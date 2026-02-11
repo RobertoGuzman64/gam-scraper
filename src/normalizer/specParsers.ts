@@ -1,18 +1,51 @@
+const normalizeNumericString = (input: string): string => {
+  const s = input.trim();
+  if (!s) return "";
+
+  const hasDot = s.includes(".");
+  const hasComma = s.includes(",");
+
+  if (hasDot && hasComma) {
+    return s.replace(/\./g, "").replace(/,/g, ".");
+  }
+
+  if (hasComma && !hasDot) {
+    return s.replace(/,/g, ".");
+  }
+
+  if (hasDot && !hasComma) {
+    const dots = (s.match(/\./g) ?? []).length;
+    if (dots >= 2) return s.replace(/\./g, "");
+    if (/^\d{1,3}\.\d{3}$/.test(s)) return s.replace(/\./g, "");
+  }
+
+  return s;
+};
+
 export const parseNumber = (v: unknown): number | null => {
   if (v === null || v === undefined) return null;
   if (typeof v === "number") return Number.isFinite(v) ? v : null;
-  const n = parseFloat(String(v).replace(",", ".").replace(/[^\d.-]/g, ""));
+
+  const raw = String(v);
+  const cleaned = normalizeNumericString(raw).replace(/[^\d.-]/g, "");
+  if (!cleaned) return null;
+  const n = parseFloat(cleaned);
   return Number.isNaN(n) ? null : n;
 };
 
 export const parseNumberArray = (v: unknown): readonly number[] | null => {
   if (v === null || v === undefined || v === "") return null;
   const txt = Array.isArray(v) ? v.join(" ") : String(v);
-  const nums = txt
-    .replace(/[^\d.\s/-]/g, " ")
+  const tokens = txt
+    .replace(/[^\d.,\s/-]/g, " ")
     .split(/[\s/-]+/)
-    .map((n) => parseFloat(n))
-    .filter((n) => !Number.isNaN(n));
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0);
+
+  const nums = tokens
+    .map((t) => parseNumber(normalizeNumericString(t)))
+    .filter((n): n is number => n !== null && Number.isFinite(n));
+
   return nums.length === 0 ? null : nums;
 };
 
@@ -45,7 +78,7 @@ export const parseDimensionRect = (v: unknown): DimensionRect | null => {
     .toLowerCase()
     .replace(/[^\dx]/g, "")
     .split("x")
-    .map((n) => parseFloat(n));
+    .map((n) => parseNumber(n));
   if (nums.length < 2) return null;
   return { ancho: nums[0] ?? null, largo: nums[1] ?? null };
 };
@@ -81,8 +114,8 @@ export const parseBattery = (v: unknown): Battery | null => {
 export const parseBoolean = (v: unknown): boolean | null => {
   if (v === null || v === undefined) return null;
   const t = String(v).trim().toLowerCase();
-  if (t === "si" || t === "sí" || t === "yes" || t === "true") return true;
-  if (t === "no" || t === "false") return false;
+  if (t === "si" || t === "sí" || t === "yes" || t === "true" || t === "1") return true;
+  if (t === "no" || t === "false" || t === "0") return false;
   return null;
 };
 

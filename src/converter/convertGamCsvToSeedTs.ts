@@ -119,13 +119,28 @@ const parseNumberLike = (s: string): number | null => {
     return null;
 };
 
-const parseScalar = (v: unknown): string | number | boolean => {
+const isNullLike = (v: unknown): boolean => {
+    if (v === null || v === undefined) return true;
+    if (typeof v === "string") {
+        const t = normalizeSpace(v).toLowerCase();
+        if (!t) return true;
+        if (t === "null" || t === "undefined") return true;
+        if (t === "n/a" || t === "na" || t === "no aplica") return true;
+        if (t === "-" || t === "—") return true;
+    }
+    return false;
+};
+
+const parseScalar = (key: string, v: unknown): string | number | boolean | null => {
+    if (isNullLike(v)) return null;
     if (typeof v === "boolean") return v;
     if (typeof v === "number") return v;
     if (typeof v !== "string") return String(v);
 
     const t = normalizeSpace(v);
-    if (!t) return "";
+    if (!t) return null;
+
+    if (key === "Nº de serie") return t;
 
     const lower = t.toLowerCase();
     if (lower === "true") return true;
@@ -589,8 +604,12 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
         >;
 
         const spec: Record<string, string | number | boolean> = {};
-        for (const [k, v] of Object.entries(specObj)) {
-            spec[normalizeSpace(k)] = parseScalar(v);
+        for (const [kRaw, v] of Object.entries(specObj)) {
+            const k = normalizeSpace(kRaw);
+            if (!k) continue;
+            const parsed = parseScalar(k, v);
+            if (parsed === null) continue;
+            spec[k] = parsed;
         }
 
         const metadata = buildDefaultMetadata(categoryKey);

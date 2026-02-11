@@ -23,6 +23,7 @@ export type NormalizeResult = {
   readonly normalized: Readonly<Record<string, NormalizedSpecValue>>;
   readonly unknownKeys: ReadonlyArray<string>;
   readonly renamedKeys: ReadonlyArray<{ readonly from: string; readonly to: string }>;
+  readonly droppedNullLikeKeys: ReadonlyArray<string>;
 };
 
 const cleanKeyBase = (str: string): string =>
@@ -37,6 +38,18 @@ const normalizeKey = (key: string): string => {
   return SPEC_KEY_NORMALIZATION[base] ?? key.trim();
 };
 
+const isNullLike = (v: unknown): boolean => {
+  if (v === null || v === undefined) return true;
+  if (typeof v === "string") {
+    const t = v.trim().toLowerCase();
+    if (!t) return true;
+    if (t === "null" || t === "undefined") return true;
+    if (t === "n/a" || t === "na" || t === "no aplica") return true;
+    if (t === "-" || t === "—") return true;
+  }
+  return false;
+};
+
 const isInvalidStringValue = (v: string): boolean => {
   const t = v.toLowerCase();
   if (t.includes("(mm)") || t.includes("(kg)") || t.includes("(m)") || t.includes("(%)")) return true;
@@ -48,6 +61,7 @@ const isInvalidStringValue = (v: string): boolean => {
 };
 
 const applyRule = (type: SpecRuleType, value: unknown): NormalizedSpecValue => {
+  if (isNullLike(value)) return null;
   switch (type) {
     case "number":
       return parseNumber(value);
@@ -73,13 +87,14 @@ const applyRule = (type: SpecRuleType, value: unknown): NormalizedSpecValue => {
 
 export const normalizeSpecsObject = (spec: unknown): NormalizeResult => {
   if (!spec || typeof spec !== "object" || Array.isArray(spec)) {
-    return { normalized: {}, unknownKeys: [], renamedKeys: [] };
+    return { normalized: {}, unknownKeys: [], renamedKeys: [], droppedNullLikeKeys: [] };
   }
 
   const input = spec as Record<string, unknown>;
   const normalized: Record<string, NormalizedSpecValue> = {};
   const unknownKeys: string[] = [];
   const renamedKeys: { from: string; to: string }[] = [];
+  const droppedNullLikeKeys: string[] = [];
 
   for (const [rawKey, rawValue] of Object.entries(input)) {
     const normKey = normalizeKey(rawKey);
@@ -91,9 +106,22 @@ export const normalizeSpecsObject = (spec: unknown): NormalizeResult => {
       continue;
     }
 
+    if (isNullLike(rawValue)) {
+      droppedNullLikeKeys.push(normKey);
+      continue;
+    }
+
     if (rule === "string" && typeof rawValue === "string" && isInvalidStringValue(rawValue)) continue;
 
     let value: unknown = rawValue;
+    if (normKey === "Nº de serie") {
+      const s = String(rawValue).trim();
+      if (!s || isNullLike(s)) {
+        droppedNullLikeKeys.push(normKey);
+        continue;
+      }
+      value = s;
+    }
     if (rule === "string" && Array.isArray(value)) {
       const s = value
         .filter((v): v is string => typeof v === "string")
@@ -105,10 +133,13 @@ export const normalizeSpecsObject = (spec: unknown): NormalizeResult => {
     }
 
     const parsed = applyRule(rule, value);
-    if (parsed === undefined) continue;
+    if (parsed === null) {
+      droppedNullLikeKeys.push(normKey);
+      continue;
+    }
     normalized[normKey] = parsed;
   }
 
   const unknownUnique = Array.from(new Set(unknownKeys)).sort((a, b) => a.localeCompare(b, "es"));
-  return { normalized, unknownKeys: unknownUnique, renamedKeys };
+  return { normalized, unknownKeys: unknownUnique, renamedKeys, droppedNullLikeKeys };
 };
