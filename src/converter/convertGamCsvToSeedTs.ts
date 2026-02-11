@@ -533,6 +533,7 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
     const iLong = col("longDescription");
     const iReference = col("reference");
     const iUrl = col("url");
+    const iImage = col("image");
     const iSpecJson = col("specJson");
 
     if (iCategoryKey < 0 || iTitle < 0 || iShort < 0 || iLong < 0 || iReference < 0 || iUrl < 0 || iSpecJson < 0) {
@@ -562,6 +563,7 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
         const longDescription = ensureString(row[iLong] ?? "").trim();
         const referenceRaw = normalizeSpace(row[iReference] ?? "");
         const url = normalizeSpace(row[iUrl] ?? "");
+        const imageRaw = iImage >= 0 ? normalizeSpace(row[iImage] ?? "") : "";
         const specJsonRaw = ensureString(row[iSpecJson] ?? "");
 
         if (!categoryKey || !title) continue;
@@ -602,7 +604,7 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
             condition: "Segunda_Mano",
             description_title: title,
             description: shortDescription,
-            image: options.defaultImage,
+            image: imageRaw || options.defaultImage,
             reference,
             description_general: longDescription,
             spec,

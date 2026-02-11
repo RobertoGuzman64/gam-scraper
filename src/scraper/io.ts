@@ -191,6 +191,7 @@ const toProductRow = (
     country: p.country ?? "",
     horometer: p.horometer ?? "",
     serialNumber: p.serialNumber ?? "",
+    image: p.image ?? "",
     url: p.url,
     specJson
   };
