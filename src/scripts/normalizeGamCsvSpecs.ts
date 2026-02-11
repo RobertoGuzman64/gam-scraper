@@ -4,6 +4,13 @@ import { parseCsv } from "../shared/csvParse.js";
 import { toCsv } from "../shared/csv.js";
 import { normalizeSpecsObject, type NormalizedSpecValue } from "../normalizer/normalizeSpecs.js";
 
+type SpecSummary = {
+  readonly total: number;
+  readonly typeCounts: Readonly<Record<"string" | "number" | "boolean", number>>;
+  readonly valueCountsTop: ReadonlyArray<{ readonly value: string; readonly count: number }>;
+  readonly badValueExamples: ReadonlyArray<{ readonly value: string; readonly reference?: string }>;
+};
+
 type Report = {
   readonly inputCsv: string;
   readonly outputCsv: string;
@@ -13,6 +20,7 @@ type Report = {
   readonly rowsWithInvalidSpecJson: number;
   readonly unknownKeys: Readonly<Record<string, number>>;
   readonly renamedKeysTop: ReadonlyArray<{ readonly from: string; readonly to: string; readonly count: number }>;
+  readonly specsSummary: Readonly<Record<string, SpecSummary>>;
 };
 
 type Args = {
@@ -21,23 +29,36 @@ type Args = {
   readonly report: string;
   readonly allowUnknown: boolean;
   readonly expandSpecColumns: boolean;
+  readonly maxValuesPerKey: number;
 };
 
 const defaultInput = "storage/scraped/gam/scrape-gam-marzo-2026-all.csv";
 const defaultOutput = "storage/normalized/gam/scrape-gam-marzo-2026-all.normalized.csv";
 const defaultReport = "storage/normalized/gam/normalize.report.json";
 
+const normalizeSpace = (s: string): string => s.replace(/\s+/g, " ").trim();
+
 const parseArgs = (argv: readonly string[]): Args => {
   const positional: string[] = [];
   let report = defaultReport;
   let allowUnknown = false;
   let expandSpecColumns = false;
+  let maxValuesPerKey = 50;
 
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i] ?? "";
     if (a === "--report") {
       const v = argv[i + 1];
       if (v) report = v;
+      i += 1;
+      continue;
+    }
+    if (a === "--max-values-per-key") {
+      const v = argv[i + 1];
+      if (v) {
+        const n = Number(v);
+        if (Number.isFinite(n)) maxValuesPerKey = Math.max(10, Math.min(200, Math.trunc(n)));
+      }
       i += 1;
       continue;
     }
@@ -56,7 +77,7 @@ const parseArgs = (argv: readonly string[]): Args => {
   const input = positional[0] ?? defaultInput;
   const output = positional[1] ?? defaultOutput;
 
-  return { input, output, report, allowUnknown, expandSpecColumns };
+  return { input, output, report, allowUnknown, expandSpecColumns, maxValuesPerKey };
 };
 
 const safeJsonParse = (txt: string): { readonly ok: true; readonly value: unknown } | { readonly ok: false } => {
@@ -69,22 +90,119 @@ const safeJsonParse = (txt: string): { readonly ok: true; readonly value: unknow
   }
 };
 
-const specScalarToString = (v: string | number | boolean): string => {
-  if (typeof v === "boolean") return v ? "true" : "false";
-  return String(v);
-};
-
-const normalizedValueToString = (v: NormalizedSpecValue): string => {
-  if (v === null) return "";
-  if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") return specScalarToString(v);
-  if (Array.isArray(v)) return v.map((n) => specScalarToString(n)).join(" | ");
-  return JSON.stringify(v);
-};
-
 const isSpecColumn = (h: string): boolean => h.startsWith("spec__");
 
 const ensureOutputDir = async (path: string): Promise<void> => {
   await mkdir(dirname(path), { recursive: true });
+};
+
+const toScalarString = (v: string | number | boolean): string => {
+  if (typeof v === "boolean") return v ? "true" : "false";
+  return String(v);
+};
+
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
+
+const hasRawString = (v: Record<string, unknown>): v is Record<string, unknown> & { raw: string } =>
+  typeof v.raw === "string";
+
+const readNumKey = (obj: Record<string, unknown>, key: string): number | null => {
+  const v = obj[key];
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  return null;
+};
+
+const formatDimParts = (parts: readonly (number | null)[]): string | null => {
+  const cleaned = parts.filter((n): n is number => typeof n === "number" && Number.isFinite(n));
+  if (cleaned.length === 0) return null;
+  return cleaned.join("x");
+};
+
+const normalizedValueToScalar = (v: NormalizedSpecValue): string | number | boolean | null => {
+  if (v === null) return null;
+
+  if (typeof v === "string") {
+    const t = normalizeSpace(v);
+    if (!t) return null;
+    if (t === "[object Object]") return null;
+    return t;
+  }
+
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (typeof v === "boolean") return v;
+
+  if (Array.isArray(v)) {
+    const parts = v
+      .map((n) => (typeof n === "number" && Number.isFinite(n) ? String(n) : ""))
+      .filter((x) => x.length > 0);
+    if (parts.length === 0) return null;
+    return parts.join(" | ");
+  }
+
+  if (isPlainObject(v)) {
+    if (hasRawString(v)) {
+      const t = normalizeSpace(v.raw);
+      if (!t || t === "[object Object]") return null;
+      return t;
+    }
+
+    const largo = readNumKey(v, "largo");
+    const ancho = readNumKey(v, "ancho");
+    const grosor = readNumKey(v, "grosor");
+
+    const dim3 = formatDimParts([largo, ancho, grosor]);
+    if (dim3) return dim3;
+
+    const dim2 = formatDimParts([largo, ancho]);
+    if (dim2) return dim2;
+
+    const dim1 = formatDimParts([largo]);
+    if (dim1) return dim1;
+
+    const s = JSON.stringify(v);
+    const t = normalizeSpace(s);
+    if (!t || t === "{}" || t === "[object Object]") return null;
+    return t;
+  }
+
+  const s = String(v);
+  const t = normalizeSpace(s);
+  if (!t || t === "[object Object]") return null;
+  return t;
+};
+
+const addCount = (map: Record<string, number>, key: string, inc = 1): void => {
+  map[key] = (map[key] ?? 0) + inc;
+};
+
+const topCounts = (
+  counts: Record<string, number>,
+  limit: number
+): ReadonlyArray<{ readonly value: string; readonly count: number }> => {
+  const arr = Object.entries(counts).map(([value, count]) => ({ value, count }));
+  arr.sort((a, b) => b.count - a.count || a.value.localeCompare(b.value, "es"));
+  return arr.slice(0, limit);
+};
+
+type SummaryWorking = {
+  total: number;
+  typeCounts: Record<"string" | "number" | "boolean", number>;
+  valueCounts: Record<string, number>;
+  badValueExamples: Array<{ value: string; reference?: string }>;
+};
+
+const ensureSummary = (m: Record<string, SummaryWorking>, key: string): SummaryWorking => {
+  const existing = m[key];
+  if (existing) return existing;
+  const created: SummaryWorking = {
+    total: 0,
+    typeCounts: { string: 0, number: 0, boolean: 0 },
+    valueCounts: {},
+    badValueExamples: []
+  };
+  m[key] = created;
+  return created;
 };
 
 const main = async (): Promise<void> => {
@@ -107,6 +225,7 @@ const main = async (): Promise<void> => {
   const renamedCounts = new Map<string, { readonly from: string; readonly to: string; count: number }>();
 
   const allNormalizedSpecKeys = new Set<string>();
+  const summaryMap: Record<string, SummaryWorking> = {};
 
   for (const row of rows) {
     const specJson = row["specJson"] ?? "";
@@ -128,18 +247,56 @@ const main = async (): Promise<void> => {
       renamedCounts.set(key, { from: existing.from, to: existing.to, count: existing.count + 1 });
     }
 
-    row["specJson"] = JSON.stringify(norm.normalized);
+    const refMaybe = typeof row["reference"] === "string" ? normalizeSpace(row["reference"]) : "";
+    const reference = refMaybe ? refMaybe : undefined;
+
+    const scalarSpec: Record<string, string | number | boolean> = {};
+
+    for (const [k, v] of Object.entries(norm.normalized)) {
+      const scalar = normalizedValueToScalar(v);
+
+      if (scalar === null) {
+        const s = ensureSummary(summaryMap, k);
+        const badValue = typeof v === "string" ? v : JSON.stringify(v);
+        if (reference) s.badValueExamples.push({ value: badValue, reference });
+        else s.badValueExamples.push({ value: badValue });
+        continue;
+      }
+
+      if (k === "Nº de serie") {
+        const forced = typeof scalar === "string" ? scalar : String(scalar);
+        const t = normalizeSpace(forced);
+        if (!t) continue;
+        scalarSpec[k] = t;
+      } else {
+        scalarSpec[k] = scalar;
+      }
+
+      const s = ensureSummary(summaryMap, k);
+      s.total += 1;
+
+      const tt = typeof scalar;
+      if (tt === "string" || tt === "number" || tt === "boolean") s.typeCounts[tt] += 1;
+
+      let valueKey: string;
+      if (typeof scalar === "string") valueKey = normalizeSpace(scalar);
+      else valueKey = toScalarString(scalar);
+      addCount(s.valueCounts, valueKey, 1);
+
+      allNormalizedSpecKeys.add(k);
+    }
+
+    row["specJson"] = JSON.stringify(scalarSpec);
 
     if (args.expandSpecColumns) {
-      for (const [k, v] of Object.entries(norm.normalized)) {
-        allNormalizedSpecKeys.add(k);
-        row[`spec__${k}`] = normalizedValueToString(v);
+      for (const [k, v] of Object.entries(scalarSpec)) {
+        row[`spec__${k}`] = typeof v === "string" ? v : toScalarString(v);
       }
 
       for (const h of headers) {
         if (!isSpecColumn(h)) continue;
         const key = h.slice("spec__".length);
-        if (!Object.prototype.hasOwnProperty.call(norm.normalized, key)) row[h] = "";
+        if (!Object.prototype.hasOwnProperty.call(scalarSpec, key)) row[h] = "";
       }
     }
   }
@@ -150,7 +307,7 @@ const main = async (): Promise<void> => {
   }
 
   const renamedTop = Array.from(renamedCounts.values())
-    .sort((a, b) => b.count - a.count)
+    .sort((a, b) => b.count - a.count || a.from.localeCompare(b.from, "es") || a.to.localeCompare(b.to, "es"))
     .slice(0, 50)
     .map((x) => ({ from: x.from, to: x.to, count: x.count }));
 
@@ -168,6 +325,25 @@ const main = async (): Promise<void> => {
   const csvOut = toCsv(rows, headers);
   await writeFile(outputPath, csvOut, "utf8");
 
+  const specsSummaryOut: Record<string, SpecSummary> = {};
+  for (const [k, s] of Object.entries(summaryMap)) {
+    const bad = s.badValueExamples
+      .filter((x) => normalizeSpace(x.value))
+      .slice(0, 10)
+      .map((x) => {
+        const value = normalizeSpace(x.value);
+        if (x.reference) return { value, reference: x.reference };
+        return { value };
+      });
+
+    specsSummaryOut[k] = {
+      total: s.total,
+      typeCounts: s.typeCounts,
+      valueCountsTop: topCounts(s.valueCounts, args.maxValuesPerKey),
+      badValueExamples: bad
+    };
+  }
+
   await ensureOutputDir(reportPath);
   const report: Report = {
     inputCsv: args.input,
@@ -177,7 +353,8 @@ const main = async (): Promise<void> => {
     rowsWithSpecJson,
     rowsWithInvalidSpecJson,
     unknownKeys: unknownKeysObj,
-    renamedKeysTop: renamedTop
+    renamedKeysTop: renamedTop,
+    specsSummary: specsSummaryOut
   };
   await writeFile(reportPath, JSON.stringify(report, null, 2), "utf8");
 
