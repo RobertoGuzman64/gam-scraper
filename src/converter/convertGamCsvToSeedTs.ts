@@ -649,7 +649,7 @@ if (isMain(import.meta.url)) {
         inputCsvPath: resolve(inputCsvPath),
         outputTsPath: resolve(outputTsPath),
         categorySellFlatJsonPath: resolve(categoryFlatPath),
-        idStart: 200000,
+        idStart: 681,
         companyID: 208,
         defaultImage: "https://online.gamrentals.com/img/p/es-default.jpg",
         referencePrefix: "GAM-"
