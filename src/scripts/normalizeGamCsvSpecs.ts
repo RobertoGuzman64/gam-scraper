@@ -116,6 +116,15 @@ const readNumKey = (obj: Record<string, unknown>, key: string): number | null =>
 const formatDimParts = (parts: readonly (number | null)[]): string | null => {
   const cleaned = parts.filter((n): n is number => typeof n === "number" && Number.isFinite(n));
   if (cleaned.length === 0) return null;
+
+  if (cleaned.length === 2) {
+    const a = cleaned[0] ?? 0;
+    const b = cleaned[1] ?? 0;
+    const hi = Math.max(a, b);
+    const lo = Math.min(a, b);
+    return `${hi}x${lo}`;
+  }
+
   return cleaned.join("x");
 };
 
