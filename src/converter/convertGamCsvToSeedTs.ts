@@ -2,14 +2,12 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-type ProductCondition = "Segunda_Mano" | "Nuevo" | "Alquiler";
-
 type SeedProduct = {
     id: number;
     title: string;
     categorySellID: number;
     companyID: number;
-    condition: ProductCondition;
+    condition: "Segunda_Mano";
     description_title: string;
     description: string;
     image: string;
@@ -33,22 +31,22 @@ type CategoryFlatRow = {
 type ConvertOptions = {
     inputCsvPath: string;
     outputTsPath: string;
+    categorySellFlatJsonPath: string;
     idStart: number;
     companyID: number;
     defaultImage: string;
-    categorySellFlatJsonPath: string;
-    categorySellPathByUrlCategorySlug?: Readonly<Record<string, string>>;
-    categorySellPathByCategoryKey?: Readonly<Record<string, string>>;
-    metadataByCategoryKey?: Readonly<
-        Record<
-            string,
-            {
-                keywords: string[];
-                tags: string[];
-            }
-        >
-    >;
     referencePrefix?: string;
+};
+
+type Report = {
+    totalRows: number;
+    totalProductsWritten: number;
+    missingCategorySellId: Record<string, number>;
+    ambiguousUrlSlug: Record<string, number>;
+    usedFallbackToCategoryKey: Record<string, number>;
+    usedDirectSlugMatch: Record<string, number>;
+    usedNormalizedSlugMatch: Record<string, number>;
+    unknownUrlSlug: Record<string, number>;
 };
 
 const normalizeSpace = (s: string): string => s.replace(/\s+/g, " ").trim();
@@ -190,47 +188,6 @@ const isCategoryFlatRow = (v: unknown): v is CategoryFlatRow => {
     );
 };
 
-const normalizePath = (path: string): string[] =>
-    normalizeSpace(path)
-        .replace(/\\/g, "/")
-        .split("/")
-        .map((p) => normalizeSpace(p))
-        .filter((p) => p.length > 0);
-
-const loadCategoryResolver = async (flatJsonPath: string): Promise<(path: string) => number | null> => {
-    const raw = await readFile(flatJsonPath, "utf8");
-    const parsed = safeJsonParse(raw);
-
-    if (!Array.isArray(parsed)) throw new Error("categorySell-flat.json no es un array.");
-
-    const flat = parsed.filter(isCategoryFlatRow);
-    if (flat.length === 0) throw new Error("categorySell-flat.json está vacío o inválido.");
-
-    const byParentAndSlug = new Map<string, number>();
-    for (const r of flat) {
-        const key = `${r.parentId ?? "root"}|${r.slug}`;
-        byParentAndSlug.set(key, r.id);
-    }
-
-    return (path: string): number | null => {
-        const parts = normalizePath(path);
-        if (parts.length === 0) return null;
-
-        let parentId: number | null = null;
-        let currentId: number | null = null;
-
-        for (const slug of parts) {
-            const key = `${parentId ?? "root"}|${slug}`;
-            const id = byParentAndSlug.get(key);
-            if (!id) return null;
-            currentId = id;
-            parentId = id;
-        }
-
-        return currentId;
-    };
-};
-
 const extractUrlCategorySlug = (url: string): string => {
     try {
         const u = new URL(url);
@@ -243,28 +200,168 @@ const extractUrlCategorySlug = (url: string): string => {
     }
 };
 
+const normalizeGamSlug = (slug: string): string => {
+    const s = normalizeSpace(slug).toLowerCase();
+    if (!s) return "";
+    const withoutSaleSuffix = s
+        .replace(/-segunda-mano\b/g, "")
+        .replace(/-de-segunda-mano\b/g, "")
+        .replace(/-de-ocasion\b/g, "")
+        .replace(/-ocasion\b/g, "")
+        .replace(/-usado\b/g, "")
+        .replace(/-usada\b/g, "")
+        .replace(/-venta\b/g, "")
+        .replace(/-alquiler\b/g, "");
+    return normalizeSpace(withoutSaleSuffix).replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+};
+
+const inc = (obj: Record<string, number>, key: string): void => {
+    if (!key) return;
+    obj[key] = (obj[key] ?? 0) + 1;
+};
+
+const loadCategoryIndex = async (
+    flatJsonPath: string
+): Promise<{
+    byId: ReadonlyMap<number, CategoryFlatRow>;
+    idsBySlug: ReadonlyMap<string, readonly number[]>;
+}> => {
+    const raw = await readFile(flatJsonPath, "utf8");
+    const parsed = safeJsonParse(raw);
+    if (!Array.isArray(parsed)) throw new Error("categorySell-flat.json no es un array.");
+
+    const flat = parsed.filter(isCategoryFlatRow);
+    if (flat.length === 0) throw new Error("categorySell-flat.json está vacío o inválido.");
+
+    const byId = new Map<number, CategoryFlatRow>();
+    const idsBySlug = new Map<string, number[]>();
+
+    for (const r of flat) {
+        byId.set(r.id, r);
+
+        const slug = normalizeSpace(r.slug).toLowerCase();
+        const prev = idsBySlug.get(slug) ?? [];
+        idsBySlug.set(slug, [...prev, r.id]);
+    }
+
+    return { byId, idsBySlug };
+};
+
+const buildPath = (byId: ReadonlyMap<number, CategoryFlatRow>, id: number): string => {
+    const slugs: string[] = [];
+    let cur: CategoryFlatRow | undefined = byId.get(id);
+    while (cur) {
+        slugs.push(cur.slug);
+        if (cur.parentId === null) break;
+        cur = byId.get(cur.parentId);
+    }
+    return slugs.reverse().join("/");
+};
+
+const pickBestCandidate = (paths: readonly string[], categoryKey: string): string | null => {
+    if (paths.length === 0) return null;
+    if (paths.length === 1) return paths[0] ?? null;
+
+    const key = normalizeSpace(categoryKey).toLowerCase();
+    const target = key ? `/maquinaria/${key}` : "/maquinaria";
+    const prioritized = paths.find((p) => p.toLowerCase().includes(target));
+    return prioritized ?? (paths[0] ?? null);
+};
+
+const categoryKeyFallbackSlug = (categoryKey: string): string => {
+    const k = normalizeSpace(categoryKey).toLowerCase();
+    if (!k) return "maquinaria";
+    if (k === "maquinaria") return "maquinaria";
+    return k;
+};
+
+const resolveCategorySellIdAuto = (
+    idx: { byId: ReadonlyMap<number, CategoryFlatRow>; idsBySlug: ReadonlyMap<string, readonly number[]> },
+    categoryKey: string,
+    urlCategorySlug: string,
+    report: Report
+): number | null => {
+    const slug = normalizeSpace(urlCategorySlug).toLowerCase();
+
+    if (slug) {
+        const directIds = idx.idsBySlug.get(slug) ?? [];
+        if (directIds.length === 1) {
+            inc(report.usedDirectSlugMatch, slug);
+            return directIds[0] ?? null;
+        }
+        if (directIds.length > 1) {
+            const paths = directIds.map((id) => buildPath(idx.byId, id));
+            const best = pickBestCandidate(paths, categoryKey);
+            if (best) {
+                inc(report.ambiguousUrlSlug, slug);
+                const bestId = directIds[paths.indexOf(best)] ?? null;
+                return bestId;
+            }
+        }
+
+        const normalized = normalizeGamSlug(slug);
+        if (normalized) {
+            const normIds = idx.idsBySlug.get(normalized) ?? [];
+            if (normIds.length === 1) {
+                inc(report.usedNormalizedSlugMatch, slug);
+                return normIds[0] ?? null;
+            }
+            if (normIds.length > 1) {
+                const paths = normIds.map((id) => buildPath(idx.byId, id));
+                const best = pickBestCandidate(paths, categoryKey);
+                if (best) {
+                    inc(report.ambiguousUrlSlug, `${slug}=>${normalized}`);
+                    const bestId = normIds[paths.indexOf(best)] ?? null;
+                    return bestId;
+                }
+            }
+        }
+
+        inc(report.unknownUrlSlug, slug);
+    }
+
+    const fallbackSlug = categoryKeyFallbackSlug(categoryKey);
+    const fallbackIds = fallbackSlug ? (idx.idsBySlug.get(fallbackSlug) ?? []) : [];
+    if (fallbackIds.length === 1) {
+        inc(report.usedFallbackToCategoryKey, categoryKey);
+        return fallbackIds[0] ?? null;
+    }
+
+    return null;
+};
+
 export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<void> => {
+    const idx = await loadCategoryIndex(options.categorySellFlatJsonPath);
+
     const csv = await readFile(options.inputCsvPath, "utf8");
     const parsed = parseCsv(csv);
 
-    const idx = (name: string): number => parsed.headers.findIndex((h) => h === name);
+    const col = (name: string): number => parsed.headers.findIndex((h) => h === name);
 
-    const iCategoryKey = idx("categoryKey");
-    const iTitle = idx("title");
-    const iShort = idx("shortDescription");
-    const iLong = idx("longDescription");
-    const iReference = idx("reference");
-    const iUrl = idx("url");
-    const iSpecJson = idx("specJson");
+    const iCategoryKey = col("categoryKey");
+    const iTitle = col("title");
+    const iShort = col("shortDescription");
+    const iLong = col("longDescription");
+    const iReference = col("reference");
+    const iUrl = col("url");
+    const iSpecJson = col("specJson");
 
     if (iCategoryKey < 0 || iTitle < 0 || iShort < 0 || iLong < 0 || iReference < 0 || iUrl < 0 || iSpecJson < 0) {
         throw new Error("CSV no tiene las columnas mínimas esperadas (categoryKey,title,shortDescription,longDescription,reference,url,specJson).");
     }
 
-    const resolveCategoryId = await loadCategoryResolver(options.categorySellFlatJsonPath);
+    const report: Report = {
+        totalRows: parsed.rows.length,
+        totalProductsWritten: 0,
+        missingCategorySellId: {},
+        ambiguousUrlSlug: {},
+        usedFallbackToCategoryKey: {},
+        usedDirectSlugMatch: {},
+        usedNormalizedSlugMatch: {},
+        unknownUrlSlug: {}
+    };
 
     const out: SeedProduct[] = [];
-    const missingCategories = new Map<string, number>();
 
     for (let r = 0; r < parsed.rows.length; r += 1) {
         const row = parsed.rows[r] ?? [];
@@ -279,17 +376,11 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
         if (!categoryKey || !title) continue;
 
         const urlCategorySlug = extractUrlCategorySlug(url);
-
-        const categorySellPath =
-            (urlCategorySlug ? options.categorySellPathByUrlCategorySlug?.[urlCategorySlug] : "") ??
-            options.categorySellPathByCategoryKey?.[categoryKey] ??
-            "";
-
-        const categorySellID = categorySellPath ? resolveCategoryId(categorySellPath) : null;
+        const categorySellID = resolveCategorySellIdAuto({ byId: idx.byId, idsBySlug: idx.idsBySlug }, categoryKey, urlCategorySlug, report);
 
         if (!categorySellID) {
             const key = urlCategorySlug ? `urlSlug:${urlCategorySlug}` : `categoryKey:${categoryKey}`;
-            missingCategories.set(key, (missingCategories.get(key) ?? 0) + 1);
+            inc(report.missingCategorySellId, key);
             continue;
         }
 
@@ -304,9 +395,7 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
             spec[normalizeSpace(k)] = parseScalar(v);
         }
 
-        const metadataFromMap = options.metadataByCategoryKey?.[categoryKey];
-        const metadata = metadataFromMap ?? buildDefaultMetadata(categoryKey);
-
+        const metadata = buildDefaultMetadata(categoryKey);
         const reference = refWithPrefix(referenceRaw, options.referencePrefix ?? "GAM-");
 
         out.push({
@@ -329,26 +418,18 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
         });
     }
 
-    if (missingCategories.size > 0) {
-        const lines = [...missingCategories.entries()]
-            .sort((a, b) => b[1] - a[1])
-            .map(([k, count]) => `${k} -> ${count}`)
-            .join("\n");
-        throw new Error(`Hay productos sin categoría resoluble:\n${lines}`);
-    }
+    report.totalProductsWritten = out.length;
 
     const ts = `import { ProductCondition } from "@prisma/client";
 
-const products = ${JSON.stringify(out, null, 2)
-            .replace(/"Segunda_Mano"/g, "ProductCondition.Segunda_Mano")
-            .replace(/"Nuevo"/g, "ProductCondition.Nuevo")
-            .replace(/"Alquiler"/g, "ProductCondition.Alquiler")} as const;
+const products = ${JSON.stringify(out, null, 2).replace(/"Segunda_Mano"/g, "ProductCondition.Segunda_Mano")} as const;
 
 export default products;
 `;
 
     await mkdir(dirname(options.outputTsPath), { recursive: true });
     await writeFile(options.outputTsPath, ts, "utf8");
+    await writeFile(`${options.outputTsPath}.report.json`, JSON.stringify(report, null, 2), "utf8");
 };
 
 const isMain = (metaUrl: string): boolean => {
@@ -363,7 +444,7 @@ if (isMain(import.meta.url)) {
     const categoryFlatPath = process.argv[4];
 
     if (!inputCsvPath || !outputTsPath || !categoryFlatPath) {
-        throw new Error("Uso: node dist/conversor/convertidorTS.js <input.csv> <output.ts> <categorySell-flat.json>");
+        throw new Error("Uso: node dist/converter/convertGamCsvToSeedTs.js <input.csv> <output.ts> <categorySell-flat.json>");
     }
 
     await convertGamCsvToSeedTs({
@@ -373,16 +454,6 @@ if (isMain(import.meta.url)) {
         idStart: 200000,
         companyID: 208,
         defaultImage: "https://online.gamrentals.com/img/p/es-default.jpg",
-        referencePrefix: "GAM-",
-        categorySellPathByUrlCategorySlug: {},
-        categorySellPathByCategoryKey: {
-            elevacion: "maquinaria/elevacion",
-            manutencion: "maquinaria/manutencion",
-            manipulacion: "maquinaria/manipulacion",
-            energia: "maquinaria/energia",
-            otros: "maquinaria/otros",
-            movilidad: "maquinaria/movilidad",
-            maquinaria: "maquinaria"
-        }
+        referencePrefix: "GAM-"
     });
 }

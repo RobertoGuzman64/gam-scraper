@@ -65,7 +65,7 @@ npm run scrape -- --categoryKey elevacion --outPrefix gam-elevacion-full
 
 ## Salida
 
-Se escribe en `output/`:
+Se escribe en `storage/scraped/gam/`:
 
 - `<outPrefix>-<categoryKey>.csv`
 - `<outPrefix>-all.csv`

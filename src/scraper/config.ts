@@ -11,7 +11,7 @@ export const DEFAULT_CATEGORIES: readonly CategoryConfig[] = [
 ];
 
 export const DEFAULT_OPTIONS: ScrapeOptions = {
-  outDir: "output",
+  outDir: "storage/scraped/gam",
   outPrefix: "scrape-gam-marzo-2026",
   maxPages: 500,
   stallStopAfter: 2,

@@ -10,7 +10,7 @@ import type {
   SpecsMap,
   Summary
 } from "./types.js";
-import { toCsv } from "./csv.js";
+import { toCsv } from "../shared/csv.js";
 
 const baseProductHeaders = [
   "categoryKey",
