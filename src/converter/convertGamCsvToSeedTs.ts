@@ -10,6 +10,7 @@ import { buildDefaultMetadata } from "./internal/metadata.js";
 import { refWithPrefix } from "./internal/reference.js";
 import { normalizeSpace } from "./internal/string.js";
 import { normalizeSpecKey, parseSpecByRule } from "./internal/spec.js";
+import { renderSeedTs } from "./internal/seedPrinter.js";
 import type { ConvertOptions, Report, SeedProduct, SpecValue } from "./internal/types.js";
 
 export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<void> => {
@@ -115,12 +116,7 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
 
     report.totalProductsWritten = out.length;
 
-    const ts = `import { ProductCondition } from "@prisma/client";
-
-const products = ${JSON.stringify(out, null, 2).replace(/"Segunda_Mano"/g, "ProductCondition.Segunda_Mano")} as const;
-
-export default products;
-`;
+    const ts = renderSeedTs(out);
 
     await mkdir(dirname(options.outputTsPath), { recursive: true });
     await writeFile(options.outputTsPath, ts, "utf8");
