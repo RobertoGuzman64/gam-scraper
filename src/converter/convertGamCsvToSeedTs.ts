@@ -46,6 +46,8 @@ type Report = {
     usedFallbackToCategoryKey: Record<string, number>;
     usedDirectSlugMatch: Record<string, number>;
     usedNormalizedSlugMatch: Record<string, number>;
+    usedAliasSlugMatch: Record<string, number>;
+    usedFuzzySlugMatch: Record<string, number>;
     unknownUrlSlug: Record<string, number>;
 };
 
@@ -200,7 +202,7 @@ const extractUrlCategorySlug = (url: string): string => {
     }
 };
 
-const normalizeGamSlug = (slug: string): string => {
+const normalizeGamSlugBase = (slug: string): string => {
     const s = normalizeSpace(slug).toLowerCase();
     if (!s) return "";
     const withoutSaleSuffix = s
@@ -215,6 +217,140 @@ const normalizeGamSlug = (slug: string): string => {
     return normalizeSpace(withoutSaleSuffix).replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
 };
 
+const slugCandidatesFromUrlSlug = (urlSlug: string): readonly string[] => {
+    const raw = normalizeSpace(urlSlug).toLowerCase();
+    if (!raw) return [];
+
+    const candidates: string[] = [];
+    const base = normalizeGamSlugBase(raw);
+
+    const withSuffix = (s: string): string => {
+        const t = normalizeSpace(s).toLowerCase().replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+        if (!t) return "";
+        if (t.endsWith("-segunda-mano")) return t;
+        return `${t}-segunda-mano`;
+    };
+
+    const push = (s: string): void => {
+        const t = normalizeSpace(s).toLowerCase().replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+        if (!t) return;
+        if (!candidates.includes(t)) candidates.push(t);
+    };
+
+    push(raw);
+    push(base);
+    push(withSuffix(base));
+
+    const noElevadoras = base.replace(/\bplataformas-elevadoras-/, "plataformas-").replace(/-elevadoras-/g, "-");
+    push(noElevadoras);
+    push(withSuffix(noElevadoras));
+
+    const elevadoresToPlataformas = base.replace(/^elevadores-/, "plataformas-");
+    push(elevadoresToPlataformas);
+    push(withSuffix(elevadoresToPlataformas));
+
+    const telescopicas = base
+        .replace(/^elevadores-/, "plataformas-")
+        .replace(/-telescopicos\b/, "-telescopicas")
+        .replace(/-telescopico\b/, "-telescopica");
+    push(telescopicas);
+    push(withSuffix(telescopicas));
+
+    const plataformasElevadorasTelescopicas = telescopicas.replace(/^plataformas-/, "plataformas-elevadoras-");
+    push(plataformasElevadorasTelescopicas);
+    push(withSuffix(plataformasElevadorasTelescopicas));
+
+    const transpaletas = base.replace(/^transpaletas-elevadoras-/, "transpaletas-");
+    push(transpaletas);
+    push(withSuffix(transpaletas));
+
+    const apiladoras = base.replace(/^apiladoras-elevadoras-/, "apiladores-").replace(/^apiladoras-/, "apiladores-");
+    push(apiladoras);
+    push(withSuffix(apiladoras));
+
+    const apiladoresElectricos = base
+        .replace(/^apiladoras-elevadoras-/, "apiladores-")
+        .replace(/^apiladoras-/, "apiladores-")
+        .replace(/-electricas\b/, "-electricos")
+        .replace(/-electrica\b/, "-electrico");
+    push(apiladoresElectricos);
+    push(withSuffix(apiladoresElectricos));
+
+    const preparapedidos = base.replace(/^preparapedidos\b/, "preparapedido");
+    push(preparapedidos);
+    push(withSuffix(preparapedidos));
+
+    const carretillas4x4 = base.replace(/^carretillas-todoterreno-4x4\b/, "carretillas-todoterreno");
+    push(carretillas4x4);
+    push(withSuffix(carretillas4x4));
+
+    const minicargadoras = base.replace(/^mini-cargadoras\b/, "minicargadoras").replace(/^mini-cargadora\b/, "minicargadora");
+    push(minicargadoras);
+    push(withSuffix(minicargadoras));
+
+    const miniexcavadoras = base.replace(/^mini-excavadoras\b/, "miniexcavadoras").replace(/^mini-excavadora\b/, "miniexcavadora");
+    push(miniexcavadoras);
+    push(withSuffix(miniexcavadoras));
+
+    if (base.startsWith("camiones-cesta")) {
+        push("plataformas-elevadoras-sobre-camion-segunda-mano");
+        push("plataformas-elevadoras-sobre-camion");
+    }
+
+    if (base.startsWith("manipuladores-frontales")) {
+        push("manipulacion-elevacion-cargas-segunda-mano");
+        push("manipulacion-elevacion-cargas");
+    }
+
+    if (base.startsWith("resto-maquinaria")) {
+        push("maquinaria");
+    }
+
+    return candidates;
+};
+
+const toTokens = (slug: string): readonly string[] => {
+    const stop = new Set([
+        "segunda",
+        "mano",
+        "de",
+        "la",
+        "el",
+        "y",
+        "a",
+        "en",
+        "por",
+        "para",
+        "venta",
+        "ocasion",
+        "usado",
+        "usada",
+        "alquiler",
+        "diesel",
+        "diésel",
+        "electricas",
+        "eléctricas",
+        "electricos",
+        "eléctricos",
+        "manuales",
+        "manual"
+    ]);
+
+    const parts = normalizeSpace(slug)
+        .toLowerCase()
+        .replace(/[^a-z0-9áéíóúüñ-]/g, " ")
+        .replace(/-+/g, "-")
+        .split(/[-\s]+/g)
+        .map((p) => normalizeSpace(p))
+        .filter((p) => p.length > 0);
+
+    const filtered: string[] = [];
+    for (const p of parts) {
+        if (!stop.has(p)) filtered.push(p);
+    }
+    return filtered;
+};
+
 const inc = (obj: Record<string, number>, key: string): void => {
     if (!key) return;
     obj[key] = (obj[key] ?? 0) + 1;
@@ -223,8 +359,9 @@ const inc = (obj: Record<string, number>, key: string): void => {
 const loadCategoryIndex = async (
     flatJsonPath: string
 ): Promise<{
-    byId: ReadonlyMap<number, CategoryFlatRow>;
     idsBySlug: ReadonlyMap<string, readonly number[]>;
+    pathById: ReadonlyMap<number, string>;
+    tokensById: ReadonlyMap<number, readonly string[]>;
 }> => {
     const raw = await readFile(flatJsonPath, "utf8");
     const parsed = safeJsonParse(raw);
@@ -238,34 +375,85 @@ const loadCategoryIndex = async (
 
     for (const r of flat) {
         byId.set(r.id, r);
-
         const slug = normalizeSpace(r.slug).toLowerCase();
         const prev = idsBySlug.get(slug) ?? [];
         idsBySlug.set(slug, [...prev, r.id]);
     }
 
-    return { byId, idsBySlug };
-};
+    const buildPath = (id: number): string => {
+        const slugs: string[] = [];
+        let cur: CategoryFlatRow | undefined = byId.get(id);
+        while (cur) {
+            slugs.push(cur.slug);
+            if (cur.parentId === null) break;
+            cur = cur.parentId === null ? undefined : byId.get(cur.parentId);
+        }
+        return slugs.reverse().join("/");
+    };
 
-const buildPath = (byId: ReadonlyMap<number, CategoryFlatRow>, id: number): string => {
-    const slugs: string[] = [];
-    let cur: CategoryFlatRow | undefined = byId.get(id);
-    while (cur) {
-        slugs.push(cur.slug);
-        if (cur.parentId === null) break;
-        cur = byId.get(cur.parentId);
+    const pathById = new Map<number, string>();
+    const tokensById = new Map<number, readonly string[]>();
+
+    for (const id of byId.keys()) {
+        const p = buildPath(id).toLowerCase();
+        pathById.set(id, p);
+        tokensById.set(id, toTokens(p));
     }
-    return slugs.reverse().join("/");
+
+    return { idsBySlug, pathById, tokensById };
 };
 
-const pickBestCandidate = (paths: readonly string[], categoryKey: string): string | null => {
-    if (paths.length === 0) return null;
-    if (paths.length === 1) return paths[0] ?? null;
+const pickBestCandidate = (candidateIds: readonly number[], idx: { pathById: ReadonlyMap<number, string> }, categoryKey: string): number | null => {
+    if (candidateIds.length === 0) return null;
+    if (candidateIds.length === 1) return candidateIds[0] ?? null;
 
     const key = normalizeSpace(categoryKey).toLowerCase();
-    const target = key ? `/maquinaria/${key}` : "/maquinaria";
-    const prioritized = paths.find((p) => p.toLowerCase().includes(target));
-    return prioritized ?? (paths[0] ?? null);
+    const target = key ? `/maquinaria/${key}/` : "/maquinaria/";
+    for (const id of candidateIds) {
+        const path = idx.pathById.get(id) ?? "";
+        if (path.includes(target)) return id;
+    }
+    return candidateIds[0] ?? null;
+};
+
+const fuzzyFindBestId = (
+    urlSlug: string,
+    categoryKey: string,
+    idx: {
+        pathById: ReadonlyMap<number, string>;
+        tokensById: ReadonlyMap<number, readonly string[]>;
+    }
+): number | null => {
+    const base = normalizeGamSlugBase(urlSlug);
+    const wanted = toTokens(base);
+    if (wanted.length === 0) return null;
+
+    const key = normalizeSpace(categoryKey).toLowerCase();
+    const target = key ? `/maquinaria/${key}/` : "/maquinaria/";
+
+    let bestId: number | null = null;
+    let bestScore = 0;
+
+    for (const [id, tokens] of idx.tokensById.entries()) {
+        const path = idx.pathById.get(id) ?? "";
+        if (!path.includes(target)) continue;
+
+        let inter = 0;
+        const tokenSet = new Set(tokens);
+        for (const w of wanted) if (tokenSet.has(w)) inter += 1;
+
+        if (inter === 0) continue;
+
+        const score = inter / wanted.length;
+        if (score > bestScore) {
+            bestScore = score;
+            bestId = id;
+        }
+    }
+
+    if (bestId !== null && bestScore >= 0.5) return bestId;
+
+    return null;
 };
 
 const categoryKeyFallbackSlug = (categoryKey: string): string => {
@@ -276,7 +464,11 @@ const categoryKeyFallbackSlug = (categoryKey: string): string => {
 };
 
 const resolveCategorySellIdAuto = (
-    idx: { byId: ReadonlyMap<number, CategoryFlatRow>; idsBySlug: ReadonlyMap<string, readonly number[]> },
+    idx: {
+        idsBySlug: ReadonlyMap<string, readonly number[]>;
+        pathById: ReadonlyMap<number, string>;
+        tokensById: ReadonlyMap<number, readonly string[]>;
+    },
     categoryKey: string,
     urlCategorySlug: string,
     report: Report
@@ -285,36 +477,30 @@ const resolveCategorySellIdAuto = (
 
     if (slug) {
         const directIds = idx.idsBySlug.get(slug) ?? [];
-        if (directIds.length === 1) {
-            inc(report.usedDirectSlugMatch, slug);
-            return directIds[0] ?? null;
-        }
-        if (directIds.length > 1) {
-            const paths = directIds.map((id) => buildPath(idx.byId, id));
-            const best = pickBestCandidate(paths, categoryKey);
-            if (best) {
-                inc(report.ambiguousUrlSlug, slug);
-                const bestId = directIds[paths.indexOf(best)] ?? null;
-                return bestId;
+        if (directIds.length > 0) {
+            const chosen = pickBestCandidate(directIds, { pathById: idx.pathById }, categoryKey);
+            if (chosen !== null) {
+                inc(report.usedDirectSlugMatch, slug);
+                return chosen;
             }
         }
 
-        const normalized = normalizeGamSlug(slug);
-        if (normalized) {
-            const normIds = idx.idsBySlug.get(normalized) ?? [];
-            if (normIds.length === 1) {
-                inc(report.usedNormalizedSlugMatch, slug);
-                return normIds[0] ?? null;
-            }
-            if (normIds.length > 1) {
-                const paths = normIds.map((id) => buildPath(idx.byId, id));
-                const best = pickBestCandidate(paths, categoryKey);
-                if (best) {
-                    inc(report.ambiguousUrlSlug, `${slug}=>${normalized}`);
-                    const bestId = normIds[paths.indexOf(best)] ?? null;
-                    return bestId;
+        const candidates = slugCandidatesFromUrlSlug(slug);
+        for (const c of candidates) {
+            const ids = idx.idsBySlug.get(c) ?? [];
+            if (ids.length > 0) {
+                const chosen = pickBestCandidate(ids, { pathById: idx.pathById }, categoryKey);
+                if (chosen !== null) {
+                    inc(report.usedAliasSlugMatch, slug);
+                    return chosen;
                 }
             }
+        }
+
+        const fuzzy = fuzzyFindBestId(slug, categoryKey, { pathById: idx.pathById, tokensById: idx.tokensById });
+        if (fuzzy !== null) {
+            inc(report.usedFuzzySlugMatch, slug);
+            return fuzzy;
         }
 
         inc(report.unknownUrlSlug, slug);
@@ -322,9 +508,12 @@ const resolveCategorySellIdAuto = (
 
     const fallbackSlug = categoryKeyFallbackSlug(categoryKey);
     const fallbackIds = fallbackSlug ? (idx.idsBySlug.get(fallbackSlug) ?? []) : [];
-    if (fallbackIds.length === 1) {
-        inc(report.usedFallbackToCategoryKey, categoryKey);
-        return fallbackIds[0] ?? null;
+    if (fallbackIds.length > 0) {
+        const chosen = pickBestCandidate(fallbackIds, { pathById: idx.pathById }, categoryKey);
+        if (chosen !== null) {
+            inc(report.usedFallbackToCategoryKey, categoryKey);
+            return chosen;
+        }
     }
 
     return null;
@@ -358,6 +547,8 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
         usedFallbackToCategoryKey: {},
         usedDirectSlugMatch: {},
         usedNormalizedSlugMatch: {},
+        usedAliasSlugMatch: {},
+        usedFuzzySlugMatch: {},
         unknownUrlSlug: {}
     };
 
@@ -376,7 +567,12 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
         if (!categoryKey || !title) continue;
 
         const urlCategorySlug = extractUrlCategorySlug(url);
-        const categorySellID = resolveCategorySellIdAuto({ byId: idx.byId, idsBySlug: idx.idsBySlug }, categoryKey, urlCategorySlug, report);
+        const categorySellID = resolveCategorySellIdAuto(
+            { idsBySlug: idx.idsBySlug, pathById: idx.pathById, tokensById: idx.tokensById },
+            categoryKey,
+            urlCategorySlug,
+            report
+        );
 
         if (!categorySellID) {
             const key = urlCategorySlug ? `urlSlug:${urlCategorySlug}` : `categoryKey:${categoryKey}`;
