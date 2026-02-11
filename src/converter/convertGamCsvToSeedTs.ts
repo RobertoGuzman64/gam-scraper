@@ -1,6 +1,8 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { SPEC_RULES, type SpecRuleType } from "../normalizer/specRules.js";
+import { parseBoolean, parseDimension, parseDimensionRect, parseNumber, parseNumberArray } from "../normalizer/specParsers.js";
 
 type SeedProduct = {
     id: number;
@@ -13,7 +15,7 @@ type SeedProduct = {
     image: string;
     reference: string;
     description_general: string;
-    spec: Record<string, string | number | boolean>;
+    spec: Record<string, string | number | boolean | readonly number[]>;
     metadata: {
         featured: boolean;
         keywords: string[];
@@ -103,22 +105,6 @@ const parseCsv = (csv: string): { headers: string[]; rows: string[][] } => {
     return { headers, rows };
 };
 
-const parseNumberLike = (s: string): number | null => {
-    const t = normalizeSpace(s);
-    if (!t) return null;
-
-    const pure = t.replace(/\./g, "").replace(",", ".");
-    if (/^\d+(\.\d+)?$/.test(pure)) return Number(pure);
-
-    const m = pure.match(/^(\d+(?:\.\d+)?)(?:\s*(?:mm|cm|m|kg|kW|w|%|h|horas))$/i);
-    if (m?.[1]) return Number(m[1]);
-
-    const m2 = pure.match(/^(\d+(?:\.\d+)?)/);
-    if (m2?.[1] && /(?:mm|cm|m|kg|%|h|horas)\b/i.test(pure)) return Number(m2[1]);
-
-    return null;
-};
-
 const isNullLike = (v: unknown): boolean => {
     if (v === null || v === undefined) return true;
     if (typeof v === "string") {
@@ -131,25 +117,64 @@ const isNullLike = (v: unknown): boolean => {
     return false;
 };
 
-const parseScalar = (key: string, v: unknown): string | number | boolean | null => {
-    if (isNullLike(v)) return null;
-    if (typeof v === "boolean") return v;
-    if (typeof v === "number") return v;
-    if (typeof v !== "string") return String(v);
+const parseSpecByRule = (
+    key: string,
+    value: unknown
+): string | number | boolean | readonly number[] | null => {
+    if (isNullLike(value)) return null;
 
-    const t = normalizeSpace(v);
-    if (!t) return null;
+    const rule: SpecRuleType = SPEC_RULES[key] ?? "string";
 
-    if (key === "Nº de serie") return t;
+    if (rule === "number") {
+        const n = parseNumber(value);
+        return n === null ? null : n;
+    }
 
-    const lower = t.toLowerCase();
-    if (lower === "true") return true;
-    if (lower === "false") return false;
+    if (rule === "number_array") {
+        const arr = parseNumberArray(value);
+        return arr === null ? null : arr;
+    }
 
-    const n = parseNumberLike(t);
-    if (n !== null && Number.isFinite(n)) return n;
+    if (rule === "bool") {
+        const b = parseBoolean(value);
+        return b === null ? null : b;
+    }
 
-    return t;
+    if (rule === "dimension") {
+        const d = parseDimension(value);
+        if (!d) return null;
+        const out: number[] = [];
+        if (d.largo !== null) out.push(d.largo);
+        if (d.ancho !== null) out.push(d.ancho);
+        if (d.grosor !== null) out.push(d.grosor);
+        return out.length >= 2 ? out : null;
+    }
+
+    if (rule === "dimension_rect") {
+        const d = parseDimensionRect(value);
+        if (!d) return null;
+        if (d.ancho === null || d.largo === null) return null;
+        return [d.ancho, d.largo];
+    }
+
+    if (rule === "enum" || rule === "location" || rule === "battery") {
+        const s = normalizeSpace(typeof value === "string" ? value : String(value));
+        if (!s) return null;
+        const lower = s.toLowerCase();
+        if (lower === "null" || lower === "undefined" || lower === "n/a" || lower === "na" || lower === "no aplica") return null;
+        if (key === "Nº de serie") return s;
+        return s;
+    }
+
+    const s = normalizeSpace(typeof value === "string" ? value : String(value));
+    if (!s) return null;
+
+    const lower = s.toLowerCase();
+    if (lower === "null" || lower === "undefined" || lower === "n/a" || lower === "na" || lower === "no aplica") return null;
+
+    if (key === "Nº de serie") return s;
+
+    return s;
 };
 
 const safeJsonParse = (s: string): unknown => {
@@ -603,12 +628,14 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
             unknown
         >;
 
-        const spec: Record<string, string | number | boolean> = {};
+        const spec: Record<string, string | number | boolean | readonly number[]> = {};
         for (const [kRaw, v] of Object.entries(specObj)) {
             const k = normalizeSpace(kRaw);
             if (!k) continue;
-            const parsed = parseScalar(k, v);
+
+            const parsed = parseSpecByRule(k, v);
             if (parsed === null) continue;
+
             spec[k] = parsed;
         }
 
