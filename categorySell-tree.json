@@ -1,0 +1,786 @@
+[
+  {
+    "id": 1,
+    "name": "Maquinaria",
+    "slug": "maquinaria",
+    "parentId": null,
+    "children": [
+      {
+        "id": 3,
+        "name": "Maquinaria de Ocasión",
+        "slug": "ocasion",
+        "parentId": 1,
+        "children": [
+          {
+            "id": 104,
+            "name": "Energía, Aire, Agua de Segunda Mano",
+            "slug": "energia-aire-agua-segunda-mano",
+            "parentId": 3,
+            "children": [
+              {
+                "id": 64,
+                "name": "Climatizadores de Segunda Mano",
+                "slug": "climatizadores-segunda-mano",
+                "parentId": 104,
+                "children": []
+              },
+              {
+                "id": 71,
+                "name": "Compresores de Segunda Mano",
+                "slug": "compresores-segunda-mano",
+                "parentId": 104,
+                "children": [
+                  {
+                    "id": 61,
+                    "name": "Compresores Diésel de Segunda Mano",
+                    "slug": "compresores-diesel-segunda-mano",
+                    "parentId": 71,
+                    "children": []
+                  },
+                  {
+                    "id": 62,
+                    "name": "Compresores Eléctricos de Segunda Mano",
+                    "slug": "compresores-electricos-segunda-mano",
+                    "parentId": 71,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 59,
+                "name": "Grupos Electrógenos de Segunda Mano",
+                "slug": "grupos-electrogenos-segunda-mano",
+                "parentId": 104,
+                "children": []
+              },
+              {
+                "id": 63,
+                "name": "Grupos Electrógenos Gasolina de Segunda Mano",
+                "slug": "grupos-electrogenos-gasolina-segunda-mano",
+                "parentId": 104,
+                "children": []
+              },
+              {
+                "id": 60,
+                "name": "Torres de Iluminación de Segunda Mano",
+                "slug": "torres-iluminacion-segunda-mano",
+                "parentId": 104,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 80,
+            "name": "Manipulación y Elevación de Cargas de Segunda Mano",
+            "slug": "manipulacion-elevacion-cargas-segunda-mano",
+            "parentId": 3,
+            "children": [
+              {
+                "id": 94,
+                "name": "Apiladores de Segunda Mano",
+                "slug": "apilador-segunda-mano",
+                "parentId": 80,
+                "children": [
+                  {
+                    "id": 47,
+                    "name": "Apiladores Eléctricos de Segunda Mano",
+                    "slug": "apiladores-electricos-segunda-mano",
+                    "parentId": 94,
+                    "children": []
+                  },
+                  {
+                    "id": 48,
+                    "name": "Apiladores Manuales de Segunda Mano",
+                    "slug": "apiladores-manuales-segunda-mano",
+                    "parentId": 94,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 112,
+                "name": "Carretillas Elevadoras de Segunda Mano",
+                "slug": "carretilla-elevadora-segunda-mano",
+                "parentId": 80,
+                "children": [
+                  {
+                    "id": 37,
+                    "name": "Carretillas Elevadoras Diésel de Segunda Mano",
+                    "slug": "carretillas-elevadoras-diesel-segunda-mano",
+                    "parentId": 112,
+                    "children": []
+                  },
+                  {
+                    "id": 38,
+                    "name": "Carretillas Elevadoras Eléctricas de Segunda Mano",
+                    "slug": "carretillas-elevadoras-electricas-segunda-mano",
+                    "parentId": 112,
+                    "children": []
+                  },
+                  {
+                    "id": 42,
+                    "name": "Carretillas Elevadoras GLP de Segunda Mano",
+                    "slug": "carretillas-elevadoras-glp-segunda-mano",
+                    "parentId": 112,
+                    "children": []
+                  },
+                  {
+                    "id": 41,
+                    "name": "Carretillas Elevadoras Recogepedidos de Segunda Mano",
+                    "slug": "carretillas-elevadoras-recogepedidos-segunda-mano",
+                    "parentId": 112,
+                    "children": []
+                  },
+                  {
+                    "id": 39,
+                    "name": "Carretillas Elevadoras Retráctiles de Segunda Mano",
+                    "slug": "carretillas-elevadoras-retractiles-segunda-mano",
+                    "parentId": 112,
+                    "children": []
+                  },
+                  {
+                    "id": 40,
+                    "name": "Carretillas Elevadoras Trilaterales de Segunda Mano",
+                    "slug": "carretillas-elevadoras-trilaterales-segunda-mano",
+                    "parentId": 112,
+                    "children": []
+                  },
+                  {
+                    "id": 54,
+                    "name": "Carretillas Todoterreno de Segunda Mano",
+                    "slug": "carretillas-todoterreno-segunda-mano",
+                    "parentId": 112,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 66,
+                "name": "Grúas Hidráulicas de Segunda Mano",
+                "slug": "grua-hidraulica-segunda-mano",
+                "parentId": 80,
+                "children": []
+              },
+              {
+                "id": 93,
+                "name": "Transpaletas de Segunda Mano",
+                "slug": "transpaleta-segunda-mano",
+                "parentId": 80,
+                "children": [
+                  {
+                    "id": 44,
+                    "name": "Transpaletas Eléctricas de Segunda Mano",
+                    "slug": "transpaletas-electricas-segunda-mano",
+                    "parentId": 93,
+                    "children": []
+                  },
+                  {
+                    "id": 45,
+                    "name": "Transpaletas Manuales de Segunda Mano",
+                    "slug": "transpaletas-manuales-segunda-mano",
+                    "parentId": 93,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": 67,
+            "name": "Maquinaria de Construcción de Segunda Mano",
+            "slug": "maquinaria-construccion-segunda-mano",
+            "parentId": 3,
+            "children": [
+              {
+                "id": 72,
+                "name": "Cazos e Implementos de Segunda Mano",
+                "slug": "cazos-implementos-segunda-mano",
+                "parentId": 67,
+                "children": []
+              },
+              {
+                "id": 9,
+                "name": "Dumpers de Segunda Mano",
+                "slug": "dumpers-segunda-mano",
+                "parentId": 67,
+                "children": []
+              },
+              {
+                "id": 55,
+                "name": "Excavadoras de Segunda Mano",
+                "slug": "excavadoras-segunda-mano",
+                "parentId": 67,
+                "children": []
+              },
+              {
+                "id": 65,
+                "name": "Fregadoras de Segunda Mano",
+                "slug": "fregadoras-segunda-mano",
+                "parentId": 67,
+                "children": []
+              },
+              {
+                "id": 57,
+                "name": "Minicargadoras de Segunda Mano",
+                "slug": "minicargadoras-segunda-mano",
+                "parentId": 67,
+                "children": []
+              },
+              {
+                "id": 56,
+                "name": "Miniexcavadoras de Segunda Mano",
+                "slug": "miniexcavadoras-segunda-mano",
+                "parentId": 67,
+                "children": []
+              },
+              {
+                "id": 69,
+                "name": "Rodillos Mixtos de Segunda Mano",
+                "slug": "rodillos-mixtos-segunda-mano",
+                "parentId": 67,
+                "children": []
+              },
+              {
+                "id": 68,
+                "name": "Rodillos Tándem de Segunda Mano",
+                "slug": "rodillo-tandem-segunda-mano",
+                "parentId": 67,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 73,
+            "name": "Plataformas Elevadoras de Segunda Mano",
+            "slug": "plataforma-elevadora-segunda-mano",
+            "parentId": 3,
+            "children": [
+              {
+                "id": 28,
+                "name": "Plataformas Articuladas de Segunda Mano",
+                "slug": "plataformas-articuladas-segunda-mano",
+                "parentId": 73,
+                "children": [
+                  {
+                    "id": 29,
+                    "name": "Plataformas Articuladas Diésel de Segunda Mano",
+                    "slug": "plataformas-articuladas-diesel-segunda-mano",
+                    "parentId": 28,
+                    "children": []
+                  },
+                  {
+                    "id": 30,
+                    "name": "Plataformas Articuladas Eléctricas de Segunda Mano",
+                    "slug": "plataformas-articuladas-electricas-segunda-mano",
+                    "parentId": 28,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 25,
+                "name": "Plataformas de Tijera de Segunda Mano",
+                "slug": "plataformas-tijera-segunda-mano",
+                "parentId": 73,
+                "children": [
+                  {
+                    "id": 26,
+                    "name": "Plataformas de Tijera Diésel de Segunda Mano",
+                    "slug": "plataformas-tijera-diesel-segunda-mano",
+                    "parentId": 25,
+                    "children": []
+                  },
+                  {
+                    "id": 27,
+                    "name": "Plataformas de Tijera Eléctricas de Segunda Mano",
+                    "slug": "plataformas-tijera-electricas-segunda-mano",
+                    "parentId": 25,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 33,
+                "name": "Plataformas Elevadoras Sobre Camión de Segunda Mano",
+                "slug": "plataformas-elevadoras-sobre-camion-segunda-mano",
+                "parentId": 73,
+                "children": []
+              },
+              {
+                "id": 32,
+                "name": "Plataformas Elevadoras Sobre Orugas de Segunda Mano",
+                "slug": "plataformas-elevadoras-sobre-orugas-segunda-mano",
+                "parentId": 73,
+                "children": []
+              },
+              {
+                "id": 31,
+                "name": "Plataformas Elevadoras Telescópicas de Segunda Mano",
+                "slug": "plataformas-elevadoras-telescopicas-segunda-mano",
+                "parentId": 73,
+                "children": []
+              },
+              {
+                "id": 34,
+                "name": "Plataformas Unipersonales de Segunda Mano",
+                "slug": "plataformas-unipersonales-segunda-mano",
+                "parentId": 73,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 74,
+            "name": "Vehículos de Segunda Mano",
+            "slug": "vehiculos-segunda-mano",
+            "parentId": 3,
+            "children": [
+              {
+                "id": 70,
+                "name": "Buggies de Segunda Mano",
+                "slug": "buggies-segunda-mano",
+                "parentId": 74,
+                "children": []
+              },
+              {
+                "id": 75,
+                "name": "Vehículos Eléctricos de Carga de Segunda Mano",
+                "slug": "vehiculos-electricos-carga-segunda-mano",
+                "parentId": 74,
+                "children": [
+                  {
+                    "id": 78,
+                    "name": "Bicicletas Eléctricas de Segunda Mano",
+                    "slug": "bicicletas-electricas-segunda-mano",
+                    "parentId": 75,
+                    "children": []
+                  },
+                  {
+                    "id": 76,
+                    "name": "Ciclomotores Eléctricos de Segunda Mano",
+                    "slug": "ciclomotores-electricos-segunda-mano",
+                    "parentId": 75,
+                    "children": []
+                  },
+                  {
+                    "id": 79,
+                    "name": "Furgonetas Eléctricas de Segunda Mano",
+                    "slug": "furgonetas-electricas-segunda-mano",
+                    "parentId": 75,
+                    "children": []
+                  },
+                  {
+                    "id": 77,
+                    "name": "Motocicletas Eléctricas de Segunda Mano",
+                    "slug": "motocicletas-electricas-segunda-mano",
+                    "parentId": 75,
+                    "children": []
+                  },
+                  {
+                    "id": 49,
+                    "name": "Tractores Eléctricos de Arrastre de Segunda Mano",
+                    "slug": "tractores-electricos-segunda-mano",
+                    "parentId": 75,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 24,
+        "name": "Maquinaria Nueva",
+        "slug": "nuevo",
+        "parentId": 1,
+        "children": [
+          {
+            "id": 58,
+            "name": "Energía, Aire, Agua",
+            "slug": "energia-aire-climatizacion",
+            "parentId": 24,
+            "children": [
+              {
+                "id": 46,
+                "name": "Climatizadores",
+                "slug": "climatizadores",
+                "parentId": 58,
+                "children": []
+              },
+              {
+                "id": 51,
+                "name": "Compresores",
+                "slug": "compresores",
+                "parentId": 58,
+                "children": []
+              },
+              {
+                "id": 36,
+                "name": "Grupos Electrógenos",
+                "slug": "grupos-electrogenos",
+                "parentId": 58,
+                "children": []
+              },
+              {
+                "id": 43,
+                "name": "Torres de Iluminación",
+                "slug": "torres-iluminacion",
+                "parentId": 58,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 85,
+            "name": "Manipulación y Elevación de Cargas",
+            "slug": "manipulacion-elevacion-cargas",
+            "parentId": 24,
+            "children": [
+              {
+                "id": 21,
+                "name": "Apiladores",
+                "slug": "apilador",
+                "parentId": 85,
+                "children": [
+                  {
+                    "id": 22,
+                    "name": "Apiladores Eléctricos",
+                    "slug": "apilador-electrico",
+                    "parentId": 21,
+                    "children": []
+                  },
+                  {
+                    "id": 23,
+                    "name": "Apiladores Manuales",
+                    "slug": "apilador-manual",
+                    "parentId": 21,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 10,
+                "name": "Carretillas Elevadoras",
+                "slug": "carretilla-elevadora",
+                "parentId": 85,
+                "children": [
+                  {
+                    "id": 11,
+                    "name": "Carretillas Elevadoras Diésel",
+                    "slug": "carretilla-elevadora-diesel",
+                    "parentId": 10,
+                    "children": []
+                  },
+                  {
+                    "id": 12,
+                    "name": "Carretillas Elevadoras Eléctricas",
+                    "slug": "carretilla-elevadora-electrica",
+                    "parentId": 10,
+                    "children": []
+                  },
+                  {
+                    "id": 16,
+                    "name": "Carretillas Elevadoras GLP",
+                    "slug": "carretilla-elevadora-glp",
+                    "parentId": 10,
+                    "children": []
+                  },
+                  {
+                    "id": 15,
+                    "name": "Carretillas Elevadoras Recogepedidos",
+                    "slug": "carretilla-elevadora-recogepedidos",
+                    "parentId": 10,
+                    "children": []
+                  },
+                  {
+                    "id": 13,
+                    "name": "Carretillas Elevadoras Retráctiles",
+                    "slug": "carretilla-retractil",
+                    "parentId": 10,
+                    "children": []
+                  },
+                  {
+                    "id": 14,
+                    "name": "Carretillas Elevadoras Trilaterales",
+                    "slug": "carretilla-elevadora-trilateral",
+                    "parentId": 10,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 106,
+                "name": "Elevadores de Bobinas",
+                "slug": "elevador-de-bobina",
+                "parentId": 85,
+                "children": []
+              },
+              {
+                "id": 110,
+                "name": "Manipuladores de Contenedores",
+                "slug": "manipulador-de-contenedores",
+                "parentId": 85,
+                "children": []
+              },
+              {
+                "id": 86,
+                "name": "Manipuladores Telescópicos",
+                "slug": "manipulador-telescopico",
+                "parentId": 85,
+                "children": []
+              },
+              {
+                "id": 84,
+                "name": "Portaféretros",
+                "slug": "portaferetro",
+                "parentId": 85,
+                "children": []
+              },
+              {
+                "id": 107,
+                "name": "Preparadores de Pedidos",
+                "slug": "preparapedido",
+                "parentId": 85,
+                "children": []
+              },
+              {
+                "id": 81,
+                "name": "Transpaletas",
+                "slug": "transpaleta",
+                "parentId": 85,
+                "children": [
+                  {
+                    "id": 108,
+                    "name": "Transpaletas de Tijera",
+                    "slug": "transpaleta-tijera",
+                    "parentId": 81,
+                    "children": []
+                  },
+                  {
+                    "id": 82,
+                    "name": "Transpaletas Eléctricas",
+                    "slug": "transpaleta-electrica",
+                    "parentId": 81,
+                    "children": []
+                  },
+                  {
+                    "id": 83,
+                    "name": "Transpaletas Manuales",
+                    "slug": "transpaleta-manual",
+                    "parentId": 81,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 105,
+                "name": "Volteadores",
+                "slug": "volteador",
+                "parentId": 85,
+                "children": []
+              },
+              {
+                "id": 109,
+                "name": "Volteadores de Bidones",
+                "slug": "volteador-de-bidones",
+                "parentId": 85,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "name": "Maquinaria de Construcción",
+            "slug": "maquinaria-construccion",
+            "parentId": 24,
+            "children": [
+              {
+                "id": 91,
+                "name": "Compactadores",
+                "slug": "compactador",
+                "parentId": 2,
+                "children": []
+              },
+              {
+                "id": 87,
+                "name": "Excavadoras",
+                "slug": "excavadora",
+                "parentId": 2,
+                "children": []
+              },
+              {
+                "id": 92,
+                "name": "Grúas horquillas",
+                "slug": "grua-horquilla",
+                "parentId": 2,
+                "children": []
+              },
+              {
+                "id": 17,
+                "name": "Maquinaria de Limpieza Industrial",
+                "slug": "limpieza-industrial",
+                "parentId": 2,
+                "children": [
+                  {
+                    "id": 20,
+                    "name": "Aspiradoras industriales",
+                    "slug": "aspirador-industrial",
+                    "parentId": 17,
+                    "children": []
+                  },
+                  {
+                    "id": 18,
+                    "name": "Barredoras Industriales",
+                    "slug": "barredora-industrial",
+                    "parentId": 17,
+                    "children": []
+                  },
+                  {
+                    "id": 19,
+                    "name": "Fregadoras Industriales",
+                    "slug": "fregadora-industrial",
+                    "parentId": 17,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 89,
+                "name": "Minicargadoras",
+                "slug": "minicargadora",
+                "parentId": 2,
+                "children": []
+              },
+              {
+                "id": 88,
+                "name": "Miniexcavadoras",
+                "slug": "miniexcavadora",
+                "parentId": 2,
+                "children": []
+              },
+              {
+                "id": 90,
+                "name": "Retroexcavadoras",
+                "slug": "retroexcavadora",
+                "parentId": 2,
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "name": "Plataformas Elevadoras",
+            "slug": "plataforma-elevadora",
+            "parentId": 24,
+            "children": [
+              {
+                "id": 6,
+                "name": "Plataformas Elevadoras Articuladas",
+                "slug": "plataforma-articulada",
+                "parentId": 4,
+                "children": [
+                  {
+                    "id": 97,
+                    "name": "Plataformas Articuladas Diésel",
+                    "slug": "plataforma-articulada-diesel",
+                    "parentId": 6,
+                    "children": []
+                  },
+                  {
+                    "id": 98,
+                    "name": "Plataformas Articuladas Eléctricas",
+                    "slug": "plataforma-articulada-electrica",
+                    "parentId": 6,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "Plataformas Elevadoras de Tijera",
+                "slug": "plataforma-de-tijera",
+                "parentId": 4,
+                "children": [
+                  {
+                    "id": 99,
+                    "name": "Plataformas de Tijera Diésel",
+                    "slug": "plataforma-tijera-diesel",
+                    "parentId": 5,
+                    "children": []
+                  },
+                  {
+                    "id": 100,
+                    "name": "Plataformas de Tijera Eléctricas",
+                    "slug": "plataforma-tijera-electrica",
+                    "parentId": 5,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 8,
+                "name": "Plataformas Elevadoras Sobre Orugas",
+                "slug": "plataforma-sobre-oruga",
+                "parentId": 4,
+                "children": []
+              },
+              {
+                "id": 7,
+                "name": "Plataformas Elevadoras Telescópicas",
+                "slug": "plataforma-telescopica",
+                "parentId": 4,
+                "children": [
+                  {
+                    "id": 95,
+                    "name": "Plataformas Telescópicas Diésel",
+                    "slug": "plataforma-telescopica-diesel",
+                    "parentId": 7,
+                    "children": []
+                  },
+                  {
+                    "id": 96,
+                    "name": "Plataformas Telescópicas Eléctricas",
+                    "slug": "plataforma-telescopica-electrica",
+                    "parentId": 7,
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": 101,
+                "name": "Plataformas Unipersonales",
+                "slug": "plataforma-unipersonal",
+                "parentId": 4,
+                "children": [
+                  {
+                    "id": 102,
+                    "name": "Plataformas Unipersonales Eléctricas",
+                    "slug": "plataforma-unipersonal-electrica",
+                    "parentId": 101,
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": 52,
+            "name": "Vehículos",
+            "slug": "vehiculos",
+            "parentId": 24,
+            "children": [
+              {
+                "id": 103,
+                "name": "Tractores Eléctricos",
+                "slug": "tractor-electrico",
+                "parentId": 52,
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
