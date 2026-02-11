@@ -24,6 +24,7 @@ export type ProductRecord = {
   readonly country: string | null;
   readonly horometer: string | null;
   readonly serialNumber: string | null;
+  readonly image: string | null;
   readonly specs?: SpecsMap;
 };
 

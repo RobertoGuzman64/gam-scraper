@@ -91,7 +91,7 @@ export const scrapeCategory = async (category: CategoryConfig, options: ScrapeOp
         log("product", `start key=${category.key} ${n}/${urls.length} url=${url}`);
 
         const html = await fetchHtml(url, { timeoutMs: options.timeoutMs, userAgent: options.userAgent });
-        const parsed = parseProductPage(html);
+        const parsed = parseProductPage(html, url);
 
         const product: ProductRecord = {
           categoryKey: category.key,
@@ -109,6 +109,7 @@ export const scrapeCategory = async (category: CategoryConfig, options: ScrapeOp
           country: parsed.country ?? null,
           horometer: parsed.horometer ?? null,
           serialNumber: parsed.serialNumber ?? null,
+          image: parsed.image ?? null,
           specs: parsed.specs
         };
 

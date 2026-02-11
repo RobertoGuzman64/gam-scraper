@@ -27,6 +27,7 @@ const baseProductHeaders = [
   "country",
   "horometer",
   "serialNumber",
+  "image",
   "url",
   "specJson"
 ] as const;

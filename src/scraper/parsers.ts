@@ -426,7 +426,10 @@ const extractSpecs = ($: cheerio.CheerioAPI): SpecsMap => {
   return out;
 };
 
-export const parseProductPage = (html: string): {
+export const parseProductPage = (
+  html: string,
+  pageUrl: string
+): {
   readonly title: string | null;
   readonly shortDescription: string | null;
   readonly longDescription: string | null;
@@ -438,6 +441,7 @@ export const parseProductPage = (html: string): {
   readonly country: string | null;
   readonly horometer: string | null;
   readonly serialNumber: string | null;
+  readonly image: string | null;
   readonly specs: SpecsMap;
 } => {
   const $ = cheerio.load(html);
@@ -455,7 +459,100 @@ export const parseProductPage = (html: string): {
   const country = pickDtDd($, "País") ?? pickDtDd($, "Pais");
   const year = extractYear($, title);
 
+  const toAbs = (u: string | null | undefined): string | null => {
+    const s = (u ?? "").trim();
+    if (!s) return null;
+    if (s.startsWith("data:")) return null;
+    try {
+      return new URL(s, pageUrl).toString();
+    } catch {
+      return null;
+    }
+  };
+
+  const isGoodImage = (u: string): boolean => {
+    const l = u.toLowerCase();
+    if (!/\.(jpg|jpeg|png|webp)(\?|#|$)/.test(l)) return false;
+    if (l.includes("es-default")) return false;
+    if (l.includes("logo")) return false;
+    if (l.includes("icon")) return false;
+    if (l.includes("sprite")) return false;
+    return true;
+  };
+
+  const pickFirst = (candidates: readonly (string | null)[]): string | null => {
+    for (const c of candidates) {
+      const abs = toAbs(c);
+      if (abs && isGoodImage(abs)) return abs;
+    }
+    return null;
+  };
+
+  const og = $('meta[property="og:image"]').attr("content") ?? null;
+  const tw = $('meta[name="twitter:image"]').attr("content") ?? $('meta[property="twitter:image"]').attr("content") ?? null;
+
+  const fromMeta = pickFirst([og, tw]);
+
+  const fromImg = (() => {
+    const arr: string[] = [];
+    $("img").each((_, el) => {
+      const src = $(el).attr("src") ?? null;
+      const dataSrc = $(el).attr("data-src") ?? $(el).attr("data-lazy") ?? null;
+      if (src) arr.push(src);
+      if (dataSrc) arr.push(dataSrc);
+    });
+    return pickFirst(arr);
+  })();
+
+  const fromSource = (() => {
+    const arr: string[] = [];
+    $("source").each((_, el) => {
+      const srcset = ($(el).attr("srcset") ?? "").trim();
+      if (!srcset) return;
+      const first = srcset.split(",")[0]?.trim().split(" ")[0]?.trim() ?? "";
+      if (first) arr.push(first);
+    });
+    return pickFirst(arr);
+  })();
+
+  const fromHref = (() => {
+    const arr: string[] = [];
+    $("a[href]").each((_, el) => {
+      const href = ($(el).attr("href") ?? "").trim();
+      if (!href) return;
+      arr.push(href);
+    });
+    return pickFirst(arr);
+  })();
+
+  const fromStyle = (() => {
+    const arr: string[] = [];
+    $("[style]").each((_, el) => {
+      const style = ($(el).attr("style") ?? "").trim();
+      if (!style) return;
+      const m = style.match(/background-image\s*:\s*url\((['"]?)(.*?)\1\)/i);
+      if (m?.[2]) arr.push(m[2]);
+    });
+    return pickFirst(arr);
+  })();
+
+  const image = fromMeta ?? fromImg ?? fromSource ?? fromHref ?? fromStyle ?? null;
+
   const specs = extractSpecs($);
 
-  return { title, shortDescription, longDescription, price, brand, model, year, location, country, horometer, serialNumber, specs };
+  return {
+    title,
+    shortDescription,
+    longDescription,
+    price,
+    brand,
+    model,
+    year,
+    location,
+    country,
+    horometer,
+    serialNumber,
+    image,
+    specs
+  };
 };
