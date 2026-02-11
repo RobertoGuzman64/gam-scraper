@@ -7,12 +7,14 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Año": "number",
     "Matrícula": "string",
     "Ubicación": "location",
+
     "Capacidad de carga (kg)": "number_array",
     "Carga Máxima (kg)": "number",
     "Capacidad de arrastre (kg)": "number",
     "Centro de carga (mm)": "number",
     "Peso (kg)": "number",
     "Peso del rodillo (kg)": "number",
+
     "Batería": "string",
     "Baterías": "string",
     "Tipo de batería": "enum",
@@ -20,12 +22,14 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Capacidad batería (Ah)": "number_array",
     "Voltaje batería (V)": "number",
     "Cargador de batería": "string",
+
     "Tipo motor": "enum",
     "Combustible": "enum",
     "Motorización": "string",
     "Marca del motor": "string",
     "Marca del alternador": "string",
     "Consumo": "string",
+
     "Altura (mm)": "number",
     "Altura de elevación (mm)": "number",
     "Altura de elevación (m)": "number",
@@ -33,6 +37,7 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Altura mástil replegado (mm)": "number",
     "Altura al suelo (mm)": "number",
     "Altura plataforma (mm)": "number",
+
     "Longitud (mm)": "number",
     "Anchura (mm)": "number",
     "Anchura trabajo (mm)": "number",
@@ -42,35 +47,45 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Ancho de vía detrás (mm)": "number",
     "Radio de giro (mm)": "number",
     "AST (mm)": "number_array",
+
     "Dimensiones horquillas (mm)": "dimension",
     "Dimensiones cesta (mm)": "dimension_rect",
+
     "Elevación libre (mm)": "number",
     "Elevación libre disponible": "bool",
     "Características de elevación": "string",
+
     "Velocidad (km/h)": "number_array",
     "Velocidad de desplazamiento (km/h)": "number_array",
     "Velocidad de desplazamiento con/sin carga (km/h)": "number_array",
+
     "Máximo tiro a la barra (N)": "number",
     "Tiro a la barra nominal (N)": "number",
+
     "Tracción": "enum",
     "Tracción 4x4": "bool",
     "Desplazamiento lateral": "bool",
     "Tipo Mástil": "enum",
     "Tipo de máquina": "enum",
     "Transmisión": "string",
+
     "Neumáticos": "string",
     "Ruedas": "string",
     "Número de ruedas": "number",
     "RPM cepillo": "number",
     "RPM del cepillo": "number",
     "Estado de las ruedas": "string",
+
     "Marcado CE": "bool",
     "Controles hidraúlicos": "enum",
     "Pendiente superable (%)": "number",
+
     "Horas (h)": "number",
     "Kilómetros (km)": "number",
+
     "Potencia (kW)": "number_array",
     "Potencia (CV)": "number_array",
+
     "Nº de serie": "string",
     "Estado baterías": "string"
 };
@@ -80,28 +95,42 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "modelo": "Modelo",
     "pais": "País",
     "país": "País",
+
     "ubicacion": "Ubicación",
     "ubicación": "Ubicación",
+    "localizacion": "Ubicación",
+    "localización": "Ubicación",
+
     "matricula": "Matrícula",
+    "matrícula": "Matrícula",
+
+    "año": "Año",
+    "ano": "Año",
     "ano fabricacion": "Año",
     "ano de fabricacion": "Año",
-    "altura de elevacion (m)": "Altura de elevación (m)",
-    "estado baterias": "Estado baterías",
-    "horometro": "Horas (h)",
+    "año fabricación": "Año",
+    "año de fabricación": "Año",
+
     "nº de serie": "Nº de serie",
     "no de serie": "Nº de serie",
+    "n de serie": "Nº de serie",
     "numero de serie": "Nº de serie",
     "número de serie": "Nº de serie",
     "serial": "Nº de serie",
-    "año": "Año",
-    "ano": "Año",
+
     "capacidad carga": "Capacidad de carga (kg)",
     "capacidad de carga": "Capacidad de carga (kg)",
+    "capacidad de carga (kg)": "Capacidad de carga (kg)",
+
     "carga maxima": "Carga Máxima (kg)",
     "carga máxima": "Carga Máxima (kg)",
+
     "capacidad arrastre": "Capacidad de arrastre (kg)",
+    "capacidad de arrastre": "Capacidad de arrastre (kg)",
+
     "centro de carga": "Centro de carga (mm)",
     "centro carga": "Centro de carga (mm)",
+
     "peso": "Peso (kg)",
     "peso kg": "Peso (kg)",
     "peso (kg)": "Peso (kg)",
@@ -111,11 +140,22 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "peso vacio": "Peso (kg)",
     "peso operacional": "Peso (kg)",
     "peso vehículo": "Peso (kg)",
+
     "bateria": "Batería",
+    "batería": "Batería",
     "baterias": "Baterías",
+    "baterías": "Baterías",
+
     "tipo bateria": "Tipo de batería",
     "tipo de bateria": "Tipo de batería",
+    "tipo batería": "Tipo de batería",
+    "tipo de batería": "Tipo de batería",
+
     "cargador bateria": "Cargador de batería",
+    "cargador batería": "Cargador de batería",
+    "cargador de bateria": "Cargador de batería",
+    "cargador de batería": "Cargador de batería",
+
     "capacidad bateria": "Capacidad de la batería (Ah)",
     "capacidad de la batería": "Capacidad de la batería (Ah)",
     "capacidad de la bateria": "Capacidad de la batería (Ah)",
@@ -125,131 +165,199 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "capacidad ah": "Capacidad de la batería (Ah)",
     "amp": "Capacidad de la batería (Ah)",
     "amperios": "Capacidad de la batería (Ah)",
+
     "voltaje batería": "Voltaje batería (V)",
     "voltaje bateria": "Voltaje batería (V)",
+    "voltaje (v)": "Voltaje batería (V)",
     "voltaje": "Voltaje batería (V)",
     "voltios": "Voltaje batería (V)",
+
     "tipo motor": "Tipo motor",
     "motor": "Tipo motor",
+
     "marca motor": "Marca del motor",
     "marca del motor": "Marca del motor",
+
     "marca alternador": "Marca del alternador",
+    "marca del alternador": "Marca del alternador",
+
     "combustible": "Combustible",
+
     "motorizacion": "Motorización",
     "motorización": "Motorización",
+
     "potencia kw": "Potencia (kW)",
     "potencia (kw)": "Potencia (kW)",
     "potencia motor (kw)": "Potencia (kW)",
     "potencia nominal": "Potencia (kW)",
     "potencia continua": "Potencia (kW)",
     "kw": "Potencia (kW)",
+
     "potencia cv": "Potencia (CV)",
     "potencia (cv)": "Potencia (CV)",
     "cv": "Potencia (CV)",
+
     "altura": "Altura (mm)",
     "altura total": "Altura (mm)",
     "altura maxima": "Altura (mm)",
     "altura máxima": "Altura (mm)",
-    "altura (m)": "Altura (mm)",
+
     "altura elevacion": "Altura de elevación (mm)",
     "altura de elevacion": "Altura de elevación (mm)",
     "altura de elevación": "Altura de elevación (mm)",
     "altura elevación (industr.)": "Altura de elevación (mm)",
-    "altura de elevación (m)": "Altura de elevación (mm)",
+
+    "altura de elevacion (m)": "Altura de elevación (m)",
+    "altura de elevación (m)": "Altura de elevación (m)",
+
     "altura trabajo": "Altura de trabajo (mm)",
     "altura de trabajo": "Altura de trabajo (mm)",
-    "altura de trabajo (m)": "Altura de trabajo (mm)",
+
     "altura mastil": "Altura mástil replegado (mm)",
     "altura mástil": "Altura mástil replegado (mm)",
     "altura mastil replegado": "Altura mástil replegado (mm)",
+    "altura mástil replegado": "Altura mástil replegado (mm)",
+
+    "altura al suelo": "Altura al suelo (mm)",
+
     "altura plataforma": "Altura plataforma (mm)",
     "altura plataforma (m)": "Altura plataforma (mm)",
+
     "longitud": "Longitud (mm)",
     "longitud total": "Longitud (mm)",
     "longitud/": "Longitud (mm)",
     "longitud (m)": "Longitud (mm)",
+
     "ancho": "Anchura (mm)",
     "anchura": "Anchura (mm)",
     "anchura total": "Anchura (mm)",
     "anchura/": "Anchura (mm)",
     "ancho total": "Anchura (mm)",
     "ancho vehículo": "Anchura (mm)",
+
     "anchura trabajo": "Anchura trabajo (mm)",
     "anchura de trabajo": "Anchura trabajo (mm)",
+
     "ancho promedio": "Ancho promedio (mm)",
     "ancho medio": "Ancho promedio (mm)",
+
     "distancia entre ejes": "Distancia entre ejes (mm)",
+
     "ancho via delantero": "Ancho de vía delante (mm)",
     "ancho de via delante": "Ancho de vía delante (mm)",
+    "ancho vía delante": "Ancho de vía delante (mm)",
+
     "ancho via trasero": "Ancho de vía detrás (mm)",
     "ancho de via detras": "Ancho de vía detrás (mm)",
+    "ancho vía detrás": "Ancho de vía detrás (mm)",
+
     "radio giro": "Radio de giro (mm)",
     "radio de giro": "Radio de giro (mm)",
     "radio giro (m)": "Radio de giro (mm)",
     "radio de giro (m)": "Radio de giro (mm)",
+
     "ast": "AST (mm)",
     "ast (pasillo minimo)": "AST (mm)",
+
     "dimensiones horquillas": "Dimensiones horquillas (mm)",
     "dim horquillas": "Dimensiones horquillas (mm)",
     "medidas horquillas": "Dimensiones horquillas (mm)",
     "dimensión horquillas": "Dimensiones horquillas (mm)",
     "dimensiones horquilla": "Dimensiones horquillas (mm)",
+    "dimensiones horquillas (mm)": "Dimensiones horquillas (mm)",
+
     "dimensiones cesta": "Dimensiones cesta (mm)",
     "dim cesta": "Dimensiones cesta (mm)",
+    "dimensiones cesta (mm)": "Dimensiones cesta (mm)",
+
     "elevacion libre": "Elevación libre (mm)",
     "altura libre": "Elevación libre (mm)",
     "elevación libre": "Elevación libre (mm)",
+
     "elevacion libre disponible": "Elevación libre disponible",
+    "elevación libre disponible": "Elevación libre disponible",
     "elevación libre (sí/no)": "Elevación libre disponible",
+
     "caracteristicas elevacion": "Características de elevación",
     "características elevación": "Características de elevación",
+
     "velocidad desplazamiento": "Velocidad de desplazamiento (km/h)",
     "velocidad de desplazamiento": "Velocidad de desplazamiento (km/h)",
-    "velocidad desplazamiento carga": "Velocidad de desplazamiento con/sin carga (km/h)",
-    "velocidad con/sin carga": "Velocidad de desplazamiento con/sin carga (km/h)",
     "velocidad máxima": "Velocidad de desplazamiento (km/h)",
     "velocidad máxima (km/h)": "Velocidad de desplazamiento (km/h)",
+
+    "velocidad desplazamiento carga": "Velocidad de desplazamiento con/sin carga (km/h)",
+    "velocidad con/sin carga": "Velocidad de desplazamiento con/sin carga (km/h)",
+    "velocidad de desplazamiento con/sin carga": "Velocidad de desplazamiento con/sin carga (km/h)",
+
     "tiro barra": "Tiro a la barra nominal (N)",
     "tiro a la barra": "Tiro a la barra nominal (N)",
+
     "maximo tiro": "Máximo tiro a la barra (N)",
     "máximo tiro a la barra": "Máximo tiro a la barra (N)",
+
     "traccion": "Tracción",
+    "tracción": "Tracción",
+
     "tracción 4x4": "Tracción 4x4",
     "traccion 4x4": "Tracción 4x4",
+
     "desplazador lateral": "Desplazamiento lateral",
     "desplazamiento lateral": "Desplazamiento lateral",
+
     "tipo mastil": "Tipo Mástil",
     "tipo de mastil": "Tipo Mástil",
+    "tipo mástil": "Tipo Mástil",
+    "tipo de mástil": "Tipo Mástil",
+
     "tipo maquina": "Tipo de máquina",
     "tipo máquina": "Tipo de máquina",
+    "tipo de maquina": "Tipo de máquina",
+    "tipo de máquina": "Tipo de máquina",
+
     "transmision": "Transmisión",
     "transmisión": "Transmisión",
+
     "neumaticos": "Neumáticos",
     "neumáticos": "Neumáticos",
+
     "ruedas": "Ruedas",
+
     "numero ruedas": "Número de ruedas",
     "número de ruedas": "Número de ruedas",
+
     "rpm": "RPM cepillo",
     "rpm cepillo": "RPM cepillo",
     "rpm del cepillo": "RPM del cepillo",
+
     "estado ruedas": "Estado de las ruedas",
     "estado de las ruedas": "Estado de las ruedas",
+
     "marcado ce": "Marcado CE",
+    "marcado ce (si/no)": "Marcado CE",
+
     "pendiente": "Pendiente superable (%)",
     "pendiente superable": "Pendiente superable (%)",
     "pendiente max": "Pendiente superable (%)",
     "pendiente máxima": "Pendiente superable (%)",
     "gradiente": "Pendiente superable (%)",
+
+    "horometro": "Horas (h)",
     "horas": "Horas (h)",
     "horas uso": "Horas (h)",
     "horas totales": "Horas (h)",
     "hrs": "Horas (h)",
     "h": "Horas (h)",
+
     "kilometros": "Kilómetros (km)",
     "kilómetros": "Kilómetros (km)",
     "km": "Kilómetros (km)",
     "kilometraje": "Kilómetros (km)",
     "km totales": "Kilómetros (km)",
+
+    "estado baterias": "Estado baterías",
+    "estado baterías": "Estado baterías",
+
     "controles hidraulicos": "Controles hidraúlicos",
-    "controles hidráulicos": "Controles hidraúlicos",
+    "controles hidráulicos": "Controles hidraúlicos"
 };

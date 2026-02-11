@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { SPEC_RULES, type SpecRuleType } from "../normalizer/specRules.js";
+import { SPEC_RULES, SPEC_KEY_NORMALIZATION, type SpecRuleType } from "../normalizer/specRules.js";
 import { parseBoolean, parseDimension, parseDimensionRect, parseNumber, parseNumberArray } from "../normalizer/specParsers.js";
 
 type SeedProduct = {
@@ -630,13 +630,15 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
 
         const spec: Record<string, string | number | boolean | readonly number[]> = {};
         for (const [kRaw, v] of Object.entries(specObj)) {
-            const k = normalizeSpace(kRaw);
-            if (!k) continue;
+            const k0 = normalizeSpace(kRaw);
+            if (!k0) continue;
 
-            const parsed = parseSpecByRule(k, v);
+            const normKey = SPEC_KEY_NORMALIZATION[k0.toLowerCase()] ?? k0;
+
+            const parsed = parseSpecByRule(normKey, v);
             if (parsed === null) continue;
 
-            spec[k] = parsed;
+            spec[normKey] = parsed;
         }
 
         const metadata = buildDefaultMetadata(categoryKey);
