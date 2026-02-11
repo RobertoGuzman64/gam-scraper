@@ -10,8 +10,11 @@
     "clean": "rmdir /s /q dist || exit 0",
     "build": "tsc -p tsconfig.json",
     "scrape": "npm run build && node dist/scraper/index.js",
+    "normalize:gam": "npm run build && node dist/scripts/normalizeGamCsvSpecs.js",
+    "normalize:gam:default": "npm run build && node dist/scripts/normalizeGamCsvSpecs.js storage/scraped/gam/scrape-gam-marzo-2026-all.csv storage/normalized/gam/scrape-gam-marzo-2026-all.normalized.csv --report storage/normalized/gam/normalize.report.json",
     "convert:gam": "npm run build && node dist/converter/convertGamCsvToSeedTs.js",
-    "convert:gam:default": "npm run build && node dist/converter/convertGamCsvToSeedTs.js storage/scraped/gam/scrape-gam-marzo-2026-all.csv storage/seeds/seedDataProduct.gam.ts data/category/categorySell-flat.json",
+    "convert:gam:raw:default": "npm run build && node dist/converter/convertGamCsvToSeedTs.js storage/scraped/gam/scrape-gam-marzo-2026-all.csv storage/seeds/seedDataProduct.gam.ts data/category/categorySell-flat.json",
+    "convert:gam:default": "npm run build && node dist/converter/convertGamCsvToSeedTs.js storage/normalized/gam/scrape-gam-marzo-2026-all.normalized.csv storage/seeds/seedDataProduct.gam.ts data/category/categorySell-flat.json",
     "category:tree": "npm run build && node dist/scripts/printCategorySellTree.js",
     "slugs:gam": "npm run build && node dist/scripts/extractGamUrlCategorySlugs.js"
   },
