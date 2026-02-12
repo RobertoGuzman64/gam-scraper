@@ -1,23 +1,20 @@
-# GAM Scraper (CSV)
+# GAM Scraper → Normalizer → Seed (TypeScript)
 
-Scraper para extraer **productos de ocasión** de `online.gamrentals.com` por **categorías**, generando **CSV** listos para subir manualmente a Drive (Equipzilla).
-
-El scraper:
-1. Recorre páginas de listado (`?page=2`, `?page=3`, …).
-2. Detecta URLs de **ficha de producto**.
-3. Entra a cada ficha y extrae campos (marca, modelo, año, ubicación, horas, descripción, etc.).
-4. Genera un CSV por categoría, un CSV agregado y un `summary.json`.
+Repo para automatizar:
+- **Scrape** (GAM → CSV)
+- **Normalize** de `specJson` (CSV → CSV)
+- **Convert** (CSV → seed TS)
 
 ---
 
 ## Requisitos
 
-- Node **18.18+** (recomendado 20+)
+- Node **>= 18.18** (recomendado 20+)
 - NPM
 
 ---
 
-## Instalar
+## Instalación
 
 ```bash
 npm i
@@ -25,212 +22,216 @@ npm i
 
 ---
 
-## Ejecutar
+## Flujo recomendado (end-to-end)
 
-### Scrape completo (todas las categorías del config)
+### 1) Scrape
+
+```bash
+npm run scrape -- --outPrefix scrape-gam-2026-02
+```
+
+### 2) Normalize
+
+```bash
+npm run normalize:gam -- \
+  storage/scraped/gam/scrape-gam-2026-02-all.csv \
+  storage/normalized/gam/scrape-gam-2026-02-all.normalized.csv \
+  --report storage/normalized/gam/normalize.report.json
+```
+
+### 3) Convert (seed TS)
+
+```bash
+npm run convert:gam -- \
+  storage/normalized/gam/scrape-gam-2026-02-all.normalized.csv \
+  storage/seeds/seedDataProduct.gam.ts \
+  data/category/categorySell-flat.json
+```
+
+---
+
+## Scraper
+
+### Qué hace
+
+- Recoge URLs de productos desde los listados por categoría.
+- Visita cada ficha y extrae campos + `specJson`.
+- Deduplica por `reference`, luego `serialNumber`, y si no existe, por URL canónica (sin query/hash).
+- Escribe CSV por categoría, CSV agregado, CSV de categorías y `summary.json`.
+
+### Ejecutar
+
+Scrape completo (categorías del config):
+
 ```bash
 npm run scrape
 ```
 
-### Solo una categoría del config
+Solo una categoría del config:
+
 ```bash
-npm run scrape -- --categoryKey elevacion --outPrefix gam-elevacion
+npm run scrape -- --categoryKey elevacion --outPrefix gam-elevacion-2026-02
 ```
 
-### Ejecutar una URL concreta (sin depender del config)
+Scrapear una URL concreta (modo single):
+
 ```bash
-npm run scrape -- --url "https://online.gamrentals.com/es/8-plataformas-elevadoras-segunda-mano" --key elevacion --name "Elevación" --outPrefix gam-elevacion
+npm run scrape -- --url "https://online.gamrentals.com/es/8-plataformas-elevadoras-segunda-mano" --key elevacion --name "Elevación" --outPrefix gam-elevacion-2026-02
 ```
 
-### Pruebas rápidas (limitando páginas)
-Solo para tests (no recomendado para “producción”):
+Descubrir categorías desde una raíz (modo árbol):
+
 ```bash
-npm run scrape -- --categoryKey elevacion --maxPages 3 --outPrefix gam-elevacion-prueba
+npm run scrape -- --discoverTree --rootUrl "https://online.gamrentals.com/es/3-maquinaria-segunda-mano" --outPrefix gam-tree-2026-02
 ```
 
----
+Descubrir subcategorías desde las raíces del config:
 
-## “Sin límite de páginas” (lo que debes usar siempre)
-
-Para sacar **todo lo que tiene** una categoría:
-- **No pases** `--maxPages`, o ponlo muy alto.
-- El scraper se detiene por el criterio de “ya no salen URLs nuevas” (`stallStopAfter`).
-
-Ejemplo recomendado:
 ```bash
-npm run scrape -- --categoryKey elevacion --outPrefix gam-elevacion-full
+npm run scrape -- --discoverSubcategories --outPrefix gam-subcats-2026-02
 ```
 
----
+Para generar solo el CSV de categorías y terminar:
 
-## Salida
+```bash
+npm run scrape -- --discoverTree --rootUrl "https://online.gamrentals.com/es/3-maquinaria-segunda-mano" --onlyCategories --outPrefix gam-tree-2026-02
+```
 
-Se escribe en `storage/scraped/gam/`:
+### Flags (CLI)
 
+Output:
+- `--outDir <dir>` (default: `storage/scraped/gam`)
+- `--outPrefix <name>` (default: `scrape-gam-marzo-2026`)
+
+Selección:
+- `--categoryKey <key>` (usa categorías de `src/scraper/config.ts`)
+- `--url <url>` activa modo single
+- `--key <key>` (solo para `--url`, default: `custom`)
+- `--name <name>` (solo para `--url`, default: `Custom`)
+
+Descubrimiento:
+- `--discoverTree` (requiere `--rootUrl` o `--url`)
+- `--rootUrl <url>`
+- `--discoverSubcategories`
+- `--onlyCategories`
+
+Paginación / parada:
+- `--maxPages <n>` (default: `500`)
+- `--stallStopAfter <n>` (default: `2`) para cuando no aparecen URLs nuevas
+
+Estabilidad:
+- `--concurrencyPages <n>` (default: `2`)
+- `--concurrencyProducts <n>` (default: `6`)
+- `--timeoutMs <n>` (default: `30000`)
+- `--delayMs <n>` (default: `250`)
+- `--userAgent <string>`
+
+### Salida
+
+Por defecto en `storage/scraped/gam/`:
+
+- `<outPrefix>-categories.csv`
 - `<outPrefix>-<categoryKey>.csv`
 - `<outPrefix>-all.csv`
 - `<outPrefix>-summary.json`
 
 ### Columnas del CSV
 
-- `categoryKey`: clave interna de la categoría (config/CLI)
-- `categoryName`: nombre humano de la categoría
-- `title`: título del producto (H1 / og:title)
-- `descriptionLong`: descripción larga del producto (cuando existe en la ficha; puede venir de bloques de descripción o metatags)
-- `price`: precio si está disponible
-- `reference`: ID extraído de la URL (el número antes del guion)
-- `brand`: Marca (de la ficha)
-- `model`: Modelo (de la ficha)
-- `year`: Año (de la ficha o inferido del título)
-- `location`: Ubicación (de la ficha)
-- `country`: País (de la ficha)
-- `horometer`: Horómetro/horas (de la ficha)
-- `serialNumber`: Nº de serie (de la ficha)
-- `url`: URL de la ficha
+Base (siempre):
+- `categoryKey`, `categoryName`
+- `title`
+- `shortDescription`, `longDescription`
+- `price`
+- `reference`
+- `brand`, `model`, `year`
+- `location`, `country`
+- `horometer`, `serialNumber`
+- `image`
+- `url`
+- `specJson`
+
+Además, columnas dinámicas:
+- `spec__<clave>` (una por clave detectada)
 
 ---
 
-## Opciones (CLI)
+## Normalizer (specJson)
 
-- `--outDir <dir>` (default: `output`)
-- `--outPrefix <name>` (default: `scrape-gam-marzo-2026`)
-- `--categoryKey <key>` filtra por una categoría de `src/config.ts`
-- `--url <url>` scrapea una URL concreta (modo “single”)
-- `--key <key>` clave de categoría para modo `--url` (default: `custom`)
-- `--name <name>` nombre de categoría para modo `--url` (default: `Custom`)
+Normaliza `specJson` (claves + valores) y genera un report.
 
-### Control de paginación y parada
-- `--maxPages <n>` (default: `500`)
-  - Tope de seguridad. Para “sin límite”, **no lo uses** o ponlo alto (p.ej. 2000).
-- `--stallStopAfter <n>` (default: `2`)
-  - Se detiene cuando durante `n` tandas seguidas no aparecen URLs nuevas.
+### Uso
 
-### Rendimiento / estabilidad
-- `--concurrencyPages <n>` (default: `2`)
-- `--concurrencyProducts <n>` (default: `6`)
-- `--timeoutMs <n>` (default: `30000`)
-- `--delayMs <n>` (default: `250`)
-- `--userAgent <string>` (default: UA de Chrome)
-
----
-
-## Arquitectura del proyecto (qué toca cada fichero)
-
-### `src/types.ts`
-Tipos del dominio y del pipeline:
-- `CategoryConfig`, `ScrapeOptions`, `ProductRecord`
-- `CategoryScrapeResult`, `Summary`
-
-✅ Toca este fichero si añades/renombras campos del CSV, o cambias el shape del summary.
-
-### `src/config.ts`
-Configuración por defecto:
-- `DEFAULT_CATEGORIES`: categorías de GAM (las URLs del email)
-- `DEFAULT_OPTIONS`: opciones base del scraper
-
-✅ Toca este fichero si:
-- Añades/quitas categorías (URLs nuevas).
-- Cambias defaults (concurrencia, delay, timeouts, etc.).
-
-### `src/cli.ts`
-Parsea flags y decide el modo:
-- “config”: usa `DEFAULT_CATEGORIES` (o filtra por `--categoryKey`)
-- “single”: si existe `--url`, usa esa URL con `--key`/`--name`
-
-✅ Toca este fichero si:
-- Añades nuevas opciones CLI.
-- Quieres introducir “modos” (ej: solo URLs, solo productos, etc.).
-
-### `src/http.ts`
-Capa HTTP:
-- `fetchHtml` con timeout y headers
-- `sleep`
-
-✅ Toca este fichero si:
-- Necesitas cookies / headers especiales.
-- Quieres reintentos, backoff, etc.
-
-### `src/parsers.ts`
-Parsing HTML:
-- `buildPagedUrl`
-- `extractProductLinksFromListing`
-- `parseProductPage` (incluye `descriptionLong`)
-
-✅ Toca este fichero si:
-- Cambia el HTML de GAM (labels distintas, estructura distinta).
-- Quieres extraer nuevos campos desde la ficha.
-
-### `src/scrape.ts`
-Motor de scraping por categoría:
-- Recorre paginación
-- Acumula URLs de producto
-- Visita cada ficha con `parseProductPage`
-- Retorna `CategoryScrapeResult`
-
-✅ Toca este fichero si:
-- Cambias la estrategia de paginación.
-- Quieres separar “fase URLs” y “fase productos”.
-- Quieres persistir un caché, reintentos por producto, etc.
-
-### `src/io.ts`
-Escritura de outputs:
-- CSV por categoría
-- CSV agregado (`-all.csv`)
-- `summary.json`
-
-✅ Toca este fichero si:
-- Cambias formato de salida (otro nombre, otro directorio, etc.).
-- Añades archivos extra (p.ej. `urls.csv`).
-- Añades columnas nuevas al CSV (p.ej. `descriptionLong`).
-
-### `src/index.ts`
-Orquestación:
-- Decide categorías
-- Ejecuta `scrapeCategory` por cada una
-- Llama a `writeOutputs`
-
-✅ Toca este fichero si:
-- Cambias el flujo general (paralelizar categorías, etc.).
-
----
-
-## Checklist para cambios (para trabajar por chat sin liarnos)
-
-Cuando pidamos un cambio, lo normal es seguir esta regla:
-
-1) **Añadir/quitar categoría** → `src/config.ts`
-2) **Nuevo flag CLI** → `src/cli.ts` (+ `src/config.ts` si hay default)
-3) **Arreglar extracción de links del listado** → `src/parsers.ts` (`extractProductLinksFromListing` / `isProductUrl`)
-4) **Arreglar campos que salen vacíos en la ficha** → `src/parsers.ts` (`parseProductPage`)
-5) **Separar fases “categorías / URLs / productos”** → `src/cli.ts`, `src/scrape.ts`, `src/io.ts`, `src/index.ts`
-6) **Problemas de bloqueo / 403 / timeouts** → `src/http.ts` y ajustar defaults en `src/config.ts`
-7) **Añadir “descripción larga”** → `src/types.ts`, `src/parsers.ts`, `src/scrape.ts`, `src/io.ts`
-
----
-
-## Troubleshooting rápido
-
-### No aparecen productos (0 URLs)
-- Baja `--concurrencyPages` a 1 y sube `--delayMs` (p.ej. 500–1000).
-- Revisa que `extractProductLinksFromListing` está detectando fichas (en `src/parsers.ts`).
-
-### Muchos campos vacíos (marca/modelo/ubicación/descripción)
-- La ficha puede haber cambiado estructura. Ajusta `parseProductPage` en `src/parsers.ts`.
-
-### Se queda corto de productos
-- Si estás usando `--maxPages`, quítalo.
-- Si te corta antes de tiempo, sube `--stallStopAfter` (p.ej. 3) y/o sube `--maxPages`.
-
----
-
-## Ejemplos recomendados (los que usarás cada 6 meses)
-
-### Todas las categorías
 ```bash
-npm run scrape -- --outPrefix scrape-gam-marzo-2026
+npm run normalize:gam -- <input.csv> <output.csv> [--report <path>] [--allow-unknown] [--expand-spec-columns] [--max-values-per-key <n>]
 ```
 
-### Solo Elevación (full)
+Flags:
+- `--report <path>`: ruta del report JSON
+- `--allow-unknown`: permite claves no contempladas (se reportan igualmente)
+- `--expand-spec-columns`: recalcula columnas `spec__*` desde el spec normalizado
+- `--max-values-per-key <n>`: límite de valores del “top” del report (min 10, max 200)
+
+Salidas:
+- CSV normalizado (mantiene columnas base y actualiza `specJson`)
+- Report JSON con estadísticas (unknown keys, renames, ejemplos, etc.)
+
+---
+
+## Converter (CSV → seed TS)
+
+Convierte un CSV (idealmente normalizado) a un seed TS y escribe un report de resolución de categoría.
+
+### Uso
+
 ```bash
-npm run scrape -- --categoryKey elevacion --outPrefix scrape-gam-marzo-2026
+npm run convert:gam -- <input.csv> <output.ts> <categorySell-flat.json>
 ```
+
+Salidas:
+- `output.ts`
+- `output.ts.report.json`
+
+### Defaults hardcoded del convert
+
+En el entrypoint (`src/converter/convertGamCsvToSeedTs.ts`) se usan:
+- `idStart: 681`
+- `companyID: 208`
+- `defaultImage: https://online.gamrentals.com/img/p/es-default.jpg`
+- `referencePrefix: GAM-`
+
+Si necesitas cambiarlos, están en el bloque `isMain(...)`.
+
+---
+
+## Scripts útiles
+
+Imprimir árbol de categorías (CategorySell):
+
+```bash
+npm run category:tree
+```
+
+Extraer slugs de categorías desde URLs de GAM:
+
+```bash
+npm run slugs:gam
+```
+
+---
+
+## Estructura
+
+- `src/scraper/*`: scraper (CLI, paginación, parsers, outputs)
+- `src/normalizer/*`: reglas de normalización de specs
+- `src/converter/*`: conversión a seed TS + resolución de `categorySellID`
+- `src/scripts/*`: scripts CLI
+- `src/shared/*`: helpers CSV
+
+---
+
+## Troubleshooting
+
+- 0 URLs / 0 productos: baja `--concurrencyPages` a 1 y sube `--delayMs`.
+- Campos vacíos: revisa `src/scraper/parsers.ts` (puede haber cambiado HTML).
+- Corta antes de tiempo: quita/sube `--maxPages` o sube `--stallStopAfter`.
+- Muchas filas descartadas en convert: revisa `output.ts.report.json` (slugs/ambiguos/missingCategorySellId).

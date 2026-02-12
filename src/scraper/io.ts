@@ -277,7 +277,7 @@ export const writeGroupedOutputs = async (
       scrapedProducts: global.unique.length,
       failures: totalsFailures,
       dedupe: {
-        withinCategories,
+        withinCategories: withinCategories,
         globalAll: global.report
       }
     },
@@ -356,7 +356,7 @@ export const writeOutputs = async (
       scrapedProducts: global.unique.length,
       failures: totalsFailures,
       dedupe: {
-        withinCategories,
+        withinCategories: withinCategories,
         globalAll: global.report
       }
     },
