@@ -7,17 +7,24 @@ import type { ParsedProduct, ScraperProvider } from "./providers/contracts.js";
 
 export type ProductPageCache = Map<string, Promise<ParsedProduct>>;
 
+export type ScrapeProgressCallbacks = {
+  readonly verbose: boolean;
+  readonly onListingDone: (total: number) => void;
+  readonly onProductDone: (done: number, total: number) => void;
+};
+
 const nowIso = (): string => new Date().toISOString();
 
-const log = (scope: string, msg: string): void => {
-  console.log(`[${nowIso()}] ${scope} ${msg}`);
+const log = (scope: string, msg: string, verbose: boolean): void => {
+  if (verbose) console.log(`[${nowIso()}] ${scope} ${msg}`);
 };
 
 export const scrapeCategory = async (
   category: CategoryConfig,
   options: ScrapeOptions,
   provider: ScraperProvider = getProvider("gam"),
-  cache?: ProductPageCache
+  cache?: ProductPageCache,
+  progress?: ScrapeProgressCallbacks
 ): Promise<CategoryScrapeResult> => {
   for (const [key, value] of [
     ["maxPages", options.maxPages],
@@ -33,6 +40,8 @@ export const scrapeCategory = async (
   const pageLimit = pLimit(concurrentPages);
   const productLimit = pLimit(concurrentProducts);
 
+  const verbose = progress?.verbose ?? false;
+  const report = (scope: string, message: string): void => log(scope, message, verbose);
   const productUrls = new Set<string>();
   const failures: { url: string; error: string }[] = [];
 
@@ -40,7 +49,7 @@ export const scrapeCategory = async (
   let stall = 0;
   let exhausted = false;
 
-  log("category", `start key=${category.key} pagesMax=${options.maxPages}`);
+  report("category", `start key=${category.key} pagesMax=${options.maxPages}`);
 
   let expectedProductUrls: number | undefined;
 
@@ -57,7 +66,7 @@ export const scrapeCategory = async (
           error: `Cobertura incompleta del catálogo: ${productUrls.size} de ${expectedProductUrls} referencias únicas`
         });
       }
-      log("category", `listingDone key=${category.key} total=${productUrls.size} expected=${String(expectedProductUrls)}`);
+      report("category", `listingDone key=${category.key} total=${productUrls.size} expected=${String(expectedProductUrls)}`);
     } catch (error) {
       failures.push({ url: category.url, error: `No se pudo recorrer la paginación: ${String(error)}` });
     }
@@ -69,7 +78,7 @@ export const scrapeCategory = async (
         if (p <= options.maxPages) pages.push(p);
       }
 
-      log("category", `listing key=${category.key} pages=${pages.join(",")}`);
+      report("category", `listing key=${category.key} pages=${pages.join(",")}`);
 
       const results = await Promise.allSettled(
         pages.map((p) =>
@@ -94,7 +103,7 @@ export const scrapeCategory = async (
         if (r.status === "rejected") {
           const listingUrl = provider.buildPagedUrl(category.url, pages[i]!);
           failures.push({ url: listingUrl, error: String(r.reason) });
-          log("listing", `fail key=${category.key} url=${listingUrl} error=${String(r.reason)}`);
+          report("listing", `fail key=${category.key} url=${listingUrl} error=${String(r.reason)}`);
           continue;
         }
         if (r.value.expectedTotal !== null) {
@@ -115,14 +124,14 @@ export const scrapeCategory = async (
         throw new Error(`No se pudo leer ninguna página del listado de ${category.key}: ${pages.join(",")}`);
       }
 
-      log("category", `listingDone key=${category.key} added=${added} total=${productUrls.size} stall=${stall}`);
+      report("category", `listingDone key=${category.key} added=${added} total=${productUrls.size} stall=${stall}`);
 
       if (added === 0) stall += 1;
       else stall = 0;
 
       if (stall >= options.stallStopAfter) {
         exhausted = true;
-        log("category", `stallStop key=${category.key} stall=${stall} total=${productUrls.size}`);
+        report("category", `stallStop key=${category.key} stall=${stall} total=${productUrls.size}`);
         break;
       }
 
@@ -142,9 +151,11 @@ export const scrapeCategory = async (
   }
 
   const urls = [...productUrls];
-  log("category", `productsStart key=${category.key} count=${urls.length}`);
+  progress?.onListingDone(urls.length);
+  report("category", `productsStart key=${category.key} count=${urls.length}`);
 
   let done = 0;
+  let processed = 0;
   const parsePage = async (url: string): Promise<ParsedProduct> => {
     const html = await fetchHtml(url, { timeoutMs: options.timeoutMs, userAgent: options.userAgent });
     return provider.parseProductPage(html, url);
@@ -165,57 +176,62 @@ export const scrapeCategory = async (
     urls.map((url, idx) =>
       productLimit(async (): Promise<ProductRecord> => {
         const n = idx + 1;
-        log("product", `start key=${category.key} ${n}/${urls.length} url=${url}`);
+        report("product", `start key=${category.key} ${n}/${urls.length} url=${url}`);
 
-        const parsed = await readPage(url);
+        try {
+          const parsed = await readPage(url);
 
-        const product: ProductRecord = {
-          providerId: provider.id,
-          categoryKey: category.key,
-          categoryName: category.name,
-          url,
-          title: parsed.title ?? null,
-          shortDescription: parsed.shortDescription ?? null,
-          longDescription: parsed.longDescription ?? null,
-          price: parsed.price ?? null,
-          ...(parsed.priceText === undefined ? {} : { priceText: parsed.priceText }),
-          ...(parsed.condition === undefined && provider.id !== "gam" ? {} : {
-            condition: parsed.condition ?? (provider.id === "gam" && (
-              category.key.endsWith("-nueva") || category.key.endsWith("-nuevas") ||
-              category.key.endsWith("-nuevos") || category.key === "portaferetros" ||
-              category.key.startsWith("limpieza-")
-            ) ? "Nuevo" : null)
-          }),
-          ...(parsed.breadcrumbs === undefined ? {} : { breadcrumbs: parsed.breadcrumbs }),
-          ...(parsed.subcategory === undefined ? {} : { subcategory: parsed.subcategory }),
-          ...(parsed.externalReference === undefined ? {} : { externalReference: parsed.externalReference }),
-          ...(parsed.shortDescriptionHtml === undefined ? {} : { shortDescriptionHtml: parsed.shortDescriptionHtml }),
-          ...(parsed.longDescriptionHtml === undefined ? {} : { longDescriptionHtml: parsed.longDescriptionHtml }),
-          ...(parsed.technicalSheetUrl === undefined ? {} : { technicalSheetUrl: parsed.technicalSheetUrl }),
-          ...(parsed.yearSource === undefined ? {} : { yearSource: parsed.yearSource }),
-          scrapedAt: nowIso(),
-          reference: parsed.reference ?? provider.extractReference(url),
-          brand: parsed.brand ?? null,
-          model: parsed.model ?? null,
-          year: parsed.year ?? null,
-          location: parsed.location ?? null,
-          country: parsed.country ?? null,
-          horometer: parsed.horometer ?? null,
-          serialNumber: parsed.serialNumber ?? null,
-          image: parsed.images?.[0] ?? parsed.image ?? null,
-          images: parsed.images?.length ? parsed.images : (parsed.image ? [parsed.image] : []),
-          ...(parsed.specs === undefined ? {} : { specs: parsed.specs })
-        };
+          const product: ProductRecord = {
+            providerId: provider.id,
+            categoryKey: category.key,
+            categoryName: category.name,
+            url,
+            title: parsed.title ?? null,
+            shortDescription: parsed.shortDescription ?? null,
+            longDescription: parsed.longDescription ?? null,
+            price: parsed.price ?? null,
+            ...(parsed.priceText === undefined ? {} : { priceText: parsed.priceText }),
+            ...(parsed.condition === undefined && provider.id !== "gam" ? {} : {
+              condition: parsed.condition ?? (provider.id === "gam" && (
+                category.key.endsWith("-nueva") || category.key.endsWith("-nuevas") ||
+                category.key.endsWith("-nuevos") || category.key === "portaferetros" ||
+                category.key.startsWith("limpieza-")
+              ) ? "Nuevo" : null)
+            }),
+            ...(parsed.breadcrumbs === undefined ? {} : { breadcrumbs: parsed.breadcrumbs }),
+            ...(parsed.subcategory === undefined ? {} : { subcategory: parsed.subcategory }),
+            ...(parsed.externalReference === undefined ? {} : { externalReference: parsed.externalReference }),
+            ...(parsed.shortDescriptionHtml === undefined ? {} : { shortDescriptionHtml: parsed.shortDescriptionHtml }),
+            ...(parsed.longDescriptionHtml === undefined ? {} : { longDescriptionHtml: parsed.longDescriptionHtml }),
+            ...(parsed.technicalSheetUrl === undefined ? {} : { technicalSheetUrl: parsed.technicalSheetUrl }),
+            ...(parsed.yearSource === undefined ? {} : { yearSource: parsed.yearSource }),
+            scrapedAt: nowIso(),
+            reference: parsed.reference ?? provider.extractReference(url),
+            brand: parsed.brand ?? null,
+            model: parsed.model ?? null,
+            year: parsed.year ?? null,
+            location: parsed.location ?? null,
+            country: parsed.country ?? null,
+            horometer: parsed.horometer ?? null,
+            serialNumber: parsed.serialNumber ?? null,
+            image: parsed.images?.[0] ?? parsed.image ?? null,
+            images: parsed.images?.length ? parsed.images : (parsed.image ? [parsed.image] : []),
+            ...(parsed.specs === undefined ? {} : { specs: parsed.specs })
+          };
 
-        validateScrapedProduct(product);
-        done += 1;
-        log(
-          "product",
-          `done key=${category.key} ${done}/${urls.length} title=${product.title ? product.title.slice(0, 60) : ""} shortLen=${product.shortDescription ? product.shortDescription.length : 0
-          } longLen=${product.longDescription ? product.longDescription.length : 0}`
-        );
+          validateScrapedProduct(product);
+          done += 1;
+          report(
+            "product",
+            `done key=${category.key} ${done}/${urls.length} title=${product.title ? product.title.slice(0, 60) : ""} shortLen=${product.shortDescription ? product.shortDescription.length : 0
+            } longLen=${product.longDescription ? product.longDescription.length : 0}`
+          );
 
-        return product;
+          return product;
+        } finally {
+          processed += 1;
+          progress?.onProductDone(processed, urls.length);
+        }
       })
     )
   );
@@ -231,10 +247,10 @@ export const scrapeCategory = async (
     }
     const reason = r?.status === "rejected" ? r.reason : "unknown";
     failures.push({ url, error: String(reason) });
-    log("product", `fail key=${category.key} url=${url} error=${String(reason)}`);
+    report("product", `fail key=${category.key} url=${url} error=${String(reason)}`);
   }
 
-  log("category", `end key=${category.key} ok=${products.length} fail=${failures.length}`);
+  report("category", `end key=${category.key} ok=${products.length} fail=${failures.length}`);
 
   return {
     category,

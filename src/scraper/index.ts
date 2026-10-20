@@ -1,7 +1,10 @@
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { resolveCliSelection } from "./cli.js";
-import type { CategoryConfig, CategoryScrapeResult, ScrapeOptions } from "./types.js";
+import type { CategoryConfig, CategoryScrapeResult, ScrapeOptions, Summary } from "./types.js";
 import type { ScraperProvider } from "./providers/contracts.js";
 import { writeCategoriesCsv, writeGroupedOutputs, writeOutputs } from "./io.js";
+import { ScrapeConsole } from "./progress.js";
 import { scrapeCategory, type ProductPageCache } from "./scrape.js";
 
 const nowIso = (): string => new Date().toISOString();
@@ -14,56 +17,67 @@ const uniqueByUrl = (cats: readonly CategoryConfig[]): readonly CategoryConfig[]
   return [...map.values()];
 };
 
-const logOptions = (options: {
-  readonly outDir: string;
-  readonly outPrefix: string;
-  readonly maxPages: number;
-  readonly stallStopAfter: number;
-  readonly concurrencyPages: number;
-  readonly concurrencyProducts: number;
-  readonly timeoutMs: number;
-  readonly delayMs: number;
-  readonly userAgent: string;
-}): void => {
-  console.log(
-    [
-      "[options]",
-      `outDir=${options.outDir}`,
-      `outPrefix=${options.outPrefix}`,
-      `maxPages=${options.maxPages}`,
-      `stallStopAfter=${options.stallStopAfter}`,
-      `concurrencyPages=${options.concurrencyPages}`,
-      `concurrencyProducts=${options.concurrencyProducts}`,
-      `timeoutMs=${options.timeoutMs}`,
-      `delayMs=${options.delayMs}`,
-      `userAgent=${options.userAgent}`
-    ].join(" | ")
-  );
+const isSummary = (value: unknown): value is Summary => {
+  if (typeof value !== "object" || value === null || !("totals" in value) ||
+      !("quality" in value) || !("startedAt" in value) || !("endedAt" in value)) return false;
+  if (typeof value.startedAt !== "string" || typeof value.endedAt !== "string") return false;
+  const totals = value.totals;
+  const quality = value.quality;
+  if (typeof totals !== "object" || totals === null || typeof quality !== "object" || quality === null) return false;
+  return "categories" in totals && typeof totals.categories === "number" &&
+    "scrapedProductsRaw" in totals && typeof totals.scrapedProductsRaw === "number" &&
+    "scrapedProducts" in totals && typeof totals.scrapedProducts === "number" &&
+    "failures" in totals && typeof totals.failures === "number" &&
+    "status" in quality && (quality.status === "complete" || quality.status === "partial" || quality.status === "blocked") &&
+    "reasons" in quality && Array.isArray(quality.reasons) && quality.reasons.every((reason: unknown) => typeof reason === "string");
 };
 
-const logCategoryResult = (prefix: string, r: CategoryScrapeResult): void => {
-  console.log(
-    [
-      `[done] ${prefix}`,
-      `discovered=${r.discoveredProductUrls}`,
-      `products=${r.products.length}`,
-      `failures=${r.failures.length}`
-    ].join(" | ")
-  );
+const readSummary = async (outDir: string, outPrefix: string, startedAt: string): Promise<Summary | null> => {
+  try {
+    const content = await readFile(resolve(outDir, `${outPrefix}-summary.json`), "utf8");
+    const parsed: unknown = JSON.parse(content);
+    return isSummary(parsed) && parsed.startedAt === startedAt ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const readFirstFailure = async (outDir: string, outPrefix: string): Promise<string | null> => {
+  try {
+    const content = await readFile(resolve(outDir, `${outPrefix}-errors.json`), "utf8");
+    const parsed: unknown = JSON.parse(content);
+    if (typeof parsed !== "object" || parsed === null || !("failures" in parsed) || !Array.isArray(parsed.failures)) return null;
+    for (const failure of parsed.failures) {
+      if (typeof failure === "object" && failure !== null && "error" in failure && typeof failure.error === "string") return failure.error;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 };
 
 const scrapeSafely = async (
   category: CategoryConfig,
   options: ScrapeOptions,
   provider: ScraperProvider,
-  cache: ProductPageCache
+  cache: ProductPageCache,
+  reporter: ScrapeConsole,
+  position: number,
+  count: number
 ): Promise<CategoryScrapeResult> => {
+  reporter.beginCategory(category, position, count);
+  let result: CategoryScrapeResult;
   try {
-    return await scrapeCategory(category, options, provider, cache);
+    result = await scrapeCategory(category, options, provider, cache, {
+      verbose: reporter.verbose,
+      onListingDone: (total) => reporter.listingDone(total),
+      onProductDone: (done, total) => reporter.productDone(done, total)
+    });
   } catch (error) {
-    console.error(`[category-failed] provider=${provider.id} category=${category.key} error=${String(error)}`);
-    return { category, discoveredProductUrls: 0, products: [], failures: [{ url: category.url, error: String(error) }] };
+    result = { category, discoveredProductUrls: 0, products: [], failures: [{ url: category.url, error: String(error) }] };
   }
+  reporter.endCategory(result);
+  return result;
 };
 
 const main = async (): Promise<void> => {
@@ -72,107 +86,78 @@ const main = async (): Promise<void> => {
   const options = selection.options;
   const provider = selection.provider;
   const cache: ProductPageCache = new Map();
+  const reporter = new ScrapeConsole(provider.id, options.outDir, options.outPrefix, process.argv.includes("--verbose"));
 
-  console.log(`[start] ${startedAt}`);
-  console.log(`[mode] ${selection.mode}`);
-  console.log(`[provider] ${provider.id}`);
-  logOptions(options);
-  console.log(`[limits] effectivePages=${Math.min(options.concurrencyPages, provider.defaultOptions.concurrencyPages)} effectiveProducts=${Math.min(options.concurrencyProducts, provider.defaultOptions.concurrencyProducts)} minDelayMs=${Math.max(options.delayMs, provider.defaultOptions.delayMs)}`);
+  if (reporter.verbose) console.log(`[config] mode=${selection.mode} provider=${provider.id} prefix=${options.outPrefix}`);
 
-  if ("onlyCategories" in selection) console.log(`[flags] onlyCategories=${selection.onlyCategories}`);
-  if ("discoverSubcategories" in selection) console.log(`[flags] discoverSubcategories=${selection.discoverSubcategories}`);
-  if (selection.mode === "tree") console.log(`[tree] rootUrl=${selection.rootUrl}`);
+  const finish = async (write: () => Promise<void>): Promise<void> => {
+    let error: unknown = null;
+    try {
+      await write();
+    } catch (reason) {
+      error = reason;
+      process.exitCode = 1;
+    }
+    const summary = await readSummary(options.outDir, options.outPrefix, startedAt);
+    const failureDetail = error !== null && summary ? await readFirstFailure(options.outDir, options.outPrefix) : null;
+    reporter.finish(summary, startedAt, error, failureDetail);
+    if (!summary || summary.quality?.status !== "complete" || summary.quality?.published !== true) process.exitCode = 1;
+  };
 
   if (selection.mode === "tree") {
-    console.log(`[tree] discovering categories from: ${selection.rootUrl}`);
     const cats = await provider.discoverCategoryTree(selection.rootUrl, options);
-    console.log(`[tree] discovered categories: ${cats.length}`);
-
+    reporter.start(cats.length);
     await writeCategoriesCsv(options.outDir, options.outPrefix, cats);
-    console.log(`[write] ${options.outPrefix}-categories.csv`);
 
     if (selection.onlyCategories) {
-      console.log("[end] onlyCategories=true");
+      reporter.categoriesSaved(cats.length);
       return;
     }
 
     const results: CategoryScrapeResult[] = [];
     for (let i = 0; i < cats.length; i += 1) {
       const c = cats[i]!;
-      console.log(`[scrape] (${i + 1}/${cats.length}) ${c.key} | ${c.name}`);
-      const r = await scrapeSafely(c, options, provider, cache);
-      logCategoryResult(`${c.key} | ${c.name}`, r);
-      results.push(r);
+      results.push(await scrapeSafely(c, options, provider, cache, reporter, i + 1, cats.length));
     }
-
-    const endedAt = nowIso();
-    console.log(`[end] ${endedAt} | elapsedMs=${Date.parse(endedAt) - Date.parse(startedAt)}`);
-    console.log(`[write] writing outputs...`);
-    await writeOutputs(options.outDir, options.outPrefix, results, startedAt, endedAt);
-    console.log(`[write] done | prefix=${options.outPrefix}`);
+    await finish(() => writeOutputs(options.outDir, options.outPrefix, results, startedAt, nowIso()));
     return;
   }
 
   if (selection.mode === "single") {
-    const roots: readonly CategoryConfig[] = [selection.category];
-    console.log(`[single] category=${selection.category.key} | ${selection.category.name}`);
-    console.log(`[single] url=${selection.category.url}`);
-
     if (!selection.discoverSubcategories) {
-      const results: CategoryScrapeResult[] = [];
-      for (const c of roots) {
-        console.log(`[scrape] ${c.key} | ${c.name}`);
-        const r = await scrapeSafely(c, options, provider, cache);
-        logCategoryResult(`${c.key} | ${c.name}`, r);
-        results.push(r);
-      }
-      const endedAt = nowIso();
-      console.log(`[end] ${endedAt} | elapsedMs=${Date.parse(endedAt) - Date.parse(startedAt)}`);
-      console.log(`[write] writing outputs...`);
-      await writeOutputs(options.outDir, options.outPrefix, results, startedAt, endedAt);
-      console.log(`[write] done | prefix=${options.outPrefix}`);
+      reporter.start(1);
+      const result = await scrapeSafely(selection.category, options, provider, cache, reporter, 1, 1);
+      await finish(() => writeOutputs(options.outDir, options.outPrefix, [result], startedAt, nowIso()));
       return;
     }
 
-    console.log(`[tree] discovering subcategories from: ${selection.category.url}`);
     const discovered = await provider.discoverCategoryTree(selection.category.url, options);
     const toScrape = uniqueByUrl(discovered);
-    console.log(`[tree] discovered subcategories: ${toScrape.length}`);
-
+    reporter.start(toScrape.length);
     await writeCategoriesCsv(options.outDir, options.outPrefix, uniqueByUrl([selection.category, ...toScrape]));
-    console.log(`[write] ${options.outPrefix}-categories.csv`);
 
     if (selection.onlyCategories) {
-      console.log("[end] onlyCategories=true");
+      reporter.categoriesSaved(uniqueByUrl([selection.category, ...toScrape]).length);
       return;
     }
 
     const resultsForRoot: CategoryScrapeResult[] = [];
     for (let i = 0; i < toScrape.length; i += 1) {
       const c = toScrape[i]!;
-      console.log(`[scrape] (${i + 1}/${toScrape.length}) ${c.key} | ${c.name}`);
-      const r = await scrapeSafely(c, options, provider, cache);
-      logCategoryResult(`${c.key} | ${c.name}`, r);
-      resultsForRoot.push(r);
+      resultsForRoot.push(await scrapeSafely(c, options, provider, cache, reporter, i + 1, toScrape.length));
     }
-
-    const endedAt = nowIso();
-    console.log(`[end] ${endedAt} | elapsedMs=${Date.parse(endedAt) - Date.parse(startedAt)}`);
-    console.log(`[write] writing grouped outputs...`);
-    await writeGroupedOutputs(
+    await finish(() => writeGroupedOutputs(
       options.outDir,
       options.outPrefix,
       [{ parent: selection.category, results: resultsForRoot }],
       startedAt,
-      endedAt
-    );
-    console.log(`[write] done | prefix=${options.outPrefix}`);
+      nowIso()
+    ));
     return;
   }
 
   const roots = selection.categories;
-  console.log(`[config] roots=${roots.length} | keys=${roots.map((c) => c.key).join(",")}`);
-
+  reporter.start(roots.length);
   if (roots.length === 0) {
     const keys = provider.categories.map((c) => c.key).join(", ");
     throw new Error(`categoryKey no encontrado. Disponibles: ${keys}`);
@@ -182,31 +167,19 @@ const main = async (): Promise<void> => {
     const results: CategoryScrapeResult[] = [];
     for (let i = 0; i < roots.length; i += 1) {
       const c = roots[i]!;
-      console.log(`[scrape] (${i + 1}/${roots.length}) ${c.key} | ${c.name}`);
-      const r = await scrapeSafely(c, options, provider, cache);
-      logCategoryResult(`${c.key} | ${c.name}`, r);
-      results.push(r);
+      results.push(await scrapeSafely(c, options, provider, cache, reporter, i + 1, roots.length));
     }
-    const endedAt = nowIso();
-    console.log(`[end] ${endedAt} | elapsedMs=${Date.parse(endedAt) - Date.parse(startedAt)}`);
-    console.log(`[write] writing outputs...`);
-    await writeOutputs(options.outDir, options.outPrefix, results, startedAt, endedAt);
-    console.log(`[write] done | prefix=${options.outPrefix}`);
+    await finish(() => writeOutputs(options.outDir, options.outPrefix, results, startedAt, nowIso()));
     return;
   }
 
   const groups: { parent: CategoryConfig; results: CategoryScrapeResult[] }[] = [];
   const allDiscoveredForCsv: CategoryConfig[] = [];
 
-  for (let i = 0; i < roots.length; i += 1) {
-    const root = roots[i]!;
-    console.log(`[tree] (${i + 1}/${roots.length}) discovering subcategories from root: ${root.key} | ${root.url}`);
+  for (const root of roots) {
     const discovered = await provider.discoverCategoryTree(root.url, options);
     const toScrape = uniqueByUrl(discovered);
-    console.log(`[tree] ${root.key} discovered subcategories: ${toScrape.length}`);
-
     for (const c of uniqueByUrl([root, ...toScrape])) allDiscoveredForCsv.push(c);
-
     if (selection.onlyCategories) {
       groups.push({ parent: root, results: [] });
       continue;
@@ -215,27 +188,22 @@ const main = async (): Promise<void> => {
     const resultsForRoot: CategoryScrapeResult[] = [];
     for (let j = 0; j < toScrape.length; j += 1) {
       const c = toScrape[j]!;
-      console.log(`[scrape] ${root.key} -> (${j + 1}/${toScrape.length}) ${c.key} | ${c.name}`);
-      const r = await scrapeSafely(c, options, provider, cache);
-      logCategoryResult(`${root.key} -> ${c.key} | ${c.name}`, r);
-      resultsForRoot.push(r);
+      resultsForRoot.push(await scrapeSafely(c, options, provider, cache, reporter, j + 1, toScrape.length));
     }
-
     groups.push({ parent: root, results: resultsForRoot });
   }
 
   await writeCategoriesCsv(options.outDir, options.outPrefix, uniqueByUrl(allDiscoveredForCsv));
-  console.log(`[write] ${options.outPrefix}-categories.csv`);
   if (selection.onlyCategories) {
-    console.log("[end] onlyCategories=true");
+    reporter.categoriesSaved(uniqueByUrl(allDiscoveredForCsv).length);
     return;
   }
 
-  const endedAt = nowIso();
-  console.log(`[end] ${endedAt} | elapsedMs=${Date.parse(endedAt) - Date.parse(startedAt)}`);
-  console.log(`[write] writing grouped outputs...`);
-  await writeGroupedOutputs(options.outDir, options.outPrefix, groups, startedAt, endedAt);
-  console.log(`[write] done | prefix=${options.outPrefix}`);
+  await finish(() => writeGroupedOutputs(options.outDir, options.outPrefix, groups, startedAt, nowIso()));
 };
 
-await main();
+await main().catch((error: unknown) => {
+  const message = String(error);
+  console.error(`[SCRAPER] ERROR: ${message.length > 200 ? `${message.slice(0, 199)}…` : message}`);
+  process.exitCode = 1;
+});
