@@ -63,7 +63,6 @@ export const findIdentityConflicts = (products: readonly ProductRecord[]): reado
   const serialByIdentity = new Map<string, string>();
   const conditionByIdentity = new Map<string, ProductRecord["condition"]>();
   const byUrl = new Map<string, ProductRecord>();
-  const bySerial = new Map<string, ProductRecord>();
   const conflicts = new Set<string>();
   const normalize = (value: string | null): string => (value ?? "").trim().toLocaleLowerCase("es");
 
@@ -93,18 +92,48 @@ export const findIdentityConflicts = (products: readonly ProductRecord[]): reado
       conflicts.add(`Ficha ${product.url} con referencias contradictorias`);
     } else if (!previousUrl) byUrl.set(urlKey, product);
 
-    const serial = normalize(product.serialNumber);
-    if (serial) {
-      const serialKey = `${normalize(product.providerId)}:${serial}`;
-      const previousSerial = bySerial.get(serialKey);
-      if (previousSerial && previousSerial.reference && product.reference &&
-        normalize(previousSerial.reference) !== normalize(product.reference)) {
-        conflicts.add(`Número de serie ${serial} asociado a referencias distintas en ${product.providerId}: ${previousSerial.reference} (${previousSerial.url}) / ${product.reference} (${product.url})`);
-      } else if (!previousSerial) bySerial.set(serialKey, product);
-    }
   }
   return [...conflicts];
 };
+
+export const findSerialNumberCollisions = (products: readonly ProductRecord[]): readonly {
+  readonly providerId: string;
+  readonly serialNumber: string;
+  readonly products: readonly ProductRecord[];
+}[] => {
+  const groups = new Map<string, {
+    providerId: string;
+    serialNumber: string;
+    byReference: Map<string, ProductRecord>;
+  }>();
+  const normalize = (value: string): string => value.trim().toLocaleLowerCase("es");
+
+  for (const product of products) {
+    const serialNumber = product.serialNumber?.trim();
+    const reference = product.reference?.trim();
+    if (!serialNumber || !reference) continue;
+    const key = `${normalize(product.providerId)}:${normalize(serialNumber)}`;
+    let group = groups.get(key);
+    if (!group) {
+      group = { providerId: product.providerId, serialNumber, byReference: new Map() };
+      groups.set(key, group);
+    }
+    const referenceKey = normalize(reference);
+    if (!group.byReference.has(referenceKey)) group.byReference.set(referenceKey, product);
+  }
+
+  return [...groups.values()]
+    .filter((group) => group.byReference.size > 1)
+    .map((group) => ({
+      providerId: group.providerId,
+      serialNumber: group.serialNumber,
+      products: [...group.byReference.values()]
+    }));
+};
+
+export const describeSerialNumberCollision = (collision: ReturnType<typeof findSerialNumberCollisions>[number]): string =>
+  `Número de serie ${collision.serialNumber} asociado a referencias distintas en ${collision.providerId}: ${collision.products
+    .map((product) => `${product.reference} (${product.url})`).join(" / ")}`;
 
 export const compareCatalog = (previous: CatalogSnapshot | null, current: readonly CatalogItem[]): CatalogChanges => {
   const currentByKey = new Map(current.map((item) => [item.key, item.fingerprint]));
@@ -123,7 +152,8 @@ export const assessCatalogQuality = (
   results: readonly CategoryScrapeResult[],
   products: readonly ProductRecord[],
   previous: CatalogSnapshot | null,
-  identityConflicts: readonly string[] = []
+  identityConflicts: readonly string[] = [],
+  serialWarnings: readonly string[] = []
 ): CatalogQuality => {
   const reasons: string[] = [...identityConflicts];
   if (results.length === 0) reasons.push("No hay categorías procesadas");
@@ -144,7 +174,7 @@ export const assessCatalogQuality = (
   const blocked = identityConflicts.length > 0 || results.length === 0 || products.length === 0 || results.some((r) => r.products.length === 0)
     || (previous !== null && previous.items.length >= 10 && products.length < previous.items.length / 2);
   const status = blocked ? "blocked" : reasons.length > 0 ? "partial" : "complete";
-  return { status, reasons, published: status === "complete" };
+  return { status, reasons: [...reasons, ...serialWarnings.map((warning) => `Advertencia: ${warning}`)], published: status === "complete" };
 };
 
 export const parseCatalogSnapshot = (raw: string, scope: string): CatalogSnapshot => {

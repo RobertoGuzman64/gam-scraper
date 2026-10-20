@@ -258,12 +258,12 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
     element.getAttribute('aria-disabled') === 'true';
   const nextControl = (page) => {
     const available = controls();
-    const labelled = available.find((element) =>
+    const labelled = available.find((element) => !disabled(element) &&
       /(?:next(?:\s+\w+){0,2}\s+page|next|siguiente|següent|seguent|próxima|proxima)/i.test(controlLabel(element)));
     if (labelled) return labelled;
     const numbered = available.filter((element) => /^\d{1,3}$/.test((element.textContent || '').trim()));
     if (numbered.some((element) => element.textContent.trim() === String(page))) {
-      return numbered.find((element) => element.textContent.trim() === String(page + 1)) || null;
+      return numbered.find((element) => element.textContent.trim() === String(page + 1) && !disabled(element)) || null;
     }
     return null;
   };
@@ -272,7 +272,7 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
     const timeout = Math.min(${timeoutMs}, 8000);
     while (Date.now() - started < timeout) {
       const button = nextControl(page);
-      if (button && !disabled(button)) return button;
+      if (button) return button;
       await wait(200);
     }
     const available = controls().slice(-16).map((element) =>

@@ -100,6 +100,8 @@ type SimulationOptions = {
   readonly delayedPaginationMs?: number;
   readonly nextButtonTextOnly?: boolean;
   readonly numericPagination?: boolean;
+  readonly disabledNextOnPage?: number;
+  readonly disabledNumberOnPage?: number;
   readonly onNext?: () => void;
   readonly onProgress?: (pages: number, found: number) => void;
 };
@@ -129,9 +131,11 @@ const simulateCatalog = async (
       if (selector === 'button, [role="button"]') {
         if (Date.now() < paginationAvailableAt) return [];
         if (simulation?.numericPagination) {
+          const page = current + 1;
           return [
-            button("", String(current + 1), false, () => {}),
-            button("", String(current + 2), false, advance)
+            ...(simulation.disabledNextOnPage === page ? [button("Next page", "", true, advance)] : []),
+            button("", String(page), false, () => {}),
+            button("", String(page + 1), simulation.disabledNumberOnPage === page, advance)
           ];
         }
         return [button(simulation?.nextButtonTextOnly ? "" : "Next page",
@@ -189,6 +193,37 @@ test("Mercaeleva: puede avanzar usando botones numéricos de paginación", async
   });
   assert.ok(result && typeof result === "object" && "pages" in result && Array.isArray(result.pages));
   assert.equal(result.pages.length, 2);
+});
+
+test("Mercaeleva: pasa de la página 11 a la 12 si Next page está deshabilitado pero el 12 está disponible", async () => {
+  const pages = Array.from({ length: 12 }, (_, index) => {
+    const first = index < 10 ? index * 20 + 1 : index === 10 ? 201 : 202;
+    return Array.from({ length: index === 10 ? 1 : 20 }, (_, offset) => `M${first + offset}`);
+  });
+  const progress: { pages: number; found: number }[] = [];
+  let clicks = 0;
+  const result = await simulateCatalog(pages, 221, 12, {
+    numericPagination: true,
+    disabledNextOnPage: 11,
+    onNext: () => { clicks += 1; },
+    onProgress: (count, found) => progress.push({ pages: count, found })
+  });
+  assert.ok(result && typeof result === "object" && "pages" in result && Array.isArray(result.pages));
+  assert.equal(result.pages.length, 12);
+  assert.equal(clicks, 11);
+  assert.deepEqual(progress[10], { pages: 11, found: 201 });
+  assert.deepEqual(progress[11], { pages: 12, found: 221 });
+});
+
+test("Mercaeleva: no pulsa un botón deshabilitado ni simula cobertura si la página siguiente no es accesible", async () => {
+  let clicks = 0;
+  await assert.rejects(simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 10, {
+    numericPagination: true,
+    disabledNextOnPage: 1,
+    disabledNumberOnPage: 1,
+    onNext: () => { clicks += 1; }
+  }), /no hay página siguiente/);
+  assert.equal(clicks, 0);
 });
 
 test("Mercaeleva: detecta página repetida y paginación sin botón siguiente", async () => {

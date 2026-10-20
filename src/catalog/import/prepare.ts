@@ -1,4 +1,6 @@
 import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
+import { buildProductIdentity } from "../identity.js";
+import { findSerialNumberCollisions } from "../quality.js";
 import { resolveCategory } from "./category-mapping.js";
 import { resolveAttributeValue } from "./attribute-mapping.js";
 
@@ -144,7 +146,22 @@ export const prepareImportBatch = (products: readonly ProductRecord[], catalog: 
   readonly totals: { readonly ready: number; readonly review: number };
   readonly products: readonly PreparedProduct[];
 } => {
-  const prepared = products.map((product) => prepareProduct(product, catalog));
+  const warningsByIdentity = new Map<string, string[]>();
+  for (const collision of findSerialNumberCollisions(products)) {
+    const references = collision.products.map((product) => product.reference).join(", ");
+    const issue = `Número de serie ${collision.serialNumber} compartido por referencias ${references}; revisar identidad de origen`;
+    for (const product of collision.products) {
+      const key = buildProductIdentity(product).key;
+      const issues = warningsByIdentity.get(key) ?? [];
+      issues.push(issue);
+      warningsByIdentity.set(key, issues);
+    }
+  }
+  const prepared = products.map((product): PreparedProduct => {
+    const candidate = prepareProduct(product, catalog);
+    const warnings = warningsByIdentity.get(buildProductIdentity(product).key);
+    return warnings ? { ...candidate, status: "review", issues: [...candidate.issues, ...warnings] } : candidate;
+  });
   return {
     totals: {
       ready: prepared.filter((product) => product.status === "ready").length,

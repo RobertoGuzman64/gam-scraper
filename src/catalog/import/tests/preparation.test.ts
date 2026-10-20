@@ -135,3 +135,20 @@ test("CSV mantiene sus campos y añade imágenes; preparación publicada por sep
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+
+test("serie compartida con referencias diferentes exige revisión solo de las fichas afectadas", async () => {
+  const catalog = await loadImportCatalog();
+  const a = { ...base, serialNumber: "SN-COMPARTIDO" };
+  const b = { ...base, reference: "M044-4094", url: `${url}-2`, serialNumber: "sn-compartido" };
+  const other = { ...base, reference: "M044-4095", url: `${url}-3`, serialNumber: "OTRO" };
+  const batch = prepareImportBatch([a, b, other], catalog);
+  assert.deepEqual(batch.totals, { ready: 1, review: 2 });
+  for (const entry of batch.products.slice(0, 2)) {
+    assert.equal(entry.status, "review");
+    assert.ok(entry.issues.some((issue) => issue.includes("Número de serie") && issue.includes("M044-4093") && issue.includes("M044-4094")));
+  }
+  assert.equal(batch.products[2]?.status, "ready");
+  assert.equal(batch.products[0]?.product.reference, "M044-4093");
+  assert.equal(batch.products[1]?.product.reference, "M044-4094");
+});

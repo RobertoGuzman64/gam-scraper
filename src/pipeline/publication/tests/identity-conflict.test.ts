@@ -37,3 +37,32 @@ test("una colisión bloquea la publicación y conserva CSV y snapshot anteriores
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+
+test("serie compartida conserva ambas referencias y deja un aviso auditable sin bloquear catálogo", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "scraper-serial-"));
+  try {
+    const a = { ...first, providerId: "gam", serialNumber: "P177B10585U" };
+    const b = { ...second, providerId: "gam", reference: "TE2000", serialNumber: "p177b10585u" };
+    await writeOutputs(dir, "lote", [{ category, discoveredProductUrls: 2, products: [a, b], failures: [] }], time, time);
+    const csv = await readFile(join(dir, "lote-all.csv"), "utf8");
+    assert.match(csv, /TE1000/);
+    assert.match(csv, /TE2000/);
+    const summary = JSON.parse(await readFile(join(dir, "lote-summary.json"), "utf8"));
+    assert.equal(summary.quality.status, "complete");
+    assert.equal(summary.totals.scrapedProducts, 2);
+    assert.equal(summary.quality.published, true);
+    assert.equal(summary.quality.reasons.length, 1);
+    const errors = JSON.parse(await readFile(join(dir, "lote-errors.json"), "utf8"));
+    assert.deepEqual(errors.identityConflicts, []);
+    assert.equal(errors.serialWarnings.length, 1);
+    assert.match(errors.serialWarnings[0], /TE1000.*TE2000/);
+    const prepared = JSON.parse(await readFile(join(dir, "lote-preparation.json"), "utf8"));
+    assert.equal(prepared.totals.review, 2);
+    assert.ok(prepared.products.every((product: { status: string; issues: string[] }) =>
+      product.status === "review" && product.issues.some((issue) => issue.includes("Número de serie"))));
+    assert.match(await readFile(join(dir, "lote-changes.json"), "utf8"), /comparable/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

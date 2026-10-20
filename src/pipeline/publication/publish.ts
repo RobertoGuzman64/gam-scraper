@@ -2,7 +2,7 @@ import { mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { dedupeBy, emptyDedupeReport, mergeDedupeReports } from "../../catalog/identity.js";
-import { assessCatalogQuality, buildCatalogItems, categoryScope, compareCatalog, findIdentityConflicts, parseCatalogSnapshot } from "../../catalog/quality.js";
+import { assessCatalogQuality, buildCatalogItems, categoryScope, compareCatalog, describeSerialNumberCollision, findIdentityConflicts, findSerialNumberCollisions, parseCatalogSnapshot } from "../../catalog/quality.js";
 import type { CatalogSnapshot } from "../../catalog/quality.js";
 import type { CategoryConfig, CategoryScrapeResult, Summary } from "../../contracts/scraping.js";
 
@@ -80,8 +80,10 @@ const writeResultGroups = async (
 
   const global = dedupeBy(allProductsPreGlobal, (entry) => entry.product);
   const currentProducts = global.unique.map((entry) => entry.product);
-  const identityConflicts = findIdentityConflicts(allResults.flatMap((result) => result.products));
-  const quality = assessCatalogQuality(allResults, currentProducts, previous, identityConflicts);
+  const rawProducts = allResults.flatMap((result) => result.products);
+  const identityConflicts = findIdentityConflicts(rawProducts);
+  const serialWarnings = findSerialNumberCollisions(rawProducts).map(describeSerialNumberCollision);
+  const quality = assessCatalogQuality(allResults, currentProducts, previous, identityConflicts, serialWarnings);
   const catalog = await loadImportCatalog();
   const preparation = prepareImportBatch(currentProducts, catalog);
   const outputPrefix = quality.published ? outPrefix : `${outPrefix}-partial`;
@@ -129,7 +131,7 @@ const writeResultGroups = async (
   })));
   const summaryFile = resolve(outDir, `${outPrefix}-summary.json`);
   await atomicWrite(resolve(outDir, `${outPrefix}-errors.json`), JSON.stringify({
-    quality: quality.status, failures, identityConflicts
+    quality: quality.status, failures, identityConflicts, serialWarnings
   }, null, 2));
   await atomicWrite(resolve(outDir, `${outputPrefix}-preparation.json`), preparationContent);
 
