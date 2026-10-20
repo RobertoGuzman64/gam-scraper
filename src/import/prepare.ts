@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import type { ProductRecord, SpecScalar, SpecValue } from "../scraper/types.js";
+import type { ProductRecord, SpecValue } from "../scraper/types.js";
+import { resolveCategory } from "./categoryMapping.js";
+import { resolveAttributeValue } from "./attributeMapping.js";
 
 type AttributeType = "NUMBER" | "TEXT" | "SELECT" | "BOOLEAN";
 type Category = { readonly id: number; readonly parentId: number | null; readonly name: string; readonly slug: string };
@@ -98,87 +100,16 @@ const imageUrls = (record: ProductRecord): readonly string[] => {
   return [...unique];
 };
 
-const resolveCategory = (record: ProductRecord, categories: readonly Category[]): Category | null => {
-  const sellRoot = categories.find((category) => fold(category.name) === fold("Maquinaria de Ocasión"));
-  if (!sellRoot) return null;
-  const byId = new Map(categories.map((category) => [category.id, category]));
-  const isSellLeaf = (category: Category): boolean => {
-    if (categories.some((entry) => entry.parentId === category.id)) return false;
-    const visited = new Set<number>();
-    let parentId = category.parentId;
-    while (parentId !== null && !visited.has(parentId)) {
-      if (parentId === sellRoot.id) return true;
-      visited.add(parentId);
-      parentId = byId.get(parentId)?.parentId ?? null;
-    }
-    return false;
-  };
-  const eligible = categories.filter(isSellLeaf);
-  const slug = (() => {
-    try {
-      const parts = new URL(record.url).pathname.split("/").filter(Boolean);
-      return (parts.at(-2) ?? "").replace(/^\d+-/, "");
-    } catch {
-      return "";
-    }
-  })();
-  const directSlugs = new Set([record.categoryKey, slug].map(fold).filter(Boolean));
-  const bySlug = eligible.filter((category) => directSlugs.has(fold(category.slug)));
-  if (bySlug.length === 1) return bySlug[0] ?? null;
-  if (bySlug.length > 1) return null;
-  const byName = eligible.filter((category) => fold(category.name) === fold(record.categoryName));
-  return byName.length === 1 ? byName[0] ?? null : null;
-};
-
-const scalar = (value: SpecValue): SpecScalar | null => {
-  if (Array.isArray(value)) return value.length === 1 ? value[0] ?? null : null;
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return value;
-  return null;
-};
-
-const numberValue = (value: SpecScalar): number | null => {
-  if (typeof value === "boolean") return null;
-  if (typeof value === "number") return Number.isFinite(value) ? value : null;
-  const found = value.trim().match(/^(-?\d+(?:[.,]\d+)?)\s*(?:m|mm|kg|h|horas|%|kW|cm|número)?$/i);
-  if (!found?.[1]) return null;
-  const converted = Number(found[1].replace(",", "."));
-  return Number.isFinite(converted) ? converted : null;
-};
-
-const toAttributeValue = (value: SpecScalar, type: AttributeType): string | number | boolean | null => {
-  if (type === "NUMBER") return numberValue(value);
-  if (type === "BOOLEAN") {
-    if (typeof value === "boolean") return value;
-    if (typeof value !== "string") return null;
-    if (["si", "sí", "true", "yes"].includes(fold(value))) return true;
-    if (["no", "false"].includes(fold(value))) return false;
-    return null;
-  }
-  if (typeof value === "boolean") return value ? "Sí" : "No";
-  const text = String(value).trim();
-  return text || null;
-};
-
 const productAttributes = (record: ProductRecord, category: Category | null, catalog: ImportCatalog): {
   readonly attributes: ImportCandidate["attributes"];
   readonly missingRequired: readonly string[];
 } => {
   if (!category) return { attributes: [], missingRequired: [] };
   const activeIds = new Set(catalog.relations.filter((relation) => relation.categoryID === category.id).map((relation) => relation.attributeID));
-  const specs = new Map<string, SpecValue>(Object.entries(record.specs ?? {}).map(([key, value]) => [fold(key), value]));
-  const extra = new Map<string, SpecScalar | null>([
-    [fold("Marca"), record.brand],
-    [fold("Modelo"), record.model],
-    [fold("Año de fabricación"), record.year],
-    [fold("Horas de uso"), record.horometer],
-    [fold("Ubicación / Delegación"), record.location]
-  ]);
   const result: { attributeID: number; value: string | number | boolean }[] = [];
   const missing: string[] = [];
   for (const attribute of catalog.attributes.filter((item) => activeIds.has(item.id))) {
-    const input = specs.get(fold(attribute.name));
-    const value = input === undefined ? extra.get(fold(attribute.name)) ?? null : scalar(input);
-    const normalized = value === null ? null : toAttributeValue(value, attribute.type);
+    const normalized = resolveAttributeValue(record, attribute);
     if (normalized === null) {
       if (attribute.required) missing.push(attribute.name);
       continue;
