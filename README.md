@@ -1,39 +1,14 @@
-# Equipzilla · Scraper multiproveedor de maquinaria de ocasión
+# Equipzilla Scraper
 
-Scraper **CLI en Node.js + TypeScript** para obtener fichas de maquinaria en venta desde **GAM, Gomariz y Mercaeleva**, generar CSV/JSON auditables y preparar candidatos para el importador existente de Equipzilla. No requiere un servidor HTTP ni modifica el backend.
+Herramienta de línea de comandos **Node.js + TypeScript** para extraer maquinaria de **GAM, Gomariz y Mercaeleva**, publicar catálogos CSV/JSON con trazabilidad y preparar, de forma separada, Excel de **altas** para el importador existente de Equipzilla. No expone API HTTP ni escribe en el backend.
 
-> **Estado a 20/10/2026:** las tres fuentes se han ejecutado con datos reales, pero **NO se ha autorizado su importación ni su automatización desatendida en producción**. Mercaeleva presenta una pérdida de cobertura por paginación; las categorías y atributos del backend siguen sin resolver para gran parte de la maquinaria. Véase [Estado real de las extracciones](docs/ESTADO_EXTRACCIONES_2026-10-20.md).
+> **Estado operativo (auditoría del 20/10/2026):** ninguna importación masiva ni ejecución desatendida del conjunto de proveedores está aprobada. En aquella extracción, Mercaeleva recuperó 20 de 221 anuncios visibles por un problema de paginación y gran parte de las fichas quedó pendiente de mapeo/revisión. La auditoría es una **fotografía histórica**, no una medición en tiempo real: [estado de extracciones](docs/ESTADO_EXTRACCIONES_2026-10-20.md).
 
-## 1. Qué hay implementado
+## Instalación
 
-| Capacidad                                                      | Situación                                                  |
-| -------------------------------------------------------------- | ---------------------------------------------------------- |
-| Adaptadores `gam`, `gomariz`, `mercaeleva`                     | Implementados, con extracciones reales efectuadas          |
-| Scraping por proveedor o categoría y paginación                | Implementado; cobertura Mercaeleva pendiente de corrección |
-| Deduplicación por unidad, CSV + JSON                           | Implementado                                               |
-| Preparación de categorías, atributos y estado `ready`/`review` | Implementado contra snapshots; mapeo industrial incompleto |
-| Control de calidad, snapshots, cambios e integridad SHA-256    | Implementado; no garantiza cobertura del portal externo    |
-| Lote `scrape:all`, logs, historial y bloqueo local             | Implementado                                               |
-| Exportación `.xlsx` de **altas** con inventario confirmado     | Implementada, **manual y condicionada**                    |
-| Dockerfile, CI/CD y ejecución cloud programada                 | **No incluidos en este repositorio**                       |
-| Persistencia cloud de CSV, snapshots e historial               | **No implementada**                                        |
-| Importación automática al backend o actualización/baja         | **No implementada**                                        |
-
-Documentos de referencia:
-
-- [Arquitectura y salidas](#4-arquitectura-y-archivos-de-salida)
-- [Validación de preproducción](docs/PHASE7_VALIDACION.md)
-- [Despliegue y automatización](docs/DESPLIEGUE_AUTOMATICO.md)
-- [Estado de auditoría real](docs/ESTADO_EXTRACCIONES_2026-10-20.md)
-
-## 2. Instalación y requisitos
-
-- Node.js **>= 18.18** (`package.json`); para un entorno nuevo, usar una versión LTS compatible.
-- npm y salida HTTPS hacia las webs de proveedores.
-- **Google Chrome o Chromium** accesible en el `PATH`, o variable `CHROME_PATH` / `CHROMIUM_PATH`, para el fallback de páginas dinámicas de Mercaeleva. **No se utiliza Puppeteer ni Playwright**: el navegador se invoca con `child_process` en modo `--headless --dump-dom`.
-- Escritura sobre `storage/`, incluida su persistencia entre ejecuciones si se programa en un servidor.
-
-Desde la raíz del repositorio:
+- Node.js `>=18.18.0`, npm y acceso HTTPS a los portales.
+- Chrome/Chromium para el fallback headless de Mercaeleva (`CHROME_PATH` o `CHROMIUM_PATH` si no está en `PATH`). Se invoca como proceso externo, sin Puppeteer/Playwright.
+- Escritura en `storage/`. Conservar sus archivos entre ejecuciones y no añadirlos a Git.
 
 ```bash
 npm ci
@@ -41,146 +16,97 @@ npm test
 npm run build
 ```
 
-`npm test` compila y ejecuta las pruebas con `node --test` (fixtures locales). **No descarga los catálogos públicos** ni certifica que la paginación real funcione. Verificar que los tests de Cheerio no figuren como omitidos.
+`npm test` compila y ejecuta pruebas locales; **no** valida la cobertura ni la disponibilidad real de los portales. Comprobar que las pruebas de parsers con Cheerio no se omiten.
 
-En PowerShell, si Chrome no es detectado:
+## Comandos habituales
 
-```powershell
-$env:CHROME_PATH = "C:\Program Files\Google\Chrome\Application\chrome.exe"
-```
-
-## 3. Uso inmediato
-
-### Extraer un proveedor
+Desde la raíz del repositorio; `--` separa las opciones de npm de los argumentos del scraper.
 
 ```bash
-npm run scrape -- --provider gam --outPrefix gam-completo
-npm run scrape -- --provider gomariz --outPrefix gomariz-completo
-npm run scrape -- --provider mercaeleva --outPrefix mercaeleva-completo
+npm run scrape -- gam
+npm run scrape -- gomariz
+npm run scrape -- mercaeleva
+npm run scrape -- all --dry-run
+npm run scrape -- all --providers gam,gomariz
+npm run scrape -- all
+npm run validate -- gam
+npm run export -- --help
+npm run cli -- --help
 ```
 
-Los prefijos anteriores reproducen los nombres usados en las extracciones del 20/10/2026, **no los prefijos por defecto**. Si se omite `--outPrefix`, se aplica la configuración de cada adaptador:
+`npm run scrape -- gam` ejecuta un proveedor. Sin indicar proveedor, `scrape` usa GAM por compatibilidad. `all` ejecuta un **lote secuencial** de proveedores en procesos separados; `--dry-run` muestra el plan sin extraer ni escribir. El lote recopila logs individuales y muestra en consola un resumen breve. El scraper individual muestra progreso compacto y productos únicos al finalizar; `--verbose` habilita más detalle.
 
-| Proveedor  | Categorías raíz                                                                           | Prefijo predeterminado  | Carpeta                       |
-| ---------- | ----------------------------------------------------------------------------------------- | ----------------------- | ----------------------------- |
-| GAM        | `elevacion`, `manutencion`, `manipulacion`, `energia`, `otros`, `movilidad`, `maquinaria` | `scrape-gam-marzo-2026` | `storage/scraped/gam/`        |
-| Gomariz    | `venta`                                                                                   | `scrape-gomariz`        | `storage/scraped/gomariz/`    |
-| Mercaeleva | `venta`                                                                                   | `scrape-mercaeleva`     | `storage/scraped/mercaeleva/` |
+| Operación               | Ejemplo                                                  | Nota                                              |
+| ----------------------- | -------------------------------------------------------- | ------------------------------------------------- |
+| Categoría de GAM        | `npm run scrape -- gam --category elevacion`             | Se elige una clave configurada en el adaptador.   |
+| Diagnóstico limitado    | `npm run scrape -- mercaeleva --pages 2 --prefix prueba` | **No usar como catálogo completo ni importar.**   |
+| Selección del lote      | `npm run scrape -- all --providers gam,gomariz`          | Sin `--providers`, incluye todos los registrados. |
+| Validar prefijo elegido | `npm run validate -- gam --prefix prueba-gam`            | Los archivos deben estar publicados e íntegros.   |
+| Ver ayuda de extracción | `npm run scrape -- --help`                               | Incluye opciones avanzadas y alias.               |
+| Ver ayuda del lote      | `npm run scrape:all -- --help`                           | Incluye rutas e historial.                        |
+| Ver ayuda de validación | `npm run validate -- --help`                             | Incluye antigüedad máxima.                        |
 
-Una categoría aislada, con prefijo independiente:
+Alias de opciones del scraper: `--category` / `--categoryKey`, `--pages` / `--maxPages`, `--out` / `--outDir`, `--prefix` / `--outPrefix`. Los nombres largos anteriores siguen funcionando; los scripts npm `scrape:all`, `validate:catalog` y `export:import` se conservan por compatibilidad.
+
+**Atención:** `--pages 2` es un límite máximo, no una garantía de que se haya recorrido el portal. La publicación técnica `complete` tampoco prueba por sí sola la cobertura externa.
+
+## Salidas y validación
+
+La extracción de un proveedor se guarda por defecto en `storage/scraped/<proveedor>/`. La configuración exacta de categorías y prefijos vive en `src/scraping/providers/<proveedor>/config.ts` (GAM incluye también categorías de maquinaria nueva; no asumir únicamente las siete raíces de la auditoría histórica).
+
+| Proveedor    | Prefijo por defecto     |
+| ------------ | ----------------------- |
+| `gam`        | `scrape-gam-marzo-2026` |
+| `gomariz`    | `scrape-gomariz`        |
+| `mercaeleva` | `scrape-mercaeleva`     |
+
+Para un prefijo `<prefijo>`, el proceso genera, según el tipo y resultado de la ejecución, `<prefijo>-all.csv`, `<prefijo>-<categoria>.csv`, `-categories.csv`, `-preparation.json`, `-summary.json`, `-changes.json`, `-errors.json` y `-snapshot-<scope>.json`. Los archivos `-partial-*` sirven **solo para diagnóstico**; el último catálogo válido no debe sustituirse por una ejecución incompleta.
+
+El lote conserva `storage/runs/<run>/run.json`, logs por proveedor y copias de informes. Su bloqueo `storage/scraped/.batch.lock` solo es válido para ejecuciones que comparten almacenamiento local compatible.
+
+Para validar la publicación predeterminada:
 
 ```bash
-npm run scrape -- --provider gam --categoryKey elevacion --outPrefix prueba-elevacion
+npm run validate -- gam
+npm run validate -- gomariz
+npm run validate -- mercaeleva
 ```
 
-Diagnóstico de unas pocas páginas (**no es una extracción completa**):
+El validador exige CSV, preparación, resumen y cambios coherentes, hashes correctos y una antigüedad máxima de 48 h por defecto. Códigos de salida: **0** conforme, **2** revisión necesaria y **1** error. No compara automáticamente los totales de la web externa. Consulta [VALIDACION.md](docs/VALIDACION.md).
+
+## Exportación para importación manual
+
+La extracción **no importa nada**. `ready` en `-preparation.json` indica controles locales satisfechos, no autorización comercial. Para planificar un Excel de altas se necesitan un `companyID` real del entorno destino, un catálogo publicado válido y un inventario **completo y actual** en CSV con `companyID,reference`:
 
 ```bash
-npm run scrape -- --provider gomariz --maxPages 2 --outPrefix prueba-gomariz
+npm run export -- gam --companyID <ID_REAL> --preparation storage/scraped/gam/scrape-gam-marzo-2026-preparation.json --existing storage/inventory/gam.csv --out storage/import/gam-altas.xlsx --dry-run
 ```
 
-No usar `--maxPages 1/2` para publicar catálogos; al alcanzar el límite sin comprobar el final, la ejecución debe considerarse parcial. La comprobación de Mercaeleva es especialmente importante: **`quality.status=complete` no demuestra cobertura total** cuando la paginación devuelve repetidamente la primera página.
+Tras revisar el plan y confirmar expresamente el inventario, sustituir `--dry-run` por `--confirm-inventory` para generar el `.xlsx`. `--allow-empty-inventory` existe, pero requiere justificar que la empresa realmente no tiene referencias registradas. El Excel es **solo para altas**, no actualiza ni elimina productos, no se envía automáticamente y debe revisarse con el importador real. Ver [protocolo de validación](docs/VALIDACION.md).
 
-### Lote de las tres empresas (ejecutor ya existente)
-
-```bash
-npm run scrape:all -- --dry-run
-npm run scrape:all -- --providers gam,gomariz
-npm run scrape:all
-```
-
-`--dry-run` muestra rutas sin ejecutar scraping. Sin `--providers`, el lote ejecuta todos los adaptadores registrados, de manera secuencial, en procesos independientes. Acepta `--outRoot <carpeta>` y `--historyDir <carpeta>`. Si falla un proveedor, continúa con los demás y termina con código distinto de cero. El bloqueo `storage/scraped/.batch.lock` evita **dos lotes simultáneos sobre el mismo almacenamiento local**, pero **no es un bloqueo distribuido para cloud**.
-
-**No activar el lote general de forma programada todavía:** hay que corregir la paginación real de Mercaeleva y completar la aceptación definida en [PHASE7_VALIDACION.md](docs/PHASE7_VALIDACION.md).
-
-### Validar una publicación existente
-
-```bash
-npm run validate:catalog -- --provider gam --outDir storage/scraped/gam --outPrefix gam-completo
-npm run validate:catalog -- --provider gomariz --outDir storage/scraped/gomariz --outPrefix gomariz-completo
-npm run validate:catalog -- --provider mercaeleva --outDir storage/scraped/mercaeleva --outPrefix mercaeleva-completo
-```
-
-Usar exactamente el mismo `outPrefix` de la extracción. El validador comprueba coherencia de CSV, preparación, resumen, hashes y antigüedad (48 h por defecto), **no verifica por sí solo el total de productos publicados en la fuente externa**. Código de salida: `0` = coherencia técnica, `2` = requiere revisión, `1` = error técnico.
-
-## 4. Arquitectura y archivos de salida
+## Arquitectura y desarrollo
 
 ```text
 src/
-  scraper/
-    providers/
-      contracts.ts, index.ts       # contrato y registro de proveedores
-      gam/                         # listados y fichas GAM
-      gomariz/                     # listado de venta Gomariz
-      mercaeleva/                  # Mercaeleva + fallback Chrome/Chromium
-    scrape.ts, io.ts, quality.ts    # extracción, publicación y seguridad
-  automation/                      # lote, ejecuciones e historial
-  import/                          # preparación y exportación de XLSX
-  validation/                      # verificación local de publicación
-  normalizer/                      # normalización histórica de GAM
-  converter/                       # CSV a seed TypeScript (GAM)
-  shared/                           # utilidades CSV
-scripts/run-scheduled.ps1          # programador de tareas de Windows
-storage/                           # DATOS generados (ignorado por Git)
-data/category/                     # snapshot de categorías de Equipzilla
-data/import/                       # snapshot de atributos y relaciones
+  cli/                 Entradas, opciones y salida de terminal
+  contracts/           Tipos compartidos de catálogo y extracción
+  scraping/            Motor, parsers y adaptadores de proveedor
+  catalog/             Identidad, calidad, normalización e importación
+  pipeline/            Ejecución, publicación, lote y validación
+  infrastructure/      HTTP y escritura atómica
+  shared/              CSV transversal
+  tools/gam/           Utilidades históricas específicas de GAM
+
+data/                  Snapshots de categorías y atributos usados por el importador
+scripts/               Lanzador externo para Windows
+storage/               Resultados y estado de ejecución (ignorado)
 ```
 
-Por cada ejecución completa, en `storage/scraped/<proveedor>/` se encuentran los archivos principales:
+[ARQUITECTURA.md](docs/ARQUITECTURA.md) explica las fronteras entre módulos, el flujo de datos, los contratos que no deben romperse y los pasos reales para incorporar un proveedor.
 
-| Patrón                                                            | Significado                                                      |
-| ----------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `<prefijo>-all.csv`                                               | Inventario agregado con deduplicación                            |
-| `<prefijo>-<categoria>.csv`                                       | Salida por categoría del proveedor                               |
-| `<prefijo>-categories.csv`                                        | Categorías extraídas/configuradas                                |
-| `<prefijo>-preparation.json`                                      | Candidatos de importación, estado `ready`/`review` y motivos     |
-| `<prefijo>-summary.json`                                          | Métricas, calidad, publicación y huellas SHA-256                 |
-| `<prefijo>-changes.json`                                          | Altas, cambios y posibles ausencias respecto del snapshot previo |
-| `<prefijo>-errors.json`                                           | Incidencias de páginas y productos, si se producen               |
-| `<prefijo>-snapshot-<scope>.json`                                 | Último inventario válido de ese ámbito                           |
-| `<prefijo>-partial-all.csv`, `<prefijo>-partial-preparation.json` | Diagnósticos parciales: **no importar**                          |
+### Herramientas heredadas de GAM
 
-El lote añade `storage/runs/<fecha>-<id>/run.json` y logs/informes archivados de cada proveedor. **Conservar snapshots, historial y errores en el repositorio de ejecución**; que no se incluyeran en el ZIP de auditoría no significa que sobren operacionalmente.
-
-### CSV: contrato actual
-
-Columnas base: `categoryKey`, `categoryName`, `title`, `shortDescription`, `longDescription`, `price`, `reference`, `brand`, `model`, `year`, `location`, `country`, `horometer`, `serialNumber`, `image`, `url`, `specJson`, `providerId`, `imagesJson`.
-
-Se añaden columnas variables `spec__<nombre de especificación>` en función de las fichas. `imagesJson` contiene el listado de URLs de imágenes; `image` es la imagen principal. Algunas fuentes tienen datos ausentes: deben mantenerse vacíos, nunca inventarse.
-
-La deduplicación utiliza referencia, serie y finalmente URL canónica, con aislamiento por `providerId`. **Título/modelo repetidos no equivalen a producto duplicado**: varias unidades pueden tener el mismo modelo y referencias diferentes. La identidad externa de comparación es la pareja `providerId + reference`.
-
-### Seguridad de publicación
-
-Una ejecución con fallos o catálogo vacío/incompleto no debe sustituir el último catálogo aprobado. Las ausencias se registran como `suspectedMissing`, no como bajas. Las huellas SHA-256 permiten verificar que el CSV y la preparación corresponden al resumen. Los controles actuales **no contrastan automáticamente** el total de páginas/resultados del proveedor: por eso Mercaeleva pudo registrarse como `complete` aunque solo se recuperaron 20 fichas.
-
-## 5. Preparación e importación con Equipzilla
-
-**Tres niveles distintos:**
-
-1. `-all.csv`: datos obtenidos de la web; **no es** el archivo consumido por el importador de Equipzilla.
-2. `-preparation.json`: candidatos con categorías/atributos calculados desde `data/category/categorySell-flat.json` y `data/import/attributeCatalog.json`; `ready` significa que pasaron controles locales, **no** que estén cargados en Equipzilla.
-3. `.xlsx`: archivo para el importador existente de **altas**; se genera **solo tras verificar `companyID` real e inventario actualizado**. No modifica productos ya existentes y no se envía por sí solo a ninguna API.
-
-Para estudiar las opciones:
-
-```bash
-npm run export:import -- --help
-```
-
-Ejemplo de análisis **sin crear archivo** (sustituir `<ID_REAL>` y la ruta del inventario):
-
-```bash
-npm run export:import -- --provider gam --companyID <ID_REAL> --preparation storage/scraped/gam/gam-completo-preparation.json --existing storage/inventory/gam.csv --out storage/import/gam-altas.xlsx --dry-run
-```
-
-El inventario debe ser un CSV completo, **actual** y correspondiente a la empresa, con columnas `companyID,reference`. Solo tras validarlo se sustituye `--dry-run` por `--confirm-inventory`. El comando rechaza inventarios vacíos salvo `--allow-empty-inventory` explícito y justificado, revisa integridad/frescura, omite referencias existentes y limita el Excel a **10 MB**. Consultar [PHASE7_VALIDACION.md](docs/PHASE7_VALIDACION.md) antes de intentar la importación manual en pruebas.
-
-**Precauciones:** los 16 productos marcados `ready` en la auditoría del 20/10/2026 son vehículos ligeros de GAM, no maquinaria industrial. La importación de esos registros **también requiere aprobación de negocio**. Para Gomariz, 143 fichas carecen de precio público. No asignar categorías, atributos obligatorios o importes de manera artificial. No reutilizar `companyID` histórico sin confirmar el entorno destino.
-
-### Herramientas históricas específicas de GAM
-
-El flujo `normalize:gam` → `convert:gam` sigue disponible, pero **no es el flujo recomendado para incorporar automáticamente otros proveedores**:
+Siguen disponibles, independientes del flujo multiproveedor:
 
 ```bash
 npm run normalize:gam -- <entrada.csv> <salida.csv> --report <informe.json>
@@ -189,42 +115,13 @@ npm run category:tree
 npm run slugs:gam
 ```
 
-Opciones de normalización: `--allow-unknown`, `--expand-spec-columns`, `--max-values-per-key <n>`. El conversor conserva opciones históricas `--idStart`, `--companyID`, `--defaultImage`, `--referencePrefix`, con valores que **no deben aplicarse a otros proveedores ni asumirse válidos** en el backend actual.
+También existen los scripts `normalize:gam:default`, `convert:gam:default` y `convert:gam:raw:default`. Sus salidas/valores históricos no deben trasladarse sin revisión a otros proveedores ni al backend actual.
 
-## 6. Comandos avanzados de scraping
+## Operación y documentación
 
-```bash
-# Ficha/listado puntual
-npm run scrape -- --provider gam --url "https://online.gamrentals.com/es/8-plataformas-elevadoras-segunda-mano" --key elevacion --name "Elevación" --outPrefix inspeccion
+- [Arquitectura y contratos](docs/ARQUITECTURA.md): estructura actual, dependencias, datos y extensión de proveedores.
+- [Validación y aceptación](docs/VALIDACION.md): pruebas, control de cobertura y condiciones de importación.
+- [Despliegue y automatización](docs/DESPLIEGUE_AUTOMATICO.md): ejecución en servidor/Windows y requisitos cloud pendientes.
+- [Auditoría del 20/10/2026](docs/ESTADO_EXTRACCIONES_2026-10-20.md): incidencias históricas y limitaciones conocidas.
 
-# Descubrir árbol GAM
-npm run scrape -- --provider gam --discoverTree --rootUrl "https://online.gamrentals.com/es/3-maquinaria-segunda-mano" --onlyCategories --outPrefix categorias-gam
-
-# Subcategorías configuradas
-npm run scrape -- --provider gam --discoverSubcategories --outPrefix subcategorias-gam
-```
-
-Flags principales: `--provider`, `--categoryKey`, `--outDir`, `--outPrefix`, `--url`, `--key`, `--name`, `--discoverTree`, `--rootUrl`, `--discoverSubcategories`, `--onlyCategories`, `--maxPages`, `--stallStopAfter`, `--concurrencyPages`, `--concurrencyProducts`, `--timeoutMs`, `--delayMs`, `--userAgent`.
-
-Cada proveedor limita la concurrencia máxima y el retardo mínimo efectivo a sus valores de seguridad, aunque la CLI solicite otros mayores. Descubrimiento de árbol de Gomariz/Mercaeleva: actualmente solo la categoría raíz de venta; no equivale a un mapa real de sus subcategorías.
-
-## 7. Operaciones, despliegue y nuevas empresas
-
-- **Windows:** `scripts/run-scheduled.ps1` funciona con Programador de tareas, una vez aprobadas las extracciones. Ejemplo de argumentos: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\RUTA\scripts\run-scheduled.ps1" -Providers "gam,gomariz"`.
-- **Linux:** cron/systemd pueden ejecutar desde la raíz `npm run scrape:all`, en una máquina con Node, Chromium y almacenamiento persistente.
-- **Cloud:** un **Cloud Run Job** encaja con el proceso CLI, y **Cloud Scheduler** puede invocarlo. Pero faltan contenedor, autenticación/configuración cloud y, sobre todo, persistencia **segura** de snapshots, CSV e historial. **No asumir que montar un bucket con Cloud Storage FUSE conserva la semántica POSIX del lock/renombrado atómico.** Véase [guía de despliegue](docs/DESPLIEGUE_AUTOMATICO.md).
-- **Nuevos proveedores:** crear `src/scraper/providers/<id>/`, implementar `ScraperProvider`, registrar en `src/scraper/providers/index.ts`, añadir fixtures y validar extracción completa; después podrá seleccionarse con `--providers <id>` sin modificar el runner.
-
-### Resolución rápida de problemas
-
-| Síntoma                              | Qué mirar                                                                             |
-| ------------------------------------ | ------------------------------------------------------------------------------------- |
-| `0` productos o pocas páginas        | Paginación real y cambios HTML; **no** asumir catálogo vacío                          |
-| Mercaeleva siempre devuelve 20       | Incidencia de paginación; no permitir despliegue sin corrección                       |
-| Error de selector Cheerio en GAM     | Verificar que se ha integrado la corrección del enlace `#` en el parser de pestañas   |
-| Gomariz sin precio                   | La web muestra «Ver precio»; no fabricarlo                                            |
-| Muchas fichas `review`               | Revisar snapshot categorías/atributos, requeridos y disponibilidad real del dato      |
-| Bloqueo `.batch.lock`                | Verificar que no se ejecuta un lote; retirar manualmente solo si es antiguo           |
-| CSV válido, importador rechaza Excel | Revisar inventario, `companyID`, categorías, atributos obligatorios y límite de 10 MB |
-
-**Regla de proyecto:** todo cambio del scraper debe superar `npm test`, una muestra real por proveedor y una auditoría de cobertura antes de permitir programación o importación. **Marketplace-Back queda fuera de alcance.**
+**No se incluyen** Dockerfile, CI/CD, persistencia cloud ni importación automática. La reestructuración arquitectónica y la simplificación de la CLI **no equivalen a aceptación productiva**.

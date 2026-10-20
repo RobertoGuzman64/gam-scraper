@@ -1,131 +1,103 @@
-# Despliegue automático del scraper — guía operativa
+# Despliegue y ejecución programada — Equipzilla Scraper
 
-**Versión documental:** 20/10/2026. **No se ha desplegado un entorno cloud ni se ha añadido un Dockerfile a este repositorio en esta actualización.** Esta guía distingue los comandos que **ya existen** de la infraestructura por preparar y probar.
+Guía para infraestructura basada en el código actual. **No hay Dockerfile, CI/CD, despliegue cloud, almacenamiento remoto ni importación automática implementados** en este repositorio. Antes de programar extracciones, completar [VALIDACION.md](VALIDACION.md).
 
-## 1. Respuesta técnica para infraestructura
+## Qué se despliega
 
-- **Stack:** Node.js + TypeScript (`tsc` a JavaScript), npm, Cheerio y `p-limit`.
-- **Tipo de proceso:** aplicación **CLI por lotes**; no abre un puerto ni expone rutas HTTP, por lo que no necesita Next.js ni un servidor permanente.
-- **Navegación:** HTTP y análisis HTML con Cheerio. Para listados dinámicos de **Mercaeleva** hay fallback a Google Chrome/Chromium en modo headless, invocado por `child_process` con `--dump-dom` (sin Puppeteer/Playwright).
-- **Punto de entrada manual:** `npm run scrape -- --provider <id>`.
-- **Punto de entrada para lotes:** `npm run scrape:all`, que compila y ejecuta los proveedores en secuencia, con `run.json`, logs e informes.
-- **Salidas y estado:** CSV/JSON, snapshots de inventario, diferenciales, logs y fichero de bloqueo en `storage/`.
-- **Base de datos/backend:** **no se conecta ni publica a la API**. El Excel para el importador de altas se genera aparte y requiere inventario/ID real y confirmación manual.
+- **Runtime:** Node.js `>=18.18.0`, npm y proyecto TypeScript compilado con `tsc` a `dist/` (ESM). Dependencias de ejecución: Cheerio y `p-limit`.
+- **Proceso:** CLI que termina después de extraer; **no** abre puerto HTTP ni requiere servicio web.
+- **Acceso exterior:** HTTPS a portales; Mercaeleva puede utilizar Chrome/Chromium headless (`--dump-dom`) mediante `child_process` y `CHROME_PATH`/`CHROMIUM_PATH`.
+- **Puntos de entrada reales:** `node dist/cli/index.js scrape <id>`, `node dist/cli/index.js batch` o, para el lote compilado, `node dist/cli/index.js scrape all`. El lote crea procesos hijos mediante `dist/cli/scrape.js`.
+- **En desarrollo:** los scripts `npm run scrape -- <id>`, `npm run scrape -- all` y `npm run scrape:all` **compilan antes de arrancar**. Para producción compilada puede invocarse Node directamente.
+- **Persistencia:** `storage/scraped/` (CSV/JSON, snapshots, bloqueo) y `storage/runs/` (historial, logs e informes). Los snapshots de entrada `data/category/` y `data/import/` también deben existir en el directorio de ejecución.
 
-**Decisión de puesta en marcha:** se puede programar un lote de prueba o únicamente GAM/Gomariz tras validación individual, pero el conjunto de las tres compañías **no está aceptado** por el problema de paginación de Mercaeleva. La automatización de scraping y la importación a Equipzilla son dos hitos separados.
+El lote únicamente recopila fuentes. **No envía datos a Marketplace-Back** ni llama al importador de Excel.
 
-## 2. Opción operativa sencilla: VM o servidor con disco persistente
+## Opción sencilla: servidor o VM con disco persistente
 
-Este es el despliegue **más cercano a lo que soporta el código actual**, porque el scraper trabaja con archivos y renombrados, y el lote usa un bloqueo local basado en `open(..., "wx")`.
+Es la alternativa con menos incompatibilidades: la publicación utiliza escrituras y renombrados atómicos en disco local y el lote usa `open(..., "wx")` para el lock. Requisitos: permisos de escritura, espacio suficiente, conectividad HTTPS, Chrome/Chromium para el proveedor que lo necesite y monitorización.
 
-### Linux (cron o systemd)
-
-1. Instalar Node.js compatible (`>=18.18`, recomendable LTS mantenida), npm y Chromium/Chrome en una VM o servidor con salida HTTPS.
-2. Clonar el repositorio en una carpeta dedicada y comprobar acceso de escritura para el usuario del proceso.
-3. Instalar dependencias, compilar y probar:
+Preparación desde la raíz real del repositorio:
 
 ```bash
-cd /ruta/real/al/gam-scraper
 npm ci
 npm test
-npm run scrape:all -- --dry-run
+npm run build
+npm run scrape -- all --dry-run
 ```
 
-4. Ejecutar primero los proveedores aceptados, manualmente, antes de crear ninguna recurrencia:
+Antes de programar, ejecutar manualmente **solo los proveedores aceptados**, por ejemplo:
 
 ```bash
-npm run scrape:all -- --providers gam,gomariz
+npm run scrape -- all --providers gam,gomariz
 ```
 
-5. Examinar `storage/runs/<run>/run.json`, logs `*.log` y en cada proveedor `<prefijo>-summary.json`, `-changes.json`, `-preparation.json` y `-all.csv`. Confirmar permisos, salida y cumplimiento de [validación](PHASE7_VALIDACION.md).
-6. **Solo tras aceptación formal**, utilizar el planificador del sistema para ejecutar **desde el directorio raíz del repo**. Cron, ejemplo de estructura (no activar sin aprobar días, hora, zona y rutas):
+Ese ejemplo es una selección operativa, **no una declaración de que GAM o Gomariz estén aceptados**. Examinar `storage/runs/<run>/run.json`, los logs individuales y los archivos `<prefijo>-summary.json` y `-changes.json`. El sistema debe conservar `storage/` entre reinicios y ejecuciones.
 
-```cron
-# Ejemplo ilustrativo: elegir la periodicidad aprobada por el equipo.
-# <min> <hora> <día-mes> <mes> <día-semana> cd /ruta/real/al/gam-scraper && /ruta/real/a/npm run scrape:all -- --providers gam,gomariz
-```
+### Windows
 
-7. Configurar alertas operativas: código de salida, estado `run.json`, `quality.status`, duración anómala, faltantes y ausencia de ficheros de una ejecución esperada.
-
-**Requisitos de servidor:** conservar `storage/` entre ejecuciones (CSV completos, snapshots, run history y lock). No compartir prefijos con tareas de prueba. No iniciar dos jobs contra la misma carpeta, aunque las URLs de proveedores sean distintas. El proceso crea el lock solo para el lote, no para `npm run scrape` individual.
-
-### Windows (Programador de tareas)
-
-El repo ya incluye `scripts/run-scheduled.ps1`:
+El repositorio contiene `scripts/run-scheduled.ps1`, que se sitúa en la raíz y ejecuta el alias `scrape:all`:
 
 ```powershell
 npm ci
 npm test
-npm run scrape:all -- --dry-run
+npm run scrape -- all --dry-run
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\RUTA\DEL\REPO\scripts\run-scheduled.ps1" -Providers "gam,gomariz"
 ```
 
-La tarea programada debe ejecutar **`powershell.exe`** con el parámetro `-File`, cuenta con permisos de escritura y acceso a Node/npm/Chrome. Establecer “no iniciar segunda instancia” y revisar el último código de salida e historial. El script fija automáticamente la carpeta raíz del repositorio. **La máquina debe permanecer encendida**.
+En el Programador de tareas, usar cuenta autorizada con Node/npm/Chrome disponibles, disco persistente, código de salida supervisado y política de **no iniciar otra instancia**. Mantener el equipo encendido durante la ejecución.
 
-## 3. Opción cloud propuesta: Cloud Run Jobs + Cloud Scheduler
+### Linux
 
-Arquitectura propuesta, **pendiente de implementar**:
+Un `cron` o unidad `systemd` puede ejecutar desde la raíz del proyecto un comando aceptado, con usuario específico y registro del código de salida. Ejemplo de comando manual (sin fijar horarios ni habilitar automatización):
 
-```text
-Cloud Scheduler (periodicidad autorizada)
-    ↓ trigger autenticado
-Cloud Run Job (1 tarea, Node.js + Chromium)
-    ↓ publicación validada
-Almacén persistente y seguro de CSV/JSON/snapshots + histórico/logs
-    ↓ revisión / aprobación separada
-Exportador de Excel (offline) → importador existente de Equipzilla (manual)
+```bash
+cd /ruta/real/equipzilla-scraper
+npm run scrape -- all --providers gam,gomariz
 ```
 
-Cloud Run **Jobs** es adecuado para procesos que terminan tras ejecutar una tarea, a diferencia de un servicio HTTP que debe responder peticiones. Cloud Scheduler permite programar el job con IAM. Referencias oficiales:
+No ejecutar simultáneamente dos lotes sobre el mismo `storage/`; la protección `.batch.lock` solo funciona con filesystem local compatible. La extracción individual no está cubierta por ese bloqueo.
 
-- [Crear Cloud Run Jobs](https://docs.cloud.google.com/run/docs/create-jobs)
-- [Programar Cloud Run Jobs con Cloud Scheduler](https://docs.cloud.google.com/run/docs/execute/jobs-on-schedule)
-- [Configurar volúmenes de Cloud Storage para jobs](https://docs.cloud.google.com/run/docs/configuring/jobs/cloud-storage-volume-mounts)
-- [Contrato del filesystem de Cloud Run](https://docs.cloud.google.com/run/docs/container-contract)
+## Opción futura: Cloud Run Jobs + Cloud Scheduler
 
-### Qué hay que implementar antes de pulsar «Deploy»
+Puede encajar con un scraper CLI por lotes, **pero necesita trabajo de infraestructura y pruebas**, no basta con subir el repositorio. Diseño propuesto:
 
-| Área | Trabajo pendiente | Motivo |
-| --- | --- | --- |
-| Contenedor | Dockerfile de producción y prueba de construcción | El repo actual **no** trae Dockerfile |
-| Runtime | Node.js + dependencias y binario Chromium accesible (`CHROME_PATH`) | Listados dinámicos Mercaeleva |
-| Entrypoint | `node dist/automation/run.js` desde raíz de proyecto, con `data/category/` y `data/import/` disponibles | Evitar compilar en cada arranque, respetar rutas de snapshots |
-| Persistencia | Diseñar almacenamiento duradero de CSV, `preparation`, `summary`, snapshots, cambios e historial | El filesystem del contenedor es **efímero** |
-| Exclusión mutua | Bloqueo **distribuido** o configuración que impida ejecución solapada | `.batch.lock` solo protege correctamente una carpeta local compatible |
-| Alertas | Logs centralizados + fallos/cobertura anómala | Éxito de proceso no implica catálogo completo |
-| Seguridad | Cuenta de servicio de mínimo privilegio, sin secretos en repositorio | Acceso al almacenamiento y programación |
-| QA | Test end-to-end del contenedor y aceptación de cada proveedor | No basta `npm test` |
+```text
+Cloud Scheduler (solo tras autorización)
+        ↓
+Cloud Run Job (Node.js + Chromium, un ejecutor)
+        ↓
+Publicación segura hacia almacenamiento duradero
+        ↓
+Auditoría y aprobación separada del importador de altas
+```
 
-**Atención especial a Cloud Storage FUSE:** un bucket montado como volumen **no es un filesystem POSIX completo** y **no proporciona control de concurrencia** entre escritores. El código actual usa `rename` para escrituras temporales y `open("wx")` para `.batch.lock`; por tanto **no se debe declarar compatible directamente con un montaje FUSE sin rediseñar o probar esas operaciones**. Una opción segura es producir los archivos en un volumen local temporal de un único job, y después implementar una etapa explícita de publicación a Cloud Storage usando generación/versionado, checksums y bloqueo externo o serialización del planificador. Esta etapa **no existe todavía** en el código.
+Pendientes necesarios:
 
-**Tampoco basta ejecutar el contenedor sobre filesystem efímero:** perdería snapshots e historial entre invocaciones, invalidando las comparaciones de nuevas/desaparecidas y la trazabilidad. No declarar desplegado un flujo productivo así.
+1. Construir Dockerfile e imagen con binario Chromium, Node y dependencias necesarias, `dist/` compilado y snapshots `data/` disponibles.
+2. Determinar identidad de servicio, permisos mínimos, región y estrategia de persistencia de CSV, JSON, snapshots e historial.
+3. Diseñar exclusión mutua entre instancias y publicación consistente. El lock `.batch.lock` **no es distribuido**.
+4. No tratar Cloud Storage FUSE como un filesystem POSIX idéntico: verificar las operaciones de escritura/renombrado y bloquear concurrencia. Preferir un paso explícito de subida/versionado desde disco local temporal si se elige almacenamiento de objetos.
+5. Ensayar una ejecución manual, otra consecutiva y un fallo inducido. Verificar que se conservan snapshots e informes correctos, sin borrar inventario ni sustituir una publicación válida por otra parcial.
+6. Añadir monitorización, alertas de código distinto de cero, caídas de recuentos y condiciones de `review` antes de conectar un planificador.
 
-### Checklist de plataforma antes de crear la tarea recurrente
+El filesystem efímero del contenedor **no basta** para preservar snapshots e historial entre jobs. No se han definido credenciales ni horarios en el repositorio.
 
-1. Definir proyecto, región, cuenta de servicio, bucket/esquema de persistencia y responsables (infraestructura).
-2. Preparar Dockerfile y probar `npm test` en pipeline; instalar binario Chromium dentro de la imagen.
-3. Incluir `dist/`, dependencias de runtime y JSON `data/category`, `data/import` en imagen; el código los lee **en tiempo de ejecución**.
-4. Conectar la salida persistente garantizando escrituras coherentes y conservación de snapshots anteriores ante errores.
-5. Ejecutar manualmente **una sola tarea**, comprobar su código de salida, datos y logs; no usar Mercaeleva mientras persista el fallo P0.
-6. Ejecutar dos pasadas controladas para verificar histórico, comparaciones y `suspectedMissing` sin generar bajas.
-7. Probar una excepción de red y comprobar que los datos publicados válidos no se reemplazan por parciales.
-8. Configurar Cloud Scheduler y alertas solo tras aceptación; evitar ejecuciones superpuestas o dobles disparadores.
+Documentación oficial de referencia:
 
-No se fijan credenciales, regiones, buckets ni cron concretos aquí porque son decisiones de infraestructura que deben confirmar los responsables del entorno.
+- [Crear Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs)
+- [Programar jobs](https://cloud.google.com/run/docs/execute/jobs-on-schedule)
+- [Montajes Cloud Storage](https://cloud.google.com/run/docs/configuring/jobs/cloud-storage-volume-mounts)
 
-## 4. Convenciones para operaciones y fallos
+## Diagnóstico operativo
 
-- `npm run scrape:all -- --dry-run`: inspección sin peticiones.
-- `npm run scrape:all -- --providers gam,gomariz`: selección limitada (la selección es una decisión de operación y debe documentarse).
-- `--outRoot` y `--historyDir`: controlan directorios del runner; **requieren persistencia consistente** si hay ejecuciones recurrentes.
-- `run.json`: `complete`, `partial` o `failed`; algunos `run.json` pueden quedar en `running` si el proceso se corta.
-- Código distinto de cero: revisar logs, `-errors.json`, `-summary.json` y `-partial-*` del proveedor afectado.
-- Cambio brusco de recuentos: detener importación y comparar con portal; las reglas de calidad no detectan automáticamente todas las pérdidas de cobertura.
-- `.batch.lock` antiguo: verificar actividad real **antes** de retirarlo manualmente, nunca hacerlo a ciegas.
-- Nunca borrar registros de Equipzilla a partir de `suspectedMissing`.
+| Síntoma                                               | Acción                                                                             |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Código de salida distinto de cero                     | Revisar `run.json`, logs, `-summary.json`, `-errors.json` y archivos `-partial-*`. |
+| Catálogo aparentemente completo, pero pocos productos | Contrastar páginas y contador externo; el estado técnico no garantiza cobertura.   |
+| `run.json` queda en `running`                         | Comprobar interrupción y logs; no interpretar el estado como publicación aceptada. |
+| Lock `.batch.lock` persistente                        | Verificar si hay un lote activo antes de retirarlo manualmente.                    |
+| Proveedor con muchos candidatos `review`              | Revisar categorías/atributos y aprobar datos de negocio antes de cualquier Excel.  |
+| Aparecen `suspectedMissing`                           | Conservar informe y contrastar la fuente; **nunca dar de baja automáticamente**.   |
 
-## 5. Próximos pasos para un despliegue real
-
-**Orden recomendado:** (1) corregir y verificar cobertura de Mercaeleva, (2) decidir qué proveedores quedan autorizados, (3) elegir VM persistente o implementar Docker + persistencia segura para Cloud Run, (4) añadir alertas y ejecutar dos ciclos controlados, (5) programar scraping, y **más adelante, por separado**, validar generación/importación de XLSX con IDs e inventario reales.
-
-**Resultado documental actual:** el proyecto es *automatizable*, tiene un runner de lotes, pero **no es aún un servicio de scraping cloud listo para desplegar sin trabajo adicional**, ni un conector de importación automática al backend.
+**Orden de puesta en producción:** corregir las incidencias de cada portal (en particular la cobertura conocida de Mercaeleva), validar fuentes e inventario, probar persistencia/alertas, autorizar proveedores concretos y solo entonces programar su extracción. La importación es otro proceso con aprobación independiente.

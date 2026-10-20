@@ -4,12 +4,12 @@
 
 ## Resumen ejecutivo
 
-| Proveedor | Fichas del CSV | URL únicas | Referencias únicas | `ready` | `review` | Estado técnico informado |
-| --- | ---: | ---: | ---: | ---: | ---: | --- |
-| GAM | 268 | 268 | 268 | 16 | 252 | `complete` |
-| Gomariz | 143 | 143 | 143 | 0 | 143 | `complete` |
-| Mercaeleva | 20 | 20 | 20 | 0 | 20 | `complete`, **pero cobertura real incompleta** |
-| **Total** | **431** | **431** | **431** | **16** | **415** | No apto para importación masiva |
+| Proveedor  | Fichas del CSV | URL únicas | Referencias únicas | `ready` | `review` | Estado técnico informado                       |
+| ---------- | -------------: | ---------: | -----------------: | ------: | -------: | ---------------------------------------------- |
+| GAM        |            268 |        268 |                268 |      16 |      252 | `complete`                                     |
+| Gomariz    |            143 |        143 |                143 |       0 |      143 | `complete`                                     |
+| Mercaeleva |             20 |         20 |                 20 |       0 |       20 | `complete`, **pero cobertura real incompleta** |
+| **Total**  |        **431** |    **431** |            **431** |  **16** |  **415** | No apto para importación masiva                |
 
 **La ausencia de fallos de extracción registrados (`failures=0`) solo indica que se procesaron las URLs descubiertas; no garantiza que se descubrieran todas las del portal.**
 
@@ -21,18 +21,18 @@
 
 ## Cobertura de campos — valores no vacíos
 
-| Campo | GAM (268) | Gomariz (143) | Mercaeleva (20) |
-| --- | ---: | ---: | ---: |
-| Título / referencia / URL | 268 | 143 | 20 |
-| `price` | 267 | 0 | 15 |
-| `brand` | 264 | 143 | 20 |
-| `model` | 265 | 134 | 20 |
-| `year` | 268 | 140 | 19 |
-| `location` | 266 | 0 | 0 |
-| `country` | 267 | 0 | 0 |
-| `horometer` | 246 | 0 | 19 |
-| `serialNumber` | 262 | 0 | 0 |
-| Imagen principal / `specJson` | 268 | 143 | 20 |
+| Campo                         | GAM (268) | Gomariz (143) | Mercaeleva (20) |
+| ----------------------------- | --------: | ------------: | --------------: |
+| Título / referencia / URL     |       268 |           143 |              20 |
+| `price`                       |       267 |             0 |              15 |
+| `brand`                       |       264 |           143 |              20 |
+| `model`                       |       265 |           134 |              20 |
+| `year`                        |       268 |           140 |              19 |
+| `location`                    |       266 |             0 |               0 |
+| `country`                     |       267 |             0 |               0 |
+| `horometer`                   |       246 |             0 |              19 |
+| `serialNumber`                |       262 |             0 |               0 |
+| Imagen principal / `specJson` |       268 |           143 |              20 |
 
 La presencia de texto no certifica que sea correcto. No se han verificado individualmente todas las fotografías ni cada valor técnico contra el fabricante.
 
