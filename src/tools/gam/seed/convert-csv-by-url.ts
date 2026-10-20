@@ -1,3 +1,5 @@
+import { setImmediate as yieldToTerminal } from "node:timers/promises";
+import { runToolTask } from "../../../cli/reporting/tool-task.js";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -329,7 +331,7 @@ const resolveCategorySellIdAuto = (
     return null;
 };
 
-export const convertGamCsvToSeedTsAuto = async (options: ConvertOptions): Promise<void> => {
+export const convertGamCsvToSeedTsAuto = async (options: ConvertOptions, onProgress?: (done: number, total: number) => void): Promise<void> => {
     const idx = await loadCategoryIndex(options.categorySellFlatJsonPath);
 
     const csv = await readFile(options.inputCsvPath, "utf8");
@@ -363,6 +365,10 @@ export const convertGamCsvToSeedTsAuto = async (options: ConvertOptions): Promis
     const out: SeedProduct[] = [];
 
     for (let r = 0; r < parsed.rows.length; r += 1) {
+        if (r % 250 === 0) {
+            onProgress?.(r, parsed.rows.length);
+            await yieldToTerminal();
+        }
         const row = parsed.rows[r] ?? [];
         const categoryKey = normalizeSpace(row[iCategoryKey] ?? "");
         const title = normalizeSpace(row[iTitle] ?? "");
@@ -434,6 +440,7 @@ const products = ${JSON.stringify(out, null, 2).replace(/"Segunda_Mano"/g, "Prod
 export default products;
 `;
 
+    onProgress?.(parsed.rows.length, parsed.rows.length);
     await mkdir(dirname(options.outputTsPath), { recursive: true });
     await writeFile(options.outputTsPath, ts, "utf8");
     await writeFile(`${options.outputTsPath}.report.json`, JSON.stringify(report, null, 2), "utf8");
@@ -454,7 +461,9 @@ if (isMain(import.meta.url)) {
         throw new Error("Uso: node dist/conversor/convertidorTS.js <input.csv> <output.ts> <categorySell-flat.json>");
     }
 
-    await convertGamCsvToSeedTsAuto({
+    await runToolTask("SEMILLAS POR URL", async (status) => {
+        status.update(`SEMILLAS POR URL | convirtiendo ${inputCsvPath}`);
+        await convertGamCsvToSeedTsAuto({
         inputCsvPath: resolve(inputCsvPath),
         outputTsPath: resolve(outputTsPath),
         categorySellFlatJsonPath: resolve(categoryFlatPath),
@@ -463,5 +472,7 @@ if (isMain(import.meta.url)) {
         defaultImage: "https://online.gamrentals.com/img/p/es-default.jpg",
         referencePrefix: "GAM-",
         failOnUnresolved: false
+    }, (done, total) => status.update(`SEMILLAS POR URL | procesando ${done}/${total} filas`));
+        return `Archivo: ${resolve(outputTsPath)} | Informe: ${resolve(outputTsPath)}.report.json`;
     });
 }

@@ -1,3 +1,6 @@
+import { setImmediate as yieldToTerminal } from "node:timers/promises";
+import { runToolTask } from "../../cli/reporting/tool-task.js";
+import type { LiveStatus } from "../../cli/reporting/live-status.js";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { parseCsv } from "../../shared/csv-parse.js";
@@ -214,8 +217,9 @@ const ensureSummary = (m: Record<string, SummaryWorking>, key: string): SummaryW
   return created;
 };
 
-const main = async (): Promise<void> => {
+const main = async (status: LiveStatus): Promise<string> => {
   const args = parseArgs(process.argv.slice(2));
+  status.update(`NORMALIZACIÓN GAM | leyendo ${args.input}`);
 
   const inputPath = resolve(args.input);
   const outputPath = resolve(args.output);
@@ -236,7 +240,14 @@ const main = async (): Promise<void> => {
   const allNormalizedSpecKeys = new Set<string>();
   const summaryMap: Record<string, SummaryWorking> = {};
 
+  let processed = 0;
+  status.update(`NORMALIZACIÓN GAM | procesando 0/${rows.length} filas`);
   for (const row of rows) {
+    processed += 1;
+    if (processed % 250 === 0) {
+      status.update(`NORMALIZACIÓN GAM | procesando ${processed}/${rows.length} filas`);
+      await yieldToTerminal();
+    }
     const specJson = row["specJson"] ?? "";
     if (specJson.trim()) rowsWithSpecJson += 1;
 
@@ -330,6 +341,7 @@ const main = async (): Promise<void> => {
     headers.push(...additions);
   }
 
+  status.update(`NORMALIZACIÓN GAM | guardando CSV | ${outputPath}`);
   await ensureOutputDir(outputPath);
   const csvOut = toCsv(rows, headers);
   await writeFile(outputPath, csvOut, "utf8");
@@ -353,6 +365,7 @@ const main = async (): Promise<void> => {
     };
   }
 
+  status.update(`NORMALIZACIÓN GAM | guardando informe | ${reportPath}`);
   await ensureOutputDir(reportPath);
   const report: Report = {
     inputCsv: args.input,
@@ -371,6 +384,7 @@ const main = async (): Promise<void> => {
   if (!args.allowUnknown && (unknownTotal > 0 || rowsWithInvalidSpecJson > 0)) {
     process.exitCode = 1;
   }
+  return `${rows.length} filas | JSON inválidos: ${rowsWithInvalidSpecJson} | Claves desconocidas: ${unknownTotal}\n  CSV: ${outputPath}\n  Informe: ${reportPath}`;
 };
 
-void main();
+await runToolTask("NORMALIZACIÓN GAM", main);

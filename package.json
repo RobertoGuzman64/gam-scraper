@@ -8,7 +8,7 @@
   },
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
-    "build": "tsc -p tsconfig.json",
+    "build": "node scripts/run-build.mjs",
     "scrape": "npm run -s build && node dist/cli/index.js scrape",
     "normalize:gam": "npm run -s build && node dist/tools/gam/normalize-csv.js",
     "normalize:gam:default": "npm run -s build && node dist/tools/gam/normalize-csv.js storage/scraped/gam/scrape-gam-marzo-2026-all.csv storage/normalized/gam/scrape-gam-marzo-2026-all.normalized.csv --report storage/normalized/gam/normalize.report.json",
@@ -17,7 +17,7 @@
     "convert:gam:default": "npm run -s build && node dist/tools/gam/seed/convert-csv.js storage/normalized/gam/scrape-gam-marzo-2026-all.normalized.csv storage/seeds/seedDataProduct.gam.ts data/category/categorySell-flat.json",
     "category:tree": "npm run -s build && node dist/tools/gam/seed/convert-csv-by-category.js",
     "slugs:gam": "npm run -s build && node dist/tools/gam/seed/convert-csv-by-url.js",
-    "test": "npm run -s build && node scripts/run-tests.mjs",
+    "test": "node scripts/run-build.mjs --quiet && node scripts/run-tests.mjs",
     "scrape:all": "npm run -s build && node dist/cli/index.js batch",
     "export:import": "npm run -s build && node dist/cli/index.js export",
     "validate:catalog": "npm run -s build && node dist/cli/index.js validate",

@@ -1,3 +1,5 @@
+import { LiveStatus, formatDuration } from "./reporting/live-status.js";
+import { printCommandError } from "./reporting/errors.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getProvider } from "../scraping/registry.js";
@@ -44,22 +46,30 @@ export const runPreflight = async (args: readonly string[]): Promise<void> => {
   const provider = getProvider(providerId);
   const age = values.get("maxAgeHours") ?? "48";
   const maxAgeHours = Number(age);
-  const result = await validateCatalogPublication({
+  const status = new LiveStatus();
+  const startedAt = Date.now();
+  status.update(`VALIDACIÓN | ${providerId.toUpperCase()} | comprobando catálogo | ${values.get("outDir") ?? provider.defaultOptions.outDir}`);
+  let result: Awaited<ReturnType<typeof validateCatalogPublication>>;
+  try {
+    result = await validateCatalogPublication({
     providerId,
     outputDir: resolve(values.get("outDir") ?? provider.defaultOptions.outDir),
     outputPrefix: values.get("outPrefix") ?? provider.defaultOptions.outPrefix,
     maxAgeHours
-  });
+    });
+  } finally {
+    status.stop();
+  }
   console.log(`VALIDACIÓN | ${result.providerId.toUpperCase()} | ${result.status === "passed" ? "CONFORME" : "REVISIÓN"}`);
   console.log(`  Productos: ${result.productCount} | Listos: ${result.ready} | Revisar: ${result.review} | Posibles bajas: ${result.suspectedMissing}`);
   for (const warning of result.warnings) console.log(`  Aviso: ${warning}`);
-  console.log(`  Resumen: ${result.summaryFile}`);
+  console.log(`  Resumen: ${result.summaryFile} | Duración: ${formatDuration(Date.now() - startedAt)}`);
   if (result.status === "review") process.exitCode = 2;
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   runPreflight(process.argv.slice(2)).catch((error: unknown) => {
-    console.error(error instanceof Error ? error.message : String(error));
+    printCommandError("validate", error);
     process.exitCode = 1;
   });
 }

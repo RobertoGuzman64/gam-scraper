@@ -3,7 +3,7 @@ import { mkdtemp, readFile, readdir, rm, stat, writeFile, mkdir } from "node:fs/
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { runBatch } from "../run.js";
+import { runBatch, type BatchObserver } from "../run.js";
 import type { BatchOptions } from "../types.js";
 import { getProvider } from "../../../scraping/registry.js";
 
@@ -15,8 +15,16 @@ const get = (key) => args[args.indexOf(key) + 1];
 const id = get('--provider');
 const dir = get('--outDir');
 const prefix = get('--outPrefix');
+if (process.env.EVENTS_PROVIDER === id && process.send) {
+ process.send({channel: 'equipzilla:scrape', event: {type:'stage',stage:'descubriendo categorías',resource:'https://example.invalid'}});
+ process.send({channel: 'equipzilla:scrape', event: {type:'progress',progress:{categoryName:'Maquinaria',position:1,count:3,phase:'listing',pagesScanned:4,found:12,processed:0,totalProducts:0,elapsedSeconds:3,idleSeconds:0}}});
+}
 mkdirSync(dir, { recursive: true });
-if (process.env.FAILED_PROVIDER === id) process.exit(2);
+if (process.env.FAILED_PROVIDER === id) {
+ if (process.send) await new Promise(resolve => process.send({channel:'equipzilla:scrape',event:{type:'failure',stage:'paginación',resource:'https://example.invalid/page/7',reason:'Chrome: error detallado de navegación'}}, resolve));
+ process.exit(2);
+}
+if (process.env.WAIT_PROVIDER === id) await new Promise(resolve => setTimeout(resolve, 5000));
 if (process.env.STALE_REPORT === 'true') process.exit(0);
 writeFileSync(join(dir, prefix + '-summary.json'), JSON.stringify({
  startedAt: new Date().toISOString(), quality: { status: 'complete', published: true },
@@ -114,5 +122,67 @@ test("bloquea ejecuciones concurrentes sin reemplazar el bloqueo existente", asy
     await writeFile(lockPath, "ejecución en curso");
     await assert.rejects(runWithStub(folder, options), /Ya hay una ejecución/);
     assert.equal(await readFile(lockPath, "utf8"), "ejecución en curso");
+  });
+});
+
+test("recibe etapas y contadores del hijo mediante IPC mientras sigue ejecutándose", async () => {
+  await withFolder(async (folder) => {
+    const previous = process.env.EVENTS_PROVIDER;
+    process.env.EVENTS_PROVIDER = "gam";
+    const events: string[] = [];
+    const observer: BatchObserver = {
+      start: () => events.push("inicio"),
+      begin: () => events.push("proveedor"),
+      progress: (_providerId, event) => events.push(event.type === "progress" ? `páginas:${event.progress.pagesScanned}` : event.type),
+      end: () => events.push("fin")
+    };
+    try {
+      const script = join(folder, "scraper-stub.mjs");
+      await writeFile(script, stubScript);
+      const result = await runBatch(optionsFor(folder, ["gam"]), script, observer);
+      assert.equal(result.report.status, "complete");
+      assert.deepEqual(events, ["inicio", "proveedor", "stage", "páginas:4", "fin"]);
+      assert.match(await readFile(result.report.providers[0]!.logFile, "utf8"), /OK: gam/);
+    } finally {
+      if (previous === undefined) delete process.env.EVENTS_PROVIDER;
+      else process.env.EVENTS_PROVIDER = previous;
+    }
+  });
+});
+
+test("conserva en el informe la causa completa de un fallo del proceso hijo", async () => {
+  await withFolder(async (folder) => {
+    const previous = process.env.FAILED_PROVIDER;
+    process.env.FAILED_PROVIDER = "gam";
+    try {
+      const result = await runWithStub(folder, optionsFor(folder, ["gam"]));
+      assert.match(result.report.providers[0]?.error ?? "", /Chrome: error detallado de navegación/);
+      assert.match(result.report.providers[0]?.error ?? "", /example\.invalid\/page\/7/);
+    } finally {
+      if (previous === undefined) delete process.env.FAILED_PROVIDER;
+      else process.env.FAILED_PROVIDER = previous;
+    }
+  });
+});
+
+test("una cancelación aborta el hijo, registra estado fallido y libera el bloqueo", async () => {
+  await withFolder(async (folder) => {
+    const previous = process.env.WAIT_PROVIDER;
+    process.env.WAIT_PROVIDER = "gam";
+    const abort = new AbortController();
+    const script = join(folder, "scraper-stub.mjs");
+    await writeFile(script, stubScript);
+    const timer = setTimeout(() => abort.abort(), 200);
+    try {
+      const result = await runBatch(optionsFor(folder, ["gam", "gomariz"]), script, undefined, abort.signal);
+      assert.equal(result.report.status, "failed");
+      assert.equal(result.report.providers.length, 1);
+      assert.match(result.report.providers[0]?.error ?? "", /cancelado/);
+      await assert.rejects(stat(join(folder, "scraped", ".batch.lock")), /ENOENT/);
+    } finally {
+      clearTimeout(timer);
+      if (previous === undefined) delete process.env.WAIT_PROVIDER;
+      else process.env.WAIT_PROVIDER = previous;
+    }
   });
 });

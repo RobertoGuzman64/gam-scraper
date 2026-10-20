@@ -1,3 +1,5 @@
+import { setImmediate as yieldToTerminal } from "node:timers/promises";
+import { runToolTask } from "../../../cli/reporting/tool-task.js";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -230,7 +232,7 @@ const loadCategoryResolver = async (flatJsonPath: string): Promise<(path: string
     };
 };
 
-export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<void> => {
+export const convertGamCsvToSeedTs = async (options: ConvertOptions, onProgress?: (done: number, total: number) => void): Promise<void> => {
     const csv = await readFile(options.inputCsvPath, "utf8");
     const parsed = parseCsv(csv);
 
@@ -255,6 +257,10 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
     const missingCategories = new Map<string, number>();
 
     for (let r = 0; r < parsed.rows.length; r += 1) {
+        if (r % 250 === 0) {
+            onProgress?.(r, parsed.rows.length);
+            await yieldToTerminal();
+        }
         const row = parsed.rows[r] ?? [];
         const categoryKey = normalizeSpace(row[iCategoryKey] ?? "");
         const categorySellPathFromCsv = iCategorySellPath >= 0 ? normalizeSpace(row[iCategorySellPath] ?? "") : "";
@@ -331,6 +337,7 @@ const products = ${JSON.stringify(out, null, 2)
 export default products;
 `;
 
+    onProgress?.(parsed.rows.length, parsed.rows.length);
     await mkdir(dirname(options.outputTsPath), { recursive: true });
     await writeFile(options.outputTsPath, ts, "utf8");
 };
@@ -350,7 +357,9 @@ if (isMain(import.meta.url)) {
         throw new Error("Uso: node dist/conversor/convertidorTS.js <input.csv> <output.ts> <categorySell-flat.json>");
     }
 
-    await convertGamCsvToSeedTs({
+    await runToolTask("SEMILLAS POR CATEGORÍA", async (status) => {
+        status.update(`SEMILLAS POR CATEGORÍA | convirtiendo ${inputCsvPath}`);
+        await convertGamCsvToSeedTs({
         inputCsvPath: resolve(inputCsvPath),
         outputTsPath: resolve(outputTsPath),
         categorySellFlatJsonPath: resolve(categoryFlatPath),
@@ -367,5 +376,7 @@ if (isMain(import.meta.url)) {
             movilidad: "maquinaria/movilidad",
             maquinaria: "maquinaria"
         }
+    }, (done, total) => status.update(`SEMILLAS POR CATEGORÍA | procesando ${done}/${total} filas`));
+        return `Archivo: ${resolve(outputTsPath)}`;
     });
 }

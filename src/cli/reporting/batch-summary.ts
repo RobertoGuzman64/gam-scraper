@@ -14,7 +14,7 @@ export const formatBatchSummary = (report: BatchReport, reportFile: string): rea
     if (provider.status === "complete") {
       lines.push(`  ${provider.providerId}: OK | ${provider.products ?? 0} productos | +${provider.added ?? 0} nuevos | ${provider.updated ?? 0} cambios | ${duration(provider.durationMs)}`);
     } else {
-      lines.push(`  ${provider.providerId}: ERROR | ${duration(provider.durationMs)} | ${provider.error ?? "Consultar log"}`);
+      lines.push(`  ${provider.providerId}: ERROR | ${duration(provider.durationMs)} | ver diagnóstico anterior y log`);
       lines.push(`    Log: ${provider.logFile}`);
     }
   }

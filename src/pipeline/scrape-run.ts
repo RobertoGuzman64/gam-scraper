@@ -29,10 +29,12 @@ export type ScrapeRunSelection =
 type ScrapeRunReporter = {
   readonly verbose: boolean;
   start(total: number): void;
+  stage(stage: string, resource?: string): void;
   beginCategory(category: CategoryConfig, position: number, count: number): void;
   listingProgress(pages: number, total: number, stage?: string): void;
   listingDone(total: number): void;
   productDone(done: number, total: number): void;
+  failure(stage: string, resource: string, reason: string): void;
   endCategory(result: CategoryScrapeResult): void;
   finish(summary: Summary | null, startedAt: string, error: unknown, failureDetail: string | null): void;
   categoriesSaved(count: number): void;
@@ -103,10 +105,11 @@ const scrapeSafely = async (
       verbose: reporter.verbose,
       onListingDone: (total) => reporter.listingDone(total),
       onListingProgress: (pages, total, stage) => reporter.listingProgress(pages, total, stage),
-      onProductDone: (done, total) => reporter.productDone(done, total)
+      onProductDone: (done, total) => reporter.productDone(done, total),
+      onFailure: (stage, url, reason) => reporter.failure(stage, url, reason)
     });
   } catch (error) {
-    result = { category, discoveredProductUrls: 0, products: [], failures: [{ url: category.url, error: String(error) }] };
+    result = { category, discoveredProductUrls: 0, products: [], failures: [{ url: category.url, error: error instanceof Error ? error.stack ?? error.message : String(error) }] };
   }
   reporter.endCategory(result);
   return result;
@@ -120,6 +123,7 @@ export const runScrape = async (selection: ScrapeRunSelection, reporter: ScrapeR
 
   const finish = async (write: () => Promise<void>): Promise<boolean> => {
     let error: unknown = null;
+    reporter.stage("publicando resultados", options.outDir);
     try {
       await write();
     } catch (reason) {
@@ -132,8 +136,10 @@ export const runScrape = async (selection: ScrapeRunSelection, reporter: ScrapeR
   };
 
   if (selection.mode === "tree") {
+    reporter.stage("descubriendo categorías", selection.rootUrl);
     const cats = await provider.discoverCategoryTree(selection.rootUrl, options);
     reporter.start(cats.length);
+    reporter.stage("guardando categorías", options.outDir);
     await writeCategoriesCsv(options.outDir, options.outPrefix, cats);
 
     if (selection.onlyCategories) {
@@ -156,9 +162,11 @@ export const runScrape = async (selection: ScrapeRunSelection, reporter: ScrapeR
       return finish(() => writeOutputs(options.outDir, options.outPrefix, [result], startedAt, nowIso()));
     }
 
+    reporter.stage("descubriendo subcategorías", selection.category.url);
     const discovered = await provider.discoverCategoryTree(selection.category.url, options);
     const toScrape = uniqueByUrl(discovered);
     reporter.start(toScrape.length);
+    reporter.stage("guardando categorías", options.outDir);
     await writeCategoriesCsv(options.outDir, options.outPrefix, uniqueByUrl([selection.category, ...toScrape]));
 
     if (selection.onlyCategories) {
@@ -200,6 +208,7 @@ export const runScrape = async (selection: ScrapeRunSelection, reporter: ScrapeR
   const allDiscoveredForCsv: CategoryConfig[] = [];
 
   for (const root of roots) {
+    reporter.stage("descubriendo subcategorías", root.url);
     const discovered = await provider.discoverCategoryTree(root.url, options);
     const toScrape = uniqueByUrl(discovered);
     for (const c of uniqueByUrl([root, ...toScrape])) allDiscoveredForCsv.push(c);
@@ -216,6 +225,7 @@ export const runScrape = async (selection: ScrapeRunSelection, reporter: ScrapeR
     groups.push({ parent: root, results: resultsForRoot });
   }
 
+  reporter.stage("guardando categorías", options.outDir);
   await writeCategoriesCsv(options.outDir, options.outPrefix, uniqueByUrl(allDiscoveredForCsv));
   if (selection.onlyCategories) {
     reporter.categoriesSaved(uniqueByUrl(allDiscoveredForCsv).length);

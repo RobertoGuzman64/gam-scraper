@@ -1,3 +1,4 @@
+import { printCommandError } from "./reporting/errors.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runBatchCli } from "./batch.js";
@@ -47,7 +48,7 @@ export const runCli = async (argv: readonly string[]): Promise<void> => {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   runCli(process.argv.slice(2)).catch((error: unknown) => {
-    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    printCommandError(process.argv[2] ?? "cli", error);
     process.exitCode = 1;
   });
 }

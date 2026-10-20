@@ -1,3 +1,5 @@
+import { LiveStatus, formatDuration } from "./reporting/live-status.js";
+import { printCommandError } from "./reporting/errors.js";
 import { readFile, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -76,6 +78,10 @@ export const runExport = async (args: readonly string[]): Promise<void> => {
   if (!options.preparation.endsWith("-preparation.json")) {
     throw new Error("Debe seleccionarse un archivo -preparation.json publicado, nunca un informe parcial");
   }
+  const status = new LiveStatus();
+  const startedAt = Date.now();
+  status.update(`EXPORTACIÓN | ${options.providerId.toUpperCase()} | validando publicación | ${options.preparation}`);
+  try {
   const base = options.preparation.slice(0, -"-preparation.json".length);
   const summaryFile = `${base}-summary.json`;
   await validateCatalogPublication({
@@ -84,6 +90,7 @@ export const runExport = async (args: readonly string[]): Promise<void> => {
     outputPrefix: base.split(/[\\/]/).at(-1) ?? "",
     maxAgeHours: 48
   });
+  status.update(`EXPORTACIÓN | ${options.providerId.toUpperCase()} | leyendo preparación e inventario`);
   const [preparationJson, inventoryCsv, summaryRaw, catalog] = await Promise.all([
     readFile(options.preparation, "utf8"), readFile(options.inventory, "utf8"),
     readFile(summaryFile, "utf8"), loadImportCatalog()
@@ -101,6 +108,7 @@ export const runExport = async (args: readonly string[]): Promise<void> => {
   if (inventory.references.size === 0 && !options.allowEmptyInventory) {
     throw new Error("Inventario vacío: revisar consulta de empresa o pasar --allow-empty-inventory si se ha comprobado que no existen productos");
   }
+  status.update(`EXPORTACIÓN | ${options.providerId.toUpperCase()} | calculando altas y revisiones`);
   const plan = planProductImport(preparation, options.providerId, inventory, catalog);
   const report = {
     generatedAt: new Date().toISOString(),
@@ -109,14 +117,20 @@ export const runExport = async (args: readonly string[]): Promise<void> => {
     inventoryReferences: inventory.references.size,
     ...plan.report
   };
+  status.stop();
   console.log(`EXPORTACIÓN | ${options.providerId.toUpperCase()} | ${options.dryRun ? "SIMULACIÓN" : "PLAN DE ALTAS"}`);
   console.log(`  Nuevos: ${plan.report.newProducts} | Existentes: ${plan.report.existingProducts} | Revisar: ${plan.report.reviewProducts} | Duplicados: ${plan.report.duplicateReferences}`);
   console.log(`  Inventario: ${inventory.references.size} referencias`);
   if (args.includes("--verbose")) console.log(JSON.stringify(report, null, 2));
-  if (options.dryRun) return;
+  if (options.dryRun) {
+    console.log(`  Duración: ${formatDuration(Date.now() - startedAt)}`);
+    return;
+  }
+  status.update(`EXPORTACIÓN | ${options.providerId.toUpperCase()} | generando archivo | ${options.out}`);
   const reportFile = `${options.out}.report.json`;
   if (plan.rows.length === 0) {
     await writeFile(reportFile, JSON.stringify(report, null, 2), { flag: "wx" });
+    status.stop();
     console.log(`No hay altas nuevas seguras: informe guardado en ${reportFile}, sin Excel vacío.`);
     return;
   }
@@ -131,13 +145,18 @@ export const runExport = async (args: readonly string[]): Promise<void> => {
     await rm(options.out, { force: true });
     throw error;
   }
+  status.stop();
   console.log(`Excel de altas generado: ${options.out} (${plan.rows.length} productos)`);
   console.log(`Informe generado: ${reportFile}`);
+  console.log(`  Duración: ${formatDuration(Date.now() - startedAt)}`);
+  } finally {
+    status.stop();
+  }
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   runExport(process.argv.slice(2)).catch((error: unknown) => {
-    console.error(error instanceof Error ? error.message : String(error));
+    printCommandError("export", error);
     process.exitCode = 1;
   });
 }

@@ -13,6 +13,7 @@ export type ScrapeProgressCallbacks = {
   readonly onListingDone: (total: number) => void;
   readonly onListingProgress?: (pages: number, total: number, stage?: string) => void;
   readonly onProductDone: (done: number, total: number) => void;
+  readonly onFailure?: (stage: string, url: string, reason: string) => void;
 };
 
 const nowIso = (): string => new Date().toISOString();
@@ -46,6 +47,11 @@ export const scrapeCategory = async (
   const report = (scope: string, message: string): void => log(scope, message, verbose);
   const productUrls = new Set<string>();
   const failures: { url: string; error: string }[] = [];
+  const recordFailure = (stage: string, url: string, error: string): void => {
+    failures.push({ url, error });
+    progress?.onFailure?.(stage, url, error);
+  };
+  const failureDetail = (error: unknown): string => error instanceof Error ? error.stack ?? error.message : String(error);
 
   let page = 1;
   let stall = 0;
@@ -61,16 +67,13 @@ export const scrapeCategory = async (
       expectedProductUrls = listing.expectedTotal;
       for (const url of listing.urls) productUrls.add(url);
       if (!Number.isSafeInteger(expectedProductUrls) || expectedProductUrls < 1) {
-        failures.push({ url: category.url, error: "El proveedor no ha confirmado un total válido de resultados" });
+        recordFailure("listado", category.url, "El proveedor no ha confirmado un total válido de resultados");
       } else if (productUrls.size !== expectedProductUrls) {
-        failures.push({
-          url: category.url,
-          error: `Cobertura incompleta del catálogo: ${productUrls.size} de ${expectedProductUrls} referencias únicas`
-        });
+        recordFailure("listado", category.url, `Cobertura incompleta del catálogo: ${productUrls.size} de ${expectedProductUrls} referencias únicas`);
       }
       report("category", `listingDone key=${category.key} total=${productUrls.size} expected=${String(expectedProductUrls)}`);
     } catch (error) {
-      failures.push({ url: category.url, error: `No se pudo recorrer la paginación: ${String(error)}` });
+      recordFailure("paginación", category.url, `No se pudo recorrer la paginación: ${failureDetail(error)}`);
     }
   } else {
     while (page <= options.maxPages) {
@@ -104,13 +107,13 @@ export const scrapeCategory = async (
         if (!r) continue;
         if (r.status === "rejected") {
           const listingUrl = provider.buildPagedUrl(category.url, pages[i]!);
-          failures.push({ url: listingUrl, error: String(r.reason) });
+          recordFailure("listado", listingUrl, failureDetail(r.reason));
           report("listing", `fail key=${category.key} url=${listingUrl} error=${String(r.reason)}`);
           continue;
         }
         if (r.value.expectedTotal !== null) {
           if (expectedProductUrls !== undefined && expectedProductUrls !== r.value.expectedTotal) {
-            failures.push({ url: provider.buildPagedUrl(category.url, pages[i]!), error: `Total de resultados inconsistente: ${expectedProductUrls} / ${r.value.expectedTotal}` });
+            recordFailure("listado", provider.buildPagedUrl(category.url, pages[i]!), `Total de resultados inconsistente: ${expectedProductUrls} / ${r.value.expectedTotal}`);
           }
           expectedProductUrls = r.value.expectedTotal;
         }
@@ -143,13 +146,10 @@ export const scrapeCategory = async (
     }
 
     if (!exhausted && page > options.maxPages) {
-      failures.push({ url: category.url, error: `Límite de páginas (${options.maxPages}) alcanzado sin confirmar fin de catálogo` });
+      recordFailure("listado", category.url, `Límite de páginas (${options.maxPages}) alcanzado sin confirmar fin de catálogo`);
     }
     if (expectedProductUrls !== undefined && expectedProductUrls !== productUrls.size) {
-      failures.push({
-        url: category.url,
-        error: `Cobertura incompleta del catálogo: ${productUrls.size} de ${expectedProductUrls} referencias únicas`
-      });
+      recordFailure("listado", category.url, `Cobertura incompleta del catálogo: ${productUrls.size} de ${expectedProductUrls} referencias únicas`);
     }
   }
 
@@ -231,6 +231,9 @@ export const scrapeCategory = async (
           );
 
           return product;
+        } catch (error) {
+          progress?.onFailure?.("ficha", url, failureDetail(error));
+          throw error;
         } finally {
           processed += 1;
           progress?.onProductDone(processed, urls.length);
@@ -249,8 +252,8 @@ export const scrapeCategory = async (
       continue;
     }
     const reason = r?.status === "rejected" ? r.reason : "unknown";
-    failures.push({ url, error: String(reason) });
-    report("product", `fail key=${category.key} url=${url} error=${String(reason)}`);
+    failures.push({ url, error: failureDetail(reason) });
+    report("product", `fail key=${category.key} url=${url} error=${failureDetail(reason)}`);
   }
 
   report("category", `end key=${category.key} ok=${products.length} fail=${failures.length}`);

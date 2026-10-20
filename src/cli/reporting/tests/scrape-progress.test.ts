@@ -29,15 +29,14 @@ test("resumen compacto muestra productos únicos y tiempo de ejecución", () => 
   assert.match(lines.join("\n"), /gam-completo-all\.csv/);
 });
 
-test("errores extensos se resumen sin perder el archivo de diagnóstico", () => {
+test("errores extensos se muestran completos junto al diagnóstico", () => {
+  const reason = `Paginación fallida: ${"x".repeat(300)} con causa determinante`;
   const blocked: Summary = {
     ...summary,
-    quality: { status: "blocked", published: false, reasons: Array.from({ length: 12 }, (_, index) => `Error ${index}: ${"x".repeat(300)}`) }
+    quality: { status: "blocked", published: false, reasons: [reason] }
   };
   const lines = formatRunSummary("gam", "storage/scraped/gam", "gam-completo", blocked, true);
-  assert.equal(lines.filter((line) => line.startsWith("  - ")).length, 4);
-  assert.ok(lines.every((line) => line.length < 160));
-  assert.match(lines.join("\n"), /9 motivos adicionales/);
+  assert.match(lines.join("\n"), /con causa determinante/);
   assert.match(lines.join("\n"), /gam-completo-errors\.json/);
   assert.doesNotMatch(lines.join("\n"), /gam-completo-all\.csv/);
 });

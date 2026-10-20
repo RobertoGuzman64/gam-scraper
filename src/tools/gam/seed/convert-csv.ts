@@ -1,3 +1,5 @@
+import { setImmediate as yieldToTerminal } from "node:timers/promises";
+import { runToolTask } from "../../../cli/reporting/tool-task.js";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -13,7 +15,7 @@ import { normalizeSpecKey, parseSpecByRule } from "./internal/spec.js";
 import { renderSeedTs } from "./internal/seed-printer.js";
 import type { ConvertOptions, Report, SeedProduct, SpecValue } from "./internal/types.js";
 
-export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<void> => {
+export const convertGamCsvToSeedTs = async (options: ConvertOptions, onProgress?: (done: number, total: number) => void): Promise<void> => {
     const idx = await loadCategoryIndex(options.categorySellFlatJsonPath);
 
     const csv = await readFile(options.inputCsvPath, "utf8");
@@ -50,6 +52,10 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
     const out: SeedProduct[] = [];
 
     for (let r = 0; r < parsed.rows.length; r += 1) {
+        if (r % 250 === 0) {
+            onProgress?.(r, parsed.rows.length);
+            await yieldToTerminal();
+        }
         const row = parsed.rows[r] ?? [];
         const categoryKey = normalizeSpace(row[iCategoryKey] ?? "");
         const title = normalizeSpace(row[iTitle] ?? "");
@@ -118,6 +124,7 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions): Promise<vo
 
     const ts = renderSeedTs(out);
 
+    onProgress?.(parsed.rows.length, parsed.rows.length);
     await mkdir(dirname(options.outputTsPath), { recursive: true });
     await writeFile(options.outputTsPath, ts, "utf8");
     await writeFile(`${options.outputTsPath}.report.json`, JSON.stringify(report, null, 2), "utf8");
@@ -174,5 +181,10 @@ export const resolveGamConverterOptions = (argv: readonly string[]): ConvertOpti
 };
 
 if (isMain(import.meta.url)) {
-    await convertGamCsvToSeedTs(resolveGamConverterOptions(process.argv.slice(2)));
+    await runToolTask("CONVERSIÓN GAM", async (status) => {
+        const options = resolveGamConverterOptions(process.argv.slice(2));
+        status.update(`CONVERSIÓN GAM | convirtiendo ${options.inputCsvPath}`);
+        await convertGamCsvToSeedTs(options, (done, total) => status.update(`CONVERSIÓN GAM | procesando ${done}/${total} filas`));
+        return `Archivo: ${options.outputTsPath} | Informe: ${options.outputTsPath}.report.json`;
+    });
 }
