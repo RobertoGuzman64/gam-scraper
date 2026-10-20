@@ -1,11 +1,15 @@
 import { getProvider, listProviders } from "../../scraping/registry.js";
-
 import type { BatchOptions } from "../../pipeline/batch/types.js";
 
-export const batchHelp = `Uso: npm run scrape:all -- [--providers gam,gomariz] [--outRoot storage/scraped] [--historyDir storage/runs] [--dry-run]
+export const batchHelp = `Uso:
+  npm run scrape -- all
+  npm run scrape -- all --dry-run
+  npm run scrape -- all --providers gam,gomariz
+  npm run scrape:all -- --providers gam,gomariz
 
-Sin --providers ejecuta todos los proveedores registrados. Cada proveedor mantiene su prefijo de salida y su snapshot.
---dry-run solo muestra los proveedores y las rutas, sin lanzar extracciones ni modificar archivos.`;
+Opciones: --providers <ids>, --outRoot <directorio>, --historyDir <directorio>, --dry-run
+Sin --providers se ejecutan todos los proveedores registrados, secuencialmente.
+--dry-run solo muestra rutas; no modifica archivos.`;
 
 const requireValue = (args: readonly string[], position: number, flag: string): string => {
   const value = args[position + 1];

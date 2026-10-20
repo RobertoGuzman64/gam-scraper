@@ -8,7 +8,7 @@ import { parsePreparation } from "../catalog/import/preparation-document.js";
 import { createProductsXlsx } from "../catalog/import/xlsx.js";
 import { validateCatalogPublication } from "../pipeline/validation/preflight.js";
 
-const help = `Uso: npm run export:import -- --provider gam --companyID <ID real> --preparation <proveedor-preparation.json> --existing <inventario.csv> --out <salida.xlsx> [--dry-run | --confirm-inventory] [--allow-empty-inventory]
+const help = `Uso: npm run export -- gam --companyID <ID real> --preparation <proveedor-preparation.json> --existing <inventario.csv> --out <salida.xlsx> [--dry-run | --confirm-inventory] [--allow-empty-inventory] [--verbose]
 
 El inventario CSV debe contener companyID,reference y pertenecer a la misma compañía.
 --dry-run no crea archivos; --confirm-inventory habilita la generación del XLSX.
@@ -31,9 +31,14 @@ const parseOptions = (args: readonly string[]): ExportOptions | "help" => {
   const values = new Map<string, string>();
   const flags = new Set<string>();
   const valueFlags = new Set(["--provider", "--companyID", "--preparation", "--existing", "--out"]);
-  const booleanFlags = new Set(["--dry-run", "--confirm-inventory", "--allow-empty-inventory"]);
+  const booleanFlags = new Set(["--dry-run", "--confirm-inventory", "--allow-empty-inventory", "--verbose"]);
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
+    if (index === 0 && arg && !arg.startsWith("--")) {
+      flags.add("--provider");
+      values.set("--provider", arg);
+      continue;
+    }
     if (!arg || flags.has(arg) || (!valueFlags.has(arg) && !booleanFlags.has(arg))) {
       throw new Error(`Argumento desconocido o repetido: ${arg ?? ""}`);
     }
@@ -104,8 +109,10 @@ export const runExport = async (args: readonly string[]): Promise<void> => {
     inventoryReferences: inventory.references.size,
     ...plan.report
   };
-  console.log(JSON.stringify({ dryRun: options.dryRun, ...report, existing: report.existing.length,
-    review: report.review.length, duplicates: report.duplicates.length }, null, 2));
+  console.log(`EXPORTACIÓN | ${options.providerId.toUpperCase()} | ${options.dryRun ? "SIMULACIÓN" : "PLAN DE ALTAS"}`);
+  console.log(`  Nuevos: ${plan.report.newProducts} | Existentes: ${plan.report.existingProducts} | Revisar: ${plan.report.reviewProducts} | Duplicados: ${plan.report.duplicateReferences}`);
+  console.log(`  Inventario: ${inventory.references.size} referencias`);
+  if (args.includes("--verbose")) console.log(JSON.stringify(report, null, 2));
   if (options.dryRun) return;
   const reportFile = `${options.out}.report.json`;
   if (plan.rows.length === 0) {

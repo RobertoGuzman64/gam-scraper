@@ -1,26 +1,29 @@
 import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { describeBatch, runBatch } from "../pipeline/batch/run.js";
 import { batchHelp, parseBatchOptions } from "./options/batch.js";
+import { formatBatchSummary } from "./reporting/batch-summary.js";
 
-const main = async (): Promise<void> => {
-  const options = parseBatchOptions(process.argv.slice(2));
+export const runBatchCli = async (args: readonly string[]): Promise<void> => {
+  const options = parseBatchOptions(args);
   if (options === "help") {
     console.log(batchHelp);
     return;
   }
-
   if (options.dryRun) {
-    console.log(JSON.stringify({ dryRun: true, providers: describeBatch(options) }, null, 2));
+    console.log(`LOTE | Simulación | ${options.providerIds.length} proveedor${options.providerIds.length === 1 ? "" : "es"}`);
+    for (const provider of describeBatch(options)) console.log(`  ${provider.providerId} | ${provider.outputDir} | ${provider.outputPrefix}`);
     return;
   }
-
-  const scraperScript = fileURLToPath(new URL("../pipeline/scrape-run.js", import.meta.url));
+  const scraperScript = fileURLToPath(new URL("./scrape.js", import.meta.url));
   const { report, reportFile } = await runBatch(options, scraperScript);
-  console.log(`[batch] status=${report.status} history=${reportFile}`);
+  for (const line of formatBatchSummary(report, reportFile)) console.log(line);
   if (report.status !== "complete") process.exitCode = 1;
 };
 
-await main().catch((error: unknown) => {
-  console.error(`[batch] error=${String(error)}`);
-  process.exitCode = 1;
-});
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
+  runBatchCli(process.argv.slice(2)).catch((error: unknown) => {
+    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    process.exitCode = 1;
+  });
+}

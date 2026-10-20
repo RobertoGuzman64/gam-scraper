@@ -127,12 +127,13 @@ export const runBatch = async (options: BatchOptions, scriptFile: string): Promi
     });
     await writeBatchReport(reportFile, makeReport("running", null));
 
+    console.log(`LOTE | ${options.providerIds.length} proveedor${options.providerIds.length === 1 ? "" : "es"} | logs e historial en ${runDir}`);
     for (const provider of describeBatch(options)) {
-      console.log(`[batch] start provider=${provider.providerId}`);
+      console.log(`  [${completed.length + 1}/${options.providerIds.length}] ${provider.providerId} | ejecutando...`);
       const result = await runProvider(scriptFile, provider.providerId, provider.outputDir, provider.outputPrefix, runDir);
       completed.push(result);
       await writeBatchReport(reportFile, makeReport("running", null));
-      console.log(`[batch] end provider=${provider.providerId} status=${result.status}${result.error ? ` error=${result.error}` : ` products=${result.products}`}`);
+
     }
 
     const report = makeReport(getBatchStatus(completed), timestamp());

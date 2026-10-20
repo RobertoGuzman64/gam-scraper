@@ -73,7 +73,6 @@ export class ScrapeConsole {
   private categoryStartedAt = 0;
   private lastActivityAt = 0;
   private lastHeartbeatAt = 0;
-  private lastReported = 0;
   private spinnerFrame = 0;
   private timer: ReturnType<typeof setInterval> | null = null;
   private lineOpen = false;
@@ -100,14 +99,12 @@ export class ScrapeConsole {
     this.found = 0;
     this.processed = 0;
     this.totalProducts = 0;
-    this.lastReported = 0;
     this.spinnerFrame = 0;
     this.categoryStartedAt = Date.now();
     this.lastActivityAt = this.categoryStartedAt;
     this.lastHeartbeatAt = this.categoryStartedAt;
 
     if (this.verbose) return;
-    if (!this.interactive) console.log(`  [${position}/${count}] ${category.name} | buscando fichas...`);
     this.timer = setInterval(() => this.tick(), 160);
     this.timer.unref();
     if (this.interactive) this.render();
@@ -132,16 +129,12 @@ export class ScrapeConsole {
     if (done > this.processed) this.lastActivityAt = Date.now();
     this.processed = done;
     this.totalProducts = total;
-    if (!this.interactive && !this.verbose && done - this.lastReported >= 100 && done < total) {
-      this.lastReported = done;
-      console.log(`    ${done}/${total} fichas procesadas`);
-    }
   }
 
   endCategory(result: CategoryScrapeResult): void {
     this.clearProgress();
     const prefix = `[${this.position}/${this.count}] ${result.category.name}`;
-    console.log(`  ${prefix} | ${result.products.length}/${result.discoveredProductUrls} fichas | ${result.failures.length} fallos`);
+    console.log(`  ${prefix} | ${result.products.length}/${result.discoveredProductUrls} fichas | ${result.failures.length} fallos | ${formatSeconds(elapsedSeconds(this.categoryStartedAt, Date.now()))}`);
     this.category = null;
   }
 
@@ -175,7 +168,7 @@ export class ScrapeConsole {
       return;
     }
     const now = Date.now();
-    if (now - this.lastHeartbeatAt < 30_000) return;
+    if (now - this.lastHeartbeatAt < 60_000) return;
     this.lastHeartbeatAt = now;
     const progress = this.snapshot(now);
     console.log(formatCategoryProgress(progress, "...").trimEnd());

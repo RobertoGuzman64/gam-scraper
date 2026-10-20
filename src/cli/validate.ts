@@ -3,38 +3,58 @@ import { fileURLToPath } from "node:url";
 import { getProvider } from "../scraping/registry.js";
 import { validateCatalogPublication } from "../pipeline/validation/preflight.js";
 
+export const validateHelp = `Uso:
+  npm run validate -- gam
+  npm run validate -- gomariz --prefix scrape-gomariz
+  npm run validate -- mercaeleva --out storage/scraped/mercaeleva
+
+Opciones: --out, --prefix, --maxAgeHours
+Compatibilidad: --provider, --outDir, --outPrefix
+Requiere catálogo completo publicado, sin errores, y antigüedad máxima de 48 h.
+Código 0 = conforme, 2 = revisión manual, 1 = error.`;
+
 export const runPreflight = async (args: readonly string[]): Promise<void> => {
-  if (args.length === 1 && args[0] === "--help") {
-    console.log("Uso: npm run validate:catalog -- --provider <id> --outDir <dir> --outPrefix <prefijo> [--maxAgeHours 48]");
+  if (args.includes("--help")) {
+    console.log(validateHelp);
     return;
   }
   const values = new Map<string, string>();
-  const flags = new Set(["--provider", "--outDir", "--outPrefix", "--maxAgeHours"]);
-  for (let index = 0; index < args.length; index += 2) {
-    const flag = args[index];
-    const value = args[index + 1];
-    if (!flag || !flags.has(flag) || !value || value.startsWith("--") || values.has(flag)) {
-      throw new Error(`Opción desconocida, repetida o sin valor: ${flag ?? ""}`);
+  const names: Readonly<Record<string, string>> = {
+    "--provider": "provider", "--outDir": "outDir", "--out": "outDir",
+    "--outPrefix": "outPrefix", "--prefix": "outPrefix", "--maxAgeHours": "maxAgeHours"
+  };
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (!arg) continue;
+    if (!arg.startsWith("--")) {
+      if (values.has("provider")) throw new Error(`Argumento no reconocido: ${arg}`);
+      values.set("provider", arg);
+      continue;
     }
-    values.set(flag, value);
+    const key = names[arg];
+    const value = args[index + 1];
+    if (!key || !value || value.startsWith("--") || values.has(key)) {
+      throw new Error(`Opción desconocida, repetida o sin valor: ${arg}`);
+    }
+    values.set(key, value);
+    index += 1;
   }
-  for (const required of ["--provider", "--outDir", "--outPrefix"]) {
-    if (!values.has(required)) throw new Error(`Falta ${required}`);
-  }
-  const providerId = values.get("--provider") ?? "";
-  getProvider(providerId);
-  const maxAgeHours = Number(values.get("--maxAgeHours") ?? "48");
+  const providerId = values.get("provider");
+  if (!providerId) throw new Error("Falta proveedor. Uso: npm run validate -- gam");
+  const provider = getProvider(providerId);
+  const age = values.get("maxAgeHours") ?? "48";
+  const maxAgeHours = Number(age);
   const result = await validateCatalogPublication({
     providerId,
-    outputDir: resolve(values.get("--outDir") ?? ""),
-    outputPrefix: values.get("--outPrefix") ?? "",
+    outputDir: resolve(values.get("outDir") ?? provider.defaultOptions.outDir),
+    outputPrefix: values.get("outPrefix") ?? provider.defaultOptions.outPrefix,
     maxAgeHours
   });
-  console.log(JSON.stringify(result, null, 2));
-  if (result.status === "review") {
-    console.error("Validación técnica correcta, con revisión manual obligatoria antes de importar");
-    process.exitCode = 2;
-  }
+  console.log(`VALIDACIÓN | ${result.providerId.toUpperCase()} | ${result.status === "passed" ? "CONFORME" : "REVISIÓN"}`);
+  console.log(`  Productos: ${result.productCount} | Listos: ${result.ready} | Revisar: ${result.review} | Posibles bajas: ${result.suspectedMissing}`);
+  for (const warning of result.warnings) console.log(`  Aviso: ${warning}`);
+  console.log(`  Resumen: ${result.summaryFile}`);
+  if (result.status === "review") process.exitCode = 2;
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
