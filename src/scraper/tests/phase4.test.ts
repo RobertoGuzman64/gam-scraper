@@ -30,6 +30,14 @@ test("no confunde duplicados de categoría con dos fichas de la misma referencia
     { ...first, reference: "TE1002", url: "https://example.com/machine/d", serialNumber: "X" }]).length, 1);
 });
 
+test("los conflictos de serie indican las referencias y las dos fichas para revisión", () => {
+  const a = { ...first, serialNumber: "ABC-123" };
+  const b = { ...second, reference: "TE2000", serialNumber: "ABC-123" };
+  const problems = findIdentityConflicts([a, b]);
+  assert.equal(problems.length, 1);
+  assert.match(problems[0] ?? "", /TE1000.*machine\/a.*TE2000.*machine\/b/);
+});
+
 test("una colisión bloquea la publicación y conserva CSV y snapshot anteriores", async () => {
   const dir = await mkdtemp(join(tmpdir(), "scraper-phase4-"));
   try {

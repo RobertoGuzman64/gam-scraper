@@ -138,7 +138,11 @@ const renderWithBrowser = async (
     "--disable-dev-shm-usage", "--window-size=1600,2400", "--remote-debugging-pipe", `--user-data-dir=${profile}`, "about:blank"
   ];
   if (process.platform === "linux" && process.getuid?.() === 0) flags.unshift("--no-sandbox");
-  const child = spawn(executable, flags, { stdio: ["ignore", "ignore", "pipe", "pipe", "pipe"] });
+  const child = spawn(executable, flags, {
+    stdio: ["ignore", "ignore", "pipe", "pipe", "pipe"],
+    detached: process.platform === "win32",
+    windowsHide: true
+  });
   let diagnostics = "";
   child.stderr?.on("data", (chunk: Buffer) => {
     if (diagnostics.length < 3000) diagnostics += chunk.toString("utf8").slice(0, 3000 - diagnostics.length);
@@ -205,7 +209,8 @@ const renderWithBrowser = async (
     return asCatalog(result.value);
   } catch (error) {
     const detail = diagnostics.trim();
-    throw new Error(`Navegador ${executable}: ${String(error)}${detail ? `; stderr: ${detail}` : ""}`);
+    const status = child.exitCode !== null ? `; exitCode=${child.exitCode}` : "";
+    throw new Error(`Navegador ${executable}: ${String(error)}${status}${detail ? `; stderr: ${detail}` : ""}`);
   } finally {
     clearTimeout(timer);
     if (child.exitCode === null && child.signalCode === null) {

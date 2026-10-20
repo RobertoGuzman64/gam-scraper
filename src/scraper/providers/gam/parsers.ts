@@ -29,7 +29,8 @@ export const isProductUrl = (url: string): boolean => {
     if (u.searchParams.has("action")) return false;
 
     const parts = u.pathname.split("/").filter(Boolean);
-    if (parts.length < 3) return false;
+    if (parts.length < 3 || parts[0] !== "es") return false;
+    if (["c", "inicio"].includes(parts[1] ?? "")) return false;
 
     const last = parts.at(-1);
     return Boolean(last && /^\d+-[^/]+(?:\.html)?$/i.test(last));
@@ -62,8 +63,9 @@ export const extractProductLinksFromListing = (listingUrl: string, html: string)
   const links = new Set<string>();
 
   const productCards = $("#js-product-list .product-miniature, #js-product-list .product, .products .product-miniature, .products .product");
-  const anchors = productCards.length ? productCards.find("a[href]") : $("a[href]");
+  const anchors = productCards.length ? productCards.find("a[href]") : $("main a[href], #content a[href], #js-product-list a[href]");
   anchors.each((_, el) => {
+    if ($(el).closest("header, nav, footer, .breadcrumb, #header, #footer").length) return;
     const href = $(el).attr("href");
     if (!href) return;
 

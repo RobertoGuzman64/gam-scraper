@@ -4,6 +4,7 @@ import { DEFAULT_CATEGORIES } from "../providers/gam/config.js";
 import {
   extractExpectedTotalFromListing,
   extractProductLinksFromListing,
+  isProductUrl,
   parseProductPage
 } from "../providers/gam/parsers.js";
 import { parseMercaelevaProduct } from "../providers/mercaeleva/parsers.js";
@@ -53,6 +54,25 @@ test("GAM identifica las fichas actuales sin .html y excluye páginas de categor
     <a href="${categoryUrl}">Categoría</a>
   </div></div></main>`;
   assert.deepEqual(extractProductLinksFromListing(categoryUrl, html), [currentUrl]);
+});
+
+test("GAM ignora nueve enlaces de navegación que inflaban los totales", () => {
+  const real = [
+    "https://online.gamrentals.com/es/carretillas-elevadoras-diesel-hyster/5-carretilla-elevadora-diesel-o-glp-contrapesada-hyster-h20ft",
+    "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-electricas-segunda-mano/6934-2007-jlg-e300ajp"
+  ];
+  const irrelevant = [
+    "/es/c/96-maquinaria-nueva", "/es/c/135-mes-de-las-plataformas",
+    "/es/inicio/257-fianza-para-subasta", "/es/c/7-subasta-maquinaria",
+    "/es/c/15-como-pujar", "/es/c/10-como-comprar-maquinaria",
+    "/es/c/9-vender-maquinaria", "/es/c/11-contacto",
+    "/es/c/5-politica-de-privacidad"
+  ];
+  const page = `<main>${[...real, ...irrelevant].map((url) => `<a href="${url}">Ficha</a>`).join("")}</main>`;
+  assert.deepEqual(extractProductLinksFromListing(listing, page), real);
+  assert.ok(real.every(isProductUrl));
+  assert.ok(irrelevant.every((url) => !isProductUrl(new URL(url, listing).toString())));
+  assert.equal(extractExpectedTotalFromListing(`<main>de 2 productos</main>`), 2);
 });
 
 test("GAM conserva fichas, estado, HTML, referencias, specs e imágenes 2x", () => {

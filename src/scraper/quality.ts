@@ -97,7 +97,7 @@ export const findIdentityConflicts = (products: readonly ProductRecord[]): reado
       const previousSerial = bySerial.get(serialKey);
       if (previousSerial && previousSerial.reference && product.reference &&
         normalize(previousSerial.reference) !== normalize(product.reference)) {
-        conflicts.add(`Número de serie ${serial} asociado a referencias distintas en ${product.providerId}`);
+        conflicts.add(`Número de serie ${serial} asociado a referencias distintas en ${product.providerId}: ${previousSerial.reference} (${previousSerial.url}) / ${product.reference} (${product.url})`);
       } else if (!previousSerial) bySerial.set(serialKey, product);
     }
   }
