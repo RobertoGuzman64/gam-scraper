@@ -70,7 +70,9 @@ const sourceCategorySlug = (record: ProductRecord): string | null => {
     path[0] === "venta" && path.length >= 4) {
     const family = path[2] ?? "";
     const motor = fold(String(record.specs?.Motor ?? ""));
-    const power = energy(motor || (record.title ?? ""));
+    const advertisedPower = energy(`${record.title ?? ""} ${path.at(-1) ?? ""}`);
+    const motorPower = energy(motor);
+    const power = motor ? (advertisedPower && advertisedPower !== motorPower ? null : motorPower) : advertisedPower;
     if (family === "elevador-tijera" && power) return power === "electric"
       ? "plataformas-tijera-electricas-segunda-mano" : "plataformas-tijera-diesel-segunda-mano";
     if (["brazo-articulado", "brazo-articulado-boom-lift"].includes(family) && power) return power === "electric"

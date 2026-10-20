@@ -16,15 +16,26 @@ const urlFrom = (candidate: string | undefined, pageUrl: string): string | null 
 const urlsFromSrcset = (value: string | undefined): readonly string[] =>
   value?.split(",").map((part) => part.trim().split(/\s+/)[0]).filter((url): url is string => Boolean(url)) ?? [];
 
-const imageIdentity = (url: string, mode: "gam" | "mercaeleva" | undefined): string => {
+export const identifyWordPressImage = (value: string): { readonly identity: string; readonly rank: number } => {
+  const url = new URL(value);
+  const dimensions = url.pathname.match(/-(\d{2,4})x(\d{2,4})(?=\.(?:jpe?g|png|webp|avif)$)/i);
+  return {
+    identity: `${url.origin}${url.pathname.replace(/-\d{2,4}x\d{2,4}(?=\.(?:jpe?g|png|webp|avif)$)/i, "")}`,
+    rank: dimensions ? Number(dimensions[1]) * Number(dimensions[2]) : 1_000_000_000
+  };
+};
+
+const imageIdentity = (url: string, mode: "gam" | "mercaeleva" | "gomariz" | undefined): string => {
   const path = new URL(url).pathname;
   if (mode === "gam") return path.replace(/-(?:product_main_2x|large_default|medium_default|small_default|home_default|cart_default|thickbox_default)(?=\.)/i, "");
   if (mode === "mercaeleva") return path;
+  if (mode === "gomariz") return identifyWordPressImage(url).identity;
   return url;
 };
 
-const score = (url: string, source: string, mode: "gam" | "mercaeleva" | undefined): number => {
+const score = (url: string, source: string, mode: "gam" | "mercaeleva" | "gomariz" | undefined): number => {
   const name = new URL(url).pathname;
+  if (mode === "gomariz") return identifyWordPressImage(url).rank;
   let rank = source === "data-large_image" || source === "data-zoom-image" || source === "data-full" ? 30 : 0;
   if (mode === "gam") {
     if (/product_main_2x/i.test(name)) rank += 100;
@@ -44,7 +55,7 @@ export const collectProductImages = (
   $: cheerio.CheerioAPI,
   pageUrl: string,
   selectors: readonly string[],
-  mode?: "gam" | "mercaeleva"
+  mode?: "gam" | "mercaeleva" | "gomariz"
 ): readonly string[] => {
   const images = new Map<string, { readonly url: string; readonly rank: number; readonly position: number }>();
   let position = 0;

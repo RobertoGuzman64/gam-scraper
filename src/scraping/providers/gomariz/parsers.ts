@@ -72,7 +72,8 @@ export const parseGomarizProduct = (html: string, pageUrl: string): ParsedProduc
 
   const year = content.match(/\bAño:\s*((?:19|20)\d{2})\b/i)?.[1] ?? null;
   const brandText = content.match(/\bMarca:\s*(.*?)(?=\s+(?:Ver precio|Contactar|Descripción|Dimensiones|Año:|Referencia:)|$)/i)?.[1] ?? "";
-  const brand = normalize(brandText) || null;
+  const brandValue = normalize(brandText);
+  const brand = brandValue && !/^(?:ver precio|consultar precio|contactar)$/i.test(brandValue) ? brandValue : null;
   const description = normalize(content.match(/Descripción\s*(.*?)(?=\s+Dimensiones|\s+Especificaciones técnicas|\s+Ver ficha técnica|$)/i)?.[1] ?? "");
   const metadataStart = content.indexOf(`Referencia: ${reference}`);
   const overview = (metadataStart < 0 ? content : content.slice(metadataStart)).split(/Descripción|Dimensiones|Especificaciones técnicas/i)[0] ?? "";
@@ -81,7 +82,7 @@ export const parseGomarizProduct = (html: string, pageUrl: string): ParsedProduc
   const images = collectProductImages($, pageUrl, [
     ".woocommerce-product-gallery", ".product-gallery", ".swiper-slide",
     ".gallery", ".product-images"
-  ]);
+  ], "gomariz");
   const image = images[0] ?? null;
 
   return {

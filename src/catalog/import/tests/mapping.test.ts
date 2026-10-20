@@ -46,6 +46,14 @@ test("Gomariz: utiliza tipo fuente y motor, sin adjudicar categorías inexistent
   assert.equal(categorySlug(source("gomariz", gomUrl("elevador-mastil-vertical", "sla15"), "Genie SLA15", {}, null)), undefined);
 });
 
+test("Gomariz: la ficha identifica tijeras eléctricas aunque omita Motor, sin forzar tipos ambiguos", () => {
+  const electricScissor = gomUrl("elevador-tijera", "lgmg-as0607we-tijera-electrica-electric-scissor-2");
+  assert.equal(categorySlug(source("gomariz", electricScissor, "LGMG AS0607WE", {}, null)), "plataformas-tijera-electricas-segunda-mano");
+  assert.equal(categorySlug(source("gomariz", electricScissor, "LGMG AS0607WE", { Motor: "Diésel" }, null)), undefined);
+  assert.equal(categorySlug(source("gomariz", gomUrl("brazo-articulado", "jlg-340aj"), "JLG 340AJ", {}, null)), undefined);
+  assert.equal(categorySlug(source("gomariz", "https://www.gomarizrent.com/venta/movimiento-de-tierras-demolicion-y-compactacion/rodillo/dynapac-cc142-2/", "Dynapac CC142", { Motor: "Diésel" }, null)), undefined);
+});
+
 test("Mercaeleva: distingue las familias por el título adicional original sin usar IDs supuestos", () => {
   assert.equal(categorySlug(source("mercaeleva", merUrl("Toyota-6FBRE14-M547-2372"), "Toyota 6FBRE14", { "Título adicional": "CARRETILLA ELEVADORA RETRACTIL 1350 KG" })), "carretillas-elevadoras-retractiles-segunda-mano");
   assert.equal(categorySlug(source("mercaeleva", merUrl("Hollandlift-M140-0406"), "Hollandlift HL-220", { "Título adicional": "PLATAFORMA TIJERA ELECTRICA 22 MT" })), "plataformas-tijera-electricas-segunda-mano");
