@@ -203,9 +203,9 @@ const candidateBrowsers = (): readonly string[] => {
 export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number, delayMs: number): string => String.raw`
 (async () => {
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  const deadline = async (condition, detail) => {
+  const deadline = async (condition, detail, timeout = ${timeoutMs}) => {
     const start = Date.now();
-    while (Date.now() - start < ${timeoutMs}) {
+    while (Date.now() - start < timeout) {
       const result = condition();
       if (result) return result;
       await wait(200);
@@ -255,17 +255,56 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
   ].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim().toLowerCase();
   const controls = () => [...document.querySelectorAll('button, [role="button"]')];
   const disabled = (element) => element.disabled || element.getAttribute('disabled') !== null ||
-    element.getAttribute('aria-disabled') === 'true';
+    element.getAttribute('aria-disabled') === 'true' ||
+    !!element.closest?.('[hidden], [aria-hidden="true"]') ||
+    (element.getClientRects && element.getClientRects().length === 0);
+  const numberedControl = (page) => controls().find((element) =>
+    (element.textContent || '').trim() === String(page) && !disabled(element)) || null;
   const nextControl = (page) => {
     const available = controls();
-    const labelled = available.find((element) => !disabled(element) &&
-      /(?:next(?:\s+\w+){0,2}\s+page|next|siguiente|següent|seguent|próxima|proxima)/i.test(controlLabel(element)));
-    if (labelled) return labelled;
     const numbered = available.filter((element) => /^\d{1,3}$/.test((element.textContent || '').trim()));
     if (numbered.some((element) => element.textContent.trim() === String(page))) {
-      return numbered.find((element) => element.textContent.trim() === String(page + 1) && !disabled(element)) || null;
+      const next = numberedControl(page + 1);
+      if (next) return next;
     }
-    return null;
+    return available.find((element) => !disabled(element) &&
+      /(?:next(?:\s+\w+){0,2}\s+page|next|siguiente|següent|seguent|próxima|proxima)/i.test(controlLabel(element))) || null;
+  };
+  const largerPageSize = async (currentSize) => {
+    const label = /(?:elementos|resultados) por p[aá]gina|items? per page|results? per page|elements? per page/i;
+    const named = (element) => controlLabel(element) + ' ' +
+      (element.getAttribute('placeholder') || '') + ' ' +
+      (element.closest?.('label')?.textContent || '') + ' ' +
+      (element.parentElement?.textContent?.slice(0, 100) || '') + ' ' +
+      (element.id ? document.querySelector('label[for="' + element.id + '"]')?.textContent || '' : '');
+    const candidates = [...document.querySelectorAll('select, [role="combobox"], button[aria-haspopup="listbox"]')];
+    const nativeSize = (element) => element.tagName?.toLowerCase() === 'select' &&
+      [...element.options].some((option) => Number((option.textContent || '').trim()) === currentSize);
+    const candidate = candidates.find((element) => !disabled(element) &&
+      (label.test(named(element)) || nativeSize(element)));
+    if (!candidate) return false;
+    const choose = (elements) => elements.map((element) => ({
+      element, count: Number((element.textContent || '').trim()), value: element.value
+    })).filter((option) => Number.isSafeInteger(option.count) && option.count > currentSize && option.count <= 100)
+      .sort((a, b) => b.count - a.count)[0];
+    if (candidate.tagName?.toLowerCase() === 'select') {
+      const option = choose([...candidate.options]);
+      if (!option) return false;
+      candidate.value = option.value;
+      candidate.dispatchEvent(new Event('input', { bubbles: true }));
+      candidate.dispatchEvent(new Event('change', { bubbles: true }));
+    } else {
+      candidate.click();
+      const option = await deadline(() => choose([...document.querySelectorAll('[role="option"]')]),
+        'las opciones de elementos por página', 2000).catch(() => null);
+      if (!option) {
+        candidate.click();
+        return false;
+      }
+      option.element.click();
+    }
+    return !!await deadline(() => links().length > currentSize && links(),
+      'más referencias tras cambiar elementos por página', 3000).catch(() => null);
   };
   const nextPage = async (page, count, total) => {
     const started = Date.now();
@@ -285,6 +324,12 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
   const pages = [];
   const seen = new Set();
   let current = await settledLinks('los productos de la primera página', null);
+  const initialSize = current.length;
+  if (total > initialSize && await largerPageSize(initialSize)) {
+    current = await settledLinks('el nuevo tamaño de la primera página', null);
+  }
+  const pageSize = current.length;
+  const firstPage = [...current].sort().join('\n');
   for (let page = 1; page <= ${maxPages}; page += 1) {
     const reportedTotal = readTotal();
     if (reportedTotal !== total) {
@@ -296,7 +341,28 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
     if (seen.size >= total || page === ${maxPages}) break;
     const next = await nextPage(page, seen.size, total);
     next.click();
-    current = await settledLinks('referencias nuevas después de la página ' + page + ' (' + seen.size + '/' + total + ')', seen);
+    try {
+      current = await settledLinks('referencias nuevas después de la página ' + page + ' (' + seen.size + '/' + total + ')', seen);
+    } catch (error) {
+      const remaining = total - seen.size;
+      const lastPage = Math.ceil(total / pageSize);
+      if (remaining > pageSize || page + 1 !== lastPage || !numberedControl(1)) throw error;
+      const first = numberedControl(1);
+      first.click();
+      try {
+        await deadline(() => {
+          const candidate = links();
+          return [...candidate].sort().join('\n') === firstPage ? candidate : null;
+        }, 'volver a la primera página para recuperar la última');
+        const last = numberedControl(lastPage);
+        if (!last) throw new Error('no existe un botón habilitado para la página ' + lastPage);
+        last.click();
+        current = await settledLinks('las ' + remaining + ' referencias pendientes en la página ' + lastPage, seen);
+      } catch (recoveryError) {
+        throw new Error('Mercaeleva: navegación a la página ' + (page + 1) + ' sin referencias nuevas: ' +
+          String(error) + '; reintento directo desde la primera página: ' + String(recoveryError));
+      }
+    }
     if (${delayMs} > 0) await wait(${delayMs});
   }
   return { pages, expectedTotal: total };

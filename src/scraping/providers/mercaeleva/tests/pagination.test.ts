@@ -102,6 +102,9 @@ type SimulationOptions = {
   readonly numericPagination?: boolean;
   readonly disabledNextOnPage?: number;
   readonly disabledNumberOnPage?: number;
+  readonly stallsOnSequentialLastPage?: boolean;
+  readonly stallsOnDirectLastPage?: boolean;
+  readonly pageSizeOptions?: readonly number[];
   readonly onNext?: () => void;
   readonly onProgress?: (pages: number, found: number) => void;
 };
@@ -110,11 +113,23 @@ const simulateCatalog = async (
   pages: readonly (readonly string[])[], announced: number, maxPages = 10, simulation?: SimulationOptions
 ): Promise<unknown> => {
   let current = 0;
+  const initialSize = pages[0]?.length ?? 0;
+  const allIds = pages.flat();
+  let pageSize = initialSize;
+  const visiblePages = (): readonly (readonly string[])[] => simulation?.pageSizeOptions && pageSize > initialSize
+    ? Array.from({ length: Math.ceil(allIds.length / pageSize) }, (_, index) =>
+      allIds.slice(index * pageSize, (index + 1) * pageSize)) : pages;
   const paginationAvailableAt = Date.now() + (simulation?.delayedPaginationMs ?? 0);
   const advance = (): void => {
     simulation?.onNext?.();
     if (simulation?.delayedNextMs) setTimeout(() => { current += 1; }, simulation.delayedNextMs);
     else current += 1;
+  };
+  const goTo = (page: number): void => {
+    simulation?.onNext?.();
+    if (simulation?.stallsOnSequentialLastPage && current === 10 && page === 12) return;
+    if (simulation?.stallsOnDirectLastPage && current === 0 && page === 12) return;
+    current = page - 1;
   };
   const button = (label: string, text: string, disabled: boolean, click: () => void) => ({
     disabled,
@@ -127,25 +142,39 @@ const simulateCatalog = async (
     body: { get innerText() { return `Resultados: ${simulation?.totals?.[current] ?? announced}`; } },
     documentElement: { get outerHTML() { return `<html data-page="${current + 1}"></html>`; } },
     querySelectorAll(selector) {
-      if (selector === "a[href]") return (pages[current] ?? []).map((id) => ({ href: id.startsWith("https://") ? id : `${baseUrl}${id}` }));
+      if (selector === "a[href]") return (visiblePages()[current] ?? []).map((id) =>
+        ({ href: id.startsWith("https://") ? id : `${baseUrl}${id}` }));
+      if (selector === 'select, [role="combobox"], button[aria-haspopup="listbox"]' && simulation?.pageSizeOptions) {
+        return [{
+          tagName: "SELECT",
+          get value() { return String(pageSize); },
+          set value(value: string) { pageSize = Number(value); current = 0; },
+          options: simulation.pageSizeOptions.map((size) => ({ textContent: String(size), value: String(size) })),
+          textContent: "", getAttribute: (name: string) => name === "aria-label" ? "Elementos por página" : null,
+          querySelectorAll: () => [],
+          dispatchEvent: () => {}
+        }];
+      }
       if (selector === 'button, [role="button"]') {
         if (Date.now() < paginationAvailableAt) return [];
         if (simulation?.numericPagination) {
           const page = current + 1;
           return [
             ...(simulation.disabledNextOnPage === page ? [button("Next page", "", true, advance)] : []),
+            ...(simulation.stallsOnSequentialLastPage && page > 1 ? [button("", "1", false, () => goTo(1))] : []),
             button("", String(page), false, () => {}),
-            button("", String(page + 1), simulation.disabledNumberOnPage === page, advance)
+            button("", String(page + 1), simulation.disabledNumberOnPage === page, () => goTo(page + 1)),
+            ...(simulation.stallsOnSequentialLastPage && page === 1 ? [button("", "12", false, () => goTo(12))] : [])
           ];
         }
         return [button(simulation?.nextButtonTextOnly ? "" : "Next page",
-          simulation?.nextButtonTextOnly ? "Next page" : "", current >= pages.length - 1, advance)];
+          simulation?.nextButtonTextOnly ? "Next page" : "", current >= visiblePages().length - 1, advance)];
       }
       return [];
     }
   };
   return runInNewContext(buildMercaelevaCatalogScript(maxPages, 1000, 0), {
-    document, URL, setTimeout: (callback: () => void) => setTimeout(callback, 1),
+    document, URL, Event: class { constructor(readonly type: string) {} }, setTimeout: (callback: () => void) => setTimeout(callback, 1),
     console: { debug: (tag: string, pages: number, found: number) => {
       if (tag === "__EQUIPZILLA_MERCA_PROGRESS__") simulation?.onProgress?.(pages, found);
     } }
@@ -281,6 +310,37 @@ test("Mercaeleva: el parser aplica la misma identidad de URL sin query ni barra 
   assert.deepEqual(extractMercaelevaLinks(category.url, html), [
     `${baseUrl}M1`, "https://sales.mercaeleva.com/ca/for-sale/machine/M2"
   ]);
+});
+
+
+test("Mercaeleva: reduce el número de páginas si el selector admite más elementos", async () => {
+  const pages = Array.from({ length: 12 }, (_, index) =>
+    Array.from({ length: index === 11 ? 1 : 20 }, (_, offset) => `M${index * 20 + offset + 1}`));
+  const result = await simulateCatalog(pages, 221, 12, {
+    pageSizeOptions: [20, 50, 100], numericPagination: true
+  });
+  assert.ok(result && typeof result === "object" && "pages" in result && Array.isArray(result.pages));
+  assert.equal(result.pages.length, 3);
+});
+
+test("Mercaeleva: recupera la última página desde la primera cuando falla el salto desde la 11", async () => {
+  const pages = Array.from({ length: 12 }, (_, index) =>
+    Array.from({ length: index === 10 ? 1 : 20 }, (_, offset) =>
+      `M${index < 10 ? index * 20 + offset + 1 : index === 10 ? 201 : offset + 202}`));
+  const result = await simulateCatalog(pages, 221, 12, {
+    numericPagination: true, stallsOnSequentialLastPage: true
+  });
+  assert.ok(result && typeof result === "object" && "pages" in result && Array.isArray(result.pages));
+  assert.equal(result.pages.length, 12);
+});
+
+test("Mercaeleva: bloquea el catálogo si tampoco responde el salto directo a la última página", async () => {
+  const pages = Array.from({ length: 12 }, (_, index) =>
+    Array.from({ length: index === 10 ? 1 : 20 }, (_, offset) =>
+      `M${index < 10 ? index * 20 + offset + 1 : index === 10 ? 201 : offset + 202}`));
+  await assert.rejects(simulateCatalog(pages, 221, 12, {
+    numericPagination: true, stallsOnSequentialLastPage: true, stallsOnDirectLastPage: true
+  }), /reintento directo desde la primera página/);
 });
 
 test("Mercaeleva: detecta el listado antes de completar las cargas externas", () => {
