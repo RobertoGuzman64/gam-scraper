@@ -84,12 +84,22 @@ test("Mercaeleva: una extracción completa publica y una repetida conserva el CS
 type PageFixture = {
   readonly body: { readonly innerText: string };
   readonly documentElement: { readonly outerHTML: string };
-  querySelectorAll(selector: string): readonly { readonly href?: string; readonly disabled?: boolean; readonly title?: string; getAttribute?(name: string): string | null; click?(): void }[];
+  querySelectorAll(selector: string): readonly {
+    readonly href?: string;
+    readonly disabled?: boolean;
+    readonly textContent?: string;
+    getAttribute?(name: string): string | null;
+    querySelectorAll?(selector: string): readonly { readonly textContent?: string; getAttribute(name: string): string | null }[];
+    click?(): void;
+  }[];
 };
 
 type SimulationOptions = {
   readonly totals?: readonly number[];
   readonly delayedNextMs?: number;
+  readonly delayedPaginationMs?: number;
+  readonly nextButtonTextOnly?: boolean;
+  readonly numericPagination?: boolean;
   readonly onNext?: () => void;
   readonly onProgress?: (pages: number, found: number) => void;
 };
@@ -98,20 +108,35 @@ const simulateCatalog = async (
   pages: readonly (readonly string[])[], announced: number, maxPages = 10, simulation?: SimulationOptions
 ): Promise<unknown> => {
   let current = 0;
+  const paginationAvailableAt = Date.now() + (simulation?.delayedPaginationMs ?? 0);
+  const advance = (): void => {
+    simulation?.onNext?.();
+    if (simulation?.delayedNextMs) setTimeout(() => { current += 1; }, simulation.delayedNextMs);
+    else current += 1;
+  };
+  const button = (label: string, text: string, disabled: boolean, click: () => void) => ({
+    disabled,
+    textContent: text,
+    getAttribute: (key: string) => key === "aria-label" ? label || null : null,
+    querySelectorAll: () => [],
+    click
+  });
   const document: PageFixture = {
     body: { get innerText() { return `Resultados: ${simulation?.totals?.[current] ?? announced}`; } },
     documentElement: { get outerHTML() { return `<html data-page="${current + 1}"></html>`; } },
     querySelectorAll(selector) {
       if (selector === "a[href]") return (pages[current] ?? []).map((id) => ({ href: id.startsWith("https://") ? id : `${baseUrl}${id}` }));
-      if (selector === "button") return [{
-        disabled: current >= pages.length - 1,
-        getAttribute: (key: string) => key === "aria-label" ? "Next page" : null,
-        click: () => {
-          simulation?.onNext?.();
-          if (simulation?.delayedNextMs) setTimeout(() => { current += 1; }, simulation.delayedNextMs);
-          else current += 1;
+      if (selector === 'button, [role="button"]') {
+        if (Date.now() < paginationAvailableAt) return [];
+        if (simulation?.numericPagination) {
+          return [
+            button("", String(current + 1), false, () => {}),
+            button("", String(current + 2), false, advance)
+          ];
         }
-      }];
+        return [button(simulation?.nextButtonTextOnly ? "" : "Next page",
+          simulation?.nextButtonTextOnly ? "Next page" : "", current >= pages.length - 1, advance)];
+      }
       return [];
     }
   };
@@ -140,6 +165,30 @@ test("Mercaeleva: informa cada página antes de completar el catálogo", async (
   assert.deepEqual(progress, [
     { pages: 1, found: 2 }, { pages: 2, found: 4 }, { pages: 3, found: 5 }
   ]);
+});
+
+test("Mercaeleva: encuentra el botón de paginación aunque se renderice después de los productos", async () => {
+  const result = await simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 2, {
+    delayedPaginationMs: 25
+  });
+  assert.ok(result && typeof result === "object" && "pages" in result && Array.isArray(result.pages));
+  assert.equal(result.pages.length, 2);
+});
+
+test("Mercaeleva: reconoce Next page como texto del botón sin aria-label", async () => {
+  const result = await simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 2, {
+    nextButtonTextOnly: true
+  });
+  assert.ok(result && typeof result === "object" && "pages" in result && Array.isArray(result.pages));
+  assert.equal(result.pages.length, 2);
+});
+
+test("Mercaeleva: puede avanzar usando botones numéricos de paginación", async () => {
+  const result = await simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 2, {
+    numericPagination: true
+  });
+  assert.ok(result && typeof result === "object" && "pages" in result && Array.isArray(result.pages));
+  assert.equal(result.pages.length, 2);
 });
 
 test("Mercaeleva: detecta página repetida y paginación sin botón siguiente", async () => {

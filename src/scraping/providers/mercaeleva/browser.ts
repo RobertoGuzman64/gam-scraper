@@ -131,13 +131,12 @@ class DevtoolsWebSocket {
   }
 }
 
-const waitForDebuggingPort = async (profile: string, child: ChildProcess, timeoutMs: number): Promise<string> => {
+export const waitForDebuggingPort = async (
+  profile: string, child: Pick<ChildProcess, "exitCode" | "signalCode">, timeoutMs: number
+): Promise<string> => {
   const path = join(profile, "DevToolsActivePort");
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    if (child.exitCode !== null || child.signalCode !== null) {
-      throw new Error(`Chrome finalizó antes de abrir la depuración (código ${String(child.exitCode)})`);
-    }
     let content: string | null = null;
     try {
       content = await readFile(path, "utf8");
@@ -153,9 +152,15 @@ const waitForDebuggingPort = async (profile: string, child: ChildProcess, timeou
       }
       return `ws://127.0.0.1:${port}${browserPath}`;
     }
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    if ((child.exitCode !== null && child.exitCode !== 0) || child.signalCode !== null) {
+      throw new Error(`Chrome terminó sin abrir la depuración (código ${String(child.exitCode)}, señal ${String(child.signalCode)})`);
+    }
+    await new Promise<void>((resolve) => setTimeout(resolve, 100));
   }
-  throw new Error("Chrome no abrió el puerto de depuración a tiempo");
+  if (child.exitCode !== null || child.signalCode !== null) {
+    throw new Error(`Chrome terminó sin publicar DevToolsActivePort (código ${String(child.exitCode)}, señal ${String(child.signalCode)})`);
+  }
+  throw new Error(`Chrome no publicó DevToolsActivePort tras ${timeoutMs} ms`);
 };
 
 const openDebugSocket = async (url: string, timeoutMs: number): Promise<WebSocket> => {
@@ -242,6 +247,40 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
       return stable >= 2 ? current : null;
     }, detail);
   };
+  const controlLabel = (element) => [
+    element.getAttribute('aria-label'), element.getAttribute('title'),
+    element.textContent,
+    ...[...element.querySelectorAll('[aria-label], [title], svg title')].map((child) =>
+      child.getAttribute('aria-label') || child.getAttribute('title') || child.textContent)
+  ].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim().toLowerCase();
+  const controls = () => [...document.querySelectorAll('button, [role="button"]')];
+  const disabled = (element) => element.disabled || element.getAttribute('disabled') !== null ||
+    element.getAttribute('aria-disabled') === 'true';
+  const nextControl = (page) => {
+    const available = controls();
+    const labelled = available.find((element) =>
+      /(?:next(?:\s+\w+){0,2}\s+page|next|siguiente|següent|seguent|próxima|proxima)/i.test(controlLabel(element)));
+    if (labelled) return labelled;
+    const numbered = available.filter((element) => /^\d{1,3}$/.test((element.textContent || '').trim()));
+    if (numbered.some((element) => element.textContent.trim() === String(page))) {
+      return numbered.find((element) => element.textContent.trim() === String(page + 1)) || null;
+    }
+    return null;
+  };
+  const nextPage = async (page, count, total) => {
+    const started = Date.now();
+    const timeout = Math.min(${timeoutMs}, 8000);
+    while (Date.now() - started < timeout) {
+      const button = nextControl(page);
+      if (button && !disabled(button)) return button;
+      await wait(200);
+    }
+    const available = controls().slice(-16).map((element) =>
+      controlLabel(element).slice(0, 80) + (disabled(element) ? ' [deshabilitado]' : '')).join(' | ');
+    throw new Error('Mercaeleva: no hay página siguiente tras la página ' + page +
+      ' (' + count + '/' + total + '); ready=' + document.readyState +
+      '; botones=' + (available || 'ninguno'));
+  };
   const total = await deadline(readTotal, 'el contador total de resultados');
   const pages = [];
   const seen = new Set();
@@ -255,13 +294,7 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
     for (const href of current) seen.add(href);
     console.debug("__EQUIPZILLA_MERCA_PROGRESS__", pages.length, seen.size);
     if (seen.size >= total || page === ${maxPages}) break;
-    const next = [...document.querySelectorAll('button')].find((button) => {
-      const label = (button.getAttribute('aria-label') || button.title || '').toLowerCase();
-      return /next page|página siguiente|pagina siguiente|pàgina següent|página próxima|siguiente/.test(label);
-    });
-    if (!next || next.disabled || next.getAttribute('aria-disabled') === 'true') {
-      throw new Error('Mercaeleva: no hay página siguiente tras la página ' + page + ' (' + seen.size + '/' + total + ')');
-    }
+    const next = await nextPage(page, seen.size, total);
     next.click();
     current = await settledLinks('referencias nuevas después de la página ' + page + ' (' + seen.size + '/' + total + ')', seen);
     if (${delayMs} > 0) await wait(${delayMs});
@@ -346,13 +379,13 @@ const renderWithBrowser = async (
   const catalogTimeoutMs = Math.min(120000, Math.max(timeoutMs, 10000) + Math.min(maxPages, 12) * 6000);
   const timer = setTimeout(() => child.kill(), catalogTimeoutMs + navigationTimeoutMs + commandTimeoutMs * 3);
   let socket: WebSocket | null = null;
+  let devtools: DevtoolsPipe | DevtoolsWebSocket | null = null;
   try {
     await new Promise<void>((resolve, reject) => {
       if (child.pid) { resolve(); return; }
       child.once("spawn", () => resolve());
       child.once("error", reject);
     });
-    let devtools: DevtoolsPipe | DevtoolsWebSocket;
     if (windows) {
       reportStage("abriendo depuración de Chrome");
       const endpoint = await waitForDebuggingPort(profile, child, commandTimeoutMs);
@@ -367,12 +400,14 @@ const renderWithBrowser = async (
       }
       devtools = new DevtoolsPipe(child, input, output, handleEvent);
     }
+    if (!devtools) throw new Error("No se inicializó el canal de depuración");
+    const channel = devtools;
     const send = (
       operation: string, method: string, params: Record<string, unknown> = {}, sessionId?: string,
       deadlineMs = commandTimeoutMs
     ): Promise<Record<string, unknown>> => {
       reportStage(operation);
-      return withTimeout(devtools.send(method, params, sessionId), deadlineMs, `${operation} (${method})`);
+      return withTimeout(channel.send(method, params, sessionId), deadlineMs, `${operation} (${method})`);
     };
     const target = await send("crear pestaña", "Target.createTarget", { url: "about:blank" });
     if (typeof target.targetId !== "string") throw new Error("Chrome no creó la pestaña de catálogo");
@@ -439,6 +474,11 @@ const renderWithBrowser = async (
     throw new Error(`Navegador ${executable} [${stage}]: ${String(error)}; estado=${lastState}; red=${lastNetwork}${status}${detail ? `; stderr: ${detail}` : ""}`);
   } finally {
     clearTimeout(timer);
+    if (windows && devtools && socket?.readyState === WebSocket.OPEN) {
+      try {
+        await withTimeout(devtools.send("Browser.close"), 1200, "cerrar Chrome");
+      } catch {}
+    }
     socket?.close();
     if (child.exitCode === null && child.signalCode === null) {
       const exit = new Promise<void>((resolve) => child.once("exit", () => resolve()));
