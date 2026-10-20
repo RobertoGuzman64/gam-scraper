@@ -39,67 +39,89 @@ export const scrapeCategory = async (
 
   log("category", `start key=${category.key} pagesMax=${options.maxPages}`);
 
-  while (page <= options.maxPages) {
-    const pages: number[] = [];
-    for (let i = 0; i < concurrentPages; i += 1) {
-      const p = page + i;
-      if (p <= options.maxPages) pages.push(p);
-    }
+  let expectedProductUrls: number | undefined;
 
-    log("category", `listing key=${category.key} pages=${pages.join(",")}`);
-
-    const results = await Promise.allSettled(
-      pages.map((p) =>
-        pageLimit(async () => {
-          const url = provider.buildPagedUrl(category.url, p);
-          const html = provider.loadListingHtml
-            ? await provider.loadListingHtml(url, options)
-            : await fetchHtml(url, { timeoutMs: options.timeoutMs, userAgent: options.userAgent });
-          return provider.extractProductLinksFromListing(url, html);
-        })
-      )
-    );
-
-    let added = 0;
-
-    for (let i = 0; i < results.length; i += 1) {
-      const r = results[i];
-      if (!r) continue;
-      if (r.status === "rejected") {
-        const listingUrl = provider.buildPagedUrl(category.url, pages[i]!);
-        failures.push({ url: listingUrl, error: String(r.reason) });
-        log("listing", `fail key=${category.key} url=${listingUrl} error=${String(r.reason)}`);
-        continue;
+  if (provider.discoverListing) {
+    try {
+      const listing = await provider.discoverListing(category, options);
+      expectedProductUrls = listing.expectedTotal;
+      for (const url of listing.urls) productUrls.add(url);
+      if (!Number.isSafeInteger(expectedProductUrls) || expectedProductUrls < 1) {
+        failures.push({ url: category.url, error: "El proveedor no ha confirmado un total válido de resultados" });
+      } else if (productUrls.size !== expectedProductUrls) {
+        failures.push({
+          url: category.url,
+          error: `Cobertura incompleta del catálogo: ${productUrls.size} de ${expectedProductUrls} referencias únicas`
+        });
       }
-      for (const u of r.value) {
-        if (!productUrls.has(u)) {
-          productUrls.add(u);
-          added += 1;
+      log("category", `listingDone key=${category.key} total=${productUrls.size} expected=${String(expectedProductUrls)}`);
+    } catch (error) {
+      failures.push({ url: category.url, error: `No se pudo recorrer la paginación: ${String(error)}` });
+    }
+  } else {
+    while (page <= options.maxPages) {
+      const pages: number[] = [];
+      for (let i = 0; i < concurrentPages; i += 1) {
+        const p = page + i;
+        if (p <= options.maxPages) pages.push(p);
+      }
+
+      log("category", `listing key=${category.key} pages=${pages.join(",")}`);
+
+      const results = await Promise.allSettled(
+        pages.map((p) =>
+          pageLimit(async () => {
+            const url = provider.buildPagedUrl(category.url, p);
+            const html = provider.loadListingHtml
+              ? await provider.loadListingHtml(url, options)
+              : await fetchHtml(url, { timeoutMs: options.timeoutMs, userAgent: options.userAgent });
+            return provider.extractProductLinksFromListing(url, html);
+          })
+        )
+      );
+
+      let added = 0;
+
+      for (let i = 0; i < results.length; i += 1) {
+        const r = results[i];
+        if (!r) continue;
+        if (r.status === "rejected") {
+          const listingUrl = provider.buildPagedUrl(category.url, pages[i]!);
+          failures.push({ url: listingUrl, error: String(r.reason) });
+          log("listing", `fail key=${category.key} url=${listingUrl} error=${String(r.reason)}`);
+          continue;
+        }
+        for (const u of r.value) {
+          if (!productUrls.has(u)) {
+            productUrls.add(u);
+            added += 1;
+          }
         }
       }
+
+      if (results.every((result) => result.status === "rejected")) {
+        throw new Error(`No se pudo leer ninguna página del listado de ${category.key}: ${pages.join(",")}`);
+      }
+
+      log("category", `listingDone key=${category.key} added=${added} total=${productUrls.size} stall=${stall}`);
+
+      if (added === 0) stall += 1;
+      else stall = 0;
+
+      if (stall >= options.stallStopAfter) {
+        exhausted = true;
+        log("category", `stallStop key=${category.key} stall=${stall} total=${productUrls.size}`);
+        break;
+      }
+
+      page += pages.length;
+      if (page <= options.maxPages) await sleep(Math.max(options.delayMs, provider.defaultOptions.delayMs));
     }
 
-    if (results.every((result) => result.status === "rejected")) {
-      throw new Error(`No se pudo leer ninguna página del listado de ${category.key}: ${pages.join(",")}`);
+    if (!exhausted && page > options.maxPages) {
+      failures.push({ url: category.url, error: `Límite de páginas (${options.maxPages}) alcanzado sin confirmar fin de catálogo` });
     }
 
-    log("category", `listingDone key=${category.key} added=${added} total=${productUrls.size} stall=${stall}`);
-
-    if (added === 0) stall += 1;
-    else stall = 0;
-
-    if (stall >= options.stallStopAfter) {
-      exhausted = true;
-      log("category", `stallStop key=${category.key} stall=${stall} total=${productUrls.size}`);
-      break;
-    }
-
-    page += pages.length;
-    if (page <= options.maxPages) await sleep(Math.max(options.delayMs, provider.defaultOptions.delayMs));
-  }
-
-  if (!exhausted && page > options.maxPages) {
-    failures.push({ url: category.url, error: `Límite de páginas (${options.maxPages}) alcanzado sin confirmar fin de catálogo` });
   }
 
   const urls = [...productUrls];
@@ -170,6 +192,7 @@ export const scrapeCategory = async (
   return {
     category,
     discoveredProductUrls: urls.length,
+    ...(expectedProductUrls === undefined ? {} : { expectedProductUrls }),
     products,
     failures
   };

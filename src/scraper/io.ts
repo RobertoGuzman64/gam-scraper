@@ -239,6 +239,8 @@ const writeResultGroups = async (
       name: group.parent.name,
       url: group.parent.url,
       discoveredProductUrls: group.results.reduce((sum, result) => sum + result.discoveredProductUrls, 0),
+      ...(group.results.length === 1 && group.results[0]?.expectedProductUrls !== undefined
+        ? { expectedProductUrls: group.results[0].expectedProductUrls } : {}),
       scrapedProductsRaw: rawProducts.length,
       scrapedProducts: deduped.unique.length,
       failures: group.results.reduce((sum, result) => sum + result.failures.length, 0),

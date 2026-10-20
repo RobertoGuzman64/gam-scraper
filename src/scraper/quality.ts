@@ -73,6 +73,9 @@ export const assessCatalogQuality = (
   for (const result of results) {
     if (result.products.length === 0) reasons.push(`Categoría sin productos: ${result.category.key}`);
     if (result.failures.length > 0) reasons.push(`Errores de extracción en ${result.category.key}: ${result.failures.length}`);
+    if (result.expectedProductUrls !== undefined && result.discoveredProductUrls !== result.expectedProductUrls) {
+      reasons.push(`Cobertura incompleta en ${result.category.key}: ${result.discoveredProductUrls} de ${result.expectedProductUrls} referencias`);
+    }
   }
 
   if (previous && previous.items.length >= 10 && products.length < previous.items.length / 2) {

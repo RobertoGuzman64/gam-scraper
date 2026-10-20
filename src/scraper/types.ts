@@ -45,6 +45,7 @@ export type ScrapeOptions = {
 export type CategoryScrapeResult = {
   readonly category: CategoryConfig;
   readonly discoveredProductUrls: number;
+  readonly expectedProductUrls?: number;
   readonly products: readonly ProductRecord[];
   readonly failures: readonly { readonly url: string; readonly error: string }[];
 };
@@ -83,6 +84,7 @@ export type Summary = {
     readonly name: string;
     readonly url: string;
     readonly discoveredProductUrls: number;
+    readonly expectedProductUrls?: number;
     readonly scrapedProductsRaw: number;
     readonly scrapedProducts: number;
     readonly failures: number;

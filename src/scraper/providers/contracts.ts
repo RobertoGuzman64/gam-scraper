@@ -11,5 +11,6 @@ export interface ScraperProvider {
   parseProductPage(html: string, pageUrl: string): ParsedProduct;
   extractReference(url: string): string | null;
   loadListingHtml?(url: string, options: ScrapeOptions): Promise<string>;
+  discoverListing?(category: CategoryConfig, options: ScrapeOptions): Promise<{ readonly urls: readonly string[]; readonly expectedTotal: number }>;
   discoverCategoryTree(rootUrl: string, options: ScrapeOptions): Promise<readonly CategoryConfig[]>;
 }
