@@ -96,10 +96,16 @@ export const validateCatalogPublication = async (options: PreflightOptions): Pro
     throw new Error("Los totales de CSV, preparación y resumen no coinciden");
   }
   const csvRows = new Map<string, { providerId: string; reference: string }>();
+  const references = new Set<string>();
   for (const row of csv.rows) {
     const url = row.url;
     if (!url || row.providerId !== options.providerId || csvRows.has(url)) {
       throw new Error("CSV con URLs repetidas o proveedor incorrecto");
+    }
+    const reference = referenceKey(row.reference ?? "");
+    if (reference) {
+      if (references.has(reference)) throw new Error("CSV con referencias duplicadas; revisar identidades");
+      references.add(reference);
     }
     csvRows.set(url, { providerId: row.providerId, reference: row.reference ?? "" });
   }
@@ -114,6 +120,7 @@ export const validateCatalogPublication = async (options: PreflightOptions): Pro
     }
     urls.add(url);
     if (entry.status === "ready") {
+      if (entry.product.condition !== "Segunda_Mano") throw new Error("Producto ready sin condición de importación compatible");
       if (entry.issues.length > 0) throw new Error("Producto marcado ready con incidencias");
       ready += 1;
     } else {

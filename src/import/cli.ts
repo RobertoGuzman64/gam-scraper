@@ -1,4 +1,4 @@
-import { readFile, rm, stat, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getProvider } from "../scraper/providers/index.js";
@@ -78,16 +78,15 @@ export const runExport = async (args: readonly string[]): Promise<void> => {
     outputPrefix: base.split(/[\\/]/).at(-1) ?? "",
     maxAgeHours: 48
   });
-  const [preparationJson, inventoryCsv, summaryRaw, preparationStat, summaryStat, catalog] = await Promise.all([
+  const [preparationJson, inventoryCsv, summaryRaw, catalog] = await Promise.all([
     readFile(options.preparation, "utf8"), readFile(options.inventory, "utf8"),
-    readFile(summaryFile, "utf8"), stat(options.preparation), stat(summaryFile), loadImportCatalog()
+    readFile(summaryFile, "utf8"), loadImportCatalog()
   ]);
   const summary: unknown = JSON.parse(summaryRaw);
   if (!summary || typeof summary !== "object" || !("quality" in summary) ||
     !summary.quality || typeof summary.quality !== "object" ||
     !("status" in summary.quality) || summary.quality.status !== "complete" ||
-    !("published" in summary.quality) || summary.quality.published !== true ||
-    summaryStat.mtimeMs > preparationStat.mtimeMs) {
+    !("published" in summary.quality) || summary.quality.published !== true) {
     throw new Error("La última ejecución no publicó un catálogo completo o el informe de preparación está obsoleto");
   }
   const input: unknown = JSON.parse(preparationJson);

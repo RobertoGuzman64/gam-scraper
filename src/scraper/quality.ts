@@ -49,6 +49,61 @@ export const buildCatalogItems = (products: readonly ProductRecord[]): readonly 
     };
   }).sort((a, b) => a.key.localeCompare(b.key));
 
+const canonicalUrl = (url: string): string => {
+  const parsed = new URL(url);
+  parsed.search = "";
+  parsed.hash = "";
+  return parsed.toString();
+};
+
+export const findIdentityConflicts = (products: readonly ProductRecord[]): readonly string[] => {
+  const byIdentity = new Map<string, ProductRecord>();
+  const serialByIdentity = new Map<string, string>();
+  const conditionByIdentity = new Map<string, ProductRecord["condition"]>();
+  const byUrl = new Map<string, ProductRecord>();
+  const bySerial = new Map<string, ProductRecord>();
+  const conflicts = new Set<string>();
+  const normalize = (value: string | null): string => (value ?? "").trim().toLocaleLowerCase("es");
+
+  for (const product of products) {
+    const key = buildProductIdentity(product).key;
+    const urlKey = `${normalize(product.providerId)}:${canonicalUrl(product.url)}`;
+    const previous = byIdentity.get(key);
+    if (previous) {
+      if (canonicalUrl(previous.url) !== canonicalUrl(product.url)) {
+        conflicts.add(`Identidad ${key} asignada a fichas distintas: ${previous.url} / ${product.url}`);
+      }
+    } else byIdentity.set(key, product);
+
+    const normalizedSerial = normalize(product.serialNumber);
+    const knownSerial = serialByIdentity.get(key);
+    if (knownSerial && normalizedSerial && normalizedSerial !== knownSerial) {
+      conflicts.add(`Identidad ${key} con números de serie contradictorios`);
+    } else if (normalizedSerial && !knownSerial) serialByIdentity.set(key, normalizedSerial);
+    const knownCondition = conditionByIdentity.get(key);
+    if (knownCondition && product.condition && knownCondition !== product.condition) {
+      conflicts.add(`Identidad ${key} con estados de maquinaria contradictorios`);
+    } else if (product.condition && !knownCondition) conditionByIdentity.set(key, product.condition);
+
+    const previousUrl = byUrl.get(urlKey);
+    if (previousUrl && previousUrl.reference && product.reference &&
+      normalize(previousUrl.reference) !== normalize(product.reference)) {
+      conflicts.add(`Ficha ${product.url} con referencias contradictorias`);
+    } else if (!previousUrl) byUrl.set(urlKey, product);
+
+    const serial = normalize(product.serialNumber);
+    if (serial) {
+      const serialKey = `${normalize(product.providerId)}:${serial}`;
+      const previousSerial = bySerial.get(serialKey);
+      if (previousSerial && previousSerial.reference && product.reference &&
+        normalize(previousSerial.reference) !== normalize(product.reference)) {
+        conflicts.add(`Número de serie ${serial} asociado a referencias distintas en ${product.providerId}`);
+      } else if (!previousSerial) bySerial.set(serialKey, product);
+    }
+  }
+  return [...conflicts];
+};
+
 export const compareCatalog = (previous: CatalogSnapshot | null, current: readonly CatalogItem[]): CatalogChanges => {
   const currentByKey = new Map(current.map((item) => [item.key, item.fingerprint]));
   const previousByKey = new Map(previous?.items.map((item) => [item.key, item.fingerprint]) ?? []);
@@ -65,9 +120,10 @@ export const compareCatalog = (previous: CatalogSnapshot | null, current: readon
 export const assessCatalogQuality = (
   results: readonly CategoryScrapeResult[],
   products: readonly ProductRecord[],
-  previous: CatalogSnapshot | null
+  previous: CatalogSnapshot | null,
+  identityConflicts: readonly string[] = []
 ): CatalogQuality => {
-  const reasons: string[] = [];
+  const reasons: string[] = [...identityConflicts];
   if (results.length === 0) reasons.push("No hay categorías procesadas");
   if (products.length === 0) reasons.push("Catálogo sin productos válidos");
 
@@ -83,7 +139,7 @@ export const assessCatalogQuality = (
     reasons.push(`Caída anómala del catálogo: ${previous.items.length} → ${products.length}`);
   }
 
-  const blocked = results.length === 0 || products.length === 0 || results.some((r) => r.products.length === 0)
+  const blocked = identityConflicts.length > 0 || results.length === 0 || products.length === 0 || results.some((r) => r.products.length === 0)
     || (previous !== null && previous.items.length >= 10 && products.length < previous.items.length / 2);
   const status = blocked ? "blocked" : reasons.length > 0 ? "partial" : "complete";
   return { status, reasons, published: status === "complete" };

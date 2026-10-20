@@ -72,7 +72,7 @@ const isCandidate = (input: unknown): input is ImportCandidate => {
     (input.title === null || typeof input.title === "string") &&
     (input.categorySellID === null || Number.isSafeInteger(input.categorySellID)) &&
     (input.category === null || typeof input.category === "string") &&
-    input.condition === "Segunda_Mano" &&
+    (input.condition === "Segunda_Mano" || input.condition === null) &&
     (input.price === null || (typeof input.price === "number" && Number.isFinite(input.price))) &&
     (input.description_title === null || typeof input.description_title === "string") &&
     (input.description === null || typeof input.description === "string") &&
@@ -106,6 +106,7 @@ const productIssues = (product: ImportCandidate, catalog: ImportCatalog): readon
   const category = catalog.categories.find((item) => item.id === product.categorySellID);
   if (!validText(product.reference)) issues.push("Referencia ausente");
   if (!validText(product.title)) issues.push("Título ausente");
+  if (product.condition !== "Segunda_Mano") issues.push("Condición incompatible o no confirmada para importación");
   if (!category || category.name !== product.category ||
     catalog.categories.filter((item) => item.name === product.category).length !== 1) {
     issues.push("Categoría no coincide de forma única con el backend");

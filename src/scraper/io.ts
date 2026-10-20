@@ -2,7 +2,7 @@ import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { buildProductIdentity } from "./identity.js";
-import { assessCatalogQuality, buildCatalogItems, categoryScope, compareCatalog, parseCatalogSnapshot } from "./quality.js";
+import { assessCatalogQuality, buildCatalogItems, categoryScope, compareCatalog, findIdentityConflicts, parseCatalogSnapshot } from "./quality.js";
 import type { CatalogSnapshot } from "./quality.js";
 import type {
   CategoryConfig,
@@ -270,7 +270,8 @@ const writeResultGroups = async (
 
   const global = dedupeBy(allProductsPreGlobal, (entry) => entry.product);
   const currentProducts = global.unique.map((entry) => entry.product);
-  const quality = assessCatalogQuality(allResults, currentProducts, previous);
+  const identityConflicts = findIdentityConflicts(allResults.flatMap((result) => result.products));
+  const quality = assessCatalogQuality(allResults, currentProducts, previous, identityConflicts);
   const catalog = await loadImportCatalog();
   const preparation = prepareImportBatch(currentProducts, catalog);
   const outputPrefix = quality.published ? outPrefix : `${outPrefix}-partial`;
@@ -316,13 +317,14 @@ const writeResultGroups = async (
     categoryKey: result.category.key,
     ...failure
   })));
-  await atomicWrite(resolve(outDir, `${outPrefix}-summary.json`), JSON.stringify(summary, null, 2));
+  const summaryFile = resolve(outDir, `${outPrefix}-summary.json`);
   await atomicWrite(resolve(outDir, `${outPrefix}-errors.json`), JSON.stringify({
-    quality: quality.status, failures
+    quality: quality.status, failures, identityConflicts
   }, null, 2));
   await atomicWrite(resolve(outDir, `${outputPrefix}-preparation.json`), preparationContent);
 
   if (!quality.published) {
+    await atomicWrite(summaryFile, JSON.stringify(summary, null, 2));
     await atomicWrite(resolve(outDir, `${outPrefix}-changes.json`), JSON.stringify({
       status: "not-comparable", reasons: quality.reasons, suspectedMissing: []
     }, null, 2));
@@ -335,6 +337,7 @@ const writeResultGroups = async (
     status: "comparable", scope, ...changes
   }, null, 2));
   await atomicWrite(snapshotFile, JSON.stringify({ version: 1, scope, createdAt: endedAt, items } satisfies CatalogSnapshot, null, 2));
+  await atomicWrite(summaryFile, JSON.stringify(summary, null, 2));
 };
 
 export const writeGroupedOutputs = async (

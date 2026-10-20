@@ -22,7 +22,7 @@ export type ImportCandidate = {
   readonly title: string | null;
   readonly categorySellID: number | null;
   readonly category: string | null;
-  readonly condition: "Segunda_Mano";
+  readonly condition: "Segunda_Mano" | null;
   readonly price: number | null;
   readonly description_title: string | null;
   readonly description: string | null;
@@ -124,6 +124,13 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   const category = resolveCategory(record, catalog.categories);
   const images = imageUrls(record);
   const price = normalizePrice(record.price);
+  const categoryOrigin = `${record.url} ${record.categoryKey}`;
+  const gamNewSection = record.providerId === "gam" && /nuev[oa]s?/i.test(categoryOrigin);
+  const contradictoryCondition = gamNewSection && record.condition === "Segunda mano";
+  const isKnownSecondHand = !contradictoryCondition && (record.condition === "Segunda mano" ||
+    (record.condition !== "Nuevo" && (record.providerId !== "gam" ||
+      /segunda-mano/i.test(categoryOrigin))));
+  const condition = isKnownSecondHand ? "Segunda_Mano" : null;
   const reference = record.reference?.trim() || null;
   const title = record.title?.trim() || null;
   const description = record.shortDescription?.trim() || record.longDescription?.trim() || null;
@@ -131,6 +138,8 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   const attributeResult = productAttributes(record, category, catalog);
 
   if (record.condition === "Nuevo") issues.push("Maquinaria nueva: el contrato de importación actual solo admite Segunda_Mano");
+  else if (contradictoryCondition) issues.push("Condición contradictoria con la sección de maquinaria nueva");
+  else if (condition === null) issues.push("Condición de segunda mano no confirmada para el contrato de importación");
   if (!reference) issues.push("Referencia ausente");
   if (!title) issues.push("Título ausente");
   if (!category) issues.push("Categoría Equipzilla sin correspondencia inequívoca");
@@ -148,7 +157,7 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
       title,
       categorySellID: category?.id ?? null,
       category: category?.name ?? null,
-      condition: "Segunda_Mano",
+      condition,
       price,
       description_title: title,
       description,
