@@ -13,6 +13,10 @@ export class BatchConsole implements BatchObserver {
     console.log(`LOTE | ${total} proveedor${total === 1 ? "" : "es"} | logs e historial en ${runDir}`);
   }
 
+  recoveredLock(pid: number): void {
+    console.log(`LOTE | Recuperado bloqueo abandonado | PID anterior: ${pid}`);
+  }
+
   begin(providerId: string, position: number, count: number): void {
     this.current = providerId;
     this.loggedFailure = false;

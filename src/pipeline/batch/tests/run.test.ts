@@ -120,8 +120,72 @@ test("bloquea ejecuciones concurrentes sin reemplazar el bloqueo existente", asy
     await mkdir(options.outRoot, { recursive: true });
     const lockPath = join(options.outRoot, ".batch.lock");
     await writeFile(lockPath, "ejecución en curso");
-    await assert.rejects(runWithStub(folder, options), /Ya hay una ejecución/);
+    await assert.rejects(runWithStub(folder, options), /no contiene datos de propietario válidos/);
     assert.equal(await readFile(lockPath, "utf8"), "ejecución en curso");
+  });
+});
+
+test("recupera automáticamente un bloqueo abandonado con PID inexistente", async () => {
+  await withFolder(async (folder) => {
+    const options = optionsFor(folder, ["gam"]);
+    await mkdir(options.outRoot, { recursive: true });
+    const lockPath = join(options.outRoot, ".batch.lock");
+    await writeFile(lockPath, JSON.stringify({ runId: "anterior", pid: 2147483000, startedAt: "2026-10-19T12:00:00Z" }));
+    const recovered: number[] = [];
+    const observer: BatchObserver = {
+      start: () => undefined,
+      begin: () => undefined,
+      progress: () => undefined,
+      end: () => undefined,
+      recoveredLock: (pid) => recovered.push(pid)
+    };
+    const script = join(folder, "scraper-stub.mjs");
+    await writeFile(script, stubScript);
+    const result = await runBatch(options, script, observer);
+    assert.equal(result.report.status, "complete");
+    assert.deepEqual(recovered, [2147483000]);
+    await assert.rejects(stat(lockPath), /ENOENT/);
+  });
+});
+
+test("rechaza un bloqueo cuyo proceso propietario sigue vivo", async () => {
+  await withFolder(async (folder) => {
+    const options = optionsFor(folder, ["gam"]);
+    await mkdir(options.outRoot, { recursive: true });
+    const lockPath = join(options.outRoot, ".batch.lock");
+    const owner = JSON.stringify({ runId: "activo", pid: process.pid, startedAt: "2026-10-20T12:00:00Z" });
+    await writeFile(lockPath, owner);
+    await assert.rejects(runWithStub(folder, options), new RegExp(`PID ${process.pid}`));
+    assert.equal(await readFile(lockPath, "utf8"), owner);
+  });
+});
+
+test("dos lotes no se ejecutan a la vez al recuperar el mismo bloqueo", async () => {
+  await withFolder(async (folder) => {
+    const options = optionsFor(folder, ["gam"]);
+    await mkdir(options.outRoot, { recursive: true });
+    const lockPath = join(options.outRoot, ".batch.lock");
+    await writeFile(lockPath, JSON.stringify({ runId: "antiguo", pid: 2147483000, startedAt: "2026-10-19T12:00:00Z" }));
+    const script = join(folder, "scraper-stub.mjs");
+    await writeFile(script, stubScript);
+    const abort = new AbortController();
+    const previous = process.env.WAIT_PROVIDER;
+    process.env.WAIT_PROVIDER = "gam";
+    const first = runBatch(options, script, undefined, abort.signal);
+    try {
+      for (let attempt = 0; attempt < 100; attempt++) {
+        const lock: unknown = JSON.parse(await readFile(lockPath, "utf8"));
+        if (lock !== null && typeof lock === "object" && "runId" in lock && lock.runId !== "antiguo") break;
+        await new Promise<void>((resolve) => setTimeout(resolve, 20));
+      }
+      await assert.rejects(runBatch(options, script), /Ya hay un lote con PID/);
+    } finally {
+      abort.abort();
+      await first;
+      if (previous === undefined) delete process.env.WAIT_PROVIDER;
+      else process.env.WAIT_PROVIDER = previous;
+    }
+    await assert.rejects(stat(lockPath), /ENOENT/);
   });
 });
 

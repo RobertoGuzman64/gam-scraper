@@ -1,6 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { copyFile, mkdir, open, rm, stat } from "node:fs/promises";
+import { copyFile, mkdir, open, stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { BatchOptions } from "./types.js";
 import type { ScrapeEvent } from "../../contracts/progress.js";
@@ -8,6 +8,7 @@ import { isScrapeMessage } from "../../contracts/progress.js";
 import { getProvider } from "../../scraping/registry.js";
 import { getBatchStatus, readPublicationStats, writeBatchReport } from "./report.js";
 import type { BatchReport, ProviderRun } from "./report.js";
+import { acquireBatchLock } from "./lock.js";
 
 export type BatchResult = { readonly report: BatchReport; readonly reportFile: string };
 export type BatchObserver = {
@@ -15,6 +16,7 @@ export type BatchObserver = {
   begin(providerId: string, position: number, count: number): void;
   progress(providerId: string, event: ScrapeEvent): void;
   end(result: ProviderRun): void;
+  recoveredLock?(pid: number): void;
   cancelled?(): void;
   stop?(): void;
 };
@@ -152,16 +154,7 @@ export const runBatch = async (
   const runDir = join(historyDir, runId);
   const reportFile = join(runDir, "run.json");
   await mkdir(outRoot, { recursive: true });
-  const lockFile = join(outRoot, ".batch.lock");
-  let lock;
-  try {
-    lock = await open(lockFile, "wx");
-  } catch (error) {
-    if (error && typeof error === "object" && "code" in error && error.code === "EEXIST") {
-      throw new Error(`Ya hay una ejecución en curso o un bloqueo antiguo: ${lockFile}. Comprobar antes de eliminarlo.`);
-    }
-    throw error;
-  }
+  const lock = await acquireBatchLock(outRoot, { runId, pid: process.pid, startedAt });
 
   const controller = new AbortController();
   const cancel = (): void => controller.abort();
@@ -171,8 +164,7 @@ export const runBatch = async (
   externalSignal?.addEventListener("abort", cancelExternal, { once: true });
   if (externalSignal?.aborted) cancelExternal();
   try {
-    await lock.writeFile(`${JSON.stringify({ runId, pid: process.pid, startedAt })}\n`);
-    await lock.close();
+    if (lock.recoveredPid !== null) observer?.recoveredLock?.(lock.recoveredPid);
     await mkdir(runDir, { recursive: true });
     const completed: ProviderRun[] = [];
     const makeReport = (status: BatchReport["status"], endedAt: string | null): BatchReport => ({
@@ -199,7 +191,6 @@ export const runBatch = async (
     process.off("SIGINT", cancel);
     process.off("SIGTERM", cancel);
     externalSignal?.removeEventListener("abort", cancelExternal);
-    await lock.close().catch(() => undefined);
-    await rm(lockFile, { force: true });
+    await lock.release();
   }
 };
