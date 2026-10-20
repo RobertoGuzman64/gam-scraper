@@ -1,7 +1,7 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { Readable, Writable } from "node:stream";
 import { existsSync } from "node:fs";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -10,6 +10,20 @@ type DevtoolsResponse = {
   readonly result?: Record<string, unknown>;
   readonly error?: { readonly message: string };
   readonly sessionId?: string;
+};
+
+const withTimeout = async <T>(operation: Promise<T>, timeoutMs: number, detail: string): Promise<T> => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`Tiempo agotado (${timeoutMs} ms): ${detail}`)), timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 };
 
 type Pending = {
@@ -61,6 +75,103 @@ class DevtoolsPipe {
     });
   }
 }
+
+class DevtoolsWebSocket {
+  private readonly pending = new Map<number, Pending>();
+  private nextId = 1;
+
+  constructor(private readonly socket: WebSocket) {
+    socket.addEventListener("message", (event) => {
+      if (typeof event.data !== "string") return;
+      let response: DevtoolsResponse;
+      try {
+        response = JSON.parse(event.data);
+      } catch {
+        this.fail(new Error("Chrome devolvió un mensaje de depuración inválido"));
+        return;
+      }
+      if (response.id === undefined) return;
+      const pending = this.pending.get(response.id);
+      if (!pending) return;
+      this.pending.delete(response.id);
+      if (response.error) pending.reject(new Error(response.error.message));
+      else pending.resolve(response.result ?? {});
+    });
+    socket.addEventListener("close", () => this.fail(new Error("Chrome cerró la conexión de depuración")));
+    socket.addEventListener("error", () => this.fail(new Error("Error en la conexión de depuración de Chrome")));
+  }
+
+  private fail(error: Error): void {
+    for (const pending of this.pending.values()) pending.reject(error);
+    this.pending.clear();
+  }
+
+  send(method: string, params: Record<string, unknown> = {}, sessionId?: string): Promise<Record<string, unknown>> {
+    const id = this.nextId++;
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, { resolve, reject });
+      try {
+        this.socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+      } catch (error) {
+        this.pending.delete(id);
+        reject(error instanceof Error ? error : new Error(String(error)));
+      }
+    });
+  }
+}
+
+const waitForDebuggingPort = async (profile: string, child: ChildProcess, timeoutMs: number): Promise<string> => {
+  const path = join(profile, "DevToolsActivePort");
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (child.exitCode !== null || child.signalCode !== null) {
+      throw new Error(`Chrome finalizó antes de abrir la depuración (código ${String(child.exitCode)})`);
+    }
+    let content: string | null = null;
+    try {
+      content = await readFile(path, "utf8");
+    } catch (error) {
+      if (!error || typeof error !== "object" || !("code" in error) || error.code !== "ENOENT") throw error;
+    }
+    if (content !== null) {
+      const [portText, browserPath] = content.trim().split(/\r?\n/);
+      const port = Number(portText);
+      if (!Number.isInteger(port) || port < 1 || port > 65535 || !browserPath ||
+        !/^\/devtools\/browser\/[a-z0-9-]+$/i.test(browserPath)) {
+        throw new Error("Chrome devolvió un endpoint de depuración inválido");
+      }
+      return `ws://127.0.0.1:${port}${browserPath}`;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error("Chrome no abrió el puerto de depuración a tiempo");
+};
+
+const openDebugSocket = async (url: string, timeoutMs: number): Promise<WebSocket> => {
+  if (typeof WebSocket === "undefined") {
+    throw new Error("La depuración de Chrome en Windows requiere Node.js 22 o posterior");
+  }
+  const socket = new WebSocket(url);
+  try {
+    await withTimeout(new Promise<void>((resolve, reject) => {
+      const onOpen = (): void => { cleanup(); resolve(); };
+      const onError = (): void => { cleanup(); reject(new Error("No se pudo conectar con el puerto de depuración de Chrome")); };
+      const onClose = (): void => { cleanup(); reject(new Error("Chrome cerró el puerto de depuración antes de conectar")); };
+      const cleanup = (): void => {
+        socket.removeEventListener("open", onOpen);
+        socket.removeEventListener("error", onError);
+        socket.removeEventListener("close", onClose);
+      };
+      socket.addEventListener("open", onOpen);
+      socket.addEventListener("error", onError);
+      socket.addEventListener("close", onClose);
+    }), timeoutMs, "conexión de Chrome con DevTools");
+  } catch (error) {
+    socket.close();
+    throw error;
+  }
+  return socket;
+};
 
 const candidateBrowsers = (): readonly string[] => {
   const candidates = [process.env.CHROME_PATH, process.env.CHROMIUM_PATH];
@@ -147,6 +258,14 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
 })()
 `;
 
+export const buildMercaelevaReadinessScript = (): string => String.raw`(() => ({
+  href: location.href,
+  ready: document.readyState,
+  title: document.title,
+  count: (document.body?.innerText ?? '').match(/(?:Resultados?|Resultats?|Results?)\s*:\s*(\d[\d.,]*)/i)?.[1] ?? null,
+  links: document.querySelectorAll('a[href*="/for-sale/machine/"]').length
+}))()`;
+
 const asCatalog = (value: unknown): { readonly pages: readonly string[]; readonly expectedTotal: number } => {
   if (!value || typeof value !== "object" || !("pages" in value) || !Array.isArray(value.pages)
     || !value.pages.every((page: unknown) => typeof page === "string")
@@ -160,66 +279,99 @@ const asCatalog = (value: unknown): { readonly pages: readonly string[]; readonl
 const renderWithBrowser = async (
   executable: string, profile: string, url: string, timeoutMs: number, maxPages: number, delayMs: number
 ): Promise<{ readonly pages: readonly string[]; readonly expectedTotal: number }> => {
+  const windows = process.platform === "win32";
   const flags = [
     "--headless", "--disable-gpu", "--disable-extensions", "--no-first-run", "--no-default-browser-check",
-    "--disable-dev-shm-usage", "--window-size=1600,2400", "--remote-debugging-pipe", `--user-data-dir=${profile}`, "about:blank"
+    "--disable-dev-shm-usage", "--window-size=1600,2400",
+    windows ? "--remote-debugging-port=0" : "--remote-debugging-pipe",
+    `--user-data-dir=${profile}`, "about:blank"
   ];
-  if (process.platform === "linux" && process.getuid?.() === 0) flags.unshift("--no-sandbox");
+  if (windows) flags.unshift("--remote-debugging-address=127.0.0.1");
+  if (process.getuid?.() === 0) flags.unshift("--no-sandbox");
   const child = spawn(executable, flags, {
-    stdio: ["ignore", "ignore", "pipe", "pipe", "pipe"],
-    detached: process.platform !== "win32",
+    stdio: windows ? ["ignore", "ignore", "pipe"] : ["ignore", "ignore", "pipe", "pipe", "pipe"],
+    detached: !windows,
     windowsHide: true
   });
   let diagnostics = "";
+  let stage = "arranque";
   child.stderr?.on("data", (chunk: Buffer) => {
     if (diagnostics.length < 3000) diagnostics += chunk.toString("utf8").slice(0, 3000 - diagnostics.length);
   });
-  const input = child.stdio[3];
-  const output = child.stdio[4];
-  if (!(input instanceof Writable) || !(output instanceof Readable)) {
-    child.kill();
-    throw new Error("Chrome no abrió los canales de depuración");
-  }
-  const devtools = new DevtoolsPipe(child, input, output);
-  const timer = setTimeout(() => child.kill(), Math.max(timeoutMs, 20000) * (maxPages + 1));
+  const commandTimeoutMs = Math.min(timeoutMs, 10000);
+  const navigationTimeoutMs = Math.min(timeoutMs, 12000);
+  const catalogTimeoutMs = Math.min(120000, Math.max(timeoutMs, 10000) + Math.min(maxPages, 12) * 6000);
+  const timer = setTimeout(() => child.kill(), catalogTimeoutMs + navigationTimeoutMs + commandTimeoutMs * 3);
+  let socket: WebSocket | null = null;
   try {
     await new Promise<void>((resolve, reject) => {
       if (child.pid) { resolve(); return; }
       child.once("spawn", () => resolve());
       child.once("error", reject);
     });
-    const target = await devtools.send("Target.createTarget", { url: "about:blank" });
+    let devtools: DevtoolsPipe | DevtoolsWebSocket;
+    if (windows) {
+      stage = "puerto de depuración";
+      const endpoint = await waitForDebuggingPort(profile, child, commandTimeoutMs);
+      stage = "conexión DevTools";
+      socket = await openDebugSocket(endpoint, commandTimeoutMs);
+      devtools = new DevtoolsWebSocket(socket);
+    } else {
+      const input = child.stdio[3];
+      const output = child.stdio[4];
+      if (!(input instanceof Writable) || !(output instanceof Readable)) {
+        throw new Error("Chrome no abrió los canales de depuración");
+      }
+      devtools = new DevtoolsPipe(child, input, output);
+    }
+    const send = (
+      operation: string, method: string, params: Record<string, unknown> = {}, sessionId?: string,
+      deadlineMs = commandTimeoutMs
+    ): Promise<Record<string, unknown>> => {
+      stage = operation;
+      return withTimeout(devtools.send(method, params, sessionId), deadlineMs, `${operation} (${method})`);
+    };
+    const target = await send("crear pestaña", "Target.createTarget", { url: "about:blank" });
     if (typeof target.targetId !== "string") throw new Error("Chrome no creó la pestaña de catálogo");
-    const attached = await devtools.send("Target.attachToTarget", { targetId: target.targetId, flatten: true });
+    const attached = await send("conectar pestaña", "Target.attachToTarget", { targetId: target.targetId, flatten: true });
     if (typeof attached.sessionId !== "string") throw new Error("Chrome no abrió una sesión de catálogo");
     const sessionId = attached.sessionId;
-    await devtools.send("Page.enable", {}, sessionId);
-    await devtools.send("Runtime.enable", {}, sessionId);
-    const navigation = await devtools.send("Page.navigate", { url }, sessionId);
+    await send("activar página", "Page.enable", {}, sessionId);
+    await send("activar JavaScript", "Runtime.enable", {}, sessionId);
+    const navigation = await send("abrir listado", "Page.navigate", { url }, sessionId, navigationTimeoutMs);
     if (typeof navigation.errorText === "string") {
       throw new Error(`Chrome no pudo abrir ${url}: ${navigation.errorText}`);
     }
+    const expected = new URL(url);
+    const openedAt = Date.now();
+    let lastState = "sin respuesta";
     let loaded = false;
-    for (let attempt = 0; attempt < Math.ceil(timeoutMs / 200); attempt += 1) {
-      const state = await devtools.send("Runtime.evaluate", {
-        expression: "location.href + '|' + document.readyState", returnByValue: true
+    while (Date.now() - openedAt < navigationTimeoutMs) {
+      const state = await send("detectar productos", "Runtime.evaluate", {
+        expression: buildMercaelevaReadinessScript(), returnByValue: true
       }, sessionId);
       const result = state.result;
       const value = result && typeof result === "object" && "value" in result ? result.value : null;
-      if (typeof value === "string" && value.endsWith("|complete")) {
-        const actual = new URL(value.slice(0, value.lastIndexOf("|")));
-        const expected = new URL(url);
-        if (actual.origin === expected.origin && actual.pathname.replace(/\/+$/, "") === expected.pathname.replace(/\/+$/, "")) {
+      if (value && typeof value === "object" && "href" in value && typeof value.href === "string") {
+        const actual = new URL(value.href);
+        lastState = `url=${actual.toString()}, ready=${"ready" in value ? String(value.ready) : "?"}, ` +
+          `title=${"title" in value ? String(value.title) : "?"}, ` +
+          `resultados=${"count" in value ? String(value.count) : "?"}, ` +
+          `enlaces=${"links" in value ? String(value.links) : "?"}`;
+        if (actual.origin === expected.origin &&
+          actual.pathname.replace(/\/+$/, "") === expected.pathname.replace(/\/+$/, "") &&
+          "count" in value && typeof value.count === "string" &&
+          "links" in value && typeof value.links === "number" && value.links > 0) {
           loaded = true;
           break;
         }
       }
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 250));
     }
-    if (!loaded) throw new Error(`Mercaeleva no terminó de abrir ${url}`);
-    const evaluation = await devtools.send("Runtime.evaluate", {
+    if (!loaded) throw new Error(`No se encontraron productos en ${url} tras ${navigationTimeoutMs} ms (${lastState})`);
+    const evaluation = await send("recorrer páginas", "Runtime.evaluate", {
       expression: buildMercaelevaCatalogScript(maxPages, timeoutMs, delayMs), awaitPromise: true, returnByValue: true
-    }, sessionId);
+    }, sessionId, catalogTimeoutMs);
     if (evaluation.exceptionDetails) {
       const details = evaluation.exceptionDetails;
       if (details && typeof details === "object" && "text" in details) {
@@ -237,9 +389,10 @@ const renderWithBrowser = async (
   } catch (error) {
     const detail = diagnostics.trim();
     const status = child.exitCode !== null ? `; exitCode=${child.exitCode}` : "";
-    throw new Error(`Navegador ${executable}: ${String(error)}${status}${detail ? `; stderr: ${detail}` : ""}`);
+    throw new Error(`Navegador ${executable} [${stage}]: ${String(error)}${status}${detail ? `; stderr: ${detail}` : ""}`);
   } finally {
     clearTimeout(timer);
+    socket?.close();
     if (child.exitCode === null && child.signalCode === null) {
       const exit = new Promise<void>((resolve) => child.once("exit", () => resolve()));
       child.kill();
@@ -260,12 +413,12 @@ export const renderMercaelevaCatalog = async (
     } catch (error) {
       const message = String(error);
       failures.push(message);
-      if (!/Chrome finalizó durante la navegación|Chrome no abrió|Chrome no creó|spawn |EPIPE|ECONNRESET|ENOENT/i.test(message)) {
+      if (!/Chrome finalizó|Chrome no abrió|Chrome no creó|Chrome cerró|puerto de depuración|conexión de depuración|spawn |EPIPE|ECONNRESET|ENOENT/i.test(message)) {
         throw error;
       }
     } finally {
       await rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 150 });
     }
   }
-  throw new Error(`No se pudo iniciar Chrome/Edge para Mercaeleva. Configura CHROME_PATH. ${failures.join(" | ")}`);
+  throw new Error(`No se pudo iniciar Chrome/Edge para Mercaeleva. ${failures.join(" | ")}`);
 };

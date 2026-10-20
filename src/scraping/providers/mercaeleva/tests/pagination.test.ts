@@ -7,7 +7,7 @@ import { runInNewContext } from "node:vm";
 import { writeOutputs } from "../../../../pipeline/publication/publish.js";
 import { assessCatalogQuality } from "../../../../catalog/quality.js";
 import { scrapeCategory } from "../../../engine/scrape-category.js";
-import { buildMercaelevaCatalogScript } from "../browser.js";
+import { buildMercaelevaCatalogScript, buildMercaelevaReadinessScript } from "../browser.js";
 import { extractMercaelevaLinks } from "../parsers.js";
 import type { ScraperProvider } from "../../../provider.js";
 import type { CategoryConfig, ScrapeOptions } from "../../../../contracts/scraping.js";
@@ -182,4 +182,38 @@ test("Mercaeleva: el parser aplica la misma identidad de URL sin query ni barra 
   assert.deepEqual(extractMercaelevaLinks(category.url, html), [
     `${baseUrl}M1`, "https://sales.mercaeleva.com/ca/for-sale/machine/M2"
   ]);
+});
+
+test("Mercaeleva: detecta el listado antes de completar las cargas externas", () => {
+  const script = buildMercaelevaReadinessScript();
+  const state = runInNewContext(script, {
+    location: { href: category.url },
+    document: {
+      readyState: "interactive",
+      title: "En venta | Merca-Eleva",
+      body: { innerText: "Resultados: 221 Filtros" },
+      querySelectorAll: (selector: string) => selector === 'a[href*="/for-sale/machine/"]' ? Array.from({ length: 20 }) : []
+    }
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(state)), {
+    href: category.url,
+    ready: "interactive",
+    title: "En venta | Merca-Eleva",
+    count: "221",
+    links: 20
+  });
+});
+
+test("Mercaeleva: no confunde una página vacía con un catálogo cargado", () => {
+  const state = runInNewContext(buildMercaelevaReadinessScript(), {
+    location: { href: category.url },
+    document: {
+      readyState: "loading",
+      title: "En venta | Merca-Eleva",
+      body: { innerText: "Cargando..." },
+      querySelectorAll: () => []
+    }
+  });
+  assert.equal(state.count, null);
+  assert.equal(state.links, 0);
 });
