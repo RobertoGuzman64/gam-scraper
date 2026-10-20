@@ -45,6 +45,16 @@ test("GAM permite enlaces nuevos y comprueba el total anunciado", () => {
   assert.ok(DEFAULT_CATEGORIES.some((category) => category.key === "marcas-nuevas"));
 });
 
+test("GAM identifica las fichas actuales sin .html y excluye páginas de categorías", () => {
+  const currentUrl = "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-electricas-segunda-mano/6934-2007-jlg-e300ajp";
+  const categoryUrl = "https://online.gamrentals.com/es/8-plataformas-elevadoras-segunda-mano";
+  const html = `<main><div id="js-product-list"><div class="product-miniature">
+    <a href="${currentUrl}">Ficha</a>
+    <a href="${categoryUrl}">Categoría</a>
+  </div></div></main>`;
+  assert.deepEqual(extractProductLinksFromListing(categoryUrl, html), [currentUrl]);
+});
+
 test("GAM conserva fichas, estado, HTML, referencias, specs e imágenes 2x", () => {
   const parsed = parseProductPage(sample, productUrl);
   assert.equal(parsed.condition, "Nuevo");

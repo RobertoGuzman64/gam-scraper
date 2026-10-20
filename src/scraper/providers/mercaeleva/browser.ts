@@ -138,7 +138,11 @@ const renderWithBrowser = async (
     "--disable-dev-shm-usage", "--window-size=1600,2400", "--remote-debugging-pipe", `--user-data-dir=${profile}`, "about:blank"
   ];
   if (process.platform === "linux" && process.getuid?.() === 0) flags.unshift("--no-sandbox");
-  const child = spawn(executable, flags, { stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+  const child = spawn(executable, flags, { stdio: ["ignore", "ignore", "pipe", "pipe", "pipe"] });
+  let diagnostics = "";
+  child.stderr?.on("data", (chunk: Buffer) => {
+    if (diagnostics.length < 3000) diagnostics += chunk.toString("utf8").slice(0, 3000 - diagnostics.length);
+  });
   const input = child.stdio[3];
   const output = child.stdio[4];
   if (!(input instanceof Writable) || !(output instanceof Readable)) {
@@ -199,6 +203,9 @@ const renderWithBrowser = async (
       throw new Error("Chrome no devolvió el catálogo de Mercaeleva");
     }
     return asCatalog(result.value);
+  } catch (error) {
+    const detail = diagnostics.trim();
+    throw new Error(`Navegador ${executable}: ${String(error)}${detail ? `; stderr: ${detail}` : ""}`);
   } finally {
     clearTimeout(timer);
     if (child.exitCode === null && child.signalCode === null) {
@@ -212,21 +219,21 @@ const renderWithBrowser = async (
 export const renderMercaelevaCatalog = async (
   url: string, timeoutMs: number, maxPages: number, delayMs: number
 ): Promise<{ readonly pages: readonly string[]; readonly expectedTotal: number }> => {
-  const profile = await mkdtemp(join(tmpdir(), "mercaeleva-chrome-"));
-  let lastError: unknown = null;
-  try {
-    for (const executable of candidateBrowsers()) {
-      if ((executable.includes("/") || executable.includes("\\")) && !existsSync(executable)) continue;
-      try {
-        return await renderWithBrowser(executable, profile, url, timeoutMs, maxPages, delayMs);
-      } catch (error) {
-        lastError = error;
-        if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") continue;
+  const failures: string[] = [];
+  for (const executable of candidateBrowsers()) {
+    if ((executable.includes("/") || executable.includes("\\")) && !existsSync(executable)) continue;
+    const profile = await mkdtemp(join(tmpdir(), "mercaeleva-chrome-"));
+    try {
+      return await renderWithBrowser(executable, profile, url, timeoutMs, maxPages, delayMs);
+    } catch (error) {
+      const message = String(error);
+      failures.push(message);
+      if (!/Chrome finalizó durante la navegación|Chrome no abrió|Chrome no creó|spawn |EPIPE|ECONNRESET|ENOENT/i.test(message)) {
         throw error;
       }
+    } finally {
+      await rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 150 });
     }
-    throw new Error(`Mercaeleva necesita Chrome o Chromium para recorrer su paginación. Configura CHROME_PATH. ${String(lastError ?? "")}`);
-  } finally {
-    await rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 150 });
   }
+  throw new Error(`No se pudo iniciar Chrome/Edge para Mercaeleva. Configura CHROME_PATH. ${failures.join(" | ")}`);
 };

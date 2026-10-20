@@ -32,7 +32,7 @@ export const isProductUrl = (url: string): boolean => {
     if (parts.length < 3) return false;
 
     const last = parts.at(-1);
-    return Boolean(last && /^\d+-[^/]+\.html$/i.test(last));
+    return Boolean(last && /^\d+-[^/]+(?:\.html)?$/i.test(last));
   } catch {
     return false;
   }
