@@ -91,6 +91,7 @@ type SimulationOptions = {
   readonly totals?: readonly number[];
   readonly delayedNextMs?: number;
   readonly onNext?: () => void;
+  readonly onProgress?: (pages: number, found: number) => void;
 };
 
 const simulateCatalog = async (
@@ -115,7 +116,10 @@ const simulateCatalog = async (
     }
   };
   return runInNewContext(buildMercaelevaCatalogScript(maxPages, 1000, 0), {
-    document, URL, setTimeout: (callback: () => void) => setTimeout(callback, 1)
+    document, URL, setTimeout: (callback: () => void) => setTimeout(callback, 1),
+    console: { debug: (tag: string, pages: number, found: number) => {
+      if (tag === "__EQUIPZILLA_MERCA_PROGRESS__") simulation?.onProgress?.(pages, found);
+    } }
   });
 };
 
@@ -125,6 +129,17 @@ test("Mercaeleva: recorre primera, intermedia y última página mediante botones
     pages: ["<html data-page=\"1\"></html>", "<html data-page=\"2\"></html>", "<html data-page=\"3\"></html>"],
     expectedTotal: 5
   });
+});
+
+test("Mercaeleva: informa cada página antes de completar el catálogo", async () => {
+  const progress: { pages: number; found: number }[] = [];
+  const result = await simulateCatalog([["M1", "M2"], ["M3", "M4"], ["M5"]], 5, 12, {
+    onProgress: (pages, found) => progress.push({ pages, found })
+  });
+  assert.ok(result);
+  assert.deepEqual(progress, [
+    { pages: 1, found: 2 }, { pages: 2, found: 4 }, { pages: 3, found: 5 }
+  ]);
 });
 
 test("Mercaeleva: detecta página repetida y paginación sin botón siguiente", async () => {

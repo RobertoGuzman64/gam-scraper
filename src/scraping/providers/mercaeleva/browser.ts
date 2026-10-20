@@ -6,6 +6,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 type DevtoolsResponse = {
+  readonly method?: string;
+  readonly params?: {
+    readonly type?: string;
+    readonly args?: readonly { readonly value?: unknown }[];
+    readonly errorText?: string;
+    readonly requestId?: string;
+    readonly response?: { readonly status?: number };
+  };
   readonly id?: number;
   readonly result?: Record<string, unknown>;
   readonly error?: { readonly message: string };
@@ -36,7 +44,10 @@ class DevtoolsPipe {
   private nextId = 1;
   private buffer = "";
 
-  constructor(private readonly child: ChildProcess, private readonly input: Writable, output: Readable) {
+  constructor(
+    private readonly child: ChildProcess, private readonly input: Writable, output: Readable,
+    private readonly onEvent?: (message: DevtoolsResponse) => void
+  ) {
     output.setEncoding("utf8");
     output.on("data", (chunk: string) => {
       this.buffer += chunk;
@@ -45,7 +56,7 @@ class DevtoolsPipe {
       for (const frame of frames) {
         if (!frame) continue;
         const response: DevtoolsResponse = JSON.parse(frame);
-        if (response.id === undefined) continue;
+        if (response.id === undefined) { this.onEvent?.(response); continue; }
         const pending = this.pending.get(response.id);
         if (!pending) continue;
         this.pending.delete(response.id);
@@ -80,7 +91,7 @@ class DevtoolsWebSocket {
   private readonly pending = new Map<number, Pending>();
   private nextId = 1;
 
-  constructor(private readonly socket: WebSocket) {
+  constructor(private readonly socket: WebSocket, private readonly onEvent?: (message: DevtoolsResponse) => void) {
     socket.addEventListener("message", (event) => {
       if (typeof event.data !== "string") return;
       let response: DevtoolsResponse;
@@ -90,7 +101,7 @@ class DevtoolsWebSocket {
         this.fail(new Error("Chrome devolvió un mensaje de depuración inválido"));
         return;
       }
-      if (response.id === undefined) return;
+      if (response.id === undefined) { this.onEvent?.(response); return; }
       const pending = this.pending.get(response.id);
       if (!pending) return;
       this.pending.delete(response.id);
@@ -242,6 +253,7 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
     }
     pages.push(document.documentElement.outerHTML);
     for (const href of current) seen.add(href);
+    console.debug("__EQUIPZILLA_MERCA_PROGRESS__", pages.length, seen.size);
     if (seen.size >= total || page === ${maxPages}) break;
     const next = [...document.querySelectorAll('button')].find((button) => {
       const label = (button.getAttribute('aria-label') || button.title || '').toLowerCase();
@@ -277,7 +289,8 @@ const asCatalog = (value: unknown): { readonly pages: readonly string[]; readonl
 };
 
 const renderWithBrowser = async (
-  executable: string, profile: string, url: string, timeoutMs: number, maxPages: number, delayMs: number
+  executable: string, profile: string, url: string, timeoutMs: number, maxPages: number, delayMs: number,
+  onProgress?: (pages: number, found: number, stage: string) => void
 ): Promise<{ readonly pages: readonly string[]; readonly expectedTotal: number }> => {
   const windows = process.platform === "win32";
   const flags = [
@@ -290,11 +303,41 @@ const renderWithBrowser = async (
   if (process.getuid?.() === 0) flags.unshift("--no-sandbox");
   const child = spawn(executable, flags, {
     stdio: windows ? ["ignore", "ignore", "pipe"] : ["ignore", "ignore", "pipe", "pipe", "pipe"],
-    detached: !windows,
+    detached: true,
     windowsHide: true
   });
   let diagnostics = "";
   let stage = "arranque";
+  let lastState = "sin respuesta de la web";
+  let lastNetwork = "sin respuesta HTTP del documento";
+  let documentRequest: string | null = null;
+  let lastProgressPages = 0;
+  const reportStage = (value: string): void => {
+    if (stage === value) return;
+    stage = value;
+    onProgress?.(0, 0, value);
+  };
+  const handleEvent = (event: DevtoolsResponse): void => {
+    if (event.method === "Network.requestWillBeSent" && event.params?.type === "Document") {
+      documentRequest = event.params.requestId ?? null;
+    }
+    if (event.method === "Network.responseReceived" && event.params?.type === "Document") {
+      documentRequest = event.params.requestId ?? documentRequest;
+      lastNetwork = `HTTP ${String(event.params.response?.status ?? "desconocido")}`;
+    }
+    if (event.method === "Network.loadingFailed" && event.params?.requestId === documentRequest && event.params.errorText) {
+      lastNetwork = event.params.errorText;
+    }
+    if (event.method !== "Runtime.consoleAPICalled" || event.params?.type !== "debug") return;
+    const values = event.params.args?.map((arg) => arg.value) ?? [];
+    if (values[0] !== "__EQUIPZILLA_MERCA_PROGRESS__") return;
+    const pages = values[1];
+    const found = values[2];
+    if (typeof pages !== "number" || typeof found !== "number" || !Number.isSafeInteger(pages) ||
+      !Number.isSafeInteger(found) || pages <= lastProgressPages || found < 0) return;
+    onProgress?.(pages - lastProgressPages, found, "recorriendo páginas");
+    lastProgressPages = pages;
+  };
   child.stderr?.on("data", (chunk: Buffer) => {
     if (diagnostics.length < 3000) diagnostics += chunk.toString("utf8").slice(0, 3000 - diagnostics.length);
   });
@@ -311,24 +354,24 @@ const renderWithBrowser = async (
     });
     let devtools: DevtoolsPipe | DevtoolsWebSocket;
     if (windows) {
-      stage = "puerto de depuración";
+      reportStage("abriendo depuración de Chrome");
       const endpoint = await waitForDebuggingPort(profile, child, commandTimeoutMs);
-      stage = "conexión DevTools";
+      reportStage("conectando con Chrome");
       socket = await openDebugSocket(endpoint, commandTimeoutMs);
-      devtools = new DevtoolsWebSocket(socket);
+      devtools = new DevtoolsWebSocket(socket, handleEvent);
     } else {
       const input = child.stdio[3];
       const output = child.stdio[4];
       if (!(input instanceof Writable) || !(output instanceof Readable)) {
         throw new Error("Chrome no abrió los canales de depuración");
       }
-      devtools = new DevtoolsPipe(child, input, output);
+      devtools = new DevtoolsPipe(child, input, output, handleEvent);
     }
     const send = (
       operation: string, method: string, params: Record<string, unknown> = {}, sessionId?: string,
       deadlineMs = commandTimeoutMs
     ): Promise<Record<string, unknown>> => {
-      stage = operation;
+      reportStage(operation);
       return withTimeout(devtools.send(method, params, sessionId), deadlineMs, `${operation} (${method})`);
     };
     const target = await send("crear pestaña", "Target.createTarget", { url: "about:blank" });
@@ -338,20 +381,24 @@ const renderWithBrowser = async (
     const sessionId = attached.sessionId;
     await send("activar página", "Page.enable", {}, sessionId);
     await send("activar JavaScript", "Runtime.enable", {}, sessionId);
+    await send("activar red", "Network.enable", {}, sessionId);
     const navigation = await send("abrir listado", "Page.navigate", { url }, sessionId, navigationTimeoutMs);
     if (typeof navigation.errorText === "string") {
       throw new Error(`Chrome no pudo abrir ${url}: ${navigation.errorText}`);
     }
     const expected = new URL(url);
     const openedAt = Date.now();
-    let lastState = "sin respuesta";
     let loaded = false;
+    reportStage("esperando resultados de Mercaeleva");
     while (Date.now() - openedAt < navigationTimeoutMs) {
-      const state = await send("detectar productos", "Runtime.evaluate", {
+      const state = await send("esperando resultados de Mercaeleva", "Runtime.evaluate", {
         expression: buildMercaelevaReadinessScript(), returnByValue: true
       }, sessionId);
       const result = state.result;
       const value = result && typeof result === "object" && "value" in result ? result.value : null;
+      if (state.exceptionDetails) {
+        throw new Error(`La página devolvió un error JavaScript: ${JSON.stringify(state.exceptionDetails).slice(0, 400)}`);
+      }
       if (value && typeof value === "object" && "href" in value && typeof value.href === "string") {
         const actual = new URL(value.href);
         lastState = `url=${actual.toString()}, ready=${"ready" in value ? String(value.ready) : "?"}, ` +
@@ -389,7 +436,7 @@ const renderWithBrowser = async (
   } catch (error) {
     const detail = diagnostics.trim();
     const status = child.exitCode !== null ? `; exitCode=${child.exitCode}` : "";
-    throw new Error(`Navegador ${executable} [${stage}]: ${String(error)}${status}${detail ? `; stderr: ${detail}` : ""}`);
+    throw new Error(`Navegador ${executable} [${stage}]: ${String(error)}; estado=${lastState}; red=${lastNetwork}${status}${detail ? `; stderr: ${detail}` : ""}`);
   } finally {
     clearTimeout(timer);
     socket?.close();
@@ -402,14 +449,15 @@ const renderWithBrowser = async (
 };
 
 export const renderMercaelevaCatalog = async (
-  url: string, timeoutMs: number, maxPages: number, delayMs: number
+  url: string, timeoutMs: number, maxPages: number, delayMs: number,
+  onProgress?: (pages: number, found: number, stage: string) => void
 ): Promise<{ readonly pages: readonly string[]; readonly expectedTotal: number }> => {
   const failures: string[] = [];
   for (const executable of candidateBrowsers()) {
     if ((executable.includes("/") || executable.includes("\\")) && !existsSync(executable)) continue;
     const profile = await mkdtemp(join(tmpdir(), "mercaeleva-chrome-"));
     try {
-      return await renderWithBrowser(executable, profile, url, timeoutMs, maxPages, delayMs);
+      return await renderWithBrowser(executable, profile, url, timeoutMs, maxPages, delayMs, onProgress);
     } catch (error) {
       const message = String(error);
       failures.push(message);

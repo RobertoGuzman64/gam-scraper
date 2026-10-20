@@ -67,3 +67,13 @@ test("mantiene contador durante el procesamiento de fichas", () => {
   }, "-");
   assert.match(line, /80\/101 fichas procesadas \| 1m 25s/);
 });
+
+
+test("el listado muestra la etapa del navegador sin ocultar las páginas encontradas", () => {
+  const line = formatCategoryProgress({
+    categoryName: "Mercaeleva", position: 1, count: 1, phase: "listing",
+    pagesScanned: 2, listingStage: "recorriendo páginas", found: 40,
+    processed: 0, totalProducts: 0, elapsedSeconds: 14, idleSeconds: 1
+  }, "|");
+  assert.match(line, /recorriendo páginas \| 2 págs\. \| 40 encontradas/);
+});

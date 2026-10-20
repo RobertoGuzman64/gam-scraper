@@ -12,8 +12,8 @@ export const mercaelevaProvider: ScraperProvider = {
   parseProductPage: parseMercaelevaProduct,
   extractReference: extractMercaelevaReference,
   discoverCategoryTree: async () => MERCAELeVA_CATEGORIES,
-  async discoverListing(category, options) {
-    const catalog = await renderMercaelevaCatalog(category.url, options.timeoutMs, options.maxPages, options.delayMs);
+  async discoverListing(category, options, onProgress) {
+    const catalog = await renderMercaelevaCatalog(category.url, options.timeoutMs, options.maxPages, options.delayMs, onProgress);
     const urls = new Set(catalog.pages.flatMap((html) => extractMercaelevaLinks(category.url, html)));
     return { urls: [...urls], expectedTotal: catalog.expectedTotal };
   }

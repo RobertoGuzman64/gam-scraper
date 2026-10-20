@@ -11,7 +11,7 @@ export type ProductPageCache = Map<string, Promise<ParsedProduct>>;
 export type ScrapeProgressCallbacks = {
   readonly verbose: boolean;
   readonly onListingDone: (total: number) => void;
-  readonly onListingProgress?: (pages: number, total: number) => void;
+  readonly onListingProgress?: (pages: number, total: number, stage?: string) => void;
   readonly onProductDone: (done: number, total: number) => void;
 };
 
@@ -57,7 +57,7 @@ export const scrapeCategory = async (
 
   if (provider.discoverListing) {
     try {
-      const listing = await provider.discoverListing(category, options);
+      const listing = await provider.discoverListing(category, options, progress?.onListingProgress);
       expectedProductUrls = listing.expectedTotal;
       for (const url of listing.urls) productUrls.add(url);
       if (!Number.isSafeInteger(expectedProductUrls) || expectedProductUrls < 1) {

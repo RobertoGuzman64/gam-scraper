@@ -18,6 +18,7 @@ export type CategoryProgress = {
   readonly count: number;
   readonly phase: "listing" | "products";
   readonly pagesScanned: number;
+  readonly listingStage?: string;
   readonly found: number;
   readonly processed: number;
   readonly totalProducts: number;
@@ -28,7 +29,7 @@ export type CategoryProgress = {
 export const formatCategoryProgress = (progress: CategoryProgress, spinner: string): string => {
   const prefix = `[${progress.position}/${progress.count}] ${progress.categoryName}`;
   const activity = progress.phase === "listing"
-    ? `buscando fichas | ${progress.pagesScanned} págs. | ${progress.found} encontradas`
+    ? `${progress.listingStage ?? "buscando fichas"} | ${progress.pagesScanned} págs. | ${progress.found} encontradas`
     : `${progress.processed}/${progress.totalProducts} fichas procesadas`;
   const idle = progress.idleSeconds >= 25 ? ` | sin novedades ${formatSeconds(progress.idleSeconds)}` : "";
   return `  ${prefix} | ${spinner} ${activity} | ${formatSeconds(progress.elapsedSeconds)}${idle}`;
@@ -67,6 +68,7 @@ export class ScrapeConsole {
   private count = 0;
   private phase: "listing" | "products" = "listing";
   private pagesScanned = 0;
+  private listingStage = "buscando fichas";
   private found = 0;
   private processed = 0;
   private totalProducts = 0;
@@ -96,6 +98,7 @@ export class ScrapeConsole {
     this.count = count;
     this.phase = "listing";
     this.pagesScanned = 0;
+    this.listingStage = "buscando fichas";
     this.found = 0;
     this.processed = 0;
     this.totalProducts = 0;
@@ -110,9 +113,10 @@ export class ScrapeConsole {
     if (this.interactive) this.render();
   }
 
-  listingProgress(pages: number, total: number): void {
+  listingProgress(pages: number, total: number, stage?: string): void {
     this.pagesScanned += pages;
     this.found = total;
+    if (stage && stage !== this.listingStage) this.listingStage = stage;
     this.lastActivityAt = Date.now();
     if (this.interactive) this.render();
   }
@@ -181,6 +185,7 @@ export class ScrapeConsole {
       count: this.count,
       phase: this.phase,
       pagesScanned: this.pagesScanned,
+      listingStage: this.listingStage,
       found: this.found,
       processed: this.processed,
       totalProducts: this.totalProducts,

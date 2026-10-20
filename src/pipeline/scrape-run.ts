@@ -30,7 +30,7 @@ type ScrapeRunReporter = {
   readonly verbose: boolean;
   start(total: number): void;
   beginCategory(category: CategoryConfig, position: number, count: number): void;
-  listingProgress(pages: number, total: number): void;
+  listingProgress(pages: number, total: number, stage?: string): void;
   listingDone(total: number): void;
   productDone(done: number, total: number): void;
   endCategory(result: CategoryScrapeResult): void;
@@ -102,7 +102,7 @@ const scrapeSafely = async (
     result = await scrapeCategory(category, options, provider, cache, {
       verbose: reporter.verbose,
       onListingDone: (total) => reporter.listingDone(total),
-      onListingProgress: (pages, total) => reporter.listingProgress(pages, total),
+      onListingProgress: (pages, total, stage) => reporter.listingProgress(pages, total, stage),
       onProductDone: (done, total) => reporter.productDone(done, total)
     });
   } catch (error) {
