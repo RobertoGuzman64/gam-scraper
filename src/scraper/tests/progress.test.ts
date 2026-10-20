@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatRunSummary } from "../progress.js";
+import { formatCategoryProgress, formatRunSummary } from "../progress.js";
 import type { Summary } from "../types.js";
 
 const summary: Summary = {
@@ -40,4 +40,31 @@ test("errores extensos se resumen sin perder el archivo de diagnóstico", () => 
   assert.match(lines.join("\n"), /9 motivos adicionales/);
   assert.match(lines.join("\n"), /gam-completo-errors\.json/);
   assert.doesNotMatch(lines.join("\n"), /gam-completo-all\.csv/);
+});
+
+
+test("spinner informa páginas, fichas y tiempo durante el descubrimiento", () => {
+  const line = formatCategoryProgress({
+    categoryName: "Maquinaria nueva por marcas", position: 15, count: 15, phase: "listing",
+    pagesScanned: 28, found: 336, processed: 0, totalProducts: 0, elapsedSeconds: 74, idleSeconds: 2
+  }, "/");
+  assert.match(line, /\[15\/15\] Maquinaria nueva por marcas \| \/ buscando fichas/);
+  assert.match(line, /28 págs\. \| 336 encontradas \| 1m 14s/);
+  assert.doesNotMatch(line, /sin novedades/);
+});
+
+test("avisa si pasan más de 25 segundos sin novedades", () => {
+  const line = formatCategoryProgress({
+    categoryName: "Mercaeleva", position: 1, count: 1, phase: "listing",
+    pagesScanned: 0, found: 0, processed: 0, totalProducts: 0, elapsedSeconds: 60, idleSeconds: 40
+  }, "|");
+  assert.match(line, /sin novedades 40s/);
+});
+
+test("mantiene contador durante el procesamiento de fichas", () => {
+  const line = formatCategoryProgress({
+    categoryName: "Elevación", position: 1, count: 15, phase: "products",
+    pagesScanned: 10, found: 101, processed: 80, totalProducts: 101, elapsedSeconds: 85, idleSeconds: 0
+  }, "-");
+  assert.match(line, /80\/101 fichas procesadas \| 1m 25s/);
 });

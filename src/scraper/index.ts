@@ -71,6 +71,7 @@ const scrapeSafely = async (
     result = await scrapeCategory(category, options, provider, cache, {
       verbose: reporter.verbose,
       onListingDone: (total) => reporter.listingDone(total),
+      onListingProgress: (pages, total) => reporter.listingProgress(pages, total),
       onProductDone: (done, total) => reporter.productDone(done, total)
     });
   } catch (error) {

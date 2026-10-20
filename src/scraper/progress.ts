@@ -3,10 +3,35 @@ import { join } from "node:path";
 import type { CategoryConfig, CategoryScrapeResult, Summary } from "./types.js";
 
 const trimText = (value: string, length: number): string => value.length > length ? `${value.slice(0, length - 1)}…` : value;
+const spinnerFrames = ["|", "/", "-", "\\"] as const;
 
-const elapsed = (startedAt: string, endedAt: string): string => {
-  const seconds = Math.max(0, Math.round((Date.parse(endedAt) - Date.parse(startedAt)) / 1000));
-  return seconds >= 60 ? `${Math.floor(seconds / 60)}m ${seconds % 60}s` : `${seconds}s`;
+const elapsedSeconds = (start: number, end: number): number => Math.max(0, Math.floor((end - start) / 1000));
+
+const formatSeconds = (seconds: number): string => seconds >= 60 ? `${Math.floor(seconds / 60)}m ${seconds % 60}s` : `${seconds}s`;
+
+const elapsed = (startedAt: string, endedAt: string): string =>
+  formatSeconds(Math.max(0, Math.round((Date.parse(endedAt) - Date.parse(startedAt)) / 1000)));
+
+export type CategoryProgress = {
+  readonly categoryName: string;
+  readonly position: number;
+  readonly count: number;
+  readonly phase: "listing" | "products";
+  readonly pagesScanned: number;
+  readonly found: number;
+  readonly processed: number;
+  readonly totalProducts: number;
+  readonly elapsedSeconds: number;
+  readonly idleSeconds: number;
+};
+
+export const formatCategoryProgress = (progress: CategoryProgress, spinner: string): string => {
+  const prefix = `[${progress.position}/${progress.count}] ${progress.categoryName}`;
+  const activity = progress.phase === "listing"
+    ? `buscando fichas | ${progress.pagesScanned} págs. | ${progress.found} encontradas`
+    : `${progress.processed}/${progress.totalProducts} fichas procesadas`;
+  const idle = progress.idleSeconds >= 25 ? ` | sin novedades ${formatSeconds(progress.idleSeconds)}` : "";
+  return `  ${prefix} | ${spinner} ${activity} | ${formatSeconds(progress.elapsedSeconds)}${idle}`;
 };
 
 export const formatRunSummary = (providerId: string, outDir: string, outPrefix: string, summary: Summary, failed: boolean): readonly string[] => {
@@ -40,9 +65,17 @@ export class ScrapeConsole {
   private category: CategoryConfig | null = null;
   private position = 0;
   private count = 0;
-  private discovered = 0;
-  private lastRenderAt = 0;
+  private phase: "listing" | "products" = "listing";
+  private pagesScanned = 0;
+  private found = 0;
+  private processed = 0;
+  private totalProducts = 0;
+  private categoryStartedAt = 0;
+  private lastActivityAt = 0;
+  private lastHeartbeatAt = 0;
   private lastReported = 0;
+  private spinnerFrame = 0;
+  private timer: ReturnType<typeof setInterval> | null = null;
   private lineOpen = false;
 
   constructor(providerId: string, outDir: string, outPrefix: string, verbose: boolean) {
@@ -58,25 +91,48 @@ export class ScrapeConsole {
   }
 
   beginCategory(category: CategoryConfig, position: number, count: number): void {
+    this.clearProgress();
     this.category = category;
     this.position = position;
     this.count = count;
-    this.discovered = 0;
+    this.phase = "listing";
+    this.pagesScanned = 0;
+    this.found = 0;
+    this.processed = 0;
+    this.totalProducts = 0;
     this.lastReported = 0;
-    this.lastRenderAt = 0;
-    this.writeProgress("buscando fichas...");
+    this.spinnerFrame = 0;
+    this.categoryStartedAt = Date.now();
+    this.lastActivityAt = this.categoryStartedAt;
+    this.lastHeartbeatAt = this.categoryStartedAt;
+
+    if (this.verbose) return;
+    if (!this.interactive) console.log(`  [${position}/${count}] ${category.name} | buscando fichas...`);
+    this.timer = setInterval(() => this.tick(), 160);
+    this.timer.unref();
+    if (this.interactive) this.render();
+  }
+
+  listingProgress(pages: number, total: number): void {
+    this.pagesScanned += pages;
+    this.found = total;
+    this.lastActivityAt = Date.now();
+    if (this.interactive) this.render();
   }
 
   listingDone(total: number): void {
-    this.discovered = total;
-    this.writeProgress(`${total} encontradas | 0/${total} procesadas`);
+    this.found = total;
+    this.phase = "products";
+    this.totalProducts = total;
+    this.lastActivityAt = Date.now();
+    if (this.interactive) this.render();
   }
 
   productDone(done: number, total: number): void {
-    if (this.interactive) {
-      if (Date.now() - this.lastRenderAt < 125 && done < total) return;
-      this.writeProgress(`${this.discovered} encontradas | ${done}/${total} procesadas`);
-    } else if (!this.verbose && done - this.lastReported >= 100 && done < total) {
+    if (done > this.processed) this.lastActivityAt = Date.now();
+    this.processed = done;
+    this.totalProducts = total;
+    if (!this.interactive && !this.verbose && done - this.lastReported >= 100 && done < total) {
       this.lastReported = done;
       console.log(`    ${done}/${total} fichas procesadas`);
     }
@@ -112,22 +168,50 @@ export class ScrapeConsole {
     console.log(`  CSV: ${join(this.outDir, `${this.outPrefix}-categories.csv`)}`);
   }
 
-  private writeProgress(message: string): void {
-    const category = this.category;
-    if (!category) return;
-    const line = `  [${this.position}/${this.count}] ${category.name} | ${message}`;
-    if (!this.interactive) {
-      if (message === "buscando fichas..." && !this.verbose) console.log(line);
+  private tick(): void {
+    if (!this.category) return;
+    if (this.interactive) {
+      this.render();
       return;
     }
+    const now = Date.now();
+    if (now - this.lastHeartbeatAt < 30_000) return;
+    this.lastHeartbeatAt = now;
+    const progress = this.snapshot(now);
+    console.log(formatCategoryProgress(progress, "...").trimEnd());
+  }
+
+  private snapshot(now: number): CategoryProgress {
+    return {
+      categoryName: this.category?.name ?? "",
+      position: this.position,
+      count: this.count,
+      phase: this.phase,
+      pagesScanned: this.pagesScanned,
+      found: this.found,
+      processed: this.processed,
+      totalProducts: this.totalProducts,
+      elapsedSeconds: elapsedSeconds(this.categoryStartedAt, now),
+      idleSeconds: elapsedSeconds(this.lastActivityAt, now)
+    };
+  }
+
+  private render(): void {
+    if (!this.interactive || !this.category) return;
+    const frame = spinnerFrames[this.spinnerFrame % spinnerFrames.length]!;
+    this.spinnerFrame += 1;
+    const line = formatCategoryProgress(this.snapshot(Date.now()), frame);
     clearLine(process.stdout, 0);
     cursorTo(process.stdout, 0);
     process.stdout.write(trimText(line, Math.max(30, (process.stdout.columns ?? 100) - 1)));
     this.lineOpen = true;
-    this.lastRenderAt = Date.now();
   }
 
   private clearProgress(): void {
+    if (this.timer !== null) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
     if (!this.lineOpen) return;
     clearLine(process.stdout, 0);
     cursorTo(process.stdout, 0);

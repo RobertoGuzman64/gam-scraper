@@ -10,6 +10,7 @@ export type ProductPageCache = Map<string, Promise<ParsedProduct>>;
 export type ScrapeProgressCallbacks = {
   readonly verbose: boolean;
   readonly onListingDone: (total: number) => void;
+  readonly onListingProgress?: (pages: number, total: number) => void;
   readonly onProductDone: (done: number, total: number) => void;
 };
 
@@ -124,6 +125,7 @@ export const scrapeCategory = async (
         throw new Error(`No se pudo leer ninguna página del listado de ${category.key}: ${pages.join(",")}`);
       }
 
+      progress?.onListingProgress?.(pages.length, productUrls.size);
       report("category", `listingDone key=${category.key} added=${added} total=${productUrls.size} stall=${stall}`);
 
       if (added === 0) stall += 1;
