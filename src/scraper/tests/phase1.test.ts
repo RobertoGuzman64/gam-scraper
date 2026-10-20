@@ -72,15 +72,16 @@ test("deduplicación separada por proveedor y exportación compatible", async ()
   try {
     await writeOutputs(dir, "test", [result([
       product("gam", "https://online.gamrentals.com/es/a"),
-      product("gam", "https://online.gamrentals.com/es/a2"),
+      product("gam", "https://online.gamrentals.com/es/a"),
       product("gomariz", "https://www.gomarizrent.com/a")
     ])], "2026-01-01T00:00:00.000Z", "2026-01-01T00:00:01.000Z");
 
     const summary = JSON.parse(await readFile(join(dir, "test-summary.json"), "utf8")) as {
-      totals: { scrapedProducts: number; dedupe: { globalAll: { removed: number } } };
+      totals: { scrapedProducts: number; dedupe: { withinCategories: { removed: number }; globalAll: { removed: number } } };
     };
     const csv = await readFile(join(dir, "test-all.csv"), "utf8");
     assert.equal(summary.totals.scrapedProducts, 2);
+    assert.equal(summary.totals.dedupe.withinCategories.removed, 1);
     assert.equal(summary.totals.dedupe.globalAll.removed, 0);
     assert.ok(csv.split("\n")[0]?.includes("providerId"));
     assert.ok(csv.includes("gam"));
