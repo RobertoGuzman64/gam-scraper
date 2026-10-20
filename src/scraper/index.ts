@@ -1,9 +1,8 @@
 import { resolveCliSelection } from "./cli.js";
-import { DEFAULT_CATEGORIES } from "./config.js";
-import type { CategoryConfig, CategoryScrapeResult } from "./types.js";
+import type { CategoryConfig, CategoryScrapeResult, ScrapeOptions } from "./types.js";
+import type { ScraperProvider } from "./providers/contracts.js";
 import { writeCategoriesCsv, writeGroupedOutputs, writeOutputs } from "./io.js";
 import { scrapeCategory } from "./scrape.js";
-import { discoverCategoryTree } from "./tree.js";
 
 const nowIso = (): string => new Date().toISOString();
 
@@ -53,14 +52,30 @@ const logCategoryResult = (prefix: string, r: CategoryScrapeResult): void => {
   );
 };
 
+const scrapeSafely = async (
+  category: CategoryConfig,
+  options: ScrapeOptions,
+  provider: ScraperProvider
+): Promise<CategoryScrapeResult> => {
+  try {
+    return await scrapeCategory(category, options, provider);
+  } catch (error) {
+    console.error(`[category-failed] provider=${provider.id} category=${category.key} error=${String(error)}`);
+    return { category, discoveredProductUrls: 0, products: [], failures: [{ url: category.url, error: String(error) }] };
+  }
+};
+
 const main = async (): Promise<void> => {
   const selection = resolveCliSelection(process.argv.slice(2));
   const startedAt = nowIso();
   const options = selection.options;
+  const provider = selection.provider;
 
   console.log(`[start] ${startedAt}`);
   console.log(`[mode] ${selection.mode}`);
+  console.log(`[provider] ${provider.id}`);
   logOptions(options);
+  console.log(`[limits] effectivePages=${Math.min(options.concurrencyPages, provider.defaultOptions.concurrencyPages)} effectiveProducts=${Math.min(options.concurrencyProducts, provider.defaultOptions.concurrencyProducts)} minDelayMs=${Math.max(options.delayMs, provider.defaultOptions.delayMs)}`);
 
   if ("onlyCategories" in selection) console.log(`[flags] onlyCategories=${selection.onlyCategories}`);
   if ("discoverSubcategories" in selection) console.log(`[flags] discoverSubcategories=${selection.discoverSubcategories}`);
@@ -68,7 +83,7 @@ const main = async (): Promise<void> => {
 
   if (selection.mode === "tree") {
     console.log(`[tree] discovering categories from: ${selection.rootUrl}`);
-    const cats = await discoverCategoryTree(selection.rootUrl, options);
+    const cats = await provider.discoverCategoryTree(selection.rootUrl, options);
     console.log(`[tree] discovered categories: ${cats.length}`);
 
     await writeCategoriesCsv(options.outDir, options.outPrefix, cats);
@@ -83,7 +98,7 @@ const main = async (): Promise<void> => {
     for (let i = 0; i < cats.length; i += 1) {
       const c = cats[i]!;
       console.log(`[scrape] (${i + 1}/${cats.length}) ${c.key} | ${c.name}`);
-      const r = await scrapeCategory(c, options);
+      const r = await scrapeSafely(c, options, provider);
       logCategoryResult(`${c.key} | ${c.name}`, r);
       results.push(r);
     }
@@ -105,7 +120,7 @@ const main = async (): Promise<void> => {
       const results: CategoryScrapeResult[] = [];
       for (const c of roots) {
         console.log(`[scrape] ${c.key} | ${c.name}`);
-        const r = await scrapeCategory(c, options);
+        const r = await scrapeSafely(c, options, provider);
         logCategoryResult(`${c.key} | ${c.name}`, r);
         results.push(r);
       }
@@ -118,7 +133,7 @@ const main = async (): Promise<void> => {
     }
 
     console.log(`[tree] discovering subcategories from: ${selection.category.url}`);
-    const discovered = await discoverCategoryTree(selection.category.url, options);
+    const discovered = await provider.discoverCategoryTree(selection.category.url, options);
     const toScrape = uniqueByUrl(discovered);
     console.log(`[tree] discovered subcategories: ${toScrape.length}`);
 
@@ -134,7 +149,7 @@ const main = async (): Promise<void> => {
     for (let i = 0; i < toScrape.length; i += 1) {
       const c = toScrape[i]!;
       console.log(`[scrape] (${i + 1}/${toScrape.length}) ${c.key} | ${c.name}`);
-      const r = await scrapeCategory(c, options);
+      const r = await scrapeSafely(c, options, provider);
       logCategoryResult(`${c.key} | ${c.name}`, r);
       resultsForRoot.push(r);
     }
@@ -157,7 +172,7 @@ const main = async (): Promise<void> => {
   console.log(`[config] roots=${roots.length} | keys=${roots.map((c) => c.key).join(",")}`);
 
   if (roots.length === 0) {
-    const keys = DEFAULT_CATEGORIES.map((c) => c.key).join(", ");
+    const keys = provider.categories.map((c) => c.key).join(", ");
     throw new Error(`categoryKey no encontrado. Disponibles: ${keys}`);
   }
 
@@ -166,7 +181,7 @@ const main = async (): Promise<void> => {
     for (let i = 0; i < roots.length; i += 1) {
       const c = roots[i]!;
       console.log(`[scrape] (${i + 1}/${roots.length}) ${c.key} | ${c.name}`);
-      const r = await scrapeCategory(c, options);
+      const r = await scrapeSafely(c, options, provider);
       logCategoryResult(`${c.key} | ${c.name}`, r);
       results.push(r);
     }
@@ -184,7 +199,7 @@ const main = async (): Promise<void> => {
   for (let i = 0; i < roots.length; i += 1) {
     const root = roots[i]!;
     console.log(`[tree] (${i + 1}/${roots.length}) discovering subcategories from root: ${root.key} | ${root.url}`);
-    const discovered = await discoverCategoryTree(root.url, options);
+    const discovered = await provider.discoverCategoryTree(root.url, options);
     const toScrape = uniqueByUrl(discovered);
     console.log(`[tree] ${root.key} discovered subcategories: ${toScrape.length}`);
 
@@ -199,7 +214,7 @@ const main = async (): Promise<void> => {
     for (let j = 0; j < toScrape.length; j += 1) {
       const c = toScrape[j]!;
       console.log(`[scrape] ${root.key} -> (${j + 1}/${toScrape.length}) ${c.key} | ${c.name}`);
-      const r = await scrapeCategory(c, options);
+      const r = await scrapeSafely(c, options, provider);
       logCategoryResult(`${root.key} -> ${c.key} | ${c.name}`, r);
       resultsForRoot.push(r);
     }

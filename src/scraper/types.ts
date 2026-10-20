@@ -9,6 +9,7 @@ export type SpecValue = SpecScalar | readonly SpecScalar[];
 export type SpecsMap = Readonly<Record<string, SpecValue>>;
 
 export type ProductRecord = {
+  readonly providerId: string;
   readonly categoryKey: string;
   readonly categoryName: string;
   readonly url: string;
@@ -25,6 +26,7 @@ export type ProductRecord = {
   readonly horometer: string | null;
   readonly serialNumber: string | null;
   readonly image: string | null;
+  readonly images?: readonly string[];
   readonly specs?: SpecsMap;
 };
 
@@ -56,8 +58,14 @@ export type DedupeReport = {
 };
 
 export type Summary = {
+  readonly quality?: {
+    readonly status: "complete" | "partial" | "blocked";
+    readonly reasons: readonly string[];
+    readonly published: boolean;
+  };
   readonly startedAt: string;
   readonly endedAt: string;
+  readonly artifacts?: { readonly csvSha256: string; readonly preparationSha256: string };
   readonly totals: {
     readonly categories: number;
     readonly discoveredProductUrls: number;

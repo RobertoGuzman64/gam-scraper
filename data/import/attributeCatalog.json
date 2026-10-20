@@ -1,0 +1,8216 @@
+{
+  "source": "Marketplace-Back-develop/prisma/seedData (snapshot 2026-10-15)",
+  "attributes": [
+    {
+      "id": 1,
+      "name": "Altura de trabajo",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "m"
+    },
+    {
+      "id": 2,
+      "name": "Altura de plataforma",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "m"
+    },
+    {
+      "id": 3,
+      "name": "Alcance horizontal",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "m"
+    },
+    {
+      "id": 4,
+      "name": "Capacidad de la cesta",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "kg"
+    },
+    {
+      "id": 5,
+      "name": "Nº de personas en cesta",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "1,2,3"
+    },
+    {
+      "id": 6,
+      "name": "Dimensiones de la cesta",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "m"
+    },
+    {
+      "id": 7,
+      "name": "Extensión de plataforma",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "m"
+    },
+    {
+      "id": 8,
+      "name": "Rotación de torreta",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "grados"
+    },
+    {
+      "id": 9,
+      "name": "Tipo de tracción",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Ruedas / Orugas / Sobre camión / Empuje manual"
+    },
+    {
+      "id": 10,
+      "name": "Uso interior/exterior",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Interior / Exterior / Ambos"
+    },
+    {
+      "id": 11,
+      "name": "Pendiente superable",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "%"
+    },
+    {
+      "id": 12,
+      "name": "Neumáticos",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Macizos / No marcantes / Todoterreno"
+    },
+    {
+      "id": 13,
+      "name": "Capacidad de carga",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "kg"
+    },
+    {
+      "id": 14,
+      "name": "Centro de carga",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "mm"
+    },
+    {
+      "id": 15,
+      "name": "Altura de elevación",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "mm"
+    },
+    {
+      "id": 16,
+      "name": "Tipo de mástil",
+      "type": "SELECT",
+      "required": true,
+      "unit_option": "Simple / Dúplex / Tríplex / Cuádruplex"
+    },
+    {
+      "id": 17,
+      "name": "Altura mástil replegado",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "mm"
+    },
+    {
+      "id": 18,
+      "name": "Elevación libre",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "mm"
+    },
+    {
+      "id": 19,
+      "name": "Longitud de horquillas",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "mm"
+    },
+    {
+      "id": 20,
+      "name": "Radio de giro",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "mm"
+    },
+    {
+      "id": 21,
+      "name": "Ancho de pasillo mínimo",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "mm"
+    },
+    {
+      "id": 22,
+      "name": "Batería (V / Ah)",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "V / Ah"
+    },
+    {
+      "id": 23,
+      "name": "Potencia del motor",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "kW"
+    },
+    {
+      "id": 24,
+      "name": "Neumáticos",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Macizos / Superelásticos / Neumáticos"
+    },
+    {
+      "id": 25,
+      "name": "Posición del operario",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Sentado / De pie / Acompañante"
+    },
+    {
+      "id": 26,
+      "name": "Cabina",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Abierta / Cerrada / Techo protector"
+    },
+    {
+      "id": 27,
+      "name": "Implementos incluidos",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Desplazador lateral / Posicionador / Pinza / Ninguno"
+    },
+    {
+      "id": 28,
+      "name": "Capacidad de carga",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "kg"
+    },
+    {
+      "id": 29,
+      "name": "Altura de elevación",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "mm"
+    },
+    {
+      "id": 30,
+      "name": "Altura de elevación",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "mm"
+    },
+    {
+      "id": 31,
+      "name": "Altura de elevación",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "mm"
+    },
+    {
+      "id": 32,
+      "name": "Longitud de horquillas",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "mm"
+    },
+    {
+      "id": 33,
+      "name": "Ancho total / entre horquillas",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "mm"
+    },
+    {
+      "id": 34,
+      "name": "Batería (V / Ah)",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "V / Ah"
+    },
+    {
+      "id": 35,
+      "name": "Autonomía",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "h"
+    },
+    {
+      "id": 36,
+      "name": "Capacidad de arrastre",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "kg"
+    },
+    {
+      "id": 37,
+      "name": "Posición del operario",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Acompañante / Plataforma / Sentado"
+    },
+    {
+      "id": 38,
+      "name": "Capacidad máxima",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "kg"
+    },
+    {
+      "id": 39,
+      "name": "Altura máxima de elevación",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "m"
+    },
+    {
+      "id": 40,
+      "name": "Alcance máximo horizontal",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "m"
+    },
+    {
+      "id": 41,
+      "name": "Capacidad a máxima altura",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "kg"
+    },
+    {
+      "id": 42,
+      "name": "Estabilizadores",
+      "type": "BOOLEAN",
+      "required": false,
+      "unit_option": "Si/No"
+    },
+    {
+      "id": 43,
+      "name": "Tipo",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Fijo / Rotativo"
+    },
+    {
+      "id": 44,
+      "name": "Potencia del motor",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "kW"
+    },
+    {
+      "id": 45,
+      "name": "Implementos incluidos",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Horquillas / Cazo / Cabrestante / Plataforma / Plumín"
+    },
+    {
+      "id": 46,
+      "name": "Peso operativo",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "kg"
+    },
+    {
+      "id": 47,
+      "name": "Potencia del motor",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "kW / CV"
+    },
+    {
+      "id": 48,
+      "name": "Profundidad de excavación",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "m"
+    },
+    {
+      "id": 49,
+      "name": "Alcance máximo",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "m"
+    },
+    {
+      "id": 50,
+      "name": "Capacidad del cazo",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "m³ / l"
+    },
+    {
+      "id": 51,
+      "name": "Capacidad de la tolva",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "kg / l"
+    },
+    {
+      "id": 52,
+      "name": "Ancho del tambor",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "mm"
+    },
+    {
+      "id": 53,
+      "name": "Fuerza centrífuga",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "kN"
+    },
+    {
+      "id": 54,
+      "name": "Momento de carga",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "t·m"
+    },
+    {
+      "id": 55,
+      "name": "Tipo de tracción",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Orugas / Ruedas"
+    },
+    {
+      "id": 56,
+      "name": "Ancho de la máquina",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "mm"
+    },
+    {
+      "id": 57,
+      "name": "Cabina",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Abierta / Cerrada / ROPS"
+    },
+    {
+      "id": 58,
+      "name": "Enganche / compatibilidad",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "Tipo de acople"
+    },
+    {
+      "id": 59,
+      "name": "Tipo de conductor",
+      "type": "SELECT",
+      "required": true,
+      "unit_option": "Hombre a pie / Hombre a bordo"
+    },
+    {
+      "id": 60,
+      "name": "Ancho de trabajo",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "mm"
+    },
+    {
+      "id": 61,
+      "name": "Rendimiento teórico",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "m²/h"
+    },
+    {
+      "id": 62,
+      "name": "Depósito de solución",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "l"
+    },
+    {
+      "id": 63,
+      "name": "Depósito de recuperación",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "l"
+    },
+    {
+      "id": 64,
+      "name": "Capacidad de la tolva",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "l"
+    },
+    {
+      "id": 65,
+      "name": "Alimentación",
+      "type": "SELECT",
+      "required": true,
+      "unit_option": "Batería / Cable / Diésel / GLP"
+    },
+    {
+      "id": 66,
+      "name": "Batería (V / Ah)",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "V / Ah"
+    },
+    {
+      "id": 67,
+      "name": "Autonomía",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "h"
+    },
+    {
+      "id": 68,
+      "name": "Potencia de aspiración",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "kW"
+    },
+    {
+      "id": 69,
+      "name": "Potencia de aspiración",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "kW"
+    },
+    {
+      "id": 70,
+      "name": "Potencia",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "kVA (grupos) / kW"
+    },
+    {
+      "id": 71,
+      "name": "Combustible",
+      "type": "SELECT",
+      "required": true,
+      "unit_option": "Diésel / Gasolina / Eléctrico / GLP"
+    },
+    {
+      "id": 72,
+      "name": "Voltaje / Fases",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "230V mono / 400V trifásico"
+    },
+    {
+      "id": 73,
+      "name": "Capacidad del depósito",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "l"
+    },
+    {
+      "id": 74,
+      "name": "Autonomía a 75% carga",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "h"
+    },
+    {
+      "id": 75,
+      "name": "Nivel sonoro",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "dB(A) a 7 m"
+    },
+    {
+      "id": 76,
+      "name": "Insonorizado",
+      "type": "BOOLEAN",
+      "required": false,
+      "unit_option": "Si/No"
+    },
+    {
+      "id": 77,
+      "name": "Caudal de aire",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "l/min o m³/min"
+    },
+    {
+      "id": 78,
+      "name": "Presión de trabajo",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "bar"
+    },
+    {
+      "id": 79,
+      "name": "Altura del mástil",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "m"
+    },
+    {
+      "id": 80,
+      "name": "Nº y tipo de focos",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "uds. LED / halógenos"
+    },
+    {
+      "id": 81,
+      "name": "Potencia frigorífica",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "kW / frigorías"
+    },
+    {
+      "id": 82,
+      "name": "Caudal de aire tratado",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "m³/h"
+    },
+    {
+      "id": 83,
+      "name": "Caudal de aire",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "l/min o m³/min"
+    },
+    {
+      "id": 84,
+      "name": "Presión de trabajo",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "bar"
+    },
+    {
+      "id": 85,
+      "name": "Altura del mástil",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "m"
+    },
+    {
+      "id": 86,
+      "name": "Nº y tipo de focos",
+      "type": "TEXT",
+      "required": true,
+      "unit_option": "uds. LED / halógenos"
+    },
+    {
+      "id": 87,
+      "name": "Potencia frigorífica",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "kW / frigorías"
+    },
+    {
+      "id": 88,
+      "name": "Autonomía",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "km"
+    },
+    {
+      "id": 89,
+      "name": "Velocidad máxima",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "km/h"
+    },
+    {
+      "id": 90,
+      "name": "Batería",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "kWh / V-Ah"
+    },
+    {
+      "id": 91,
+      "name": "Tiempo de carga",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "h (tipo de cargador)"
+    },
+    {
+      "id": 92,
+      "name": "Capacidad de carga útil",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "kg"
+    },
+    {
+      "id": 93,
+      "name": "Volumen de carga",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "m³"
+    },
+    {
+      "id": 94,
+      "name": "Kilometraje",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "km"
+    },
+    {
+      "id": 95,
+      "name": "Nº de plazas",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "uds."
+    },
+    {
+      "id": 96,
+      "name": "Homologación / Permiso",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "AM / A1 / B / Sin permiso (bicis)"
+    },
+    {
+      "id": 97,
+      "name": "ITV en vigor",
+      "type": "BOOLEAN",
+      "required": false,
+      "unit_option": "Si/No"
+    },
+    {
+      "id": 98,
+      "name": "Dimensiones exteriores (L x An x Al)",
+      "type": "TEXT",
+      "required": true,
+      "unit_option": "m"
+    },
+    {
+      "id": 99,
+      "name": "Superficie útil",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "m²"
+    },
+    {
+      "id": 100,
+      "name": "Peso",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "kg"
+    },
+    {
+      "id": 101,
+      "name": "Acoplable / Modular",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "Unión lateral y/o apilable"
+    },
+    {
+      "id": 102,
+      "name": "Apilable",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "Nº de alturas"
+    },
+    {
+      "id": 103,
+      "name": "Estructura / Material",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Panel sándwich / Acero galvanizado / Madera"
+    },
+    {
+      "id": 104,
+      "name": "Aislamiento",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "Tipo y espesor"
+    },
+    {
+      "id": 105,
+      "name": "Nº de puertas",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "uds."
+    },
+    {
+      "id": 106,
+      "name": "Nº de ventanas",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "uds. (con reja/persiana)"
+    },
+    {
+      "id": 107,
+      "name": "Instalación eléctrica",
+      "type": "TEXT",
+      "required": true,
+      "unit_option": "Cuadro, enchufes, iluminación"
+    },
+    {
+      "id": 108,
+      "name": "Preinstalación de fontanería",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "Entrada/salida de agua"
+    },
+    {
+      "id": 109,
+      "name": "Equipamiento sanitario",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "Nº WC / duchas / lavabos / urinarios"
+    },
+    {
+      "id": 110,
+      "name": "Termo de agua caliente",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "Si/No + Litros"
+    },
+    {
+      "id": 111,
+      "name": "Climatización",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Sin / Split A/A / Bomba de calor"
+    },
+    {
+      "id": 112,
+      "name": "Mobiliario incluido",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Mesas / Sillas / Taquillas / Bancos / Literas / Ninguno"
+    },
+    {
+      "id": 113,
+      "name": "Transporte y montaje",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Incluido / No incluido / Opcional"
+    },
+    {
+      "id": 114,
+      "name": "Requisitos de instalación",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "Base nivelada, acometidas…"
+    },
+    {
+      "id": 115,
+      "name": "Marca",
+      "type": "TEXT",
+      "required": true,
+      "unit_option": "Genie"
+    },
+    {
+      "id": 116,
+      "name": "Modelo",
+      "type": "TEXT",
+      "required": true,
+      "unit_option": "GS-1932"
+    },
+    {
+      "id": 117,
+      "name": "Año de fabricación",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "número"
+    },
+    {
+      "id": 118,
+      "name": "Horas de uso",
+      "type": "NUMBER",
+      "required": false,
+      "unit_option": "número"
+    },
+    {
+      "id": 119,
+      "name": "Motorización / Energía",
+      "type": "SELECT",
+      "required": false,
+      "unit_option": "Eléctrico"
+    },
+    {
+      "id": 121,
+      "name": "Ubicación / Delegación",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "Madrid"
+    },
+    {
+      "id": 122,
+      "name": "Garantía",
+      "type": "TEXT",
+      "required": false,
+      "unit_option": "6 meses"
+    },
+    {
+      "id": 123,
+      "name": "Certificación / Marcado CE",
+      "type": "BOOLEAN",
+      "required": false,
+      "unit_option": "Si/No"
+    },
+    {
+      "id": 124,
+      "name": "Caudal de aire tratado",
+      "type": "NUMBER",
+      "required": true,
+      "unit_option": "m³/h"
+    }
+  ],
+  "relations": [
+    {
+      "categoryID": 5,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 1
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 2
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 3
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 4
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 5
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 6
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 7
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 8
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 9
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 10
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 11
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 12
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 13
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 13
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 13
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 13
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 13
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 13
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 13
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 13
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 13
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 13
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 13
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 13
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 13
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 14
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 14
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 14
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 14
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 14
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 14
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 14
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 14
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 14
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 14
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 14
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 14
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 14
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 15
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 15
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 15
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 15
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 15
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 15
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 15
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 15
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 15
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 15
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 15
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 15
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 15
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 16
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 16
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 16
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 16
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 16
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 16
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 16
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 16
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 16
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 16
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 16
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 16
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 16
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 17
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 17
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 17
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 17
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 17
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 17
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 17
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 17
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 17
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 17
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 17
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 17
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 17
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 18
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 18
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 18
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 18
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 18
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 18
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 18
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 18
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 18
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 18
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 18
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 18
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 18
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 19
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 19
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 19
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 19
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 19
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 19
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 19
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 19
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 19
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 19
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 19
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 19
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 19
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 20
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 20
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 20
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 20
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 20
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 20
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 20
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 20
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 20
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 20
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 20
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 20
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 20
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 21
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 21
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 21
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 21
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 21
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 21
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 21
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 21
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 21
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 21
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 21
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 21
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 21
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 22
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 22
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 22
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 22
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 22
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 22
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 22
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 22
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 22
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 22
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 22
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 22
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 22
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 23
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 23
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 23
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 23
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 23
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 23
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 23
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 23
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 23
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 23
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 23
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 23
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 23
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 24
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 24
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 24
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 24
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 24
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 24
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 24
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 24
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 24
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 24
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 24
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 24
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 24
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 25
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 25
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 25
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 25
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 25
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 25
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 25
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 25
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 25
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 25
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 25
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 25
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 25
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 26
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 26
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 26
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 26
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 26
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 26
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 26
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 26
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 26
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 26
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 26
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 26
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 26
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 27
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 27
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 27
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 27
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 27
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 27
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 27
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 27
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 27
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 27
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 27
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 27
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 27
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 29
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 29
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 29
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 29
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 29
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 29
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 29
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 29
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 29
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 29
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 29
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 29
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 30
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 30
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 30
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 30
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 30
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 30
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 30
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 38
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 38
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 39
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 39
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 40
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 40
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 41
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 41
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 42
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 42
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 43
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 43
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 44
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 44
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 45
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 45
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 46
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 47
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 48
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 49
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 50
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 51
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 52
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 53
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 54
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 55
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 56
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 57
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 58
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 59
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 59
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 59
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 60
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 60
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 60
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 61
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 61
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 61
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 62
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 62
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 62
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 63
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 63
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 63
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 64
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 64
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 64
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 65
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 65
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 65
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 66
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 66
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 66
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 67
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 67
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 67
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 68
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 68
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 68
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 59
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 60
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 61
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 62
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 63
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 64
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 65
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 66
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 67
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 69
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 70
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 70
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 70
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 71
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 71
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 71
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 72
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 72
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 72
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 73
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 73
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 73
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 74
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 74
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 74
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 75
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 75
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 75
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 76
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 76
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 76
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 77
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 77
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 77
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 78
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 78
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 78
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 79
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 79
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 79
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 80
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 80
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 80
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 81
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 81
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 81
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 82
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 82
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 82
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 70
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 70
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 71
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 71
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 72
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 72
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 73
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 73
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 74
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 74
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 75
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 75
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 76
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 76
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 77
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 77
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 78
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 78
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 85
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 85
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 86
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 86
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 81
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 81
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 82
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 82
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 70
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 70
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 70
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 70
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 71
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 71
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 71
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 71
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 72
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 72
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 72
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 72
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 73
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 73
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 73
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 73
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 74
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 74
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 74
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 74
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 75
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 75
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 75
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 75
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 76
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 76
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 76
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 76
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 83
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 83
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 83
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 83
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 84
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 84
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 84
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 84
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 79
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 79
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 79
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 79
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 80
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 80
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 80
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 80
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 81
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 81
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 81
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 81
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 82
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 82
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 82
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 82
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 70
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 70
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 71
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 71
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 72
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 72
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 73
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 73
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 74
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 74
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 75
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 75
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 76
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 76
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 77
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 77
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 78
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 78
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 79
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 79
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 80
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 80
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 87
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 87
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 124
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 124
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 28
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 29
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 32
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 33
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 34
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 35
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 36
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 37
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 88
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 88
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 88
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 88
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 88
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 88
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 89
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 89
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 89
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 89
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 89
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 89
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 90
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 90
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 90
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 90
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 90
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 90
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 91
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 91
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 91
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 91
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 91
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 91
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 92
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 92
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 92
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 92
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 92
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 92
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 93
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 93
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 93
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 93
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 93
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 93
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 94
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 94
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 94
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 94
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 94
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 94
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 95
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 95
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 95
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 95
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 95
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 95
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 96
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 96
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 96
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 96
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 96
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 96
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 97
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 97
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 97
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 97
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 97
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 97
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 115
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 116
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 117
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 118
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 119
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 121
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 122
+    },
+    {
+      "categoryID": 5,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 6,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 7,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 8,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 9,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 11,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 12,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 13,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 14,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 15,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 16,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 18,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 19,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 20,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 21,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 22,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 23,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 25,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 26,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 27,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 28,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 29,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 30,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 31,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 32,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 33,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 34,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 36,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 37,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 38,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 39,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 40,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 41,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 42,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 43,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 44,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 45,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 46,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 47,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 48,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 49,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 51,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 54,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 55,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 56,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 57,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 59,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 60,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 61,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 62,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 63,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 64,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 65,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 66,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 68,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 69,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 70,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 71,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 72,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 75,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 76,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 77,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 78,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 79,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 81,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 82,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 83,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 84,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 86,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 87,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 88,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 89,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 90,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 91,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 92,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 93,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 94,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 95,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 96,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 97,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 98,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 99,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 100,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 101,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 102,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 103,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 105,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 106,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 107,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 108,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 109,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 110,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 113,
+      "attributeID": 123
+    },
+    {
+      "categoryID": 114,
+      "attributeID": 123
+    }
+  ]
+}

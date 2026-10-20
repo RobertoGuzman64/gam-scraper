@@ -1,5 +1,9 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { createHash, randomUUID } from "node:crypto";
+import { buildProductIdentity } from "./identity.js";
+import { assessCatalogQuality, buildCatalogItems, categoryScope, compareCatalog, parseCatalogSnapshot } from "./quality.js";
+import type { CatalogSnapshot } from "./quality.js";
 import type {
   CategoryConfig,
   CategoryScrapeResult,
@@ -11,6 +15,7 @@ import type {
   Summary
 } from "./types.js";
 import { toCsv } from "../shared/csv.js";
+import { loadImportCatalog, prepareImportBatch } from "../import/prepare.js";
 
 const baseProductHeaders = [
   "categoryKey",
@@ -29,7 +34,9 @@ const baseProductHeaders = [
   "serialNumber",
   "image",
   "url",
-  "specJson"
+  "specJson",
+  "providerId",
+  "imagesJson"
 ] as const;
 
 const categoryHeaders = ["categoryKey", "categoryName", "categoryUrl"] as const;
@@ -37,29 +44,11 @@ const categoryHeaders = ["categoryKey", "categoryName", "categoryUrl"] as const;
 type CategoryHeader = (typeof categoryHeaders)[number];
 type CategoryCsvRow = Record<CategoryHeader, string>;
 
-type DedupeEntity = {
-  readonly reference: string | null;
-  readonly serialNumber: string | null;
-  readonly url: string;
-};
-
 type ParentProduct = {
   readonly parent: CategoryConfig;
   readonly product: CategoryScrapeResult["products"][number];
 };
 
-const canonicalizeNoQueryNoHash = (url: string): string => {
-  try {
-    const u = new URL(url);
-    u.hash = "";
-    u.search = "";
-    return u.toString();
-  } catch {
-    return url.trim();
-  }
-};
-
-const normalizeKey = (s: string): string => s.trim().toLowerCase().replace(/\s+/g, " ");
 const normalizeSpecKey = (s: string): string => s.trim().replace(/\s+/g, " ");
 
 const specColumnName = (specKey: string): string => `spec__${specKey}`;
@@ -112,26 +101,16 @@ const mergeDedupeReports = (a: DedupeReport, b: DedupeReport): DedupeReport => (
   }
 });
 
-const buildDedupeKey = (e: DedupeEntity): { readonly reason: DedupeReason; readonly key: string } => {
-  const ref = (e.reference ?? "").trim();
-  if (ref) return { reason: "reference", key: `ref:${normalizeKey(ref)}` };
-
-  const serial = (e.serialNumber ?? "").trim();
-  if (serial) return { reason: "serialNumber", key: `sn:${normalizeKey(serial)}` };
-
-  return { reason: "canonicalUrl", key: `url:${canonicalizeNoQueryNoHash(e.url)}` };
-};
-
 const dedupeBy = <T>(
   items: readonly T[],
-  getEntity: (item: T) => DedupeEntity
+  getEntity: (item: T) => CategoryScrapeResult["products"][number]
 ): { readonly unique: T[]; readonly report: DedupeReport } => {
   const seen = new Set<string>();
   const unique: T[] = [];
   const byReason: Record<DedupeReason, number> = { reference: 0, serialNumber: 0, canonicalUrl: 0 };
 
   for (const item of items) {
-    const k = buildDedupeKey(getEntity(item));
+    const k = buildProductIdentity(getEntity(item));
     if (seen.has(k.key)) {
       byReason[k.reason] += 1;
       continue;
@@ -164,7 +143,7 @@ export const writeCategoriesCsv = async (
   }));
 
   const csv = toCsv(rows, categoryHeaders);
-  await writeFile(resolve(outDir, `${outPrefix}-categories.csv`), csv, "utf8");
+  await atomicWrite(resolve(outDir, `${outPrefix}-categories.csv`), csv);
 };
 
 const toProductRow = (
@@ -193,7 +172,9 @@ const toProductRow = (
     serialNumber: p.serialNumber ?? "",
     image: p.image ?? "",
     url: p.url,
-    specJson
+    specJson,
+    providerId: p.providerId,
+    imagesJson: JSON.stringify(p.images ?? (p.image ? [p.image] : []))
   };
 
   for (const k of specKeys) {
@@ -204,88 +185,143 @@ const toProductRow = (
   return row;
 };
 
-export const writeGroupedOutputs = async (
+type OutputGroup = {
+  readonly parent: CategoryConfig;
+  readonly results: readonly CategoryScrapeResult[];
+};
+
+const atomicWrite = async (filePath: string, content: string): Promise<void> => {
+  const temporary = `${filePath}.${randomUUID()}.tmp`;
+  await writeFile(temporary, content, "utf8");
+  try {
+    await rename(temporary, filePath);
+  } catch (error) {
+    await rm(temporary, { force: true });
+    throw error;
+  }
+};
+
+const loadSnapshot = async (filePath: string, scope: string): Promise<CatalogSnapshot | null> => {
+  try {
+    return parseCatalogSnapshot(await readFile(filePath, "utf8"), scope);
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") return null;
+    throw error;
+  }
+};
+
+const writeResultGroups = async (
   outDir: string,
   outPrefix: string,
-  groups: readonly { readonly parent: CategoryConfig; readonly results: readonly CategoryScrapeResult[] }[],
+  groups: readonly OutputGroup[],
   startedAt: string,
-  endedAt: string
+  endedAt: string,
+  grouped: boolean
 ): Promise<void> => {
   await mkdir(outDir, { recursive: true });
-
-  type SummaryCategory = Summary["categories"][number];
-  const categorySummaries: SummaryCategory[] = [];
-
+  const scope = categoryScope(groups.map((group) => group.parent), grouped ? "grouped" : "flat");
+  const snapshotFile = resolve(outDir, `${outPrefix}-snapshot-${scope}.json`);
+  const previous = await loadSnapshot(snapshotFile, scope);
+  const allResults = groups.flatMap((group) => [...group.results]);
   const allProductsPreGlobal: ParentProduct[] = [];
+  const categoryData: { readonly parent: CategoryConfig; readonly products: readonly CategoryScrapeResult["products"][number][] }[] = [];
+  const categorySummaries: Summary["categories"][number][] = [];
   let withinCategories = emptyDedupeReport();
 
-  for (const g of groups) {
-    let discoveredProductUrls = 0;
-    let failures = 0;
-
-    const rawProducts: CategoryScrapeResult["products"][number][] = [];
-
-    for (const r of g.results) {
-      discoveredProductUrls += r.discoveredProductUrls;
-      failures += r.failures.length;
-      for (const p of r.products) rawProducts.push(p);
-    }
-
-    const deduped = dedupeBy(rawProducts, (p) => p);
+  for (const group of groups) {
+    const rawProducts = group.results.flatMap((result) => [...result.products]);
+    const deduped = dedupeBy(rawProducts, (product) => product);
     withinCategories = mergeDedupeReports(withinCategories, deduped.report);
-
-    for (const p of deduped.unique) allProductsPreGlobal.push({ parent: g.parent, product: p });
-
-    const specKeys = listSpecKeys(deduped.unique);
-    const headers = buildProductHeaders(specKeys);
-    const rows = deduped.unique.map((p) => toProductRow(g.parent, p, specKeys));
-    const csv = toCsv(rows, headers);
-    await writeFile(resolve(outDir, `${outPrefix}-${g.parent.key}.csv`), csv, "utf8");
-
+    for (const product of deduped.unique) allProductsPreGlobal.push({ parent: group.parent, product });
+    categoryData.push({ parent: group.parent, products: deduped.unique });
     categorySummaries.push({
-      key: g.parent.key,
-      name: g.parent.name,
-      url: g.parent.url,
-      discoveredProductUrls,
+      key: group.parent.key,
+      name: group.parent.name,
+      url: group.parent.url,
+      discoveredProductUrls: group.results.reduce((sum, result) => sum + result.discoveredProductUrls, 0),
       scrapedProductsRaw: rawProducts.length,
       scrapedProducts: deduped.unique.length,
-      failures,
+      failures: group.results.reduce((sum, result) => sum + result.failures.length, 0),
       dedupe: deduped.report
     });
   }
 
-  const global = dedupeBy(allProductsPreGlobal, (pp) => pp.product);
-  const globalSpecKeys = listSpecKeys(global.unique.map((pp) => pp.product));
-  const globalHeaders = buildProductHeaders(globalSpecKeys);
-  const globalRows = global.unique.map((pp) => toProductRow(pp.parent, pp.product, globalSpecKeys));
-  const allCsv = toCsv(globalRows, globalHeaders);
-  await writeFile(resolve(outDir, `${outPrefix}-all.csv`), allCsv, "utf8");
+  const global = dedupeBy(allProductsPreGlobal, (entry) => entry.product);
+  const currentProducts = global.unique.map((entry) => entry.product);
+  const quality = assessCatalogQuality(allResults, currentProducts, previous);
+  const catalog = await loadImportCatalog();
+  const preparation = prepareImportBatch(currentProducts, catalog);
+  const outputPrefix = quality.published ? outPrefix : `${outPrefix}-partial`;
 
-  const totalsDiscovered = categorySummaries.reduce((acc, c) => acc + c.discoveredProductUrls, 0);
-  const totalsRaw = categorySummaries.reduce((acc, c) => acc + c.scrapedProductsRaw, 0);
-  const totalsByCategory = categorySummaries.reduce((acc, c) => acc + c.scrapedProducts, 0);
-  const totalsFailures = categorySummaries.reduce((acc, c) => acc + c.failures, 0);
+  if (!grouped) {
+    await writeCategoriesCsv(outDir, outputPrefix, groups.map((group) => group.parent));
+  }
+
+  for (const { parent, products } of categoryData) {
+    const specKeys = listSpecKeys(products);
+    await atomicWrite(resolve(outDir, `${outputPrefix}-${parent.key}.csv`), toCsv(
+      products.map((product) => toProductRow(parent, product, specKeys)), buildProductHeaders(specKeys)
+    ));
+  }
+  const globalSpecKeys = listSpecKeys(currentProducts);
+  const aggregateCsv = toCsv(
+    global.unique.map(({ parent, product }) => toProductRow(parent, product, globalSpecKeys)),
+    buildProductHeaders(globalSpecKeys)
+  );
+  await atomicWrite(resolve(outDir, `${outputPrefix}-all.csv`), aggregateCsv);
+  const preparationContent = JSON.stringify({
+    quality: quality.status, published: quality.published, ...preparation
+  }, null, 2);
+  const hash = (content: string): string => createHash("sha256").update(content).digest("hex");
 
   const summary: Summary = {
     startedAt,
     endedAt,
+    quality,
+    artifacts: { csvSha256: hash(aggregateCsv), preparationSha256: hash(preparationContent) },
     totals: {
       categories: groups.length,
-      discoveredProductUrls: totalsDiscovered,
-      scrapedProductsRaw: totalsRaw,
-      scrapedProductsByCategorySum: totalsByCategory,
-      scrapedProducts: global.unique.length,
-      failures: totalsFailures,
-      dedupe: {
-        withinCategories: withinCategories,
-        globalAll: global.report
-      }
+      discoveredProductUrls: categorySummaries.reduce((sum, category) => sum + category.discoveredProductUrls, 0),
+      scrapedProductsRaw: categorySummaries.reduce((sum, category) => sum + category.scrapedProductsRaw, 0),
+      scrapedProductsByCategorySum: categorySummaries.reduce((sum, category) => sum + category.scrapedProducts, 0),
+      scrapedProducts: currentProducts.length,
+      failures: categorySummaries.reduce((sum, category) => sum + category.failures, 0),
+      dedupe: { withinCategories, globalAll: global.report }
     },
     categories: categorySummaries
   };
+  const failures = allResults.flatMap((result) => result.failures.map((failure) => ({
+    categoryKey: result.category.key,
+    ...failure
+  })));
+  await atomicWrite(resolve(outDir, `${outPrefix}-summary.json`), JSON.stringify(summary, null, 2));
+  await atomicWrite(resolve(outDir, `${outPrefix}-errors.json`), JSON.stringify({
+    quality: quality.status, failures
+  }, null, 2));
+  await atomicWrite(resolve(outDir, `${outputPrefix}-preparation.json`), preparationContent);
 
-  await writeFile(resolve(outDir, `${outPrefix}-summary.json`), JSON.stringify(summary, null, 2), "utf8");
+  if (!quality.published) {
+    await atomicWrite(resolve(outDir, `${outPrefix}-changes.json`), JSON.stringify({
+      status: "not-comparable", reasons: quality.reasons, suspectedMissing: []
+    }, null, 2));
+    throw new Error(`Extracción ${quality.status}: ${quality.reasons.join("; ")}. Los CSV anteriores se conservan; revisar ${outPrefix}-summary.json`);
+  }
+
+  const items = buildCatalogItems(currentProducts);
+  const changes = compareCatalog(previous, items);
+  await atomicWrite(resolve(outDir, `${outPrefix}-changes.json`), JSON.stringify({
+    status: "comparable", scope, ...changes
+  }, null, 2));
+  await atomicWrite(snapshotFile, JSON.stringify({ version: 1, scope, createdAt: endedAt, items } satisfies CatalogSnapshot, null, 2));
 };
+
+export const writeGroupedOutputs = async (
+  outDir: string,
+  outPrefix: string,
+  groups: readonly OutputGroup[],
+  startedAt: string,
+  endedAt: string
+): Promise<void> => writeResultGroups(outDir, outPrefix, groups, startedAt, endedAt, true);
 
 export const writeOutputs = async (
   outDir: string,
@@ -293,75 +329,6 @@ export const writeOutputs = async (
   results: readonly CategoryScrapeResult[],
   startedAt: string,
   endedAt: string
-): Promise<void> => {
-  await mkdir(outDir, { recursive: true });
-
-  await writeCategoriesCsv(
-    outDir,
-    outPrefix,
-    results.map((r) => r.category)
-  );
-
-  type SummaryCategory = Summary["categories"][number];
-  const categorySummaries: SummaryCategory[] = [];
-
-  const allProductsPreGlobal: ParentProduct[] = [];
-  let withinCategories = emptyDedupeReport();
-
-  for (const r of results) {
-    const rawProducts = [...r.products];
-    const deduped = dedupeBy(rawProducts, (p) => p);
-    withinCategories = mergeDedupeReports(withinCategories, deduped.report);
-
-    for (const p of deduped.unique) allProductsPreGlobal.push({ parent: r.category, product: p });
-
-    const specKeys = listSpecKeys(deduped.unique);
-    const headers = buildProductHeaders(specKeys);
-    const rows = deduped.unique.map((p) => toProductRow(r.category, p, specKeys));
-    const csv = toCsv(rows, headers);
-    await writeFile(resolve(outDir, `${outPrefix}-${r.category.key}.csv`), csv, "utf8");
-
-    categorySummaries.push({
-      key: r.category.key,
-      name: r.category.name,
-      url: r.category.url,
-      discoveredProductUrls: r.discoveredProductUrls,
-      scrapedProductsRaw: rawProducts.length,
-      scrapedProducts: deduped.unique.length,
-      failures: r.failures.length,
-      dedupe: deduped.report
-    });
-  }
-
-  const global = dedupeBy(allProductsPreGlobal, (pp) => pp.product);
-  const globalSpecKeys = listSpecKeys(global.unique.map((pp) => pp.product));
-  const globalHeaders = buildProductHeaders(globalSpecKeys);
-  const globalRows = global.unique.map((pp) => toProductRow(pp.parent, pp.product, globalSpecKeys));
-  const allCsv = toCsv(globalRows, globalHeaders);
-  await writeFile(resolve(outDir, `${outPrefix}-all.csv`), allCsv, "utf8");
-
-  const totalsDiscovered = results.reduce((acc, r) => acc + r.discoveredProductUrls, 0);
-  const totalsRaw = categorySummaries.reduce((acc, c) => acc + c.scrapedProductsRaw, 0);
-  const totalsByCategory = categorySummaries.reduce((acc, c) => acc + c.scrapedProducts, 0);
-  const totalsFailures = results.reduce((acc, r) => acc + r.failures.length, 0);
-
-  const summary: Summary = {
-    startedAt,
-    endedAt,
-    totals: {
-      categories: results.length,
-      discoveredProductUrls: totalsDiscovered,
-      scrapedProductsRaw: totalsRaw,
-      scrapedProductsByCategorySum: totalsByCategory,
-      scrapedProducts: global.unique.length,
-      failures: totalsFailures,
-      dedupe: {
-        withinCategories: withinCategories,
-        globalAll: global.report
-      }
-    },
-    categories: categorySummaries
-  };
-
-  await writeFile(resolve(outDir, `${outPrefix}-summary.json`), JSON.stringify(summary, null, 2), "utf8");
-};
+): Promise<void> => writeResultGroups(outDir, outPrefix, results.map((result) => ({
+  parent: result.category, results: [result]
+})), startedAt, endedAt, false);

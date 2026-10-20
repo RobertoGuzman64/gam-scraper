@@ -16,7 +16,11 @@
     "convert:gam:raw:default": "npm run build && node dist/converter/convertGamCsvToSeedTs.js storage/scraped/gam/scrape-gam-marzo-2026-all.csv storage/seeds/seedDataProduct.gam.ts data/category/categorySell-flat.json",
     "convert:gam:default": "npm run build && node dist/converter/convertGamCsvToSeedTs.js storage/normalized/gam/scrape-gam-marzo-2026-all.normalized.csv storage/seeds/seedDataProduct.gam.ts data/category/categorySell-flat.json",
     "category:tree": "npm run build && node dist/scripts/printCategorySellTree.js",
-    "slugs:gam": "npm run build && node dist/scripts/extractGamUrlCategorySlugs.js"
+    "slugs:gam": "npm run build && node dist/scripts/extractGamUrlCategorySlugs.js",
+    "test": "npm run build && node --test",
+    "scrape:all": "npm run build && node dist/automation/run.js",
+    "export:import": "npm run build && node dist/import/cli.js",
+    "validate:catalog": "npm run build && node dist/validation/cli.js"
   },
   "dependencies": {
     "cheerio": "^1.0.0",

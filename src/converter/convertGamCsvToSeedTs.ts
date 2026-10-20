@@ -129,22 +129,50 @@ const isMain = (metaUrl: string): boolean => {
     return metaUrl === pathToFileURL(argv1).href;
 };
 
-if (isMain(import.meta.url)) {
-    const inputCsvPath = process.argv[2];
-    const outputTsPath = process.argv[3];
-    const categoryFlatPath = process.argv[4];
+const parseOptionalInteger = (raw: string | undefined, flag: string, fallback: number): number => {
+    if (raw === undefined) return fallback;
+    const value = Number(raw);
+    if (!Number.isSafeInteger(value) || value <= 0) throw new Error(`${flag} debe ser un entero positivo`);
+    return value;
+};
 
-    if (!inputCsvPath || !outputTsPath || !categoryFlatPath) {
-        throw new Error("Uso: node dist/converter/convertGamCsvToSeedTs.js <input.csv> <output.ts> <categorySell-flat.json>");
+export const resolveGamConverterOptions = (argv: readonly string[]): ConvertOptions => {
+    const values: string[] = [];
+    const flags = new Map<string, string>();
+    const allowed = new Set(["idStart", "companyID", "defaultImage", "referencePrefix"]);
+
+    for (let i = 0; i < argv.length; i += 1) {
+        const argument = argv[i];
+        if (!argument) continue;
+        if (!argument.startsWith("--")) {
+            values.push(argument);
+            continue;
+        }
+        const name = argument.slice(2);
+        const value = argv[i + 1];
+        if (!allowed.has(name) || !value || value.startsWith("--")) {
+            throw new Error(`Argumento inválido: ${argument}`);
+        }
+        flags.set(name, value);
+        i += 1;
     }
 
-    await convertGamCsvToSeedTs({
+    const [inputCsvPath, outputTsPath, categoryFlatPath] = values;
+    if (!inputCsvPath || !outputTsPath || !categoryFlatPath || values.length !== 3) {
+        throw new Error("Uso: convertGamCsvToSeedTs <input.csv> <output.ts> <categorySell-flat.json> [--idStart <n>] [--companyID <n>] [--defaultImage <url>] [--referencePrefix <texto>]");
+    }
+
+    return {
         inputCsvPath: resolve(inputCsvPath),
         outputTsPath: resolve(outputTsPath),
         categorySellFlatJsonPath: resolve(categoryFlatPath),
-        idStart: 681,
-        companyID: 208,
-        defaultImage: "https://online.gamrentals.com/img/p/es-default.jpg",
-        referencePrefix: "GAM-"
-    });
+        idStart: parseOptionalInteger(flags.get("idStart"), "idStart", 681),
+        companyID: parseOptionalInteger(flags.get("companyID"), "companyID", 208),
+        defaultImage: flags.get("defaultImage") ?? "https://online.gamrentals.com/img/p/es-default.jpg",
+        referencePrefix: flags.get("referencePrefix") ?? "GAM-"
+    };
+};
+
+if (isMain(import.meta.url)) {
+    await convertGamCsvToSeedTs(resolveGamConverterOptions(process.argv.slice(2)));
 }

@@ -1,4 +1,5 @@
-import { DEFAULT_CATEGORIES, DEFAULT_OPTIONS } from "./config.js";
+import { getProvider } from "./providers/index.js";
+import type { ScraperProvider } from "./providers/contracts.js";
 import type { CategoryConfig, ScrapeOptions } from "./types.js";
 
 type ArgValue = string | boolean;
@@ -41,13 +42,14 @@ const toBoolean = (v: ArgValue | undefined): boolean => {
 };
 
 export type CliSelection =
-  | { readonly mode: "tree"; readonly rootUrl: string; readonly onlyCategories: boolean; readonly options: ScrapeOptions }
+  | { readonly mode: "tree"; readonly rootUrl: string; readonly onlyCategories: boolean; readonly options: ScrapeOptions; readonly provider: ScraperProvider }
   | {
     readonly mode: "config";
     readonly categories: readonly CategoryConfig[];
     readonly discoverSubcategories: boolean;
     readonly onlyCategories: boolean;
     readonly options: ScrapeOptions;
+    readonly provider: ScraperProvider;
   }
   | {
     readonly mode: "single";
@@ -55,21 +57,24 @@ export type CliSelection =
     readonly discoverSubcategories: boolean;
     readonly onlyCategories: boolean;
     readonly options: ScrapeOptions;
+    readonly provider: ScraperProvider;
   };
 
 export const resolveCliSelection = (argv: readonly string[]): CliSelection => {
   const args = parseArgs(argv);
+  const provider = getProvider(toStringOr(args.provider, "gam"));
+  const defaults = provider.defaultOptions;
 
   const options: ScrapeOptions = {
-    outDir: toStringOr(args.outDir, DEFAULT_OPTIONS.outDir),
-    outPrefix: toStringOr(args.outPrefix, DEFAULT_OPTIONS.outPrefix),
-    maxPages: toNumber(args.maxPages, DEFAULT_OPTIONS.maxPages),
-    stallStopAfter: toNumber(args.stallStopAfter, DEFAULT_OPTIONS.stallStopAfter),
-    concurrencyPages: toNumber(args.concurrencyPages, DEFAULT_OPTIONS.concurrencyPages),
-    concurrencyProducts: toNumber(args.concurrencyProducts, DEFAULT_OPTIONS.concurrencyProducts),
-    timeoutMs: toNumber(args.timeoutMs, DEFAULT_OPTIONS.timeoutMs),
-    delayMs: toNumber(args.delayMs, DEFAULT_OPTIONS.delayMs),
-    userAgent: toStringOr(args.userAgent, DEFAULT_OPTIONS.userAgent)
+    outDir: toStringOr(args.outDir, defaults.outDir),
+    outPrefix: toStringOr(args.outPrefix, defaults.outPrefix),
+    maxPages: toNumber(args.maxPages, defaults.maxPages),
+    stallStopAfter: toNumber(args.stallStopAfter, defaults.stallStopAfter),
+    concurrencyPages: toNumber(args.concurrencyPages, defaults.concurrencyPages),
+    concurrencyProducts: toNumber(args.concurrencyProducts, defaults.concurrencyProducts),
+    timeoutMs: toNumber(args.timeoutMs, defaults.timeoutMs),
+    delayMs: toNumber(args.delayMs, defaults.delayMs),
+    userAgent: toStringOr(args.userAgent, defaults.userAgent)
   };
 
   const onlyCategories = toBoolean(args.onlyCategories);
@@ -83,18 +88,18 @@ export const resolveCliSelection = (argv: readonly string[]): CliSelection => {
 
     if (!rootUrl) throw new Error("Falta --rootUrl (o --url) para --discoverTree");
 
-    return { mode: "tree", rootUrl, onlyCategories, options };
+    return { mode: "tree", rootUrl, onlyCategories, options, provider };
   }
 
   const url = typeof args.url === "string" ? args.url : null;
   if (url) {
     const key = typeof args.key === "string" ? args.key : "custom";
     const name = typeof args.name === "string" ? args.name : "Custom";
-    return { mode: "single", category: { key, name, url }, discoverSubcategories, onlyCategories, options };
+    return { mode: "single", category: { key, name, url }, discoverSubcategories, onlyCategories, options, provider };
   }
 
   const categoryKey = typeof args.categoryKey === "string" ? args.categoryKey : null;
-  const categories = categoryKey ? DEFAULT_CATEGORIES.filter((c) => c.key === categoryKey) : DEFAULT_CATEGORIES;
+  const categories = categoryKey ? provider.categories.filter((c) => c.key === categoryKey) : provider.categories;
 
-  return { mode: "config", categories, discoverSubcategories, onlyCategories, options };
+  return { mode: "config", categories, discoverSubcategories, onlyCategories, options, provider };
 };
