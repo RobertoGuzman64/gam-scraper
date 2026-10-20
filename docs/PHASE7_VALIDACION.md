@@ -1,14 +1,14 @@
-# Fase 7 — Validación previa a producción
+# Fase 7 — Protocolo de validación y aceptación previa a producción
 
-## Alcance y resultado
+**Actualizado el 20/10/2026 tras analizar extracciones reales de GAM, Gomariz y Mercaeleva.**
 
-Se revisa el flujo de extracción → CSV → preparación de productos → Excel de altas del importador existente. **No se modifica Marketplace-Back, ni se ejecuta `POST /product/import` automáticamente**. Las pruebas unitarias son locales; no certifican que las tres webs hayan sido recorridas por completo ni que las URL de fotos estén accesibles.
+## 1. Alcance y punto de partida
 
-El script `validate:catalog` verifica que el resumen, el CSV agregado, la preparación y los cambios correspondan a una ejecución reciente, completa y sin fallos; confirma recuentos, referencias, URLs y proveedor. También comprueba las huellas SHA-256 del CSV y la preparación publicadas junto al resumen. Las ejecuciones anteriores a la fase 7, que carezcan de huellas, requieren **un nuevo scraping**, no una excepción a la validación.
+La cadena existente es **extracción → CSV + JSON de preparación → revisión → exportación manual de Excel de altas**. `npm run scrape:all` permite ejecutar los tres proveedores, pero no inicia ni controla la importación a `Marketplace-Back`. El contrato del backend se mantiene intacto.
 
-Una extracción que alcance el máximo `--maxPages` sin llegar a la condición normal de parada se considera **parcial**. Sus CSV válidos anteriores se conservan y su preparación se archiva con el prefijo `-partial`; no genera un nuevo catálogo publicable. No debe emplearse `--maxPages 1` para obtener un catálogo de producción.
+Los resultados de referencia, con cero fallos de extracción reportados, son **268 GAM, 143 Gomariz y 20 Mercaeleva**. **No son tres catálogos aceptados**: el portal de Mercaeleva mostraba 221 máquinas y el scraper solo detectó las primeras 20; además 415/431 candidatos están en `review`. Ver [estado real](ESTADO_EXTRACCIONES_2026-10-20.md).
 
-## Comprobación de instalación
+## 2. Puerta de entrada: instalación y pruebas locales
 
 ```bash
 npm ci
@@ -16,65 +16,89 @@ npm test
 npm run build
 ```
 
-**Todas** las pruebas HTML deben pasar con Cheerio real: si aparecen como omitidas (`skipped`), el entorno todavía no está validado para una puesta en producción. Las pruebas con ficheros HTML guardados son de regresión de selectores; no sustituyen pruebas sobre las páginas públicas actuales.
+Comprobar que **ningún test de parser con Cheerio** se omite. Los tests usan fixtures: un resultado verde no demuestra paginación real ni disponibilidad de imágenes. Verificar la instalación de Chrome/Chromium para Mercaeleva y el espacio de escritura en `storage/`.
 
-## Pruebas de extracción por proveedor
+## 3. Diagnóstico aislado y captura real
 
-Los prefijos de prueba deben ser distintos de los usados por el programador. Utilizar `--maxPages 2` solamente para diagnosticar HTML y paginación: la ejecución acabará como parcial si encuentra productos hasta ese límite, y eso es esperado.
-
-```bash
-npm run scrape -- --provider gam --outPrefix prueba-gam --maxPages 2
-npm run scrape -- --provider gomariz --outPrefix prueba-gomariz --maxPages 2
-npm run scrape -- --provider mercaeleva --outPrefix prueba-mercaeleva --maxPages 2
-```
-
-Después de revisar los resultados de prueba, ejecutar cada proveedor **sin limitar artificialmente las páginas**:
+Los ejemplos cortos se usan solo para inspeccionar HTML; el límite de páginas no autoriza producción:
 
 ```bash
-npm run scrape -- --provider gam
-npm run scrape -- --provider gomariz
-npm run scrape -- --provider mercaeleva
+npm run scrape -- --provider gam --categoryKey elevacion --outPrefix prueba-gam-elevacion
+npm run scrape -- --provider gomariz --maxPages 2 --outPrefix prueba-gomariz
+npm run scrape -- --provider mercaeleva --maxPages 2 --outPrefix prueba-mercaeleva
 ```
 
-La automatización general sigue disponible con `npm run scrape:all`. No habilitarla hasta completar la aceptación individual de los tres proveedores. Si Mercaeleva no muestra enlaces HTML, hay que disponer de Chrome o Chromium y configurar `CHROME_PATH` según el README.
-
-## Auditoría del catálogo publicado
-
-Usar el directorio y el prefijo que constan realmente en la configuración del adaptador. Ejemplos para los valores actuales:
+Una vez corregidos los problemas conocidos, ejecutar **sin `--maxPages` artificial**, usando prefijos separados de cualquier ejecución productiva:
 
 ```bash
-npm run validate:catalog -- --provider gam --outDir storage/scraped/gam --outPrefix scrape-gam-marzo-2026
-npm run validate:catalog -- --provider gomariz --outDir storage/scraped/gomariz --outPrefix scrape-gomariz
-npm run validate:catalog -- --provider mercaeleva --outDir storage/scraped/mercaeleva --outPrefix scrape-mercaeleva
+npm run scrape -- --provider gam --outPrefix validacion-gam
+npm run scrape -- --provider gomariz --outPrefix validacion-gomariz
+npm run scrape -- --provider mercaeleva --outPrefix validacion-mercaeleva
 ```
 
-El valor predeterminado de antigüedad máxima es **48 horas**; modificarlo solamente si se acepta de manera explícita un catálogo más antiguo con `--maxAgeHours`. La salida `status: passed` significa **consistencia técnica local**, no disponibilidad ni aprobación para importar. `status: review` señala categorías, precios, atributos, imágenes o posibles bajas que deben revisarse. La CLI usa código de salida `2` para `review`, `1` para errores técnicos y `0` para `passed`.
+**Comprobación obligatoria de cobertura por proveedor:**
 
-## Aceptación manual antes de importar
+- Comparar número de resultados con contador del portal o recorrido manual reproducible.
+- Verificar listados **primera, intermedia y última página** y detectar repetición involuntaria de la primera.
+- Contrastar URLs y referencias reales sin confundir unidades del mismo modelo ni contar dos veces el catálogo general de GAM.
+- En Gomariz, confirmar que las páginas intercaladas sin novedades no impiden detectar artículos en páginas posteriores.
+- En Mercaeleva, **no aceptar la repetición de 20 resultados en páginas siguientes**; comprobar el avance de paginación real y el total anunciado vigente.
 
-1. Confirmar con negocio las URLs y el alcance del catálogo de **venta** de cada empresa. Comprobar contra la web la primera, intermedia y última página y verificar que la paginación no pierde artículos. Revisar unidades distintas con igual modelo.
-2. Examinar un conjunto representativo de productos reales de cada categoría y comparar referencia, marca, modelo, año, horas, precio, fotografías, especificaciones y categoría Equipzilla. No inventar valores ausentes; las fichas sin precio deben quedar en revisión.
-3. Revisar `*-summary.json`, `*-errors.json`, `*-changes.json` y `*-preparation.json`. Confirmar `failures=0`, `status=complete`, integridad y recuentos razonables; comprobar explícitamente los casos de `suspectedMissing` sin dar de baja productos.
-4. Verificar en la **base de datos de destino** el `companyID`, el catálogo de categorías y atributos, y el inventario completo `companyID,reference`. No reutilizar IDs históricos sin confirmarlos.
-5. Ejecutar `npm run export:import -- ... --dry-run` y revisar las incidencias. Generar el `.xlsx` únicamente con `--confirm-inventory` y un inventario reciente de la misma empresa. Examinar todas las columnas y las diez URLs máximas de imágenes.
-6. En entorno de pruebas, importar **una muestra pequeña** por el endpoint existente y comprobar el resultado en la base de datos y el panel admin. Consultar referencias antes y después; verificar número de productos, categorías, fotos y atributos reales. Una importación parcial puede crear unos productos y fallar en otros.
-7. Repetir la preparación con el inventario actualizado: las referencias ya creadas deben excluirse de las nuevas altas. No asumir idempotencia de la API; la protección solo funciona con el inventario completo del momento. Validar también que errores de red o una extracción parcial conservan los catálogos publicados.
-8. Documentar resultados, incidencias, aprobación y persona responsable antes de activar ejecuciones programadas. La automatización no importará directamente al backend.
+## 4. Verificación de calidad local e integridad
 
-No se declara **validación de producción completada** hasta ejecutar las pruebas reales y el ensayo de importación en un entorno autorizado. Sin inventario real, IDs de empresa confirmados y acceso a ese entorno, el resultado es «pendiente de validación externa».
+```bash
+npm run validate:catalog -- --provider gam --outDir storage/scraped/gam --outPrefix validacion-gam
+npm run validate:catalog -- --provider gomariz --outDir storage/scraped/gomariz --outPrefix validacion-gomariz
+npm run validate:catalog -- --provider mercaeleva --outDir storage/scraped/mercaeleva --outPrefix validacion-mercaeleva
+```
 
-## Alta de los próximos proveedores
+- `0` = integridad coherente, `2` = requiere revisión manual, `1` = error técnico.
+- Edad máxima por defecto: 48 h (`--maxAgeHours` se puede adaptar de forma consciente).
+- Confirmar `quality.status`, `quality.published`, `failures`, totales, referencias y hashes SHA-256 de **CSV + preparación**. Un informe marcado `complete` **no sustituye la comprobación externa de cobertura**.
+- Conservar `-snapshot-*`, `-changes.json`, `-errors.json`, `-summary.json`, `-preparation.json` y el historial del lote. **Jamás importar `-partial-all.csv`**.
+- Si una ejecución falla, verificar que el catálogo válido anterior no ha sido sobrescrito. `suspectedMissing` **no implica venta ni baja**.
 
-- Crear el adaptador según `src/scraper/providers/contracts.ts`, implementando su descubrimiento/listado, detalle y paginación.
-- Registrar el identificador nuevo en `src/scraper/providers/index.ts`. No copiar el motor común ni mezclar reglas de proveedores distintos.
-- Guardar casos representativos de listado/ficha en los tests de parsing, con referencia, precio, atributos, fotos y variantes de maquinarias repetidas.
-- Ejecutar pruebas de scraping aislado con prefijo nuevo; inspeccionar datos y pasar la auditoría de catálogo completo.
-- Confirmar el ID de empresa real y su inventario antes de generar un Excel de altas; incluirlo en la ejecución general solo tras aceptación.
+## 5. Revisión funcional de datos
 
-## Limitaciones conocidas
+Tomar muestras representativas de cada categoría y comprobar contra fichas fuente: título, modelo, marca, año, serie, horómetro, precio, descripciones, URL, fotos, atributos y categoría final. Casos obligatorios de regresión:
 
-- La normalización usa un snapshot de categorías/atributos del backend. Puede quedar obsoleto.
-- La validación de integridad no confirma que las imágenes remotas respondan ni que las páginas del proveedor no hayan cambiado.
-- Las máquinas existentes no se actualizan por el importador. Una segunda subida con un inventario antiguo puede duplicar productos.
-- Las posibles desapariciones de catálogo no se convierten en bajas.
-- Mercaeleva necesita comprobar su paginación dinámica en una ejecución completa y Gomariz puede no publicar precios.
+1. **GAM:** caso del enlace de pestaña `#` anteriormente corregido y casos con claves `spec__4880`, `spec__1930`, `spec__SI` para descartar encabezados numéricos falsos.
+2. **Gomariz:** varias fichas de un mismo modelo con referencias diferentes, galerías de >10 imágenes y precio vacío legítimo. Revisar posibles incoherencias editoriales (p. ej., altura de plataforma/trabajo) **sin corregir inventando**.
+3. **Mercaeleva:** fichas de páginas distintas, miniaturas vs. imagen de mayor calidad, máquinas sin precio y final real de la paginación.
+4. **Taxonomía:** categorías hoja Equipzilla, atributos obligatorios y unidades. El snapshot local de categorías y atributos debe contrastarse contra datos **actuales** del entorno de destino.
+
+## 6. Importación manual: condiciones mínimas
+
+La existencia de un `ready` no autoriza el alta. Antes de producir el `.xlsx`:
+
+1. Obtener `companyID` autorizado para **esa** empresa y para **ese** entorno; no reciclar IDs históricos.
+2. Exportar inventario completo y reciente `companyID,reference` desde el backend de destino.
+3. Revisar todos los `review` y decidir, por negocio, qué fuentes/maquinaria se admiten; no suplir precios ausentes ni atributos obligatorios.
+4. Ejecutar **dry-run** (ejemplo GAM; ajustar ruta de preparación al prefijo usado):
+
+```bash
+npm run export:import -- --provider gam --companyID <ID_REAL> --preparation storage/scraped/gam/validacion-gam-preparation.json --existing storage/inventory/gam.csv --out storage/import/gam-altas.xlsx --dry-run
+```
+
+5. Solo con inventario confirmado y trazabilidad, repetir con `--confirm-inventory`. Revisar `*.xlsx.report.json`, tamaños (máximo 10 MB) y hasta diez fotos por producto.
+6. Hacer una **importación manual de muestra en un entorno de pruebas autorizado** con el importador ya existente. Comparar antes/después en la base de datos y panel, y actualizar el inventario antes de un segundo intento. El importador es de **altas**, no un proceso idempotente garantizado por sí mismo.
+7. Recoger aprobación funcional y técnica; la automatización del scraping **no equivale** a autorización de importación.
+
+## 7. Habilitación de ejecución programada
+
+No habilitar cron, Programador de tareas ni Cloud Scheduler hasta: (a) cerrar el fallo P0 de cobertura de Mercaeleva o excluir expresamente ese proveedor, (b) demostrar resultados completos por fuente, (c) validar que la persistencia de snapshots y reportes funciona entre ejecuciones y (d) disponer de alertas ante salida no cero / `review`.
+
+Para hosting en cloud y limitaciones del bloqueo `.batch.lock`, consultar [DESPLIEGUE_AUTOMATICO.md](DESPLIEGUE_AUTOMATICO.md). Para nuevas empresas, implementar adaptador + fixtures + extracción integral + revisión del mapeo, y añadirlas al runner solo tras aceptación.
+
+## 8. Criterios para cerrar fase
+
+- [ ] Tests completos y parsers no omitidos.
+- [ ] Paginación de todas las empresas aceptadas frente al catálogo real.
+- [ ] Cero fallos de fichas y evidencias de cobertura externa suficiente.
+- [ ] Duplicados tratados por unidad/referencia, no por título.
+- [ ] Precios, fotos, atributos y categorías contrastados con el destino.
+- [ ] CSV + JSON + snapshots + historial preservados, hashes correctos.
+- [ ] Bloqueos, reintentos y alertas probados en infraestructura de despliegue.
+- [ ] Excel de prueba e importación manual revisados por responsables.
+
+**Estado de esta lista a 20/10/2026: abierto; no declarar producción lista.**
