@@ -152,3 +152,25 @@ test("serie compartida con referencias diferentes exige revisión solo de las fi
   assert.equal(batch.products[0]?.product.reference, "M044-4093");
   assert.equal(batch.products[1]?.product.reference, "M044-4094");
 });
+
+test("los formatos de precio de los tres proveedores se convierten sin adivinar separadores inválidos", async () => {
+  const catalog = await loadImportCatalog();
+  const cases: readonly { readonly providerId: string; readonly raw: string; readonly expected: number | null }[] = [
+    { providerId: "gam", raw: "12.500 €", expected: 12500 },
+    { providerId: "gomariz", raw: "18 750,50 EUR", expected: 18750.5 },
+    { providerId: "mercaeleva", raw: "20,500.00 €", expected: 20500 },
+    { providerId: "gam", raw: "1.234.567,89 €", expected: 1234567.89 },
+    { providerId: "gomariz", raw: "1.234.56 €", expected: null },
+    { providerId: "mercaeleva", raw: "12,34,56", expected: null },
+    { providerId: "gam", raw: "Consultar", expected: null },
+    { providerId: "gomariz", raw: "0 €", expected: null }
+  ];
+  for (const entry of cases) {
+    const product = prepareProduct({ ...base, providerId: entry.providerId, price: entry.raw }, catalog);
+    assert.equal(product.product.price, entry.expected, `${entry.providerId}: ${entry.raw}`);
+    if (entry.expected === null) {
+      assert.equal(product.status, "review");
+      assert.ok(product.issues.includes("Precio no disponible o inválido"));
+    }
+  }
+});

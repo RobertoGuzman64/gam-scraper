@@ -112,3 +112,61 @@ test("impide generar Excel si se altera el CSV después de preparar la extracci�
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("preflight rechaza ready que el exportador descartaría aunque los hashes sean correctos", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "eq-f4-contract-"));
+  try {
+    const batch = await createBatch(dir);
+    const original = batch.preparation.products[0];
+    assert.ok(original);
+    const scenarios = [
+      { name: "precio", product: { ...original.product, price: null }, reason: /Precio ausente o inválido/ },
+      { name: "categoría", product: { ...original.product, categorySellID: 99999 }, reason: /Categoría no coincide/ },
+      { name: "imagen", product: { ...original.product, images: ["file:///local.jpg"] }, reason: /URL de imagen/ },
+      { name: "atributo", product: { ...original.product, attributes: [{ attributeID: 1, value: "muchos" }] }, reason: /Atributo numérico inválido/ }
+    ];
+    for (const scenario of scenarios) {
+      const preparationText = JSON.stringify({ ...batch.preparation, products: [{ ...original, product: scenario.product }] });
+      await writeFile(batch.paths.preparation, preparationText);
+      await writeFile(batch.paths.summary, JSON.stringify({
+        ...batch.summary,
+        artifacts: {
+          ...batch.summary.artifacts,
+          preparationSha256: createHash("sha256").update(preparationText).digest("hex")
+        }
+      }));
+      await assert.rejects(check(dir), scenario.reason, scenario.name);
+    }
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("preflight comprueba ready/review declarados sin invalidar preparaciones históricas sin totales", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "eq-f4-totals-"));
+  try {
+    const batch = await createBatch(dir);
+    const preparationText = JSON.stringify({ ...batch.preparation, totals: { ready: 0, review: 1 } });
+    await writeFile(batch.paths.preparation, preparationText);
+    await writeFile(batch.paths.summary, JSON.stringify({
+      ...batch.summary,
+      artifacts: {
+        ...batch.summary.artifacts,
+        preparationSha256: createHash("sha256").update(preparationText).digest("hex")
+      }
+    }));
+    await assert.rejects(check(dir), /totales ready\/review/);
+    const corrected = JSON.stringify({ ...batch.preparation, totals: { ready: 1, review: 0 } });
+    await writeFile(batch.paths.preparation, corrected);
+    await writeFile(batch.paths.summary, JSON.stringify({
+      ...batch.summary,
+      artifacts: {
+        ...batch.summary.artifacts,
+        preparationSha256: createHash("sha256").update(corrected).digest("hex")
+      }
+    }));
+    assert.equal((await check(dir)).status, "passed");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

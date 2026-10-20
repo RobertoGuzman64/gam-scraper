@@ -45,16 +45,14 @@ const fold = (value: string): string => value.toLocaleLowerCase("es").normalize(
 
 const normalizePrice = (value: string | null): number | null => {
   if (!value) return null;
-  const raw = value.replace(/[\s\u00a0€]/g, "").replace(/(?:EUR)$/i, "");
-  if (!/^[\d.,]+$/.test(raw)) return null;
-  const comma = raw.lastIndexOf(",");
-  const dot = raw.lastIndexOf(".");
-  const decimal = comma > dot ? "," : ".";
-  const parts = raw.split(decimal);
-  const hasDecimal = parts.length > 1 && (parts.at(-1)?.length ?? 0) <= 2;
-  const normalized = hasDecimal
-    ? `${parts.slice(0, -1).join("").replace(/[.,]/g, "")}.${parts.at(-1)}`
-    : raw.replace(/[.,]/g, "");
+  const raw = value.replace(/[\s\u00a0\u202f€]/g, "").replace(/EUR$/i, "");
+  let normalized: string;
+  if (/^\d+$/.test(raw)) normalized = raw;
+  else if (/^\d+[.,]\d{1,2}$/.test(raw)) normalized = raw.replace(",", ".");
+  else if (/^\d{1,3}(?:[.,]\d{3})+$/.test(raw)) normalized = raw.replace(/[.,]/g, "");
+  else if (/^\d{1,3}(?:\.\d{3})+,\d{1,2}$/.test(raw)) normalized = raw.replace(/\./g, "").replace(",", ".");
+  else if (/^\d{1,3}(?:,\d{3})+\.\d{1,2}$/.test(raw)) normalized = raw.replace(/,/g, "");
+  else return null;
   const amount = Number(normalized);
   return Number.isFinite(amount) && amount > 0 ? amount : null;
 };

@@ -2,6 +2,7 @@ import type { ImportCandidate, ImportCatalog } from "./prepare.js";
 import type { PreparationDocument } from "./preparation-document.js";
 import type { CellValue } from "./xlsx.js";
 import { parseCsv } from "../../shared/csv-parse.js";
+import { validateImportCandidate } from "./import-validation.js";
 
 const fixedHeaders = [
   "Referencia *", "Categoría *", "Título *", "Condición *", "Precio *",
@@ -59,47 +60,6 @@ const attributeHeader = (attribute: ImportCatalog["attributes"][number]): string
     ? `${attribute.name} (${attribute.unit_option})`
     : attribute.name;
 
-const productIssues = (product: ImportCandidate, catalog: ImportCatalog): readonly string[] => {
-  const issues: string[] = [];
-  const category = catalog.categories.find((item) => item.id === product.categorySellID);
-  if (!validText(product.reference)) issues.push("Referencia ausente");
-  if (!validText(product.title)) issues.push("Título ausente");
-  if (product.condition !== "Segunda_Mano") issues.push("Condición incompatible o no confirmada para importación");
-  if (!category || category.name !== product.category ||
-    catalog.categories.filter((item) => item.name === product.category).length !== 1) {
-    issues.push("Categoría no coincide de forma única con el backend");
-  }
-  if (product.price === null || product.price <= 0) issues.push("Precio ausente o inválido");
-  if (!validText(product.description)) issues.push("Descripción ausente");
-  if (product.images.length === 0 || product.images.some((image) => {
-    try { return !["http:", "https:"].includes(new URL(image).protocol); }
-    catch { return true; }
-  })) issues.push("URL de imagen ausente o inválida");
-
-  const active = new Set(catalog.relations.filter((relation) => relation.categoryID === product.categorySellID).map((relation) => relation.attributeID));
-  const byId = new Map(catalog.attributes.map((attribute) => [attribute.id, attribute]));
-  const seen = new Set<number>();
-  for (const attribute of product.attributes) {
-    const definition = byId.get(attribute.attributeID);
-    if (!definition || !active.has(attribute.attributeID) || seen.has(attribute.attributeID)) {
-      issues.push(`Atributo no asociado o duplicado: ${attribute.attributeID}`);
-    }
-    if (typeof attribute.value === "string" && !attribute.value.trim()) {
-      issues.push(`Atributo vacío: ${attribute.attributeID}`);
-    }
-    if (definition?.type === "NUMBER" && typeof attribute.value !== "number") {
-      issues.push(`Atributo numérico inválido: ${attribute.attributeID}`);
-    }
-    if (definition?.type === "BOOLEAN" && typeof attribute.value !== "boolean") {
-      issues.push(`Atributo booleano inválido: ${attribute.attributeID}`);
-    }
-    seen.add(attribute.attributeID);
-  }
-  for (const definition of catalog.attributes.filter((attribute) => active.has(attribute.id) && attribute.required)) {
-    if (!seen.has(definition.id)) issues.push(`Atributo obligatorio ausente: ${definition.name}`);
-  }
-  return issues;
-};
 
 export const planProductImport = (
   document: PreparationDocument, providerId: string, inventory: ReferenceInventory, catalog: ImportCatalog
@@ -126,10 +86,10 @@ export const planProductImport = (
       continue;
     }
     if (entry.status === "review" || entry.issues.length > 0) {
-      review.push({ ...issue, reason: [...entry.issues, ...productIssues(product, catalog)].join("; ") || "Requiere revisión" });
+      review.push({ ...issue, reason: [...entry.issues, ...validateImportCandidate(product, catalog)].join("; ") || "Requiere revisión" });
       continue;
     }
-    const issues = productIssues(product, catalog);
+    const issues = validateImportCandidate(product, catalog);
     if (issues.length > 0) {
       review.push({ ...issue, reason: issues.join("; ") });
       continue;

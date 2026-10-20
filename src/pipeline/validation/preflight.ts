@@ -4,6 +4,8 @@ import { resolve } from "node:path";
 import { getProvider } from "../../scraping/registry.js";
 import { parseCsv } from "../../shared/csv-parse.js";
 import { parsePreparation } from "../../catalog/import/preparation-document.js";
+import { loadImportCatalog } from "../../catalog/import/catalog-loader.js";
+import { validateImportCandidate } from "../../catalog/import/import-validation.js";
 
 export type PreflightOptions = {
   readonly providerId: string;
@@ -86,6 +88,15 @@ export const validateCatalogPublication = async (options: PreflightOptions): Pro
     throw new Error("Informe de cambios incompleto, no comparable o antiguo");
   }
   const document = parsePreparation(preparation, options.providerId);
+  if (isRecord(preparation) && isRecord(preparation.totals)) {
+    const totals = preparation.totals;
+    const actualReady = document.products.filter((entry) => entry.status === "ready").length;
+    const actualReview = document.products.length - actualReady;
+    if (totals.ready !== actualReady || totals.review !== actualReview) {
+      throw new Error("Los totales ready/review de la preparación no coinciden con sus productos");
+    }
+  }
+  const catalog = await loadImportCatalog();
   const csv = parseCsv(rawCsv.replace(/^\ufeff/, ""));
   if (new Set(csv.headers).size !== csv.headers.length ||
     !["providerId", "url", "reference"].every((header) => csv.headers.includes(header))) {
@@ -122,6 +133,10 @@ export const validateCatalogPublication = async (options: PreflightOptions): Pro
     if (entry.status === "ready") {
       if (entry.product.condition !== "Segunda_Mano") throw new Error("Producto ready sin condición de importación compatible");
       if (entry.issues.length > 0) throw new Error("Producto marcado ready con incidencias");
+      const candidateIssues = validateImportCandidate(entry.product, catalog);
+      if (candidateIssues.length > 0) {
+        throw new Error(`Producto ${entry.product.reference ?? url} marcado ready sin cumplir el contrato de importación: ${candidateIssues.join("; ")}`);
+      }
       ready += 1;
     } else {
       review += 1;
