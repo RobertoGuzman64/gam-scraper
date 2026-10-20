@@ -15,7 +15,7 @@ export const buildMercaelevaPageUrl = (categoryUrl: string, page: number): strin
 export const isMercaelevaProductUrl = (href: string): boolean => {
   try {
     const url = new URL(href);
-    return url.hostname === "sales.mercaeleva.com" && /^\/(?:es|en)\/for-sale\/machine\/[^/]+\/?$/i.test(url.pathname);
+    return url.hostname === "sales.mercaeleva.com" && /^\/(?:es|en|ca)\/for-sale\/machine\/[^/]+\/?$/i.test(url.pathname);
   } catch {
     return false;
   }
@@ -32,6 +32,7 @@ export const extractMercaelevaLinks = (listingUrl: string, html: string): readon
       if (!isMercaelevaProductUrl(url.toString())) return;
       url.search = "";
       url.hash = "";
+      url.pathname = url.pathname.replace(/\/$/, "");
       links.add(url.toString());
     } catch {
       return;

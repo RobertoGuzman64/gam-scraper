@@ -86,22 +86,52 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
     throw new Error('Mercaeleva: tiempo agotado al esperar ' + detail);
   };
   const links = () => [...new Set([...document.querySelectorAll('a[href]')]
-    .map((a) => a.href)
-    .filter((href) => /^\/(?:es|en)\/for-sale\/machine\//i.test(new URL(href).pathname)))];
-  const total = await deadline(() => {
-    const match = document.body?.innerText.match(/Resultados?\s*:\s*(\d[\d.,]*)/i);
+    .map((anchor) => {
+      try {
+        const url = new URL(anchor.href);
+        if (url.hostname !== 'sales.mercaeleva.com' || !/^\/(?:es|en|ca)\/for-sale\/machine\/[^/]+\/?$/i.test(url.pathname)) return null;
+        url.search = '';
+        url.hash = '';
+        url.pathname = url.pathname.replace(/\/$/, '');
+        return url.toString();
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean))];
+  const readTotal = () => {
+    const match = document.body?.innerText.match(/(?:Resultados?|Resultats?|Results?)\s*:\s*(\d[\d.,]*)/i);
     const value = match ? Number(match[1].replace(/[^\d]/g, '')) : 0;
     return Number.isSafeInteger(value) && value > 0 ? value : null;
-  }, 'el contador total de resultados');
-  await deadline(() => links().length > 0, 'los productos de la primera página');
+  };
+  const settledLinks = async (detail, seen) => {
+    let previous = '';
+    let stable = 0;
+    return deadline(() => {
+      const current = links();
+      if (!current.length || (seen && !current.some((href) => !seen.has(href)))) {
+        stable = 0;
+        previous = '';
+        return null;
+      }
+      const fingerprint = [...current].sort().join('\n');
+      stable = fingerprint === previous ? stable + 1 : 0;
+      previous = fingerprint;
+      return stable >= 2 ? current : null;
+    }, detail);
+  };
+  const total = await deadline(readTotal, 'el contador total de resultados');
   const pages = [];
   const seen = new Set();
+  let current = await settledLinks('los productos de la primera página', null);
   for (let page = 1; page <= ${maxPages}; page += 1) {
-    const current = links();
-    if (current.length === 0) throw new Error('Mercaeleva: página vacía ' + page);
+    const reportedTotal = readTotal();
+    if (reportedTotal !== total) {
+      throw new Error('Mercaeleva: el contador cambió durante la extracción (' + total + ' / ' + reportedTotal + ')');
+    }
     pages.push(document.documentElement.outerHTML);
     for (const href of current) seen.add(href);
-    if (seen.size >= total) break;
+    if (seen.size >= total || page === ${maxPages}) break;
     const next = [...document.querySelectorAll('button')].find((button) => {
       const label = (button.getAttribute('aria-label') || button.title || '').toLowerCase();
       return /next page|página siguiente|pagina siguiente|pàgina següent|página próxima|siguiente/.test(label);
@@ -110,10 +140,7 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
       throw new Error('Mercaeleva: no hay página siguiente tras la página ' + page + ' (' + seen.size + '/' + total + ')');
     }
     next.click();
-    await deadline(() => {
-      const incoming = links();
-      return incoming.length > 0 && incoming.some((href) => !seen.has(href));
-    }, 'una página nueva después de la ' + page);
+    current = await settledLinks('referencias nuevas después de la página ' + page + ' (' + seen.size + '/' + total + ')', seen);
     if (${delayMs} > 0) await wait(${delayMs});
   }
   return { pages, expectedTotal: total };
@@ -140,7 +167,7 @@ const renderWithBrowser = async (
   if (process.platform === "linux" && process.getuid?.() === 0) flags.unshift("--no-sandbox");
   const child = spawn(executable, flags, {
     stdio: ["ignore", "ignore", "pipe", "pipe", "pipe"],
-    detached: process.platform === "win32",
+    detached: process.platform !== "win32",
     windowsHide: true
   });
   let diagnostics = "";

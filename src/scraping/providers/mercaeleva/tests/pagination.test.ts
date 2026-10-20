@@ -8,6 +8,7 @@ import { writeOutputs } from "../../../../pipeline/publication/publish.js";
 import { assessCatalogQuality } from "../../../../catalog/quality.js";
 import { scrapeCategory } from "../../../engine/scrape-category.js";
 import { buildMercaelevaCatalogScript } from "../browser.js";
+import { extractMercaelevaLinks } from "../parsers.js";
 import type { ScraperProvider } from "../../../provider.js";
 import type { CategoryConfig, ScrapeOptions } from "../../../../contracts/scraping.js";
 
@@ -81,27 +82,41 @@ test("Mercaeleva: una extracción completa publica y una repetida conserva el CS
 });
 
 type PageFixture = {
-  readonly body: { innerText: string };
+  readonly body: { readonly innerText: string };
   readonly documentElement: { readonly outerHTML: string };
   querySelectorAll(selector: string): readonly { readonly href?: string; readonly disabled?: boolean; readonly title?: string; getAttribute?(name: string): string | null; click?(): void }[];
 };
 
-const simulateCatalog = async (pages: readonly (readonly string[])[], announced: number, maxPages = 10): Promise<unknown> => {
+type SimulationOptions = {
+  readonly totals?: readonly number[];
+  readonly delayedNextMs?: number;
+  readonly onNext?: () => void;
+};
+
+const simulateCatalog = async (
+  pages: readonly (readonly string[])[], announced: number, maxPages = 10, simulation?: SimulationOptions
+): Promise<unknown> => {
   let current = 0;
   const document: PageFixture = {
-    body: { innerText: `Resultados: ${announced}` },
+    body: { get innerText() { return `Resultados: ${simulation?.totals?.[current] ?? announced}`; } },
     documentElement: { get outerHTML() { return `<html data-page="${current + 1}"></html>`; } },
     querySelectorAll(selector) {
-      if (selector === "a[href]") return (pages[current] ?? []).map((id) => ({ href: `${baseUrl}${id}` }));
+      if (selector === "a[href]") return (pages[current] ?? []).map((id) => ({ href: id.startsWith("https://") ? id : `${baseUrl}${id}` }));
       if (selector === "button") return [{
         disabled: current >= pages.length - 1,
         getAttribute: (key: string) => key === "aria-label" ? "Next page" : null,
-        click: () => { current += 1; }
+        click: () => {
+          simulation?.onNext?.();
+          if (simulation?.delayedNextMs) setTimeout(() => { current += 1; }, simulation.delayedNextMs);
+          else current += 1;
+        }
       }];
       return [];
     }
   };
-  return runInNewContext(buildMercaelevaCatalogScript(maxPages, 100, 0), { document, URL, setTimeout });
+  return runInNewContext(buildMercaelevaCatalogScript(maxPages, 1000, 0), {
+    document, URL, setTimeout: (callback: () => void) => setTimeout(callback, 1)
+  });
 };
 
 test("Mercaeleva: recorre primera, intermedia y última página mediante botones", async () => {
@@ -121,4 +136,50 @@ test("Mercaeleva: al llegar al límite de páginas no confunde la cobertura inco
   const result: unknown = await simulateCatalog([["M1", "M2"], ["M3", "M4"], ["M5"]], 5, 2);
   assert.ok(result && typeof result === "object" && "pages" in result && Array.isArray(result.pages));
   assert.equal(result.pages.length, 2);
+});
+
+
+test("Mercaeleva: espera el cambio real de enlaces tras una transición asíncrona", async () => {
+  const result = await simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 10, { delayedNextMs: 20 });
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
+    pages: ["<html data-page=\"1\"></html>", "<html data-page=\"2\"></html>"],
+    expectedTotal: 4
+  });
+});
+
+test("Mercaeleva: no avanza más allá del máximo de páginas", async () => {
+  let clicks = 0;
+  const result = await simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 1, {
+    onNext: () => { clicks += 1; }
+  });
+  assert.equal(clicks, 0);
+  assert.ok(result && typeof result === "object" && "pages" in result && Array.isArray(result.pages));
+  assert.equal(result.pages.length, 1);
+});
+
+test("Mercaeleva: detecta cambios del total mientras navega", async () => {
+  await assert.rejects(
+    simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 10, { totals: [4, 5] }),
+    /contador cambió/
+  );
+});
+
+test("Mercaeleva: normaliza URLs repetidas y rechaza enlaces ajenos", async () => {
+  const result = await simulateCatalog([
+    ["M1?src=grid", "M1#details", "https://externo.com/es/for-sale/machine/M2", "M2/"],
+    ["M3", "M4"]
+  ], 4);
+  assert.ok(result && typeof result === "object" && "pages" in result && Array.isArray(result.pages));
+  assert.equal(result.pages.length, 2);
+});
+
+
+test("Mercaeleva: el parser aplica la misma identidad de URL sin query ni barra final", () => {
+  const html = `<a href="${baseUrl}M1?origen=lista">M1</a>
+    <a href="${baseUrl}M1/#detalles">M1</a>
+    <a href="https://externo.com/es/for-sale/machine/OTRA">Otra web</a>
+    <a href="https://sales.mercaeleva.com/ca/for-sale/machine/M2">M2</a>`;
+  assert.deepEqual(extractMercaelevaLinks(category.url, html), [
+    `${baseUrl}M1`, "https://sales.mercaeleva.com/ca/for-sale/machine/M2"
+  ]);
 });
