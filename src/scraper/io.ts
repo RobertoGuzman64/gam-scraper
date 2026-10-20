@@ -36,7 +36,17 @@ const baseProductHeaders = [
   "url",
   "specJson",
   "providerId",
-  "imagesJson"
+  "imagesJson",
+  "priceText",
+  "condition",
+  "breadcrumbsJson",
+  "subcategory",
+  "externalReference",
+  "shortDescriptionHtml",
+  "longDescriptionHtml",
+  "technicalSheetUrl",
+  "scrapedAt",
+  "yearSource"
 ] as const;
 
 const categoryHeaders = ["categoryKey", "categoryName", "categoryUrl"] as const;
@@ -49,7 +59,7 @@ type ParentProduct = {
   readonly product: CategoryScrapeResult["products"][number];
 };
 
-const normalizeSpecKey = (s: string): string => s.trim().replace(/\s+/g, " ");
+const normalizeSpecKey = (s: string): string => s.trim().replace(/\s+/g, " ").replace(/\s*:+\s*$/, "");
 
 const specColumnName = (specKey: string): string => `spec__${specKey}`;
 
@@ -174,7 +184,17 @@ const toProductRow = (
     url: p.url,
     specJson,
     providerId: p.providerId,
-    imagesJson: JSON.stringify(p.images ?? (p.image ? [p.image] : []))
+    imagesJson: JSON.stringify(p.images ?? (p.image ? [p.image] : [])),
+    priceText: p.priceText ?? "",
+    condition: p.condition ?? "",
+    breadcrumbsJson: JSON.stringify(p.breadcrumbs ?? []),
+    subcategory: p.subcategory ?? "",
+    externalReference: p.externalReference ?? "",
+    shortDescriptionHtml: p.shortDescriptionHtml ?? "",
+    longDescriptionHtml: p.longDescriptionHtml ?? "",
+    technicalSheetUrl: p.technicalSheetUrl ?? "",
+    scrapedAt: p.scrapedAt ?? "",
+    yearSource: p.yearSource ?? ""
   };
 
   for (const k of specKeys) {

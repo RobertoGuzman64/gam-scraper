@@ -99,7 +99,7 @@ export const parseMercaelevaProduct = (html: string, pageUrl: string): ParsedPro
     "[class*='gallery']", "[class*='Gallery']", "[class*='carousel']", "[class*='Carousel']",
     "img[alt*='Imagen']", "img[src*='machineric.com/']",
     "img[data-src*='machineric.com/']"
-  ]);
+  ], "mercaeleva");
   const image = images[0] ?? null;
 
   const year = specs["Año de fabricación"]?.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? null;

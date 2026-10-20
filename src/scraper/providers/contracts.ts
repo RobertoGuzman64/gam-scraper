@@ -8,6 +8,7 @@ export interface ScraperProvider {
   readonly defaultOptions: ScrapeOptions;
   buildPagedUrl(categoryUrl: string, page: number): string;
   extractProductLinksFromListing(listingUrl: string, html: string): readonly string[];
+  extractExpectedTotalFromListing?(html: string): number | null;
   parseProductPage(html: string, pageUrl: string): ParsedProduct;
   extractReference(url: string): string | null;
   loadListingHtml?(url: string, options: ScrapeOptions): Promise<string>;

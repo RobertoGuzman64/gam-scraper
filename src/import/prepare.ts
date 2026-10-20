@@ -130,6 +130,7 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   const descriptionGeneral = record.longDescription?.trim() || description;
   const attributeResult = productAttributes(record, category, catalog);
 
+  if (record.condition === "Nuevo") issues.push("Maquinaria nueva: el contrato de importación actual solo admite Segunda_Mano");
   if (!reference) issues.push("Referencia ausente");
   if (!title) issues.push("Título ausente");
   if (!category) issues.push("Categoría Equipzilla sin correspondencia inequívoca");

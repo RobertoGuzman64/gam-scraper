@@ -42,9 +42,10 @@ export const validateScrapedProduct = (product: ProductRecord): void => {
 export const buildCatalogItems = (products: readonly ProductRecord[]): readonly CatalogItem[] =>
   products.map((product) => {
     const specs = product.specs ? Object.fromEntries(Object.entries(product.specs).sort(([a], [b]) => a.localeCompare(b))) : {};
+    const { scrapedAt: _scrapedAt, ...stable } = product;
     return {
       key: buildProductIdentity(product).key,
-      fingerprint: digest(JSON.stringify({ ...product, specs }))
+      fingerprint: digest(JSON.stringify({ ...stable, specs }))
     };
   }).sort((a, b) => a.key.localeCompare(b.key));
 

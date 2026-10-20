@@ -3,7 +3,9 @@ import type { CategoryConfig, CategoryScrapeResult, ProductRecord, ScrapeOptions
 import { fetchHtml, sleep } from "./http.js";
 import { getProvider } from "./providers/index.js";
 import { validateScrapedProduct } from "./quality.js";
-import type { ScraperProvider } from "./providers/contracts.js";
+import type { ParsedProduct, ScraperProvider } from "./providers/contracts.js";
+
+export type ProductPageCache = Map<string, Promise<ParsedProduct>>;
 
 const nowIso = (): string => new Date().toISOString();
 
@@ -14,7 +16,8 @@ const log = (scope: string, msg: string): void => {
 export const scrapeCategory = async (
   category: CategoryConfig,
   options: ScrapeOptions,
-  provider: ScraperProvider = getProvider("gam")
+  provider: ScraperProvider = getProvider("gam"),
+  cache?: ProductPageCache
 ): Promise<CategoryScrapeResult> => {
   for (const [key, value] of [
     ["maxPages", options.maxPages],
@@ -75,7 +78,10 @@ export const scrapeCategory = async (
             const html = provider.loadListingHtml
               ? await provider.loadListingHtml(url, options)
               : await fetchHtml(url, { timeoutMs: options.timeoutMs, userAgent: options.userAgent });
-            return provider.extractProductLinksFromListing(url, html);
+            return {
+              urls: provider.extractProductLinksFromListing(url, html),
+              expectedTotal: provider.extractExpectedTotalFromListing?.(html) ?? null
+            };
           })
         )
       );
@@ -91,7 +97,13 @@ export const scrapeCategory = async (
           log("listing", `fail key=${category.key} url=${listingUrl} error=${String(r.reason)}`);
           continue;
         }
-        for (const u of r.value) {
+        if (r.value.expectedTotal !== null) {
+          if (expectedProductUrls !== undefined && expectedProductUrls !== r.value.expectedTotal) {
+            failures.push({ url: provider.buildPagedUrl(category.url, pages[i]!), error: `Total de resultados inconsistente: ${expectedProductUrls} / ${r.value.expectedTotal}` });
+          }
+          expectedProductUrls = r.value.expectedTotal;
+        }
+        for (const u of r.value.urls) {
           if (!productUrls.has(u)) {
             productUrls.add(u);
             added += 1;
@@ -121,13 +133,33 @@ export const scrapeCategory = async (
     if (!exhausted && page > options.maxPages) {
       failures.push({ url: category.url, error: `Límite de páginas (${options.maxPages}) alcanzado sin confirmar fin de catálogo` });
     }
-
+    if (expectedProductUrls !== undefined && expectedProductUrls !== productUrls.size) {
+      failures.push({
+        url: category.url,
+        error: `Cobertura incompleta del catálogo: ${productUrls.size} de ${expectedProductUrls} referencias únicas`
+      });
+    }
   }
 
   const urls = [...productUrls];
   log("category", `productsStart key=${category.key} count=${urls.length}`);
 
   let done = 0;
+  const parsePage = async (url: string): Promise<ParsedProduct> => {
+    const html = await fetchHtml(url, { timeoutMs: options.timeoutMs, userAgent: options.userAgent });
+    return provider.parseProductPage(html, url);
+  };
+  const readPage = (url: string): Promise<ParsedProduct> => {
+    if (!cache) return parsePage(url);
+    const previous = cache.get(url);
+    if (previous) return previous;
+    const pending = parsePage(url).catch((error: unknown) => {
+      cache.delete(url);
+      throw error;
+    });
+    cache.set(url, pending);
+    return pending;
+  };
 
   const productsSettled = await Promise.allSettled(
     urls.map((url, idx) =>
@@ -135,8 +167,7 @@ export const scrapeCategory = async (
         const n = idx + 1;
         log("product", `start key=${category.key} ${n}/${urls.length} url=${url}`);
 
-        const html = await fetchHtml(url, { timeoutMs: options.timeoutMs, userAgent: options.userAgent });
-        const parsed = provider.parseProductPage(html, url);
+        const parsed = await readPage(url);
 
         const product: ProductRecord = {
           providerId: provider.id,
@@ -147,6 +178,22 @@ export const scrapeCategory = async (
           shortDescription: parsed.shortDescription ?? null,
           longDescription: parsed.longDescription ?? null,
           price: parsed.price ?? null,
+          ...(parsed.priceText === undefined ? {} : { priceText: parsed.priceText }),
+          ...(parsed.condition === undefined && provider.id !== "gam" ? {} : {
+            condition: parsed.condition ?? (provider.id === "gam" && (
+              category.key.endsWith("-nueva") || category.key.endsWith("-nuevas") ||
+              category.key.endsWith("-nuevos") || category.key === "portaferetros" ||
+              category.key.startsWith("limpieza-")
+            ) ? "Nuevo" : null)
+          }),
+          ...(parsed.breadcrumbs === undefined ? {} : { breadcrumbs: parsed.breadcrumbs }),
+          ...(parsed.subcategory === undefined ? {} : { subcategory: parsed.subcategory }),
+          ...(parsed.externalReference === undefined ? {} : { externalReference: parsed.externalReference }),
+          ...(parsed.shortDescriptionHtml === undefined ? {} : { shortDescriptionHtml: parsed.shortDescriptionHtml }),
+          ...(parsed.longDescriptionHtml === undefined ? {} : { longDescriptionHtml: parsed.longDescriptionHtml }),
+          ...(parsed.technicalSheetUrl === undefined ? {} : { technicalSheetUrl: parsed.technicalSheetUrl }),
+          ...(parsed.yearSource === undefined ? {} : { yearSource: parsed.yearSource }),
+          scrapedAt: nowIso(),
           reference: parsed.reference ?? provider.extractReference(url),
           brand: parsed.brand ?? null,
           model: parsed.model ?? null,

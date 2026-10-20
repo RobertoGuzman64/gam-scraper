@@ -17,6 +17,16 @@ export type ProductRecord = {
   readonly shortDescription: string | null;
   readonly longDescription: string | null;
   readonly price: string | null;
+  readonly priceText?: string | null;
+  readonly condition?: "Nuevo" | "Segunda mano" | null;
+  readonly breadcrumbs?: readonly string[];
+  readonly subcategory?: string | null;
+  readonly externalReference?: string | null;
+  readonly shortDescriptionHtml?: string | null;
+  readonly longDescriptionHtml?: string | null;
+  readonly technicalSheetUrl?: string | null;
+  readonly scrapedAt?: string;
+  readonly yearSource?: "ficha" | "descripcion" | "titulo" | "url" | null;
   readonly reference: string | null;
   readonly brand: string | null;
   readonly model: string | null;

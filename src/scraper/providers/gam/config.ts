@@ -7,7 +7,15 @@ export const DEFAULT_CATEGORIES: readonly CategoryConfig[] = [
   { key: "energia", name: "Energía", url: "https://online.gamrentals.com/es/11-maquinaria-energia-segunda-mano" },
   { key: "otros", name: "Otros equipos", url: "https://online.gamrentals.com/es/12-resto-maquinaria-segunda-mano" },
   { key: "movilidad", name: "Vehículos de ocasión", url: "https://online.gamrentals.com/es/32-vehiculos-segunda-mano" },
-  { key: "maquinaria", name: "Maquinaria de ocasión", url: "https://online.gamrentals.com/es/3-maquinaria-segunda-mano" }
+  { key: "maquinaria", name: "Maquinaria de ocasión", url: "https://online.gamrentals.com/es/3-maquinaria-segunda-mano" },
+  { key: "elevacion-nueva", name: "Plataformas elevadoras nuevas", url: "https://online.gamrentals.com/es/33-plataformas-elevadoras-nuevas" },
+  { key: "carretillas-nuevas", name: "Carretillas elevadoras nuevas", url: "https://online.gamrentals.com/es/34-carretillas-elevadoras-nuevas" },
+  { key: "apiladores-nuevos", name: "Apiladores nuevos", url: "https://online.gamrentals.com/es/35-maquinas-apiladoras-nuevas" },
+  { key: "otros-nuevos", name: "Otros equipos nuevos", url: "https://online.gamrentals.com/es/37-otra-maquinaria-nueva" },
+  { key: "portaferetros", name: "Portaféretros nuevos", url: "https://online.gamrentals.com/es/784-portaferetros-nuevos" },
+  { key: "limpieza-barredoras", name: "Barredoras industriales nuevas", url: "https://online.gamrentals.com/es/152-barredoras-industriales-nuevas" },
+  { key: "limpieza-fregadoras", name: "Fregadoras industriales nuevas", url: "https://online.gamrentals.com/es/153-fregadoras-industriales-nuevas" },
+  { key: "marcas-nuevas", name: "Maquinaria nueva por marcas", url: "https://online.gamrentals.com/es/38-marcas" }
 ];
 
 export const DEFAULT_OPTIONS: ScrapeOptions = {

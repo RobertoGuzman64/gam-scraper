@@ -2,7 +2,7 @@ import { resolveCliSelection } from "./cli.js";
 import type { CategoryConfig, CategoryScrapeResult, ScrapeOptions } from "./types.js";
 import type { ScraperProvider } from "./providers/contracts.js";
 import { writeCategoriesCsv, writeGroupedOutputs, writeOutputs } from "./io.js";
-import { scrapeCategory } from "./scrape.js";
+import { scrapeCategory, type ProductPageCache } from "./scrape.js";
 
 const nowIso = (): string => new Date().toISOString();
 
@@ -55,10 +55,11 @@ const logCategoryResult = (prefix: string, r: CategoryScrapeResult): void => {
 const scrapeSafely = async (
   category: CategoryConfig,
   options: ScrapeOptions,
-  provider: ScraperProvider
+  provider: ScraperProvider,
+  cache: ProductPageCache
 ): Promise<CategoryScrapeResult> => {
   try {
-    return await scrapeCategory(category, options, provider);
+    return await scrapeCategory(category, options, provider, cache);
   } catch (error) {
     console.error(`[category-failed] provider=${provider.id} category=${category.key} error=${String(error)}`);
     return { category, discoveredProductUrls: 0, products: [], failures: [{ url: category.url, error: String(error) }] };
@@ -70,6 +71,7 @@ const main = async (): Promise<void> => {
   const startedAt = nowIso();
   const options = selection.options;
   const provider = selection.provider;
+  const cache: ProductPageCache = new Map();
 
   console.log(`[start] ${startedAt}`);
   console.log(`[mode] ${selection.mode}`);
@@ -98,7 +100,7 @@ const main = async (): Promise<void> => {
     for (let i = 0; i < cats.length; i += 1) {
       const c = cats[i]!;
       console.log(`[scrape] (${i + 1}/${cats.length}) ${c.key} | ${c.name}`);
-      const r = await scrapeSafely(c, options, provider);
+      const r = await scrapeSafely(c, options, provider, cache);
       logCategoryResult(`${c.key} | ${c.name}`, r);
       results.push(r);
     }
@@ -120,7 +122,7 @@ const main = async (): Promise<void> => {
       const results: CategoryScrapeResult[] = [];
       for (const c of roots) {
         console.log(`[scrape] ${c.key} | ${c.name}`);
-        const r = await scrapeSafely(c, options, provider);
+        const r = await scrapeSafely(c, options, provider, cache);
         logCategoryResult(`${c.key} | ${c.name}`, r);
         results.push(r);
       }
@@ -149,7 +151,7 @@ const main = async (): Promise<void> => {
     for (let i = 0; i < toScrape.length; i += 1) {
       const c = toScrape[i]!;
       console.log(`[scrape] (${i + 1}/${toScrape.length}) ${c.key} | ${c.name}`);
-      const r = await scrapeSafely(c, options, provider);
+      const r = await scrapeSafely(c, options, provider, cache);
       logCategoryResult(`${c.key} | ${c.name}`, r);
       resultsForRoot.push(r);
     }
@@ -181,7 +183,7 @@ const main = async (): Promise<void> => {
     for (let i = 0; i < roots.length; i += 1) {
       const c = roots[i]!;
       console.log(`[scrape] (${i + 1}/${roots.length}) ${c.key} | ${c.name}`);
-      const r = await scrapeSafely(c, options, provider);
+      const r = await scrapeSafely(c, options, provider, cache);
       logCategoryResult(`${c.key} | ${c.name}`, r);
       results.push(r);
     }
@@ -214,7 +216,7 @@ const main = async (): Promise<void> => {
     for (let j = 0; j < toScrape.length; j += 1) {
       const c = toScrape[j]!;
       console.log(`[scrape] ${root.key} -> (${j + 1}/${toScrape.length}) ${c.key} | ${c.name}`);
-      const r = await scrapeSafely(c, options, provider);
+      const r = await scrapeSafely(c, options, provider, cache);
       logCategoryResult(`${root.key} -> ${c.key} | ${c.name}`, r);
       resultsForRoot.push(r);
     }

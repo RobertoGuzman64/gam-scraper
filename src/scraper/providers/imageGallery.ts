@@ -13,18 +13,49 @@ const urlFrom = (candidate: string | undefined, pageUrl: string): string | null 
   }
 };
 
-const firstSrcsetUrl = (value: string | undefined): string | undefined =>
-  value?.split(",").map((part) => part.trim().split(/\s+/)[0]).find((part) => Boolean(part));
+const urlsFromSrcset = (value: string | undefined): readonly string[] =>
+  value?.split(",").map((part) => part.trim().split(/\s+/)[0]).filter((url): url is string => Boolean(url)) ?? [];
+
+const imageIdentity = (url: string, mode: "gam" | "mercaeleva" | undefined): string => {
+  const path = new URL(url).pathname;
+  if (mode === "gam") return path.replace(/-(?:product_main_2x|large_default|medium_default|small_default|home_default|cart_default|thickbox_default)(?=\.)/i, "");
+  if (mode === "mercaeleva") return path;
+  return url;
+};
+
+const score = (url: string, source: string, mode: "gam" | "mercaeleva" | undefined): number => {
+  const name = new URL(url).pathname;
+  let rank = source === "data-large_image" || source === "data-zoom-image" || source === "data-full" ? 30 : 0;
+  if (mode === "gam") {
+    if (/product_main_2x/i.test(name)) rank += 100;
+    else if (/large_default|product_main/i.test(name)) rank += 40;
+    else if (/small_default|cart_default|medium_default/i.test(name)) rank -= 40;
+  }
+  if (mode === "mercaeleva") {
+    const u = new URL(url);
+    const width = Number(u.searchParams.get("width") ?? u.searchParams.get("w") ?? 0);
+    if (Number.isFinite(width) && width > 0) rank += Math.min(width, 3000) / 100;
+    if (/thumb|thumbnail|small/i.test(name)) rank -= 30;
+  }
+  return rank;
+};
 
 export const collectProductImages = (
   $: cheerio.CheerioAPI,
   pageUrl: string,
-  selectors: readonly string[]
+  selectors: readonly string[],
+  mode?: "gam" | "mercaeleva"
 ): readonly string[] => {
-  const images = new Set<string>();
-  const push = (value: string | undefined): void => {
+  const images = new Map<string, { readonly url: string; readonly rank: number; readonly position: number }>();
+  let position = 0;
+  const push = (value: string | undefined, source: string): void => {
     const url = urlFrom(value, pageUrl);
-    if (url) images.add(url);
+    if (!url) return;
+    const key = imageIdentity(url, mode);
+    const rank = score(url, source, mode);
+    const previous = images.get(key);
+    if (!previous || rank > previous.rank) images.set(key, { url, rank, position: previous?.position ?? position });
+    position += 1;
   };
 
   for (const selector of selectors) {
@@ -33,17 +64,20 @@ export const collectProductImages = (
       const candidates = [node, ...node.find("a[href], img, source, [data-image]").toArray().map((child) => $(child))];
       for (const candidate of candidates) {
         for (const name of ["data-large_image", "data-zoom-image", "data-full", "data-image", "data-src", "data-lazy", "href", "src"]) {
-          push(candidate.attr(name));
+          push(candidate.attr(name), name);
         }
-        push(firstSrcsetUrl(candidate.attr("data-srcset")));
-        push(firstSrcsetUrl(candidate.attr("srcset")));
+        for (const url of urlsFromSrcset(candidate.attr("data-srcset"))) push(url, "data-srcset");
+        for (const url of urlsFromSrcset(candidate.attr("srcset"))) push(url, "srcset");
       }
     });
   }
 
   if (images.size === 0) {
-    push($("meta[property='og:image']").first().attr("content"));
-    push($("meta[name='twitter:image']").first().attr("content"));
+    push($("meta[property='og:image']").first().attr("content"), "meta");
+    push($("meta[name='twitter:image']").first().attr("content"), "meta");
   }
-  return [...images];
+  const ordered = [...images.values()];
+  if (mode === "gam") ordered.sort((a, b) => b.rank - a.rank || a.position - b.position);
+  else ordered.sort((a, b) => a.position - b.position);
+  return ordered.map((entry) => entry.url);
 };

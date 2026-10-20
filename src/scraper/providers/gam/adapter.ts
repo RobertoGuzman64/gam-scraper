@@ -1,6 +1,6 @@
 import type { ScraperProvider } from "../contracts.js";
 import { DEFAULT_CATEGORIES, DEFAULT_OPTIONS } from "./config.js";
-import { buildPagedUrl, extractProductLinksFromListing, parseProductPage } from "./parsers.js";
+import { buildPagedUrl, extractExpectedTotalFromListing, extractProductLinksFromListing, parseProductPage } from "./parsers.js";
 import { discoverCategoryTree } from "./tree.js";
 
 const extractReference = (url: string): string | null => {
@@ -18,6 +18,7 @@ export const gamProvider: ScraperProvider = {
   defaultOptions: DEFAULT_OPTIONS,
   buildPagedUrl,
   extractProductLinksFromListing,
+  extractExpectedTotalFromListing,
   parseProductPage,
   extractReference,
   discoverCategoryTree
