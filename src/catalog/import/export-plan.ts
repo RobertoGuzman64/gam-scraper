@@ -86,7 +86,8 @@ export const planProductImport = (
       continue;
     }
     if (entry.status === "review" || entry.issues.length > 0) {
-      review.push({ ...issue, reason: [...entry.issues, ...validateImportCandidate(product, catalog)].join("; ") || "Requiere revisión" });
+      const reasons = [...new Set([...entry.issues, ...validateImportCandidate(product, catalog)])];
+      review.push({ ...issue, reason: reasons.join("; ") || "Requiere revisión" });
       continue;
     }
     const issues = validateImportCandidate(product, catalog);

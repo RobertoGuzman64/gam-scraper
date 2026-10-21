@@ -2,6 +2,7 @@ import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
 import { buildProductIdentity } from "../identity.js";
 import { findSerialNumberCollisions } from "../quality.js";
 import { distinguishDescriptions } from "../../shared/descriptions.js";
+import { descriptionImportIssue } from "./import-validation.js";
 import { resolveCategory } from "./category-mapping.js";
 import { resolveAttributeValue } from "./attribute-mapping.js";
 
@@ -116,7 +117,8 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   if (!title) issues.push("Título ausente");
   if (!category) issues.push("Categoría Equipzilla sin correspondencia inequívoca");
   if (price === null) issues.push("Precio no disponible o inválido");
-  if (!description) issues.push("Descripción ausente");
+  const descriptionIssue = descriptionImportIssue(description, descriptionGeneral);
+  if (descriptionIssue) issues.push(descriptionIssue);
   if (images.length === 0) issues.push("Imágenes válidas ausentes");
   for (const name of attributeResult.missingRequired) issues.push(`Atributo obligatorio ausente: ${name}`);
   return {

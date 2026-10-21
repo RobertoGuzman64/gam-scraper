@@ -102,6 +102,39 @@ test("vuelve a comprobar campos y atributos aunque una entrada llegue marcada re
   assert.equal(plan.report.reviewProducts, 1);
 });
 
+test("la exportación rechaza descripciones ausentes o duplicadas aunque el documento indique ready", async () => {
+  const catalog = await loadImportCatalog();
+  const document = await documentFor([record]);
+  const prepared = document.products[0];
+  assert.ok(prepared);
+  const cases = [
+    { description: null, description_general: record.longDescription, reason: "Descripción corta ausente" },
+    { description: record.shortDescription, description_general: null, reason: "Descripción general ausente" },
+    { description: "Máquina revisada.", description_general: "  Máquina   revisada. ", reason: "duplicadas" }
+  ];
+  for (const entry of cases) {
+    const { reason, ...descriptions } = entry;
+    const input = {
+      ...document,
+      products: [{ ...prepared, status: "ready" as const, issues: [], product: { ...prepared.product, ...descriptions } }]
+    };
+    const plan = planProductImport(input, "mercaeleva", readReferenceInventory("companyID,reference\n45,OTRA\n", 45), catalog);
+    assert.equal(plan.report.newProducts, 0, reason);
+    assert.equal(plan.report.reviewProducts, 1, reason);
+    assert.match(plan.report.review[0]?.reason ?? "", new RegExp(reason));
+  }
+});
+
+test("la exportación no repite incidencias detectadas en la preparación", async () => {
+  const catalog = await loadImportCatalog();
+  const document = await documentFor([{ ...record, shortDescription: null }]);
+  const plan = planProductImport(document, "mercaeleva", readReferenceInventory("companyID,reference\n45,OTRA\n", 45), catalog);
+  assert.equal(plan.report.reviewProducts, 1);
+  assert.equal(plan.report.newProducts, 0);
+  const reason = plan.report.review[0]?.reason ?? "";
+  assert.equal(reason.match(/Descripción corta ausente/g)?.length, 1);
+});
+
 test("xlsx estándar contiene hoja Productos, textos seguros, números y cabeceras compatibles", () => {
   const bytes = createProductsXlsx(["Referencia *", "Precio *", "URL 1 *"], [["=SUM(1,2)", 12500.5, "https://example.com/x.jpg"]]);
   assert.equal(bytes.readUInt32LE(0), 0x04034b50);

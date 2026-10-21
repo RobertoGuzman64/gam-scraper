@@ -46,3 +46,64 @@ test("Mercaeleva: prioriza medium sobre miniatura si no hay imagen original publ
   const product = parseMercaelevaProduct(html, url);
   assert.deepEqual(product.images, [medium]);
 });
+
+const commercialAddress = {
+  city: "Barcelona", countryCode: "ES", state: "Vilafranca del Penedès",
+  street: "Avinguda de Tarragona, 106", zipCode: "08720"
+};
+
+const sellerAddressState = JSON.stringify({
+  location: commercialAddress,
+  machinericId: "M288-9739",
+  pictures: [{ big: original, medium }],
+  prices: [],
+  salesContacts: [{ location: commercialAddress, position: "Dpt Gestión Flota" }]
+});
+
+test("Mercaeleva: no confunde la dirección del contacto comercial con la ubicación de la máquina", () => {
+  assert.deepEqual(extractEmbeddedMachineMetadata(sellerAddressState, "M288-9739"), {
+    location: null, country: null, images: [original]
+  });
+  const html = `<html><body><h1>MB ESL122 Apilador Eléctrico</h1>
+    <div><span>Ubicación</span><span>Avinguda de Tarragona, 106, 08720</span></div>
+    <script type="application/json">${sellerAddressState}</script>
+  </body></html>`;
+  const product = parseMercaelevaProduct(html, url);
+  assert.equal(product.location, null);
+  assert.equal(product.country, null);
+  assert.deepEqual(product.images, [original]);
+});
+
+test("Mercaeleva: conserva una ubicación diferente de la dirección del contacto", () => {
+  const machineLocation = {
+    city: "Madrid", countryCode: "ES", state: "Madrid", street: "Calle Mayor, 1", zipCode: "28013"
+  };
+  const source = JSON.stringify({
+    location: machineLocation,
+    machinericId: "M288-9739",
+    pictures: [{ big: original }],
+    prices: [],
+    salesContacts: [{ location: commercialAddress }]
+  });
+  const result = extractEmbeddedMachineMetadata(source, "M288-9739");
+  assert.equal(result.location, "Madrid · Madrid · 28013");
+  assert.equal(result.country, "ES");
+  assert.deepEqual(result.images, [original]);
+});
+
+test("Mercaeleva: no atribuye la ubicación de otra referencia a una ficha sin ubicación", () => {
+  const source = `${state},{"machinericId":"M288-9740","pictures":[],"prices":[]}`;
+  assert.deepEqual(extractEmbeddedMachineMetadata(source, "M288-9740"), {
+    location: null, country: null, images: []
+  });
+});
+
+test("Mercaeleva: no descarta una ubicación diferente aunque comparta municipio y código postal", () => {
+  const source = JSON.stringify({
+    location: { ...commercialAddress, street: "Carrer de la Indústria, 20" },
+    machinericId: "M288-9739",
+    pictures: [{ big: original }],
+    salesContacts: [{ location: commercialAddress }]
+  });
+  assert.equal(extractEmbeddedMachineMetadata(source, "M288-9739").location, "Barcelona · Vilafranca del Penedès · 08720");
+});

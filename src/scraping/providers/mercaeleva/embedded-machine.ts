@@ -4,6 +4,31 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const readText = (value: unknown): string | null =>
   typeof value === "string" && value.trim() ? value.trim() : null;
 
+const sameContactLocation = (machine: Record<string, unknown>, contact: Record<string, unknown>): boolean => {
+  const city = readText(machine.city)?.toLocaleLowerCase("es");
+  const contactCity = readText(contact.city)?.toLocaleLowerCase("es");
+  if (!city || city !== contactCity) return false;
+  const country = readText(machine.countryCode);
+  const contactCountry = readText(contact.countryCode);
+  if (country && contactCountry && country !== contactCountry) return false;
+  const zipCode = readText(machine.zipCode);
+  const contactZipCode = readText(contact.zipCode);
+  const street = readText(machine.street)?.toLocaleLowerCase("es");
+  const contactStreet = readText(contact.street)?.toLocaleLowerCase("es");
+  if (street && contactStreet) return street === contactStreet && (!zipCode || !contactZipCode || zipCode === contactZipCode);
+  return Boolean(zipCode && zipCode === contactZipCode);
+};
+
+const isSalesContactLocation = (source: string, referencePosition: number, location: Record<string, unknown>): boolean => {
+  const nextMachine = source.indexOf('"machinericId":', referencePosition + 1);
+  const contactsPosition = source.indexOf('"salesContacts":', referencePosition + 1);
+  if (contactsPosition < 0 || (nextMachine >= 0 && contactsPosition > nextMachine)) return false;
+  const start = source.indexOf("[", contactsPosition + '"salesContacts":'.length);
+  if (start < 0 || start - contactsPosition > 25) return false;
+  const contacts = readJsonArray(source, start);
+  return contacts?.some((item) => isRecord(item) && isRecord(item.location) && sameContactLocation(location, item.location)) ?? false;
+};
+
 const validImage = (value: unknown, reference: string): string | null => {
   if (typeof value !== "string") return null;
   try {
@@ -33,13 +58,14 @@ export const extractEmbeddedMachineMetadata = (html: string, reference: string):
   let location: string | null = null;
   let country: string | null = null;
   const locationPosition = source.lastIndexOf('"location":', position);
-  if (locationPosition >= 0 && position - locationPosition < 750) {
+  const previousMachine = source.lastIndexOf('"machinericId":', position - 1);
+  if (locationPosition >= 0 && position - locationPosition < 750 && previousMachine < locationPosition) {
     const start = source.indexOf("{", locationPosition);
     const end = source.indexOf("}", start + 1);
     if (start >= 0 && end > start && end < position) {
       try {
         const raw: unknown = JSON.parse(source.slice(start, end + 1));
-        if (isRecord(raw)) {
+        if (isRecord(raw) && !isSalesContactLocation(source, position, raw)) {
           const parts = [readText(raw.city), readText(raw.state), readText(raw.zipCode)].filter((part): part is string => part !== null);
           location = parts.length ? parts.join(" · ") : null;
           country = readText(raw.countryCode);

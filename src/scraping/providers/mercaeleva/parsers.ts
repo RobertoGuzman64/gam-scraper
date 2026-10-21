@@ -44,10 +44,17 @@ export const extractMercaelevaLinks = (listingUrl: string, html: string): readon
 
 const labelValue = ($: cheerio.CheerioAPI, label: string): string | null => {
   let result: string | null = null;
-  $("dt, th, label, span, div, p").each((_, el) => {
+  let contactSection = false;
+  $("body").find("h2, h3, h4, dt, th, label, span, div, p").each((_, el) => {
     if (result) return;
     const element = $(el);
-    if (element.find("*").length > 0 || normalize(element.text()).toLocaleLowerCase("es") !== label.toLocaleLowerCase("es")) return;
+    if (element.is("h2, h3, h4")) {
+      const heading = normalize(element.text());
+      contactSection = /^(?:contacto|contact|contact information|información de contacto)$/i.test(heading);
+      return;
+    }
+    if (contactSection || element.find("*").length > 0 ||
+      normalize(element.text()).toLocaleLowerCase("es") !== label.toLocaleLowerCase("es")) return;
     const sibling = element.next();
     const siblingValue = normalize(sibling.text());
     if (siblingValue && siblingValue.length < 240) { result = siblingValue; return; }
@@ -76,41 +83,63 @@ const extractDescription = ($: cheerio.CheerioAPI): string | null => {
   return description;
 };
 
+const technicalHeadings = new Set([
+  "general information", "información general", "power and performance", "potencia y rendimiento", "chassis", "chasis"
+]);
+
+const technicalTerms = /(?:marca|modelo|motor|año|fabricaci[oó]n|bater[ií]a|cargador|carga|capacidad|altura|anchura|ancho|longitud|peso|horas|estado|condici[oó]n|cabina|m[aá]stil|ruedas|centro de gravedad|conductor|certificaci[oó]n|color|voltaje|corriente|t[ií]tulo adicional|art[ií]culo|reg\. no\.|id de maquinaria|potencia|distancia|accesorio|dimensi[oó]n|combustible|transmisi[oó]n|serial|número de serie)/i;
+const nonTechnicalText = /(?:¡|!|\?|@|(?:oferta|contact|tel[eé]fono|dpt|gesti[oó]n flota|departamento|vendedor|comercial|precio|avinguda|avenida|calle|direcci[oó]n|street|road)\b)/i;
+
+const isTechnicalLabel = (label: string, semantic: boolean): boolean =>
+  label.length >= 2 && label.length <= 72 && /[\p{L}]/u.test(label)
+  && !/[{}\[\]"€]/.test(label)
+  && !nonTechnicalText.test(label)
+  && (technicalTerms.test(label) || (semantic && !/\d/.test(label) && label.split(/\s+/).length <= 6));
+
+const isTechnicalValue = (value: string): boolean =>
+  value.length > 0 && value.length <= 240 && !/[{}\[\]"@]/.test(value)
+  && !nonTechnicalText.test(value);
+
 const collectSpecs = ($: cheerio.CheerioAPI): Record<string, string> => {
   const specs: Record<string, string> = {};
-  const usedValues = new Set<object>();
   let insideSpecs = false;
 
   $("body").find("*").each((_, el) => {
     const element = $(el);
     if (element.is("h2")) {
-      const heading = normalize(element.text());
-      if (/^(?:general information|información general|power and performance|potencia y rendimiento|chassis|chasis)$/i.test(heading)) insideSpecs = true;
-      else if (/^(?:sales information|información de venta|machine description|descripción de la máquina)$/i.test(heading)) insideSpecs = false;
+      insideSpecs = technicalHeadings.has(normalize(element.text()).toLocaleLowerCase("es"));
+      return;
     }
-    if (!insideSpecs || !element.is("dt, th, label, span, div, p") || element.children().length > 0 || usedValues.has(el)) return;
+    if (element.is("h3, h4") && /^(?:sales information|información de venta|machine description|descripción de la máquina|contacto|contact|contact information|información de contacto)$/i.test(normalize(element.text()))) {
+      insideSpecs = false;
+      return;
+    }
+    if (!insideSpecs || !element.is("dt, th, td, label, span, div, p") || element.children().length > 0
+      || element.closest("h1, h2, h3, h4, h5, h6, script, style").length > 0) return;
 
     const key = normalize(element.text()).replace(/:\s*$/, "");
-    if (key.length < 2 || key.length > 72 || !/[\p{L}]/u.test(key)
-      || /[{}\[\]"]/.test(key) || /(?:EUR|€)/i.test(key)) return;
-
     const sibling = element.next();
-    const value = normalize(sibling.text());
-    if (!sibling.length || sibling.is("h1, h2, h3, h4, h5, h6, script, style")
-      || sibling.find("dt, dd, th, td, span, div, p").length > 1
-      || !value || value === key || value.length > 240 || /[{}\[\]"]/.test(value)) return;
+    if (!sibling.length || sibling.find("dt, dd, th, td, div, p, h1, h2, h3, h4, h5, h6").length > 0) return;
 
-    const valueNode = sibling.get(0);
-    if (!valueNode || usedValues.has(valueNode)) return;
+    const semantic = (element.is("dt") && sibling.is("dd"))
+      || (element.is("th, td") && sibling.is("td") && element.parent().is("tr"));
+    const paired = semantic || ((element.is("span") && sibling.is("span"))
+      || (element.is("div") && sibling.is("div"))
+      || (element.is("p") && sibling.is("p")))
+      && element.parent().children().length === 2
+      && !element.parent().is("body");
+    if (!paired || !isTechnicalLabel(key, semantic)) return;
+
+    const value = normalize(sibling.text());
+    if (!isTechnicalValue(value) || value === key) return;
     if (!Object.hasOwn(specs, key)) specs[key] = value;
-    usedValues.add(valueNode);
   });
 
   const primaryLabels = ["Marca", "Modelo", "Título adicional", "Año de fabricación", "Artículo No.", "Horas laborales", "Estado", "Condición general", "Tipo de motor", "Altura de trabajo", "Altura de elevación", "Tipo de mástil", "Capacidad de carga"];
   for (const label of primaryLabels) {
     if (specs[label]) continue;
     const value = labelValue($, label);
-    if (value) specs[label] = value;
+    if (value && isTechnicalValue(value)) specs[label] = value;
   }
   return specs;
 };
@@ -151,7 +180,7 @@ export const parseMercaelevaProduct = (html: string, pageUrl: string): ParsedPro
 
   const year = specs["Año de fabricación"]?.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? null;
   const hours = specs["Horas laborales"]?.match(/\d[\d\s.,]*/)?.[0]?.trim() ?? null;
-  const location = embedded.location ?? labelValue($, "Ubicación");
+  const location = embedded.location;
 
   return {
     title,
@@ -163,7 +192,7 @@ export const parseMercaelevaProduct = (html: string, pageUrl: string): ParsedPro
     shortDescription: null,
     longDescription: description,
     location,
-    country: embedded.country ?? (location?.endsWith(", ES") ? "ES" : null),
+    country: embedded.country,
     horometer: hours,
     serialNumber: null,
     image,

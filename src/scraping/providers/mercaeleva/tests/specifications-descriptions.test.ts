@@ -61,3 +61,47 @@ test("Mercaeleva: una descripción formada solo por JSON no se publica", () => {
   assert.equal(parsed.longDescription, null);
   assert.equal(parsed.shortDescription, null);
 });
+
+test("Mercaeleva: excluye ofertas, contacto, direcciones y títulos de producto de las especificaciones", () => {
+  const html = `<html><body><h1>BT LPE200/8 TRANSPALET ELECTRICO</h1>
+    <h2>Información general</h2>
+    ${row("Marca", "BT")}${row("Modelo", "LPE200/8")}${row("Año de fabricación", "2012")}
+    ${row("¡Haz una oferta!", "Contáctenos y haga su oferta. Un vendedor procesará su oferta.")}
+    ${row("Dpt Gestión Flota", "Teléfono: +34633666089")}
+    ${row("Avinguda de Tarragona, 106, 08720, Barcelona, Vilafranca del Penedès, ES", "sales@mercaeleva.com")}
+    ${row("BT LPE200/8", "Precio a consultar")}
+    <h2>Contacto</h2>${row("Horas laborales", "1000 h")}
+  </body></html>`;
+  const parsed = parseMercaelevaProduct(html, "https://sales.mercaeleva.com/es/for-sale/machine/BT-LPE200-8-M239-6301");
+  assert.equal(parsed.specs?.["Marca"], "BT");
+  assert.equal(parsed.specs?.["Modelo"], "LPE200/8");
+  assert.equal(parsed.specs?.["Año de fabricación"], "2012");
+  assert.equal(parsed.specs?.["¡Haz una oferta!"], undefined);
+  assert.equal(parsed.specs?.["Dpt Gestión Flota"], undefined);
+  assert.equal(parsed.specs?.["Avinguda de Tarragona, 106, 08720, Barcelona, Vilafranca del Penedès, ES"], undefined);
+  assert.equal(parsed.specs?.["BT LPE200/8"], undefined);
+});
+
+test("Mercaeleva: mantiene etiquetas técnicas adicionales en filas semánticas", () => {
+  const html = `<html><body><h1>Equipo de prueba</h1>
+    <h2>Potencia y rendimiento</h2>
+    <dl><dt>Capacidad máxima de elevación</dt><dd>2500 kg</dd><dt>Distancia del centro de gravedad</dt><dd>500 mm</dd><dt>Radio de giro</dt><dd>1,6 m</dd></dl>
+    <h2>Información de venta</h2><dl><dt>Departamento</dt><dd>Ventas</dd></dl>
+  </body></html>`;
+  const parsed = parseMercaelevaProduct(html, url);
+  assert.equal(parsed.specs?.["Capacidad máxima de elevación"], "2500 kg");
+  assert.equal(parsed.specs?.["Distancia del centro de gravedad"], "500 mm");
+  assert.equal(parsed.specs?.["Radio de giro"], "1,6 m");
+  assert.equal(parsed.specs?.["Departamento"], undefined);
+});
+
+test("Mercaeleva: no rescata características de la sección de contacto mediante el fallback", () => {
+  const html = `<html><body><h1>JLG 450 AJ</h1>
+    <h2>Información general</h2>${row("Marca", "JLG")}${row("Modelo", "450 AJ")}
+    <h2>Contacto</h2>${row("Horas laborales", "1000 h")}${row("Capacidad de carga", "2000 kg")}
+  </body></html>`;
+  const parsed = parseMercaelevaProduct(html, url);
+  assert.equal(parsed.specs?.["Marca"], "JLG");
+  assert.equal(parsed.specs?.["Horas laborales"], undefined);
+  assert.equal(parsed.specs?.["Capacidad de carga"], undefined);
+});

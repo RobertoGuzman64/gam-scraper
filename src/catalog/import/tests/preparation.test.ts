@@ -73,7 +73,7 @@ test("la preparación deja una única descripción en el campo largo, sin invent
   assert.equal(duplicated.product.description, null);
   assert.equal(duplicated.product.description_general, "Máquina revisada.");
   assert.equal(duplicated.status, "review");
-  assert.ok(duplicated.issues.includes("Descripción ausente"));
+  assert.ok(duplicated.issues.some((issue) => issue.includes("Descripción corta ausente")));
 
   const distinct = prepareProduct(base, catalog);
   assert.equal(distinct.product.description, base.shortDescription);
@@ -84,6 +84,13 @@ test("la preparación deja una única descripción en el campo largo, sin invent
   assert.equal(longOnly.product.description, null);
   assert.equal(longOnly.product.description_general, base.longDescription);
   assert.equal(longOnly.status, "review");
+  assert.ok(longOnly.issues.some((issue) => issue.includes("backend exige una descripción corta")));
+
+  const shortOnly = prepareProduct({ ...base, longDescription: null }, catalog);
+  assert.equal(shortOnly.product.description, null);
+  assert.equal(shortOnly.product.description_general, base.shortDescription);
+  assert.equal(shortOnly.status, "review");
+  assert.ok(shortOnly.issues.some((issue) => issue.includes("Descripción corta ausente")));
 });
 
 test("la categoría genérica venta no se asigna arbitrariamente", async () => {

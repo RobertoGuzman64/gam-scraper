@@ -2,6 +2,21 @@ import type { ImportCandidate, ImportCatalog } from "./prepare.js";
 
 const validText = (input: unknown): input is string => typeof input === "string" && input.trim().length > 0;
 
+export const descriptionImportIssue = (description: string | null, descriptionGeneral: string | null): string | null => {
+  if (!validText(description)) {
+    return validText(descriptionGeneral)
+      ? "Descripción corta ausente: solo hay descripción general y el backend exige una descripción corta"
+      : "Descripción ausente";
+  }
+  if (!validText(descriptionGeneral)) {
+    return "Descripción general ausente: el backend duplicaría la descripción corta al crear el producto";
+  }
+  if (description.replace(/\s+/g, " ").trim() === descriptionGeneral.replace(/\s+/g, " ").trim()) {
+    return "Descripciones corta y general duplicadas";
+  }
+  return null;
+};
+
 export const validateImportCandidate = (product: ImportCandidate, catalog: ImportCatalog): readonly string[] => {
   const issues: string[] = [];
   const category = catalog.categories.find((item) => item.id === product.categorySellID);
@@ -13,7 +28,8 @@ export const validateImportCandidate = (product: ImportCandidate, catalog: Impor
     issues.push("Categoría no coincide de forma única con el backend");
   }
   if (product.price === null || !Number.isFinite(product.price) || product.price <= 0) issues.push("Precio ausente o inválido");
-  if (!validText(product.description)) issues.push("Descripción ausente");
+  const descriptionIssue = descriptionImportIssue(product.description, product.description_general);
+  if (descriptionIssue) issues.push(descriptionIssue);
   if (product.images.length === 0 || product.images.some((image) => {
     try { return !["http:", "https:"].includes(new URL(image).protocol); }
     catch { return true; }
