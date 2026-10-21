@@ -105,3 +105,42 @@ test("Mercaeleva: no rescata características de la sección de contacto mediant
   assert.equal(parsed.specs?.["Horas laborales"], undefined);
   assert.equal(parsed.specs?.["Capacidad de carga"], undefined);
 });
+
+test("Mercaeleva: conserva cabina y ruedas cuando las características comparten contenedor", () => {
+  const html = `<html><body><h1>Nissan Q02L20CU CARRETILLA ELEVADORA ELECTRICA 2000 KG</h1>
+    <h2>Información general</h2>
+    <section><span>Marca</span><span>Nissan</span><span>Modelo</span><span>Q02L20CU</span>
+    <span>Tipo de cabina</span><span>Guardia superior</span><span>Número de ruedas</span><span>4.0</span></section>
+    <h2>Información de venta</h2><section><span>Dpt Gestión Flota</span><span>Teléfono: +34633666089</span></section>
+  </body></html>`;
+  const parsed = parseMercaelevaProduct(html, "https://sales.mercaeleva.com/es/for-sale/machine/Nissan-Q02L20CU-M121-6486");
+  assert.equal(parsed.specs?.["Tipo de cabina"], "Guardia superior");
+  assert.equal(parsed.specs?.["Número de ruedas"], "4.0");
+  assert.equal(parsed.specs?.["Dpt Gestión Flota"], undefined);
+});
+
+test("Mercaeleva: recupera capacidad y altura máxima desde detalles técnicos adicionales", () => {
+  const html = `<html><body><h1>JLG 4014PS MANIPULADOR TELESCOPICO 14 MT</h1>
+    <h2>Información general</h2>${row("Marca", "JLG")}${row("Modelo", "4014PS")}
+    <h2>Detalles adicionales</h2>${row("Capacidad máxima de elevación", "4000 kg")}${row("Altura máxima de elevación", "14 m")}
+    <h2>Información de venta</h2>${row("¡Haz una oferta!", "Contáctenos")}
+  </body></html>`;
+  const parsed = parseMercaelevaProduct(html, "https://sales.mercaeleva.com/es/for-sale/machine/JLG-4014PS-M200-9533");
+  assert.equal(parsed.specs?.["Capacidad máxima de elevación"], "4000 kg");
+  assert.equal(parsed.specs?.["Altura máxima de elevación"], "14 m");
+  assert.equal(parsed.specs?.["¡Haz una oferta!"], undefined);
+});
+
+test("Mercaeleva: no recupera especificaciones desde información comercial o contacto", () => {
+  const html = `<html><body><h1>Equipo de prueba</h1>
+    <h2>Información general</h2>${row("Marca", "JLG")}
+    <h2>Información de venta</h2><h3>Detalles</h3>${row("Tipo de cabina", "Texto comercial")}
+    <h2>Contacto</h2><h3>Detalles</h3>${row("Número de ruedas", "4.0")}
+    ${row("Capacidad máxima de elevación", "4000 kg")}${row("Altura máxima de elevación", "14 m")}
+  </body></html>`;
+  const parsed = parseMercaelevaProduct(html, url);
+  assert.equal(parsed.specs?.["Marca"], "JLG");
+  for (const label of ["Tipo de cabina", "Número de ruedas", "Capacidad máxima de elevación", "Altura máxima de elevación"]) {
+    assert.equal(parsed.specs?.[label], undefined);
+  }
+});

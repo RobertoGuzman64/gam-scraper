@@ -42,25 +42,38 @@ export const extractMercaelevaLinks = (listingUrl: string, html: string): readon
   return [...links];
 };
 
+const salesTechnicalLabels = new Set(["Altura de elevación", "Tipo de mástil", "Capacidad de carga"]);
+
+const salesTechnicalValue = (label: string, value: string): boolean => {
+  if (label === "Tipo de mástil") {
+    return /^[\p{L}][\p{L}\p{M}\s./-]{1,48}$/u.test(value)
+      && !/\b(?:venta|ventas|cliente|información|informacion)\b/i.test(value);
+  }
+  return /^\d[\d.,\s]*\s*(?:m|metros?|kg|t|toneladas?)$/i.test(value);
+};
+
 const labelValue = ($: cheerio.CheerioAPI, label: string): string | null => {
   let result: string | null = null;
-  let contactSection = false;
+  let section: "data" | "sales" | "contact" = "data";
   $("body").find("h2, h3, h4, dt, th, label, span, div, p").each((_, el) => {
     if (result) return;
     const element = $(el);
     if (element.is("h2, h3, h4")) {
       const heading = normalize(element.text());
-      contactSection = /^(?:contacto|contact|contact information|información de contacto)$/i.test(heading);
+      if (/^(?:contacto|contact|contact information|información de contacto)$/i.test(heading)) section = "contact";
+      else if (/^(?:sales information|información de venta)$/i.test(heading)) section = "sales";
+      else if (element.is("h2")) section = "data";
       return;
     }
-    if (contactSection || element.find("*").length > 0 ||
-      normalize(element.text()).toLocaleLowerCase("es") !== label.toLocaleLowerCase("es")) return;
+    if (section === "contact" || (section === "sales" && !salesTechnicalLabels.has(label))
+      || element.find("*").length > 0
+      || normalize(element.text()).toLocaleLowerCase("es") !== label.toLocaleLowerCase("es")) return;
     const sibling = element.next();
     const siblingValue = normalize(sibling.text());
-    if (siblingValue && siblingValue.length < 240) { result = siblingValue; return; }
     const parentValue = normalize(element.parent().text());
     const rest = normalize(parentValue.slice(label.length));
-    if (rest && rest.length < 240) result = rest;
+    const value = siblingValue && siblingValue.length < 240 ? siblingValue : rest && rest.length < 240 ? rest : null;
+    if (value && (section !== "sales" || salesTechnicalValue(label, value))) result = value;
   });
   return result;
 };
@@ -135,7 +148,7 @@ const collectSpecs = ($: cheerio.CheerioAPI): Record<string, string> => {
     if (!Object.hasOwn(specs, key)) specs[key] = value;
   });
 
-  const primaryLabels = ["Marca", "Modelo", "Título adicional", "Año de fabricación", "Artículo No.", "Horas laborales", "Estado", "Condición general", "Tipo de motor", "Altura de trabajo", "Altura de elevación", "Tipo de mástil", "Capacidad de carga"];
+  const primaryLabels = ["Marca", "Modelo", "Título adicional", "Año de fabricación", "Artículo No.", "Horas laborales", "Estado", "Condición general", "Tipo de motor", "Altura de trabajo", "Altura de elevación", "Tipo de mástil", "Capacidad de carga", "Capacidad máxima de elevación", "Altura máxima de elevación", "Tipo de cabina", "Número de ruedas"];
   for (const label of primaryLabels) {
     if (specs[label]) continue;
     const value = labelValue($, label);

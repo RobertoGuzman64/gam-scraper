@@ -51,6 +51,36 @@ test("Mercaeleva: recupera altura de elevación, mástil y capacidad etiquetadas
   assert.equal(result.specs?.["Capacidad de carga"], "1200 kg");
 });
 
+test("Mercaeleva: conserva medidas etiquetadas en información de venta", () => {
+  const result = parseMercaelevaProduct(`<html><body><h1>MB ESL122 Apilador Eléctrico</h1>
+    <h2>Información de venta</h2>
+    <div><span>Altura de elevación</span><span>5 m</span></div>
+    <div><span>Tipo de mástil</span><span>Tríplex</span></div>
+    <div><span>Capacidad de carga</span><span>1200 kg</span></div>
+    <div><span>Departamento</span><span>Ventas</span></div>
+  </body></html>`, url);
+  assert.equal(result.specs?.["Altura de elevación"], "5 m");
+  assert.equal(result.specs?.["Tipo de mástil"], "Tríplex");
+  assert.equal(result.specs?.["Capacidad de carga"], "1200 kg");
+  assert.equal(result.specs?.["Departamento"], undefined);
+});
+
+test("Mercaeleva: en información de venta solo recupera medidas técnicas explícitas", () => {
+  const result = parseMercaelevaProduct(`<html><body><h1>MB ESL122 Apilador Eléctrico</h1>
+    <h2>Sales information</h2>
+    <div><span>Altura de elevación</span><span>Consulte precio</span></div>
+    <div><span>Tipo de mástil</span><span>Ventas</span></div>
+    <div><span>Capacidad de carga</span><span>Solicite información</span></div>
+    <h2>Contacto</h2>
+    <div><span>Altura de elevación</span><span>5 m</span></div>
+    <div><span>Tipo de mástil</span><span>Tríplex</span></div>
+    <div><span>Capacidad de carga</span><span>1200 kg</span></div>
+  </body></html>`, url);
+  assert.equal(result.specs?.["Altura de elevación"], undefined);
+  assert.equal(result.specs?.["Tipo de mástil"], undefined);
+  assert.equal(result.specs?.["Capacidad de carga"], undefined);
+});
+
 test("Mercaeleva: no duplica una descripción única ni inventa datos ausentes", () => {
   const result = parseMercaelevaProduct(`<html><body><h1>MB ESL122 Apilador Eléctrico</h1>
     <h2>Machine description</h2><p>Apilador eléctrico revisado.</p></body></html>`, url);
