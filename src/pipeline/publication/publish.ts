@@ -1,27 +1,18 @@
 import { mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createHash } from "node:crypto";
-import { dedupeBy, emptyDedupeReport, mergeDedupeReports } from "../../catalog/identity.js";
-import { assessCatalogQuality, buildCatalogItems, categoryScope, compareCatalog, describeSerialNumberCollision, findIdentityConflicts, findSerialNumberCollisions, parseCatalogSnapshot } from "../../catalog/quality.js";
-import type { CatalogSnapshot } from "../../catalog/quality.js";
+import { buildCatalogItems, categoryScope, compareCatalog, parseCatalogSnapshot } from "../../catalog/snapshot.js";
+import type { CatalogSnapshot } from "../../catalog/snapshot.js";
 import type { CategoryConfig, CategoryScrapeResult, Summary } from "../../contracts/scraping.js";
+import { assemblePublication } from "./assemble.js";
+import type { OutputGroup } from "./assemble.js";
 
 import { toCsv } from "../../shared/csv.js";
 import { serializeCategoriesCsv, listSpecKeys, buildProductHeaders, toProductRow } from "./csv-serializer.js";
 import { atomicWrite } from "../../infrastructure/filesystem/atomic-write.js";
 import { abandonArchive, finalizePublishedCatalog, stagePublishedCatalog } from "../../infrastructure/filesystem/catalog-retention.js";
-import { prepareImportBatch } from "../../catalog/import/prepare.js";
-import { loadImportCatalog } from "../../catalog/import/catalog-loader.js";
-
-type ParentProduct = {
-  readonly parent: CategoryConfig;
-  readonly product: CategoryScrapeResult["products"][number];
-};
-
-type OutputGroup = {
-  readonly parent: CategoryConfig;
-  readonly results: readonly CategoryScrapeResult[];
-};
+import { prepareImportBatch } from "../../catalog/import/preparation/prepare.js";
+import { loadImportCatalog } from "../../infrastructure/filesystem/import-catalog-loader.js";
 
 export const writeCategoriesCsv = async (
   outDir: string,
@@ -53,38 +44,8 @@ const writeResultGroups = async (
   const scope = categoryScope(groups.map((group) => group.parent), grouped ? "grouped" : "flat");
   const snapshotFile = resolve(outDir, `${outPrefix}-snapshot-${scope}.json`);
   const previous = await loadSnapshot(snapshotFile, scope);
-  const allResults = groups.flatMap((group) => [...group.results]);
-  const allProductsPreGlobal: ParentProduct[] = [];
-  const categoryData: { readonly parent: CategoryConfig; readonly products: readonly CategoryScrapeResult["products"][number][] }[] = [];
-  const categorySummaries: Summary["categories"][number][] = [];
-  let withinCategories = emptyDedupeReport();
-
-  for (const group of groups) {
-    const rawProducts = group.results.flatMap((result) => [...result.products]);
-    const deduped = dedupeBy(rawProducts, (product) => product);
-    withinCategories = mergeDedupeReports(withinCategories, deduped.report);
-    for (const product of deduped.unique) allProductsPreGlobal.push({ parent: group.parent, product });
-    categoryData.push({ parent: group.parent, products: deduped.unique });
-    categorySummaries.push({
-      key: group.parent.key,
-      name: group.parent.name,
-      url: group.parent.url,
-      discoveredProductUrls: group.results.reduce((sum, result) => sum + result.discoveredProductUrls, 0),
-      ...(group.results.length === 1 && group.results[0]?.expectedProductUrls !== undefined
-        ? { expectedProductUrls: group.results[0].expectedProductUrls } : {}),
-      scrapedProductsRaw: rawProducts.length,
-      scrapedProducts: deduped.unique.length,
-      failures: group.results.reduce((sum, result) => sum + result.failures.length, 0),
-      dedupe: deduped.report
-    });
-  }
-
-  const global = dedupeBy(allProductsPreGlobal, (entry) => entry.product);
-  const currentProducts = global.unique.map((entry) => entry.product);
-  const rawProducts = allResults.flatMap((result) => result.products);
-  const identityConflicts = findIdentityConflicts(rawProducts);
-  const serialWarnings = findSerialNumberCollisions(rawProducts).map(describeSerialNumberCollision);
-  const quality = assessCatalogQuality(allResults, currentProducts, previous, identityConflicts, serialWarnings);
+  const { allResults, categoryData, categorySummaries, currentProducts, global,
+    identityConflicts, serialWarnings, quality, withinCategories } = assemblePublication(groups, previous);
   const catalog = await loadImportCatalog();
   const preparation = prepareImportBatch(currentProducts, catalog);
   const outputPrefix = quality.published ? outPrefix : `${outPrefix}-partial`;

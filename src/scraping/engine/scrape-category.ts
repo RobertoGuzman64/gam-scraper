@@ -3,7 +3,7 @@ import type { CategoryConfig, CategoryScrapeResult, ScrapeOptions } from "../../
 
 import type { ProductRecord } from "../../contracts/catalog.js";
 import { fetchHtml, sleep } from "../../infrastructure/http/fetch-html.js";
-import { validateScrapedProduct } from "../../catalog/quality.js";
+import { validateScrapedProduct } from "../../catalog/product-validation.js";
 import type { ParsedProduct, ScraperProvider } from "../provider.js";
 
 export type ProductPageCache = Map<string, Promise<ParsedProduct>>;
@@ -183,6 +183,8 @@ export const scrapeCategory = async (
 
         try {
           const parsed = await readPage(url);
+          const condition = provider.resolveCondition
+            ? provider.resolveCondition(category, parsed.condition, provider.id) : parsed.condition;
 
           const product: ProductRecord = {
             providerId: provider.id,
@@ -194,13 +196,7 @@ export const scrapeCategory = async (
             longDescription: parsed.longDescription ?? null,
             price: parsed.price ?? null,
             ...(parsed.priceText === undefined ? {} : { priceText: parsed.priceText }),
-            ...(parsed.condition === undefined && provider.id !== "gam" ? {} : {
-              condition: parsed.condition ?? (provider.id === "gam" && (
-                category.key.endsWith("-nueva") || category.key.endsWith("-nuevas") ||
-                category.key.endsWith("-nuevos") || category.key === "portaferetros" ||
-                category.key.startsWith("limpieza-")
-              ) ? "Nuevo" : null)
-            }),
+            ...(condition === undefined ? {} : { condition }),
             ...(parsed.breadcrumbs === undefined ? {} : { breadcrumbs: parsed.breadcrumbs }),
             ...(parsed.subcategory === undefined ? {} : { subcategory: parsed.subcategory }),
             ...(parsed.externalReference === undefined ? {} : { externalReference: parsed.externalReference }),

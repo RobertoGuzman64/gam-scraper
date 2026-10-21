@@ -1,5 +1,5 @@
-import { isLeafCategoryForCondition } from "./category-mapping.js";
-import type { ImportCandidate, ImportCatalog } from "./prepare.js";
+import { isLeafCategoryForCondition } from "../mapping/category-mapping.js";
+import type { ImportCandidate, ImportCatalog } from "./contracts.js";
 
 const validText = (input: unknown): input is string => typeof input === "string" && input.trim().length > 0;
 

@@ -8,7 +8,7 @@ import { isScrapeMessage } from "../../contracts/progress.js";
 import { getProvider } from "../../scraping/registry.js";
 import { getBatchStatus, readPublicationStats, writeBatchReport } from "./report.js";
 import type { BatchReport, ProviderRun } from "./report.js";
-import { acquireBatchLock } from "./lock.js";
+import { acquireBatchLock } from "../../infrastructure/locking/batch-lock.js";
 import { cleanBatchExcess } from "../../infrastructure/filesystem/run-retention.js";
 
 export type BatchResult = { readonly report: BatchReport; readonly reportFile: string };

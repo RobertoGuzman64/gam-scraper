@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import { loadImportCatalog } from "../catalog-loader.js";
-import { isLeafCategoryForCondition } from "../category-mapping.js";
-import { planProductImport, readReferenceInventory } from "../export-plan.js";
-import { validateImportCandidate } from "../import-validation.js";
-import { prepareProduct } from "../prepare.js";
+import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
+import { isLeafCategoryForCondition } from "../mapping/category-mapping.js";
+import { planProductImport, readReferenceInventory } from "../export/export-plan.js";
+import { validateImportCandidate } from "../preparation/import-validation.js";
+import { prepareProduct } from "../preparation/prepare.js";
 
 const catalog = await loadImportCatalog();
 

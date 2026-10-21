@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { loadImportCatalog } from "../../../../catalog/import/catalog-loader.js";
-import { prepareProduct } from "../../../../catalog/import/prepare.js";
+import { loadImportCatalog } from "../../../../infrastructure/filesystem/import-catalog-loader.js";
+import { prepareProduct } from "../../../../catalog/import/preparation/prepare.js";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { parseMercaelevaProduct } from "../parsers.js";
 

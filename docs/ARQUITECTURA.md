@@ -1,6 +1,8 @@
 # Arquitectura del scraper de Equipzilla
 
-Referencia técnica del **repositorio actual tras su reestructuración**. El proceso es una aplicación CLI Node.js/TypeScript ESM con comprobación estricta de tipos. No hay servidor HTTP ni conexión directa al backend de Equipzilla.
+Referencia técnica del **repositorio reorganizado tras las fases 1 y 2 y revisado en fase 3**. El proceso es una aplicación CLI Node.js/TypeScript ESM con comprobación estricta de tipos. No hay servidor HTTP ni conexión directa al backend de Equipzilla.
+
+La fase 2 resolvió las rutas movidas en la fase 1 y separó contratos, reglas por proveedor, preparación, calidad, navegador y publicación. Durante la fase 3 se comprobaron **162 archivos TypeScript**, sin imports internos inexistentes ni ciclos de dependencias de ejecución. Con el compilador TypeScript global y tipos Node locales se emitió `dist/` para efectuar pruebas parciales: **96 pruebas superadas**; otras **24 suites no pudieron arrancar por falta de Cheerio o `p-limit`**, sin llegar a ejecutar sus aserciones. Se verificó además la carga del catálogo local y la integridad ZIP/XML de un XLSX de prueba con `Nuevo` y `Segunda_Mano`. La instalación `npm ci` falló por falta de conectividad al registro npm, de modo que **no se acredita un build completo ni toda la batería de tests**. Quedan pendientes `npm ci`, `npm run build` y `npm test` con las dependencias reales.
 
 ## Organización real
 
@@ -11,27 +13,35 @@ src/
 │   ├── options/           Argumentos y validaciones de CLI
 │   └── reporting/         Progreso y resúmenes de consola
 ├── contracts/
-│   ├── catalog.ts, scraping.ts
+│   ├── catalog.ts, scraping.ts, progress.ts
 ├── scraping/
 │   ├── provider.ts, registry.ts
 │   ├── engine/            scrape-category.ts
 │   ├── parsing/           HTML e imágenes compartidos
 │   └── providers/
-│       ├── gam/           adapter.ts, config.ts, parsers.ts, tree.ts
+│       ├── gam/           Adaptador, condición, listados, ficha, descripciones y especificaciones
 │       ├── gomariz/       adapter.ts, config.ts, parsers.ts
-│       └── mercaeleva/    adapter.ts, browser.ts, config.ts, parsers.ts
+│       └── mercaeleva/    Adaptador, navegador de catálogo y script de paginación
 ├── catalog/
-│   ├── identity.ts, quality.ts
-│   ├── normalization/     Especificaciones técnicas
-│   └── import/            Catálogos, mapeo, preparación y Excel
+│   ├── identity.ts, identity-conflicts.ts, product-validation.ts, snapshot.ts, quality.ts
+│   ├── normalization/     Especificaciones y descripciones de productos
+│   └── import/
+│       ├── mapping/       Resolución común y reglas particulares bajo providers/<id>/
+│       ├── preparation/   Contratos, condición, ficha, lote y validaciones de importación
+│       ├── export/        Inventario de referencias y planificación de altas
+│       └── tests/         Pruebas del dominio de importación
 ├── pipeline/
 │   ├── scrape-run.ts
-│   ├── publication/       Publicación, CSV y snapshots
-│   ├── batch/             Ejecución secuencial e historial
-│   └── validation/        Preflight de catálogo publicado
+│   ├── publication/       Ensamblado de catálogo, persistencia, CSV e informes
+│   ├── batch/             Ejecución, contratos y persistencia de informes
+│   ├── validation/        Preflight de catálogo publicado
+│   └── export/            Lectura validada de preparación e inventario
 ├── infrastructure/
+│   ├── browser/           DevTools de Chrome compartido
 │   ├── http/              Fetch y reintentos
-│   └── filesystem/        Escritura atómica local
+│   ├── filesystem/        Persistencia y lectura del catálogo de destino
+│   ├── locking/           Bloqueo de lotes
+│   └── spreadsheet/       Generador XLSX
 ├── shared/                Lectura/escritura CSV transversal
 └── tools/gam/             Normalizador y conversores de seeds heredados
 
@@ -64,7 +74,7 @@ La dirección principal es **CLI → pipeline → scraping/catalog/infrastructur
 
 1. `src/cli/index.ts` distribuye a `src/cli/scrape.ts` y `cli/options/scrape.ts` obtiene proveedor, modo y opciones.
 2. `scraping/registry.ts` entrega el adaptador; `pipeline/scrape-run.ts` organiza categorías y pide resultados a `scraping/engine/scrape-category.ts`.
-3. El motor usa el adaptador (listado, parseo, referencias, árbol; navegador específico de Mercaeleva cuando corresponde) e `infrastructure/http/fetch-html.ts`.
+3. El motor usa el adaptador (listado, parseo, referencias, árbol; navegador específico de Mercaeleva cuando corresponde) e `infrastructure/http/fetch-html.ts`. La regla de condición comercial de GAM se resuelve mediante un punto de extensión opcional del proveedor, sin condicionales de GAM en el motor.
 4. `pipeline/publication/publish.ts` deduplica mediante `catalog/identity.ts`, evalúa calidad/comparaciones, genera preparación desde `catalog/import` y publica salidas mediante `csv-serializer.ts` y escritura atómica.
 5. `cli/reporting/scrape-progress.ts` presenta el progreso compacto y el resultado; `--verbose` permite detalles adicionales.
 
@@ -78,11 +88,11 @@ El bloqueo `storage/scraped/.batch.lock` funciona únicamente para procesos que 
 
 `cli/validate.ts` → `pipeline/validation/preflight.ts`: verifica coherencia temporal, integridad de hashes, totales, URLs, referencias, preparación y estado publicado. No comprueba el total anunciado en la web del proveedor.
 
-`cli/export.ts` consume una preparación validada y el inventario confirmado, usa `catalog/import/export-plan.ts` y `xlsx.ts` y genera un Excel offline de **altas**. No llama a la API del backend, no actualiza referencias existentes y no produce bajas.
+`cli/export.ts` presenta el proceso; `pipeline/export/prepare-export.ts` consume una preparación validada y el inventario confirmado, usa `catalog/import/export/export-plan.ts` e `infrastructure/spreadsheet/xlsx.ts` y genera un Excel offline de **altas**. No llama a la API del backend, no actualiza referencias existentes y no produce bajas.
 
 ## Contratos que deben conservarse
 
-- **Proveedor:** `ScraperProvider` definido en `scraping/provider.ts`; identificadores actuales `gam`, `gomariz`, `mercaeleva`. El registro y las opciones por defecto son parte del flujo de selección.
+- **Proveedor:** `ScraperProvider` definido en `scraping/provider.ts`; identificadores actuales `gam`, `gomariz`, `mercaeleva`. El registro y las opciones por defecto son parte del flujo de selección. `resolveCondition` es un punto de extensión opcional y compatible para resolver condiciones por proveedor.
 - **CSV:** columnas base `categoryKey`, `categoryName`, `title`, `shortDescription`, `longDescription`, `price`, `reference`, `brand`, `model`, `year`, `location`, `country`, `horometer`, `serialNumber`, `image`, `url`, `specJson`, `providerId`, `imagesJson`, más columnas dinámicas `spec__*`.
 - **Identidad:** las referencias, la serie y la URL ayudan a identificar unidades, **aisladas por proveedor**. Dos máquinas del mismo modelo no son necesariamente la misma unidad.
 - **Publicación:** `-all.csv`, archivos por categoría, `-preparation.json`, `-summary.json`, `-changes.json`, `-errors.json`, `-categories.csv` y `-snapshot-<scope>.json`; resultados `-partial-*` no sustituyen una publicación válida.

@@ -1,6 +1,7 @@
 import type { ScraperProvider } from "../../provider.js";
 import { DEFAULT_CATEGORIES, DEFAULT_OPTIONS } from "./config.js";
 import { buildPagedUrl, extractExpectedTotalFromListing, extractProductLinksFromListing, parseProductPage } from "./parsers.js";
+import { resolveGamCondition } from "./condition.js";
 import { discoverCategoryTree } from "./tree.js";
 
 const extractReference = (url: string): string | null => {
@@ -20,6 +21,7 @@ export const gamProvider: ScraperProvider = {
   extractProductLinksFromListing,
   extractExpectedTotalFromListing,
   parseProductPage,
+  resolveCondition: resolveGamCondition,
   extractReference,
   discoverCategoryTree
 };

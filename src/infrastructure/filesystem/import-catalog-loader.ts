@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import type { ImportCatalog } from "./prepare.js";
+import type { ImportCatalog } from "../../catalog/import/preparation/contracts.js";
 
 type Category = ImportCatalog["categories"][number];
 type Attribute = ImportCatalog["attributes"][number];

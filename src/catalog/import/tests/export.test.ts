@@ -5,11 +5,11 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { prepareProduct } from "../prepare.js";
-import { loadImportCatalog } from "../catalog-loader.js";
-import { planProductImport, readReferenceInventory } from "../export-plan.js";
-import { parsePreparation } from "../preparation-document.js";
-import { createProductsXlsx } from "../xlsx.js";
+import { prepareProduct } from "../preparation/prepare.js";
+import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
+import { planProductImport, readReferenceInventory } from "../export/export-plan.js";
+import { parsePreparation } from "../preparation/preparation-document.js";
+import { createProductsXlsx } from "../../../infrastructure/spreadsheet/xlsx.js";
 import { runExport } from "../../../cli/export.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 

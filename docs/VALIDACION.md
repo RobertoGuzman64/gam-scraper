@@ -57,12 +57,12 @@ Si una extracción falla, comprobar que el último catálogo válido sigue intac
 
 ## 4. Revisión funcional de las fichas
 
-Comprobar muestras representativas **separadas por condición (`Nuevo`, `Segunda_Mano` y desconocida)** de título, marca, modelo, referencia, año, serie, horas, precio, descripción, fotos, URL, categoría final, especificaciones y atributos requeridos. La finalidad incluye ambas condiciones: que la preparación actual marque maquinaria nueva como `review` no es un límite del backend, sino una **brecha del scraper pendiente de corrección**. No confundir desbloquear condición con disponer ya de precio, categoría, descripción corta y atributos suficientes para importar. Regresiones especialmente relevantes:
+Comprobar muestras representativas **separadas por condición (`Nuevo`, `Segunda_Mano` y desconocida)** de título, marca, modelo, referencia, año, serie, horas, precio, descripción, fotos, URL, categoría final, especificaciones y atributos requeridos. La finalidad incluye ambas condiciones: que la preparación de versiones anteriores marcase toda maquinaria nueva como `review` era una **brecha ya corregida**. Las máquinas nuevas pueden continuar en `review` por datos o requisitos de importación realmente incumplidos. No confundir desbloquear condición con disponer ya de precio, categoría, descripción corta y atributos suficientes para importar. Regresiones especialmente relevantes:
 
 - **GAM:** referencias de unidades del mismo modelo, pestañas HTML enlazadas a `#`, claves técnicas sospechosas como `spec__4880`, `spec__1930` y `spec__SI`; revisar solapamientos entre categorías.
 - **Gomariz:** varias unidades con nombres semejantes, galerías con más de diez imágenes y precios ausentes en la web. No inventar precios.
 - **Mercaeleva:** avance auténtico entre páginas, fotografías duplicadas como miniaturas/variantes y artículos sin precio.
-- **Condiciones/categorías:** comprobar que `Nuevo` no se convierta en `Segunda_Mano`, que una nueva no acabe en una categoría de ocasión y que los estados desconocidos o contradictorios queden sin inventar. El backend admite ambos estados; el scraper aún debe alinearse.
+- **Condiciones/categorías:** comprobar que `Nuevo` no se convierta en `Segunda_Mano`, que una nueva no acabe en una categoría de ocasión y que los estados desconocidos o contradictorios queden sin inventar. El contrato local admite ambos estados con evidencia de origen.
 - **Destino Equipzilla:** comparar snapshots `data/category/` y `data/import/` con los catálogos **vigentes del entorno donde se importaría**. No forzar categorías ni atributos obligatorios de forma especulativa.
 
 ## 5. Exportación manual de altas

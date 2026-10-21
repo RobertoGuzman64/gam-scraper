@@ -3,8 +3,8 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { prepareImportBatch, prepareProduct } from "../prepare.js";
-import { loadImportCatalog } from "../catalog-loader.js";
+import { prepareImportBatch, prepareProduct } from "../preparation/prepare.js";
+import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { writeOutputs } from "../../../pipeline/publication/publish.js";
 import type { CategoryScrapeResult } from "../../../contracts/scraping.js";
 

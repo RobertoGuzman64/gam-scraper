@@ -1,4 +1,4 @@
-import type { ImportCandidate, PreparedProduct } from "./prepare.js";
+import type { ImportCandidate, PreparedProduct } from "./contracts.js";
 
 export type PreparationDocument = {
   readonly quality: "complete";

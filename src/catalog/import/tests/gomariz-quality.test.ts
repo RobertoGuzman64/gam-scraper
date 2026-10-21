@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveCategory } from "../category-mapping.js";
-import { resolveAttributeValue } from "../attribute-mapping.js";
-import { loadImportCatalog } from "../catalog-loader.js";
-import { prepareProduct } from "../prepare.js";
+import { resolveCategory } from "../mapping/category-mapping.js";
+import { resolveAttributeValue } from "../mapping/attribute-mapping.js";
+import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
+import { prepareProduct } from "../preparation/prepare.js";
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 
 const catalog = await loadImportCatalog();

@@ -2,9 +2,9 @@
 
 Herramienta de línea de comandos **Node.js + TypeScript** para extraer maquinaria **nueva y de segunda mano** de **GAM, Gomariz y Mercaeleva**, publicar catálogos CSV/JSON con trazabilidad y preparar, de forma separada, Excel de **altas** para el importador existente de Equipzilla. No expone API HTTP ni escribe en el backend. Existe además una vía JSON `POST /product/create/many` en el backend, **todavía no integrada**, cuyo uso debe decidirse y validarse por separado.
 
-> **Objetivo funcional y definición de terminado:** [OBJETIVOS_SCRAPER.md](docs/OBJETIVOS_SCRAPER.md). El backend permite `Nuevo` y `Segunda_Mano`; **el scraper actualmente restringe su preparación a segunda mano**. Es una brecha de implementación prioritaria, no una política de EQUIPZILLA. Las fichas nuevas siguen conservándose en el catálogo extraído aunque aparezcan en `review`.
+> **Objetivo funcional y definición de terminado:** [OBJETIVOS_SCRAPER.md](docs/OBJETIVOS_SCRAPER.md). El backend permite `Nuevo` y `Segunda_Mano`; **la preparación admite ambas condiciones con evidencia de origen**, y mantiene condiciones desconocidas o contradictorias en `review`. Las fichas sin requisitos del Excel permanecen en el catálogo extraído.
 
-> **Estado operativo:** ninguna importación masiva queda autorizada por esta documentación. La auditoría del 20/10/2026 (Mercaeleva 20/221) es **histórica**: [estado de extracciones](docs/ESTADO_EXTRACCIONES_2026-10-20.md). La línea base del **21/10/2026** es **1.374 máquinas** (GAM 1.010, Gomariz 143, Mercaeleva 221) con 748 nuevas bloqueadas por una **restricción local de preparación**, no del backend. Los totales de `ready/review` son de la extracción fechada, no de un entorno vivo.
+> **Estado operativo:** ninguna importación masiva queda autorizada por esta documentación. La auditoría del 20/10/2026 (Mercaeleva 20/221) es **histórica**: [estado de extracciones](docs/ESTADO_EXTRACCIONES_2026-10-20.md). La línea base del **21/10/2026** es **1.374 máquinas** (GAM 1.010, Gomariz 143, Mercaeleva 221) con 748 nuevas bloqueadas por una **restricción local de preparación de aquella versión**, ya corregida en el código actual. Los totales de `ready/review` son históricos y no representan esta versión ni un entorno vivo.
 
 ## Instalación
 

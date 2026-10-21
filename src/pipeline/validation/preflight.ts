@@ -3,9 +3,9 @@ import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { getProvider } from "../../scraping/registry.js";
 import { parseCsv } from "../../shared/csv-parse.js";
-import { parsePreparation } from "../../catalog/import/preparation-document.js";
-import { loadImportCatalog } from "../../catalog/import/catalog-loader.js";
-import { validateImportCandidate } from "../../catalog/import/import-validation.js";
+import { parsePreparation } from "../../catalog/import/preparation/preparation-document.js";
+import { loadImportCatalog } from "../../infrastructure/filesystem/import-catalog-loader.js";
+import { validateImportCandidate } from "../../catalog/import/preparation/import-validation.js";
 
 export type PreflightOptions = {
   readonly providerId: string;

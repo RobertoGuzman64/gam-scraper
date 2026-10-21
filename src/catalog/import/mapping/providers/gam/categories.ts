@@ -1,11 +1,5 @@
-import type { ProductRecord } from "../../contracts/catalog.js";
-import type { ImportCandidate, ImportCatalog } from "./prepare.js";
-
-type Category = ImportCatalog["categories"][number];
-type ImportableCondition = Exclude<ImportCandidate["condition"], null>;
-
-const fold = (value: string): string => value.toLocaleLowerCase("es").normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+import type { ProductRecord } from "../../../../../contracts/catalog.js";
+import { fold } from "../../category-utils.js";
 
 const gamCategories: Readonly<Record<string, string>> = {
   "plataformas-elevadoras-tijera-electricas-segunda-mano": "plataformas-tijera-electricas-segunda-mano",
@@ -124,7 +118,7 @@ const gamNewTitleCategories: Readonly<Record<string, readonly { readonly slug: s
   ]
 };
 
-const newCategorySlug = (record: ProductRecord): string | null => {
+export const newCategorySlug = (record: ProductRecord): string | null => {
   if (record.providerId !== "gam") return null;
   let url: URL;
   try { url = new URL(record.url); }
@@ -143,26 +137,8 @@ const newCategorySlug = (record: ProductRecord): string | null => {
   return matches.length === 1 ? matches[0]?.slug ?? null : null;
 };
 
-const energy = (value: string): "electric" | "diesel" | null => {
-  const text = fold(value);
-  const electric = /\belectric[oa]s?\b/.test(text);
-  const diesel = /\bdiesel\b/.test(text);
-  const other = /\bgasolina\b|\bglp\b|\bhibrid[oa]\b/.test(text);
-  if (other) return null;
-  return electric === diesel ? null : electric ? "electric" : "diesel";
-};
-
-const sourceCategorySlug = (record: ProductRecord): string | null => {
-  let path: string[];
-  let hostname: string;
-  try {
-    const url = new URL(record.url);
-    path = url.pathname.split("/").filter(Boolean);
-    hostname = url.hostname;
-  } catch {
-    return null;
-  }
-  if (record.providerId === "gam" && hostname === "online.gamrentals.com" && path[0] === "es") {
+export const gamUsedCategorySlug = (record: ProductRecord, path: readonly string[], hostname: string): string | null => {
+  if (hostname === "online.gamrentals.com" && path[0] === "es") {
     const parent = path.at(-2) ?? "";
     const title = fold(record.title ?? "");
     if (parent === "mini-cargadoras-segunda-mano" && /\bminiexcavadora\b/.test(title)) {
@@ -178,127 +154,5 @@ const sourceCategorySlug = (record: ProductRecord): string | null => {
     }
     return gamCategories[parent] ?? null;
   }
-  if (record.providerId === "gomariz" && ["gomarizrent.com", "www.gomarizrent.com"].includes(hostname) &&
-    path[0] === "venta" && path.length >= 4) {
-    const family = path[2] ?? "";
-    const motor = fold(String(record.specs?.Motor ?? ""));
-    const advertisedPower = energy(`${record.title ?? ""} ${path.at(-1) ?? ""}`);
-    const motorPower = energy(motor);
-    const power = motor ? (advertisedPower && advertisedPower !== motorPower ? null : motorPower) : advertisedPower;
-    if (family === "elevador-tijera" && power) return power === "electric"
-      ? "plataformas-tijera-electricas-segunda-mano" : "plataformas-tijera-diesel-segunda-mano";
-    if (["brazo-articulado", "brazo-articulado-boom-lift"].includes(family) && power) return power === "electric"
-      ? "plataformas-articuladas-electricas-segunda-mano" : "plataformas-articuladas-diesel-segunda-mano";
-    if (family === "carretilla-industrial" && power) return power === "electric"
-      ? "carretillas-elevadoras-electricas-segunda-mano" : "carretillas-elevadoras-diesel-segunda-mano";
-    if (family === "manipulador-telescopico") return "manipulador-teñescopico-segunda-mano";
-    if (family === "rodillo" && /\brodillo compactador en tandem\b/.test(fold(record.longDescription ?? ""))) {
-      return "rodillo-tandem-segunda-mano";
-    }
-    if (family === "elevador-mastil-vertical" && power === "electric") {
-      return "plataformas-unipersonales-segunda-mano";
-    }
-    const types: Readonly<Record<string, string>> = {
-      "brazo-telescopico": "plataformas-elevadoras-telescopicas-segunda-mano",
-      "camion-plataforma": "plataformas-elevadoras-sobre-camion-segunda-mano",
-      "oruga": "plataformas-elevadoras-sobre-orugas-segunda-mano",
-      "generador": "grupos-electrogenos-segunda-mano",
-      "torre-de-luz": "torres-iluminacion-segunda-mano",
-      "carretilla-retractil": "carretillas-elevadoras-retractiles-segunda-mano",
-      "dumper": "dumpers-segunda-mano",
-      "fregadora": "fregadoras-segunda-mano"
-    };
-    return types[family] ?? null;
-  }
-  if (record.providerId === "mercaeleva" && hostname === "sales.mercaeleva.com" &&
-    /^(?:es|en)\/for-sale\/machine\/[^/]+\/?$/i.test(path.join("/"))) {
-    const text = fold(String(record.specs?.["Título adicional"] ?? record.title ?? ""));
-    if (/\bdumper\b/.test(text)) return "dumpers-segunda-mano";
-    if (/\bminiexcavadora\b/.test(text)) return "miniexcavadoras-segunda-mano";
-    if (/\bmanipulador telescopico\b/.test(text)) return "manipulador-teñescopico-segunda-mano";
-    if (/\bcamion cesta\b/.test(text)) return "plataformas-elevadoras-sobre-camion-segunda-mano";
-    if (/\bapilador\b/.test(text)) {
-      const electric = /\belectric[oa]\b/.test(text) || Boolean(String(record.specs?.["Tipo de Batería"] ?? "").trim());
-      const manual = /\bmanual\b/.test(text);
-      if (electric && !manual) return "apiladores-electricos-segunda-mano";
-      if (manual && !electric) return "apiladores-manuales-segunda-mano";
-    }
-    if (/\btranspalet(?:a)?\b/.test(text)) {
-      if (/\belectric[oa]\b/.test(text)) return "transpaletas-electricas-segunda-mano";
-      if (/\bmanual\b/.test(text)) return "transpaletas-manuales-segunda-mano";
-    }
-    if (/\bcarretilla\b/.test(text)) {
-      if (/\bretractil\b/.test(text)) return "carretillas-elevadoras-retractiles-segunda-mano";
-      if (/\b4x4\b|\btodoterreno\b/.test(text)) return "carretillas-todoterreno-segunda-mano";
-      if (/\bglp\b/.test(text)) return "carretillas-elevadoras-glp-segunda-mano";
-      if (/\bdiesel\b/.test(text)) return "carretillas-elevadoras-diesel-segunda-mano";
-      if (/\belectric[oa]\b/.test(text)) return "carretillas-elevadoras-electricas-segunda-mano";
-    }
-    if (/\bplataforma\b/.test(text)) {
-      if (/\btijera\b/.test(text)) {
-        const power = energy(text);
-        return power === "electric" ? "plataformas-tijera-electricas-segunda-mano"
-          : power === "diesel" ? "plataformas-tijera-diesel-segunda-mano" : null;
-      }
-      if (/\barticulada\b/.test(text)) {
-        const power = energy(text);
-        return power === "electric" ? "plataformas-articuladas-electricas-segunda-mano"
-          : power === "diesel" ? "plataformas-articuladas-diesel-segunda-mano" : null;
-      }
-      if (/\btelescopica\b/.test(text)) return "plataformas-elevadoras-telescopicas-segunda-mano";
-      if (/\bvertical\b/.test(text) && /\bautopropulsada\b/.test(text)) return "plataformas-unipersonales-segunda-mano";
-    }
-    return null;
-  }
   return null;
-};
-
-const contradictsMappedCategory = (record: ProductRecord, slug: string): boolean => {
-  if (record.providerId !== "gam") return false;
-  if (slug === "furgonetas-electricas-segunda-mano") {
-    const description = fold(`${record.title ?? ""} ${record.shortDescription ?? ""}`);
-    if (/\b(?:es un cuatriciclo|cuatriciclo electrico|cuatriciclo de carga)\b/.test(description)) return true;
-  }
-  const titleEnergy = energy(record.title ?? "");
-  if (/(?:^|-)diesel(?:-|$)/.test(slug) && titleEnergy === "electric") return true;
-  if (/(?:^|-)electric[ao]s?(?:-|$)/.test(slug) && titleEnergy === "diesel") return true;
-  return false;
-};
-
-export const isLeafCategoryForCondition = (
-  categoryId: number, categories: ImportCatalog["categories"], condition: ImportableCondition
-): boolean => {
-  const rootName = condition === "Nuevo" ? "Maquinaria Nueva" : "Maquinaria de Ocasión";
-  const roots = categories.filter((category) => fold(category.name) === fold(rootName));
-  if (roots.length !== 1 || categories.filter((category) => category.id === categoryId).length !== 1 ||
-    categories.some((category) => category.parentId === categoryId)) return false;
-  const byId = new Map(categories.map((category) => [category.id, category]));
-  let parentId = byId.get(categoryId)?.parentId ?? null;
-  const visited = new Set<number>();
-  while (parentId !== null && !visited.has(parentId)) {
-    if (parentId === roots[0]?.id) return true;
-    visited.add(parentId);
-    parentId = byId.get(parentId)?.parentId ?? null;
-  }
-  return false;
-};
-
-export const resolveCategory = (
-  record: ProductRecord, categories: ImportCatalog["categories"],
-  condition: ImportableCondition = record.condition === "Nuevo" ? "Nuevo" : "Segunda_Mano"
-): Category | null => {
-  const leaf = categories.filter((category) => isLeafCategoryForCondition(category.id, categories, condition));
-  const sourceSlug = condition === "Nuevo" ? newCategorySlug(record) : sourceCategorySlug(record);
-  if (sourceSlug) {
-    const matches = leaf.filter((category) => fold(category.slug) === fold(sourceSlug));
-    const matched = matches.length === 1 ? matches[0] : undefined;
-    return matched && !contradictsMappedCategory(record, matched.slug) ? matched : null;
-  }
-  const direct = leaf.filter((category) => fold(category.slug) === fold(record.categoryKey));
-  const directMatch = direct.length === 1 ? direct[0] : undefined;
-  if (directMatch) return contradictsMappedCategory(record, directMatch.slug) ? null : directMatch;
-  if (record.providerId !== "gam" || condition === "Nuevo") return null;
-  const byName = leaf.filter((category) => fold(category.name) === fold(record.categoryName));
-  const nameMatch = byName.length === 1 ? byName[0] : undefined;
-  return nameMatch && !contradictsMappedCategory(record, nameMatch.slug) ? nameMatch : null;
 };

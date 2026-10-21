@@ -47,19 +47,19 @@ El backend puede admitir `Nuevo` sin que ello confirme que todas las categorías
 
 ## 3. Situación del scraper frente a los objetivos
 
-| Área                   | Evidencia en el código actual                                                                                                                     | Diferencia respecto al objetivo                                                                                                                                                                                                                     |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Obtención              | `src/scraping/providers/{gam,gomariz,mercaeleva}/`; GAM configura 15 raíces incluidas categorías nuevas.                                          | La extracción **ya incluye nuevas**; no eliminar las fichas por no poder exportarlas. La cobertura real debe cotejarse por proveedor.                                                                                                               |
-| Condición              | `src/contracts/catalog.ts` admite origen `Nuevo`, `Segunda mano`, `null`; `prepare.ts` solo convierte `Segunda mano` confirmada a `Segunda_Mano`. | **Brecha prioritaria:** `ImportCandidate.condition` no admite `Nuevo`; la preparación marca toda nueva como `review` por una prohibición **del scraper**, no del backend. Mantener `null` y revisar cuando haya contradicción o falta de evidencia. |
-| Categorías             | `src/catalog/import/category-mapping.ts` busca solo bajo «Maquinaria de Ocasión»; `import-validation.ts` exige hojas de esa rama.                 | **Brecha prioritaria:** `data/category/categorySell-flat.json` también incluye «Maquinaria Nueva», pero la ruta de preparación no la usa. No mapear nuevas a categorías de ocasión.                                                                 |
-| Atributos              | `attribute-mapping.ts` utiliza catálogo local, categorías y unidades; `catalog-loader.ts` admite `NUMBER`, `TEXT`, `SELECT`, `BOOLEAN`.           | Medir pérdidas recuperables por patrón; confirmar atributos activos/requeridos del destino. El backend modela también `DECIMAL`, `DATE`, `MULTISELECT`, hoy sin soporte del cargador local.                                                         |
-| Descripciones          | `prepare.ts`/`import-validation.ts` exigen descripción corta **y** general diferenciadas.                                                         | La corta sí es obligatoria en backend, la general no. La prohibición local de general ausente/igual es **una precaución adicional**, no un rechazo del endpoint. No rellenar automáticamente con texto inventado.                                   |
-| Precio                 | `prepare.ts` exige precio numérico positivo; `import-validation.ts` lo mantiene.                                                                  | El precio no publicado no se inventa. Una ficha sin precio sigue siendo útil en el catálogo y **no es alta válida por el Excel**. El endpoint JSON `create/many` admite `price` opcional, pero su uso exige decisión y controles separados.         |
-| Imágenes               | URL HTTP(S) con extensiones conocidas y deduplicación; `export-plan.ts` limita a diez.                                                            | Es más restrictivo que el parser backend; conservar galería completa en origen y contar las imágenes omitidas por Excel.                                                                                                                            |
-| Identidad e inventario | `catalog/identity.ts`, `quality.ts`, `export-plan.ts` y preflight; inventario CSV por empresa antes de exportar.                                  | Conservar protección; importador backend no evita duplicados previos en BD por `(companyID, reference)`.                                                                                                                                            |
-| Publicación y `review` | CSV + preparación + resúmenes/cambios/snapshots; preflight valida integridad.                                                                     | Separar **calidad de extracción**, **compatibilidad de importación** y **autorización comercial**. `review` no identifica automáticamente un fallo del parser.                                                                                      |
+| Área                   | Estado en esta versión                                                                                                                           | Límites aún por comprobar                                                |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| Obtención              | Los adaptadores GAM, Gomariz y Mercaeleva conservan la extracción de nuevas y usadas.                                                            | Comprobar cobertura real y paginación de cada proveedor.                 |
+| Condición              | `catalog/import/preparation/condition.ts` y `contracts.ts` admiten `Nuevo`, `Segunda_Mano` o `null` con revisión de condiciones contradictorias. | Contrastar evidencias reales y falsos positivos en los portales.         |
+| Categorías             | `catalog/import/mapping/category-mapping.ts` contempla ambas ramas y exige correspondencia inequívoca.                                           | Validar categorías activas y equivalencias contra la BD del destino.     |
+| Atributos              | Mapeadores específicos por proveedor y catálogo local; se conservan atributos requeridos y unidades.                                             | Medir pérdidas recuperables por patrón y contrastar el catálogo vigente. |
+| Descripciones          | `preparation/import-validation.ts` exige descripción corta para Excel; la general es opcional.                                                   | Detectar descripciones publicadas que no llegan al candidato.            |
+| Precio                 | El Excel requiere precio finito positivo; las fichas sin precio no se eliminan del catálogo.                                                     | Valorar por separado el JSON `create/many` si se autoriza.               |
+| Imágenes               | Se exige imagen válida y la planificación Excel limita a diez URLs por fila.                                                                     | Revisar imágenes publicadas que no se capturen.                          |
+| Identidad e inventario | Identidad, protección frente a duplicados, comparación de snapshots e inventario por empresa.                                                    | Contrastar con inventario real antes de altas.                           |
+| Publicación y `review` | CSV/JSON con diagnósticos y preflight de integridad.                                                                                             | Distinguir requisitos del Excel de pérdidas demostradas de origen.       |
 
-**Error conceptual que queda corregido en esta documentación:** «nueva fuera de alcance» describe la **restricción local heredada**, no la finalidad de EQUIPZILLA ni una incapacidad de `POST /product/import`. Ninguna futura fase debe reinstaurar esa exclusión por defecto.
+Las cuatro fases funcionales de nueva/usada, mapeos, diagnósticos y exportación se reflejan en el código actual. Su presencia no acredita por sí sola resultados de scraping en vivo ni compatibilidad con la base de datos desplegada.
 
 ## 4. Línea base real y lectura correcta de `review`
 
@@ -72,7 +72,7 @@ Fotografía de los `*-preparation.json` vigentes en la raíz de cada proveedor d
 | Mercaeleva |       221 |       0 |       221 |                                17 |
 | **Total**  | **1.374** | **106** | **1.268** |                           **748** |
 
-Las **748** son referencias afectadas por la exclusión de condición, **no 748 importaciones que ya puedan aprobarse**. En **729 de las 731 nuevas de GAM** consta además «Precio no disponible o inválido», y las 731 tienen incidencia de categoría por el mapeo solo de ocasión. Entre las 17 nuevas de Mercaeleva, **8** tienen incidencia de precio; algunas quedaron provisionalmente mapeadas a una **categoría de segunda mano**, lo cual también deberá corregirse. Estas incidencias se solapan.
+Las **748** son referencias afectadas por la exclusión de condición en la **línea base histórica anterior a las correcciones**, **no 748 importaciones que ya puedan aprobarse**. En **729 de las 731 nuevas de GAM** consta además «Precio no disponible o inválido», y las 731 tienen incidencia de categoría por el mapeo solo de ocasión. Entre las 17 nuevas de Mercaeleva, **8** tienen incidencia de precio; algunas quedaron provisionalmente mapeadas a una **categoría de segunda mano**, lo cual también deberá corregirse. Estas incidencias se solapan.
 
 Otros bloqueos relevantes: **387** fichas con descripción corta ausente y general presente (**31 GAM, 143 Gomariz, 213 Mercaeleva**); **930** incidencias de precio (incluyen nuevas); **99** alturas de trabajo GAM y **58** tipos de mástil entre proveedores. Son **requisitos incumplidos**, no pruebas de que todos esos valores estaban publicados y el scraper los perdió.
 
@@ -91,13 +91,13 @@ Otros bloqueos relevantes: **387** fichas con descripción corta ausente y gener
 - **No sacrificar controles del pipeline:** resultados parciales no publicables, snapshots preservados, detección de faltantes solo como señal, hashes y publicación atómica sin regresiones.
 - **No confundir API y proceso de negocio:** `ready` ≠ aprobado; Excel generado ≠ importado; HTTP 201 ≠ todas las filas creadas; ficha importada ≠ publicada/activa.
 
-## 6. Prioridad de trabajo desde este contrato (sin cambiar código aquí)
+## 6. Prioridad de trabajo desde este contrato
 
-**Bloque 1 — Corregir el alcance funcional, antes de perseguir pequeños `ready`.**
+**Bloque 1 — Preservar las correcciones funcionales y contrastarlas con datos reales.**
 
-1. Aceptar `Nuevo` y `Segunda_Mano` como condiciones preparables, **solo con evidencia del origen**, modificando de forma coherente contratos TypeScript, preparación, validación, categoría y pruebas. No cambiar silenciosamente estructuras públicas.
-2. Resolver categorías de ambas ramas (nueva/ocasión) de forma segura con el catálogo real; prohibir específicamente nuevas en hojas de ocasión. Analizar antes los 731 GAM y 17 Mercaeleva y los posibles contraejemplos; no convertir automáticamente el bloque de 748 en `ready`.
-3. Mantener el precio/imagen/descripción corta/atributos requeridos como bloqueos separados para el **importador Excel actual**, aunque las fichas se hayan extraído correctamente. Documentar las restricciones locales adicionales que convenga conservar como reglas de calidad.
+1. Conservar `Nuevo` y `Segunda_Mano` como condiciones preparables **solo con evidencia del origen**, y `null` para condiciones desconocidas o contradictorias.
+2. Validar ambas ramas de categorías con el catálogo vigente; nunca permitir nuevas en hojas de ocasión ni equivalencias aproximadas. Revisar específicamente las cohortes de GAM y Mercaeleva sin presuponer que todo será `ready`.
+3. Conservar precio, imagen, descripción corta y atributos obligatorios como bloqueos separados para el **Excel**, aunque las fichas se hayan extraído correctamente.
 
 **Bloque 2 — Aprovechar mejor los datos, por patrones recuperables.**
 

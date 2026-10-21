@@ -12,6 +12,7 @@ export interface ScraperProvider {
   extractProductLinksFromListing(listingUrl: string, html: string): readonly string[];
   extractExpectedTotalFromListing?(html: string): number | null;
   parseProductPage(html: string, pageUrl: string): ParsedProduct;
+  resolveCondition?(category: CategoryConfig, condition: ParsedProduct["condition"], providerId: string): ProductRecord["condition"];
   extractReference(url: string): string | null;
   loadListingHtml?(url: string, options: ScrapeOptions): Promise<string>;
   discoverListing?(category: CategoryConfig, options: ScrapeOptions, onProgress?: (pages: number, found: number, stage?: string) => void): Promise<{ readonly urls: readonly string[]; readonly expectedTotal: number }>;

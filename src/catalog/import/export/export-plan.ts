@@ -1,8 +1,11 @@
-import type { ImportCandidate, ImportCatalog } from "./prepare.js";
-import type { PreparationDocument } from "./preparation-document.js";
-import type { CellValue } from "./xlsx.js";
-import { parseCsv } from "../../shared/csv-parse.js";
-import { validateImportCandidate } from "./import-validation.js";
+import type { ImportCandidate, ImportCatalog } from "../preparation/contracts.js";
+import type { PreparationDocument } from "../preparation/preparation-document.js";
+import type { CellValue } from "../../../infrastructure/spreadsheet/xlsx.js";
+import { validText, referenceKey } from "./reference-inventory.js";
+import type { ReferenceInventory } from "./reference-inventory.js";
+export { readReferenceInventory } from "./reference-inventory.js";
+export type { ReferenceInventory } from "./reference-inventory.js";
+import { validateImportCandidate } from "../preparation/import-validation.js";
 
 const fixedHeaders = [
   "Referencia *", "Categoría *", "Título *", "Condición *", "Precio *",
@@ -10,8 +13,6 @@ const fixedHeaders = [
 ] as const;
 
 const urlHeaders = Array.from({ length: 10 }, (_, index) => index === 0 ? "URL 1 *" : `URL ${index + 1}`);
-
-export type ReferenceInventory = { readonly companyID: number; readonly references: ReadonlySet<string> };
 
 export type ImportIssue = { readonly reference: string | null; readonly sourceUrl: string; readonly reason: string };
 
@@ -31,28 +32,6 @@ export type ImportPlan = {
     readonly review: readonly ImportIssue[];
     readonly duplicates: readonly ImportIssue[];
   };
-};
-
-const validText = (input: unknown): input is string => typeof input === "string" && input.trim().length > 0;
-
-const referenceKey = (value: string): string => value.trim().toLocaleUpperCase("es");
-
-export const readReferenceInventory = (csv: string, companyID: number): ReferenceInventory => {
-  const parsed = parseCsv(csv.replace(/^\ufeff/, ""));
-  if (!parsed.headers.includes("companyID") || !parsed.headers.includes("reference") ||
-    new Set(parsed.headers).size !== parsed.headers.length) {
-    throw new Error("El inventario CSV debe incluir las columnas companyID y reference sin duplicados");
-  }
-  const references = new Set<string>();
-  for (const row of parsed.rows) {
-    const company = row.companyID?.trim();
-    if (!company || !/^\d+$/.test(company) || Number(company) !== companyID) {
-      throw new Error("El inventario incluye registros sin companyID válido o de otra empresa");
-    }
-    if (!validText(row.reference)) throw new Error("El inventario incluye una referencia vacía");
-    references.add(referenceKey(row.reference));
-  }
-  return { companyID, references };
 };
 
 const attributeHeader = (attribute: ImportCatalog["attributes"][number]): string =>

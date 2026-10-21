@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
-import { prepareProduct } from "../prepare.js";
-import { loadImportCatalog } from "../catalog-loader.js";
-import { resolveAttributeValue } from "../attribute-mapping.js";
+import { prepareProduct } from "../preparation/prepare.js";
+import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
+import { resolveAttributeValue } from "../mapping/attribute-mapping.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 
 const catalog = await loadImportCatalog();

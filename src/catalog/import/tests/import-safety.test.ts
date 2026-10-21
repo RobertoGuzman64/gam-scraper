@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import { loadImportCatalog } from "../catalog-loader.js";
-import { planProductImport, readReferenceInventory } from "../export-plan.js";
-import { prepareProduct } from "../prepare.js";
+import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
+import { planProductImport, readReferenceInventory } from "../export/export-plan.js";
+import { prepareProduct } from "../preparation/prepare.js";
 
 const record: ProductRecord = {
   providerId: "mercaeleva",
