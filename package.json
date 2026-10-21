@@ -23,7 +23,8 @@
     "validate:catalog": "npm run -s build && node dist/cli/index.js validate",
     "validate": "npm run -s build && node dist/cli/index.js validate",
     "export": "npm run -s build && node dist/cli/index.js export",
-    "cli": "npm run -s build && node dist/cli/index.js"
+    "cli": "npm run -s build && node dist/cli/index.js",
+    "storage:clean": "npm run -s build && node dist/cli/storage-clean.js"
   },
   "dependencies": {
     "cheerio": "^1.0.0",

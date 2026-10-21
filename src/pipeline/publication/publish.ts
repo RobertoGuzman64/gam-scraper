@@ -9,6 +9,7 @@ import type { CategoryConfig, CategoryScrapeResult, Summary } from "../../contra
 import { toCsv } from "../../shared/csv.js";
 import { serializeCategoriesCsv, listSpecKeys, buildProductHeaders, toProductRow } from "./csv-serializer.js";
 import { atomicWrite } from "../../infrastructure/filesystem/atomic-write.js";
+import { abandonArchive, finalizePublishedCatalog, stagePublishedCatalog } from "../../infrastructure/filesystem/catalog-retention.js";
 import { prepareImportBatch } from "../../catalog/import/prepare.js";
 import { loadImportCatalog } from "../../catalog/import/catalog-loader.js";
 
@@ -87,69 +88,75 @@ const writeResultGroups = async (
   const catalog = await loadImportCatalog();
   const preparation = prepareImportBatch(currentProducts, catalog);
   const outputPrefix = quality.published ? outPrefix : `${outPrefix}-partial`;
+  const pending = quality.published ? await stagePublishedCatalog(outDir, outPrefix) : null;
+  try {
+    if (!grouped) {
+      await writeCategoriesCsv(outDir, outputPrefix, groups.map((group) => group.parent));
+    }
 
-  if (!grouped) {
-    await writeCategoriesCsv(outDir, outputPrefix, groups.map((group) => group.parent));
-  }
+    for (const { parent, products } of categoryData) {
+      const specKeys = listSpecKeys(products);
+      await atomicWrite(resolve(outDir, `${outputPrefix}-${parent.key}.csv`), toCsv(
+        products.map((product) => toProductRow(parent, product, specKeys)), buildProductHeaders(specKeys)
+      ));
+    }
+    const globalSpecKeys = listSpecKeys(currentProducts);
+    const aggregateCsv = toCsv(
+      global.unique.map(({ parent, product }) => toProductRow(parent, product, globalSpecKeys)),
+      buildProductHeaders(globalSpecKeys)
+    );
+    await atomicWrite(resolve(outDir, `${outputPrefix}-all.csv`), aggregateCsv);
+    const preparationContent = JSON.stringify({
+      quality: quality.status, published: quality.published, ...preparation
+    }, null, 2);
+    const hash = (content: string): string => createHash("sha256").update(content).digest("hex");
 
-  for (const { parent, products } of categoryData) {
-    const specKeys = listSpecKeys(products);
-    await atomicWrite(resolve(outDir, `${outputPrefix}-${parent.key}.csv`), toCsv(
-      products.map((product) => toProductRow(parent, product, specKeys)), buildProductHeaders(specKeys)
-    ));
-  }
-  const globalSpecKeys = listSpecKeys(currentProducts);
-  const aggregateCsv = toCsv(
-    global.unique.map(({ parent, product }) => toProductRow(parent, product, globalSpecKeys)),
-    buildProductHeaders(globalSpecKeys)
-  );
-  await atomicWrite(resolve(outDir, `${outputPrefix}-all.csv`), aggregateCsv);
-  const preparationContent = JSON.stringify({
-    quality: quality.status, published: quality.published, ...preparation
-  }, null, 2);
-  const hash = (content: string): string => createHash("sha256").update(content).digest("hex");
-
-  const summary: Summary = {
-    startedAt,
-    endedAt,
-    quality,
-    artifacts: { csvSha256: hash(aggregateCsv), preparationSha256: hash(preparationContent) },
-    totals: {
-      categories: groups.length,
-      discoveredProductUrls: categorySummaries.reduce((sum, category) => sum + category.discoveredProductUrls, 0),
-      scrapedProductsRaw: categorySummaries.reduce((sum, category) => sum + category.scrapedProductsRaw, 0),
-      scrapedProductsByCategorySum: categorySummaries.reduce((sum, category) => sum + category.scrapedProducts, 0),
-      scrapedProducts: currentProducts.length,
-      failures: categorySummaries.reduce((sum, category) => sum + category.failures, 0),
-      dedupe: { withinCategories, globalAll: global.report }
-    },
-    categories: categorySummaries
-  };
-  const failures = allResults.flatMap((result) => result.failures.map((failure) => ({
-    categoryKey: result.category.key,
-    ...failure
-  })));
-  const summaryFile = resolve(outDir, `${outPrefix}-summary.json`);
-  await atomicWrite(resolve(outDir, `${outPrefix}-errors.json`), JSON.stringify({
-    quality: quality.status, failures, identityConflicts, serialWarnings
-  }, null, 2));
-  await atomicWrite(resolve(outDir, `${outputPrefix}-preparation.json`), preparationContent);
-
-  if (!quality.published) {
-    await atomicWrite(summaryFile, JSON.stringify(summary, null, 2));
-    await atomicWrite(resolve(outDir, `${outPrefix}-changes.json`), JSON.stringify({
-      status: "not-comparable", reasons: quality.reasons, suspectedMissing: []
+    const summary: Summary = {
+      startedAt,
+      endedAt,
+      quality,
+      artifacts: { csvSha256: hash(aggregateCsv), preparationSha256: hash(preparationContent) },
+      totals: {
+        categories: groups.length,
+        discoveredProductUrls: categorySummaries.reduce((sum, category) => sum + category.discoveredProductUrls, 0),
+        scrapedProductsRaw: categorySummaries.reduce((sum, category) => sum + category.scrapedProductsRaw, 0),
+        scrapedProductsByCategorySum: categorySummaries.reduce((sum, category) => sum + category.scrapedProducts, 0),
+        scrapedProducts: currentProducts.length,
+        failures: categorySummaries.reduce((sum, category) => sum + category.failures, 0),
+        dedupe: { withinCategories, globalAll: global.report }
+      },
+      categories: categorySummaries
+    };
+    const failures = allResults.flatMap((result) => result.failures.map((failure) => ({
+      categoryKey: result.category.key,
+      ...failure
+    })));
+    const summaryFile = resolve(outDir, `${outPrefix}-summary.json`);
+    await atomicWrite(resolve(outDir, `${outPrefix}-errors.json`), JSON.stringify({
+      quality: quality.status, failures, identityConflicts, serialWarnings
     }, null, 2));
-    throw new Error(`Extracción ${quality.status}: ${quality.reasons.join("; ")}. Los CSV anteriores se conservan; revisar ${outPrefix}-summary.json`);
-  }
+    await atomicWrite(resolve(outDir, `${outputPrefix}-preparation.json`), preparationContent);
 
-  const items = buildCatalogItems(currentProducts);
-  const changes = compareCatalog(previous, items);
-  await atomicWrite(resolve(outDir, `${outPrefix}-changes.json`), JSON.stringify({
-    status: "comparable", scope, ...changes
-  }, null, 2));
-  await atomicWrite(snapshotFile, JSON.stringify({ version: 1, scope, createdAt: endedAt, items } satisfies CatalogSnapshot, null, 2));
-  await atomicWrite(summaryFile, JSON.stringify(summary, null, 2));
+    if (!quality.published) {
+      await atomicWrite(summaryFile, JSON.stringify(summary, null, 2));
+      await atomicWrite(resolve(outDir, `${outPrefix}-changes.json`), JSON.stringify({
+        status: "not-comparable", reasons: quality.reasons, suspectedMissing: []
+      }, null, 2));
+      throw new Error(`Extracción ${quality.status}: ${quality.reasons.join("; ")}. Los CSV anteriores se conservan; revisar ${outPrefix}-summary.json`);
+    }
+
+    const items = buildCatalogItems(currentProducts);
+    const changes = compareCatalog(previous, items);
+    await atomicWrite(resolve(outDir, `${outPrefix}-changes.json`), JSON.stringify({
+      status: "comparable", scope, ...changes
+    }, null, 2));
+    await atomicWrite(snapshotFile, JSON.stringify({ version: 1, scope, createdAt: endedAt, items } satisfies CatalogSnapshot, null, 2));
+    await atomicWrite(summaryFile, JSON.stringify(summary, null, 2));
+    await finalizePublishedCatalog(outDir, outPrefix, pending);
+  } catch (error) {
+    await abandonArchive(pending);
+    throw error;
+  }
 };
 
 export const writeGroupedOutputs = async (
