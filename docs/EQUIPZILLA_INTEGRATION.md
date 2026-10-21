@@ -2,7 +2,7 @@
 
 **Contrato receptor documentado · Equipzilla / importación de productos de maquinaria**  
 **Fecha del análisis:** 20/10/2026.  
-**Procedencia:** código fuente entregado en `Marketplace-Back-develop.zip` y, para delimitar el emisor, `ez-f4-f5bed1.zip` (scraper tras sus cuatro fases). **No se consultó una base de datos ni un entorno desplegado.** Lo descrito es comportamiento implementado en ese código, no evidencia de aceptación en producción.
+**Procedencia:** código fuente de `Marketplace-Back-develop.zip` y del scraper para delimitar el emisor. **No se consultó una base de datos ni un entorno desplegado.** Lo descrito es comportamiento implementado en ese código, no evidencia de aceptación en producción.
 
 ## 1. Finalidad y límite exacto
 

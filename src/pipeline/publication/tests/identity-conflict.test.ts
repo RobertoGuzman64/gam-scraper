@@ -20,7 +20,7 @@ const first = product("TE1000", "https://example.com/machine/a");
 const second = product("TE1000", "https://example.com/machine/b");
 
 test("una colisión bloquea la publicación y conserva CSV y snapshot anteriores", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "scraper-phase4-"));
+  const dir = await mkdtemp(join(tmpdir(), "scraper-identity-conflict-"));
   try {
     await writeOutputs(dir, "lote", [{ category, discoveredProductUrls: 1, products: [first], failures: [] }], time, time);
     const previousCsv = await readFile(join(dir, "lote-all.csv"), "utf8");

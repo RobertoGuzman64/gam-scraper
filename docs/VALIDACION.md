@@ -1,6 +1,6 @@
 # Validación y aceptación antes de producción
 
-Protocolo operativo aplicable a las extracciones de GAM, Gomariz y Mercaeleva. Reemplaza la antigua guía numerada por fase: no es una certificación de producción.
+Protocolo operativo aplicable a las extracciones de GAM, Gomariz y Mercaeleva. No es una certificación de producción.
 
 La cadena real es **web del proveedor → extracción → CSV/JSON de preparación → revisión → Excel de altas (opcional y manual)**. Ejecutar el lote no genera ni importa productos automáticamente en Marketplace-Back.
 

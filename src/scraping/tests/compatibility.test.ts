@@ -54,7 +54,7 @@ test("proveedor por defecto y fallo temprano para proveedores no registrados", (
 });
 
 test("deduplicación separada por proveedor y exportación compatible", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "scraper-phase1-"));
+  const dir = await mkdtemp(join(tmpdir(), "scraper-compatibility-"));
   try {
     await writeOutputs(dir, "test", [result([
       product("gam", "https://online.gamrentals.com/es/a"),

@@ -2,7 +2,7 @@
 
 **Reglas de datos, preparación y exportación · Equipzilla Scraper**  
 **Fecha del análisis:** 20/10/2026.  
-**Procedencia:** `ez-f4-f5bed1.zip` (scraper reestructurado, fase 4) y `Marketplace-Back-develop.zip` (contrato receptor contrastado en código). No se ejecutaron extracciones reales ni importaciones ni se inspeccionó la base de datos de un entorno. **Documento autónomo:** su contrato de destino se resume aquí sin exigir tener el backend abierto.
+**Procedencia:** código del scraper y `Marketplace-Back-develop.zip` (contrato receptor contrastado en código). No se ejecutaron extracciones reales ni importaciones ni se inspeccionó la base de datos de un entorno. **Documento autónomo:** su contrato de destino se resume aquí sin exigir tener el backend abierto.
 
 ## 1. Objetivo operativo que no debe perderse
 

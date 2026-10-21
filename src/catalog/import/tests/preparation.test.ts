@@ -134,7 +134,7 @@ test("el batch separa preparados y revisión sin perder referencias", async () =
 });
 
 test("CSV mantiene sus campos y añade imágenes; preparación publicada por separado", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "phase5-output-"));
+  const dir = await mkdtemp(join(tmpdir(), "catalog-preparation-"));
   try {
     await writeOutputs(dir, "lote", [result(base)], "2026-10-15T09:00:00Z", "2026-10-15T09:01:00Z");
     const csv = await readFile(join(dir, "lote-all.csv"), "utf8");

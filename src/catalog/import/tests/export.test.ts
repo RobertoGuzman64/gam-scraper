@@ -124,7 +124,7 @@ test("se limita a diez URLs y no inventa imágenes adicionales", async () => {
 });
 
 test("CLI genera Excel offline e impide reusar la preparación tras una extracción parcial", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "phase6-import-"));
+  const dir = await mkdtemp(join(tmpdir(), "catalog-export-"));
   try {
     const preparationFile = join(dir, "lote-preparation.json");
     const summaryFile = join(dir, "lote-summary.json");

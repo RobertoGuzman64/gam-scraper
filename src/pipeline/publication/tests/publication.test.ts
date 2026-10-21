@@ -28,7 +28,7 @@ const initial = (): readonly ProductRecord[] =>
   Array.from({ length: 12 }, (_, index) => product(`STOCK-${index + 1}`));
 
 const withOutputDir = async (run: (dir: string) => Promise<void>): Promise<void> => {
-  const directory = await mkdtemp(join(tmpdir(), "scraper-phase3-"));
+  const directory = await mkdtemp(join(tmpdir(), "scraper-publication-"));
   try { await run(directory); } finally { await rm(directory, { recursive: true, force: true }); }
 };
 

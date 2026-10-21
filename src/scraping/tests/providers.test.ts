@@ -76,7 +76,7 @@ test("el motor acepta referencias provenientes de HTML y carga personalizada del
 });
 
 test("dos unidades Gomariz del mismo modelo mantienen identidades diferentes", async () => {
-  const folder = await mkdtemp(join(tmpdir(), "phase2-gomariz-"));
+  const folder = await mkdtemp(join(tmpdir(), "gomariz-provider-"));
   try {
     const base = {
       providerId: "gomariz", categoryKey: "venta", categoryName: "Venta",
