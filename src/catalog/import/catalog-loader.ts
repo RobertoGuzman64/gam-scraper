@@ -32,5 +32,10 @@ export const loadImportCatalog = async (): Promise<ImportCatalog> => {
     !Array.isArray(metadata.relations) || !metadata.relations.every(isRelation)) {
     throw new Error("Metadatos de categorías o atributos de Equipzilla inválidos");
   }
+  const ids = new Set(categories.map((category) => category.id));
+  if (ids.size !== categories.length || categories.some((category) =>
+    category.parentId !== null && !ids.has(category.parentId))) {
+    throw new Error("Catálogo de categorías de Equipzilla con IDs duplicados o padres inexistentes");
+  }
   return { categories, attributes: metadata.attributes, relations: metadata.relations };
 };

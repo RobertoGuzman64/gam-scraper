@@ -35,7 +35,7 @@ test("GAM: resuelve categorías por subfamilias reales, incluyendo excepciones e
   assert.equal(categorySlug(source("gam", gamUrl("mini-cargadoras-segunda-mano", "6599"), "Miniexcavadora de cadenas JCB", {})), "miniexcavadoras-segunda-mano");
   assert.equal(categorySlug(source("gam", gamUrl("transpaletas-elevadoras-manuales-segunda-mano", "6123"), "Transpaleta eléctrica", {})), "transpaletas-electricas-segunda-mano");
   assert.equal(categorySlug(source("gam", gamUrl("vehiculos-segunda-mano", "6217"), "Land Rover", {})), undefined);
-  assert.equal(categorySlug(source("gam", gamUrl("dumpers-segunda-mano", "6559"), "Dumper Crawler", {})), undefined);
+  assert.equal(categorySlug(source("gam", gamUrl("dumpers-segunda-mano", "6559"), "Dumper Crawler", {})), "dumpers-segunda-mano");
 });
 
 test("Gomariz: utiliza tipo fuente y motor, sin adjudicar categorías inexistentes", () => {
@@ -96,6 +96,8 @@ test("contratos: los slugs resueltos existen en el catálogo Equipzilla, sin mut
   const original: unknown = JSON.parse(await readFile(path, "utf8"));
   assert.equal(Array.isArray(original), true);
   const ids = new Set(catalog.categories.map((entry) => entry.id));
-  assert.ok(ids.has(9));
-  assert.equal(catalog.categories.filter((category) => category.id === 9).length, 2);
+  assert.equal(ids.size, catalog.categories.length);
+  assert.equal(catalog.categories.find((category) => category.id === 9)?.slug, "dumpers-segunda-mano");
+  assert.equal(catalog.categories.find((category) => category.id === 113)?.slug, "manipulador-teñescopico-segunda-mano");
+  assert.equal(catalog.categories.find((category) => category.id === 114)?.slug, "plataforma-sobre-camion");
 });

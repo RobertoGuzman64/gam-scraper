@@ -144,7 +144,7 @@
     "slug": "plataforma-sobre-oruga"
   },
   {
-    "id": 9,
+    "id": 114,
     "parentId": 4,
     "name": "Plataformas Elevadoras Sobre Camión",
     "slug": "plataforma-sobre-camion"
@@ -544,6 +544,12 @@
     "parentId": 80,
     "name": "Apiladores de Segunda Mano",
     "slug": "apilador-segunda-mano"
+  },
+  {
+    "id": 113,
+    "parentId": 80,
+    "name": "Manipulador telescópico de Segunda Mano",
+    "slug": "manipulador-teñescopico-segunda-mano"
   },
   {
     "id": 47,

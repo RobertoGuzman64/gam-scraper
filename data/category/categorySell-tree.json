@@ -162,6 +162,13 @@
                 "children": []
               },
               {
+                "id": 113,
+                "name": "Manipulador telescópico de Segunda Mano",
+                "slug": "manipulador-teñescopico-segunda-mano",
+                "parentId": 80,
+                "children": []
+              },
+              {
                 "id": 93,
                 "name": "Transpaletas de Segunda Mano",
                 "slug": "transpaleta-segunda-mano",
@@ -717,6 +724,13 @@
                     "children": []
                   }
                 ]
+              },
+              {
+                "id": 114,
+                "name": "Plataformas Elevadoras Sobre Camión",
+                "slug": "plataforma-sobre-camion",
+                "parentId": 4,
+                "children": []
               },
               {
                 "id": 8,
