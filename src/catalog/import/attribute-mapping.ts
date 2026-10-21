@@ -101,6 +101,20 @@ export const resolveAttributeValue = (record: ProductRecord, attribute: Attribut
     try { family = new URL(record.url).pathname.split("/").filter(Boolean)[2] ?? ""; } catch { family = ""; }
     if (attribute.name === "Capacidad de carga" && ["carretilla-industrial", "carretilla-retractil"].includes(family)) keys.add(fold("Capacidad"));
     if (attribute.name === "Capacidad de la cesta" && ["elevador-tijera", "brazo-articulado", "brazo-articulado-boom-lift", "brazo-telescopico", "oruga", "camion-plataforma"].includes(family)) keys.add(fold("Capacidad"));
+    if (family === "fregadora" && attribute.name === "Ancho de trabajo") {
+      keys.add(fold("Anchura limpieza"));
+      keys.add(fold("Ancho de limpieza"));
+    }
+    if (family === "generador" && attribute.name === "Combustible") {
+      const motor = String(record.specs?.Motor ?? "").trim();
+      if (/^(?:Diésel|Diesel|Gasolina|Eléctrico|GLP)$/i.test(motor)) {
+        candidates.push({ key: "Motor", value: motor });
+      }
+    }
+  }
+  if (record.providerId === "mercaeleva" && /\bcarretilla\b/i.test(record.title ?? "")) {
+    if (attribute.name === "Altura de elevación") keys.add(fold("Altura máxima de elevación"));
+    if (attribute.name === "Capacidad de carga") keys.add(fold("Capacidad máxima de elevación"));
   }
   if (record.providerId === "mercaeleva" && attribute.name === "Capacidad de carga") {
     const title = String(record.specs?.["Título adicional"] ?? record.title ?? "");
@@ -125,7 +139,15 @@ export const resolveAttributeValue = (record: ProductRecord, attribute: Attribut
   const direct = extra[attribute.name];
   if (direct?.trim()) candidates.push({ key: attribute.name, value: direct });
   if (candidates.length === 0) return null;
-  const converted = candidates.map((candidate) => convert(candidate.value, candidate.key, attribute));
+  const converted = candidates.map((candidate) => {
+    if (record.providerId === "gomariz" && attribute.name === "Potencia" && attribute.type === "NUMBER" &&
+      /\/venta\/energia-electrica-e-iluminacion\/generador\//.test(record.url) &&
+      /kVA/i.test(attribute.unit_option) && typeof candidate.value === "string" &&
+      /^\d+(?:[.,]\d+)?\s*kVA$/i.test(candidate.value.trim())) {
+      return Number(candidate.value.trim().replace(/\s*kVA$/i, "").replace(",", "."));
+    }
+    return convert(candidate.value, candidate.key, attribute);
+  });
   if (converted.some((value) => value === null)) return null;
   const first = converted[0];
   return converted.every((value) => value === first) ? first ?? null : null;

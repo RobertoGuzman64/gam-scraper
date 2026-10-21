@@ -28,7 +28,9 @@ const gamCategories: Readonly<Record<string, string>> = {
   "tractores-electricos-segunda-mano": "tractores-electricos-segunda-mano",
   "ciclomotores-electricos-segunda-mano": "ciclomotores-electricos-segunda-mano",
   "motocicletas-electricas-segunda-mano": "motocicletas-electricas-segunda-mano",
-  "bicicletas-electricas-segunda-mano": "bicicletas-electricas-segunda-mano"
+  "bicicletas-electricas-segunda-mano": "bicicletas-electricas-segunda-mano",
+  "manipuladores-frontales-segunda-mano": "manipulador-teñescopico-segunda-mano",
+  "furgonetas-electricas-de-ocasion": "furgonetas-electricas-segunda-mano"
 };
 
 const energy = (value: string): "electric" | "diesel" | null => {
@@ -79,6 +81,13 @@ const sourceCategorySlug = (record: ProductRecord): string | null => {
       ? "plataformas-articuladas-electricas-segunda-mano" : "plataformas-articuladas-diesel-segunda-mano";
     if (family === "carretilla-industrial" && power) return power === "electric"
       ? "carretillas-elevadoras-electricas-segunda-mano" : "carretillas-elevadoras-diesel-segunda-mano";
+    if (family === "manipulador-telescopico") return "manipulador-teñescopico-segunda-mano";
+    if (family === "rodillo" && /\brodillo compactador en tandem\b/.test(fold(record.longDescription ?? ""))) {
+      return "rodillo-tandem-segunda-mano";
+    }
+    if (family === "elevador-mastil-vertical" && power === "electric") {
+      return "plataformas-unipersonales-segunda-mano";
+    }
     const types: Readonly<Record<string, string>> = {
       "brazo-telescopico": "plataformas-elevadoras-telescopicas-segunda-mano",
       "camion-plataforma": "plataformas-elevadoras-sobre-camion-segunda-mano",
@@ -94,6 +103,16 @@ const sourceCategorySlug = (record: ProductRecord): string | null => {
   if (record.providerId === "mercaeleva" && hostname === "sales.mercaeleva.com" &&
     /^(?:es|en)\/for-sale\/machine\/[^/]+\/?$/i.test(path.join("/"))) {
     const text = fold(String(record.specs?.["Título adicional"] ?? record.title ?? ""));
+    if (/\bdumper\b/.test(text)) return "dumpers-segunda-mano";
+    if (/\bminiexcavadora\b/.test(text)) return "miniexcavadoras-segunda-mano";
+    if (/\bmanipulador telescopico\b/.test(text)) return "manipulador-teñescopico-segunda-mano";
+    if (/\bcamion cesta\b/.test(text)) return "plataformas-elevadoras-sobre-camion-segunda-mano";
+    if (/\bapilador\b/.test(text)) {
+      const electric = /\belectric[oa]\b/.test(text) || Boolean(String(record.specs?.["Tipo de Batería"] ?? "").trim());
+      const manual = /\bmanual\b/.test(text);
+      if (electric && !manual) return "apiladores-electricos-segunda-mano";
+      if (manual && !electric) return "apiladores-manuales-segunda-mano";
+    }
     if (/\btranspalet(?:a)?\b/.test(text)) {
       if (/\belectric[oa]\b/.test(text)) return "transpaletas-electricas-segunda-mano";
       if (/\bmanual\b/.test(text)) return "transpaletas-manuales-segunda-mano";

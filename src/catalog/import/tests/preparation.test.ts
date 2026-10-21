@@ -200,3 +200,18 @@ test("los formatos de precio de los tres proveedores se convierten sin adivinar 
     }
   }
 });
+
+
+test("referencias repetidas en el lote se bloquean durante preparación sin perder productos", async () => {
+  const catalog = await loadImportCatalog();
+  const other = { ...base, reference: "m044-4093", url: `${url}-otra-unidad`, serialNumber: "OTRA-SERIE" };
+  const distinct = { ...base, reference: "M044-4096", url: `${url}-tercera-unidad` };
+  const prepared = prepareImportBatch([base, other, distinct], catalog);
+  assert.deepEqual(prepared.totals, { ready: 1, review: 2 });
+  for (const entry of prepared.products.slice(0, 2)) {
+    assert.ok(entry.issues.some((issue) => issue.includes("Referencia duplicada en la extracción")));
+    assert.equal(entry.status, "review");
+  }
+  assert.equal(prepared.products[2]?.product.reference, "M044-4096");
+  assert.equal(prepared.products[2]?.status, "ready");
+});

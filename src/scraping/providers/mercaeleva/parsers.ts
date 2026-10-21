@@ -96,6 +96,18 @@ const extractDescription = ($: cheerio.CheerioAPI): string | null => {
   return description;
 };
 
+const recoverDescriptionSpecs = (specs: Record<string, string>, description: string | null, title: string): void => {
+  if (!description || !/\b(?:carretilla|transpalet(?:a)?|apilador)\b/i.test(title)) return;
+  if (!specs["Tipo de mástil"]) {
+    const mast = description.match(/\bm[aá]stil\s+(?:tipo\s+)?(tr[ií]plex|d[uú]plex|s[ií]mplex|triple|doble|simple)\b/i)?.[1];
+    if (mast) specs["Tipo de mástil"] = mast;
+  }
+  if (!specs["Capacidad de carga"] && !specs["Capacidad máxima de elevación"]) {
+    const capacity = description.match(/\bcapacidad(?:\s+de\s+carga)?\s*:?\s*(\d[\d., ]{0,10})\s*kg\b/i)?.[1];
+    if (capacity) specs["Capacidad de carga"] = `${capacity.trim()} kg`;
+  }
+};
+
 const technicalHeadings = new Set([
   "general information", "información general", "power and performance", "potencia y rendimiento", "chassis", "chasis"
 ]);
@@ -176,10 +188,12 @@ export const parseMercaelevaProduct = (html: string, pageUrl: string): ParsedPro
   const content = normalize($("body").text());
   const fallbackDescription = normalize(content.match(/(?:Machine description|Descripción de la máquina)\s*(.*?)(?=\s+(?:Información general|General|Potencia y rendimiento)|$)/i)?.[1] ?? "");
   const description = extractDescription($) ?? cleanDescription(fallbackDescription);
-  const visiblePrice = content.match(/\b\d{1,3}(?:[\s\u00a0.]\d{3})+(?:[,.]\d{2})?\s*(?:EUR\b|€)/i)?.[0]
-    ?? content.match(/\b\d+(?:[,.]\d{2})?\s*(?:EUR\b|€)/i)?.[0]
+  const visibleHeader = normalize($("h1").first().nextUntil("h2").text()).slice(0, 600);
+  const visiblePrice = visibleHeader.match(/^(?:precio(?:\s+de\s+venta)?\s*:?\s*)?(\d{1,3}(?:[\s\u00a0.]\d{3})+(?:[,.]\d{2})?\s*(?:EUR\b|€))/i)?.[1]
+    ?? visibleHeader.match(/^(?:precio(?:\s+de\s+venta)?\s*:?\s*)?(\d+(?:[,.]\d{2})?\s*(?:EUR\b|€))/i)?.[1]
     ?? null;
   const specs = collectSpecs($);
+  recoverDescriptionSpecs(specs, description, title);
   const embedded = extractEmbeddedMachineMetadata(html, reference);
   const price = visiblePrice ?? extractEmbeddedMachinePrice(html, reference);
   const visibleImages = collectProductImages($, pageUrl, [

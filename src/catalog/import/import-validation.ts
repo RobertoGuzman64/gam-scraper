@@ -2,6 +2,20 @@ import type { ImportCandidate, ImportCatalog } from "./prepare.js";
 
 const validText = (input: unknown): input is string => typeof input === "string" && input.trim().length > 0;
 
+const isUsedLeafCategory = (categoryId: number, catalog: ImportCatalog): boolean => {
+  const roots = catalog.categories.filter((item) => item.name === "Maquinaria de Ocasión");
+  if (roots.length !== 1 || catalog.categories.some((item) => item.parentId === categoryId)) return false;
+  const categories = new Map(catalog.categories.map((item) => [item.id, item]));
+  const visited = new Set<number>();
+  let parentId = categories.get(categoryId)?.parentId ?? null;
+  while (parentId !== null && !visited.has(parentId)) {
+    if (parentId === roots[0]?.id) return true;
+    visited.add(parentId);
+    parentId = categories.get(parentId)?.parentId ?? null;
+  }
+  return false;
+};
+
 export const descriptionImportIssue = (description: string | null, descriptionGeneral: string | null): string | null => {
   if (!validText(description)) {
     return validText(descriptionGeneral)
@@ -24,7 +38,8 @@ export const validateImportCandidate = (product: ImportCandidate, catalog: Impor
   if (!validText(product.title)) issues.push("Título ausente");
   if (product.condition !== "Segunda_Mano") issues.push("Condición incompatible o no confirmada para importación");
   if (!category || category.name !== product.category ||
-    catalog.categories.filter((item) => item.name === product.category).length !== 1) {
+    catalog.categories.filter((item) => item.name === product.category).length !== 1 ||
+    !isUsedLeafCategory(category.id, catalog)) {
     issues.push("Categoría no coincide de forma única con el backend");
   }
   if (product.price === null || !Number.isFinite(product.price) || product.price <= 0) issues.push("Precio ausente o inválido");

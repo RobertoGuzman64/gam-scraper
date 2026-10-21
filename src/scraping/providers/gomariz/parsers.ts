@@ -50,9 +50,11 @@ const collectSpecs = (source: string): SpecsMap => {
   const keys = [
     "Altura plataforma", "Altura de trabajo", "Alcance lateral", "Altura almacenaje",
     "Altura", "Longitud", "Anchura", "Peso", "Motor", "Capacidad",
-    "Potencia motor", "Potencia", "Combustible", "Tipo de combustible", "Tipo de motor", "Consumo"
+    "Potencia motor", "Potencia", "Combustible", "Tipo de combustible", "Tipo de motor", "Consumo",
+    "Voltaje", "Tensión", "Anchura limpieza", "Ancho de limpieza",
+    "Capacidad de trabajo máxima", "Velocidad máxima", "Altura del mástil", "Nº y tipo de focos"
   ];
-  const section = source.match(/(?:Dimensiones|Especificaciones técnicas)\s*(.*?)(?:Ver ficha técnica|Comparador|¿Te interesa|Máquinas similares|$)/is)?.[1] ?? "";
+  const section = source.match(/(?:Dimensiones|Especificaciones técnicas)\s+(?=(?:Altura|Alcance|Longitud|Anchura|Ancho|Peso|Motor|Potencia|Combustible|Voltaje|Tensión|Capacidad|Velocidad|Consumo|Nº y tipo de focos)\b)(.*?)(?:Ver ficha técnica|Comparador|¿Te interesa|Máquinas similares|$)/is)?.[1] ?? "";
   const sorted = [...keys].sort((a, b) => b.length - a.length);
   const fieldPattern = new RegExp(`(${sorted.join("|")}):\\s*(.*?)(?=\\s+(?:${sorted.join("|")}):|\\s+Especificaciones técnicas|$)`, "giu");
   for (const match of section.matchAll(fieldPattern)) {

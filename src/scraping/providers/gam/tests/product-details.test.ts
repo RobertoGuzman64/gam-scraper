@@ -75,3 +75,63 @@ test("GAM: conserva etiquetas reales y descarta valores convertidos en etiquetas
   assert.equal(specs["12 meses"], undefined);
   assert.equal(specs["1,72X0,76"], undefined);
 });
+
+
+test("GAM: recupera referencias comerciales del encabezado sin tomar referencias relacionadas", () => {
+  const html = fixture(`<section class="product-header"><p>Referencia: IB-01953</p></section>
+    <div class="related-products"><p>Referencia: JP-JTC-12</p></div>`);
+  assert.equal(parseProductPage(html, base).externalReference, "IB-01953");
+  const withoutOwn = fixture(`<div class="related-products"><p>Referencia: JP-JTC-12</p></div>`);
+  assert.equal(parseProductPage(withoutOwn, base).externalReference, null);
+});
+
+test("GAM: únicamente extrae atributos técnicos explícitos de la ficha principal", () => {
+  const html = fixture(`<section class="product-description-short">
+    <p>Altura de trabajo: 11 m. Tipo de mástil: Tríplex.</p>
+  </section><dl><dt>Capacidad de carga (kg)</dt><dd>220 kg</dd></dl>
+  <section class="related-products"><dl>
+    <dt>Altura de trabajo</dt><dd>16 m</dd>
+    <dt>Nº de serie</dt><dd>AJENO-01</dd>
+  </dl><table><tr><td>Tipo de mástil</td><td>Simple</td></tr></table></section>`);
+  const parsed = parseProductPage(html, base);
+  assert.equal(parsed.specs["Altura de trabajo"], "11 m");
+  assert.equal(parsed.specs["Tipo de mástil"], "Tríplex");
+  assert.equal(parsed.specs["Capacidad de carga (kg)"], "220 kg");
+  assert.equal(parsed.specs["Nº de serie"], undefined);
+  assert.equal(parsed.serialNumber, null);
+});
+
+test("GAM: conserva alturas distintas y rechaza declaraciones explícitas contradictorias", () => {
+  const html = fixture(`<div class="product-description-short">
+    Altura de trabajo: 10 m. Altura de trabajo: 12 m. Altura de elevación: 8 m.
+  </div>`);
+  const parsed = parseProductPage(html, base);
+  assert.equal(parsed.specs["Altura de trabajo"], undefined);
+  assert.equal(parsed.specs["Altura de elevación"], "8 m");
+  const onlyElevation = parseProductPage(fixture(`<div class="product-description-short">Altura de elevación: 11 metros</div>`), base);
+  assert.equal(onlyElevation.specs["Altura de trabajo"], undefined);
+});
+
+test("GAM: el valor técnico estructurado prevalece frente al texto promocional", () => {
+  const html = fixture(`<div class="product-description-short">Altura de trabajo: 11 m.</div>
+    <dl><dt>Altura de trabajo</dt><dd>10 m</dd></dl>`);
+  assert.equal(parseProductPage(html, base).specs["Altura de trabajo"], "10 m");
+});
+
+test("GAM: no importa enlaces PDF de máquinas relacionadas", () => {
+  const html = fixture(`<a href="/docs/ficha-tecnica-6934.pdf">Descargar ficha técnica</a>
+    <div class="related-products"><a href="/docs/ficha-tecnica-otra.pdf">Otra ficha</a></div>`);
+  assert.equal(parseProductPage(html, base).technicalSheetUrl, "https://online.gamrentals.com/docs/ficha-tecnica-6934.pdf");
+  const related = fixture(`<div class="related-products"><a href="/docs/ficha-tecnica-otra.pdf">Ficha técnica</a></div>`);
+  assert.equal(parseProductPage(related, base).technicalSheetUrl, null);
+});
+
+
+test("GAM: un atributo técnico publicado solo en productos relacionados no se asigna al principal", () => {
+  const html = fixture(`<section class="related-products">
+    <div class="product-description-short">Altura de trabajo: 15 m. Tipo de mástil: Simple.</div>
+  </section>`);
+  const parsed = parseProductPage(html, base);
+  assert.equal(parsed.specs["Altura de trabajo"], undefined);
+  assert.equal(parsed.specs["Tipo de mástil"], undefined);
+});

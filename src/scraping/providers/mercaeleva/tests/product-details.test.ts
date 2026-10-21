@@ -89,3 +89,38 @@ test("Mercaeleva: no duplica una descripción única ni inventa datos ausentes",
   assert.equal(result.specs?.["Altura de elevación"], undefined);
   assert.equal(result.price, null);
 });
+
+test("Mercaeleva: precio del producto no se toma de maquinaria relacionada", () => {
+  const result = parseMercaelevaProduct(`<html><body><h1>MB ESL122 Apilador Eléctrico</h1>
+    <p>Precio a consultar</p><h2>Machine description</h2><p>Apilador usado.</p>
+    <h2>Productos relacionados</h2><a>Otra máquina 20.500,00 EUR</a>
+    <script type="application/json">${state([])}</script></body></html>`, url);
+  assert.equal(result.price, null);
+  assert.equal(result.longDescription, "Apilador usado.");
+});
+
+test("Mercaeleva: no toma una oferta cercana si la propia ficha dice precio a consultar", () => {
+  const result = parseMercaelevaProduct(`<html><body><h1>MB ESL122 Apilador Eléctrico</h1>
+    <p>Precio a consultar</p><div>Máquinas relacionadas: 12.500 EUR</div>
+    <h2>Machine description</h2><p>Apilador usado.</p></body></html>`, url);
+  assert.equal(result.price, null);
+});
+
+test("Mercaeleva: aprovecha el mástil y la capacidad explícitos de la descripción sin inventar alturas", () => {
+  const result = parseMercaelevaProduct(`<html><body><h1>BT SWE 160 APILADOR ELECTRICO</h1>
+    <h2>Machine description</h2><p>Apilador eléctrico. Mástil TRÍPLEX. CAPACIDAD 1600 KG.</p>
+    </body></html>`, url);
+  assert.equal(result.specs?.["Tipo de mástil"], "TRÍPLEX");
+  assert.equal(result.specs?.["Capacidad de carga"], "1600 kg");
+  assert.equal(result.specs?.["Altura de elevación"], undefined);
+  assert.equal(result.shortDescription, null);
+});
+
+test("Mercaeleva: no atribuye datos sin etiquetar ni mezcla atributos de máquinas diferentes", () => {
+  const result = parseMercaelevaProduct(`<html><body><h1>BT SWE 160 APILADOR ELECTRICO</h1>
+    <h2>Machine description</h2><p>Otros productos: 1600 KG, mástil opcional. ALTURA DE TRABAJO 6 m.</p>
+    </body></html>`, url);
+  assert.equal(result.specs?.["Tipo de mástil"], undefined);
+  assert.equal(result.specs?.["Capacidad de carga"], undefined);
+  assert.equal(result.specs?.["Altura de elevación"], undefined);
+});

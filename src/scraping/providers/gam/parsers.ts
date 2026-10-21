@@ -3,6 +3,7 @@ import type { SpecsMap, SpecValue } from "../../../contracts/catalog.js";
 import { collectProductImages } from "../../parsing/image-gallery.js";
 import { extractGamGallery } from "./gallery.js";
 import { distinguishDescriptions } from "../../../shared/descriptions.js";
+import { extractGamPrice } from "./price.js";
 
 export const normalizeSpace = (s: string): string => s.replace(/\s+/g, " ").trim();
 
@@ -131,11 +132,13 @@ export const extractCategoryLinksFromPage = (pageUrl: string, html: string): rea
   return [...links];
 };
 
+const unrelatedDetails = "header, nav, footer, .breadcrumb, .related-products, .product-miniature, .product-accessories, .featured-products, .crossselling, #js-product-list";
+
 const pickDtDd = ($: cheerio.CheerioAPI, label: string): string | null => {
   let found: string | null = null;
 
   $("dt").each((_, el) => {
-    if (found) return;
+    if (found || $(el).closest(unrelatedDetails).length) return;
     const dtText = normalizeSpace($(el).text());
     if (!dtText) return;
     if (dtText.replace(/\s*:+\s*$/, "").toLocaleLowerCase("es") !== label.toLocaleLowerCase("es")) return;
@@ -153,80 +156,6 @@ const extractTitle = ($: cheerio.CheerioAPI): string | null => {
   if (h1) return h1;
   const og = $('meta[property="og:title"]').attr("content");
   return og ? normalizeSpace(String(og)) : null;
-};
-
-const cleanPrice = (text: string): string | null => {
-  const value = normalizeSpace(text);
-  if (/\b(?:consultar|a consultar|bajo pedido|sin precio)\b/i.test(value)) return null;
-  const match = value.match(/(?:\d{1,3}(?:[.\s\u00a0]\d{3})+|\d+)(?:,\d{1,2}|\.\d{1,2})?/);
-  if (!match) return null;
-  const raw = match[0].replace(/[\s\u00a0]/g, "");
-  const comma = raw.lastIndexOf(",");
-  const dot = raw.lastIndexOf(".");
-  const separator = Math.max(comma, dot);
-  const decimals = separator >= 0 && raw.length - separator - 1 <= 2;
-  const normalized = decimals
-    ? `${raw.slice(0, separator).replace(/[.,]/g, "")}.${raw.slice(separator + 1)}`
-    : raw.replace(/[.,]/g, "");
-  const amount = Number(normalized);
-  return Number.isFinite(amount) && amount > 0 ? String(amount) : null;
-};
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-const productPriceFromStructuredData = ($: cheerio.CheerioAPI): string | null => {
-  for (const script of $("script[type='application/ld+json']").toArray()) {
-    const source = $(script).html();
-    if (!source) continue;
-    let parsed: unknown;
-    try { parsed = JSON.parse(source); } catch { continue; }
-    const candidates: unknown[] = Array.isArray(parsed) ? parsed : [parsed];
-    for (const candidate of candidates) {
-      if (!isRecord(candidate)) continue;
-      const graph = Array.isArray(candidate["@graph"]) ? candidate["@graph"] : [candidate];
-      for (const node of graph) {
-        if (!isRecord(node) || ![node["@type"]].flat().includes("Product")) continue;
-        const offers = Array.isArray(node.offers) ? node.offers : [node.offers];
-        for (const offer of offers) {
-          if (!isRecord(offer)) continue;
-          const price = offer.price ?? (isRecord(offer.priceSpecification) ? offer.priceSpecification.price : null);
-          if (typeof price === "number" || typeof price === "string") {
-            const normalized = cleanPrice(String(price));
-            if (normalized) return normalized;
-          }
-        }
-      }
-    }
-  }
-  return null;
-};
-
-const extractPrice = ($: cheerio.CheerioAPI): { readonly price: string | null; readonly priceText: string | null } => {
-  const candidates = [
-    $(".current-price [itemprop='price']").first().attr("content"),
-    $("meta[property='product:price:amount']").attr("content"),
-    $("[itemprop='offers'] [itemprop='price']").first().attr("content"),
-    $("#product .product-prices [data-price-amount]").first().attr("data-price-amount"),
-    $("#product .product-prices [data-price]").first().attr("data-price"),
-    $("[itemprop='price']").first().attr("content"),
-    $(".current-price .price").first().text(),
-    $(".product-price").first().text(),
-    $(".current-price").first().text(),
-    $(".our_price_display").first().text(),
-    pickDtDd($, "Precio")
-  ].map((text) => text ? normalizeSpace(text) : "").filter(Boolean);
-  for (const text of candidates) {
-    const price = cleanPrice(text);
-    if (price) {
-      const display = candidates.find((candidate) => /[€]|EUR/i.test(candidate)) ?? text;
-      return { price, priceText: display };
-    }
-  }
-  const structured = productPriceFromStructuredData($);
-  if (structured) return { price: structured, priceText: structured };
-  const priceScope = normalizeSpace($(".product-prices, .product-price, .current-price").first().text());
-  return { price: null, priceText: priceScope || null };
 };
 
 const validYear = (value: string | null): string | null => value?.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? null;
@@ -514,6 +443,7 @@ const extractSpecs = ($: cheerio.CheerioAPI): SpecsMap => {
   };
 
   $("dl").each((_, dl) => {
+    if ($(dl).closest(unrelatedDetails).length) return;
     $(dl).children("dt").each((_, el) => {
       const term = $(el);
       const definition = term.next();
@@ -524,6 +454,7 @@ const extractSpecs = ($: cheerio.CheerioAPI): SpecsMap => {
   });
 
   $("table tr").each((_, el) => {
+    if ($(el).closest(unrelatedDetails).length) return;
     const cells = $(el).children("th, td");
     if (cells.length !== 2) return;
     const name = normalizeLabel($(cells[0]).text());
@@ -532,6 +463,7 @@ const extractSpecs = ($: cheerio.CheerioAPI): SpecsMap => {
   });
 
   $(".product-features .data-sheet li, .product-features .product-feature").each((_, el) => {
+    if ($(el).closest(unrelatedDetails).length) return;
     const node = $(el);
     const name = node.find(".name, .feature-name, strong").first().text();
     const value = node.find(".value, .feature-value").first().text();
@@ -539,6 +471,26 @@ const extractSpecs = ($: cheerio.CheerioAPI): SpecsMap => {
   });
 
   return out;
+};
+
+const extractExplicitTechnicalSpecs = ($: cheerio.CheerioAPI): SpecsMap => {
+  const short = $(".product-description-short, #product-description-short")
+    .filter((_, element) => $(element).closest(unrelatedDetails).length === 0)
+    .first();
+  const text = [short.text(), $("meta[name='description']").attr("content") ?? ""].filter(Boolean).join("\n");
+  const expressions: readonly { readonly key: string; readonly pattern: RegExp }[] = [
+    { key: "Altura de trabajo", pattern: /\baltura\s+(?:m[aá]xima\s+)?de\s+trabajo\s*[:：]\s*(\d+(?:[.,]\d+)?\s*(?:m|metros?|mm))\b/gi },
+    { key: "Altura de elevación", pattern: /\baltura\s+de\s+elevaci[oó]n\s*[:：]\s*(\d+(?:[.,]\d+)?\s*(?:m|metros?|mm))\b/gi },
+    { key: "Tipo de mástil", pattern: /\btipo\s+de\s+m[aá]stil\s*[:：]\s*(simple|d[uú]plex|tr[ií]plex|cu[aá]druplex)\b/gi }
+  ];
+  const found: Record<string, SpecValue> = {};
+  for (const { key, pattern } of expressions) {
+    const matches = [...text.matchAll(pattern)].map((match) => normalizeSpace(match[1] ?? ""));
+    if (matches.length && matches.every((value) => fold(value) === fold(matches[0] ?? ""))) {
+      found[key] = matches[0]!;
+    }
+  }
+  return found;
 };
 
 const extractBreadcrumbs = ($: cheerio.CheerioAPI): readonly string[] => {
@@ -558,6 +510,7 @@ const extractBreadcrumbs = ($: cheerio.CheerioAPI): readonly string[] => {
 const extractPdf = ($: cheerio.CheerioAPI, pageUrl: string): string | null => {
   const anchors = $("main a[href], #content a[href], .product-container a[href]");
   for (const element of anchors.toArray()) {
+    if ($(element).closest(unrelatedDetails).length) continue;
     const href = $(element).attr("href");
     if (!href) continue;
     try {
@@ -584,8 +537,25 @@ const extractExternalReference = ($: cheerio.CheerioAPI): string | null => {
     const match = pickDtDd($, label);
     if (match) return match;
   }
-  const source = normalizeSpace($(".product-information, .product-details, .product-features").first().text());
-  return source.match(/\b(?:referencia|ref\.?|código\s*GAM)\s*:\s*([A-Z]{2,}[-\w]+)\b/i)?.[1] ?? null;
+  const source = $(".product-reference, .product-sku, [itemprop='sku'], [data-product-reference]")
+    .filter((_, element) => $(element).closest(unrelatedDetails).length === 0)
+    .first();
+  const fromSource = source.attr("content") ?? source.attr("data-product-reference") ?? normalizeSpace(source.text());
+  const direct = fromSource.match(/(?:referencia|ref\.?|c[oó]digo(?:\s+gam)?)\s*:\s*([\w-]+)/i)?.[1]
+    ?? (source.length && /^[\w-]+$/.test(fromSource.trim()) ? fromSource.trim() : null);
+  if (direct) return direct;
+
+  const container = $("main, #content, #product").first();
+  if (!container.length) return null;
+  const clean = container.clone();
+  clean.find(unrelatedDetails).remove();
+  for (const element of clean.find("p, li, td, th, span, div, section").toArray()) {
+    const value = normalizeSpace($(element).text());
+    const match = value.match(/^(?:referencia|ref\.?|c[oó]digo(?:\s+gam)?)\s*:\s*([A-Z0-9][\w-]{2,})\b/i);
+    if (match?.[1]) return match[1];
+  }
+  const text = normalizeSpace(clean.text()).split(/(?:¿no es lo que estabas buscando\?|productos relacionados|categor[ií]as relacionadas)/i)[0] ?? "";
+  return text.match(/\b(?:referencia|ref\.?|c[oó]digo(?:\s+gam)?)\s*:\s*([A-Z0-9][\w-]{2,})\b/i)?.[1] ?? null;
 };
 
 export const parseProductPage = (html: string, pageUrl: string): {
@@ -617,8 +587,10 @@ export const parseProductPage = (html: string, pageUrl: string): {
   const title = extractTitle($);
   const longDescription = extractLongDescription($);
   const descriptions = distinguishDescriptions(extractShortDescription($), longDescription);
-  const { price, priceText } = extractPrice($);
-  const specs = extractSpecs($);
+  const { price, priceText } = extractGamPrice($, pageUrl, title);
+  const extractedSpecs = extractSpecs($);
+  const labeledSpecs = extractExplicitTechnicalSpecs($);
+  const specs: SpecsMap = { ...labeledSpecs, ...extractedSpecs };
   const { year, source: yearSource } = extractYear($, title, pageUrl, specs);
   const breadcrumbs = extractBreadcrumbs($);
   const lineage = breadcrumbs.filter((part) => part !== title);
