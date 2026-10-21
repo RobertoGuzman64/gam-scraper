@@ -51,8 +51,8 @@ const createBatch = async (dir: string, records: readonly ProductRecord[] = [rec
   return { paths, summary, preparation, changes };
 };
 
-const check = (dir: string) => validateCatalogPublication({
-  providerId: "mercaeleva", outputDir: dir, outputPrefix: "lote", maxAgeHours: 48
+const check = (dir: string, providerId = "mercaeleva") => validateCatalogPublication({
+  providerId, outputDir: dir, outputPrefix: "lote", maxAgeHours: 48
 });
 
 test("valida lote coherente con referencias reales y marca los pendientes", async () => {
@@ -67,6 +67,58 @@ test("valida lote coherente con referencias reales y marca los pendientes", asyn
     const warnings = await check(dir);
     assert.equal(warnings.status, "review");
     assert.equal(warnings.suspectedMissing, 1);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("preflight y Excel admiten maquinaria nueva y usada sin descartar las fichas sin precio", async (t) => {
+  const logs: string[] = [];
+  t.mock.method(console, "log", (...values: unknown[]) => { logs.push(values.map(String).join(" ")); });
+  const dir = await mkdtemp(join(tmpdir(), "eq-new-used-export-"));
+  try {
+    const newMachine: ProductRecord = {
+      ...record,
+      providerId: "gam", categoryKey: "elevacion-nueva", categoryName: "Plataformas elevadoras nuevas",
+      url: "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/99999-maquina",
+      reference: "GAM-NUEVA", title: "Plataforma de tijera eléctrica XCMG",
+      condition: "Nuevo", specs: { "Altura de trabajo": "8 m" }
+    };
+    const usedMachine: ProductRecord = {
+      ...newMachine, categoryKey: "elevacion",
+      url: "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/88888-maquina",
+      reference: "GAM-USADA", title: "Plataforma de tijera eléctrica usada", condition: "Segunda mano"
+    };
+    const noPrice: ProductRecord = {
+      ...newMachine,
+      url: "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/77777-maquina",
+      reference: "GAM-SIN-PRECIO", price: null
+    };
+    const batch = await createBatch(dir, [newMachine, usedMachine, noPrice]);
+    assert.deepEqual(batch.preparation.products.map((entry) => entry.status), ["ready", "ready", "review"]);
+    assert.deepEqual(batch.preparation.products.map((entry) => entry.product.condition), ["Nuevo", "Segunda_Mano", "Nuevo"]);
+    assert.equal(batch.preparation.products[2]?.product.price, null);
+    const checked = await check(dir, "gam");
+    assert.equal(checked.productCount, 3);
+    assert.equal(checked.ready, 2);
+    assert.equal(checked.review, 1);
+    const inventory = join(dir, "inventory.csv");
+    const output = join(dir, "altas.xlsx");
+    await writeFile(inventory, "companyID,reference\n45,YA-EXISTE\n");
+    const args = ["--provider", "gam", "--companyID", "45", "--preparation", batch.paths.preparation,
+      "--existing", inventory, "--out", output];
+    await runExport([...args, "--dry-run"]);
+    assert.match(logs.join("\n"), /Altas: 2 \| Existentes: 0 \| Revisar: 1 \| Duplicados: 0/);
+    assert.match(logs.join("\n"), /Condiciones de las altas: Nuevo: 1 \| Segunda_Mano: 1/);
+    await assert.rejects(readFile(output), /ENOENT/);
+    await runExport([...args, "--confirm-inventory"]);
+    assert.equal((await readFile(output)).readUInt32LE(0), 0x04034b50);
+    const report: unknown = JSON.parse(await readFile(`${output}.report.json`, "utf8"));
+    assert.ok(report && typeof report === "object" && "total" in report && report.total === 3);
+    assert.ok("newProducts" in report && report.newProducts === 2);
+    assert.ok("reviewProducts" in report && report.reviewProducts === 1);
+    assert.match(JSON.stringify(report), /GAM-SIN-PRECIO/);
+    assert.deepEqual(JSON.parse(await readFile(batch.paths.preparation, "utf8")), batch.preparation);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -121,6 +173,7 @@ test("preflight rechaza ready que el exportador descartaría aunque los hashes s
     const original = batch.preparation.products[0];
     assert.ok(original);
     const scenarios = [
+      { name: "condición", product: { ...original.product, condition: null }, reason: /Condición incompatible/ },
       { name: "precio", product: { ...original.product, price: null }, reason: /Precio ausente o inválido/ },
       { name: "categoría", product: { ...original.product, categorySellID: 99999 }, reason: /Categoría no coincide/ },
       { name: "imagen", product: { ...original.product, images: ["file:///local.jpg"] }, reason: /URL de imagen/ },

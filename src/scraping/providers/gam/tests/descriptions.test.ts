@@ -35,9 +35,9 @@ test("GAM: no copia la descripción larga al campo corto por ausencia de texto S
   assert.equal(result.longDescription, "Solo hay una descripción real.");
 });
 
-test("GAM: no duplica metadatos cuando contienen el mismo texto que la descripción", () => {
+test("GAM: conserva metadatos SEO publicados aunque coincidan con la descripción general", () => {
   const result = parseProductPage(`<html><head><meta property="og:description" content="Máquina revisada."></head><body>
     <h1>JLG E300AJP</h1><div id="description"><p>Máquina revisada.</p></div></body></html>`, url);
-  assert.equal(result.shortDescription, null);
+  assert.equal(result.shortDescription, "Máquina revisada.");
   assert.equal(result.longDescription, "Máquina revisada.");
 });

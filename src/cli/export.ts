@@ -119,7 +119,11 @@ export const runExport = async (args: readonly string[]): Promise<void> => {
   };
   status.stop();
   console.log(`EXPORTACIÓN | ${options.providerId.toUpperCase()} | ${options.dryRun ? "SIMULACIÓN" : "PLAN DE ALTAS"}`);
-  console.log(`  Nuevos: ${plan.report.newProducts} | Existentes: ${plan.report.existingProducts} | Revisar: ${plan.report.reviewProducts} | Duplicados: ${plan.report.duplicateReferences}`);
+  const conditionColumn = plan.headers.indexOf("Condición *");
+  const newMachines = plan.rows.filter((row) => row[conditionColumn] === "Nuevo").length;
+  const usedMachines = plan.rows.filter((row) => row[conditionColumn] === "Segunda_Mano").length;
+  console.log(`  Altas: ${plan.report.newProducts} | Existentes: ${plan.report.existingProducts} | Revisar: ${plan.report.reviewProducts} | Duplicados: ${plan.report.duplicateReferences}`);
+  console.log(`  Condiciones de las altas: Nuevo: ${newMachines} | Segunda_Mano: ${usedMachines}`);
   console.log(`  Inventario: ${inventory.references.size} referencias`);
   if (args.includes("--verbose")) console.log(JSON.stringify(report, null, 2));
   if (options.dryRun) {

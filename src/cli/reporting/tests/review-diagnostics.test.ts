@@ -3,12 +3,12 @@ import test from "node:test";
 import { formatReviewDiagnostics } from "../review-diagnostics.js";
 import type { PreparedProduct } from "../../../catalog/import/prepare.js";
 
-const entry = (reference: string | null, issues: readonly string[], status: PreparedProduct["status"] = "review"): PreparedProduct => ({
+const entry = (reference: string | null, issues: readonly string[], status: PreparedProduct["status"] = "review", condition: PreparedProduct["product"]["condition"] = null): PreparedProduct => ({
   status,
   issues,
   product: {
     providerId: "gam", sourceUrl: `https://example.com/${reference ?? "sin-referencia"}`,
-    reference, title: "Plataforma", categorySellID: null, category: null, condition: null, price: null,
+    reference, title: "Plataforma", categorySellID: null, category: null, condition, price: null,
     description_title: "Plataforma", description: null, description_general: null,
     image: null, images: [], spec: {}, attributes: []
   }
@@ -49,4 +49,24 @@ test("conserva literalmente los motivos desconocidos y de serie y muestra refere
 test("no genera diagnóstico ni modifica el estado de un lote sin review", () => {
   assert.deepEqual(formatReviewDiagnostics([entry("A1", [], "ready")]), []);
   assert.deepEqual(formatReviewDiagnostics([]), []);
+});
+
+test("diagnóstico separa las cohortes comerciales sin inventar causas ni cambiar estados", () => {
+  const entries = [
+    entry("N1", ["Precio no disponible o inválido"], "review", "Nuevo"),
+    entry("N2", [], "ready", "Nuevo"),
+    entry("U1", ["Atributo obligatorio ausente: Altura de trabajo"], "review", "Segunda_Mano"),
+    entry("U2", ["Número de serie X compartido por referencias U2, U3; revisar identidad de origen"], "review", "Segunda_Mano"),
+    entry("?", ["Condición comercial no confirmada (Nuevo o Segunda_Mano)"], "review")
+  ];
+  const lines = formatReviewDiagnostics(entries).join("\n");
+  assert.match(lines, /Nuevo: 2 fichas \| ready: 1 \| review: 1/);
+  assert.match(lines, /Segunda_Mano: 2 fichas \| ready: 0 \| review: 2/);
+  assert.match(lines, /Sin confirmar: 1 ficha \| ready: 0 \| review: 1/);
+  assert.match(lines, /Precio no disponible o inválido.*diagnóstico: requisito Excel; origen por contrastar/);
+  assert.match(lines, /Atributo obligatorio ausente.*diagnóstico: requisito Excel; origen por contrastar/);
+  assert.match(lines, /Número de serie X.*diagnóstico: integridad de identidad/);
+  assert.match(lines, /Condición comercial no confirmada.*diagnóstico: equivalencia o condición por verificar/);
+  assert.match(lines, /no fallos de extracción demostrados/);
+  assert.equal(entries[1]?.status, "ready");
 });

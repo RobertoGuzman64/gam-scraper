@@ -68,13 +68,13 @@ test("producto completo se prepara con categorías y atributos reales, sin compa
   assert.equal("companyID" in record.product, false);
 });
 
-test("la preparación deja una única descripción en el campo largo, sin inventar resumen", async () => {
+test("preparación conserva la descripción corta publicada aunque falte o coincida con la general", async () => {
   const catalog = await loadImportCatalog();
   const duplicated = prepareProduct({ ...base, shortDescription: "Máquina revisada.  ", longDescription: "Máquina revisada." }, catalog);
-  assert.equal(duplicated.product.description, null);
+  assert.equal(duplicated.product.description, "Máquina revisada.");
   assert.equal(duplicated.product.description_general, "Máquina revisada.");
-  assert.equal(duplicated.status, "review");
-  assert.ok(duplicated.issues.some((issue) => issue.includes("Descripción corta ausente")));
+  assert.equal(duplicated.status, "ready");
+  assert.deepEqual(duplicated.issues, []);
 
   const distinct = prepareProduct(base, catalog);
   assert.equal(distinct.product.description, base.shortDescription);
@@ -88,10 +88,10 @@ test("la preparación deja una única descripción en el campo largo, sin invent
   assert.ok(longOnly.issues.some((issue) => issue.includes("backend exige una descripción corta")));
 
   const shortOnly = prepareProduct({ ...base, longDescription: null }, catalog);
-  assert.equal(shortOnly.product.description, null);
-  assert.equal(shortOnly.product.description_general, base.shortDescription);
-  assert.equal(shortOnly.status, "review");
-  assert.ok(shortOnly.issues.some((issue) => issue.includes("Descripción corta ausente")));
+  assert.equal(shortOnly.product.description, base.shortDescription);
+  assert.equal(shortOnly.product.description_general, null);
+  assert.equal(shortOnly.status, "ready");
+  assert.deepEqual(shortOnly.issues, []);
 });
 
 test("la categoría genérica venta no se asigna arbitrariamente", async () => {

@@ -2,6 +2,15 @@ import type { PreparedProduct } from "../../catalog/import/prepare.js";
 
 const MAX_EXAMPLES = 3;
 
+const diagnosticKind = (reason: string): string => {
+  if (/^(?:Referencia ausente|Título ausente|Precio no disponible o inválido|Precio ausente o inválido|Descripción (?:corta ausente|ausente)|Imágenes válidas ausentes|Atributo obligatorio ausente:)/.test(reason)) {
+    return "requisito Excel; origen por contrastar";
+  }
+  if (/^(?:Categoría Equipzilla|Condición comercial)/.test(reason)) return "equivalencia o condición por verificar";
+  if (/^(?:Número de serie |Referencia duplicada en la extracción)/.test(reason)) return "integridad de identidad";
+  return "sin causa clasificada";
+};
+
 export const formatReviewDiagnostics = (products: readonly PreparedProduct[]): readonly string[] => {
   const groups = new Map<string, { count: number; only: number; references: string[] }>();
   let reviewed = 0;
@@ -9,8 +18,16 @@ export const formatReviewDiagnostics = (products: readonly PreparedProduct[]): r
   let multiple = 0;
   let withoutReasons = 0;
   let incidences = 0;
+  const conditions = new Map<string, { ready: number; review: number }>([
+    ["Nuevo", { ready: 0, review: 0 }],
+    ["Segunda_Mano", { ready: 0, review: 0 }],
+    ["Sin confirmar", { ready: 0, review: 0 }]
+  ]);
 
   for (const entry of products) {
+    const key = entry.product.condition ?? "Sin confirmar";
+    const cohort = conditions.get(key);
+    if (cohort) cohort[entry.status] += 1;
     if (entry.status !== "review") continue;
     reviewed += 1;
     const reasons = [...new Set(entry.issues)];
@@ -34,13 +51,15 @@ export const formatReviewDiagnostics = (products: readonly PreparedProduct[]): r
 
   const lines = [
     `  Diagnóstico review: ${reviewed} fichas | 1 motivo: ${single} | 2+ motivos: ${multiple} | sin motivo: ${withoutReasons} | incidencias: ${incidences}`,
+    "  Cohortes por condición (estado declarado; sin atribuir causas):",
+    ...[...conditions].map(([condition, counts]) => `    ${condition}: ${counts.ready + counts.review} ${counts.ready + counts.review === 1 ? "ficha" : "fichas"} | ready: ${counts.ready} | review: ${counts.review}`),
     "  Motivos (fichas únicas por motivo; solo = único bloqueo; con otros = bloqueo simultáneo):"
   ];
   const sorted = [...groups].sort(([leftReason, left], [rightReason, right]) =>
     right.count - left.count || leftReason.localeCompare(rightReason, "es"));
   for (const [reason, group] of sorted) {
-    lines.push(`    ${reason || "(motivo sin texto)"} | ${group.count} ${group.count === 1 ? "ficha" : "fichas"} | solo: ${group.only} | con otros: ${group.count - group.only} | refs: ${group.references.join(", ")}`);
+    lines.push(`    ${reason || "(motivo sin texto)"} | ${group.count} ${group.count === 1 ? "ficha" : "fichas"} | solo: ${group.only} | con otros: ${group.count - group.only} | refs: ${group.references.join(", ")} | diagnóstico: ${diagnosticKind(reason)}`);
   }
-  lines.push("  Causa de los bloqueos: no determinada por estos motivos; contrastar origen, CSV y contrato antes de corregir.");
+  lines.push("  Causa de los bloqueos: no determinada por estos motivos; las etiquetas indican requisitos o áreas de contraste, no fallos de extracción demostrados.");
   return lines;
 };

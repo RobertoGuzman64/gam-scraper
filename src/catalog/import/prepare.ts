@@ -24,7 +24,7 @@ export type ImportCandidate = {
   readonly title: string | null;
   readonly categorySellID: number | null;
   readonly category: string | null;
-  readonly condition: "Segunda_Mano" | null;
+  readonly condition: "Nuevo" | "Segunda_Mano" | null;
   readonly price: number | null;
   readonly description_title: string | null;
   readonly description: string | null;
@@ -93,16 +93,28 @@ const productAttributes = (record: ProductRecord, category: Category | null, cat
 
 export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): PreparedProduct => {
   const issues: string[] = [];
-  const category = resolveCategory(record, catalog.categories);
-  const images = imageUrls(record);
-  const price = normalizePrice(record.price);
-  const categoryOrigin = `${record.url} ${record.categoryKey}`;
-  const gamNewSection = record.providerId === "gam" && /nuev[oa]s?/i.test(categoryOrigin);
+  const gamCategory = record.providerId === "gam" ? record.categoryKey : "";
+  const gamPath = record.providerId === "gam" ? (() => {
+    try { return new URL(record.url).pathname.split("/").at(-2) ?? ""; }
+    catch { return ""; }
+  })() : "";
+  const gamNewSection = /(?:^|-)nuev[oa]s?(?:-|$)/i.test(gamCategory) ||
+    /(?:^|-)nuev[oa]s?(?:-|$)/i.test(gamPath);
+  const gamUsedSection = /(?:segunda-mano|de-ocasion|de-ocasión)/i.test(`${gamCategory} ${gamPath}`);
   const mercaelevaState = record.providerId === "mercaeleva" && typeof record.specs?.["Estado"] === "string"
     ? fold(record.specs["Estado"]) : null;
   const newInSource = mercaelevaState === "nuevo" || mercaelevaState === "nueva";
-  const contradictoryCondition = record.condition === "Segunda mano" && (gamNewSection || newInSource);
-  const condition = record.condition === "Segunda mano" && !contradictoryCondition ? "Segunda_Mano" : null;
+  const usedInSource = mercaelevaState === "usado" || mercaelevaState === "usada" ||
+    mercaelevaState === "segunda mano" || mercaelevaState === "de segunda mano";
+  const newEvidence = record.condition === "Nuevo" || gamNewSection || newInSource;
+  const usedEvidence = record.condition === "Segunda mano" || gamUsedSection || usedInSource;
+  const contradictoryCondition = newEvidence && usedEvidence;
+  const condition: ImportCandidate["condition"] = contradictoryCondition ? null :
+    record.condition === "Nuevo" || newInSource ? "Nuevo" :
+      record.condition === "Segunda mano" || usedInSource ? "Segunda_Mano" : null;
+  const category = resolveCategory(record, catalog.categories, condition ?? "Segunda_Mano");
+  const images = imageUrls(record);
+  const price = normalizePrice(record.price);
   const reference = record.reference?.trim() || null;
   const title = record.title?.trim() || null;
   const descriptions = distinguishDescriptions(record.shortDescription, record.longDescription);
@@ -110,9 +122,8 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   const descriptionGeneral = descriptions.long;
   const attributeResult = productAttributes(record, category, catalog);
 
-  if (contradictoryCondition) issues.push("Condición contradictoria con el origen de maquinaria nueva");
-  else if (record.condition === "Nuevo" || newInSource) issues.push("Maquinaria nueva: el contrato de importación actual solo admite Segunda_Mano");
-  else if (condition === null) issues.push("Condición de segunda mano no confirmada para el contrato de importación");
+  if (contradictoryCondition) issues.push("Condición comercial contradictoria entre la ficha y el origen");
+  else if (condition === null) issues.push("Condición comercial no confirmada (Nuevo o Segunda_Mano)");
   if (!reference) issues.push("Referencia ausente");
   if (!title) issues.push("Título ausente");
   if (!category) issues.push("Categoría Equipzilla sin correspondencia inequívoca");

@@ -21,7 +21,7 @@ const isCandidate = (input: unknown): input is ImportCandidate => {
     (input.title === null || typeof input.title === "string") &&
     (input.categorySellID === null || Number.isSafeInteger(input.categorySellID)) &&
     (input.category === null || typeof input.category === "string") &&
-    (input.condition === "Segunda_Mano" || input.condition === null) &&
+    (input.condition === "Nuevo" || input.condition === "Segunda_Mano" || input.condition === null) &&
     (input.price === null || (typeof input.price === "number" && Number.isFinite(input.price))) &&
     (input.description_title === null || typeof input.description_title === "string") &&
     (input.description === null || typeof input.description === "string") &&

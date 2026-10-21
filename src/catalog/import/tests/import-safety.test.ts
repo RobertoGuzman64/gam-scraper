@@ -64,3 +64,27 @@ test("exportación respeta categoría usada válida y bloquea resumen no publica
   assert.equal(blocked.report.reviewProducts, 1);
   assert.match(blocked.report.review[0]?.reason ?? "", /Descripción corta ausente/);
 });
+
+test("Excel admite descripción corta única o repetida y sigue exigiendo la corta real", async () => {
+  const catalog = await loadImportCatalog();
+  const prepared = prepareProduct(record, catalog);
+  const inventory = readReferenceInventory("companyID,reference\n45,OTRA\n", 45);
+  for (const descriptions of [
+    { description: "Texto corto real", description_general: null },
+    { description: "Texto corto real", description_general: "Texto corto real" }
+  ]) {
+    const candidate = { ...prepared, status: "ready" as const, issues: [], product: {
+      ...prepared.product, ...descriptions
+    } };
+    const plan = planProductImport({ quality: "complete", published: true, products: [candidate] }, "mercaeleva", inventory, catalog);
+    assert.equal(plan.report.newProducts, 1);
+    assert.equal(plan.report.reviewProducts, 0);
+    assert.equal(plan.rows[0]?.[7], descriptions.description_general ?? "");
+  }
+  const invalid = { ...prepared, status: "ready" as const, issues: [], product: {
+    ...prepared.product, description: null, description_general: "Solo texto largo"
+  } };
+  const plan = planProductImport({ quality: "complete", published: true, products: [invalid] }, "mercaeleva", inventory, catalog);
+  assert.equal(plan.report.newProducts, 0);
+  assert.match(plan.report.review[0]?.reason ?? "", /Descripción corta ausente/);
+});

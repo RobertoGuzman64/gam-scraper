@@ -63,10 +63,6 @@ for (const company of ["gam", "gomariz", "mercaeleva"]) {
       }
     }
     for (const result of output.products) {
-      const { description, description_general } = result.product;
-      if (description && description_general) {
-        assert.notEqual(description.replace(/\s+/g, " ").trim(), description_general.replace(/\s+/g, " ").trim());
-      }
       if (result.status !== "ready") continue;
       assert.equal(result.issues.length, 0);
       assert.notEqual(result.product.categorySellID, null);

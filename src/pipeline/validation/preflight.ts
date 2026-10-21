@@ -131,7 +131,6 @@ export const validateCatalogPublication = async (options: PreflightOptions): Pro
     }
     urls.add(url);
     if (entry.status === "ready") {
-      if (entry.product.condition !== "Segunda_Mano") throw new Error("Producto ready sin condición de importación compatible");
       if (entry.issues.length > 0) throw new Error("Producto marcado ready con incidencias");
       const candidateIssues = validateImportCandidate(entry.product, catalog);
       if (candidateIssues.length > 0) {

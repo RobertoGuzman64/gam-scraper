@@ -85,6 +85,43 @@ test("solo exporta nuevos preparados, excluyendo existentes, reviews y referenci
   assert.equal(plan.rows[0]?.[4], 20500);
 });
 
+test("un mismo XLSX contiene condiciones nuevas y usadas con atributos y precios reales", async () => {
+  const catalog = await loadImportCatalog();
+  const newMachine: ProductRecord = {
+    ...record, providerId: "gam", categoryKey: "elevacion-nueva",
+    url: "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/99999-maquina",
+    reference: "GAM-NEW", title: "Plataforma de tijera eléctrica XCMG", condition: "Nuevo",
+    specs: { "Altura de trabajo": "8 m" }
+  };
+  const usedMachine: ProductRecord = {
+    ...newMachine, categoryKey: "elevacion",
+    url: "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/88888-maquina",
+    reference: "GAM-USED", title: "Plataforma de tijera eléctrica usada", condition: "Segunda mano"
+  };
+  const noPrice: ProductRecord = {
+    ...newMachine,
+    url: "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/77777-maquina",
+    reference: "GAM-NO-PRICE", price: null
+  };
+  const document = await documentFor([newMachine, usedMachine, noPrice]);
+  const plan = planProductImport(document, "gam", readReferenceInventory("companyID,reference\n45,OTRA\n", 45), catalog);
+  assert.equal(plan.report.total, 3);
+  assert.equal(plan.report.newProducts, 2);
+  assert.equal(plan.report.reviewProducts, 1);
+  assert.equal(plan.report.review[0]?.reference, "GAM-NO-PRICE");
+  assert.match(plan.report.review[0]?.reason ?? "", /Precio no disponible o inválido/);
+  assert.equal(document.products[2]?.product.price, null);
+  assert.deepEqual(plan.rows.map((row) => [row[0], row[3]]), [
+    ["GAM-NEW", "Nuevo"], ["GAM-USED", "Segunda_Mano"]
+  ]);
+  assert.equal(plan.rows[0]?.[plan.headers.indexOf("Altura de trabajo (m)")], 8);
+  assert.equal(plan.rows[1]?.[plan.headers.indexOf("Altura de trabajo (m)")], 8);
+  const sheet = readZipXml(createProductsXlsx(plan.headers, plan.rows), "xl/worksheets/sheet1.xml");
+  assert.match(sheet, /<c r="D2" t="inlineStr"><is><t xml:space="preserve">Nuevo<\/t><\/is><\/c>/);
+  assert.match(sheet, /<c r="D3" t="inlineStr"><is><t xml:space="preserve">Segunda_Mano<\/t><\/is><\/c>/);
+  assert.doesNotMatch(sheet, /GAM-NO-PRICE/);
+});
+
 test("no acepta preparación parcial ni de un proveedor distinto", async () => {
   const input = await documentFor([record]);
   assert.throws(() => parsePreparation({ ...input, quality: "partial" }, "mercaeleva"), /completo/);
@@ -103,26 +140,32 @@ test("vuelve a comprobar campos y atributos aunque una entrada llegue marcada re
   assert.equal(plan.report.reviewProducts, 1);
 });
 
-test("la exportación rechaza descripciones ausentes o duplicadas aunque el documento indique ready", async () => {
+test("exportación rechaza falta de descripción corta pero permite general ausente o repetida", async () => {
   const catalog = await loadImportCatalog();
   const document = await documentFor([record]);
   const prepared = document.products[0];
   assert.ok(prepared);
-  const cases = [
-    { description: null, description_general: record.longDescription, reason: "Descripción corta ausente" },
-    { description: record.shortDescription, description_general: null, reason: "Descripción general ausente" },
-    { description: "Máquina revisada.", description_general: "  Máquina   revisada. ", reason: "duplicadas" }
+  const inventory = readReferenceInventory("companyID,reference\n45,OTRA\n", 45);
+  const longOnly = { ...document, products: [{ ...prepared, status: "ready" as const, issues: [], product: {
+    ...prepared.product, description: null, description_general: record.longDescription
+  } }] };
+  const blocked = planProductImport(longOnly, "mercaeleva", inventory, catalog);
+  assert.equal(blocked.report.newProducts, 0);
+  assert.equal(blocked.report.reviewProducts, 1);
+  assert.match(blocked.report.review[0]?.reason ?? "", /Descripción corta ausente/);
+
+  const allowed = [
+    { description: record.shortDescription, description_general: null },
+    { description: "Máquina revisada.", description_general: "  Máquina   revisada. " }
   ];
-  for (const entry of cases) {
-    const { reason, ...descriptions } = entry;
-    const input = {
-      ...document,
-      products: [{ ...prepared, status: "ready" as const, issues: [], product: { ...prepared.product, ...descriptions } }]
-    };
-    const plan = planProductImport(input, "mercaeleva", readReferenceInventory("companyID,reference\n45,OTRA\n", 45), catalog);
-    assert.equal(plan.report.newProducts, 0, reason);
-    assert.equal(plan.report.reviewProducts, 1, reason);
-    assert.match(plan.report.review[0]?.reason ?? "", new RegExp(reason));
+  for (const descriptions of allowed) {
+    const input = { ...document, products: [{ ...prepared, status: "ready" as const, issues: [], product: {
+      ...prepared.product, ...descriptions
+    } }] };
+    const plan = planProductImport(input, "mercaeleva", inventory, catalog);
+    assert.equal(plan.report.newProducts, 1);
+    assert.equal(plan.report.reviewProducts, 0);
+    assert.equal(plan.rows[0]?.[7], descriptions.description_general ?? "");
   }
 });
 
