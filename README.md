@@ -1,8 +1,10 @@
 # Equipzilla Scraper
 
-Herramienta de línea de comandos **Node.js + TypeScript** para extraer maquinaria de **GAM, Gomariz y Mercaeleva**, publicar catálogos CSV/JSON con trazabilidad y preparar, de forma separada, Excel de **altas** para el importador existente de Equipzilla. No expone API HTTP ni escribe en el backend.
+Herramienta de línea de comandos **Node.js + TypeScript** para extraer maquinaria **nueva y de segunda mano** de **GAM, Gomariz y Mercaeleva**, publicar catálogos CSV/JSON con trazabilidad y preparar, de forma separada, Excel de **altas** para el importador existente de Equipzilla. No expone API HTTP ni escribe en el backend. Existe además una vía JSON `POST /product/create/many` en el backend, **todavía no integrada**, cuyo uso debe decidirse y validarse por separado.
 
-> **Estado operativo (auditoría del 20/10/2026):** ninguna importación masiva ni ejecución desatendida del conjunto de proveedores está aprobada. En aquella extracción, Mercaeleva recuperó 20 de 221 anuncios visibles por un problema de paginación y gran parte de las fichas quedó pendiente de mapeo/revisión. La auditoría es una **fotografía histórica**, no una medición en tiempo real: [estado de extracciones](docs/ESTADO_EXTRACCIONES_2026-10-20.md).
+> **Objetivo funcional y definición de terminado:** [OBJETIVOS_SCRAPER.md](docs/OBJETIVOS_SCRAPER.md). El backend permite `Nuevo` y `Segunda_Mano`; **el scraper actualmente restringe su preparación a segunda mano**. Es una brecha de implementación prioritaria, no una política de EQUIPZILLA. Las fichas nuevas siguen conservándose en el catálogo extraído aunque aparezcan en `review`.
+
+> **Estado operativo:** ninguna importación masiva queda autorizada por esta documentación. La auditoría del 20/10/2026 (Mercaeleva 20/221) es **histórica**: [estado de extracciones](docs/ESTADO_EXTRACCIONES_2026-10-20.md). La línea base del **21/10/2026** es **1.374 máquinas** (GAM 1.010, Gomariz 143, Mercaeleva 221) con 748 nuevas bloqueadas por una **restricción local de preparación**, no del backend. Los totales de `ready/review` son de la extracción fechada, no de un entorno vivo.
 
 ## Instalación
 
@@ -119,6 +121,9 @@ También existen los scripts `normalize:gam:default`, `convert:gam:default` y `c
 
 ## Operación y documentación
 
+- [Objetivos, alcance real y aceptación](docs/OBJETIVOS_SCRAPER.md): finalidad para nuevas y usadas, brechas, prioridades y criterio de terminado.
+- [Contrato del importador Equipzilla](docs/EQUIPZILLA_INTEGRATION.md): Excel, campos y límites demostrados.
+- [Reglas de datos y preparación](docs/SCRAPER_DATA_RULES.md): trazabilidad de candidatos, publicación y restricciones locales.
 - [Arquitectura y contratos](docs/ARQUITECTURA.md): estructura actual, dependencias, datos y extensión de proveedores.
 - [Validación y aceptación](docs/VALIDACION.md): pruebas, control de cobertura y condiciones de importación.
 - [Despliegue y automatización](docs/DESPLIEGUE_AUTOMATICO.md): ejecución en servidor/Windows y requisitos cloud pendientes.

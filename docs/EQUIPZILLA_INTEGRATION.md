@@ -1,8 +1,10 @@
 # EQUIPZILLA_INTEGRATION.md
 
 **Contrato receptor documentado · Equipzilla / importación de productos de maquinaria**  
-**Fecha del análisis:** 20/10/2026.  
+**Fecha del análisis:** 20/10/2026; **recontrastado con `Marketplace-Back-develop.zip` aportado el 21/10/2026**.  
 **Procedencia:** código fuente de `Marketplace-Back-develop.zip` y del scraper para delimitar el emisor. **No se consultó una base de datos ni un entorno desplegado.** Lo descrito es comportamiento implementado en ese código, no evidencia de aceptación en producción.
+
+**Decisión de alcance del scraper:** EQUIPZILLA requiere **maquinaria nueva y de segunda mano**. `POST /product/import` admite `Nuevo` y `Segunda_Mano`; si el scraper deja las nuevas en `review` por una política de «solo ocasión», ese bloqueo procede del **emisor**, no de esta API. Objetivos y brechas de implementación: [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md). Esta referencia describe el **receptor**, no aprueba precios ni descripciones inexistentes.
 
 ## 1. Finalidad y límite exacto
 
@@ -134,7 +136,7 @@ Errores que el importador registra por fila: `row`, `reference`, `title` y `mess
 
 Operaciones próximas pero distintas:
 
-- `POST /product/create` y `POST /product/create/many`: otras rutas autenticadas de creación, con sus propios cuerpos JSON y validaciones. No son la entrada usada por el exportador Excel del scraper.
+- `POST /product/create` y **`POST /product/create/many`**: rutas autenticadas de creación por JSON. La segunda recibe `{products: [...]}`, verifica `companyID` por producto y usa `ProductValidator.createMany` / `create`. Exige `title`, `categorySellID`, `condition`, `companyID`, descripción corta, `reference`, imágenes y atributos obligatorios. **`price?: number` es opcional** en esta vía; `spec` puede persistirse. Devuelve `total`, `created`, `failed`, `products`, `errors` y permite resultados parciales. **No tiene validación de duplicados previos en BD ni *upsert*.** No la consume actualmente el scraper; requiere estudio de permisos, dominio y formato, antes de desarrollar un exportador o enviar datos. **No equiparar su contrato con el Excel**, que sí exige precio. Ver objetivos y decisión abierta en [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
 - `POST /product/compare`: recibe `{ products: ExternalProduct[] }`, donde cada producto tiene `{source: string, externalReference: string | null, productUrl: string, price: number | null}`. El validador solo reconoce `GAM` y `MERCA_ELEVA` en esta función, filtra referencias/URLs inválidas y genera una **comparación**; no importa productos ni es la ruta prevista para Gomariz. No debe confundirse con `/product/import`.
 - `GET /product/attributes/sell/:categoryID` (autenticada) y `GET /product/categories/product`: rutas de consulta relacionadas con metadatos; su disponibilidad en código **no significa que el scraper las consuma**.
 
@@ -147,7 +149,7 @@ Operaciones próximas pero distintas:
 - Valores efectivos en la BD destino (IDs de empresa, categorías activas, atributos asociados, existencia del logo 18), calidad del inventario de referencias y permisos reales disponibles para el operador.
 - Coincidencia entre `data/category/categorySell-flat.json` y `data/import/attributeCatalog.json` del scraper y los catálogos **actuales** del despliegue.
 - Disponibilidad o validez HTTP de todas las URLs de imágenes, almacenamiento remoto de imágenes y aceptación visual/publicación final.
-- Una API que consuma directamente `-preparation.json` o `ProductRecord`: **no se ha identificado como parte de este flujo**.
+- Una API que consuma directamente `-preparation.json` o `ProductRecord`: **no se ha identificado como parte de este flujo**. `POST /product/create/many` recibe un **JSON diferente** y no constituye compatibilidad directa.
 - Sincronización automática de altas, cambios, precios o bajas entre proveedor y Equipzilla: **no consta implementada en el camino documentado**.
 
 ## 8. Trazabilidad para mantener esta referencia

@@ -1,4 +1,7 @@
+import { readFile } from "node:fs/promises";
 import { LiveStatus, formatDuration } from "./reporting/live-status.js";
+import { formatReviewDiagnostics } from "./reporting/review-diagnostics.js";
+import { parsePreparation } from "../catalog/import/preparation-document.js";
 import { printCommandError } from "./reporting/errors.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -49,20 +52,33 @@ export const runPreflight = async (args: readonly string[]): Promise<void> => {
   const status = new LiveStatus();
   const startedAt = Date.now();
   status.update(`VALIDACIÓN | ${providerId.toUpperCase()} | comprobando catálogo | ${values.get("outDir") ?? provider.defaultOptions.outDir}`);
+  const outputDir = resolve(values.get("outDir") ?? provider.defaultOptions.outDir);
+  const outputPrefix = values.get("outPrefix") ?? provider.defaultOptions.outPrefix;
   let result: Awaited<ReturnType<typeof validateCatalogPublication>>;
   try {
     result = await validateCatalogPublication({
-    providerId,
-    outputDir: resolve(values.get("outDir") ?? provider.defaultOptions.outDir),
-    outputPrefix: values.get("outPrefix") ?? provider.defaultOptions.outPrefix,
-    maxAgeHours
+      providerId,
+      outputDir,
+      outputPrefix,
+      maxAgeHours
     });
   } finally {
     status.stop();
   }
+  let diagnostics: readonly string[] = [];
+  if (result.review > 0) {
+    const preparationText = await readFile(resolve(outputDir, `${outputPrefix}-preparation.json`), "utf8");
+    const preparation: unknown = JSON.parse(preparationText);
+    const products = parsePreparation(preparation, providerId).products;
+    if (products.length !== result.productCount || products.filter((entry) => entry.status === "review").length !== result.review) {
+      throw new Error("La preparación cambió durante la validación; repetir el comando");
+    }
+    diagnostics = formatReviewDiagnostics(products);
+  }
   console.log(`VALIDACIÓN | ${result.providerId.toUpperCase()} | ${result.status === "passed" ? "CONFORME" : "REVISIÓN"}`);
   console.log(`  Productos: ${result.productCount} | Listos: ${result.ready} | Revisar: ${result.review} | Posibles bajas: ${result.suspectedMissing}`);
   for (const warning of result.warnings) console.log(`  Aviso: ${warning}`);
+  for (const line of diagnostics) console.log(line);
   console.log(`  Resumen: ${result.summaryFile} | Duración: ${formatDuration(Date.now() - startedAt)}`);
   if (result.status === "review") process.exitCode = 2;
 };

@@ -7,6 +7,7 @@ import test from "node:test";
 import { prepareProduct } from "../../../catalog/import/prepare.js";
 import { loadImportCatalog } from "../../../catalog/import/catalog-loader.js";
 import { runExport } from "../../../cli/export.js";
+import { runPreflight } from "../../../cli/validate.js";
 import { validateCatalogPublication } from "../preflight.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 
@@ -20,20 +21,19 @@ const record: ProductRecord = {
   image: "https://example.com/1.jpg", images: ["https://example.com/1.jpg"], specs: { "Altura de trabajo": "16 m" }
 };
 
-const createBatch = async (dir: string) => {
+const createBatch = async (dir: string, records: readonly ProductRecord[] = [record]) => {
   const catalog = await loadImportCatalog();
-  const prepared = prepareProduct(record, catalog);
-  assert.equal(prepared.status, "ready");
+  const products = records.map((item) => prepareProduct(item, catalog));
   const start = new Date(Date.now() - 100).toISOString();
-  const csv = `providerId,url,reference\nmercaeleva,${record.url},${record.reference}\n`;
-  const preparation = { quality: "complete", published: true, products: [prepared] };
+  const csv = `providerId,url,reference\n${records.map((item) => `${item.providerId},${item.url},${item.reference ?? ""}\n`).join("")}`;
+  const preparation = { quality: "complete", published: true, products };
   const preparationText = JSON.stringify(preparation);
   const hash = (text: string) => createHash("sha256").update(text).digest("hex");
   const summary = {
     startedAt: start, endedAt: new Date().toISOString(),
     artifacts: { csvSha256: hash(csv), preparationSha256: hash(preparationText) },
     quality: { status: "complete", published: true },
-    totals: { scrapedProducts: 1, failures: 0 }
+    totals: { scrapedProducts: records.length, failures: 0 }
   };
   const changes = { status: "comparable", suspectedMissing: [] };
   const paths = {
@@ -168,6 +168,39 @@ test("preflight comprueba ready/review declarados sin invalidar preparaciones hi
     }));
     assert.equal((await check(dir)).status, "passed");
   } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+
+test("validate presenta motivos y referencias sin modificar la elegibilidad ni el código de revisión", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "eq-review-cli-"));
+  const originalExitCode = process.exitCode;
+  const lines: string[] = [];
+  t.mock.method(console, "log", (...values: unknown[]) => { lines.push(values.map(String).join(" ")); });
+  try {
+    const noPrice: ProductRecord = { ...record, reference: "M044-4094", url: `${record.url}-2`, price: null };
+    const noDescription: ProductRecord = { ...record, reference: "M044-4095", url: `${record.url}-3`,
+      price: null, shortDescription: null };
+    await createBatch(dir, [record, noPrice, noDescription]);
+    process.exitCode = 0;
+    await runPreflight(["mercaeleva", "--out", dir, "--prefix", "lote"]);
+    const output = lines.join("\n");
+    assert.equal(process.exitCode, 2);
+    assert.match(output, /Productos: 3 \| Listos: 1 \| Revisar: 2 \| Posibles bajas: 0/);
+    assert.match(output, /Diagnóstico review: 2 fichas \| 1 motivo: 1 \| 2\+ motivos: 1 \| sin motivo: 0 \| incidencias: 3/);
+    assert.match(output, /Precio no disponible o inválido \| 2 fichas \| solo: 1 \| con otros: 1 \| refs: M044-4094, M044-4095/);
+    assert.match(output, /Descripción corta ausente:.*\| 1 ficha \| solo: 0 \| con otros: 1 \| refs: M044-4095/);
+    assert.match(output, /Aviso: 2 productos pendientes de revisión/);
+    lines.length = 0;
+    await createBatch(dir);
+    process.exitCode = 0;
+    await runPreflight(["mercaeleva", "--out", dir, "--prefix", "lote"]);
+    assert.equal(process.exitCode, 0);
+    assert.match(lines.join("\n"), /VALIDACIÓN \| MERCAELEVA \| CONFORME/);
+    assert.doesNotMatch(lines.join("\n"), /Diagnóstico review:/);
+  } finally {
+    process.exitCode = originalExitCode;
     await rm(dir, { recursive: true, force: true });
   }
 });
