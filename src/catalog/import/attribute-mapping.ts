@@ -16,6 +16,7 @@ const aliases: Readonly<Record<string, readonly string[]>> = {
   "Peso operativo": ["Peso (kg)"],
   "Altura de trabajo": ["Altura de trabajo (mm)"],
   "Altura de plataforma": ["Altura plataforma", "Altura plataforma (mm)"],
+  "Pendiente superable": ["Pendiente superable (%)"],
   "Ancho de trabajo": ["Anchura trabajo (mm)"],
   "Potencia": ["Potencia (kW)"],
   "Horas de uso": ["Horas (h)", "Horas laborales"],
@@ -47,13 +48,13 @@ const numberToken = (raw: string): number | null => {
   return Number.isFinite(num) && num >= 0 ? num : null;
 };
 
-const unitOf = (source: string): "mm" | "cm" | "m" | "kg" | "kw" | "h" | null => {
+const unitOf = (source: string): "mm" | "cm" | "m" | "kg" | "kw" | "h" | "%" | null => {
   const value = fold(source);
-  if (["mm", "cm", "m", "metros", "metro", "kg", "kilogramos", "kilogramo", "kw", "h", "horas", "hora"].includes(value)) {
+  if (["mm", "cm", "m", "metros", "metro", "kg", "kilogramos", "kilogramo", "kw", "h", "horas", "hora", "%"].includes(value)) {
     if (value.startsWith("metro") || value === "m") return "m";
     if (value.startsWith("kilo") || value === "kg") return "kg";
     if (value.startsWith("hora") || value === "h") return "h";
-    return value as "mm" | "cm" | "kw";
+    return value as "mm" | "cm" | "kw" | "%";
   }
   return null;
 };
@@ -61,13 +62,13 @@ const unitOf = (source: string): "mm" | "cm" | "m" | "kg" | "kw" | "h" | null =>
 const numberValue = (value: SpecScalar, sourceKey: string, attribute: Attribute): number | null => {
   if (typeof value === "boolean") return null;
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
-  const matched = value.trim().match(/^([\d.,\s\u00a0\u202f]+)\s*([a-záéíóú]+)?$/i);
+  const matched = value.trim().match(/^([\d.,\s\u00a0\u202f]+)\s*([a-záéíóú%]+)?$/i);
   if (!matched?.[1]) return null;
   const parsed = numberToken(matched[1]);
   if (parsed === null) return null;
   const explicit = matched[2] ? unitOf(matched[2]) : null;
   if (matched[2] && !explicit) return null;
-  const keyUnit = sourceKey.match(/\((mm|cm|m|kg|kw|h)\)/i)?.[1];
+  const keyUnit = sourceKey.match(/\((mm|cm|m|kg|kw|h|%)\)/i)?.[1];
   const sourceUnit = explicit ?? (keyUnit ? unitOf(keyUnit) : null);
   const targetUnit = unitOf(attribute.unit_option);
   if (sourceUnit && targetUnit && sourceUnit !== targetUnit) {
@@ -77,6 +78,16 @@ const numberValue = (value: SpecScalar, sourceKey: string, attribute: Attribute)
   }
   if (sourceUnit && !targetUnit && !(attribute.name === "Horas de uso" && sourceUnit === "h")) return null;
   return parsed;
+};
+
+const basketDimensions = (value: SpecScalar): string | null => {
+  if (typeof value !== "string") return null;
+  const match = value.trim().match(/^(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*(?:m|metros?)$/i);
+  if (!match?.[1] || !match[2]) return null;
+  const length = Number(match[1].replace(",", "."));
+  const width = Number(match[2].replace(",", "."));
+  if (!Number.isFinite(length) || !Number.isFinite(width) || length <= 0 || width <= 0) return null;
+  return `${String(length).replace(".", ",")} x ${String(width).replace(".", ",")} m`;
 };
 
 const convert = (value: SpecScalar, key: string, attribute: Attribute): string | number | boolean | null => {
@@ -97,6 +108,7 @@ export const resolveAttributeValue = (record: ProductRecord, attribute: Attribut
   const keys = new Set([attribute.name, ...(aliases[attribute.name] ?? [])].map(fold));
   const candidates: Candidate[] = [];
   if (record.providerId === "gam") {
+    if (attribute.name === "Dimensiones de la cesta") keys.add(fold("Dimensiones Cesta"));
     let family = "";
     try {
       const url = new URL(record.url);
@@ -120,6 +132,13 @@ export const resolveAttributeValue = (record: ProductRecord, attribute: Attribut
       }
     }
     if (attribute.name === "Capacidad de la cesta" && ["elevador-tijera", "brazo-articulado", "brazo-articulado-boom-lift", "brazo-telescopico", "oruga", "camion-plataforma"].includes(family)) keys.add(fold("Capacidad"));
+    if (["Alcance horizontal", "Alcance máximo horizontal"].includes(attribute.name)) {
+      const reach = record.specs?.["Alcance lateral"];
+      if (typeof reach === "string" && /^\d+(?:[.,]\d{1,2})?\s*m$/i.test(reach.trim()) &&
+        (numberToken(reach.trim().replace(/\s*m$/i, "")) ?? 0) > 0) {
+        keys.add(fold("Alcance lateral"));
+      }
+    }
     if (family === "fregadora" && attribute.name === "Ancho de trabajo") {
       keys.add(fold("Anchura limpieza"));
       keys.add(fold("Ancho de limpieza"));
@@ -151,6 +170,7 @@ export const resolveAttributeValue = (record: ProductRecord, attribute: Attribut
       const load = title.match(/\b(\d{3,5}|\d{1,2}[.,]\d{3})\s*kg\b/i)?.[1];
       if (load) candidates.push({ key: "Capacidad de carga (kg)", value: `${load} kg` });
     }
+    if (attribute.name === "Longitud de horquillas") keys.add(fold("Longitud de tenedor"));
     if (attribute.name === "Tipo de mástil" && isForklift) {
       const rawMast = record.specs?.["Tipo de mástil"];
       const published = rawMast === undefined ? null : scalar(rawMast);
@@ -187,6 +207,10 @@ export const resolveAttributeValue = (record: ProductRecord, attribute: Attribut
   if (direct?.trim()) candidates.push({ key: attribute.name, value: direct });
   if (candidates.length === 0) return null;
   const converted = candidates.map((candidate) => {
+    if (record.providerId === "gam" && attribute.name === "Dimensiones de la cesta" &&
+      fold(candidate.key) === fold("Dimensiones Cesta")) {
+      return basketDimensions(candidate.value);
+    }
     if (record.providerId === "gomariz" && attribute.name === "Potencia" && attribute.type === "NUMBER" &&
       /\/venta\/energia-electrica-e-iluminacion\/generador\//.test(record.url) &&
       /kVA/i.test(attribute.unit_option) && typeof candidate.value === "string" &&

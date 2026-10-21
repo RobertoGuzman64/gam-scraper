@@ -188,6 +188,58 @@ test("asocia atributos requeridos y convierte unidades explícitas sin confundir
   assert.equal(attrVal(source("gam", gam.url, "Carretilla", { "Capacidad de carga (kg)": "1200 - 1400 kg" }), "Capacidad de carga"), null);
 });
 
+test("GAM: incorpora pendientes publicadas con porcentaje sin confundir unidades", () => {
+  const url = gamUrl("plataformas-elevadoras-articuladas-electricas-segunda-mano", "6934");
+  for (const [raw, expected] of [["25%", 25], ["40 %", 40], ["45", 45], ["23,5 %", 23.5]] as const) {
+    assert.equal(attrVal(source("gam", url, "Plataforma articulada", { "Pendiente superable": raw }), "Pendiente superable"), expected);
+  }
+  assert.equal(attrVal(source("gam", url, "Plataforma articulada", { "Pendiente superable (%)": "25%" }), "Pendiente superable"), 25);
+  assert.equal(attrVal(source("gam", url, "Plataforma articulada", { "Pendiente superable": "25%", "Pendiente superable (%)": "40%" }), "Pendiente superable"), null);
+  for (const raw of ["20 grados", "25-40%", "no disponible", "40 kg", "25%%"]) {
+    assert.equal(attrVal(source("gam", url, "Plataforma articulada", { "Pendiente superable": raw }), "Pendiente superable"), null, raw);
+  }
+  assert.equal(attrVal(source("gam", url, "Plataforma articulada", { "Capacidad de carga (kg)": "25%" }), "Capacidad de carga"), null);
+});
+
+test("GAM: recupera exclusivamente dimensiones de cesta expresadas como dos medidas en metros", () => {
+  const url = gamUrl("plataformas-elevadoras-articuladas-electricas-segunda-mano", "6934");
+  const valid = source("gam", url, "Plataforma articulada", { "Dimensiones Cesta": "2,4X1,17 metros" });
+  assert.equal(attrVal(valid, "Dimensiones de la cesta"), "2,4 x 1,17 m");
+  assert.deepEqual(valid.specs, { "Dimensiones Cesta": "2,4X1,17 metros" });
+  assert.equal(prepareProduct(valid, catalog).product.attributes.find((entry) => entry.attributeID === 6)?.value, "2,4 x 1,17 m");
+  assert.equal(attrVal(source("gam", url, "Plataforma", { "Dimensiones Cesta": "1.83 x 0.76 m" }), "Dimensiones de la cesta"), "1,83 x 0,76 m");
+  for (const raw of ["4 81 88x1 metros", "1 83X0 91 metros", "1,4 x 0,7 x 1,1 m", "2,4x1,17", "0x1,17 metros", "1400x700 mm"]) {
+    assert.equal(attrVal(source("gam", url, "Plataforma", { "Dimensiones Cesta": raw }), "Dimensiones de la cesta"), null, raw);
+  }
+  assert.equal(attrVal(source("gam", url, "Plataforma", { "Dimensiones Cesta": "2,4X1,17 metros", "Dimensiones de la cesta": "3 x 1 m" }), "Dimensiones de la cesta"), null);
+  assert.equal(attrVal(source("gomariz", gomUrl("elevador-tijera", "test"), "Plataforma", { "Dimensiones Cesta": "2,4X1,17 metros" }), "Dimensiones de la cesta"), null);
+});
+
+test("Gomariz: mapea alcance lateral positivo a alcance horizontal sin reutilizar ceros", () => {
+  const platform = gomUrl("brazo-articulado", "jlg-450aj");
+  assert.equal(attrVal(source("gomariz", platform, "Brazo articulado", { "Alcance lateral": "7.47 m" }), "Alcance horizontal"), 7.47);
+  assert.equal(attrVal(source("gomariz", gomUrl("manipulador-telescopico", "jcb-540-140"), "Manipulador", { "Alcance lateral": "9.25 M" }), "Alcance máximo horizontal"), 9.25);
+  for (const raw of ["0 m", "-5 m", "10 ft", "8 a 12 m", "2.500 m"]) {
+    assert.equal(attrVal(source("gomariz", platform, "Brazo articulado", { "Alcance lateral": raw }), "Alcance horizontal"), null, raw);
+  }
+  assert.equal(attrVal(source("gomariz", platform, "Brazo articulado", { "Alcance lateral": "8 m", "Alcance horizontal": "9 m" }), "Alcance horizontal"), null);
+  assert.equal(attrVal(source("gam", gamUrl("plataformas-elevadoras-articuladas-electricas-segunda-mano", "6934"), "Plataforma", { "Alcance lateral": "8 m" }), "Alcance horizontal"), null);
+});
+
+test("Mercaeleva: convierte longitud de tenedor al atributo real de horquillas", () => {
+  const record = source("mercaeleva", merUrl("MB-M288-9739"), "MB ESL122 APILADOR ELECTRICO", {
+    "Título adicional": "APILADOR ELECTRICO", "Longitud de tenedor": "1150 mm"
+  });
+  assert.equal(attrVal(record, "Longitud de horquillas"), 1150);
+  assert.equal(prepareProduct(record, catalog).product.attributes.find((entry) => entry.attributeID === 32)?.value, 1150);
+  assert.equal(attrVal(source("mercaeleva", merUrl("MB-M402-2703"), "MB EFL253 CARRETILLA ELEVADORA ELECTRICA", {
+    "Título adicional": "CARRETILLA ELEVADORA ELECTRICA", "Longitud de tenedor": "1220 mm"
+  }), "Longitud de horquillas"), 1220);
+  assert.equal(attrVal(source("mercaeleva", record.url, record.title ?? "", { "Longitud de tenedor": "1150 mm", "Longitud de horquillas": "1200 mm" }), "Longitud de horquillas"), null);
+  assert.equal(attrVal(source("mercaeleva", record.url, record.title ?? "", { "Longitud de tenedor": "1150 kg" }), "Longitud de horquillas"), null);
+  assert.equal(attrVal(source("gam", gamUrl("carretillas-elevadoras-electricas-segunda-mano", "1"), "Carretilla", { "Longitud de tenedor": "1150 mm" }), "Longitud de horquillas"), null);
+});
+
 test("las fuentes secundarias no inventan precios y aprovechan capacidad declarada", () => {
   const gom = source("gomariz", "https://www.gomarizrent.com/venta/manipulacion-de-materiales/carretilla-industrial/heli-cpd35/", "HELI CPD 35", { Motor: "Eléctrico", Capacidad: "3500 kg", "Altura de trabajo": "4.8 m" }, null);
   const prepared = prepareProduct(gom, catalog);
