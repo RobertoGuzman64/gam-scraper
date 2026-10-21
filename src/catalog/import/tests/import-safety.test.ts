@@ -22,6 +22,7 @@ const record: ProductRecord = {
   country: "ES",
   horometer: "3666",
   serialNumber: null,
+  condition: "Segunda mano",
   image: "https://machineric.com/1.jpg",
   images: ["https://machineric.com/1.jpg"],
   specs: { "Altura de trabajo": "16 m" }

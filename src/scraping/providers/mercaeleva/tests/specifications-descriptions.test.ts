@@ -144,3 +144,35 @@ test("Mercaeleva: no recupera especificaciones desde información comercial o co
     assert.equal(parsed.specs?.[label], undefined);
   }
 });
+
+
+test("Mercaeleva: usa únicamente el Estado explícito de la ficha para distinguir nueva y usada", () => {
+  const machine = (state: string): string => `<html><body><h1>MB ESL122 Apilador Eléctrico</h1>
+    <h2>Información general</h2>${row("Estado", state)}${row("Condición general", "Bueno")}
+    </body></html>`;
+  for (const state of ["Usado", "Usada", "Segunda mano"]) {
+    const parsed = parseMercaelevaProduct(machine(state), contaminatedUrl);
+    assert.equal(parsed.condition, "Segunda mano", state);
+    assert.equal(parsed.specs?.["Estado"], state);
+  }
+  for (const state of ["Nuevo", "Nueva"]) {
+    const parsed = parseMercaelevaProduct(machine(state), contaminatedUrl);
+    assert.equal(parsed.condition, "Nuevo", state);
+    assert.equal(parsed.specs?.["Estado"], state);
+  }
+});
+
+test("Mercaeleva: no inventa condición si el Estado falta o no es inequívoco", () => {
+  const unknown = parseMercaelevaProduct(`<html><body><h1>MB ESL122 Apilador Eléctrico</h1>
+    <h2>Información general</h2>${row("Condición general", "Como nuevo")}
+    </body></html>`, contaminatedUrl);
+  assert.equal(unknown.condition, null);
+  assert.equal(unknown.specs?.["Estado"], undefined);
+
+  for (const state of ["Como nuevo", "Bueno", "Consultar"]) {
+    const parsed = parseMercaelevaProduct(`<html><body><h1>MB ESL122 Apilador Eléctrico</h1>
+      <h2>Información general</h2>${row("Estado", state)}
+      </body></html>`, contaminatedUrl);
+    assert.equal(parsed.condition, null, state);
+  }
+});

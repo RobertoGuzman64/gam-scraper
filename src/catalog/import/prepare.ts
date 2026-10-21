@@ -98,11 +98,11 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   const price = normalizePrice(record.price);
   const categoryOrigin = `${record.url} ${record.categoryKey}`;
   const gamNewSection = record.providerId === "gam" && /nuev[oa]s?/i.test(categoryOrigin);
-  const contradictoryCondition = gamNewSection && record.condition === "Segunda mano";
-  const isKnownSecondHand = !contradictoryCondition && (record.condition === "Segunda mano" ||
-    (record.condition !== "Nuevo" && (record.providerId !== "gam" ||
-      /segunda-mano/i.test(categoryOrigin))));
-  const condition = isKnownSecondHand ? "Segunda_Mano" : null;
+  const mercaelevaState = record.providerId === "mercaeleva" && typeof record.specs?.["Estado"] === "string"
+    ? fold(record.specs["Estado"]) : null;
+  const newInSource = mercaelevaState === "nuevo" || mercaelevaState === "nueva";
+  const contradictoryCondition = record.condition === "Segunda mano" && (gamNewSection || newInSource);
+  const condition = record.condition === "Segunda mano" && !contradictoryCondition ? "Segunda_Mano" : null;
   const reference = record.reference?.trim() || null;
   const title = record.title?.trim() || null;
   const descriptions = distinguishDescriptions(record.shortDescription, record.longDescription);
@@ -110,8 +110,8 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   const descriptionGeneral = descriptions.long;
   const attributeResult = productAttributes(record, category, catalog);
 
-  if (record.condition === "Nuevo") issues.push("Maquinaria nueva: el contrato de importación actual solo admite Segunda_Mano");
-  else if (contradictoryCondition) issues.push("Condición contradictoria con la sección de maquinaria nueva");
+  if (contradictoryCondition) issues.push("Condición contradictoria con el origen de maquinaria nueva");
+  else if (record.condition === "Nuevo" || newInSource) issues.push("Maquinaria nueva: el contrato de importación actual solo admite Segunda_Mano");
   else if (condition === null) issues.push("Condición de segunda mano no confirmada para el contrato de importación");
   if (!reference) issues.push("Referencia ausente");
   if (!title) issues.push("Título ausente");

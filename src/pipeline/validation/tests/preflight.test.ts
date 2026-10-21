@@ -16,6 +16,7 @@ const record: ProductRecord = {
   title: "JLG 450 AJ", shortDescription: "Plataforma de ocasión", longDescription: "Máquina revisada",
   price: "20.500,00 €", reference: "M044-4093", brand: "JLG", model: "450 AJ", year: "2013",
   location: "Barcelona", country: "ES", horometer: "3666", serialNumber: null,
+  condition: "Segunda mano",
   image: "https://example.com/1.jpg", images: ["https://example.com/1.jpg"], specs: { "Altura de trabajo": "16 m" }
 };
 

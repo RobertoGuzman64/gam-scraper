@@ -143,6 +143,18 @@ const sourceCategorySlug = (record: ProductRecord): string | null => {
   return null;
 };
 
+const contradictsMappedCategory = (record: ProductRecord, slug: string): boolean => {
+  if (record.providerId !== "gam") return false;
+  if (slug === "furgonetas-electricas-segunda-mano") {
+    const description = fold(`${record.title ?? ""} ${record.shortDescription ?? ""}`);
+    if (/\b(?:es un cuatriciclo|cuatriciclo electrico|cuatriciclo de carga)\b/.test(description)) return true;
+  }
+  const titleEnergy = energy(record.title ?? "");
+  if (/-diesel-/.test(slug) && titleEnergy === "electric") return true;
+  if (/-electricas?-/.test(slug) && titleEnergy === "diesel") return true;
+  return false;
+};
+
 export const resolveCategory = (record: ProductRecord, categories: ImportCatalog["categories"]): Category | null => {
   const root = categories.find((category) => fold(category.name) === fold("Maquinaria de Ocasión"));
   if (!root) return null;
@@ -165,11 +177,14 @@ export const resolveCategory = (record: ProductRecord, categories: ImportCatalog
   const sourceSlug = sourceCategorySlug(record);
   if (sourceSlug) {
     const matches = leaf.filter((category) => fold(category.slug) === fold(sourceSlug));
-    return matches.length === 1 ? matches[0] ?? null : null;
+    const matched = matches.length === 1 ? matches[0] : undefined;
+    return matched && !contradictsMappedCategory(record, matched.slug) ? matched : null;
   }
   const direct = leaf.filter((category) => fold(category.slug) === fold(record.categoryKey));
-  if (direct.length === 1) return direct[0] ?? null;
+  const directMatch = direct.length === 1 ? direct[0] : undefined;
+  if (directMatch) return contradictsMappedCategory(record, directMatch.slug) ? null : directMatch;
   if (record.providerId !== "gam") return null;
   const byName = leaf.filter((category) => fold(category.name) === fold(record.categoryName));
-  return byName.length === 1 ? byName[0] ?? null : null;
+  const nameMatch = byName.length === 1 ? byName[0] : undefined;
+  return nameMatch && !contradictsMappedCategory(record, nameMatch.slug) ? nameMatch : null;
 };

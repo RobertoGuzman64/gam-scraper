@@ -60,3 +60,32 @@ test("Gomariz: respeta las unidades del ancho de limpieza y no inventa la alimen
   assert.equal(value(product(scrubber, { "Anchura limpieza": "0.81 m", "Ancho de trabajo": "900 mm" }), "Ancho de trabajo"), null);
   assert.equal(value(product(url("carretilla-industrial", "nissan"), { "Anchura limpieza": "0.81 m" }), "Ancho de trabajo"), null);
 });
+
+test("Gomariz: capacidades explícitas de manipuladores, sin atribuirlas a familias ajenas", () => {
+  const machines = [
+    ["jcb-540-140", "4000 kg", 4000],
+    ["genie-gth-2506", "2500 kg", 2500],
+    ["jcb-535-140", "3500 kg", 3500]
+  ] as const;
+  for (const [slug, capacity, expected] of machines) {
+    const source = product(url("manipulador-telescopico", slug), { Capacidad: capacity, "Altura de trabajo": "13.8 m" });
+    assert.equal(value(source, "Capacidad máxima"), expected, slug);
+    assert.equal(value(source, "Altura máxima de elevación"), null, slug);
+  }
+  const conflicting = product(url("manipulador-telescopico", "jcb-535-140"), {
+    Capacidad: "3500 kg", "Capacidad máxima": "4000 kg"
+  });
+  assert.equal(value(conflicting, "Capacidad máxima"), null);
+  assert.equal(value(product(url("manipulador-telescopico", "jcb-535-140"), { Capacidad: "350 l" }), "Capacidad máxima"), null);
+  assert.equal(value(product(url("carretilla-industrial", "heli-cpd35"), { Capacidad: "3500 kg" }), "Capacidad máxima"), null);
+});
+
+test("Gomariz: combustible etiquetado como motor solo para generadores y torres de luz", () => {
+  const towerUrl = "https://www.gomarizrent.com/venta/energia-electrica-e-iluminacion/torre-de-luz/generac-vb9/";
+  assert.equal(value(product(towerUrl, { Motor: "Diésel", Potencia: "4x120 W" }), "Combustible"), "Diésel");
+  assert.equal(value(product(towerUrl, { Motor: "Diésel", Combustible: "Gasolina" }), "Combustible"), null);
+  assert.equal(value(product(towerUrl, { Motor: "Diésel / eléctrico" }), "Combustible"), null);
+  assert.equal(value(product(towerUrl, { Motor: "Diésel", Potencia: "4x120 W" }), "Potencia"), null);
+  assert.equal(value(product(towerUrl, { Motor: "Diésel", "Altura de trabajo": "8.5 m" }), "Altura del mástil"), null);
+  assert.equal(value(product(url("carretilla-industrial", "nissan"), { Motor: "Diésel" }), "Combustible"), null);
+});

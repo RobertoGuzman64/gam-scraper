@@ -51,3 +51,39 @@ test("un estado ready manipulado no permite exportar producto con condición des
   assert.equal(plan.report.reviewProducts, 1);
   assert.match(plan.report.review[0]?.reason ?? "", /Condición incompatible/);
 });
+
+
+test("Mercaeleva: nuevo y desconocido no se convierten en segunda mano por pertenecer al catálogo de venta", async () => {
+  const catalog = await loadImportCatalog();
+  const source = {
+    ...gam, providerId: "mercaeleva", categoryKey: "venta", categoryName: "Maquinaria en venta",
+    url: "https://sales.mercaeleva.com/es/for-sale/machine/MB-ESL122-M288-9739",
+    reference: "M288-9739", condition: null
+  };
+  for (const [sourceState, condition] of [["Nuevo", null], ["Usado", null], [null, null]] as const) {
+    const prepared = prepareProduct({ ...source, condition, specs: sourceState ? { Estado: sourceState } : {} }, catalog);
+    assert.equal(prepared.product.condition, null);
+    assert.equal(prepared.status, "review");
+    assert.ok(prepared.issues.some((issue) => issue.includes(sourceState === "Nuevo" ? "Maquinaria nueva" : "Condición de segunda mano no confirmada")));
+  }
+
+  const used = prepareProduct({ ...source, condition: "Segunda mano", specs: { Estado: "Usado" } }, catalog);
+  assert.equal(used.product.condition, "Segunda_Mano");
+  const newMachine = prepareProduct({ ...source, condition: "Nuevo", specs: { Estado: "Nuevo" } }, catalog);
+  assert.equal(newMachine.product.condition, null);
+  assert.ok(newMachine.issues.some((issue) => issue.includes("Maquinaria nueva")));
+
+  const contradiction = prepareProduct({ ...source, condition: "Segunda mano", specs: { Estado: "Nuevo" } }, catalog);
+  assert.equal(contradiction.product.condition, null);
+  assert.ok(contradiction.issues.some((issue) => issue.includes("contradictoria")));
+});
+
+test("Gomariz y proveedores desconocidos no se consideran usados sin condición explícita", async () => {
+  const catalog = await loadImportCatalog();
+  for (const providerId of ["gomariz", "otro-proveedor"]) {
+    const prepared = prepareProduct({ ...gam, providerId, condition: null, categoryKey: "venta" }, catalog);
+    assert.equal(prepared.product.condition, null, providerId);
+    assert.equal(prepared.status, "review", providerId);
+    assert.ok(prepared.issues.some((issue) => issue.includes("Condición de segunda mano no confirmada")));
+  }
+});

@@ -47,3 +47,48 @@ test("Gomariz: recupera motor y potencia cuando no hay sección de dimensiones",
   assert.equal(parsed.specs?.Motor, "Diésel");
   assert.equal(parsed.specs?.Potencia, "200 kW");
 });
+
+test("Gomariz: recupera marca y modelo del título cuando la referencia y el slug coinciden", () => {
+  const machines = [
+    ["TE1620", "LGMG S1413EII", "lgmg-s1413eii-tijera-electrica-scissor-lift", "LGMG", "S1413EII"],
+    ["GR1113", "Himoinsa HFW-605T", "himoinsa-hfw-605t-generador-generator", "Himoinsa", "HFW-605T"],
+    ["TO1242", "Generac EVE 9", "generac-eve-9-generador", "Generac", "EVE 9"],
+    ["BA1575", "JLG 340AJ", "jlg-340aj-brazo-articulado-articulated-boom-lift", "JLG", "340AJ"]
+  ] as const;
+  for (const [reference, title, slug, brand, model] of machines) {
+    const html = `<html><main><h1>${title}</h1><p>Referencia: ${reference} Ver precio</p></main></html>`;
+    const pageUrl = `https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/${slug}/`;
+    const parsed = parseGomarizProduct(html, pageUrl);
+    assert.equal(parsed.brand, brand, reference);
+    assert.equal(parsed.model, model, reference);
+    assert.equal(parsed.price, null, reference);
+  }
+});
+
+test("Gomariz: respeta la marca explícita y acepta el orden inverso de marcas compuestas", () => {
+  const title = "SOCAGE IVECO 35S14 FORSTE 20D SPEED NEUTRA";
+  const html = `<html><main><h1>${title}</h1><p>Referencia: CC1535 Marca: Iveco Socage Ver precio</p></main></html>`;
+  const result = parseGomarizProduct(html,
+    "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/camion-plataforma/socage-iveco-35s14-forste-20d-speed-neutra/");
+  assert.equal(result.brand, "Iveco Socage");
+  assert.equal(result.model, "35S14 FORSTE 20D SPEED NEUTRA");
+  const unknown = parseGomarizProduct(html.replace("Marca: Iveco Socage ", "").replace("CC1535", "CC1665"),
+    "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/camion-plataforma/socage-iveco-35s14-forste-20d-speed-neutra/");
+  assert.equal(unknown.brand, null);
+  assert.equal(unknown.model, null);
+});
+
+test("Gomariz: no deduce la marca con títulos genéricos, slug distinto o dominios ajenos", () => {
+  const html = `<html><main><h1>Plataforma Eléctrica 10</h1><p>Referencia: TEST Ver precio</p></main></html>`;
+  const pageUrl = "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/plataforma-electrica-10/";
+  const result = parseGomarizProduct(html, pageUrl);
+  assert.equal(result.brand, null);
+  assert.equal(result.model, null);
+  const mislabeled = parseGomarizProduct(html.replace("Plataforma Eléctrica 10", "JLG 340AJ"), pageUrl);
+  assert.equal(mislabeled.brand, null);
+  assert.equal(mislabeled.model, null);
+  const foreign = parseGomarizProduct(html.replace("Plataforma Eléctrica 10", "JLG 340AJ"),
+    "https://example.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/jlg-340aj/");
+  assert.equal(foreign.brand, null);
+  assert.equal(foreign.model, null);
+});

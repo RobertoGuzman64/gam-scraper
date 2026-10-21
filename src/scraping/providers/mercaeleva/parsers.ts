@@ -208,6 +208,9 @@ export const parseMercaelevaProduct = (html: string, pageUrl: string): ParsedPro
   const year = specs["Año de fabricación"]?.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? null;
   const hours = specs["Horas laborales"]?.match(/\d[\d\s.,]*/)?.[0]?.trim() ?? null;
   const location = embedded.location;
+  const sourceCondition = normalize(specs["Estado"] ?? "").toLocaleLowerCase("es");
+  const condition = /^(?:usad[oa]|segunda mano|de segunda mano)$/.test(sourceCondition) ? "Segunda mano"
+    : /^nuev[oa]$/.test(sourceCondition) ? "Nuevo" : null;
 
   return {
     title,
@@ -216,6 +219,7 @@ export const parseMercaelevaProduct = (html: string, pageUrl: string): ParsedPro
     model: specs["Modelo"] ?? null,
     year,
     price,
+    condition,
     shortDescription: null,
     longDescription: description,
     location,

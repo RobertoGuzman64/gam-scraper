@@ -19,6 +19,7 @@ const record: ProductRecord = {
   title: "JLG 450 AJ", shortDescription: "Plataforma articulada diésel de ocasión.",
   longDescription: "Plataforma revisada.", price: "20.500,00 €", reference: "M044-4093",
   brand: "JLG", model: "450 AJ", year: "2013", location: "Barcelona", country: "ES",
+  condition: "Segunda mano",
   horometer: "3666", serialNumber: null, image: "https://machineric.com/1.jpg",
   images: ["https://machineric.com/1.jpg", "https://machineric.com/2.jpg"],
   specs: { "Altura de trabajo": "16 m" }

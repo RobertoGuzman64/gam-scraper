@@ -3,6 +3,7 @@ import { loadReadableHtml } from "../../parsing/readable-html.js";
 import type { ParsedProduct } from "../../provider.js";
 import type { SpecsMap } from "../../../contracts/catalog.js";
 import { collectProductImages } from "../../parsing/image-gallery.js";
+import { brandFromTitle, modelFromTitle } from "./identity.js";
 
 const normalize = (value: string): string => value.replace(/\s+/g, " ").trim();
 
@@ -93,7 +94,7 @@ export const parseGomarizProduct = (html: string, pageUrl: string): ParsedProduc
   if (!title || !reference) throw new Error(`Ficha Gomariz sin título o referencia: ${pageUrl}`);
 
   const year = content.match(/\bAño:\s*((?:19|20)\d{2})\b/i)?.[1] ?? null;
-  const brand = metadataValue(content, "Marca");
+  const brand = metadataValue(content, "Marca") ?? brandFromTitle(title, pageUrl);
   const description = normalize(content.match(/Descripción\s*(.*?)(?=\s+Dimensiones|\s+Especificaciones técnicas|\s+Ver ficha técnica|$)/i)?.[1] ?? "");
   const metadataStart = content.indexOf(`Referencia: ${reference}`);
   const overview = (metadataStart < 0 ? content : content.slice(metadataStart)).split(/Descripción|Dimensiones|Especificaciones técnicas/i)[0] ?? "";
@@ -109,9 +110,7 @@ export const parseGomarizProduct = (html: string, pageUrl: string): ParsedProduc
     title,
     reference,
     brand,
-    model: metadataValue(overview, "Modelo") ?? (brand && title.toLocaleLowerCase("es").startsWith(`${brand.toLocaleLowerCase("es")} `)
-      ? title.slice(brand.length).trim() || null
-      : null),
+    model: metadataValue(overview, "Modelo") ?? modelFromTitle(title, brand),
     year,
     price,
     shortDescription: null,

@@ -28,6 +28,7 @@ const base: ProductRecord = {
   country: "ES",
   horometer: "3666",
   serialNumber: null,
+  condition: "Segunda mano",
   image: "https://files2.machineric.com/clients/mercaeleva/machines/M044-4093/public/1.jpg",
   images: [
     "https://files2.machineric.com/clients/mercaeleva/machines/M044-4093/public/1.jpg",

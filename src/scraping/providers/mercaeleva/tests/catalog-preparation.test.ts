@@ -41,6 +41,7 @@ test("Mercaeleva: la ficha mantiene precio, galería y técnica sin publicar dat
   assert.equal(parsed.location, null);
   assert.equal(parsed.country, null);
   assert.equal(parsed.specs?.["Altura de trabajo"], "16 m");
+  assert.equal(parsed.condition, "Segunda mano");
   assert.equal(parsed.specs?.["¡Haz una oferta!"], undefined);
   assert.equal(parsed.specs?.["Dpt Gestión Flota"], undefined);
   assert.equal(parsed.shortDescription, null);
@@ -52,6 +53,7 @@ test("Mercaeleva: la ficha mantiene precio, galería y técnica sin publicar dat
   const prepared = prepareProduct(record, await loadImportCatalog());
   assert.equal(prepared.status, "review");
   assert.equal(prepared.product.price, 20500);
+  assert.equal(prepared.product.condition, "Segunda_Mano");
   assert.deepEqual(prepared.product.images, [original]);
   assert.equal(prepared.product.description, null);
   assert.equal(prepared.product.description_general, parsed.longDescription);

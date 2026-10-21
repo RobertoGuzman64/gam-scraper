@@ -43,11 +43,110 @@ test("GAM: asigna manipuladores y furgonetas eléctricas a categorías existente
     const record = source("gam", gamUrl("manipuladores-frontales-segunda-mano", reference), "Manipulador telescópico", {});
     assert.equal(categorySlug(record), "manipulador-teñescopico-segunda-mano");
   }
-  for (const reference of ["5918", "6806"]) {
-    const record = source("gam", gamUrl("furgonetas-electricas-de-ocasion", reference), "Vehículo eléctrico de carga", {});
-    assert.equal(categorySlug(record), "furgonetas-electricas-segunda-mano");
-  }
+  const electricVan = source("gam", gamUrl("furgonetas-electricas-de-ocasion", "furgoneta"), "Furgoneta eléctrica de reparto", {});
+  assert.equal(categorySlug(electricVan), "furgonetas-electricas-segunda-mano");
   assert.equal(categorySlug(source("gam", gamUrl("resto-maquinaria-segunda-mano", "5710"), "Plataforma de ejes", {})), undefined);
+});
+
+test("GAM: los cuatriciclos no se clasifican como furgonetas eléctricas", () => {
+  const vehicles = [
+    { reference: "5918", title: "Paxster Gen 2.2", description: "El Paxster Gen 2.2 es un cuatriciclo eléctrico diseñado para el reparto urbano." },
+    { reference: "6806", title: "Musoshi PoP Up Mini", description: "La Musoshi PoP Up Mini es un cuatriciclo eléctrico compacto y ligero." }
+  ];
+  for (const vehicle of vehicles) {
+    const record: ProductRecord = {
+      ...source("gam", gamUrl("furgonetas-electricas-de-ocasion", vehicle.reference), vehicle.title, {}),
+      reference: vehicle.reference,
+      shortDescription: vehicle.description,
+      condition: "Segunda mano"
+    };
+    assert.equal(categorySlug(record), undefined, vehicle.reference);
+    const prepared = prepareProduct(record, catalog);
+    assert.equal(prepared.product.categorySellID, null, vehicle.reference);
+    assert.equal(prepared.status, "review", vehicle.reference);
+    assert.ok(prepared.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"), vehicle.reference);
+    const direct = { ...record, categoryKey: "furgonetas-electricas-segunda-mano" };
+    assert.equal(categorySlug(direct), undefined, vehicle.reference);
+  }
+});
+
+test("GAM: un título eléctrico incompatible con la sección diésel requiere revisión", () => {
+  const incompatible: ProductRecord = {
+    ...source("gam", gamUrl("carretillas-elevadoras-diesel-segunda-mano", "6587"), "Carretilla elevadora eléctrica 5000Kg BT C4E500V", {}),
+    reference: "6587",
+    condition: "Segunda mano"
+  };
+  assert.equal(categorySlug(incompatible), undefined);
+  assert.equal(prepareProduct(incompatible, catalog).product.categorySellID, null);
+  assert.ok(prepareProduct(incompatible, catalog).issues.includes("Categoría Equipzilla sin correspondencia inequívoca"));
+  assert.equal(categorySlug({ ...incompatible, categoryKey: "carretillas-elevadoras-diesel-segunda-mano" }), undefined);
+  assert.equal(categorySlug(source("gam", gamUrl("carretillas-elevadoras-diesel-segunda-mano", "6024"), "Carretilla frontal diésel 2000Kg", {})), "carretillas-elevadoras-diesel-segunda-mano");
+  assert.equal(categorySlug(source("gam", gamUrl("carretillas-elevadoras-electricas-segunda-mano", "6941"), "Carretilla elevadora eléctrica triciclo", {})), "carretillas-elevadoras-electricas-segunda-mano");
+  assert.equal(categorySlug(source("gam", gamUrl("carretillas-elevadoras-electricas-segunda-mano", "incompatible"), "Carretilla elevadora diésel 2000Kg", {})), undefined);
+  assert.equal(categorySlug(source("mercaeleva", merUrl("M100-1000"), "Carretilla elevadora diésel", { "Título adicional": "Carretilla elevadora diésel" })), "carretillas-elevadoras-diesel-segunda-mano");
+});
+
+test("GAM: recupera capacidades y alturas de los cuatro manipuladores telescópicos sin alterar unidades", () => {
+  const machines = [
+    { reference: "6857", slug: "6857-2006-jlg-3512", title: "Manipulador telescópico 11M 3500Kg JLG 3512", capacity: "3500 KG", height: "11,5 metros", expectedCapacity: 3500, expectedHeight: 11.5 },
+    { reference: "6391", slug: "6391-2006-jlg-4013", title: "Manipulador telescópico 13M 4000Kg JLG 4013", capacity: "4000 KG", height: "13 metros", expectedCapacity: 4000, expectedHeight: 13 },
+    { reference: "6893", slug: "6893-2018-haulotte-htl-4014", title: "Manipulador telescópico 14M 4000Kg HAULOTTE HTL 4014", capacity: "4000 KG", height: "14 metros", expectedCapacity: 4000, expectedHeight: 14 },
+    { reference: "6502", slug: "6502-2022-magni-th-5515", title: "Manipulador telescópico 15M 5500Kg MAGNI TH 5.5.15", capacity: "5500 KG", height: "15 metros", expectedCapacity: 5500, expectedHeight: 15 }
+  ] as const;
+  for (const machine of machines) {
+    const record: ProductRecord = {
+      ...source("gam", `https://online.gamrentals.com/es/manipuladores-frontales-segunda-mano/${machine.slug}`, machine.title, {
+        "Capacidad de carga (kg)": machine.capacity,
+        "Altura de elevación (m)": machine.height
+      }),
+      reference: machine.reference,
+      condition: "Segunda mano",
+      shortDescription: "Ficha individual del manipulador telescópico",
+      longDescription: "Características técnicas y descripción de la máquina de segunda mano"
+    };
+    assert.equal(attrVal(record, "Capacidad máxima"), machine.expectedCapacity, machine.reference);
+    assert.equal(attrVal(record, "Altura máxima de elevación"), machine.expectedHeight, machine.reference);
+    const prepared = prepareProduct(record, catalog);
+    assert.equal(prepared.product.categorySellID, 113, machine.reference);
+    assert.ok(prepared.product.attributes.some((item) => item.attributeID === 38 && item.value === machine.expectedCapacity), machine.reference);
+    assert.ok(prepared.product.attributes.some((item) => item.attributeID === 39 && item.value === machine.expectedHeight), machine.reference);
+    assert.ok(!prepared.issues.some((issue) => issue.startsWith("Atributo obligatorio ausente:")), machine.reference);
+    assert.equal(prepared.status, "ready", machine.reference);
+  }
+});
+
+test("GAM: las equivalencias técnicas del manipulador no se extienden a otros proveedores ni familias", () => {
+  const specs = { "Capacidad de carga (kg)": "3500 KG", "Altura de elevación (m)": "11,5 metros" };
+  for (const record of [
+    source("gam", gamUrl("carretillas-elevadoras-diesel-segunda-mano", "6857"), "Carretilla", specs),
+    source("gomariz", gomUrl("elevador-tijera", "te1620"), "Tijera", specs),
+    source("mercaeleva", merUrl("JLG-M100-1000"), "Manipulador", specs),
+    source("gam", "https://example.com/es/manipuladores-frontales-segunda-mano/6857", "Manipulador", specs)
+  ]) {
+    assert.equal(attrVal(record, "Capacidad máxima"), null, record.url);
+    assert.equal(attrVal(record, "Altura máxima de elevación"), null, record.url);
+  }
+});
+
+test("GAM: los valores conflictivos, ambiguos o con unidades incompatibles siguen en revisión", () => {
+  const url = gamUrl("manipuladores-frontales-segunda-mano", "6857");
+  const conflict = source("gam", url, "Manipulador", {
+    "Capacidad máxima": "3000 kg", "Capacidad de carga (kg)": "3500 KG",
+    "Altura máxima de elevación": "12 metros", "Altura de elevación (m)": "11,5 metros"
+  });
+  assert.equal(attrVal(conflict, "Capacidad máxima"), null);
+  assert.equal(attrVal(conflict, "Altura máxima de elevación"), null);
+  const invalid = source("gam", url, "Manipulador", {
+    "Capacidad de carga (kg)": "3000 - 3500 KG", "Altura de elevación (m)": "11500 kg"
+  });
+  assert.equal(attrVal(invalid, "Capacidad máxima"), null);
+  assert.equal(attrVal(invalid, "Altura máxima de elevación"), null);
+  const matching = source("gam", url, "Manipulador", {
+    "Capacidad máxima": "3500 kg", "Capacidad de carga (kg)": "3500 KG",
+    "Altura máxima de elevación": "11,5 m", "Altura de elevación (m)": "11,5 metros"
+  });
+  assert.equal(attrVal(matching, "Capacidad máxima"), 3500);
+  assert.equal(attrVal(matching, "Altura máxima de elevación"), 11.5);
 });
 
 test("Gomariz: utiliza tipo fuente y motor, sin adjudicar categorías inexistentes", () => {
@@ -166,4 +265,108 @@ test("Mercaeleva: categorías expresas solo cuando coincide una familia existent
   assert.equal(categorySlug(source("mercaeleva", merUrl("Apilador-M111-1112"), "APILADOR MANUAL", {
     "Título adicional": "APILADOR MANUAL", "Tipo de Batería": "Li-ion"
   })), undefined);
+});
+
+test("Mercaeleva: aprovecha capacidades explícitas de manipuladores sin aplicar equivalencias a otras familias", () => {
+  for (const reference of ["M200-9533", "M005-5167"]) {
+    const record = source("mercaeleva", merUrl(reference), "MANIPULADOR TELESCOPICO 14 MT", {
+      "Título adicional": "MANIPULADOR TELESCOPICO 14 MT",
+      "Capacidad máxima de elevación": "4000 kg",
+      "Altura máxima de elevación": "14 m"
+    });
+    assert.equal(attrVal(record, "Capacidad máxima"), 4000, reference);
+    assert.equal(attrVal(record, "Altura máxima de elevación"), 14, reference);
+  }
+  const other = source("mercaeleva", merUrl("M111-1111"), "PLATAFORMA TIJERA ELECTRICA", {
+    "Título adicional": "PLATAFORMA TIJERA ELECTRICA",
+    "Capacidad máxima de elevación": "4000 kg"
+  });
+  assert.equal(attrVal(other, "Capacidad máxima"), null);
+  assert.equal(attrVal(source("mercaeleva", merUrl("M111-1112"), "MANIPULADOR TELESCOPICO", {
+    "Título adicional": "MANIPULADOR TELESCOPICO",
+    "Capacidad máxima de elevación": "14 m"
+  }), "Capacidad máxima"), null);
+  assert.equal(attrVal(source("mercaeleva", merUrl("M111-1113"), "MANIPULADOR TELESCOPICO", {
+    "Título adicional": "MANIPULADOR TELESCOPICO",
+    "Capacidad máxima": "3500 kg", "Capacidad máxima de elevación": "4000 kg"
+  }), "Capacidad máxima"), null);
+});
+
+test("Mercaeleva: convierte solo alturas y cargas expresas de apiladores", () => {
+  const machines = [
+    ["M288-9739", "1200 kg", "3600 mm", 1200, 3600],
+    ["M373-1421", "1600 kg", "4800 mm", 1600, 4800],
+    ["M346-8712", "1600 kg", "4800 mm", 1600, 4800]
+  ] as const;
+  for (const [reference, load, height, expectedLoad, expectedHeight] of machines) {
+    const record = source("mercaeleva", merUrl(reference), `Apilador Eléctrico ${load}`, {
+      "Título adicional": `APILADOR ELECTRICO ${load}`,
+      "Capacidad máxima de elevación": load,
+      "Altura máxima de elevación": height
+    });
+    assert.equal(attrVal(record, "Capacidad de carga"), expectedLoad, reference);
+    assert.equal(attrVal(record, "Altura de elevación"), expectedHeight, reference);
+  }
+  const used = source("mercaeleva", merUrl("M958-0132"), "BT SWE160 APILADOR ELECTRICO 1600 KG", {
+    "Título adicional": "APILADOR ELECTRICO 1600 KG"
+  });
+  assert.equal(attrVal(used, "Capacidad de carga"), 1600);
+  assert.equal(attrVal(used, "Altura de elevación"), null);
+  const conflict = source("mercaeleva", merUrl("M999-1111"), "APILADOR ELECTRICO 1600 KG", {
+    "Título adicional": "APILADOR ELECTRICO 1600 KG",
+    "Capacidad máxima de elevación": "1200 kg"
+  });
+  assert.equal(attrVal(conflict, "Capacidad de carga"), null);
+  assert.equal(attrVal(source("mercaeleva", merUrl("M999-1112"), "APILADOR ELECTRICO", {
+    "Título adicional": "APILADOR ELECTRICO",
+    "Altura máxima de elevación": "1600 kg"
+  }), "Altura de elevación"), null);
+});
+
+test("Mercaeleva: transpaletas usan capacidad declarada y mantienen las contradicciones en revisión", () => {
+  for (const [reference, capacity] of [
+    ["M035-8084", "1500"], ["M168-3277", "2000"], ["M141-6536", "1500"]
+  ] as const) {
+    const record = source("mercaeleva", merUrl(reference), `TRANSPALET ELECTRICO ${capacity} kg`, {
+      "Título adicional": `TRANSPALET ELECTRICO ${capacity} kg`, "Capacidad máxima de elevación": `${capacity} kg`
+    });
+    assert.equal(attrVal(record, "Capacidad de carga"), Number(capacity), reference);
+  }
+  const conflicting = source("mercaeleva", merUrl("M119-9334"), "TRANSPALET ELECTRICO 1800 kg", {
+    "Título adicional": "TRANSPALET ELECTRICO 1800 kg", "Capacidad máxima de elevación": "1500 kg"
+  });
+  assert.equal(attrVal(conflicting, "Capacidad de carga"), null);
+  const absent = source("mercaeleva", merUrl("M239-6301"), "BT LPE200/8 TRANSPALET ELECTRICO", {
+    "Título adicional": "TRANSPALET ELECTRICO"
+  });
+  assert.equal(attrVal(absent, "Capacidad de carga"), null);
+  assert.equal(attrVal(absent, "Altura de elevación"), null);
+  assert.equal(attrVal(source("mercaeleva", merUrl("M913-0641"), "MINIEXCAVADORA ORUGA 2700 KG", {
+    "Título adicional": "MINIEXCAVADORA ORUGA 2700 KG"
+  }), "Peso operativo"), null);
+});
+
+test("Mercaeleva: descarta tipo de mástil contradictorio en ficha individual", () => {
+  const carretilla = source("mercaeleva", merUrl("M827-8304"), "LINDE E48P CARRETILLA ELEVADORA", {
+    "Título adicional": "CARRETILLA ELEVADORA ELECTRICA 4800 KG",
+    "Tipo de mástil": "Triple"
+  });
+  assert.equal(attrVal({ ...carretilla, longDescription: "Ref. MER0798 MASTIL DUPLEX LINDE E48P" }, "Tipo de mástil"), null);
+  assert.equal(attrVal({ ...carretilla, longDescription: "Ref. MER0798 MASTIL TRIPLEX LINDE E48P" }, "Tipo de mástil"), "Triple");
+  assert.equal(attrVal(carretilla, "Tipo de mástil"), "Triple");
+  const noInference = source("mercaeleva", merUrl("M488-5646"), "TOYOTA 02-8FDF25 CARRETILLA", {
+    "Título adicional": "CARRETILLA ELEVADORA DIESEL 2500 KG",
+    "Tipo de mástil": "Triple"
+  });
+  assert.equal(attrVal({ ...noInference, longDescription: "Ref. MER0655 Tríplex 4700 mm" }, "Altura de elevación"), null);
+});
+
+test("Mercaeleva: admite dúplex/estándar sin perder el tipo de mástil válido", () => {
+  const record = source("mercaeleva", merUrl("M701-5459"), "CARRETILLA ELEVADORA ELECTRICA", {
+    "Título adicional": "CARRETILLA ELEVADORA ELECTRICA 1600 KG",
+    "Tipo de mástil": "Dúplex/estándar"
+  });
+  assert.equal(attrVal({ ...record, longDescription: "Ref. 100 MASTIL DUPLEX" }, "Tipo de mástil"), "Dúplex/estándar");
+  assert.equal(attrVal({ ...record, longDescription: "Ref. 100 MASTIL TRIPLEX" }, "Tipo de mástil"), null);
+  assert.equal(attrVal({ ...record, specs: { ...record.specs, "Tipo de mástil": "Dúplex/Tríplex" }, longDescription: "Ref. 100 MASTIL DUPLEX" }, "Tipo de mástil"), null);
 });

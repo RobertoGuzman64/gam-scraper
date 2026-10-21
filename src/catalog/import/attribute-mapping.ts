@@ -96,31 +96,78 @@ const convert = (value: SpecScalar, key: string, attribute: Attribute): string |
 export const resolveAttributeValue = (record: ProductRecord, attribute: Attribute): string | number | boolean | null => {
   const keys = new Set([attribute.name, ...(aliases[attribute.name] ?? [])].map(fold));
   const candidates: Candidate[] = [];
+  if (record.providerId === "gam") {
+    let family = "";
+    try {
+      const url = new URL(record.url);
+      const path = url.pathname.split("/").filter(Boolean);
+      if (url.hostname === "online.gamrentals.com" && path[0] === "es") family = path[1] ?? "";
+    } catch { family = ""; }
+    if (family === "manipuladores-frontales-segunda-mano") {
+      if (attribute.name === "Capacidad máxima") keys.add(fold("Capacidad de carga (kg)"));
+      if (attribute.name === "Altura máxima de elevación") keys.add(fold("Altura de elevación (m)"));
+    }
+  }
   if (record.providerId === "gomariz") {
     let family = "";
     try { family = new URL(record.url).pathname.split("/").filter(Boolean)[2] ?? ""; } catch { family = ""; }
     if (attribute.name === "Capacidad de carga" && ["carretilla-industrial", "carretilla-retractil"].includes(family)) keys.add(fold("Capacidad"));
+    if (family === "manipulador-telescopico" && attribute.name === "Capacidad máxima") {
+      const raw = record.specs?.Capacidad;
+      const capacity = raw === undefined ? null : scalar(raw);
+      if (typeof capacity === "string" && /^\d[\d., ]*\s*kg$/i.test(capacity.trim())) {
+        keys.add(fold("Capacidad"));
+      }
+    }
     if (attribute.name === "Capacidad de la cesta" && ["elevador-tijera", "brazo-articulado", "brazo-articulado-boom-lift", "brazo-telescopico", "oruga", "camion-plataforma"].includes(family)) keys.add(fold("Capacidad"));
     if (family === "fregadora" && attribute.name === "Ancho de trabajo") {
       keys.add(fold("Anchura limpieza"));
       keys.add(fold("Ancho de limpieza"));
     }
-    if (family === "generador" && attribute.name === "Combustible") {
+    if (["generador", "torre-de-luz"].includes(family) && attribute.name === "Combustible") {
       const motor = String(record.specs?.Motor ?? "").trim();
       if (/^(?:Diésel|Diesel|Gasolina|Eléctrico|GLP)$/i.test(motor)) {
         candidates.push({ key: "Motor", value: motor });
       }
     }
   }
-  if (record.providerId === "mercaeleva" && /\bcarretilla\b/i.test(record.title ?? "")) {
-    if (attribute.name === "Altura de elevación") keys.add(fold("Altura máxima de elevación"));
-    if (attribute.name === "Capacidad de carga") keys.add(fold("Capacidad máxima de elevación"));
-  }
-  if (record.providerId === "mercaeleva" && attribute.name === "Capacidad de carga") {
+  if (record.providerId === "mercaeleva") {
     const title = String(record.specs?.["Título adicional"] ?? record.title ?? "");
-    if (/\bcarretilla\b/i.test(title)) {
+    const family = fold(title);
+    const isForklift = /\bcarretilla\b/.test(family);
+    const isStacker = /\bapilador\b/.test(family);
+    const isPalletTruck = /\btranspalet(?:a)?\b/.test(family);
+    const isTelehandler = /\bmanipulador telescopico\b/.test(family);
+    const maxLoad = record.specs?.["Capacidad máxima de elevación"];
+    const hasExplicitLoad = typeof maxLoad === "string" && /\bkg\s*$/i.test(maxLoad.trim());
+    if (attribute.name === "Capacidad máxima" && isTelehandler && hasExplicitLoad) {
+      keys.add(fold("Capacidad máxima de elevación"));
+    }
+    if (attribute.name === "Altura de elevación" && (isForklift || isStacker)) {
+      keys.add(fold("Altura máxima de elevación"));
+    }
+    if (attribute.name === "Capacidad de carga" && (isForklift || isStacker || isPalletTruck)) {
+      if (hasExplicitLoad) keys.add(fold("Capacidad máxima de elevación"));
       const load = title.match(/\b(\d{3,5}|\d{1,2}[.,]\d{3})\s*kg\b/i)?.[1];
       if (load) candidates.push({ key: "Capacidad de carga (kg)", value: `${load} kg` });
+    }
+    if (attribute.name === "Tipo de mástil" && isForklift) {
+      const rawMast = record.specs?.["Tipo de mástil"];
+      const published = rawMast === undefined ? null : scalar(rawMast);
+      const description = fold(record.longDescription ?? "");
+      const inDescription = description.match(/\bmastil\s+(triplex|duplex|simplex)\b/)?.[1];
+      if (published !== null && inDescription) {
+        const publishedType = fold(String(published));
+        const equivalent: Readonly<Record<string, readonly string[]>> = {
+          triplex: ["triplex", "triple"],
+          duplex: ["duplex", "doble"],
+          simplex: ["simplex", "simple"]
+        };
+        const declared = Object.entries(equivalent).filter(([, names]) =>
+          names.some((name) => new RegExp(`(?:^|[^a-z])${name}(?:$|[^a-z])`).test(publishedType))
+        );
+        if (declared.length !== 1 || declared[0]?.[0] !== inDescription) return null;
+      }
     }
   }
   for (const [rawKey, spec] of Object.entries(record.specs ?? {})) {
