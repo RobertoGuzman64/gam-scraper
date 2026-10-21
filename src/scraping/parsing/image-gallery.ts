@@ -28,7 +28,7 @@ export const identifyWordPressImage = (value: string): { readonly identity: stri
 const imageIdentity = (url: string, mode: "gam" | "mercaeleva" | "gomariz" | undefined): string => {
   const path = new URL(url).pathname;
   if (mode === "gam") return path.replace(/-(?:product_main_2x|large_default|medium_default|small_default|home_default|cart_default|thickbox_default)(?=\.)/i, "");
-  if (mode === "mercaeleva") return path;
+  if (mode === "mercaeleva") return path.replace(/\/public\/(?:medium|thumbnail|large|original)\//i, "/public/");
   if (mode === "gomariz") return identifyWordPressImage(url).identity;
   return url;
 };
@@ -46,6 +46,8 @@ const score = (url: string, source: string, mode: "gam" | "mercaeleva" | "gomari
     const u = new URL(url);
     const width = Number(u.searchParams.get("width") ?? u.searchParams.get("w") ?? 0);
     if (Number.isFinite(width) && width > 0) rank += Math.min(width, 3000) / 100;
+    if (/\/public\/(?:original|large)\//i.test(name)) rank += 100;
+    else if (/\/public\/medium\//i.test(name)) rank += 50;
     if (/thumb|thumbnail|small/i.test(name)) rank -= 30;
   }
   return rank;

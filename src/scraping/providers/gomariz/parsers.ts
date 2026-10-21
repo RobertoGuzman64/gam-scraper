@@ -49,16 +49,36 @@ const collectSpecs = (source: string): SpecsMap => {
   const specs: Record<string, string> = {};
   const keys = [
     "Altura plataforma", "Altura de trabajo", "Alcance lateral", "Altura almacenaje",
-    "Altura", "Longitud", "Anchura", "Peso", "Motor", "Capacidad"
+    "Altura", "Longitud", "Anchura", "Peso", "Motor", "Capacidad",
+    "Potencia motor", "Potencia", "Combustible", "Tipo de combustible", "Tipo de motor", "Consumo"
   ];
-  const section = source.match(/Dimensiones\s*(.*?)(?:Ver ficha técnica|Comparador|¿Te interesa|Máquinas similares|$)/is)?.[1] ?? "";
-  const fieldPattern = new RegExp(`(${keys.join("|")}):\\s*(.*?)(?=\\s+(?:${keys.join("|")}):|\\s+Especificaciones técnicas|$)`, "giu");
+  const section = source.match(/(?:Dimensiones|Especificaciones técnicas)\s*(.*?)(?:Ver ficha técnica|Comparador|¿Te interesa|Máquinas similares|$)/is)?.[1] ?? "";
+  const sorted = [...keys].sort((a, b) => b.length - a.length);
+  const fieldPattern = new RegExp(`(${sorted.join("|")}):\\s*(.*?)(?=\\s+(?:${sorted.join("|")}):|\\s+Especificaciones técnicas|$)`, "giu");
   for (const match of section.matchAll(fieldPattern)) {
     const key = normalize(match[1] ?? "");
     const value = normalize(match[2] ?? "");
     if (key && value) specs[key] = value;
   }
+  const height = (value: string | undefined): number | null => {
+    const match = value?.match(/^(\d+(?:[.,]\d+)?)\s*(?:m|metros?)$/i);
+    if (!match) return null;
+    const parsed = Number(match[1]?.replace(",", "."));
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+  const platformHeight = height(specs["Altura plataforma"]);
+  const workingHeight = height(specs["Altura de trabajo"]);
+  if (platformHeight !== null && workingHeight !== null && platformHeight > workingHeight) {
+    delete specs["Altura plataforma"];
+  }
   return specs;
+};
+
+const metadataValue = (text: string, name: string): string | null => {
+  const otherLabels = "Referencia|Año|Marca|Modelo|Horas|Horómetro|Horometro|Nº de serie|Número de serie|Número de bastidor|Ubicación|Localización|País|Potencia|Combustible";
+  const pattern = new RegExp(`(?:^|\\s)${name}:\\s*(.*?)(?=\\s+(?:${otherLabels}):|\\s+(?:Ver precio|Contactar|Descripción|Dimensiones|Especificaciones técnicas|Ver ficha técnica)\\b|$)`, "i");
+  const value = normalize(text.match(pattern)?.[1] ?? "");
+  return value && value.length < 120 && !/^(?:consultar|ver precio|contactar)$/i.test(value) ? value : null;
 };
 
 export const parseGomarizProduct = (html: string, pageUrl: string): ParsedProduct => {
@@ -71,13 +91,11 @@ export const parseGomarizProduct = (html: string, pageUrl: string): ParsedProduc
   if (!title || !reference) throw new Error(`Ficha Gomariz sin título o referencia: ${pageUrl}`);
 
   const year = content.match(/\bAño:\s*((?:19|20)\d{2})\b/i)?.[1] ?? null;
-  const brandText = content.match(/\bMarca:\s*(.*?)(?=\s+(?:Ver precio|Contactar|Descripción|Dimensiones|Año:|Referencia:)|$)/i)?.[1] ?? "";
-  const brandValue = normalize(brandText);
-  const brand = brandValue && !/^(?:ver precio|consultar precio|contactar)$/i.test(brandValue) ? brandValue : null;
+  const brand = metadataValue(content, "Marca");
   const description = normalize(content.match(/Descripción\s*(.*?)(?=\s+Dimensiones|\s+Especificaciones técnicas|\s+Ver ficha técnica|$)/i)?.[1] ?? "");
   const metadataStart = content.indexOf(`Referencia: ${reference}`);
   const overview = (metadataStart < 0 ? content : content.slice(metadataStart)).split(/Descripción|Dimensiones|Especificaciones técnicas/i)[0] ?? "";
-  const priceMatch = /Ver precio/i.test(overview) ? null : overview.match(/\b(\d{1,3}(?:[. ]\d{3})*(?:,\d{2})?)\s*€/);
+  const priceMatch = overview.match(/\b(\d{1,3}(?:[. ]\d{3})*(?:,\d{2})?)\s*€/);
   const price = priceMatch?.[0] ?? null;
   const images = collectProductImages($, pageUrl, [
     ".woocommerce-product-gallery", ".product-gallery", ".swiper-slide",
@@ -89,17 +107,17 @@ export const parseGomarizProduct = (html: string, pageUrl: string): ParsedProduc
     title,
     reference,
     brand,
-    model: brand && title.toLocaleLowerCase("es").startsWith(`${brand.toLocaleLowerCase("es")} `)
+    model: metadataValue(overview, "Modelo") ?? (brand && title.toLocaleLowerCase("es").startsWith(`${brand.toLocaleLowerCase("es")} `)
       ? title.slice(brand.length).trim() || null
-      : null,
+      : null),
     year,
     price,
-    shortDescription: description ? description.slice(0, 260) : null,
+    shortDescription: null,
     longDescription: description || null,
-    location: null,
-    country: null,
-    horometer: null,
-    serialNumber: null,
+    location: metadataValue(overview, "Ubicación") ?? metadataValue(overview, "Localización"),
+    country: metadataValue(overview, "País"),
+    horometer: metadataValue(overview, "Horómetro") ?? metadataValue(overview, "Horometro") ?? metadataValue(overview, "Horas"),
+    serialNumber: metadataValue(overview, "Nº de serie") ?? metadataValue(overview, "Número de serie") ?? metadataValue(overview, "Número de bastidor"),
     image,
     images,
     specs: collectSpecs(content)

@@ -1,6 +1,7 @@
 import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
 import { buildProductIdentity } from "../identity.js";
 import { findSerialNumberCollisions } from "../quality.js";
+import { distinguishDescriptions } from "../../shared/descriptions.js";
 import { resolveCategory } from "./category-mapping.js";
 import { resolveAttributeValue } from "./attribute-mapping.js";
 
@@ -103,8 +104,9 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   const condition = isKnownSecondHand ? "Segunda_Mano" : null;
   const reference = record.reference?.trim() || null;
   const title = record.title?.trim() || null;
-  const description = record.shortDescription?.trim() || record.longDescription?.trim() || null;
-  const descriptionGeneral = record.longDescription?.trim() || description;
+  const descriptions = distinguishDescriptions(record.shortDescription, record.longDescription);
+  const description = descriptions.short;
+  const descriptionGeneral = descriptions.long;
   const attributeResult = productAttributes(record, category, catalog);
 
   if (record.condition === "Nuevo") issues.push("Maquinaria nueva: el contrato de importación actual solo admite Segunda_Mano");

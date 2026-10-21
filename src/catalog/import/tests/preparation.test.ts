@@ -67,6 +67,25 @@ test("producto completo se prepara con categorías y atributos reales, sin compa
   assert.equal("companyID" in record.product, false);
 });
 
+test("la preparación deja una única descripción en el campo largo, sin inventar resumen", async () => {
+  const catalog = await loadImportCatalog();
+  const duplicated = prepareProduct({ ...base, shortDescription: "Máquina revisada.  ", longDescription: "Máquina revisada." }, catalog);
+  assert.equal(duplicated.product.description, null);
+  assert.equal(duplicated.product.description_general, "Máquina revisada.");
+  assert.equal(duplicated.status, "review");
+  assert.ok(duplicated.issues.includes("Descripción ausente"));
+
+  const distinct = prepareProduct(base, catalog);
+  assert.equal(distinct.product.description, base.shortDescription);
+  assert.equal(distinct.product.description_general, base.longDescription);
+  assert.equal(distinct.status, "ready");
+
+  const longOnly = prepareProduct({ ...base, shortDescription: null }, catalog);
+  assert.equal(longOnly.product.description, null);
+  assert.equal(longOnly.product.description_general, base.longDescription);
+  assert.equal(longOnly.status, "review");
+});
+
 test("la categoría genérica venta no se asigna arbitrariamente", async () => {
   const record = prepareProduct({ ...base, categoryKey: "venta" }, await loadImportCatalog());
   assert.equal(record.status, "review");

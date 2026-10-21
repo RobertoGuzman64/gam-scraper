@@ -1,6 +1,8 @@
 import * as cheerio from "cheerio";
 import type { SpecsMap, SpecValue } from "../../../contracts/catalog.js";
 import { collectProductImages } from "../../parsing/image-gallery.js";
+import { extractGamGallery } from "./gallery.js";
+import { distinguishDescriptions } from "../../../shared/descriptions.js";
 
 export const normalizeSpace = (s: string): string => s.replace(/\s+/g, " ").trim();
 
@@ -155,6 +157,7 @@ const extractTitle = ($: cheerio.CheerioAPI): string | null => {
 
 const cleanPrice = (text: string): string | null => {
   const value = normalizeSpace(text);
+  if (/\b(?:consultar|a consultar|bajo pedido|sin precio)\b/i.test(value)) return null;
   const match = value.match(/(?:\d{1,3}(?:[.\s\u00a0]\d{3})+|\d+)(?:,\d{1,2}|\.\d{1,2})?/);
   if (!match) return null;
   const raw = match[0].replace(/[\s\u00a0]/g, "");
@@ -169,15 +172,49 @@ const cleanPrice = (text: string): string | null => {
   return Number.isFinite(amount) && amount > 0 ? String(amount) : null;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const productPriceFromStructuredData = ($: cheerio.CheerioAPI): string | null => {
+  for (const script of $("script[type='application/ld+json']").toArray()) {
+    const source = $(script).html();
+    if (!source) continue;
+    let parsed: unknown;
+    try { parsed = JSON.parse(source); } catch { continue; }
+    const candidates: unknown[] = Array.isArray(parsed) ? parsed : [parsed];
+    for (const candidate of candidates) {
+      if (!isRecord(candidate)) continue;
+      const graph = Array.isArray(candidate["@graph"]) ? candidate["@graph"] : [candidate];
+      for (const node of graph) {
+        if (!isRecord(node) || ![node["@type"]].flat().includes("Product")) continue;
+        const offers = Array.isArray(node.offers) ? node.offers : [node.offers];
+        for (const offer of offers) {
+          if (!isRecord(offer)) continue;
+          const price = offer.price ?? (isRecord(offer.priceSpecification) ? offer.priceSpecification.price : null);
+          if (typeof price === "number" || typeof price === "string") {
+            const normalized = cleanPrice(String(price));
+            if (normalized) return normalized;
+          }
+        }
+      }
+    }
+  }
+  return null;
+};
+
 const extractPrice = ($: cheerio.CheerioAPI): { readonly price: string | null; readonly priceText: string | null } => {
   const candidates = [
     $(".current-price [itemprop='price']").first().attr("content"),
     $("meta[property='product:price:amount']").attr("content"),
+    $("[itemprop='offers'] [itemprop='price']").first().attr("content"),
+    $("#product .product-prices [data-price-amount]").first().attr("data-price-amount"),
+    $("#product .product-prices [data-price]").first().attr("data-price"),
     $("[itemprop='price']").first().attr("content"),
     $(".current-price .price").first().text(),
     $(".product-price").first().text(),
     $(".current-price").first().text(),
-    $(".our_price_display").first().text()
+    $(".our_price_display").first().text(),
+    pickDtDd($, "Precio")
   ].map((text) => text ? normalizeSpace(text) : "").filter(Boolean);
   for (const text of candidates) {
     const price = cleanPrice(text);
@@ -186,9 +223,10 @@ const extractPrice = ($: cheerio.CheerioAPI): { readonly price: string | null; r
       return { price, priceText: display };
     }
   }
+  const structured = productPriceFromStructuredData($);
+  if (structured) return { price: structured, priceText: structured };
   const priceScope = normalizeSpace($(".product-prices, .product-price, .current-price").first().text());
-  if (priceScope) return { price: null, priceText: priceScope };
-  return { price: null, priceText: null };
+  return { price: null, priceText: priceScope || null };
 };
 
 const validYear = (value: string | null): string | null => value?.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? null;
@@ -205,10 +243,10 @@ const extractYear = ($: cheerio.CheerioAPI, title: string | null, pageUrl: strin
     $(".product-description-short").text(),
     $("#description, .product-description, .tab-content").first().text(),
     $("meta[property='og:description']").attr("content") ?? "",
-    title ?? ""
+    $("meta[name='description']").attr("content") ?? ""
   ];
   for (const description of descriptions) {
-    const match = description.match(/(?:\baño\s*(?:de fabricación)?\s*[:\-]?\s*|\bfabricad[oa]\s+en\s+)((?:19|20)\d{2})\b/i);
+    const match = description.match(/(?:\baño\s*(?:de\s+fabricación)?\s*[:\-]?\s*|\bfabricad[oa]\s+en\s+)((?:19|20)\d{2})\b/i);
     if (match?.[1]) return { year: match[1], source: "descripcion" };
   }
   const inTitle = validYear(title);
@@ -415,7 +453,10 @@ const extractLongDescription = ($: cheerio.CheerioAPI): string | null => {
   return best;
 };
 
-const extractShortDescription = ($: cheerio.CheerioAPI, longDescription: string | null): string | null => {
+const extractShortDescription = ($: cheerio.CheerioAPI): string | null => {
+  const fromProduct = normalizeSpace($(".product-description-short, #product-description-short").first().text());
+  if (fromProduct) return stripAfterMarkers(fromProduct);
+
   const og = $('meta[property="og:description"]').attr("content");
   if (og) {
     const s = stripAfterMarkers(normalizeSpace(String(og)));
@@ -426,11 +467,6 @@ const extractShortDescription = ($: cheerio.CheerioAPI, longDescription: string 
   if (meta) {
     const s = stripAfterMarkers(normalizeSpace(String(meta)));
     if (s) return s;
-  }
-
-  if (longDescription) {
-    const firstLine = longDescription.split("\n").map((x) => normalizeSpace(x)).find((x) => x.length > 0) ?? "";
-    if (firstLine) return firstLine.length > 260 ? `${firstLine.slice(0, 257)}...` : firstLine;
   }
 
   return null;
@@ -464,6 +500,8 @@ const normalizeLabel = (label: string): string => normalizeSpace(label).replace(
 const validSpecLabel = (label: string): boolean =>
   label.length > 1 && label.length <= 100 && /[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(label)
   && !/^\s*(?:si|no|n\/?a)\s*$/i.test(label)
+  && !/^\d+(?:[.,]\d+)?(?:\s*[x×]\s*\d+(?:[.,]\d+)?)+(?:\s*(?:mm|cm|m|metros?))?$/i.test(label)
+  && !/^\d+(?:[.,]\d+)?\s*(?:mes(?:es)?|horas?|kg|mm|cm|metros?|kw|km|años?)$/i.test(label)
   && !/^(?:\d+[.,xX\s\/-]*)$/.test(label);
 
 const extractSpecs = ($: cheerio.CheerioAPI): SpecsMap => {
@@ -578,7 +616,7 @@ export const parseProductPage = (html: string, pageUrl: string): {
   const $ = cheerio.load(html);
   const title = extractTitle($);
   const longDescription = extractLongDescription($);
-  const shortDescription = extractShortDescription($, longDescription);
+  const descriptions = distinguishDescriptions(extractShortDescription($), longDescription);
   const { price, priceText } = extractPrice($);
   const specs = extractSpecs($);
   const { year, source: yearSource } = extractYear($, title, pageUrl, specs);
@@ -586,21 +624,21 @@ export const parseProductPage = (html: string, pageUrl: string): {
   const lineage = breadcrumbs.filter((part) => part !== title);
   const path = decodeURIComponent(new URL(pageUrl).pathname);
   const contextual = lineage.join(" ").toLocaleLowerCase("es");
-  const condition = /(?:maquinaria nueva|\bnuev[oa]s?\b)/i.test(contextual) || /-nuev[oa]s?\b/i.test(path)
-    ? "Nuevo" : /(?:ocasión|segunda mano)/i.test(contextual) || /segunda-mano/i.test(path)
-      ? "Segunda mano" : null;
-  const images = collectProductImages($, pageUrl, [
-    ".product-cover", ".images-container", ".product-images", ".product-gallery",
-    ".product-thumbnails", ".js-qv-product-cover", ".js-qv-product-images",
-    "#product-images", ".product-detail-images"
-  ], "gam");
+  const itemCondition = $("[itemprop='itemCondition']").first().attr("href") ??
+    $("[itemprop='itemCondition']").first().attr("content") ?? "";
+  const fromNew = /(?:maquinaria nueva|\bnuev[oa]s?\b)/i.test(contextual) || /-nuev[oa]s?\b/i.test(path) ||
+    /\bNewCondition\b/i.test(itemCondition);
+  const fromUsed = /(?:ocasión|segunda mano)/i.test(contextual) || /(?:segunda-mano|de-ocasion|de-ocasión)/i.test(path) ||
+    /\bUsedCondition\b/i.test(itemCondition);
+  const condition = fromNew === fromUsed ? null : fromNew ? "Nuevo" : "Segunda mano";
+  const images = extractGamGallery($, pageUrl);
   const fallbackImages = images.length ? images : collectProductImages($, pageUrl, [
     "img[itemprop='image']", "main img", "#content img", "body img"
   ], "gam");
   return {
     title,
-    shortDescription,
-    longDescription,
+    shortDescription: descriptions.short,
+    longDescription: descriptions.long,
     price,
     priceText,
     condition,
