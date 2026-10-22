@@ -44,24 +44,28 @@ export const isLeafCategoryForCondition = (
   categoryId: number, categories: ImportCatalog["categories"], condition: ImportableCondition
 ): boolean => {
   const rootName = condition === "Nuevo" ? "Maquinaria Nueva" : "Maquinaria de Ocasión";
-  const roots = categories.filter((category) => fold(category.name) === fold(rootName));
-  if (roots.length !== 1 || categories.filter((category) => category.id === categoryId).length !== 1 ||
+  const roots = categories.filter((category) => category.active !== false && fold(category.name) === fold(rootName));
+  if (roots.length !== 1 || categories.filter((category) => category.id === categoryId && category.active !== false).length !== 1 ||
     categories.some((category) => category.parentId === categoryId)) return false;
   const byId = new Map(categories.map((category) => [category.id, category]));
   let parentId = byId.get(categoryId)?.parentId ?? null;
   const visited = new Set<number>();
   while (parentId !== null && !visited.has(parentId)) {
+    const parent = byId.get(parentId);
+    if (!parent || parent.active === false) return false;
     if (parentId === roots[0]?.id) return true;
     visited.add(parentId);
-    parentId = byId.get(parentId)?.parentId ?? null;
+    parentId = parent.parentId;
   }
   return false;
 };
 
 export const resolveCategory = (
   record: ProductRecord, categories: ImportCatalog["categories"],
-  condition: ImportableCondition = record.condition === "Nuevo" ? "Nuevo" : "Segunda_Mano"
+  condition: ImportCandidate["condition"] = record.condition === "Nuevo" ? "Nuevo" :
+    record.condition === "Segunda mano" ? "Segunda_Mano" : null
 ): Category | null => {
+  if (condition === null) return null;
   const leaf = categories.filter((category) => isLeafCategoryForCondition(category.id, categories, condition));
   const sourceSlug = condition === "Nuevo"
     ? record.providerId === "mercaeleva" ? mercaelevaNewCategorySlug(record) : newCategorySlug(record)

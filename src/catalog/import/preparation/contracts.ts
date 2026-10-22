@@ -1,9 +1,9 @@
 import type { SpecValue } from "../../../contracts/catalog.js";
 
-type AttributeType = "NUMBER" | "TEXT" | "SELECT" | "BOOLEAN";
-type Category = { readonly id: number; readonly parentId: number | null; readonly name: string; readonly slug: string };
+type AttributeType = "NUMBER" | "DECIMAL" | "TEXT" | "SELECT" | "BOOLEAN" | "DATE" | "MULTISELECT";
+type Category = { readonly id: number; readonly parentId: number | null; readonly name: string; readonly slug: string; readonly active?: boolean };
 type Attribute = { readonly id: number; readonly name: string; readonly type: AttributeType; readonly required: boolean; readonly unit_option: string };
-type Relation = { readonly categoryID: number; readonly attributeID: number };
+type Relation = { readonly categoryID: number; readonly attributeID: number; readonly actived?: boolean };
 
 export type ImportCatalog = {
   readonly categories: readonly Category[];

@@ -11,7 +11,7 @@ import type { ImportCatalog, PreparedProduct } from "./contracts.js";
 export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): PreparedProduct => {
   const issues: string[] = [];
   const { condition, contradictory: contradictoryCondition } = resolveCommercialCondition(record);
-  const category = resolveCategory(record, catalog.categories, condition ?? "Segunda_Mano");
+  const category = resolveCategory(record, catalog.categories, condition);
   const images = imageUrls(record);
   const price = normalizePrice(record.price);
   const reference = record.reference?.trim() || null;

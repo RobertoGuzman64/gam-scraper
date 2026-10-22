@@ -55,7 +55,8 @@ const numberValue = (value: SpecScalar, sourceKey: string, attribute: Attribute)
 };
 
 const convert = (value: SpecScalar, key: string, attribute: Attribute): string | number | boolean | null => {
-  if (attribute.type === "NUMBER") return numberValue(value, key, attribute);
+  if (attribute.type === "NUMBER" || attribute.type === "DECIMAL") return numberValue(value, key, attribute);
+  if (attribute.type === "DATE" || attribute.type === "MULTISELECT") return null;
   if (attribute.type === "BOOLEAN") {
     if (typeof value === "boolean") return value;
     if (typeof value !== "string") return null;

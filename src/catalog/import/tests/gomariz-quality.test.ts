@@ -16,7 +16,7 @@ const product = (pageUrl: string, specs: SpecsMap = {}, longDescription: string 
   serialNumber: null, image: null, specs
 });
 const categorySlug = (record: ProductRecord): string | null =>
-  resolveCategory(record, catalog.categories)?.slug ?? null;
+  resolveCategory(record, catalog.categories, "Segunda_Mano")?.slug ?? null;
 const value = (record: ProductRecord, name: string): string | number | boolean | null => {
   const attribute = catalog.attributes.find((item) => item.name === name);
   if (!attribute) throw new Error(`Atributo no encontrado: ${name}`);

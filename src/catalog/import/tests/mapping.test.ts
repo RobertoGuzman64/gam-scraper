@@ -12,7 +12,7 @@ const source = (providerId: string, url: string, title: string, specs: ProductRe
   providerId, categoryKey: providerId === "gam" ? "manutencion" : "venta",
   categoryName: "Maquinaria de ocasión", url, title, shortDescription: "Ficha original", longDescription: "Ficha original",
   price, reference: "SAMPLE", brand: "LGMG", model: "S1413EII", year: "2018", location: null,
-  country: null, horometer: null, serialNumber: null, image: "https://example.com/image.jpg", specs: specs ?? {}
+  country: null, horometer: null, serialNumber: null, condition: "Segunda mano", image: "https://example.com/image.jpg", specs: specs ?? {}
 });
 const attr = (name: string) => {
   const result = catalog.attributes.find((entry) => entry.name === name);

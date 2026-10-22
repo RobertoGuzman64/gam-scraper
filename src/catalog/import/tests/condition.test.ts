@@ -149,3 +149,18 @@ test("exportación no admite condición desconocida aunque se manipule ready", a
   assert.equal(plan.report.reviewProducts, 1);
   assert.match(plan.report.review[0]?.reason ?? "", /Condición incompatible/);
 });
+
+test("sin condición fiable no se asigna categoría comercial de ocasión ni de nueva", async () => {
+  const catalog = await loadImportCatalog();
+  const unknown = prepareProduct({ ...usedGam, condition: null, categoryKey: "carretillas-elevadoras-diesel-segunda-mano" }, catalog);
+  assert.equal(unknown.product.condition, null);
+  assert.equal(unknown.product.categorySellID, null);
+  assert.equal(unknown.product.category, null);
+  assert.equal(unknown.status, "review");
+  assert.ok(unknown.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"));
+
+  const contradictory = prepareProduct({ ...usedGam, condition: "Nuevo" }, catalog);
+  assert.equal(contradictory.product.condition, null);
+  assert.equal(contradictory.product.categorySellID, null);
+  assert.ok(contradictory.issues.some((issue) => issue.includes("contradictoria")));
+});

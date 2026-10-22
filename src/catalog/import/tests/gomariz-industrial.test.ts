@@ -86,7 +86,11 @@ test("Gomariz: preparación comercial sin rellenos ni reclasificaciones", () => 
   assert.equal(towerResult.product.price, null);
   assert.equal(towerResult.product.condition, null);
   assert.equal(towerResult.product.description, null);
-  assert.equal(liftResult.product.attributes.find((entry) => entry.attributeID === 119)?.value, "Eléctrico");
-  assert.equal(towerResult.product.attributes.find((entry) => entry.attributeID === 70)?.value, 0.48);
-  assert.equal(towerResult.product.attributes.find((entry) => entry.attributeID === 86)?.value, "4 focos (tipo no publicado)");
+  assert.deepEqual(liftResult.product.attributes, []);
+  assert.deepEqual(towerResult.product.attributes, []);
+  const classifiedLift = prepareProduct({ ...lift, condition: "Segunda mano" }, catalog);
+  const classifiedTower = prepareProduct({ ...tower, condition: "Segunda mano" }, catalog);
+  assert.equal(classifiedLift.product.attributes.find((entry) => entry.attributeID === 119)?.value, "Eléctrico");
+  assert.equal(classifiedTower.product.attributes.find((entry) => entry.attributeID === 70)?.value, 0.48);
+  assert.equal(classifiedTower.product.attributes.find((entry) => entry.attributeID === 86)?.value, "4 focos (tipo no publicado)");
 });

@@ -1,8 +1,10 @@
 import { access, readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { resolve, join } from "node:path";
 import { getProvider } from "../../scraping/registry.js";
 import { loadImportCatalog } from "../../infrastructure/filesystem/import-catalog-loader.js";
 import { planProductImport, readReferenceInventory } from "../../catalog/import/export/export-plan.js";
+import { planCreateMany } from "../../catalog/import/export/create-many-plan.js";
 import { parsePreparation } from "../../catalog/import/preparation/preparation-document.js";
 import { offlinePreparationManifestPath } from "../../infrastructure/filesystem/offline-preparation.js";
 import { validateCatalogPublication } from "../validation/preflight.js";
@@ -11,7 +13,7 @@ import { validateOfflinePreparation } from "../validation/offline.js";
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 
-export const prepareExport = async (
+const loadExportInputs = async (
   providerId: string, companyID: number, preparationFile: string, inventoryFile: string,
   allowEmptyInventory: boolean, sourceFile?: string
 ) => {
@@ -56,11 +58,37 @@ export const prepareExport = async (
   if (inventory.references.size === 0 && !allowEmptyInventory) {
     throw new Error("Inventario vacío: revisar consulta de empresa o pasar --allow-empty-inventory si se ha comprobado que no existen productos");
   }
+  const inventorySha256 = createHash("sha256").update(inventoryCsv, "utf8").digest("hex");
+  return { document, catalog, inventory, source, path, inventoryReferences: inventory.references.size, inventorySha256 };
+};
+
+export const prepareExport = async (
+  providerId: string, companyID: number, preparationFile: string, inventoryFile: string,
+  allowEmptyInventory: boolean, sourceFile?: string
+) => {
+  const { document, catalog, inventory, source, path, inventoryReferences, inventorySha256 } = await loadExportInputs(
+    providerId, companyID, preparationFile, inventoryFile, allowEmptyInventory, sourceFile
+  );
   const plan = planProductImport(document, providerId, inventory, catalog);
   const report = {
     generatedAt: new Date().toISOString(),
     preparationFile: path, sourceFile: source, inventoryFile,
-    inventoryReferences: inventory.references.size, ...plan.report
+    inventoryReferences, inventorySha256, ...plan.report
   };
-  return { plan, report, inventoryReferences: inventory.references.size };
+  return { plan, report, inventoryReferences };
+};
+
+export const prepareCreateManyExport = async (
+  providerId: string, companyID: number, preparationFile: string, inventoryFile: string,
+  allowEmptyInventory: boolean, sourceFile?: string
+) => {
+  const { document, catalog, inventory, source, path, inventoryReferences, inventorySha256 } = await loadExportInputs(
+    providerId, companyID, preparationFile, inventoryFile, allowEmptyInventory, sourceFile
+  );
+  const plan = planCreateMany(document, providerId, inventory, catalog);
+  const report = {
+    generatedAt: new Date().toISOString(),
+    preparationFile: path, sourceFile: source, inventoryFile, inventoryReferences, inventorySha256, ...plan.report
+  };
+  return { plan, report, inventoryReferences };
 };

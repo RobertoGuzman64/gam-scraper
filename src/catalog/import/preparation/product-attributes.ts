@@ -7,7 +7,7 @@ export const productAttributes = (record: ProductRecord, category: ImportCatalog
   readonly missingRequired: readonly string[];
 } => {
   if (!category) return { attributes: [], missingRequired: [] };
-  const activeIds = new Set(catalog.relations.filter((relation) => relation.categoryID === category.id).map((relation) => relation.attributeID));
+  const activeIds = new Set(catalog.relations.filter((relation) => relation.categoryID === category.id && relation.actived !== false).map((relation) => relation.attributeID));
   const result: { attributeID: number; value: string | number | boolean }[] = [];
   const missing: string[] = [];
   for (const attribute of catalog.attributes.filter((item) => activeIds.has(item.id))) {

@@ -48,9 +48,9 @@ test("Gomariz: solo registra orugas y camión con categoría y texto de origen c
   assert.equal(value(record("camion-plataforma", {}, "SOCAGE IVECO", "Plataforma de acceso"), "Tipo de tracción"), null);
   assert.equal(value(record("elevador-tijera", {}, "LGMG", "Plataforma sobre camión con orugas"), "Tipo de tracción"), null);
   assert.equal(value(tracked, "Motorización / Energía"), null);
-  const candidate = prepareProduct(tracked, catalog).product;
+  const candidate = prepareProduct({ ...tracked, condition: "Segunda mano" }, catalog).product;
   assert.equal(candidate.attributes.find((entry) => entry.attributeID === 9)?.value, "Orugas");
-  assert.equal(prepareProduct(truck, catalog).product.attributes.find((entry) => entry.attributeID === 9)?.value, "Sobre camión");
+  assert.equal(prepareProduct({ ...truck, condition: "Segunda mano" }, catalog).product.attributes.find((entry) => entry.attributeID === 9)?.value, "Sobre camión");
 });
 
 test("Gomariz: no afecta a otros proveedores, ramas, hosts ni categorías sin destino seguro", () => {
@@ -61,7 +61,7 @@ test("Gomariz: no afecta a otros proveedores, ramas, hosts ni categorías sin de
   assert.equal(value({ ...source, url: "https://www.gomarizrent.com/venta/manipulacion-de-materiales/elevador-tijera/prueba/" }, "Motorización / Energía"), null);
   assert.equal(value(record("carretilla-industrial", { Motor: "Eléctrico" }), "Motorización / Energía"), null);
   const lift = record("elevador-mastil-vertical", { Capacidad: "363 kg" }, "GENIE SLA15");
-  assert.equal(resolveCategory(lift, catalog.categories), null);
+  assert.equal(resolveCategory(lift, catalog.categories, "Segunda_Mano"), null);
   assert.equal(value(lift, "Motorización / Energía"), null);
   assert.equal(prepareProduct(lift, catalog).product.price, null);
   assert.equal(prepareProduct(source, catalog).product.condition, null);

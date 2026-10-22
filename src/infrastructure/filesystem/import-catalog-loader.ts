@@ -11,15 +11,17 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isCategory = (value: unknown): value is Category => isRecord(value) &&
   Number.isSafeInteger(value.id) && (value.parentId === null || Number.isSafeInteger(value.parentId)) &&
-  typeof value.name === "string" && typeof value.slug === "string";
+  typeof value.name === "string" && typeof value.slug === "string" &&
+  (value.active === undefined || typeof value.active === "boolean");
 
 const isAttribute = (value: unknown): value is Attribute => isRecord(value) &&
   Number.isSafeInteger(value.id) && typeof value.name === "string" &&
-  ["NUMBER", "TEXT", "SELECT", "BOOLEAN"].includes(String(value.type)) &&
+  ["NUMBER", "DECIMAL", "TEXT", "SELECT", "BOOLEAN", "DATE", "MULTISELECT"].includes(String(value.type)) &&
   typeof value.required === "boolean" && typeof value.unit_option === "string";
 
 const isRelation = (value: unknown): value is Relation => isRecord(value) &&
-  Number.isSafeInteger(value.categoryID) && Number.isSafeInteger(value.attributeID);
+  Number.isSafeInteger(value.categoryID) && Number.isSafeInteger(value.attributeID) &&
+  (value.actived === undefined || typeof value.actived === "boolean");
 
 export const loadImportCatalogSnapshot = async (): Promise<{ catalog: ImportCatalog; categoryRaw: string; attributeRaw: string }> => {
   const categoryPath = fileURLToPath(new URL("../../../data/category/categorySell-flat.json", import.meta.url));

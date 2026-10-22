@@ -64,10 +64,10 @@ test("solo exporta nuevos preparados, excluyendo existentes, reviews y referenci
   const catalog = await loadImportCatalog();
   const input = await documentFor([
     record,
-    { ...record, reference: "PREEXISTE" },
-    { ...record, reference: "SINPRECIO", price: null },
-    { ...record, reference: "DUPLICADA" },
-    { ...record, reference: "duplicada", title: "Otra unidad" }
+    { ...record, reference: "PREEXISTE", url: `${record.url}/preexiste` },
+    { ...record, reference: "SINPRECIO", price: null, url: `${record.url}/sinprecio` },
+    { ...record, reference: "DUPLICADA", url: `${record.url}/duplicada-1` },
+    { ...record, reference: "duplicada", title: "Otra unidad", url: `${record.url}/duplicada-2` }
   ]);
   const plan = planProductImport(input, "mercaeleva", readReferenceInventory("companyID,reference\n45,preexiste\n", 45), catalog);
   assert.deepEqual({ new: plan.report.newProducts, existing: plan.report.existingProducts, review: plan.report.reviewProducts, duplicates: plan.report.duplicateReferences },
@@ -231,6 +231,10 @@ test("CLI genera Excel offline e impide reusar la preparación tras una extracci
     assert.match(readZipXml(await readFile(outputFile), "xl/workbook.xml"), /name="Productos"/);
     const report: unknown = JSON.parse(await readFile(`${outputFile}.report.json`, "utf8"));
     assert.ok(report && typeof report === "object" && "newProducts" in report && report.newProducts === 1);
+    assert.ok("format" in report && report.format === "xlsx");
+    assert.ok("outputBytes" in report && report.outputBytes === (await readFile(outputFile)).length);
+    assert.ok("outputSha256" in report && report.outputSha256 === createHash("sha256").update(await readFile(outputFile)).digest("hex"));
+    assert.ok("inventorySha256" in report && report.inventorySha256 === createHash("sha256").update("companyID,reference\n45,EXISTENTE\n").digest("hex"));
     await writeFile(summaryFile, JSON.stringify({ quality: { status: "partial", published: false } }));
     await assert.rejects(runExport([...args, "--dry-run"]), /catálogo completo/);
   } finally {
