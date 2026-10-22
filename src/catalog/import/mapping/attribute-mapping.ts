@@ -1,11 +1,14 @@
 import { SPEC_KEY_NORMALIZATION } from "../../normalization/spec-rules.js";
 import type { ProductRecord, SpecScalar } from "../../../contracts/catalog.js";
-import type { Attribute, Candidate } from "./attribute-types.js";
+import type { Attribute, AttributeResolution, Candidate } from "./attribute-types.js";
 import { fold, scalar, numberToken } from "./attribute-utils.js";
-import { applyGamAliases, convertGamCandidate } from "./providers/gam/attributes.js";
+import { applyGamAliasesDetailed, convertGamCandidate } from "./providers/gam/attributes.js";
 import { applyGomarizAliases, convertGomarizCandidate } from "./providers/gomariz/attributes.js";
-import { applyMercaelevaAliases } from "./providers/mercaeleva/attributes.js";
+import { applyMercaelevaAliasesDetailed } from "./providers/mercaeleva/attributes.js";
 import { normalizeMercaelevaCandidate } from "./providers/mercaeleva/technical.js";
+
+const notPublished = (value: SpecScalar): boolean =>
+  typeof value === "string" && ["n/d", "n/a", "no disponible", "no informado", "sin datos", "-", "—", "a consultar"].includes(fold(value));
 
 const aliases: Readonly<Record<string, readonly string[]>> = {
   "Tipo de mástil": ["Tipo Mástil"],
@@ -78,17 +81,27 @@ const convert = (value: SpecScalar, key: string, attribute: Attribute): string |
   return text || null;
 };
 
-export const resolveAttributeValue = (record: ProductRecord, attribute: Attribute): string | number | boolean | null => {
+export const resolveAttribute = (record: ProductRecord, attribute: Attribute): AttributeResolution => {
   const keys = new Set([attribute.name, ...(aliases[attribute.name] ?? [])].map(fold));
   const candidates: Candidate[] = [];
-  if (record.providerId === "gam" && !applyGamAliases(record, attribute, keys, candidates)) return null;
-  if (record.providerId === "gomariz" && !applyGomarizAliases(record, attribute, keys, candidates)) return null;
-  if (record.providerId === "mercaeleva" && !applyMercaelevaAliases(record, attribute, keys, candidates)) return null;
+  if (record.providerId === "gam") {
+    const outcome = applyGamAliasesDetailed(record, attribute, keys, candidates);
+    if (outcome !== "accepted") return { status: outcome, value: null };
+  }
+  if (record.providerId === "gomariz" && !applyGomarizAliases(record, attribute, keys, candidates)) {
+    return { status: "rejected", value: null };
+  }
+  if (record.providerId === "mercaeleva") {
+    const outcome = applyMercaelevaAliasesDetailed(record, attribute, keys, candidates);
+    if (outcome !== "accepted") return { status: outcome, value: null };
+  }
+  let ambiguousSource = false;
   for (const [rawKey, spec] of Object.entries(record.specs ?? {})) {
     const canonical = SPEC_KEY_NORMALIZATION[fold(rawKey)] ?? rawKey;
     if (!keys.has(fold(rawKey)) && !keys.has(fold(canonical))) continue;
     const value = scalar(spec);
-    if (value !== null) candidates.push({ key: rawKey, value });
+    if (value !== null && !notPublished(value)) candidates.push({ key: rawKey, value });
+    else if (Array.isArray(spec) && spec.length > 1) ambiguousSource = true;
   }
   const extra: Readonly<Record<string, string | null>> = {
     "Marca": record.brand,
@@ -99,7 +112,7 @@ export const resolveAttributeValue = (record: ProductRecord, attribute: Attribut
   };
   const direct = extra[attribute.name];
   if (direct?.trim()) candidates.push({ key: attribute.name, value: direct });
-  if (candidates.length === 0) return null;
+  if (candidates.length === 0) return { status: ambiguousSource ? "rejected" : "not_observed", value: null };
   const converted = candidates.map((candidate) => {
     const fallback = convert(candidate.value, candidate.key, attribute);
     if (record.providerId === "gam") return convertGamCandidate(attribute, candidate, fallback);
@@ -107,7 +120,13 @@ export const resolveAttributeValue = (record: ProductRecord, attribute: Attribut
     if (record.providerId === "mercaeleva") return normalizeMercaelevaCandidate(attribute, candidate, fallback);
     return fallback;
   });
-  if (converted.some((value) => value === null)) return null;
+  if (converted.some((value) => value === null)) return { status: "invalid", value: null };
   const first = converted[0];
-  return converted.every((value) => value === first) ? first ?? null : null;
+  if (first === undefined || first === null) return { status: "invalid", value: null };
+  return converted.every((value) => value === first)
+    ? { status: "resolved", value: first }
+    : { status: "contradiction", value: null };
 };
+
+export const resolveAttributeValue = (record: ProductRecord, attribute: Attribute): string | number | boolean | null =>
+  resolveAttribute(record, attribute).value;

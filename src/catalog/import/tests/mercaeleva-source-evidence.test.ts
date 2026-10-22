@@ -5,6 +5,7 @@ import { mercaelevaShortDescription } from "../mapping/providers/mercaeleva/desc
 import { recoverMercaelevaDescriptionSpecs } from "../../../scraping/providers/mercaeleva/technical-description.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
+import { issueCode } from "../preparation/offline-diagnostics.js";
 
 const catalog = await loadImportCatalog();
 
@@ -142,4 +143,22 @@ test("Mercaeleva: rescata el encabezado técnico individual publicado sin genera
   assert.equal(mercaelevaShortDescription({ ...source, model: "ML120E22" }), null);
   assert.equal(mercaelevaShortDescription({ ...source, longDescription: general.replace("Camión porta-vehículos", "Carretilla elevadora") }), null);
   assert.equal(mercaelevaShortDescription({ ...source, longDescription: "Marca: IVECO Modelo: ML120E22/P Tipo: Camión porta-vehículos".replace("Marca:", "Marca desconocida:") }), null);
+});
+
+
+test("Mercaeleva: diferencia explícita de altura se clasifica como calidad, no como mera ausencia", () => {
+  const source = record("M486-0114", "LGMG AS1413 PLATAFORMA TIJERA ELECTRICA 14 MT",
+    "Ref. 1236 PLATAFORMA TIJERA ELECTRICA ALTURA DE TRABAJO 16 MT LGMG AS1413 HORAS 181", "LGMG", "AS1413", "1236");
+  const conflicting = prepareProduct(source, catalog);
+  assert.equal(conflicting.status, "review");
+  assert.ok(conflicting.issues.includes("Descripción comercial contradictoria: altura de trabajo"));
+  assert.equal(issueCode("Descripción comercial contradictoria: altura de trabajo"), "description.height_conflict");
+  assert.equal(conflicting.product.description, null);
+  assert.ok(conflicting.importIssues?.createMany.includes("Descripción corta ausente: solo hay descripción general y el backend exige una descripción corta"));
+
+  const absent = prepareProduct({ ...source, longDescription: "Equipo revisado por el vendedor" }, catalog);
+  assert.equal(absent.status, "ready");
+  assert.deepEqual(absent.issues, []);
+  assert.equal(absent.product.description, null);
+  assert.ok(absent.importIssues?.createMany.includes("Descripción corta ausente: solo hay descripción general y el backend exige una descripción corta"));
 });

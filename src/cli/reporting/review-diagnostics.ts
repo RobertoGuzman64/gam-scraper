@@ -3,9 +3,13 @@ import type { PreparedProduct } from "../../catalog/import/preparation/contracts
 const MAX_EXAMPLES = 3;
 
 const diagnosticKind = (reason: string): string => {
+  if (reason.startsWith("Atributo contradictorio: ")) return "contradicción entre valores publicados";
+  if (reason.startsWith("Atributo rechazado por seguridad: ")) return "dato descartado por regla de seguridad";
+  if (reason.startsWith("Atributo no normalizable: ")) return "valor observado sin normalización fiable";
   if (/^(?:Referencia ausente|Título ausente|Precio no disponible o inválido|Precio ausente o inválido|Descripción (?:corta ausente|ausente)|Imágenes válidas ausentes|Atributo obligatorio ausente:)/.test(reason)) {
     return "requisito Excel; origen por contrastar";
   }
+  if (reason === "Descripción comercial contradictoria: altura de trabajo") return "alturas comerciales explícitas incompatibles";
   if (reason === "Precio publicado inválido") return "valor numérico publicado no interpretable";
   if (/^(?:Categoría Equipzilla|Condición comercial)/.test(reason)) return "equivalencia o condición por verificar";
   if (/^(?:Número de serie |Referencia duplicada en la extracción)/.test(reason)) return "integridad de identidad";

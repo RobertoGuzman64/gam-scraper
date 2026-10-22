@@ -43,6 +43,7 @@ test("restricciones comerciales, categorías y conflictos no implican datos inve
   assert.equal(sourceSignalForIssue("Categoría Equipzilla sin correspondencia inequívoca", base), "equivalencia_pendiente");
   assert.equal(sourceSignalForIssue("Condición comercial no confirmada (Nuevo o Segunda_Mano)", base), "sin_evidencia_local");
   assert.equal(sourceSignalForIssue("Condición comercial contradictoria entre la ficha y el origen", base), "contradiccion");
+  assert.equal(sourceSignalForIssue("Descripción comercial contradictoria: altura de trabajo", base), "contradiccion");
   assert.equal(sourceSignalForIssue("Número de serie ABC compartido por dos máquinas", base), "identidad");
   assert.equal(sourceSignalForIssue("Descripción corta ausente: solo hay descripción general", {
     ...base, longDescription: "Ficha general"

@@ -166,7 +166,7 @@ test("impide generar Excel si se altera el CSV después de preparar la extracci�
   }
 });
 
-test("preflight rechaza ready incompatible con create/many aunque los hashes sean correctos", async () => {
+test("preflight separa calidad ready de importabilidad create/many sin exportar candidatos incompatibles", async () => {
   const dir = await mkdtemp(join(tmpdir(), "eq-f4-contract-"));
   try {
     const batch = await createBatch(dir);
@@ -195,7 +195,12 @@ test("preflight rechaza ready incompatible con create/many aunque los hashes sea
           preparationSha256: createHash("sha256").update(preparationText).digest("hex")
         }
       }));
-      await assert.rejects(check(dir), scenario.reason, scenario.name);
+      const result = await check(dir);
+      assert.equal(result.ready, 1, scenario.name);
+      assert.equal(result.review, 0, scenario.name);
+      assert.equal(result.importReady, 0, scenario.name);
+      assert.equal(result.importBlocked, 1, scenario.name);
+      assert.equal(result.status, "review", scenario.name);
     }
   } finally {
     await rm(dir, { recursive: true, force: true });
@@ -246,11 +251,9 @@ test("validate presenta motivos y referencias sin modificar la elegibilidad ni e
     await runPreflight(["mercaeleva", "--out", dir, "--prefix", "lote"]);
     const output = lines.join("\n");
     assert.equal(process.exitCode, 2);
-    assert.match(output, /Productos: 3 \| Listos: 2 \| Revisar: 1 \| Posibles bajas: 0/);
-    assert.match(output, /Diagnóstico review: 1 fichas \| 1 motivo: 1 \| 2\+ motivos: 0 \| sin motivo: 0 \| incidencias: 1/);
+    assert.match(output, /Productos: 3 \| Calidad ready: 3 \| Calidad review: 0 \| Importables create\/many: 2 \| Bloqueados: 1 \| Posibles bajas: 0/);
     assert.doesNotMatch(output, /Precio no disponible o inválido/);
-    assert.match(output, /Descripción corta ausente:.*\| 1 ficha \| solo: 1 \| con otros: 0 \| refs: M044-4095/);
-    assert.match(output, /Aviso: 1 productos pendientes de revisión/);
+    assert.match(output, /Aviso: 1 productos no elegibles para create\/many/);
     lines.length = 0;
     await createBatch(dir);
     process.exitCode = 0;

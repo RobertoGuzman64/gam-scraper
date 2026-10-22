@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { LiveStatus, formatDuration } from "./reporting/live-status.js";
 import { formatPriceAvailability, formatReviewDiagnostics } from "./reporting/review-diagnostics.js";
 import { formatDetailedValidation } from "./reporting/detailed-validation.js";
+import { formatImportDiagnostics } from "./reporting/import-diagnostics.js";
 import { parsePreparation } from "../catalog/import/preparation/preparation-document.js";
 import { printCommandError } from "./reporting/errors.js";
 import { join, resolve } from "node:path";
@@ -40,13 +41,14 @@ export const runPreflight = async (args: readonly string[]): Promise<void> => {
         `${(await readOfflinePreparation(options.preparation, providerId)).source.prefix}-catalog.json`);
       const report = await validateOfflinePreparation(providerId, options.preparation, source);
       status.stop();
-      console.log(`VALIDACIÓN | ${providerId.toUpperCase()} | ${report.review ? "REVISIÓN" : "CONFORME"}`);
-      console.log(`  Productos: ${report.catalog.productCount} | Listos para create/many: ${report.ready} | Revisar: ${report.review}`);
+      console.log(`VALIDACIÓN | ${providerId.toUpperCase()} | ${report.importBlocked ? "REVISIÓN" : "CONFORME"}`);
+      console.log(`  Productos: ${report.catalog.productCount} | Calidad ready: ${report.ready} | Calidad review: ${report.review} | Importables create/many: ${report.importReady} | Bloqueados: ${report.importBlocked}`);
       console.log(formatPriceAvailability(report.preparation.products));
+      for (const line of formatImportDiagnostics(report.preparation.products)) console.log(line);
       if (report.review > 0) {
         for (const line of formatReviewDiagnostics(report.preparation.products)) console.log(line);
-        process.exitCode = 2;
       }
+      if (report.importBlocked > 0) process.exitCode = 2;
       if (options.verbose) {
         for (const line of formatDetailedValidation(report.preparation.products)) console.log(line);
       }
@@ -60,18 +62,18 @@ export const runPreflight = async (args: readonly string[]): Promise<void> => {
   } finally { status.stop(); }
   let diagnostics: readonly string[] = [];
   let preparedProducts: ReturnType<typeof parsePreparation>["products"] | null = null;
-  if (result.review > 0) {
+  if (result.review > 0 || result.importBlocked > 0 || options.verbose) {
     const preparationText = await readFile(resolve(outputDir, `${outputPrefix}-preparation.json`), "utf8");
     const preparation: unknown = JSON.parse(preparationText);
     const products = parsePreparation(preparation, providerId).products;
     if (products.length !== result.productCount || products.filter((entry) => entry.status === "review").length !== result.review) {
       throw new Error("La preparación cambió durante la validación; repetir el comando");
     }
-    diagnostics = formatReviewDiagnostics(products);
+    diagnostics = [...formatReviewDiagnostics(products), ...formatImportDiagnostics(products)];
     if (options.verbose) preparedProducts = products;
   }
   console.log(`VALIDACIÓN | ${result.providerId.toUpperCase()} | ${result.status === "passed" ? "CONFORME" : "REVISIÓN"}`);
-  console.log(`  Productos: ${result.productCount} | Listos: ${result.ready} | Revisar: ${result.review} | Posibles bajas: ${result.suspectedMissing}`);
+  console.log(`  Productos: ${result.productCount} | Calidad ready: ${result.ready} | Calidad review: ${result.review} | Importables create/many: ${result.importReady} | Bloqueados: ${result.importBlocked} | Posibles bajas: ${result.suspectedMissing}`);
   for (const warning of result.warnings) console.log(`  Aviso: ${warning}`);
   for (const line of diagnostics) console.log(line);
   if (options.verbose) {

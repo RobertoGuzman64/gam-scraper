@@ -84,8 +84,9 @@ test("preparación conserva la descripción corta publicada aunque falte o coinc
   const longOnly = prepareProduct({ ...base, shortDescription: null }, catalog);
   assert.equal(longOnly.product.description, null);
   assert.equal(longOnly.product.description_general, base.longDescription);
-  assert.equal(longOnly.status, "review");
-  assert.ok(longOnly.issues.some((issue) => issue.includes("backend exige una descripción corta")));
+  assert.equal(longOnly.status, "ready");
+  assert.deepEqual(longOnly.issues, []);
+  assert.ok(longOnly.importIssues?.createMany.some((issue) => issue.includes("backend exige una descripción corta")));
 
   const shortOnly = prepareProduct({ ...base, longDescription: null }, catalog);
   assert.equal(shortOnly.product.description, base.shortDescription);
@@ -119,8 +120,9 @@ test("el precio ausente se conserva sin bloquear create/many", async () => {
 
 test("atributo obligatorio ausente bloquea importación y los desconocidos se conservan en specs", async () => {
   const record = prepareProduct({ ...base, specs: { "Altura de trabajo": "N/D", "Valor proveedor": "propio" } }, await loadImportCatalog());
-  assert.equal(record.status, "review");
-  assert.ok(record.issues.includes("Atributo obligatorio ausente: Altura de trabajo"));
+  assert.equal(record.status, "ready");
+  assert.deepEqual(record.issues, []);
+  assert.ok(record.importIssues?.createMany.includes("Atributo obligatorio ausente: Altura de trabajo"));
   assert.equal(record.product.spec["Valor proveedor"], "propio");
   assert.ok(!record.product.attributes.some((item) => item.attributeID === 1));
 });
@@ -131,8 +133,10 @@ test("precio, imágenes y descripción inválidos requieren revisión; no se inv
   assert.deepEqual(record.product.images, []);
   assert.equal(record.product.description, null);
   assert.ok(!record.issues.some((issue) => issue.startsWith("Precio ")));
-  assert.ok(record.issues.includes("Imágenes válidas ausentes"));
-  assert.ok(record.issues.includes("Descripción ausente"));
+  assert.equal(record.status, "ready");
+  assert.deepEqual(record.issues, []);
+  assert.ok(record.importIssues?.createMany.includes("URL de imagen ausente o inválida"));
+  assert.ok(record.importIssues?.createMany.includes("Descripción ausente"));
 });
 
 test("el batch separa preparados y revisión sin perder referencias", async () => {

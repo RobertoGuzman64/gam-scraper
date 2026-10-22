@@ -1,7 +1,9 @@
 import type { PreparedProduct } from "./contracts.js";
 import type { OfflinePreparation } from "./offline-document.js";
+import { buildImportDiagnostics } from "./import-diagnostics.js";
+import type { ImportDiagnostics } from "./import-diagnostics.js";
 
-export type IssueCategory = "contrato_excel" | "dato_presente_no_mapeado" | "ambiguo" | "dato_no_observado" | "origen_por_contrastar" | "identidad" | "no_determinado";
+export type IssueCategory = "contrato_excel" | "dato_presente_no_mapeado" | "ambiguo" | "dato_no_observado" | "origen_por_contrastar" | "identidad" | "no_determinado" | "contradiccion" | "rechazo_seguridad" | "no_normalizable";
 export type IssueDetail = {
   readonly code: string;
   readonly message: string;
@@ -12,11 +14,15 @@ export type IssueDetail = {
 };
 
 const describeIssue = (issue: string): { code: string; classification: IssueCategory } => {
+  if (issue.startsWith("Atributo contradictorio: ")) return { code: `quality.attribute_contradiction:${issue.slice("Atributo contradictorio: ".length)}`, classification: "contradiccion" };
+  if (issue.startsWith("Atributo rechazado por seguridad: ")) return { code: `quality.attribute_rejected:${issue.slice("Atributo rechazado por seguridad: ".length)}`, classification: "rechazo_seguridad" };
+  if (issue.startsWith("Atributo no normalizable: ")) return { code: `quality.attribute_invalid:${issue.slice("Atributo no normalizable: ".length)}`, classification: "no_normalizable" };
   if (issue.startsWith("Atributo obligatorio ausente: ")) {
     return { code: `excel.required_attribute:${issue.slice("Atributo obligatorio ausente: ".length)}`, classification: "origen_por_contrastar" };
   }
   if (issue.startsWith("Número de serie ")) return { code: "identity.serial_collision", classification: "identidad" };
   if (issue.startsWith("Referencia duplicada ")) return { code: "identity.duplicate_reference", classification: "identidad" };
+  if (issue === "Descripción comercial contradictoria: altura de trabajo") return { code: "description.height_conflict", classification: "contradiccion" };
   if (issue.startsWith("Condición comercial contradictoria")) return { code: "condition.contradictory", classification: "ambiguo" };
   if (issue.startsWith("Condición comercial no confirmada")) return { code: "condition.unknown", classification: "origen_por_contrastar" };
   if (issue.startsWith("Categoría Equipzilla")) return { code: "mapping.category", classification: "dato_presente_no_mapeado" };
@@ -44,6 +50,7 @@ export type OfflineDiagnostics = {
   };
   readonly conditions: Readonly<Record<"Nuevo" | "Segunda_Mano" | "Sin confirmar", { readonly ready: number; readonly review: number }>>;
   readonly issues: readonly IssueDetail[];
+  readonly importation: ImportDiagnostics;
 };
 
 export const buildOfflineDiagnostics = (preparation: OfflinePreparation): OfflineDiagnostics => {
@@ -79,7 +86,7 @@ export const buildOfflineDiagnostics = (preparation: OfflinePreparation): Offlin
     version: 1, providerId: preparation.source.providerId, source: preparation.source,
     fingerprints: preparation.fingerprints,
     totals: { ...preparation.totals, products: preparation.products.length, incidences, reviewSingle, reviewMultiple },
-    conditions,
+    conditions, importation: buildImportDiagnostics(preparation.products),
     issues: [...groups].map(([code, item]) => ({ code, ...item })).sort((a, b) => b.affected - a.affected || a.code.localeCompare(b.code, "es"))
   };
 };

@@ -159,7 +159,7 @@ test("validate resuelve el catálogo original al validar una preparación de nom
   });
 });
 
-test("validate --verbose muestra solo fichas en review y motivos sin alterar la validación", async () => {
+test("validate --verbose separa fichas en review de bloqueos de receptor sin alterar la validación", async () => {
   await withCatalog(async ({ source, preparation }) => {
     const previousLog = console.log;
     const previousExitCode = process.exitCode;
@@ -172,8 +172,11 @@ test("validate --verbose muestra solo fichas en review y motivos sin alterar la 
       assert.match(output, /AUDIT DE REVIEW \| 1\/4 fichas en revisión/);
       assert.match(output, /Patrones de bloqueos simultáneos/);
       assert.match(output, /Máquinas en review \(referencia y motivos exactos\)/);
-      assert.doesNotMatch(output, /GAM \| 33333 \|/);
-      assert.match(output, /GAM \| 44444 \| 2 motivos/);
+      const reviewDetails = output.split("  Máquinas en review (referencia y motivos exactos):")[1]?.split("  Bloqueos de importación Excel")[0];
+      assert.ok(reviewDetails);
+      assert.doesNotMatch(reviewDetails, /GAM \| 33333 \|/);
+      assert.match(reviewDetails, /GAM \| 44444 \| 2 motivos/);
+      assert.match(output, /GAM \| 33333 \| calidad: ready \| 1 requisitos de receptor/);
       assert.doesNotMatch(output, /\[excel.price\]/);
       assert.match(output, /\[condition.unknown\] Condición comercial no confirmada/);
       assert.match(output, /\[mapping.category\] Categoría Equipzilla sin correspondencia inequívoca/);

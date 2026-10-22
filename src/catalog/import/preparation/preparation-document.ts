@@ -14,6 +14,10 @@ const validText = (input: unknown): input is string => typeof input === "string"
 const isAttributeValue = (input: unknown): input is string | number | boolean =>
   typeof input === "string" || typeof input === "boolean" || (typeof input === "number" && Number.isFinite(input));
 
+const isImportIssues = (input: unknown): boolean =>
+  isRecord(input) && Array.isArray(input.excel) && input.excel.every((item: unknown) => typeof item === "string") &&
+  Array.isArray(input.createMany) && input.createMany.every((item: unknown) => typeof item === "string");
+
 const isCandidate = (input: unknown): input is ImportCandidate => {
   if (!isRecord(input)) return false;
   return validText(input.providerId) && validText(input.sourceUrl) &&
@@ -38,6 +42,7 @@ export const parsePreparation = (input: unknown, providerId: string): Preparatio
   for (const entry of input.products) {
     if (!isRecord(entry) || !["ready", "review"].includes(String(entry.status)) ||
       !Array.isArray(entry.issues) || !entry.issues.every((issue: unknown) => typeof issue === "string") ||
+      (entry.importIssues !== undefined && !isImportIssues(entry.importIssues)) ||
       !isCandidate(entry.product) || entry.product.providerId !== providerId) {
       throw new Error("El informe de preparación no coincide con el proveedor o contiene productos inválidos");
     }

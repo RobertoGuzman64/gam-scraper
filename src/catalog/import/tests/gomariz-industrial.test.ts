@@ -81,8 +81,10 @@ test("Gomariz: preparación comercial sin rellenos ni reclasificaciones", () => 
   const lift = source("carretilla-industrial", material, { Motor: "Eléctrico", Capacidad: "2500 kg" });
   const towerResult = prepareProduct(tower, catalog);
   const liftResult = prepareProduct(lift, catalog);
-  assert.equal(towerResult.status, "review");
-  assert.equal(liftResult.status, "review");
+  assert.equal(towerResult.status, "ready");
+  assert.equal(liftResult.status, "ready");
+  assert.ok(towerResult.importIssues?.excel.includes("Precio ausente o inválido"));
+  assert.ok(liftResult.importIssues?.createMany.some((issue) => issue.startsWith("Descripción ")));
   assert.equal(towerResult.product.price, null);
   assert.equal(towerResult.product.condition, "Segunda_Mano");
   assert.equal(liftResult.product.condition, "Segunda_Mano");

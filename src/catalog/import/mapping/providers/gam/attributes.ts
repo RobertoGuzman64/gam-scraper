@@ -1,6 +1,6 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { SPEC_KEY_NORMALIZATION } from "../../../../normalization/spec-rules.js";
-import type { Attribute, Candidate } from "../../attribute-types.js";
+import type { AliasOutcome, Attribute, Candidate } from "../../attribute-types.js";
 import { fold, basketDimensions, scalar } from "../../attribute-utils.js";
 import { gamWorkingHeightFromDescription } from "./working-height.js";
 import { gamElevationIdentityConflict } from "./elevation-identity.js";
@@ -11,7 +11,7 @@ import { gamElevationCandidate, gamElevationHeightConflicts } from "./elevation.
 import { gamSpecializedCandidate } from "./specialized.js";
 import { gamGeneratorCandidate, isGamGenerator } from "./generator.js";
 
-export const applyGamAliases = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): boolean => {
+export const applyGamAliasesDetailed = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): AliasOutcome => {
   if (attribute.name === "Dimensiones de la cesta") keys.add(fold("Dimensiones Cesta"));
   let family = "";
   try {
@@ -20,7 +20,7 @@ export const applyGamAliases = (record: ProductRecord, attribute: Attribute, key
     if (url.hostname === "online.gamrentals.com" && path[0] === "es") family = path[1] ?? "";
   } catch { family = ""; }
   if (["Altura de trabajo", "Altura de plataforma", "Alcance horizontal", "Altura de elevación"].includes(attribute.name) &&
-    gamElevationIdentityConflict(record)) return false;
+    gamElevationIdentityConflict(record)) return "rejected";
   if (family && attribute.name === "Altura de trabajo" && attribute.type === "NUMBER") {
     const hasDirectValue = Object.entries(record.specs ?? {}).some(([key, value]) =>
       (keys.has(fold(key)) || keys.has(fold(SPEC_KEY_NORMALIZATION[fold(key)] ?? key))) && scalar(value) !== null
@@ -30,7 +30,7 @@ export const applyGamAliases = (record: ProductRecord, attribute: Attribute, key
       if (height !== null) candidates.push({ key: "Altura de trabajo", value: height });
     }
   }
-  if (attribute.name === "Ancho de trabajo" && gamCleaningWidthConflicts(record)) return false;
+  if (attribute.name === "Ancho de trabajo" && gamCleaningWidthConflicts(record)) return "contradiction";
   if (["Alimentación", "Tipo de conductor", "Ancho de trabajo"].includes(attribute.name)) {
     const hasDirectValue = Object.entries(record.specs ?? {}).some(([key, value]) =>
       (keys.has(fold(key)) || keys.has(fold(SPEC_KEY_NORMALIZATION[fold(key)] ?? key))) && scalar(value) !== null
@@ -50,14 +50,14 @@ export const applyGamAliases = (record: ProductRecord, attribute: Attribute, key
     }
   }
   if (attribute.name === "Altura de elevación" && attribute.unit_option === "mm") {
-    if (gamElevationHeightConflicts(record)) return false;
+    if (gamElevationHeightConflicts(record)) return "contradiction";
     keys.add(fold("Altura Elevación (Industr.)"));
   }
-  if (gamHandlingAttributeConflicts(record, attribute)) return false;
+  if (gamHandlingAttributeConflicts(record, attribute)) return "contradiction";
   if (attribute.name === "Potencia" && isGamGenerator(record)) {
     keys.delete(fold("Potencia (kW)"));
     const generatorPower = gamGeneratorCandidate(record, attribute);
-    if (!generatorPower) return false;
+    if (!generatorPower) return "rejected";
     candidates.push(generatorPower);
   }
   if (["Tipo de mástil", "Altura de elevación", "Capacidad de carga", "Marca", "Modelo", "Motorización / Energía"].includes(attribute.name)) {
@@ -84,8 +84,11 @@ export const applyGamAliases = (record: ProductRecord, attribute: Attribute, key
     if (attribute.name === "Capacidad máxima") keys.add(fold("Capacidad de carga (kg)"));
     if (attribute.name === "Altura máxima de elevación") keys.add(fold("Altura de elevación (m)"));
   }
-  return true;
+  return "accepted";
 };
+
+export const applyGamAliases = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): boolean =>
+  applyGamAliasesDetailed(record, attribute, keys, candidates) === "accepted";
 
 export const convertGamCandidate = (
   attribute: Attribute, candidate: Candidate, fallback: string | number | boolean | null

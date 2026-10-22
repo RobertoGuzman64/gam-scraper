@@ -68,8 +68,8 @@ test("las relaciones y atributos obligatorios se calculan según la hoja nueva, 
     "Altura de elevación (m)": "8 metros"
   }), catalog);
   assert.equal(missing.product.categorySellID, 100);
-  assert.equal(missing.status, "review");
-  assert.ok(missing.issues.includes("Atributo obligatorio ausente: Altura de trabajo"));
+  assert.equal(missing.status, "ready");
+  assert.ok(missing.importIssues?.createMany.includes("Atributo obligatorio ausente: Altura de trabajo"));
 });
 
 test("ambigüedad de familia y motorización impide equivalencias aproximadas", () => {

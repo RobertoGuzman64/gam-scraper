@@ -71,19 +71,22 @@ const sourceMeasurements = (record: ProductRecord, attribute: Attribute): readon
 
 export const mercaelevaHandlingEvidence = (
   record: ProductRecord, attribute: Attribute
-): { safe: boolean; candidate: Candidate | null } => {
+): { safe: true; candidate: Candidate | null } | { safe: false; candidate: null; reason: "contradiction" | "rejected" } => {
   if (!validMercaelevaTechnicalSource(record)) return { safe: true, candidate: null };
   if (attribute.name === "Tipo de mástil" && /\bcarretilla\b/.test(fold(`${record.title ?? ""} ${String(record.specs?.["Título adicional"] ?? "")}`))) {
     const described = mastTypes(record.longDescription ?? "");
     const declared = publishedMast(record);
     if (described.size > 1 || (declared !== null && described.size === 1 && !described.has(declared))) {
-      return { safe: false, candidate: null };
+      return { safe: false, candidate: null, reason: "contradiction" };
     }
   }
   const found = sourceMeasurements(record, attribute);
   if (found.length === 0) return { safe: true, candidate: null };
-  if (found.some((item) => item.ambiguous || item.value !== found[0]?.value)) {
-    return { safe: false, candidate: null };
+  if (found.some((item) => item.value !== found[0]?.value)) {
+    return { safe: false, candidate: null, reason: "contradiction" };
+  }
+  if (found.some((item) => item.ambiguous)) {
+    return { safe: false, candidate: null, reason: "rejected" };
   }
   const first = found[0];
   return { safe: true, candidate: first ? { key: attribute.name, value: first.value } : null };

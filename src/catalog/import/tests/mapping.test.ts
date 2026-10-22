@@ -246,8 +246,9 @@ test("las fuentes secundarias no inventan precios y aprovechan capacidad declara
   assert.equal(categorySlug(gom), "carretillas-elevadoras-electricas-segunda-mano");
   assert.equal(attrVal(gom, "Capacidad de carga"), 3500);
   assert.equal(attrVal(gom, "Altura de elevación"), null);
-  assert.equal(prepared.status, "review");
+  assert.equal(prepared.status, "ready");
   assert.equal(prepared.product.price, null);
+  assert.ok(prepared.importIssues?.createMany.includes("Atributo obligatorio ausente: Altura de elevación"));
   const merca = source("mercaeleva", merUrl("Toyota-6FBRE14-M547-2372"), "Toyota", { "Título adicional": "CARRETILLA ELEVADORA RETRACTIL 1350 KG", "Horas laborales": "14 696 h" });
   assert.equal(attrVal(merca, "Capacidad de carga"), 1350);
   assert.equal(attrVal(merca, "Horas de uso"), 14696);
@@ -279,7 +280,7 @@ test("Mercaeleva: utiliza alturas máximas y cargas máximas explícitas solo en
       "Título adicional": "CARRETILLA ELEVADORA DIESEL 3000 KG", "Capacidad máxima de elevación": "2500 kg"
     });
   assert.equal(attrVal(contradictorySource, "Capacidad de carga"), null);
-  assert.ok(prepareProduct(contradictorySource, catalog).issues.includes("Atributo obligatorio ausente: Capacidad de carga"));
+  assert.ok(prepareProduct(contradictorySource, catalog).issues.some((issue) => issue.includes("Capacidad de carga")));
   assert.ok(!prepared.issues.includes("Atributo obligatorio ausente: Altura de elevación"));
   assert.ok(!prepared.issues.includes("Atributo obligatorio ausente: Capacidad de carga"));
   const conflict = source("mercaeleva", merca.url, merca.title ?? "", {

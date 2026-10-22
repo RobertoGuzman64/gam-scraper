@@ -38,7 +38,8 @@ test("Mercaeleva: nueva asigna cinco familias a hojas de maquinaria nueva existe
     assert.equal(slug(source), expected, title);
     const prepared = prepareProduct(source, catalog);
     assert.equal(prepared.product.condition, "Nuevo", title);
-    assert.ok(prepared.issues.includes("Descripción ausente"), title);
+    assert.ok(prepared.importIssues?.createMany.includes("Descripción ausente"), title);
+    assert.ok(!prepared.issues.includes("Descripción ausente"), title);
   }
 });
 
@@ -103,5 +104,5 @@ test("Mercaeleva: no inventa precios, condiciones ni textos para fichas sin orig
   assert.equal(prepared.product.description, null);
   assert.ok(!prepared.issues.some((issue) => issue.startsWith("Precio ")));
   assert.ok(prepared.issues.includes("Condición comercial no confirmada (Nuevo o Segunda_Mano)"));
-  assert.ok(prepared.issues.includes("Descripción ausente"));
+  assert.ok(prepared.importIssues?.createMany.includes("Descripción ausente"));
 });

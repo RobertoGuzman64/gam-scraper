@@ -1,10 +1,10 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
-import type { Attribute, Candidate } from "../../attribute-types.js";
+import type { AliasOutcome, Attribute, Candidate } from "../../attribute-types.js";
 import { fold } from "../../attribute-utils.js";
 import { mercaelevaHandlingEvidence } from "./handling-evidence.js";
 import { mercaelevaTechnicalCandidate } from "./technical.js";
 
-export const applyMercaelevaAliases = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): boolean => {
+export const applyMercaelevaAliasesDetailed = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): AliasOutcome => {
   const title = String(record.specs?.["Título adicional"] ?? record.title ?? "");
   const family = fold(title);
   const isForklift = /\bcarretilla\b/.test(family);
@@ -34,7 +34,10 @@ export const applyMercaelevaAliases = (record: ProductRecord, attribute: Attribu
   const technical = mercaelevaTechnicalCandidate(record, attribute);
   if (technical !== null) candidates.push(technical);
   const evidence = mercaelevaHandlingEvidence(record, attribute);
-  if (!evidence.safe) return false;
+  if (!evidence.safe) return evidence.reason;
   if (evidence.candidate !== null) candidates.push(evidence.candidate);
-  return true;
+  return "accepted";
 };
+
+export const applyMercaelevaAliases = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): boolean =>
+  applyMercaelevaAliasesDetailed(record, attribute, keys, candidates) === "accepted";

@@ -35,7 +35,9 @@ test("Gomariz: la procedencia verificada de venta de ocasión permite resolver c
   assert.ok(!prepared.issues.some((issue) => issue.includes("Categoría Equipzilla")));
   assert.equal(prepared.product.price, null);
   assert.ok(!prepared.issues.some((issue) => issue.startsWith("Precio ")));
-  assert.equal(prepared.status, "review");
+  assert.equal(prepared.status, "ready");
+  assert.ok(prepared.importIssues?.excel.includes("Precio ausente o inválido"));
+  assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Descripción corta ausente: ")));
 });
 
 test("Gomariz: no se extiende la condición de ocasión a otro dominio, ruta o colección", () => {

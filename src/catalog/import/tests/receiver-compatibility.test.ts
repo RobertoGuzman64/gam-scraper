@@ -53,9 +53,10 @@ test("GAM conserva el mástil obligatorio aunque no publique precio", async () =
   const prepared = prepareProduct(forklift, catalog);
   assert.equal(prepared.product.price, null);
   assert.equal(prepared.product.categorySellID, 11);
-  assert.ok(prepared.issues.includes("Atributo obligatorio ausente: Tipo de mástil"));
+  assert.ok(prepared.importIssues?.createMany.includes("Atributo obligatorio ausente: Tipo de mástil"));
+  assert.ok(!prepared.issues.includes("Atributo obligatorio ausente: Tipo de mástil"));
   assert.ok(!prepared.issues.some((issue) => issue.startsWith("Precio ")));
-  assert.equal(prepared.status, "review");
+  assert.equal(prepared.status, "ready");
   assert.ok(validateCreateManyCandidate(prepared.product, catalog).includes("Atributo obligatorio ausente: Tipo de mástil"));
 });
 

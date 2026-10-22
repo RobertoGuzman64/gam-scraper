@@ -87,7 +87,7 @@ test("create/many distingue registros existentes, duplicados e incompatibles sin
   assert.equal(plan.report.existing[0]?.reference, "EXISTE");
   assert.deepEqual(plan.report.duplicates.map((entry) => entry.reference), ["REP", "rep"]);
   assert.ok(plan.report.review.some((entry) => entry.reference === "SIN-DESC" && entry.reason.includes("Descripción corta")));
-  assert.ok(plan.report.review.some((entry) => entry.reference === "SIN-FOTO" && entry.reason.includes("Imágenes")));
+  assert.ok(plan.report.review.some((entry) => entry.reference === "SIN-FOTO" && entry.reason.includes("URL de imagen")));
   assert.ok(plan.report.review.some((entry) => entry.reference === "SIN-COND" && entry.reason.includes("Condición")));
 });
 

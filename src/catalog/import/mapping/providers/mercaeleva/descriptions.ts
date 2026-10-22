@@ -61,42 +61,54 @@ const subtype = (value: string): string | null => {
   return found.length === 1 ? found[0]?.[0] ?? null : null;
 };
 
-export const mercaelevaShortDescription = (record: ProductRecord): string | null => {
-  if (record.providerId !== "mercaeleva" || record.shortDescription?.trim()) return null;
+type ShortDescriptionResolution = {
+  readonly description: string | null;
+  readonly heightConflict: boolean;
+};
+
+const notAvailable: ShortDescriptionResolution = { description: null, heightConflict: false };
+
+export const resolveMercaelevaShortDescription = (record: ProductRecord): ShortDescriptionResolution => {
+  if (record.providerId !== "mercaeleva" || record.shortDescription?.trim()) return notAvailable;
   const general = record.longDescription?.trim();
-  if (!general || !record.brand?.trim() || !record.model?.trim()) return null;
+  if (!general || !record.brand?.trim() || !record.model?.trim()) return notAvailable;
 
   const sellerText = descriptionSource(record, general);
-  if (!sellerText) return null;
+  if (!sellerText) return notAvailable;
   const source = sellerText.split(/\s+(?:horas?|hours?|houras)\s*:?\s*\d|\s+(?:a[nñ]o\s+de\s+fabricaci[oó]n|year\s+of\s+manufacture)\b/i)[0]?.trim();
-  if (!source || source.length < 25 || !exactModelIn(source, record.model)) return null;
+  if (!source || source.length < 25 || !exactModelIn(source, record.model)) return notAvailable;
 
   const titleFamily = machineFamily(record.title ?? "");
-  if (!titleFamily || machineFamily(source) !== titleFamily) return null;
-  if (!brandInSource(record.brand, source)) return null;
+  if (!titleFamily || machineFamily(source) !== titleFamily) return notAvailable;
+  if (!brandInSource(record.brand, source)) return notAvailable;
 
   const title = fold(record.title ?? "");
   const description = fold(source);
   const electric = /\belectric[oa]s?\b|\belectric\b/;
   const diesel = /\bdiesel\b/;
-  if ((electric.test(title) && diesel.test(description)) || (diesel.test(title) && electric.test(description))) return null;
+  if ((electric.test(title) && diesel.test(description)) || (diesel.test(title) && electric.test(description))) return notAvailable;
   const titleSubtype = subtype(title);
   const sourceSubtype = subtype(description);
-  if (titleSubtype && sourceSubtype && titleSubtype !== sourceSubtype) return null;
+  if (titleSubtype && sourceSubtype && titleSubtype !== sourceSubtype) return notAvailable;
 
   const mastTypes = ["simplex", "duplex", "triplex"];
-  if (mastTypes.filter((type) => new RegExp(`\\b${type}\\b`).test(description)).length > 1) return null;
+  if (mastTypes.filter((type) => new RegExp(`\\b${type}\\b`).test(description)).length > 1) return notAvailable;
 
   const titleHeight = title.match(/\b(\d{1,2}(?:[.,]\d+)?)\s*(?:mt|metros?)\b/)?.[1];
   const sourceHeight = description.match(/\b(?:altura\s+(?:de\s+)?(?:trabajo|elevacion)|working height)\s*:?\s*(\d{1,2}(?:[.,]\d+)?)\s*(?:mt|metros?)\b/)?.[1];
-  if (titleHeight && sourceHeight && Number(titleHeight.replace(",", ".")) !== Number(sourceHeight.replace(",", "."))) return null;
+  if (titleHeight && sourceHeight && Number(titleHeight.replace(",", ".")) !== Number(sourceHeight.replace(",", "."))) {
+    return { description: null, heightConflict: true };
+  }
 
   const titleCapacity = title.match(/\b(\d[\d.,]*)\s*kg\b/)?.[1];
   const sourceCapacity = description.match(/\b(?:capacidad(?:\s+de\s+carga)?\s*:?)?\s*(\d[\d.,]*)\s*kg\b/)?.[1];
   if (titleCapacity && sourceCapacity) {
     const kilograms = (value: string): number => Number(value.replace(/\./g, "").replace(",", "."));
-    if (kilograms(titleCapacity) !== kilograms(sourceCapacity)) return null;
+    if (kilograms(titleCapacity) !== kilograms(sourceCapacity)) return notAvailable;
   }
 
-  return source;
+  return { description: source, heightConflict: false };
 };
+
+export const mercaelevaShortDescription = (record: ProductRecord): string | null =>
+  resolveMercaelevaShortDescription(record).description;

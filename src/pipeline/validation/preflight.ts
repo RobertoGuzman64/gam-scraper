@@ -22,6 +22,8 @@ export type PreflightReport = {
   readonly productCount: number;
   readonly ready: number;
   readonly review: number;
+  readonly importReady: number;
+  readonly importBlocked: number;
   readonly suspectedMissing: number;
   readonly status: "passed" | "review";
   readonly warnings: readonly string[];
@@ -131,6 +133,8 @@ export const validateCatalogPublication = async (options: PreflightOptions): Pro
   const urls = new Set<string>();
   let ready = 0;
   let review = 0;
+  let importReady = 0;
+  let importBlocked = 0;
   for (const entry of document.products) {
     const url = entry.product.sourceUrl;
     const csvRow = csvRows.get(url);
@@ -140,18 +144,20 @@ export const validateCatalogPublication = async (options: PreflightOptions): Pro
     urls.add(url);
     if (entry.status === "ready") {
       if (entry.issues.length > 0) throw new Error("Producto marcado ready con incidencias");
-      const candidateIssues = validateCreateManyCandidate(entry.product, catalog);
-      if (candidateIssues.length > 0) {
-        throw new Error(`Producto ${entry.product.reference ?? url} marcado ready sin cumplir el contrato de importación: ${candidateIssues.join("; ")}`);
-      }
       ready += 1;
     } else {
       review += 1;
     }
+    if (entry.status === "ready" && validateCreateManyCandidate(entry.product, catalog).length === 0) {
+      importReady += 1;
+    } else {
+      importBlocked += 1;
+    }
   }
   const warnings: string[] = [];
-  if (review > 0) warnings.push(`${review} productos pendientes de revisión; no se deben importar`);
-  if (ready === 0) warnings.push("Ningún producto preparado para importar");
+  if (review > 0) warnings.push(`${review} productos con incidencias de calidad`);
+  if (importBlocked > 0) warnings.push(`${importBlocked} productos no elegibles para create/many por calidad o contrato de importación`);
+  if (importReady === 0) warnings.push("Ningún producto elegible para create/many");
   if (changes.suspectedMissing.length > 0) {
     warnings.push(`${changes.suspectedMissing.length} posibles bajas; no dar de baja automáticamente`);
   }
@@ -160,7 +166,7 @@ export const validateCatalogPublication = async (options: PreflightOptions): Pro
     checkedAt: new Date(checkedAt).toISOString(),
     summaryFile,
     productCount: document.products.length,
-    ready, review,
+    ready, review, importReady, importBlocked,
     suspectedMissing: changes.suspectedMissing.length,
     status: warnings.length ? "review" : "passed",
     warnings

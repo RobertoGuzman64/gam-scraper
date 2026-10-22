@@ -40,7 +40,9 @@ const containsLabel = (text: string | null | undefined, label: string): boolean 
 
 export const sourceSignalForIssue = (issue: string, record: ProductRecord): SourceSignal => {
   if (issue.startsWith("Número de serie ") || issue.startsWith("Referencia duplicada ")) return "identidad";
-  if (issue.startsWith("Condición comercial contradictoria")) return "contradiccion";
+  if (issue === "Descripción comercial contradictoria: altura de trabajo") return "contradiccion";
+  if (issue.startsWith("Condición comercial contradictoria") || issue.startsWith("Atributo contradictorio: ")) return "contradiccion";
+  if (issue.startsWith("Atributo rechazado por seguridad: ") || issue.startsWith("Atributo no normalizable: ")) return "campo_origen_no_validado";
   if (issue.startsWith("Categoría Equipzilla")) return "equivalencia_pendiente";
   if (issue.startsWith("Atributo obligatorio ausente: ")) {
     const label = issue.slice("Atributo obligatorio ausente: ".length);

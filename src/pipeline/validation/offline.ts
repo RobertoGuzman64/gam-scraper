@@ -25,6 +25,8 @@ export type OfflineValidation = {
   readonly preparationFile: string;
   readonly ready: number;
   readonly review: number;
+  readonly importReady: number;
+  readonly importBlocked: number;
   readonly preparation: OfflinePreparation;
   readonly target: ImportCatalog;
   readonly sourceProducts: readonly ProductRecord[];
@@ -65,11 +67,9 @@ export const validateOfflinePreparation = async (
     !isDeepStrictEqual(preparation.totals, expected.totals)) {
     throw new Error("La preparación no coincide con los productos y reglas de su catálogo de origen");
   }
-  for (const entry of preparation.products) {
-    if (entry.status === "ready" && validateCreateManyCandidate(entry.product, inputs.catalog).length > 0) {
-      throw new Error(`Un producto ready ya no cumple el contrato create/many: ${entry.product.reference ?? entry.product.sourceUrl}`);
-    }
-  }
+  const importReady = preparation.products.filter((entry) =>
+    entry.status === "ready" && validateCreateManyCandidate(entry.product, inputs.catalog).length === 0
+  ).length;
   if (maxAgeHours !== null) {
     if (!Number.isFinite(maxAgeHours) || maxAgeHours <= 0) throw new Error("maxAgeHours debe ser positivo");
     const age = Date.now() - Date.parse(canonical.endedAt);
@@ -83,6 +83,8 @@ export const validateOfflinePreparation = async (
       endedAt: canonical.endedAt, catalogSha256: sourceHash
     },
     preparationFile: resolve(preparationFile), ready: preparation.totals.ready,
-    review: preparation.totals.review, preparation, target: inputs.catalog, sourceProducts: canonical.products
+    review: preparation.totals.review, importReady,
+    importBlocked: preparation.products.length - importReady,
+    preparation, target: inputs.catalog, sourceProducts: canonical.products
   };
 };

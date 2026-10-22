@@ -1,4 +1,5 @@
 import { issueCode } from "../../catalog/import/preparation/offline-diagnostics.js";
+import { classifyImportIssue, importIssueCode } from "../../catalog/import/preparation/import-diagnostics.js";
 import type { PreparedProduct } from "../../catalog/import/preparation/contracts.js";
 
 const issueSignature = (issues: readonly string[]): string =>
@@ -18,14 +19,13 @@ export function* formatDetailedValidation(products: readonly PreparedProduct[]):
   yield `  AUDIT DE REVIEW | ${reviewed.length}/${products.length} fichas en revisión | ${signatures.size} combinaciones de motivos | solo lectura`;
   if (reviewed.length === 0) {
     yield "  No hay fichas en review.";
-    return;
   }
-  yield "  Patrones de bloqueos simultáneos (códigos diagnósticos; no indican causa demostrada):";
+  if (reviewed.length > 0) yield "  Patrones de bloqueos simultáneos (códigos diagnósticos; no indican causa demostrada):";
   for (const [signature, group] of [...signatures].sort(([a, x], [b, y]) => y.total - x.total || a.localeCompare(b, "es"))) {
     yield `    ${group.total} fichas | ${signature} | refs: ${group.references.join(", ")}`;
   }
 
-  yield "  Máquinas en review (referencia y motivos exactos):";
+  if (reviewed.length > 0) yield "  Máquinas en review (referencia y motivos exactos):";
   for (const entry of reviewed) {
     const product = entry.product;
     const reference = product.reference?.trim() || product.sourceUrl;
@@ -37,4 +37,18 @@ export function* formatDetailedValidation(products: readonly PreparedProduct[]):
       yield `      - [${issueCode(issue)}] ${issue}`;
     }
   }
+  for (const receiver of ["excel", "createMany"] as const) {
+    const blocked = products.filter((entry) => entry.importIssues &&
+      (entry.status === "review" || entry.importIssues[receiver].length > 0));
+    if (blocked.length === 0) continue;
+    yield `  Bloqueos de importación ${receiver === "excel" ? "Excel" : "create/many"} | ${blocked.length}/${products.length} fichas | calidad y contrato separados:`;
+    for (const entry of blocked) {
+      const reference = entry.product.reference?.trim() || entry.product.sourceUrl;
+      yield `    ${entry.product.providerId.toUpperCase()} | ${reference} | calidad: ${entry.status} | ${entry.importIssues?.[receiver].length ?? 0} requisitos de receptor`;
+      for (const issue of entry.importIssues?.[receiver] ?? []) {
+        yield `      - [${importIssueCode(issue)}] ${classifyImportIssue(issue, entry.issues)}: ${issue}`;
+      }
+    }
+  }
+
 }

@@ -102,7 +102,8 @@ test("Mercaeleva: mantiene bloqueadas capacidades contradictorias, pesos y mást
   assert.equal(value(source, "Capacidad de carga"), null);
   assert.equal(value(source, "Altura de elevación"), 4800);
   const prep = prepareProduct(source, catalog);
-  assert.ok(prep.issues.includes("Atributo obligatorio ausente: Capacidad de carga"));
+  assert.ok(prep.importIssues?.createMany.includes("Atributo obligatorio ausente: Capacidad de carga"));
+  assert.ok(prep.issues.some((issue) => issue.includes("Capacidad de carga")));
   const dumper = record("Ausa D450AHG DUMPER GIRATORIO 4500 KG", {});
   assert.equal(value(dumper, "Peso operativo"), null);
 });
