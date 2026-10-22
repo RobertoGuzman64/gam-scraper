@@ -86,10 +86,11 @@ const loadCapacity = (record: ProductRecord): number | null => {
   const values = new Set<number>();
   for (const part of parts) {
     const text = fold(part);
-    for (const match of text.matchAll(/\bcapacidad\s+(?:nominal\s+)?de\s+carga\s+(?:de\s+)?(?:hasta\s+)?(\d[\d.,]*)\s*(kg|kilogramos?|toneladas?|t)\b/g)) {
+    for (const match of text.matchAll(/\bcapacidad\s+(?:nominal\s+)?de\s+carga\s+(?:de\s+)?(hasta\s+)?(\d[\d.,]*)\s*(kg|kilogramos?|toneladas?|t)\b/g)) {
+      if (match[1]) continue;
       if (hasAdjacentAlternative(text, (match.index ?? 0) + match[0].length)) return null;
-      const numeric = match[1];
-      const unit = match[2];
+      const numeric = match[2];
+      const unit = match[3];
       if (!numeric || !unit) return null;
       const parsed = numberToken(numeric);
       if (parsed === null) return null;

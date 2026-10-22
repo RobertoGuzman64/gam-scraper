@@ -26,12 +26,23 @@ const exactModelIn = (text: string, model: string): boolean => {
   return new RegExp(`(?:^|[^a-z0-9])${pattern}(?![a-z0-9]|[-/][a-z0-9])`).test(fold(text));
 };
 
+const brandInSource = (brand: string, source: string): boolean => {
+  if (identity(source).includes(identity(brand))) return true;
+  return fold(brand) === "manitou" && /\bmantiou\b/.test(fold(source));
+};
+
 const descriptionSource = (record: ProductRecord, general: string): string | null => {
   const withReference = /^ref\.\s*([\p{L}\d/-]+)\s+(.+)$/iu.exec(general);
   if (withReference?.[1] && withReference[2]) {
     const article = record.specs?.["Artículo No."];
     if (typeof article === "string" && identity(article) !== identity(withReference[1])) return null;
     return withReference[2].trim();
+  }
+  const structured = /^(marca:\s*([\p{L}\d]+)\s+modelo:\s*([\p{L}\d./_+-]+)\s+tipo:\s*.+?)(?=\s+(?:configuraci[oó]n|categor[ií]a|mma|motor)\s*:|$)/iu.exec(general);
+  if (structured) {
+    if (identity(structured[2] ?? "") !== identity(record.brand ?? "") ||
+      identity(structured[3] ?? "") !== identity(record.model ?? "")) return null;
+    return structured[1]?.trim() ?? null;
   }
   const state = fold(String(record.specs?.["Estado"] ?? ""));
   if (record.condition !== "Nuevo" || (state !== "nuevo" && state !== "nueva")) return null;
@@ -62,7 +73,7 @@ export const mercaelevaShortDescription = (record: ProductRecord): string | null
 
   const titleFamily = machineFamily(record.title ?? "");
   if (!titleFamily || machineFamily(source) !== titleFamily) return null;
-  if (!identity(source).includes(identity(record.brand))) return null;
+  if (!brandInSource(record.brand, source)) return null;
 
   const title = fold(record.title ?? "");
   const description = fold(source);

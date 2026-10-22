@@ -101,3 +101,43 @@ test("GAM manutención: las protecciones no afectan a proveedores, categorías n
     { ...conflict, url: "https://example.com/es/carretillas-elevadoras-glp-segunda-mano/6702" }
   ]) assert.equal(value(record, "Altura de elevación"), 3600);
 });
+
+test("GAM manutención: contrasta alturas máximas declaradas sin confundir configuraciones optativas", () => {
+  assert.equal(value(machine({
+    longDescription: "La Hyster H3.5FT presenta una altura máxima de elevación de 4,6 metros."
+  }), "Altura de elevación"), null);
+  assert.equal(value(machine({
+    longDescription: "La Hyster H3.5FT ofrece una altura máxima de elevación de hasta 4,6 metros según configuración."
+  }), "Altura de elevación"), 3600);
+  assert.equal(value(machine({
+    longDescription: "La Hyster H3.5FT puede equipar una altura de elevación de 4,6 m o 3,6 m."
+  }), "Altura de elevación"), 3600);
+});
+
+test("GAM manutención: las capacidades máximas opcionales no invalidan una carga nominal estructurada", () => {
+  const product = machine({
+    title: "Carretilla elevadora GLP 1800Kg Hyster H3.5FT",
+    specs: { "Capacidad de carga (kg)": "1800 KG" },
+    shortDescription: "Hyster H3.5FT: capacidad de carga de 1800 kg"
+  });
+  assert.equal(value({ ...product, longDescription: "La Hyster H3.5FT tiene capacidad de carga de hasta 2000 kg." }, "Capacidad de carga"), 1800);
+  assert.equal(value({ ...product, longDescription: "La Hyster H3.5FT tiene capacidad de carga de 2000 kg." }, "Capacidad de carga"), 1800);
+});
+
+test("GAM manutención: los mástiles de etapas instaladas contradicen tipos estructurados incompatibles", () => {
+  const product = machine({ specs: { "Tipo Mástil": "TRIPLEX" } });
+  assert.equal(value({ ...product, longDescription: "La Hyster H3.5FT monta un mástil de 2 etapas." }, "Tipo de mástil"), null);
+  assert.equal(value({ ...product, longDescription: "La Hyster H3.5FT incorpora un mástil de 3 etapas." }, "Tipo de mástil"), "Tríplex");
+  assert.equal(value({ ...product, longDescription: "La Hyster H3.5FT monta un mástil de 2 etapas según las opciones disponibles." }, "Tipo de mástil"), "Tríplex");
+});
+
+
+test("GAM manutención: mantiene en revisión una carga estructurada contradicha por fuentes distintas", () => {
+  const product = machine({
+    title: "Carretilla elevadora GLP Hyster H3.5FT",
+    specs: { "Capacidad de carga (kg)": "4000 KG" },
+    shortDescription: "Hyster H3.5FT con capacidad de carga de 4500 kg",
+    longDescription: "Hyster H3.5FT con capacidad de carga de hasta 4500 kg"
+  });
+  assert.equal(value(product, "Capacidad de carga"), null);
+});

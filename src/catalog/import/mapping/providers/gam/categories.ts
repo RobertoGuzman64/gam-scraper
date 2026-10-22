@@ -199,8 +199,28 @@ const gamHandlingCategory = (record: ProductRecord, parent: string, title: strin
   const specElectric = /\belectric[oa]s?\b/.test(drive);
   if ((manual && (electric || specElectric)) || (specManual && (electric || specElectric)) ||
     (specElectric && specManual)) return null;
+  if ((manual || specManual) && transpaleta && parent === "transpaletas-yale" &&
+    /\btranspaletas? motorizadas?\b/.test(fold(record.longDescription ?? "")) &&
+    /\b24\s*v\b/.test(fold(typeof specs["Capacidad de la batería"] === "string" ? specs["Capacidad de la batería"] : ""))) return null;
   if (manual || specManual) return apilador ? "apilador-manual" : "transpaleta-manual";
   if (electric) return apilador ? "apilador-electrico" : "transpaleta-electrica";
+  if (parent === "transpaletas-yale" && record.categoryKey === "marcas-nuevas" &&
+    /\btranspaleta\b/.test(title) && !/\b(?:manual|tijera)\b/.test(title)) {
+    const model = specs["Modelo"];
+    const battery = specs["Capacidad de la batería"];
+    const modelName = typeof model === "string" ? fold(model).trim() : "";
+    const batteryText = typeof battery === "string" ? fold(battery) : "";
+    const long = fold(record.longDescription ?? "");
+    const combined = `${title} ${short} ${long} ${drive}`;
+    if (modelName && modelName.length >= 4 &&
+      title.includes(modelName) && long.includes(modelName) &&
+      /\btranspaletas? motorizadas? compactas?\b/.test(long) &&
+      /\b24\s*v\b/.test(batteryText) &&
+      !/\b(?:manual|diesel|glp|lpg|gasolina|hibrid[oa]|semi[ -]?electric[oa])\b/.test(combined)) {
+      return "transpaleta-electrica";
+    }
+    return null;
+  }
   return null;
 };
 
@@ -215,6 +235,7 @@ export const newCategorySlug = (record: ProductRecord): string | null => {
   if (/(?:segunda-mano|de-ocasion)/.test(parent)) return null;
   const title = fold(record.title ?? "");
   if (/\bsemi\s+electric[oa]\b/.test(title) || /\bhibrid[oa]\b/.test(title) ||
+    (/\bglp\b/.test(title) && /\bdiesel\b/.test(title)) ||
     (/\belectric[oa]\b/.test(title) && /\bdiesel\b/.test(title)) ||
     (/\bbarredora\b/.test(title) && /\bfregadora\b/.test(title))) return null;
   const special = specializedLogitransCategory(record, parent, title);

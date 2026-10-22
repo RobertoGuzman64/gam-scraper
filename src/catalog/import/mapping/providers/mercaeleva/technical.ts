@@ -7,7 +7,7 @@ const publishedText = (record: ProductRecord, name: string): string => {
   return typeof value === "string" ? fold(value) : "";
 };
 
-const validSource = (record: ProductRecord): boolean => {
+export const validMercaelevaTechnicalSource = (record: ProductRecord): boolean => {
   if (record.providerId !== "mercaeleva") return false;
   try {
     const url = new URL(record.url);
@@ -89,7 +89,7 @@ export const normalizeMercaelevaCandidate = (
 };
 
 export const mercaelevaTechnicalCandidate = (record: ProductRecord, attribute: Attribute): Candidate | null => {
-  if (!validSource(record)) return null;
+  if (!validMercaelevaTechnicalSource(record)) return null;
   let value: string | number | boolean | null = null;
   if (attribute.name === "Motorización / Energía" && attribute.type === "SELECT" &&
     fold(attribute.unit_option) === "electrico") value = electricEnergy(record);

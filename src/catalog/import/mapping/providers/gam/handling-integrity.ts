@@ -36,11 +36,12 @@ const conflictingHeight = (record: ProductRecord): boolean => {
   for (const paragraph of [record.shortDescription, record.longDescription]) {
     if (!paragraph || !gamHandlingModelEvidence(record, paragraph)) continue;
     const text = fold(paragraph);
-    for (const match of text.matchAll(/\baltura\s+de\s+elevacion\s+(?:de\s+)?(hasta\s+)?(\d[\d.,]*)\s*(mm|cm|m|metros?)\b/g)) {
+    for (const match of text.matchAll(/\baltura\s+(?:maxima\s+)?de\s+elevacion\s+(?:de\s+)?(hasta\s+)?(\d[\d.,]*)\s*(mm|cm|m|metros?)\b/g)) {
       if (match[1] || !match[2] || !match[3]) continue;
       const tail = text.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 85);
       const before = text.slice(Math.max(0, (match.index ?? 0) - 40), match.index ?? 0);
-      if (/\b(?:hasta|desde|entre|segun|dependiendo|configuraciones?|opciones?|versiones?|alcanzar|puede)\b/.test(before) || /\b(?:segun|opciones?|configuraciones?|versiones?|disponibles?)\b/.test(tail)) continue;
+      if (/\b(?:hasta|desde|entre|segun|dependiendo|configuraciones?|opciones?|versiones?|alcanzar|puede)\b/.test(before) || /\b(?:segun|opciones?|configuraciones?|versiones?|disponibles?)\b/.test(tail) ||
+        /^(?:\s*[/,-]\s*|\s+(?:o|u|y|a)\s+)\d[\d.,]*/.test(tail)) continue;
       const number = numberToken(match[2]);
       if (number === null) continue;
       const unit = match[3];
@@ -63,9 +64,11 @@ const capacity = (raw: string, unit: string): number | null => {
 
 const capacityMentions = (value: string): readonly number[] => {
   const text = fold(value);
-  const matches = [...text.matchAll(/\bcapacidad\s+(?:nominal\s+)?(?:de\s+)?carga\s+(?:de\s+)?(?:hasta\s+)?(\d[\d.,]*)\s*(kg|kilogramos?|toneladas?|t)\b/g)];
+  const matches = [...text.matchAll(/\bcapacidad\s+(?:nominal\s+)?(?:de\s+)?carga\s+(?:de\s+)?(hasta\s+)?(\d[\d.,]*)\s*(kg|kilogramos?|toneladas?|t)\b/g)];
   return matches.flatMap((match) => {
-    const result = match[1] && match[2] ? capacity(match[1], match[2]) : null;
+    const tail = text.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 42);
+    if (/^(?:\s*[/,-]\s*|\s+(?:o|u|y|a)\s+)\d[\d.,]*/.test(tail)) return [];
+    const result = match[2] && match[3] ? capacity(match[2], match[3]) : null;
     return result === null ? [] : [result];
   });
 };
@@ -106,8 +109,14 @@ const conflictingMast = (record: ProductRecord): boolean => {
     if (!paragraph || !gamHandlingModelEvidence(record, paragraph)) continue;
     const text = fold(paragraph);
     if (/\b(?:opciones?|versiones?|configuraciones?|disponibles?)\b.{0,90}\bmastil/.test(text)) continue;
-    const attached = [...text.matchAll(/\b(?:monta|incorpora|equipad[oa]\s+con|con)\s+(?:un\s+)?mastil\s+(simple|duplex|triplex|cuadruplex)\b/g)];
-    if (attached.some((match) => normalizeGamMast(match[1] ?? null) !== expected)) return true;
+    const attached = [...text.matchAll(/\b(?:monta|incorpora|equipad[oa]\s+con|con)\s+(?:un\s+)?mastil\s+(?:(simple|duplex|triplex|cuadruplex)\b|de\s+([1-4])\s+etapas?\b)/g)];
+    const stages: Readonly<Record<string, string>> = { "1": "Simple", "2": "Dúplex", "3": "Tríplex", "4": "Cuádruplex" };
+    for (const match of attached) {
+      const tail = text.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 65);
+      if (/\b(?:opciones?|versiones?|configuraciones?|disponibles?|a\s+elegir)\b/.test(tail)) continue;
+      const described = match[1] ? normalizeGamMast(match[1]) : stages[match[2] ?? ""] ?? null;
+      if (described !== expected) return true;
+    }
   }
   return false;
 };

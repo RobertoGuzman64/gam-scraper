@@ -4,6 +4,7 @@ import type { ParsedProduct } from "../../provider.js";
 import type { SpecsMap } from "../../../contracts/catalog.js";
 import { collectProductImages } from "../../parsing/image-gallery.js";
 import { brandFromTitle, modelFromTitle } from "./identity.js";
+import { invalidGomarizPlatformHeight } from "../../../catalog/normalization/gomariz-technical.js";
 
 const normalize = (value: string): string => value.replace(/\s+/g, " ").trim();
 
@@ -46,8 +47,9 @@ export const extractGomarizLinks = (listingUrl: string, html: string): readonly 
   return [...results];
 };
 
-const collectSpecs = (source: string): SpecsMap => {
+const collectSpecs = (source: string, pageUrl: string): SpecsMap => {
   const specs: Record<string, string> = {};
+  const conflicting = new Set<string>();
   const keys = [
     "Altura plataforma", "Altura de trabajo", "Alcance lateral", "Altura almacenaje",
     "Altura", "Longitud", "Anchura", "Peso", "Motor", "Capacidad",
@@ -61,19 +63,15 @@ const collectSpecs = (source: string): SpecsMap => {
   for (const match of section.matchAll(fieldPattern)) {
     const key = normalize(match[1] ?? "");
     const value = normalize(match[2] ?? "");
-    if (key && value) specs[key] = value;
+    if (!key || !value || conflicting.has(key)) continue;
+    if (specs[key] !== undefined && specs[key] !== value) {
+      delete specs[key];
+      conflicting.add(key);
+    } else {
+      specs[key] = value;
+    }
   }
-  const height = (value: string | undefined): number | null => {
-    const match = value?.match(/^(\d+(?:[.,]\d+)?)\s*(?:m|metros?)$/i);
-    if (!match) return null;
-    const parsed = Number(match[1]?.replace(",", "."));
-    return Number.isFinite(parsed) ? parsed : null;
-  };
-  const platformHeight = height(specs["Altura plataforma"]);
-  const workingHeight = height(specs["Altura de trabajo"]);
-  if (platformHeight !== null && workingHeight !== null && platformHeight > workingHeight) {
-    delete specs["Altura plataforma"];
-  }
+  if (invalidGomarizPlatformHeight(pageUrl, specs)) delete specs["Altura plataforma"];
   return specs;
 };
 
@@ -121,6 +119,6 @@ export const parseGomarizProduct = (html: string, pageUrl: string): ParsedProduc
     serialNumber: metadataValue(overview, "Nº de serie") ?? metadataValue(overview, "Número de serie") ?? metadataValue(overview, "Número de bastidor"),
     image,
     images,
-    specs: collectSpecs(content)
+    specs: collectSpecs(content, pageUrl)
   };
 };

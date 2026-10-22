@@ -41,7 +41,7 @@ test("GLP Hyster: cruza título, descripción y ficha sin aceptar contradiccione
   assert.equal(slug({ ...source, specs: { "Tipo motor": "Diésel" } }), null);
   assert.equal(slug({ ...source, shortDescription: "Venta de Carretilla Elevadora Diésel" }), null);
   assert.equal(slug({ ...source, longDescription: "La carretilla elevadora diésel" }), null);
-  assert.equal(slug({ ...source, title: "Carretilla elevadora GLP o diésel Hyster" }), "carretilla-elevadora-diesel");
+  assert.equal(slug({ ...source, title: "Carretilla elevadora GLP o diésel Hyster" }), null);
 });
 
 test("motorización eléctrica Hyster sin confundir variante ni degradar fichas ya mapeadas", () => {
@@ -101,4 +101,32 @@ test("sin categoría compatible o evidencia suficiente mantiene review", () => {
     assert.equal(prepared.product.categorySellID, null, source.title ?? "");
     assert.ok(prepared.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"), source.title ?? "");
   }
+});
+
+test("transpaleta motorizada Yale: exige modelo, descripción y batería atribuibles a la ficha", () => {
+  const record = machine("transpaletas-yale", "Transpaleta YALE MPSC12 1200 Kg",
+    "Transpaleta motorizada súper compacta", "Las Transpaletas Motorizadas Compactas MPSC12 incluyen batería",
+    { Modelo: "MPSC12", "Capacidad de la batería": "24V / 840-1000Ah(V/Ah)" }, "Nuevo", "marcas-nuevas");
+  assert.equal(slug(record), "transpaleta-electrica");
+  assert.equal(slug({ ...record, specs: { ...record.specs, Modelo: "MPC14" } }), null);
+  assert.equal(slug({ ...record, longDescription: "Transpaletas Motorizadas Compactas de Yale" }), null);
+  assert.equal(slug({ ...record, specs: { ...record.specs, "Capacidad de la batería": "1000 mm" } }), null);
+  assert.equal(slug({ ...record, shortDescription: "Transpaleta diésel" }), null);
+  assert.equal(slug({ ...record, title: "Transpaleta manual Yale MPSC12" }), null);
+  assert.equal(slug({ ...record, url: "https://online.gamrentals.com/es/transpaletas-logitrans/99999" }), null);
+  assert.equal(slug({ ...record, providerId: "gomariz" }), null);
+});
+
+test("categoría energética: rechaza motorización de ficha contradictoria sin descartar alternativas de motor", () => {
+  const diesel = machine("carretillas-elevadoras-diesel-hyster", "Carretilla elevadora diésel Hyster H4.0FT",
+    "Venta de carretilla elevadora diésel", "", { "Tipo motor": "Diésel" }, "Nuevo", "carretillas-nuevas");
+  assert.equal(slug(diesel), "carretilla-elevadora-diesel");
+  assert.equal(slug({ ...diesel, specs: { "Tipo motor": "Kubota 3.8L LPG" } }), null);
+  assert.equal(slug({ ...diesel, specs: { "Tipo motor": "Diésel", "Motorización": "Eléctrico" } }), null);
+  assert.equal(slug({ ...diesel, specs: { "Tipo motor": "Diésel o GLP" } }), "carretilla-elevadora-diesel");
+  assert.equal(slug({ ...diesel, title: "Carretilla elevadora diésel o GLP Hyster H4.0FT" }), null);
+  const electric = machine("carretillas-elevadoras-electricas-hyster", "Carretilla elevadora eléctrica Hyster",
+    "Venta de carretilla eléctrica", "", { "Tipo motor": "Eléctrico" }, "Nuevo", "carretillas-nuevas");
+  assert.equal(slug(electric), "carretilla-elevadora-electrica");
+  assert.equal(slug({ ...electric, specs: { "Tipo motor": "Diésel" } }), null);
 });

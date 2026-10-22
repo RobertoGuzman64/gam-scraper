@@ -1,5 +1,5 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
-import { numberToken } from "../../attribute-utils.js";
+import { numberToken, scalar } from "../../attribute-utils.js";
 import type { Attribute, Candidate } from "../../attribute-types.js";
 
 const cleaningFamily = (record: ProductRecord): "fregadora" | "barredora" | "aspiradora" | null => {
@@ -59,37 +59,68 @@ const driver = (description: string): string | null => {
   return onBoard ? "Hombre a bordo" : "Hombre a pie";
 };
 
-const workWidth = (description: string): number | null => {
+const widthMillimetres = (raw: string, unit: string): number | null => {
+  const parsed = numberToken(raw);
+  if (parsed === null || parsed <= 0) return null;
+  const mm = parsed * (unit === "mm" ? 1 : unit === "cm" ? 10 : 1000);
+  return Number.isFinite(mm) ? Math.round(mm * 1000) / 1000 : null;
+};
+
+const workWidthExpressions = (description: string): readonly { value: number; optional: boolean }[] | null => {
   const text = foldText(description);
   const expression = /\b(?:(?:ancho|anchura) de (?:trabajo|barrido|fregado|restregado|limpieza)|(?:franja|trayectoria) de limpieza(?: total)?)\b[^\d.!?]{0,55}?(\d[\d.,]*)\s*(mm|cm|metros?|m)\b/g;
-  if (/\bmientras que (?:el|los) (?:cabezal|cepillos?) [^.!?]{0,85}\b(?:cubre|abarca|tiene un ancho de)\s+\d[\d.,]*\s*(?:mm|cm|m)\b/.test(text)) return null;
-  const values = new Set<number>();
+  const values: { value: number; optional: boolean }[] = [];
   for (const match of text.matchAll(expression)) {
-    if (/\b(?:hasta|m[aá]ximo|puede llegar)\b/.test(match[0])) continue;
-    const raw = match[1];
-    const unit = match[2];
-    if (!raw || !unit) continue;
-    const parsed = numberToken(raw);
-    if (parsed === null || parsed <= 0) continue;
-    const mm = parsed * (unit === "mm" ? 1 : unit === "cm" ? 10 : 1000);
-    if (!Number.isFinite(mm)) return null;
-    values.add(Math.round(mm * 1000) / 1000);
-    const rest = text.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 85);
-    if (/\b(?:o|y|hasta)\s+\d[\d.,]*\s*(?:mm|cm|metros?|m)(?![a-z0-9²³])/.test(rest)) return null;
+    if (!match[1] || !match[2]) return null;
+    const value = widthMillimetres(match[1], match[2]);
+    if (value === null) return null;
+    const tail = text.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 85).split(/[.!?]\s+[a-z]/, 1)[0] ?? "";
+    const alternative = /\b(?:o|y|hasta)\s+\d[\d.,]*\s*(?:mm|cm|metros?|m)\b(?![a-z0-9²³])|(?:\/|-)\s*\d[\d.,]*\s*(?:mm|cm|metros?|m)\b(?![a-z0-9²³])/.exec(tail);
+    if (alternative) {
+      const after = tail.slice((alternative.index ?? 0) + alternative[0].length);
+      if (!alternative[0].startsWith("hasta") || !/\bcon (?:el |un |la )?(?:cepillo|escobilla) lateral\b/.test(after)) return null;
+    }
+    const optional = /\b(?:hasta|maximo|puede llegar)\b/.test(match[0]) ||
+      (!alternative && /\b(?:cuando se utiliza|cuando se usa|con)\b[^.!?]{0,40}\b(?:cepillo|escobilla) lateral\b/.test(tail));
+    values.push({ value, optional });
   }
+  return values;
+};
+
+export const gamCleaningWidthConflicts = (record: ProductRecord): boolean => {
+  if (!cleaningFamily(record)) return false;
+  const source = record.specs?.["Anchura trabajo"];
+  if (source === undefined) return false;
+  const raw = scalar(source);
+  if (raw === null || typeof raw === "boolean") return true;
+  const match = String(raw).trim().match(/^(\d[\d.,]*)\s*(mm|cm|metros?|m)$/i);
+  const expected = match?.[1] && match[2] ? widthMillimetres(match[1], foldText(match[2])) : null;
+  if (expected === null) return true;
+  const found = workWidthExpressions(`${record.shortDescription ?? ""}. ${record.longDescription ?? ""}`);
+  return found === null || found.some((entry) => entry.value !== expected &&
+    (!entry.optional || entry.value < expected));
+};
+
+const workWidth = (description: string): number | null => {
+  const text = foldText(description);
+  if (/\bmientras que (?:el|los) (?:cabezal|cepillos?) [^.!?]{0,85}\b(?:cubre|abarca|tiene un ancho de)\s+\d[\d.,]*\s*(?:mm|cm|m)\b/.test(text)) return null;
+  const found = workWidthExpressions(description);
+  if (found === null) return null;
+  const values = new Set(found.filter((entry) => !entry.optional).map((entry) => entry.value));
+  if (found.some((entry) => entry.optional && values.size > 0 && !values.has(entry.value))) return null;
   return values.size === 1 ? [...values][0] ?? null : null;
 };
 
 export const gamCleaningCandidate = (record: ProductRecord, attribute: Attribute): Candidate | null => {
   if (!cleaningFamily(record)) return null;
   const modelCode = record.model?.match(/\b([a-z]{1,4}\d{2,4})([a-z]{1,3})\b/i);
-  if (modelCode?.[1] && modelCode[2] && record.longDescription) {
-    const variants = record.longDescription.match(new RegExp(`\\b${modelCode[1]}[a-z]{1,3}\\b`, "gi")) ?? [];
-    if (variants.length > 0 && !variants.some((variant) => variant.toLowerCase() === `${modelCode[1]}${modelCode[2]}`.toLowerCase())) {
+  if (modelCode?.[1] && modelCode[2]) {
+    const variants = `${record.shortDescription ?? ""} ${record.longDescription ?? ""}`.match(new RegExp(`\\b${modelCode[1]}[a-z]{1,3}\\b`, "gi")) ?? [];
+    if (variants.some((variant) => variant.toLowerCase() !== `${modelCode[1]}${modelCode[2]}`.toLowerCase())) {
       return null;
     }
   }
-  const text = `${record.title}. ${record.longDescription ?? record.shortDescription ?? ""}`;
+  const text = `${record.title}. ${record.shortDescription ?? ""}. ${record.longDescription ?? ""}`;
   if (attribute.name === "Alimentación" && attribute.type === "SELECT") {
     const value = energy(text);
     return value === null ? null : { key: attribute.name, value };

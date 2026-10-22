@@ -3,7 +3,8 @@ import { SPEC_KEY_NORMALIZATION } from "../../../../normalization/spec-rules.js"
 import type { Attribute, Candidate } from "../../attribute-types.js";
 import { fold, basketDimensions, scalar } from "../../attribute-utils.js";
 import { gamWorkingHeightFromDescription } from "./working-height.js";
-import { gamCleaningCandidate } from "./cleaning.js";
+import { gamElevationIdentityConflict } from "./elevation-identity.js";
+import { gamCleaningCandidate, gamCleaningWidthConflicts } from "./cleaning.js";
 import { gamHandlingCandidate, normalizeGamMast } from "./handling.js";
 import { gamHandlingAttributeConflicts } from "./handling-integrity.js";
 import { gamElevationCandidate, gamElevationHeightConflicts } from "./elevation.js";
@@ -18,6 +19,8 @@ export const applyGamAliases = (record: ProductRecord, attribute: Attribute, key
     const path = url.pathname.split("/").filter(Boolean);
     if (url.hostname === "online.gamrentals.com" && path[0] === "es") family = path[1] ?? "";
   } catch { family = ""; }
+  if (["Altura de trabajo", "Altura de plataforma", "Alcance horizontal", "Altura de elevación"].includes(attribute.name) &&
+    gamElevationIdentityConflict(record)) return false;
   if (family && attribute.name === "Altura de trabajo" && attribute.type === "NUMBER") {
     const hasDirectValue = Object.entries(record.specs ?? {}).some(([key, value]) =>
       (keys.has(fold(key)) || keys.has(fold(SPEC_KEY_NORMALIZATION[fold(key)] ?? key))) && scalar(value) !== null
@@ -25,12 +28,9 @@ export const applyGamAliases = (record: ProductRecord, attribute: Attribute, key
     if (!hasDirectValue) {
       const height = gamWorkingHeightFromDescription(record);
       if (height !== null) candidates.push({ key: "Altura de trabajo", value: height });
-      else {
-        const candidate = gamElevationCandidate(record, attribute);
-        if (candidate) candidates.push(candidate);
-      }
     }
   }
+  if (attribute.name === "Ancho de trabajo" && gamCleaningWidthConflicts(record)) return false;
   if (["Alimentación", "Tipo de conductor", "Ancho de trabajo"].includes(attribute.name)) {
     const hasDirectValue = Object.entries(record.specs ?? {}).some(([key, value]) =>
       (keys.has(fold(key)) || keys.has(fold(SPEC_KEY_NORMALIZATION[fold(key)] ?? key))) && scalar(value) !== null

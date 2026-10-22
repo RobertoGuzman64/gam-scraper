@@ -1,6 +1,7 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import type { Attribute, Candidate } from "../../attribute-types.js";
-import { fold, scalar } from "../../attribute-utils.js";
+import { fold } from "../../attribute-utils.js";
+import { mercaelevaHandlingEvidence } from "./handling-evidence.js";
 import { mercaelevaTechnicalCandidate } from "./technical.js";
 
 export const applyMercaelevaAliases = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): boolean => {
@@ -20,31 +21,20 @@ export const applyMercaelevaAliases = (record: ProductRecord, attribute: Attribu
   }
   if (attribute.name === "Capacidad de carga" && (isForklift || isStacker || isPalletTruck)) {
     if (hasExplicitLoad) keys.add(fold("Capacidad máxima de elevación"));
+    if (typeof record.specs?.["Capacidad nominal"] === "string" && /\bkg\s*$/i.test(record.specs["Capacidad nominal"])) {
+      keys.add(fold("Capacidad nominal"));
+    }
     const load = title.match(/\b(\d{3,5}|\d{1,2}[.,]\d{3})\s*kg\b/i)?.[1];
     if (load) candidates.push({ key: "Capacidad de carga (kg)", value: `${load} kg` });
+  }
+  if (attribute.name === "Peso operativo" && /\b(?:dumper|(?:mini)?excavadora)\b/.test(family)) {
+    keys.add(fold("Peso en servicio"));
   }
   if (attribute.name === "Longitud de horquillas") keys.add(fold("Longitud de tenedor"));
   const technical = mercaelevaTechnicalCandidate(record, attribute);
   if (technical !== null) candidates.push(technical);
-  if (attribute.name === "Tipo de mástil" && isForklift) {
-    const rawMast = record.specs?.["Tipo de mástil"];
-    const published = rawMast === undefined ? null : scalar(rawMast);
-    const description = fold(record.longDescription ?? "");
-    const types = [...description.matchAll(/\b(?:triplex|duplex|simplex|cuadruplex)\b/g)].map((match) => match[0]);
-    if (new Set(types).size > 1) return false;
-    const inDescription = types[0];
-    if (published !== null && inDescription) {
-      const publishedType = fold(String(published));
-      const equivalent: Readonly<Record<string, readonly string[]>> = {
-        triplex: ["triplex", "triple"],
-        duplex: ["duplex", "doble"],
-        simplex: ["simplex", "simple"]
-      };
-      const declared = Object.entries(equivalent).filter(([, names]) =>
-        names.some((name) => new RegExp(`(?:^|[^a-z])${name}(?:$|[^a-z])`).test(publishedType))
-      );
-      if (declared.length !== 1 || declared[0]?.[0] !== inDescription) return false;
-    }
-  }
+  const evidence = mercaelevaHandlingEvidence(record, attribute);
+  if (!evidence.safe) return false;
+  if (evidence.candidate !== null) candidates.push(evidence.candidate);
   return true;
 };

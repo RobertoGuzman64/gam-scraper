@@ -12,8 +12,8 @@ const aliases: Readonly<Record<string, readonly string[]>> = {
   "Capacidad de carga": ["Capacidad de carga (kg)"],
   "Altura de elevación": ["Altura de elevación (mm)", "Altura de elevación (m)"],
   "Peso operativo": ["Peso (kg)"],
-  "Altura de trabajo": ["Altura de trabajo (mm)"],
-  "Altura de plataforma": ["Altura plataforma", "Altura plataforma (mm)"],
+  "Altura de trabajo": ["Altura de trabajo (mm)", "Altura de trabajo (m)"],
+  "Altura de plataforma": ["Altura plataforma", "Altura plataforma (mm)", "Altura plataforma (m)"],
   "Pendiente superable": ["Pendiente superable (%)"],
   "Ancho de trabajo": ["Anchura trabajo (mm)"],
   "Potencia": ["Potencia (kW)"],
@@ -35,15 +35,24 @@ const unitOf = (source: string): "mm" | "cm" | "m" | "kg" | "kw" | "h" | "%" | n
 
 const numberValue = (value: SpecScalar, sourceKey: string, attribute: Attribute): number | null => {
   if (typeof value === "boolean") return null;
-  if (typeof value === "number") return Number.isFinite(value) ? value : null;
-  const matched = value.trim().match(/^([\d.,\s\u00a0\u202f]+)\s*([a-záéíóú%]+)?$/i);
-  if (!matched?.[1]) return null;
-  const parsed = numberToken(matched[1]);
-  if (parsed === null) return null;
-  const explicit = matched[2] ? unitOf(matched[2]) : null;
-  if (matched[2] && !explicit) return null;
-  const keyUnit = sourceKey.match(/\((mm|cm|m|kg|kw|h|%)\)/i)?.[1];
-  const sourceUnit = explicit ?? (keyUnit ? unitOf(keyUnit) : null);
+  let parsed: number;
+  let explicit: ReturnType<typeof unitOf> = null;
+  if (typeof value === "number") {
+    if (!Number.isFinite(value) || value < 0) return null;
+    parsed = value;
+  } else {
+    const matched = value.trim().match(/^([\d.,\s\u00a0\u202f]+)\s*([a-záéíóú%]+)?$/i);
+    if (!matched?.[1]) return null;
+    const numeric = numberToken(matched[1]);
+    if (numeric === null) return null;
+    parsed = numeric;
+    explicit = matched[2] ? unitOf(matched[2]) : null;
+    if (matched[2] && !explicit) return null;
+  }
+  const keyUnitMatch = sourceKey.match(/\((mm|cm|m|kg|kw|h|%)\)/i)?.[1];
+  const keyUnit = keyUnitMatch ? unitOf(keyUnitMatch) : null;
+  if (explicit && keyUnit && explicit !== keyUnit) return null;
+  const sourceUnit = explicit ?? keyUnit;
   const targetUnit = unitOf(attribute.unit_option);
   if (sourceUnit && targetUnit && sourceUnit !== targetUnit) {
     const ratios: Readonly<Record<string, number>> = { mm: 0.001, cm: 0.01, m: 1 };

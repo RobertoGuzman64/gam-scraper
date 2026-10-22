@@ -46,18 +46,6 @@ const singleMeasurement = (record: ProductRecord, patterns: readonly RegExp[]): 
   return values.size === 1 ? [...values][0] ?? null : null;
 };
 
-const workingHeight = (record: ProductRecord): number | null => {
-  const value = singleMeasurement(record, [
-    /\baltura\s+(?:maxima\s+)?de\s+trabajo(?:\s+maxima)?\s+(?:de\s+)?hasta\s+(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\b/g,
-    /\baltura\s+maxima\s+de\s+trabajo\s+(?:de\s+)?(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\b/g
-  ]);
-  if (value === null) return null;
-  const maxima = singleMeasurement(record, [
-    /\baltura\s+maxima\s+de\s+(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\b/g
-  ]);
-  return maxima !== null && maxima !== value ? null : value;
-};
-
 const basketCapacity = (record: ProductRecord): number | null => {
   if (!descriptions(record).some((part) => /\bcapacidad\s+(?:maxima\s+|nominal\s+)?(?:de\s+)?(?:la\s+)?cesta\b/.test(fold(part)))) return null;
   const capacities = new Set<number>();
@@ -92,7 +80,6 @@ export const gamElevationCandidate = (record: ProductRecord, attribute: Attribut
   if (!elevationRecord(record)) return null;
   let value: string | number | null = null;
   if (attribute.type === "NUMBER" && attribute.unit_option === "m") {
-    if (attribute.name === "Altura de trabajo") value = workingHeight(record);
     if (attribute.name === "Altura de plataforma") value = singleMeasurement(record, [
       /\baltura\s+de\s+(?:la\s+)?plataforma\s+(?:de\s+)?(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\b/g,
       /\b(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\s+de\s+altura\s+de\s+(?:la\s+)?plataforma\b/g

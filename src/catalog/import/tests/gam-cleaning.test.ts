@@ -69,9 +69,31 @@ test("GAM limpieza: versiones, opciones, medidas de máquina y potencia no acred
   assert.equal(resolved(record("fregadoras", "Robot fregadora autónomo con funcionamiento a batería.", "Fregadora autónoma TENNANT"), "Tipo de conductor"), null);
 });
 
+
+test("GAM limpieza: rescata anchura concordante del resumen sin confundir máximos opcionales", () => {
+  const machine = {
+    ...record("barredoras", "La TENNANT BCS S880 tiene una trayectoria de limpieza de hasta 1.200 mm.", "Barredora TENNANT BCS S880"),
+    model: "BCS S880",
+    shortDescription: "La TENNANT BCS S880 dispone de una trayectoria de limpieza total de 1.200 mm."
+  };
+  assert.equal(resolved(machine, "Ancho de trabajo"), 1200);
+  assert.equal(resolved({ ...machine, shortDescription: "Barredora TENNANT BCS S880" }, "Ancho de trabajo"), null);
+  assert.equal(resolved(record("fregadoras", "Ancho de restregado de 1.100 mm y hasta 1.320 mm con cepillo lateral.", "Fregadora TENNANT"), "Ancho de trabajo"), 1100);
+});
+
+test("GAM limpieza: rechaza anchuras de especificación incompatibles, alternativas o de la bayeta", () => {
+  const examples = [
+    record("barredoras", "El ancho de barrido es de 860 mm.", "Barredora TENNANT", { "Anchura trabajo": "0,85 metros" }),
+    record("fregadoras", "El ancho de fregado llega hasta 900 mm.", "Fregadora TENNANT", { "Anchura trabajo": "1,1 metros" }),
+    record("fregadoras", "La trayectoria de limpieza es de 550 mm o 700 mm.", "Fregadora TENNANT", { "Anchura trabajo": "0,55 metros" }),
+    record("fregadoras", "La trayectoria de limpieza es de 650 mm y 800 mm, con una bayeta de 1.234 mm.", "Fregadora TENNANT", { "Anchura trabajo": "1,23 metros" })
+  ];
+  for (const example of examples) assert.equal(resolved(example, "Ancho de trabajo"), null);
+});
+
 test("GAM limpieza: respeta los specs existentes y no extrapola a otros proveedores o líneas", () => {
   const withSpecs = record("barredoras", "Ancho de barrido de 860 mm.", "Barredora TENNANT", { "Anchura trabajo": "0,85 metros" });
-  assert.equal(resolved(withSpecs, "Ancho de trabajo"), 850);
+  assert.equal(resolved(withSpecs, "Ancho de trabajo"), null);
   const incompatibleModel: ProductRecord = {
     ...record("barredoras", "La barredora TENNANT BCS S16L está alimentada por baterías, con conductor sentado y una franja de limpieza de 1520 mm.", "Barredora TENNANT BCS S16H"),
     model: "BCS S16H Descarga alto"

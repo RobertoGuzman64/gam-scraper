@@ -34,9 +34,11 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Altura de elevación (mm)": "number",
     "Altura de elevación (m)": "number",
     "Altura de trabajo (mm)": "number",
+    "Altura de trabajo (m)": "number",
     "Altura mástil replegado (mm)": "number",
     "Altura al suelo (mm)": "number",
     "Altura plataforma (mm)": "number",
+    "Altura plataforma (m)": "number",
 
     "Longitud (mm)": "number",
     "Anchura (mm)": "number",
@@ -212,6 +214,7 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
 
     "altura trabajo": "Altura de trabajo (mm)",
     "altura de trabajo": "Altura de trabajo (mm)",
+    "altura de trabajo (m)": "Altura de trabajo (m)",
 
     "altura mastil": "Altura mástil replegado (mm)",
     "altura mástil": "Altura mástil replegado (mm)",
@@ -221,7 +224,7 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "altura al suelo": "Altura al suelo (mm)",
 
     "altura plataforma": "Altura plataforma (mm)",
-    "altura plataforma (m)": "Altura plataforma (mm)",
+    "altura plataforma (m)": "Altura plataforma (m)",
 
     "longitud": "Longitud (mm)",
     "longitud total": "Longitud (mm)",

@@ -113,3 +113,11 @@ test("GAM manutención: únicamente afecta al proveedor y familias autorizados",
   assert.ok(prepared.product.attributes.some((item) => item.attributeID === 115 && item.value === "HYSTER"));
   assert.ok(prepared.product.attributes.some((item) => item.attributeID === 116 && item.value === "J3.0UTL"));
 });
+
+test("GAM manutención: capacidad máxima genérica no identifica la configuración de carga", () => {
+  const product = example("Carretilla elevadora HYSTER J3.0UTL", "La HYSTER J3.0UTL ofrece una capacidad de carga de hasta 3000 kg.");
+  assert.equal(resolved(product, "Capacidad de carga"), null);
+  assert.equal(resolved({ ...product, specs: { "Capacidad de carga (kg)": "3000 KG" } }, "Capacidad de carga"), 3000);
+  assert.equal(resolved({ ...product, longDescription: "La HYSTER J3.0UTL tiene una capacidad nominal de carga de 3000 kg." }, "Capacidad de carga"), 3000);
+  assert.equal(resolved({ ...product, shortDescription: "HYSTER J3.0UTL: capacidad de carga de 3000 kg" }, "Capacidad de carga"), 3000);
+});

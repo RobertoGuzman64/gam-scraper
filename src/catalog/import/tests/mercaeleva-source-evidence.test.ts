@@ -104,3 +104,42 @@ test("Mercaeleva: acepta capacidad única concordante sin reemplazar datos ni pe
   assert.equal(existing["Capacidad de carga"], undefined);
   assert.equal(existing["Capacidad máxima de elevación"], "2500 kg");
 });
+
+
+test("Mercaeleva: recupera descripciones Manitou con errata publicada y referencia, modelo y medidas concordantes", () => {
+  const cases = [
+    { reference: "M572-8190", article: "774", hours: "3018" },
+    { reference: "M205-2951", article: "786", hours: "3355" },
+    { reference: "M178-6194", article: "784", hours: "3233" }
+  ] as const;
+  for (const item of cases) {
+    const description = `Ref. ${item.article} PLATAFORMA ARTICULADA DIESEL ALTURA DE TRABAJO 18 MT MANTIOU 180ATJ HORAS ${item.hours} AÑO DE FABRICACION 2017`;
+    const title = "Manitou 180ATJ PLATAFORMA ARTICULADA DIESEL 18 MT";
+    const source = record(item.reference, title, description, "Manitou", "180ATJ", item.article);
+    const expected = "PLATAFORMA ARTICULADA DIESEL ALTURA DE TRABAJO 18 MT MANTIOU 180ATJ";
+    assert.equal(mercaelevaShortDescription(source), expected, item.reference);
+    const prepared = prepareProduct(source, catalog);
+    assert.equal(prepared.product.description, expected, item.reference);
+    assert.equal(prepared.product.description_general, description, item.reference);
+    assert.equal(mercaelevaShortDescription({ ...source, model: "170ATJ" }), null);
+    assert.equal(mercaelevaShortDescription({ ...source, brand: "JLG" }), null);
+    assert.equal(mercaelevaShortDescription({ ...source, specs: { "Artículo No.": "999" } }), null);
+    assert.equal(mercaelevaShortDescription({ ...source, title: title.replace("18 MT", "17 MT") }), null);
+    assert.equal(mercaelevaShortDescription({ ...source, longDescription: description.replace("DIESEL", "ELECTRICA") }), null);
+  }
+});
+
+
+test("Mercaeleva: rescata el encabezado técnico individual publicado sin generar una descripción artificial", () => {
+  const general = "Marca: IVECO Modelo: ML120E22/P Tipo: Camión porta-vehículos Configuración: 4x2 Categoría: N2 MMA: hasta 12.000 kg Motor: IVECO F4AE3681B*M";
+  const source = record("M928-9933", "Iveco ML120E22/P Camión porta-vehículos 160CV",
+    general, "Iveco", "ML120E22/P", "1754KYC");
+  assert.equal(mercaelevaShortDescription(source), "Marca: IVECO Modelo: ML120E22/P Tipo: Camión porta-vehículos");
+  const prepared = prepareProduct(source, catalog);
+  assert.equal(prepared.product.description, "Marca: IVECO Modelo: ML120E22/P Tipo: Camión porta-vehículos");
+  assert.equal(prepared.product.description_general, general);
+  assert.equal(mercaelevaShortDescription({ ...source, brand: "MAN" }), null);
+  assert.equal(mercaelevaShortDescription({ ...source, model: "ML120E22" }), null);
+  assert.equal(mercaelevaShortDescription({ ...source, longDescription: general.replace("Camión porta-vehículos", "Carretilla elevadora") }), null);
+  assert.equal(mercaelevaShortDescription({ ...source, longDescription: "Marca: IVECO Modelo: ML120E22/P Tipo: Camión porta-vehículos".replace("Marca:", "Marca desconocida:") }), null);
+});

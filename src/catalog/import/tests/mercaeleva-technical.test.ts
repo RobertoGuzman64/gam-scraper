@@ -106,3 +106,51 @@ test("Mercaeleva: mantiene bloqueadas capacidades contradictorias, pesos y mást
   const dumper = record("Ausa D450AHG DUMPER GIRATORIO 4500 KG", {});
   assert.equal(value(dumper, "Peso operativo"), null);
 });
+
+
+test("Mercaeleva: solo rescata capacidad de carga nominada y concordante", () => {
+  const source = record("Toyota 6FBRE14 CARRETILLA RETRACTIL", {});
+  assert.equal(value({ ...source, longDescription: "Capacidad de carga: 1.350 kg, batería eléctrica" }, "Capacidad de carga"), 1350);
+  assert.equal(value({ ...source, longDescription: "Capacidad de carga: 1.500 kg" }, "Capacidad de carga"), 1500);
+  assert.equal(value({ ...source, longDescription: "Capacidad de carga: 1350 kg o 1500 kg" }, "Capacidad de carga"), null);
+  assert.equal(value({ ...source, longDescription: "Capacidad de carga: 1350 kg; capacidad nominal 1500 kg" }, "Capacidad de carga"), null);
+  assert.equal(value({ ...source, longDescription: "Capacidad de carga: 1350 kg", specs: { "Capacidad máxima de elevación": "1500 kg" } }, "Capacidad de carga"), null);
+  assert.equal(value({ ...source, longDescription: "CAPACIDAD 1350 KG" }, "Capacidad de carga"), null);
+  assert.equal(value({ ...source, specs: { "Capacidad nominal": "1350 kg" } }, "Capacidad de carga"), 1350);
+  assert.equal(value({ ...source, specs: { "Capacidad nominal": "1350 Ah" } }, "Capacidad de carga"), null);
+});
+
+test("Mercaeleva: solo recupera alturas expresamente identificadas como elevación", () => {
+  const forklift = record("Toyota 02-7FD18 CARRETILLA ELEVADORA DIESEL 1800 KG", {});
+  assert.equal(value({ ...forklift, longDescription: "Altura máxima de elevación 4.700 mm" }, "Altura de elevación"), 4700);
+  assert.equal(value({ ...forklift, longDescription: "Altura de elevación 4,7 m" }, "Altura de elevación"), 4700);
+  assert.equal(value({ ...forklift, longDescription: "ALTURA DE TRABAJO 4.700 mm" }, "Altura de elevación"), null);
+  assert.equal(value({ ...forklift, longDescription: "Altura de elevación 4.700 mm o 5.200 mm" }, "Altura de elevación"), null);
+  assert.equal(value({ ...forklift, longDescription: "Altura de elevación 4.700 mm y altura máxima de elevación 5.200 mm" }, "Altura de elevación"), null);
+  assert.equal(value({ ...forklift, longDescription: "Altura de elevación 4.700 mm", specs: { "Altura máxima de elevación": "4800 mm" } }, "Altura de elevación"), null);
+});
+
+test("Mercaeleva: distingue el peso operativo de capacidad y peso comercial", () => {
+  const excavator = record("Kubota U27.4 MINIEXCAVADORA ORUGA 2700 KG", {});
+  assert.equal(value({ ...excavator, longDescription: "PESO OPERATIVO 2.650 KG" }, "Peso operativo"), 2650);
+  assert.equal(value({ ...excavator, longDescription: "PESO EN SERVICIO: 2.650 KG" }, "Peso operativo"), 2650);
+  assert.equal(value({ ...excavator, longDescription: "CAPACIDAD 2700 KG" }, "Peso operativo"), null);
+  assert.equal(value({ ...excavator, longDescription: "Peso operativo 2.650 KG / 2.800 KG" }, "Peso operativo"), null);
+  assert.equal(value({ ...excavator, longDescription: "Peso operativo 2650 kg; peso en servicio 2800 kg" }, "Peso operativo"), null);
+  assert.equal(value({ ...excavator, specs: { "Peso en servicio": "2650 kg" } }, "Peso operativo"), 2650);
+});
+
+test("Mercaeleva: controla mástil doble/simple frente a especificación y evita variantes", () => {
+  const forklift = record("Linde E16P CARRETILLA ELEVADORA ELECTRICA 1600 KG", { "Tipo de mástil": "Triple" });
+  assert.equal(value({ ...forklift, longDescription: "MÁSTIL DOBLE, altura 4300 mm" }, "Tipo de mástil"), null);
+  assert.equal(value({ ...forklift, longDescription: "MÁSTIL TRIPLE 4300 mm" }, "Tipo de mástil"), "Tríplex");
+  assert.equal(value({ ...forklift, longDescription: "MASTIL SIMPLE o TRIPLEX" }, "Tipo de mástil"), null);
+  assert.equal(value({ ...forklift, longDescription: "Manejo simple y compacto" }, "Tipo de mástil"), "Tríplex");
+  assert.equal(value({ ...forklift, specs: { "Tipo de mástil": ["Triple"] }, longDescription: "MÁSTIL DOBLE" }, "Tipo de mástil"), null);
+});
+
+test("Mercaeleva: no rescata información textual desde proveedores o dominios ajenos", () => {
+  const source = { ...record("Carretilla elevadora 2000 KG", {}), longDescription: "Capacidad de carga 2000 kg" };
+  assert.equal(value({ ...source, url: "https://other.example/es/for-sale/machine/123", title: "Carretilla elevadora" }, "Capacidad de carga"), null);
+  assert.equal(value({ ...source, providerId: "gam" }, "Capacidad de carga"), null);
+});

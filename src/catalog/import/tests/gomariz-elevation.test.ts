@@ -64,5 +64,5 @@ test("Gomariz: no afecta a otros proveedores, ramas, hosts ni categorías sin de
   assert.equal(resolveCategory(lift, catalog.categories, "Segunda_Mano"), null);
   assert.equal(value(lift, "Motorización / Energía"), null);
   assert.equal(prepareProduct(lift, catalog).product.price, null);
-  assert.equal(prepareProduct(source, catalog).product.condition, null);
+  assert.equal(prepareProduct(source, catalog).product.condition, "Segunda_Mano");
 });
