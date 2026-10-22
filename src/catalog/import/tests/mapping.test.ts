@@ -422,3 +422,35 @@ test("Mercaeleva: admite dúplex/estándar sin perder el tipo de mástil válido
   assert.equal(attrVal({ ...record, longDescription: "Ref. 100 MASTIL TRIPLEX" }, "Tipo de mástil"), null);
   assert.equal(attrVal({ ...record, specs: { ...record.specs, "Tipo de mástil": "Dúplex/Tríplex" }, longDescription: "Ref. 100 MASTIL DUPLEX" }, "Tipo de mástil"), null);
 });
+
+test("GAM: recupera la altura de trabajo explícita en descripciones, sin equipararla a elevación", () => {
+  const examples = [
+    { reference: "6910", family: "plataformas-elevadoras-tijera-electricas-segunda-mano", title: "Plataforma tijera eléctrica 12M JLG 10RS", description: "Gracias a su altura de trabajo de 12 metros, esta plataforma es perfecta para trabajos que requieran un acceso considerable a altura.", expected: 12 },
+    { reference: "4731", family: "plataformas-de-tijera-electricas-xcmg", title: "Plataforma elevadora de tijera eléctrica 6M XCMG XG0607DC", description: "Esta máquina elevadora de tijera permite alcanzar una altura máxima de trabajo de 5,9 metros, soportando una capacidad de carga de 240 kg.", expected: 5.9 },
+    { reference: "6542", family: "plataforma-articulada-diesel-xcmg", title: "Plataforma articulada diésel 43M XCMG XGA43K", description: "Con 43,2 m de altura de trabajo y 21,6 m de alcance horizontal, es una solución ideal para mantenimiento industrial.", expected: 43.2 }
+  ] as const;
+  for (const example of examples) {
+    const record: ProductRecord = {
+      ...source("gam", gamUrl(example.family, example.reference), example.title, { "Altura de elevación (m)": "10 metros" }),
+      reference: example.reference,
+      longDescription: example.description,
+      shortDescription: null
+    };
+    assert.equal(attrVal(record, "Altura de trabajo"), example.expected, example.reference);
+    assert.equal(attrVal({ ...record, longDescription: "Solo se publica la altura de elevación de 10 metros." }, "Altura de trabajo"), null);
+  }
+});
+
+test("GAM: no deduce alturas ambiguas, contradictorias ni sustituye la especificación explícita", () => {
+  const base: ProductRecord = {
+    ...source("gam", gamUrl("plataformas-elevadoras-tijera-electricas-segunda-mano", "6910"), "Plataforma tijera eléctrica 12M JLG 10RS", {}),
+    reference: "6910",
+    shortDescription: null
+  };
+  assert.equal(attrVal({ ...base, longDescription: "Las plataformas tienen alturas de trabajo de entre 6 y 20 metros." }, "Altura de trabajo"), null);
+  assert.equal(attrVal({ ...base, longDescription: "Altura de trabajo de 12 metros y altura de trabajo de 14 metros." }, "Altura de trabajo"), null);
+  assert.equal(attrVal({ ...base, longDescription: "Altura de trabajo de 12 metros. Altura de trabajo: 12 m." }, "Altura de trabajo"), 12);
+  assert.equal(attrVal({ ...base, longDescription: "Altura de trabajo de 12 metros.", specs: { "Altura de trabajo": "14 metros" } }, "Altura de trabajo"), 14);
+  assert.equal(attrVal({ ...base, longDescription: "Altura de trabajo de 12 metros.", url: "https://example.com/es/elevadoras/6910" }, "Altura de trabajo"), null);
+  assert.equal(attrVal({ ...base, longDescription: "Altura de trabajo de 12 metros.", providerId: "gomariz" }, "Altura de trabajo"), null);
+});
