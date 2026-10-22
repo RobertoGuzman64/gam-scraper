@@ -48,7 +48,7 @@ export const parseExportOptions = (args: readonly string[]): ExportOptions | "he
     values.set(arg, next);
     index += 1;
   }
-  for (const flag of valueFlags) if (flag !== "--source" && !values.has(flag)) throw new Error(`Falta ${flag}`);
+  for (const flag of valueFlags) if (flag !== "--source" && flag !== "--format" && !values.has(flag)) throw new Error(`Falta ${flag}`);
   const providerId = values.get("--provider") ?? "";
   getProvider(providerId);
   const id = values.get("--companyID") ?? "";
