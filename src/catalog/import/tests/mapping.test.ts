@@ -178,7 +178,7 @@ test("asocia atributos requeridos y convierte unidades explícitas sin confundir
   });
   assert.equal(attrVal(gam, "Capacidad de carga"), 3500);
   assert.equal(attrVal(gam, "Altura de elevación"), 4900);
-  assert.equal(attrVal(gam, "Tipo de mástil"), "TRIPLEX");
+  assert.equal(attrVal(gam, "Tipo de mástil"), "Tríplex");
   assert.equal(attrVal(gam, "Peso operativo"), 3220);
   assert.equal(attrVal(source("gam", gam.url, gam.title ?? "", { "Altura de elevación (m)": "4.9 metros" }), "Altura de elevación"), 4900);
   assert.equal(attrVal(source("gam", gam.url, "Plataforma", { "Altura de elevación (m)": "8 metros" }), "Altura de trabajo"), null);
@@ -404,8 +404,8 @@ test("Mercaeleva: descarta tipo de mástil contradictorio en ficha individual", 
     "Tipo de mástil": "Triple"
   });
   assert.equal(attrVal({ ...carretilla, longDescription: "Ref. MER0798 MASTIL DUPLEX LINDE E48P" }, "Tipo de mástil"), null);
-  assert.equal(attrVal({ ...carretilla, longDescription: "Ref. MER0798 MASTIL TRIPLEX LINDE E48P" }, "Tipo de mástil"), "Triple");
-  assert.equal(attrVal(carretilla, "Tipo de mástil"), "Triple");
+  assert.equal(attrVal({ ...carretilla, longDescription: "Ref. MER0798 MASTIL TRIPLEX LINDE E48P" }, "Tipo de mástil"), "Tríplex");
+  assert.equal(attrVal(carretilla, "Tipo de mástil"), "Tríplex");
   const noInference = source("mercaeleva", merUrl("M488-5646"), "TOYOTA 02-8FDF25 CARRETILLA", {
     "Título adicional": "CARRETILLA ELEVADORA DIESEL 2500 KG",
     "Tipo de mástil": "Triple"
@@ -418,7 +418,7 @@ test("Mercaeleva: admite dúplex/estándar sin perder el tipo de mástil válido
     "Título adicional": "CARRETILLA ELEVADORA ELECTRICA 1600 KG",
     "Tipo de mástil": "Dúplex/estándar"
   });
-  assert.equal(attrVal({ ...record, longDescription: "Ref. 100 MASTIL DUPLEX" }, "Tipo de mástil"), "Dúplex/estándar");
+  assert.equal(attrVal({ ...record, longDescription: "Ref. 100 MASTIL DUPLEX" }, "Tipo de mástil"), "Dúplex");
   assert.equal(attrVal({ ...record, longDescription: "Ref. 100 MASTIL TRIPLEX" }, "Tipo de mástil"), null);
   assert.equal(attrVal({ ...record, specs: { ...record.specs, "Tipo de mástil": "Dúplex/Tríplex" }, longDescription: "Ref. 100 MASTIL DUPLEX" }, "Tipo de mástil"), null);
 });

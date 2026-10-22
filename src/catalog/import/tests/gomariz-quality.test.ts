@@ -85,7 +85,7 @@ test("Gomariz: combustible etiquetado como motor solo para generadores y torres 
   assert.equal(value(product(towerUrl, { Motor: "Diésel", Potencia: "4x120 W" }), "Combustible"), "Diésel");
   assert.equal(value(product(towerUrl, { Motor: "Diésel", Combustible: "Gasolina" }), "Combustible"), null);
   assert.equal(value(product(towerUrl, { Motor: "Diésel / eléctrico" }), "Combustible"), null);
-  assert.equal(value(product(towerUrl, { Motor: "Diésel", Potencia: "4x120 W" }), "Potencia"), null);
+  assert.equal(value(product(towerUrl, { Motor: "Diésel", Potencia: "4x120 W" }), "Potencia"), 0.48);
   assert.equal(value(product(towerUrl, { Motor: "Diésel", "Altura de trabajo": "8.5 m" }), "Altura del mástil"), null);
   assert.equal(value(product(url("carretilla-industrial", "nissan"), { Motor: "Diésel" }), "Combustible"), null);
 });

@@ -5,6 +5,7 @@ import { fold, scalar, numberToken } from "./attribute-utils.js";
 import { applyGamAliases, convertGamCandidate } from "./providers/gam/attributes.js";
 import { applyGomarizAliases, convertGomarizCandidate } from "./providers/gomariz/attributes.js";
 import { applyMercaelevaAliases } from "./providers/mercaeleva/attributes.js";
+import { normalizeMercaelevaCandidate } from "./providers/mercaeleva/technical.js";
 
 const aliases: Readonly<Record<string, readonly string[]>> = {
   "Tipo de mástil": ["Tipo Mástil"],
@@ -93,6 +94,7 @@ export const resolveAttributeValue = (record: ProductRecord, attribute: Attribut
     const fallback = convert(candidate.value, candidate.key, attribute);
     if (record.providerId === "gam") return convertGamCandidate(attribute, candidate, fallback);
     if (record.providerId === "gomariz") return convertGomarizCandidate(record, attribute, candidate, fallback);
+    if (record.providerId === "mercaeleva") return normalizeMercaelevaCandidate(attribute, candidate, fallback);
     return fallback;
   });
   if (converted.some((value) => value === null)) return null;

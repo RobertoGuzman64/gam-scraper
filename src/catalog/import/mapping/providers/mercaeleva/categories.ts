@@ -44,3 +44,39 @@ export const mercaelevaCategorySlug = (record: ProductRecord, path: readonly str
   }
   return null;
 };
+
+
+export const mercaelevaNewCategorySlug = (record: ProductRecord): string | null => {
+  if (record.providerId !== "mercaeleva") return null;
+  let url: URL;
+  try { url = new URL(record.url); }
+  catch { return null; }
+  if (url.hostname !== "sales.mercaeleva.com" ||
+    !/^(?:es|en)\/for-sale\/machine\/[^/]+\/?$/i.test(url.pathname.replace(/^\//, ""))) return null;
+  const state = fold(String(record.specs?.["Estado"] ?? ""));
+  if (record.condition !== "Nuevo" && state !== "nuevo" && state !== "nueva") return null;
+  const title = fold(record.title ?? "");
+  const additional = fold(String(record.specs?.["Título adicional"] ?? ""));
+  const engine = fold(String(record.specs?.["Tipo de motor"] ?? ""));
+  const battery = fold(String(record.specs?.["Tipo de Batería"] ?? ""));
+  const text = `${title} ${additional}`;
+  if (/\b(?:diesel|glp|gasolina|manual|semielectr(?:ic[oa])?)\b/.test(text) ||
+    /\b(?:diesel|glp|gasolina)\b/.test(engine)) return null;
+  const electricTitle = /\belectric[oa]s?\b/.test(title);
+  const electricAdditional = /\belectric[oa]s?\b/.test(additional);
+  if (engine && !/\belectric[oa]s?\b/.test(engine)) return null;
+  if (additional && electricTitle !== electricAdditional && /\b(?:electric[oa]s?|diesel|manual)\b/.test(additional)) return null;
+  const electric = electricTitle || electricAdditional || /\b(?:li-ion|litio|gel|plomo)\b/.test(battery);
+  if (!electric) return null;
+  const families: readonly { readonly pattern: RegExp; readonly slug: string }[] = [
+    { pattern: /\bplataforma\b.*\btijera\b/, slug: "plataforma-tijera-electrica" },
+    { pattern: /\bplataforma\b.*\barticulada\b/, slug: "plataforma-articulada-electrica" },
+    { pattern: /\bcarretilla\b/, slug: "carretilla-elevadora-electrica" },
+    { pattern: /\bapilador(?:a)?\b/, slug: "apilador-electrico" },
+    { pattern: /\btranspalet(?:a)?\b/, slug: "transpaleta-electrica" }
+  ];
+  const matches = families.filter((item) => item.pattern.test(title));
+  if (matches.length !== 1) return null;
+  if (additional && families.some((item) => item.pattern.test(additional) && item.slug !== matches[0]?.slug)) return null;
+  return matches[0]?.slug ?? null;
+};

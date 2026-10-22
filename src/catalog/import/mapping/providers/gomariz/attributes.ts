@@ -1,8 +1,14 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import type { Attribute, Candidate } from "../../attribute-types.js";
 import { fold, scalar, numberToken } from "../../attribute-utils.js";
+import { gomarizElevationCandidate } from "./elevation.js";
+import { gomarizIndustrialCandidate, gomarizTowerPower } from "./industrial.js";
 
 export const applyGomarizAliases = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): boolean => {
+  const elevation = gomarizElevationCandidate(record, attribute);
+  if (elevation) candidates.push(elevation);
+  const industrial = gomarizIndustrialCandidate(record, attribute);
+  if (industrial) candidates.push(industrial);
   let family = "";
   try { family = new URL(record.url).pathname.split("/").filter(Boolean)[2] ?? ""; } catch { family = ""; }
   if (attribute.name === "Capacidad de carga" && ["carretilla-industrial", "carretilla-retractil"].includes(family)) keys.add(fold("Capacidad"));
@@ -43,5 +49,5 @@ export const convertGomarizCandidate = (
     /^\d+(?:[.,]\d+)?\s*kVA$/i.test(candidate.value.trim())) {
     return Number(candidate.value.trim().replace(/\s*kVA$/i, "").replace(",", "."));
   }
-  return fallback;
+  return gomarizTowerPower(record, attribute, candidate) ?? fallback;
 };

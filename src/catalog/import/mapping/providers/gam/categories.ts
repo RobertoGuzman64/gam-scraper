@@ -71,6 +71,14 @@ const gamNewCategories: Readonly<Record<string, { readonly slug: string; readonl
   "portaferetros-nuevos": { slug: "portaferetro", title: /\bportaferetros?\b/ }
 };
 
+const specializedLogitransCategory = (record: ProductRecord, parent: string, title: string): string | null | undefined => {
+  if (record.categoryKey !== "otros-nuevos" || parent !== "volteadores-logitrans") return undefined;
+  if (/\belevador\s+de\s+bobinas?\b/.test(title)) return "elevador-de-bobina";
+  if (/\bvolteador\s+de\s+bidones?\b/.test(title)) return "volteador-de-bidones";
+  if (/\bvolteador\b/.test(title)) return "volteador";
+  return null;
+};
+
 const gamNewTitleCategories: Readonly<Record<string, readonly { readonly slug: string; readonly title: RegExp }[]>> = {
   "elevacion-nueva": [
     { slug: "plataforma-tijera-electrica", title: /\bplataforma\b.*\btijera\b.*\belectrica\b/ },
@@ -81,7 +89,7 @@ const gamNewTitleCategories: Readonly<Record<string, readonly { readonly slug: s
     { slug: "plataforma-telescopica-diesel", title: /\bplataforma\b.*\btelescopica\b.*\bdiesel\b/ },
     { slug: "plataforma-unipersonal-electrica", title: /\bplataforma\b.*\bunipersonal\b.*\belectrica\b/ },
     { slug: "plataforma-sobre-oruga", title: /\bplataforma\b.*\bsobre orugas\b/ },
-    { slug: "plataforma-sobre-camion", title: /\bplataforma\b.*\bsobre camion\b/ }
+    { slug: "plataforma-sobre-camion", title: /\bplataformas?\b.*\bsobre camion\b/ }
   ],
   "carretillas-nuevas": [
     { slug: "carretilla-elevadora-electrica", title: /\bcarretilla\b.*\belectrica\b/ },
@@ -118,6 +126,47 @@ const gamNewTitleCategories: Readonly<Record<string, readonly { readonly slug: s
   ]
 };
 
+const gamElevationCategory = (record: ProductRecord, parent: string, title: string): string | null | undefined => {
+  if (record.categoryKey !== "elevacion-nueva") return undefined;
+  if (parent === "plataformas-de-tijera-electricas-xcmg" && /\btijera(?=\b|\d)/.test(title)) {
+    const description = fold(record.shortDescription ?? "");
+    const confirms = /\bplataforma\b[^.!?]{0,100}\btijera\b[^.!?]{0,50}\belectrica\b/.test(description);
+    if (confirms && !/\b(?:diesel|hibrid[oa]|gasolina|glp)\b/.test(title + " " + description) &&
+      /\b(?:bateria|electric[oa])\b/.test(title + " " + description)) return "plataforma-tijera-electrica";
+  }
+  return undefined;
+};
+
+const gamHandlingCategory = (record: ProductRecord, parent: string, title: string): string | null | undefined => {
+  const apiladores = ["apiladores-hyster", "apiladores-yale", "apiladores-logitrans"];
+  const transpaletas = ["transpaletas-hyster", "transpaletas-yale", "transpaletas-logitrans", "transpaleta-electrica-compacta-1500-kg", "transpaleta-electrica-conductor-acompanante-1600-kg"];
+  const preparapedidos = ["recogepedidos-hyster", "recogepedidos-yale", "yale"];
+  if (preparapedidos.includes(parent) && /\b(?:recogepedidos?|preparapedidos?)\b/.test(title)) {
+    return /\b(?:plataforma|carretilla|apilador|transpaleta)\b/.test(title) ? null : "preparapedido";
+  }
+  const apilador = apiladores.includes(parent) && /\bapilador(?:a|es|as)?\b/.test(title);
+  const transpaleta = (transpaletas.includes(parent) || parent === "hyster") &&
+    /\b(?:transpaletas?|portador de paletas)\b/.test(title);
+  if (!apilador && !transpaleta) return undefined;
+  const short = fold(record.shortDescription ?? "");
+  const source = `${title} ${short}`;
+  const specs = record.specs ?? {};
+  const drive = fold([specs["Tipo motor"], specs["Motorización"]].filter((value) => typeof value === "string").join(" "));
+  if (/\b(?:semi[ -]?electric[oa]s?|hibrid[oa]s?|diesel|glp|gasolina)\b/.test(`${source} ${drive}`)) return null;
+  if (transpaleta && /\btranspaleta\b.*\btijera\b/.test(title)) return "transpaleta-tijera";
+  const manual = /\bmanual(?:es)?\b/.test(title) ||
+    /\b(?:transpaleta|apilador(?:a)?)\s+manual\b/.test(short);
+  const electric = /\belectric[oa]s?\b|\b(?:ion de litio|bateria de litio|propulsada con ion de litio)\b/.test(source) ||
+    /\belectric[oa]s?\b/.test(drive);
+  const specManual = /\bmanual\b/.test(drive);
+  const specElectric = /\belectric[oa]s?\b/.test(drive);
+  if ((manual && (electric || specElectric)) || (specManual && (electric || specElectric)) ||
+    (specElectric && specManual)) return null;
+  if (manual || specManual) return apilador ? "apilador-manual" : "transpaleta-manual";
+  if (electric) return apilador ? "apilador-electrico" : "transpaleta-electrica";
+  return null;
+};
+
 export const newCategorySlug = (record: ProductRecord): string | null => {
   if (record.providerId !== "gam") return null;
   let url: URL;
@@ -131,6 +180,12 @@ export const newCategorySlug = (record: ProductRecord): string | null => {
   if (/\bsemi\s+electric[oa]\b/.test(title) || /\bhibrid[oa]\b/.test(title) ||
     (/\belectric[oa]\b/.test(title) && /\bdiesel\b/.test(title)) ||
     (/\bbarredora\b/.test(title) && /\bfregadora\b/.test(title))) return null;
+  const special = specializedLogitransCategory(record, parent, title);
+  if (special !== undefined) return special;
+  const handling = gamHandlingCategory(record, parent, title);
+  if (handling !== undefined) return handling;
+  const elevation = gamElevationCategory(record, parent, title);
+  if (elevation !== undefined) return elevation;
   const explicit = gamNewCategories[parent];
   if (explicit) return explicit.title.test(title) ? explicit.slug : null;
   const matches = (gamNewTitleCategories[record.categoryKey] ?? []).filter((item) => item.title.test(title));

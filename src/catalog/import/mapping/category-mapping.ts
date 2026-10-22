@@ -3,7 +3,7 @@ import type { ImportCandidate, ImportCatalog } from "../preparation/contracts.js
 import { fold } from "./category-utils.js";
 import { gamUsedCategorySlug, newCategorySlug } from "./providers/gam/categories.js";
 import { gomarizCategorySlug } from "./providers/gomariz/categories.js";
-import { mercaelevaCategorySlug } from "./providers/mercaeleva/categories.js";
+import { mercaelevaCategorySlug, mercaelevaNewCategorySlug } from "./providers/mercaeleva/categories.js";
 
 type Category = ImportCatalog["categories"][number];
 type ImportableCondition = Exclude<ImportCandidate["condition"], null>;
@@ -63,7 +63,9 @@ export const resolveCategory = (
   condition: ImportableCondition = record.condition === "Nuevo" ? "Nuevo" : "Segunda_Mano"
 ): Category | null => {
   const leaf = categories.filter((category) => isLeafCategoryForCondition(category.id, categories, condition));
-  const sourceSlug = condition === "Nuevo" ? newCategorySlug(record) : sourceCategorySlug(record);
+  const sourceSlug = condition === "Nuevo"
+    ? record.providerId === "mercaeleva" ? mercaelevaNewCategorySlug(record) : newCategorySlug(record)
+    : sourceCategorySlug(record);
   if (sourceSlug) {
     const matches = leaf.filter((category) => fold(category.slug) === fold(sourceSlug));
     const matched = matches.length === 1 ? matches[0] : undefined;

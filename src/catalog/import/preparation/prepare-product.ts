@@ -5,6 +5,7 @@ import { resolveCategory } from "../mapping/category-mapping.js";
 import { imageUrls, normalizePrice } from "./product-fields.js";
 import { productAttributes } from "./product-attributes.js";
 import { resolveCommercialCondition } from "./condition.js";
+import { mercaelevaShortDescription } from "../mapping/providers/mercaeleva/descriptions.js";
 import type { ImportCatalog, PreparedProduct } from "./contracts.js";
 
 export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): PreparedProduct => {
@@ -15,7 +16,7 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   const price = normalizePrice(record.price);
   const reference = record.reference?.trim() || null;
   const title = record.title?.trim() || null;
-  const descriptions = distinguishDescriptions(record.shortDescription, record.longDescription);
+  const descriptions = distinguishDescriptions(record.shortDescription ?? mercaelevaShortDescription(record), record.longDescription);
   const description = descriptions.short;
   const descriptionGeneral = descriptions.long;
   const attributeResult = productAttributes(record, category, catalog);
