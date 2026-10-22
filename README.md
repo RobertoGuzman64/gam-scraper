@@ -4,13 +4,13 @@ Herramienta de línea de comandos **Node.js + TypeScript** para extraer maquinar
 
 > **Objetivo funcional y definición de terminado:** [OBJETIVOS_SCRAPER.md](docs/OBJETIVOS_SCRAPER.md). El backend permite `Nuevo` y `Segunda_Mano`; **la preparación admite ambas condiciones con evidencia de origen**, y mantiene condiciones desconocidas o contradictorias en `review`. Las fichas sin requisitos del Excel permanecen en el catálogo extraído.
 
-> **Estado operativo:** ninguna importación masiva queda autorizada por esta documentación. La auditoría del 20/10/2026 (Mercaeleva 20/221) es **histórica**: [estado de extracciones](docs/ESTADO_EXTRACCIONES_2026-10-20.md). La línea base del **21/10/2026** es **1.374 máquinas** (GAM 1.010, Gomariz 143, Mercaeleva 221) con 748 nuevas bloqueadas por una **restricción local de preparación de aquella versión**, ya corregida en el código actual. Los totales de `ready/review` son históricos y no representan esta versión ni un entorno vivo.
+> **Estado operativo y línea base conservada (22/10/2026):** este repositorio incluye los catálogos originales y las preparaciones offline de **1.369 máquinas**: GAM 1.008 (125 ready / 883 review), Gomariz 143 (0 / 143) y Mercaeleva 218 (173 / 45). Son resultados **del contrato Excel**, no una medida de importabilidad JSON ni una validación de la web en tiempo real. Las 2.111 incidencias son motivos de preparación, no 2.111 máquinas defectuosas. Ninguna importación masiva queda autorizada por estos resultados. La [auditoría del 20/10/2026](docs/ESTADO_EXTRACCIONES_2026-10-20.md) es histórica.
 
 ## Instalación
 
 - Node.js `>=18.18.0`, npm y acceso HTTPS a los portales.
 - Chrome/Chromium para el fallback headless de Mercaeleva (`CHROME_PATH` o `CHROMIUM_PATH` si no está en `PATH`). Se invoca como proceso externo, sin Puppeteer/Playwright.
-- Escritura en `storage/`. Conservar sus archivos entre ejecuciones y no añadirlos a Git.
+- Escritura en `storage/`. Se conserva en Git únicamente una selección controlada de **15 archivos de evidencia** (catálogos, manifiestos, preparaciones y diagnósticos de la línea base). Las salidas temporales e históricos operativos continúan ignorados por `.gitignore`; no añadir todo `storage/` indiscriminadamente.
 
 ```bash
 npm ci
@@ -108,6 +108,27 @@ npm run validate -- gam --stage preparation --preparation storage/prepared/gam/s
 
 `--stage catalog` valida catálogo, manifest, hash, proveedor, identidades, recuentos y publicación. `--stage preparation` comprueba también el manifest de preparación, fingerprint de reglas y snapshots, identidad y resultado íntegro recalculado desde la fuente **sin portales ni inventario**. Si se usó un nombre de salida distinto del prefijo original, indicar `--source`. La validación heredada `npm run validate -- gam` sigue comprobando CSV, preparación antigua, cambios y máximo de 48 h. La preparación offline puede validarse con cualquier antigüedad; **exportar** mantiene el bloqueo del origen superior a 48 h. El estado `review` de la preparación conserva el código de salida **2**.
 
+## Trabajar directamente con la línea base incluida en el repositorio
+
+Los catálogos y sus preparaciones offline seleccionadas están en `storage/scraped/<proveedor>/` y `storage/prepared/<proveedor>/`. Los 15 archivos conservados permiten analizar referencias, motivos, atributos y valores originales sin ejecutar una extracción nueva ni recuperar archivos externos. Los ficheros se enlazan por el SHA-256 del catálogo; los manifiestos protegen la integridad de cada etapa.
+
+Ejemplo para comprobar **GAM** sin acceder a la web (replicar con los nombres equivalentes de Gomariz y Mercaeleva):
+
+```bash
+npm run validate -- gam --stage catalog --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json
+npm run validate -- gam --stage preparation --preparation storage/prepared/gam/scrape-gam-marzo-2026-20261022-171552-preparation.json --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json --verbose
+```
+
+En esta segunda validación, el código de salida **2** indica que existen fichas `review` según el Excel; **no implica corrupción ni fallo de extracción**. El comando heredado `npm run validate -- gam` necesita los CSV e informes operativos de `storage/scraped/`, que **no están incluidos** en la selección versionada; usar las etapas `catalog` y `preparation` para trabajar con el ZIP del repositorio.
+
+Para ensayar nuevas reglas de preparación sobre **el mismo catálogo**, usar una salida nueva y comparar con la línea base (no se sobrescriben archivos existentes):
+
+```bash
+npm run prepare:catalog -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json --out storage/prepared/gam/scrape-gam-marzo-2026-ensayo-preparation.json --compare storage/prepared/gam/scrape-gam-marzo-2026-20261022-171552-preparation.json
+```
+
+**Límite de la comparación integrada:** `--compare` solo declara homogéneas preparaciones derivadas del **mismo SHA-256 de catálogo y de la misma cohorte**. Si cambian los productos o el contenido extraído al mejorar el scraper, esa comparación no calcula automáticamente altas, pérdidas ni mejoras. Para evaluar extracciones nuevas debe realizarse un contraste específico por identidad y campo, conservando ambos catálogos y distinguiendo cambios reales del proveedor. Los diagnósticos `ready/review` corresponden al Excel; el proyecto todavía **no calcula una clasificación independiente de elegibilidad JSON**. Los datos originales y las reglas de mapeo sí están disponibles para investigar esa vía, sin modificar el backend.
+
 ## Exportación para importación manual
 
 La extracción **no importa nada**. `ready` en `-preparation.json` indica controles locales satisfechos, no autorización comercial. Para planificar un Excel de altas se necesitan un `companyID` real del entorno destino, un catálogo publicado válido y un inventario **completo y actual** en CSV con `companyID,reference`:
@@ -135,7 +156,7 @@ src/
 
 data/                  Snapshots de categorías y atributos usados por el importador
 scripts/               Lanzador externo para Windows
-storage/               Resultados y estado de ejecución (ignorado)
+storage/               Línea base seleccionada en Git; ejecución e históricos ignorados
 ```
 
 [ARQUITECTURA.md](docs/ARQUITECTURA.md) explica las fronteras entre módulos, el flujo de datos, los contratos que no deben romperse y los pasos reales para incorporar un proveedor.
