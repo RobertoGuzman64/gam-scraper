@@ -6,6 +6,7 @@ import { parseCsv } from "../../shared/csv-parse.js";
 import { parsePreparation } from "../../catalog/import/preparation/preparation-document.js";
 import { loadImportCatalog } from "../../infrastructure/filesystem/import-catalog-loader.js";
 import { validateImportCandidate } from "../../catalog/import/preparation/import-validation.js";
+import { readCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
 
 export type PreflightOptions = {
   readonly providerId: string;
@@ -69,6 +70,13 @@ export const validateCatalogPublication = async (options: PreflightOptions): Pro
     createHash("sha256").update(rawCsv).digest("hex") !== summary.artifacts.csvSha256 ||
     createHash("sha256").update(rawPreparation).digest("hex") !== summary.artifacts.preparationSha256) {
     throw new Error("Los archivos publicados no coinciden con sus huellas de integridad; ejecutar de nuevo el scraping");
+  }
+  if (summary.artifacts.catalogSha256 !== undefined) {
+    const canonical = await readCanonicalCatalog(`${base}-catalog.json`);
+    if (canonical.providerId !== options.providerId || canonical.productCount !== summary.totals.scrapedProducts ||
+      createHash("sha256").update(await readFile(`${base}-catalog.json`, "utf8")).digest("hex") !== summary.artifacts.catalogSha256) {
+      throw new Error("Catálogo canónico con proveedor, tamaño o hash distinto del resumen");
+    }
   }
   const preparation: unknown = JSON.parse(rawPreparation);
   const started = Date.parse(summary.startedAt);

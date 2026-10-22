@@ -35,7 +35,7 @@ export type Summary = {
   };
   readonly startedAt: string;
   readonly endedAt: string;
-  readonly artifacts?: { readonly csvSha256: string; readonly preparationSha256: string };
+  readonly artifacts?: { readonly csvSha256: string; readonly preparationSha256: string; readonly catalogSha256?: string };
   readonly totals: {
     readonly categories: number;
     readonly discoveredProductUrls: number;

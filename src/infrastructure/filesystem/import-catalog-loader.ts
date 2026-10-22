@@ -21,7 +21,7 @@ const isAttribute = (value: unknown): value is Attribute => isRecord(value) &&
 const isRelation = (value: unknown): value is Relation => isRecord(value) &&
   Number.isSafeInteger(value.categoryID) && Number.isSafeInteger(value.attributeID);
 
-export const loadImportCatalog = async (): Promise<ImportCatalog> => {
+export const loadImportCatalogSnapshot = async (): Promise<{ catalog: ImportCatalog; categoryRaw: string; attributeRaw: string }> => {
   const categoryPath = fileURLToPath(new URL("../../../data/category/categorySell-flat.json", import.meta.url));
   const attributePath = fileURLToPath(new URL("../../../data/import/attributeCatalog.json", import.meta.url));
   const [categoriesRaw, attributesRaw] = await Promise.all([readFile(categoryPath, "utf8"), readFile(attributePath, "utf8")]);
@@ -37,5 +37,7 @@ export const loadImportCatalog = async (): Promise<ImportCatalog> => {
     category.parentId !== null && !ids.has(category.parentId))) {
     throw new Error("Catálogo de categorías de Equipzilla con IDs duplicados o padres inexistentes");
   }
-  return { categories, attributes: metadata.attributes, relations: metadata.relations };
+  return { catalog: { categories, attributes: metadata.attributes, relations: metadata.relations }, categoryRaw: categoriesRaw, attributeRaw: attributesRaw };
 };
+
+export const loadImportCatalog = async (): Promise<ImportCatalog> => (await loadImportCatalogSnapshot()).catalog;

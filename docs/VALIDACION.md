@@ -2,7 +2,7 @@
 
 Protocolo operativo aplicable a las extracciones de GAM, Gomariz y Mercaeleva, para **maquinaria nueva y de segunda mano**. No es una certificación de producción. Alcance funcional y definición de terminado: [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
 
-La cadena real es **web del proveedor → extracción → CSV/JSON de preparación → revisión → Excel de altas (opcional y manual)**. Ejecutar el lote no genera ni importa productos automáticamente en Marketplace-Back.
+La cadena real es **web del proveedor → extracción y catálogo canónico → preparación offline (o heredada durante transición) → revisión → Excel de altas (opcional y manual)**. Ejecutar el lote no genera ni importa productos automáticamente en Marketplace-Back.
 
 **Antecedente documentado:** en la auditoría del 20/10/2026 se extrajeron 268 GAM, 143 Gomariz y 20 Mercaeleva. Estos números no son una expectativa para ejecuciones posteriores; en aquella muestra Mercaeleva tenía 221 resultados visibles y el scraper solo recuperó la primera página. Había 415/431 candidatos en `review`. Véase [informe histórico](ESTADO_EXTRACCIONES_2026-10-20.md).
 
@@ -51,9 +51,9 @@ Por defecto se utiliza `storage/scraped/<proveedor>/`; para un directorio person
 - **2:** verificación técnica completada con avisos de revisión (por ejemplo candidatos `review`, ningún `ready` o posibles ausencias).
 - **1:** error técnico, de argumentos, publicación, hashes, antigüedad o datos incompatibles.
 
-Comprobar `quality.status`, `quality.published`, fallos, productos únicos y huellas SHA-256 de `<prefijo>-all.csv` y `<prefijo>-preparation.json`. El validador coteja también cambios y referencias, **pero no el recuento total del portal externo**. Nunca importar `-partial-all.csv` ni interpretar `suspectedMissing` como producto vendido/baja.
+Comprobar `quality.status`, `quality.published`, fallos, productos únicos y huellas SHA-256 de `<prefijo>-all.csv`, `<prefijo>-preparation.json` y, para publicaciones nuevas, `<prefijo>-catalog.json` con su manifest externo. El lector canónico admite relectura offline de catálogos completos y rechaza mezclas de ejecuciones, identidades repetidas y archivos alterados. El validador coteja también cambios y referencias, **pero no el recuento total del portal externo**. Nunca importar `-partial-all.csv` ni interpretar `suspectedMissing` como producto vendido/baja.
 
-Si una extracción falla, comprobar que el último catálogo válido sigue intacto y conservar `-errors.json`, snapshots y logs para diagnóstico. Evitar reutilizar prefijos de producción para pruebas.
+Si una extracción falla, comprobar que el último CSV y `-catalog.json` válido siguen intactos y conservar `-errors.json`, snapshots y logs para diagnóstico. Históricos anteriores a la etapa canónica solo incluyen sus artefactos originales, sin reconstrucción automática. Evitar reutilizar prefijos de producción para pruebas.
 
 ## 4. Revisión funcional de las fichas
 
@@ -92,3 +92,26 @@ Checklist de salida:
 - [ ] Importación manual de prueba y aprobación separadas, si se pretende utilizar el Excel.
 
 Para escoger infraestructura y persistencia, consultar [DESPLIEGUE_AUTOMATICO.md](DESPLIEGUE_AUTOMATICO.md). La validación técnica **no equivale** a autorización de negocio o de importación.
+
+### Evidencia de pruebas en esta entrega (etapa 2)
+
+En el entorno de preparación de la entrega se compilaron los ficheros afectados sin errores propios de TypeScript y se ejecutó el subconjunto de pruebas sin dependencias externas: **108 pruebas correctas, 0 fallidas, 0 omitidas**. Se incluyeron **13 pruebas nuevas** del flujo offline, identidad, replay, tres proveedores, comparación, manifests y recuperación ante archivos existentes. La ejecución completa de `npm test` y `npm run build` **no quedó acreditada** porque el entorno carecía de los paquetes reales `cheerio` y `p-limit`: generan errores de resolución/importación y de tipado derivado; no se han sustituido por mocks en la entrega. El propietario debe ejecutar `npm ci`, `npm test` y `npm run build` en su entorno con dependencias completas antes de integrar.
+
+## Etapa 3 — validación y exportación desacopladas (22/10/2026)
+
+Tres vías disponibles: `npm run validate -- gam` (publicación heredada y antigüedad máxima de 48 h), `npm run validate -- gam --stage catalog --prefix scrape-gam-marzo-2026` (integridad canónica) y `npm run validate -- gam --stage preparation --preparation storage/prepared/gam/scrape-gam-marzo-2026-preparation.json` (replay verificado). Si el prefijo/ruta de preparación difiere de la fuente, indicar `--source <catálogo-catalog.json>`. No se llama a los portales durante `prepare`, `validate --stage` ni `export`.
+
+El preflight offline coteja catálogo, manifest y resumen de publicación; origen y hash de la preparación; snapshots y reglas vigentes; identidades alineadas y el contenido completo de productos regenerados desde el catálogo. El modo de preparación informa `ready/review`; no exige inventario y puede revisar orígenes antiguos. El exportador sí exige origen de antigüedad máxima de 48 h, compañía real y un inventario completo confirmado. No exporta fichas `review`, precios nulos, nuevas con categoría de ocasión ni referencias repetidas/existentes.
+
+Ejemplo de flujo completo a ejecutar tras un scraping íntegro y con inventario real:
+
+```powershell
+npm run validate -- gam --stage catalog --prefix scrape-gam-marzo-2026
+npm run prepare -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json
+npm run validate -- gam --stage preparation --preparation storage/prepared/gam/scrape-gam-marzo-2026-preparation.json
+npm run export -- gam --companyID <ID_REAL> --preparation storage/prepared/gam/scrape-gam-marzo-2026-preparation.json --existing storage/inventory/gam.csv --out storage/import/gam-altas.xlsx --dry-run
+```
+
+Tras comprobar el plan, sustituir `--dry-run` por `--confirm-inventory` únicamente con autorización y un inventario actual. La simulación no crea XLSX ni informe persistido. La generación conserva `wx` (sin sobreescritura), informe JSON y rollback del Excel ante fallo del informe. Ningún comando envía POST al backend.
+
+**Evidencia de esta entrega:** selección de 23 ficheros de pruebas, **130 casos correctos, 0 fallidos y 3 omitidos**; incluye exportación offline/legacy, manifest alterado aun refirmado, identidades, proveedor, antigüedad, plan de altas y tres proveedores. Las pruebas que importan el registro de proveedores se ejecutaron con un sustituto temporal de Cheerio que impide parsear HTML (no incluido en el repositorio). No sustituye a las dependencias reales ni acredita parsers o build completo. Ejecutar `npm ci`, `npm test` y `npm run build` con dependencias reales antes de integrar.

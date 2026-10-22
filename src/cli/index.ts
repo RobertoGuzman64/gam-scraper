@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runBatchCli } from "./batch.js";
 import { runExport } from "./export.js";
+import { runPrepare } from "./prepare.js";
 import { runSingleScrape } from "./scrape.js";
 import { runPreflight } from "./validate.js";
 import { batchHelp } from "./options/batch.js";
@@ -17,6 +18,7 @@ export const cliHelp = `EQUIPZILLA SCRAPER
   npm run scrape -- all                    Extraer los tres proveedores
   npm run scrape -- all --dry-run          Simular el lote
   npm run validate -- gam                 Validar último catálogo de GAM
+  npm run prepare -- --help               Preparación independiente offline
   npm run export -- --help                Consultar exportación segura
 
   npm run scrape -- --help                Ayuda extracción
@@ -39,6 +41,7 @@ export const runCli = async (argv: readonly string[]): Promise<void> => {
     case "batch": return runBatchCli(args);
     case "validate": return runPreflight(args);
     case "export": return runExport(args);
+    case "prepare": return runPrepare(args);
     case "help-scrape": console.log(scrapeHelp); return;
     case "help-batch": console.log(batchHelp); return;
     case "help-validate": console.log(validateHelp); return;

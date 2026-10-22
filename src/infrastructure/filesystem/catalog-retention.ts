@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { copyFile, mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { atomicWrite } from "./atomic-write.js";
+import { parseCanonicalManifest } from "../../catalog/canonical-catalog.js";
 
 type JsonRecord = Record<string, unknown>;
 type PublishedMetadata = {
@@ -50,6 +51,15 @@ const verifyPublished = async (dir: string, prefix: string, summary: JsonRecord)
   const preparation = await readFile(join(dir, `${prefix}-preparation.json`), "utf8");
   if (sha256(csv) !== artifacts.csvSha256 || sha256(preparation) !== artifacts.preparationSha256) {
     throw new Error(`No se puede proteger la publicación previa de ${prefix}: integridad incorrecta`);
+  }
+  if (artifacts.catalogSha256 !== undefined) {
+    if (typeof artifacts.catalogSha256 !== "string") throw new Error("Hash del catálogo canónico inválido");
+    const canonical = await readFile(join(dir, `${prefix}-catalog.json`), "utf8");
+    const manifest = parseCanonicalManifest(await readJson(join(dir, `${prefix}-catalog.manifest.json`)));
+    if (sha256(canonical) !== artifacts.catalogSha256 || manifest.catalogSha256 !== artifacts.catalogSha256 ||
+      manifest.prefix !== prefix || manifest.productCount !== (isRecord(summary.totals) ? summary.totals.scrapedProducts : null)) {
+      throw new Error(`No se puede proteger la publicación previa de ${prefix}: catálogo canónico inconsistente`);
+    }
   }
 };
 const archiveRoot = (dir: string, prefix: string): string => join(dir, ".history", prefix);
@@ -117,6 +127,13 @@ export const stagePublishedCatalog = async (dir: string, prefix: string): Promis
       await copyFile(join(dir, snapshot), join(staging, snapshot));
       files.push(snapshot);
     }
+    if (isRecord(metadata.summary.artifacts) && metadata.summary.artifacts.catalogSha256 !== undefined) {
+      for (const suffix of ["catalog.json", "catalog.manifest.json"]) {
+        const name = `${prefix}-${suffix}`;
+        await copyFile(join(dir, name), join(staging, name));
+        files.push(name);
+      }
+    }
     const preparation = `${prefix}-preparation.json`;
     await copyFile(join(dir, preparation), join(staging, preparation));
     files.push(preparation);
@@ -138,6 +155,40 @@ export const stagePublishedCatalog = async (dir: string, prefix: string): Promis
 
 export const abandonArchive = async (pending: PendingArchive | null): Promise<void> => {
   if (pending) await rm(pending.staging, { recursive: true, force: true });
+};
+
+export const restorePublishedCatalog = async (
+  dir: string, prefix: string, pending: PendingArchive
+): Promise<void> => {
+  let directory = pending.staging;
+  try { await stat(directory); }
+  catch (error) {
+    if (!isRecord(error) || error.code !== "ENOENT") throw error;
+    directory = pending.destination;
+  }
+  const metadata = await readJson(join(directory, "manifest.json"));
+  if (!isRecord(metadata) || metadata.version !== 1 || metadata.prefix !== prefix ||
+    !Array.isArray(metadata.files) || !metadata.files.every((file: unknown) =>
+      typeof file === "string" && file !== "." && file !== ".." && basename(file) === file && !file.includes("\\"))) {
+    throw new Error("No se puede restaurar la publicación: archivo histórico inválido");
+  }
+  for (const file of metadata.files) {
+    await atomicWrite(join(dir, file), await readFile(join(directory, file), "utf8"));
+  }
+  if (!metadata.files.includes(`${prefix}-catalog.json`)) {
+    await rm(join(dir, `${prefix}-catalog.json`), { force: true });
+    await rm(join(dir, `${prefix}-catalog.manifest.json`), { force: true });
+  }
+  const [summary, changes, errors] = await Promise.all([
+    readJson(join(directory, `${prefix}-summary.json`)),
+    readJson(join(directory, `${prefix}-changes.json`)),
+    readJson(join(directory, `${prefix}-errors.json`))
+  ]);
+  if (!isRecord(summary) || !isRecord(changes) || !isRecord(errors)) {
+    throw new Error("No se puede restaurar la publicación: metadatos inválidos");
+  }
+  await savePublishedMetadata(dir, prefix, { summary, changes, errors });
+  await rm(directory, { recursive: true, force: true });
 };
 
 export const savePublishedMetadata = async (
@@ -239,7 +290,6 @@ export const finalizePublishedCatalog = async (
   const errors = parseRecord(await readFile(join(dir, `${prefix}-errors.json`), "utf8"));
   if (pending) await rename(pending.staging, pending.destination);
   await savePublishedMetadata(dir, prefix, { summary, changes, errors });
-  await cleanCatalogExcess(dir, prefix, false);
 };
 
 export const legacyCatalogExcess = async (dir: string, activePrefix: string): Promise<readonly RetentionCandidate[]> => {

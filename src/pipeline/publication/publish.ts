@@ -10,9 +10,9 @@ import type { OutputGroup } from "./assemble.js";
 import { toCsv } from "../../shared/csv.js";
 import { serializeCategoriesCsv, listSpecKeys, buildProductHeaders, toProductRow } from "./csv-serializer.js";
 import { atomicWrite } from "../../infrastructure/filesystem/atomic-write.js";
-import { abandonArchive, finalizePublishedCatalog, stagePublishedCatalog } from "../../infrastructure/filesystem/catalog-retention.js";
-import { prepareImportBatch } from "../../catalog/import/preparation/prepare.js";
-import { loadImportCatalog } from "../../infrastructure/filesystem/import-catalog-loader.js";
+import { abandonArchive, cleanCatalogExcess, finalizePublishedCatalog, restorePublishedCatalog, stagePublishedCatalog } from "../../infrastructure/filesystem/catalog-retention.js";
+import { buildLegacyPreparation } from "./legacy-preparation.js";
+import { writeCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
 
 export const writeCategoriesCsv = async (
   outDir: string,
@@ -46,8 +46,7 @@ const writeResultGroups = async (
   const previous = await loadSnapshot(snapshotFile, scope);
   const { allResults, categoryData, categorySummaries, currentProducts, global,
     identityConflicts, serialWarnings, quality, withinCategories } = assemblePublication(groups, previous);
-  const catalog = await loadImportCatalog();
-  const preparation = prepareImportBatch(currentProducts, catalog);
+
   const outputPrefix = quality.published ? outPrefix : `${outPrefix}-partial`;
   const pending = quality.published ? await stagePublishedCatalog(outDir, outPrefix) : null;
   try {
@@ -67,16 +66,18 @@ const writeResultGroups = async (
       buildProductHeaders(globalSpecKeys)
     );
     await atomicWrite(resolve(outDir, `${outputPrefix}-all.csv`), aggregateCsv);
-    const preparationContent = JSON.stringify({
-      quality: quality.status, published: quality.published, ...preparation
-    }, null, 2);
+    const catalogSha256 = quality.published
+      ? await writeCanonicalCatalog(outDir, outPrefix, scope, startedAt, endedAt, currentProducts)
+      : null;
+    const preparationContent = await buildLegacyPreparation(currentProducts, quality.status, quality.published);
     const hash = (content: string): string => createHash("sha256").update(content).digest("hex");
 
     const summary: Summary = {
       startedAt,
       endedAt,
       quality,
-      artifacts: { csvSha256: hash(aggregateCsv), preparationSha256: hash(preparationContent) },
+      artifacts: { csvSha256: hash(aggregateCsv), preparationSha256: hash(preparationContent),
+        ...(catalogSha256 ? { catalogSha256 } : {}) },
       totals: {
         categories: groups.length,
         discoveredProductUrls: categorySummaries.reduce((sum, category) => sum + category.discoveredProductUrls, 0),
@@ -115,9 +116,11 @@ const writeResultGroups = async (
     await atomicWrite(summaryFile, JSON.stringify(summary, null, 2));
     await finalizePublishedCatalog(outDir, outPrefix, pending);
   } catch (error) {
+    if (pending) await restorePublishedCatalog(outDir, outPrefix, pending);
     await abandonArchive(pending);
     throw error;
   }
+  await cleanCatalogExcess(outDir, outPrefix, false);
 };
 
 export const writeGroupedOutputs = async (

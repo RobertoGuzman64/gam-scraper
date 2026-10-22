@@ -1,6 +1,6 @@
 # Equipzilla Scraper
 
-Herramienta de línea de comandos **Node.js + TypeScript** para extraer maquinaria **nueva y de segunda mano** de **GAM, Gomariz y Mercaeleva**, publicar catálogos CSV/JSON con trazabilidad y preparar, de forma separada, Excel de **altas** para el importador existente de Equipzilla. No expone API HTTP ni escribe en el backend. Existe además una vía JSON `POST /product/create/many` en el backend, **todavía no integrada**, cuyo uso debe decidirse y validarse por separado.
+Herramienta de línea de comandos **Node.js + TypeScript** para extraer maquinaria **nueva y de segunda mano** de **GAM, Gomariz y Mercaeleva**, publicar catálogos CSV/JSON con trazabilidad y generar Excel de **altas** mediante un exportador independiente para el importador existente de Equipzilla. No expone API HTTP ni escribe en el backend. Existe además una vía JSON `POST /product/create/many` en el backend, **todavía no integrada**, cuyo uso debe decidirse y validarse por separado.
 
 > **Objetivo funcional y definición de terminado:** [OBJETIVOS_SCRAPER.md](docs/OBJETIVOS_SCRAPER.md). El backend permite `Nuevo` y `Segunda_Mano`; **la preparación admite ambas condiciones con evidencia de origen**, y mantiene condiciones desconocidas o contradictorias en `review`. Las fichas sin requisitos del Excel permanecen en el catálogo extraído.
 
@@ -32,6 +32,7 @@ npm run scrape -- all --dry-run
 npm run scrape -- all --providers gam,gomariz
 npm run scrape -- all
 npm run validate -- gam
+npm run prepare -- --help
 npm run export -- --help
 npm run cli -- --help
 ```
@@ -62,7 +63,26 @@ La extracción de un proveedor se guarda por defecto en `storage/scraped/<provee
 | `gomariz`    | `scrape-gomariz`        |
 | `mercaeleva` | `scrape-mercaeleva`     |
 
-Para un prefijo `<prefijo>`, el proceso genera, según el tipo y resultado de la ejecución, `<prefijo>-all.csv`, `<prefijo>-<categoria>.csv`, `-categories.csv`, `-preparation.json`, `-summary.json`, `-changes.json`, `-errors.json` y `-snapshot-<scope>.json`. Los archivos `-partial-*` sirven **solo para diagnóstico**; el último catálogo válido no debe sustituirse por una ejecución incompleta.
+Para un prefijo `<prefijo>`, una publicación completa genera `<prefijo>-catalog.json` (catálogo canónico íntegro `ProductRecord`) y `<prefijo>-catalog.manifest.json` (hash SHA-256 externo y metadatos de ejecución), además de `<prefijo>-all.csv`, `<prefijo>-<categoria>.csv`, `-categories.csv`, `-preparation.json`, `-summary.json`, `-changes.json`, `-errors.json` y `-snapshot-<scope>.json`. El resumen incluye `artifacts.catalogSha256`, adicional a los hashes anteriores. Los archivos `-partial-*` sirven **solo para diagnóstico**; no reemplazan el catálogo canónico ni el último CSV válido.
+
+El catálogo canónico **no filtra por elegibilidad Excel**: contiene tanto máquinas nuevas como usadas, incluidas las que no tienen precio, condición confirmada o categoría destino. Puede reabrirse y verificarse localmente mediante `readCanonicalCatalog` (`src/infrastructure/filesystem/canonical-catalog.ts`) sin acceder al portal ni ejecutar mapeos. El historial conserva la publicación actual y hasta dos anteriores, incorporando ambos archivos canónicos en ejecuciones nuevas. Las publicaciones anteriores a este cambio mantienen sus CSV y JSON históricos: no se les reconstruye un canónico ficticio a partir del CSV.
+
+**Etapas 1–3 integradas:** `scrape` conserva los ficheros heredados. `prepare` usa el catálogo canónico sin red. `validate --stage catalog|preparation` distingue integridad de origen y consistencia de preparación; `export` consume la nueva preparación verificando su catálogo y reglas, o admite la publicación heredada de forma compatible.
+
+### Preparación offline y comparación
+
+Desde la raíz del proyecto, tras una extracción completa que ya haya generado `-catalog.json`:
+
+```bash
+npm run prepare -- --help
+npm run prepare -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json --dry-run
+npm run prepare -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json
+npm run prepare -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json --out storage/prepared/gam/scrape-gam-marzo-2026-v2-preparation.json --compare storage/prepared/gam/scrape-gam-marzo-2026-preparation.json
+```
+
+Sin `--out`, se usa `storage/prepared/<proveedor>/<prefijo>-preparation.json`. También se escriben `-preparation.manifest.json` (SHA-256 del JSON), `-diagnostics.json` y, con `--compare`, `-comparison.json`. Se rechazan sobrescrituras; para repetir una preparación se usa **otra salida**, manteniendo la anterior. `--dry-run` calcula resultados pero no escribe archivos. Los diagnósticos enumeran bloqueos del Excel, equivalencias no resueltas y problemas de origen **por contrastar**, sin atribuir pérdidas al scraper sin evidencia. La comparación mide cambios por identidad, categoría, atributos y códigos de motivo **solo si coinciden catálogo y cohorte**; si cambian reglas o snapshots lo informa. El replay lee archivos locales, no consulta portales, inventario ni API del backend.
+
+Antes de preparar catálogos históricos es necesario publicar una extracción completa con el catálogo canónico: el CSV antiguo no permite recuperar un `ProductRecord` íntegro y verificable. Una preparación offline debe tener su manifest íntegro y corresponder exactamente al catálogo elegido; si se cambian reglas o snapshots hay que ejecutar `prepare` de nuevo, sin alterar el origen.
 
 El lote conserva `storage/runs/<run>/run.json`, logs por proveedor y copias de informes. Su bloqueo `storage/scraped/.batch.lock` solo es válido para ejecuciones que comparten almacenamiento local compatible.
 
@@ -76,13 +96,25 @@ npm run validate -- mercaeleva
 
 El validador exige CSV, preparación, resumen y cambios coherentes, hashes correctos y una antigüedad máxima de 48 h por defecto. Códigos de salida: **0** conforme, **2** revisión necesaria y **1** error. No compara automáticamente los totales de la web externa. Consulta [VALIDACION.md](docs/VALIDACION.md).
 
+### Validación por etapas
+
+```bash
+npm run validate -- gam --stage catalog --prefix scrape-gam-marzo-2026
+npm run validate -- gam --stage preparation --preparation storage/prepared/gam/scrape-gam-marzo-2026-preparation.json
+npm run validate -- gam --stage preparation --preparation storage/prepared/gam/scrape-gam-marzo-2026-v2-preparation.json --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json
+```
+
+`--stage catalog` valida catálogo, manifest, hash, proveedor, identidades, recuentos y publicación. `--stage preparation` comprueba también el manifest de preparación, fingerprint de reglas y snapshots, identidad y resultado íntegro recalculado desde la fuente **sin portales ni inventario**. Si se usó un nombre de salida distinto del prefijo original, indicar `--source`. La validación heredada `npm run validate -- gam` sigue comprobando CSV, preparación antigua, cambios y máximo de 48 h. La preparación offline puede validarse con cualquier antigüedad; **exportar** mantiene el bloqueo del origen superior a 48 h. El estado `review` de la preparación conserva el código de salida **2**.
+
 ## Exportación para importación manual
 
 La extracción **no importa nada**. `ready` en `-preparation.json` indica controles locales satisfechos, no autorización comercial. Para planificar un Excel de altas se necesitan un `companyID` real del entorno destino, un catálogo publicado válido y un inventario **completo y actual** en CSV con `companyID,reference`:
 
 ```bash
-npm run export -- gam --companyID <ID_REAL> --preparation storage/scraped/gam/scrape-gam-marzo-2026-preparation.json --existing storage/inventory/gam.csv --out storage/import/gam-altas.xlsx --dry-run
+npm run export -- gam --companyID <ID_REAL> --preparation storage/prepared/gam/scrape-gam-marzo-2026-preparation.json --existing storage/inventory/gam.csv --out storage/import/gam-altas.xlsx --dry-run
 ```
+
+Para una preparación offline con un nombre o ruta de origen no predeterminados, incluir `--source storage/scraped/gam/<prefijo>-catalog.json`. Para informes anteriores se sigue aceptando `--preparation storage/scraped/gam/<prefijo>-preparation.json` siempre que supere el preflight heredado. **No** se relaja el precio obligatorio del Excel ni se envía nada al backend.
 
 Tras revisar el plan y confirmar expresamente el inventario, sustituir `--dry-run` por `--confirm-inventory` para generar el `.xlsx`. `--allow-empty-inventory` existe, pero requiere justificar que la empresa realmente no tiene referencias registradas. El Excel es **solo para altas**, no actualiza ni elimina productos, no se envía automáticamente y debe revisarse con el importador real. Ver [protocolo de validación](docs/VALIDACION.md).
 

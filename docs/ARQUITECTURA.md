@@ -32,6 +32,7 @@ src/
 │       └── tests/         Pruebas del dominio de importación
 ├── pipeline/
 │   ├── scrape-run.ts
+│   ├── preparation/       Preparación y comparación offline sobre catálogos completos
 │   ├── publication/       Ensamblado de catálogo, persistencia, CSV e informes
 │   ├── batch/             Ejecución, contratos y persistencia de informes
 │   ├── validation/        Preflight de catálogo publicado
@@ -75,7 +76,7 @@ La dirección principal es **CLI → pipeline → scraping/catalog/infrastructur
 1. `src/cli/index.ts` distribuye a `src/cli/scrape.ts` y `cli/options/scrape.ts` obtiene proveedor, modo y opciones.
 2. `scraping/registry.ts` entrega el adaptador; `pipeline/scrape-run.ts` organiza categorías y pide resultados a `scraping/engine/scrape-category.ts`.
 3. El motor usa el adaptador (listado, parseo, referencias, árbol; navegador específico de Mercaeleva cuando corresponde) e `infrastructure/http/fetch-html.ts`. La regla de condición comercial de GAM se resuelve mediante un punto de extensión opcional del proveedor, sin condicionales de GAM en el motor.
-4. `pipeline/publication/publish.ts` deduplica mediante `catalog/identity.ts`, evalúa calidad/comparaciones, genera preparación desde `catalog/import` y publica salidas mediante `csv-serializer.ts` y escritura atómica.
+4. `pipeline/publication/publish.ts` deduplica mediante `catalog/identity.ts`, evalúa calidad/comparaciones y publica un `ProductRecord[]` canónico completo mediante `infrastructure/filesystem/canonical-catalog.ts` y los CSV mediante `csv-serializer.ts`. La preparación heredada sigue generándose durante la publicación por `pipeline/publication/legacy-preparation.ts`, por compatibilidad con consumidores existentes. No se descartan máquinas por su elegibilidad para Excel.
 5. `cli/reporting/scrape-progress.ts` presenta el progreso compacto y el resultado; `--verbose` permite detalles adicionales.
 
 ### Lote de proveedores
@@ -86,17 +87,25 @@ El bloqueo `storage/scraped/.batch.lock` funciona únicamente para procesos que 
 
 ### Validación y Excel de altas
 
-`cli/validate.ts` → `pipeline/validation/preflight.ts`: verifica coherencia temporal, integridad de hashes, totales, URLs, referencias, preparación y estado publicado. No comprueba el total anunciado en la web del proveedor.
+`cli/validate.ts` → `pipeline/validation/{preflight,offline}.ts`: verifica coherencia temporal, integridad de hashes, totales, URLs, referencias, preparación y estado publicado. No comprueba el total anunciado en la web del proveedor.
 
 `cli/export.ts` presenta el proceso; `pipeline/export/prepare-export.ts` consume una preparación validada y el inventario confirmado, usa `catalog/import/export/export-plan.ts` e `infrastructure/spreadsheet/xlsx.ts` y genera un Excel offline de **altas**. No llama a la API del backend, no actualiza referencias existentes y no produce bajas.
+
+### Preparación independiente y estado de transición (22/10/2026)
+
+`cli/prepare.ts` recibe los argumentos de `cli/options/prepare.ts`; `pipeline/preparation/prepare.ts` coordina lectura íntegra de `-catalog.json`, `prepareImportBatch` y escritura exclusiva. `catalog/import/preparation/offline-document.ts`, `offline-diagnostics.ts` y las reglas de mapeo existentes definen resultados, diagnósticos y comparaciones. `infrastructure/filesystem/preparation-inputs.ts` identifica los snapshots de destino y el código de las reglas que se ejecuta; `offline-preparation.ts` guarda/lee una huella externa de la preparación.
+
+`npm run prepare` consume catálogos publicados completos (incluidos históricos íntegros), sin Chrome, HTML, peticiones HTTP ni consulta de inventario. La preparación nueva contiene `version`, `source` (proveedor, prefijo, ámbito, hash canónico y total), `fingerprints` (versión de reglas, SHA-256 de reglas y snapshots), `preparedAt`, `identities`, `totals`, `quality`, `published` y `products: PreparedProduct[]`. Los metadatos diagnósticos son independientes del JSON de candidatos. Se mantiene un manifest SHA-256 externo, y las salidas se crean con exclusión de sobrescrituras y rollback ante errores. Al repetir, la identidad y el hash permiten comparar la misma cohorte o marcar una comparación no homogénea; se rastrean regresiones y cambios de mapeo sin atribuirlos a scraping.
+
+`publish.ts` **continúa** generando la preparación heredada para mantener sin cambios los comandos `validate` y `export`, y sus contratos de integridad. `validate --stage catalog|preparation` y `export` aceptan además el flujo canónico/offline verificado; `pipeline/validation/offline.ts` rehace la preparación con las reglas actuales y compara identidades, fingerprints y hashes antes del Excel. No se han cambiado endpoints ni permisos comerciales.
 
 ## Contratos que deben conservarse
 
 - **Proveedor:** `ScraperProvider` definido en `scraping/provider.ts`; identificadores actuales `gam`, `gomariz`, `mercaeleva`. El registro y las opciones por defecto son parte del flujo de selección. `resolveCondition` es un punto de extensión opcional y compatible para resolver condiciones por proveedor.
 - **CSV:** columnas base `categoryKey`, `categoryName`, `title`, `shortDescription`, `longDescription`, `price`, `reference`, `brand`, `model`, `year`, `location`, `country`, `horometer`, `serialNumber`, `image`, `url`, `specJson`, `providerId`, `imagesJson`, más columnas dinámicas `spec__*`.
 - **Identidad:** las referencias, la serie y la URL ayudan a identificar unidades, **aisladas por proveedor**. Dos máquinas del mismo modelo no son necesariamente la misma unidad.
-- **Publicación:** `-all.csv`, archivos por categoría, `-preparation.json`, `-summary.json`, `-changes.json`, `-errors.json`, `-categories.csv` y `-snapshot-<scope>.json`; resultados `-partial-*` no sustituyen una publicación válida.
-- **Integridad:** las huellas SHA-256 del CSV y la preparación se contrastan con el resumen. `suspectedMissing` es una observación, **no una orden de borrado**.
+- **Publicación:** `-catalog.json` y `-catalog.manifest.json` (solo para completas), `-all.csv`, archivos por categoría, `-preparation.json`, `-summary.json`, `-changes.json`, `-errors.json`, `-categories.csv` y `-snapshot-<scope>.json`; resultados `-partial-*` no sustituyen una publicación válida. El lector canónico verifica esquema, identidad, hash externo, proveedor, ejecución y totales frente al resumen activo o histórico. El historial conserva dos generaciones anteriores y permite migración desde publicaciones sin canónico.
+- **Integridad:** las huellas SHA-256 del CSV, la preparación heredada y, cuando existe, el catálogo canónico se contrastan con el resumen. Si una publicación lanza un error y existe una versión anterior protegida, se restauran sus archivos y metadatos; un corte abrupto del proceso exige comprobar el estado de `active.json` y los archivos antes de continuar. `suspectedMissing` es una observación, **no una orden de borrado**.
 - **Snapshots de destino:** `data/category/categorySell-flat.json` y `data/import/attributeCatalog.json` se leen en tiempo de ejecución. No moverlos ni cambiar su formato al añadir proveedores.
 - **Scripts npm existentes:** conservar los alias históricos mientras haya consumidores (`scrape:all`, `validate:catalog`, `export:import` y herramientas GAM).
 - **Importación:** `ready` es solo un indicador local de preparación; importación a Equipzilla requiere aprobación, `companyID` real e inventario de la empresa actualizado.

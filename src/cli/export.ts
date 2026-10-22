@@ -21,7 +21,7 @@ export const runExport = async (args: readonly string[]): Promise<void> => {
   status.update(`EXPORTACIÓN | ${options.providerId.toUpperCase()} | validando publicación | ${options.preparation}`);
   try {
   const { plan, report, inventoryReferences } = await prepareExport(
-    options.providerId, options.companyID, options.preparation, options.inventory, options.allowEmptyInventory
+    options.providerId, options.companyID, options.preparation, options.inventory, options.allowEmptyInventory, options.source
   );
   status.stop();
   console.log(`EXPORTACIÓN | ${options.providerId.toUpperCase()} | ${options.dryRun ? "SIMULACIÓN" : "PLAN DE ALTAS"}`);

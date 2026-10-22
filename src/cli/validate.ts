@@ -8,27 +8,47 @@ import { fileURLToPath } from "node:url";
 import { parseValidateOptions, validateHelp } from "./options/validate.js";
 export { validateHelp } from "./options/validate.js";
 import { validateCatalogPublication } from "../pipeline/validation/preflight.js";
+import { validateCanonicalSource, validateOfflinePreparation } from "../pipeline/validation/offline.js";
 
 export const runPreflight = async (args: readonly string[]): Promise<void> => {
   if (args.includes("--help")) {
     console.log(validateHelp);
     return;
   }
-  const { providerId, outputDir, outputPrefix, maxAgeHours, displayedOutputDir } = parseValidateOptions(args);
+  const options = parseValidateOptions(args);
+  const { providerId, outputDir, outputPrefix, maxAgeHours, displayedOutputDir } = options;
   const status = new LiveStatus();
   const startedAt = Date.now();
-  status.update(`VALIDACIÓN | ${providerId.toUpperCase()} | comprobando catálogo | ${displayedOutputDir}`);
+  status.update(`VALIDACIÓN | ${providerId.toUpperCase()} | ${options.stage} | ${displayedOutputDir}`);
+  if (options.stage === "catalog") {
+    try {
+      const report = await validateCanonicalSource(options.source, providerId);
+      status.stop();
+      console.log(`VALIDACIÓN | ${providerId.toUpperCase()} | CATÁLOGO CONFORME`);
+      console.log(`  Productos: ${report.productCount} | Origen: ${report.sourceFile}`);
+      console.log(`  SHA-256: ${report.catalogSha256} | Duración: ${formatDuration(Date.now() - startedAt)}`);
+    } finally { status.stop(); }
+    return;
+  }
+  if (options.stage === "preparation") {
+    try {
+      if (!options.preparation) throw new Error("Falta --preparation");
+      const report = await validateOfflinePreparation(providerId, options.preparation, options.source);
+      status.stop();
+      console.log(`VALIDACIÓN | ${providerId.toUpperCase()} | ${report.review ? "REVISIÓN" : "CONFORME"}`);
+      console.log(`  Productos: ${report.catalog.productCount} | Listos: ${report.ready} | Revisar: ${report.review}`);
+      if (report.review > 0) {
+        for (const line of formatReviewDiagnostics(report.preparation.products)) console.log(line);
+        process.exitCode = 2;
+      }
+      console.log(`  Preparación: ${report.preparationFile} | Duración: ${formatDuration(Date.now() - startedAt)}`);
+    } finally { status.stop(); }
+    return;
+  }
   let result: Awaited<ReturnType<typeof validateCatalogPublication>>;
   try {
-    result = await validateCatalogPublication({
-      providerId,
-      outputDir,
-      outputPrefix,
-      maxAgeHours
-    });
-  } finally {
-    status.stop();
-  }
+    result = await validateCatalogPublication({ providerId, outputDir, outputPrefix, maxAgeHours });
+  } finally { status.stop(); }
   let diagnostics: readonly string[] = [];
   if (result.review > 0) {
     const preparationText = await readFile(resolve(outputDir, `${outputPrefix}-preparation.json`), "utf8");
