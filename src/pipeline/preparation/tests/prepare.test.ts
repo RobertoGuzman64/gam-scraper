@@ -9,7 +9,9 @@ import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/sc
 import { writeOutputs } from "../../publication/publish.js";
 import { prepareSavedCatalog } from "../prepare.js";
 import { compareOfflinePreparations } from "../../../catalog/import/preparation/offline-diagnostics.js";
+import { buildSourceTriage } from "../../../catalog/diagnostics/source-triage.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/offline-preparation.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 
 const category: CategoryConfig = { key: "maquinas", name: "Maquinaria de ocasión", url: "https://example.test/maquinas" };
 const when = "2026-10-21T12:00:00Z";
@@ -58,6 +60,15 @@ test("replay offline conserva máquinas sin precio, condiciones inciertas e iden
       assert.equal(result.diagnostics.totals.products, 12);
       assert.ok(result.diagnostics.issues.some((entry) => entry.code === "excel.price"));
       assert.ok(result.diagnostics.issues.every((entry) => entry.affected >= entry.only));
+      assert.ok(result.diagnostics.sourceTriage);
+      const sourceTriage = result.diagnostics.sourceTriage;
+      assert.equal(sourceTriage.reduce((total, entry) => total + entry.affected, 0), result.diagnostics.issues.reduce((total, entry) => total + entry.affected, 0));
+      assert.equal(sourceTriage.find((entry) => entry.issueCode === "excel.price")?.signal, "sin_evidencia_local");
+      assert.ok(sourceTriage.every((entry) => entry.affected >= entry.only));
+      const reversed = [...(await readCanonicalCatalog(source)).products].reverse();
+      assert.deepEqual(buildSourceTriage(result.preparation, reversed), sourceTriage);
+      assert.throws(() => buildSourceTriage(result.preparation, reversed.slice(1)), /diferentes cantidades/);
+      assert.throws(() => buildSourceTriage(result.preparation, [reversed[0]!, ...reversed.slice(0, -1)]), /identidad duplicada/);
       const saved = await readOfflinePreparation(out, "gam");
       assert.deepEqual(saved.products, result.preparation.products);
       assert.equal(saved.source.catalogSha256, createHash("sha256").update(await readFile(source, "utf8")).digest("hex"));

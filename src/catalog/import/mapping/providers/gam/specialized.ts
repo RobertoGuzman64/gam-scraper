@@ -1,6 +1,7 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import type { Attribute, Candidate } from "../../attribute-types.js";
 import { fold, numberToken, scalar } from "../../attribute-utils.js";
+import { gamEquipmentIdentityCandidate } from "./equipment-identity.js";
 
 const sourceSection = (record: ProductRecord): string | null => {
   if (record.providerId !== "gam") return null;
@@ -66,5 +67,6 @@ const tractorCandidate = (record: ProductRecord, attribute: Attribute): Candidat
 
 export const gamSpecializedCandidate = (record: ProductRecord, attribute: Attribute): Candidate | null => {
   if (sourceSection(record) === null) return null;
-  return manipulatorCandidate(record, attribute) ?? tractorCandidate(record, attribute);
+  return manipulatorCandidate(record, attribute) ?? tractorCandidate(record, attribute) ??
+    gamEquipmentIdentityCandidate(record, attribute);
 };

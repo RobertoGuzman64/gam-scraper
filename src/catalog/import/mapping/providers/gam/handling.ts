@@ -2,7 +2,7 @@ import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import type { Attribute, Candidate } from "../../attribute-types.js";
 import { fold, numberToken } from "../../attribute-utils.js";
 
-const relevantRecord = (record: ProductRecord): boolean => {
+export const relevantGamHandlingRecord = (record: ProductRecord): boolean => {
   if (record.providerId !== "gam" || !["manutencion", "carretillas-nuevas", "apiladores-nuevos", "marcas-nuevas"].includes(record.categoryKey)) return false;
   try {
     const url = new URL(record.url);
@@ -15,6 +15,19 @@ const relevantRecord = (record: ProductRecord): boolean => {
 
 const descriptionParts = (record: ProductRecord): readonly string[] =>
   [record.shortDescription, record.longDescription].filter((value): value is string => Boolean(value?.trim()));
+
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+export const gamHandlingModelEvidence = (record: ProductRecord, text: string): boolean => {
+  const identified = record.model?.trim() || identityFromTitle(record)?.model;
+  if (!identified) return false;
+  const model = fold(identified);
+  const pattern = new RegExp(`(?:^|[^a-z0-9])${escapeRegExp(model)}(?![a-z0-9])`);
+  return pattern.test(fold(text));
+};
+
+const confirmedDescriptions = (record: ProductRecord): readonly string[] =>
+  descriptionParts(record).filter((part) => gamHandlingModelEvidence(record, part));
 
 const mastNames: Readonly<Record<string, string>> = {
   "simple": "Simple",
@@ -29,21 +42,25 @@ export const normalizeGamMast = (value: string | number | boolean | null): strin
 };
 
 const mastFromDescription = (record: ProductRecord): string | null => {
-  const text = fold(descriptionParts(record).join(" "));
+  const text = fold(confirmedDescriptions(record).join(" "));
   if (/\b(?:opciones?|versiones?|configuraciones?|disponibles?|gama)\b.{0,95}\bmastiles?\b|\bmastiles?\b.{0,100}\b(?:opciones?|versiones?|configuraciones?|disponibles?|gama|hasta|puede)\b/.test(text)) return null;
-  const named = [...text.matchAll(/\b(?:simple|duplex|triplex|cuadruplex)\b/g)].map((match) => match[0]);
-  if (new Set(named).size !== 1) return null;
-  const attached = [...text.matchAll(/\b(?:monta|incorpora|equipad[oa]\s+con|con)\s+(?:un\s+)?mastil\s+(simple|duplex|triplex|cuadruplex)\b/g)];
-  if (attached.length === 0) return null;
-  return mastNames[attached[0]?.[1] ?? ""] ?? null;
+  const types = [...text.matchAll(/\b(?:simple|duplex|triplex|cuadruplex)\b/g)].map((match) => mastNames[match[0]]);
+  const attached = [...text.matchAll(/\b(?:monta|incorpora|equipad[oa]\s+con|con)\s+(?:un\s+)?mastil\s+(simple|duplex|triplex|cuadruplex)\b/g)]
+    .map((match) => mastNames[match[1] ?? ""]);
+  const stages: Readonly<Record<string, string>> = { "1": "Simple", "2": "Dúplex", "3": "Tríplex", "4": "Cuádruplex" };
+  const attachedStages = [...text.matchAll(/\b(?:monta|incorpora|equipad[oa]\s+con|con)\s+(?:un\s+)?mastil\s+de\s+([1-4])\s+etapas?\b/g)]
+    .map((match) => stages[match[1] ?? ""]);
+  const selected = [...attached, ...attachedStages].filter((value): value is string => Boolean(value));
+  if (selected.length === 0 || new Set([...types, ...selected]).size !== 1) return null;
+  return selected[0] ?? null;
 };
 
 const hasAdjacentAlternative = (text: string, end: number): boolean =>
   /^(?:\s*[/,-]\s*|\s+(?:o|u|y|a|hasta)\s+)\d[\d.,]*(?:\s*(?:mm|cm|metros?|m|kg|kilogramos?|toneladas?|t))?\b/.test(text.slice(end, end + 45));
 
 const liftHeight = (record: ProductRecord): number | null => {
-  const parts = descriptionParts(record);
-  if (record.model && !parts.some((part) => fold(part).includes(fold(record.model ?? "")))) return null;
+  const parts = confirmedDescriptions(record);
+  if (parts.length === 0) return null;
   const values = new Set<number>();
   for (const part of parts) {
     const text = fold(part);
@@ -64,8 +81,8 @@ const liftHeight = (record: ProductRecord): number | null => {
 };
 
 const loadCapacity = (record: ProductRecord): number | null => {
-  const parts = descriptionParts(record);
-  if (record.model && !parts.some((part) => fold(part).includes(fold(record.model ?? "")))) return null;
+  const parts = confirmedDescriptions(record);
+  if (parts.length === 0) return null;
   const values = new Set<number>();
   for (const part of parts) {
     const text = fold(part);
@@ -83,8 +100,6 @@ const loadCapacity = (record: ProductRecord): number | null => {
   }
   return values.size === 1 ? [...values][0] ?? null : null;
 };
-
-const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const identityFromTitle = (record: ProductRecord): { readonly brand: string; readonly model: string } | null => {
   if (!record.title) return null;
@@ -126,7 +141,7 @@ const electricEnergy = (record: ProductRecord): string | null => {
 };
 
 export const gamHandlingCandidate = (record: ProductRecord, attribute: Attribute): Candidate | null => {
-  if (!relevantRecord(record)) return null;
+  if (!relevantGamHandlingRecord(record)) return null;
   let value: string | number | null = null;
   if (attribute.name === "Tipo de mástil" && attribute.type === "SELECT") value = mastFromDescription(record);
   if (attribute.name === "Altura de elevación" && attribute.type === "NUMBER" && attribute.unit_option === "mm") value = liftHeight(record);

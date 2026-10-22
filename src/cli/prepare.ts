@@ -19,6 +19,15 @@ export const runPrepare = async (args: readonly string[]): Promise<void> => {
   for (const [condition, counts] of Object.entries(result.diagnostics.conditions)) {
     console.log(`  ${condition}: ${counts.ready + counts.review} | ready: ${counts.ready} | review: ${counts.review}`);
   }
+  if (result.diagnostics.sourceTriage) {
+    const actionable = result.diagnostics.sourceTriage.filter((entry) =>
+      entry.signal === "especificacion_explicita" || entry.signal === "campo_origen_no_validado" || entry.signal === "mencion_textual");
+    const counts = actionable.reduce((sum, entry) => sum + entry.affected, 0);
+    console.log(`  Contraste de origen: ${counts} incidencias con indicios locales, sin recuperación acreditada`);
+    for (const entry of actionable.slice().sort((a, b) => b.affected - a.affected).slice(0, 5)) {
+      console.log(`    ${entry.issueCode} | ${entry.categoryKey} | ${entry.signal}: ${entry.affected} | refs: ${entry.examples.join(", ")}`);
+    }
+  }
   if (result.comparison) {
     if (!result.comparison.comparable) console.log(`  Comparación NO homogénea: ${result.comparison.reason}`);
     else console.log(`  Comparación: review→ready ${result.comparison.reviewToReady.length} | ready→review ${result.comparison.readyToReview.length} | categorías ${result.comparison.categoryChanged.length} | atributos ${result.comparison.attributesChanged.length}`);

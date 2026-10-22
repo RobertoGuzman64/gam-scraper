@@ -5,8 +5,10 @@ import { fold, basketDimensions, scalar } from "../../attribute-utils.js";
 import { gamWorkingHeightFromDescription } from "./working-height.js";
 import { gamCleaningCandidate } from "./cleaning.js";
 import { gamHandlingCandidate, normalizeGamMast } from "./handling.js";
-import { gamElevationCandidate } from "./elevation.js";
+import { gamHandlingAttributeConflicts } from "./handling-integrity.js";
+import { gamElevationCandidate, gamElevationHeightConflicts } from "./elevation.js";
 import { gamSpecializedCandidate } from "./specialized.js";
+import { gamGeneratorCandidate, isGamGenerator } from "./generator.js";
 
 export const applyGamAliases = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): boolean => {
   if (attribute.name === "Dimensiones de la cesta") keys.add(fold("Dimensiones Cesta"));
@@ -48,7 +50,15 @@ export const applyGamAliases = (record: ProductRecord, attribute: Attribute, key
     }
   }
   if (attribute.name === "Altura de elevación" && attribute.unit_option === "mm") {
+    if (gamElevationHeightConflicts(record)) return false;
     keys.add(fold("Altura Elevación (Industr.)"));
+  }
+  if (gamHandlingAttributeConflicts(record, attribute)) return false;
+  if (attribute.name === "Potencia" && isGamGenerator(record)) {
+    keys.delete(fold("Potencia (kW)"));
+    const generatorPower = gamGeneratorCandidate(record, attribute);
+    if (!generatorPower) return false;
+    candidates.push(generatorPower);
   }
   if (["Tipo de mástil", "Altura de elevación", "Capacidad de carga", "Marca", "Modelo", "Motorización / Energía"].includes(attribute.name)) {
     const hasDirectValue = Object.entries(record.specs ?? {}).some(([key]) =>
@@ -59,11 +69,13 @@ export const applyGamAliases = (record: ProductRecord, attribute: Attribute, key
       if (candidate) candidates.push(candidate);
     }
   }
-  if (["Capacidad máxima", "Altura máxima de elevación", "Motorización / Energía"].includes(attribute.name)) {
+  if (["Capacidad máxima", "Altura máxima de elevación", "Motorización / Energía", "Marca", "Modelo"].includes(attribute.name)) {
     const hasDirectValue = Object.entries(record.specs ?? {}).some(([key]) =>
       keys.has(fold(key)) || keys.has(fold(SPEC_KEY_NORMALIZATION[fold(key)] ?? key))
     );
-    if (!hasDirectValue) {
+    const missingIdentity = attribute.name === "Marca" && !record.brand?.trim() ||
+      attribute.name === "Modelo" && !record.model?.trim();
+    if (!hasDirectValue || missingIdentity) {
       const candidate = gamSpecializedCandidate(record, attribute);
       if (candidate) candidates.push(candidate);
     }

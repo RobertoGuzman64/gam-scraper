@@ -3,6 +3,7 @@ import { loadReadableHtml } from "../../parsing/readable-html.js";
 import type { ParsedProduct } from "../../provider.js";
 import { collectProductImages } from "../../parsing/image-gallery.js";
 import { extractEmbeddedMachineMetadata, extractEmbeddedMachinePrice } from "./embedded-machine.js";
+import { recoverMercaelevaDescriptionSpecs } from "./technical-description.js";
 
 const normalize = (value: string): string => value.replace(/\s+/g, " ").trim();
 
@@ -96,17 +97,6 @@ const extractDescription = ($: cheerio.CheerioAPI): string | null => {
   return description;
 };
 
-const recoverDescriptionSpecs = (specs: Record<string, string>, description: string | null, title: string): void => {
-  if (!description || !/\b(?:carretilla|transpalet(?:a)?|apilador)\b/i.test(title)) return;
-  if (!specs["Tipo de mástil"]) {
-    const mast = description.match(/\bm[aá]stil\s+(?:tipo\s+)?(tr[ií]plex|d[uú]plex|s[ií]mplex|triple|doble|simple)\b/i)?.[1];
-    if (mast) specs["Tipo de mástil"] = mast;
-  }
-  if (!specs["Capacidad de carga"] && !specs["Capacidad máxima de elevación"]) {
-    const capacity = description.match(/\bcapacidad(?:\s+de\s+carga)?\s*:?\s*(\d[\d., ]{0,10})\s*kg\b/i)?.[1];
-    if (capacity) specs["Capacidad de carga"] = `${capacity.trim()} kg`;
-  }
-};
 
 const technicalHeadings = new Set([
   "general information", "información general", "power and performance", "potencia y rendimiento", "chassis", "chasis"
@@ -193,7 +183,7 @@ export const parseMercaelevaProduct = (html: string, pageUrl: string): ParsedPro
     ?? visibleHeader.match(/^(?:precio(?:\s+de\s+venta)?\s*:?\s*)?(\d+(?:[,.]\d{2})?\s*(?:EUR\b|€))/i)?.[1]
     ?? null;
   const specs = collectSpecs($);
-  recoverDescriptionSpecs(specs, description, title);
+  recoverMercaelevaDescriptionSpecs(specs, description, title);
   const embedded = extractEmbeddedMachineMetadata(html, reference);
   const price = visiblePrice ?? extractEmbeddedMachinePrice(html, reference);
   const visibleImages = collectProductImages($, pageUrl, [

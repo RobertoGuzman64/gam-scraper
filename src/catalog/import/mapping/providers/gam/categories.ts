@@ -79,6 +79,43 @@ const specializedLogitransCategory = (record: ProductRecord, parent: string, tit
   return null;
 };
 
+const gamDocumentedCategory = (record: ProductRecord, parent: string, title: string): string | null | undefined => {
+  const short = fold(record.shortDescription ?? "");
+  const long = fold(record.longDescription ?? "");
+  const rawMotor = record.specs?.["Tipo motor"];
+  const motor = rawMotor === undefined ? "" : typeof rawMotor === "string" ? fold(rawMotor) : null;
+  const combined = `${title} ${short} ${long}`;
+
+  if (parent === "reachstacker-hyster" && /\breach[ -]?stacker\b/.test(title)) {
+    return /\bmanipulacion de contenedores\b|\bcontenedores iso\b|\bvaciado de contenedores\b/.test(long)
+      ? "manipulador-de-contenedores" : null;
+  }
+  if (parent === "carretillas-elevadoras-diesel-hyster" &&
+    /\bcarretilla elevadora glp\b/.test(title) && !/\bdiesel\b/.test(title)) {
+    return /\bglp\b/.test(short) && /\bglp\b/.test(long) && motor === "glp" &&
+      !/\b(?:diesel|electrica|hibrida)\b/.test(combined)
+      ? "carretilla-elevadora-glp" : null;
+  }
+  if (parent === "carretillas-elevadoras-electricas-hyster" &&
+    /\bcarretilla elevadora\b/.test(title) && !/\belectrica\b/.test(title) &&
+    !/\b(?:diesel|glp|hibrida)\b/.test(combined)) {
+    return /\bcarretilla electrica\b/.test(short) && /\bcarretilla elevadora electrica\b/.test(long) &&
+      (motor === "" || motor === "electrico") ? "carretilla-elevadora-electrica" : null;
+  }
+  if (parent === "tennant" && record.categoryKey === "limpieza-fregadoras" &&
+    /\bmicrofregadora\b/.test(title)) {
+    return /\bfregadora industrial\b/.test(short) && !/\bbarredora\b/.test(combined)
+      ? "fregadora-industrial" : null;
+  }
+  if (parent === "bravi" && /\bplataforma elevadora\b/.test(title) &&
+    /\bplataforma unipersonal electrica\b/.test(long) && motor === "electrico" &&
+    !/\b(?:diesel|glp|hibrida)\b/.test(combined)) return "plataforma-unipersonal-electrica";
+  if (parent === "tractor-de-remolcado-conductor-sentado-7000-kg" &&
+    /\btractor de arrastre\b/.test(title) && motor === "electrico" &&
+    !/\b(?:diesel|glp|hibrido)\b/.test(combined)) return "tractor-electrico";
+  return undefined;
+};
+
 const gamNewTitleCategories: Readonly<Record<string, readonly { readonly slug: string; readonly title: RegExp }[]>> = {
   "elevacion-nueva": [
     { slug: "plataforma-tijera-electrica", title: /\bplataforma\b.*\btijera\b.*\belectrica\b/ },
@@ -186,6 +223,8 @@ export const newCategorySlug = (record: ProductRecord): string | null => {
   if (handling !== undefined) return handling;
   const elevation = gamElevationCategory(record, parent, title);
   if (elevation !== undefined) return elevation;
+  const documented = gamDocumentedCategory(record, parent, title);
+  if (documented !== undefined) return documented;
   const explicit = gamNewCategories[parent];
   if (explicit) return explicit.title.test(title) ? explicit.slug : null;
   const matches = (gamNewTitleCategories[record.categoryKey] ?? []).filter((item) => item.title.test(title));
@@ -198,6 +237,20 @@ export const gamUsedCategorySlug = (record: ProductRecord, path: readonly string
     const title = fold(record.title ?? "");
     if (parent === "mini-cargadoras-segunda-mano" && /\bminiexcavadora\b/.test(title)) {
       return "miniexcavadoras-segunda-mano";
+    }
+    if (parent === "carretillas-elevadoras-diesel-segunda-mano" &&
+      /\bcarretilla elevadora electrica\b/.test(title)) {
+      const short = fold(record.shortDescription ?? "");
+      const long = fold(record.longDescription ?? "");
+      const combined = `${title} ${short} ${long}`;
+      const rawMotor = record.specs?.["Tipo motor"];
+      const motor = rawMotor === undefined ? "" : typeof rawMotor === "string" ? fold(rawMotor) : null;
+      if ((motor === "" || motor === "electrico") &&
+        /\bcarretilla (?:frontal )?electrica\b/.test(short) &&
+        /\bcarretilla elevadora electrica\b/.test(long) &&
+        !/\b(?:diesel|glp|gasolina|hibrida)\b/.test(combined)) {
+        return "carretillas-elevadoras-electricas-segunda-mano";
+      }
     }
     if (parent === "carretillas-elevadoras-electricas-segunda-mano" && /\btrilateral\b/.test(title)) {
       return "carretillas-elevadoras-trilaterales-segunda-mano";

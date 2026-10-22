@@ -37,6 +37,8 @@ const singleMeasurement = (record: ProductRecord, patterns: readonly RegExp[]): 
       for (const match of text.matchAll(pattern)) {
         const value = match[1] && match[2] ? valueInMeters(match[1], match[2]) : null;
         if (value === null) return null;
+        const suffix = text.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 45);
+        if (/^(?:\s*[/,-]\s*|\s+(?:o|u|y|hasta)\s+)\d[\d.,]*/.test(suffix)) return null;
         values.add(value);
       }
     }
@@ -92,10 +94,12 @@ export const gamElevationCandidate = (record: ProductRecord, attribute: Attribut
   if (attribute.type === "NUMBER" && attribute.unit_option === "m") {
     if (attribute.name === "Altura de trabajo") value = workingHeight(record);
     if (attribute.name === "Altura de plataforma") value = singleMeasurement(record, [
-      /\baltura\s+de\s+plataforma\s+(?:de\s+)?(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\b/g
+      /\baltura\s+de\s+(?:la\s+)?plataforma\s+(?:de\s+)?(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\b/g,
+      /\b(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\s+de\s+altura\s+de\s+(?:la\s+)?plataforma\b/g
     ]);
     if (attribute.name === "Alcance horizontal") value = singleMeasurement(record, [
-      /\balcance\s+horizontal\s+(?:de\s+|maximo\s+de\s+)?(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\b/g
+      /\balcance\s+horizontal\s+(?:maximo\s*)?(?:de\s+)?(?:hasta\s+)?[:=]?\s*(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\b/g,
+      /\b(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\s+de\s+alcance\s+horizontal\b/g
     ]);
   }
   if (attribute.name === "Capacidad de la cesta" && attribute.type === "NUMBER" && attribute.unit_option === "kg") {
@@ -103,4 +107,21 @@ export const gamElevationCandidate = (record: ProductRecord, attribute: Attribut
   }
   if (attribute.name === "Tipo de tracción" && attribute.type === "SELECT") value = traction(record);
   return value === null ? null : { key: attribute.name, value };
+};
+
+export const gamElevationHeightConflicts = (record: ProductRecord): boolean => {
+  if (record.providerId !== "gam" || !["elevacion", "elevacion-nueva"].includes(record.categoryKey)) return false;
+  const source = record.specs?.["Altura de elevación (m)"];
+  const raw = source === undefined ? null : scalar(source);
+  if (typeof raw !== "string") return false;
+  const matched = raw.trim().match(/^(\d[\d.,]*)\s*(mm|cm|m|metros?)$/i);
+  const declared = matched?.[1] && matched[2] ? valueInMeters(matched[1], fold(matched[2])) : null;
+  if (declared === null) return false;
+  for (const part of descriptions(record)) {
+    for (const match of fold(part).matchAll(/\baltura\s+de\s+elevacion\s+(?:impresionante\s+)?(?:de\s+)?(?:hasta\s+)?(\d[\d.,]*)\s*(mm|cm|m|metros?)\b/g)) {
+      const described = match[1] && match[2] ? valueInMeters(match[1], match[2]) : null;
+      if (described !== null && described !== declared) return true;
+    }
+  }
+  return false;
 };

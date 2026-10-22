@@ -4,6 +4,8 @@ import { basename, dirname, join, resolve } from "node:path";
 import { buildProductIdentity } from "../../catalog/identity.js";
 import { prepareImportBatch } from "../../catalog/import/preparation/prepare.js";
 import { buildOfflineDiagnostics, compareOfflinePreparations } from "../../catalog/import/preparation/offline-diagnostics.js";
+import { buildSourceTriage } from "../../catalog/diagnostics/source-triage.js";
+import type { SourceTriageGroup } from "../../catalog/diagnostics/source-triage.js";
 import type { OfflineDiagnostics, PreparationComparison } from "../../catalog/import/preparation/offline-diagnostics.js";
 import { parseOfflinePreparation } from "../../catalog/import/preparation/offline-document.js";
 import type { OfflinePreparation } from "../../catalog/import/preparation/offline-document.js";
@@ -21,7 +23,7 @@ export type PrepareOptions = {
 
 export type PrepareResult = {
   readonly preparation: OfflinePreparation;
-  readonly diagnostics: OfflineDiagnostics;
+  readonly diagnostics: OfflineDiagnostics & { readonly sourceTriage: readonly SourceTriageGroup[] };
   readonly comparison: PreparationComparison | null;
   readonly preparationFile: string;
   readonly diagnosticsFile: string;
@@ -72,7 +74,7 @@ export const prepareSavedCatalog = async (options: PrepareOptions): Promise<Prep
     identities: catalog.products.map((product) => buildProductIdentity(product).key),
     products: prepared.products
   }, options.providerId);
-  const diagnostics = buildOfflineDiagnostics(preparation);
+  const diagnostics = { ...buildOfflineDiagnostics(preparation), sourceTriage: buildSourceTriage(preparation, catalog.products) };
   let comparison: PreparationComparison | null = null;
   if (options.compare) {
     const previous = await readOfflinePreparation(resolve(options.compare), options.providerId);
