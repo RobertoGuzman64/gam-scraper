@@ -26,7 +26,7 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   if (!reference) issues.push("Referencia ausente");
   if (!title) issues.push("Título ausente");
   if (!category) issues.push("Categoría Equipzilla sin correspondencia inequívoca");
-  if (price === null) issues.push("Precio no disponible o inválido");
+  if (price === null && /\d/.test(record.price ?? "")) issues.push("Precio publicado inválido");
   const descriptionIssue = descriptionImportIssue(description, descriptionGeneral);
   if (descriptionIssue) issues.push(descriptionIssue);
   if (images.length === 0) issues.push("Imágenes válidas ausentes");

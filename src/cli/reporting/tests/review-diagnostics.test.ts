@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatReviewDiagnostics } from "../review-diagnostics.js";
+import { formatPriceAvailability, formatReviewDiagnostics } from "../review-diagnostics.js";
 import type { PreparedProduct } from "../../../catalog/import/preparation/prepare.js";
 
 const entry = (reference: string | null, issues: readonly string[], status: PreparedProduct["status"] = "review", condition: PreparedProduct["product"]["condition"] = null): PreparedProduct => ({
@@ -69,4 +69,11 @@ test("diagnóstico separa las cohortes comerciales sin inventar causas ni cambia
   assert.match(lines, /Condición comercial no confirmada.*diagnóstico: equivalencia o condición por verificar/);
   assert.match(lines, /no fallos de extracción demostrados/);
   assert.equal(entries[1]?.status, "ready");
+});
+
+test("precio ausente se registra aunque una ficha esté ready para create/many", () => {
+  const products = [entry("A1", [], "ready"), entry("A2", ["Atributo obligatorio ausente: Tipo de mástil"]),
+    { ...entry("A3", [], "ready"), product: { ...entry("A3", [], "ready").product, price: 1500 } }];
+  assert.match(formatPriceAvailability(products), /Precio no normalizado: 2 fichas/);
+  assert.deepEqual(formatReviewDiagnostics([products[0]!]), []);
 });

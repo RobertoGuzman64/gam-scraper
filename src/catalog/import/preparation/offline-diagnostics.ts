@@ -20,6 +20,7 @@ const describeIssue = (issue: string): { code: string; classification: IssueCate
   if (issue.startsWith("Condición comercial contradictoria")) return { code: "condition.contradictory", classification: "ambiguo" };
   if (issue.startsWith("Condición comercial no confirmada")) return { code: "condition.unknown", classification: "origen_por_contrastar" };
   if (issue.startsWith("Categoría Equipzilla")) return { code: "mapping.category", classification: "dato_presente_no_mapeado" };
+  if (issue === "Precio publicado inválido") return { code: "source.price_invalid", classification: "ambiguo" };
   if (issue.startsWith("Precio ")) return { code: "excel.price", classification: "contrato_excel" };
   if (issue.startsWith("Descripción ")) return { code: "excel.description", classification: "contrato_excel" };
   if (issue.startsWith("Imágenes ")) return { code: "excel.images", classification: "contrato_excel" };

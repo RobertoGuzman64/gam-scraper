@@ -101,7 +101,7 @@ test("Mercaeleva: no inventa precios, condiciones ni textos para fichas sin orig
   assert.equal(prepared.product.price, null);
   assert.equal(prepared.product.condition, null);
   assert.equal(prepared.product.description, null);
-  assert.ok(prepared.issues.includes("Precio no disponible o inválido"));
+  assert.ok(!prepared.issues.some((issue) => issue.startsWith("Precio ")));
   assert.ok(prepared.issues.includes("Condición comercial no confirmada (Nuevo o Segunda_Mano)"));
   assert.ok(prepared.issues.includes("Descripción ausente"));
 });

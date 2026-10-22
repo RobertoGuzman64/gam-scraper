@@ -116,7 +116,7 @@ La extracción **no importa nada**. `ready` en `-preparation.json` indica contro
 npm run export -- gam --companyID <ID_REAL> --preparation storage/prepared/gam/scrape-gam-marzo-2026-preparation.json --existing storage/inventory/gam.csv --out storage/import/gam-altas.xlsx --dry-run
 ```
 
-Para una preparación offline con un nombre o ruta de origen no predeterminados, incluir `--source storage/scraped/gam/<prefijo>-catalog.json`. Para informes anteriores se sigue aceptando `--preparation storage/scraped/gam/<prefijo>-preparation.json` siempre que supere el preflight heredado. **No** se relaja el precio obligatorio del Excel ni se envía nada al backend.
+Para una preparación offline con un nombre o ruta de origen no predeterminados, incluir `--source storage/scraped/gam/<prefijo>-catalog.json`. Para informes anteriores se sigue aceptando `--preparation storage/scraped/gam/<prefijo>-preparation.json` siempre que supere el preflight heredado. El `ready` de preparación permite precio ausente para JSON `create/many`; **no** se relaja el precio obligatorio del Excel ni se envía nada al backend. Los atributos obligatorios, como el mástil cuando corresponda, siguen exigidos.
 
 Tras revisar el plan y confirmar expresamente el inventario, sustituir `--dry-run` por `--confirm-inventory` para generar el `.xlsx`. `--allow-empty-inventory` existe, pero requiere justificar que la empresa realmente no tiene referencias registradas. El Excel es **solo para altas**, no actualiza ni elimina productos, no se envía automáticamente y debe revisarse con el importador real. Ver [protocolo de validación](docs/VALIDACION.md).
 

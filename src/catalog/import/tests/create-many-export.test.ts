@@ -29,7 +29,7 @@ const prepareDocument = async (records: readonly ProductRecord[]): Promise<Prepa
 test("create/many exporta precio opcional sin simular datos ni modificar el contrato Excel", async () => {
   const catalog = await loadImportCatalog();
   const document = await prepareDocument([{ ...record, price: null }]);
-  assert.equal(document.products[0]?.status, "review");
+  assert.equal(document.products[0]?.status, "ready");
   const excel = planProductImport(document, "mercaeleva", emptyInventory, catalog);
   const json = planCreateMany(document, "mercaeleva", emptyInventory, catalog);
   assert.equal(excel.report.newProducts, 0);
@@ -50,6 +50,22 @@ test("create/many exporta precio opcional sin simular datos ni modificar el cont
   assert.ok(!("providerId" in product));
   assert.ok(!("sourceUrl" in product));
   assert.deepEqual(json.report.selectedSources, [{ reference: record.reference, sourceUrl: record.url }]);
+});
+
+test("preparaciones históricas con bloqueo exclusivo de precio no se saltan la validación Excel", async () => {
+  const catalog = await loadImportCatalog();
+  const current = (await prepareDocument([{ ...record, price: null }])).products[0];
+  assert.ok(current);
+  const historical: PreparationDocument = {
+    quality: "complete", published: true,
+    products: [{ ...current, status: "review", issues: ["Precio no disponible o inválido"] }]
+  };
+  const excel = planProductImport(historical, "mercaeleva", emptyInventory, catalog);
+  const json = planCreateMany(historical, "mercaeleva", emptyInventory, catalog);
+  assert.equal(excel.report.newProducts, 0);
+  assert.match(excel.report.review[0]?.reason ?? "", /Precio/);
+  assert.equal(json.report.newProducts, 1);
+  assert.ok(!("price" in json.products[0]!));
 });
 
 test("create/many distingue registros existentes, duplicados e incompatibles sin borrarlos de informes", async () => {

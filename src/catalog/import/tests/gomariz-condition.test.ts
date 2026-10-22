@@ -34,7 +34,7 @@ test("Gomariz: la procedencia verificada de venta de ocasión permite resolver c
   assert.ok(!prepared.issues.some((issue) => issue.includes("Condición comercial")));
   assert.ok(!prepared.issues.some((issue) => issue.includes("Categoría Equipzilla")));
   assert.equal(prepared.product.price, null);
-  assert.ok(prepared.issues.includes("Precio no disponible o inválido"));
+  assert.ok(!prepared.issues.some((issue) => issue.startsWith("Precio ")));
   assert.equal(prepared.status, "review");
 });
 

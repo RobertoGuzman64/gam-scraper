@@ -109,7 +109,8 @@ test("un mismo XLSX contiene condiciones nuevas y usadas con atributos y precios
   assert.equal(plan.report.newProducts, 2);
   assert.equal(plan.report.reviewProducts, 1);
   assert.equal(plan.report.review[0]?.reference, "GAM-NO-PRICE");
-  assert.match(plan.report.review[0]?.reason ?? "", /Precio no disponible o inválido/);
+  assert.match(plan.report.review[0]?.reason ?? "", /Precio ausente o inválido/);
+  assert.equal(document.products[2]?.status, "ready");
   assert.equal(document.products[2]?.product.price, null);
   assert.deepEqual(plan.rows.map((row) => [row[0], row[3]]), [
     ["GAM-NEW", "Nuevo"], ["GAM-USED", "Segunda_Mano"]

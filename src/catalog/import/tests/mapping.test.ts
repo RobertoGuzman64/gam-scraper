@@ -247,7 +247,7 @@ test("las fuentes secundarias no inventan precios y aprovechan capacidad declara
   assert.equal(attrVal(gom, "Capacidad de carga"), 3500);
   assert.equal(attrVal(gom, "Altura de elevación"), null);
   assert.equal(prepared.status, "review");
-  assert.ok(prepared.issues.includes("Precio no disponible o inválido"));
+  assert.equal(prepared.product.price, null);
   const merca = source("mercaeleva", merUrl("Toyota-6FBRE14-M547-2372"), "Toyota", { "Título adicional": "CARRETILLA ELEVADORA RETRACTIL 1350 KG", "Horas laborales": "14 696 h" });
   assert.equal(attrVal(merca, "Capacidad de carga"), 1350);
   assert.equal(attrVal(merca, "Horas de uso"), 14696);

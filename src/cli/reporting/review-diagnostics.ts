@@ -6,6 +6,7 @@ const diagnosticKind = (reason: string): string => {
   if (/^(?:Referencia ausente|Título ausente|Precio no disponible o inválido|Precio ausente o inválido|Descripción (?:corta ausente|ausente)|Imágenes válidas ausentes|Atributo obligatorio ausente:)/.test(reason)) {
     return "requisito Excel; origen por contrastar";
   }
+  if (reason === "Precio publicado inválido") return "valor numérico publicado no interpretable";
   if (/^(?:Categoría Equipzilla|Condición comercial)/.test(reason)) return "equivalencia o condición por verificar";
   if (/^(?:Número de serie |Referencia duplicada en la extracción)/.test(reason)) return "integridad de identidad";
   return "sin causa clasificada";
@@ -62,4 +63,9 @@ export const formatReviewDiagnostics = (products: readonly PreparedProduct[]): r
   }
   lines.push("  Causa de los bloqueos: no determinada por estos motivos; las etiquetas indican requisitos o áreas de contraste, no fallos de extracción demostrados.");
   return lines;
+};
+
+export const formatPriceAvailability = (products: readonly PreparedProduct[]): string => {
+  const withoutPrice = products.filter((entry) => entry.product.price === null).length;
+  return `  Precio no normalizado: ${withoutPrice} fichas | informativo para create/many; excluyente para Excel`;
 };

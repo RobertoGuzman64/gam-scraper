@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { prepareSavedCatalog } from "../pipeline/preparation/prepare.js";
 import { parsePrepareOptions, prepareHelp } from "./options/prepare.js";
+import { formatPriceAvailability } from "./reporting/review-diagnostics.js";
 import { printCommandError } from "./reporting/errors.js";
 
 export const runPrepare = async (args: readonly string[]): Promise<void> => {
@@ -14,7 +15,8 @@ export const runPrepare = async (args: readonly string[]): Promise<void> => {
   const result = await prepareSavedCatalog(options);
   const totals = result.diagnostics.totals;
   console.log(`PREPARACIÓN | ${options.providerId.toUpperCase()} | ${options.dryRun ? "SIMULACIÓN" : "GUARDADA"}`);
-  console.log(`  Productos: ${totals.products} | Listos: ${totals.ready} | Revisar: ${totals.review}`);
+  console.log(`  Productos: ${totals.products} | Listos para create/many: ${totals.ready} | Revisar: ${totals.review}`);
+  console.log(formatPriceAvailability(result.preparation.products));
   console.log(`  Bloqueos: ${totals.incidences} | 1 motivo: ${totals.reviewSingle} | múltiples: ${totals.reviewMultiple}`);
   for (const [condition, counts] of Object.entries(result.diagnostics.conditions)) {
     console.log(`  ${condition}: ${counts.ready + counts.review} | ready: ${counts.ready} | review: ${counts.review}`);

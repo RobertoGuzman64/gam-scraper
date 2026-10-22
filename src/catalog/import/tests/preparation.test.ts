@@ -110,10 +110,11 @@ test("no publica como categorías de ocasión ni la raíz ni ramas de maquinaria
   }
 });
 
-test("Gomariz sin precio no se considera importable aunque tenga imágenes", async () => {
-  const record = prepareProduct({ ...base, providerId: "gomariz", reference: "TE1617", price: null }, await loadImportCatalog());
-  assert.equal(record.status, "review");
-  assert.ok(record.issues.includes("Precio no disponible o inválido"));
+test("el precio ausente se conserva sin bloquear create/many", async () => {
+  const record = prepareProduct({ ...base, price: null }, await loadImportCatalog());
+  assert.equal(record.status, "ready");
+  assert.equal(record.product.price, null);
+  assert.deepEqual(record.issues, []);
 });
 
 test("atributo obligatorio ausente bloquea importación y los desconocidos se conservan en specs", async () => {
@@ -129,7 +130,7 @@ test("precio, imágenes y descripción inválidos requieren revisión; no se inv
   assert.equal(record.product.price, null);
   assert.deepEqual(record.product.images, []);
   assert.equal(record.product.description, null);
-  assert.ok(record.issues.includes("Precio no disponible o inválido"));
+  assert.ok(!record.issues.some((issue) => issue.startsWith("Precio ")));
   assert.ok(record.issues.includes("Imágenes válidas ausentes"));
   assert.ok(record.issues.includes("Descripción ausente"));
 });
@@ -137,7 +138,7 @@ test("precio, imágenes y descripción inválidos requieren revisión; no se inv
 test("el batch separa preparados y revisión sin perder referencias", async () => {
   const catalog = await loadImportCatalog();
   const prepared = prepareImportBatch([base, { ...base, reference: "TE9999", price: null }], catalog);
-  assert.deepEqual(prepared.totals, { ready: 1, review: 1 });
+  assert.deepEqual(prepared.totals, { ready: 2, review: 0 });
   assert.equal(prepared.products[1]?.product.reference, "TE9999");
 });
 
@@ -156,7 +157,7 @@ test("CSV mantiene sus campos y añade imágenes; preparación publicada por sep
     await assert.rejects(writeOutputs(dir, "lote", [result({ ...base, price: null }, [{ url, error: "503" }])],
       "2026-10-15T09:02:00Z", "2026-10-15T09:03:00Z"), /Extracción partial/);
     assert.equal(await readFile(join(dir, "lote-all.csv"), "utf8"), csv);
-    assert.match(await readFile(join(dir, "lote-partial-preparation.json"), "utf8"), /"review": 1/);
+    assert.match(await readFile(join(dir, "lote-partial-preparation.json"), "utf8"), /"review": 0/);
     assert.deepEqual(JSON.parse(await readFile(join(dir, "lote-preparation.json"), "utf8")), report);
   } finally {
     await rm(dir, { recursive: true, force: true });
@@ -195,9 +196,12 @@ test("los formatos de precio de los tres proveedores se convierten sin adivinar 
   for (const entry of cases) {
     const product = prepareProduct({ ...base, providerId: entry.providerId, price: entry.raw }, catalog);
     assert.equal(product.product.price, entry.expected, `${entry.providerId}: ${entry.raw}`);
-    if (entry.expected === null) {
+    if (entry.expected === null && /\d/.test(entry.raw)) {
       assert.equal(product.status, "review");
-      assert.ok(product.issues.includes("Precio no disponible o inválido"));
+      assert.ok(product.issues.includes("Precio publicado inválido"));
+    } else if (entry.expected === null) {
+      assert.equal(product.status, "ready");
+      assert.deepEqual(product.issues, []);
     }
   }
 });

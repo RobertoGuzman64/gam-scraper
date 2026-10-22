@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { LiveStatus, formatDuration } from "./reporting/live-status.js";
-import { formatReviewDiagnostics } from "./reporting/review-diagnostics.js";
+import { formatPriceAvailability, formatReviewDiagnostics } from "./reporting/review-diagnostics.js";
 import { formatDetailedValidation } from "./reporting/detailed-validation.js";
 import { parsePreparation } from "../catalog/import/preparation/preparation-document.js";
 import { printCommandError } from "./reporting/errors.js";
@@ -41,7 +41,8 @@ export const runPreflight = async (args: readonly string[]): Promise<void> => {
       const report = await validateOfflinePreparation(providerId, options.preparation, source);
       status.stop();
       console.log(`VALIDACIÓN | ${providerId.toUpperCase()} | ${report.review ? "REVISIÓN" : "CONFORME"}`);
-      console.log(`  Productos: ${report.catalog.productCount} | Listos: ${report.ready} | Revisar: ${report.review}`);
+      console.log(`  Productos: ${report.catalog.productCount} | Listos para create/many: ${report.ready} | Revisar: ${report.review}`);
+      console.log(formatPriceAvailability(report.preparation.products));
       if (report.review > 0) {
         for (const line of formatReviewDiagnostics(report.preparation.products)) console.log(line);
         process.exitCode = 2;

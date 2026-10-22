@@ -68,7 +68,7 @@ for (const company of ["gam", "gomariz", "mercaeleva"]) {
       assert.notEqual(result.product.categorySellID, null);
       if (result.product.categorySellID === null) continue;
       assert.equal(ids.get(result.product.categorySellID), 1);
-      assert.ok(result.product.price !== null && result.product.price > 0);
+      assert.ok(result.product.price === null || result.product.price > 0);
       const active = new Set(catalog.relations.filter((item) => item.categoryID === result.product.categorySellID).map((item) => item.attributeID));
       for (const attribute of result.product.attributes) assert.ok(active.has(attribute.attributeID));
       for (const definition of catalog.attributes.filter((item) => item.required && active.has(item.id))) {

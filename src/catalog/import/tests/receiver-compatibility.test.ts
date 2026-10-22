@@ -22,14 +22,41 @@ const used: ProductRecord = {
   specs: { "Altura de trabajo": "16 m" }
 };
 
-test("Excel y create/many distinguen el precio sin alterar el estado histórico de preparación", async () => {
+test("Excel y create/many distinguen el precio y la preparación sigue create/many", async () => {
   const catalog = await loadImportCatalog();
   const prepared = prepareProduct({ ...used, price: null }, catalog);
-  assert.equal(prepared.status, "review");
-  assert.ok(prepared.issues.includes("Precio no disponible o inválido"));
+  assert.equal(prepared.status, "ready");
+  assert.deepEqual(prepared.issues, []);
   assert.ok(validateImportCandidate(prepared.product, catalog).includes("Precio ausente o inválido"));
   assert.deepEqual(validateCreateManyCandidate(prepared.product, catalog), []);
   assert.deepEqual(validateCreateManyCandidate({ ...prepared.product, price: 0 }, catalog), ["Precio ausente o inválido"]);
+});
+
+test("precio numérico publicado pero inválido no pasa a ready ni a create/many", async () => {
+  const catalog = await loadImportCatalog();
+  const prepared = prepareProduct({ ...used, price: "12,34,56" }, catalog);
+  assert.equal(prepared.product.price, null);
+  assert.equal(prepared.status, "review");
+  assert.ok(prepared.issues.includes("Precio publicado inválido"));
+  assert.deepEqual(validateCreateManyCandidate(prepared.product, catalog), []);
+});
+
+test("GAM conserva el mástil obligatorio aunque no publique precio", async () => {
+  const catalog = await loadImportCatalog();
+  const forklift: ProductRecord = {
+    ...used, providerId: "gam", categoryKey: "elevacion-nueva",
+    categoryName: "Carretillas elevadoras nuevas",
+    url: "https://online.gamrentals.com/es/carretillas-elevadoras-diesel-hyster/99999-carretilla",
+    title: "Carretilla elevadora diésel Hyster", reference: "99999", price: null,
+    condition: "Nuevo", specs: { "Capacidad de carga": "2500 kg" }
+  };
+  const prepared = prepareProduct(forklift, catalog);
+  assert.equal(prepared.product.price, null);
+  assert.equal(prepared.product.categorySellID, 11);
+  assert.ok(prepared.issues.includes("Atributo obligatorio ausente: Tipo de mástil"));
+  assert.ok(!prepared.issues.some((issue) => issue.startsWith("Precio ")));
+  assert.equal(prepared.status, "review");
+  assert.ok(validateCreateManyCandidate(prepared.product, catalog).includes("Atributo obligatorio ausente: Tipo de mástil"));
 });
 
 test("create/many mantiene las restricciones comerciales aunque el precio sea opcional", async () => {
