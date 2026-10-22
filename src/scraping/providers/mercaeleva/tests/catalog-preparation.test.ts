@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/import-catalog-loader.js";
 import { prepareProduct } from "../../../../catalog/import/preparation/prepare.js";
+import { validateImportCandidate } from "../../../../catalog/import/preparation/import-validation.js";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { parseMercaelevaProduct } from "../parsers.js";
 
@@ -33,7 +34,7 @@ const html = `<html><body>
   <script type="application/json">${metadata}</script>
 </body></html>`;
 
-test("Mercaeleva: la ficha mantiene precio, galería y técnica sin publicar datos comerciales ni forzar ready", async () => {
+test("Mercaeleva: la ficha conserva precio, galería y técnica y recupera descripción publicada", async () => {
   const parsed = parseMercaelevaProduct(html, url);
   assert.equal(parsed.reference, reference);
   assert.equal(parsed.price, "20500");
@@ -50,14 +51,29 @@ test("Mercaeleva: la ficha mantiene precio, galería y técnica sin publicar dat
     ...parsed, providerId: "mercaeleva", categoryKey: "venta",
     categoryName: "Maquinaria en venta", url, reference: parsed.reference ?? null
   };
-  const prepared = prepareProduct(record, await loadImportCatalog());
-  assert.equal(prepared.status, "review");
+  const catalog = await loadImportCatalog();
+  const prepared = prepareProduct(record, catalog);
+  assert.equal(prepared.status, "ready");
   assert.equal(prepared.product.price, 20500);
   assert.equal(prepared.product.condition, "Segunda_Mano");
   assert.deepEqual(prepared.product.images, [original]);
-  assert.equal(prepared.product.description, null);
+  assert.equal(prepared.product.description, "PLATAFORMA ARTICULADA DIESEL ALTURA DE TRABAJO 16 MT JLG 450 AJ SII");
   assert.equal(prepared.product.description_general, parsed.longDescription);
-  assert.ok(prepared.issues.some((issue) => issue.includes("Descripción corta ausente")));
+  assert.deepEqual(prepared.issues, []);
   assert.equal(prepared.product.categorySellID, 29);
-  assert.ok(!prepared.issues.some((issue) => issue.includes("Categoría Equipzilla")));
+  assert.deepEqual(validateImportCandidate(prepared.product, catalog), []);
+});
+
+test("Mercaeleva: una altura comercial contradictoria mantiene la ficha en revisión", async () => {
+  const parsed = parseMercaelevaProduct(html, url);
+  const record: ProductRecord = {
+    ...parsed, providerId: "mercaeleva", categoryKey: "venta",
+    categoryName: "Maquinaria en venta", url, reference: parsed.reference ?? null,
+    longDescription: parsed.longDescription?.replace("ALTURA DE TRABAJO 16 MT", "ALTURA DE TRABAJO 20 MT") ?? null
+  };
+  const prepared = prepareProduct(record, await loadImportCatalog());
+  assert.equal(prepared.status, "review");
+  assert.equal(prepared.product.description, null);
+  assert.equal(prepared.product.description_general, record.longDescription);
+  assert.ok(prepared.issues.includes("Descripción corta ausente: solo hay descripción general y el backend exige una descripción corta"));
 });
