@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { buildProductIdentity } from "../../catalog/identity.js";
 import { prepareImportBatch } from "../../catalog/import/preparation/prepare.js";
-import { validateImportCandidate } from "../../catalog/import/preparation/import-validation.js";
+import { validateCreateManyCandidate } from "../../catalog/import/preparation/import-validation.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
 import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation-inputs.js";
@@ -66,8 +66,8 @@ export const validateOfflinePreparation = async (
     throw new Error("La preparación no coincide con los productos y reglas de su catálogo de origen");
   }
   for (const entry of preparation.products) {
-    if (entry.status === "ready" && validateImportCandidate(entry.product, inputs.catalog).length > 0) {
-      throw new Error(`Un producto ready ya no cumple el contrato Excel: ${entry.product.reference ?? entry.product.sourceUrl}`);
+    if (entry.status === "ready" && validateCreateManyCandidate(entry.product, inputs.catalog).length > 0) {
+      throw new Error(`Un producto ready ya no cumple el contrato create/many: ${entry.product.reference ?? entry.product.sourceUrl}`);
     }
   }
   if (maxAgeHours !== null) {

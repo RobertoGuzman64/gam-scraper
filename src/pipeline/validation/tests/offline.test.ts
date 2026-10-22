@@ -59,7 +59,7 @@ test("catálogo, preparación y plan de altas usan la misma fuente y preservan r
       const result = await validateOfflinePreparation("gam", preparation, source, 48);
       assert.equal(catalog.productCount, 4);
       assert.equal(result.ready + result.review, 4);
-      assert.equal(result.ready, 2);
+      assert.equal(result.ready, 3);
       const referenceInventory = readReferenceInventory(await readFile(inventory, "utf8"), 45);
       const plan = planProductImport(result.preparation, "gam", referenceInventory, result.target);
       assert.equal(plan.report.newProducts, 1);
@@ -169,19 +169,19 @@ test("validate --verbose muestra solo fichas en review y motivos sin alterar la 
       process.exitCode = 0;
       await runPreflight(["gam", "--stage", "preparation", "--preparation", preparation, "--source", source, "--verbose"]);
       const output = messages.join("\n");
-      assert.match(output, /AUDIT DE REVIEW \| 2\/4 fichas en revisión/);
+      assert.match(output, /AUDIT DE REVIEW \| 1\/4 fichas en revisión/);
       assert.match(output, /Patrones de bloqueos simultáneos/);
       assert.match(output, /Máquinas en review \(referencia y motivos exactos\)/);
-      assert.match(output, /GAM \| 33333 \| 1 motivo/);
+      assert.doesNotMatch(output, /GAM \| 33333 \|/);
       assert.match(output, /GAM \| 44444 \| 2 motivos/);
-      assert.match(output, /\[excel.price\] Precio no disponible o inválido/);
+      assert.doesNotMatch(output, /\[excel.price\]/);
       assert.match(output, /\[condition.unknown\] Condición comercial no confirmada/);
       assert.match(output, /\[mapping.category\] Categoría Equipzilla sin correspondencia inequívoca/);
       assert.doesNotMatch(output, /GAM \| 11111 \|/);
       assert.doesNotMatch(output, /GAM \| 22222 \|/);
       assert.doesNotMatch(output, /Origen canónico \(todos los campos publicados\)/);
       assert.doesNotMatch(output, /Preparación \(todos los campos normalizados\)/);
-      assert.equal((output.match(/^    GAM \| \d+ \| \d+ motivos?$/gm) ?? []).length, 2);
+      assert.equal((output.match(/^    GAM \| \d+ \| \d+ motivos?$/gm) ?? []).length, 1);
       assert.equal(process.exitCode, 2);
     } finally {
       console.log = previousLog;

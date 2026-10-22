@@ -5,7 +5,7 @@ import { getProvider } from "../../scraping/registry.js";
 import { parseCsv } from "../../shared/csv-parse.js";
 import { parsePreparation } from "../../catalog/import/preparation/preparation-document.js";
 import { loadImportCatalog } from "../../infrastructure/filesystem/import-catalog-loader.js";
-import { validateImportCandidate } from "../../catalog/import/preparation/import-validation.js";
+import { validateCreateManyCandidate } from "../../catalog/import/preparation/import-validation.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
 
 export type PreflightOptions = {
@@ -140,7 +140,7 @@ export const validateCatalogPublication = async (options: PreflightOptions): Pro
     urls.add(url);
     if (entry.status === "ready") {
       if (entry.issues.length > 0) throw new Error("Producto marcado ready con incidencias");
-      const candidateIssues = validateImportCandidate(entry.product, catalog);
+      const candidateIssues = validateCreateManyCandidate(entry.product, catalog);
       if (candidateIssues.length > 0) {
         throw new Error(`Producto ${entry.product.reference ?? url} marcado ready sin cumplir el contrato de importación: ${candidateIssues.join("; ")}`);
       }

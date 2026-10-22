@@ -72,7 +72,7 @@ test("valida lote coherente con referencias reales y marca los pendientes", asyn
   }
 });
 
-test("preflight y Excel admiten maquinaria nueva y usada sin descartar las fichas sin precio", async (t) => {
+test("preflight acepta precios ausentes para create/many pero Excel excluye esas fichas", async (t) => {
   const logs: string[] = [];
   t.mock.method(console, "log", (...values: unknown[]) => { logs.push(values.map(String).join(" ")); });
   const dir = await mkdtemp(join(tmpdir(), "eq-new-used-export-"));
@@ -95,13 +95,13 @@ test("preflight y Excel admiten maquinaria nueva y usada sin descartar las ficha
       reference: "GAM-SIN-PRECIO", price: null
     };
     const batch = await createBatch(dir, [newMachine, usedMachine, noPrice]);
-    assert.deepEqual(batch.preparation.products.map((entry) => entry.status), ["ready", "ready", "review"]);
+    assert.deepEqual(batch.preparation.products.map((entry) => entry.status), ["ready", "ready", "ready"]);
     assert.deepEqual(batch.preparation.products.map((entry) => entry.product.condition), ["Nuevo", "Segunda_Mano", "Nuevo"]);
     assert.equal(batch.preparation.products[2]?.product.price, null);
     const checked = await check(dir, "gam");
     assert.equal(checked.productCount, 3);
-    assert.equal(checked.ready, 2);
-    assert.equal(checked.review, 1);
+    assert.equal(checked.ready, 3);
+    assert.equal(checked.review, 0);
     const inventory = join(dir, "inventory.csv");
     const output = join(dir, "altas.xlsx");
     await writeFile(inventory, "companyID,reference\n45,YA-EXISTE\n");
@@ -166,7 +166,7 @@ test("impide generar Excel si se altera el CSV después de preparar la extracci�
   }
 });
 
-test("preflight rechaza ready que el exportador descartaría aunque los hashes sean correctos", async () => {
+test("preflight rechaza ready incompatible con create/many aunque los hashes sean correctos", async () => {
   const dir = await mkdtemp(join(tmpdir(), "eq-f4-contract-"));
   try {
     const batch = await createBatch(dir);
@@ -174,11 +174,17 @@ test("preflight rechaza ready que el exportador descartaría aunque los hashes s
     assert.ok(original);
     const scenarios = [
       { name: "condición", product: { ...original.product, condition: null }, reason: /Condición incompatible/ },
-      { name: "precio", product: { ...original.product, price: null }, reason: /Precio ausente o inválido/ },
-      { name: "categoría", product: { ...original.product, categorySellID: 99999 }, reason: /Categoría no coincide/ },
+      { name: "precio inválido", product: { ...original.product, price: 0 }, reason: /Precio ausente o inválido/ },
+      { name: "categoría", product: { ...original.product, categorySellID: 99999 }, reason: /Categoría no válida/ },
       { name: "imagen", product: { ...original.product, images: ["file:///local.jpg"] }, reason: /URL de imagen/ },
       { name: "atributo", product: { ...original.product, attributes: [{ attributeID: 1, value: "muchos" }] }, reason: /Atributo numérico inválido/ }
     ];
+    const withoutPrice = JSON.stringify({ ...batch.preparation, products: [{ ...original, product: { ...original.product, price: null } }] });
+    await writeFile(batch.paths.preparation, withoutPrice);
+    await writeFile(batch.paths.summary, JSON.stringify({
+      ...batch.summary, artifacts: { ...batch.summary.artifacts, preparationSha256: createHash("sha256").update(withoutPrice).digest("hex") }
+    }));
+    assert.equal((await check(dir)).ready, 1);
     for (const scenario of scenarios) {
       const preparationText = JSON.stringify({ ...batch.preparation, products: [{ ...original, product: scenario.product }] });
       await writeFile(batch.paths.preparation, preparationText);
@@ -240,11 +246,11 @@ test("validate presenta motivos y referencias sin modificar la elegibilidad ni e
     await runPreflight(["mercaeleva", "--out", dir, "--prefix", "lote"]);
     const output = lines.join("\n");
     assert.equal(process.exitCode, 2);
-    assert.match(output, /Productos: 3 \| Listos: 1 \| Revisar: 2 \| Posibles bajas: 0/);
-    assert.match(output, /Diagnóstico review: 2 fichas \| 1 motivo: 1 \| 2\+ motivos: 1 \| sin motivo: 0 \| incidencias: 3/);
-    assert.match(output, /Precio no disponible o inválido \| 2 fichas \| solo: 1 \| con otros: 1 \| refs: M044-4094, M044-4095/);
-    assert.match(output, /Descripción corta ausente:.*\| 1 ficha \| solo: 0 \| con otros: 1 \| refs: M044-4095/);
-    assert.match(output, /Aviso: 2 productos pendientes de revisión/);
+    assert.match(output, /Productos: 3 \| Listos: 2 \| Revisar: 1 \| Posibles bajas: 0/);
+    assert.match(output, /Diagnóstico review: 1 fichas \| 1 motivo: 1 \| 2\+ motivos: 0 \| sin motivo: 0 \| incidencias: 1/);
+    assert.doesNotMatch(output, /Precio no disponible o inválido/);
+    assert.match(output, /Descripción corta ausente:.*\| 1 ficha \| solo: 1 \| con otros: 0 \| refs: M044-4095/);
+    assert.match(output, /Aviso: 1 productos pendientes de revisión/);
     lines.length = 0;
     await createBatch(dir);
     process.exitCode = 0;

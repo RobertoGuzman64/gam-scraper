@@ -58,12 +58,12 @@ test("replay offline conserva máquinas sin precio, condiciones inciertas e iden
       assert.equal(result.preparation.products[0]?.product.price, null);
       assert.equal(new Set(result.preparation.identities).size, 12);
       assert.equal(result.diagnostics.totals.products, 12);
-      assert.ok(result.diagnostics.issues.some((entry) => entry.code === "excel.price"));
+      assert.ok(result.diagnostics.issues.every((entry) => entry.code !== "excel.price"));
       assert.ok(result.diagnostics.issues.every((entry) => entry.affected >= entry.only));
       assert.ok(result.diagnostics.sourceTriage);
       const sourceTriage = result.diagnostics.sourceTriage;
       assert.equal(sourceTriage.reduce((total, entry) => total + entry.affected, 0), result.diagnostics.issues.reduce((total, entry) => total + entry.affected, 0));
-      assert.equal(sourceTriage.find((entry) => entry.issueCode === "excel.price")?.signal, "sin_evidencia_local");
+      assert.equal(sourceTriage.find((entry) => entry.issueCode === "excel.price"), undefined);
       assert.ok(sourceTriage.every((entry) => entry.affected >= entry.only));
       const reversed = [...(await readCanonicalCatalog(source)).products].reverse();
       assert.deepEqual(buildSourceTriage(result.preparation, reversed), sourceTriage);
