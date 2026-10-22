@@ -13,6 +13,7 @@ Opciones heredadas: --out, --prefix, --maxAgeHours
 Compatibilidad: --provider, --outDir, --outPrefix
 Opciones nuevas: --stage catalog|preparation, --source, --preparation
 La validación heredada conserva su contrato y límite de 48 horas.
+En preparación, el catálogo se localiza por el prefijo de origen guardado en su manifest; --source permite indicar otra ruta.
 La validación de preparación no requiere acceso a portales ni inventario.
 Código 0 = conforme, 2 = revisión manual, 1 = error.`;
 
@@ -61,9 +62,10 @@ export const parseValidateOptions = (args: readonly string[]) => {
   const outputDir = resolve(values.get("outDir") ?? provider.defaultOptions.outDir);
   const outputPrefix = values.get("outPrefix") ?? provider.defaultOptions.outPrefix;
   const preparation = values.has("preparation") ? resolve(values.get("preparation") ?? "") : null;
-  const source = resolve(values.get("source") ?? join(outputDir,
-    `${stage === "preparation" ? preparation?.split(/[\\/]/).at(-1)?.replace(/-preparation\.json$/, "") ?? "" : outputPrefix}-catalog.json`));
-  if (stage !== "legacy" && !source.endsWith("-catalog.json")) throw new Error("--source debe ser -catalog.json");
+  const source = values.has("source")
+    ? resolve(values.get("source") ?? "")
+    : stage === "preparation" ? null : resolve(join(outputDir, `${outputPrefix}-catalog.json`));
+  if (source && stage !== "legacy" && !source.endsWith("-catalog.json")) throw new Error("--source debe ser -catalog.json");
   if (preparation && !preparation.endsWith("-preparation.json")) throw new Error("--preparation debe ser -preparation.json");
   return {
     providerId, stage, source, preparation,

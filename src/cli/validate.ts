@@ -3,12 +3,13 @@ import { LiveStatus, formatDuration } from "./reporting/live-status.js";
 import { formatReviewDiagnostics } from "./reporting/review-diagnostics.js";
 import { parsePreparation } from "../catalog/import/preparation/preparation-document.js";
 import { printCommandError } from "./reporting/errors.js";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseValidateOptions, validateHelp } from "./options/validate.js";
 export { validateHelp } from "./options/validate.js";
 import { validateCatalogPublication } from "../pipeline/validation/preflight.js";
 import { validateCanonicalSource, validateOfflinePreparation } from "../pipeline/validation/offline.js";
+import { readOfflinePreparation } from "../infrastructure/filesystem/offline-preparation.js";
 
 export const runPreflight = async (args: readonly string[]): Promise<void> => {
   if (args.includes("--help")) {
@@ -22,6 +23,7 @@ export const runPreflight = async (args: readonly string[]): Promise<void> => {
   status.update(`VALIDACIÓN | ${providerId.toUpperCase()} | ${options.stage} | ${displayedOutputDir}`);
   if (options.stage === "catalog") {
     try {
+      if (!options.source) throw new Error("Falta catálogo canónico de origen");
       const report = await validateCanonicalSource(options.source, providerId);
       status.stop();
       console.log(`VALIDACIÓN | ${providerId.toUpperCase()} | CATÁLOGO CONFORME`);
@@ -33,7 +35,9 @@ export const runPreflight = async (args: readonly string[]): Promise<void> => {
   if (options.stage === "preparation") {
     try {
       if (!options.preparation) throw new Error("Falta --preparation");
-      const report = await validateOfflinePreparation(providerId, options.preparation, options.source);
+      const source = options.source ?? join(outputDir,
+        `${(await readOfflinePreparation(options.preparation, providerId)).source.prefix}-catalog.json`);
+      const report = await validateOfflinePreparation(providerId, options.preparation, source);
       status.stop();
       console.log(`VALIDACIÓN | ${providerId.toUpperCase()} | ${report.review ? "REVISIÓN" : "CONFORME"}`);
       console.log(`  Productos: ${report.catalog.productCount} | Listos: ${report.ready} | Revisar: ${report.review}`);

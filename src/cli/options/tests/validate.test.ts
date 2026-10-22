@@ -11,11 +11,13 @@ test("validate conserva el modo heredado y añade dos etapas específicas", () =
   assert.equal(legacy.stage, "legacy");
   const catalog = parseValidateOptions(["gam", "--stage", "catalog", "--prefix", "scrape-gam-marzo-2026"]);
   assert.equal(catalog.stage, "catalog");
-  assert.ok(catalog.source.endsWith("scrape-gam-marzo-2026-catalog.json"));
+  assert.ok(catalog.source?.endsWith("scrape-gam-marzo-2026-catalog.json"));
   const prepared = parseValidateOptions(["gam", "--stage", "preparation", "--preparation", preparation, "--source", source]);
   assert.equal(prepared.stage, "preparation");
   assert.ok(prepared.preparation?.endsWith("scrape-gam-marzo-2026-preparation.json"));
-  assert.ok(prepared.source.endsWith("scrape-gam-marzo-2026-catalog.json"));
+  assert.ok(prepared.source?.endsWith("scrape-gam-marzo-2026-catalog.json"));
+  const renamed = parseValidateOptions(["gam", "--stage", "preparation", "--preparation", "storage/prepared/gam/scrape-gam-marzo-2026-alturas-preparation.json"]);
+  assert.equal(renamed.source, null);
 });
 
 test("validate rechaza opciones de etapas incompletas sin alterar los alias históricos", () => {

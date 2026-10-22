@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -12,6 +12,7 @@ import { validateCanonicalSource, validateOfflinePreparation } from "../offline.
 import { offlinePreparationManifestPath, readOfflinePreparation } from "../../../infrastructure/filesystem/offline-preparation.js";
 import { planProductImport, readReferenceInventory } from "../../../catalog/import/export/export-plan.js";
 import { createProductsXlsx } from "../../../infrastructure/spreadsheet/xlsx.js";
+import { runPreflight } from "../../../cli/validate.js";
 
 const category: CategoryConfig = {
   key: "elevacion-nueva", name: "Plataformas elevadoras nuevas", url: "https://example.test/catalogo"
@@ -135,4 +136,25 @@ test("catálogos de los tres proveedores se verifican sin convertir review en p�
       assert.equal(await readFile(source, "utf8"), before);
     }, products);
   }
+});
+
+test("validate resuelve el catálogo original al validar una preparación de nombre diferente", async () => {
+  await withCatalog(async ({ root, preparation }) => {
+    const renamed = join(root, "prepared", "fase3-alturas-preparation.json");
+    await rename(preparation, renamed);
+    await rename(offlinePreparationManifestPath(preparation), offlinePreparationManifestPath(renamed));
+    const previousLog = console.log;
+    const previousExitCode = process.exitCode;
+    const messages: string[] = [];
+    try {
+      console.log = (...values: unknown[]) => { messages.push(values.map(String).join(" ")); };
+      process.exitCode = 0;
+      await runPreflight(["gam", "--stage", "preparation", "--preparation", renamed, "--out", join(root, "scraped")]);
+      assert.ok(messages.some((message) => message.includes("VALIDACIÓN | GAM | REVISIÓN")));
+      assert.equal(process.exitCode, 2);
+    } finally {
+      console.log = previousLog;
+      process.exitCode = previousExitCode;
+    }
+  });
 });
