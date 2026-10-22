@@ -107,7 +107,7 @@ Ejemplo de flujo completo a ejecutar tras un scraping íntegro y con inventario 
 
 ```powershell
 npm run validate -- gam --stage catalog --prefix scrape-gam-marzo-2026
-npm run prepare -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json
+npm run prepare:catalog -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json
 npm run validate -- gam --stage preparation --preparation storage/prepared/gam/scrape-gam-marzo-2026-preparation.json
 npm run export -- gam --companyID <ID_REAL> --preparation storage/prepared/gam/scrape-gam-marzo-2026-preparation.json --existing storage/inventory/gam.csv --out storage/import/gam-altas.xlsx --dry-run
 ```

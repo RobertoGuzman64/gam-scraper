@@ -2,9 +2,9 @@ import { basename, join, resolve } from "node:path";
 import type { PrepareOptions } from "../../pipeline/preparation/prepare.js";
 
 export const prepareHelp = `Uso:
-  npm run prepare -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json
-  npm run prepare -- gam --source <catalog.json> --out <preparation.json> --dry-run
-  npm run prepare -- gam --source <catalog.json> --out <preparation.json> --compare <preparacion-anterior.json>
+  npm run prepare:catalog -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json
+  npm run prepare:catalog -- gam --source <catalog.json> --out <preparation.json> --dry-run
+  npm run prepare:catalog -- gam --source <catalog.json> --out <preparation.json> --compare <preparacion-anterior.json>
 
 Opciones: --source (obligatoria), --out, --dry-run, --compare, --help.
 Sin --out, escribe en storage/prepared/<proveedor>/<prefijo>-preparation.json.

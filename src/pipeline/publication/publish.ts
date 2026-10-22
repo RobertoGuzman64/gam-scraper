@@ -46,6 +46,8 @@ const writeResultGroups = async (
   const previous = await loadSnapshot(snapshotFile, scope);
   const { allResults, categoryData, categorySummaries, currentProducts, global,
     identityConflicts, serialWarnings, quality, withinCategories } = assemblePublication(groups, previous);
+  const providerIds = new Set(currentProducts.map((product) => product.providerId));
+  if (providerIds.size > 1) throw new Error("No se pueden publicar productos de proveedores distintos en un mismo catálogo");
 
   const outputPrefix = quality.published ? outPrefix : `${outPrefix}-partial`;
   const pending = quality.published ? await stagePublishedCatalog(outDir, outPrefix) : null;

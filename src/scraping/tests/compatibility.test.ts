@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { dedupeBy } from "../../catalog/identity.js";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -53,25 +54,55 @@ test("proveedor por defecto y fallo temprano para proveedores no registrados", (
   assert.throws(() => resolveCliSelection(["--provider", "inexistente"]), /Proveedor no registrado/);
 });
 
-test("deduplicación separada por proveedor y exportación compatible", async () => {
+test("deduplicación separada por proveedor y publicación canónica compatible", async () => {
   const dir = await mkdtemp(join(tmpdir(), "scraper-compatibility-"));
   try {
+    const gam = product("gam", "https://online.gamrentals.com/es/a");
+    const gomariz = product("gomariz", "https://www.gomarizrent.com/a");
+    const separated = dedupeBy([gam, gam, gomariz], (item) => item);
+    assert.equal(separated.unique.length, 2);
+    assert.equal(separated.report.removed, 1);
+    assert.deepEqual(separated.unique.map((item) => item.providerId), ["gam", "gomariz"]);
+
     await writeOutputs(dir, "test", [result([
-      product("gam", "https://online.gamrentals.com/es/a"),
-      product("gam", "https://online.gamrentals.com/es/a"),
-      product("gomariz", "https://www.gomarizrent.com/a")
+      gam, gam,
+      { ...product("gam", "https://online.gamrentals.com/es/b"), reference: "456" }
     ])], "2026-01-01T00:00:00.000Z", "2026-01-01T00:00:01.000Z");
+    await writeOutputs(dir, "gomariz", [result([gomariz])], "2026-01-01T00:00:00.000Z", "2026-01-01T00:00:01.000Z");
 
     const summary = JSON.parse(await readFile(join(dir, "test-summary.json"), "utf8")) as {
       totals: { scrapedProducts: number; dedupe: { withinCategories: { removed: number }; globalAll: { removed: number } } };
     };
     const csv = await readFile(join(dir, "test-all.csv"), "utf8");
+    const gomarizCsv = await readFile(join(dir, "gomariz-all.csv"), "utf8");
     assert.equal(summary.totals.scrapedProducts, 2);
     assert.equal(summary.totals.dedupe.withinCategories.removed, 1);
     assert.equal(summary.totals.dedupe.globalAll.removed, 0);
     assert.ok(csv.split("\n")[0]?.includes("providerId"));
     assert.ok(csv.includes("gam"));
-    assert.ok(csv.includes("gomariz"));
+    assert.ok(!csv.includes("gomariz"));
+    assert.ok(gomarizCsv.includes("gomariz"));
+    assert.equal(JSON.parse(await readFile(join(dir, "test-catalog.json"), "utf8")).providerId, "gam");
+    assert.equal(JSON.parse(await readFile(join(dir, "gomariz-catalog.json"), "utf8")).providerId, "gomariz");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("una publicación con proveedores mezclados no reemplaza un catálogo válido", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "scraper-compatibility-"));
+  const startedAt = "2026-01-01T00:00:00.000Z";
+  const endedAt = "2026-01-01T00:00:01.000Z";
+  try {
+    await writeOutputs(dir, "test", [result([product("gam", "https://online.gamrentals.com/es/a")])], startedAt, endedAt);
+    const catalogBefore = await readFile(join(dir, "test-catalog.json"), "utf8");
+    const summaryBefore = await readFile(join(dir, "test-summary.json"), "utf8");
+    await assert.rejects(writeOutputs(dir, "test", [result([
+      product("gam", "https://online.gamrentals.com/es/a"),
+      product("gomariz", "https://www.gomarizrent.com/a")
+    ])], startedAt, endedAt), /proveedores distintos/);
+    assert.equal(await readFile(join(dir, "test-catalog.json"), "utf8"), catalogBefore);
+    assert.equal(await readFile(join(dir, "test-summary.json"), "utf8"), summaryBefore);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

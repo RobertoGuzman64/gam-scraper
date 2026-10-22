@@ -32,7 +32,7 @@ npm run scrape -- all --dry-run
 npm run scrape -- all --providers gam,gomariz
 npm run scrape -- all
 npm run validate -- gam
-npm run prepare -- --help
+npm run prepare:catalog -- --help
 npm run export -- --help
 npm run cli -- --help
 ```
@@ -71,13 +71,15 @@ El catálogo canónico **no filtra por elegibilidad Excel**: contiene tanto máq
 
 ### Preparación offline y comparación
 
+El script npm se llama `prepare:catalog`, no `prepare`, porque este último es un evento de instalación de npm que se ejecutaría también durante `npm ci`. La suborden de CLI `npm run cli -- prepare` se mantiene.
+
 Desde la raíz del proyecto, tras una extracción completa que ya haya generado `-catalog.json`:
 
 ```bash
-npm run prepare -- --help
-npm run prepare -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json --dry-run
-npm run prepare -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json
-npm run prepare -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json --out storage/prepared/gam/scrape-gam-marzo-2026-v2-preparation.json --compare storage/prepared/gam/scrape-gam-marzo-2026-preparation.json
+npm run prepare:catalog -- --help
+npm run prepare:catalog -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json --dry-run
+npm run prepare:catalog -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json
+npm run prepare:catalog -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json --out storage/prepared/gam/scrape-gam-marzo-2026-v2-preparation.json --compare storage/prepared/gam/scrape-gam-marzo-2026-preparation.json
 ```
 
 Sin `--out`, se usa `storage/prepared/<proveedor>/<prefijo>-preparation.json`. También se escriben `-preparation.manifest.json` (SHA-256 del JSON), `-diagnostics.json` y, con `--compare`, `-comparison.json`. Se rechazan sobrescrituras; para repetir una preparación se usa **otra salida**, manteniendo la anterior. `--dry-run` calcula resultados pero no escribe archivos. Los diagnósticos enumeran bloqueos del Excel, equivalencias no resueltas y problemas de origen **por contrastar**, sin atribuir pérdidas al scraper sin evidencia. La comparación mide cambios por identidad, categoría, atributos y códigos de motivo **solo si coinciden catálogo y cohorte**; si cambian reglas o snapshots lo informa. El replay lee archivos locales, no consulta portales, inventario ni API del backend.

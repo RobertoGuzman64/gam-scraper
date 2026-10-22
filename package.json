@@ -9,7 +9,7 @@
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "node scripts/run-build.mjs",
-    "prepare": "npm run -s build && node dist/cli/prepare.js",
+    "prepare:catalog": "npm run -s build && node dist/cli/prepare.js",
     "scrape": "npm run -s build && node dist/cli/index.js scrape",
     "normalize:gam": "npm run -s build && node dist/tools/gam/normalize-csv.js",
     "normalize:gam:default": "npm run -s build && node dist/tools/gam/normalize-csv.js storage/scraped/gam/scrape-gam-marzo-2026-all.csv storage/normalized/gam/scrape-gam-marzo-2026-all.normalized.csv --report storage/normalized/gam/normalize.report.json",
