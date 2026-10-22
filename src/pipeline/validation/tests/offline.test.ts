@@ -158,3 +158,55 @@ test("validate resuelve el catálogo original al validar una preparación de nom
     }
   });
 });
+
+test("validate --verbose muestra solo fichas en review y motivos sin alterar la validación", async () => {
+  await withCatalog(async ({ source, preparation }) => {
+    const previousLog = console.log;
+    const previousExitCode = process.exitCode;
+    const messages: string[] = [];
+    try {
+      console.log = (...values: unknown[]) => { messages.push(values.map(String).join(" ")); };
+      process.exitCode = 0;
+      await runPreflight(["gam", "--stage", "preparation", "--preparation", preparation, "--source", source, "--verbose"]);
+      const output = messages.join("\n");
+      assert.match(output, /AUDIT DE REVIEW \| 2\/4 fichas en revisión/);
+      assert.match(output, /Patrones de bloqueos simultáneos/);
+      assert.match(output, /Máquinas en review \(referencia y motivos exactos\)/);
+      assert.match(output, /GAM \| 33333 \| 1 motivo/);
+      assert.match(output, /GAM \| 44444 \| 2 motivos/);
+      assert.match(output, /\[excel.price\] Precio no disponible o inválido/);
+      assert.match(output, /\[condition.unknown\] Condición comercial no confirmada/);
+      assert.match(output, /\[mapping.category\] Categoría Equipzilla sin correspondencia inequívoca/);
+      assert.doesNotMatch(output, /GAM \| 11111 \|/);
+      assert.doesNotMatch(output, /GAM \| 22222 \|/);
+      assert.doesNotMatch(output, /Origen canónico \(todos los campos publicados\)/);
+      assert.doesNotMatch(output, /Preparación \(todos los campos normalizados\)/);
+      assert.equal((output.match(/^    GAM \| \d+ \| \d+ motivos?$/gm) ?? []).length, 2);
+      assert.equal(process.exitCode, 2);
+    } finally {
+      console.log = previousLog;
+      process.exitCode = previousExitCode;
+    }
+  });
+});
+
+test("validate sin --verbose conserva el diagnóstico resumido", async () => {
+  await withCatalog(async ({ source, preparation }) => {
+    const previousLog = console.log;
+    const previousExitCode = process.exitCode;
+    const messages: string[] = [];
+    try {
+      console.log = (...values: unknown[]) => { messages.push(values.map(String).join(" ")); };
+      process.exitCode = 0;
+      await runPreflight(["gam", "--stage", "preparation", "--preparation", preparation, "--source", source]);
+      const output = messages.join("\n");
+      assert.match(output, /Diagnóstico review/);
+      assert.doesNotMatch(output, /AUDIT DE REVIEW/);
+      assert.doesNotMatch(output, /Máquinas en review/);
+      assert.equal(process.exitCode, 2);
+    } finally {
+      console.log = previousLog;
+      process.exitCode = previousExitCode;
+    }
+  });
+});

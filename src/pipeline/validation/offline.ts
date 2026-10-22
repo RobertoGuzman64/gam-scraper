@@ -8,6 +8,7 @@ import { validateImportCandidate } from "../../catalog/import/preparation/import
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
 import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation-inputs.js";
+import type { ProductRecord } from "../../contracts/catalog.js";
 import type { OfflinePreparation } from "../../catalog/import/preparation/offline-document.js";
 import type { ImportCatalog } from "../../catalog/import/preparation/contracts.js";
 
@@ -26,6 +27,7 @@ export type OfflineValidation = {
   readonly review: number;
   readonly preparation: OfflinePreparation;
   readonly target: ImportCatalog;
+  readonly sourceProducts: readonly ProductRecord[];
 };
 
 const sha = (value: string): string => createHash("sha256").update(value).digest("hex");
@@ -81,6 +83,6 @@ export const validateOfflinePreparation = async (
       endedAt: canonical.endedAt, catalogSha256: sourceHash
     },
     preparationFile: resolve(preparationFile), ready: preparation.totals.ready,
-    review: preparation.totals.review, preparation, target: inputs.catalog
+    review: preparation.totals.review, preparation, target: inputs.catalog, sourceProducts: canonical.products
   };
 };

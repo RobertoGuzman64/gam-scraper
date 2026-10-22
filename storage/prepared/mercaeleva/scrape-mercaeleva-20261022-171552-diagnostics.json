@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "providerId": "mercaeleva",
+  "source": {
+    "providerId": "mercaeleva",
+    "prefix": "scrape-mercaeleva",
+    "scope": "f42abbe29471bb2c",
+    "catalogSha256": "335c1d5474dfb796125802f925f142218bf8b86ac038d608e801774ebabe8810",
+    "productCount": 218
+  },
+  "fingerprints": {
+    "rulesVersion": 1,
+    "rulesSha256": "61bd1fb07c0df4fbcb7f4238ca1ae2ac865e5cc80b12fefdfde8928a817568cc",
+    "categorySnapshotSha256": "ccc4ae77e71a7596d2b8cb3069ee60b85eba239adff17a66e1bdeda0f04f152a",
+    "attributeSnapshotSha256": "56b4a4cb3c51f880570acc88f75264666681af7814850fabe8070e1a6bd11a8d"
+  },
+  "totals": {
+    "ready": 173,
+    "review": 45,
+    "products": 218,
+    "incidences": 71,
+    "reviewSingle": 28,
+    "reviewMultiple": 17
+  },
+  "conditions": {
+    "Nuevo": {
+      "ready": 0,
+      "review": 17
+    },
+    "Segunda_Mano": {
+      "ready": 173,
+      "review": 26
+    },
+    "Sin confirmar": {
+      "ready": 0,
+      "review": 2
+    }
+  },
+  "issues": [
+    {
+      "code": "excel.description",
+      "message": "Descripción corta ausente: solo hay descripción general y el backend exige una descripción corta",
+      "classification": "contrato_excel",
+      "affected": 25,
+      "only": 14,
+      "examples": [
+        "M239-6301",
+        "M547-2372",
+        "M011-3720"
+      ]
+    },
+    {
+      "code": "excel.price",
+      "message": "Precio no disponible o inválido",
+      "classification": "contrato_excel",
+      "affected": 20,
+      "only": 10,
+      "examples": [
+        "M239-6301",
+        "M547-2372",
+        "M582-1882"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Capacidad de carga",
+      "message": "Atributo obligatorio ausente: Capacidad de carga",
+      "classification": "origen_por_contrastar",
+      "affected": 8,
+      "only": 0,
+      "examples": [
+        "M239-6301",
+        "M582-1882",
+        "M827-8304"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Tipo de mástil",
+      "message": "Atributo obligatorio ausente: Tipo de mástil",
+      "classification": "origen_por_contrastar",
+      "affected": 6,
+      "only": 1,
+      "examples": [
+        "M547-2372",
+        "M827-8304",
+        "M433-5206"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Altura de elevación",
+      "message": "Atributo obligatorio ausente: Altura de elevación",
+      "classification": "origen_por_contrastar",
+      "affected": 4,
+      "only": 0,
+      "examples": [
+        "M547-2372",
+        "M582-1882",
+        "M433-5206"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Peso operativo",
+      "message": "Atributo obligatorio ausente: Peso operativo",
+      "classification": "origen_por_contrastar",
+      "affected": 3,
+      "only": 3,
+      "examples": [
+        "M736-5615",
+        "M432-1479",
+        "M913-0641"
+      ]
+    },
+    {
+      "code": "mapping.category",
+      "message": "Categoría Equipzilla sin correspondencia inequívoca",
+      "classification": "dato_presente_no_mapeado",
+      "affected": 3,
+      "only": 0,
+      "examples": [
+        "M294-4678",
+        "M958-0132",
+        "M928-9933"
+      ]
+    },
+    {
+      "code": "condition.unknown",
+      "message": "Condición comercial no confirmada (Nuevo o Segunda_Mano)",
+      "classification": "origen_por_contrastar",
+      "affected": 2,
+      "only": 0,
+      "examples": [
+        "M294-4678",
+        "M958-0132"
+      ]
+    }
+  ]
+}

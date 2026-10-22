@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { LiveStatus, formatDuration } from "./reporting/live-status.js";
 import { formatReviewDiagnostics } from "./reporting/review-diagnostics.js";
+import { formatDetailedValidation } from "./reporting/detailed-validation.js";
 import { parsePreparation } from "../catalog/import/preparation/preparation-document.js";
 import { printCommandError } from "./reporting/errors.js";
 import { join, resolve } from "node:path";
@@ -45,6 +46,9 @@ export const runPreflight = async (args: readonly string[]): Promise<void> => {
         for (const line of formatReviewDiagnostics(report.preparation.products)) console.log(line);
         process.exitCode = 2;
       }
+      if (options.verbose) {
+        for (const line of formatDetailedValidation(report.preparation.products)) console.log(line);
+      }
       console.log(`  Preparación: ${report.preparationFile} | Duración: ${formatDuration(Date.now() - startedAt)}`);
     } finally { status.stop(); }
     return;
@@ -54,6 +58,7 @@ export const runPreflight = async (args: readonly string[]): Promise<void> => {
     result = await validateCatalogPublication({ providerId, outputDir, outputPrefix, maxAgeHours });
   } finally { status.stop(); }
   let diagnostics: readonly string[] = [];
+  let preparedProducts: ReturnType<typeof parsePreparation>["products"] | null = null;
   if (result.review > 0) {
     const preparationText = await readFile(resolve(outputDir, `${outputPrefix}-preparation.json`), "utf8");
     const preparation: unknown = JSON.parse(preparationText);
@@ -62,11 +67,20 @@ export const runPreflight = async (args: readonly string[]): Promise<void> => {
       throw new Error("La preparación cambió durante la validación; repetir el comando");
     }
     diagnostics = formatReviewDiagnostics(products);
+    if (options.verbose) preparedProducts = products;
   }
   console.log(`VALIDACIÓN | ${result.providerId.toUpperCase()} | ${result.status === "passed" ? "CONFORME" : "REVISIÓN"}`);
   console.log(`  Productos: ${result.productCount} | Listos: ${result.ready} | Revisar: ${result.review} | Posibles bajas: ${result.suspectedMissing}`);
   for (const warning of result.warnings) console.log(`  Aviso: ${warning}`);
   for (const line of diagnostics) console.log(line);
+  if (options.verbose) {
+    if (!preparedProducts) {
+      const preparationText = await readFile(resolve(outputDir, `${outputPrefix}-preparation.json`), "utf8");
+      const preparation: unknown = JSON.parse(preparationText);
+      preparedProducts = parsePreparation(preparation, providerId).products;
+    }
+    for (const line of formatDetailedValidation(preparedProducts)) console.log(line);
+  }
   console.log(`  Resumen: ${result.summaryFile} | Duración: ${formatDuration(Date.now() - startedAt)}`);
   if (result.status === "review") process.exitCode = 2;
 };

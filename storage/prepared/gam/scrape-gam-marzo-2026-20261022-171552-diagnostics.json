@@ -1,0 +1,266 @@
+{
+  "version": 1,
+  "providerId": "gam",
+  "source": {
+    "providerId": "gam",
+    "prefix": "scrape-gam-marzo-2026",
+    "scope": "10907b02e73059d7",
+    "catalogSha256": "945e218ad93782e868a50b8ecaad99e225242274d9a32ed7b8203cb426e6af87",
+    "productCount": 1008
+  },
+  "fingerprints": {
+    "rulesVersion": 1,
+    "rulesSha256": "61bd1fb07c0df4fbcb7f4238ca1ae2ac865e5cc80b12fefdfde8928a817568cc",
+    "categorySnapshotSha256": "ccc4ae77e71a7596d2b8cb3069ee60b85eba239adff17a66e1bdeda0f04f152a",
+    "attributeSnapshotSha256": "56b4a4cb3c51f880570acc88f75264666681af7814850fabe8070e1a6bd11a8d"
+  },
+  "totals": {
+    "ready": 125,
+    "review": 883,
+    "products": 1008,
+    "incidences": 1468,
+    "reviewSingle": 371,
+    "reviewMultiple": 512
+  },
+  "conditions": {
+    "Nuevo": {
+      "ready": 2,
+      "review": 729
+    },
+    "Segunda_Mano": {
+      "ready": 123,
+      "review": 143
+    },
+    "Sin confirmar": {
+      "ready": 0,
+      "review": 11
+    }
+  },
+  "issues": [
+    {
+      "code": "excel.price",
+      "message": "Precio no disponible o inválido",
+      "classification": "contrato_excel",
+      "affected": 736,
+      "only": 244,
+      "examples": [
+        "5912",
+        "6116",
+        "6236"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Tipo de mástil",
+      "message": "Atributo obligatorio ausente: Tipo de mástil",
+      "classification": "origen_por_contrastar",
+      "affected": 321,
+      "only": 39,
+      "examples": [
+        "6682",
+        "6683",
+        "6679"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Altura de trabajo",
+      "message": "Atributo obligatorio ausente: Altura de trabajo",
+      "classification": "origen_por_contrastar",
+      "affected": 114,
+      "only": 77,
+      "examples": [
+        "5912",
+        "6116",
+        "6236"
+      ]
+    },
+    {
+      "code": "mapping.category",
+      "message": "Categoría Equipzilla sin correspondencia inequívoca",
+      "classification": "dato_presente_no_mapeado",
+      "affected": 108,
+      "only": 9,
+      "examples": [
+        "6587",
+        "6653",
+        "6358"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Altura de elevación",
+      "message": "Atributo obligatorio ausente: Altura de elevación",
+      "classification": "origen_por_contrastar",
+      "affected": 73,
+      "only": 0,
+      "examples": [
+        "6601",
+        "6639",
+        "6640"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Ancho de trabajo",
+      "message": "Atributo obligatorio ausente: Ancho de trabajo",
+      "classification": "origen_por_contrastar",
+      "affected": 20,
+      "only": 0,
+      "examples": [
+        "4027",
+        "4029",
+        "4030"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Marca",
+      "message": "Atributo obligatorio ausente: Marca",
+      "classification": "origen_por_contrastar",
+      "affected": 16,
+      "only": 0,
+      "examples": [
+        "6805",
+        "6186",
+        "6187"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Alimentación",
+      "message": "Atributo obligatorio ausente: Alimentación",
+      "classification": "origen_por_contrastar",
+      "affected": 15,
+      "only": 0,
+      "examples": [
+        "6150",
+        "4029",
+        "4032"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Tipo de conductor",
+      "message": "Atributo obligatorio ausente: Tipo de conductor",
+      "classification": "origen_por_contrastar",
+      "affected": 12,
+      "only": 0,
+      "examples": [
+        "4023",
+        "4029",
+        "3997"
+      ]
+    },
+    {
+      "code": "condition.unknown",
+      "message": "Condición comercial no confirmada (Nuevo o Segunda_Mano)",
+      "classification": "origen_por_contrastar",
+      "affected": 11,
+      "only": 0,
+      "examples": [
+        "6653",
+        "6358",
+        "6367"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Potencia",
+      "message": "Atributo obligatorio ausente: Potencia",
+      "classification": "origen_por_contrastar",
+      "affected": 10,
+      "only": 0,
+      "examples": [
+        "6834",
+        "1210",
+        "1218"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Modelo",
+      "message": "Atributo obligatorio ausente: Modelo",
+      "classification": "origen_por_contrastar",
+      "affected": 8,
+      "only": 0,
+      "examples": [
+        "6805",
+        "6186",
+        "6187"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Potencia de aspiración",
+      "message": "Atributo obligatorio ausente: Potencia de aspiración",
+      "classification": "origen_por_contrastar",
+      "affected": 6,
+      "only": 0,
+      "examples": [
+        "4035",
+        "4036",
+        "4037"
+      ]
+    },
+    {
+      "code": "identity.serial_collision",
+      "message": "Número de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen",
+      "classification": "identidad",
+      "affected": 6,
+      "only": 2,
+      "examples": [
+        "6682",
+        "6703",
+        "6835"
+      ]
+    },
+    {
+      "code": "excel.description",
+      "message": "Descripción ausente",
+      "classification": "contrato_excel",
+      "affected": 3,
+      "only": 0,
+      "examples": [
+        "4683",
+        "4691",
+        "2364"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Altura máxima de elevación",
+      "message": "Atributo obligatorio ausente: Altura máxima de elevación",
+      "classification": "origen_por_contrastar",
+      "affected": 3,
+      "only": 0,
+      "examples": [
+        "6432",
+        "4817",
+        "4819"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Combustible",
+      "message": "Atributo obligatorio ausente: Combustible",
+      "classification": "origen_por_contrastar",
+      "affected": 3,
+      "only": 0,
+      "examples": [
+        "6834",
+        "1212",
+        "1216"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Capacidad de carga",
+      "message": "Atributo obligatorio ausente: Capacidad de carga",
+      "classification": "origen_por_contrastar",
+      "affected": 2,
+      "only": 0,
+      "examples": [
+        "237",
+        "235"
+      ]
+    },
+    {
+      "code": "excel.required_attribute:Capacidad máxima",
+      "message": "Atributo obligatorio ausente: Capacidad máxima",
+      "classification": "origen_por_contrastar",
+      "affected": 1,
+      "only": 0,
+      "examples": [
+        "6432"
+      ]
+    }
+  ]
+}

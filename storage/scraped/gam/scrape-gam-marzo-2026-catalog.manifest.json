@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "providerId": "gam",
+  "prefix": "scrape-gam-marzo-2026",
+  "scope": "10907b02e73059d7",
+  "startedAt": "2026-10-22T08:46:28.582Z",
+  "endedAt": "2026-10-22T08:52:45.412Z",
+  "productCount": 1008,
+  "catalogSha256": "945e218ad93782e868a50b8ecaad99e225242274d9a32ed7b8203cb426e6af87"
+}

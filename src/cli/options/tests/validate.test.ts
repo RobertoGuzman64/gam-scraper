@@ -9,6 +9,8 @@ const source = "storage/scraped/gam/scrape-gam-marzo-2026-catalog.json";
 test("validate conserva el modo heredado y añade dos etapas específicas", () => {
   const legacy = parseValidateOptions(["gam"]);
   assert.equal(legacy.stage, "legacy");
+  assert.equal(legacy.verbose, false);
+  assert.equal(parseValidateOptions(["gam", "--verbose"]).verbose, true);
   const catalog = parseValidateOptions(["gam", "--stage", "catalog", "--prefix", "scrape-gam-marzo-2026"]);
   assert.equal(catalog.stage, "catalog");
   assert.ok(catalog.source?.endsWith("scrape-gam-marzo-2026-catalog.json"));
@@ -16,6 +18,7 @@ test("validate conserva el modo heredado y añade dos etapas específicas", () =
   assert.equal(prepared.stage, "preparation");
   assert.ok(prepared.preparation?.endsWith("scrape-gam-marzo-2026-preparation.json"));
   assert.ok(prepared.source?.endsWith("scrape-gam-marzo-2026-catalog.json"));
+  assert.equal(parseValidateOptions(["gam", "--stage", "preparation", "--preparation", preparation, "--verbose"]).verbose, true);
   const renamed = parseValidateOptions(["gam", "--stage", "preparation", "--preparation", "storage/prepared/gam/scrape-gam-marzo-2026-alturas-preparation.json"]);
   assert.equal(renamed.source, null);
 });
@@ -25,6 +28,8 @@ test("validate rechaza opciones de etapas incompletas sin alterar los alias hist
   assert.throws(() => parseValidateOptions(["gam", "--stage", "preparation"]), /--preparation/);
   assert.throws(() => parseValidateOptions(["gam", "--stage", "catalog", "--preparation", preparation]), /solo es compatible/);
   assert.throws(() => parseValidateOptions(["gam", "--stage", "otro"]), /--stage/);
+  assert.throws(() => parseValidateOptions(["gam", "--verbose", "--verbose"]), /repetida/);
+  assert.throws(() => parseValidateOptions(["gam", "--stage", "catalog", "--verbose"]), /requiere una validación de preparación/);
   assert.equal(parseValidateOptions(["--provider", "gam", "--outPrefix", "personalizado"]).outputPrefix, "personalizado");
 });
 

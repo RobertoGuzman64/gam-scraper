@@ -8,10 +8,12 @@ export const validateHelp = `Uso:
   npm run validate -- gam --stage catalog --prefix scrape-gam
   npm run validate -- gam --stage preparation --preparation storage/prepared/gam/scrape-gam-preparation.json
   npm run validate -- gam --stage preparation --preparation <archivo-preparation.json> --source <archivo-catalog.json>
+  npm run validate -- gam --stage preparation --preparation <archivo-preparation.json> --source <archivo-catalog.json> --verbose
 
 Opciones heredadas: --out, --prefix, --maxAgeHours
 Compatibilidad: --provider, --outDir, --outPrefix
-Opciones nuevas: --stage catalog|preparation, --source, --preparation
+Opciones nuevas: --stage catalog|preparation, --source, --preparation, --verbose
+--verbose muestra únicamente las fichas review con su referencia y todos sus motivos, agrupados también por patrones de bloqueo.
 La validación heredada conserva su contrato y límite de 48 horas.
 En preparación, el catálogo se localiza por el prefijo de origen guardado en su manifest; --source permite indicar otra ruta.
 La validación de preparación no requiere acceso a portales ni inventario.
@@ -19,6 +21,7 @@ Código 0 = conforme, 2 = revisión manual, 1 = error.`;
 
 export const parseValidateOptions = (args: readonly string[]) => {
   const values = new Map<string, string>();
+  let verbose = false;
   const names: Readonly<Record<string, string>> = {
     "--provider": "provider", "--outDir": "outDir", "--out": "outDir",
     "--outPrefix": "outPrefix", "--prefix": "outPrefix", "--maxAgeHours": "maxAgeHours",
@@ -27,6 +30,11 @@ export const parseValidateOptions = (args: readonly string[]) => {
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (!arg) continue;
+    if (arg === "--verbose") {
+      if (verbose) throw new Error("Opción repetida: --verbose");
+      verbose = true;
+      continue;
+    }
     if (!arg.startsWith("--")) {
       if (values.has("provider")) throw new Error(`Argumento no reconocido: ${arg}`);
       values.set("provider", arg);
@@ -51,6 +59,7 @@ export const parseValidateOptions = (args: readonly string[]) => {
   if (stage === "legacy" && (values.has("source") || values.has("preparation"))) {
     throw new Error("--source y --preparation requieren --stage");
   }
+  if (stage === "catalog" && verbose) throw new Error("--verbose requiere una validación de preparación");
   if (stage === "catalog" && values.has("preparation")) {
     throw new Error("--preparation solo es compatible con --stage preparation");
   }
@@ -68,7 +77,7 @@ export const parseValidateOptions = (args: readonly string[]) => {
   if (source && stage !== "legacy" && !source.endsWith("-catalog.json")) throw new Error("--source debe ser -catalog.json");
   if (preparation && !preparation.endsWith("-preparation.json")) throw new Error("--preparation debe ser -preparation.json");
   return {
-    providerId, stage, source, preparation,
+    providerId, stage, source, preparation, verbose,
     outputDir, outputPrefix, maxAgeHours,
     displayedOutputDir: values.get("outDir") ?? provider.defaultOptions.outDir
   };
