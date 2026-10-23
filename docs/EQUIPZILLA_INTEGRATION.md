@@ -1,5 +1,7 @@
 # EQUIPZILLA_INTEGRATION.md
 
+> **Alcance exclusivamente informativo (decisión del 23/10/2026):** este archivo documenta los contratos históricos de importación Excel y `create/many` del **backend**. **No define el objetivo ni la aceptación del scraper**: el producto principal es el catálogo JSON completo, y se persigue el 100 % de máquinas `ready`, 0 `review`, con datos verificados. Las restricciones de importación no son motivos para excluir fichas ni prioridades del scraper. La adaptación del receptor compete a su responsable y **no requiere volver a solicitar o analizar el backend**. Criterio vigente: [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
+
 **Contrato receptor documentado · Equipzilla / importación de productos de maquinaria**  
 **Fecha del análisis:** 20/10/2026; **recontrastado con `Marketplace-Back-develop.zip` aportado el 21/10/2026**.  
 **Procedencia:** código fuente de `Marketplace-Back-develop.zip` y del scraper para delimitar el emisor. **No se consultó una base de datos ni un entorno desplegado.** Lo descrito es comportamiento implementado en ese código, no evidencia de aceptación en producción.

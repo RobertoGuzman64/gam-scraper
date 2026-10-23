@@ -1,8 +1,10 @@
-# Validación y aceptación antes de producción
+# Validación y aceptación del catálogo JSON
 
 Protocolo operativo aplicable a las extracciones de GAM, Gomariz y Mercaeleva, para **maquinaria nueva y de segunda mano**. No es una certificación de producción. Alcance funcional y definición de terminado: [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
 
-La cadena real es **web del proveedor → extracción y catálogo canónico → preparación offline (o heredada durante transición) → revisión → Excel de altas (opcional y manual)**. Ejecutar el lote no genera ni importa productos automáticamente en Marketplace-Back.
+La cadena central es **web del proveedor → extracción → catálogo JSON canónico completo → preparación y auditoría de calidad → 100 % `ready`, 0 `review`**. La exportación hacia Excel o `create/many` es una **rama auxiliar del receptor**, que no determina si el catálogo está terminado. Ejecutar el lote no importa ni publica productos automáticamente en Marketplace-Back.
+
+**Criterio de aceptación vigente (23/10/2026):** todas las máquinas de la cohorte real deben estar `ready` mediante datos verificables, sin pérdidas de identidad ni valores inventados. Un requisito exclusivo del backend no es, por sí mismo, un defecto de calidad del JSON. Las reglas actuales deben analizarse antes de reclasificar casos; nunca forzar `ready` escondiendo contradicciones.
 
 **Antecedente documentado:** en la auditoría del 20/10/2026 se extrajeron 268 GAM, 143 Gomariz y 20 Mercaeleva. Estos números no son una expectativa para ejecuciones posteriores; en aquella muestra Mercaeleva tenía 221 resultados visibles y el scraper solo recuperó la primera página. Había 415/431 candidatos en `review`. Véase [informe histórico](ESTADO_EXTRACCIONES_2026-10-20.md).
 
@@ -57,7 +59,7 @@ Si una extracción falla, comprobar que el último CSV y `-catalog.json` válido
 
 ## 4. Revisión funcional de las fichas
 
-Comprobar muestras representativas **separadas por condición (`Nuevo`, `Segunda_Mano` y desconocida)** de título, marca, modelo, referencia, año, serie, horas, precio, descripción, fotos, URL, categoría final, especificaciones y atributos requeridos. La finalidad incluye ambas condiciones: que la preparación de versiones anteriores marcase toda maquinaria nueva como `review` era una **brecha ya corregida**. Las máquinas nuevas pueden continuar en `review` por datos o requisitos de importación realmente incumplidos. No confundir desbloquear condición con disponer de categoría, descripción corta y atributos suficientes para importar. El precio ausente no bloquea `ready` para `create/many`, pero sigue excluyendo el Excel. Regresiones especialmente relevantes:
+Comprobar muestras representativas **separadas por condición (`Nuevo`, `Segunda_Mano` y desconocida)** de título, marca, modelo, referencia, año, serie, horas, precio, descripción, fotos, URL, categoría final, especificaciones y atributos requeridos. La finalidad incluye ambas condiciones: que la preparación de versiones anteriores marcase toda maquinaria nueva como `review` era una **brecha ya corregida**. Las máquinas nuevas pueden continuar en `review` por contradicciones, identidades o normalizaciones no resueltas. **No confundir esos problemas de calidad con la falta de campos exigidos por un receptor externo.** El precio ausente tiene tratamientos distintos en Excel y `create/many`, pero ninguno de ellos dirige la aceptación del catálogo JSON. Regresiones especialmente relevantes:
 
 - **GAM:** referencias de unidades del mismo modelo, pestañas HTML enlazadas a `#`, claves técnicas sospechosas como `spec__4880`, `spec__1930` y `spec__SI`; revisar solapamientos entre categorías.
 - **Gomariz:** varias unidades con nombres semejantes, galerías con más de diez imágenes y precios ausentes en la web. No inventar precios.
@@ -65,9 +67,9 @@ Comprobar muestras representativas **separadas por condición (`Nuevo`, `Segunda
 - **Condiciones/categorías:** comprobar que `Nuevo` no se convierta en `Segunda_Mano`, que una nueva no acabe en una categoría de ocasión y que los estados desconocidos o contradictorios queden sin inventar. El contrato local admite ambos estados con evidencia de origen.
 - **Destino Equipzilla:** comparar snapshots `data/category/` y `data/import/` con los catálogos **vigentes del entorno donde se importaría**. No forzar categorías ni atributos obligatorios de forma especulativa.
 
-## 5. Exportación manual de altas
+## 5. Exportación manual de altas (opcional, fuera del criterio de aceptación JSON)
 
-Antes de generar un archivo, obtener un `companyID` autorizado del entorno correcto y extraer de ese backend el inventario **completo, reciente y de la misma empresa**, en CSV con cabeceras `companyID,reference`.
+Esta sección se conserva únicamente como **referencia operativa para el receptor**. No es un paso necesario para cerrar los JSON ni una tarea prioritaria del scraper. Si otra persona decide generar altas, antes de producir el archivo debe obtener un `companyID` autorizado del entorno correcto y extraer un inventario **completo, reciente y de la misma empresa**, en CSV con cabeceras `companyID,reference`.
 
 Simulación para el prefijo de aceptación de GAM:
 
@@ -87,9 +89,10 @@ Checklist de salida:
 - [ ] Cobertura real y paginación aceptadas para cada proveedor habilitado.
 - [ ] Fallos, identificaciones duplicadas y muestras de atributos/fotos revisados.
 - [ ] CSV, JSON, hashes y snapshots válidos; una ejecución fallida no sustituye la última publicación.
-- [ ] Categorías/atributos de destino e inventario por `companyID` contrastados.
+- [ ] Todas las máquinas incluidas en los JSON y preparaciones; `ready` del 100 % y `review` igual a 0, con evidencias y sin modificar las reglas por conveniencia.
+- [ ] Contradicciones, fuentes y atributos recuperados contrastados con regresiones controladas.
 - [ ] Dos ejecuciones controladas con historial y alertas antes del planificador.
-- [ ] Importación manual de prueba y aprobación separadas, si se pretende utilizar el Excel.
+- [ ] Si se pretende utilizar Excel/`create/many`, validación del receptor y autorización **por separado**; no condicionan la aceptación JSON.
 
 Para escoger infraestructura y persistencia, consultar [DESPLIEGUE_AUTOMATICO.md](DESPLIEGUE_AUTOMATICO.md). La validación técnica **no equivale** a autorización de negocio o de importación.
 
@@ -101,9 +104,9 @@ En el entorno de preparación de la entrega se compilaron los ficheros afectados
 
 Tres vías disponibles: `npm run validate -- gam` (publicación heredada y antigüedad máxima de 48 h), `npm run validate -- gam --stage catalog --prefix scrape-gam-marzo-2026` (integridad canónica) y `npm run validate -- gam --stage preparation --preparation storage/prepared/gam/scrape-gam-marzo-2026-preparation.json` (replay verificado). El modo preparación utiliza el prefijo original guardado en el documento, aunque la salida tenga otro nombre (por ejemplo `-alturas-preparation.json`). Si el catálogo está fuera del directorio predeterminado del proveedor, indicar `--source <catálogo-catalog.json>`. No se llama a los portales durante `prepare`, `validate --stage` ni `export`.
 
-El preflight offline coteja catálogo, manifest y resumen de publicación; origen y hash de la preparación; snapshots y reglas vigentes; identidades alineadas y el contenido completo de productos regenerados desde el catálogo. El modo de preparación informa `ready/review` con los requisitos de `create/many` (sin exigir precio), conserva `price: null` cuando falta y muestra su recuento informativo en consola. No exige inventario y puede revisar orígenes antiguos. El exportador sí exige origen de antigüedad máxima de 48 h, compañía real y un inventario completo confirmado. El Excel exige precio positivo y descarta precios nulos aunque la ficha esté `ready`; JSON omite el precio cuando es nulo. Ambos mantienen bloqueados los atributos obligatorios como el tipo de mástil, las categorías/condiciones no válidas, las identidades contradictorias y las referencias repetidas/existentes. Ninguno importa automáticamente.
+El preflight offline coteja catálogo, manifest y resumen de publicación; origen y hash de la preparación; snapshots y reglas vigentes; identidades alineadas y el contenido completo de productos regenerados desde el catálogo. El modo de preparación vigente puede reflejar requisitos de `create/many` en sus diagnósticos `ready/review` (sin exigir precio), conserva `price: null` cuando falta y muestra indicadores de receptor en consola. **Este comportamiento técnico existente no redefine el objetivo:** se debe separar la calidad real del JSON de las exigencias de importación cuando se investiguen los bloqueos. No exige inventario y puede revisar orígenes antiguos. El exportador sí exige origen de antigüedad máxima de 48 h, compañía real y un inventario completo confirmado. El Excel exige precio positivo y descarta precios nulos aunque la ficha esté `ready`; JSON omite el precio cuando es nulo. Ambos mantienen bloqueados los atributos obligatorios como el tipo de mástil, las categorías/condiciones no válidas, las identidades contradictorias y las referencias repetidas/existentes. Ninguno importa automáticamente.
 
-Ejemplo de flujo completo a ejecutar tras un scraping íntegro y con inventario real:
+Ejemplo histórico del flujo con una **rama adicional de exportación** (el último comando es opcional y ajeno a la aceptación JSON):
 
 ```powershell
 npm run validate -- gam --stage catalog --prefix scrape-gam-marzo-2026

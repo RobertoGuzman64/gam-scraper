@@ -1,10 +1,10 @@
 # Equipzilla Scraper
 
-Herramienta de línea de comandos **Node.js + TypeScript** para extraer maquinaria **nueva y de segunda mano** de **GAM, Gomariz y Mercaeleva**, publicar catálogos CSV/JSON con trazabilidad y generar Excel de **altas** mediante un exportador independiente para el importador existente de Equipzilla. No expone API HTTP ni escribe en el backend. Existe además una vía JSON `POST /product/create/many` en el backend, **todavía no integrada**, cuyo uso debe decidirse y validarse por separado.
+Herramienta de línea de comandos **Node.js + TypeScript** para extraer y normalizar maquinaria **nueva y de segunda mano** de **GAM, Gomariz y Mercaeleva**. Su producto principal son los **catálogos JSON completos, verificables y trazables**. Publica también CSV y conserva herramientas independientes de compatibilidad con las importaciones Excel y JSON del backend; no expone API HTTP ni escribe en ese backend.
 
-> **Objetivo funcional y definición de terminado:** [OBJETIVOS_SCRAPER.md](docs/OBJETIVOS_SCRAPER.md). El backend permite `Nuevo` y `Segunda_Mano`; **la preparación admite ambas condiciones con evidencia de origen**, y mantiene condiciones desconocidas o contradictorias en `review`. Las fichas sin requisitos del Excel permanecen en el catálogo extraído.
+> **Objetivo y criterio de terminado:** [OBJETIVOS_SCRAPER.md](docs/OBJETIVOS_SCRAPER.md). El catálogo debe conservar **todas** las máquinas identificadas y alcanzar **100 % `ready`, 0 `review`**, sin inventar atributos, omitir máquinas ni ocultar contradicciones. `ready/review` es el indicador de calidad a revisar y mejorar con evidencias; los requisitos de Excel y `create/many` **no son criterios de calidad ni prioridades de desarrollo**. La preparación conserva fichas `ready` y `review` mientras se resuelven sus incidencias.
 
-> **Estado operativo:** ninguna importación masiva queda autorizada por esta documentación. La auditoría del 20/10/2026 (Mercaeleva 20/221) es **histórica**: [estado de extracciones](docs/ESTADO_EXTRACCIONES_2026-10-20.md). La línea base del **21/10/2026** es **1.374 máquinas** (GAM 1.010, Gomariz 143, Mercaeleva 221) con 748 nuevas bloqueadas por una **restricción local de preparación de aquella versión**, ya corregida en el código actual. Los totales de `ready/review` son históricos y no representan esta versión ni un entorno vivo.
+> **Última auditoría aportada (23/10/2026, corte `20261023-162700`):** **1.369 máquinas**, **1.181 `ready` y 188 `review`** (GAM 1.008/834/174; Gomariz 143/139/4; Mercaeleva 218/208/10). Son cifras de los catálogos auditados, no un scraping en vivo. El [estado de 20/10](docs/ESTADO_EXTRACCIONES_2026-10-20.md) y la línea base de 21/10 (1.374 máquinas) son **históricos**, no metas actuales. La importabilidad se informa por separado, sin excluir registros del JSON.
 
 ## Instalación
 
@@ -108,15 +108,15 @@ npm run validate -- gam --stage preparation --preparation storage/prepared/gam/s
 
 `--stage catalog` valida catálogo, manifest, hash, proveedor, identidades, recuentos y publicación. `--stage preparation` comprueba también el manifest de preparación, fingerprint de reglas y snapshots, identidad y resultado íntegro recalculado desde la fuente **sin portales ni inventario**. Si se usó un nombre de salida distinto del prefijo original, indicar `--source`. La validación heredada `npm run validate -- gam` sigue comprobando CSV, preparación antigua, cambios y máximo de 48 h. La preparación offline puede validarse con cualquier antigüedad; **exportar** mantiene el bloqueo del origen superior a 48 h. El estado `review` de la preparación conserva el código de salida **2**.
 
-## Exportación para importación manual
+## Compatibilidad opcional con importaciones del backend
 
-La extracción **no importa nada**. `ready` en `-preparation.json` indica controles locales satisfechos, no autorización comercial. Para planificar un Excel de altas se necesitan un `companyID` real del entorno destino, un catálogo publicado válido y un inventario **completo y actual** en CSV con `companyID,reference`:
+La extracción **no importa nada**. Esta sección documenta una herramienta auxiliar para el consumidor: **no forma parte de la aceptación del catálogo JSON, no dirige el trabajo de calidad y no justifica rebajar ni endurecer `ready` por las necesidades de Excel**. El `ready` actual corresponde a controles locales de preparación y no autoriza altas comerciales. Para planificar un Excel de altas se necesitan un `companyID` real del entorno destino, un catálogo publicado válido y un inventario **completo y actual** en CSV con `companyID,reference`:
 
 ```bash
 npm run export -- gam --companyID <ID_REAL> --preparation storage/prepared/gam/scrape-gam-marzo-2026-preparation.json --existing storage/inventory/gam.csv --out storage/import/gam-altas.xlsx --dry-run
 ```
 
-Para una preparación offline con un nombre o ruta de origen no predeterminados, incluir `--source storage/scraped/gam/<prefijo>-catalog.json`. Para informes anteriores se sigue aceptando `--preparation storage/scraped/gam/<prefijo>-preparation.json` siempre que supere el preflight heredado. El `ready` de preparación permite precio ausente para JSON `create/many`; **no** se relaja el precio obligatorio del Excel ni se envía nada al backend. Los atributos obligatorios, como el mástil cuando corresponda, siguen exigidos.
+Para una preparación offline con un nombre o ruta de origen no predeterminados, incluir `--source storage/scraped/gam/<prefijo>-catalog.json`. Para informes anteriores se sigue aceptando `--preparation storage/scraped/gam/<prefijo>-preparation.json` siempre que supere el preflight heredado. El `ready` de preparación permite precio ausente en la evaluación actual de compatibilidad con `create/many`; **no** se relaja el precio obligatorio del Excel ni se envía nada al backend. Los atributos obligatorios, como el mástil cuando corresponda, siguen exigidos.
 
 Tras revisar el plan y confirmar expresamente el inventario, sustituir `--dry-run` por `--confirm-inventory` para generar el `.xlsx`. `--allow-empty-inventory` existe, pero requiere justificar que la empresa realmente no tiene referencias registradas. El Excel es **solo para altas**, no actualiza ni elimina productos, no se envía automáticamente y debe revisarse con el importador real. Ver [protocolo de validación](docs/VALIDACION.md).
 

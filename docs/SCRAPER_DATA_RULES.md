@@ -6,19 +6,19 @@
 
 ## 1. Objetivo operativo que no debe perderse
 
-Extraer maquinaria **nueva y de segunda mano** de **GAM (`gam`)**, **Gomariz (`gomariz`)** y **Mercaeleva (`mercaeleva`)**, conservar su identidad y procedencia, normalizar fichas y preparar **altas revisables**, no sincronizaciones automáticas, de productos de venta en Equipzilla. Añadir proveedores nuevos debe reutilizar motor, contratos, reglas de calidad, mapeo y publicación; no duplicar lógica de negocio en cada adaptador. **La preparación admite `Nuevo` y `Segunda_Mano` con evidencia suficiente, y conserva estados desconocidos o contradictorios en revisión.** Definición de terminado y prioridades: [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
+Extraer maquinaria **nueva y de segunda mano** de **GAM (`gam`)**, **Gomariz (`gomariz`)** y **Mercaeleva (`mercaeleva`)**, conservar todas las identidades y evidencias de origen y obtener **JSON fiables para el catálogo completo**. El criterio de terminado es **100 % `ready`, 0 `review`, sin máquinas excluidas ni datos inventados**. Añadir proveedores nuevos debe reutilizar motor, contratos, reglas de calidad, mapeo y publicación; no duplicar lógica. La preparación admite `Nuevo` y `Segunda_Mano` cuando existe evidencia y deja las condiciones contradictorias pendientes de resolución. Definición vinculante: [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
 
-La ruta **actualmente integrada mediante exportador** es **`POST /product/import`**, autenticada, con `multipart/form-data`, campo `file` `.xlsx` (hoja exacta `Productos`, hasta 10 MiB) y `companyID` real. **No acepta directamente ninguno de los JSON listados abajo.** El backend también ofrece **`POST /product/create/many`** con otro contrato JSON (`price?` opcional, `categorySellID` y `attributes` por ID), **sin implementación de exportación ni envío en este scraper**. Ambos caminos crean altas, sin *upsert* ni bajas, y pueden devolver resultados parciales. Comparativa y decisión pendiente: [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
+**Compatibilidad informativa, no objetivo:** Excel (`POST /product/import`) y JSON (`POST /product/create/many`) son dos contratos independientes del **backend**; sus restricciones no deben modificar el catálogo canónico ni guiar la recuperación de datos. Existe exportación `.xlsx` y una salida `export --format json` adaptada a `create/many`; **ninguna de ellas equivale al JSON canónico** ni transmite por sí sola datos al backend. Los detalles del receptor están en [EQUIPZILLA_INTEGRATION.md](EQUIPZILLA_INTEGRATION.md), exclusivamente como referencia técnica.
 
 ```text
 Proveedor externo → ProductRecord → calidad + deduplicación
-  → catálogo canónico íntegro + CSV + JSON de preparación heredada
-  → preflight + revisión + inventario de referencia por empresa
-  → Excel de ALTAS con columnas que lee el importador
-  → importación MANUAL del Excel en Equipzilla (acción ajena al scraper)
+  → catálogo canónico JSON íntegro + trazabilidad + preparación
+  → auditoría por referencia → resolución de review hasta 100 % ready
+  └─ opcional: adaptación de exportación a Excel / create/many
+              → importación en Equipzilla (responsabilidad externa)
 ```
 
-`ready` es un estado **local de preparación para `create/many`**, no una aceptación de Equipzilla ni una orden de publicación comercial. El Excel vuelve a verificar sus exigencias, incluido el precio; los atributos declarados obligatorios en el catálogo vigente, incluido el mástil de las categorías correspondientes, siguen bloqueando ambos destinos.
+`ready` es hoy un estado **local de preparación**, cuyo cálculo puede estar condicionado por validaciones de mapeo y por el contrato `create/many` existente. **Eso describe el código actual, no el criterio deseado de calidad JSON.** Para el cierre del scraper hay que investigar qué `review` reflejan defectos reales y cuáles solo exigencias del receptor, sin desactivar protecciones legítimas. Los informes de Excel y `create/many` pueden mantener sus requisitos de forma separada, sin excluir máquinas del catálogo.
 
 ## 2. Qué datos obtiene el scraper
 
@@ -146,7 +146,9 @@ Esa identidad **NO es la regla del importador backend**: este último detecta du
 
 La validación puede emitir advertencias por productos `review`, ausencia de `ready` o `suspectedMissing`. Ninguna advertencia autoriza borrar anuncios ni saltarse la revisión del operador.
 
-## 6. Preparación y exportación manual de **altas**
+## 6. Preparación y exportación manual de **altas** (opcional, responsabilidad del receptor)
+
+El flujo que sigue se conserva por compatibilidad operativa. **No es una tarea necesaria para alcanzar 0 `review` de calidad ni define cuándo está terminado el JSON.**
 
 1. Ejecutar scraping completo de un proveedor y conservar salida válida, no muestras con límites de páginas como catálogo definitivo.
 2. Inspeccionar `-summary.json`, `-errors.json`, `-changes.json`, `-preparation.json`; distinguir `ready` de `review` y de fallos del portal.
@@ -164,9 +166,11 @@ npm run export -- --help
 
 No sustituir los datos de entrada por IDs/URLs inventados. Los comandos cortos del scraper (`npm run scrape -- <proveedor>`, `npm run validate -- <proveedor>`) corresponden a la CLI real, pero las opciones de exportación requieren siempre rutas existentes y un ID real.
 
-## 7. Diferencias detectadas y tareas técnicas pendientes (no implementadas aquí)
+## 7. Diferencias de contrato e incidencias históricas (no son prioridades del catálogo JSON)
 
-**Prioridad alta — impedir importación incorrecta**
+**Lectura obligatoria:** las tablas de este apartado reflejan un análisis fechado el 20–21/10/2026, anterior a campañas posteriores. Sus referencias a importabilidad o implementación pendiente **no son tareas de la siguiente campaña**. El único criterio vigente es [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
+
+**Riesgos del receptor, de interés informativo**
 
 | Hallazgo                                    | Hecho comprobado                                                                                                                                                                           | Implicación para próximos cambios                                                                                                                                                                     |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -176,25 +180,25 @@ No sustituir los datos de entrada por IDs/URLs inventados. Los comandos cortos d
 | Atributos/categorías no resueltos           | `prepareProduct` marca `review` cuando falta categoría o atributo obligatorio; los aliases son específicos y limitados                                                                     | Revisar mappings con datos reales, no inventar valores/IDs para convertirlos artificialmente en `ready`                                                                                               |
 | Estado ausente o contradictorio             | `prepareProduct` solo acepta `Segunda mano` explícito y sin contradicción; `gomariz` no define condición en su parser y `mercaeleva` puede devolver `null` cuando no hay estado publicado. | Conservar `review` para condición desconocida y distinguirla de la exclusión artificial de `Nuevo`; no inferir uso por defecto.                                                                       |
 
-**Prioridad alta — corregir el alcance funcional según el objetivo vigente**
+**Fotografía histórica del estado funcional analizado el 20–21/10 (no corresponde al código integrado el 23/10)**
 
-| Hallazgo                                    | Situación actual y límite                                                                                                                                                                                                                                                    |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Productos `Nuevo`                           | El backend **ya acepta `Nuevo`**; `prepareProduct`, `ImportCandidate`, `resolveCategory` y `validateImportCandidate` los bloquean o los tratan como ocasión. **Dar soporte correcto a ambas condiciones es un requisito central pendiente**, no una decisión futura opcional |
-| Actualizaciones y bajas                     | Solo se generan altas; `existing` se excluye y `suspectedMissing` es informativo. No existe sincronización de cambios de precio/stock, *upsert* ni baja automática en el flujo revisado                                                                                      |
-| Metadatos de origen perdidos                | `providerId`, `sourceUrl`, `externalReference`, `spec` y `serialNumber` no pasan como campos independientes por Excel. El contrato receptor revisado no conserva toda la trazabilidad de origen                                                                              |
-| `logoID` fijo                               | El importador backend asigna `18`; su existencia/correspondencia con la marca no se ha comprobado en BD                                                                                                                                                                      |
-| Diferencia de validación entre herramientas | El scraper exige precio positivo e imagen URL HTTP(S) con formato de archivo conocido; el backend comprueba `!price` y al menos una URL, sin las mismas reglas. Una fila creada por otra vía no comparte necesariamente filtros locales                                      |
-| Soporte de atributos                        | El backend modela `DECIMAL`, `DATE`, `MULTISELECT`; el cargador de atributos del scraper no reconoce esos tipos en su catálogo local                                                                                                                                         |
-| Imágenes adicionales                        | El Excel admite diez columnas de URL; el resto se contabiliza y no se importa por esta ruta                                                                                                                                                                                  |
+| Hallazgo                                    | Situación actual y límite                                                                                                                                                                                                               |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Productos `Nuevo`                           | En el código revisado el 20–21/10 se documentó un bloqueo de nuevas ya corregido posteriormente. **No reabrir este problema histórico ni interpretarlo como estado actual**; auditar casos nuevos concretos con su fuente.              |
+| Actualizaciones y bajas                     | Solo se generan altas; `existing` se excluye y `suspectedMissing` es informativo. No existe sincronización de cambios de precio/stock, *upsert* ni baja automática en el flujo revisado                                                 |
+| Metadatos de origen perdidos                | `providerId`, `sourceUrl`, `externalReference`, `spec` y `serialNumber` no pasan como campos independientes por Excel. El contrato receptor revisado no conserva toda la trazabilidad de origen                                         |
+| `logoID` fijo                               | El importador backend asigna `18`; su existencia/correspondencia con la marca no se ha comprobado en BD                                                                                                                                 |
+| Diferencia de validación entre herramientas | El scraper exige precio positivo e imagen URL HTTP(S) con formato de archivo conocido; el backend comprueba `!price` y al menos una URL, sin las mismas reglas. Una fila creada por otra vía no comparte necesariamente filtros locales |
+| Soporte de atributos                        | El backend modela `DECIMAL`, `DATE`, `MULTISELECT`; el cargador de atributos del scraper no reconoce esos tipos en su catálogo local                                                                                                    |
+| Imágenes adicionales                        | El Excel admite diez columnas de URL; el resto se contabiliza y no se importa por esta ruta                                                                                                                                             |
 
-**La tabla anterior no fija el orden exacto del trabajo:** para corregir nuevas/usadas, atributos, descripción y precios ver [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
+**La tabla anterior no fija prioridades de desarrollo:** el trabajo vigente se define únicamente por defectos de extracción, identidad, mapeo o calidad JSON acreditados; ver [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
 
 **No confirmado en el código revisado:** estado de la BD real, inventario de cada compañía, equivalencias actuales de atributos, autoría/aprobación para importar, resultado de procesos asíncronos posteriores y disponibilidad completa de las webs. No se afirma que haya automatización de importación ni producción validada.
 
 ## 8. Contratos que debe preservar un hilo futuro
 
-- Mantener `ProductRecord` como **dato extraído** y `ImportCandidate` como **dato preparado**. No confundir ninguno con la hoja Excel del backend.
+- Mantener `ProductRecord` como **dato extraído** y `ImportCandidate` como **dato preparado**. Ninguno es el cuerpo JSON de `create/many` ni una hoja Excel. El catálogo canónico y la preparación conservan todas las máquinas, incluidas las que siguen en `review`.
 - Mantener identidad por proveedor en extracción y comprobar duplicados del inventario por referencia de la empresa antes de alta.
 - No prometer datos ausentes ni transformar `review` en `ready` sin evidencia; preservar bloqueo de publicación parcial y snapshot del último resultado válido.
 - Separar adaptadores/parsers (obtención), normalización y mappers (reglas), `catalog/import` (preparación/exportación), pipeline (calidad/publicación), CLI (entrada/salida).
