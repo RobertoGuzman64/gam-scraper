@@ -1,6 +1,7 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { numberToken, scalar } from "../../attribute-utils.js";
 import type { Attribute, Candidate } from "../../attribute-types.js";
+import { gamHandlingModelEvidence } from "./handling.js";
 
 const cleaningFamily = (record: ProductRecord): "fregadora" | "barredora" | "aspiradora" | null => {
   let section = "";
@@ -14,7 +15,7 @@ const cleaningFamily = (record: ProductRecord): "fregadora" | "barredora" | "asp
     return null;
   }
   const families = [
-    { type: "fregadora", category: "limpieza-fregadoras", section: "fregadoras-industriales-nuevas", title: /\bfregadora\b/i },
+    { type: "fregadora", category: "limpieza-fregadoras", section: "fregadoras-industriales-nuevas", title: /\b(?:micro)?fregadora\b/i },
     { type: "barredora", category: "limpieza-barredoras", section: "barredoras-industriales-nuevas", title: /\bbarredora\b/i },
     { type: "aspiradora", category: "marcas-nuevas", section: "aspiradoras-industriales-nuevas", title: /\baspiradora\b/i }
   ] as const;
@@ -48,6 +49,18 @@ const energy = (description: string): string | null => {
   if (/\b(?:diesel\s*\/\s*(?:lpg|glp)|(?:lpg|glp)\s*\/\s*diesel|gasolina\s+o\s+diesel|diesel\s+o\s+gasolina)\b/.test(text)) return null;
   if (/\b(?:gasolina|gasoleo)\b/.test(text) && found.size > 0) return null;
   return found.size === 1 ? [...found][0] ?? null : null;
+};
+
+const batteryFromConfirmedDescription = (record: ProductRecord): string | null => {
+  const descriptions = [record.shortDescription, record.longDescription].filter((description): description is string =>
+    typeof description === "string" && description.trim().length > 0 && gamHandlingModelEvidence(record, description)
+  );
+  const text = foldText(descriptions.join(". "));
+  if (/\bbaterias? opcional(?:es)?\b|\b(?:diesel|glp|lpg|gasolina)\b/.test(text)) return null;
+  if (/\bautonomia\b[^.!?]{0,90}\bcon la bateria estandar\b|\b\d+(?:[.,]\d+)?\s*kg\s*\(\s*con baterias\s*\)/.test(text)) {
+    return "Batería";
+  }
+  return null;
 };
 
 const driver = (description: string): string | null => {
@@ -133,6 +146,8 @@ const workWidth = (description: string): number | null => {
 
 export const gamCleaningCandidate = (record: ProductRecord, attribute: Attribute): Candidate | null => {
   if (!cleaningFamily(record)) return null;
+  if (/^microfregadora\b/i.test(record.title ?? "") &&
+    (!record.longDescription || !gamHandlingModelEvidence(record, record.longDescription))) return null;
   const modelCode = record.model?.match(/\b([a-z]{1,4}\d{2,4})([a-z]{1,3})\b/i);
   if (modelCode?.[1] && modelCode[2]) {
     const variants = `${record.shortDescription ?? ""} ${record.longDescription ?? ""}`.match(new RegExp(`\\b${modelCode[1]}[a-z]{1,3}\\b`, "gi")) ?? [];
@@ -142,7 +157,7 @@ export const gamCleaningCandidate = (record: ProductRecord, attribute: Attribute
   }
   const text = `${record.title}. ${record.shortDescription ?? ""}. ${record.longDescription ?? ""}`;
   if (attribute.name === "Alimentación" && attribute.type === "SELECT") {
-    const value = energy(text);
+    const value = energy(text) ?? batteryFromConfirmedDescription(record);
     return value === null ? null : { key: attribute.name, value };
   }
   if (attribute.name === "Tipo de conductor" && attribute.type === "SELECT") {

@@ -15,6 +15,6 @@ export const resolveCommercialCondition = (record: ProductRecord): { readonly co
   const contradictoryCondition = newEvidence && usedEvidence;
   const condition: ImportCandidate["condition"] = contradictoryCondition ? null :
     record.condition === "Nuevo" || mercaeleva.isNew ? "Nuevo" :
-      record.condition === "Segunda mano" || mercaeleva.isUsed || gomarizUsed ? "Segunda_Mano" : null;
+      record.condition === "Segunda mano" || gam.documentedUsed || mercaeleva.isUsed || gomarizUsed ? "Segunda_Mano" : null;
   return { condition, contradictory: contradictoryCondition };
 };

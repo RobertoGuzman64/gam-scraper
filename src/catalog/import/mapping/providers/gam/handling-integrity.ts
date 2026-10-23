@@ -73,6 +73,21 @@ const capacityMentions = (value: string): readonly number[] => {
   });
 };
 
+const confirmedShortCapacity = (record: ProductRecord): number | null => {
+  const description = record.shortDescription;
+  if (!description || !gamHandlingModelEvidence(record, description)) return null;
+  const text = fold(description);
+  const values = new Set<number>();
+  for (const match of text.matchAll(/\bcapacidad\s+(?:nominal\s+)?(?:de\s+)?carga\s+(?:de\s+)?(hasta\s+)?(\d[\d.,]*)\s*(kg|kilogramos?|toneladas?|t)\b/g)) {
+    if (match[1] || !match[2] || !match[3]) continue;
+    const tail = text.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 45);
+    if (/^(?:\s*[/,-]\s*|\s+(?:o|u|y|a|hasta)\s+)\d[\d.,]*/.test(tail)) return null;
+    const reading = capacity(match[2], match[3]);
+    if (reading !== null) values.add(reading);
+  }
+  return values.size === 1 ? [...values][0] ?? null : null;
+};
+
 const conflictingCapacity = (record: ProductRecord): boolean => {
   const raw = record.specs?.["Capacidad de carga (kg)"];
   const direct = raw === undefined ? null : scalar(raw);
@@ -80,6 +95,8 @@ const conflictingCapacity = (record: ProductRecord): boolean => {
   const declared = typeof direct === "string" ? direct.trim().match(/^(\d[\d.,]*)\s*(kg|kilogramos?)$/i) : null;
   const expected = typeof direct === "number" ? direct : declared?.[1] && declared[2] ? capacity(declared[1], fold(declared[2])) : null;
   if (expected === null) return false;
+  const shortCapacity = confirmedShortCapacity(record);
+  if (shortCapacity !== null && shortCapacity !== expected) return true;
   const sources: readonly (readonly number[])[] = [
     (() => {
       const title = fold(record.title ?? "");

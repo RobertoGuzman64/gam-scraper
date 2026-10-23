@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import type { SpecsMap, SpecValue } from "../../../contracts/catalog.js";
-import { normalizeSpace, fold } from "./text.js";
+import { normalizeSpace } from "./text.js";
+import { extractExplicitTechnicalSpecValues } from "./specification-text.js";
 import { unrelatedDetails } from "./selectors.js";
 
 const mergeSpecValue = (prev: SpecValue | undefined, next: SpecValue): SpecValue => {
@@ -80,18 +81,6 @@ export const extractExplicitTechnicalSpecs = ($: cheerio.CheerioAPI): SpecsMap =
     .filter((_, element) => $(element).closest(unrelatedDetails).length === 0)
     .first();
   const text = [short.text(), $("meta[name='description']").attr("content") ?? ""].filter(Boolean).join("\n");
-  const expressions: readonly { readonly key: string; readonly pattern: RegExp }[] = [
-    { key: "Altura de trabajo", pattern: /\baltura\s+(?:m[aá]xima\s+)?de\s+trabajo\s*[:：]\s*(\d+(?:[.,]\d+)?\s*(?:m|metros?|mm))\b/gi },
-    { key: "Altura de elevación", pattern: /\baltura\s+de\s+elevaci[oó]n\s*[:：]\s*(\d+(?:[.,]\d+)?\s*(?:m|metros?|mm))\b/gi },
-    { key: "Tipo de mástil", pattern: /\btipo\s+de\s+m[aá]stil\s*[:：]\s*(simple|d[uú]plex|tr[ií]plex|cu[aá]druplex)\b/gi }
-  ];
-  const found: Record<string, SpecValue> = {};
-  for (const { key, pattern } of expressions) {
-    const matches = [...text.matchAll(pattern)].map((match) => normalizeSpace(match[1] ?? ""));
-    if (matches.length && matches.every((value) => fold(value) === fold(matches[0] ?? ""))) {
-      found[key] = matches[0]!;
-    }
-  }
-  return found;
+  return extractExplicitTechnicalSpecValues(text);
 };
 

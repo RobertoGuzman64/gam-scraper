@@ -135,3 +135,43 @@ test("GAM: un atributo técnico publicado solo en productos relacionados no se a
   assert.equal(parsed.specs["Altura de trabajo"], undefined);
   assert.equal(parsed.specs["Tipo de mástil"], undefined);
 });
+
+test("GAM: recupera dimensiones y rotación explícitas solo de la ficha principal cuando faltan especificaciones", () => {
+  const html = fixture(`<section class="product-description-short">
+    <p>Dimensiones Cesta: 1,83 x 0,76 metros; Rotación de torreta: 700º.</p>
+  </section>`);
+  const parsed = parseProductPage(html, base);
+  assert.equal(parsed.specs["Dimensiones Cesta"], "1,83 x 0,76 metros");
+  assert.equal(parsed.specs["Rotación de torreta"], "700º");
+  const three = parseProductPage(fixture(`<meta name="description" content="Medidas de la cesta: 140x70x110 cm; Rotación de la torreta: 320°."/>`), base);
+  assert.equal(three.specs["Dimensiones Cesta"], "140x70x110 cm");
+  assert.equal(three.specs["Rotación de torreta"], "320°");
+});
+
+test("GAM: las unidades ausentes, las rotaciones compuestas y las dimensiones corruptas no se reconstruyen", () => {
+  const html = fixture(`<section class="product-description-short">
+    <p>Dimensiones Cesta: 1 76 83X0 metros; Rotación de torreta: 190º+190º.</p>
+  </section>`);
+  const parsed = parseProductPage(html, base);
+  assert.equal(parsed.specs["Dimensiones Cesta"], undefined);
+  assert.equal(parsed.specs["Rotación de torreta"], undefined);
+  const units = parseProductPage(fixture(`<meta name="description" content="Dimensiones Cesta: 1,83 x 0,76; Rotación de torreta: 700º+20º."/>`), base);
+  assert.equal(units.specs["Dimensiones Cesta"], undefined);
+  assert.equal(units.specs["Rotación de torreta"], undefined);
+});
+
+test("GAM: no decide entre medidas explícitas contradictorias ni sustituye valores estructurados", () => {
+  const conflicting = fixture(`<section class="product-description-short">
+    Dimensiones Cesta: 1,83 x 0,76 metros; Dimensiones Cesta: 2,4 x 1,17 metros;
+    Rotación de torreta: 320º; Rotación de torreta: 700º.
+  </section>`);
+  assert.equal(parseProductPage(conflicting, base).specs["Dimensiones Cesta"], undefined);
+  assert.equal(parseProductPage(conflicting, base).specs["Rotación de torreta"], undefined);
+  const structured = fixture(`<section class="product-description-short">
+    Dimensiones Cesta: 1,83 x 0,76 metros; Rotación de torreta: 320º.
+  </section><dl><dt>Dimensiones Cesta</dt><dd>1 76 83X0 metros</dd>
+    <dt>Rotación de torreta</dt><dd>190º+190º</dd></dl>`);
+  const parsed = parseProductPage(structured, base);
+  assert.equal(parsed.specs["Dimensiones Cesta"], "1 76 83X0 metros");
+  assert.equal(parsed.specs["Rotación de torreta"], "190º+190º");
+});

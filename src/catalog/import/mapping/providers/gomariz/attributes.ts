@@ -1,7 +1,7 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import type { Attribute, Candidate } from "../../attribute-types.js";
 import { fold, scalar, numberToken } from "../../attribute-utils.js";
-import { invalidGomarizPlatformHeight } from "../../../../normalization/gomariz-technical.js";
+import { invalidGomarizPlatformHeight, verifiedGomarizPlatformHeight } from "../../../../normalization/gomariz-technical.js";
 import { gomarizElevationCandidate } from "./elevation.js";
 import { gomarizIndustrialCandidate, gomarizTowerPower } from "./industrial.js";
 
@@ -57,7 +57,7 @@ export const convertGomarizCandidate = (
   record: ProductRecord, attribute: Attribute, candidate: Candidate, fallback: string | number | boolean | null
 ): string | number | boolean | null => {
   if (attribute.name === "Altura de plataforma" && candidate.key === "Altura plataforma" &&
-    invalidGomarizPlatformHeight(record.url, record.specs ?? {})) return null;
+    invalidGomarizPlatformHeight(record.url, record.specs ?? {})) return verifiedGomarizPlatformHeight(record);
   if (attribute.name === "Capacidad del depósito" &&
     ["Capacidad", "Capacidad del depósito"].includes(candidate.key) &&
     attribute.type === "NUMBER" && typeof candidate.value === "string") {

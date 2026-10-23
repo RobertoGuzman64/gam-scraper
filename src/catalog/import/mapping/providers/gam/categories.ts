@@ -107,6 +107,11 @@ const gamDocumentedCategory = (record: ProductRecord, parent: string, title: str
     return /\bfregadora industrial\b/.test(short) && !/\bbarredora\b/.test(combined)
       ? "fregadora-industrial" : null;
   }
+  if (parent === "plataformas-elevadoras-bravi" && record.categoryKey === "elevacion-nueva" &&
+    /\bplataforma elevadora\b/.test(title) && /\bleonardo hd\b/.test(title) &&
+    /\bleonardo hd\b/.test(fold(typeof record.specs?.["Modelo"] === "string" ? record.specs["Modelo"] : "")) &&
+    /\bun unico operario\b/.test(long) && motor === "electrico" &&
+    !/\b(?:diesel|glp|gasolina|hibrid[oa])\b/.test(combined)) return "plataforma-unipersonal-electrica";
   if (parent === "bravi" && /\bplataforma elevadora\b/.test(title) &&
     /\bplataforma unipersonal electrica\b/.test(long) && motor === "electrico" &&
     !/\b(?:diesel|glp|hibrida)\b/.test(combined)) return "plataforma-unipersonal-electrica";
@@ -213,6 +218,19 @@ const gamHandlingCategory = (record: ProductRecord, parent: string, title: strin
   if ((manual || specManual) && transpaleta && parent === "transpaletas-yale" &&
     /\btranspaletas? motorizadas?\b/.test(fold(record.longDescription ?? "")) &&
     /\b24\s*v\b/.test(fold(typeof specs["Capacidad de la batería"] === "string" ? specs["Capacidad de la batería"] : ""))) return null;
+  if (parent === "transpaletas-yale" && record.categoryKey === "marcas-nuevas" &&
+    /\btranspaleta\b/.test(title) && /\bmp20\s*xv\b/.test(title)) {
+    const model = specs["Modelo"];
+    const battery = specs["Capacidad de la batería"];
+    const long = fold(record.longDescription ?? "");
+    const combined = `${title} ${short} ${long} ${drive}`;
+    return /\bmp20\s*xv\b/.test(fold(typeof model === "string" ? model : "")) &&
+      /\bplataforma de trabajo a bordo\b/.test(short) &&
+      /\bmp20\s*xv\b/.test(long) &&
+      /\b24\s*v\b/.test(fold(typeof battery === "string" ? battery : "")) &&
+      !/\b(?:manual|diesel|glp|gasolina|hibrid[oa]|semi[ -]?electric[oa])\b/.test(combined) &&
+      (drive === "" || /\belectric[oa]\b/.test(drive)) ? "transpaleta-electrica" : null;
+  }
   if (manual || specManual) return apilador ? "apilador-manual" : "transpaleta-manual";
   if (electric) return apilador ? "apilador-electrico" : "transpaleta-electrica";
   if (parent === "transpaletas-yale" && record.categoryKey === "marcas-nuevas" &&

@@ -8,7 +8,14 @@ export const gomarizCategorySlug = (record: ProductRecord, path: readonly string
     const motor = fold(String(record.specs?.Motor ?? ""));
     const advertisedPower = energy(`${record.title ?? ""} ${path.at(-1) ?? ""}`);
     const motorPower = energy(motor);
-    const power = motor ? (advertisedPower && advertisedPower !== motorPower ? null : motorPower) : advertisedPower;
+    const documentedDiesel = !motor && !advertisedPower &&
+      ["brazo-articulado", "brazo-articulado-boom-lift"].includes(family) &&
+      fold(record.brand ?? "") === "jlg" && fold(record.model ?? "") === "340aj" &&
+      fold(record.title ?? "") === "jlg 340aj" &&
+      /\blas articuladas diesel\b/.test(fold(record.longDescription ?? ""));
+    // https://www.gomarizrent.com/wp-content/uploads/2024/04/FICHA-TECNICA-340AJ.pdf
+    const power = motor ? (advertisedPower && advertisedPower !== motorPower ? null : motorPower) :
+      advertisedPower ?? (documentedDiesel ? "diesel" : null);
     if (family === "elevador-tijera" && power) return power === "electric"
       ? "plataformas-tijera-electricas-segunda-mano" : "plataformas-tijera-diesel-segunda-mano";
     if (["brazo-articulado", "brazo-articulado-boom-lift"].includes(family) && power) return power === "electric"

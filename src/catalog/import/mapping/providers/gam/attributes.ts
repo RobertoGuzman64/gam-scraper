@@ -31,8 +31,17 @@ export const applyGamAliasesDetailed = (record: ProductRecord, attribute: Attrib
     const path = url.pathname.split("/").filter(Boolean);
     if (url.hostname === "online.gamrentals.com" && path[0] === "es") family = path[1] ?? "";
   } catch { family = ""; }
-  if (["Altura de trabajo", "Altura de plataforma", "Alcance horizontal", "Altura de elevación"].includes(attribute.name) &&
-    gamElevationIdentityConflict(record)) return "rejected";
+  if (gamElevationIdentityConflict(record)) {
+    if (["Altura de trabajo", "Altura de plataforma", "Alcance horizontal", "Altura de elevación"].includes(attribute.name)) {
+      return "rejected";
+    }
+    if (["Capacidad de la cesta", "Dimensiones de la cesta", "Pendiente superable"].includes(attribute.name)) {
+      const published = Object.keys(record.specs ?? {}).some((key) =>
+        keys.has(fold(key)) || keys.has(fold(SPEC_KEY_NORMALIZATION[fold(key)] ?? key))
+      );
+      if (published || gamElevationCandidate(record, attribute)) return "rejected";
+    }
+  }
   if (family && attribute.name === "Altura de trabajo" && attribute.type === "NUMBER") {
     const hasDirectValue = Object.entries(record.specs ?? {}).some(([key, value]) =>
       (keys.has(fold(key)) || keys.has(fold(SPEC_KEY_NORMALIZATION[fold(key)] ?? key))) && scalar(value) !== null

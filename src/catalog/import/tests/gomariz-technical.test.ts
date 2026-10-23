@@ -82,7 +82,7 @@ test("Gomariz: preparación del catálogo real sin inventar valores ni perder re
     if (["CC1535", "CC1666"].includes(record.reference ?? "") &&
       record.specs?.["Altura plataforma"] === record.specs?.["Altura almacenaje"] &&
       record.specs?.["Altura de trabajo"] === "20 m") {
-      assert.equal(value(record, "Altura de plataforma"), null);
+      assert.equal(value(record, "Altura de plataforma"), 17.6);
       assert.equal(value(record, "Altura de trabajo"), 20);
     }
   }
@@ -116,11 +116,11 @@ test("Gomariz: el catálogo original conserva las incidencias reales sin inventa
     const record = byReference.get(reference);
     assert.ok(record);
     const prepared = prepareProduct(record, catalog);
-    assert.ok(prepared.issues.includes("Atributo no normalizable: Altura de plataforma"), reference);
-    assert.equal(value(record, "Altura de plataforma"), null);
-    assert.equal(prepared.status, "review");
+    assert.ok(!prepared.issues.includes("Atributo no normalizable: Altura de plataforma"), reference);
+    assert.equal(value(record, "Altura de plataforma"), 17.6);
+    assert.equal(prepared.status, "ready");
   }
-  for (const reference of ["5051BDX", "1011JFB", "BA1522", "RE454", "PV556", "BA1358"]) {
+  for (const reference of ["5051BDX", "1011JFB", "RE454", "PV556"]) {
     const record = byReference.get(reference);
     assert.ok(record);
     const prepared = prepareProduct(record, catalog);
