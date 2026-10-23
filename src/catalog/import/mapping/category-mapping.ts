@@ -74,13 +74,28 @@ export const isLeafCategoryForCondition = (
   return false;
 };
 
+const leafCategoriesByCatalog = new WeakMap<ImportCatalog["categories"], Partial<Record<ImportableCondition, readonly Category[]>>>();
+
+const leafCategories = (categories: ImportCatalog["categories"], condition: ImportableCondition): readonly Category[] => {
+  let byCondition = leafCategoriesByCatalog.get(categories);
+  if (!byCondition) {
+    byCondition = {};
+    leafCategoriesByCatalog.set(categories, byCondition);
+  }
+  const cached = byCondition[condition];
+  if (cached) return cached;
+  const resolved = categories.filter((category) => isLeafCategoryForCondition(category.id, categories, condition));
+  byCondition[condition] = resolved;
+  return resolved;
+};
+
 export const resolveCategory = (
   record: ProductRecord, categories: ImportCatalog["categories"],
   condition: ImportCandidate["condition"] = record.condition === "Nuevo" ? "Nuevo" :
     record.condition === "Segunda mano" ? "Segunda_Mano" : null
 ): Category | null => {
   if (condition === null) return null;
-  const leaf = categories.filter((category) => isLeafCategoryForCondition(category.id, categories, condition));
+  const leaf = leafCategories(categories, condition);
   const sourceSlug = condition === "Nuevo"
     ? record.providerId === "mercaeleva" ? mercaelevaNewCategorySlug(record) : newCategorySlug(record)
     : sourceCategorySlug(record);
