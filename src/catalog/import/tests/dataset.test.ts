@@ -34,7 +34,7 @@ const auditedRoot = process.env.SCRAPER_AUDIT_DATA;
 const audited = auditedRoot && auditedRoot.trim() ? auditedRoot.trim() : null;
 
 for (const company of ["gam", "gomariz", "mercaeleva"]) {
-  test(`preparación offline real de ${company} (si están disponibles los CSV de auditoría)`, { skip: audited === null }, async () => {
+  test(`preparación offline real de ${company} (si están disponibles los CSV de auditoría)`, { skip: audited === null ? "SCRAPER_AUDIT_DATA no configurada; CSV de auditoría opcionales" : false }, async () => {
     if (!audited) return;
     const outputPrefix = getProvider(company).defaultOptions.outPrefix;
     const current = join(audited, company, `${outputPrefix}-all.csv`);
