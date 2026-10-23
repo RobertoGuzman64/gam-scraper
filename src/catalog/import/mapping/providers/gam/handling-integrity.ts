@@ -62,12 +62,14 @@ const capacity = (raw: string, unit: string): number | null => {
   return kilograms >= 50 && kilograms <= 100000 ? kilograms : null;
 };
 
+const capacityPattern = /\bcapacidad\s+(?:(?:nominal\s+)?(?:de\s+)?carga|nominal)\s+(?:de\s+)?(hasta\s+)?(\d[\d.,]*)\s*(kg|kilogramos?|toneladas?|t)\b/g;
+
 const capacityMentions = (value: string): readonly number[] => {
   const text = fold(value);
-  const matches = [...text.matchAll(/\bcapacidad\s+(?:nominal\s+)?(?:de\s+)?carga\s+(?:de\s+)?(hasta\s+)?(\d[\d.,]*)\s*(kg|kilogramos?|toneladas?|t)\b/g)];
+  const matches = [...text.matchAll(capacityPattern)];
   return matches.flatMap((match) => {
     const tail = text.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 42);
-    if (/^(?:\s*[/,-]\s*|\s+(?:o|u|y|a)\s+)\d[\d.,]*/.test(tail)) return [];
+    if (match[1] || /^(?:\s*[/,-]\s*|\s+(?:o|u|y|a|hasta)\s+)\d[\d.,]*/.test(tail)) return [];
     const result = match[2] && match[3] ? capacity(match[2], match[3]) : null;
     return result === null ? [] : [result];
   });
@@ -78,7 +80,7 @@ const confirmedShortCapacity = (record: ProductRecord): number | null => {
   if (!description || !gamHandlingModelEvidence(record, description)) return null;
   const text = fold(description);
   const values = new Set<number>();
-  for (const match of text.matchAll(/\bcapacidad\s+(?:nominal\s+)?(?:de\s+)?carga\s+(?:de\s+)?(hasta\s+)?(\d[\d.,]*)\s*(kg|kilogramos?|toneladas?|t)\b/g)) {
+  for (const match of text.matchAll(capacityPattern)) {
     if (match[1] || !match[2] || !match[3]) continue;
     const tail = text.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 45);
     if (/^(?:\s*[/,-]\s*|\s+(?:o|u|y|a|hasta)\s+)\d[\d.,]*/.test(tail)) return null;
@@ -89,6 +91,9 @@ const confirmedShortCapacity = (record: ProductRecord): number | null => {
 };
 
 const conflictingCapacity = (record: ProductRecord): boolean => {
+  const statements = [record.shortDescription, record.longDescription]
+    .filter((description): description is string => typeof description === "string" && gamHandlingModelEvidence(record, description));
+  if (statements.some((description) => new Set(capacityMentions(description)).size > 1)) return true;
   const raw = record.specs?.["Capacidad de carga (kg)"];
   const direct = raw === undefined ? null : scalar(raw);
   if (typeof direct !== "string" && typeof direct !== "number") return false;

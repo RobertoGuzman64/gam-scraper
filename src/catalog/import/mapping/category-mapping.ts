@@ -27,7 +27,7 @@ const sourceCategorySlug = (record: ProductRecord): string | null => {
 const contradictsMappedCategory = (record: ProductRecord, slug: string): boolean => {
   if (record.providerId !== "gam") return false;
   if (slug === "furgonetas-electricas-segunda-mano") {
-    const description = fold(`${record.title ?? ""} ${record.shortDescription ?? ""}`);
+    const description = fold(`${record.title ?? ""} ${record.shortDescription ?? ""} ${record.longDescription ?? ""}`);
     if (/\b(?:es un cuatriciclo|cuatriciclo electrico|cuatriciclo de carga)\b/.test(description)) return true;
   }
   const expected = /(?:^|-)diesel(?:-|$)/.test(slug) ? "diesel" :

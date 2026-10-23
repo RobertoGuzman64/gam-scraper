@@ -119,8 +119,62 @@ const configuredWidthMatchesOptions = (record: ProductRecord, expected: number, 
   });
 };
 
+const configuredWorkWidth = (record: ProductRecord): number | null => {
+  if (cleaningFamily(record) !== "fregadora") return null;
+  const model = foldText(record.model ?? "").trim();
+  const suffix = /(?:^|\s)d(\d{2})$/.exec(model)?.[1];
+  if (!suffix) return null;
+  const chosen = Number(suffix) * 10;
+  const title = foldText(record.title ?? "");
+  const description = foldText(record.longDescription ?? "");
+  const modelPattern = new RegExp(`(?:^|[^a-z0-9])${model.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![a-z0-9])`);
+  if (!modelPattern.test(title) || !modelPattern.test(description)) return null;
+
+  const widthKeys = Object.keys(record.specs ?? {}).filter((key) =>
+    /^(?:anchura trabajo|ancho de trabajo)(?: \(mm\))?$/.test(foldText(key))
+  );
+  if (widthKeys.length !== 1 || foldText(widthKeys[0] ?? "") !== "anchura trabajo") return null;
+  const rawSource = record.specs?.["Anchura trabajo"];
+  if (rawSource === undefined) return null;
+  const rawWidth = scalar(rawSource);
+  if (typeof rawWidth !== "string") return null;
+  const specMatch = rawWidth.trim().match(/^(\d[\d.,]*)\s*(mm|cm|metros?|m)$/i);
+  if (!specMatch?.[1] || !specMatch[2]) return null;
+  const published = widthMillimetres(specMatch[1], foldText(specMatch[2]));
+  if (published === null) return null;
+
+  const alternatives = [...description.matchAll(/\btrayectoria de limpieza que varia entre\s+(\d[\d.,]*)\s*(mm|cm|metros?|m)\s+y\s+(\d[\d.,]*)\s*(mm|cm|metros?|m)\b/g)];
+  if (alternatives.length !== 1) return null;
+  const first = alternatives[0]?.[1] && alternatives[0]?.[2]
+    ? widthMillimetres(alternatives[0][1], alternatives[0][2]) : null;
+  const second = alternatives[0]?.[3] && alternatives[0]?.[4]
+    ? widthMillimetres(alternatives[0][3], alternatives[0][4]) : null;
+  if (first === null || second === null || first === second || ![first, second].includes(chosen)) return null;
+  const declaredWorkWidths = /\b(?:ancho|anchura) de (?:trabajo|barrido|fregado|limpieza)\s+(?:de\s+)?(\d[\d.,]*)\s*(mm|cm|metros?|m)\b/g;
+  for (const source of [record.shortDescription ?? "", record.longDescription ?? ""]) {
+    if (!modelPattern.test(foldText(source))) continue;
+    for (const match of foldText(source).matchAll(declaredWorkWidths)) {
+      const value = match[1] && match[2] ? widthMillimetres(match[1], match[2]) : null;
+      if (value === null || ![first, second].includes(value)) return null;
+    }
+  }
+
+  const squeegees = [...description.matchAll(/\bbayeta de (?:hasta )?(\d[\d.,]*)\s*(mm|cm|metros?|m) de ancho\b/g)];
+  if (squeegees.length !== 1 || !squeegees[0]?.[1] || !squeegees[0][2]) return null;
+  const squeegee = widthMillimetres(squeegees[0][1], squeegees[0][2]);
+  if (squeegee === null) return null;
+  const numericPrecision = specMatch[1].split(/[.,]/).at(-1)?.length ?? 0;
+  const decimals = /[.,]/.test(specMatch[1]) ? numericPrecision : 0;
+  const unitMillimetres = specMatch[2].toLowerCase() === "mm" ? 1 : specMatch[2].toLowerCase() === "cm" ? 10 : 1000;
+  const roundingTolerance = unitMillimetres / 10 ** decimals / 2;
+  if (Math.abs(squeegee - published) >= roundingTolerance || Math.abs(chosen - published) <= roundingTolerance) return null;
+  return chosen;
+};
+
+export const gamCleaningCorrectedWidth = (record: ProductRecord): number | null => configuredWorkWidth(record);
+
 export const gamCleaningWidthConflicts = (record: ProductRecord): boolean => {
-  if (!cleaningFamily(record)) return false;
+  if (!cleaningFamily(record) || configuredWorkWidth(record) !== null) return false;
   const source = record.specs?.["Anchura trabajo"];
   if (source === undefined) return false;
   const raw = scalar(source);

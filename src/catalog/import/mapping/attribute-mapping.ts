@@ -121,7 +121,7 @@ export const resolveAttribute = (record: ProductRecord, attribute: Attribute): A
   if (candidates.length === 0) return { status: ambiguousSource ? "rejected" : "not_observed", value: null };
   const converted = candidates.map((candidate) => {
     const fallback = convert(candidate.value, candidate.key, attribute);
-    if (record.providerId === "gam") return convertGamCandidate(attribute, candidate, fallback);
+    if (record.providerId === "gam") return convertGamCandidate(record, attribute, candidate, fallback);
     if (record.providerId === "gomariz") return convertGomarizCandidate(record, attribute, candidate, fallback);
     if (record.providerId === "mercaeleva") return normalizeMercaelevaCandidate(attribute, candidate, fallback);
     return fallback;

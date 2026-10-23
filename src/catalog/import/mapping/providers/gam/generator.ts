@@ -25,7 +25,12 @@ export const isGamGenerator = (record: ProductRecord): boolean => {
   } catch {
     return false;
   }
-  return /^grupos-electrogenos-|^generadores-electricos-segunda-mano$/.test(section);
+  if (/^grupos-electrogenos-|^generadores-electricos-segunda-mano$/.test(section)) return true;
+  if (section !== "pramac" || record.categoryKey !== "otros-nuevos" || fold(record.brand ?? "") !== "pramac") return false;
+  const title = record.title?.match(/^Grupo electr[oó]geno\s+(PRAMAC)\s+([a-z0-9-]+)\s+\d[\d.,]*\s*kVA\s*$/i);
+  return !!title?.[2] && fold(title[2]) === fold(record.model ?? "") &&
+    typeof record.specs?.["Marca"] === "string" && fold(record.specs["Marca"]) === "pramac" &&
+    typeof record.specs?.["Modelo"] === "string" && fold(record.specs["Modelo"]) === fold(title[2]);
 };
 
 export const gamGeneratorCandidate = (record: ProductRecord, attribute: Attribute): Candidate | null => {

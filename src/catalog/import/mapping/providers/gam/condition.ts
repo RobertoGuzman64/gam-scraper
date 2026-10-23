@@ -13,10 +13,12 @@ export const gamConditionEvidence = (record: ProductRecord): { readonly isNew: b
   const short = fold(record.shortDescription ?? "");
   const model = record.specs?.["Modelo"];
   const normalizedModel = typeof model === "string" ? fold(model) : "";
+  const contradictoryUsedTitle = record.providerId === "gam" && record.condition === "Nuevo" &&
+    /\b(?:de )?segunda mano\b/.test(fold(record.title ?? ""));
   const documentedUsed = record.providerId === "gam" && gamCategory === "manutencion" && gamPath === "barredoras" &&
     /\bbarredora\b/.test(fold(record.title ?? "")) && normalizedModel.length >= 4 &&
     fold(record.title ?? "").includes(normalizedModel) && short.includes(normalizedModel) &&
     /\bde segunda mano\b.*\bventa\b/.test(short) &&
     !/\b(?:nuev[oa]s?|sin estrenar)\b/.test(short);
-  return { isNew: gamNewSection, isUsed: gamUsedSection || documentedUsed, documentedUsed };
+  return { isNew: gamNewSection, isUsed: gamUsedSection || documentedUsed || contradictoryUsedTitle, documentedUsed };
 };

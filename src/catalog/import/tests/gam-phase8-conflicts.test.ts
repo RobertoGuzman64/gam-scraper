@@ -44,7 +44,7 @@ test("GAM: alturas, anchos y radios de giro ambiguos conservan sus rechazos", ()
   for (const code of ["6702", "5275", "6887", "5864", "3134", "6236", "6764"]) {
     assert.equal(status(code, "Altura de elevación"), "contradiction", code);
   }
-  for (const code of ["4024", "3997", "4005", "4002", "4004"]) {
+  for (const code of ["4024", "3997", "4005", "4004"]) {
     assert.equal(status(code, "Ancho de trabajo"), "contradiction", code);
   }
   for (const code of ["2285", "2286", "2287", "2288", "2289", "2290", "5996"]) {

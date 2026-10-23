@@ -96,6 +96,18 @@ const gamDocumentedCategory = (record: ProductRecord, parent: string, title: str
       !/\b(?:diesel|electrica|hibrida)\b/.test(combined)
       ? "carretilla-elevadora-glp" : null;
   }
+  if (record.categoryKey === "carretillas-nuevas" && record.condition === "Nuevo" &&
+    parent === "carretillas-elevadoras-diesel-hyster" && title === "carretilla elevadora hyster h9xdl6") {
+    const model = record.specs?.["Modelo"];
+    const drive = record.specs?.["Motorización"];
+    return typeof model === "string" && fold(model) === "h9xdl6" &&
+      /\bh9xdl6\b/.test(short) && /\bh9xdl6\b/.test(long) &&
+      /\bmotor diesel cummins qsb6[.,]7\b/.test(long) &&
+      !/\b(?:glp|lpg|gasolina|hibrid[oa]|electric[oa]s?)\b/.test(combined) &&
+      (motor === "" || motor === "diesel") &&
+      (drive === undefined || (typeof drive === "string" && fold(drive) === "diesel"))
+      ? "carretilla-elevadora-diesel" : null;
+  }
   if (parent === "carretillas-elevadoras-electricas-hyster" &&
     /\bcarretilla elevadora\b/.test(title) && !/\belectrica\b/.test(title) &&
     !/\b(?:diesel|glp|hibrida)\b/.test(combined)) {

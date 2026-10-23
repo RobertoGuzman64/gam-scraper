@@ -3,8 +3,9 @@ import { SPEC_KEY_NORMALIZATION } from "../../../../normalization/spec-rules.js"
 import type { AliasOutcome, Attribute, Candidate } from "../../attribute-types.js";
 import { fold, basketDimensions, numberToken, scalar } from "../../attribute-utils.js";
 import { gamWorkingHeightFromDescription } from "./working-height.js";
+import { gamBasketDimensionsFromDescription } from "./basket.js";
 import { gamElevationIdentityConflict } from "./elevation-identity.js";
-import { gamCleaningCandidate, gamCleaningWidthConflicts } from "./cleaning.js";
+import { gamCleaningCandidate, gamCleaningCorrectedWidth, gamCleaningWidthConflicts } from "./cleaning.js";
 import { gamHandlingCandidate, normalizeGamMast } from "./handling.js";
 import { gamHandlingAttributeConflicts } from "./handling-integrity.js";
 import { gamElevationCandidate, gamElevationHeightConflicts } from "./elevation.js";
@@ -32,6 +33,7 @@ export const applyGamAliasesDetailed = (record: ProductRecord, attribute: Attrib
     if (url.hostname === "online.gamrentals.com" && path[0] === "es") family = path[1] ?? "";
   } catch { family = ""; }
   if (gamElevationIdentityConflict(record)) {
+    if (attribute.name === "Modelo") return "rejected";
     if (["Altura de trabajo", "Altura de plataforma", "Alcance horizontal", "Altura de elevación"].includes(attribute.name)) {
       return "rejected";
     }
@@ -120,18 +122,22 @@ export const isGamUnmeasuredNumeric = (attribute: Attribute, value: string | num
 };
 
 export const convertGamCandidate = (
-  attribute: Attribute, candidate: Candidate, fallback: string | number | boolean | null
+  record: ProductRecord, attribute: Attribute, candidate: Candidate, fallback: string | number | boolean | null
 ): string | number | boolean | null => {
   if (attribute.name === "Tipo de mástil" && attribute.type === "SELECT") return normalizeGamMast(fallback);
   if (attribute.name === "Ancho de trabajo" && attribute.unit_option === "mm" && typeof fallback === "number") {
-    return Math.round(fallback * 1000) / 1000;
+    return gamCleaningCorrectedWidth(record) ?? Math.round(fallback * 1000) / 1000;
   }
   if (attribute.name === "Centro de carga" && attribute.unit_option === "mm" &&
     fallback === null && typeof candidate.value === "string") {
     const duplicatedUnit = candidate.value.trim().match(/^([\d.,\s]+)\s*mm\s+mm$/i);
     if (duplicatedUnit?.[1]) return numberToken(duplicatedUnit[1]);
   }
-  if (attribute.name === "Dimensiones de la cesta") return basketDimensions(candidate.value);
+  if (attribute.name === "Dimensiones de la cesta") {
+    const normalized = basketDimensions(candidate.value);
+    if (normalized !== null || typeof candidate.value !== "string") return normalized;
+    return gamBasketDimensionsFromDescription(record, candidate.value);
+  }
   if (attribute.name === "Rotación de torreta" && attribute.type === "NUMBER" && attribute.unit_option === "grados" &&
     typeof candidate.value === "string") {
     const angle = candidate.value.trim().match(/^(\d+(?:[.,]\d+)?)\s*[°º]$/);

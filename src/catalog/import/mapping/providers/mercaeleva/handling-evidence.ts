@@ -69,6 +69,42 @@ const sourceMeasurements = (record: ProductRecord, attribute: Attribute): readon
   return [];
 };
 
+const singleKilogramAmount = (text: string): number | null => {
+  const matches = [...fold(text).matchAll(/\b(\d{1,3}(?:[. ]\d{3})+|\d{3,5})\s*kg\b/g)];
+  return matches.length === 1 && matches[0]?.[1] ? numberToken(matches[0][1]) : null;
+};
+
+export const mercaelevaMislabelledCapacity = (record: ProductRecord): boolean => {
+  if (!validMercaelevaTechnicalSource(record)) return false;
+  const title = fold(record.title ?? "");
+  const additional = record.specs?.["Título adicional"];
+  const description = fold(record.longDescription ?? "");
+  if (typeof additional !== "string" || !/\bcarretilla\b/.test(title) ||
+    !/\bcarretilla\b/.test(fold(additional)) || !/\bcarretilla\b/.test(description)) return false;
+  if (!record.brand?.trim() || !record.model?.trim() ||
+    !title.includes(fold(record.brand)) || !title.includes(fold(record.model)) ||
+    !description.includes(fold(record.brand)) || !description.includes(fold(record.model))) return false;
+  const titleLoad = singleKilogramAmount(title);
+  if (titleLoad === null || titleLoad <= 0 ||
+    singleKilogramAmount(additional) !== titleLoad || singleKilogramAmount(description) !== titleLoad) return false;
+  if (record.shortDescription?.trim() && singleKilogramAmount(record.shortDescription) !== titleLoad) return false;
+  const sourceCapacity = record.specs?.["Capacidad máxima de elevación"];
+  if (typeof sourceCapacity !== "string") return false;
+  const specification = /^(\d{1,3}(?:[. ]\d{3})+|\d{3,5})\s*kg$/i.exec(sourceCapacity.trim());
+  if (!specification?.[1]) return false;
+  const publishedLoad = numberToken(specification[1]);
+  if (publishedLoad === null || publishedLoad === titleLoad) return false;
+  const heights = [...description.matchAll(/\baltura\s+(?:de\s+)?(?:trabajo|elevacion)\s*:?\s*(\d{1,3}(?:[. ]\d{3})+|\d{3,5})\s*mm\b/g)];
+  if (heights.length !== 1 || !heights[0]?.[1] || numberToken(heights[0][1]) !== publishedLoad) return false;
+  const declaredHeight = record.specs?.["Altura máxima de elevación"];
+  if (declaredHeight !== undefined) {
+    if (typeof declaredHeight !== "string") return false;
+    const parsed = /^(\d{1,3}(?:[. ]\d{3})+|\d{3,5})\s*mm$/i.exec(declaredHeight.trim());
+    if (!parsed?.[1] || numberToken(parsed[1]) !== publishedLoad) return false;
+  }
+  return true;
+};
+
 export const mercaelevaHandlingEvidence = (
   record: ProductRecord, attribute: Attribute
 ): { safe: true; candidate: Candidate | null } | { safe: false; candidate: null; reason: "contradiction" | "rejected" } => {

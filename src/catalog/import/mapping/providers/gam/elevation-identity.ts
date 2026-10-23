@@ -36,7 +36,7 @@ export const gamElevationIdentityConflict = (record: ProductRecord): boolean => 
   const expected = normalizeVariant(model);
   const precise = !/\d\s+[a-z]/i.test(record.model);
   return precise && titleTokens.length > 0 && shortTokens.length > 0 &&
-    [...titleTokens, ...shortTokens].every((token) => {
+    [...titleTokens, ...shortTokens].some((token) => {
       const candidate = normalizeVariant(token);
       return /[a-z]$/.test(candidate) && candidate !== expected && !expected.startsWith(candidate);
     });

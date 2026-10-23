@@ -34,7 +34,7 @@ test("GAM: variante 70 y especificaciÃ³n coinciden con una de dos anchuras explÃ
 });
 
 test("GAM: dimensiones de limpieza incompatibles o versiones sin confirmar siguen bloqueadas", () => {
-  for (const code of ["4024", "3997", "4005", "4002", "4004"]) {
+  for (const code of ["4024", "3997", "4005", "4004"]) {
     assert.equal(resolveAttribute(reference(code), attribute("Ancho de trabajo")).status, "contradiction", code);
   }
 });

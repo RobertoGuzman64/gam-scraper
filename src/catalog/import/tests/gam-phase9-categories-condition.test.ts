@@ -69,3 +69,32 @@ test("GAM: categorías sin equivalente siguen sin forzarse a otra familia", () =
     assert.equal(categorySlug(reference(code)), null, code);
   }
 });
+
+
+test("GAM Hyster H9XDL6: recupera diésel solo con evidencia completa del modelo", () => {
+  const record = reference("2172");
+  const prepared = prepareProduct(record, catalog);
+  assert.equal(categorySlug(record), "carretilla-elevadora-diesel");
+  assert.equal(prepared.status, "ready");
+  assert.deepEqual(prepared.issues, []);
+  assert.equal(categorySlug({ ...record, specs: { ...record.specs, Modelo: "H9.0FT" } }), null);
+  assert.equal(categorySlug({ ...record, specs: { ...record.specs, "Tipo motor": "GLP" } }), null);
+  assert.equal(categorySlug({ ...record, specs: { ...record.specs, Motorización: "Eléctrico" } }), null);
+  assert.equal(categorySlug({ ...record, longDescription: "La Hyster H9XDL6 está disponible en versiones diésel y GLP" }), null);
+  assert.equal(categorySlug({ ...record, longDescription: "Motor diésel Cummins QSB6.7 para Hyster H9.0FT" }), null);
+  assert.equal(categorySlug({ ...record, shortDescription: "Carretilla de gran capacidad Hyster" }), null);
+  assert.equal(categorySlug({ ...record, title: "Carretilla elevadora Hyster H9.0FT" }), null);
+  assert.equal(categorySlug({ ...record, categoryKey: "marcas-nuevas" }), null);
+  assert.equal(categorySlug({ ...record, condition: "Segunda mano" }), null);
+  assert.equal(categorySlug({ ...record, url: record.url.replace("carretillas-elevadoras-diesel-hyster", "carretillas-elevadoras-electricas-hyster") }), null);
+  assert.equal(categorySlug({ ...record, providerId: "gomariz" }), null);
+});
+
+test("GAM: familias nuevas sin equivalente y motorizaciones contradictorias permanecen bloqueadas", () => {
+  for (const code of ["2134", "2135", "2373", "2364", "3425", "3436", "3312", "6182", "1884", "3309", "239", "238", "5", "8", "2312", "2314", "4778", "6874", "6953"]) {
+    const record = reference(code);
+    const prepared = prepareProduct(record, catalog);
+    assert.equal(categorySlug(record), null, code);
+    assert.ok(prepared.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"), code);
+  }
+});
