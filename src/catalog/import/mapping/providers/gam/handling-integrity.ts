@@ -122,6 +122,16 @@ const conflictingCapacity = (record: ProductRecord): boolean => {
   return [...differing.values()].some((count) => count >= 2);
 };
 
+export const gamHandlingAmbiguousCapacity = (record: ProductRecord): boolean => {
+  if (!relevantGamHandlingRecord(record)) return false;
+  if (Object.entries(record.specs ?? {}).some(([key, value]) =>
+    ["capacidad de carga", "capacidad de carga (kg)"].includes(fold(key)) && scalar(value) !== null)) return false;
+  return [record.shortDescription, record.longDescription].some((description) =>
+    typeof description === "string" && gamHandlingModelEvidence(record, description) &&
+    /\bcapacidad\s+(?:nominal\s+)?de\s+carga\s+(?:de\s+)?\d[\d.,]*(?:\s*\/\s*\d[\d.,]*)+\s*(?:kg|kilogramos?)\b/.test(fold(description))
+  );
+};
+
 const conflictingMast = (record: ProductRecord): boolean => {
   const raw = record.specs?.["Tipo Mástil"];
   const direct = raw === undefined ? null : scalar(raw);

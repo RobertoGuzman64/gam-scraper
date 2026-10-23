@@ -124,6 +124,16 @@ const gamDocumentedCategory = (record: ProductRecord, parent: string, title: str
     /\bleonardo hd\b/.test(fold(typeof record.specs?.["Modelo"] === "string" ? record.specs["Modelo"] : "")) &&
     /\bun unico operario\b/.test(long) && motor === "electrico" &&
     !/\b(?:diesel|glp|gasolina|hibrid[oa])\b/.test(combined)) return "plataforma-unipersonal-electrica";
+  if (parent === "plataformas-elevadoras-neumaticos-bravi" && record.categoryKey === "elevacion-nueva" &&
+    record.condition === "Nuevo" && fold(record.brand ?? "") === "bravi" &&
+    fold(typeof record.specs?.["Marca"] === "string" ? record.specs["Marca"] : "") === "bravi" &&
+    fold(typeof record.specs?.["Modelo"] === "string" ? record.specs["Modelo"] : "") === "sprint tl" &&
+    /\bplataforma elevadora de neumaticos\b/.test(title) && /\bbravi sprint tl\b/.test(title) &&
+    /\bbravi sprint tl\b/.test(long) && /\bneumaticos\b/.test(long) &&
+    /\bcapacidad de la cesta 130 kg\b/.test(short) && motor === "electrico" &&
+    !/\b(?:diesel|glp|gasolina|hibrid[oa]|dos ocupantes|dos operadores)\b/.test(combined)) {
+    return "plataforma-unipersonal-electrica";
+  }
   if (parent === "bravi" && /\bplataforma elevadora\b/.test(title) &&
     /\bplataforma unipersonal electrica\b/.test(long) && motor === "electrico" &&
     !/\b(?:diesel|glp|hibrida)\b/.test(combined)) return "plataforma-unipersonal-electrica";
@@ -244,6 +254,21 @@ const gamHandlingCategory = (record: ProductRecord, parent: string, title: strin
       (drive === "" || /\belectric[oa]\b/.test(drive)) ? "transpaleta-electrica" : null;
   }
   if (manual || specManual) return apilador ? "apilador-manual" : "transpaleta-manual";
+  if (transpaleta && parent === "transpaletas-logitrans" && record.categoryKey === "marcas-nuevas" &&
+    record.condition === "Nuevo" && fold(record.brand ?? "") === "logitrans" &&
+    fold(typeof specs["Marca"] === "string" ? specs["Marca"] : "") === "logitrans") {
+    const model = fold(typeof specs["Modelo"] === "string" ? specs["Modelo"] : "");
+    const long = fold(record.longDescription ?? "");
+    const documentedManual = (model === "logiq 200/300" &&
+      /\btranspaleta de cuartos de pale logitrans logiq 200\/300\b/.test(title) &&
+      /\blogiq 200\/300\b/.test(short) && /\bmodelo logiq 200\b/.test(long)) ||
+      (model === "wsp 2200" && /\btranspaleta con balanza 2200 kg logitrans wsp 2200\b/.test(title) &&
+      /\blogitrans wsp 2200\b/.test(short) && /\bmodelo wsp 2200\b/.test(long));
+    if (documentedManual) {
+      return electric || specElectric || /\b(?:diesel|glp|gasolina|hibrid[oa]|propulsion electrica|traccion electrica)\b/.test(long)
+        ? null : "transpaleta-manual";
+    }
+  }
   if (electric) return apilador ? "apilador-electrico" : "transpaleta-electrica";
   if (parent === "transpaletas-yale" && record.categoryKey === "marcas-nuevas" &&
     /\btranspaleta\b/.test(title) && !/\b(?:manual|tijera)\b/.test(title)) {

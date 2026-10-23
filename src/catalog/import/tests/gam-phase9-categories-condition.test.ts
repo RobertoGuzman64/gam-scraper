@@ -30,7 +30,7 @@ test("Bravi Leonardo HD: identifica plataforma unipersonal con evidencia del mis
   assert.equal(categorySlug({ ...record, title: "Plataforma elevadora Bravi Lui 460" }), null);
   assert.equal(categorySlug({ ...record, categoryKey: "carretillas-nuevas" }), null);
   assert.equal(categorySlug(reference("2159")), null);
-  assert.equal(categorySlug(reference("157")), null);
+  assert.equal(categorySlug(reference("157")), "plataforma-unipersonal-electrica");
 });
 
 test("Yale MP20XV: modelo, plataforma y batería deben corresponder a la misma ficha", () => {
@@ -43,8 +43,8 @@ test("Yale MP20XV: modelo, plataforma y batería deben corresponder a la misma f
   assert.equal(categorySlug({ ...record, shortDescription: "Transpaleta Yale para almacenes" }), null);
   assert.equal(categorySlug({ ...record, longDescription: "Transpaleta para almacenes" }), null);
   assert.equal(categorySlug({ ...record, condition: "Segunda mano" }), null);
-  assert.equal(categorySlug(reference("239")), null);
-  assert.equal(categorySlug(reference("238")), null);
+  assert.equal(categorySlug(reference("239")), "transpaleta-manual");
+  assert.equal(categorySlug(reference("238")), "transpaleta-manual");
 });
 
 test("GAM: condición de ocasión explícita en ficha de barredora, sin fabricar categoría de destino", () => {
@@ -91,7 +91,7 @@ test("GAM Hyster H9XDL6: recupera diésel solo con evidencia completa del modelo
 });
 
 test("GAM: familias nuevas sin equivalente y motorizaciones contradictorias permanecen bloqueadas", () => {
-  for (const code of ["2134", "2135", "2373", "2364", "3425", "3436", "3312", "6182", "1884", "3309", "239", "238", "5", "8", "2312", "2314", "4778", "6874", "6953"]) {
+  for (const code of ["2134", "2135", "2373", "2364", "3425", "3436", "3312", "6182", "1884", "3309", "5", "8", "2312", "2314", "4778", "6874", "6953"]) {
     const record = reference(code);
     const prepared = prepareCached(record, catalog);
     assert.equal(categorySlug(record), null, code);

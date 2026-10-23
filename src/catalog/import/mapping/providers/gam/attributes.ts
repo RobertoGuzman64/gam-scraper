@@ -7,7 +7,7 @@ import { gamBasketDimensionsFromDescription } from "./basket.js";
 import { gamElevationIdentityConflict } from "./elevation-identity.js";
 import { gamCleaningCandidate, gamCleaningCorrectedWidth, gamCleaningWidthConflicts } from "./cleaning.js";
 import { gamHandlingCandidate, normalizeGamMast } from "./handling.js";
-import { gamHandlingAttributeConflicts } from "./handling-integrity.js";
+import { gamHandlingAmbiguousCapacity, gamHandlingAttributeConflicts } from "./handling-integrity.js";
 import { gamElevationCandidate, gamElevationHeightConflicts } from "./elevation.js";
 import { gamSpecializedCandidate } from "./specialized.js";
 import { gamGeneratorCandidate, isGamGenerator } from "./generator.js";
@@ -77,6 +77,7 @@ export const applyGamAliasesDetailed = (record: ProductRecord, attribute: Attrib
     keys.add(fold("Altura Elevación (Industr.)"));
   }
   if (gamHandlingAttributeConflicts(record, attribute)) return "contradiction";
+  if (attribute.name === "Capacidad de carga" && gamHandlingAmbiguousCapacity(record)) return "rejected";
   if (attribute.name === "Potencia" && isGamGenerator(record)) {
     keys.delete(fold("Potencia (kW)"));
     const generatorPower = gamGeneratorCandidate(record, attribute);

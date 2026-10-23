@@ -65,7 +65,8 @@ test("Fase 15: no emplea esta evidencia para salvar conflictos de identidad o ca
 });
 
 test("Fase 15: mantiene los veinte casos de cestas corruptas de segunda mano", () => {
-  for (const id of ["6607", "5855", "6139", "6630", "6632", "6631", "6206", "6614", "6616", "6615", "6642", "6622", "6625", "6669", "6158", "6196", "6195", "6486", "6617", "6626"]) {
+  for (const id of ["6607", "5855", "6139", "6630", "6632", "6631", "6206", "6614", "6616", "6615", "6642", "6625", "6669", "6158", "6196", "6195", "6486", "6617", "6626"]) {
     assert.deepEqual(resolve(reference(id)), { status: "invalid", value: null }, id);
   }
+  assert.deepEqual(resolve(reference("6622")), { status: "rejected", value: null });
 });

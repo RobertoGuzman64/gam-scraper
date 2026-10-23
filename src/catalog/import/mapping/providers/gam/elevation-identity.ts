@@ -14,14 +14,36 @@ const sourceModelTokens = (text: string, prefix: string): readonly string[] => {
   return [...normalized.matchAll(pattern)].flatMap((match) => match[1] ? [compact(match[1])] : []);
 };
 
-export const gamElevationIdentityConflict = (record: ProductRecord): boolean => {
-  if (record.providerId !== "gam" || !["elevacion", "elevacion-nueva"].includes(record.categoryKey) || !record.model) return false;
+const isGamElevationPage = (record: ProductRecord): boolean => {
+  if (record.providerId !== "gam" || !["elevacion", "elevacion-nueva"].includes(record.categoryKey)) return false;
   try {
     const url = new URL(record.url);
-    if (url.hostname !== "online.gamrentals.com" || url.pathname.split("/").filter(Boolean)[0] !== "es") return false;
+    return url.hostname === "online.gamrentals.com" && url.pathname.split("/").filter(Boolean)[0] === "es";
   } catch {
     return false;
   }
+};
+
+export const gamElevationBrandConflict = (record: ProductRecord): boolean => {
+  if (!isGamElevationPage(record) || !record.brand || !record.model) return false;
+  const specBrand = record.specs?.["Marca"];
+  const specModel = record.specs?.["Modelo"];
+  if (typeof specBrand !== "string" || typeof specModel !== "string" ||
+    fold(specBrand) !== fold(record.brand) || compact(specModel) !== compact(record.model)) return false;
+  const short = record.shortDescription ?? "";
+  const match = short.match(/^\s*➨\s*([A-Z][A-Z0-9-]{1,24})\s+([A-Z0-9.-]*\d[A-Z0-9.-]*)\b/i);
+  if (!match?.[1] || !match[2] || fold(match[1]) === fold(record.brand)) return false;
+  const title = record.title ?? "";
+  const normalizeWords = (value: string): string => fold(value).replace(/[^a-z0-9]+/g, " ").trim();
+  if (!` ${normalizeWords(title)} `.includes(` ${normalizeWords(`${match[1]} ${match[2]}`)} `)) return false;
+  const canonicalModel = compact(record.model);
+  return !compact(title).includes(canonicalModel) && !compact(short).includes(canonicalModel);
+};
+
+export const gamElevationIdentityConflict = (record: ProductRecord): boolean => {
+  if (!isGamElevationPage(record)) return false;
+  if (gamElevationBrandConflict(record)) return true;
+  if (!record.model) return false;
   const prefix = modelPrefix(record.model);
   if (!prefix) return false;
   if (/\d[.,]\d/.test(record.model)) return false;

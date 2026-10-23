@@ -6,6 +6,7 @@ import { imageUrls, normalizePrice } from "./product-fields.js";
 import { productAttributes } from "./product-attributes.js";
 import { resolveCommercialCondition } from "./condition.js";
 import { resolveMercaelevaShortDescription } from "../mapping/providers/mercaeleva/descriptions.js";
+import { gamElevationBrandConflict } from "../mapping/providers/gam/elevation-identity.js";
 import type { ImportCandidate, ImportCatalog, PreparedProduct } from "./contracts.js";
 
 export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): PreparedProduct => {
@@ -19,6 +20,7 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   const descriptionEvidence = resolveMercaelevaShortDescription(record);
   const descriptions = distinguishDescriptions(record.shortDescription ?? descriptionEvidence.description, record.longDescription);
   if (descriptionEvidence.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
+  if (gamElevationBrandConflict(record)) issues.push("Identidad GAM contradictoria entre título, resumen y ficha técnica");
   const attributeResult = productAttributes(record, category, catalog);
 
   if (contradictoryCondition) issues.push("Condición comercial contradictoria entre la ficha y el origen");

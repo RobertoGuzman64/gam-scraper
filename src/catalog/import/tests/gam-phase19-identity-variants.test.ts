@@ -6,7 +6,7 @@ import { findSerialNumberCollisions } from "../../identity-conflicts.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { resolveAttribute } from "../mapping/attribute-mapping.js";
-import { gamElevationIdentityConflict } from "../mapping/providers/gam/elevation-identity.js";
+import { gamElevationBrandConflict, gamElevationIdentityConflict } from "../mapping/providers/gam/elevation-identity.js";
 import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
@@ -83,4 +83,38 @@ test("GAM: tres series colisionadas mantienen seis fichas independientes bloquea
   for (const product of batch.products) {
     assert.ok(product.issues.some((issue) => issue.includes("Número de serie") && issue.includes("compartido")));
   }
+});
+
+
+test("GAM: bloquea la identidad cruzada de 6622 aunque el modelo de ficha tenga otro prefijo", () => {
+  const product = record("6622");
+  assert.equal(gamElevationBrandConflict(product), true);
+  assert.equal(gamElevationIdentityConflict(product), true);
+  assert.deepEqual(resolvedModel(product), { status: "rejected", value: null });
+  const prepared = prepareProduct(product, catalog);
+  assert.equal(prepared.status, "review");
+  assert.ok(prepared.issues.includes("Identidad GAM contradictoria entre título, resumen y ficha técnica"));
+  assert.ok(prepared.issues.includes("Atributo rechazado por seguridad: Modelo"));
+  assert.ok(model);
+  assert.equal(prepared.product.attributes.some((attribute) => attribute.attributeID === model.id), false);
+  assert.equal(prepared.product.reference, "6622");
+  assert.equal(prepared.product.sourceUrl, product.url);
+});
+
+test("GAM: no confunde erratas de marca, textos parciales ni dominios ajenos con una identidad cruzada", () => {
+  const typo = record("6947");
+  assert.equal(gamElevationBrandConflict(typo), false);
+  assert.equal(gamElevationIdentityConflict(typo), false);
+  const conflict = record("6622");
+  assert.equal(gamElevationBrandConflict({ ...conflict, shortDescription: null }), false);
+  assert.equal(gamElevationBrandConflict({ ...conflict, title: "Plataforma Genie GS-5390" }), false);
+  assert.equal(gamElevationBrandConflict({ ...conflict, providerId: "gomariz" }), false);
+  assert.equal(gamElevationBrandConflict({ ...conflict, url: "https://example.com/es/6622-genie-gs-5390" }), false);
+  assert.equal(gamElevationBrandConflict({ ...conflict, specs: { ...conflict.specs, Marca: "JLG" } }), false);
+  assert.equal(gamElevationBrandConflict({ ...conflict, specs: { ...conflict.specs, Modelo: "1930ES" } }), false);
+});
+
+test("GAM: el detector de marcas no introduce vetos nuevos en el catálogo actual salvo 6622", () => {
+  const affected = source.products.filter(gamElevationBrandConflict).map((product) => product.reference);
+  assert.deepEqual(affected, ["6622"]);
 });
