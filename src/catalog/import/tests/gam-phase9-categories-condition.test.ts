@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
-import { prepareProduct } from "../preparation/prepare.js";
+import { prepareCached } from "./prepare-cached.js";
 
 const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog(fileURLToPath(new URL(
@@ -16,14 +16,14 @@ const reference = (code: string): ProductRecord => {
   return record;
 };
 const categorySlug = (record: ProductRecord): string | null => {
-  const prepared = prepareProduct(record, catalog);
+  const prepared = prepareCached(record, catalog);
   return catalog.categories.find((category) => category.id === prepared.product.categorySellID)?.slug ?? null;
 };
 
 test("Bravi Leonardo HD: identifica plataforma unipersonal con evidencia del mismo modelo", () => {
   const record = reference("2155");
   assert.equal(categorySlug(record), "plataforma-unipersonal-electrica");
-  assert.equal(prepareProduct(record, catalog).status, "ready");
+  assert.equal(prepareCached(record, catalog).status, "ready");
   assert.equal(categorySlug({ ...record, specs: { ...record.specs, Modelo: "Lui 460" } }), null);
   assert.equal(categorySlug({ ...record, longDescription: "Plataforma elevadora para trabajos en altura" }), null);
   assert.equal(categorySlug({ ...record, specs: { ...record.specs, "Tipo motor": "Diésel" } }), null);
@@ -36,7 +36,7 @@ test("Bravi Leonardo HD: identifica plataforma unipersonal con evidencia del mis
 test("Yale MP20XV: modelo, plataforma y batería deben corresponder a la misma ficha", () => {
   const record = reference("912");
   assert.equal(categorySlug(record), "transpaleta-electrica");
-  assert.equal(prepareProduct(record, catalog).status, "ready");
+  assert.equal(prepareCached(record, catalog).status, "ready");
   assert.equal(categorySlug({ ...record, specs: { ...record.specs, Modelo: "MP20XD" } }), null);
   assert.equal(categorySlug({ ...record, specs: { ...record.specs, "Capacidad de la batería": "Desconocida" } }), null);
   assert.equal(categorySlug({ ...record, specs: { ...record.specs, Motorización: "Manual" } }), null);
@@ -49,18 +49,18 @@ test("Yale MP20XV: modelo, plataforma y batería deben corresponder a la misma f
 
 test("GAM: condición de ocasión explícita en ficha de barredora, sin fabricar categoría de destino", () => {
   const record = reference("6653");
-  const prepared = prepareProduct(record, catalog);
+  const prepared = prepareCached(record, catalog);
   assert.equal(prepared.product.condition, "Segunda_Mano");
   assert.equal(prepared.product.categorySellID, null);
   assert.equal(prepared.status, "review");
   assert.ok(!prepared.issues.includes("Condición comercial no confirmada (Nuevo o Segunda_Mano)"));
   assert.ok(prepared.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"));
-  assert.equal(prepareProduct({ ...record, shortDescription: "Barredora EUREKA MAGNUM en venta" }, catalog).product.condition, null);
-  assert.equal(prepareProduct({ ...record, shortDescription: "EUREKA MAGNUM de segunda mano en venta nueva" }, catalog).product.condition, null);
-  assert.equal(prepareProduct({ ...record, specs: { ...record.specs, Modelo: "Otro modelo" } }, catalog).product.condition, null);
-  assert.equal(prepareProduct({ ...record, condition: "Nuevo" }, catalog).product.condition, null);
+  assert.equal(prepareCached({ ...record, shortDescription: "Barredora EUREKA MAGNUM en venta" }, catalog).product.condition, null);
+  assert.equal(prepareCached({ ...record, shortDescription: "EUREKA MAGNUM de segunda mano en venta nueva" }, catalog).product.condition, null);
+  assert.equal(prepareCached({ ...record, specs: { ...record.specs, Modelo: "Otro modelo" } }, catalog).product.condition, null);
+  assert.equal(prepareCached({ ...record, condition: "Nuevo" }, catalog).product.condition, null);
   for (const code of ["6358", "6367", "6814", "6815", "6969", "6970", "6971", "6987", "6988", "6989"]) {
-    assert.equal(prepareProduct(reference(code), catalog).product.condition, null, code);
+    assert.equal(prepareCached(reference(code), catalog).product.condition, null, code);
   }
 });
 
@@ -73,7 +73,7 @@ test("GAM: categorías sin equivalente siguen sin forzarse a otra familia", () =
 
 test("GAM Hyster H9XDL6: recupera diésel solo con evidencia completa del modelo", () => {
   const record = reference("2172");
-  const prepared = prepareProduct(record, catalog);
+  const prepared = prepareCached(record, catalog);
   assert.equal(categorySlug(record), "carretilla-elevadora-diesel");
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
@@ -93,7 +93,7 @@ test("GAM Hyster H9XDL6: recupera diésel solo con evidencia completa del modelo
 test("GAM: familias nuevas sin equivalente y motorizaciones contradictorias permanecen bloqueadas", () => {
   for (const code of ["2134", "2135", "2373", "2364", "3425", "3436", "3312", "6182", "1884", "3309", "239", "238", "5", "8", "2312", "2314", "4778", "6874", "6953"]) {
     const record = reference(code);
-    const prepared = prepareProduct(record, catalog);
+    const prepared = prepareCached(record, catalog);
     assert.equal(categorySlug(record), null, code);
     assert.ok(prepared.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"), code);
   }

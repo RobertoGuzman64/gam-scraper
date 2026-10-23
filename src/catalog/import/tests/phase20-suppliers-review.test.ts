@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { resolveAttribute } from "../mapping/attribute-mapping.js";
-import { prepareProduct } from "../preparation/prepare-product.js";
+import { prepareCached } from "./prepare-cached.js";
 import { mercaelevaMislabelledCapacity } from "../mapping/providers/mercaeleva/handling-evidence.js";
 
 const catalog = await loadImportCatalog();
@@ -28,7 +28,7 @@ test("Fase 20: Toyota recupera capacidad respaldada por tres textos y conserva l
   assert.equal(toyota.specs?.["Capacidad máxima de elevación"], "4700 kg");
   assert.equal(resolveAttribute(toyota, capacity).status, "resolved");
   assert.equal(resolveAttribute(toyota, capacity).value, 1800);
-  const prepared = prepareProduct(toyota, catalog);
+  const prepared = prepareCached(toyota, catalog);
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
   assert.ok(prepared.product.attributes.some((attribute) =>
@@ -61,29 +61,29 @@ test("Fase 20: descarta el reconocimiento ante unidades, capacidades, alturas, i
 });
 
 test("Fase 20: conserva los bloqueos legítimos de los quince casos residuales salvo la Toyota", () => {
-  assert.equal(gomariz.filter((record) => prepareProduct(record, catalog).status === "review").length, 4);
-  assert.equal(mercaeleva.filter((record) => prepareProduct(record, catalog).status === "review").length, 10);
+  assert.equal(gomariz.filter((record) => prepareCached(record, catalog).status === "review").length, 4);
+  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 10);
   for (const id of ["5051BDX", "1011JFB", "RE454", "PV556"]) {
     const record = gomariz.find((item) => item.reference === id);
     assert.ok(record);
-    assert.ok(prepareProduct(record, catalog).issues.includes("Categoría Equipzilla sin correspondencia inequívoca"));
+    assert.ok(prepareCached(record, catalog).issues.includes("Categoría Equipzilla sin correspondencia inequívoca"));
   }
   for (const id of ["M582-1882", "M827-8304", "M062-8951", "M119-9334"]) {
     const record = mercaeleva.find((item) => item.reference === id);
     assert.ok(record);
-    assert.ok(prepareProduct(record, catalog).issues.includes("Atributo contradictorio: Capacidad de carga"));
+    assert.ok(prepareCached(record, catalog).issues.includes("Atributo contradictorio: Capacidad de carga"));
   }
   for (const id of ["M827-8304", "M818-7811", "M104-0836"]) {
     const record = mercaeleva.find((item) => item.reference === id);
     assert.ok(record);
-    assert.ok(prepareProduct(record, catalog).issues.includes("Atributo contradictorio: Tipo de mástil"));
+    assert.ok(prepareCached(record, catalog).issues.includes("Atributo contradictorio: Tipo de mástil"));
   }
   for (const id of ["M294-4678", "M958-0132"]) {
     const record = mercaeleva.find((item) => item.reference === id);
     assert.ok(record);
-    assert.ok(prepareProduct(record, catalog).issues.some((issue) => issue.includes("Condición comercial no confirmada")));
+    assert.ok(prepareCached(record, catalog).issues.some((issue) => issue.includes("Condición comercial no confirmada")));
   }
   const height = mercaeleva.find((record) => record.reference === "M486-0114");
   assert.ok(height);
-  assert.ok(prepareProduct(height, catalog).issues.includes("Descripción comercial contradictoria: altura de trabajo"));
+  assert.ok(prepareCached(height, catalog).issues.includes("Descripción comercial contradictoria: altura de trabajo"));
 });

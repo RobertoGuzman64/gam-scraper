@@ -3,10 +3,15 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { resolveAttributeValue } from "../mapping/attribute-mapping.js";
-import { prepareProduct } from "../preparation/prepare.js";
+import { prepareCached } from "./prepare-cached.js";
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 
 const catalog = await loadImportCatalog();
+const originalCatalogFile = new URL("../../../../storage/scraped/gomariz/scrape-gomariz-catalog.json", import.meta.url);
+const originalSnapshot: unknown = JSON.parse(await readFile(originalCatalogFile, "utf8"));
+assert.ok(originalSnapshot && typeof originalSnapshot === "object" &&
+  "products" in originalSnapshot && Array.isArray(originalSnapshot.products));
+const originalProducts: ProductRecord[] = originalSnapshot.products;
 const source = (section: string, family: string, specs: SpecsMap): ProductRecord => ({
   providerId: "gomariz", categoryKey: "venta", categoryName: "Maquinaria de ocasión",
   url: `https://www.gomarizrent.com/venta/${section}/${family}/ficha/`,
@@ -65,15 +70,12 @@ test("Gomariz: bloquea altura de plataforma contradictoria en datos ya almacenad
 });
 
 test("Gomariz: preparación del catálogo real sin inventar valores ni perder referencias", async () => {
-  const catalogFile = new URL("../../../../storage/scraped/gomariz/scrape-gomariz-catalog.json", import.meta.url);
-  const snapshot: unknown = JSON.parse(await readFile(catalogFile, "utf8"));
-  assert.ok(snapshot && typeof snapshot === "object" && "products" in snapshot && Array.isArray(snapshot.products));
-  const products: ProductRecord[] = snapshot.products;
+  const products = originalProducts;
   assert.ok(products.length > 0);
   const references = products.map((record) => record.reference);
   assert.equal(new Set(references).size, products.length);
   for (const record of products) {
-    const prepared = prepareProduct(record, catalog);
+    const prepared = prepareCached(record, catalog);
     assert.equal(prepared.product.reference, record.reference);
     if (record.price === null) assert.equal(prepared.product.price, null);
     if (record.reference === "GR1356" && record.specs?.Capacidad === "350 l") {
@@ -94,20 +96,17 @@ test("Gomariz: conserva y rechaza especificaciones con valores múltiples incomp
   });
   assert.equal(value(generator, "Combustible"), null);
   assert.equal(value(generator, "Capacidad del depósito"), null);
-  const prepared = prepareProduct(generator, catalog);
+  const prepared = prepareCached(generator, catalog);
   assert.ok(prepared.issues.includes("Atributo rechazado por seguridad: Capacidad del depósito"));
   assert.equal(prepared.product.attributes.some((item) => item.value === 350 || item.value === 400), false);
 });
 
 test("Gomariz: el catálogo original conserva las incidencias reales sin inventar descripciones cortas", async () => {
-  const catalogFile = new URL("../../../../storage/scraped/gomariz/scrape-gomariz-catalog.json", import.meta.url);
-  const snapshot: unknown = JSON.parse(await readFile(catalogFile, "utf8"));
-  assert.ok(snapshot && typeof snapshot === "object" && "products" in snapshot && Array.isArray(snapshot.products));
-  const products: ProductRecord[] = snapshot.products;
+  const products = originalProducts;
   const byReference = new Map(products.map((record) => [record.reference, record]));
   for (const record of products) {
     assert.equal(record.shortDescription, null, record.reference ?? record.url);
-    const prepared = prepareProduct(record, catalog);
+    const prepared = prepareCached(record, catalog);
     assert.equal(prepared.product.description, null, record.reference ?? record.url);
     assert.ok(prepared.importIssues);
     assert.ok(prepared.importIssues.createMany.length > 0, record.reference ?? record.url);
@@ -115,7 +114,7 @@ test("Gomariz: el catálogo original conserva las incidencias reales sin inventa
   for (const reference of ["CC1535", "CC1666"]) {
     const record = byReference.get(reference);
     assert.ok(record);
-    const prepared = prepareProduct(record, catalog);
+    const prepared = prepareCached(record, catalog);
     assert.ok(!prepared.issues.includes("Atributo no normalizable: Altura de plataforma"), reference);
     assert.equal(value(record, "Altura de plataforma"), 17.6);
     assert.equal(prepared.status, "ready");
@@ -123,7 +122,7 @@ test("Gomariz: el catálogo original conserva las incidencias reales sin inventa
   for (const reference of ["5051BDX", "1011JFB", "RE454", "PV556"]) {
     const record = byReference.get(reference);
     assert.ok(record);
-    const prepared = prepareProduct(record, catalog);
+    const prepared = prepareCached(record, catalog);
     assert.ok(prepared.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"), reference);
     assert.equal(prepared.product.categorySellID, null);
   }

@@ -119,10 +119,11 @@ const simulateCatalog = async (
   const visiblePages = (): readonly (readonly string[])[] => simulation?.pageSizeOptions && pageSize > initialSize
     ? Array.from({ length: Math.ceil(allIds.length / pageSize) }, (_, index) =>
       allIds.slice(index * pageSize, (index + 1) * pageSize)) : pages;
-  const paginationAvailableAt = Date.now() + (simulation?.delayedPaginationMs ?? 0);
+  let simulatedNow = Date.now();
+  const paginationAvailableAt = simulatedNow + (simulation?.delayedPaginationMs ?? 0);
   const advance = (): void => {
     simulation?.onNext?.();
-    if (simulation?.delayedNextMs) setTimeout(() => { current += 1; }, simulation.delayedNextMs);
+    if (simulation?.delayedNextMs) setTimeout(() => { current += 1; }, 1);
     else current += 1;
   };
   const goTo = (page: number): void => {
@@ -156,7 +157,7 @@ const simulateCatalog = async (
         }];
       }
       if (selector === 'button, [role="button"]') {
-        if (Date.now() < paginationAvailableAt) return [];
+        if (simulatedNow < paginationAvailableAt) return [];
         if (simulation?.numericPagination) {
           const page = current + 1;
           return [
@@ -174,7 +175,12 @@ const simulateCatalog = async (
     }
   };
   return runInNewContext(buildMercaelevaCatalogScript(maxPages, 1000, 0), {
-    document, URL, Event: class { constructor(readonly type: string) {} }, setTimeout: (callback: () => void) => setTimeout(callback, 1),
+    document, URL, Event: class { constructor(readonly type: string) {} },
+    Date: class extends Date { static override now(): number { return simulatedNow; } },
+    setTimeout: (callback: () => void, milliseconds: number) => {
+      simulatedNow += milliseconds;
+      return setTimeout(callback, 1);
+    },
     console: { debug: (tag: string, pages: number, found: number) => {
       if (tag === "__EQUIPZILLA_MERCA_PROGRESS__") simulation?.onProgress?.(pages, found);
     } }

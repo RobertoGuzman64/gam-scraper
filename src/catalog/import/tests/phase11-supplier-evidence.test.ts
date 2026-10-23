@@ -5,7 +5,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { resolveCategory } from "../mapping/category-mapping.js";
 import { resolveAttributeValue } from "../mapping/attribute-mapping.js";
-import { prepareProduct } from "../preparation/prepare.js";
+import { prepareCached } from "./prepare-cached.js";
 
 const catalog = await loadImportCatalog();
 const readProducts = async (provider: "gomariz" | "mercaeleva"): Promise<readonly ProductRecord[]> => {
@@ -33,7 +33,7 @@ test("Fase 11: SOCAGE 20D SPEED recupera 17,6 m acreditados por la ficha técnic
   for (const id of ["CC1535", "CC1666"]) {
     const record = reference(gomarizByReference, id);
     assert.equal(resolveAttributeValue(record, heightAttribute), 17.6);
-    const prepared = prepareProduct(record, catalog);
+    const prepared = prepareCached(record, catalog);
     assert.equal(prepared.status, "ready");
     assert.equal(record.specs?.["Altura plataforma"], "3.07 m");
     assert.equal(record.specs?.["Altura almacenaje"], "3.07 m");
@@ -62,7 +62,7 @@ test("Fase 11: JLG 340AJ usa evidencia diésel del proveedor sin deducir aliment
     const record = reference(gomarizByReference, id);
     assert.equal(resolveCategory(record, catalog.categories, "Segunda_Mano")?.slug,
       "plataformas-articuladas-diesel-segunda-mano");
-    assert.equal(prepareProduct(record, catalog).status, "ready");
+    assert.equal(prepareCached(record, catalog).status, "ready");
     assert.equal(record.specs?.Motor, undefined);
     assert.equal(resolveCategory({ ...record, model: "450AJ" }, catalog.categories, "Segunda_Mano"), null);
     assert.equal(resolveCategory({ ...record, longDescription: null }, catalog.categories, "Segunda_Mano"), null);
@@ -73,15 +73,15 @@ test("Fase 11: JLG 340AJ usa evidencia diésel del proveedor sin deducir aliment
 });
 
 test("Fase 11: Mercaeleva conserva las contradicciones de capacidad y mástil no resueltas", () => {
-  assert.equal(mercaeleva.filter((record) => prepareProduct(record, catalog).status === "review").length, 10);
+  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 10);
   for (const id of ["M582-1882", "M827-8304", "M062-8951", "M119-9334"]) {
-    assert.ok(prepareProduct(reference(mercaelevaByReference, id), catalog).issues.includes("Atributo contradictorio: Capacidad de carga"));
+    assert.ok(prepareCached(reference(mercaelevaByReference, id), catalog).issues.includes("Atributo contradictorio: Capacidad de carga"));
   }
   for (const id of ["M827-8304", "M818-7811", "M104-0836"]) {
-    assert.ok(prepareProduct(reference(mercaelevaByReference, id), catalog).issues.includes("Atributo contradictorio: Tipo de mástil"));
+    assert.ok(prepareCached(reference(mercaelevaByReference, id), catalog).issues.includes("Atributo contradictorio: Tipo de mástil"));
   }
-  assert.ok(prepareProduct(reference(mercaelevaByReference, "M486-0114"), catalog).issues.some((issue) => issue.includes("altura de trabajo")));
+  assert.ok(prepareCached(reference(mercaelevaByReference, "M486-0114"), catalog).issues.some((issue) => issue.includes("altura de trabajo")));
   for (const id of ["M294-4678", "M958-0132"]) {
-    assert.ok(prepareProduct(reference(mercaelevaByReference, id), catalog).issues.some((issue) => issue.includes("Condición comercial")));
+    assert.ok(prepareCached(reference(mercaelevaByReference, id), catalog).issues.some((issue) => issue.includes("Condición comercial")));
   }
 });
