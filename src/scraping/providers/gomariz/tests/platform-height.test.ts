@@ -13,10 +13,10 @@ const ficha = (platform: string, working: string): string => `
   <h2>Especificaciones técnicas</h2><p>Motor: Eléctrico Capacidad: 230 kg</p>
   <p>Ver ficha técnica</p></main></html>`;
 
-test("Gomariz: no exporta la altura de plataforma contradictoria publicada para TE1858", () => {
+test("Gomariz: conserva la altura contradictoria publicada para que el importador señale el fallo", () => {
   const product = parseGomarizProduct(ficha("14.30 m", "6.3 m"), url);
   assert.equal(product.reference, "TE1858");
-  assert.equal(product.specs?.["Altura plataforma"], undefined);
+  assert.equal(product.specs?.["Altura plataforma"], "14.30 m");
   assert.equal(product.specs?.["Altura de trabajo"], "6.3 m");
   assert.equal(product.specs?.["Peso"], "985 kg");
   assert.equal(product.specs?.["Motor"], "Eléctrico");

@@ -201,14 +201,14 @@ test("GAM: incorpora pendientes publicadas con porcentaje sin confundir unidades
   assert.equal(attrVal(source("gam", url, "Plataforma articulada", { "Capacidad de carga (kg)": "25%" }), "Capacidad de carga"), null);
 });
 
-test("GAM: recupera exclusivamente dimensiones de cesta expresadas como dos medidas en metros", () => {
+test("GAM: conserva la dimensión publicada con unidad inequívoca y sin pérdida de ejes", () => {
   const url = gamUrl("plataformas-elevadoras-articuladas-electricas-segunda-mano", "6934");
   const valid = source("gam", url, "Plataforma articulada", { "Dimensiones Cesta": "2,4X1,17 metros" });
   assert.equal(attrVal(valid, "Dimensiones de la cesta"), "2,4 x 1,17 m");
   assert.deepEqual(valid.specs, { "Dimensiones Cesta": "2,4X1,17 metros" });
   assert.equal(prepareProduct(valid, catalog).product.attributes.find((entry) => entry.attributeID === 6)?.value, "2,4 x 1,17 m");
   assert.equal(attrVal(source("gam", url, "Plataforma", { "Dimensiones Cesta": "1.83 x 0.76 m" }), "Dimensiones de la cesta"), "1,83 x 0,76 m");
-  for (const raw of ["4 81 88x1 metros", "1 83X0 91 metros", "1,4 x 0,7 x 1,1 m", "2,4x1,17", "0x1,17 metros", "1400x700 mm"]) {
+  for (const raw of ["4 81 88x1 metros", "1 83X0 91 metros", "2,4x1,17", "0x1,17 metros", "1400x700x1100 metros"]) {
     assert.equal(attrVal(source("gam", url, "Plataforma", { "Dimensiones Cesta": raw }), "Dimensiones de la cesta"), null, raw);
   }
   assert.equal(attrVal(source("gam", url, "Plataforma", { "Dimensiones Cesta": "2,4X1,17 metros", "Dimensiones de la cesta": "3 x 1 m" }), "Dimensiones de la cesta"), null);

@@ -113,6 +113,17 @@ const gamDocumentedCategory = (record: ProductRecord, parent: string, title: str
   if (parent === "tractor-de-remolcado-conductor-sentado-7000-kg" &&
     /\btractor de arrastre\b/.test(title) && motor === "electrico" &&
     !/\b(?:diesel|glp|hibrido)\b/.test(combined)) return "tractor-electrico";
+  if (parent === "tractor-de-remolcado-conductor-sentado-8000-kg" && record.categoryKey === "marcas-nuevas" &&
+    /\btractor de arrastre\b/.test(title) && /\btractor electrico de arrastre\b/.test(short) &&
+    /\btractores de arrastre\b/.test(long) && (motor === "" || motor === "electrico") &&
+    !/\b(?:diesel|glp|gasolina|hibrido|semi[ -]?electrico)\b/.test(combined)) return "tractor-electrico";
+  if (parent === "recogepedidos-bravi" && record.categoryKey === "carretillas-nuevas" &&
+    /\bplataforma recogepedidos\b/.test(title)) {
+    return /\bplataforma recoge ?pedidos\b/.test(short) &&
+      /\b(?:recogida|preparacion) de pedidos\b/.test(long) &&
+      !/\b(?:transpaleta|carretilla elevadora|apilador)\b/.test(combined)
+      ? "preparapedido" : null;
+  }
   return undefined;
 };
 

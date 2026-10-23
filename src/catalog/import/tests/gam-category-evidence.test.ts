@@ -130,3 +130,38 @@ test("categoría energética: rechaza motorización de ficha contradictoria sin 
   assert.equal(slug(electric), "carretilla-elevadora-electrica");
   assert.equal(slug({ ...electric, specs: { "Tipo motor": "Diésel" } }), null);
 });
+
+
+test("BRAVI: plataformas de recogepedidos con función operativa explícita", () => {
+  const spinGo = machine("recogepedidos-bravi", "Plataforma recogepedidos 4,1M BRAVI Spin-GO",
+    "Venta de plataforma recoge pedidos de 4,1 metros de altura",
+    "La plataforma recogepedidos BRAVI Spin-Go, de tracción manual y elevación eléctrica, nos ayuda en la recogida de pedidos y en la reposición de stocks.",
+    { "Tipo motor": "Eléctrico" }, "Nuevo", "carretillas-nuevas");
+  const sprint = machine("recogepedidos-bravi", "Plataforma recogepedidos 5,3M BRAVI Sprint",
+    "Venta de plataforma recogepedidos de 20 metros de altura",
+    "La plataforma Bravi Sprint, de traslación y elevación eléctrica; aumenta la productividad en las labores de reposición de stock y preparación de pedidos.",
+    { "Tipo motor": "Eléctrico" }, "Nuevo", "carretillas-nuevas");
+  assert.equal(slug(spinGo), "preparapedido");
+  assert.equal(slug(sprint), "preparapedido");
+  assert.equal(slug({ ...spinGo, longDescription: "Plataforma de elevación de personas" }), null);
+  assert.equal(slug({ ...spinGo, shortDescription: "Plataforma elevadora" }), null);
+  assert.equal(slug({ ...spinGo, title: "Plataforma elevadora BRAVI Spin-GO" }), null);
+  assert.equal(slug({ ...spinGo, longDescription: "Carretilla elevadora de preparación de pedidos" }), null);
+  assert.equal(slug({ ...spinGo, url: "https://online.gamrentals.com/es/recogepedidos-hyster/99999-maquina" }), null);
+  assert.equal(slug({ ...spinGo, condition: null }), null);
+});
+
+test("tractor Hyster T8.0HS4: exige evidencia eléctrica de la propia ficha", () => {
+  const tractor = machine("tractor-de-remolcado-conductor-sentado-8000-kg",
+    "Tractor de arrastre de conductor a bordo 8000Kg Hyster T8.0HS4",
+    "Venta de tractor eléctrico de arrastre 8000kg",
+    "Con capacidad para remolcar hasta 7000 kg u 8000 kg, respectivamente, los nuevos Tractores de Arrastre de conductor a bordo de Hyster.",
+    { "Capacidad de la batería": "1000mm" }, "Nuevo", "marcas-nuevas");
+  assert.equal(slug(tractor), "tractor-electrico");
+  assert.equal(slug({ ...tractor, shortDescription: "Venta de tractor de arrastre 8000kg" }), null);
+  assert.equal(slug({ ...tractor, longDescription: "Equipo de remolque" }), null);
+  assert.equal(slug({ ...tractor, specs: { "Tipo motor": "Diésel" } }), null);
+  assert.equal(slug({ ...tractor, shortDescription: "Tractor eléctrico de arrastre diésel" }), null);
+  assert.equal(slug({ ...tractor, condition: "Segunda mano" }), null);
+  assert.equal(slug({ ...tractor, providerId: "gomariz" }), null);
+});

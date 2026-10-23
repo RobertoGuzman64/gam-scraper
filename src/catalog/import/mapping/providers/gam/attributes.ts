@@ -1,7 +1,7 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { SPEC_KEY_NORMALIZATION } from "../../../../normalization/spec-rules.js";
 import type { AliasOutcome, Attribute, Candidate } from "../../attribute-types.js";
-import { fold, basketDimensions, scalar } from "../../attribute-utils.js";
+import { fold, basketDimensions, numberToken, scalar } from "../../attribute-utils.js";
 import { gamWorkingHeightFromDescription } from "./working-height.js";
 import { gamElevationIdentityConflict } from "./elevation-identity.js";
 import { gamCleaningCandidate, gamCleaningWidthConflicts } from "./cleaning.js";
@@ -13,6 +13,18 @@ import { gamGeneratorCandidate, isGamGenerator } from "./generator.js";
 
 export const applyGamAliasesDetailed = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): AliasOutcome => {
   if (attribute.name === "Dimensiones de la cesta") keys.add(fold("Dimensiones Cesta"));
+  if (["Centro de carga", "Elevación libre", "Radio de giro"].includes(attribute.name)) {
+    keys.add(fold(`${attribute.name} (mm)`));
+  }
+  if (attribute.name === "Elevación libre") {
+    const observed = Object.entries(record.specs ?? {}).filter(([key]) =>
+      keys.has(fold(key)) || keys.has(fold(SPEC_KEY_NORMALIZATION[fold(key)] ?? key))
+    ).map(([, spec]) => scalar(spec));
+    const denied = observed.some((value) => typeof value === "string" && fold(value) === "no");
+    const measured = observed.some((value) => typeof value === "number" && value > 0 ||
+      typeof value === "string" && /^[1-9]\d*(?:[.,]\d+)?\s*(?:mm|cm|m)?$/i.test(value.trim()));
+    if (denied && measured) return "contradiction";
+  }
   let family = "";
   try {
     const url = new URL(record.url);
@@ -90,10 +102,31 @@ export const applyGamAliasesDetailed = (record: ProductRecord, attribute: Attrib
 export const applyGamAliases = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): boolean =>
   applyGamAliasesDetailed(record, attribute, keys, candidates) === "accepted";
 
+export const isGamUnmeasuredNumeric = (attribute: Attribute, value: string | number | boolean): boolean => {
+  if (typeof value !== "string") return false;
+  const normalized = fold(value);
+  if (attribute.name === "Horas de uso") return normalized === "na horas" || normalized === "horometro sustituido horas";
+  if (attribute.name === "Elevación libre") return normalized === "si" || normalized === "no";
+  return false;
+};
+
 export const convertGamCandidate = (
   attribute: Attribute, candidate: Candidate, fallback: string | number | boolean | null
 ): string | number | boolean | null => {
   if (attribute.name === "Tipo de mástil" && attribute.type === "SELECT") return normalizeGamMast(fallback);
-  return attribute.name === "Dimensiones de la cesta" && fold(candidate.key) === fold("Dimensiones Cesta")
-    ? basketDimensions(candidate.value) : fallback;
+  if (attribute.name === "Ancho de trabajo" && attribute.unit_option === "mm" && typeof fallback === "number") {
+    return Math.round(fallback * 1000) / 1000;
+  }
+  if (attribute.name === "Centro de carga" && attribute.unit_option === "mm" &&
+    fallback === null && typeof candidate.value === "string") {
+    const duplicatedUnit = candidate.value.trim().match(/^([\d.,\s]+)\s*mm\s+mm$/i);
+    if (duplicatedUnit?.[1]) return numberToken(duplicatedUnit[1]);
+  }
+  if (attribute.name === "Dimensiones de la cesta") return basketDimensions(candidate.value);
+  if (attribute.name === "Rotación de torreta" && attribute.type === "NUMBER" && attribute.unit_option === "grados" &&
+    typeof candidate.value === "string") {
+    const angle = candidate.value.trim().match(/^(\d+(?:[.,]\d+)?)\s*[°º]$/);
+    return angle?.[1] ? numberToken(angle[1]) : fallback;
+  }
+  return fallback;
 };

@@ -11,6 +11,12 @@ export const applyMercaelevaAliasesDetailed = (record: ProductRecord, attribute:
   const isStacker = /\bapilador\b/.test(family);
   const isPalletTruck = /\btranspalet(?:a)?\b/.test(family);
   const isTelehandler = /\bmanipulador telescopico\b/.test(family);
+  const conflictingAliases = attribute.name === "Capacidad de carga"
+    ? ["Capacidad máxima de elevación", "Capacidad nominal"]
+    : attribute.name === "Altura de elevación" ? ["Altura máxima de elevación"] : [];
+  if (Object.entries(record.specs ?? {}).some(([key, value]) =>
+    Array.isArray(value) && value.length > 1 &&
+    (keys.has(fold(key)) || conflictingAliases.some((alias) => fold(alias) === fold(key))))) return "contradiction";
   const maxLoad = record.specs?.["Capacidad máxima de elevación"];
   const hasExplicitLoad = typeof maxLoad === "string" && /\bkg\s*$/i.test(maxLoad.trim());
   if (attribute.name === "Capacidad máxima" && isTelehandler && hasExplicitLoad) {

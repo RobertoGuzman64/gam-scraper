@@ -176,3 +176,55 @@ test("Mercaeleva: no inventa condición si el Estado falta o no es inequívoco",
     assert.equal(parsed.condition, null, state);
   }
 });
+
+test("Mercaeleva: conserva especificaciones técnicas repetidas y deja sin resolver metadatos incompatibles", () => {
+  const html = `<html><body><h1>Linde E48P CARRETILLA ELEVADORA ELECTRICA 4800 KG</h1>
+    <h2>Información general</h2>
+    ${row("Marca", "Linde")}${row("Modelo", "E48P")}${row("Estado", "Usado")}
+    ${row("Capacidad máxima de elevación", "4800 kg")}${row("Tipo de mástil", "Dúplex")}
+    ${row("Horas laborales", "2649 h")}${row("Año de fabricación", "2007")}
+    <h2>Potencia y rendimiento</h2>
+    ${row("Capacidad máxima de elevación", "3000 kg")}${row("Tipo de mástil", "Triple")}
+    ${row("Horas laborales", "3000 h")}${row("Año de fabricación", "2008")}
+    ${row("Modelo", "E45P")}${row("Estado", "Nuevo")}
+  </body></html>`;
+  const parsed = parseMercaelevaProduct(html, "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E48P-M827-8304");
+  assert.deepEqual(parsed.specs?.["Capacidad máxima de elevación"], ["4800 kg", "3000 kg"]);
+  assert.deepEqual(parsed.specs?.["Tipo de mástil"], ["Dúplex", "Triple"]);
+  assert.deepEqual(parsed.specs?.["Modelo"], ["E48P", "E45P"]);
+  assert.deepEqual(parsed.specs?.["Horas laborales"], ["2649 h", "3000 h"]);
+  assert.deepEqual(parsed.specs?.["Año de fabricación"], ["2007", "2008"]);
+  assert.deepEqual(parsed.specs?.["Estado"], ["Usado", "Nuevo"]);
+  assert.equal(parsed.brand, "Linde");
+  assert.equal(parsed.model, null);
+  assert.equal(parsed.condition, null);
+  assert.equal(parsed.horometer, null);
+  assert.equal(parsed.year, null);
+});
+
+test("Mercaeleva: especificaciones repetidas concordantes no se convierten en conflictos", () => {
+  const html = `<html><body><h1>Linde E48P CARRETILLA ELEVADORA ELECTRICA 4800 KG</h1>
+    <h2>General information</h2>
+    ${row("Estado", "Usado")}${row("Tipo de mástil", "Triple")}${row("Capacidad máxima de elevación", "4800 kg")}
+    <h2>Chasis</h2>
+    ${row("Estado", "Usado")}${row("Tipo de mástil", "Triple")}${row("Capacidad máxima de elevación", "4800 kg")}
+  </body></html>`;
+  const parsed = parseMercaelevaProduct(html, "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E48P-M827-8304");
+  assert.equal(parsed.specs?.["Tipo de mástil"], "Triple");
+  assert.equal(parsed.specs?.["Capacidad máxima de elevación"], "4800 kg");
+  assert.equal(parsed.condition, "Segunda mano");
+});
+
+
+test("Mercaeleva: una lectura de horas negativa no se convierte en positiva", () => {
+  const source = (hours: string) => `<html><body><h1>MB EPL185 Transpaleta Eléctrica</h1>
+    <h2>Información general</h2>${row("Horas laborales", hours)}
+  </body></html>`;
+  const url = "https://sales.mercaeleva.com/es/for-sale/machine/MB-EPL185-M119-9334";
+  const negative = parseMercaelevaProduct(source("−1 h"), url);
+  assert.equal(negative.specs?.["Horas laborales"], "−1 h");
+  assert.equal(negative.horometer, null);
+  assert.equal(parseMercaelevaProduct(source("-1 h"), url).horometer, null);
+  assert.equal(parseMercaelevaProduct(source("1 h"), url).horometer, "1");
+  assert.equal(parseMercaelevaProduct(source("16 532 h"), url).horometer, "16 532");
+});

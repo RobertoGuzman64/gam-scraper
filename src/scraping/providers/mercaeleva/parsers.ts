@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { loadReadableHtml } from "../../parsing/readable-html.js";
 import type { ParsedProduct } from "../../provider.js";
+import type { SpecsMap } from "../../../contracts/catalog.js";
 import { collectProductImages } from "../../parsing/image-gallery.js";
 import { extractEmbeddedMachineMetadata, extractEmbeddedMachinePrice } from "./embedded-machine.js";
 import { recoverMercaelevaDescriptionSpecs } from "./technical-description.js";
@@ -115,8 +116,14 @@ const isTechnicalValue = (value: string): boolean =>
   value.length > 0 && value.length <= 240 && !/[{}\[\]"@]/.test(value)
   && !nonTechnicalText.test(value);
 
-const collectSpecs = ($: cheerio.CheerioAPI): Record<string, string> => {
+type CollectedSpecs = {
+  readonly values: Record<string, string>;
+  readonly conflicts: ReadonlyMap<string, readonly string[]>;
+};
+
+const collectSpecs = ($: cheerio.CheerioAPI): CollectedSpecs => {
   const specs: Record<string, string> = {};
+  const conflicts = new Map<string, string[]>();
   let insideSpecs = false;
 
   $("body").find("*").each((_, el) => {
@@ -147,7 +154,13 @@ const collectSpecs = ($: cheerio.CheerioAPI): Record<string, string> => {
 
     const value = normalize(sibling.text());
     if (!isTechnicalValue(value) || value === key) return;
-    if (!Object.hasOwn(specs, key)) specs[key] = value;
+    if (!Object.hasOwn(specs, key)) {
+      specs[key] = value;
+    } else if (specs[key] !== value) {
+      const alternatives = conflicts.get(key) ?? [specs[key] ?? ""];
+      if (!alternatives.includes(value)) alternatives.push(value);
+      conflicts.set(key, alternatives);
+    }
   });
 
   const primaryLabels = ["Marca", "Modelo", "Título adicional", "Año de fabricación", "Artículo No.", "Horas laborales", "Estado", "Condición general", "Tipo de motor", "Altura de trabajo", "Altura de elevación", "Tipo de mástil", "Capacidad de carga", "Capacidad máxima de elevación", "Altura máxima de elevación", "Tipo de cabina", "Número de ruedas"];
@@ -156,7 +169,7 @@ const collectSpecs = ($: cheerio.CheerioAPI): Record<string, string> => {
     const value = labelValue($, label);
     if (value && isTechnicalValue(value)) specs[label] = value;
   }
-  return specs;
+  return { values: specs, conflicts };
 };
 
 export const extractMercaelevaReference = (pageUrl: string): string | null => {
@@ -182,8 +195,11 @@ export const parseMercaelevaProduct = (html: string, pageUrl: string): ParsedPro
   const visiblePrice = visibleHeader.match(/^(?:precio(?:\s+de\s+venta)?\s*:?\s*)?(\d{1,3}(?:[\s\u00a0.]\d{3})+(?:[,.]\d{2})?\s*(?:EUR\b|€))/i)?.[1]
     ?? visibleHeader.match(/^(?:precio(?:\s+de\s+venta)?\s*:?\s*)?(\d+(?:[,.]\d{2})?\s*(?:EUR\b|€))/i)?.[1]
     ?? null;
-  const specs = collectSpecs($);
+  const collected = collectSpecs($);
+  const specs = collected.values;
   recoverMercaelevaDescriptionSpecs(specs, description, title);
+  const publishedSpecs: Record<string, SpecsMap[string]> = { ...specs };
+  for (const [key, alternatives] of collected.conflicts) publishedSpecs[key] = alternatives;
   const embedded = extractEmbeddedMachineMetadata(html, reference);
   const price = visiblePrice ?? extractEmbeddedMachinePrice(html, reference);
   const visibleImages = collectProductImages($, pageUrl, [
@@ -195,18 +211,22 @@ export const parseMercaelevaProduct = (html: string, pageUrl: string): ParsedPro
   const images = embedded.images.length ? embedded.images : visibleImages;
   const image = images[0] ?? null;
 
-  const year = specs["Año de fabricación"]?.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? null;
-  const hours = specs["Horas laborales"]?.match(/\d[\d\s.,]*/)?.[0]?.trim() ?? null;
+  const year = collected.conflicts.has("Año de fabricación") ? null :
+    specs["Año de fabricación"]?.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? null;
+  const hoursMatch = collected.conflicts.has("Horas laborales") ? null :
+    /^\s*(\d[\d\s.,]*?)\s*(?:h|horas?)?\s*$/i.exec(specs["Horas laborales"] ?? "");
+  const hours = hoursMatch?.[1]?.trim() ?? null;
   const location = embedded.location;
-  const sourceCondition = normalize(specs["Estado"] ?? "").toLocaleLowerCase("es");
+  const sourceCondition = collected.conflicts.has("Estado") ? "" :
+    normalize(specs["Estado"] ?? "").toLocaleLowerCase("es");
   const condition = /^(?:usad[oa]|segunda mano|de segunda mano)$/.test(sourceCondition) ? "Segunda mano"
     : /^nuev[oa]$/.test(sourceCondition) ? "Nuevo" : null;
 
   return {
     title,
     reference,
-    brand: specs["Marca"] ?? null,
-    model: specs["Modelo"] ?? null,
+    brand: collected.conflicts.has("Marca") ? null : specs["Marca"] ?? null,
+    model: collected.conflicts.has("Modelo") ? null : specs["Modelo"] ?? null,
     year,
     price,
     condition,
@@ -218,6 +238,6 @@ export const parseMercaelevaProduct = (html: string, pageUrl: string): ParsedPro
     serialNumber: null,
     image,
     images,
-    specs
+    specs: publishedSpecs
   };
 };

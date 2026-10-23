@@ -87,6 +87,25 @@ const workWidthExpressions = (description: string): readonly { value: number; op
   return values;
 };
 
+const configuredWidthMatchesOptions = (record: ProductRecord, expected: number, description: string): boolean => {
+  const suffix = record.model?.trim().match(/(?:^|\s)(\d{2})$/)?.[1];
+  if (!suffix || Number(suffix) * 10 !== expected) return false;
+  const model = foldText(record.model ?? "").trim();
+  if ([record.title, record.shortDescription, record.longDescription].some((part) =>
+    !part || !foldText(part).includes(model))) return false;
+  const text = foldText(description);
+  const expression = /\b(?:(?:ancho|anchura) de (?:trabajo|barrido|fregado|restregado|limpieza)|(?:franja|trayectoria) de limpieza(?: total)?)\b[^\d.!?]{0,55}?(\d[\d.,]*)\s*(mm|cm|metros?|m)\b/g;
+  const matches = [...text.matchAll(expression)];
+  if (matches.length === 0) return false;
+  return matches.every((match) => {
+    const first = match[1] && match[2] ? widthMillimetres(match[1], match[2]) : null;
+    const tail = text.slice((match.index ?? 0) + match[0].length);
+    const alternative = /^\s*(?:o|y|\/)\s*(\d[\d.,]*)\s*(mm|cm|metros?|m)\b/.exec(tail);
+    const second = alternative?.[1] && alternative[2] ? widthMillimetres(alternative[1], alternative[2]) : null;
+    return first !== null && second !== null && first !== second && (first === expected || second === expected);
+  });
+};
+
 export const gamCleaningWidthConflicts = (record: ProductRecord): boolean => {
   if (!cleaningFamily(record)) return false;
   const source = record.specs?.["Anchura trabajo"];
@@ -96,9 +115,10 @@ export const gamCleaningWidthConflicts = (record: ProductRecord): boolean => {
   const match = String(raw).trim().match(/^(\d[\d.,]*)\s*(mm|cm|metros?|m)$/i);
   const expected = match?.[1] && match[2] ? widthMillimetres(match[1], foldText(match[2])) : null;
   if (expected === null) return true;
-  const found = workWidthExpressions(`${record.shortDescription ?? ""}. ${record.longDescription ?? ""}`);
-  return found === null || found.some((entry) => entry.value !== expected &&
-    (!entry.optional || entry.value < expected));
+  const description = `${record.shortDescription ?? ""}. ${record.longDescription ?? ""}`;
+  const found = workWidthExpressions(description);
+  if (found === null) return !configuredWidthMatchesOptions(record, expected, description);
+  return found.some((entry) => entry.value !== expected && (!entry.optional || entry.value < expected));
 };
 
 const workWidth = (description: string): number | null => {

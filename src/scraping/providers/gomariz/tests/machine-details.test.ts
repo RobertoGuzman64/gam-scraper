@@ -33,7 +33,7 @@ test("Gomariz: no inventa ubicación, serie ni precio cuando solo ofrece consult
   assert.equal(result.price, null);
   assert.equal(result.location, null);
   assert.equal(result.serialNumber, null);
-  assert.equal(result.specs?.["Altura plataforma"], undefined);
+  assert.equal(result.specs?.["Altura plataforma"], "14.30 m");
   assert.equal(result.specs?.["Altura de trabajo"], "6.3 m");
 });
 

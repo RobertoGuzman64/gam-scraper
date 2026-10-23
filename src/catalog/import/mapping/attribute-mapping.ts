@@ -2,7 +2,7 @@ import { SPEC_KEY_NORMALIZATION } from "../../normalization/spec-rules.js";
 import type { ProductRecord, SpecScalar } from "../../../contracts/catalog.js";
 import type { Attribute, AttributeResolution, Candidate } from "./attribute-types.js";
 import { fold, scalar, numberToken } from "./attribute-utils.js";
-import { applyGamAliasesDetailed, convertGamCandidate } from "./providers/gam/attributes.js";
+import { applyGamAliasesDetailed, convertGamCandidate, isGamUnmeasuredNumeric } from "./providers/gam/attributes.js";
 import { applyGomarizAliases, convertGomarizCandidate } from "./providers/gomariz/attributes.js";
 import { applyMercaelevaAliasesDetailed } from "./providers/mercaeleva/attributes.js";
 import { normalizeMercaelevaCandidate } from "./providers/mercaeleva/technical.js";
@@ -100,7 +100,10 @@ export const resolveAttribute = (record: ProductRecord, attribute: Attribute): A
     const canonical = SPEC_KEY_NORMALIZATION[fold(rawKey)] ?? rawKey;
     if (!keys.has(fold(rawKey)) && !keys.has(fold(canonical))) continue;
     const value = scalar(spec);
-    if (value !== null && !notPublished(value)) candidates.push({ key: rawKey, value });
+    if (value !== null && !notPublished(value) &&
+      !(record.providerId === "gam" && isGamUnmeasuredNumeric(attribute, value))) {
+      candidates.push({ key: rawKey, value });
+    }
     else if (Array.isArray(spec) && spec.length > 1) ambiguousSource = true;
   }
   const extra: Readonly<Record<string, string | null>> = {
@@ -111,7 +114,10 @@ export const resolveAttribute = (record: ProductRecord, attribute: Attribute): A
     "Ubicación / Delegación": record.location
   };
   const direct = extra[attribute.name];
-  if (direct?.trim()) candidates.push({ key: attribute.name, value: direct });
+  if (direct?.trim() &&
+    !(record.providerId === "gam" && isGamUnmeasuredNumeric(attribute, direct))) {
+    candidates.push({ key: attribute.name, value: direct });
+  }
   if (candidates.length === 0) return { status: ambiguousSource ? "rejected" : "not_observed", value: null };
   const converted = candidates.map((candidate) => {
     const fallback = convert(candidate.value, candidate.key, attribute);

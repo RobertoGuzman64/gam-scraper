@@ -1,10 +1,9 @@
 import * as cheerio from "cheerio";
 import { loadReadableHtml } from "../../parsing/readable-html.js";
 import type { ParsedProduct } from "../../provider.js";
-import type { SpecsMap } from "../../../contracts/catalog.js";
 import { collectProductImages } from "../../parsing/image-gallery.js";
 import { brandFromTitle, modelFromTitle } from "./identity.js";
-import { invalidGomarizPlatformHeight } from "../../../catalog/normalization/gomariz-technical.js";
+import { collectGomarizSpecs } from "./specifications.js";
 
 const normalize = (value: string): string => value.replace(/\s+/g, " ").trim();
 
@@ -47,33 +46,6 @@ export const extractGomarizLinks = (listingUrl: string, html: string): readonly 
   return [...results];
 };
 
-const collectSpecs = (source: string, pageUrl: string): SpecsMap => {
-  const specs: Record<string, string> = {};
-  const conflicting = new Set<string>();
-  const keys = [
-    "Altura plataforma", "Altura de trabajo", "Alcance lateral", "Altura almacenaje",
-    "Altura", "Longitud", "Anchura", "Peso", "Motor", "Capacidad",
-    "Potencia motor", "Potencia", "Combustible", "Tipo de combustible", "Tipo de motor", "Consumo",
-    "Voltaje", "Tensión", "Anchura limpieza", "Ancho de limpieza",
-    "Capacidad de trabajo máxima", "Velocidad máxima", "Altura del mástil", "Nº y tipo de focos"
-  ];
-  const section = source.match(/(?:Dimensiones|Especificaciones técnicas)\s+(?=(?:Altura|Alcance|Longitud|Anchura|Ancho|Peso|Motor|Potencia|Combustible|Voltaje|Tensión|Capacidad|Velocidad|Consumo|Nº y tipo de focos)\b)(.*?)(?:Ver ficha técnica|Comparador|¿Te interesa|Máquinas similares|$)/is)?.[1] ?? "";
-  const sorted = [...keys].sort((a, b) => b.length - a.length);
-  const fieldPattern = new RegExp(`(${sorted.join("|")}):\\s*(.*?)(?=\\s+(?:${sorted.join("|")}):|\\s+Especificaciones técnicas|$)`, "giu");
-  for (const match of section.matchAll(fieldPattern)) {
-    const key = normalize(match[1] ?? "");
-    const value = normalize(match[2] ?? "");
-    if (!key || !value || conflicting.has(key)) continue;
-    if (specs[key] !== undefined && specs[key] !== value) {
-      delete specs[key];
-      conflicting.add(key);
-    } else {
-      specs[key] = value;
-    }
-  }
-  if (invalidGomarizPlatformHeight(pageUrl, specs)) delete specs["Altura plataforma"];
-  return specs;
-};
 
 const metadataValue = (text: string, name: string): string | null => {
   const otherLabels = "Referencia|Año|Marca|Modelo|Horas|Horómetro|Horometro|Nº de serie|Número de serie|Número de bastidor|Ubicación|Localización|País|Potencia|Combustible";
@@ -119,6 +91,6 @@ export const parseGomarizProduct = (html: string, pageUrl: string): ParsedProduc
     serialNumber: metadataValue(overview, "Nº de serie") ?? metadataValue(overview, "Número de serie") ?? metadataValue(overview, "Número de bastidor"),
     image,
     images,
-    specs: collectSpecs(content, pageUrl)
+    specs: collectGomarizSpecs(content)
   };
 };

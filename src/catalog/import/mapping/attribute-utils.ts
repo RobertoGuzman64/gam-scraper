@@ -29,11 +29,13 @@ export const numberToken = (raw: string): number | null => {
 
 export const basketDimensions = (value: SpecScalar): string | null => {
   if (typeof value !== "string") return null;
-  const match = value.trim().match(/^(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*(?:m|metros?)$/i);
-  if (!match?.[1] || !match[2]) return null;
-  const length = Number(match[1].replace(",", "."));
-  const width = Number(match[2].replace(",", "."));
-  if (!Number.isFinite(length) || !Number.isFinite(width) || length <= 0 || width <= 0) return null;
-  return `${String(length).replace(".", ",")} x ${String(width).replace(".", ",")} m`;
+  const match = value.trim().match(/^(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)(?:\s*[x×]\s*(\d+(?:[.,]\d+)?))?\s*(mm|cm|m|metros?)(?:\s+metros?)?$/i);
+  if (!match?.[1] || !match[2] || !match[4]) return null;
+  const unit = match[4].toLowerCase();
+  if (match[3] && unit.startsWith("metro")) return null;
+  const ratio = unit === "mm" ? 1000 : unit === "cm" ? 100 : 1;
+  const values = [match[1], match[2], match[3]].filter((part): part is string => part !== undefined)
+    .map((part) => Number(part.replace(",", ".")) / ratio);
+  if (values.some((dimension) => !Number.isFinite(dimension) || dimension <= 0 || dimension > 20)) return null;
+  return `${values.map((dimension) => String(dimension).replace(".", ",")).join(" x ")} m`;
 };
-
