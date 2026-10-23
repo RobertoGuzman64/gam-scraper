@@ -4,9 +4,11 @@ import { validateCreateManyCandidate, validateImportCandidate } from "./import-v
 import { resolveCategory } from "../mapping/category-mapping.js";
 import { imageUrls, normalizePrice } from "./product-fields.js";
 import { productAttributes } from "./product-attributes.js";
+import { sourceAttributeQualityIssues } from "../mapping/source-attribute-quality.js";
+import { sourceCategoryQualityIssue } from "../mapping/source-category-quality.js";
 import { resolveCommercialCondition } from "./condition.js";
 import { resolveMercaelevaShortDescription } from "../mapping/providers/mercaeleva/descriptions.js";
-import { gamElevationBrandConflict } from "../mapping/providers/gam/elevation-identity.js";
+import { gamElevationSourceIdentityConflict } from "../mapping/providers/gam/elevation-identity.js";
 import type { ImportCandidate, ImportCatalog, PreparedProduct } from "./contracts.js";
 
 export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): PreparedProduct => {
@@ -20,15 +22,18 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   const descriptionEvidence = resolveMercaelevaShortDescription(record);
   const descriptions = distinguishDescriptions(record.shortDescription ?? descriptionEvidence.description, record.longDescription);
   if (descriptionEvidence.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
-  if (gamElevationBrandConflict(record)) issues.push("Identidad GAM contradictoria entre título, resumen y ficha técnica");
+  if (gamElevationSourceIdentityConflict(record)) issues.push("Identidad GAM contradictoria entre título, resumen y ficha técnica");
   const attributeResult = productAttributes(record, category, catalog);
 
   if (contradictoryCondition) issues.push("Condición comercial contradictoria entre la ficha y el origen");
   else if (condition === null) issues.push("Condición comercial no confirmada (Nuevo o Segunda_Mano)");
   if (!reference) issues.push("Referencia ausente");
-  if (!category) issues.push("Categoría Equipzilla sin correspondencia inequívoca");
+  if (!category) {
+    const sourceIssue = sourceCategoryQualityIssue(record);
+    if (sourceIssue) issues.push(sourceIssue);
+  }
   if (price === null && /\d/.test(record.price ?? "")) issues.push("Precio publicado inválido");
-  issues.push(...attributeResult.qualityIssues);
+  issues.push(...(category ? attributeResult.qualityIssues : sourceAttributeQualityIssues(record, catalog)));
 
   const product: ImportCandidate = {
     providerId: record.providerId,

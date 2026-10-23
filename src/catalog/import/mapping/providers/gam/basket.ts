@@ -2,6 +2,23 @@ import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { basketDimensions } from "../../attribute-utils.js";
 
 const sourceDimensions = /^(\d{3,4})\s*[x×]\s*(\d{3,4})\s*[x×]\s*(\d{3,4})\s+metros?$/i;
+const fragmentedDimensions = /^(\d{1,2})\s+(\d{1,2}[.,]\d{1,2})\s*[x×]\s*(\d{1,2}[.,]\d{1,2})\s+([\d\sx×]+?)\s+metros?$/i;
+
+export const gamBasketDimensionsFromRepeatedFragments = (value: string): string | null => {
+  const matched = value.trim().match(fragmentedDimensions);
+  if (!matched?.[1] || !matched[2] || !matched[3] || !matched[4]) return null;
+  const [firstInteger, firstFraction] = matched[2].replace(",", ".").split(".");
+  const [secondInteger, secondFraction] = matched[3].replace(",", ".").split(".");
+  if (!firstInteger || !firstFraction || !secondInteger || !secondFraction || matched[1] !== firstInteger) return null;
+  const remaining = matched[4].replace(/\s*[x×]\s*/gi, "x").trim();
+  const repeats = [
+    `${secondFraction} ${firstFraction}x${secondInteger}`,
+    `${firstFraction}x${secondInteger} ${secondFraction}`
+  ];
+  if (!repeats.includes(remaining)) return null;
+  return basketDimensions(`${matched[2]} x ${matched[3]} metros`);
+};
+
 const publishedDimensions = /\bdimensiones\s+de\s+(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*(mm|cm|m|metros?)\b/gi;
 
 export const gamBasketDimensionsFromDescription = (record: ProductRecord, value: string): string | null => {

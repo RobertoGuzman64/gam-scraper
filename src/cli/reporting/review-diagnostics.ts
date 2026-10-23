@@ -11,7 +11,7 @@ const diagnosticKind = (reason: string): string => {
   }
   if (reason === "Descripción comercial contradictoria: altura de trabajo") return "alturas comerciales explícitas incompatibles";
   if (reason === "Precio publicado inválido") return "valor numérico publicado no interpretable";
-  if (/^(?:Categoría Equipzilla|Condición comercial)/.test(reason)) return "equivalencia o condición por verificar";
+  if (/^(?:Tipo de máquina de origen|Categoría Equipzilla|Condición comercial)/.test(reason)) return "equivalencia o condición por verificar";
   if (/^(?:Número de serie |Referencia duplicada en la extracción)/.test(reason)) return "integridad de identidad";
   return "sin causa clasificada";
 };

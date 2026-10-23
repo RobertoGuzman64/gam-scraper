@@ -27,7 +27,7 @@ test("GAM: Logitrans manual acreditada en LogiQ y WSP, no por batería de balanz
     assert.equal(categorySlug(record), "transpaleta-manual", code);
     assert.equal(prepared.status, code === "238" ? "ready" : "review", code);
     if (code === "239") {
-      assert.ok(prepared.issues.includes("Atributo no normalizable: Capacidad de carga"));
+      assert.ok(prepared.issues.includes("Atributo rechazado por seguridad: Capacidad de carga"));
     }
     assert.equal(categorySlug({ ...record, brand: null }), null, code);
     assert.equal(categorySlug({ ...record, specs: { ...record.specs, Modelo: "Modelo distinto" } }), null, code);
@@ -48,12 +48,13 @@ test("GAM: Sprint TL eleva un ocupante, exige modelo, marca y ficha coincidentes
   assert.equal(categorySlug({ ...record, url: record.url.replace("plataformas-elevadoras-neumaticos-bravi", "plataformas-elevadoras-bravi") }), null);
 });
 
-test("GAM: Lui 460 de dos ocupantes y CTE sobre furgón siguen sin equivalencia", () => {
+test("GAM: Lui 460 y CTE carecen de equivalencia, sin bloquear un tipo acreditado", () => {
   for (const code of ["2159", "6874", "6873", "6953", "6954"]) {
     const record = reference(code);
     assert.equal(categorySlug(record), null, code);
     const prepared = prepareCached(record, catalog);
-    assert.equal(prepared.status, "review", code);
-    assert.ok(prepared.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"), code);
+    assert.equal(prepared.status, "ready", code);
+    assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")), code);
+    assert.ok(!prepared.issues.includes("Tipo de máquina de origen sin confirmar"), code);
   }
 });

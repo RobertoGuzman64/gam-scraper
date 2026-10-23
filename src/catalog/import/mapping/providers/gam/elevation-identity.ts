@@ -40,9 +40,32 @@ export const gamElevationBrandConflict = (record: ProductRecord): boolean => {
   return !compact(title).includes(canonicalModel) && !compact(short).includes(canonicalModel);
 };
 
+export const gamElevationSourceModelConflict = (record: ProductRecord): boolean => {
+  if (!isGamElevationPage(record) || !record.brand || !record.model) return false;
+  const specBrand = record.specs?.["Marca"];
+  const specModel = record.specs?.["Modelo"];
+  if (typeof specBrand !== "string" || typeof specModel !== "string" ||
+    fold(specBrand) !== fold(record.brand) || compact(specModel) !== compact(record.model)) return false;
+  const short = record.shortDescription ?? "";
+  const match = short.match(/^\s*➨\s*([A-Z][A-Z0-9-]{1,24})\s+([A-Z0-9.-]*\d[A-Z0-9.-]*)\b/i);
+  if (!match?.[1] || !match[2] || fold(match[1]) !== fold(record.brand)) return false;
+  const modelRoot = /^([a-z]+)[\s-]*(\d+)/;
+  const expected = modelRoot.exec(fold(record.model));
+  const published = modelRoot.exec(fold(match[2]));
+  if (!expected?.[1] || !expected[2] || !published?.[1] || !published[2] ||
+    expected[1] !== published[1] || expected[2] === published[2]) return false;
+  const normalizeWords = (value: string): string => fold(value).replace(/[^a-z0-9]+/g, " ").trim();
+  if (!` ${normalizeWords(record.title ?? "")} `.includes(` ${normalizeWords(`${match[1]} ${match[2]}`)} `)) return false;
+  const canonical = compact(record.model);
+  return !compact(record.title ?? "").includes(canonical) && !compact(short).includes(canonical);
+};
+
+export const gamElevationSourceIdentityConflict = (record: ProductRecord): boolean =>
+  gamElevationBrandConflict(record) || gamElevationSourceModelConflict(record);
+
 export const gamElevationIdentityConflict = (record: ProductRecord): boolean => {
   if (!isGamElevationPage(record)) return false;
-  if (gamElevationBrandConflict(record)) return true;
+  if (gamElevationSourceIdentityConflict(record)) return true;
   if (!record.model) return false;
   const prefix = modelPrefix(record.model);
   if (!prefix) return false;

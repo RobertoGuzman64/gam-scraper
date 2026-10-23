@@ -67,8 +67,8 @@ test("Fase 6: las dos capacidades multivalor GAM no se convierten en una carga p
   const capacity = attribute("Capacidad de carga");
   for (const reference of gamVariableCapacity) {
     const product = record("gam", reference);
-    assert.deepEqual(resolveAttribute(product, capacity), { status: "invalid", value: null }, reference);
-    assert.ok(prepareProduct(product, catalog).issues.includes("Atributo no normalizable: Capacidad de carga"), reference);
+    assert.deepEqual(resolveAttribute(product, capacity), { status: "rejected", value: null }, reference);
+    assert.ok(prepareProduct(product, catalog).issues.includes("Atributo rechazado por seguridad: Capacidad de carga"), reference);
   }
 });
 

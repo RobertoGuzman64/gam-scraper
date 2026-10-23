@@ -60,7 +60,7 @@ test("GAM: conserva las tres dimensiones de cesta cuando la unidad original es i
 
 test("GAM: no inventa unidades ni reconstruye dimensiones corruptas o contradictorias", () => {
   for (const raw of [
-    "1 76 83X0 metros", "1 1,83 x 0,76 76 83 x 0 metros", "4 81 88x1 metros",
+    "1 76 83X0 metros", "1 1,83 x 0,76 76 82 x 0 metros", "4 81 88x1 metros",
     "1400x700x1100 metros", "1400x700x1100 mm cm", "1,4 x 0,7 x 1,1",
     "2,27 x 1,12", "2,27 x 1,12 m mm", "0x1,12 m", "25x1,12 m", "1,2x-0,8 m"
   ]) {

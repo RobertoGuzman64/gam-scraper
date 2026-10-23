@@ -99,7 +99,7 @@ test("la categoría genérica venta no se asigna arbitrariamente", async () => {
   const record = prepareProduct({ ...base, categoryKey: "venta" }, await loadImportCatalog());
   assert.equal(record.status, "review");
   assert.equal(record.product.categorySellID, null);
-  assert.ok(record.issues.some((issue) => issue.includes("Categoría Equipzilla")));
+  assert.ok(record.issues.some((issue) => issue.includes("Tipo de máquina de origen sin confirmar")));
 });
 
 test("no publica como categorías de ocasión ni la raíz ni ramas de maquinaria nueva", async () => {

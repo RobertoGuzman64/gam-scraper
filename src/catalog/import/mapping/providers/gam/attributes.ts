@@ -3,7 +3,7 @@ import { SPEC_KEY_NORMALIZATION } from "../../../../normalization/spec-rules.js"
 import type { AliasOutcome, Attribute, Candidate } from "../../attribute-types.js";
 import { fold, basketDimensions, numberToken, scalar } from "../../attribute-utils.js";
 import { gamWorkingHeightFromDescription } from "./working-height.js";
-import { gamBasketDimensionsFromDescription } from "./basket.js";
+import { gamBasketDimensionsFromDescription, gamBasketDimensionsFromRepeatedFragments } from "./basket.js";
 import { gamElevationIdentityConflict } from "./elevation-identity.js";
 import { gamCleaningCandidate, gamCleaningCorrectedWidth, gamCleaningWidthConflicts } from "./cleaning.js";
 import { gamHandlingCandidate, normalizeGamMast } from "./handling.js";
@@ -137,7 +137,7 @@ export const convertGamCandidate = (
   if (attribute.name === "Dimensiones de la cesta") {
     const normalized = basketDimensions(candidate.value);
     if (normalized !== null || typeof candidate.value !== "string") return normalized;
-    return gamBasketDimensionsFromDescription(record, candidate.value);
+    return gamBasketDimensionsFromDescription(record, candidate.value) ?? gamBasketDimensionsFromRepeatedFragments(candidate.value);
   }
   if (attribute.name === "Rotación de torreta" && attribute.type === "NUMBER" && attribute.unit_option === "grados" &&
     typeof candidate.value === "string") {

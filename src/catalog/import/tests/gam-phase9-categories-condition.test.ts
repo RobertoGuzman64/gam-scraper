@@ -52,9 +52,9 @@ test("GAM: condición de ocasión explícita en ficha de barredora, sin fabricar
   const prepared = prepareCached(record, catalog);
   assert.equal(prepared.product.condition, "Segunda_Mano");
   assert.equal(prepared.product.categorySellID, null);
-  assert.equal(prepared.status, "review");
-  assert.ok(!prepared.issues.includes("Condición comercial no confirmada (Nuevo o Segunda_Mano)"));
-  assert.ok(prepared.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"));
+  assert.equal(prepared.status, "ready");
+  assert.deepEqual(prepared.issues, []);
+  assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")));
   assert.equal(prepareCached({ ...record, shortDescription: "Barredora EUREKA MAGNUM en venta" }, catalog).product.condition, null);
   assert.equal(prepareCached({ ...record, shortDescription: "EUREKA MAGNUM de segunda mano en venta nueva" }, catalog).product.condition, null);
   assert.equal(prepareCached({ ...record, specs: { ...record.specs, Modelo: "Otro modelo" } }, catalog).product.condition, null);
@@ -90,11 +90,18 @@ test("GAM Hyster H9XDL6: recupera diésel solo con evidencia completa del modelo
   assert.equal(categorySlug({ ...record, providerId: "gomariz" }), null);
 });
 
-test("GAM: familias nuevas sin equivalente y motorizaciones contradictorias permanecen bloqueadas", () => {
+test("GAM: familias nuevas acreditadas no dependen del receptor y motores ambiguos siguen bloqueados", () => {
   for (const code of ["2134", "2135", "2373", "2364", "3425", "3436", "3312", "6182", "1884", "3309", "5", "8", "2312", "2314", "4778", "6874", "6953"]) {
     const record = reference(code);
     const prepared = prepareCached(record, catalog);
     assert.equal(categorySlug(record), null, code);
-    assert.ok(prepared.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"), code);
+    if (["2134", "2135", "4778", "3425", "3436", "3312", "6182", "1884", "3309", "6874", "6953"].includes(code)) {
+      assert.equal(prepared.status, "ready", code);
+      assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")), code);
+    } else {
+      assert.ok(prepared.issues.includes("Tipo de máquina de origen sin confirmar") ||
+        prepared.issues.some((issue) => issue.startsWith("Atributo ")) ||
+        prepared.issues.some((issue) => issue.startsWith("Condición comercial")), code);
+    }
   }
 });

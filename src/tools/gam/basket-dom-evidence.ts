@@ -1,7 +1,7 @@
 import * as cheerio from "cheerio";
 import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
 import { basketDimensions, fold } from "../../catalog/import/mapping/attribute-utils.js";
-import { gamBasketDimensionsFromDescription } from "../../catalog/import/mapping/providers/gam/basket.js";
+import { gamBasketDimensionsFromDescription, gamBasketDimensionsFromRepeatedFragments } from "../../catalog/import/mapping/providers/gam/basket.js";
 import { extractSpecs } from "../../scraping/providers/gam/specifications.js";
 import { normalizeSpace } from "../../scraping/providers/gam/text.js";
 import { unrelatedDetails } from "../../scraping/providers/gam/selectors.js";
@@ -28,7 +28,7 @@ export const pendingGamBasketRecords = (products: readonly ProductRecord[]): rea
   if (record.providerId !== "gam" || !record.reference) return false;
   const raw = record.specs?.["Dimensiones Cesta"];
   return typeof raw === "string" && basketDimensions(raw) === null &&
-    gamBasketDimensionsFromDescription(record, raw) === null;
+    gamBasketDimensionsFromDescription(record, raw) === null && gamBasketDimensionsFromRepeatedFragments(raw) === null;
 });
 
 export const inspectGamBasketDom = (html: string): BasketDomEvidence => {

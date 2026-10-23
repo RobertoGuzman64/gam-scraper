@@ -13,18 +13,20 @@ export type IssueDetail = {
   readonly examples: readonly string[];
 };
 
-const describeIssue = (issue: string): { code: string; classification: IssueCategory } => {
+export const classifyQualityIssue = (issue: string): { code: string; classification: IssueCategory } => {
   if (issue.startsWith("Atributo contradictorio: ")) return { code: `quality.attribute_contradiction:${issue.slice("Atributo contradictorio: ".length)}`, classification: "contradiccion" };
   if (issue.startsWith("Atributo rechazado por seguridad: ")) return { code: `quality.attribute_rejected:${issue.slice("Atributo rechazado por seguridad: ".length)}`, classification: "rechazo_seguridad" };
   if (issue.startsWith("Atributo no normalizable: ")) return { code: `quality.attribute_invalid:${issue.slice("Atributo no normalizable: ".length)}`, classification: "no_normalizable" };
   if (issue.startsWith("Atributo obligatorio ausente: ")) {
     return { code: `excel.required_attribute:${issue.slice("Atributo obligatorio ausente: ".length)}`, classification: "origen_por_contrastar" };
   }
+  if (issue === "Identidad GAM contradictoria entre título, resumen y ficha técnica") return { code: "identity.gam_source_conflict", classification: "identidad" };
   if (issue.startsWith("Número de serie ")) return { code: "identity.serial_collision", classification: "identidad" };
   if (issue.startsWith("Referencia duplicada ")) return { code: "identity.duplicate_reference", classification: "identidad" };
   if (issue === "Descripción comercial contradictoria: altura de trabajo") return { code: "description.height_conflict", classification: "contradiccion" };
-  if (issue.startsWith("Condición comercial contradictoria")) return { code: "condition.contradictory", classification: "ambiguo" };
+  if (issue.startsWith("Condición comercial contradictoria")) return { code: "condition.contradictory", classification: "contradiccion" };
   if (issue.startsWith("Condición comercial no confirmada")) return { code: "condition.unknown", classification: "origen_por_contrastar" };
+  if (issue === "Tipo de máquina de origen sin confirmar") return { code: "quality.source_category_unconfirmed", classification: "origen_por_contrastar" };
   if (issue.startsWith("Categoría Equipzilla")) return { code: "mapping.category", classification: "dato_presente_no_mapeado" };
   if (issue === "Precio publicado inválido") return { code: "source.price_invalid", classification: "ambiguo" };
   if (issue.startsWith("Precio ")) return { code: "excel.price", classification: "contrato_excel" };
@@ -35,7 +37,7 @@ const describeIssue = (issue: string): { code: string; classification: IssueCate
   return { code: `unclassified:${issue}`, classification: "no_determinado" };
 };
 
-export const issueCode = (issue: string): string => describeIssue(issue).code;
+export const issueCode = (issue: string): string => classifyQualityIssue(issue).code;
 
 export type OfflineDiagnostics = {
   readonly version: 1;
@@ -72,7 +74,7 @@ export const buildOfflineDiagnostics = (preparation: OfflinePreparation): Offlin
     else reviewMultiple += 1;
     const codes = new Set<string>();
     for (const reason of reasons) {
-      const { code, classification } = describeIssue(reason);
+      const { code, classification } = classifyQualityIssue(reason);
       if (codes.has(code)) continue;
       codes.add(code);
       const current = groups.get(code) ?? { message: reason, classification, affected: 0, only: 0, examples: [] };

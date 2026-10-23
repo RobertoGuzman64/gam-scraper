@@ -64,7 +64,7 @@ test("GAM: los cuatriciclos no se clasifican como furgonetas eléctricas", () =>
     const prepared = prepareProduct(record, catalog);
     assert.equal(prepared.product.categorySellID, null, vehicle.reference);
     assert.equal(prepared.status, "review", vehicle.reference);
-    assert.ok(prepared.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"), vehicle.reference);
+    assert.ok(prepared.issues.includes("Tipo de máquina de origen sin confirmar"), vehicle.reference);
     const direct = { ...record, categoryKey: "furgonetas-electricas-segunda-mano" };
     assert.equal(categorySlug(direct), undefined, vehicle.reference);
   }
@@ -78,7 +78,7 @@ test("GAM: un título eléctrico incompatible con la sección diésel requiere r
   };
   assert.equal(categorySlug(incompatible), undefined);
   assert.equal(prepareProduct(incompatible, catalog).product.categorySellID, null);
-  assert.ok(prepareProduct(incompatible, catalog).issues.includes("Categoría Equipzilla sin correspondencia inequívoca"));
+  assert.ok(prepareProduct(incompatible, catalog).issues.includes("Tipo de máquina de origen sin confirmar"));
   assert.equal(categorySlug({ ...incompatible, categoryKey: "carretillas-elevadoras-diesel-segunda-mano" }), undefined);
   assert.equal(categorySlug(source("gam", gamUrl("carretillas-elevadoras-diesel-segunda-mano", "6024"), "Carretilla frontal diésel 2000Kg", {})), "carretillas-elevadoras-diesel-segunda-mano");
   assert.equal(categorySlug(source("gam", gamUrl("carretillas-elevadoras-electricas-segunda-mano", "6941"), "Carretilla elevadora eléctrica triciclo", {})), "carretillas-elevadoras-electricas-segunda-mano");

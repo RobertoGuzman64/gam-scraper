@@ -46,7 +46,7 @@ test("maquinaria nueva: rutas de familia inequívoca enlazan con hojas del catá
     const prepared = prepareProduct(record, catalog);
     assert.equal(categorySlug(record), expected, parent);
     assert.equal(prepared.product.condition, "Nuevo", parent);
-    assert.ok(!prepared.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"), parent);
+    assert.ok(!prepared.issues.includes("Tipo de máquina de origen sin confirmar"), parent);
     assert.ok(prepared.issues.every((issue) => !issue.includes("Maquinaria nueva excluida")), parent);
   }
 });
@@ -86,8 +86,13 @@ test("ambigüedad de familia y motorización impide equivalencias aproximadas", 
   for (const source of cases) {
     const prepared = prepareProduct(source, catalog);
     assert.equal(prepared.product.categorySellID, null, source.title ?? "");
-    assert.equal(prepared.status, "review", source.title ?? "");
-    assert.ok(prepared.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"), source.title ?? "");
+    if (["Apilador semi eléctrico Logitrans", "Plataforma elevadora Bravi"].includes(source.title ?? "")) {
+      assert.equal(prepared.status, "ready", source.title ?? "");
+      assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")));
+    } else {
+      assert.equal(prepared.status, "review", source.title ?? "");
+      assert.ok(prepared.issues.includes("Tipo de máquina de origen sin confirmar"), source.title ?? "");
+    }
   }
 });
 
@@ -136,5 +141,5 @@ test("mapeo usado anterior conserva categoría y condición, sin mezclarlas", ()
   }, catalog);
   assert.equal(used.product.categorySellID, 27);
   assert.equal(used.product.condition, "Segunda_Mano");
-  assert.ok(!used.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"));
+  assert.ok(!used.issues.includes("Tipo de máquina de origen sin confirmar"));
 });

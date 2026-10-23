@@ -34,9 +34,10 @@ test("GAM: Nuevo explícito se conserva sin mapearse a categorías de ocasión",
   const newMachine = prepareProduct(gam, catalog);
   assert.equal(newMachine.product.condition, "Nuevo");
   assert.equal(newMachine.product.categorySellID, null);
-  assert.equal(newMachine.status, "review");
-  assert.ok(newMachine.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"));
+  assert.equal(newMachine.status, "ready");
   assert.ok(!newMachine.issues.some((issue) => issue.includes("Condición comercial")));
+  assert.deepEqual(newMachine.issues, []);
+  assert.ok(newMachine.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")));
   assert.equal(newMachine.product.price, 21000);
   assert.equal(newMachine.product.reference, "8000");
   assert.equal(newMachine.product.images.length, 1);
@@ -157,7 +158,7 @@ test("sin condición fiable no se asigna categoría comercial de ocasión ni de 
   assert.equal(unknown.product.categorySellID, null);
   assert.equal(unknown.product.category, null);
   assert.equal(unknown.status, "review");
-  assert.ok(unknown.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"));
+  assert.ok(unknown.issues.includes("Tipo de máquina de origen sin confirmar"));
 
   const contradictory = prepareProduct({ ...usedGam, condition: "Nuevo" }, catalog);
   assert.equal(contradictory.product.condition, null);

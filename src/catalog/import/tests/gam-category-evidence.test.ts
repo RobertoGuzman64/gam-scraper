@@ -99,7 +99,12 @@ test("sin categoría compatible o evidencia suficiente mantiene review", () => {
   for (const source of cases) {
     const prepared = prepareProduct(source, catalog);
     assert.equal(prepared.product.categorySellID, null, source.title ?? "");
-    assert.ok(prepared.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"), source.title ?? "");
+    if (source.title?.includes("híbrida")) {
+      assert.equal(prepared.status, "ready");
+      assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")));
+    } else {
+      assert.ok(prepared.issues.includes("Tipo de máquina de origen sin confirmar"), source.title ?? "");
+    }
   }
 });
 

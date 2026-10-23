@@ -39,10 +39,12 @@ const containsLabel = (text: string | null | undefined, label: string): boolean 
   hasText(text) && (` ${normalized(text ?? "")} `).includes(` ${normalized(label)} `);
 
 export const sourceSignalForIssue = (issue: string, record: ProductRecord): SourceSignal => {
-  if (issue.startsWith("Número de serie ") || issue.startsWith("Referencia duplicada ")) return "identidad";
+  if (issue.startsWith("Número de serie ") || issue.startsWith("Referencia duplicada ") ||
+    issue === "Identidad GAM contradictoria entre título, resumen y ficha técnica") return "identidad";
   if (issue === "Descripción comercial contradictoria: altura de trabajo") return "contradiccion";
   if (issue.startsWith("Condición comercial contradictoria") || issue.startsWith("Atributo contradictorio: ")) return "contradiccion";
   if (issue.startsWith("Atributo rechazado por seguridad: ") || issue.startsWith("Atributo no normalizable: ")) return "campo_origen_no_validado";
+  if (issue === "Tipo de máquina de origen sin confirmar") return "sin_evidencia_local";
   if (issue.startsWith("Categoría Equipzilla")) return "equivalencia_pendiente";
   if (issue.startsWith("Atributo obligatorio ausente: ")) {
     const label = issue.slice("Atributo obligatorio ausente: ".length);

@@ -122,10 +122,22 @@ const conflictingCapacity = (record: ProductRecord): boolean => {
   return [...differing.values()].some((count) => count >= 2);
 };
 
+const multipleCapacities = (value: string): boolean => {
+  const match = fold(value).match(/^(\d[\d., ]*(?:\s*(?:\/|[-–]|\ba\b|\bo\b)\s*\d[\d., ]*)+)\s*(?:kg|kilogramos?)$/);
+  if (!match?.[1]) return false;
+  const values = match[1].split(/\s*(?:\/|[-–]|\ba\b|\bo\b)\s*/).map(numberToken);
+  return values.length > 1 && values.every((part) => part !== null && part > 0) && new Set(values).size > 1;
+};
+
 export const gamHandlingAmbiguousCapacity = (record: ProductRecord): boolean => {
   if (!relevantGamHandlingRecord(record)) return false;
-  if (Object.entries(record.specs ?? {}).some(([key, value]) =>
-    ["capacidad de carga", "capacidad de carga (kg)"].includes(fold(key)) && scalar(value) !== null)) return false;
+  const published = Object.entries(record.specs ?? {}).filter(([key]) =>
+    ["capacidad de carga", "capacidad de carga (kg)"].includes(fold(key)));
+  if (published.some(([, value]) => {
+    const observed = scalar(value);
+    return typeof observed === "string" && multipleCapacities(observed);
+  })) return true;
+  if (published.some(([, value]) => scalar(value) !== null)) return false;
   return [record.shortDescription, record.longDescription].some((description) =>
     typeof description === "string" && gamHandlingModelEvidence(record, description) &&
     /\bcapacidad\s+(?:nominal\s+)?de\s+carga\s+(?:de\s+)?\d[\d.,]*(?:\s*\/\s*\d[\d.,]*)+\s*(?:kg|kilogramos?)\b/.test(fold(description))

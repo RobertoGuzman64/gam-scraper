@@ -54,8 +54,11 @@ const assertPrepared = (records: readonly ProductRecord[], company: string, cata
     if (result.status !== "ready") continue;
     assert.equal(result.issues.length, 0);
     assert.ok(result.importIssues);
-    assert.notEqual(result.product.categorySellID, null);
-    if (result.product.categorySellID === null) continue;
+    if (result.product.categorySellID === null) {
+      assert.ok(result.importIssues.excel.some((issue) => issue.startsWith("Categoría no ")));
+      assert.deepEqual(result.product.attributes, []);
+      continue;
+    }
     assert.equal(ids.get(result.product.categorySellID), 1);
     assert.ok(result.product.price === null || result.product.price > 0);
     const active = new Set(catalog.relations.filter((item) => item.categoryID === result.product.categorySellID).map((item) => item.attributeID));

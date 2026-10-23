@@ -175,11 +175,12 @@ test("validate --verbose separa fichas en review de bloqueos de receptor sin alt
       const reviewDetails = output.split("  Máquinas en review (referencia y motivos exactos):")[1]?.split("  Bloqueos de importación Excel")[0];
       assert.ok(reviewDetails);
       assert.doesNotMatch(reviewDetails, /GAM \| 33333 \|/);
-      assert.match(reviewDetails, /GAM \| 44444 \| 2 motivos/);
+      assert.match(reviewDetails, /GAM \| 44444 \| 1 motivo/);
       assert.match(output, /GAM \| 33333 \| calidad: ready \| 1 requisitos de receptor/);
       assert.doesNotMatch(output, /\[excel.price\]/);
       assert.match(output, /\[condition.unknown\] Condición comercial no confirmada/);
-      assert.match(output, /\[mapping.category\] Categoría Equipzilla sin correspondencia inequívoca/);
+      assert.doesNotMatch(reviewDetails, /\[mapping.category\]/);
+      assert.match(output, /\[category.excel\] contrato_destino: Categoría no coincide de forma única con el backend/);
       assert.doesNotMatch(output, /GAM \| 11111 \|/);
       assert.doesNotMatch(output, /GAM \| 22222 \|/);
       assert.doesNotMatch(output, /Origen canónico \(todos los campos publicados\)/);

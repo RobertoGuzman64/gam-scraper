@@ -33,7 +33,7 @@ test("Fase 16: ninguna de las dieciséis capacidades discordantes se elige por m
 test("Fase 16: no inventa una capacidad puntual para las dos fichas con alternativas", () => {
   for (const id of ["237", "235"]) {
     const record = reference(id);
-    assert.equal(status(record), "invalid", id);
+    assert.equal(status(record), "rejected", id);
     assert.equal(prepareProduct(record, catalog).status, "review", id);
   }
 });

@@ -41,9 +41,10 @@ test("GAM: descripción ajena al modelo o capacidad opcional no invalida la espe
 });
 
 test("GAM: alturas, anchos y radios de giro ambiguos conservan sus rechazos", () => {
-  for (const code of ["6702", "5275", "6887", "5864", "3134", "6236", "6764"]) {
+  for (const code of ["6702", "5275", "6887", "5864", "3134", "6764"]) {
     assert.equal(status(code, "Altura de elevación"), "contradiction", code);
   }
+  assert.equal(status("6236", "Altura de elevación"), "rejected");
   for (const code of ["4024", "3997", "4005", "4004"]) {
     assert.equal(status(code, "Ancho de trabajo"), "contradiction", code);
   }

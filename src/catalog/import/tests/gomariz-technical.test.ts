@@ -123,7 +123,8 @@ test("Gomariz: el catálogo original conserva las incidencias reales sin inventa
     const record = byReference.get(reference);
     assert.ok(record);
     const prepared = prepareCached(record, catalog);
-    assert.ok(prepared.issues.includes("Categoría Equipzilla sin correspondencia inequívoca"), reference);
+    assert.equal(prepared.status, "ready", reference);
+    assert.ok(!prepared.issues.includes("Tipo de máquina de origen sin confirmar"), reference);
     assert.equal(prepared.product.categorySellID, null);
   }
 });
