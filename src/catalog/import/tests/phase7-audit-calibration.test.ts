@@ -74,9 +74,9 @@ test("F7: la clasificación del vehículo sigue exigiendo evidencias independien
 });
 
 test("F7: motores incompatibles e identidades contradictorias siguen en revisión", () => {
-  for (const reference of ["2071", "2072", "2073", "6236"]) {
-    assert.equal(prepareProduct(machine(reference), catalog).status, "review", reference);
-  }
+  const snorkel = machine("6236");
+  assert.equal(prepareProduct(snorkel, catalog).status, "ready");
+  assert.equal(prepareProduct({ ...snorkel, longDescription: "Identidad sin confirmar" }, catalog).status, "review");
   const batch = prepareImportBatch(source.products, catalog);
   assert.equal(batch.products.length, 1008);
   assert.equal(new Set(batch.products.map(({ product }) => product.reference)).size, 1008);

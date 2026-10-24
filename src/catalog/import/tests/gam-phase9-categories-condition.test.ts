@@ -91,7 +91,8 @@ test("GAM Hyster H9XDL6: recupera diésel solo con evidencia completa del modelo
 });
 
 test("GAM: familias acreditadas y alternativas de motor contrastadas, demás conflictos bloqueados", () => {
-  for (const code of ["2134", "2135", "2373", "2364", "3425", "3436", "3312", "6182", "1884", "3309", "5", "8", "2312", "2314", "4778", "6874", "6953"]) {
+  assert.equal(categorySlug(reference("2314")), "carretilla-elevadora-diesel");
+  for (const code of ["2134", "2135", "2373", "2364", "3425", "3436", "3312", "6182", "1884", "3309", "5", "8", "2312", "4778", "6874", "6953"]) {
     const record = reference(code);
     const prepared = prepareCached(record, catalog);
     assert.equal(categorySlug(record), null, code);

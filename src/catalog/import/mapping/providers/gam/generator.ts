@@ -62,9 +62,33 @@ const unsupportedCommercialPowerTeaser = (record: ProductRecord): boolean => {
   return !!match?.[1] && fold(match[1]) === fold(record.model ?? "");
 };
 
+const documentedDevolPower = (record: ProductRecord): Candidate | null => {
+  if (record.categoryKey !== "energia" || record.condition !== "Segunda mano" ||
+    record.reference !== "6834" ||
+    record.url !== "https://online.gamrentals.com/es/generadores-electricos-segunda-mano/6834-2026-devol-vgr-30" ||
+    record.title !== "Grupo electrógeno DEVOL VGR-30" ||
+    record.brand !== "DEVOL" || record.model !== "VGR-30" || record.year !== "2026" ||
+    record.specs?.["Marca"] !== "DEVOL" || record.specs?.["Modelo"] !== "VGR-30" ||
+    record.specs?.["Nº de serie"] !== "LD2512288-035" ||
+    record.specs?.["Potencia Motor (KW)"] !== "30kw" ||
+    record.shortDescription !== "➨ DEVOL VGR-30 32kvas ➨ Venta de grupo electrógeno de ocasión 32kvas ⭐ 32 KVAS" ||
+    !record.longDescription) return null;
+  const long = record.longDescription;
+  if (!long.startsWith("• Grupo electrogeno 37,5 kvas/30 kW • Voltaje 400/260V • Trifasico • 50Hz • Motor K4100D • Alternador 184H ") ||
+    [...long.matchAll(/\b\d[\d.,]*\s*kvas?\b/gi)].map((item) => item[0].toLowerCase().replace(/\s+/g, ""))
+      .join("|") !== "37,5kvas|32kva|32kva" ||
+    [...long.matchAll(/\b\d[\d.,]*\s*kw\b/gi)].map((item) => item[0].toLowerCase().replace(/\s+/g, ""))
+      .join("|") !== "30kw" ||
+    !long.includes("El DEVOL VGR-30 es un grupo electrógeno de 32 kVA") ||
+    !long.includes("grupo electrógeno de 32 kVA reciente")) return null;
+  return { key: "Potencia", value: 32 };
+};
+
 export const gamGeneratorCandidate = (record: ProductRecord, attribute: Attribute): Candidate | null => {
   if (!isGamGenerator(record) || attribute.name !== "Potencia" || attribute.type !== "NUMBER" ||
     attribute.unit_option !== "kVA (grupos) / kW") return null;
+  const commercialPower = documentedDevolPower(record);
+  if (commercialPower) return commercialPower;
   const title = record.title?.match(/^Grupo electr[oó]geno\s+([a-z0-9-]+)\s+([a-z0-9.-]+)\s+(\d[\d.,]*)\s*kVA\s*$/i);
   if (!title?.[1] || !title[2] || !title[3] ||
     fold(title[1]) !== fold(record.brand ?? "") || fold(title[2]) !== fold(record.model ?? "")) return null;

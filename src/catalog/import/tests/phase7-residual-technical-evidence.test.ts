@@ -26,7 +26,7 @@ const cases = [
   { provider: "gam", reference: "6887", name: "Altura de elevación", status: "contradiction", issue: "Atributo contradictorio: Altura de elevación" },
   { provider: "gam", reference: "5864", name: "Altura de elevación", status: "contradiction", issue: "Atributo contradictorio: Altura de elevación" },
   { provider: "gam", reference: "3134", name: "Altura de elevación", status: "contradiction", issue: "Atributo contradictorio: Altura de elevación" },
-  { provider: "gam", reference: "4004", name: "Ancho de trabajo", status: "contradiction", issue: "Atributo contradictorio: Ancho de trabajo" },
+  { provider: "gam", reference: "4004", name: "Ancho de trabajo", status: "resolved", issue: "Atributo contradictorio: Ancho de trabajo" },
   { provider: "mercaeleva", reference: "M104-0836", name: "Tipo de mástil", status: "contradiction", issue: "Atributo contradictorio: Tipo de mástil" },
 ] as const;
 
@@ -37,9 +37,9 @@ test("Fase 7: las contradicciones técnicas pendientes mantienen su bloqueo y su
     const resolution = resolveAttribute(record, attribute(entry.name));
     const prepared = prepareProduct(record, catalog);
     assert.equal(resolution.status, entry.status, `${entry.provider}:${entry.reference}`);
-    assert.equal(resolution.value, null, `${entry.provider}:${entry.reference}`);
-    assert.equal(prepared.status, ["3134", "6702"].includes(entry.reference) ? "ready" : "review", `${entry.provider}:${entry.reference}`);
-    assert.equal(prepared.issues.includes(entry.issue), !(["3134", "6702"].includes(entry.reference)), `${entry.provider}:${entry.reference}`);
+    assert.equal(resolution.value, entry.reference === "4004" ? 800 : null, `${entry.provider}:${entry.reference}`);
+    assert.equal(prepared.status, ["3134", "6702", "5275", "5864", "6887", "4004"].includes(entry.reference) ? "ready" : "review", `${entry.provider}:${entry.reference}`);
+    assert.equal(prepared.issues.includes(entry.issue), !(["3134", "6702", "5275", "5864", "6887", "4004"].includes(entry.reference)), `${entry.provider}:${entry.reference}`);
   }
 });
 

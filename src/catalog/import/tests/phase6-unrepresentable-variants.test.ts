@@ -89,7 +89,7 @@ test("Fase 6: 14 m de altura nominal y 16 m de trabajo son magnitudes compatible
 
 test("Fase 6: preparación por lote conserva las identidades y los choques de serie", () => {
   const prepared = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(prepared.totals, { ready: 979, review: 29 });
+  assert.deepEqual(prepared.totals, { ready: 999, review: 9 });
   assert.equal(new Set(prepared.products.map((item) => item.product.reference)).size, 1008);
   for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858"]) {
     const original = prepared.products.find((item) => item.product.reference === reference);

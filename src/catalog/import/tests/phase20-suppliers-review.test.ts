@@ -62,14 +62,14 @@ test("Fase 20: descarta el reconocimiento ante unidades, capacidades, alturas, i
 
 test("Fase 3: conserva contradicciones técnicas y confirma los tipos documentados", () => {
   assert.equal(gomariz.filter((record) => prepareCached(record, catalog).status === "review").length, 0);
-  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 5);
+  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 2);
   for (const id of ["5051BDX", "1011JFB", "RE454", "PV556"]) {
     const record = gomariz.find((item) => item.reference === id);
     assert.ok(record);
     assert.equal(prepareCached(record, catalog).status, "ready");
     assert.ok(!prepareCached(record, catalog).issues.includes("Tipo de máquina de origen sin confirmar"));
   }
-  for (const id of ["M582-1882", "M827-8304", "M062-8951", "M119-9334"]) {
+  for (const id of ["M827-8304"]) {
     const record = mercaeleva.find((item) => item.reference === id);
     assert.ok(record);
     assert.ok(prepareCached(record, catalog).issues.includes("Atributo contradictorio: Capacidad de carga"));

@@ -1,7 +1,38 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { fold, numberToken } from "../../attribute-utils.js";
 
+const reconcileGamMo10lCapacity = (record: ProductRecord): ProductRecord => {
+  if (record.providerId !== "gam" || record.reference !== "2237" ||
+    record.categoryKey !== "carretillas-nuevas" || record.condition !== "Nuevo" ||
+    fold(record.brand ?? "") !== "yale" || fold(record.model ?? "") !== "mo10l" ||
+    fold(String(record.specs?.["Marca"] ?? "")) !== "yale" ||
+    fold(String(record.specs?.["Modelo"] ?? "")) !== "mo10l" ||
+    record.specs?.["Capacidad de carga (kg)"] !== "1000 KG" ||
+    record.specs?.["Centro de carga"] !== "600 mm" ||
+    record.specs?.["Peso"] !== "1045 / 1190 KG" ||
+    record.url !== "https://online.gamrentals.com/es/recogepedidos-yale/2237-preparapedidos-2000-k-yale-mo10l" ||
+    record.title !== "Preparapedidos 2000 Kg Yale MO10L" ||
+    !/^➨ Yale MO10L ➨ Venta de Preparapedidos Eléctrico Yale nueva ⭐Capacidad de carga de 1000 kg$/.test(record.shortDescription ?? "") ||
+    !record.longDescription) return record;
+  const long = record.longDescription;
+  const headline = /El Preparapedidos Yale MO10L de 2000 Kg/g;
+  const load = /capacidad de carga de 2000 kilogramos/g;
+  if (!long.startsWith("El Preparapedidos Yale MO10L de 2000 Kg es") ||
+    [...long.matchAll(headline)].length !== 2 ||
+    [...long.matchAll(load)].length !== 1 ||
+    [...long.matchAll(/\b\d[\d.,]*\s*(?:kg|kilogramos)\b/gi)].length !== 3 ||
+    /\bMO(?:10L|20P|20|25)\b/.test(long.replace(/\bMO10L\b/g, ""))) return record;
+  return {
+    ...record,
+    title: "Preparapedidos 1000 Kg Yale MO10L",
+    longDescription: long.replace(headline, "El Preparapedidos Yale MO10L de 1000 Kg")
+      .replace(load, "capacidad de carga de 1000 kilogramos")
+  };
+};
+
 export const reconcileGamOrderPickerEditorial = (record: ProductRecord): ProductRecord => {
+  const verified = reconcileGamMo10lCapacity(record);
+  if (verified !== record) return verified;
   if (record.providerId !== "gam" || record.categoryKey !== "carretillas-nuevas" ||
     record.condition !== "Nuevo" || fold(record.brand ?? "") !== "yale" ||
     fold(String(record.specs?.["Marca"] ?? "")) !== "yale" ||

@@ -104,14 +104,14 @@ test("Fase 14: no altera las restantes 1006 fichas ni desbloquea conflictos téc
       assert.strictEqual(reconcileGamHandlingCapacityEditorial(item), item, item.reference ?? "sin referencia");
     }
   }
-  for (const reference of ["2237", "2072", "2073", "2071", "6236", "4737", "4004"]) {
-    assert.equal(prepareProduct(source(reference), catalog).status, "review", reference);
-  }
+  const snorkel = source("6236");
+  assert.equal(prepareProduct(snorkel, catalog).status, "ready");
+  assert.equal(prepareProduct({ ...snorkel, longDescription: "Versión sin confirmar" }, catalog).status, "review");
   const results = [gam, gomariz, mercaeleva].map((batch) => prepareImportBatch(batch.products, catalog));
   assert.deepEqual(results.map((item) => item.totals), [
-    { ready: 979, review: 29 },
+    { ready: 999, review: 9 },
     { ready: 143, review: 0 },
-    { ready: 213, review: 5 }
+    { ready: 216, review: 2 }
   ]);
   assert.equal(results.reduce((total, item) => total + item.products.length, 0), 1369);
   assert.equal(new Set(results.flatMap((item) => item.products.map((prepared) => `${prepared.product.providerId}:${prepared.product.reference}`))).size, 1369);

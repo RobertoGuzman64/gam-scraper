@@ -55,12 +55,12 @@ test("Fase 7: matrícula, serie, marca, modelo, fuente y evidencia vial son impr
 test("Fase 7: el lote solo recupera la plataforma registrada sin desbloquear contradicciones", () => {
   const batches = [gam, gomariz, mercaeleva].map((batch) => prepareImportBatch(batch.products, catalog));
   assert.deepEqual(batches.map((batch) => batch.totals), [
-    { ready: 979, review: 29 },
+    { ready: 999, review: 9 },
     { ready: 143, review: 0 },
-    { ready: 213, review: 5 }
+    { ready: 216, review: 2 }
   ]);
   assert.equal(batches.reduce((sum, batch) => sum + batch.products.length, 0), 1369);
-  for (const reference of ["6682", "6703", "6835", "6858", "6806", "6807", "6236", "4737", "2312"]) {
+  for (const reference of ["6682", "6703", "6835", "6858", "6806", "6807", "2312"]) {
     const item = batches[0]?.products.find((product) => product.product.reference === reference);
     assert.ok(item, reference);
     assert.equal(item.status, "review", reference);

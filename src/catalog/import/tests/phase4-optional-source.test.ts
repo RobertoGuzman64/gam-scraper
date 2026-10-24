@@ -75,11 +75,11 @@ test("Fase 4: radios publicados como pares permanecen sin escalar y una medida Ã
 });
 
 test("Fase 4: las contradicciones autÃ©nticas y las colisiones de serie siguen bloqueadas por lote", () => {
-  for (const reference of ["2312", "4737", "6236"]) {
+  for (const reference of ["2312"]) {
     assert.equal(prepareProduct(source("gam", reference), catalog).status, "review", reference);
   }
   const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 979, review: 29 });
+  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
   for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858"]) {
     const item = batch.products.find((entry) => entry.product.reference === reference);
     assert.ok(item, reference);

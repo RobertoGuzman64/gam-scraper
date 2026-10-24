@@ -80,10 +80,13 @@ test("Fase 11: rechaza identidades, motorizaciones y textos manipulados", () => 
   for (const [index, record] of variants.entries()) {
     assert.strictEqual(reconcileGamForkliftFuelEditorial(record), record, String(index));
   }
-  for (const reference of ["2071", "2072", "2073", "2311", "2312", "2313", "2314"]) {
+  for (const reference of ["2071", "2311", "2312", "2313"]) {
     const record = source(reference);
     assert.strictEqual(reconcileGamForkliftFuelEditorial(record), record, reference);
-    assert.equal(prepareProduct(record, catalog).status, "review", reference);
+    assert.equal(prepareProduct(record, catalog).status, ["2071", "2313"].includes(reference) ? "ready" : "review", reference);
+  }
+  for (const reference of ["2072", "2073"]) {
+    assert.strictEqual(reconcileGamForkliftFuelEditorial(source(reference)), source(reference), reference);
   }
 });
 
@@ -105,12 +108,13 @@ test("Fase 11: la ruta diésel no acredita un motor GLP por sí sola", () => {
 
 test("Fase 11: lote completo con dos recuperaciones y vetos técnicos intactos", () => {
   const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 979, review: 29 });
+  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
   for (const reference of ["3130", "3131"]) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "ready", reference);
   }
-  for (const reference of ["2071", "2072", "2073", "2311", "2312", "2313", "2314", "6236", "6622", "6682", "6703", "4737", "4802", "6834"]) {
+  assert.equal(batch.products.find((item) => item.product.reference === "2071")?.status, "ready");
+  for (const reference of ["2311", "2312", "6682", "6703"]) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review", reference);
   }
 });

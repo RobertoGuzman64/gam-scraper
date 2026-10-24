@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { fold } from "../../category-utils.js";
+import { isGamVerifiedYaleGc55vxGlp } from "./yale-gc55vx-glp-evidence.js";
 
 const gamCategories: Readonly<Record<string, string>> = {
   "plataformas-elevadoras-tijera-electricas-segunda-mano": "plataformas-tijera-electricas-segunda-mano",
@@ -85,6 +86,9 @@ const gamDocumentedCategory = (record: ProductRecord, parent: string, title: str
   const rawMotor = record.specs?.["Tipo motor"];
   const motor = rawMotor === undefined ? "" : typeof rawMotor === "string" ? fold(rawMotor) : null;
   const combined = `${title} ${short} ${long}`;
+  if (parent === "carretillas-elevadora-diesel-yale" && isGamVerifiedYaleGc55vxGlp(record)) {
+    return "carretilla-elevadora-glp";
+  }
 
   if (parent === "reachstacker-hyster" && /\breach[ -]?stacker\b/.test(title)) {
     return /\bmanipulacion de contenedores\b|\bcontenedores iso\b|\bvaciado de contenedores\b/.test(long)
@@ -330,6 +334,7 @@ export const gamUsedCategorySlug = (record: ProductRecord, path: readonly string
       const short = fold(record.shortDescription ?? "");
       const long = fold(record.longDescription ?? "");
       const combined = `${title} ${short} ${long}`;
+
       const rawMotor = record.specs?.["Tipo motor"];
       const motor = rawMotor === undefined ? "" : typeof rawMotor === "string" ? fold(rawMotor) : null;
       if ((motor === "" || motor === "electrico") &&

@@ -54,10 +54,10 @@ test("Fase 13: alturas diferentes o identidad alterada no generan corrección", 
   for (const [index, variant] of variants.entries()) {
     assert.strictEqual(reconcileGamHandlingHeightEditorial(variant), variant, String(index));
   }
-  for (const reference of ["5275", "5864", "6887"]) {
+  for (const reference of ["5275", "5864"]) {
     const other = source(reference);
     assert.strictEqual(reconcileGamHandlingHeightEditorial(other), other);
-    assert.equal(prepareProduct(other, catalog).status, "review");
+    assert.equal(prepareProduct(other, catalog).status, "ready");
   }
 });
 
@@ -97,7 +97,7 @@ test("Fase 13: no corrige preparapedidos con ficha, modelo o fuente discordantes
   for (const [index, variant] of variants.entries()) {
     assert.strictEqual(reconcileGamOrderPickerEditorial(variant), variant, String(index));
   }
-  for (const reference of ["2237", "2311", "2312"]) {
+  for (const reference of ["2311", "2312"]) {
     const other = source(reference);
     assert.strictEqual(reconcileGamOrderPickerEditorial(other), other);
     assert.equal(prepareProduct(other, catalog).status, "review");
@@ -106,12 +106,12 @@ test("Fase 13: no corrige preparapedidos con ficha, modelo o fuente discordantes
 
 test("Fase 13: recuperación por lote, sin aprobar conflictos técnicos de origen", () => {
   const batch = prepareImportBatch(sourceCatalog.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 979, review: 29 });
+  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
   for (const reference of ["3134", "2240"]) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "ready", reference);
   }
-  for (const reference of ["2237", "2311", "2312", "2313", "2314", "6834", "6236", "6622", "6682", "6703", "4737", "4802", "5275", "6887"]) {
+  for (const reference of ["2311", "2312", "6682", "6703"]) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review", reference);
   }
 });

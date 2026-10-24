@@ -28,7 +28,7 @@ test("Fase 16: capacidades de modelo acreditado se distinguen de discrepancias p
     const record = reference(id);
     const expected = confirmed.has(id) ? "resolved" : "contradiction";
     assert.equal(status(record), expected, id);
-    assert.equal(prepareProduct(record, catalog).status, confirmed.has(id) || ["2240", "6723", "2211", "6272"].includes(id) ? "ready" : "review", id);
+    assert.equal(prepareProduct(record, catalog).status, confirmed.has(id) || ["2237", "2240", "6723", "2211", "6272"].includes(id) ? "ready" : "review", id);
   }
 });
 

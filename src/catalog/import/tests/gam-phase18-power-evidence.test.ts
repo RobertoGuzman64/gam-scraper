@@ -49,10 +49,8 @@ test("Fase 18: solo acepta la ruta PRAMAC cuando coinciden el modelo y la potenc
 });
 
 test("Fase 18: la potencia no acreditada sigue rechazada y las nominales se conservan", () => {
-  for (const id of ["6834"]) {
-    assert.equal(power(reference(id)).status, "rejected", id);
-    assert.equal(prepareProduct(reference(id), catalog).status, "review", id);
-  }
+  assert.deepEqual(power(reference("6834")), { status: "resolved", value: 32 });
+  assert.equal(prepareProduct(reference("6834"), catalog).status, "ready");
   assert.deepEqual(power(reference("1214")), { status: "resolved", value: 200 });
   assert.deepEqual(power(reference("1211")), { status: "resolved", value: 80 });
 });

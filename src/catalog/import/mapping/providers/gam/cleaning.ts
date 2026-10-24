@@ -213,8 +213,30 @@ const corroboratedCleaningWidth = (record: ProductRecord): number | null => {
   return null;
 };
 
+const verifiedTennantT600eD80Width = (record: ProductRecord): number | null => {
+  if (record.providerId !== "gam" || record.reference !== "4004" ||
+    record.categoryKey !== "limpieza-fregadoras" || record.condition !== "Nuevo" ||
+    record.url !== "https://online.gamrentals.com/es/fregadoras-industriales-nuevas/4004-fca-t600e-d80" ||
+    record.title !== "Fregadora TENNANT FCA T600e D80" ||
+    record.shortDescription !== "➨ TENNANT FCA T600e D80 Nueva ➨ Venta de fregadora industrial" ||
+    record.brand !== "Tennant" || record.model !== "FCA T600e D80" ||
+    record.specs?.["Marca"] !== "Tennant" ||
+    record.specs?.["Modelo"] !== "FCA T600e D80" ||
+    record.specs?.["Anchura trabajo"] !== "1,1 metros" ||
+    record.specs?.["RPM cepillo"] !== "300") return null;
+  const description = record.longDescription;
+  if (!description || !description.startsWith("La fregadora TENNANT FCA T600e D80 está diseñada") ||
+    !description.includes("La TENNANT FCA T600e D80 está diseñada") ||
+    !description.includes("La fregadora TENNANT FCA T600e D80 ofrece") ||
+    !description.includes("Con un ancho de fregado de hasta 900 mm") ||
+    !description.includes("4415 m² por hora") ||
+    [...description.matchAll(/\b(?:ancho|anchura) de (?:trabajo|fregado|barrido|limpieza)\b/gi)].length !== 1 ||
+    [...description.matchAll(/\b\d+(?:[.,]\d+)?\s*(?:mm|cm|metros?)\b/gi)].some((match) => match[0] !== "900 mm")) return null;
+  return 800;
+};
+
 export const gamCleaningCorrectedWidth = (record: ProductRecord): number | null =>
-  configuredWorkWidth(record) ?? corroboratedCleaningWidth(record);
+  configuredWorkWidth(record) ?? corroboratedCleaningWidth(record) ?? verifiedTennantT600eD80Width(record);
 
 
 export const gamCleaningWidthConflicts = (record: ProductRecord): boolean => {

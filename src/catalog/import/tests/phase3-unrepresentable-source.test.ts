@@ -74,7 +74,7 @@ test("Fase 3: un dato secundario o un conflicto de identidad impide normalizar e
   assert.equal(resolved(withIndependentEvidence, "Dimensiones de la cesta").status, "invalid");
   const conflictedIdentity = reference("6236");
   assert.equal(resolved(conflictedIdentity, "Dimensiones de la cesta").status, "rejected");
-  assert.equal(prepareProduct(conflictedIdentity, catalog).status, "review");
+  assert.equal(prepareProduct({ ...conflictedIdentity, longDescription: "Origen técnico alterado" }, catalog).status, "review");
   const distorted = { ...reference("6169"), specs: { ...reference("6169").specs, "Rotación de torreta": "190º+200º" } };
   assert.equal(resolved(distorted, "Rotación de torreta").status, "invalid");
   const withConventional = { ...reference("6169"), specs: { ...reference("6169").specs, "Rotación de torreta": "380º" } };
@@ -91,6 +91,6 @@ test("Fase 3: la política no convierte contradicciones técnicas reales en atri
   ] as const) {
     const record = reference(id);
     assert.equal(resolved(record, name).status, expected, `${id}:${name}`);
-    assert.equal(prepareProduct(record, catalog).status, id === "3134" || id === "6723" ? "ready" : "review", id);
+    assert.equal(prepareProduct(record, catalog).status, "ready", id);
   }
 });

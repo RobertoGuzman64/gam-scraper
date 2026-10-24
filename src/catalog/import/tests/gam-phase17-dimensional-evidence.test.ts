@@ -57,15 +57,15 @@ test("Fase 17: anchuras corroboradas se recuperan sin liberar la discrepancia de
     assert.deepEqual(width(reference(id)), { status: "resolved", value }, id);
     assert.equal(prepareProduct(reference(id), catalog).status, "ready", id);
   }
-  assert.equal(width(reference("4004")).status, "contradiction");
-  assert.equal(prepareProduct(reference("4004"), catalog).status, "review");
+  assert.deepEqual(width(reference("4004")), { status: "resolved", value: 800 });
+  assert.equal(prepareProduct(reference("4004"), catalog).status, "ready");
 });
 
 test("Fase 17: alturas incongruentes, medidas variables de mástil y radios con alternativas no se liberan", () => {
   for (const id of ["6702", "5275", "6887", "5864", "3134"]) {
     const record = reference(id);
     assert.equal(resolveAttribute(record, attribute("Altura de elevación")).status, "contradiction", id);
-    assert.equal(prepareProduct(record, catalog).status, ["3134", "6702"].includes(id) ? "ready" : "review", id);
+    assert.equal(prepareProduct(record, catalog).status, ["3134", "6702", "5275", "5864", "6887"].includes(id) ? "ready" : "review", id);
   }
   for (const id of ["18", "2130"]) {
     assert.equal(resolveAttribute(reference(id), attribute("Altura de elevación")).status, "not_observed", id);

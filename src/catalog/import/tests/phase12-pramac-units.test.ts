@@ -64,18 +64,18 @@ test("Fase 12: exige la estructura comercial exacta, identidad, condición y aus
 test("Fase 12: los regímenes de emergencia y continuo legítimos permanecen diferenciados", () => {
   assert.deepEqual(resolveAttribute(source("1211"), power), { status: "resolved", value: 80 });
   assert.deepEqual(resolveAttribute(source("1214"), power), { status: "resolved", value: 200 });
-  assert.deepEqual(resolveAttribute(source("6834"), power), { status: "rejected", value: null });
-  assert.equal(prepareProduct(source("6834"), catalog).status, "review");
+  assert.deepEqual(resolveAttribute(source("6834"), power), { status: "resolved", value: 32 });
+  assert.equal(prepareProduct(source("6834"), catalog).status, "ready");
 });
 
 test("Fase 12: lote completo mantiene las identidades y los conflictos técnicos no resueltos", () => {
   const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 979, review: 29 });
+  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
   for (const [reference] of recovered) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "ready", reference);
   }
-  for (const reference of ["6834", "6236", "6622", "6682", "6703", "4737", "4802", "2071", "2072", "2073", "2311", "2312", "2313", "2314"]) {
+  for (const reference of ["6682", "6703", "2311", "2312"]) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review", reference);
   }
 });

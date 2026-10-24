@@ -1,5 +1,7 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { fold } from "../../category-utils.js";
+import { isGamVerifiedHysterSGlp } from "./hyster-s-glp-evidence.js";
+import { isGamVerifiedYaleGc55vxGlp } from "./yale-gc55vx-glp-evidence.js";
 
 const normalize = (value: string | null | undefined): string => fold(value ?? "");
 
@@ -192,8 +194,10 @@ export const gamDocumentedSourceType = (record: ProductRecord, route: string): b
         /\btrenes logisticos\b/.test(long) && /\btecna/.test(normalize(record.brand)) &&
         model.length >= 4 && title.includes(model) && short.includes(model);
     }
+    case "carretillas-elevadora-diesel-yale":
+      return isGamVerifiedYaleGc55vxGlp(record) ? true : undefined;
     case "carretillas-elevadoras-diesel-hyster":
-      return documentedForkliftFamily(record, title, short) || documentedMixedFuelForklift(record, title, short) ||
+      return isGamVerifiedHysterSGlp(record) || documentedForkliftFamily(record, title, short) || documentedMixedFuelForklift(record, title, short) ||
         documentedGasForklift(record, title, short) ? true : undefined;
     case "furgonetas-electricas-de-ocasion":
       return documentedElectricQuadricycle(record, title, short);

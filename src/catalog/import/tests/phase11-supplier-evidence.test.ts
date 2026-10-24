@@ -72,9 +72,9 @@ test("Fase 11: JLG 340AJ usa evidencia diésel del proveedor sin deducir aliment
   }
 });
 
-test("Fase 11: Mercaeleva conserva las contradicciones de capacidad y mástil no resueltas", () => {
-  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 5);
-  for (const id of ["M582-1882", "M827-8304", "M062-8951", "M119-9334"]) {
+test("Fase 11: Mercaeleva conserva las dos contradicciones no resueltas", () => {
+  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 2);
+  for (const id of ["M827-8304"]) {
     assert.ok(prepareCached(reference(mercaelevaByReference, id), catalog).issues.includes("Atributo contradictorio: Capacidad de carga"));
   }
   for (const id of ["M827-8304", "M104-0836"]) {

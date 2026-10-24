@@ -7,6 +7,7 @@ import { applyGomarizAliases, convertGomarizCandidate } from "./providers/gomari
 import { applyMercaelevaAliasesDetailed } from "./providers/mercaeleva/attributes.js";
 import { normalizeMercaelevaCandidate } from "./providers/mercaeleva/technical.js";
 import { mercaelevaUnspecifiedMast } from "./providers/mercaeleva/handling-evidence.js";
+import { mercaelevaUnpublishedHours } from "./providers/mercaeleva/hours-evidence.js";
 import { gamConfirmedAbsentScalar } from "./providers/gam/unrepresentable.js";
 
 const notPublished = (value: SpecScalar): boolean =>
@@ -88,6 +89,8 @@ export const resolveAttribute = (record: ProductRecord, attribute: Attribute): A
   if (gamConfirmedAbsentScalar(record, attribute)) return { status: "not_observed", value: null };
   if (attribute.name === "Tipo de mástil" && attribute.type === "SELECT" &&
     mercaelevaUnspecifiedMast(record)) return { status: "not_observed", value: null };
+  if (attribute.name === "Horas de uso" && (attribute.type === "NUMBER" || attribute.type === "DECIMAL") &&
+    mercaelevaUnpublishedHours(record)) return { status: "not_observed", value: null };
   if (record.providerId === "gam" && attribute.name === "Radio de giro" &&
     attribute.unit_option === "mm" && gamUnspecifiedTurningRadius(record)) {
     return { status: "not_observed", value: null };

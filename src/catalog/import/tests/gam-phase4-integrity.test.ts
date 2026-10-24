@@ -37,7 +37,7 @@ test("GAM: anchuras acreditadas y versiones no confirmadas se distinguen", () =>
   for (const code of ["4024", "3997", "4005"]) {
     assert.equal(resolveAttribute(reference(code), attribute("Ancho de trabajo")).status, "resolved", code);
   }
-  assert.equal(resolveAttribute(reference("4004"), attribute("Ancho de trabajo")).status, "contradiction");
+  assert.deepEqual(resolveAttribute(reference("4004"), attribute("Ancho de trabajo")), { status: "resolved", value: 800 });
 });
 
 test("GAM: las contradicciones de capacidad y alturas mantienen el veto", () => {
@@ -52,10 +52,8 @@ test("GAM: las contradicciones de capacidad y alturas mantienen el veto", () => 
   }
 });
 
-test("GAM: el generador con potencia realmente contradictoria sigue rechazado", () => {
-  for (const code of ["6834"]) {
-    assert.equal(resolveAttribute(reference(code), attribute("Potencia")).status, "rejected", code);
-  }
+test("GAM: la potencia comercial documentada se resuelve con su valor publicado", () => {
+  assert.deepEqual(resolveAttribute(reference("6834"), attribute("Potencia")), { status: "resolved", value: 32 });
 });
 
 test("GAM: los tres números de serie repetidos mantienen las seis referencias independientes", () => {

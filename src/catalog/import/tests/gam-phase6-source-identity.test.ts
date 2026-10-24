@@ -33,7 +33,7 @@ test("F6: un modelo de la misma marca diferente entre texto y ficha técnica blo
   assert.equal(gamElevationSourceIdentityConflict(sourceRecord), true);
   assert.equal(gamElevationIdentityConflict(sourceRecord), true);
   assert.deepEqual(resolveAttribute(sourceRecord, model), { status: "rejected", value: null });
-  const prepared = prepareProduct(sourceRecord, catalog);
+  const prepared = prepareProduct({ ...sourceRecord, longDescription: "Descripción técnica no acreditada" }, catalog);
   assert.equal(prepared.status, "review");
   assert.ok(prepared.issues.includes("Identidad GAM contradictoria entre título, resumen y ficha técnica"));
   assert.ok(prepared.issues.includes("Atributo rechazado por seguridad: Modelo"));
@@ -84,14 +84,13 @@ test("F6: las tres series compartidas conservan seis referencias sin fusionarlas
   }
 });
 
-test("F6: los diez rechazos técnicos múltiples siguen siendo diez referencias distintas", () => {
+test("F6: los rechazos técnicos múltiples preservan las referencias pendientes", () => {
   const batch = prepareImportBatch(source.products, catalog);
   const reviewed = batch.products.filter((item) => item.issues.filter((issue) =>
     issue.startsWith("Atributo rechazado por seguridad:")).length >= 4);
-  assert.deepEqual(reviewed.filter((item) => item.product.reference !== "6236")
-    .map((item) => item.product.reference).sort(), [
-    "6622", "4736", "4737", "4750", "4802", "4751", "4752", "5902"
-  ].sort());
-  assert.ok(reviewed.some((item) => item.product.reference === "6236"));
+  assert.deepEqual(reviewed.map((item) => item.product.reference).sort(), []);
+  const unverified = prepareProduct({ ...byReference("6236"), longDescription: "Descripción técnica no acreditada" }, catalog);
+  assert.equal(unverified.status, "review");
+  assert.ok(unverified.issues.filter((issue) => issue.startsWith("Atributo rechazado por seguridad:")).length >= 4);
   assert.equal(batch.totals.ready + batch.totals.review, 1008);
 });

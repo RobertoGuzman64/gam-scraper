@@ -17,11 +17,32 @@ import { reconcileGamHandlingHeightEditorial } from "../mapping/providers/gam/ha
 import { reconcileGamHandlingCapacityEditorial } from "../mapping/providers/gam/handling-capacity-editorial.js";
 import { reconcileGamOrderPickerEditorial } from "../mapping/providers/gam/orderpicker-editorial.js";
 import { reconcileGamVerifiedHandlingEditorial } from "../mapping/providers/gam/handling-verified-editorial.js";
+import { reconcileGamUsedLiftEditorial } from "../mapping/providers/gam/used-lift-editorial.js";
+import { reconcileGamVerifiedXga43kEditorial } from "../mapping/providers/gam/xga43k-editorial.js";
+import { reconcileGamVerifiedGenie5390Editorial } from "../mapping/providers/gam/genie-5390-editorial.js";
+import { reconcileGamVerifiedXcmg1523Model } from "../mapping/providers/gam/xcmg-1523-model-evidence.js";
+import { reconcileGamVerifiedXcmg1823Model } from "../mapping/providers/gam/xcmg-1823-model-evidence.js";
+import { reconcileGamVerifiedXcmg0810Crawler } from "../mapping/providers/gam/xcmg-0810-crawler-evidence.js";
+import { reconcileGamVerifiedXcmg0807acwLithium } from "../mapping/providers/gam/xcmg-0807acw-lithium-evidence.js";
+import { reconcileGamVerifiedXcmg12kDiesel } from "../mapping/providers/gam/xcmg-12k-diesel-evidence.js";
+import { reconcileGamVerifiedHysterSGlp } from "../mapping/providers/gam/hyster-s-glp-evidence.js";
+import { reconcileGamVerifiedHysterH18xdDiesel } from "../mapping/providers/gam/hyster-h18xd-diesel-evidence.js";
+import { reconcileGamVerifiedSnorkelS4732e } from "../mapping/providers/gam/snorkel-s4732e-evidence.js";
+import { reconcileGamVerifiedYaleGc60vx } from "../mapping/providers/gam/yale-gc60vx-evidence.js";
+import { reconcileGamVerifiedYaleGc55vxGlp } from "../mapping/providers/gam/yale-gc55vx-glp-evidence.js";
+import { reconcileMercaelevaVerifiedUnicarriersCapacity } from "../mapping/providers/mercaeleva/unicarriers-used-capacity-evidence.js";
 import type { ImportCandidate, ImportCatalog, PreparedProduct } from "./contracts.js";
 
 export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): PreparedProduct => {
-  record = reconcileGamOrderPickerEditorial(reconcileGamHandlingHeightEditorial(reconcileGamForkliftFuelEditorial(reconcileGamBtsEditorialSummary(reconcileGamElevationEditorialIdentity(reconcileGamOutdatedSourceTitle(record))))));
-  record = reconcileGamVerifiedHandlingEditorial(reconcileGamHandlingCapacityEditorial(record));
+  const originalSpecs = record.specs;
+  record = reconcileGamVerifiedGenie5390Editorial(reconcileGamOrderPickerEditorial(reconcileGamHandlingHeightEditorial(reconcileGamForkliftFuelEditorial(reconcileGamBtsEditorialSummary(reconcileGamElevationEditorialIdentity(reconcileGamOutdatedSourceTitle(record)))))));
+  record = reconcileGamVerifiedXcmg12kDiesel(reconcileGamVerifiedXcmg0807acwLithium(reconcileGamVerifiedXcmg0810Crawler(reconcileGamVerifiedXcmg1823Model(reconcileGamVerifiedXcmg1523Model(reconcileGamUsedLiftEditorial(reconcileGamVerifiedHandlingEditorial(reconcileGamHandlingCapacityEditorial(reconcileGamVerifiedXga43kEditorial(record)))))))));
+  record = reconcileGamVerifiedHysterSGlp(record);
+  record = reconcileGamVerifiedHysterH18xdDiesel(record);
+  record = reconcileGamVerifiedSnorkelS4732e(record);
+  record = reconcileGamVerifiedYaleGc60vx(record);
+  record = reconcileGamVerifiedYaleGc55vxGlp(record);
+  record = reconcileMercaelevaVerifiedUnicarriersCapacity(record);
   const issues: string[] = [];
   const { condition, contradictory: contradictoryCondition } = resolveCommercialCondition(record);
   const category = resolveCategory(record, catalog.categories, condition);
@@ -58,7 +79,7 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
     description_general: descriptions.long,
     image: images[0] ?? null,
     images,
-    spec: record.specs ?? {},
+    spec: originalSpecs ?? {},
     attributes: attributeResult.attributes
   };
   return {

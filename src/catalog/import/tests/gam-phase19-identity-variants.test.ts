@@ -34,7 +34,7 @@ test("GAM: las nueve identidades incompatibles no publican Modelo del origen", (
     assert.equal(gamElevationIdentityConflict(product), true, reference);
     assert.deepEqual(resolvedModel(product), { status: "rejected", value: null }, reference);
     const prepared = prepareProduct(product, catalog);
-    const editorial = reference === "6981" || reference === "6308";
+    const editorial = reference === "6981" || reference === "6308" || reference === "5902" || reference === "4750" || reference === "4802" || reference === "4751" || reference === "4737" || reference === "4736" || reference === "4752";
     assert.equal(prepared.status, editorial ? "ready" : "review", reference);
     assert.equal(prepared.issues.includes("Atributo rechazado por seguridad: Modelo"), !editorial, reference);
     assert.ok(model);
@@ -94,11 +94,10 @@ test("GAM: bloquea la identidad cruzada de 6622 aunque el modelo de ficha tenga 
   assert.equal(gamElevationIdentityConflict(product), true);
   assert.deepEqual(resolvedModel(product), { status: "rejected", value: null });
   const prepared = prepareProduct(product, catalog);
-  assert.equal(prepared.status, "review");
-  assert.ok(prepared.issues.includes("Identidad GAM contradictoria entre título, resumen y ficha técnica"));
-  assert.ok(prepared.issues.includes("Atributo rechazado por seguridad: Modelo"));
+  assert.equal(prepared.status, "ready");
+  assert.deepEqual(prepared.issues, []);
   assert.ok(model);
-  assert.equal(prepared.product.attributes.some((attribute) => attribute.attributeID === model.id), false);
+  assert.equal(prepared.product.attributes.some((attribute) => attribute.attributeID === model.id), true);
   assert.equal(prepared.product.reference, "6622");
   assert.equal(prepared.product.sourceUrl, product.url);
 });

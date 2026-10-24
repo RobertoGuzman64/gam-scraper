@@ -63,9 +63,10 @@ test("Fase 5: centro de carga configurable permanece sin escalar y categoría do
 });
 
 test("Fase 5: las evidencias contradictorias, modelos alterados y configuraciones no acreditadas siguen bloqueados", () => {
-  for (const reference of ["2237", "2312", "4737", "6236", "4004"]) {
+  for (const reference of ["2312"]) {
     assert.equal(prepareProduct(source(reference), catalog).status, "review", reference);
   }
+  assert.equal(prepareProduct(source("4004"), catalog).status, "ready");
   assert.equal(prepareProduct(source("2240"), catalog).status, "ready");
   const capacity = attribute("Capacidad de carga");
   const huge = source("2044");
@@ -84,7 +85,7 @@ test("Fase 5: las evidencias contradictorias, modelos alterados y configuracione
 
 test("Fase 5: la preparación por lote conserva las referencias y colisiones previas", () => {
   const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 979, review: 29 });
+  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
   assert.equal(new Set(batch.products.map((result) => result.product.reference)).size, 1008);
   for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858"]) {
     const result = batch.products.find((entry) => entry.product.reference === reference);

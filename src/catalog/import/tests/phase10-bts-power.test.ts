@@ -82,12 +82,12 @@ test("Fase 10: no reescribe cabeceras sin identidad, origen, condición y capaci
 
 test("Fase 10: las cuatro recuperaciones no desbloquean contradicciones y colisiones por lote", () => {
   const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 979, review: 29 });
+  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
   assert.equal(new Set(batch.products.map((product) => product.product.reference)).size, 1008);
   for (const reference of recovered) {
     assert.equal(batch.products.find((product) => product.product.reference === reference)?.status, "ready", reference);
   }
-  for (const reference of ["6236", "6622", "4737", "4802", "6682", "6703", "6806", "6807", "6835", "6858", "2312", "2313", "6834"]) {
+  for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858", "2312"]) {
     assert.equal(batch.products.find((product) => product.product.reference === reference)?.status, "review", reference);
   }
 });

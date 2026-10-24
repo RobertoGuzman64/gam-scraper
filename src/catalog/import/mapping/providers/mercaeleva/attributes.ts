@@ -3,6 +3,7 @@ import type { AliasOutcome, Attribute, Candidate } from "../../attribute-types.j
 import { fold } from "../../attribute-utils.js";
 import { mercaelevaHandlingEvidence, mercaelevaMislabelledCapacity } from "./handling-evidence.js";
 import { mercaelevaTechnicalCandidate } from "./technical.js";
+import { verifiedMercaelevaMbCapacity } from "./verified-mb-capacity.js";
 
 export const applyMercaelevaAliasesDetailed = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): AliasOutcome => {
   const title = String(record.specs?.["Título adicional"] ?? record.title ?? "");
@@ -26,7 +27,9 @@ export const applyMercaelevaAliasesDetailed = (record: ProductRecord, attribute:
     keys.add(fold("Altura máxima de elevación"));
   }
   if (attribute.name === "Capacidad de carga" && (isForklift || isStacker || isPalletTruck)) {
-    if (hasExplicitLoad && !mercaelevaMislabelledCapacity(record)) keys.add(fold("Capacidad máxima de elevación"));
+    if (hasExplicitLoad && !mercaelevaMislabelledCapacity(record) && verifiedMercaelevaMbCapacity(record) === null) {
+      keys.add(fold("Capacidad máxima de elevación"));
+    }
     if (typeof record.specs?.["Capacidad nominal"] === "string" && /\bkg\s*$/i.test(record.specs["Capacidad nominal"])) {
       keys.add(fold("Capacidad nominal"));
     }

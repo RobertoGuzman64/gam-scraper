@@ -53,10 +53,9 @@ test("GAM: la resolución exige coherencia de marca, modelo y familia", () => {
   assert.ok(!prepareProduct(otherCategory, catalog).product.attributes.some((attribute) => attribute.attributeID === power.id));
 });
 
-test("GAM: las discrepancias expresadas en unidades válidas siguen rechazadas", () => {
-  for (const reference of ["6834"]) {
-    const item = source.products.find((product) => product.reference === reference);
-    assert.ok(item, reference);
-    rejected(item);
-  }
+test("GAM: el régimen comercial documentado se distingue del valor técnico de respaldo", () => {
+  const item = source.products.find((product) => product.reference === "6834");
+  assert.ok(item);
+  assert.deepEqual(resolution(item), { status: "resolved", value: 32 });
+  assert.equal(prepareProduct(item, catalog).status, "ready");
 });

@@ -35,13 +35,12 @@ test("Fase 2: tipo de origen corroborado sin categoría del receptor no es motiv
   }
 });
 
-test("Fase 2: las motorizaciones incompatibles y variantes LPG conservan revisión", () => {
-  for (const code of ["2071", "2072", "2073"]) {
-    const prepared = prepareProduct(reference(code), catalog);
-    assert.equal(prepared.status, "review", code);
-    assert.ok(prepared.issues.includes(SOURCE_CATEGORY_ISSUE), code);
-    assert.equal(prepared.product.categorySellID, null, code);
-  }
+test("Fase 2: las motorizaciones incompatibles fuera de evidencia conservan revisión", () => {
+  const h18xd = reference("2071");
+  const preparedH18xd = prepareProduct({ ...h18xd, longDescription: `${h18xd.longDescription} distinta evidencia` }, catalog);
+  assert.equal(preparedH18xd.status, "review");
+  assert.ok(preparedH18xd.issues.includes(SOURCE_CATEGORY_ISSUE));
+  assert.equal(preparedH18xd.product.categorySellID, null);
   const mismatch = reference("6653");
   const prepared = prepareProduct({ ...mismatch, url: mismatch.url.replace("/barredoras/", "/fregadoras/") }, catalog);
   assert.equal(prepared.status, "review");

@@ -46,7 +46,10 @@ test("Fase 2: las variantes de motor no acreditan una configuración particular 
     assert.equal(sourceCategoryQualityIssue({ ...record, longDescription: "Equipo industrial sin identidad acreditada" }), SOURCE_CATEGORY_ISSUE, reference);
     assert.equal(sourceCategoryQualityIssue({ ...record, url: record.url.replace("/carretillas-elevadoras-diesel-hyster/", "/carretillas-elevadoras-electricas-hyster/") }), SOURCE_CATEGORY_ISSUE, reference);
   }
-  for (const reference of ["2071", "2072", "2073", "2312", "2313", "2314"]) {
+  assert.equal(prepareProduct(source("2071"), catalog).status, "ready");
+  assert.equal(prepareProduct(source("2314"), catalog).status, "ready");
+  assert.equal(prepareProduct(source("2313"), catalog).status, "ready");
+  for (const reference of ["2312"]) {
     assert.equal(prepareProduct(source(reference), catalog).status, "review", reference);
   }
 });
@@ -96,12 +99,12 @@ test("Fase 2: radio multivariante omite el escalar y retiene el original sin esc
 test("Fase 2: calidad del lote y vetos de identidad intactos en 1.369 referencias", () => {
   const prepared = [gam, gomariz, mercaeleva].map((sourceCatalog) => prepareImportBatch(sourceCatalog.products, catalog));
   assert.deepEqual(prepared.map((batch) => batch.totals), [
-    { ready: 979, review: 29 },
+    { ready: 999, review: 9 },
     { ready: 143, review: 0 },
-    { ready: 213, review: 5 }
+    { ready: 216, review: 2 }
   ]);
   assert.equal(prepared.reduce((sum, batch) => sum + batch.products.length, 0), 1369);
-  for (const reference of ["6682", "6703", "6835", "6858", "6807", "6806", "6236"]) {
+  for (const reference of ["6682", "6703", "6835", "6858", "6807", "6806"]) {
     const product = prepared[0]?.products.find((item) => item.product.reference === reference);
     assert.ok(product, reference);
     assert.equal(product.status, "review", reference);

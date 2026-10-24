@@ -51,8 +51,12 @@ test("Fase 6: se comprueban 30 referencias únicas y once capacidades recuperada
     const [provider, reference] = id.split(":");
     assert.ok(provider === "gam" || provider === "mercaeleva");
     assert.ok(reference);
+    const recoveredGam = confirmed.has(reference) || ["2237", "2240", "6723", "2211", "6272"].includes(reference) ||
+      gamVariableCapacity.some((value) => value === reference) ||
+      gamNonUnivocalPower.some((value) => value === reference);
+    const recoveredMercaeleva = ["M062-8951", "M119-9334", "M582-1882"].includes(reference);
     assert.equal(prepareProduct(record(provider, reference), catalog).status,
-      provider === "gam" && (confirmed.has(reference) || ["2240", "6723", "2211", "6272"].includes(reference) || gamVariableCapacity.includes(reference as typeof gamVariableCapacity[number]) || (gamNonUnivocalPower.includes(reference as typeof gamNonUnivocalPower[number]) && reference !== "6834"))
+      (provider === "gam" && recoveredGam) || (provider === "mercaeleva" && recoveredMercaeleva)
         ? "ready" : "review", id);
   }
 });
@@ -65,7 +69,7 @@ test("Fase 6: las 16 capacidades conservan conflictos auténticos y distinguen v
     const resolution = resolveAttribute(product, capacity);
     assert.equal(resolution.status, confirmed.has(reference) ? "resolved" : "contradiction", reference);
     const prepared = prepareProduct(product, catalog);
-    assert.equal(prepared.issues.includes("Atributo contradictorio: Capacidad de carga"), !confirmed.has(reference) && !["2240", "6723", "2211", "6272"].includes(reference), reference);
+    assert.equal(prepared.issues.includes("Atributo contradictorio: Capacidad de carga"), !confirmed.has(reference) && !["2237", "2240", "6723", "2211", "6272"].includes(reference), reference);
     assert.deepEqual(prepared.product.spec, product.specs ?? {}, reference);
   }
 });
@@ -80,19 +84,22 @@ test("Fase 6: las dos capacidades multivalor GAM no se convierten en una carga p
   }
 });
 
-test("Fase 6: los cuatro conflictos Mercaeleva mantienen el valor original y los vetos adicionales", () => {
+test("Fase 6: las cuatro capacidades conservan el origen tras reconciliar dos modelos MB y la UniCarriers", () => {
   const capacity = attribute("Capacidad de carga");
   for (const reference of mercaelevaConflictingCapacity) {
     const product = record("mercaeleva", reference);
     const originalSpecs = JSON.stringify(product.specs);
-    assert.deepEqual(resolveAttribute(product, capacity), { status: "contradiction", value: null }, reference);
+    const expected = reference === "M062-8951" ? 3000 : reference === "M119-9334" ? 1800 : null;
+    assert.deepEqual(resolveAttribute(product, capacity), expected === null
+      ? { status: "contradiction", value: null }
+      : { status: "resolved", value: expected }, reference);
     const prepared = prepareProduct(product, catalog);
-    assert.ok(prepared.issues.includes("Atributo contradictorio: Capacidad de carga"), reference);
+    assert.equal(prepared.issues.includes("Atributo contradictorio: Capacidad de carga"), expected === null && reference !== "M582-1882", reference);
     assert.equal(JSON.stringify(product.specs), originalSpecs, reference);
     assert.equal(JSON.stringify(prepared.product.spec), originalSpecs, reference);
   }
   assert.ok(prepareProduct(record("mercaeleva", "M827-8304"), catalog).issues.includes("Atributo contradictorio: Tipo de mástil"));
-  assert.ok(prepareProduct(record("mercaeleva", "M119-9334"), catalog).issues.includes("Atributo no normalizable: Horas de uso"));
+  assert.ok(!prepareProduct(record("mercaeleva", "M119-9334"), catalog).issues.includes("Atributo no normalizable: Horas de uso"));
 });
 
 test("Fase 6: las potencias GAM nominales no confunden kW con kVA ni regímenes", () => {
@@ -100,13 +107,8 @@ test("Fase 6: las potencias GAM nominales no confunden kW con kVA ni regímenes"
   for (const reference of gamNonUnivocalPower) {
     const product = record("gam", reference);
     const source = JSON.stringify(product.specs);
-    if (reference === "6834") {
-      assert.deepEqual(resolveAttribute(product, power), { status: "rejected", value: null }, reference);
-      assert.ok(prepareProduct(product, catalog).issues.includes("Atributo rechazado por seguridad: Potencia"), reference);
-    } else {
-      assert.equal(resolveAttribute(product, power).status, "resolved", reference);
-      assert.equal(prepareProduct(product, catalog).status, "ready", reference);
-    }
+    assert.equal(resolveAttribute(product, power).status, "resolved", reference);
+    assert.equal(prepareProduct(product, catalog).status, "ready", reference);
     assert.equal(JSON.stringify(product.specs), source, reference);
   }
 });

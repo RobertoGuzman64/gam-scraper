@@ -24,7 +24,7 @@ const load = attr("Capacidad de carga");
 const mast = attr("Tipo de mástil");
 
 const incompatibleGam = ["6965", "6932", "6723", "2089", "2211", "2049", "2044", "6272", "2016", "2275", "2193", "6421", "50", "2237", "2240", "2136"];
-const differentMercaeleva = ["M582-1882", "M827-8304", "M062-8951", "M119-9334"];
+const differentMercaeleva = ["M827-8304"];
 const incompatibleMasts = ["M827-8304", "M818-7811", "M104-0836"];
 
 test("Fase 5: las dieciséis fichas conservan sus fuentes, con once capacidades acreditadas", () => {
@@ -36,7 +36,7 @@ test("Fase 5: las dieciséis fichas conservan sus fuentes, con once capacidades 
     assert.equal(actual.status, confirmed.has(id) ? "resolved" : "contradiction", id);
     assert.equal(actual.value === null, !confirmed.has(id), id);
     const prepared = prepareProduct(record, catalog);
-    assert.equal(prepared.status, confirmed.has(id) || ["2240", "6723", "2211", "6272"].includes(id) ? "ready" : "review", id);
+    assert.equal(prepared.status, confirmed.has(id) || ["2237", "2240", "6723", "2211", "6272"].includes(id) ? "ready" : "review", id);
     assert.deepEqual(prepared.product.spec, record.specs ?? {}, id);
     assert.equal(JSON.stringify(record), original, id);
   }
@@ -65,7 +65,7 @@ test("Fase 5: múltiples valores son distintos de miles, decimales y una única 
   }
 });
 
-test("Fase 5: cuatro capacidades Mercaeleva no se deciden por coincidencia comercial", () => {
+test("Fase 5: la capacidad Mercaeleva pendiente sigue sin corroboración técnica", () => {
   for (const id of differentMercaeleva) {
     const record = byReference("mercaeleva", id);
     const original = JSON.stringify(record);
