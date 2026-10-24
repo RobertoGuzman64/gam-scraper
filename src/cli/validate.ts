@@ -45,7 +45,13 @@ export const runPreflight = async (args: readonly string[]): Promise<void> => {
         for (const product of delta.added) {
           console.log(`  INCORPORADA | ${product.reference ?? "sin referencia"} | ${product.title ?? "sin título"} | ${product.url}`);
         }
-        if (delta.missing.length > 0) {
+        for (const product of delta.changedDetails) {
+          console.log(`  CAMBIADA | ${product.reference ?? "sin referencia"} | campos: ${product.fields.join(", ")} | ${product.url}`);
+        }
+        if (delta.changedDetails.length > 0) {
+          console.log("  REVISIÓN DE CAMBIOS | Contrastar los campos modificados antes de publicar");
+        }
+        if (delta.missing.length > 0 || delta.changedDetails.length > 0) {
           console.log("  REVISIÓN DE COBERTURA | No reincorporar ni dar de baja referencias sin verificar la fuente");
           process.exitCode = 2;
         }

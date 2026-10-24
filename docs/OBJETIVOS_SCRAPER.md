@@ -24,7 +24,7 @@
 | `<prefijo>-preparation.json` | Productos preparados, campos normalizados, `ready/review` e incidencias         | **Control y mejora de calidad**; conservar todas las identidades |
 | `export --format json`       | Generar candidatos adaptados a `POST /product/create/many`                      | **Herramienta del receptor**, no JSON final canónico             |
 | Exportación `.xlsx`          | Altas por la vía de importación Excel                                           | **Herramienta del receptor**, sin influencia sobre calidad       |
-| Selección editorial F48      | Conjunto publicable de la cohorte acreditada y exclusiones trazables            | **No altera el canónico ni los estados técnicos**                |
+| Selección editorial F48      | Conjunto publicable de la cohorte acreditada y exclusiones trazables           | **No altera el canónico ni los estados técnicos**               |
 
 Los contratos receptores pueden exigir descripción corta, categoría o atributos específicos e incluso precio en Excel. Una ficha puede contener datos de origen fieles aunque no reúna esas exigencias. El audit puede informar ambos diagnósticos por separado, pero **el contador relevante para cerrar esta campaña es el de calidad del catálogo**. Si una validación actual mezcla calidad con condiciones del receptor, debe investigarse por referencia y corregirse con evidencia; este documento por sí solo **no cambia el comportamiento del código**.
 
@@ -65,3 +65,10 @@ Documentación relacionada: [SCRAPER_DATA_RULES.md](SCRAPER_DATA_RULES.md) (cont
 ## Estado posterior al scraping de octubre de 2026 (F49)
 
 La extracción nueva del 25/10/2026 obtuvo 1.365 referencias (GAM 1.004, Gomariz 143 y Mercaeleva 218), frente a 1.369 históricas. La preparación previa a F49 registró seis `review` (dos Hyster GAM, tres LGMG Gomariz y una Linde Mercaeleva). La F49 introduce una reconciliación técnica acotada para las tres SS0507E de Gomariz, basada en la ficha técnica del fabricante, y un contraste explícito de cobertura `validate --stage catalog --baseline`. Las cuatro referencias GAM ausentes requieren confirmación de origen y no se restauran por arrastre del catálogo histórico. Los contadores de la cohorte nueva deben medirse tras integrar F49; no se consideran validados por el resultado de las pruebas unitarias.
+
+
+## F50 — cierre de cobertura condicionado a evidencia
+
+La ejecución F49 en el entorno del propietario confirmó 143/143 `ready` para Gomariz, 1.002/1.004 para GAM y 217/218 para Mercaeleva. El total de la extracción del 25/10/2026 es 1.362/1.365 `ready`, tres `review`. GAM tiene cuatro referencias ausentes frente a la cohorte de 1.008 y 24 referencias cambiadas; no se ha acreditado todavía su baja ni la naturaleza de todos los cambios. La aceptación publicable de 1.362 fichas es por ahora una **previsión condicionada**, no una salida final emitida.
+
+F50 mantiene las tres exclusiones editoriales justificadas, distingue las cuatro ausencias y 24 cambios mediante un expediente con hashes y campos, y bloquea los JSON finales de la nueva cohorte mientras no existan decisiones manuales y evidencia para cada discrepancia. Incluye un comando de generación del expediente y una exportación opcional de tres JSON publicables más su trazabilidad. La cohorte histórica F48 permanece compatible. Consultar [VALIDACION.md](VALIDACION.md) para comandos; no se toca backend, Excel ni importación.

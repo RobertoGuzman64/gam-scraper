@@ -132,3 +132,34 @@ Se validan ambos catálogos con sus respectivos manifests e informes de publicac
 F49 también admite preparar de nuevo el JSON canónico recién obtenido de Gomariz sin reescribirlo. En las tres referencias SS0507E `TE1858`, `TE1621` y `TE1622`, cuando la ficha mantiene exactamente la identidad y las especificaciones comprobadas, se normaliza a **4,3 m** la altura de plataforma publicada erróneamente como **14,30 m**. La evidencia es la tabla SS0507E del fabricante en `https://www.gomarizrent.com/wp-content/uploads/2025/11/FICHA-TECNICA-LGMG-SS0407E-SS0507E-SS0607E.pdf` (6,3 m altura de trabajo, 4,3 m plataforma, 985 kg y 230 kg de capacidad). Valores o variantes diferentes continúan sujetos al control de calidad existente. La ficha canónica conserva el texto original.
 
 F48 no se reutiliza sobre esta extracción porque su selección editorial requiere los hashes y recuentos de la cohorte anterior. No se reescriben exclusiones sin una decisión editorial de la cohorte nueva.
+
+## F50 — Revisión editorial del scraping nuevo (25/10/2026)
+
+La ejecución real en Windows superó tests y compilación. El lote de 25/10/2026 produjo 1.004 fichas GAM, 143 Gomariz y 218 Mercaeleva. Tras F49: 1.362 `ready`, 3 `review`; las únicas exclusiones técnicas siguen siendo GAM `6682`/`6703` y Mercaeleva `M827-8304`. La comparación histórica de GAM detectó **cuatro ausencias y 24 referencias cambiadas**, sin incorporaciones. Las diferencias aún no están validadas manualmente; que un enlace sea accesible por búsqueda o en otra variante regional no acredita presencia en la cobertura española del scraper.
+
+F50 amplía `validate --stage catalog --baseline`: además del recuento muestra `CAMBIADA | referencia | campos ...`, incluyendo las claves concretas de `specs`. Las fechas `scrapedAt` no cuentan como cambios; cualquier modificación real exige revisión y devuelve código `2`, al igual que una ausencia. Esto **no** cambia los JSON de origen ni el algoritmo de scraping.
+
+Para generar un expediente que permita revisar todas las diferencias sin inventar decisiones:
+
+```powershell
+$raw = "storage/scraped-20261025-010603"
+$prep = "storage/prepared-20261025-f49"
+$baseline = "storage/scraped/gam/scrape-gam-marzo-2026-catalog.json"
+$current = "$raw/gam/scrape-gam-marzo-2026-catalog.json"
+
+npm run review:coverage -- --baseline $baseline --current $current --out "storage/coverage-f50/review.json"
+```
+
+El JSON contiene los hashes de ambos catálogos, las referencias ausentes, las fichas cambiadas y las claves modificadas. Todos los campos `decision` y `reason` se generan vacíos. Revisar cada ficha y los datos de origen antes de completar el expediente: cada ausencia confirmada como retirada debe llevar `decision: "retirado"`, motivo específico y una o más URLs HTTPS de evidencia; cada cambio contrastado debe llevar `decision: "aceptado"`, motivo y evidencia. No basta observar un HTTP 404 o un resultado indexado: deben contrastarse cobertura, anuncios y existencia real en el portal pertinente. Ante ausencia de evidencia, dejar la decisión `null` y **no publicar**. No se copian fichas históricas al catálogo actual.
+
+F50 también permite simular la selección editorial sobre la nueva cohorte de 1.365 referencias, protegida por los hashes exactos del scraping del 25/10:
+
+```powershell
+npm run select:publishable -- --gam "storage/prepared-20261025-010603/gam/scrape-gam-marzo-2026-preparation.json" --gomariz "$prep/gomariz/scrape-gomariz-preparation.json" --mercaeleva "storage/prepared-20261025-010603/mercaeleva/scrape-mercaeleva-preparation.json" --dry-run
+```
+
+La simulación permite comprobar **1.362 publicables y tres exclusiones técnicas**, pero todavía **no** autoriza generar los JSON finales. Tras completar y revisar honestamente el expediente de cobertura, el mismo comando puede escribirse con `--outDir "storage/publicable-20261025-f50"` en lugar de `--dry-run`, añadiendo `--baseline $baseline --catalog $current --coverage-review "storage/coverage-f50/review.json"`. El proceso verifica los catálogos, manifests, hashes, cuatro ausencias, 24 cambios, referencias, campos, motivos y evidencias. Si falta alguna revisión o la fuente cambia, falla sin escribir nada.
+
+Una exportación autorizada mediante `--outDir` genera `gam-publishable.json`, `gomariz-publishable.json`, `mercaeleva-publishable.json` y `selection.json`. Los tres primeros son arrays de los contratos `ImportCandidate` ya existentes, filtrados únicamente por calidad editorial; **no** son una importación automática ni acreditan conformidad con Excel o `create/many`. `selection.json` conserva el resumen, procedencia y exclusiones. La salida es de creación exclusiva y no sobrescribe ficheros preexistentes. La selección F48 sobre su cohorte histórica sigue soportada sin cambiar sus contratos.
+
+En esta entrega no se incluyen los JSON nuevos de la máquina del usuario ni un expediente de cobertura ya aprobado. Por ello la F50 proporciona los controles reproducibles, pero no declara que las cuatro ausencias ni las 24 modificaciones estén resueltas.

@@ -26,7 +26,8 @@
     "export": "npm run -s build && node dist/cli/index.js export",
     "cli": "npm run -s build && node dist/cli/index.js",
     "storage:clean": "npm run -s build && node dist/cli/storage-clean.js",
-    "select:publishable": "npm run -s build && node dist/cli/select-publishable.js"
+    "select:publishable": "npm run -s build && node dist/cli/select-publishable.js",
+    "review:coverage": "npm run -s build && node dist/cli/review-coverage.js"
   },
   "dependencies": {
     "cheerio": "^1.0.0",

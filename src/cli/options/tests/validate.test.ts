@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { resolve } from "node:path";
 import { parseValidateOptions } from "../validate.js";
 import { parseExportOptions } from "../export.js";
 
@@ -50,8 +51,8 @@ test("validate: comparación de cobertura exige catálogo y rutas canónicas", (
   const current = "storage/scraped-20261025-010603/gam/scrape-gam-marzo-2026-catalog.json";
   const prior = "storage/scraped/gam/scrape-gam-marzo-2026-catalog.json";
   const parsed = parseValidateOptions(["gam", "--stage", "catalog", "--source", current, "--baseline", prior]);
-  assert.ok(parsed.baseline?.endsWith(prior));
-  assert.ok(parsed.source?.endsWith(current));
+  assert.equal(parsed.baseline, resolve(prior));
+  assert.equal(parsed.source, resolve(current));
   assert.throws(() => parseValidateOptions(["gam", "--baseline", prior]), /requiere --stage catalog/);
   assert.throws(() => parseValidateOptions(["gam", "--stage", "preparation", "--preparation", preparation, "--baseline", prior]), /requiere --stage catalog/);
   assert.throws(() => parseValidateOptions(["gam", "--stage", "catalog", "--baseline", "otra.json"]), /debe ser -catalog.json/);
