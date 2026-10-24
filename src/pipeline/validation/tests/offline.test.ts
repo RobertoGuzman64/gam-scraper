@@ -34,7 +34,10 @@ const withCatalog = async (run: (paths: {
   source: string; preparation: string; inventory: string; root: string;
 }) => Promise<void>, products: readonly ProductRecord[] = [
   machine("11111", "Nuevo", "20000 €"), machine("22222", "Segunda mano", "18000 €"),
-  machine("33333", "Nuevo", null), machine("44444", null, "20000 €")
+  machine("33333", "Nuevo", null), {
+    ...machine("44444", "Nuevo", "20000 €"),
+    title: "Plataforma de tijera eléctrica XCMG de segunda mano"
+  }
 ]): Promise<void> => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-stage3-"));
   const source = join(root, "scraped", "fase3-catalog.json");
@@ -75,15 +78,27 @@ test("catálogo, preparación y plan de altas usan la misma fuente y preservan r
   });
 });
 
+test("condición comercial no publicada conserva ready sin superar requisitos de importación", async () => {
+  await withCatalog(async ({ source, preparation }) => {
+    const result = await validateOfflinePreparation("gam", preparation, source);
+    assert.equal(result.ready, 1);
+    assert.equal(result.review, 0);
+    assert.equal(result.importBlocked, 1);
+    const entry = result.preparation.products[0];
+    assert.equal(entry?.status, "ready");
+    assert.equal(entry?.product.condition, null);
+    assert.deepEqual(entry?.issues, []);
+    assert.ok(entry?.importIssues?.createMany.some((issue) => issue.includes("Condición")));
+  }, [machine("55555", null, "20000 €")]);
+});
+
 test("preparación alterada y firmada de nuevo sigue bloqueada por las reglas reales", async () => {
   await withCatalog(async ({ source, preparation }) => {
     const original = await readOfflinePreparation(preparation, "gam");
-    const entry = original.products[2];
-    assert.ok(entry);
     const changed = {
-      ...original, totals: { ready: 3, review: 1 },
+      ...original,
       products: original.products.map((product, index) => index === 2 ? {
-        ...product, status: "ready", issues: [], product: { ...entry.product, price: 20000 }
+        ...product, product: { ...product.product, price: 20000 }
       } : product)
     };
     const raw = JSON.stringify(changed);
@@ -124,7 +139,7 @@ test("exportación rechaza antigüedad de origen aunque la preparación sea reci
 test("catálogos de los tres proveedores se verifican sin convertir review en pérdida", async () => {
   for (const providerId of ["gam", "gomariz", "mercaeleva"] as const) {
     const products = ["11111", "22222"].map((ref) => ({
-      ...machine(ref, null, null), providerId
+      ...machine(ref, null, "12xx3 €"), providerId
     }));
     await withCatalog(async ({ source, preparation }) => {
       const result = await validateOfflinePreparation(providerId, preparation, source);
@@ -178,7 +193,7 @@ test("validate --verbose separa fichas en review de bloqueos de receptor sin alt
       assert.match(reviewDetails, /GAM \| 44444 \| 1 motivo/);
       assert.match(output, /GAM \| 33333 \| calidad: ready \| 1 requisitos de receptor/);
       assert.doesNotMatch(output, /\[excel.price\]/);
-      assert.match(output, /\[condition.unknown\] Condición comercial no confirmada/);
+      assert.match(output, /\[condition.contradictory\] Condición comercial contradictoria entre la ficha y el origen/);
       assert.doesNotMatch(reviewDetails, /\[mapping.category\]/);
       assert.match(output, /\[category.excel\] contrato_destino: Categoría no coincide de forma única con el backend/);
       assert.doesNotMatch(output, /GAM \| 11111 \|/);
