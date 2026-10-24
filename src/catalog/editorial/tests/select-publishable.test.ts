@@ -1,0 +1,104 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
+import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
+import { selectPublishableCatalog } from "../select-publishable.js";
+
+const sourceFiles = {
+  gam: "storage/scraped/gam/scrape-gam-marzo-2026-catalog.json",
+  gomariz: "storage/scraped/gomariz/scrape-gomariz-catalog.json",
+  mercaeleva: "storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json"
+};
+const sources = ["gam", "gomariz", "mercaeleva"] as const;
+const preparations = await Promise.all(sources.map(async (providerId) => {
+  const source = sourceFiles[providerId];
+  const prefix = source.slice(source.lastIndexOf("/") + 1).replace(/-catalog\.json$/, "");
+  const result = await prepareSavedCatalog({
+    providerId, source, out: `storage/prepared/${providerId}/${prefix}-f48-preparation.json`,
+    dryRun: true, compare: null
+  });
+  return result.preparation;
+}));
+
+const replaceEntry = (providerId: string, reference: string, transform: (
+  item: (typeof preparations)[number]["products"][number]
+) => (typeof preparations)[number]["products"][number]) => preparations.map((preparation) => ({
+  ...preparation,
+  products: preparation.source.providerId === providerId
+    ? preparation.products.map((item) => item.product.reference === reference ? transform(item) : item)
+    : preparation.products
+}));
+
+test("F48: selección editorial preserva 1369 referencias y publica exclusivamente las 1366 ready", async () => {
+  const originalRecords = await Promise.all(sources.map(async (providerId) =>
+    readCanonicalCatalog(sourceFiles[providerId])));
+  const originalSnapshot = JSON.stringify(originalRecords);
+  const preparationSnapshot = JSON.stringify(preparations);
+  const result = selectPublishableCatalog(preparations);
+  assert.deepEqual(result.totals, { original: 1369, ready: 1366, review: 3, publishable: 1366, excluded: 3 });
+  assert.deepEqual(result.exclusions.map(({ providerId, reference }) => `${providerId}:${reference}`), [
+    "gam:6682", "gam:6703", "mercaeleva:M827-8304"
+  ]);
+  assert.equal(new Set(result.products.map(({ providerId, reference }) => `${providerId}:${reference}`)).size, 1366);
+  assert.ok(result.products.every(({ providerId, reference }) =>
+    !result.exclusions.some((entry) => entry.providerId === providerId && entry.reference === reference)));
+  assert.ok(result.exclusions.every((entry) => entry.reason && entry.evidenceUrls.length && entry.issues.length));
+  assert.equal(JSON.stringify(originalRecords), originalSnapshot);
+  assert.equal(JSON.stringify(preparations), preparationSnapshot);
+  assert.deepEqual(preparations.map(({ totals }) => totals), [
+    { ready: 1006, review: 2 }, { ready: 143, review: 0 }, { ready: 217, review: 1 }
+  ]);
+});
+
+test("F48: las Hyster no se consolidan y el número de serie contradictorio sigue en las incidencias", () => {
+  const result = selectPublishableCatalog(preparations);
+  const hyster = result.exclusions.filter((item) => item.providerId === "gam");
+  assert.equal(hyster.length, 2);
+  assert.ok(hyster.every((item) => item.issues.some((issue) => issue.includes("P177B10585U"))));
+  assert.ok(hyster.every((item) => item.reason.includes("identidad física")));
+});
+
+test("F48: bloquea nuevas reviews incluso si pertenecen a una referencia válida", () => {
+  const mutated = replaceEntry("gam", "6683", (entry) => ({
+    ...entry, status: "review", issues: ["Contradicción técnica nueva"]
+  }));
+  assert.throws(() => selectPublishableCatalog(mutated), /review sin exclusión acreditada/);
+});
+
+test("F48: bloquea exclusiones de referencia sin contradicción", () => {
+  const changed = replaceEntry("gam", "6682", (entry) => ({ ...entry, issues: ["Sin datos"] }));
+  assert.throws(() => selectPublishableCatalog(changed), /review sin exclusión acreditada/);
+});
+
+test("F48: bloquea URL cambiada o estados ready heredados por una ficha excluida", () => {
+  const changedUrl = replaceEntry("mercaeleva", "M827-8304", (entry) => ({
+    ...entry, product: { ...entry.product, sourceUrl: `${entry.product.sourceUrl}?revision=2` }
+  }));
+  assert.throws(() => selectPublishableCatalog(changedUrl), /review sin exclusión acreditada/);
+  const changedQuality = replaceEntry("gam", "6703", (entry) => ({ ...entry, status: "ready", issues: [] }));
+  assert.throws(() => selectPublishableCatalog(changedQuality), /decisión caducada/);
+});
+
+test("F48: bloquea catálogos distintos, faltantes, duplicados o incompletos", () => {
+  assert.throws(() => selectPublishableCatalog(preparations.slice(0, 2)), /faltan proveedores/);
+  assert.throws(() => selectPublishableCatalog([...preparations, preparations[0]!]), /cohorte desconocida/);
+  const changedSource = preparations.map((preparation) => preparation.source.providerId !== "gam"
+    ? preparation
+    : { ...preparation, source: { ...preparation.source, catalogSha256: "a".repeat(64) } });
+  assert.throws(() => selectPublishableCatalog(changedSource), /cohorte desconocida/);
+  const truncated = preparations.map((preparation) => preparation.source.providerId !== "gam"
+    ? preparation
+    : { ...preparation, products: preparation.products.slice(1) });
+  assert.throws(() => selectPublishableCatalog(truncated), /cohorte desconocida/);
+  const duplicate = replaceEntry("gam", "6683", (entry) => ({
+    ...entry, product: { ...entry.product, reference: "6684" }
+  }));
+  assert.throws(() => selectPublishableCatalog(duplicate), /referencia inválida o repetida/);
+});
+
+test("F48: el criterio editorial no depende de elegibilidad Excel/createMany", () => {
+  const result = selectPublishableCatalog(preparations);
+  const gam = result.products.filter((product) => product.providerId === "gam");
+  assert.equal(gam.length, 1006);
+  assert.ok(gam.some((product) => product.price === null));
+});

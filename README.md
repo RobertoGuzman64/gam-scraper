@@ -2,7 +2,7 @@
 
 Herramienta de línea de comandos **Node.js + TypeScript** para extraer y normalizar maquinaria **nueva y de segunda mano** de **GAM, Gomariz y Mercaeleva**. Su producto principal son los **catálogos JSON completos, verificables y trazables**. Publica también CSV y conserva herramientas independientes de compatibilidad con las importaciones Excel y JSON del backend; no expone API HTTP ni escribe en ese backend.
 
-> **Objetivo y criterio de terminado:** [OBJETIVOS_SCRAPER.md](docs/OBJETIVOS_SCRAPER.md). El catálogo debe conservar **todas** las máquinas identificadas y alcanzar **100 % `ready`, 0 `review`**, sin inventar atributos, omitir máquinas ni ocultar contradicciones. `ready/review` es el indicador de calidad a revisar y mejorar con evidencias; los requisitos de Excel y `create/many` **no son criterios de calidad ni prioridades de desarrollo**. La preparación conserva fichas `ready` y `review` mientras se resuelven sus incidencias.
+> **Objetivo y criterio de terminado:** [OBJETIVOS_SCRAPER.md](docs/OBJETIVOS_SCRAPER.md). El catálogo canónico conserva **todas** las máquinas identificadas; `ready/review` mide calidad técnica sin ocultar contradicciones. La selección editorial publicable es una salida **separada** que permite apartar anuncios no acreditables conservándolos en el original y en `review`. Excel y `create/many` **no son criterios de calidad ni prioridades de desarrollo**.
 
 > **Última auditoría aportada (23/10/2026, corte `20261023-162700`):** **1.369 máquinas**, **1.181 `ready` y 188 `review`** (GAM 1.008/834/174; Gomariz 143/139/4; Mercaeleva 218/208/10). Son cifras de los catálogos auditados, no un scraping en vivo. El [estado de 20/10](docs/ESTADO_EXTRACCIONES_2026-10-20.md) y la línea base de 21/10 (1.374 máquinas) son **históricos**, no metas actuales. La importabilidad se informa por separado, sin excluir registros del JSON.
 
@@ -107,6 +107,22 @@ npm run validate -- gam --stage preparation --preparation storage/prepared/gam/s
 ```
 
 `--stage catalog` valida catálogo, manifest, hash, proveedor, identidades, recuentos y publicación. `--stage preparation` comprueba también el manifest de preparación, fingerprint de reglas y snapshots, identidad y resultado íntegro recalculado desde la fuente **sin portales ni inventario**. Si se usó un nombre de salida distinto del prefijo original, indicar `--source`. La validación heredada `npm run validate -- gam` sigue comprobando CSV, preparación antigua, cambios y máximo de 48 h. La preparación offline puede validarse con cualquier antigüedad; **exportar** mantiene el bloqueo del origen superior a 48 h. El estado `review` de la preparación conserva el código de salida **2**.
+
+### Selección editorial de catálogo publicable (F48)
+
+La F48 documenta una decisión **reversible y limitada a los catálogos canónicos de la cohorte auditada**: apartar GAM `6682` (`GAM-11596`), GAM `6703` (`GAM-11594`) y Mercaeleva `M827-8304` (`MER0798`), sin afirmar que las Hyster son la misma máquina ni atribuir su serie por suposición. La Linde mantiene sus contradicciones de capacidad y mástil. Los tres registros permanecen en sus catálogos originales y en `review`.
+
+Preparar primero los tres catálogos offline con rutas de salida nuevas. Después, con las preparaciones y sus manifests íntegros:
+
+```bash
+npm run prepare:catalog -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json --out storage/prepared/gam/scrape-gam-marzo-2026-f48-preparation.json
+npm run prepare:catalog -- gomariz --source storage/scraped/gomariz/scrape-gomariz-catalog.json --out storage/prepared/gomariz/scrape-gomariz-f48-preparation.json
+npm run prepare:catalog -- mercaeleva --source storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json --out storage/prepared/mercaeleva/scrape-mercaeleva-f48-preparation.json
+npm run select:publishable -- --gam storage/prepared/gam/scrape-gam-marzo-2026-f48-preparation.json --gomariz storage/prepared/gomariz/scrape-gomariz-f48-preparation.json --mercaeleva storage/prepared/mercaeleva/scrape-mercaeleva-f48-preparation.json --dry-run
+npm run select:publishable -- --gam storage/prepared/gam/scrape-gam-marzo-2026-f48-preparation.json --gomariz storage/prepared/gomariz/scrape-gomariz-f48-preparation.json --mercaeleva storage/prepared/mercaeleva/scrape-mercaeleva-f48-preparation.json --out storage/prepared/seleccion-editorial-f48.json
+```
+
+La salida contiene **1.366 productos `ready` publicables**, tres exclusiones razonadas con evidencia y los totales técnicos originales **1.366 `ready` / 3 `review`**; no inventa un estado de calidad nuevo. El programa rechaza otro hash de catálogo, otra cohorte, nuevas `review`, cambios de referencia/URL o contradicciones no coincidentes. No importa al backend y **no garantiza elegibilidad para Excel ni `create/many`**. Ante cambios del proveedor debe revisarse nuevamente la decisión, no reutilizar la excepción.
 
 ## Compatibilidad opcional con importaciones del backend
 
