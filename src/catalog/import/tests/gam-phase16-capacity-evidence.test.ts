@@ -22,19 +22,21 @@ const conflicting = [
   "2016", "2275", "2193", "6421", "50", "2237", "2240", "2136"
 ];
 
-test("Fase 16: ninguna de las dieciséis capacidades discordantes se elige por mayoría", () => {
+test("Fase 16: capacidades de modelo acreditado se distinguen de discrepancias pendientes", () => {
+  const confirmed = new Set(["50", "2016", "2044", "2049", "2089", "2136", "2193", "2275", "6421", "6932", "6965"]);
   for (const id of conflicting) {
     const record = reference(id);
-    assert.equal(status(record), "contradiction", id);
-    assert.equal(prepareProduct(record, catalog).status, "review", id);
+    const expected = confirmed.has(id) ? "resolved" : "contradiction";
+    assert.equal(status(record), expected, id);
+    assert.equal(prepareProduct(record, catalog).status, confirmed.has(id) || ["2240", "6723", "2211", "6272"].includes(id) ? "ready" : "review", id);
   }
 });
 
 test("Fase 16: no inventa una capacidad puntual para las dos fichas con alternativas", () => {
   for (const id of ["237", "235"]) {
     const record = reference(id);
-    assert.equal(status(record), "rejected", id);
-    assert.equal(prepareProduct(record, catalog).status, "review", id);
+    assert.equal(status(record), "not_observed", id);
+    assert.equal(prepareProduct(record, catalog).status, "ready", id);
   }
 });
 

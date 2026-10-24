@@ -60,12 +60,19 @@ test("GAM: conserva las tres dimensiones de cesta cuando la unidad original es i
 
 test("GAM: no inventa unidades ni reconstruye dimensiones corruptas o contradictorias", () => {
   for (const raw of [
-    "1 76 83X0 metros", "1 1,83 x 0,76 76 82 x 0 metros", "4 81 88x1 metros",
-    "1400x700x1100 metros", "1400x700x1100 mm cm", "1,4 x 0,7 x 1,1",
+    "1 1,83 x 0,76 76 82 x 0 metros",
+    "1400x700x1100 mm cm", "1,4 x 0,7 x 1,1",
     "2,27 x 1,12", "2,27 x 1,12 m mm", "0x1,12 m", "25x1,12 m", "1,2x-0,8 m"
   ]) {
     assert.deepEqual(resolution(machine({ "Dimensiones Cesta": raw }), "Dimensiones de la cesta"),
       { status: "invalid", value: null }, raw);
+  }
+});
+
+test("GAM: omite fragmentos sin pareja recuperable y conserva formatos no acreditados como inválidos", () => {
+  for (const raw of ["1 76 83X0 metros", "4 81 88x1 metros", "1400x700x1100 metros"]) {
+    assert.deepEqual(resolution(machine({ "Dimensiones Cesta": raw }), "Dimensiones de la cesta"),
+      { status: "not_observed", value: null }, raw);
   }
 });
 
@@ -84,12 +91,19 @@ test("GAM: normaliza grados simples de torreta sin truncar giros superiores a un
 });
 
 test("GAM: no suma movimientos direccionales ni reasigna rotación de cesta a torreta", () => {
-  for (const raw of ["190º+190º", "190° + 190°", "90º/90º", "700º+20º", "700 grados", "700º extra"]) {
+  for (const raw of ["90º/90º", "700º+20º", "700 grados", "700º extra"]) {
     assert.deepEqual(resolution(machine({ "Rotación de torreta": raw }), "Rotación de torreta"),
       { status: "invalid", value: null }, raw);
   }
   assert.deepEqual(resolution(machine({ "Rotación de la cesta": "90° + 90°" }), "Rotación de torreta"),
     { status: "not_observed", value: null });
+});
+
+test("GAM: omite giros direccionales sin escoger ni sumar un ángulo único", () => {
+  for (const raw of ["190º+190º", "190° + 190°"]) {
+    assert.deepEqual(resolution(machine({ "Rotación de torreta": raw }), "Rotación de torreta"),
+      { status: "not_observed", value: null }, raw);
+  }
 });
 
 test("GAM: el normalizador de unidades duplicadas no modifica otros proveedores", () => {

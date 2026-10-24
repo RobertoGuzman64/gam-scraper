@@ -90,7 +90,7 @@ test("F6: los diez rechazos técnicos múltiples siguen siendo diez referencias 
     issue.startsWith("Atributo rechazado por seguridad:")).length >= 4);
   assert.deepEqual(reviewed.filter((item) => item.product.reference !== "6236")
     .map((item) => item.product.reference).sort(), [
-    "6981", "6622", "4736", "4737", "4750", "4802", "4751", "4752", "5902", "6308"
+    "6622", "4736", "4737", "4750", "4802", "4751", "4752", "5902"
   ].sort());
   assert.ok(reviewed.some((item) => item.product.reference === "6236"));
   assert.equal(batch.totals.ready + batch.totals.review, 1008);

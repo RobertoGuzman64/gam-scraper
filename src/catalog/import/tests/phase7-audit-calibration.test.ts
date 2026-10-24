@@ -45,7 +45,7 @@ test("F7: la máquina mixta no se confirma por palabras sueltas, variantes o rut
   ]) {
     assert.equal(sourceCategoryQualityIssue(altered), SOURCE_CATEGORY_ISSUE);
   }
-  assert.equal(sourceCategoryQualityIssue(machine("4022")), SOURCE_CATEGORY_ISSUE);
+  assert.equal(sourceCategoryQualityIssue(machine("4022")), null);
 });
 
 test("F7: vehículo con identidad técnica y descripción explícita no exige matrícula", () => {
@@ -68,13 +68,13 @@ test("F7: la clasificación del vehículo sigue exigiendo evidencias independien
   ]) {
     assert.equal(sourceCategoryQualityIssue(altered), SOURCE_CATEGORY_ISSUE);
   }
-  for (const reference of ["6688", "6689", "6690", "5918", "6806"]) {
+  for (const reference of ["6806"]) {
     assert.equal(sourceCategoryQualityIssue(machine(reference)), SOURCE_CATEGORY_ISSUE, reference);
   }
 });
 
-test("F7: motores alternativos, lotes y colisiones de identidad no se recalibran a ready", () => {
-  for (const reference of ["2071", "2072", "2073", "2163", "6969", "6970", "6236"]) {
+test("F7: motores incompatibles e identidades contradictorias siguen en revisión", () => {
+  for (const reference of ["2071", "2072", "2073", "6236"]) {
     assert.equal(prepareProduct(machine(reference), catalog).status, "review", reference);
   }
   const batch = prepareImportBatch(source.products, catalog);

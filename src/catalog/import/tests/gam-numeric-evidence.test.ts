@@ -47,7 +47,9 @@ test("GAM: NA y horómetro sustituido son lectura ausente, no horas numéricas i
 });
 
 test("GAM: no ignora horas dudosas, observadas ni inconsistentes", () => {
-  for (const value of ["NA V72309090022 horas", "Horometro sustituido 300 horas", "desconocido horas", "300/500 horas"]) {
+  assert.deepEqual(resolution(machine({ horometer: "NA V72309090022 horas" }), "Horas de uso"),
+    { status: "not_observed", value: null });
+  for (const value of ["Horometro sustituido 300 horas", "desconocido horas", "300/500 horas"]) {
     assert.equal(resolution(machine({ horometer: value }), "Horas de uso").status, "invalid");
   }
   assert.deepEqual(resolution(machine({ horometer: "385 horas" }), "Horas de uso"),

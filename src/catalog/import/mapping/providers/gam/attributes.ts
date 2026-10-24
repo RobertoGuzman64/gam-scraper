@@ -8,9 +8,36 @@ import { gamElevationIdentityConflict } from "./elevation-identity.js";
 import { gamCleaningCandidate, gamCleaningCorrectedWidth, gamCleaningWidthConflicts } from "./cleaning.js";
 import { gamHandlingCandidate, normalizeGamMast } from "./handling.js";
 import { gamHandlingAmbiguousCapacity, gamHandlingAttributeConflicts } from "./handling-integrity.js";
+import { gamHandlingReconciledCapacity } from "./capacity-evidence.js";
 import { gamElevationCandidate, gamElevationHeightConflicts } from "./elevation.js";
 import { gamSpecializedCandidate } from "./specialized.js";
 import { gamGeneratorCandidate, isGamGenerator } from "./generator.js";
+
+export const gamUnspecifiedTurningRadius = (record: ProductRecord): boolean => {
+  if (record.categoryKey !== "carretillas-nuevas" || record.condition !== "Nuevo" ||
+    fold(record.brand ?? "") !== "yale") return false;
+  const raw = record.specs?.["Radio de giro"];
+  const model = record.specs?.["Modelo"];
+  if (typeof raw !== "string" || typeof model !== "string") return false;
+  const values = raw.trim().match(/^(\d{4})\s*\/\s*(\d{4})$/);
+  if (!values?.[1] || !values[2]) return false;
+  const first = Number(values[1]);
+  const second = Number(values[2]);
+  if (first < 1000 || first > 10000 || second < 1000 || second > 10000 ||
+    Math.abs(first - second) < 1 || Math.max(first, second) / Math.min(first, second) > 1.2) return false;
+  let route = "";
+  try {
+    const url = new URL(record.url);
+    if (url.hostname !== "online.gamrentals.com") return false;
+    route = url.pathname.split("/").filter(Boolean)[1] ?? "";
+  } catch { return false; }
+  if (route !== "carretillas-elevadoras-electricas-yale") return false;
+  const normalizedModel = fold(model);
+  if (record.model?.trim() && fold(record.model) !== normalizedModel) return false;
+  const matcher = new RegExp(`(?:^|[^a-z0-9])${normalizedModel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![a-z0-9])`);
+  return [record.title, record.shortDescription, record.longDescription].every((text) =>
+    typeof text === "string" && matcher.test(fold(text)));
+};
 
 export const applyGamAliasesDetailed = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): AliasOutcome => {
   if (attribute.name === "Dimensiones de la cesta") keys.add(fold("Dimensiones Cesta"));
@@ -117,7 +144,8 @@ export const applyGamAliases = (record: ProductRecord, attribute: Attribute, key
 export const isGamUnmeasuredNumeric = (attribute: Attribute, value: string | number | boolean): boolean => {
   if (typeof value !== "string") return false;
   const normalized = fold(value);
-  if (attribute.name === "Horas de uso") return normalized === "na horas" || normalized === "horometro sustituido horas";
+  if (attribute.name === "Horas de uso") return normalized === "na horas" || normalized === "horometro sustituido horas" ||
+    /^na\s+[a-z]\d{8,20}\s+horas$/.test(normalized);
   if (attribute.name === "Elevación libre") return normalized === "si" || normalized === "no";
   return false;
 };
@@ -126,6 +154,9 @@ export const convertGamCandidate = (
   record: ProductRecord, attribute: Attribute, candidate: Candidate, fallback: string | number | boolean | null
 ): string | number | boolean | null => {
   if (attribute.name === "Tipo de mástil" && attribute.type === "SELECT") return normalizeGamMast(fallback);
+  if (attribute.name === "Capacidad de carga" && attribute.type === "NUMBER" && attribute.unit_option === "kg") {
+    return gamHandlingReconciledCapacity(record) ?? fallback;
+  }
   if (attribute.name === "Ancho de trabajo" && attribute.unit_option === "mm" && typeof fallback === "number") {
     return gamCleaningCorrectedWidth(record) ?? Math.round(fallback * 1000) / 1000;
   }

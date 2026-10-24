@@ -20,12 +20,12 @@ const reference = (id: string): ProductRecord => {
 };
 const power = (record: ProductRecord) => resolveAttribute(record, attribute("Potencia"));
 
-test("Fase 18: PRAMAC publicado bajo la ruta comercial /pramac conserva la contradicción de kVA", () => {
+test("Fase 18: PRAMAC publicado bajo /pramac conserva la potencia de motor separada", () => {
   const record = reference("1213");
   assert.equal(record.categoryKey, "otros-nuevos");
   assert.match(record.url, /\/es\/pramac\//);
-  assert.equal(power(record).status, "rejected");
-  assert.equal(prepareProduct(record, catalog).status, "review");
+  assert.deepEqual(power(record), { status: "resolved", value: 165 });
+  assert.equal(prepareProduct(record, catalog).status, "ready");
   assert.equal(record.specs?.["Potencia Motor (KW)"], "148 / 140");
 });
 
@@ -48,17 +48,18 @@ test("Fase 18: solo acepta la ruta PRAMAC cuando coinciden el modelo y la potenc
   ]) assert.notDeepEqual(power(record), { status: "resolved", value: 165 });
 });
 
-test("Fase 18: ocho potencias incompatibles siguen rechazadas y la única coincidente continúa válida", () => {
-  for (const id of ["6834", "1210", "1218", "1211", "1212", "1216", "1217", "1219"]) {
+test("Fase 18: la potencia no acreditada sigue rechazada y las nominales se conservan", () => {
+  for (const id of ["6834"]) {
     assert.equal(power(reference(id)).status, "rejected", id);
     assert.equal(prepareProduct(reference(id), catalog).status, "review", id);
   }
   assert.deepEqual(power(reference("1214")), { status: "resolved", value: 200 });
+  assert.deepEqual(power(reference("1211")), { status: "resolved", value: 80 });
 });
 
 test("Fase 18: no transforma un horómetro mezclado con un identificador en horas válidas", () => {
   const record = reference("6775");
   assert.equal(record.horometer, "NA V72309090022 horas");
-  assert.equal(resolveAttribute(record, attribute("Horas de uso")).status, "invalid");
-  assert.equal(prepareProduct(record, catalog).status, "review");
+  assert.equal(resolveAttribute(record, attribute("Horas de uso")).status, "not_observed");
+  assert.equal(prepareProduct(record, catalog).status, "ready");
 });

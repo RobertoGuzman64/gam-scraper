@@ -90,12 +90,12 @@ test("GAM Hyster H9XDL6: recupera diésel solo con evidencia completa del modelo
   assert.equal(categorySlug({ ...record, providerId: "gomariz" }), null);
 });
 
-test("GAM: familias nuevas acreditadas no dependen del receptor y motores ambiguos siguen bloqueados", () => {
+test("GAM: familias acreditadas y alternativas de motor contrastadas, demás conflictos bloqueados", () => {
   for (const code of ["2134", "2135", "2373", "2364", "3425", "3436", "3312", "6182", "1884", "3309", "5", "8", "2312", "2314", "4778", "6874", "6953"]) {
     const record = reference(code);
     const prepared = prepareCached(record, catalog);
     assert.equal(categorySlug(record), null, code);
-    if (["2134", "2135", "4778", "3425", "3436", "3312", "6182", "1884", "3309", "6874", "6953"].includes(code)) {
+    if (["2134", "2135", "2373", "5", "8", "4778", "3425", "3436", "3312", "6182", "1884", "3309", "6874", "6953"].includes(code)) {
       assert.equal(prepared.status, "ready", code);
       assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")), code);
     } else {

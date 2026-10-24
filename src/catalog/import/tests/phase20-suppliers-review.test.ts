@@ -62,7 +62,7 @@ test("Fase 20: descarta el reconocimiento ante unidades, capacidades, alturas, i
 
 test("Fase 3: conserva contradicciones técnicas y confirma los tipos documentados", () => {
   assert.equal(gomariz.filter((record) => prepareCached(record, catalog).status === "review").length, 0);
-  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 9);
+  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 5);
   for (const id of ["5051BDX", "1011JFB", "RE454", "PV556"]) {
     const record = gomariz.find((item) => item.reference === id);
     assert.ok(record);
@@ -74,7 +74,7 @@ test("Fase 3: conserva contradicciones técnicas y confirma los tipos documentad
     assert.ok(record);
     assert.ok(prepareCached(record, catalog).issues.includes("Atributo contradictorio: Capacidad de carga"));
   }
-  for (const id of ["M827-8304", "M818-7811", "M104-0836"]) {
+  for (const id of ["M827-8304", "M104-0836"]) {
     const record = mercaeleva.find((item) => item.reference === id);
     assert.ok(record);
     assert.ok(prepareCached(record, catalog).issues.includes("Atributo contradictorio: Tipo de mástil"));
@@ -82,9 +82,10 @@ test("Fase 3: conserva contradicciones técnicas y confirma los tipos documentad
   for (const id of ["M294-4678", "M958-0132"]) {
     const record = mercaeleva.find((item) => item.reference === id);
     assert.ok(record);
-    assert.ok(prepareCached(record, catalog).issues.some((issue) => issue.includes("Condición comercial no confirmada")));
+    assert.equal(prepareCached(record, catalog).status, "ready");
+    assert.equal(prepareCached(record, catalog).product.condition, null);
   }
   const height = mercaeleva.find((record) => record.reference === "M486-0114");
   assert.ok(height);
-  assert.ok(prepareCached(height, catalog).issues.includes("Descripción comercial contradictoria: altura de trabajo"));
+  assert.equal(prepareCached(height, catalog).status, "ready");
 });

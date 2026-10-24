@@ -52,26 +52,34 @@ test("Fase 17: si falta evidencia de configuración, medidas o identidad, conser
   assert.deepEqual(width(noDescription), { status: "resolved", value: 1230 });
 });
 
-test("Fase 17: conserva los cuatro conflictos restantes de anchura real", () => {
-  for (const id of ["4024", "3997", "4005", "4004"]) {
-    assert.equal(width(reference(id)).status, "contradiction", id);
-    assert.equal(prepareProduct(reference(id), catalog).status, "review", id);
+test("Fase 17: anchuras corroboradas se recuperan sin liberar la discrepancia de T581 55", () => {
+  for (const [id, value] of [["4024", 860], ["3997", 455], ["4005", 700]] as const) {
+    assert.deepEqual(width(reference(id)), { status: "resolved", value }, id);
+    assert.equal(prepareProduct(reference(id), catalog).status, "ready", id);
   }
+  assert.equal(width(reference("4004")).status, "contradiction");
+  assert.equal(prepareProduct(reference("4004"), catalog).status, "review");
 });
 
 test("Fase 17: alturas incongruentes, medidas variables de mástil y radios con alternativas no se liberan", () => {
   for (const id of ["6702", "5275", "6887", "5864", "3134"]) {
     const record = reference(id);
     assert.equal(resolveAttribute(record, attribute("Altura de elevación")).status, "contradiction", id);
-    assert.equal(prepareProduct(record, catalog).status, "review", id);
+    assert.equal(prepareProduct(record, catalog).status, ["3134", "6702"].includes(id) ? "ready" : "review", id);
   }
   for (const id of ["18", "2130"]) {
-    assert.equal(resolveAttribute(reference(id), attribute("Altura de elevación")).status, "invalid", id);
+    assert.equal(resolveAttribute(reference(id), attribute("Altura de elevación")).status, "not_observed", id);
   }
-  assert.equal(resolveAttribute(reference("18"), attribute("Tipo de mástil")).status, "invalid");
-  for (const id of ["2285", "2286", "2287", "2288", "2289", "2290", "5996"]) {
+  assert.equal(resolveAttribute(reference("18"), attribute("Tipo de mástil")).status, "not_observed");
+  for (const id of ["2285", "2286", "2289", "2290"]) {
     const record = reference(id);
-    assert.equal(resolveAttribute(record, attribute("Radio de giro")).status, "invalid", id);
-    assert.equal(prepareProduct(record, catalog).status, "review", id);
+    assert.equal(resolveAttribute(record, attribute("Radio de giro")).status, "not_observed", id);
+    assert.equal(prepareProduct(record, catalog).status, "ready", id);
+    assert.equal(prepareProduct(record, catalog).product.spec["Radio de giro"], record.specs?.["Radio de giro"]);
+  }
+  for (const id of ["2287", "2288", "5996"]) {
+    const record = reference(id);
+    assert.equal(resolveAttribute(record, attribute("Radio de giro")).status, "not_observed", id);
+    assert.equal(prepareProduct(record, catalog).status, "ready", id);
   }
 });

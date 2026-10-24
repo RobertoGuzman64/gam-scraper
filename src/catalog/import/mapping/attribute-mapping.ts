@@ -2,10 +2,12 @@ import { SPEC_KEY_NORMALIZATION } from "../../normalization/spec-rules.js";
 import type { ProductRecord, SpecScalar } from "../../../contracts/catalog.js";
 import type { Attribute, AttributeResolution, Candidate } from "./attribute-types.js";
 import { fold, scalar, numberToken } from "./attribute-utils.js";
-import { applyGamAliasesDetailed, convertGamCandidate, isGamUnmeasuredNumeric } from "./providers/gam/attributes.js";
+import { applyGamAliasesDetailed, convertGamCandidate, isGamUnmeasuredNumeric, gamUnspecifiedTurningRadius } from "./providers/gam/attributes.js";
 import { applyGomarizAliases, convertGomarizCandidate } from "./providers/gomariz/attributes.js";
 import { applyMercaelevaAliasesDetailed } from "./providers/mercaeleva/attributes.js";
 import { normalizeMercaelevaCandidate } from "./providers/mercaeleva/technical.js";
+import { mercaelevaUnspecifiedMast } from "./providers/mercaeleva/handling-evidence.js";
+import { gamConfirmedAbsentScalar } from "./providers/gam/unrepresentable.js";
 
 const notPublished = (value: SpecScalar): boolean =>
   typeof value === "string" && ["n/d", "n/a", "no disponible", "no informado", "sin datos", "-", "—", "a consultar"].includes(fold(value));
@@ -56,7 +58,8 @@ const numberValue = (value: SpecScalar, sourceKey: string, attribute: Attribute)
   const keyUnit = keyUnitMatch ? unitOf(keyUnitMatch) : null;
   if (explicit && keyUnit && explicit !== keyUnit) return null;
   const sourceUnit = explicit ?? keyUnit;
-  const targetUnit = unitOf(attribute.unit_option);
+  const targetUnit = attribute.name === "Potencia" && attribute.unit_option === "kVA (grupos) / kW" && sourceUnit === "kw"
+    ? "kw" : unitOf(attribute.unit_option);
   if (sourceUnit && targetUnit && sourceUnit !== targetUnit) {
     const ratios: Readonly<Record<string, number>> = { mm: 0.001, cm: 0.01, m: 1 };
     if (!(sourceUnit in ratios) || !(targetUnit in ratios)) return null;
@@ -82,6 +85,13 @@ const convert = (value: SpecScalar, key: string, attribute: Attribute): string |
 };
 
 export const resolveAttribute = (record: ProductRecord, attribute: Attribute): AttributeResolution => {
+  if (gamConfirmedAbsentScalar(record, attribute)) return { status: "not_observed", value: null };
+  if (attribute.name === "Tipo de mástil" && attribute.type === "SELECT" &&
+    mercaelevaUnspecifiedMast(record)) return { status: "not_observed", value: null };
+  if (record.providerId === "gam" && attribute.name === "Radio de giro" &&
+    attribute.unit_option === "mm" && gamUnspecifiedTurningRadius(record)) {
+    return { status: "not_observed", value: null };
+  }
   const keys = new Set([attribute.name, ...(aliases[attribute.name] ?? [])].map(fold));
   const candidates: Candidate[] = [];
   if (record.providerId === "gam") {

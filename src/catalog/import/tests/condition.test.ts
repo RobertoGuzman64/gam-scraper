@@ -47,12 +47,12 @@ test("GAM: Nuevo explícito se conserva sin mapearse a categorías de ocasión",
   assert.ok(!used.issues.some((issue) => issue.includes("Condición comercial")));
 });
 
-test("GAM: condición ausente y señales contradictorias se mantienen en review", async () => {
+test("GAM: condición no publicada queda vacía y solo las contradicciones siguen en review", async () => {
   const catalog = await loadImportCatalog();
   const unknown = prepareProduct({ ...gam, condition: null }, catalog);
   assert.equal(unknown.product.condition, null);
-  assert.equal(unknown.status, "review");
-  assert.ok(unknown.issues.some((issue) => issue.includes("Condición comercial no confirmada")));
+  assert.equal(unknown.status, "ready");
+  assert.ok(!unknown.issues.some((issue) => issue.includes("Condición comercial")));
 
   const contradictoryUsed = prepareProduct({ ...gam, condition: "Segunda mano" }, catalog);
   assert.equal(contradictoryUsed.product.condition, null);
@@ -92,7 +92,7 @@ test("Mercaeleva: condición explícita y Estado publicado concuerdan o bloquean
   }
   const ambiguous = prepareProduct({ ...mercaeleva, condition: null, specs: { Estado: "Revisado" } }, catalog);
   assert.equal(ambiguous.product.condition, null);
-  assert.ok(ambiguous.issues.some((issue) => issue.includes("Condición comercial no confirmada")));
+  assert.ok(!ambiguous.issues.some((issue) => issue.includes("Condición comercial")));
 });
 
 test("Gomariz y proveedores desconocidos no reciben condición sin evidencia", async () => {
@@ -101,7 +101,7 @@ test("Gomariz y proveedores desconocidos no reciben condición sin evidencia", a
     const prepared = prepareProduct({ ...gam, providerId, condition: null, categoryKey: "venta" }, catalog);
     assert.equal(prepared.product.condition, null, providerId);
     assert.equal(prepared.status, "review", providerId);
-    assert.ok(prepared.issues.some((issue) => issue.includes("Condición comercial no confirmada")));
+    assert.ok(!prepared.issues.some((issue) => issue.includes("Condición comercial")));
   }
 });
 

@@ -55,11 +55,11 @@ test("Fase 4: ninguna cifra se reconstruye con trozos sueltos, unidades supuesta
   }
 });
 
-test("Fase 4: conserva las otras revisiones y las contradicciones de fuente", () => {
+test("Fase 4: conserva las contradicciones y los fragmentos irrecuperables sin normalizar", () => {
   for (const code of ["6607", "6630", "6632", "6631", "6614", "6616", "6615", "6642", "6625", "6669", "6617", "6626", "6169", "6171"]) {
     const record = reference(code);
-    assert.deepEqual(resolve(record), { status: "invalid", value: null }, code);
-    assert.equal(prepareProduct(record, catalog).status, "review", code);
+    assert.deepEqual(resolve(record), { status: "not_observed", value: null }, code);
+    assert.equal(prepareProduct(record, catalog).status, "ready", code);
   }
   const base = reference("6139");
   assert.deepEqual(resolve({ ...base, specs: { ...base.specs, "Dimensiones de la cesta": "2 x 1 m" } }),

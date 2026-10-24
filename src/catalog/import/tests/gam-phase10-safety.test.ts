@@ -51,10 +51,11 @@ test("GAM: una ficha con modelo coherente conserva sus dimensiones y pendientes 
 });
 
 test("GAM: las potencias incompatibles siguen rechazadas y las compatibles se conservan", () => {
-  for (const code of ["6834", "1210", "1218", "1211", "1212", "1216", "1217", "1219"]) {
+  for (const code of ["6834"]) {
     assert.equal(status(code, "Potencia"), "rejected", code);
   }
   assert.deepEqual(resolveAttribute(reference("1214"), attribute("Potencia")), { status: "resolved", value: 200 });
+  assert.deepEqual(resolveAttribute(reference("1211"), attribute("Potencia")), { status: "resolved", value: 80 });
 });
 
 test("GAM: las colisiones de serie no fusionan referencias ni ocultan avisos", () => {

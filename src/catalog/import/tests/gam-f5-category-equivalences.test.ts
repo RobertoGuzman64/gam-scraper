@@ -25,9 +25,12 @@ test("GAM: Logitrans manual acreditada en LogiQ y WSP, no por batería de balanz
     const record = reference(code);
     const prepared = prepareCached(record, catalog);
     assert.equal(categorySlug(record), "transpaleta-manual", code);
-    assert.equal(prepared.status, code === "238" ? "ready" : "review", code);
+    assert.equal(prepared.status, "ready", code);
     if (code === "239") {
-      assert.ok(prepared.issues.includes("Atributo rechazado por seguridad: Capacidad de carga"));
+      const capacity = catalog.attributes.find((item) => item.name === "Capacidad de carga");
+      assert.ok(capacity);
+      assert.ok(!prepared.product.attributes.some((item) => item.attributeID === capacity.id));
+      assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "200/300 KG");
     }
     assert.equal(categorySlug({ ...record, brand: null }), null, code);
     assert.equal(categorySlug({ ...record, specs: { ...record.specs, Modelo: "Modelo distinto" } }), null, code);

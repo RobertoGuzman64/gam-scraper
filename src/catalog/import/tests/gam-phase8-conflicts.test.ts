@@ -21,16 +21,20 @@ const attribute = (name: string) => {
 };
 const status = (code: string, name: string) => resolveAttribute(reference(code), attribute(name)).status;
 
-test("GAM: capacidades incompatibles de una ficha con modelo explícito siguen bloqueadas", () => {
-  for (const code of ["6965", "6932", "6723", "2211", "2275", "2193", "6421"]) {
+test("GAM: capacidades acreditadas por el modelo y contradicciones pendientes se distinguen", () => {
+  for (const code of ["6965", "6932", "2275", "2193", "6421"]) {
+    assert.equal(status(code, "Capacidad de carga"), "resolved", code);
+  }
+  for (const code of ["6723", "2211"]) {
     assert.equal(status(code, "Capacidad de carga"), "contradiction", code);
   }
 });
 
-test("GAM: discrepancias de capacidad en descripción corta de modelo confirmado no pasan a ready", () => {
-  for (const code of ["2089", "2049", "2044", "6272", "2016", "50", "2136"]) {
-    assert.equal(status(code, "Capacidad de carga"), "contradiction", code);
+test("GAM: capacidades corroboradas y descripción corta sin confirmar se distinguen", () => {
+  for (const code of ["2089", "2049", "2044", "2016", "50", "2136"]) {
+    assert.equal(status(code, "Capacidad de carga"), "resolved", code);
   }
+  assert.equal(status("6272", "Capacidad de carga"), "contradiction");
 });
 
 test("GAM: descripción ajena al modelo o capacidad opcional no invalida la especificación", () => {
@@ -45,10 +49,14 @@ test("GAM: alturas, anchos y radios de giro ambiguos conservan sus rechazos", ()
     assert.equal(status(code, "Altura de elevación"), "contradiction", code);
   }
   assert.equal(status("6236", "Altura de elevación"), "rejected");
-  for (const code of ["4024", "3997", "4005", "4004"]) {
-    assert.equal(status(code, "Ancho de trabajo"), "contradiction", code);
+  for (const code of ["4024", "3997", "4005"]) {
+    assert.equal(status(code, "Ancho de trabajo"), "resolved", code);
   }
-  for (const code of ["2285", "2286", "2287", "2288", "2289", "2290", "5996"]) {
-    assert.equal(status(code, "Radio de giro"), "invalid", code);
+  assert.equal(status("4004", "Ancho de trabajo"), "contradiction");
+  for (const code of ["2285", "2286", "2289", "2290"]) {
+    assert.equal(status(code, "Radio de giro"), "not_observed", code);
+  }
+  for (const code of ["2287", "2288", "5996"]) {
+    assert.equal(status(code, "Radio de giro"), "not_observed", code);
   }
 });

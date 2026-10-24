@@ -105,6 +105,22 @@ export const mercaelevaMislabelledCapacity = (record: ProductRecord): boolean =>
   return true;
 };
 
+export const mercaelevaUnspecifiedMast = (record: ProductRecord): boolean => {
+  if (!validMercaelevaTechnicalSource(record) || !record.model || !record.brand) return false;
+  const title = fold(record.title ?? "");
+  const description = fold(record.longDescription ?? "");
+  const additional = fold(String(record.specs?.["Título adicional"] ?? ""));
+  const identity = [fold(record.brand), fold(record.model)];
+  if (!/\bcarretilla\b/.test(title) || !/\bcarretilla\b/.test(additional) ||
+    !identity.every((part) => title.includes(part) && description.includes(part))) return false;
+  const declared = publishedMast(record);
+  if (declared === null || !mastTypes(description).has(declared)) return false;
+  const indicated = mastTypes(description);
+  if (indicated.size !== 2 || !description.includes("duplex triplex")) return false;
+  return indicated.has("duplex") && indicated.has("triplex") &&
+    !/\bmastil\s+(?:instalado|montado|equipado)\s+(?:es|de|tipo)?\s*(?:duplex|triplex)\b/.test(description);
+};
+
 export const mercaelevaHandlingEvidence = (
   record: ProductRecord, attribute: Attribute
 ): { safe: true; candidate: Candidate | null } | { safe: false; candidate: null; reason: "contradiction" | "rejected" } => {

@@ -9,9 +9,19 @@ import { sourceCategoryQualityIssue } from "../mapping/source-category-quality.j
 import { resolveCommercialCondition } from "./condition.js";
 import { resolveMercaelevaShortDescription } from "../mapping/providers/mercaeleva/descriptions.js";
 import { gamElevationSourceIdentityConflict } from "../mapping/providers/gam/elevation-identity.js";
+import { reconcileGamElevationEditorialIdentity } from "../mapping/providers/gam/elevation-editorial.js";
+import { reconcileGamOutdatedSourceTitle } from "../mapping/providers/gam/editorial-titles.js";
+import { reconcileGamBtsEditorialSummary } from "../mapping/providers/gam/bts-editorial.js";
+import { reconcileGamForkliftFuelEditorial } from "../mapping/providers/gam/forklift-fuel-editorial.js";
+import { reconcileGamHandlingHeightEditorial } from "../mapping/providers/gam/handling-height-editorial.js";
+import { reconcileGamHandlingCapacityEditorial } from "../mapping/providers/gam/handling-capacity-editorial.js";
+import { reconcileGamOrderPickerEditorial } from "../mapping/providers/gam/orderpicker-editorial.js";
+import { reconcileGamVerifiedHandlingEditorial } from "../mapping/providers/gam/handling-verified-editorial.js";
 import type { ImportCandidate, ImportCatalog, PreparedProduct } from "./contracts.js";
 
 export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): PreparedProduct => {
+  record = reconcileGamOrderPickerEditorial(reconcileGamHandlingHeightEditorial(reconcileGamForkliftFuelEditorial(reconcileGamBtsEditorialSummary(reconcileGamElevationEditorialIdentity(reconcileGamOutdatedSourceTitle(record))))));
+  record = reconcileGamVerifiedHandlingEditorial(reconcileGamHandlingCapacityEditorial(record));
   const issues: string[] = [];
   const { condition, contradictory: contradictoryCondition } = resolveCommercialCondition(record);
   const category = resolveCategory(record, catalog.categories, condition);
@@ -26,7 +36,6 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   const attributeResult = productAttributes(record, category, catalog);
 
   if (contradictoryCondition) issues.push("Condición comercial contradictoria entre la ficha y el origen");
-  else if (condition === null) issues.push("Condición comercial no confirmada (Nuevo o Segunda_Mano)");
   if (!reference) issues.push("Referencia ausente");
   if (!category) {
     const sourceIssue = sourceCategoryQualityIssue(record);

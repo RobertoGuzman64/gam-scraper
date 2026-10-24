@@ -31,12 +31,12 @@ test("Fase 15: recupera seis dimensiones CTE con evidencia explícita equivalent
   }
 });
 
-test("Fase 15: no convierte los milímetros implícitos de dos fichas CTE sin evidencia secundaria", () => {
+test("Fase 15: no inventa milímetros implícitos en dos fichas CTE sin evidencia secundaria", () => {
   for (const id of ["6169", "6171"]) {
     const record = reference(id);
-    assert.deepEqual(resolve(record), { status: "invalid", value: null }, id);
-    assert.deepEqual(resolveAttribute(record, rotation), { status: "invalid", value: null }, id);
-    assert.equal(prepareProduct(record, catalog).status, "review", id);
+    assert.deepEqual(resolve(record), { status: "not_observed", value: null }, id);
+    assert.deepEqual(resolveAttribute(record, rotation), { status: "not_observed", value: null }, id);
+    assert.equal(prepareProduct(record, catalog).status, "ready", id);
   }
 });
 
@@ -50,8 +50,9 @@ test("Fase 15: rechaza narrativas ausentes, contradictorias, no equivalentes o a
     { ...base, longDescription: "La cesta tiene dimensiones de 1,40 x 0,70 x 1,10 m. La cesta tiene dimensiones de 1,40 x 0,75 x 1,10 m." },
     { ...base, specs: { ...base.specs, "Dimensiones Cesta": "1400x700x1100 mm cm" } }
   ];
-  for (const variant of variants) {
-    assert.deepEqual(resolve(variant), { status: "invalid", value: null }, variant.longDescription ?? "sin descripción");
+  for (const [index, variant] of variants.entries()) {
+    const status = index <= 1 ? "not_observed" : "invalid";
+    assert.deepEqual(resolve(variant), { status, value: null }, variant.longDescription ?? "sin descripción");
   }
 });
 
@@ -64,9 +65,9 @@ test("Fase 15: no emplea esta evidencia para salvar conflictos de identidad o ca
   assert.equal(resolve({ ...base, providerId: "gomariz" }).status, "not_observed");
 });
 
-test("Fase 15: mantiene los doce casos sin una pareja dimensional recuperable", () => {
+test("Fase 15: mantiene sin inventar medidas los doce fragmentos sin pareja recuperable", () => {
   for (const id of ["6607", "6630", "6632", "6631", "6614", "6616", "6615", "6642", "6625", "6669", "6617", "6626"]) {
-    assert.deepEqual(resolve(reference(id)), { status: "invalid", value: null }, id);
+    assert.deepEqual(resolve(reference(id)), { status: "not_observed", value: null }, id);
   }
   assert.deepEqual(resolve(reference("6622")), { status: "rejected", value: null });
 });

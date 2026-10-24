@@ -73,15 +73,18 @@ test("Fase 11: JLG 340AJ usa evidencia diésel del proveedor sin deducir aliment
 });
 
 test("Fase 11: Mercaeleva conserva las contradicciones de capacidad y mástil no resueltas", () => {
-  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 9);
+  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 5);
   for (const id of ["M582-1882", "M827-8304", "M062-8951", "M119-9334"]) {
     assert.ok(prepareCached(reference(mercaelevaByReference, id), catalog).issues.includes("Atributo contradictorio: Capacidad de carga"));
   }
-  for (const id of ["M827-8304", "M818-7811", "M104-0836"]) {
+  for (const id of ["M827-8304", "M104-0836"]) {
     assert.ok(prepareCached(reference(mercaelevaByReference, id), catalog).issues.includes("Atributo contradictorio: Tipo de mástil"));
   }
-  assert.ok(prepareCached(reference(mercaelevaByReference, "M486-0114"), catalog).issues.some((issue) => issue.includes("altura de trabajo")));
+  assert.equal(prepareCached(reference(mercaelevaByReference, "M486-0114"), catalog).status, "ready");
+  assert.equal(prepareCached(reference(mercaelevaByReference, "M818-7811"), catalog).status, "ready");
   for (const id of ["M294-4678", "M958-0132"]) {
-    assert.ok(prepareCached(reference(mercaelevaByReference, id), catalog).issues.some((issue) => issue.includes("Condición comercial")));
+    const prepared = prepareCached(reference(mercaelevaByReference, id), catalog);
+    assert.equal(prepared.status, "ready");
+    assert.equal(prepared.product.condition, null);
   }
 });

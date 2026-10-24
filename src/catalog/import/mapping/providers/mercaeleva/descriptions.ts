@@ -97,7 +97,16 @@ export const resolveMercaelevaShortDescription = (record: ProductRecord): ShortD
   const titleHeight = title.match(/\b(\d{1,2}(?:[.,]\d+)?)\s*(?:mt|metros?)\b/)?.[1];
   const sourceHeight = description.match(/\b(?:altura\s+(?:de\s+)?(?:trabajo|elevacion)|working height)\s*:?\s*(\d{1,2}(?:[.,]\d+)?)\s*(?:mt|metros?)\b/)?.[1];
   if (titleHeight && sourceHeight && Number(titleHeight.replace(",", ".")) !== Number(sourceHeight.replace(",", "."))) {
-    return { description: null, heightConflict: true };
+    const publishedHeight = record.specs?.["Altura de trabajo"];
+    const working = Number(sourceHeight.replace(",", "."));
+    const titleValue = Number(titleHeight.replace(",", "."));
+    const published = typeof publishedHeight === "string" ? publishedHeight.trim().match(/^(\d{1,2}(?:[.,]\d+)?)\s*(?:m|mt|metros?)$/i) : null;
+    const confirmed = published?.[1] ? Number(published[1].replace(",", ".")) : null;
+    const platformRange = titleFamily === "plataforma" && titleSubtype === "tijera" &&
+      sourceSubtype === "tijera" && /\belectrica\b/.test(title) && /\belectrica\b/.test(description) &&
+      !/\baltura\s+(?:de\s+)?trabajo\b/.test(title) &&
+      working - titleValue === 2 && confirmed === working;
+    if (!platformRange) return { description: null, heightConflict: true };
   }
 
   const titleCapacity = title.match(/\b(\d[\d.,]*)\s*kg\b/)?.[1];

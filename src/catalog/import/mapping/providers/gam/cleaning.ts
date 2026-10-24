@@ -171,10 +171,54 @@ const configuredWorkWidth = (record: ProductRecord): number | null => {
   return chosen;
 };
 
-export const gamCleaningCorrectedWidth = (record: ProductRecord): number | null => configuredWorkWidth(record);
+const corroboratedCleaningWidth = (record: ProductRecord): number | null => {
+  if (!cleaningFamily(record) || !record.model ||
+    ![record.title, record.shortDescription, record.longDescription].every((text) =>
+      text && gamHandlingModelEvidence(record, text))) return null;
+  const raw = record.specs?.["Anchura trabajo"];
+  const value = raw === undefined ? null : scalar(raw);
+  if (typeof value !== "string") return null;
+  const match = value.trim().match(/^(\d[\d.,]*)\s*(mm|cm|metros?|m)$/i);
+  if (!match?.[1] || !match[2]) return null;
+  const published = widthMillimetres(match[1], foldText(match[2]));
+  if (published === null) return null;
+  const long = foldText(record.longDescription ?? "");
+  const variant = foldText(record.model).match(/(?:^|\s)(\d{2})$/)?.[1];
+  if (cleaningFamily(record) === "fregadora" && variant) {
+    const variants = [...long.matchAll(/\btrayectoria de limpieza de\s+(\d[\d.,]*)\s*(mm|cm|metros?|m)\s+o\s+(\d[\d.,]*)\s*(mm|cm|metros?|m)\b/g)];
+    if (variants.length === 1) {
+      const entry = variants[0];
+      const first = entry?.[1] && entry[2] ? widthMillimetres(entry[1], foldText(entry[2])) : null;
+      const second = entry?.[3] && entry[4] ? widthMillimetres(entry[3], foldText(entry[4])) : null;
+      const selected = Number(variant) * 10;
+      const independent = [...long.matchAll(/\bcabezales? de\s+(\d[\d.,]*)\s*(mm|cm|metros?|m)\s+o\s+(\d[\d.,]*)\s*(mm|cm|metros?|m)\b/g)];
+      const mention = independent[0];
+      const verifiedFirst = mention?.[1] && mention[2] ? widthMillimetres(mention[1], foldText(mention[2])) : null;
+      const verifiedSecond = mention?.[3] && mention[4] ? widthMillimetres(mention[3], foldText(mention[4])) : null;
+      if (first !== null && second !== null && first !== second && independent.length === 1 &&
+        verifiedFirst === first && verifiedSecond === second &&
+        [first, second].includes(published) && [first, second].includes(selected)) return selected;
+    }
+  }
+  const described = workWidthExpressions(record.longDescription ?? "");
+  const measured = described?.[0];
+  if (described?.length !== 1 || !measured || measured.optional) return null;
+  const exact = measured.value;
+  const decimals = match[1].match(/[.,](\d+)$/)?.[1]?.length ?? 0;
+  const resolution = (match[2].toLowerCase() === "mm" ? 1 : match[2].toLowerCase() === "cm" ? 10 : 1000) / 10 ** decimals;
+  const difference = Math.abs(exact - published);
+  if (difference > 0 && difference <= resolution / 2 + 0.001) return exact;
+  const sameShort = workWidthExpressions(record.shortDescription ?? "");
+  if (sameShort?.length === 1 && !sameShort[0]?.optional && sameShort[0]?.value === exact && difference <= 15) return exact;
+  return null;
+};
+
+export const gamCleaningCorrectedWidth = (record: ProductRecord): number | null =>
+  configuredWorkWidth(record) ?? corroboratedCleaningWidth(record);
+
 
 export const gamCleaningWidthConflicts = (record: ProductRecord): boolean => {
-  if (!cleaningFamily(record) || configuredWorkWidth(record) !== null) return false;
+  if (!cleaningFamily(record) || gamCleaningCorrectedWidth(record) !== null) return false;
   const source = record.specs?.["Anchura trabajo"];
   if (source === undefined) return false;
   const raw = scalar(source);

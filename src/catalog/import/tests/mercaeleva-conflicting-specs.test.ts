@@ -57,10 +57,10 @@ test("Mercaeleva: no infiere condición, categoría ni altura ante ausencias o d
   const prepared = prepareProduct(source, catalog);
   assert.equal(prepared.product.condition, null);
   assert.equal(prepared.product.categorySellID, null);
-  assert.equal(prepared.status, "review");
+  assert.equal(prepared.status, "ready");
   const conflict = { ...record({ "Altura de trabajo": "16 m" }),
     url: "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-AS1413-M486-0114",
-    reference: "M486-0114", title: "LGMG AS1413 PLATAFORMA TIJERA ELECTRICA 14 MT",
+    reference: "M486-0114", title: "LGMG AS1413 PLATAFORMA TIJERA ELECTRICA ALTURA DE TRABAJO 14 MT",
     brand: "LGMG", model: "AS1413",
     longDescription: "Ref. 1236 PLATAFORMA TIJERA ELECTRICA ALTURA DE TRABAJO 16 MT LGMG AS1413 HORAS 181" };
   assert.ok(prepareProduct(conflict, catalog).issues.includes("Descripción comercial contradictoria: altura de trabajo"));

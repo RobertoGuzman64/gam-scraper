@@ -34,7 +34,7 @@ const gamConflictingCapacity = [
 
 const gamVariableCapacity = ["237", "235"] as const;
 const mercaelevaConflictingCapacity = ["M582-1882", "M827-8304", "M062-8951", "M119-9334"] as const;
-const gamNonUnivocalPower = ["6834", "1210", "1218", "1211", "1212", "1213", "1216", "1217", "1219"] as const;
+const gamNonUnivocalPower = ["6834", "1210", "1218", "1212", "1213", "1216", "1217", "1219"] as const;
 
 const allReviewed = [
   ...gamConflictingCapacity.map((reference) => `gam:${reference}`),
@@ -43,23 +43,30 @@ const allReviewed = [
   ...gamNonUnivocalPower.map((reference) => `gam:${reference}`)
 ];
 
-test("Fase 6: se comprueban 31 referencias únicas del diagnóstico de capacidad y potencia", () => {
-  assert.equal(allReviewed.length, 31);
-  assert.equal(new Set(allReviewed).size, 31);
+test("Fase 6: se comprueban 30 referencias únicas y once capacidades recuperadas", () => {
+  const confirmed = new Set(["50", "2016", "2044", "2049", "2089", "2136", "2193", "2275", "6421", "6932", "6965"]);
+  assert.equal(allReviewed.length, 30);
+  assert.equal(new Set(allReviewed).size, 30);
   for (const id of allReviewed) {
     const [provider, reference] = id.split(":");
     assert.ok(provider === "gam" || provider === "mercaeleva");
     assert.ok(reference);
-    assert.equal(prepareProduct(record(provider, reference), catalog).status, "review", id);
+    assert.equal(prepareProduct(record(provider, reference), catalog).status,
+      provider === "gam" && (confirmed.has(reference) || ["2240", "6723", "2211", "6272"].includes(reference) || gamVariableCapacity.includes(reference as typeof gamVariableCapacity[number]) || (gamNonUnivocalPower.includes(reference as typeof gamNonUnivocalPower[number]) && reference !== "6834"))
+        ? "ready" : "review", id);
   }
 });
 
-test("Fase 6: las 16 capacidades GAM discrepantes se conservan como contradicción", () => {
+test("Fase 6: las 16 capacidades conservan conflictos auténticos y distinguen valores corroborados", () => {
+  const confirmed = new Set(["50", "2016", "2044", "2049", "2089", "2136", "2193", "2275", "6421", "6932", "6965"]);
   const capacity = attribute("Capacidad de carga");
   for (const reference of gamConflictingCapacity) {
     const product = record("gam", reference);
-    assert.deepEqual(resolveAttribute(product, capacity), { status: "contradiction", value: null }, reference);
-    assert.ok(prepareProduct(product, catalog).issues.includes("Atributo contradictorio: Capacidad de carga"), reference);
+    const resolution = resolveAttribute(product, capacity);
+    assert.equal(resolution.status, confirmed.has(reference) ? "resolved" : "contradiction", reference);
+    const prepared = prepareProduct(product, catalog);
+    assert.equal(prepared.issues.includes("Atributo contradictorio: Capacidad de carga"), !confirmed.has(reference) && !["2240", "6723", "2211", "6272"].includes(reference), reference);
+    assert.deepEqual(prepared.product.spec, product.specs ?? {}, reference);
   }
 });
 
@@ -67,8 +74,9 @@ test("Fase 6: las dos capacidades multivalor GAM no se convierten en una carga p
   const capacity = attribute("Capacidad de carga");
   for (const reference of gamVariableCapacity) {
     const product = record("gam", reference);
-    assert.deepEqual(resolveAttribute(product, capacity), { status: "rejected", value: null }, reference);
-    assert.ok(prepareProduct(product, catalog).issues.includes("Atributo rechazado por seguridad: Capacidad de carga"), reference);
+    assert.deepEqual(resolveAttribute(product, capacity), { status: "not_observed", value: null }, reference);
+    assert.equal(prepareProduct(product, catalog).status, "ready", reference);
+    assert.ok(!prepareProduct(product, catalog).product.attributes.some((item) => item.attributeID === capacity.id), reference);
   }
 });
 
@@ -87,13 +95,18 @@ test("Fase 6: los cuatro conflictos Mercaeleva mantienen el valor original y los
   assert.ok(prepareProduct(record("mercaeleva", "M119-9334"), catalog).issues.includes("Atributo no normalizable: Horas de uso"));
 });
 
-test("Fase 6: las nueve potencias GAM incompatibles no seleccionan un régimen ni confunden kW con kVA", () => {
+test("Fase 6: las potencias GAM nominales no confunden kW con kVA ni regímenes", () => {
   const power = attribute("Potencia");
   for (const reference of gamNonUnivocalPower) {
     const product = record("gam", reference);
     const source = JSON.stringify(product.specs);
-    assert.deepEqual(resolveAttribute(product, power), { status: "rejected", value: null }, reference);
-    assert.ok(prepareProduct(product, catalog).issues.includes("Atributo rechazado por seguridad: Potencia"), reference);
+    if (reference === "6834") {
+      assert.deepEqual(resolveAttribute(product, power), { status: "rejected", value: null }, reference);
+      assert.ok(prepareProduct(product, catalog).issues.includes("Atributo rechazado por seguridad: Potencia"), reference);
+    } else {
+      assert.equal(resolveAttribute(product, power).status, "resolved", reference);
+      assert.equal(prepareProduct(product, catalog).status, "ready", reference);
+    }
     assert.equal(JSON.stringify(product.specs), source, reference);
   }
 });
@@ -103,11 +116,11 @@ test("Fase 6: potencia no unívoca y capacidad nominal son conceptos separados",
   assert.match(generator.shortDescription ?? "", /Potencia Emergencia: 83\.0 Kva/);
   assert.match(generator.shortDescription ?? "", /Potencia continuo: 78\.0 Kva/);
   assert.equal(generator.specs?.["Potencia Motor (KW)"], "76 / 72");
-  assert.equal(resolveAttribute(generator, attribute("Potencia")).status, "rejected");
+  assert.deepEqual(resolveAttribute(generator, attribute("Potencia")), { status: "resolved", value: 80 });
   const lift = record("gam", "2016");
   assert.equal(lift.specs?.["Capacidad de carga (kg)"], "1600 KG");
   assert.match(lift.shortDescription ?? "", /1800 kg/i);
-  assert.equal(resolveAttribute(lift, attribute("Capacidad de carga")).status, "contradiction");
+  assert.deepEqual(resolveAttribute(lift, attribute("Capacidad de carga")), { status: "resolved", value: 1800 });
 });
 
 test("Fase 6: la capacidad multivariante explícita no desaparece si falta la especificación", () => {

@@ -36,7 +36,7 @@ test("Fase 2: tipo de origen corroborado sin categoría del receptor no es motiv
 });
 
 test("Fase 2: las motorizaciones incompatibles y variantes LPG conservan revisión", () => {
-  for (const code of ["2071", "2072", "2073", "2163", "2164", "2165", "2169"]) {
+  for (const code of ["2071", "2072", "2073"]) {
     const prepared = prepareProduct(reference(code), catalog);
     assert.equal(prepared.status, "review", code);
     assert.ok(prepared.issues.includes(SOURCE_CATEGORY_ISSUE), code);
@@ -64,10 +64,10 @@ test("Fase 2: atributos de fuente se auditan sin categoría del receptor ni IDs 
 });
 
 test("Fase 2: clasificación de origen pendiente queda diferenciada de la importación", () => {
-  const unidentified = prepareProduct(reference("6969"), catalog);
+  const unidentified = prepareProduct(reference("2364"), catalog);
   assert.equal(unidentified.status, "review");
   assert.ok(unidentified.issues.includes(SOURCE_CATEGORY_ISSUE));
   assert.equal(classifyQualityIssue(SOURCE_CATEGORY_ISSUE).code, "quality.source_category_unconfirmed");
   assert.equal(classifyQualityIssue(SOURCE_CATEGORY_ISSUE).classification, "origen_por_contrastar");
-  assert.equal(sourceSignalForIssue(SOURCE_CATEGORY_ISSUE, reference("6969")), "sin_evidencia_local");
+  assert.equal(sourceSignalForIssue(SOURCE_CATEGORY_ISSUE, reference("2364")), "sin_evidencia_local");
 });

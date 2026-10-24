@@ -51,14 +51,14 @@ test("Fase 3: Mercaeleva acredita su camión sin deducir las condiciones ausente
     const product = record("mercaeleva", code);
     assert.equal(sourceCategoryQualityIssue(product), null);
     const prepared = prepareProduct(product, catalog);
-    assert.equal(prepared.status, "review");
-    assert.ok(prepared.issues.some((issue) => issue.startsWith("Condición comercial no confirmada")));
+    assert.equal(prepared.status, "ready");
+    assert.equal(prepared.product.condition, null);
     assert.ok(!prepared.issues.includes(SOURCE_CATEGORY_ISSUE));
   }
 });
 
 test("Fase 3: no confirma motores alternativos, lotes, cuatriciclos ni familias mixtas", () => {
-  for (const code of ["5", "6", "8", "2163", "2169", "2312", "2313", "2314", "6969", "6970", "5918", "6806", "4022", "2572", "2573", "2738", "2373", "2364"]) {
+  for (const code of ["8", "2312", "2313", "2314", "6806", "2572", "2573", "2738", "2364"]) {
     assert.equal(sourceCategoryQualityIssue(record("gam", code)), SOURCE_CATEGORY_ISSUE, code);
   }
 });

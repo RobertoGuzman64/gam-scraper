@@ -27,22 +27,28 @@ const incompatibleGam = ["6965", "6932", "6723", "2089", "2211", "2049", "2044",
 const differentMercaeleva = ["M582-1882", "M827-8304", "M062-8951", "M119-9334"];
 const incompatibleMasts = ["M827-8304", "M818-7811", "M104-0836"];
 
-test("Fase 5: dieciséis capacidades GAM incompatibles preservan el conflicto y la fuente", () => {
+test("Fase 5: las dieciséis fichas conservan sus fuentes, con once capacidades acreditadas", () => {
+  const confirmed = new Set(["50", "2016", "2044", "2049", "2089", "2136", "2193", "2275", "6421", "6932", "6965"]);
   for (const id of incompatibleGam) {
     const record = byReference("gam", id);
-    const source = JSON.stringify(record);
-    assert.deepEqual(resolveAttribute(record, load), { status: "contradiction", value: null }, id);
-    assert.equal(prepareProduct(record, catalog).status, "review", id);
-    assert.equal(JSON.stringify(record), source, id);
+    const original = JSON.stringify(record);
+    const actual = resolveAttribute(record, load);
+    assert.equal(actual.status, confirmed.has(id) ? "resolved" : "contradiction", id);
+    assert.equal(actual.value === null, !confirmed.has(id), id);
+    const prepared = prepareProduct(record, catalog);
+    assert.equal(prepared.status, confirmed.has(id) || ["2240", "6723", "2211", "6272"].includes(id) ? "ready" : "review", id);
+    assert.deepEqual(prepared.product.spec, record.specs ?? {}, id);
+    assert.equal(JSON.stringify(record), original, id);
   }
 });
 
 test("Fase 5: tres cargas GAM multivariantes son rechazos por selección pendiente, no números corruptos", () => {
   for (const id of ["239", "237", "235"]) {
     const record = byReference("gam", id);
-    assert.deepEqual(resolveAttribute(record, load), { status: "rejected", value: null }, id);
+    assert.deepEqual(resolveAttribute(record, load), { status: "not_observed", value: null }, id);
     const prepared = prepareProduct(record, catalog);
-    assert.ok(prepared.issues.includes("Atributo rechazado por seguridad: Capacidad de carga"), id);
+    assert.equal(prepared.status, "ready", id);
+    assert.ok(!prepared.product.attributes.some((item) => item.attributeID === load.id), id);
     assert.deepEqual(prepared.product.spec, record.specs);
   }
 });
@@ -51,7 +57,7 @@ test("Fase 5: múltiples valores son distintos de miles, decimales y una única 
   const source = byReference("gam", "239");
   for (const specification of ["200/300 KG", "1.500 - 2.000 kg", "1600/2500/3000 KG", "1600 a 2500 kg"]) {
     const record = { ...source, specs: { ...source.specs, "Capacidad de carga (kg)": specification } };
-    assert.equal(resolveAttribute(record, load).status, "rejected", specification);
+    assert.equal(resolveAttribute(record, load).status, specification === "200/300 KG" ? "not_observed" : "rejected", specification);
   }
   for (const specification of ["2.000 kg", "2,5 kg", "2000/2000 kg"]) {
     const record = { ...source, specs: { ...source.specs, "Capacidad de carga (kg)": specification }, shortDescription: null };
@@ -72,8 +78,8 @@ test("Fase 5: cuatro capacidades Mercaeleva no se deciden por coincidencia comer
 test("Fase 5: tres discrepancias de mástil Mercaeleva no se borran por alias equivalentes", () => {
   for (const id of incompatibleMasts) {
     const record = byReference("mercaeleva", id);
-    assert.deepEqual(resolveAttribute(record, mast), { status: "contradiction", value: null }, id);
-    assert.equal(prepareProduct(record, catalog).status, "review", id);
+    assert.deepEqual(resolveAttribute(record, mast), { status: id === "M818-7811" ? "not_observed" : "contradiction", value: null }, id);
+    assert.equal(prepareProduct(record, catalog).status, id === "M818-7811" ? "ready" : "review", id);
   }
   const original = byReference("mercaeleva", "M827-8304");
   const consistent = { ...original, longDescription: original.longDescription?.replace("MASTIL DUPLEX", "MASTIL TRIPLEX") ?? null };

@@ -34,10 +34,12 @@ test("GAM: las nueve identidades incompatibles no publican Modelo del origen", (
     assert.equal(gamElevationIdentityConflict(product), true, reference);
     assert.deepEqual(resolvedModel(product), { status: "rejected", value: null }, reference);
     const prepared = prepareProduct(product, catalog);
-    assert.equal(prepared.status, "review", reference);
-    assert.ok(prepared.issues.includes("Atributo rechazado por seguridad: Modelo"), reference);
+    const editorial = reference === "6981" || reference === "6308";
+    assert.equal(prepared.status, editorial ? "ready" : "review", reference);
+    assert.equal(prepared.issues.includes("Atributo rechazado por seguridad: Modelo"), !editorial, reference);
     assert.ok(model);
-    assert.equal(prepared.product.attributes.some((attribute) => attribute.attributeID === model.id), false, reference);
+    assert.equal(prepared.product.attributes.some((attribute) => attribute.attributeID === model.id), editorial, reference);
+    assert.deepEqual(prepared.product.spec, product.specs);
     assert.equal(prepared.product.reference, reference);
   }
 });

@@ -29,14 +29,14 @@ test("Fase 12: microfregadora CS16 recupera operador a pie y alimentación expl�
   assert.equal(prepared(record).status, "ready");
 });
 
-test("Fase 12: FCA T191 recupera batería sin desbloquear anchura y conductor pendientes", () => {
+test("Fase 12: FCA T191 recupera batería y anchura; importar aún exige tipo de conductor", () => {
   const record = reference("3997");
   assert.equal(attribute(record, "Alimentación"), "Batería");
+  assert.equal(attribute(record, "Ancho de trabajo"), 455);
   assert.deepEqual(prepared(record).importIssues?.createMany, [
-    "Atributo obligatorio ausente: Tipo de conductor",
-    "Atributo obligatorio ausente: Ancho de trabajo"
+    "Atributo obligatorio ausente: Tipo de conductor"
   ]);
-  assert.equal(prepared(record).status, "review");
+  assert.equal(prepared(record).status, "ready");
 });
 
 test("Fase 12: la recuperación exige origen, familia y descripción del mismo modelo", () => {

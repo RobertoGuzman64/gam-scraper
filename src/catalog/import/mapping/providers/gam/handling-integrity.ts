@@ -2,6 +2,7 @@ import type { ProductRecord, SpecValue } from "../../../../../contracts/catalog.
 import type { Attribute } from "../../attribute-types.js";
 import { fold, numberToken, scalar } from "../../attribute-utils.js";
 import { gamHandlingModelEvidence, normalizeGamMast, relevantGamHandlingRecord } from "./handling.js";
+import { gamHandlingReconciledCapacity } from "./capacity-evidence.js";
 
 const heightSpec = (value: SpecValue | undefined, defaultUnit: "mm" | "m"): number | null => {
   if (value === undefined) return null;
@@ -168,7 +169,11 @@ const conflictingMast = (record: ProductRecord): boolean => {
 export const gamHandlingAttributeConflicts = (record: ProductRecord, attribute: Attribute): boolean => {
   if (!relevantGamHandlingRecord(record)) return false;
   if (attribute.name === "Altura de elevación" && attribute.type === "NUMBER" && attribute.unit_option === "mm") return conflictingHeight(record);
-  if (attribute.name === "Capacidad de carga" && attribute.type === "NUMBER" && attribute.unit_option === "kg") return conflictingCapacity(record);
+  if (attribute.name === "Capacidad de carga" && attribute.type === "NUMBER" && attribute.unit_option === "kg") {
+    const sourceModel = record.specs?.["Modelo"];
+    if (typeof sourceModel === "string" && record.model?.trim() && fold(record.model) !== fold(sourceModel)) return true;
+    return gamHandlingReconciledCapacity(record) === null && conflictingCapacity(record);
+  }
   if (attribute.name === "Tipo de mástil" && attribute.type === "SELECT") return conflictingMast(record);
   return false;
 };

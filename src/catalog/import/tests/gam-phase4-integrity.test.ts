@@ -33,23 +33,27 @@ test("GAM: variante 70 y especificación coinciden con una de dos anchuras expl�
   assert.equal(resolveAttribute({ ...selected, specs: { ...selected.specs, "Anchura trabajo": "0,6 metros" } }, attribute("Ancho de trabajo")).status, "contradiction");
 });
 
-test("GAM: dimensiones de limpieza incompatibles o versiones sin confirmar siguen bloqueadas", () => {
-  for (const code of ["4024", "3997", "4005", "4004"]) {
-    assert.equal(resolveAttribute(reference(code), attribute("Ancho de trabajo")).status, "contradiction", code);
+test("GAM: anchuras acreditadas y versiones no confirmadas se distinguen", () => {
+  for (const code of ["4024", "3997", "4005"]) {
+    assert.equal(resolveAttribute(reference(code), attribute("Ancho de trabajo")).status, "resolved", code);
   }
+  assert.equal(resolveAttribute(reference("4004"), attribute("Ancho de trabajo")).status, "contradiction");
 });
 
 test("GAM: las contradicciones de capacidad y alturas mantienen el veto", () => {
-  for (const code of ["6965", "6932", "6723", "2211", "2275"]) {
+  for (const code of ["6723", "2211"]) {
     assert.equal(resolveAttribute(reference(code), attribute("Capacidad de carga")).status, "contradiction", code);
+  }
+  for (const code of ["6965", "6932", "2275"]) {
+    assert.equal(resolveAttribute(reference(code), attribute("Capacidad de carga")).status, "resolved", code);
   }
   for (const code of ["6702", "5275", "6887"]) {
     assert.equal(resolveAttribute(reference(code), attribute("Altura de elevación")).status, "contradiction", code);
   }
 });
 
-test("GAM: los generadores con potencias incompatibles siguen rechazados", () => {
-  for (const code of ["1210", "1211", "1218", "6834"]) {
+test("GAM: el generador con potencia realmente contradictoria sigue rechazado", () => {
+  for (const code of ["6834"]) {
     assert.equal(resolveAttribute(reference(code), attribute("Potencia")).status, "rejected", code);
   }
 });
