@@ -95,8 +95,12 @@ test("GAM: familias acreditadas y alternativas de motor contrastadas, demás con
   for (const code of ["2134", "2135", "2373", "2364", "3425", "3436", "3312", "6182", "1884", "3309", "5", "8", "2312", "4778", "6874", "6953"]) {
     const record = reference(code);
     const prepared = prepareCached(record, catalog);
-    assert.equal(categorySlug(record), null, code);
-    if (["2134", "2135", "2373", "5", "8", "4778", "3425", "3436", "3312", "6182", "1884", "3309", "6874", "6953"].includes(code)) {
+    assert.equal(categorySlug(record), code === "2312" ? "carretilla-elevadora-glp" : null, code);
+    if (code === "2312") {
+      assert.equal(prepared.status, "ready", code);
+      continue;
+    }
+    if (["2134", "2135", "2373", "2364", "5", "8", "4778", "3425", "3436", "3312", "6182", "1884", "3309", "6874", "6953"].includes(code)) {
       assert.equal(prepared.status, "ready", code);
       assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")), code);
     } else {

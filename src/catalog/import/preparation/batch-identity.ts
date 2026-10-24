@@ -1,6 +1,9 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { buildProductIdentity } from "../../identity.js";
 import { findSerialNumberCollisions } from "../../identity-conflicts.js";
+import { describeHysterH35ftStockConflict } from "../mapping/providers/gam/hyster-h35ft-serial-evidence.js";
+import { verifiedMusoshiSerialOwner, verifiedZeroMisattributedSerial } from "../mapping/providers/gam/musoshi-serial-evidence.js";
+import { verifiedYaleErp35vlCrossListing, verifiedYaleErp35vlSerialOwner } from "../mapping/providers/gam/yale-erp35vl-serial-evidence.js";
 import type { ImportCatalog, PreparedProduct } from "./contracts.js";
 import { prepareProduct } from "./prepare-product.js";
 
@@ -19,10 +22,16 @@ export const prepareImportBatch = (products: readonly ProductRecord[], catalog: 
   for (const collision of findSerialNumberCollisions(products)) {
     const references = collision.products.map((product) => product.reference).join(", ");
     const issue = `Número de serie ${collision.serialNumber} compartido por referencias ${references}; revisar identidad de origen`;
+    if (verifiedYaleErp35vlCrossListing(collision)) continue;
+    const verifiedOwner = verifiedMusoshiSerialOwner(collision) ?? verifiedYaleErp35vlSerialOwner(collision);
+    const correctedSerial = verifiedZeroMisattributedSerial(collision);
+    const stockConflict = describeHysterH35ftStockConflict(collision);
     for (const product of collision.products) {
+      if (product === verifiedOwner || product === correctedSerial) continue;
       const key = buildProductIdentity(product).key;
       const issues = warningsByIdentity.get(key) ?? [];
       issues.push(issue);
+      if (stockConflict) issues.push(stockConflict);
       warningsByIdentity.set(key, issues);
     }
   }

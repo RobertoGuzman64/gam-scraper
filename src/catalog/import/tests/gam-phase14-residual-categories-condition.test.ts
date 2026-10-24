@@ -27,7 +27,7 @@ test("GAM: los cuatriciclos no pasan a furgonetas aunque solo consten en la desc
     assert.equal(categorySlug({ ...record, shortDescription: "Vehículo eléctrico de ocasión" }), null, code);
     assert.equal(categorySlug({ ...record, shortDescription: null }), null, code);
     const prepared = prepareCached(record, catalog);
-    const classified = ["220", "221", "227", "6653", "6623", "6217", "4019", "4020", "4021", "5254", "5918"].includes(code);
+    const classified = ["220", "221", "227", "6653", "6623", "6217", "4019", "4020", "4021", "5254", "5918", "6806"].includes(code);
     assert.equal(prepared.status, classified ? "ready" : "review", code);
     if (classified) {
       assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")), code);
@@ -60,7 +60,7 @@ test("GAM: categorías residuales solo bloquean cuando falta evidencia de origen
   ]) {
     const prepared = prepareCached(reference(code), catalog);
     assert.equal(categorySlug(reference(code)), null, code);
-    const classified = ["220", "221", "227", "6653", "6623", "6217", "4019", "4020", "4021", "5254", "5918", "6688", "6689", "6690", "4022", "6358", "6367", "6814", "6815", "6969", "6970", "6971", "6987", "6988", "6989"].includes(code);
+    const classified = ["220", "221", "227", "6653", "6623", "6217", "4019", "4020", "4021", "5254", "5918", "6806", "6688", "6689", "6690", "4022", "6358", "6367", "6814", "6815", "6969", "6970", "6971", "6987", "6988", "6989"].includes(code);
     assert.equal(prepared.status, classified ? "ready" : "review", code);
     if (classified) {
       assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")), code);

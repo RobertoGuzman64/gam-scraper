@@ -75,11 +75,11 @@ test("Fase 33: impide reconciliar fichas similares con identidad o evidencia té
 
 test("Fase 33: conserva las 1008 fichas GAM y mantiene los demás conflictos abiertos", () => {
   const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
+  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
   assert.equal(batch.products.length, 1008);
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
   assert.equal(batch.products.find((item) => item.product.reference === "6236")?.status, "ready");
-  for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858", "2311", "2312", "2364"]) {
+  for (const reference of ["6682", "6703"]) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review", reference);
   }
 });

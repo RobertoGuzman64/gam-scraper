@@ -106,12 +106,12 @@ test("Fase 15: el reconciliador respeta el resto del catálogo y los vetos reale
     assert.strictEqual(reconcileGamVerifiedHandlingEditorial(record), record, record.reference ?? "sin ref");
   }
   const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
+  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
   for (const reference of ["6702", "6272"]) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "ready", reference);
   }
-  for (const reference of ["6682", "6703", "2312"]) {
+  for (const reference of ["6682", "6703"]) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review", reference);
   }
 });

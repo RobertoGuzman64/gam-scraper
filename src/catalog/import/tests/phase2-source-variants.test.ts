@@ -49,9 +49,7 @@ test("Fase 2: las variantes de motor no acreditan una configuración particular 
   assert.equal(prepareProduct(source("2071"), catalog).status, "ready");
   assert.equal(prepareProduct(source("2314"), catalog).status, "ready");
   assert.equal(prepareProduct(source("2313"), catalog).status, "ready");
-  for (const reference of ["2312"]) {
-    assert.equal(prepareProduct(source(reference), catalog).status, "review", reference);
-  }
+  assert.equal(prepareProduct(source("2312"), catalog).status, "ready");
 });
 
 test("Fase 2: vehículos, cuatriciclo, accesorio y equipo combinado requieren evidencia independiente", () => {
@@ -71,7 +69,7 @@ test("Fase 2: vehículos, cuatriciclo, accesorio y equipo combinado requieren ev
   const train = source("299");
   assert.equal(sourceCategoryQualityIssue({ ...train, specs: { ...train.specs, Modelo: "Otro" } }), SOURCE_CATEGORY_ISSUE);
   assert.equal(sourceCategoryQualityIssue({ ...train, longDescription: "Remolque industrial" }), SOURCE_CATEGORY_ISSUE);
-  for (const reference of ["6806", "2364", "2572", "2573"]) {
+  for (const reference of ["2572", "2573"]) {
     assert.equal(sourceCategoryQualityIssue(source(reference)), SOURCE_CATEGORY_ISSUE, reference);
   }
 });
@@ -99,12 +97,12 @@ test("Fase 2: radio multivariante omite el escalar y retiene el original sin esc
 test("Fase 2: calidad del lote y vetos de identidad intactos en 1.369 referencias", () => {
   const prepared = [gam, gomariz, mercaeleva].map((sourceCatalog) => prepareImportBatch(sourceCatalog.products, catalog));
   assert.deepEqual(prepared.map((batch) => batch.totals), [
-    { ready: 999, review: 9 },
+    { ready: 1006, review: 2 },
     { ready: 143, review: 0 },
-    { ready: 216, review: 2 }
+    { ready: 217, review: 1 }
   ]);
   assert.equal(prepared.reduce((sum, batch) => sum + batch.products.length, 0), 1369);
-  for (const reference of ["6682", "6703", "6835", "6858", "6807", "6806"]) {
+  for (const reference of ["6682", "6703"]) {
     const product = prepared[0]?.products.find((item) => item.product.reference === reference);
     assert.ok(product, reference);
     assert.equal(product.status, "review", reference);

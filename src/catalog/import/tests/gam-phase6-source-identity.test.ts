@@ -68,7 +68,7 @@ test("F6: la discrepancia requiere marca, modelo, título, resumen y ficha del m
   ]) assert.equal(gamElevationSourceModelConflict(invalid), false);
 });
 
-test("F6: las tres series compartidas conservan seis referencias sin fusionarlas", () => {
+test("F6: las tres series compartidas conservan seis referencias sin fusionarlas y tres siguen bloqueadas", () => {
   const batch = prepareImportBatch(source.products, catalog);
   assert.deepEqual(findSerialNumberCollisions(source.products).map((item) =>
     item.products.map((record) => record.reference).sort()).sort(), [
@@ -76,7 +76,7 @@ test("F6: las tres series compartidas conservan seis referencias sin fusionarlas
   ].sort());
   assert.equal(batch.products.length, source.products.length);
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, source.products.length);
-  for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858"]) {
+  for (const reference of ["6682", "6703"]) {
     const entry = batch.products.find((item) => item.product.reference === reference);
     assert.ok(entry, reference);
     assert.equal(entry.status, "review", reference);

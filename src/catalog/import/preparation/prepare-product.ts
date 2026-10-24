@@ -30,10 +30,17 @@ import { reconcileGamVerifiedHysterH18xdDiesel } from "../mapping/providers/gam/
 import { reconcileGamVerifiedSnorkelS4732e } from "../mapping/providers/gam/snorkel-s4732e-evidence.js";
 import { reconcileGamVerifiedYaleGc60vx } from "../mapping/providers/gam/yale-gc60vx-evidence.js";
 import { reconcileGamVerifiedYaleGc55vxGlp } from "../mapping/providers/gam/yale-gc55vx-glp-evidence.js";
+import { reconcileGamVerifiedYaleGc40vxLpg } from "../mapping/providers/gam/yale-gc40vx-lpg-evidence.js";
+import { reconcileGamVerifiedYaleGc45vxLpg } from "../mapping/providers/gam/yale-gc45vx-lpg-evidence.js";
+import { reconcileGamVerifiedZeroSerial } from "../mapping/providers/gam/musoshi-serial-evidence.js";
 import { reconcileMercaelevaVerifiedUnicarriersCapacity } from "../mapping/providers/mercaeleva/unicarriers-used-capacity-evidence.js";
+import { reconcileMercaelevaVerifiedLindeE16pMast } from "../mapping/providers/mercaeleva/linde-e16p-duplex-evidence.js";
+import { describeMercaelevaE48pPublicationConflict } from "../mapping/providers/mercaeleva/linde-e48p-publication-evidence.js";
 import type { ImportCandidate, ImportCatalog, PreparedProduct } from "./contracts.js";
 
 export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): PreparedProduct => {
+  const publicationConflict = describeMercaelevaE48pPublicationConflict(record);
+  record = reconcileGamVerifiedZeroSerial(record);
   const originalSpecs = record.specs;
   record = reconcileGamVerifiedGenie5390Editorial(reconcileGamOrderPickerEditorial(reconcileGamHandlingHeightEditorial(reconcileGamForkliftFuelEditorial(reconcileGamBtsEditorialSummary(reconcileGamElevationEditorialIdentity(reconcileGamOutdatedSourceTitle(record)))))));
   record = reconcileGamVerifiedXcmg12kDiesel(reconcileGamVerifiedXcmg0807acwLithium(reconcileGamVerifiedXcmg0810Crawler(reconcileGamVerifiedXcmg1823Model(reconcileGamVerifiedXcmg1523Model(reconcileGamUsedLiftEditorial(reconcileGamVerifiedHandlingEditorial(reconcileGamHandlingCapacityEditorial(reconcileGamVerifiedXga43kEditorial(record)))))))));
@@ -42,7 +49,10 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   record = reconcileGamVerifiedSnorkelS4732e(record);
   record = reconcileGamVerifiedYaleGc60vx(record);
   record = reconcileGamVerifiedYaleGc55vxGlp(record);
+  record = reconcileGamVerifiedYaleGc40vxLpg(record);
+  record = reconcileGamVerifiedYaleGc45vxLpg(record);
   record = reconcileMercaelevaVerifiedUnicarriersCapacity(record);
+  record = reconcileMercaelevaVerifiedLindeE16pMast(record);
   const issues: string[] = [];
   const { condition, contradictory: contradictoryCondition } = resolveCommercialCondition(record);
   const category = resolveCategory(record, catalog.categories, condition);
@@ -57,6 +67,7 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   const attributeResult = productAttributes(record, category, catalog);
 
   if (contradictoryCondition) issues.push("Condición comercial contradictoria entre la ficha y el origen");
+  if (publicationConflict !== null) issues.push(publicationConflict);
   if (!reference) issues.push("Referencia ausente");
   if (!category) {
     const sourceIssue = sourceCategoryQualityIssue(record);

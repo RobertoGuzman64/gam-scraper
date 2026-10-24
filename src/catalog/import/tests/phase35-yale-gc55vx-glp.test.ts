@@ -71,10 +71,10 @@ test("Fase 35: Yale GC55VX no reconcilia otras identidades o pruebas de origen c
 
 test("Fase 35: libera solo 2313 y mantiene reviews de identidad, categoría y mástil", () => {
   const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
+  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
   assert.equal(batch.products.find((item) => item.product.reference === "2313")?.status, "ready");
-  for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858", "2311", "2312", "2364"]) {
+  for (const reference of ["6682", "6703"]) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review", reference);
   }
 });

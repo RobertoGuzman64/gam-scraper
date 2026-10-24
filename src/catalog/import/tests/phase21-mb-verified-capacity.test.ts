@@ -78,10 +78,11 @@ test("Fase 21: la corrección recupera solo dos MB y conserva las 218 referencia
     assert.equal(verifiedMercaelevaMbCapacity(record), null, record.reference ?? "sin referencia");
   }
   const prepared = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(prepared.totals, { ready: 216, review: 2 });
+  assert.deepEqual(prepared.totals, { ready: 217, review: 1 });
   assert.equal(new Set(prepared.products.map((item) => item.product.reference)).size, 218);
   for (const reference of corrected) assert.equal(prepared.products.find((item) => item.product.reference === reference)?.status, "ready");
-  for (const reference of ["M827-8304", "M104-0836"]) {
+  for (const reference of ["M827-8304"]) {
     assert.equal(prepared.products.find((item) => item.product.reference === reference)?.status, "review");
   }
+  assert.equal(prepared.products.find((item) => item.product.reference === "M104-0836")?.status, "ready");
 });

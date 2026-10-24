@@ -57,16 +57,17 @@ test("Fase 2: atributos de fuente se auditan sin categoría del receptor ni IDs 
   assert.ok(invalid.issues.includes("Atributo no normalizable: Ancho de trabajo"));
   assert.deepEqual(invalid.product.attributes, []);
   assert.equal(invalid.product.spec["Ancho de trabajo"], "medida indeterminada");
-  const contradiction = prepareProduct(reference("2311"), catalog);
+  const yale = reference("2312");
+  const contradiction = prepareProduct({ ...yale, specs: { ...yale.specs, "Capacidad de carga (kg)": "3500 KG" } }, catalog);
   assert.equal(contradiction.status, "review");
   assert.ok(contradiction.issues.includes("Atributo contradictorio: Capacidad de carga"));
 });
 
 test("Fase 2: clasificación de origen pendiente queda diferenciada de la importación", () => {
-  const unidentified = prepareProduct(reference("2364"), catalog);
+  const unidentified = prepareProduct({ ...reference("6806"), model: "sin confirmar" }, catalog);
   assert.equal(unidentified.status, "review");
   assert.ok(unidentified.issues.includes(SOURCE_CATEGORY_ISSUE));
   assert.equal(classifyQualityIssue(SOURCE_CATEGORY_ISSUE).code, "quality.source_category_unconfirmed");
   assert.equal(classifyQualityIssue(SOURCE_CATEGORY_ISSUE).classification, "origen_por_contrastar");
-  assert.equal(sourceSignalForIssue(SOURCE_CATEGORY_ISSUE, reference("2364")), "sin_evidencia_local");
+  assert.equal(sourceSignalForIssue(SOURCE_CATEGORY_ISSUE, { ...reference("6806"), model: "sin confirmar" }), "sin_evidencia_local");
 });

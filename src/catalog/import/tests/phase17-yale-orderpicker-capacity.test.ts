@@ -60,10 +60,10 @@ test("Fase 17: rechaza cambios de identidad, origen, carga, pesos, resumen y tex
 
 test("Fase 17: único cambio de estado en el censo GAM, con 1008 referencias preservadas", () => {
   const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
+  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
   assert.equal(batch.products.find((item) => item.product.reference === "2237")?.status, "ready");
-  for (const id of ["6682", "6703", "2311", "2312"]) {
+  for (const id of ["6682", "6703"]) {
     assert.equal(batch.products.find((item) => item.product.reference === id)?.status, "review", id);
   }
 });

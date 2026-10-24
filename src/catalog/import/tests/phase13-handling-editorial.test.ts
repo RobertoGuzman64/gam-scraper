@@ -100,18 +100,18 @@ test("Fase 13: no corrige preparapedidos con ficha, modelo o fuente discordantes
   for (const reference of ["2311", "2312"]) {
     const other = source(reference);
     assert.strictEqual(reconcileGamOrderPickerEditorial(other), other);
-    assert.equal(prepareProduct(other, catalog).status, "review");
+    assert.equal(prepareProduct(other, catalog).status, "ready");
   }
 });
 
 test("Fase 13: recuperación por lote, sin aprobar conflictos técnicos de origen", () => {
   const batch = prepareImportBatch(sourceCatalog.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
+  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
   for (const reference of ["3134", "2240"]) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "ready", reference);
   }
-  for (const reference of ["2311", "2312", "6682", "6703"]) {
+  for (const reference of ["6682", "6703"]) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review", reference);
   }
 });

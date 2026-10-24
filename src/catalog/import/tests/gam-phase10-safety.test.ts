@@ -65,9 +65,10 @@ test("GAM: las colisiones de serie no fusionan referencias ni ocultan avisos", (
   ].sort());
   const prepared = prepareImportBatch(records, catalog);
   assert.equal(prepared.products.length, records.length);
-  assert.equal(prepared.totals.review, records.length);
+  assert.equal(prepared.totals.review, records.length - 4);
   for (const product of prepared.products) {
-    assert.equal(product.status, "review");
-    assert.ok(product.issues.some((issue) => issue.includes("Número de serie") && issue.includes("compartido")));
+    assert.equal(product.status, ["6806", "6807", "6835", "6858"].includes(product.product.reference ?? "") ? "ready" : "review");
+    if (["6806", "6807", "6835", "6858"].includes(product.product.reference ?? "")) assert.deepEqual(product.issues, []);
+    else assert.ok(product.issues.some((issue) => issue.includes("Número de serie") && issue.includes("compartido")));
   }
 });

@@ -69,9 +69,9 @@ test("Fase 18: las otras contradicciones no se suprimen y no se pierden referenc
   for (const reference of ["2311", "2312"]) {
     const record = source(reference);
     assert.strictEqual(reconcileGamUsedLiftEditorial(record), record);
-    assert.equal(prepareProduct(record, catalog).status, "review", reference);
+    assert.equal(prepareProduct(record, catalog).status, "ready", reference);
   }
   const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
+  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
 });

@@ -68,9 +68,9 @@ test("Fase 23: cambios de identidad, ficha técnica y textos no se autocorrigen"
 
 test("Fase 23: solo la referencia verificada se libera; demás conflictos conservados", () => {
   const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
+  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
-  for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858"]) {
+  for (const reference of ["6682", "6703"]) {
     const item = batch.products.find((entry) => entry.product.reference === reference);
     assert.ok(item, reference);
     assert.equal(item.status, "review", reference);

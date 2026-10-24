@@ -66,13 +66,13 @@ test("Fase 29: rechaza versiones cambiadas sin identificarlas por parecido", () 
 
 test("Fase 29: una sola ficha cambia de estado; permanecen las demás reviews", () => {
   const prepared = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(prepared.totals, { ready: 999, review: 9 });
+  assert.deepEqual(prepared.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(prepared.products.map((item) => item.product.reference)).size, 1008);
   for (const product of source.products) {
     if (product.reference === "4752") continue;
     assert.strictEqual(reconcileGamVerifiedXcmg12kDiesel(product), product, product.reference ?? "");
   }
-  for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858"]) {
+  for (const reference of ["6682", "6703"]) {
     assert.equal(prepared.products.find((item) => item.product.reference === reference)?.status, "review", reference);
   }
 });

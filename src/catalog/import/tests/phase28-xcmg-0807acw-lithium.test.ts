@@ -64,13 +64,13 @@ test("Fase 28: no interviene si la fuente o la identidad cambian", () => {
 
 test("Fase 28: solo recupera la referencia prevista y conserva las demás reviews", () => {
   const prepared = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(prepared.totals, { ready: 999, review: 9 });
+  assert.deepEqual(prepared.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(prepared.products.map((product) => product.product.reference)).size, 1008);
   for (const other of source.products) {
     if (other.reference === "4736") continue;
     assert.strictEqual(reconcileGamVerifiedXcmg0807acwLithium(other), other, other.reference ?? "");
   }
-  for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858"]) {
+  for (const reference of ["6682", "6703"]) {
     assert.equal(prepared.products.find((product) => product.product.reference === reference)?.status, "review", reference);
   }
 });

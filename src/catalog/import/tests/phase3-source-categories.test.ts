@@ -58,7 +58,7 @@ test("Fase 3: Mercaeleva acredita su camión sin deducir las condiciones ausente
 });
 
 test("Fase 3: no confirma motores alternativos, lotes, cuatriciclos ni familias mixtas", () => {
-  for (const code of ["8", "2312", "2313", "6806", "2572", "2573", "2738", "2364"]) {
+  for (const code of ["8", "2312", "2313", "2572", "2573", "2738"]) {
     assert.equal(sourceCategoryQualityIssue(record("gam", code)), SOURCE_CATEGORY_ISSUE, code);
   }
 });

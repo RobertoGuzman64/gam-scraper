@@ -71,12 +71,12 @@ test("Fase 24: variaciones de identidad, unidad, origen y especificaciones no se
 
 test("Fase 24: conserva las 1008 identidades y mantiene bloqueados los demás casos", () => {
   const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
+  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
   const genie = batch.products.find((item) => item.product.reference === "6622");
   assert.ok(genie);
   assert.equal(genie.status, "ready");
-  for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858"]) {
+  for (const reference of ["6682", "6703"]) {
     const item = batch.products.find((entry) => entry.product.reference === reference);
     assert.ok(item, reference);
     assert.equal(item.status, "review", reference);

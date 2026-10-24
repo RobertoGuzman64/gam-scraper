@@ -61,10 +61,11 @@ test("Fase 31: solo se recupera M582-1882 entre las 218 Mercaeleva", () => {
     assert.strictEqual(reconcileMercaelevaVerifiedUnicarriersCapacity(item), item, item.reference ?? "");
   }
   const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 216, review: 2 });
+  assert.deepEqual(batch.totals, { ready: 217, review: 1 });
   assert.equal(batch.products.length, 218);
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 218);
-  for (const reference of ["M827-8304", "M104-0836"]) {
+  for (const reference of ["M827-8304"]) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review");
   }
+  assert.equal(batch.products.find((item) => item.product.reference === "M104-0836")?.status, "ready");
 });

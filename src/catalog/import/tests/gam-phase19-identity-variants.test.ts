@@ -70,7 +70,7 @@ test("GAM: variantes abreviadas compatibles y otras compañías conservan sus at
   assert.equal(resolvedModel({ ...original, providerId: "gomariz" }).status, "resolved");
 });
 
-test("GAM: tres series colisionadas mantienen seis fichas independientes bloqueadas", () => {
+test("GAM: tres series colisionadas conservan seis fichas y bloquean solo las Hyster", () => {
   const references = ["6682", "6703", "6835", "6858", "6807", "6806"];
   const records = references.map(record);
   assert.deepEqual(findSerialNumberCollisions(records).map(({ products }) =>
@@ -79,11 +79,12 @@ test("GAM: tres series colisionadas mantienen seis fichas independientes bloquea
   ].sort());
   const batch = prepareImportBatch(records, catalog);
   assert.equal(batch.products.length, 6);
-  assert.equal(batch.totals.ready, 0);
-  assert.equal(batch.totals.review, 6);
+  assert.equal(batch.totals.ready, 4);
+  assert.equal(batch.totals.review, 2);
   assert.deepEqual(batch.products.map(({ product }) => product.reference), references);
   for (const product of batch.products) {
-    assert.ok(product.issues.some((issue) => issue.includes("Número de serie") && issue.includes("compartido")));
+    if (["6806", "6807", "6835", "6858"].includes(product.product.reference ?? "")) assert.deepEqual(product.issues, []);
+    else assert.ok(product.issues.some((issue) => issue.includes("Número de serie") && issue.includes("compartido")));
   }
 });
 

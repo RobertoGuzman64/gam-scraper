@@ -1,6 +1,9 @@
+import { createHash } from "node:crypto";
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { fold } from "../../category-utils.js";
 import { isGamVerifiedHysterSGlp } from "./hyster-s-glp-evidence.js";
+import { isGamVerifiedYaleGc40vxLpg } from "./yale-gc40vx-lpg-evidence.js";
+import { isGamVerifiedYaleGc45vxLpg } from "./yale-gc45vx-lpg-evidence.js";
 import { isGamVerifiedYaleGc55vxGlp } from "./yale-gc55vx-glp-evidence.js";
 
 const normalize = (value: string | null | undefined): string => fold(value ?? "");
@@ -91,6 +94,44 @@ const documentedElectricQuadricycle = (record: ProductRecord, title: string, sho
     model.length >= 3 && title.includes(model) && short.includes(model) && long.includes(model) &&
     /\bcuatriciclo electrico\b/.test(short) && /\bcuatriciclo electrico\b/.test(long) &&
     /^[a-z0-9-]{5,14}$/.test(recordedSpec(record, "Matrícula"));
+};
+
+const documentedMusoshiQuadricycle = (record: ProductRecord, title: string, short: string): boolean => {
+  const digest = (value: string): string => createHash("sha256").update(value).digest("hex");
+  const specs = record.specs;
+  return record.providerId === "gam" && record.categoryKey === "maquinaria" &&
+    record.condition === "Segunda mano" && record.reference === "6806" &&
+    record.url === "https://online.gamrentals.com/es/furgonetas-electricas-de-ocasion/6806-musoshi-pop-up-mini" &&
+    record.externalReference === "INQ-04323" && record.brand === null &&
+    record.model === "P1.6" && record.year === "2024" &&
+    record.serialNumber === "NRXL3AALS10000101" &&
+    record.location === "MADRID" && record.country === "ESPAÑA" &&
+    title === "musoshi pop up mini" &&
+    short.startsWith("la musoshi pop up mini es un cuatriciclo electrico") &&
+    normalize(record.longDescription).includes("musoshi pop up mini es un cuatriciclo electrico") &&
+    typeof record.shortDescription === "string" &&
+    digest(record.shortDescription) === "f7b9ebc963e3993e8ac504bb259c5240bb1e65fab8c3a96a1ec880905b31a4aa" &&
+    typeof record.longDescription === "string" &&
+    digest(record.longDescription) === "064e39de28010d8f14bf3bcbaa365f40a22dd019f8f27ddce05547268b6fe199" &&
+    specs !== undefined && specs !== null && Object.keys(specs).length === 6 &&
+    recordedSpec(record, "Modelo") === "p1.6" &&
+    recordedSpec(record, "Nº de serie").toUpperCase() === record.serialNumber &&
+    recordedSpec(record, "Matrícula") === "3009mms" &&
+    recordedSpec(record, "Año de fabricación") === "2024" &&
+    recordedSpec(record, "Ubicación") === "madrid" &&
+    recordedSpec(record, "País") === "espana";
+};
+
+const documentedSkyDeckAccessory = (record: ProductRecord, title: string): boolean => {
+  const specs = record.specs;
+  return record.providerId === "gam" && record.categoryKey === "marcas-nuevas" &&
+    record.condition === "Nuevo" && record.reference === "2364" &&
+    record.url === "https://online.gamrentals.com/es/plataformas-elevadoras-bravi/2364-sky-deck" &&
+    record.externalReference === "SKY" && title === "sky deck" &&
+    normalize(record.brand) === "bravi" && normalize(record.model) === "sky deck" &&
+    !record.shortDescription?.trim() && !record.longDescription?.trim() &&
+    specs !== undefined && specs !== null && Object.keys(specs).length === 2 &&
+    recordedSpec(record, "Marca") === "bravi" && recordedSpec(record, "Modelo") === "sky deck";
 };
 
 const documentedEquipmentCart = (record: ProductRecord, title: string, short: string): boolean => {
@@ -194,13 +235,15 @@ export const gamDocumentedSourceType = (record: ProductRecord, route: string): b
         /\btrenes logisticos\b/.test(long) && /\btecna/.test(normalize(record.brand)) &&
         model.length >= 4 && title.includes(model) && short.includes(model);
     }
+    case "yale":
+      return isGamVerifiedYaleGc40vxLpg(record) ? true : undefined;
     case "carretillas-elevadora-diesel-yale":
-      return isGamVerifiedYaleGc55vxGlp(record) ? true : undefined;
+      return isGamVerifiedYaleGc55vxGlp(record) || isGamVerifiedYaleGc45vxLpg(record) ? true : undefined;
     case "carretillas-elevadoras-diesel-hyster":
       return isGamVerifiedHysterSGlp(record) || documentedForkliftFamily(record, title, short) || documentedMixedFuelForklift(record, title, short) ||
         documentedGasForklift(record, title, short) ? true : undefined;
     case "furgonetas-electricas-de-ocasion":
-      return documentedElectricQuadricycle(record, title, short);
+      return documentedElectricQuadricycle(record, title, short) || documentedMusoshiQuadricycle(record, title, short);
     case "tennant": {
       const model = recordedSpec(record, "Modelo");
       const long = normalize(record.longDescription);
@@ -211,6 +254,9 @@ export const gamDocumentedSourceType = (record: ProductRecord, route: string): b
         /\bbarrido\b/.test(long) && /\bfregado\b/.test(long);
     }
     case "plataformas-elevadoras-bravi": {
+      if (record.reference === "2364" || title.includes("sky deck") || normalize(record.model) === "sky deck") {
+        return documentedSkyDeckAccessory(record, title);
+      }
       const model = recordedSpec(record, "Modelo");
       const long = normalize(record.longDescription);
       if (!/\bkit de elevacion\b/.test(title)) return undefined;

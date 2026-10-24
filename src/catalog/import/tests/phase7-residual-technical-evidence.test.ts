@@ -38,8 +38,9 @@ test("Fase 7: las contradicciones técnicas pendientes mantienen su bloqueo y su
     const prepared = prepareProduct(record, catalog);
     assert.equal(resolution.status, entry.status, `${entry.provider}:${entry.reference}`);
     assert.equal(resolution.value, entry.reference === "4004" ? 800 : null, `${entry.provider}:${entry.reference}`);
-    assert.equal(prepared.status, ["3134", "6702", "5275", "5864", "6887", "4004"].includes(entry.reference) ? "ready" : "review", `${entry.provider}:${entry.reference}`);
-    assert.equal(prepared.issues.includes(entry.issue), !(["3134", "6702", "5275", "5864", "6887", "4004"].includes(entry.reference)), `${entry.provider}:${entry.reference}`);
+    const resolvedInPreparation = ["3134", "6702", "5275", "5864", "6887", "4004", "M104-0836"].includes(entry.reference);
+    assert.equal(prepared.status, resolvedInPreparation ? "ready" : "review", `${entry.provider}:${entry.reference}`);
+    assert.equal(prepared.issues.includes(entry.issue), !resolvedInPreparation, `${entry.provider}:${entry.reference}`);
   }
 });
 

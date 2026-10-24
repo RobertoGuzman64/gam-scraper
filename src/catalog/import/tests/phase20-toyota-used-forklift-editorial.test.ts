@@ -76,10 +76,10 @@ test("Fase 20: una única unidad cambia de estado y la cohorte GAM sigue íntegr
     assert.strictEqual(reconcileGamUsedLiftEditorial(record), record, record.reference ?? "sin referencia");
   }
   const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
+  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(batch.products.map((entry) => entry.product.reference)).size, gam.products.length);
   assert.equal(batch.products.find((entry) => entry.product.reference === "6887")?.status, "ready");
-  for (const reference of ["6682", "6703", "2311", "2312"]) {
+  for (const reference of ["6682", "6703"]) {
     assert.equal(batch.products.find((entry) => entry.product.reference === reference)?.status, "review", reference);
   }
 });

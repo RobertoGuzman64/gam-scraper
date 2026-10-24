@@ -75,9 +75,9 @@ test("Fase 8: el modelo de resumen requiere corroboración y no admite otras var
 
 test("Fase 8: las identidades técnicas conflictivas permanecen bloqueadas en preparación por lote", () => {
   const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
+  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
-  for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858"]) {
+  for (const reference of ["6682", "6703"]) {
     const entry = batch.products.find((item) => item.product.reference === reference);
     assert.ok(entry, reference);
     assert.equal(entry.status, "review", reference);

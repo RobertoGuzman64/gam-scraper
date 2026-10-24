@@ -62,9 +62,9 @@ test("Fase 26: exige identidad y huellas exactas, sin extender el cambio a model
 
 test("Fase 26: únicamente 4751 cambia y todas las demás revisiones quedan protegidas", () => {
   const prepared = prepareImportBatch(canonical.products, catalog);
-  assert.deepEqual(prepared.totals, { ready: 999, review: 9 });
+  assert.deepEqual(prepared.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(prepared.products.map((item) => item.product.reference)).size, 1008);
-  for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858"]) {
+  for (const reference of ["6682", "6703"]) {
     const product = prepared.products.find((item) => item.product.reference === reference);
     assert.ok(product, reference);
     assert.equal(product.status, "review", reference);

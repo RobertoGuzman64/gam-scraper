@@ -1,6 +1,7 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { fold } from "../../category-utils.js";
 import { isGamVerifiedYaleGc55vxGlp } from "./yale-gc55vx-glp-evidence.js";
+import { isGamVerifiedYaleGc45vxLpg } from "./yale-gc45vx-lpg-evidence.js";
 
 const gamCategories: Readonly<Record<string, string>> = {
   "plataformas-elevadoras-tijera-electricas-segunda-mano": "plataformas-tijera-electricas-segunda-mano",
@@ -86,7 +87,8 @@ const gamDocumentedCategory = (record: ProductRecord, parent: string, title: str
   const rawMotor = record.specs?.["Tipo motor"];
   const motor = rawMotor === undefined ? "" : typeof rawMotor === "string" ? fold(rawMotor) : null;
   const combined = `${title} ${short} ${long}`;
-  if (parent === "carretillas-elevadora-diesel-yale" && isGamVerifiedYaleGc55vxGlp(record)) {
+  if (parent === "carretillas-elevadora-diesel-yale" &&
+    (isGamVerifiedYaleGc55vxGlp(record) || isGamVerifiedYaleGc45vxLpg(record))) {
     return "carretilla-elevadora-glp";
   }
 

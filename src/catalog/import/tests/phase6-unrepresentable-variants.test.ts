@@ -59,7 +59,7 @@ test("Fase 6: mástil opcional Mercaeleva no elige Dúplex ni Tríplex", () => {
   assert.equal(prepared.product.attributes.some((item) => item.attributeID === mast.id), false);
   for (const reference of ["M827-8304", "M104-0836"]) {
     assert.equal(resolveAttribute(find("mercaeleva", reference), mast).status, "contradiction");
-    assert.equal(prepareProduct(find("mercaeleva", reference), catalog).status, "review");
+    assert.equal(prepareProduct(find("mercaeleva", reference), catalog).status, reference === "M827-8304" ? "review" : "ready");
   }
 });
 
@@ -89,9 +89,9 @@ test("Fase 6: 14 m de altura nominal y 16 m de trabajo son magnitudes compatible
 
 test("Fase 6: preparación por lote conserva las identidades y los choques de serie", () => {
   const prepared = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(prepared.totals, { ready: 999, review: 9 });
+  assert.deepEqual(prepared.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(prepared.products.map((item) => item.product.reference)).size, 1008);
-  for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858"]) {
+  for (const reference of ["6682", "6703"]) {
     const original = prepared.products.find((item) => item.product.reference === reference);
     assert.ok(original, reference);
     assert.equal(original.status, "review");

@@ -83,13 +83,13 @@ test("Fase 30: las variantes de origen no se corrigen por aproximación", () => 
 
 test("Fase 30: solo se desbloquean las dos HYSTER con evidencia verificada", () => {
   const prepared = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(prepared.totals, { ready: 999, review: 9 });
+  assert.deepEqual(prepared.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(prepared.products.map((item) => item.product.reference)).size, 1008);
   for (const product of source.products) {
     if (product.reference === "2072" || product.reference === "2073") continue;
     assert.strictEqual(reconcileGamVerifiedHysterSGlp(product), product, product.reference ?? "");
   }
-  for (const reference of ["6682", "6703", "6806", "6807", "6835", "6858", "2311", "2312", "2364"]) {
+  for (const reference of ["6682", "6703"]) {
     assert.equal(prepared.products.find((item) => item.product.reference === reference)?.status, "review", reference);
   }
 });

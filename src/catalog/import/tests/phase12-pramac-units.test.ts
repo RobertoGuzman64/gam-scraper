@@ -70,12 +70,12 @@ test("Fase 12: los regímenes de emergencia y continuo legítimos permanecen dif
 
 test("Fase 12: lote completo mantiene las identidades y los conflictos técnicos no resueltos", () => {
   const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
+  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
   for (const [reference] of recovered) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "ready", reference);
   }
-  for (const reference of ["6682", "6703", "2311", "2312"]) {
+  for (const reference of ["6682", "6703"]) {
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review", reference);
   }
 });

@@ -68,10 +68,8 @@ test("Fase 22: la excepción no afecta a ninguna otra ficha GAM", () => {
     if (gamCleaningCorrectedWidth(record) === 800) assert.equal(record.reference, "4002");
   }
   const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 999, review: 9 });
+  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
   assert.equal(batch.products.find((item) => item.product.reference === "4004")?.status, "ready");
-  for (const reference of ["2311", "2312"]) {
-    assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review", reference);
-  }
+  assert.equal(batch.products.find((item) => item.product.reference === "2312")?.status, "ready");
 });

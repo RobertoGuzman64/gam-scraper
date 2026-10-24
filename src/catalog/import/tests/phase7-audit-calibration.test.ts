@@ -68,9 +68,6 @@ test("F7: la clasificación del vehículo sigue exigiendo evidencias independien
   ]) {
     assert.equal(sourceCategoryQualityIssue(altered), SOURCE_CATEGORY_ISSUE);
   }
-  for (const reference of ["6806"]) {
-    assert.equal(sourceCategoryQualityIssue(machine(reference)), SOURCE_CATEGORY_ISSUE, reference);
-  }
 });
 
 test("F7: motores incompatibles e identidades contradictorias siguen en revisión", () => {

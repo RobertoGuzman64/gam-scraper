@@ -109,9 +109,9 @@ test("Fase 14: no altera las restantes 1006 fichas ni desbloquea conflictos téc
   assert.equal(prepareProduct({ ...snorkel, longDescription: "Versión sin confirmar" }, catalog).status, "review");
   const results = [gam, gomariz, mercaeleva].map((batch) => prepareImportBatch(batch.products, catalog));
   assert.deepEqual(results.map((item) => item.totals), [
-    { ready: 999, review: 9 },
+    { ready: 1006, review: 2 },
     { ready: 143, review: 0 },
-    { ready: 216, review: 2 }
+    { ready: 217, review: 1 }
   ]);
   assert.equal(results.reduce((total, item) => total + item.products.length, 0), 1369);
   assert.equal(new Set(results.flatMap((item) => item.products.map((prepared) => `${prepared.product.providerId}:${prepared.product.reference}`))).size, 1369);
