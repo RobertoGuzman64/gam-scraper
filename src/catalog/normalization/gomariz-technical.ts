@@ -26,7 +26,39 @@ export const invalidGomarizPlatformHeight = (url: ProductRecord["url"], specs: S
   }
 };
 
+const verifiedLGMGSS0507EHeight = (record: ProductRecord): number | null => {
+  const paths: Readonly<Record<string, string>> = {
+    TE1858: "lgmg-ss0507etijera-electrica-electric-scissor",
+    TE1621: "lgmg-ss0507e-tijera-electrica-scissor-lift",
+    TE1622: "lgmg-ss0507e-tijera-electrica-scissor-lift-2"
+  };
+  if (record.providerId !== "gomariz" || record.title !== "LGMG SS0507E" ||
+    record.brand !== "LGMG" || record.model !== "SS0507E" ||
+    !record.reference || !Object.hasOwn(paths, record.reference) ||
+    !invalidGomarizPlatformHeight(record.url, record.specs ?? {}) ||
+    meters(record.specs?.["Altura plataforma"]) !== 14.3 ||
+    meters(record.specs?.["Altura de trabajo"]) !== 6.3 ||
+    meters(record.specs?.["Altura almacenaje"]) !== 2.15 ||
+    meters(record.specs?.Longitud) !== 1.53 ||
+    meters(record.specs?.Anchura) !== 0.81 ||
+    String(record.specs?.Peso ?? "").trim() !== "985 kg" ||
+    String(record.specs?.Motor ?? "").trim() !== "Eléctrico" ||
+    String(record.specs?.Capacidad ?? "").trim() !== "230 kg") return null;
+  try {
+    const url = new URL(record.url);
+    const path = url.pathname.split("/").filter(Boolean);
+    if (url.protocol !== "https:" || !["gomarizrent.com", "www.gomarizrent.com"].includes(url.hostname) ||
+      path.length !== 4 || path[0] !== "venta" || path[1] !== "elevacion-y-trabajos-en-altura" ||
+      path[2] !== "elevador-tijera" || path[3] !== paths[record.reference]) return null;
+    return 4.3;
+  } catch {
+    return null;
+  }
+};
+
 export const verifiedGomarizPlatformHeight = (record: ProductRecord): number | null => {
+  const lgmg = verifiedLGMGSS0507EHeight(record);
+  if (lgmg !== null) return lgmg;
   if (record.providerId !== "gomariz" ||
     record.title !== "SOCAGE IVECO 35S14 FORSTE 20D SPEED NEUTRA" ||
     record.model !== "35S14 FORSTE 20D SPEED NEUTRA" ||

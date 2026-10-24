@@ -118,3 +118,17 @@ npm run export -- gam --companyID <ID_REAL> --preparation storage/prepared/gam/s
 Tras comprobar el plan, sustituir `--dry-run` por `--confirm-inventory` únicamente con autorización y un inventario actual. La simulación no crea XLSX ni informe persistido. La generación conserva `wx` (sin sobreescritura), informe JSON y rollback del Excel ante fallo del informe. Ningún comando envía POST al backend.
 
 **Evidencia de esta entrega:** selección de 23 ficheros de pruebas, **130 casos correctos, 0 fallidos y 3 omitidos**; incluye exportación offline/legacy, manifest alterado aun refirmado, identidades, proveedor, antigüedad, plan de altas y tres proveedores. Las pruebas que importan el registro de proveedores se ejecutaron con un sustituto temporal de Cheerio que impide parsear HTML (no incluido en el repositorio). No sustituye a las dependencias reales ni acredita parsers o build completo. Ejecutar `npm ci`, `npm test` y `npm run build` con dependencias reales antes de integrar.
+
+## F49 — contraste explícito de cobertura entre extracciones
+
+Para una extracción nueva, la conformidad estructural del catálogo no demuestra que se hayan mantenido las referencias de una cohorte histórica. El contraste se activa únicamente con `--baseline` y no cambia los JSON:
+
+```powershell
+npm run validate -- gam --stage catalog --source "storage/scraped-20261025-010603/gam/scrape-gam-marzo-2026-catalog.json" --baseline "storage/scraped/gam/scrape-gam-marzo-2026-catalog.json"
+```
+
+Se validan ambos catálogos con sus respectivos manifests e informes de publicación, y se comprueba que pertenecen al mismo proveedor y ámbito. La comparación usa identidades canónicas, no el contador total: informa ausencias, incorporaciones y cambios. Si hay referencias ausentes devuelve código `2` (revisión de cobertura); `1` indica error o catálogos no comparables y `0` ausencia de bajas sospechosas. No se reincorporan productos históricos ni se dan de baja automáticamente. El contraste no permite asegurar si la causa fue venta, retirada, traslado de categoría o pérdida de descubrimiento. Para la cohorte del 25/10/2026 GAM aparecen como ausentes `6942`, `6948`, `6366` y `6676`; antes de decidir su publicación se requiere verificar la fuente actual.
+
+F49 también admite preparar de nuevo el JSON canónico recién obtenido de Gomariz sin reescribirlo. En las tres referencias SS0507E `TE1858`, `TE1621` y `TE1622`, cuando la ficha mantiene exactamente la identidad y las especificaciones comprobadas, se normaliza a **4,3 m** la altura de plataforma publicada erróneamente como **14,30 m**. La evidencia es la tabla SS0507E del fabricante en `https://www.gomarizrent.com/wp-content/uploads/2025/11/FICHA-TECNICA-LGMG-SS0407E-SS0507E-SS0607E.pdf` (6,3 m altura de trabajo, 4,3 m plataforma, 985 kg y 230 kg de capacidad). Valores o variantes diferentes continúan sujetos al control de calidad existente. La ficha canónica conserva el texto original.
+
+F48 no se reutiliza sobre esta extracción porque su selección editorial requiere los hashes y recuentos de la cohorte anterior. No se reescriben exclusiones sin una decisión editorial de la cohorte nueva.

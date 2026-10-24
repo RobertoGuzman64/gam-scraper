@@ -12,6 +12,8 @@ export { validateHelp } from "./options/validate.js";
 import { validateCatalogPublication } from "../pipeline/validation/preflight.js";
 import { validateCanonicalSource, validateOfflinePreparation } from "../pipeline/validation/offline.js";
 import { readOfflinePreparation } from "../infrastructure/filesystem/offline-preparation.js";
+import { readCanonicalCatalog } from "../infrastructure/filesystem/canonical-catalog.js";
+import { compareCanonicalCoverage } from "../catalog/coverage/compare.js";
 
 export const runPreflight = async (args: readonly string[]): Promise<void> => {
   if (args.includes("--help")) {
@@ -31,6 +33,23 @@ export const runPreflight = async (args: readonly string[]): Promise<void> => {
       console.log(`VALIDACIÓN | ${providerId.toUpperCase()} | CATÁLOGO CONFORME`);
       console.log(`  Productos: ${report.productCount} | Origen: ${report.sourceFile}`);
       console.log(`  SHA-256: ${report.catalogSha256} | Duración: ${formatDuration(Date.now() - startedAt)}`);
+      if (options.baseline) {
+        const [previous, current] = await Promise.all([
+          readCanonicalCatalog(options.baseline), readCanonicalCatalog(options.source)
+        ]);
+        const delta = compareCanonicalCoverage(previous, current);
+        console.log(`COBERTURA | ${providerId.toUpperCase()} | anterior: ${delta.previousCount} | actual: ${delta.currentCount} | ausentes: ${delta.missing.length} | incorporadas: ${delta.added.length} | cambiadas: ${delta.changed}`);
+        for (const product of delta.missing) {
+          console.log(`  AUSENTE | ${product.reference ?? "sin referencia"} | ${product.title ?? "sin título"} | ${product.url}`);
+        }
+        for (const product of delta.added) {
+          console.log(`  INCORPORADA | ${product.reference ?? "sin referencia"} | ${product.title ?? "sin título"} | ${product.url}`);
+        }
+        if (delta.missing.length > 0) {
+          console.log("  REVISIÓN DE COBERTURA | No reincorporar ni dar de baja referencias sin verificar la fuente");
+          process.exitCode = 2;
+        }
+      }
     } finally { status.stop(); }
     return;
   }

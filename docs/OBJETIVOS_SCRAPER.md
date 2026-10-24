@@ -61,3 +61,7 @@ La compatibilidad con Excel o `create/many` **no forma parte de estas prioridade
 - **Cierre técnico aspiracional:** 1.369 de 1.369 en `ready`, 0 `review`, sin pérdida de cobertura ni datos fabricados. **Cierre editorial actual F48:** 1.366 publicables, 3 excluidas con justificación y 1.369 originales intactas; las 3 exclusiones no cuentan como `ready`. Se revisará la decisión si el origen cambia.
 
 Documentación relacionada: [SCRAPER_DATA_RULES.md](SCRAPER_DATA_RULES.md) (contratos y conservación), [VALIDACION.md](VALIDACION.md) (comprobaciones), [ARQUITECTURA.md](ARQUITECTURA.md) (responsabilidades) y [EQUIPZILLA_INTEGRATION.md](EQUIPZILLA_INTEGRATION.md) (**referencia informativa del receptor**).
+
+## Estado posterior al scraping de octubre de 2026 (F49)
+
+La extracción nueva del 25/10/2026 obtuvo 1.365 referencias (GAM 1.004, Gomariz 143 y Mercaeleva 218), frente a 1.369 históricas. La preparación previa a F49 registró seis `review` (dos Hyster GAM, tres LGMG Gomariz y una Linde Mercaeleva). La F49 introduce una reconciliación técnica acotada para las tres SS0507E de Gomariz, basada en la ficha técnica del fabricante, y un contraste explícito de cobertura `validate --stage catalog --baseline`. Las cuatro referencias GAM ausentes requieren confirmación de origen y no se restauran por arrastre del catálogo histórico. Los contadores de la cohorte nueva deben medirse tras integrar F49; no se consideran validados por el resultado de las pruebas unitarias.
