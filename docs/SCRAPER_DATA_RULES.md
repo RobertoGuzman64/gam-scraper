@@ -1,219 +1,61 @@
-# SCRAPER_DATA_RULES.md
+# Reglas de datos y publicación
 
 ## AI GUARD
 
-**Documentación protegida.** Ninguna IA debe crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para esa intervención documental. Una petición sobre código, tests o auditorías no autoriza cambios documentales implícitos.
+**Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
-**Reglas de datos, preparación y exportación · Equipzilla Scraper**  
-**Fecha del análisis:** 20/10/2026; **alcance de producto corregido el 21/10/2026** tras contraste del backend.  
-**Procedencia:** código del scraper y `Marketplace-Back-develop.zip` (contrato receptor contrastado en código). No se ejecutaron extracciones reales ni importaciones ni se inspeccionó la base de datos de un entorno. **Documento autónomo:** su contrato de destino se resume aquí sin exigir tener el backend abierto.
+## Fuente de verdad y contratos
 
-## 1. Objetivo operativo que no debe perderse
+La fuente de verdad de extracción es el catálogo **`ProductRecord[]`** dentro de `<prefijo>-catalog.json`, definido en `src/contracts/catalog.ts`. Cada registro conserva:
 
-Extraer maquinaria **nueva y de segunda mano** de **GAM (`gam`)**, **Gomariz (`gomariz`)** y **Mercaeleva (`mercaeleva`)**, conservar todas las identidades y evidencias de origen y obtener **JSON fiables para el catálogo completo**. El criterio de terminado es **100 % `ready`, 0 `review`, sin máquinas excluidas ni datos inventados**. Añadir proveedores nuevos debe reutilizar motor, contratos, reglas de calidad, mapeo y publicación; no duplicar lógica. La preparación admite `Nuevo` y `Segunda_Mano` cuando existe evidencia y deja las condiciones contradictorias pendientes de resolución. Definición vinculante: [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
+- Identidad y origen: `providerId`, `reference`, `externalReference?`, `url`, `serialNumber`, `categoryKey`, `categoryName`.
+- Contenido: `title`, `shortDescription`, `longDescription`, `shortDescriptionHtml?`, `longDescriptionHtml?`, `brand`, `model`.
+- Datos técnicos y comerciales: `year`, `yearSource?`, `horometer`, `condition?`, `price`, `priceText?`, `location`, `country`, `specs?`.
+- Imágenes y contexto: `image`, `images?`, `breadcrumbs?`, `subcategory?`, `technicalSheetUrl?` y metadatos de extracción.
 
-**Compatibilidad informativa, no objetivo:** Excel (`POST /product/import`) y JSON (`POST /product/create/many`) son dos contratos independientes del **backend**; sus restricciones no deben modificar el catálogo canónico ni guiar la recuperación de datos. Existe exportación `.xlsx` y una salida `export --format json` adaptada a `create/many`; **ninguna de ellas equivale al JSON canónico** ni transmite por sí sola datos al backend. Los detalles del receptor están en [EQUIPZILLA_INTEGRATION.md](EQUIPZILLA_INTEGRATION.md), exclusivamente como referencia técnica.
+Los valores que faltan pueden ser `null`; `condition` es `"Nuevo" | "Segunda mano" | null` y **no** coincide literalmente con el enum del receptor. `specs` es un mapa de valores escalares o listas simples. No inferir una característica por semejanza de modelo, descripción genérica o campos ajenos a otra máquina.
 
-```text
-Proveedor externo → ProductRecord → calidad + deduplicación
-  → catálogo canónico JSON íntegro + trazabilidad + preparación
-  → auditoría por referencia → resolución de review hasta 100 % ready
-  └─ opcional: adaptación de exportación a Excel / create/many
-              → importación en Equipzilla (responsabilidad externa)
-```
+El catálogo canónico incluye todas las máquinas que superan la publicación estructural, **sin filtrarlas por importabilidad**. `ImportCandidate`, definido en los contratos de preparación del repositorio, es otra representación para mapeos de destino; no sustituye a `ProductRecord`.
 
-`ready` es hoy un estado **local de preparación**, cuyo cálculo puede estar condicionado por validaciones de mapeo y por el contrato `create/many` existente. **Eso describe el código actual, no el criterio deseado de calidad JSON.** Para el cierre del scraper hay que investigar qué `review` reflejan defectos reales y cuáles solo exigencias del receptor, sin desactivar protecciones legítimas. Los informes de Excel y `create/many` pueden mantener sus requisitos de forma separada, sin excluir máquinas del catálogo.
+## Artefactos de extracción
 
-## 2. Qué datos obtiene el scraper
+La ubicación habitual es `storage/scraped/<proveedor>/`, con prefijo configurable:
 
-El contrato interno `ProductRecord` de `src/contracts/catalog.ts` usa los campos siguientes. `?` indica propiedad TypeScript opcional y `| null` indica que el valor puede faltar semánticamente:
+| Artefacto                               | Función                                                                              |
+| --------------------------------------- | ------------------------------------------------------------------------------------ |
+| `<prefijo>-catalog.json`                | Catálogo canónico íntegro, productos y ámbito de extracción.                         |
+| `<prefijo>-catalog.manifest.json`       | Procedencia, totales y huella SHA-256 del catálogo.                                  |
+| `<prefijo>-all.csv` y CSV por categoría | Inspección y procesamiento tabular, con columnas `spec__*` cuando proceda.           |
+| `<prefijo>-preparation.json`            | Preparación generada en la publicación, con productos y diagnósticos `ready/review`. |
+| `<prefijo>-summary.json`                | Estado y totales de publicación, incluida información de integridad.                 |
+| `<prefijo>-changes.json`                | Cambios y posibles ausencias frente al contexto disponible; no autoriza bajas.       |
+| `<prefijo>-errors.json` y snapshots     | Diagnóstico de extracción, descubrimiento y seguimiento.                             |
 
-| Campo                                                                                              | Tipo                                                                                                | Uso                                                                          |
-| -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `providerId`                                                                                       | `string`                                                                                            | Identidad del origen (`gam`, `gomariz`, `mercaeleva`)                        |
-| `categoryKey`, `categoryName`, `url`                                                               | `string`                                                                                            | Contexto de categoría de origen y URL de ficha                               |
-| `title`, `shortDescription`, `longDescription`, `price`                                            | `string \| null`                                                                                    | Contenido comercial sin garantía de ser importable                           |
-| `reference`, `brand`, `model`, `year`, `location`, `country`, `horometer`, `serialNumber`, `image` | `string \| null`                                                                                    | Referencias, datos de máquina y fotografía principal                         |
-| `priceText?`                                                                                       | `string \| null`                                                                                    | Precio textual alternativo/traza                                             |
-| `condition?`                                                                                       | `"Nuevo" \| "Segunda mano" \| null`                                                                 | Estado de origen; **distinto del enum backend**                              |
-| `images?`                                                                                          | `readonly string[]`                                                                                 | Galería externa                                                              |
-| `specs?`                                                                                           | `Readonly<Record<string, string \| number \| boolean \| readonly (string \| number \| boolean)[]>>` | Especificaciones recogidas/normalizadas                                      |
-| `breadcrumbs?`, `subcategory?`                                                                     | `readonly string[]`, `string \| null`                                                               | Contexto auxiliar de catálogo                                                |
-| `externalReference?`                                                                               | `string \| null`                                                                                    | Referencia externa adicional; **no sustituye automáticamente a `reference`** |
-| `shortDescriptionHtml?`, `longDescriptionHtml?`                                                    | `string \| null`                                                                                    | HTML original de descripción cuando existe                                   |
-| `technicalSheetUrl?`, `scrapedAt?`, `yearSource?`                                                  | `string \| null` / `string` / `"ficha" \| "descripcion" \| "titulo" \| "url" \| null`               | Procedencia, fecha y origen del año                                          |
+La preparación **offline** se puede escribir en `storage/prepared/<proveedor>/`. Incluye procedencia del catálogo, identidades, huellas de reglas y snapshots, calidad y candidatos preparados. Debe poder verificarse sin consultar las webs.
 
-Los parsers obtienen datos; `catalog/normalization/` estandariza especificaciones; `catalog/import/` traduce las fichas al destino. Una ficha bien extraída **puede** no ser importable si carece de precio, imagen, categoría exacta o atributos exigidos.
+Los documentos de origen, los manifests y los datos de preparación deben permanecer alineados. No editar productos manualmente en un JSON publicado ni reemplazar su manifest para «validar» una modificación. Los archivos de ejecución están excluidos del control de versiones.
 
-## 3. Inventario de JSON producidos realmente y su finalidad
+## Identidad y cobertura
 
-Prefijo de salida por ejecución: `<P>` en `storage/scraped/<providerId>/` por defecto. Los directorios `storage/` son estado de ejecución, no fuentes versionadas. El nombre exacto de `<P>` depende de la configuración/argumentos; no se debe asumir un prefijo fijo para todos los proveedores.
+- La identidad de una **unidad** no es únicamente marca/modelo: usar referencias, series, URLs canónicas y otras evidencias coherentes para deduplicar sin fusionar máquinas distintas.
+- Una caída del número de anuncios requiere análisis de cobertura; no prueba venta, retirada o fallo del scraper por sí sola.
+- Un estado de publicación `complete` acredita coherencia del proceso local, **no** que el portal haya enumerado todas las fichas existentes.
+- Una diferencia de URL, imágenes, textos o especificaciones puede requerir revisión editorial aunque no cambie el número de productos.
+- Preservar la imagen principal propia de cada ficha; evitar fotografías de productos relacionados como si fueran parte de su galería.
 
-| Archivo JSON                        | Estructura comprobada                                                                                                                                                                                     | Papel / consumo                                                                                                                                                                                                                        |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `<P>-catalog.json`                  | `{version:1,providerId,prefix,scope,startedAt,endedAt,quality:{status:"complete",published:true},productCount,products:ProductRecord[]}`                                                                  | **Fuente de verdad de extracción**, no filtrada por requisitos Excel. Relectura local offline; solo se publica cuando la extracción es completa                                                                                        |
-| `<P>-catalog.manifest.json`         | `{version:1,providerId,prefix,scope,startedAt,endedAt,productCount,catalogSha256}`                                                                                                                        | Manifest externo para comprobar huella, procedencia y ejecución; el hash también se ancla en `summary.artifacts.catalogSha256`                                                                                                         |
-| `<P>-preparation.json`              | `{quality:"complete", published:true, totals:{ready,review}, products:[{status:"ready"\|"review", issues:string[], product: ImportCandidate}]}` en publicación completa                                   | **Preparación heredada de publicación**. El exportador también admite preparación offline validada con catálogo canónico y fingerprints. En modo heredado lee además resumen, CSV y cambios; **NO** lo importa directamente el backend |
-| `<P>-partial-preparation.json`      | `{quality:"partial"\|"blocked", published:false, totals, products:[...]}`                                                                                                                                 | Diagnóstico de ejecución incompleta. `parsePreparation` lo rechaza para exportar                                                                                                                                                       |
-| `<P>-summary.json`                  | `startedAt`, `endedAt`, `quality:{status,reasons,published}`, `artifacts:{csvSha256,preparationSha256,catalogSha256?}`, `totals`, `categories[]`                                                          | Recuento y prueba de integridad/estado del catálogo; no contiene órdenes de importación                                                                                                                                                |
-| `<P>-changes.json`                  | Si publica: `{status:"comparable",scope,baseline,previousCount,currentCount,added,updated,suspectedMissing}`; si no: `{status:"not-comparable",reasons,suspectedMissing:[]}`                              | Comparación local con snapshot previo. `suspectedMissing` es **señal**, no orden de baja                                                                                                                                               |
-| `<P>-errors.json`                   | `{quality:"complete"\|"partial"\|"blocked",failures:[{categoryKey,url,error}],identityConflicts:string[]}`                                                                                                | Diagnóstico de fichas fallidas/conflictos; nunca entrada de importación                                                                                                                                                                |
-| `<P>-snapshot-<scope>.json`         | `{version:1,scope:string,createdAt:string,items:[{key:string,fingerprint:string}]}`                                                                                                                       | Histórico **local** de identidades y huellas para un ámbito de categorías. Se actualiza únicamente tras publicación `complete`; no representa estado de BD Equipzilla                                                                  |
-| `<salida>.xlsx.report.json`         | `{generatedAt,preparationFile,inventoryFile,inventoryReferences,providerId,companyID,total,newProducts,existingProducts,reviewProducts,duplicateReferences,extraImages,existing[],review[],duplicates[]}` | Informe del plan de exportación al generar un Excel o al no existir altas nuevas seguras; diagnóstico, no API                                                                                                                          |
-| `storage/runs/<ejecución>/run.json` | Informe de lote generado por su runner, independiente del catálogo importable                                                                                                                             | Operación y trazabilidad de ejecución multiproveedor, no contrato con Equipzilla                                                                                                                                                       |
+## Calidad y decisiones editoriales
 
-**Compatibilidad y seguridad:** `-catalog.json` y `-catalog.manifest.json` no existían en publicaciones históricas; no se rellenan a posteriori desde CSV. El lector canónico `readCanonicalCatalog` valida el JSON íntegro, duplicados de identidad y su hash frente al manifest y al resumen publicado. Si una corrida posterior falla o es parcial, se conserva la fuente completa previa. La preparación heredada y las reglas de importación siguen separadas semánticamente del catálogo, aunque en esta etapa todavía se ejecutan en la misma orden `scrape`. `prepare` offline independiente ya está disponible; `validate --stage catalog|preparation` y la exportación desde preparación offline ya están disponibles, conservando la CLI heredada.
+`ready` y `review` son estados locales de preparación. `review` señala cuestiones a investigar, pero algunas provienen de requisitos de mapeo del receptor y no necesariamente de errores en el catálogo de origen. No eliminar atributos fiables ni rellenar los ausentes por conveniencia.
 
+La revisión de cobertura genera un expediente con **huellas de los dos catálogos**, referencias ausentes y cambios por campo. Las decisiones empiezan pendientes. Para cerrar incidencias hacen falta motivos específicos y evidencias, especialmente en ausencias, imágenes y descripciones. Una retirada exige prueba; una ausencia acreditada de listado no equivale a una baja comercial; `no_acreditado` mantiene el bloqueo. Las decisiones deben verificarse contra los mismos archivos a los que se refieren.
 
-**Artefactos independientes de etapa 2 (`storage/prepared/<proveedor>/`):** `<P>-preparation.json` contiene `OfflinePreparation` versionada con `ProductRecord` canónico identificado por SHA-256, `PreparedProduct[]`, identidades alineadas, totales y fingerprints de reglas/snapshots; `<P>-preparation.manifest.json` vincula la huella del JSON a la fuente; `<P>-diagnostics.json` conserva cohortes y bloqueos codificados; `<P>-comparison.json` opcional informa transiciones `review→ready`, `ready→review`, categorías, atributos y motivos añadidos/resueltos **solo para el mismo hash/cohorte**, identificando cambios en reglas y snapshots. `prepare` no escribe el catálogo ni consulta la web. Prohibida la sobrescritura silenciosa. Estos artefactos pueden ser verificados por `validate --stage preparation` y consumidos por `export`; las publicaciones heredadas se siguen aceptando con su preflight específico.
+La selección editorial crea productos publicables y un resumen de exclusiones **sin reescribir el catálogo original**. Las exclusiones pueden ser necesarias para proteger la calidad, pero no convierten fichas dudosas en `ready`. La salida por proveedor es un conjunto de candidatos ya definidos por el proyecto, no un request HTTP de importación.
 
-**Archivos no JSON relevantes:** `<P>-all.csv` es la salida tabular completa del scraper; `<P>-<categoría>.csv` separa categorías y `<P>-categories.csv` enumera las categorías procesadas cuando corresponde. Esos CSV **no son la plantilla del backend**. El inventario externo `companyID,reference` tampoco es un resultado automático de consultar la BD: debe aportarlo el operador. **El único artefacto preparado para `/product/import` es el `.xlsx` generado manualmente por `export`.**
+## Exportaciones auxiliares
 
-### 3.1. `ImportCandidate` dentro del JSON de preparación
+- **XLSX:** plan de **altas** con `companyID` autorizado e inventario completo de la compañía. Requiere precio admitido por el exportador y aplica restricciones propias del receptor Excel.
+- **JSON de receptor:** formato adaptado a `create/many`; mantiene su propia validación y no es el catálogo canónico.
+- Ninguna exportación realiza altas, cambios ni bajas en el backend; solo genera un artefacto revisable.
+- No copiar IDs de categoría o atributos de otra empresa ni presuponer que los snapshots locales reflejan la base de datos activa.
 
-Contrato de `src/catalog/import/preparation/contracts.ts`:
-
-```ts
-type ImportCandidate = {
-  providerId: string;
-  sourceUrl: string;
-  reference: string | null;
-  title: string | null;
-  categorySellID: number | null;
-  category: string | null;
-  condition: "Nuevo" | "Segunda_Mano" | null;
-  price: number | null;
-  description_title: string | null;
-  description: string | null;
-  description_general: string | null;
-  image: string | null;
-  images: readonly string[];
-  spec: Readonly<Record<string, SpecValue>>;
-  attributes: readonly {attributeID: number; value: string | number | boolean}[];
-};
-```
-
-Cada entrada contiene `status: "ready" | "review"`, `issues: string[]` y `product`. En un archivo **publicado** pueden coexistir entradas `ready` y `review`: la completitud de extracción no implica que todo el catálogo sea apto para el backend.
-
-## 4. Del dato del proveedor al Excel receptor: correspondencia campo a campo
-
-| Origen / preparación en scraper                                                   | Destino real backend `.xlsx` / persistencia                               | Conversión o condición                                                                                                                                                                                                                 |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `record.reference` ⇒ `product.reference`                                          | `Referencia *` ⇒ `Product.reference`                                      | Debe existir; se normaliza solo por `trim` al preparar. Es identidad de negocio, no `externalReference` por defecto                                                                                                                    |
-| `record.title`                                                                    | `Título *` ⇒ `Product.title`                                              | Texto no vacío                                                                                                                                                                                                                         |
-| Categoría de portal ⇒ `resolveCategory` ⇒ `categorySellID`, `category`            | `Categoría *` ⇒ búsqueda `CategorySell.name` activa ⇒ `categorySellID`    | El Excel envía **nombre**, no ID. Debe corresponder de modo único a la categoría activa; el exportador comprueba esa unicidad local                                                                                                    |
-| `record.condition` y procedencia                                                  | `Condición *` ⇒ enum `ProductCondition`                                   | El exportador acepta **`Nuevo` y `Segunda_Mano`** si se confirma su procedencia, la categoría pertenece a la rama correspondiente y se cumplen los requisitos del Excel. Las condiciones ausentes o contradictorias quedan en `review` |
-| `record.price` texto                                                              | `Precio *` ⇒ `Product.price: Float?`                                      | Se convierte a número finito positivo o `null`; precio nulo es informativo en la preparación para JSON `create/many`, pero excluye el Excel. El backend de esta ruta exige valor *truthy*, no valida positividad explícita             |
-| `shortDescription` o `longDescription`                                            | `Descripción *` ⇒ `Product.description`                                   | Si falta, `review`                                                                                                                                                                                                                     |
-| `title`                                                                           | `Descripción título` ⇒ `Product.description_title`                        | Preparación usa título                                                                                                                                                                                                                 |
-| `longDescription` o descripción corta                                             | `Descripción general` ⇒ `Product.description_general`                     | En backend puede sustituirse por `description` si está vacía                                                                                                                                                                           |
-| `images` + `image`                                                                | `URL 1 *`…`URL 10` ⇒ `Product.images` JSON; `Product.image` primera       | Deduplica URL HTTP(S) con extensión reconocida jpg/png/webp/avif; exige al menos una; **solo 10** llegan al Excel, el exceso se cuenta en informe                                                                                      |
-| `specs`, `brand`, `model`, `year`, `horometer`, `location`                        | Columnas dinámicas de atributos ⇒ `ProductAttribute`                      | Solo definiciones del catálogo local activas para la categoría; cabeceras como `<name> (<unit_option>)` cuando procede; el backend persiste valores como texto                                                                         |
-| `product.attributes[].attributeID`                                                | Nombre de columna; luego backend resuelve ID desde sus relaciones activas | El ID **no** viaja en Excel: una foto local del catálogo obsoleta puede producir cabeceras incompatibles                                                                                                                               |
-| `product.spec`                                                                    | —                                                                         | No se transmite a `Product.spec` por el importador Excel actual                                                                                                                                                                        |
-| `providerId`, `sourceUrl`, `externalReference`, `serialNumber`, `scrapedAt`, etc. | —                                                                         | Trazabilidad interna y normalización; **no** se guardan como tales en el `Product` creado por esa ruta                                                                                                                                 |
-| `companyID` de inventario/opción de exportación                                   | Campo **multipart `companyID`**, no columna Excel                         | Operador aporta ID real de compañía autorizada                                                                                                                                                                                         |
-| —                                                                                 | `logoID: 18`, `metadata` autogenerada, `active` por defecto `false`       | Comportamiento backend; **no** derivado de datos de origen                                                                                                                                                                             |
-| `status`, `issues`                                                                | —                                                                         | Solo filtran exportación; `Estado de fila` se escribe vacío en el Excel seleccionado y es ignorado por el backend                                                                                                                      |
-
-**Cabeceras fijas exactas de exportación:** `Referencia *`, `Categoría *`, `Título *`, `Condición *`, `Precio *`, `Descripción título`, `Descripción *`, `Descripción general`, `Estado de fila`, seguidas de atributos elegidos y `URL 1 *` … `URL 10`. Hoja exacta `Productos`. Los atributos de tipo `SELECT`/`BOOLEAN` no agregan unidad al encabezado; el resto sí cuando la definición tiene `unit_option` no vacío.
-
-### 4.1. Categorías y atributos: fuentes y límites
-
-El scraper carga **datos locales** de `data/category/categorySell-flat.json` y `data/import/attributeCatalog.json` (atributos y relaciones). La versión del ZIP contiene 109 categorías y 123 definiciones de atributos; son **conteos del fichero**, no confirmación de la BD desplegada.
-
-- `resolveCategory` localiza la raíz `Maquinaria de Ocasión`, restringe a categorías hoja descendientes y exige correspondencia inequívoca por slug/categoría. Aplica equivalencias concretas por proveedor; si no puede decidir, devuelve `null`.
-- `resolveAttributeValue` usa nombres, aliases y normalización de claves; admite ciertas conversiones **mm/cm/m** de longitud. No convierte arbitrariamente otras unidades; valores contradictorios o ambiguos se dejan sin asignar, lo que puede llevar a revisión.
-- Para `NUMBER` exige número procesable, para `BOOLEAN` interpreta respuestas equivalentes a sí/no y para texto/select mantiene representación textual; los valores exportados han de ser compatibles con la categoría asociada.
-- En el backend los tipos existentes incluyen también `DECIMAL`, `DATE` y `MULTISELECT`. **El cargador local del scraper solo admite `NUMBER`, `TEXT`, `SELECT`, `BOOLEAN`**. Este límite debe revisarse si cambian las definiciones usadas en el destino; **no inventar valores** para suplirlo.
-
-## 5. Publicación, protección y calidad de la extracción
-
-### 5.1. Identidad y duplicación en origen
-
-`buildProductIdentity` usa una clave con proveedor y prioridad: **`reference` → `serialNumber` → URL canónica** (sin query/hash). `dedupeBy` elimina duplicados con esa clave dentro de categorías y en el agregado global. `findIdentityConflicts` detecta, entre otros, una identidad con URLs distintas, números de serie/condiciones contradictorias, una misma URL con referencias distintas y un serial con referencias incompatibles.
-
-Esa identidad **NO es la regla del importador backend**: este último detecta duplicaciones solo dentro del fichero por referencia recortada y no consulta previamente la BD para evitar altas repetidas. Por eso el paso de inventario local es imprescindible; las referencias de distintos proveedores no se convierten en una clave compuesta persistida en Equipzilla.
-
-### 5.2. Estados de calidad del catálogo
-
-`assessCatalogQuality` produce `complete`, `partial` o `blocked` y `published: boolean`:
-
-- Marca razones si no hay categorías, catálogo vacío, categorías sin productos, fallos de extracción, diferencia con `expectedProductUrls` **cuando el adaptador ofrece esa cifra**, caída de tamaño respecto a snapshot o conflictos de identidad.
-- Bloquea si hay conflictos, ninguna categoría/producto, alguna categoría vacía o caída a menos de la mitad respecto a un snapshot de al menos 10 elementos. Los problemas restantes impiden que sea `complete` y dan `partial`.
-- **Solo `complete` publica** CSV y preparación sin prefijo `partial`, actualiza `-snapshot-<scope>.json` y genera cambios comparables. Si está `partial/blocked`, se escriben salidas diagnósticas `-partial-*`, `-errors.json`, resumen y cambios no comparables; se conserva el último catálogo principal válido. La función lanza error para señalar ejecución no publicada.
-- **Cuidado:** `complete` significa que pasaron **los controles disponibles**, no que se recorrió realmente el 100 % del portal si el proveedor no aporta una expectativa fiable.
-
-### 5.3. Preflight antes de exportar
-
-`validateCatalogPublication` (modo heredado) verifica resumen `complete/published`, errores cero, recuentos coherentes entre CSV y preparación, huellas SHA-256 de ambos, antigüedad (por defecto 48 horas en `export`), fechas de escritura, cambios comparables, URL/referencia/proveedor consistentes y ausencia de duplicados. `parsePreparation` impide usar `partial-preparation` o un fichero de otro proveedor. En modo offline `validateOfflinePreparation` exige catálogo canónico completo, hash y manifest enlazados, mismas reglas/snapshots y el mismo resultado al recalcular `prepareImportBatch`; exportar también exige antigüedad de origen menor o igual a 48 h. No se admite sustituir el contenido o falsificar un `ready` aunque el hash del JSON de preparación se haya rehecho.
-
-La validación puede emitir advertencias por productos `review`, ausencia de `ready` o `suspectedMissing`. Ninguna advertencia autoriza borrar anuncios ni saltarse la revisión del operador.
-
-## 6. Preparación y exportación manual de **altas** (opcional, responsabilidad del receptor)
-
-El flujo que sigue se conserva por compatibilidad operativa. **No es una tarea necesaria para alcanzar 0 `review` de calidad ni define cuándo está terminado el JSON.**
-
-1. Ejecutar scraping completo de un proveedor y conservar salida válida, no muestras con límites de páginas como catálogo definitivo.
-2. Inspeccionar `-summary.json`, `-errors.json`, `-changes.json`, `-preparation.json`; distinguir `ready` de `review` y de fallos del portal.
-3. Disponer de un **inventario completo y actualizado de referencias de la compañía** en CSV con cabeceras literales `companyID,reference` y filas pertenecientes solo a esa compañía. El scraper **no lo obtiene por sí solo del backend**.
-4. Ejecutar `export` con proveedor, `--companyID` real, ruta de `-preparation.json`, `--existing` y salida `.xlsx`. `--dry-run` simula y **no escribe**; para generar el archivo hay que indicar expresamente `--confirm-inventory`. `--allow-empty-inventory` permite el inventario vacío solo tras comprobarlo externamente.
-5. `planProductImport` excluye referencias duplicadas en la preparación, productos `review` o con controles fallidos y referencias ya presentes en inventario (normalizadas con mayúsculas y `trim`). **No actualiza existentes**. Genera como máximo diez URLs por fila; registra imágenes adicionales.
-6. Si no hay altas seleccionables, genera únicamente el informe `.report.json`, sin Excel vacío; si sí las hay, genera el Excel + informe, comprueba límite de 10 MiB, no sobreescribe archivos existentes y no transmite el fichero al backend. Una persona decide si procede importarlo.
-7. Tras una importación manual, revisar `totalProcessed`, `totalCreated`, `totalFailed`, los errores por fila y el estado de los productos en destino. **La respuesta HTTP 201 no garantiza que todas las filas se hayan creado**. El backend no hace *upsert*.
-
-Comando orientativo de ayuda, sin IDs de empresa ni rutas ficticias de ejecución:
-
-```bash
-npm run export -- --help
-```
-
-No sustituir los datos de entrada por IDs/URLs inventados. Los comandos cortos del scraper (`npm run scrape -- <proveedor>`, `npm run validate -- <proveedor>`) corresponden a la CLI real, pero las opciones de exportación requieren siempre rutas existentes y un ID real.
-
-## 7. Diferencias de contrato e incidencias históricas (no son prioridades del catálogo JSON)
-
-**Lectura obligatoria:** las tablas de este apartado reflejan un análisis fechado el 20–21/10/2026, anterior a campañas posteriores. Sus referencias a importabilidad o implementación pendiente **no son tareas de la siguiente campaña**. El único criterio vigente es [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
-
-**Riesgos del receptor, de interés informativo**
-
-| Hallazgo                                    | Hecho comprobado                                                                                                                                                                           | Implicación para próximos cambios                                                                                                                                                                     |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Catálogos de destino no consultados en vivo | El mapeo depende de dos JSON locales; backend resuelve nombres, relaciones y obligatoriedad desde su BD                                                                                    | Antes de aceptar nuevas altas, confirmar coincidencia de categoría/atributo real. La validez de los snapshots en producción **no está confirmada**                                                    |
-| Riesgo de duplicado en destino              | El importador crea registros sin comprobar duplicado previo en BD ni `@@unique(companyID,reference)` en el modelo                                                                          | Inventario actualizado y fiable es condición de exportación segura; no afirmar que el backend evita repetidos                                                                                         |
-| Cobertura de portales                       | La calidad usa `expectedProductUrls` solo donde está disponible; puede considerar `complete` una cobertura insuficiente si el portal no permite detectar faltantes                         | La aceptación de nuevos proveedores requiere contrastar recuentos externos. La auditoría histórica del 20/10/2026 describía paginación incompleta de Mercaeleva; **no se ha medido su estado actual** |
-| Atributos/categorías no resueltos           | `prepareProduct` marca `review` cuando falta categoría o atributo obligatorio; los aliases son específicos y limitados                                                                     | Revisar mappings con datos reales, no inventar valores/IDs para convertirlos artificialmente en `ready`                                                                                               |
-| Estado ausente o contradictorio             | `prepareProduct` solo acepta `Segunda mano` explícito y sin contradicción; `gomariz` no define condición en su parser y `mercaeleva` puede devolver `null` cuando no hay estado publicado. | Conservar `review` para condición desconocida y distinguirla de la exclusión artificial de `Nuevo`; no inferir uso por defecto.                                                                       |
-
-**Fotografía histórica del estado funcional analizado el 20–21/10 (no corresponde al código integrado el 23/10)**
-
-| Hallazgo                                    | Situación actual y límite                                                                                                                                                                                                               |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Productos `Nuevo`                           | En el código revisado el 20–21/10 se documentó un bloqueo de nuevas ya corregido posteriormente. **No reabrir este problema histórico ni interpretarlo como estado actual**; auditar casos nuevos concretos con su fuente.              |
-| Actualizaciones y bajas                     | Solo se generan altas; `existing` se excluye y `suspectedMissing` es informativo. No existe sincronización de cambios de precio/stock, *upsert* ni baja automática en el flujo revisado                                                 |
-| Metadatos de origen perdidos                | `providerId`, `sourceUrl`, `externalReference`, `spec` y `serialNumber` no pasan como campos independientes por Excel. El contrato receptor revisado no conserva toda la trazabilidad de origen                                         |
-| `logoID` fijo                               | El importador backend asigna `18`; su existencia/correspondencia con la marca no se ha comprobado en BD                                                                                                                                 |
-| Diferencia de validación entre herramientas | El scraper exige precio positivo e imagen URL HTTP(S) con formato de archivo conocido; el backend comprueba `!price` y al menos una URL, sin las mismas reglas. Una fila creada por otra vía no comparte necesariamente filtros locales |
-| Soporte de atributos                        | El backend modela `DECIMAL`, `DATE`, `MULTISELECT`; el cargador de atributos del scraper no reconoce esos tipos en su catálogo local                                                                                                    |
-| Imágenes adicionales                        | El Excel admite diez columnas de URL; el resto se contabiliza y no se importa por esta ruta                                                                                                                                             |
-
-**La tabla anterior no fija prioridades de desarrollo:** el trabajo vigente se define únicamente por defectos de extracción, identidad, mapeo o calidad JSON acreditados; ver [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
-
-**No confirmado en el código revisado:** estado de la BD real, inventario de cada compañía, equivalencias actuales de atributos, autoría/aprobación para importar, resultado de procesos asíncronos posteriores y disponibilidad completa de las webs. No se afirma que haya automatización de importación ni producción validada.
-
-## 8. Contratos que debe preservar un hilo futuro
-
-- Mantener `ProductRecord` como **dato extraído** y `ImportCandidate` como **dato preparado**. Ninguno es el cuerpo JSON de `create/many` ni una hoja Excel. El catálogo canónico y la preparación conservan todas las máquinas, incluidas las que siguen en `review`.
-- Mantener identidad por proveedor en extracción y comprobar duplicados del inventario por referencia de la empresa antes de alta.
-- No prometer datos ausentes ni transformar `review` en `ready` sin evidencia; preservar bloqueo de publicación parcial y snapshot del último resultado válido.
-- Separar adaptadores/parsers (obtención), normalización y mappers (reglas), `catalog/import` (preparación/exportación), pipeline (calidad/publicación), CLI (entrada/salida).
-- No alterar los endpoints ni contratos del backend para corregir problemas del scraper sin autorización expresa.
-- No tratar `-changes.json` como orden de borrado ni `-preparation.json` como petición HTTP.
-- Mantener la procedencia y fecha de análisis: si cambia el backend, revalidar manualmente **el contrato receptor** y actualizar estos dos Markdown; no crear copias paralelas.
-
-## 9. Trazabilidad concreta
-
-**Scraper:** `src/contracts/catalog.ts`, `src/contracts/scraping.ts`, `src/scraping/registry.ts`, `src/scraping/providers/{gam,gomariz,mercaeleva}/`, `src/catalog/{identity,quality}.ts`, `src/catalog/normalization/`, `src/catalog/import/mapping/{category-mapping,attribute-mapping}.ts`, `src/catalog/import/preparation/{prepare,preparation-document,import-validation}.ts`, `src/catalog/import/export/export-plan.ts`, `src/infrastructure/filesystem/import-catalog-loader.ts`, `src/infrastructure/spreadsheet/xlsx.ts`, `src/pipeline/publication/{publish,csv-serializer}.ts`, `src/pipeline/validation/preflight.ts`, `src/cli/{index,export}.ts`; fotografías `data/category/categorySell-flat.json` y `data/import/attributeCatalog.json`.
-
-**Backend contrastado:** `src/routes/product.routes.ts`, `src/controller/product.controller.ts` (`importProducts`), `src/utils/ProductImportParser.ts`, `src/validator/product.validator.ts` (`parseImportRow`, `importProducts`, `create`), `src/service/product.service.ts` y `prisma/schema.prisma`. La referencia compartida y más detallada del receptor es `EQUIPZILLA_INTEGRATION.md`.
-
-**Estado documental:** fotografía del código del **20/10/2026**, destinada a futuros hilos sin necesidad de volver a abrir el backend. Este documento no es prueba de una importación exitosa.
+Para operativa y criterios de aceptación consultar [Validación](VALIDACION.md) y [Objetivos](OBJETIVOS_SCRAPER.md).

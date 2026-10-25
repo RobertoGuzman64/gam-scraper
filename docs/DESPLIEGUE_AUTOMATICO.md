@@ -1,107 +1,53 @@
-# Despliegue y ejecución programada — Equipzilla Scraper
+# Operación y despliegue
 
 ## AI GUARD
 
-**Documentación protegida.** Ninguna IA debe crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para esa intervención documental. Una petición sobre código, tests o auditorías no autoriza cambios documentales implícitos.
+**Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
-Guía para infraestructura basada en el código actual. **No hay Dockerfile, CI/CD, despliegue cloud, almacenamiento remoto ni importación automática implementados** en este repositorio. Antes de programar extracciones, completar [VALIDACION.md](VALIDACION.md).
+## Modelo de ejecución
 
-## Qué se despliega
+El repositorio implementa una **CLI que termina tras ejecutar una operación**. No incorpora servidor HTTP, Dockerfile, despliegue cloud, CI/CD ni importación automática al backend. Es posible planificar ejecuciones externas, pero deben conservarse íntegros los resultados y vigilarse sus fallos.
 
-- **Runtime:** Node.js `>=18.18.0`, npm y proyecto TypeScript compilado con `tsc` a `dist/` (ESM). Dependencias de ejecución: Cheerio y `p-limit`.
-- **Proceso:** CLI que termina después de extraer; **no** abre puerto HTTP ni requiere servicio web.
-- **Acceso exterior:** HTTPS a portales; Mercaeleva puede utilizar Chrome/Chromium headless (`--dump-dom`) mediante `child_process` y `CHROME_PATH`/`CHROMIUM_PATH`.
-- **Puntos de entrada reales:** `node dist/cli/index.js scrape <id>`, `node dist/cli/index.js batch` o, para el lote compilado, `node dist/cli/index.js scrape all`. El lote crea procesos hijos mediante `dist/cli/scrape.js`.
-- **En desarrollo:** los scripts `npm run scrape -- <id>`, `npm run scrape -- all` y `npm run scrape:all` **compilan antes de arrancar**. Para producción compilada puede invocarse Node directamente.
-- **Persistencia:** `storage/scraped/` (CSV/JSON, snapshots, bloqueo) y `storage/runs/` (historial, logs e informes). Los snapshots de entrada `data/category/` y `data/import/` también deben existir en el directorio de ejecución.
+Requisitos operativos: Node.js, npm, dependencias instaladas, acceso HTTPS, espacio en disco y permisos sobre `storage/`. Mercaeleva puede requerir Chrome/Chromium (`CHROME_PATH` o `CHROMIUM_PATH`). Los snapshots `data/category/` y `data/import/` deben acompañar al código.
 
-El lote únicamente recopila fuentes. **No envía datos a Marketplace-Back** ni llama al importador de Excel.
+## Ejecución controlada
 
-## Opción sencilla: servidor o VM con disco persistente
-
-Es la alternativa con menos incompatibilidades: la publicación utiliza escrituras y renombrados atómicos en disco local y el lote usa `open(..., "wx")` para el lock. Requisitos: permisos de escritura, espacio suficiente, conectividad HTTPS, Chrome/Chromium para el proveedor que lo necesite y monitorización.
-
-Preparación desde la raíz real del repositorio:
-
-```bash
-npm ci
-npm test
-npm run build
-npm run scrape -- all --dry-run
+```powershell
+npm run extraer:todos -- --simular
+npm run extraer:todos -- --proveedores gam,gomariz
 ```
 
-Antes de programar, ejecutar manualmente **solo los proveedores aceptados**, por ejemplo:
+El lote lanza los proveedores indicados **en secuencia**, guarda informes/logs en `storage/runs/` y mantiene las salidas de extracción en `storage/scraped/`. El bloqueo de lote se basa en **filesystem local**: no es distribuido y no evita toda concurrencia con una extracción individual. Evitar ejecuciones solapadas sobre el mismo directorio.
 
-```bash
-npm run scrape -- all --providers gam,gomariz
-```
-
-Ese ejemplo es una selección operativa, **no una declaración de que GAM o Gomariz estén aceptados**. Examinar `storage/runs/<run>/run.json`, los logs individuales y los archivos `<prefijo>-summary.json` y `-changes.json`. El sistema debe conservar `storage/` entre reinicios y ejecuciones.
+No planificar un proveedor hasta haber acreditado su cobertura y revisado su comportamiento ante páginas vacías, fallos de red, cambios de HTML y límites de paginación. Los archivos `-partial-*` y los registros de error son evidencia de fallos, no fuentes publicables.
 
 ### Windows
 
-El repositorio contiene `scripts/run-scheduled.ps1`, que se sitúa en la raíz y ejecuta el alias `scrape:all`:
+El repositorio incluye `scripts/run-scheduled.ps1`. Desde una tarea programada puede invocarse con la ruta real del proyecto:
 
 ```powershell
-npm ci
-npm test
-npm run scrape -- all --dry-run
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\RUTA\DEL\REPO\scripts\run-scheduled.ps1" -Providers "gam,gomariz"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\RUTA\REPOSITORIO\scripts\run-scheduled.ps1" -Providers "gam,gomariz"
 ```
 
-En el Programador de tareas, usar cuenta autorizada con Node/npm/Chrome disponibles, disco persistente, código de salida supervisado y política de **no iniciar otra instancia**. Mantener el equipo encendido durante la ejecución.
+La tarea debe usar una cuenta con permisos y herramientas disponibles, conservar el disco entre ejecuciones, supervisar códigos de salida y **no iniciar otra instancia** si la anterior sigue activa.
 
 ### Linux
 
-Un `cron` o unidad `systemd` puede ejecutar desde la raíz del proyecto un comando aceptado, con usuario específico y registro del código de salida. Ejemplo de comando manual (sin fijar horarios ni habilitar automatización):
+Un planificador externo puede invocar la CLI desde la raíz del proyecto con el usuario autorizado. No hay una configuración de `cron` o `systemd` implementada en este repositorio; crearla requiere aprobación operativa y política de logs, permisos y persistencia.
 
-```bash
-cd /ruta/real/equipzilla-scraper
-npm run scrape -- all --providers gam,gomariz
-```
+## Publicación y recuperación
 
-No ejecutar simultáneamente dos lotes sobre el mismo `storage/`; la protección `.batch.lock` solo funciona con filesystem local compatible. La extracción individual no está cubierta por ese bloqueo.
+- Conservar `storage/` entre procesos: catálogos, manifests, snapshots, preparaciones, evidencias y logs.
+- Comprobar `run.json` en cada lote y los informes `-summary.json`, `-changes.json` y `-errors.json` por proveedor.
+- No asumir cobertura completa porque el informe diga `complete`; contrastar recuentos externos.
+- No borrar un lock persistente sin confirmar antes que no hay otro proceso activo.
+- No sobrescribir catálogos válidos por salidas parciales ni borrar originales al corregir la selección editorial.
+- `npm run limpiar:almacen` **solo simula**. `--aplicar` autoriza una limpieza real y exige inspección previa de la simulación y respaldo suficiente.
 
-## Opción futura: Cloud Run Jobs + Cloud Scheduler
+El scraper **no** automatiza la creación, actualización o eliminación de productos en Equipzilla. La entrega de un catálogo publicable y su importación son decisiones independientes.
 
-Puede encajar con un scraper CLI por lotes, **pero necesita trabajo de infraestructura y pruebas**, no basta con subir el repositorio. Diseño propuesto:
+## Infraestructura remota
 
-```text
-Cloud Scheduler (solo tras autorización)
-        ↓
-Cloud Run Job (Node.js + Chromium, un ejecutor)
-        ↓
-Publicación segura hacia almacenamiento duradero
-        ↓
-Auditoría y aprobación separada del importador de altas
-```
+Cualquier ejecución en contenedores o sistemas efímeros necesita un diseño adicional de **persistencia duradera**, publicación consistente, exclusión mutua distribuida, monitorización y gestión de Chromium. Un montaje remoto no debe presumirse equivalente a un filesystem POSIX local. Ninguna infraestructura remota está ya configurada por el repositorio.
 
-Pendientes necesarios:
-
-1. Construir Dockerfile e imagen con binario Chromium, Node y dependencias necesarias, `dist/` compilado y snapshots `data/` disponibles.
-2. Determinar identidad de servicio, permisos mínimos, región y estrategia de persistencia de CSV, JSON, snapshots e historial.
-3. Diseñar exclusión mutua entre instancias y publicación consistente. El lock `.batch.lock` **no es distribuido**.
-4. No tratar Cloud Storage FUSE como un filesystem POSIX idéntico: verificar las operaciones de escritura/renombrado y bloquear concurrencia. Preferir un paso explícito de subida/versionado desde disco local temporal si se elige almacenamiento de objetos.
-5. Ensayar una ejecución manual, otra consecutiva y un fallo inducido. Verificar que se conservan snapshots e informes correctos, sin borrar inventario ni sustituir una publicación válida por otra parcial.
-6. Añadir monitorización, alertas de código distinto de cero, caídas de recuentos y condiciones de `review` antes de conectar un planificador.
-
-El filesystem efímero del contenedor **no basta** para preservar snapshots e historial entre jobs. No se han definido credenciales ni horarios en el repositorio.
-
-Documentación oficial de referencia:
-
-- [Crear Cloud Run Jobs](https://cloud.google.com/run/docs/create-jobs)
-- [Programar jobs](https://cloud.google.com/run/docs/execute/jobs-on-schedule)
-- [Montajes Cloud Storage](https://cloud.google.com/run/docs/configuring/jobs/cloud-storage-volume-mounts)
-
-## Diagnóstico operativo
-
-| Síntoma                                               | Acción                                                                             |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Código de salida distinto de cero                     | Revisar `run.json`, logs, `-summary.json`, `-errors.json` y archivos `-partial-*`. |
-| Catálogo aparentemente completo, pero pocos productos | Contrastar páginas y contador externo; el estado técnico no garantiza cobertura.   |
-| `run.json` queda en `running`                         | Comprobar interrupción y logs; no interpretar el estado como publicación aceptada. |
-| Lock `.batch.lock` persistente                        | Verificar si hay un lote activo antes de retirarlo manualmente.                    |
-| Proveedor con muchos candidatos `review`              | Revisar categorías/atributos y aprobar datos de negocio antes de cualquier Excel.  |
-| Aparecen `suspectedMissing`                           | Conservar informe y contrastar la fuente; **nunca dar de baja automáticamente**.   |
-
-**Orden de puesta en producción:** corregir las incidencias de cada portal (en particular la cobertura conocida de Mercaeleva), validar fuentes e inventario, probar persistencia/alertas, autorizar proveedores concretos y solo entonces programar su extracción. La importación es otro proceso con aprobación independiente.
+Antes de automatizar, completar la [validación de fuentes](VALIDACION.md) y obtener aprobación explícita para los proveedores y el entorno elegidos.

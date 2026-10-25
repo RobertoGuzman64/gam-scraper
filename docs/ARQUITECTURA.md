@@ -1,130 +1,71 @@
-# Arquitectura del scraper de Equipzilla
+# Arquitectura
 
 ## AI GUARD
 
-**Documentación protegida.** Ninguna IA debe crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para esa intervención documental. Una petición sobre código, tests o auditorías no autoriza cambios documentales implícitos.
+**Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
-Referencia técnica del repositorio actual. Aplicación CLI Node.js/TypeScript ESM con tipado estricto; no expone servidor HTTP ni escribe directamente en el backend de Equipzilla.
+## Visión general
 
-## Organización real
+Aplicación CLI de Node.js y TypeScript con módulos ESM. El scraper se ejecuta como proceso local o programado; **no tiene servidor HTTP ni persistencia en el backend de Equipzilla**.
 
 ```text
+scripts/              Entrada npm, ayuda y ejecución programada
 src/
-├── cli/
-│   ├── index.ts, scrape.ts, batch.ts, validate.ts, export.ts
-│   ├── options/           Argumentos y validaciones de CLI
-│   └── reporting/         Progreso y resúmenes de consola
-├── contracts/
-│   ├── catalog.ts, scraping.ts, progress.ts
-├── scraping/
-│   ├── provider.ts, registry.ts
-│   ├── engine/            scrape-category.ts
-│   ├── parsing/           HTML e imágenes compartidos
-│   └── providers/
-│       ├── gam/           Adaptador, condición, listados, ficha, descripciones y especificaciones
-│       ├── gomariz/       adapter.ts, config.ts, parsers.ts
-│       └── mercaeleva/    Adaptador, navegador de catálogo y script de paginación
-├── catalog/
-│   ├── identity.ts, identity-conflicts.ts, product-validation.ts, snapshot.ts, quality.ts
-│   ├── normalization/     Especificaciones y descripciones de productos
-│   └── import/
-│       ├── mapping/       Resolución común y reglas particulares bajo providers/<id>/
-│       ├── preparation/   Contratos, condición, ficha, lote y validaciones de importación
-│       ├── export/        Inventario de referencias y planificación de altas
-│       └── tests/         Pruebas del dominio de importación
-├── pipeline/
-│   ├── scrape-run.ts
-│   ├── preparation/       Preparación y comparación offline sobre catálogos completos
-│   ├── publication/       Ensamblado de catálogo, persistencia, CSV e informes
-│   ├── batch/             Ejecución, contratos y persistencia de informes
-│   ├── validation/        Preflight de catálogo publicado
-│   └── export/            Lectura validada de preparación e inventario
-├── infrastructure/
-│   ├── browser/           DevTools de Chrome compartido
-│   ├── http/              Fetch y reintentos
-│   ├── filesystem/        Persistencia y lectura del catálogo de destino
-│   ├── locking/           Bloqueo de lotes
-│   └── spreadsheet/       Generador XLSX
-├── shared/                Lectura/escritura CSV transversal
-└── tools/gam/             Normalizador y conversores de seeds heredados
+  cli/                Argumentos, comandos y presentación de resultados
+  contracts/          Contratos de extracción y catálogo
+  scraping/           Motor, registro y adaptadores de proveedores
+    engine/           Procesamiento de categorías y fichas
+    parsing/          Utilidades comunes de HTML y fotografías
+    providers/        gam/, gomariz/, mercaeleva/
+  catalog/            Identidad, normalización y validaciones de producto
+    coverage/         Diferencias entre catálogos y expediente de revisión
+    editorial/        Selección y exclusiones acreditadas
+    import/           Mapeos y preparación para formatos de destino
+  pipeline/           Orquestación de extracción, lotes, publicación,
+                      preparación, validación y exportación
+  infrastructure/     HTTP, navegador, archivos, bloqueos y XLSX
+  shared/             Utilidades transversales como CSV
+  tools/gam/          Normalización y conversión de semillas GAM
 
-data/category/            Snapshot de categorías del destino
-data/import/              Snapshot de atributos del destino
-scripts/run-scheduled.ps1 Lanzador del lote para Windows
-storage/                  Datos de ejecución, fuera de Git
+data/category/        Catálogo local de categorías del receptor
+data/import/          Catálogo local de atributos del receptor
+storage/              Datos de ejecución y evidencias no versionadas
 ```
 
-Las pruebas `.test.ts` están junto a cada área: `scraping/tests`, `catalog/**/tests`, `pipeline/**/tests` y `cli/**/tests`.
+El registro de proveedores vive en `src/scraping/registry.ts`; los contratos de datos se definen en `src/contracts/`. Las pruebas `.test.ts` están próximas a los módulos que protegen. El resultado del compilador se escribe en `dist/`, que no se versiona.
 
-## Límites de responsabilidad
+## Responsabilidades
 
-| Capa             | Responsabilidad                                                                           | Evitar                                                       |
-| ---------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `cli`            | Interpretar comandos, presentar progreso/resúmenes, establecer códigos de salida.         | Implementar parsers HTML o reglas de catálogo.               |
-| `contracts`      | Tipos compartidos (`ProductRecord`, `ScrapeOptions`, `Summary`, etc.).                    | IO y dependencias de ejecución.                              |
-| `scraping`       | Extraer categorías, listados y fichas mediante `ScraperProvider`.                         | Escribir Excel o decidir reglas de importación.              |
-| `catalog`        | Identidad de máquinas, deduplicación, calidad, normalización y preparación de candidatos. | Presentación en terminal o peticiones de scraping.           |
-| `pipeline`       | Orquestar extracción, publicación, validación y lotes.                                    | Incorporar HTML específico de proveedores.                   |
-| `infrastructure` | Acceso HTTP y escritura local reutilizable.                                               | Conocer el catálogo del proveedor o permisos de importación. |
-| `shared`         | CSV transversal sin reglas de negocio.                                                    | Incorporar lógica de proveedores.                            |
-| `tools/gam`      | Compatibilidad con normalización y seeds históricos de GAM.                               | Acoplarse al camino ordinario de los otros proveedores.      |
+| Capa                   | Debe hacer                                                                    | No debe hacer                                              |
+| ---------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `cli` y `scripts`      | Interpretar órdenes, preparar parámetros, mostrar ayuda, errores y resúmenes. | Decidir identidades o parsear HTML.                        |
+| `scraping`             | Descubrir listados, obtener fichas y devolver registros de origen.            | Importar al backend o aplicar políticas de Excel.          |
+| `catalog`              | Normalizar, deduplicar, contrastar evidencia y resolver reglas editoriales.   | Ejecutar peticiones de scraping o presentar UI de consola. |
+| `pipeline`             | Coordinar flujos y mantener integridad de las publicaciones.                  | Repetir reglas de proveedor.                               |
+| `infrastructure`       | I/O, HTTP, navegador, locks y escritura segura.                               | Inventar reglas de producto.                               |
+| `contracts` y `shared` | Tipos y utilidades reutilizables.                                             | Acoplarse a CLI o a un portal particular.                  |
 
-La dirección principal es **CLI → pipeline → scraping/catalog/infrastructure**. `scraping` usa contratos e infraestructura; `catalog` mantiene las reglas y los mapeos. Los adaptadores se registran en **un único punto**, `src/scraping/registry.ts`. No crear reexports genéricos que disimulen dependencias con GAM ni introducir capas vacías.
+Dirección preferente: `cli → pipeline → scraping/catalog/infrastructure`. Los adaptadores implementan el contrato `ScraperProvider`; las excepciones de un proveedor deben permanecer en su propio módulo. No introducir capas vacías, duplicar mappers ni mover contratos públicos sin revisar consumidores.
 
-## Flujos de ejecución
+## Procesos principales
 
-### Extracción individual
+**Extracción:** `cli` selecciona proveedor → `scraping/registry.ts` → `pipeline/scrape-run.ts` → motor y adaptador → deduplicación e integridad → `pipeline/publication/` → catálogo, CSV, preparación e informes. El adaptador de Mercaeleva puede necesitar Chrome/Chromium externo.
 
-1. `src/cli/index.ts` distribuye a `src/cli/scrape.ts` y `cli/options/scrape.ts` obtiene proveedor, modo y opciones.
-2. `scraping/registry.ts` entrega el adaptador; `pipeline/scrape-run.ts` organiza categorías y pide resultados a `scraping/engine/scrape-category.ts`.
-3. El motor usa el adaptador (listado, parseo, referencias, árbol; navegador específico de Mercaeleva cuando corresponde) e `infrastructure/http/fetch-html.ts`. La regla de condición comercial de GAM se resuelve mediante un punto de extensión opcional del proveedor, sin condicionales de GAM en el motor.
-4. `pipeline/publication/publish.ts` deduplica mediante `catalog/identity.ts`, evalúa calidad/comparaciones y publica un `ProductRecord[]` canónico completo mediante `infrastructure/filesystem/canonical-catalog.ts` y los CSV mediante `csv-serializer.ts`. La preparación heredada sigue generándose durante la publicación por `pipeline/publication/legacy-preparation.ts`, por compatibilidad con consumidores existentes. No se descartan máquinas por su elegibilidad para Excel.
-5. `cli/reporting/scrape-progress.ts` presenta el progreso compacto y el resultado; `--verbose` permite detalles adicionales.
+**Lote:** `cli/batch.ts` → `pipeline/batch/` → proveedores ejecutados secuencialmente en procesos hijos → logs individuales y resumen en `storage/runs/`. El lock es **local al sistema de archivos** y no protege ejecuciones independientes en otros hosts. El scraping individual no comparte necesariamente esa exclusión.
 
-### Lote de proveedores
+**Preparación offline:** `cli/prepare.ts` → `pipeline/preparation/` → lectura íntegra de catálogo canónico y comprobación de procedencia → mapeo y preparación de productos → documento nuevo con huellas de entrada y reglas. No consulta portales ni inventario.
 
-`src/cli/batch.ts` invoca `pipeline/batch/run.ts`, que ejecuta en secuencia procesos hijos con el **entrypoint compilado `dist/cli/scrape.js`**. Cada proveedor tiene log independiente; los informes se archivan en `storage/runs/<run>/`. La CLI muestra un resumen total y devuelve error si el lote no es `complete`. `--dry-run` solamente describe la ejecución.
+**Auditoría y selección:** `catalog/coverage/` compara fuentes y exige revisión acreditada; `catalog/editorial/` decide productos seleccionables y exclusiones; `cli/select-publishable.ts` genera únicamente las salidas autorizadas. Las reglas de identidad y de cohorte específicas existentes siguen siendo restricciones productivas: un refactor no puede neutralizarlas.
 
-El bloqueo `storage/scraped/.batch.lock` funciona únicamente para procesos que comparten filesystem local. La extracción individual no utiliza ese lock.
+**Exportación opcional:** `pipeline/export/` prepara altas mediante inventario externo y mapeos existentes; `infrastructure/spreadsheet/` genera XLSX cuando se solicita. También se admite salida JSON adaptada al receptor. Ningún proceso envía peticiones de importación.
 
-### Validación y Excel de altas
+## Reglas de mantenimiento
 
-`cli/validate.ts` → `pipeline/validation/{preflight,offline}.ts`: verifica coherencia temporal, integridad de hashes, totales, URLs, referencias, preparación y estado publicado. No comprueba el total anunciado en la web del proveedor.
+- Conservar APIs, contratos y formatos de archivo existentes; advertir antes de cambios incompatibles.
+- Evitar mezcla de UI/CLI, red, filesystem y reglas de negocio.
+- No duplicar reglas entre proveedores; tampoco generalizar comportamientos que solo estén acreditados para uno.
+- Mantener la persistencia atómica o de creación exclusiva, la integridad de manifests y la preservación de la última publicación válida.
+- Comparar resultados reales antes y después de alterar parsers, mappers, deduplicación o selección.
+- Añadir un proveedor mediante `ScraperProvider`, `registry.ts` y su configuración, con pruebas específicas de paginación, identidad y calidad.
 
-`cli/export.ts` presenta el proceso; `pipeline/export/prepare-export.ts` consume una preparación validada y el inventario confirmado, usa `catalog/import/export/export-plan.ts` e `infrastructure/spreadsheet/xlsx.ts` y genera un Excel offline de **altas**. No llama a la API del backend, no actualiza referencias existentes y no produce bajas.
-
-### Preparación independiente y estado de transición (22/10/2026)
-
-`cli/prepare.ts` recibe los argumentos de `cli/options/prepare.ts`; `pipeline/preparation/prepare.ts` coordina lectura íntegra de `-catalog.json`, `prepareImportBatch` y escritura exclusiva. `catalog/import/preparation/offline-document.ts`, `offline-diagnostics.ts` y las reglas de mapeo existentes definen resultados, diagnósticos y comparaciones. `infrastructure/filesystem/preparation-inputs.ts` identifica los snapshots de destino y el código de las reglas que se ejecuta; `offline-preparation.ts` guarda/lee una huella externa de la preparación.
-
-`npm run prepare:catalog` consume catálogos publicados completos (incluidos históricos íntegros), sin Chrome, HTML, peticiones HTTP ni consulta de inventario. La preparación nueva contiene `version`, `source` (proveedor, prefijo, ámbito, hash canónico y total), `fingerprints` (versión de reglas, SHA-256 de reglas y snapshots), `preparedAt`, `identities`, `totals`, `quality`, `published` y `products: PreparedProduct[]`. Los metadatos diagnósticos son independientes del JSON de candidatos. Se mantiene un manifest SHA-256 externo, y las salidas se crean con exclusión de sobrescrituras y rollback ante errores. Al repetir, la identidad y el hash permiten comparar la misma cohorte o marcar una comparación no homogénea; se rastrean regresiones y cambios de mapeo sin atribuirlos a scraping.
-
-`publish.ts` **continúa** generando la preparación heredada para mantener sin cambios los comandos `validate` y `export`, y sus contratos de integridad. `validate --stage catalog|preparation` y `export` aceptan además el flujo canónico/offline verificado; `pipeline/validation/offline.ts` rehace la preparación con las reglas actuales y compara identidades, fingerprints y hashes antes del Excel. No se han cambiado endpoints ni permisos comerciales.
-
-## Contratos que deben conservarse
-
-- **Proveedor:** `ScraperProvider` definido en `scraping/provider.ts`; identificadores actuales `gam`, `gomariz`, `mercaeleva`. El registro y las opciones por defecto son parte del flujo de selección. `resolveCondition` es un punto de extensión opcional y compatible para resolver condiciones por proveedor.
-- **CSV:** columnas base `categoryKey`, `categoryName`, `title`, `shortDescription`, `longDescription`, `price`, `reference`, `brand`, `model`, `year`, `location`, `country`, `horometer`, `serialNumber`, `image`, `url`, `specJson`, `providerId`, `imagesJson`, más columnas dinámicas `spec__*`.
-- **Identidad:** las referencias, la serie y la URL ayudan a identificar unidades, **aisladas por proveedor**. Dos máquinas del mismo modelo no son necesariamente la misma unidad.
-- **Publicación:** `-catalog.json` y `-catalog.manifest.json` (solo para completas), `-all.csv`, archivos por categoría, `-preparation.json`, `-summary.json`, `-changes.json`, `-errors.json`, `-categories.csv` y `-snapshot-<scope>.json`; resultados `-partial-*` no sustituyen una publicación válida. El lector canónico verifica esquema, identidad, hash externo, proveedor, ejecución y totales frente al resumen activo o histórico. El historial conserva dos generaciones anteriores y permite migración desde publicaciones sin canónico.
-- **Integridad:** las huellas SHA-256 del CSV, la preparación heredada y, cuando existe, el catálogo canónico se contrastan con el resumen. Si una publicación lanza un error y existe una versión anterior protegida, se restauran sus archivos y metadatos; un corte abrupto del proceso exige comprobar el estado de `active.json` y los archivos antes de continuar. `suspectedMissing` es una observación, **no una orden de borrado**.
-- **Snapshots de destino:** `data/category/categorySell-flat.json` y `data/import/attributeCatalog.json` se leen en tiempo de ejecución. No moverlos ni cambiar su formato al añadir proveedores.
-- **Scripts npm existentes:** conservar los alias históricos mientras haya consumidores (`scrape:all`, `validate:catalog`, `export:import` y herramientas GAM).
-- **Importación:** `ready` es solo un indicador local de preparación; importación a Equipzilla requiere aprobación, `companyID` real e inventario de la empresa actualizado.
-
-## Incorporar un proveedor sin expandir la arquitectura
-
-1. Crear `src/scraping/providers/<id>/` con `adapter.ts`, `config.ts` y `parsers.ts` según las necesidades reales. No copiar el navegador de Mercaeleva si el portal no lo necesita.
-2. Implementar la interfaz **existente** `ScraperProvider` en `adapter.ts` y definir las categorías/opciones en `config.ts`. Reutilizar `scraping/engine/`, `scraping/parsing/` e infraestructura; mantener selectores y paginación en el adaptador.
-3. Registrarlo en `src/scraping/registry.ts`.
-4. Añadir fixtures/pruebas de parser, referencias y paginación; ejecutar `npm test`.
-5. Ejecutar extracción real, contrastar recuentos del portal y revisar categorías/atributos del destino. Un proveedor que corre sin lanzar excepciones todavía puede tener cobertura incompleta.
-6. Solo después de la aceptación operativa, incorporarlo a un lote programado. El runner detecta los IDs registrados; no necesita código específico de la empresa.
-
-## Decisiones de mantenimiento
-
-- No mezclar reglas de negocio con UI de terminal o IO.
-- No crear directorios, interfaces, módulos índice ni servicios genéricos sin una necesidad concreta.
-- No mover el lector de snapshots sin corregir su ruta de resolución.
-- Tratar cambio de CSV, esquema JSON, snapshots, flags o códigos de salida como **cambio de contrato**, no como simple refactor.
-- Antes de aceptar cambios: compilar, probar, extraer una muestra real y confirmar cobertura externa. La prueba funcional detallada está en [VALIDACION.md](VALIDACION.md).
+Consulta [Reglas de datos](SCRAPER_DATA_RULES.md) para los formatos y [Validación](VALIDACION.md) para los controles operativos.
