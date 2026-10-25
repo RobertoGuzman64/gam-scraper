@@ -11,21 +11,21 @@ const checksums = {
 };
 const disappearing = new Set(["6942", "6948", "6366", "6676"]);
 const changedIdentityRoutes = new Set(["6002", "6003", "6004"]);
-const f50GalleryReferences = new Set(["4988", "4989", "4990", "4991", "5998", "5999", "6000", "6001"]);
-const f50RelatedImages = [
+const galleryCorrectionReferences = new Set(["4988", "4989", "4990", "4991", "5998", "5999", "6000", "6001"]);
+const relatedGalleryImages = [
   "https://online.gamrentals.com/53434-product_main_2x/carretilla-elevadora-electrica-hyster-a13xnt.jpg",
   "https://online.gamrentals.com/133-product_main_2x/carretilla-elevadora-electrica-hyster-j16xn.jpg",
   "https://online.gamrentals.com/140-product_main_2x/carretilla-elevadora-electrica-hyster-j18xn.jpg",
   "https://online.gamrentals.com/147-product_main_2x/carretilla-elevadora-electrica-hyster-j20xn.jpg"
 ] as const;
-const f50ShortDescription5996 = "La carretilla elevadora eléctrica Yale ERP6.0MXLG6 combina una capacidad de carga de 6.000 kg, con centro de carga de 600 mm, con la eficiencia de la tecnología de ion de litio y la robustez necesaria para afrontar operaciones de manutención de gran tonelaje en diferentes entornos industriales. Una de sus principales ventajas es su altura libre al suelo de 230 mm en el centro de la distancia entre ejes y 200 mm bajo el mástil con carga, combinada con neumáticos industriales de gran tamaño y ruedas delantera";
+const shortDescription5996 = "La carretilla elevadora eléctrica Yale ERP6.0MXLG6 combina una capacidad de carga de 6.000 kg, con centro de carga de 600 mm, con la eficiencia de la tecnología de ion de litio y la robustez necesaria para afrontar operaciones de manutención de gran tonelaje en diferentes entornos industriales. Una de sus principales ventajas es su altura libre al suelo de 230 mm en el centro de la distancia entre ejes y 200 mm bajo el mástil con carga, combinada con neumáticos industriales de gran tamaño y ruedas delantera";
 const preparations = originals.map((preparation) => {
   const providerId = preparation.source.providerId;
   const products = providerId === "gam"
     ? preparation.products.filter(({ product }) => !disappearing.has(product.reference ?? ""))
       .map((entry) => {
         const reference = entry.product.reference ?? "";
-        const gallery = f50GalleryReferences.has(reference);
+        const gallery = galleryCorrectionReferences.has(reference);
         const identity = changedIdentityRoutes.has(reference);
         const description = reference === "5996";
         if (!gallery && !identity && !description) return entry;
@@ -38,8 +38,8 @@ const preparations = originals.map((preparation) => {
             sourceUrl: entry.product.sourceUrl
               .replace("/es/hyster/", "/es/carretillas-elevadoras-electricas-hyster/")
               .replace("/es/yale/", "/es/carretillas-elevadoras-electricas-yale/"),
-            ...(gallery && image ? { images: [image, ...f50RelatedImages] } : {}),
-            ...(description ? { description: f50ShortDescription5996 } : {})
+            ...(gallery && image ? { images: [image, ...relatedGalleryImages] } : {}),
+            ...(description ? { description: shortDescription5996 } : {})
           }
         };
       })

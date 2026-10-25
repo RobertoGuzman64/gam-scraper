@@ -7,6 +7,9 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const definitions = {
   extraer: { entry: "cli/index.js", prefix: ["scrape"], usage: "extraer -- gam [--categoria venta] [--paginas 2]", description: "Extraer un proveedor", requiresProvider: true },
   "extraer:todos": { entry: "cli/index.js", prefix: ["batch"], usage: "extraer:todos -- [--proveedores gam,gomariz] [--simular]", description: "Extraer todos o varios proveedores" },
+  "intervenir:preparar": { entry: "cli/prepare-intervention.js", usage: "intervenir:preparar -- gam --derivado <catalog-derived.json> --origen <original-catalog.json> [--simular]", description: "Preparar manualmente un catálogo intervenido", requiresProvider: true },
+  "intervenir:validar": { entry: "cli/validate-intervention.js", usage: "intervenir:validar -- gam --derivado <catalog-derived.json> --origen <original-catalog.json> --preparacion <preparation.json>", description: "Validar preparación intervenida y su procedencia", requiresProvider: true },
+  intervenir: { entry: "cli/intervene.js", usage: "intervenir -- gam --script <archivo.ts> --origen <catalog.json> [--detalle] [--campana <id> --aplicar --plan <sha>]", description: "Simular o aplicar manualmente intervención con SHA aprobado", requiresProvider: true },
   preparar: { entry: "cli/prepare.js", usage: "preparar -- gam --origen <catalog.json> [--simular]", description: "Preparar un catálogo guardado", requiresProvider: true },
   validar: { entry: "cli/index.js", prefix: ["validate"], usage: "validar -- gam [--etapa catalogo --origen <catalog.json>]", description: "Validar catálogo o preparación", requiresProvider: true },
   exportar: { entry: "cli/index.js", prefix: ["export"], usage: "exportar -- gam --companyID <id> --preparacion <archivo> --inventario <csv> --salida <xlsx> --simular", description: "Revisar o generar una exportación", requiresProvider: true },
@@ -61,6 +64,7 @@ const options = {
   "--catalogo": "--catalog",
   "--revision-cobertura": "--coverage-review",
   "--preparacion": "--preparation",
+  "--derivado": "--derived",
   "--inventario": "--existing",
   "--confirmar-inventario": "--confirm-inventory",
   "--empresa": "--companyID",
@@ -137,10 +141,10 @@ if (rawCommand === "ayuda") {
     fail("Falta el proveedor (gam, gomariz o mercaeleva)", command);
   } else if (command === "limpiar:almacen" && rawCommand !== "storage:clean" && normalized.includes("--aplicar") && normalized.includes("--dry-run")) {
     fail("No combines --aplicar y --simular", command);
-  } else if (normalized.includes("--aplicar") && (command !== "limpiar:almacen" || rawCommand === "storage:clean")) {
-    fail("--aplicar solo corresponde a limpiar:almacen", command);
+  } else if (normalized.includes("--aplicar") && ((command !== "limpiar:almacen" && command !== "intervenir") || rawCommand === "storage:clean")) {
+    fail("--aplicar solo corresponde a limpiar:almacen o intervenir", command);
   } else {
-    const cleaned = normalized.filter((argument) => argument !== "--aplicar");
+    const cleaned = command === "intervenir" ? normalized : normalized.filter((argument) => argument !== "--aplicar");
     if (selected.defaultSimulation && rawCommand !== "storage:clean" && !normalized.includes("--aplicar") && !cleaned.includes("--dry-run")) cleaned.push("--dry-run");
     const compile = spawnSync(process.execPath, [join(root, "scripts/run-build.mjs"), "--quiet"], {
       cwd: root, stdio: "inherit", windowsHide: true

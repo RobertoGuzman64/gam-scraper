@@ -51,7 +51,10 @@
     "review:coverage": "node scripts/herramientas.mjs review:coverage",
     "coverage": "node scripts/herramientas.mjs coverage",
     "publish": "node scripts/herramientas.mjs publish",
-    "check:catalog": "node scripts/herramientas.mjs check:catalog"
+    "check:catalog": "node scripts/herramientas.mjs check:catalog",
+    "intervenir": "node scripts/herramientas.mjs intervenir",
+    "intervenir:preparar": "node scripts/herramientas.mjs intervenir:preparar",
+    "intervenir:validar": "node scripts/herramientas.mjs intervenir:validar"
   },
   "dependencies": {
     "cheerio": "^1.0.0",

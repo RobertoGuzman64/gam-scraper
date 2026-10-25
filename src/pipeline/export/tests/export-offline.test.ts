@@ -32,8 +32,8 @@ const fixture = async (run: (paths: {
   source: string; preparation: string; inventory: string; out: string; root: string;
 }) => Promise<void>) => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-export-stage3-"));
-  const source = join(root, "scraped", "fase3-catalog.json");
-  const preparation = join(root, "prepared", "fase3-preparation.json");
+  const source = join(root, "scraped", "catalogo-ejemplo-catalog.json");
+  const preparation = join(root, "prepared", "catalogo-ejemplo-preparation.json");
   const inventory = join(root, "inventario.csv");
   const out = join(root, "altas.xlsx");
   const products = [
@@ -42,7 +42,7 @@ const fixture = async (run: (paths: {
   ];
   const now = new Date().toISOString();
   try {
-    await writeOutputs(join(root, "scraped"), "fase3", [{ category, products, discoveredProductUrls: 4, failures: [] }], now, now);
+    await writeOutputs(join(root, "scraped"), "catalogo-ejemplo", [{ category, products, discoveredProductUrls: 4, failures: [] }], now, now);
     await prepareSavedCatalog({ providerId: "gam", source, out: preparation, dryRun: false, compare: null });
     await writeFile(inventory, "companyID,reference\n45,11111\n");
     await run({ source, preparation, inventory, out, root });

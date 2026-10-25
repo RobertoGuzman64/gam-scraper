@@ -6,7 +6,7 @@ import { selectPublishableCatalog } from "../select-publishable.js";
 import { EDITORIAL_SOURCES, prepareEditorialCohort } from "./editorial-cohort-fixtures.js";
 
 const sources = EDITORIAL_SOURCES;
-const preparations = await prepareEditorialCohort("-f52");
+const preparations = await prepareEditorialCohort("-identity-holds");
 const gam = preparations.find((item) => item.source.providerId === "gam");
 assert.ok(gam);
 const get = (reference: string) => {

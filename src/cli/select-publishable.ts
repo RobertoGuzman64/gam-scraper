@@ -38,7 +38,7 @@ const ensureCoverageReview = async (
   const catalog = options.get("--catalog");
   const review = options.get("--coverage-review");
   if (!baseline || !catalog || baseline === catalog || (!allowPending && !review)) {
-    throw new Error("F50: la nueva cohorte requiere --baseline, --catalog y --coverage-review aprobada");
+    throw new Error("Selección editorial GAM: la nueva cohorte requiere --baseline, --catalog y --coverage-review aprobada");
   }
   const [previous, current, previousText, currentText] = await Promise.all([
     readCanonicalCatalog(baseline), readCanonicalCatalog(catalog),
@@ -47,7 +47,7 @@ const ensureCoverageReview = async (
   if (current.providerId !== "gam" || previous.providerId !== "gam" ||
     sha(previousText) !== "945e218ad93782e868a50b8ecaad99e225242274d9a32ed7b8203cb426e6af87" ||
     sha(currentText) !== expectedGamSha) {
-    throw new Error("F50: el catálogo GAM o su línea base no coincide con la cohorte seleccionada");
+    throw new Error("Selección editorial GAM: el catálogo GAM o su línea base no coincide con la cohorte seleccionada");
   }
   const value: unknown = review ? JSON.parse(await readFile(review, "utf8")) : undefined;
   const report = assessNewGamCoverage(previous, current, sha(previousText), sha(currentText), value);
@@ -118,20 +118,20 @@ export const runSelectPublishable = async (args: readonly string[]): Promise<voi
   const preparations = await Promise.all(paths.map(({ providerId, path }) => readOfflinePreparation(path, providerId)));
   const selection = selectPublishableCatalog(preparations);
   const isNew = isNewEditorialCohort(preparations);
-  console.log(`SELECCIÓN EDITORIAL ${isNew ? "F50" : "F48"} | originales ${selection.totals.original} | publicables ${selection.totals.publishable} | excluidos ${selection.totals.excluded} | quality review ${selection.totals.review}`);
+  console.log(`SELECCIÓN EDITORIAL ${isNew ? "ACTUALIZADA" : "BASE"} | originales ${selection.totals.original} | publicables ${selection.totals.publishable} | excluidos ${selection.totals.excluded} | quality review ${selection.totals.review}`);
   for (const excluded of selection.exclusions) console.log(`  Excluida ${excluded.providerId}:${excluded.reference} | ${excluded.reason}`);
   const coverageOptions = ["--baseline", "--catalog", "--coverage-review"] as const;
   if (isNew) {
     const supplied = coverageOptions.filter((key) => options.has(key));
     if (!dryRun || supplied.length) {
       const source = preparations.find((item) => item.source.providerId === "gam");
-      if (!source) throw new Error("F50: preparación GAM no encontrada");
+      if (!source) throw new Error("Selección editorial GAM: preparación GAM no encontrada");
       await ensureCoverageReview(options, source.source.catalogSha256, dryRun);
     } else {
       console.log("  Cobertura GAM pendiente: 4 ausencias y 24 cambios sin revisión aportada");
     }
   } else if (coverageOptions.some((key) => options.has(key))) {
-    throw new Error("La revisión F50 solo corresponde a la nueva cohorte");
+    throw new Error("La revisión de cobertura solo corresponde a la nueva cohorte");
   }
   if (dryRun) {
     console.log("  Ningún archivo escrito");

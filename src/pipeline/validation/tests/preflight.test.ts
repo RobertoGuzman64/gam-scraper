@@ -56,7 +56,7 @@ const check = (dir: string, providerId = "mercaeleva") => validateCatalogPublica
 });
 
 test("valida lote coherente con referencias reales y marca los pendientes", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "eq-f7-"));
+  const dir = await mkdtemp(join(tmpdir(), "eq-preflight-"));
   try {
     const batch = await createBatch(dir);
     const result = await check(dir);
@@ -125,7 +125,7 @@ test("preflight acepta precios ausentes para create/many pero Excel excluye esas
 });
 
 test("rechaza productos inconsistentes, catálogos incompletos, mezclas y fechas antiguas", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "eq-f7-fail-"));
+  const dir = await mkdtemp(join(tmpdir(), "eq-preflight-invalid-"));
   try {
     const batch = await createBatch(dir);
     await writeFile(batch.paths.csv, `providerId,url,reference\nmercaeleva,${record.url},DISTINTA\n`);
@@ -147,7 +147,7 @@ test("rechaza productos inconsistentes, catálogos incompletos, mezclas y fechas
 });
 
 test("impide generar Excel si se altera el CSV después de preparar la extracción", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "eq-f7-export-"));
+  const dir = await mkdtemp(join(tmpdir(), "eq-preflight-export-"));
   try {
     const batch = await createBatch(dir);
     const inventory = join(dir, "inventory.csv");
@@ -167,7 +167,7 @@ test("impide generar Excel si se altera el CSV después de preparar la extracci�
 });
 
 test("preflight separa calidad ready de importabilidad create/many sin exportar candidatos incompatibles", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "eq-f4-contract-"));
+  const dir = await mkdtemp(join(tmpdir(), "eq-preflight-contract-"));
   try {
     const batch = await createBatch(dir);
     const original = batch.preparation.products[0];
@@ -208,7 +208,7 @@ test("preflight separa calidad ready de importabilidad create/many sin exportar 
 });
 
 test("preflight comprueba ready/review declarados sin invalidar preparaciones históricas sin totales", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "eq-f4-totals-"));
+  const dir = await mkdtemp(join(tmpdir(), "eq-preflight-totals-"));
   try {
     const batch = await createBatch(dir);
     const preparationText = JSON.stringify({ ...batch.preparation, totals: { ready: 0, review: 1 } });

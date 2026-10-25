@@ -42,6 +42,7 @@ Los documentos de origen, los manifests y los datos de preparación deben perman
 - Un estado de publicación `complete` acredita coherencia del proceso local, **no** que el portal haya enumerado todas las fichas existentes.
 - Una diferencia de URL, imágenes, textos o especificaciones puede requerir revisión editorial aunque no cambie el número de productos.
 - Preservar la imagen principal propia de cada ficha; evitar fotografías de productos relacionados como si fueran parte de su galería.
+- **Fidelidad de imágenes a la fuente vigente:** si el proveedor deja de exponer una URL, no restaurarla desde históricos aunque aún funcione. No exigir recuentos constantes de fotos entre campañas. Si la fuente actual sí expone una imagen que el scraper omite, comprobar el adaptador; no inventar ni conservar URL externas por conveniencia.
 
 ## Calidad y decisiones editoriales
 
@@ -58,4 +59,6 @@ La selección editorial crea productos publicables y un resumen de exclusiones *
 - Ninguna exportación realiza altas, cambios ni bajas en el backend; solo genera un artefacto revisable.
 - No copiar IDs de categoría o atributos de otra empresa ni presuponer que los snapshots locales reflejan la base de datos activa.
 
-Para operativa y criterios de aceptación consultar [Validación](VALIDACION.md) y [Objetivos](OBJETIVOS_SCRAPER.md).
+Las correcciones textuales puntuales se gestionan, cuando proceda, mediante [intervenciones manuales por campaña](INTERVENCIONES_CAMPANA.md), con origen intacto y sin promoción editorial automática.
+
+Para el flujo ordinario de **todos los proveedores registrados** consultar [Campañas completas](CAMPANAS.md); para los criterios de aceptación ver [Validación](VALIDACION.md) y [Objetivos](OBJETIVOS_SCRAPER.md).

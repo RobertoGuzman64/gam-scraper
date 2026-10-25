@@ -40,13 +40,13 @@ const withCatalog = async (run: (paths: {
   }
 ]): Promise<void> => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-stage3-"));
-  const source = join(root, "scraped", "fase3-catalog.json");
-  const preparation = join(root, "prepared", "fase3-preparation.json");
+  const source = join(root, "scraped", "catalogo-ejemplo-catalog.json");
+  const preparation = join(root, "prepared", "catalogo-ejemplo-preparation.json");
   const inventory = join(root, "inventory.csv");
   const now = new Date().toISOString();
   const result: CategoryScrapeResult = { category, discoveredProductUrls: products.length, products, failures: [] };
   try {
-    await writeOutputs(join(root, "scraped"), "fase3", [result], now, now);
+    await writeOutputs(join(root, "scraped"), "catalogo-ejemplo", [result], now, now);
     await prepareSavedCatalog({ providerId: products[0]?.providerId ?? "gam", source, out: preparation, dryRun: false, compare: null });
     await writeFile(inventory, "companyID,reference\n45,11111\n");
     await run({ root, source, preparation, inventory });
@@ -155,7 +155,7 @@ test("catálogos de los tres proveedores se verifican sin convertir review en p�
 
 test("validate resuelve el catálogo original al validar una preparación de nombre diferente", async () => {
   await withCatalog(async ({ root, preparation }) => {
-    const renamed = join(root, "prepared", "fase3-alturas-preparation.json");
+    const renamed = join(root, "prepared", "catalogo-ejemplo-alturas-preparation.json");
     await rename(preparation, renamed);
     await rename(offlinePreparationManifestPath(preparation), offlinePreparationManifestPath(renamed));
     const previousLog = console.log;

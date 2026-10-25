@@ -13,7 +13,7 @@ export const assessNewGamCoverage = (
   decision: unknown
 ): CoverageReview => {
   if (baseline.providerId !== "gam" || current.providerId !== "gam") {
-    throw new Error("F50: la revisión de cobertura corresponde únicamente a GAM");
+    throw new Error("Cobertura GAM: la revisión de cobertura corresponde únicamente a GAM");
   }
   const difference = compareCanonicalCoverage(baseline, current);
   const report = createCoverageReview(baseline, current, baselineSha256, currentSha256);
@@ -21,7 +21,7 @@ export const assessNewGamCoverage = (
   if (difference.added.length !== 0 || report.missing.length !== missingReferences.length || report.changed.length !== 24 ||
     missing.size !== missingReferences.length ||
     missingReferences.some((reference) => !missing.has(reference))) {
-    throw new Error("F50: la cobertura no coincide con las cuatro ausencias y los 24 cambios observados");
+    throw new Error("Cobertura GAM: la cobertura no coincide con las cuatro ausencias y los 24 cambios observados");
   }
   if (decision !== undefined) verifyCoverageReview(decision, report);
   return report;

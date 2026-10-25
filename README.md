@@ -32,22 +32,23 @@ npm run ayuda
 
 Ejecutar desde la raíz del repositorio. El separador `--` permite pasar argumentos a la herramienta.
 
-| Comando                                                                                                                                         | Qué hace                                             |
-| ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `npm run ayuda`                                                                                                                                 | Enumera las herramientas sin compilar.               |
-| `npm run ayuda -- opciones`                                                                                                                     | Muestra las opciones españolas y sus equivalentes.   |
-| `npm run ayuda -- preparar`                                                                                                                     | Muestra el uso de un comando concreto.               |
-| `npm run extraer -- gam`                                                                                                                        | Extrae GAM; admite también `gomariz` y `mercaeleva`. |
-| `npm run extraer:todos -- --simular`                                                                                                            | Muestra el plan del lote sin ejecutar extracciones.  |
-| `npm run extraer:todos -- --proveedores gam,gomariz`                                                                                            | Ejecuta los proveedores indicados en secuencia.      |
-| `npm run preparar -- gam --origen <catalogo-catalog.json> --simular`                                                                            | Prepara sin escribir una nueva salida.               |
-| `npm run validar -- gam`                                                                                                                        | Comprueba una publicación del proveedor.             |
-| `npm run cobertura -- --anterior <anterior-catalog.json> --actual <actual-catalog.json> --simular`                                              | Analiza ausencias y cambios sin crear informe.       |
-| `npm run seleccionar -- --gam <gam-preparation.json> --gomariz <gomariz-preparation.json> --mercaeleva <mercaeleva-preparation.json> --simular` | Simula la selección editorial.                       |
-| `npm run limpiar:almacen`                                                                                                                       | **Solo simula** la limpieza.                         |
-| `npm run exportar -- --help`                                                                                                                    | Consulta el contrato de exportación opcional.        |
+| Comando                                                                                                                                         | Qué hace                                                                                 |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `npm run ayuda`                                                                                                                                 | Enumera las herramientas sin compilar.                                                   |
+| `npm run ayuda -- opciones`                                                                                                                     | Muestra las opciones españolas y sus equivalentes.                                       |
+| `npm run ayuda -- preparar`                                                                                                                     | Muestra el uso de un comando concreto.                                                   |
+| `npm run extraer:todos`                                                                                                                         | **Campaña ordinaria: extrae todos los proveedores registrados.**                         |
+| `npm run extraer -- gam`                                                                                                                        | Ejecución individual auxiliar para diagnóstico; admite también `gomariz` y `mercaeleva`. |
+| `npm run extraer:todos -- --simular`                                                                                                            | Muestra el plan del lote sin ejecutar extracciones.                                      |
+| `npm run extraer:todos -- --proveedores gam,gomariz`                                                                                            | Lote parcial **solo auxiliar**; no acredita una campaña completa.                        |
+| `npm run preparar -- gam --origen <catalogo-catalog.json> --simular`                                                                            | Prepara sin escribir una nueva salida.                                                   |
+| `npm run validar -- gam`                                                                                                                        | Comprueba una publicación del proveedor.                                                 |
+| `npm run cobertura -- --anterior <anterior-catalog.json> --actual <actual-catalog.json> --simular`                                              | Analiza ausencias y cambios sin crear informe.                                           |
+| `npm run seleccionar -- --gam <gam-preparation.json> --gomariz <gomariz-preparation.json> --mercaeleva <mercaeleva-preparation.json> --simular` | Simula la selección editorial.                                                           |
+| `npm run limpiar:almacen`                                                                                                                       | **Solo simula** la limpieza.                                                             |
+| `npm run exportar -- --help`                                                                                                                    | Consulta el contrato de exportación opcional.                                            |
 
-**Precauciones:** `--paginas` limita la extracción y **no** acredita cobertura completa. `limpiar:almacen` solo elimina cuando recibe `--aplicar`; no usar esa opción sin revisar previamente la simulación. La publicación editorial requiere además las evidencias y opciones de cobertura que correspondan a los datos de entrada.
+**Campañas nuevas:** ejecutar siempre `npm run extraer:todos` sin `--proveedores`, revisar que **todos** los proveedores registrados han completado el lote y seguir el [protocolo integral de campañas](docs/CAMPANAS.md). Las opciones por proveedor o subconjunto se reservan a diagnóstico y mantenimiento. **Precauciones:** `--paginas` limita la extracción y **no** acredita cobertura completa. `limpiar:almacen` solo elimina cuando recibe `--aplicar`; no usar esa opción sin revisar previamente la simulación. La publicación editorial requiere además las evidencias y opciones de cobertura que correspondan a los datos de entrada.
 
 Los comandos ingleses anteriores (`scrape`, `validate`, `prepare:catalog`, `select:publishable`, etc.) continúan disponibles por compatibilidad; se recomiendan los españoles. Para conocer opciones especializadas, usar `npm run ayuda` y la ayuda del comando.
 
@@ -99,6 +100,8 @@ La validación local confirma integridad y coherencia, **no** que un portal haya
 - [Objetivos y alcance](docs/OBJETIVOS_SCRAPER.md): prioridades y criterios de aceptación.
 - [Arquitectura](docs/ARQUITECTURA.md): módulos, responsabilidades y extensibilidad.
 - [Reglas de datos](docs/SCRAPER_DATA_RULES.md): contratos, origen, preservación y revisión editorial.
+- [Protocolo de campañas completas](docs/CAMPANAS.md): extracción global obligatoria, validación de todos los proveedores, intervenciones excepcionales y entrega acreditada.
+- [Intervenciones manuales por campaña](docs/INTERVENCIONES_CAMPANA.md): diagnóstico, simulación, aplicación bajo autorización y validación de derivados.
 - [Validación](docs/VALIDACION.md): verificaciones, códigos de salida y evidencias.
 - [Operación y despliegue](docs/DESPLIEGUE_AUTOMATICO.md): ejecución manual o programada y seguridad operacional.
 - [Integración con Equipzilla](docs/EQUIPZILLA_INTEGRATION.md): límites del receptor y exportaciones auxiliares.

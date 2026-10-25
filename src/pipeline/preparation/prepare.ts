@@ -10,6 +10,7 @@ import type { OfflineDiagnostics, PreparationComparison } from "../../catalog/im
 import { parseOfflinePreparation } from "../../catalog/import/preparation/offline-document.js";
 import type { OfflinePreparation } from "../../catalog/import/preparation/offline-document.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
+import { readAppliedIntervention } from "../../infrastructure/filesystem/intervention-derived.js";
 import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation-inputs.js";
 import { offlinePreparationManifest, offlinePreparationManifestPath, readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
 
@@ -19,6 +20,7 @@ export type PrepareOptions = {
   readonly out: string;
   readonly dryRun: boolean;
   readonly compare: string | null;
+  readonly originalSource?: string;
 };
 
 export type PrepareResult = {
@@ -49,17 +51,25 @@ const writeExclusive = async (files: readonly { path: string; content: string }[
 export const prepareSavedCatalog = async (options: PrepareOptions): Promise<PrepareResult> => {
   const source = resolve(options.source);
   const out = resolve(options.out);
-  if (!out.endsWith("-preparation.json") || !basename(out).startsWith(basename(source).slice(0, -"-catalog.json".length))) {
+  const isDerived = options.originalSource !== undefined;
+  if (!out.endsWith("-preparation.json") ||
+    (!isDerived && !basename(out).startsWith(basename(source).slice(0, -"-catalog.json".length)))) {
     throw new Error("La salida debe ser -preparation.json y conservar el prefijo del catálogo de origen");
   }
-  if (dirname(out) === dirname(source)) throw new Error("La preparación debe guardarse separada del catálogo de origen");
-  const catalog = await readCanonicalCatalog(source);
-  if (catalog.providerId !== options.providerId) throw new Error("El proveedor solicitado no coincide con el catálogo canónico");
-  const sourceText = await readFile(source, "utf8");
-  const sourceHash = sha(sourceText);
-  const manifest: unknown = JSON.parse(await readFile(join(dirname(source), `${catalog.prefix}-catalog.manifest.json`), "utf8"));
-  if (!manifest || typeof manifest !== "object" || !("catalogSha256" in manifest) || manifest.catalogSha256 !== sourceHash) {
-    throw new Error("El catálogo ha cambiado durante la lectura de la preparación");
+  if (dirname(out) === dirname(source) ||
+    (options.originalSource !== undefined && dirname(out) === dirname(resolve(options.originalSource)))) {
+    throw new Error("La preparación debe guardarse separada del catálogo de origen");
+  }
+  const derived = options.originalSource === undefined
+    ? null : await readAppliedIntervention(source, options.originalSource);
+  const catalog = derived?.catalog ?? await readCanonicalCatalog(source);
+  if (catalog.providerId !== options.providerId) throw new Error("El proveedor solicitado no coincide con el catálogo de origen");
+  const sourceHash = derived?.catalogSha256 ?? sha(await readFile(source, "utf8"));
+  if (derived === null) {
+    const manifest: unknown = JSON.parse(await readFile(join(dirname(source), `${catalog.prefix}-catalog.manifest.json`), "utf8"));
+    if (!manifest || typeof manifest !== "object" || !("catalogSha256" in manifest) || manifest.catalogSha256 !== sourceHash) {
+      throw new Error("El catálogo ha cambiado durante la lectura de la preparación");
+    }
   }
   const { catalog: target, fingerprints } = await loadPreparationInputs();
   const prepared = prepareImportBatch(catalog.products, target);
@@ -67,7 +77,8 @@ export const prepareSavedCatalog = async (options: PrepareOptions): Promise<Prep
     version: 1, quality: "complete", published: true, preparedAt: new Date().toISOString(),
     source: {
       providerId: catalog.providerId, prefix: catalog.prefix, scope: catalog.scope,
-      catalogSha256: sourceHash, productCount: catalog.productCount
+      catalogSha256: sourceHash, productCount: catalog.productCount,
+      ...(derived === null ? {} : { intervention: derived.provenance })
     },
     fingerprints,
     totals: prepared.totals,
@@ -84,6 +95,10 @@ export const prepareSavedCatalog = async (options: PrepareOptions): Promise<Prep
   const manifestFile = offlinePreparationManifestPath(out);
   const comparisonFile = comparison ? out.slice(0, -"-preparation.json".length) + "-comparison.json" : null;
   if (!options.dryRun) {
+    if (derived !== null && options.originalSource !== undefined) {
+      const current = await readAppliedIntervention(source, options.originalSource);
+      if (current.catalogSha256 !== sourceHash) throw new Error("El origen derivado cambió durante la preparación");
+    }
     await mkdir(dirname(out), { recursive: true });
     const rawPreparation = JSON.stringify(preparation, null, 2);
     const files = [

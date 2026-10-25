@@ -23,11 +23,11 @@ test("una sustitución que mantenga el contador no oculta pérdidas", () => {
   const removed = previous.products.find((record) => record.reference === "6942");
   assert.ok(removed);
   const products = previous.products.map((product) => product === removed
-    ? { ...product, reference: "NUEVA-F49", url: "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/9000-nueva-f49" }
+    ? { ...product, reference: "NUEVA-REF", url: "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/9000-nueva-ref" }
     : product);
   const result = compareCanonicalCoverage(previous, parseCanonicalCatalog({ ...previous, products }));
   assert.deepEqual(result.missing.map((product) => product.reference), ["6942"]);
-  assert.deepEqual(result.added.map((product) => product.reference), ["NUEVA-F49"]);
+  assert.deepEqual(result.added.map((product) => product.reference), ["NUEVA-REF"]);
 });
 
 test("rechaza proveedor o ámbito distinto", () => {

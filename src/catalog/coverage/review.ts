@@ -1,8 +1,8 @@
 import type { CanonicalCatalog } from "../canonical-catalog.js";
 import { compareCanonicalCoverage } from "./compare.js";
 import { auditChangedProduct, changedFieldChecks } from "./change-audit.js";
-import { hasGamF50GalleryCorrection } from "../editorial/gam-f50-gallery.js";
-import { hasGamF50ShortDescriptionCorrection } from "../editorial/gam-f50-description.js";
+import { hasGamGalleryCorrection } from "../editorial/gam-verified-gallery.js";
+import { hasGamShortDescriptionCorrection } from "../editorial/gam-verified-description.js";
 import type { ChangedFieldCheck, ChangedProductAudit } from "./change-audit.js";
 
 export type CoverageReview = {
@@ -79,14 +79,14 @@ const isSourceListingEvidence = (url: string, originalUrl: string): boolean => {
   }
 };
 
-const f50Sha256 = "7f31ebee51f573401d6f20bbe850751c46ff1659a5a91ffcf4302e82ed11e11d";
-const excludedF50Changes = new Set(["6002", "6003", "6004"]);
+const verifiedGamCatalogSha256 = "7f31ebee51f573401d6f20bbe850751c46ff1659a5a91ffcf4302e82ed11e11d";
+const excludedGamChangeReferences = new Set(["6002", "6003", "6004"]);
 
 const validFieldChecks = (
   value: unknown,
   required: readonly ChangedFieldCheck[],
   reference: string,
-  f50: boolean,
+  hasVerifiedGamCorrections: boolean,
   excluded: boolean
 ): boolean => {
   if (!Array.isArray(value) || value.length !== required.length) return false;
@@ -96,9 +96,9 @@ const validFieldChecks = (
       !required.some((item) => item.field === entry.field) ||
       !(excluded ? entry.decision === "rechazado" :
         entry.decision === "aceptado" ||
-        (f50 && entry.decision === "corregido" && (
-          (entry.field === "images" && hasGamF50GalleryCorrection(reference)) ||
-          (entry.field === "shortDescription" && hasGamF50ShortDescriptionCorrection(reference))
+        (hasVerifiedGamCorrections && entry.decision === "corregido" && (
+          (entry.field === "images" && hasGamGalleryCorrection(reference)) ||
+          (entry.field === "shortDescription" && hasGamShortDescriptionCorrection(reference))
         ))) ||
       typeof entry.reason !== "string" || entry.reason.trim().length < 15 ||
       !validEvidence(entry.evidenceUrls)) return false;
@@ -113,14 +113,14 @@ const isReviewed = (
   originalUrl: string,
   requiredChecks: readonly ChangedFieldCheck[] = [],
   reference = "",
-  f50 = false
+  hasVerifiedGamCorrections = false
 ): boolean => {
   if (!isRecord(value) || typeof value.reason !== "string" || value.reason.trim().length < 15 ||
     !validEvidence(value.evidenceUrls)) return false;
   if (kind === "changed") {
-    const excluded = f50 && excludedF50Changes.has(reference) && value.decision === "rechazado";
+    const excluded = hasVerifiedGamCorrections && excludedGamChangeReferences.has(reference) && value.decision === "rechazado";
     return (value.decision === "aceptado" || excluded) &&
-      validFieldChecks(value.fieldChecks, requiredChecks, reference, f50, excluded);
+      validFieldChecks(value.fieldChecks, requiredChecks, reference, hasVerifiedGamCorrections, excluded);
   }
   if (value.decision === "retirado") return true;
   return value.decision === "ausencia_listado_acreditada" &&
@@ -159,7 +159,7 @@ export const verifyCoverageReview = (
           !Array.isArray(entry.fields) || JSON.stringify(entry.fields) !== JSON.stringify("fields" in item ? item.fields : []) ||
           JSON.stringify(entry.audit) !== JSON.stringify("audit" in item ? item.audit : null)
         )) || !isReviewed(entry, kind, item.url, "fieldChecks" in item ? item.fieldChecks : [],
-          item.reference, expected.currentSha256 === f50Sha256)) {
+          item.reference, expected.currentSha256 === verifiedGamCatalogSha256)) {
         throw new Error(`Revisión de cobertura pendiente o incoherente: ${kind}:${item.reference}`);
       }
     }

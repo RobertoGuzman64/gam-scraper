@@ -6,7 +6,7 @@ import { EDITORIAL_PROVIDERS, EDITORIAL_SOURCES, prepareEditorialCohort } from "
 
 const sourceFiles = EDITORIAL_SOURCES;
 const sources = EDITORIAL_PROVIDERS;
-const preparations = await prepareEditorialCohort("-f48");
+const preparations = await prepareEditorialCohort("-base");
 
 const replaceEntry = (providerId: string, reference: string, transform: (
   item: (typeof preparations)[number]["products"][number]

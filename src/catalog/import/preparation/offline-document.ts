@@ -1,12 +1,20 @@
 import type { PreparedProduct } from "./contracts.js";
 import { parsePreparation } from "./preparation-document.js";
 
+export type InterventionProvenance = {
+  readonly campaign: string;
+  readonly sourceCatalogSha256: string;
+  readonly planSha256: string;
+  readonly derivedCatalogSha256: string;
+};
+
 export type PreparationSource = {
   readonly providerId: string;
   readonly prefix: string;
   readonly scope: string;
   readonly catalogSha256: string;
   readonly productCount: number;
+  readonly intervention?: InterventionProvenance;
 };
 
 export type PreparationFingerprints = {
@@ -32,6 +40,21 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 const isSha = (value: unknown): value is string => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 
+const parseInterventionProvenance = (value: unknown, catalogSha256: string): InterventionProvenance => {
+  if (!isRecord(value) || Object.keys(value).length !== 4 ||
+    typeof value.campaign !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(value.campaign) ||
+    !isSha(value.sourceCatalogSha256) || !isSha(value.planSha256) ||
+    !isSha(value.derivedCatalogSha256) || value.derivedCatalogSha256 !== catalogSha256) {
+    throw new Error("Procedencia de intervención de preparación inválida");
+  }
+  return {
+    campaign: value.campaign,
+    sourceCatalogSha256: value.sourceCatalogSha256,
+    planSha256: value.planSha256,
+    derivedCatalogSha256: value.derivedCatalogSha256
+  };
+};
+
 export const parseOfflinePreparation = (value: unknown, providerId: string): OfflinePreparation => {
   const parsed = parsePreparation(value, providerId);
   if (!isRecord(value) || value.version !== 1 || !isRecord(value.source) || !isRecord(value.fingerprints) ||
@@ -53,11 +76,14 @@ export const parseOfflinePreparation = (value: unknown, providerId: string): Off
     parsed.products.some((entry) => entry.status === "ready" ? entry.issues.length !== 0 : entry.issues.length === 0)) {
     throw new Error("Preparación offline inválida, incompleta o con metadatos incoherentes");
   }
+  const intervention = value.source.intervention === undefined
+    ? undefined : parseInterventionProvenance(value.source.intervention, value.source.catalogSha256);
   return {
     version: 1, quality: "complete", published: true, preparedAt: value.preparedAt,
     source: {
       providerId, prefix: value.source.prefix, scope: value.source.scope,
-      catalogSha256: value.source.catalogSha256, productCount: value.source.productCount
+      catalogSha256: value.source.catalogSha256, productCount: value.source.productCount,
+      ...(intervention === undefined ? {} : { intervention })
     },
     fingerprints: {
       rulesVersion: 1, rulesSha256: value.fingerprints.rulesSha256,

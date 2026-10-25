@@ -6,6 +6,7 @@ import { buildProductIdentity } from "../../catalog/identity.js";
 import { prepareImportBatch } from "../../catalog/import/preparation/prepare.js";
 import { validateCreateManyCandidate } from "../../catalog/import/preparation/import-validation.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
+import { readAppliedIntervention } from "../../infrastructure/filesystem/intervention-derived.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
 import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation-inputs.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
@@ -45,15 +46,20 @@ export const validateCanonicalSource = async (sourceFile: string, providerId: st
 };
 
 export const validateOfflinePreparation = async (
-  providerId: string, preparationFile: string, sourceFile: string, maxAgeHours: number | null = null
+  providerId: string, preparationFile: string, sourceFile: string, maxAgeHours: number | null = null,
+  originalSource?: string
 ): Promise<OfflineValidation> => {
   const path = resolve(sourceFile);
-  const canonical = await readCanonicalCatalog(path);
+  const derived = originalSource === undefined ? null : await readAppliedIntervention(path, originalSource);
+  const canonical = derived?.catalog ?? await readCanonicalCatalog(path);
   if (canonical.providerId !== providerId) throw new Error("La preparación y el catálogo pertenecen a proveedores distintos");
-  const [preparation, sourceRaw, inputs] = await Promise.all([
-    readOfflinePreparation(resolve(preparationFile), providerId), readFile(path, "utf8"), loadPreparationInputs()
+  const [preparation, inputs] = await Promise.all([
+    readOfflinePreparation(resolve(preparationFile), providerId), loadPreparationInputs()
   ]);
-  const sourceHash = sha(sourceRaw);
+  const sourceHash = derived?.catalogSha256 ?? sha(await readFile(path, "utf8"));
+  if (!isDeepStrictEqual(preparation.source.intervention, derived?.provenance)) {
+    throw new Error("La procedencia de la preparación no coincide con la intervención verificada");
+  }
   if (preparation.source.prefix !== canonical.prefix || preparation.source.scope !== canonical.scope ||
     preparation.source.catalogSha256 !== sourceHash || preparation.source.productCount !== canonical.productCount) {
     throw new Error("La preparación offline no corresponde exactamente al catálogo canónico seleccionado");

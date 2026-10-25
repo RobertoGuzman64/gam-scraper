@@ -42,17 +42,17 @@ const galleryCases: Readonly<Record<string, { readonly url: string; readonly ima
   }
 };
 
-export const hasGamF50GalleryCorrection = (reference: string): boolean =>
+export const hasGamGalleryCorrection = (reference: string): boolean =>
   Object.hasOwn(galleryCases, reference);
 
-export const curateGamF50Gallery = (product: ImportCandidate): ImportCandidate => {
+export const curateGamGallery = (product: ImportCandidate): ImportCandidate => {
   const item = product.reference ? galleryCases[product.reference] : undefined;
   if (product.providerId !== "gam" || !item) return product;
   const expectedImages = [item.image, ...contaminatedImages];
   if (product.sourceUrl !== item.url || product.image !== item.image ||
     product.images.length !== expectedImages.length ||
     product.images.some((url, index) => url !== expectedImages[index])) {
-    throw new Error(`GAM F50: galería distinta de la evidencia acreditada (${product.reference})`);
+    throw new Error(`Galería GAM: galería distinta de la evidencia acreditada (${product.reference})`);
   }
   return { ...product, images: [item.image] };
 };

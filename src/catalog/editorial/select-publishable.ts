@@ -1,6 +1,6 @@
 import { gamNewForkliftIdentityIssues } from "./gam-new-forklift-identity.js";
-import { curateGamF50Gallery } from "./gam-f50-gallery.js";
-import { curateGamF50Description } from "./gam-f50-description.js";
+import { curateGamGallery } from "./gam-verified-gallery.js";
+import { curateGamDescription } from "./gam-verified-description.js";
 import type { ImportCandidate } from "../import/preparation/contracts.js";
 import type { OfflinePreparation, PreparationSource } from "../import/preparation/offline-document.js";
 import { cohorts } from "./cohorts.js";
@@ -31,6 +31,9 @@ export type PublishableSelection = {
 
 export const selectPublishableCatalog = (preparations: readonly OfflinePreparation[]): PublishableSelection => {
   if (preparations.length < 3) throw new Error("Selección editorial: faltan proveedores");
+  if (preparations.some((preparation) => preparation.source.intervention !== undefined)) {
+    throw new Error("Selección editorial: los catálogos intervenidos requieren una autorización editorial específica; no son publicables por defecto");
+  }
   const snapshots = cohorts.find((cohort) => preparations.length === Object.keys(cohort).length &&
     preparations.every((item) => cohort[item.source.providerId]?.sha256 === item.source.catalogSha256 &&
       cohort[item.source.providerId]?.count === item.source.productCount));
@@ -83,7 +86,7 @@ export const selectPublishableCatalog = (preparations: readonly OfflinePreparati
         } else {
           if (identityIssues.length) throw new Error(`Selección editorial: identidad GAM sin decisión acreditada (${key})`);
           publishable.push(newCohort
-            ? curateGamF50Description(curateGamF50Gallery(entry.product))
+            ? curateGamDescription(curateGamGallery(entry.product))
             : entry.product);
         }
       } else {

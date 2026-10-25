@@ -8,17 +8,17 @@ const shortDescriptionCase = {
   closingPhrase: "diferentes entornos industriales."
 } as const;
 
-export const hasGamF50ShortDescriptionCorrection = (reference: string): boolean =>
+export const hasGamShortDescriptionCorrection = (reference: string): boolean =>
   reference === shortDescriptionCase.reference;
 
-export const curateGamF50Description = (product: ImportCandidate): ImportCandidate => {
+export const curateGamDescription = (product: ImportCandidate): ImportCandidate => {
   if (product.providerId !== "gam" || product.reference !== shortDescriptionCase.reference) return product;
   const description = product.description;
   if (product.sourceUrl !== shortDescriptionCase.sourceUrl || !description ||
     createHash("sha256").update(description).digest("hex") !== shortDescriptionCase.sha256) {
-    throw new Error(`GAM F50: resumen distinto de la evidencia acreditada (${product.reference})`);
+    throw new Error(`Descripción GAM: resumen distinto de la evidencia acreditada (${product.reference})`);
   }
   const end = description.indexOf(shortDescriptionCase.closingPhrase);
-  if (end < 0) throw new Error(`GAM F50: frase de cierre ausente (${product.reference})`);
+  if (end < 0) throw new Error(`Descripción GAM: frase de cierre ausente (${product.reference})`);
   return { ...product, description: description.slice(0, end + shortDescriptionCase.closingPhrase.length) };
 };

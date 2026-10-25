@@ -37,7 +37,7 @@ console.log('OK:', id);
 `;
 
 const withFolder = async (fn: (folder: string) => Promise<void>): Promise<void> => {
-  const folder = await mkdtemp(join(tmpdir(), "eq-batch-f4-"));
+  const folder = await mkdtemp(join(tmpdir(), "eq-batch-run-"));
   try { await fn(folder); } finally { await rm(folder, { recursive: true, force: true }); }
 };
 
