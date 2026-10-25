@@ -1,7 +1,49 @@
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { clearLine, cursorTo } from "node:readline";
 import { run } from "node:test";
+
+const parseOptions = (argumentsList) => {
+  let concurrency;
+  let report;
+
+  for (let index = 0; index < argumentsList.length; index += 1) {
+    const argument = argumentsList[index];
+    const concurrencyValue = argument.startsWith("--concurrencia=")
+      ? argument.slice("--concurrencia=".length)
+      : argument === "--concurrencia"
+        ? argumentsList[++index]
+        : null;
+
+    if (concurrencyValue !== null) {
+      if (!/^[1-9]\d*$/.test(concurrencyValue ?? "") || Number(concurrencyValue) > 64) {
+        throw new Error("--concurrencia requiere un entero entre 1 y 64");
+      }
+      concurrency = Number(concurrencyValue);
+      continue;
+    }
+
+    const reportValue = argument.startsWith("--medicion=")
+      ? argument.slice("--medicion=".length)
+      : argument === "--medicion"
+        ? argumentsList[++index]
+        : null;
+
+    if (reportValue !== null) {
+      if (!reportValue || reportValue.startsWith("--")) throw new Error("--medicion requiere una ruta JSON");
+      report = reportValue;
+      continue;
+    }
+
+    throw new Error(`Opción de pruebas desconocida: ${argument}`);
+  }
+
+  return { concurrency, report };
+};
+
+const DEFAULT_CONCURRENCY = 6;
+const options = parseOptions(process.argv.slice(2));
+const effectiveConcurrency = options.concurrency ?? DEFAULT_CONCURRENCY;
 
 const collectTests = (directory) => readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
   const path = join(directory, entry.name);
@@ -23,6 +65,7 @@ const skippedTests = [];
 const todoTests = [];
 const standardErrors = new Map();
 const counts = { passed: 0, failed: 0, skipped: 0, todo: 0 };
+const profile = options.report ? { tests: [], files: [] } : null;
 
 const clearProgress = () => {
   if (!interactive) return;
@@ -59,7 +102,25 @@ const describeOmission = ({ name, file, line, reason }) => {
 let summary;
 renderProgress();
 
-for await (const event of run({ files })) {
+for await (const event of run({ files, concurrency: effectiveConcurrency })) {
+  if (profile && (event.type === "test:pass" || event.type === "test:fail") && event.data.details?.type === "test") {
+    profile.tests.push({
+      archivo: event.data.file ? relative(process.cwd(), event.data.file) : "",
+      prueba: event.data.name,
+      tiempo_ms: event.data.details.duration_ms ?? 0,
+      estado: event.type === "test:fail" ? "fallido" : event.data.skip ? "omitido" : event.data.todo ? "todo" : "correcto"
+    });
+  }
+
+  if (profile && event.type === "test:summary" && event.data.file) {
+    profile.files.push({
+      archivo: relative(process.cwd(), event.data.file),
+      tiempo_ms: event.data.duration_ms ?? 0,
+      correctos: event.data.counts?.passed ?? 0,
+      fallidos: event.data.counts?.failed ?? 0
+    });
+  }
+
   if (event.type === "test:stderr") {
     if (event.data.file) {
       const file = resolve(event.data.file);
@@ -104,6 +165,24 @@ for await (const event of run({ files })) {
 
 clearProgress();
 if (!summary) throw new Error("La ejecución de pruebas terminó sin resumen");
+
+if (profile) {
+  writeFileSync(options.report, JSON.stringify({
+    modo: options.concurrency === undefined ? "predeterminado" : "concurrencia configurada",
+    concurrencia: effectiveConcurrency,
+    resumen: {
+      correcto: summary.success,
+      archivos: files.length,
+      correctos: summary.counts.passed,
+      fallidos: summary.counts.failed,
+      omitidos: summary.counts.skipped,
+      pendientes: summary.counts.todo,
+      tiempo_ms: summary.duration_ms
+    },
+    archivos: profile.files,
+    pruebas: profile.tests
+  }, null, 2));
+}
 
 for (const failure of errors) {
   const location = failure.file ? ` (${failure.file}${failure.line ? `:${failure.line}` : ""})` : "";

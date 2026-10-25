@@ -26,6 +26,7 @@
     "consola": "node scripts/herramientas.mjs consola",
     "compilar": "node scripts/run-build.mjs",
     "probar": "node scripts/run-build.mjs --quiet && node scripts/run-tests.mjs",
+    "medir:ejecucion": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/medir-ejecucion.ps1",
     "limpiar:compilado": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build": "node scripts/run-build.mjs",
     "test": "node scripts/run-build.mjs --quiet && node scripts/run-tests.mjs",
