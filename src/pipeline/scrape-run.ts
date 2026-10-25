@@ -1,11 +1,11 @@
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
 import type { ScraperProvider } from "../scraping/provider.js";
 import type { CategoryConfig, CategoryScrapeResult, ScrapeOptions, Summary } from "../contracts/scraping.js";
 
 import { writeCategoriesCsv, writeGroupedOutputs, writeOutputs } from "./publication/publish.js";
 
-import { scrapeCategory, type ProductPageCache } from "../scraping/engine/scrape-category.js";
+import type { ProductPageCache } from "../scraping/engine/scrape-category.js";
+import { scrapeSafely } from "./scrape-run-category.js";
+import { readSummary, readFirstFailure } from "./scrape-run-summary.js";
 
 export type ScrapeRunSelection =
   | { readonly mode: "tree"; readonly rootUrl: string; readonly onlyCategories: boolean; readonly options: ScrapeOptions; readonly provider: ScraperProvider }
@@ -26,7 +26,7 @@ export type ScrapeRunSelection =
     readonly provider: ScraperProvider;
   };
 
-type ScrapeRunReporter = {
+export type ScrapeRunReporter = {
   readonly verbose: boolean;
   start(total: number): void;
   stage(stage: string, resource?: string): void;
@@ -48,71 +48,6 @@ const uniqueByUrl = (cats: readonly CategoryConfig[]): readonly CategoryConfig[]
     if (!map.has(c.url)) map.set(c.url, c);
   }
   return [...map.values()];
-};
-
-const isSummary = (value: unknown): value is Summary => {
-  if (typeof value !== "object" || value === null || !("totals" in value) ||
-      !("quality" in value) || !("startedAt" in value) || !("endedAt" in value)) return false;
-  if (typeof value.startedAt !== "string" || typeof value.endedAt !== "string") return false;
-  const totals = value.totals;
-  const quality = value.quality;
-  if (typeof totals !== "object" || totals === null || typeof quality !== "object" || quality === null) return false;
-  return "categories" in totals && typeof totals.categories === "number" &&
-    "scrapedProductsRaw" in totals && typeof totals.scrapedProductsRaw === "number" &&
-    "scrapedProducts" in totals && typeof totals.scrapedProducts === "number" &&
-    "failures" in totals && typeof totals.failures === "number" &&
-    "status" in quality && (quality.status === "complete" || quality.status === "partial" || quality.status === "blocked") &&
-    "reasons" in quality && Array.isArray(quality.reasons) && quality.reasons.every((reason: unknown) => typeof reason === "string");
-};
-
-const readSummary = async (outDir: string, outPrefix: string, startedAt: string): Promise<Summary | null> => {
-  try {
-    const content = await readFile(resolve(outDir, `${outPrefix}-summary.json`), "utf8");
-    const parsed: unknown = JSON.parse(content);
-    return isSummary(parsed) && parsed.startedAt === startedAt ? parsed : null;
-  } catch {
-    return null;
-  }
-};
-
-const readFirstFailure = async (outDir: string, outPrefix: string): Promise<string | null> => {
-  try {
-    const content = await readFile(resolve(outDir, `${outPrefix}-errors.json`), "utf8");
-    const parsed: unknown = JSON.parse(content);
-    if (typeof parsed !== "object" || parsed === null || !("failures" in parsed) || !Array.isArray(parsed.failures)) return null;
-    for (const failure of parsed.failures) {
-      if (typeof failure === "object" && failure !== null && "error" in failure && typeof failure.error === "string") return failure.error;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-};
-
-const scrapeSafely = async (
-  category: CategoryConfig,
-  options: ScrapeOptions,
-  provider: ScraperProvider,
-  cache: ProductPageCache,
-  reporter: ScrapeRunReporter,
-  position: number,
-  count: number
-): Promise<CategoryScrapeResult> => {
-  reporter.beginCategory(category, position, count);
-  let result: CategoryScrapeResult;
-  try {
-    result = await scrapeCategory(category, options, provider, cache, {
-      verbose: reporter.verbose,
-      onListingDone: (total) => reporter.listingDone(total),
-      onListingProgress: (pages, total, stage) => reporter.listingProgress(pages, total, stage),
-      onProductDone: (done, total) => reporter.productDone(done, total),
-      onFailure: (stage, url, reason) => reporter.failure(stage, url, reason)
-    });
-  } catch (error) {
-    result = { category, discoveredProductUrls: 0, products: [], failures: [{ url: category.url, error: error instanceof Error ? error.stack ?? error.message : String(error) }] };
-  }
-  reporter.endCategory(result);
-  return result;
 };
 
 export const runScrape = async (selection: ScrapeRunSelection, reporter: ScrapeRunReporter): Promise<boolean> => {
@@ -167,10 +102,11 @@ export const runScrape = async (selection: ScrapeRunSelection, reporter: ScrapeR
     const toScrape = uniqueByUrl(discovered);
     reporter.start(toScrape.length);
     reporter.stage("guardando categorías", options.outDir);
-    await writeCategoriesCsv(options.outDir, options.outPrefix, uniqueByUrl([selection.category, ...toScrape]));
+    const categoriesForCsv = uniqueByUrl([selection.category, ...toScrape]);
+    await writeCategoriesCsv(options.outDir, options.outPrefix, categoriesForCsv);
 
     if (selection.onlyCategories) {
-      reporter.categoriesSaved(uniqueByUrl([selection.category, ...toScrape]).length);
+      reporter.categoriesSaved(categoriesForCsv.length);
       return true;
     }
 
@@ -226,9 +162,10 @@ export const runScrape = async (selection: ScrapeRunSelection, reporter: ScrapeR
   }
 
   reporter.stage("guardando categorías", options.outDir);
-  await writeCategoriesCsv(options.outDir, options.outPrefix, uniqueByUrl(allDiscoveredForCsv));
+  const categoriesForCsv = uniqueByUrl(allDiscoveredForCsv);
+  await writeCategoriesCsv(options.outDir, options.outPrefix, categoriesForCsv);
   if (selection.onlyCategories) {
-    reporter.categoriesSaved(uniqueByUrl(allDiscoveredForCsv).length);
+    reporter.categoriesSaved(categoriesForCsv.length);
     return true;
   }
 
