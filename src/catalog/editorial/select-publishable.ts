@@ -68,6 +68,7 @@ type EditorialHold = {
   readonly providerId: string;
   readonly reference: string;
   readonly sourceUrl: string;
+  readonly currentSourceUrl: string;
   readonly reason: string;
   readonly evidenceUrls: readonly string[];
   readonly requiredIssues: readonly string[];
@@ -77,6 +78,7 @@ const identityHolds: readonly EditorialHold[] = [
   {
     providerId: "gam", reference: "6002",
     sourceUrl: "https://online.gamrentals.com/es/hyster/6002-carretilla-elevadora-electrica-hyster-j50xtg6",
+    currentSourceUrl: "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6002-carretilla-elevadora-electrica-hyster-j50xtg6",
     reason: "La carretilla Hyster J5.0XTLG6 se anuncia como Hyster, pero GAM publica YALE como marca técnica. Identidad no reconciliada; no corregir ni publicar sin evidencia",
     evidenceUrls: ["https://online.gamrentals.com/es/hyster/6002-carretilla-elevadora-electrica-hyster-j50xtg6"],
     requiredIssues: ["marca HYSTER en anuncio y YALE en ficha técnica"]
@@ -84,6 +86,7 @@ const identityHolds: readonly EditorialHold[] = [
   {
     providerId: "gam", reference: "6003",
     sourceUrl: "https://online.gamrentals.com/es/hyster/6003-carretilla-elevadora-electrica-hyster-j60xtg6",
+    currentSourceUrl: "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6003-carretilla-elevadora-electrica-hyster-j60xtg6",
     reason: "La carretilla Hyster J6.0XTLG6 se anuncia como Hyster, pero GAM publica YALE como marca técnica. Identidad no reconciliada; no corregir ni publicar sin evidencia",
     evidenceUrls: ["https://online.gamrentals.com/es/hyster/6003-carretilla-elevadora-electrica-hyster-j60xtg6"],
     requiredIssues: ["marca HYSTER en anuncio y YALE en ficha técnica"]
@@ -91,6 +94,7 @@ const identityHolds: readonly EditorialHold[] = [
   {
     providerId: "gam", reference: "6004",
     sourceUrl: "https://online.gamrentals.com/es/hyster/6004-carretilla-elevadora-electrica-hyster-j70xtg6",
+    currentSourceUrl: "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6004-carretilla-elevadora-electrica-hyster-j70xtg6",
     reason: "GAM anuncia Hyster J7.0XTLG6, pero especifica YALE J7.0XTG6. Marca y modelo sin acreditar; no corregir ni publicar por suposición",
     evidenceUrls: ["https://online.gamrentals.com/es/hyster/6004-carretilla-elevadora-electrica-hyster-j70xtg6"],
     requiredIssues: ["marca HYSTER en anuncio y YALE en ficha técnica", "modelo anunciado distinto de J7.0XTG6"]
@@ -123,6 +127,7 @@ export const selectPublishableCatalog = (preparations: readonly OfflinePreparati
     preparations.every((item) => cohort[item.source.providerId]?.sha256 === item.source.catalogSha256 &&
       cohort[item.source.providerId]?.count === item.source.productCount));
   if (!snapshots) throw new Error("Selección editorial: cohorte desconocida o mezclada");
+  const newCohort = isNewEditorialCohort(preparations);
   const sources = new Set<string>();
   const identified = new Set<string>();
   const foundExclusions = new Set<string>();
@@ -155,14 +160,15 @@ export const selectPublishableCatalog = (preparations: readonly OfflinePreparati
         ready += 1;
         if (entry.issues.length || decision) throw new Error(`Selección editorial: decisión caducada (${key})`);
         if (hold) {
-          if (entry.product.sourceUrl !== hold.sourceUrl ||
+          const holdUrl = newCohort ? hold.currentSourceUrl : hold.sourceUrl;
+          if (entry.product.sourceUrl !== holdUrl ||
             !hold.requiredIssues.every((issue) => identityIssues.some((found) => found.includes(issue)))) {
             throw new Error(`Selección editorial: exclusión de identidad caducada (${key})`);
           }
           foundHolds.add(key);
           excluded.push({
             providerId, reference, sourceUrl: entry.product.sourceUrl,
-            reason: hold.reason, evidenceUrls: hold.evidenceUrls, issues: identityIssues
+            reason: hold.reason, evidenceUrls: newCohort ? [holdUrl] : hold.evidenceUrls, issues: identityIssues
           });
         } else {
           if (identityIssues.length) throw new Error(`Selección editorial: identidad GAM sin decisión acreditada (${key})`);

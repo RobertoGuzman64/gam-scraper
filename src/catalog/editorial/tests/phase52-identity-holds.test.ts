@@ -89,6 +89,26 @@ test("F52: una contradicción nueva y sin exclusión acreditada bloquea la selec
   assert.throws(() => selectPublishableCatalog(changed), /identidad GAM sin decisión acreditada/);
 });
 
+test("F52: reconoce tanto las rutas Hyster/Yale anteriores como las actuales sin admitir categorías ajenas", () => {
+  const current = get("6004").product;
+  const newRoute = {
+    ...current,
+    sourceUrl: current.sourceUrl.replace("/es/hyster/", "/es/carretillas-elevadoras-electricas-hyster/")
+  };
+  assert.deepEqual(gamNewForkliftIdentityIssues(newRoute), gamNewForkliftIdentityIssues(current));
+  const invalid = {
+    ...current,
+    sourceUrl: current.sourceUrl.replace("/es/hyster/", "/es/carretillas-elevadoras-diesel-hyster/")
+  };
+  assert.deepEqual(gamNewForkliftIdentityIssues(invalid), []);
+  const yale = get("5995").product;
+  const newYaleRoute = {
+    ...yale,
+    sourceUrl: yale.sourceUrl.replace("/es/yale/", "/es/carretillas-elevadoras-electricas-yale/")
+  };
+  assert.deepEqual(gamNewForkliftIdentityIssues(newYaleRoute), []);
+});
+
 test("F52: no interpreta como contradicción de marca las variaciones de modelo de otras fichas", () => {
   for (const reference of ["6274", "6322", "6323", "6324", "6325", "6326", "6327", "6422", "6574"]) {
     assert.deepEqual(gamNewForkliftIdentityIssues(get(reference).product), [], reference);

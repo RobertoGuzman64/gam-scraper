@@ -10,9 +10,14 @@ export const gamNewForkliftIdentityIssues = (product: ImportCandidate): readonly
     const url = new URL(product.sourceUrl);
     const parts = url.pathname.split("/").filter(Boolean);
     if (url.hostname !== "online.gamrentals.com" || parts[0] !== "es" ||
-      !["hyster", "yale"].includes(parts[1] ?? "") ||
       parts.length !== 3 || !parts[2]?.startsWith(`${product.reference}-`)) return [];
-    brand = normalize(parts[1] ?? "");
+    if (parts[1] === "hyster" || parts[1] === "carretillas-elevadoras-electricas-hyster") {
+      brand = "HYSTER";
+    } else if (parts[1] === "yale" || parts[1] === "carretillas-elevadoras-electricas-yale") {
+      brand = "YALE";
+    } else {
+      return [];
+    }
   } catch {
     return [];
   }
