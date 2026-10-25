@@ -10,6 +10,14 @@ export { isNewEditorialCohort } from "./cohorts.js";
 import { isNewEditorialCohort } from "./cohorts.js";
 
 export type PublishableSelection = {
+  readonly accreditation?: {
+    readonly runId: string;
+    readonly approvalSha256: string;
+    readonly preparationSources: readonly {
+      readonly providerId: string;
+      readonly preparationSha256: string;
+    }[];
+  };
   readonly source: readonly PreparationSource[];
   readonly totals: {
     readonly original: number;

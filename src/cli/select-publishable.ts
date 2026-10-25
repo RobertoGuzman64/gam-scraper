@@ -4,6 +4,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { assessNewGamCoverage } from "../catalog/coverage/gam-review-gate.js";
 import { isNewEditorialCohort, selectPublishableCatalog } from "../catalog/editorial/select-publishable.js";
+import { createAccreditationDraft, selectAccreditedPublishable, sha256 as accreditationSha } from "../catalog/editorial/campaign-accreditation.js";
+import { readCampaignAccreditationSources } from "../infrastructure/filesystem/campaign-accreditation.js";
 import type { PublishableSelection } from "../catalog/editorial/select-publishable.js";
 import { readCanonicalCatalog } from "../infrastructure/filesystem/canonical-catalog.js";
 import { readOfflinePreparation } from "../infrastructure/filesystem/offline-preparation.js";
@@ -12,8 +14,14 @@ import { printCommandError } from "./reporting/errors.js";
 const help = `Uso:
   npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --out <seleccion.json>
   npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --outDir <directorio>
+  npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --lote <run.json> --borrador <acreditacion.json>
+  npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --lote <run.json> --acreditacion <acreditacion.json> --dry-run
+  npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --lote <run.json> --acreditacion <acreditacion.json> --outDir <directorio>
   npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --dry-run
 
+La vía de acreditación exige un lote global completo, un borrador revisado y
+aprobación manual de cada exclusión. No modifica imágenes ni reutiliza URL antiguas.
+Las preparaciones derivadas de intervenciones no se aprueban por esta vía.
 En la cohorte de 25/10/2026 se exigen además --baseline <gam-catalog.json>,
 --catalog <gam-catalog.json> y --coverage-review <revision.json> para escribir archivos.
 Con --dry-run se pueden proporcionar --baseline y --catalog para inspeccionar
@@ -91,7 +99,7 @@ export const runSelectPublishable = async (args: readonly string[]): Promise<voi
       dryRun = true;
       continue;
     }
-    if (!key || !["--gam", "--gomariz", "--mercaeleva", "--out", "--outDir", "--baseline", "--catalog", "--coverage-review"].includes(key)) {
+    if (!key || !["--gam", "--gomariz", "--mercaeleva", "--out", "--outDir", "--baseline", "--catalog", "--coverage-review", "--lote", "--borrador", "--acreditacion"].includes(key)) {
       throw new Error(`Opción desconocida: ${key}`);
     }
     const value = args[index + 1];
@@ -101,7 +109,16 @@ export const runSelectPublishable = async (args: readonly string[]): Promise<voi
   }
   const out = options.get("--out");
   const outDir = options.get("--outDir");
-  if ((dryRun && (out || outDir)) || (!dryRun && Boolean(out) === Boolean(outDir))) {
+  const draftPath = options.get("--borrador");
+  const accreditationPath = options.get("--acreditacion");
+  const runPath = options.get("--lote");
+  if ((draftPath && (dryRun || out || outDir || accreditationPath)) ||
+    ((draftPath || accreditationPath) && !runPath) ||
+    (runPath && !draftPath && !accreditationPath) ||
+    (accreditationPath && options.has("--coverage-review"))) {
+    throw new Error("Opciones de acreditación incompatibles o incompletas");
+  }
+  if ((dryRun && (out || outDir)) || (!dryRun && !draftPath && Boolean(out) === Boolean(outDir))) {
     throw new Error("Se requiere --out o --outDir, salvo con --dry-run; no combinar salidas");
   }
   const providers = ["gam", "gomariz", "mercaeleva"] as const;
@@ -116,6 +133,32 @@ export const runSelectPublishable = async (args: readonly string[]): Promise<voi
     throw new Error("Directorio de salida contiene una preparación de entrada");
   }
   const preparations = await Promise.all(paths.map(({ providerId, path }) => readOfflinePreparation(path, providerId)));
+  if (runPath) {
+    const { runId, sources } = await readCampaignAccreditationSources(runPath, preparations, paths);
+    if (draftPath) {
+      if (paths.some((item) => item.path === draftPath)) throw new Error("Borrador coincide con una preparación");
+      const draft = createAccreditationDraft(preparations, sources, runId);
+      await mkdir(dirname(draftPath), { recursive: true });
+      await writeFile(draftPath, JSON.stringify(draft, null, 2), { flag: "wx" });
+      console.log(`BORRADOR EDITORIAL | ${draft.exclusions.length} decisiones pendientes | ${draftPath}`);
+      console.log("  Ningún producto aprobado ni archivo original modificado");
+      return;
+    }
+    if (!accreditationPath) throw new Error("Falta acreditación editorial");
+    const accreditationText = await readFile(accreditationPath, "utf8");
+    const accreditation: unknown = JSON.parse(accreditationText);
+    const selection = selectAccreditedPublishable(preparations, sources, runId, accreditation, accreditationSha(accreditationText));
+    console.log(`SELECCIÓN EDITORIAL ACREDITADA | originales ${selection.totals.original} | publicables ${selection.totals.publishable} | excluidos ${selection.totals.excluded}`);
+    if (dryRun) { console.log("  Ningún archivo escrito"); return; }
+    if (out) {
+      await mkdir(dirname(out), { recursive: true });
+      await writeFile(out, JSON.stringify(selection, null, 2), { flag: "wx" });
+      console.log(`  Selección: ${out}`);
+    } else if (outDir) {
+      await writePublishable(outDir, selection);
+    }
+    return;
+  }
   const selection = selectPublishableCatalog(preparations);
   const isNew = isNewEditorialCohort(preparations);
   console.log(`SELECCIÓN EDITORIAL ${isNew ? "ACTUALIZADA" : "BASE"} | originales ${selection.totals.original} | publicables ${selection.totals.publishable} | excluidos ${selection.totals.excluded} | quality review ${selection.totals.review}`);
