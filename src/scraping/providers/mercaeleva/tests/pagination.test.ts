@@ -123,7 +123,7 @@ const simulateCatalog = async (
   const paginationAvailableAt = simulatedNow + (simulation?.delayedPaginationMs ?? 0);
   const advance = (): void => {
     simulation?.onNext?.();
-    if (simulation?.delayedNextMs) setTimeout(() => { current += 1; }, 1);
+    if (simulation?.delayedNextMs) setImmediate(() => { current += 1; });
     else current += 1;
   };
   const goTo = (page: number): void => {
@@ -179,7 +179,7 @@ const simulateCatalog = async (
     Date: class extends Date { static override now(): number { return simulatedNow; } },
     setTimeout: (callback: () => void, milliseconds: number) => {
       simulatedNow += milliseconds;
-      return setTimeout(callback, 1);
+      return setImmediate(callback);
     },
     console: { debug: (tag: string, pages: number, found: number) => {
       if (tag === "__EQUIPZILLA_MERCA_PROGRESS__") simulation?.onProgress?.(pages, found);
