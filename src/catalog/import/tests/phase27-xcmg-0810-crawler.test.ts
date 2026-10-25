@@ -5,7 +5,6 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { reconcileGamVerifiedXcmg0810Crawler } from "../mapping/providers/gam/xcmg-0810-crawler-evidence.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -50,15 +49,10 @@ test("Fase 27: bloquea variaciones de identidad y técnica sin intervención edi
   }
 });
 
-test("Fase 27: conserva la cohorte completa y no altera otras referencias", () => {
-  const prepared = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(prepared.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(prepared.products.map((product) => product.product.reference)).size, 1008);
+test("Fase 27: la corrección de orugas no altera otras referencias", () => {
   for (const other of source.products) {
     if (other.reference === "4737") continue;
     assert.strictEqual(reconcileGamVerifiedXcmg0810Crawler(other), other, other.reference ?? "");
   }
-  for (const reference of ["6682", "6703"]) {
-    assert.equal(prepared.products.find((product) => product.product.reference === reference)?.status, "review", reference);
-  }
+
 });

@@ -5,7 +5,6 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonic
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { gamElevationBrandConflict } from "../mapping/providers/gam/elevation-identity.js";
 import { reconcileGamVerifiedGenie5390Editorial } from "../mapping/providers/gam/genie-5390-editorial.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -69,18 +68,7 @@ test("Fase 24: variaciones de identidad, unidad, origen y especificaciones no se
   }
 });
 
-test("Fase 24: conserva las 1008 identidades y mantiene bloqueados los demás casos", () => {
-  const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
-  const genie = batch.products.find((item) => item.product.reference === "6622");
-  assert.ok(genie);
-  assert.equal(genie.status, "ready");
-  for (const reference of ["6682", "6703"]) {
-    const item = batch.products.find((entry) => entry.product.reference === reference);
-    assert.ok(item, reference);
-    assert.equal(item.status, "review", reference);
-  }
+test("Fase 24: el corrector Genie no afecta a otras unidades", () => {
   for (const record of source.products) {
     if (record.reference === "6622") continue;
     assert.strictEqual(reconcileGamVerifiedGenie5390Editorial(record), record, record.reference ?? "");

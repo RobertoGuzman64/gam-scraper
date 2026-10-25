@@ -5,7 +5,6 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonic
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { resolveAttribute } from "../mapping/attribute-mapping.js";
 import { SOURCE_CATEGORY_ISSUE, sourceCategoryQualityIssue } from "../mapping/source-category-quality.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -94,17 +93,3 @@ test("Fase 2: radio multivariante omite el escalar y retiene el original sin esc
   }
 });
 
-test("Fase 2: calidad del lote y vetos de identidad intactos en 1.369 referencias", () => {
-  const prepared = [gam, gomariz, mercaeleva].map((sourceCatalog) => prepareImportBatch(sourceCatalog.products, catalog));
-  assert.deepEqual(prepared.map((batch) => batch.totals), [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  assert.equal(prepared.reduce((sum, batch) => sum + batch.products.length, 0), 1369);
-  for (const reference of ["6682", "6703"]) {
-    const product = prepared[0]?.products.find((item) => item.product.reference === reference);
-    assert.ok(product, reference);
-    assert.equal(product.status, "review", reference);
-  }
-});

@@ -4,7 +4,6 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { resolveAttribute } from "../mapping/attribute-mapping.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -87,13 +86,3 @@ test("Fase 6: 14 m de altura nominal y 16 m de trabajo son magnitudes compatible
   }
 });
 
-test("Fase 6: preparación por lote conserva las identidades y los choques de serie", () => {
-  const prepared = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(prepared.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(prepared.products.map((item) => item.product.reference)).size, 1008);
-  for (const reference of ["6682", "6703"]) {
-    const original = prepared.products.find((item) => item.product.reference === reference);
-    assert.ok(original, reference);
-    assert.equal(original.status, "review");
-  }
-});

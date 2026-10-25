@@ -5,15 +5,10 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonic
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { resolveAttribute } from "../mapping/attribute-mapping.js";
 import { describeMercaelevaE48pPublicationConflict } from "../mapping/providers/mercaeleva/linde-e48p-publication-evidence.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const [gam, gomariz, mercaeleva] = await Promise.all([
-  readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json"),
-  readCanonicalCatalog("storage/scraped/gomariz/scrape-gomariz-catalog.json"),
-  readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json")
-]);
+const mercaeleva = await readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json");
 const original = mercaeleva.products.find((product) => product.reference === "M827-8304");
 assert.ok(original);
 const load = catalog.attributes.find((attribute) => attribute.name === "Capacidad de carga");
@@ -66,20 +61,4 @@ test("F47: otras máquinas Mercaeleva no reciben el diagnóstico de MER0798", ()
   }
   const changedScrapeDate: ProductRecord = { ...original, scrapedAt: "2026-10-25T00:00:00.000Z" };
   assert.equal(describeMercaelevaE48pPublicationConflict(changedScrapeDate), describeMercaelevaE48pPublicationConflict(original));
-});
-
-test("F47: se preservan 1369 máquinas y las tres revisiones sin excepciones de calidad", () => {
-  const batches = [gam, gomariz, mercaeleva].map(({ products }) => prepareImportBatch(products, catalog));
-  assert.deepEqual(batches.map(({ totals }) => totals), [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  const results = batches.flatMap(({ products }) => products);
-  assert.equal(results.length, 1369);
-  assert.equal(new Set(results.map(({ product }) => `${product.providerId}:${product.reference}`)).size, 1369);
-  for (const reference of ["6682", "6703", "M827-8304"]) {
-    assert.equal(results.find(({ product }) => product.reference === reference)?.status, "review", reference);
-  }
-  assert.ok(results.filter(({ status }) => status === "ready").every(({ issues }) => issues.length === 0));
 });

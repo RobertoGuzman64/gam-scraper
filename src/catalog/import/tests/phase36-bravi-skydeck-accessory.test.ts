@@ -61,20 +61,3 @@ test("Fase 36: recupera únicamente SKY DECK y preserva las 1008 referencias GAM
     assert.equal(prepared.products.find((item) => item.product.reference === reference)?.status, "review", reference);
   }
 });
-
-test("Fase 36: conserva las 1369 referencias y reduce reviews globales de 11 a 10", async () => {
-  const [gomariz, mercaeleva] = await Promise.all([
-    readCanonicalCatalog("storage/scraped/gomariz/scrape-gomariz-catalog.json"),
-    readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json")
-  ]);
-  const sources = [source, gomariz, mercaeleva];
-  const summaries = sources.map((item) => prepareImportBatch(item.products, catalog).totals);
-  assert.deepEqual(summaries, [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  const references = sources.flatMap((item) => item.products.map((product) => `${item.providerId}:${product.reference}`));
-  assert.equal(references.length, 1369);
-  assert.equal(new Set(references).size, 1369);
-});

@@ -8,11 +8,7 @@ import { reconcileGamVerifiedZeroSerial, verifiedZeroMisattributedSerial } from 
 import { prepareImportBatch } from "../preparation/batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const [gam, gomariz, mercaeleva] = await Promise.all([
-  readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json"),
-  readCanonicalCatalog("storage/scraped/gomariz/scrape-gomariz-catalog.json"),
-  readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json")
-]);
+const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
 const get = (reference: string): ProductRecord => {
   const record = gam.products.find((product) => product.reference === reference);
   assert.ok(record, reference);
@@ -89,20 +85,4 @@ test("F43: modificar identidad Musoshi o añadir un tercer VIN mantiene bloquead
   assert.ok(tripletCollision);
   assert.equal(verifiedZeroMisattributedSerial(tripletCollision), null);
   assert.deepEqual(prepareImportBatch([musoshi, zero, third], catalog).totals, { ready: 0, review: 3 });
-});
-
-test("F43: 1369 identidades, 1366 ready y tres revisiones justificadas", () => {
-  const result = [gam, gomariz, mercaeleva].map(({ products }) => prepareImportBatch(products, catalog));
-  assert.deepEqual(result.map(({ totals }) => totals), [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  const all = result.flatMap(({ products }) => products);
-  assert.equal(all.length, 1369);
-  assert.equal(new Set(all.map(({ product }) => `${product.providerId}:${product.reference}`)).size, 1369);
-  assert.equal(all.find(({ product }) => product.reference === "6807")?.status, "ready");
-  for (const reference of ["6682", "6703", "M827-8304"]) {
-    assert.equal(all.find(({ product }) => product.reference === reference)?.status, "review", reference);
-  }
 });

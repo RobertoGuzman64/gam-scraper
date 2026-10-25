@@ -1,0 +1,96 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
+import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
+import { gamNewForkliftIdentityIssues } from "../gam-new-forklift-identity.js";
+import { selectPublishableCatalog } from "../select-publishable.js";
+
+const providers = ["gam", "gomariz", "mercaeleva"] as const;
+const sources = {
+  gam: "storage/scraped/gam/scrape-gam-marzo-2026-catalog.json",
+  gomariz: "storage/scraped/gomariz/scrape-gomariz-catalog.json",
+  mercaeleva: "storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json"
+};
+const preparations = await Promise.all(providers.map(async (providerId) => {
+  const source = sources[providerId];
+  return (await prepareSavedCatalog({
+    providerId, source,
+    out: `storage/prepared/${providerId}/${source.split("/").at(-1)!.replace("-catalog.json", "-f52-preparation.json")}`,
+    dryRun: true, compare: null
+  })).preparation;
+}));
+const gam = preparations.find((item) => item.source.providerId === "gam");
+assert.ok(gam);
+const get = (reference: string) => {
+  const entry = gam.products.find((item) => item.product.reference === reference);
+  assert.ok(entry, reference);
+  return entry;
+};
+const replaceGam = (reference: string, transform: (entry: ReturnType<typeof get>) => ReturnType<typeof get>) =>
+  preparations.map((preparation) => preparation.source.providerId !== "gam" ? preparation : {
+    ...preparation,
+    products: preparation.products.map((entry) => entry.product.reference === reference ? transform(entry) : entry)
+  });
+
+test("F52: GAM 6002, 6003 y 6004 tienen inconsistencias acreditadas sin forzar HYSTER en sus specs", async () => {
+  const source = preparations.find((item) => item.source.providerId === "gam");
+  assert.ok(source);
+  for (const reference of ["6002", "6003", "6004"]) {
+    const entry = get(reference);
+    assert.equal(entry.status, "ready");
+    assert.equal(entry.product.spec["Marca"], "YALE");
+    const issues = gamNewForkliftIdentityIssues(entry.product);
+    assert.ok(issues.some((issue) => issue.includes("marca HYSTER en anuncio y YALE en ficha técnica")), reference);
+    assert.equal(issues.some((issue) => issue.includes("modelo anunciado distinto")), reference === "6004", reference);
+  }
+  const original = await readCanonicalCatalog(sources.gam);
+  assert.equal(original.products.find((item) => item.reference === "6004")?.specs?.["Modelo"], "J7.0XTG6");
+});
+
+test("F52: mantiene 6236 reconciliada por F33 y no publica las tres Hyster/Yale", () => {
+  const result = selectPublishableCatalog(preparations);
+  assert.deepEqual(result.totals, { original: 1369, ready: 1366, review: 3, publishable: 1363, excluded: 6 });
+  const retained = result.exclusions.filter(({ reference }) => ["6002", "6003", "6004"].includes(reference));
+  assert.deepEqual(retained.map(({ reference }) => reference), ["6002", "6003", "6004"]);
+  assert.ok(retained.every(({ issues, evidenceUrls, reason }) => issues.length > 0 && evidenceUrls.length === 1 && reason));
+  const snorkel = result.products.find((item) => item.providerId === "gam" && item.reference === "6236");
+  assert.ok(snorkel);
+  assert.equal(snorkel.title, "Plataforma tijera eléctrica 12M SNORKEL S4732E");
+  assert.equal(snorkel.spec["Nº de serie"], "S4732E-01-180200369");
+  assert.equal(result.products.some((item) => ["6002", "6003", "6004"].includes(item.reference ?? "")), false);
+});
+
+test("F52: una marca técnica corregida, un cambio de ruta o una review nueva caducan la decisión", () => {
+  const corrected = replaceGam("6002", (entry) => ({
+    ...entry, product: { ...entry.product, spec: { ...entry.product.spec, Marca: "HYSTER" } }
+  }));
+  assert.throws(() => selectPublishableCatalog(corrected), /exclusión de identidad caducada/);
+  const changedUrl = replaceGam("6003", (entry) => ({
+    ...entry, product: { ...entry.product, sourceUrl: `${entry.product.sourceUrl}?otro=1` }
+  }));
+  assert.throws(() => selectPublishableCatalog(changedUrl), /exclusión de identidad caducada/);
+  const changedStatus = replaceGam("6004", (entry) => ({
+    ...entry, status: "review", issues: ["Identidad todavía contradictoria"]
+  }));
+  assert.throws(() => selectPublishableCatalog(changedStatus), /exclusión de identidad caducada/);
+});
+
+test("F52: una contradicción nueva y sin exclusión acreditada bloquea la selección", () => {
+  const other = gam.products.find((entry) => entry.status === "ready" &&
+    !["6002", "6003", "6004"].includes(entry.product.reference ?? "") &&
+    entry.product.sourceUrl.includes("/es/hyster/") && entry.product.spec["Marca"] === "HYSTER" &&
+    /carretilla/i.test(entry.product.title ?? ""));
+  assert.ok(other);
+  const reference = other.product.reference;
+  assert.ok(reference);
+  const changed = replaceGam(reference, (entry) => ({
+    ...entry, product: { ...entry.product, spec: { ...entry.product.spec, Marca: "YALE" } }
+  }));
+  assert.throws(() => selectPublishableCatalog(changed), /identidad GAM sin decisión acreditada/);
+});
+
+test("F52: no interpreta como contradicción de marca las variaciones de modelo de otras fichas", () => {
+  for (const reference of ["6274", "6322", "6323", "6324", "6325", "6326", "6327", "6422", "6574"]) {
+    assert.deepEqual(gamNewForkliftIdentityIssues(get(reference).product), [], reference);
+  }
+});

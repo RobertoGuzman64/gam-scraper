@@ -84,19 +84,3 @@ test("Fase 39: se recupera solo GAM 2312 sin relajar colisiones de número de se
     assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review", reference);
   }
 });
-
-test("Fase 39: invariantes globales 1369 referencias, 1366 ready y tres reviews", async () => {
-  const [gomariz, mercaeleva] = await Promise.all([
-    readCanonicalCatalog("storage/scraped/gomariz/scrape-gomariz-catalog.json"),
-    readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json")
-  ]);
-  const sources = [source, gomariz, mercaeleva];
-  assert.deepEqual(sources.map((item) => prepareImportBatch(item.products, catalog).totals), [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  const identities = sources.flatMap((item) => item.products.map((product) => `${item.providerId}:${product.reference}`));
-  assert.equal(identities.length, 1369);
-  assert.equal(new Set(identities).size, 1369);
-});

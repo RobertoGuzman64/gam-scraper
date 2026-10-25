@@ -8,11 +8,7 @@ import { verifiedMusoshiSerialOwner } from "../mapping/providers/gam/musoshi-ser
 import { prepareImportBatch } from "../preparation/batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const [gam, gomariz, mercaeleva] = await Promise.all([
-  readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json"),
-  readCanonicalCatalog("storage/scraped/gomariz/scrape-gomariz-catalog.json"),
-  readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json")
-]);
+const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
 const target = (reference: string): ProductRecord => {
   const product = gam.products.find((record) => record.reference === reference);
   assert.ok(product, reference);
@@ -99,22 +95,4 @@ test("F41: una tercera ficha con el mismo VIN vuelve a bloquear la colisión com
   assert.equal(verifiedMusoshiSerialOwner(collision), null);
   const batch = prepareImportBatch([musoshi, zero, third], catalog);
   assert.deepEqual(batch.totals, { ready: 0, review: 3 });
-});
-
-test("F41: 1369 referencias intactas, 1366 ready y tres reviews reales", () => {
-  const batches = [gam, gomariz, mercaeleva].map((source) => prepareImportBatch(source.products, catalog));
-  assert.deepEqual(batches.map((batch) => batch.totals), [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  const all = batches.flatMap((batch) => batch.products);
-  assert.equal(all.length, 1369);
-  assert.equal(new Set(all.map(({ product }) => `${product.providerId}:${product.reference}`)).size, 1369);
-  assert.equal(all.find(({ product }) => product.reference === "6806")?.status, "ready");
-  for (const reference of ["6682", "6703", "M827-8304"]) {
-    const product = all.find((item) => item.product.reference === reference);
-    assert.ok(product);
-    assert.equal(product.status, "review", reference);
-  }
 });

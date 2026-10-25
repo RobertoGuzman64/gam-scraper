@@ -81,20 +81,3 @@ test("Fase 37: una única ficha Mercaeleva recuperada; M827 conserva ambos bloqu
   assert.ok(remaining.issues.includes("Atributo contradictorio: Tipo de mástil"));
   assert.deepEqual(resolveAttribute(unresolved, mast), { status: "contradiction", value: null });
 });
-
-test("Fase 37: calidad total 1360 ready / 9 review sin perder referencias", async () => {
-  const [gam, gomariz] = await Promise.all([
-    readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json"),
-    readCanonicalCatalog("storage/scraped/gomariz/scrape-gomariz-catalog.json")
-  ]);
-  const sources = [gam, gomariz, source];
-  const totals = sources.map((item) => prepareImportBatch(item.products, catalog).totals);
-  assert.deepEqual(totals, [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  const ids = sources.flatMap((item) => item.products.map((product) => `${item.providerId}:${product.reference}`));
-  assert.equal(ids.length, 1369);
-  assert.equal(new Set(ids).size, 1369);
-});

@@ -35,12 +35,12 @@ const preparations = originals.map((preparation) => {
   };
 });
 
-test("F50: admite cohorte acreditada de 1365, 1362 ready y tres exclusiones", () => {
+test("F50: retiene tres identidades adicionales sin cambiar las 1362 ready de preparación", () => {
   assert.equal(isNewEditorialCohort(preparations), true);
   const result = selectPublishableCatalog(preparations);
-  assert.deepEqual(result.totals, { original: 1365, ready: 1362, review: 3, publishable: 1362, excluded: 3 });
+  assert.deepEqual(result.totals, { original: 1365, ready: 1362, review: 3, publishable: 1359, excluded: 6 });
   assert.deepEqual(result.exclusions.map((item) => `${item.providerId}:${item.reference}`), [
-    "gam:6682", "gam:6703", "mercaeleva:M827-8304"
+    "gam:6682", "gam:6703", "gam:6002", "gam:6003", "gam:6004", "mercaeleva:M827-8304"
   ]);
   assert.equal(result.products.filter((item) => item.providerId === "gomariz").length, 143);
 });

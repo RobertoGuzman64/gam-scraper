@@ -4,7 +4,6 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { reconcileGamVerifiedXga43kEditorial } from "../mapping/providers/gam/xga43k-editorial.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -66,15 +65,7 @@ test("Fase 23: cambios de identidad, ficha técnica y textos no se autocorrigen"
   }
 });
 
-test("Fase 23: solo la referencia verificada se libera; demás conflictos conservados", () => {
-  const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
-  for (const reference of ["6682", "6703"]) {
-    const item = batch.products.find((entry) => entry.product.reference === reference);
-    assert.ok(item, reference);
-    assert.equal(item.status, "review", reference);
-  }
+test("Fase 23: el corrector XGA43K no modifica otras referencias", () => {
   for (const item of source.products) {
     if (item.reference !== "5902") assert.strictEqual(reconcileGamVerifiedXga43kEditorial(item), item, item.reference ?? "");
   }

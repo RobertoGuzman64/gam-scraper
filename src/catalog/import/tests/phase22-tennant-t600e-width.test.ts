@@ -5,7 +5,6 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonic
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { resolveAttribute } from "../mapping/attribute-mapping.js";
 import { gamCleaningCorrectedWidth } from "../mapping/providers/gam/cleaning.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -62,14 +61,9 @@ test("Fase 22: se rechazan variantes y contradicciones no documentadas", () => {
   }
 });
 
-test("Fase 22: la excepción no afecta a ninguna otra ficha GAM", () => {
+test("Fase 22: la anchura excepcional no se extiende a otras máquinas", () => {
   for (const record of source.products) {
     if (record.reference === "4004") continue;
     if (gamCleaningCorrectedWidth(record) === 800) assert.equal(record.reference, "4002");
   }
-  const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
-  assert.equal(batch.products.find((item) => item.product.reference === "4004")?.status, "ready");
-  assert.equal(batch.products.find((item) => item.product.reference === "2312")?.status, "ready");
 });

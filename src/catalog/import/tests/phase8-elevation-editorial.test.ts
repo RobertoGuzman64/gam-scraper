@@ -4,7 +4,6 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { reconcileGamElevationEditorialIdentity } from "../mapping/providers/gam/elevation-editorial.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -73,13 +72,3 @@ test("Fase 8: el modelo de resumen requiere corroboración y no admite otras var
   }
 });
 
-test("Fase 8: las identidades técnicas conflictivas permanecen bloqueadas en preparación por lote", () => {
-  const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
-  for (const reference of ["6682", "6703"]) {
-    const entry = batch.products.find((item) => item.product.reference === reference);
-    assert.ok(entry, reference);
-    assert.equal(entry.status, "review", reference);
-  }
-});

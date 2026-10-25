@@ -8,11 +8,7 @@ import { verifiedYaleErp35vlPotentialRepublishedListing } from "../mapping/provi
 import { prepareImportBatch } from "../preparation/batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const [gam, gomariz, mercaeleva] = await Promise.all([
-  readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json"),
-  readCanonicalCatalog("storage/scraped/gomariz/scrape-gomariz-catalog.json"),
-  readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json")
-]);
+const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
 const byReference = (reference: string): ProductRecord => {
   const found = gam.products.find((record) => record.reference === reference);
   assert.ok(found, reference);
@@ -72,19 +68,4 @@ test("F44: tres referencias con la misma serie no se consideran republicación a
   const result = prepareImportBatch([older, listed, third], catalog);
   assert.deepEqual(result.totals, { ready: 0, review: 3 });
   assert.ok(result.products.every(({ issues }) => issues.every((issue) => !issue.includes("Posible republicación"))));
-});
-
-test("F44: se conservan las 1369 referencias y los tres bloqueos legítimos", () => {
-  const batches = [gam, gomariz, mercaeleva].map(({ products }) => prepareImportBatch(products, catalog));
-  assert.deepEqual(batches.map(({ totals }) => totals), [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  const all = batches.flatMap(({ products }) => products);
-  assert.equal(all.length, 1369);
-  assert.equal(new Set(all.map(({ product }) => `${product.providerId}:${product.reference}`)).size, 1369);
-  for (const reference of ["6682", "6703", "M827-8304"]) {
-    assert.equal(all.find(({ product }) => product.reference === reference)?.status, "review", reference);
-  }
 });

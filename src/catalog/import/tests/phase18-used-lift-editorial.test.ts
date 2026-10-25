@@ -4,7 +4,6 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { reconcileGamUsedLiftEditorial } from "../mapping/providers/gam/used-lift-editorial.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -65,13 +64,10 @@ test("Fase 18: no se corrigen unidades alteradas, otras alturas o fuentes ambigu
   }
 });
 
-test("Fase 18: las otras contradicciones no se suprimen y no se pierden referencias", () => {
+test("Fase 18: las Yale de control permanecen sin modificación editorial", () => {
   for (const reference of ["2311", "2312"]) {
     const record = source(reference);
     assert.strictEqual(reconcileGamUsedLiftEditorial(record), record);
     assert.equal(prepareProduct(record, catalog).status, "ready", reference);
   }
-  const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
 });

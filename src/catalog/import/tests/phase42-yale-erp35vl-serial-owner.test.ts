@@ -8,11 +8,7 @@ import { verifiedYaleErp35vlSerialOwner } from "../mapping/providers/gam/yale-er
 import { prepareImportBatch } from "../preparation/batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const [gam, gomariz, mercaeleva] = await Promise.all([
-  readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json"),
-  readCanonicalCatalog("storage/scraped/gomariz/scrape-gomariz-catalog.json"),
-  readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json")
-]);
+const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
 const byReference = (reference: string): ProductRecord => {
   const record = gam.products.find((entry) => entry.reference === reference);
   assert.ok(record, reference);
@@ -92,20 +88,4 @@ test("F42: tres coincidencias de VIN no quedan autorizadas por esta acreditació
   assert.ok(collision);
   assert.equal(verifiedYaleErp35vlSerialOwner(collision), null);
   assert.deepEqual(prepareImportBatch([older, accredited, third], catalog).totals, { ready: 0, review: 3 });
-});
-
-test("F42: los tres catálogos conservan 1369 referencias y tres reviews reales", () => {
-  const prepared = [gam, gomariz, mercaeleva].map(({ products }) => prepareImportBatch(products, catalog));
-  assert.deepEqual(prepared.map(({ totals }) => totals), [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  const products = prepared.flatMap(({ products }) => products);
-  assert.equal(products.length, 1369);
-  assert.equal(new Set(products.map(({ product }) => `${product.providerId}:${product.reference}`)).size, 1369);
-  assert.equal(products.find(({ product }) => product.reference === "6858")?.status, "ready");
-  for (const reference of ["6682", "6703", "M827-8304"]) {
-    assert.equal(products.find(({ product }) => product.reference === reference)?.status, "review", reference);
-  }
 });

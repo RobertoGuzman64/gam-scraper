@@ -4,7 +4,6 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { reconcileGamHandlingCapacityEditorial } from "../mapping/providers/gam/handling-capacity-editorial.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -97,7 +96,7 @@ test("Fase 14: identidad, categoría, especificaciones y evidencia editorial son
   }
 });
 
-test("Fase 14: no altera las restantes 1006 fichas ni desbloquea conflictos técnicos reales", () => {
+test("Fase 14: la reconciliación afecta solo a las dos unidades identificadas", () => {
   const corrected = new Set(["6723", "2211"]);
   for (const item of gam.products) {
     if (!corrected.has(item.reference ?? "")) {
@@ -107,12 +106,4 @@ test("Fase 14: no altera las restantes 1006 fichas ni desbloquea conflictos téc
   const snorkel = source("6236");
   assert.equal(prepareProduct(snorkel, catalog).status, "ready");
   assert.equal(prepareProduct({ ...snorkel, longDescription: "Versión sin confirmar" }, catalog).status, "review");
-  const results = [gam, gomariz, mercaeleva].map((batch) => prepareImportBatch(batch.products, catalog));
-  assert.deepEqual(results.map((item) => item.totals), [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  assert.equal(results.reduce((total, item) => total + item.products.length, 0), 1369);
-  assert.equal(new Set(results.flatMap((item) => item.products.map((prepared) => `${prepared.product.providerId}:${prepared.product.reference}`))).size, 1369);
 });

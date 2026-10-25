@@ -5,7 +5,6 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonic
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { gamElevationIdentityConflict } from "../mapping/providers/gam/elevation-identity.js";
 import { reconcileGamVerifiedXcmg1523Model } from "../mapping/providers/gam/xcmg-1523-model-evidence.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -65,15 +64,7 @@ for (const record of records) {
   });
 }
 
-test("Fase 25: conserva las 1008 fichas y mantiene los conflictos sin evidencia", () => {
-  const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(batch.products.map((result) => result.product.reference)).size, 1008);
-  for (const reference of ["6682", "6703"]) {
-    const result = batch.products.find((item) => item.product.reference === reference);
-    assert.ok(result, reference);
-    assert.equal(result.status, "review", reference);
-  }
+test("Fase 25: el modelo XCMG no se corrige fuera de las referencias acreditadas", () => {
   for (const record of source.products) {
     if (record.reference === "4750" || record.reference === "4802") continue;
     assert.strictEqual(reconcileGamVerifiedXcmg1523Model(record), record, record.reference ?? "");

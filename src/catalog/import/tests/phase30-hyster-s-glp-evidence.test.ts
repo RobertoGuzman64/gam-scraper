@@ -6,7 +6,6 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonic
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { isGamVerifiedHysterSGlp, reconcileGamVerifiedHysterSGlp } from "../mapping/providers/gam/hyster-s-glp-evidence.js";
 import { sourceCategoryQualityIssue } from "../mapping/source-category-quality.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -81,15 +80,10 @@ test("Fase 30: las variantes de origen no se corrigen por aproximación", () => 
   }
 });
 
-test("Fase 30: solo se desbloquean las dos HYSTER con evidencia verificada", () => {
-  const prepared = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(prepared.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(prepared.products.map((item) => item.product.reference)).size, 1008);
+test("Fase 30: otras unidades no reciben la reconciliación Hyster GLP", () => {
   for (const product of source.products) {
     if (product.reference === "2072" || product.reference === "2073") continue;
     assert.strictEqual(reconcileGamVerifiedHysterSGlp(product), product, product.reference ?? "");
   }
-  for (const reference of ["6682", "6703"]) {
-    assert.equal(prepared.products.find((item) => item.product.reference === reference)?.status, "review", reference);
-  }
+
 });

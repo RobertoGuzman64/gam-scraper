@@ -5,7 +5,6 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonic
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { resolveAttribute } from "../mapping/attribute-mapping.js";
 import { sourceCategoryQualityIssue } from "../mapping/source-category-quality.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -81,13 +80,3 @@ test("Fase 5: las evidencias contradictorias, modelos alterados y configuracione
   assert.notEqual(sourceCategoryQualityIssue({ ...hand, specs: { ...hand.specs, Modelo: "H3.5FT" } }), null);
 });
 
-test("Fase 5: la preparación por lote conserva las referencias y colisiones previas", () => {
-  const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(batch.products.map((result) => result.product.reference)).size, 1008);
-  for (const reference of ["6682", "6703"]) {
-    const result = batch.products.find((entry) => entry.product.reference === reference);
-    assert.ok(result, reference);
-    assert.equal(result.status, "review", reference);
-  }
-});

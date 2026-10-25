@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createCoverageReview, verifyCoverageReview } from "../catalog/coverage/review.js";
+import { assessNewGamCoverage } from "../catalog/coverage/gam-review-gate.js";
 import { isNewEditorialCohort, selectPublishableCatalog } from "../catalog/editorial/select-publishable.js";
 import type { PublishableSelection } from "../catalog/editorial/select-publishable.js";
 import { readCanonicalCatalog } from "../infrastructure/filesystem/canonical-catalog.js";
@@ -16,38 +16,46 @@ const help = `Uso:
 
 En la cohorte de 25/10/2026 se exigen además --baseline <gam-catalog.json>,
 --catalog <gam-catalog.json> y --coverage-review <revision.json> para escribir archivos.
-La revisión debe justificar todas las ausencias y diferencias; no restaura máquinas,
-no modifica los originales ni convierte las tres exclusiones técnicas en ready.
+Con --dry-run se pueden proporcionar --baseline y --catalog para inspeccionar
+las incidencias reales, y añadir --coverage-review para validar las decisiones
+sin escribir archivos.
+La revisión exige retiradas confirmadas o ausencias de listado acreditadas;
+"no_acreditado" mantiene bloqueada la publicación. También deben aprobarse
+los cambios con evidencia; no restaura máquinas,
+no modifica los originales ni convierte las exclusiones técnicas en ready.
+La selección también retiene las fichas GAM 6002, 6003 y 6004 por
+contradicciones de identidad preexistentes, sin alterar su preparación.
 --outDir genera tres JSON de productos por proveedor y selection.json con trazabilidad.`;
 
 const sha = (content: string): string => createHash("sha256").update(content).digest("hex");
 
 const ensureCoverageReview = async (
   options: ReadonlyMap<string, string>,
-  expectedGamSha: string
+  expectedGamSha: string,
+  allowPending: boolean
 ): Promise<void> => {
   const baseline = options.get("--baseline");
   const catalog = options.get("--catalog");
   const review = options.get("--coverage-review");
-  if (!baseline || !catalog || !review || baseline === catalog) {
+  if (!baseline || !catalog || baseline === catalog || (!allowPending && !review)) {
     throw new Error("F50: la nueva cohorte requiere --baseline, --catalog y --coverage-review aprobada");
   }
-  const [previous, current, previousText, currentText, reviewText] = await Promise.all([
+  const [previous, current, previousText, currentText] = await Promise.all([
     readCanonicalCatalog(baseline), readCanonicalCatalog(catalog),
-    readFile(baseline, "utf8"), readFile(catalog, "utf8"), readFile(review, "utf8")
+    readFile(baseline, "utf8"), readFile(catalog, "utf8")
   ]);
-  if (current.providerId !== "gam" || previous.providerId !== "gam" || sha(currentText) !== expectedGamSha) {
-    throw new Error("F50: el catálogo GAM no coincide con la preparación seleccionada");
+  if (current.providerId !== "gam" || previous.providerId !== "gam" ||
+    sha(previousText) !== "945e218ad93782e868a50b8ecaad99e225242274d9a32ed7b8203cb426e6af87" ||
+    sha(currentText) !== expectedGamSha) {
+    throw new Error("F50: el catálogo GAM o su línea base no coincide con la cohorte seleccionada");
   }
-  const report = createCoverageReview(previous, current, sha(previousText), sha(currentText));
-  if (report.missing.length !== 4 || report.changed.length !== 24 ||
-    new Set(report.missing.map(({ reference }) => reference)).size !== 4 ||
-    !["6942", "6948", "6366", "6676"].every((reference) =>
-      report.missing.some((entry) => entry.reference === reference))) {
-    throw new Error("F50: la cobertura no coincide con las cuatro ausencias y los 24 cambios observados");
-  }
-  const value: unknown = JSON.parse(reviewText);
-  verifyCoverageReview(value, report);
+  const value: unknown = review ? JSON.parse(await readFile(review, "utf8")) : undefined;
+  const report = assessNewGamCoverage(previous, current, sha(previousText), sha(currentText), value);
+  const sensitiveChecks = report.changed.reduce((total, entry) => total + entry.fieldChecks.length, 0);
+  console.log(`  Cobertura GAM: ${report.missing.length} ausencias, ${report.changed.length} cambios, ${sensitiveChecks} revisiones de campo`);
+  console.log(review
+    ? "  Revisión de cobertura validada contra los catálogos y sus huellas"
+    : "  Expediente sin aprobar: no se ha aportado una revisión de cobertura validada");
 };
 
 const writePublishable = async (dir: string, selection: PublishableSelection): Promise<void> => {
@@ -112,17 +120,22 @@ export const runSelectPublishable = async (args: readonly string[]): Promise<voi
   const isNew = isNewEditorialCohort(preparations);
   console.log(`SELECCIÓN EDITORIAL ${isNew ? "F50" : "F48"} | originales ${selection.totals.original} | publicables ${selection.totals.publishable} | excluidos ${selection.totals.excluded} | quality review ${selection.totals.review}`);
   for (const excluded of selection.exclusions) console.log(`  Excluida ${excluded.providerId}:${excluded.reference} | ${excluded.reason}`);
+  const coverageOptions = ["--baseline", "--catalog", "--coverage-review"] as const;
+  if (isNew) {
+    const supplied = coverageOptions.filter((key) => options.has(key));
+    if (!dryRun || supplied.length) {
+      const source = preparations.find((item) => item.source.providerId === "gam");
+      if (!source) throw new Error("F50: preparación GAM no encontrada");
+      await ensureCoverageReview(options, source.source.catalogSha256, dryRun);
+    } else {
+      console.log("  Cobertura GAM pendiente: 4 ausencias y 24 cambios sin revisión aportada");
+    }
+  } else if (coverageOptions.some((key) => options.has(key))) {
+    throw new Error("La revisión F50 solo corresponde a la nueva cohorte");
+  }
   if (dryRun) {
-    if (isNew) console.log("  Simulación provisional: cobertura GAM requiere revisión editorial de cuatro ausencias y 24 cambios");
     console.log("  Ningún archivo escrito");
     return;
-  }
-  if (isNew) {
-    const source = preparations.find((item) => item.source.providerId === "gam");
-    if (!source) throw new Error("F50: preparación GAM no encontrada");
-    await ensureCoverageReview(options, source.source.catalogSha256);
-  } else if (["--baseline", "--catalog", "--coverage-review"].some((key) => options.has(key))) {
-    throw new Error("La revisión F50 solo corresponde a la nueva cohorte");
   }
   if (out) {
     await mkdir(dirname(out), { recursive: true });

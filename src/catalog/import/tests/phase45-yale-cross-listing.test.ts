@@ -8,11 +8,7 @@ import { verifiedYaleErp35vlCrossListing } from "../mapping/providers/gam/yale-e
 import { prepareImportBatch } from "../preparation/batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const [gam, gomariz, mercaeleva] = await Promise.all([
-  readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json"),
-  readCanonicalCatalog("storage/scraped/gomariz/scrape-gomariz-catalog.json"),
-  readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json")
-]);
+const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
 const get = (reference: string): ProductRecord => {
   const record = gam.products.find((item) => item.reference === reference);
   assert.ok(record, reference);
@@ -72,24 +68,4 @@ test("F45: una tercera ficha con el mismo VIN bloquea las tres identidades", () 
   const result = prepareImportBatch([older, newer, third], catalog);
   assert.deepEqual(result.totals, { ready: 0, review: 3 });
   assert.ok(result.products.every(({ issues }) => issues.some((issue) => issue.includes("Número de serie"))));
-});
-
-test("F45: 1369 identidades intactas y solo tres revisiones pendientes", () => {
-  const batches = [gam, gomariz, mercaeleva].map(({ products }) => prepareImportBatch(products, catalog));
-  assert.deepEqual(batches.map(({ totals }) => totals), [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  const products = batches.flatMap(({ products }) => products);
-  assert.equal(products.length, 1369);
-  assert.equal(new Set(products.map(({ product }) => `${product.providerId}:${product.reference}`)).size, 1369);
-  for (const reference of ["6835", "6858"]) {
-    const result = products.find(({ product }) => product.reference === reference);
-    assert.equal(result?.status, "ready", reference);
-    assert.deepEqual(result?.issues, [], reference);
-  }
-  for (const reference of ["6682", "6703", "M827-8304"]) {
-    assert.equal(products.find(({ product }) => product.reference === reference)?.status, "review", reference);
-  }
 });

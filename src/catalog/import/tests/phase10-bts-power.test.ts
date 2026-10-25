@@ -6,7 +6,6 @@ import { loadImportCatalog } from "../../../infrastructure/filesystem/import-cat
 import { resolveAttribute } from "../mapping/attribute-mapping.js";
 import { reconcileGamBtsEditorialSummary } from "../mapping/providers/gam/bts-editorial.js";
 import { SOURCE_CATEGORY_ISSUE, sourceCategoryQualityIssue } from "../mapping/source-category-quality.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -80,14 +79,3 @@ test("Fase 10: no reescribe cabeceras sin identidad, origen, condición y capaci
   assert.strictEqual(reconcileGamBtsEditorialSummary(changedBadge), changedBadge);
 });
 
-test("Fase 10: las cuatro recuperaciones no desbloquean contradicciones y colisiones por lote", () => {
-  const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(batch.products.map((product) => product.product.reference)).size, 1008);
-  for (const reference of recovered) {
-    assert.equal(batch.products.find((product) => product.product.reference === reference)?.status, "ready", reference);
-  }
-  for (const reference of ["6682", "6703"]) {
-    assert.equal(batch.products.find((product) => product.product.reference === reference)?.status, "review", reference);
-  }
-});

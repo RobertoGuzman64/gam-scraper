@@ -4,7 +4,6 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { reconcileGamVerifiedHandlingEditorial } from "../mapping/providers/gam/handling-verified-editorial.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -100,18 +99,9 @@ test("Fase 15: variantes incompatibles de 6272 no reciben corrección", () => {
   }
 });
 
-test("Fase 15: el reconciliador respeta el resto del catálogo y los vetos reales", () => {
+test("Fase 15: los demás anuncios no reciben reconciliación Hyster", () => {
   for (const record of gam.products) {
     if (["6702", "6272"].includes(record.reference ?? "")) continue;
     assert.strictEqual(reconcileGamVerifiedHandlingEditorial(record), record, record.reference ?? "sin ref");
-  }
-  const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
-  for (const reference of ["6702", "6272"]) {
-    assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "ready", reference);
-  }
-  for (const reference of ["6682", "6703"]) {
-    assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review", reference);
   }
 });

@@ -4,7 +4,6 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { SOURCE_CATEGORY_ISSUE, sourceCategoryQualityIssue } from "../mapping/source-category-quality.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -52,17 +51,3 @@ test("Fase 7: matrícula, serie, marca, modelo, fuente y evidencia vial son impr
   }
 });
 
-test("Fase 7: el lote solo recupera la plataforma registrada sin desbloquear contradicciones", () => {
-  const batches = [gam, gomariz, mercaeleva].map((batch) => prepareImportBatch(batch.products, catalog));
-  assert.deepEqual(batches.map((batch) => batch.totals), [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  assert.equal(batches.reduce((sum, batch) => sum + batch.products.length, 0), 1369);
-  for (const reference of ["6682", "6703"]) {
-    const item = batches[0]?.products.find((product) => product.product.reference === reference);
-    assert.ok(item, reference);
-    assert.equal(item.status, "review", reference);
-  }
-});

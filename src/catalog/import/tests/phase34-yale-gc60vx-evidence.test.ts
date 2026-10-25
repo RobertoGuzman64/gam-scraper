@@ -4,7 +4,6 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { reconcileGamVerifiedYaleGc60vx } from "../mapping/providers/gam/yale-gc60vx-evidence.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -64,13 +63,3 @@ test("Fase 34: Yale GC60VX no modifica variantes con identidad o evidencias dive
   }
 });
 
-test("Fase 34: recupera solo 2314 y conserva los demás bloqueos reales de GAM", () => {
-  const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
-  assert.equal(batch.products.length, 1008);
-  assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
-  assert.equal(batch.products.find((item) => item.product.reference === "2314")?.status, "ready");
-  for (const reference of ["6682", "6703"]) {
-    assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review", reference);
-  }
-});

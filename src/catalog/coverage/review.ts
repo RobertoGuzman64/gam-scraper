@@ -1,5 +1,7 @@
 import type { CanonicalCatalog } from "../canonical-catalog.js";
 import { compareCanonicalCoverage } from "./compare.js";
+import { auditChangedProduct, changedFieldChecks } from "./change-audit.js";
+import type { ChangedFieldCheck, ChangedProductAudit } from "./change-audit.js";
 
 export type CoverageReview = {
   readonly version: 1;
@@ -8,7 +10,7 @@ export type CoverageReview = {
   readonly missing: readonly {
     readonly reference: string;
     readonly url: string;
-    readonly decision: "retirado" | null;
+    readonly decision: "retirado" | "ausencia_listado_acreditada" | "no_acreditado" | null;
     readonly reason: string | null;
     readonly evidenceUrls: readonly string[];
   }[];
@@ -16,7 +18,9 @@ export type CoverageReview = {
     readonly reference: string;
     readonly url: string;
     readonly fields: readonly string[];
-    readonly decision: "aceptado" | null;
+    readonly decision: "aceptado" | "rechazado" | null;
+    readonly audit: ChangedProductAudit;
+    readonly fieldChecks: readonly ChangedFieldCheck[];
     readonly reason: string | null;
     readonly evidenceUrls: readonly string[];
   }[];
@@ -33,9 +37,19 @@ export const createCoverageReview = (
     if (!product.reference) throw new Error("Ausencia sin referencia para revisión editorial");
     return { reference: product.reference, url: product.url, decision: null, reason: null, evidenceUrls: [] };
   });
+  const previousByReference = new Map(baseline.products.map((product) => [product.reference, product]));
+  const currentByReference = new Map(current.products.map((product) => [product.reference, product]));
   const changed = changes.changedDetails.map((product) => {
     if (!product.reference) throw new Error("Cambio sin referencia para revisión editorial");
-    return { reference: product.reference, url: product.url, fields: product.fields, decision: null, reason: null, evidenceUrls: [] };
+    const before = previousByReference.get(product.reference);
+    const after = currentByReference.get(product.reference);
+    if (!before || !after) throw new Error(`Cambio sin pareja de productos: ${product.reference}`);
+    return {
+      reference: product.reference, url: product.url, fields: product.fields,
+      audit: auditChangedProduct(before, after, product.fields),
+      fieldChecks: changedFieldChecks(product.fields),
+      decision: null, reason: null, evidenceUrls: []
+    };
   });
   return { version: 1, baselineSha256, currentSha256, missing, changed };
 };
@@ -49,11 +63,46 @@ const validEvidence = (value: unknown): value is readonly string[] =>
     try { return new URL(url).protocol === "https:"; } catch { return false; }
   });
 
-const isReviewed = (value: unknown, kind: "missing" | "changed"): boolean =>
-  isRecord(value) &&
-  value.decision === (kind === "missing" ? "retirado" : "aceptado") &&
-  typeof value.reason === "string" && value.reason.trim().length >= 15 &&
-  validEvidence(value.evidenceUrls);
+const isSourceListingEvidence = (url: string, originalUrl: string): boolean => {
+  try {
+    const listing = new URL(url);
+    const product = new URL(originalUrl);
+    const listingParts = listing.pathname.split("/").filter(Boolean);
+    const productParts = product.pathname.split("/").filter(Boolean);
+    return listing.origin === product.origin &&
+      listingParts.length === 2 && productParts.length === 3 &&
+      listingParts[0] === productParts[0] && /^\d+-/.test(listingParts[1] ?? "");
+  } catch {
+    return false;
+  }
+};
+
+const validFieldChecks = (value: unknown, required: readonly ChangedFieldCheck[]): boolean => {
+  if (!Array.isArray(value) || value.length !== required.length) return false;
+  const checked = new Set<string>();
+  for (const entry of value) {
+    if (!isRecord(entry) || typeof entry.field !== "string" || checked.has(entry.field) ||
+      !required.some((item) => item.field === entry.field) || entry.decision !== "aceptado" ||
+      typeof entry.reason !== "string" || entry.reason.trim().length < 15 ||
+      !validEvidence(entry.evidenceUrls)) return false;
+    checked.add(entry.field);
+  }
+  return checked.size === required.length;
+};
+
+const isReviewed = (
+  value: unknown,
+  kind: "missing" | "changed",
+  originalUrl: string,
+  requiredChecks: readonly ChangedFieldCheck[] = []
+): boolean => {
+  if (!isRecord(value) || typeof value.reason !== "string" || value.reason.trim().length < 15 ||
+    !validEvidence(value.evidenceUrls)) return false;
+  if (kind === "changed") return value.decision === "aceptado" && validFieldChecks(value.fieldChecks, requiredChecks);
+  if (value.decision === "retirado") return true;
+  return value.decision === "ausencia_listado_acreditada" &&
+    value.evidenceUrls.some((url) => isSourceListingEvidence(url, originalUrl));
+};
 
 export const verifyCoverageReview = (
   value: unknown,
@@ -84,8 +133,9 @@ export const verifyCoverageReview = (
       const entry = byReference.get(item.reference);
       if (!isRecord(entry) || entry.url !== item.url ||
         (kind === "changed" && (
-          !Array.isArray(entry.fields) || JSON.stringify(entry.fields) !== JSON.stringify("fields" in item ? item.fields : [])
-        )) || !isReviewed(entry, kind)) {
+          !Array.isArray(entry.fields) || JSON.stringify(entry.fields) !== JSON.stringify("fields" in item ? item.fields : []) ||
+          JSON.stringify(entry.audit) !== JSON.stringify("audit" in item ? item.audit : null)
+        )) || !isReviewed(entry, kind, item.url, "fieldChecks" in item ? item.fieldChecks : [])) {
         throw new Error(`Revisión de cobertura pendiente o incoherente: ${kind}:${item.reference}`);
       }
     }

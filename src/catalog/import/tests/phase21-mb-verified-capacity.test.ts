@@ -5,7 +5,6 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonic
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { resolveAttribute } from "../mapping/attribute-mapping.js";
 import { verifiedMercaelevaMbCapacity } from "../mapping/providers/mercaeleva/verified-mb-capacity.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -71,18 +70,10 @@ for (const [reference, expected, original] of [
   });
 }
 
-test("Fase 21: la corrección recupera solo dos MB y conserva las 218 referencias", () => {
+test("Fase 21: la capacidad MB no se infiere para otras referencias Mercaeleva", () => {
   const corrected = new Set(["M062-8951", "M119-9334"]);
   for (const record of source.products) {
     if (corrected.has(record.reference ?? "")) continue;
     assert.equal(verifiedMercaelevaMbCapacity(record), null, record.reference ?? "sin referencia");
   }
-  const prepared = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(prepared.totals, { ready: 217, review: 1 });
-  assert.equal(new Set(prepared.products.map((item) => item.product.reference)).size, 218);
-  for (const reference of corrected) assert.equal(prepared.products.find((item) => item.product.reference === reference)?.status, "ready");
-  for (const reference of ["M827-8304"]) {
-    assert.equal(prepared.products.find((item) => item.product.reference === reference)?.status, "review");
-  }
-  assert.equal(prepared.products.find((item) => item.product.reference === "M104-0836")?.status, "ready");
 });

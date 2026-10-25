@@ -11,7 +11,12 @@ const help = `Uso:
   npm run review:coverage -- --baseline <catalog.json> --current <catalog.json> --dry-run
 
 Genera un informe con todas las ausencias y cambios de campos. Las decisiones se dejan
-pendientes: cada retiro o cambio requiere motivo y URL de evidencia antes de publicar.`;
+pendientes: una retirada debe acreditarse; una ausencia de listado acreditada
+requiere además una URL de categoría oficial del mismo ámbito. "no_acreditado"
+registra la incertidumbre pero bloquea la publicación, igual que una decisión nula.
+Los cambios requieren aceptación justificada y URL de evidencia antes de publicar.
+Las galerías y descripciones modificadas exigen también revisión individual
+de sus campos con evidencia, sin aprobar automáticamente la nueva extracción.`;
 
 export const runReviewCoverage = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") { console.log(help); return; }
@@ -46,7 +51,20 @@ export const runReviewCoverage = async (args: readonly string[]): Promise<void> 
   const report = createCoverageReview(previous, next, sha(rawPrevious), sha(rawNext));
   console.log(`REVISIÓN DE COBERTURA | ausentes ${report.missing.length} | cambiadas ${report.changed.length}`);
   for (const item of report.missing) console.log(`  AUSENTE | ${item.reference} | ${item.url}`);
-  for (const item of report.changed) console.log(`  CAMBIADA | ${item.reference} | ${item.fields.join(", ")}`);
+  for (const item of report.changed) {
+    console.log(`  CAMBIADA | ${item.reference} | ${item.fields.join(", ")}`);
+    const gallery = item.audit.images;
+    if (gallery) {
+      console.log(`    GALERÍA | ${gallery.previousCount} -> ${gallery.currentCount} | principal conservada: ${gallery.primaryRetained} | eliminadas: ${gallery.removed.length} | añadidas: ${gallery.added.length}`);
+    }
+    for (const description of item.audit.descriptions) {
+      console.log(`    ${description.field} | ${description.previousLength} -> ${description.currentLength} caracteres`);
+    }
+    for (const field of item.audit.otherFields) {
+      console.log(`    ${field.field} | ${JSON.stringify(field.previousValue)} -> ${JSON.stringify(field.currentValue)}`);
+    }
+    if (item.fieldChecks.length) console.log(`    Revisiones de campo pendientes: ${item.fieldChecks.map(({ field }) => field).join(", ")}`);
+  }
   if (dryRun) { console.log("Simulación: ningún archivo escrito"); return; }
   if (!out) throw new Error("Falta --out");
   await mkdir(dirname(out), { recursive: true });

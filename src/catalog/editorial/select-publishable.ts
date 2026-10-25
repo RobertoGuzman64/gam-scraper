@@ -1,3 +1,4 @@
+import { gamNewForkliftIdentityIssues } from "./gam-new-forklift-identity.js";
 import type { ImportCandidate } from "../import/preparation/contracts.js";
 import type { OfflinePreparation, PreparationSource } from "../import/preparation/offline-document.js";
 
@@ -63,6 +64,39 @@ const exclusions: readonly EditorialExclusion[] = [
   }
 ];
 
+type EditorialHold = {
+  readonly providerId: string;
+  readonly reference: string;
+  readonly sourceUrl: string;
+  readonly reason: string;
+  readonly evidenceUrls: readonly string[];
+  readonly requiredIssues: readonly string[];
+};
+
+const identityHolds: readonly EditorialHold[] = [
+  {
+    providerId: "gam", reference: "6002",
+    sourceUrl: "https://online.gamrentals.com/es/hyster/6002-carretilla-elevadora-electrica-hyster-j50xtg6",
+    reason: "La carretilla Hyster J5.0XTLG6 se anuncia como Hyster, pero GAM publica YALE como marca técnica. Identidad no reconciliada; no corregir ni publicar sin evidencia",
+    evidenceUrls: ["https://online.gamrentals.com/es/hyster/6002-carretilla-elevadora-electrica-hyster-j50xtg6"],
+    requiredIssues: ["marca HYSTER en anuncio y YALE en ficha técnica"]
+  },
+  {
+    providerId: "gam", reference: "6003",
+    sourceUrl: "https://online.gamrentals.com/es/hyster/6003-carretilla-elevadora-electrica-hyster-j60xtg6",
+    reason: "La carretilla Hyster J6.0XTLG6 se anuncia como Hyster, pero GAM publica YALE como marca técnica. Identidad no reconciliada; no corregir ni publicar sin evidencia",
+    evidenceUrls: ["https://online.gamrentals.com/es/hyster/6003-carretilla-elevadora-electrica-hyster-j60xtg6"],
+    requiredIssues: ["marca HYSTER en anuncio y YALE en ficha técnica"]
+  },
+  {
+    providerId: "gam", reference: "6004",
+    sourceUrl: "https://online.gamrentals.com/es/hyster/6004-carretilla-elevadora-electrica-hyster-j70xtg6",
+    reason: "GAM anuncia Hyster J7.0XTLG6, pero especifica YALE J7.0XTG6. Marca y modelo sin acreditar; no corregir ni publicar por suposición",
+    evidenceUrls: ["https://online.gamrentals.com/es/hyster/6004-carretilla-elevadora-electrica-hyster-j70xtg6"],
+    requiredIssues: ["marca HYSTER en anuncio y YALE en ficha técnica", "modelo anunciado distinto de J7.0XTG6"]
+  }
+];
+
 export type PublishableSelection = {
   readonly source: readonly PreparationSource[];
   readonly totals: {
@@ -92,6 +126,7 @@ export const selectPublishableCatalog = (preparations: readonly OfflinePreparati
   const sources = new Set<string>();
   const identified = new Set<string>();
   const foundExclusions = new Set<string>();
+  const foundHolds = new Set<string>();
   const publishable: ImportCandidate[] = [];
   const excluded: PublishableSelection["exclusions"][number][] = [];
   let ready = 0;
@@ -114,12 +149,28 @@ export const selectPublishableCatalog = (preparations: readonly OfflinePreparati
       }
       identified.add(key);
       const decision = exclusions.find((item) => item.providerId === providerId && item.reference === reference);
+      const hold = identityHolds.find((item) => item.providerId === providerId && item.reference === reference);
+      const identityIssues = gamNewForkliftIdentityIssues(entry.product);
       if (entry.status === "ready") {
         ready += 1;
         if (entry.issues.length || decision) throw new Error(`Selección editorial: decisión caducada (${key})`);
-        publishable.push(entry.product);
+        if (hold) {
+          if (entry.product.sourceUrl !== hold.sourceUrl ||
+            !hold.requiredIssues.every((issue) => identityIssues.some((found) => found.includes(issue)))) {
+            throw new Error(`Selección editorial: exclusión de identidad caducada (${key})`);
+          }
+          foundHolds.add(key);
+          excluded.push({
+            providerId, reference, sourceUrl: entry.product.sourceUrl,
+            reason: hold.reason, evidenceUrls: hold.evidenceUrls, issues: identityIssues
+          });
+        } else {
+          if (identityIssues.length) throw new Error(`Selección editorial: identidad GAM sin decisión acreditada (${key})`);
+          publishable.push(entry.product);
+        }
       } else {
         review += 1;
+        if (hold) throw new Error(`Selección editorial: exclusión de identidad caducada (${key})`);
         if (!decision || entry.product.sourceUrl !== decision.sourceUrl ||
           !decision.requiredIssues.every((required) => entry.issues.some((issue) => issue.includes(required)))) {
           throw new Error(`Selección editorial: review sin exclusión acreditada (${key})`);
@@ -133,11 +184,13 @@ export const selectPublishableCatalog = (preparations: readonly OfflinePreparati
     }
   }
   if (sources.size !== Object.keys(snapshots).length ||
-    exclusions.some((decision) => !foundExclusions.has(`${decision.providerId}:${decision.reference}`))) {
+    exclusions.some((decision) => !foundExclusions.has(`${decision.providerId}:${decision.reference}`)) ||
+    identityHolds.some((decision) => !foundHolds.has(`${decision.providerId}:${decision.reference}`))) {
     throw new Error("Selección editorial: faltan proveedores o exclusiones justificadas");
   }
   const original = preparations.reduce((count, preparation) => count + preparation.source.productCount, 0);
-  if (original !== ready + review || publishable.length !== ready || excluded.length !== review) {
+  if (original !== ready + review || publishable.length + excluded.length !== original ||
+    publishable.length !== ready - foundHolds.size || excluded.length !== review + foundHolds.size) {
     throw new Error("Selección editorial: referencias no reconciliadas");
   }
   return {

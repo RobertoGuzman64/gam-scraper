@@ -4,15 +4,10 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { sourceCategoryQualityIssue, SOURCE_CATEGORY_ISSUE } from "../mapping/source-category-quality.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const [gam, gomariz, mercaeleva] = await Promise.all([
-  readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json"),
-  readCanonicalCatalog("storage/scraped/gomariz/scrape-gomariz-catalog.json"),
-  readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json")
-]);
+const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
 const musoshi = gam.products.find((product) => product.reference === "6806");
 assert.ok(musoshi);
 
@@ -55,32 +50,4 @@ test("Fase 40: variantes de identidad, modelo, documentación y origen quedan si
     assert.equal(sourceCategoryQualityIssue(variant), SOURCE_CATEGORY_ISSUE, String(index));
     assert.equal(prepareProduct(variant, catalog).status, "review", String(index));
   }
-});
-
-test("Fase 40: el origen conserva ambas referencias y M827-8304 sigue bloqueada", () => {
-  const batches = [gam, gomariz, mercaeleva].map((source) => prepareImportBatch(source.products, catalog));
-  assert.deepEqual(batches.map((batch) => batch.totals), [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  const products = batches.flatMap((batch) => batch.products);
-  assert.equal(products.length, 1369);
-  assert.equal(new Set(products.map((entry) => `${entry.product.providerId}:${entry.product.reference}`)).size, 1369);
-  const target = products.find((entry) => entry.product.reference === "6806" && entry.product.providerId === "gam");
-  assert.ok(target);
-  assert.equal(target.status, "ready");
-  assert.deepEqual(target.issues, []);
-  for (const reference of ["6682", "6703"]) {
-    const entry = batches[0]?.products.find((item) => item.product.reference === reference);
-    assert.equal(entry?.status, "review", reference);
-    assert.ok(entry.issues.some((issue) => issue.includes("Número de serie")), reference);
-  }
-  const linde = batches[2]?.products.find((item) => item.product.reference === "M827-8304");
-  assert.equal(linde?.status, "review");
-  assert.deepEqual([...(linde?.issues ?? [])].sort(), [
-    "Atributo contradictorio: Capacidad de carga",
-    "Atributo contradictorio: Tipo de mástil",
-    "MER0798: el anuncio del vendedor publica 4.800 kg y mástil dúplex en el texto, pero 3.000 kg y mástil tríplex en los campos técnicos; la republicación en Machineryline conserva ambas discrepancias. Confirmar capacidad efectiva y mástil instalado con el vendedor o la placa antes de validar la ficha"
-  ].sort());
 });

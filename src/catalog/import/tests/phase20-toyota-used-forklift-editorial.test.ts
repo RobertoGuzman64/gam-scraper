@@ -4,7 +4,6 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { reconcileGamUsedLiftEditorial } from "../mapping/providers/gam/used-lift-editorial.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
@@ -70,16 +69,9 @@ test("Fase 20: cambios de identidad, serie, fecha, evidencia o texto no reciben 
   }
 });
 
-test("Fase 20: una única unidad cambia de estado y la cohorte GAM sigue íntegra", () => {
+test("Fase 20: las demás referencias no reciben reconciliación Toyota", () => {
   for (const record of gam.products) {
     if (record.reference === "6887" || record.reference === "5275" || record.reference === "5864") continue;
     assert.strictEqual(reconcileGamUsedLiftEditorial(record), record, record.reference ?? "sin referencia");
-  }
-  const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(batch.products.map((entry) => entry.product.reference)).size, gam.products.length);
-  assert.equal(batch.products.find((entry) => entry.product.reference === "6887")?.status, "ready");
-  for (const reference of ["6682", "6703"]) {
-    assert.equal(batch.products.find((entry) => entry.product.reference === reference)?.status, "review", reference);
   }
 });

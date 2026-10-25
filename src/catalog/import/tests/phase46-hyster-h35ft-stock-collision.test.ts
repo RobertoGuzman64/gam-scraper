@@ -8,11 +8,7 @@ import { describeHysterH35ftStockConflict } from "../mapping/providers/gam/hyste
 import { prepareImportBatch } from "../preparation/batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const [gam, gomariz, mercaeleva] = await Promise.all([
-  readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json"),
-  readCanonicalCatalog("storage/scraped/gomariz/scrape-gomariz-catalog.json"),
-  readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json")
-]);
+const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
 const get = (reference: string): ProductRecord => {
   const item = gam.products.find((product) => product.reference === reference);
   assert.ok(item, reference);
@@ -72,21 +68,4 @@ test("F46: la inclusión de una tercera referencia no se considera un conflicto 
   assert.deepEqual(result.totals, { ready: 0, review: 3 });
   assert.ok(result.products.every(({ issues }) => issues.some((issue) => issue.includes("Número de serie"))));
   assert.ok(result.products.every(({ issues }) => issues.every((issue) => !issue.includes("Stock GAM diferenciado"))));
-});
-
-test("F46: 1369 referencias preservadas, 1366 ready y tres revisiones reales", () => {
-  const batches = [gam, gomariz, mercaeleva].map(({ products }) => prepareImportBatch(products, catalog));
-  assert.deepEqual(batches.map(({ totals }) => totals), [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  const results = batches.flatMap(({ products }) => products);
-  assert.equal(results.length, 1369);
-  assert.equal(new Set(results.map(({ product }) => `${product.providerId}:${product.reference}`)).size, 1369);
-  for (const reference of ["6682", "6703", "M827-8304"]) {
-    const prepared = results.find(({ product }) => product.reference === reference);
-    assert.equal(prepared?.status, "review", reference);
-  }
-  assert.ok(results.filter(({ status }) => status === "ready").every(({ issues }) => issues.length === 0));
 });

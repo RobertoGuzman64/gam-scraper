@@ -5,7 +5,6 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonic
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { gamElevationIdentityConflict } from "../mapping/providers/gam/elevation-identity.js";
 import { reconcileGamVerifiedXcmg1823Model } from "../mapping/providers/gam/xcmg-1823-model-evidence.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -60,15 +59,7 @@ test("Fase 26: exige identidad y huellas exactas, sin extender el cambio a model
   }
 });
 
-test("Fase 26: únicamente 4751 cambia y todas las demás revisiones quedan protegidas", () => {
-  const prepared = prepareImportBatch(canonical.products, catalog);
-  assert.deepEqual(prepared.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(prepared.products.map((item) => item.product.reference)).size, 1008);
-  for (const reference of ["6682", "6703"]) {
-    const product = prepared.products.find((item) => item.product.reference === reference);
-    assert.ok(product, reference);
-    assert.equal(product.status, "review", reference);
-  }
+test("Fase 26: la reconciliación XCMG1823 no afecta a otras fichas", () => {
   for (const product of canonical.products) {
     if (product.reference === "4751") continue;
     assert.strictEqual(reconcileGamVerifiedXcmg1823Model(product), product, product.reference ?? "");

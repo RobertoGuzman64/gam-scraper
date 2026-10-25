@@ -5,7 +5,6 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonic
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { reconcileGamVerifiedHysterH18xdDiesel } from "../mapping/providers/gam/hyster-h18xd-diesel-evidence.js";
 import { sourceCategoryQualityIssue } from "../mapping/source-category-quality.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
@@ -62,13 +61,3 @@ test("Fase 32: no altera otras identidades ni fuentes modificadas", () => {
   }
 });
 
-test("Fase 32: únicamente recupera la 2071 del catálogo GAM", () => {
-  const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
-  assert.equal(batch.products.length, 1008);
-  assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
-  assert.equal(batch.products.find((item) => item.product.reference === "2071")?.status, "ready");
-  for (const reference of ["6682", "6703"]) {
-    assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review", reference);
-  }
-});

@@ -85,19 +85,3 @@ test("Fase 38: conserva el estado de GC40VX y los seis conflictos de serie", () 
   }
   assert.equal(prepareProduct(nextRecovered, catalog).status, "ready");
 });
-
-test("Fase 38: respeta las 1369 referencias con las fases acumuladas", async () => {
-  const [gomariz, mercaeleva] = await Promise.all([
-    readCanonicalCatalog("storage/scraped/gomariz/scrape-gomariz-catalog.json"),
-    readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json")
-  ]);
-  const sources = [source, gomariz, mercaeleva];
-  assert.deepEqual(sources.map((item) => prepareImportBatch(item.products, catalog).totals), [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
-  ]);
-  const identifiers = sources.flatMap((item) => item.products.map((product) => `${item.providerId}:${product.reference}`));
-  assert.equal(identifiers.length, 1369);
-  assert.equal(new Set(identifiers).size, 1369);
-});

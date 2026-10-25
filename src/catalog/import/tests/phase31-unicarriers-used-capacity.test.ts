@@ -4,7 +4,6 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { reconcileMercaelevaVerifiedUnicarriersCapacity } from "../mapping/providers/mercaeleva/unicarriers-used-capacity-evidence.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const source = await readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json");
@@ -55,17 +54,9 @@ test("Fase 31: no reconcilia cambios de identidad, descripción o ficha técnica
   }
 });
 
-test("Fase 31: solo se recupera M582-1882 entre las 218 Mercaeleva", () => {
+test("Fase 31: el corrector Unicarriers no altera otras fichas Mercaeleva", () => {
   for (const item of source.products) {
     if (item.reference === "M582-1882") continue;
     assert.strictEqual(reconcileMercaelevaVerifiedUnicarriersCapacity(item), item, item.reference ?? "");
   }
-  const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 217, review: 1 });
-  assert.equal(batch.products.length, 218);
-  assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 218);
-  for (const reference of ["M827-8304"]) {
-    assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review");
-  }
-  assert.equal(batch.products.find((item) => item.product.reference === "M104-0836")?.status, "ready");
 });

@@ -5,7 +5,6 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { SOURCE_CATEGORY_ISSUE, sourceCategoryQualityIssue } from "../mapping/source-category-quality.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -70,16 +69,8 @@ test("F7: la clasificación del vehículo sigue exigiendo evidencias independien
   }
 });
 
-test("F7: motores incompatibles e identidades contradictorias siguen en revisión", () => {
+test("F7: una identidad alterada de Snorkel permanece en revisión", () => {
   const snorkel = machine("6236");
   assert.equal(prepareProduct(snorkel, catalog).status, "ready");
   assert.equal(prepareProduct({ ...snorkel, longDescription: "Identidad sin confirmar" }, catalog).status, "review");
-  const batch = prepareImportBatch(source.products, catalog);
-  assert.equal(batch.products.length, 1008);
-  assert.equal(new Set(batch.products.map(({ product }) => product.reference)).size, 1008);
-  for (const reference of ["6682", "6703"]) {
-    const item = batch.products.find(({ product }) => product.reference === reference);
-    assert.ok(item, reference);
-    assert.equal(item.status, "review", reference);
-  }
 });

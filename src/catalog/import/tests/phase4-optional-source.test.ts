@@ -5,7 +5,6 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonic
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { resolveAttribute } from "../mapping/attribute-mapping.js";
 import { SOURCE_CATEGORY_ISSUE, sourceCategoryQualityIssue } from "../mapping/source-category-quality.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -74,13 +73,6 @@ test("Fase 4: radios publicados como pares permanecen sin escalar y una medida �
   }
 });
 
-test("Fase 4: las contradicciones auténticas y las colisiones de serie siguen bloqueadas por lote", () => {
+test("Fase 4: la ficha histórica 2312 supera la preparación individual", () => {
   assert.equal(prepareProduct(source("gam", "2312"), catalog).status, "ready");
-  const batch = prepareImportBatch(gam.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
-  for (const reference of ["6682", "6703"]) {
-    const item = batch.products.find((entry) => entry.product.reference === reference);
-    assert.ok(item, reference);
-    assert.equal(item.status, "review", reference);
-  }
 });

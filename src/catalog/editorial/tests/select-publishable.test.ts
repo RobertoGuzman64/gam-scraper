@@ -29,17 +29,17 @@ const replaceEntry = (providerId: string, reference: string, transform: (
     : preparation.products
 }));
 
-test("F48: selección editorial preserva 1369 referencias y publica exclusivamente las 1366 ready", async () => {
+test("F48: selección editorial preserva 1369 referencias y publica 1363 fichas tras retener tres identidades contradictorias", async () => {
   const originalRecords = await Promise.all(sources.map(async (providerId) =>
     readCanonicalCatalog(sourceFiles[providerId])));
   const originalSnapshot = JSON.stringify(originalRecords);
   const preparationSnapshot = JSON.stringify(preparations);
   const result = selectPublishableCatalog(preparations);
-  assert.deepEqual(result.totals, { original: 1369, ready: 1366, review: 3, publishable: 1366, excluded: 3 });
+  assert.deepEqual(result.totals, { original: 1369, ready: 1366, review: 3, publishable: 1363, excluded: 6 });
   assert.deepEqual(result.exclusions.map(({ providerId, reference }) => `${providerId}:${reference}`), [
-    "gam:6682", "gam:6703", "mercaeleva:M827-8304"
+    "gam:6682", "gam:6703", "gam:6002", "gam:6003", "gam:6004", "mercaeleva:M827-8304"
   ]);
-  assert.equal(new Set(result.products.map(({ providerId, reference }) => `${providerId}:${reference}`)).size, 1366);
+  assert.equal(new Set(result.products.map(({ providerId, reference }) => `${providerId}:${reference}`)).size, 1363);
   assert.ok(result.products.every(({ providerId, reference }) =>
     !result.exclusions.some((entry) => entry.providerId === providerId && entry.reference === reference)));
   assert.ok(result.exclusions.every((entry) => entry.reason && entry.evidenceUrls.length && entry.issues.length));
@@ -53,9 +53,11 @@ test("F48: selección editorial preserva 1369 referencias y publica exclusivamen
 test("F48: las Hyster no se consolidan y el número de serie contradictorio sigue en las incidencias", () => {
   const result = selectPublishableCatalog(preparations);
   const hyster = result.exclusions.filter((item) => item.providerId === "gam");
-  assert.equal(hyster.length, 2);
-  assert.ok(hyster.every((item) => item.issues.some((issue) => issue.includes("P177B10585U"))));
-  assert.ok(hyster.every((item) => item.reason.includes("identidad física")));
+  assert.equal(hyster.length, 5);
+  const colliding = hyster.filter((item) => ["6682", "6703"].includes(item.reference));
+  assert.equal(colliding.length, 2);
+  assert.ok(colliding.every((item) => item.issues.some((issue) => issue.includes("P177B10585U"))));
+  assert.ok(colliding.every((item) => item.reason.includes("identidad física")));
 });
 
 test("F48: bloquea nuevas reviews incluso si pertenecen a una referencia válida", () => {
@@ -99,6 +101,6 @@ test("F48: bloquea catálogos distintos, faltantes, duplicados o incompletos", (
 test("F48: el criterio editorial no depende de elegibilidad Excel/createMany", () => {
   const result = selectPublishableCatalog(preparations);
   const gam = result.products.filter((product) => product.providerId === "gam");
-  assert.equal(gam.length, 1006);
+  assert.equal(gam.length, 1003);
   assert.ok(gam.some((product) => product.price === null));
 });

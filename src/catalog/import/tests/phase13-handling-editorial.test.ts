@@ -5,7 +5,6 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonic
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { reconcileGamHandlingHeightEditorial } from "../mapping/providers/gam/handling-height-editorial.js";
 import { reconcileGamOrderPickerEditorial } from "../mapping/providers/gam/orderpicker-editorial.js";
-import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -104,14 +103,3 @@ test("Fase 13: no corrige preparapedidos con ficha, modelo o fuente discordantes
   }
 });
 
-test("Fase 13: recuperación por lote, sin aprobar conflictos técnicos de origen", () => {
-  const batch = prepareImportBatch(sourceCatalog.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 1006, review: 2 });
-  assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 1008);
-  for (const reference of ["3134", "2240"]) {
-    assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "ready", reference);
-  }
-  for (const reference of ["6682", "6703"]) {
-    assert.equal(batch.products.find((item) => item.product.reference === reference)?.status, "review", reference);
-  }
-});
