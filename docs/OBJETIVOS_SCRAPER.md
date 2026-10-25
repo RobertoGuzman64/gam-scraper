@@ -28,7 +28,7 @@
 | `<prefijo>-preparation.json` | Productos preparados, campos normalizados, `ready/review` e incidencias         | **Control y mejora de calidad**; conservar todas las identidades |
 | `export --format json`       | Generar candidatos adaptados a `POST /product/create/many`                      | **Herramienta del receptor**, no JSON final canónico             |
 | Exportación `.xlsx`          | Altas por la vía de importación Excel                                           | **Herramienta del receptor**, sin influencia sobre calidad       |
-| Selección editorial F48      | Conjunto publicable de la cohorte acreditada y exclusiones trazables           | **No altera el canónico ni los estados técnicos**               |
+| Selección editorial F48      | Conjunto publicable de la cohorte acreditada y exclusiones trazables            | **No altera el canónico ni los estados técnicos**                |
 
 Los contratos receptores pueden exigir descripción corta, categoría o atributos específicos e incluso precio en Excel. Una ficha puede contener datos de origen fieles aunque no reúna esas exigencias. El audit puede informar ambos diagnósticos por separado, pero **el contador relevante para cerrar esta campaña es el de calidad del catálogo**. Si una validación actual mezcla calidad con condiciones del receptor, debe investigarse por referencia y corregirse con evidencia; este documento por sí solo **no cambia el comportamiento del código**.
 

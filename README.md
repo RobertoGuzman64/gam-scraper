@@ -28,12 +28,12 @@ npm run build
 
 Se mantienen todos los comandos anteriores. Alias nuevos para evitar recordar nombres históricos:
 
-| Comando | Equivale a | Finalidad |
-| --- | --- | --- |
-| `npm run prepare -- <argumentos>` | `prepare:catalog` | Preparar catálogos canónicos |
-| `npm run coverage -- <argumentos>` | `review:coverage` | Generar expediente de cobertura |
-| `npm run publish -- <argumentos>` | `select:publishable` | Simular o seleccionar productos publicables |
-| `npm run check:catalog -- <argumentos>` | `validate:catalog` | Validar catálogo según CLI |
+| Comando                                 | Equivale a           | Finalidad                                   |
+| --------------------------------------- | -------------------- | ------------------------------------------- |
+| `npm run prepare -- <argumentos>`       | `prepare:catalog`    | Preparar catálogos canónicos                |
+| `npm run coverage -- <argumentos>`      | `review:coverage`    | Generar expediente de cobertura             |
+| `npm run publish -- <argumentos>`       | `select:publishable` | Simular o seleccionar productos publicables |
+| `npm run check:catalog -- <argumentos>` | `validate:catalog`   | Validar catálogo según CLI                  |
 
 Las opciones y protecciones de los comandos originales no cambian. La medición TOP15 de referencia del 25/10/2026 fue de 802 tests correctos en 164 archivos y 54,26 s; no constituye una garantía de rendimiento tras el saneamiento.
 
