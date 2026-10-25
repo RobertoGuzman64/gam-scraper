@@ -1,15 +1,14 @@
-import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { copyFile, mkdir, open, stat } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { BatchOptions } from "./types.js";
 import type { ScrapeEvent } from "../../contracts/progress.js";
-import { isScrapeMessage } from "../../contracts/progress.js";
 import { getProvider } from "../../scraping/registry.js";
-import { getBatchStatus, readPublicationStats, writeBatchReport } from "./report.js";
+import { getBatchStatus, writeBatchReport } from "./report.js";
 import type { BatchReport, ProviderRun } from "./report.js";
 import { acquireBatchLock } from "../../infrastructure/locking/batch-lock.js";
 import { cleanBatchExcess } from "../../infrastructure/filesystem/run-retention.js";
+import { runProvider } from "./run-provider.js";
 
 export type BatchResult = { readonly report: BatchReport; readonly reportFile: string };
 export type BatchObserver = {
@@ -33,116 +32,6 @@ export const describeBatch = (options: BatchOptions): readonly {
   outputDir: resolve(options.outRoot, providerId),
   outputPrefix: getProvider(providerId).defaultOptions.outPrefix
 }));
-
-const terminateTree = (child: ChildProcess): void => {
-  if (child.exitCode !== null || child.signalCode !== null || !child.pid) return;
-  if (process.platform === "win32") {
-    const killer = spawn("taskkill", ["/PID", String(child.pid), "/T", "/F"], { stdio: "ignore", windowsHide: true });
-    killer.once("error", () => child.kill());
-  } else {
-    child.kill("SIGTERM");
-  }
-};
-
-const executeProvider = async (
-  scriptFile: string, providerId: string, outDir: string, outPrefix: string, logFile: string,
-  progress: (event: ScrapeEvent) => void, signal: AbortSignal
-): Promise<number> => {
-  if (signal.aborted) throw new Error("Lote cancelado antes de ejecutar el proveedor");
-  const log = await open(logFile, "w");
-  try {
-    return await new Promise<number>((done, fail) => {
-      const child = spawn(process.execPath, [
-        scriptFile, "--provider", providerId, "--outDir", outDir, "--outPrefix", outPrefix
-      ], { cwd: process.cwd(), stdio: ["ignore", log.fd, log.fd, "ipc"], windowsHide: true });
-      const cancel = (): void => terminateTree(child);
-      const cleanup = (): void => signal.removeEventListener("abort", cancel);
-      signal.addEventListener("abort", cancel, { once: true });
-      if (signal.aborted) cancel();
-      child.on("message", (message: unknown) => {
-        if (isScrapeMessage(message)) progress(message.event);
-      });
-      child.once("error", (error) => { cleanup(); fail(error); });
-      child.once("close", (code, childSignal) => {
-        cleanup();
-        if (signal.aborted) fail(new Error("Lote cancelado por señal; proceso hijo detenido"));
-        else done(childSignal === null ? (code ?? -1) : -1);
-      });
-    });
-  } finally {
-    await log.close();
-  }
-};
-
-const archiveReports = async (
-  providerId: string, outputDir: string, outputPrefix: string, runDir: string, startedAt: string
-): Promise<Pick<ProviderRun, "archivedSummaryFile" | "archivedChangesFile" | "archivedErrorsFile" | "archivedPreparationFile" | "archivedPartialPreparationFile">> => {
-  const entries = [
-    { suffix: "summary", field: "archivedSummaryFile" },
-    { suffix: "changes", field: "archivedChangesFile" },
-    { suffix: "errors", field: "archivedErrorsFile" },
-    { suffix: "preparation", field: "archivedPreparationFile" },
-    { suffix: "partial-preparation", field: "archivedPartialPreparationFile" }
-  ] as const;
-  const archived: {
-    archivedSummaryFile?: string;
-    archivedChangesFile?: string;
-    archivedErrorsFile?: string;
-    archivedPreparationFile?: string;
-    archivedPartialPreparationFile?: string;
-  } = {};
-
-  for (const entry of entries) {
-    const source = join(outputDir, `${outputPrefix}-${entry.suffix}.json`);
-    const destination = join(runDir, `${providerId}-${entry.suffix}.json`);
-    try {
-      const metadata = await stat(source);
-      if (metadata.mtimeMs < Date.parse(startedAt)) continue;
-      await copyFile(source, destination);
-      archived[entry.field] = destination;
-    } catch (error) {
-      if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") continue;
-      throw error;
-    }
-  }
-  return archived;
-};
-
-const runProvider = async (
-  scriptFile: string, providerId: string, outputDir: string, outputPrefix: string, runDir: string,
-  progress: (event: ScrapeEvent) => void, signal: AbortSignal
-): Promise<ProviderRun> => {
-  const startedAt = timestamp();
-  const logFile = join(runDir, `${providerId}.log`);
-  const summaryFile = join(outputDir, `${outputPrefix}-summary.json`);
-  const changesFile = join(outputDir, `${outputPrefix}-changes.json`);
-  const details = { providerId, startedAt, outputDir, outputPrefix, logFile, summaryFile, changesFile };
-
-  const failures: string[] = [];
-  let archived: Pick<ProviderRun, "archivedSummaryFile" | "archivedChangesFile" | "archivedErrorsFile" | "archivedPreparationFile" | "archivedPartialPreparationFile"> = {};
-  try {
-    await mkdir(outputDir, { recursive: true });
-    const exitCode = await executeProvider(scriptFile, providerId, outputDir, outputPrefix, logFile, (event) => {
-      if (event.type === "failure" && failures.length === 0) failures.push(`${event.stage} | ${event.resource}: ${event.reason}`);
-      progress(event);
-    }, signal);
-    archived = await archiveReports(providerId, outputDir, outputPrefix, runDir, startedAt);
-    if (exitCode !== 0) {
-      const diagnostic = failures.length ? ` | ${failures[0]}` : "";
-      throw new Error(`El scraper finalizó con código ${exitCode}${diagnostic}`);
-    }
-    const statistics = await readPublicationStats(summaryFile, changesFile, startedAt);
-    const endedAt = timestamp();
-    return { ...details, ...archived, status: "complete", endedAt, durationMs: Date.parse(endedAt) - Date.parse(startedAt), ...statistics };
-  } catch (error) {
-    archived = await archiveReports(providerId, outputDir, outputPrefix, runDir, startedAt).catch(() => archived);
-    const endedAt = timestamp();
-    return {
-      ...details, ...archived, status: "failed", endedAt, durationMs: Date.parse(endedAt) - Date.parse(startedAt),
-      error: error instanceof Error ? error.message : String(error)
-    };
-  }
-};
 
 export const runBatch = async (
   options: BatchOptions, scriptFile: string, observer?: BatchObserver, externalSignal?: AbortSignal
