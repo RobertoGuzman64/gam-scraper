@@ -3,7 +3,7 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 
 export type ChangedFieldCheck = {
   readonly field: "images" | "longDescription" | "shortDescription";
-  readonly decision: "aceptado" | "rechazado" | null;
+  readonly decision: "aceptado" | "corregido" | "rechazado" | null;
   readonly reason: string | null;
   readonly evidenceUrls: readonly string[];
 };

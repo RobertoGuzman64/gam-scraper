@@ -1,6 +1,8 @@
 import type { CanonicalCatalog } from "../canonical-catalog.js";
 import { compareCanonicalCoverage } from "./compare.js";
 import { auditChangedProduct, changedFieldChecks } from "./change-audit.js";
+import { hasGamF50GalleryCorrection } from "../editorial/gam-f50-gallery.js";
+import { hasGamF50ShortDescriptionCorrection } from "../editorial/gam-f50-description.js";
 import type { ChangedFieldCheck, ChangedProductAudit } from "./change-audit.js";
 
 export type CoverageReview = {
@@ -77,12 +79,27 @@ const isSourceListingEvidence = (url: string, originalUrl: string): boolean => {
   }
 };
 
-const validFieldChecks = (value: unknown, required: readonly ChangedFieldCheck[]): boolean => {
+const f50Sha256 = "7f31ebee51f573401d6f20bbe850751c46ff1659a5a91ffcf4302e82ed11e11d";
+const excludedF50Changes = new Set(["6002", "6003", "6004"]);
+
+const validFieldChecks = (
+  value: unknown,
+  required: readonly ChangedFieldCheck[],
+  reference: string,
+  f50: boolean,
+  excluded: boolean
+): boolean => {
   if (!Array.isArray(value) || value.length !== required.length) return false;
   const checked = new Set<string>();
   for (const entry of value) {
     if (!isRecord(entry) || typeof entry.field !== "string" || checked.has(entry.field) ||
-      !required.some((item) => item.field === entry.field) || entry.decision !== "aceptado" ||
+      !required.some((item) => item.field === entry.field) ||
+      !(excluded ? entry.decision === "rechazado" :
+        entry.decision === "aceptado" ||
+        (f50 && entry.decision === "corregido" && (
+          (entry.field === "images" && hasGamF50GalleryCorrection(reference)) ||
+          (entry.field === "shortDescription" && hasGamF50ShortDescriptionCorrection(reference))
+        ))) ||
       typeof entry.reason !== "string" || entry.reason.trim().length < 15 ||
       !validEvidence(entry.evidenceUrls)) return false;
     checked.add(entry.field);
@@ -94,11 +111,17 @@ const isReviewed = (
   value: unknown,
   kind: "missing" | "changed",
   originalUrl: string,
-  requiredChecks: readonly ChangedFieldCheck[] = []
+  requiredChecks: readonly ChangedFieldCheck[] = [],
+  reference = "",
+  f50 = false
 ): boolean => {
   if (!isRecord(value) || typeof value.reason !== "string" || value.reason.trim().length < 15 ||
     !validEvidence(value.evidenceUrls)) return false;
-  if (kind === "changed") return value.decision === "aceptado" && validFieldChecks(value.fieldChecks, requiredChecks);
+  if (kind === "changed") {
+    const excluded = f50 && excludedF50Changes.has(reference) && value.decision === "rechazado";
+    return (value.decision === "aceptado" || excluded) &&
+      validFieldChecks(value.fieldChecks, requiredChecks, reference, f50, excluded);
+  }
   if (value.decision === "retirado") return true;
   return value.decision === "ausencia_listado_acreditada" &&
     value.evidenceUrls.some((url) => isSourceListingEvidence(url, originalUrl));
@@ -135,7 +158,8 @@ export const verifyCoverageReview = (
         (kind === "changed" && (
           !Array.isArray(entry.fields) || JSON.stringify(entry.fields) !== JSON.stringify("fields" in item ? item.fields : []) ||
           JSON.stringify(entry.audit) !== JSON.stringify("audit" in item ? item.audit : null)
-        )) || !isReviewed(entry, kind, item.url, "fieldChecks" in item ? item.fieldChecks : [])) {
+        )) || !isReviewed(entry, kind, item.url, "fieldChecks" in item ? item.fieldChecks : [],
+          item.reference, expected.currentSha256 === f50Sha256)) {
         throw new Error(`Revisión de cobertura pendiente o incoherente: ${kind}:${item.reference}`);
       }
     }

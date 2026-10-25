@@ -1,4 +1,6 @@
 import { gamNewForkliftIdentityIssues } from "./gam-new-forklift-identity.js";
+import { curateGamF50Gallery } from "./gam-f50-gallery.js";
+import { curateGamF50Description } from "./gam-f50-description.js";
 import type { ImportCandidate } from "../import/preparation/contracts.js";
 import type { OfflinePreparation, PreparationSource } from "../import/preparation/offline-document.js";
 
@@ -172,7 +174,9 @@ export const selectPublishableCatalog = (preparations: readonly OfflinePreparati
           });
         } else {
           if (identityIssues.length) throw new Error(`Selección editorial: identidad GAM sin decisión acreditada (${key})`);
-          publishable.push(entry.product);
+          publishable.push(newCohort
+            ? curateGamF50Description(curateGamF50Gallery(entry.product))
+            : entry.product);
         }
       } else {
         review += 1;
