@@ -77,3 +77,72 @@ test("bloquea una revisión nueva no acreditada", () => {
   });
   assert.throws(() => selectAccreditedPublishable(changed, sources, runId, approved, sha256(JSON.stringify(approved))), /aprobación ausente/);
 });
+
+test("una ficha intervenida y lista exige aprobación individual antes de incluirse", () => {
+  const gam = preparations.find((item) => item.source.providerId === "gam");
+  assert.ok(gam);
+  const product = gam.products.find((entry) => entry.product.reference === "4988");
+  assert.ok(product && product.status === "ready");
+  const source = sources.find((item) => item.providerId === "gam");
+  assert.ok(source);
+  const intervention = {
+    campaign: "revision-manual",
+    sourceCatalogSha256: source.catalogSha256,
+    planSha256: "a".repeat(64), derivedCatalogSha256: "b".repeat(64),
+    affectedReferences: ["4988"]
+  };
+  const modifiedSources = sources.map((item) => item.providerId !== "gam" ? item : {
+    ...item, intervention
+  });
+  const modifiedPreparations = preparations.map((item) => item.source.providerId !== "gam" ? item : {
+    ...item,
+    source: { ...item.source, catalogSha256: intervention.derivedCatalogSha256, intervention: {
+      campaign: intervention.campaign, sourceCatalogSha256: intervention.sourceCatalogSha256,
+      planSha256: intervention.planSha256, derivedCatalogSha256: intervention.derivedCatalogSha256
+    } }
+  });
+  const changedDraft = createAccreditationDraft(modifiedPreparations, modifiedSources, runId);
+  const pending = changedDraft.exclusions.find((item) => item.providerId === "gam" && item.reference === "4988");
+  assert.ok(pending);
+  assert.equal(pending.status, "intervention");
+  const approveAllExceptChanged = {
+    ...changedDraft, approved: true, approvalReason: "Revisión editorial de las seis incidencias y cambio manual.",
+    exclusions: changedDraft.exclusions.map((item) => ({
+      ...item,
+      decision: item.status === "intervention" ? null : "excluir",
+      reason: "Revisión de identidad según la fuente vigente del proveedor.",
+      evidenceUrls: [item.sourceUrl]
+    }))
+  };
+  assert.throws(() => selectAccreditedPublishable(
+    modifiedPreparations, modifiedSources, runId, approveAllExceptChanged,
+    sha256(JSON.stringify(approveAllExceptChanged))
+  ), /decisión ausente/);
+  const approvedChanges = {
+    ...approveAllExceptChanged,
+    exclusions: approveAllExceptChanged.exclusions.map((item) => ({
+      ...item, decision: item.status === "intervention" ? "incluir" : "excluir"
+    }))
+  };
+  const selection = selectAccreditedPublishable(
+    modifiedPreparations, modifiedSources, runId, approvedChanges, sha256(JSON.stringify(approvedChanges))
+  );
+  assert.equal(selection.totals.publishable, 1363);
+  assert.ok(selection.products.some((item) => item.providerId === "gam" && item.reference === "4988"));
+  assert.ok(selection.accreditation?.preparationSources.some((entry) => entry.providerId === "gam"));
+
+  const incorrect = {
+    ...approvedChanges,
+    exclusions: approvedChanges.exclusions.map((item) => item.reference !== "6682" ? item : { ...item, decision: "incluir" })
+  };
+  assert.throws(() => selectAccreditedPublishable(
+    modifiedPreparations, modifiedSources, runId, incorrect, sha256(JSON.stringify(incorrect))
+  ), /decisión ausente/);
+
+  const changedPlan = modifiedSources.map((item) => item.providerId !== "gam" ? item : {
+    ...item, intervention: { ...intervention, planSha256: "c".repeat(64) }
+  });
+  assert.throws(() => selectAccreditedPublishable(
+    modifiedPreparations, changedPlan, runId, approvedChanges, sha256(JSON.stringify(approvedChanges))
+  ), /vinculada/);
+});

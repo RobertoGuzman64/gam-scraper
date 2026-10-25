@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
+import type { InterventionProvenance } from "../import/preparation/offline-document.js";
 import type { OfflinePreparation } from "../import/preparation/offline-document.js";
 import { gamNewForkliftIdentityIssues } from "./gam-new-forklift-identity.js";
 import type { PublishableSelection } from "./select-publishable.js";
@@ -8,18 +10,21 @@ export type AccreditedSource = {
   readonly catalogSha256: string;
   readonly preparationSha256: string;
   readonly productCount: number;
+  readonly intervention?: InterventionProvenance & {
+    readonly affectedReferences: readonly string[];
+  };
 };
 
 type RequiredExclusion = {
   readonly providerId: string;
   readonly reference: string;
   readonly sourceUrl: string;
-  readonly status: "review" | "identity";
+  readonly status: "review" | "identity" | "intervention";
   readonly issues: readonly string[];
 };
 
 type AccreditationDecision = RequiredExclusion & {
-  readonly decision: "excluir" | null;
+  readonly decision: "excluir" | "incluir" | null;
   readonly reason: string | null;
   readonly evidenceUrls: readonly string[];
 };
@@ -43,19 +48,23 @@ const isSecureUrl = (value: unknown): value is string => {
 
 export const sha256 = (text: string): string => createHash("sha256").update(text).digest("hex");
 
-const getRequiredExclusions = (preparations: readonly OfflinePreparation[]): readonly RequiredExclusion[] => {
+const getRequiredExclusions = (
+  preparations: readonly OfflinePreparation[], sources: readonly AccreditedSource[]
+): readonly RequiredExclusion[] => {
   const required: RequiredExclusion[] = [];
   for (const preparation of preparations) {
     const providerId = preparation.source.providerId;
+    const touched = new Set(sources.find((source) => source.providerId === providerId)?.intervention?.affectedReferences ?? []);
     for (const entry of preparation.products) {
       const reference = entry.product.reference;
       if (!reference || entry.product.providerId !== providerId) {
         throw new Error("Acreditación editorial: identidad de producto inválida");
       }
       const issues = entry.status === "review" ? entry.issues : gamNewForkliftIdentityIssues(entry.product);
-      if (issues.length > 0) required.push({
+      if (issues.length > 0 || touched.has(reference)) required.push({
         providerId, reference, sourceUrl: entry.product.sourceUrl,
-        status: entry.status === "review" ? "review" : "identity", issues
+        status: entry.status === "review" ? "review" : issues.length ? "identity" : "intervention",
+        issues: issues.length ? issues : ["Intervención manual acreditada; requiere aprobación editorial explícita"]
       });
     }
   }
@@ -68,7 +77,7 @@ export const createAccreditationDraft = (
   runId: string
 ): CampaignAccreditation => ({
   version: 1, runId, approved: false, approvalReason: null, sources,
-  exclusions: getRequiredExclusions(preparations).map((required) => ({
+  exclusions: getRequiredExclusions(preparations, sources).map((required) => ({
     ...required, decision: null, reason: null, evidenceUrls: []
   }))
 });
@@ -97,7 +106,8 @@ export const selectAccreditedPublishable = (
     const key = `${item.providerId}:${item.reference}`;
     const expectedEntry = expected.exclusions.find((entry) =>
       entry.providerId === item.providerId && entry.reference === item.reference);
-    if (!expectedEntry || decisions.has(key) || item.decision !== "excluir" ||
+    if (!expectedEntry || decisions.has(key) ||
+      (item.decision !== "excluir" && !(expectedEntry.status === "intervention" && item.decision === "incluir")) ||
       item.status !== expectedEntry.status || item.sourceUrl !== expectedEntry.sourceUrl ||
       JSON.stringify(item.issues) !== JSON.stringify(expectedEntry.issues) ||
       typeof item.reason !== "string" || item.reason.trim().length < 15 ||
@@ -106,7 +116,7 @@ export const selectAccreditedPublishable = (
       throw new Error(`Acreditación editorial: decisión ausente o caducada (${key})`);
     }
     decisions.set(key, {
-      ...expectedEntry, decision: "excluir", reason: item.reason, evidenceUrls: item.evidenceUrls
+      ...expectedEntry, decision: item.decision, reason: item.reason, evidenceUrls: item.evidenceUrls
     });
   }
   const products: PublishableSelection["products"][number][] = [];
@@ -116,9 +126,19 @@ export const selectAccreditedPublishable = (
   let review = 0;
   for (const preparation of preparations) {
     const providerId = preparation.source.providerId;
+    const accredited = sources.find((source) => source.providerId === providerId);
     if (preparation.source.productCount !== preparation.products.length ||
       preparation.totals.ready + preparation.totals.review !== preparation.products.length ||
-      preparation.source.intervention !== undefined) {
+      !accredited || accredited.productCount !== preparation.source.productCount ||
+      (preparation.source.intervention === undefined ?
+        accredited.intervention !== undefined || accredited.catalogSha256 !== preparation.source.catalogSha256 :
+        !accredited.intervention ||
+        !isDeepStrictEqual(preparation.source.intervention, {
+          campaign: accredited.intervention.campaign,
+          sourceCatalogSha256: accredited.intervention.sourceCatalogSha256,
+          planSha256: accredited.intervention.planSha256,
+          derivedCatalogSha256: accredited.intervention.derivedCatalogSha256
+        }) || accredited.catalogSha256 !== accredited.intervention.sourceCatalogSha256)) {
       throw new Error(`Acreditación editorial: preparación no admitida (${providerId})`);
     }
     for (const entry of preparation.products) {
@@ -136,13 +156,15 @@ export const selectAccreditedPublishable = (
         if (!entry.issues.length) throw new Error(`Acreditación editorial: review sin motivo (${key})`);
       }
       const decision = decisions.get(key);
-      if (decision) {
+      if (decision?.decision === "excluir") {
         exclusions.push({
           providerId, reference, sourceUrl: entry.product.sourceUrl,
           reason: decision.reason ?? "", evidenceUrls: decision.evidenceUrls, issues: decision.issues
         });
       } else {
-        if (entry.status !== "ready" || gamNewForkliftIdentityIssues(entry.product).length) {
+        if (entry.status !== "ready" || gamNewForkliftIdentityIssues(entry.product).length ||
+          (expected.exclusions.some((item) => item.providerId === providerId && item.reference === reference) &&
+            decision?.decision !== "incluir")) {
           throw new Error(`Acreditación editorial: producto sin decisión (${key})`);
         }
         products.push(entry.product);
@@ -151,7 +173,10 @@ export const selectAccreditedPublishable = (
   }
   const original = preparations.reduce((sum, item) => sum + item.source.productCount, 0);
   if (original !== ready + review || original !== products.length + exclusions.length ||
-    exclusions.length !== decisions.size) throw new Error("Acreditación editorial: referencias no reconciliadas");
+    decisions.size !== expected.exclusions.length ||
+    exclusions.length + products.filter((item) => decisions.get(`${item.providerId}:${item.reference}`)?.decision === "incluir").length !== decisions.size) {
+    throw new Error("Acreditación editorial: referencias no reconciliadas");
+  }
   return {
     accreditation: {
       runId,

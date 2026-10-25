@@ -6,6 +6,7 @@ import { parseCanonicalCatalog } from "../../catalog/canonical-catalog.js";
 import type { CanonicalCatalog } from "../../catalog/canonical-catalog.js";
 import type { InterventionProvenance } from "../../catalog/import/preparation/offline-document.js";
 import { applyInterventionToCatalog } from "../../manual-interventions/application.js";
+import type { ManualInterventionProposal } from "../../manual-interventions/contracts.js";
 import { parseAppliedInterventionRecord } from "../../manual-interventions/record.js";
 import { simulateIntervention } from "../../manual-interventions/simulation.js";
 import { readInterventionSource } from "./intervention-source.js";
@@ -18,6 +19,7 @@ export type VerifiedIntervention = {
   readonly catalog: CanonicalCatalog;
   readonly catalogSha256: string;
   readonly provenance: InterventionProvenance;
+  readonly changes: readonly ManualInterventionProposal[];
 };
 
 export const readAppliedIntervention = async (derivedFile: string, originalFile: string): Promise<VerifiedIntervention> => {
@@ -73,5 +75,5 @@ export const readAppliedIntervention = async (derivedFile: string, originalFile:
     planSha256: record.planSha256,
     derivedCatalogSha256: record.derivedCatalogSha256
   };
-  return { catalog, catalogSha256: sha256(raw), provenance };
+  return { catalog, catalogSha256: sha256(raw), provenance, changes: record.changes };
 };

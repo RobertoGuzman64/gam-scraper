@@ -2,7 +2,7 @@ import { basename, resolve } from "node:path";
 
 export type InterveneOptions = {
   readonly providerId: string;
-  readonly script: string;
+  readonly scripts: readonly string[];
   readonly source: string;
   readonly detail: boolean;
   readonly apply: boolean;
@@ -10,8 +10,8 @@ export type InterveneOptions = {
   readonly plan: string | null;
 };
 
-export const interveneHelp = `Uso: npm run intervenir -- gam --script storage/interventions/<campaña>/scripts/<archivo>.ts --origen <catalog.json> [--detalle]
-Aplicar: npm run intervenir -- gam --script <archivo.ts> --origen <catalog.json> --campana <campaña> --aplicar --plan <SHA-256>
+export const interveneHelp = `Uso: npm run intervenir -- gam --script storage/interventions/<campaña>/scripts/<archivo>.ts [--script <otro.ts> ...] --origen <catalog.json> [--detalle]
+Aplicar: npm run intervenir -- gam --script <archivo.ts> [--script <otro.ts> ...] --origen <catalog.json> --campana <campaña> --aplicar --plan <SHA-256>
 
 Por defecto solo simula, sin escribir archivos. --aplicar requiere SHA completo obtenido con la simulación.
 Genera únicamente resultados derivados bajo storage/interventions/<campaña>/results/.
@@ -22,6 +22,7 @@ export const parseInterveneOptions = (args: readonly string[]): InterveneOptions
   const [providerId, ...rest] = args;
   if (!providerId || providerId.startsWith("-")) throw new Error(`Falta proveedor.\n${interveneHelp}`);
   const options = new Map<string, string>();
+  const scripts: string[] = [];
   let detail = false;
   let apply = false;
   let dryRun = false;
@@ -47,14 +48,16 @@ export const parseInterveneOptions = (args: readonly string[]): InterveneOptions
     }
     const value = rest[index + 1];
     if (!value || value.startsWith("--") || options.has(arg)) throw new Error(`Opción repetida o sin valor: ${arg}`);
-    options.set(arg, value);
+    if (arg === "--script") {
+      if (scripts.includes(value)) throw new Error("Script repetido");
+      scripts.push(value);
+    } else options.set(arg, value);
     index += 1;
   }
-  const script = options.get("--script");
   const source = options.get("--source");
   const campaign = options.get("--campana") ?? null;
   const plan = options.get("--plan") ?? null;
-  if (!script || !source || !basename(source).endsWith("-catalog.json")) {
+  if (!scripts.length || !source || !basename(source).endsWith("-catalog.json")) {
     throw new Error(`Debes indicar --script y --origen <archivo-catalog.json>.\n${interveneHelp}`);
   }
   if (apply && dryRun) throw new Error("No se puede combinar --aplicar con --simular");
@@ -64,5 +67,5 @@ export const parseInterveneOptions = (args: readonly string[]): InterveneOptions
     throw new Error("Identificador de campaña inválido");
   }
   if (plan !== null && !/^[a-f0-9]{64}$/.test(plan)) throw new Error("--plan requiere un SHA-256 completo");
-  return { providerId, script, source: resolve(source), detail, apply, campaign, plan };
+  return { providerId, scripts, source: resolve(source), detail, apply, campaign, plan };
 };

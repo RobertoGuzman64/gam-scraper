@@ -18,6 +18,15 @@ const assertScriptLocation = (input: string, workspaceRoot: string): string => {
   return scriptPath;
 };
 
+export const interventionScriptCampaign = (input: string, workspaceRoot = process.cwd()): string => {
+  const location = assertScriptLocation(input, workspaceRoot);
+  const campaign = relative(realpathSync(resolve(workspaceRoot, "storage", "interventions")), location).split(sep)[0];
+  if (!campaign || !/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(campaign)) {
+    throw new Error("Campaña de script inválida");
+  }
+  return campaign;
+};
+
 const rejectRuntimeImports = (sourceFile: ts.SourceFile): void => {
   const check = (node: ts.Node): void => {
     if (ts.isImportDeclaration(node) && !node.importClause?.isTypeOnly) {

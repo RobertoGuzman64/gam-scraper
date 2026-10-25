@@ -13,7 +13,7 @@ const isWithin = (parent: string, child: string): boolean => {
   return path !== "" && path !== ".." && !path.startsWith(`..${sep}`);
 };
 
-const validateCampaign = async (campaign: string, script: string, root: string): Promise<string> => {
+const validateCampaign = async (campaign: string, scripts: readonly string[], root: string): Promise<string> => {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(campaign)) throw new Error("Identificador de campaña inválido");
   const workspace = await realpath(root);
   const interventions = await realpath(join(workspace, "storage", "interventions"));
@@ -21,11 +21,15 @@ const validateCampaign = async (campaign: string, script: string, root: string):
   if (!isWithin(interventions, campaignDir) || basename(campaignDir) !== campaign) {
     throw new Error("La campaña sale del directorio de intervenciones");
   }
-  const scriptPath = await realpath(resolve(workspace, script));
-  if (relative(join(campaignDir, "scripts"), scriptPath).startsWith("..") ||
-    !isWithin(join(campaignDir, "scripts"), scriptPath) ||
-    !(await stat(scriptPath)).isFile()) {
-    throw new Error("El script no pertenece a la campaña solicitada");
+  if (scripts.length === 0) throw new Error("La intervención debe indicar scripts");
+  const unique = new Set<string>();
+  for (const script of scripts) {
+    const scriptPath = await realpath(resolve(workspace, script));
+    if (!isWithin(join(campaignDir, "scripts"), scriptPath) ||
+      !(await stat(scriptPath)).isFile() || unique.has(scriptPath)) {
+      throw new Error("Script repetido o ajeno a la campaña solicitada");
+    }
+    unique.add(scriptPath);
   }
   return campaignDir;
 };
@@ -40,17 +44,19 @@ export type AppliedIntervention = {
 
 export const persistAppliedIntervention = async (options: {
   readonly source: string;
-  readonly script: string;
+  readonly script?: string;
+  readonly scripts?: readonly string[];
   readonly campaign: string;
   readonly confirmation: string;
   readonly simulation: InterventionSimulation;
   readonly workspaceRoot?: string;
 }): Promise<AppliedIntervention> => {
-  const { source, script, campaign, confirmation, simulation } = options;
+  const { source, campaign, confirmation, simulation } = options;
+  const scripts = options.scripts ?? (options.script ? [options.script] : []);
   if (confirmation !== simulation.planSha256) throw new Error("El SHA del plan no coincide con la simulación actual");
   if (simulation.changes.length === 0) throw new Error("No hay cambios que aplicar");
   const root = options.workspaceRoot ?? process.cwd();
-  const campaignDir = await validateCampaign(campaign, script, root);
+  const campaignDir = await validateCampaign(campaign, scripts, root);
   const latest = await readInterventionSource(source);
   if (latest.catalogSha256 !== simulation.catalogSha256) throw new Error("El catálogo original ha cambiado desde la simulación");
   const verifiedPlan = simulateIntervention(latest.catalog, latest.catalogSha256, simulation.changes);
@@ -85,7 +91,8 @@ export const persistAppliedIntervention = async (options: {
     derivedCatalogSha256: derivedSha256,
     analyzedProducts: simulation.analyzedProducts,
     affectedProducts: simulation.affectedProducts,
-    changes: simulation.changes
+    changes: simulation.changes,
+    scripts: scripts.map((script) => basename(script)).sort()
   }, null, 2);
 
   const resultRoot = join(campaignDir, "results");

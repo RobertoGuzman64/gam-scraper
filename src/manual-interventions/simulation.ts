@@ -1,8 +1,10 @@
 import { createHash } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import type { CanonicalCatalog } from "../catalog/canonical-catalog.js";
 import { buildProductIdentity } from "../catalog/identity.js";
 import type { ManualInterventionProposal } from "./contracts.js";
 import { validateInterventionProposals } from "./proposals.js";
+import { readProposedField } from "./values.js";
 
 export type InterventionSimulation = {
   readonly providerId: string;
@@ -39,7 +41,7 @@ export const simulateIntervention = (
     const product = products.get(proposal.identity);
     if (!product) {
       conflicts.push(`${proposal.identity} | identidad no encontrada`);
-    } else if (product[proposal.field] !== proposal.expected) {
+    } else if (!isDeepStrictEqual(readProposedField(product, proposal.field), proposal.expected)) {
       conflicts.push(`${proposal.identity} | ${proposal.field} | el valor actual no coincide con el esperado`);
     }
   }

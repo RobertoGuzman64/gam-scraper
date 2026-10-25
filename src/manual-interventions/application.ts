@@ -2,6 +2,8 @@ import type { CanonicalCatalog } from "../catalog/canonical-catalog.js";
 import { parseCanonicalCatalog } from "../catalog/canonical-catalog.js";
 import { buildProductIdentity } from "../catalog/identity.js";
 import type { ProductRecord } from "../contracts/catalog.js";
+import { isDeepStrictEqual } from "node:util";
+import { readProposedField, writeProposedField } from "./values.js";
 import type { InterventionSimulation } from "./simulation.js";
 
 export const applyInterventionToCatalog = (
@@ -26,16 +28,10 @@ export const applyInterventionToCatalog = (
     applied.add(identity);
     let product: ProductRecord = original;
     for (const operation of operations) {
-      if (product[operation.field] !== operation.expected) {
+      if (!isDeepStrictEqual(readProposedField(product, operation.field), operation.expected)) {
         throw new Error(`Valor anterior no coincide: ${identity} | ${operation.field}`);
       }
-      if (operation.field === "title") {
-        product = { ...product, title: operation.next };
-      } else if (operation.field === "shortDescription") {
-        product = { ...product, shortDescription: operation.next };
-      } else if (operation.field === "longDescription") {
-        product = { ...product, longDescription: operation.next };
-      }
+      product = writeProposedField(product, operation);
     }
     if (buildProductIdentity(product).key !== identity) throw new Error("Una intervención alteró la identidad del producto");
     return product;

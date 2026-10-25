@@ -40,6 +40,12 @@ La salida son `gam-publishable.json`, `gomariz-publishable.json`, `mercaeleva-pu
 
 Se rechazan lotes incompletos, catálogos no correspondientes al lote, preparaciones alteradas, exclusiones nuevas sin acreditar y aprobaciones de otras campañas. La acreditación **no** hace pasar una ficha `review` a `ready`: la excluye de la entrega hasta que se resuelva su problema.
 
-Las preparaciones derivadas de intervenciones manuales siguen requiriendo una vía de autorización específica y no están admitidas en esta acreditación. No eludir esa barrera modificando un archivo de procedencia.
+Las preparaciones derivadas de intervenciones manuales requieren acreditación explícita de sus cambios mediante la misma vía, después de comprobar origen, expediente, reglas y huellas. No eludir esa barrera modificando un archivo de procedencia.
 
 La acreditación y sus decisiones se conservan como evidencias de la campaña, **fuera del código permanente**. No copiar el borrador ni los JSON de aprobación al repositorio como reglas de negocio.
+
+## Preparaciones con intervención manual
+
+La selección admite también una preparación intervenida que esté completamente ligada al catálogo original del lote y que haya superado las validaciones de procedencia, reglas y huellas. Los productos intervenidos que quedan listos aparecen en el borrador con `status: "intervention"`; para publicarlos hay que decidir individualmente `"incluir"`, con motivo y evidencia vigentes. Si mantienen problemas de calidad o identidad, siguen requiriendo exclusión; no hay promoción automática de `review` a `ready`. Los datos originales permanecen intactos.
+
+Procedimiento y comandos: [Composición de intervenciones manuales](COMPOSICION_INTERVENCIONES.md).

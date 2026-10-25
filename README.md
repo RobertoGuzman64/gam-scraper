@@ -101,7 +101,9 @@ La validación local confirma integridad y coherencia, **no** que un portal haya
 - [Arquitectura](docs/ARQUITECTURA.md): módulos, responsabilidades y extensibilidad.
 - [Reglas de datos](docs/SCRAPER_DATA_RULES.md): contratos, origen, preservación y revisión editorial.
 - [Protocolo de campañas completas](docs/CAMPANAS.md): extracción global obligatoria, validación de todos los proveedores, intervenciones excepcionales y entrega acreditada.
-- [Intervenciones manuales por campaña](docs/INTERVENCIONES_CAMPANA.md): diagnóstico, simulación, aplicación bajo autorización y validación de derivados.
+- [Intervenciones manuales por campaña](docs/INTERVENCIONES_CAMPANA.md): principios y controles de la ejecución manual.
+- [Composición de intervenciones independientes](docs/COMPOSICION_INTERVENCIONES.md): varios scripts, campos acreditables, simulación conjunta y selección final con aprobación humana.
+- [Acreditación editorial de campañas](docs/ACREDITACION_CAMPANA.md): procedimiento de aprobación y entrega de JSON.
 - [Validación](docs/VALIDACION.md): verificaciones, códigos de salida y evidencias.
 - [Operación y despliegue](docs/DESPLIEGUE_AUTOMATICO.md): ejecución manual o programada y seguridad operacional.
 - [Integración con Equipzilla](docs/EQUIPZILLA_INTEGRATION.md): límites del receptor y exportaciones auxiliares.

@@ -2,13 +2,14 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readInterventionSource } from "../infrastructure/filesystem/intervention-source.js";
 import { persistAppliedIntervention } from "../infrastructure/filesystem/intervention-application.js";
-import { loadInterventionScript } from "../manual-interventions/script-loader.js";
+import { interventionScriptCampaign, loadInterventionScript } from "../manual-interventions/script-loader.js";
 import { simulateIntervention } from "../manual-interventions/simulation.js";
+import { validateInterventionProposals } from "../manual-interventions/proposals.js";
 import type { InterventionSimulation } from "../manual-interventions/simulation.js";
 import { interveneHelp, parseInterveneOptions } from "./options/intervene.js";
 import { printCommandError } from "./reporting/errors.js";
 
-const excerpt = (value: string | null, maxLength: number): string => {
+const excerpt = (value: unknown, maxLength: number): string => {
   const text = JSON.stringify(value);
   return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
 };
@@ -43,7 +44,13 @@ export const runIntervene = async (args: readonly string[]): Promise<void> => {
   }
   if (args.includes("--help")) throw new Error("--help no admite argumentos adicionales");
   const options = parseInterveneOptions(args);
-  const proposals = await loadInterventionScript(options.script, options.providerId);
+  const campaigns = new Set(options.scripts.map((script) => interventionScriptCampaign(script)));
+  if (campaigns.size !== 1 || (options.campaign !== null && !campaigns.has(options.campaign))) {
+    throw new Error("Todos los scripts deben pertenecer a la misma campaña seleccionada");
+  }
+  const groups = await Promise.all(options.scripts.map((script) =>
+    loadInterventionScript(script, options.providerId)));
+  const proposals = validateInterventionProposals(groups.flat(), options.providerId);
   const { catalog, catalogSha256 } = await readInterventionSource(options.source);
   if (catalog.providerId !== options.providerId) {
     throw new Error(`El catálogo pertenece a ${catalog.providerId}, no a ${options.providerId}`);
@@ -56,7 +63,7 @@ export const runIntervene = async (args: readonly string[]): Promise<void> => {
   if (options.campaign === null || options.plan === null) throw new Error("Faltan datos para aplicar el plan");
   const applied = await persistAppliedIntervention({
     source: options.source,
-    script: options.script,
+    scripts: options.scripts,
     campaign: options.campaign,
     confirmation: options.plan,
     simulation
