@@ -15,10 +15,10 @@ const aliases: Readonly<Record<string, string>> = {
 };
 
 export const scrapeHelp = `Uso:
-  npm run scrape -- gam
-  npm run scrape -- gomariz --category venta
-  npm run scrape -- mercaeleva --pages 2 --prefix prueba-mercaeleva
-  npm run scrape -- all [--dry-run | --providers gam,gomariz]
+  npm run extraer -- gam
+  npm run extraer -- gomariz --category venta
+  npm run extraer -- mercaeleva --pages 2 --prefix prueba-mercaeleva
+  npm run extraer -- all [--dry-run | --providers gam,gomariz]
 
 Opciones: --category, --pages, --out, --prefix, --verbose, --help
 Compatibilidad: --provider, --categoryKey, --maxPages, --outDir, --outPrefix

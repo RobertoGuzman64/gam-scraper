@@ -12,18 +12,18 @@ import { validateHelp } from "./validate.js";
 
 export const cliHelp = `EQUIPZILLA SCRAPER
 
-  npm run scrape -- gam                   Extraer GAM
-  npm run scrape -- gomariz               Extraer Gomariz
-  npm run scrape -- mercaeleva            Extraer Mercaeleva
-  npm run scrape -- all                    Extraer los tres proveedores
-  npm run scrape -- all --dry-run          Simular el lote
-  npm run validate -- gam                 Validar último catálogo de GAM
-  npm run prepare:catalog -- --help               Preparación independiente offline
-  npm run export -- --help                Consultar exportación segura
+  npm run extraer -- gam                   Extraer GAM
+  npm run extraer -- gomariz               Extraer Gomariz
+  npm run extraer -- mercaeleva            Extraer Mercaeleva
+  npm run extraer -- all                    Extraer los tres proveedores
+  npm run extraer -- all --dry-run          Simular el lote
+  npm run validar -- gam                 Validar último catálogo de GAM
+  npm run preparar -- --help               Preparación independiente offline
+  npm run exportar -- --help                Consultar exportación segura
 
-  npm run scrape -- --help                Ayuda extracción
-  npm run scrape:all -- --help            Ayuda lote
-  npm run validate -- --help              Ayuda validación
+  npm run extraer -- --help                Ayuda extracción
+  npm run extraer:todos -- --help            Ayuda lote
+  npm run validar -- --help              Ayuda validación
 
 El lote no importa nada en el backend; los productos requieren revisión antes de importar.`;
 
@@ -45,7 +45,7 @@ export const runCli = async (argv: readonly string[]): Promise<void> => {
     case "help-scrape": console.log(scrapeHelp); return;
     case "help-batch": console.log(batchHelp); return;
     case "help-validate": console.log(validateHelp); return;
-    default: throw new Error(`Comando desconocido: ${command}. Usa npm run cli -- --help`);
+    default: throw new Error(`Comando desconocido: ${command}. Usa npm run ayuda`);
   }
 };
 

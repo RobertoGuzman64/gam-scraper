@@ -7,8 +7,8 @@ import { readCanonicalCatalog } from "../infrastructure/filesystem/canonical-cat
 import { printCommandError } from "./reporting/errors.js";
 
 const help = `Uso:
-  npm run review:coverage -- --baseline <catalog.json> --current <catalog.json> --out <revision.json>
-  npm run review:coverage -- --baseline <catalog.json> --current <catalog.json> --dry-run
+  npm run cobertura -- --baseline <catalog.json> --current <catalog.json> --out <revision.json>
+  npm run cobertura -- --baseline <catalog.json> --current <catalog.json> --dry-run
 
 Genera un informe con todas las ausencias y cambios de campos. Las decisiones se dejan
 pendientes: una retirada debe acreditarse; una ausencia de listado acreditada

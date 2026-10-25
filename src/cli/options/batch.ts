@@ -2,10 +2,10 @@ import { getProvider, listProviders } from "../../scraping/registry.js";
 import type { BatchOptions } from "../../pipeline/batch/types.js";
 
 export const batchHelp = `Uso:
-  npm run scrape -- all
-  npm run scrape -- all --dry-run
-  npm run scrape -- all --providers gam,gomariz
-  npm run scrape:all -- --providers gam,gomariz
+  npm run extraer -- all
+  npm run extraer -- all --dry-run
+  npm run extraer -- all --providers gam,gomariz
+  npm run extraer:todos -- --providers gam,gomariz
 
 Opciones: --providers <ids>, --outRoot <directorio>, --historyDir <directorio>, --dry-run
 Sin --providers se ejecutan todos los proveedores registrados, secuencialmente.

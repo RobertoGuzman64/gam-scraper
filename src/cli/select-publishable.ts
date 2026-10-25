@@ -10,9 +10,9 @@ import { readOfflinePreparation } from "../infrastructure/filesystem/offline-pre
 import { printCommandError } from "./reporting/errors.js";
 
 const help = `Uso:
-  npm run select:publishable -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --out <seleccion.json>
-  npm run select:publishable -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --outDir <directorio>
-  npm run select:publishable -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --dry-run
+  npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --out <seleccion.json>
+  npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --outDir <directorio>
+  npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --dry-run
 
 En la cohorte de 25/10/2026 se exigen además --baseline <gam-catalog.json>,
 --catalog <gam-catalog.json> y --coverage-review <revision.json> para escribir archivos.

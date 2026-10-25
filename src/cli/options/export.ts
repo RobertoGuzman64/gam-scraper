@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { getProvider } from "../../scraping/registry.js";
 
-export const exportHelp = `Uso: npm run export -- gam --companyID <ID real> --preparation <proveedor-preparation.json> [--source <catalogo-catalog.json>] --existing <inventario.csv> --out <salida.xlsx|salida.json> [--format xlsx|json] [--dry-run | --confirm-inventory] [--allow-empty-inventory] [--verbose]
+export const exportHelp = `Uso: npm run exportar -- gam --companyID <ID real> --preparation <proveedor-preparation.json> [--source <catalogo-catalog.json>] --existing <inventario.csv> --out <salida.xlsx|salida.json> [--format xlsx|json] [--dry-run | --confirm-inventory] [--allow-empty-inventory] [--verbose]
 
 Para preparación offline, --source identifica el catálogo canónico si no está en la ruta predeterminada.
 Sin --source, la preparación offline busca el canónico en la ruta predeterminada; también se admiten publicaciones heredadas completas.

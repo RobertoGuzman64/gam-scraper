@@ -2,9 +2,9 @@ import { basename, join, resolve } from "node:path";
 import type { PrepareOptions } from "../../pipeline/preparation/prepare.js";
 
 export const prepareHelp = `Uso:
-  npm run prepare:catalog -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json
-  npm run prepare:catalog -- gam --source <catalog.json> --out <preparation.json> --dry-run
-  npm run prepare:catalog -- gam --source <catalog.json> --out <preparation.json> --compare <preparacion-anterior.json>
+  npm run preparar -- gam --source storage/scraped/gam/scrape-gam-marzo-2026-catalog.json
+  npm run preparar -- gam --source <catalog.json> --out <preparation.json> --dry-run
+  npm run preparar -- gam --source <catalog.json> --out <preparation.json> --compare <preparacion-anterior.json>
 
 Opciones: --source (obligatoria), --out, --dry-run, --compare, --help.
 Sin --out, escribe en storage/prepared/<proveedor>/<prefijo>-preparation.json.
@@ -14,7 +14,7 @@ El catálogo canónico debe tener su manifest y resumen de publicación completo
 
 export const parsePrepareOptions = (args: readonly string[]): PrepareOptions => {
   const [providerId, ...rest] = args;
-  if (!providerId || providerId.startsWith("--")) throw new Error("Falta proveedor para prepare");
+  if (!providerId || providerId.startsWith("--")) throw new Error("Falta proveedor para preparar");
   const options = new Map<string, string>();
   let dryRun = false;
   for (let index = 0; index < rest.length; index += 1) {

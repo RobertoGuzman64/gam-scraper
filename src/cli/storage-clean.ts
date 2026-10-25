@@ -13,7 +13,7 @@ export const cleanStorage = async (argv: readonly string[]): Promise<void> => {
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--help" && argv.length === 1) {
-      console.log("Uso: npm run storage:clean -- [--dry-run] [--legacy] [--outRoot ruta] [--historyDir ruta]");
+      console.log("Uso: npm run limpiar:almacen -- [--dry-run] [--legacy] [--outRoot ruta] [--historyDir ruta]");
       console.log("--legacy elimina salidas antiguas de prefijos alternativos; conserva sus snapshots.");
       return;
     }

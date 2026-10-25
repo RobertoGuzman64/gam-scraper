@@ -2,14 +2,14 @@ import { getProvider } from "../../scraping/registry.js";
 import { join, resolve } from "node:path";
 
 export const validateHelp = `Uso:
-  npm run validate -- gam
-  npm run validate -- gomariz --prefix scrape-gomariz
-  npm run validate -- mercaeleva --out storage/scraped/mercaeleva
-  npm run validate -- gam --stage catalog --prefix scrape-gam
-  npm run validate -- gam --stage catalog --source <catalogo-nuevo-catalog.json> --baseline <catalogo-anterior-catalog.json>
-  npm run validate -- gam --stage preparation --preparation storage/prepared/gam/scrape-gam-preparation.json
-  npm run validate -- gam --stage preparation --preparation <archivo-preparation.json> --source <archivo-catalog.json>
-  npm run validate -- gam --stage preparation --preparation <archivo-preparation.json> --source <archivo-catalog.json> --verbose
+  npm run validar -- gam
+  npm run validar -- gomariz --prefix scrape-gomariz
+  npm run validar -- mercaeleva --out storage/scraped/mercaeleva
+  npm run validar -- gam --stage catalog --prefix scrape-gam
+  npm run validar -- gam --stage catalog --source <catalogo-nuevo-catalog.json> --baseline <catalogo-anterior-catalog.json>
+  npm run validar -- gam --stage preparation --preparation storage/prepared/gam/scrape-gam-preparation.json
+  npm run validar -- gam --stage preparation --preparation <archivo-preparation.json> --source <archivo-catalog.json>
+  npm run validar -- gam --stage preparation --preparation <archivo-preparation.json> --source <archivo-catalog.json> --verbose
 
 Opciones heredadas: --out, --prefix, --maxAgeHours
 Compatibilidad: --provider, --outDir, --outPrefix
@@ -50,7 +50,7 @@ export const parseValidateOptions = (args: readonly string[]) => {
     index += 1;
   }
   const providerId = values.get("provider");
-  if (!providerId) throw new Error("Falta proveedor. Uso: npm run validate -- gam");
+  if (!providerId) throw new Error("Falta proveedor. Uso: npm run validar -- gam");
   const provider = getProvider(providerId);
   const stage = values.get("stage") ?? "legacy";
   if ((stage !== "legacy" && stage !== "catalog" && stage !== "preparation") ||
