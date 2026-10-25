@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { requireProductReference } from "./require-product-reference.js";
 import { fileURLToPath } from "node:url";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
@@ -14,11 +15,7 @@ const source = await readCanonicalCatalog(fileURLToPath(new URL(
   "../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
 )));
 
-const reference = (code: string): ProductRecord => {
-  const record = source.products.find((product) => product.reference === code);
-  assert.ok(record, code);
-  return record;
-};
+const reference = (code: string): ProductRecord => requireProductReference(source.products, code);
 
 test("tipo de origen corroborado sin categoría del receptor no es motivo de review", () => {
   for (const code of ["6653", "4778", "4779", "4780", "2159", "220", "221", "227", "2134", "2135"]) {

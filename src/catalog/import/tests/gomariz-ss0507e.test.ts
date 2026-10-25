@@ -1,16 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
+import { requireProductReference } from "./require-product-reference.js";
+import { fileURLToPath } from "node:url";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { resolveAttributeValue } from "../mapping/attribute-mapping.js";
 import { prepareCached } from "./prepare-cached.js";
 
 const importCatalog = await loadImportCatalog();
 const sourceFile = new URL("../../../../storage/scraped/gomariz/scrape-gomariz-catalog.json", import.meta.url);
-const source: unknown = JSON.parse(await readFile(sourceFile, "utf8"));
-assert.ok(source && typeof source === "object" && "products" in source && Array.isArray(source.products));
-const records: readonly ProductRecord[] = source.products;
+const records = (await readCanonicalCatalog(fileURLToPath(sourceFile))).products;
 const references = ["TE1858", "TE1621", "TE1622"] as const;
 const platform = importCatalog.attributes.find((item) => item.name === "Altura de plataforma");
 assert.ok(platform);
@@ -20,9 +20,7 @@ const changed = (record: ProductRecord): ProductRecord => ({
 });
 
 const prepared = references.map((reference) => {
-  const record = records.find((item) => item.reference === reference);
-  assert.ok(record);
-  return changed(record);
+  return changed(requireProductReference(records, reference));
 });
 
 test("tres SS0507E publicadas con 14,30 m recuperan solo 4,3 m acreditados", () => {

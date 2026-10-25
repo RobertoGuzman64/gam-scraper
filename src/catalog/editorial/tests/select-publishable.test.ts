@@ -1,24 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
-import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
 import { selectPublishableCatalog } from "../select-publishable.js";
+import { EDITORIAL_PROVIDERS, EDITORIAL_SOURCES, prepareEditorialCohort } from "./editorial-cohort-fixtures.js";
 
-const sourceFiles = {
-  gam: "storage/scraped/gam/scrape-gam-marzo-2026-catalog.json",
-  gomariz: "storage/scraped/gomariz/scrape-gomariz-catalog.json",
-  mercaeleva: "storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json"
-};
-const sources = ["gam", "gomariz", "mercaeleva"] as const;
-const preparations = await Promise.all(sources.map(async (providerId) => {
-  const source = sourceFiles[providerId];
-  const prefix = source.slice(source.lastIndexOf("/") + 1).replace(/-catalog\.json$/, "");
-  const result = await prepareSavedCatalog({
-    providerId, source, out: `storage/prepared/${providerId}/${prefix}-f48-preparation.json`,
-    dryRun: true, compare: null
-  });
-  return result.preparation;
-}));
+const sourceFiles = EDITORIAL_SOURCES;
+const sources = EDITORIAL_PROVIDERS;
+const preparations = await prepareEditorialCohort("-f48");
 
 const replaceEntry = (providerId: string, reference: string, transform: (
   item: (typeof preparations)[number]["products"][number]

@@ -1,13 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
+import { readHistoricalGamCoverageCatalog, GAM_MISSING_REFERENCES } from "./gam-coverage-fixtures.js";
 import { parseCanonicalCatalog } from "../../canonical-catalog.js";
 import { DEFAULT_CATEGORIES } from "../../../scraping/providers/gam/config.js";
 import { assessNewGamCoverage } from "../gam-review-gate.js";
 
-const filename = new URL("../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url);
-const previous = parseCanonicalCatalog(JSON.parse(await readFile(filename, "utf8")));
-const missing = new Set(["6942", "6948", "6366", "6676"]);
+const previous = await readHistoricalGamCoverageCatalog();
+const missing = GAM_MISSING_REFERENCES;
 const remaining = previous.products.filter(({ reference }) => !missing.has(reference ?? ""));
 const changed = new Set(remaining.slice(0, 23).map(({ reference }) => reference));
 changed.add("4989");

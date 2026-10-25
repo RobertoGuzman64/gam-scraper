@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { gamCapacityDisputedReferences, gamCapacityVerifiedReferences } from "./gam-technical-cohorts.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
@@ -27,10 +28,7 @@ const attribute = (name: string) => {
   return found;
 };
 
-const gamConflictingCapacity = [
-  "6965", "6932", "6723", "2089", "2211", "2049", "2044", "6272",
-  "2016", "2275", "2193", "6421", "50", "2237", "2240", "2136"
-] as const;
+const gamConflictingCapacity = gamCapacityDisputedReferences;
 
 const gamVariableCapacity = ["237", "235"] as const;
 const mercaelevaConflictingCapacity = ["M582-1882", "M827-8304", "M062-8951", "M119-9334"] as const;
@@ -44,7 +42,7 @@ const allReviewed = [
 ];
 
 test("se comprueban 30 referencias únicas y once capacidades recuperadas", () => {
-  const confirmed = new Set(["50", "2016", "2044", "2049", "2089", "2136", "2193", "2275", "6421", "6932", "6965"]);
+  const confirmed = new Set<string>(gamCapacityVerifiedReferences);
   assert.equal(allReviewed.length, 30);
   assert.equal(new Set(allReviewed).size, 30);
   for (const id of allReviewed) {
@@ -62,7 +60,7 @@ test("se comprueban 30 referencias únicas y once capacidades recuperadas", () =
 });
 
 test("las 16 capacidades conservan conflictos auténticos y distinguen valores corroborados", () => {
-  const confirmed = new Set(["50", "2016", "2044", "2049", "2089", "2136", "2193", "2275", "6421", "6932", "6965"]);
+  const confirmed = new Set<string>(gamCapacityVerifiedReferences);
   const capacity = attribute("Capacidad de carga");
   for (const reference of gamConflictingCapacity) {
     const product = record("gam", reference);

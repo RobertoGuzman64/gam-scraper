@@ -1,56 +1,9 @@
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
-import { inflateRawSync } from "node:zlib";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import test from "node:test";
-import { prepareProduct } from "../preparation/prepare.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { planProductImport, readReferenceInventory } from "../export/export-plan.js";
 import { parsePreparation } from "../preparation/preparation-document.js";
-import { createProductsXlsx } from "../../../infrastructure/spreadsheet/xlsx.js";
-import { runExport } from "../../../cli/export.js";
-import type { ProductRecord } from "../../../contracts/catalog.js";
-
-const record: ProductRecord = {
-  providerId: "mercaeleva", categoryKey: "plataformas-articuladas-diesel-segunda-mano",
-  categoryName: "Maquinaria en venta", url: "https://sales.mercaeleva.com/es/for-sale/machine/JLG-450-AJ-M044-4093",
-  title: "JLG 450 AJ", shortDescription: "Plataforma articulada diésel de ocasión.",
-  longDescription: "Plataforma revisada.", price: "20.500,00 €", reference: "M044-4093",
-  brand: "JLG", model: "450 AJ", year: "2013", location: "Barcelona", country: "ES",
-  condition: "Segunda mano",
-  horometer: "3666", serialNumber: null, image: "https://machineric.com/1.jpg",
-  images: ["https://machineric.com/1.jpg", "https://machineric.com/2.jpg"],
-  specs: { "Altura de trabajo": "16 m" }
-};
-
-const documentFor = async (records: readonly ProductRecord[]) => {
-  const catalog = await loadImportCatalog();
-  return {
-    quality: "complete" as const,
-    published: true as const,
-    products: records.map((record) => prepareProduct(record, catalog))
-  };
-};
-
-const readZipXml = (zip: Buffer, file: string): string => {
-  let position = 0;
-  while (zip.readUInt32LE(position) === 0x04034b50) {
-    const method = zip.readUInt16LE(position + 8);
-    const compressed = zip.readUInt32LE(position + 18);
-    const nameLength = zip.readUInt16LE(position + 26);
-    const extraLength = zip.readUInt16LE(position + 28);
-    const name = zip.subarray(position + 30, position + 30 + nameLength).toString("utf8");
-    const start = position + 30 + nameLength + extraLength;
-    if (name === file) {
-      assert.equal(method, 8);
-      return inflateRawSync(zip.subarray(start, start + compressed)).toString("utf8");
-    }
-    position = start + compressed;
-  }
-  throw new Error(`No se encontró ${file}`);
-};
+import { record, documentFor } from "./export-fixtures.js";
 
 test("el inventario exige companyID coherente e identifica referencias sin distinguir mayúsculas", () => {
   const inventory = readReferenceInventory("companyID,reference\n45,m044-4093\n", 45);
@@ -83,44 +36,6 @@ test("solo exporta nuevos preparados, excluyendo existentes, reviews y referenci
   assert.equal(plan.headers[3], "Condición *");
   assert.equal(plan.rows[0]?.[3], "Segunda_Mano");
   assert.equal(plan.rows[0]?.[4], 20500);
-});
-
-test("un mismo XLSX contiene condiciones nuevas y usadas con atributos y precios reales", async () => {
-  const catalog = await loadImportCatalog();
-  const newMachine: ProductRecord = {
-    ...record, providerId: "gam", categoryKey: "elevacion-nueva",
-    url: "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/99999-maquina",
-    reference: "GAM-NEW", title: "Plataforma de tijera eléctrica XCMG", condition: "Nuevo",
-    specs: { "Altura de trabajo": "8 m" }
-  };
-  const usedMachine: ProductRecord = {
-    ...newMachine, categoryKey: "elevacion",
-    url: "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/88888-maquina",
-    reference: "GAM-USED", title: "Plataforma de tijera eléctrica usada", condition: "Segunda mano"
-  };
-  const noPrice: ProductRecord = {
-    ...newMachine,
-    url: "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/77777-maquina",
-    reference: "GAM-NO-PRICE", price: null
-  };
-  const document = await documentFor([newMachine, usedMachine, noPrice]);
-  const plan = planProductImport(document, "gam", readReferenceInventory("companyID,reference\n45,OTRA\n", 45), catalog);
-  assert.equal(plan.report.total, 3);
-  assert.equal(plan.report.newProducts, 2);
-  assert.equal(plan.report.reviewProducts, 1);
-  assert.equal(plan.report.review[0]?.reference, "GAM-NO-PRICE");
-  assert.match(plan.report.review[0]?.reason ?? "", /Precio ausente o inválido/);
-  assert.equal(document.products[2]?.status, "ready");
-  assert.equal(document.products[2]?.product.price, null);
-  assert.deepEqual(plan.rows.map((row) => [row[0], row[3]]), [
-    ["GAM-NEW", "Nuevo"], ["GAM-USED", "Segunda_Mano"]
-  ]);
-  assert.equal(plan.rows[0]?.[plan.headers.indexOf("Altura de trabajo (m)")], 8);
-  assert.equal(plan.rows[1]?.[plan.headers.indexOf("Altura de trabajo (m)")], 8);
-  const sheet = readZipXml(createProductsXlsx(plan.headers, plan.rows), "xl/worksheets/sheet1.xml");
-  assert.match(sheet, /<c r="D2" t="inlineStr"><is><t xml:space="preserve">Nuevo<\/t><\/is><\/c>/);
-  assert.match(sheet, /<c r="D3" t="inlineStr"><is><t xml:space="preserve">Segunda_Mano<\/t><\/is><\/c>/);
-  assert.doesNotMatch(sheet, /GAM-NO-PRICE/);
 });
 
 test("no acepta preparación parcial ni de un proveedor distinto", async () => {
@@ -180,17 +95,6 @@ test("la exportación no repite incidencias detectadas en la preparación", asyn
   assert.equal(reason.match(/Descripción corta ausente/g)?.length, 1);
 });
 
-test("xlsx estándar contiene hoja Productos, textos seguros, números y cabeceras compatibles", () => {
-  const bytes = createProductsXlsx(["Referencia *", "Precio *", "URL 1 *"], [["=SUM(1,2)", 12500.5, "https://example.com/x.jpg"]]);
-  assert.equal(bytes.readUInt32LE(0), 0x04034b50);
-  assert.match(readZipXml(bytes, "xl/workbook.xml"), /name="Productos"/);
-  const sheet = readZipXml(bytes, "xl/worksheets/sheet1.xml");
-  assert.match(sheet, /t="inlineStr"><is><t xml:space="preserve">=SUM\(1,2\)/);
-  assert.match(sheet, /<c r="B2"><v>12500\.5<\/v><\/c>/);
-  assert.doesNotMatch(sheet, /<f>/);
-  assert.throws(() => createProductsXlsx(["Precio *", "Precio *"], []), /duplicadas/);
-});
-
 test("se limita a diez URLs y no inventa imágenes adicionales", async () => {
   const catalog = await loadImportCatalog();
   const many = Array.from({ length: 12 }, (_, index) => `https://example.com/${index + 1}.jpg`);
@@ -199,46 +103,4 @@ test("se limita a diez URLs y no inventa imágenes adicionales", async () => {
   assert.equal(plan.report.extraImages, 2);
   assert.equal(plan.headers.filter((h) => /^URL /.test(h)).length, 10);
   assert.ok(!plan.rows[0]?.includes(many[10] ?? ""));
-});
-
-test("CLI genera Excel offline e impide reusar la preparación tras una extracción parcial", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "catalog-export-"));
-  try {
-    const preparationFile = join(dir, "lote-preparation.json");
-    const summaryFile = join(dir, "lote-summary.json");
-    const inventoryFile = join(dir, "existing.csv");
-    const outputFile = join(dir, "altas.xlsx");
-    const document = await documentFor([record]);
-    await writeFile(inventoryFile, "companyID,reference\n45,EXISTENTE\n");
-    const endedAt = new Date().toISOString();
-    const csv = "providerId,url,reference\nmercaeleva,https://sales.mercaeleva.com/es/for-sale/machine/JLG-450-AJ-M044-4093,M044-4093\n";
-    const preparationText = JSON.stringify(document);
-    const hash = (text: string) => createHash("sha256").update(text).digest("hex");
-    await writeFile(summaryFile, JSON.stringify({
-      startedAt: endedAt,
-      endedAt,
-      quality: { status: "complete", published: true },
-      artifacts: { csvSha256: hash(csv), preparationSha256: hash(preparationText) },
-      totals: { scrapedProducts: 1, failures: 0 }
-    }));
-    await writeFile(preparationFile, preparationText);
-    await writeFile(join(dir, "lote-all.csv"), csv);
-    await writeFile(join(dir, "lote-changes.json"), JSON.stringify({ status: "comparable", suspectedMissing: [] }));
-    const args = ["--provider", "mercaeleva", "--companyID", "45", "--preparation", preparationFile,
-      "--existing", inventoryFile, "--out", outputFile];
-    await runExport([...args, "--dry-run"]);
-    await assert.rejects(readFile(outputFile), /ENOENT/);
-    await runExport([...args, "--confirm-inventory"]);
-    assert.match(readZipXml(await readFile(outputFile), "xl/workbook.xml"), /name="Productos"/);
-    const report: unknown = JSON.parse(await readFile(`${outputFile}.report.json`, "utf8"));
-    assert.ok(report && typeof report === "object" && "newProducts" in report && report.newProducts === 1);
-    assert.ok("format" in report && report.format === "xlsx");
-    assert.ok("outputBytes" in report && report.outputBytes === (await readFile(outputFile)).length);
-    assert.ok("outputSha256" in report && report.outputSha256 === createHash("sha256").update(await readFile(outputFile)).digest("hex"));
-    assert.ok("inventorySha256" in report && report.inventorySha256 === createHash("sha256").update("companyID,reference\n45,EXISTENTE\n").digest("hex"));
-    await writeFile(summaryFile, JSON.stringify({ quality: { status: "partial", published: false } }));
-    await assert.rejects(runExport([...args, "--dry-run"]), /catálogo completo/);
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
 });

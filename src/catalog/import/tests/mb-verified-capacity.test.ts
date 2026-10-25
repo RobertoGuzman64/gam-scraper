@@ -22,7 +22,7 @@ for (const [reference, expected, original] of [
   ["M062-8951", 3000, "2500 kg"],
   ["M119-9334", 1800, "1500 kg"]
 ] as const) {
-  test(`Fase 21: ${reference} reconoce capacidad MB confirmada y preserva la ficha original`, () => {
+  test(`Mercaeleva: ${reference} reconoce capacidad MB confirmada y preserva la ficha original`, () => {
     const record = find(reference);
     const before = JSON.stringify(record);
     assert.equal(verifiedMercaelevaMbCapacity(record), expected);
@@ -39,7 +39,7 @@ for (const [reference, expected, original] of [
     assert.equal(JSON.stringify(record), before);
   });
 
-  test(`Fase 21: ${reference} no acepta falsos positivos de identidad, estado, batería o ficha`, () => {
+  test(`Mercaeleva: ${reference} no acepta falsos positivos de identidad, estado, batería o ficha`, () => {
     const record = find(reference);
     const changed: readonly ProductRecord[] = [
       { ...record, providerId: "gam" },

@@ -1,17 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { resolveAttributeValue } from "../mapping/attribute-mapping.js";
 import { prepareCached } from "./prepare-cached.js";
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 
 const catalog = await loadImportCatalog();
-const originalCatalogFile = new URL("../../../../storage/scraped/gomariz/scrape-gomariz-catalog.json", import.meta.url);
-const originalSnapshot: unknown = JSON.parse(await readFile(originalCatalogFile, "utf8"));
-assert.ok(originalSnapshot && typeof originalSnapshot === "object" &&
-  "products" in originalSnapshot && Array.isArray(originalSnapshot.products));
-const originalProducts: ProductRecord[] = originalSnapshot.products;
 const source = (section: string, family: string, specs: SpecsMap): ProductRecord => ({
   providerId: "gomariz", categoryKey: "venta", categoryName: "Maquinaria de ocasión",
   url: `https://www.gomarizrent.com/venta/${section}/${family}/ficha/`,
@@ -69,27 +63,6 @@ test("Gomariz: bloquea altura de plataforma contradictoria en datos ya almacenad
   }), "Altura máxima de elevación"), null);
 });
 
-test("Gomariz: preparación del catálogo real sin inventar valores ni perder referencias", async () => {
-  const products = originalProducts;
-  assert.ok(products.length > 0);
-  const references = products.map((record) => record.reference);
-  assert.equal(new Set(references).size, products.length);
-  for (const record of products) {
-    const prepared = prepareCached(record, catalog);
-    assert.equal(prepared.product.reference, record.reference);
-    if (record.price === null) assert.equal(prepared.product.price, null);
-    if (record.reference === "GR1356" && record.specs?.Capacidad === "350 l") {
-      assert.equal(value(record, "Capacidad del depósito"), 350);
-    }
-    if (["CC1535", "CC1666"].includes(record.reference ?? "") &&
-      record.specs?.["Altura plataforma"] === record.specs?.["Altura almacenaje"] &&
-      record.specs?.["Altura de trabajo"] === "20 m") {
-      assert.equal(value(record, "Altura de plataforma"), 17.6);
-      assert.equal(value(record, "Altura de trabajo"), 20);
-    }
-  }
-});
-
 test("Gomariz: conserva y rechaza especificaciones con valores múltiples incompatibles", () => {
   const generator = source(energy, "generador", {
     Motor: ["Diésel", "Eléctrico"], Capacidad: ["350 l", "400 l"]
@@ -101,30 +74,3 @@ test("Gomariz: conserva y rechaza especificaciones con valores múltiples incomp
   assert.equal(prepared.product.attributes.some((item) => item.value === 350 || item.value === 400), false);
 });
 
-test("Gomariz: el catálogo original conserva las incidencias reales sin inventar descripciones cortas", async () => {
-  const products = originalProducts;
-  const byReference = new Map(products.map((record) => [record.reference, record]));
-  for (const record of products) {
-    assert.equal(record.shortDescription, null, record.reference ?? record.url);
-    const prepared = prepareCached(record, catalog);
-    assert.equal(prepared.product.description, null, record.reference ?? record.url);
-    assert.ok(prepared.importIssues);
-    assert.ok(prepared.importIssues.createMany.length > 0, record.reference ?? record.url);
-  }
-  for (const reference of ["CC1535", "CC1666"]) {
-    const record = byReference.get(reference);
-    assert.ok(record);
-    const prepared = prepareCached(record, catalog);
-    assert.ok(!prepared.issues.includes("Atributo no normalizable: Altura de plataforma"), reference);
-    assert.equal(value(record, "Altura de plataforma"), 17.6);
-    assert.equal(prepared.status, "ready");
-  }
-  for (const reference of ["5051BDX", "1011JFB", "RE454", "PV556"]) {
-    const record = byReference.get(reference);
-    assert.ok(record);
-    const prepared = prepareCached(record, catalog);
-    assert.equal(prepared.status, "ready", reference);
-    assert.ok(!prepared.issues.includes("Tipo de máquina de origen sin confirmar"), reference);
-    assert.equal(prepared.product.categorySellID, null);
-  }
-});

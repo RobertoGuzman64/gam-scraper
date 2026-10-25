@@ -1,24 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
-import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
+import { catalog, categorySlug, reference, unconfirmedConditionCodes } from "./gam-historical-category-fixture.js";
 import { prepareCached } from "./prepare-cached.js";
-
-const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
-)));
-const reference = (code: string): ProductRecord => {
-  const record = source.products.find((product) => product.reference === code);
-  assert.ok(record, code);
-  return record;
-};
-const categorySlug = (record: ProductRecord): string | null => {
-  const prepared = prepareCached(record, catalog);
-  return catalog.categories.find((category) => category.id === prepared.product.categorySellID)?.slug ?? null;
-};
 
 test("Bravi Leonardo HD: identifica plataforma unipersonal con evidencia del mismo modelo", () => {
   const record = reference("2155");
@@ -59,7 +43,7 @@ test("GAM: condición de ocasión explícita en ficha de barredora, sin fabricar
   assert.equal(prepareCached({ ...record, shortDescription: "EUREKA MAGNUM de segunda mano en venta nueva" }, catalog).product.condition, null);
   assert.equal(prepareCached({ ...record, specs: { ...record.specs, Modelo: "Otro modelo" } }, catalog).product.condition, null);
   assert.equal(prepareCached({ ...record, condition: "Nuevo" }, catalog).product.condition, null);
-  for (const code of ["6358", "6367", "6814", "6815", "6969", "6970", "6971", "6987", "6988", "6989"]) {
+  for (const code of unconfirmedConditionCodes) {
     assert.equal(prepareCached(reference(code), catalog).product.condition, null, code);
   }
 });

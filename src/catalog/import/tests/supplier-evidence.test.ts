@@ -1,23 +1,20 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { resolveCategory } from "../mapping/category-mapping.js";
 import { resolveAttributeValue } from "../mapping/attribute-mapping.js";
 import { prepareCached } from "./prepare-cached.js";
 
 const catalog = await loadImportCatalog();
-const readProducts = async (provider: "gomariz" | "mercaeleva"): Promise<readonly ProductRecord[]> => {
-  const location = new URL(`../../../../storage/scraped/${provider}/scrape-${provider}-catalog.json`, import.meta.url);
-  const data: unknown = JSON.parse(await readFile(location, "utf8"));
-  if (typeof data !== "object" || data === null || !("products" in data) || !Array.isArray(data.products)) {
-    throw new Error(`Catálogo inválido: ${provider}`);
-  }
-  return data.products;
-};
-const gomariz = await readProducts("gomariz");
-const mercaeleva = await readProducts("mercaeleva");
+const gomariz = (await readCanonicalCatalog(fileURLToPath(new URL(
+  "../../../../storage/scraped/gomariz/scrape-gomariz-catalog.json", import.meta.url
+)))).products;
+const mercaeleva = (await readCanonicalCatalog(fileURLToPath(new URL(
+  "../../../../storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json", import.meta.url
+)))).products;
 const gomarizByReference = new Map(gomariz.map((record) => [record.reference, record]));
 const mercaelevaByReference = new Map(mercaeleva.map((record) => [record.reference, record]));
 const heightAttribute = catalog.attributes.find((item) => item.name === "Altura de plataforma");

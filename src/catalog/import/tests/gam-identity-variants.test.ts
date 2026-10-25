@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { gamElevationConflictingIdentityReferences, gamHistoricalSerialCollisionGroups, gamSerialCollisionReferenceOrder } from "./gam-technical-cohorts.js";
+import { requireProductReference } from "./require-product-reference.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { findSerialNumberCollisions } from "../../identity-conflicts.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
@@ -14,11 +16,7 @@ const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog(fileURLToPath(new URL(
   "../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
 )));
-const record = (reference: string): ProductRecord => {
-  const found = source.products.find((product) => product.reference === reference);
-  assert.ok(found, reference);
-  return found;
-};
+const record = (reference: string): ProductRecord => requireProductReference(source.products, reference);
 const model = catalog.attributes.find((attribute) => attribute.name === "Modelo");
 assert.ok(model);
 const resolvedModel = (product: ProductRecord) => {
@@ -26,7 +24,7 @@ const resolvedModel = (product: ProductRecord) => {
   return resolveAttribute(product, model);
 };
 
-const mismatched = ["6981", "4736", "4737", "4750", "4802", "4751", "4752", "5902", "6308"];
+const mismatched = gamElevationConflictingIdentityReferences;
 
 test("GAM: las nueve identidades incompatibles no publican Modelo del origen", () => {
   for (const reference of mismatched) {
@@ -71,12 +69,10 @@ test("GAM: variantes abreviadas compatibles y otras compañías conservan sus at
 });
 
 test("GAM: tres series colisionadas conservan seis fichas y bloquean solo las Hyster", () => {
-  const references = ["6682", "6703", "6835", "6858", "6807", "6806"];
+  const references = gamSerialCollisionReferenceOrder;
   const records = references.map(record);
   assert.deepEqual(findSerialNumberCollisions(records).map(({ products }) =>
-    products.map((product) => product.reference).sort()).sort(), [
-    ["6682", "6703"], ["6806", "6807"], ["6835", "6858"]
-  ].sort());
+    products.map((product) => product.reference).sort()).sort(), gamHistoricalSerialCollisionGroups.map((group) => [...group]).sort());
   const batch = prepareImportBatch(records, catalog);
   assert.equal(batch.products.length, 6);
   assert.equal(batch.totals.ready, 4);

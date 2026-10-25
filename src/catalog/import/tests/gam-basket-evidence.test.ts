@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { requireProductReference } from "./require-product-reference.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
@@ -12,11 +13,7 @@ const dimension = catalog.attributes.find((item) => item.name === "Dimensiones d
 const rotation = catalog.attributes.find((item) => item.name === "Rotación de torreta");
 assert.ok(dimension);
 assert.ok(rotation);
-const reference = (id: string): ProductRecord => {
-  const found = source.products.find((item) => item.reference === id);
-  assert.ok(found, id);
-  return found;
-};
+const reference = (id: string): ProductRecord => requireProductReference(source.products, id);
 const resolve = (record: ProductRecord) => resolveAttribute(record, dimension);
 
 const recovered = ["6162", "6166", "6185", "6188", "6168", "6163"];
@@ -65,9 +62,3 @@ test("no emplea esta evidencia para salvar conflictos de identidad o candidatos 
   assert.equal(resolve({ ...base, providerId: "gomariz" }).status, "not_observed");
 });
 
-test("mantiene sin inventar medidas los doce fragmentos sin pareja recuperable", () => {
-  for (const id of ["6607", "6630", "6632", "6631", "6614", "6616", "6615", "6642", "6625", "6669", "6617", "6626"]) {
-    assert.deepEqual(resolve(reference(id)), { status: "not_observed", value: null }, id);
-  }
-  assert.deepEqual(resolve(reference("6622")), { status: "rejected", value: null });
-});

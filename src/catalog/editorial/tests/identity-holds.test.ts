@@ -1,24 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
-import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
 import { gamNewForkliftIdentityIssues } from "../gam-new-forklift-identity.js";
 import { selectPublishableCatalog } from "../select-publishable.js";
+import { EDITORIAL_SOURCES, prepareEditorialCohort } from "./editorial-cohort-fixtures.js";
 
-const providers = ["gam", "gomariz", "mercaeleva"] as const;
-const sources = {
-  gam: "storage/scraped/gam/scrape-gam-marzo-2026-catalog.json",
-  gomariz: "storage/scraped/gomariz/scrape-gomariz-catalog.json",
-  mercaeleva: "storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json"
-};
-const preparations = await Promise.all(providers.map(async (providerId) => {
-  const source = sources[providerId];
-  return (await prepareSavedCatalog({
-    providerId, source,
-    out: `storage/prepared/${providerId}/${source.split("/").at(-1)!.replace("-catalog.json", "-f52-preparation.json")}`,
-    dryRun: true, compare: null
-  })).preparation;
-}));
+const sources = EDITORIAL_SOURCES;
+const preparations = await prepareEditorialCohort("-f52");
 const gam = preparations.find((item) => item.source.providerId === "gam");
 assert.ok(gam);
 const get = (reference: string) => {
@@ -47,7 +35,7 @@ test("GAM 6002, 6003 y 6004 tienen inconsistencias acreditadas sin forzar HYSTER
   assert.equal(original.products.find((item) => item.reference === "6004")?.specs?.["Modelo"], "J7.0XTG6");
 });
 
-test("mantiene 6236 reconciliada por F33 y no publica las tres Hyster/Yale", () => {
+test("mantiene GAM 6236 reconciliada y excluye 6002, 6003 y 6004 por identidad Hyster/Yale", () => {
   const result = selectPublishableCatalog(preparations);
   assert.deepEqual(result.totals, { original: 1369, ready: 1366, review: 3, publishable: 1363, excluded: 6 });
   const retained = result.exclusions.filter(({ reference }) => ["6002", "6003", "6004"].includes(reference));

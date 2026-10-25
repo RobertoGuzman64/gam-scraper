@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
+import { createCategorySlugResolver } from "./category-slug-resolver.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { newCategorySlug } from "../mapping/providers/gam/categories.js";
 import { prepareProduct } from "../preparation/prepare.js";
@@ -15,10 +16,7 @@ const machine = (parent: string, title: string, shortDescription: string, specs:
   image: null, images: [], specs
 });
 
-const slug = (record: ProductRecord): string | null => {
-  const prepared = prepareProduct(record, catalog);
-  return catalog.categories.find((category) => category.id === prepared.product.categorySellID)?.slug ?? null;
-};
+const slug = createCategorySlugResolver(catalog);
 
 test("apiladores: respeta la modalidad explícita del título, la descripción y las especificaciones", () => {
   assert.equal(slug(machine("apiladores-hyster", "Carretilla elevadora apiladora HYSTER S1.0E",

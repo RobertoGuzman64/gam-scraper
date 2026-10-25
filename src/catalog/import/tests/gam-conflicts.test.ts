@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { requireProductReference } from "./require-product-reference.js";
 import { fileURLToPath } from "node:url";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
@@ -9,11 +10,7 @@ const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog(fileURLToPath(new URL(
   "../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
 )));
-const reference = (code: string) => {
-  const record = source.products.find((product) => product.reference === code);
-  assert.ok(record, code);
-  return record;
-};
+const reference = (code: string) => requireProductReference(source.products, code);
 const attribute = (name: string) => {
   const found = catalog.attributes.find((item) => item.name === name);
   assert.ok(found, name);

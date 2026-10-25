@@ -1,18 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
 import { isNewEditorialCohort, selectPublishableCatalog } from "../select-publishable.js";
+import { prepareEditorialCohort } from "./editorial-cohort-fixtures.js";
 
-const sources = {
-  gam: "storage/scraped/gam/scrape-gam-marzo-2026-catalog.json",
-  gomariz: "storage/scraped/gomariz/scrape-gomariz-catalog.json",
-  mercaeleva: "storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json"
-};
-const ids = ["gam", "gomariz", "mercaeleva"] as const;
-const originals = await Promise.all(ids.map(async (providerId) => (await prepareSavedCatalog({
-  providerId, source: sources[providerId], out: `storage/prepared/${providerId}/${sources[providerId].split("/").at(-1)!.replace("-catalog.json", "-preparation.json")}`,
-  dryRun: true, compare: null
-})).preparation));
+const originals = await prepareEditorialCohort();
 const checksums = {
   gam: "7f31ebee51f573401d6f20bbe850751c46ff1659a5a91ffcf4302e82ed11e11d",
   gomariz: "13a889861d03a86c4756d85e65f894b44c5097bcfbcb84d096c67786d0513e90",

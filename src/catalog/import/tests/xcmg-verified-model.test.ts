@@ -17,7 +17,7 @@ const records = ["4750", "4802"].map((reference) => {
 
 for (const record of records) {
   const model = record.reference === "4750" ? "XG1523RT" : "XG1523ERT";
-  test(`Fase 25: ${record.reference} recupera el modelo XCMG corroborado sin modificar el origen`, () => {
+  test(`GAM: ${record.reference} recupera el modelo XCMG corroborado sin modificar el origen`, () => {
     const snapshot = JSON.stringify(record);
     assert.equal(gamElevationIdentityConflict(record), true);
     const reconciled = reconcileGamVerifiedXcmg1523Model(record);
@@ -38,7 +38,7 @@ for (const record of records) {
     assert.equal(output.product.title, record.title);
   });
 
-  test(`Fase 25: ${record.reference} exige coincidencia estricta de identidad y datos técnicos`, () => {
+  test(`GAM: ${record.reference} exige coincidencia estricta de identidad y datos técnicos`, () => {
     const variants: readonly ProductRecord[] = [
       { ...record, providerId: "mercaeleva" },
       { ...record, reference: "4751" },

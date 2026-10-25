@@ -21,7 +21,7 @@ for (const [record, model, capacity] of [
   [first, "S4.0FT", "4000"],
   [second, "S4.5FT", "4500"]
 ] as const) {
-  test(`Fase 30: ${model} GLP se reconcilia preservando el spec original`, () => {
+  test(`GAM: ${model} GLP se reconcilia preservando el spec original`, () => {
     const originalSpec = structuredClone(record.specs);
     const preparedRecord = reconcileGamVerifiedHysterSGlp(record);
     assert.notStrictEqual(preparedRecord, record);

@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { requireProductReference } from "./require-product-reference.js";
+import { gamHistoricalSerialCollisionGroups } from "./gam-technical-cohorts.js";
 import { fileURLToPath } from "node:url";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
@@ -17,11 +19,7 @@ const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog(fileURLToPath(new URL(
   "../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
 )));
-const byReference = (reference: string): ProductRecord => {
-  const record = source.products.find((entry) => entry.reference === reference);
-  assert.ok(record, reference);
-  return record;
-};
+const byReference = (reference: string): ProductRecord => requireProductReference(source.products, reference);
 
 const historicalBatch = prepareImportBatch(source.products, catalog);
 
@@ -73,9 +71,7 @@ test("la discrepancia requiere marca, modelo, título, resumen y ficha del mismo
 test("las tres series compartidas conservan seis referencias sin fusionarlas y tres siguen bloqueadas", () => {
   const batch = historicalBatch;
   assert.deepEqual(findSerialNumberCollisions(source.products).map((item) =>
-    item.products.map((record) => record.reference).sort()).sort(), [
-    ["6682", "6703"], ["6806", "6807"], ["6835", "6858"]
-  ].sort());
+    item.products.map((record) => record.reference).sort()).sort(), gamHistoricalSerialCollisionGroups.map((group) => [...group]).sort());
   assert.equal(batch.products.length, source.products.length);
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, source.products.length);
   for (const reference of ["6682", "6703"]) {

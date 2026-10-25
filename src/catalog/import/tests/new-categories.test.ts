@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
+import { createCategorySlugResolver } from "./category-slug-resolver.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { isLeafCategoryForCondition } from "../mapping/category-mapping.js";
 import { planProductImport, readReferenceInventory } from "../export/export-plan.js";
@@ -19,10 +20,7 @@ const gam = (parent: string, title: string, specs: ProductRecord["specs"] = {}):
   images: ["https://online.gamrentals.com/img/99999.jpg"], specs
 });
 
-const categorySlug = (record: ProductRecord): string | null => {
-  const prepared = prepareProduct(record, catalog);
-  return catalog.categories.find((category) => category.id === prepared.product.categorySellID)?.slug ?? null;
-};
+const categorySlug = createCategorySlugResolver(catalog);
 
 test("maquinaria nueva: rutas de familia inequívoca enlazan con hojas del catálogo real", () => {
   const examples = [

@@ -1,23 +1,20 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { resolveAttribute } from "../mapping/attribute-mapping.js";
 import { prepareCached } from "./prepare-cached.js";
 import { mercaelevaMislabelledCapacity } from "../mapping/providers/mercaeleva/handling-evidence.js";
 
 const catalog = await loadImportCatalog();
-const loadProducts = async (provider: "gomariz" | "mercaeleva"): Promise<readonly ProductRecord[]> => {
-  const url = new URL(`../../../../storage/scraped/${provider}/scrape-${provider}-catalog.json`, import.meta.url);
-  const data: unknown = JSON.parse(await readFile(url, "utf8"));
-  if (typeof data !== "object" || data === null || !("products" in data) || !Array.isArray(data.products)) {
-    throw new Error(`Catálogo no disponible: ${provider}`);
-  }
-  return data.products;
-};
-const gomariz = await loadProducts("gomariz");
-const mercaeleva = await loadProducts("mercaeleva");
+const gomariz = (await readCanonicalCatalog(fileURLToPath(new URL(
+  "../../../../storage/scraped/gomariz/scrape-gomariz-catalog.json", import.meta.url
+)))).products;
+const mercaeleva = (await readCanonicalCatalog(fileURLToPath(new URL(
+  "../../../../storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json", import.meta.url
+)))).products;
 const toyota = mercaeleva.find((record) => record.reference === "M433-5206");
 if (!toyota) throw new Error("Falta M433-5206");
 const capacity = catalog.attributes.find((attribute) => attribute.name === "Capacidad de carga");

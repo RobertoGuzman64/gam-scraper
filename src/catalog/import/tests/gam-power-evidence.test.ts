@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { requireProductReference } from "./require-product-reference.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
@@ -13,11 +14,7 @@ const attribute = (name: string) => {
   assert.ok(result, name);
   return result;
 };
-const reference = (id: string): ProductRecord => {
-  const record = source.products.find((entry) => entry.reference === id);
-  assert.ok(record, id);
-  return record;
-};
+const reference = (id: string): ProductRecord => requireProductReference(source.products, id);
 const power = (record: ProductRecord) => resolveAttribute(record, attribute("Potencia"));
 
 test("PRAMAC publicado bajo /pramac conserva la potencia de motor separada", () => {

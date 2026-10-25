@@ -1,12 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
+import { readHistoricalGamCoverageCatalog, GAM_MISSING_REFERENCES } from "./gam-coverage-fixtures.js";
 import { parseCanonicalCatalog } from "../../canonical-catalog.js";
 import { compareCanonicalCoverage } from "../compare.js";
 
-const sourceFile = new URL("../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url);
-const previous = parseCanonicalCatalog(JSON.parse(await readFile(sourceFile, "utf8")));
-const disappearing = new Set(["6942", "6948", "6366", "6676"]);
+const previous = await readHistoricalGamCoverageCatalog();
+const disappearing = GAM_MISSING_REFERENCES;
 
 test("detecta las cuatro referencias GAM ausentes y sus URL sin perder otras", () => {
   const products = previous.products.filter((item) => !disappearing.has(item.reference ?? ""));

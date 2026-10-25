@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
+import { createCategorySlugResolver } from "./category-slug-resolver.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { prepareProduct } from "../preparation/prepare.js";
 
@@ -19,10 +20,7 @@ const machine = (
   image: null, images: []
 });
 
-const slug = (record: ProductRecord): string | null => {
-  const result = prepareProduct(record, catalog);
-  return catalog.categories.find((category) => category.id === result.product.categorySellID)?.slug ?? null;
-};
+const slug = createCategorySlugResolver(catalog);
 
 test("Reach Stacker: requiere manipulación de contenedores expresamente documentada", () => {
   const source = machine("reachstacker-hyster", "Reach Stacker Hyster RS46-41XD/75S",

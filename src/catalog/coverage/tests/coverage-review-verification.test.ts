@@ -1,13 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
+import { readHistoricalGamCoverageCatalog, GAM_MISSING_REFERENCES } from "./gam-coverage-fixtures.js";
 import { parseCanonicalCatalog } from "../../canonical-catalog.js";
 import { compareCanonicalCoverage } from "../compare.js";
 import { createCoverageReview, verifyCoverageReview } from "../review.js";
 
-const filename = new URL("../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url);
-const prior = parseCanonicalCatalog(JSON.parse(await readFile(filename, "utf8")));
-const lost = new Set(["6942", "6948", "6366", "6676"]);
+const prior = await readHistoricalGamCoverageCatalog();
+const lost = GAM_MISSING_REFERENCES;
 const currentProducts = prior.products.filter(({ reference }) => !lost.has(reference ?? ""))
   .map((product) => product.reference === "6683" ? {
     ...product, price: "1260", scrapedAt: "2026-10-25T00:00:00Z"

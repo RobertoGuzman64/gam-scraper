@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { requireProductReference } from "./require-product-reference.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
@@ -10,27 +11,8 @@ const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
 const capacity = catalog.attributes.find((attribute) => attribute.name === "Capacidad de carga");
 assert.ok(capacity);
-const reference = (id: string): ProductRecord => {
-  const record = source.products.find((item) => item.reference === id);
-  assert.ok(record, id);
-  return record;
-};
+const reference = (id: string): ProductRecord => requireProductReference(source.products, id);
 const status = (record: ProductRecord) => resolveAttribute(record, capacity).status;
-
-const conflicting = [
-  "6965", "6932", "6723", "2089", "2211", "2049", "2044", "6272",
-  "2016", "2275", "2193", "6421", "50", "2237", "2240", "2136"
-];
-
-test("capacidades de modelo acreditado se distinguen de discrepancias pendientes", () => {
-  const confirmed = new Set(["50", "2016", "2044", "2049", "2089", "2136", "2193", "2275", "6421", "6932", "6965"]);
-  for (const id of conflicting) {
-    const record = reference(id);
-    const expected = confirmed.has(id) ? "resolved" : "contradiction";
-    assert.equal(status(record), expected, id);
-    assert.equal(prepareProduct(record, catalog).status, confirmed.has(id) || ["2237", "2240", "6723", "2211", "6272"].includes(id) ? "ready" : "review", id);
-  }
-});
 
 test("no inventa una capacidad puntual para las dos fichas con alternativas", () => {
   for (const id of ["237", "235"]) {

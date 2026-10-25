@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
+import { readHistoricalGamCoverageCatalog } from "./gam-coverage-fixtures.js";
 import { parseCanonicalCatalog } from "../../canonical-catalog.js";
 import { createCoverageReview, verifyCoverageReview } from "../review.js";
 
-const file = new URL("../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url);
-const previous = parseCanonicalCatalog(JSON.parse(await readFile(file, "utf8")));
+const previous = await readHistoricalGamCoverageCatalog();
 const current = parseCanonicalCatalog({
   ...previous,
   products: previous.products.map((product) => {

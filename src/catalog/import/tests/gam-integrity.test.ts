@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { requireProductReference } from "./require-product-reference.js";
+import { gamHistoricalSerialCollisionGroups, gamSerialCollisionReferenceOrder } from "./gam-technical-cohorts.js";
 import { fileURLToPath } from "node:url";
 import { findSerialNumberCollisions } from "../../identity-conflicts.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
@@ -11,11 +13,7 @@ const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog(fileURLToPath(new URL(
   "../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
 )));
-const reference = (code: string) => {
-  const record = source.products.find((product) => product.reference === code);
-  assert.ok(record, `Referencia GAM ${code}`);
-  return record;
-};
+const reference = (code: string) => requireProductReference(source.products, code);
 const attribute = (name: string) => {
   const found = catalog.attributes.find((item) => item.name === name);
   assert.ok(found, name);
@@ -57,12 +55,10 @@ test("GAM: la potencia comercial documentada se resuelve con su valor publicado"
 });
 
 test("GAM: los tres números de serie repetidos mantienen las seis referencias independientes", () => {
-  const relevant = new Set(["6682", "6703", "6835", "6858", "6807", "6806"]);
+  const relevant = new Set<string>(gamSerialCollisionReferenceOrder);
   const collisions = findSerialNumberCollisions(source.products).filter(({ products }) =>
     products.some((product) => product.reference !== null && relevant.has(product.reference))
   );
   assert.equal(collisions.length, 3);
-  assert.deepEqual(collisions.map(({ products }) => products.map((product) => product.reference).sort()).sort(), [
-    ["6682", "6703"], ["6806", "6807"], ["6835", "6858"]
-  ].sort());
+  assert.deepEqual(collisions.map(({ products }) => products.map((product) => product.reference).sort()).sort(), gamHistoricalSerialCollisionGroups.map((group) => [...group]).sort());
 });

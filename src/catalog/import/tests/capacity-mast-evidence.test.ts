@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { gamCapacityDisputedReferences, gamCapacityVerifiedReferences } from "./gam-technical-cohorts.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
@@ -23,12 +24,12 @@ const attr = (name: string) => {
 const load = attr("Capacidad de carga");
 const mast = attr("Tipo de mástil");
 
-const incompatibleGam = ["6965", "6932", "6723", "2089", "2211", "2049", "2044", "6272", "2016", "2275", "2193", "6421", "50", "2237", "2240", "2136"];
+const incompatibleGam = gamCapacityDisputedReferences;
 const differentMercaeleva = ["M827-8304"];
 const incompatibleMasts = ["M827-8304", "M818-7811", "M104-0836"];
 
 test("las dieciséis fichas conservan sus fuentes, con once capacidades acreditadas", () => {
-  const confirmed = new Set(["50", "2016", "2044", "2049", "2089", "2136", "2193", "2275", "6421", "6932", "6965"]);
+  const confirmed = new Set<string>(gamCapacityVerifiedReferences);
   for (const id of incompatibleGam) {
     const record = byReference("gam", id);
     const original = JSON.stringify(record);

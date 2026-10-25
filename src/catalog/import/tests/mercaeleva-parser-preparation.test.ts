@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { loadImportCatalog } from "../../../../infrastructure/filesystem/import-catalog-loader.js";
-import { prepareProduct } from "../../../../catalog/import/preparation/prepare.js";
-import { validateImportCandidate } from "../../../../catalog/import/preparation/import-validation.js";
-import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { parseMercaelevaProduct } from "../parsers.js";
+import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
+import { prepareProduct } from "../preparation/prepare.js";
+import { validateImportCandidate } from "../preparation/import-validation.js";
+import type { ProductRecord } from "../../../contracts/catalog.js";
+import { parseMercaelevaProduct } from "../../../scraping/providers/mercaeleva/parsers.js";
 
 const reference = "M044-4093";
 const url = `https://sales.mercaeleva.com/es/for-sale/machine/JLG-450-AJ-SII-${reference}`;

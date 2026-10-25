@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { requireProductReference } from "./require-product-reference.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
@@ -9,17 +10,13 @@ import { prepareImportBatch } from "../preparation/batch-identity.js";
 
 const catalog = await loadImportCatalog();
 const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
-const byReference = (reference: string): ProductRecord => {
-  const found = gam.products.find((record) => record.reference === reference);
-  assert.ok(found, reference);
-  return found;
-};
+const byReference = (reference: string): ProductRecord => requireProductReference(gam.products, reference);
 const older = byReference("6835");
 const listed = byReference("6858");
 const collisionFor = (records: readonly ProductRecord[]) =>
   findSerialNumberCollisions(records).find((item) => item.serialNumber === "A976B08243T");
 
-test("F44/F45: los dos anuncios comparten stock acreditado y se conservan ambas fichas", () => {
+test("GAM: los anuncios Yale 6835 y 6858 comparten stock acreditado y conservan ambas fichas", () => {
   const originals = structuredClone([older, listed]);
   const collision = collisionFor([older, listed]);
   assert.ok(collision);

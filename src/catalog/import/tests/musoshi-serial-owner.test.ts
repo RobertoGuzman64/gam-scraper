@@ -22,7 +22,7 @@ const getCollision = (products: readonly ProductRecord[]) => {
   return collision;
 };
 
-test("F41/F43: el VIN corresponde a Musoshi y Zero lo descarta sin inventar otro", () => {
+test("GAM: el VIN corresponde a Musoshi 6806 y Zero 6807 lo descarta sin inventar otro", () => {
   const original = structuredClone([musoshi, zero]);
   const collision = getCollision([zero, musoshi]);
   assert.strictEqual(verifiedMusoshiSerialOwner(collision), musoshi);

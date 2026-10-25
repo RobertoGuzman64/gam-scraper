@@ -1,13 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
+import { readHistoricalGamCoverageCatalog, GAM_MISSING_REFERENCES } from "./gam-coverage-fixtures.js";
 import { parseCanonicalCatalog } from "../../canonical-catalog.js";
 import { createCoverageReview, verifyCoverageReview } from "../review.js";
 import { DEFAULT_CATEGORIES } from "../../../scraping/providers/gam/config.js";
 
-const filename = new URL("../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url);
-const previous = parseCanonicalCatalog(JSON.parse(await readFile(filename, "utf8")));
-const missingReferences = new Set(["6942", "6948", "6366", "6676"]);
+const previous = await readHistoricalGamCoverageCatalog();
+const missingReferences = GAM_MISSING_REFERENCES;
 const products = previous.products.filter(({ reference }) => !missingReferences.has(reference ?? ""));
 const current = parseCanonicalCatalog({ ...previous, productCount: products.length, products });
 const expected = createCoverageReview(previous, current, "a".repeat(64), "b".repeat(64));
@@ -57,7 +56,7 @@ test("admite ausencia de listado acreditada sin convertirla en retirada", () => 
   assert.ok(report.missing.every(({ decision }) => decision !== "retirado"));
 });
 
-test("mantiene válido el contrato de retirada F50", () => {
+test("admite la retirada acreditada sin invalidar el contrato de revisión", () => {
   const report = {
     ...expected,
     missing: expected.missing.map((item) => ({

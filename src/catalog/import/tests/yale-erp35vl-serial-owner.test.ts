@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { requireProductReference } from "./require-product-reference.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
@@ -9,17 +10,13 @@ import { prepareImportBatch } from "../preparation/batch-identity.js";
 
 const catalog = await loadImportCatalog();
 const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
-const byReference = (reference: string): ProductRecord => {
-  const record = gam.products.find((entry) => entry.reference === reference);
-  assert.ok(record, reference);
-  return record;
-};
+const byReference = (reference: string): ProductRecord => requireProductReference(gam.products, reference);
 const older = byReference("6835");
 const accredited = byReference("6858");
 const collisionFor = (products: readonly ProductRecord[]) =>
   findSerialNumberCollisions(products).find((item) => item.serialNumber === "A976B08243T");
 
-test("F42/F45: ambas publicaciones acreditadas conservan el mismo VIN sin bloqueo", () => {
+test("GAM: Yale 6835 y 6858 conservan el mismo VIN acreditado sin bloqueo", () => {
   const original = structuredClone([older, accredited]);
   const collision = collisionFor([accredited, older]);
   assert.ok(collision);
