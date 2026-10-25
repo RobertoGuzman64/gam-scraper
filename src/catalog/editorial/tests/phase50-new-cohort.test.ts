@@ -20,14 +20,38 @@ const checksums = {
 };
 const disappearing = new Set(["6942", "6948", "6366", "6676"]);
 const changedIdentityRoutes = new Set(["6002", "6003", "6004"]);
+const f50GalleryReferences = new Set(["4988", "4989", "4990", "4991", "5998", "5999", "6000", "6001"]);
+const f50RelatedImages = [
+  "https://online.gamrentals.com/53434-product_main_2x/carretilla-elevadora-electrica-hyster-a13xnt.jpg",
+  "https://online.gamrentals.com/133-product_main_2x/carretilla-elevadora-electrica-hyster-j16xn.jpg",
+  "https://online.gamrentals.com/140-product_main_2x/carretilla-elevadora-electrica-hyster-j18xn.jpg",
+  "https://online.gamrentals.com/147-product_main_2x/carretilla-elevadora-electrica-hyster-j20xn.jpg"
+] as const;
+const f50ShortDescription5996 = "La carretilla elevadora eléctrica Yale ERP6.0MXLG6 combina una capacidad de carga de 6.000 kg, con centro de carga de 600 mm, con la eficiencia de la tecnología de ion de litio y la robustez necesaria para afrontar operaciones de manutención de gran tonelaje en diferentes entornos industriales. Una de sus principales ventajas es su altura libre al suelo de 230 mm en el centro de la distancia entre ejes y 200 mm bajo el mástil con carga, combinada con neumáticos industriales de gran tamaño y ruedas delantera";
 const preparations = originals.map((preparation) => {
   const providerId = preparation.source.providerId;
   const products = providerId === "gam"
     ? preparation.products.filter(({ product }) => !disappearing.has(product.reference ?? ""))
-      .map((entry) => changedIdentityRoutes.has(entry.product.reference ?? "")
-        ? { ...entry, product: { ...entry.product, sourceUrl: entry.product.sourceUrl.replace(
-          "/es/hyster/", "/es/carretillas-elevadoras-electricas-hyster/") } }
-        : entry)
+      .map((entry) => {
+        const reference = entry.product.reference ?? "";
+        const gallery = f50GalleryReferences.has(reference);
+        const identity = changedIdentityRoutes.has(reference);
+        const description = reference === "5996";
+        if (!gallery && !identity && !description) return entry;
+        const image = entry.product.image;
+        if (gallery) assert.ok(image, reference);
+        return {
+          ...entry,
+          product: {
+            ...entry.product,
+            sourceUrl: entry.product.sourceUrl
+              .replace("/es/hyster/", "/es/carretillas-elevadoras-electricas-hyster/")
+              .replace("/es/yale/", "/es/carretillas-elevadoras-electricas-yale/"),
+            ...(gallery && image ? { images: [image, ...f50RelatedImages] } : {}),
+            ...(description ? { description: f50ShortDescription5996 } : {})
+          }
+        };
+      })
     : preparation.products;
   return {
     ...preparation,
@@ -84,4 +108,19 @@ test("F50: rechaza mezclar catálogo y hash, reviews nuevas, totales alterados",
       : entry)
   });
   assert.throws(() => selectPublishableCatalog(changed), /review sin exclusión acreditada/);
+});
+
+test("F50: rechaza una galería o una descripción distinta de la evidencia acreditada", () => {
+  const gallery = preparations.map((preparation) => preparation.source.providerId !== "gam"
+    ? preparation
+    : { ...preparation, products: preparation.products.map((entry) => entry.product.reference === "4988"
+      ? { ...entry, product: { ...entry.product, images: entry.product.images.slice(0, -1) } }
+      : entry) });
+  assert.throws(() => selectPublishableCatalog(gallery), /galería distinta de la evidencia acreditada/);
+  const description = preparations.map((preparation) => preparation.source.providerId !== "gam"
+    ? preparation
+    : { ...preparation, products: preparation.products.map((entry) => entry.product.reference === "5996"
+      ? { ...entry, product: { ...entry.product, description: `${entry.product.description} ` } }
+      : entry) });
+  assert.throws(() => selectPublishableCatalog(description), /resumen distinto de la evidencia acreditada/);
 });
