@@ -1,5 +1,9 @@
 # SCRAPER_DATA_RULES.md
 
+## AI GUARD
+
+**Documentación protegida.** Ninguna IA debe crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para esa intervención documental. Una petición sobre código, tests o auditorías no autoriza cambios documentales implícitos.
+
 **Reglas de datos, preparación y exportación · Equipzilla Scraper**  
 **Fecha del análisis:** 20/10/2026; **alcance de producto corregido el 21/10/2026** tras contraste del backend.  
 **Procedencia:** código del scraper y `Marketplace-Back-develop.zip` (contrato receptor contrastado en código). No se ejecutaron extracciones reales ni importaciones ni se inspeccionó la base de datos de un entorno. **Documento autónomo:** su contrato de destino se resume aquí sin exigir tener el backend abierto.

@@ -29,7 +29,7 @@ const replaceEntry = (providerId: string, reference: string, transform: (
     : preparation.products
 }));
 
-test("F48: selección editorial preserva 1369 referencias y publica 1363 fichas tras retener tres identidades contradictorias", async () => {
+test("selección editorial preserva 1369 referencias y publica 1363 fichas tras retener tres identidades contradictorias", async () => {
   const originalRecords = await Promise.all(sources.map(async (providerId) =>
     readCanonicalCatalog(sourceFiles[providerId])));
   const originalSnapshot = JSON.stringify(originalRecords);
@@ -50,7 +50,7 @@ test("F48: selección editorial preserva 1369 referencias y publica 1363 fichas 
   ]);
 });
 
-test("F48: las Hyster no se consolidan y el número de serie contradictorio sigue en las incidencias", () => {
+test("las Hyster no se consolidan y el número de serie contradictorio sigue en las incidencias", () => {
   const result = selectPublishableCatalog(preparations);
   const hyster = result.exclusions.filter((item) => item.providerId === "gam");
   assert.equal(hyster.length, 5);
@@ -60,19 +60,19 @@ test("F48: las Hyster no se consolidan y el número de serie contradictorio sigu
   assert.ok(colliding.every((item) => item.reason.includes("identidad física")));
 });
 
-test("F48: bloquea nuevas reviews incluso si pertenecen a una referencia válida", () => {
+test("bloquea nuevas reviews incluso si pertenecen a una referencia válida", () => {
   const mutated = replaceEntry("gam", "6683", (entry) => ({
     ...entry, status: "review", issues: ["Contradicción técnica nueva"]
   }));
   assert.throws(() => selectPublishableCatalog(mutated), /review sin exclusión acreditada/);
 });
 
-test("F48: bloquea exclusiones de referencia sin contradicción", () => {
+test("bloquea exclusiones de referencia sin contradicción", () => {
   const changed = replaceEntry("gam", "6682", (entry) => ({ ...entry, issues: ["Sin datos"] }));
   assert.throws(() => selectPublishableCatalog(changed), /review sin exclusión acreditada/);
 });
 
-test("F48: bloquea URL cambiada o estados ready heredados por una ficha excluida", () => {
+test("bloquea URL cambiada o estados ready heredados por una ficha excluida", () => {
   const changedUrl = replaceEntry("mercaeleva", "M827-8304", (entry) => ({
     ...entry, product: { ...entry.product, sourceUrl: `${entry.product.sourceUrl}?revision=2` }
   }));
@@ -81,7 +81,7 @@ test("F48: bloquea URL cambiada o estados ready heredados por una ficha excluida
   assert.throws(() => selectPublishableCatalog(changedQuality), /decisión caducada/);
 });
 
-test("F48: bloquea catálogos distintos, faltantes, duplicados o incompletos", () => {
+test("bloquea catálogos distintos, faltantes, duplicados o incompletos", () => {
   assert.throws(() => selectPublishableCatalog(preparations.slice(0, 2)), /faltan proveedores/);
   assert.throws(() => selectPublishableCatalog([...preparations, preparations[0]!]), /cohorte desconocida/);
   const changedSource = preparations.map((preparation) => preparation.source.providerId !== "gam"
@@ -98,7 +98,7 @@ test("F48: bloquea catálogos distintos, faltantes, duplicados o incompletos", (
   assert.throws(() => selectPublishableCatalog(duplicate), /referencia inválida o repetida/);
 });
 
-test("F48: el criterio editorial no depende de elegibilidad Excel/createMany", () => {
+test("el criterio editorial no depende de elegibilidad Excel/createMany", () => {
   const result = selectPublishableCatalog(preparations);
   const gam = result.products.filter((product) => product.providerId === "gam");
   assert.equal(gam.length, 1003);

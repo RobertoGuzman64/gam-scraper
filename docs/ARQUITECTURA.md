@@ -1,8 +1,10 @@
 # Arquitectura del scraper de Equipzilla
 
-Referencia técnica del **repositorio reorganizado tras las fases 1 y 2 y revisado en fase 3**. El proceso es una aplicación CLI Node.js/TypeScript ESM con comprobación estricta de tipos. No hay servidor HTTP ni conexión directa al backend de Equipzilla.
+## AI GUARD
 
-La fase 2 resolvió las rutas movidas en la fase 1 y separó contratos, reglas por proveedor, preparación, calidad, navegador y publicación. Durante la fase 3 se comprobaron **162 archivos TypeScript**, sin imports internos inexistentes ni ciclos de dependencias de ejecución. Con el compilador TypeScript global y tipos Node locales se emitió `dist/` para efectuar pruebas parciales: **96 pruebas superadas**; otras **24 suites no pudieron arrancar por falta de Cheerio o `p-limit`**, sin llegar a ejecutar sus aserciones. Se verificó además la carga del catálogo local y la integridad ZIP/XML de un XLSX de prueba con `Nuevo` y `Segunda_Mano`. La instalación `npm ci` falló por falta de conectividad al registro npm, de modo que **no se acredita un build completo ni toda la batería de tests**. Quedan pendientes `npm ci`, `npm run build` y `npm test` con las dependencias reales.
+**Documentación protegida.** Ninguna IA debe crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para esa intervención documental. Una petición sobre código, tests o auditorías no autoriza cambios documentales implícitos.
+
+Referencia técnica del repositorio actual. Aplicación CLI Node.js/TypeScript ESM con tipado estricto; no expone servidor HTTP ni escribe directamente en el backend de Equipzilla.
 
 ## Organización real
 

@@ -27,7 +27,11 @@
     "cli": "npm run -s build && node dist/cli/index.js",
     "storage:clean": "npm run -s build && node dist/cli/storage-clean.js",
     "select:publishable": "npm run -s build && node dist/cli/select-publishable.js",
-    "review:coverage": "npm run -s build && node dist/cli/review-coverage.js"
+    "review:coverage": "npm run -s build && node dist/cli/review-coverage.js",
+    "prepare": "npm run -s prepare:catalog --",
+    "coverage": "npm run -s review:coverage --",
+    "publish": "npm run -s select:publishable --",
+    "check:catalog": "npm run -s validate:catalog --"
   },
   "dependencies": {
     "cheerio": "^1.0.0",

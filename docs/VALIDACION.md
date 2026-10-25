@@ -1,5 +1,9 @@
 # Validación y aceptación del catálogo JSON
 
+## AI GUARD
+
+**Documentación protegida.** Ninguna IA debe crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para esa intervención documental. Una petición sobre código, tests o auditorías no autoriza cambios documentales implícitos.
+
 Protocolo operativo aplicable a las extracciones de GAM, Gomariz y Mercaeleva, para **maquinaria nueva y de segunda mano**. No es una certificación de producción. Alcance funcional y definición de terminado: [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
 
 La cadena central es **web del proveedor → extracción → catálogo JSON canónico completo → preparación y auditoría de calidad → 100 % `ready`, 0 `review`**. La exportación hacia Excel o `create/many` es una **rama auxiliar del receptor**, que no determina si el catálogo está terminado. Ejecutar el lote no importa ni publica productos automáticamente en Marketplace-Back.
@@ -119,7 +123,7 @@ Tras comprobar el plan, sustituir `--dry-run` por `--confirm-inventory` únicame
 
 **Evidencia de esta entrega:** selección de 23 ficheros de pruebas, **130 casos correctos, 0 fallidos y 3 omitidos**; incluye exportación offline/legacy, manifest alterado aun refirmado, identidades, proveedor, antigüedad, plan de altas y tres proveedores. Las pruebas que importan el registro de proveedores se ejecutaron con un sustituto temporal de Cheerio que impide parsear HTML (no incluido en el repositorio). No sustituye a las dependencias reales ni acredita parsers o build completo. Ejecutar `npm ci`, `npm test` y `npm run build` con dependencias reales antes de integrar.
 
-## F49 — contraste explícito de cobertura entre extracciones
+## Contraste de cobertura entre extracciones (F49)
 
 Para una extracción nueva, la conformidad estructural del catálogo no demuestra que se hayan mantenido las referencias de una cohorte histórica. El contraste se activa únicamente con `--baseline` y no cambia los JSON:
 
@@ -133,9 +137,9 @@ F49 también admite preparar de nuevo el JSON canónico recién obtenido de Goma
 
 F48 no se reutiliza sobre esta extracción porque su selección editorial requiere los hashes y recuentos de la cohorte anterior. No se reescriben exclusiones sin una decisión editorial de la cohorte nueva.
 
-## F50 — Revisión editorial del scraping nuevo (25/10/2026)
+## Revisión editorial del scraping del 25/10/2026 (F50–F54)
 
-La ejecución real en Windows superó tests y compilación. El lote de 25/10/2026 produjo 1.004 fichas GAM, 143 Gomariz y 218 Mercaeleva. Tras F49: 1.362 `ready`, 3 `review`; las únicas exclusiones técnicas siguen siendo GAM `6682`/`6703` y Mercaeleva `M827-8304`. La comparación histórica de GAM detectó **cuatro ausencias y 24 referencias cambiadas**, sin incorporaciones. Las diferencias aún no están validadas manualmente; que un enlace sea accesible por búsqueda o en otra variante regional no acredita presencia en la cobertura española del scraper.
+La ejecución real en Windows superó tests y compilación. El lote de 25/10/2026 produjo 1.004 fichas GAM, 143 Gomariz y 218 Mercaeleva. Tras F49: 1.362 `ready`, 3 `review`; las únicas exclusiones técnicas siguen siendo GAM `6682`/`6703` y Mercaeleva `M827-8304`. La comparación histórica de GAM detectó **cuatro ausencias y 24 referencias cambiadas**, sin incorporaciones. Las diferencias se cerraron posteriormente mediante el expediente editorial de F51–F54. La accesibilidad de una ficha no acredita por sí sola presencia en la cobertura española.
 
 F50 amplía `validate --stage catalog --baseline`: además del recuento muestra `CAMBIADA | referencia | campos ...`, incluyendo las claves concretas de `specs`. Las fechas `scrapedAt` no cuentan como cambios; cualquier modificación real exige revisión y devuelve código `2`, al igual que una ausencia. Esto **no** cambia los JSON de origen ni el algoritmo de scraping.
 
@@ -162,4 +166,4 @@ La simulación permite comprobar **1.362 publicables y tres exclusiones técnica
 
 Una exportación autorizada mediante `--outDir` genera `gam-publishable.json`, `gomariz-publishable.json`, `mercaeleva-publishable.json` y `selection.json`. Los tres primeros son arrays de los contratos `ImportCandidate` ya existentes, filtrados únicamente por calidad editorial; **no** son una importación automática ni acreditan conformidad con Excel o `create/many`. `selection.json` conserva el resumen, procedencia y exclusiones. La salida es de creación exclusiva y no sobrescribe ficheros preexistentes. La selección F48 sobre su cohorte histórica sigue soportada sin cambiar sus contratos.
 
-En esta entrega no se incluyen los JSON nuevos de la máquina del usuario ni un expediente de cobertura ya aprobado. Por ello la F50 proporciona los controles reproducibles, pero no declara que las cuatro ausencias ni las 24 modificaciones estén resueltas.
+Cierre editorial posterior del 25/10/2026: 24 referencias con cambios y 33 controles de campo revisados; selección final de 1.359 fichas (GAM 999, Gomariz 143, Mercaeleva 217), con seis exclusiones. Las cuatro ausencias se clasificaron sin atribuirles una retirada comercial no probada. La evidencia aprobada y los JSON de entrega son artefactos externos a este repositorio; no se deben reconstruir motivos ni decisiones sin ellos.

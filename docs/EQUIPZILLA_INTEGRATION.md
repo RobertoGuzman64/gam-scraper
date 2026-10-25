@@ -1,5 +1,9 @@
 # EQUIPZILLA_INTEGRATION.md
 
+## AI GUARD
+
+**Documentación protegida.** Ninguna IA debe crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para esa intervención documental. Una petición sobre código, tests o auditorías no autoriza cambios documentales implícitos.
+
 > **Alcance exclusivamente informativo (decisión del 23/10/2026):** este archivo documenta los contratos históricos de importación Excel y `create/many` del **backend**. **No define el objetivo ni la aceptación del scraper**: el producto principal es el catálogo JSON completo, y se persigue el 100 % de máquinas `ready`, 0 `review`, con datos verificados. Las restricciones de importación no son motivos para excluir fichas ni prioridades del scraper. La adaptación del receptor compete a su responsable y **no requiere volver a solicitar o analizar el backend**. Criterio vigente: [OBJETIVOS_SCRAPER.md](OBJETIVOS_SCRAPER.md).
 
 **Contrato receptor documentado · Equipzilla / importación de productos de maquinaria**  

@@ -8,7 +8,7 @@ const sourceFile = new URL("../../../../storage/scraped/gam/scrape-gam-marzo-202
 const previous = parseCanonicalCatalog(JSON.parse(await readFile(sourceFile, "utf8")));
 const disappearing = new Set(["6942", "6948", "6366", "6676"]);
 
-test("F49: detecta las cuatro referencias GAM ausentes y sus URL sin perder otras", () => {
+test("detecta las cuatro referencias GAM ausentes y sus URL sin perder otras", () => {
   const products = previous.products.filter((item) => !disappearing.has(item.reference ?? ""));
   const current = parseCanonicalCatalog({ ...previous, productCount: products.length, products });
   const comparison = compareCanonicalCoverage(previous, current);
@@ -20,7 +20,7 @@ test("F49: detecta las cuatro referencias GAM ausentes y sus URL sin perder otra
   assert.ok(comparison.missing.every((product) => product.url.startsWith("https://online.gamrentals.com/es/")));
 });
 
-test("F49: una sustitución que mantenga el contador no oculta pérdidas", () => {
+test("una sustitución que mantenga el contador no oculta pérdidas", () => {
   const removed = previous.products.find((record) => record.reference === "6942");
   assert.ok(removed);
   const products = previous.products.map((product) => product === removed
@@ -31,7 +31,7 @@ test("F49: una sustitución que mantenga el contador no oculta pérdidas", () =>
   assert.deepEqual(result.added.map((product) => product.reference), ["NUEVA-F49"]);
 });
 
-test("F49: rechaza proveedor o ámbito distinto", () => {
+test("rechaza proveedor o ámbito distinto", () => {
   assert.throws(() => compareCanonicalCoverage(previous, { ...previous, scope: "aaaaaaaaaaaaaaaa" }), /no comparable/);
   assert.throws(() => compareCanonicalCoverage(previous, { ...previous, providerId: "gomariz" }), /no comparable/);
 });

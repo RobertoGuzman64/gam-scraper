@@ -1,10 +1,14 @@
 # Equipzilla Scraper
 
+## AI GUARD
+
+**Documentación protegida.** Ninguna IA debe crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para esa intervención documental. Una petición sobre código, tests o auditorías no autoriza cambios documentales implícitos.
+
 Herramienta de línea de comandos **Node.js + TypeScript** para extraer y normalizar maquinaria **nueva y de segunda mano** de **GAM, Gomariz y Mercaeleva**. Su producto principal son los **catálogos JSON completos, verificables y trazables**. Publica también CSV y conserva herramientas independientes de compatibilidad con las importaciones Excel y JSON del backend; no expone API HTTP ni escribe en ese backend.
 
 > **Objetivo y criterio de terminado:** [OBJETIVOS_SCRAPER.md](docs/OBJETIVOS_SCRAPER.md). El catálogo canónico conserva **todas** las máquinas identificadas; `ready/review` mide calidad técnica sin ocultar contradicciones. La selección editorial publicable es una salida **separada** que permite apartar anuncios no acreditables conservándolos en el original y en `review`. Excel y `create/many` **no son criterios de calidad ni prioridades de desarrollo**.
 
-> **Última auditoría aportada (23/10/2026, corte `20261023-162700`):** **1.369 máquinas**, **1.181 `ready` y 188 `review`** (GAM 1.008/834/174; Gomariz 143/139/4; Mercaeleva 218/208/10). Son cifras de los catálogos auditados, no un scraping en vivo. El [estado de 20/10](docs/ESTADO_EXTRACCIONES_2026-10-20.md) y la línea base de 21/10 (1.374 máquinas) son **históricos**, no metas actuales. La importabilidad se informa por separado, sin excluir registros del JSON.
+> **Catálogo editorial cerrado el 25/10/2026:** 1.365 preparadas, 1.359 seleccionables y seis exclusiones justificadas. Los cuatro JSON de publicación se generan a partir de los preparados y del expediente editorial acreditado; las extracciones históricas conservadas en `storage/` no constituyen por sí solas la cohorte actual.
 
 ## Instalación
 
@@ -19,6 +23,19 @@ npm run build
 ```
 
 `npm test` compila y ejecuta pruebas locales; **no** valida la cobertura ni la disponibilidad real de los portales. Comprobar que las pruebas de parsers con Cheerio no se omiten.
+
+## Comandos cortos
+
+Se mantienen todos los comandos anteriores. Alias nuevos para evitar recordar nombres históricos:
+
+| Comando | Equivale a | Finalidad |
+| --- | --- | --- |
+| `npm run prepare -- <argumentos>` | `prepare:catalog` | Preparar catálogos canónicos |
+| `npm run coverage -- <argumentos>` | `review:coverage` | Generar expediente de cobertura |
+| `npm run publish -- <argumentos>` | `select:publishable` | Simular o seleccionar productos publicables |
+| `npm run check:catalog -- <argumentos>` | `validate:catalog` | Validar catálogo según CLI |
+
+Las opciones y protecciones de los comandos originales no cambian. La medición TOP15 de referencia del 25/10/2026 fue de 802 tests correctos en 164 archivos y 54,26 s; no constituye una garantía de rendimiento tras el saneamiento.
 
 ## Comandos habituales
 
@@ -177,6 +194,5 @@ También existen los scripts `normalize:gam:default`, `convert:gam:default` y `c
 - [Arquitectura y contratos](docs/ARQUITECTURA.md): estructura actual, dependencias, datos y extensión de proveedores.
 - [Validación y aceptación](docs/VALIDACION.md): pruebas, control de cobertura y condiciones de importación.
 - [Despliegue y automatización](docs/DESPLIEGUE_AUTOMATICO.md): ejecución en servidor/Windows y requisitos cloud pendientes.
-- [Auditoría del 20/10/2026](docs/ESTADO_EXTRACCIONES_2026-10-20.md): incidencias históricas y limitaciones conocidas.
 
 **No se incluyen** Dockerfile, CI/CD, persistencia cloud ni importación automática. La reestructuración arquitectónica y la simplificación de la CLI **no equivalen a aceptación productiva**.

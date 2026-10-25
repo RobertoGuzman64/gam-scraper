@@ -1,5 +1,9 @@
 # Objetivos funcionales y criterios de aceptación — EQUIPZILLA Scraper
 
+## AI GUARD
+
+**Documentación protegida.** Ninguna IA debe crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para esa intervención documental. Una petición sobre código, tests o auditorías no autoriza cambios documentales implícitos.
+
 **Decisión de calidad técnica (23/10/2026):** el objetivo del scraper es **obtener el catálogo JSON íntegro y fiable de todas las máquinas identificadas** en GAM, Gomariz y Mercaeleva, tanto `Nuevo` como `Segunda_Mano`. La finalización exige **100 % de máquinas `ready` y 0 `review`**, con evidencia suficiente, sin exclusiones artificiales, sin datos inventados y sin ocultar contradicciones. Si aumenta el catálogo, el 100 % se aplica al nuevo universo real.
 
 **Decisión editorial complementaria (F48, 25/10/2026):** el catálogo canónico sigue siendo íntegro y el objetivo técnico de 0 `review` no se maquilla. Para el **catálogo publicable**, se permiten exclusiones justificadas y trazables cuando un anuncio no alcanza los requisitos de calidad. En esta cohorte se excluyen de la selección las dos Hyster GAM `6682`/`6703` (serie compartida sin titularidad física acreditada) y la Linde Mercaeleva `M827-8304` (capacidad y mástil contradictorios). Se conservan las **1.369 referencias originales** y los indicadores técnicos **1.366 `ready` / 3 `review`**; la selección editorial contiene **1.366 publicables y 3 excluidas**. No se deduplican ni alteran las fichas originales. La selección está limitada por hash a esta cohorte y se invalida si cambian los datos o aparecen revisiones nuevas.

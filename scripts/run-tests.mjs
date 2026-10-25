@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { clearLine, cursorTo } from "node:readline";
 import { run } from "node:test";
@@ -6,11 +6,14 @@ import { run } from "node:test";
 const collectTests = (directory) => readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
   const path = join(directory, entry.name);
   if (entry.isDirectory()) return collectTests(path);
-  return entry.isFile() && entry.name.endsWith(".test.js") ? [path] : [];
+  return entry.isFile() && entry.name.endsWith(".test.ts") ? [path] : [];
 });
 
-const files = collectTests("dist").sort();
-if (files.length === 0) throw new Error("No se encontraron pruebas compiladas en dist");
+const sources = collectTests("src").sort();
+if (sources.length === 0) throw new Error("No se encontraron pruebas en src");
+const files = sources.map((source) => join("dist", relative("src", source).replace(/\.test\.ts$/, ".test.js")));
+const missing = files.filter((file) => !existsSync(file));
+if (missing.length > 0) throw new Error(`Faltan ${missing.length} pruebas compiladas: ${missing.join(", ")}`);
 
 const filePaths = new Set(files.map((file) => resolve(file)));
 const interactive = process.stdout.isTTY === true;

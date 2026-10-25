@@ -20,7 +20,7 @@ const reference = (code: string): ProductRecord => {
   return record;
 };
 
-test("Fase 2: tipo de origen corroborado sin categoría del receptor no es motivo de review", () => {
+test("tipo de origen corroborado sin categoría del receptor no es motivo de review", () => {
   for (const code of ["6653", "4778", "4779", "4780", "2159", "220", "221", "227", "2134", "2135"]) {
     const record = reference(code);
     const prepared = prepareProduct(record, catalog);
@@ -35,7 +35,7 @@ test("Fase 2: tipo de origen corroborado sin categoría del receptor no es motiv
   }
 });
 
-test("Fase 2: las motorizaciones incompatibles fuera de evidencia conservan revisión", () => {
+test("las motorizaciones incompatibles fuera de evidencia conservan revisión", () => {
   const h18xd = reference("2071");
   const preparedH18xd = prepareProduct({ ...h18xd, longDescription: `${h18xd.longDescription} distinta evidencia` }, catalog);
   assert.equal(preparedH18xd.status, "review");
@@ -47,7 +47,7 @@ test("Fase 2: las motorizaciones incompatibles fuera de evidencia conservan revi
   assert.ok(prepared.issues.includes(SOURCE_CATEGORY_ISSUE));
 });
 
-test("Fase 2: atributos de fuente se auditan sin categoría del receptor ni IDs inventados", () => {
+test("atributos de fuente se auditan sin categoría del receptor ni IDs inventados", () => {
   const record = reference("6653");
   const valid = prepareProduct({ ...record, specs: { ...record.specs, "Ancho de trabajo": "900 mm" } }, catalog);
   assert.equal(valid.status, "ready");
@@ -63,7 +63,7 @@ test("Fase 2: atributos de fuente se auditan sin categoría del receptor ni IDs 
   assert.ok(contradiction.issues.includes("Atributo contradictorio: Capacidad de carga"));
 });
 
-test("Fase 2: clasificación de origen pendiente queda diferenciada de la importación", () => {
+test("clasificación de origen pendiente queda diferenciada de la importación", () => {
   const unidentified = prepareProduct({ ...reference("6806"), model: "sin confirmar" }, catalog);
   assert.equal(unidentified.status, "review");
   assert.ok(unidentified.issues.includes(SOURCE_CATEGORY_ISSUE));

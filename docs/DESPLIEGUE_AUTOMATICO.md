@@ -1,5 +1,9 @@
 # Despliegue y ejecución programada — Equipzilla Scraper
 
+## AI GUARD
+
+**Documentación protegida.** Ninguna IA debe crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para esa intervención documental. Una petición sobre código, tests o auditorías no autoriza cambios documentales implícitos.
+
 Guía para infraestructura basada en el código actual. **No hay Dockerfile, CI/CD, despliegue cloud, almacenamiento remoto ni importación automática implementados** en este repositorio. Antes de programar extracciones, completar [VALIDACION.md](VALIDACION.md).
 
 ## Qué se despliega
