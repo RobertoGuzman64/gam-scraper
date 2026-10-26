@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const definitions = {
+  "campana:comparar": { entry: "cli/campaign-compare.js", usage: "campana:comparar", description: "Comparar los catálogos originales completos con la referencia única (solo lectura)" },
+  "campana:referencia": { entry: "cli/campaign-reference.js", usage: "campana:referencia -- --actualizar", description: "Actualizar expresamente la referencia tras una entrega acreditada y antes de limpiar" },
   "campana:extraer": { entry: "cli/campaign-extract.js", usage: "campana:extraer [-- --nueva]", description: "Extraer los tres proveedores y preparar/revisar el lote aislado" },
   "campana:intervenir": { entry: "cli/campaign-intervene.js", usage: "campana:intervenir -- gam --listar | --consultar <id> | --mantenimiento | --script <archivo.ts> [--aplicar]", description: "Consultar scripts versionados o simular/aplicar correcciones del lote actual", requiresProvider: true },
   "campana:entregar": { entry: "cli/campaign-deliver.js", usage: "campana:entregar", description: "Entregar ZIP comprobado con tres JSON en el Escritorio sin perder la versión anterior" },
@@ -92,6 +94,8 @@ const printHelp = (requested) => {
     console.log("\nEJEMPLOS\n");
     console.log("  npm run iniciar");
     console.log("  npm run campana:extraer");
+    console.log("  npm run campana:comparar");
+    console.log("  npm run campana:referencia -- --actualizar  (después de entregar; antes de limpiar)");
     console.log("  npm run campana:revisar");
     console.log("  npm run campana:intervenir -- gam --listar");
     console.log("  npm run campana:intervenir -- gam --consultar gam-6002");
@@ -100,6 +104,7 @@ const printHelp = (requested) => {
     console.log("  npm run campana:finalizar");
     console.log("  npm run campana:entregar");
     console.log("  npm run campana:limpiar");
+    console.log("  La comparación no escribe; la actualización exige entrega acreditada y --actualizar.");
     console.log("  npm run limpiar:versionados  (limpia solo archivos históricos rastreados por Git)");
     console.log("  npm run extraer -- gam");
     console.log("  npm run extraer:todos -- --simular");
@@ -117,6 +122,7 @@ const printHelp = (requested) => {
   if (requested === "opciones") {
     console.log("OPCIONES EN ESPAÑOL (también se aceptan las originales)\n");
     for (const [alias, original] of Object.entries(options)) console.log(`  ${alias.padEnd(26)} ${original}`);
+    console.log("  --actualizar                Sustituye la referencia únicamente en campana:referencia");
     console.log("  --aplicar                   Ejecuta la limpieza en lugar de simularla");
     return true;
   }

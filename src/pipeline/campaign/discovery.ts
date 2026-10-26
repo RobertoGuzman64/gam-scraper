@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { readFile, readdir } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
@@ -8,7 +9,7 @@ import type { OfflinePreparation } from "../../catalog/import/preparation/offlin
 import type { CanonicalCatalog } from "../../catalog/canonical-catalog.js";
 import type { BatchReport, ProviderRun } from "../batch/report-types.js";
 
-export const CAMPAIGN_PROVIDERS = ["gam", "gomariz", "mercaeleva"] as const;
+export { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 
 type Artifact = { readonly path: string; readonly sha256: string };
 type Preparation = Artifact & { readonly preparedAt: string; readonly intervened: boolean };

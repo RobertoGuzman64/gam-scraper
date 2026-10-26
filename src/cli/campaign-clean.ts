@@ -15,6 +15,7 @@ export const runCampaignCleanup = async (args: readonly string[]): Promise<void>
     throw new Error("Solo se admite --aplicar para autorizar la limpieza");
   }
   const dryRun = args.length === 0;
+  console.log("AVISO | La limpieza elimina los catálogos originales. Para conservar una referencia del inventario, ejecutar antes npm run campana:referencia -- --actualizar tras la entrega acreditada.");
   const desktop = await findDesktopDirectory();
   const result = await cleanDeliveredCampaign(root, desktop, dryRun);
   console.log(`LIMPIEZA CAMPAÑA | ${dryRun ? "SIMULACIÓN" : "COMPLETADA"} | ${result.runId}`);

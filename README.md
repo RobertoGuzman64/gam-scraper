@@ -37,6 +37,7 @@ npm ci
 npm run iniciar
 npm run campana:extraer
 npm run campana:revisar
+npm run campana:comparar
 npm run campana:finalizar
 ```
 
@@ -47,10 +48,13 @@ npm run campana:finalizar
 ```powershell
 npm run campana:finalizar
 npm run campana:entregar
+npm run campana:referencia -- --actualizar
 npm run campana:limpiar
 ```
 
-`campana:entregar` genera en el Escritorio `equipzilla-AAAA-MM-DD.zip` con **exactamente tres JSON**: `gam-AAAA-MM-DD.json`, `gomariz-AAAA-MM-DD.json` y `mercaeleva-AAAA-MM-DD.json`. La entrega solo se sustituye tras comprobar el ZIP nuevo. `campana:limpiar` **simula** la limpieza; cuando el ZIP esté comprobado y no se prevean más correcciones del lote, `npm run campana:limpiar -- --aplicar` cierra su trabajo conservando el ZIP y los scripts versionados en Git (y los scripts históricos, si existen).
+`campana:comparar` consulta sin escribir las altas, ausencias y modificaciones frente a `data/referencia/`. Si todavía no hay referencia, indica que el lote servirá como inicial. **No confundir una ausencia con una venta ni con una exclusión editorial:** se comparan todos los productos originales extraídos, no solo los publicables.
+
+`campana:entregar` genera en el Escritorio `equipzilla-AAAA-MM-DD.zip` con **exactamente tres JSON**: `gam-AAAA-MM-DD.json`, `gomariz-AAAA-MM-DD.json` y `mercaeleva-AAAA-MM-DD.json`. La entrega solo se sustituye tras comprobar el ZIP nuevo. Después, `campana:referencia -- --actualizar` comprueba de nuevo la entrega acreditada y conserva únicamente los tres catálogos originales completos, `manifest.json` y el último `diferencias.json`; no guarda históricos ni modifica la aprobación. La actualización requiere `--actualizar` y es opcional, pero debe hacerse **antes de limpiar** si se quiere comparar el inventario de la siguiente campaña. `campana:limpiar` **simula** la limpieza; cuando el ZIP esté comprobado y no se prevean más correcciones del lote, `npm run campana:limpiar -- --aplicar` cierra su trabajo conservando el ZIP y los scripts versionados en Git (y los scripts históricos, si existen). La limpieza no obliga a actualizar la referencia.
 
 Si una ficha necesita una corrección puntual acreditada, consulta los scripts existentes con `npm run campana:intervenir -- gam --listar` y simula uno seleccionado con `npm run campana:intervenir -- gam --script interventions/gam/6002.ts`. Tras revisar las diferencias, autoriza expresamente `--aplicar` para ese script. Cada intervención nueva se guarda en `interventions/<proveedor>/` y se versiona en Git; no se registra en `storage/`. No hay cambios ni aprobaciones editoriales automáticas. Ver [Protocolo completo](docs/CAMPANAS.md), [Intervenciones](docs/INTERVENCIONES_CAMPANA.md) y [Acreditación](docs/ACREDITACION_CAMPANA.md).
 
@@ -88,6 +92,7 @@ Las operaciones GAM con rutas preconfiguradas son **herramientas de compatibilid
 - `interventions/<proveedor>/`: scripts permanentes con ID, resumen y propuestas, versionados en Git.
 - `storage/interventions/<id-lote>/results/`: expedientes y derivados del lote, no versionados.
 - `storage/interventions/<id-lote>/scripts/`: solo compatibilidad con scripts antiguos; se protegen si aún existen.
+- `data/referencia/`: referencia única opcional de inventario; tres originales completos, manifiesto verificable y último informe de diferencias.
 - **Escritorio del usuario:** `equipzilla-AAAA-MM-DD.zip` con los tres JSON publicables, sin los archivos internos.
 - `data/category/` y `data/import/`: referencias versionadas necesarias para los mapeadores.
 

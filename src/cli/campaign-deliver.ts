@@ -17,6 +17,7 @@ export const runCampaignDelivery = async (args: readonly string[]): Promise<void
   console.log(`ENTREGA | ${delivery.runId} | ${delivery.date}`);
   console.log(`  GAM ${delivery.products.gam} | Gomariz ${delivery.products.gomariz} | Mercaeleva ${delivery.products.mercaeleva}`);
   console.log(`  ZIP comprobado: ${delivery.zipFile}`);
+  console.log("  Si quieres conservar una referencia del inventario: npm run campana:comparar y después npm run campana:referencia -- --actualizar, antes de limpiar.");
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

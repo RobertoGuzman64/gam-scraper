@@ -7,6 +7,8 @@
     "node": ">=18.18.0"
   },
   "scripts": {
+    "campana:comparar": "node scripts/herramientas.mjs campana:comparar",
+    "campana:referencia": "node scripts/herramientas.mjs campana:referencia",
     "campana:extraer": "node scripts/herramientas.mjs campana:extraer",
     "campana:revisar": "node scripts/herramientas.mjs campana:revisar",
     "campana:intervenir": "node scripts/herramientas.mjs campana:intervenir",
