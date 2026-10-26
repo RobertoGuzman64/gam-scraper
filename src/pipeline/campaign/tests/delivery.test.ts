@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import test from "node:test";
+import test, { after } from "node:test";
 import { randomUUID } from "node:crypto";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { buildProductIdentity } from "../../../catalog/identity.js";
@@ -12,7 +12,7 @@ import { finalizeActiveCampaign } from "../finalization.js";
 import { interveneActiveCampaign } from "../intervention.js";
 import { deliverActiveCampaign } from "../delivery.js";
 import { CAMPAIGN_PROVIDERS } from "../discovery.js";
-import { copyCampaignTestCatalog } from "./campaign-catalog-fixture.js";
+import { copyCampaignTestCatalog, reuseCampaignTestFixture } from "./campaign-catalog-fixture.js";
 import type { BatchReport, ProviderRun } from "../../batch/report-types.js";
 
 const fixtures = resolve("src/testing/fixtures");
@@ -24,7 +24,7 @@ const prefixes = {
 const date = new Date(2026, 9, 26, 12);
 const isArray = (value: unknown): value is readonly unknown[] => Array.isArray(value);
 
-const fixture = async () => {
+const createFixture = async () => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-delivery-"));
   const desktop = join(root, "Escritorio");
   await mkdir(desktop);
@@ -56,6 +56,10 @@ const fixture = async () => {
   return { root, desktop, runId, cleanup: () => rm(root, { recursive: true, force: true }) };
 };
 
+const fixtureCache = reuseCampaignTestFixture(createFixture);
+const fixture = fixtureCache.fixture;
+after(fixtureCache.close);
+
 const approve = async (root: string): Promise<void> => {
   const draft = await finalizeActiveCampaign(root, false);
   assert.ok(draft.status === "draft" || draft.status === "pending");
@@ -72,10 +76,11 @@ const approve = async (root: string): Promise<void> => {
   await writeFile(draft.draftFile, JSON.stringify(approved, null, 2));
 };
 
+const approvedFixture = () => fixtureCache.prepared("approved", async (data) => approve(data.root));
+
 test("genera exactamente los tres JSON con la fecha local de entrega y totales acreditados", async () => {
-  const data = await fixture();
+  const data = await approvedFixture();
   try {
-    await approve(data.root);
     const delivered = await deliverActiveCampaign(data.root, data.desktop, date);
     assert.equal(delivered.runId, data.runId);
     assert.equal(delivered.date, "2026-10-26");
@@ -112,9 +117,8 @@ test("sin aprobación editorial no entrega ni reemplaza un ZIP anterior", async 
 });
 
 test("reemplaza una entrega del mismo día solo con el nuevo ZIP ya comprobado", async () => {
-  const data = await fixture();
+  const data = await approvedFixture();
   try {
-    await approve(data.root);
     const first = await deliverActiveCampaign(data.root, data.desktop, date);
     const original = await readFile(first.zipFile);
     const replacement = await deliverActiveCampaign(data.root, data.desktop, date);
@@ -125,9 +129,8 @@ test("reemplaza una entrega del mismo día solo con el nuevo ZIP ya comprobado",
 });
 
 test("una campaña intervenida y acreditada sustituye el ZIP del mismo día; si falta nueva aprobación conserva el anterior", async () => {
-  const data = await fixture();
+  const data = await approvedFixture();
   try {
-    await approve(data.root);
     const first = await deliverActiveCampaign(data.root, data.desktop, date);
     const previous = await readFile(first.zipFile);
     const source = join(data.root, "storage", "scraped", "campanas", data.runId, "gam", `${prefixes.gam}-catalog.json`);
@@ -167,9 +170,8 @@ test("una campaña intervenida y acreditada sustituye el ZIP del mismo día; si 
 });
 
 test("si se altera una selección, la entrega válida anterior permanece intacta", async () => {
-  const data = await fixture();
+  const data = await approvedFixture();
   try {
-    await approve(data.root);
     const delivered = await deliverActiveCampaign(data.root, data.desktop, date);
     const previous = await readFile(delivered.zipFile);
     const selection = await finalizeActiveCampaign(data.root, false);
@@ -192,9 +194,8 @@ test("el lector ZIP rechaza contenidos corruptos, duplicados y directorios incon
 });
 
 test("rechaza fecha inválida y Escritorio ausente sin dejar artefactos", async () => {
-  const data = await fixture();
+  const data = await approvedFixture();
   try {
-    await approve(data.root);
     await assert.rejects(deliverActiveCampaign(data.root, data.desktop, new Date(Number.NaN)), /Fecha de entrega inválida/);
     await assert.rejects(deliverActiveCampaign(data.root, join(data.root, "inexistente"), date), /ENOENT/);
     assert.deepEqual(await readdir(data.desktop), []);
@@ -202,9 +203,8 @@ test("rechaza fecha inválida y Escritorio ausente sin dejar artefactos", async 
 });
 
 test("simula limpieza acreditada y conserva la campaña hasta autorización explícita", async () => {
-  const data = await fixture();
+  const data = await approvedFixture();
   try {
-    await approve(data.root);
     await writeFile(join(data.root, "storage", "runs", data.runId, "gam.log"), "Registro técnico");
     const delivered = await deliverActiveCampaign(data.root, data.desktop, date);
     await assert.rejects(readFile(join(data.root, "storage", "runs", data.runId, "gam.log")));

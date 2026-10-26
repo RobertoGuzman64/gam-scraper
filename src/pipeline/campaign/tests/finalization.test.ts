@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import test from "node:test";
+import test, { after } from "node:test";
 import { randomUUID } from "node:crypto";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { buildProductIdentity } from "../../../catalog/identity.js";
@@ -13,7 +13,7 @@ import { reviewActiveCampaign } from "../review.js";
 import { interveneActiveCampaign } from "../intervention.js";
 import { finalizeActiveCampaign } from "../finalization.js";
 import { CAMPAIGN_PROVIDERS } from "../discovery.js";
-import { copyCampaignTestCatalog } from "./campaign-catalog-fixture.js";
+import { copyCampaignTestCatalog, reuseCampaignTestFixture } from "./campaign-catalog-fixture.js";
 import type { ProviderRun, BatchReport } from "../../batch/report-types.js";
 
 const sourceRoot = resolve("src/testing/fixtures");
@@ -23,7 +23,7 @@ const prefixes = {
   mercaeleva: "scrape-mercaeleva"
 } as const;
 
-const fixture = async () => {
+const createFixture = async () => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-f4-"));
   const runId = `lote-${randomUUID()}`;
   const providers: ProviderRun[] = [];
@@ -52,6 +52,10 @@ const fixture = async () => {
   assert.equal(review.complete, true, JSON.stringify(review.providers));
   return { root, runId, providers, review, cleanup: () => rm(root, { recursive: true, force: true }) };
 };
+
+const fixtureCache = reuseCampaignTestFixture(createFixture);
+const fixture = fixtureCache.fixture;
+after(fixtureCache.close);
 
 const approveDraft = async (path: string) => {
   const draft = JSON.parse(await readFile(path, "utf8"));
