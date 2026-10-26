@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
@@ -12,6 +12,7 @@ import { finalizeActiveCampaign } from "../finalization.js";
 import { interveneActiveCampaign } from "../intervention.js";
 import { deliverActiveCampaign } from "../delivery.js";
 import { CAMPAIGN_PROVIDERS } from "../discovery.js";
+import { copyCampaignTestCatalog } from "./campaign-catalog-fixture.js";
 import type { BatchReport, ProviderRun } from "../../batch/report-types.js";
 
 const fixtures = resolve("src/testing/fixtures");
@@ -33,10 +34,7 @@ const fixture = async () => {
     const prefix = prefixes[id];
     const dir = join(root, "storage", "scraped", "campanas", runId, id);
     await mkdir(dir, { recursive: true });
-    for (const suffix of ["-catalog.json", "-catalog.manifest.json", "-summary.json"]) {
-      await copyFile(join(fixtures, id, `${prefix}${suffix}`), join(dir, `${prefix}${suffix}`));
-    }
-    const catalog = await readCanonicalCatalog(join(dir, `${prefix}-catalog.json`));
+    const catalog = await copyCampaignTestCatalog(fixtures, dir, id, prefix);
     providers.push({
       providerId: id, status: "complete",
       startedAt: new Date(Date.parse(catalog.startedAt) - 1000).toISOString(),

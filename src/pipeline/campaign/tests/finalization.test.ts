@@ -13,6 +13,7 @@ import { reviewActiveCampaign } from "../review.js";
 import { interveneActiveCampaign } from "../intervention.js";
 import { finalizeActiveCampaign } from "../finalization.js";
 import { CAMPAIGN_PROVIDERS } from "../discovery.js";
+import { copyCampaignTestCatalog } from "./campaign-catalog-fixture.js";
 import type { ProviderRun, BatchReport } from "../../batch/report-types.js";
 
 const sourceRoot = resolve("src/testing/fixtures");
@@ -30,10 +31,7 @@ const fixture = async () => {
     const prefix = prefixes[id];
     const dir = join(root, "storage", "scraped", "campanas", runId, id);
     await mkdir(dir, { recursive: true });
-    for (const suffix of ["-catalog.json", "-catalog.manifest.json", "-summary.json"]) {
-      await copyFile(join(sourceRoot, id, `${prefix}${suffix}`), join(dir, `${prefix}${suffix}`));
-    }
-    const catalog = await readCanonicalCatalog(join(dir, `${prefix}-catalog.json`));
+    const catalog = await copyCampaignTestCatalog(sourceRoot, dir, id, prefix);
     providers.push({
       providerId: id, status: "complete",
       startedAt: new Date(Date.parse(catalog.startedAt) - 1000).toISOString(),
