@@ -12,3 +12,8 @@ export type ManualInterventionProposal = {
   readonly reason: string;
   readonly evidence: string;
 };
+
+export type InterventionMetadata = {
+  readonly id: string;
+  readonly summary: string;
+};

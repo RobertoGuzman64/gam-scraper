@@ -1,20 +1,25 @@
 import { basename, join, resolve } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import { readFile, realpath, stat } from "node:fs/promises";
 import { readAppliedIntervention } from "../../infrastructure/filesystem/intervention-derived.js";
 import { readInterventionSource } from "../../infrastructure/filesystem/intervention-source.js";
 import { persistAppliedIntervention } from "../../infrastructure/filesystem/intervention-application.js";
 import { validateOfflinePreparation } from "../validation/offline.js";
 import { prepareSavedCatalog } from "../preparation/prepare.js";
-import { interventionScriptCampaign, loadInterventionScript } from "../../manual-interventions/script-loader.js";
-import { validateInterventionProposals } from "../../manual-interventions/proposals.js";
+import { readSelectedInterventionScripts } from "../../manual-interventions/script-selection.js";
+import { compareInterventionScripts } from "../../manual-interventions/comparison.js";
+import type { InterventionComparison } from "../../manual-interventions/comparison.js";
+import { validateInterventionScriptSelection } from "../../manual-interventions/script-location.js";
 import { simulateIntervention } from "../../manual-interventions/simulation.js";
 import { parseAppliedInterventionRecord } from "../../manual-interventions/record.js";
+import type { VersionedInterventionScript } from "../../manual-interventions/record.js";
 import type { InterventionSimulation } from "../../manual-interventions/simulation.js";
 import { CAMPAIGN_PROVIDERS, discoverCampaign } from "./discovery.js";
 
 export type CampaignInterventionResult = {
   readonly runId: string;
-  readonly simulation: InterventionSimulation;
+  readonly simulation: InterventionSimulation | null;
+  readonly comparison: InterventionComparison;
   readonly applied: boolean;
   readonly derivedFile?: string;
   readonly preparationFile?: string;
@@ -24,7 +29,7 @@ export type CampaignInterventionResult = {
 
 export const interveneActiveCampaign = async (
   rootDirectory: string, providerId: string, scripts: readonly string[], apply: boolean,
-  onSimulation?: (simulation: InterventionSimulation) => void
+  onSimulation?: (simulation: InterventionSimulation | null, comparison: InterventionComparison) => void
 ): Promise<CampaignInterventionResult> => {
   const root = resolve(rootDirectory);
   const campaign = await discoverCampaign(root);
@@ -37,25 +42,22 @@ export const interveneActiveCampaign = async (
   if (!provider?.catalog || provider.preparation?.intervened) {
     throw new Error(`El proveedor ${providerId} no tiene un origen libre de intervenciones; no se aplican scripts sobre un derivado existente`);
   }
-  if (scripts.length === 0 || new Set(scripts.map((path) => resolve(root, path))).size !== scripts.length) {
-    throw new Error("Selecciona al menos un script distinto para esta campaña");
-  }
-  for (const script of scripts) {
-    if (interventionScriptCampaign(script, root) !== campaign.runId) {
-      throw new Error(`El script no pertenece al lote actual ${campaign.runId}`);
-    }
-  }
-  const groups = await Promise.all(scripts.map((script) => loadInterventionScript(script, providerId, root)));
-  const proposals = validateInterventionProposals(groups.flat(), providerId);
+  const selectedScripts = validateInterventionScriptSelection(scripts, providerId, campaign.runId, root);
+  const selections = await readSelectedInterventionScripts(selectedScripts, providerId, root);
+  const scriptVersions: readonly VersionedInterventionScript[] = selections.flatMap((selection) =>
+    selection.version === null ? [] : [selection.version]).sort((a, b) => a.script.localeCompare(b.script));
   const source = provider.catalog.path;
   const original = await readInterventionSource(source);
   if (original.catalogSha256 !== provider.catalog.sha256) {
     throw new Error("El catálogo original ha cambiado desde el descubrimiento");
   }
-  const simulation = simulateIntervention(original.catalog, original.catalogSha256, proposals);
-  onSimulation?.(simulation);
-  if (!apply) return { runId: campaign.runId, simulation, applied: false };
-  if (simulation.changes.length === 0) throw new Error("No hay modificaciones que aplicar");
+  const comparison = compareInterventionScripts(original.catalog, selections);
+  const simulation = comparison.blocked || !comparison.pending.length ? null :
+    simulateIntervention(original.catalog, original.catalogSha256, comparison.pending);
+  onSimulation?.(simulation, comparison);
+  if (comparison.blocked) throw new Error("Hay intervenciones divergentes o parcialmente corregidas; no se permite aplicar este conjunto");
+  if (!apply) return { runId: campaign.runId, simulation, comparison, applied: false };
+  if (simulation === null) throw new Error("No hay modificaciones pendientes que aplicar");
   const resultDir = join(root, "storage", "interventions", campaign.runId, "results", simulation.planSha256);
   let present = false;
   try {
@@ -72,18 +74,20 @@ export const interveneActiveCampaign = async (
     const verified = await readAppliedIntervention(derivedFile, source);
     const recordValue: unknown = JSON.parse(await readFile(join(resultDir, "intervention-record.json"), "utf8"));
     const record = parseAppliedInterventionRecord(recordValue);
-    const names = scripts.map((script) => basename(script)).sort();
+    const names = selectedScripts.map((script) => basename(script)).sort();
     if (verified.provenance.campaign !== campaign.runId ||
       verified.provenance.planSha256 !== simulation.planSha256 ||
       verified.provenance.sourceCatalogSha256 !== simulation.catalogSha256 ||
-      JSON.stringify(record.scripts) !== JSON.stringify(names)) {
+      JSON.stringify(record.scripts) !== JSON.stringify(names) ||
+      (record.version === 2 && !isDeepStrictEqual(record.scriptVersions, scriptVersions)) ||
+      (record.version === 1 && scriptVersions.length > 0)) {
       throw new Error("El resultado existente no corresponde a estos scripts ni al lote actual");
     }
     derivedSha256 = verified.catalogSha256;
   } else {
     const applied = await persistAppliedIntervention({
-      source, scripts, campaign: campaign.runId, confirmation: simulation.planSha256,
-      simulation, workspaceRoot: root
+      source, scripts: selectedScripts, campaign: campaign.runId, confirmation: simulation.planSha256,
+      simulation, workspaceRoot: root, scriptVersions
     });
     derivedFile = join(applied.path, "catalog-derived.json");
     derivedSha256 = applied.derivedSha256;
@@ -99,7 +103,7 @@ export const interveneActiveCampaign = async (
   });
   const validation = await validateOfflinePreparation(providerId, preparationFile, derivedFile, null, source);
   return {
-    runId: campaign.runId, simulation, applied: true, derivedFile, preparationFile,
+    runId: campaign.runId, simulation, comparison, applied: true, derivedFile, preparationFile,
     ready: validation.ready, review: validation.review
   };
 };

@@ -6,6 +6,7 @@ import test from "node:test";
 import type { ManualInterventionProposal } from "../contracts.js";
 import { validateInterventionProposals } from "../proposals.js";
 import { loadInterventionScript } from "../script-loader.js";
+import { validateInterventionScriptSelection } from "../script-location.js";
 
 const base: ManualInterventionProposal = {
   providerId: "gam",
@@ -103,5 +104,37 @@ test("rechaza falta de proposals y scripts con valores dinámicos incorrectos", 
   } finally {
     absent.cleanup();
     invalid.cleanup();
+  }
+});
+
+
+test("admite scripts permanentes del proveedor sin registrar copias y rechaza rutas ajenas", async () => {
+  const root = mkdtempSync(join(tmpdir(), "intervencion-versionada-"));
+  const folder = join(root, "interventions", "gam");
+  mkdirSync(folder, { recursive: true });
+  const script = join(folder, "maquina.ts");
+  const otherProvider = join(root, "interventions", "gomariz");
+  mkdirSync(otherProvider);
+  const mismatched = join(otherProvider, "maquina.ts");
+  const external = join(root, "fuera.ts");
+  const legacyFolder = join(root, "storage", "interventions", "lote-anterior", "scripts");
+  mkdirSync(legacyFolder, { recursive: true });
+  const legacy = join(legacyFolder, "maquina.ts");
+  const content = `export const proposals = ${JSON.stringify([base])};`;
+  writeFileSync(script, content);
+  writeFileSync(mismatched, content);
+  writeFileSync(external, content);
+  writeFileSync(legacy, content);
+  try {
+    assert.deepEqual(await loadInterventionScript(script, "gam", root), [base]);
+    assert.deepEqual(validateInterventionScriptSelection([script], "gam", "lote-actual", root), [script]);
+    await assert.rejects(loadInterventionScript(mismatched, "gam", root), /pertenece a gomariz/);
+    assert.throws(() => validateInterventionScriptSelection([external], "gam", null, root), /debe estar en/);
+    assert.throws(() => validateInterventionScriptSelection([script, script], "gam", null, root), /repetido/);
+    assert.throws(() => validateInterventionScriptSelection([script, legacy], "gam", "lote-anterior", root), /repetido/);
+    assert.throws(() => validateInterventionScriptSelection([legacy], "gam", "lote-actual", root), /campaña distinta/);
+    assert.throws(() => validateInterventionScriptSelection([script, mismatched], "gam", null, root), /pertenece a gomariz/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 });

@@ -15,30 +15,58 @@ El contrato vigente es `ManualInterventionProposal` en `src/manual-interventions
 
 No se admiten imágenes, identidad, referencia, serie, categoría ni precios. Una foto que la fuente ya no publica no debe restaurarse desde una URL histórica. Si la fuente actual sí la muestra pero el scraper no la obtiene, se investiga y repara el extractor.
 
-## Preparar y registrar un script
+## Consultar y mantener el catálogo versionado
 
-Tras `npm run campana:extraer` y `npm run campana:revisar`, identificar proveedor, producto, campo incorrecto, valor observado y valor contrastado. Crear un archivo TypeScript de confianza que exporte `proposals` como **array no vacío** de objetos con exactamente estas propiedades:
-
-`providerId`, `identity`, `field`, `expected`, `next`, `reason`, `evidence`.
-
-`identity` procede de `buildProductIdentity` sobre la ficha original. `expected` debe coincidir con el valor real del catálogo; `next` es el valor acreditado. `reason` y `evidence` justifican el cambio. El script no debe incluir imports ejecutables ni reexportaciones y no debe contener propuestas ajenas al proveedor seleccionado.
-
-Para vincularlo **solo al lote vigente** y ver una simulación detallada:
+Desde la raíz del repositorio, sin necesidad de una campaña activa:
 
 ```powershell
-npm run campana:intervenir -- gam --registrar <ruta-al-script.ts>
+npm run campana:intervenir -- gam --listar
+npm run campana:intervenir -- gam --consultar gam-6002
+npm run campana:intervenir -- gam --consultar gam:ref:6002
 ```
 
-El comando copia el script a `storage/interventions/<id-lote>/scripts/` y muestra los cambios antes/después sin aplicarlos. Los scripts existentes no se ejecutan nunca por el mero hecho de permanecer en esa carpeta. `--registrar` no sustituye silenciosamente un archivo ya registrado con contenido diferente. Si se necesita más de un script, se pueden repetir `--registrar <archivo.ts>`.
+La consulta obtiene metadatos, identidades, campos, motivos y evidencias mediante análisis **estático**; no importa ni ejecuta el script. Un archivo inválido bloquea el catálogo. Para evaluar su vigencia contra campañas completas y verificables:
 
-También se puede usar `--script storage/interventions/<id-lote>/scripts/<archivo.ts>` para simular uno ya registrado. **Revisar el diff y las evidencias antes de autorizar la aplicación.**
+```powershell
+npm run campana:intervenir -- gam --mantenimiento
+```
+
+Este comando tampoco aplica cambios ni elimina scripts. Una ausencia aislada no es suficiente para recomendar la retirada; cuando hay evidencia consecutiva y comparable propone una **revisión humana**, no un borrado automático. Tras comprobar la fuente y las campañas, se puede retirar **solo** el script afectado con `git rm -- interventions/gam/6002.ts` (ejemplo: ejecutar únicamente si realmente se decide retirar esa intervención).
+
+## Crear y simular una intervención permanente
+
+Tras `npm run campana:extraer` y `npm run campana:revisar`, identificar el problema concreto y contrastar los valores con la ficha vigente. Añadir un archivo `.ts` independiente bajo `interventions/<proveedor>/<archivo>.ts`, bajo control de Git. Debe exportar **dos declaraciones estáticas**:
+
+- `metadata`: objeto con `id` estable y exclusivo (prefijo `<proveedor>-`) y `summary` descriptivo no vacío.
+- `proposals`: array no vacío de propuestas con `providerId`, `identity`, `field`, `expected`, `next`, `reason` y `evidence`.
+
+No duplicar en `metadata` datos ya deducibles de `proposals`. `identity` procede de `buildProductIdentity` sobre el catálogo original; `expected` debe coincidir con la fuente vigente y `next` exige evidencia actual. Se rechazan imports ejecutables, valores computados y propuestas de otro proveedor. No se deben utilizar scripts no revisados: la consulta es estática, pero **la aplicación sí evalúa TypeScript de confianza**.
+
+Se incluyen `interventions/gam/6002.ts`, `6003.ts` y `6004.ts` como casos reales, cada uno retirable sin los demás. Para simular uno o varios scripts seleccionados:
+
+```powershell
+npm run campana:intervenir -- gam --script interventions/gam/6002.ts
+npm run campana:intervenir -- gam --script interventions/gam/6002.ts --script interventions/gam/6003.ts
+```
+
+La comparación muestra intervenciones pendientes, corregidas en origen, ausentes, parciales o divergentes. Las corregidas en origen y las ausentes **no se reaplican**; las parciales o divergentes bloquean el conjunto. Ningún script se ejecuta por existir en Git o por figurar en el catálogo.
+
+**Migración del flujo anterior:** `--registrar` y `npm run intervencion:conservar` han sido retirados. No copies nuevos scripts a `storage/interventions/<lote>/scripts/` ni uses `interventions/permanentes/<lote>/`. Los **scripts temporales de campañas antiguas continúan admitidos para lectura y recuperación**, y sus expedientes `version: 1` mantienen compatibilidad. No moverlos ni eliminarlos mientras una campaña pueda necesitarlos.
+
+Al integrar esta entrega incremental mediante extracción de ZIP (que no elimina archivos preexistentes), retirar del repositorio exclusivamente los dos módulos ya redundantes, después de aplicar los archivos nuevos:
+
+```powershell
+git rm -- scripts/conservar-intervencion.mjs src/infrastructure/filesystem/intervention-script-registration.ts
+```
+
+No eliminar `storage/`, scripts históricos, expedientes, acreditaciones ni resultados de campañas abiertas. Si los dos archivos ya no existen, no es necesaria ninguna operación adicional.
 
 ## Aplicar y acreditar
 
 Cuando la simulación sea correcta, repetir la operación indicando los mismos scripts y la autorización explícita `--aplicar`:
 
 ```powershell
-npm run campana:intervenir -- gam --script storage/interventions/<id-lote>/scripts/<archivo.ts> --aplicar
+npm run campana:intervenir -- gam --script interventions/gam/6002.ts --aplicar
 ```
 
 Este comando recalcula y valida el plan contra el origen, aplica los cambios **en un derivado**, verifica el expediente y las huellas, y prepara y valida la ficha corregida. Los catálogos originales permanecen intactos. Si el derivado de ese plan ya existe y es íntegro, puede recuperarse una preparación interrumpida sin duplicar la intervención. Una discrepancia del origen o del plan bloquea la aplicación.
@@ -54,8 +82,8 @@ Si antes existía un borrador aprobado, la preparación intervenida genera **otr
 
 ## Herramientas avanzadas y seguridad
 
-`npm run intervenir`, `intervenir:preparar` e `intervenir:validar` conservan sus contratos explícitos de rutas y SHA para diagnóstico o mantenimiento. El flujo `campana:intervenir` reduce ese trabajo manual, pero **no sustituye la decisión humana**. Un script TypeScript de intervención se ejecuta como código local de confianza: verificar su procedencia antes de registrarlo o aplicarlo, pues no es un sandbox frente a código malicioso.
+`npm run intervenir`, `intervenir:preparar` e `intervenir:validar` conservan sus contratos explícitos de rutas y SHA para diagnóstico o mantenimiento. El flujo `campana:intervenir` reduce ese trabajo manual, pero **no sustituye la decisión humana**. Un script TypeScript de intervención se ejecuta como código local de confianza al aplicarlo: verificar su procedencia y revisar la simulación; no es un sandbox frente a código malicioso.
 
-La limpieza de una campaña entregada elimina resultados temporales solo con `npm run campana:limpiar -- --aplicar` tras verificar el ZIP final, pero **conserva los scripts** en `storage/interventions/<id-lote>/scripts/`. No se transportan ni aplican automáticamente a otras campañas.
+La limpieza de una campaña entregada elimina únicamente resultados temporales reconocidos, tras validar el ZIP final. **Conserva los scripts temporales antiguos** si existen en `storage/interventions/<id-lote>/scripts/` para no romper la recuperación histórica. Los scripts permanentes de `interventions/` están versionados en Git y nunca son objeto de limpieza de campaña.
 
 Referencias: [Campañas](CAMPANAS.md), [Acreditación](ACREDITACION_CAMPANA.md), [Composición de intervenciones](COMPOSICION_INTERVENCIONES.md), [Validación](VALIDACION.md).

@@ -2,9 +2,11 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readInterventionSource } from "../infrastructure/filesystem/intervention-source.js";
 import { persistAppliedIntervention } from "../infrastructure/filesystem/intervention-application.js";
-import { interventionScriptCampaign, loadInterventionScript } from "../manual-interventions/script-loader.js";
+import { readSelectedInterventionScripts } from "../manual-interventions/script-selection.js";
+import { compareInterventionScripts } from "../manual-interventions/comparison.js";
+import { formatInterventionComparison } from "../manual-interventions/comparison-format.js";
+import { validateInterventionScriptSelection } from "../manual-interventions/script-location.js";
 import { simulateIntervention } from "../manual-interventions/simulation.js";
-import { validateInterventionProposals } from "../manual-interventions/proposals.js";
 import type { InterventionSimulation } from "../manual-interventions/simulation.js";
 import { interveneHelp, parseInterveneOptions } from "./options/intervene.js";
 import { printCommandError } from "./reporting/errors.js";
@@ -44,18 +46,21 @@ export const runIntervene = async (args: readonly string[]): Promise<void> => {
   }
   if (args.includes("--help")) throw new Error("--help no admite argumentos adicionales");
   const options = parseInterveneOptions(args);
-  const campaigns = new Set(options.scripts.map((script) => interventionScriptCampaign(script)));
-  if (campaigns.size !== 1 || (options.campaign !== null && !campaigns.has(options.campaign))) {
-    throw new Error("Todos los scripts deben pertenecer a la misma campaña seleccionada");
-  }
-  const groups = await Promise.all(options.scripts.map((script) =>
-    loadInterventionScript(script, options.providerId)));
-  const proposals = validateInterventionProposals(groups.flat(), options.providerId);
+  const selectedScripts = validateInterventionScriptSelection(options.scripts, options.providerId, options.campaign);
+  const selections = await readSelectedInterventionScripts(selectedScripts, options.providerId, process.cwd());
   const { catalog, catalogSha256 } = await readInterventionSource(options.source);
   if (catalog.providerId !== options.providerId) {
     throw new Error(`El catálogo pertenece a ${catalog.providerId}, no a ${options.providerId}`);
   }
-  const simulation = simulateIntervention(catalog, catalogSha256, proposals);
+  const comparison = compareInterventionScripts(catalog, selections);
+  console.log(formatInterventionComparison(comparison));
+  if (comparison.blocked) throw new Error("Hay intervenciones divergentes o parcialmente corregidas; no se permite aplicar este conjunto");
+  if (!comparison.pending.length) {
+    if (options.apply) throw new Error("No hay modificaciones pendientes que aplicar");
+    console.log("Sin modificaciones pendientes; no se generó ningún plan ni archivo");
+    return;
+  }
+  const simulation = simulateIntervention(catalog, catalogSha256, comparison.pending);
   if (!options.apply) {
     console.log(formatInterventionSimulation(simulation, options.detail));
     return;
@@ -63,10 +68,12 @@ export const runIntervene = async (args: readonly string[]): Promise<void> => {
   if (options.campaign === null || options.plan === null) throw new Error("Faltan datos para aplicar el plan");
   const applied = await persistAppliedIntervention({
     source: options.source,
-    scripts: options.scripts,
+    scripts: selectedScripts,
     campaign: options.campaign,
     confirmation: options.plan,
-    simulation
+    simulation,
+    scriptVersions: selections.flatMap((selection) => selection.version === null ? [] : [selection.version])
+      .sort((a, b) => a.script.localeCompare(b.script))
   });
   console.log([
     `INTERVENCIÓN | ${simulation.providerId.toUpperCase()} | APLICADA`,

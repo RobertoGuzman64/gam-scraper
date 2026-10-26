@@ -50,9 +50,9 @@ npm run campana:entregar
 npm run campana:limpiar
 ```
 
-`campana:entregar` genera en el Escritorio `equipzilla-AAAA-MM-DD.zip` con **exactamente tres JSON**: `gam-AAAA-MM-DD.json`, `gomariz-AAAA-MM-DD.json` y `mercaeleva-AAAA-MM-DD.json`. La entrega solo se sustituye tras comprobar el ZIP nuevo. `campana:limpiar` **simula** la limpieza; cuando el ZIP esté comprobado y no se prevean más correcciones del lote, `npm run campana:limpiar -- --aplicar` cierra su trabajo conservando el ZIP y los scripts registrados.
+`campana:entregar` genera en el Escritorio `equipzilla-AAAA-MM-DD.zip` con **exactamente tres JSON**: `gam-AAAA-MM-DD.json`, `gomariz-AAAA-MM-DD.json` y `mercaeleva-AAAA-MM-DD.json`. La entrega solo se sustituye tras comprobar el ZIP nuevo. `campana:limpiar` **simula** la limpieza; cuando el ZIP esté comprobado y no se prevean más correcciones del lote, `npm run campana:limpiar -- --aplicar` cierra su trabajo conservando el ZIP y los scripts versionados en Git (y los scripts históricos, si existen).
 
-Si una ficha necesita una corrección puntual acreditada, antes de finalizar puede utilizarse `npm run campana:intervenir -- gam --registrar <archivo.ts>` para simular y, después de revisar los cambios, repetir con `--aplicar`. No se hacen cambios ni aprobaciones editoriales automáticas. Ver [Protocolo completo](docs/CAMPANAS.md), [Intervenciones](docs/INTERVENCIONES_CAMPANA.md) y [Acreditación](docs/ACREDITACION_CAMPANA.md).
+Si una ficha necesita una corrección puntual acreditada, consulta los scripts existentes con `npm run campana:intervenir -- gam --listar` y simula uno seleccionado con `npm run campana:intervenir -- gam --script interventions/gam/6002.ts`. Tras revisar las diferencias, autoriza expresamente `--aplicar` para ese script. Cada intervención nueva se guarda en `interventions/<proveedor>/` y se versiona en Git; no se registra en `storage/`. No hay cambios ni aprobaciones editoriales automáticas. Ver [Protocolo completo](docs/CAMPANAS.md), [Intervenciones](docs/INTERVENCIONES_CAMPANA.md) y [Acreditación](docs/ACREDITACION_CAMPANA.md).
 
 ### Otros comandos disponibles
 
@@ -85,7 +85,9 @@ Las operaciones GAM con rutas preconfiguradas son **herramientas de compatibilid
 - `storage/campanas/<id-lote>/<proveedor>/`: preparaciones validadas por la revisión offline.
 - `storage/campanas/<id-lote>/editorial/`: borradores y aprobación de la campaña.
 - `storage/campanas/<id-lote>/seleccion/`: selección interna acreditada (no se entrega completa al usuario).
-- `storage/interventions/<id-lote>/scripts/`: scripts puntuales registrados y protegidos de la limpieza de campaña.
+- `interventions/<proveedor>/`: scripts permanentes con ID, resumen y propuestas, versionados en Git.
+- `storage/interventions/<id-lote>/results/`: expedientes y derivados del lote, no versionados.
+- `storage/interventions/<id-lote>/scripts/`: solo compatibilidad con scripts antiguos; se protegen si aún existen.
 - **Escritorio del usuario:** `equipzilla-AAAA-MM-DD.zip` con los tres JSON publicables, sin los archivos internos.
 - `data/category/` y `data/import/`: referencias versionadas necesarias para los mapeadores.
 

@@ -5,6 +5,7 @@ import { readCanonicalCatalog } from "../../infrastructure/filesystem/canonical-
 import { readAppliedIntervention } from "../../infrastructure/filesystem/intervention-derived.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
 import type { OfflinePreparation } from "../../catalog/import/preparation/offline-document.js";
+import type { CanonicalCatalog } from "../../catalog/canonical-catalog.js";
 import type { BatchReport, ProviderRun } from "../batch/report-types.js";
 
 export const CAMPAIGN_PROVIDERS = ["gam", "gomariz", "mercaeleva"] as const;
@@ -279,4 +280,48 @@ export const discoverCampaign = async (rootDirectory: string): Promise<CampaignD
   )) issues.unshift("Lote completado parcialmente por proveedores; requiere los tres para acreditar");
   return { runId: current.report.runId, runFile: current.path, status: current.report.status,
     providers: results.map((result) => result.provider), issues };
+};
+
+export type CampaignCatalogObservation = {
+  readonly runId: string;
+  readonly catalog: CanonicalCatalog | null;
+  readonly reason?: string;
+};
+
+export const discoverCampaignCatalogHistory = async (
+  rootDirectory: string, providerId: string
+): Promise<readonly CampaignCatalogObservation[]> => {
+  if (!CAMPAIGN_PROVIDERS.some((id) => id === providerId)) throw new Error(`Proveedor no admitido: ${providerId}`);
+  const root = resolve(rootDirectory);
+  const reports = await Promise.all((await directories(join(root, "storage", "runs"))).map(async (directory) => {
+    const report = await readBatch(join(directory, "run.json"));
+    return report;
+  }));
+  reports.sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt));
+  if (reports.length > 1 && reports[0]?.startedAt === reports[1]?.startedAt) {
+    throw new Error("Existen campañas con el mismo inicio; no se puede establecer la secuencia de mantenimiento");
+  }
+  const observations: CampaignCatalogObservation[] = [];
+  for (const report of reports.slice(0, 5)) {
+    const provider = report.providers.find((entry) => entry.providerId === providerId);
+    if (report.status !== "complete" || report.requestedProviders.length !== CAMPAIGN_PROVIDERS.length ||
+      CAMPAIGN_PROVIDERS.some((id) => !report.requestedProviders.includes(id)) || !provider ||
+      provider.status !== "complete") {
+      observations.push({ runId: report.runId, catalog: null, reason: "Campaña no completada por los tres proveedores" });
+      continue;
+    }
+    try {
+      const path = resolve(root, provider.outputDir, `${provider.outputPrefix}-catalog.json`);
+      const catalog = await readCanonicalCatalog(path);
+      if (catalog.providerId !== providerId || catalog.prefix !== provider.outputPrefix ||
+        Date.parse(catalog.startedAt) < Date.parse(provider.startedAt) ||
+        Date.parse(catalog.endedAt) > Date.parse(provider.endedAt)) {
+        throw new Error("Origen no vinculado a la ejecución registrada");
+      }
+      observations.push({ runId: report.runId, catalog });
+    } catch {
+      observations.push({ runId: report.runId, catalog: null, reason: "Catálogo original no disponible o no verificable" });
+    }
+  }
+  return observations;
 };

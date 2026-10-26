@@ -10,13 +10,16 @@ export type InterveneOptions = {
   readonly plan: string | null;
 };
 
-export const interveneHelp = `Uso: npm run intervenir -- gam --script storage/interventions/<campaña>/scripts/<archivo>.ts [--script <otro.ts> ...] --origen <catalog.json> [--detalle]
+export const interveneHelp = `Uso: npm run intervenir -- gam --script interventions/gam/6002.ts [--script <otro.ts> ...] --origen <catalog.json> [--detalle]
+Anterior: npm run intervenir -- gam --script storage/interventions/<campaña>/scripts/<archivo>.ts --origen <catalog.json>
 Aplicar: npm run intervenir -- gam --script <archivo.ts> [--script <otro.ts> ...] --origen <catalog.json> --campana <campaña> --aplicar --plan <SHA-256>
 
-Por defecto solo simula, sin escribir archivos. --aplicar requiere SHA completo obtenido con la simulación.
+Por defecto compara y simula, sin escribir archivos. Las correcciones resueltas y referencias ausentes
+no se aplican; divergencias y correcciones parciales bloquean el plan.
+--aplicar requiere SHA completo obtenido con la simulación.
 Genera únicamente resultados derivados bajo storage/interventions/<campaña>/results/.
 Nunca se integra automáticamente con extracción, preparación ni selección.
-Los scripts temporales deben ser propios y de confianza: su TypeScript se ejecuta localmente.`;
+Los scripts elegidos deben ser propios y de confianza: su TypeScript se ejecuta localmente.`;
 
 export const parseInterveneOptions = (args: readonly string[]): InterveneOptions => {
   const [providerId, ...rest] = args;

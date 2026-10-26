@@ -23,15 +23,15 @@ npm run iniciar
 
 ## Secuencia ordinaria
 
-| Paso | Comando | Qué revisar antes de avanzar |
-| --- | --- | --- |
-| 1. Extraer y preparar | `npm run campana:extraer` | Los tres proveedores deben terminar correctamente; prepara y revisa el mismo lote aislado |
-| 2. Consultar incidencias | `npm run campana:revisar` | `Ready`, `Review`, referencia, URL de origen y motivos por proveedor; no fuerza cambios de estado |
-| 3. Intervenir, **solo si procede** | `npm run campana:intervenir -- gam --registrar <archivo.ts>` y, tras inspeccionar la simulación, repetir con `--aplicar` | Cambios concretos y acreditados; el script se registra para el lote actual y el original queda intacto |
-| 4. Solicitar/acreditar selección | `npm run campana:finalizar` | Revisar el borrador `acreditacion-<sha>.json`; aprobar expresamente las decisiones correctas; repetir el comando |
-| 5. Entregar | `npm run campana:entregar` | Confirmar el ZIP del Escritorio y los totales, sin entregar `selection.json` ni los manifests |
-| 6. Inspeccionar limpieza | `npm run campana:limpiar` | Lista carpetas y tamaños, pero no elimina nada |
-| 7. Cerrar, cuando ya no habrá cambios | `npm run campana:limpiar -- --aplicar` | Revalida el ZIP y la acreditación; conserva los scripts y la entrega |
+| Paso                                  | Comando                                                                                                                                                                         | Qué revisar antes de avanzar                                                                                     |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1. Extraer y preparar                 | `npm run campana:extraer`                                                                                                                                                       | Los tres proveedores deben terminar correctamente; prepara y revisa el mismo lote aislado                        |
+| 2. Consultar incidencias              | `npm run campana:revisar`                                                                                                                                                       | `Ready`, `Review`, referencia, URL de origen y motivos por proveedor; no fuerza cambios de estado                |
+| 3. Intervenir, **solo si procede**    | `npm run campana:intervenir -- gam --listar` y después `--script interventions/gam/6002.ts`; aplicar **solo** tras revisar la simulación, repitiendo el comando con `--aplicar` | Scripts versionados y elegidos manualmente; no se registran por lote y el original queda intacto                 |
+| 4. Solicitar/acreditar selección      | `npm run campana:finalizar`                                                                                                                                                     | Revisar el borrador `acreditacion-<sha>.json`; aprobar expresamente las decisiones correctas; repetir el comando |
+| 5. Entregar                           | `npm run campana:entregar`                                                                                                                                                      | Confirmar el ZIP del Escritorio y los totales, sin entregar `selection.json` ni los manifests                    |
+| 6. Inspeccionar limpieza              | `npm run campana:limpiar`                                                                                                                                                       | Lista carpetas y tamaños, pero no elimina nada                                                                   |
+| 7. Cerrar, cuando ya no habrá cambios | `npm run campana:limpiar -- --aplicar`                                                                                                                                          | Revalida el ZIP y la acreditación; conserva los scripts históricos y la entrega                                  |
 
 `campana:extraer` ya invoca la revisión offline al terminar con los tres proveedores completos; `campana:revisar` permite repetir la consulta sin nueva extracción. Si el lote previo está incompleto, investigar primero sus errores. Solo si se decide abandonarlo deliberadamente, iniciar otro con `npm run campana:extraer -- --nueva`. Un `run.json` ambiguo o corrupto no se oculta usando `--nueva`.
 
@@ -51,7 +51,7 @@ Al repetir `npm run campana:finalizar`, se valida la acreditación y se genera l
 
 `campana:entregar` crea `equipzilla-AAAA-MM-DD.zip` en el **Escritorio real del usuario**, con exactamente `gam-AAAA-MM-DD.json`, `gomariz-AAAA-MM-DD.json` y `mercaeleva-AAAA-MM-DD.json`. Se comprueba el ZIP temporal antes de sustituir el archivo del mismo día. Si falla la aprobación o el ZIP, se conserva la entrega correcta anterior.
 
-**Antes de ejecutar la limpieza con `--aplicar`, decidir si aún se va a corregir o repetir la entrega de ese mismo lote.** Se necesita conservar los catálogos mientras haya trabajo pendiente. La limpieza rechaza entregas no acreditadas, ZIP alterados y carpetas desconocidas, y protege los scripts en `storage/interventions/<id-lote>/scripts/`. Tras el cierre ya no se puede rehacer esa campaña sin volver a extraer.
+**Antes de ejecutar la limpieza con `--aplicar`, decidir si aún se va a corregir o repetir la entrega de ese mismo lote.** Se necesita conservar los catálogos mientras haya trabajo pendiente. La limpieza rechaza entregas no acreditadas, ZIP alterados y carpetas desconocidas, y protege las carpetas de scripts históricos en `storage/interventions/<id-lote>/scripts/` para mantener compatibilidad. Los scripts nuevos viven en `interventions/<proveedor>/` y nunca se limpian con una campaña. Tras el cierre ya no se puede rehacer esa campaña sin volver a extraer.
 
 Los catálogos, manifests, resúmenes y derivados internos se encuentran bajo `storage/`, nunca dentro del ZIP público. El proyecto no importa al backend ni actualiza productos remotos. La limpieza de históricos rastreados por Git es **otra operación explícita**: `npm run limpiar:versionados` (simula) y `npm run limpiar:versionados -- --aplicar` (retira los archivos generados rastreados del árbol de trabajo y registra su borrado en el índice Git); no reescribe el historial.
 

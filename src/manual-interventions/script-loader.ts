@@ -1,30 +1,13 @@
-import { realpathSync, statSync } from "node:fs";
-import { relative, resolve, sep } from "node:path";
 import * as ts from "typescript";
 import type { ManualInterventionProposal } from "./contracts.js";
 import { validateInterventionProposals } from "./proposals.js";
 
-const assertScriptLocation = (input: string, workspaceRoot: string): string => {
-  const scriptPath = realpathSync(resolve(workspaceRoot, input));
-  const campaignRoot = realpathSync(resolve(workspaceRoot, "storage", "interventions"));
-  const relativePath = relative(campaignRoot, scriptPath);
-  const parts = relativePath.split(sep);
-  if (parts.length !== 3 || !parts[0] || parts[0] === ".." || parts[0] === "." ||
-    parts[1] !== "scripts" || !parts[2] || parts[2] === ".ts" ||
-    !parts[2].endsWith(".ts") || parts[2].endsWith(".d.ts")) {
-    throw new Error("El script debe estar en storage/interventions/<campaña>/scripts/<archivo>.ts");
-  }
-  if (!statSync(scriptPath).isFile()) throw new Error("La ruta del script no es un archivo");
-  return scriptPath;
-};
+import { resolveInterventionScriptLocation } from "./script-location.js";
 
 export const interventionScriptCampaign = (input: string, workspaceRoot = process.cwd()): string => {
-  const location = assertScriptLocation(input, workspaceRoot);
-  const campaign = relative(realpathSync(resolve(workspaceRoot, "storage", "interventions")), location).split(sep)[0];
-  if (!campaign || !/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(campaign)) {
-    throw new Error("Campaña de script inválida");
-  }
-  return campaign;
+  const location = resolveInterventionScriptLocation(input, workspaceRoot);
+  if (location.campaign === null) throw new Error("El script versionado no pertenece a una campaña específica");
+  return location.campaign;
 };
 
 const rejectRuntimeImports = (sourceFile: ts.SourceFile): void => {
@@ -55,7 +38,11 @@ export const loadInterventionScript = async (
   providerId: string,
   workspaceRoot = process.cwd()
 ): Promise<readonly ManualInterventionProposal[]> => {
-  const scriptPath = assertScriptLocation(script, workspaceRoot);
+  const location = resolveInterventionScriptLocation(script, workspaceRoot);
+  if (location.providerId !== null && location.providerId !== providerId) {
+    throw new Error(`El script versionado pertenece a ${location.providerId}, no a ${providerId}`);
+  }
+  const scriptPath = location.path;
   const compilerOptions: ts.CompilerOptions = {
     target: ts.ScriptTarget.ES2022,
     module: ts.ModuleKind.NodeNext,

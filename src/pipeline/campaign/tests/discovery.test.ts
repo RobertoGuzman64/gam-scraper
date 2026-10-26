@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { prepareSavedCatalog } from "../../preparation/prepare.js";
-import { discoverCampaign, CAMPAIGN_PROVIDERS } from "../discovery.js";
+import { discoverCampaign, discoverCampaignCatalogHistory, CAMPAIGN_PROVIDERS } from "../discovery.js";
 import type { BatchReport, ProviderRun } from "../../batch/report-types.js";
 
 const fixtureRoot = resolve("src/testing/fixtures");
@@ -153,5 +153,30 @@ test("detecta catálogos previos sin run.json sin convertirlos en lote válido",
     const result = await discoverCampaign(root);
     assert.equal(result.status, "none");
     assert.ok(result.issues.some((issue) => issue.includes("sin run.json")));
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+
+test("historial de mantenimiento: solo acredita campañas completas con catálogos originales verificables", async () => {
+  const root = await createRoot();
+  try {
+    const runs = await Promise.all(CAMPAIGN_PROVIDERS.map((providerId) => populate(root, providerId)));
+    await writeRun(root, "lote-completo", runs, "2026-10-22T08:20:00.000Z");
+    const complete = await discoverCampaignCatalogHistory(root, "gam");
+    assert.equal(complete.length, 1);
+    assert.equal(complete[0]?.runId, "lote-completo");
+    assert.equal(complete[0]?.catalog?.providerId, "gam");
+    await writeRun(root, "lote-incompleto", [{ ...runs[0]!, status: "failed", error: "Sin extracción",
+      startedAt: "2026-10-23T08:21:00.000Z", endedAt: "2026-10-23T08:22:00.000Z" }],
+    "2026-10-23T08:20:00.000Z", "partial");
+    const withGap = await discoverCampaignCatalogHistory(root, "gam");
+    assert.equal(withGap[0]?.runId, "lote-incompleto");
+    assert.equal(withGap[0]?.catalog, null);
+    assert.ok(withGap[0]?.reason);
+    const manifest = join(runs[0]!.outputDir, `${runs[0]!.outputPrefix}-catalog.manifest.json`);
+    await writeFile(manifest, JSON.stringify({ version: 1, catalogSha256: "0".repeat(64) }));
+    const altered = await discoverCampaignCatalogHistory(root, "gam");
+    assert.equal(altered[1]?.catalog, null);
+    assert.match(altered[1]?.reason ?? "", /no verificable/);
   } finally { await rm(root, { recursive: true, force: true }); }
 });

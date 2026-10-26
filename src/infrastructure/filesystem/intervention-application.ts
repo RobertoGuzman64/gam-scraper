@@ -1,8 +1,12 @@
 import { createHash, randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { mkdir, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { basename, join, relative, resolve, sep } from "node:path";
 import { applyInterventionToCatalog } from "../../manual-interventions/application.js";
+import { validateInterventionScriptSelection } from "../../manual-interventions/script-location.js";
 import { simulateIntervention } from "../../manual-interventions/simulation.js";
+import { readInterventionScriptVersions } from "../../manual-interventions/script-selection.js";
+import type { VersionedInterventionScript } from "../../manual-interventions/record.js";
 import type { InterventionSimulation } from "../../manual-interventions/simulation.js";
 import { readInterventionSource } from "./intervention-source.js";
 
@@ -22,15 +26,6 @@ const validateCampaign = async (campaign: string, scripts: readonly string[], ro
     throw new Error("La campaña sale del directorio de intervenciones");
   }
   if (scripts.length === 0) throw new Error("La intervención debe indicar scripts");
-  const unique = new Set<string>();
-  for (const script of scripts) {
-    const scriptPath = await realpath(resolve(workspace, script));
-    if (!isWithin(join(campaignDir, "scripts"), scriptPath) ||
-      !(await stat(scriptPath)).isFile() || unique.has(scriptPath)) {
-      throw new Error("Script repetido o ajeno a la campaña solicitada");
-    }
-    unique.add(scriptPath);
-  }
   return campaignDir;
 };
 
@@ -50,13 +45,19 @@ export const persistAppliedIntervention = async (options: {
   readonly confirmation: string;
   readonly simulation: InterventionSimulation;
   readonly workspaceRoot?: string;
+  readonly scriptVersions?: readonly VersionedInterventionScript[];
 }): Promise<AppliedIntervention> => {
   const { source, campaign, confirmation, simulation } = options;
   const scripts = options.scripts ?? (options.script ? [options.script] : []);
   if (confirmation !== simulation.planSha256) throw new Error("El SHA del plan no coincide con la simulación actual");
   if (simulation.changes.length === 0) throw new Error("No hay cambios que aplicar");
   const root = options.workspaceRoot ?? process.cwd();
-  const campaignDir = await validateCampaign(campaign, scripts, root);
+  const selectedScripts = validateInterventionScriptSelection(scripts, simulation.providerId, campaign, root);
+  const campaignDir = await validateCampaign(campaign, selectedScripts, root);
+  const scriptVersions = readInterventionScriptVersions(selectedScripts, root);
+  if (options.scriptVersions && !isDeepStrictEqual(scriptVersions, options.scriptVersions)) {
+    throw new Error("Un script permanente cambió desde la simulación");
+  }
   const latest = await readInterventionSource(source);
   if (latest.catalogSha256 !== simulation.catalogSha256) throw new Error("El catálogo original ha cambiado desde la simulación");
   const verifiedPlan = simulateIntervention(latest.catalog, latest.catalogSha256, simulation.changes);
@@ -81,7 +82,7 @@ export const persistAppliedIntervention = async (options: {
   }, null, 2);
   const derivedSha256 = sha256(data);
   const record = JSON.stringify({
-    version: 1,
+    version: scriptVersions.length ? 2 : 1,
     status: "applied",
     campaign,
     appliedAt: new Date().toISOString(),
@@ -92,7 +93,8 @@ export const persistAppliedIntervention = async (options: {
     analyzedProducts: simulation.analyzedProducts,
     affectedProducts: simulation.affectedProducts,
     changes: simulation.changes,
-    scripts: scripts.map((script) => basename(script)).sort()
+    scripts: selectedScripts.map((script) => basename(script)).sort(),
+    ...(scriptVersions.length ? { scriptVersions } : {})
   }, null, 2);
 
   const resultRoot = join(campaignDir, "results");
@@ -106,6 +108,9 @@ export const persistAppliedIntervention = async (options: {
     await writeFile(join(stage, "intervention-record.json"), record, { flag: "wx" });
     if (sha256(await readFile(join(stage, "catalog-derived.json"))) !== derivedSha256) {
       throw new Error("Fallo de integridad al preparar el catálogo derivado");
+    }
+    if (!isDeepStrictEqual(readInterventionScriptVersions(selectedScripts, root), scriptVersions)) {
+      throw new Error("Un script permanente cambió durante la aplicación");
     }
     const current = await readInterventionSource(source);
     if (current.catalogSha256 !== simulation.catalogSha256) throw new Error("El origen cambió durante la aplicación");

@@ -6,26 +6,28 @@ Antes de crear scripts se debe clasificar cada incidencia usando el anuncio vige
 
 Las campañas ordinarias extraen **todos los proveedores habilitados**. Las intervenciones se ejecutan solo de forma manual y nunca forman parte de la extracción o de tareas automáticas.
 
-## Scripts independientes
+## Scripts independientes y composición
 
-Cada campaña tiene su carpeta `storage/interventions/<campana>/scripts/`. Se pueden crear tantos archivos `.ts` como decisiones independientes hagan falta, agrupados por producto o por incidencia. El sistema no descubre ni ejecuta scripts por su cuenta. Conservar los archivos originales de la campaña fuera del control de versiones, conforme a la configuración de `storage/`.
+Los scripts reutilizables viven bajo `interventions/<proveedor>/<archivo>.ts` y se versionan en Git, idealmente uno por máquina o incidencia que pueda retirarse individualmente. Cada script declara `metadata` con identificador y resumen estáticos, y `proposals` con las correcciones acreditadas. **No** deben copiarse ni registrarse para cada campaña.
 
-Cada archivo exporta `proposals` con el contrato existente `ManualInterventionProposal`: `providerId`, `identity`, `field`, `expected`, `next`, `reason` y `evidence`. La identidad sale de `buildProductIdentity` y `expected` debe coincidir con **el catálogo vigente**. Se admiten título, descripciones, marca, modelo y atributos técnicos **existentes** mediante `field: "spec:<nombre exacto del atributo>"`. Los atributos admiten valores originales del tipo `SpecValue`, sin borrar atributos ni añadir nombres nuevos. Los cambios de texto usan `string | null`. Se rechazan fotografías, números de serie, referencias, URL, categorías y otros identificadores. El hecho de que la marca o un modelo existan en otra publicación no demuestra que correspondan a la unidad concreta.
+Cada `ManualInterventionProposal` contiene `providerId`, `identity`, `field`, `expected`, `next`, `reason` y `evidence`. La identidad sale de `buildProductIdentity` y el valor esperado debe coincidir con **el catálogo vigente**. Se admiten título, descripciones, marca, modelo y atributos técnicos **existentes** mediante `field: "spec:<nombre exacto del atributo>"`. Los atributos admiten valores originales del tipo `SpecValue`, sin borrar atributos ni añadir nombres nuevos. Los cambios de texto usan `string | null`. Se rechazan fotografías, números de serie, referencias, URL, categorías y otros identificadores. El hecho de que una marca o un modelo existan en otra publicación no demuestra que correspondan a la unidad concreta.
 
-Dos scripts que intenten modificar el mismo campo de la misma referencia dan error, incluso si proponen el mismo valor. El orden de los scripts no cambia el SHA del plan; un plan confirmado se aplica **una vez** y no sobrescribe resultados anteriores.
+Varios scripts pueden componerse en una misma simulación o aplicación; dos propuestas para el mismo campo de la misma máquina dan conflicto, aunque propongan el mismo valor. El orden no cambia el SHA del plan. El catálogo `--listar` y la consulta `--consultar` inspeccionan código estático sin ejecutarlo; el motor de aplicación carga únicamente los scripts **seleccionados**.
+
+Las rutas antiguas `storage/interventions/<campana>/scripts/` siguen admitidas para recuperación de expedientes existentes. No crear allí scripts nuevos: el registro por campaña está retirado.
 
 ## Simular, aplicar y verificar
 
 Desde la raíz del proyecto, sustituyendo los marcadores por rutas existentes:
 
 ```powershell
-npm run intervenir -- gam --script storage/interventions/<campana>/scripts/<uno.ts> --script storage/interventions/<campana>/scripts/<otro.ts> --origen <catalogo-catalog.json> --detalle
+npm run intervenir -- gam --script interventions/gam/6002.ts --script interventions/gam/6003.ts --origen <catalogo-catalog.json> --detalle
 ```
 
 El resultado muestra el SHA del plan y el antes/después, sin modificar catálogos. Tras comprobar cada cambio y aprobarlo manualmente:
 
 ```powershell
-npm run intervenir -- gam --script storage/interventions/<campana>/scripts/<uno.ts> --script storage/interventions/<campana>/scripts/<otro.ts> --origen <catalogo-catalog.json> --campana <campana> --aplicar --plan <sha256-completo>
+npm run intervenir -- gam --script interventions/gam/6002.ts --script interventions/gam/6003.ts --origen <catalogo-catalog.json> --campana <campana> --aplicar --plan <sha256-completo>
 ```
 
 La salida es **un único** `storage/interventions/<campana>/results/<sha>/catalog-derived.json` y su `intervention-record.json`, con registro de los scripts seleccionados y cambios. El catálogo canónico y su manifest permanecen intactos. No editar manualmente el resultado.
@@ -54,4 +56,4 @@ No se recuperan imágenes de campañas anteriores. La galería siempre procede d
 
 ## Alcance actual
 
-El sistema no infiere valores verdaderos, no verifica placas ni documentos externos y no reemplaza la investigación manual. Si una máquina sigue publicando datos contradictorios sin fuentes concluyentes, debe permanecer pendiente; no se creará un script provisional para hacerla pasar los controles. Los documentos maestros de continuidad y auditoría se gestionan **fuera del repositorio**, conforme a su propio protocolo; esta guía no los sustituye.
+El sistema no infiere valores verdaderos, no verifica placas ni documentos externos y no reemplaza la investigación manual. Si una máquina sigue publicando datos contradictorios sin fuentes concluyentes, debe permanecer pendiente; no se creará un script provisional para hacerla pasar los controles. Los documentos maestros de continuidad se mantienen conforme a su propio protocolo; esta guía operativa no los sustituye.

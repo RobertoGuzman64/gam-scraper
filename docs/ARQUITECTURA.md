@@ -10,6 +10,7 @@ Aplicación CLI de Node.js y TypeScript con módulos ESM. El scraper se ejecuta 
 
 ```text
 scripts/              Entrada npm, ayuda y ejecución programada
+interventions/        Scripts de intervención permanentes versionados
 src/
   cli/                Argumentos, comandos y presentación de resultados
   contracts/          Contratos de extracción y catálogo

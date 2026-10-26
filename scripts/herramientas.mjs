@@ -6,7 +6,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const definitions = {
   "campana:extraer": { entry: "cli/campaign-extract.js", usage: "campana:extraer [-- --nueva]", description: "Extraer los tres proveedores y preparar/revisar el lote aislado" },
-  "campana:intervenir": { entry: "cli/campaign-intervene.js", usage: "campana:intervenir -- gam --registrar <archivo.ts> [--registrar ...] [--aplicar]", description: "Simular o aplicar correcciones del lote actual y validar su derivado", requiresProvider: true },
+  "campana:intervenir": { entry: "cli/campaign-intervene.js", usage: "campana:intervenir -- gam --listar | --consultar <id> | --mantenimiento | --script <archivo.ts> [--aplicar]", description: "Consultar scripts versionados o simular/aplicar correcciones del lote actual", requiresProvider: true },
   "campana:entregar": { entry: "cli/campaign-deliver.js", usage: "campana:entregar", description: "Entregar ZIP comprobado con tres JSON en el Escritorio sin perder la versión anterior" },
   "campana:finalizar": { entry: "cli/campaign-finalize.js", usage: "campana:finalizar [-- --simular]", description: "Acreditación editorial y selección por campaña sin introducir rutas ni SHA" },
   "campana:revisar": { entry: "cli/campaign-review.js", usage: "campana:revisar", description: "Consultar Ready, Review y campos pendientes del lote actual" },
@@ -93,7 +93,10 @@ const printHelp = (requested) => {
     console.log("  npm run iniciar");
     console.log("  npm run campana:extraer");
     console.log("  npm run campana:revisar");
-    console.log("  npm run campana:intervenir -- gam --script storage/interventions/<id-lote>/scripts/cambio.ts");
+    console.log("  npm run campana:intervenir -- gam --listar");
+    console.log("  npm run campana:intervenir -- gam --consultar gam-6002");
+    console.log("  npm run campana:intervenir -- gam --mantenimiento");
+    console.log("  npm run campana:intervenir -- gam --script interventions/gam/6002.ts");
     console.log("  npm run campana:finalizar");
     console.log("  npm run campana:entregar");
     console.log("  npm run campana:limpiar");

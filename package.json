@@ -24,7 +24,6 @@
     "seleccionar": "node scripts/herramientas.mjs seleccionar",
     "limpiar:almacen": "node scripts/herramientas.mjs limpiar:almacen",
     "limpiar:versionados": "node scripts/retirar-generados-git.mjs",
-    "intervencion:conservar": "node scripts/conservar-intervencion.mjs",
     "normalizar:gam": "node scripts/herramientas.mjs normalizar:gam",
     "normalizar:gam:base": "node scripts/herramientas.mjs normalizar:gam:base",
     "convertir:gam": "node scripts/herramientas.mjs convertir:gam",
