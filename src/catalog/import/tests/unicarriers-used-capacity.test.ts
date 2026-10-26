@@ -6,7 +6,7 @@ import { loadImportCatalog } from "../../../infrastructure/filesystem/import-cat
 import { reconcileMercaelevaVerifiedUnicarriersCapacity } from "../mapping/providers/mercaeleva/unicarriers-used-capacity-evidence.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
-const source = await readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json");
 const catalog = await loadImportCatalog();
 const record = source.products.find((item) => item.reference === "M582-1882");
 assert.ok(record);

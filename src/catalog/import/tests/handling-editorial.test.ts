@@ -8,7 +8,7 @@ import { reconcileGamOrderPickerEditorial } from "../mapping/providers/gam/order
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const sourceCatalog = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const sourceCatalog = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 
 const source = (reference: string): ProductRecord => {
   const record = sourceCatalog.products.find((item) => item.reference === reference);

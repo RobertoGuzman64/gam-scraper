@@ -7,9 +7,9 @@ import { reconcileGamHandlingCapacityEditorial } from "../mapping/providers/gam/
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
-const gomariz = await readCanonicalCatalog("storage/scraped/gomariz/scrape-gomariz-catalog.json");
-const mercaeleva = await readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json");
+const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
+const gomariz = await readCanonicalCatalog("src/testing/fixtures/gomariz/scrape-gomariz-catalog.json");
+const mercaeleva = await readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json");
 const source = (reference: string): ProductRecord => {
   const found = gam.products.find((item) => item.reference === reference);
   assert.ok(found, reference);

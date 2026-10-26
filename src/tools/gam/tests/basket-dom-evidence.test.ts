@@ -4,7 +4,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonic
 import { inspectGamBasketDom, pendingGamBasketRecords } from "../basket-dom-evidence.js";
 
 test("GAM: diagnostica las 15 cestas pendientes tras recuperar fragmentos repetidos sin alterar los valores originales", async () => {
-  const catalog = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+  const catalog = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
   const pending = pendingGamBasketRecords(catalog.products);
   assert.equal(pending.length, 15);
   assert.deepEqual(pending.map((record) => record.reference).sort(), [

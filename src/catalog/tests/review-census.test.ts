@@ -8,9 +8,9 @@ import { readOfflinePreparation } from "../../infrastructure/filesystem/offline-
 
 const provider = "gam";
 const prefix = "scrape-gam-marzo-2026";
-const catalog = await readCanonicalCatalog(`storage/scraped/${provider}/${prefix}-catalog.json`);
+const catalog = await readCanonicalCatalog(`src/testing/fixtures/census/${provider}/${prefix}-catalog.json`);
 const preparation = await readOfflinePreparation(
-  `storage/prepared/${provider}/${prefix}-20261022-171552-preparation.json`, provider
+  `src/testing/fixtures/census/preparations/${provider}/${prefix}-census-preparation.json`, provider
 );
 
 const narrowed = (count: number) => ({

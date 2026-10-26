@@ -8,7 +8,7 @@ import { verifiedMusoshiSerialOwner } from "../mapping/providers/gam/musoshi-ser
 import { prepareImportBatch } from "../preparation/batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const target = (reference: string): ProductRecord => {
   const product = gam.products.find((record) => record.reference === reference);
   assert.ok(product, reference);

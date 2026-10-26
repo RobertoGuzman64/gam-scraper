@@ -6,7 +6,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonic
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const records: readonly ProductRecord[] = source.products;
 const byReference = new Map(records.map((record) => [record.reference, record]));
 const reference = (id: string): ProductRecord => {

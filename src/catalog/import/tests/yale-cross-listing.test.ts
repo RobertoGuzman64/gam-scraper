@@ -8,7 +8,7 @@ import { verifiedYaleErp35vlCrossListing } from "../mapping/providers/gam/yale-e
 import { prepareImportBatch } from "../preparation/batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const get = (reference: string): ProductRecord => {
   const record = gam.products.find((item) => item.reference === reference);
   assert.ok(record, reference);

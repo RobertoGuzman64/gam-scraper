@@ -8,7 +8,7 @@ import { gamCleaningCorrectedWidth } from "../mapping/providers/gam/cleaning.js"
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const width = catalog.attributes.find((attribute) => attribute.name === "Ancho de trabajo" && attribute.unit_option === "mm");
 assert.ok(width);
 const original = source.products.find((product) => product.reference === "4004");

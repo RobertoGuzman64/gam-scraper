@@ -9,7 +9,7 @@ import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
+  "../../../../src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
 )));
 const record = source.products.find((product) => product.reference === "4737");
 assert.ok(record);

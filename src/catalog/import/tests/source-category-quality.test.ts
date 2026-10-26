@@ -12,7 +12,7 @@ import { SOURCE_CATEGORY_ISSUE } from "../mapping/source-category-quality.js";
 
 const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
+  "../../../../src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
 )));
 
 const reference = (code: string): ProductRecord => requireProductReference(source.products, code);

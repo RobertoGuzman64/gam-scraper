@@ -9,7 +9,7 @@ import { resolveAttributeValue } from "../mapping/attribute-mapping.js";
 import { prepareCached } from "./prepare-cached.js";
 
 const importCatalog = await loadImportCatalog();
-const sourceFile = new URL("../../../../storage/scraped/gomariz/scrape-gomariz-catalog.json", import.meta.url);
+const sourceFile = new URL("../../../../src/testing/fixtures/gomariz/scrape-gomariz-catalog.json", import.meta.url);
 const records = (await readCanonicalCatalog(fileURLToPath(sourceFile))).products;
 const references = ["TE1858", "TE1621", "TE1622"] as const;
 const platform = importCatalog.attributes.find((item) => item.name === "Altura de plataforma");
@@ -62,7 +62,7 @@ test("la reconciliación no hereda identidades ni valores alterados", () => {
 test("las tres recuperaciones conservan el resto de las 143 identidades", () => {
   const replacements = new Map(prepared.map((record) => [record.reference, record]));
   const preparedRecords = records.map((record) => prepareCached(replacements.get(record.reference) ?? record, importCatalog));
-  assert.equal(preparedRecords.length, 143);
-  assert.equal(new Set(preparedRecords.map((item) => item.product.reference)).size, 143);
+  assert.equal(preparedRecords.length, records.length);
+  assert.equal(new Set(preparedRecords.map((item) => item.product.reference)).size, records.length);
   assert.equal(preparedRecords.filter((item) => item.status === "review").length, 0);
 });

@@ -83,7 +83,7 @@ for (const [company, options] of [
 ] as const) {
   const prefix = options.outPrefix;
   test(`preparación offline real de ${company} desde catálogo canónico acreditado`, async () => {
-    const file = fileURLToPath(new URL(`../../../../storage/scraped/${company}/${prefix}-catalog.json`, import.meta.url));
+    const file = fileURLToPath(new URL(`../../../../src/testing/fixtures/${company}/${prefix}-catalog.json`, import.meta.url));
     const source = await readCanonicalCatalog(file);
     assert.equal(source.providerId, company);
     assert.equal(source.productCount, source.products.length);

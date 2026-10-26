@@ -7,7 +7,7 @@ import { resolveAttribute } from "../mapping/attribute-mapping.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const power = catalog.attributes.find((attribute) => attribute.name === "Potencia");
 assert.ok(power);
 const generator = source.products.find((product) => product.reference === "1211");

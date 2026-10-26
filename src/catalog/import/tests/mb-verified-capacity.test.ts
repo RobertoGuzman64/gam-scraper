@@ -8,7 +8,7 @@ import { verifiedMercaelevaMbCapacity } from "../mapping/providers/mercaeleva/ve
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json");
 const capacity = catalog.attributes.find((attribute) => attribute.name === "Capacidad de carga" && attribute.unit_option === "kg");
 assert.ok(capacity);
 

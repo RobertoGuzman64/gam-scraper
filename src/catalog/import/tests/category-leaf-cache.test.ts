@@ -7,7 +7,7 @@ import { resolveCategory } from "../mapping/category-mapping.js";
 
 const catalog = await loadImportCatalog();
 const gam = await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
+  "../../../../src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
 )));
 const newProduct = gam.products.find((record) => resolveCategory(record, catalog.categories, "Nuevo") !== null);
 if (!newProduct) throw new Error("No hay una máquina nueva con categoría acreditada");

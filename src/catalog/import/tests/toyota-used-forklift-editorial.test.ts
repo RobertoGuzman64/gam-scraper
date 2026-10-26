@@ -6,7 +6,7 @@ import { loadImportCatalog } from "../../../infrastructure/filesystem/import-cat
 import { reconcileGamUsedLiftEditorial } from "../mapping/providers/gam/used-lift-editorial.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
-const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const catalog = await loadImportCatalog();
 const original = gam.products.find((record) => record.reference === "6887");
 assert.ok(original);

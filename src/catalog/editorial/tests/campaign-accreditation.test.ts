@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
 import { createAccreditationDraft, selectAccreditedPublishable, sha256 } from "../campaign-accreditation.js";
 import type { AccreditedSource } from "../campaign-accreditation.js";
 import { EDITORIAL_PROVIDERS, prepareEditorialCohort } from "./editorial-cohort-fixtures.js";
@@ -9,11 +8,10 @@ const preparations = await prepareEditorialCohort("-accreditation");
 const sources: readonly AccreditedSource[] = await Promise.all(EDITORIAL_PROVIDERS.map(async (providerId) => {
   const preparation = preparations.find((item) => item.source.providerId === providerId);
   assert.ok(preparation);
-  const sourceFile = `storage/prepared/${providerId}/${preparation.source.prefix}-20261022-171552-preparation.json`;
   return {
     providerId,
     catalogSha256: preparation.source.catalogSha256,
-    preparationSha256: sha256(await readFile(sourceFile, "utf8")),
+    preparationSha256: sha256(JSON.stringify(preparation, null, 2)),
     productCount: preparation.source.productCount
   };
 }));
@@ -41,7 +39,12 @@ test("prepara borrador de selección sin aprobaciones automáticas", () => {
 
 test("selecciona solo ready sin contradicciones acreditadas y conserva imágenes originales", () => {
   const result = selectAccreditedPublishable(preparations, sources, runId, approved, sha256(JSON.stringify(approved)));
-  assert.deepEqual(result.totals, { original: 1369, ready: 1366, review: 3, excluded: 6, publishable: 1363 });
+  assert.deepEqual(result.totals, {
+    original: preparations.reduce((sum, item) => sum + item.source.productCount, 0),
+    ready: preparations.reduce((sum, item) => sum + item.totals.ready, 0),
+    review: 3, excluded: 6,
+    publishable: preparations.reduce((sum, item) => sum + item.source.productCount, 0) - 6
+  });
   assert.deepEqual(result.exclusions.map((item) => `${item.providerId}:${item.reference}`), [
     "gam:6682", "gam:6703", "gam:6002", "gam:6003", "gam:6004", "mercaeleva:M827-8304"
   ]);
@@ -70,7 +73,7 @@ test("rechaza huellas, lote y decisiones que no coinciden con la campaña", () =
 test("bloquea una revisión nueva no acreditada", () => {
   const changed = preparations.map((preparation) => preparation.source.providerId !== "gomariz" ? preparation : {
     ...preparation,
-    totals: { ready: 142, review: 1 },
+    totals: { ready: preparation.totals.ready - 1, review: preparation.totals.review + 1 },
     products: preparation.products.map((entry, i) => i === 0
       ? { ...entry, status: "review" as const, issues: ["Identidad no acreditada"] }
       : entry)
@@ -127,7 +130,7 @@ test("una ficha intervenida y lista exige aprobación individual antes de inclui
   const selection = selectAccreditedPublishable(
     modifiedPreparations, modifiedSources, runId, approvedChanges, sha256(JSON.stringify(approvedChanges))
   );
-  assert.equal(selection.totals.publishable, 1363);
+  assert.equal(selection.totals.publishable, preparations.reduce((sum, item) => sum + item.source.productCount, 0) - 6);
   assert.ok(selection.products.some((item) => item.providerId === "gam" && item.reference === "4988"));
   assert.ok(selection.accreditation?.preparationSources.some((entry) => entry.providerId === "gam"));
 

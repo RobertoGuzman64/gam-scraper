@@ -4,60 +4,61 @@
 
 **Protección documental.** No modificar, eliminar ni regenerar esta guía sin autorización expresa del propietario para la intervención documental concreta. Cambios de código, auditorías o correcciones puntuales no implican autorización documental.
 
-## Alcance obligatorio
+## Objetivo y alcance
 
-**Campaña ordinaria nueva = todos los proveedores registrados y habilitados en el scraper en ese momento.** El comando normal es `npm run extraer:todos`, **sin** `--proveedores`. El registro actual contiene GAM, Gomariz y Mercaeleva; cuando se añada otro proveedor al registro, debe entrar también en el lote ordinario sin crear una excepción manual.
+Una campaña ordinaria incluye **GAM, Gomariz y Mercaeleva**, todos los proveedores exigidos actualmente para la entrega. Las extracciones limitadas por proveedor, categoría o número de páginas son auxiliares: **nunca se consideran una campaña global publicable**. Si se incorporan proveedores nuevos al registro habrá que adaptar también el contrato editorial y de entrega antes de dar por cerrada una campaña.
 
-`npm run extraer -- <proveedor>` y `npm run extraer:todos -- --proveedores ...` están disponibles **solo como herramientas auxiliares** para pruebas, diagnóstico, reintentos dirigidos o mantenimiento. Una ejecución parcial no acredita una campaña completa, aunque sus archivos sean válidos. Tampoco acredita cobertura completa una extracción limitada con `--paginas`.
+La operación habitual no requiere recuperar JSON históricos, copiar SHA, adivinar rutas ni preparar tres catálogos a mano. Todo se ejecuta desde la raíz del repositorio.
 
-**No publicar una campaña parcial de forma silenciosa.** Comprobar el listado de proveedores previsto y que todos figuren completados en el informe del lote. Si falla uno, resolverlo y volver a acreditar la campaña completa, o elevar una excepción explícita al propietario; no confundir una excepción documentada con una campaña global cerrada.
+## Instalación inicial
 
-## Secuencia de trabajo
+Se necesita Node.js >=18.18.0, npm, acceso a los portales, permisos de escritura y Chrome/Chromium para el extractor que lo requiera. En una copia nueva:
 
-| Momento                         | Comando o mecanismo                                                                                                                             | Criterio para avanzar                                                                                                                     |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Comprobar entorno            | `npm ci` solo si falta instalar dependencias; `npm test` y `npm run build` cuando se haya modificado código o sea necesario verificarlo         | No reinstalar dependencias ni repetir una batería completa por rutina en cada campaña; registrar fallos de ejecución reales               |
-| 2. Revisar lote                 | `npm run extraer:todos -- --simular`                                                                                                            | Lista de salida igual a **todos** los proveedores registrados; sin selector de subconjunto                                                |
-| 3. Ejecutar campaña             | `npm run extraer:todos`                                                                                                                         | Lote secuencial finalizado; revisar `storage/runs/<id>/run.json` y logs de cada proveedor; estado `complete`, no `partial` ni `failed`    |
-| 4. Localizar originales         | `storage/scraped/<proveedor>/`                                                                                                                  | Identificar catálogo `*-catalog.json` **vigente** y sus manifest/resumen por procedencia y fecha de lote; nunca inferirlo solo del nombre |
-| 5. Validar catálogos            | `npm run validar -- <proveedor> --etapa catalogo --origen <catalogo-catalog.json>`                                                              | Comprobación canónica por **cada proveedor**; códigos de validación y anomalías revisados                                                 |
-| 6. Comparar si existe histórico | `npm run cobertura -- --anterior <catalogo-previo.json> --actual <catalogo-vigente.json> --simular`                                             | Analizar diferencias reales, sin deducir automáticamente bajas, defectos o necesidad de intervención                                      |
-| 7. Preparar fichas              | `npm run preparar -- <proveedor> --origen <catalogo-catalog.json> --simular`; después sin `--simular` cuando proceda                            | Preparación por **cada proveedor**, con reglas reales, originales intactos y salidas no sobrescritas                                      |
-| 8. Validar preparaciones        | `npm run validar -- <proveedor> --etapa preparacion --preparacion <preparation.json> --origen <catalogo-catalog.json>`                          | Calidad técnica y procedencia verificadas; revisión manual de incidencias relevantes                                                      |
-| 9. Revisar selección            | `npm run seleccionar -- --gam <gam-preparation.json> --gomariz <gomariz-preparation.json> --mercaeleva <mercaeleva-preparation.json> --simular` | Exclusions y cobertura acreditadas; no saltarse el bloqueo de cohortes ni las decisiones pendientes                                       |
-| 10. Emitir entrega              | Repetir selección con opciones y evidencias válidas, y `--directorio-salida <ruta-nueva>`                                                       | Entregar **únicamente** JSON autorizados y su trazabilidad, distinguiéndolos de catálogos originales o derivaciones no aprobadas          |
+```powershell
+npm ci
+npm run iniciar
+```
 
-Los ejemplos de validación y preparación se repiten por proveedor **porque esas operaciones son individuales**; esto no convierte la campaña en una extracción por proveedor. Las rutas entre `<...>` son marcadores que deben sustituirse por los archivos reales de esa ejecución. No reutilizar arbitrariamente las preparaciones históricas ni sobrescribir salidas; usar destinos nuevos cuando ya existan archivos.
+`iniciar` comprueba dependencias y referencias de `data/`, crea carpetas de trabajo y descubre el último lote mediante `run.json`, manifiestos y huellas. No realiza extracción ni publicación. Si falta una dependencia, ejecutar `npm ci` desde la raíz. Consultar `npm run ayuda` para todas las opciones.
 
-### Riesgos y decisiones entre extracción y entrega
+## Secuencia ordinaria
 
-- **Cambio normal del proveedor:** conservar lo que expone en la campaña vigente. Si una fotografía desaparece de la ficha publicada, no restaurar su URL desde campañas antiguas, ni verificar para reutilizar URLs históricas. La ausencia por sí misma **no requiere intervención**.
-- **Fallo del extractor:** la fuente vigente **sí** muestra el dato, pero el scraper no lo recoge; corregir extractor/parser y añadir una prueba de comportamiento.
-- **Fallo generalizable de mapeador o formateador:** corregir el módulo permanente y las pruebas pertinentes, sin parchear en masa con scripts de campaña.
-- **Error textual puntual acreditado:** si realmente requiere corrección, seguir [Intervenciones manuales](INTERVENCIONES_CAMPANA.md); simular, revisar y aplicar **solo bajo orden manual explícita**. Actualmente solo se admiten `title`, `shortDescription`, `longDescription`.
-- **Incidencia sin evidencia o conflicto editorial:** no inventar valores, no convertir un `review` en `ready` y no declarar una selección publicable por el mero hecho de pasar validaciones estructurales.
+| Paso | Comando | Qué revisar antes de avanzar |
+| --- | --- | --- |
+| 1. Extraer y preparar | `npm run campana:extraer` | Los tres proveedores deben terminar correctamente; prepara y revisa el mismo lote aislado |
+| 2. Consultar incidencias | `npm run campana:revisar` | `Ready`, `Review`, referencia, URL de origen y motivos por proveedor; no fuerza cambios de estado |
+| 3. Intervenir, **solo si procede** | `npm run campana:intervenir -- gam --registrar <archivo.ts>` y, tras inspeccionar la simulación, repetir con `--aplicar` | Cambios concretos y acreditados; el script se registra para el lote actual y el original queda intacto |
+| 4. Solicitar/acreditar selección | `npm run campana:finalizar` | Revisar el borrador `acreditacion-<sha>.json`; aprobar expresamente las decisiones correctas; repetir el comando |
+| 5. Entregar | `npm run campana:entregar` | Confirmar el ZIP del Escritorio y los totales, sin entregar `selection.json` ni los manifests |
+| 6. Inspeccionar limpieza | `npm run campana:limpiar` | Lista carpetas y tamaños, pero no elimina nada |
+| 7. Cerrar, cuando ya no habrá cambios | `npm run campana:limpiar -- --aplicar` | Revalida el ZIP y la acreditación; conserva los scripts y la entrega |
 
-Las intervenciones **no forman parte del lote ordinario**, no se ejecutan automáticamente ni reintroducen imágenes antiguas. Su catálogo derivado y expediente tienen trazabilidad independiente; su validación técnica no sustituye la aprobación editorial. Nunca reutilizar automáticamente scripts de campañas pasadas.
+`campana:extraer` ya invoca la revisión offline al terminar con los tres proveedores completos; `campana:revisar` permite repetir la consulta sin nueva extracción. Si el lote previo está incompleto, investigar primero sus errores. Solo si se decide abandonarlo deliberadamente, iniciar otro con `npm run campana:extraer -- --nueva`. Un `run.json` ambiguo o corrupto no se oculta usando `--nueva`.
 
-### Particularidad editorial actual
+Si no existen incidencias que requieran cambios, **omitir el paso 3**. La aprobación editorial del paso 4 sigue siendo imprescindible: la ausencia de `Review` no constituye autorización automática para publicar.
 
-El comando `seleccionar` actualmente exige preparaciones para **GAM, Gomariz y Mercaeleva** y mantiene comprobaciones de cohortes específicas. Si una campaña nueva no coincide con la cohorte acreditada o aparece un proveedor adicional, la selección puede bloquearse aunque `extraer:todos` haya funcionado correctamente. Es una **limitación real del selector actual**: evaluar sus reglas con datos verificados; no falsear hashes, quitar controles ni publicar una selección incompleta para forzar la entrega. La incorporación de un proveedor nuevo requiere revisar además la cobertura editorial y los contratos de salida aplicables.
+## Acreditación editorial
 
-La revisión de cobertura puede exigir `--anterior`, `--catalogo` y `--revision-cobertura` con archivos y huellas acordes a la cohorte. Seguir el diagnóstico real del comando y [Validación](VALIDACION.md); no inventar expedientes. Tampoco interpretar `--simular` como aprobación de publicación.
+`campana:finalizar` descubre las preparaciones actuales y crea el borrador en:
 
-## Cierre de campaña: comprobación mínima
+`storage/campanas/<id-lote>/editorial/acreditacion-<sha256>.json`
 
-- Todos los proveedores registrados están presentes en un lote con estado `complete` y sin sustituciones por resultados parciales.
-- Cada catálogo usado tiene manifest/resumen consistentes; cada preparación conserva su procedencia.
-- Se han distinguido cambios naturales del origen, anomalías de extracción, defectos reutilizables e intervenciones puntuales.
-- No existen URL históricas de imágenes reintroducidas ni datos inventados para mejorar artificialmente las fichas.
-- Las diferencias y bloqueos editoriales están resueltos con evidencia o la entrega se declara **pendiente**, no completa.
-- Se identifican los JSON publicables exactos, su selección, sus proveedores y las decisiones aplicadas; los artefactos de diagnóstico o intervenidos sin aprobación **no** son entregables.
+El archivo se inicia con `approved: false`. Revisar fuentes y exclusiones: las fichas en `Review` o con contradicciones deben excluirse con motivo y URL HTTPS vigente; las fichas intervenidas que quedan `ready` requieren una decisión individual de inclusión. Completar `approvalReason` y establecer `approved: true` **solo tras la revisión humana**. No editar `runId`, `sources`, SHA, identidades ni incidencias calculadas. Una nueva preparación o intervención producirá otro borrador; una aprobación antigua no se reutiliza.
 
-## Documentación de apoyo
+Al repetir `npm run campana:finalizar`, se valida la acreditación y se genera la selección interna. También se puede usar `npm run campana:finalizar -- --simular` para comprobar una acreditación ya existente sin escribir resultados. Consultar [Acreditación de campañas](ACREDITACION_CAMPANA.md).
 
-- [Intervenciones manuales por campaña](INTERVENCIONES_CAMPANA.md): script temporal, simulación, SHA, aplicación bajo control humano y validación derivada.
-- [Validación y aceptación](VALIDACION.md): códigos de salida, revisión de cobertura y selección editorial.
-- [Reglas de datos y publicación](SCRAPER_DATA_RULES.md): contratos, fidelidad a las fuentes y límites.
-- [Operación y despliegue](DESPLIEGUE_AUTOMATICO.md): ejecución operativa, distinta del proceso editorial de campañas.
-- [Arquitectura](ARQUITECTURA.md): registro de proveedores, interfaces y responsables de cada transformación.
+## Entrega y limpieza
+
+`campana:entregar` crea `equipzilla-AAAA-MM-DD.zip` en el **Escritorio real del usuario**, con exactamente `gam-AAAA-MM-DD.json`, `gomariz-AAAA-MM-DD.json` y `mercaeleva-AAAA-MM-DD.json`. Se comprueba el ZIP temporal antes de sustituir el archivo del mismo día. Si falla la aprobación o el ZIP, se conserva la entrega correcta anterior.
+
+**Antes de ejecutar la limpieza con `--aplicar`, decidir si aún se va a corregir o repetir la entrega de ese mismo lote.** Se necesita conservar los catálogos mientras haya trabajo pendiente. La limpieza rechaza entregas no acreditadas, ZIP alterados y carpetas desconocidas, y protege los scripts en `storage/interventions/<id-lote>/scripts/`. Tras el cierre ya no se puede rehacer esa campaña sin volver a extraer.
+
+Los catálogos, manifests, resúmenes y derivados internos se encuentran bajo `storage/`, nunca dentro del ZIP público. El proyecto no importa al backend ni actualiza productos remotos. La limpieza de históricos rastreados por Git es **otra operación explícita**: `npm run limpiar:versionados` (simula) y `npm run limpiar:versionados -- --aplicar` (retira los archivos generados rastreados del árbol de trabajo y registra su borrado en el índice Git); no reescribe el historial.
+
+## Diagnóstico y herramientas avanzadas
+
+`npm run extraer:todos`, `extraer`, `preparar`, `validar`, `cobertura`, `seleccionar`, `intervenir`, `intervenir:preparar` e `intervenir:validar` se mantienen para diagnóstico, mantenimiento y compatibilidad. No son pasos obligatorios del flujo ordinario, y sus rutas explícitas no deben mezclarse entre campañas. Un resultado técnico `Ready` o una simulación no sustituyen la acreditación editorial.
+
+Para clasificar anomalías: si la fuente actual ya no publica una foto, no recuperarla de un histórico; si la fuente sí la publica pero el extractor no la recoge, reparar el parser; si el defecto afecta a un conjunto amplio, corregir la regla de normalización; si es puntual y acreditado, usar [Intervenciones manuales](INTERVENCIONES_CAMPANA.md). Sin evidencia, mantener la revisión pendiente y no fabricar atributos.
+
+Referencias: [Reglas de datos](SCRAPER_DATA_RULES.md), [Validación](VALIDACION.md), [Arquitectura](ARQUITECTURA.md) y [Operación](DESPLIEGUE_AUTOMATICO.md).

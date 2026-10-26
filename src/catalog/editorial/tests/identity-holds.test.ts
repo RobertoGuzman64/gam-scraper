@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
 import { gamNewForkliftIdentityIssues } from "../gam-new-forklift-identity.js";
-import { selectPublishableCatalog } from "../select-publishable.js";
-import { EDITORIAL_SOURCES, prepareEditorialCohort } from "./editorial-cohort-fixtures.js";
+import { createEditorialTestApproval, EDITORIAL_SOURCES, prepareEditorialCohort } from "./editorial-cohort-fixtures.js";
 
 const sources = EDITORIAL_SOURCES;
 const preparations = await prepareEditorialCohort("-identity-holds");
+const approved = createEditorialTestApproval(preparations);
 const gam = preparations.find((item) => item.source.providerId === "gam");
 assert.ok(gam);
 const get = (reference: string) => {
@@ -36,8 +36,9 @@ test("GAM 6002, 6003 y 6004 tienen inconsistencias acreditadas sin forzar HYSTER
 });
 
 test("mantiene GAM 6236 reconciliada y excluye 6002, 6003 y 6004 por identidad Hyster/Yale", () => {
-  const result = selectPublishableCatalog(preparations);
-  assert.deepEqual(result.totals, { original: 1369, ready: 1366, review: 3, publishable: 1363, excluded: 6 });
+  const result = approved.select(preparations);
+  const total = preparations.reduce((sum, item) => sum + item.source.productCount, 0);
+  assert.deepEqual(result.totals, { original: total, ready: total - 3, review: 3, publishable: total - 6, excluded: 6 });
   const retained = result.exclusions.filter(({ reference }) => ["6002", "6003", "6004"].includes(reference));
   assert.deepEqual(retained.map(({ reference }) => reference), ["6002", "6003", "6004"]);
   assert.ok(retained.every(({ issues, evidenceUrls, reason }) => issues.length > 0 && evidenceUrls.length === 1 && reason));
@@ -52,15 +53,15 @@ test("una marca técnica corregida, un cambio de ruta o una review nueva caducan
   const corrected = replaceGam("6002", (entry) => ({
     ...entry, product: { ...entry.product, spec: { ...entry.product.spec, Marca: "HYSTER" } }
   }));
-  assert.throws(() => selectPublishableCatalog(corrected), /exclusión de identidad caducada/);
+  assert.throws(() => approved.select(corrected), /decisión ausente|aprobación ausente/);
   const changedUrl = replaceGam("6003", (entry) => ({
     ...entry, product: { ...entry.product, sourceUrl: `${entry.product.sourceUrl}?otro=1` }
   }));
-  assert.throws(() => selectPublishableCatalog(changedUrl), /exclusión de identidad caducada/);
+  assert.throws(() => approved.select(changedUrl), /decisión ausente|aprobación ausente/);
   const changedStatus = replaceGam("6004", (entry) => ({
     ...entry, status: "review", issues: ["Identidad todavía contradictoria"]
   }));
-  assert.throws(() => selectPublishableCatalog(changedStatus), /exclusión de identidad caducada/);
+  assert.throws(() => approved.select(changedStatus), /decisión ausente|aprobación ausente/);
 });
 
 test("una contradicción nueva y sin exclusión acreditada bloquea la selección", () => {
@@ -74,7 +75,7 @@ test("una contradicción nueva y sin exclusión acreditada bloquea la selección
   const changed = replaceGam(reference, (entry) => ({
     ...entry, product: { ...entry.product, spec: { ...entry.product.spec, Marca: "YALE" } }
   }));
-  assert.throws(() => selectPublishableCatalog(changed), /identidad GAM sin decisión acreditada/);
+  assert.throws(() => approved.select(changed), /aprobación ausente/);
 });
 
 test("reconoce tanto las rutas Hyster/Yale anteriores como las actuales sin admitir categorías ajenas", () => {

@@ -5,6 +5,12 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const definitions = {
+  "campana:extraer": { entry: "cli/campaign-extract.js", usage: "campana:extraer [-- --nueva]", description: "Extraer los tres proveedores y preparar/revisar el lote aislado" },
+  "campana:intervenir": { entry: "cli/campaign-intervene.js", usage: "campana:intervenir -- gam --registrar <archivo.ts> [--registrar ...] [--aplicar]", description: "Simular o aplicar correcciones del lote actual y validar su derivado", requiresProvider: true },
+  "campana:entregar": { entry: "cli/campaign-deliver.js", usage: "campana:entregar", description: "Entregar ZIP comprobado con tres JSON en el Escritorio sin perder la versión anterior" },
+  "campana:finalizar": { entry: "cli/campaign-finalize.js", usage: "campana:finalizar [-- --simular]", description: "Acreditación editorial y selección por campaña sin introducir rutas ni SHA" },
+  "campana:revisar": { entry: "cli/campaign-review.js", usage: "campana:revisar", description: "Consultar Ready, Review y campos pendientes del lote actual" },
+  iniciar: { entry: "cli/start.js", usage: "iniciar", description: "Comprobar entorno y descubrir campaña sin extraer" },
   extraer: { entry: "cli/index.js", prefix: ["scrape"], usage: "extraer -- gam [--categoria venta] [--paginas 2]", description: "Extraer un proveedor", requiresProvider: true },
   "extraer:todos": { entry: "cli/index.js", prefix: ["batch"], usage: "extraer:todos -- [--proveedores gam,gomariz] [--simular]", description: "Extraer todos o varios proveedores" },
   "intervenir:preparar": { entry: "cli/prepare-intervention.js", usage: "intervenir:preparar -- gam --derivado <catalog-derived.json> --origen <original-catalog.json> [--simular]", description: "Preparar manualmente un catálogo intervenido", requiresProvider: true },
@@ -15,6 +21,7 @@ const definitions = {
   exportar: { entry: "cli/index.js", prefix: ["export"], usage: "exportar -- gam --companyID <id> --preparacion <archivo> --inventario <csv> --salida <xlsx> --simular", description: "Revisar o generar una exportación", requiresProvider: true },
   cobertura: { entry: "cli/review-coverage.js", usage: "cobertura -- --anterior <catalog.json> --actual <catalog.json> --simular", description: "Auditar ausencias y cambios de catálogo" },
   seleccionar: { entry: "cli/select-publishable.js", usage: "seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --lote <run.json> --borrador <acreditacion.json> (o --acreditacion <acreditacion.json> --simular)", description: "Seleccionar fichas publicables" },
+  "campana:limpiar": { entry: "cli/campaign-clean.js", usage: "campana:limpiar [-- --aplicar]", description: "Simular o cerrar la campaña ya entregada; protege scripts y trabajos pendientes" },
   "limpiar:almacen": { entry: "cli/storage-clean.js", usage: "limpiar:almacen [-- --aplicar]", description: "Simular limpieza; ejecutar solo con --aplicar", defaultSimulation: true },
   "normalizar:gam": { entry: "tools/gam/normalize-csv.js", usage: "normalizar:gam -- <entrada.csv> <salida.csv> [--informe <json>]", description: "Normalizar un CSV GAM" },
   "normalizar:gam:base": { entry: "tools/gam/normalize-csv.js", fixed: ["storage/scraped/gam/scrape-gam-marzo-2026-all.csv", "storage/normalized/gam/scrape-gam-marzo-2026-all.normalized.csv", "--report", "storage/normalized/gam/normalize.report.json"], usage: "normalizar:gam:base", description: "Normalizar las rutas GAM predeterminadas" },
@@ -83,6 +90,14 @@ const printHelp = (requested) => {
       console.log(`  ${command.padEnd(26)} ${value.description}`);
     }
     console.log("\nEJEMPLOS\n");
+    console.log("  npm run iniciar");
+    console.log("  npm run campana:extraer");
+    console.log("  npm run campana:revisar");
+    console.log("  npm run campana:intervenir -- gam --script storage/interventions/<id-lote>/scripts/cambio.ts");
+    console.log("  npm run campana:finalizar");
+    console.log("  npm run campana:entregar");
+    console.log("  npm run campana:limpiar");
+    console.log("  npm run limpiar:versionados  (limpia solo archivos históricos rastreados por Git)");
     console.log("  npm run extraer -- gam");
     console.log("  npm run extraer:todos -- --simular");
     console.log("  npm run preparar -- gam --origen storage/scraped/gam/archivo-catalog.json --simular");
@@ -91,7 +106,7 @@ const printHelp = (requested) => {
     console.log("\n  npm run ayuda -- preparar      Ayuda de un comando");
     console.log("  npm run ayuda -- opciones       Alias españoles de opciones");
     console.log("\n  npm ci instala dependencias sin extraer ni preparar catálogos.");
-    console.log("  npm run limpiar:almacen solo simula; --aplicar autoriza la limpieza.");
+    console.log("  npm run limpiar:almacen y campana:limpiar simulan; --aplicar autoriza la limpieza.");
     console.log("  npm test y npm run build siguen siendo compatibles con npm.");
     console.log("  Los comandos antiguos permanecen como alias de compatibilidad.");
     return true;
@@ -141,10 +156,10 @@ if (rawCommand === "ayuda") {
     fail("Falta el proveedor (gam, gomariz o mercaeleva)", command);
   } else if (command === "limpiar:almacen" && rawCommand !== "storage:clean" && normalized.includes("--aplicar") && normalized.includes("--dry-run")) {
     fail("No combines --aplicar y --simular", command);
-  } else if (normalized.includes("--aplicar") && ((command !== "limpiar:almacen" && command !== "intervenir") || rawCommand === "storage:clean")) {
-    fail("--aplicar solo corresponde a limpiar:almacen o intervenir", command);
+  } else if (normalized.includes("--aplicar") && ((command !== "limpiar:almacen" && command !== "campana:limpiar" && command !== "intervenir" && command !== "campana:intervenir") || rawCommand === "storage:clean")) {
+    fail("--aplicar solo corresponde a limpiar:almacen, campana:limpiar o intervenir", command);
   } else {
-    const cleaned = command === "intervenir" ? normalized : normalized.filter((argument) => argument !== "--aplicar");
+    const cleaned = command === "intervenir" || command === "campana:intervenir" || command === "campana:limpiar" ? normalized : normalized.filter((argument) => argument !== "--aplicar");
     if (selected.defaultSimulation && rawCommand !== "storage:clean" && !normalized.includes("--aplicar") && !cleaned.includes("--dry-run")) cleaned.push("--dry-run");
     const compile = spawnSync(process.execPath, [join(root, "scripts/run-build.mjs"), "--quiet"], {
       cwd: root, stdio: "inherit", windowsHide: true

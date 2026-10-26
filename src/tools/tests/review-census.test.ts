@@ -6,10 +6,10 @@ import test from "node:test";
 import { runReviewCensus } from "../review-census.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
 
-const catalog = "storage/scraped/gam/scrape-gam-marzo-2026-catalog.json";
-const preparation = "storage/prepared/gam/scrape-gam-marzo-2026-20261022-171552-preparation.json";
+const catalog = "src/testing/fixtures/census/gam/scrape-gam-marzo-2026-catalog.json";
+const preparation = "src/testing/fixtures/census/preparations/gam/scrape-gam-marzo-2026-census-preparation.json";
 
-test("la CLI genera el CSV trazable a partir de los archivos publicados sin modificar el catálogo", async () => {
+test("la CLI genera el censo desde una preparación reproducible sin modificar su catálogo", async () => {
   const dir = await mkdtemp(join(tmpdir(), "eq-review-census-"));
   try {
     const path = join(dir, "censo.csv");

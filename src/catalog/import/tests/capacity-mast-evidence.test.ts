@@ -8,8 +8,8 @@ import { resolveAttribute } from "../mapping/attribute-mapping.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const sourceGam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
-const sourceMercaeleva = await readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json");
+const sourceGam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
+const sourceMercaeleva = await readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json");
 const byReference = (provider: "gam" | "mercaeleva", reference: string): ProductRecord => {
   const source = provider === "gam" ? sourceGam : sourceMercaeleva;
   const record = source.products.find((product) => product.reference === reference);

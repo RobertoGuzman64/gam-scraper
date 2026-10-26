@@ -11,8 +11,8 @@ test("detecta las cuatro referencias GAM ausentes y sus URL sin perder otras", (
   const products = previous.products.filter((item) => !disappearing.has(item.reference ?? ""));
   const current = parseCanonicalCatalog({ ...previous, productCount: products.length, products });
   const comparison = compareCanonicalCoverage(previous, current);
-  assert.equal(comparison.previousCount, 1008);
-  assert.equal(comparison.currentCount, 1004);
+  assert.equal(comparison.previousCount, previous.productCount);
+  assert.equal(comparison.currentCount, previous.productCount - disappearing.size);
   assert.deepEqual(new Set(comparison.missing.map((product) => product.reference)), disappearing);
   assert.equal(comparison.added.length, 0);
   assert.equal(comparison.changed, 0);

@@ -8,7 +8,7 @@ import { describeHysterH35ftStockConflict } from "../mapping/providers/gam/hyste
 import { prepareImportBatch } from "../preparation/batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const get = (reference: string): ProductRecord => {
   const item = gam.products.find((product) => product.reference === reference);
   assert.ok(item, reference);

@@ -9,7 +9,7 @@ import { prepareProduct } from "../preparation/prepare-product.js";
 const catalog = await loadImportCatalog();
 const hours = catalog.attributes.find((attribute) => attribute.name === "Horas de uso" && attribute.type === "NUMBER");
 assert.ok(hours);
-const source = await readCanonicalCatalog(fileURLToPath(new URL("../../../../storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json", import.meta.url)));
+const source = await readCanonicalCatalog(fileURLToPath(new URL("../../../../src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json", import.meta.url)));
 const record = source.products.find((product) => product.reference === "M119-9334");
 assert.ok(record);
 

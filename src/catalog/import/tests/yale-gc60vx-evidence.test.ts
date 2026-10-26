@@ -7,7 +7,7 @@ import { reconcileGamVerifiedYaleGc60vx } from "../mapping/providers/gam/yale-gc
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const record = source.products.find((item) => item.reference === "2314");
 assert.ok(record);
 

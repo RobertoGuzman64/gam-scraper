@@ -8,7 +8,7 @@ import { reconcileGamVerifiedXcmg1823Model } from "../mapping/providers/gam/xcmg
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const canonical = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const canonical = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const record = canonical.products.find((product) => product.reference === "4751");
 assert.ok(record);
 

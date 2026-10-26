@@ -8,7 +8,7 @@ import { describeMercaelevaE48pPublicationConflict } from "../mapping/providers/
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const mercaeleva = await readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json");
+const mercaeleva = await readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json");
 const original = mercaeleva.products.find((product) => product.reference === "M827-8304");
 assert.ok(original);
 const load = catalog.attributes.find((attribute) => attribute.name === "Capacidad de carga");

@@ -9,7 +9,7 @@ import { SOURCE_CATEGORY_ISSUE, sourceCategoryQualityIssue } from "../mapping/so
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const power = catalog.attributes.find((attribute) => attribute.name === "Potencia" && attribute.unit_option === "kVA (grupos) / kW");
 assert.ok(power);
 const source = (reference: string): ProductRecord => {

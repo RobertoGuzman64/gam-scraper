@@ -1,51 +1,48 @@
 # Acreditación manual de una campaña completa
 
-La selección editorial de una campaña nueva no se desbloquea añadiendo hashes al código ni aceptando productos con incidencias sin decisión. El flujo nuevo exige un `run.json` de extracción global **completa**, catálogos canónicos de los tres proveedores con manifest y resumen válidos, y preparaciones validadas con manifest.
+## Objetivo
 
-El selector histórico permanece disponible para las cohortes previamente acreditadas. La vía nueva es independiente y no restaura fotografías, no transforma galerías ni modifica datos de origen.
+La acreditación editorial valida que los tres catálogos proceden del mismo lote completo y que sus preparaciones, decisiones e intervenciones son comprobables. Superar la validación técnica o tener cero incidencias `Review` **no autoriza por sí solo la publicación**. No añadir SHA fijos al código ni relajar los controles para forzar la selección.
 
-## Preparación
+## Recorrido ordinario sin rutas ni SHA manuales
 
-Después de extraer todos los proveedores, preparar y validar los tres catálogos, conservar las rutas exactas de sus archivos `*-preparation.json` y localizar el `storage/runs/<id>/run.json` de esa extracción. No mezclar lotes ni reutilizar una preparación antigua.
-
-En los comandos siguientes, sustituir los cuatro marcadores por las rutas existentes. Ejecutar primero:
+Después de `npm run campana:extraer` y de revisar las incidencias con `npm run campana:revisar`, ejecutar:
 
 ```powershell
-npm run seleccionar -- --gam <gam-preparation.json> --gomariz <gomariz-preparation.json> --mercaeleva <mercaeleva-preparation.json> --lote <run.json> --borrador <acreditacion-pendiente.json>
+npm run campana:finalizar
 ```
 
-El borrador se escribe solo si la ruta no existe. Contiene el ID del lote, las huellas SHA-256 de los catálogos y preparaciones, el estado `approved: false` y las fichas cuya publicación está bloqueada por `review` o contradicción de identidad.
+El comando identifica el lote vigente por `run.json`, verifica catálogos originales y preparaciones de **GAM, Gomariz y Mercaeleva**, y genera el borrador asociado a sus huellas en:
 
-## Revisión humana
+`storage/campanas/<id-lote>/editorial/acreditacion-<sha256>.json`
 
-Abrir el borrador y revisar cada producto afectado en su fuente vigente. Cuando proceda **excluir** una ficha, completar su `decision` con `"excluir"`, una `reason` específica y `evidenceUrls` con HTTPS que incluyan la URL actual del producto. No cambiar referencias, estados, `issues`, recuentos ni hashes; esos valores se revalidan contra los originales.
+El borrador contiene `version`, `runId`, `approved: false`, `approvalReason: null`, las `sources` verificadas y las decisiones `exclusions` pendientes. Si cambian las preparaciones, incluso por una intervención, **cambia el borrador**: no se reutiliza una aprobación anterior.
 
-Solo tras revisar todas las exclusiones y el conjunto global, establecer `approved: true` y escribir un `approvalReason` específico (mínimo 15 caracteres). Esta aprobación es manual: no la hace el scraper, ni la implica superar `npm test`.
+## Revisión y decisión humana
 
-Si una incidencia no está suficientemente acreditada, **no aprobar** la campaña. No modificar las URL de imágenes ni recuperar imágenes de campañas anteriores.
+Contrastar con los portales vigentes todos los bloqueos editoriales indicados. Cada decisión requerida conserva `providerId`, `reference`, `sourceUrl`, `status` e `issues`. No alterar esas propiedades ni `runId`, `sources` o las huellas.
 
-## Simulación y entrega
+- Para `review` o contradicción de identidad: establecer `decision: "excluir"`, `reason` concreto de al menos 15 caracteres y `evidenceUrls` HTTPS que incluya la URL vigente de la ficha. No convertir el registro a `ready` artificialmente.
+- Para `intervention` de una ficha que permanece `ready`: decidir expresamente `"incluir"` o `"excluir"`, con el motivo y la misma exigencia de evidencia. Un cambio técnico acreditado no implica aprobación editorial automática.
+- Solo cuando se haya revisado el conjunto, introducir `approvalReason` específico de al menos 15 caracteres y `approved: true`. Si falta evidencia, dejar la campaña pendiente.
+
+Sin exclusiones, sigue siendo necesaria la revisión y aprobación global. Tras guardarla, ejecutar:
 
 ```powershell
-npm run seleccionar -- --gam <gam-preparation.json> --gomariz <gomariz-preparation.json> --mercaeleva <mercaeleva-preparation.json> --lote <run.json> --acreditacion <acreditacion-aprobada.json> --simular
+npm run campana:finalizar -- --simular
+npm run campana:finalizar
+npm run campana:entregar
 ```
 
-Tras revisar el resumen, emitir los JSON en un directorio nuevo:
+El comando de simulación no escribe resultados. La finalización aprobada genera bajo `storage/campanas/<id-lote>/seleccion/<sha256>/` los tres JSON publicables y `selection.json`, **solo para uso interno**. `campana:entregar` valida esa selección y produce en el Escritorio un ZIP comprobado con exactamente los tres JSON fechados, sin manifests ni `selection.json`. La entrega anterior del mismo día se conserva cuando el intento nuevo falla.
 
-```powershell
-npm run seleccionar -- --gam <gam-preparation.json> --gomariz <gomariz-preparation.json> --mercaeleva <mercaeleva-preparation.json> --lote <run.json> --acreditacion <acreditacion-aprobada.json> --directorio-salida <directorio-nuevo>
-```
+## Seguridad y límites
 
-La salida son `gam-publishable.json`, `gomariz-publishable.json`, `mercaeleva-publishable.json` y `selection.json`. Este último incluye la huella SHA-256 de la aprobación, el lote y las huellas de las preparaciones utilizadas.
+- No utilizar un lote parcial, catálogos mezclados o manifiestos alterados. Las preparaciones deben quedar vinculadas al mismo lote completo.
+- Nunca incluir por defecto una ficha `review`, inventar atributos o restaurar galerías históricas.
+- Las intervenciones conservan original, derivado, SHA del plan y expediente propios. Sus productos modificados requieren decisión editorial nueva.
+- Los borradores y aprobaciones permanecen fuera del código y de Git, bajo `storage/`. Tras entregar, `npm run campana:limpiar` simula la limpieza; `-- --aplicar` requiere que la entrega siga verificable.
 
-Se rechazan lotes incompletos, catálogos no correspondientes al lote, preparaciones alteradas, exclusiones nuevas sin acreditar y aprobaciones de otras campañas. La acreditación **no** hace pasar una ficha `review` a `ready`: la excluye de la entrega hasta que se resuelva su problema.
+Las operaciones avanzadas `npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --lote <run.json> --borrador <acreditacion.json>` y sus opciones `--acreditacion` / `--simular` siguen disponibles para mantenimiento o diagnóstico con rutas explícitas. **No son necesarias en el recorrido ordinario.**
 
-Las preparaciones derivadas de intervenciones manuales requieren acreditación explícita de sus cambios mediante la misma vía, después de comprobar origen, expediente, reglas y huellas. No eludir esa barrera modificando un archivo de procedencia.
-
-La acreditación y sus decisiones se conservan como evidencias de la campaña, **fuera del código permanente**. No copiar el borrador ni los JSON de aprobación al repositorio como reglas de negocio.
-
-## Preparaciones con intervención manual
-
-La selección admite también una preparación intervenida que esté completamente ligada al catálogo original del lote y que haya superado las validaciones de procedencia, reglas y huellas. Los productos intervenidos que quedan listos aparecen en el borrador con `status: "intervention"`; para publicarlos hay que decidir individualmente `"incluir"`, con motivo y evidencia vigentes. Si mantienen problemas de calidad o identidad, siguen requiriendo exclusión; no hay promoción automática de `review` a `ready`. Los datos originales permanecen intactos.
-
-Procedimiento y comandos: [Composición de intervenciones manuales](COMPOSICION_INTERVENCIONES.md).
+Consultar [Campañas](CAMPANAS.md), [Intervenciones](INTERVENCIONES_CAMPANA.md), [Validación](VALIDACION.md) y [Reglas de datos](SCRAPER_DATA_RULES.md).

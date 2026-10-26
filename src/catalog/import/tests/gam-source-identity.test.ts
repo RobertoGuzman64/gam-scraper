@@ -17,7 +17,7 @@ import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../storage/scraped/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
+  "../../../../src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
 )));
 const byReference = (reference: string): ProductRecord => requireProductReference(source.products, reference);
 
@@ -90,5 +90,5 @@ test("los rechazos técnicos múltiples preservan las referencias pendientes", (
   const unverified = prepareProduct({ ...byReference("6236"), longDescription: "Descripción técnica no acreditada" }, catalog);
   assert.equal(unverified.status, "review");
   assert.ok(unverified.issues.filter((issue) => issue.startsWith("Atributo rechazado por seguridad:")).length >= 4);
-  assert.equal(batch.totals.ready + batch.totals.review, 1008);
+  assert.equal(batch.totals.ready + batch.totals.review, source.products.length);
 });

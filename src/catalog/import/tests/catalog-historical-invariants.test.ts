@@ -5,12 +5,12 @@ import { loadImportCatalog } from "../../../infrastructure/filesystem/import-cat
 import { prepareImportBatch } from "../preparation/batch-identity.js";
 
 const sourcePaths = [
-  "storage/scraped/gam/scrape-gam-marzo-2026-catalog.json",
-  "storage/scraped/gomariz/scrape-gomariz-catalog.json",
-  "storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json"
+  "src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json",
+  "src/testing/fixtures/gomariz/scrape-gomariz-catalog.json",
+  "src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json"
 ] as const;
 
-test("La cohorte histórica conserva las 1369 referencias, las reconciliaciones y los tres bloqueos reales", async () => {
+test("Las muestras de los tres proveedores preservan las reconciliaciones y bloqueos acreditados", async () => {
   const [catalog, sources] = await Promise.all([
     loadImportCatalog(),
     Promise.all(sourcePaths.map((path) => readCanonicalCatalog(path)))
@@ -18,15 +18,15 @@ test("La cohorte histórica conserva las 1369 referencias, las reconciliaciones 
   const batches = sources.map(({ products }) => prepareImportBatch(products, catalog));
 
   assert.deepEqual(batches.map(({ totals }) => totals), [
-    { ready: 1006, review: 2 },
-    { ready: 143, review: 0 },
-    { ready: 217, review: 1 }
+    { ready: sources[0]!.products.length - 2, review: 2 },
+    { ready: sources[1]!.products.length, review: 0 },
+    { ready: sources[2]!.products.length - 1, review: 1 }
   ]);
 
   const all = batches.flatMap(({ products }) => products);
-  assert.equal(all.length, 1369);
-  assert.equal(new Set(all.map(({ product }) => `${product.providerId}:${product.reference}`)).size, 1369);
-  assert.equal(all.filter(({ status }) => status === "ready").length, 1366);
+  assert.equal(all.length, sources.reduce((sum, source) => sum + source.productCount, 0));
+  assert.equal(new Set(all.map(({ product }) => `${product.providerId}:${product.reference}`)).size, all.length);
+  assert.equal(all.filter(({ status }) => status === "ready").length, all.length - 3);
   assert.ok(all.filter(({ status }) => status === "ready").every(({ issues }) => issues.length === 0));
 
   const get = (providerId: string, reference: string) => {

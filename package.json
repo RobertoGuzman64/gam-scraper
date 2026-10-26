@@ -7,6 +7,13 @@
     "node": ">=18.18.0"
   },
   "scripts": {
+    "campana:extraer": "node scripts/herramientas.mjs campana:extraer",
+    "campana:revisar": "node scripts/herramientas.mjs campana:revisar",
+    "campana:intervenir": "node scripts/herramientas.mjs campana:intervenir",
+    "campana:entregar": "node scripts/herramientas.mjs campana:entregar",
+    "campana:limpiar": "node scripts/herramientas.mjs campana:limpiar",
+    "campana:finalizar": "node scripts/herramientas.mjs campana:finalizar",
+    "iniciar": "node scripts/herramientas.mjs iniciar",
     "ayuda": "node scripts/herramientas.mjs ayuda",
     "extraer": "node scripts/herramientas.mjs extraer",
     "extraer:todos": "node scripts/herramientas.mjs extraer:todos",
@@ -16,6 +23,8 @@
     "cobertura": "node scripts/herramientas.mjs cobertura",
     "seleccionar": "node scripts/herramientas.mjs seleccionar",
     "limpiar:almacen": "node scripts/herramientas.mjs limpiar:almacen",
+    "limpiar:versionados": "node scripts/retirar-generados-git.mjs",
+    "intervencion:conservar": "node scripts/conservar-intervencion.mjs",
     "normalizar:gam": "node scripts/herramientas.mjs normalizar:gam",
     "normalizar:gam:base": "node scripts/herramientas.mjs normalizar:gam:base",
     "convertir:gam": "node scripts/herramientas.mjs convertir:gam",

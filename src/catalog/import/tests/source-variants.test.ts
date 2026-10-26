@@ -9,9 +9,9 @@ import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
 const [gam, gomariz, mercaeleva] = await Promise.all([
-  readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json"),
-  readCanonicalCatalog("storage/scraped/gomariz/scrape-gomariz-catalog.json"),
-  readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json")
+  readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json"),
+  readCanonicalCatalog("src/testing/fixtures/gomariz/scrape-gomariz-catalog.json"),
+  readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json")
 ]);
 const source = (reference: string): ProductRecord => {
   const record = gam.products.find((product) => product.reference === reference);

@@ -9,7 +9,7 @@ import { gamBasketDimensionsFromRepeatedFragments } from "../mapping/providers/g
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const dimension = catalog.attributes.find((entry) => entry.name === "Dimensiones de la cesta");
 assert.ok(dimension);
 const reference = (code: string): ProductRecord => requireProductReference(source.products, code);

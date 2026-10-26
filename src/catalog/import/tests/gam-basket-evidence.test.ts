@@ -8,7 +8,7 @@ import { resolveAttribute } from "../mapping/attribute-mapping.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const dimension = catalog.attributes.find((item) => item.name === "Dimensiones de la cesta");
 const rotation = catalog.attributes.find((item) => item.name === "Rotación de torreta");
 assert.ok(dimension);

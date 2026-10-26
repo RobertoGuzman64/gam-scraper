@@ -9,7 +9,7 @@ import { prepareImportBatch } from "../preparation/batch-identity.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog("storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json");
 const original = source.products.find((product) => product.reference === "M104-0836");
 const unresolved = source.products.find((product) => product.reference === "M827-8304");
 const mast = catalog.attributes.find((attribute) => attribute.name === "Tipo de mástil" && attribute.type === "SELECT");
@@ -70,9 +70,9 @@ test("una única ficha Mercaeleva recuperada; M827 conserva ambos bloqueos", () 
     assert.strictEqual(reconcileMercaelevaVerifiedLindeE16pMast(item), item, item.reference ?? "");
   }
   const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: 217, review: 1 });
-  assert.equal(batch.products.length, 218);
-  assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, 218);
+  assert.deepEqual(batch.totals, { ready: source.products.length - 1, review: 1 });
+  assert.equal(batch.products.length, source.products.length);
+  assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, source.products.length);
   assert.equal(batch.products.find((item) => item.product.reference === "M104-0836")?.status, "ready");
   const remaining = batch.products.find((item) => item.product.reference === "M827-8304");
   assert.ok(remaining);

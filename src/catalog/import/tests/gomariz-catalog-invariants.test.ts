@@ -8,7 +8,7 @@ import { prepareCached } from "./prepare-cached.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 
 const catalog = await loadImportCatalog();
-const originalCatalogFile = new URL("../../../../storage/scraped/gomariz/scrape-gomariz-catalog.json", import.meta.url);
+const originalCatalogFile = new URL("../../../../src/testing/fixtures/gomariz/scrape-gomariz-catalog.json", import.meta.url);
 const originalProducts = (await readCanonicalCatalog(fileURLToPath(originalCatalogFile))).products;
 const value = (record: ProductRecord, name: string): string | number | boolean | null => {
   const attribute = catalog.attributes.find((item) => item.name === name);

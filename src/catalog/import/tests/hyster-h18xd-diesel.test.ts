@@ -7,7 +7,7 @@ import { reconcileGamVerifiedHysterH18xdDiesel } from "../mapping/providers/gam/
 import { sourceCategoryQualityIssue } from "../mapping/source-category-quality.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
-const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const catalog = await loadImportCatalog();
 const record = source.products.find((item) => item.reference === "2071");
 assert.ok(record);

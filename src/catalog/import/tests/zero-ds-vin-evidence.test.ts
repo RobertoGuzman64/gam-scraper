@@ -8,7 +8,7 @@ import { reconcileGamVerifiedZeroSerial, verifiedZeroMisattributedSerial } from 
 import { prepareImportBatch } from "../preparation/batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const get = (reference: string): ProductRecord => {
   const record = gam.products.find((product) => product.reference === reference);
   assert.ok(record, reference);

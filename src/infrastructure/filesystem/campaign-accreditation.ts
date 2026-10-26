@@ -33,9 +33,9 @@ const isCompleteBatch = (value: unknown): value is BatchReport => {
 const interventionForPreparation = async (
   file: string,
   originalFile: string,
-  preparation: OfflinePreparation
+  preparation: OfflinePreparation, workspaceRoot: string
 ): Promise<AccreditedSource["intervention"]> => {
-  const root = await realpath(resolve("storage", "interventions"));
+  const root = await realpath(resolve(workspaceRoot, "storage", "interventions"));
   const realFile = await realpath(file);
   const inputDir = dirname(realFile);
   const resultDir = dirname(inputDir);
@@ -67,7 +67,8 @@ const interventionForPreparation = async (
 export const readCampaignAccreditationSources = async (
   runPath: string,
   preparations: readonly OfflinePreparation[],
-  paths: readonly { readonly providerId: string; readonly path: string }[]
+  paths: readonly { readonly providerId: string; readonly path: string }[],
+  workspaceRoot = process.cwd()
 ): Promise<{ readonly runId: string; readonly sources: readonly AccreditedSource[] }> => {
   const report: unknown = JSON.parse(await readFile(runPath, "utf8"));
   if (!isCompleteBatch(report)) {
@@ -80,7 +81,7 @@ export const readCampaignAccreditationSources = async (
     if (!run || !preparation || sources.some((item) => item.providerId === path.providerId)) {
       throw new Error(`Acreditación editorial: proveedor no acreditado (${path.providerId})`);
     }
-    const catalogPath = resolve(run.outputDir, `${run.outputPrefix}-catalog.json`);
+    const catalogPath = resolve(workspaceRoot, run.outputDir, `${run.outputPrefix}-catalog.json`);
     const catalog = await readCanonicalCatalog(catalogPath);
     const catalogSha256 = sha256(await readFile(catalogPath, "utf8"));
     if (catalog.providerId !== path.providerId || catalog.prefix !== run.outputPrefix ||
@@ -91,7 +92,7 @@ export const readCampaignAccreditationSources = async (
       throw new Error(`Acreditación editorial: catálogo o preparación ajena al lote (${path.providerId})`);
     }
     const intervention = preparation.source.intervention === undefined ? undefined :
-      await interventionForPreparation(path.path, catalogPath, preparation);
+      await interventionForPreparation(path.path, catalogPath, preparation, workspaceRoot);
     if ((intervention === undefined && preparation.source.catalogSha256 !== catalogSha256) ||
       (intervention !== undefined && intervention.sourceCatalogSha256 !== catalogSha256)) {
       throw new Error(`Acreditación editorial: catálogo o preparación ajena al lote (${path.providerId})`);

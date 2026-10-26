@@ -7,7 +7,7 @@ import { sourceCategoryQualityIssue, SOURCE_CATEGORY_ISSUE } from "../mapping/so
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const skyDeck = source.products.find((item) => item.reference === "2364");
 assert.ok(skyDeck);
 

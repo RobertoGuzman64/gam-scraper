@@ -8,7 +8,7 @@ import { resolveAttribute } from "../mapping/attribute-mapping.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const attribute = (name: string) => {
   const result = catalog.attributes.find((entry) => entry.name === name);
   assert.ok(result, name);

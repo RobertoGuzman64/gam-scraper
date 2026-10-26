@@ -9,7 +9,7 @@ import { verifiedYaleErp35vlSerialOwner } from "../mapping/providers/gam/yale-er
 import { prepareImportBatch } from "../preparation/batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const gam = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const byReference = (reference: string): ProductRecord => requireProductReference(gam.products, reference);
 const older = byReference("6835");
 const accredited = byReference("6858");

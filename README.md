@@ -28,29 +28,39 @@ npm run ayuda
 
 `npm ci` **solo instala dependencias**: el script reservado `prepare` de npm no se utiliza para preparar catálogos. Los comandos operativos invocan su compilación interna cuando es necesaria. `storage/` contiene estado de ejecución y está excluido de Git.
 
-## Comandos principales
+## Uso habitual: de una instalación limpia al ZIP final
 
-Ejecutar desde la raíz del repositorio. El separador `--` permite pasar argumentos a la herramienta.
+Ejecutar desde la raíz del repositorio:
 
-| Comando                                                                                                                                         | Qué hace                                                                                 |
-| ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `npm run ayuda`                                                                                                                                 | Enumera las herramientas sin compilar.                                                   |
-| `npm run ayuda -- opciones`                                                                                                                     | Muestra las opciones españolas y sus equivalentes.                                       |
-| `npm run ayuda -- preparar`                                                                                                                     | Muestra el uso de un comando concreto.                                                   |
-| `npm run extraer:todos`                                                                                                                         | **Campaña ordinaria: extrae todos los proveedores registrados.**                         |
-| `npm run extraer -- gam`                                                                                                                        | Ejecución individual auxiliar para diagnóstico; admite también `gomariz` y `mercaeleva`. |
-| `npm run extraer:todos -- --simular`                                                                                                            | Muestra el plan del lote sin ejecutar extracciones.                                      |
-| `npm run extraer:todos -- --proveedores gam,gomariz`                                                                                            | Lote parcial **solo auxiliar**; no acredita una campaña completa.                        |
-| `npm run preparar -- gam --origen <catalogo-catalog.json> --simular`                                                                            | Prepara sin escribir una nueva salida.                                                   |
-| `npm run validar -- gam`                                                                                                                        | Comprueba una publicación del proveedor.                                                 |
-| `npm run cobertura -- --anterior <anterior-catalog.json> --actual <actual-catalog.json> --simular`                                              | Analiza ausencias y cambios sin crear informe.                                           |
-| `npm run seleccionar -- --gam <gam-preparation.json> --gomariz <gomariz-preparation.json> --mercaeleva <mercaeleva-preparation.json> --simular` | Simula la selección editorial.                                                           |
-| `npm run limpiar:almacen`                                                                                                                       | **Solo simula** la limpieza.                                                             |
-| `npm run exportar -- --help`                                                                                                                    | Consulta el contrato de exportación opcional.                                            |
+```powershell
+npm ci
+npm run iniciar
+npm run campana:extraer
+npm run campana:revisar
+npm run campana:finalizar
+```
 
-**Campañas nuevas:** ejecutar siempre `npm run extraer:todos` sin `--proveedores`, revisar que **todos** los proveedores registrados han completado el lote y seguir el [protocolo integral de campañas](docs/CAMPANAS.md). Las opciones por proveedor o subconjunto se reservan a diagnóstico y mantenimiento. **Precauciones:** `--paginas` limita la extracción y **no** acredita cobertura completa. `limpiar:almacen` solo elimina cuando recibe `--aplicar`; no usar esa opción sin revisar previamente la simulación. La publicación editorial requiere además las evidencias y opciones de cobertura que correspondan a los datos de entrada.
+`campana:extraer` extrae los tres proveedores en una campaña aislada y prepara y valida los catálogos; al terminar ya muestra las incidencias. `campana:revisar` permite consultarlas otra vez. **No hay que suministrar JSON anteriores ni buscar rutas o huellas manualmente.** Si una campaña anterior falló, revisarla primero o iniciar deliberadamente otra con `npm run campana:extraer -- --nueva`.
 
-Los comandos ingleses anteriores (`scrape`, `validate`, `prepare:catalog`, `select:publishable`, etc.) continúan disponibles por compatibilidad; se recomiendan los españoles. Para conocer opciones especializadas, usar `npm run ayuda` y la ayuda del comando.
+`campana:finalizar` crea un borrador en `storage/campanas/<id-lote>/editorial/acreditacion-<sha256>.json`. Antes de publicar, una persona debe revisar las decisiones y sus evidencias, rellenar `approvalReason`, las exclusiones o inclusiones necesarias y marcar `approved: true`. Después:
+
+```powershell
+npm run campana:finalizar
+npm run campana:entregar
+npm run campana:limpiar
+```
+
+`campana:entregar` genera en el Escritorio `equipzilla-AAAA-MM-DD.zip` con **exactamente tres JSON**: `gam-AAAA-MM-DD.json`, `gomariz-AAAA-MM-DD.json` y `mercaeleva-AAAA-MM-DD.json`. La entrega solo se sustituye tras comprobar el ZIP nuevo. `campana:limpiar` **simula** la limpieza; cuando el ZIP esté comprobado y no se prevean más correcciones del lote, `npm run campana:limpiar -- --aplicar` cierra su trabajo conservando el ZIP y los scripts registrados.
+
+Si una ficha necesita una corrección puntual acreditada, antes de finalizar puede utilizarse `npm run campana:intervenir -- gam --registrar <archivo.ts>` para simular y, después de revisar los cambios, repetir con `--aplicar`. No se hacen cambios ni aprobaciones editoriales automáticas. Ver [Protocolo completo](docs/CAMPANAS.md), [Intervenciones](docs/INTERVENCIONES_CAMPANA.md) y [Acreditación](docs/ACREDITACION_CAMPANA.md).
+
+### Otros comandos disponibles
+
+- `npm run ayuda` y `npm run ayuda -- <comando>`: ayuda desde la terminal.
+- `npm run build` y `npm test`: compilación y pruebas del repositorio.
+- `npm run extraer:todos`, `extraer`, `preparar`, `validar`, `seleccionar`, `cobertura` e `intervenir`: operaciones avanzadas o de compatibilidad, no pasos obligatorios para la entrega habitual.
+- `npm run limpiar:almacen`: retención anterior, distinta del cierre de campaña.
+- `npm run limpiar:versionados`: simulación de retirada del índice Git de históricos rastreados; solo actúa con `-- --aplicar`.
 
 ### Herramientas complementarias
 
@@ -70,12 +80,16 @@ Las operaciones GAM con rutas preconfiguradas son **herramientas de compatibilid
 
 ## Dónde están los resultados
 
-- `storage/scraped/<proveedor>/`: catálogo canónico, CSV, preparación de publicación, resúmenes, cambios, errores, snapshots y manifests de integridad.
-- `storage/prepared/<proveedor>/`: preparación offline, cuando se utiliza esa operación.
-- `storage/runs/`: resultados y logs de lotes.
-- `data/category/` y `data/import/`: snapshots versionados del esquema de destino usados por los mappers.
+- `storage/runs/<id-lote>/run.json`: evidencia del lote y estado por proveedor.
+- `storage/scraped/campanas/<id-extraccion>/<proveedor>/`: catálogos canónicos, manifests y diagnósticos de la extracción aislada.
+- `storage/campanas/<id-lote>/<proveedor>/`: preparaciones validadas por la revisión offline.
+- `storage/campanas/<id-lote>/editorial/`: borradores y aprobación de la campaña.
+- `storage/campanas/<id-lote>/seleccion/`: selección interna acreditada (no se entrega completa al usuario).
+- `storage/interventions/<id-lote>/scripts/`: scripts puntuales registrados y protegidos de la limpieza de campaña.
+- **Escritorio del usuario:** `equipzilla-AAAA-MM-DD.zip` con los tres JSON publicables, sin los archivos internos.
+- `data/category/` y `data/import/`: referencias versionadas necesarias para los mapeadores.
 
-Los **prefijos de archivo** dependen de la configuración y de las opciones de ejecución. No deducir el catálogo vigente por un nombre de fichero: identificarlo por sus manifests y procedencia. No sobrescribir ni borrar catálogos originales para corregir fichas editoriales.
+Los nombres individuales de catálogo pueden variar por proveedor: `run.json`, la procedencia y los manifests determinan qué datos pertenecen a una campaña. `storage/` es efímero y está excluido de Git. No borrar originales para corregir decisiones editoriales.
 
 ## Cómo funciona
 

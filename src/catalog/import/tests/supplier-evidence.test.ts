@@ -10,10 +10,10 @@ import { prepareCached } from "./prepare-cached.js";
 
 const catalog = await loadImportCatalog();
 const gomariz = (await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../storage/scraped/gomariz/scrape-gomariz-catalog.json", import.meta.url
+  "../../../../src/testing/fixtures/gomariz/scrape-gomariz-catalog.json", import.meta.url
 )))).products;
 const mercaeleva = (await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json", import.meta.url
+  "../../../../src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json", import.meta.url
 )))).products;
 const gomarizByReference = new Map(gomariz.map((record) => [record.reference, record]));
 const mercaelevaByReference = new Map(mercaeleva.map((record) => [record.reference, record]));

@@ -8,7 +8,7 @@ import { sourceCategoryQualityIssue } from "../mapping/source-category-quality.j
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const machine = (reference: string): ProductRecord => {
   const record = source.products.find((item) => item.reference === reference);
   assert.ok(record, reference);

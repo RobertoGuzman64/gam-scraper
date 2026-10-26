@@ -10,10 +10,10 @@ import { mercaelevaMislabelledCapacity } from "../mapping/providers/mercaeleva/h
 
 const catalog = await loadImportCatalog();
 const gomariz = (await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../storage/scraped/gomariz/scrape-gomariz-catalog.json", import.meta.url
+  "../../../../src/testing/fixtures/gomariz/scrape-gomariz-catalog.json", import.meta.url
 )))).products;
 const mercaeleva = (await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../storage/scraped/mercaeleva/scrape-mercaeleva-catalog.json", import.meta.url
+  "../../../../src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json", import.meta.url
 )))).products;
 const toyota = mercaeleva.find((record) => record.reference === "M433-5206");
 if (!toyota) throw new Error("Falta M433-5206");

@@ -8,7 +8,7 @@ import { reconcileGamVerifiedXcmg1523Model } from "../mapping/providers/gam/xcmg
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const records = ["4750", "4802"].map((reference) => {
   const record = source.products.find((product) => product.reference === reference);
   assert.ok(record, reference);

@@ -8,7 +8,7 @@ import { resolveAttribute } from "../mapping/attribute-mapping.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const capacity = catalog.attributes.find((attribute) => attribute.name === "Capacidad de carga");
 assert.ok(capacity);
 const reference = (id: string): ProductRecord => requireProductReference(source.products, id);

@@ -7,7 +7,7 @@ import { gamElevationSourceIdentityConflict } from "../mapping/providers/gam/ele
 import { reconcileGamVerifiedSnorkelS4732e } from "../mapping/providers/gam/snorkel-s4732e-evidence.js";
 import { prepareProduct } from "../preparation/prepare-product.js";
 
-const source = await readCanonicalCatalog("storage/scraped/gam/scrape-gam-marzo-2026-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
 const catalog = await loadImportCatalog();
 const record = source.products.find((item) => item.reference === "6236");
 assert.ok(record);
