@@ -9,6 +9,7 @@
   "scripts": {
     "iniciar": "node scripts/tooling.mjs iniciar",
     "estado": "node scripts/tooling.mjs estado",
+    "huecos": "node scripts/tooling.mjs huecos",
     "extraer": "node scripts/tooling.mjs extraer",
     "revisar": "node scripts/tooling.mjs revisar",
     "intervenir": "node scripts/tooling.mjs intervenir",

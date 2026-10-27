@@ -41,6 +41,32 @@ export const gamUnspecifiedTurningRadius = (record: ProductRecord): boolean => {
 
 export const applyGamAliasesDetailed = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): AliasOutcome => {
   if (attribute.name === "Dimensiones de la cesta") keys.add(fold("Dimensiones Cesta"));
+  if (attribute.name === "Batería (V / Ah)" && attribute.type === "TEXT" && attribute.unit_option === "V / Ah" &&
+    !Object.keys(record.specs ?? {}).some((key) =>
+      keys.has(fold(key)) || keys.has(fold(SPEC_KEY_NORMALIZATION[fold(key)] ?? key)))) {
+    const published = record.specs?.["Capacidad de la batería"];
+    const raw = published === undefined ? null : scalar(published);
+    if (typeof raw === "string") {
+      const match = raw.trim().match(/^([1-9]\d*)\s*V\s*\/\s*([1-9]\d*)\s*Ah\s*\(\s*V\s*\/\s*Ah\s*\)$/i);
+      if (match?.[1] && match[2]) candidates.push({ key: attribute.name, value: `${match[1]} V / ${match[2]} Ah` });
+    }
+  }
+  if (record.providerId === "gam" && attribute.name === "Motorización / Energía" &&
+    attribute.type === "SELECT" && fold(attribute.unit_option) === "electrico") {
+    const motor = record.specs?.["Tipo motor"];
+    const hasDirectValue = Object.keys(record.specs ?? {}).some((key) =>
+      keys.has(fold(key)) || keys.has(fold(SPEC_KEY_NORMALIZATION[fold(key)] ?? key)));
+    let trustedSource = false;
+    try {
+      const url = new URL(record.url);
+      trustedSource = url.hostname === "online.gamrentals.com" && url.pathname.startsWith("/es/");
+    } catch { trustedSource = false; }
+    if (trustedSource && typeof motor === "string" && fold(motor) === "electrico" &&
+      record.specs?.["Motorización"] === undefined && !hasDirectValue &&
+      !/\b(?:diesel|glp|gasolina|hibrid[oa]|manual)\b/.test(fold(`${record.title ?? ""} ${record.shortDescription ?? ""}`))) {
+      candidates.push({ key: attribute.name, value: "Eléctrico" });
+    }
+  }
   if (["Centro de carga", "Elevación libre", "Radio de giro"].includes(attribute.name)) {
     keys.add(fold(`${attribute.name} (mm)`));
   }

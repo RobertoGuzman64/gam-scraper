@@ -121,3 +121,21 @@ test("GAM manutención: capacidad máxima genérica no identifica la configuraci
   assert.equal(resolved({ ...product, longDescription: "La HYSTER J3.0UTL tiene una capacidad nominal de carga de 3000 kg." }, "Capacidad de carga"), 3000);
   assert.equal(resolved({ ...product, shortDescription: "HYSTER J3.0UTL: capacidad de carga de 3000 kg" }, "Capacidad de carga"), 3000);
 });
+
+test("GAM energía: utiliza un motor eléctrico literal sin introducir conflictos ni sustituir valores directos", () => {
+  const source = example("Plataforma elevadora BRAVI modelo", "Ficha del equipo", { "Tipo motor": "Eléctrico" });
+  assert.equal(resolved(source, "Motorización / Energía"), "Eléctrico");
+  for (const invalid of [
+    { ...source, specs: { "Tipo motor": "Diésel" } },
+    { ...source, specs: { "Tipo motor": "Eléctrico / Diésel" } },
+    { ...source, specs: { "Tipo motor": "Eléctrico", "Motorización": "GLP" } },
+    { ...source, title: "Plataforma elevadora diésel BRAVI" },
+    { ...source, shortDescription: "Motor de gasolina" },
+    { ...source, url: "https://example.com/es/plataformas-elevadoras-bravi/2155" },
+    { ...source, providerId: "gomariz" }
+  ]) {
+    assert.equal(resolved(invalid, "Motorización / Energía"), null);
+  }
+  assert.equal(resolved({ ...source, specs: { "Tipo motor": "Eléctrico", "Motorización / Energía": "Eléctrico" } },
+    "Motorización / Energía"), "Eléctrico");
+});

@@ -4,6 +4,7 @@ import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
 import { resolveAttribute, resolveAttributeValue } from "../mapping/attribute-mapping.js";
 import { productAttributes } from "../preparation/product-attributes.js";
+import { prepareProduct } from "../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
 const attribute = (name: string) => {
@@ -85,4 +86,58 @@ test("preparación: conserva las ausencias antiguas y expone su clasificación i
   assert.ok(result.missingRequiredDetails.some((item) => item.attributeID === target.id && item.name === target.name && item.status === "not_observed"));
   assert.deepEqual(result.missingRequiredDetails.map((item) => item.name), result.missingRequired);
   assert.ok(result.missingRequiredDetails.every((item) => !result.attributes.some((entry) => entry.attributeID === item.attributeID)));
+});
+
+
+test("GAM: recupera solo un voltaje y una capacidad de batería explícitos", () => {
+  const target = attribute("Batería (V / Ah)");
+  assert.deepEqual(resolveAttribute(gamRecord({ "Capacidad de la batería": "48V / 420Ah(V/Ah)" }), target),
+    { status: "resolved", value: "48 V / 420 Ah" });
+  assert.deepEqual(resolveAttribute(gamRecord({ "Capacidad de la batería": " 80 V / 205 Ah ( V / Ah ) " }), target),
+    { status: "resolved", value: "80 V / 205 Ah" });
+  for (const raw of ["24V / 735-875Ah(V/Ah)", "48V / 420Ah(V/Ah)(V/Ah)",
+    "Li-ion 48V / 420Ah(V/Ah)", "48V / 420Ah", "0V / 420Ah(V/Ah)", "48V / 0Ah(V/Ah)"]) {
+    assert.deepEqual(resolveAttribute(gamRecord({ "Capacidad de la batería": raw }), target),
+      { status: "not_observed", value: null }, raw);
+  }
+  assert.deepEqual(resolveAttribute(gamRecord({ "Capacidad de la batería": ["48V / 420Ah(V/Ah)", "80V / 205Ah(V/Ah)"] }), target),
+    { status: "not_observed", value: null });
+});
+
+test("GAM: el dato directo de batería conserva prioridad y el candidato no afecta a otros proveedores", () => {
+  const target = attribute("Batería (V / Ah)");
+  const specs = { "Batería (V / Ah)": "72 V / 300 Ah", "Capacidad de la batería": "48V / 420Ah(V/Ah)" };
+  assert.deepEqual(resolveAttribute(gamRecord(specs), target), { status: "resolved", value: "72 V / 300 Ah" });
+  assert.deepEqual(resolveAttribute(mercaelevaRecord({ "Capacidad de la batería": "48V / 420Ah(V/Ah)" }, ""), target),
+    { status: "not_observed", value: null });
+});
+
+test("GAM: la batería recuperada solo se publica en categorías compatibles sin nuevas revisiones", () => {
+  const batteryIds = new Set(catalog.attributes.filter((item) => item.name === "Batería (V / Ah)").map((item) => item.id));
+  const eligible: ProductRecord = {
+    ...gamRecord(),
+    categoryKey: "manutencion", categoryName: "Manutención",
+    url: "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-segunda-mano/carretilla-electrica",
+    title: "Carretilla elevadora eléctrica de ocasión", condition: "Segunda mano"
+  };
+  const before = prepareProduct(eligible, catalog);
+  const after = prepareProduct({ ...eligible, specs: { "Capacidad de la batería": "48V / 420Ah(V/Ah)" } }, catalog);
+  assert.notEqual(after.product.categorySellID, null);
+  assert.equal(before.status, "ready");
+  assert.equal(after.status, before.status);
+  assert.deepEqual(after.issues, before.issues);
+  assert.ok(!before.product.attributes.some((item) => batteryIds.has(item.attributeID)));
+  assert.ok(after.product.attributes.some((item) => batteryIds.has(item.attributeID) && item.value === "48 V / 420 Ah"));
+  const excluded = prepareProduct({ ...eligible, specs: { "Capacidad de la batería": "48V / 420-460Ah(V/Ah)" } }, catalog);
+  assert.equal(excluded.status, before.status);
+  assert.deepEqual(excluded.issues, before.issues);
+  assert.ok(!excluded.product.attributes.some((item) => batteryIds.has(item.attributeID)));
+  const incompatible = prepareProduct({ ...eligible,
+    url: "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/5845-2015-jlg-10rs",
+    title: "Plataforma tijera eléctrica JLG 10RS", categoryKey: "elevacion",
+    specs: { "Capacidad de la batería": "48V / 420Ah(V/Ah)" }
+  }, catalog);
+  assert.notEqual(incompatible.product.categorySellID, null);
+  assert.equal(incompatible.status, "ready");
+  assert.ok(!incompatible.product.attributes.some((item) => batteryIds.has(item.attributeID)));
 });

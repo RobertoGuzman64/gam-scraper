@@ -7,6 +7,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const definitions = {
   iniciar: { entry: "cli/start.js", usage: "iniciar", description: "Comprobar entorno y descubrir campaña sin extraer" },
+  huecos: { entry: "cli/catalog-content-gaps.js", usage: "huecos [-- --agrupar categoria|marca|modelo --min-grupo 8 --min-ausentes 3 --top 20 --json]", description: "Consultar huecos de contenido de la referencia; solo lectura" },
   estado: { entry: "cli/campaign-status.js", usage: "estado", description: "Consultar sin escrituras la fase de campaña, entrega, referencia y próximos comandos" },
   extraer: { entry: "cli/campaign-extract.js", usage: "extraer [-- --nueva]", description: "Extraer los tres proveedores y preparar/revisar el lote aislado" },
   revisar: { entry: "cli/campaign-review.js", usage: "revisar", description: "Revisar Ready y Review; puede crear preparaciones que todavía falten" },
@@ -72,6 +73,7 @@ const printHelp = (requested) => {
     console.log("\nEJEMPLOS\n");
     console.log("  npm run iniciar  (crea carpetas de trabajo si faltan)");
     console.log("  npm run estado  (consulta sin escrituras)");
+    console.log("  npm run huecos  (estadísticas de contenido de la referencia; solo lectura)");
     console.log("  npm run extraer");
     console.log("  npm run comparar");
     console.log("  npm run referencia  (solo lectura; incluso tras limpiar)");

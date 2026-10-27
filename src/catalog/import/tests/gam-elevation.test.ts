@@ -116,3 +116,29 @@ test("GAM elevación: no extrae de otra máquina, de otros proveedores ni de or�
     assert.equal(valueOf(example, "Tipo de tracción"), null);
   }
 });
+
+test("GAM elevación: tracción 4x4 con ruedas publicadas, sin inferir rodadura de una ausencia", () => {
+  const wheeled = machine({
+    title: "Plataforma elevadora tijera eléctrica 4x4 XCMG XG1523ERT",
+    url: "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/4802-plataforma-de-tijera-electrica-4x4-xcmg-xg1523ert",
+    reference: "4802", model: "XG1523ERT",
+    shortDescription: "Plataforma de tijera eléctrica 4x4 XCMG XG1523ERT",
+    longDescription: "La XCMG XG1523ERT dispone de tracción en las cuatro ruedas.",
+    specs: { "Tracción 4x4": "Sí" }
+  });
+  assert.equal(valueOf(wheeled, "Tipo de tracción"), "Ruedas");
+  for (const invalid of [
+    { ...wheeled, specs: { "Tracción 4x4": "No" } },
+    { ...wheeled, specs: { "Tracción 4x4": "Sí/No" } },
+    { ...wheeled, specs: {} },
+    { ...wheeled, title: "Plataforma elevadora tijera XCMG XG1523ERT" },
+    { ...wheeled, longDescription: "Sin datos de rodadura." },
+    { ...wheeled, longDescription: "Sistema de ruedas y orugas opcionales." },
+    { ...wheeled, providerId: "mercaeleva" },
+    { ...wheeled, url: "https://example.com/es/plataformas-tijera/4802" }
+  ]) {
+    assert.equal(valueOf(invalid, "Tipo de tracción"), null);
+  }
+  assert.equal(valueOf({ ...wheeled, specs: { "Tracción 4x4": "Sí", "Tipo de tracción": "Orugas" } },
+    "Tipo de tracción"), "Orugas");
+});

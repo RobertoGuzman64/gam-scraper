@@ -72,8 +72,14 @@ const traction = (record: ProductRecord): string | null => {
   const text = fold(`${record.title ?? ""} ${record.shortDescription ?? ""}`);
   const tracked = /\borugas\b/.test(text);
   const truck = /\b(?:sobre\s+camion|montad[oa]\s+sobre\s+camion)\b/.test(text);
-  if (tracked === truck) return null;
-  return tracked ? "Orugas" : "Sobre camión";
+  if (tracked !== truck) return tracked ? "Orugas" : "Sobre camión";
+  if (tracked || truck) return null;
+  const traction4x4 = record.specs?.["Tracción 4x4"];
+  if (typeof traction4x4 !== "string" || fold(traction4x4) !== "si" ||
+    !/\b4x4\b/.test(fold(record.title ?? "")) ||
+    !/\b(?:ruedas?|neumaticos?)\b/.test(fold(record.longDescription ?? "")) ||
+    /\b(?:orugas?|sobre camion|sobre furgon)\b/.test(fold(record.longDescription ?? ""))) return null;
+  return "Ruedas";
 };
 
 export const gamElevationCandidate = (record: ProductRecord, attribute: Attribute): Candidate | null => {
