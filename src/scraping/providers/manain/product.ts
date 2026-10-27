@@ -13,7 +13,7 @@ const canonicalLabels: Readonly<Record<string, string>> = {
   traccion: "Tracción", "longitud extension": "Longitud extensión"
 };
 const technicalLabels = new Set([
-  "marca", "modelo", "motor", "nueva o usada", "ano", "ano de fabricacion", "horas", "horas de trabajo", "horas laborales", "horometro", "estado", "condicion", "peso operativo", "peso", "altura trabajo", "altura de trabajo", "altura elevacion", "altura de elevacion", "capacidad carga", "capacidad de carga", "capacidad elevacion", "capacidad de elevacion", "potencia", "tipo de enganche", "longitud", "ancho", "anchura", "alto", "altura", "numero de serie", "nº de serie", "serie", "sku", "referencia"
+  "marca", "modelo", "motor", "nueva o usada", "ano", "ano de fabricacion", "horas", "horas de trabajo", "horas laborales", "horometro", "estado", "condicion", "peso operativo", "peso", "altura trabajo", "altura de trabajo", "altura elevacion", "altura de elevacion", "capacidad carga", "capacidad de carga", "capacidad elevacion", "capacidad de elevacion", "capacidad deposito", "potencia", "tipo de enganche", "longitud", "ancho", "anchura", "alto", "altura", "numero de serie", "nº de serie", "serie", "sku", "referencia"
 ]);
 
 const rootOf = ($: cheerio.CheerioAPI): ReturnType<cheerio.CheerioAPI> => {
