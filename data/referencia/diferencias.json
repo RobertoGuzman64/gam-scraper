@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "baseline": "initial",
+  "previousRunId": null,
+  "currentRunId": "2026-10-26T15-03-03-313Z-1cb257a0",
+  "providers": [
+    {
+      "providerId": "gam",
+      "previousCount": 0,
+      "currentCount": 987,
+      "added": [],
+      "missing": [],
+      "modified": [],
+      "unchanged": 0
+    },
+    {
+      "providerId": "gomariz",
+      "previousCount": 0,
+      "currentCount": 143,
+      "added": [],
+      "missing": [],
+      "modified": [],
+      "unchanged": 0
+    },
+    {
+      "providerId": "mercaeleva",
+      "previousCount": 0,
+      "currentCount": 217,
+      "added": [],
+      "missing": [],
+      "modified": [],
+      "unchanged": 0
+    }
+  ]
+}
