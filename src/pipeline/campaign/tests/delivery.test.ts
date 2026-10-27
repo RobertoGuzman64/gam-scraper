@@ -255,3 +255,38 @@ test("no limpia sin entrega acreditada, con ZIP alterado ni ante archivos descon
     assert.ok((await readFile(join(data.root, "storage", "runs", data.runId, "run.json"))).length > 0);
   } finally { await data.cleanup(); }
 });
+
+
+test("limpia auxiliares reconocidos del lote entregado sin tocar scripts ni ZIP", async () => {
+  const data = await approvedFixture();
+  try {
+    const gam = join(data.root, "storage", "scraped", "campanas", data.runId, "gam");
+    const prefix = prefixes.gam;
+    const csv = join(gam, `${prefix}-all.csv`);
+    const snapshot = join(gam, `${prefix}-snapshot-grouped.json`);
+    const history = join(gam, ".history", prefix);
+    const scripts = join(data.root, "storage", "interventions", data.runId, "scripts");
+    await mkdir(history, { recursive: true });
+    await mkdir(scripts, { recursive: true });
+    await writeFile(csv, "categoryKey,categoryName,title,reference\nmaquinaria,Maquinaria,Máquina,ABC\n");
+    await writeFile(snapshot, JSON.stringify({ version: 1, scope: "grouped", createdAt: "2026-10-22T10:00:00Z", items: [] }));
+    const summary = JSON.parse(await readFile(join(gam, `${prefix}-summary.json`), "utf8"));
+    await writeFile(join(history, "active.json"), JSON.stringify({
+      version: 1, summary, changes: {}, errors: {}
+    }));
+    await writeFile(join(scripts, "estable.ts"), "export const proposals = [];");
+    const delivery = await deliverActiveCampaign(data.root, data.desktop, date);
+    const { cleanDeliveredCampaign } = await import("../cleanup.js");
+    const dry = await cleanDeliveredCampaign(data.root, data.desktop, true);
+    assert.ok(dry.inventory.some(({ area, details }) => area === "scraped" &&
+      details.breakdown.some(({ kind }) => kind === "history")));
+    assert.match(await readFile(csv, "utf8"), /categoryKey,categoryName,title/);
+    const applied = await cleanDeliveredCampaign(data.root, data.desktop, false);
+    assert.ok(applied.bytes >= dry.bytes);
+    await assert.rejects(readFile(csv), { code: "ENOENT" });
+    await assert.rejects(readFile(snapshot), { code: "ENOENT" });
+    await assert.rejects(readFile(join(history, "active.json")), { code: "ENOENT" });
+    assert.equal(await readFile(join(scripts, "estable.ts"), "utf8"), "export const proposals = [];");
+    assert.ok((await readFile(delivery.zipFile)).length > 0);
+  } finally { await data.cleanup(); }
+});

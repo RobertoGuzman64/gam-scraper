@@ -13,3 +13,8 @@ dist/
 output/
 out/
 *.report.json
+
+/data/referencia/
+/data/.referencia-anterior/
+/data/.referencia-candidata/
+/data/.referencia-bloqueo

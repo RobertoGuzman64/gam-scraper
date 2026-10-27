@@ -32,22 +32,25 @@ test("npm ci no ejecuta preparación de catálogos como lifecycle", () => {
   assert.equal(Object.hasOwn(scripts, "preinstall"), false);
   assert.equal(Object.hasOwn(scripts, "postinstall"), false);
   assert.equal(Object.hasOwn(scripts, "prepack"), false);
-  for (const command of ["ayuda", "campana:extraer", "campana:revisar", "preparar", "extraer", "validar", "cobertura", "seleccionar", "limpiar:almacen", "prepare:catalog", "campana:comparar", "campana:referencia", "test", "build"]) {
+  for (const command of ["ayuda", "campana:extraer", "campana:estado", "campana:revisar", "preparar", "extraer", "validar", "cobertura", "seleccionar", "limpiar:almacen", "prepare:catalog", "campana:comparar", "campana:referencia", "test", "build"]) {
     assert.ok(Object.hasOwn(scripts, command), command);
   }
 });
 
 test("ayuda española y validación de proveedor funcionan sin compilar", async () => {
-  const [help, commandHelp, missing, unknown, campaignHelp, referenceHelp] = await Promise.all([
+  const [help, commandHelp, missing, unknown, campaignHelp, referenceHelp, editorialHelp] = await Promise.all([
     run(script, ["ayuda"]),
     run(script, ["ayuda", "preparar"]),
     run(script, ["preparar"]),
     run(script, ["ayuda", "no-existe"]),
     run(script, ["ayuda", "campana:extraer"]),
-    run(script, ["ayuda", "campana:referencia"])
+    run(script, ["ayuda", "campana:referencia"]),
+    run(script, ["ayuda", "campana:finalizar"])
   ]);
   assert.equal(help.status, 0, help.stderr);
   assert.match(help.stdout, /npm ci instala dependencias sin extraer/);
+  assert.match(help.stdout, /campana:estado/);
+  assert.match(help.stdout, /LECTURA/);
   assert.equal(commandHelp.status, 0, commandHelp.stderr);
   assert.match(commandHelp.stdout, /--origen/);
   assert.equal(missing.status, 1);
@@ -56,6 +59,9 @@ test("ayuda española y validación de proveedor funcionan sin compilar", async 
   assert.match(campaignHelp.stdout, /--nueva/);
   assert.equal(referenceHelp.status, 0);
   assert.match(referenceHelp.stdout, /--actualizar/);
+  assert.equal(editorialHelp.status, 0);
+  assert.match(editorialHelp.stdout, /--decidir/);
+  assert.match(editorialHelp.stdout, /--aprobar/);
   assert.equal(unknown.status, 1);
 });
 
@@ -68,11 +74,11 @@ test("el despachador conserva la compatibilidad y traduce las opciones antes de 
     copyFileSync(script, join(temp, "scripts/herramientas.mjs"));
     writeFileSync(join(temp, "scripts/run-build.mjs"), "process.exitCode = 0;\n");
     const echo = 'console.log(JSON.stringify(process.argv.slice(2)));\n';
-    for (const filename of ["prepare.js", "index.js", "storage-clean.js", "campaign-extract.js", "campaign-review.js", "campaign-reference.js"]) {
+    for (const filename of ["prepare.js", "index.js", "storage-clean.js", "campaign-extract.js", "campaign-status.js", "campaign-review.js", "campaign-reference.js", "campaign-finalize.js"]) {
       writeFileSync(join(temp, "dist/cli", filename), echo);
     }
     const fake = join(temp, "scripts/herramientas.mjs");
-    const [spanish, legacy, validate, originalHelp, cleanup, applied, previous, denied, campaignExtract, campaignReview, referenceUpdate, referenceDenied] = await Promise.all([
+    const [spanish, legacy, validate, originalHelp, cleanup, applied, previous, denied, campaignExtract, campaignReview, campaignStatus, referenceRead, referenceUpdate, referenceRecovery, referenceExport, referenceImport, referenceDenied] = await Promise.all([
       run(fake, ["preparar", "gam", "--origen", "origen-catalog.json", "--simular"]),
       run(fake, ["prepare:catalog", "gam", "--source", "origen-catalog.json", "--dry-run"]),
       run(fake, ["validar", "gam", "--etapa", "preparacion", "--preparacion", "x-preparation.json"]),
@@ -83,7 +89,12 @@ test("el despachador conserva la compatibilidad y traduce las opciones antes de 
       run(fake, ["limpiar:almacen", "--aplicar", "--simular"]),
       run(fake, ["campana:extraer", "--nueva"]),
       run(fake, ["campana:revisar"]),
+      run(fake, ["campana:estado"]),
+      run(fake, ["campana:referencia"]),
       run(fake, ["campana:referencia", "--actualizar"]),
+      run(fake, ["campana:referencia", "--recuperar"]),
+      run(fake, ["campana:referencia", "--exportar", "copia-nueva"]),
+      run(fake, ["campana:referencia", "--importar", "copia", "--sustituir"]),
       run(fake, ["campana:referencia", "--aplicar"])
     ]);
     assert.equal(spanish.status, 0, spanish.stderr);
@@ -104,9 +115,24 @@ test("el despachador conserva la compatibilidad y traduce las opciones antes de 
     assert.deepEqual(JSON.parse(campaignExtract.stdout.trim()), ["--nueva"]);
     assert.equal(campaignReview.status, 0, campaignReview.stderr);
     assert.deepEqual(JSON.parse(campaignReview.stdout.trim()), []);
+    assert.equal(campaignStatus.status, 0, campaignStatus.stderr);
+    assert.deepEqual(JSON.parse(campaignStatus.stdout.trim()), []);
+    assert.equal(referenceRead.status, 0, referenceRead.stderr);
+    assert.deepEqual(JSON.parse(referenceRead.stdout.trim()), []);
+    assert.equal(referenceRecovery.status, 0, referenceRecovery.stderr);
+    assert.deepEqual(JSON.parse(referenceRecovery.stdout.trim()), ["--recuperar"]);
+    assert.equal(referenceExport.status, 0, referenceExport.stderr);
+    assert.deepEqual(JSON.parse(referenceExport.stdout.trim()), ["--exportar", "copia-nueva"]);
+    assert.equal(referenceImport.status, 0, referenceImport.stderr);
+    assert.deepEqual(JSON.parse(referenceImport.stdout.trim()), ["--importar", "copia", "--sustituir"]);
     assert.equal(referenceUpdate.status, 0, referenceUpdate.stderr);
     assert.deepEqual(JSON.parse(referenceUpdate.stdout.trim()), ["--actualizar"]);
     assert.equal(referenceDenied.status, 1);
+    const decision = await run(fake, ["campana:finalizar", "--decidir", "gam", "6682", "excluir",
+      "--motivo", "Identidad contrastada por el operador", "--evidencia", "https://catalogo.example/ficha"]);
+    assert.equal(decision.status, 0, decision.stderr);
+    assert.deepEqual(JSON.parse(decision.stdout.trim()), ["--decidir", "gam", "6682", "excluir",
+      "--motivo", "Identidad contrastada por el operador", "--evidencia", "https://catalogo.example/ficha"]);
     assert.equal(denied.status, 1);
     assert.match(denied.stderr, /No combines/);
   } finally {
@@ -116,7 +142,8 @@ test("el despachador conserva la compatibilidad y traduce las opciones antes de 
 
 
 test("la actualización de referencia no permite opciones implícitas ni mezcladas", async () => {
-  await assert.rejects(runCampaignReferenceUpdate([]), /solo admite --actualizar/);
-  await assert.rejects(runCampaignReferenceUpdate(["--actualizar", "--simular"]), /solo admite --actualizar/);
-  await assert.rejects(runCampaignReferenceUpdate(["--aplicar"]), /solo admite --actualizar/);
+  await assert.rejects(runCampaignReferenceUpdate(["--actualizar", "--simular"]), /Opciones inválidas/);
+  await assert.rejects(runCampaignReferenceUpdate(["--aplicar"]), /Opciones inválidas/);
+  await assert.rejects(runCampaignReferenceUpdate(["--exportar"]), /Opciones inválidas/);
+  await assert.rejects(runCampaignReferenceUpdate(["--importar", "copia", "--actualizar"]), /Opciones inválidas/);
 });

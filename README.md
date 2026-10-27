@@ -35,15 +35,18 @@ Ejecutar desde la raíz del repositorio:
 ```powershell
 npm ci
 npm run iniciar
+npm run campana:estado
 npm run campana:extraer
 npm run campana:revisar
 npm run campana:comparar
 npm run campana:finalizar
 ```
 
+`campana:estado` es una **consulta sin escrituras**: identifica el lote, preparaciones, decisiones editoriales, entrega acreditada y situación de la referencia. Muestra el siguiente comando adecuado al estado actual. Puede repetirse en cualquier momento, incluso tras la limpieza; si el ZIP entregado ya no verifica, avisa y no considera el lote listo para cerrar. `iniciar`, en cambio, **crea las carpetas de trabajo que falten** y muestra la orientación operativa. `campana:revisar` puede crear preparaciones ausentes, por lo que no es una consulta estricta.
+
 `campana:extraer` extrae los tres proveedores en una campaña aislada y prepara y valida los catálogos; al terminar ya muestra las incidencias. `campana:revisar` permite consultarlas otra vez. **No hay que suministrar JSON anteriores ni buscar rutas o huellas manualmente.** Si una campaña anterior falló, revisarla primero o iniciar deliberadamente otra con `npm run campana:extraer -- --nueva`.
 
-`campana:finalizar` crea un borrador en `storage/campanas/<id-lote>/editorial/acreditacion-<sha256>.json`. Antes de publicar, una persona debe revisar las decisiones y sus evidencias, rellenar `approvalReason`, las exclusiones o inclusiones necesarias y marcar `approved: true`. Después:
+`campana:finalizar` crea un borrador en `storage/campanas/<id-lote>/editorial/acreditacion-<sha256>.json`. Las decisiones se consultan con `npm run campana:finalizar -- --listar` y `--consultar <proveedor> <referencia>`; se registran individualmente mediante `--decidir <proveedor> <referencia> <excluir|incluir> --motivo "..." --evidencia <url-https>` (repetir `--evidencia` cuando sea necesario). Tras contrastarlas humanamente, ejecutar `--validar` y aprobar explícitamente con `--aprobar --motivo "..."`. **No hay que editar JSON ni huellas SHA**. Después:
 
 ```powershell
 npm run campana:finalizar
@@ -54,13 +57,14 @@ npm run campana:limpiar
 
 `campana:comparar` consulta sin escribir las altas, ausencias y modificaciones frente a `data/referencia/`. Si todavía no hay referencia, indica que el lote servirá como inicial. **No confundir una ausencia con una venta ni con una exclusión editorial:** se comparan todos los productos originales extraídos, no solo los publicables.
 
-`campana:entregar` genera en el Escritorio `equipzilla-AAAA-MM-DD.zip` con **exactamente tres JSON**: `gam-AAAA-MM-DD.json`, `gomariz-AAAA-MM-DD.json` y `mercaeleva-AAAA-MM-DD.json`. La entrega solo se sustituye tras comprobar el ZIP nuevo. Después, `campana:referencia -- --actualizar` comprueba de nuevo la entrega acreditada y conserva únicamente los tres catálogos originales completos, `manifest.json` y el último `diferencias.json`; no guarda históricos ni modifica la aprobación. La actualización requiere `--actualizar` y es opcional, pero debe hacerse **antes de limpiar** si se quiere comparar el inventario de la siguiente campaña. `campana:limpiar` **simula** la limpieza; cuando el ZIP esté comprobado y no se prevean más correcciones del lote, `npm run campana:limpiar -- --aplicar` cierra su trabajo conservando el ZIP y los scripts versionados en Git (y los scripts históricos, si existen). La limpieza no obliga a actualizar la referencia.
+`campana:entregar` genera en el Escritorio `equipzilla-AAAA-MM-DD.zip` con **exactamente tres JSON**: `gam-AAAA-MM-DD.json`, `gomariz-AAAA-MM-DD.json` y `mercaeleva-AAAA-MM-DD.json`. La entrega solo se sustituye tras comprobar el ZIP nuevo. Después, `campana:referencia -- --actualizar` comprueba de nuevo la entrega acreditada y conserva únicamente los tres catálogos originales completos, `manifest.json` y el último `diferencias.json`; no guarda históricos ni modifica la aprobación. La actualización requiere `--actualizar` y es opcional, pero debe hacerse **antes de limpiar** si se quiere comparar el inventario de la siguiente campaña. `campana:limpiar` **simula** la limpieza y muestra si la referencia ya corresponde al lote, evitando pedir una segunda actualización; cuando el ZIP esté comprobado y no se prevean más correcciones del lote, `npm run campana:limpiar -- --aplicar` cierra su trabajo conservando el ZIP y los scripts versionados en Git (y los scripts históricos, si existen). La limpieza no obliga a actualizar la referencia.
 
 Si una ficha necesita una corrección puntual acreditada, consulta los scripts existentes con `npm run campana:intervenir -- gam --listar` y simula uno seleccionado con `npm run campana:intervenir -- gam --script interventions/gam/6002.ts`. Tras revisar las diferencias, autoriza expresamente `--aplicar` para ese script. Cada intervención nueva se guarda en `interventions/<proveedor>/` y se versiona en Git; no se registra en `storage/`. No hay cambios ni aprobaciones editoriales automáticas. Ver [Protocolo completo](docs/CAMPANAS.md), [Intervenciones](docs/INTERVENCIONES_CAMPANA.md) y [Acreditación](docs/ACREDITACION_CAMPANA.md).
 
 ### Otros comandos disponibles
 
-- `npm run ayuda` y `npm run ayuda -- <comando>`: ayuda desde la terminal.
+- `npm run ayuda` y `npm run ayuda -- <comando>`: ayuda desde la terminal; distingue lectura, preparación, escritura y autorización destructiva.
+- `npm run campana:estado`: estado autónomo de campaña y referencia, sin escrituras.
 - `npm run build` y `npm test`: compilación y pruebas del repositorio.
 - `npm run extraer:todos`, `extraer`, `preparar`, `validar`, `seleccionar`, `cobertura` e `intervenir`: operaciones avanzadas o de compatibilidad, no pasos obligatorios para la entrega habitual.
 - `npm run limpiar:almacen`: retención anterior, distinta del cierre de campaña.

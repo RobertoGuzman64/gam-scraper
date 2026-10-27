@@ -2,6 +2,8 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initializeWorkspace, workspaceDirectories } from "../infrastructure/filesystem/workspace.js";
 import { discoverCampaign } from "../pipeline/campaign/discovery.js";
+import { inspectCampaignOperations } from "../pipeline/campaign/operations-status.js";
+import { printCampaignOperations } from "./reporting/campaign-operations.js";
 import { printCommandError } from "./reporting/errors.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -30,6 +32,8 @@ export const runStart = async (args: readonly string[]): Promise<void> => {
     if (provider.preparation) console.log(`    Preparación: ${provider.preparation.path} | SHA256 ${provider.preparation.sha256}${provider.preparation.intervened ? " | intervenida" : ""}`);
   }
   for (const issue of campaign.issues) console.warn(`  AVISO | ${issue}`);
+  console.log("\nORIENTACIÓN OPERATIVA");
+  printCampaignOperations(await inspectCampaignOperations(root));
   if (campaign.providers.some((provider) => provider.state === "invalid") ||
     campaign.issues.some((issue) => !issue.startsWith("Lote ") && !issue.startsWith("Lote completado"))) {
     process.exitCode = 1;

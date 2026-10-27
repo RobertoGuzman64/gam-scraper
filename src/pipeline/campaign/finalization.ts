@@ -2,7 +2,9 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
-import { createAccreditationDraft, selectAccreditedPublishable, sha256 } from "../../catalog/editorial/campaign-accreditation.js";
+import { createAccreditationDraft, inspectAccreditationDraft, selectAccreditedPublishable, sha256 } from "../../catalog/editorial/campaign-accreditation.js";
+import type { AccreditedSource, CampaignAccreditation } from "../../catalog/editorial/campaign-accreditation.js";
+import type { OfflinePreparation } from "../../catalog/import/preparation/offline-document.js";
 import type { PublishableSelection } from "../../catalog/editorial/select-publishable.js";
 import { readCampaignAccreditationSources } from "../../infrastructure/filesystem/campaign-accreditation.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
@@ -57,9 +59,18 @@ const saveSelection = async (root: string, files: readonly { path: string; conte
   }
 };
 
-export const finalizeActiveCampaign = async (
-  rootDirectory: string, dryRun: boolean
-): Promise<CampaignFinalizationResult> => {
+export type CampaignFinalizationContext = {
+  readonly runId: string;
+  readonly draftFile: string;
+  readonly expected: CampaignAccreditation;
+  readonly preparations: readonly OfflinePreparation[];
+  readonly sources: readonly AccreditedSource[];
+  readonly paths: readonly { readonly providerId: string; readonly path: string }[];
+};
+
+export const readCampaignFinalizationContext = async (
+  rootDirectory: string
+): Promise<CampaignFinalizationContext> => {
   const root = resolve(rootDirectory);
   const campaign = await discoverCampaign(root);
   if (!campaign.runId || !campaign.runFile || campaign.status !== "complete" || campaign.issues.length ||
@@ -85,9 +96,17 @@ export const finalizeActiveCampaign = async (
   const fingerprint = sha256(JSON.stringify(sources));
   const editorialDir = join(root, "storage", "campanas", runId, "editorial");
   const draftFile = join(editorialDir, `acreditacion-${fingerprint}.json`);
+  return { runId, draftFile, expected, preparations, sources, paths };
+};
+
+export const finalizeActiveCampaign = async (
+  rootDirectory: string, dryRun: boolean
+): Promise<CampaignFinalizationResult> => {
+  const root = resolve(rootDirectory);
+  const { runId, draftFile, expected, preparations, sources, paths } = await readCampaignFinalizationContext(root);
   if (!await exists(draftFile)) {
     if (!dryRun) {
-      await mkdir(editorialDir, { recursive: true });
+      await mkdir(dirname(draftFile), { recursive: true });
       await writeFile(draftFile, JSON.stringify(expected, null, 2), { flag: "wx" });
     }
     return { runId, draftFile, status: "draft", decisions: expected.exclusions.length };
@@ -100,6 +119,7 @@ export const finalizeActiveCampaign = async (
     throw new Error("La acreditación no corresponde a las preparaciones actuales; no se reutiliza");
   }
   if (!("approved" in parsed) || parsed.approved !== true) {
+    inspectAccreditationDraft(preparations, sources, runId, parsed);
     return { runId, draftFile, status: "pending", decisions: expected.exclusions.length };
   }
   const selection = selectAccreditedPublishable(preparations, sources, runId, parsed, sha256(raw));

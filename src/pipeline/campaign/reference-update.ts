@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { compareCampaignReferences } from "../../catalog/reference/compare.js";
 import { readCampaignReference, writeCampaignReference } from "../../infrastructure/filesystem/campaign-reference.js";
-import { planDeliveredCampaignCleanup } from "./cleanup.js";
+import { verifyDeliveredCampaign } from "./delivery-verification.js";
 import { readActiveCampaignReferenceInput } from "./reference-comparison.js";
 import type { ReferenceComparison } from "../../catalog/reference/compare.js";
 import type { ReferenceManifest } from "../../catalog/reference/manifest.js";
@@ -19,7 +19,7 @@ export const updateActiveCampaignReference = async (
   rootDirectory: string, desktopDirectory: string, updatedAt: Date = new Date()
 ): Promise<CampaignReferenceUpdateResult> => {
   const root = resolve(rootDirectory);
-  const delivery = await planDeliveredCampaignCleanup(root, desktopDirectory);
+  const delivery = await verifyDeliveredCampaign(root, desktopDirectory);
   const current = await readActiveCampaignReferenceInput(root);
   if (delivery.runId !== current.runId) throw new Error("La entrega y los catálogos corresponden a lotes diferentes");
   const previous = await readCampaignReference(root);
@@ -29,7 +29,7 @@ export const updateActiveCampaignReference = async (
     current.catalogs.map((entry) => entry.catalog)
   );
   const manifest = await writeCampaignReference(root, current.runId, current.catalogs, comparison, async () => {
-    const deliveryAgain = await planDeliveredCampaignCleanup(root, desktopDirectory);
+    const deliveryAgain = await verifyDeliveredCampaign(root, desktopDirectory);
     if (deliveryAgain.runId !== current.runId) throw new Error("La entrega cambió durante la actualización");
     for (const entry of current.catalogs) {
       if (digest(await readFile(entry.path, "utf8")) !== entry.sha256) {

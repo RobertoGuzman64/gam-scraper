@@ -14,6 +14,8 @@ export const runCampaignReview = async (args: readonly string[]): Promise<void> 
   if (args.length > 0) throw new Error("campana:revisar no acepta argumentos");
   const result = await reviewActiveCampaign(root);
   printCampaignReview(result);
+  if (result.complete) console.log("  SIGUIENTE | npm run campana:finalizar (borrador o selección, según acreditación vigente)");
+  else console.log("  SIGUIENTE | Resolver los avisos del lote; consultar npm run campana:estado");
   if (!result.complete) process.exitCode = 1;
 };
 

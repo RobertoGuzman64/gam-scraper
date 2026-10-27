@@ -18,23 +18,38 @@ El comando identifica el lote vigente por `run.json`, verifica catálogos origin
 
 El borrador contiene `version`, `runId`, `approved: false`, `approvalReason: null`, las `sources` verificadas y las decisiones `exclusions` pendientes. Si cambian las preparaciones, incluso por una intervención, **cambia el borrador**: no se reutiliza una aprobación anterior.
 
-## Revisión y decisión humana
+## Revisión y decisión humana mediante comandos
 
-Contrastar con los portales vigentes todos los bloqueos editoriales indicados. Cada decisión requerida conserva `providerId`, `reference`, `sourceUrl`, `status` e `issues`. No alterar esas propiedades ni `runId`, `sources` o las huellas.
-
-- Para `review` o contradicción de identidad: establecer `decision: "excluir"`, `reason` concreto de al menos 15 caracteres y `evidenceUrls` HTTPS que incluya la URL vigente de la ficha. No convertir el registro a `ready` artificialmente.
-- Para `intervention` de una ficha que permanece `ready`: decidir expresamente `"incluir"` o `"excluir"`, con el motivo y la misma exigencia de evidencia. Un cambio técnico acreditado no implica aprobación editorial automática.
-- Solo cuando se haya revisado el conjunto, introducir `approvalReason` específico de al menos 15 caracteres y `approved: true`. Si falta evidencia, dejar la campaña pendiente.
-
-Sin exclusiones, sigue siendo necesaria la revisión y aprobación global. Tras guardarla, ejecutar:
+El borrador se genera con `npm run campana:finalizar`. A partir de ese momento **no se edita directamente**. Los comandos siguientes resuelven el lote y el SHA de las preparaciones automáticamente:
 
 ```powershell
+npm run campana:finalizar -- --listar
+npm run campana:finalizar -- --consultar gam 6682
+```
+
+La consulta muestra el proveedor, la referencia, la URL de origen, la causa del bloqueo y su decisión actual. Una persona contrasta los datos con las fuentes y registra la decisión individual, aportando un motivo específico de al menos 15 caracteres y la URL HTTPS de origen como evidencia:
+
+```powershell
+npm run campana:finalizar -- --decidir gam 6682 excluir --motivo "Identidad sin confirmar tras revisar la publicación vigente" --evidencia "<url-fuente-mostrada-por-consultar>"
+```
+
+La URL anterior es solo ilustrativa: **en una operación real se utiliza exactamente la `Fuente` mostrada por `--consultar`**, nunca una URL inventada. Se puede repetir `--evidencia <https-url>` para añadir otras pruebas. Los comandos no acreditan por sí solos que una persona haya verificado el portal: esa revisión sigue siendo imprescindible.
+
+Las fichas `review` o con contradicciones de identidad solo admiten `excluir`. Las fichas de `intervention` que permanecen `ready` permiten `incluir` o `excluir`, siempre con motivo y evidencia. Nadie debe aprobar una inclusión sin contraste real.
+
+```powershell
+npm run campana:finalizar -- --validar
+npm run campana:finalizar -- --aprobar --motivo "Aprobación humana del conjunto tras contrastar todas las decisiones"
 npm run campana:finalizar -- --simular
 npm run campana:finalizar
 npm run campana:entregar
 ```
 
-El comando de simulación no escribe resultados. La finalización aprobada genera bajo `storage/campanas/<id-lote>/seleccion/<sha256>/` los tres JSON publicables y `selection.json`, **solo para uso interno**. `campana:entregar` valida esa selección y produce en el Escritorio un ZIP comprobado con exactamente los tres JSON fechados, sin manifests ni `selection.json`. La entrega anterior del mismo día se conserva cuando el intento nuevo falla.
+`--validar` **no escribe** y señala todos los fallos de las decisiones. Si alguna decisión está incompleta, `--aprobar` falla sin cambiar el archivo. La aprobación requiere un motivo global de al menos 15 caracteres y es explícita incluso si no existen incidencias. `--simular` no crea archivos; la finalización aprobada genera bajo `storage/campanas/<id-lote>/seleccion/<sha256>/` los JSON publicables y la selección interna, exclusivamente para uso del pipeline.
+
+Una vez aprobada una acreditación, los comandos editoriales no permiten modificarla. Una intervención posterior genera un borrador distinto, vinculado a las nuevas preparaciones. Las operaciones de edición comprueban de nuevo la campaña y el contenido del borrador antes de sustituirlo, y nunca reescriben una selección existente.
+
+`campana:entregar` valida la selección y genera en el Escritorio el ZIP verificado con exactamente los tres JSON fechados, sin manifests ni `selection.json`. Una entrega válida anterior se conserva cuando un nuevo intento falla.
 
 ## Seguridad y límites
 

@@ -82,6 +82,76 @@ export const createAccreditationDraft = (
   }))
 });
 
+export type AccreditationIssue = {
+  readonly providerId: string;
+  readonly reference: string;
+  readonly message: string;
+};
+
+export type AccreditationInspection = {
+  readonly approved: boolean;
+  readonly total: number;
+  readonly completed: number;
+  readonly issues: readonly AccreditationIssue[];
+};
+
+export const inspectAccreditationDraft = (
+  preparations: readonly OfflinePreparation[], sources: readonly AccreditedSource[],
+  runId: string, rawAccreditation: unknown
+): AccreditationInspection => {
+  const expected = createAccreditationDraft(preparations, sources, runId);
+  if (!isRecord(rawAccreditation) || rawAccreditation.version !== 1 || rawAccreditation.runId !== runId ||
+    typeof rawAccreditation.approved !== "boolean" ||
+    (rawAccreditation.approvalReason !== null && typeof rawAccreditation.approvalReason !== "string") ||
+    JSON.stringify(rawAccreditation.sources) !== JSON.stringify(sources) ||
+    !Array.isArray(rawAccreditation.exclusions) || rawAccreditation.exclusions.length !== expected.exclusions.length) {
+    throw new Error("Acreditación editorial: aprobación ausente, incompleta o vinculada a otra campaña");
+  }
+  const issues: AccreditationIssue[] = [];
+  const indexed = new Map<string, Record<string, unknown>>();
+  const suppliedExclusions: readonly unknown[] = rawAccreditation.exclusions;
+  for (const item of suppliedExclusions) {
+    if (!isRecord(item) || typeof item.providerId !== "string" || typeof item.reference !== "string") {
+      throw new Error("Acreditación editorial: exclusión inválida");
+    }
+    const key = `${item.providerId}:${item.reference}`;
+    const required = expected.exclusions.find((entry) =>
+      entry.providerId === item.providerId && entry.reference === item.reference);
+    if (!required || indexed.has(key) || item.sourceUrl !== required.sourceUrl || item.status !== required.status ||
+      !isDeepStrictEqual(item.issues, required.issues)) {
+      throw new Error(`Acreditación editorial: decisión ausente o caducada (${key})`);
+    }
+    indexed.set(key, item);
+  }
+  let completed = 0;
+  for (const required of expected.exclusions) {
+    const key = `${required.providerId}:${required.reference}`;
+    const item = indexed.get(key);
+    if (!item) throw new Error(`Acreditación editorial: decisión ausente o caducada (${key})`);
+    const messages: string[] = [];
+    if (item.decision === null) messages.push("decisión pendiente");
+    else if (item.decision !== "excluir" && !(required.status === "intervention" && item.decision === "incluir")) {
+      messages.push("decisión no permitida para esta ficha");
+    }
+    if (typeof item.reason !== "string" || item.reason.trim().length < 15) {
+      messages.push("motivo requerido de al menos 15 caracteres");
+    }
+    if (!Array.isArray(item.evidenceUrls) || item.evidenceUrls.length === 0 ||
+      !item.evidenceUrls.every(isSecureUrl) || !item.evidenceUrls.includes(required.sourceUrl)) {
+      messages.push("evidencia HTTPS inválida o falta la URL original de la ficha");
+    }
+    if (messages.length) issues.push(...messages.map((message) => ({
+      providerId: required.providerId, reference: required.reference, message
+    })));
+    else completed += 1;
+  }
+  if (rawAccreditation.approved &&
+    (typeof rawAccreditation.approvalReason !== "string" || rawAccreditation.approvalReason.trim().length < 15)) {
+    issues.push({ providerId: "", reference: "", message: "aprobación global sin motivo válido (mínimo 15 caracteres)" });
+  }
+  return { approved: rawAccreditation.approved, total: expected.exclusions.length, completed, issues };
+};
+
 export const selectAccreditedPublishable = (
   preparations: readonly OfflinePreparation[],
   sources: readonly AccreditedSource[],
@@ -89,34 +159,32 @@ export const selectAccreditedPublishable = (
   rawAccreditation: unknown,
   approvalSha256: string
 ): PublishableSelection => {
-  const expected = createAccreditationDraft(preparations, sources, runId);
-  if (!isRecord(rawAccreditation) || rawAccreditation.version !== 1 || rawAccreditation.runId !== runId ||
-    rawAccreditation.approved !== true || typeof rawAccreditation.approvalReason !== "string" ||
-    rawAccreditation.approvalReason.trim().length < 15 ||
-    JSON.stringify(rawAccreditation.sources) !== JSON.stringify(sources) ||
-    !Array.isArray(rawAccreditation.exclusions) || rawAccreditation.exclusions.length !== expected.exclusions.length) {
+  const inspection = inspectAccreditationDraft(preparations, sources, runId, rawAccreditation);
+  if (!inspection.approved || inspection.issues.some((issue) => issue.providerId === "")) {
     throw new Error("Acreditación editorial: aprobación ausente, incompleta o vinculada a otra campaña");
   }
+  const firstIssue = inspection.issues[0];
+  if (firstIssue) {
+    throw new Error(`Acreditación editorial: decisión ausente o caducada (${firstIssue.providerId}:${firstIssue.reference}): ${firstIssue.message}`);
+  }
+  if (!isRecord(rawAccreditation) || !Array.isArray(rawAccreditation.exclusions)) {
+    throw new Error("Acreditación editorial: aprobación ausente o incompleta");
+  }
+  const expected = createAccreditationDraft(preparations, sources, runId);
   const decisions = new Map<string, AccreditationDecision>();
-  const suppliedExclusions: readonly unknown[] = rawAccreditation.exclusions;
-  for (const item of suppliedExclusions) {
-    if (!isRecord(item) || typeof item.providerId !== "string" || typeof item.reference !== "string") {
+  const suppliedDecisions: readonly unknown[] = rawAccreditation.exclusions;
+  for (const item of suppliedDecisions) {
+    if (!isRecord(item) || typeof item.providerId !== "string" || typeof item.reference !== "string" ||
+      typeof item.reason !== "string" || !Array.isArray(item.evidenceUrls)) {
       throw new Error("Acreditación editorial: exclusión inválida");
     }
-    const key = `${item.providerId}:${item.reference}`;
-    const expectedEntry = expected.exclusions.find((entry) =>
+    const required = expected.exclusions.find((entry) =>
       entry.providerId === item.providerId && entry.reference === item.reference);
-    if (!expectedEntry || decisions.has(key) ||
-      (item.decision !== "excluir" && !(expectedEntry.status === "intervention" && item.decision === "incluir")) ||
-      item.status !== expectedEntry.status || item.sourceUrl !== expectedEntry.sourceUrl ||
-      JSON.stringify(item.issues) !== JSON.stringify(expectedEntry.issues) ||
-      typeof item.reason !== "string" || item.reason.trim().length < 15 ||
-      !Array.isArray(item.evidenceUrls) || item.evidenceUrls.length === 0 ||
-      !item.evidenceUrls.every(isSecureUrl) || !item.evidenceUrls.includes(expectedEntry.sourceUrl)) {
-      throw new Error(`Acreditación editorial: decisión ausente o caducada (${key})`);
+    if (!required || (item.decision !== "incluir" && item.decision !== "excluir")) {
+      throw new Error("Acreditación editorial: decisión inválida");
     }
-    decisions.set(key, {
-      ...expectedEntry, decision: item.decision, reason: item.reason, evidenceUrls: item.evidenceUrls
+    decisions.set(`${item.providerId}:${item.reference}`, {
+      ...required, decision: item.decision, reason: item.reason, evidenceUrls: item.evidenceUrls.filter(isSecureUrl)
     });
   }
   const products: PublishableSelection["products"][number][] = [];

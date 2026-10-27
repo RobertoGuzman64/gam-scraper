@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { mkdir, open, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { copyFile, lstat, mkdir, open, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { isAbsolute, join, relative, resolve } from "node:path";
 import { parseCanonicalCatalog } from "../../catalog/canonical-catalog.js";
 import { parseReferenceManifest } from "../../catalog/reference/manifest.js";
 import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
@@ -12,6 +12,12 @@ export type StoredCampaignReference = {
   readonly manifest: ReferenceManifest;
   readonly catalogs: readonly CanonicalCatalog[];
 };
+
+export type CampaignReferenceInspection =
+  | { readonly status: "absent" }
+  | { readonly status: "valid"; readonly reference: StoredCampaignReference }
+  | { readonly status: "recoverable"; readonly reference: StoredCampaignReference; readonly reason: string }
+  | { readonly status: "invalid"; readonly reason: string };
 
 export type ReferenceCatalogSource = {
   readonly providerId: string;
@@ -26,7 +32,7 @@ const missing = (error: unknown): boolean => record(error) && error.code === "EN
 
 const directoryExists = async (directory: string): Promise<boolean> => {
   try {
-    if (!(await stat(directory)).isDirectory()) throw new Error(`No es un directorio: ${directory}`);
+    if (!(await lstat(directory)).isDirectory()) throw new Error(`No es un directorio: ${directory}`);
     return true;
   } catch (error) {
     if (missing(error)) return false;
@@ -45,10 +51,16 @@ const paths = (rootDirectory: string) => {
   };
 };
 
+const referenceFiles = [...CAMPAIGN_PROVIDERS.map((provider) => `${provider}.json`), "manifest.json", "diferencias.json"];
+
 const readReferenceDirectory = async (directory: string): Promise<StoredCampaignReference> => {
-  const expected = [...CAMPAIGN_PROVIDERS.map((provider) => `${provider}.json`), "manifest.json", "diferencias.json"];
   const files = await readdir(directory);
-  if (files.length !== expected.length || expected.some((file) => !files.includes(file))) {
+  for (const file of files) {
+    if (!(await lstat(join(directory, file))).isFile()) {
+      throw new Error(`La referencia contiene un elemento que no es archivo regular: ${file}`);
+    }
+  }
+  if (files.length !== referenceFiles.length || referenceFiles.some((file) => !files.includes(file))) {
     throw new Error("La referencia existe pero está incompleta o contiene archivos inesperados");
   }
   const manifestInput: unknown = JSON.parse(await readFile(join(directory, "manifest.json"), "utf8"));
@@ -79,11 +91,82 @@ const readReferenceDirectory = async (directory: string): Promise<StoredCampaign
   return { manifest, catalogs };
 };
 
+const errorMessage = (error: unknown): string => error instanceof Error ? error.message : String(error);
+
+export const inspectCampaignReference = async (rootDirectory: string): Promise<CampaignReferenceInspection> => {
+  const { active, backup, staging, lock } = paths(rootDirectory);
+  try {
+    const activeExists = await directoryExists(active);
+    const backupExists = await directoryExists(backup);
+    const stagingExists = await directoryExists(staging);
+    const lockExists = await pathExists(lock);
+    if (!activeExists && !backupExists && !stagingExists && !lockExists) return { status: "absent" };
+    let invalidActive: string | null = null;
+    if (activeExists) {
+      try {
+        const reference = await readReferenceDirectory(active);
+        if (!backupExists && !stagingExists && !lockExists) return { status: "valid", reference };
+        return { status: "recoverable", reference, reason: "La referencia vigente es íntegra, pero hay una transacción pendiente; inspeccionar antes de actualizar" };
+      } catch (error) { invalidActive = errorMessage(error); }
+    }
+    if (backupExists) {
+      try {
+        const reference = await readReferenceDirectory(backup);
+        return { status: "recoverable", reference, reason: invalidActive === null ?
+          "Existe una copia anterior íntegra sin referencia activa" :
+          `La referencia activa es inválida (${invalidActive}); existe una copia anterior íntegra` };
+      } catch (error) {
+        return { status: "invalid", reason: `La referencia anterior tampoco es válida: ${errorMessage(error)}` };
+      }
+    }
+    return { status: "invalid", reason: invalidActive ?? "Existen archivos de una transacción sin referencia válida" };
+  } catch (error) {
+    return { status: "invalid", reason: errorMessage(error) };
+  }
+};
+
 export const readCampaignReference = async (rootDirectory: string): Promise<StoredCampaignReference | null> => {
   const { active, backup } = paths(rootDirectory);
   if (await directoryExists(active)) return readReferenceDirectory(active);
   if (await directoryExists(backup)) return readReferenceDirectory(backup);
   return null;
+};
+
+const pathExists = async (file: string): Promise<boolean> => {
+  try { await lstat(file); return true; }
+  catch (error) { if (missing(error)) return false; throw error; }
+};
+
+const independentDirectory = (rootDirectory: string, directory: string): string => {
+  if (!directory.trim()) throw new Error("Se necesita una carpeta de traslado explícita");
+  const destination = resolve(directory);
+  const separation = relative(resolve(rootDirectory), destination);
+  if (!separation || (!separation.startsWith("..") && !isAbsolute(separation))) {
+    throw new Error("La carpeta de traslado debe estar fuera del repositorio");
+  }
+  return destination;
+};
+
+export const exportCampaignReference = async (rootDirectory: string, directory: string): Promise<ReferenceManifest> => {
+  const destination = independentDirectory(rootDirectory, directory);
+  const inspection = await inspectCampaignReference(rootDirectory);
+  if (inspection.status !== "valid") {
+    throw new Error(inspection.status === "absent" ? "No existe referencia para exportar" :
+      inspection.reason);
+  }
+  const { active } = paths(rootDirectory);
+  await mkdir(destination);
+  try {
+    for (const filename of referenceFiles) await copyFile(join(active, filename), join(destination, filename));
+    const exported = await readReferenceDirectory(destination);
+    if (exported.manifest.runId !== inspection.reference.manifest.runId) {
+      throw new Error("La referencia cambió durante la exportación");
+    }
+    return exported.manifest;
+  } catch (error) {
+    await rm(destination, { recursive: true, force: true });
+    throw error;
+  }
 };
 
 const pidAlive = (pid: number): boolean => {
@@ -139,6 +222,74 @@ const recoverTransaction = async (active: string, backup: string, staging: strin
   if (await directoryExists(active)) await readReferenceDirectory(active);
 };
 
+export const recoverCampaignReference = async (rootDirectory: string): Promise<ReferenceManifest> => {
+  const inspection = await inspectCampaignReference(rootDirectory);
+  if (inspection.status !== "recoverable") {
+    throw new Error(inspection.status === "absent" ? "No existe referencia para recuperar" :
+      inspection.status === "valid" ? "La referencia ya es válida; no necesita recuperación" : inspection.reason);
+  }
+  const { active, backup, staging, lock } = paths(rootDirectory);
+  const release = await acquireLock(lock);
+  try {
+    await recoverTransaction(active, backup, staging);
+    const recovered = await readReferenceDirectory(active);
+    return recovered.manifest;
+  } finally { await release(); }
+};
+
+const promoteReference = async (active: string, backup: string, staging: string, runId: string): Promise<void> => {
+  const hadPrevious = await directoryExists(active);
+  let movedPrevious = false;
+  let promoted = false;
+  try {
+    if (hadPrevious) {
+      await rename(active, backup);
+      movedPrevious = true;
+    }
+    await rename(staging, active);
+    promoted = true;
+    const verified = await readReferenceDirectory(active);
+    if (verified.manifest.runId !== runId) throw new Error("La referencia promovida no pertenece al lote previsto");
+    if (movedPrevious) await rm(backup, { recursive: true });
+  } catch (error) {
+    if (movedPrevious && await directoryExists(backup)) {
+      if (promoted) await rm(active, { recursive: true });
+      await rename(backup, active);
+    } else if (!hadPrevious && promoted) {
+      await rm(active, { recursive: true });
+    }
+    throw error;
+  }
+};
+
+export const importCampaignReference = async (
+  rootDirectory: string, directory: string, replaceExisting = false
+): Promise<ReferenceManifest> => {
+  const source = independentDirectory(rootDirectory, directory);
+  if (!(await directoryExists(source))) throw new Error("No existe la carpeta de referencia a importar");
+  const imported = await readReferenceDirectory(source);
+  const { parent, active, backup, staging, lock } = paths(rootDirectory);
+  await mkdir(parent, { recursive: true });
+  const release = await acquireLock(lock);
+  try {
+    await recoverTransaction(active, backup, staging);
+    if (await directoryExists(active) && !replaceExisting) {
+      throw new Error("La referencia ya existe: --sustituir es obligatorio para reemplazarla");
+    }
+    await mkdir(staging);
+    for (const filename of referenceFiles) await copyFile(join(source, filename), join(staging, filename));
+    const verified = await readReferenceDirectory(staging);
+    if (verified.manifest.runId !== imported.manifest.runId) {
+      throw new Error("La referencia de origen cambió durante la importación");
+    }
+    await promoteReference(active, backup, staging, verified.manifest.runId);
+    return verified.manifest;
+  } finally {
+    try { await rm(staging, { recursive: true, force: true }); }
+    finally { await release(); }
+  }
+};
+
 export const writeCampaignReference = async (
   rootDirectory: string,
   runId: string,
@@ -183,28 +334,7 @@ export const writeCampaignReference = async (
     await writeFile(join(staging, "manifest.json"), JSON.stringify(manifest, null, 2), { flag: "wx" });
     await readReferenceDirectory(staging);
     await verifyBeforeCommit();
-    const hadPrevious = await directoryExists(active);
-    let movedPrevious = false;
-    let promoted = false;
-    try {
-      if (hadPrevious) {
-        await rename(active, backup);
-        movedPrevious = true;
-      }
-      await rename(staging, active);
-      promoted = true;
-      const verified = await readReferenceDirectory(active);
-      if (verified.manifest.runId !== runId) throw new Error("La referencia promovida no pertenece al lote nuevo");
-      if (movedPrevious) await rm(backup, { recursive: true });
-    } catch (error) {
-      if (movedPrevious && await directoryExists(backup)) {
-        if (promoted) await rm(active, { recursive: true });
-        await rename(backup, active);
-      } else if (!hadPrevious && promoted) {
-        await rm(active, { recursive: true });
-      }
-      throw error;
-    }
+    await promoteReference(active, backup, staging, runId);
     return manifest;
   } finally {
     try { await rm(staging, { recursive: true, force: true }); }

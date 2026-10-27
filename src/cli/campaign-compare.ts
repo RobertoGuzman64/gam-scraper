@@ -29,7 +29,9 @@ export const runCampaignComparison = async (args: readonly string[]): Promise<vo
     }
   }
   if (report.baseline === "initial") console.log("Sin referencia previa: después de acreditar la entrega, inicializa con npm run campana:referencia -- --actualizar.");
-  else console.log("Consulta terminada sin escrituras. Para actualizar tras una entrega acreditada: npm run campana:referencia -- --actualizar.");
+  else if (report.previousRunId === report.currentRunId) {
+    console.log("Consulta terminada sin escrituras. Este lote ya es la referencia vigente; no procede actualizarlo otra vez.");
+  } else console.log("Consulta terminada sin escrituras. Para actualizar tras una entrega acreditada: npm run campana:referencia -- --actualizar.");
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

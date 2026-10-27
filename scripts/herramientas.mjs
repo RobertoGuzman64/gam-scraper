@@ -5,13 +5,14 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const definitions = {
+  "campana:estado": { entry: "cli/campaign-status.js", usage: "campana:estado", description: "Consultar sin escrituras la fase de campaña, entrega, referencia y próximos comandos" },
   "campana:comparar": { entry: "cli/campaign-compare.js", usage: "campana:comparar", description: "Comparar los catálogos originales completos con la referencia única (solo lectura)" },
-  "campana:referencia": { entry: "cli/campaign-reference.js", usage: "campana:referencia -- --actualizar", description: "Actualizar expresamente la referencia tras una entrega acreditada y antes de limpiar" },
+  "campana:referencia": { entry: "cli/campaign-reference.js", usage: "campana:referencia [-- --actualizar | --recuperar | --exportar <carpeta> | --importar <carpeta> [--sustituir]]", description: "Consultar (solo lectura), actualizar o trasladar con integridad la referencia operativa" },
   "campana:extraer": { entry: "cli/campaign-extract.js", usage: "campana:extraer [-- --nueva]", description: "Extraer los tres proveedores y preparar/revisar el lote aislado" },
   "campana:intervenir": { entry: "cli/campaign-intervene.js", usage: "campana:intervenir -- gam --listar | --consultar <id> | --mantenimiento | --script <archivo.ts> [--aplicar]", description: "Consultar scripts versionados o simular/aplicar correcciones del lote actual", requiresProvider: true },
   "campana:entregar": { entry: "cli/campaign-deliver.js", usage: "campana:entregar", description: "Entregar ZIP comprobado con tres JSON en el Escritorio sin perder la versión anterior" },
-  "campana:finalizar": { entry: "cli/campaign-finalize.js", usage: "campana:finalizar [-- --simular]", description: "Acreditación editorial y selección por campaña sin introducir rutas ni SHA" },
-  "campana:revisar": { entry: "cli/campaign-review.js", usage: "campana:revisar", description: "Consultar Ready, Review y campos pendientes del lote actual" },
+  "campana:finalizar": { entry: "cli/campaign-finalize.js", usage: "campana:finalizar [-- --listar | --consultar <proveedor> <ref> | --validar | --decidir <proveedor> <ref> <excluir|incluir> --motivo <texto> --evidencia <url> | --aprobar --motivo <texto> | --simular]", description: "Gestionar y aprobar decisiones editoriales mediante comandos, sin editar JSON" },
+  "campana:revisar": { entry: "cli/campaign-review.js", usage: "campana:revisar", description: "Revisar Ready y Review; puede crear preparaciones que todavía falten" },
   iniciar: { entry: "cli/start.js", usage: "iniciar", description: "Comprobar entorno y descubrir campaña sin extraer" },
   extraer: { entry: "cli/index.js", prefix: ["scrape"], usage: "extraer -- gam [--categoria venta] [--paginas 2]", description: "Extraer un proveedor", requiresProvider: true },
   "extraer:todos": { entry: "cli/index.js", prefix: ["batch"], usage: "extraer:todos -- [--proveedores gam,gomariz] [--simular]", description: "Extraer todos o varios proveedores" },
@@ -92,19 +93,28 @@ const printHelp = (requested) => {
       console.log(`  ${command.padEnd(26)} ${value.description}`);
     }
     console.log("\nEJEMPLOS\n");
-    console.log("  npm run iniciar");
+    console.log("  npm run iniciar  (crea carpetas de trabajo si faltan)");
+    console.log("  npm run campana:estado  (consulta sin escrituras)");
     console.log("  npm run campana:extraer");
     console.log("  npm run campana:comparar");
+    console.log("  npm run campana:referencia  (solo lectura; incluso tras limpiar)");
     console.log("  npm run campana:referencia -- --actualizar  (después de entregar; antes de limpiar)");
+    console.log("  npm run campana:referencia -- --exportar <carpeta-nueva>  (respaldo/traslado)");
     console.log("  npm run campana:revisar");
     console.log("  npm run campana:intervenir -- gam --listar");
     console.log("  npm run campana:intervenir -- gam --consultar gam-6002");
     console.log("  npm run campana:intervenir -- gam --mantenimiento");
     console.log("  npm run campana:intervenir -- gam --script interventions/gam/6002.ts");
     console.log("  npm run campana:finalizar");
+    console.log("  npm run campana:finalizar -- --listar");
+    console.log("  npm run campana:finalizar -- --consultar gam 6682");
+    console.log("  npm run campana:finalizar -- --validar");
+    console.log("  npm run campana:finalizar -- --aprobar --motivo \"Motivo global documentado de la campaña\"");
     console.log("  npm run campana:entregar");
     console.log("  npm run campana:limpiar");
-    console.log("  La comparación no escribe; la actualización exige entrega acreditada y --actualizar.");
+    console.log("  LECTURA | campana:estado, campana:comparar, campana:referencia sin argumentos y modos editoriales de consulta.");
+    console.log("  PREPARACIÓN/ESCRITURA | iniciar crea carpetas; campana:revisar puede preparar; campana:finalizar crea selección y sus modos de decisión escriben.");
+    console.log("  AUTORIZACIÓN | campana:referencia --actualizar, campana:finalizar --aprobar y campana:limpiar --aplicar son acciones explícitas.");
     console.log("  npm run limpiar:versionados  (limpia solo archivos históricos rastreados por Git)");
     console.log("  npm run extraer -- gam");
     console.log("  npm run extraer:todos -- --simular");

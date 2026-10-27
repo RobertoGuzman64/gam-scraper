@@ -6,6 +6,7 @@ import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { readCampaignReference } from "../../../infrastructure/filesystem/campaign-reference.js";
 import { deliverActiveCampaign } from "../delivery.js";
+import { planDeliveredCampaignCleanup } from "../cleanup.js";
 import { finalizeActiveCampaign } from "../finalization.js";
 import { reviewActiveCampaign } from "../review.js";
 import { updateActiveCampaignReference } from "../reference-update.js";
@@ -83,6 +84,19 @@ test("la actualización requiere entrega acreditada y conserva los originales co
   assert.deepEqual(saved?.catalogs.map((catalog) => catalog.providerId), CAMPAIGN_PROVIDERS);
   assert.equal(saved?.manifest.runId, runId);
   await assert.rejects(updateActiveCampaignReference(root, desktop), /ya está guardado/);
+}));
+
+test("la referencia acreditada no depende del inventario de archivos eliminables", async () => withCampaign(async (root, desktop, runId) => {
+  await approve(root);
+  await deliverActiveCampaign(root, desktop, new Date(2026, 9, 26, 12));
+  const auxiliary = join(root, "storage", "scraped", "campanas", runId, "gam", "auxiliar-ajeno.csv");
+  await writeFile(auxiliary, "archivo ajeno a la limpieza");
+  await assert.rejects(planDeliveredCampaignCleanup(root, desktop), /no reconocido/);
+  const result = await updateActiveCampaignReference(root, desktop);
+  assert.equal(result.manifest.runId, runId);
+  assert.equal((await readCampaignReference(root))?.manifest.runId, runId);
+  assert.equal(await readFile(auxiliary, "utf8"), "archivo ajeno a la limpieza");
+  await assert.rejects(planDeliveredCampaignCleanup(root, desktop), /no reconocido/);
 }));
 
 test("si la entrega acreditada cambia, no puede modificar la referencia válida", async () => withCampaign(async (root, desktop, runId) => {

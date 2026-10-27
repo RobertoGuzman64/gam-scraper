@@ -39,6 +39,8 @@ export const runCampaignExtraction = async (args: readonly string[]): Promise<vo
   console.log("EXTRACCIÓN | Tres proveedores completos y catálogos verificados; iniciando revisión offline");
   const reviewed = await reviewActiveCampaign(root);
   printCampaignReview(reviewed);
+  if (reviewed.complete) console.log("  SIGUIENTE | npm run campana:finalizar (crear o consultar acreditación)");
+  else console.log("  SIGUIENTE | npm run campana:estado (diagnosticar antes de avanzar)");
   if (!reviewed.complete) process.exitCode = 1;
 };
 
