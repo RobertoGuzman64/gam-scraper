@@ -18,7 +18,8 @@ const fixtures = resolve("src/testing/fixtures");
 const prefixes = {
   gam: "scrape-gam-marzo-2026",
   gomariz: "scrape-gomariz",
-  mercaeleva: "scrape-mercaeleva"
+  mercaeleva: "scrape-mercaeleva",
+  manain: "scrape-manain"
 } as const;
 
 const createCampaign = async (root: string): Promise<string> => {

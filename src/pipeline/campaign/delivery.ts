@@ -32,7 +32,7 @@ export const deliverActiveCampaign = async (
     source.totals.original !== source.totals.publishable + source.totals.excluded) {
     throw new Error("La selección no cuadra con sus totales");
   }
-  const counts = { gam: 0, gomariz: 0, mercaeleva: 0 };
+  const counts: Record<(typeof CAMPAIGN_PROVIDERS)[number], number> = { gam: 0, gomariz: 0, mercaeleva: 0, manain: 0 };
   const files: ZipFile[] = [];
   for (const providerId of CAMPAIGN_PROVIDERS) {
     const raw = await readFile(join(selection.selectionDir, `${providerId}-publishable.json`), "utf8");
@@ -45,7 +45,7 @@ export const deliverActiveCampaign = async (
     files.push({ name: `${providerId}-${date}.json`, data: raw });
   }
   if (Object.values(counts).reduce((sum, count) => sum + count, 0) !== source.totals.publishable) {
-    throw new Error("Los tres proveedores no suman el total publicable");
+    throw new Error("Los proveedores no suman el total publicable");
   }
   const desktop = resolve(desktopDirectory);
   const destinationInfo = await stat(desktop);
@@ -57,7 +57,7 @@ export const deliverActiveCampaign = async (
     const verified = readZipArchive(await readFile(pending));
     if (verified.length !== files.length || verified.some((entry, index) =>
       entry.name !== files[index]?.name || !entry.data.equals(Buffer.from(files[index]?.data ?? "", "utf8")))) {
-      throw new Error("El ZIP temporal no contiene exactamente los tres JSON esperados");
+      throw new Error("El ZIP temporal no contiene exactamente los JSON esperados");
     }
     await rename(pending, destination);
   } finally {

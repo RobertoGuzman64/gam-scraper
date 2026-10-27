@@ -4,6 +4,7 @@ import { fold } from "./category-utils.js";
 import { gamUsedCategorySlug, newCategorySlug } from "./providers/gam/categories.js";
 import { gomarizCategorySlug } from "./providers/gomariz/categories.js";
 import { mercaelevaCategorySlug, mercaelevaNewCategorySlug } from "./providers/mercaeleva/categories.js";
+import { manainCategorySlug } from "./providers/manain/categories.js";
 
 type Category = ImportCatalog["categories"][number];
 type ImportableCondition = Exclude<ImportCandidate["condition"], null>;
@@ -96,9 +97,11 @@ export const resolveCategory = (
 ): Category | null => {
   if (condition === null) return null;
   const leaf = leafCategories(categories, condition);
-  const sourceSlug = condition === "Nuevo"
+  const manainSlug = record.providerId === "manain" ? manainCategorySlug(record, condition) : null;
+  const sourceSlug = record.providerId === "manain" ? manainSlug : condition === "Nuevo"
     ? record.providerId === "mercaeleva" ? mercaelevaNewCategorySlug(record) : newCategorySlug(record)
     : sourceCategorySlug(record);
+  if (record.providerId === "manain" && !sourceSlug) return null;
   if (sourceSlug) {
     const matches = leaf.filter((category) => fold(category.slug) === fold(sourceSlug));
     const matched = matches.length === 1 ? matches[0] : undefined;

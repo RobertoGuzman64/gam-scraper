@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { lstat, open, readdir, readFile, realpath, rename, rm, writeFile, mkdir } from "node:fs/promises";
 import { parseCatalogSnapshot } from "../../catalog/snapshot.js";
+import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { join, relative, resolve, sep, isAbsolute } from "node:path";
 
 const isRecord = (input: unknown): input is Record<string, unknown> =>
@@ -16,7 +17,10 @@ const readable = async (path: string): Promise<boolean> => {
     throw error;
   }
 };
-const CAMPAIGN_PROVIDERS = ["gam", "gomariz", "mercaeleva"] as const;
+const providerNames = CAMPAIGN_PROVIDERS.join("|");
+const runArtifact = new RegExp(`^(?:${providerNames})(?:\\.log|-(?:summary|changes|errors|preparation|partial-preparation)\\.json)$`);
+const publishableArtifact = new RegExp(`^(?:${providerNames})-publishable\\.json$`);
+const interventionArtifact = new RegExp(`^(?:${providerNames})-intervention-(?:preparation|preparation\\.manifest|diagnostics)\\.json$`);
 const archivePattern = /^archive-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z-[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/;
 const validName = /^[a-zA-Z0-9_-]+$/;
 
@@ -79,7 +83,7 @@ const allowedFile = (
   area: CleanupArea, parts: readonly string[], name: string, prefixes: ReadonlyMap<string, string>
 ): boolean => {
   if (area === "run") return parts.length === 0 &&
-    (name === "run.json" || /^(gam|gomariz|mercaeleva)(?:\.log|-(?:summary|changes|errors|preparation|partial-preparation)\.json)$/.test(name));
+    (name === "run.json" || runArtifact.test(name));
   if (area === "scraped") {
     if (parts.length === 1) {
       const prefix = prefixes.get(parts[0] ?? "");
@@ -101,13 +105,13 @@ const allowedFile = (
       return /^[a-zA-Z0-9_-]+-(?:preparation|preparation\.manifest|diagnostics)\.json$/.test(name);
     if (parts.length === 1 && parts[0] === "editorial") return /^accreditation-[a-f0-9]{64}\.json$/.test(name);
     if (parts.length === 2 && parts[0] === "selection" && /^[a-f0-9]{64}$/.test(parts[1] ?? ""))
-      return name === "selection.json" || /^(gam|gomariz|mercaeleva)-publishable\.json$/.test(name);
+      return name === "selection.json" || publishableArtifact.test(name);
     return false;
   }
   if (parts.length === 1 && /^[a-f0-9]{64}$/.test(parts[0] ?? ""))
     return name === "catalog-derived.json" || name === "intervention-record.json";
   if (parts.length === 2 && /^[a-f0-9]{64}$/.test(parts[0] ?? "") && parts[1] === "prepared")
-    return /^(gam|gomariz|mercaeleva)-intervention-(?:preparation|preparation\.manifest|diagnostics)\.json$/.test(name);
+    return interventionArtifact.test(name);
   return false;
 };
 

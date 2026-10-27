@@ -76,7 +76,7 @@ export const readCampaignFinalizationContext = async (
   if (!campaign.runId || !campaign.runFile || campaign.status !== "complete" || campaign.issues.length ||
     campaign.providers.length !== CAMPAIGN_PROVIDERS.length ||
     campaign.providers.some((provider) => !provider.catalog || !provider.preparation)) {
-    throw new Error(`No se puede finalizar: faltan tres preparaciones verificables del lote actual. ${campaign.issues.join("; ")}`);
+    throw new Error(`No se puede finalizar: faltan preparaciones verificables de todos los proveedores del lote actual. ${campaign.issues.join("; ")}`);
   }
   const paths = CAMPAIGN_PROVIDERS.map((providerId) => {
     const provider = campaign.providers.find((item) => item.providerId === providerId);

@@ -52,7 +52,7 @@ export const verifyDeliveredCampaign = async (
   const zip = await readFile(receiptValue.zipFile);
   if (sha256(zip) !== receiptValue.zipSha256) throw new Error("El ZIP entregado fue modificado");
   const archive = readZipArchive(zip);
-  if (archive.length !== CAMPAIGN_PROVIDERS.length) throw new Error("El ZIP entregado no contiene tres archivos");
+  if (archive.length !== CAMPAIGN_PROVIDERS.length) throw new Error("El ZIP entregado no contiene todos los archivos");
   for (const [index, id] of CAMPAIGN_PROVIDERS.entries()) {
     const entry = archive[index];
     if (!entry || entry.name !== `${id}-${receiptValue.date}.json`) throw new Error("El ZIP tiene entradas inesperadas");

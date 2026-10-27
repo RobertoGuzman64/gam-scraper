@@ -7,18 +7,20 @@ import { inspectBeforeExtraction } from "../preflight.js";
 import { reviewActiveCampaign } from "../review.js";
 import { CAMPAIGN_PROVIDERS } from "../discovery.js";
 import type { BatchReport, ProviderRun } from "../../batch/report-types.js";
+import { copyCampaignTestCatalog } from "./campaign-catalog-fixture.js";
 
 const sourceRoot = resolve("src/testing/fixtures");
 
 const populate = async (root: string, providerId: string): Promise<ProviderRun> => {
   const source = join(sourceRoot, providerId);
-  const names = ["gam", "gomariz", "mercaeleva"];
-  const prefixes = ["scrape-gam-marzo-2026", "scrape-gomariz", "scrape-mercaeleva"];
+  const names = ["gam", "gomariz", "mercaeleva", "manain"];
+  const prefixes = ["scrape-gam-marzo-2026", "scrape-gomariz", "scrape-mercaeleva", "scrape-manain"];
   const prefix = prefixes[names.indexOf(providerId)];
   if (!prefix) throw new Error("Proveedor no admitido");
   const dir = join(root, "storage", "scraped", "campaigns", "prueba", providerId);
   await mkdir(dir, { recursive: true });
-  for (const name of [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`]) {
+  if (providerId === "manain") await copyCampaignTestCatalog(sourceRoot, dir, providerId, prefix);
+  else for (const name of [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`]) {
     await copyFile(join(source, name), join(dir, name));
   }
   const catalog: unknown = JSON.parse(await readFile(join(dir, `${prefix}-catalog.json`), "utf8"));
@@ -53,7 +55,7 @@ test("instalación sin históricos no intenta generar una preparación", async (
     const result = await reviewActiveCampaign(root);
     assert.equal(result.complete, false);
     assert.equal(result.campaign.status, "none");
-    assert.deepEqual(result.providers.map((p) => p.state), ["pending", "pending", "pending"]);
+    assert.deepEqual(result.providers.map((p) => p.state), ["pending", "pending", "pending", "pending"]);
     const inspect = await inspectBeforeExtraction(root);
     assert.equal(inspect.requiresNewCampaign, false);
   } finally { await rm(root, { recursive: true, force: true }); }
@@ -68,7 +70,7 @@ test("un lote incompleto exige reconocerlo antes de empezar otro y no se prepara
     const reviewed = await reviewActiveCampaign(root);
     assert.equal(reviewed.complete, false);
     assert.ok(reviewed.campaign.issues.some((issue) => issue.includes("no es seleccionable")));
-    assert.deepEqual(reviewed.providers.map((provider) => provider.state), ["pending", "pending", "pending"]);
+    assert.deepEqual(reviewed.providers.map((provider) => provider.state), ["pending", "pending", "pending", "pending"]);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
@@ -79,7 +81,7 @@ test("prepara y valida los tres catálogos del mismo run sin cambiar los Review;
     await writeRun(root, "complete", providers);
     const first = await reviewActiveCampaign(root);
     assert.equal(first.complete, true, JSON.stringify(first.providers.filter((p) => p.state !== "validated")));
-    assert.deepEqual(first.providers.map((p) => p.state), ["validated", "validated", "validated"]);
+    assert.deepEqual(first.providers.map((p) => p.state), ["validated", "validated", "validated", "validated"]);
     for (const p of first.providers) {
       assert.equal(p.ready! + p.review!, p.products);
       assert.ok(p.preparationFile?.includes(join("storage", "campaigns", "revision-actual")));

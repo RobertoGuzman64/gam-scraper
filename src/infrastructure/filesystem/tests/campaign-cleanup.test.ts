@@ -10,7 +10,7 @@ import { inspectCleanupArea } from "../campaign-cleanup.js";
 
 const category: CategoryConfig = { key: "maquinaria", name: "Maquinaria", url: "https://example.test/maquinaria" };
 const prefixes = new Map([
-  ["gam", "scrape-gam"], ["gomariz", "scrape-gomariz"], ["mercaeleva", "scrape-mercaeleva"]
+  ["gam", "scrape-gam"], ["gomariz", "scrape-gomariz"], ["mercaeleva", "scrape-mercaeleva"], ["manain", "scrape-manain"]
 ]);
 
 const products = (providerId: string, date: string): CategoryScrapeResult => ({
@@ -47,9 +47,9 @@ test("inventa y cuantifica CSV, snapshots e historiales que genera la publicaciÃ
     assert.ok(inventory);
     assert.ok(inventory.bytes > 0);
     assert.ok(inventory.files > 0);
-    assert.ok(inventory.breakdown.some(({ kind, files }) => kind === "csv" && files >= 6));
-    assert.ok(inventory.breakdown.some(({ kind, files }) => kind === "snapshot" && files === 3));
-    assert.ok(inventory.breakdown.some(({ kind, files }) => kind === "history" && files > 3));
+    assert.ok(inventory.breakdown.some(({ kind, files }) => kind === "csv" && files >= 8));
+    assert.ok(inventory.breakdown.some(({ kind, files }) => kind === "snapshot" && files === 4));
+    assert.ok(inventory.breakdown.some(({ kind, files }) => kind === "history" && files > 4));
     assert.deepEqual(await readdir(join(scraped, "gam", ".history")), ["scrape-gam"]);
   });
 });

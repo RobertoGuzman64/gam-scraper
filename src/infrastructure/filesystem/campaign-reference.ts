@@ -51,7 +51,8 @@ const paths = (rootDirectory: string) => {
   };
 };
 
-const referenceFiles = [...CAMPAIGN_PROVIDERS.map((provider) => `${provider}.json`), "manifest.json", "differences.json"];
+const referenceFiles = (providers: readonly string[]): readonly string[] =>
+  [...providers.map((provider) => `${provider}.json`), "manifest.json", "differences.json"];
 
 const readReferenceDirectory = async (directory: string): Promise<StoredCampaignReference> => {
   const files = await readdir(directory);
@@ -60,11 +61,15 @@ const readReferenceDirectory = async (directory: string): Promise<StoredCampaign
       throw new Error(`La referencia contiene un elemento que no es archivo regular: ${file}`);
     }
   }
-  if (files.length !== referenceFiles.length || referenceFiles.some((file) => !files.includes(file))) {
+  if (!files.includes("manifest.json") || !files.includes("differences.json")) {
     throw new Error("La referencia existe pero está incompleta o contiene archivos inesperados");
   }
   const manifestInput: unknown = JSON.parse(await readFile(join(directory, "manifest.json"), "utf8"));
   const manifest = parseReferenceManifest(manifestInput);
+  const expectedFiles = referenceFiles(manifest.catalogs.map((entry) => entry.providerId));
+  if (files.length !== expectedFiles.length || expectedFiles.some((file) => !files.includes(file))) {
+    throw new Error("La referencia existe pero está incompleta o contiene archivos inesperados");
+  }
   const differences = await readFile(join(directory, "differences.json"), "utf8");
   if (digest(differences) !== manifest.differencesSha256) {
     throw new Error("El informe de diferencias no coincide con el manifiesto de referencia");
@@ -77,7 +82,7 @@ const readReferenceDirectory = async (directory: string): Promise<StoredCampaign
     throw new Error("El informe de diferencias no pertenece a la referencia vigente");
   }
   const catalogs: CanonicalCatalog[] = [];
-  for (const providerId of CAMPAIGN_PROVIDERS) {
+  for (const { providerId } of manifest.catalogs) {
     const entry = manifest.catalogs.find((item) => item.providerId === providerId);
     if (!entry) throw new Error(`Falta ${providerId} en el manifiesto`);
     const raw = await readFile(join(directory, `${providerId}.json`), "utf8");
@@ -157,7 +162,9 @@ export const exportCampaignReference = async (rootDirectory: string, directory: 
   const { active } = paths(rootDirectory);
   await mkdir(destination);
   try {
-    for (const filename of referenceFiles) await copyFile(join(active, filename), join(destination, filename));
+    for (const filename of referenceFiles(inspection.reference.manifest.catalogs.map((entry) => entry.providerId))) {
+      await copyFile(join(active, filename), join(destination, filename));
+    }
     const exported = await readReferenceDirectory(destination);
     if (exported.manifest.runId !== inspection.reference.manifest.runId) {
       throw new Error("La referencia cambió durante la exportación");
@@ -277,7 +284,9 @@ export const importCampaignReference = async (
       throw new Error("La referencia ya existe: --sustituir es obligatorio para reemplazarla");
     }
     await mkdir(staging);
-    for (const filename of referenceFiles) await copyFile(join(source, filename), join(staging, filename));
+    for (const filename of referenceFiles(imported.manifest.catalogs.map((entry) => entry.providerId))) {
+      await copyFile(join(source, filename), join(staging, filename));
+    }
     const verified = await readReferenceDirectory(staging);
     if (verified.manifest.runId !== imported.manifest.runId) {
       throw new Error("La referencia de origen cambió durante la importación");

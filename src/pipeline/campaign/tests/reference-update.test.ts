@@ -17,7 +17,8 @@ import type { BatchReport, ProviderRun } from "../../batch/report-types.js";
 const prefixes = {
   gam: "scrape-gam-marzo-2026",
   gomariz: "scrape-gomariz",
-  mercaeleva: "scrape-mercaeleva"
+  mercaeleva: "scrape-mercaeleva",
+  manain: "scrape-manain"
 } as const;
 
 const withCampaign = async (callback: (root: string, desktop: string, runId: string) => Promise<void>): Promise<void> => {
@@ -80,7 +81,7 @@ test("la actualización requiere entrega acreditada y conserva los originales co
   assert.equal(result.manifest.runId, runId);
   assert.equal(result.comparison.baseline, "initial");
   const saved = await readCampaignReference(root);
-  assert.deepEqual(saved?.catalogs.map((catalog) => catalog.productCount), [4, 4, 4]);
+  assert.deepEqual(saved?.catalogs.map((catalog) => catalog.productCount), [4, 4, 4, 1]);
   assert.deepEqual(saved?.catalogs.map((catalog) => catalog.providerId), CAMPAIGN_PROVIDERS);
   assert.equal(saved?.manifest.runId, runId);
   await assert.rejects(updateActiveCampaignReference(root, desktop), /ya está guardado/);

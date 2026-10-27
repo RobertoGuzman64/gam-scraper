@@ -1,4 +1,4 @@
-import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
+import { isReferenceProviderSet } from "../../contracts/campaign-providers.js";
 
 export type ReferenceCatalogManifest = {
   readonly providerId: string;
@@ -26,13 +26,12 @@ export const parseReferenceManifest = (value: unknown): ReferenceManifest => {
   if (!record(value) || value.version !== 1 || typeof value.runId !== "string" || !value.runId.trim() ||
     typeof value.createdAt !== "string" || !Number.isFinite(Date.parse(value.createdAt)) ||
     !sha(value.differencesSha256) || !Array.isArray(value.catalogs) ||
-    value.catalogs.length !== CAMPAIGN_PROVIDERS.length) {
+    !isReferenceProviderSet(value.catalogs.map((entry: unknown) => record(entry) && typeof entry.providerId === "string" ? entry.providerId : ""))) {
     throw new Error("Manifiesto de referencia inválido");
   }
   const catalogs: ReferenceCatalogManifest[] = [];
   for (const entry of value.catalogs) {
     if (!record(entry) || typeof entry.providerId !== "string" ||
-      !CAMPAIGN_PROVIDERS.some((provider) => provider === entry.providerId) ||
       typeof entry.prefix !== "string" || !/^[a-zA-Z0-9_-]+$/.test(entry.prefix) ||
       typeof entry.scope !== "string" || !/^[a-f0-9]{16}$/.test(entry.scope) ||
       typeof entry.productCount !== "number" || !Number.isSafeInteger(entry.productCount) || entry.productCount < 1 ||
@@ -40,7 +39,7 @@ export const parseReferenceManifest = (value: unknown): ReferenceManifest => {
     catalogs.push({ providerId: entry.providerId, prefix: entry.prefix, scope: entry.scope,
       productCount: entry.productCount, sha256: entry.sha256 });
   }
-  if (new Set(catalogs.map((entry) => entry.providerId)).size !== CAMPAIGN_PROVIDERS.length) {
+  if (!isReferenceProviderSet(catalogs.map((entry) => entry.providerId))) {
     throw new Error("Manifiesto de referencia con proveedores incompletos o duplicados");
   }
   return { version: 1, runId: value.runId, createdAt: value.createdAt, catalogs, differencesSha256: value.differencesSha256 };

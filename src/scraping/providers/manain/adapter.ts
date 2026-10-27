@@ -1,0 +1,32 @@
+import type { ScraperProvider } from "../../provider.js";
+import { discoverManainSaleCatalog } from "./browser.js";
+import { MANAIN_CATEGORIES, MANAIN_OPTIONS } from "./config.js";
+import { extractManainSaleProductLinks } from "./listing.js";
+import type { ManainListingResult } from "./listing.js";
+import { parseManainProduct } from "./product.js";
+
+export const requireCompleteManainListing = (
+  listing: ManainListingResult
+): { readonly urls: readonly string[]; readonly expectedTotal: number } => {
+  if (!listing.complete || listing.endReason !== "control-exhausted") {
+    throw new Error(`Manain: fin de catálogo sin acreditar (${listing.endReason}); se cancela la extracción de fichas`);
+  }
+  return { urls: listing.urls, expectedTotal: listing.urls.length };
+};
+
+export const manainProvider: ScraperProvider = {
+  id: "manain",
+  categories: MANAIN_CATEGORIES,
+  defaultOptions: MANAIN_OPTIONS,
+  buildPagedUrl: (categoryUrl, page) => {
+    if (page !== 1) throw new Error("Manain: la paginación requiere el descubrimiento con navegador");
+    return categoryUrl;
+  },
+  extractProductLinksFromListing: extractManainSaleProductLinks,
+  parseProductPage: parseManainProduct,
+  extractReference: () => null,
+  discoverCategoryTree: async () => MANAIN_CATEGORIES,
+  async discoverListing(category, options, onProgress) {
+    return requireCompleteManainListing(await discoverManainSaleCatalog(category.url, options, onProgress));
+  }
+};

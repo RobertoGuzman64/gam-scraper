@@ -7,6 +7,7 @@ import test from "node:test";
 import { prepareSavedCatalog } from "../../preparation/prepare.js";
 import { discoverCampaign, discoverCampaignCatalogHistory, CAMPAIGN_PROVIDERS } from "../discovery.js";
 import type { BatchReport, ProviderRun } from "../../batch/report-types.js";
+import { copyCampaignTestCatalog } from "./campaign-catalog-fixture.js";
 
 const fixtureRoot = resolve("src/testing/fixtures");
 
@@ -14,13 +15,14 @@ const createRoot = async (): Promise<string> => mkdtemp(join(tmpdir(), "equipzil
 
 const populate = async (root: string, providerId: string): Promise<ProviderRun> => {
   const source = join(fixtureRoot, providerId);
-  const names = ["gam", "gomariz", "mercaeleva"];
-  const prefixes = ["scrape-gam-marzo-2026", "scrape-gomariz", "scrape-mercaeleva"];
+  const names = ["gam", "gomariz", "mercaeleva", "manain"];
+  const prefixes = ["scrape-gam-marzo-2026", "scrape-gomariz", "scrape-mercaeleva", "scrape-manain"];
   const prefix = prefixes[names.indexOf(providerId)];
   if (!prefix) throw new Error("Proveedor de prueba no declarado");
   const outputDir = join(root, "storage", "scraped", providerId);
   await mkdir(outputDir, { recursive: true });
-  for (const name of [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`]) {
+  if (providerId === "manain") await copyCampaignTestCatalog(fixtureRoot, outputDir, providerId, prefix);
+  else for (const name of [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`]) {
     await copyFile(join(source, name), join(outputDir, name));
   }
   const catalog: unknown = JSON.parse(await readFile(join(outputDir, `${prefix}-catalog.json`), "utf8"));
@@ -55,7 +57,7 @@ test("sin storage ni campañas previas devuelve los tres proveedores pendientes 
     const result = await discoverCampaign(root);
     assert.equal(result.status, "none");
     assert.equal(result.runFile, null);
-    assert.deepEqual(result.providers.map((provider) => provider.state), ["not-started", "not-started", "not-started"]);
+    assert.deepEqual(result.providers.map((provider) => provider.state), ["not-started", "not-started", "not-started", "not-started"]);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
@@ -68,7 +70,7 @@ test("descubre el lote completo a través de run.json, sus catálogos y los SHA 
     assert.equal(result.runId, "lote-completo");
     assert.equal(result.status, "complete");
     assert.deepEqual(result.issues, []);
-    assert.deepEqual(result.providers.map((provider) => provider.state), ["catalog", "catalog", "catalog"]);
+    assert.deepEqual(result.providers.map((provider) => provider.state), ["catalog", "catalog", "catalog", "catalog"]);
     for (const provider of result.providers) {
       assert.ok(provider.catalog);
       const raw = await readFile(provider.catalog.path);
@@ -99,7 +101,7 @@ test("no confunde el último lote incompleto con un lote completo anterior", asy
     const result = await discoverCampaign(root);
     assert.equal(result.runId, "lote-nuevo");
     assert.equal(result.status, "partial");
-    assert.deepEqual(result.providers.map((provider) => provider.state), ["failed", "not-started", "not-started"]);
+    assert.deepEqual(result.providers.map((provider) => provider.state), ["failed", "not-started", "not-started", "not-started"]);
     assert.ok(result.issues.some((issue) => issue.includes("no es seleccionable")));
   } finally { await rm(root, { recursive: true, force: true }); }
 });

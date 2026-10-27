@@ -1,6 +1,6 @@
 import type { CanonicalCatalog } from "../canonical-catalog.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
-import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
+import { CAMPAIGN_PROVIDERS, isReferenceProviderSet } from "../../contracts/campaign-providers.js";
 
 export type ReferenceIdentity = {
   readonly identity: string;
@@ -120,7 +120,7 @@ const changesFor = (before: ProductRecord, after: ProductRecord): readonly Refer
 };
 
 const compareProvider = (
-  providerId: string, previous: CanonicalCatalog | null, current: CanonicalCatalog
+  providerId: string, previous: CanonicalCatalog | null, current: CanonicalCatalog, isNewProvider: boolean
 ): ReferenceProviderDifference => {
   if (current.providerId !== providerId || (previous && previous.providerId !== providerId)) {
     throw new Error(`Proveedor de inventario incoherente: ${providerId}`);
@@ -130,7 +130,11 @@ const compareProvider = (
   }
   const before = previous ? indexProducts(previous) : new Map<string, IndexedProduct>();
   const after = indexProducts(current);
-  if (!previous) return { providerId, previousCount: 0, currentCount: after.size, added: [], missing: [], modified: [], unchanged: 0 };
+  if (!previous) return {
+    providerId, previousCount: 0, currentCount: after.size,
+    added: isNewProvider ? sorted([...after.values()]).map(({ identity: key, reference, url }) => ({ identity: key, reference, url })) : [],
+    missing: [], modified: [], unchanged: 0
+  };
   if (previous) {
     const beforeUrls = new Map([...before.values()].map((item) => [item.canonicalUrl, item.identity]));
     const afterUrls = new Map([...after.values()].map((item) => [item.canonicalUrl, item.identity]));
@@ -175,8 +179,10 @@ export const compareCampaignReferences = (
       if (indexed.has(catalog.providerId)) throw new Error(`Proveedor duplicado en ${name}: ${catalog.providerId}`);
       indexed.set(catalog.providerId, catalog);
     }
-    if (indexed.size !== CAMPAIGN_PROVIDERS.length || CAMPAIGN_PROVIDERS.some((id) => !indexed.has(id))) {
-      throw new Error(`Se necesitan los tres proveedores completos en ${name}`);
+    if ((name === "referencia" && !isReferenceProviderSet([...indexed.keys()])) ||
+      (name === "campaña" && (indexed.size !== CAMPAIGN_PROVIDERS.length ||
+        CAMPAIGN_PROVIDERS.some((id) => !indexed.has(id))))) {
+      throw new Error(`Se necesitan los proveedores completos en ${name}`);
     }
     return indexed;
   };
@@ -187,7 +193,7 @@ export const compareCampaignReferences = (
     providers: CAMPAIGN_PROVIDERS.map((providerId) => {
       const catalog = newer.get(providerId);
       if (!catalog) throw new Error(`No se encontró el catálogo de ${providerId}`);
-      return compareProvider(providerId, older?.get(providerId) ?? null, catalog);
+      return compareProvider(providerId, older?.get(providerId) ?? null, catalog, older !== null);
     })
   };
 };

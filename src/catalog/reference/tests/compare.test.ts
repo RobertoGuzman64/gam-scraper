@@ -85,5 +85,5 @@ test("bloquea ámbitos incompatibles y proveedores ausentes", () => {
   assert.throws(() => compareCampaignReferences("a", all([
     product("gam", "1", "https://ejemplo.test/gam/1")
   ]), "b", all([product("gam", "1", "https://ejemplo.test/gam/1")], "b".repeat(16))), /Ámbito/);
-  assert.throws(() => compareCampaignReferences(null, null, "b", all([]).slice(0, 2)), /tres proveedores/);
+  assert.throws(() => compareCampaignReferences(null, null, "b", all([]).slice(0, 2)), /proveedores completos/);
 });

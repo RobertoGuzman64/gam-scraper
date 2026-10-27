@@ -13,7 +13,7 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 
 export const runCampaignExtraction = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    console.log("Uso: npm run extraer [-- --nueva]\nExtrae los tres proveedores en un lote aislado, comprueba sus archivos y ejecuta preparación/revisión. --nueva permite empezar otro lote después de uno incompleto o con avisos.");
+    console.log("Uso: npm run extraer [-- --nueva]\nExtrae todos los proveedores en un lote aislado, comprueba sus archivos y ejecuta preparación/revisión. --nueva permite empezar otro lote después de uno incompleto o con avisos.");
     return;
   }
   if (args.length > 1 || (args.length === 1 && args[0] !== "--nueva")) {
@@ -38,7 +38,7 @@ export const runCampaignExtraction = async (args: readonly string[]): Promise<vo
     process.exitCode = 1;
     return;
   }
-  printStatus("PASS", "EXTRACCIÓN | Tres proveedores completos y catálogos verificados; iniciando revisión offline");
+  printStatus("PASS", "EXTRACCIÓN | Todos los proveedores completos y catálogos verificados; iniciando revisión offline");
   const reviewed = await reviewActiveCampaign(root);
   printCampaignReview(reviewed);
   if (reviewed.complete) console.log("  SIGUIENTE | npm run acreditar (crear o consultar acreditación)");

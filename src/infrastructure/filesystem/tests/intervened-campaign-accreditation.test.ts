@@ -6,6 +6,7 @@ import test from "node:test";
 import { buildProductIdentity } from "../../../catalog/identity.js";
 import { createAccreditationDraft, selectAccreditedPublishable, sha256 } from "../../../catalog/editorial/campaign-accreditation.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
+import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { persistAppliedIntervention } from "../intervention-application.js";
 import { writeCanonicalCatalog } from "../canonical-catalog.js";
 import { readInterventionSource } from "../intervention-source.js";
@@ -14,7 +15,7 @@ import { readOfflinePreparation } from "../offline-preparation.js";
 import { simulateIntervention } from "../../../manual-interventions/simulation.js";
 import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
 
-const providers = ["gam", "gomariz", "mercaeleva"] as const;
+const providers = CAMPAIGN_PROVIDERS;
 const makeProduct = (providerId: string): ProductRecord => ({
   providerId, categoryKey: "industrial", categoryName: "Industrial",
   url: `https://proveedor.example/${providerId}/maquina`, title: "Máquina original",

@@ -278,7 +278,7 @@ export const discoverCampaign = async (rootDirectory: string): Promise<CampaignD
   if (current.report.status === "complete" && (
     current.report.requestedProviders.length !== CAMPAIGN_PROVIDERS.length ||
     CAMPAIGN_PROVIDERS.some((id) => !current.report.requestedProviders.includes(id))
-  )) issues.unshift("Lote completado parcialmente por proveedores; requiere los tres para acreditar");
+  )) issues.unshift("Lote completado parcialmente por proveedores; requiere todos los proveedores para acreditar");
   return { runId: current.report.runId, runFile: current.path, status: current.report.status,
     providers: results.map((result) => result.provider), issues };
 };
@@ -308,7 +308,7 @@ export const discoverCampaignCatalogHistory = async (
     if (report.status !== "complete" || report.requestedProviders.length !== CAMPAIGN_PROVIDERS.length ||
       CAMPAIGN_PROVIDERS.some((id) => !report.requestedProviders.includes(id)) || !provider ||
       provider.status !== "complete") {
-      observations.push({ runId: report.runId, catalog: null, reason: "Campaña no completada por los tres proveedores" });
+      observations.push({ runId: report.runId, catalog: null, reason: "Campaña no completada por todos los proveedores" });
       continue;
     }
     try {

@@ -44,7 +44,7 @@ test("inicializa cinco archivos completos, con huellas y sin residuos de transac
   await start(root);
   const directory = join(root, "data", "reference");
   assert.deepEqual((await readdir(directory)).sort(),
-    ["gam.json", "gomariz.json", "mercaeleva.json", "manifest.json", "differences.json"].sort());
+    ["gam.json", "gomariz.json", "mercaeleva.json", "manain.json", "manifest.json", "differences.json"].sort());
   assert.deepEqual(await readdir(join(root, "data")), ["reference"]);
   const reference = await readCampaignReference(root);
   assert.equal(reference?.manifest.runId, "lote-1");

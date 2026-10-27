@@ -9,11 +9,11 @@ const definitions = {
   iniciar: { entry: "cli/start.js", usage: "iniciar", description: "Comprobar entorno y descubrir campaña sin extraer" },
   huecos: { entry: "cli/catalog-content-gaps.js", usage: "huecos [-- --agrupar categoria|marca|modelo --min-grupo 8 --min-ausentes 3 --top 20 --json]", description: "Consultar huecos de contenido de la referencia; solo lectura" },
   estado: { entry: "cli/campaign-status.js", usage: "estado", description: "Consultar sin escrituras la fase de campaña, entrega, referencia y próximos comandos" },
-  extraer: { entry: "cli/campaign-extract.js", usage: "extraer [-- --nueva]", description: "Extraer los tres proveedores y preparar/revisar el lote aislado" },
+  extraer: { entry: "cli/campaign-extract.js", usage: "extraer [-- --nueva]", description: "Extraer los cuatro proveedores y preparar/revisar el lote aislado" },
   revisar: { entry: "cli/campaign-review.js", usage: "revisar", description: "Revisar Ready y Review; puede crear preparaciones que todavía falten" },
   intervenir: { entry: "cli/campaign-intervene.js", usage: "intervenir -- gam --listar | --consultar <id> | --mantenimiento | --script <archivo.ts> [--aplicar]", description: "Consultar scripts versionados o simular/aplicar correcciones del lote actual", requiresProvider: true },
   acreditar: { entry: "cli/campaign-finalize.js", usage: "acreditar [-- --listar | --consultar <proveedor> <ref> | --validar | --decidir <proveedor> <ref> <excluir|incluir> --motivo <texto> --evidencia <url> | --aprobar --motivo <texto> | --simular]", description: "Gestionar y aprobar decisiones editoriales mediante comandos, sin editar JSON" },
-  entregar: { entry: "cli/campaign-deliver.js", usage: "entregar", description: "Entregar ZIP comprobado con tres JSON en el Escritorio sin perder la versión anterior" },
+  entregar: { entry: "cli/campaign-deliver.js", usage: "entregar", description: "Entregar ZIP comprobado con cuatro JSON en el Escritorio sin perder la versión anterior" },
   comparar: { entry: "cli/campaign-compare.js", usage: "comparar", description: "Comparar los catálogos originales completos con la referencia única (solo lectura)" },
   referencia: { entry: "cli/campaign-reference.js", usage: "referencia [-- --actualizar | --recuperar | --exportar <carpeta> | --importar <carpeta> [--sustituir]]", description: "Consultar (solo lectura), actualizar o trasladar con integridad la referencia operativa" },
   limpiar: { entry: "cli/campaign-clean.js", usage: "limpiar [-- --aplicar]", description: "Simular o cerrar la campaña ya entregada; protege scripts y trabajos pendientes" },
@@ -26,7 +26,7 @@ const definitions = {
   validar: { entry: "cli/index.js", prefix: ["validate"], usage: "validar -- gam [--etapa catalogo --origen <catalog.json>]", description: "Validar catálogo o preparación", requiresProvider: true },
   exportar: { entry: "cli/index.js", prefix: ["export"], usage: "exportar -- gam --companyID <id> --preparacion <archivo> --inventario <csv> --salida <xlsx> --simular", description: "Revisar o generar una exportación", requiresProvider: true },
   cobertura: { entry: "cli/review-coverage.js", usage: "cobertura -- --anterior <catalog.json> --actual <catalog.json> --simular", description: "Auditar ausencias y cambios de catálogo" },
-  seleccionar: { entry: "cli/select-publishable.js", usage: "seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --lote <run.json> --borrador <acreditacion.json> (o --acreditacion <acreditacion.json> --simular)", description: "Seleccionar fichas publicables" },
+  seleccionar: { entry: "cli/select-publishable.js", usage: "seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --manain <preparation.json> --lote <run.json> --borrador <acreditacion.json> (o --acreditacion <acreditacion.json> --simular)", description: "Seleccionar fichas publicables" },
   "limpiar:almacen": { entry: "cli/storage-clean.js", usage: "limpiar:almacen [-- --aplicar]", description: "Simular limpieza; ejecutar solo con --aplicar", defaultSimulation: true },
   "normalizar:gam": { entry: "tools/gam/normalize-csv.js", usage: "normalizar:gam -- <entrada.csv> <salida.csv> [--informe <json>]", description: "Normalizar un CSV GAM" },
   "normalizar:gam:base": { entry: "tools/gam/normalize-csv.js", fixed: ["storage/scraped/gam/scrape-gam-marzo-2026-all.csv", "storage/normalized/gam/scrape-gam-marzo-2026-all.normalized.csv", "--report", "storage/normalized/gam/normalize.report.json"], usage: "normalizar:gam:base", description: "Normalizar las rutas GAM predeterminadas" },
@@ -150,7 +150,7 @@ if (rawCommand === "ayuda") {
     }
   }
   if (selected.requiresProvider && (normalized.length === 0 || normalized[0]?.startsWith("-"))) {
-    fail("Falta el proveedor (gam, gomariz o mercaeleva)", command);
+    fail("Falta el proveedor (gam, gomariz, mercaeleva o manain)", command);
   } else if (command === "limpiar:almacen" && normalized.includes("--aplicar") && normalized.includes("--dry-run")) {
     fail("No combines --aplicar y --simular", command);
   } else if (normalized.includes("--aplicar") && !(["limpiar:almacen", "limpiar", "intervenir", "intervenir:manual"].includes(command))) {

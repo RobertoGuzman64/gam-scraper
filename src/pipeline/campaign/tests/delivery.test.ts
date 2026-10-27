@@ -19,7 +19,8 @@ const fixtures = resolve("src/testing/fixtures");
 const prefixes = {
   gam: "scrape-gam-marzo-2026",
   gomariz: "scrape-gomariz",
-  mercaeleva: "scrape-mercaeleva"
+  mercaeleva: "scrape-mercaeleva",
+  manain: "scrape-manain"
 } as const;
 const date = new Date(2026, 9, 26, 12);
 const isArray = (value: unknown): value is readonly unknown[] => Array.isArray(value);
@@ -78,7 +79,7 @@ const approve = async (root: string): Promise<void> => {
 
 const approvedFixture = () => fixtureCache.prepared("approved", async (data) => approve(data.root));
 
-test("genera exactamente los tres JSON con la fecha local de entrega y totales acreditados", async () => {
+test("genera exactamente los cuatro JSON con la fecha local de entrega y totales acreditados", async () => {
   const data = await approvedFixture();
   try {
     const delivered = await deliverActiveCampaign(data.root, data.desktop, date);
@@ -157,7 +158,7 @@ test("una campaña intervenida y acreditada sustituye el ZIP del mismo día; si 
     assert.equal(current.zipFile, first.zipFile);
     const next = await readFile(current.zipFile);
     assert.notDeepEqual(next, previous);
-    assert.equal(readZipArchive(next).length, 3);
+    assert.equal(readZipArchive(next).length, CAMPAIGN_PROVIDERS.length);
     assert.deepEqual(await readdir(data.desktop), ["equipzilla-2026-10-26.zip"]);
     const scriptContent = await readFile(script, "utf8");
     const { cleanDeliveredCampaign } = await import("../cleanup.js");

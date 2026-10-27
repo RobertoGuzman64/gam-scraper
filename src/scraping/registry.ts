@@ -2,8 +2,9 @@ import type { ScraperProvider } from "./provider.js";
 import { gamProvider } from "./providers/gam/adapter.js";
 import { gomarizProvider } from "./providers/gomariz/adapter.js";
 import { mercaelevaProvider } from "./providers/mercaeleva/adapter.js";
+import { manainProvider } from "./providers/manain/adapter.js";
 
-const registeredProviders: readonly ScraperProvider[] = [gamProvider, gomarizProvider, mercaelevaProvider];
+const registeredProviders: readonly ScraperProvider[] = [gamProvider, gomarizProvider, mercaelevaProvider, manainProvider];
 
 export const listProviders = (): readonly string[] => registeredProviders.map((provider) => provider.id);
 

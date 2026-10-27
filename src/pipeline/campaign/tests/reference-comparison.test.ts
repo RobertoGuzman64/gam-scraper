@@ -57,7 +57,7 @@ test("compara exclusivamente originales verificados, en modo lectura, con refere
     const result = await compareActiveCampaignReference(root);
     assert.equal(result.baseline, "initial");
     assert.equal(result.currentRunId, "lote-actual");
-    assert.deepEqual(result.providers.map((item) => item.currentCount), [1, 1, 1]);
+    assert.deepEqual(result.providers.map((item) => item.currentCount), [1, 1, 1, 1]);
     assert.deepEqual(await readdir(root), before);
     const bad = join(root, "storage", "scraped", "gam", "extract-gam-catalog.manifest.json");
     const content = await readFile(bad, "utf8");

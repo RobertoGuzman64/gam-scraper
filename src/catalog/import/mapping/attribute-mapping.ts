@@ -9,6 +9,7 @@ import { normalizeMercaelevaCandidate } from "./providers/mercaeleva/technical.j
 import { mercaelevaUnspecifiedMast } from "./providers/mercaeleva/handling-evidence.js";
 import { mercaelevaUnpublishedHours } from "./providers/mercaeleva/hours-evidence.js";
 import { gamConfirmedAbsentScalar } from "./providers/gam/unrepresentable.js";
+import { applyManainAliases, convertManainCandidate } from "./providers/manain/attributes.js";
 
 const notPublished = (value: SpecScalar): boolean =>
   typeof value === "string" && ["n/d", "n/a", "no disponible", "no informado", "sin datos", "-", "—", "a consultar"].includes(fold(value));
@@ -104,6 +105,7 @@ export const resolveAttribute = (record: ProductRecord, attribute: Attribute): A
   if (record.providerId === "gomariz" && !applyGomarizAliases(record, attribute, keys, candidates)) {
     return { status: "rejected", value: null };
   }
+  if (record.providerId === "manain") applyManainAliases(record, attribute, keys, candidates);
   if (record.providerId === "mercaeleva") {
     const outcome = applyMercaelevaAliasesDetailed(record, attribute, keys, candidates);
     if (outcome !== "accepted") return { status: outcome, value: null };
@@ -137,6 +139,7 @@ export const resolveAttribute = (record: ProductRecord, attribute: Attribute): A
     if (record.providerId === "gam") return convertGamCandidate(record, attribute, candidate, fallback);
     if (record.providerId === "gomariz") return convertGomarizCandidate(record, attribute, candidate, fallback);
     if (record.providerId === "mercaeleva") return normalizeMercaelevaCandidate(attribute, candidate, fallback);
+    if (record.providerId === "manain") return convertManainCandidate(record, attribute, candidate, fallback);
     return fallback;
   });
   if (converted.some((value) => value === null)) return { status: "invalid", value: null };

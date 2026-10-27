@@ -30,7 +30,7 @@ test("elabora borrador del lote sin aprobación automática y selecciona solo al
     assert.equal(totals?.original, totals?.publishable! + totals?.excluded!);
     const publicables = await Promise.all(CAMPAIGN_PROVIDERS.map(async (id) =>
       JSON.parse(await readFile(join(selected.selectionDir!, `${id}-publishable.json`), "utf8")) as unknown));
-    assert.equal(publicables.length, 3);
+    assert.equal(publicables.length, CAMPAIGN_PROVIDERS.length);
     assert.ok(publicables.every(Array.isArray));
   } finally { await data.cleanup(); }
 });

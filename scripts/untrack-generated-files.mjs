@@ -19,7 +19,7 @@ if (argumentsList.length > 1 || (argumentsList.length === 1 && argumentsList[0] 
     const tracked = git("ls-files", "-z", "--", "storage/scraped", "storage/prepared")
       .toString("utf8").split("\0").filter(Boolean);
     const isGenerated = (path) => {
-      const match = /^storage\/(scraped|prepared)\/(gam|gomariz|mercaeleva)\/([a-zA-Z0-9_-]+\.json)$/.exec(path);
+      const match = /^storage\/(scraped|prepared)\/(gam|gomariz|mercaeleva|manain)\/([a-zA-Z0-9_-]+\.json)$/.exec(path);
       if (!match) return false;
       const name = match[3];
       return match[1] === "scraped" ?

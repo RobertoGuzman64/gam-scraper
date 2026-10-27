@@ -9,14 +9,15 @@ import { readCampaignAccreditationSources } from "../infrastructure/filesystem/c
 import type { PublishableSelection } from "../catalog/editorial/select-publishable.js";
 import { readCanonicalCatalog } from "../infrastructure/filesystem/canonical-catalog.js";
 import { readOfflinePreparation } from "../infrastructure/filesystem/offline-preparation.js";
+import { CAMPAIGN_PROVIDERS, LEGACY_CAMPAIGN_PROVIDERS } from "../contracts/campaign-providers.js";
 import { printCommandError } from "./reporting/errors.js";
 
 const help = `Uso:
   npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --out <seleccion.json>
   npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --outDir <directorio>
-  npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --lote <run.json> --borrador <acreditacion.json>
-  npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --lote <run.json> --acreditacion <acreditacion.json> --dry-run
-  npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --lote <run.json> --acreditacion <acreditacion.json> --outDir <directorio>
+  npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --manain <preparation.json> --lote <run.json> --borrador <acreditacion.json>
+  npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --manain <preparation.json> --lote <run.json> --acreditacion <acreditacion.json> --dry-run
+  npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --manain <preparation.json> --lote <run.json> --acreditacion <acreditacion.json> --outDir <directorio>
   npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --dry-run
 
 La vía de acreditación exige un lote global completo, un borrador revisado y
@@ -31,9 +32,10 @@ La revisión exige retiradas confirmadas o ausencias de listado acreditadas;
 "no_acreditado" mantiene bloqueada la publicación. También deben aprobarse
 los cambios con evidencia; no restaura máquinas,
 no modifica los originales ni convierte las exclusiones técnicas en ready.
+La opción --manain incorpora las preparaciones del nuevo proveedor. En acreditación global es obligatoria.
 La selección también retiene las fichas GAM 6002, 6003 y 6004 por
 contradicciones de identidad preexistentes, sin alterar su preparación.
---outDir genera tres JSON de productos por proveedor y selection.json con trazabilidad.`;
+--outDir genera un JSON por proveedor seleccionado y selection.json con trazabilidad.`;
 
 const sha = (content: string): string => createHash("sha256").update(content).digest("hex");
 
@@ -66,9 +68,11 @@ const ensureCoverageReview = async (
     : "  Expediente sin aprobar: no se ha aportado una revisión de cobertura validada");
 };
 
-const writePublishable = async (dir: string, selection: PublishableSelection): Promise<void> => {
+const writePublishable = async (
+  dir: string, selection: PublishableSelection, providerIds: readonly string[]
+): Promise<void> => {
   const files = [
-    ...["gam", "gomariz", "mercaeleva"].map((providerId) => ({
+    ...providerIds.map((providerId) => ({
       path: join(dir, `${providerId}-publishable.json`),
       text: JSON.stringify(selection.products.filter((item) => item.providerId === providerId), null, 2)
     })),
@@ -99,7 +103,7 @@ export const runSelectPublishable = async (args: readonly string[]): Promise<voi
       dryRun = true;
       continue;
     }
-    if (!key || !["--gam", "--gomariz", "--mercaeleva", "--out", "--outDir", "--baseline", "--catalog", "--coverage-review", "--lote", "--borrador", "--acreditacion"].includes(key)) {
+    if (!key || ![...CAMPAIGN_PROVIDERS.map((id) => `--${id}`), "--out", "--outDir", "--baseline", "--catalog", "--coverage-review", "--lote", "--borrador", "--acreditacion"].includes(key)) {
       throw new Error(`Opción desconocida: ${key}`);
     }
     const value = args[index + 1];
@@ -121,7 +125,8 @@ export const runSelectPublishable = async (args: readonly string[]): Promise<voi
   if ((dryRun && (out || outDir)) || (!dryRun && !draftPath && Boolean(out) === Boolean(outDir))) {
     throw new Error("Se requiere --out o --outDir, salvo con --dry-run; no combinar salidas");
   }
-  const providers = ["gam", "gomariz", "mercaeleva"] as const;
+  const providers = options.has("--manain") ? CAMPAIGN_PROVIDERS : LEGACY_CAMPAIGN_PROVIDERS;
+  if (runPath && !options.has("--manain")) throw new Error("La acreditación global requiere --manain");
   const paths = providers.map((providerId) => {
     const path = options.get(`--${providerId}`);
     if (!path || !path.endsWith("-preparation.json")) throw new Error(`Preparación inválida: ${providerId}`);
@@ -155,7 +160,7 @@ export const runSelectPublishable = async (args: readonly string[]): Promise<voi
       await writeFile(out, JSON.stringify(selection, null, 2), { flag: "wx" });
       console.log(`  Selección: ${out}`);
     } else if (outDir) {
-      await writePublishable(outDir, selection);
+      await writePublishable(outDir, selection, providers);
     }
     return;
   }
@@ -185,7 +190,7 @@ export const runSelectPublishable = async (args: readonly string[]): Promise<voi
     await writeFile(out, JSON.stringify(selection, null, 2), { flag: "wx" });
     console.log(`  Selección: ${out}`);
   } else if (outDir) {
-    await writePublishable(outDir, selection);
+    await writePublishable(outDir, selection, providers);
   }
 };
 

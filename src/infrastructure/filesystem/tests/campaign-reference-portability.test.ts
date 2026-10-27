@@ -52,7 +52,7 @@ test("la consulta no escribe ni requiere campaña; distingue ausente, válida y 
   assert.equal(valid.status, "valid");
   if (valid.status !== "valid") throw new Error("Falta referencia íntegra");
   assert.equal(valid.reference.manifest.runId, "lote-a");
-  assert.deepEqual(valid.reference.catalogs.map((entry) => entry.productCount), [1, 1, 1]);
+  assert.deepEqual(valid.reference.catalogs.map((entry) => entry.productCount), [1, 1, 1, 1]);
   const gam = join(root, "data", "reference", "gam.json");
   const initial = await readFile(gam, "utf8");
   await writeFile(gam, initial + " ");
@@ -94,7 +94,7 @@ test("exporta e importa los cinco archivos con integridad sin intervención manu
   const transfer = join(root, "traslado");
   await fixture(source, "lote-origen");
   assert.equal((await exportCampaignReference(source, transfer)).runId, "lote-origen");
-  assert.deepEqual((await readdir(transfer)).sort(), ["differences.json", "gam.json", "gomariz.json", "manifest.json", "mercaeleva.json"]);
+  assert.deepEqual((await readdir(transfer)).sort(), ["differences.json", "gam.json", "gomariz.json", "manain.json", "manifest.json", "mercaeleva.json"]);
   assert.equal((await importCampaignReference(target, transfer)).runId, "lote-origen");
   assert.equal((await readCampaignReference(target))?.manifest.runId, "lote-origen");
   assert.equal((await inspectCampaignReference(target)).status, "valid");

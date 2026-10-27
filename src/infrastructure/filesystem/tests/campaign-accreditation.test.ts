@@ -7,13 +7,19 @@ import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
 import { readCampaignAccreditationSources } from "../campaign-accreditation.js";
 import { readCanonicalCatalog } from "../canonical-catalog.js";
 import { readOfflinePreparation } from "../offline-preparation.js";
+import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
+import { copyCampaignTestCatalog } from "../../../pipeline/campaign/tests/campaign-catalog-fixture.js";
+import { mkdir } from "node:fs/promises";
 
-const providers = ["gam", "gomariz", "mercaeleva"] as const;
-const prefixes = ["scrape-gam-marzo-2026", "scrape-gomariz", "scrape-mercaeleva"] as const;
+const providers = CAMPAIGN_PROVIDERS;
+const prefixes = ["scrape-gam-marzo-2026", "scrape-gomariz", "scrape-mercaeleva", "scrape-manain"] as const;
 const dir = await mkdtemp(join(tmpdir(), "editorial-accreditation-fixtures-"));
 after(async () => rm(dir, { recursive: true, force: true }));
-const catalogPaths = providers.map((providerId, index) =>
-  resolve(`src/testing/fixtures/${providerId}/${prefixes[index]}-catalog.json`));
+const catalogPaths = providers.map((providerId, index) => providerId === "manain"
+  ? join(dir, "source", providerId, `${prefixes[index]}-catalog.json`)
+  : resolve(`src/testing/fixtures/${providerId}/${prefixes[index]}-catalog.json`));
+await mkdir(join(dir, "source", "manain"), { recursive: true });
+await copyCampaignTestCatalog(resolve("src/testing/fixtures"), join(dir, "source", "manain"), "manain", "scrape-manain");
 const paths = providers.map((providerId, index) => ({
   providerId,
   path: join(dir, providerId, `${prefixes[index]}-test-preparation.json`)
@@ -37,7 +43,7 @@ const report = {
   }))
 };
 
-test("acredita las tres publicaciones completas vinculadas a las preparaciones generadas", async () => {
+test("acredita las cuatro publicaciones completas vinculadas a las preparaciones generadas", async () => {
   const file = join(dir, "run.json");
   await writeFile(file, JSON.stringify(report));
   const result = await readCampaignAccreditationSources(file, preparations, paths);
