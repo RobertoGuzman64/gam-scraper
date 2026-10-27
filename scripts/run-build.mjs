@@ -1,11 +1,12 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { formatScriptStatus } from "./terminal.mjs";
 
 const quiet = process.argv.includes("--quiet");
 const startedAt = Date.now();
 const interactive = process.stdout.isTTY === true && process.env.CI !== "true" && process.env.TERM !== "dumb";
-const frames = ["|", "/", "-", "\\"];
+const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const script = resolve("node_modules/typescript/bin/tsc");
 let frame = 0;
 let lastPrinted = 0;
@@ -33,7 +34,7 @@ const tick = () => {
 };
 
 if (!existsSync(script)) {
-  console.error(`BUILD | ERROR | No existe ${script}; ejecutar npm ci`);
+  console.error(formatScriptStatus("FAIL", `BUILD | No existe ${script}; ejecutar npm ci`, process.stderr));
   process.exitCode = 1;
 } else {
   const stdout = [];
@@ -53,9 +54,9 @@ if (!existsSync(script)) {
   clear();
   if (stdout.length) process.stdout.write(stdout.join(""));
   if (stderr.length) process.stderr.write(stderr.join(""));
-  if (result.error) console.error(`BUILD | ERROR | ${result.error.stack ?? result.error.message}`);
+  if (result.error) console.error(formatScriptStatus("FAIL", `BUILD | ${result.error.stack ?? result.error.message}`, process.stderr));
   if (!quiet || result.code !== 0) {
-    console.log(`BUILD | ${result.code === 0 ? "OK" : "ERROR"} | ${duration()} | código ${result.code}`);
+    console.log(formatScriptStatus(result.code === 0 ? "PASS" : "FAIL", `BUILD | ${duration()} | código ${result.code}`));
   }
   process.exitCode = result.code;
 }

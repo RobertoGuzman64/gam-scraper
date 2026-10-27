@@ -16,7 +16,7 @@ const populate = async (root: string, providerId: string): Promise<ProviderRun> 
   const prefixes = ["scrape-gam-marzo-2026", "scrape-gomariz", "scrape-mercaeleva"];
   const prefix = prefixes[names.indexOf(providerId)];
   if (!prefix) throw new Error("Proveedor no admitido");
-  const dir = join(root, "storage", "scraped", "campanas", "prueba", providerId);
+  const dir = join(root, "storage", "scraped", "campaigns", "prueba", providerId);
   await mkdir(dir, { recursive: true });
   for (const name of [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`]) {
     await copyFile(join(source, name), join(dir, name));
@@ -82,7 +82,7 @@ test("prepara y valida los tres catálogos del mismo run sin cambiar los Review;
     assert.deepEqual(first.providers.map((p) => p.state), ["validated", "validated", "validated"]);
     for (const p of first.providers) {
       assert.equal(p.ready! + p.review!, p.products);
-      assert.ok(p.preparationFile?.includes(join("storage", "campanas", "revision-actual")));
+      assert.ok(p.preparationFile?.includes(join("storage", "campaigns", "revision-actual")));
       assert.equal(p.items?.length, p.review);
       for (const issue of p.items ?? []) {
         assert.ok(issue.reference.length > 0);

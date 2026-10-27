@@ -78,7 +78,7 @@ test("compone intervenciones versionadas en una campaña nueva sin duplicar las 
   try {
     const temporal = await campaignScript(data.root, data.runId);
     const original = await readFile(temporal, "utf8");
-    const catalogFile = join(data.root, "storage", "scraped", "campanas", data.runId, "gam", `${prefixes.gam}-catalog.json`);
+    const catalogFile = join(data.root, "storage", "scraped", "campaigns", data.runId, "gam", `${prefixes.gam}-catalog.json`);
     const catalog = await readCanonicalCatalog(catalogFile);
     const second = catalog.products.find((product) => product.title !== null &&
       buildProductIdentity(product).key !== JSON.parse(original.slice(original.indexOf("["), original.lastIndexOf("]") + 1))[0]?.identity);

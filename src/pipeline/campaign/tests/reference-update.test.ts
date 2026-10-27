@@ -29,7 +29,7 @@ const withCampaign = async (callback: (root: string, desktop: string, runId: str
     const providers: ProviderRun[] = [];
     for (const providerId of CAMPAIGN_PROVIDERS) {
       const prefix = prefixes[providerId];
-      const outputDir = join(root, "storage", "scraped", "campanas", runId, providerId);
+      const outputDir = join(root, "storage", "scraped", "campaigns", runId, providerId);
       await mkdir(outputDir, { recursive: true });
       const catalog = await copyCampaignTestCatalog(resolve("src/testing/fixtures"), outputDir, providerId, prefix);
       providers.push({
@@ -89,7 +89,7 @@ test("la actualización requiere entrega acreditada y conserva los originales co
 test("la referencia acreditada no depende del inventario de archivos eliminables", async () => withCampaign(async (root, desktop, runId) => {
   await approve(root);
   await deliverActiveCampaign(root, desktop, new Date(2026, 9, 26, 12));
-  const auxiliary = join(root, "storage", "scraped", "campanas", runId, "gam", "auxiliar-ajeno.csv");
+  const auxiliary = join(root, "storage", "scraped", "campaigns", runId, "gam", "auxiliar-ajeno.csv");
   await writeFile(auxiliary, "archivo ajeno a la limpieza");
   await assert.rejects(planDeliveredCampaignCleanup(root, desktop), /no reconocido/);
   const result = await updateActiveCampaignReference(root, desktop);
@@ -103,13 +103,13 @@ test("si la entrega acreditada cambia, no puede modificar la referencia válida"
   await approve(root);
   await deliverActiveCampaign(root, desktop, new Date(2026, 9, 26, 12));
   await updateActiveCampaignReference(root, desktop);
-  const original = await readFile(join(root, "data", "referencia", "manifest.json"), "utf8");
-  const receipt = join(root, "storage", "campanas", runId, "delivery.json");
+  const original = await readFile(join(root, "data", "reference", "manifest.json"), "utf8");
+  const receipt = join(root, "storage", "campaigns", runId, "delivery.json");
   const content: unknown = JSON.parse(await readFile(receipt, "utf8"));
   if (!content || typeof content !== "object" || !("zipSha256" in content)) {
     throw new Error("Justificante de prueba inválido");
   }
   await writeFile(receipt, JSON.stringify({ ...content, zipSha256: "0".repeat(64) }));
   await assert.rejects(updateActiveCampaignReference(root, desktop), /modificado|entrega|ZIP/);
-  assert.equal(await readFile(join(root, "data", "referencia", "manifest.json"), "utf8"), original);
+  assert.equal(await readFile(join(root, "data", "reference", "manifest.json"), "utf8"), original);
 }));

@@ -2,6 +2,7 @@ import { existsSync, readdirSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { clearLine, cursorTo } from "node:readline";
 import { run } from "node:test";
+import { formatScriptStatus } from "./terminal.mjs";
 
 const parseOptions = (argumentsList) => {
   let concurrency;
@@ -58,7 +59,7 @@ const missing = files.filter((file) => !existsSync(file));
 if (missing.length > 0) throw new Error(`Faltan ${missing.length} pruebas compiladas: ${missing.join(", ")}`);
 
 const filePaths = new Set(files.map((file) => resolve(file)));
-const interactive = process.stdout.isTTY === true;
+const interactive = process.stdout.isTTY === true && process.env.CI !== "true" && process.env.TERM !== "dumb";
 const completedFiles = new Set();
 const errors = [];
 const skippedTests = [];
@@ -188,7 +189,7 @@ for (const failure of errors) {
   const location = failure.file ? ` (${failure.file}${failure.line ? `:${failure.line}` : ""})` : "";
   const output = failure.fileFailure ? standardErrors.get(resolve(failure.file))?.trim() : "";
   const reason = output || describeError(failure.error) || "La prueba falló sin diagnóstico adicional";
-  process.stdout.write(`FALLO: ${failure.name}${location}\n${reason}\n`);
+  process.stdout.write(`${formatScriptStatus("FAIL", `${failure.name}${location}`)}\n${reason}\n`);
 }
 
 if (skippedTests.length > 0) {
@@ -202,6 +203,5 @@ if (todoTests.length > 0) {
 }
 
 const { counts: finalCounts, duration_ms: duration } = summary;
-const result = summary.success ? "OK" : "FALLO";
-process.stdout.write(`${result} | ${completedFiles.size}/${files.length} archivos | ${finalCounts.passed} correctos | ${finalCounts.failed} fallidos | ${finalCounts.skipped} omitidos | ${Math.round(duration)} ms\n`);
+process.stdout.write(`${formatScriptStatus(summary.success ? "PASS" : "FAIL", `${completedFiles.size}/${files.length} archivos | ${finalCounts.passed} correctos | ${finalCounts.failed} fallidos | ${finalCounts.skipped} omitidos | ${Math.round(duration)} ms`)}\n`);
 if (!summary.success) process.exitCode = 1;

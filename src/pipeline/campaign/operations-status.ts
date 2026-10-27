@@ -35,19 +35,19 @@ export const inspectCampaignOperations = async (
     discoverCampaign(root), inspectCampaignReference(root)
   ]);
   const alerts: string[] = [];
-  if (reference.status === "invalid") alerts.push(`Referencia inválida: ${reference.reason}. Consultar npm run campana:referencia`);
-  if (reference.status === "recoverable") alerts.push(`Referencia recuperable: ${reference.reason}. Consultar npm run campana:referencia -- --recuperar`);
+  if (reference.status === "invalid") alerts.push(`Referencia inválida: ${reference.reason}. Consultar npm run referencia`);
+  if (reference.status === "recoverable") alerts.push(`Referencia recuperable: ${reference.reason}. Consultar npm run referencia -- --recuperar`);
   const result = (description: string, next: readonly string[]): CampaignOperationsStatus =>
     ({ campaign, reference, description, next, alerts });
 
   if (!campaign.runId || !campaign.runFile) {
     if (campaign.issues.length) return result("No se puede identificar una campaña íntegra", ["Revisar los avisos del lote antes de extraer o modificar archivos"]);
-    return result("Sin campaña activa (también es normal después de limpiar)", ["npm run campana:extraer"]);
+    return result("Sin campaña activa (también es normal después de limpiar)", ["npm run extraer"]);
   }
   if (campaign.status !== "complete" || campaign.issues.length) {
     return result("Campaña incompleta o con incidencias de procedencia", [
       "Revisar los avisos del lote y sus proveedores; no finalizar ni limpiar",
-      "Si se abandona deliberadamente el lote: npm run campana:extraer -- --nueva"
+      "Si se abandona deliberadamente el lote: npm run extraer -- --nueva"
     ]);
   }
   if (campaign.providers.some((provider) => provider.state === "failed" || provider.state === "invalid")) {
@@ -56,30 +56,30 @@ export const inspectCampaignOperations = async (
     ]);
   }
   if (campaign.providers.some((provider) => provider.state !== "prepared")) {
-    return result("Faltan preparaciones verificables de algún proveedor", ["npm run campana:revisar"]);
+    return result("Faltan preparaciones verificables de algún proveedor", ["npm run revisar"]);
   }
 
   try {
     const finalization = await finalizeActiveCampaign(root, true);
     if (finalization.status === "draft") {
-      return result("Preparaciones disponibles; falta crear el borrador editorial", ["npm run campana:finalizar"]);
+      return result("Preparaciones disponibles; falta crear el borrador editorial", ["npm run acreditar"]);
     }
     if (finalization.status === "pending") {
       const editorial = await inspectActiveCampaignEditorial(root);
       if (editorial.inspection.issues.length) {
         return result(`Acreditación pendiente: ${editorial.inspection.completed}/${editorial.inspection.total} decisiones válidas`, [
-          "npm run campana:finalizar -- --listar", "npm run campana:finalizar -- --validar"
+          "npm run acreditar -- --listar", "npm run acreditar -- --validar"
         ]);
       }
       return result("Decisiones editoriales válidas, pendientes de aprobación humana", [
-        "npm run campana:finalizar -- --validar", "npm run campana:finalizar -- --aprobar --motivo \"Motivo global documentado\""
+        "npm run acreditar -- --validar", "npm run acreditar -- --aprobar --motivo \"Motivo global documentado\""
       ]);
     }
     if (finalization.status !== "simulation") {
-      return result("Estado editorial no verificable para consulta", ["npm run campana:finalizar -- --validar"]);
+      return result("Estado editorial no verificable para consulta", ["npm run acreditar -- --validar"]);
     }
 
-    const receipt = join(root, "storage", "campanas", campaign.runId, "delivery.json");
+    const receipt = join(root, "storage", "campaigns", campaign.runId, "delivery.json");
     if (await exists(receipt)) {
       try {
         const verified = await verifyDeliveredCampaign(root, desktopDirectory ?? await findDesktopDirectory());
@@ -91,29 +91,29 @@ export const inspectCampaignOperations = async (
       }
       if (reference.status === "valid" && reference.reference.manifest.runId === campaign.runId) {
         return result("Entrega acreditada y referencia verificada para este mismo lote", [
-          "npm run campana:limpiar", "npm run campana:limpiar -- --aplicar (solo tras revisar la simulación)"
+          "npm run limpiar", "npm run limpiar -- --aplicar (solo tras revisar la simulación)"
         ]);
       }
-      const next = ["npm run campana:comparar"];
+      const next = ["npm run comparar"];
       if (reference.status === "absent" || reference.status === "valid") {
-        next.push("npm run campana:referencia -- --actualizar (opcional, antes de limpiar)");
+        next.push("npm run referencia -- --actualizar (opcional, antes de limpiar)");
       } else {
         next.push("Resolver el estado de referencia antes de intentar actualizarla");
       }
-      next.push("npm run campana:limpiar (simulación; no exige actualizar referencia)");
+      next.push("npm run limpiar (simulación; no exige actualizar referencia)");
       return result("Entrega acreditada; referencia aún no actualizada para este lote", next);
     }
-    const selectionDir = join(root, "storage", "campanas", campaign.runId, "seleccion");
+    const selectionDir = join(root, "storage", "campaigns", campaign.runId, "selection");
     if (await exists(selectionDir)) {
       const info = await lstat(selectionDir);
       if (!info.isDirectory() || info.isSymbolicLink()) {
         return result("La ruta de selección no es un directorio regular", ["Revisar los artefactos antes de entregar"]);
       }
       return result("Acreditación aprobada y carpeta de selección existente; entrega aún sin acreditar", [
-        "npm run campana:entregar (verifica los JSON seleccionados antes del ZIP)"
+        "npm run entregar (verifica los JSON seleccionados antes del ZIP)"
       ]);
     }
-    return result("Acreditación aprobada; falta generar la selección", ["npm run campana:finalizar"]);
+    return result("Acreditación aprobada; falta generar la selección", ["npm run acreditar"]);
   } catch (error) {
     return result(`No es posible comprobar la etapa editorial: ${errorMessage(error)}`, [
       "Revisar la acreditación y las preparaciones vigentes; no entregar ni limpiar"

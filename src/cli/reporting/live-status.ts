@@ -1,6 +1,7 @@
 import { clearLine, cursorTo } from "node:readline";
+import { supportsAnimation, tint } from "./terminal.js";
 
-const frames = ["|", "/", "-", "\\"] as const;
+const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] as const;
 
 export const formatDuration = (ms: number): string => {
   const seconds = Math.max(0, Math.floor(ms / 1000));
@@ -18,7 +19,7 @@ export class LiveStatus {
   private openLine = false;
 
   constructor(disableAnimation = false) {
-    this.interactive = !disableAnimation && process.stdout.isTTY === true && process.env.CI !== "true" && process.env.TERM !== "dumb";
+    this.interactive = !disableAnimation && supportsAnimation();
   }
 
   update(label: string, changed = true): void {
@@ -78,9 +79,10 @@ export class LiveStatus {
   private render(): void {
     this.clearLine();
     const width = Math.max(20, (process.stdout.columns ?? 100) - 1);
-    const prefix = `${frames[this.frame++ % frames.length]} `;
-    const content = `${prefix}${this.content()}`;
-    process.stdout.write(content.length > width ? `${content.slice(0, width - 1)}…` : content);
+    const message = this.content();
+    const plain = `${frames[this.frame++ % frames.length]} ${message}`;
+    const clipped = plain.length > width ? `${plain.slice(0, width - 1)}…` : plain;
+    process.stdout.write(tint(clipped, "cyan"));
     this.openLine = true;
   }
 }

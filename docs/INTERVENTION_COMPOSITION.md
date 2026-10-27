@@ -21,13 +21,13 @@ Las rutas antiguas `storage/interventions/<campana>/scripts/` siguen admitidas p
 Desde la raíz del proyecto, sustituyendo los marcadores por rutas existentes:
 
 ```powershell
-npm run intervenir -- gam --script interventions/gam/6002.ts --script interventions/gam/6003.ts --origen <catalogo-catalog.json> --detalle
+npm run intervenir:manual -- gam --script interventions/gam/6002.ts --script interventions/gam/6003.ts --origen <catalogo-catalog.json> --detalle
 ```
 
 El resultado muestra el SHA del plan y el antes/después, sin modificar catálogos. Tras comprobar cada cambio y aprobarlo manualmente:
 
 ```powershell
-npm run intervenir -- gam --script interventions/gam/6002.ts --script interventions/gam/6003.ts --origen <catalogo-catalog.json> --campana <campana> --aplicar --plan <sha256-completo>
+npm run intervenir:manual -- gam --script interventions/gam/6002.ts --script interventions/gam/6003.ts --origen <catalogo-catalog.json> --campana <campana> --aplicar --plan <sha256-completo>
 ```
 
 La salida es **un único** `storage/interventions/<campana>/results/<sha>/catalog-derived.json` y su `intervention-record.json`, con registro de los scripts seleccionados y cambios. El catálogo canónico y su manifest permanecen intactos. No editar manualmente el resultado.
@@ -42,7 +42,7 @@ El mismo procedimiento se realiza por separado en los proveedores que tengan int
 
 ## Selección editorial de una campaña global
 
-La preparación intervenida no se publica por el mero hecho de estar validada. Se puede aportar en `--gam`, `--gomariz` o `--mercaeleva` junto con preparaciones normales de los otros proveedores y el **mismo** `run.json` global completo, de acuerdo con `docs/ACREDITACION_CAMPANA.md`.
+La preparación intervenida no se publica por el mero hecho de estar validada. Se puede aportar en `--gam`, `--gomariz` o `--mercaeleva` junto con preparaciones normales de los otros proveedores y el **mismo** `run.json` global completo, de acuerdo con `docs/CAMPAIGN_ACCREDITATION.md`.
 
 ```powershell
 npm run seleccionar -- --gam <gam-preparation.json> --gomariz <gomariz-preparation.json> --mercaeleva <mercaeleva-preparation.json> --lote <run.json> --borrador <borrador.json>

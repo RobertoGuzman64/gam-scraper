@@ -14,7 +14,7 @@ output/
 out/
 *.report.json
 
-/data/referencia/
-/data/.referencia-anterior/
-/data/.referencia-candidata/
-/data/.referencia-bloqueo
+/data/reference/
+/data/.reference-backup/
+/data/.reference-staging/
+/data/.reference-lock

@@ -76,7 +76,7 @@ test("descubre el lote completo a través de run.json, sus catálogos y los SHA 
     }
     const gam = runs[0];
     assert.ok(gam);
-    const preparationFile = join(root, "storage", "campanas", "revision-local", "gam", `${gam.outputPrefix}-20261026-preparation.json`);
+    const preparationFile = join(root, "storage", "campaigns", "revision-local", "gam", `${gam.outputPrefix}-20261026-preparation.json`);
     await prepareSavedCatalog({
       providerId: "gam", source: join(gam.outputDir, `${gam.outputPrefix}-catalog.json`),
       out: preparationFile, dryRun: false, compare: null

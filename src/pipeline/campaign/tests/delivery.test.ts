@@ -32,7 +32,7 @@ const createFixture = async () => {
   const providers: ProviderRun[] = [];
   for (const id of CAMPAIGN_PROVIDERS) {
     const prefix = prefixes[id];
-    const dir = join(root, "storage", "scraped", "campanas", runId, id);
+    const dir = join(root, "storage", "scraped", "campaigns", runId, id);
     await mkdir(dir, { recursive: true });
     const catalog = await copyCampaignTestCatalog(fixtures, dir, id, prefix);
     providers.push({
@@ -133,7 +133,7 @@ test("una campaña intervenida y acreditada sustituye el ZIP del mismo día; si 
   try {
     const first = await deliverActiveCampaign(data.root, data.desktop, date);
     const previous = await readFile(first.zipFile);
-    const source = join(data.root, "storage", "scraped", "campanas", data.runId, "gam", `${prefixes.gam}-catalog.json`);
+    const source = join(data.root, "storage", "scraped", "campaigns", data.runId, "gam", `${prefixes.gam}-catalog.json`);
     const catalog = await readCanonicalCatalog(source);
     const selected = await finalizeActiveCampaign(data.root, false);
     const published = selected.selection?.products.find((entry) => entry.providerId === "gam" && entry.title !== null);
@@ -248,7 +248,7 @@ test("no limpia sin entrega acreditada, con ZIP alterado ni ante archivos descon
     await writeFile(delivered.zipFile, "ZIP alterado");
     await assert.rejects(cleanDeliveredCampaign(data.root, data.desktop, false), /ZIP entregado fue modificado/);
     await writeFile(delivered.zipFile, original);
-    const unexpected = join(data.root, "storage", "campanas", data.runId, "documento-personal.txt");
+    const unexpected = join(data.root, "storage", "campaigns", data.runId, "documento-personal.txt");
     await writeFile(unexpected, "Conservar");
     await assert.rejects(cleanDeliveredCampaign(data.root, data.desktop, false), /no reconocido/);
     assert.equal(await readFile(unexpected, "utf8"), "Conservar");
@@ -260,7 +260,7 @@ test("no limpia sin entrega acreditada, con ZIP alterado ni ante archivos descon
 test("limpia auxiliares reconocidos del lote entregado sin tocar scripts ni ZIP", async () => {
   const data = await approvedFixture();
   try {
-    const gam = join(data.root, "storage", "scraped", "campanas", data.runId, "gam");
+    const gam = join(data.root, "storage", "scraped", "campaigns", data.runId, "gam");
     const prefix = prefixes.gam;
     const csv = join(gam, `${prefix}-all.csv`);
     const snapshot = join(gam, `${prefix}-snapshot-grouped.json`);

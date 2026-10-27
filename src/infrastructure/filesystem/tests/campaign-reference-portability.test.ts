@@ -12,7 +12,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 const digest = (value: string): string => createHash("sha256").update(value).digest("hex");
 
 const fixture = async (root: string, runId: string): Promise<void> => {
-  const directory = join(root, "data", "referencia");
+  const directory = join(root, "data", "reference");
   await mkdir(directory, { recursive: true });
   const catalogs: { providerId: string; prefix: string; scope: string; productCount: number; sha256: string }[] = [];
   for (const providerId of CAMPAIGN_PROVIDERS) {
@@ -32,7 +32,7 @@ const fixture = async (root: string, runId: string): Promise<void> => {
     catalogs.push({ providerId, prefix: providerId, scope: catalog.scope, productCount: 1, sha256: digest(raw) });
   }
   const report = JSON.stringify({ version: 1, baseline: "initial", currentRunId: runId, previousRunId: null, providers: [] });
-  await writeFile(join(directory, "diferencias.json"), report);
+  await writeFile(join(directory, "differences.json"), report);
   await writeFile(join(directory, "manifest.json"), JSON.stringify({
     version: 1, runId, createdAt: "2026-01-01T09:00:00Z", catalogs, differencesSha256: digest(report)
   }));
@@ -53,7 +53,7 @@ test("la consulta no escribe ni requiere campaña; distingue ausente, válida y 
   if (valid.status !== "valid") throw new Error("Falta referencia íntegra");
   assert.equal(valid.reference.manifest.runId, "lote-a");
   assert.deepEqual(valid.reference.catalogs.map((entry) => entry.productCount), [1, 1, 1]);
-  const gam = join(root, "data", "referencia", "gam.json");
+  const gam = join(root, "data", "reference", "gam.json");
   const initial = await readFile(gam, "utf8");
   await writeFile(gam, initial + " ");
   const invalid = await inspectCampaignReference(root);
@@ -64,12 +64,12 @@ test("la consulta no escribe ni requiere campaña; distingue ausente, válida y 
 test("detecta respaldo recuperable sin repararlo ni crear una campaña", async () => temporary(async (root) => {
   await fixture(root, "lote-b");
   const data = join(root, "data");
-  await rename(join(data, "referencia"), join(data, ".referencia-anterior"));
+  await rename(join(data, "reference"), join(data, ".reference-backup"));
   const inspection = await inspectCampaignReference(root);
   assert.equal(inspection.status, "recoverable");
   if (inspection.status !== "recoverable") throw new Error("No se detectó respaldo");
   assert.equal(inspection.reference.manifest.runId, "lote-b");
-  await assert.rejects(lstat(join(data, "referencia")), { code: "ENOENT" });
+  await assert.rejects(lstat(join(data, "reference")), { code: "ENOENT" });
   assert.equal((await recoverCampaignReference(root)).runId, "lote-b");
   assert.equal((await inspectCampaignReference(root)).status, "valid");
   await assert.rejects(recoverCampaignReference(root), /ya es válida/);
@@ -78,10 +78,10 @@ test("detecta respaldo recuperable sin repararlo ni crear una campaña", async (
 test("recupera la copia íntegra ante una referencia activa adulterada", async () => temporary(async (root) => {
   await fixture(root, "lote-a");
   const data = join(root, "data");
-  const backup = join(data, ".referencia-anterior");
-  await rename(join(data, "referencia"), backup);
-  await mkdir(join(data, "referencia"));
-  await writeFile(join(data, "referencia", "manifest.json"), "{}");
+  const backup = join(data, ".reference-backup");
+  await rename(join(data, "reference"), backup);
+  await mkdir(join(data, "reference"));
+  await writeFile(join(data, "reference", "manifest.json"), "{}");
   assert.equal((await inspectCampaignReference(root)).status, "recoverable");
   assert.equal((await recoverCampaignReference(root)).runId, "lote-a");
   assert.equal((await inspectCampaignReference(root)).status, "valid");
@@ -94,14 +94,14 @@ test("exporta e importa los cinco archivos con integridad sin intervención manu
   const transfer = join(root, "traslado");
   await fixture(source, "lote-origen");
   assert.equal((await exportCampaignReference(source, transfer)).runId, "lote-origen");
-  assert.deepEqual((await readdir(transfer)).sort(), ["diferencias.json", "gam.json", "gomariz.json", "manifest.json", "mercaeleva.json"]);
+  assert.deepEqual((await readdir(transfer)).sort(), ["differences.json", "gam.json", "gomariz.json", "manifest.json", "mercaeleva.json"]);
   assert.equal((await importCampaignReference(target, transfer)).runId, "lote-origen");
   assert.equal((await readCampaignReference(target))?.manifest.runId, "lote-origen");
   assert.equal((await inspectCampaignReference(target)).status, "valid");
   await assert.rejects(importCampaignReference(target, transfer), /--sustituir/);
   assert.equal((await importCampaignReference(target, transfer, true)).runId, "lote-origen");
   assert.equal((await readdir(join(target, "data"))).length, 1);
-  assert.deepEqual(await readFile(join(target, "data", "referencia", "gam.json")), await readFile(join(source, "data", "referencia", "gam.json")));
+  assert.deepEqual(await readFile(join(target, "data", "reference", "gam.json")), await readFile(join(source, "data", "reference", "gam.json")));
 }));
 
 test("rechaza importación adulterada y conserva la referencia anterior", async () => temporary(async (root) => {
@@ -114,7 +114,7 @@ test("rechaza importación adulterada y conserva la referencia anterior", async 
   await writeFile(join(transfer, "gomariz.json"), "{}");
   await assert.rejects(importCampaignReference(target, transfer, true), /Huella alterada/);
   assert.equal((await readCampaignReference(target))?.manifest.runId, "lote-b");
-  assert.deepEqual(await readdir(join(target, "data")), ["referencia"]);
+  assert.deepEqual(await readdir(join(target, "data")), ["reference"]);
 }));
 
 test("rechaza referencias con enlaces y operaciones sobre data/", async () => temporary(async (root) => {
@@ -122,7 +122,7 @@ test("rechaza referencias con enlaces y operaciones sobre data/", async () => te
   const target = join(root, "destino");
   await fixture(source, "lote-a");
   await assert.rejects(exportCampaignReference(source, join(source, "data", "traslado")), /fuera del repositorio/);
-  await assert.rejects(importCampaignReference(target, join(target, "data", "referencia")), /fuera del repositorio/);
+  await assert.rejects(importCampaignReference(target, join(target, "data", "reference")), /fuera del repositorio/);
   const transfer = join(root, "traslado");
   await exportCampaignReference(source, transfer);
   const gam = join(transfer, "gam.json");

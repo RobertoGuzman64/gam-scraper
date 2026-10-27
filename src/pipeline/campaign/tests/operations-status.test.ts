@@ -26,7 +26,7 @@ const createCampaign = async (root: string): Promise<string> => {
   const providers: ProviderRun[] = [];
   for (const providerId of CAMPAIGN_PROVIDERS) {
     const prefix = prefixes[providerId];
-    const dir = join(root, "storage", "scraped", "campanas", runId, providerId);
+    const dir = join(root, "storage", "scraped", "campaigns", runId, providerId);
     await mkdir(dir, { recursive: true });
     const catalog = await copyCampaignTestCatalog(fixtures, dir, providerId, prefix);
     providers.push({
@@ -54,19 +54,19 @@ test("estado de campaña sin escritura y orientación consistente entre editoria
   try {
     const initial = await inspectCampaignOperations(root, desktop);
     assert.equal(initial.campaign.runId, null);
-    assert.ok(initial.next.includes("npm run campana:extraer"));
+    assert.ok(initial.next.includes("npm run extraer"));
     assert.deepEqual(await readdir(root), []);
 
     const runId = await createCampaign(root);
     const unprepared = await inspectCampaignOperations(root, desktop);
-    assert.deepEqual(unprepared.next, ["npm run campana:revisar"]);
+    assert.deepEqual(unprepared.next, ["npm run revisar"]);
     assert.equal(unprepared.reference.status, "absent");
-    assert.equal((await readdir(join(root, "storage", "campanas")).catch(() => [])).length, 0);
+    assert.equal((await readdir(join(root, "storage", "campaigns")).catch(() => [])).length, 0);
 
     const review = await reviewActiveCampaign(root);
     assert.equal(review.complete, true);
     const beforeDraft = await inspectCampaignOperations(root, desktop);
-    assert.deepEqual(beforeDraft.next, ["npm run campana:finalizar"]);
+    assert.deepEqual(beforeDraft.next, ["npm run acreditar"]);
     const created = await finalizeActiveCampaign(root, false);
     assert.equal(created.status, "draft");
     const pending = await inspectCampaignOperations(root, desktop);
@@ -86,11 +86,11 @@ test("estado de campaña sin escritura y orientación consistente entre editoria
     await writeFile(created.draftFile, JSON.stringify(next, null, 2));
     const approved = await inspectCampaignOperations(root, desktop);
     assert.match(approved.description, /aprobada/);
-    assert.deepEqual(approved.next, ["npm run campana:finalizar"]);
+    assert.deepEqual(approved.next, ["npm run acreditar"]);
     const selected = await finalizeActiveCampaign(root, false);
     assert.equal(selected.status, "selected");
     const readyForDelivery = await inspectCampaignOperations(root, desktop);
-    assert.ok(readyForDelivery.next.some((command) => command.includes("campana:entregar")));
+    assert.ok(readyForDelivery.next.some((command) => command.includes("entregar")));
 
     await mkdir(desktop);
     const delivered = await deliverActiveCampaign(root, desktop, new Date(2026, 9, 26, 12));
@@ -100,7 +100,7 @@ test("estado de campaña sin escritura y orientación consistente entre editoria
     await updateActiveCampaignReference(root, desktop);
     const referenced = await inspectCampaignOperations(root, desktop);
     assert.match(referenced.description, /referencia verificada/);
-    assert.ok(referenced.next.some((command) => command.includes("campana:limpiar")));
+    assert.ok(referenced.next.some((command) => command.includes("limpiar")));
     assert.ok(referenced.next.every((command) => !command.includes("--actualizar")));
     assert.equal(referenced.reference.status, "valid");
     if (referenced.reference.status === "valid") assert.equal(referenced.reference.reference.manifest.runId, runId);
@@ -109,7 +109,7 @@ test("estado de campaña sin escritura y orientación consistente entre editoria
     await writeFile(delivered.zipFile, "ZIP modificado");
     const altered = await inspectCampaignOperations(root, desktop);
     assert.match(altered.description, /no verificable/);
-    assert.ok(altered.next.every((command) => !command.includes("campana:limpiar") && !command.includes("--actualizar")));
+    assert.ok(altered.next.every((command) => !command.includes("npm run limpiar") && !command.includes("--actualizar")));
 
     await writeFile(delivered.zipFile, deliveredArchive);
     const cleanPlan = await cleanDeliveredCampaign(root, desktop, true);
@@ -122,10 +122,10 @@ test("estado de campaña sin escritura y orientación consistente entre editoria
     if (afterCleanup.reference.status === "valid") {
       assert.equal(afterCleanup.reference.reference.manifest.runId, runId);
     }
-    assert.ok(afterCleanup.next.includes("npm run campana:extraer"));
-    assert.ok(afterCleanup.next.every((command) => !command.includes("campana:limpiar")));
+    assert.ok(afterCleanup.next.includes("npm run extraer"));
+    assert.ok(afterCleanup.next.every((command) => !command.includes("npm run limpiar")));
     assert.deepEqual(await readFile(delivered.zipFile), deliveredArchive);
-    assert.equal((await readdir(join(root, "storage", "campanas"))).length, 0);
+    assert.equal((await readdir(join(root, "storage", "campaigns"))).length, 0);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

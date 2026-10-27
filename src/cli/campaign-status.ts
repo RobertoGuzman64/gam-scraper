@@ -8,16 +8,16 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 
 export const runCampaignStatus = async (args: readonly string[], rootDirectory: string = root): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    console.log("Uso: npm run campana:estado\nConsulta campaña, acreditación, entrega y referencia; indica siguientes pasos sin escribir ni preparar archivos.");
+    console.log("Uso: npm run estado\nConsulta campaña, acreditación, entrega y referencia; indica siguientes pasos sin escribir ni preparar archivos.");
     return;
   }
-  if (args.length) throw new Error("campana:estado no admite argumentos");
+  if (args.length) throw new Error("estado no admite argumentos");
   printCampaignOperations(await inspectCampaignOperations(rootDirectory));
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   runCampaignStatus(process.argv.slice(2)).catch((error: unknown) => {
-    printCommandError("campana:estado", error);
+    printCommandError("estado", error);
     process.exitCode = 1;
   });
 }

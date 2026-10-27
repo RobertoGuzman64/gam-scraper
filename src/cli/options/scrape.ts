@@ -15,10 +15,9 @@ const aliases: Readonly<Record<string, string>> = {
 };
 
 export const scrapeHelp = `Uso:
-  npm run extraer -- gam
-  npm run extraer -- gomariz --category venta
-  npm run extraer -- mercaeleva --pages 2 --prefix prueba-mercaeleva
-  npm run extraer -- all [--dry-run | --providers gam,gomariz]
+  npm run extraer:proveedor -- gam
+  npm run extraer:proveedor -- gomariz --category venta
+  npm run extraer:proveedor -- mercaeleva --pages 2 --prefix prueba-mercaeleva
 
 Opciones: --category, --pages, --out, --prefix, --verbose, --help
 Compatibilidad: --provider, --categoryKey, --maxPages, --outDir, --outPrefix
@@ -27,7 +26,7 @@ Avanzadas: --url, --rootUrl, --discoverTree, --discoverSubcategories,
            --concurrencyProducts, --timeoutMs, --delayMs, --userAgent
 
 --pages limita las páginas: los resultados de diagnóstico no deben importarse.
-Sin proveedor se utiliza GAM, como en el comando original.`;
+El proveedor es obligatorio en el comando público extraer:proveedor.`;
 
 export const parseArgs = (argv: readonly string[]): ArgMap => {
   const out: ArgMap = {};

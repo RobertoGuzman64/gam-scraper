@@ -50,4 +50,4 @@ El scraper **no** automatiza la creación, actualización o eliminación de prod
 
 Cualquier ejecución en contenedores o sistemas efímeros necesita un diseño adicional de **persistencia duradera**, publicación consistente, exclusión mutua distribuida, monitorización y gestión de Chromium. Un montaje remoto no debe presumirse equivalente a un filesystem POSIX local. Ninguna infraestructura remota está ya configurada por el repositorio.
 
-Antes de automatizar, completar la [validación de fuentes](VALIDACION.md) y obtener aprobación explícita para los proveedores y el entorno elegidos.
+Antes de automatizar, completar la [validación de fuentes](VALIDATION.md) y obtener aprobación explícita para los proveedores y el entorno elegidos.

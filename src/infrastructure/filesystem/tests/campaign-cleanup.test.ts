@@ -27,7 +27,7 @@ const products = (providerId: string, date: string): CategoryScrapeResult => ({
 
 const fixture = async (callback: (root: string, scraped: string, outside: string) => Promise<void>): Promise<void> => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-cleanup-inventory-"));
-  const scraped = join(root, "storage", "scraped", "campanas", "lote");
+  const scraped = join(root, "storage", "scraped", "campaigns", "lote");
   const outside = join(root, "externo.txt");
   try {
     await writeFile(outside, "no borrar");

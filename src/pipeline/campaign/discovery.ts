@@ -129,7 +129,7 @@ const preparationPaths = async (root: string, providerId: string): Promise<reado
       throw error;
     }
   }
-  files.push(...await filesInCampaign(join(root, "storage", "campanas"), 5));
+  files.push(...await filesInCampaign(join(root, "storage", "campaigns"), 5));
   return files;
 };
 

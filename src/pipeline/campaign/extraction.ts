@@ -19,7 +19,7 @@ export const extractCampaign = async (
     throw new Error("La campaña anterior está incompleta o tiene advertencias. Consulta npm run iniciar; si quieres comenzar un lote aislado utiliza --nueva");
   }
   await initializeWorkspace(root);
-  const separateRoot = join(root, "storage", "scraped", "campanas", randomUUID());
+  const separateRoot = join(root, "storage", "scraped", "campaigns", randomUUID());
   const result = await runBatch({
     providerIds: CAMPAIGN_PROVIDERS, outRoot: separateRoot,
     historyDir: join(root, "storage", "runs"), dryRun: false

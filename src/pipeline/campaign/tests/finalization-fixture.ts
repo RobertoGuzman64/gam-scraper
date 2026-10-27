@@ -23,7 +23,7 @@ export const createFixture = async () => {
   const providers: ProviderRun[] = [];
   for (const id of CAMPAIGN_PROVIDERS) {
     const prefix = prefixes[id];
-    const dir = join(root, "storage", "scraped", "campanas", runId, id);
+    const dir = join(root, "storage", "scraped", "campaigns", runId, id);
     await mkdir(dir, { recursive: true });
     const catalog = await copyCampaignTestCatalog(sourceRoot, dir, id, prefix);
     providers.push({
@@ -62,7 +62,7 @@ export const approveDraft = async (path: string) => {
 };
 
 export const campaignScript = async (root: string, runId: string): Promise<string> => {
-  const catalogFile = join(root, "storage", "scraped", "campanas", runId, "gam", `${prefixes.gam}-catalog.json`);
+  const catalogFile = join(root, "storage", "scraped", "campaigns", runId, "gam", `${prefixes.gam}-catalog.json`);
   const catalog = await readCanonicalCatalog(catalogFile);
   const product = catalog.products.find((entry) => entry.title !== null);
   assert.ok(product);

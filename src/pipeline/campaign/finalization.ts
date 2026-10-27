@@ -94,8 +94,8 @@ export const readCampaignFinalizationContext = async (
   if (runId !== campaign.runId) throw new Error("El lote cambió durante la acreditación");
   const expected = createAccreditationDraft(preparations, sources, runId);
   const fingerprint = sha256(JSON.stringify(sources));
-  const editorialDir = join(root, "storage", "campanas", runId, "editorial");
-  const draftFile = join(editorialDir, `acreditacion-${fingerprint}.json`);
+  const editorialDir = join(root, "storage", "campaigns", runId, "editorial");
+  const draftFile = join(editorialDir, `accreditation-${fingerprint}.json`);
   return { runId, draftFile, expected, preparations, sources, paths };
 };
 
@@ -124,7 +124,7 @@ export const finalizeActiveCampaign = async (
   }
   const selection = selectAccreditedPublishable(preparations, sources, runId, parsed, sha256(raw));
   if (dryRun) return { runId, draftFile, status: "simulation", decisions: expected.exclusions.length, selection };
-  const selectionDir = join(root, "storage", "campanas", runId, "seleccion", sha256(raw));
+  const selectionDir = join(root, "storage", "campaigns", runId, "selection", sha256(raw));
   await saveSelection(selectionDir, selectionFiles(selection));
   const current = await discoverCampaign(root);
   if (current.runId !== runId || current.issues.length ||

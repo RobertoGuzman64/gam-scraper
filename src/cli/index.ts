@@ -12,17 +12,17 @@ import { validateHelp } from "./validate.js";
 
 export const cliHelp = `EQUIPZILLA SCRAPER
 
-  npm run extraer -- gam                   Extraer GAM
-  npm run extraer -- gomariz               Extraer Gomariz
-  npm run extraer -- mercaeleva            Extraer Mercaeleva
-  npm run extraer -- all                    Extraer los tres proveedores
-  npm run extraer -- all --dry-run          Simular el lote
+  npm run extraer:proveedor -- gam                   Extraer GAM
+  npm run extraer:proveedor -- gomariz               Extraer Gomariz
+  npm run extraer:proveedor -- mercaeleva            Extraer Mercaeleva
+  npm run extraer:todos                    Extraer los tres proveedores
+  npm run extraer:todos -- --simular          Simular el lote
   npm run validar -- gam                 Validar último catálogo de GAM
   npm run preparar -- --help               Preparación independiente offline
   npm run exportar -- --help                Consultar exportación segura
 
-  npm run extraer -- --help                Ayuda extracción
-  npm run extraer:todos -- --help            Ayuda lote
+  npm run ayuda -- extraer:proveedor                Ayuda extracción
+  npm run ayuda -- extraer:todos          Ayuda extracción por lote
   npm run validar -- --help              Ayuda validación
 
 El lote no importa nada en el backend; los productos requieren revisión antes de importar.`;
@@ -36,7 +36,6 @@ export const runCli = async (argv: readonly string[]): Promise<void> => {
   }
   switch (command) {
     case "scrape":
-      if (args[0] === "all") return runBatchCli(args.slice(1));
       return runSingleScrape(args);
     case "batch": return runBatchCli(args);
     case "validate": return runPreflight(args);

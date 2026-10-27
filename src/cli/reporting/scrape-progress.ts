@@ -3,6 +3,7 @@ import type { CategoryConfig, CategoryScrapeResult, Summary } from "../../contra
 import type { CategoryProgress, ScrapeEvent, ScrapeMessage } from "../../contracts/progress.js";
 import { LiveStatus, formatDuration } from "./live-status.js";
 import { errorDetail } from "./errors.js";
+import { formatProgressBar, formatStatus } from "./terminal.js";
 
 const seconds = (startedAt: string, endedAt: string): string =>
   formatDuration(Math.max(0, Date.parse(endedAt) - Date.parse(startedAt)));
@@ -15,7 +16,8 @@ export const formatCategoryProgress = (progress: CategoryProgress, spinner: stri
     ? `${progress.listingStage ?? "buscando fichas"} | ${progress.pagesScanned} págs. | ${progress.found} encontradas`
     : `${progress.processed}/${progress.totalProducts} fichas procesadas`;
   const idle = progress.idleSeconds >= 25 ? ` | sin novedades ${formatDuration(progress.idleSeconds * 1000)}` : "";
-  return `  ${prefix} | ${spinner} ${activity} | ${formatDuration(progress.elapsedSeconds * 1000)}${idle}`;
+  const bar = progress.phase === "products" ? formatProgressBar(progress.processed, progress.totalProducts, 10) : "";
+  return `  ${prefix} | ${spinner} ${activity} | ${formatDuration(progress.elapsedSeconds * 1000)}${bar ? ` | ${bar}` : ""}${idle}`;
 };
 
 export const formatRunSummary = (providerId: string, outDir: string, outPrefix: string, summary: Summary, failed: boolean): readonly string[] => {
@@ -23,7 +25,8 @@ export const formatRunSummary = (providerId: string, outDir: string, outPrefix: 
   const totals = summary.totals;
   const reasons = summary.quality?.reasons ?? [];
   const lines = [
-    `\n[FIN] ${providerId.toUpperCase()} | ${status} | ${seconds(summary.startedAt, summary.endedAt)}`,
+    `
+${formatStatus(failed ? "FAIL" : summary.quality?.status === "complete" ? "PASS" : "WARN", `${providerId.toUpperCase()} | ${status} | ${seconds(summary.startedAt, summary.endedAt)}`)}`,
     `  Categorías: ${totals.categories} | Fichas leídas: ${totals.scrapedProductsRaw} | Productos únicos: ${totals.scrapedProducts} | Fallos: ${totals.failures}`
   ];
   if (failed) {
@@ -79,7 +82,8 @@ export class ScrapeConsole {
   }
 
   start(total: number): void {
-    this.status.log(`\n[SCRAPER] ${this.providerId.toUpperCase()} | ${total} categorías`);
+    this.status.log(`
+${formatStatus("RUN", `${this.providerId.toUpperCase()} | ${total} categorías`)}`);
   }
 
   beginCategory(category: CategoryConfig, position: number, count: number): void {
@@ -127,14 +131,14 @@ export class ScrapeConsole {
     if (this.seenFailures.has(key)) return;
     this.seenFailures.add(key);
     this.reportedFailures += 1;
-    this.status.log(`  [ERROR] ${this.providerId} | ${stage} | ${resource}\n  Causa: ${reason}`, true);
+    this.status.log(`  ${formatStatus("FAIL", `${this.providerId} | ${stage} | ${resource}`)}\n  Causa: ${reason}`, true);
     this.forward({ type: "failure", stage, resource, reason });
   }
 
   endCategory(result: CategoryScrapeResult): void {
     this.publish(true);
     this.status.stop();
-    this.status.log(`  [${this.position}/${this.count}] ${result.category.name} | ${result.products.length}/${result.discoveredProductUrls} fichas | ${result.failures.length} fallos | ${formatDuration(Date.now() - this.categoryStartedAt)}`);
+    this.status.log(`  ${formatStatus(result.failures.length ? "WARN" : "PASS", `[${this.position}/${this.count}] ${result.category.name} | ${result.products.length}/${result.discoveredProductUrls} fichas | ${result.failures.length} fallos | ${formatDuration(Date.now() - this.categoryStartedAt)}`)}`);
     for (const failure of result.failures) this.failure(result.category.name, failure.url, failure.error);
     this.category = null;
   }
@@ -153,7 +157,8 @@ export class ScrapeConsole {
       }
       return;
     }
-    console.error(`\n[FIN] ${this.providerId.toUpperCase()} | ERROR | ${seconds(startedAt, new Date().toISOString())}`);
+    console.error(`
+${formatStatus("FAIL", `${this.providerId.toUpperCase()} | ${seconds(startedAt, new Date().toISOString())}`)}`);
     console.error(`  Causa: ${errorDetail(error ?? "No se pudo leer el resumen de ejecución")}`);
     console.error(`  Salida: ${this.outDir}`);
     console.error(`  Resumen: ${join(this.outDir, `${this.outPrefix}-summary.json`)}`);
@@ -162,7 +167,7 @@ export class ScrapeConsole {
 
   categoriesSaved(count: number): void {
     this.status.stop();
-    console.log(`[FIN] ${this.providerId.toUpperCase()} | ${count} categorías exportadas`);
+    console.log(formatStatus("PASS", `${this.providerId.toUpperCase()} | ${count} categorías exportadas`));
     console.log(`  CSV: ${join(this.outDir, `${this.outPrefix}-categories.csv`)}`);
   }
 

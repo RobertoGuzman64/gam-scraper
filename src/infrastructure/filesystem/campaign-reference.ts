@@ -44,14 +44,14 @@ const paths = (rootDirectory: string) => {
   const parent = join(resolve(rootDirectory), "data");
   return {
     parent,
-    active: join(parent, "referencia"),
-    backup: join(parent, ".referencia-anterior"),
-    staging: join(parent, ".referencia-candidata"),
-    lock: join(parent, ".referencia-bloqueo")
+    active: join(parent, "reference"),
+    backup: join(parent, ".reference-backup"),
+    staging: join(parent, ".reference-staging"),
+    lock: join(parent, ".reference-lock")
   };
 };
 
-const referenceFiles = [...CAMPAIGN_PROVIDERS.map((provider) => `${provider}.json`), "manifest.json", "diferencias.json"];
+const referenceFiles = [...CAMPAIGN_PROVIDERS.map((provider) => `${provider}.json`), "manifest.json", "differences.json"];
 
 const readReferenceDirectory = async (directory: string): Promise<StoredCampaignReference> => {
   const files = await readdir(directory);
@@ -65,7 +65,7 @@ const readReferenceDirectory = async (directory: string): Promise<StoredCampaign
   }
   const manifestInput: unknown = JSON.parse(await readFile(join(directory, "manifest.json"), "utf8"));
   const manifest = parseReferenceManifest(manifestInput);
-  const differences = await readFile(join(directory, "diferencias.json"), "utf8");
+  const differences = await readFile(join(directory, "differences.json"), "utf8");
   if (digest(differences) !== manifest.differencesSha256) {
     throw new Error("El informe de diferencias no coincide con el manifiesto de referencia");
   }
@@ -330,7 +330,7 @@ export const writeCampaignReference = async (
       if (!source) throw new Error(`Falta el catálogo de ${providerId}`);
       await writeFile(join(staging, `${providerId}.json`), source.raw, { flag: "wx" });
     }
-    await writeFile(join(staging, "diferencias.json"), differences, { flag: "wx" });
+    await writeFile(join(staging, "differences.json"), differences, { flag: "wx" });
     await writeFile(join(staging, "manifest.json"), JSON.stringify(manifest, null, 2), { flag: "wx" });
     await readReferenceDirectory(staging);
     await verifyBeforeCommit();

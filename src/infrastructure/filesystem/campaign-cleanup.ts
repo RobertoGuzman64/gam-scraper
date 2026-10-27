@@ -32,7 +32,7 @@ export type CampaignDeliveryReceipt = {
 export const persistCampaignDelivery = async (
   rootDirectory: string, receipt: CampaignDeliveryReceipt
 ): Promise<void> => {
-  const folder = join(resolve(rootDirectory), "storage", "campanas", receipt.runId);
+  const folder = join(resolve(rootDirectory), "storage", "campaigns", receipt.runId);
   await mkdir(folder, { recursive: true });
   const target = join(folder, "delivery.json");
   const stage = join(folder, `.delivery-${randomUUID()}.tmp`);
@@ -99,8 +99,8 @@ const allowedFile = (
     if (parts.length === 0) return name === "delivery.json";
     if (parts.length === 1 && CAMPAIGN_PROVIDERS.some((id) => id === parts[0]))
       return /^[a-zA-Z0-9_-]+-(?:preparation|preparation\.manifest|diagnostics)\.json$/.test(name);
-    if (parts.length === 1 && parts[0] === "editorial") return /^acreditacion-[a-f0-9]{64}\.json$/.test(name);
-    if (parts.length === 2 && parts[0] === "seleccion" && /^[a-f0-9]{64}$/.test(parts[1] ?? ""))
+    if (parts.length === 1 && parts[0] === "editorial") return /^accreditation-[a-f0-9]{64}\.json$/.test(name);
+    if (parts.length === 2 && parts[0] === "selection" && /^[a-f0-9]{64}$/.test(parts[1] ?? ""))
       return name === "selection.json" || /^(gam|gomariz|mercaeleva)-publishable\.json$/.test(name);
     return false;
   }
@@ -129,8 +129,8 @@ const allowedDir = (
     return false;
   }
   if (area === "campaign") return parts.length === 0 ?
-    name === "editorial" || name === "seleccion" || CAMPAIGN_PROVIDERS.some((id) => id === name) :
-    parts.length === 1 && parts[0] === "seleccion" && /^[a-f0-9]{64}$/.test(name);
+    name === "editorial" || name === "selection" || CAMPAIGN_PROVIDERS.some((id) => id === name) :
+    parts.length === 1 && parts[0] === "selection" && /^[a-f0-9]{64}$/.test(name);
   return (parts.length === 0 && /^[a-f0-9]{64}$/.test(name)) ||
     (parts.length === 1 && /^[a-f0-9]{64}$/.test(parts[0] ?? "") && name === "prepared");
 };

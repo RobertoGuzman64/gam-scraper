@@ -59,4 +59,4 @@ En una importación manual, la respuesta de éxito HTTP **no demuestra** que tod
 
 La extracción, normalización, selección y conservación de evidencia corresponden al scraper. Autenticación, permisos, inventario vivo, reglas comerciales, importación y publicación definitiva en el backend corresponden a los responsables del receptor. **No modificar el backend para corregir el scraper sin autorización expresa.**
 
-Para el objetivo del proyecto consultar [Objetivos](OBJETIVOS_SCRAPER.md); para las estructuras producidas consultar [Reglas de datos](SCRAPER_DATA_RULES.md).
+Para el objetivo del proyecto consultar [Objetivos](SCRAPER_OBJECTIVES.md); para las estructuras producidas consultar [Reglas de datos](SCRAPER_DATA_RULES.md).

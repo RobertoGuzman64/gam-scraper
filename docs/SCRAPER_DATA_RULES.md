@@ -59,6 +59,6 @@ La selección editorial crea productos publicables y un resumen de exclusiones *
 - Ninguna exportación realiza altas, cambios ni bajas en el backend; solo genera un artefacto revisable.
 - No copiar IDs de categoría o atributos de otra empresa ni presuponer que los snapshots locales reflejan la base de datos activa.
 
-Las correcciones textuales puntuales se gestionan, cuando proceda, mediante [intervenciones manuales por campaña](INTERVENCIONES_CAMPANA.md), con origen intacto y sin promoción editorial automática.
+Las correcciones textuales puntuales se gestionan, cuando proceda, mediante [intervenciones manuales por campaña](CAMPAIGN_INTERVENTIONS.md), con origen intacto y sin promoción editorial automática.
 
-Para el flujo ordinario de **todos los proveedores registrados** consultar [Campañas completas](CAMPANAS.md); para los criterios de aceptación ver [Validación](VALIDACION.md) y [Objetivos](OBJETIVOS_SCRAPER.md).
+Para el flujo ordinario de **todos los proveedores registrados** consultar [Campañas completas](CAMPAIGNS.md); para los criterios de aceptación ver [Validación](VALIDATION.md) y [Objetivos](SCRAPER_OBJECTIVES.md).

@@ -11,7 +11,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 
 const hash = (value: string): string => createHash("sha256").update(value).digest("hex");
 const createReference = async (root: string): Promise<void> => {
-  const dir = join(root, "data", "referencia");
+  const dir = join(root, "data", "reference");
   await mkdir(dir, { recursive: true });
   const catalogs: { providerId: string; prefix: string; scope: string; productCount: number; sha256: string }[] = [];
   for (const providerId of CAMPAIGN_PROVIDERS) {
@@ -31,7 +31,7 @@ const createReference = async (root: string): Promise<void> => {
     catalogs.push({ providerId, prefix: providerId, scope: catalog.scope, productCount: 1, sha256: hash(raw) });
   }
   const differences = JSON.stringify({ version: 1, baseline: "initial", currentRunId: "nuevo", previousRunId: null, providers: [] });
-  await writeFile(join(dir, "diferencias.json"), differences);
+  await writeFile(join(dir, "differences.json"), differences);
   await writeFile(join(dir, "manifest.json"), JSON.stringify({
     version: 1, runId: "nuevo", createdAt: "2026-01-01T09:00:00Z",
     catalogs, differencesSha256: hash(differences)
@@ -52,14 +52,14 @@ test("lectura sin referencia no crea carpetas; valida un conjunto íntegro", asy
 test("no acepta referencia parcial ni alterada, aunque sus JSON sean válidos", async () => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-reference-tamper-"));
   try {
-    await mkdir(join(root, "data", "referencia"), { recursive: true });
+    await mkdir(join(root, "data", "reference"), { recursive: true });
     await assert.rejects(readCampaignReference(root), /incompleta/);
     await createReference(root);
-    const gam = join(root, "data", "referencia", "gam.json");
+    const gam = join(root, "data", "reference", "gam.json");
     await writeFile(gam, (await readFile(gam, "utf8")) + " ");
     await assert.rejects(readCampaignReference(root), /Huella alterada/);
     await createReference(root);
-    await writeFile(join(root, "data", "referencia", "diferencias.json"), "{}");
+    await writeFile(join(root, "data", "reference", "differences.json"), "{}");
     await assert.rejects(readCampaignReference(root), /informe de diferencias/);
   } finally { await rm(root, { recursive: true, force: true }); }
 });

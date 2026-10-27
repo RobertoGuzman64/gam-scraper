@@ -49,7 +49,7 @@ export const planDeliveredCampaignCleanup = async (
   const { runId, runFile } = await verifyDeliveredCampaign(root, desktopDirectory);
   const run = await readRun(runFile, runId);
   const scrapedCampaign = dirname(resolve(run.providers[0]?.outputDir ?? ""));
-  const expectedParent = join(root, "storage", "scraped", "campanas");
+  const expectedParent = join(root, "storage", "scraped", "campaigns");
   if (dirname(scrapedCampaign) !== expectedParent ||
     !/^[a-zA-Z0-9_-]+$/.test(basename(scrapedCampaign)) ||
     run.providers.some((provider) =>
@@ -58,7 +58,7 @@ export const planDeliveredCampaignCleanup = async (
   }
   const areas: readonly { path: string; area: CleanupArea }[] = [
     { path: join(root, "storage", "interventions", runId, "results"), area: "intervention" },
-    { path: join(root, "storage", "campanas", runId), area: "campaign" },
+    { path: join(root, "storage", "campaigns", runId), area: "campaign" },
     { path: scrapedCampaign, area: "scraped" },
     { path: join(root, "storage", "runs", runId), area: "run" }
   ];

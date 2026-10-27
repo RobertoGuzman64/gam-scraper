@@ -42,4 +42,4 @@ La ausencia de precio, año u otro dato que el portal no publique **no autoriza*
 - Ejecutar scraping programado de proveedores no acreditados sin supervisión.
 - Modificar documentación sin la autorización explícita indicada por `AI GUARD`.
 
-Guías de implementación: [Arquitectura](ARQUITECTURA.md), [Reglas de datos](SCRAPER_DATA_RULES.md) y [Validación](VALIDACION.md).
+Guías de implementación: [Arquitectura](ARCHITECTURE.md), [Reglas de datos](SCRAPER_DATA_RULES.md) y [Validación](VALIDATION.md).

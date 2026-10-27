@@ -1,3 +1,5 @@
+import { printStatus } from "./terminal.js";
+
 export const errorDetail = (error: unknown): string => {
   if (!(error instanceof Error)) return String(error);
   const parts: string[] = [];
@@ -13,6 +15,6 @@ export const errorDetail = (error: unknown): string => {
 };
 
 export const printCommandError = (command: string, error: unknown): void => {
-  console.error(`[ERROR] ${command} | código 1\n  ${errorDetail(error)}`);
+  printStatus("FAIL", `${command} | código 1\n  ${errorDetail(error)}`);
   if (error instanceof Error && error.stack) console.error(`  Stack: ${error.stack}`);
 };

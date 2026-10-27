@@ -3,13 +3,18 @@ import type { ProviderRun } from "../../pipeline/batch/report.js";
 import type { BatchObserver } from "../../pipeline/batch/run.js";
 import { formatCategoryProgress } from "./scrape-progress.js";
 import { LiveStatus, formatDuration } from "./live-status.js";
+import { formatProgressBar, formatStatus, printStatus } from "./terminal.js";
 
 export class BatchConsole implements BatchObserver {
   private readonly status = new LiveStatus();
   private current = "";
   private loggedFailure = false;
+  private completed = 0;
+  private total = 0;
 
   start(runDir: string, total: number): void {
+    this.total = total;
+    this.completed = 0;
     console.log(`LOTE | ${total} proveedor${total === 1 ? "" : "es"} | logs e historial en ${runDir}`);
   }
 
@@ -20,7 +25,7 @@ export class BatchConsole implements BatchObserver {
   begin(providerId: string, position: number, count: number): void {
     this.current = providerId;
     this.loggedFailure = false;
-    this.status.log(`  [${position}/${count}] ${providerId} | iniciando`);
+    this.status.log(`  ${formatProgressBar(this.completed, this.total)} | ${providerId} | iniciando`);
     this.status.update(`[${position}/${count}] ${providerId} | iniciando scraper`);
   }
 
@@ -32,17 +37,18 @@ export class BatchConsole implements BatchObserver {
       this.status.update(`${providerId} | ${formatCategoryProgress(event.progress, "").trim()}`);
     } else {
       this.loggedFailure = true;
-      this.status.log(`  [ERROR] ${providerId} | ${event.stage} | ${event.resource}\n  Causa: ${event.reason}`, true);
+      this.status.log(`  ${formatStatus("FAIL", `${providerId} | ${event.stage} | ${event.resource}`)}\n  Causa: ${event.reason}`, true);
     }
   }
 
   end(result: ProviderRun): void {
     this.status.stop();
+    this.completed += 1;
     if (result.status === "complete") {
-      console.log(`  [OK] ${result.providerId} | ${result.products ?? 0} productos | ${formatDuration(result.durationMs)}`);
+      printStatus("PASS", `${result.providerId.toUpperCase()} | ${result.products ?? 0} productos | ${formatDuration(result.durationMs)} | ${formatProgressBar(this.completed, this.total)}`);
     } else {
-      if (this.loggedFailure) console.error(`  [ERROR] ${result.providerId} | ${formatDuration(result.durationMs)} | fallo confirmado`);
-      else console.error(`  [ERROR] ${result.providerId} | ${formatDuration(result.durationMs)}\n  Causa: ${result.error ?? "Error no identificado"}`);
+      if (this.loggedFailure) printStatus("FAIL", `${result.providerId} | ${formatDuration(result.durationMs)} | fallo confirmado`);
+      else printStatus("FAIL", `${result.providerId} | ${formatDuration(result.durationMs)}\n  Causa: ${result.error ?? "Error no identificado"}`);
       console.error(`  Log: ${result.logFile}`);
       if (result.archivedErrorsFile) console.error(`  Errores: ${result.archivedErrorsFile}`);
       if (result.archivedSummaryFile) console.error(`  Resumen: ${result.archivedSummaryFile}`);
@@ -51,7 +57,7 @@ export class BatchConsole implements BatchObserver {
 
   cancelled(): void {
     this.status.stop();
-    console.error("[CANCELADO] Lote interrumpido | no se ejecutan más proveedores");
+    printStatus("WARN", "Lote interrumpido | no se ejecutan más proveedores");
   }
 
   stop(): void {

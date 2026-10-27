@@ -56,4 +56,4 @@ La selección puede bloquearse **correctamente** aunque la extracción y la prep
 
 La generación opcional de Excel o JSON para el backend tiene un control separado. Antes de exportar se requiere `companyID` real, inventario completo de la misma empresa y revisión del plan. `--simular` no escribe; `--confirmar-inventario` permite producir el artefacto, pero **no importarlo**. No interpretar un plan de altas como autorización para crear, actualizar o borrar máquinas.
 
-La ejecución automática se trata en [Operación y despliegue](DESPLIEGUE_AUTOMATICO.md); los contratos están en [Reglas de datos](SCRAPER_DATA_RULES.md).
+La ejecución automática se trata en [Operación y despliegue](AUTOMATED_DEPLOYMENT.md); los contratos están en [Reglas de datos](SCRAPER_DATA_RULES.md).

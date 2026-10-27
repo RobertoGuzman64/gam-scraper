@@ -5,6 +5,7 @@ import { discoverCampaign } from "../pipeline/campaign/discovery.js";
 import { inspectCampaignOperations } from "../pipeline/campaign/operations-status.js";
 import { printCampaignOperations } from "./reporting/campaign-operations.js";
 import { printCommandError } from "./reporting/errors.js";
+import { formatHeader, printStatus } from "./reporting/terminal.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 
@@ -15,7 +16,8 @@ export const runStart = async (args: readonly string[]): Promise<void> => {
   }
   if (args.length !== 0) throw new Error("iniciar no acepta argumentos; usa npm run iniciar");
   await initializeWorkspace(root);
-  console.log("INICIO | Entorno y datos estructurales correctos");
+  console.log(formatHeader("INICIO"));
+  printStatus("PASS", "INICIO | Entorno y datos estructurales correctos");
   for (const path of workspaceDirectories(root)) console.log(`  Trabajo: ${path}`);
   const campaign = await discoverCampaign(root);
   if (!campaign.runId) {
@@ -31,7 +33,7 @@ export const runStart = async (args: readonly string[]): Promise<void> => {
     if (provider.catalog) console.log(`    Catálogo: ${provider.catalog.path} | SHA256 ${provider.catalog.sha256}`);
     if (provider.preparation) console.log(`    Preparación: ${provider.preparation.path} | SHA256 ${provider.preparation.sha256}${provider.preparation.intervened ? " | intervenida" : ""}`);
   }
-  for (const issue of campaign.issues) console.warn(`  AVISO | ${issue}`);
+  for (const issue of campaign.issues) printStatus("WARN", issue);
   console.log("\nORIENTACIÓN OPERATIVA");
   printCampaignOperations(await inspectCampaignOperations(root));
   if (campaign.providers.some((provider) => provider.state === "invalid") ||

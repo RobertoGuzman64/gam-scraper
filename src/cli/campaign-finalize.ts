@@ -6,10 +6,11 @@ import {
 } from "../pipeline/campaign/editorial.js";
 import type { EditorialDecisionRequest, EditorialReview } from "../pipeline/campaign/editorial.js";
 import { printCommandError } from "./reporting/errors.js";
+import { formatHeader, printStatus } from "./reporting/terminal.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 
-const usage = `Uso: npm run campana:finalizar [-- --simular]
+const usage = `Uso: npm run acreditar [-- --simular]
   --listar                                        Consultar decisiones del borrador actual
   --consultar <proveedor> <referencia>             Consultar una ficha editorial
   --validar                                       Revisar TODAS las decisiones, sin escribir
@@ -21,7 +22,7 @@ El primer uso sin opciones crea el borrador si falta. Ningún otro modo crea bor
 Las evidencias deben incluir la URL original de la ficha. Repite --evidencia para más URLs.`;
 
 const showReview = (review: EditorialReview): void => {
-  console.log(`CAMPAÑA | ${review.runId} | EDITORIAL ${review.inspection.approved ? "APROBADA" : "PENDIENTE"}`);
+  printStatus(review.inspection.approved ? "PASS" : "WARN", `CAMPAÑA | ${review.runId} | EDITORIAL ${review.inspection.approved ? "APROBADA" : "PENDIENTE"}`);
   console.log(`  Acreditación: ${review.draftFile}`);
   console.log(`  Decisiones válidas: ${review.inspection.completed}/${review.inspection.total}`);
   if (review.inspection.issues.length) {
@@ -48,17 +49,18 @@ export const runCampaignFinalization = async (args: readonly string[], rootDirec
     console.log(usage);
     return;
   }
+  console.log(formatHeader("ACREDITACIÓN"));
   if (!args.length || (args.length === 1 && args[0] === "--dry-run")) {
     const result = await finalizeActiveCampaign(rootDirectory, args.length === 1);
-    console.log(`CAMPAÑA | ${result.runId} | ${result.status.toUpperCase()}`);
+    printStatus(result.status === "selected" ? "PASS" : "WARN", `CAMPAÑA | ${result.runId} | ${result.status.toUpperCase()}`);
     console.log(`  Borrador asociado a las preparaciones vigentes: ${result.draftFile}`);
     console.log(`  Decisiones editoriales necesarias: ${result.decisions}`);
-    if (result.status === "draft") console.log("  Consulta las fichas mediante campana:finalizar -- --listar");
+    if (result.status === "draft") console.log("  Consulta las fichas mediante npm run acreditar -- --listar");
     else if (result.status === "pending") console.log("  Ejecuta --validar para consultar las decisiones pendientes");
     else if (result.selection) {
       console.log(`  Originales ${result.selection.totals.original} | Publicables ${result.selection.totals.publishable} | Excluidos ${result.selection.totals.excluded}`);
       console.log(result.selectionDir ? `  Selección íntegra: ${result.selectionDir}` : "  Simulación sin escrituras");
-      if (result.selectionDir) console.log("  SIGUIENTE | npm run campana:entregar");
+      if (result.selectionDir) console.log("  SIGUIENTE | npm run entregar");
     }
     return;
   }
@@ -111,7 +113,7 @@ export const runCampaignFinalization = async (args: readonly string[], rootDirec
   if (args.length === 3 && args[0] === "--aprobar" && args[1] === "--motivo" && args[2]) {
     const review = await approveActiveCampaignEditorial(rootDirectory, args[2]);
     showReview(review);
-    console.log("  Ejecuta npm run campana:finalizar para generar la selección acreditada");
+    console.log("  Ejecuta npm run acreditar para generar la selección acreditada");
     return;
   }
   throw new Error(usage);
@@ -119,7 +121,7 @@ export const runCampaignFinalization = async (args: readonly string[], rootDirec
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   runCampaignFinalization(process.argv.slice(2)).catch((error: unknown) => {
-    printCommandError("campana:finalizar", error);
+    printCommandError("acreditar", error);
     process.exitCode = 1;
   });
 }

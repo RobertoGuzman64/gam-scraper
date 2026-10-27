@@ -7,15 +7,16 @@ import { assessInterventionMaintenance } from "../manual-interventions/maintenan
 import { formatInterventionSimulation } from "./intervene.js";
 import { formatInterventionComparison } from "../manual-interventions/comparison-format.js";
 import { printCommandError } from "./reporting/errors.js";
+import { formatHeader, printStatus } from "./reporting/terminal.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const help = `Uso:
-  npm run campana:intervenir -- gam --listar
-  npm run campana:intervenir -- gam --consultar gam-6002
-  npm run campana:intervenir -- gam --consultar gam:ref:6002
-  npm run campana:intervenir -- gam --mantenimiento
-  npm run campana:intervenir -- gam --script interventions/gam/6002.ts [--script <otro.ts> ...]
-  npm run campana:intervenir -- gam --script interventions/gam/6002.ts --aplicar
+  npm run intervenir -- gam --listar
+  npm run intervenir -- gam --consultar gam-6002
+  npm run intervenir -- gam --consultar gam:ref:6002
+  npm run intervenir -- gam --mantenimiento
+  npm run intervenir -- gam --script interventions/gam/6002.ts [--script <otro.ts> ...]
+  npm run intervenir -- gam --script interventions/gam/6002.ts --aplicar
 
 Las consultas y mantenimiento son de solo lectura, sin ejecutar scripts.
 Los scripts antiguos en storage/interventions/<lote>/scripts/ solo se admiten por compatibilidad.
@@ -29,6 +30,7 @@ y prepara y valida el derivado. No aprueba productos ni modifica catálogos orig
 
 export const runCampaignIntervention = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") { console.log(help); return; }
+  console.log(formatHeader("INTERVENCIONES"));
   const [providerId, ...rest] = args;
   if (!providerId || providerId.startsWith("-")) throw new Error(help);
   if (rest.length === 1 && rest[0] === "--listar") {
@@ -119,20 +121,20 @@ export const runCampaignIntervention = async (args: readonly string[]): Promise<
   });
   console.log(`LOTE | ${result.runId}`);
   if (!result.applied) {
-    console.log(result.simulation ?
-      "  Solo simulación; para aplicar vuelve a ejecutar exactamente los mismos --script con --aplicar" :
-      "  Sin modificaciones pendientes; no se generó ningún plan ni archivo");
+    printStatus("WARN", result.simulation ?
+      "Solo simulación; para aplicar vuelve a ejecutar exactamente los mismos --script con --aplicar" :
+      "Sin modificaciones pendientes; no se generó ningún plan ni archivo");
     return;
   }
-  console.log(`  INTERVENCIÓN APLICADA | ${result.derivedFile}`);
-  console.log(`  PREPARACIÓN VALIDADA | ${result.preparationFile}`);
+  printStatus("PASS", `INTERVENCIÓN APLICADA | ${result.derivedFile}`);
+  printStatus("PASS", `PREPARACIÓN VALIDADA | ${result.preparationFile}`);
   console.log(`  Ready ${result.ready} | Review ${result.review}`);
-  console.log("  La publicación requiere acreditación editorial explícita; continúa con campana:finalizar");
+  console.log("  La publicación requiere acreditación editorial explícita; continúa con acreditar");
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   runCampaignIntervention(process.argv.slice(2)).catch((error: unknown) => {
-    printCommandError("campana:intervenir", error);
+    printCommandError("intervenir", error);
     process.exitCode = 1;
   });
 }

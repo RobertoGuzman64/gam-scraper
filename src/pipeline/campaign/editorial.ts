@@ -43,7 +43,7 @@ const readEditorialState = async (rootDirectory: string) => {
   try { metadata = await lstat(context.draftFile); }
   catch (error) {
     if (isRecord(error) && error.code === "ENOENT") {
-      throw new Error("No existe borrador vigente. Ejecuta primero npm run campana:finalizar");
+      throw new Error("No existe borrador vigente. Ejecuta primero npm run acreditar");
     }
     throw error;
   }
@@ -82,7 +82,7 @@ const updateEditorialState = async (
     selectAccreditedPublishable(initial.context.preparations, initial.context.sources,
       initial.context.runId, next, sha256(JSON.stringify(next)));
   }
-  const selectionDir = join(root, "storage", "campanas", initial.context.runId, "seleccion");
+  const selectionDir = join(root, "storage", "campaigns", initial.context.runId, "selection");
   try {
     await lstat(selectionDir);
     throw new Error("La campaña ya tiene selección; no se permite modificar la acreditación");

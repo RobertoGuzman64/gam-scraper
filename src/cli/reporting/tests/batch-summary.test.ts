@@ -22,4 +22,8 @@ test("muestra el total sin sumar resultados fallidos y conserva rutas de diagnó
   assert.match(lines.join("\n"), /12/);
   assert.match(lines.join("\n"), /gomariz\.log/);
   assert.match(lines.join("\n"), /run\.json/);
+  assert.match(lines.join("\n"), /WARN \| LOTE \| PARCIAL/);
+  assert.match(lines.join("\n"), /PASS \| GAM/);
+  assert.match(lines.join("\n"), /FAIL \| GOMARIZ/);
+  assert.doesNotMatch(lines.join("\n"), /\u001b/);
 });

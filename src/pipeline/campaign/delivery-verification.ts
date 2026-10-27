@@ -25,7 +25,7 @@ export const verifyDeliveredCampaign = async (
     throw new Error("La campaña está incompleta, no es verificable o tiene incidencias pendientes");
   }
   const runId = campaign.runId;
-  const receiptPath = join(root, "storage", "campanas", runId, "delivery.json");
+  const receiptPath = join(root, "storage", "campaigns", runId, "delivery.json");
   let receiptText: string;
   try { receiptText = await readFile(receiptPath, "utf8"); }
   catch (error) {

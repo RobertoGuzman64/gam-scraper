@@ -72,7 +72,7 @@ test("compara contra los tres JSON completos guardados, no contra preparaciones 
   const root = await mkdtemp(join(tmpdir(), "equipzilla-reference-campaign-"));
   try {
     await fixture(root);
-    const directory = join(root, "data", "referencia");
+    const directory = join(root, "data", "reference");
     await mkdir(directory, { recursive: true });
     const catalogs: { providerId: string; prefix: string; scope: string; productCount: number; sha256: string }[] = [];
     for (const providerId of CAMPAIGN_PROVIDERS) {
@@ -83,7 +83,7 @@ test("compara contra los tres JSON completos guardados, no contra preparaciones 
     }
     const differences = JSON.stringify({ version: 1, baseline: "initial", previousRunId: null,
       currentRunId: "lote-anterior", providers: [] });
-    await writeFile(join(directory, "diferencias.json"), differences);
+    await writeFile(join(directory, "differences.json"), differences);
     await writeFile(join(directory, "manifest.json"), JSON.stringify({ version: 1, runId: "lote-anterior",
       createdAt: endedAt, catalogs, differencesSha256: sha(differences) }));
     await writeProvider(root, "gam", "500");

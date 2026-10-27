@@ -1,4 +1,5 @@
 import type { CampaignReview } from "../../pipeline/campaign/review.js";
+import { formatStatus, printStatus } from "./terminal.js";
 
 export const printCampaignReview = (result: CampaignReview): void => {
   console.log(`CAMPAÑA | ${result.campaign.runId ?? "sin lote"} | ${result.campaign.status}`);
@@ -9,7 +10,7 @@ export const printCampaignReview = (result: CampaignReview): void => {
       console.log(`  ${provider.providerId.toUpperCase()} | ${provider.state.toUpperCase()} | ${provider.message ?? "Pendiente"}`);
       continue;
     }
-    console.log(`  ${provider.providerId.toUpperCase()} | VALIDADO | ${provider.products} productos | Ready: ${provider.ready} | Review: ${provider.review}`);
+    console.log(`  ${formatStatus(provider.review === 0 ? "PASS" : "WARN", `${provider.providerId.toUpperCase()} | VALIDADO | ${provider.products} productos | Ready: ${provider.ready} | Review: ${provider.review}`)}`);
     console.log(`    Preparación: ${provider.preparationFile}`);
     for (const item of provider.items ?? []) {
       console.log(`    REVIEW | ${item.reference} | ${item.title}`);
@@ -19,8 +20,8 @@ export const printCampaignReview = (result: CampaignReview): void => {
   }
   if (result.complete) {
     const total = result.providers.reduce((sum, provider) => sum + (provider.review ?? 0), 0);
-    console.log(`REVISIÓN | ${total} fichas pendientes de criterio. ${total === 0 ? "Sin Review; pendiente de acreditar y seleccionar en el siguiente paso." : "No se cambian valores ni estados automáticamente."}`);
+    printStatus(total === 0 ? "PASS" : "WARN", `REVISIÓN | ${total} fichas pendientes de criterio. ${total === 0 ? "Sin Review; pendiente de acreditar y seleccionar en el siguiente paso." : "No se cambian valores ni estados automáticamente."}`);
   } else {
-    console.log("REVISIÓN | NO CERRADA | Conservar archivos y resolver los errores antes de avanzar");
+    printStatus("FAIL", "REVISIÓN | NO CERRADA | Conservar archivos y resolver los errores antes de avanzar");
   }
 };

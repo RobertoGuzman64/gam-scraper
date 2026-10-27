@@ -69,4 +69,4 @@ Dirección preferente: `cli → pipeline → scraping/catalog/infrastructure`. L
 - Comparar resultados reales antes y después de alterar parsers, mappers, deduplicación o selección.
 - Añadir un proveedor mediante `ScraperProvider`, `registry.ts` y su configuración, con pruebas específicas de paginación, identidad y calidad.
 
-Consulta [Reglas de datos](SCRAPER_DATA_RULES.md) para los formatos y [Validación](VALIDACION.md) para los controles operativos.
+Consulta [Reglas de datos](SCRAPER_DATA_RULES.md) para los formatos y [Validación](VALIDATION.md) para los controles operativos.

@@ -41,7 +41,7 @@ const inspectPreparation = async (
     const catalog = await validateCanonicalSource(provider.catalog.path, provider.providerId);
     if (catalog.catalogSha256 !== provider.catalog.sha256) throw new Error("El catálogo cambió desde el descubrimiento");
     const preparationFile = provider.preparation?.path ?? join(
-      root, "storage", "campanas", campaignId, provider.providerId,
+      root, "storage", "campaigns", campaignId, provider.providerId,
       `${basename(provider.catalog.path, "-catalog.json")}-preparation.json`
     );
     if (!provider.preparation) {

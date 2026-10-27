@@ -119,7 +119,7 @@ test("rechaza borradores caducados, estructura adulterada y edición de seleccio
     }));
     await assert.rejects(inspectActiveCampaignEditorial(data.root), /caducada/);
     await writeFile(draft.draftFile, content);
-    const selectionFolder = join(data.root, "storage", "campanas", data.runId, "seleccion");
+    const selectionFolder = join(data.root, "storage", "campaigns", data.runId, "selection");
     await mkdir(selectionFolder, { recursive: true });
     await assert.rejects(decideActiveCampaignEditorial(data.root, {
       providerId: first.providerId, reference: first.reference, decision: "excluir",
