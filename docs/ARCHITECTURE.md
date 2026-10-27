@@ -26,7 +26,8 @@ src/
                       preparación, validación y exportación
   infrastructure/     HTTP, navegador, archivos, bloqueos y XLSX
   shared/             Utilidades transversales como CSV
-  tools/gam/          Normalización y conversión de semillas GAM
+  tools/              Consultas offline opcionales de solo lectura
+    gam/              Normalización y conversión de semillas GAM
 
 data/category/        Catálogo local de categorías del receptor
 data/import/          Catálogo local de atributos del receptor
@@ -57,6 +58,8 @@ Dirección preferente: `cli → pipeline → scraping/catalog/infrastructure`. L
 **Preparación offline:** `cli/prepare.ts` → `pipeline/preparation/` → lectura íntegra de catálogo canónico y comprobación de procedencia → mapeo y preparación de productos → documento nuevo con huellas de entrada y reglas. No consulta portales ni inventario.
 
 **Auditoría y selección:** `catalog/coverage/` compara fuentes y exige revisión acreditada; `catalog/editorial/` decide productos seleccionables y exclusiones; `cli/select-publishable.ts` genera únicamente las salidas autorizadas. Las reglas de identidad y de cohorte específicas existentes siguen siendo restricciones productivas: un refactor no puede neutralizarlas.
+
+**Auditor de huecos de contenido:** `cli/catalog-content-gaps.ts` → inspección de `data/reference/` íntegra y carga del catálogo de importación → `prepareProduct` en memoria → `tools/catalog-content-gaps.ts` para comparar presencias y aportar evidencia original. La CLI `huecos` imprime resumen o JSON en salida estándar, sin alterar campañas, resultados, estados ni archivos operativos. La consulta no comparte el proceso editorial ni decide conversiones o equivalencias. Ver [Auditor de huecos](CATALOG_CONTENT_GAPS.md).
 
 **Exportación opcional:** `pipeline/export/` prepara altas mediante inventario externo y mapeos existentes; `infrastructure/spreadsheet/` genera XLSX cuando se solicita. También se admite salida JSON adaptada al receptor. Ningún proceso envía peticiones de importación.
 

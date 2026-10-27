@@ -14,16 +14,9 @@ Este repositorio no ofrece una API HTTP, no realiza altas en el backend y no aut
 
 Para los criterios funcionales, consultar [Objetivos](docs/SCRAPER_OBJECTIVES.md).
 
-## Migración estructural de una instalación anterior
+## Instalaciones existentes
 
-Después de descomprimir el ZIP incremental en la raíz, ejecutar **una única vez** `powershell -NoProfile -ExecutionPolicy Bypass -File .\APPLY-PHASE1.ps1`; el instalador migra los datos y retira los archivos antiguos cuyos nombres cambiaron. No borra campañas ni altera sus JSON. Si detecta campañas antiguas pendientes, se detiene y conserva los archivos heredados. Tras completar la instalación, el aplicador temporal puede borrarse. Antes de cualquier comando de campaña o referencia deben completarse estos pasos. También se puede ejecutar la migración de datos por separado:
-
-```powershell
-node scripts/migrate-storage.mjs
-npm run referencia
-```
-
-El cambio conserva los SHA256 de los catálogos y del informe. Si quedan campañas anteriores abiertas o transacciones de referencia pendientes, se detiene sin trasladar datos: cerrarlas de forma segura con el proyecto anterior antes de volver a intentar la migración. No ejecutar una nueva extracción o actualización de referencia hasta terminarla. Las copias externas antiguas se convierten una sola vez mediante `node scripts/migrate-storage.mjs --transfer "<carpeta>"`; el nuevo importador requiere `differences.json`. Ver [Referencia operativa](docs/OPERATIONAL_REFERENCE.md).
+Una instalación nueva no requiere ejecutar migraciones de nombres. Si se actualiza una instalación antigua con rutas de almacenamiento heredadas, consultar primero [Referencia operativa](docs/OPERATIONAL_REFERENCE.md) y el comportamiento de `scripts/migrate-storage.mjs`. No mover datos ni ejecutar migraciones sobre campañas o transacciones abiertas sin comprobar su estado.
 
 ## Requisitos e instalación
 
@@ -78,10 +71,23 @@ Si una ficha necesita una corrección puntual acreditada, consulta los scripts e
 
 - `npm run ayuda` y `npm run ayuda -- <comando>`: ayuda desde la terminal; distingue lectura, preparación, escritura y autorización destructiva.
 - `npm run estado`: estado autónomo de campaña y referencia, sin escrituras.
+- `npm run huecos`: consulta estadística opcional de contenido ausente sobre los originales de la referencia válida; no interviene en campañas. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md).
 - `npm run build` y `npm test`: compilación y pruebas del repositorio.
 - `npm run extraer:proveedor`, `extraer:todos`, `intervenir:manual`, `preparar`, `validar`, `seleccionar` y `cobertura`: operaciones avanzadas con finalidades distintas del flujo principal.
 - `npm run limpiar:almacen`: retención anterior, distinta del cierre de campaña.
 - `npm run limpiar:versionados`: simulación de retirada del índice Git de históricos rastreados; solo actúa con `-- --aplicar`.
+
+### Auditor de huecos de contenido
+
+`npm run huecos` agrupa originales de `data/reference/` por proveedor y categoría, con refinamiento opcional por marca o modelo declarado. Señala ausencias repetidas en atributos aplicables, descripción corta y descripción general, muestra referencias concretas y permite consultar los datos originales y preparados en un JSON generado por `stdout`. **No rellena fichas, no declara errores de calidad ni crea `Review`**.
+
+```powershell
+npm run huecos
+npm run huecos -- --agrupar marca --top 10
+npm run huecos -- --json > huecos-consulta.json
+```
+
+Exige una referencia íntegra; no la crea, recupera ni modifica. Los recuentos se refieren a **todos los originales**, incluidos excluidos de entrega, preparados en memoria con el código actual. Es una herramienta de investigación, nunca un requisito para entregar una campaña. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md) para opciones, límites y lectura de evidencias.
 
 ### Herramientas complementarias
 
@@ -137,6 +143,7 @@ La validación local confirma integridad y coherencia, **no** que un portal haya
 
 - [Objetivos y alcance](docs/SCRAPER_OBJECTIVES.md): prioridades y criterios de aceptación.
 - [Arquitectura](docs/ARCHITECTURE.md): módulos, responsabilidades y extensibilidad.
+- [Auditor de huecos de contenido](docs/CATALOG_CONTENT_GAPS.md): consulta opcional, campos observados, evidencias originales y límites.
 - [Reglas de datos](docs/SCRAPER_DATA_RULES.md): contratos, origen, preservación y revisión editorial.
 - [Protocolo de campañas completas](docs/CAMPAIGNS.md): extracción global obligatoria, validación de todos los proveedores, intervenciones excepcionales y entrega acreditada.
 - [Intervenciones manuales por campaña](docs/CAMPAIGN_INTERVENTIONS.md): principios y controles de la ejecución manual.
