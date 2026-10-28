@@ -58,34 +58,58 @@ export const reuseCampaignTestFixture = <T extends { readonly root: string; read
   let data: T | undefined;
   let snapshot: string | undefined;
   const variants = new Set<string>();
-  const fixture = async (): Promise<T> => {
+  const ensureFixture = async (): Promise<T> => {
     if (!data) {
       const initialized = await initialize();
       const snapshotRoot = await mkdtemp(join(tmpdir(), "equipzilla-campaign-fixture-"));
-      await cp(initialized.root, join(snapshotRoot, "workspace"), { recursive: true });
+      try {
+        await cp(initialized.root, join(snapshotRoot, "workspace"), { recursive: true });
+      } catch (error) {
+        await rm(snapshotRoot, { recursive: true, force: true });
+        await initialized.cleanup();
+        throw error;
+      }
       data = initialized;
       snapshot = snapshotRoot;
-    } else {
-      if (!snapshot) throw new Error("Falta la copia base de la campaña de prueba");
-      await cp(join(snapshot, "workspace"), data.root, { recursive: true });
     }
     const current = data;
     return { ...current, cleanup: () => rm(current.root, { recursive: true, force: true }) };
   };
+  const restore = async (source: string, destination: string): Promise<void> => {
+    await rm(destination, { recursive: true, force: true });
+    await cp(source, destination, { recursive: true });
+  };
+  const fixture = async (): Promise<T> => {
+    const first = !data;
+    const current = await ensureFixture();
+    if (!first) {
+      if (!snapshot) throw new Error("Falta la copia base de la campaña de prueba");
+      await restore(join(snapshot, "workspace"), current.root);
+    }
+    return current;
+  };
   return {
     fixture,
     prepared: async (name, setup) => {
-      if (!/^[a-z][a-z0-9-]*$/.test(name)) throw new Error("Nombre de fixture preparado inválido");
+      if (!/^[a-z][a-z0-9-]*$/.test(name) || name === "workspace") {
+        throw new Error("Nombre de fixture preparado inválido");
+      }
+      if (variants.has(name)) {
+        const current = await ensureFixture();
+        if (!snapshot) throw new Error("Falta la copia base de la campaña de prueba");
+        await restore(join(snapshot, name), current.root);
+        return current;
+      }
       const current = await fixture();
       if (!snapshot) throw new Error("Falta la copia base de la campaña de prueba");
       const destination = join(snapshot, name);
-      if (variants.has(name)) {
-        await rm(current.root, { recursive: true, force: true });
-        await cp(destination, current.root, { recursive: true });
-      } else {
+      try {
         await setup(current);
         await cp(current.root, destination, { recursive: true });
         variants.add(name);
+      } catch (error) {
+        await rm(destination, { recursive: true, force: true });
+        throw error;
       }
       return current;
     },
