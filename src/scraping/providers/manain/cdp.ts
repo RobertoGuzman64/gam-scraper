@@ -1,6 +1,7 @@
 import type { ScrapeOptions } from "../../../contracts/scraping.js";
 import { DevtoolsWebSocket, openDebugSocket, withTimeout } from "../../../infrastructure/browser/devtools.js";
-import { buildManainListingScript } from "./listing-script.js";
+import { buildManainListingScript, MANAIN_LISTING_PROGRESS_BINDING } from "./listing-script.js";
+import type { DevtoolsResponse } from "../../../infrastructure/browser/devtools.js";
 import { normalizeManainSaleProductUrl, parseManainListingResult } from "./listing.js";
 import type { ManainListingResult } from "./listing.js";
 
@@ -72,6 +73,19 @@ const describePageLocation = (value: string): string => {
   }
 };
 
+export const parseManainListingProgressEvent = (event: DevtoolsResponse): { readonly pages: number; readonly found: number } | null => {
+  if (event.method !== "Runtime.bindingCalled" || event.params?.name !== MANAIN_LISTING_PROGRESS_BINDING ||
+    typeof event.params.payload !== "string") return null;
+  let payload: unknown;
+  try { payload = JSON.parse(event.params.payload); } catch { return null; }
+  if (!payload || typeof payload !== "object" ||
+    !("pages" in payload) || typeof payload.pages !== "number" || !Number.isSafeInteger(payload.pages) || payload.pages < 1 ||
+    !("found" in payload) || typeof payload.found !== "number" || !Number.isSafeInteger(payload.found) || payload.found < 1) {
+    return null;
+  }
+  return { pages: payload.pages, found: payload.found };
+};
+
 export const selectManainTarget = (value: unknown, port: number, id?: string): BrowserTarget => {
   if (!Array.isArray(value)) throw new Error("Chrome devolvió un listado CDP inválido");
   const targets: BrowserTarget[] = [];
@@ -134,10 +148,11 @@ export const parseManainPageState = (value: unknown): PageState => {
 const withPage = async <T>(
   target: BrowserTarget, timeoutMs: number, action: (send: (
     method: string, params?: Record<string, unknown>, durationMs?: number
-  ) => Promise<Record<string, unknown>>) => Promise<T>
+  ) => Promise<Record<string, unknown>>) => Promise<T>,
+  onEvent?: (event: DevtoolsResponse) => void
 ): Promise<T> => {
   const socket = await openDebugSocket(target.webSocketDebuggerUrl, timeoutMs);
-  const devtools = new DevtoolsWebSocket(socket);
+  const devtools = new DevtoolsWebSocket(socket, onEvent);
   const send = (method: string, params: Record<string, unknown> = {}, durationMs = timeoutMs) =>
     withTimeout(devtools.send(method, params), durationMs, `Manain CDP: ${method}`);
   try {
@@ -178,12 +193,19 @@ export const discoverManainViaCdp = async (
         expression: pageStateExpression, returnByValue: true
       }), "estado de verificación"));
     }
+    if (onProgress) {
+      await send("Runtime.enable");
+      await send("Runtime.addBinding", { name: MANAIN_LISTING_PROGRESS_BINDING });
+    }
     const duration = Math.min(900000, timeoutMs * options.maxPages + 30000);
     const evaluation = await send("Runtime.evaluate", {
       expression: buildManainListingScript(options.maxPages, options.timeoutMs, options.delayMs),
       returnByValue: true, awaitPromise: true
     }, duration);
     return parseManainListingResult(resultValue(evaluation, "descubrimiento"));
+  }, (event) => {
+    const progress = parseManainListingProgressEvent(event);
+    if (progress) onProgress?.(progress.pages, progress.found, "paginación");
   });
   onProgress?.(listing.pagesVisited, listing.urls.length, "catálogo obtenido desde Chrome CDP");
   return listing;

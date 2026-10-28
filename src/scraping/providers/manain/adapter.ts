@@ -1,5 +1,6 @@
 import type { ScraperProvider } from "../../provider.js";
 import { discoverManainSaleCatalog } from "./browser.js";
+import { findReusableManainCensus } from "./census-storage.js";
 import { loadManainProductViaCdp, manainCdpPort } from "./cdp.js";
 import { fetchHtml } from "../../../infrastructure/http/fetch-html.js";
 import { MANAIN_CATEGORIES, MANAIN_OPTIONS } from "./config.js";
@@ -32,6 +33,12 @@ export const manainProvider: ScraperProvider = {
   extractReference: () => null,
   discoverCategoryTree: async () => MANAIN_CATEGORIES,
   async discoverListing(category, options, onProgress) {
-    return requireCompleteManainListing(await discoverManainSaleCatalog(category.url, options, onProgress));
+    const listing = await discoverManainSaleCatalog(category.url, options, onProgress);
+    const reusable = await findReusableManainCensus(listing);
+    if (reusable) {
+      onProgress?.(reusable.pagesVisited, reusable.urls.length, "censo completo reutilizado");
+      return requireCompleteManainListing(reusable);
+    }
+    return requireCompleteManainListing(listing);
   }
 };

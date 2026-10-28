@@ -1,3 +1,5 @@
+export const MANAIN_LISTING_PROGRESS_BINDING = "__equipzillaManainListingProgress";
+
 export const buildManainListingScript = (maxPages: number, timeoutMs: number, delayMs: number): string => String.raw`
 (async () => {
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -26,6 +28,12 @@ export const buildManainListingScript = (maxPages: number, timeoutMs: number, de
   const isDisabled = (element) => element.disabled === true || element.hasAttribute('disabled') ||
     element.getAttribute('aria-disabled') === 'true' || element.classList?.contains('disabled');
   const loadControl = () => controls().find((element) => !isHidden(element) && !isDisabled(element)) || null;
+  const report = (pages, found) => {
+    const notify = globalThis['${MANAIN_LISTING_PROGRESS_BINDING}'];
+    if (typeof notify === 'function') {
+      try { notify(JSON.stringify({ pages, found })); } catch {}
+    }
+  };
   const started = Date.now();
   let previous = '';
   let stable = 0;
@@ -39,6 +47,7 @@ export const buildManainListingScript = (maxPages: number, timeoutMs: number, de
   const seen = new Set(links());
   if (!seen.size) throw new Error('Manain: listado sin enlaces de venta; acceso, renderizado o selectores sin verificar');
   let pagesVisited = 1;
+  report(pagesVisited, seen.size);
   let observedControl = false;
   while (true) {
     const control = loadControl();
@@ -66,6 +75,7 @@ export const buildManainListingScript = (maxPages: number, timeoutMs: number, de
     if (!next.length) throw new Error('Manain: Cargar más no incorporó fichas nuevas; paginación no confirmada');
     for (const url of next) seen.add(url);
     pagesVisited += 1;
+    report(pagesVisited, seen.size);
     await wait(${Math.max(delayMs, 0)});
   }
 })()`;

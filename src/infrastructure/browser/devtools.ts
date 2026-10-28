@@ -7,6 +7,8 @@ export type DevtoolsResponse = {
   readonly method?: string;
   readonly params?: {
     readonly type?: string;
+    readonly name?: string;
+    readonly payload?: string;
     readonly args?: readonly { readonly value?: unknown }[];
     readonly errorText?: string;
     readonly requestId?: string;

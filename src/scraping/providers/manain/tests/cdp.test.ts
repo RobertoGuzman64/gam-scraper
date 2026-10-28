@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { classifyManainCatalogState, manainCdpPort, parseManainPageState, selectManainTarget } from "../cdp.js";
+import { classifyManainCatalogState, parseManainListingProgressEvent, manainCdpPort, parseManainPageState, selectManainTarget } from "../cdp.js";
 
 const port = 9227;
 const catalog = "https://manain.com/catalogo/venta/";
@@ -22,6 +22,21 @@ test("Manain CDP: conecta únicamente con pestañas locales y limita la sesión 
   assert.throws(() => selectManainTarget([target("catalog", "https://example.com/")], port, "catalog"), /cambió de sitio/);
   assert.throws(() => selectManainTarget([target("catalog", catalog, "ws://example.com:9227/devtools/page/catalog")], port), /Abre el catálogo/);
   assert.throws(() => selectManainTarget([], port), /Abre el catálogo/);
+});
+
+test("Manain CDP: solo acepta eventos de progreso válidos para el censo", () => {
+  assert.deepEqual(parseManainListingProgressEvent({
+    method: "Runtime.bindingCalled", params: { name: "__equipzillaManainListingProgress", payload: '{"pages":3,"found":27}' }
+  }), { pages: 3, found: 27 });
+  assert.equal(parseManainListingProgressEvent({
+    method: "Runtime.bindingCalled", params: { name: "otraBinding", payload: '{"pages":3,"found":27}' }
+  }), null);
+  assert.equal(parseManainListingProgressEvent({
+    method: "Runtime.bindingCalled", params: { name: "__equipzillaManainListingProgress", payload: '{"pages":0,"found":-1}' }
+  }), null);
+  assert.equal(parseManainListingProgressEvent({
+    method: "Runtime.bindingCalled", params: { name: "__equipzillaManainListingProgress", payload: "no-json" }
+  }), null);
 });
 
 test("Manain CDP: exige un puerto local explícito y válido", () => {

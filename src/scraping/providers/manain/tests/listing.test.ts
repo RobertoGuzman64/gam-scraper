@@ -49,7 +49,8 @@ type MockAnchor = {
 
 const simulate = async (
   pages: readonly (readonly string[])[], maxPages: number,
-  behavior: "normal" | "stall" | "missing-button" = "normal"
+  behavior: "normal" | "stall" | "missing-button" = "normal",
+  onProgress?: (payload: string) => void
 ): Promise<unknown> => {
   let current = 0;
   let fakeTime = 0;
@@ -78,6 +79,7 @@ const simulate = async (
   };
   return runInNewContext(buildManainListingScript(maxPages, 1500, 0), {
     document, URL,
+    ...(onProgress ? { __equipzillaManainListingProgress: onProgress } : {}),
     Date: class extends Date { static override now(): number { return fakeTime; } },
     console: { debug: () => {} },
     setTimeout: (callback: () => void, milliseconds: number) => {
@@ -98,6 +100,16 @@ test("Manain: botón Cargar más, paginación y deduplicación conservando model
       "https://manain.com/producto/venda-elevacio-tisores-jlg-530lrt/", product("epiroc-sb-102"), product("ausad-151")],
     pagesVisited: 3, complete: true, endReason: "control-exhausted"
   });
+});
+
+test("Manain: informa del progreso real por página sin alterar el resultado final", async () => {
+  const progress: string[] = [];
+  const result = parseManainListingResult(await simulate([["a"], ["b", "a"], ["c"]], 5, "normal", (payload) => progress.push(payload)));
+  assert.deepEqual(progress.map((payload) => JSON.parse(payload)), [
+    { pages: 1, found: 1 }, { pages: 2, found: 2 }, { pages: 3, found: 3 }
+  ]);
+  assert.equal(result.complete, true);
+  assert.equal(result.urls.length, 3);
 });
 
 test("Manain: límite de navegación no se confunde con fin de catálogo", async () => {
