@@ -174,3 +174,46 @@ test("Manain: las categorías de mástil, pequeña maquinaria y motor no acredit
     { ...base, "Nueva o usada": "nueva" }, "");
   assert.equal(prepareProduct(implementoNuevo, catalog).product.categorySellID, null);
 });
+
+test("Manain: horas enteras serializadas con cuatro decimales se validan contra la ficha", () => {
+  const hours = { ...usedScissor, horometer: "3916.0000", specs: { ...usedScissor.specs, Horas: "3916.0000" } };
+  const resolved = resolveAttribute(hours, attribute("Horas de uso"));
+  assert.equal(resolved.status, "resolved");
+  assert.equal(resolved.value, 3916);
+  assert.equal(prepareProduct(hours, catalog).status, "ready");
+  assert.equal(resolveAttribute({ ...hours, horometer: "3915.0000" }, attribute("Horas de uso")).status, "contradiction");
+  const fractional = { ...hours, horometer: "3916.0001", specs: { ...hours.specs, Horas: "3916.0001" } };
+  assert.equal(resolveAttribute(fractional, attribute("Horas de uso")).status, "invalid");
+});
+
+test("Manain: generadores de ruta catalana y unidad kVA repetida conservan potencia acreditada", () => {
+  const source = machine("https://manain.com/producto/venda-energia-grups-electrogens-inmesol-ak-500/", {
+    "Nueva o usada": "usada", Motor: "Gasolina", Potencia: "5 kva"
+  }, "");
+  const prepared = prepareProduct(source, catalog);
+  assert.equal(category(prepared.product.categorySellID), "grupos-electrogenos-segunda-mano");
+  assert.equal(prepared.status, "ready");
+  const doubled = { ...source, url: "https://manain.com/producto/venta-energia-grupo-electrogeno-inmesol-iir-165/",
+    specs: { ...source.specs, Potencia: "150kva kva" } };
+  assert.equal(resolveAttribute(doubled, attribute("Potencia")).value, 150);
+  assert.equal(prepareProduct(doubled, catalog).status, "ready");
+  const contradictoryUnit = { ...doubled, specs: { ...doubled.specs, Potencia: "150kva kw" } };
+  assert.equal(resolveAttribute(contradictoryUnit, attribute("Potencia")).status, "invalid");
+});
+
+
+test("Manain: pesos con cuatro decimales acreditados no se confunden con miles", () => {
+  const tool = machine("https://manain.com/producto/venta-pequena-maquinaria-martillos-electricos-bosch-gsh-5/", {
+    "Nueva o usada": "usada", Motor: "Eléctrico", Peso: "5.5000 kg"
+  }, "");
+  assert.equal(resolveAttribute(tool, attribute("Peso operativo")).value, 5.5);
+  assert.equal(resolveAttribute(tool, attribute("Peso")).value, 5.5);
+  assert.ok(!prepareProduct(tool, catalog).issues.some((issue) => issue.includes("Peso")));
+  assert.equal(prepareProduct(tool, catalog).status, "review");
+  assert.equal(prepareProduct(tool, catalog).product.categorySellID, null);
+  for (const peso of ["kg", "5.2340 kg", "5.2000 mm", "5.2000-6 kg"]) {
+    assert.equal(resolveAttribute({ ...tool, specs: { ...tool.specs, Peso: peso } }, attribute("Peso")).status,
+      "invalid", peso);
+  }
+  assert.equal(resolveAttribute({ ...tool, providerId: "gam" }, attribute("Peso")).status, "invalid");
+});

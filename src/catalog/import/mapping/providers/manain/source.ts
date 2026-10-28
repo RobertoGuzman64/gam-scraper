@@ -27,7 +27,8 @@ const aliases: readonly { readonly prefix: string; readonly family: ManainFamily
   { prefix: "venda-manipulacio-de-carregues-carretilles", family: "manipulacion-carretilla" },
   { prefix: "venda-moviment-de-terres-minicargadora", family: "movimiento-tierra-minicargadora" },
   { prefix: "venda-elevacio-camions-plataforma", family: "elevacion-camion-cesta" },
-  { prefix: "venda-elevacio-unipersonals", family: "elevacion-unipersonal" }
+  { prefix: "venda-elevacio-unipersonals", family: "elevacion-unipersonal" },
+  { prefix: "venda-energia-grups-electrogens", family: "energia-grupo-electrogeno" }
 ];
 
 export const manainSourceFamily = (record: ProductRecord): ManainFamily | null => {

@@ -28,9 +28,20 @@ export const applyManainAliases = (record: ProductRecord, attribute: Attribute, 
 export const convertManainCandidate = (
   record: ProductRecord, attribute: Attribute, candidate: Candidate, fallback: string | number | boolean | null
 ): string | number | boolean | null => {
-  if (manainSourceFamily(record) !== "energia-grupo-electrogeno" || typeof candidate.value !== "string") return fallback;
+  if (record.providerId !== "manain" || typeof candidate.value !== "string") return fallback;
+  if ((attribute.name === "Peso" || attribute.name === "Peso operativo") && attribute.unit_option === "kg" &&
+    candidate.key === "Peso") {
+    const found = /^(\d+)\.(\d{2})00\s*kg$/i.exec(candidate.value.trim());
+    if (found?.[1] && found[2]) return numberToken(`${found[1]}.${found[2]}`);
+  }
+  if (!manainSourceFamily(record)) return fallback;
+  if (attribute.name === "Horas de uso" && (candidate.key === "Horas" || candidate.key === "Horas de uso")) {
+    const found = /^(\d+)\.0{4}$/.exec(candidate.value.trim());
+    if (found?.[1]) return numberToken(found[1]);
+  }
+  if (manainSourceFamily(record) !== "energia-grupo-electrogeno") return fallback;
   if (attribute.name === "Potencia" && /kVA/.test(attribute.unit_option) && candidate.key === "Potencia") {
-    const found = /^([\d., ]+)\s*kva$/i.exec(candidate.value.trim());
+    const found = /^([\d., ]+)\s*kva(?:\s+kva)?$/i.exec(candidate.value.trim());
     return found?.[1] ? numberToken(found[1]) : fallback;
   }
   if (attribute.name === "Capacidad del depósito" && ["Capacidad depósito", "Capacidad del depósito"].includes(candidate.key)) {
