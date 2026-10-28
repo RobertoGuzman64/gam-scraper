@@ -42,6 +42,24 @@ const parseOptions = (argumentsList) => {
   return { concurrency, report };
 };
 
+const PRIORITIZED_TESTS = [
+  "pipeline/campaign/tests/delivery.test.js",
+  "pipeline/campaign/tests/finalization-interventions.test.js",
+  "catalog/interventions/tests/multiple-scripts.test.js",
+  "pipeline/campaign/tests/finalization.test.js",
+  "pipeline/campaign/tests/finalization-recovery.test.js",
+  "pipeline/campaign/tests/workflow.test.js",
+  "cli/commands/catalog/tests/catalog-content-gaps.test.js",
+  "catalog/interventions/tests/manual-interventions.test.js",
+  "catalog/interventions/tests/intervention-application.test.js",
+  "pipeline/campaign/tests/reference-update.test.js",
+  "pipeline/campaign/tests/operations-status.test.js",
+  "catalog/interventions/tests/intervention-simulation.test.js",
+  "catalog/interventions/tests/catalog.test.js",
+  "infrastructure/filesystem/tests/campaign-accreditation.test.js"
+];
+const testPriority = new Map(PRIORITIZED_TESTS.map((path, index) => [path, index]));
+
 const DEFAULT_CONCURRENCY = 6;
 const options = parseOptions(process.argv.slice(2));
 const effectiveConcurrency = options.concurrency ?? DEFAULT_CONCURRENCY;
@@ -55,12 +73,21 @@ const collectTests = (directory) => readdirSync(directory, { withFileTypes: true
 const sources = collectTests("src").sort();
 if (sources.length === 0) throw new Error("No se encontraron pruebas en src");
 const files = sources.map((source) => join("dist", relative("src", source).replace(/\.test\.ts$/, ".test.js")));
+files.sort((left, right) => {
+  const leftPriority = testPriority.get(relative("dist", left).replaceAll("\\", "/")) ?? testPriority.size;
+  const rightPriority = testPriority.get(relative("dist", right).replaceAll("\\", "/")) ?? testPriority.size;
+  return leftPriority - rightPriority;
+});
 const missing = files.filter((file) => !existsSync(file));
 if (missing.length > 0) throw new Error(`Faltan ${missing.length} pruebas compiladas: ${missing.join(", ")}`);
 
 const filePaths = new Set(files.map((file) => resolve(file)));
 const interactive = process.stdout.isTTY === true && process.env.CI !== "true" && process.env.TERM !== "dumb";
 const completedFiles = new Set();
+const activeFiles = new Set();
+const startedAt = Date.now();
+const frames = ["|", "/", "-", "\\"];
+let frameIndex = 0;
 const errors = [];
 const skippedTests = [];
 const todoTests = [];
@@ -78,13 +105,25 @@ const renderProgress = () => {
   if (!interactive) return;
 
   const completed = completedFiles.size;
-  const barWidth = Math.max(8, Math.min(20, (process.stdout.columns ?? 100) - 70));
+  const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+  const frame = frames[frameIndex % frames.length];
+  frameIndex += 1;
+  const running = Math.min(activeFiles.size, effectiveConcurrency);
+  const activity = running > 0
+    ? `${running} en ejecución`
+    : completed < files.length ? "iniciando" : "finalizando";
+  const result = `${completed}/${files.length} archivos | ${activity} | OK ${counts.passed} | KO ${counts.failed} | ${elapsed}s`;
+  const omissions = counts.skipped || counts.todo
+    ? ` | omit ${counts.skipped}${counts.todo ? ` | TODO ${counts.todo}` : ""}`
+    : "";
+  const columns = process.stdout.columns > 0 ? process.stdout.columns : 100;
+  const available = columns - result.length - omissions.length - 12;
+  const barWidth = available >= 8 ? Math.min(20, available) : 0;
   const filled = Math.round((completed / files.length) * barWidth);
-  const bar = `${"█".repeat(filled)}${"░".repeat(barWidth - filled)}`;
-  const line = `TESTS [${bar}] ${completed}/${files.length} archivos | ${files.length - completed} pendientes | OK ${counts.passed} | KO ${counts.failed} | omit ${counts.skipped}${counts.todo ? ` | TODO ${counts.todo}` : ""}`;
+  const bar = barWidth ? ` [${"█".repeat(filled)}${"░".repeat(barWidth - filled)}]` : "";
 
   clearProgress();
-  process.stdout.write(line);
+  process.stdout.write(`TESTS ${frame}${bar} ${result}${omissions}`);
 };
 
 const describeError = (error) => {
@@ -102,69 +141,85 @@ const describeOmission = ({ name, file, line, reason }) => {
 
 let summary;
 renderProgress();
+const progressTimer = interactive ? setInterval(renderProgress, 350) : undefined;
 
-for await (const event of run({ files, concurrency: effectiveConcurrency })) {
-  if (profile && (event.type === "test:pass" || event.type === "test:fail") && event.data.details?.type === "test") {
-    profile.tests.push({
-      archivo: event.data.file ? relative(process.cwd(), event.data.file) : "",
-      prueba: event.data.name,
-      tiempo_ms: event.data.details.duration_ms ?? 0,
-      estado: event.type === "test:fail" ? "fallido" : event.data.skip ? "omitido" : event.data.todo ? "todo" : "correcto"
-    });
-  }
-
-  if (profile && event.type === "test:summary" && event.data.file) {
-    profile.files.push({
-      archivo: relative(process.cwd(), event.data.file),
-      tiempo_ms: event.data.duration_ms ?? 0,
-      correctos: event.data.counts?.passed ?? 0,
-      fallidos: event.data.counts?.failed ?? 0
-    });
-  }
-
-  if (event.type === "test:stderr") {
-    if (event.data.file) {
-      const file = resolve(event.data.file);
-      standardErrors.set(file, `${standardErrors.get(file) ?? ""}${event.data.message}`);
+try {
+  for await (const event of run({ files, concurrency: effectiveConcurrency })) {
+    if (event.type === "test:dequeue" && typeof event.data.name === "string" && filePaths.has(resolve(event.data.name))) {
+      activeFiles.add(resolve(event.data.name));
     }
-  }
-
-  if (event.type === "test:pass" && event.data.details?.type === "test") {
-    const { name, file, line, skip, todo } = event.data;
-    if (skip) {
-      counts.skipped += 1;
-      skippedTests.push({ name, file, line, reason: skip });
-    } else if (todo) {
-      counts.todo += 1;
-      todoTests.push({ name, file, line, reason: todo });
-    } else {
-      counts.passed += 1;
+    if (event.type === "test:start" && event.data.file && filePaths.has(resolve(event.data.file))) {
+      activeFiles.add(resolve(event.data.file));
     }
-  }
 
-  if (event.type === "test:fail") {
-    const { name, file, line, details, todo } = event.data;
-    if (todo && details?.type === "test") {
-      counts.todo += 1;
-      todoTests.push({ name, file, line, reason: todo });
-    } else {
-      const fileFailure = filePaths.has(resolve(name));
-      counts.failed += 1;
-      errors.push({ name, file, line, fileFailure, error: details?.error?.cause ?? details?.error });
-      if (fileFailure) completedFiles.add(resolve(name));
+    if (profile && (event.type === "test:pass" || event.type === "test:fail") && event.data.details?.type === "test") {
+      profile.tests.push({
+        archivo: event.data.file ? relative(process.cwd(), event.data.file) : "",
+        prueba: event.data.name,
+        tiempo_ms: event.data.details.duration_ms ?? 0,
+        estado: event.type === "test:fail" ? "fallido" : event.data.skip ? "omitido" : event.data.todo ? "todo" : "correcto"
+      });
     }
-  }
 
-  if (event.type === "test:summary") {
-    if (event.data.file) completedFiles.add(resolve(event.data.file));
-    else summary = event.data;
-  }
+    if (profile && event.type === "test:summary" && event.data.file) {
+      profile.files.push({
+        archivo: relative(process.cwd(), event.data.file),
+        tiempo_ms: event.data.duration_ms ?? 0,
+        correctos: event.data.counts?.passed ?? 0,
+        fallidos: event.data.counts?.failed ?? 0
+      });
+    }
 
-  if (event.type === "test:summary" && event.data.file) renderProgress();
-  if (event.type === "test:fail" && filePaths.has(resolve(event.data.name))) renderProgress();
+    if (event.type === "test:stderr") {
+      if (event.data.file) {
+        const file = resolve(event.data.file);
+        standardErrors.set(file, `${standardErrors.get(file) ?? ""}${event.data.message}`);
+      }
+    }
+
+    if (event.type === "test:pass" && event.data.details?.type === "test") {
+      const { name, file, line, skip, todo } = event.data;
+      if (skip) {
+        counts.skipped += 1;
+        skippedTests.push({ name, file, line, reason: skip });
+      } else if (todo) {
+        counts.todo += 1;
+        todoTests.push({ name, file, line, reason: todo });
+      } else {
+        counts.passed += 1;
+      }
+    }
+
+    if (event.type === "test:fail") {
+      const { name, file, line, details, todo } = event.data;
+      if (todo && details?.type === "test") {
+        counts.todo += 1;
+        todoTests.push({ name, file, line, reason: todo });
+      } else {
+        const fileFailure = filePaths.has(resolve(name));
+        counts.failed += 1;
+        errors.push({ name, file, line, fileFailure, error: details?.error?.cause ?? details?.error });
+        if (fileFailure) {
+          completedFiles.add(resolve(name));
+          activeFiles.delete(resolve(name));
+        }
+      }
+    }
+
+    if (event.type === "test:summary") {
+      if (event.data.file) {
+        completedFiles.add(resolve(event.data.file));
+        activeFiles.delete(resolve(event.data.file));
+      } else summary = event.data;
+    }
+
+    if (event.type === "test:summary" && event.data.file) renderProgress();
+    if (event.type === "test:fail" && filePaths.has(resolve(event.data.name))) renderProgress();
+  }
+} finally {
+  if (progressTimer) clearInterval(progressTimer);
+  clearProgress();
 }
-
-clearProgress();
 if (!summary) throw new Error("La ejecución de pruebas terminó sin resumen");
 
 if (profile) {
