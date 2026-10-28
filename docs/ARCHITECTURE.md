@@ -17,24 +17,24 @@ src/
   scraping/           Motor, registro y adaptadores de proveedores
     engine/           Procesamiento de categorías y fichas
     parsing/          Utilidades comunes de HTML y fotografías
-    providers/        gam/, gomariz/, mercaeleva/
+    providers/        gam/, gomariz/, mercaeleva/, manain/
   catalog/            Identidad, normalización y validaciones de producto
     coverage/         Diferencias entre catálogos y expediente de revisión
     editorial/        Selección y exclusiones acreditadas
-    import/           Mapeos y preparación para formatos de destino
+    import/           Preparación técnica actual y compatibilidad comercial heredada
   pipeline/           Orquestación de extracción, lotes, publicación,
                       preparación, validación y exportación
-  infrastructure/     HTTP, navegador, archivos, bloqueos y XLSX
+  infrastructure/     HTTP, navegador, archivos, bloqueos y salida XLSX heredada
   shared/             Utilidades transversales como CSV
   tools/              Consultas offline opcionales de solo lectura
     gam/              Normalización y conversión de semillas GAM
 
-data/category/        Catálogo local de categorías del receptor
-data/import/          Catálogo local de atributos del receptor
+data/category/        Snapshot comercial heredado del receptor
+data/import/          Snapshot de atributos comercial heredado
 storage/              Datos de ejecución y evidencias no versionadas
 ```
 
-El registro de proveedores vive en `src/scraping/registry.ts`; los contratos de datos se definen en `src/contracts/`. Las pruebas `.test.ts` están próximas a los módulos que protegen. El resultado del compilador se escribe en `dist/`, que no se versiona.
+El registro de proveedores vive en `src/scraping/registry.ts`; el conjunto de campaña actual (GAM, Gomariz, Mercaeleva y Manain) se declara en `src/contracts/campaign-providers.ts`. El contrato admite además lectura de referencias históricas de tres proveedores; esto no convierte esos lotes en campañas actuales completas. Los contratos de datos se definen en `src/contracts/`. Las pruebas `.test.ts` están próximas a los módulos que protegen. El resultado del compilador se escribe en `dist/`, que no se versiona.
 
 ## Responsabilidades
 
@@ -55,13 +55,13 @@ Dirección preferente: `cli → pipeline → scraping/catalog/infrastructure`. L
 
 **Lote:** `cli/batch.ts` → `pipeline/batch/` → proveedores ejecutados secuencialmente en procesos hijos → logs individuales y resumen en `storage/runs/`. El lock es **local al sistema de archivos** y no protege ejecuciones independientes en otros hosts. El scraping individual no comparte necesariamente esa exclusión.
 
-**Preparación offline:** `cli/prepare.ts` → `pipeline/preparation/` → lectura íntegra de catálogo canónico y comprobación de procedencia → mapeo y preparación de productos → documento nuevo con huellas de entrada y reglas. No consulta portales ni inventario.
+**Preparación offline:** `cli/prepare.ts` → `pipeline/preparation/` → lectura íntegra del catálogo canónico y comprobación de procedencia → `prepareSourceProduct` → diagnóstico técnico `ready/review` y candidato con `categorySellID: null`, `attributes: []` y `spec` originales → documento con huellas del origen y reglas técnicas (`rulesVersion: 2`). No consulta portales, inventario del backend ni snapshots comerciales. Los documentos anteriores (`rulesVersion: 1`) se reconocen como formato heredado, pero no se reinterpretan como preparaciones nuevas válidas.
 
 **Auditoría y selección:** `catalog/coverage/` compara fuentes y exige revisión acreditada; `catalog/editorial/` decide productos seleccionables y exclusiones; `cli/select-publishable.ts` genera únicamente las salidas autorizadas. Las reglas de identidad y de cohorte específicas existentes siguen siendo restricciones productivas: un refactor no puede neutralizarlas.
 
-**Auditor de huecos de contenido:** `cli/catalog-content-gaps.ts` → inspección de `data/reference/` íntegra y carga del catálogo de importación → `prepareProduct` en memoria → `tools/catalog-content-gaps.ts` para comparar presencias y aportar evidencia original. La CLI `huecos` imprime resumen o JSON en salida estándar, sin alterar campañas, resultados, estados ni archivos operativos. La consulta no comparte el proceso editorial ni decide conversiones o equivalencias. Ver [Auditor de huecos](CATALOG_CONTENT_GAPS.md).
+**Auditor de huecos de contenido:** `cli/catalog-content-gaps.ts` → inspección íntegra de `data/reference/` → `prepareSourceProduct` en memoria → `analyzeSourceContentGaps` en `tools/catalog-content-gaps.ts`. Compara descripciones y claves `specs` observadas por categoría **original del proveedor** y aporta evidencias sin asumir que un campo sea obligatorio para toda la familia. No consulta catálogos comerciales ni modifica campañas, referencia o decisiones. Ver [Auditor de huecos](CATALOG_CONTENT_GAPS.md).
 
-**Exportación opcional:** `pipeline/export/` prepara altas mediante inventario externo y mapeos existentes; `infrastructure/spreadsheet/` genera XLSX cuando se solicita. También se admite salida JSON adaptada al receptor. Ningún proceso envía peticiones de importación.
+**Compatibilidad comercial heredada:** `pipeline/export/` y `infrastructure/spreadsheet/` conservan exportación de altas XLSX/JSON para preparaciones comerciales históricas verificables. **Una preparación canónica nueva se bloquea expresamente** en ese exportador, al carecer de asignaciones comerciales. No forma parte de la cadena de entrega, y ningún proceso realiza importaciones HTTP. La categorización y adaptación comercial actuales son responsabilidad del proceso receptor; ver [Integración](EQUIPZILLA_INTEGRATION.md).
 
 ## Reglas de mantenimiento
 

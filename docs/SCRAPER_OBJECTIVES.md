@@ -6,7 +6,7 @@
 
 ## Objetivo principal
 
-Conseguir un **catálogo JSON completo, coherente, verificable y reutilizable** de maquinaria nueva y de segunda mano de GAM, Gomariz y Mercaeleva. La calidad se mide por la fiabilidad de la identidad, las características, el contenido y la cobertura de las fuentes, no por la facilidad de importar los productos.
+Conseguir un **catálogo JSON completo, coherente, verificable y reutilizable** de maquinaria nueva y de segunda mano de GAM, Gomariz, Mercaeleva y Manain. La incorporación de un proveedor al contrato no acredita por sí sola la cobertura de su portal. La calidad se mide por la fiabilidad de la identidad, las características, el contenido y la cobertura de las fuentes, no por la facilidad de importar los productos.
 
 Prioridades, por orden:
 
@@ -19,7 +19,7 @@ Prioridades, por orden:
 ## Tres conceptos diferentes
 
 - **Catálogo canónico (`ProductRecord`)**: todas las máquinas detectadas, sin filtrar por condiciones comerciales o requisitos del backend.
-- **Preparación (`ready` / `review`)**: diagnóstico local de mapeos y validaciones. El código puede incluir restricciones del receptor; sus estados no sustituyen una revisión independiente de la calidad del origen.
+- **Preparación (`ready` / `review`)**: diagnóstico técnico local del origen y sus evidencias. Las preparaciones actuales no dependen de la asignación de categorías comerciales ni de atributos del backend; sus estados tampoco sustituyen una revisión externa de cobertura.
 - **Selección editorial**: fichas autorizadas para entrega y exclusiones justificadas, sin borrar las fichas excluidas del catálogo original ni modificar su estado para mejorar un contador.
 
 El objetivo de calidad es resolver todas las incidencias acreditables. Una contradicción irresuelta puede mantenerse como exclusión editorial justificada; nunca se fabrica una solución para conseguir `0 review`.
@@ -38,7 +38,8 @@ La ausencia de precio, año u otro dato que el portal no publique **no autoriza*
 ## Fuera del alcance principal
 
 - Importar automáticamente al backend, modificar endpoints, sincronizar precios o dar de baja productos en la base de datos.
-- Hacer de Excel o `create/many` el criterio de aceptación del catálogo JSON.
+- Asignar `categorySellID`, IDs de atributos comerciales o mantener la taxonomía del backend dentro del flujo canónico.
+- Usar Excel, `create/many` o cualquier importador heredado como criterio de aceptación del catálogo JSON.
 - Ejecutar scraping programado de proveedores no acreditados sin supervisión.
 - Modificar documentación sin la autorización explícita indicada por `AI GUARD`.
 

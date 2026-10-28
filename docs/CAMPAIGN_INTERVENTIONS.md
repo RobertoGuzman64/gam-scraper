@@ -51,15 +51,7 @@ npm run intervenir -- gam --script interventions/gam/6002.ts --script interventi
 
 La comparación muestra intervenciones pendientes, corregidas en origen, ausentes, parciales o divergentes. Las corregidas en origen y las ausentes **no se reaplican**; las parciales o divergentes bloquean el conjunto. Ningún script se ejecuta por existir en Git o por figurar en el catálogo.
 
-**Migración del flujo anterior:** `--registrar` y `npm run intervencion:conservar` han sido retirados. No copies nuevos scripts a `storage/interventions/<lote>/scripts/` ni uses `interventions/permanentes/<lote>/`. Los **scripts temporales de campañas antiguas continúan admitidos para lectura y recuperación**, y sus expedientes `version: 1` mantienen compatibilidad. No moverlos ni eliminarlos mientras una campaña pueda necesitarlos.
-
-Al integrar esta entrega incremental mediante extracción de ZIP (que no elimina archivos preexistentes), retirar del repositorio exclusivamente los dos módulos ya redundantes, después de aplicar los archivos nuevos:
-
-```powershell
-git rm -- scripts/conservar-intervencion.mjs src/infrastructure/filesystem/intervention-script-registration.ts
-```
-
-No eliminar `storage/`, scripts históricos, expedientes, acreditaciones ni resultados de campañas abiertas. Si los dos archivos ya no existen, no es necesaria ninguna operación adicional.
+**Compatibilidad histórica:** `--registrar` y `npm run intervencion:conservar` ya no pertenecen al flujo actual. No crear scripts en `storage/interventions/<lote>/scripts/` ni en `interventions/permanentes/<lote>/`. Los scripts temporales de campañas anteriores y sus expedientes `version: 1` siguen admitidos para lectura y recuperación; no moverlos ni borrarlos mientras puedan ser necesarios. Los módulos antiguos de registro ya no forman parte del repositorio y no requieren comandos adicionales de migración.
 
 ## Aplicar y acreditar
 

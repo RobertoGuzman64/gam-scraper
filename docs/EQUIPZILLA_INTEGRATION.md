@@ -4,59 +4,44 @@
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
-## Propósito de esta referencia
+## Frontera entre el scraper y el backend
 
-Este documento resume **cómo se relacionan las salidas del scraper con las entradas del backend**, sin convertir la importación en objetivo de calidad del catálogo. Los detalles del receptor proceden del código de backend consultado para documentar su contrato, **no de una comprobación de la base de datos o del servicio actualmente desplegado**. Ante cambios del backend, su responsable debe reconfirmar el contrato antes de utilizar una exportación.
+La **responsabilidad del scraper** es obtener catálogos canónicos fiables, conservar la evidencia del proveedor, verificar identidad y contenido, comparar campañas y entregar una selección editorial acreditada. **La responsabilidad del proceso receptor** es interpretar esos datos para el modelo comercial de Equipzilla: decidir `categorySellID`, IDs de atributos, reglas de importación, permisos, inventario en base de datos y publicación.
+
+Esta separación es deliberada. Los mapeos comerciales que el scraper llegó a incorporar eran una capacidad técnica auxiliar, **no un requisito de calidad del dato ni una obligación pendiente de completar**.
 
 ```text
-ProductRecord (origen, íntegro)
-    ↓ preparación y revisión editorial independientes
-ImportCandidate / selección publicable
-    ↓ exportación auxiliar autorizada
-XLSX de altas o JSON adaptado al receptor
-    ↓ proceso manual externo al scraper
-Backend Equipzilla
+Portales de proveedores
+        ↓
+ProductRecord y catálogos canónicos íntegros
+        ↓
+Preparación técnica y controles de calidad
+        ↓
+Selección editorial y cuatro JSON acreditados (campaña actual)
+        ↓
+Adaptación comercial e importación — proceso receptor / backend
 ```
 
-**No son cuerpos de importación:** `<prefijo>-catalog.json`, `<prefijo>-preparation.json`, `-summary.json`, `-changes.json`, snapshots o `selection.json`. Ninguno de estos ficheros se envía automáticamente por HTTP.
+## Contratos que entrega el scraper
 
-## Exportación Excel
+- `ProductRecord` conserva `categoryKey` y `categoryName` originales, referencias, descripciones, imágenes, condición acreditada y `specs` sin equivalencias comerciales inventadas.
+- La preparación offline actual utiliza reglas técnicas versionadas (`rulesVersion: 2`). En sus candidatos, `categorySellID: null` y `attributes: []` indican **ausencia intencionada de asignación comercial**; las especificaciones siguen en `spec`.
+- `ready/review` describe incidencias técnicas del origen; no garantiza que el backend pueda crear un producto sin transformación adicional.
+- La campaña actual entrega cuatro JSON seleccionados y acreditados. **No son requests HTTP** ni prueban que ya existan categorías comerciales asignadas.
+- Ninguna entrega crea, actualiza o da de baja productos de Equipzilla.
 
-El importador documentado del backend acepta `POST /product/import`, autenticación y una compañía autorizada, mediante `multipart/form-data` con el archivo `.xlsx` en el campo `file` y `companyID` real. La hoja se llama **`Productos`**. En el contrato analizado, el tamaño permitido es de **10 MiB** y las imágenes se expresan en columnas `URL 1` a `URL 10`.
+Los identificadores propios del proveedor, si existen, se conservan como datos de origen; **no** deben ponerse a `null` para simular una ausencia de IDs comerciales. La correspondencia entre categorías del proveedor y categorías de venta es una decisión de la integración receptora.
 
-| Columna de Excel                                         | Criterio básico del receptor documentado                            |
-| -------------------------------------------------------- | ------------------------------------------------------------------- |
-| `Referencia *`                                           | Referencia de producto no vacía.                                    |
-| `Categoría *`                                            | Nombre de categoría existente y activa.                             |
-| `Título *`                                               | Texto no vacío.                                                     |
-| `Condición *`                                            | `Nuevo` o `Segunda_Mano`.                                           |
-| `Precio *`                                               | Número presente; el receptor rechaza valores evaluados como falsos. |
-| `Descripción *`                                          | Descripción corta no vacía.                                         |
-| `URL 1 *`                                                | Al menos una imagen.                                                |
-| `Descripción título`, `Descripción general`, otras `URL` | Datos opcionales sujetos al contrato receptor.                      |
+## Compatibilidad comercial heredada
 
-Las columnas de atributos se resuelven frente a la categoría de destino. Las snapshots locales `data/category/` y `data/import/` ayudan al mapper, pero **no garantizan que coincidan con la base de datos del entorno elegido**.
+El repositorio todavía contiene `npm run exportar`, `pipeline/export/`, infraestructura de XLSX y snapshots `data/category/` y `data/import/`. Son piezas **heredadas**, separadas del flujo canónico vigente. El exportador puede procesar preparaciones comerciales históricas conforme a sus validaciones, pero **rechaza expresamente las preparaciones canónicas actuales sin asignación comercial**.
 
-El exportador del scraper prepara **altas**, no actualizaciones ni bajas. Exige un inventario CSV completo de la empresa con cabeceras `companyID,reference` para evitar generar altas de referencias conocidas. El inventario es una protección local: no equivale a comprobar duplicados en vivo al importar.
+No utilizar estos módulos como continuación automática de `npm run entregar`, ni interpretar un Excel o un JSON para `create/many` como artefacto de campaña. Cualquier uso excepcional requiere validar el contrato real del backend con sus responsables; los snapshots locales no acreditan el estado de la base de datos desplegada. No convertir el trabajo de compatibilidad en una dependencia del scraper.
 
-## Exportación JSON de receptor
+La operación comercial, incluyendo inventario vivo, autorización y comprobación de errores de importación por fila, pertenece al proceso receptor. Para conocer el estado del comando heredado se puede consultar `npm run ayuda -- exportar`, **sin asumir que sea aplicable a preparaciones nuevas**.
 
-`npm run exportar` admite `--formato json` para generar el formato de `POST /product/create/many` descrito por el código de destino. Es **un contrato diferente del XLSX y del catálogo canónico**; puede tratar precios ausentes de manera diferente y mantiene requisitos de validación propios. El scraper solo escribe el archivo solicitado: **no ejecuta la petición HTTP**.
+## Responsabilidades y cambios futuros
 
-## Uso responsable
+Si el backend cambia su catálogo de categorías, atributos, endpoints o políticas comerciales, **el scraper no debe necesitar cambios mientras conserve su contrato canónico**. Una petición de integración nueva debe acordarse como contrato entre proyectos, no introducirse silenciosamente en las reglas de calidad.
 
-Consultar los parámetros reales mediante:
-
-```powershell
-npm run ayuda -- exportar
-```
-
-Para producir una exportación se requieren datos reales: preparación íntegra, `companyID` autorizado, inventario de la misma compañía y ruta de salida. Primero utilizar `--simular`; solo tras revisar el inventario corresponde `--confirmar-inventario`. No crear inventarios ficticios ni usar `--permitir-inventario-vacio` sin acreditar que el receptor carece realmente de referencias previas.
-
-En una importación manual, la respuesta de éxito HTTP **no demuestra** que todas las filas se hayan creado: el contrato documentado permite errores por fila. Revisar totales y errores de la operación en destino. La activación/publicación de productos en la web también es independiente de la creación.
-
-## Límite de responsabilidad
-
-La extracción, normalización, selección y conservación de evidencia corresponden al scraper. Autenticación, permisos, inventario vivo, reglas comerciales, importación y publicación definitiva en el backend corresponden a los responsables del receptor. **No modificar el backend para corregir el scraper sin autorización expresa.**
-
-Para el objetivo del proyecto consultar [Objetivos](SCRAPER_OBJECTIVES.md); para las estructuras producidas consultar [Reglas de datos](SCRAPER_DATA_RULES.md).
+Las salidas conservan su integridad, procedencia, acreditación y límites editoriales. Para más detalle consultar [Objetivos](SCRAPER_OBJECTIVES.md), [Reglas de datos](SCRAPER_DATA_RULES.md) y [Campañas](CAMPAIGNS.md).

@@ -15,7 +15,7 @@ La fuente de verdad de extracción es el catálogo **`ProductRecord[]`** dentro 
 
 Los valores que faltan pueden ser `null`; `condition` es `"Nuevo" | "Segunda mano" | null` y **no** coincide literalmente con el enum del receptor. `specs` es un mapa de valores escalares o listas simples. No inferir una característica por semejanza de modelo, descripción genérica o campos ajenos a otra máquina.
 
-El catálogo canónico incluye todas las máquinas que superan la publicación estructural, **sin filtrarlas por importabilidad**. `ImportCandidate`, definido en los contratos de preparación del repositorio, es otra representación para mapeos de destino; no sustituye a `ProductRecord`.
+El catálogo canónico incluye todas las máquinas que superan la publicación estructural, **sin filtrarlas por importabilidad**. `ImportCandidate`, definido en los contratos de preparación, es una representación auxiliar. En la preparación canónica actual **no asigna IDs comerciales**: `categorySellID` es `null`, `attributes` es `[]`, la categoría de origen permanece como texto y `spec` conserva las especificaciones originales. Esta representación **no** sustituye a `ProductRecord` ni equivale a un objeto importable por el backend.
 
 ## Artefactos de extracción
 
@@ -31,7 +31,7 @@ La ubicación habitual es `storage/scraped/<proveedor>/`, con prefijo configurab
 | `<prefijo>-changes.json`                | Cambios y posibles ausencias frente al contexto disponible; no autoriza bajas.       |
 | `<prefijo>-errors.json` y snapshots     | Diagnóstico de extracción, descubrimiento y seguimiento.                             |
 
-La preparación **offline** se puede escribir en `storage/prepared/<proveedor>/`. Incluye procedencia del catálogo, identidades, huellas de reglas y snapshots, calidad y candidatos preparados. Debe poder verificarse sin consultar las webs.
+La preparación **offline** se puede escribir en `storage/prepared/<proveedor>/`. Incluye procedencia del catálogo, identidades, huella de las reglas técnicas (`rulesVersion: 2`, `rulesSha256`), calidad y candidatos preparados. Los snapshots comerciales solo figuran en el formato histórico `rulesVersion: 1`; no son entradas de la preparación nueva. Debe poder verificarse sin consultar las webs.
 
 Los documentos de origen, los manifests y los datos de preparación deben permanecer alineados. No editar productos manualmente en un JSON publicado ni reemplazar su manifest para «validar» una modificación. Los archivos de ejecución están excluidos del control de versiones.
 
@@ -46,18 +46,19 @@ Los documentos de origen, los manifests y los datos de preparación deben perman
 
 ## Calidad y decisiones editoriales
 
-`ready` y `review` son estados locales de preparación. `review` señala cuestiones a investigar, pero algunas provienen de requisitos de mapeo del receptor y no necesariamente de errores en el catálogo de origen. No eliminar atributos fiables ni rellenar los ausentes por conveniencia.
+`ready` y `review` son estados locales de preparación. En preparaciones nuevas, `review` señala incidencias **técnicas y de evidencia del origen**, no la falta de `categorySellID` o de atributos comerciales. Las preparaciones heredadas pueden contener diagnósticos comerciales y no se reinterpretan como si tuvieran las reglas actuales. No eliminar atributos fiables ni rellenar los ausentes por conveniencia.
 
 La revisión de cobertura genera un expediente con **huellas de los dos catálogos**, referencias ausentes y cambios por campo. Las decisiones empiezan pendientes. Para cerrar incidencias hacen falta motivos específicos y evidencias, especialmente en ausencias, imágenes y descripciones. Una retirada exige prueba; una ausencia acreditada de listado no equivale a una baja comercial; `no_acreditado` mantiene el bloqueo. Las decisiones deben verificarse contra los mismos archivos a los que se refieren.
 
 La selección editorial crea productos publicables y un resumen de exclusiones **sin reescribir el catálogo original**. Las exclusiones pueden ser necesarias para proteger la calidad, pero no convierten fichas dudosas en `ready`. La salida por proveedor es un conjunto de candidatos ya definidos por el proyecto, no un request HTTP de importación.
 
-## Exportaciones auxiliares
+## Frontera con la importación comercial
 
-- **XLSX:** plan de **altas** con `companyID` autorizado e inventario completo de la compañía. Requiere precio admitido por el exportador y aplica restricciones propias del receptor Excel.
-- **JSON de receptor:** formato adaptado a `create/many`; mantiene su propia validación y no es el catálogo canónico.
-- Ninguna exportación realiza altas, cambios ni bajas en el backend; solo genera un artefacto revisable.
-- No copiar IDs de categoría o atributos de otra empresa ni presuponer que los snapshots locales reflejan la base de datos activa.
+La campaña entrega JSON acreditados para **traspasar datos fiables**, no para efectuar una operación de importación. La asignación de `categorySellID`, los IDs de atributos y la transformación a contratos del backend son responsabilidades del proceso receptor. **No añadir requisitos comerciales a `ready/review` ni convertir `specs` originales en atributos comerciales sin un contrato externo explícito.**
+
+El exportador comercial XLSX/JSON (`npm run exportar`) permanece únicamente como compatibilidad heredada. Mantiene sus controles de seguridad para preparaciones antiguas con asignación comercial; **rechaza preparaciones canónicas nuevas**. No se utiliza como paso normal tras `entregar`, y el scraper nunca realiza peticiones HTTP de importación.
+
+Consultar [Límites de integración](EQUIPZILLA_INTEGRATION.md) para la separación de responsabilidades.
 
 Las correcciones textuales puntuales se gestionan, cuando proceda, mediante [intervenciones manuales por campaña](CAMPAIGN_INTERVENTIONS.md), con origen intacto y sin promoción editorial automática.
 

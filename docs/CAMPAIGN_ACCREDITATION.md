@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-La acreditación editorial valida que los tres catálogos proceden del mismo lote completo y que sus preparaciones, decisiones e intervenciones son comprobables. Superar la validación técnica o tener cero incidencias `Review` **no autoriza por sí solo la publicación**. No añadir SHA fijos al código ni relajar los controles para forzar la selección.
+La acreditación editorial valida que los cuatro catálogos del contrato actual proceden del mismo lote completo y que sus preparaciones, decisiones e intervenciones son comprobables. Superar la validación técnica o tener cero incidencias `Review` **no autoriza por sí solo la publicación**. No añadir SHA fijos al código ni relajar los controles para forzar la selección.
 
 ## Recorrido ordinario sin rutas ni SHA manuales
 
@@ -12,7 +12,7 @@ Después de `npm run extraer` y de revisar las incidencias con `npm run revisar`
 npm run acreditar
 ```
 
-El comando identifica el lote vigente por `run.json`, verifica catálogos originales y preparaciones de **GAM, Gomariz y Mercaeleva**, y genera el borrador asociado a sus huellas en:
+El comando identifica el lote vigente por `run.json`, verifica catálogos originales y preparaciones de **GAM, Gomariz, Mercaeleva y Manain**, y genera el borrador asociado a sus huellas en:
 
 `storage/campaigns/<id-lote>/editorial/accreditation-<sha256>.json`
 
@@ -49,7 +49,7 @@ npm run entregar
 
 Una vez aprobada una acreditación, los comandos editoriales no permiten modificarla. Una intervención posterior genera un borrador distinto, vinculado a las nuevas preparaciones. Las operaciones de edición comprueban de nuevo la campaña y el contenido del borrador antes de sustituirlo, y nunca reescriben una selección existente.
 
-`entregar` valida la selección y genera en el Escritorio el ZIP verificado con exactamente los tres JSON fechados, sin manifests ni `selection.json`. Una entrega válida anterior se conserva cuando un nuevo intento falla.
+`entregar` valida la selección y genera en el Escritorio el ZIP verificado con exactamente los cuatro JSON fechados, sin manifests ni `selection.json`. Una entrega válida anterior se conserva cuando un nuevo intento falla.
 
 ## Seguridad y límites
 
@@ -58,6 +58,6 @@ Una vez aprobada una acreditación, los comandos editoriales no permiten modific
 - Las intervenciones conservan original, derivado, SHA del plan y expediente propios. Sus productos modificados requieren decisión editorial nueva.
 - Los borradores y aprobaciones permanecen fuera del código y de Git, bajo `storage/`. Tras entregar, `npm run limpiar` simula la limpieza; `-- --aplicar` requiere que la entrega siga verificable.
 
-Las operaciones avanzadas `npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --lote <run.json> --borrador <acreditacion.json>` y sus opciones `--acreditacion` / `--simular` siguen disponibles para mantenimiento o diagnóstico con rutas explícitas. **No son necesarias en el recorrido ordinario.**
+Las operaciones avanzadas `npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --manain <preparation.json> --lote <run.json> --borrador <acreditacion.json>` y sus opciones `--acreditacion` / `--simular` siguen disponibles para mantenimiento o diagnóstico con rutas explícitas. **No son necesarias en el recorrido ordinario.** El selector avanzado también puede admitir el conjunto heredado de tres proveedores para compatibilidad explícita; no equivale a acreditar una campaña global vigente.
 
 Consultar [Campañas](CAMPAIGNS.md), [Intervenciones](CAMPAIGN_INTERVENTIONS.md), [Validación](VALIDATION.md) y [Reglas de datos](SCRAPER_DATA_RULES.md).

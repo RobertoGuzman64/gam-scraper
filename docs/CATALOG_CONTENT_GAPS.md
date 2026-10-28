@@ -6,51 +6,47 @@
 
 ## Finalidad y límites
 
-`npm run huecos` es una **consulta opcional** que identifica patrones de contenido ausente entre originales canónicos de EQUIPZILLA. Agrupa fichas y muestra la cobertura de sus campos, las identidades afectadas y la evidencia original disponible para una investigación posterior. No completa campos, no recomienda automáticamente valores, no decide equivalencias técnicas y **no genera incidencias `Review`**. No forma parte del proceso de extracción, acreditación, entrega, actualización de referencia ni limpieza.
+`npm run huecos` es una **consulta opcional y estadística** sobre el catálogo original conservado en `data/reference/`. Identifica campos ausentes repetidos, muestra a qué fichas afectan y permite inspeccionar la evidencia conservada. **No completa fichas, no asigna categorías comerciales, no genera `review` y no interviene en campañas, acreditaciones o entregas.**
 
-El informe es estadístico: una ausencia en un grupo no demuestra un error ni que pueda recuperarse un dato. Compartir categoría, marca o modelo declarado tampoco garantiza que las máquinas tengan la misma configuración.
+Que dos máquinas compartan categoría, marca o modelo no significa que deban tener las mismas especificaciones. Una ausencia observada **no acredita obligatoriedad técnica ni error del proveedor**.
 
-## Procedencia, contratos y módulos
+## Procedencia y componentes
 
-- **Entrada:** `data/reference/`, inspeccionada exclusivamente mediante `inspectCampaignReference` (`src/infrastructure/filesystem/campaign-reference.ts`). La consulta solo continúa si la referencia es `valid`; ante `absent`, `recoverable` o `invalid` falla sin reparar ni modificar nada.
-- **Originales:** `ProductRecord` de `src/contracts/catalog.ts`, conservados en los catálogos canónicos. Incluyen proveedor, referencias, URL, categoría de origen, marca, modelo, descripciones y `specs` originales.
-- **Reglas vigentes:** `loadImportCatalogSnapshot` obtiene categorías, atributos y relaciones activas. `prepareProduct` reconstruye **en memoria** el producto preparado para obtener `categorySellID`, estado y contenido normalizado.
-- **Análisis:** `src/tools/catalog-content-gaps.ts` calcula agrupaciones, ausencias, evidencias y prioridades sin acceder al sistema de archivos.
-- **Entrada de usuario:** `src/cli/catalog-content-gaps.ts`, registrada como `huecos` en `scripts/tooling.mjs` y `package.json`. `src/tools/tests/catalog-content-gaps.test.ts` protege sus comportamientos esenciales.
+- **Entrada:** `inspectCampaignReference` (`src/infrastructure/filesystem/campaign-reference.ts`) exige una referencia con estado `valid`. Si está ausente, dañada o pendiente de recuperación, el auditor falla sin crearla ni repararla.
+- **Universo:** todos los `ProductRecord` originales de esa referencia, también los excluidos de la entrega editorial. Se conservan `providerId`, `categoryKey`, `categoryName`, identidad, URL, descripciones y `specs`.
+- **Preparación temporal:** `prepareSourceProduct` calcula en memoria el estado técnico y las descripciones preparadas. No consulta snapshots comerciales ni asigna `categorySellID` o `attributeID`.
+- **Análisis:** `analyzeSourceContentGaps` (`src/tools/catalog-content-gaps.ts`) agrupa por categoría de origen, con desglose opcional por marca o modelo, y calcula la cobertura de descripciones y claves técnicas observadas.
+- **CLI:** `src/cli/catalog-content-gaps.ts` presenta resumen o JSON por `stdout`. Las huellas de procedencia se vinculan a la referencia y a las reglas técnicas actuales (`rulesSha256`).
 
-El universo son **todos los originales de la referencia**, incluidos productos excluidos de una entrega. Los estados `ready/review` y la normalización corresponden a las **reglas actuales del repositorio**, no a una preparación histórica. La referencia operativa es local, puede no existir en una instalación recién clonada y no se versiona por defecto.
+La consulta usa las **reglas técnicas actuales**, no una preparación guardada cuando se extrajo el catálogo. Los recuentos `ready/review` del universo expresan ese diagnóstico recalculado; no cambian los estados de una campaña.
 
-## Campos observados
+## Campos y agrupaciones
 
-| Campo observado     | Comprobación                                                                                                   | Evidencia para investigar                                                                     |
-| ------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Atributos técnicos  | Presencia de `attributeID` entre `product.attributes[]`, solo si está activo y es aplicable a `categorySellID` | `ProductRecord.specs`, claves literales y textos originales, **sin equivalencias presumidas** |
-| Descripción corta   | `product.description` no nula ni vacía tras `trim()`                                                           | `shortDescription` original y, separadamente, `longDescription` como texto relacionado        |
-| Descripción general | `product.description_general` no nula ni vacía tras `trim()`                                                   | `longDescription` original y, separadamente, `shortDescription` como texto relacionado        |
+| Campo                  | Criterio de presencia                                          | Evidencia conservada                                               |
+| ---------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Descripción corta      | `description` preparada no vacía tras `trim()`                 | `shortDescription` original y texto relacionado                    |
+| Descripción general    | `description_general` preparada no vacía tras `trim()`         | `longDescription` original y texto relacionado                     |
+| Especificación técnica | Clave normalizada de `ProductRecord.specs` con valor informado | Claves y valores originales, sin deducir equivalencias comerciales |
 
-Una cadena vacía o compuesta solo de espacios cuenta como ausente. En un atributo, `0` y `false` cuentan como contenido. Cuando no existe una categoría de destino válida no se comparan atributos técnicos aplicables, aunque sí se observan las descripciones. Los campos de identidad, título, referencia, serie, clasificación, precio e imágenes **no se auditan como huecos**.
+Una clave técnica entra en la comparación **solo si aparece informada en al menos dos fichas del mismo grupo**. Se normaliza el nombre de clave conforme a las reglas del proyecto; no se atribuye automáticamente un significado distinto ni se exige a todas las máquinas una especificación publicada en otra categoría. Para las claves observadas se calculan `applicable`, `present`, `missing` y `coveragePercent`; `applicable` es el tamaño del grupo, **no una declaración de obligatoriedad**. Los valores numéricos `0` y booleanos `false` cuentan como presentes.
 
-## Agrupación, cobertura y prioridad
+La separación de grupos es siempre por **proveedor y `categoryKey` original**. `--agrupar marca` subdivide por marca declarada; `--agrupar modelo` subdivide por marca y modelo. No mezcla equivalencias de proveedores distintos ni sustituye la clasificación original por `categorySellID`.
 
-Los grupos separan siempre proveedores y categorías de destino existentes. Si no hay `categorySellID`, se usa la categoría de origen como grupo **no comparable**. El parámetro `--agrupar` permite `categoria` (predeterminado), `marca` o `modelo`, utilizando únicamente cadenas declaradas; el refinamiento por modelo mantiene la marca. No se infieren familias técnicas.
+La cobertura se clasifica como `completa`, `desigual` o `sistematica`. El TOP prioriza ausencias relevantes según frecuencia y evidencias; sus filtros no eliminan los detalles completos de `groups` ni `cases` en el JSON.
 
-Para cada grupo y campo, el analizador cuenta máquinas aplicables, presentes y ausentes, porcentaje de cobertura y sus identidades. Distingue cobertura `completa`, `desigual` y `sistematica` (ausencia en todo el grupo). Los patrones sistemáticos también pueden ser relevantes si hay texto original relacionado: no se eliminan por tener cobertura del 0 %.
+## Evidencias y límites
 
-La prioridad es orientativa: primero ausencias numerosas con evidencia directa o texto relacionado repetidos; después coberturas desiguales; después patrones con especificaciones no vinculadas y, finalmente, ausencias sin evidencia observable. El orden es estable y se desempata por claves del grupo. Los filtros del TOP **no eliminan** grupos ni casos del JSON de detalle.
+- `directa_del_campo`: contenido original correspondiente a una descripción que falta en la salida preparada.
+- `texto_relacionado`: texto en la otra descripción; no prueba que ambos campos sean equivalentes.
+- `especificaciones_sin_vinculo_acreditado`: hay otras claves técnicas, sin demostrar relación con la clave ausente.
+- `sin_evidencia_observable`: no se observó evidencia suficiente **en los datos conservados**, no necesariamente en la web.
+- `desconocida`: el dato disponible no permite otra clasificación segura.
 
-### Clases de evidencia por caso
-
-- `directa_del_campo`: existe el campo original de descripción correspondiente pero el final está vacío.
-- `texto_relacionado`: existe texto en el otro campo de descripción, sin equivalencia demostrada.
-- `especificaciones_sin_vinculo_acreditado`: hay `specs` con contenido junto a un atributo ausente; no se ha acreditado relación con dicho atributo.
-- `sin_evidencia_observable`: estas comprobaciones no encuentran evidencia en los campos observados, **no** que la web carezca de ella.
-- `desconocida`: la información conservada no permite una clasificación segura.
-
-Ni las clases de evidencia ni la frecuencia estadística crean una autorización para modificar productos. Los valores ambiguos, las configuraciones múltiples y los datos no publicados deben conservar sus defensas actuales.
+El JSON mantiene nombres de compatibilidad como `categorySellID` y `prepared.attributes`, pero **sus valores son `null` y `[]` en el análisis actual**. No deben interpretarse como IDs comerciales pendientes de resolver ni como atributos obligatorios del backend. `sourceCategoryKey` identifica el grupo de origen; `original.specs` es la evidencia técnica relevante.
 
 ## Ejecución
 
-Desde la raíz del repositorio, con sus dependencias instaladas:
+Desde la raíz del repositorio, con una referencia válida:
 
 ```powershell
 npm run huecos
@@ -60,32 +56,29 @@ npm run huecos -- --json > huecos-consulta.json
 npm run ayuda -- huecos
 ```
 
-| Opción               | Significado                                         | Valor predeterminado |
-| -------------------- | --------------------------------------------------- | -------------------- |
-| `--agrupar categoria | marca                                               | modelo`              | Dimensión de agrupación | `categoria` |
-| `--min-grupo N`      | Mínimo de máquinas del grupo para entrar en el TOP  | `8`                  |
-| `--min-ausentes N`   | Mínimo de ausencias del campo para entrar en el TOP | `3`                  |
-| `--top N`            | Máximo de patrones priorizados que se muestran      | `20`                 |
-| `--json`             | Informe completo JSON por salida estándar           | Desactivado          |
+| Opción                               | Significado                               | Valor inicial |
+| ------------------------------------ | ----------------------------------------- | ------------- |
+| `--agrupar categoria\|marca\|modelo` | Agrupación; admite un único valor         | `categoria`   |
+| `--min-grupo N`                      | Tamaño mínimo para el TOP                 | `8`           |
+| `--min-ausentes N`                   | Ausencias mínimas de un campo para el TOP | `3`           |
+| `--top N`                            | Máximo de patrones priorizados mostrados  | `20`          |
+| `--json`                             | Informe completo por `stdout`             | Desactivado   |
 
-`N` debe ser entero positivo. `--top` limita también `prioritized` en el JSON, pero **no** las colecciones completas `groups` y `cases`. El comando pasa por el despachador habitual, que puede compilar y actualizar `dist/`; el **auditor** no escribe en `data/reference/`, `storage/`, campañas, entregas ni catálogos. La redirección `>` escribe el archivo solicitado por quien ejecuta el comando; contiene datos de fichas y URLs, por lo que debe mantenerse fuera de Git y de las entregas.
+Los argumentos numéricos requieren enteros positivos. `--top` limita `prioritized`, no las colecciones completas `groups` y `cases`. El despachador puede compilar y actualizar `dist/`, pero **el auditor no escribe en `data/reference/`, `storage/` ni en los catálogos**. Una redirección `>` sí crea el archivo indicado por el operador; debe mantenerse fuera de Git y del ZIP público.
 
-## Cómo investigar un resultado
+## Lectura del resultado
 
-1. En el resumen, identificar proveedor, categoría, campo, frecuencia y las identidades del grupo afectado.
-2. Para detalle, ejecutar con `--json`: `provenance` indica `runId`, recuentos y huellas de referencia y catálogos de importación; `universe` identifica el universo y la vista recalculada.
-3. Localizar el patrón en `prioritized`, su grupo en `groups` y las identidades en `observations[].missingIdentities`.
-4. Buscar esas identidades en `cases[]`. Cada caso contiene `reference`, `url`, `brand`, `model`, categoría, `status`, descripciones y `specs` originales, descripciones y `attributes` preparados y `gaps[].evidence`.
-5. Comprobar el anuncio original y los contratos de atributo/categoría **antes** de valorar un cambio general en el mapper. Validar positivos, contraejemplos y diferencias completas antes/después. Si no existe una regla segura, la ausencia se conserva.
+1. Identificar proveedor, categoría original, clave/descripción, frecuencia y fichas afectadas.
+2. Usar `--json` para consultar `provenance` (`runId`, huellas de los catálogos y `rulesSha256`), `universe` y la vista recalculada.
+3. Consultar `prioritized` para el TOP, `groups[].observations` para todas las coberturas y `cases[]` para las fichas afectadas.
+4. Revisar `original.shortDescription`, `original.longDescription` y `original.specs` antes de sugerir cualquier cambio. `observations[].originalSpecKeys` contiene **claves literales relacionadas por coexistencia**, nunca equivalencias acreditadas.
+5. Contrastar los anuncios vigentes y los contraejemplos antes de corregir extractores o normalizadores. Si no hay evidencia suficiente, conservar el hueco como observación.
 
-`observations[].originalSpecKeys` muestra **claves literales** frecuentes entre fichas sin atributo; no identifica semánticamente qué atributo contienen. Un resultado con pocas fichas puede estar en `groups` aunque no alcance los umbrales del TOP.
+## Seguridad y verificación
 
-## Seguridad, mantenimiento y verificación
+- No usar el auditor para aprobar campañas, resolver `review`, rellenar por analogía ni sustituir la revisión humana.
+- Mantener separación de proveedores, identidades únicas, agrupación por categoría de origen, orden determinista y pruebas de referencia íntegra.
+- Verificar campos vacíos, valores `0`/`false`, cobertura total y cero, y ausencia de escrituras al modificar el analizador.
+- Ejecutar la suite completa y el build antes de integrar cambios productivos. Una consulta estadística correcta no acredita cobertura externa del proveedor.
 
-- Consulta solo lectura y fallo seguro ante referencia no íntegra; no crear ni reparar la referencia, ni obligar a auditar para entregar una campaña.
-- Nunca crear `Review` por información opcional ausente ni completar por analogía entre máquinas.
-- Preservar los contratos de `ProductRecord`, `PreparedProduct` e `ImportCatalog`. Las reglas de extracción y normalización continúan en sus módulos actuales, no aquí.
-- Para modificar el auditor, verificar con pruebas dirigidas separación de proveedores/categorías, identidad única, atributos aplicables, campos vacíos, orden determinista, resultados de grupos con cobertura total o cero, y ausencia de escrituras.
-- La suite global y la compilación del repositorio deben acreditarse en un entorno con dependencias instaladas; no interpretar como éxito global las ejecuciones dirigidas o fixtures antiguos.
-
-Documentación relacionada: [Arquitectura](ARCHITECTURE.md), [Reglas de datos](SCRAPER_DATA_RULES.md), [Referencia operativa](OPERATIONAL_REFERENCE.md) y [README](../README.md).
+Referencias: [Arquitectura](ARCHITECTURE.md), [Reglas de datos](SCRAPER_DATA_RULES.md), [Referencia operativa](OPERATIONAL_REFERENCE.md) y [README](../README.md).

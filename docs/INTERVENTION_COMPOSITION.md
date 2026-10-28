@@ -42,15 +42,15 @@ El mismo procedimiento se realiza por separado en los proveedores que tengan int
 
 ## Selección editorial de una campaña global
 
-La preparación intervenida no se publica por el mero hecho de estar validada. Se puede aportar en `--gam`, `--gomariz` o `--mercaeleva` junto con preparaciones normales de los otros proveedores y el **mismo** `run.json` global completo, de acuerdo con `docs/CAMPAIGN_ACCREDITATION.md`.
+La preparación intervenida no se publica por el mero hecho de estar validada. El selector avanzado también admite un conjunto histórico de tres proveedores sin `--manain` para compatibilidad, pero eso **no es una campaña global completa bajo el contrato vigente**. Se puede aportar en `--gam`, `--gomariz`, `--mercaeleva` o `--manain` junto con preparaciones normales de los otros proveedores y el **mismo** `run.json` global completo, de acuerdo con `docs/CAMPAIGN_ACCREDITATION.md`.
 
 ```powershell
-npm run seleccionar -- --gam <gam-preparation.json> --gomariz <gomariz-preparation.json> --mercaeleva <mercaeleva-preparation.json> --lote <run.json> --borrador <borrador.json>
+npm run seleccionar -- --gam <gam-preparation.json> --gomariz <gomariz-preparation.json> --mercaeleva <mercaeleva-preparation.json> --manain <manain-preparation.json> --lote <run.json> --borrador <borrador.json>
 ```
 
 El selector reconstruye el derivado desde los cambios acreditados y el catálogo canónico de ese lote, vuelve a validar la preparación y comprueba sus hashes. El borrador incluye cada ficha intervenida que haya quedado lista con `status: "intervention"`. **Solo tras revisión humana** admite `decision: "incluir"`, `reason` justificativa y `evidenceUrls` HTTPS que incluya la ficha vigente. También se puede excluir con una decisión documentada. Una ficha que siga en `review` o con contradicción de identidad **no puede incluirse** por este procedimiento. Las demás exclusiones siguen exigiendo `decision: "excluir"` y evidencia. Establecer `approved: true` y `approvalReason` solo después de decidir todas las entradas.
 
-Después simular la selección con `--lote <run.json> --acreditacion <aprobada.json> --simular`; si es correcta, repetir con `--directorio-salida <directorio-nuevo>` para obtener los tres JSON de proveedores y `selection.json`. La aprobación está vinculada a las huellas exactas de la campaña, las preparaciones y los planes intervenidos: no vale para otra ejecución.
+Después simular la selección con `--lote <run.json> --acreditacion <aprobada.json> --simular`; si es correcta, repetir con `--directorio-salida <directorio-nuevo>` para obtener los cuatro JSON del conjunto actual de proveedores y `selection.json`. La aprobación está vinculada a las huellas exactas de la campaña, las preparaciones y los planes intervenidos: no vale para otra ejecución.
 
 No se recuperan imágenes de campañas anteriores. La galería siempre procede de la extracción actual y permanece inalterada durante cualquier intervención.
 

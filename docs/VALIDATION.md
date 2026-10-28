@@ -31,7 +31,7 @@ El modo de simulación **no crea informes ni cambia decisiones**. La escritura d
 ## Lista de aceptación de una extracción
 
 - [ ] El proceso finalizó sin sustituir una publicación válida por artefactos parciales.
-- [ ] Catálogo, manifest, resumen, snapshots y preparación son consistentes.
+- [ ] Catálogo, manifest, resumen y preparación son consistentes; la preparación actual verifica huellas de **reglas técnicas**, sin exigir snapshots comerciales.
 - [ ] Los identificadores de máquina son estables, sin pérdidas o fusiones indebidas.
 - [ ] La paginación avanzó realmente y las cantidades y URLs se contrastaron con el portal.
 - [ ] Hay muestras de maquinaria nueva y de segunda mano, categorías, galerías y fichas atípicas revisadas.
@@ -40,20 +40,22 @@ El modo de simulación **no crea informes ni cambia decisiones**. La escritura d
 - [ ] Ningún dato desconocido se ha rellenado sin evidencia y el resultado conserva trazabilidad.
 - [ ] La selección no genera artefactos definitivos con una revisión pendiente o con huellas incompatibles.
 
-**Controles especialmente importantes:** solapamientos de categorías e identidades GAM; paginación y páginas repetidas en Mercaeleva; múltiples unidades semejantes y ausencia de precios en Gomariz. Un límite de páginas sirve para diagnóstico, no para acreditar cobertura completa.
+**Controles especialmente importantes:** solapamientos de categorías e identidades GAM; paginación y páginas repetidas en Mercaeleva; múltiples unidades semejantes y ausencia de precios en Gomariz; disponibilidad de páginas, familias originales y cobertura verificable en Manain. Un límite de páginas sirve para diagnóstico, no para acreditar cobertura completa.
 
 ## Selección editorial
 
 ```powershell
-npm run seleccionar -- --gam <gam-preparation.json> --gomariz <gomariz-preparation.json> --mercaeleva <mercaeleva-preparation.json> --simular
+npm run seleccionar -- --gam <gam-preparation.json> --gomariz <gomariz-preparation.json> --mercaeleva <mercaeleva-preparation.json> --manain <manain-preparation.json> --simular
 ```
 
 La simulación informa de publicables, exclusiones y cobertura sin escribir archivos. Cuando la selección detecta un conjunto que requiere control de cobertura, deben proporcionarse `--anterior`, `--catalogo` y `--revision-cobertura` de acuerdo con las reglas productivas. No improvisar el expediente ni copiar aprobaciones de otro origen. Para una salida por proveedor, el comando admite `--directorio-salida` **solo después de acreditar la revisión**.
 
 La selección puede bloquearse **correctamente** aunque la extracción y la preparación técnica hayan terminado sin errores: el bloqueo editorial no es un fallo que deba desactivarse.
 
-## Exportación e importación
+## Verificación de la frontera comercial
 
-La generación opcional de Excel o JSON para el backend tiene un control separado. Antes de exportar se requiere `companyID` real, inventario completo de la misma empresa y revisión del plan. `--simular` no escribe; `--confirmar-inventario` permite producir el artefacto, pero **no importarlo**. No interpretar un plan de altas como autorización para crear, actualizar o borrar máquinas.
+En las preparaciones canónicas nuevas, validar que `categorySellID` permanezca en `null`, `attributes` sea `[]` y las especificaciones técnicas originales sigan en `spec`. La ausencia de asignación comercial no convierte una ficha en `review`. **La selección acreditada sigue siendo un conjunto de datos, no un request de importación al backend.**
+
+El exportador heredado de Excel/JSON conserva sus verificaciones para preparaciones comerciales antiguas, pero rechaza las actuales. Su posible uso excepcional **no forma parte de la aceptación del scraper**. Ver [Integración](EQUIPZILLA_INTEGRATION.md).
 
 La ejecución automática se trata en [Operación y despliegue](AUTOMATED_DEPLOYMENT.md); los contratos están en [Reglas de datos](SCRAPER_DATA_RULES.md).

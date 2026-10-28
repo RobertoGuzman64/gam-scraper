@@ -8,7 +8,7 @@
 
 El repositorio implementa una **CLI que termina tras ejecutar una operación**. No incorpora servidor HTTP, Dockerfile, despliegue cloud, CI/CD ni importación automática al backend. Es posible planificar ejecuciones externas, pero deben conservarse íntegros los resultados y vigilarse sus fallos.
 
-Requisitos operativos: Node.js, npm, dependencias instaladas, acceso HTTPS, espacio en disco y permisos sobre `storage/`. Mercaeleva puede requerir Chrome/Chromium (`CHROME_PATH` o `CHROMIUM_PATH`). Los snapshots `data/category/` y `data/import/` deben acompañar al código.
+Requisitos operativos: Node.js, npm, dependencias instaladas, acceso HTTPS, espacio en disco y permisos sobre `storage/`. Mercaeleva puede requerir Chrome/Chromium (`CHROME_PATH` o `CHROMIUM_PATH`). Las preparaciones canónicas actuales utilizan reglas técnicas versionadas, no los snapshots comerciales de `data/category/` y `data/import/`. Estos permanecen solo para funciones heredadas que los requieran.
 
 ## Ejecución controlada
 
@@ -19,7 +19,7 @@ npm run extraer:todos -- --proveedores gam,gomariz
 
 El lote lanza los proveedores indicados **en secuencia**, guarda informes/logs en `storage/runs/` y mantiene las salidas de extracción en `storage/scraped/`. El bloqueo de lote se basa en **filesystem local**: no es distribuido y no evita toda concurrencia con una extracción individual. Evitar ejecuciones solapadas sobre el mismo directorio.
 
-No planificar un proveedor hasta haber acreditado su cobertura y revisado su comportamiento ante páginas vacías, fallos de red, cambios de HTML y límites de paginación. Los archivos `-partial-*` y los registros de error son evidencia de fallos, no fuentes publicables.
+No planificar un proveedor hasta haber acreditado su cobertura y revisado su comportamiento ante páginas vacías, fallos de red, cambios de HTML y límites de paginación. En particular, la presencia de Manain en el registro y en las pruebas no acredita automáticamente la cobertura externa de sus páginas. Los archivos `-partial-*` y los registros de error son evidencia de fallos, no fuentes publicables.
 
 ### Windows
 
