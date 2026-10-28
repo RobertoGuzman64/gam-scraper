@@ -1,20 +1,21 @@
 import { basename, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { readFile, realpath, stat } from "node:fs/promises";
-import { readAppliedIntervention } from "../../infrastructure/filesystem/intervention-derived.js";
-import { readInterventionSource } from "../../infrastructure/filesystem/intervention-source.js";
-import { persistAppliedIntervention } from "../../infrastructure/filesystem/intervention-application.js";
+import { readAppliedIntervention } from "../../infrastructure/filesystem/interventions/intervention-derived.js";
+import { readInterventionSource } from "../../infrastructure/filesystem/interventions/intervention-source.js";
+import { persistAppliedIntervention } from "../../infrastructure/filesystem/interventions/intervention-application.js";
 import { validateOfflinePreparation } from "../validation/offline.js";
 import { prepareSavedCatalog } from "../preparation/prepare.js";
-import { readSelectedInterventionScripts } from "../../manual-interventions/script-selection.js";
-import { compareInterventionScripts } from "../../manual-interventions/comparison.js";
-import type { InterventionComparison } from "../../manual-interventions/comparison.js";
-import { validateInterventionScriptSelection } from "../../manual-interventions/script-location.js";
-import { simulateIntervention } from "../../manual-interventions/simulation.js";
-import { parseAppliedInterventionRecord } from "../../manual-interventions/record.js";
-import type { VersionedInterventionScript } from "../../manual-interventions/record.js";
-import type { InterventionSimulation } from "../../manual-interventions/simulation.js";
-import { CAMPAIGN_PROVIDERS, discoverCampaign } from "./discovery.js";
+import { readSelectedInterventionScripts } from "../../infrastructure/filesystem/intervention-scripts/script-selection.js";
+import { compareInterventionScripts } from "../../catalog/interventions/comparison.js";
+import type { InterventionComparison } from "../../catalog/interventions/comparison.js";
+import { validateInterventionScriptSelection } from "../../infrastructure/filesystem/intervention-scripts/script-location.js";
+import { simulateIntervention } from "../../catalog/interventions/simulation.js";
+import { parseAppliedInterventionRecord } from "../../catalog/interventions/record.js";
+import type { VersionedInterventionScript } from "../../catalog/interventions/record.js";
+import type { InterventionSimulation } from "../../catalog/interventions/simulation.js";
+import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
+import { discoverCampaign } from "./discovery/search.js";
 
 export type CampaignInterventionResult = {
   readonly runId: string;

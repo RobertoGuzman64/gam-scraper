@@ -1,9 +1,10 @@
 import { readFile, stat } from "node:fs/promises";
 import { dirname, basename, join, resolve } from "node:path";
-import { inspectCleanupArea } from "../../infrastructure/filesystem/campaign-cleanup.js";
-import type { CleanupArea, CleanupInventory } from "../../infrastructure/filesystem/campaign-cleanup.js";
-import { CAMPAIGN_PROVIDERS, discoverCampaign } from "./discovery.js";
-import { verifyDeliveredCampaign } from "./delivery-verification.js";
+import { inspectCleanupArea } from "../../infrastructure/filesystem/campaign/campaign-cleanup.js";
+import type { CleanupArea, CleanupInventory } from "../../infrastructure/filesystem/campaign/campaign-cleanup.js";
+import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
+import { discoverCampaign } from "./discovery/search.js";
+import { verifyDeliveredCampaign } from "./delivery/verification.js";
 
 const isRecord = (input: unknown): input is Record<string, unknown> =>
   typeof input === "object" && input !== null && !Array.isArray(input);

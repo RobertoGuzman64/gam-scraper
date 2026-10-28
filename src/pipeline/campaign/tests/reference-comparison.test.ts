@@ -4,11 +4,11 @@ import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promis
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { writeCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
+import { writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
-import { compareActiveCampaignReference } from "../reference-comparison.js";
+import { compareActiveCampaignReference } from "../reference/compare.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import type { ProviderRun, BatchReport } from "../../batch/report-types.js";
+import type { ProviderRun, BatchReport } from "../../../contracts/batch-report.js";
 
 const sha = (input: string): string => createHash("sha256").update(input).digest("hex");
 const startedAt = "2026-01-01T08:00:00.000Z";

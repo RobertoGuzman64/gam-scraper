@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { buildReviewCensus } from "../diagnostics/review-census.js";
 import { sourceSignalForIssue } from "../diagnostics/source-triage.js";
-import { classifyQualityIssue } from "../import/preparation/offline-diagnostics.js";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
-import { readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
+import { classifyQualityIssue } from "../preparation/offline-diagnostics.js";
+import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
 
 const provider = "gam";
 const prefix = "scrape-gam-marzo-2026";

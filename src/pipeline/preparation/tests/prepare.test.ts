@@ -8,10 +8,10 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/scraping.js";
 import { writeOutputs } from "../../publication/publish.js";
 import { prepareSavedCatalog } from "../prepare.js";
-import { compareOfflinePreparations } from "../../../catalog/import/preparation/offline-diagnostics.js";
+import { compareOfflinePreparations } from "../../../catalog/preparation/offline-diagnostics.js";
 import { buildSourceTriage } from "../../../catalog/diagnostics/source-triage.js";
-import { readOfflinePreparation } from "../../../infrastructure/filesystem/offline-preparation.js";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
+import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 
 const category: CategoryConfig = { key: "maquinas", name: "Maquinaria de ocasión", url: "https://example.test/maquinas" };
 const when = "2026-10-21T12:00:00Z";

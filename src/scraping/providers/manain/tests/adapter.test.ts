@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { loadImportCatalog } from "../../../../infrastructure/filesystem/import-catalog-loader.js";
-import { prepareProduct } from "../../../../catalog/import/preparation/prepare-product.js";
+import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+import { prepareProduct } from "../../../../catalog/legacy-export/prepare-product.js";
 import { scrapeCategory } from "../../../engine/scrape-category.js";
 import type { ScraperProvider } from "../../../provider.js";
 import { manainProvider, requireCompleteManainListing } from "../adapter.js";

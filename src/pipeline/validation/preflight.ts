@@ -3,10 +3,10 @@ import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { getProvider } from "../../scraping/registry.js";
 import { parseCsv } from "../../shared/csv-parse.js";
-import { parsePreparation } from "../../catalog/import/preparation/preparation-document.js";
-import { loadImportCatalog } from "../../infrastructure/filesystem/import-catalog-loader.js";
-import { validateCreateManyCandidate } from "../../catalog/import/preparation/import-validation.js";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
+import { parsePreparation } from "../../catalog/preparation/preparation-document.js";
+import { loadImportCatalog } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+import { validateCreateManyCandidate } from "../../catalog/legacy-export/import-validation.js";
+import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 
 export type PreflightOptions = {
   readonly providerId: string;

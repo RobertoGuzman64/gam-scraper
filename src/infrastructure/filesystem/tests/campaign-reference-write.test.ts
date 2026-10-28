@@ -6,10 +6,11 @@ import { join } from "node:path";
 import test from "node:test";
 import { compareCampaignReferences } from "../../../catalog/reference/compare.js";
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
-import { readCampaignReference, writeCampaignReference } from "../campaign-reference.js";
+import { readCampaignReference } from "../reference/store.js";
+import { writeCampaignReference } from "../../../pipeline/campaign/reference/maintenance.js";
 import type { CanonicalCatalog } from "../../../catalog/canonical-catalog.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import type { ReferenceCatalogSource } from "../campaign-reference.js";
+import type { ReferenceCatalogSource } from "../reference/store.js";
 
 const sha = (raw: string): string => createHash("sha256").update(raw).digest("hex");
 const product = (providerId: string, price: string | null): ProductRecord => ({

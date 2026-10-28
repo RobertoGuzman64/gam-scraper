@@ -3,7 +3,7 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test, { after } from "node:test";
 import { finalizeActiveCampaign } from "../finalization.js";
-import { CAMPAIGN_PROVIDERS } from "../discovery.js";
+import { CAMPAIGN_PROVIDERS } from "../discovery/report.js";
 import { reuseCampaignTestFixture } from "./campaign-catalog-fixture.js";
 import { approveDraft, createFixture } from "./finalization-fixture.js";
 
@@ -144,7 +144,7 @@ test("rechaza borradores caducados, estructura adulterada y edición de seleccio
 test("los argumentos CLI aplican las decisiones y validan sin aprobar por defecto", async () => {
   const data = await fixture();
   try {
-    const { runCampaignFinalization } = await import("../../../cli/campaign-finalize.js");
+    const { runCampaignFinalization } = await import("../../../cli/commands/campaign/campaign-finalize.js");
     const { inspectActiveCampaignEditorial } = await import("../editorial.js");
     await runCampaignFinalization([], data.root);
     const draft = await inspectActiveCampaignEditorial(data.root);

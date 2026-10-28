@@ -4,15 +4,15 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { randomUUID } from "node:crypto";
-import { CAMPAIGN_PROVIDERS } from "../discovery.js";
+import { CAMPAIGN_PROVIDERS } from "../discovery/report.js";
 import { copyCampaignTestCatalog } from "./campaign-catalog-fixture.js";
 import { reviewActiveCampaign } from "../review.js";
 import { finalizeActiveCampaign } from "../finalization.js";
-import { deliverActiveCampaign } from "../delivery.js";
+import { deliverActiveCampaign } from "../delivery/execute.js";
 import { cleanDeliveredCampaign } from "../cleanup.js";
-import { updateActiveCampaignReference } from "../reference-update.js";
+import { updateActiveCampaignReference } from "../reference/update-legacy.js";
 import { inspectCampaignOperations } from "../operations-status.js";
-import type { BatchReport, ProviderRun } from "../../batch/report-types.js";
+import type { BatchReport, ProviderRun } from "../../../contracts/batch-report.js";
 
 const fixtures = resolve("src/testing/fixtures");
 const prefixes = {

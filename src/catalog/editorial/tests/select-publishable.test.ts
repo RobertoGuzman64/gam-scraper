@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { selectPublishableCatalog } from "../select-publishable.js";
 import { createEditorialTestApproval, EDITORIAL_PROVIDERS, EDITORIAL_SOURCES, prepareEditorialCohort } from "./editorial-cohort-fixtures.js";
 

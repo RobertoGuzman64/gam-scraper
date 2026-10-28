@@ -4,7 +4,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildManainCensus, reuseManainCompleteCensus } from "../census.js";
-import { findReusableManainCensus } from "../census-storage.js";
+import { findReusableManainCensus } from "../../../../infrastructure/filesystem/manain-census-storage.js";
 import type { ManainListingResult } from "../listing.js";
 
 test("Manain: el censo parcial mantiene explícita la falta de cobertura y no publica fichas", () => {

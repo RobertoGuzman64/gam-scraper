@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { loadImportCatalogSnapshot } from "./import-catalog-loader.js";
+import { loadImportCatalogSnapshot } from "./legacy-export/import-catalog-loader.js";
 
 const require = createRequire(import.meta.url);
 

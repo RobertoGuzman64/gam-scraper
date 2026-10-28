@@ -5,8 +5,10 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { prepareSavedCatalog } from "../../preparation/prepare.js";
-import { discoverCampaign, discoverCampaignCatalogHistory, CAMPAIGN_PROVIDERS } from "../discovery.js";
-import type { BatchReport, ProviderRun } from "../../batch/report-types.js";
+import { discoverCampaign } from "../discovery/search.js";
+import { discoverCampaignCatalogHistory } from "../discovery/history.js";
+import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
+import type { BatchReport, ProviderRun } from "../../../contracts/batch-report.js";
 import { copyCampaignTestCatalog } from "./campaign-catalog-fixture.js";
 
 const fixtureRoot = resolve("src/testing/fixtures");

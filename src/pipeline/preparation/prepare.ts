@@ -2,17 +2,17 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { buildProductIdentity } from "../../catalog/identity.js";
-import { prepareImportBatch } from "../../catalog/import/preparation/prepare.js";
-import { buildOfflineDiagnostics, compareOfflinePreparations } from "../../catalog/import/preparation/offline-diagnostics.js";
+import { prepareImportBatch } from "../../catalog/preparation/prepare.js";
+import { buildOfflineDiagnostics, compareOfflinePreparations } from "../../catalog/preparation/offline-diagnostics.js";
 import { buildSourceTriage } from "../../catalog/diagnostics/source-triage.js";
 import type { SourceTriageGroup } from "../../catalog/diagnostics/source-triage.js";
-import type { OfflineDiagnostics, PreparationComparison } from "../../catalog/import/preparation/offline-diagnostics.js";
-import { parseOfflinePreparation } from "../../catalog/import/preparation/offline-document.js";
-import type { OfflinePreparation } from "../../catalog/import/preparation/offline-document.js";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
-import { readAppliedIntervention } from "../../infrastructure/filesystem/intervention-derived.js";
-import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation-inputs.js";
-import { offlinePreparationManifest, offlinePreparationManifestPath, readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
+import type { OfflineDiagnostics, PreparationComparison } from "../../catalog/preparation/offline-diagnostics.js";
+import { parseOfflinePreparation } from "../../catalog/preparation/offline-document.js";
+import type { OfflinePreparation } from "../../catalog/preparation/offline-document.js";
+import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readAppliedIntervention } from "../../infrastructure/filesystem/interventions/intervention-derived.js";
+import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation/preparation-inputs.js";
+import { offlinePreparationManifest, offlinePreparationManifestPath, readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
 
 export type PrepareOptions = {
   readonly providerId: string;

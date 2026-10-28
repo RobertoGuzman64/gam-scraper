@@ -1,6 +1,6 @@
 import type { ScraperProvider } from "../../provider.js";
 import { discoverManainSaleCatalog } from "./browser.js";
-import { findReusableManainCensus } from "./census-storage.js";
+import { findReusableManainCensus } from "../../../infrastructure/filesystem/manain-census-storage.js";
 import { loadManainProductViaCdp, manainCdpPort } from "./cdp.js";
 import { fetchHtml } from "../../../infrastructure/http/fetch-html.js";
 import { MANAIN_CATEGORIES, MANAIN_OPTIONS } from "./config.js";

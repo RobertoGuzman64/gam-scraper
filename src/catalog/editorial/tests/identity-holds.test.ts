@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
-import { gamNewForkliftIdentityIssues } from "../gam-new-forklift-identity.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { gamNewForkliftIdentityIssues } from "../providers/gam/new-forklift-identity.js";
 import { createEditorialTestApproval, EDITORIAL_SOURCES, prepareEditorialCohort } from "./editorial-cohort-fixtures.js";
 
 const sources = EDITORIAL_SOURCES;

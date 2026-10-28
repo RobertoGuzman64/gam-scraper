@@ -4,12 +4,13 @@ import { dirname, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { createAccreditationDraft, inspectAccreditationDraft, selectAccreditedPublishable, sha256 } from "../../catalog/editorial/campaign-accreditation.js";
 import type { AccreditedSource, CampaignAccreditation } from "../../catalog/editorial/campaign-accreditation.js";
-import type { OfflinePreparation } from "../../catalog/import/preparation/offline-document.js";
+import type { OfflinePreparation } from "../../catalog/preparation/offline-document.js";
 import type { PublishableSelection } from "../../catalog/editorial/select-publishable.js";
-import { readCampaignAccreditationSources } from "../../infrastructure/filesystem/campaign-accreditation.js";
-import { readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
+import { readCampaignAccreditationSources } from "./accreditation-sources.js";
+import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { validateOfflinePreparation } from "../validation/offline.js";
-import { CAMPAIGN_PROVIDERS, discoverCampaign, listCampaignRuns } from "./discovery.js";
+import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
+import { discoverCampaign, listCampaignRuns } from "./discovery/search.js";
 
 export type CampaignFinalizationResult = {
   readonly runId: string;

@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { batchRunExcess, cleanBatchExcess } from "../run-retention.js";
+import { batchRunExcess, cleanBatchExcess } from "../runs/run-retention.js";
 
 const runId = (day: number): string => `2026-10-${String(day).padStart(2, "0")}T10-00-00-000Z-1234abcd`;
 

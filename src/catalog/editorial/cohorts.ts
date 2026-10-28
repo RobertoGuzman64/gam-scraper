@@ -1,4 +1,4 @@
-import type { OfflinePreparation } from "../import/preparation/offline-document.js";
+import type { OfflinePreparation } from "../preparation/offline-document.js";
 
 export type Snapshot = Readonly<Record<string, { readonly sha256: string; readonly count: number }>>;
 

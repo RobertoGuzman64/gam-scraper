@@ -1,8 +1,8 @@
 import { basename, dirname, join } from "node:path";
 import { prepareSavedCatalog } from "../preparation/prepare.js";
 import { validateCanonicalSource, validateOfflinePreparation } from "../validation/offline.js";
-import { discoverCampaign, listCampaignRuns } from "./discovery.js";
-import type { CampaignDiscovery, ProviderDiscovery } from "./discovery.js";
+import { discoverCampaign, listCampaignRuns } from "./discovery/search.js";
+import type { CampaignDiscovery, ProviderDiscovery } from "./discovery/search.js";
 
 export type ReviewItem = {
   readonly reference: string;

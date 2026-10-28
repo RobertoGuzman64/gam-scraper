@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { inspectGamBasketDom, pendingGamBasketRecords } from "../basket-dom-evidence.js";
 
 test("GAM: diagnostica las 15 cestas pendientes tras recuperar fragmentos repetidos sin alterar los valores originales", async () => {

@@ -1,5 +1,5 @@
 import type { ScraperProvider } from "../../provider.js";
-import { isGomarizOccasionSale } from "../../../catalog/normalization/gomariz-sale.js";
+import { isGomarizOccasionSale } from "../../../catalog/normalization/providers/gomariz/sale.js";
 import { GOMARIZ_CATEGORIES, GOMARIZ_OPTIONS } from "./config.js";
 import { buildGomarizPageUrl, extractGomarizLinks, parseGomarizProduct } from "./parsers.js";
 

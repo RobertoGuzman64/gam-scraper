@@ -1,6 +1,6 @@
 import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
 import { createAccreditationDraft, selectAccreditedPublishable, sha256 } from "../campaign-accreditation.js";
-import type { OfflinePreparation } from "../../import/preparation/offline-document.js";
+import type { OfflinePreparation } from "../../preparation/offline-document.js";
 
 export const EDITORIAL_PROVIDERS = ["gam", "gomariz", "mercaeleva"] as const;
 export const EDITORIAL_SOURCES = {

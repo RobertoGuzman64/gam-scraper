@@ -1,7 +1,7 @@
 import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { readCanonicalCatalog, writeCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
+import { readCanonicalCatalog, writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import type { CanonicalCatalog } from "../../../catalog/canonical-catalog.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 

@@ -7,7 +7,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/scraping.js";
 import { writeOutputs } from "../../../pipeline/publication/publish.js";
-import { readCanonicalCatalog } from "../canonical-catalog.js";
+import { readCanonicalCatalog } from "../catalog/canonical-catalog.js";
 
 const category: CategoryConfig = { key: "venta", name: "Venta", url: "https://test.example/venta" };
 const stamp = (day: number): string => `2026-10-${String(day).padStart(2, "0")}T10:00:00Z`;

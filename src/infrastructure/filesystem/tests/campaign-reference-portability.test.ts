@@ -4,7 +4,8 @@ import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { exportCampaignReference, importCampaignReference, inspectCampaignReference, readCampaignReference, recoverCampaignReference } from "../campaign-reference.js";
+import { exportCampaignReference, importCampaignReference, recoverCampaignReference } from "../../../pipeline/campaign/reference/maintenance.js";
+import { inspectCampaignReference, readCampaignReference } from "../reference/store.js";
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import type { CanonicalCatalog } from "../../../catalog/canonical-catalog.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";

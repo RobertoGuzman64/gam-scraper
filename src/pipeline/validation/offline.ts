@@ -3,14 +3,14 @@ import { isDeepStrictEqual } from "node:util";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { buildProductIdentity } from "../../catalog/identity.js";
-import { prepareImportBatch } from "../../catalog/import/preparation/prepare.js";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
-import { readAppliedIntervention } from "../../infrastructure/filesystem/intervention-derived.js";
-import { readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
-import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation-inputs.js";
+import { prepareImportBatch } from "../../catalog/preparation/prepare.js";
+import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readAppliedIntervention } from "../../infrastructure/filesystem/interventions/intervention-derived.js";
+import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
+import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation/preparation-inputs.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
-import type { OfflinePreparation } from "../../catalog/import/preparation/offline-document.js";
-import type { ImportCatalog } from "../../catalog/import/preparation/contracts.js";
+import type { OfflinePreparation } from "../../catalog/preparation/offline-document.js";
+import type { ImportCatalog } from "../../catalog/legacy-export/contracts.js";
 
 export type CatalogValidation = {
   readonly providerId: string;

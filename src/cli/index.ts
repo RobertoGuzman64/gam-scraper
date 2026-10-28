@@ -1,14 +1,14 @@
 import { printCommandError } from "./reporting/errors.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { runBatchCli } from "./batch.js";
-import { runExport } from "./export.js";
-import { runPrepare } from "./prepare.js";
-import { runSingleScrape } from "./scrape.js";
-import { runPreflight } from "./validate.js";
+import { runBatchCli } from "./commands/campaign/batch.js";
+import { runExport } from "./commands/legacy-export/export.js";
+import { runPrepare } from "./commands/catalog/prepare.js";
+import { runSingleScrape } from "./commands/extraction/scrape.js";
+import { runPreflight } from "./commands/catalog/validate.js";
 import { batchHelp } from "./options/batch.js";
 import { scrapeHelp } from "./options/scrape.js";
-import { validateHelp } from "./validate.js";
+import { validateHelp } from "./commands/catalog/validate.js";
 
 export const cliHelp = `EQUIPZILLA SCRAPER
 

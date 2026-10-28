@@ -7,7 +7,7 @@ import { buildReviewCensus } from "../catalog/diagnostics/review-census.js";
 import type { ReviewCensusEntry } from "../catalog/diagnostics/review-census.js";
 import { printCommandError } from "../cli/reporting/errors.js";
 import { atomicWrite } from "../infrastructure/filesystem/atomic-write.js";
-import { readOfflinePreparation } from "../infrastructure/filesystem/offline-preparation.js";
+import { readOfflinePreparation } from "../infrastructure/filesystem/preparation/offline-preparation.js";
 
 const sha256 = (content: string): string => createHash("sha256").update(content).digest("hex");
 const quote = (value: string): string => `"${value.replaceAll('"', '""')}"`;

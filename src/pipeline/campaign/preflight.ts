@@ -1,5 +1,5 @@
-import { discoverCampaign } from "./discovery.js";
-import type { CampaignDiscovery } from "./discovery.js";
+import { discoverCampaign } from "./discovery/search.js";
+import type { CampaignDiscovery } from "./discovery/search.js";
 
 export type ExtractionInspection = {
   readonly campaign: CampaignDiscovery;

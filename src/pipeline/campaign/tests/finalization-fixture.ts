@@ -3,12 +3,12 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/canonical-catalog.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { buildProductIdentity } from "../../../catalog/identity.js";
 import { reviewActiveCampaign } from "../review.js";
-import { CAMPAIGN_PROVIDERS } from "../discovery.js";
+import { CAMPAIGN_PROVIDERS } from "../discovery/report.js";
 import { copyCampaignTestCatalog } from "./campaign-catalog-fixture.js";
-import type { ProviderRun, BatchReport } from "../../batch/report-types.js";
+import type { ProviderRun, BatchReport } from "../../../contracts/batch-report.js";
 
 const sourceRoot = resolve("src/testing/fixtures");
 export const prefixes = {

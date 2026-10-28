@@ -7,7 +7,7 @@ import { getProvider } from "../../scraping/registry.js";
 import { getBatchStatus, writeBatchReport } from "./report.js";
 import type { BatchReport, ProviderRun } from "./report.js";
 import { acquireBatchLock } from "../../infrastructure/locking/batch-lock.js";
-import { cleanBatchExcess } from "../../infrastructure/filesystem/run-retention.js";
+import { cleanBatchExcess } from "../../infrastructure/filesystem/runs/run-retention.js";
 import { runProvider } from "./run-provider.js";
 
 export type BatchResult = { readonly report: BatchReport; readonly reportFile: string };

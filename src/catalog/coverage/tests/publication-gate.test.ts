@@ -3,7 +3,7 @@ import test from "node:test";
 import { readHistoricalGamCoverageCatalog, GAM_MISSING_REFERENCES } from "./gam-coverage-fixtures.js";
 import { parseCanonicalCatalog } from "../../canonical-catalog.js";
 import { DEFAULT_CATEGORIES } from "../../../scraping/providers/gam/config.js";
-import { assessNewGamCoverage } from "../gam-review-gate.js";
+import { assessNewGamCoverage } from "../providers/gam/review-gate.js";
 
 const previous = await readHistoricalGamCoverageCatalog();
 const missing = GAM_MISSING_REFERENCES;

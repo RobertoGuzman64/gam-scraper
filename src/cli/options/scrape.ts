@@ -1,5 +1,5 @@
 import type { ScrapeOptions } from "../../contracts/scraping.js";
-import type { ScrapeRunSelection } from "../../pipeline/scrape-run.js";
+import type { ScrapeRunSelection } from "../../pipeline/extraction/types.js";
 import { getProvider } from "../../scraping/registry.js";
 
 type ArgValue = string | boolean;

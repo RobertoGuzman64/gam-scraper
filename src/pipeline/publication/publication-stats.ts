@@ -1,5 +1,5 @@
 import { readFile, stat } from "node:fs/promises";
-import type { PublicationStats } from "../batch/report-types.js";
+import type { PublicationStats } from "../../contracts/batch-report.js";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);

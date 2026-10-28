@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { runReviewCensus } from "../review-census.js";
-import { readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
+import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
 
 const catalog = "src/testing/fixtures/census/gam/scrape-gam-marzo-2026-catalog.json";
 const preparation = "src/testing/fixtures/census/preparations/gam/scrape-gam-marzo-2026-census-preparation.json";

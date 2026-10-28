@@ -10,9 +10,9 @@ import type { OutputGroup } from "./assemble.js";
 import { toCsv } from "../../shared/csv.js";
 import { serializeCategoriesCsv, listSpecKeys, buildProductHeaders, toProductRow } from "./csv-serializer.js";
 import { atomicWrite } from "../../infrastructure/filesystem/atomic-write.js";
-import { abandonArchive, cleanCatalogExcess, finalizePublishedCatalog, restorePublishedCatalog, stagePublishedCatalog } from "../../infrastructure/filesystem/catalog-retention.js";
-import { buildLegacyPreparation } from "./legacy-preparation.js";
-import { writeCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
+import { abandonArchive, cleanCatalogExcess, finalizePublishedCatalog, restorePublishedCatalog, stagePublishedCatalog } from "../../infrastructure/filesystem/catalog/catalog-retention.js";
+import { buildLegacyPreparation } from "../legacy-export/preparation.js";
+import { writeCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 
 export const writeCategoriesCsv = async (
   outDir: string,

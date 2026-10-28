@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { readCampaignReference } from "../campaign-reference.js";
+import { readCampaignReference } from "../reference/store.js";
 import { CAMPAIGN_PROVIDERS, LEGACY_CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { compareCampaignReferences } from "../../../catalog/reference/compare.js";
 import type { CanonicalCatalog } from "../../../catalog/canonical-catalog.js";

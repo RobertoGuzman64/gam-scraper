@@ -1,10 +1,10 @@
 import { lstat } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { inspectCampaignReference } from "../../infrastructure/filesystem/campaign-reference.js";
-import type { CampaignReferenceInspection } from "../../infrastructure/filesystem/campaign-reference.js";
-import { discoverCampaign, listCampaignRuns } from "./discovery.js";
-import type { CampaignDiscovery } from "./discovery.js";
-import { verifyDeliveredCampaign } from "./delivery-verification.js";
+import { inspectCampaignReference } from "../../infrastructure/filesystem/reference/store.js";
+import type { CampaignReferenceInspection } from "../../infrastructure/filesystem/reference/store.js";
+import { discoverCampaign, listCampaignRuns } from "./discovery/search.js";
+import type { CampaignDiscovery } from "./discovery/search.js";
+import { verifyDeliveredCampaign } from "./delivery/verification.js";
 import { inspectActiveCampaignEditorial } from "./editorial.js";
 import { finalizeActiveCampaign } from "./finalization.js";
 

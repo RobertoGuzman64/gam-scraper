@@ -1,8 +1,8 @@
 import type { CanonicalCatalog } from "../canonical-catalog.js";
 import { compareCanonicalCoverage } from "./compare.js";
 import { auditChangedProduct, changedFieldChecks } from "./change-audit.js";
-import { hasGamGalleryCorrection } from "../editorial/gam-verified-gallery.js";
-import { hasGamShortDescriptionCorrection } from "../editorial/gam-verified-description.js";
+import { hasGamGalleryCorrection } from "../editorial/providers/gam/verified-gallery.js";
+import { hasGamShortDescriptionCorrection } from "../editorial/providers/gam/verified-description.js";
 import type { ChangedFieldCheck, ChangedProductAudit } from "./change-audit.js";
 
 export type CoverageReview = {

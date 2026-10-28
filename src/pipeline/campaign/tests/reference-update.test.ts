@@ -4,15 +4,15 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
-import { readCampaignReference } from "../../../infrastructure/filesystem/campaign-reference.js";
-import { deliverActiveCampaign } from "../delivery.js";
+import { readCampaignReference } from "../../../infrastructure/filesystem/reference/store.js";
+import { deliverActiveCampaign } from "../delivery/execute.js";
 import { planDeliveredCampaignCleanup } from "../cleanup.js";
 import { finalizeActiveCampaign } from "../finalization.js";
 import { reviewActiveCampaign } from "../review.js";
-import { updateActiveCampaignReference } from "../reference-update.js";
-import { CAMPAIGN_PROVIDERS } from "../discovery.js";
+import { updateActiveCampaignReference } from "../reference/update-legacy.js";
+import { CAMPAIGN_PROVIDERS } from "../discovery/report.js";
 import { copyCampaignTestCatalog } from "./campaign-catalog-fixture.js";
-import type { BatchReport, ProviderRun } from "../../batch/report-types.js";
+import type { BatchReport, ProviderRun } from "../../../contracts/batch-report.js";
 
 const prefixes = {
   gam: "scrape-gam-marzo-2026",

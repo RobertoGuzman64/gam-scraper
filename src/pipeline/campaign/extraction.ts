@@ -2,8 +2,10 @@ import { join, resolve } from "node:path";
 import { initializeWorkspace } from "../../infrastructure/filesystem/workspace.js";
 import { createBatchRunId, runBatch } from "../batch/run.js";
 import type { BatchObserver, BatchResult } from "../batch/run.js";
-import { discoverCampaign, CAMPAIGN_PROVIDERS } from "./discovery.js";
-import { withCampaignAdmissionLock, prepareCampaignAdmission, resumePendingCampaignRemoval } from "./campaign-retention.js";
+import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
+import { discoverCampaign } from "./discovery/search.js";
+import { withCampaignAdmissionLock, prepareCampaignAdmission } from "./retention/admission.js";
+import { resumePendingCampaignRemoval } from "./retention/recovery.js";
 import { inspectBeforeExtraction } from "./preflight.js";
 
 export const extractCampaign = async (

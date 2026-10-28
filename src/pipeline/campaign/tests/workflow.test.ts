@@ -5,8 +5,8 @@ import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { inspectBeforeExtraction } from "../preflight.js";
 import { reviewActiveCampaign } from "../review.js";
-import { CAMPAIGN_PROVIDERS } from "../discovery.js";
-import type { BatchReport, ProviderRun } from "../../batch/report-types.js";
+import { CAMPAIGN_PROVIDERS } from "../discovery/report.js";
+import type { BatchReport, ProviderRun } from "../../../contracts/batch-report.js";
 import { copyCampaignTestCatalog } from "./campaign-catalog-fixture.js";
 
 const sourceRoot = resolve("src/testing/fixtures");

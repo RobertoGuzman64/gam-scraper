@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { formatPriceAvailability, formatReviewDiagnostics } from "../review-diagnostics.js";
-import type { PreparedProduct } from "../../../catalog/import/preparation/prepare.js";
+import type { PreparedProduct } from "../../../catalog/preparation/prepare.js";
 
 const entry = (reference: string | null, issues: readonly string[], status: PreparedProduct["status"] = "review", condition: PreparedProduct["product"]["condition"] = null): PreparedProduct => ({
   status,

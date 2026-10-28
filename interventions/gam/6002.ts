@@ -1,4 +1,4 @@
-import type { InterventionMetadata, ManualInterventionProposal } from "../../src/manual-interventions/contracts.js";
+import type { InterventionMetadata, ManualInterventionProposal } from "../../src/catalog/interventions/contracts.js";
 
 export const metadata = {
   id: "gam-6002",

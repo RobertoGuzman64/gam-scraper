@@ -1,10 +1,10 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { CanonicalCatalog } from "../canonical-catalog.js";
 import { buildProductIdentity } from "../identity.js";
-import { classifyQualityIssue } from "../import/preparation/offline-diagnostics.js";
-import type { IssueCategory } from "../import/preparation/offline-diagnostics.js";
-import type { OfflinePreparation } from "../import/preparation/offline-document.js";
-import type { PreparedProduct } from "../import/preparation/contracts.js";
+import { classifyQualityIssue } from "../preparation/offline-diagnostics.js";
+import type { IssueCategory } from "../preparation/offline-diagnostics.js";
+import type { OfflinePreparation } from "../preparation/offline-document.js";
+import type { PreparedProduct } from "../preparation/contracts.js";
 import { sourceSignalForIssue } from "./source-triage.js";
 import type { SourceSignal } from "./source-triage.js";
 

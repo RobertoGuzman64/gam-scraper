@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { PreparedProduct } from "../../../catalog/import/preparation/contracts.js";
+import type { PreparedProduct } from "../../../catalog/preparation/contracts.js";
 import { formatDetailedValidation } from "../detailed-validation.js";
 
 const entry: PreparedProduct = {

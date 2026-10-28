@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { runCampaignReferenceUpdate } from "../../campaign-reference.js";
+import { runCampaignReferenceUpdate } from "../../commands/campaign/campaign-reference.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const script = join(root, "scripts/tooling.mjs");
@@ -82,11 +82,14 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
     copyFileSync(join(root, "scripts/terminal.mjs"), join(temp, "scripts/terminal.mjs"));
     writeFileSync(join(temp, "scripts/run-build.mjs"), "process.exitCode = 0;\n");
     const echo = 'console.log(JSON.stringify(process.argv.slice(2)));\n';
-    for (const filename of ["prepare.js", "index.js", "storage-clean.js", "campaign-extract.js", "campaign-status.js", "campaign-review.js", "campaign-reference.js", "campaign-finalize.js", "catalog-content-gaps.js"]) {
-      writeFileSync(join(temp, "dist/cli", filename), echo);
+    for (const filename of ["cli/commands/catalog/prepare.js", "cli/index.js", "cli/commands/maintenance/storage-clean.js", "cli/commands/campaign/campaign-extract.js", "cli/commands/campaign/campaign-status.js", "cli/commands/campaign/campaign-review.js", "cli/commands/campaign/campaign-reference.js", "cli/commands/campaign/campaign-finalize.js", "cli/commands/catalog/catalog-content-gaps.js"]) {
+      const target = join(temp, "dist", filename);
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, echo);
     }
-    writeFileSync(join(temp, "dist/cli/campaign-intervene.js"), 'console.log("CAMPAIGN " + JSON.stringify(process.argv.slice(2)));\n');
-    writeFileSync(join(temp, "dist/cli/intervene.js"), 'console.log("MANUAL " + JSON.stringify(process.argv.slice(2)));\n');
+    writeFileSync(join(temp, "dist/cli/commands/campaign/campaign-intervene.js"), 'console.log("CAMPAIGN " + JSON.stringify(process.argv.slice(2)));\n');
+    mkdirSync(join(temp, "dist/cli/commands/interventions"), { recursive: true });
+    writeFileSync(join(temp, "dist/cli/commands/interventions/intervene.js"), 'console.log("MANUAL " + JSON.stringify(process.argv.slice(2)));\n');
     const fake = join(temp, "scripts/tooling.mjs");
     const [spanish, providerExtract, validate, campaignHelp, cleanup, applied, simulation, denied, campaignExtract, campaignReview, campaignStatus, referenceRead, referenceUpdate, referenceRecovery, referenceExport, referenceImport, referenceDenied, gaps, legacyCatalog] = await Promise.all([
       run(fake, ["preparar", "gam", "--origen", "origen-catalog.json", "--simular"]),

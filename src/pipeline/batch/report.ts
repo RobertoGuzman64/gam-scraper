@@ -1,5 +1,5 @@
-import type { ProviderRun, BatchReport } from "./report-types.js";
-export type { ProviderRun, BatchReport, PublicationStats } from "./report-types.js";
+import type { ProviderRun, BatchReport } from "../../contracts/batch-report.js";
+export type { ProviderRun, BatchReport, PublicationStats } from "../../contracts/batch-report.js";
 export { readPublicationStats } from "../publication/publication-stats.js";
 export { writeBatchReport } from "./report-persistence.js";
 

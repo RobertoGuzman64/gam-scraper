@@ -7,7 +7,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/scraping.js";
 import { writeOutputs } from "../../../pipeline/publication/publish.js";
 import { categoryScope } from "../../../catalog/quality.js";
-import { catalogArchiveExcess, cleanCatalogExcess } from "../catalog-retention.js";
+import { catalogArchiveExcess, cleanCatalogExcess } from "../catalog/catalog-retention.js";
 
 const category: CategoryConfig = { key: "venta", name: "Venta", url: "https://test.example/venta" };
 const item = (reference: string, price: string): ProductRecord => ({
@@ -92,7 +92,7 @@ test("limpieza opcional de prefijos antiguos mantiene snapshots y archivos sin p
     await writeFile(oldSummary, JSON.stringify({ startedAt: stamp(1) }));
     await writeFile(oldCsv, "datos anteriores");
     await writeFile(oldSnapshot, "snapshot anterior");
-    const { cleanLegacyCatalogExcess } = await import("../catalog-retention.js");
+    const { cleanLegacyCatalogExcess } = await import("../catalog/catalog-retention.js");
     assert.deepEqual((await cleanLegacyCatalogExcess(dir, "inventario", true)).map((candidate) => candidate.path).sort(),
       [oldSummary, oldCsv].sort());
     await cleanLegacyCatalogExcess(dir, "inventario", false);

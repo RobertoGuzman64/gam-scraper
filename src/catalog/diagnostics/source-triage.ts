@@ -1,7 +1,7 @@
 import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
 import { buildProductIdentity } from "../identity.js";
-import { issueCode } from "../import/preparation/offline-diagnostics.js";
-import type { OfflinePreparation } from "../import/preparation/offline-document.js";
+import { issueCode } from "../preparation/offline-diagnostics.js";
+import type { OfflinePreparation } from "../preparation/offline-document.js";
 
 export type SourceSignal =
   | "especificacion_explicita"

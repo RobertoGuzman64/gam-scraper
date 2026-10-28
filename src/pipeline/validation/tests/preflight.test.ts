@@ -4,10 +4,10 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { prepareProduct } from "../../../catalog/import/preparation/prepare.js";
-import { loadImportCatalog } from "../../../infrastructure/filesystem/import-catalog-loader.js";
-import { runExport } from "../../../cli/export.js";
-import { runPreflight } from "../../../cli/validate.js";
+import { prepareProduct } from "../../../catalog/preparation/prepare.js";
+import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+import { runExport } from "../../../cli/commands/legacy-export/export.js";
+import { runPreflight } from "../../../cli/commands/catalog/validate.js";
 import { validateCatalogPublication } from "../preflight.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 

@@ -6,7 +6,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/scraping.js";
 import { writeOutputs } from "../../../pipeline/publication/publish.js";
-import { inspectCleanupArea } from "../campaign-cleanup.js";
+import { inspectCleanupArea } from "../campaign/campaign-cleanup.js";
 
 const category: CategoryConfig = { key: "maquinaria", name: "Maquinaria", url: "https://example.test/maquinaria" };
 const prefixes = new Map([

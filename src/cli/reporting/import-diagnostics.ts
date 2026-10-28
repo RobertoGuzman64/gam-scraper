@@ -1,5 +1,5 @@
-import type { PreparedProduct } from "../../catalog/import/preparation/contracts.js";
-import { buildImportDiagnostics } from "../../catalog/import/preparation/import-diagnostics.js";
+import type { PreparedProduct } from "../../catalog/preparation/contracts.js";
+import { buildImportDiagnostics } from "../../catalog/legacy-export/import-diagnostics.js";
 
 export const formatImportDiagnostics = (products: readonly PreparedProduct[]): readonly string[] => {
   if (products.some((entry) => entry.importIssues === undefined)) {

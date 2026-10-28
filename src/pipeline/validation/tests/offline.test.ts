@@ -9,8 +9,8 @@ import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/sc
 import { writeOutputs } from "../../publication/publish.js";
 import { prepareSavedCatalog } from "../../preparation/prepare.js";
 import { validateCanonicalSource, validateOfflinePreparation } from "../offline.js";
-import { offlinePreparationManifestPath, readOfflinePreparation } from "../../../infrastructure/filesystem/offline-preparation.js";
-import { runPreflight } from "../../../cli/validate.js";
+import { offlinePreparationManifestPath, readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
+import { runPreflight } from "../../../cli/commands/catalog/validate.js";
 
 const category: CategoryConfig = {
   key: "elevacion-nueva", name: "Plataformas elevadoras nuevas", url: "https://example.test/catalogo"
