@@ -15,6 +15,7 @@ export interface ScraperProvider {
   resolveCondition?(category: CategoryConfig, condition: ParsedProduct["condition"], providerId: string): ProductRecord["condition"];
   extractReference(url: string): string | null;
   loadListingHtml?(url: string, options: ScrapeOptions): Promise<string>;
+  loadProductHtml?(url: string, options: ScrapeOptions): Promise<string>;
   discoverListing?(category: CategoryConfig, options: ScrapeOptions, onProgress?: (pages: number, found: number, stage?: string) => void): Promise<{ readonly urls: readonly string[]; readonly expectedTotal: number }>;
   discoverCategoryTree(rootUrl: string, options: ScrapeOptions): Promise<readonly CategoryConfig[]>;
 }

@@ -17,6 +17,8 @@ const definitions = {
   comparar: { entry: "cli/campaign-compare.js", usage: "comparar", description: "Comparar los catálogos originales completos con la referencia única (solo lectura)" },
   referencia: { entry: "cli/campaign-reference.js", usage: "referencia [-- --actualizar | --recuperar | --exportar <carpeta> | --importar <carpeta> [--sustituir]]", description: "Consultar (solo lectura), actualizar o trasladar con integridad la referencia operativa" },
   limpiar: { entry: "cli/campaign-clean.js", usage: "limpiar [-- --aplicar]", description: "Simular o cerrar la campaña ya entregada; protege scripts y trabajos pendientes" },
+  "manain:muestra": { entry: "cli/manain-sample.js", usage: "manain:muestra", description: "Leer cinco fichas de Manain con Chrome visible en modo diagnóstico no publicable" },
+  "manain:censo": { entry: "cli/manain-census.js", usage: "manain:censo", description: "Contar y guardar las URL del catálogo de venta de Manain sin extraer fichas" },
   "extraer:proveedor": { entry: "cli/index.js", prefix: ["scrape"], usage: "extraer:proveedor -- gam [--categoria venta] [--paginas 2]", description: "Extraer un proveedor", requiresProvider: true },
   "extraer:todos": { entry: "cli/index.js", prefix: ["batch"], usage: "extraer:todos -- [--proveedores gam,gomariz] [--simular]", description: "Extraer todos o varios proveedores" },
   "intervenir:manual": { entry: "cli/intervene.js", usage: "intervenir:manual -- gam --script <archivo.ts> [--script <otro.ts> ...] --origen <catalog.json> [--detalle] [--campana <id> --aplicar --plan <sha>]", description: "Simular o aplicar manualmente intervención con SHA aprobado", requiresProvider: true },

@@ -23,7 +23,9 @@ export const scrapeProductPages = async (
   let done = 0;
   let processed = 0;
   const parsePage = async (url: string): Promise<ParsedProduct> => {
-    const html = await fetchHtml(url, { timeoutMs: options.timeoutMs, userAgent: options.userAgent });
+    const html = provider.loadProductHtml
+      ? await provider.loadProductHtml(url, options)
+      : await fetchHtml(url, { timeoutMs: options.timeoutMs, userAgent: options.userAgent });
     return provider.parseProductPage(html, url);
   };
   const readPage = (url: string): Promise<ParsedProduct> => {

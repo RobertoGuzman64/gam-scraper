@@ -62,6 +62,9 @@ const collectValues = ($: cheerio.CheerioAPI, root: ReturnType<cheerio.CheerioAP
   return results;
 };
 
+const validTechnicalValue = (label: string, value: string): boolean =>
+  label !== "radio giro exterior" || /^\d+(?:[.,]\d+)?\s*(?:m|mm)$/i.test(value);
+
 const firstUnambiguous = (values: Values, labels: readonly string[]): string | null => {
   const distinct = new Set(labels.flatMap((label) => values.get(normalizedLabel(label)) ?? []));
   return distinct.size === 1 ? [...distinct][0] ?? null : null;
@@ -144,7 +147,12 @@ const technicalSheetFrom = ($: cheerio.CheerioAPI, root: ReturnType<cheerio.Chee
     try {
       const url = new URL(href, pageUrl);
       if (url.protocol === "https:" && (/\.pdf$/i.test(url.pathname) ||
-        (url.hostname === "manain.com" && url.pathname.startsWith("/ficha-tecnica/")))) candidates.add(url.toString());
+        (url.hostname === "manain.com" && url.pathname.startsWith("/ficha-tecnica/")))) {
+        for (const key of [...url.searchParams.keys()]) {
+          if (key.toLowerCase().startsWith("utm_")) url.searchParams.delete(key);
+        }
+        candidates.add(url.toString());
+      }
     } catch { return; }
   });
   return candidates.size === 1 ? [...candidates][0] ?? null : null;
@@ -161,7 +169,8 @@ const publishedPrice = ($: cheerio.CheerioAPI, root: ReturnType<cheerio.CheerioA
 };
 
 export const parseManainProduct = (html: string, pageUrl: string): ParsedProduct => {
-  if (!normalizeManainSaleProductUrl(pageUrl, "https://manain.com/")) {
+  const canonicalPageUrl = normalizeManainSaleProductUrl(pageUrl, "https://manain.com/");
+  if (!canonicalPageUrl) {
     throw new Error(`Manain: URL de ficha de venta inválida: ${pageUrl}`);
   }
   const $ = cheerio.load(html);
@@ -179,9 +188,11 @@ export const parseManainProduct = (html: string, pageUrl: string): ParsedProduct
   const specs: Record<string, SpecsMap[string]> = {};
   for (const [label, alternatives] of values) {
     const canonical = canonicalLabels[label] ?? `${label.charAt(0).toUpperCase()}${label.slice(1)}`;
-    if (alternatives.length) specs[canonical] = alternatives.length === 1 ? alternatives[0] ?? "" : alternatives;
+    if (alternatives.length && alternatives.every((value) => validTechnicalValue(label, value))) {
+      specs[canonical] = alternatives.length === 1 ? alternatives[0] ?? "" : alternatives;
+    }
   }
-  const images = imagesFrom($, root, pageUrl);
+  const images = imagesFrom($, root, canonicalPageUrl);
   const price = publishedPrice($, root);
   return {
     title,
@@ -197,7 +208,7 @@ export const parseManainProduct = (html: string, pageUrl: string): ParsedProduct
     longDescription: descriptionFrom($, root, [".woocommerce-Tabs-panel--description", "#tab-description", ".product-description"]),
     price: price.price,
     priceText: price.priceText,
-    technicalSheetUrl: technicalSheetFrom($, root, pageUrl),
+    technicalSheetUrl: technicalSheetFrom($, root, canonicalPageUrl),
     location: null,
     country: null,
     image: images[0] ?? null,

@@ -1,5 +1,7 @@
 import type { ScraperProvider } from "../../provider.js";
 import { discoverManainSaleCatalog } from "./browser.js";
+import { loadManainProductViaCdp, manainCdpPort } from "./cdp.js";
+import { fetchHtml } from "../../../infrastructure/http/fetch-html.js";
 import { MANAIN_CATEGORIES, MANAIN_OPTIONS } from "./config.js";
 import { extractManainSaleProductLinks } from "./listing.js";
 import type { ManainListingResult } from "./listing.js";
@@ -24,6 +26,9 @@ export const manainProvider: ScraperProvider = {
   },
   extractProductLinksFromListing: extractManainSaleProductLinks,
   parseProductPage: parseManainProduct,
+  loadProductHtml: (url, options) => manainCdpPort() !== null
+    ? loadManainProductViaCdp(url, options)
+    : fetchHtml(url, { timeoutMs: options.timeoutMs, userAgent: options.userAgent }),
   extractReference: () => null,
   discoverCategoryTree: async () => MANAIN_CATEGORIES,
   async discoverListing(category, options, onProgress) {

@@ -63,3 +63,20 @@ test("Manain: motor y preparaciÃ³n conservan unidades distintas en una extracciÃ
   assert.ok(prepared.every((item) => item.product.condition === "Segunda_Mano"));
   assert.ok(prepared.every((item) => item.product.categorySellID !== null));
 });
+
+
+test("Manain: el motor recibe las fichas mediante el lector propio sin hacer HTTP directo", async () => {
+  const seen: string[] = [];
+  const isolated: ScraperProvider = {
+    ...manainProvider,
+    discoverListing: async () => ({ urls: [firstUrl], expectedTotal: 1 }),
+    loadProductHtml: async (url) => {
+      seen.push(url);
+      return fixture("MAN1802", 2023, 3280);
+    }
+  };
+  const result = await scrapeCategory(manainProvider.categories[0]!, manainProvider.defaultOptions, isolated);
+  assert.deepEqual(seen, [firstUrl]);
+  assert.equal(result.products[0]?.reference, "MAN1802");
+  assert.deepEqual(result.failures, []);
+});

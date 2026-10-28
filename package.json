@@ -20,6 +20,8 @@
     "limpiar": "node scripts/tooling.mjs limpiar",
     "ayuda": "node scripts/tooling.mjs ayuda",
     "extraer:proveedor": "node scripts/tooling.mjs extraer:proveedor",
+    "manain:muestra": "node scripts/tooling.mjs manain:muestra",
+    "manain:censo": "node scripts/tooling.mjs manain:censo",
     "extraer:todos": "node scripts/tooling.mjs extraer:todos",
     "intervenir:manual": "node scripts/tooling.mjs intervenir:manual",
     "intervenir:preparar": "node scripts/tooling.mjs intervenir:preparar",

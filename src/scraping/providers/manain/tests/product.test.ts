@@ -131,3 +131,17 @@ test("Manain: reconoce la ficha Elementor y las imágenes originales sin contami
   assert.equal(parsed.shortDescription, null);
   assert.equal(parsed.longDescription, null);
 });
+
+test("Manain: descarta una medida dimensional inválida sin corregirla por inferencia y elimina seguimiento en el enlace técnico", () => {
+  const html = page("MAN2327", `<table class="woocommerce-product-attributes">
+    <tr><th>Radio giro exterior</th><td>si m</td></tr>
+    <tr><th>Altura trabajo</th><td>10 m</td></tr>
+    <tr><th>Año</th><td>2024</td></tr>
+  </table><a href="/ficha-tecnica/venta-movimiento-tierra-miniexcavadora-kubota-kx080-4a2-2/?utm_source=chatgpt.com">Ficha técnica</a>`);
+  const parsed = parseManainProduct(html, `${base}?utm_source=chatgpt.com`);
+  assert.equal(parsed.reference, "MAN2327");
+  assert.equal(parsed.specs?.["Radio giro exterior"], undefined);
+  assert.equal(parsed.specs?.["Altura trabajo"], "10 m");
+  assert.equal(parsed.technicalSheetUrl, "https://manain.com/ficha-tecnica/venta-movimiento-tierra-miniexcavadora-kubota-kx080-4a2-2/");
+  assert.equal(parsed.priceText, "Consultar precio");
+});
