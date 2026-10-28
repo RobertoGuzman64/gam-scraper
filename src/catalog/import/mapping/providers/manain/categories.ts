@@ -36,6 +36,19 @@ export const manainCategorySlug = (record: ProductRecord, condition: ImportCandi
     return energy ? `plataforma-telescopica-${energy}` : null;
   }
   if (family === "elevacion-camion-cesta") return used ? "plataformas-elevadoras-sobre-camion-segunda-mano" : "plataforma-sobre-camion";
+  if (family === "elevacion-unipersonal") {
+    if (energyOf(record) !== "electrica") return null;
+    return used ? "plataformas-unipersonales-segunda-mano" : "plataforma-unipersonal-electrica";
+  }
+  if (family === "movimiento-tierra-martillo-miniex") return used ? "cazos-implementos-segunda-mano" : null;
+  if (family === "manipulacion-transpaletas") {
+    if (energyOf(record) !== "electrica") return null;
+    return used ? "transpaletas-electricas-segunda-mano" : "transpaleta-electrica";
+  }
+  if (family === "manipulacion-retractil") {
+    if (energyOf(record) !== "electrica") return null;
+    return used ? "carretillas-elevadoras-retractiles-segunda-mano" : "carretilla-retractil";
+  }
   if (family === "manipulacion-carretilla-4x4") return used ? "carretillas-todoterreno-segunda-mano" : null;
   if (family === "manipulacion-carretilla") {
     const energy = energyOf(record);

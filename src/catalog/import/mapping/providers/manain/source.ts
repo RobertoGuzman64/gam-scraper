@@ -12,7 +12,11 @@ const families = [
   "manipulacion-carretilla",
   "manipulacion-manipulador",
   "movimiento-tierra-dumper",
-  "movimiento-tierra-minicargadora"
+  "movimiento-tierra-minicargadora",
+  "movimiento-tierra-martillo-miniex",
+  "elevacion-unipersonal",
+  "manipulacion-transpaletas",
+  "manipulacion-retractil"
 ] as const;
 
 export type ManainFamily = (typeof families)[number];
@@ -21,7 +25,9 @@ const aliases: readonly { readonly prefix: string; readonly family: ManainFamily
   { prefix: "venda-elevacio-tisores", family: "elevacion-tijera" },
   { prefix: "venda-elevacio-bracos-articulats", family: "elevacion-brazo-articulado" },
   { prefix: "venda-manipulacio-de-carregues-carretilles", family: "manipulacion-carretilla" },
-  { prefix: "venda-moviment-de-terres-minicargadora", family: "movimiento-tierra-minicargadora" }
+  { prefix: "venda-moviment-de-terres-minicargadora", family: "movimiento-tierra-minicargadora" },
+  { prefix: "venda-elevacio-camions-plataforma", family: "elevacion-camion-cesta" },
+  { prefix: "venda-elevacio-unipersonals", family: "elevacion-unipersonal" }
 ];
 
 export const manainSourceFamily = (record: ProductRecord): ManainFamily | null => {

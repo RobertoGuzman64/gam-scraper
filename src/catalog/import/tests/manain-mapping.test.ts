@@ -139,3 +139,38 @@ test("Manain: no se fuerza categoría con motorización o evidencia insuficiente
     { "Nueva o usada": "usada", Motor: "Gasolina" }, "");
   assert.equal(prepareProduct(generic, catalog).product.categorySellID, null);
 });
+
+test("Manain: implementos, unipersonales y equipos de manipulación con familia explícita conservan su destino", () => {
+  const cases: readonly { readonly url: string; readonly motor: string; readonly slug: string }[] = [
+    { url: "venta-movimiento-tierra-martillo-miniex-kubota-km-155", motor: "Diésel", slug: "cazos-implementos-segunda-mano" },
+    { url: "venda-elevacio-camions-plataforma-socage-18t", motor: "Diésel", slug: "plataformas-elevadoras-sobre-camion-segunda-mano" },
+    { url: "venta-elevacion-unipersonal-power-towers-nano-sp", motor: "Eléctrico", slug: "plataformas-unipersonales-segunda-mano" },
+    { url: "venda-elevacio-unipersonals-youngman-boss-x3", motor: "Eléctrico", slug: "plataformas-unipersonales-segunda-mano" },
+    { url: "venta-manipulacion-transpaletas-mb-forklift-f4", motor: "Eléctrico", slug: "transpaletas-electricas-segunda-mano" },
+    { url: "venta-manipulacion-retractil-bt-rr-b-3", motor: "Eléctrico", slug: "carretillas-elevadoras-retractiles-segunda-mano" }
+  ];
+  for (const entry of cases) {
+    const source = machine(`https://manain.com/producto/${entry.url}/`,
+      { "Nueva o usada": "usada", Motor: entry.motor }, "");
+    const result = prepareProduct(source, catalog);
+    assert.equal(category(result.product.categorySellID), entry.slug, entry.url);
+    assert.ok(!result.issues.includes("Tipo de máquina de origen sin confirmar"), entry.url);
+  }
+});
+
+test("Manain: las categorías de mástil, pequeña maquinaria y motor no acreditado no se suponen", () => {
+  const base = { "Nueva o usada": "usada", Motor: "Eléctrico" };
+  for (const url of [
+    "venta-elevacion-mastil-genie-gr-15",
+    "venta-pequena-maquinaria-martillos-electricos-bosch-gsh-5"
+  ]) {
+    const source = machine(`https://manain.com/producto/${url}/`, base, "");
+    assert.equal(prepareProduct(source, catalog).product.categorySellID, null, url);
+  }
+  const transpaleta = machine("https://manain.com/producto/venta-manipulacion-transpaletas-mb-forklift-f4/",
+    { ...base, Motor: "Híbrido" }, "");
+  assert.equal(prepareProduct(transpaleta, catalog).product.categorySellID, null);
+  const implementoNuevo = machine("https://manain.com/producto/venta-movimiento-tierra-martillo-miniex-kubota-km-155/",
+    { ...base, "Nueva o usada": "nueva" }, "");
+  assert.equal(prepareProduct(implementoNuevo, catalog).product.categorySellID, null);
+});
