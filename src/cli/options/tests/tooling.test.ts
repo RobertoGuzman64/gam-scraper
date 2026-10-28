@@ -82,13 +82,13 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
     copyFileSync(join(root, "scripts/terminal.mjs"), join(temp, "scripts/terminal.mjs"));
     writeFileSync(join(temp, "scripts/run-build.mjs"), "process.exitCode = 0;\n");
     const echo = 'console.log(JSON.stringify(process.argv.slice(2)));\n';
-    for (const filename of ["prepare.js", "index.js", "storage-clean.js", "campaign-extract.js", "campaign-status.js", "campaign-review.js", "campaign-reference.js", "campaign-finalize.js"]) {
+    for (const filename of ["prepare.js", "index.js", "storage-clean.js", "campaign-extract.js", "campaign-status.js", "campaign-review.js", "campaign-reference.js", "campaign-finalize.js", "catalog-content-gaps.js"]) {
       writeFileSync(join(temp, "dist/cli", filename), echo);
     }
     writeFileSync(join(temp, "dist/cli/campaign-intervene.js"), 'console.log("CAMPAIGN " + JSON.stringify(process.argv.slice(2)));\n');
     writeFileSync(join(temp, "dist/cli/intervene.js"), 'console.log("MANUAL " + JSON.stringify(process.argv.slice(2)));\n');
     const fake = join(temp, "scripts/tooling.mjs");
-    const [spanish, providerExtract, validate, campaignHelp, cleanup, applied, simulation, denied, campaignExtract, campaignReview, campaignStatus, referenceRead, referenceUpdate, referenceRecovery, referenceExport, referenceImport, referenceDenied] = await Promise.all([
+    const [spanish, providerExtract, validate, campaignHelp, cleanup, applied, simulation, denied, campaignExtract, campaignReview, campaignStatus, referenceRead, referenceUpdate, referenceRecovery, referenceExport, referenceImport, referenceDenied, gaps, legacyCatalog] = await Promise.all([
       run(fake, ["preparar", "gam", "--origen", "origen-catalog.json", "--simular"]),
       run(fake, ["extraer:proveedor", "gam", "--categoria", "venta"]),
       run(fake, ["validar", "gam", "--etapa", "preparacion", "--preparacion", "x-preparation.json"]),
@@ -105,7 +105,9 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
       run(fake, ["referencia", "--recuperar"]),
       run(fake, ["referencia", "--exportar", "copia-nueva"]),
       run(fake, ["referencia", "--importar", "copia", "--sustituir"]),
-      run(fake, ["referencia", "--aplicar"])
+      run(fake, ["referencia", "--aplicar"]),
+      run(fake, ["huecos", "--catalogo", "fixture-catalog.json", "--top", "10"]),
+      run(fake, ["preparar", "gam", "--catalogo", "fixture-catalog.json"])
     ]);
     const [campaignIntervention, manualIntervention] = await Promise.all([
       run(fake, ["intervenir", "gam", "--script", "interventions/gam/6002.ts", "--aplicar"]),
@@ -153,6 +155,10 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
     assert.equal(referenceUpdate.status, 0, referenceUpdate.stderr);
     assert.deepEqual(JSON.parse(referenceUpdate.stdout.trim()), ["--actualizar"]);
     assert.equal(referenceDenied.status, 1);
+    assert.equal(gaps.status, 0, gaps.stderr);
+    assert.deepEqual(JSON.parse(gaps.stdout.trim()), ["--catalogo", "fixture-catalog.json", "--top", "10"]);
+    assert.equal(legacyCatalog.status, 0, legacyCatalog.stderr);
+    assert.deepEqual(JSON.parse(legacyCatalog.stdout.trim()), ["gam", "--catalog", "fixture-catalog.json"]);
     const decision = await run(fake, ["acreditar", "--decidir", "gam", "6682", "excluir",
       "--motivo", "Identidad contrastada por el operador", "--evidencia", "https://catalogo.example/ficha"]);
     assert.equal(decision.status, 0, decision.stderr);
