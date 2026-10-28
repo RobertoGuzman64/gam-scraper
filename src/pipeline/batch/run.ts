@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import type { BatchOptions } from "./types.js";
 import type { ScrapeEvent } from "../../contracts/progress.js";
 import { getProvider } from "../../scraping/registry.js";
@@ -23,6 +23,8 @@ export type BatchObserver = {
 
 const timestamp = (): string => new Date().toISOString();
 
+export const createBatchRunId = (): string => `${timestamp().replace(/[:.]/g, "-")}-${randomUUID().slice(0, 8)}`;
+
 export const describeBatch = (options: BatchOptions): readonly {
   readonly providerId: string;
   readonly outputDir: string;
@@ -34,13 +36,17 @@ export const describeBatch = (options: BatchOptions): readonly {
 }));
 
 export const runBatch = async (
-  options: BatchOptions, scriptFile: string, observer?: BatchObserver, externalSignal?: AbortSignal
+  options: BatchOptions, scriptFile: string, observer?: BatchObserver, externalSignal?: AbortSignal, campaignRunId?: string
 ): Promise<BatchResult> => {
   if (options.dryRun) throw new Error("--dry-run no ejecuta lotes; utilizar describeBatch");
   const outRoot = resolve(options.outRoot);
   const historyDir = resolve(options.historyDir);
   const startedAt = timestamp();
-  const runId = `${startedAt.replace(/[:.]/g, "-")}-${randomUUID().slice(0, 8)}`;
+  if (campaignRunId !== undefined && (!/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z-[a-f0-9]{8}$/.test(campaignRunId) ||
+    basename(outRoot) !== campaignRunId)) {
+    throw new Error("Identificador de campaña y carpeta de extracción no coinciden");
+  }
+  const runId = campaignRunId ?? `${startedAt.replace(/[:.]/g, "-")}-${randomUUID().slice(0, 8)}`;
   const runDir = join(historyDir, runId);
   const reportFile = join(runDir, "run.json");
   await mkdir(outRoot, { recursive: true });

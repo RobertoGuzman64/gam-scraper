@@ -1,8 +1,8 @@
 import { readFile, stat } from "node:fs/promises";
 import { dirname, basename, join, resolve } from "node:path";
-import { inspectCleanupArea, removeCleanupDirectories } from "../../infrastructure/filesystem/campaign-cleanup.js";
+import { inspectCleanupArea } from "../../infrastructure/filesystem/campaign-cleanup.js";
 import type { CleanupArea, CleanupInventory } from "../../infrastructure/filesystem/campaign-cleanup.js";
-import { CAMPAIGN_PROVIDERS } from "./discovery.js";
+import { CAMPAIGN_PROVIDERS, discoverCampaign } from "./discovery.js";
 import { verifyDeliveredCampaign } from "./delivery-verification.js";
 
 const isRecord = (input: unknown): input is Record<string, unknown> =>
@@ -25,7 +25,7 @@ type RunOutputs = { readonly providers: readonly {
 const readRun = async (runFile: string, runId: string): Promise<RunOutputs> => {
   const input: unknown = JSON.parse(await readFile(runFile, "utf8"));
   if (!isRecord(input) || input.version !== 1 || input.runId !== runId || input.status !== "complete" ||
-    !Array.isArray(input.providers) || input.providers.length !== CAMPAIGN_PROVIDERS.length ||
+    !Array.isArray(input.providers) || input.providers.length < 3 || input.providers.length > CAMPAIGN_PROVIDERS.length ||
     !input.providers.every((provider: unknown) => isRecord(provider) &&
       typeof provider.providerId === "string" && CAMPAIGN_PROVIDERS.some((id) => id === provider.providerId) &&
       typeof provider.outputDir === "string" && typeof provider.outputPrefix === "string" &&
@@ -36,18 +36,21 @@ const readRun = async (runFile: string, runId: string): Promise<RunOutputs> => {
     readonly providerId: string; readonly outputDir: string; readonly outputPrefix: string;
   } => isRecord(provider) && typeof provider.providerId === "string" &&
     typeof provider.outputDir === "string" && typeof provider.outputPrefix === "string");
-  if (new Set(providers.map((provider) => provider.providerId)).size !== CAMPAIGN_PROVIDERS.length) {
+  if (new Set(providers.map((provider) => provider.providerId)).size !== providers.length) {
     throw new Error("El lote tiene proveedores repetidos");
   }
   return { providers };
 };
 
 export const planDeliveredCampaignCleanup = async (
-  rootDirectory: string, desktopDirectory: string
+  rootDirectory: string, desktopDirectory: string, targetRunId?: string
 ): Promise<CampaignCleanupPlan> => {
   const root = resolve(rootDirectory);
-  const { runId, runFile } = await verifyDeliveredCampaign(root, desktopDirectory);
+  const { runId, runFile } = await verifyDeliveredCampaign(root, desktopDirectory, targetRunId);
   const run = await readRun(runFile, runId);
+  const campaign = await discoverCampaign(root, runId);
+  if (run.providers.length !== campaign.requestedProviders.length ||
+    run.providers.some((provider) => !campaign.requestedProviders.includes(provider.providerId))) throw new Error("Proveedores de campaña incongruentes");
   const scrapedCampaign = dirname(resolve(run.providers[0]?.outputDir ?? ""));
   const expectedParent = join(root, "storage", "scraped", "campaigns");
   if (dirname(scrapedCampaign) !== expectedParent ||
@@ -94,8 +97,6 @@ export const cleanDeliveredCampaign = async (
   rootDirectory: string, desktopDirectory: string, dryRun: boolean
 ): Promise<CampaignCleanupPlan> => {
   const plan = await planDeliveredCampaignCleanup(rootDirectory, desktopDirectory);
-  if (!dryRun) {
-    await removeCleanupDirectories(plan.directories);
-  }
+  if (!dryRun) throw new Error("La limpieza manual ordinaria está retirada; la rotación segura es automática");
   return plan;
 };

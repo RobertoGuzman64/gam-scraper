@@ -18,7 +18,7 @@ export const runCampaignReferenceUpdate = async (args: readonly string[]): Promi
   npm run referencia -- --importar <carpeta-existente> [--sustituir]
 Sin argumentos comprueba los catálogos, el manifiesto y las diferencias y sus SHA sin necesitar campaña ni escribir datos.
 --recuperar repara explícitamente una transacción interrumpida si existe un respaldo íntegro.
---actualizar exige entrega acreditada. --exportar copia una referencia íntegra a una carpeta nueva.
+--actualizar es un procedimiento legado opcional que exige entrega acreditada. --exportar copia una referencia íntegra a una carpeta nueva.
 --importar valida la referencia y no reemplaza la actual salvo autorización --sustituir.
 Política Git y traslado: docs/OPERATIONAL_REFERENCE.md`);
     return;
@@ -73,7 +73,7 @@ Política Git y traslado: docs/OPERATIONAL_REFERENCE.md`);
     console.log(`  ${provider.providerId.toUpperCase()} | anterior ${provider.previousCount} | actual ${provider.currentCount} | altas ${provider.added.length} | ausencias ${provider.missing.length} | modificaciones ${provider.modified.length} | sin cambios ${provider.unchanged}`);
   }
   console.log(`  Referencia comprobada: data/reference (${result.manifest.catalogs.length} catálogos completos, manifest.json y differences.json)`);
-  console.log("  Solo se conserva la referencia vigente y el informe más reciente. Puedes inspeccionar la limpieza con npm run limpiar.");
+  console.log("  La comparación ordinaria utiliza los originales de las campañas retenidas; esta actualización es legada.");
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

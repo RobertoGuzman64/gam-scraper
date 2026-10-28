@@ -1,6 +1,7 @@
 import { readFile, readdir, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import type { RetentionCandidate } from "./catalog-retention.js";
+import { isReferenceProviderSet } from "../../contracts/campaign-providers.js";
 
 const runPattern = /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z-[\da-f]{8}$/;
 
@@ -40,7 +41,7 @@ export const batchRunExcess = async (historyDir: string): Promise<readonly Reten
   for (const entry of entries) {
     if (entry.isDirectory() && runPattern.test(entry.name)) {
       const run = await readCompletedRun(historyDir, entry.name);
-      if (run) runs.push(run);
+      if (run && !isReferenceProviderSet(run.providers)) runs.push(run);
     }
   }
   runs.sort((a, b) => b.name.localeCompare(a.name));

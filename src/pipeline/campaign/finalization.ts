@@ -9,7 +9,7 @@ import type { PublishableSelection } from "../../catalog/editorial/select-publis
 import { readCampaignAccreditationSources } from "../../infrastructure/filesystem/campaign-accreditation.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
 import { validateOfflinePreparation } from "../validation/offline.js";
-import { CAMPAIGN_PROVIDERS, discoverCampaign } from "./discovery.js";
+import { CAMPAIGN_PROVIDERS, discoverCampaign, listCampaignRuns } from "./discovery.js";
 
 export type CampaignFinalizationResult = {
   readonly runId: string;
@@ -69,16 +69,17 @@ export type CampaignFinalizationContext = {
 };
 
 export const readCampaignFinalizationContext = async (
-  rootDirectory: string
+  rootDirectory: string, targetRunId?: string, skipRunId?: string
 ): Promise<CampaignFinalizationContext> => {
   const root = resolve(rootDirectory);
-  const campaign = await discoverCampaign(root);
+  const activeId = targetRunId ?? ((await listCampaignRuns(root)).length > 1 ? (await discoverCampaign(root)).runId ?? undefined : undefined);
+  const campaign = await discoverCampaign(root, activeId, skipRunId);
   if (!campaign.runId || !campaign.runFile || campaign.status !== "complete" || campaign.issues.length ||
-    campaign.providers.length !== CAMPAIGN_PROVIDERS.length ||
+    campaign.providers.length !== campaign.requestedProviders.length ||
     campaign.providers.some((provider) => !provider.catalog || !provider.preparation)) {
     throw new Error(`No se puede finalizar: faltan preparaciones verificables de todos los proveedores del lote actual. ${campaign.issues.join("; ")}`);
   }
-  const paths = CAMPAIGN_PROVIDERS.map((providerId) => {
+  const paths = campaign.requestedProviders.map((providerId) => {
     const provider = campaign.providers.find((item) => item.providerId === providerId);
     if (!provider?.catalog || !provider.preparation) throw new Error(`Falta preparación ${providerId}`);
     return { providerId, path: provider.preparation.path, original: provider.catalog.path,
@@ -100,10 +101,13 @@ export const readCampaignFinalizationContext = async (
 };
 
 export const finalizeActiveCampaign = async (
-  rootDirectory: string, dryRun: boolean
+  rootDirectory: string, dryRun: boolean, targetRunId?: string, skipRunId?: string
 ): Promise<CampaignFinalizationResult> => {
   const root = resolve(rootDirectory);
-  const { runId, draftFile, expected, preparations, sources, paths } = await readCampaignFinalizationContext(root);
+  const { runId, draftFile, expected, preparations, sources, paths } = await readCampaignFinalizationContext(root, targetRunId, skipRunId);
+  if (!dryRun && (await discoverCampaign(root, runId)).requestedProviders.length !== CAMPAIGN_PROVIDERS.length) {
+    throw new Error("Una campaña histórica de tres proveedores es de solo lectura; las entregas nuevas requieren cuatro");
+  }
   if (!await exists(draftFile)) {
     if (!dryRun) {
       await mkdir(dirname(draftFile), { recursive: true });
@@ -126,9 +130,9 @@ export const finalizeActiveCampaign = async (
   if (dryRun) return { runId, draftFile, status: "simulation", decisions: expected.exclusions.length, selection };
   const selectionDir = join(root, "storage", "campaigns", runId, "selection", sha256(raw));
   await saveSelection(selectionDir, selectionFiles(selection));
-  const current = await discoverCampaign(root);
+  const current = await discoverCampaign(root, runId);
   if (current.runId !== runId || current.issues.length ||
-    CAMPAIGN_PROVIDERS.some((id) => current.providers.find((item) => item.providerId === id)?.preparation?.path !==
+    paths.some(({providerId: id}) => current.providers.find((item) => item.providerId === id)?.preparation?.path !==
       paths.find((item) => item.providerId === id)?.path)) {
     throw new Error("Las entradas de la selección han cambiado; no se puede dar por finalizada la campaña");
   }

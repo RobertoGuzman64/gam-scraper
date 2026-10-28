@@ -17,7 +17,7 @@
     "entregar": "node scripts/tooling.mjs entregar",
     "comparar": "node scripts/tooling.mjs comparar",
     "referencia": "node scripts/tooling.mjs referencia",
-    "limpiar": "node scripts/tooling.mjs limpiar",
+    "recuperar": "node scripts/tooling.mjs recuperar",
     "ayuda": "node scripts/tooling.mjs ayuda",
     "extraer:proveedor": "node scripts/tooling.mjs extraer:proveedor",
     "manain:muestra": "node scripts/tooling.mjs manain:muestra",

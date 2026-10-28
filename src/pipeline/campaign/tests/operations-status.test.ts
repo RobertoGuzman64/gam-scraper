@@ -96,12 +96,13 @@ test("estado de campaña sin escritura y orientación consistente entre editoria
     await mkdir(desktop);
     const delivered = await deliverActiveCampaign(root, desktop, new Date(2026, 9, 26, 12));
     const awaitingReference = await inspectCampaignOperations(root, desktop);
-    assert.match(awaitingReference.description, /Entrega acreditada/);
-    assert.ok(awaitingReference.next.some((command) => command.includes("--actualizar")));
+    assert.match(awaitingReference.description, /Entrega histórica acreditada/);
+    assert.ok(awaitingReference.next.some((command) => command.includes("comparar")));
+    assert.ok(awaitingReference.next.every((command) => !command.includes("limpiar") && !command.includes("--actualizar")));
     await updateActiveCampaignReference(root, desktop);
     const referenced = await inspectCampaignOperations(root, desktop);
-    assert.match(referenced.description, /referencia verificada/);
-    assert.ok(referenced.next.some((command) => command.includes("limpiar")));
+    assert.match(referenced.description, /acreditada/);
+    assert.ok(referenced.next.every((command) => !command.includes("limpiar")));
     assert.ok(referenced.next.every((command) => !command.includes("--actualizar")));
     assert.equal(referenced.reference.status, "valid");
     if (referenced.reference.status === "valid") assert.equal(referenced.reference.reference.manifest.runId, runId);
@@ -115,10 +116,9 @@ test("estado de campaña sin escritura y orientación consistente entre editoria
     await writeFile(delivered.zipFile, deliveredArchive);
     const cleanPlan = await cleanDeliveredCampaign(root, desktop, true);
     assert.ok(cleanPlan.directories.length > 0);
-    const cleaned = await cleanDeliveredCampaign(root, desktop, false);
-    assert.deepEqual(cleaned.directories, cleanPlan.directories);
+    await assert.rejects(cleanDeliveredCampaign(root, desktop, false), /limpieza manual ordinaria/);
     const afterCleanup = await inspectCampaignOperations(root, desktop);
-    assert.equal(afterCleanup.campaign.runId, null);
+    assert.equal(afterCleanup.campaign.runId, runId);
     assert.equal(afterCleanup.reference.status, "valid");
     if (afterCleanup.reference.status === "valid") {
       assert.equal(afterCleanup.reference.reference.manifest.runId, runId);
@@ -126,7 +126,7 @@ test("estado de campaña sin escritura y orientación consistente entre editoria
     assert.ok(afterCleanup.next.includes("npm run extraer"));
     assert.ok(afterCleanup.next.every((command) => !command.includes("npm run limpiar")));
     assert.deepEqual(await readFile(delivered.zipFile), deliveredArchive);
-    assert.equal((await readdir(join(root, "storage", "campaigns"))).length, 0);
+    assert.equal((await readdir(join(root, "storage", "campaigns"))).length, 1);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

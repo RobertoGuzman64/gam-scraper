@@ -1,7 +1,7 @@
 import { basename, dirname, join } from "node:path";
 import { prepareSavedCatalog } from "../preparation/prepare.js";
 import { validateCanonicalSource, validateOfflinePreparation } from "../validation/offline.js";
-import { discoverCampaign } from "./discovery.js";
+import { discoverCampaign, listCampaignRuns } from "./discovery.js";
 import type { CampaignDiscovery, ProviderDiscovery } from "./discovery.js";
 
 export type ReviewItem = {
@@ -75,7 +75,9 @@ const inspectPreparation = async (
 };
 
 export const reviewActiveCampaign = async (root: string): Promise<CampaignReview> => {
-  const campaign = await discoverCampaign(root);
+  const current = await discoverCampaign(root);
+  const campaign = current.runId && (await listCampaignRuns(root)).length > 1 ?
+    await discoverCampaign(root, current.runId) : current;
   if (!campaign.runId || campaign.status !== "complete" || campaign.issues.length > 0 ||
     campaign.providers.some((provider) => provider.state === "failed" || provider.state === "invalid" || provider.state === "not-started")) {
     return {

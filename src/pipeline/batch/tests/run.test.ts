@@ -3,7 +3,7 @@ import { mkdtemp, readFile, readdir, rm, stat, writeFile, mkdir } from "node:fs/
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { runBatch, type BatchObserver } from "../run.js";
+import { createBatchRunId, runBatch, type BatchObserver } from "../run.js";
 import type { BatchOptions } from "../types.js";
 import { getProvider } from "../../../scraping/registry.js";
 
@@ -248,5 +248,38 @@ test("una cancelación aborta el hijo, registra estado fallido y libera el bloqu
       if (previous === undefined) delete process.env.WAIT_PROVIDER;
       else process.env.WAIT_PROVIDER = previous;
     }
+  });
+});
+
+
+test("la campaña reserva su runId antes del primer proveedor, incluso si no registra ninguno", async () => {
+  await withFolder(async (folder) => {
+    const runId = createBatchRunId();
+    const outRoot = join(folder, "storage", "scraped", "campaigns", runId);
+    const historyDir = join(folder, "storage", "runs");
+    const script = join(folder, "scraper-stub.mjs");
+    await writeFile(script, stubScript);
+    const interrupted = new AbortController();
+    interrupted.abort();
+    const result = await runBatch({ providerIds: ["gam", "gomariz", "mercaeleva", "manain"],
+      outRoot, historyDir, dryRun: false }, script, undefined, interrupted.signal, runId);
+    assert.equal(result.report.runId, runId);
+    assert.equal(result.report.status, "failed");
+    assert.deepEqual(result.report.providers, []);
+    assert.equal(result.reportFile, join(historyDir, runId, "run.json"));
+    assert.deepEqual(JSON.parse(await readFile(result.reportFile, "utf8")), result.report);
+    assert.deepEqual(await readdir(outRoot), []);
+  });
+});
+
+
+test("rechaza una carpeta de campaña que no coincide con el runId antes de crear archivos", async () => {
+  await withFolder(async (folder) => {
+    const runId = createBatchRunId();
+    const options = optionsFor(folder, ["gam"]);
+    await assert.rejects(runBatch(options, join(folder, "stub.mjs"), undefined, undefined, runId),
+      /Identificador de campaña y carpeta de extracción no coinciden/);
+    await assert.rejects(stat(options.outRoot), /ENOENT/);
+    await assert.rejects(stat(join(options.historyDir, runId)), /ENOENT/);
   });
 });

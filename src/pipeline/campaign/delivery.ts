@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
-import { readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { copyFile, lstat, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { constants } from "node:fs";
 import { isDeepStrictEqual } from "node:util";
 import { createZipArchive, readZipArchive, type ZipFile } from "../../infrastructure/archive/zip.js";
 import { CAMPAIGN_PROVIDERS } from "./discovery.js";
@@ -27,6 +28,9 @@ export const deliverActiveCampaign = async (
   if (selection.status !== "selected" || !selection.selectionDir || !selection.selection) {
     throw new Error(`Entrega bloqueada: la campaña necesita acreditación aprobada (estado: ${selection.status})`);
   }
+  const existingReceipt = join(resolve(rootDirectory), "storage", "campaigns", selection.runId, "delivery.json");
+  try { await lstat(existingReceipt); throw new Error("La campaña ya tiene una entrega; no se reemplaza ni se entrega dos veces"); }
+  catch (error) { if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error; }
   const source = selection.selection;
   if (source.products.length !== source.totals.publishable ||
     source.totals.original !== source.totals.publishable + source.totals.excluded) {
@@ -50,7 +54,7 @@ export const deliverActiveCampaign = async (
   const desktop = resolve(desktopDirectory);
   const destinationInfo = await stat(desktop);
   if (!destinationInfo.isDirectory()) throw new Error("La ruta del Escritorio no es un directorio");
-  const destination = join(desktop, `equipzilla-${date}.zip`);
+  const destination = join(desktop, `equipzilla-${date}-${selection.runId}.zip`);
   const pending = join(desktop, `.equipzilla-${date}-${randomUUID()}.tmp`);
   try {
     await writeFile(pending, createZipArchive(files), { flag: "wx" });
@@ -59,7 +63,12 @@ export const deliverActiveCampaign = async (
       entry.name !== files[index]?.name || !entry.data.equals(Buffer.from(files[index]?.data ?? "", "utf8")))) {
       throw new Error("El ZIP temporal no contiene exactamente los JSON esperados");
     }
-    await rename(pending, destination);
+    try { await copyFile(pending, destination, constants.COPYFILE_EXCL); }
+    catch (error) {
+      if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
+    }
+    const actual = await readFile(destination);
+    if (!actual.equals(await readFile(pending))) throw new Error("Ya existe un ZIP distinto con ese nombre; no se sobrescribe");
   } finally {
     await rm(pending, { force: true });
   }

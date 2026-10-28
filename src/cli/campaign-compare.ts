@@ -13,7 +13,7 @@ const label = (product: ReferenceIdentity): string =>
 
 export const runCampaignComparison = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    console.log("Uso: npm run comparar\nCompara los originales completos de la campaña actual con data/reference, sin escribir ni actualizar archivos.");
+    console.log("Uso: npm run comparar\nCompara los originales completos de la campaña actual con la última entrega íntegra conservada (referencia legada si no existe), sin escribir ni actualizar archivos.");
     return;
   }
   if (args.length > 0) throw new Error("comparar no acepta argumentos");
@@ -30,10 +30,10 @@ export const runCampaignComparison = async (args: readonly string[]): Promise<vo
       for (const field of item.fields) console.log(`    ${field.field}: ${display(field.previous)} -> ${display(field.current)}`);
     }
   }
-  if (report.baseline === "initial") console.log("Sin referencia previa: después de acreditar la entrega, inicializa con npm run referencia -- --actualizar.");
+  if (report.baseline === "initial") console.log("Sin entrega previa de referencia: comparación inicial; no se requiere actualizar una copia.");
   else if (report.previousRunId === report.currentRunId) {
     console.log("Consulta terminada sin escrituras. Este lote ya es la referencia vigente; no procede actualizarlo otra vez.");
-  } else console.log("Consulta terminada sin escrituras. Para actualizar tras una entrega acreditada: npm run referencia -- --actualizar.");
+  } else console.log("Consulta terminada sin escrituras. La referencia es la última campaña entregada e íntegra.");
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

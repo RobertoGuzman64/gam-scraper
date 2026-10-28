@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
+import { CAMPAIGN_PROVIDERS, isReferenceProviderSet } from "../../contracts/campaign-providers.js";
 import { readFile, readdir } from "node:fs/promises";
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve, sep } from "node:path";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
 import { readAppliedIntervention } from "../../infrastructure/filesystem/intervention-derived.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
@@ -23,6 +23,7 @@ export type ProviderDiscovery = {
 };
 
 export type CampaignDiscovery = {
+  readonly requestedProviders: readonly string[];
   readonly runId: string | null;
   readonly runFile: string | null;
   readonly status: BatchReport["status"] | "none";
@@ -50,7 +51,7 @@ const isProviderRun = (value: unknown): value is ProviderRun =>
   typeof value.outputDir === "string" && value.outputDir.length > 0 &&
   typeof value.outputPrefix === "string" && /^[a-zA-Z0-9_-]+$/.test(value.outputPrefix);
 
-const readBatch = async (file: string): Promise<BatchReport> => {
+export const readCampaignBatch = async (file: string): Promise<BatchReport> => {
   const raw: unknown = JSON.parse(await readFile(file, "utf8"));
   if (!isRecord(raw) || raw.version !== 1 || typeof raw.runId !== "string" ||
     raw.runId !== basename(dirname(file)) || !validDate(raw.startedAt) ||
@@ -111,12 +112,10 @@ const filesInCampaign = async (path: string, depth: number): Promise<readonly st
   return files;
 };
 
-const preparationPaths = async (root: string, providerId: string): Promise<readonly string[]> => {
+const preparationPaths = async (root: string, providerId: string, runId: string, includeHistorical: boolean): Promise<readonly string[]> => {
   const paths = [join(root, "storage", "prepared", providerId)];
-  for (const campaignDir of await directories(join(root, "storage", "interventions"))) {
-    for (const resultDir of await directories(join(campaignDir, "results"))) {
+  for (const resultDir of await directories(join(root, "storage", "interventions", runId, "results"))) {
       if (/^[a-f0-9]{64}$/.test(basename(resultDir))) paths.push(join(resultDir, "prepared"));
-    }
   }
   const files: string[] = [];
   for (const path of paths) {
@@ -129,14 +128,14 @@ const preparationPaths = async (root: string, providerId: string): Promise<reado
       throw error;
     }
   }
-  files.push(...await filesInCampaign(join(root, "storage", "campaigns"), 5));
+  files.push(...await filesInCampaign(join(root, "storage", "campaigns", includeHistorical ? "" : runId), 5));
   return files;
 };
 
 const selectPreparation = async (
-  root: string, run: ProviderRun, original: Artifact, scope: string, productCount: number
+  root: string, run: ProviderRun, runId: string, includeHistorical: boolean, original: Artifact, scope: string, productCount: number
 ): Promise<{ preparation?: Preparation; issues: readonly string[] }> => {
-  const paths = await preparationPaths(root, run.providerId);
+  const paths = await preparationPaths(root, run.providerId, runId, includeHistorical);
   const candidates: Preparation[] = [];
   const issues: string[] = [];
   for (const path of paths) {
@@ -187,7 +186,12 @@ const selectPreparation = async (
       preparedAt: preparation.preparedAt, intervened: intervention !== undefined
     });
   }
-  candidates.sort((left, right) => Date.parse(right.preparedAt) - Date.parse(left.preparedAt));
+  candidates.sort((left, right) => {
+    const local = (path: string): boolean => path.includes(`${join("storage", "campaigns", runId)}${sep}`) ||
+      path.includes(`${join("storage", "interventions", runId)}${sep}`);
+    return Number(local(right.path)) - Number(local(left.path)) ||
+      Date.parse(right.preparedAt) - Date.parse(left.preparedAt);
+  });
   if (candidates.length > 1 && candidates[0]?.preparedAt === candidates[1]?.preparedAt &&
     candidates[0]?.sha256 !== candidates[1]?.sha256) {
     issues.push(`Varias preparaciones vigentes con la misma fecha para ${run.providerId}; requiere revisión`);
@@ -198,7 +202,7 @@ const selectPreparation = async (
 };
 
 const inspectProvider = async (
-  root: string, report: BatchReport, providerId: string
+  root: string, report: BatchReport, providerId: string, includeHistorical: boolean
 ): Promise<{ provider: ProviderDiscovery; issues: readonly string[] }> => {
   const run = report.providers.find((entry) => entry.providerId === providerId);
   if (!run) return {
@@ -216,7 +220,7 @@ const inspectProvider = async (
       throw new Error("El catálogo no pertenece a la ejecución indicada en run.json");
     }
     const original = { path, sha256: createHash("sha256").update(await readFile(path)).digest("hex") };
-    const result = await selectPreparation(root, run, original, catalog.scope, catalog.productCount);
+    const result = await selectPreparation(root, run, report.runId, includeHistorical, original, catalog.scope, catalog.productCount);
     return {
       provider: { providerId, state: result.preparation ? "prepared" : "catalog", catalog: original,
         ...(result.preparation ? { preparation: result.preparation } : {}) },
@@ -230,57 +234,78 @@ const inspectProvider = async (
   }
 };
 
-export const discoverCampaign = async (rootDirectory: string): Promise<CampaignDiscovery> => {
+export type CampaignRun = { readonly report: BatchReport; readonly path: string };
+
+export const listCampaignRuns = async (rootDirectory: string, skipRunId?: string): Promise<readonly CampaignRun[]> => {
   const root = resolve(rootDirectory);
-  const runDirs = await directories(join(root, "storage", "runs"));
-  const reports: { report: BatchReport; path: string }[] = [];
+  const reports: CampaignRun[] = [];
   const invalid: string[] = [];
-  for (const dir of runDirs) {
+  for (const dir of await directories(join(root, "storage", "runs"))) {
+    if (skipRunId !== undefined && basename(dir) === skipRunId) continue;
     const path = join(dir, "run.json");
     try {
-      reports.push({ report: await readBatch(path), path });
+      const report = await readCampaignBatch(path);
+      if (!isReferenceProviderSet(report.requestedProviders)) continue;
+      const campaignRoots = new Set(report.providers.map((provider) => {
+        const output = resolve(root, provider.outputDir);
+        const directory = dirname(output);
+        const isolated = dirname(directory) === join(root, "storage", "scraped", "campaigns") &&
+          /^[a-zA-Z0-9_-]+$/.test(basename(directory));
+        if (!((isolated && output === join(directory, provider.providerId)) ||
+          output === join(root, "storage", "scraped", provider.providerId))) {
+          throw new Error(`Ruta de salida ajena a la campaña: ${output}`);
+        }
+        return isolated ? directory : join(root, "storage", "scraped");
+      }));
+      if (campaignRoots.size > 1) throw new Error("Las salidas no pertenecen al mismo lote");
+      reports.push({ report, path });
     } catch (error) {
       invalid.push(`No se puede acreditar el lote en ${path}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
-  if (invalid.length > 0) return {
-    runId: null, runFile: null, status: "none", issues: invalid,
-    providers: CAMPAIGN_PROVIDERS.map((providerId) => ({ providerId, state: "not-started" }))
-  };
+  if (invalid.length) throw new Error(invalid.join("; "));
   reports.sort((left, right) => Date.parse(right.report.startedAt) - Date.parse(left.report.startedAt));
-  const current = reports[0];
+  if (reports.some((item, index) => index > 0 && item.report.startedAt === reports[index - 1]?.report.startedAt)) {
+    throw new Error("Varios lotes tienen el mismo inicio; se necesita identificar expresamente la campaña");
+  }
+  return reports;
+};
+
+export const discoverCampaign = async (rootDirectory: string, runId?: string, skipRunId?: string): Promise<CampaignDiscovery> => {
+  const root = resolve(rootDirectory);
+  let reports: readonly CampaignRun[];
+  try { reports = await listCampaignRuns(root, skipRunId); }
+  catch (error) {
+    if (runId) throw error;
+    return { runId: null, runFile: null, status: "none", requestedProviders: [],
+      issues: [error instanceof Error ? error.message : String(error)],
+      providers: CAMPAIGN_PROVIDERS.map((providerId) => ({ providerId, state: "not-started" })) };
+  }
+  const current = runId === undefined ? reports[0] : reports.find((item) => item.report.runId === runId);
+  if (runId && !current) throw new Error(`No existe una campaña global con runId ${runId}`);
   if (!current) {
     const orphaned: string[] = [];
     for (const providerId of CAMPAIGN_PROVIDERS) {
-      const path = join(root, "storage", "scraped", providerId);
-      try {
-        for (const entry of await readdir(path, { withFileTypes: true })) {
-          if (entry.isFile() && entry.name.endsWith("-catalog.json")) orphaned.push(join(path, entry.name));
-        }
-      } catch (error) {
-        if (!isRecord(error) || error.code !== "ENOENT") throw error;
+      for (const directory of [join(root, "storage", "scraped", providerId)]) {
+        try {
+          for (const entry of await readdir(directory, { withFileTypes: true })) {
+            if (entry.isFile() && entry.name.endsWith("-catalog.json")) orphaned.push(join(directory, entry.name));
+          }
+        } catch (error) { if (!isRecord(error) || error.code !== "ENOENT") throw error; }
       }
     }
-    return {
-      runId: null, runFile: null, status: "none",
-      issues: orphaned.length ? ["Catálogos heredados sin run.json; no deben utilizarse en una campaña nueva: " + orphaned.join(", ")] : [],
-      providers: CAMPAIGN_PROVIDERS.map((providerId) => ({ providerId, state: "not-started" }))
-    };
+    return { runId: null, runFile: null, status: "none", requestedProviders: [],
+      issues: orphaned.length ? ["Catálogos heredados sin run.json; no utilizar como nueva campaña: " + orphaned.join(", ")] : [],
+      providers: CAMPAIGN_PROVIDERS.map((providerId) => ({ providerId, state: "not-started" })) };
   }
-  if (reports[1]?.report.startedAt === current.report.startedAt) return {
-    runId: null, runFile: null, status: "none",
-    issues: ["Varios lotes tienen el mismo inicio; se necesita identificar expresamente la campaña"],
-    providers: CAMPAIGN_PROVIDERS.map((providerId) => ({ providerId, state: "not-started" }))
-  };
-  const results = await Promise.all(CAMPAIGN_PROVIDERS.map((id) => inspectProvider(root, current.report, id)));
+  const required = current.report.requestedProviders;
+  const results = await Promise.all(required.map((id) => inspectProvider(root, current.report, id, runId === undefined)));
   const issues = results.flatMap((result) => result.issues);
   if (current.report.status !== "complete") issues.unshift(`Lote ${current.report.status}; no es seleccionable`);
-  if (current.report.status === "complete" && (
-    current.report.requestedProviders.length !== CAMPAIGN_PROVIDERS.length ||
-    CAMPAIGN_PROVIDERS.some((id) => !current.report.requestedProviders.includes(id))
-  )) issues.unshift("Lote completado parcialmente por proveedores; requiere todos los proveedores para acreditar");
+  if (!isReferenceProviderSet(required) || current.report.status === "complete" &&
+    current.report.providers.length !== required.length) issues.unshift("Conjunto de proveedores de campaña inválido");
   return { runId: current.report.runId, runFile: current.path, status: current.report.status,
-    providers: results.map((result) => result.provider), issues };
+    requestedProviders: required, providers: results.map((result) => result.provider), issues };
 };
 
 export type CampaignCatalogObservation = {
@@ -295,7 +320,7 @@ export const discoverCampaignCatalogHistory = async (
   if (!CAMPAIGN_PROVIDERS.some((id) => id === providerId)) throw new Error(`Proveedor no admitido: ${providerId}`);
   const root = resolve(rootDirectory);
   const reports = await Promise.all((await directories(join(root, "storage", "runs"))).map(async (directory) => {
-    const report = await readBatch(join(directory, "run.json"));
+    const report = await readCampaignBatch(join(directory, "run.json"));
     return report;
   }));
   reports.sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt));
@@ -305,8 +330,7 @@ export const discoverCampaignCatalogHistory = async (
   const observations: CampaignCatalogObservation[] = [];
   for (const report of reports.slice(0, 5)) {
     const provider = report.providers.find((entry) => entry.providerId === providerId);
-    if (report.status !== "complete" || report.requestedProviders.length !== CAMPAIGN_PROVIDERS.length ||
-      CAMPAIGN_PROVIDERS.some((id) => !report.requestedProviders.includes(id)) || !provider ||
+    if (report.status !== "complete" || !isReferenceProviderSet(report.requestedProviders) || !provider ||
       provider.status !== "complete") {
       observations.push({ runId: report.runId, catalog: null, reason: "Campaña no completada por todos los proveedores" });
       continue;

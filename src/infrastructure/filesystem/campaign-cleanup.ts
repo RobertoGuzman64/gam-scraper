@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { lstat, open, readdir, readFile, realpath, rename, rm, writeFile, mkdir } from "node:fs/promises";
+import { lstat, open, readdir, readFile, realpath, rm, writeFile, mkdir } from "node:fs/promises";
 import { parseCatalogSnapshot } from "../../catalog/snapshot.js";
 import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { join, relative, resolve, sep, isAbsolute } from "node:path";
@@ -42,7 +42,7 @@ export const persistCampaignDelivery = async (
   const stage = join(folder, `.delivery-${randomUUID()}.tmp`);
   try {
     await writeFile(stage, JSON.stringify(receipt, null, 2), { flag: "wx" });
-    await rename(stage, target);
+    await writeFile(target, await readFile(stage), { flag: "wx" });
   } finally { await rm(stage, { force: true }); }
 };
 
@@ -80,14 +80,17 @@ const scrapedSuffix = (name: string, prefix: string): boolean => {
 };
 
 const allowedFile = (
-  area: CleanupArea, parts: readonly string[], name: string, prefixes: ReadonlyMap<string, string>
+  area: CleanupArea, parts: readonly string[], name: string, prefixes: ReadonlyMap<string, string>, allowPartial: boolean
 ): boolean => {
   if (area === "run") return parts.length === 0 &&
     (name === "run.json" || runArtifact.test(name));
   if (area === "scraped") {
     if (parts.length === 1) {
       const prefix = prefixes.get(parts[0] ?? "");
-      return prefix !== undefined && scrapedSuffix(name, prefix);
+      if (prefix === undefined) return false;
+      if (scrapedSuffix(name, prefix)) return true;
+      const temporary = name.match(/^(.+)\.[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.tmp$/);
+      return allowPartial && temporary !== null && scrapedSuffix(temporary[1] ?? "", prefix);
     }
     if (parts.length === 3 && parts[1] === ".history") {
       return parts[2] === prefixes.get(parts[0] ?? "") && name === "active.json";
@@ -198,50 +201,51 @@ const countFile = (inventory: MutableInventory, bytes: number, kind: CleanupArti
 
 const inspectTree = async (
   path: string, area: CleanupArea, parts: readonly string[], prefixes: ReadonlyMap<string, string>,
-  inventory: MutableInventory, issues: string[]
+  inventory: MutableInventory, issues: string[], allowPartial: boolean
 ): Promise<void> => {
   for (const entry of await readdir(path, { withFileTypes: true })) {
     const item = join(path, entry.name);
-    if (entry.isFile() && allowedFile(area, parts, entry.name, prefixes)) {
+    if (entry.isFile() && allowedFile(area, parts, entry.name, prefixes, allowPartial)) {
       const info = await lstat(item);
       if (!info.isFile()) { issues.push(`Archivo no regular: ${item}`); continue; }
       const historical = area === "scraped" && parts.includes(".history");
       const kind: CleanupArtifactKind = historical ? "history" : entry.name.endsWith(".csv") ? "csv" :
         entry.name.includes("-snapshot-") && entry.name.endsWith(".json") ? "snapshot" : "other";
       try {
-        if (historical && entry.name === "active.json") {
+        if (!allowPartial && historical && entry.name === "active.json") {
           await validateHistory(path, parts[parts.length - 1] ?? "", false);
         }
-        if (area === "scraped") await validateScrapedContent(item, entry.name);
+        if (!allowPartial && area === "scraped") await validateScrapedContent(item, entry.name);
       } catch (error) {
         issues.push(`${item}: ${String(error)}`);
       }
       countFile(inventory, info.size, kind);
     } else if (entry.isDirectory() && allowedDir(area, parts, entry.name, prefixes)) {
-      if (area === "scraped" && parts.length === 3 && parts[1] === ".history") {
+      if (!allowPartial && area === "scraped" && parts.length === 3 && parts[1] === ".history") {
         try { await validateHistory(item, parts[2] ?? "", true); }
         catch (error) { issues.push(`${item}: ${String(error)}`); }
       }
-      await inspectTree(item, area, [...parts, entry.name], prefixes, inventory, issues);
+      await inspectTree(item, area, [...parts, entry.name], prefixes, inventory, issues, allowPartial);
     } else issues.push(`Archivo o directorio no reconocido: ${item}`);
   }
 };
 
 export const inspectCleanupArea = async (
-  root: string, path: string, area: CleanupArea, scrapedPrefixes: ReadonlyMap<string, string> = new Map()
+  root: string, path: string, area: CleanupArea, scrapedPrefixes: ReadonlyMap<string, string> = new Map(),
+  allowPartial = false
 ): Promise<CleanupInventory | null> => {
   if (!await readable(path)) return null;
   if (!(await lstat(path)).isDirectory()) throw new Error(`Ruta no segura: ${path}`);
   const actualRoot = await realpath(root);
   const actualPath = await realpath(path);
   if (!inside(actualRoot, actualPath) || actualPath !== path) throw new Error(`Ruta fuera del repositorio o enlazada: ${path}`);
-  if (area === "scraped" && (scrapedPrefixes.size !== CAMPAIGN_PROVIDERS.length ||
-    !CAMPAIGN_PROVIDERS.every((provider) => validName.test(scrapedPrefixes.get(provider) ?? "")))) {
+  if (area === "scraped" && ((scrapedPrefixes.size < 1 || scrapedPrefixes.size > CAMPAIGN_PROVIDERS.length) ||
+    ![...scrapedPrefixes.values()].every((prefix) => validName.test(prefix)))) {
     throw new Error("Los prefijos de extracción no son válidos para limpiar");
   }
   const inventory: MutableInventory = { bytes: 0, files: 0, breakdown: new Map() };
   const issues: string[] = [];
-  await inspectTree(path, area, [], scrapedPrefixes, inventory, issues);
+  await inspectTree(path, area, [], scrapedPrefixes, inventory, issues, allowPartial);
   if (issues.length) throw new Error(`No se borra: ${issues.length} elemento(s) incompatible(s):\n- ${issues.join("\n- ")}`);
   return { bytes: inventory.bytes, files: inventory.files, breakdown: [...inventory.breakdown].map(([kind, totals]) => ({ kind, ...totals })) };
 };

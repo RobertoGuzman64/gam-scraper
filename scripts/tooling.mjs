@@ -14,9 +14,9 @@ const definitions = {
   intervenir: { entry: "cli/campaign-intervene.js", usage: "intervenir -- gam --listar | --consultar <id> | --mantenimiento | --script <archivo.ts> [--aplicar]", description: "Consultar scripts versionados o simular/aplicar correcciones del lote actual", requiresProvider: true },
   acreditar: { entry: "cli/campaign-finalize.js", usage: "acreditar [-- --listar | --consultar <proveedor> <ref> | --validar | --decidir <proveedor> <ref> <excluir|incluir> --motivo <texto> --evidencia <url> | --aprobar --motivo <texto> | --simular]", description: "Gestionar y aprobar decisiones editoriales mediante comandos, sin editar JSON" },
   entregar: { entry: "cli/campaign-deliver.js", usage: "entregar", description: "Entregar ZIP comprobado con cuatro JSON en el Escritorio sin perder la versión anterior" },
-  comparar: { entry: "cli/campaign-compare.js", usage: "comparar", description: "Comparar los catálogos originales completos con la referencia única (solo lectura)" },
-  referencia: { entry: "cli/campaign-reference.js", usage: "referencia [-- --actualizar | --recuperar | --exportar <carpeta> | --importar <carpeta> [--sustituir]]", description: "Consultar (solo lectura), actualizar o trasladar con integridad la referencia operativa" },
-  limpiar: { entry: "cli/campaign-clean.js", usage: "limpiar [-- --aplicar]", description: "Simular o cerrar la campaña ya entregada; protege scripts y trabajos pendientes" },
+  comparar: { entry: "cli/campaign-compare.js", usage: "comparar", description: "Comparar los originales completos con la última entrega retenida (solo lectura)" },
+  referencia: { entry: "cli/campaign-reference.js", usage: "referencia [-- --actualizar | --recuperar | --exportar <carpeta> | --importar <carpeta> [--sustituir]]", description: "Consultar y trasladar referencias históricas con integridad (legado)" },
+  recuperar: { entry: "cli/campaign-recover.js", usage: "recuperar -- <runId> | --recuperar <runId> | --abandonar <runId> --confirmar <runId>", description: "Consultar y abandonar expresamente un intento fallido; no es limpieza ordinaria" },
   "manain:muestra": { entry: "cli/manain-sample.js", usage: "manain:muestra", description: "Leer cinco fichas de Manain con Chrome visible en modo diagnóstico no publicable" },
   "manain:censo": { entry: "cli/manain-census.js", usage: "manain:censo", description: "Contar y guardar las URL del catálogo de venta de Manain sin extraer fichas" },
   "extraer:proveedor": { entry: "cli/index.js", prefix: ["scrape"], usage: "extraer:proveedor -- gam [--categoria venta] [--paginas 2]", description: "Extraer un proveedor", requiresProvider: true },
@@ -75,11 +75,11 @@ const printHelp = (requested) => {
     console.log("\nEJEMPLOS\n");
     console.log("  npm run iniciar  (crea carpetas de trabajo si faltan)");
     console.log("  npm run estado  (consulta sin escrituras)");
-    console.log("  npm run huecos  (referencia o --catalogo explícito; solo lectura)");
+    console.log("  npm run huecos  (última campaña entregada o --catalogo explícito)");
     console.log("  npm run extraer");
     console.log("  npm run comparar");
-    console.log("  npm run referencia  (solo lectura; incluso tras limpiar)");
-    console.log("  npm run referencia -- --actualizar  (después de entregar; antes de limpiar)");
+    console.log("  npm run referencia  (consulta de la referencia legada)");
+    console.log("  npm run comparar  (usa la última campaña anterior acreditada)");
     console.log("  npm run referencia -- --exportar <carpeta-nueva>  (respaldo/traslado)");
     console.log("  npm run revisar");
     console.log("  npm run intervenir -- gam --listar");
@@ -92,10 +92,10 @@ const printHelp = (requested) => {
     console.log("  npm run acreditar -- --validar");
     console.log("  npm run acreditar -- --aprobar --motivo \"Motivo global documentado de la campaña\"");
     console.log("  npm run entregar");
-    console.log("  npm run limpiar");
+    console.log("  npm run recuperar -- <runId>  (consulta segura de una campaña fallida)");
     console.log("  LECTURA | estado, comparar, referencia sin argumentos y modos editoriales de consulta.");
     console.log("  PREPARACIÓN/ESCRITURA | iniciar crea carpetas; revisar puede preparar; acreditar crea selección y sus modos de decisión escriben.");
-    console.log("  AUTORIZACIÓN | referencia --actualizar, acreditar --aprobar y limpiar --aplicar son acciones explícitas.");
+    console.log("  AUTORIZACIÓN | acreditar --aprobar y recuperar --abandonar requieren decisión explícita.");
     console.log("  npm run limpiar:versionados  (limpia solo archivos históricos rastreados por Git)");
     console.log("  npm run extraer:proveedor -- gam");
     console.log("  npm run extraer:todos -- --simular");
@@ -105,15 +105,15 @@ const printHelp = (requested) => {
     console.log("\n  npm run ayuda -- preparar      Ayuda de un comando");
     console.log("  npm run ayuda -- opciones       Opciones de terminal");
     console.log("\n  npm ci instala dependencias sin extraer ni preparar catálogos.");
-    console.log("  npm run limpiar:almacen y limpiar simulan; --aplicar autoriza la limpieza.");
+    console.log("  La rotación de campañas es automática; recuperar --abandonar solo para fallos identificados.");
     console.log("  npm test y npm run build ejecutan pruebas y compilación.");
     return true;
   }
   if (requested === "opciones") {
     console.log("OPCIONES DISPONIBLES\n");
     for (const [alias, original] of Object.entries(options)) console.log(`  ${alias.padEnd(26)} ${original}`);
-    console.log("  --actualizar                Sustituye la referencia únicamente en referencia");
-    console.log("  --aplicar                   Ejecuta la limpieza en lugar de simularla");
+    console.log("  --actualizar                Legado de referencia; la comparación ya utiliza campañas retenidas");
+    console.log("  --aplicar                   Ejecuta únicamente limpieza de almacenamiento individual");
     return true;
   }
   const definition = definitions[requested];
@@ -157,10 +157,10 @@ if (rawCommand === "ayuda") {
     fail("Falta el proveedor (gam, gomariz, mercaeleva o manain)", command);
   } else if (command === "limpiar:almacen" && normalized.includes("--aplicar") && normalized.includes("--dry-run")) {
     fail("No combines --aplicar y --simular", command);
-  } else if (normalized.includes("--aplicar") && !(["limpiar:almacen", "limpiar", "intervenir", "intervenir:manual"].includes(command))) {
-    fail("--aplicar solo corresponde a limpiar:almacen, limpiar, intervenir o intervenir:manual", command);
+  } else if (normalized.includes("--aplicar") && !(["limpiar:almacen", "intervenir", "intervenir:manual"].includes(command))) {
+    fail("--aplicar solo corresponde a limpiar:almacen, intervenir o intervenir:manual", command);
   } else {
-    const cleaned = command === "intervenir" || command === "intervenir:manual" || command === "limpiar" ? normalized : normalized.filter((argument) => argument !== "--aplicar");
+    const cleaned = command === "intervenir" || command === "intervenir:manual" || command === "recuperar" ? normalized : normalized.filter((argument) => argument !== "--aplicar");
     if (selected.defaultSimulation && !normalized.includes("--aplicar") && !cleaned.includes("--dry-run")) cleaned.push("--dry-run");
     const compile = spawnSync(process.execPath, [join(root, "scripts/run-build.mjs"), "--quiet"], {
       cwd: root, stdio: "inherit", windowsHide: true

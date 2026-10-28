@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { analyzeSourceContentGaps, prioritizeCatalogGaps } from "../tools/catalog-content-gaps.js";
 import type { GapGroupBy, GapInput } from "../tools/catalog-content-gaps.js";
-import { inspectCampaignReference } from "../infrastructure/filesystem/campaign-reference.js";
+import { findCampaignBaseline } from "../pipeline/campaign/reference-comparison.js";
 import { readCanonicalCatalog } from "../infrastructure/filesystem/canonical-catalog.js";
 import { loadPreparationInputs } from "../infrastructure/filesystem/preparation-inputs.js";
 import { prepareSourceProduct } from "../catalog/import/preparation/prepare-product.js";
@@ -51,7 +51,7 @@ const readOptions = (args: readonly string[]): CommandOptions => {
 
 export const runCatalogContentGaps = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    console.log("Uso: npm run huecos -- [--catalogo ruta/-catalog.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json]\nSin --catalogo: referencia íntegra de data/reference. Con --catalogo: uno o varios catálogos canónicos completos verificados por su manifest y resumen; consulta de solo lectura.");
+    console.log("Uso: npm run huecos -- [--catalogo ruta/-catalog.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json]\nSin --catalogo: última campaña entregada íntegra (o referencia histórica). Con --catalogo: uno o varios catálogos canónicos completos verificados por su manifest y resumen; consulta de solo lectura.");
     return;
   }
   const options = readOptions(args);
@@ -79,22 +79,19 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
     };
     sourceLabel = `catálogos explícitos (${catalogs.map((catalog) => catalog.providerId).join(", ")})`;
   } else {
-    const inspection = await inspectCampaignReference(root);
-    if (inspection.status !== "valid") {
-      throw new Error(inspection.status === "absent" ? "No existe referencia íntegra; usa --catalogo con un catálogo canónico completo" :
-        `Referencia no válida para auditoría (${inspection.status}): ${inspection.reason}`);
-    }
-    for (const catalog of inspection.reference.catalogs) {
+    const baseline = await findCampaignBaseline(root);
+    if (!baseline) throw new Error("No existe campaña entregada ni referencia íntegra; utiliza --catalogo con un canónico completo");
+    for (const catalog of baseline.catalogs) {
       for (const source of catalog.products) inputs.push({ source, prepared: prepareSourceProduct(source) });
     }
     provenance = {
-      source: "referencia",
-      runId: inspection.reference.manifest.runId,
-      catalogs: inspection.reference.manifest.catalogs.map(({ providerId, productCount, sha256 }) => ({ providerId, productCount, sha256 })),
+      source: "campaña_entregada",
+      runId: baseline.runId,
+      catalogs: baseline.catalogs.map(({ providerId, productCount }) => ({ providerId, productCount })),
       rulesSha256: fingerprints.rulesSha256,
       preparation: "Vista recalculada con reglas técnicas actuales, no preparación histórica"
     };
-    sourceLabel = `referencia ${inspection.reference.manifest.runId}`;
+    sourceLabel = `referencia ${baseline.runId}`;
   }
   const analysis = analyzeSourceContentGaps(inputs, { groupBy: options.groupBy });
   const ranked = prioritizeCatalogGaps(analysis, options.minGroup, options.minMissing);

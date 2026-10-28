@@ -9,7 +9,7 @@ import { sha256 } from "../../catalog/editorial/campaign-accreditation.js";
 import type { AccreditedSource } from "../../catalog/editorial/campaign-accreditation.js";
 import type { OfflinePreparation } from "../../catalog/import/preparation/offline-document.js";
 import type { BatchReport } from "../../pipeline/batch/report-types.js";
-import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
+import { isReferenceProviderSet } from "../../contracts/campaign-providers.js";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
@@ -18,17 +18,15 @@ const isCompleteBatch = (value: unknown): value is BatchReport => {
   if (!isRecord(value) || value.version !== 1 || value.status !== "complete" ||
     typeof value.runId !== "string" || !Array.isArray(value.requestedProviders) ||
     !Array.isArray(value.providers)) return false;
-  const required = CAMPAIGN_PROVIDERS;
   const requested: readonly unknown[] = value.requestedProviders;
   const providers: readonly unknown[] = value.providers;
-  return requested.length === required.length &&
-    required.every((provider) => requested.includes(provider)) &&
-    providers.length === required.length &&
+  return isReferenceProviderSet(requested.filter((id): id is string => typeof id === "string")) &&
+    providers.length === requested.length &&
     providers.every((item) => isRecord(item) && item.status === "complete" &&
-      typeof item.providerId === "string" && required.some((id) => id === item.providerId) &&
+      typeof item.providerId === "string" && requested.some((id) => id === item.providerId) &&
       typeof item.outputDir === "string" && typeof item.outputPrefix === "string" &&
       typeof item.startedAt === "string" && typeof item.endedAt === "string") &&
-    new Set(providers.map((item) => isRecord(item) ? item.providerId : undefined)).size === required.length;
+    new Set(providers.map((item) => isRecord(item) ? item.providerId : undefined)).size === requested.length;
 };
 
 const interventionForPreparation = async (

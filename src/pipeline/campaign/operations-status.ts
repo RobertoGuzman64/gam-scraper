@@ -2,8 +2,7 @@ import { lstat } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { inspectCampaignReference } from "../../infrastructure/filesystem/campaign-reference.js";
 import type { CampaignReferenceInspection } from "../../infrastructure/filesystem/campaign-reference.js";
-import { findDesktopDirectory } from "../../infrastructure/filesystem/desktop-directory.js";
-import { discoverCampaign } from "./discovery.js";
+import { discoverCampaign, listCampaignRuns } from "./discovery.js";
 import type { CampaignDiscovery } from "./discovery.js";
 import { verifyDeliveredCampaign } from "./delivery-verification.js";
 import { inspectActiveCampaignEditorial } from "./editorial.js";
@@ -42,12 +41,12 @@ export const inspectCampaignOperations = async (
 
   if (!campaign.runId || !campaign.runFile) {
     if (campaign.issues.length) return result("No se puede identificar una campaña íntegra", ["Revisar los avisos del lote antes de extraer o modificar archivos"]);
-    return result("Sin campaña activa (también es normal después de limpiar)", ["npm run extraer"]);
+    return result("Sin campaña activa", ["npm run extraer"]);
   }
   if (campaign.status !== "complete" || campaign.issues.length) {
     return result("Campaña incompleta o con incidencias de procedencia", [
       "Revisar los avisos del lote y sus proveedores; no finalizar ni limpiar",
-      "Si se abandona deliberadamente el lote: npm run extraer -- --nueva"
+      `Si decides abandonar este intento: npm run recuperar -- ${campaign.runId}`
     ]);
   }
   if (campaign.providers.some((provider) => provider.state === "failed" || provider.state === "invalid")) {
@@ -82,26 +81,20 @@ export const inspectCampaignOperations = async (
     const receipt = join(root, "storage", "campaigns", campaign.runId, "delivery.json");
     if (await exists(receipt)) {
       try {
-        const verified = await verifyDeliveredCampaign(root, desktopDirectory ?? await findDesktopDirectory());
+        const verified = await verifyDeliveredCampaign(root, desktopDirectory, campaign.runId);
         if (verified.runId !== campaign.runId) throw new Error("La entrega corresponde a otro lote");
       } catch (error) {
         return result(`Entrega existente, pero no verificable: ${errorMessage(error)}`, [
-          "Comprobar el justificante, el ZIP y la selección antes de actualizar referencia o limpiar"
+          "Comprobar el recibo local, la selección y acreditación; el ZIP puede estar ausente"
         ]);
       }
-      if (reference.status === "valid" && reference.reference.manifest.runId === campaign.runId) {
-        return result("Entrega acreditada y referencia verificada para este mismo lote", [
-          "npm run limpiar", "npm run limpiar -- --aplicar (solo tras revisar la simulación)"
-        ]);
-      }
-      const next = ["npm run comparar"];
-      if (reference.status === "absent" || reference.status === "valid") {
-        next.push("npm run referencia -- --actualizar (opcional, antes de limpiar)");
-      } else {
-        next.push("Resolver el estado de referencia antes de intentar actualizarla");
-      }
-      next.push("npm run limpiar (simulación; no exige actualizar referencia)");
-      return result("Entrega acreditada; referencia aún no actualizada para este lote", next);
+      const runs = await listCampaignRuns(root);
+      if (runs.length === 2) return result("Entrega acreditada; dos campañas conservadas, la anterior se rotará antes de la siguiente extracción", [
+        "npm run comparar", "npm run extraer (rotación automática cuando ambas entregas sean acreditables)"
+      ]);
+      return result("Entrega histórica acreditada localmente; no requiere actualizar copias de referencia ni limpieza manual", [
+        "npm run comparar", "npm run extraer"
+      ]);
     }
     const selectionDir = join(root, "storage", "campaigns", campaign.runId, "selection");
     if (await exists(selectionDir)) {
