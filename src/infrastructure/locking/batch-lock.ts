@@ -1,5 +1,5 @@
 import { hostname } from "node:os";
-import { mkdir, open, readFile, rm, stat } from "node:fs/promises";
+import { lstat, mkdir, open, readFile, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
@@ -64,6 +64,22 @@ const checkOwner = (owner: LockOwner, lockFile: string): void => {
   if (isAlive(owner.pid)) {
     throw new Error(`Ya hay un lote con PID ${owner.pid} iniciado el ${owner.startedAt}: ${lockFile}. Comprueba ese proceso antes de lanzar otro.`);
   }
+};
+
+export const assertInactiveCampaignBatchLock = async (outRoot: string, runId: string): Promise<void> => {
+  const lockFile = join(outRoot, ".batch.lock");
+  const entry = await lstat(lockFile);
+  if (!entry.isFile() || entry.isSymbolicLink()) {
+    throw new Error(`Bloqueo de campaña no regular: ${lockFile}`);
+  }
+  const current = await readLock(lockFile);
+  if (current.kind !== "owned") {
+    throw new Error(`No se puede acreditar el propietario del bloqueo: ${lockFile}`);
+  }
+  if (current.owner.runId !== runId) {
+    throw new Error(`Bloqueo de otra ejecución (${current.owner.runId}): ${lockFile}`);
+  }
+  checkOwner(current.owner, lockFile);
 };
 
 const recoverLock = async (lockFile: string): Promise<number | null> => {

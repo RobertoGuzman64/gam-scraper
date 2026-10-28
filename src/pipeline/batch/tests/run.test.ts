@@ -283,3 +283,16 @@ test("rechaza una carpeta de campaña que no coincide con el runId antes de crea
     await assert.rejects(stat(join(options.historyDir, runId)), /ENOENT/);
   });
 });
+
+test("el lote de campaña registra run.json antes de crear la carpeta de extracción", async () => {
+  await withFolder(async (folder) => {
+    const runId = createBatchRunId();
+    const blocked = join(folder, "history-blocked");
+    const outRoot = join(folder, "scraped", "campaigns", runId);
+    await writeFile(blocked, "No es un directorio");
+    await assert.rejects(runBatch({
+      providerIds: ["gam"], outRoot, historyDir: blocked, dryRun: false
+    }, join(folder, "missing.mjs"), undefined, undefined, runId), /ENOTDIR/);
+    await assert.rejects(stat(outRoot), /ENOENT/);
+  });
+});

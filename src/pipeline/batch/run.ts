@@ -49,6 +49,14 @@ export const runBatch = async (
   const runId = campaignRunId ?? `${startedAt.replace(/[:.]/g, "-")}-${randomUUID().slice(0, 8)}`;
   const runDir = join(historyDir, runId);
   const reportFile = join(runDir, "run.json");
+  const completed: ProviderRun[] = [];
+  const makeReport = (status: BatchReport["status"], endedAt: string | null): BatchReport => ({
+    version: 1, runId, startedAt, endedAt, status, requestedProviders: options.providerIds, providers: [...completed]
+  });
+  if (campaignRunId !== undefined) {
+    await mkdir(runDir, { recursive: true });
+    await writeBatchReport(reportFile, makeReport("running", null));
+  }
   await mkdir(outRoot, { recursive: true });
   const lock = await acquireBatchLock(outRoot, { runId, pid: process.pid, startedAt });
 
@@ -61,12 +69,10 @@ export const runBatch = async (
   if (externalSignal?.aborted) cancelExternal();
   try {
     if (lock.recoveredPid !== null) observer?.recoveredLock?.(lock.recoveredPid);
-    await mkdir(runDir, { recursive: true });
-    const completed: ProviderRun[] = [];
-    const makeReport = (status: BatchReport["status"], endedAt: string | null): BatchReport => ({
-      version: 1, runId, startedAt, endedAt, status, requestedProviders: options.providerIds, providers: [...completed]
-    });
-    await writeBatchReport(reportFile, makeReport("running", null));
+    if (campaignRunId === undefined) {
+      await mkdir(runDir, { recursive: true });
+      await writeBatchReport(reportFile, makeReport("running", null));
+    }
     observer?.start(runDir, options.providerIds.length);
     for (const provider of describeBatch(options)) {
       if (controller.signal.aborted) break;

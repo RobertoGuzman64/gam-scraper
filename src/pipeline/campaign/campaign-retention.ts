@@ -19,6 +19,13 @@ const missing = (error: unknown): boolean => error instanceof Error && "code" in
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 const validName = (value: unknown): value is string => typeof value === "string" && /^[a-zA-Z0-9_-]+$/.test(value);
+const readableFile = async (path: string): Promise<boolean> => {
+  try {
+    const entry = await lstat(path);
+    if (!entry.isFile() || entry.isSymbolicLink()) throw new Error(`Archivo de campaña inseguro: ${path}`);
+    return true;
+  } catch (error) { if (missing(error)) return false; throw error; }
+};
 const regularDirectory = async (path: string): Promise<boolean> => {
   try {
     const entry = await lstat(path);
@@ -116,6 +123,35 @@ const describeOutputs = (root: string, run: CampaignRun): Pick<CampaignRemoval, 
       }))
       : outputs.map(({ providerId, outputPrefix }) => ({ providerId, outputPrefix }))
   };
+};
+
+const planUnreportedRemoval = async (root: string, runId: string): Promise<CampaignRemoval> => {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z-[a-f0-9]{8}$/.test(runId)) {
+    throw new Error(`El identificador ${runId} no corresponde a una extracción aislada`);
+  }
+  const runDir = join(root, "storage", "runs", runId);
+  const scrapedDir = join(base(root), runId);
+  if (!await regularDirectory(runDir) && !await regularDirectory(scrapedDir)) {
+    throw new Error(`No existe una extracción interrumpida asociable a ${runId}`);
+  }
+  try {
+    await lstat(join(runDir, "run.json"));
+    throw new Error(`El lote ${runId} dispone de run.json y debe verificarse por su informe`);
+  } catch (error) { if (!missing(error)) throw error; }
+  const prefixes = CAMPAIGN_PROVIDERS.map((providerId) => ({
+    providerId, outputPrefix: getProvider(providerId).defaultOptions.outPrefix
+  }));
+  const journal: RemovalJournal = {
+    version: 1, kind: "abandon", runId, retainedRunId: null, scrapedFolder: runId, prefixes
+  };
+  const paths: string[] = [];
+  for (const item of removalAreas(root, journal)) {
+    if (await inspectCleanupArea(root, item.path, item.area,
+      new Map(prefixes.map(({ providerId, outputPrefix }) => [providerId, outputPrefix])), true) !== null) {
+      paths.push(item.path);
+    }
+  }
+  return { runId, paths, scrapedFolder: runId, prefixes };
 };
 
 const planRemoval = async (root: string, run: CampaignRun): Promise<CampaignRemoval> => {
@@ -285,13 +321,16 @@ export type CampaignRecovery = {
 };
 
 export const inspectRecoverableCampaign = async (rootDirectory: string, runId: string): Promise<CampaignRecovery> => {
+  if (!validName(runId)) throw new Error("Identificador de campaña no seguro");
   const root = resolve(rootDirectory);
-  const runs = await listCampaignRuns(root);
+  const reportPath = join(root, "storage", "runs", runId, "run.json");
+  const unreported = !await readableFile(reportPath);
+  const runs = await listCampaignRuns(root, unreported ? runId : undefined);
   const target = runs.find((entry) => entry.report.runId === runId);
-  if (!target) throw new Error(`No se encuentra campaña ${runId}`);
-  if (target.report.status === "complete") throw new Error("La campaña está completa y debe acreditarse o entregarse, no abandonarse como fallida");
-  const campaign = await discoverCampaign(root, runId);
-  await planRemoval(root, target);
+  if (!unreported && !target) throw new Error(`No se encuentra campaña ${runId}`);
+  if (target?.report.status === "complete") throw new Error("La campaña está completa y debe acreditarse o entregarse, no abandonarse como fallida");
+  if (target) await planRemoval(root, target);
+  else await planUnreportedRemoval(root, runId);
   try { await lstat(join(root, "storage", "campaigns", runId, "delivery.json"));
     throw new Error("La campaña tiene un recibo de entrega y no se puede abandonar");
   } catch (error) { if (!missing(error)) throw error; }
@@ -304,22 +343,24 @@ export const inspectRecoverableCampaign = async (rootDirectory: string, runId: s
       throw new Error(`Campaña ${runId} contiene trabajo de intervención/acreditación; se conserva sin abandono automático: ${path}`);
     }
   }
-  return { runId, status: campaign.status, filesPreserved: true, canAbandon: true };
+  return { runId, status: target?.report.status ?? "interrupted", filesPreserved: true, canAbandon: true };
 };
 
 export const abandonFailedCampaign = async (rootDirectory: string, runId: string): Promise<void> =>
   withCampaignAdmissionLock(rootDirectory, async () => {
     const root = resolve(rootDirectory);
     await resumePendingCampaignRemoval(root);
-    const runs = await listCampaignRuns(root);
+    if (!validName(runId)) throw new Error("Identificador de campaña no seguro");
+    const unreported = !await readableFile(join(root, "storage", "runs", runId, "run.json"));
+    const runs = await listCampaignRuns(root, unreported ? runId : undefined);
     const target = runs.find((run) => run.report.runId === runId);
-    if (!target) throw new Error(`No se encuentra campaña ${runId}`);
+    if (!target && !unreported) throw new Error(`No se encuentra campaña ${runId}`);
     await inspectRecoverableCampaign(root, runId);
     if (runs.length > 2) throw new Error("Historial de campañas ambiguo");
     const others = runs.filter((run) => run.report.runId !== runId);
     if (others.length > 1) throw new Error("Historial de campañas ambiguo");
-    if (others[0]) await verifyDeliveredCampaign(root, undefined, others[0].report.runId);
-    const candidate = await planRemoval(root, target);
+    if (others[0]) await verifyDeliveredCampaign(root, undefined, others[0].report.runId, unreported ? runId : undefined);
+    const candidate = target ? await planRemoval(root, target) : await planUnreportedRemoval(root, runId);
     await beginRemoval(root, "abandon", candidate, others[0]?.report.runId ?? null);
   });
 

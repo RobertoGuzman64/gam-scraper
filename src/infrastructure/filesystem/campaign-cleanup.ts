@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import { lstat, open, readdir, readFile, realpath, rm, writeFile, mkdir } from "node:fs/promises";
 import { parseCatalogSnapshot } from "../../catalog/snapshot.js";
 import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
-import { join, relative, resolve, sep, isAbsolute } from "node:path";
+import { basename, join, relative, resolve, sep, isAbsolute } from "node:path";
+import { assertInactiveCampaignBatchLock } from "../locking/batch-lock.js";
 
 const isRecord = (input: unknown): input is Record<string, unknown> =>
   typeof input === "object" && input !== null && !Array.isArray(input);
@@ -83,7 +84,8 @@ const allowedFile = (
   area: CleanupArea, parts: readonly string[], name: string, prefixes: ReadonlyMap<string, string>, allowPartial: boolean
 ): boolean => {
   if (area === "run") return parts.length === 0 &&
-    (name === "run.json" || runArtifact.test(name));
+    (name === "run.json" || runArtifact.test(name) ||
+      (allowPartial && /^run\.json\.[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.tmp$/.test(name)));
   if (area === "scraped") {
     if (parts.length === 1) {
       const prefix = prefixes.get(parts[0] ?? "");
@@ -205,7 +207,15 @@ const inspectTree = async (
 ): Promise<void> => {
   for (const entry of await readdir(path, { withFileTypes: true })) {
     const item = join(path, entry.name);
-    if (entry.isFile() && allowedFile(area, parts, entry.name, prefixes, allowPartial)) {
+    if (area === "scraped" && parts.length === 0 && entry.name === ".batch.lock") {
+      try {
+        await assertInactiveCampaignBatchLock(path, basename(path));
+        const info = await lstat(item);
+        countFile(inventory, info.size, "other");
+      } catch (error) {
+        issues.push(`${item}: ${String(error)}`);
+      }
+    } else if (entry.isFile() && allowedFile(area, parts, entry.name, prefixes, allowPartial)) {
       const info = await lstat(item);
       if (!info.isFile()) { issues.push(`Archivo no regular: ${item}`); continue; }
       const historical = area === "scraped" && parts.includes(".history");

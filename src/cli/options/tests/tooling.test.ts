@@ -32,12 +32,12 @@ test("npm ci no ejecuta preparación de catálogos como lifecycle", () => {
   assert.equal(Object.hasOwn(scripts, "preinstall"), false);
   assert.equal(Object.hasOwn(scripts, "postinstall"), false);
   assert.equal(Object.hasOwn(scripts, "prepack"), false);
-  for (const command of ["ayuda", "iniciar", "estado", "extraer", "revisar", "intervenir", "acreditar", "entregar", "comparar", "referencia", "limpiar", "extraer:proveedor", "intervenir:manual", "preparar", "validar", "cobertura", "seleccionar", "limpiar:almacen", "test", "build"]) {
+  for (const command of ["ayuda", "iniciar", "estado", "extraer", "revisar", "intervenir", "acreditar", "entregar", "comparar", "referencia", "recuperar", "extraer:proveedor", "intervenir:manual", "preparar", "validar", "cobertura", "seleccionar", "limpiar:almacen", "test", "build"]) {
     assert.ok(Object.hasOwn(scripts, command), command);
   }
   const names = Object.keys(scripts);
   assert.ok(names.every((name) => !name.startsWith("campana:")));
-  for (const removed of ["scrape", "prepare:catalog", "select:publishable", "storage:clean", "compilar", "probar", "limpiar:compilado"]) {
+  for (const removed of ["scrape", "prepare:catalog", "select:publishable", "storage:clean", "compilar", "probar", "limpiar:compilado", "limpiar"]) {
     assert.ok(!Object.hasOwn(scripts, removed), removed);
   }
 });
