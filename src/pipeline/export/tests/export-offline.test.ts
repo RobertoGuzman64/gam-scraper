@@ -29,11 +29,12 @@ const machine = (reference: string, condition: "Nuevo" | "Segunda mano" | null, 
 });
 
 const fixture = async (run: (paths: {
-  source: string; preparation: string; inventory: string; out: string; root: string;
+  source: string; preparation: string; legacyPreparation: string; inventory: string; out: string; root: string;
 }) => Promise<void>) => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-export-stage3-"));
   const source = join(root, "scraped", "catalogo-ejemplo-catalog.json");
   const preparation = join(root, "prepared", "catalogo-ejemplo-preparation.json");
+  const legacyPreparation = join(root, "scraped", "catalogo-ejemplo-preparation.json");
   const inventory = join(root, "inventario.csv");
   const out = join(root, "altas.xlsx");
   const products = [
@@ -45,19 +46,19 @@ const fixture = async (run: (paths: {
     await writeOutputs(join(root, "scraped"), "catalogo-ejemplo", [{ category, products, discoveredProductUrls: 4, failures: [] }], now, now);
     await prepareSavedCatalog({ providerId: "gam", source, out: preparation, dryRun: false, compare: null });
     await writeFile(inventory, "companyID,reference\n45,11111\n");
-    await run({ source, preparation, inventory, out, root });
+    await run({ source, preparation, legacyPreparation, inventory, out, root });
   } finally { await rm(root, { recursive: true, force: true }); }
 };
 
-const args = (preparation: string, source: string, inventory: string, out: string) => [
+const args = (preparation: string, inventory: string, out: string, source?: string) => [
   "gam", "--companyID", "45", "--preparation", preparation,
-  "--source", source, "--existing", inventory, "--out", out
+  ...(source === undefined ? [] : ["--source", source]), "--existing", inventory, "--out", out
 ];
 
-test("export offline: dry-run no escribe, inventario excluye existentes y XLSX contiene solo altas ready", async (t) => {
+test("export offline heredado: dry-run no escribe, inventario excluye existentes y XLSX contiene solo altas ready", async (t) => {
   t.mock.method(console, "log", () => {});
-  await fixture(async ({ source, preparation, inventory, out }) => {
-    const argumentsList = args(preparation, source, inventory, out);
+  await fixture(async ({ source, legacyPreparation, inventory, out }) => {
+    const argumentsList = args(legacyPreparation, inventory, out);
     const sourceBefore = await readFile(source, "utf8");
     const oldFetch = globalThis.fetch;
     globalThis.fetch = () => { throw new Error("No acceder a la red"); };
@@ -77,15 +78,29 @@ test("export offline: dry-run no escribe, inventario excluye existentes y XLSX c
   });
 });
 
-test("export offline bloquea manipulación de manifiestos e inventario incorrecto", async () => {
+test("export offline canónico bloquea XLSX y create/many sin asignación comercial", async (t) => {
+  t.mock.method(console, "log", () => {});
   await fixture(async ({ source, preparation, inventory, out }) => {
-    const argumentsList = args(preparation, source, inventory, out);
+    const argumentsList = args(preparation, inventory, out, source);
+    const sourceBefore = await readFile(source, "utf8");
+    await assert.rejects(runExport([...argumentsList, "--dry-run"]), /Preparación canónica sin asignación comercial/);
+    await assert.rejects(runExport([...argumentsList, "--confirm-inventory"]), /Preparación canónica sin asignación comercial/);
+    await assert.rejects(runExport([...args(preparation, inventory, out.replace(/\.xlsx$/, ".json"), source), "--format", "json", "--dry-run"]), /Preparación canónica sin asignación comercial/);
+    await assert.rejects(access(out), { code: "ENOENT" });
+    await assert.rejects(access(`${out}.report.json`), { code: "ENOENT" });
+    assert.equal(await readFile(source, "utf8"), sourceBefore);
+  });
+});
+
+test("export offline bloquea inventario incorrecto en modo heredado y manipulación de manifiestos canónicos", async (t) => {
+  t.mock.method(console, "log", () => {});
+  await fixture(async ({ source, preparation, legacyPreparation, inventory, out }) => {
     await writeFile(inventory, "companyID,reference\n99,11111\n");
-    await assert.rejects(prepareExport("gam", 45, preparation, inventory, false, source), /companyID|compañía/i);
+    await assert.rejects(prepareExport("gam", 45, legacyPreparation, inventory, false), /companyID|compañía/i);
     await writeFile(inventory, "companyID,reference\n45,11111\n");
     const manifestPath = offlinePreparationManifestPath(preparation);
     await writeFile(manifestPath, "{}");
-    await assert.rejects(runExport([...argumentsList, "--confirm-inventory"]), /Manifest/);
+    await assert.rejects(runExport([...args(preparation, inventory, out, source), "--confirm-inventory"]), /Manifest/);
     await assert.rejects(access(out), { code: "ENOENT" });
   });
 });
