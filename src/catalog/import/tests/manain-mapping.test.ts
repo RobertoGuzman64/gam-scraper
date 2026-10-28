@@ -104,3 +104,38 @@ test("Manain: la ruta de venta catalana acreditada conserva el destino de tijera
   assert.ok(prepared.product.attributes.some((entry) =>
     entry.attributeID === attribute("Altura de trabajo").id && entry.value === 18.15));
 });
+
+test("Manain: familias acreditadas por ruta y datos técnicos resuelven destinos de ocasión", () => {
+  const cases: readonly { readonly url: string; readonly motor: string; readonly slug: string; readonly specs?: SpecsMap }[] = [
+    { url: "venda-elevacio-bracos-articulats-jlg-e400ajpn", motor: "Eléctrico", slug: "plataformas-articuladas-electricas-segunda-mano" },
+    { url: "venta-manipulacion-carretilla-toyota-8fbe18t", motor: "Eléctrico", slug: "carretillas-elevadoras-electricas-segunda-mano" },
+    { url: "venda-manipulacio-de-carregues-carretilles-kalmar-dcg160", motor: "Diésel", slug: "carretillas-elevadoras-diesel-segunda-mano" },
+    { url: "venta-manipulacion-carretilla-4x4-agria-tw25-4", motor: "Diésel", slug: "carretillas-todoterreno-segunda-mano" },
+    { url: "venta-movimiento-tierra-dumper-ausa-d-601", motor: "Diésel", slug: "dumpers-segunda-mano" },
+    { url: "venda-moviment-de-terres-minicargadora-bobcat-s450", motor: "Diésel", slug: "minicargadoras-segunda-mano" },
+    { url: "venta-manipulacion-manipulador-manitou-mt-625", motor: "Diésel", slug: "manipulador-teñescopico-segunda-mano",
+      specs: { "Altura de elevacion max": "5,85 m", "Alcance maximo": "3,4 m" } }
+  ];
+  for (const entry of cases) {
+    const source = machine(`https://manain.com/producto/${entry.url}/`,
+      { "Nueva o usada": "usada", Motor: entry.motor, ...entry.specs }, "");
+    const result = prepareProduct(source, catalog);
+    assert.equal(category(result.product.categorySellID), entry.slug, entry.url);
+    assert.ok(!result.issues.includes("Tipo de máquina de origen sin confirmar"), entry.url);
+  }
+});
+
+test("Manain: no se fuerza categoría con motorización o evidencia insuficiente", () => {
+  const forklift = machine("https://manain.com/producto/venta-manipulacion-carretilla-toyota-8fbe18t/",
+    { "Nueva o usada": "usada", Motor: "Híbrido" }, "");
+  assert.equal(prepareProduct(forklift, catalog).product.categorySellID, null);
+  const manipulator = machine("https://manain.com/producto/venta-manipulacion-manipulador-manitou-mt-625/",
+    { "Nueva o usada": "usada", Motor: "Diésel", "Altura de elevacion max": "5,85 m" }, "");
+  assert.equal(prepareProduct(manipulator, catalog).product.categorySellID, null);
+  const newOffroad = machine("https://manain.com/producto/venta-manipulacion-carretilla-4x4-agria-tw25-4/",
+    { "Nueva o usada": "nueva", Motor: "Diésel" }, "");
+  assert.equal(prepareProduct(newOffroad, catalog).product.categorySellID, null);
+  const generic = machine("https://manain.com/producto/venta-pequena-maquinaria-compactacion-atlas-copco-lf75/",
+    { "Nueva o usada": "usada", Motor: "Gasolina" }, "");
+  assert.equal(prepareProduct(generic, catalog).product.categorySellID, null);
+});

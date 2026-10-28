@@ -7,10 +7,22 @@ const families = [
   "elevacion-brazo-telescopico",
   "elevacion-camion-cesta",
   "movimiento-tierra-miniexcavadora",
-  "energia-grupo-electrogeno"
+  "energia-grupo-electrogeno",
+  "manipulacion-carretilla-4x4",
+  "manipulacion-carretilla",
+  "manipulacion-manipulador",
+  "movimiento-tierra-dumper",
+  "movimiento-tierra-minicargadora"
 ] as const;
 
 export type ManainFamily = (typeof families)[number];
+
+const aliases: readonly { readonly prefix: string; readonly family: ManainFamily }[] = [
+  { prefix: "venda-elevacio-tisores", family: "elevacion-tijera" },
+  { prefix: "venda-elevacio-bracos-articulats", family: "elevacion-brazo-articulado" },
+  { prefix: "venda-manipulacio-de-carregues-carretilles", family: "manipulacion-carretilla" },
+  { prefix: "venda-moviment-de-terres-minicargadora", family: "movimiento-tierra-minicargadora" }
+];
 
 export const manainSourceFamily = (record: ProductRecord): ManainFamily | null => {
   if (record.providerId !== "manain") return null;
@@ -18,9 +30,10 @@ export const manainSourceFamily = (record: ProductRecord): ManainFamily | null =
     const url = new URL(record.url);
     if (url.protocol !== "https:" || !["manain.com", "www.manain.com"].includes(url.hostname)) return null;
     const path = url.pathname;
+    if (!/^\/producto\/(?:venta|venda)-[^/]+\/?$/.test(path)) return null;
     const family = families.find((item) => path.startsWith(`/producto/venta-${item}-`));
-    if (family && /^\/producto\/venta-[^/]+\/?$/.test(path)) return family;
-    return /^\/producto\/venda-elevacio-tisores-[^/]+\/?$/.test(path) ? "elevacion-tijera" : null;
+    if (family) return family;
+    return aliases.find((alias) => path.startsWith(`/producto/${alias.prefix}-`))?.family ?? null;
   } catch {
     return null;
   }
