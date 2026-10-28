@@ -4,8 +4,9 @@ import { validateCreateManyCandidate, validateImportCandidate } from "./import-v
 import { resolveCategory } from "../mapping/category-mapping.js";
 import { imageUrls, normalizePrice } from "./product-fields.js";
 import { productAttributes } from "./product-attributes.js";
-import { sourceAttributeQualityIssues } from "../mapping/source-attribute-quality.js";
+import { sourceAttributeQualityIssues, sourceTechnicalQualityIssues } from "../mapping/source-attribute-quality.js";
 import { sourceCategoryQualityIssue } from "../mapping/source-category-quality.js";
+import { manainSourceFamily, manainSourceDescriptionContradictsFamily } from "../mapping/providers/manain/source.js";
 import { resolveCommercialCondition } from "./condition.js";
 import { resolveMercaelevaShortDescription } from "../mapping/providers/mercaeleva/descriptions.js";
 import { gamElevationSourceIdentityConflict } from "../mapping/providers/gam/elevation-identity.js";
@@ -38,7 +39,7 @@ import { reconcileMercaelevaVerifiedLindeE16pMast } from "../mapping/providers/m
 import { describeMercaelevaE48pPublicationConflict } from "../mapping/providers/mercaeleva/linde-e48p-publication-evidence.js";
 import type { ImportCandidate, ImportCatalog, PreparedProduct } from "./contracts.js";
 
-export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): PreparedProduct => {
+const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
   const publicationConflict = describeMercaelevaE48pPublicationConflict(record);
   record = reconcileGamVerifiedZeroSerial(record);
   const originalSpecs = record.specs;
@@ -55,7 +56,7 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   record = reconcileMercaelevaVerifiedLindeE16pMast(record);
   const issues: string[] = [];
   const { condition, contradictory: contradictoryCondition } = resolveCommercialCondition(record);
-  const category = resolveCategory(record, catalog.categories, condition);
+  const category = catalog ? resolveCategory(record, catalog.categories, condition) : null;
   const images = imageUrls(record);
   const price = normalizePrice(record.price);
   const reference = record.reference?.trim() || null;
@@ -64,17 +65,24 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
   const descriptions = distinguishDescriptions(record.shortDescription ?? descriptionEvidence.description, record.longDescription);
   if (descriptionEvidence.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
   if (gamElevationSourceIdentityConflict(record)) issues.push("Identidad GAM contradictoria entre título, resumen y ficha técnica");
-  const attributeResult = productAttributes(record, category, catalog);
+  const attributeResult = catalog ? productAttributes(record, category, catalog) : null;
 
   if (contradictoryCondition) issues.push("Condición comercial contradictoria entre la ficha y el origen");
   if (publicationConflict !== null) issues.push(publicationConflict);
   if (!reference) issues.push("Referencia ausente");
-  if (!category) {
+  if (catalog === null) {
+    const manainFamily = record.providerId === "manain" ? manainSourceFamily(record) : null;
+    if (!record.categoryKey.trim() || !record.categoryName.trim() ||
+      record.providerId === "manain" && (!manainFamily || manainSourceDescriptionContradictsFamily(record, manainFamily))) {
+      issues.push("Tipo de máquina de origen sin confirmar");
+    }
+  } else if (!category) {
     const sourceIssue = sourceCategoryQualityIssue(record);
     if (sourceIssue) issues.push(sourceIssue);
   }
   if (price === null && /\d/.test(record.price ?? "")) issues.push("Precio publicado inválido");
-  issues.push(...(category ? attributeResult.qualityIssues : sourceAttributeQualityIssues(record, catalog)));
+  issues.push(...(catalog === null ? sourceTechnicalQualityIssues(record) :
+    category ? attributeResult!.qualityIssues : sourceAttributeQualityIssues(record, catalog)));
 
   const product: ImportCandidate = {
     providerId: record.providerId,
@@ -82,7 +90,7 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
     reference,
     title,
     categorySellID: category?.id ?? null,
-    category: category?.name ?? null,
+    category: catalog === null ? record.categoryName.trim() || null : category?.name ?? null,
     condition,
     price,
     description_title: title,
@@ -91,15 +99,18 @@ export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): P
     image: images[0] ?? null,
     images,
     spec: originalSpecs ?? {},
-    attributes: attributeResult.attributes
+    attributes: attributeResult?.attributes ?? []
   };
   return {
     status: issues.length ? "review" : "ready",
     issues,
-    importIssues: {
+    ...(catalog === null ? {} : { importIssues: {
       excel: validateImportCandidate(product, catalog),
       createMany: validateCreateManyCandidate(product, catalog)
-    },
+    } }),
     product
   };
 };
+
+export const prepareProduct = (record: ProductRecord, catalog: ImportCatalog): PreparedProduct => prepare(record, catalog);
+export const prepareSourceProduct = (record: ProductRecord): PreparedProduct => prepare(record, null);

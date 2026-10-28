@@ -52,7 +52,7 @@ export type OfflineDiagnostics = {
   };
   readonly conditions: Readonly<Record<"Nuevo" | "Segunda_Mano" | "Sin confirmar", { readonly ready: number; readonly review: number }>>;
   readonly issues: readonly IssueDetail[];
-  readonly importation: ImportDiagnostics;
+  readonly importation: ImportDiagnostics | null;
 };
 
 export const buildOfflineDiagnostics = (preparation: OfflinePreparation): OfflineDiagnostics => {
@@ -88,7 +88,7 @@ export const buildOfflineDiagnostics = (preparation: OfflinePreparation): Offlin
     version: 1, providerId: preparation.source.providerId, source: preparation.source,
     fingerprints: preparation.fingerprints,
     totals: { ...preparation.totals, products: preparation.products.length, incidences, reviewSingle, reviewMultiple },
-    conditions, importation: buildImportDiagnostics(preparation.products),
+    conditions, importation: preparation.fingerprints.rulesVersion === 2 ? null : buildImportDiagnostics(preparation.products),
     issues: [...groups].map(([code, item]) => ({ code, ...item })).sort((a, b) => b.affected - a.affected || a.code.localeCompare(b.code, "es"))
   };
 };
@@ -114,8 +114,10 @@ const emptyChanges = {
 export const compareOfflinePreparations = (current: OfflinePreparation, previous: OfflinePreparation): PreparationComparison => {
   const rulesChanged = current.fingerprints.rulesSha256 !== previous.fingerprints.rulesSha256 ||
     current.fingerprints.rulesVersion !== previous.fingerprints.rulesVersion;
-  const snapshotsChanged = current.fingerprints.categorySnapshotSha256 !== previous.fingerprints.categorySnapshotSha256 ||
-    current.fingerprints.attributeSnapshotSha256 !== previous.fingerprints.attributeSnapshotSha256;
+  const snapshotsChanged = current.fingerprints.rulesVersion !== previous.fingerprints.rulesVersion ||
+    current.fingerprints.rulesVersion === 1 && previous.fingerprints.rulesVersion === 1 && (
+      current.fingerprints.categorySnapshotSha256 !== previous.fingerprints.categorySnapshotSha256 ||
+      current.fingerprints.attributeSnapshotSha256 !== previous.fingerprints.attributeSnapshotSha256);
   const common = { previousFingerprints: previous.fingerprints, rulesChanged, snapshotsChanged };
   if (current.source.providerId !== previous.source.providerId ||
     current.source.catalogSha256 !== previous.source.catalogSha256 ||

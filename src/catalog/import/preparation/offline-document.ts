@@ -22,6 +22,9 @@ export type PreparationFingerprints = {
   readonly rulesSha256: string;
   readonly categorySnapshotSha256: string;
   readonly attributeSnapshotSha256: string;
+} | {
+  readonly rulesVersion: 2;
+  readonly rulesSha256: string;
 };
 
 export type OfflinePreparation = {
@@ -64,8 +67,10 @@ export const parseOfflinePreparation = (value: unknown, providerId: string): Off
     !/^[a-f0-9]{16}$/.test(value.source.scope) || !isSha(value.source.catalogSha256) ||
     typeof value.source.productCount !== "number" || !Number.isSafeInteger(value.source.productCount) ||
     value.source.productCount !== parsed.products.length || parsed.products.length === 0 ||
-    value.fingerprints.rulesVersion !== 1 || !isSha(value.fingerprints.rulesSha256) ||
-    !isSha(value.fingerprints.categorySnapshotSha256) || !isSha(value.fingerprints.attributeSnapshotSha256) ||
+    !isSha(value.fingerprints.rulesSha256) ||
+    !(value.fingerprints.rulesVersion === 2 && Object.keys(value.fingerprints).length === 2 ||
+      value.fingerprints.rulesVersion === 1 && Object.keys(value.fingerprints).length === 4 &&
+      isSha(value.fingerprints.categorySnapshotSha256) && isSha(value.fingerprints.attributeSnapshotSha256)) ||
     !isRecord(value.totals) || typeof value.totals.ready !== "number" ||
     typeof value.totals.review !== "number" ||
     value.totals.ready !== parsed.products.filter((entry) => entry.status === "ready").length ||
@@ -85,10 +90,12 @@ export const parseOfflinePreparation = (value: unknown, providerId: string): Off
       catalogSha256: value.source.catalogSha256, productCount: value.source.productCount,
       ...(intervention === undefined ? {} : { intervention })
     },
-    fingerprints: {
-      rulesVersion: 1, rulesSha256: value.fingerprints.rulesSha256,
-      categorySnapshotSha256: value.fingerprints.categorySnapshotSha256,
-      attributeSnapshotSha256: value.fingerprints.attributeSnapshotSha256
+    fingerprints: value.fingerprints.rulesVersion === 2 ? {
+      rulesVersion: 2, rulesSha256: value.fingerprints.rulesSha256 as string
+    } : {
+      rulesVersion: 1, rulesSha256: value.fingerprints.rulesSha256 as string,
+      categorySnapshotSha256: value.fingerprints.categorySnapshotSha256 as string,
+      attributeSnapshotSha256: value.fingerprints.attributeSnapshotSha256 as string
     },
     totals: { ready: value.totals.ready, review: value.totals.review },
     identities: value.identities, products: parsed.products

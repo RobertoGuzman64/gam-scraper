@@ -71,8 +71,8 @@ export const prepareSavedCatalog = async (options: PrepareOptions): Promise<Prep
       throw new Error("El catálogo ha cambiado durante la lectura de la preparación");
     }
   }
-  const { catalog: target, fingerprints } = await loadPreparationInputs();
-  const prepared = prepareImportBatch(catalog.products, target);
+  const { fingerprints } = await loadPreparationInputs();
+  const prepared = prepareImportBatch(catalog.products);
   const preparation = parseOfflinePreparation({
     version: 1, quality: "complete", published: true, preparedAt: new Date().toISOString(),
     source: {

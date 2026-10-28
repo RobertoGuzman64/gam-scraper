@@ -14,14 +14,14 @@ export const runValidateIntervention = async (args: readonly string[]): Promise<
     options.providerId, options.preparation, options.source, null, options.originalSource
   );
   console.log([
-    `VALIDACIÓN INTERVENIDA | ${options.providerId.toUpperCase()} | ${result.importBlocked ? "REVISIÓN" : "CONFORME"}`,
+    `VALIDACIÓN INTERVENIDA | ${options.providerId.toUpperCase()} | ${result.review ? "REVISIÓN" : "CONFORME"}`,
     `  Productos: ${result.catalog.productCount} | Ready: ${result.ready} | Review: ${result.review}`,
-    `  Importables: ${result.importReady} | Bloqueados: ${result.importBlocked}`,
+    `  Categorización comercial: responsabilidad del backend`,
     `  SHA derivado: ${result.catalog.catalogSha256}`,
     `  SHA plan: ${result.preparation.source.intervention?.planSha256 ?? ""}`,
     "  Estado: procedencia verificada; sin aprobación editorial automática"
   ].join("\n"));
-  if (result.importBlocked > 0) process.exitCode = 2;
+  if (result.review > 0) process.exitCode = 2;
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

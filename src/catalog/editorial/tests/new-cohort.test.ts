@@ -28,7 +28,7 @@ test("las rutas Hyster actualizadas retienen las tres identidades y no requieren
     sourceUrl.includes("/es/carretillas-elevadoras-electricas-hyster/") &&
     evidenceUrls.includes(sourceUrl) &&
     issues.some((issue) => issue.includes("marca HYSTER en anuncio y YALE en ficha técnica"))));
-  assert.equal(result.totals.publishable, result.totals.original - 6);
+  assert.equal(result.totals.publishable, result.totals.original - 11);
   assert.equal(result.products.filter((item) => item.providerId === "gomariz").length,
     originals.find((item) => item.source.providerId === "gomariz")?.products.length);
 });

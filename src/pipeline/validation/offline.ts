@@ -4,7 +4,6 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { buildProductIdentity } from "../../catalog/identity.js";
 import { prepareImportBatch } from "../../catalog/import/preparation/prepare.js";
-import { validateCreateManyCandidate } from "../../catalog/import/preparation/import-validation.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/canonical-catalog.js";
 import { readAppliedIntervention } from "../../infrastructure/filesystem/intervention-derived.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/offline-preparation.js";
@@ -26,10 +25,10 @@ export type OfflineValidation = {
   readonly preparationFile: string;
   readonly ready: number;
   readonly review: number;
-  readonly importReady: number;
-  readonly importBlocked: number;
+  readonly importReady: number | null;
+  readonly importBlocked: number | null;
   readonly preparation: OfflinePreparation;
-  readonly target: ImportCatalog;
+  readonly target: ImportCatalog | null;
   readonly sourceProducts: readonly ProductRecord[];
 };
 
@@ -65,17 +64,14 @@ export const validateOfflinePreparation = async (
     throw new Error("La preparación offline no corresponde exactamente al catálogo canónico seleccionado");
   }
   if (!isDeepStrictEqual(preparation.fingerprints, inputs.fingerprints)) {
-    throw new Error("La preparación está obsoleta: han cambiado las reglas o snapshots de Equipzilla; repetir prepare");
+    throw new Error("La preparación está obsoleta: han cambiado las reglas de calidad del scraper; repetir preparar");
   }
-  const expected = prepareImportBatch(canonical.products, inputs.catalog);
+  const expected = prepareImportBatch(canonical.products);
   if (!isDeepStrictEqual(preparation.identities, canonical.products.map((product) => buildProductIdentity(product).key)) ||
     !isDeepStrictEqual(preparation.products, expected.products) ||
     !isDeepStrictEqual(preparation.totals, expected.totals)) {
     throw new Error("La preparación no coincide con los productos y reglas de su catálogo de origen");
   }
-  const importReady = preparation.products.filter((entry) =>
-    entry.status === "ready" && validateCreateManyCandidate(entry.product, inputs.catalog).length === 0
-  ).length;
   if (maxAgeHours !== null) {
     if (!Number.isFinite(maxAgeHours) || maxAgeHours <= 0) throw new Error("maxAgeHours debe ser positivo");
     const age = Date.now() - Date.parse(canonical.endedAt);
@@ -89,8 +85,8 @@ export const validateOfflinePreparation = async (
       endedAt: canonical.endedAt, catalogSha256: sourceHash
     },
     preparationFile: resolve(preparationFile), ready: preparation.totals.ready,
-    review: preparation.totals.review, importReady,
-    importBlocked: preparation.products.length - importReady,
-    preparation, target: inputs.catalog, sourceProducts: canonical.products
+    review: preparation.totals.review, importReady: null,
+    importBlocked: null,
+    preparation, target: null, sourceProducts: canonical.products
   };
 };

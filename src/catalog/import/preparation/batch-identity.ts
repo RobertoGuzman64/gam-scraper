@@ -5,9 +5,9 @@ import { describeHysterH35ftStockConflict } from "../mapping/providers/gam/hyste
 import { verifiedMusoshiSerialOwner, verifiedZeroMisattributedSerial } from "../mapping/providers/gam/musoshi-serial-evidence.js";
 import { verifiedYaleErp35vlCrossListing, verifiedYaleErp35vlSerialOwner } from "../mapping/providers/gam/yale-erp35vl-serial-evidence.js";
 import type { ImportCatalog, PreparedProduct } from "./contracts.js";
-import { prepareProduct } from "./prepare-product.js";
+import { prepareProduct, prepareSourceProduct } from "./prepare-product.js";
 
-export const prepareImportBatch = (products: readonly ProductRecord[], catalog: ImportCatalog): {
+export const prepareImportBatch = (products: readonly ProductRecord[], catalog?: ImportCatalog): {
   readonly totals: { readonly ready: number; readonly review: number };
   readonly products: readonly PreparedProduct[];
 } => {
@@ -36,7 +36,7 @@ export const prepareImportBatch = (products: readonly ProductRecord[], catalog: 
     }
   }
   const prepared = products.map((product): PreparedProduct => {
-    const candidate = prepareProduct(product, catalog);
+    const candidate = catalog ? prepareProduct(product, catalog) : prepareSourceProduct(product);
     const warnings = warningsByIdentity.get(buildProductIdentity(product).key) ?? [];
     const reference = product.reference?.trim();
     const count = reference ? referenceCounts.get(`${product.providerId}:${reference.toLocaleUpperCase("es")}`) ?? 0 : 0;

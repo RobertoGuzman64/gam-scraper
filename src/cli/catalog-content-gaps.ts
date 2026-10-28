@@ -1,15 +1,13 @@
-import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { analyzeCatalogContentGaps, prioritizeCatalogGaps } from "../tools/catalog-content-gaps.js";
+import { analyzeSourceContentGaps, prioritizeCatalogGaps } from "../tools/catalog-content-gaps.js";
 import type { GapGroupBy, GapInput } from "../tools/catalog-content-gaps.js";
 import { inspectCampaignReference } from "../infrastructure/filesystem/campaign-reference.js";
-import { loadImportCatalogSnapshot } from "../infrastructure/filesystem/import-catalog-loader.js";
-import { prepareProduct } from "../catalog/import/preparation/prepare-product.js";
+import { loadPreparationInputs } from "../infrastructure/filesystem/preparation-inputs.js";
+import { prepareSourceProduct } from "../catalog/import/preparation/prepare-product.js";
 import { printCommandError } from "./reporting/errors.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
-const sha256 = (content: string): string => createHash("sha256").update(content).digest("hex");
 
 type CommandOptions = { readonly json: boolean; readonly groupBy: GapGroupBy; readonly minGroup: number;
   readonly minMissing: number; readonly limit: number };
@@ -55,19 +53,19 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
     throw new Error(inspection.status === "absent" ? "No existe referencia íntegra; consulta no disponible" :
       `Referencia no válida para auditoría (${inspection.status}): ${inspection.reason}`);
   }
-  const { catalog, categoryRaw, attributeRaw } = await loadImportCatalogSnapshot();
+  const { fingerprints } = await loadPreparationInputs();
   const inputs: GapInput[] = [];
   for (const sourceCatalog of inspection.reference.catalogs) {
-    for (const source of sourceCatalog.products) inputs.push({ source, prepared: prepareProduct(source, catalog) });
+    for (const source of sourceCatalog.products) inputs.push({ source, prepared: prepareSourceProduct(source) });
   }
-  const analysis = analyzeCatalogContentGaps(inputs, catalog, { groupBy: options.groupBy });
+  const analysis = analyzeSourceContentGaps(inputs, { groupBy: options.groupBy });
   const ranked = prioritizeCatalogGaps(analysis, options.minGroup, options.minMissing);
   if (options.json) {
     console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance: {
       runId: inspection.reference.manifest.runId,
       catalogs: inspection.reference.manifest.catalogs.map(({ providerId, productCount, sha256 }) => ({ providerId, productCount, sha256 })),
-      importCatalogSha256: { categories: sha256(categoryRaw), attributes: sha256(attributeRaw) },
-      preparation: "Vista recalculada con los mapeadores actuales, no preparación histórica"
+      rulesSha256: fingerprints.rulesSha256,
+      preparation: "Vista recalculada con reglas técnicas actuales, no preparación histórica"
     }, ...analysis, prioritized: ranked.slice(0, options.limit).map(({ group, observation, tier }) => ({
       providerId: group.providerId, categorySellID: group.categorySellID, sourceCategoryKey: group.sourceCategoryKey,
       brand: group.brand, model: group.model, field: observation.field, missing: observation.missing, tier
@@ -79,7 +77,7 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
   console.log(`PROVEEDORES | ${analysis.universe.providers.map((item) => `${item.providerId}:${item.originals}`).join(" | ")}`);
   console.log(`PATRONES | ${ranked.length} con grupo >= ${options.minGroup} y ausencias >= ${options.minMissing} | TOP ${Math.min(options.limit, ranked.length)}`);
   for (const { group, observation } of ranked.slice(0, options.limit)) {
-    const field = observation.field.kind === "attribute" ? `${observation.field.name} (#${observation.field.attributeID})` : observation.field.name;
+    const field = observation.field.name;
     const label = group.category ?? `sin categoría (${group.sourceCategoryKey})`;
     const refinement = [group.brand, group.model].filter((value) => value !== null).join(" / ");
     console.log(`${group.providerId} | ${label}${refinement ? ` | ${refinement}` : ""} | ${field} | ${observation.present}/${observation.applicable} (${observation.coveragePercent}%) | ausentes ${observation.missing} | ${observation.coverage} | evidencias directas ${observation.directEvidence}, texto relacionado ${observation.relatedText}`);

@@ -178,8 +178,9 @@ test("la CLI manual prepara y valida; el seleccionador sigue rechazando derivaci
       "dist/cli/validate-intervention.js", "gam", "--derived", data.derived,
       "--source", data.original, "--preparation", data.preparation
     ], { cwd: process.cwd(), encoding: "utf8", timeout: 20000 });
-    assert.equal(validated.status, 2);
+    assert.equal(validated.status, 0);
     assert.match(validated.stdout, /procedencia verificada/);
-    assert.match(validated.stdout, /Bloqueados: 1/);
+    assert.match(validated.stdout, /Categorización comercial: responsabilidad del backend/);
+    assert.doesNotMatch(validated.stdout, /Bloqueados: 1/);
   } finally { await data.cleanup(); }
 });

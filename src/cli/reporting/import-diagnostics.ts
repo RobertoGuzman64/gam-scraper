@@ -3,7 +3,7 @@ import { buildImportDiagnostics } from "../../catalog/import/preparation/import-
 
 export const formatImportDiagnostics = (products: readonly PreparedProduct[]): readonly string[] => {
   if (products.some((entry) => entry.importIssues === undefined)) {
-    return ["  Elegibilidad Excel/create-many: no registrada en este informe histórico; generar preparación actual para evaluarla"];
+    return ["  Importación comercial: no evaluada por esta preparación; el backend asigna categorías y atributos"];
   }
   const diagnostics = buildImportDiagnostics(products);
   const lines: string[] = [];

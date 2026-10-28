@@ -64,6 +64,7 @@ test("JSON y CLI informan calidad y elegibilidad de forma independiente también
   assert.equal(diagnostics.totals.ready, 2);
   assert.equal(diagnostics.totals.review, 1);
   assert.equal(diagnostics.totals.incidences, 1);
+  assert.ok(diagnostics.importation);
   assert.equal(diagnostics.importation.createMany.eligible, 1);
   assert.equal(diagnostics.importation.createMany.blockedByContractOnly, 1);
   assert.equal(diagnostics.issues[0]?.classification, "contradiccion");
@@ -79,7 +80,7 @@ test("JSON y CLI informan calidad y elegibilidad de forma independiente también
 test("informe histórico sin clasificación de importación no se presenta como elegible", () => {
   const { importIssues, ...historical } = entry("A", [], [], []);
   assert.deepEqual(formatImportDiagnostics([historical]), [
-    "  Elegibilidad Excel/create-many: no registrada en este informe histórico; generar preparación actual para evaluarla"
+    "  Importación comercial: no evaluada por esta preparación; el backend asigna categorías y atributos"
   ]);
   assert.deepEqual(importIssues, { excel: [], createMany: [] });
 });

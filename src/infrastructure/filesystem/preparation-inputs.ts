@@ -2,8 +2,6 @@ import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadImportCatalogSnapshot } from "./import-catalog-loader.js";
-import type { ImportCatalog } from "../../catalog/import/preparation/contracts.js";
 import type { PreparationFingerprints } from "../../catalog/import/preparation/offline-document.js";
 
 const sha = (value: string): string => createHash("sha256").update(value).digest("hex");
@@ -22,8 +20,7 @@ const readRuleFiles = async (directory: string): Promise<readonly { name: string
   return files;
 };
 
-export const loadPreparationInputs = async (): Promise<{ catalog: ImportCatalog; fingerprints: PreparationFingerprints }> => {
-  const { catalog, categoryRaw, attributeRaw } = await loadImportCatalogSnapshot();
+export const loadPreparationInputs = async (): Promise<{ fingerprints: PreparationFingerprints }> => {
   const rulesRoot = fileURLToPath(new URL("../../catalog/", import.meta.url));
   const [mapping, preparation, normalization, identity, conflicts] = await Promise.all([
     readRuleFiles(join(rulesRoot, "import", "mapping")),
@@ -33,16 +30,14 @@ export const loadPreparationInputs = async (): Promise<{ catalog: ImportCatalog;
     readFile(join(rulesRoot, "identity-conflicts.js"), "utf8")
   ]);
   const files = [
-    ...mapping.map((file) => ({ name: `mapping/${file.name}`, content: file.content })),
-    ...preparation.map((file) => ({ name: `preparation/${file.name}`, content: file.content })),
+    ...mapping.filter((file) => file.name !== "category-mapping.js").map((file) => ({ name: `mapping/${file.name}`, content: file.content })),
+    ...preparation.filter((file) => !["product-attributes.js", "import-validation.js", "import-diagnostics.js"].includes(file.name)).map((file) => ({ name: `preparation/${file.name}`, content: file.content })),
     ...normalization.map((file) => ({ name: `normalization/${file.name}`, content: file.content })),
     { name: "identity.js", content: identity },
     { name: "identity-conflicts.js", content: conflicts }
   ].sort((left, right) => left.name.localeCompare(right.name));
-  return { catalog, fingerprints: {
-    rulesVersion: 1,
-    rulesSha256: sha(JSON.stringify(files)),
-    categorySnapshotSha256: sha(categoryRaw),
-    attributeSnapshotSha256: sha(attributeRaw)
+  return { fingerprints: {
+    rulesVersion: 2,
+    rulesSha256: sha(JSON.stringify(files))
   } };
 };

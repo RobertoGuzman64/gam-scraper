@@ -1,7 +1,7 @@
 import type { SpecScalar } from "../../../contracts/catalog.js";
 import type { ImportCatalog } from "../preparation/contracts.js";
 
-export type Attribute = ImportCatalog["attributes"][number];
+export type Attribute = Pick<ImportCatalog["attributes"][number], "name" | "type" | "unit_option">;
 export type Candidate = { readonly key: string; readonly value: SpecScalar };
 export type AliasOutcome = "accepted" | "contradiction" | "rejected";
 export type AttributeValue = string | number | boolean;

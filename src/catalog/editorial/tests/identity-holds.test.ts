@@ -38,7 +38,7 @@ test("GAM 6002, 6003 y 6004 tienen inconsistencias acreditadas sin forzar HYSTER
 test("mantiene GAM 6236 reconciliada y excluye 6002, 6003 y 6004 por identidad Hyster/Yale", () => {
   const result = approved.select(preparations);
   const total = preparations.reduce((sum, item) => sum + item.source.productCount, 0);
-  assert.deepEqual(result.totals, { original: total, ready: total - 3, review: 3, publishable: total - 6, excluded: 6 });
+  assert.deepEqual(result.totals, { original: total, ready: total - 8, review: 8, publishable: total - 11, excluded: 11 });
   const retained = result.exclusions.filter(({ reference }) => ["6002", "6003", "6004"].includes(reference));
   assert.deepEqual(retained.map(({ reference }) => reference), ["6002", "6003", "6004"]);
   assert.ok(retained.every(({ issues, evidenceUrls, reason }) => issues.length > 0 && evidenceUrls.length === 1 && reason));

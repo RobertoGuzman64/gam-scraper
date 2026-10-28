@@ -1,8 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { loadImportCatalog } from "../infrastructure/filesystem/import-catalog-loader.js";
-import { prepareProduct } from "../catalog/import/preparation/prepare-product.js";
+import { prepareSourceProduct } from "../catalog/import/preparation/prepare-product.js";
 import { scrapeProductPages } from "../scraping/engine/scrape-products.js";
 import { manainProvider } from "../scraping/providers/manain/adapter.js";
 import { discoverManainSaleCatalog } from "../scraping/providers/manain/browser.js";
@@ -20,10 +19,9 @@ const run = async (): Promise<void> => {
     (error) => error instanceof Error ? error.message : String(error),
     () => undefined
   );
-  const catalog = await loadImportCatalog();
   const prepared = read.products.map((product) => ({
     reference: product.reference,
-    result: prepareProduct(product, catalog)
+    result: prepareSourceProduct(product)
   }));
   const references = read.products.map((product) => product.reference).filter((value): value is string => !!value);
   const duplicatedReferences = [...new Set(references.filter((reference, index) => references.indexOf(reference) !== index))];

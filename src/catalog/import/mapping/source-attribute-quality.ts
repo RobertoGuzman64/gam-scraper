@@ -2,6 +2,8 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { resolveAttribute } from "./attribute-mapping.js";
 import type { AttributeResolution } from "./attribute-types.js";
 import type { ImportCatalog } from "../preparation/contracts.js";
+import type { Attribute } from "./attribute-types.js";
+import { SOURCE_TECHNICAL_FIELDS } from "./source-technical-fields.js";
 
 const issuePrefix: Readonly<Partial<Record<AttributeResolution["status"], string>>> = {
   contradiction: "Atributo contradictorio: ",
@@ -9,10 +11,10 @@ const issuePrefix: Readonly<Partial<Record<AttributeResolution["status"], string
   rejected: "Atributo rechazado por seguridad: "
 };
 
-export const sourceAttributeQualityIssues = (record: ProductRecord, catalog: ImportCatalog): readonly string[] => {
+const checkAttributeQuality = (record: ProductRecord, attributes: readonly Attribute[]): readonly string[] => {
   const byName = new Map<string, Set<AttributeResolution["status"]>>();
   const seenDefinitions = new Set<string>();
-  for (const attribute of catalog.attributes) {
+  for (const attribute of attributes) {
     const definition = JSON.stringify([attribute.name, attribute.type, attribute.unit_option]);
     if (seenDefinitions.has(definition)) continue;
     seenDefinitions.add(definition);
@@ -30,3 +32,9 @@ export const sourceAttributeQualityIssues = (record: ProductRecord, catalog: Imp
   }
   return issues;
 };
+
+export const sourceAttributeQualityIssues = (record: ProductRecord, catalog: ImportCatalog): readonly string[] =>
+  checkAttributeQuality(record, catalog.attributes);
+
+export const sourceTechnicalQualityIssues = (record: ProductRecord): readonly string[] =>
+  checkAttributeQuality(record, SOURCE_TECHNICAL_FIELDS);

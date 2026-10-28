@@ -32,7 +32,7 @@ const approved = {
 test("prepara borrador de selección sin aprobaciones automáticas", () => {
   assert.equal(draft.approved, false);
   assert.equal(draft.approvalReason, null);
-  assert.equal(draft.exclusions.length, 6);
+  assert.equal(draft.exclusions.length, 11);
   assert.ok(draft.exclusions.every((item) => item.decision === null && item.reason === null));
   assert.throws(() => selectAccreditedPublishable(preparations, sources, runId, draft, sha256(JSON.stringify(draft))), /aprobación ausente/);
 });
@@ -42,11 +42,12 @@ test("selecciona solo ready sin contradicciones acreditadas y conserva imágenes
   assert.deepEqual(result.totals, {
     original: preparations.reduce((sum, item) => sum + item.source.productCount, 0),
     ready: preparations.reduce((sum, item) => sum + item.totals.ready, 0),
-    review: 3, excluded: 6,
-    publishable: preparations.reduce((sum, item) => sum + item.source.productCount, 0) - 6
+    review: 8, excluded: 11,
+    publishable: preparations.reduce((sum, item) => sum + item.source.productCount, 0) - 11
   });
   assert.deepEqual(result.exclusions.map((item) => `${item.providerId}:${item.reference}`), [
-    "gam:6682", "gam:6703", "gam:6002", "gam:6003", "gam:6004", "mercaeleva:M827-8304"
+    "gam:6682", "gam:6703", "gam:6764", "gam:157", "gam:6002", "gam:6003", "gam:6004",
+    "gam:2130", "gam:2237", "gam:2240", "mercaeleva:M827-8304"
   ]);
   const original = preparations[0]?.products.find((entry) => entry.product.reference === "4988")?.product;
   const selected = result.products.find((item) => item.providerId === "gam" && item.reference === "4988");
@@ -109,7 +110,7 @@ test("una ficha intervenida y lista exige aprobación individual antes de inclui
   assert.ok(pending);
   assert.equal(pending.status, "intervention");
   const approveAllExceptChanged = {
-    ...changedDraft, approved: true, approvalReason: "Revisión editorial de las seis incidencias y cambio manual.",
+    ...changedDraft, approved: true, approvalReason: "Revisión editorial de las once incidencias y cambio manual.",
     exclusions: changedDraft.exclusions.map((item) => ({
       ...item,
       decision: item.status === "intervention" ? null : "excluir",
@@ -130,7 +131,7 @@ test("una ficha intervenida y lista exige aprobación individual antes de inclui
   const selection = selectAccreditedPublishable(
     modifiedPreparations, modifiedSources, runId, approvedChanges, sha256(JSON.stringify(approvedChanges))
   );
-  assert.equal(selection.totals.publishable, preparations.reduce((sum, item) => sum + item.source.productCount, 0) - 6);
+  assert.equal(selection.totals.publishable, preparations.reduce((sum, item) => sum + item.source.productCount, 0) - 11);
   assert.ok(selection.products.some((item) => item.providerId === "gam" && item.reference === "4988"));
   assert.ok(selection.accreditation?.preparationSources.some((entry) => entry.providerId === "gam"));
 

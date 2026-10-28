@@ -35,6 +35,7 @@ const loadExportInputs = async (
     const canonicalFile = sourceFile ?? join(resolve(provider.defaultOptions.outDir), `${prefix}-catalog.json`);
     const verified = await validateOfflinePreparation(providerId, path, canonicalFile, 48);
     document = verified.preparation;
+    if (verified.target === null) throw new Error("Preparación canónica sin asignación comercial: la importación corresponde al backend");
     catalog = verified.target;
     source = verified.catalog.sourceFile;
   } else {

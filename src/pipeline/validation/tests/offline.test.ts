@@ -10,8 +10,6 @@ import { writeOutputs } from "../../publication/publish.js";
 import { prepareSavedCatalog } from "../../preparation/prepare.js";
 import { validateCanonicalSource, validateOfflinePreparation } from "../offline.js";
 import { offlinePreparationManifestPath, readOfflinePreparation } from "../../../infrastructure/filesystem/offline-preparation.js";
-import { planProductImport, readReferenceInventory } from "../../../catalog/import/export/export-plan.js";
-import { createProductsXlsx } from "../../../infrastructure/spreadsheet/xlsx.js";
 import { runPreflight } from "../../../cli/validate.js";
 
 const category: CategoryConfig = {
@@ -54,7 +52,7 @@ const withCatalog = async (run: (paths: {
 };
 
 test("catálogo, preparación y plan de altas usan la misma fuente y preservan review", async () => {
-  await withCatalog(async ({ source, preparation, inventory }) => {
+  await withCatalog(async ({ source, preparation }) => {
     const oldFetch = globalThis.fetch;
     globalThis.fetch = () => { throw new Error("Red prohibida"); };
     try {
@@ -63,17 +61,11 @@ test("catálogo, preparación y plan de altas usan la misma fuente y preservan r
       assert.equal(catalog.productCount, 4);
       assert.equal(result.ready + result.review, 4);
       assert.equal(result.ready, 3);
-      const referenceInventory = readReferenceInventory(await readFile(inventory, "utf8"), 45);
-      const plan = planProductImport(result.preparation, "gam", referenceInventory, result.target);
-      assert.equal(plan.report.newProducts, 1);
-      assert.equal(plan.report.existingProducts, 1);
-      assert.equal(plan.report.reviewProducts, 2);
-      assert.equal(plan.rows[0]?.[0], "22222");
-      assert.equal(plan.rows[0]?.[3], "Segunda_Mano");
-      assert.ok(!plan.rows.some((row) => row.includes("33333")));
-      assert.ok(!plan.rows.some((row) => row.includes("44444")));
-      const xlsx = createProductsXlsx(plan.headers, plan.rows);
-      assert.equal(xlsx.readUInt32LE(0), 0x04034b50);
+      assert.equal(result.target, null);
+      assert.ok(result.preparation.products.every((entry) => entry.product.categorySellID === null));
+      assert.ok(result.preparation.products.every((entry) => entry.product.attributes.length === 0));
+      assert.ok(result.preparation.products.every((entry) => entry.importIssues === undefined));
+      assert.equal(result.preparation.products[1]?.product.category, "Plataformas usadas");
     } finally { globalThis.fetch = oldFetch; }
   });
 });
@@ -83,12 +75,12 @@ test("condición comercial no publicada conserva ready sin superar requisitos de
     const result = await validateOfflinePreparation("gam", preparation, source);
     assert.equal(result.ready, 1);
     assert.equal(result.review, 0);
-    assert.equal(result.importBlocked, 1);
+    assert.equal(result.importBlocked, null);
     const entry = result.preparation.products[0];
     assert.equal(entry?.status, "ready");
     assert.equal(entry?.product.condition, null);
     assert.deepEqual(entry?.issues, []);
-    assert.ok(entry?.importIssues?.createMany.some((issue) => issue.includes("Condición")));
+    assert.equal(entry?.importIssues, undefined);
   }, [machine("55555", null, "20000 €")]);
 });
 
@@ -191,11 +183,11 @@ test("validate --verbose separa fichas en review de bloqueos de receptor sin alt
       assert.ok(reviewDetails);
       assert.doesNotMatch(reviewDetails, /GAM \| 33333 \|/);
       assert.match(reviewDetails, /GAM \| 44444 \| 1 motivo/);
-      assert.match(output, /GAM \| 33333 \| calidad: ready \| 1 requisitos de receptor/);
+      assert.doesNotMatch(output, /Bloqueos de importación Excel/);
       assert.doesNotMatch(output, /\[excel.price\]/);
       assert.match(output, /\[condition.contradictory\] Condición comercial contradictoria entre la ficha y el origen/);
       assert.doesNotMatch(reviewDetails, /\[mapping.category\]/);
-      assert.match(output, /\[category.excel\] contrato_destino: Categoría no coincide de forma única con el backend/);
+      assert.match(output, /categorización comercial delegada al backend/);
       assert.doesNotMatch(output, /GAM \| 11111 \|/);
       assert.doesNotMatch(output, /GAM \| 22222 \|/);
       assert.doesNotMatch(output, /Origen canónico \(todos los campos publicados\)/);

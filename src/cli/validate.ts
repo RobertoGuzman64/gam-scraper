@@ -66,14 +66,14 @@ export const runPreflight = async (args: readonly string[]): Promise<void> => {
         `${(await readOfflinePreparation(options.preparation, providerId)).source.prefix}-catalog.json`);
       const report = await validateOfflinePreparation(providerId, options.preparation, source);
       status.stop();
-      console.log(`VALIDACIÓN | ${providerId.toUpperCase()} | ${report.importBlocked ? "REVISIÓN" : "CONFORME"}`);
-      console.log(`  Productos: ${report.catalog.productCount} | Calidad ready: ${report.ready} | Calidad review: ${report.review} | Importables create/many: ${report.importReady} | Bloqueados: ${report.importBlocked}`);
+      console.log(`VALIDACIÓN | ${providerId.toUpperCase()} | ${report.review ? "REVISIÓN" : "CONFORME"}`);
+      console.log(`  Productos: ${report.catalog.productCount} | Calidad ready: ${report.ready} | Calidad review: ${report.review} | categorización comercial delegada al backend`);
       console.log(formatPriceAvailability(report.preparation.products));
       for (const line of formatImportDiagnostics(report.preparation.products)) console.log(line);
       if (report.review > 0) {
         for (const line of formatReviewDiagnostics(report.preparation.products)) console.log(line);
       }
-      if (report.importBlocked > 0) process.exitCode = 2;
+      if (report.review > 0) process.exitCode = 2;
       if (options.verbose) {
         for (const line of formatDetailedValidation(report.preparation.products)) console.log(line);
       }
