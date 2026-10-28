@@ -46,6 +46,32 @@ const isManainCatalog = (value: string): boolean => {
   }
 };
 
+const isManainChallenge = (value: string): boolean => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && ["manain.com", "www.manain.com"].includes(url.hostname.toLowerCase()) &&
+      /^\/cdn-cgi\/(?:challenge-platform|challenge)(?:\/|$)/.test(url.pathname);
+  } catch {
+    return false;
+  }
+};
+
+export const classifyManainCatalogState = (state: PageState): "ready" | "challenge" | "loading" | "unexpected" => {
+  if (state.challenge || isManainChallenge(state.url)) return "challenge";
+  if (state.url === "about:blank") return "loading";
+  if (isManainCatalog(state.url)) return state.ready ? "ready" : "loading";
+  return state.ready ? "unexpected" : "loading";
+};
+
+const describePageLocation = (value: string): string => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:" ? `${url.origin}${url.pathname}` : url.href;
+  } catch {
+    return "dirección desconocida";
+  }
+};
+
 export const selectManainTarget = (value: unknown, port: number, id?: string): BrowserTarget => {
   if (!Array.isArray(value)) throw new Error("Chrome devolvió un listado CDP inválido");
   const targets: BrowserTarget[] = [];
@@ -61,7 +87,8 @@ export const selectManainTarget = (value: unknown, port: number, id?: string): B
       !ws.pathname.startsWith("/devtools/page/")) continue;
     targets.push({ id: candidate.id, type: "page", url: candidate.url, webSocketDebuggerUrl: candidate.webSocketDebuggerUrl });
   }
-  const match = id ? targets.find((target) => target.id === id) : targets.find((target) => isManainCatalog(target.url));
+  const match = id ? targets.find((target) => target.id === id) :
+    targets.find((target) => isManainCatalog(target.url) || isManainChallenge(target.url));
   if (!match || (id && !isManainCatalog(match.url) && normalizeManainSaleProductUrl(match.url, "https://manain.com/") === null)) {
     throw new Error(id ? "La pestaña CDP de Manain se cerró o cambió de sitio" :
       "Abre el catálogo de venta de Manain en Chrome visible y completa manualmente cualquier verificación antes de extraer");
@@ -131,20 +158,25 @@ export const discoverManainViaCdp = async (
     const state = parseManainPageState(resultValue(await send("Runtime.evaluate", {
       expression: pageStateExpression, returnByValue: true
     }), "estado del catálogo"));
-    if (!isManainCatalog(state.url)) throw new Error("La pestaña no muestra el catálogo de venta de Manain");
-    if (state.challenge || !state.ready) {
-      const deadline = Date.now() + 120000;
-      let current = state;
-      while (Date.now() < deadline && (current.challenge || !current.ready)) {
-        await new Promise<void>((resolve) => setTimeout(resolve, 1000));
-        current = parseManainPageState(resultValue(await send("Runtime.evaluate", {
-          expression: pageStateExpression, returnByValue: true
-        }), "estado de verificación"));
-        if (!isManainCatalog(current.url)) throw new Error("La pestaña de Manain cambió de dirección");
+    const deadline = Date.now() + 120000;
+    let current = state;
+    while (true) {
+      const status = classifyManainCatalogState(current);
+      if (status === "ready") break;
+      if (status === "unexpected") {
+        throw new Error(`La pestaña no muestra el catálogo de venta de Manain (${describePageLocation(current.url)})`);
       }
-      if (current.challenge || !current.ready) {
-        throw new Error("Manain sigue mostrando una verificación humana; complétala en Chrome y vuelve a ejecutar");
+      if (Date.now() >= deadline) {
+        throw new Error(status === "challenge"
+          ? "Manain sigue mostrando una verificación humana sin completar; comprueba el acceso manual en Chrome"
+          : current.url === "about:blank"
+            ? "Manain: la pestaña sigue en about:blank; el catálogo no se ha cargado en Chrome"
+            : "Manain: el catálogo de venta no terminó de cargar en Chrome");
       }
+      await new Promise<void>((resolve) => setTimeout(resolve, 1000));
+      current = parseManainPageState(resultValue(await send("Runtime.evaluate", {
+        expression: pageStateExpression, returnByValue: true
+      }), "estado de verificación"));
     }
     const duration = Math.min(900000, timeoutMs * options.maxPages + 30000);
     const evaluation = await send("Runtime.evaluate", {
