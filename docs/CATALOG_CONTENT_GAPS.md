@@ -6,17 +6,17 @@
 
 ## Finalidad y límites
 
-`npm run huecos` es una **consulta opcional y estadística** sobre el catálogo original conservado en `data/reference/`. Identifica campos ausentes repetidos, muestra a qué fichas afectan y permite inspeccionar la evidencia conservada. **No completa fichas, no asigna categorías comerciales, no genera `review` y no interviene en campañas, acreditaciones o entregas.**
+`npm run huecos` es una **consulta opcional y estadística** sobre los originales de la última campaña entregada íntegra conservada; si no la hay, puede utilizar una referencia histórica válida de `data/reference/`, o catálogos completos suministrados explícitamente con `--catalogo`. Identifica campos ausentes repetidos, muestra a qué fichas afectan y permite inspeccionar la evidencia conservada. **No completa fichas, no asigna categorías comerciales, no genera `review` y no interviene en campañas, acreditaciones o entregas.**
 
 Que dos máquinas compartan categoría, marca o modelo no significa que deban tener las mismas especificaciones. Una ausencia observada **no acredita obligatoriedad técnica ni error del proveedor**.
 
 ## Procedencia y componentes
 
-- **Entrada:** `inspectCampaignReference` (`src/infrastructure/filesystem/campaign-reference.ts`) exige una referencia con estado `valid`. Si está ausente, dañada o pendiente de recuperación, el auditor falla sin crearla ni repararla.
-- **Universo:** todos los `ProductRecord` originales de esa referencia, también los excluidos de la entrega editorial. Se conservan `providerId`, `categoryKey`, `categoryName`, identidad, URL, descripciones y `specs`.
+- **Entrada:** `findCampaignBaseline` (`src/pipeline/campaign/reference-comparison.ts`) busca una entrega íntegra conservada y verifica su procedencia por `runId`; si no existe, consulta `data/reference/` como compatibilidad. `--catalogo <ruta>` (repetible) utiliza `readCanonicalCatalog` y exige manifiesto y resumen verificables para cada original; no admite CSV parciales.
+- **Universo:** todos los `ProductRecord` originales de la fuente elegida, también los excluidos de la entrega editorial. Se conservan `providerId`, `categoryKey`, `categoryName`, identidad, URL, descripciones y `specs`.
 - **Preparación temporal:** `prepareSourceProduct` calcula en memoria el estado técnico y las descripciones preparadas. No consulta snapshots comerciales ni asigna `categorySellID` o `attributeID`.
 - **Análisis:** `analyzeSourceContentGaps` (`src/tools/catalog-content-gaps.ts`) agrupa por categoría de origen, con desglose opcional por marca o modelo, y calcula la cobertura de descripciones y claves técnicas observadas.
-- **CLI:** `src/cli/catalog-content-gaps.ts` presenta resumen o JSON por `stdout`. Las huellas de procedencia se vinculan a la referencia y a las reglas técnicas actuales (`rulesSha256`).
+- **CLI:** `src/cli/catalog-content-gaps.ts` presenta resumen o JSON por `stdout`. La procedencia identifica el `runId` de la entrega conservada o las rutas de los canónicos explícitos; incluye la huella de reglas técnicas (`rulesSha256`).
 
 La consulta usa las **reglas técnicas actuales**, no una preparación guardada cuando se extrajo el catálogo. Los recuentos `ready/review` del universo expresan ese diagnóstico recalculado; no cambian los estados de una campaña.
 
@@ -46,30 +46,32 @@ El JSON mantiene nombres de compatibilidad como `categorySellID` y `prepared.att
 
 ## Ejecución
 
-Desde la raíz del repositorio, con una referencia válida:
+Desde la raíz del repositorio, con una entrega íntegra conservada, una referencia histórica válida o catálogos canónicos explícitos:
 
 ```powershell
 npm run huecos
 npm run huecos -- --agrupar marca --min-grupo 8 --min-ausentes 3 --top 20
 npm run huecos -- --agrupar modelo --top 10
+npm run huecos -- --catalogo <ruta-al-catalog.json> --json
 npm run huecos -- --json > huecos-consulta.json
 npm run ayuda -- huecos
 ```
 
-| Opción                               | Significado                               | Valor inicial |
-| ------------------------------------ | ----------------------------------------- | ------------- |
-| `--agrupar categoria\|marca\|modelo` | Agrupación; admite un único valor         | `categoria`   |
-| `--min-grupo N`                      | Tamaño mínimo para el TOP                 | `8`           |
-| `--min-ausentes N`                   | Ausencias mínimas de un campo para el TOP | `3`           |
-| `--top N`                            | Máximo de patrones priorizados mostrados  | `20`          |
-| `--json`                             | Informe completo por `stdout`             | Desactivado   |
+| Opción                               | Significado                               | Valor inicial                          |
+| ------------------------------------ | ----------------------------------------- | -------------------------------------- |
+| `--agrupar categoria\|marca\|modelo` | Agrupación; admite un único valor         | `categoria`                            |
+| `--min-grupo N`                      | Tamaño mínimo para el TOP                 | `8`                                    |
+| `--min-ausentes N`                   | Ausencias mínimas de un campo para el TOP | `3`                                    |
+| `--top N`                            | Máximo de patrones priorizados mostrados  | `20`                                   |
+| `--json`                             | Informe completo por `stdout`             | Desactivado                            |
+| `--catalogo <ruta>`                  | Canónico íntegro explícito; repetible     | Entrega conservada o referencia legada |
 
 Los argumentos numéricos requieren enteros positivos. `--top` limita `prioritized`, no las colecciones completas `groups` y `cases`. El despachador puede compilar y actualizar `dist/`, pero **el auditor no escribe en `data/reference/`, `storage/` ni en los catálogos**. Una redirección `>` sí crea el archivo indicado por el operador; debe mantenerse fuera de Git y del ZIP público.
 
 ## Lectura del resultado
 
 1. Identificar proveedor, categoría original, clave/descripción, frecuencia y fichas afectadas.
-2. Usar `--json` para consultar `provenance` (`runId`, huellas de los catálogos y `rulesSha256`), `universe` y la vista recalculada.
+2. Usar `--json` para consultar `provenance` (fuente, `runId` cuando existe o catálogos explícitos, y `rulesSha256`), `universe` y la vista recalculada.
 3. Consultar `prioritized` para el TOP, `groups[].observations` para todas las coberturas y `cases[]` para las fichas afectadas.
 4. Revisar `original.shortDescription`, `original.longDescription` y `original.specs` antes de sugerir cualquier cambio. `observations[].originalSpecKeys` contiene **claves literales relacionadas por coexistencia**, nunca equivalencias acreditadas.
 5. Contrastar los anuncios vigentes y los contraejemplos antes de corregir extractores o normalizadores. Si no hay evidencia suficiente, conservar el hueco como observación.

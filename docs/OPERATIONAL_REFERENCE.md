@@ -1,8 +1,10 @@
-# Referencia operativa: consulta, Git y traslado
+# Referencia operativa: compatibilidad histórica, consulta y traslado
 
-`data/reference/` contiene una referencia verificable del inventario original completo. Para el contrato actual: `gam.json`, `gomariz.json`, `mercaeleva.json`, `manain.json`, `manifest.json` y `differences.json`. El lector mantiene compatibilidad con referencias históricas completas de **tres proveedores** (`gam`, `gomariz`, `mercaeleva`). Es un estado de trabajo sustituible; **no** incluye la selección editorial ni forma parte del ZIP público. La limpieza de campañas no la elimina.
+`data/reference/` es un **almacén legado opcional**, no la referencia que debe actualizarse después de cada entrega. La comparación normal obtiene su base de los originales de la última campaña entregada íntegra y conservada, verificados por `runId`; si no existe, puede usar la referencia legada íntegra. `npm run huecos` sigue la misma prioridad y admite catálogos canónicos explícitos con `--catalogo`.
 
-## Comandos
+El formato legado conserva `gam.json`, `gomariz.json`, `mercaeleva.json`, opcionalmente `manain.json`, `manifest.json` y `differences.json`, con huellas verificables. Acepta referencias históricas de **tres proveedores** sin exigir Manain en sus originales. Una nueva campaña global y su ZIP, en cambio, requieren los cuatro proveedores. Las referencias heredadas no incluyen selección editorial ni forman parte del ZIP público. La rotación global no elimina `data/reference/`.
+
+## Comandos de compatibilidad
 
 ```text
 npm run referencia
@@ -13,14 +15,15 @@ npm run referencia -- --importar <carpeta-existente>
 npm run referencia -- --importar <carpeta-existente> --sustituir
 ```
 
-- Sin argumentos: **solo lectura**, incluso sin campaña activa. Comprueba las huellas SHA-256, el manifiesto, el informe y el conjunto de catálogos declarado. Una referencia ausente es normal en una instalación nueva. Una referencia inválida produce error; una recuperable se señala **sin repararla**. Si hay respaldo íntegro y una operación interrumpida, `--recuperar` realiza la reparación explícita y revalida la referencia sin requerir campaña.
-- `--actualizar`: única actualización a partir de una campaña acreditada y entregada; requiere que existan sus originales y la entrega verificada. No depende del inventario destructivo de limpieza.
-- `--exportar`: crea una carpeta nueva y comprueba los archivos del conjunto de referencia (seis en el contrato actual; cinco en el histórico). Nunca sobrescribe una carpeta existente; la ruta debe estar fuera del repositorio. Usar un destino seguro al que solo accedan operadores autorizados: los JSON pueden contener información del inventario.
-- `--importar`: comprueba una copia exportada e instala los archivos verificados del conjunto de referencia con sustitución transaccional. Una referencia presente no se reemplaza salvo con `--sustituir`. No exige una campaña ni edita el contenido de la copia. Si la referencia local está corrupta o hay una transacción pendiente no recuperable, la importación se bloquea para evitar pérdidas: conservar los archivos y diagnosticar antes de intervenir. `--recuperar` solo procede cuando el estado es recuperable y existe una copia comprobable.
+- Sin argumentos: **solo lectura** del almacén legado. Comprueba huellas SHA-256, manifest, diferencias y catálogos; no exige una campaña activa. Una referencia ausente es normal; una inválida produce error y una recuperable se señala sin repararla.
+- `--actualizar`: mecanismo **legado opcional** desde una campaña acreditada y entregada. No es un paso de la operación normal ni requisito para comparar el siguiente lote.
+- `--recuperar`: repara explícitamente una transacción de referencia interrumpida si existe respaldo íntegro. Una transacción inválida o recuperable puede bloquear la rotación; no borrarla para desbloquear el ciclo.
+- `--exportar`: crea una carpeta nueva con los archivos verificados (seis en el formato de cuatro proveedores o cinco en el histórico de tres), sin sobrescribir el destino. Guardar fuera del repositorio y solo para operadores autorizados.
+- `--importar`: valida la copia y la instala transaccionalmente; no sustituye una referencia presente salvo con `--sustituir`. Si hay transacciones incompatibles o datos corruptos, bloquea el reemplazo sin borrados.
 
-Antes de usar la primera versión con nombres ingleses sobre una instalación anterior, ejecutar desde la raíz del repositorio `node scripts/migrate-storage.mjs` y después `npm run referencia`. La migración verifica los SHA256 y renombra `data/referencia/` a `data/reference/` y `diferencias.json` a `differences.json`, sin modificar sus bytes. Rechaza campañas antiguas pendientes, transacciones de referencia y destinos en conflicto. Las copias exportadas por la versión anterior se convierten cuando sea necesario mediante `node scripts/migrate-storage.mjs --transfer "<carpeta-externa>"`; el importador ordinario acepta únicamente el formato nuevo. El script de migración es transitorio y no introduce una ruta alternativa en el funcionamiento normal.
+`node scripts/migrate-storage.mjs` es una migración de **rutas heredadas** (`data/referencia/`, `diferencias.json`), no un paso de instalación nueva ni de la rotación. Ejecutarla solo al actualizar una instalación antigua que use esos nombres y tras verificar que no haya campañas o transacciones abiertas. Para una copia externa antigua admite `--transfer <carpeta-externa>`; las importaciones ordinarias usan el formato de nombres vigente.
 
-Para cambiar de máquina, exportar desde la instalación original, transportar esa carpeta por el medio aprobado y ejecutar `--importar` en la nueva. No hace falta reconstruir campañas ni copiar archivos dentro de `data/` a mano. **Este comando no envía archivos por red**: el transporte externo sigue siendo responsabilidad del operador.
+Las operaciones de exportación/importación trasladan **solo la referencia legada**, no las campañas, sus catálogos originales retenidos, selecciones ni recibos de entrega. No son un mecanismo de copia de seguridad integral del ciclo actual y no envían archivos por red. Para operar una campaña normal no hace falta utilizar estos comandos.
 
 ## Política de Git
 
@@ -28,4 +31,4 @@ La referencia es **operativa, local y no versionada por defecto**. `.gitignore` 
 
 `.gitignore` **no desindexa archivos ya rastreados**. Para comprobar el repositorio local ejecutar `git ls-files -- data/reference/`. Si aparecen archivos de referencia, el propietario debe decidir y aplicar una sola retirada del índice con `git rm -r --cached -- data/reference/`, revisar `git status` y registrar ese cambio; `--cached` conserva los archivos de trabajo. No ejecutar retirada automática del índice durante la instalación, consulta ni actualización de la referencia. El archivo ZIP de origen no incluye `.git`, por lo que no acredita el estado real del índice del usuario.
 
-Una instalación nueva sin referencia puede iniciar un lote y compararlo como referencia inicial. Antes de limpiar un lote entregado debe decidirse si actualizarla; la limpieza nunca realiza esa actualización de manera implícita. La exportación y la importación deben revisarse cuando se actualice el procedimiento de copia de seguridad de la organización.
+Una instalación nueva sin referencia ni entrega retenida puede iniciar un lote y compararlo como inventario inicial. Las campañas entregadas conservan sus originales mientras estén retenidas, sin actualización ni limpieza manual ordinaria. La exportación/importación legada no sustituye un respaldo integral de las campañas y sus acreditaciones.

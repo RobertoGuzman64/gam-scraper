@@ -40,9 +40,10 @@ Un planificador externo puede invocar la CLI desde la raíz del proyecto con el 
 - Conservar `storage/` entre procesos: catálogos, manifests, snapshots, preparaciones, evidencias y logs.
 - Comprobar `run.json` en cada lote y los informes `-summary.json`, `-changes.json` y `-errors.json` por proveedor.
 - No asumir cobertura completa porque el informe diga `complete`; contrastar recuentos externos.
-- No borrar un lock persistente sin confirmar antes que no hay otro proceso activo.
+- No borrar un lock persistente: para campañas globales, consultar el intento por `runId` con `npm run recuperar -- <runId>`; el abandono explícito rechaza bloqueos de procesos activos y archivos no reconocidos.
 - No sobrescribir catálogos válidos por salidas parciales ni borrar originales al corregir la selección editorial.
-- `npm run limpiar:almacen` **solo simula**. `--aplicar` autoriza una limpieza real y exige inspección previa de la simulación y respaldo suficiente.
+- Las campañas globales se rotan automáticamente al admitir una nueva, con hasta dos posiciones y conservación de la última entrega acreditada. Una retirada interrumpida se reanuda de forma verificada; puede solicitarse con `npm run recuperar -- --reanudar-rotacion`. No eliminar manualmente `.rotation.json`, sus temporales ni residuos de un lote.
+- `npm run limpiar:almacen` mantiene la simulación y `--aplicar` para almacenamiento **individual**, fuera del ciclo normal de campañas globales; exige inspección previa y protección de trabajos abiertos.
 
 El scraper **no** automatiza la creación, actualización o eliminación de productos en Equipzilla. La entrega de un catálogo publicable y su importación son decisiones independientes.
 

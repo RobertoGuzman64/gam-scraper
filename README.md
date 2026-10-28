@@ -48,39 +48,40 @@ npm run comparar
 npm run acreditar
 ```
 
-`estado` es una **consulta sin escrituras**: identifica el lote, preparaciones, decisiones editoriales, entrega acreditada y situación de la referencia. Muestra el siguiente comando adecuado al estado actual. Puede repetirse en cualquier momento, incluso tras la limpieza; si el ZIP entregado ya no verifica, avisa y no considera el lote listo para cerrar. `iniciar`, en cambio, **crea las carpetas de trabajo que falten** y muestra la orientación operativa. `revisar` puede crear preparaciones ausentes, por lo que no es una consulta estricta.
+`estado` es una **consulta sin escrituras sobre campañas**: identifica el lote, preparaciones, decisiones editoriales y acreditación local de la entrega. También advierte de problemas con una referencia histórica. La acreditación local puede verificarse aunque el ZIP ya no esté en el Escritorio; su existencia física se comprueba por separado cuando se solicita. `iniciar` **puede crear carpetas de trabajo** y `revisar` puede generar preparaciones ausentes.
 
-`extraer` ejecuta los cuatro proveedores del contrato de campaña en un lote aislado y prepara y valida los catálogos; al terminar ya muestra las incidencias. `revisar` permite consultarlas otra vez. **No hay que suministrar JSON anteriores ni buscar rutas o huellas manualmente.** Si una campaña anterior falló, revisarla primero o iniciar deliberadamente otra con `npm run extraer -- --nueva`.
+`extraer` ejecuta los cuatro proveedores del contrato en un lote aislado con `runId` propio y después prepara y valida sus catálogos. `revisar` permite consultar las incidencias sin reextraer. **No hay que buscar los JSON anteriores ni copiar huellas manualmente.** El sistema conserva como máximo dos campañas globales y rota la más antigua solamente si ambas entregas son verificables y la retirada es segura. Si una campaña se interrumpe, hay que inspeccionarla y recuperarla o abandonarla expresamente con `recuperar`; `--nueva` **no autoriza** su eliminación.
 
 `acreditar` crea un borrador en `storage/campaigns/<id-lote>/editorial/accreditation-<sha256>.json`. Las decisiones se consultan con `npm run acreditar -- --listar` y `--consultar <proveedor> <referencia>`; se registran individualmente mediante `--decidir <proveedor> <referencia> <excluir|incluir> --motivo "..." --evidencia <url-https>` (repetir `--evidencia` cuando sea necesario). Tras contrastarlas humanamente, ejecutar `--validar` y aprobar explícitamente con `--aprobar --motivo "..."`. **No hay que editar JSON ni huellas SHA**. Después:
 
 ```powershell
 npm run acreditar
 npm run entregar
-npm run referencia -- --actualizar
-npm run limpiar
+npm run estado
 ```
 
-`comparar` consulta sin escribir las altas, ausencias y modificaciones frente a `data/reference/`. Si todavía no hay referencia, indica que el lote servirá como inicial. **No confundir una ausencia con una venta ni con una exclusión editorial:** se comparan todos los productos originales extraídos, no solo los publicables.
+`comparar` consulta sin escribir las altas, ausencias y modificaciones entre los originales de la campaña vigente y la última entrega válida retenida; solo si no hay tal entrega utiliza una referencia histórica válida de `data/reference/`. Sin baseline anterior, indica comparación inicial. **Una ausencia no demuestra una venta ni una exclusión editorial:** se comparan todos los originales, no solo los publicables. Las campañas históricas verificables de tres proveedores pueden servir de base para los tres comunes; las entregas nuevas exigen cuatro.
 
-`entregar` genera en el Escritorio `equipzilla-AAAA-MM-DD.zip` con **exactamente cuatro JSON**: `gam-AAAA-MM-DD.json`, `gomariz-AAAA-MM-DD.json`, `mercaeleva-AAAA-MM-DD.json` y `manain-AAAA-MM-DD.json`. La entrega solo se sustituye tras comprobar el ZIP nuevo. Después, `referencia -- --actualizar` comprueba de nuevo la entrega acreditada y conserva los cuatro catálogos originales completos, `manifest.json` y el último `differences.json`; no guarda históricos ni modifica la aprobación. La actualización requiere `--actualizar` y es opcional, pero debe hacerse **antes de limpiar** si se quiere comparar el inventario de la siguiente campaña. `limpiar` **simula** la limpieza y muestra si la referencia ya corresponde al lote, evitando pedir una segunda actualización; cuando el ZIP esté comprobado y no se prevean más correcciones del lote, `npm run limpiar -- --aplicar` cierra su trabajo conservando el ZIP y los scripts versionados en Git (y los scripts históricos, si existen). La limpieza no obliga a actualizar la referencia.
+`entregar` genera en el Escritorio `equipzilla-AAAA-MM-DD-<runId>.zip` con **exactamente cuatro JSON**: `gam-AAAA-MM-DD.json`, `gomariz-AAAA-MM-DD.json`, `mercaeleva-AAAA-MM-DD.json` y `manain-AAAA-MM-DD.json`. El `runId` diferencia entregas del mismo día: un ZIP existente no se sobrescribe y una campaña con recibo no se entrega dos veces. La entrega guarda su recibo y evidencias locales bajo la campaña, sin depender indefinidamente del ZIP del Escritorio. Los originales se conservan mientras la campaña siga retenida; **no hay que actualizar `data/reference/` ni ejecutar limpieza manual**. La retirada automática ocurre al admitir una nueva campaña y se bloquea si hay entregas sin acreditar, trabajos pendientes, rutas desconocidas o referencias heredadas sin resolver.
 
 Si una ficha necesita una corrección puntual acreditada, consulta los scripts existentes con `npm run intervenir -- gam --listar` y simula uno seleccionado con `npm run intervenir -- gam --script interventions/gam/6002.ts`. Tras revisar las diferencias, autoriza expresamente `--aplicar` para ese script. Cada intervención nueva se guarda en `interventions/<proveedor>/` y se versiona en Git; no se registra en `storage/`. No hay cambios ni aprobaciones editoriales automáticas. Ver [Protocolo completo](docs/CAMPAIGNS.md), [Intervenciones](docs/CAMPAIGN_INTERVENTIONS.md) y [Acreditación](docs/CAMPAIGN_ACCREDITATION.md).
 
 ### Otros comandos disponibles
 
 - `npm run ayuda` y `npm run ayuda -- <comando>`: ayuda desde la terminal; distingue lectura, preparación, escritura y autorización destructiva.
-- `npm run estado`: estado autónomo de campaña y referencia, sin escrituras.
-- `npm run huecos`: consulta estadística opcional de contenido ausente sobre los originales de la referencia válida; no interviene en campañas. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md).
+- `npm run estado`: estado operativo de la campaña y sus evidencias, sin modificar campañas.
+- `npm run huecos`: auditor opcional de la última entrega íntegra conservada (o referencia histórica si no hay entrega); admite `--catalogo <ruta>` para canónicos explícitos. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md).
 - `npm run build` y `npm test`: compilación y pruebas del repositorio.
 - `npm run extraer:proveedor`, `extraer:todos`, `intervenir:manual`, `preparar`, `validar`, `seleccionar` y `cobertura`: operaciones avanzadas con finalidades distintas del flujo principal.
 - `npm run manain:muestra` y `npm run manain:censo`: herramientas de diagnóstico específicas de Manain; no acreditan por sí solas una extracción completa.
-- `npm run limpiar:almacen`: retención anterior, distinta del cierre de campaña.
+- `npm run recuperar -- <runId>`: inspección sin borrados de un intento fallido; `--recuperar`, `--abandonar ... --confirmar ...` y `--reanudar-rotacion` son operaciones explícitas de recuperación. Ver [Protocolo de campañas](docs/CAMPAIGNS.md).
+- `npm run referencia`: consulta y mantenimiento **legado** de `data/reference/`; `--actualizar` ya no es un paso habitual.
+- `npm run limpiar:almacen`: mantenimiento separado de extracciones individuales, no cierre ni rotación de campañas globales.
 - `npm run limpiar:versionados`: simulación de retirada del índice Git de históricos rastreados; solo actúa con `-- --aplicar`.
 
 ### Auditor de huecos de contenido
 
-`npm run huecos` agrupa originales de `data/reference/` por proveedor y categoría, con refinamiento opcional por marca o modelo declarado. Señala ausencias repetidas de claves técnicas observadas en fichas de la misma familia de origen y de descripciones, muestra referencias concretas y permite consultar las evidencias en un JSON generado por `stdout`. No depende de `categorySellID` ni de los atributos comerciales de Equipzilla. **No rellena fichas, no declara errores de calidad ni crea `Review`**.
+`npm run huecos` agrupa los originales de la última campaña entregada íntegra, o de una referencia histórica válida cuando no existe aquella, por proveedor y categoría, con refinamiento opcional por marca o modelo declarado. Señala ausencias repetidas de claves técnicas observadas en fichas de la misma familia de origen y de descripciones, muestra referencias concretas y permite consultar las evidencias en un JSON generado por `stdout`. No depende de `categorySellID` ni de los atributos comerciales de Equipzilla. **No rellena fichas, no declara errores de calidad ni crea `Review`**.
 
 ```powershell
 npm run huecos
@@ -88,7 +89,7 @@ npm run huecos -- --agrupar marca --top 10
 npm run huecos -- --json > huecos-consulta.json
 ```
 
-Exige una referencia íntegra; no la crea, recupera ni modifica. Los recuentos se refieren a **todos los originales**, incluidos excluidos de entrega, preparados en memoria con el código actual. Es una herramienta de investigación, nunca un requisito para entregar una campaña. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md) para opciones, límites y lectura de evidencias.
+Exige una entrega íntegra conservada, una referencia histórica válida o catálogos explícitos completos verificables con `--catalogo <ruta>` (repetible). No modifica su fuente. Los recuentos se refieren a **todos los originales**, incluidos excluidos de entrega, preparados en memoria con el código actual. Es una herramienta de investigación, nunca un requisito para entregar una campaña. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md) para opciones, límites y lectura de evidencias.
 
 ### Herramientas complementarias
 
@@ -109,18 +110,19 @@ Las operaciones GAM con rutas preconfiguradas son **herramientas de compatibilid
 ## Dónde están los resultados
 
 - `storage/runs/<id-lote>/run.json`: evidencia del lote y estado por proveedor.
-- `storage/scraped/campaigns/<id-extraccion>/<proveedor>/`: catálogos canónicos, manifests y diagnósticos de la extracción aislada.
+- `storage/scraped/campaigns/<runId>/<proveedor>/`: catálogos canónicos, manifests y diagnósticos de la extracción aislada.
 - `storage/campaigns/<id-lote>/<proveedor>/`: preparaciones validadas por la revisión offline.
 - `storage/campaigns/<id-lote>/editorial/`: borradores y aprobación de la campaña.
 - `storage/campaigns/<id-lote>/selection/`: selección interna acreditada (no se entrega completa al usuario).
+- `storage/campaigns/<runId>/delivery.json`: recibo local de entrega vinculado a la selección; no es un reemplazo del ZIP físico.
 - `interventions/<proveedor>/`: scripts permanentes con ID, resumen y propuestas, versionados en Git.
 - `storage/interventions/<id-lote>/results/`: expedientes y derivados del lote, no versionados.
 - `storage/interventions/<id-lote>/scripts/`: solo compatibilidad con scripts antiguos; se protegen si aún existen.
-- `data/reference/`: referencia única opcional de inventario; en el contrato actual, cuatro originales completos, manifiesto verificable y último informe de diferencias. Se mantiene lectura compatible de referencias históricas de tres proveedores.
-- **Escritorio del usuario:** `equipzilla-AAAA-MM-DD.zip` con los cuatro JSON publicables del contrato actual, sin los archivos internos.
+- `data/reference/`: almacén legado opcional de inventario con manifiesto y diferencias, incluida lectura compatible de referencias históricas de tres proveedores; no se actualiza como paso ordinario de campaña.
+- **Escritorio del usuario:** `equipzilla-AAAA-MM-DD-<runId>.zip` con los cuatro JSON publicables, sin artefactos internos; su ausencia posterior no invalida por sí sola la acreditación local.
 - `data/category/` y `data/import/`: snapshots de compatibilidad para mapeos comerciales heredados; **no son dependencias de la preparación canónica actual**.
 
-Los nombres individuales de catálogo pueden variar por proveedor: `run.json`, la procedencia y los manifests determinan qué datos pertenecen a una campaña. `storage/` es efímero y está excluido de Git. No borrar originales para corregir decisiones editoriales.
+Los nombres individuales de catálogo pueden variar por proveedor: `run.json`, la procedencia y los manifests determinan qué datos pertenecen a una campaña. `storage/` está excluido de Git y conserva los datos operativos sujetos a la retención segura de campañas; no debe vaciarse manualmente. No borrar originales para corregir decisiones editoriales.
 
 ## Cómo funciona
 

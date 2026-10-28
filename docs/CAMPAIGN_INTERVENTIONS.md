@@ -31,7 +31,7 @@ La consulta obtiene metadatos, identidades, campos, motivos y evidencias mediant
 npm run intervenir -- gam --mantenimiento
 ```
 
-Este comando tampoco aplica cambios ni elimina scripts. Una ausencia aislada no es suficiente para recomendar la retirada; cuando hay evidencia consecutiva y comparable propone una **revisión humana**, no un borrado automático. Tras comprobar la fuente y las campañas, se puede retirar **solo** el script afectado con `git rm -- interventions/gam/6002.ts` (ejemplo: ejecutar únicamente si realmente se decide retirar esa intervención).
+Este comando tampoco aplica cambios ni elimina scripts. El mantenimiento consulta el historial íntegro disponible y, bajo la retención de dos campañas globales, puede disponer de menos observaciones que en instalaciones anteriores; **no reconstruye un historial inexistente**. Una ausencia aislada no es suficiente para recomendar la retirada; cuando hay evidencia consecutiva y comparable propone una **revisión humana**, no un borrado automático. Tras comprobar la fuente y las campañas, se puede retirar **solo** el script afectado con `git rm -- interventions/gam/6002.ts` (ejemplo: ejecutar únicamente si realmente se decide retirar esa intervención).
 
 ## Crear y simular una intervención permanente
 
@@ -76,6 +76,6 @@ Si antes existía un borrador aprobado, la preparación intervenida genera **otr
 
 `npm run intervenir:manual`, `intervenir:preparar` e `intervenir:validar` mantienen sus contratos explícitos de rutas y SHA para diagnóstico o mantenimiento. El flujo `intervenir` reduce ese trabajo manual, pero **no sustituye la decisión humana**. Un script TypeScript de intervención se ejecuta como código local de confianza al aplicarlo: verificar su procedencia y revisar la simulación; no es un sandbox frente a código malicioso.
 
-La limpieza de una campaña entregada elimina únicamente resultados temporales reconocidos, tras validar el ZIP final. **Conserva los scripts temporales antiguos** si existen en `storage/interventions/<id-lote>/scripts/` para no romper la recuperación histórica. Los scripts permanentes de `interventions/` están versionados en Git y nunca son objeto de limpieza de campaña.
+La rotación automática conserva los resultados y derivados mientras la campaña siga retenida; cuando la más antigua ya puede retirarse, solo admite rutas y archivos reconocidos tras verificar las entregas por `runId`. Los scripts históricos situados en `storage/interventions/<id-lote>/scripts/` quedan protegidos por compatibilidad. Los scripts permanentes de `interventions/` están versionados en Git y nunca se retiran con una campaña. No existe un paso de limpieza manual ordinaria tras entregar.
 
 Referencias: [Campañas](CAMPAIGNS.md), [Acreditación](CAMPAIGN_ACCREDITATION.md), [Composición de intervenciones](INTERVENTION_COMPOSITION.md), [Validación](VALIDATION.md).

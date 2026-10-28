@@ -49,14 +49,14 @@ npm run entregar
 
 Una vez aprobada una acreditación, los comandos editoriales no permiten modificarla. Una intervención posterior genera un borrador distinto, vinculado a las nuevas preparaciones. Las operaciones de edición comprueban de nuevo la campaña y el contenido del borrador antes de sustituirlo, y nunca reescriben una selección existente.
 
-`entregar` valida la selección y genera en el Escritorio el ZIP verificado con exactamente los cuatro JSON fechados, sin manifests ni `selection.json`. Una entrega válida anterior se conserva cuando un nuevo intento falla.
+`entregar` valida la selección y crea en el Escritorio `equipzilla-AAAA-MM-DD-<runId>.zip` con los cuatro JSON fechados, sin manifests ni `selection.json`. El `runId` evita colisiones entre entregas del mismo día, no se sobrescribe un ZIP existente y una campaña ya entregada no se entrega de nuevo. El recibo local y sus evidencias se verifican por `runId`, aunque el ZIP físico deje de estar disponible.
 
 ## Seguridad y límites
 
 - No utilizar un lote parcial, catálogos mezclados o manifiestos alterados. Las preparaciones deben quedar vinculadas al mismo lote completo.
 - Nunca incluir por defecto una ficha `review`, inventar atributos o restaurar galerías históricas.
 - Las intervenciones conservan original, derivado, SHA del plan y expediente propios. Sus productos modificados requieren decisión editorial nueva.
-- Los borradores y aprobaciones permanecen fuera del código y de Git, bajo `storage/`. Tras entregar, `npm run limpiar` simula la limpieza; `-- --aplicar` requiere que la entrega siga verificable.
+- Los borradores y aprobaciones permanecen fuera del código y de Git, bajo `storage/`. Tras entregar, se conservan mientras permanezca la campaña; la rotación automática solo puede retirar la más antigua tras comprobar las entregas y las rutas permitidas. No hay limpieza manual ordinaria.
 
 Las operaciones avanzadas `npm run seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --manain <preparation.json> --lote <run.json> --borrador <acreditacion.json>` y sus opciones `--acreditacion` / `--simular` siguen disponibles para mantenimiento o diagnóstico con rutas explícitas. **No son necesarias en el recorrido ordinario.** El selector avanzado también puede admitir el conjunto heredado de tres proveedores para compatibilidad explícita; no equivale a acreditar una campaña global vigente.
 
