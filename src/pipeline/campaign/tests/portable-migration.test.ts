@@ -62,6 +62,7 @@ test("un parcial verificable no se promociona ni se interpreta como completo", a
     await writeFile(partial, csv);
     await writeFile(join(source, `${prefix}-summary.json`), JSON.stringify({
       quality: { status: "partial", published: false },
+      totals: { scrapedProducts: 1 },
       artifacts: { csvSha256: createHash("sha256").update(csv).digest("hex") }
     }));
     const plan = await planPortableMigration(root);
@@ -71,6 +72,61 @@ test("un parcial verificable no se promociona ni se interpreta como completo", a
     assert.equal(await readFile(partial, "utf8"), csv);
     await writeFile(partial, "alterado");
     await assert.rejects(planPortableMigration(root), /Parcial no verificable/);
+  });
+});
+
+test("intentos bloqueados sin productos no invalidan un parcial real de otro prefijo", async () => {
+  await withOriginal(async (root, source) => {
+    for (const name of originalFiles) await rm(join(source, name));
+    const fixtures = [
+      { name: "prueba-gomariz", status: "blocked", count: 0 },
+      { name: "prueba-gomariz-cdp", status: "blocked", count: 0 },
+      { name: prefix, status: "partial", count: 14 }
+    ] as const;
+    for (const item of fixtures) {
+      const csv = `url,title\nhttps://example.org/${item.name},prueba\n`;
+      await writeFile(join(source, `${item.name}-partial-all.csv`), csv);
+      await writeFile(join(source, `${item.name}-summary.json`), JSON.stringify({
+        quality: { status: item.status, published: false },
+        totals: { scrapedProducts: item.count },
+        artifacts: { csvSha256: createHash("sha256").update(csv).digest("hex") }
+      }));
+    }
+    assert.equal((await planPortableMigration(root)).providers[1]?.status, "parcial");
+    await applyPortableMigration(root);
+    assert.equal((await readdir(root)).includes("catalogs"), false);
+    const prueba = join(source, "prueba-gomariz-partial-all.csv");
+    assert.equal((await readFile(prueba, "utf8")).includes("prueba-gomariz"), true);
+  });
+});
+
+test("dos parciales con productos siguen siendo incompatibles", async () => {
+  await withOriginal(async (root, source) => {
+    for (const name of originalFiles) await rm(join(source, name));
+    for (const name of ["uno", "dos"]) {
+      const csv = `url,title\nhttps://example.org/${name},prueba\n`;
+      await writeFile(join(source, `${name}-partial-all.csv`), csv);
+      await writeFile(join(source, `${name}-summary.json`), JSON.stringify({
+        quality: { status: "partial", published: false }, totals: { scrapedProducts: 1 },
+        artifacts: { csvSha256: createHash("sha256").update(csv).digest("hex") }
+      }));
+    }
+    await assert.rejects(planPortableMigration(root), /Varios parciales incompatibles/);
+    assert.equal((await readdir(root)).includes("catalogs"), false);
+  });
+});
+
+test("un intento bloqueado con hash incorrecto no se ignora", async () => {
+  await withOriginal(async (root, source) => {
+    for (const name of originalFiles) await rm(join(source, name));
+    const file = "prueba-gomariz";
+    await writeFile(join(source, `${file}-partial-all.csv`), "contenido");
+    await writeFile(join(source, `${file}-summary.json`), JSON.stringify({
+      quality: { status: "blocked", published: false }, totals: { scrapedProducts: 0 },
+      artifacts: { csvSha256: "no-coincide" }
+    }));
+    await assert.rejects(planPortableMigration(root), /Parcial no verificable/);
+    assert.equal((await readdir(root)).includes("catalogs"), false);
   });
 });
 

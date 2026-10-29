@@ -143,6 +143,9 @@ test("una intervención posterior no reescribe la entrega acreditada del lote", 
   try {
     const first = await deliverActiveCampaign(data.root, data.desktop, date);
     const previous = await readFile(first.zipFile);
+    const receiptFile = join(data.root, "storage", "campaigns", data.runId, "delivery.json");
+    const receipt = await readFile(receiptFile);
+    const portable = await readPortableCampaign(data.root, data.runId);
     const source = join(data.root, "storage", "scraped", "campaigns", data.runId, "gam", `${prefixes.gam}-catalog.json`);
     const catalog = await readCanonicalCatalog(source);
     const selected = await finalizeActiveCampaign(data.root, false);
@@ -165,6 +168,8 @@ test("una intervención posterior no reescribe la entrega acreditada del lote", 
     await approve(data.root);
     await assert.rejects(deliverActiveCampaign(data.root, data.desktop, date), /ya tiene una entrega/);
     assert.deepEqual(await readFile(first.zipFile), previous);
+    assert.deepEqual(await readFile(receiptFile), receipt);
+    assert.deepEqual(await readPortableCampaign(data.root, data.runId), portable);
     assert.deepEqual(await readdir(data.desktop), [`equipzilla-2026-10-26-${data.runId}.zip`]);
     assert.ok(intervention.derivedFile);
     assert.ok((await readFile(intervention.derivedFile)).length > 0);

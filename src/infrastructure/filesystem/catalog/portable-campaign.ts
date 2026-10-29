@@ -11,6 +11,14 @@ import type { PublishableSelection } from "../../../catalog/editorial/select-pub
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { readCanonicalCatalog } from "./canonical-catalog.js";
 
+/** The run already has a different, immutable portable campaign snapshot. */
+export class PortableCampaignConflictError extends Error {
+  constructor(readonly runId: string) {
+    super("La campaña portátil ya existe con un contenido diferente");
+    this.name = "PortableCampaignConflictError";
+  }
+}
+
 const sha = (data: string): string => createHash("sha256").update(data).digest("hex");
 const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -267,7 +275,7 @@ export const consolidatePortableCampaign = async (args: {
     if (await directoryExists(destination)) {
       const existing = await readPortableCampaign(workspace, runId);
       if (!isDeepStrictEqual(existing, manifest)) {
-        throw new Error("La campaña portátil ya existe con un contenido diferente");
+        throw new PortableCampaignConflictError(runId);
       }
       return false;
     }

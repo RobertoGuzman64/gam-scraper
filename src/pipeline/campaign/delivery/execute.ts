@@ -6,6 +6,7 @@ import { isDeepStrictEqual } from "node:util";
 import { createZipArchive, readZipArchive, type ZipFile } from "../../../infrastructure/archive/zip.js";
 import { CAMPAIGN_PROVIDERS } from "../discovery/report.js";
 import { finalizeActiveCampaign } from "../finalization.js";
+import { PortableCampaignConflictError } from "../../../infrastructure/filesystem/catalog/portable-campaign.js";
 import { persistCampaignDelivery, removeDeliveredRunLogs } from "../../../infrastructure/filesystem/campaign/campaign-cleanup.js";
 
 export type CampaignDeliveryResult = {
@@ -20,17 +21,34 @@ const deliveryDate = (date: Date): string => {
   return `${date.getFullYear().toString().padStart(4, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 };
 
+const assertNotDelivered = async (rootDirectory: string, runId: string): Promise<void> => {
+  const receipt = join(resolve(rootDirectory), "storage", "campaigns", runId, "delivery.json");
+  try { await lstat(receipt); }
+  catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") return;
+    throw error;
+  }
+  throw new Error("La campaña ya tiene una entrega; no se reemplaza ni se entrega dos veces");
+};
+
 export const deliverActiveCampaign = async (
   rootDirectory: string, desktopDirectory: string, deliveredAt: Date = new Date()
 ): Promise<CampaignDeliveryResult> => {
   const date = deliveryDate(deliveredAt);
-  const selection = await finalizeActiveCampaign(rootDirectory, false);
+  // Finalization validates the selection and its immutable portable snapshot.
+  // A later approved intervention may conflict with that snapshot before the
+  // delivery receipt guard runs. In that case, report the existing delivery,
+  // but never suppress a conflict when no receipt exists.
+  const selection = await finalizeActiveCampaign(rootDirectory, false).catch(async (error: unknown) => {
+    if (error instanceof PortableCampaignConflictError) {
+      await assertNotDelivered(rootDirectory, error.runId);
+    }
+    throw error;
+  });
   if (selection.status !== "selected" || !selection.selectionDir || !selection.selection) {
     throw new Error(`Entrega bloqueada: la campaña necesita acreditación aprobada (estado: ${selection.status})`);
   }
-  const existingReceipt = join(resolve(rootDirectory), "storage", "campaigns", selection.runId, "delivery.json");
-  try { await lstat(existingReceipt); throw new Error("La campaña ya tiene una entrega; no se reemplaza ni se entrega dos veces"); }
-  catch (error) { if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error; }
+  await assertNotDelivered(rootDirectory, selection.runId);
   const source = selection.selection;
   if (source.products.length !== source.totals.publishable ||
     source.totals.original !== source.totals.publishable + source.totals.excluded) {

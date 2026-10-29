@@ -56,18 +56,29 @@ const namesIn = async (path: string): Promise<readonly string[]> => {
 
 const inspectPartial = async (dir: string, names: readonly string[]): Promise<boolean> => {
   const partials = names.filter((name) => name.endsWith("-partial-all.csv"));
-  if (partials.length > 1) throw new Error(`Varios parciales incompatibles en ${dir}`);
   if (!partials.length) return names.some((name) => name.endsWith("-all.csv"));
-  const csv = partials[0]!;
-  const summary = join(dir, `${csv.slice(0, -"-partial-all.csv".length)}-summary.json`);
-  if (await kind(summary) !== "file") throw new Error(`Parcial sin resumen: ${csv}`);
-  const value: unknown = JSON.parse(await readFile(summary, "utf8"));
-  if (!object(value) || !object(value.quality) || value.quality.published !== false ||
-    !object(value.artifacts) || typeof value.artifacts.csvSha256 !== "string" ||
-    value.artifacts.csvSha256 !== hash(await readFile(join(dir, csv)))) {
-    throw new Error(`Parcial no verificable: ${csv}`);
+  let usable = 0;
+  for (const csv of partials) {
+    const summary = join(dir, `${csv.slice(0, -"-partial-all.csv".length)}-summary.json`);
+    if (await kind(summary) !== "file") throw new Error(`Parcial sin resumen: ${csv}`);
+    const value: unknown = JSON.parse(await readFile(summary, "utf8"));
+    if (!object(value) || !object(value.quality) || value.quality.published !== false ||
+      !object(value.artifacts) || typeof value.artifacts.csvSha256 !== "string" ||
+      value.artifacts.csvSha256 !== hash(await readFile(join(dir, csv))) || !object(value.totals)) {
+      throw new Error(`Parcial no verificable: ${csv}`);
+    }
+    const count = value.totals.scrapedProducts;
+    if (typeof count !== "number" || !Number.isSafeInteger(count) || count < 0) {
+      throw new Error(`Parcial no verificable: ${csv}`);
+    }
+    if (value.quality.status === "blocked" && count === 0) continue;
+    if (value.quality.status !== "partial" || count === 0) {
+      throw new Error(`Parcial con estado incompatible: ${csv}`);
+    }
+    usable += 1;
+    if (usable > 1) throw new Error(`Varios parciales incompatibles en ${dir}`);
   }
-  return true;
+  return usable === 1;
 };
 
 const inspectCompleteSource = async (source: string): Promise<Awaited<ReturnType<typeof readCanonicalCatalog>>> => {
