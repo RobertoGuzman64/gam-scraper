@@ -21,6 +21,7 @@ type PageFixture = {
 
 type SimulationOptions = {
   readonly totals?: readonly number[];
+  readonly missingTotalReads?: readonly number[];
   readonly delayedNextMs?: number;
   readonly delayedPaginationMs?: number;
   readonly nextButtonTextOnly?: boolean;
@@ -45,6 +46,7 @@ const simulateCatalog = async (
     ? Array.from({ length: Math.ceil(allIds.length / pageSize) }, (_, index) =>
       allIds.slice(index * pageSize, (index + 1) * pageSize)) : pages;
   let simulatedNow = Date.now();
+  let totalReads = 0;
   const paginationAvailableAt = simulatedNow + (simulation?.delayedPaginationMs ?? 0);
   const advance = (): void => {
     simulation?.onNext?.();
@@ -65,7 +67,11 @@ const simulateCatalog = async (
     click
   });
   const document: PageFixture = {
-    body: { get innerText() { return `Resultados: ${simulation?.totals?.[current] ?? announced}`; } },
+    body: { get innerText() {
+      totalReads += 1;
+      return simulation?.missingTotalReads?.includes(totalReads)
+        ? 'Cargando resultados' : `Resultados: ${simulation?.totals?.[current] ?? announced}`;
+    } },
     documentElement: { get outerHTML() { return `<html data-page="${current + 1}"></html>`; } },
     querySelectorAll(selector) {
       if (selector === "a[href]") return (visiblePages()[current] ?? []).map((id) =>
@@ -214,6 +220,22 @@ test("Mercaeleva: no avanza más allá del máximo de páginas", async () => {
   assert.equal(clicks, 0);
   assert.ok(result && typeof result === "object" && "pages" in result && Array.isArray(result.pages));
   assert.equal(result.pages.length, 1);
+});
+
+test("Mercaeleva: espera el contador si desaparece temporalmente sin aceptar cambios del total", async () => {
+  const result = await simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 10, {
+    missingTotalReads: [2, 3]
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
+    pages: ["<html data-page=\"1\"></html>", "<html data-page=\"2\"></html>"],
+    expectedTotal: 4
+  });
+});
+
+test("Mercaeleva: bloquea si el contador no reaparece", async () => {
+  await assert.rejects(simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 10, {
+    missingTotalReads: Array.from({ length: 30 }, (_, index) => index + 2)
+  }), /tiempo agotado al esperar el contador total de resultados/);
 });
 
 test("Mercaeleva: detecta cambios del total mientras navega", async () => {

@@ -129,7 +129,7 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
   const pageSize = current.length;
   const firstPage = [...current].sort().join('\n');
   for (let page = 1; page <= ${maxPages}; page += 1) {
-    const reportedTotal = readTotal();
+    const reportedTotal = await deadline(readTotal, 'el contador total de resultados en la página ' + page);
     if (reportedTotal !== total) {
       throw new Error('Mercaeleva: el contador cambió durante la extracción (' + total + ' / ' + reportedTotal + ')');
     }
