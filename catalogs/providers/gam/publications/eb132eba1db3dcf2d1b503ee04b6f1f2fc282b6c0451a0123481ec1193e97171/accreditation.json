@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "runId": "individual-gam-4d32d19a2b1bb2782722f1d9ade33436",
+  "approved": true,
+  "approvalReason": "Exclusion editorial de cinco fichas con contradicciones de identidad acreditadas",
+  "sources": [
+    {
+      "providerId": "gam",
+      "catalogSha256": "855865e4a99f709cd9b10b68e77d594841b8cbd8c64b4fc9eb851cb397162483",
+      "preparationSha256": "66278a231097e0c220a44cc15b9595d1d338f9f23f97807910d03d29be91487b",
+      "productCount": 983
+    }
+  ],
+  "exclusions": [
+    {
+      "providerId": "gam",
+      "reference": "6682",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6682-2020-hyster-h35ft",
+      "status": "review",
+      "issues": [
+        "Número de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen",
+        "Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo número de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicación"
+      ],
+      "decision": "excluir",
+      "reason": "Numero de serie compartido con 6703; identidad fisica no acreditada",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6682-2020-hyster-h35ft"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "6703",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6703-2020-hyster-h35ft",
+      "status": "review",
+      "issues": [
+        "Número de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen",
+        "Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo número de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicación"
+      ],
+      "decision": "excluir",
+      "reason": "Numero de serie compartido con 6682; identidad fisica no acreditada",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6703-2020-hyster-h35ft"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "6002",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6002-carretilla-elevadora-electrica-hyster-j50xtg6",
+      "status": "identity",
+      "issues": [
+        "Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha técnica"
+      ],
+      "decision": "excluir",
+      "reason": "Contradiccion entre marca anunciada HYSTER y marca tecnica YALE",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6002-carretilla-elevadora-electrica-hyster-j50xtg6"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "6003",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6003-carretilla-elevadora-electrica-hyster-j60xtg6",
+      "status": "identity",
+      "issues": [
+        "Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha técnica"
+      ],
+      "decision": "excluir",
+      "reason": "Contradiccion entre marca anunciada HYSTER y marca tecnica YALE",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6003-carretilla-elevadora-electrica-hyster-j60xtg6"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "6004",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6004-carretilla-elevadora-electrica-hyster-j70xtg6",
+      "status": "identity",
+      "issues": [
+        "Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha técnica",
+        "Identidad GAM contradictoria: modelo anunciado distinto de J7.0XTG6 en ficha técnica"
+      ],
+      "decision": "excluir",
+      "reason": "Contradiccion entre marca y modelo anunciados HYSTER y ficha tecnica YALE",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6004-carretilla-elevadora-electrica-hyster-j70xtg6"
+      ]
+    }
+  ]
+}
