@@ -140,8 +140,45 @@ const unrepresentableLoadCapacity = (record: ProductRecord): boolean => {
   return true;
 };
 
+const unrepresentableOrderPickerVariant = (record: ProductRecord, attribute: Attribute): boolean => {
+  if (record.condition !== "Nuevo" || !["Peso", "Peso operativo", "Altura de plataforma"].includes(attribute.name) ||
+    !["hyster", "yale"].includes(fold(record.brand ?? "")) ||
+    !["carretillas-nuevas", "marcas-nuevas"].includes(record.categoryKey)) return false;
+  let family = "";
+  try {
+    const url = new URL(record.url);
+    const segments = url.pathname.split("/").filter(Boolean);
+    if (url.hostname !== "online.gamrentals.com" || segments[0] !== "es") return false;
+    family = segments[1] ?? "";
+  } catch { return false; }
+  if (!["recogepedidos-hyster", "recogepedidos-yale"].includes(family) &&
+    !(family === "yale" && fold(record.brand ?? "") === "yale" &&
+      /\b(?:recogepedidos|preparapedidos)\b/.test(fold(record.title ?? "")))) return false;
+  if (!gamHandlingModelEvidence(record, record.title ?? "") ||
+    !gamHandlingModelEvidence(record, record.shortDescription ?? "") ||
+    !gamHandlingModelEvidence(record, record.longDescription ?? "") ||
+    fold(String(record.specs?.["Modelo"] ?? "")) !== fold(record.model ?? "")) return false;
+  const specs = record.specs ?? {};
+  const weight = singleSpec(record, ["peso"]);
+  const height = singleSpec(record, ["altura plataforma"]);
+  if (!weight || !height) return false;
+  const weightOptions = weight.match(/^([1-9]\d{2,4}(?:\s*\/\s*[1-9]\d{2,4}){1,3})\s*kg$/i)?.[1];
+  const platformOptions = height.match(/^\s*-\s*\/\s*\d{3,4}(?:\s*\/\s*\d{3,4})?\s*m{0,4}\s*metros?$/i);
+  if (!weightOptions || !platformOptions) return false;
+  const values = weightOptions.split(/\s*\/\s*/).map(Number);
+  if (new Set(values).size !== values.length || values.some((value) => value < 250 || value > 5000)) return false;
+  if ([record.shortDescription, record.longDescription].some((text) =>
+    typeof text === "string" && /\bpeso\s+(?:operativo\s+)?(?:de\s+)?\d/iu.test(fold(text)))) return false;
+  if (attribute.name === "Altura de plataforma") {
+    return attribute.unit_option === "m" && specs["Altura de plataforma"] === undefined &&
+      specs["Altura plataforma (mm)"] === undefined && specs["Altura plataforma (m)"] === undefined;
+  }
+  return attribute.unit_option === "kg" && specs["Peso (kg)"] === undefined;
+};
+
 export const gamConfirmedAbsentScalar = (record: ProductRecord, attribute: Attribute): boolean => {
   if (record.providerId !== "gam") return false;
+  if (unrepresentableOrderPickerVariant(record, attribute)) return true;
   if (attribute.name === "Radio de giro" && attribute.type === "NUMBER" && attribute.unit_option === "mm") {
     return unrepresentableTurningRadius(record);
   }

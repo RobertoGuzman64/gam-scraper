@@ -9,6 +9,7 @@ import { normalizeMercaelevaCandidate } from "./providers/mercaeleva/technical.j
 import { mercaelevaUnspecifiedMast } from "../evidence/providers/mercaeleva/handling-evidence.js";
 import { mercaelevaUnpublishedHours } from "../evidence/providers/mercaeleva/hours-evidence.js";
 import { gamConfirmedAbsentScalar } from "./providers/gam/unrepresentable.js";
+import { gamMislabelledSpecKey } from "./providers/gam/crossed-specifications.js";
 import { applyManainAliases, convertManainCandidate, isManainUnmeasuredNumeric } from "./providers/manain/attributes.js";
 
 const notPublished = (value: SpecScalar): boolean =>
@@ -112,6 +113,7 @@ export const resolveAttribute = (record: ProductRecord, attribute: Attribute): A
   }
   let ambiguousSource = false;
   for (const [rawKey, spec] of Object.entries(record.specs ?? {})) {
+    if (record.providerId === "gam" && gamMislabelledSpecKey(record, attribute, rawKey)) continue;
     const canonical = SPEC_KEY_NORMALIZATION[fold(rawKey)] ?? rawKey;
     if (!keys.has(fold(rawKey)) && !keys.has(fold(canonical))) continue;
     const value = scalar(spec);

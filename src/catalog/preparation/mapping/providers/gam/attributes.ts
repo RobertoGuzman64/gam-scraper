@@ -12,6 +12,8 @@ import { gamHandlingReconciledCapacity } from "../../../evidence/providers/gam/c
 import { gamElevationCandidate, gamElevationHeightConflicts } from "./elevation.js";
 import { gamSpecializedCandidate } from "./specialized.js";
 import { gamGeneratorCandidate, isGamGenerator } from "./generator.js";
+import { gamCompoundMeasure } from "./compound-measures.js";
+import { applyGamCrossedSpecifications } from "./crossed-specifications.js";
 
 export const gamUnspecifiedTurningRadius = (record: ProductRecord): boolean => {
   if (record.categoryKey !== "carretillas-nuevas" || record.condition !== "Nuevo" ||
@@ -40,6 +42,7 @@ export const gamUnspecifiedTurningRadius = (record: ProductRecord): boolean => {
 };
 
 export const applyGamAliasesDetailed = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): AliasOutcome => {
+  applyGamCrossedSpecifications(record, attribute, candidates);
   if (attribute.name === "Dimensiones de la cesta") keys.add(fold("Dimensiones Cesta"));
   if (attribute.name === "Batería (V / Ah)" && attribute.type === "TEXT" && attribute.unit_option === "V / Ah" &&
     !Object.keys(record.specs ?? {}).some((key) =>
@@ -201,5 +204,5 @@ export const convertGamCandidate = (
     const angle = candidate.value.trim().match(/^(\d+(?:[.,]\d+)?)\s*[°º]$/);
     return angle?.[1] ? numberToken(angle[1]) : fallback;
   }
-  return fallback;
+  return fallback ?? gamCompoundMeasure(attribute, candidate);
 };
