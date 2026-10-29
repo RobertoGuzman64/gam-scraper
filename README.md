@@ -104,13 +104,35 @@ npm run estado
 
 Si una ficha necesita una corrección puntual acreditada, consulta los scripts existentes con `npm run intervenir -- gam --listar` y simula uno seleccionado con `npm run intervenir -- gam --script interventions/gam/6002.ts`. Tras revisar las diferencias, autoriza expresamente `--aplicar` para ese script. Cada intervención nueva se guarda en `interventions/<proveedor>/` y se versiona en Git; no se registra en `storage/`. No hay cambios ni aprobaciones editoriales automáticas. Ver [Protocolo completo](docs/CAMPAIGNS.md), [Intervenciones](docs/CAMPAIGN_INTERVENTIONS.md) y [Acreditación](docs/CAMPAIGN_ACCREDITATION.md).
 
+### Acreditación editorial individual (sin campaña global)
+
+La preparación completa de un proveedor puede verificarse y acreditarse por separado mediante `seleccionar:proveedor` y `acreditar:proveedor`. Debe aportarse el catálogo original y la preparación offline correspondiente; ambos se validan contra sus huellas actuales. Este recorrido no acepta catálogos intervenidos ni promueve extracciones parciales a una entrega.
+
+```powershell
+$gam = ".\catalogs\providers\gam\original\scrape-gam-marzo-2026-catalog.json"
+$preparacion = ".\storage\prepared\gam\scrape-gam-marzo-2026-preparation.json"
+npm run acreditar:proveedor -- gam --origen $gam --preparacion $preparacion
+npm run acreditar:proveedor -- gam --origen $gam --preparacion $preparacion --listar
+npm run acreditar:proveedor -- gam --origen $gam --preparacion $preparacion --consultar 6682
+```
+
+Tras contrastar la ficha con su origen, se puede registrar una decisión con `--decidir 6682 excluir --motivo "..." --evidencia <URL original mostrada por --consultar>`, repitiendo `--evidencia` para pruebas adicionales. `--validar` comprueba decisiones sin escritura y `--aprobar --motivo "..."` exige una aprobación humana global y bloquea cambios posteriores. El borrador se conserva en `storage/providers/<proveedor>/editorial/` con huella de las fuentes: no se reutiliza después de cambiar la preparación. Una vez aprobadas las decisiones y la aprobación global individual, el JSON comercial de un solo proveedor puede generarse sin campaña global:
+
+```powershell
+npm run entregar:proveedor -- gam --origen $gam --preparacion $preparacion --simular
+npm run entregar:proveedor -- gam --origen $gam --preparacion $preparacion
+npm run entregar:proveedor -- gam --origen $gam --preparacion $preparacion --verificar
+```
+
+La entrega se guarda en `catalogs/providers/<proveedor>/publications/<sha-aprobacion>/`: `<proveedor>-publishable.json` (`ImportCandidate[]`), `accreditation.json` y `manifest.json`. Solo se crea con aprobación editorial válida y vinculada a la preparación; `--simular` no escribe y `--verificar` comprueba el destino existente. Cada destino es inmutable: una repetición idéntica se verifica; si ha sido alterado no se sobrescribe. La selección elimina las fichas excluidas, sin maquillar los reviews que permanecen en el original. `acreditar` y `entregar` conservan exclusivamente el contrato global de cuatro proveedores. `npm run estado` conserva por ahora su inventario de campañas globales; para verificar una publicación individual se utiliza `entregar:proveedor --verificar`.
+
 ### Otros comandos disponibles
 
 - `npm run ayuda` y `npm run ayuda -- <comando>`: ayuda desde la terminal; distingue lectura, preparación, escritura y autorización destructiva.
 - `npm run estado`: inventario de fuentes operativas, originales de `catalogs/`, JSON finales acreditados, integridad y discrepancias, sin escritura.
 - `npm run huecos`: auditor opcional de la última entrega íntegra conservada (o referencia histórica si no hay entrega); admite `--catalogo <ruta>` para canónicos explícitos. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md).
 - `npm run build` y `npm test`: compilación y pruebas del repositorio.
-- `npm run extraer:proveedor`, `extraer:todos`, `intervenir:manual`, `preparar`, `validar`, `seleccionar` y `cobertura`: operaciones avanzadas con finalidades distintas del flujo principal.
+- `npm run extraer:proveedor`, `extraer:todos`, `intervenir:manual`, `preparar`, `validar`, `seleccionar`, `seleccionar:proveedor`, `acreditar:proveedor`, `entregar:proveedor` y `cobertura`: operaciones avanzadas con finalidades distintas del flujo principal.
 - `npm run manain:muestra` y `npm run manain:censo`: herramientas de diagnóstico específicas de Manain; no acreditan por sí solas una extracción completa.
 - `npm run recuperar -- <runId>`: inspección sin borrados de un intento fallido; `--recuperar`, `--abandonar ... --confirmar ...` y `--reanudar-rotacion` son operaciones explícitas de recuperación. Ver [Protocolo de campañas](docs/CAMPAIGNS.md).
 - `npm run referencia`: consulta y mantenimiento **legado** de `data/reference/`; `--actualizar` ya no es un paso habitual.
@@ -154,6 +176,7 @@ Las operaciones GAM con rutas preconfiguradas son **herramientas de compatibilid
 - `storage/scraped/campaigns/<runId>/<proveedor>/`: catálogos canónicos, manifests y diagnósticos de la extracción aislada.
 - `storage/campaigns/<id-lote>/<proveedor>/`: preparaciones validadas por la revisión offline.
 - `storage/campaigns/<id-lote>/editorial/`: borradores y aprobación de la campaña.
+- `storage/providers/<proveedor>/editorial/`: borrador y aprobación individual ligados a la huella vigente de la preparación; aún no representan una entrega.
 - `storage/campaigns/<id-lote>/selection/`: selección interna acreditada (no se entrega completa al usuario).
 - `storage/campaigns/<runId>/delivery.json`: recibo local de entrega vinculado a la selección; no es un reemplazo del ZIP físico.
 - `interventions/<proveedor>/`: scripts permanentes con ID, resumen y propuestas, versionados en Git.

@@ -60,6 +60,20 @@ Una vez aprobada una acreditación, los comandos editoriales no permiten modific
 
 `entregar` valida la selección y crea en el Escritorio `equipzilla-AAAA-MM-DD-<runId>.zip` con los cuatro JSON fechados, sin manifests ni `selection.json`. El `runId` evita colisiones entre entregas del mismo día, no se sobrescribe un ZIP existente y una campaña ya entregada no se entrega de nuevo. El recibo local y sus evidencias se verifican por `runId`, aunque el ZIP físico deje de estar disponible.
 
+## Acreditación de un único proveedor
+
+`npm run acreditar:proveedor -- <proveedor> --origen <catalog.json> --preparacion <preparation.json>` abre un borrador individual verificado, independiente de los lotes globales. La lectura previa `seleccionar:proveedor` sigue siendo de solo consulta. Están disponibles `--listar`, `--consultar <referencia>`, `--validar`, `--decidir <referencia> excluir --motivo "..." --evidencia <URL HTTPS de la ficha>` y `--aprobar --motivo "..."`. La aprobación es explícita y solo se permite cuando todas las decisiones obligatorias son válidas. No se admiten inclusiones automáticas de fichas en revisión o con conflicto de identidad.
+
+El borrador se guarda en `storage/providers/<proveedor>/editorial/accreditation-<huella-de-fuentes>.json` y no puede reutilizarse tras variar la preparación. Toda edición vuelve a verificar la procedencia y bloquea sobrescrituras concurrentes. No se requiere `run.json` ni se altera la acreditación de la campaña global. La aprobación individual, por sí sola, no genera el JSON. Después de registrar y aprobar todas las decisiones humanas:
+
+```powershell
+npm run entregar:proveedor -- gam --origen <catalog.json> --preparacion <preparation.json> --simular
+npm run entregar:proveedor -- gam --origen <catalog.json> --preparacion <preparation.json>
+npm run entregar:proveedor -- gam --origen <catalog.json> --preparacion <preparation.json> --verificar
+```
+
+`entregar:proveedor` verifica nuevamente original, preparación y acreditación y aplica el selector editorial existente. Guarda en `catalogs/providers/<proveedor>/publications/<sha-aprobacion>/` un JSON de `ImportCandidate[]` (solo fichas publicables), copia exacta de la aprobación y un manifiesto con hashes y recuentos. `--simular` solo consulta y `--verificar` exige un resultado existente íntegro. No sobrescribe publicaciones modificadas, no incluye fichas descartadas ni modifica campañas globales. El inventario de `npm run estado` sigue centrado en la entrega global; esta vía se verifica explícitamente con `entregar:proveedor --verificar`. No sustituirla por `npm run entregar`, que exige cuatro proveedores.
+
 ## Seguridad y límites
 
 - No utilizar un lote parcial, catálogos mezclados o manifiestos alterados. Las preparaciones deben quedar vinculadas al mismo lote completo.
