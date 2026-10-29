@@ -16,6 +16,13 @@ Este repositorio no ofrece una API HTTP, no realiza altas en el backend y no aut
 
 Para los criterios funcionales, consultar [Objetivos](docs/SCRAPER_OBJECTIVES.md).
 
+## Regla de ejecución y cierre
+
+El trabajo técnico se orienta al **resultado productivo**: extracción completa, fichas correctas, cobertura comprobada, catálogo íntegro `ready`, campaña acreditable y entrega verificable, según el frente que corresponda. `estado`, `revisar`, `huecos`, `validar` y los diagnósticos no son metas por sí mismos: sus resultados alimentan correcciones en los motores existentes. Cuando el error es reproducible y generalizable, se modifica el código y se verifica contra el conjunto afectado; el trabajo no se da por terminado con un listado de incidencias o con comandos para analizarlas manualmente.
+
+Los criterios **según el tipo de problema**, las protecciones de seguridad y los límites entre catálogo técnico, selección e importación están definidos en [Objetivos](docs/SCRAPER_OBJECTIVES.md). Ninguna automatización evita las aprobaciones editoriales reales, ni un `PASS` de extracción garantiza por sí solo cobertura completa o `0 review`.
+
+
 ## Instalaciones existentes
 
 Una instalación nueva no requiere ejecutar migraciones de nombres. Si se actualiza una instalación antigua con rutas de almacenamiento heredadas, consultar primero [Referencia operativa](docs/OPERATIONAL_REFERENCE.md) y el comportamiento de `scripts/migrate-storage.mjs`. No mover datos ni ejecutar migraciones sobre campañas o transacciones abiertas sin comprobar su estado.
@@ -25,7 +32,7 @@ Una instalación nueva no requiere ejecutar migraciones de nombres. Si se actual
 - Node.js `>=18.18.0` y npm.
 - Acceso HTTPS a los portales.
 - Permisos de escritura en `storage/`.
-- Chrome o Chromium accesible desde el sistema para el mecanismo headless de Mercaeleva, cuando se necesite; se pueden definir `CHROME_PATH` o `CHROMIUM_PATH`.
+- Chrome o Chromium (o Edge compatible, según el extractor) para Mercaeleva y Manain cuando se necesite; se pueden definir `CHROME_PATH` o `CHROMIUM_PATH`. Manain puede requerir navegador visible y verificación humana.
 
 ```powershell
 npm ci

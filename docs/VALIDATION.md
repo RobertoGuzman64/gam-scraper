@@ -22,6 +22,15 @@ La validación identifica fallos; **el trabajo de calidad no termina al encontra
 
 **Aceptación de calidad del catálogo completo:** `0 review` reales en la preparación y validación técnica oficial de **todos** sus productos, sin cambiar estados artificialmente, ignorar campos válidos por conveniencia, retirar máquinas de la muestra o relajar validadores. Si permanece alguna review legítima, el catálogo sigue pendiente de esa meta. Un subconjunto publicable aprobado y un catálogo completamente `ready` son afirmaciones distintas.
 
+## Responsabilidad ante cualquier validación adversa
+
+El sentido de una validación es **dirigir una reparación productiva**, no multiplicar informes. Ante `review`, pérdida de cobertura, incoherencia de manifiesto, regresión, identidad contradictoria o preparación no acreditable, delimitar internamente **qué contrato incumple** y corregir el componente responsable. Las herramientas de contraste deben responder a una hipótesis de ingeniería concreta; no iniciar rondas sucesivas de comandos al operador ni presentarlas como progreso terminado.
+
+**No confundir señales:** `0 fallos` de extracción no significa cobertura web acreditada; `0 review` técnica no significa selección/editorial aprobada; `PASS` de tests no significa calidad de datos demostrada; una exclusión editorial no convierte una review en `ready`; un error real del portal no demuestra una regresión de parser. Cada afirmación de cierre debe indicar **universo evaluado, criterio vigente y resultado efectivo**.
+
+Si una revisión sigue abierta después de una corrección, repetir el ciclo productivo con las causas restantes. Un bloqueo no reparable con la evidencia disponible debe quedar visible, delimitado y trazable, **no maquillado ni transferido como una investigación general al propietario**. Ver [matriz de objetivos por frente](SCRAPER_OBJECTIVES.md#propósito-de-cada-frente-resultado-primero-herramientas-después).
+
+
 ## Operaciones sin alterar datos originales
 
 ```powershell

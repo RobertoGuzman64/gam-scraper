@@ -45,6 +45,13 @@ Cuando `prepareSourceProduct` o sus validadores producen reviews, su diagnóstic
 
 El flujo de ingeniería normal es reproducir en el catálogo completo → corregir el motor → probar el comportamiento y sus contraejemplos → volver a preparar/validar el conjunto hasta acreditar `0 review`. Una review que exige evidencia externa se mantiene visible sin falsear el `ready`. Los diagnósticos y auditores sirven a este ciclo, no son un objetivo de producto independiente. Ver [Objetivos](SCRAPER_OBJECTIVES.md) y [Validación](VALIDATION.md).
 
+## Regla de reparación según el componente
+
+Un defecto de **descubrimiento/cobertura** se resuelve en el adaptador y motor de scraping; uno de **campo cruzado o magnitud mal interpretada**, en extracción semántica o normalización; uno de **identidad o duplicados**, en contratos y reglas de catálogo; uno de **reviews injustificadas**, en calidad/contratos con contraejemplos, sin apagar el control; uno de **artefactos, recuperaciones o comandos encadenados**, en pipeline e infraestructura; uno de **presentación del estado**, en CLI. La corrección se ubica donde evitará repetir el defecto en otras fichas y campañas, sin duplicar la regla en un script de diagnóstico, un CLI o un editor manual.
+
+Modificar código productivo no autoriza cambios indiscriminados de arquitectura: reutilizar el motor existente, mantener TypeScript estricto, comprobar consumidores, exigir pruebas proporcionales al riesgo y verificar el efecto sobre el universo completo. Los contratos de aceptación por frente se enumeran en [Objetivos](SCRAPER_OBJECTIVES.md).
+
+
 ## Responsabilidades
 
 | Capa                   | Debe hacer                                                                    | No debe hacer                                              |

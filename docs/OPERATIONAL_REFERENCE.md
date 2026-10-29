@@ -4,6 +4,11 @@
 
 El formato legado conserva `gam.json`, `gomariz.json`, `mercaeleva.json`, opcionalmente `manain.json`, `manifest.json` y `differences.json`, con huellas verificables. Acepta referencias históricas de **tres proveedores** sin exigir Manain en sus originales. Una nueva campaña global y su ZIP, en cambio, requieren los cuatro proveedores. Las referencias heredadas no incluyen selección editorial ni forman parte del ZIP público. La rotación global no elimina `data/reference/`.
 
+## Responsabilidad frente a incidencias de referencia
+
+El almacén heredado y los comandos de traslado sirven a **compatibilidad, recuperación y comparación**, no constituyen la solución a problemas de calidad del scraper. Una referencia desactualizada, una transacción incompleta o una huella inconsistente exige comprobar y, si hay defecto repetible, **reparar el mecanismo productivo** preservando la última copia válida; no sustituir a mano hashes o archivos para que la consulta muestre `PASS`. Para el ciclo vigente se usa la referencia acreditada de campaña, no se crea trabajo periódico de actualización del legado. Ver [Objetivos](SCRAPER_OBJECTIVES.md).
+
+
 ## Comandos de compatibilidad
 
 ```text

@@ -8,7 +8,14 @@
 
 El repositorio implementa una **CLI que termina tras ejecutar una operación**. No incorpora servidor HTTP, Dockerfile, despliegue cloud, CI/CD ni importación automática al backend. Es posible planificar ejecuciones externas, pero deben conservarse íntegros los resultados y vigilarse sus fallos.
 
-Requisitos operativos: Node.js `>=20.18.1`, npm, dependencias instaladas, acceso HTTPS, espacio en disco y permisos sobre `storage/`. Mercaeleva y Manain utilizan Chrome/Chromium o un Edge compatible (`CHROME_PATH` o `CHROMIUM_PATH` permiten indicar el ejecutable). Mercaeleva usa modo headless; Manain inicia un navegador visible y puede requerir verificación humana, por lo que no debe presumirse apto para una ejecución desatendida. Las preparaciones canónicas actuales utilizan reglas técnicas versionadas, no los snapshots comerciales de `data/category/` y `data/import/`. Estos permanecen solo para funciones heredadas que los requieran.
+Requisitos operativos: Node.js `>=18.18.0`, npm, dependencias instaladas, acceso HTTPS, espacio en disco y permisos sobre `storage/`. Mercaeleva y Manain utilizan Chrome/Chromium o un Edge compatible (`CHROME_PATH` o `CHROMIUM_PATH` permiten indicar el ejecutable). Mercaeleva usa modo headless; Manain inicia un navegador visible y puede requerir verificación humana, por lo que no debe presumirse apto para una ejecución desatendida. Las preparaciones canónicas actuales utilizan reglas técnicas versionadas, no los snapshots comerciales de `data/category/` y `data/import/`. Estos permanecen solo para funciones heredadas que los requieran.
+
+## Finalidad de automatizar
+
+El objetivo de la automatización es **hacer fiable el flujo productivo completo**, no programar más diagnósticos. Debe reducir pasos manuales, conservar los controles actuales y distinguir un fallo transitorio recuperable, una fuente indisponible, una pérdida de cobertura, un error del motor y un bloqueo editorial. Un lote programado que termina con `PASS` sin comprobar su contenido, su cobertura o la integridad del original no equivale a un catálogo aceptado. Cualquier mejora de automatización debe proteger datos válidos y no asumir aprobación humana; se valida en escenarios de éxito, error y recuperación.
+
+La instrumentación y los informes operativos son medios para reparar el comportamiento de la CLI, los adaptadores o la publicación, no sustitutos de la corrección. Ver [Objetivos](SCRAPER_OBJECTIVES.md) y [Validación](VALIDATION.md).
+
 
 ## Ejecución controlada
 

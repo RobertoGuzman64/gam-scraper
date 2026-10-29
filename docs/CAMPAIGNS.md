@@ -10,6 +10,15 @@ Una campaña ordinaria bajo el contrato actual incluye **GAM, Gomariz, Mercaelev
 
 La operación habitual no requiere recuperar JSON históricos, copiar SHA, adivinar rutas ni preparar los cuatro catálogos a mano. Todo se ejecuta desde la raíz del repositorio.
 
+## Resultado esperado por tramo de campaña
+
+El propósito de `iniciar`/`estado` es preservar la continuidad; de `extraer`, conseguir **cuatro originales completos y fiables**; de `revisar`/`validar`/`comparar`, obtener evidencia para **corregir defectos del motor o confirmar cambios de origen**; de `acreditar`, registrar **decisiones humanas verificables**; y de `entregar`, producir **los cuatro JSON exactos de la campaña** con recibo e integridad. Ninguno de estos comandos reemplaza el resultado del tramo siguiente.
+
+Cuando la campaña detecte fallos repetibles, el desarrollo debe **reparar el código productivo que los origina y volver a comprobar el conjunto afectado**. No convertir la operación ordinaria en una secuencia manual de inspecciones por ficha. No reextraer proveedores completos solo para arreglar una normalización reproducible offline; reextraer únicamente cuando sea necesario para demostrar el comportamiento modificado del extractor, con evidencia y sin perder el original vigente. Las aprobaciones editoriales no pueden automatizarse por el hecho de haber eliminado fallos técnicos.
+
+Para otros tipos de incidencias (identidad, cobertura, gaps, tests, mantenimiento, integración), rige la [matriz de resultados y criterios de cierre](SCRAPER_OBJECTIVES.md#propósito-de-cada-frente-resultado-primero-herramientas-después).
+
+
 ## Instalación inicial
 
 Se necesita Node.js >=18.18.0, npm, acceso a los portales, permisos de escritura y Chrome/Chromium para el extractor que lo requiera. En una copia nueva:

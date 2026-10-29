@@ -22,6 +22,13 @@ Selección editorial y cuatro JSON acreditados (campaña actual)
 Adaptación comercial e importación — proceso receptor / backend
 ```
 
+## Qué significa resolver una incidencia en esta frontera
+
+Si el scraper **pierde o altera datos comerciales de origen**, incluida la referencia comercial publicada, se corrige **su extractor o contrato de salida** y se comprueba todo el catálogo. Si el backend no puede importar legítimamente una selección acreditada por un requisito suyo de categorías, atributos o unicidad, se analiza **el contrato receptor**: no se inventan referencias, no se fusionan unidades y no se introduce ese requisito en `ready/review` técnico del canónico por conveniencia. Los avisos de importación deben exponerse y tratarse en su frontera real.
+
+El éxito es un **catálogo original fiable y un JSON acreditado que cumple el contrato del scraper**, no la cantidad de comandos de exportación ni la presunción de que el backend ha importado. Ver [Objetivos](SCRAPER_OBJECTIVES.md).
+
+
 ## Contratos que entrega el scraper
 
 - `ProductRecord` conserva `categoryKey` y `categoryName` originales, referencias, descripciones, imágenes, condición acreditada y `specs` sin equivalencias comerciales inventadas.

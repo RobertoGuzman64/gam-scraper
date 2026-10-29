@@ -6,6 +6,11 @@ Antes de crear scripts se debe clasificar cada incidencia usando el anuncio vige
 
 Las campañas ordinarias extraen **todos los proveedores habilitados**. Las intervenciones se ejecutan solo de forma manual y nunca forman parte de la extracción o de tareas automáticas.
 
+## Prioridad de desarrollo sobre la composición manual
+
+Componer scripts resuelve **casos singulares acreditados**, no patrones de producción. Si la simulación revela un defecto común de lectura, formato, asociación de atributos o validación, hay que **arreglar ese módulo en el scraper y verificar de nuevo el catálogo completo**. No sustituir la mejora del motor por un archivo `.ts` por máquina ni tratar una simulación o un derivado como prueba de que el original está completamente `ready`. La intervención editorial permanece estrictamente humana y sobre derivados, con los límites de campos del contrato. Ver [Objetivos](SCRAPER_OBJECTIVES.md).
+
+
 ## Scripts independientes y composición
 
 Los scripts reutilizables viven bajo `interventions/<proveedor>/<archivo>.ts` y se versionan en Git, idealmente uno por máquina o incidencia que pueda retirarse individualmente. Cada script declara `metadata` con identificador y resumen estáticos, y `proposals` con las correcciones acreditadas. **No** deben copiarse ni registrarse para cada campaña.

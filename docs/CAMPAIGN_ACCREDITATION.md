@@ -4,6 +4,13 @@
 
 La acreditación editorial valida que los cuatro catálogos del contrato actual proceden del mismo lote completo y que sus preparaciones, decisiones e intervenciones son comprobables. Superar la validación técnica o tener cero incidencias `Review` **no autoriza por sí solo la publicación**. No añadir SHA fijos al código ni relajar los controles para forzar la selección.
 
+## Qué acredita y qué no arregla
+
+La acreditación **no corrige** fallos generalizables de extracción, normalización, identidad o cobertura. Antes de llegar a ella, el código productivo debe haber resuelto las incidencias técnicamente corregibles y acreditado la calidad del conjunto. La decisión humana queda para **exclusiones e inclusiones editoriales genuinas**, con evidencia y su propia autorización: ni ejecutar `acreditar` ni excluir una ficha convierte sus datos técnicos en `ready`, ni permite afirmar que el catálogo de origen tiene `0 review` si no los tiene.
+
+Si la causa de un bloqueo está en el software, se vuelve a su módulo responsable y se rehace la preparación derivada conforme a las huellas vigentes; no se fuerza una aprobación para evitar reparar el motor. Ver [Objetivos](SCRAPER_OBJECTIVES.md) y [Validación](VALIDATION.md).
+
+
 ## Recorrido ordinario sin rutas ni SHA manuales
 
 Después de `npm run extraer` y de revisar las incidencias con `npm run revisar`, ejecutar:

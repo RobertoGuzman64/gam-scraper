@@ -15,6 +15,13 @@ El contrato vigente es `ManualInterventionProposal` en `src/catalog/intervention
 
 No se admiten imágenes, identidad, referencia, serie, categoría ni precios. Una foto que la fuente ya no publica no debe restaurarse desde una URL histórica. Si la fuente actual sí la muestra pero el scraper no la obtiene, se investiga y repara el extractor.
 
+## Por qué no sustituyen al desarrollo productivo
+
+El sistema de intervenciones está reservado para correcciones **aisladas, excepcionales y acreditadas** que no se pueden expresar con seguridad como una regla común. Si varias fichas comparten un defecto del parser, las unidades, la deduplicación, las descripciones o la validación, **se corrige antes el código productivo**; no se crean decenas de scripts por referencia para conseguir `0 review`. Los scripts existentes tampoco se ejecutan automáticamente en campañas nuevas ni se convierten en un segundo normalizador permanente.
+
+La decisión humana no se reemplaza por una excepción automática. Si el proveedor publica una contradicción genuina sin evidencia concluyente, se conserva el bloqueo y la revisión editorial; **no se proclama un catálogo completo `ready` por excluirla**. Ver [Objetivos](SCRAPER_OBJECTIVES.md) y [Validación](VALIDATION.md).
+
+
 ## Consultar y mantener el catálogo versionado
 
 Desde la raíz del repositorio, sin necesidad de una campaña activa:

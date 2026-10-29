@@ -10,6 +10,13 @@
 
 Que dos máquinas compartan categoría, marca o modelo no significa que deban tener las mismas especificaciones. Una ausencia observada **no acredita obligatoriedad técnica ni error del proveedor**.
 
+## Uso para mejorar el catálogo, no para acumular auditorías
+
+El propósito de la consulta es descubrir **posibles oportunidades de recuperación fiable**. Si un campo existe en la fuente y se está perdiendo por el extractor o la preparación, el trabajo de ingeniería consiste en **corregir el módulo productivo, probar la causa común y volver a medir la cobertura del catálogo**; no entregar un TOP de fichas para que el operador las arregle una por una. Si la fuente no publica ese campo, la ausencia sigue siendo válida y no debe generar un valor, una review artificial ni una obligación de completitud no acreditada. Una similitud de modelo no es prueba de que el atributo corresponda a esa unidad.
+
+`huecos` nunca resuelve ni acredita la mejora: el éxito es la **recuperación verificable de información realmente disponible**, sin contaminación de otros registros. Ver [Objetivos](SCRAPER_OBJECTIVES.md).
+
+
 ## Procedencia y componentes
 
 - **Entrada:** `findCampaignBaseline` (`src/pipeline/campaign/reference/compare.ts`) busca una entrega íntegra conservada y verifica su procedencia por `runId`; si no existe, consulta `data/reference/` como compatibilidad. `--catalogo <ruta>` (repetible) utiliza `readCanonicalCatalog` y exige manifiesto y resumen verificables para cada original; no admite CSV parciales.
