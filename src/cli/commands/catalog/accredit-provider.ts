@@ -2,7 +2,8 @@ import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  approveIndividualEditorial, decideIndividualEditorial, inspectIndividualEditorial, startIndividualEditorial
+  approveIndividualEditorial, decideIndividualEditorial, inspectIndividualEditorial,
+  prepareIndividualEditorialProposals, startIndividualEditorial
 } from "../../../pipeline/publication/individual-editorial.js";
 import type { IndividualEditorialOptions, IndividualEditorialReview } from "../../../pipeline/publication/individual-editorial.js";
 import { printCommandError } from "../../reporting/errors.js";
@@ -10,7 +11,8 @@ import { printCommandError } from "../../reporting/errors.js";
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const help = `Uso: npm run acreditar:proveedor -- gam --origen <catalog.json> --preparacion <preparation.json> [modo]
   sin modo                                   Crear o consultar borrador individual
-  --listar                                   Consultar decisiones pendientes
+  --listar                                   Consultar decisiones, motivos y evidencias
+  --proponer                                 Preparar exclusiones justificadas sin aprobar
   --consultar <referencia>                   Consultar ficha y URL original
   --validar                                  Validar todas las decisiones sin escribir
   --decidir <referencia> excluir --motivo "..." --evidencia <https-url>
@@ -48,16 +50,30 @@ const show = (review: IndividualEditorialReview): void => {
   if (review.inspection.approved) printReportLine("  Aprobación guardada; JSON comercial pendiente de entrega individual");
 };
 
+const showDecisions = (review: IndividualEditorialReview): void => {
+  for (const item of review.accreditation.exclusions) {
+    printReportLine(`  FICHA | ${item.reference} | ${item.status} | ${item.decision ?? "pendiente"}`);
+    if (item.reason) printReportLine(`    Motivo: ${item.reason}`);
+    for (const evidence of item.evidenceUrls) printReportLine(`    Evidencia: ${evidence}`);
+  }
+};
+
 export const runAccreditProvider = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") { printReportLine(help); return; }
   const { options, action } = parse(args);
   if (action.length === 0) { show(await startIndividualEditorial(options)); return; }
+  if (action.length === 1 && action[0] === "--proponer") {
+    await startIndividualEditorial(options);
+    const review = await prepareIndividualEditorialProposals(options);
+    show(review);
+    showDecisions(review);
+    printReportLine("  Propuestas sin aprobación humana ni contraste externo adicional");
+    return;
+  }
   if (action.length === 1 && action[0] === "--listar") {
     const review = await inspectIndividualEditorial(options);
     show(review);
-    for (const item of review.accreditation.exclusions) {
-      printReportLine(`  FICHA | ${item.reference} | ${item.status} | ${item.decision ?? "pendiente"}`);
-    }
+    showDecisions(review);
     return;
   }
   if (action.length === 2 && action[0] === "--consultar" && action[1]) {

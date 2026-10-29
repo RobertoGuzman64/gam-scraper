@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { lstat, mkdir, open, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { inspectAccreditationDraft, sha256 } from "../../catalog/editorial/campaign-accreditation.js";
+import { proposeIndividualExclusions } from "../../catalog/editorial/individual-decision-proposals.js";
 import type { AccreditationInspection, CampaignAccreditation } from "../../catalog/editorial/campaign-accreditation.js";
 import { readIndividualSelection, selectIndividualPublishable } from "./individual-selection.js";
 import type { IndividualSelectionContext } from "./individual-selection.js";
@@ -114,6 +116,9 @@ const update = async (
     }
     selectIndividualPublishable(initial.context, JSON.stringify(next));
   }
+  if (isDeepStrictEqual(next, initial.accreditation)) {
+    return { runId: initial.context.runId, draftFile: initial.draftFile, accreditation: next, inspection };
+  }
   const lockFile = `${initial.draftFile}.lock`;
   let lock;
   try { lock = await open(lockFile, "wx"); }
@@ -140,6 +145,10 @@ const update = async (
   }
   return { runId: initial.context.runId, draftFile: initial.draftFile, accreditation: next, inspection };
 };
+
+export const prepareIndividualEditorialProposals = async (
+  options: IndividualEditorialOptions
+): Promise<IndividualEditorialReview> => update(options, proposeIndividualExclusions);
 
 export const decideIndividualEditorial = async (
   options: IndividualEditorialOptions, request: IndividualEditorialDecision

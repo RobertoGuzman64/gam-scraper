@@ -3,6 +3,8 @@ import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promis
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { sha256 } from "../../../catalog/editorial/campaign-accreditation.js";
+import { proposeIndividualExclusions } from "../../../catalog/editorial/individual-decision-proposals.js";
+import type { CampaignAccreditation } from "../../../catalog/editorial/campaign-accreditation.js";
 import { readZipArchive } from "../../../infrastructure/archive/zip.js";
 import { deliverIndividualArchive } from "../individual-archive.js";
 import { deliverIndividualProvider } from "../individual-delivery.js";
@@ -13,7 +15,8 @@ import { prepareSavedCatalog } from "../../preparation/prepare.js";
 import { writeOutputs } from "../../publication/publish.js";
 import { selectIndividualPublishable, readIndividualSelection } from "../individual-selection.js";
 import {
-  approveIndividualEditorial, decideIndividualEditorial, inspectIndividualEditorial, startIndividualEditorial
+  approveIndividualEditorial, decideIndividualEditorial, inspectIndividualEditorial,
+  prepareIndividualEditorialProposals, startIndividualEditorial
 } from "../individual-editorial.js";
 import type { IndividualEditorialOptions } from "../individual-editorial.js";
 
@@ -242,5 +245,65 @@ test("la entrega individual no sobrescribe ZIP ajenos con el mismo nombre", asyn
     await writeFile(zipFile, "Archivo externo que debe conservarse");
     await assert.rejects(deliverIndividualArchive(options, desktop, "publish", date), /no se sobrescribe/);
     assert.equal(await readFile(zipFile, "utf8"), "Archivo externo que debe conservarse");
+  });
+});
+
+
+test("propuestas individuales conservan decisiones humanas, no aprueban y son idempotentes", async () => {
+  await fixture(async (options) => {
+    const started = await startIndividualEditorial(options);
+    const first = started.accreditation.exclusions[0];
+    assert.ok(first);
+    const manualReason = "Exclusión contrastada manualmente y registrada con evidencia original";
+    await decideIndividualEditorial(options, {
+      reference: first.reference, decision: "excluir", reason: manualReason, evidenceUrls: [first.sourceUrl]
+    });
+    const proposed = await prepareIndividualEditorialProposals(options);
+    assert.equal(proposed.inspection.completed, 2);
+    assert.equal(proposed.inspection.approved, false);
+    const manual = proposed.accreditation.exclusions.find((item) => item.reference === first.reference);
+    const assisted = proposed.accreditation.exclusions.find((item) => item.reference !== first.reference);
+    assert.equal(manual?.reason, manualReason);
+    assert.ok(assisted);
+    assert.equal(assisted.decision, "excluir");
+    assert.match(assisted.reason ?? "", /incidencias documentadas en la preparación/);
+    assert.deepEqual(assisted.evidenceUrls, [assisted.sourceUrl]);
+    await assert.rejects(deliverIndividualProvider(options), /aprobación humana/);
+    const before = await readFile(proposed.draftFile, "utf8");
+    await prepareIndividualEditorialProposals(options);
+    assert.equal(await readFile(proposed.draftFile, "utf8"), before);
+    await decideIndividualEditorial(options, {
+      reference: assisted.reference, decision: "excluir",
+      reason: "Decisión humana revisada y reemplazada antes de aprobar el conjunto",
+      evidenceUrls: [assisted.sourceUrl]
+    });
+    const approved = await approveIndividualEditorial(options, "Decisiones asistidas revisadas y aprobadas expresamente");
+    assert.equal(approved.inspection.approved, true);
+    await assert.rejects(prepareIndividualEditorialProposals(options), /ya está aprobada/);
+  });
+});
+
+test("propuestas no descartan errores técnicos, intervenciones ni inventan evidencias", async () => {
+  await fixture(async (options) => {
+    const started = await startIndividualEditorial(options);
+    const first = started.accreditation.exclusions[0];
+    const second = started.accreditation.exclusions[1];
+    assert.ok(first);
+    assert.ok(second);
+    const intervention: CampaignAccreditation["exclusions"][number] = { ...first, status: "intervention" };
+    const invalidUrl: CampaignAccreditation["exclusions"][number] = {
+      ...second, sourceUrl: "http://example.test/origen"
+    };
+    const attributeIssue: CampaignAccreditation["exclusions"][number] = {
+      ...first, issues: ["Atributo no normalizable: Potencia"]
+    };
+    const mixedIssue: CampaignAccreditation["exclusions"][number] = {
+      ...first, issues: [...first.issues, "Atributo no normalizable: Altura de plataforma"]
+    };
+    const proposed = proposeIndividualExclusions({
+      ...started.accreditation, exclusions: [intervention, invalidUrl, attributeIssue, mixedIssue]
+    });
+    assert.deepEqual(proposed.exclusions, [intervention, invalidUrl, attributeIssue, mixedIssue]);
+    assert.equal(proposed.approved, false);
   });
 });
