@@ -162,3 +162,36 @@ test("Mercaeleva: diferencia explícita de altura se clasifica como calidad, no 
   assert.equal(absent.product.description, null);
   assert.ok(absent.importIssues?.createMany.includes("Descripción corta ausente: solo hay descripción general y el backend exige una descripción corta"));
 });
+
+test("Mercaeleva: A14JE 1332 admite redondeo acreditado sin cambiar datos originales", () => {
+  const original = record("M887-9469", "LGMG A14JE PLATAFORMA ARTICULADA ELECTRICA 15 MT",
+    "Ref.1332 PLATAFORMA ARTICULADA ELECTRICA ALTURA DE TRABAJO 16 MT LGMG A14JE HORAS 298 AÑO DE FABRICACION 2023",
+    "LGMG", "A14JE", "1332");
+  const source: ProductRecord = {
+    ...original,
+    url: "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-A14JE-M887-9469",
+    specs: { ...original.specs, "Altura de trabajo": "16 m" }
+  };
+  const resolved = mercaelevaShortDescription(source);
+  assert.equal(resolved, "PLATAFORMA ARTICULADA ELECTRICA ALTURA DE TRABAJO 16 MT LGMG A14JE");
+  const prepared = prepareProduct(source, catalog);
+  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.product.description_title, source.title);
+  assert.equal(prepared.product.description_general, source.longDescription);
+  assert.deepEqual(prepared.product.spec, source.specs);
+  assert.ok(!prepared.issues.includes("Descripción comercial contradictoria: altura de trabajo"));
+
+  const variants: ProductRecord[] = [
+    { ...source, reference: "M887-9470" },
+    { ...source, url: source.url.replace("M887-9469", "M887-9470") },
+    { ...source, model: "A14JE-Li" },
+    { ...source, specs: { ...source.specs, "Artículo No.": "1333" } },
+    { ...source, specs: { ...source.specs, "Altura de trabajo": "15 m" } },
+    { ...source, longDescription: source.longDescription?.replace("16 MT", "17 MT") ?? null },
+    { ...source, title: source.title?.replace("15 MT", "14 MT") ?? null },
+    { ...source, title: source.title?.replace("15 MT", "ALTURA DE TRABAJO 15 MT") ?? null }
+  ];
+  for (const variant of variants) {
+    assert.equal(mercaelevaShortDescription(variant), null, variant.title ?? variant.reference ?? "variant");
+  }
+});

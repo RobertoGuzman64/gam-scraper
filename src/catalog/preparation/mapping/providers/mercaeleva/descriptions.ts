@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { fold } from "../../category-utils.js";
+import { verifiedMercaelevaA14jeWorkingHeight } from "../../../evidence/providers/mercaeleva/lgmg-a14je-work-height-evidence.js";
 
 const identity = (value: string): string => fold(value).replace(/[^a-z0-9]/g, "");
 
@@ -106,7 +107,9 @@ export const resolveMercaelevaShortDescription = (record: ProductRecord): ShortD
       sourceSubtype === "tijera" && /\belectrica\b/.test(title) && /\belectrica\b/.test(description) &&
       !/\baltura\s+(?:de\s+)?trabajo\b/.test(title) &&
       working - titleValue === 2 && confirmed === working;
-    if (!platformRange) return { description: null, heightConflict: true };
+    if (!platformRange && !verifiedMercaelevaA14jeWorkingHeight(record, titleValue, working, confirmed)) {
+      return { description: null, heightConflict: true };
+    }
   }
 
   const titleCapacity = title.match(/\b(\d[\d.,]*)\s*kg\b/)?.[1];

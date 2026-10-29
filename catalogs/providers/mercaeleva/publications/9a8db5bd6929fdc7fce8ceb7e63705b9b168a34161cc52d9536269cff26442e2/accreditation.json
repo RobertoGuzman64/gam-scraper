@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "runId": "individual-mercaeleva-40649c43cf06cf0b544bdc4262d923cc",
+  "approved": true,
+  "approvalReason": "Exclusion editorial de M827-8304 por contradicciones de capacidad y mastil",
+  "sources": [
+    {
+      "providerId": "mercaeleva",
+      "catalogSha256": "83e0265743ba1ec0b6ebb1c1bc8bbb9cd3b26eba77d208d659d35e7a62bba792",
+      "preparationSha256": "688ba66d69fdb03bc6eb881a2feb9c21557f6776074fd9d4b3fcd2e67d9e02ec",
+      "productCount": 221
+    }
+  ],
+  "exclusions": [
+    {
+      "providerId": "mercaeleva",
+      "reference": "M827-8304",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E48P-M827-8304",
+      "status": "review",
+      "issues": [
+        "MER0798: el anuncio del vendedor publica 4.800 kg y mástil dúplex en el texto, pero 3.000 kg y mástil tríplex en los campos técnicos; la republicación en Machineryline conserva ambas discrepancias. Confirmar capacidad efectiva y mástil instalado con el vendedor o la placa antes de validar la ficha",
+        "Atributo contradictorio: Capacidad de carga",
+        "Atributo contradictorio: Tipo de mástil"
+      ],
+      "decision": "excluir",
+      "reason": "Capacidad de carga y tipo de mastil contradictorios en el anuncio original; identidad tecnica no acreditada",
+      "evidenceUrls": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E48P-M827-8304"
+      ]
+    }
+  ]
+}
