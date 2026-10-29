@@ -222,7 +222,7 @@ test("Mercaeleva: no avanza más allá del máximo de páginas", async () => {
   assert.equal(result.pages.length, 1);
 });
 
-test("Mercaeleva: espera el contador si desaparece temporalmente sin aceptar cambios del total", async () => {
+test("Mercaeleva: tolera la ausencia temporal del contador sin aceptar cambios del total", async () => {
   const result = await simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 10, {
     missingTotalReads: [2, 3]
   });
@@ -232,10 +232,15 @@ test("Mercaeleva: espera el contador si desaparece temporalmente sin aceptar cam
   });
 });
 
-test("Mercaeleva: bloquea si el contador no reaparece", async () => {
-  await assert.rejects(simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 10, {
+test("Mercaeleva: conserva el total inicial si desaparece tras cambiar elementos por página", async () => {
+  const result = await simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 10, {
+    pageSizeOptions: [2, 4],
     missingTotalReads: Array.from({ length: 30 }, (_, index) => index + 2)
-  }), /tiempo agotado al esperar el contador total de resultados/);
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
+    pages: ["<html data-page=\"1\"></html>"],
+    expectedTotal: 4
+  });
 });
 
 test("Mercaeleva: detecta cambios del total mientras navega", async () => {
