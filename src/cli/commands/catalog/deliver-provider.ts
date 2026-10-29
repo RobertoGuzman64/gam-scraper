@@ -1,13 +1,14 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { deliverIndividualProvider } from "../../../pipeline/publication/individual-delivery.js";
+import { findDesktopDirectory } from "../../../infrastructure/filesystem/desktop-directory.js";
+import { deliverIndividualArchive } from "../../../pipeline/publication/individual-archive.js";
 import { printCommandError } from "../../reporting/errors.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const help = `Uso: npm run entregar:proveedor -- gam --origen <catalog.json> --preparacion <preparation.json> [--simular | --verificar]
   --simular     Comprobar la selección aprobada sin escribir
-  --verificar   Comprobar la publicación existente sin escribir
-  sin modo      Guardar un JSON comercial individual con acreditación y manifiesto
+  --verificar   Comprobar el JSON, la acreditación y el ZIP existente sin escribir
+  sin modo      Guardar el JSON acreditado y generar el ZIP en el Escritorio
 Requiere acreditación:proveedor aprobada y vigente; no altera campañas globales.`;
 
 export const runDeliverProvider = async (args: readonly string[]): Promise<void> => {
@@ -31,14 +32,18 @@ export const runDeliverProvider = async (args: readonly string[]): Promise<void>
   const source = options.get("--source");
   const preparation = options.get("--preparation");
   if (!source || !preparation) throw new Error(help);
-  const result = await deliverIndividualProvider({
+  const desktop = mode === "simulation" ? "" : await findDesktopDirectory();
+  const result = await deliverIndividualArchive({
     rootDirectory: root, providerId, catalogFile: resolve(source), preparationFile: resolve(preparation)
-  }, mode);
+  }, desktop, mode);
   console.log(`ENTREGA INDIVIDUAL | ${providerId.toUpperCase()} | ${result.status.toUpperCase()}`);
   console.log(`  Publicables: ${result.publishable} | Excluidas: ${result.excluded}`);
   console.log(`  JSON: ${result.productFile}`);
   if (result.status === "simulation") console.log("  Solo simulación; no se escribieron archivos");
-  else console.log(`  Acreditación y manifiesto: ${result.publicationDirectory}`);
+  else {
+    console.log(`  Acreditación y manifiesto: ${result.publicationDirectory}`);
+    console.log(`  ZIP verificado: ${result.zipFile}`);
+  }
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { sha256 } from "../../../catalog/editorial/campaign-accreditation.js";
+import { readZipArchive } from "../../../infrastructure/archive/zip.js";
+import { deliverIndividualArchive } from "../individual-archive.js";
 import { deliverIndividualProvider } from "../individual-delivery.js";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
@@ -180,5 +182,65 @@ test("entrega individual rechaza aprobación obsoleta y artefactos adicionales",
     await writeFile(options.preparationFile,
       (await readFile(options.preparationFile, "utf8")).replace("11111", "99999"));
     await assert.rejects(deliverIndividualProvider(options), /Manifest|preparación/);
+  });
+});
+
+
+test("la entrega individual empaqueta el JSON aprobado y verifica el ZIP sin duplicarlo", async () => {
+  await fixture(async (options) => {
+    const draft = await startIndividualEditorial(options);
+    for (const item of draft.accreditation.exclusions) {
+      await decideIndividualEditorial(options, {
+        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
+      });
+    }
+    await approveIndividualEditorial(options, "Exclusiones revisadas y aprobadas editorialmente");
+    const desktop = join(options.rootDirectory, "Escritorio");
+    await mkdir(desktop);
+    const date = new Date(2026, 9, 29);
+    const simulated = await deliverIndividualArchive(options, desktop, "simulation", date);
+    assert.equal(simulated.status, "simulation");
+    assert.equal(simulated.zipFile, null);
+    assert.deepEqual(await readdir(desktop), []);
+
+    await deliverIndividualProvider(options);
+    await assert.rejects(deliverIndividualArchive(options, desktop, "verify", date), /No existe todavía un ZIP/);
+    const published = await deliverIndividualArchive(options, desktop, "publish", date);
+    assert.equal(published.status, "published");
+    assert.match(published.zipFile ?? "", /equipzilla-gam-2026-10-29-[a-f0-9]{16}\.zip$/);
+    const zip = readZipArchive(await readFile(published.zipFile ?? ""));
+    assert.equal(zip.length, 1);
+    assert.equal(zip[0]?.name, "gam-2026-10-29.json");
+    assert.equal(zip[0]?.data.toString("utf8"), await readFile(published.productFile, "utf8"));
+    assert.equal((await deliverIndividualArchive(options, desktop, "verify", date)).status, "verified");
+    const repeated = await deliverIndividualArchive(options, desktop, "publish", new Date(2026, 9, 30));
+    assert.equal(repeated.status, "verified");
+    assert.equal(repeated.zipFile, published.zipFile);
+    assert.equal((await readdir(desktop)).length, 1);
+
+    await writeFile(published.zipFile ?? "", "ZIP alterado");
+    await assert.rejects(deliverIndividualArchive(options, desktop, "verify", date), /ZIP individual alterado/);
+    await assert.rejects(deliverIndividualArchive(options, desktop, "publish", date), /ZIP individual alterado/);
+    assert.equal(await readFile(published.zipFile ?? "", "utf8"), "ZIP alterado");
+  });
+});
+
+test("la entrega individual no sobrescribe ZIP ajenos con el mismo nombre", async () => {
+  await fixture(async (options) => {
+    const draft = await startIndividualEditorial(options);
+    for (const item of draft.accreditation.exclusions) {
+      await decideIndividualEditorial(options, {
+        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
+      });
+    }
+    const approved = await approveIndividualEditorial(options, "Exclusiones verificadas y aprobadas expresamente");
+    const desktop = join(options.rootDirectory, "Escritorio");
+    await mkdir(desktop);
+    const date = new Date(2026, 9, 29);
+    const identifier = sha256(await readFile(approved.draftFile, "utf8")).slice(0, 16);
+    const zipFile = join(desktop, `equipzilla-gam-2026-10-29-${identifier}.zip`);
+    await writeFile(zipFile, "Archivo externo que debe conservarse");
+    await assert.rejects(deliverIndividualArchive(options, desktop, "publish", date), /no se sobrescribe/);
+    assert.equal(await readFile(zipFile, "utf8"), "Archivo externo que debe conservarse");
   });
 });
