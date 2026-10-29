@@ -81,18 +81,18 @@ test("preflight acepta precios ausentes para create/many pero Excel excluye esas
       ...record,
       providerId: "gam", categoryKey: "elevacion-nueva", categoryName: "Plataformas elevadoras nuevas",
       url: "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/99999-maquina",
-      reference: "GAM-NUEVA", title: "Plataforma de tijera eléctrica XCMG",
+      reference: "GAM-NUEVA", externalReference: "COM-NUEVA", title: "Plataforma de tijera eléctrica XCMG",
       condition: "Nuevo", specs: { "Altura de trabajo": "8 m" }
     };
     const usedMachine: ProductRecord = {
       ...newMachine, categoryKey: "elevacion",
       url: "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/88888-maquina",
-      reference: "GAM-USADA", title: "Plataforma de tijera eléctrica usada", condition: "Segunda mano"
+      reference: "GAM-USADA", externalReference: "COM-USADA", title: "Plataforma de tijera eléctrica usada", condition: "Segunda mano"
     };
     const noPrice: ProductRecord = {
       ...newMachine,
       url: "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/77777-maquina",
-      reference: "GAM-SIN-PRECIO", price: null
+      reference: "GAM-SIN-PRECIO", externalReference: "COM-SIN-PRECIO", price: null
     };
     const batch = await createBatch(dir, [newMachine, usedMachine, noPrice]);
     assert.deepEqual(batch.preparation.products.map((entry) => entry.status), ["ready", "ready", "ready"]);
@@ -117,7 +117,12 @@ test("preflight acepta precios ausentes para create/many pero Excel excluye esas
     assert.ok(report && typeof report === "object" && "total" in report && report.total === 3);
     assert.ok("newProducts" in report && report.newProducts === 2);
     assert.ok("reviewProducts" in report && report.reviewProducts === 1);
-    assert.match(JSON.stringify(report), /GAM-SIN-PRECIO/);
+    assert.ok("selectedSources" in report);
+    assert.deepEqual(report.selectedSources, [
+      { reference: "COM-NUEVA", sourceUrl: newMachine.url },
+      { reference: "COM-USADA", sourceUrl: usedMachine.url }
+    ]);
+    assert.match(JSON.stringify(report), /COM-SIN-PRECIO/);
     assert.deepEqual(JSON.parse(await readFile(batch.paths.preparation, "utf8")), batch.preparation);
   } finally {
     await rm(dir, { recursive: true, force: true });

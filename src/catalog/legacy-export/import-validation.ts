@@ -1,5 +1,6 @@
 import { isLeafCategoryForCondition } from "../preparation/mapping/category-mapping.js";
 import type { ImportCandidate, ImportCatalog } from "./contracts.js";
+import { commercialReference } from "./commercial-reference.js";
 
 type ImportReceiver = "excel" | "createMany";
 
@@ -17,7 +18,8 @@ export const descriptionImportIssue = (description: string | null, descriptionGe
 const validateForReceiver = (product: ImportCandidate, catalog: ImportCatalog, receiver: ImportReceiver): readonly string[] => {
   const issues: string[] = [];
   const category = catalog.categories.find((item) => item.id === product.categorySellID);
-  if (!validText(product.reference)) issues.push("Referencia ausente");
+  if (!validText(commercialReference(product))) issues.push(product.providerId === "gam"
+    ? "Referencia comercial GAM (externalReference) ausente" : "Referencia ausente");
   if (!validText(product.title)) issues.push("Título ausente");
   if (product.condition !== "Segunda_Mano" && product.condition !== "Nuevo") issues.push("Condición incompatible o no confirmada para importación");
   if (!category || category.active === false || category.name !== product.category ||

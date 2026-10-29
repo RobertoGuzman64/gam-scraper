@@ -14,7 +14,7 @@ const gam = (parent: string, title: string, specs: ProductRecord["specs"] = {}):
   providerId: "gam", categoryKey: "elevacion-nueva", categoryName: "Plataformas elevadoras nuevas",
   url: `https://online.gamrentals.com/es/${parent}/99999-maquina`, title,
   shortDescription: "Descripción corta de producto.", longDescription: "Información detallada del producto.",
-  price: "21.000,00 €", reference: "99999", brand: "XCMG", model: "XG0607DC", year: null,
+  price: "21.000,00 €", reference: "99999", externalReference: "XG0607DC", brand: "XCMG", model: "XG0607DC", year: null,
   location: null, country: null, horometer: null, serialNumber: null,
   condition: "Nuevo", image: "https://online.gamrentals.com/img/99999.jpg",
   images: ["https://online.gamrentals.com/img/99999.jpg"], specs

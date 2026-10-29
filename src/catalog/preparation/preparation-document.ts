@@ -23,6 +23,7 @@ const isCandidate = (input: unknown): input is ImportCandidate => {
   if (!isRecord(input)) return false;
   return validText(input.providerId) && validText(input.sourceUrl) &&
     (input.reference === null || typeof input.reference === "string") &&
+    (input.externalReference === undefined || input.externalReference === null || typeof input.externalReference === "string") &&
     (input.title === null || typeof input.title === "string") &&
     (input.categorySellID === null || Number.isSafeInteger(input.categorySellID)) &&
     (input.category === null || typeof input.category === "string") &&

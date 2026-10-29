@@ -1,4 +1,5 @@
 import type { ImportCandidate, ImportCatalog } from "./contracts.js";
+import { commercialCandidate } from "./commercial-reference.js";
 import type { PreparationDocument } from "../preparation/preparation-document.js";
 import { validateCreateManyCandidate, validateImportCandidate } from "./import-validation.js";
 import { validText, referenceKey } from "./reference-inventory.js";
@@ -33,7 +34,7 @@ export const selectImportCandidates = (
   for (const entry of document.products) {
     const source = sourceUrlKey(entry.product.sourceUrl);
     if (source) sourceCounts.set(source, (sourceCounts.get(source) ?? 0) + 1);
-    const reference = entry.product.reference;
+    const reference = commercialCandidate(entry.product).reference;
     if (validText(reference)) {
       const key = referenceKey(reference);
       counts.set(key, (counts.get(key) ?? 0) + 1);
@@ -44,7 +45,7 @@ export const selectImportCandidates = (
   const duplicates: ImportIssue[] = [];
   const selected: ImportCandidate[] = [];
   for (const entry of document.products) {
-    const product = entry.product;
+    const product = commercialCandidate(entry.product);
     if (product.providerId !== providerId) throw new Error("El lote mezcla proveedores");
     const reference = product.reference;
     const issue = { reference, sourceUrl: product.sourceUrl };

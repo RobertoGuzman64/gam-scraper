@@ -21,7 +21,7 @@ const machine = (reference: string, condition: "Nuevo" | "Segunda mano" | null, 
   url: condition === "Segunda mano"
     ? `https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/${reference}-maquina`
     : `https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/${reference}-maquina`,
-  reference, title: "Plataforma de tijera eléctrica XCMG", shortDescription: "Plataforma eléctrica",
+  reference, externalReference: `COM-${reference}`, title: "Plataforma de tijera eléctrica XCMG", shortDescription: "Plataforma eléctrica",
   longDescription: "Maquinaria", price, brand: "XCMG", model: "Tijera", year: null, location: null,
   country: null, horometer: null, serialNumber: null, condition,
   image: "https://example.test/image.jpg", images: ["https://example.test/image.jpg"],
@@ -45,7 +45,7 @@ const fixture = async (run: (paths: {
   try {
     await writeOutputs(join(root, "scraped"), "catalogo-ejemplo", [{ category, products, discoveredProductUrls: 4, failures: [] }], now, now);
     await prepareSavedCatalog({ providerId: "gam", source, out: preparation, dryRun: false, compare: null });
-    await writeFile(inventory, "companyID,reference\n45,11111\n");
+    await writeFile(inventory, "companyID,reference\n45,COM-11111\n");
     await run({ source, preparation, legacyPreparation, inventory, out, root });
   } finally { await rm(root, { recursive: true, force: true }); }
 };
@@ -72,6 +72,11 @@ test("export offline heredado: dry-run no escribe, inventario excluye existentes
       assert.ok(report && typeof report === "object" && "newProducts" in report && report.newProducts === 1);
       assert.ok("existingProducts" in report && report.existingProducts === 1);
       assert.ok("reviewProducts" in report && report.reviewProducts === 2);
+      assert.ok("selectedSources" in report);
+      assert.deepEqual(report.selectedSources, [{
+        reference: "COM-22222",
+        sourceUrl: "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/22222-maquina"
+      }]);
       assert.equal(await readFile(source, "utf8"), sourceBefore);
       await assert.rejects(runExport([...argumentsList, "--confirm-inventory"]), { code: "EEXIST" });
     } finally { globalThis.fetch = oldFetch; }
@@ -95,9 +100,9 @@ test("export offline canónico bloquea XLSX y create/many sin asignación comerc
 test("export offline bloquea inventario incorrecto en modo heredado y manipulación de manifiestos canónicos", async (t) => {
   t.mock.method(console, "log", () => {});
   await fixture(async ({ source, preparation, legacyPreparation, inventory, out }) => {
-    await writeFile(inventory, "companyID,reference\n99,11111\n");
+    await writeFile(inventory, "companyID,reference\n99,COM-11111\n");
     await assert.rejects(prepareExport("gam", 45, legacyPreparation, inventory, false), /companyID|compañía/i);
-    await writeFile(inventory, "companyID,reference\n45,11111\n");
+    await writeFile(inventory, "companyID,reference\n45,COM-11111\n");
     const manifestPath = offlinePreparationManifestPath(preparation);
     await writeFile(manifestPath, "{}");
     await assert.rejects(runExport([...args(preparation, inventory, out, source), "--confirm-inventory"]), /Manifest/);

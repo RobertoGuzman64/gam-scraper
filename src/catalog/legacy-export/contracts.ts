@@ -15,6 +15,7 @@ export type ImportCandidate = {
   readonly providerId: string;
   readonly sourceUrl: string;
   readonly reference: string | null;
+  readonly externalReference?: string | null;
   readonly title: string | null;
   readonly categorySellID: number | null;
   readonly category: string | null;

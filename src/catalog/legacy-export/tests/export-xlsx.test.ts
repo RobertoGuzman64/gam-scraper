@@ -11,30 +11,30 @@ test("un mismo XLSX contiene condiciones nuevas y usadas con atributos y precios
   const newMachine: ProductRecord = {
     ...record, providerId: "gam", categoryKey: "elevacion-nueva",
     url: "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/99999-maquina",
-    reference: "GAM-NEW", title: "Plataforma de tijera eléctrica XCMG", condition: "Nuevo",
+    reference: "GAM-NEW", externalReference: "JP-NEW", title: "Plataforma de tijera eléctrica XCMG", condition: "Nuevo",
     specs: { "Altura de trabajo": "8 m" }
   };
   const usedMachine: ProductRecord = {
     ...newMachine, categoryKey: "elevacion",
     url: "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/88888-maquina",
-    reference: "GAM-USED", title: "Plataforma de tijera eléctrica usada", condition: "Segunda mano"
+    reference: "GAM-USED", externalReference: "JP-USED", title: "Plataforma de tijera eléctrica usada", condition: "Segunda mano"
   };
   const noPrice: ProductRecord = {
     ...newMachine,
     url: "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/77777-maquina",
-    reference: "GAM-NO-PRICE", price: null
+    reference: "GAM-NO-PRICE", externalReference: "JP-NO-PRICE", price: null
   };
   const document = await documentFor([newMachine, usedMachine, noPrice]);
   const plan = planProductImport(document, "gam", readReferenceInventory("companyID,reference\n45,OTRA\n", 45), catalog);
   assert.equal(plan.report.total, 3);
   assert.equal(plan.report.newProducts, 2);
   assert.equal(plan.report.reviewProducts, 1);
-  assert.equal(plan.report.review[0]?.reference, "GAM-NO-PRICE");
+  assert.equal(plan.report.review[0]?.reference, "JP-NO-PRICE");
   assert.match(plan.report.review[0]?.reason ?? "", /Precio ausente o inválido/);
   assert.equal(document.products[2]?.status, "ready");
   assert.equal(document.products[2]?.product.price, null);
   assert.deepEqual(plan.rows.map((row) => [row[0], row[3]]), [
-    ["GAM-NEW", "Nuevo"], ["GAM-USED", "Segunda_Mano"]
+    ["JP-NEW", "Nuevo"], ["JP-USED", "Segunda_Mano"]
   ]);
   assert.equal(plan.rows[0]?.[plan.headers.indexOf("Altura de trabajo (m)")], 8);
   assert.equal(plan.rows[1]?.[plan.headers.indexOf("Altura de trabajo (m)")], 8);

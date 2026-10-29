@@ -43,6 +43,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     providerId: record.providerId,
     sourceUrl: record.url,
     reference,
+    ...(record.providerId === "gam" ? { externalReference: record.externalReference?.trim() || null } : {}),
     title,
     categorySellID: category?.id ?? null,
     category: catalog === null ? record.categoryName.trim() || null : category?.name ?? null,
