@@ -85,6 +85,28 @@ test("GAM: recupera referencias comerciales del encabezado sin tomar referencias
   assert.equal(parseProductPage(withoutOwn, base).externalReference, null);
 });
 
+test("GAM: conserva referencias comerciales con puntos en etiquetas, atributos y texto de ficha", () => {
+  const structured = fixture("<dl><dt>Referencia</dt><dd>H2.0FTS</dd></dl>");
+  const attribute = fixture('<span class="product-reference" data-product-reference="H2.0FTS"></span>');
+  const header = fixture("<section class='product-header'><p>Referencia:H2.0FTS</p></section>");
+  const separated = fixture("<section><div>Referencia: XG0807ACW-LI</div></section>");
+  const slash = fixture("<p>Ref.: Z45/25J.</p>");
+  assert.equal(parseProductPage(structured, base).externalReference, "H2.0FTS");
+  assert.equal(parseProductPage(attribute, base).externalReference, "H2.0FTS");
+  assert.equal(parseProductPage(header, base).externalReference, "H2.0FTS");
+  assert.equal(parseProductPage(separated, base).externalReference, "XG0807ACW-LI");
+  assert.equal(parseProductPage(slash, base).externalReference, "Z45/25J");
+});
+
+test("GAM: no inventa la referencia a partir del modelo ni importa referencias relacionadas", () => {
+  const noReference = fixture("<dl><dt>Modelo</dt><dd>H2.0FTS</dd></dl>");
+  const unrelated = fixture("<div class='related-products'><p>Referencia: H2.0FTS</p></div>");
+  const incomplete = fixture("<p>Referencia: H2.0FTS/</p>");
+  assert.equal(parseProductPage(noReference, base).externalReference, null);
+  assert.equal(parseProductPage(unrelated, base).externalReference, null);
+  assert.equal(parseProductPage(incomplete, base).externalReference, null);
+});
+
 test("GAM: únicamente extrae atributos técnicos explícitos de la ficha principal", () => {
   const html = fixture(`<section class="product-description-short">
     <p>Altura de trabajo: 11 m. Tipo de mástil: Tríplex.</p>
