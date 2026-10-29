@@ -84,7 +84,7 @@ if (missing.length > 0) throw new Error(`Faltan ${missing.length} pruebas compil
 const filePaths = new Set(files.map((file) => resolve(file)));
 const interactive = process.stdout.isTTY === true && process.env.CI !== "true" && process.env.TERM !== "dumb";
 const completedFiles = new Set();
-const activeFiles = new Set();
+const startedFiles = new Set();
 const startedAt = Date.now();
 const frames = ["|", "/", "-", "\\"];
 let frameIndex = 0;
@@ -104,15 +104,13 @@ const clearProgress = () => {
 const renderProgress = () => {
   if (!interactive) return;
 
+  const started = startedFiles.size;
   const completed = completedFiles.size;
   const elapsed = Math.floor((Date.now() - startedAt) / 1000);
   const frame = frames[frameIndex % frames.length];
   frameIndex += 1;
-  const running = Math.min(activeFiles.size, effectiveConcurrency);
-  const activity = running > 0
-    ? `${running} en ejecución`
-    : completed < files.length ? "iniciando" : "finalizando";
-  const result = `${completed}/${files.length} archivos | ${activity} | OK ${counts.passed} | KO ${counts.failed} | ${elapsed}s`;
+  const pending = Math.max(0, started - completed);
+  const result = `${started}/${files.length} iniciados | ${completed} informados | ${pending} pendientes | OK ${counts.passed} | KO ${counts.failed} | ${elapsed}s`;
   const omissions = counts.skipped || counts.todo
     ? ` | omit ${counts.skipped}${counts.todo ? ` | TODO ${counts.todo}` : ""}`
     : "";
@@ -146,10 +144,9 @@ const progressTimer = interactive ? setInterval(renderProgress, 350) : undefined
 try {
   for await (const event of run({ files, concurrency: effectiveConcurrency })) {
     if (event.type === "test:dequeue" && typeof event.data.name === "string" && filePaths.has(resolve(event.data.name))) {
-      activeFiles.add(resolve(event.data.name));
-    }
-    if (event.type === "test:start" && event.data.file && filePaths.has(resolve(event.data.file))) {
-      activeFiles.add(resolve(event.data.file));
+      const file = resolve(event.data.name);
+      startedFiles.add(file);
+      renderProgress();
     }
 
     if (profile && (event.type === "test:pass" || event.type === "test:fail") && event.data.details?.type === "test") {
@@ -201,7 +198,6 @@ try {
         errors.push({ name, file, line, fileFailure, error: details?.error?.cause ?? details?.error });
         if (fileFailure) {
           completedFiles.add(resolve(name));
-          activeFiles.delete(resolve(name));
         }
       }
     }
@@ -209,7 +205,6 @@ try {
     if (event.type === "test:summary") {
       if (event.data.file) {
         completedFiles.add(resolve(event.data.file));
-        activeFiles.delete(resolve(event.data.file));
       } else summary = event.data;
     }
 
