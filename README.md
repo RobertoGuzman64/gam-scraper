@@ -20,10 +20,10 @@ Una instalación nueva no requiere ejecutar migraciones de nombres. Si se actual
 
 ## Requisitos e instalación
 
-- Node.js `>=20.18.1` y npm.
+- Node.js `>=18.18.0` y npm.
 - Acceso HTTPS a los portales.
 - Permisos de escritura en `storage/`.
-- Chrome o Chromium (o Microsoft Edge compatible) accesible desde el sistema para Mercaeleva y Manain; `CHROME_PATH` o `CHROMIUM_PATH` permiten indicar el ejecutable. Mercaeleva utiliza navegador headless; Manain abre una ventana visible y puede requerir verificación humana en el portal.
+- Chrome o Chromium accesible desde el sistema para el mecanismo headless de Mercaeleva, cuando se necesite; se pueden definir `CHROME_PATH` o `CHROMIUM_PATH`.
 
 ```powershell
 npm ci
@@ -32,7 +32,27 @@ npm run ayuda
 
 `PASS` confirma una operación completada (incluidos `npm test` y `npm run build`), `WARN` señala revisiones o simulaciones pendientes, `FAIL` indica un error y `RUN` identifica trabajo en curso. En terminal interactiva los estados llevan color y las operaciones largas muestran un spinner; el progreso se representa mediante contadores reales. Con `NO_COLOR`, `CI=true` o salida redirigida no se emiten secuencias ANSI y los mensajes siguen siendo legibles. Los comandos siguen en español y los nombres internos de archivos y carpetas en inglés.
 
-`npm ci` **solo instala dependencias**: el script reservado `prepare` de npm no se utiliza para preparar catálogos. Los comandos operativos invocan su compilación interna cuando es necesaria. `storage/` contiene estado de ejecución y está excluido de Git.
+`npm ci` **solo instala dependencias**: el script reservado `prepare` de npm no se utiliza para preparar catálogos. Los comandos operativos invocan su compilación interna cuando es necesaria. `storage/` contiene estado operativo excluido de Git. `catalogs/` guarda los originales y las campañas acreditadas que se han consolidado como datos portátiles versionables; ambos espacios tienen responsabilidades distintas. Ver [Reglas de datos](docs/SCRAPER_DATA_RULES.md).
+
+## Catálogos definitivos y trabajo operativo
+
+- `catalogs/providers/<proveedor>/original/` contiene **un solo original vigente** de extracción individual completa: `<prefijo>-catalog.json`, `<prefijo>-catalog.manifest.json` y `<prefijo>-summary.json`. La consolidación comprueba el trío; no guarda CSV ni resultados parciales como originales completos.
+- `catalogs/campaigns/<runId>/` contiene una **instantánea acreditada e inmutable** de una campaña: `manifest.json`, `accreditation.json`, `selection.json` y, por proveedor, el trío original y `publishable.json`; si hubo intervención, también `catalog-derived.json` e `intervention-record.json`. No confundir este `publishable.json` con un JSON importado en el backend.
+- `storage/` continúa siendo necesario para extraer, preparar, corregir, acreditar y entregar; incluye trabajos en curso y elementos de recuperación. **No se copia íntegramente a Git ni se elimina a mano**. Una copia limpia del repositorio puede verificar los conjuntos de `catalogs/` sin necesitar los archivos operativos originales; eso no equivale a disponer de una campaña activa para seguir editándola.
+
+La extracción **individual completa, con opciones y destino predeterminados**, consolida su original en `catalogs/`. Una extracción de prueba, limitada, parcial o con destino personalizado no lo sustituye. Los JSON publicables definitivos de campaña se consolidan al finalizar una **acreditación editorial aprobada**; ni `ready` ni una preparación aislada generan esos finales. Una intervención acreditada queda ligada al derivado y a la selección de su campaña, sin reescribir el original.
+
+Para incorporar fuentes locales anteriores a este almacenamiento, usar el comando existente, que **simula por defecto**:
+
+```powershell
+npm run migrar:catalogos
+npm run migrar:catalogos -- --aplicar
+npm run estado
+```
+
+`--aplicar` solo consolida originales completos y campañas con entrega verificable; reconoce parciales sin promocionarlos. **No reextrae, no borra `storage/` y no concede aprobaciones editoriales**. Si detecta corrupción, conflicto o retención excedida, bloquea la operación. Consultar [Reglas de datos](docs/SCRAPER_DATA_RULES.md) y [Validación](docs/VALIDATION.md) antes de migrar.
+
+Git registra los datos de `catalogs/` **cuando tú los añades y haces commit**. El scraper no ejecuta `git add`, `commit` ni `push`; `estado` valida archivos y discrepancias con el original operativo, **no comprueba el índice ni si el último commit contiene los cambios**. Tras consolidar, revisar `npm run estado` y `git status --short`, e incluir `catalogs/` en el commit correspondiente. Los históricos internos de Git no forman parte de la retención operativa.
 
 ## Uso habitual: de una instalación limpia al ZIP final
 
@@ -69,13 +89,14 @@ Si una ficha necesita una corrección puntual acreditada, consulta los scripts e
 ### Otros comandos disponibles
 
 - `npm run ayuda` y `npm run ayuda -- <comando>`: ayuda desde la terminal; distingue lectura, preparación, escritura y autorización destructiva.
-- `npm run estado`: estado operativo de la campaña y sus evidencias, sin modificar campañas.
+- `npm run estado`: inventario de fuentes operativas, originales de `catalogs/`, JSON finales acreditados, integridad y discrepancias, sin escritura.
 - `npm run huecos`: auditor opcional de la última entrega íntegra conservada (o referencia histórica si no hay entrega); admite `--catalogo <ruta>` para canónicos explícitos. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md).
 - `npm run build` y `npm test`: compilación y pruebas del repositorio.
 - `npm run extraer:proveedor`, `extraer:todos`, `intervenir:manual`, `preparar`, `validar`, `seleccionar` y `cobertura`: operaciones avanzadas con finalidades distintas del flujo principal.
 - `npm run manain:muestra` y `npm run manain:censo`: herramientas de diagnóstico específicas de Manain; no acreditan por sí solas una extracción completa.
 - `npm run recuperar -- <runId>`: inspección sin borrados de un intento fallido; `--recuperar`, `--abandonar ... --confirmar ...` y `--reanudar-rotacion` son operaciones explícitas de recuperación. Ver [Protocolo de campañas](docs/CAMPAIGNS.md).
 - `npm run referencia`: consulta y mantenimiento **legado** de `data/reference/`; `--actualizar` ya no es un paso habitual.
+- `npm run migrar:catalogos`: inventario y migración controlada a `catalogs/` (simulación predeterminada; escritura solo con `-- --aplicar`).
 - `npm run limpiar:almacen`: mantenimiento separado de extracciones individuales, no cierre ni rotación de campañas globales.
 - `npm run limpiar:versionados`: simulación de retirada del índice Git de históricos rastreados; solo actúa con `-- --aplicar`.
 
@@ -109,6 +130,8 @@ Las operaciones GAM con rutas preconfiguradas son **herramientas de compatibilid
 
 ## Dónde están los resultados
 
+- `catalogs/providers/<proveedor>/original/`: trío canónico individual completo y verificable que acompaña al repositorio.
+- `catalogs/campaigns/<runId>/`: instantáneas acreditadas de campaña con finales por proveedor, originales, aprobación y procedencia. Máximo dos campañas portátiles conservadas.
 - `storage/runs/<id-lote>/run.json`: evidencia del lote y estado por proveedor.
 - `storage/scraped/campaigns/<runId>/<proveedor>/`: catálogos canónicos, manifests y diagnósticos de la extracción aislada.
 - `storage/campaigns/<id-lote>/<proveedor>/`: preparaciones validadas por la revisión offline.
@@ -122,7 +145,7 @@ Las operaciones GAM con rutas preconfiguradas son **herramientas de compatibilid
 - **Escritorio del usuario:** `equipzilla-AAAA-MM-DD-<runId>.zip` con los cuatro JSON publicables, sin artefactos internos; su ausencia posterior no invalida por sí sola la acreditación local.
 - `data/category/` y `data/import/`: snapshots de compatibilidad para mapeos comerciales heredados; **no son dependencias de la preparación canónica actual**.
 
-Los nombres individuales de catálogo pueden variar por proveedor: `run.json`, la procedencia y los manifests determinan qué datos pertenecen a una campaña. `storage/` está excluido de Git y conserva los datos operativos sujetos a la retención segura de campañas; no debe vaciarse manualmente. No borrar originales para corregir decisiones editoriales.
+Los nombres individuales de catálogo pueden variar por proveedor: `run.json`, la procedencia y los manifests determinan qué datos pertenecen a una campaña. `storage/` está excluido de Git y conserva los datos operativos sujetos a la retención segura de campañas; no debe vaciarse manualmente. `catalogs/` es la copia portátil de los datos **ya consolidados**, no una autorización para editar manualmente originales ni selecciones. Los originales completos individuales y las instantáneas por `runId` tienen ciclos de vida distintos. No borrar originales para corregir decisiones editoriales.
 
 ## Cómo funciona
 

@@ -8,6 +8,8 @@ import { getProvider } from "../../scraping/registry.js";
 import { verifyDeliveredCampaign } from "./delivery/verification.js";
 import { listCampaignRuns } from "./discovery/search.js";
 import type { CampaignOperationsStatus } from "./operations-status.js";
+import { inspectPortableInventory } from "./portable-inventory.js";
+import type { PortableCampaignInventory } from "./portable-inventory.js";
 
 export type InventoryState = "correcto" | "parcial" | "ausente" | "error";
 
@@ -19,6 +21,8 @@ export type InventoryItem = {
 export type ProviderInventory = {
   readonly providerId: string;
   readonly original: InventoryItem;
+  readonly portableOriginal: InventoryItem;
+  readonly consistency: InventoryItem;
   readonly preparation: InventoryItem;
   readonly final: InventoryItem;
 };
@@ -33,6 +37,9 @@ export type OperationsInventory = {
   readonly providers: readonly ProviderInventory[];
   readonly campaigns: readonly CampaignInventory[];
   readonly retainedDeliveries: number;
+  readonly portableCampaigns: readonly PortableCampaignInventory[];
+  readonly portableDeliveries: number;
+  readonly portableIssues: readonly string[];
   readonly campaignIssues: readonly string[];
 };
 
@@ -180,6 +187,10 @@ export const inspectOperationsInventory = async (
     campaignIssues.push(`Historial de campañas no verificable: ${describe(error)}`);
   }
   if (retainedDeliveries > 2) campaignIssues.push(`Retención excedida: ${retainedDeliveries} entregas acreditadas (máximo 2)`);
+  const portable = await inspectPortableInventory(root, Object.fromEntries(CAMPAIGN_PROVIDERS.map((providerId) => {
+    const prefix = getProvider(providerId).defaultOptions.outPrefix;
+    return [providerId, join(root, "storage", "scraped", providerId, `${prefix}-catalog.json`)];
+  })));
   const providers = await Promise.all(CAMPAIGN_PROVIDERS.map(async (providerId): Promise<ProviderInventory> => {
     const prefix = getProvider(providerId).defaultOptions.outPrefix;
     const dir = join(root, "storage", "scraped", providerId);
@@ -190,14 +201,28 @@ export const inspectOperationsInventory = async (
     const localPreparation = await inspectPreparation(root, dir, prefix, providerId, localOriginal);
     const preparation = fromCampaign?.preparation && localPreparation.state === "ausente"
       ? ok("Preparación acreditada en campaña activa") : localPreparation;
+    const portableProvider = portable.providers.find((entry) => entry.providerId === providerId);
+    if (!portableProvider) throw new Error(`Proveedor no inventariado en catalogs/: ${providerId}`);
     return {
       providerId,
       original,
+      portableOriginal: portableProvider.original,
+      consistency: portableProvider.consistency,
       preparation,
-      final: delivered.has(providerId)
-        ? ok(`JSON final acreditado en selección de ${delivered.get(providerId)}`)
-        : absent("Sin JSON final acreditado en campañas conservadas")
+      final: portableProvider.final.state !== "ausente" ? portableProvider.final : delivered.has(providerId)
+        ? partial(`JSON final acreditado solo en storage/ (${delivered.get(providerId)}); falta catalogs/`)
+        : absent("Sin JSON final acreditado")
     };
   }));
-  return { essentials, providers, campaigns, retainedDeliveries, campaignIssues };
+  for (const runId of new Set(delivered.values())) {
+    if (!portable.campaigns.some((campaign) => campaign.runId === runId && campaign.status.state === "correcto")) {
+      campaignIssues.push(`Entrega local ${runId} aún no acreditada en catalogs/`);
+    }
+  }
+  return {
+    essentials, providers, campaigns, retainedDeliveries, campaignIssues,
+    portableCampaigns: portable.campaigns,
+    portableDeliveries: portable.accreditedCampaigns,
+    portableIssues: portable.issues
+  };
 };

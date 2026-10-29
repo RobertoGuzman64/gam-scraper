@@ -29,6 +29,7 @@ const definitions = {
   exportar: { entry: "cli/index.js", prefix: ["export"], usage: "exportar -- gam --companyID <id> --preparacion <archivo> --inventario <csv> --salida <xlsx> --simular", description: "Revisar o generar una exportación", requiresProvider: true },
   cobertura: { entry: "cli/commands/catalog/review-coverage.js", usage: "cobertura -- --anterior <catalog.json> --actual <catalog.json> --simular", description: "Auditar ausencias y cambios de catálogo" },
   seleccionar: { entry: "cli/commands/catalog/select-publishable.js", usage: "seleccionar -- --gam <preparation.json> --gomariz <preparation.json> --mercaeleva <preparation.json> --manain <preparation.json> --lote <run.json> --borrador <acreditacion.json> (o --acreditacion <acreditacion.json> --simular)", description: "Seleccionar fichas publicables" },
+  "migrar:catalogos": { entry: "cli/commands/maintenance/catalogs-migrate.js", usage: "migrar:catalogos [-- --aplicar]", description: "Simular o migrar originales y entregas acreditadas a catalogs/ sin borrar datos", defaultSimulation: true },
   "limpiar:almacen": { entry: "cli/commands/maintenance/storage-clean.js", usage: "limpiar:almacen [-- --aplicar]", description: "Simular limpieza; ejecutar solo con --aplicar", defaultSimulation: true },
   "normalizar:gam": { entry: "tools/gam/normalize-csv.js", usage: "normalizar:gam -- <entrada.csv> <salida.csv> [--informe <json>]", description: "Normalizar un CSV GAM" },
   "normalizar:gam:base": { entry: "tools/gam/normalize-csv.js", fixed: ["storage/scraped/gam/scrape-gam-marzo-2026-all.csv", "storage/normalized/gam/scrape-gam-marzo-2026-all.normalized.csv", "--report", "storage/normalized/gam/normalize.report.json"], usage: "normalizar:gam:base", description: "Normalizar las rutas GAM predeterminadas" },
@@ -96,6 +97,8 @@ const printHelp = (requested) => {
     console.log("  LECTURA | estado, comparar, referencia sin argumentos y modos editoriales de consulta.");
     console.log("  PREPARACIÓN/ESCRITURA | iniciar crea carpetas; revisar puede preparar; acreditar crea selección y sus modos de decisión escriben.");
     console.log("  AUTORIZACIÓN | acreditar --aprobar y recuperar --abandonar requieren decisión explícita.");
+    console.log("  npm run migrar:catalogos  (audita migración sin escrituras)");
+    console.log("  npm run migrar:catalogos -- --aplicar  (consolida acreditados sin limpiar)");
     console.log("  npm run limpiar:versionados  (limpia solo archivos históricos rastreados por Git)");
     console.log("  npm run extraer:proveedor -- gam");
     console.log("  npm run extraer:todos -- --simular");
@@ -155,12 +158,12 @@ if (rawCommand === "ayuda") {
   }
   if (selected.requiresProvider && (normalized.length === 0 || normalized[0]?.startsWith("-"))) {
     fail("Falta el proveedor (gam, gomariz, mercaeleva o manain)", command);
-  } else if (command === "limpiar:almacen" && normalized.includes("--aplicar") && normalized.includes("--dry-run")) {
+  } else if ((command === "limpiar:almacen" || command === "migrar:catalogos") && normalized.includes("--aplicar") && normalized.includes("--dry-run")) {
     fail("No combines --aplicar y --simular", command);
-  } else if (normalized.includes("--aplicar") && !(["limpiar:almacen", "intervenir", "intervenir:manual"].includes(command))) {
+  } else if (normalized.includes("--aplicar") && !(["limpiar:almacen", "migrar:catalogos", "intervenir", "intervenir:manual"].includes(command))) {
     fail("--aplicar solo corresponde a limpiar:almacen, intervenir o intervenir:manual", command);
   } else {
-    const cleaned = command === "intervenir" || command === "intervenir:manual" || command === "recuperar" ? normalized : normalized.filter((argument) => argument !== "--aplicar");
+    const cleaned = command === "intervenir" || command === "intervenir:manual" || command === "recuperar" || command === "migrar:catalogos" ? normalized : normalized.filter((argument) => argument !== "--aplicar");
     if (selected.defaultSimulation && !normalized.includes("--aplicar") && !cleaned.includes("--dry-run")) cleaned.push("--dry-run");
     const compile = spawnSync(process.execPath, [join(root, "scripts/run-build.mjs"), "--quiet"], {
       cwd: root, stdio: "inherit", windowsHide: true

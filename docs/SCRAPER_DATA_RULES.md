@@ -35,6 +35,30 @@ La preparación **offline** se puede escribir en `storage/prepared/<proveedor>/`
 
 Los documentos de origen, los manifests y los datos de preparación deben permanecer alineados. No editar productos manualmente en un JSON publicado ni reemplazar su manifest para «validar» una modificación. Los archivos de ejecución están excluidos del control de versiones.
 
+## Persistencia definitiva y ciclo de vida
+
+El repositorio separa **fuentes operativas** y **artefactos definitivos portátiles**:
+
+| Espacio                                                        | Contenido admitido                                                                                                                                                | Regla de conservación                                             |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `storage/scraped/<proveedor>/`                                 | Extracción individual, canónico vigente, parciales, CSV y diagnósticos                                                                                            | Operativo, fuera de Git; preservación y limpieza seguras          |
+| `storage/scraped/campaigns/` y `storage/campaigns/`            | Fuentes de lote, preparaciones, decisiones y recibos                                                                                                              | Operativo y recuperable; retención por `runId`                    |
+| `storage/prepared/`, `storage/runs/`, `storage/interventions/` | Preparaciones, ejecuciones, evidencias y derivados en trabajo                                                                                                     | No se consideran resultados definitivos por existir               |
+| `catalogs/providers/<proveedor>/original/`                     | Exactamente un `<prefijo>-catalog.json`, `<prefijo>-catalog.manifest.json` y `<prefijo>-summary.json`                                                             | Original individual completo vigente, verificable y versionable   |
+| `catalogs/campaigns/<runId>/`                                  | `manifest.json`, `accreditation.json`, `selection.json` y por proveedor original (trío) y `publishable.json`; opcionalmente derivado y expediente de intervención | Instantánea editorial inmutable y verificable, hasta dos campañas |
+
+La **fuente de verdad de una extracción** sigue siendo su catálogo canónico y procedencia. Al consolidarlo en `catalogs/`, se copian y verifican sus bytes; no se crea un nuevo original ni se reescribe su contenido. El original individual vigente puede sustituirse por otro **completo y más reciente**, conservando recuperación transaccional. Los originales de una campaña acreditada siguen ligados a su `runId` y no se confunden con el original individual más reciente.
+
+Una extracción solo actualiza `catalogs/providers/` cuando se publica íntegra desde las **categorías, opciones y destino predeterminados**. Muestras, límites de páginas, parciales, simulaciones y destinos personalizados no promocionan datos. El fallo conserva la publicación válida anterior. Un `ready` técnico tampoco es una selección comercial ni autoriza un JSON final.
+
+Los **JSON finales** de `catalogs/campaigns/<runId>/<proveedor>/publishable.json` proceden exclusivamente de la selección editorial validada y aprobada de una campaña de cuatro proveedores. Se conserva la aprobación, la selección y las huellas necesarias para verificar originales, exclusiones, finales y, si hubo cambios manuales, el expediente y el derivado. La preparación o intervención aislada **no** actualiza un JSON final acreditado. Si cambia una preparación, la corrección debe verificarse y requerir una nueva acreditación coherente; una instantánea existente para un `runId` no se sobrescribe silenciosamente con otro contenido.
+
+La **retención global** de hasta dos campañas se aplica por `runId` y mediante rotación recuperable tanto al material operativo correspondiente como a su instantánea portátil. Los originales independientes y los parciales no se borran por rotar campañas. Los archivos de recuperación individuales solo se limpian cuando el original activo coincide byte a byte con el consolidado; se conserva `active.json` y cualquier historial desconocido, pendiente o corrupto bloquea la limpieza. La limpieza operativa **no implica** que `storage/` esté vacío ni que todas sus carpetas tengan la misma política de expiración.
+
+`npm run migrar:catalogos` **solo inspecciona** por defecto; `npm run migrar:catalogos -- --aplicar` incorpora originales completos y entregas históricas verificadas. Reconoce parciales sin elevarlos a originales completos; ante ambigüedad, corrupción o más de dos campañas, se detiene. No borra fuentes, reextrae ni toma decisiones editoriales. `npm run estado` lee los datos de ambos espacios y detecta diferencias, campañas dañadas o consolidaciones pendientes, sin alterar archivos.
+
+**Git versiona el árbol de trabajo, no valida los catálogos.** `storage/` permanece excluido y `catalogs/` es versionable. Los procesos actualizan los datos consolidados; el propietario decide `git add`, commit y push. El comando `estado` no determina qué está staged ni qué contiene el último commit. Antes de cerrar un cambio de catálogo, comprobar que el conjunto definitivo afectado está validado y que figura en el commit correspondiente. Los históricos internos de Git son independientes de la retención del scraper. Una copia limpia puede comprobar `catalogs/` sin `storage/`, pero sin este último no se reanudan trabajos operativos antiguos ni se reconstruyen acreditaciones pendientes.
+
 ## Identidad y cobertura
 
 - La identidad de una **unidad** no es únicamente marca/modelo: usar referencias, series, URLs canónicas y otras evidencias coherentes para deduplicar sin fusionar máquinas distintas.

@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20.18.1"
+    "node": ">=18.18.0"
   },
   "scripts": {
     "iniciar": "node scripts/tooling.mjs iniciar",
@@ -32,6 +32,7 @@
     "cobertura": "node scripts/tooling.mjs cobertura",
     "seleccionar": "node scripts/tooling.mjs seleccionar",
     "limpiar:almacen": "node scripts/tooling.mjs limpiar:almacen",
+    "migrar:catalogos": "node scripts/tooling.mjs migrar:catalogos",
     "limpiar:versionados": "node scripts/untrack-generated-files.mjs",
     "normalizar:gam": "node scripts/tooling.mjs normalizar:gam",
     "normalizar:gam:base": "node scripts/tooling.mjs normalizar:gam:base",

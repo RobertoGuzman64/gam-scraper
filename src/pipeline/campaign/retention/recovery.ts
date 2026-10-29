@@ -4,6 +4,7 @@ import { basename, dirname, join, resolve, sep } from "node:path";
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { acquireBatchLock } from "../../../infrastructure/locking/batch-lock.js";
 import { inspectCampaignReference } from "../../../infrastructure/filesystem/reference/store.js";
+import { verifyPortableCampaignRetirement, retirePortableCampaign } from "../../../infrastructure/filesystem/catalog/portable-campaign.js";
 import { inspectCleanupArea, removeCleanupDirectories } from "../../../infrastructure/filesystem/campaign/campaign-cleanup.js";
 import type { CleanupArea } from "../../../infrastructure/filesystem/campaign/campaign-cleanup.js";
 import { discoverCampaign, listCampaignRuns } from "../discovery/search.js";
@@ -47,6 +48,9 @@ export const finishRemoval = async (root: string, journal: RemovalJournal): Prom
       throw new Error("La retirada comparte originales con la campaña retenida");
     }
   }
+  // Before touching any operational evidence, verify both portable snapshots.
+  // The check also runs when resuming a previously interrupted removal.
+  await verifyPortableCampaignRetirement(root, journal.runId, journal.retainedRunId);
   const prefixes = new Map(journal.prefixes.map(({ providerId, outputPrefix }) => [providerId, outputPrefix]));
   const paths: string[] = [];
   for (const item of removalAreas(root, journal)) {
@@ -59,6 +63,9 @@ export const finishRemoval = async (root: string, journal: RemovalJournal): Prom
   if ((await listCampaignRuns(root)).length !== (journal.retainedRunId === null ? 0 : 1)) {
     throw new Error(`Retirada de ${journal.runId} no concluida; no se abre otra campaña`);
   }
+  // Keep the journal until both operational and portable retirement finish.
+  // A crash after either deletion is safely resumable by runId.
+  await retirePortableCampaign(root, journal.runId, journal.retainedRunId);
   await rm(journalPath(root));
 };
 
@@ -78,6 +85,7 @@ export const beginRemoval = async (
   };
   await discardIncompleteJournal(root);
   if (await readJournal(root) !== null) throw new Error("Ya hay una retirada pendiente; no se inicia otra");
+  await verifyPortableCampaignRetirement(root, candidate.runId, retainedRunId);
   const stage = journalStagePath(root);
   const handle = await open(stage, "wx");
   try {

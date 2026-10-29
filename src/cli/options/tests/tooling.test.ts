@@ -82,7 +82,7 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
     copyFileSync(join(root, "scripts/terminal.mjs"), join(temp, "scripts/terminal.mjs"));
     writeFileSync(join(temp, "scripts/run-build.mjs"), "process.exitCode = 0;\n");
     const echo = 'console.log(JSON.stringify(process.argv.slice(2)));\n';
-    for (const filename of ["cli/commands/catalog/prepare.js", "cli/index.js", "cli/commands/maintenance/storage-clean.js", "cli/commands/campaign/campaign-extract.js", "cli/commands/campaign/campaign-status.js", "cli/commands/campaign/campaign-review.js", "cli/commands/campaign/campaign-reference.js", "cli/commands/campaign/campaign-finalize.js", "cli/commands/catalog/catalog-content-gaps.js"]) {
+    for (const filename of ["cli/commands/catalog/prepare.js", "cli/index.js", "cli/commands/maintenance/storage-clean.js", "cli/commands/maintenance/catalogs-migrate.js", "cli/commands/campaign/campaign-extract.js", "cli/commands/campaign/campaign-status.js", "cli/commands/campaign/campaign-review.js", "cli/commands/campaign/campaign-reference.js", "cli/commands/campaign/campaign-finalize.js", "cli/commands/catalog/catalog-content-gaps.js"]) {
       const target = join(temp, "dist", filename);
       mkdirSync(dirname(target), { recursive: true });
       writeFileSync(target, echo);
@@ -112,6 +112,16 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
       run(fake, ["huecos", "--catalogo", "fixture-catalog.json", "--top", "10"]),
       run(fake, ["preparar", "gam", "--catalogo", "fixture-catalog.json"])
     ]);
+    const [migrationPreview, migrationApply, migrationConflict] = await Promise.all([
+      run(fake, ["migrar:catalogos"]),
+      run(fake, ["migrar:catalogos", "--aplicar"]),
+      run(fake, ["migrar:catalogos", "--aplicar", "--simular"])
+    ]);
+    assert.equal(migrationPreview.status, 0, migrationPreview.stderr);
+    assert.deepEqual(JSON.parse(migrationPreview.stdout.trim()), ["--dry-run"]);
+    assert.equal(migrationApply.status, 0, migrationApply.stderr);
+    assert.deepEqual(JSON.parse(migrationApply.stdout.trim()), ["--aplicar"]);
+    assert.equal(migrationConflict.status, 1);
     const [campaignIntervention, manualIntervention] = await Promise.all([
       run(fake, ["intervenir", "gam", "--script", "interventions/gam/6002.ts", "--aplicar"]),
       run(fake, ["intervenir:manual", "gam", "--origen", "catalogo-catalog.json", "--aplicar"])

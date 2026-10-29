@@ -1,3 +1,7 @@
+import { join, resolve } from "node:path";
+import { isPortableExtraction } from "./portable-eligibility.js";
+import { consolidatePortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
+import { cleanConsolidatedCatalogHistory } from "../../infrastructure/filesystem/catalog/catalog-retention.js";
 import type { ScraperProvider } from "../../scraping/provider.js";
 import type { CategoryConfig, CategoryScrapeResult, ScrapeOptions, Summary } from "../../contracts/scraping.js";
 
@@ -30,6 +34,17 @@ export const runScrape = async (selection: ScrapeRunSelection, reporter: ScrapeR
     reporter.stage("publicando resultados", options.outDir);
     try {
       await write();
+      if (isPortableExtraction(selection, process.cwd())) {
+        await consolidatePortableOriginal(process.cwd(),
+          join(resolve(options.outDir), `${options.outPrefix}-catalog.json`));
+        // The publish step has succeeded. Cleanup is best-effort and must not
+        // misreport a valid extraction if an unfamiliar history is protected.
+        try {
+          await cleanConsolidatedCatalogHistory(process.cwd(), provider.id, options.outDir, options.outPrefix);
+        } catch (cleanupError) {
+          console.warn(`Aviso: historial individual conservado: ${String(cleanupError)}`);
+        }
+      }
     } catch (reason) {
       error = reason;
     }

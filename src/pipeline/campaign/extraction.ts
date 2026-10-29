@@ -1,4 +1,6 @@
 import { join, resolve } from "node:path";
+import { consolidatePortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
+import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { initializeWorkspace } from "../../infrastructure/filesystem/workspace.js";
 import { createBatchRunId, runBatch } from "../batch/run.js";
 import type { BatchObserver, BatchResult } from "../batch/run.js";
@@ -31,6 +33,15 @@ export const extractCampaign = async (
     if (discovery.runId !== result.report.runId || discovery.status !== "complete" ||
       discovery.issues.length !== 0 || discovery.providers.some((provider) => !provider.catalog)) {
       throw new Error(`La extracción terminó, pero sus archivos no son verificables; conservar el lote ${result.report.runId} para diagnóstico`);
+    }
+    // All four originals must pass validation before any individual promotion.
+    for (const provider of discovery.providers) {
+      if (!provider.catalog) throw new Error("Falta un original de la campaña completa");
+      await readCanonicalCatalog(provider.catalog.path);
+    }
+    for (const provider of discovery.providers) {
+      if (!provider.catalog) throw new Error("Falta un original de la campaña completa");
+      await consolidatePortableOriginal(root, provider.catalog.path);
     }
     return result;
   });

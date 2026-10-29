@@ -1,3 +1,4 @@
+import { consolidatePortableCampaign } from "../../infrastructure/filesystem/catalog/portable-campaign.js";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -137,5 +138,17 @@ export const finalizeActiveCampaign = async (
       paths.find((item) => item.providerId === id)?.path)) {
     throw new Error("Las entradas de la selección han cambiado; no se puede dar por finalizada la campaña");
   }
+  await consolidatePortableCampaign({
+    workspace: root, runId, selection, accreditationFile: draftFile,
+    originals: current.providers.map((provider) => {
+      if (!provider.catalog) throw new Error(`Falta original de ${provider.providerId}`);
+      return { providerId: provider.providerId, path: provider.catalog.path };
+    }),
+    interventions: current.providers.flatMap((provider) =>
+      provider.preparation?.intervened ? [{
+        providerId: provider.providerId,
+        derivedFile: join(dirname(dirname(provider.preparation.path)), "catalog-derived.json")
+      }] : [])
+  });
   return { runId, draftFile, status: "selected", decisions: expected.exclusions.length, selection, selectionDir };
 };

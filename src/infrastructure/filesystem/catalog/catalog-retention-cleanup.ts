@@ -1,5 +1,8 @@
-import { readFile, readdir, rm, stat } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { lstat, readFile, readdir, rm, stat } from "node:fs/promises";
+import { basename, join, resolve } from "node:path";
+import { isDeepStrictEqual } from "node:util";
+import { readCanonicalCatalog } from "./canonical-catalog.js";
+import { readPortableOriginal } from "./portable-original.js";
 import { archiveRoot, currentMetadata, isRecord, readJson, optionalRead, parseRecord, isPublished } from "./catalog-retention-metadata.js";
 
 export type RetentionCandidate = { readonly path: string; readonly bytes: number };
@@ -128,5 +131,70 @@ export const cleanLegacyCatalogExcess = async (
 ): Promise<readonly RetentionCandidate[]> => {
   const candidates = await legacyCatalogExcess(dir, prefix);
   if (!dryRun) for (const candidate of candidates) await rm(candidate.path);
+  return candidates;
+};
+
+/**
+ * Operational rollback archives are only redundant after the exact current
+ * canonical publication is independently available and verified in catalogs/.
+ * Keep active.json: it is still the metadata source of the active publication.
+ * Unknown, pending or malformed history is never removed automatically.
+ */
+export const cleanConsolidatedCatalogHistory = async (
+  workspace: string, providerId: string, dir: string, prefix: string
+): Promise<readonly RetentionCandidate[]> => {
+  const root = resolve(workspace);
+  if (resolve(dir) !== join(root, "storage", "scraped", providerId)) {
+    throw new Error("Solo se limpia el historial individual del destino predeterminado");
+  }
+  // Refuse linked directories even when their absolute spelling matches the workspace.
+  for (const directory of [join(root, "storage"), join(root, "storage", "scraped"), resolve(dir)]) {
+    const info = await lstat(directory);
+    if (!info.isDirectory() || info.isSymbolicLink()) throw new Error("Almacén operativo enlazado o no regular");
+  }
+  const source = await readCanonicalCatalog(join(dir, `${prefix}-catalog.json`));
+  const portable = await readPortableOriginal(root, providerId);
+  if (source.providerId !== providerId || source.prefix !== prefix ||
+    !isDeepStrictEqual(source, portable)) {
+    throw new Error("El original portátil no acredita la publicación individual vigente");
+  }
+  // Comparing canonical payloads alone is insufficient: guard the exact
+  // persisted bytes and the publication summary as well.
+  for (const name of [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`]) {
+    const current = await readFile(join(dir, name), "utf8");
+    const saved = await readFile(join(root, "catalogs", "providers", providerId, "original", name), "utf8");
+    if (current !== saved) throw new Error(`El original portátil difiere de ${name}; se conserva el historial`);
+  }
+  const history = archiveRoot(dir, prefix);
+  let entries;
+  try {
+    for (const directory of [join(dir, ".history"), history]) {
+      const info = await lstat(directory);
+      if (!info.isDirectory() || info.isSymbolicLink()) throw new Error("Historial enlazado o no regular");
+    }
+    entries = await readdir(history, { withFileTypes: true });
+  }
+  catch (error) {
+    if (isRecord(error) && error.code === "ENOENT") return [];
+    throw error;
+  }
+  // No concurrent publication, unexplained files, or malformed backups.
+  const candidates: RetentionCandidate[] = [];
+  for (const entry of entries) {
+    if (entry.name === "active.json" && entry.isFile()) continue;
+    if (!entry.isDirectory() || !archivePattern.test(entry.name) ||
+      !await validArchive(join(history, entry.name), prefix)) {
+      throw new Error(`Historial no reconocido o en curso: ${entry.name}; no se limpia`);
+    }
+    const path = join(history, entry.name);
+    candidates.push({ path, bytes: await bytesInDirectory(path) });
+  }
+  // No later file/manifest mutations may be accepted in a best-effort cleanup.
+  for (const candidate of candidates) {
+    if (!await validArchive(candidate.path, prefix)) {
+      throw new Error(`Historial modificado durante la limpieza: ${candidate.path}`);
+    }
+  }
+  for (const candidate of candidates) await rm(candidate.path, { recursive: true });
   return candidates;
 };

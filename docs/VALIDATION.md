@@ -42,6 +42,21 @@ El modo de simulación **no crea informes ni cambia decisiones**. La escritura d
 
 **Controles especialmente importantes:** solapamientos de categorías e identidades GAM; paginación y páginas repetidas en Mercaeleva; múltiples unidades semejantes y ausencia de precios en Gomariz; disponibilidad de páginas, familias originales y cobertura verificable en Manain. Un límite de páginas sirve para diagnóstico, no para acreditar cobertura completa.
 
+## Verificación de catálogos consolidados
+
+Para consultar sin modificar los archivos definitivos y contrastarlos con los operativos:
+
+```powershell
+npm run estado
+npm run migrar:catalogos
+```
+
+`estado` comprueba el trío original conservado en `catalogs/providers/<proveedor>/original/`, la procedencia de las campañas en `catalogs/campaigns/<runId>/`, sus cuatro `publishable.json`, las huellas de aprobación y las diferencias con los originales completos disponibles en `storage/`. También señala conjuntos ausentes, dañados, en promoción pendiente o con más de dos campañas portátiles. **No repara, migra, borra ni examina el índice Git**. La ausencia de `storage/` en una copia limpia no invalida un conjunto portátil íntegro.
+
+`migrar:catalogos` es una **simulación sin escrituras** por defecto. Solo `npm run migrar:catalogos -- --aplicar` incorpora datos verificados; no borra archivos operativos ni acredita campañas nuevas. Los parciales permanecen parciales y las campañas sin entrega verificable no se elevan a entregadas. Ante un error de integridad, una promoción pendiente o una rotación incompatible, detenerse y revisar las fuentes: no editar manifiestos, SHA ni JSON a mano.
+
+Para considerar cerrado un cambio destinado a Git, comprobar el origen, la selección aplicable, las huellas y `estado`; después revisar `git status --short` para incluir los archivos modificados de `catalogs/` en el commit que corresponda. **Ni `npm run estado` ni `npm test` prueban que un commit contenga los datos definitivos**. La validación técnica de una publicación no garantiza por sí sola la cobertura externa del portal.
+
 ## Selección editorial
 
 ```powershell

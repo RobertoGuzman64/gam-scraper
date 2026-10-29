@@ -12,7 +12,7 @@ La operación habitual no requiere recuperar JSON históricos, copiar SHA, adivi
 
 ## Instalación inicial
 
-Se necesita Node.js >=20.18.1, npm, acceso a los portales, permisos de escritura y un navegador Chrome/Chromium o Edge compatible para Mercaeleva y Manain. Mercaeleva usa navegador headless; Manain inicia una ventana visible que puede requerir verificación humana. En una copia nueva:
+Se necesita Node.js >=18.18.0, npm, acceso a los portales, permisos de escritura y Chrome/Chromium para el extractor que lo requiera. En una copia nueva:
 
 ```powershell
 npm ci
@@ -59,6 +59,14 @@ La consulta inicial no elimina nada. `--recuperar` solo completa un lote interru
 
 La retirada registra su estado en `storage/scraped/campaigns/.rotation.json` mediante escritura temporal y renombrado atómico. Si se interrumpe, la siguiente admisión intenta reanudarla con las mismas comprobaciones; `npm run recuperar -- --reanudar-rotacion` permite solicitarlo expresamente. Un temporal incompleto y regular se descarta sin eliminar campañas. Un registro inválido, rutas ajenas, bloqueos activos o una entrega conservada no verificable hacen que la operación **se detenga sin borrar más datos**. No borrar locks, temporales o archivos de campaña manualmente para superar ese control.
 
+## Persistencia portátil de campaña
+
+`storage/` contiene la campaña **operativa**; `catalogs/campaigns/<runId>/` contiene el conjunto **definitivo y versionable** que resulta de finalizar una acreditación aprobada. Incluye el manifiesto de huellas, la aprobación, la selección, el trío original y el JSON `publishable.json` de cada uno de los cuatro proveedores. Si una ficha fue intervenida, también conserva el derivado y el expediente necesario para verificarla. El original no se edita para reflejar esas correcciones.
+
+Esta instantánea se crea al finalizar `npm run acreditar` **después de la aprobación humana**: no aparece por ejecutar `revisar`, tener todo `ready` o iniciar un lote. Una campaña ya almacenada para el mismo `runId` no admite otra selección diferente bajo ese identificador. La entrega comercial continúa siendo un flujo separado que produce su ZIP y recibo; una campaña portable acreditada no debe presentarse como entregada hasta existir ese recibo verificable.
+
+La rotación recuperable de campañas contempla también la retirada de la instantánea correspondiente de `catalogs/`, manteniendo **como máximo dos campañas**. Esa retención no afecta a `catalogs/providers/<proveedor>/original/`, que contiene el último original individual completo acreditado para cada proveedor. `npm run estado` verifica los definitivos sin escritura; `npm run migrar:catalogos` permite examinar o consolidar datos anteriores, sin reextraer ni eliminar `storage/`. Ver [Reglas de datos](SCRAPER_DATA_RULES.md).
+
 ## Acreditación editorial
 
 `acreditar` descubre las preparaciones actuales y crea el borrador en:
@@ -77,7 +85,7 @@ Los originales, sus manifiestos y la procedencia editorial permanecen mientras l
 
 `data/reference/` continúa admitiendo lecturas y traslado de referencias heredadas, incluidas las de tres proveedores; no es una segunda copia que haya que refrescar semanalmente. Las campañas históricas verificables de tres proveedores son aptas como base de comparación, pero **toda entrega nueva exige cuatro**. No se fuerza a Manain a aparecer en históricos donde no existía.
 
-Los catálogos, manifests y decisiones internas están bajo `storage/`, fuera del ZIP público. Los scripts permanentes siguen en `interventions/<proveedor>/` y no forman parte de la rotación. `npm run limpiar:almacen` es un mantenimiento distinto, de salidas individuales, y no un paso de campaña. `npm run limpiar:versionados` y `npm run limpiar:versionados -- --aplicar` actúan sobre históricos rastreados por Git; tampoco realizan rotaciones ni reescriben el historial de Git. El scraper no importa al backend ni actualiza productos remotos.
+Los artefactos **operativos** de campaña continúan bajo `storage/`. Los originales y las decisiones acreditadas imprescindibles también se conservan en la instantánea `catalogs/campaigns/<runId>/`, fuera del ZIP público; esa copia es versionable y verificable sin `storage/`. Los scripts permanentes siguen en `interventions/<proveedor>/` y no forman parte de la rotación. `npm run limpiar:almacen` es un mantenimiento distinto, de salidas individuales, y no un paso de campaña. `npm run limpiar:versionados` y `npm run limpiar:versionados -- --aplicar` actúan sobre históricos rastreados por Git; tampoco realizan rotaciones ni reescriben el historial de Git. El scraper no importa al backend ni actualiza productos remotos.
 
 ## Diagnóstico y herramientas avanzadas
 
