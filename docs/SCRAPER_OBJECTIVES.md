@@ -22,7 +22,21 @@ Prioridades, por orden:
 - **Preparación (`ready` / `review`)**: diagnóstico técnico local del origen y sus evidencias. Las preparaciones actuales no dependen de la asignación de categorías comerciales ni de atributos del backend; sus estados tampoco sustituyen una revisión externa de cobertura.
 - **Selección editorial**: fichas autorizadas para entrega y exclusiones justificadas, sin borrar las fichas excluidas del catálogo original ni modificar su estado para mejorar un contador.
 
-El objetivo de calidad es resolver todas las incidencias acreditables. Una contradicción irresuelta puede mantenerse como exclusión editorial justificada; nunca se fabrica una solución para conseguir `0 review`.
+El objetivo de calidad es resolver todas las incidencias acreditables. Una contradicción irresuelta puede mantenerse como exclusión editorial justificada; nunca se fabrica una solución para conseguir `0 review`. **La exclusión no transforma una ficha `review` en `ready` ni permite presentar el catálogo completo como íntegramente `ready`.**
+
+## Dirección permanente del trabajo de calidad
+
+**El objetivo operativo es obtener el catálogo completo de cada proveedor con `0 review` reales bajo la validación técnica oficial vigente.** Mientras existan reviews, el catálogo no está cerrado como *catálogo completamente ready*, aunque la extracción haya finalizado, todas las referencias estén informadas o la mayoría de fichas supere la preparación. La acreditación y entrega editorial siguen siendo contratos distintos, con sus propias aprobaciones.
+
+**Ante cualquier review, el trabajo prioritario del desarrollador/asistente es corregir el código productivo que la causa cuando la solución pueda generalizarse con evidencia.** Investigar fichas, recopilar logs, agrupar motivos, consultar diferencias y ejecutar auditores son medios internos de ingeniería, **no entregables ni sustitutos de una corrección**. Debe reutilizar o mejorar los módulos existentes —extractores, parsers, asociación de especificaciones, normalizadores, reglas de calidad e identidad— en vez de delegar en el propietario la investigación ficha por ficha.
+
+- Primero buscar el patrón y el punto del motor que origina la review; corregir allí la causa reutilizable, no en JSON derivados ni mediante listas de excepciones por ID.
+- Usar las fichas reales como evidencia y contraejemplos para proteger la semántica; añadir pruebas de regresión según riesgo y ejecutar la validación sobre **el catálogo completo**, no solo sobre las muestras que pasan.
+- Repetir el ciclo **corrección productiva → pruebas → preparación/validación integral → revisión de reviews restantes** hasta alcanzar `0 review` verificadas, sin aumentar las incidencias existentes ni introducir regresiones.
+- No hacer pasar un dato ambiguo por válido: si la fuente no permite una solución fiable, demostrar el bloqueo con evidencia y proponer el tratamiento editorial explícito. Este supuesto excepcional **no equivale a declarar `0 review`**.
+- La responsabilidad del asistente es realizar el análisis necesario para programar y presentar **cambios de código efectivos y su evidencia**. No terminar una intervención de calidad entregando únicamente un inventario de problemas, una orden de terminal o una propuesta de nuevas auditorías.
+
+La mejora es de **calidad de datos publicados y reglas que los interpretan**, no de cobertura arbitraria: la ausencia de un atributo no publicado sigue siendo opcional y no se generan valores por analogía. Las reglas y las aprobaciones existentes siguen siendo obligatorias; resolver reviews no autoriza a desactivarlas.
 
 ## Qué se considera terminado
 
@@ -31,6 +45,7 @@ El objetivo de calidad es resolver todas las incidencias acreditables. Una contr
 - No hay contradicciones técnicas conocidas dentro de las fichas seleccionadas como publicables.
 - Las decisiones de exclusión, aprobación y corrección tienen evidencias y no alteran los originales.
 - Los artefactos publicados son coherentes con sus manifests y contratos.
+- Si se declara un proveedor **completamente `ready`**, la validación técnica oficial del **universo completo** acredita `0 review` y conserva todas las fichas; una selección con exclusiones no satisface esa afirmación.
 - Los cambios en el software conservan la compatibilidad pública o identifican explícitamente la ruptura.
 
 La ausencia de precio, año u otro dato que el portal no publique **no autoriza** a inventarlo. Un estado técnico `complete` o una ejecución de pruebas correcta **no demuestran por sí mismos** que exista cobertura externa completa.

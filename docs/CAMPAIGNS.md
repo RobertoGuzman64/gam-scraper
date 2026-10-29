@@ -40,6 +40,14 @@ npm run iniciar
 
 La comparación no equivale a selección editorial: una ficha excluida pero extraída sigue en el universo original. Una ausencia no equivale a una venta. La aprobación humana es obligatoria incluso cuando no hay fichas `Review`.
 
+### Calidad antes de cierre: trabajo del motor, no revisión ficha a ficha
+
+**Una review detectada abre trabajo de ingeniería sobre el código productivo antes que una cadena de inspecciones manuales.** Las operaciones `revisar`, `validar`, `comparar`, `huecos` y los diagnósticos son herramientas de investigación del desarrollador. Su ejecución no constituye una corrección ni una condición de cierre por sí misma. El desarrollador investiga internamente los patrones y corrige extractores, normalizadores, asociación de campos, reglas de calidad o identidad, reutilizando componentes existentes y protegiendo la evidencia original.
+
+La meta para declarar un **catálogo de proveedor completamente `ready`** es `0 review` verificadas sobre todo su catálogo canónico con las reglas técnicas vigentes. El desarrollador debe iterar correcciones productivas y pruebas de regresión sobre el conjunto completo mientras queden defectos solucionables del motor. **No asignar al propietario un recorrido por IDs ni declarar resuelta la calidad al producir informes.** La selección editorial con exclusiones y aprobación humana sigue disponible cuando el dato de origen es verdaderamente irresoluble; una exclusión no modifica la review de origen ni acredita un catálogo íntegramente `ready`.
+
+Esta obligación de desarrollo **no autoriza** a mutar originales, inventar datos, bajar el umbral de calidad, saltarse aprobaciones o convertir intervenciones manuales en reglas permanentes. Ver [Objetivos](SCRAPER_OBJECTIVES.md) y [Validación](VALIDATION.md).
+
 `extraer` prepara y revisa tras extraer los cuatro proveedores. Si existe una campaña incompleta, hay que consultar su `runId` y decidir explícitamente cómo tratarla. `npm run extraer -- --nueva` permite solicitar otro lote según el estado, pero **no autoriza a borrar la campaña fallida ni trabajos pendientes**. Un historial ambiguo o con rutas no reconocidas bloquea la admisión.
 
 ## Conservación y recuperación

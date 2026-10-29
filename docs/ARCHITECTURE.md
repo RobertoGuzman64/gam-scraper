@@ -39,6 +39,12 @@ catalogs/
 
 El registro de proveedores vive en `src/scraping/registry.ts`; el conjunto de campaña actual (GAM, Gomariz, Mercaeleva y Manain) se declara en `src/contracts/campaign-providers.ts`. El contrato admite además lectura de referencias históricas de tres proveedores; esto no convierte esos lotes en campañas actuales completas. Los contratos de datos se definen en `src/contracts/`. Las pruebas `.test.ts` están próximas a los módulos que protegen. El resultado del compilador se escribe en `dist/`, que no se versiona.
 
+## Calidad como responsabilidad del código productivo
+
+Cuando `prepareSourceProduct` o sus validadores producen reviews, su diagnóstico es una **entrada de desarrollo**. La corrección reusable corresponde al módulo que pueda demostrar la causa: `scraping/` para lectura y asociación de campos; `catalog/` para normalización, reglas de calidad e identidad; `pipeline/` para orquestar y comprobar resultados; `cli/` solo para exponer el estado. No reparar silenciosamente el dato con una decisión en CLI, una mutación del original ni una excepción por referencia.
+
+El flujo de ingeniería normal es reproducir en el catálogo completo → corregir el motor → probar el comportamiento y sus contraejemplos → volver a preparar/validar el conjunto hasta acreditar `0 review`. Una review que exige evidencia externa se mantiene visible sin falsear el `ready`. Los diagnósticos y auditores sirven a este ciclo, no son un objetivo de producto independiente. Ver [Objetivos](SCRAPER_OBJECTIVES.md) y [Validación](VALIDATION.md).
+
 ## Responsabilidades
 
 | Capa                   | Debe hacer                                                                    | No debe hacer                                              |

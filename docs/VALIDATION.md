@@ -8,6 +8,20 @@
 
 Distinguir **integridad de los archivos**, **calidad de las fichas** y **cobertura externa**. Son comprobaciones diferentes: aprobar una no implica aprobar las otras. Los tests del software protegen regresiones, pero tampoco sustituyen la comparación con los anuncios publicados por cada proveedor.
 
+## Responsabilidad productiva ante reviews
+
+La validación identifica fallos; **el trabajo de calidad no termina al encontrarlos**. Ante una preparación con cualquier ficha `review`, el siguiente trabajo del desarrollador es localizar y corregir la causa **en código productivo reutilizable** (extracción, parseo, asociación semántica, normalización, calidad o identidad), siempre que haya evidencia de una transformación segura. Los informes de auditoría, las consultas por ID y las comparaciones son instrumentación interna para esa tarea, no un proceso editorial que deba dirigir el propietario.
+
+**Contrato de ejecución y cierre de una corrección:**
+
+1. Reproducir las reviews con el catálogo canónico íntegro y reglas identificadas; comparar versiones solo cuando se ejecuten **ambas con el mismo criterio**. Nunca interpretar dos motores distintos como una regresión demostrada.
+2. Agrupar los motivos internamente, buscar el módulo responsable y definir la transformación segura con contraejemplos; reutilizar primero el motor actual, evitando scripts por ficha y nuevos subsistemas innecesarios.
+3. Editar **código que se ejecute en producción**, conservar los datos originales y mantener intactas las comprobaciones de integridad, identidad, cobertura y trazabilidad.
+4. Ejecutar pruebas dirigidas por riesgo y build; preparar y validar el **catálogo entero** con las reglas nuevas; comprobar el delta real de reviews, la conservación de productos y las regresiones. Una prueba verde no acredita por sí sola `0 review`.
+5. Si quedan reviews atribuibles al motor, continuar implementando correcciones generales. **No cerrar el trabajo con diagnósticos o comandos para que el propietario estudie fichas**. Una contradicción de origen irremediable exige evidencia y decisión editorial; ni se inventa un valor ni se silencia el motivo.
+
+**Aceptación de calidad del catálogo completo:** `0 review` reales en la preparación y validación técnica oficial de **todos** sus productos, sin cambiar estados artificialmente, ignorar campos válidos por conveniencia, retirar máquinas de la muestra o relajar validadores. Si permanece alguna review legítima, el catálogo sigue pendiente de esa meta. Un subconjunto publicable aprobado y un catálogo completamente `ready` son afirmaciones distintas.
+
 ## Operaciones sin alterar datos originales
 
 ```powershell
@@ -32,6 +46,7 @@ El modo de simulación **no crea informes ni cambia decisiones**. La escritura d
 
 - [ ] El proceso finalizó sin sustituir una publicación válida por artefactos parciales.
 - [ ] Catálogo, manifest, resumen y preparación son consistentes; la preparación actual verifica huellas de **reglas técnicas**, sin exigir snapshots comerciales.
+- [ ] Para declarar el catálogo completo `ready`, su validación oficial acredita **0 reviews sobre todo el universo original**, sin excepciones maquilladas ni exclusiones presentadas como conversiones a `ready`.
 - [ ] Los identificadores de máquina son estables, sin pérdidas o fusiones indebidas.
 - [ ] La paginación avanzó realmente y las cantidades y URLs se contrastaron con el portal.
 - [ ] Hay muestras de maquinaria nueva y de segunda mano, categorías, galerías y fichas atípicas revisadas.

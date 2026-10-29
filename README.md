@@ -10,6 +10,8 @@ Herramienta de línea de comandos, desarrollada en **Node.js, TypeScript y módu
 
 El **catálogo canónico** conserva todas las máquinas identificadas, incluidas aquellas cuya preparación tenga incidencias. La **selección editorial** es una salida separada: aparta fichas no acreditadas sin borrar el origen ni convertir artificialmente productos a `ready`.
 
+**Dirección permanente de calidad:** si aparecen reviews, el trabajo de desarrollo consiste en **corregir el código productivo reutilizable que origina los problemas**, no terminar en informes, comandos o revisión manual ficha a ficha. La meta para declarar el catálogo completo de un proveedor `ready` es **0 reviews verificadas sobre todas sus fichas**, conservando los originales y sin inventar valores ni relajar validaciones. Los diagnósticos son herramientas internas del desarrollador; las contradicciones de origen realmente irresolubles permanecen identificadas y requieren una decisión editorial distinta. Ver [Objetivos](docs/SCRAPER_OBJECTIVES.md) y [Validación](docs/VALIDATION.md).
+
 Este repositorio no ofrece una API HTTP, no realiza altas en el backend y no automatiza importaciones. Los JSON canónicos y las selecciones acreditadas **no son solicitudes de creación de productos del backend**: la asignación de categorías e IDs comerciales corresponde a la integración receptora. El exportador Excel/JSON comercial que permanece en el código es **compatibilidad heredada**, no un paso del flujo actual; las nuevas preparaciones canónicas se rechazan en ese exportador.
 
 Para los criterios funcionales, consultar [Objetivos](docs/SCRAPER_OBJECTIVES.md).

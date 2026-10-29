@@ -76,6 +76,14 @@ La revisión de cobertura genera un expediente con **huellas de los dos catálog
 
 La selección editorial crea productos publicables y un resumen de exclusiones **sin reescribir el catálogo original**. Las exclusiones pueden ser necesarias para proteger la calidad, pero no convierten fichas dudosas en `ready`. La salida por proveedor es un conjunto de candidatos ya definidos por el proyecto, no un request HTTP de importación.
 
+## Corrección del motor y procedencia de las reviews
+
+Las reviews de preparación se resuelven prioritariamente mediante cambios reutilizables en **código productivo** —extractor, parser, correspondencia entre etiqueta y magnitud, normalizador, calidad e identidad—, no alterando el canónico para conseguir un contador favorable. Los comandos de diagnóstico son herramientas auxiliares del desarrollador, no una sustitución de ese trabajo ni una obligación de inspección producto por producto del propietario. El criterio para declarar el **catálogo completo `ready`** exige `0 review` verificadas sobre todos los productos originales evaluados.
+
+Distinguir valor técnico válido y representable, valor publicado compuesto o no escalar, unidad inconsistente, campo posiblemente cruzado y contradicción de identidad. La solución debe conservar la especificación cruda y aplicar únicamente transformaciones que se puedan justificar con evidencia. Un formato no representable por el tipo actual exige revisar el contrato o la regla de calidad, no inventar un número. La ausencia de atributos no publicados no es un fallo. Una contradicción real sin evidencia sigue como `review` y requiere tratamiento editorial separado; la exclusión nunca simula un `ready`.
+
+Cada corrección del motor exige pruebas según el riesgo, validación del catálogo completo y comprobación de que no se pierden fichas, identidades ni garantías de trazabilidad. Las decisiones manuales, los derivados y las entregas acreditadas conservan su independencia de los originales inmutables.
+
 ## Frontera con la importación comercial
 
 La campaña entrega JSON acreditados para **traspasar datos fiables**, no para efectuar una operación de importación. La asignación de `categorySellID`, los IDs de atributos y la transformación a contratos del backend son responsabilidades del proceso receptor. **No añadir requisitos comerciales a `ready/review` ni convertir `specs` originales en atributos comerciales sin un contrato externo explícito.**
