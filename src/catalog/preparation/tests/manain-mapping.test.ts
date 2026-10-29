@@ -211,9 +211,29 @@ test("Manain: pesos con cuatro decimales acreditados no se confunden con miles",
   assert.ok(!prepareProduct(tool, catalog).issues.some((issue) => issue.includes("Peso")));
   assert.equal(prepareProduct(tool, catalog).status, "ready");
   assert.equal(prepareProduct(tool, catalog).product.categorySellID, null);
-  for (const peso of ["kg", "5.2340 kg", "5.2000 mm", "5.2000-6 kg"]) {
+  const unmeasured = { ...tool, specs: { ...tool.specs, Peso: "kg" } };
+  assert.deepEqual(resolveAttribute(unmeasured, attribute("Peso")), { status: "not_observed", value: null });
+  assert.deepEqual(resolveAttribute(unmeasured, attribute("Peso operativo")), { status: "not_observed", value: null });
+  assert.equal(prepareProduct(unmeasured, catalog).status, "ready");
+  assert.equal(prepareProduct(unmeasured, catalog).product.spec.Peso, "kg");
+  assert.equal(resolveAttribute({ ...unmeasured, providerId: "gam" }, attribute("Peso")).status, "invalid");
+  for (const peso of ["5.2340 kg", "5.2000 mm", "5.2000-6 kg"]) {
     assert.equal(resolveAttribute({ ...tool, specs: { ...tool.specs, Peso: peso } }, attribute("Peso")).status,
       "invalid", peso);
   }
   assert.equal(resolveAttribute({ ...tool, providerId: "gam" }, attribute("Peso")).status, "invalid");
+});
+
+test("Manain: disponibilidad de elevación libre sin medida no se interpreta como milímetros", () => {
+  const source = machine("https://manain.com/producto/venta-manipulacion-carretilla-4x4-manitou-mc-25-4-d-k-st5-s1-23/", {
+    "Nueva o usada": "usada", "Elevacion libre": "si"
+  }, "");
+  assert.deepEqual(resolveAttribute(source, attribute("Elevación libre")), { status: "not_observed", value: null });
+  const prepared = prepareProduct(source, catalog);
+  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.product.spec["Elevacion libre"], "si");
+  const measured = { ...source, specs: { ...source.specs, "Elevación libre (mm)": "1500 mm" } };
+  assert.equal(resolveAttribute(measured, attribute("Elevación libre")).value, 1500);
+  const malformed = { ...source, specs: { ...source.specs, "Elevacion libre": "inexacta" } };
+  assert.equal(resolveAttribute(malformed, attribute("Elevación libre")).status, "invalid");
 });

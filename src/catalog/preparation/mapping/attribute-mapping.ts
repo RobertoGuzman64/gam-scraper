@@ -9,7 +9,7 @@ import { normalizeMercaelevaCandidate } from "./providers/mercaeleva/technical.j
 import { mercaelevaUnspecifiedMast } from "../evidence/providers/mercaeleva/handling-evidence.js";
 import { mercaelevaUnpublishedHours } from "../evidence/providers/mercaeleva/hours-evidence.js";
 import { gamConfirmedAbsentScalar } from "./providers/gam/unrepresentable.js";
-import { applyManainAliases, convertManainCandidate } from "./providers/manain/attributes.js";
+import { applyManainAliases, convertManainCandidate, isManainUnmeasuredNumeric } from "./providers/manain/attributes.js";
 
 const notPublished = (value: SpecScalar): boolean =>
   typeof value === "string" && ["n/d", "n/a", "no disponible", "no informado", "sin datos", "-", "—", "a consultar"].includes(fold(value));
@@ -116,7 +116,8 @@ export const resolveAttribute = (record: ProductRecord, attribute: Attribute): A
     if (!keys.has(fold(rawKey)) && !keys.has(fold(canonical))) continue;
     const value = scalar(spec);
     if (value !== null && !notPublished(value) &&
-      !(record.providerId === "gam" && isGamUnmeasuredNumeric(attribute, value))) {
+      !(record.providerId === "gam" && isGamUnmeasuredNumeric(attribute, value)) &&
+      !isManainUnmeasuredNumeric(record, attribute, value)) {
       candidates.push({ key: rawKey, value });
     }
     else if (Array.isArray(spec) && spec.length > 1) ambiguousSource = true;

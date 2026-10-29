@@ -6,6 +6,7 @@ import { manainSourceFamily } from "../../../evidence/providers/manain/source.js
 export const applyManainAliases = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): void => {
   const family = manainSourceFamily(record);
   if (!family) return;
+  if (attribute.name === "Elevación libre") keys.add(fold("Elevación libre (mm)"));
   if (attribute.name === "Altura de trabajo") keys.add(fold("Altura trabajo"));
   if (attribute.name === "Ancho de la máquina" && family === "movimiento-tierra-miniexcavadora") keys.add(fold("Ancho"));
   if (attribute.name === "Peso operativo" && family === "movimiento-tierra-miniexcavadora") keys.add(fold("Peso"));
@@ -23,6 +24,17 @@ export const applyManainAliases = (record: ProductRecord, attribute: Attribute, 
     const allowed = motor === "diesel" ? "Diésel" : motor === "electrico" ? "Eléctrico" : motor === "glp" ? "GLP" : "Gasolina";
     candidates.push({ key: "Motor", value: allowed });
   }
+};
+
+export const isManainUnmeasuredNumeric = (record: ProductRecord, attribute: Attribute, value: string | number | boolean): boolean => {
+  if (record.providerId !== "manain" || typeof value !== "string" ||
+    (attribute.type !== "NUMBER" && attribute.type !== "DECIMAL")) return false;
+  const normalized = fold(value);
+  if (attribute.name === "Elevación libre" && attribute.unit_option === "mm") {
+    return normalized === "si";
+  }
+  return (attribute.name === "Peso" || attribute.name === "Peso operativo") && attribute.unit_option === "kg" &&
+    normalized === "kg";
 };
 
 export const convertManainCandidate = (
