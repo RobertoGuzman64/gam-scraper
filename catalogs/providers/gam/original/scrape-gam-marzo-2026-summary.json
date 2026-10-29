@@ -1,6 +1,6 @@
 {
-  "startedAt": "2026-10-29T11:03:37.751Z",
-  "endedAt": "2026-10-29T11:08:37.072Z",
+  "startedAt": "2026-10-29T17:25:59.177Z",
+  "endedAt": "2026-10-29T17:30:38.677Z",
   "quality": {
     "status": "complete",
     "reasons": [
@@ -11,20 +11,20 @@
     "published": true
   },
   "artifacts": {
-    "csvSha256": "6a9afe0ee2d095c6cb66b9e9803e288beca03630010e3fe2f5455053830cc052",
-    "preparationSha256": "c819d6844cdfcc2289c42521668509da23afd879a5b6033e9df4c7d9696dad87",
-    "catalogSha256": "7d191afb46d31b71f33a068c614aeb3cd98c3df81ff797ac8d224300e50dc2b4"
+    "csvSha256": "e1ee7ee3650a031928a7f1e2575f05b6d29b0f5cd64be290d50d658569fe4722",
+    "preparationSha256": "a931da446e34082bef9c83c686f25d74faea523a7c4cd89a418c7167d147e928",
+    "catalogSha256": "855865e4a99f709cd9b10b68e77d594841b8cbd8c64b4fc9eb851cb397162483"
   },
   "totals": {
     "categories": 15,
-    "discoveredProductUrls": 1796,
-    "scrapedProductsRaw": 1796,
-    "scrapedProductsByCategorySum": 1796,
-    "scrapedProducts": 984,
+    "discoveredProductUrls": 1794,
+    "scrapedProductsRaw": 1794,
+    "scrapedProductsByCategorySum": 1794,
+    "scrapedProducts": 983,
     "failures": 0,
     "dedupe": {
       "withinCategories": {
-        "kept": 1796,
+        "kept": 1794,
         "removed": 0,
         "byReason": {
           "reference": 0,
@@ -33,10 +33,10 @@
         }
       },
       "globalAll": {
-        "kept": 984,
-        "removed": 812,
+        "kept": 983,
+        "removed": 811,
         "byReason": {
-          "reference": 812,
+          "reference": 811,
           "serialNumber": 0,
           "canonicalUrl": 0
         }
@@ -48,13 +48,13 @@
       "key": "elevacion",
       "name": "Elevación",
       "url": "https://online.gamrentals.com/es/8-plataformas-elevadoras-segunda-mano",
-      "discoveredProductUrls": 89,
-      "expectedProductUrls": 89,
-      "scrapedProductsRaw": 89,
-      "scrapedProducts": 89,
+      "discoveredProductUrls": 88,
+      "expectedProductUrls": 88,
+      "scrapedProductsRaw": 88,
+      "scrapedProducts": 88,
       "failures": 0,
       "dedupe": {
-        "kept": 89,
+        "kept": 88,
         "removed": 0,
         "byReason": {
           "reference": 0,
@@ -162,13 +162,13 @@
       "key": "maquinaria",
       "name": "Maquinaria de ocasión",
       "url": "https://online.gamrentals.com/es/3-maquinaria-segunda-mano",
-      "discoveredProductUrls": 253,
-      "expectedProductUrls": 253,
-      "scrapedProductsRaw": 253,
-      "scrapedProducts": 253,
+      "discoveredProductUrls": 252,
+      "expectedProductUrls": 252,
+      "scrapedProductsRaw": 252,
+      "scrapedProducts": 252,
       "failures": 0,
       "dedupe": {
-        "kept": 253,
+        "kept": 252,
         "removed": 0,
         "byReason": {
           "reference": 0,

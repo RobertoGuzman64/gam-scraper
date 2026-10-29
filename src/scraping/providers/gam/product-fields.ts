@@ -93,8 +93,21 @@ export const extractHtmlDescription = ($: cheerio.CheerioAPI, selectors: readonl
   return null;
 };
 
-const labelledExternalReference = /\b(?:referencia|ref\.?|c[oó]digo(?:\s+gam)?)\s*[:：]\s*([A-Z0-9]+(?:[._/-][A-Z0-9]+)*)(?=$|[\s;,!?)]|\.(?=$|\s))/i;
-const standaloneExternalReference = /^[A-Z0-9]+(?:[._/-][A-Z0-9]+)*$/i;
+const referenceLabel = /^(?:referencia|ref\.?|c[oó]digo(?:\s+gam)?)\s*[:：]\s*(.+)$/i;
+const referenceValue = /^[\p{L}\p{N}]+(?:[._/+-][\p{L}\p{N}]+|\+(?=\s|$))*(?:\s+[\p{L}\p{N}]+(?:[._/+-][\p{L}\p{N}]+|\+(?=\s|$))*)*$/iu;
+const adjacentReferenceField = /\s+(?=(?:marca|modelo|precio|estado|disponibilidad|año|c[oó]digo|referencia|ref\.?)\s*[:：])/i;
+
+const normalizeExternalReference = (value: string): string | null => {
+  const reference = normalizeSpace(value).replace(/\.$/, "");
+  return referenceValue.test(reference) ? reference : null;
+};
+
+const parseLabelledExternalReference = (value: string): string | null => {
+  const match = normalizeSpace(value).match(referenceLabel);
+  if (!match?.[1]) return null;
+  const [reference] = match[1].split(adjacentReferenceField);
+  return normalizeExternalReference(reference ?? "");
+};
 
 export const extractExternalReference = ($: cheerio.CheerioAPI): string | null => {
   for (const label of ["Referencia", "Ref.", "Código", "Código GAM"]) {
@@ -105,8 +118,8 @@ export const extractExternalReference = ($: cheerio.CheerioAPI): string | null =
     .filter((_, element) => $(element).closest(unrelatedDetails).length === 0)
     .first();
   const fromSource = source.attr("content") ?? source.attr("data-product-reference") ?? normalizeSpace(source.text());
-  const direct = fromSource.match(labelledExternalReference)?.[1]
-    ?? (source.length && standaloneExternalReference.test(fromSource.trim()) ? fromSource.trim() : null);
+  const direct = parseLabelledExternalReference(fromSource)
+    ?? (source.length && !referenceLabel.test(fromSource) ? normalizeExternalReference(fromSource) : null);
   if (direct) return direct;
 
   const container = $("main, #content, #product").first();
@@ -115,11 +128,10 @@ export const extractExternalReference = ($: cheerio.CheerioAPI): string | null =
   clean.find(unrelatedDetails).remove();
   for (const element of clean.find("p, li, td, th, span, div, section").toArray()) {
     const value = normalizeSpace($(element).text());
-    const match = value.match(labelledExternalReference);
-    if (match?.index !== 0) continue;
-    if (match?.[1]) return match[1];
+    if ($(element).find("p, li, td, th, div, section, a, button").length) continue;
+    const reference = parseLabelledExternalReference(value);
+    if (reference) return reference;
   }
-  const text = normalizeSpace(clean.text()).split(/(?:¿no es lo que estabas buscando\?|productos relacionados|categor[ií]as relacionadas)/i)[0] ?? "";
-  return text.match(labelledExternalReference)?.[1] ?? null;
+  return null;
 };
 

@@ -98,6 +98,42 @@ test("GAM: conserva referencias comerciales con puntos en etiquetas, atributos y
   assert.equal(parseProductPage(slash, base).externalReference, "Z45/25J");
 });
 
+test("GAM: extrae completas las referencias comerciales con espacios de las fichas", () => {
+  const examples: Array<[string, string]> = [
+    ["<p>Referencia:TRACCESS 135 GASOLINA</p>", "TRACCESS 135 GASOLINA"],
+    ["<span>Referencia:FCS T681 D70</span>", "FCS T681 D70"],
+    ["<div class='product-reference'><span>Referencia:</span><span>ZED 20.4 HN</span></div>", "ZED 20.4 HN"],
+    ["<span class='product-sku' data-product-reference='FCA I-MOP LITE'></span>", "FCA I-MOP LITE"],
+    ["<dl><dt>Referencia</dt><dd>TRACCESS 135 DIESEL</dd></dl>", "TRACCESS 135 DIESEL"]
+  ];
+  for (const [body, expected] of examples) {
+    assert.equal(parseProductPage(fixture(body), base).externalReference, expected);
+  }
+});
+
+test("GAM: conserva símbolos y numerales Unicode de las referencias comerciales", () => {
+  const examples: Array<[string, string]> = [
+    ["<p>Referencia: XGS32ACK Ⅱ</p>", "XGS32ACK Ⅱ"],
+    ["<p>Referencia: FCS T7+ D65</p>", "FCS T7+ D65"],
+    ["<span>Referencia: FCS T7+ D80</span>", "FCS T7+ D80"],
+    ["<span class='product-sku' data-product-reference='FCS T7+ D65'></span>", "FCS T7+ D65"]
+  ];
+  for (const [body, expected] of examples) {
+    assert.equal(parseProductPage(fixture(body), base).externalReference, expected);
+  }
+  assert.equal(parseProductPage(fixture("<p>Referencia: FCS T7++ D65</p>"), base).externalReference, null);
+  assert.equal(parseProductPage(fixture("<div class='related-products'><p>Referencia: XGS32ACK Ⅱ</p></div>"), base).externalReference, null);
+});
+
+test("GAM: no mezcla referencias comerciales con etiquetas adyacentes ni con fichas relacionadas", () => {
+  const adjacent = fixture("<div><p>Referencia: TRACCESS 135 GASOLINA</p><p>Marca: CTE</p><p>Modelo: TRACCESS 135</p></div>");
+  const inline = fixture("<div>Referencia: FCS T681 D70 <span>Modelo: FCS T681 D70</span></div>");
+  const unrelated = fixture("<div class='related-products'><p>Referencia: TRACCESS 135 GASOLINA</p></div>");
+  assert.equal(parseProductPage(adjacent, base).externalReference, "TRACCESS 135 GASOLINA");
+  assert.equal(parseProductPage(inline, base).externalReference, "FCS T681 D70");
+  assert.equal(parseProductPage(unrelated, base).externalReference, null);
+});
+
 test("GAM: no inventa la referencia a partir del modelo ni importa referencias relacionadas", () => {
   const noReference = fixture("<dl><dt>Modelo</dt><dd>H2.0FTS</dd></dl>");
   const unrelated = fixture("<div class='related-products'><p>Referencia: H2.0FTS</p></div>");
