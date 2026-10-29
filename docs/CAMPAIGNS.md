@@ -19,6 +19,11 @@ Cuando la campaña detecte fallos repetibles, el desarrollo debe **reparar el c�
 Para otros tipos de incidencias (identidad, cobertura, gaps, tests, mantenimiento, integración), rige la [matriz de resultados y criterios de cierre](SCRAPER_OBJECTIVES.md#propósito-de-cada-frente-resultado-primero-herramientas-después).
 
 
+## Operación sin trasladar la investigación al propietario
+
+`revisar`, `comparar`, `cobertura` y `estado` **no son destinos finales de una intervención productiva**. Ante un resultado adverso en una campaña, el asistente debe localizar internamente la capa responsable, corregir el código si está bajo su control y acreditar que el flujo afectado vuelve a producir los artefactos correctos. No solicitar una nueva extracción global por rutina cuando el fallo pueda reproducirse y corregirse offline. Una nueva campaña, la aprobación editorial y cualquier operación con efectos destructivos siguen requiriendo sus autorizaciones y salvaguardas particulares. Ver [contrato anti-deriva](SCRAPER_OBJECTIVES.md#contrato-anti-deriva-comportamiento-obligatorio-del-asistente).
+
+
 ## Instalación inicial
 
 Se necesita Node.js >=18.18.0, npm, acceso a los portales, permisos de escritura y Chrome/Chromium para el extractor que lo requiera. En una copia nueva:

@@ -31,6 +31,13 @@ El sentido de una validación es **dirigir una reparación productiva**, no mult
 Si una revisión sigue abierta después de una corrección, repetir el ciclo productivo con las causas restantes. Un bloqueo no reparable con la evidencia disponible debe quedar visible, delimitado y trazable, **no maquillado ni transferido como una investigación general al propietario**. Ver [matriz de objetivos por frente](SCRAPER_OBJECTIVES.md#propósito-de-cada-frente-resultado-primero-herramientas-después).
 
 
+## Qué debe hacer el desarrollador con un resultado de validación
+
+Una salida `REVISIÓN`, `WARN`, una lista de motivos o un delta entre catálogos **no son una instrucción para que el propietario examine fichas**. Si el trabajo autorizado es resolver el problema, el siguiente paso es **editar y probar el motor que lo causa**. Las inspecciones por ID se realizan internamente solo para localizar la causa y construir pruebas de regresión reutilizables; no se convierten en una serie de tareas editoriales individuales.
+
+Si después de un parche quedan reviews, no repetir el diagnóstico como si fuera una fase nueva: continuar por el siguiente patrón corregible del **mismo alcance**. Confirmar que el recuento de productos y la calidad semántica no empeoran. Si el único resultado posible exige alterar una verdad del proveedor o una decisión humana, el bloqueo sigue visible y no se declara cumplimiento. Ver [contrato de actuación transversal](SCRAPER_OBJECTIVES.md#contrato-anti-deriva-comportamiento-obligatorio-del-asistente).
+
+
 ## Operaciones sin alterar datos originales
 
 ```powershell
@@ -60,7 +67,7 @@ El modo de simulación **no crea informes ni cambia decisiones**. La escritura d
 - [ ] La paginación avanzó realmente y las cantidades y URLs se contrastaron con el portal.
 - [ ] Hay muestras de maquinaria nueva y de segunda mano, categorías, galerías y fichas atípicas revisadas.
 - [ ] Las ausencias y los cambios relevantes están documentados; no se interpretan automáticamente como venta o retirada.
-- [ ] Las contradicciones de marca, modelo, serie, capacidades, medidas o fotografías están resueltas o excluidas editorialmente.
+- [ ] Las contradicciones de marca, modelo, serie, capacidades, medidas o fotografías imputables al software se han corregido en el motor; las contradicciones genuinas del origen permanecen visibles y pueden tratarse editorialmente sin considerarlas `ready` ni contar una exclusión como `0 review`.
 - [ ] Ningún dato desconocido se ha rellenado sin evidencia y el resultado conserva trazabilidad.
 - [ ] La selección no genera artefactos definitivos con una revisión pendiente o con huellas incompatibles.
 

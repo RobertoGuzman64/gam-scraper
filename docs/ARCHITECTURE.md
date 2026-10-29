@@ -52,6 +52,11 @@ Un defecto de **descubrimiento/cobertura** se resuelve en el adaptador y motor d
 Modificar código productivo no autoriza cambios indiscriminados de arquitectura: reutilizar el motor existente, mantener TypeScript estricto, comprobar consumidores, exigir pruebas proporcionales al riesgo y verificar el efecto sobre el universo completo. Los contratos de aceptación por frente se enumeran en [Objetivos](SCRAPER_OBJECTIVES.md).
 
 
+## Criterio transversal de cambio productivo
+
+La ubicación de una corrección depende de **dónde se origina el comportamiento defectuoso**, no del comando que lo muestra. No añadir parches de presentación a `cli/` para silenciar síntomas del motor; no alterar `ProductRecord` o el original portátil para remediar una preparación; no incorporar excepciones por producto cuando la causa pertenece al parser, al normalizador o a las reglas de calidad. Un cambio de contrato exige rastrear consumidores y preservar garantías de persistencia e identidad. El comportamiento de actuación y cierre está en [Objetivos](SCRAPER_OBJECTIVES.md#contrato-anti-deriva-comportamiento-obligatorio-del-asistente).
+
+
 ## Responsabilidades
 
 | Capa                   | Debe hacer                                                                    | No debe hacer                                              |

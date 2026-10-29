@@ -23,6 +23,13 @@ El trabajo técnico se orienta al **resultado productivo**: extracción completa
 Los criterios **según el tipo de problema**, las protecciones de seguridad y los límites entre catálogo técnico, selección e importación están definidos en [Objetivos](docs/SCRAPER_OBJECTIVES.md). Ninguna automatización evita las aprobaciones editoriales reales, ni un `PASS` de extracción garantiza por sí solo cobertura completa o `0 review`.
 
 
+## Regla de actuación para cualquier incidencia
+
+El criterio transversal no cambia según el comando que haya fallado: **identificar el objetivo vigente → investigar internamente → corregir el componente productivo responsable → verificar el conjunto real → continuar hasta cumplir el criterio de cierre**. No desviar una incidencia de calidad hacia listas de fichas, diagnósticos sucesivos, nuevas herramientas observacionales o una entrega prematura; tampoco iniciar refactors ajenos al encargo. El contrato de comportamiento y los límites de autorización están en [Objetivos, contrato anti-deriva](docs/SCRAPER_OBJECTIVES.md#contrato-anti-deriva-comportamiento-obligatorio-del-asistente).
+
+Una consulta o un plan no equivalen a permiso para editar; una intervención productiva acordada tampoco requiere que el propietario apruebe cada comprobación interna. Las decisiones editoriales, destructivas o de cambio de contrato siguen siendo exclusivamente humanas. No se puede afirmar `0 review` ni una entrega completa sin verificar la totalidad del catálogo y todas las garantías pertinentes.
+
+
 ## Instalaciones existentes
 
 Una instalación nueva no requiere ejecutar migraciones de nombres. Si se actualiza una instalación antigua con rutas de almacenamiento heredadas, consultar primero [Referencia operativa](docs/OPERATIONAL_REFERENCE.md) y el comportamiento de `scripts/migrate-storage.mjs`. No mover datos ni ejecutar migraciones sobre campañas o transacciones abiertas sin comprobar su estado.
@@ -76,6 +83,8 @@ npm run revisar
 npm run comparar
 npm run acreditar
 ```
+
+**Condición previa al cierre:** la secuencia de comandos es orientativa, no una licencia para avanzar desde `revisar` hasta `acreditar` con defectos productivos pendientes. Si las preparaciones mantienen reviews por fallos del motor, **se corrige el código y se revalida primero**. Las exclusiones editoriales no transforman el original en un catálogo `0 review`.
 
 `estado` es una **consulta sin escrituras sobre campañas**: identifica el lote, preparaciones, decisiones editoriales y acreditación local de la entrega. También advierte de problemas con una referencia histórica. La acreditación local puede verificarse aunque el ZIP ya no esté en el Escritorio; su existencia física se comprueba por separado cuando se solicita. `iniciar` **puede crear carpetas de trabajo** y `revisar` puede generar preparaciones ausentes.
 

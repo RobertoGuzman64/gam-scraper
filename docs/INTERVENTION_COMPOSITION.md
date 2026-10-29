@@ -61,4 +61,4 @@ No se recuperan imágenes de campañas anteriores. La galería siempre procede d
 
 ## Alcance actual
 
-El sistema no infiere valores verdaderos, no verifica placas ni documentos externos y no reemplaza la investigación manual. Si una máquina sigue publicando datos contradictorios sin fuentes concluyentes, debe permanecer pendiente; no se creará un script provisional para hacerla pasar los controles. Los documentos maestros de continuidad se mantienen conforme a su propio protocolo; esta guía operativa no los sustituye.
+El sistema no infiere valores verdaderos, no verifica placas ni documentos externos y no reemplaza el contraste humano exigible **únicamente para decisiones editoriales genuinas**. Esa excepción no traslada al propietario el diagnóstico técnico de patrones ni convierte una intervención por ficha en sustituto de reparar código productivo. Si una máquina sigue publicando datos contradictorios sin fuentes concluyentes, debe permanecer pendiente; no se creará un script provisional para hacerla pasar los controles. Los documentos maestros de continuidad se mantienen conforme a su propio protocolo; esta guía operativa no los sustituye.
