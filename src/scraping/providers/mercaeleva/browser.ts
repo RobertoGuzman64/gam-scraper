@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DevtoolsPipe, DevtoolsWebSocket, withTimeout, waitForDebuggingPort, openDebugSocket } from "../../../infrastructure/browser/devtools.js";
 import type { DevtoolsResponse } from "../../../infrastructure/browser/devtools.js";
-import { buildMercaelevaCatalogScript, buildMercaelevaReadinessScript } from "./listing-script.js";
+import { buildMercaelevaCatalogScript, buildMercaelevaReadinessScript, buildMercaelevaRetryScript } from "./listing-script.js";
 
 export { waitForDebuggingPort } from "../../../infrastructure/browser/devtools.js";
 export { buildMercaelevaCatalogScript, buildMercaelevaReadinessScript } from "./listing-script.js";
@@ -162,23 +162,65 @@ const renderWithBrowser = async (
       await new Promise((resolve) => setTimeout(resolve, 250));
     }
     if (!loaded) throw new Error(`No se encontraron productos en ${url} tras ${navigationTimeoutMs} ms (${lastState})`);
-    const evaluation = await send("recorrer páginas", "Runtime.evaluate", {
-      expression: buildMercaelevaCatalogScript(maxPages, timeoutMs, delayMs), awaitPromise: true, returnByValue: true
-    }, sessionId, catalogTimeoutMs);
-    if (evaluation.exceptionDetails) {
-      const details = evaluation.exceptionDetails;
-      if (details && typeof details === "object" && "text" in details) {
-        const description = "exception" in details && details.exception && typeof details.exception === "object"
-          && "description" in details.exception ? details.exception.description : details.text;
-        throw new Error(`Mercaeleva: fallo en navegación: ${String(description)}`);
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const evaluation = await send("recorrer páginas", "Runtime.evaluate", {
+        expression: buildMercaelevaCatalogScript(maxPages, timeoutMs, delayMs), awaitPromise: true, returnByValue: true
+      }, sessionId, catalogTimeoutMs);
+      if (evaluation.exceptionDetails) {
+        const details = evaluation.exceptionDetails;
+        if (details && typeof details === "object" && "text" in details) {
+          const description = "exception" in details && details.exception && typeof details.exception === "object"
+            && "description" in details.exception ? details.exception.description : details.text;
+          throw new Error(`Mercaeleva: fallo en navegación: ${String(description)}`);
+        }
+        throw new Error("Mercaeleva: error de navegación en el navegador");
       }
-      throw new Error("Mercaeleva: error de navegación en el navegador");
+      const result = evaluation.result;
+      if (!result || typeof result !== "object" || !("value" in result)) {
+        throw new Error("Chrome no devolvió el catálogo de Mercaeleva");
+      }
+      if (result.value && typeof result.value === "object" && "retry" in result.value && result.value.retry === true) {
+        if (attempt > 0) throw new Error("Mercaeleva: la paginación sigue sin aparecer tras reintentar la carga");
+        const retry = await send("reintentando carga de listado", "Runtime.evaluate", {
+          expression: buildMercaelevaRetryScript(), returnByValue: true
+        }, sessionId);
+        if (!retry.result || typeof retry.result !== "object" || !("value" in retry.result) || retry.result.value !== true) {
+          throw new Error("Mercaeleva: desapareció el control de reintento antes de activarlo");
+        }
+        await new Promise<void>((resolve) => setTimeout(resolve, 600));
+        const retryStarted = Date.now();
+        let restarted = false;
+        while (Date.now() - retryStarted < navigationTimeoutMs) {
+          try {
+            const state = await send("esperando recarga de listado", "Runtime.evaluate", {
+              expression: buildMercaelevaReadinessScript(), returnByValue: true
+            }, sessionId);
+            const value = state.result && typeof state.result === "object" && "value" in state.result
+              ? state.result.value : null;
+            if (value && typeof value === "object" && "href" in value && typeof value.href === "string" &&
+              "links" in value && typeof value.links === "number" && value.links > 0 &&
+              "count" in value && typeof value.count === "string") {
+              const actual = new URL(value.href);
+              if (actual.origin !== expected.origin ||
+                actual.pathname.replace(/\/+$/, "") !== expected.pathname.replace(/\/+$/, "")) {
+                throw new Error(`Mercaeleva: el reintento redirigió a ${value.href}`);
+              }
+              restarted = true;
+              break;
+            }
+          } catch (error) {
+            if (!/Inspected target navigated or closed|Execution context was destroyed|Cannot find context with specified id/i.test(String(error))) {
+              throw error;
+            }
+          }
+          await new Promise<void>((resolve) => setTimeout(resolve, 250));
+        }
+        if (!restarted) throw new Error("Mercaeleva: no se recuperó el listado tras recargarlo");
+        continue;
+      }
+      return asCatalog(result.value);
     }
-    const result = evaluation.result;
-    if (!result || typeof result !== "object" || !("value" in result)) {
-      throw new Error("Chrome no devolvió el catálogo de Mercaeleva");
-    }
-    return asCatalog(result.value);
+    throw new Error("Mercaeleva: no se completó el recorrido de páginas");
   } catch (error) {
     const detail = diagnostics.trim();
     const status = child.exitCode !== null ? `; exitCode=${child.exitCode}` : "";

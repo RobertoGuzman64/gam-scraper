@@ -104,12 +104,25 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
     return !!await deadline(() => links().length > currentSize && links(),
       'más referencias tras cambiar elementos por página', 3000).catch(() => null);
   };
-  const nextPage = async (page, count, total) => {
+  const nextPage = async (page, count, total, seen) => {
     const started = Date.now();
     const timeout = Math.min(${timeoutMs}, 8000);
+    let scrolled = false;
     while (Date.now() - started < timeout) {
+      if (links().some((href) => !seen.has(href))) return null;
       const button = nextControl(page);
       if (button) return button;
+      if (!scrolled) {
+        scrolled = true;
+        const anchors = [...document.querySelectorAll('a[href*="/for-sale/machine/"]')];
+        anchors[anchors.length - 1]?.scrollIntoView?.({ block: 'end' });
+        window.scrollTo?.(0, document.documentElement.scrollHeight);
+      }
+      if (Date.now() - started >= Math.min(800, timeout / 3)) {
+        const retry = controls().find((element) => !disabled(element) &&
+          /^(?:try again|reintentar|inténtalo de nuevo|tornar-ho a provar)$/i.test(controlLabel(element)));
+        if (retry) return 'retry';
+      }
       await wait(200);
     }
     const available = controls().slice(-16).map((element) =>
@@ -137,8 +150,9 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
     for (const href of current) seen.add(href);
     console.debug("__EQUIPZILLA_MERCA_PROGRESS__", pages.length, seen.size);
     if (seen.size >= total || page === ${maxPages}) break;
-    const next = await nextPage(page, seen.size, total);
-    next.click();
+    const next = await nextPage(page, seen.size, total, seen);
+    if (next === 'retry') return { retry: true, pages: [], expectedTotal: total };
+    next?.click();
     try {
       current = await settledLinks('referencias nuevas después de la página ' + page + ' (' + seen.size + '/' + total + ')', seen);
     } catch (error) {
@@ -175,3 +189,13 @@ export const buildMercaelevaReadinessScript = (): string => String.raw`(() => ({
   links: document.querySelectorAll('a[href*="/for-sale/machine/"]').length
 }))()`;
 
+export const buildMercaelevaRetryScript = (): string => String.raw`(() => {
+  const label = (element) => [element.getAttribute('aria-label'), element.getAttribute('title'), element.textContent]
+    .filter(Boolean).join(' ').replace(/\s+/g, ' ').trim().toLowerCase();
+  const retry = [...document.querySelectorAll('button, [role="button"]')].find((element) =>
+    /^(?:try again|reintentar|inténtalo de nuevo|tornar-ho a provar)$/i.test(label(element)) &&
+    !element.disabled && element.getAttribute('aria-disabled') !== 'true');
+  if (!retry) return false;
+  setTimeout(() => retry.click(), 100);
+  return true;
+})()`;

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
 import { buildMercaelevaCatalogScript, buildMercaelevaReadinessScript } from "../browser.js";
+import { buildMercaelevaRetryScript } from "../listing-script.js";
 import type { CategoryConfig } from "../../../../contracts/scraping.js";
 
 const category: CategoryConfig = { key: "venta", name: "Maquinaria en venta", url: "https://sales.mercaeleva.com/es/for-sale" };
@@ -13,6 +14,7 @@ type PageFixture = {
     readonly href?: string;
     readonly disabled?: boolean;
     readonly textContent?: string;
+    scrollIntoView?(options: { readonly block: string }): void;
     getAttribute?(name: string): string | null;
     querySelectorAll?(selector: string): readonly { readonly textContent?: string; getAttribute(name: string): string | null }[];
     click?(): void;
@@ -31,6 +33,9 @@ type SimulationOptions = {
   readonly stallsOnSequentialLastPage?: boolean;
   readonly stallsOnDirectLastPage?: boolean;
   readonly pageSizeOptions?: readonly number[];
+  readonly paginationAfterScroll?: boolean;
+  readonly appendAfterScroll?: boolean;
+  readonly retryRevealsPagination?: boolean;
   readonly onNext?: () => void;
   readonly onProgress?: (pages: number, found: number) => void;
 };
@@ -42,6 +47,8 @@ const simulateCatalog = async (
   const initialSize = pages[0]?.length ?? 0;
   const allIds = pages.flat();
   let pageSize = initialSize;
+  let scrolled = false;
+  let retried = false;
   const visiblePages = (): readonly (readonly string[])[] => simulation?.pageSizeOptions && pageSize > initialSize
     ? Array.from({ length: Math.ceil(allIds.length / pageSize) }, (_, index) =>
       allIds.slice(index * pageSize, (index + 1) * pageSize)) : pages;
@@ -88,6 +95,11 @@ const simulateCatalog = async (
         }];
       }
       if (selector === 'button, [role="button"]') {
+        if (simulation?.appendAfterScroll) return [];
+        if (simulation?.retryRevealsPagination && !retried) {
+          return [button("Try again", "", false, () => { retried = true; })];
+        }
+        if (simulation?.paginationAfterScroll && !scrolled) return [];
         if (simulatedNow < paginationAvailableAt) return [];
         if (simulation?.numericPagination) {
           const page = current + 1;
@@ -106,7 +118,10 @@ const simulateCatalog = async (
     }
   };
   return runInNewContext(buildMercaelevaCatalogScript(maxPages, 1000, 0), {
-    document, URL, Event: class { constructor(readonly type: string) {} },
+    document, URL, window: { scrollTo: () => {
+      scrolled = true;
+      if (simulation?.appendAfterScroll && current < pages.length - 1) current += 1;
+    } }, Event: class { constructor(readonly type: string) {} },
     Date: class extends Date { static override now(): number { return simulatedNow; } },
     setTimeout: (callback: () => void, milliseconds: number) => {
       simulatedNow += milliseconds;
@@ -140,6 +155,45 @@ test("Mercaeleva: informa cada página antes de completar el catálogo", async (
 test("Mercaeleva: encuentra el botón de paginación aunque se renderice después de los productos", async () => {
   const result = await simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 2, {
     delayedPaginationMs: 25
+  });
+  assert.ok(result && typeof result === "object" && "pages" in result && Array.isArray(result.pages));
+  assert.equal(result.pages.length, 2);
+});
+
+test("Mercaeleva: muestra la paginación después de desplazar el listado", async () => {
+  const result = await simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 10, {
+    paginationAfterScroll: true
+  });
+  assert.ok(result && typeof result === "object" && "pages" in result && Array.isArray(result.pages));
+  assert.equal(result.pages.length, 2);
+});
+
+test("Mercaeleva: delega el reintento al navegador sin navegar dentro de la evaluación larga", async () => {
+  const result = await simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 10, {
+    retryRevealsPagination: true
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), { retry: true, pages: [], expectedTotal: 4 });
+});
+
+test("Mercaeleva: programa el clic del reintento después de devolver el control a DevTools", () => {
+  let scheduled: (() => void) | undefined;
+  let clicked = false;
+  const result = runInNewContext(buildMercaelevaRetryScript(), {
+    document: { querySelectorAll: () => [{
+      textContent: "Try again", disabled: false, getAttribute: () => null, click: () => { clicked = true; }
+    }] },
+    setTimeout: (callback: () => void) => { scheduled = callback; }
+  });
+  assert.equal(result, true);
+  assert.equal(clicked, false);
+  assert.ok(scheduled);
+  scheduled();
+  assert.equal(clicked, true);
+});
+
+test("Mercaeleva: recoge referencias nuevas al desplazarse aunque no aparezcan botones", async () => {
+  const result = await simulateCatalog([["M1", "M2"], ["M3", "M4"]], 4, 10, {
+    appendAfterScroll: true
   });
   assert.ok(result && typeof result === "object" && "pages" in result && Array.isArray(result.pages));
   assert.equal(result.pages.length, 2);

@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import { CAMPAIGN_PROVIDERS, isReferenceProviderSet } from "../../../contracts/campaign-providers.js";
-import { readFile, readdir } from "node:fs/promises";
+import { lstat, readFile, readdir } from "node:fs/promises";
 import { basename, dirname, join, resolve, sep } from "node:path";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
 import { readAppliedIntervention } from "../../../infrastructure/filesystem/interventions/intervention-derived.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
 import type { OfflinePreparation } from "../../../catalog/preparation/offline-document.js";
@@ -69,6 +70,30 @@ export const listCampaignRuns = async (rootDirectory: string, skipRunId?: string
   return reports;
 };
 
+const isConsolidatedLegacyOriginal = async (root: string, providerId: string, source: string): Promise<boolean> => {
+  try {
+    const [catalog, portable] = await Promise.all([
+      readCanonicalCatalog(source), readPortableOriginal(root, providerId)
+    ]);
+    if (catalog.providerId !== providerId || catalog.prefix !== portable.prefix) return false;
+    const portableDirectory = join(root, "catalogs", "providers", providerId, "original");
+    for (const name of [
+      `${catalog.prefix}-catalog.json`, `${catalog.prefix}-catalog.manifest.json`, `${catalog.prefix}-summary.json`
+    ]) {
+      const sourceFile = join(dirname(source), name);
+      const portableFile = join(portableDirectory, name);
+      const [sourceInfo, portableInfo] = await Promise.all([lstat(sourceFile), lstat(portableFile)]);
+      if (!sourceInfo.isFile() || sourceInfo.isSymbolicLink() ||
+        !portableInfo.isFile() || portableInfo.isSymbolicLink()) return false;
+      const [sourceContent, portableContent] = await Promise.all([readFile(sourceFile), readFile(portableFile)]);
+      if (!sourceContent.equals(portableContent)) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const discoverCampaign = async (rootDirectory: string, runId?: string, skipRunId?: string): Promise<CampaignDiscovery> => {
   const root = resolve(rootDirectory);
   let reports: readonly CampaignRun[];
@@ -87,7 +112,10 @@ export const discoverCampaign = async (rootDirectory: string, runId?: string, sk
       for (const directory of [join(root, "storage", "scraped", providerId)]) {
         try {
           for (const entry of await readdir(directory, { withFileTypes: true })) {
-            if (entry.isFile() && entry.name.endsWith("-catalog.json")) orphaned.push(join(directory, entry.name));
+            if (entry.isFile() && entry.name.endsWith("-catalog.json")) {
+              const source = join(directory, entry.name);
+              if (!await isConsolidatedLegacyOriginal(root, providerId, source)) orphaned.push(source);
+            }
           }
         } catch (error) { if (!isRecord(error) || error.code !== "ENOENT") throw error; }
       }
