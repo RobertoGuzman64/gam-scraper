@@ -134,11 +134,31 @@ export const cleanLegacyCatalogExcess = async (
   return candidates;
 };
 
+const redundantArchive = async (archive: string, current: string, prefix: string): Promise<boolean> => {
+  if (!await validArchive(archive, prefix)) return false;
+  const manifest: unknown = await readJson(join(archive, "manifest.json"));
+  if (!isRecord(manifest) || !Array.isArray(manifest.files)) return false;
+  for (const file of manifest.files) {
+    if (typeof file !== "string") return false;
+    const currentFile = join(current, file);
+    try {
+      const info = await lstat(currentFile);
+      if (!info.isFile() || info.isSymbolicLink()) return false;
+      const archived = await readFile(join(archive, file));
+      const active = await readFile(currentFile);
+      if (!archived.equals(active)) return false;
+    } catch (error) {
+      if (isRecord(error) && error.code === "ENOENT") return false;
+      throw error;
+    }
+  }
+  return true;
+};
+
 /**
- * Operational rollback archives are only redundant after the exact current
- * canonical publication is independently available and verified in catalogs/.
- * Keep active.json: it is still the metadata source of the active publication.
- * Unknown, pending or malformed history is never removed automatically.
+ * Remove only archives duplicated byte for byte in the current publication.
+ * A verified portable original does not contain older CSV, snapshots or
+ * summaries, so those archives must remain available for local recovery.
  */
 export const cleanConsolidatedCatalogHistory = async (
   workspace: string, providerId: string, dir: string, prefix: string
@@ -187,11 +207,13 @@ export const cleanConsolidatedCatalogHistory = async (
       throw new Error(`Historial no reconocido o en curso: ${entry.name}; no se limpia`);
     }
     const path = join(history, entry.name);
-    candidates.push({ path, bytes: await bytesInDirectory(path) });
+    if (await redundantArchive(path, dir, prefix)) {
+      candidates.push({ path, bytes: await bytesInDirectory(path) });
+    }
   }
   // No later file/manifest mutations may be accepted in a best-effort cleanup.
   for (const candidate of candidates) {
-    if (!await validArchive(candidate.path, prefix)) {
+    if (!await redundantArchive(candidate.path, dir, prefix)) {
       throw new Error(`Historial modificado durante la limpieza: ${candidate.path}`);
     }
   }

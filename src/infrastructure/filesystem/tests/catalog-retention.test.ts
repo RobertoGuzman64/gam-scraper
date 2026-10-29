@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -7,7 +7,8 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/scraping.js";
 import { writeOutputs } from "../../../pipeline/publication/publish.js";
 import { categoryScope } from "../../../catalog/quality.js";
-import { catalogArchiveExcess, cleanCatalogExcess } from "../catalog/catalog-retention.js";
+import { catalogArchiveExcess, cleanCatalogExcess, cleanConsolidatedCatalogHistory } from "../catalog/catalog-retention.js";
+import { consolidatePortableOriginal } from "../catalog/portable-original.js";
 
 const category: CategoryConfig = { key: "venta", name: "Venta", url: "https://test.example/venta" };
 const item = (reference: string, price: string): ProductRecord => ({
@@ -98,5 +99,32 @@ test("limpieza opcional de prefijos antiguos mantiene snapshots y archivos sin p
     await cleanLegacyCatalogExcess(dir, "inventario", false);
     await assert.rejects(readFile(oldCsv, "utf8"), { code: "ENOENT" });
     assert.equal(await readFile(oldSnapshot, "utf8"), "snapshot anterior");
+  });
+});
+
+test("la consolidación no elimina respaldos anteriores que no se conservan en catalogs/", async () => {
+  await withDir(async (root) => {
+    const dir = join(root, "storage", "scraped", "gomariz");
+    await mkdir(dir, { recursive: true });
+    const gomarizProducts = (price: string): CategoryScrapeResult => ({
+      ...products(price),
+      products: products(price).products.map((product) => ({ ...product, providerId: "gomariz" }))
+    });
+    await writeOutputs(dir, "inventario", [gomarizProducts("1000 €")], stamp(1), stamp(1));
+    await writeOutputs(dir, "inventario", [gomarizProducts("2000 €")], stamp(2), stamp(2));
+    await consolidatePortableOriginal(root, join(dir, "inventario-catalog.json"));
+    const existing = await archives(dir);
+    assert.equal(existing.length, 1);
+    const history = join(dir, ".history", "inventario");
+    const archived = join(history, existing[0]!);
+    assert.deepEqual(await cleanConsolidatedCatalogHistory(root, "gomariz", dir, "inventario"), []);
+    assert.equal((await readFile(join(archived, "inventario-all.csv"), "utf8")).includes("1000 €"), true);
+    assert.equal((await readFile(join(dir, "inventario-all.csv"), "utf8")).includes("2000 €"), true);
+    for (const file of await readdir(archived)) {
+      if (file !== "manifest.json") await copyFile(join(dir, file), join(archived, file));
+    }
+    assert.equal((await cleanConsolidatedCatalogHistory(root, "gomariz", dir, "inventario")).length, 1);
+    assert.deepEqual(await archives(dir), []);
+    assert.equal((await readFile(join(history, "active.json"), "utf8")).includes("complete"), true);
   });
 });
