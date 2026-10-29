@@ -1,0 +1,333 @@
+{
+  "startedAt": "2026-10-29T11:03:37.751Z",
+  "endedAt": "2026-10-29T11:08:37.072Z",
+  "quality": {
+    "status": "complete",
+    "reasons": [
+      "Advertencia: Número de serie P177B10585U asociado a referencias distintas en gam: 6682 (https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6682-2020-hyster-h35ft) / 6703 (https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6703-2020-hyster-h35ft)",
+      "Advertencia: Número de serie A976B08243T asociado a referencias distintas en gam: 6835 (https://online.gamrentals.com/es/carretillas-elevadoras-electricas-segunda-mano/6835-2019-yale-erp35vl) / 6858 (https://online.gamrentals.com/es/carretillas-elevadoras-electricas-segunda-mano/6858-2019-yale-erp35vl)",
+      "Advertencia: Número de serie NRXL3AALS10000101 asociado a referencias distintas en gam: 6807 (https://online.gamrentals.com/es/motocicletas-electricas-segunda-mano/6807-zero-motorcycles-ds-144) / 6806 (https://online.gamrentals.com/es/furgonetas-electricas-de-ocasion/6806-musoshi-pop-up-mini)"
+    ],
+    "published": true
+  },
+  "artifacts": {
+    "csvSha256": "6a9afe0ee2d095c6cb66b9e9803e288beca03630010e3fe2f5455053830cc052",
+    "preparationSha256": "c819d6844cdfcc2289c42521668509da23afd879a5b6033e9df4c7d9696dad87",
+    "catalogSha256": "7d191afb46d31b71f33a068c614aeb3cd98c3df81ff797ac8d224300e50dc2b4"
+  },
+  "totals": {
+    "categories": 15,
+    "discoveredProductUrls": 1796,
+    "scrapedProductsRaw": 1796,
+    "scrapedProductsByCategorySum": 1796,
+    "scrapedProducts": 984,
+    "failures": 0,
+    "dedupe": {
+      "withinCategories": {
+        "kept": 1796,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      },
+      "globalAll": {
+        "kept": 984,
+        "removed": 812,
+        "byReason": {
+          "reference": 812,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    }
+  },
+  "categories": [
+    {
+      "key": "elevacion",
+      "name": "Elevación",
+      "url": "https://online.gamrentals.com/es/8-plataformas-elevadoras-segunda-mano",
+      "discoveredProductUrls": 89,
+      "expectedProductUrls": 89,
+      "scrapedProductsRaw": 89,
+      "scrapedProducts": 89,
+      "failures": 0,
+      "dedupe": {
+        "kept": 89,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    },
+    {
+      "key": "manutencion",
+      "name": "Manutención",
+      "url": "https://online.gamrentals.com/es/9-maquinaria-manutencion-segunda-mano",
+      "discoveredProductUrls": 115,
+      "expectedProductUrls": 115,
+      "scrapedProductsRaw": 115,
+      "scrapedProducts": 115,
+      "failures": 0,
+      "dedupe": {
+        "kept": 115,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    },
+    {
+      "key": "manipulacion",
+      "name": "Manipulación",
+      "url": "https://online.gamrentals.com/es/10-maquinaria-manipulacion-segunda-mano",
+      "discoveredProductUrls": 5,
+      "expectedProductUrls": 5,
+      "scrapedProductsRaw": 5,
+      "scrapedProducts": 5,
+      "failures": 0,
+      "dedupe": {
+        "kept": 5,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    },
+    {
+      "key": "energia",
+      "name": "Energía",
+      "url": "https://online.gamrentals.com/es/11-maquinaria-energia-segunda-mano",
+      "discoveredProductUrls": 1,
+      "expectedProductUrls": 1,
+      "scrapedProductsRaw": 1,
+      "scrapedProducts": 1,
+      "failures": 0,
+      "dedupe": {
+        "kept": 1,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    },
+    {
+      "key": "otros",
+      "name": "Otros equipos",
+      "url": "https://online.gamrentals.com/es/12-resto-maquinaria-segunda-mano",
+      "discoveredProductUrls": 13,
+      "expectedProductUrls": 13,
+      "scrapedProductsRaw": 13,
+      "scrapedProducts": 13,
+      "failures": 0,
+      "dedupe": {
+        "kept": 13,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    },
+    {
+      "key": "movilidad",
+      "name": "Vehículos de ocasión",
+      "url": "https://online.gamrentals.com/es/32-vehiculos-segunda-mano",
+      "discoveredProductUrls": 5,
+      "expectedProductUrls": 5,
+      "scrapedProductsRaw": 5,
+      "scrapedProducts": 5,
+      "failures": 0,
+      "dedupe": {
+        "kept": 5,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    },
+    {
+      "key": "maquinaria",
+      "name": "Maquinaria de ocasión",
+      "url": "https://online.gamrentals.com/es/3-maquinaria-segunda-mano",
+      "discoveredProductUrls": 253,
+      "expectedProductUrls": 253,
+      "scrapedProductsRaw": 253,
+      "scrapedProducts": 253,
+      "failures": 0,
+      "dedupe": {
+        "kept": 253,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    },
+    {
+      "key": "elevacion-nueva",
+      "name": "Plataformas elevadoras nuevas",
+      "url": "https://online.gamrentals.com/es/33-plataformas-elevadoras-nuevas",
+      "discoveredProductUrls": 120,
+      "expectedProductUrls": 120,
+      "scrapedProductsRaw": 120,
+      "scrapedProducts": 120,
+      "failures": 0,
+      "dedupe": {
+        "kept": 120,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    },
+    {
+      "key": "carretillas-nuevas",
+      "name": "Carretillas elevadoras nuevas",
+      "url": "https://online.gamrentals.com/es/34-carretillas-elevadoras-nuevas",
+      "discoveredProductUrls": 305,
+      "expectedProductUrls": 305,
+      "scrapedProductsRaw": 305,
+      "scrapedProducts": 305,
+      "failures": 0,
+      "dedupe": {
+        "kept": 305,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    },
+    {
+      "key": "apiladores-nuevos",
+      "name": "Apiladores nuevos",
+      "url": "https://online.gamrentals.com/es/35-maquinas-apiladoras-nuevas",
+      "discoveredProductUrls": 59,
+      "expectedProductUrls": 59,
+      "scrapedProductsRaw": 59,
+      "scrapedProducts": 59,
+      "failures": 0,
+      "dedupe": {
+        "kept": 59,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    },
+    {
+      "key": "otros-nuevos",
+      "name": "Otros equipos nuevos",
+      "url": "https://online.gamrentals.com/es/37-otra-maquinaria-nueva",
+      "discoveredProductUrls": 49,
+      "expectedProductUrls": 49,
+      "scrapedProductsRaw": 49,
+      "scrapedProducts": 49,
+      "failures": 0,
+      "dedupe": {
+        "kept": 49,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    },
+    {
+      "key": "portaferetros",
+      "name": "Portaféretros nuevos",
+      "url": "https://online.gamrentals.com/es/784-portaferetros-nuevos",
+      "discoveredProductUrls": 9,
+      "expectedProductUrls": 9,
+      "scrapedProductsRaw": 9,
+      "scrapedProducts": 9,
+      "failures": 0,
+      "dedupe": {
+        "kept": 9,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    },
+    {
+      "key": "limpieza-barredoras",
+      "name": "Barredoras industriales nuevas",
+      "url": "https://online.gamrentals.com/es/152-barredoras-industriales-nuevas",
+      "discoveredProductUrls": 16,
+      "expectedProductUrls": 16,
+      "scrapedProductsRaw": 16,
+      "scrapedProducts": 16,
+      "failures": 0,
+      "dedupe": {
+        "kept": 16,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    },
+    {
+      "key": "limpieza-fregadoras",
+      "name": "Fregadoras industriales nuevas",
+      "url": "https://online.gamrentals.com/es/153-fregadoras-industriales-nuevas",
+      "discoveredProductUrls": 35,
+      "expectedProductUrls": 35,
+      "scrapedProductsRaw": 35,
+      "scrapedProducts": 35,
+      "failures": 0,
+      "dedupe": {
+        "kept": 35,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    },
+    {
+      "key": "marcas-nuevas",
+      "name": "Maquinaria nueva por marcas",
+      "url": "https://online.gamrentals.com/es/38-marcas",
+      "discoveredProductUrls": 722,
+      "expectedProductUrls": 722,
+      "scrapedProductsRaw": 722,
+      "scrapedProducts": 722,
+      "failures": 0,
+      "dedupe": {
+        "kept": 722,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "providerId": "gomariz",
+  "prefix": "scrape-gomariz",
+  "scope": "f226a9fd77182657",
+  "startedAt": "2026-10-29T11:08:39.249Z",
+  "endedAt": "2026-10-29T11:10:37.498Z",
+  "productCount": 143,
+  "catalogSha256": "52cd6523ac4150f4059ca8c50147ad3ecddf6c7f69daebe5dd2b79f113f594e6"
+}
