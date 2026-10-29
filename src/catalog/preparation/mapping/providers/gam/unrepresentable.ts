@@ -176,9 +176,49 @@ const unrepresentableOrderPickerVariant = (record: ProductRecord, attribute: Att
   return attribute.unit_option === "kg" && specs["Peso (kg)"] === undefined;
 };
 
+const gamSourceFamily = (record: ProductRecord): string | null => {
+  try {
+    const parsed = new URL(record.url);
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    return parsed.hostname === "online.gamrentals.com" && parts[0] === "es" ? parts[1] ?? null : null;
+  } catch {
+    return null;
+  }
+};
+
+const unrepresentableTecnacarLoad = (record: ProductRecord): boolean => {
+  if (record.condition !== "Nuevo" || !["marcas-nuevas", "otros-nuevos"].includes(record.categoryKey) ||
+    fold(record.brand ?? "") !== "tecna" || fold(String(record.specs?.["Marca"] ?? "")) !== "tecna" ||
+    !["tractores-electricos-de-carga-tecnacar", "tractores-arrastre-nuevos"].includes(gamSourceFamily(record) ?? "") ||
+    record.specs?.["Capacidad de carga (kg)"] !== "1500 / 2000 KG" ||
+    record.specs?.["Capacidad de carga"] !== undefined) return false;
+  const model = fold(record.model ?? "").replace(/[^a-z0-9]/g, "");
+  const published = fold(String(record.specs?.["Modelo"] ?? "")).replace(/[^a-z0-9]/g, "");
+  if (!/^vca4(?:12|15|20|25)$/.test(model) || published !== model) return false;
+  return [record.title, record.shortDescription].every((part) =>
+    fold(part ?? "").replace(/[^a-z0-9]/g, "").includes(model)) &&
+    /\btractor\s+electrico\s+de\s+arrastre\b/.test(fold(record.shortDescription ?? ""));
+};
+
+const unrepresentableYalePlatform = (record: ProductRecord): boolean =>
+  record.condition === "Nuevo" && record.categoryKey === "marcas-nuevas" &&
+  fold(record.brand ?? "") === "yale" && fold(String(record.specs?.["Marca"] ?? "")) === "yale" &&
+  fold(record.model ?? "") === "ms20xd" && fold(String(record.specs?.["Modelo"] ?? "")) === "ms20xd" &&
+  gamSourceFamily(record) === "apiladores-yale" &&
+  [record.title, record.shortDescription, record.longDescription].every((part) =>
+    fold(part ?? "").includes("ms20xd")) &&
+  record.specs?.["Altura Plataforma"] === "4.8mm metros" &&
+  record.specs?.["Altura de plataforma"] === undefined &&
+  record.specs?.["Altura plataforma (mm)"] === undefined &&
+  record.specs?.["Altura plataforma (m)"] === undefined;
+
 export const gamConfirmedAbsentScalar = (record: ProductRecord, attribute: Attribute): boolean => {
   if (record.providerId !== "gam") return false;
   if (unrepresentableOrderPickerVariant(record, attribute)) return true;
+  if (attribute.name === "Capacidad de carga" && attribute.type === "NUMBER" && attribute.unit_option === "kg" &&
+    unrepresentableTecnacarLoad(record)) return true;
+  if (attribute.name === "Altura de plataforma" && attribute.type === "NUMBER" && attribute.unit_option === "m" &&
+    unrepresentableYalePlatform(record)) return true;
   if (attribute.name === "Radio de giro" && attribute.type === "NUMBER" && attribute.unit_option === "mm") {
     return unrepresentableTurningRadius(record);
   }

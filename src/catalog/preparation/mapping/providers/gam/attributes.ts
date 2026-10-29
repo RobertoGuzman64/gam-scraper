@@ -184,7 +184,7 @@ export const convertGamCandidate = (
 ): string | number | boolean | null => {
   if (attribute.name === "Tipo de mástil" && attribute.type === "SELECT") return normalizeGamMast(fallback);
   if (attribute.name === "Capacidad de carga" && attribute.type === "NUMBER" && attribute.unit_option === "kg") {
-    return gamHandlingReconciledCapacity(record) ?? fallback;
+    return gamHandlingReconciledCapacity(record) ?? fallback ?? gamCompoundMeasure(record, attribute, candidate);
   }
   if (attribute.name === "Ancho de trabajo" && attribute.unit_option === "mm" && typeof fallback === "number") {
     return gamCleaningCorrectedWidth(record) ?? Math.round(fallback * 1000) / 1000;
@@ -204,5 +204,5 @@ export const convertGamCandidate = (
     const angle = candidate.value.trim().match(/^(\d+(?:[.,]\d+)?)\s*[°º]$/);
     return angle?.[1] ? numberToken(angle[1]) : fallback;
   }
-  return fallback ?? gamCompoundMeasure(attribute, candidate);
+  return fallback ?? gamCompoundMeasure(record, attribute, candidate);
 };
