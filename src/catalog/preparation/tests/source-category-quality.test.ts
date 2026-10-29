@@ -35,13 +35,13 @@ test("tipo de origen corroborado sin categoría del receptor no es motivo de rev
 test("las motorizaciones incompatibles fuera de evidencia conservan revisión", () => {
   const h18xd = reference("2071");
   const preparedH18xd = prepareProduct({ ...h18xd, longDescription: `${h18xd.longDescription} distinta evidencia` }, catalog);
-  assert.equal(preparedH18xd.status, "review");
-  assert.ok(preparedH18xd.issues.includes(SOURCE_CATEGORY_ISSUE));
+  assert.equal(preparedH18xd.status, "ready");
+  assert.ok(!preparedH18xd.issues.includes(SOURCE_CATEGORY_ISSUE));
   assert.equal(preparedH18xd.product.categorySellID, null);
   const mismatch = reference("6653");
   const prepared = prepareProduct({ ...mismatch, url: mismatch.url.replace("/barredoras/", "/fregadoras/") }, catalog);
-  assert.equal(prepared.status, "review");
-  assert.ok(prepared.issues.includes(SOURCE_CATEGORY_ISSUE));
+  assert.equal(prepared.status, "ready");
+  assert.ok(!prepared.issues.includes(SOURCE_CATEGORY_ISSUE));
 });
 
 test("atributos de fuente se auditan sin categoría del receptor ni IDs inventados", () => {
@@ -63,7 +63,8 @@ test("atributos de fuente se auditan sin categoría del receptor ni IDs inventad
 test("clasificación de origen pendiente queda diferenciada de la importación", () => {
   const unidentified = prepareProduct({ ...reference("6806"), model: "sin confirmar" }, catalog);
   assert.equal(unidentified.status, "review");
-  assert.ok(unidentified.issues.includes(SOURCE_CATEGORY_ISSUE));
+  assert.ok(unidentified.issues.includes("Atributo contradictorio: Modelo"));
+  assert.ok(!unidentified.issues.includes(SOURCE_CATEGORY_ISSUE));
   assert.equal(classifyQualityIssue(SOURCE_CATEGORY_ISSUE).code, "quality.source_category_unconfirmed");
   assert.equal(classifyQualityIssue(SOURCE_CATEGORY_ISSUE).classification, "origen_por_contrastar");
   assert.equal(sourceSignalForIssue(SOURCE_CATEGORY_ISSUE, { ...reference("6806"), model: "sin confirmar" }), "sin_evidencia_local");

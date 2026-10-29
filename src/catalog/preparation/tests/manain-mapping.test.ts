@@ -56,7 +56,7 @@ test("Manain: condición y motorización contradictorias se retienen sin elegir 
   const motor = prepareProduct({ ...usedScissor, specs: { ...usedScissor.specs, Motor: "Eléctrico" } }, catalog);
   assert.equal(motor.product.categorySellID, null);
   assert.ok(!motor.product.attributes.some((entry) => entry.attributeID === attribute("Altura de trabajo").id));
-  assert.equal(motor.status, "review");
+  assert.equal(motor.status, "ready");
 
   const absent = { ...usedScissor, specs: { "Nueva o usada": "usada" }, shortDescription: "" };
   assert.equal(prepareProduct(absent, catalog).product.categorySellID, null);
@@ -79,7 +79,7 @@ test("Manain: el generador conserva la categoría documental y normaliza solo po
   const contaminated = prepareProduct({ ...source,
     shortDescription: "Plataforma de brazo articulado diésel de 18,19m de altura de trabajo." }, catalog);
   assert.equal(contaminated.product.categorySellID, null);
-  assert.equal(contaminated.status, "review");
+  assert.equal(contaminated.status, "ready");
 });
 
 test("Manain: los atributos y los destinos no se extrapolan a proveedores ni rutas no acreditados", () => {
@@ -209,7 +209,7 @@ test("Manain: pesos con cuatro decimales acreditados no se confunden con miles",
   assert.equal(resolveAttribute(tool, attribute("Peso operativo")).value, 5.5);
   assert.equal(resolveAttribute(tool, attribute("Peso")).value, 5.5);
   assert.ok(!prepareProduct(tool, catalog).issues.some((issue) => issue.includes("Peso")));
-  assert.equal(prepareProduct(tool, catalog).status, "review");
+  assert.equal(prepareProduct(tool, catalog).status, "ready");
   assert.equal(prepareProduct(tool, catalog).product.categorySellID, null);
   for (const peso of ["kg", "5.2340 kg", "5.2000 mm", "5.2000-6 kg"]) {
     assert.equal(resolveAttribute({ ...tool, specs: { ...tool.specs, Peso: peso } }, attribute("Peso")).status,

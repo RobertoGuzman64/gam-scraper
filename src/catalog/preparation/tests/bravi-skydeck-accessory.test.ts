@@ -26,7 +26,7 @@ test("SKY DECK se identifica como accesorio Bravi sin inventar categoría ni atr
   assert.deepEqual(skyDeck, original);
 });
 
-test("otras identidades y cualquier evidencia SKY DECK alterada mantienen revisión", () => {
+test("otras identidades y cualquier evidencia SKY DECK alterada no reciben categoría", () => {
   const variants: readonly ProductRecord[] = [
     { ...skyDeck, providerId: "mercaeleva" },
     { ...skyDeck, categoryKey: "elevacion" },
@@ -46,6 +46,6 @@ test("otras identidades y cualquier evidencia SKY DECK alterada mantienen revisi
   ];
   for (const [index, variant] of variants.entries()) {
     assert.equal(sourceCategoryQualityIssue(variant), SOURCE_CATEGORY_ISSUE, String(index));
-    assert.equal(prepareProduct(variant, catalog).status, "review", String(index));
+    assert.equal(prepareProduct(variant, catalog).product.categorySellID, null, String(index));
   }
 });

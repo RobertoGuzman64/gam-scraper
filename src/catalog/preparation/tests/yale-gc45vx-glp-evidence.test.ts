@@ -63,7 +63,7 @@ test("cotejo de fuente exacta sin extrapolar a identidades o fichas modificadas"
   ];
   for (const [index, variant] of variants.entries()) {
     assert.strictEqual(reconcileGamVerifiedYaleGc45vxLpg(variant), variant, String(index));
-    assert.equal(prepareProduct(variant, catalog).status, "review", String(index));
+    assert.notEqual(prepareProduct(variant, catalog).product.categorySellID, catalog.categories.find((item) => item.slug === "carretilla-elevadora-glp")?.id, String(index));
   }
   const corrected = reconcileGamVerifiedYaleGc45vxLpg(record);
   assert.equal(isGamVerifiedYaleGc45vxLpg({ ...corrected, specs: { ...record.specs } }), false);

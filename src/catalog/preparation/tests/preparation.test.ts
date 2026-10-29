@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { prepareProduct } from "../prepare.js";
+import { prepareProduct, prepareSourceProduct } from "../prepare.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { base } from "./preparation-fixtures.js";
 
@@ -56,9 +56,9 @@ test("preparación conserva la descripción corta publicada aunque falte o coinc
 
 test("la categoría genérica venta no se asigna arbitrariamente", async () => {
   const record = prepareProduct({ ...base, categoryKey: "venta" }, await loadImportCatalog());
-  assert.equal(record.status, "review");
+  assert.equal(record.status, "ready");
   assert.equal(record.product.categorySellID, null);
-  assert.ok(record.issues.some((issue) => issue.includes("Tipo de máquina de origen sin confirmar")));
+  assert.ok(record.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")));
 });
 
 test("no publica como categorías de ocasión ni la raíz ni ramas de maquinaria nueva", async () => {
@@ -66,7 +66,8 @@ test("no publica como categorías de ocasión ni la raíz ni ramas de maquinaria
   for (const categoryKey of ["maquinaria", "nuevo", "ocasion", "plataforma-elevadora-segunda-mano"]) {
     const record = prepareProduct({ ...base, categoryKey }, catalog);
     assert.equal(record.product.categorySellID, null, categoryKey);
-    assert.equal(record.status, "review", categoryKey);
+    assert.equal(record.status, "ready", categoryKey);
+    assert.ok(record.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")), categoryKey);
   }
 });
 
@@ -120,5 +121,26 @@ test("los formatos de precio de los tres proveedores se convierten sin adivinar 
       assert.equal(product.status, "ready");
       assert.deepEqual(product.issues, []);
     }
+  }
+});
+
+test("la categoría ausente no provoca Review para ningún proveedor ni altera la validación del receptor", async () => {
+  const catalog = await loadImportCatalog();
+  for (const providerId of ["gam", "gomariz", "mercaeleva", "manain"]) {
+    const record = {
+      ...base,
+      providerId,
+      categoryKey: "",
+      categoryName: "",
+      specs: {}
+    };
+    const canonical = prepareSourceProduct(record);
+    const commercial = prepareProduct(record, catalog);
+    assert.equal(canonical.status, "ready", providerId);
+    assert.deepEqual(canonical.issues, [], providerId);
+    assert.equal(commercial.status, "ready", providerId);
+    assert.deepEqual(commercial.issues, [], providerId);
+    assert.equal(commercial.product.categorySellID, null, providerId);
+    assert.ok(commercial.importIssues?.createMany.includes("Categoría no válida para create/many"), providerId);
   }
 });

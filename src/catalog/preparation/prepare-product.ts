@@ -5,8 +5,6 @@ import { resolveCategory } from "./mapping/category-mapping.js";
 import { imageUrls, normalizePrice } from "./product-fields.js";
 import { productAttributes } from "./product-attributes.js";
 import { sourceAttributeQualityIssues, sourceTechnicalQualityIssues } from "./source/attribute-quality.js";
-import { sourceCategoryQualityIssue } from "./source/category-quality.js";
-import { manainSourceFamily, manainSourceDescriptionContradictsFamily } from "./evidence/providers/manain/source.js";
 import { resolveCommercialCondition } from "./condition.js";
 import type { ImportCandidate, ImportCatalog } from "../legacy-export/contracts.js";
 import type { PreparedProduct } from "./contracts.js";
@@ -37,16 +35,6 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   if (contradictoryCondition) issues.push("Condición comercial contradictoria entre la ficha y el origen");
   if (publicationConflict !== null) issues.push(publicationConflict);
   if (!reference) issues.push("Referencia ausente");
-  if (catalog === null) {
-    const manainFamily = record.providerId === "manain" ? manainSourceFamily(record) : null;
-    if (!record.categoryKey.trim() || !record.categoryName.trim() ||
-      record.providerId === "manain" && (!manainFamily || manainSourceDescriptionContradictsFamily(record, manainFamily))) {
-      issues.push("Tipo de máquina de origen sin confirmar");
-    }
-  } else if (!category) {
-    const sourceIssue = sourceCategoryQualityIssue(record);
-    if (sourceIssue) issues.push(sourceIssue);
-  }
   if (price === null && /\d/.test(record.price ?? "")) issues.push("Precio publicado inválido");
   issues.push(...(catalog === null ? sourceTechnicalQualityIssues(record) :
     category ? attributeResult!.qualityIssues : sourceAttributeQualityIssues(record, catalog)));

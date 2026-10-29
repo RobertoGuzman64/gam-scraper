@@ -70,7 +70,7 @@ test("Mercaeleva: condición explícita y Estado publicado concuerdan o bloquean
     const prepared = prepareProduct({ ...mercaeleva, specs: { Estado: state } }, catalog);
     assert.equal(prepared.product.condition, "Nuevo", state);
     assert.equal(prepared.product.categorySellID, null, state);
-    assert.equal(prepared.status, "review", state);
+    assert.equal(prepared.status, "ready", state);
     assert.ok(!prepared.issues.some((issue) => issue.includes("Condición comercial")), state);
   }
   for (const state of ["Usado", "Usada", "Segunda mano"]) {
@@ -100,7 +100,7 @@ test("Gomariz y proveedores desconocidos no reciben condición sin evidencia", a
   for (const providerId of ["gomariz", "otro-proveedor"]) {
     const prepared = prepareProduct({ ...gam, providerId, condition: null, categoryKey: "venta" }, catalog);
     assert.equal(prepared.product.condition, null, providerId);
-    assert.equal(prepared.status, "review", providerId);
+    assert.equal(prepared.status, "ready", providerId);
     assert.ok(!prepared.issues.some((issue) => issue.includes("Condición comercial")));
   }
 });
@@ -157,8 +157,8 @@ test("sin condición fiable no se asigna categoría comercial de ocasión ni de 
   assert.equal(unknown.product.condition, null);
   assert.equal(unknown.product.categorySellID, null);
   assert.equal(unknown.product.category, null);
-  assert.equal(unknown.status, "review");
-  assert.ok(unknown.issues.includes("Tipo de máquina de origen sin confirmar"));
+  assert.equal(unknown.status, "ready");
+  assert.deepEqual(unknown.issues, []);
 
   const contradictory = prepareProduct({ ...usedGam, condition: "Nuevo" }, catalog);
   assert.equal(contradictory.product.condition, null);

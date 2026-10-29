@@ -48,6 +48,6 @@ test("variantes de identidad, modelo, documentación y origen quedan sin confirm
   ];
   for (const [index, variant] of variants.entries()) {
     assert.equal(sourceCategoryQualityIssue(variant), SOURCE_CATEGORY_ISSUE, String(index));
-    assert.equal(prepareProduct(variant, catalog).status, "review", String(index));
+    assert.equal(prepareProduct(variant, catalog).product.categorySellID, null, String(index));
   }
 });

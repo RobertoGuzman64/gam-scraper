@@ -84,13 +84,8 @@ test("ambigüedad de familia y motorización impide equivalencias aproximadas", 
   for (const source of cases) {
     const prepared = prepareProduct(source, catalog);
     assert.equal(prepared.product.categorySellID, null, source.title ?? "");
-    if (["Apilador semi eléctrico Logitrans", "Plataforma elevadora Bravi"].includes(source.title ?? "")) {
-      assert.equal(prepared.status, "ready", source.title ?? "");
-      assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")));
-    } else {
-      assert.equal(prepared.status, "review", source.title ?? "");
-      assert.ok(prepared.issues.includes("Tipo de máquina de origen sin confirmar"), source.title ?? "");
-    }
+    assert.equal(prepared.status, "ready", source.title ?? "");
+    assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")));
   }
 });
 

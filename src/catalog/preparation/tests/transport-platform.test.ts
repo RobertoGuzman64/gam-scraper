@@ -47,7 +47,7 @@ test("matrícula, serie, marca, modelo, fuente y evidencia vial son imprescindib
   ];
   for (const [index, record] of altered.entries()) {
     assert.equal(sourceCategoryQualityIssue(record), SOURCE_CATEGORY_ISSUE, String(index));
-    assert.equal(prepareProduct(record, catalog).status, "review", String(index));
+    assert.equal(prepareProduct(record, catalog).product.categorySellID, null, String(index));
   }
 });
 

@@ -63,7 +63,7 @@ test("el cotejo exacto rechaza alteraciones de identidad, descripciones o ficha 
   ];
   for (const [index, variant] of variants.entries()) {
     assert.strictEqual(reconcileGamVerifiedYaleGc40vxLpg(variant), variant, String(index));
-    assert.equal(prepareProduct(variant, catalog).status, "review", String(index));
+    assert.notEqual(prepareProduct(variant, catalog).product.categorySellID, catalog.categories.find((item) => item.slug === "carretilla-elevadora-glp")?.id, String(index));
   }
   assert.equal(isGamVerifiedYaleGc40vxLpg({ ...reconcileGamVerifiedYaleGc40vxLpg(record), specs: { ...record.specs } }), false);
   for (const item of source.products) {

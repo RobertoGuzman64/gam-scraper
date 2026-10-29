@@ -74,5 +74,6 @@ test("Gomariz: una familia sin motor inequívoco conserva categoría pendiente",
   }, catalog);
   assert.equal(ambiguous.product.condition, "Segunda_Mano");
   assert.equal(ambiguous.product.categorySellID, null);
-  assert.ok(ambiguous.issues.includes("Tipo de máquina de origen sin confirmar"));
+  assert.equal(ambiguous.status, "ready");
+  assert.ok(ambiguous.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")));
 });

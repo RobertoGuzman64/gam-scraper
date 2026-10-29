@@ -53,7 +53,7 @@ test("Mercaeleva: rechaza modelos de energía y familia contradictorias", () => 
   assert.equal(slug({ ...original, providerId: "gomariz" }), null);
   const unknown = prepareProduct({ ...original, condition: null, specs: {} }, catalog);
   assert.equal(unknown.product.condition, null);
-  assert.equal(unknown.status, "review");
+  assert.equal(unknown.status, "ready");
 });
 
 test("Mercaeleva: extrae solo texto publicado y conserva íntegra la descripción general", () => {

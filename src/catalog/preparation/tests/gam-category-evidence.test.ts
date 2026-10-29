@@ -84,7 +84,7 @@ test("carretilla usada mal ubicada: exige tres señales eléctricas y evita conf
   assert.equal(slug({ ...used, condition: null }), null);
 });
 
-test("sin categoría compatible o evidencia suficiente mantiene review", () => {
+test("sin categoría compatible o evidencia suficiente no fuerza destino comercial", () => {
   const cases = [
     machine("modula", "Almacén automático vertical MODULA", "Almacén vertical", "Solución logística"),
     machine("ormig", "Grúa eléctrica ORMIG", "Grúa eléctrica", "Grúa de gran tonelaje"),
@@ -97,12 +97,8 @@ test("sin categoría compatible o evidencia suficiente mantiene review", () => {
   for (const source of cases) {
     const prepared = prepareProduct(source, catalog);
     assert.equal(prepared.product.categorySellID, null, source.title ?? "");
-    if (source.title?.includes("híbrida")) {
-      assert.equal(prepared.status, "ready");
-      assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")));
-    } else {
-      assert.ok(prepared.issues.includes("Tipo de máquina de origen sin confirmar"), source.title ?? "");
-    }
+    assert.equal(prepared.status, "ready", source.title ?? "");
+    assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")));
   }
 });
 
