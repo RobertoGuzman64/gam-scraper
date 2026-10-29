@@ -12,11 +12,11 @@ Que dos máquinas compartan categoría, marca o modelo no significa que deban te
 
 ## Procedencia y componentes
 
-- **Entrada:** `findCampaignBaseline` (`src/pipeline/campaign/reference-comparison.ts`) busca una entrega íntegra conservada y verifica su procedencia por `runId`; si no existe, consulta `data/reference/` como compatibilidad. `--catalogo <ruta>` (repetible) utiliza `readCanonicalCatalog` y exige manifiesto y resumen verificables para cada original; no admite CSV parciales.
+- **Entrada:** `findCampaignBaseline` (`src/pipeline/campaign/reference/compare.ts`) busca una entrega íntegra conservada y verifica su procedencia por `runId`; si no existe, consulta `data/reference/` como compatibilidad. `--catalogo <ruta>` (repetible) utiliza `readCanonicalCatalog` y exige manifiesto y resumen verificables para cada original; no admite CSV parciales.
 - **Universo:** todos los `ProductRecord` originales de la fuente elegida, también los excluidos de la entrega editorial. Se conservan `providerId`, `categoryKey`, `categoryName`, identidad, URL, descripciones y `specs`.
 - **Preparación temporal:** `prepareSourceProduct` calcula en memoria el estado técnico y las descripciones preparadas. No consulta snapshots comerciales ni asigna `categorySellID` o `attributeID`.
-- **Análisis:** `analyzeSourceContentGaps` (`src/tools/catalog-content-gaps.ts`) agrupa por categoría de origen, con desglose opcional por marca o modelo, y calcula la cobertura de descripciones y claves técnicas observadas.
-- **CLI:** `src/cli/catalog-content-gaps.ts` presenta resumen o JSON por `stdout`. La procedencia identifica el `runId` de la entrega conservada o las rutas de los canónicos explícitos; incluye la huella de reglas técnicas (`rulesSha256`).
+- **Análisis:** `analyzeSourceContentGaps` (`src/catalog/diagnostics/content-gaps-source.ts`) agrupa por categoría de origen, con desglose opcional por marca o modelo, y calcula la cobertura de descripciones y claves técnicas observadas.
+- **CLI:** `src/cli/commands/catalog/catalog-content-gaps.ts` presenta resumen o JSON por `stdout`. La procedencia identifica el `runId` de la entrega conservada o las rutas de los canónicos explícitos; incluye la huella de reglas técnicas (`rulesSha256`).
 
 La consulta usa las **reglas técnicas actuales**, no una preparación guardada cuando se extrajo el catálogo. Los recuentos `ready/review` del universo expresan ese diagnóstico recalculado; no cambian los estados de una campaña.
 

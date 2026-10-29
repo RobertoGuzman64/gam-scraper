@@ -20,10 +20,10 @@ Una instalación nueva no requiere ejecutar migraciones de nombres. Si se actual
 
 ## Requisitos e instalación
 
-- Node.js `>=18.18.0` y npm.
+- Node.js `>=20.18.1` y npm.
 - Acceso HTTPS a los portales.
 - Permisos de escritura en `storage/`.
-- Chrome o Chromium accesible desde el sistema para el mecanismo headless de Mercaeleva, cuando se necesite; se pueden definir `CHROME_PATH` o `CHROMIUM_PATH`.
+- Chrome o Chromium (o Microsoft Edge compatible) accesible desde el sistema para Mercaeleva y Manain; `CHROME_PATH` o `CHROMIUM_PATH` permiten indicar el ejecutable. Mercaeleva utiliza navegador headless; Manain abre una ventana visible y puede requerir verificación humana en el portal.
 
 ```powershell
 npm ci

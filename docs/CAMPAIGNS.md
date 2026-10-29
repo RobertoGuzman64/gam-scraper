@@ -12,7 +12,7 @@ La operación habitual no requiere recuperar JSON históricos, copiar SHA, adivi
 
 ## Instalación inicial
 
-Se necesita Node.js >=18.18.0, npm, acceso a los portales, permisos de escritura y Chrome/Chromium para el extractor que lo requiera. En una copia nueva:
+Se necesita Node.js >=20.18.1, npm, acceso a los portales, permisos de escritura y un navegador Chrome/Chromium o Edge compatible para Mercaeleva y Manain. Mercaeleva usa navegador headless; Manain inicia una ventana visible que puede requerir verificación humana. En una copia nueva:
 
 ```powershell
 npm ci

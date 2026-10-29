@@ -34,7 +34,7 @@ Los identificadores propios del proveedor, si existen, se conservan como datos d
 
 ## Compatibilidad comercial heredada
 
-El repositorio todavía contiene `npm run exportar`, `pipeline/export/`, infraestructura de XLSX y snapshots `data/category/` y `data/import/`. Son piezas **heredadas**, separadas del flujo canónico vigente. El exportador puede procesar preparaciones comerciales históricas conforme a sus validaciones, pero **rechaza expresamente las preparaciones canónicas actuales sin asignación comercial**.
+El repositorio todavía contiene `npm run exportar`, `src/catalog/legacy-export/` y `src/pipeline/legacy-export/`, infraestructura de XLSX y snapshots `data/category/` y `data/import/`. Son piezas **heredadas**, separadas del flujo canónico vigente. El exportador puede procesar preparaciones comerciales históricas conforme a sus validaciones, pero **rechaza expresamente las preparaciones canónicas actuales sin asignación comercial**.
 
 No utilizar estos módulos como continuación automática de `npm run entregar`, ni interpretar un Excel o un JSON para `create/many` como artefacto de campaña. Cualquier uso excepcional requiere validar el contrato real del backend con sus responsables; los snapshots locales no acreditan el estado de la base de datos desplegada. No convertir el trabajo de compatibilidad en una dependencia del scraper.
 

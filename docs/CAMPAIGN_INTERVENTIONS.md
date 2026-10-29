@@ -8,7 +8,7 @@
 
 Una intervención es una corrección **puntual y acreditada**, decidida por una persona tras contrastar la ficha con la fuente vigente. No es un formateador general, no completa datos por intuición y **no se ejecuta automáticamente al extraer, revisar o finalizar**. Si el problema se repite en numerosas fichas, corregir el extractor, mapeador o formateador responsable.
 
-El contrato vigente es `ManualInterventionProposal` en `src/manual-interventions/contracts.ts`. Admite estos campos, y ningún otro:
+El contrato vigente es `ManualInterventionProposal` en `src/catalog/interventions/contracts.ts`. Admite estos campos, y ningún otro:
 
 - `title`, `shortDescription`, `longDescription`, `brand` y `model`: texto o `null` cuando lo permita el contrato; `brand` y `model` requieren como nuevo valor texto no vacío.
 - `spec:<clave>`: **solo** un atributo técnico ya existente en `product.specs`, con valores concretos del tipo admitido (`string`, `number`, `boolean` o array no vacío de estos). No se añaden claves ausentes ni se establece `null` como valor nuevo.

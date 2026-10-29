@@ -8,7 +8,7 @@
 
 El repositorio implementa una **CLI que termina tras ejecutar una operación**. No incorpora servidor HTTP, Dockerfile, despliegue cloud, CI/CD ni importación automática al backend. Es posible planificar ejecuciones externas, pero deben conservarse íntegros los resultados y vigilarse sus fallos.
 
-Requisitos operativos: Node.js, npm, dependencias instaladas, acceso HTTPS, espacio en disco y permisos sobre `storage/`. Mercaeleva puede requerir Chrome/Chromium (`CHROME_PATH` o `CHROMIUM_PATH`). Las preparaciones canónicas actuales utilizan reglas técnicas versionadas, no los snapshots comerciales de `data/category/` y `data/import/`. Estos permanecen solo para funciones heredadas que los requieran.
+Requisitos operativos: Node.js `>=20.18.1`, npm, dependencias instaladas, acceso HTTPS, espacio en disco y permisos sobre `storage/`. Mercaeleva y Manain utilizan Chrome/Chromium o un Edge compatible (`CHROME_PATH` o `CHROMIUM_PATH` permiten indicar el ejecutable). Mercaeleva usa modo headless; Manain inicia un navegador visible y puede requerir verificación humana, por lo que no debe presumirse apto para una ejecución desatendida. Las preparaciones canónicas actuales utilizan reglas técnicas versionadas, no los snapshots comerciales de `data/category/` y `data/import/`. Estos permanecen solo para funciones heredadas que los requieran.
 
 ## Ejecución controlada
 
@@ -17,7 +17,7 @@ npm run extraer:todos -- --simular
 npm run extraer:todos -- --proveedores gam,gomariz
 ```
 
-El lote lanza los proveedores indicados **en secuencia**, guarda informes/logs en `storage/runs/` y mantiene las salidas de extracción en `storage/scraped/`. El bloqueo de lote se basa en **filesystem local**: no es distribuido y no evita toda concurrencia con una extracción individual. Evitar ejecuciones solapadas sobre el mismo directorio.
+El lote técnico `extraer:todos` lanza los proveedores indicados **en secuencia**, guarda informes/logs en `storage/runs/` y mantiene las salidas de extracción en `storage/scraped/`. No equivale a `npm run extraer`, que coordina la campaña global, su preparación y revisión. El bloqueo de lote se basa en **filesystem local**: no es distribuido y no evita toda concurrencia con una extracción individual. Evitar ejecuciones solapadas sobre el mismo directorio.
 
 No planificar un proveedor hasta haber acreditado su cobertura y revisado su comportamiento ante páginas vacías, fallos de red, cambios de HTML y límites de paginación. En particular, la presencia de Manain en el registro y en las pruebas no acredita automáticamente la cobertura externa de sus páginas. Los archivos `-partial-*` y los registros de error son evidencia de fallos, no fuentes publicables.
 
@@ -29,7 +29,7 @@ El repositorio incluye `scripts/run-scheduled.ps1`. Desde una tarea programada p
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\RUTA\REPOSITORIO\scripts\run-scheduled.ps1" -Providers "gam,gomariz"
 ```
 
-La tarea debe usar una cuenta con permisos y herramientas disponibles, conservar el disco entre ejecuciones, supervisar códigos de salida y **no iniciar otra instancia** si la anterior sigue activa.
+La tarea ejecuta `extraer:todos`, no el flujo completo de campaña. Debe usar una cuenta con permisos y herramientas disponibles, conservar el disco entre ejecuciones, supervisar códigos de salida y **no iniciar otra instancia** si la anterior sigue activa. Para incluir Manain hay que prever una sesión gráfica y la posible verificación humana; no asumir que funcionará sin supervisión.
 
 ### Linux
 
