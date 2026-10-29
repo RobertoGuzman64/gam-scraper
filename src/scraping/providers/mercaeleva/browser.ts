@@ -6,7 +6,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DevtoolsPipe, DevtoolsWebSocket, withTimeout, waitForDebuggingPort, openDebugSocket } from "../../../infrastructure/browser/devtools.js";
 import type { DevtoolsResponse } from "../../../infrastructure/browser/devtools.js";
-import { buildMercaelevaCatalogScript, buildMercaelevaReadinessScript, buildMercaelevaRetryScript } from "./listing-script.js";
+import { buildMercaelevaCatalogScript, buildMercaelevaReadinessScript } from "./listing-script.js";
+import { extractMercaelevaLinks } from "./parsers.js";
+import { buildMercaelevaPageUrl } from "./page-url.js";
 
 export { waitForDebuggingPort } from "../../../infrastructure/browser/devtools.js";
 export { buildMercaelevaCatalogScript, buildMercaelevaReadinessScript } from "./listing-script.js";
@@ -55,7 +57,6 @@ const renderWithBrowser = async (
   let lastState = "sin respuesta de la web";
   let lastNetwork = "sin respuesta HTTP del documento";
   let documentRequest: string | null = null;
-  let lastProgressPages = 0;
   const reportStage = (value: string): void => {
     if (stage === value) return;
     stage = value;
@@ -72,22 +73,13 @@ const renderWithBrowser = async (
     if (event.method === "Network.loadingFailed" && event.params?.requestId === documentRequest && event.params.errorText) {
       lastNetwork = event.params.errorText;
     }
-    if (event.method !== "Runtime.consoleAPICalled" || event.params?.type !== "debug") return;
-    const values = event.params.args?.map((arg) => arg.value) ?? [];
-    if (values[0] !== "__EQUIPZILLA_MERCA_PROGRESS__") return;
-    const pages = values[1];
-    const found = values[2];
-    if (typeof pages !== "number" || typeof found !== "number" || !Number.isSafeInteger(pages) ||
-      !Number.isSafeInteger(found) || pages <= lastProgressPages || found < 0) return;
-    onProgress?.(pages - lastProgressPages, found, "recorriendo páginas");
-    lastProgressPages = pages;
   };
   child.stderr?.on("data", (chunk: Buffer) => {
     if (diagnostics.length < 3000) diagnostics += chunk.toString("utf8").slice(0, 3000 - diagnostics.length);
   });
   const commandTimeoutMs = Math.min(timeoutMs, 10000);
   const navigationTimeoutMs = Math.min(timeoutMs, 12000);
-  const catalogTimeoutMs = Math.min(120000, Math.max(timeoutMs, 10000) + Math.min(maxPages, 12) * 6000);
+  const catalogTimeoutMs = Math.max(120000, Math.min(900000, maxPages * (navigationTimeoutMs + commandTimeoutMs)));
   const timer = setTimeout(() => child.kill(), catalogTimeoutMs + navigationTimeoutMs + commandTimeoutMs * 3);
   let socket: WebSocket | null = null;
   let devtools: DevtoolsPipe | DevtoolsWebSocket | null = null;
@@ -128,85 +120,46 @@ const renderWithBrowser = async (
     await send("activar página", "Page.enable", {}, sessionId);
     await send("activar JavaScript", "Runtime.enable", {}, sessionId);
     await send("activar red", "Network.enable", {}, sessionId);
-    const navigation = await send("abrir listado", "Page.navigate", { url }, sessionId, navigationTimeoutMs);
-    if (typeof navigation.errorText === "string") {
-      throw new Error(`Chrome no pudo abrir ${url}: ${navigation.errorText}`);
-    }
-    const expected = new URL(url);
-    const openedAt = Date.now();
-    let loaded = false;
-    reportStage("esperando resultados de Mercaeleva");
-    while (Date.now() - openedAt < navigationTimeoutMs) {
-      const state = await send("esperando resultados de Mercaeleva", "Runtime.evaluate", {
-        expression: buildMercaelevaReadinessScript(), returnByValue: true
-      }, sessionId);
-      const result = state.result;
-      const value = result && typeof result === "object" && "value" in result ? result.value : null;
-      if (state.exceptionDetails) {
-        throw new Error(`La página devolvió un error JavaScript: ${JSON.stringify(state.exceptionDetails).slice(0, 400)}`);
-      }
-      if (value && typeof value === "object" && "href" in value && typeof value.href === "string") {
-        const actual = new URL(value.href);
-        lastState = `url=${actual.toString()}, ready=${"ready" in value ? String(value.ready) : "?"}, ` +
-          `title=${"title" in value ? String(value.title) : "?"}, ` +
-          `resultados=${"count" in value ? String(value.count) : "?"}, ` +
-          `enlaces=${"links" in value ? String(value.links) : "?"}`;
-        if (actual.origin === expected.origin &&
-          actual.pathname.replace(/\/+$/, "") === expected.pathname.replace(/\/+$/, "") &&
-          "count" in value && typeof value.count === "string" &&
-          "links" in value && typeof value.links === "number" && value.links > 0) {
-          loaded = true;
-          break;
+    const pages: string[] = [];
+    const seen = new Set<string>();
+    let expectedTotal: number | null = null;
+    let pageSize: number | null = null;
+    for (let page = 1; page <= maxPages; page += 1) {
+      const pageUrl = buildMercaelevaPageUrl(url, page);
+      const expected = new URL(pageUrl);
+      let content: { readonly pages: readonly string[]; readonly expectedTotal: number } | null = null;
+      for (let attempt = 0; attempt < 2 && !content; attempt += 1) {
+        const navigation = await send("abrir página " + page, "Page.navigate", { url: pageUrl }, sessionId, navigationTimeoutMs);
+        if (typeof navigation.errorText === "string") {
+          throw new Error(`Chrome no pudo abrir ${pageUrl}: ${navigation.errorText}`);
         }
-      }
-      await new Promise((resolve) => setTimeout(resolve, 250));
-    }
-    if (!loaded) throw new Error(`No se encontraron productos en ${url} tras ${navigationTimeoutMs} ms (${lastState})`);
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      const evaluation = await send("recorrer páginas", "Runtime.evaluate", {
-        expression: buildMercaelevaCatalogScript(maxPages, timeoutMs, delayMs), awaitPromise: true, returnByValue: true
-      }, sessionId, catalogTimeoutMs);
-      if (evaluation.exceptionDetails) {
-        const details = evaluation.exceptionDetails;
-        if (details && typeof details === "object" && "text" in details) {
-          const description = "exception" in details && details.exception && typeof details.exception === "object"
-            && "description" in details.exception ? details.exception.description : details.text;
-          throw new Error(`Mercaeleva: fallo en navegación: ${String(description)}`);
-        }
-        throw new Error("Mercaeleva: error de navegación en el navegador");
-      }
-      const result = evaluation.result;
-      if (!result || typeof result !== "object" || !("value" in result)) {
-        throw new Error("Chrome no devolvió el catálogo de Mercaeleva");
-      }
-      if (result.value && typeof result.value === "object" && "retry" in result.value && result.value.retry === true) {
-        if (attempt > 0) throw new Error("Mercaeleva: la paginación sigue sin aparecer tras reintentar la carga");
-        const retry = await send("reintentando carga de listado", "Runtime.evaluate", {
-          expression: buildMercaelevaRetryScript(), returnByValue: true
-        }, sessionId);
-        if (!retry.result || typeof retry.result !== "object" || !("value" in retry.result) || retry.result.value !== true) {
-          throw new Error("Mercaeleva: desapareció el control de reintento antes de activarlo");
-        }
-        await new Promise<void>((resolve) => setTimeout(resolve, 600));
-        const retryStarted = Date.now();
-        let restarted = false;
-        while (Date.now() - retryStarted < navigationTimeoutMs) {
+        const openedAt = Date.now();
+        let loaded = false;
+        while (Date.now() - openedAt < navigationTimeoutMs) {
           try {
-            const state = await send("esperando recarga de listado", "Runtime.evaluate", {
+            const state = await send("esperando página " + page, "Runtime.evaluate", {
               expression: buildMercaelevaReadinessScript(), returnByValue: true
             }, sessionId);
-            const value = state.result && typeof state.result === "object" && "value" in state.result
-              ? state.result.value : null;
-            if (value && typeof value === "object" && "href" in value && typeof value.href === "string" &&
-              "links" in value && typeof value.links === "number" && value.links > 0 &&
-              "count" in value && typeof value.count === "string") {
+            if (state.exceptionDetails) {
+              throw new Error(`Mercaeleva: error JavaScript en ${pageUrl}: ${JSON.stringify(state.exceptionDetails).slice(0, 400)}`);
+            }
+            const result = state.result;
+            const value = result && typeof result === "object" && "value" in result ? result.value : null;
+            if (value && typeof value === "object" && "href" in value && typeof value.href === "string") {
               const actual = new URL(value.href);
-              if (actual.origin !== expected.origin ||
-                actual.pathname.replace(/\/+$/, "") !== expected.pathname.replace(/\/+$/, "")) {
-                throw new Error(`Mercaeleva: el reintento redirigió a ${value.href}`);
+              lastState = `url=${actual.toString()}, ready=${"ready" in value ? String(value.ready) : "?"}, ` +
+                `title=${"title" in value ? String(value.title) : "?"}, ` +
+                `resultados=${"count" in value ? String(value.count) : "?"}, ` +
+                `enlaces=${"links" in value ? String(value.links) : "?"}`;
+              if (actual.origin === expected.origin &&
+                actual.pathname.replace(/\/+$/, "") === expected.pathname.replace(/\/+$/, "") &&
+                actual.searchParams.get("pageIndex") === expected.searchParams.get("pageIndex") &&
+                "count" in value && typeof value.count === "string" &&
+                "links" in value && typeof value.links === "number" && value.links > 0 &&
+                (("ready" in value && value.ready === "complete") || Date.now() - openedAt >= 2500)) {
+                loaded = true;
+                break;
               }
-              restarted = true;
-              break;
             }
           } catch (error) {
             if (!/Inspected target navigated or closed|Execution context was destroyed|Cannot find context with specified id/i.test(String(error))) {
@@ -215,12 +168,43 @@ const renderWithBrowser = async (
           }
           await new Promise<void>((resolve) => setTimeout(resolve, 250));
         }
-        if (!restarted) throw new Error("Mercaeleva: no se recuperó el listado tras recargarlo");
-        continue;
+        if (!loaded) {
+          if (attempt === 0) continue;
+          throw new Error(`Mercaeleva: página ${page} sin productos tras navegación directa a ${pageUrl} (${lastState})`);
+        }
+        const evaluation = await send("leer página " + page, "Runtime.evaluate", {
+          expression: buildMercaelevaCatalogScript(1, timeoutMs, 0), awaitPromise: true, returnByValue: true
+        }, sessionId, commandTimeoutMs);
+        if (evaluation.exceptionDetails) {
+          throw new Error(`Mercaeleva: no se pudo leer la página ${page}: ${JSON.stringify(evaluation.exceptionDetails).slice(0, 400)}`);
+        }
+        content = asCatalog(evaluation.result && typeof evaluation.result === "object" && "value" in evaluation.result
+          ? evaluation.result.value : null);
       }
-      return asCatalog(result.value);
+      if (!content) throw new Error(`Mercaeleva: no se pudo recuperar la página ${page}`);
+      if (expectedTotal !== null && content.expectedTotal !== expectedTotal) {
+        throw new Error(`Mercaeleva: el total cambió en la página ${page} (${expectedTotal}/${content.expectedTotal})`);
+      }
+      expectedTotal = content.expectedTotal;
+      const html = content.pages[0];
+      if (!html) throw new Error(`Mercaeleva: página ${page} sin HTML`);
+      const links = extractMercaelevaLinks(pageUrl, html);
+      if (links.length === 0) throw new Error(`Mercaeleva: página ${page} sin referencias válidas`);
+      if (links.some((href) => seen.has(href))) {
+        throw new Error(`Mercaeleva: página ${page} repite referencias de páginas anteriores`);
+      }
+      if (pageSize !== null && links.length > pageSize) {
+        throw new Error(`Mercaeleva: tamaño de página inesperado en la página ${page} (${links.length}/${pageSize})`);
+      }
+      pageSize ??= links.length;
+      pages.push(html);
+      for (const href of links) seen.add(href);
+      onProgress?.(1, seen.size, "recorriendo páginas");
+      if (seen.size >= expectedTotal) break;
+      if (delayMs > 0) await new Promise<void>((resolve) => setTimeout(resolve, delayMs));
     }
-    throw new Error("Mercaeleva: no se completó el recorrido de páginas");
+    if (expectedTotal === null) throw new Error("Mercaeleva: catálogo sin resultados");
+    return { pages, expectedTotal };
   } catch (error) {
     const detail = diagnostics.trim();
     const status = child.exitCode !== null ? `; exitCode=${child.exitCode}` : "";

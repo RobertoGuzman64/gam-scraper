@@ -37,7 +37,7 @@ test("Gomariz pagina la venta sin usar enlaces de alquiler ni navegación", () =
 
 test("Mercaeleva reconoce las fichas sin confundir las categorías", () => {
   assert.equal(buildMercaelevaPageUrl(mercaPage, 1), mercaPage);
-  assert.equal(buildMercaelevaPageUrl(mercaPage, 2), `${mercaPage}?page=2`);
+  assert.equal(buildMercaelevaPageUrl(mercaPage, 2), `${mercaPage}?pageIndex=1`);
   assert.ok(isMercaelevaProductUrl(`${mercaPage}/machine/JLG-450-AJ-M571-2568`));
   assert.ok(!isMercaelevaProductUrl(mercaPage));
   assert.ok(!isMercaelevaProductUrl("https://sales.mercaeleva.com/en/about-us"));

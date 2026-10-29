@@ -8,12 +8,7 @@ import { recoverMercaelevaDescriptionSpecs } from "./technical-description.js";
 
 const normalize = (value: string): string => value.replace(/\s+/g, " ").trim();
 
-export const buildMercaelevaPageUrl = (categoryUrl: string, page: number): string => {
-  const url = new URL(categoryUrl);
-  if (page <= 1) url.searchParams.delete("page");
-  else url.searchParams.set("page", String(page));
-  return url.toString();
-};
+export { buildMercaelevaPageUrl } from "./page-url.js";
 
 export const isMercaelevaProductUrl = (href: string): boolean => {
   try {

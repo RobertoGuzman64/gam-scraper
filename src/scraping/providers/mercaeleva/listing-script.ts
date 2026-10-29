@@ -29,7 +29,7 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
     const value = match ? Number(match[1].replace(/[^\d]/g, '')) : 0;
     return Number.isSafeInteger(value) && value > 0 ? value : null;
   };
-  const settledLinks = async (detail, seen) => {
+  const settledLinks = async (detail, seen, timeout = ${timeoutMs}) => {
     let previous = '';
     let stable = 0;
     return deadline(() => {
@@ -43,7 +43,7 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
       stable = fingerprint === previous ? stable + 1 : 0;
       previous = fingerprint;
       return stable >= 2 ? current : null;
-    }, detail);
+    }, detail, timeout);
   };
   const controlLabel = (element) => [
     element.getAttribute('aria-label'), element.getAttribute('title'),
@@ -60,49 +60,12 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
     (element.textContent || '').trim() === String(page) && !disabled(element)) || null;
   const nextControl = (page) => {
     const available = controls();
+    const next = available.find((element) => !disabled(element) &&
+      /(?:next(?:\s+\w+){0,2}\s+page|next|siguiente|següent|seguent|próxima|proxima)/i.test(controlLabel(element)));
+    if (next) return next;
     const numbered = available.filter((element) => /^\d{1,3}$/.test((element.textContent || '').trim()));
-    if (numbered.some((element) => element.textContent.trim() === String(page))) {
-      const next = numberedControl(page + 1);
-      if (next) return next;
-    }
-    return available.find((element) => !disabled(element) &&
-      /(?:next(?:\s+\w+){0,2}\s+page|next|siguiente|següent|seguent|próxima|proxima)/i.test(controlLabel(element))) || null;
-  };
-  const largerPageSize = async (currentSize) => {
-    const label = /(?:elementos|resultados) por p[aá]gina|items? per page|results? per page|elements? per page/i;
-    const named = (element) => controlLabel(element) + ' ' +
-      (element.getAttribute('placeholder') || '') + ' ' +
-      (element.closest?.('label')?.textContent || '') + ' ' +
-      (element.parentElement?.textContent?.slice(0, 100) || '') + ' ' +
-      (element.id ? document.querySelector('label[for="' + element.id + '"]')?.textContent || '' : '');
-    const candidates = [...document.querySelectorAll('select, [role="combobox"], button[aria-haspopup="listbox"]')];
-    const nativeSize = (element) => element.tagName?.toLowerCase() === 'select' &&
-      [...element.options].some((option) => Number((option.textContent || '').trim()) === currentSize);
-    const candidate = candidates.find((element) => !disabled(element) &&
-      (label.test(named(element)) || nativeSize(element)));
-    if (!candidate) return false;
-    const choose = (elements) => elements.map((element) => ({
-      element, count: Number((element.textContent || '').trim()), value: element.value
-    })).filter((option) => Number.isSafeInteger(option.count) && option.count > currentSize && option.count <= 100)
-      .sort((a, b) => b.count - a.count)[0];
-    if (candidate.tagName?.toLowerCase() === 'select') {
-      const option = choose([...candidate.options]);
-      if (!option) return false;
-      candidate.value = option.value;
-      candidate.dispatchEvent(new Event('input', { bubbles: true }));
-      candidate.dispatchEvent(new Event('change', { bubbles: true }));
-    } else {
-      candidate.click();
-      const option = await deadline(() => choose([...document.querySelectorAll('[role="option"]')]),
-        'las opciones de elementos por página', 2000).catch(() => null);
-      if (!option) {
-        candidate.click();
-        return false;
-      }
-      option.element.click();
-    }
-    return !!await deadline(() => links().length > currentSize && links(),
-      'más referencias tras cambiar elementos por página', 3000).catch(() => null);
+    return numbered.some((element) => element.textContent.trim() === String(page))
+      ? numberedControl(page + 1) : null;
   };
   const nextPage = async (page, count, total, seen) => {
     const started = Date.now();
@@ -135,10 +98,6 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
   const pages = [];
   const seen = new Set();
   let current = await settledLinks('los productos de la primera página', null);
-  const initialSize = current.length;
-  if (total > initialSize && await largerPageSize(initialSize)) {
-    current = await settledLinks('el nuevo tamaño de la primera página', null);
-  }
   const pageSize = current.length;
   const firstPage = [...current].sort().join('\n');
   for (let page = 1; page <= ${maxPages}; page += 1) {
@@ -152,13 +111,39 @@ export const buildMercaelevaCatalogScript = (maxPages: number, timeoutMs: number
     if (seen.size >= total || page === ${maxPages}) break;
     const next = await nextPage(page, seen.size, total, seen);
     if (next === 'retry') return { retry: true, pages: [], expectedTotal: total };
-    next?.click();
+    if (next) {
+      if (page === 1 && document.readyState === 'interactive') {
+        try {
+          await deadline(() => document.readyState === 'complete', 'la carga inicial', Math.min(${timeoutMs}, 2000));
+        } catch {}
+      }
+      next.scrollIntoView?.({ block: 'end' });
+      if (page === 1) await wait(700);
+      next.click();
+    }
+    const detail = 'referencias nuevas después de la página ' + page + ' (' + seen.size + '/' + total + ')';
+    const describeControls = () => controls().slice(-16).map((element) =>
+      controlLabel(element).slice(0, 65) + (disabled(element) ? ' [deshabilitado]' : '')).join(' | ');
     try {
-      current = await settledLinks('referencias nuevas después de la página ' + page + ' (' + seen.size + '/' + total + ')', seen);
+      const fallback = next && numberedControl(page + 1);
+      if (fallback && fallback !== next) {
+        try {
+          current = await settledLinks(detail, seen, Math.min(${timeoutMs}, 5000));
+        } catch {
+          fallback.click();
+          current = await settledLinks(detail + ' tras seleccionar la página ' + (page + 1), seen);
+        }
+      } else {
+        current = await settledLinks(detail, seen);
+      }
     } catch (error) {
       const remaining = total - seen.size;
       const lastPage = Math.ceil(total / pageSize);
-      if (remaining > pageSize || page + 1 !== lastPage || !numberedControl(1)) throw error;
+      if (remaining > pageSize || page + 1 !== lastPage || !numberedControl(1)) {
+        throw new Error(String(error) + '; control=' + (next ? controlLabel(next) : 'sin botón') +
+          '; controles=' + (describeControls() || 'ninguno') + '; url=' + location.href +
+          '; ready=' + document.readyState + '; enlaces=' + links().length);
+      }
       const first = numberedControl(1);
       first.click();
       try {
