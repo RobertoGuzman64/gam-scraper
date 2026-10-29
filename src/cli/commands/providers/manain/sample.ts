@@ -1,3 +1,4 @@
+import { printReportLine } from "../../../reporting/terminal.js";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -50,12 +51,12 @@ const run = async (): Promise<void> => {
   const filename = `muestra-${new Date().toISOString().replace(/[:.]/g, "-")}-${randomUUID().slice(0, 8)}.json`;
   const path = join(directory, filename);
   await writeFile(path, JSON.stringify(output, null, 2) + "\n", { encoding: "utf8", flag: "wx" });
-  console.log(`MANAIN | DIAGNÓSTICO NO PUBLICABLE | ${read.products.length}/${selection.urls.length} fichas | ${read.failures.length} errores`);
-  console.log(`LISTADO | ${selection.discovered} URL distintas en ${selection.pagesVisited} páginas | ${selection.endReason} | cobertura no acreditada`);
+  printReportLine(`MANAIN | DIAGNÓSTICO NO PUBLICABLE | ${read.products.length}/${selection.urls.length} fichas | ${read.failures.length} errores`);
+  printReportLine(`LISTADO | ${selection.discovered} URL distintas en ${selection.pagesVisited} páginas | ${selection.endReason} | cobertura no acreditada`);
   for (const product of read.products) {
-    console.log(`FICHA | ${product.reference ?? "SIN REFERENCIA"} | ${product.brand ?? ""} ${product.model ?? ""} | ${product.images?.length ?? 0} fotos | ${Object.keys(product.specs ?? {}).length} atributos`);
+    printReportLine(`FICHA | ${product.reference ?? "SIN REFERENCIA"} | ${product.brand ?? ""} ${product.model ?? ""} | ${product.images?.length ?? 0} fotos | ${Object.keys(product.specs ?? {}).length} atributos`);
   }
-  console.log(`DIAGNÓSTICO | ${path}`);
+  printReportLine(`DIAGNÓSTICO | ${path}`);
   if (read.products.length !== selection.urls.length || duplicatedReferences.length || missingReferences.length) {
     throw new Error("Manain: muestra incompleta o con referencias repetidas/ausentes; consulta el diagnóstico");
   }

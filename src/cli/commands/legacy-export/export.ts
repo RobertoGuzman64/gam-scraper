@@ -1,3 +1,4 @@
+import { printReportLine } from "../../reporting/terminal.js";
 import { createHash } from "node:crypto";
 import { LiveStatus, formatDuration } from "../../reporting/live-status.js";
 import { printCommandError } from "../../reporting/errors.js";
@@ -11,7 +12,7 @@ import { prepareCreateManyExport, prepareExport } from "../../../pipeline/legacy
 export const runExport = async (args: readonly string[]): Promise<void> => {
   const options = parseExportOptions(args);
   if (options === "help") {
-    console.log(exportHelp);
+    printReportLine(exportHelp);
     return;
   }
   if (!options.preparation.endsWith("-preparation.json")) {
@@ -26,17 +27,17 @@ export const runExport = async (args: readonly string[]): Promise<void> => {
       : await prepareExport(options.providerId, options.companyID, options.preparation, options.inventory, options.allowEmptyInventory, options.source);
     const { plan, report, inventoryReferences } = prepared;
     status.stop();
-    console.log(`EXPORTACIÓN | ${options.providerId.toUpperCase()} | ${options.dryRun ? "SIMULACIÓN" : "PLAN DE ALTAS"} | ${options.format.toUpperCase()}`);
-    console.log(`  Altas: ${plan.report.newProducts} | Existentes: ${plan.report.existingProducts} | Revisar: ${plan.report.reviewProducts} | Duplicados: ${plan.report.duplicateReferences}`);
+    printReportLine(`EXPORTACIÓN | ${options.providerId.toUpperCase()} | ${options.dryRun ? "SIMULACIÓN" : "PLAN DE ALTAS"} | ${options.format.toUpperCase()}`);
+    printReportLine(`  Altas: ${plan.report.newProducts} | Existentes: ${plan.report.existingProducts} | Revisar: ${plan.report.reviewProducts} | Duplicados: ${plan.report.duplicateReferences}`);
     const newMachines = "products" in plan
       ? plan.products.filter((product) => product.condition === "Nuevo").length
       : plan.rows.filter((row) => row[plan.headers.indexOf("Condición *")] === "Nuevo").length;
     const usedMachines = plan.report.newProducts - newMachines;
-    console.log(`  Condiciones de las altas: Nuevo: ${newMachines} | Segunda_Mano: ${usedMachines}`);
-    console.log(`  Inventario: ${inventoryReferences} referencias`);
+    printReportLine(`  Condiciones de las altas: Nuevo: ${newMachines} | Segunda_Mano: ${usedMachines}`);
+    printReportLine(`  Inventario: ${inventoryReferences} referencias`);
     if (args.includes("--verbose")) console.log(JSON.stringify(report, null, 2));
     if (options.dryRun) {
-      console.log(`  Duración: ${formatDuration(Date.now() - startedAt)}`);
+      printReportLine(`  Duración: ${formatDuration(Date.now() - startedAt)}`);
       return;
     }
     status.update(`EXPORTACIÓN | ${options.providerId.toUpperCase()} | generando archivo | ${options.out}`);
@@ -44,7 +45,7 @@ export const runExport = async (args: readonly string[]): Promise<void> => {
     if (plan.report.newProducts === 0) {
       await writeFile(reportFile, JSON.stringify({ ...report, format: options.format, outputSha256: null, outputBytes: 0 }, null, 2), { flag: "wx" });
       status.stop();
-      console.log(`No hay altas nuevas seguras: informe guardado en ${reportFile}, sin archivo vacío.`);
+      printReportLine(`No hay altas nuevas seguras: informe guardado en ${reportFile}, sin archivo vacío.`);
       return;
     }
     const buffer = "products" in plan
@@ -65,9 +66,9 @@ export const runExport = async (args: readonly string[]): Promise<void> => {
       throw error;
     }
     status.stop();
-    console.log(`Archivo de altas generado: ${options.out} (${plan.report.newProducts} productos)`);
-    console.log(`Informe generado: ${reportFile}`);
-    console.log(`  Duración: ${formatDuration(Date.now() - startedAt)}`);
+    printReportLine(`Archivo de altas generado: ${options.out} (${plan.report.newProducts} productos)`);
+    printReportLine(`Informe generado: ${reportFile}`);
+    printReportLine(`  Duración: ${formatDuration(Date.now() - startedAt)}`);
   } finally {
     status.stop();
   }

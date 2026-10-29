@@ -8,7 +8,7 @@ import { assessInterventionMaintenance } from "../../../catalog/interventions/ma
 import { formatInterventionSimulation } from "../interventions/intervene.js";
 import { formatInterventionComparison } from "../../reporting/intervention-comparison.js";
 import { printCommandError } from "../../reporting/errors.js";
-import { formatHeader, printStatus } from "../../reporting/terminal.js";
+import { formatHeader, printStatus, printReportLine } from "../../reporting/terminal.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const help = `Uso:
@@ -30,17 +30,17 @@ Divergencias y correcciones parciales bloquean el plan.
 y prepara y valida el derivado. No aprueba productos ni modifica catálogos originales.`;
 
 export const runCampaignIntervention = async (args: readonly string[]): Promise<void> => {
-  if (args.length === 1 && args[0] === "--help") { console.log(help); return; }
-  console.log(formatHeader("INTERVENCIONES"));
+  if (args.length === 1 && args[0] === "--help") { printReportLine(help); return; }
+  printReportLine(formatHeader("INTERVENCIONES"));
   const [providerId, ...rest] = args;
   if (!providerId || providerId.startsWith("-")) throw new Error(help);
   if (rest.length === 1 && rest[0] === "--listar") {
     const catalog = readInterventionCatalog(providerId, root);
-    console.log(`INTERVENCIONES | ${providerId.toUpperCase()} | ${catalog.length}`);
+    printReportLine(`INTERVENCIONES | ${providerId.toUpperCase()} | ${catalog.length}`);
     for (const item of catalog) {
-      console.log(`  ${item.metadata.id} | ${item.metadata.summary}`);
-      console.log(`    Máquinas: ${item.identities.join(", ")} | Campos: ${item.fields.join(", ")}`);
-      console.log(`    Script: ${item.script}`);
+      printReportLine(`  ${item.metadata.id} | ${item.metadata.summary}`);
+      printReportLine(`    Máquinas: ${item.identities.join(", ")} | Campos: ${item.fields.join(", ")}`);
+      printReportLine(`    Script: ${item.script}`);
     }
     return;
   }
@@ -50,13 +50,13 @@ export const runCampaignIntervention = async (args: readonly string[]): Promise<
     const found = catalog.filter((entry) => entry.metadata.id === id || entry.identities.includes(id));
     if (!found.length) throw new Error(`No existe una intervención con identificador o referencia ${id} para ${providerId}`);
     for (const item of found) {
-      console.log(`INTERVENCIÓN | ${item.metadata.id} | ${item.metadata.summary}`);
-      console.log(`  Proveedor: ${item.providerId} | Script: ${item.script}`);
+      printReportLine(`INTERVENCIÓN | ${item.metadata.id} | ${item.metadata.summary}`);
+      printReportLine(`  Proveedor: ${item.providerId} | Script: ${item.script}`);
       for (const proposal of item.proposals) {
-        console.log(`  ${proposal.identity} | ${proposal.field}`);
-        console.log(`    Valor original: ${JSON.stringify(proposal.expected)} | Valor propuesto: ${JSON.stringify(proposal.next)}`);
-        console.log(`    Motivo: ${proposal.reason}`);
-        console.log(`    Evidencia: ${proposal.evidence}`);
+        printReportLine(`  ${proposal.identity} | ${proposal.field}`);
+        printReportLine(`    Valor original: ${JSON.stringify(proposal.expected)} | Valor propuesto: ${JSON.stringify(proposal.next)}`);
+        printReportLine(`    Motivo: ${proposal.reason}`);
+        printReportLine(`    Evidencia: ${proposal.evidence}`);
       }
     }
     return;
@@ -73,33 +73,33 @@ export const runCampaignIntervention = async (args: readonly string[]): Promise<
     }
     const interventions = readInterventionCatalog(providerId, root);
     const assessments = assessInterventionMaintenance(interventions, history);
-    console.log(`MANTENIMIENTO | ${providerId.toUpperCase()} | Lote ${campaign.runId} | ${assessments.length} intervenciones`);
-    console.log("Se analiza siempre el original; ninguna observación autoriza a reaplicar una intervención.");
+    printReportLine(`MANTENIMIENTO | ${providerId.toUpperCase()} | Lote ${campaign.runId} | ${assessments.length} intervenciones`);
+    printReportLine("Se analiza siempre el original; ninguna observación autoriza a reaplicar una intervención.");
     if (campaign.providers.find((provider) => provider.providerId === providerId)?.preparation?.intervened) {
-      console.log("El lote ya tiene preparación intervenida; la comparación no modifica ni reabre su expediente.");
+      printReportLine("El lote ya tiene preparación intervenida; la comparación no modifica ni reabre su expediente.");
     }
     for (const entry of assessments) {
       const label = entry.assessment === "active" ? "VIGENTE: ORIGEN SIN CORREGIR" :
         entry.assessment === "inconsistent" ? "DIVERGENCIA: REVISIÓN OBLIGATORIA" :
           entry.assessment === "review" ? "CANDIDATA A REVISIÓN HUMANA" : "CONSERVAR: EVIDENCIA INSUFICIENTE";
-      console.log(`  ${entry.intervention.metadata.id} | ${label}`);
-      console.log(`    ${entry.intervention.metadata.summary}`);
-      console.log(`    Máquina(s): ${entry.intervention.identities.join(", ")}`);
-      console.log(`    Script: ${entry.intervention.script}`);
-      console.log(`    Lotes consecutivos confirmados: ${entry.consecutiveObservations}`);
+      printReportLine(`  ${entry.intervention.metadata.id} | ${label}`);
+      printReportLine(`    ${entry.intervention.metadata.summary}`);
+      printReportLine(`    Máquina(s): ${entry.intervention.identities.join(", ")}`);
+      printReportLine(`    Script: ${entry.intervention.script}`);
+      printReportLine(`    Lotes consecutivos confirmados: ${entry.consecutiveObservations}`);
       for (const observation of entry.observations) {
-        console.log(`    ${observation.runId}: ${observation.status}`);
+        printReportLine(`    ${observation.runId}: ${observation.status}`);
       }
       if (entry.assessment === "review") {
-        console.log("    Revisar presencia en la fuente, recurrencia y evidencia antes de decidir la retirada.");
+        printReportLine("    Revisar presencia en la fuente, recurrencia y evidencia antes de decidir la retirada.");
         if (entry.intervention.identities.length === 1) {
-          console.log(`    Solo tras autorización humana: git rm -- ${entry.intervention.script}`);
+          printReportLine(`    Solo tras autorización humana: git rm -- ${entry.intervention.script}`);
         } else {
-          console.log("    El script afecta varias máquinas: separar responsabilidades antes de una retirada individual.");
+          printReportLine("    El script afecta varias máquinas: separar responsabilidades antes de una retirada individual.");
         }
       }
     }
-    console.log("Solo lectura | Ningún script, expediente ni catálogo ha sido modificado");
+    printReportLine("Solo lectura | Ningún script, expediente ni catálogo ha sido modificado");
     return;
   }
   const scripts: string[] = [];
@@ -117,10 +117,10 @@ export const runCampaignIntervention = async (args: readonly string[]): Promise<
     index += 1;
   }
   const result = await interveneActiveCampaign(root, providerId, scripts, apply, (simulation, comparison) => {
-    console.log(formatInterventionComparison(comparison));
-    if (simulation) console.log(formatInterventionSimulation(simulation, true));
+    printReportLine(formatInterventionComparison(comparison));
+    if (simulation) printReportLine(formatInterventionSimulation(simulation, true));
   });
-  console.log(`LOTE | ${result.runId}`);
+  printReportLine(`LOTE | ${result.runId}`);
   if (!result.applied) {
     printStatus("WARN", result.simulation ?
       "Solo simulación; para aplicar vuelve a ejecutar exactamente los mismos --script con --aplicar" :
@@ -129,8 +129,8 @@ export const runCampaignIntervention = async (args: readonly string[]): Promise<
   }
   printStatus("PASS", `INTERVENCIÓN APLICADA | ${result.derivedFile}`);
   printStatus("PASS", `PREPARACIÓN VALIDADA | ${result.preparationFile}`);
-  console.log(`  Ready ${result.ready} | Review ${result.review}`);
-  console.log("  La publicación requiere acreditación editorial explícita; continúa con acreditar");
+  printReportLine(`  Ready ${result.ready} | Review ${result.review}`);
+  printReportLine("  La publicación requiere acreditación editorial explícita; continúa con acreditar");
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

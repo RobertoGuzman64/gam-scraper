@@ -1,3 +1,4 @@
+import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readInterventionSource } from "../../../infrastructure/filesystem/interventions/intervention-source.js";
@@ -41,7 +42,7 @@ export const formatInterventionSimulation = (simulation: InterventionSimulation,
 
 export const runIntervene = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    console.log(interveneHelp);
+    printReportLine(interveneHelp);
     return;
   }
   if (args.includes("--help")) throw new Error("--help no admite argumentos adicionales");
@@ -53,16 +54,16 @@ export const runIntervene = async (args: readonly string[]): Promise<void> => {
     throw new Error(`El catálogo pertenece a ${catalog.providerId}, no a ${options.providerId}`);
   }
   const comparison = compareInterventionScripts(catalog, selections);
-  console.log(formatInterventionComparison(comparison));
+  printReportLine(formatInterventionComparison(comparison));
   if (comparison.blocked) throw new Error("Hay intervenciones divergentes o parcialmente corregidas; no se permite aplicar este conjunto");
   if (!comparison.pending.length) {
     if (options.apply) throw new Error("No hay modificaciones pendientes que aplicar");
-    console.log("Sin modificaciones pendientes; no se generó ningún plan ni archivo");
+    printReportLine("Sin modificaciones pendientes; no se generó ningún plan ni archivo");
     return;
   }
   const simulation = simulateIntervention(catalog, catalogSha256, comparison.pending);
   if (!options.apply) {
-    console.log(formatInterventionSimulation(simulation, options.detail));
+    printReportLine(formatInterventionSimulation(simulation, options.detail));
     return;
   }
   if (options.campaign === null || options.plan === null) throw new Error("Faltan datos para aplicar el plan");
@@ -75,7 +76,7 @@ export const runIntervene = async (args: readonly string[]): Promise<void> => {
     scriptVersions: selections.flatMap((selection) => selection.version === null ? [] : [selection.version])
       .sort((a, b) => a.script.localeCompare(b.script))
   });
-  console.log([
+  printReportLine([
     `INTERVENCIÓN | ${simulation.providerId.toUpperCase()} | APLICADA`,
     `  Campaña: ${options.campaign}`,
     `  Productos analizados: ${simulation.analyzedProducts}`,

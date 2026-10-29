@@ -1,3 +1,4 @@
+import { printReportLine } from "../../reporting/terminal.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
@@ -7,13 +8,13 @@ import { runScrape } from "../../../pipeline/extraction/run.js";
 
 export const runSingleScrape = async (args: readonly string[]): Promise<void> => {
   if (args.includes("--help") || args.includes("-h")) {
-    console.log(scrapeHelp);
+    printReportLine(scrapeHelp);
     return;
   }
   const selection = resolveCliSelection(args);
   const { provider, options } = selection;
   const verbose = parseArgs(args).verbose === true;
-  if (verbose) console.log(`[config] mode=${selection.mode} provider=${provider.id} prefix=${options.outPrefix}`);
+  if (verbose) printReportLine(`[config] mode=${selection.mode} provider=${provider.id} prefix=${options.outPrefix}`);
   const reporter = new ScrapeConsole(provider.id, options.outDir, options.outPrefix, verbose);
   try {
     reporter.stage("preparando extracción", options.outDir);

@@ -3,7 +3,7 @@ import type { CategoryConfig, CategoryScrapeResult, Summary } from "../../contra
 import type { CategoryProgress, ScrapeEvent, ScrapeMessage } from "../../contracts/progress.js";
 import { LiveStatus, formatDuration } from "./live-status.js";
 import { errorDetail } from "./errors.js";
-import { formatProgressBar, formatStatus } from "./terminal.js";
+import { formatProgressBar, formatStatus, printReportLine } from "./terminal.js";
 
 const seconds = (startedAt: string, endedAt: string): string =>
   formatDuration(Math.max(0, Date.parse(endedAt) - Date.parse(startedAt)));
@@ -147,7 +147,7 @@ ${formatStatus("RUN", `${this.providerId.toUpperCase()} | ${total} categorías`)
     this.status.stop();
     if (summary) {
       const failed = error !== null || summary.quality?.status !== "complete" || summary.quality?.published !== true;
-      for (const line of formatRunSummary(this.providerId, this.outDir, this.outPrefix, summary, failed)) console.log(line);
+      for (const line of formatRunSummary(this.providerId, this.outDir, this.outPrefix, summary, failed)) printReportLine(line);
       if (error !== null) console.error(`  Error: ${errorDetail(error)}`);
       if (failureDetail && this.reportedFailures === 0) console.error(`  Causa registrada: ${failureDetail}`);
       if (error !== null) this.forward({ type: "failure", stage: "publicación", resource: this.outDir, reason: errorDetail(error) });
@@ -167,8 +167,8 @@ ${formatStatus("FAIL", `${this.providerId.toUpperCase()} | ${seconds(startedAt, 
 
   categoriesSaved(count: number): void {
     this.status.stop();
-    console.log(formatStatus("PASS", `${this.providerId.toUpperCase()} | ${count} categorías exportadas`));
-    console.log(`  CSV: ${join(this.outDir, `${this.outPrefix}-categories.csv`)}`);
+    printReportLine(formatStatus("PASS", `${this.providerId.toUpperCase()} | ${count} categorías exportadas`));
+    printReportLine(`  CSV: ${join(this.outDir, `${this.outPrefix}-categories.csv`)}`);
   }
 
   abort(error: unknown): void {

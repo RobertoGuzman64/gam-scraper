@@ -1,3 +1,4 @@
+import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { inspectCampaignOperations } from "../../../pipeline/campaign/operations-status.js";
@@ -9,7 +10,7 @@ const root = fileURLToPath(new URL("../../../../", import.meta.url));
 
 export const runCampaignStatus = async (args: readonly string[], rootDirectory: string = root): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    console.log("Uso: npm run estado\nConsulta recursos esenciales, proveedores, campañas, acreditación y referencia, sin escribir archivos ni sugerir siguientes pasos.");
+    printReportLine("Uso: npm run estado\nConsulta recursos esenciales, proveedores, campañas, acreditación y referencia, sin escribir archivos ni sugerir siguientes pasos.");
     return;
   }
   if (args.length) throw new Error("estado no admite argumentos");

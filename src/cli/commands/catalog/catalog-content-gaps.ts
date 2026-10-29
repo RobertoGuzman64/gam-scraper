@@ -1,3 +1,4 @@
+import { printReportLine } from "../../reporting/terminal.js";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -51,7 +52,7 @@ const readOptions = (args: readonly string[]): CommandOptions => {
 
 export const runCatalogContentGaps = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    console.log("Uso: npm run huecos -- [--catalogo ruta/-catalog.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json]\nSin --catalogo: última campaña entregada íntegra (o referencia histórica). Con --catalogo: uno o varios catálogos canónicos completos verificados por su manifest y resumen; consulta de solo lectura.");
+    printReportLine("Uso: npm run huecos -- [--catalogo ruta/-catalog.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json]\nSin --catalogo: última campaña entregada íntegra (o referencia histórica). Con --catalogo: uno o varios catálogos canónicos completos verificados por su manifest y resumen; consulta de solo lectura.");
     return;
   }
   const options = readOptions(args);
@@ -103,18 +104,18 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
       })) }, null, 2));
     return;
   }
-  console.log(`HUECOS | ${sourceLabel} | originales ${analysis.universe.total} | ready ${analysis.universe.ready} | review ${analysis.universe.review} | sin categoría ${analysis.universe.withoutCategory}`);
-  console.log(analysis.universe.note);
-  console.log(`PROVEEDORES | ${analysis.universe.providers.map((item) => `${item.providerId}:${item.originals}`).join(" | ")}`);
-  console.log(`PATRONES | ${ranked.length} con grupo >= ${options.minGroup} y ausencias >= ${options.minMissing} | TOP ${Math.min(options.limit, ranked.length)}`);
+  printReportLine(`HUECOS | ${sourceLabel} | originales ${analysis.universe.total} | ready ${analysis.universe.ready} | review ${analysis.universe.review} | sin categoría ${analysis.universe.withoutCategory}`);
+  printReportLine(analysis.universe.note);
+  printReportLine(`PROVEEDORES | ${analysis.universe.providers.map((item) => `${item.providerId}:${item.originals}`).join(" | ")}`);
+  printReportLine(`PATRONES | ${ranked.length} con grupo >= ${options.minGroup} y ausencias >= ${options.minMissing} | TOP ${Math.min(options.limit, ranked.length)}`);
   for (const { group, observation } of ranked.slice(0, options.limit)) {
     const field = observation.field.name;
     const label = group.category ?? `sin categoría (${group.sourceCategoryKey})`;
     const refinement = [group.brand, group.model].filter((value) => value !== null).join(" / ");
-    console.log(`${group.providerId} | ${label}${refinement ? ` | ${refinement}` : ""} | ${field} | ${observation.present}/${observation.applicable} (${observation.coveragePercent}%) | ausentes ${observation.missing} | ${observation.coverage} | evidencias directas ${observation.directEvidence}, texto relacionado ${observation.relatedText}`);
-    console.log(`  Casos: ${observation.missingIdentities.join(", ")}`);
+    printReportLine(`${group.providerId} | ${label}${refinement ? ` | ${refinement}` : ""} | ${field} | ${observation.present}/${observation.applicable} (${observation.coveragePercent}%) | ausentes ${observation.missing} | ${observation.coverage} | evidencias directas ${observation.directEvidence}, texto relacionado ${observation.relatedText}`);
+    printReportLine(`  Casos: ${observation.missingIdentities.join(", ")}`);
   }
-  console.log("Consulta sin escrituras. Para evidencias originales y todos los grupos: npm run huecos -- --json (añade --catalogo si procede)");
+  printReportLine("Consulta sin escrituras. Para evidencias originales y todos los grupos: npm run huecos -- --json (añade --catalogo si procede)");
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

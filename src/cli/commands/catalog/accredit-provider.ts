@@ -1,3 +1,4 @@
+import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -38,24 +39,24 @@ const parse = (args: readonly string[]): { options: IndividualEditorialOptions; 
 };
 
 const show = (review: IndividualEditorialReview): void => {
-  console.log(`ACREDITACIÓN INDIVIDUAL | ${review.accreditation.sources[0]?.providerId.toUpperCase()} | ${review.inspection.approved ? "APROBADA" : "PENDIENTE"}`);
-  console.log(`  Borrador: ${review.draftFile}`);
-  console.log(`  Decisiones válidas: ${review.inspection.completed}/${review.inspection.total}`);
+  printReportLine(`ACREDITACIÓN INDIVIDUAL | ${review.accreditation.sources[0]?.providerId.toUpperCase()} | ${review.inspection.approved ? "APROBADA" : "PENDIENTE"}`);
+  printReportLine(`  Borrador: ${review.draftFile}`);
+  printReportLine(`  Decisiones válidas: ${review.inspection.completed}/${review.inspection.total}`);
   for (const issue of review.inspection.issues) {
-    console.log(`  PENDIENTE | ${issue.reference || "global"} | ${issue.message}`);
+    printReportLine(`  PENDIENTE | ${issue.reference || "global"} | ${issue.message}`);
   }
-  if (review.inspection.approved) console.log("  Aprobación guardada; JSON comercial pendiente de entrega individual");
+  if (review.inspection.approved) printReportLine("  Aprobación guardada; JSON comercial pendiente de entrega individual");
 };
 
 export const runAccreditProvider = async (args: readonly string[]): Promise<void> => {
-  if (args.length === 1 && args[0] === "--help") { console.log(help); return; }
+  if (args.length === 1 && args[0] === "--help") { printReportLine(help); return; }
   const { options, action } = parse(args);
   if (action.length === 0) { show(await startIndividualEditorial(options)); return; }
   if (action.length === 1 && action[0] === "--listar") {
     const review = await inspectIndividualEditorial(options);
     show(review);
     for (const item of review.accreditation.exclusions) {
-      console.log(`  FICHA | ${item.reference} | ${item.status} | ${item.decision ?? "pendiente"}`);
+      printReportLine(`  FICHA | ${item.reference} | ${item.status} | ${item.decision ?? "pendiente"}`);
     }
     return;
   }
@@ -63,12 +64,12 @@ export const runAccreditProvider = async (args: readonly string[]): Promise<void
     const review = await inspectIndividualEditorial(options);
     const item = review.accreditation.exclusions.find((entry) => entry.reference === action[1]);
     if (!item) throw new Error("La ficha no necesita acreditación editorial individual");
-    console.log(`FICHA | ${options.providerId}:${item.reference} | ${item.status}`);
-    console.log(`  Fuente: ${item.sourceUrl}`);
-    for (const issue of item.issues) console.log(`  Incidencia: ${issue}`);
-    console.log(`  Decisión: ${item.decision ?? "pendiente"}`);
-    console.log(`  Motivo: ${item.reason ?? "pendiente"}`);
-    for (const evidence of item.evidenceUrls) console.log(`  Evidencia: ${evidence}`);
+    printReportLine(`FICHA | ${options.providerId}:${item.reference} | ${item.status}`);
+    printReportLine(`  Fuente: ${item.sourceUrl}`);
+    for (const issue of item.issues) printReportLine(`  Incidencia: ${issue}`);
+    printReportLine(`  Decisión: ${item.decision ?? "pendiente"}`);
+    printReportLine(`  Motivo: ${item.reason ?? "pendiente"}`);
+    for (const evidence of item.evidenceUrls) printReportLine(`  Evidencia: ${evidence}`);
     return;
   }
   if (action.length === 1 && action[0] === "--validar") {

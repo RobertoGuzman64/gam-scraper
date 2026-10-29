@@ -1,3 +1,4 @@
+import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { findDesktopDirectory } from "../../../infrastructure/filesystem/desktop-directory.js";
@@ -12,7 +13,7 @@ const help = `Uso: npm run entregar:proveedor -- gam --origen <catalog.json> --p
 Requiere acreditación:proveedor aprobada y vigente; no altera campañas globales.`;
 
 export const runDeliverProvider = async (args: readonly string[]): Promise<void> => {
-  if (args.length === 1 && args[0] === "--help") { console.log(help); return; }
+  if (args.length === 1 && args[0] === "--help") { printReportLine(help); return; }
   const [providerId, ...rest] = args;
   if (!providerId || providerId.startsWith("--")) throw new Error(help);
   const options = new Map<string, string>();
@@ -36,13 +37,13 @@ export const runDeliverProvider = async (args: readonly string[]): Promise<void>
   const result = await deliverIndividualArchive({
     rootDirectory: root, providerId, catalogFile: resolve(source), preparationFile: resolve(preparation)
   }, desktop, mode);
-  console.log(`ENTREGA INDIVIDUAL | ${providerId.toUpperCase()} | ${result.status.toUpperCase()}`);
-  console.log(`  Publicables: ${result.publishable} | Excluidas: ${result.excluded}`);
-  console.log(`  JSON: ${result.productFile}`);
-  if (result.status === "simulation") console.log("  Solo simulación; no se escribieron archivos");
+  printReportLine(`ENTREGA INDIVIDUAL | ${providerId.toUpperCase()} | ${result.status.toUpperCase()}`);
+  printReportLine(`  Publicables: ${result.publishable} | Excluidas: ${result.excluded}`);
+  printReportLine(`  JSON: ${result.productFile}`);
+  if (result.status === "simulation") printReportLine("  Solo simulación; no se escribieron archivos");
   else {
-    console.log(`  Acreditación y manifiesto: ${result.publicationDirectory}`);
-    console.log(`  ZIP verificado: ${result.zipFile}`);
+    printReportLine(`  Acreditación y manifiesto: ${result.publicationDirectory}`);
+    printReportLine(`  ZIP verificado: ${result.zipFile}`);
   }
 };
 

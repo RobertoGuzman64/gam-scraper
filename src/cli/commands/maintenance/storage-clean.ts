@@ -1,3 +1,4 @@
+import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { cleanCatalogExcess, cleanLegacyCatalogExcess, type RetentionCandidate } from "../../../infrastructure/filesystem/catalog/catalog-retention.js";
@@ -13,8 +14,8 @@ export const cleanStorage = async (argv: readonly string[]): Promise<void> => {
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--help" && argv.length === 1) {
-      console.log("Uso: npm run limpiar:almacen -- [--dry-run] [--legacy] [--outRoot ruta] [--historyDir ruta]");
-      console.log("--legacy elimina salidas antiguas de prefijos alternativos; conserva sus snapshots.");
+      printReportLine("Uso: npm run limpiar:almacen -- [--dry-run] [--legacy] [--outRoot ruta] [--historyDir ruta]");
+      printReportLine("--legacy elimina salidas antiguas de prefijos alternativos; conserva sus snapshots.");
       return;
     }
     if (!arg || !["--dry-run", "--legacy", "--outRoot", "--historyDir"].includes(arg) || seen.has(arg)) {
@@ -39,10 +40,10 @@ export const cleanStorage = async (argv: readonly string[]): Promise<void> => {
     }
   }
   results.push(...await cleanBatchExcess(resolve(historyDir), dryRun));
-  for (const item of results) console.log(`${dryRun ? "ELIMINARÍA" : "ELIMINADO"} | ${(item.bytes / (1024 * 1024)).toFixed(2)} MB | ${item.path}`);
+  for (const item of results) printReportLine(`${dryRun ? "ELIMINARÍA" : "ELIMINADO"} | ${(item.bytes / (1024 * 1024)).toFixed(2)} MB | ${item.path}`);
   const bytes = results.reduce((sum, item) => sum + item.bytes, 0);
-  console.log(`LIMPIEZA | ${dryRun ? "SIMULACIÓN" : "COMPLETADA"} | ${results.length} elementos | ${(bytes / (1024 * 1024)).toFixed(2)} MB`);
-  console.log("Protegidos: catálogo actual, dos versiones anteriores y snapshots. Prefijos alternativos solo con --legacy.");
+  printReportLine(`LIMPIEZA | ${dryRun ? "SIMULACIÓN" : "COMPLETADA"} | ${results.length} elementos | ${(bytes / (1024 * 1024)).toFixed(2)} MB`);
+  printReportLine("Protegidos: catálogo actual, dos versiones anteriores y snapshots. Prefijos alternativos solo con --legacy.");
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

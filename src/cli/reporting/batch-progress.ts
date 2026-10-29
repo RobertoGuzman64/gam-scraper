@@ -3,7 +3,7 @@ import type { ProviderRun } from "../../pipeline/batch/report.js";
 import type { BatchObserver } from "../../pipeline/batch/run.js";
 import { formatCategoryProgress } from "./scrape-progress.js";
 import { LiveStatus, formatDuration } from "./live-status.js";
-import { formatProgressBar, formatStatus, printStatus } from "./terminal.js";
+import { formatProgressBar, formatStatus, printStatus, printReportLine } from "./terminal.js";
 
 export class BatchConsole implements BatchObserver {
   private readonly status = new LiveStatus();
@@ -15,11 +15,11 @@ export class BatchConsole implements BatchObserver {
   start(runDir: string, total: number): void {
     this.total = total;
     this.completed = 0;
-    console.log(`LOTE | ${total} proveedor${total === 1 ? "" : "es"} | logs e historial en ${runDir}`);
+    printReportLine(`LOTE | ${total} proveedor${total === 1 ? "" : "es"} | logs e historial en ${runDir}`);
   }
 
   recoveredLock(pid: number): void {
-    console.log(`LOTE | Recuperado bloqueo abandonado | PID anterior: ${pid}`);
+    printReportLine(`LOTE | Recuperado bloqueo abandonado | PID anterior: ${pid}`);
   }
 
   begin(providerId: string, position: number, count: number): void {

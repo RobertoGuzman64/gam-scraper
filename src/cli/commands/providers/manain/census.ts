@@ -1,3 +1,4 @@
+import { printReportLine } from "../../../reporting/terminal.js";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -23,7 +24,7 @@ const run = async (): Promise<void> => {
     process.stdout.write(`\r\x1b[2KMANAIN | CENSO ${frames[frame % frames.length]} | ${status}`);
     frame += 1;
   };
-  if (!interactive) console.log("MANAIN | CENSO | Conectando con el catálogo...");
+  if (!interactive) printReportLine("MANAIN | CENSO | Conectando con el catálogo...");
   else render();
   const timer = interactive ? setInterval(render, 250) : null;
   const listing = await discoverManainSaleCatalog(category.url, manainProvider.defaultOptions, (visited, count) => {
@@ -31,7 +32,7 @@ const run = async (): Promise<void> => {
     pages = visited;
     found = count;
     if (interactive) render();
-    else console.log(`MANAIN | CENSO | ${pages} páginas | ${found} URL distintas`);
+    else printReportLine(`MANAIN | CENSO | ${pages} páginas | ${found} URL distintas`);
   }).finally(() => {
     if (timer) clearInterval(timer);
     clearLine();
@@ -42,8 +43,8 @@ const run = async (): Promise<void> => {
   const filename = `censo-${new Date().toISOString().replace(/[:.]/g, "-")}-${randomUUID().slice(0, 8)}.json`;
   const path = join(directory, filename);
   await writeFile(path, JSON.stringify(census, null, 2) + "\n", { encoding: "utf8", flag: "wx" });
-  console.log(`MANAIN | CENSO NO PUBLICABLE | ${census.urlCount} URL | ${census.pagesVisited} páginas | ${census.endReason}`);
-  console.log(`DIAGNÓSTICO | ${path}`);
+  printReportLine(`MANAIN | CENSO NO PUBLICABLE | ${census.urlCount} URL | ${census.pagesVisited} páginas | ${census.endReason}`);
+  printReportLine(`DIAGNÓSTICO | ${path}`);
   if (!census.complete) throw new Error("Manain: cobertura sin acreditar; el censo parcial se conserva para diagnóstico");
 };
 

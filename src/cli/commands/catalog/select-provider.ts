@@ -1,3 +1,4 @@
+import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readIndividualSelection } from "../../../pipeline/publication/individual-selection.js";
@@ -10,7 +11,7 @@ Consulta la preparación canónica verificada de un solo proveedor y sus decisio
 No aprueba decisiones, genera JSON finales ni escribe archivos.`;
 
 export const runSelectProvider = async (args: readonly string[]): Promise<void> => {
-  if (args.length === 1 && args[0] === "--help") { console.log(help); return; }
+  if (args.length === 1 && args[0] === "--help") { printReportLine(help); return; }
   const [providerId, ...rest] = args;
   if (!providerId || providerId.startsWith("--")) throw new Error("Falta proveedor");
   const options = new Map<string, string>();
@@ -26,13 +27,13 @@ export const runSelectProvider = async (args: readonly string[]): Promise<void> 
   const preparation = options.get("--preparation");
   if (!source || !preparation) throw new Error("Se requieren --origen y --preparacion");
   const context = await readIndividualSelection(providerId, resolve(source), resolve(preparation));
-  console.log(`SELECCIÓN INDIVIDUAL | ${providerId.toUpperCase()} | PENDIENTE DE ACREDITACIÓN`);
-  console.log(`  Originales: ${context.preparation.source.productCount} | Ready: ${context.preparation.totals.ready} | Review: ${context.preparation.totals.review}`);
-  console.log(`  Decisiones editoriales necesarias: ${context.draft.exclusions.length}`);
+  printReportLine(`SELECCIÓN INDIVIDUAL | ${providerId.toUpperCase()} | PENDIENTE DE ACREDITACIÓN`);
+  printReportLine(`  Originales: ${context.preparation.source.productCount} | Ready: ${context.preparation.totals.ready} | Review: ${context.preparation.totals.review}`);
+  printReportLine(`  Decisiones editoriales necesarias: ${context.draft.exclusions.length}`);
   for (const item of context.draft.exclusions) {
-    console.log(`  Pendiente ${item.providerId}:${item.reference} | ${item.status} | ${item.issues.join("; ")}`);
+    printReportLine(`  Pendiente ${item.providerId}:${item.reference} | ${item.status} | ${item.issues.join("; ")}`);
   }
-  console.log("  Solo lectura; ninguna ficha publicada ni decisión aprobada");
+  printReportLine("  Solo lectura; ninguna ficha publicada ni decisión aprobada");
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

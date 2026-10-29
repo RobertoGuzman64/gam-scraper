@@ -1,3 +1,4 @@
+import { printReportLine } from "../../reporting/terminal.js";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
@@ -19,7 +20,7 @@ Las galerías y descripciones modificadas exigen también revisión individual
 de sus campos con evidencia, sin aprobar automáticamente la nueva extracción.`;
 
 export const runReviewCoverage = async (args: readonly string[]): Promise<void> => {
-  if (args.length === 1 && args[0] === "--help") { console.log(help); return; }
+  if (args.length === 1 && args[0] === "--help") { printReportLine(help); return; }
   const paths = new Map<string, string>();
   let dryRun = false;
   for (let index = 0; index < args.length; index += 1) {
@@ -49,27 +50,27 @@ export const runReviewCoverage = async (args: readonly string[]): Promise<void> 
   ]);
   const sha = (raw: string): string => createHash("sha256").update(raw).digest("hex");
   const report = createCoverageReview(previous, next, sha(rawPrevious), sha(rawNext));
-  console.log(`REVISIÓN DE COBERTURA | ausentes ${report.missing.length} | cambiadas ${report.changed.length}`);
-  for (const item of report.missing) console.log(`  AUSENTE | ${item.reference} | ${item.url}`);
+  printReportLine(`REVISIÓN DE COBERTURA | ausentes ${report.missing.length} | cambiadas ${report.changed.length}`);
+  for (const item of report.missing) printReportLine(`  AUSENTE | ${item.reference} | ${item.url}`);
   for (const item of report.changed) {
-    console.log(`  CAMBIADA | ${item.reference} | ${item.fields.join(", ")}`);
+    printReportLine(`  CAMBIADA | ${item.reference} | ${item.fields.join(", ")}`);
     const gallery = item.audit.images;
     if (gallery) {
-      console.log(`    GALERÍA | ${gallery.previousCount} -> ${gallery.currentCount} | principal conservada: ${gallery.primaryRetained} | eliminadas: ${gallery.removed.length} | añadidas: ${gallery.added.length}`);
+      printReportLine(`    GALERÍA | ${gallery.previousCount} -> ${gallery.currentCount} | principal conservada: ${gallery.primaryRetained} | eliminadas: ${gallery.removed.length} | añadidas: ${gallery.added.length}`);
     }
     for (const description of item.audit.descriptions) {
-      console.log(`    ${description.field} | ${description.previousLength} -> ${description.currentLength} caracteres`);
+      printReportLine(`    ${description.field} | ${description.previousLength} -> ${description.currentLength} caracteres`);
     }
     for (const field of item.audit.otherFields) {
-      console.log(`    ${field.field} | ${JSON.stringify(field.previousValue)} -> ${JSON.stringify(field.currentValue)}`);
+      printReportLine(`    ${field.field} | ${JSON.stringify(field.previousValue)} -> ${JSON.stringify(field.currentValue)}`);
     }
-    if (item.fieldChecks.length) console.log(`    Revisiones de campo pendientes: ${item.fieldChecks.map(({ field }) => field).join(", ")}`);
+    if (item.fieldChecks.length) printReportLine(`    Revisiones de campo pendientes: ${item.fieldChecks.map(({ field }) => field).join(", ")}`);
   }
-  if (dryRun) { console.log("Simulación: ningún archivo escrito"); return; }
+  if (dryRun) { printReportLine("Simulación: ningún archivo escrito"); return; }
   if (!out) throw new Error("Falta --out");
   await mkdir(dirname(out), { recursive: true });
   await writeFile(out, JSON.stringify(report, null, 2), { flag: "wx" });
-  console.log(`  Informe para decisión editorial: ${out}`);
+  printReportLine(`  Informe para decisión editorial: ${out}`);
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

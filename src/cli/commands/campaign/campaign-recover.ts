@@ -3,13 +3,13 @@ import { fileURLToPath } from "node:url";
 import { abandonFailedCampaign, inspectRecoverableCampaign, recoverCompletedCampaign, resumePendingCampaignRemoval } from "../../../pipeline/campaign/retention/recovery.js";
 import { withCampaignAdmissionLock } from "../../../pipeline/campaign/retention/admission.js";
 import { printCommandError } from "../../reporting/errors.js";
-import { formatHeader, printStatus } from "../../reporting/terminal.js";
+import { formatHeader, printStatus, printReportLine } from "../../reporting/terminal.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 
 export const runCampaignRecovery = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    console.log("Uso: npm run recuperar -- <runId> | --recuperar <runId> | --abandonar <runId> --confirmar <runId> | --reanudar-rotacion\nLa consulta conserva íntegramente la campaña fallida y muestra si se puede abandonar. El abandono requiere dos identificaciones explícitas y nunca elimina una entrega acreditada ni trabajos editoriales.");
+    printReportLine("Uso: npm run recuperar -- <runId> | --recuperar <runId> | --abandonar <runId> --confirmar <runId> | --reanudar-rotacion\nLa consulta conserva íntegramente la campaña fallida y muestra si se puede abandonar. El abandono requiere dos identificaciones explícitas y nunca elimina una entrega acreditada ni trabajos editoriales.");
     return;
   }
   if (args.length === 1 && args[0] === "--reanudar-rotacion") {
@@ -19,10 +19,10 @@ export const runCampaignRecovery = async (args: readonly string[]): Promise<void
   }
   if (args.length === 1 && args[0] && !args[0].startsWith("--")) {
     const result = await inspectRecoverableCampaign(root, args[0]);
-    console.log(formatHeader("RECUPERACIÓN"));
+    printReportLine(formatHeader("RECUPERACIÓN"));
     printStatus("WARN", `Campaña ${result.runId} | ${result.status} | archivos preservados`);
-    console.log(`  Ningún dato se ha modificado. Si los cuatro canónicos están completos: npm run recuperar -- --recuperar ${result.runId}`);
-    console.log(`  Si decides descartar el intento: npm run recuperar -- --abandonar ${result.runId} --confirmar ${result.runId}`);
+    printReportLine(`  Ningún dato se ha modificado. Si los cuatro canónicos están completos: npm run recuperar -- --recuperar ${result.runId}`);
+    printReportLine(`  Si decides descartar el intento: npm run recuperar -- --abandonar ${result.runId} --confirmar ${result.runId}`);
     return;
   }
   if (args.length === 2 && args[0] === "--recuperar" && args[1]) {

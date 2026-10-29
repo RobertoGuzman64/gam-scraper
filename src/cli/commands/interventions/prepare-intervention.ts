@@ -1,3 +1,4 @@
+import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
@@ -6,14 +7,14 @@ import { printCommandError } from "../../reporting/errors.js";
 
 export const runPrepareIntervention = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    console.log(interventionPreparationHelp);
+    printReportLine(interventionPreparationHelp);
     return;
   }
   const options = parseInterventionPreparationOptions(args);
   const result = await prepareSavedCatalog({
     ...options, compare: null
   });
-  console.log([
+  printReportLine([
     `PREPARACIÓN INTERVENIDA | ${options.providerId.toUpperCase()} | ${options.dryRun ? "SIMULACIÓN" : "GUARDADA"}`,
     `  Productos: ${result.preparation.source.productCount} | Ready: ${result.preparation.totals.ready} | Review: ${result.preparation.totals.review}`,
     `  SHA original: ${result.preparation.source.intervention?.sourceCatalogSha256 ?? ""}`,

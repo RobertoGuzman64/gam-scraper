@@ -1,3 +1,4 @@
+import { printReportLine } from "../../reporting/terminal.js";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -62,8 +63,8 @@ const ensureCoverageReview = async (
   const value: unknown = review ? JSON.parse(await readFile(review, "utf8")) : undefined;
   const report = assessNewGamCoverage(previous, current, sha(previousText), sha(currentText), value);
   const sensitiveChecks = report.changed.reduce((total, entry) => total + entry.fieldChecks.length, 0);
-  console.log(`  Cobertura GAM: ${report.missing.length} ausencias, ${report.changed.length} cambios, ${sensitiveChecks} revisiones de campo`);
-  console.log(review
+  printReportLine(`  Cobertura GAM: ${report.missing.length} ausencias, ${report.changed.length} cambios, ${sensitiveChecks} revisiones de campo`);
+  printReportLine(review
     ? "  Revisión de cobertura validada contra los catálogos y sus huellas"
     : "  Expediente sin aprobar: no se ha aportado una revisión de cobertura validada");
 };
@@ -89,11 +90,11 @@ const writePublishable = async (
     await Promise.all(written.map((path) => rm(path, { force: true })));
     throw error;
   }
-  for (const file of files) console.log(`  JSON generado: ${file.path}`);
+  for (const file of files) printReportLine(`  JSON generado: ${file.path}`);
 };
 
 export const runSelectPublishable = async (args: readonly string[]): Promise<void> => {
-  if (args.length === 1 && args[0] === "--help") { console.log(help); return; }
+  if (args.length === 1 && args[0] === "--help") { printReportLine(help); return; }
   const options = new Map<string, string>();
   let dryRun = false;
   for (let index = 0; index < args.length; index += 1) {
@@ -145,20 +146,20 @@ export const runSelectPublishable = async (args: readonly string[]): Promise<voi
       const draft = createAccreditationDraft(preparations, sources, runId);
       await mkdir(dirname(draftPath), { recursive: true });
       await writeFile(draftPath, JSON.stringify(draft, null, 2), { flag: "wx" });
-      console.log(`BORRADOR EDITORIAL | ${draft.exclusions.length} decisiones pendientes | ${draftPath}`);
-      console.log("  Ningún producto aprobado ni archivo original modificado");
+      printReportLine(`BORRADOR EDITORIAL | ${draft.exclusions.length} decisiones pendientes | ${draftPath}`);
+      printReportLine("  Ningún producto aprobado ni archivo original modificado");
       return;
     }
     if (!accreditationPath) throw new Error("Falta acreditación editorial");
     const accreditationText = await readFile(accreditationPath, "utf8");
     const accreditation: unknown = JSON.parse(accreditationText);
     const selection = selectAccreditedPublishable(preparations, sources, runId, accreditation, accreditationSha(accreditationText));
-    console.log(`SELECCIÓN EDITORIAL ACREDITADA | originales ${selection.totals.original} | publicables ${selection.totals.publishable} | excluidos ${selection.totals.excluded}`);
-    if (dryRun) { console.log("  Ningún archivo escrito"); return; }
+    printReportLine(`SELECCIÓN EDITORIAL ACREDITADA | originales ${selection.totals.original} | publicables ${selection.totals.publishable} | excluidos ${selection.totals.excluded}`);
+    if (dryRun) { printReportLine("  Ningún archivo escrito"); return; }
     if (out) {
       await mkdir(dirname(out), { recursive: true });
       await writeFile(out, JSON.stringify(selection, null, 2), { flag: "wx" });
-      console.log(`  Selección: ${out}`);
+      printReportLine(`  Selección: ${out}`);
     } else if (outDir) {
       await writePublishable(outDir, selection, providers);
     }
@@ -166,8 +167,8 @@ export const runSelectPublishable = async (args: readonly string[]): Promise<voi
   }
   const selection = selectPublishableCatalog(preparations);
   const isNew = isNewEditorialCohort(preparations);
-  console.log(`SELECCIÓN EDITORIAL ${isNew ? "ACTUALIZADA" : "BASE"} | originales ${selection.totals.original} | publicables ${selection.totals.publishable} | excluidos ${selection.totals.excluded} | quality review ${selection.totals.review}`);
-  for (const excluded of selection.exclusions) console.log(`  Excluida ${excluded.providerId}:${excluded.reference} | ${excluded.reason}`);
+  printReportLine(`SELECCIÓN EDITORIAL ${isNew ? "ACTUALIZADA" : "BASE"} | originales ${selection.totals.original} | publicables ${selection.totals.publishable} | excluidos ${selection.totals.excluded} | quality review ${selection.totals.review}`);
+  for (const excluded of selection.exclusions) printReportLine(`  Excluida ${excluded.providerId}:${excluded.reference} | ${excluded.reason}`);
   const coverageOptions = ["--baseline", "--catalog", "--coverage-review"] as const;
   if (isNew) {
     const supplied = coverageOptions.filter((key) => options.has(key));
@@ -176,19 +177,19 @@ export const runSelectPublishable = async (args: readonly string[]): Promise<voi
       if (!source) throw new Error("Selección editorial GAM: preparación GAM no encontrada");
       await ensureCoverageReview(options, source.source.catalogSha256, dryRun);
     } else {
-      console.log("  Cobertura GAM pendiente: 4 ausencias y 24 cambios sin revisión aportada");
+      printReportLine("  Cobertura GAM pendiente: 4 ausencias y 24 cambios sin revisión aportada");
     }
   } else if (coverageOptions.some((key) => options.has(key))) {
     throw new Error("La revisión de cobertura solo corresponde a la nueva cohorte");
   }
   if (dryRun) {
-    console.log("  Ningún archivo escrito");
+    printReportLine("  Ningún archivo escrito");
     return;
   }
   if (out) {
     await mkdir(dirname(out), { recursive: true });
     await writeFile(out, JSON.stringify(selection, null, 2), { flag: "wx" });
-    console.log(`  Selección: ${out}`);
+    printReportLine(`  Selección: ${out}`);
   } else if (outDir) {
     await writePublishable(outDir, selection, providers);
   }
