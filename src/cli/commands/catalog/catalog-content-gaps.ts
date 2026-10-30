@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { analyzeSourceContentGaps, prioritizeCatalogGaps } from "../../../catalog/diagnostics/content-gaps-source.js";
+import { analyzeEditorialQuality } from "../../../catalog/diagnostics/editorial-quality.js";
 import type { GapGroupBy, GapInput } from "../../../catalog/diagnostics/content-gaps-types.js";
 import { findCampaignBaseline } from "../../../pipeline/campaign/reference/compare.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -52,7 +53,7 @@ const readOptions = (args: readonly string[]): CommandOptions => {
 
 export const runCatalogContentGaps = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    printReportLine("Uso: npm run huecos -- [--catalogo ruta/-catalog.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json]\nSin --catalogo: última campaña entregada íntegra (o referencia histórica). Con --catalogo: uno o varios catálogos canónicos completos verificados por su manifest y resumen; consulta de solo lectura.");
+    printReportLine("Uso: npm run huecos -- [--catalogo ruta/-catalog.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json]\nSin --catalogo: última campaña entregada íntegra (o referencia histórica). Con --catalogo: uno o varios catálogos canónicos completos verificados por su manifest y resumen; consulta de solo lectura. Además de ausencias, mide longitudes y señales editoriales de título, descripción corta y general.");
     return;
   }
   const options = readOptions(args);
@@ -96,9 +97,10 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
   }
   const analysis = analyzeSourceContentGaps(inputs, { groupBy: options.groupBy });
   const ranked = prioritizeCatalogGaps(analysis, options.minGroup, options.minMissing);
+  const editorial = analyzeEditorialQuality(inputs);
   if (options.json) {
     console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance,
-      ...analysis, prioritized: ranked.slice(0, options.limit).map(({ group, observation, tier }) => ({
+      ...analysis, editorial, prioritized: ranked.slice(0, options.limit).map(({ group, observation, tier }) => ({
         providerId: group.providerId, categorySellID: group.categorySellID, sourceCategoryKey: group.sourceCategoryKey,
         brand: group.brand, model: group.model, field: observation.field, missing: observation.missing, tier
       })) }, null, 2));
@@ -115,7 +117,18 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
     printReportLine(`${group.providerId} | ${label}${refinement ? ` | ${refinement}` : ""} | ${field} | ${observation.present}/${observation.applicable} (${observation.coveragePercent}%) | ausentes ${observation.missing} | ${observation.coverage} | evidencias directas ${observation.directEvidence}, texto relacionado ${observation.relatedText}`);
     printReportLine(`  Casos: ${observation.missingIdentities.join(", ")}`);
   }
-  printReportLine("Consulta sin escrituras. Para evidencias originales y todos los grupos: npm run huecos -- --json (añade --catalogo si procede)");
+  printReportLine("CALIDAD EDITORIAL | texto preparado, umbrales orientativos, sin intervenir fichas");
+  printReportLine(`CRITERIOS (palabras) | título >= ${editorial.criteria.minTitleWords} | corta ${editorial.criteria.minShortWords}-${editorial.criteria.maxShortWords} | general ${editorial.criteria.minLongWords}-${editorial.criteria.maxLongWords}`);
+  for (const provider of editorial.providers) {
+    const short = provider.lengths.description;
+    const long = provider.lengths.description_general;
+    printReportLine(`${provider.providerId} | corta: ${short.present}/${provider.total}, mediana ${short.words.median ?? "-"} palabras, P90 ${short.words.p90 ?? "-"} | general: ${long.present}/${provider.total}, mediana ${long.words.median ?? "-"} palabras, P90 ${long.words.p90 ?? "-"}`);
+  }
+  printReportLine(`SEÑALES EDITORIALES | ${editorial.patterns.length} patrones | ${editorial.cases.length} fichas con observaciones | TOP ${Math.min(options.limit, editorial.patterns.length)}`);
+  for (const pattern of editorial.patterns.slice(0, options.limit)) {
+    printReportLine(`${pattern.providerId} | ${pattern.category} | ${pattern.code} | ${pattern.affected}/${pattern.total} | ejemplos ${pattern.examples.join(", ")}`);
+  }
+  printReportLine("Consulta sin escrituras. El JSON incluye métricas de palabras/caracteres, criterios, patrones y casos editoriales, además de los huecos existentes.");
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

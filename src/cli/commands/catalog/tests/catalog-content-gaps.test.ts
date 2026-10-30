@@ -24,14 +24,19 @@ test("huecos analiza catálogos canónicos explícitos sin exigir referencia glo
   const single = JSON.parse(await execute(["--catalogo", gam, "--json"])) as {
     provenance: { source: string; catalogs: { providerId: string; contentSha256: string }[] };
     universe: { total: number; providers: { providerId: string }[] };
+    editorial: { lengths: { description: { missing: number } }; providers: { providerId: string }[] };
   };
   assert.equal(single.provenance.source, "catalogos_canonicos");
   assert.equal(single.universe.total, 244);
+  assert.equal(single.editorial.providers[0]?.providerId, "gam");
+  assert.ok(single.editorial.lengths.description.missing >= 0);
   assert.deepEqual(single.universe.providers.map((item) => item.providerId), ["gam"]);
   assert.match(single.provenance.catalogs[0]?.contentSha256 ?? "", /^[a-f0-9]{64}$/);
   const combined = await execute(["--catalogo", gam, "--catalogo", gomariz, "--catalogo", mercaeleva, "--top", "1"]);
   assert.match(combined, /catálogos explícitos \(gam, gomariz, mercaeleva\)/);
   assert.match(combined, /originales 276/);
+  assert.match(combined, /CALIDAD EDITORIAL/);
+  assert.match(combined, /SEÑALES EDITORIALES/);
   assert.equal(await readFile(gam, "utf8"), before);
 });
 
