@@ -5,6 +5,7 @@ import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-exp
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveAttributeValue } from "../mapping/attribute-mapping.js";
 import { prepareCached } from "./prepare-cached.js";
+import { resolveGomarizShortDescription } from "../mapping/providers/gomariz/short-description.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 
 const catalog = await loadImportCatalog();
@@ -37,15 +38,17 @@ test("Gomariz: preparación del catálogo real sin inventar valores ni perder re
   }
 });
 
-test("Gomariz: el catálogo original conserva las incidencias reales sin inventar descripciones cortas", async () => {
+test("Gomariz: la preparación editorial deriva textos sin modificar el catálogo original", async () => {
   const products = originalProducts;
   const byReference = new Map(products.map((record) => [record.reference, record]));
   for (const record of products) {
     assert.equal(record.shortDescription, null, record.reference ?? record.url);
     const prepared = prepareCached(record, catalog);
-    assert.equal(prepared.product.description, null, record.reference ?? record.url);
+    assert.equal(prepared.product.description, resolveGomarizShortDescription(record), record.reference ?? record.url);
     assert.ok(prepared.importIssues);
-    assert.ok(prepared.importIssues.createMany.length > 0, record.reference ?? record.url);
+    if (prepared.product.description === null) {
+      assert.ok(prepared.importIssues.createMany.length > 0, record.reference ?? record.url);
+    }
   }
   for (const reference of ["CC1535", "CC1666"]) {
     const record = byReference.get(reference);
