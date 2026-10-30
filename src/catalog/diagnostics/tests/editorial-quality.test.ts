@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { PreparedProduct } from "../../preparation/contracts.js";
-import { analyzeEditorialQuality, EDITORIAL_CRITERIA } from "../editorial-quality.js";
+import { analyzeEditorialQuality, analyzePublishedEditorialQuality, EDITORIAL_CRITERIA } from "../editorial-quality.js";
 import type { GapInput } from "../content-gaps-types.js";
 
 const entry = (reference: string, values: {
@@ -45,7 +45,9 @@ test("mide palabras y caracteres de textos preparados, incluidos vacíos, y sepa
   assert.equal(result.lengths.description.characters.max, words(46).length);
   assert.deepEqual(codes(result, "1"), ["titulo_muy_breve", "corta_demasiado_larga", "general_muy_breve"]);
   assert.ok(codes(result, "2").includes("corta_muy_breve"));
-  assert.equal(codes(result, "3").length, 0);
+  assert.deepEqual(codes(result, "3"), ["corta_ausente", "general_ausente"]);
+  assert.equal(result.providers[0]?.findings.corta_ausente, 1);
+  assert.equal(result.providers[0]?.findings.general_ausente, 1);
 });
 
 test("detecta equivalencia, general menor que corta y título reutilizado sin afirmar datos inventados", () => {
@@ -132,4 +134,25 @@ test("ordena las descripciones más largas por palabras, caracteres e identidad,
   assert.equal(result.longestGeneral[0]?.words, 100);
   assert.match(result.longestGeneral[0]?.url ?? "", /\/max$/);
   assert.equal(result.longestGeneral[0]?.preview, words(100).slice(0, 180));
+});
+
+
+test("localiza por referencia ambos campos ausentes en publicaciones sin duplicar identidades", () => {
+  const products = [
+    entry("ambos").prepared.product,
+    entry("corta", { long: words(75) }).prepared.product,
+    entry("completa", { short: words(20), long: words(75) }).prepared.product
+  ];
+  const result = analyzePublishedEditorialQuality(products);
+  const both = result.cases.find((item) => item.reference === "ambos");
+  const onlyShort = result.cases.find((item) => item.reference === "corta");
+  assert.equal(both?.identity, "gomariz:ref:ambos");
+  assert.equal(both?.url, "https://example.com/ambos");
+  assert.deepEqual(both?.issues.map((issue) => issue.code), ["corta_ausente", "general_ausente"]);
+  assert.deepEqual(onlyShort?.issues.map((issue) => issue.code), ["corta_ausente"]);
+  assert.equal(result.cases.some((item) => item.reference === "completa"), false);
+  assert.equal(result.lengths.description.missing, 2);
+  assert.equal(result.lengths.description_general.missing, 1);
+  assert.equal(result.providers[0]?.findings.corta_ausente, 2);
+  assert.equal(result.providers[0]?.findings.general_ausente, 1);
 });

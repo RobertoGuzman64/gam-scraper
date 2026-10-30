@@ -1,6 +1,7 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { fold } from "../../category-utils.js";
 import { verifiedMercaelevaA14jeWorkingHeight } from "../../../evidence/providers/mercaeleva/lgmg-a14je-work-height-evidence.js";
+import { mercaelevaMissingDescriptions } from "./missing-descriptions.js";
 
 const identity = (value: string): string => fold(value).replace(/[^a-z0-9]/g, "");
 
@@ -72,7 +73,9 @@ const notAvailable: ShortDescriptionResolution = { description: null, heightConf
 export const resolveMercaelevaShortDescription = (record: ProductRecord): ShortDescriptionResolution => {
   if (record.providerId !== "mercaeleva" || record.shortDescription?.trim()) return notAvailable;
   const general = record.longDescription?.trim();
-  if (!general || !record.brand?.trim() || !record.model?.trim()) return notAvailable;
+  if (!general || !record.brand?.trim() || !record.model?.trim()) {
+    return { description: mercaelevaMissingDescriptions(record).short, heightConflict: false };
+  }
 
   const sellerText = descriptionSource(record, general);
   if (!sellerText) return notAvailable;

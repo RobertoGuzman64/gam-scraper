@@ -9,7 +9,14 @@ import { resolveCommercialCondition } from "./condition.js";
 import type { ImportCandidate, ImportCatalog } from "../legacy-export/contracts.js";
 import type { PreparedProduct } from "./contracts.js";
 import { resolveMercaelevaShortDescription } from "./mapping/providers/mercaeleva/descriptions.js";
+import { resolveMercaelevaGeneralDescription } from "./mapping/providers/mercaeleva/general-description.js";
+import { mercaelevaMissingDescriptions } from "./mapping/providers/mercaeleva/missing-descriptions.js";
+import { gamMissingDescriptions } from "./mapping/providers/gam/missing-descriptions.js";
+import { resolveGamGeneralDescription } from "./mapping/providers/gam/general-description.js";
+import { resolveGamModelSpecificGeneral } from "./mapping/providers/gam/model-specific-general.js";
+import { resolveGamLongDescription } from "./mapping/providers/gam/long-description.js";
 import { resolveGomarizShortDescription } from "./mapping/providers/gomariz/short-description.js";
+import { resolveGomarizGeneralDescription } from "./mapping/providers/gomariz/general-description.js";
 import { gamElevationSourceIdentityConflict } from "./evidence/providers/gam/elevation-identity.js";
 import { reconcileGamInitialIdentity, reconcileGamForPreparation } from "./reconciliation/gam.js";
 import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation } from "./reconciliation/mercaeleva.js";
@@ -28,7 +35,12 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const reference = record.reference?.trim() || null;
   const title = record.title?.trim() || null;
   const descriptionEvidence = resolveMercaelevaShortDescription(record);
-  const descriptions = distinguishDescriptions(record.shortDescription ?? descriptionEvidence.description ?? resolveGomarizShortDescription(record), record.longDescription);
+  const missingDescriptions = mercaelevaMissingDescriptions(record);
+  const missingGamDescriptions = gamMissingDescriptions(record);
+  const descriptions = distinguishDescriptions(
+    record.shortDescription ?? descriptionEvidence.description ?? resolveGomarizShortDescription(record) ?? missingGamDescriptions.short,
+    resolveGomarizGeneralDescription(record) ?? resolveMercaelevaGeneralDescription(record) ?? resolveGamGeneralDescription(record) ?? resolveGamModelSpecificGeneral(record) ?? resolveGamLongDescription(record) ?? record.longDescription ?? missingDescriptions.long ?? missingGamDescriptions.long
+  );
   if (descriptionEvidence.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
   if (gamElevationSourceIdentityConflict(record)) issues.push("Identidad GAM contradictoria entre título, resumen y ficha técnica");
   const attributeResult = catalog ? productAttributes(record, category, catalog) : null;

@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { invalidGomarizPlatformHeight } from "../../../../normalization/providers/gomariz/technical.js";
+import { resolveGomarizAdditionalShortDescription } from "./additional-short-description.js";
 
 const familyNames: Readonly<Record<string, string>> = {
   "elevador-tijera": "Plataforma de tijera",
@@ -32,7 +33,8 @@ const quantity = (value: unknown, unit: "m" | "kg"): string | null => {
 export const resolveGomarizShortDescription = (record: ProductRecord): string | null => {
   if (record.shortDescription?.trim()) return null;
   const family = sourceFamily(record);
-  if (!family || !record.title?.trim() || !record.brand?.trim() || !record.model?.trim() ||
+  if (!family) return resolveGomarizAdditionalShortDescription(record);
+  if (!record.title?.trim() || !record.brand?.trim() || !record.model?.trim() ||
     !/^(?:19|20)\d{2}$/.test(record.year ?? "")) return null;
   const title = record.title.trim();
   const lowered = title.toLocaleLowerCase("es");
@@ -52,6 +54,9 @@ export const resolveGomarizShortDescription = (record: ProductRecord): string | 
   const motor = rawMotor?.trim();
   if (motor !== undefined && !["Eléctrico", "Diésel", "Eléctrico, Gasolina"].includes(motor)) return null;
   if (family !== "oruga" && motor === "Eléctrico, Gasolina") return null;
+  const longDescription = record.longDescription ?? "";
+  if ((motor === "Eléctrico" && /\bdi[eé]sel\b/i.test(longDescription)) ||
+    (motor === "Diésel" && /\bel[eé]ctric[oa]s?\b/i.test(longDescription))) return null;
   const motorName = motor === "Eléctrico" ? " eléctrica" : motor === "Diésel" ? " diésel" : "";
   if (motorName && ((motorName === " eléctrica" && /\bdi[eé]sel\b/i.test(title)) ||
     (motorName === " diésel" && /\bel[eé]ctric[oa]\b/i.test(title)))) return null;

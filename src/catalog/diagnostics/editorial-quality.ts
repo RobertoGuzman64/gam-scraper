@@ -23,8 +23,8 @@ export const EDITORIAL_CRITERIA = {
 
 export type EditorialField = "title" | "description" | "description_general";
 export type EditorialIssueCode =
-  "titulo_ausente" | "titulo_muy_breve" | "corta_muy_breve" | "corta_demasiado_larga" |
-  "general_muy_breve" | "general_desproporcionada" | "general_no_supera_corta" |
+  "titulo_ausente" | "titulo_muy_breve" | "corta_ausente" | "corta_muy_breve" | "corta_demasiado_larga" |
+  "general_ausente" | "general_muy_breve" | "general_desproporcionada" | "general_no_supera_corta" |
   "corta_igual_titulo" | "descripciones_iguales" | "general_repetida_entre_modelos" |
   "general_sin_modelo" | "general_telegrafica" | "general_repeticion_interna";
 
@@ -207,14 +207,16 @@ const analyze = (source: readonly Entry[]): EditorialAnalysis => {
     const { title, short, long } = item;
     if (!title.words) addIssue(issues, "titulo_ausente", "title", title);
     else if (title.words < EDITORIAL_CRITERIA.minTitleWords) addIssue(issues, "titulo_muy_breve", "title", title);
-    if (short.words) {
+    if (!short.words) addIssue(issues, "corta_ausente", "description", short);
+    else {
       if (short.words < EDITORIAL_CRITERIA.minShortWords) addIssue(issues, "corta_muy_breve", "description", short);
       if (short.words > EDITORIAL_CRITERIA.maxShortWords) addIssue(issues, "corta_demasiado_larga", "description", short);
       if (title.words && normalizeText(short.text) === normalizeText(title.text)) {
         addIssue(issues, "corta_igual_titulo", "description", short);
       }
     }
-    if (long.words) {
+    if (!long.words) addIssue(issues, "general_ausente", "description_general", long);
+    else {
       if (long.words < EDITORIAL_CRITERIA.minLongWords) addIssue(issues, "general_muy_breve", "description_general", long);
       if (long.words > EDITORIAL_CRITERIA.maxLongWords) addIssue(issues, "general_desproporcionada", "description_general", long);
       if (short.words) {
