@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "runId": "individual-gomariz-5e4c644b44ea3ca44721a82ad6bac74f",
+  "approved": true,
+  "approvalReason": "Apruebo las 143 fichas tecnicamente conformes de Gomariz",
+  "sources": [
+    {
+      "providerId": "gomariz",
+      "catalogSha256": "52cd6523ac4150f4059ca8c50147ad3ecddf6c7f69daebe5dd2b79f113f594e6",
+      "preparationSha256": "489531a87de70dad27c514d0c169e61dc2e96759aef96cc8431e5934b1927b28",
+      "productCount": 143
+    }
+  ],
+  "exclusions": []
+}
