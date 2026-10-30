@@ -123,6 +123,32 @@ test("huecos puede descubrir y auditar las publicaciones finales sin listar ruta
   await assert.rejects(execute(["--finales", "--catalogo", gam]), /no se combina/);
 });
 
+test("huecos identifica la conversión CRLF sin aceptar una publicación modificada", async () => {
+  const { readdir } = await import("node:fs/promises");
+  const publicationsRoot = join(root, "catalogs", "providers", "gomariz", "publications");
+  const folder = (await readdir(publicationsRoot)).find((name) => /^[a-f0-9]{64}$/.test(name));
+  assert.ok(folder);
+  const source = join(publicationsRoot, folder);
+  const temp = await mkdtemp(join(tmpdir(), "huecos-crlf-"));
+  try {
+    for (const name of ["gomariz-publishable.json", "manifest.json", "accreditation.json"]) {
+      await copyFile(join(source, name), join(temp, name));
+    }
+    const publication = join(temp, "gomariz-publishable.json");
+    const accreditation = join(temp, "accreditation.json");
+    const rawPublication = await readFile(publication, "utf8");
+    const rawAccreditation = await readFile(accreditation, "utf8");
+    assert.match(await execute(["--publicacion", publication, "--top", "1"]), /finales [1-9]\d*/);
+    await writeFile(publication, rawPublication.replace(/\r?\n/g, "\r\n"));
+    await assert.rejects(execute(["--publicacion", publication]), /gomariz-publishable\.json: SHA256 distinto del manifest:.*CRLF/);
+    await writeFile(publication, rawPublication);
+    await writeFile(accreditation, rawAccreditation.replace(/\r?\n/g, "\r\n"));
+    await assert.rejects(execute(["--publicacion", publication]), /accreditation\.json: SHA256 de acreditación distinto del manifest:.*CRLF/);
+  } finally {
+    await rm(temp, { recursive: true, force: true });
+  }
+});
+
 test("huecos identifica el motivo y la ficha exacta si falla la validación de Gomariz", async () => {
   const { readdir } = await import("node:fs/promises");
   const publicationsRoot = join(root, "catalogs", "providers", "gomariz", "publications");

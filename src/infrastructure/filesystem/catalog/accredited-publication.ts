@@ -11,6 +11,11 @@ const sha256 = (content: string): string => createHash("sha256").update(content)
 const publicationError = (path: string, detail: string): Error =>
   new Error(`Publicación ${path}: ${detail}`);
 
+const crlfDiagnostic = (raw: string, expected: unknown): string =>
+  typeof expected === "string" && raw.includes("\r\n") && sha256(raw.replace(/\r\n/g, "\n")) === expected
+    ? " (se detectó conversión de saltos de línea LF a CRLF; restaura los bytes acreditados)"
+    : "";
+
 const readPublicationFile = async (path: string): Promise<string> => {
   try {
     return await readFile(path, "utf8");
@@ -85,12 +90,14 @@ export const readAccreditedPublication = async (file: string): Promise<{
     throw publicationError(path, `total de fichas ${parsed.length} distinto del manifest (${String(manifest.totals.publishable)})`);
   }
   const productHash = sha256(raw);
-  if (manifest.files[basename(path)] !== productHash) {
-    throw publicationError(path, `SHA256 distinto del manifest: esperado ${String(manifest.files[basename(path)])}, actual ${productHash}`);
+  const expectedProductHash = manifest.files[basename(path)];
+  if (expectedProductHash !== productHash) {
+    throw publicationError(path, `SHA256 distinto del manifest: esperado ${String(expectedProductHash)}, actual ${productHash}${crlfDiagnostic(raw, expectedProductHash)}`);
   }
   const approvalHash = sha256(rawAccreditation);
-  if (manifest.files["accreditation.json"] !== approvalHash || manifest.approvalSha256 !== approvalHash) {
-    throw publicationError(accreditationPath, `SHA256 de acreditación distinto del manifest: actual ${approvalHash}`);
+  const expectedApprovalHash = manifest.files["accreditation.json"];
+  if (expectedApprovalHash !== approvalHash || manifest.approvalSha256 !== approvalHash) {
+    throw publicationError(accreditationPath, `SHA256 de acreditación distinto del manifest: esperados ${String(expectedApprovalHash)} y ${String(manifest.approvalSha256)}, actual ${approvalHash}${crlfDiagnostic(rawAccreditation, expectedApprovalHash)}`);
   }
   for (const [index, entry] of parsed.entries()) {
     const issue = candidateValidationIssue(entry);
