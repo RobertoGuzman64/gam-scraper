@@ -15,8 +15,17 @@ const families = [
   "movimiento-tierra-minicargadora",
   "movimiento-tierra-martillo-miniex",
   "elevacion-unipersonal",
+  "elevacion-mastil",
   "manipulacion-transpaletas",
-  "manipulacion-retractil"
+  "manipulacion-retractil",
+  "manipulacion-apilador",
+  "movimiento-tierra-rodillo-compactador",
+  "pequena-maquinaria-compactacion",
+  "pequena-maquinaria-demolicion",
+  "pequena-maquinaria-radiales-electricas",
+  "pequena-maquinaria-martillos-electricos",
+  "pequena-maquinaria-hidrolimpiadora",
+  "pequena-maquinaria-bomba-sumergible"
 ] as const;
 
 export type ManainFamily = (typeof families)[number];
@@ -28,7 +37,9 @@ const aliases: readonly { readonly prefix: string; readonly family: ManainFamily
   { prefix: "venda-moviment-de-terres-minicargadora", family: "movimiento-tierra-minicargadora" },
   { prefix: "venda-elevacio-camions-plataforma", family: "elevacion-camion-cesta" },
   { prefix: "venda-elevacio-unipersonals", family: "elevacion-unipersonal" },
-  { prefix: "venda-energia-grups-electrogens", family: "energia-grupo-electrogeno" }
+  { prefix: "venda-energia-grups-electrogens", family: "energia-grupo-electrogeno" },
+  { prefix: "venda-elevacio-mastils-verticals", family: "elevacion-mastil" },
+  { prefix: "venta-manipulacion-apiladors", family: "manipulacion-apilador" }
 ];
 
 export const manainSourceFamily = (record: ProductRecord): ManainFamily | null => {

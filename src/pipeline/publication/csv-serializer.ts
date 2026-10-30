@@ -3,7 +3,7 @@ import type { CategoryConfig, CategoryScrapeResult } from "../../contracts/scrap
 import type { SpecScalar, SpecValue, SpecsMap } from "../../contracts/catalog.js";
 import { toCsv } from "../../shared/csv.js";
 
-const baseProductHeaders = [
+export const baseProductHeaders = [
   "categoryKey",
   "categoryName",
   "title",

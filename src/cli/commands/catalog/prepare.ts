@@ -2,7 +2,8 @@ import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
-import { parsePrepareOptions, prepareHelp } from "../../options/prepare.js";
+import { prepareManainRecord } from "../../../pipeline/preparation/manain-record.js";
+import { parseManainRecordOptions, parsePrepareOptions, prepareHelp } from "../../options/prepare.js";
 import { formatPriceAvailability } from "../../reporting/review-diagnostics.js";
 import { formatImportDiagnostics } from "../../reporting/import-diagnostics.js";
 import { printCommandError } from "../../reporting/errors.js";
@@ -13,6 +14,19 @@ export const runPrepare = async (args: readonly string[]): Promise<void> => {
     return;
   }
   if (args.includes("--help")) throw new Error("--help no admite argumentos adicionales");
+  if (args[0] === "manain" && args.includes("--censo")) {
+    const options = parseManainRecordOptions(args);
+    const result = await prepareManainRecord(options);
+    printReportLine(`MANAIN | REGISTRO OFFLINE | ${options.dryRun ? "SIMULACIÓN" : "GUARDADO"}`);
+    printReportLine(`  Censo: ${result.discoveredProductUrls} | Conservadas: ${result.products.length} | Descartadas: ${result.discardedUrls.length}`);
+    printReportLine(`  Calidad técnica: ${result.totals.ready} ready | ${result.totals.review} review`);
+    for (const entry of result.products.filter((product) => product.prepared.status === "review")) {
+      printReportLine(`  REVIEW ${entry.original.reference}: ${entry.prepared.issues.join("; ")}`);
+    }
+    printReportLine(options.dryRun ? "  Sin escrituras ni acceso a portales" : `  Registro: ${options.out}`);
+    printReportLine("  Registro parcial, sin acreditación comercial ni publicación");
+    return;
+  }
   const options = parsePrepareOptions(args);
   const result = await prepareSavedCatalog(options);
   const totals = result.diagnostics.totals;

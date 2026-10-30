@@ -7,6 +7,9 @@ import { MANAIN_CATEGORIES, MANAIN_OPTIONS } from "./config.js";
 import { extractManainSaleProductLinks } from "./listing.js";
 import type { ManainListingResult } from "./listing.js";
 import { parseManainProduct } from "./product.js";
+import { discardedManainProductUrls } from "../../../catalog/preparation/evidence/providers/manain/discarded-urls.js";
+
+const discardedManainUrls = new Set(discardedManainProductUrls);
 
 export const requireCompleteManainListing = (
   listing: ManainListingResult
@@ -14,7 +17,8 @@ export const requireCompleteManainListing = (
   if (!listing.complete || listing.endReason !== "control-exhausted") {
     throw new Error(`Manain: fin de catálogo sin acreditar (${listing.endReason}); se cancela la extracción de fichas`);
   }
-  return { urls: listing.urls, expectedTotal: listing.urls.length };
+  const urls = listing.urls.filter((url) => !discardedManainUrls.has(url));
+  return { urls, expectedTotal: urls.length };
 };
 
 export const manainProvider: ScraperProvider = {

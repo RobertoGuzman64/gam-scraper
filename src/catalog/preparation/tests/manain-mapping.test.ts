@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../mapping/attribute-mapping.js";
+import { manainSourceFamily, type ManainFamily } from "../evidence/providers/manain/source.js";
 import { resolveCommercialCondition } from "../condition.js";
 import { prepareProduct } from "../../legacy-export/prepare-product.js";
 
@@ -156,6 +157,27 @@ test("Manain: implementos, unipersonales y equipos de manipulación con familia 
     assert.equal(category(result.product.categorySellID), entry.slug, entry.url);
     assert.ok(!result.issues.includes("Tipo de máquina de origen sin confirmar"), entry.url);
   }
+});
+
+test("Manain: las familias técnicas publicadas se reconocen sin inventar categorías comerciales", () => {
+  const cases: readonly { readonly path: string; readonly family: ManainFamily }[] = [
+    { path: "venta-elevacion-mastil-lgmg-m0810je-3", family: "elevacion-mastil" },
+    { path: "venda-elevacio-mastils-verticals-genie-gr-15", family: "elevacion-mastil" },
+    { path: "venta-pequena-maquinaria-compactacion-atlas-copco-lf75-3", family: "pequena-maquinaria-compactacion" },
+    { path: "venta-pequena-maquinaria-demolicion-holzstar-tks-316-e", family: "pequena-maquinaria-demolicion" },
+    { path: "venta-movimiento-tierra-rodillo-compactador-wacker-rd-28-120", family: "movimiento-tierra-rodillo-compactador" },
+    { path: "venta-pequena-maquinaria-radiales-electricas-bosch-gws-22-230-h-3", family: "pequena-maquinaria-radiales-electricas" },
+    { path: "venta-pequena-maquinaria-martillos-electricos-bosch-gsh-5", family: "pequena-maquinaria-martillos-electricos" },
+    { path: "venta-pequena-maquinaria-hidrolimpiadora-bosch-ghp-5-75", family: "pequena-maquinaria-hidrolimpiadora" },
+    { path: "venta-pequena-maquinaria-bomba-sumergible-atlas-copco-weda-04s", family: "pequena-maquinaria-bomba-sumergible" },
+    { path: "venta-manipulacion-apiladors-atlet-160-sth-sn-380", family: "manipulacion-apilador" }
+  ];
+  for (const { path, family } of cases) {
+    const record = machine(`https://manain.com/producto/${path}/`, { "Nueva o usada": "usada" }, "");
+    assert.equal(manainSourceFamily(record), family, path);
+    assert.equal(prepareProduct(record, catalog).product.categorySellID, null, path);
+  }
+  assert.equal(manainSourceFamily(machine("https://manain.com/producto/venta-elevacion-indeterminada/", {}, "")), null);
 });
 
 test("Manain: las categorías de mástil, pequeña maquinaria y motor no acreditado no se suponen", () => {

@@ -38,6 +38,20 @@ test("Manain: un listado sin cierre acreditado no pasa al motor común", () => {
   assert.throws(() => manainProvider.buildPagedUrl(catalogUrl, 2), /navegador/);
 });
 
+test("Manain: descarta únicamente las tres fichas sin contenido del proveedor", () => {
+  const excluded = [
+    "https://manain.com/producto/venta-elevacion-brazo-articulado-haulotte-ha-20-px-5/",
+    "https://manain.com/producto/venta-elevacion-mastil-haulotte-star-10-2/",
+    "https://manain.com/producto/venta-elevacion-mastil-haulotte-star-10/"
+  ];
+  assert.deepEqual(requireCompleteManainListing({
+    urls: [firstUrl, ...excluded, secondUrl, `${excluded[2]}-otra-maquina/`],
+    pagesVisited: 43,
+    complete: true,
+    endReason: "control-exhausted"
+  }), { urls: [firstUrl, secondUrl, `${excluded[2]}-otra-maquina/`], expectedTotal: 3 });
+});
+
 test("Manain: motor y preparación conservan unidades distintas en una extracción aislada", async () => {
   const one = manainProvider.parseProductPage(fixture("MAN1802", 2023, 3280), firstUrl);
   const two = manainProvider.parseProductPage(fixture("MAN1268", 2022, 3377), secondUrl);
