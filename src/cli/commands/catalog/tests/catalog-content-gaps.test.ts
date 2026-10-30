@@ -3,6 +3,7 @@ import { execFile } from "node:child_process";
 import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import test from "node:test";
@@ -107,7 +108,52 @@ test("huecos no acepta publicaciones manipuladas aunque el JSON siga siendo vál
     const publication = join(temp, "gomariz-publishable.json");
     assert.match(await execute(["--publicacion", publication, "--top", "1"]), /finales [1-9]\d*/);
     await writeFile(publication, `${await readFile(publication, "utf8")} `);
-    await assert.rejects(execute(["--publicacion", publication]), /no coincide/);
+    await assert.rejects(execute(["--publicacion", publication]), /SHA256 distinto del manifest/);
+  } finally {
+    await rm(temp, { recursive: true, force: true });
+  }
+});
+
+test("huecos puede descubrir y auditar las publicaciones finales sin listar rutas", async () => {
+  const output = await execute(["--finales", "--top", "2"]);
+  assert.match(output, /finales 1341/);
+  assert.match(output, /DESCRIPCIONES GENERALES MÁS LARGAS/);
+  const automatic = await execute(["--top", "1"]);
+  assert.match(automatic, /finales 1341/);
+  await assert.rejects(execute(["--finales", "--catalogo", gam]), /no se combina/);
+});
+
+test("huecos identifica el motivo y la ficha exacta si falla la validación de Gomariz", async () => {
+  const { readdir } = await import("node:fs/promises");
+  const publicationsRoot = join(root, "catalogs", "providers", "gomariz", "publications");
+  const folder = (await readdir(publicationsRoot)).find((name) => /^[a-f0-9]{64}$/.test(name));
+  assert.ok(folder);
+  const source = join(publicationsRoot, folder);
+  const temp = await mkdtemp(join(tmpdir(), "huecos-diagnostico-"));
+  try {
+    for (const name of ["gomariz-publishable.json", "manifest.json", "accreditation.json"]) {
+      await copyFile(join(source, name), join(temp, name));
+    }
+    const publication = join(temp, "gomariz-publishable.json");
+    const raw = await readFile(publication, "utf8");
+    await writeFile(publication, `${raw} `);
+    await assert.rejects(execute(["--publicacion", publication]), /gomariz-publishable\.json: SHA256 distinto del manifest/);
+    await writeFile(publication, raw);
+    const parsed: unknown = JSON.parse(raw);
+    assert.ok(Array.isArray(parsed));
+    const changed = parsed.map((value: unknown, index: number) =>
+      index === 0 && typeof value === "object" && value !== null ? { ...value, description: 99 } : value);
+    const modified = JSON.stringify(changed);
+    await writeFile(publication, modified);
+    const manifestPath = join(temp, "manifest.json");
+    const manifest: unknown = JSON.parse(await readFile(manifestPath, "utf8"));
+    assert.ok(typeof manifest === "object" && manifest !== null && "files" in manifest);
+    const files = manifest.files;
+    assert.ok(typeof files === "object" && files !== null);
+    await writeFile(manifestPath, JSON.stringify({ ...manifest, files: {
+      ...files, "gomariz-publishable.json": createHash("sha256").update(modified).digest("hex")
+    } }));
+    await assert.rejects(execute(["--publicacion", publication]), /ficha 1 .*description: debe ser texto o null/);
   } finally {
     await rm(temp, { recursive: true, force: true });
   }

@@ -19,23 +19,41 @@ const isImportIssues = (input: unknown): boolean =>
   isRecord(input) && Array.isArray(input.excel) && input.excel.every((item: unknown) => typeof item === "string") &&
   Array.isArray(input.createMany) && input.createMany.every((item: unknown) => typeof item === "string");
 
-export const isCandidate = (input: unknown): input is ImportCandidate => {
-  if (!isRecord(input)) return false;
-  return validText(input.providerId) && validText(input.sourceUrl) &&
-    (input.reference === null || typeof input.reference === "string") &&
-    (input.externalReference === undefined || input.externalReference === null || typeof input.externalReference === "string") &&
-    (input.title === null || typeof input.title === "string") &&
-    (input.categorySellID === null || Number.isSafeInteger(input.categorySellID)) &&
-    (input.category === null || typeof input.category === "string") &&
-    (input.condition === "Nuevo" || input.condition === "Segunda_Mano" || input.condition === null) &&
-    (input.price === null || (typeof input.price === "number" && Number.isFinite(input.price))) &&
-    (input.description_title === null || typeof input.description_title === "string") &&
-    (input.description === null || typeof input.description === "string") &&
-    (input.description_general === null || typeof input.description_general === "string") &&
-    Array.isArray(input.images) && input.images.every((image: unknown) => typeof image === "string") &&
-    Array.isArray(input.attributes) && input.attributes.every((attribute: unknown) =>
-      isRecord(attribute) && Number.isSafeInteger(attribute.attributeID) && isAttributeValue(attribute.value));
+export const candidateValidationIssue = (input: unknown): string | null => {
+  if (!isRecord(input)) return "producto: se esperaba un objeto";
+  if (!validText(input.providerId)) return "providerId: se requiere texto no vacío";
+  if (!validText(input.sourceUrl)) return "sourceUrl: se requiere texto no vacío";
+  if (input.reference !== null && typeof input.reference !== "string") return "reference: debe ser texto o null";
+  if (input.externalReference !== undefined && input.externalReference !== null && typeof input.externalReference !== "string") {
+    return "externalReference: debe ser texto o null";
+  }
+  if (input.title !== null && typeof input.title !== "string") return "title: debe ser texto o null";
+  if (input.categorySellID !== null && !Number.isSafeInteger(input.categorySellID)) {
+    return "categorySellID: debe ser entero seguro o null";
+  }
+  if (input.category !== null && typeof input.category !== "string") return "category: debe ser texto o null";
+  if (input.condition !== "Nuevo" && input.condition !== "Segunda_Mano" && input.condition !== null) {
+    return "condition: valor ajeno al contrato";
+  }
+  if (input.price !== null && (typeof input.price !== "number" || !Number.isFinite(input.price))) {
+    return "price: debe ser número finito o null";
+  }
+  for (const field of ["description_title", "description", "description_general"] as const) {
+    if (input[field] !== null && typeof input[field] !== "string") return `${field}: debe ser texto o null`;
+  }
+  if (!Array.isArray(input.images) || input.images.some((image: unknown) => typeof image !== "string")) {
+    return "images: debe ser una lista de textos";
+  }
+  if (!Array.isArray(input.attributes)) return "attributes: debe ser una lista";
+  for (const [index, attribute] of input.attributes.entries()) {
+    if (!isRecord(attribute) || !Number.isSafeInteger(attribute.attributeID) || !isAttributeValue(attribute.value)) {
+      return `attributes[${index}]: attributeID o value inválido`;
+    }
+  }
+  return null;
 };
+
+export const isCandidate = (input: unknown): input is ImportCandidate => candidateValidationIssue(input) === null;
 
 export const parsePreparation = (input: unknown, providerId: string): PreparationDocument => {
   if (!isRecord(input) || input.quality !== "complete" || input.published !== true || !Array.isArray(input.products)) {

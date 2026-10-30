@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { analyzeSourceContentGaps, prioritizeCatalogGaps } from "../../../catalog/diagnostics/content-gaps-source.js";
 import { analyzeEditorialQuality, analyzePublishedEditorialQuality } from "../../../catalog/diagnostics/editorial-quality.js";
 import type { EditorialAnalysis } from "../../../catalog/diagnostics/editorial-quality.js";
-import { readAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { discoverAccreditedPublications, readAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
 import type { GapGroupBy, GapInput } from "../../../catalog/diagnostics/content-gaps-types.js";
 import { findCampaignBaseline } from "../../../pipeline/campaign/reference/compare.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -15,7 +15,7 @@ import { printCommandError } from "../../reporting/errors.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 
-type CommandOptions = { readonly json: boolean; readonly groupBy: GapGroupBy; readonly minGroup: number;
+type CommandOptions = { readonly json: boolean; readonly finales: boolean; readonly groupBy: GapGroupBy; readonly minGroup: number;
   readonly minMissing: number; readonly limit: number; readonly catalogs: readonly string[];
   readonly publications: readonly string[] };
 
@@ -28,6 +28,7 @@ const parsePositive = (value: string | undefined, flag: string): number => {
 
 const readOptions = (args: readonly string[]): CommandOptions => {
   let json = false;
+  let finales = false;
   let groupBy: GapGroupBy = "categoria";
   let minGroup = 8;
   let minMissing = 3;
@@ -37,6 +38,7 @@ const readOptions = (args: readonly string[]): CommandOptions => {
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === "--json") json = true;
+    else if (arg === "--finales") finales = true;
     else if (arg === "--catalogo") {
       const value = args[++index];
       if (!value?.trim() || value.startsWith("--")) throw new Error("--catalogo requiere la ruta de un -catalog.json");
@@ -59,7 +61,10 @@ const readOptions = (args: readonly string[]): CommandOptions => {
   if (catalogs.length > 0 && publications.length > 0) {
     throw new Error("--catalogo y --publicacion son modos alternativos; no mezclarlos");
   }
-  return { json, groupBy, minGroup, minMissing, limit, catalogs, publications };
+  if (finales && (catalogs.length > 0 || publications.length > 0)) {
+    throw new Error("--finales no se combina con --catalogo ni --publicacion");
+  }
+  return { json, finales, groupBy, minGroup, minMissing, limit, catalogs, publications };
 };
 
 const printEditorial = (editorial: EditorialAnalysis, limit: number): void => {
@@ -82,32 +87,47 @@ const printEditorial = (editorial: EditorialAnalysis, limit: number): void => {
   printReportLine("Consulta sin escrituras. Los casos, métricas, evidencias y ranking de hasta 50 descripciones se incluyen en --json.");
 };
 
+const reportPublications = async (paths: readonly string[], options: CommandOptions): Promise<void> => {
+  const publications = await Promise.all(paths.map(readAccreditedPublication));
+  const providers = new Set<string>();
+  for (const publication of publications) {
+    if (providers.has(publication.providerId)) throw new Error(`Proveedor duplicado en publicaciones: ${publication.providerId}`);
+    providers.add(publication.providerId);
+  }
+  const products = publications.flatMap((publication) => publication.products);
+  const provenance = { source: "publicaciones_acreditadas", publications: publications.map((publication, index) => ({
+    path: paths[index], providerId: publication.providerId, runId: publication.runId,
+    productCount: publication.products.length, contentSha256: publication.sha256
+  })) };
+  const editorial = analyzePublishedEditorialQuality(products);
+  if (options.json) {
+    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, editorial }, null, 2));
+  } else {
+    printReportLine(`HUECOS | publicaciones acreditadas (${publications.map((item) => item.providerId).join(", ")}) | finales ${products.length} | diagnóstico exclusivamente editorial`);
+    printEditorial(editorial, options.limit);
+  }
+};
+
 export const runCatalogContentGaps = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    printReportLine("Uso: npm run huecos -- [--catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json]\nSin fuente explícita: campaña entregada o referencia histórica. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados (manifest y aprobación), sin inventar originales ni gaps de specs. Mide longitudes, calidad editorial y ranking de descripciones generales más largas.");
+    printReportLine("Uso: npm run huecos -- [--finales | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, publicaciones finales acreditadas de catalogs/. --finales descubre las publicaciones acreditadas sin rutas manuales. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. Los textos finales no representan gaps técnicos de specs.");
     return;
   }
   const options = readOptions(args);
-  if (options.publications.length > 0) {
-    const publications = await Promise.all(options.publications.map(readAccreditedPublication));
-    const providers = new Set<string>();
-    for (const publication of publications) {
-      if (providers.has(publication.providerId)) throw new Error(`Proveedor duplicado en publicaciones: ${publication.providerId}`);
-      providers.add(publication.providerId);
-    }
-    const products = publications.flatMap((publication) => publication.products);
-    const provenance = { source: "publicaciones_acreditadas", publications: publications.map((publication, index) => ({
-      path: options.publications[index], providerId: publication.providerId, runId: publication.runId,
-      productCount: publication.products.length, contentSha256: publication.sha256
-    })) };
-    const editorial = analyzePublishedEditorialQuality(products);
-    if (options.json) {
-      console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, editorial }, null, 2));
-    } else {
-      printReportLine(`HUECOS | publicaciones acreditadas (${publications.map((item) => item.providerId).join(", ")}) | finales ${products.length} | diagnóstico exclusivamente editorial`);
-      printEditorial(editorial, options.limit);
-    }
+  if (options.publications.length > 0 || options.finales) {
+    const paths = options.finales ? await discoverAccreditedPublications(root) : options.publications;
+    if (paths.length === 0) throw new Error("No hay publicaciones acreditadas en catalogs/providers/*/publications");
+    await reportPublications(paths, options);
     return;
+  }
+  const baseline = options.catalogs.length === 0 ? await findCampaignBaseline(root) : null;
+  if (options.catalogs.length === 0 && !baseline) {
+      const paths = await discoverAccreditedPublications(root);
+      if (paths.length === 0) {
+        throw new Error("No existe campaña entregada ni publicaciones acreditadas; utiliza --catalogo con un canónico completo");
+      }
+      await reportPublications(paths, options);
+      return;
   }
   const { fingerprints } = await loadPreparationInputs();
   const inputs: GapInput[] = [];
@@ -133,8 +153,7 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
     };
     sourceLabel = `catálogos explícitos (${catalogs.map((catalog) => catalog.providerId).join(", ")})`;
   } else {
-    const baseline = await findCampaignBaseline(root);
-    if (!baseline) throw new Error("No existe campaña entregada ni referencia íntegra; utiliza --catalogo con un canónico completo");
+    if (!baseline) throw new Error("No existe campaña entregada verificable");
     for (const catalog of baseline.catalogs) {
       for (const source of catalog.products) inputs.push({ source, prepared: prepareSourceProduct(source) });
     }
