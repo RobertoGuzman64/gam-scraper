@@ -7,7 +7,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const definitions = {
   iniciar: { entry: "cli/commands/maintenance/start.js", usage: "iniciar", description: "Comprobar entorno y descubrir campaña sin extraer" },
-  huecos: { entry: "cli/commands/catalog/catalog-content-gaps.js", usage: "huecos [-- --catalogo ruta/-catalog.json --agrupar categoria|marca|modelo --min-grupo 8 --min-ausentes 3 --top 20 --json]", description: "Consultar huecos desde referencia o catálogos canónicos completos; solo lectura" },
+  huecos: { entry: "cli/commands/catalog/catalog-content-gaps.js", usage: "huecos [-- --catalogo ruta/-catalog.json | --publicacion ruta/-publishable.json] [--agrupar categoria|marca|modelo] [--min-grupo 8] [--min-ausentes 3] [--top 20] [--json]", description: "Consultar huecos canónicos o calidad editorial de publicaciones acreditadas; solo lectura" },
   estado: { entry: "cli/commands/campaign/campaign-status.js", usage: "estado", description: "Consultar sin escrituras la fase de campaña, entrega, referencia y próximos comandos" },
   extraer: { entry: "cli/commands/campaign/campaign-extract.js", usage: "extraer [-- --nueva]", description: "Extraer los cuatro proveedores y preparar/revisar el lote aislado" },
   revisar: { entry: "cli/commands/campaign/campaign-review.js", usage: "revisar", description: "Revisar Ready y Review; puede crear preparaciones que todavía falten" },
@@ -79,7 +79,7 @@ const printHelp = (requested) => {
     console.log("\nEJEMPLOS\n");
     console.log("  npm run iniciar  (crea carpetas de trabajo si faltan)");
     console.log("  npm run estado  (consulta sin escrituras)");
-    console.log("  npm run huecos  (última campaña entregada o --catalogo explícito)");
+    console.log("  npm run huecos  (última campaña entregada, --catalogo canónico o --publicacion acreditada)");
     console.log("  npm run extraer");
     console.log("  npm run comparar");
     console.log("  npm run referencia  (consulta de la referencia legada)");

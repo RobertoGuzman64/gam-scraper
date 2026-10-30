@@ -19,7 +19,7 @@ const isImportIssues = (input: unknown): boolean =>
   isRecord(input) && Array.isArray(input.excel) && input.excel.every((item: unknown) => typeof item === "string") &&
   Array.isArray(input.createMany) && input.createMany.every((item: unknown) => typeof item === "string");
 
-const isCandidate = (input: unknown): input is ImportCandidate => {
+export const isCandidate = (input: unknown): input is ImportCandidate => {
   if (!isRecord(input)) return false;
   return validText(input.providerId) && validText(input.sourceUrl) &&
     (input.reference === null || typeof input.reference === "string") &&

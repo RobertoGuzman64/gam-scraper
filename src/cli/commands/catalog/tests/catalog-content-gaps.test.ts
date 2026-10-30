@@ -66,3 +66,68 @@ test("huecos exige manifiesto y publicación completa coherentes para la fuente 
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("huecos audita las publicaciones finales acreditadas sin atribuirles originales", async () => {
+  const { readdir } = await import("node:fs/promises");
+  const publicationsRoot = join(root, "catalogs", "providers");
+  const publications: string[] = [];
+  for (const providerId of ["gam", "gomariz", "mercaeleva"]) {
+    const dirs = await readdir(join(publicationsRoot, providerId, "publications"));
+    const folder = dirs.filter((name) => /^[a-f0-9]{64}$/.test(name)).sort()[0];
+    assert.ok(folder);
+    publications.push(join(publicationsRoot, providerId, "publications", folder, `${providerId}-publishable.json`));
+  }
+  const raw = await execute(publications.flatMap((path) => ["--publicacion", path]).concat(["--top", "2", "--json"]));
+  const report: unknown = JSON.parse(raw);
+  assert.ok(isEditorialReport(report));
+  assert.equal(report.provenance.source, "publicaciones_acreditadas");
+  assert.equal(report.editorial.providers.length, 3);
+  assert.ok(report.editorial.providers.every((item) => item.total > 0));
+  assert.ok(report.editorial.longestGeneral.length > 0);
+  assert.ok(report.editorial.longestGeneral.every((item, index, items) =>
+    index === 0 || (items[index - 1]?.words ?? 0) >= item.words));
+  const text = await execute(["--publicacion", publications[2] ?? "", "--top", "1"]);
+  assert.match(text, /finales [1-9]\d*/);
+  assert.match(text, /DESCRIPCIONES GENERALES MÁS LARGAS/);
+  await assert.rejects(execute(["--catalogo", gam, "--publicacion", publications[0] ?? ""]), /modos alternativos/);
+  await assert.rejects(execute(["--publicacion", publications[0] ?? "", "--publicacion", publications[0] ?? ""]), /Proveedor duplicado/);
+});
+
+test("huecos no acepta publicaciones manipuladas aunque el JSON siga siendo válido", async () => {
+  const { readdir } = await import("node:fs/promises");
+  const rootDir = join(root, "catalogs", "providers", "gomariz", "publications");
+  const folder = (await readdir(rootDir)).filter((name) => /^[a-f0-9]{64}$/.test(name)).sort()[0];
+  assert.ok(folder);
+  const from = join(rootDir, folder);
+  const temp = await mkdtemp(join(tmpdir(), "huecos-publicacion-"));
+  try {
+    for (const name of ["gomariz-publishable.json", "manifest.json", "accreditation.json"]) {
+      await copyFile(join(from, name), join(temp, name));
+    }
+    const publication = join(temp, "gomariz-publishable.json");
+    assert.match(await execute(["--publicacion", publication, "--top", "1"]), /finales [1-9]\d*/);
+    await writeFile(publication, `${await readFile(publication, "utf8")} `);
+    await assert.rejects(execute(["--publicacion", publication]), /no coincide/);
+  } finally {
+    await rm(temp, { recursive: true, force: true });
+  }
+});
+
+type EditorialReport = {
+  readonly provenance: { readonly source: string };
+  readonly editorial: {
+    readonly providers: readonly { readonly total: number }[];
+    readonly patterns: readonly { readonly code: string; readonly providerId: string }[];
+    readonly longestGeneral: readonly { readonly reference: string | null; readonly words: number }[];
+  };
+};
+const isEditorialReport = (value: unknown): value is EditorialReport => {
+  if (typeof value !== "object" || value === null || !('editorial' in value) ||
+    typeof value.editorial !== "object" || value.editorial === null ||
+    !('provenance' in value) || typeof value.provenance !== "object" || value.provenance === null) return false;
+  const editorial = value.editorial;
+  return 'providers' in editorial && Array.isArray(editorial.providers) &&
+    'patterns' in editorial && Array.isArray(editorial.patterns) &&
+    'longestGeneral' in editorial && Array.isArray(editorial.longestGeneral) &&
+    'source' in value.provenance && typeof value.provenance.source === "string";
+};

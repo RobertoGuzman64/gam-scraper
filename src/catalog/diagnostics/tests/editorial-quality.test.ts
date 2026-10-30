@@ -91,3 +91,45 @@ test("mantiene orden estable, trazabilidad y no altera originales ni preparacion
   assert.throws(() => analyzeEditorialQuality([first, first]), /duplicada/);
   assert.ok(analyzeEditorialQuality(records).cases.every((item) => item.url.startsWith("https://example.com/")));
 });
+
+test("señala descripciones generales genéricas sin el modelo pero admite variantes de separación", () => {
+  const catalog = [
+    entry("modelo-sin-mention", { model: "SS0507E", long: words(80) }),
+    entry("modelo-presente", { model: "GS-2632", long: `${words(80)} El modelo GS 2632 está documentado.` }),
+    entry("modelo-sin-identificador", { model: "Serie", long: words(80) })
+  ];
+  const result = analyzeEditorialQuality(catalog);
+  assert.ok(codes(result, "modelo-sin-mention").includes("general_sin_modelo"));
+  assert.ok(!codes(result, "modelo-presente").includes("general_sin_modelo"));
+  assert.ok(!codes(result, "modelo-sin-identificador").includes("general_sin_modelo"));
+});
+
+test("distingue texto telegráfico y repetición interna no solapada de textos descriptivos", () => {
+  const uppercase = "Ref. 442 CARRETILLA ELEVADORA ELÉCTRICA 2500 KG MÁSTIL TRÍPLEX MARCA GENIE MODELO GS2632 ALTURA 12 METROS HORAS 235 AÑO 2023";
+  const phrase = "La máquina destaca por estabilidad durante los trabajos de movimiento de materiales industriales.";
+  const distinct = (prefix: string): string => Array.from({ length: 50 }, (_, index) => `${prefix}${index}`).join(" ");
+  const repeated = `${distinct("uno")} ${phrase} ${distinct("dos")} ${phrase} ${distinct("tres")} ${phrase}`;
+  const result = analyzeEditorialQuality([
+    entry("telegráfico", { long: uppercase }),
+    entry("repetido", { long: repeated }),
+    entry("natural", { long: `${distinct("natural")} ${phrase} ${distinct("otro")} ${distinct("final")}` }),
+    entry("solo-dos", { long: `${distinct("inicio")} ${phrase} ${distinct("medio")} ${phrase} ${distinct("cierre")}` })
+  ]);
+  assert.ok(codes(result, "telegráfico").includes("general_telegrafica"));
+  assert.ok(!codes(result, "natural").includes("general_telegrafica"));
+  assert.ok(codes(result, "repetido").includes("general_repeticion_interna"));
+  assert.ok(!codes(result, "solo-dos").includes("general_repeticion_interna"));
+});
+
+test("ordena las descripciones más largas por palabras, caracteres e identidad, con referencia y URL", () => {
+  const result = analyzeEditorialQuality([
+    entry("b", { long: words(40) }),
+    entry("a", { long: words(40) }),
+    entry("max", { long: words(100) }),
+    entry("sin-texto")
+  ]);
+  assert.deepEqual(result.longestGeneral.map((item) => item.reference), ["max", "a", "b"]);
+  assert.equal(result.longestGeneral[0]?.words, 100);
+  assert.match(result.longestGeneral[0]?.url ?? "", /\/max$/);
+  assert.equal(result.longestGeneral[0]?.preview, words(100).slice(0, 180));
+});

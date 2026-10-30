@@ -1,4 +1,5 @@
 import { buildProductIdentity } from "../identity.js";
+import type { ImportCandidate } from "../legacy-export/contracts.js";
 import type { GapInput } from "./content-gaps-types.js";
 
 export const EDITORIAL_CRITERIA = {
@@ -8,14 +9,24 @@ export const EDITORIAL_CRITERIA = {
   minLongWords: 60,
   maxLongWords: 800,
   repeatedLongMinRecords: 3,
-  repeatedLongMinModels: 2
+  repeatedLongMinModels: 2,
+  modelMinCharacters: 4,
+  telegraphicMinWords: 12,
+  telegraphicMaxWords: 80,
+  telegraphicUppercaseRatio: 0.75,
+  telegraphicMaxSentenceMarks: 2,
+  repeatedPassageWords: 12,
+  repeatedPassageMinOccurrences: 3,
+  repeatedPassageMinLongWords: 150,
+  longestDescriptionsLimit: 50
 } as const;
 
 export type EditorialField = "title" | "description" | "description_general";
 export type EditorialIssueCode =
   "titulo_ausente" | "titulo_muy_breve" | "corta_muy_breve" | "corta_demasiado_larga" |
   "general_muy_breve" | "general_desproporcionada" | "general_no_supera_corta" |
-  "corta_igual_titulo" | "descripciones_iguales" | "general_repetida_entre_modelos";
+  "corta_igual_titulo" | "descripciones_iguales" | "general_repetida_entre_modelos" |
+  "general_sin_modelo" | "general_telegrafica" | "general_repeticion_interna";
 
 export type EditorialLengthStats = {
   readonly present: number;
@@ -55,6 +66,16 @@ export type EditorialProvider = {
   readonly lengths: EditorialMetrics;
   readonly findings: Readonly<Partial<Record<EditorialIssueCode, number>>>;
 };
+export type EditorialLongest = {
+  readonly identity: string;
+  readonly providerId: string;
+  readonly reference: string | null;
+  readonly url: string;
+  readonly title: string;
+  readonly words: number;
+  readonly characters: number;
+  readonly preview: string;
+};
 export type EditorialAnalysis = {
   readonly criteria: typeof EDITORIAL_CRITERIA;
   readonly note: string;
@@ -62,12 +83,18 @@ export type EditorialAnalysis = {
   readonly providers: readonly EditorialProvider[];
   readonly patterns: readonly EditorialPattern[];
   readonly cases: readonly EditorialCase[];
+  readonly longestGeneral: readonly EditorialLongest[];
 };
 
 type Measured = { readonly text: string; readonly words: number; readonly characters: number };
 type Entry = {
-  readonly input: GapInput;
   readonly identity: string;
+  readonly providerId: string;
+  readonly categoryKey: string;
+  readonly categoryName: string;
+  readonly reference: string | null;
+  readonly url: string;
+  readonly model: string | null;
   readonly title: Measured;
   readonly short: Measured;
   readonly long: Measured;
@@ -76,6 +103,7 @@ type Entry = {
 const compare = (a: string, b: string): number => a < b ? -1 : a > b ? 1 : 0;
 const normalizeText = (text: string): string => text.normalize("NFKC").toLocaleLowerCase("es")
   .replace(/[^\p{L}\p{N}]+/gu, " ").trim().replace(/\s+/g, " ");
+const compact = (text: string): string => normalizeText(text).replace(/\s/g, "");
 const measure = (value: string | null | undefined): Measured => {
   const text = (value ?? "").replace(/\s+/g, " ").trim();
   return { text, words: text ? text.split(" ").length : 0, characters: [...text].length };
@@ -103,31 +131,52 @@ const metricsOf = (entries: readonly Entry[]): EditorialMetrics => ({
   description: lengthStats(entries.map((item) => item.short)),
   description_general: lengthStats(entries.map((item) => item.long))
 });
-
 const addIssue = (list: EditorialIssue[], code: EditorialIssueCode, field: EditorialField, value: Measured): void => {
   list.push({ code, field, words: value.words, characters: value.characters, preview: value.text.slice(0, 180) });
 };
 
-export const analyzeEditorialQuality = (inputs: readonly GapInput[]): EditorialAnalysis => {
-  const identities = new Set<string>();
-  const entries: Entry[] = inputs.map((input) => {
-    const identity = buildProductIdentity(input.source).key;
-    if (identities.has(identity)) throw new Error(`Identidad duplicada en auditor editorial: ${identity}`);
-    if (input.source.providerId !== input.prepared.product.providerId) throw new Error(`Proveedor distinto en ${identity}`);
-    identities.add(identity);
-    return {
-      identity, input, title: measure(input.prepared.product.title),
-      short: measure(input.prepared.product.description), long: measure(input.prepared.product.description_general)
-    };
-  }).sort((a, b) => compare(a.identity, b.identity));
+const lacksModel = (long: Measured, model: string | null): boolean => {
+  if (!model || !long.text) return false;
+  const target = compact(model);
+  return target.length >= EDITORIAL_CRITERIA.modelMinCharacters && /\d/.test(target) && !compact(long.text).includes(target);
+};
+const isTelegraphic = (long: Measured): boolean => {
+  if (long.words < EDITORIAL_CRITERIA.telegraphicMinWords ||
+    long.words > EDITORIAL_CRITERIA.telegraphicMaxWords) return false;
+  const letters = [...long.text].filter((char) => /\p{L}/u.test(char));
+  return letters.length > 0 && letters.filter((char) => char === char.toLocaleUpperCase("es")).length / letters.length >=
+    EDITORIAL_CRITERIA.telegraphicUppercaseRatio &&
+    (long.text.match(/[.!?]/g)?.length ?? 0) <= EDITORIAL_CRITERIA.telegraphicMaxSentenceMarks;
+};
+const repeatsPassage = (long: Measured): boolean => {
+  if (long.words < EDITORIAL_CRITERIA.repeatedPassageMinLongWords) return false;
+  const tokens = normalizeText(long.text).split(" ");
+  const size = EDITORIAL_CRITERIA.repeatedPassageWords;
+  const positions = new Map<string, number[]>();
+  for (let index = 0; index <= tokens.length - size; index++) {
+    const phrase = tokens.slice(index, index + size).join(" ");
+    const starts = positions.get(phrase) ?? [];
+    if (starts.length === 0 || index - (starts[starts.length - 1] ?? 0) >= size) starts.push(index);
+    if (starts.length >= EDITORIAL_CRITERIA.repeatedPassageMinOccurrences) return true;
+    positions.set(phrase, starts);
+  }
+  return false;
+};
 
+const analyze = (source: readonly Entry[]): EditorialAnalysis => {
+  const identities = new Set<string>();
+  const entries = [...source].sort((a, b) => compare(a.identity, b.identity));
+  for (const entry of entries) {
+    if (identities.has(entry.identity)) throw new Error(`Identidad duplicada en auditor editorial: ${entry.identity}`);
+    identities.add(entry.identity);
+  }
   const repeated = new Map<string, { identities: string[]; models: Set<string> }>();
   for (const item of entries) {
     if (!item.long.text) continue;
-    const key = JSON.stringify([item.input.source.providerId, item.input.source.categoryKey, normalizeText(item.long.text)]);
+    const key = JSON.stringify([item.providerId, item.categoryKey, normalizeText(item.long.text)]);
     const cluster = repeated.get(key) ?? { identities: [], models: new Set<string>() };
     cluster.identities.push(item.identity);
-    cluster.models.add(normalizeText([item.input.source.brand ?? "", item.input.source.model ?? item.input.source.title].join(" ")));
+    cluster.models.add(normalizeText(item.model ?? item.title.text));
     repeated.set(key, cluster);
   }
   const reused = new Set<string>();
@@ -143,15 +192,14 @@ export const analyzeEditorialQuality = (inputs: readonly GapInput[]): EditorialA
     issues: Map<EditorialIssueCode, string[]> }>();
   const byProvider = new Map<string, Entry[]>();
   for (const item of entries) {
-    const { source } = item.input;
-    const list = byProvider.get(source.providerId) ?? [];
+    const list = byProvider.get(item.providerId) ?? [];
     list.push(item);
-    byProvider.set(source.providerId, list);
-    const key = JSON.stringify([source.providerId, source.categoryKey]);
+    byProvider.set(item.providerId, list);
+    const key = JSON.stringify([item.providerId, item.categoryKey]);
     let group = groups.get(key);
     if (!group) {
-      group = { providerId: source.providerId, categoryKey: source.categoryKey,
-        category: source.categoryName, total: 0, issues: new Map() };
+      group = { providerId: item.providerId, categoryKey: item.categoryKey,
+        category: item.categoryName, total: 0, issues: new Map() };
       groups.set(key, group);
     }
     group.total++;
@@ -177,9 +225,12 @@ export const analyzeEditorialQuality = (inputs: readonly GapInput[]): EditorialA
         }
       }
       if (reused.has(item.identity)) addIssue(issues, "general_repetida_entre_modelos", "description_general", long);
+      if (lacksModel(long, item.model)) addIssue(issues, "general_sin_modelo", "description_general", long);
+      if (isTelegraphic(long)) addIssue(issues, "general_telegrafica", "description_general", long);
+      if (repeatsPassage(long)) addIssue(issues, "general_repeticion_interna", "description_general", long);
     }
-    if (issues.length) cases.push({ identity: item.identity, providerId: source.providerId,
-      categoryKey: source.categoryKey, reference: source.reference, url: source.url, issues });
+    if (issues.length) cases.push({ identity: item.identity, providerId: item.providerId,
+      categoryKey: item.categoryKey, reference: item.reference, url: item.url, issues });
     for (const issue of issues) {
       const ids = group.issues.get(issue.code) ?? [];
       ids.push(item.identity);
@@ -189,10 +240,10 @@ export const analyzeEditorialQuality = (inputs: readonly GapInput[]): EditorialA
 
   const patterns: EditorialPattern[] = [];
   for (const group of groups.values()) {
-    for (const [code, identities] of group.issues) {
+    for (const [code, groupIdentities] of group.issues) {
       patterns.push({ providerId: group.providerId, categoryKey: group.categoryKey,
-        category: group.category, code, affected: identities.length, total: group.total,
-        examples: identities.slice(0, 5) });
+        category: group.category, code, affected: groupIdentities.length, total: group.total,
+        examples: groupIdentities.slice(0, 5) });
     }
   }
   patterns.sort((a, b) => b.affected - a.affected || compare(a.providerId, b.providerId) ||
@@ -204,9 +255,35 @@ export const analyzeEditorialQuality = (inputs: readonly GapInput[]): EditorialA
     }
     return { providerId, total: providerEntries.length, lengths: metricsOf(providerEntries), findings };
   });
+  const longestGeneral: EditorialLongest[] = entries.filter((item) => item.long.words > 0)
+    .sort((a, b) => b.long.words - a.long.words || b.long.characters - a.long.characters || compare(a.identity, b.identity))
+    .slice(0, EDITORIAL_CRITERIA.longestDescriptionsLimit)
+    .map((item) => ({ identity: item.identity, providerId: item.providerId, reference: item.reference,
+      url: item.url, title: item.title.text, words: item.long.words,
+      characters: item.long.characters, preview: item.long.text.slice(0, 180) }));
   return {
     criteria: EDITORIAL_CRITERIA,
-    note: "Indicadores orientativos sobre textos preparados, no defectos confirmados ni obligación de inventar contenido. Repeticiones entre modelos requieren revisión del origen.",
-    lengths: metricsOf(entries), providers, patterns, cases
+    note: "Señales orientativas, no defectos confirmados. La ausencia del modelo es literal (puede haber variantes de escritura); los bloques repetidos y textos telegráficos requieren revisión editorial. No se rellena ni modifica ninguna ficha.",
+    lengths: metricsOf(entries), providers, patterns, cases, longestGeneral
   };
 };
+
+export const analyzeEditorialQuality = (inputs: readonly GapInput[]): EditorialAnalysis => analyze(inputs.map(({ source, prepared }) => {
+  const identity = buildProductIdentity(source).key;
+  if (source.providerId !== prepared.product.providerId) throw new Error(`Proveedor distinto en ${identity}`);
+  return {
+    identity, providerId: source.providerId, categoryKey: source.categoryKey, categoryName: source.categoryName,
+    reference: source.reference, url: source.url, model: source.model,
+    title: measure(prepared.product.title), short: measure(prepared.product.description),
+    long: measure(prepared.product.description_general)
+  };
+}));
+
+export const analyzePublishedEditorialQuality = (products: readonly ImportCandidate[]): EditorialAnalysis => analyze(products.map((product) => ({
+  identity: buildProductIdentity({ providerId: product.providerId, reference: product.reference,
+    serialNumber: null, url: product.sourceUrl }).key,
+  providerId: product.providerId, categoryKey: product.category ?? "", categoryName: product.category ?? "Sin categoría",
+  reference: product.reference, url: product.sourceUrl,
+  model: typeof product.spec["Modelo"] === "string" ? product.spec["Modelo"] : null,
+  title: measure(product.title), short: measure(product.description), long: measure(product.description_general)
+})));
