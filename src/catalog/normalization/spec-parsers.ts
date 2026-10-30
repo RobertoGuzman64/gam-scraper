@@ -1,3 +1,36 @@
+
+const lengthUnit = (raw: string): "mm" | "cm" | "m" | null => {
+  const normalized = raw.toLowerCase();
+  if (normalized === "mm" || normalized === "cm") return normalized;
+  if (normalized === "m" || normalized === "metro" || normalized === "metros") return "m";
+  return null;
+};
+
+export const parseMeasuredLength = (value: unknown, sourceKey: string, target: "mm" | "m"): number | null => {
+  const keyUnit = sourceKey.match(/\((mm|cm|m)\)\s*$/i)?.[1];
+  const fromKey = keyUnit ? lengthUnit(keyUnit) : null;
+  if (typeof value === "number") {
+    if (!Number.isFinite(value) || value < 0) return null;
+    if (!fromKey || fromKey === target) return value;
+    const inMillimeters = fromKey === "cm" ? value * 10 : fromKey === "m" ? value * 1000 : value;
+    return target === "mm" ? inMillimeters : inMillimeters / 1000;
+  }
+  if (typeof value !== "string") return null;
+  const match = value.trim().match(/^(\d+(?:[.,]\d+)?)\s*(mm|cm|m|metros?)?$/i);
+  if (!match?.[1]) return null;
+  const unit = match[2] ? lengthUnit(match[2]) : null;
+  if (unit && fromKey && unit !== fromKey) return null;
+  const from = unit ?? fromKey ?? target;
+  const literal = match[1];
+  if (from === "m" && /^\d{1,3}\.\d{3}$/.test(literal)) return null;
+  let numeric: number;
+  if (/^\d{1,3}\.\d{3}$/.test(literal) && from !== "m") numeric = Number(literal.replace(".", ""));
+  else numeric = Number(literal.replace(",", "."));
+  if (!Number.isFinite(numeric) || numeric < 0 || (from === "m" && numeric >= 1000)) return null;
+  if (from === target) return numeric;
+  const inMillimeters = from === "cm" ? numeric * 10 : from === "m" ? numeric * 1000 : numeric;
+  return target === "mm" ? inMillimeters : inMillimeters / 1000;
+};
 const normalizeNumericString = (input: string): string => {
   const s = input.trim();
   if (!s) return "";

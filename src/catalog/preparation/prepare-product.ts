@@ -5,13 +5,18 @@ import { resolveCategory } from "./mapping/category-mapping.js";
 import { imageUrls, normalizePrice } from "./product-fields.js";
 import { productAttributes } from "./product-attributes.js";
 import { sourceAttributeQualityIssues, sourceTechnicalQualityIssues } from "./source/attribute-quality.js";
+import { sourceSemanticQualityIssues } from "./source/semantic-quality.js";
 import { resolveCommercialCondition } from "./condition.js";
 import type { ImportCandidate, ImportCatalog } from "../legacy-export/contracts.js";
 import type { PreparedProduct } from "./contracts.js";
 import { resolveMercaelevaShortDescription } from "./mapping/providers/mercaeleva/descriptions.js";
+import { resolveMercaelevaConciseDescription } from "./mapping/providers/mercaeleva/concise-description.js";
 import { resolveMercaelevaGeneralDescription } from "./mapping/providers/mercaeleva/general-description.js";
 import { mercaelevaMissingDescriptions } from "./mapping/providers/mercaeleva/missing-descriptions.js";
 import { gamMissingDescriptions } from "./mapping/providers/gam/missing-descriptions.js";
+import { resolveGamShortDescription } from "./mapping/providers/gam/short-description.js";
+import { resolveGamConciseTitle } from "./mapping/providers/gam/concise-titles.js";
+import { resolveGomarizEditorialTitle } from "./mapping/providers/gomariz/editorial-title.js";
 import { resolveGamGeneralDescription } from "./mapping/providers/gam/general-description.js";
 import { resolveGamModelSpecificGeneral } from "./mapping/providers/gam/model-specific-general.js";
 import { resolveGamLongDescription } from "./mapping/providers/gam/long-description.js";
@@ -22,7 +27,9 @@ import { reconcileGamInitialIdentity, reconcileGamForPreparation } from "./recon
 import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation } from "./reconciliation/mercaeleva.js";
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
+  const conciseGamShort = resolveGamShortDescription(record);
   const publicationConflict = publicationConflictForMercaeleva(record);
+  const semanticIssues = sourceSemanticQualityIssues(record);
   record = reconcileGamInitialIdentity(record);
   const originalSpecs = record.specs;
   record = reconcileGamForPreparation(record);
@@ -33,12 +40,13 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const images = imageUrls(record);
   const price = normalizePrice(record.price);
   const reference = record.reference?.trim() || null;
-  const title = record.title?.trim() || null;
+  const title = (resolveGomarizEditorialTitle(record) ?? resolveGamConciseTitle(record) ?? record.title?.trim()) || null;
   const descriptionEvidence = resolveMercaelevaShortDescription(record);
+  const conciseMercaelevaShort = resolveMercaelevaConciseDescription(record);
   const missingDescriptions = mercaelevaMissingDescriptions(record);
   const missingGamDescriptions = gamMissingDescriptions(record);
   const descriptions = distinguishDescriptions(
-    record.shortDescription ?? descriptionEvidence.description ?? resolveGomarizShortDescription(record) ?? missingGamDescriptions.short,
+    conciseGamShort ?? conciseMercaelevaShort ?? record.shortDescription ?? descriptionEvidence.description ?? resolveGomarizShortDescription(record) ?? missingGamDescriptions.short,
     resolveGomarizGeneralDescription(record) ?? resolveMercaelevaGeneralDescription(record) ?? resolveGamGeneralDescription(record) ?? resolveGamModelSpecificGeneral(record) ?? resolveGamLongDescription(record) ?? record.longDescription ?? missingDescriptions.long ?? missingGamDescriptions.long
   );
   if (descriptionEvidence.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
@@ -47,6 +55,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
 
   if (contradictoryCondition) issues.push("Condición comercial contradictoria entre la ficha y el origen");
   if (publicationConflict !== null) issues.push(publicationConflict);
+  issues.push(...semanticIssues);
   if (!reference) issues.push("Referencia ausente");
   if (price === null && /\d/.test(record.price ?? "")) issues.push("Precio publicado inválido");
   issues.push(...(catalog === null ? sourceTechnicalQualityIssues(record) :

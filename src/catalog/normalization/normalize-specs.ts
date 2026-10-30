@@ -5,6 +5,7 @@ import {
   parseBoolean,
   parseDimension,
   parseDimensionRect,
+  parseMeasuredLength,
   parseNumber,
   parseNumberArray
 } from "./spec-parsers.js";
@@ -60,11 +61,14 @@ const isInvalidStringValue = (v: string): boolean => {
   return false;
 };
 
-const applyRule = (type: SpecRuleType, value: unknown): NormalizedSpecValue => {
+const applyRule = (type: SpecRuleType, value: unknown, rawKey: string, normalizedKey: string): NormalizedSpecValue => {
   if (isNullLike(value)) return null;
   switch (type) {
-    case "number":
+    case "number": {
+      const measure = normalizedKey.match(/\((mm|m)\)$/)?.[1];
+      if (measure === "mm" || measure === "m") return parseMeasuredLength(value, rawKey, measure);
       return parseNumber(value);
+    }
     case "number_array":
       return parseNumberArray(value);
     case "dimension":
@@ -132,7 +136,7 @@ export const normalizeSpecsObject = (spec: unknown): NormalizeResult => {
       value = s;
     }
 
-    const parsed = applyRule(rule, value);
+    const parsed = applyRule(rule, value, rawKey, normKey);
     if (parsed === null) {
       droppedNullLikeKeys.push(normKey);
       continue;
