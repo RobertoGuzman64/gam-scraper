@@ -18,3 +18,8 @@ out/
 /data/.reference-backup/
 /data/.reference-staging/
 /data/.reference-lock
+
+/catalogs/providers/*/publications/.active.lock
+/catalogs/providers/*/publications/.active-*.tmp
+/catalogs/.active.lock
+/catalogs/.active-*.tmp

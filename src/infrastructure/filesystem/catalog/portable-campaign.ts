@@ -10,6 +10,7 @@ import { readAppliedIntervention } from "../interventions/intervention-derived.j
 import type { PublishableSelection } from "../../../catalog/editorial/select-publishable.js";
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { readCanonicalCatalog } from "./canonical-catalog.js";
+import { readActiveCatalogIndex, withActiveCatalogLock } from "./active-selection.js";
 
 /** The run already has a different, immutable portable campaign snapshot. */
 export class PortableCampaignConflictError extends Error {
@@ -296,6 +297,10 @@ export const verifyPortableCampaignRetirement = async (
 ): Promise<boolean> => {
   if (retiredId === retainedId) throw new Error("No se puede retirar la campaña portátil conservada");
   const retired = campaignRoot(workspace, retiredId);
+  const active = await readActiveCatalogIndex(workspace);
+  if (Object.values(active?.providers ?? {}).some((source) => source.runId === retiredId)) {
+    throw new Error(`La campaña portátil ${retiredId} está vigente; activa otra versión antes de retirarla`);
+  }
   if (!await directoryExists(retired)) return false;
   await readPortableCampaign(workspace, retiredId);
   if (retainedId === null) {
@@ -308,7 +313,10 @@ export const verifyPortableCampaignRetirement = async (
 export const retirePortableCampaign = async (
   workspace: string, retiredId: string, retainedId: string | null
 ): Promise<boolean> => {
-  if (!await verifyPortableCampaignRetirement(workspace, retiredId, retainedId)) return false;
-  await rm(campaignRoot(workspace, retiredId), { recursive: true });
-  return true;
+  if (!await directoryExists(campaignRoot(workspace, retiredId))) return false;
+  return withActiveCatalogLock(workspace, async () => {
+    if (!await verifyPortableCampaignRetirement(workspace, retiredId, retainedId)) return false;
+    await rm(campaignRoot(workspace, retiredId), { recursive: true });
+    return true;
+  });
 };

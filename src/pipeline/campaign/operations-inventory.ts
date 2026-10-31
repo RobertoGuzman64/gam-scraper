@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import { lstat, readFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { getProvider } from "../../scraping/registry.js";
 import { verifyDeliveredCampaign } from "./delivery/verification.js";
@@ -89,6 +90,17 @@ const inspectEssential = async (root: string, path: string): Promise<{ path: str
     return { path, status: ok("Archivo presente y legible") };
   } catch (error) {
     return { path, status: invalid(describe(error)) };
+  }
+};
+
+const inspectIndividualFinal = async (root: string, providerId: string): Promise<InventoryItem> => {
+  try {
+    const path = await resolveAccreditedPublication(root, providerId);
+    if (!path) return absent("Sin publicación individual acreditada");
+    const publication = await readAccreditedPublication(path);
+    return ok(`Publicación vigente: ${publication.products.length} fichas | ${publication.runId} | ${basename(path) === "publishable.json" ? "campaña" : `aprobación ${basename(dirname(path))}`}`);
+  } catch (error) {
+    return invalid(`Publicación individual no verificable: ${describe(error)}`);
   }
 };
 
@@ -203,15 +215,17 @@ export const inspectOperationsInventory = async (
       ? ok("Preparación acreditada en campaña activa") : localPreparation;
     const portableProvider = portable.providers.find((entry) => entry.providerId === providerId);
     if (!portableProvider) throw new Error(`Proveedor no inventariado en catalogs/: ${providerId}`);
+    const individualFinal = await inspectIndividualFinal(root, providerId);
     return {
       providerId,
       original,
       portableOriginal: portableProvider.original,
       consistency: portableProvider.consistency,
       preparation,
-      final: portableProvider.final.state !== "ausente" ? portableProvider.final : delivered.has(providerId)
-        ? partial(`JSON final acreditado solo en storage/ (${delivered.get(providerId)}); falta catalogs/`)
-        : absent("Sin JSON final acreditado")
+      final: portableProvider.final.state !== "ausente" ? portableProvider.final : individualFinal.state !== "ausente"
+        ? individualFinal : delivered.has(providerId)
+          ? partial(`JSON final acreditado solo en storage/ (${delivered.get(providerId)}); falta catalogs/`)
+          : absent("Sin JSON final acreditado")
     };
   }));
   for (const runId of new Set(delivered.values())) {

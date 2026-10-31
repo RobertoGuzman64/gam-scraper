@@ -3,6 +3,7 @@ import { lstat, readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readActiveCatalogIndex } from "../../infrastructure/filesystem/catalog/active-selection.js";
 import { readPortableCampaign } from "../../infrastructure/filesystem/catalog/portable-campaign.js";
 import { readPortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
 import type { InventoryItem } from "./operations-inventory.js";
@@ -53,8 +54,12 @@ const checkKnownEntries = async (path: string, allowed: readonly string[], issue
   for (const name of await directoryNames(path)) {
     if (!allowed.includes(name)) issues.push(`Entrada no reconocida en ${path}: ${name}`);
     else {
-      try { await directoryExists(join(path, name)); }
-      catch (error) { issues.push(describe(error)); }
+      try {
+        if (name === "active.json") {
+          const metadata = await lstat(join(path, name));
+          if (!metadata.isFile() || metadata.isSymbolicLink()) throw new Error("Índice global de publicaciones no regular");
+        } else await directoryExists(join(path, name));
+      } catch (error) { issues.push(describe(error)); }
     }
   }
 };
@@ -64,9 +69,10 @@ const inspectProvider = async (root: string, providerId: string): Promise<Invent
   if (!await directoryExists(base)) return absent("Sin original definitivo en catalogs/");
   try {
     const names = await readdir(base);
-    if (names.length !== 1 || names[0] !== "original") {
+    if (names.some((name) => name !== "original" && name !== "publications")) {
       return invalid("Archivos inesperados o promoción pendiente en original portátil");
     }
+    if (!names.includes("original")) return absent("Sin original definitivo en catalogs/");
     const catalog = await readPortableOriginal(root, providerId);
     return ok(`Original portátil íntegro (${catalog.productCount} fichas)`);
   } catch (error) {
@@ -120,7 +126,8 @@ export const inspectPortableInventory = async (
   try {
     rootAvailable = await directoryExists(catalogRoot);
     if (rootAvailable) {
-      await checkKnownEntries(catalogRoot, ["providers", "campaigns"], issues);
+      await checkKnownEntries(catalogRoot, ["providers", "campaigns", "active.json"], issues);
+      await readActiveCatalogIndex(root);
       await checkKnownEntries(join(catalogRoot, "providers"), CAMPAIGN_PROVIDERS, issues);
     }
   } catch (error) {

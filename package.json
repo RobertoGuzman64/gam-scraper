@@ -33,6 +33,7 @@
     "seleccionar": "node scripts/tooling.mjs seleccionar",
     "seleccionar:proveedor": "node scripts/tooling.mjs seleccionar:proveedor",
     "acreditar:proveedor": "node scripts/tooling.mjs acreditar:proveedor",
+    "publicacion:vigente": "node scripts/tooling.mjs publicacion:vigente",
     "entregar:proveedor": "node scripts/tooling.mjs entregar:proveedor",
     "limpiar:almacen": "node scripts/tooling.mjs limpiar:almacen",
     "migrar:catalogos": "node scripts/tooling.mjs migrar:catalogos",
