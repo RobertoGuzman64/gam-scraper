@@ -1,17 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { discoverAccreditedPublications, readAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { readMercaelevaAccreditedBaseline } from "../../../testing/accredited-publication-fixture.js";
 import { reconstructMercaelevaSource } from "../../diagnostics/description-source.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 import { mbModelEditorialEvidence } from "../evidence/providers/mercaeleva/mb-model-description.js";
 import { braviSkydeckEditorialEvidence } from "../evidence/providers/gam/bravi-skydeck-editorial.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
-const paths = await discoverAccreditedPublications(process.cwd());
-const mercaelevaPath = paths.find((value) => value.endsWith("mercaeleva-publishable.json"));
-assert.ok(mercaelevaPath);
-const mercaeleva = await readAccreditedPublication(mercaelevaPath);
+const mercaeleva = await readMercaelevaAccreditedBaseline(process.cwd());
 
 const originalGam = gam.products.find((record) => record.reference === "2364");
 assert.ok(originalGam);

@@ -5,7 +5,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { prepareSourceProduct } from "../prepare-product.js";
 import { mercaelevaShortDescription } from "../mapping/providers/mercaeleva/descriptions.js";
 import { mercaelevaMissingDescriptions } from "../mapping/providers/mercaeleva/missing-descriptions.js";
-import { discoverAccreditedPublications, readAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { readMercaelevaAccreditedBaseline } from "../../../testing/accredited-publication-fixture.js";
 import { reconstructMercaelevaSource } from "../../diagnostics/description-source.js";
 
 const source = await readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json");
@@ -111,10 +111,7 @@ test("Mercaeleva: no contamina fichas con descripción existente ni otras refere
 
 
 test("Mercaeleva: amplía generales de transpaletas cuando no se declara altura y los datos concuerdan", async () => {
-  const paths = await discoverAccreditedPublications(process.cwd());
-  const path = paths.find((value) => value.endsWith("mercaeleva-publishable.json"));
-  assert.ok(path);
-  const publication = await readAccreditedPublication(path);
+  const publication = await readMercaelevaAccreditedBaseline(process.cwd());
   for (const reference of ["M035-8084", "M141-6536"]) {
     const candidate = publication.products.find((item) => item.reference === reference);
     assert.ok(candidate, reference);

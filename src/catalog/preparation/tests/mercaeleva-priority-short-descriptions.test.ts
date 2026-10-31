@@ -1,15 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import { discoverAccreditedPublications, readAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { readMercaelevaAccreditedBaseline } from "../../../testing/accredited-publication-fixture.js";
 import { reconstructMercaelevaSource } from "../../diagnostics/description-source.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 import { mercaelevaPriorityShortEvidence, verifiedMercaelevaPriorityShortDescription } from "../evidence/providers/mercaeleva/priority-short-descriptions.js";
 
-const paths = await discoverAccreditedPublications(process.cwd());
-const path = paths.find((value) => value.endsWith("mercaeleva-publishable.json"));
-assert.ok(path);
-const publication = await readAccreditedPublication(path);
+const publication = await readMercaelevaAccreditedBaseline(process.cwd());
 const records = publication.products.map(reconstructMercaelevaSource);
 const references = Object.keys(mercaelevaPriorityShortEvidence);
 

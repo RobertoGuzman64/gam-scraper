@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import test from "node:test";
+import { accreditedBaselineSha, accreditedBaselineFile } from "../../../../testing/accredited-publication-fixture.js";
 
 const run = promisify(execFile);
 const root = fileURLToPath(new URL("../../../../../", import.meta.url));
@@ -19,6 +20,37 @@ const cli = join(root, "dist", "cli", "commands", "catalog", "catalog-content-ga
 
 const execute = async (args: readonly string[]): Promise<string> =>
   (await run(process.execPath, [cli, ...args], { cwd: root, maxBuffer: 16 * 1024 * 1024 })).stdout;
+
+let baselineRoot: string | undefined;
+const createBaselineRoot = async (): Promise<string> => {
+  const temporary = join(root, "storage");
+  await mkdir(temporary, { recursive: true });
+  const destination = await mkdtemp(join(temporary, "huecos-baseline-"));
+  try {
+    await cp(join(root, "dist"), join(destination, "dist"), { recursive: true });
+    for (const providerId of ["gam", "gomariz", "mercaeleva"] as const) {
+      const source = join(root, "catalogs", "providers", providerId);
+      const target = join(destination, "catalogs", "providers", providerId);
+      await cp(join(source, "publications", accreditedBaselineSha[providerId]),
+        join(target, "publications", accreditedBaselineSha[providerId]), { recursive: true });
+      if (providerId !== "mercaeleva") {
+        await cp(join(source, "original"), join(target, "original"), { recursive: true });
+      }
+    }
+    return destination;
+  } catch (error) {
+    await rm(destination, { recursive: true, force: true });
+    throw error;
+  }
+};
+const executeBaseline = async (args: readonly string[]): Promise<string> => {
+  baselineRoot ??= await createBaselineRoot();
+  const fixtureCli = join(baselineRoot, "dist", "cli", "commands", "catalog", "catalog-content-gaps.js");
+  return (await run(process.execPath, [fixtureCli, ...args], { cwd: baselineRoot, maxBuffer: 16 * 1024 * 1024 })).stdout;
+};
+test.after(async () => {
+  if (baselineRoot) await rm(baselineRoot, { recursive: true, force: true });
+});
 
 test("huecos analiza catálogos canónicos explícitos sin exigir referencia global", async () => {
   const before = await readFile(gam, "utf8");
@@ -69,15 +101,8 @@ test("huecos exige manifiesto y publicación completa coherentes para la fuente 
 });
 
 test("huecos audita las publicaciones finales acreditadas sin atribuirles originales", async () => {
-  const { readdir } = await import("node:fs/promises");
-  const publicationsRoot = join(root, "catalogs", "providers");
-  const publications: string[] = [];
-  for (const providerId of ["gam", "gomariz", "mercaeleva"]) {
-    const dirs = await readdir(join(publicationsRoot, providerId, "publications"));
-    const folder = dirs.filter((name) => /^[a-f0-9]{64}$/.test(name)).sort()[0];
-    assert.ok(folder);
-    publications.push(join(publicationsRoot, providerId, "publications", folder, `${providerId}-publishable.json`));
-  }
+  const publications = (["gam", "gomariz", "mercaeleva"] as const)
+    .map((providerId) => accreditedBaselineFile(root, providerId));
   const raw = await execute(publications.flatMap((path) => ["--publicacion", path]).concat(["--top", "2", "--json"]));
   const report: unknown = JSON.parse(raw);
   assert.ok(isEditorialReport(report));
@@ -115,10 +140,10 @@ test("huecos no acepta publicaciones manipuladas aunque el JSON siga siendo vál
 });
 
 test("huecos puede descubrir y auditar las publicaciones finales sin listar rutas", async () => {
-  const output = await execute(["--finales", "--top", "2"]);
+  const output = await executeBaseline(["--finales", "--top", "2"]);
   assert.match(output, /finales 1341/);
   assert.match(output, /DESCRIPCIONES GENERALES MÁS LARGAS/);
-  const automatic = await execute(["--top", "1"]);
+  const automatic = await executeBaseline(["--top", "1"]);
   assert.match(automatic, /finales 1341/);
   await assert.rejects(execute(["--finales", "--catalogo", gam]), /no se combina/);
 });
@@ -205,7 +230,7 @@ const isEditorialReport = (value: unknown): value is EditorialReport => {
 };
 
 test("huecos compara las 1341 publicaciones y acredita la cobertura completa de descripciones", async () => {
-  const raw = await execute(["--comparar", "--json", "--top", "1"]);
+  const raw = await executeBaseline(["--comparar", "--json", "--top", "1"]);
   const report: unknown = JSON.parse(raw);
   assert.ok(isComparisonReport(report));
   assert.equal(report.provenance.source, "comparacion_publicaciones_y_preparacion");
@@ -241,7 +266,7 @@ test("huecos compara las 1341 publicaciones y acredita la cobertura completa de 
   assert.ok(report.priorities.pending.some((item) => item.stage === "P2" && item.familySamples >= 5));
   assert.equal(report.priorities.resolved.filter((item) => item.stage === "P0").length, 174);
   assert.ok(report.priorities.technical.some((item) => item.contradictions.length > 0));
-  const text = await execute(["--comparar", "--top", "1"]);
+  const text = await executeBaseline(["--comparar", "--top", "1"]);
   assert.match(text, /P0 COLA RESIDUAL \| 0 fichas, sin recorte por --top/);
   assert.match(text, /ORDEN DE TRABAJO \| P0 vacíos 0/);
   assert.match(text, /INCIDENCIAS TÉCNICAS/);
@@ -288,7 +313,7 @@ const isComparisonReport = (value: unknown): value is ComparisonReport => {
 };
 
 test("huecos --comparar --specs diferencia cobertura técnica sin alterar el informe editorial", async () => {
-  const comparison = JSON.parse(await execute(["--comparar", "--specs", "--json"])) as {
+  const comparison = JSON.parse(await executeBaseline(["--comparar", "--specs", "--json"])) as {
     coverage: { totals: { products: number; pending: { description: number; description_general: number } } };
     priorities: { totals: { pending: number } };
     technicalSpecs: { totals: { products: number; canonicalOriginals: number; reconstructedSources: number;
