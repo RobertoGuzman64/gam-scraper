@@ -37,7 +37,7 @@ test("GAM: las nueve identidades incompatibles no publican Modelo del origen", (
     assert.equal(prepared.issues.includes("Atributo rechazado por seguridad: Modelo"), !editorial, reference);
     assert.ok(model);
     assert.equal(prepared.product.attributes.some((attribute) => attribute.attributeID === model.id), editorial, reference);
-    assert.deepEqual(prepared.product.spec, product.specs);
+    assert.deepEqual(prepared.product.spec, reference === "4751" ? { ...product.specs, "Altura de trabajo (m)": "18,1 m" } : product.specs);
     assert.equal(prepared.product.reference, reference);
   }
 });

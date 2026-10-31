@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { resolveGamShortDescription } from "../mapping/providers/gam/short-description.js";
+import { resolveGamResidualConciseShort, resolveGamShortDescription } from "../mapping/providers/gam/short-description.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -38,7 +38,19 @@ test("GAM: resume exclusivamente fichas seguras sin retirar cifras de la descrip
       for (const figure of numbers(record.shortDescription ?? "")) {
         assert.ok(numbers(total).has(figure), `${record.reference}: falta ${figure}`);
       }
-      assert.deepEqual(prepared.product.spec, record.specs);
+      const explicitHeight = record.reference === "6190" ? "27 m" : record.reference === "6192" ? "23 m" : null;
+      assert.deepEqual(prepared.product.spec, {
+        ...record.specs,
+        ...(record.reference === "4025" ? { "Anchura (mm)": "816 mm" } : {}),
+        ...(record.reference === "4027" ? { "Anchura (mm)": "905 mm" } : {}),
+        ...(explicitHeight === null ? {} : { "Altura de trabajo (m)": explicitHeight }),
+        ...(record.reference === "6190" ? { "Alcance horizontal (m)": "15,5 m" } : {}),
+        ...(["6190", "6192"].includes(record.reference ?? "") ? { "Capacidad de carga (kg)": "250 KG" } : {}),
+        ...(["4019", "4020"].includes(record.reference ?? "") ? { "Depósito de solución": 480, "Depósito de recuperación": 346 } : {}),
+        ...(record.reference === "4022" ? { "Depósito de solución": 410, "Depósito de recuperación": 360 } : {}),
+        ...(record.reference === "4012" ? { "Depósito de solución": 218, "Depósito de recuperación": 237 } : {}),
+        ...(record.reference === "2370" ? { "Voltaje batería (V)": "24 V", "Capacidad de la batería (Ah)": "150 Ah" } : {})
+      });
       assert.equal(prepared.product.reference, record.reference);
       assert.equal(prepared.product.sourceUrl, record.url);
     }
@@ -124,7 +136,11 @@ test("GAM: descarta discrepancias de identidad, URL, campos técnicos y texto de
 test("GAM: ninguna corrección de título durante la preparación legitima el original contradictorio", () => {
   const original = find("8");
   assert.equal(resolveGamShortDescription(original), null);
-  assert.equal(prepareSourceProduct(original).product.description, original.shortDescription?.trim() ?? null);
+  const prepared = prepareSourceProduct(original);
+  assert.equal(resolveGamResidualConciseShort(original, prepared.product.description_general), null);
+  assert.ok(prepared.product.description?.includes("Hyster H3.5FT"));
+  assert.ok((prepared.product.description?.trim().split(/\s+/u).length ?? 0) <= 45);
+  assert.notEqual(prepared.product.description, original.shortDescription?.trim() ?? null);
 });
 
 test("GAM: no modifica los originales Gomariz ni las fichas publicadas Mercaeleva", async () => {

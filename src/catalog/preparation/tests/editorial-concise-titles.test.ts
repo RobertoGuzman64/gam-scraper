@@ -89,7 +89,7 @@ test("GAM: tipos de vehículos confirmados sin tocar lotes ni fichas incompletas
     assert.equal(prepared.product.description_title, title);
     assert.equal(prepared.product.reference, record.reference);
     assert.equal(prepared.product.sourceUrl, record.url);
-    assert.deepEqual(prepared.product.spec, record.specs);
+    assert.deepEqual(prepared.product.spec, { ...record.specs, "Velocidad de desplazamiento (km/h)": "45 km/h" });
     assert.equal(JSON.stringify(record), original);
   }
   for (const reference of ["6805", "6971", "6987", "6988", "6989", "6993", "6994", "6995", "2364"]) {

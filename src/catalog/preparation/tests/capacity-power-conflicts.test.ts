@@ -68,7 +68,7 @@ test("las 16 capacidades conservan conflictos auténticos y distinguen valores c
     assert.equal(resolution.status, confirmed.has(reference) ? "resolved" : "contradiction", reference);
     const prepared = prepareProduct(product, catalog);
     assert.equal(prepared.issues.includes("Atributo contradictorio: Capacidad de carga"), !confirmed.has(reference) && !["2237", "2240", "6723", "2211", "6272"].includes(reference), reference);
-    assert.deepEqual(prepared.product.spec, product.specs ?? {}, reference);
+    assert.deepEqual(prepared.product.spec, { ...product.specs, ...(reference === "6421" ? { "Velocidad de desplazamiento con/sin carga (km/h)": "15,7 / 15,7 km/h", "Potencia de tracción (kW)": "8,5 kW", "Potencia de elevación (kW)": "11 kW" } : {}) }, reference);
   }
 });
 

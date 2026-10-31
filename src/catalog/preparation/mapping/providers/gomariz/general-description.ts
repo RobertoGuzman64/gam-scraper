@@ -89,6 +89,9 @@ export const resolveGomarizGeneralDescription = (record: ProductRecord): string 
   const specs = record.specs ?? {};
   const workingHeight = measurement(specs["Altura de trabajo"], "m");
   const platformHeight = measurement(specs["Altura plataforma"], "m");
+  const storedHeight = measurement(specs["Altura almacenaje"], "m");
+  const coherentStoredHeight = storedHeight && (!workingHeight ||
+    Number(storedHeight.replace(",", ".")) <= Number(workingHeight.replace(",", "."))) ? storedHeight : null;
   const capacity = measurement(specs.Capacidad, "kg");
   const length = measurement(specs.Longitud, "m");
   const width = measurement(specs.Anchura, "m");
@@ -107,6 +110,7 @@ export const resolveGomarizGeneralDescription = (record: ProductRecord): string 
   ].filter((item): item is string => item !== null);
   const details = [
     platformHeight ? `una altura de plataforma de ${platformHeight} m` : null,
+    coherentStoredHeight ? `una altura de almacenaje de ${coherentStoredHeight} m` : null,
     lateralReach ? `un alcance lateral de ${lateralReach} m` : null,
     length ? `una longitud de ${length} m` : null,
     width ? `una anchura de ${width} m` : null,

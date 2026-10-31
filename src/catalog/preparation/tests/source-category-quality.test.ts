@@ -25,7 +25,14 @@ test("tipo de origen corroborado sin categoría del receptor no es motivo de rev
     assert.deepEqual(prepared.issues, [], code);
     assert.equal(prepared.product.categorySellID, null, code);
     assert.equal(prepared.product.category, null, code);
-    assert.deepEqual(prepared.product.spec, record.specs ?? {}, code);
+    const explicitHeight = code === "4778" ? "16,3 m" : code === "4779" ? "18,01 m" : null;
+    assert.deepEqual(prepared.product.spec, {
+      ...record.specs,
+      ...(explicitHeight === null ? {} : { "Altura de trabajo (m)": explicitHeight }),
+      ...(code === "4778" ? { "Alcance horizontal (m)": "8,22 m" } : {}),
+      ...(code === "4779" ? { "Alcance horizontal (m)": "10,26 m" } : {}),
+      ...(code === "4780" ? { "Voltaje batería (V)": "51,2 V", "Capacidad de la batería (Ah)": "346 Ah" } : {})
+    }, code);
     assert.deepEqual(prepared.product.attributes, [], code);
     assert.ok(prepared.importIssues?.excel.some((issue) => issue.startsWith("Categoría no ")), code);
     assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")), code);

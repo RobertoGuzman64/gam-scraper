@@ -31,7 +31,7 @@ test("tipo de origen corroborado por identidad y descripción sin inventar subti
     assert.equal(sourceCategoryQualityIssue(record), null, reference);
     assert.equal(prepared.status, "ready", reference);
     assert.deepEqual(prepared.issues, [], reference);
-    assert.deepEqual(prepared.product.spec, record.specs ?? {}, reference);
+    assert.deepEqual(prepared.product.spec, { ...record.specs, ...(reference === "5918" ? { "Velocidad de desplazamiento (km/h)": "45 km/h" } : {}), ...(reference === "4022" ? { "Depósito de solución": 410, "Depósito de recuperación": 360 } : {}) }, reference);
     assert.equal(prepared.product.categorySellID, null, reference);
     assert.equal(prepared.product.category, null, reference);
   }

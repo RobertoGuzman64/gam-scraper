@@ -25,8 +25,8 @@ test("XCMG 4751 recupera el modelo corroborado conservando todas las evidencias 
   const output = prepareProduct(record, catalog);
   assert.equal(output.status, "ready");
   assert.deepEqual(output.issues, []);
-  assert.deepEqual(output.product.spec, record.specs);
   assert.equal(output.product.spec["Modelo"], "XG1523RT");
+  assert.deepEqual(output.product.spec, { ...record.specs, "Altura de trabajo (m)": "18,1 m" });
   assert.ok(output.product.attributes.some((attribute) => attribute.attributeID === 116 && attribute.value === "XG1823RT"));
   assert.equal(output.product.description_general, record.longDescription);
   assert.equal(output.product.description, record.shortDescription);

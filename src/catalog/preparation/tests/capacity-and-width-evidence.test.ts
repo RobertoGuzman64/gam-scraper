@@ -33,7 +33,7 @@ test("reconciliar capacidades requiere identidad de modelo y evidencias converge
     assert.deepEqual(resolveAttribute(record, definition), { status: "resolved", value: expected }, reference);
     const prepared = prepareProduct(record, catalog);
     assert.equal(prepared.status, "ready", reference);
-    assert.deepEqual(prepared.product.spec, record.specs ?? {}, reference);
+    assert.deepEqual(prepared.product.spec, { ...record.specs, ...(reference === "6421" ? { "Velocidad de desplazamiento con/sin carga (km/h)": "15,7 / 15,7 km/h", "Potencia de tracción (kW)": "8,5 kW", "Potencia de elevación (kW)": "11 kW" } : {}) }, reference);
     assert.ok(prepared.product.attributes.some((value) =>
       value.value === expected && catalog.attributes.some((candidate) =>
         candidate.id === value.attributeID && candidate.name === definition.name)), reference);
@@ -47,7 +47,7 @@ test("anchuras corroboradas distinguen redondeo, configuración y medida de trab
     assert.deepEqual(resolveAttribute(record, definition), { status: "resolved", value: expected }, reference);
     const prepared = prepareProduct(record, catalog);
     assert.equal(prepared.status, "ready", reference);
-    assert.deepEqual(prepared.product.spec, record.specs ?? {}, reference);
+    assert.deepEqual(prepared.product.spec, { ...record.specs, ...(reference === "4005" ? { "Depósito de solución": 78.5, "Depósito de recuperación": 80 } : {}) }, reference);
   }
 });
 

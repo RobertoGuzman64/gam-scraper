@@ -46,6 +46,12 @@ const singleMeasurement = (record: ProductRecord, patterns: readonly RegExp[]): 
   return values.size === 1 ? [...values][0] ?? null : null;
 };
 
+export const gamExplicitHorizontalReach = (record: ProductRecord): number | null =>
+  elevationRecord(record) ? singleMeasurement(record, [
+    /\balcance\s+horizontal\s+(?:maximo\s*)?(?:de\s+)?(?:hasta\s+)?[:=]?\s*(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\b/g,
+    /\b(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\s+de\s+alcance\s+horizontal\b/g
+  ]) : null;
+
 const basketCapacity = (record: ProductRecord): number | null => {
   if (!descriptions(record).some((part) => /\bcapacidad\s+(?:maxima\s+|nominal\s+)?(?:de\s+)?(?:la\s+)?cesta\b/.test(fold(part)))) return null;
   const capacities = new Set<number>();
@@ -90,10 +96,7 @@ export const gamElevationCandidate = (record: ProductRecord, attribute: Attribut
       /\baltura\s+de\s+(?:la\s+)?plataforma\s+(?:de\s+)?(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\b/g,
       /\b(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\s+de\s+altura\s+de\s+(?:la\s+)?plataforma\b/g
     ]);
-    if (attribute.name === "Alcance horizontal") value = singleMeasurement(record, [
-      /\balcance\s+horizontal\s+(?:maximo\s*)?(?:de\s+)?(?:hasta\s+)?[:=]?\s*(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\b/g,
-      /\b(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\s+de\s+alcance\s+horizontal\b/g
-    ]);
+    if (attribute.name === "Alcance horizontal") value = gamExplicitHorizontalReach(record);
   }
   if (attribute.name === "Capacidad de la cesta" && attribute.type === "NUMBER" && attribute.unit_option === "kg") {
     value = basketCapacity(record);

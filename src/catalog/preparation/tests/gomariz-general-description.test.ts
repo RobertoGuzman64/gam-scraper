@@ -4,6 +4,8 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGomarizCriticalBriefGeneral } from "../mapping/providers/gomariz/critical-brief-general.js";
 import { resolveGomarizGeneralDescription } from "../mapping/providers/gomariz/general-description.js";
+import { resolveGomarizIndividualizedGeneral } from "../mapping/providers/gomariz/individualized-general.js";
+import { resolveGomarizResidualGeneral } from "../mapping/providers/gomariz/residual-general.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const source = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
@@ -38,14 +40,30 @@ test("Gomariz: las generales sustituyen texto de familia por datos específicos 
   }
 });
 
+test("Gomariz: incorpora altura de almacenaje coherente y rechaza valores sin evidencia válida", () => {
+  const record = find("TE1620");
+  const general = resolveGomarizGeneralDescription(record);
+  assert.ok(general?.includes("una altura de almacenaje de 2,74 m"));
+  assert.equal(prepareSourceProduct(record).product.description_general, general);
+  for (const value of ["20 m", "0 m", "-1 m", "2 kg", "2 a 3 m"]) {
+    const variant = { ...record, specs: { ...record.specs, "Altura almacenaje": value } };
+    const result = resolveGomarizGeneralDescription(variant);
+    assert.ok(result);
+    assert.equal(result.includes("altura de almacenaje"), false, value);
+  }
+  assert.equal(resolveGomarizGeneralDescription(find("TE1858")), null);
+  assert.equal(resolveGomarizGeneralDescription(find("GR1113")), null);
+});
+
 test("Gomariz: contradicciones o descripción propia acreditada no se reescriben", () => {
   for (const reference of [
-    "TE1858", "TE1621", "TE1622", "BA1465", "GR1113", "OR1537",
+    "TE1858", "TE1621", "TE1622", "BA1465", "OR1537",
     "CC1535", "CC1666", "5051BDX", "PV556"
   ]) {
     const record = find(reference);
     assert.equal(resolveGomarizGeneralDescription(record), null, reference);
-    assert.equal(prepareSourceProduct(record).product.description_general, record.longDescription, reference);
+    assert.equal(prepareSourceProduct(record).product.description_general,
+      resolveGomarizResidualGeneral(record) ?? record.longDescription, reference);
   }
 });
 
@@ -84,7 +102,8 @@ test("Gomariz: el piloto se aplica solo a la cohorte segura y preserva todas las
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.product.reference, reference);
     assert.equal(prepared.product.description_general,
-      resolveGomarizCriticalBriefGeneral(record) ?? resolveGomarizGeneralDescription(record) ?? record.longDescription);
+      resolveGomarizIndividualizedGeneral(record) ?? resolveGomarizCriticalBriefGeneral(record) ??
+      resolveGomarizGeneralDescription(record) ?? resolveGomarizResidualGeneral(record) ?? record.longDescription);
     assert.deepEqual(prepared.product.spec, record.specs);
   }
 });

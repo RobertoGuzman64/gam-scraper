@@ -28,7 +28,10 @@ test("diez publicaciones GAM sin estado comercial se preservan sin inferir nueva
     assert.equal(prepared.status, "ready", reference);
     assert.equal(prepared.product.condition, null, reference);
     assert.equal(prepared.product.categorySellID, null, reference);
-    assert.deepEqual(prepared.product.spec, record.specs ?? {}, reference);
+    assert.deepEqual(prepared.product.spec, {
+      ...record.specs,
+      ...(["6358", "6367"].includes(reference) ? { "Capacidad de carga (kg)": "2000 KG" } : {})
+    }, reference);
     assert.equal(sourceCategoryQualityIssue(record), null, reference);
   }
 });

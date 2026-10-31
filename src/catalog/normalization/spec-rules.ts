@@ -39,6 +39,7 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Altura al suelo (mm)": "number",
     "Altura plataforma (mm)": "number",
     "Altura plataforma (m)": "number",
+    "Alcance horizontal (m)": "number",
 
     "Longitud (mm)": "number",
     "Anchura (mm)": "number",
@@ -76,6 +77,10 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Número de ruedas": "number",
     "RPM cepillo": "number",
     "RPM del cepillo": "number",
+    "Depósito de combustible": "number",
+    "Rotación de torreta": "string",
+    "Depósito de solución": "number",
+    "Depósito de recuperación": "number",
     "Estado de las ruedas": "string",
 
     "Marcado CE": "bool",
@@ -86,6 +91,8 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Kilómetros (km)": "number",
 
     "Potencia (kW)": "number_array",
+    "Potencia de tracción (kW)": "number_array",
+    "Potencia de elevación (kW)": "number_array",
     "Potencia (CV)": "number_array",
 
     "Nº de serie": "string",
@@ -225,6 +232,9 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
 
     "altura plataforma": "Altura plataforma (mm)",
     "altura plataforma (m)": "Altura plataforma (m)",
+
+    "alcance horizontal": "Alcance horizontal (m)",
+    "alcance horizontal (m)": "Alcance horizontal (m)",
 
     "longitud": "Longitud (mm)",
     "longitud total": "Longitud (mm)",

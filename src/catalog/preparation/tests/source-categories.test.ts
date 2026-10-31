@@ -27,7 +27,9 @@ const approved = (provider: string, codes: readonly string[]): void => {
     const prepared = prepareProduct(product, catalog);
     assert.equal(prepared.status, "ready", `${provider}:${code}: ${prepared.issues.join(", ")}`);
     assert.equal(prepared.product.reference, code);
-    assert.deepEqual(prepared.product.spec, product.specs ?? {});
+    assert.deepEqual(prepared.product.spec, { ...product.specs, ...(provider === "gam" && ["4019", "4020"].includes(code) ? { "Depósito de solución": 480, "Depósito de recuperación": 346 } : {}),
+      ...(provider === "gam" && code === "6182" ? { "Depósito de combustible": 50 } : {}),
+      ...(provider === "gam" && code === "5079" ? { "Voltaje batería (V)": "96 V", "Capacidad de la batería (Ah)": "1395 Ah" } : {}) });
   }
 };
 

@@ -25,10 +25,14 @@ test("GAM: conserva las seis generales de F10 y recupera la 6617", () => {
       assert.ok(record.reference === "6617" ? count(record.longDescription ?? "") === 22 : count(record.longDescription ?? "") < 20, record.reference);
       assert.ok(count(editorial) >= 60, record.reference);
       const prepared = prepareSourceProduct(record);
-      assert.equal(prepared.product.description_general, editorial);
+      assert.equal(prepared.product.description_general, record.reference === "6617"
+        ? `Año de fabricación declarado para esta unidad: 2005.\n\n${editorial}` : editorial);
       assert.equal(prepared.product.reference, record.reference);
       assert.equal(prepared.product.sourceUrl, record.url);
-      assert.deepEqual(prepared.product.spec, record.specs);
+      assert.deepEqual(prepared.product.spec, {
+        ...record.specs,
+        ...(["6358", "6367"].includes(record.reference) ? { "Capacidad de carga (kg)": "2000 KG" } : {})
+      });
     }
     assert.equal(JSON.stringify(record), baseline);
   }

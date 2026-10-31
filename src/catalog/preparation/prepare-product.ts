@@ -16,7 +16,7 @@ import { verifiedMercaelevaCriticalGeneral } from "./evidence/providers/mercaele
 import { verifiedPriorityPlatformGeneral } from "./evidence/providers/mercaeleva/priority-platform-generals.js";
 import { mercaelevaMissingDescriptions } from "./mapping/providers/mercaeleva/missing-descriptions.js";
 import { gamMissingDescriptions } from "./mapping/providers/gam/missing-descriptions.js";
-import { resolveGamShortDescription } from "./mapping/providers/gam/short-description.js";
+import { rebalanceGamOverlongShort, resolveGamResidualConciseShort, resolveGamShortDescription } from "./mapping/providers/gam/short-description.js";
 import { resolveGamConciseTitle } from "./mapping/providers/gam/concise-titles.js";
 import { resolveGomarizEditorialTitle } from "./mapping/providers/gomariz/editorial-title.js";
 import { resolveGamGeneralDescription } from "./mapping/providers/gam/general-description.js";
@@ -25,11 +25,30 @@ import { resolveGamLongDescription } from "./mapping/providers/gam/long-descript
 import { resolveGamPriorityBriefGeneral } from "./mapping/providers/gam/priority-brief-general.js";
 import { resolveGamCriticalBriefGeneral } from "./mapping/providers/gam/critical-brief-general.js";
 import { resolveGamFamilyTechnicalDescription } from "./mapping/providers/gam/family-technical-description.js";
+import { resolveGamTecnacarGeneral } from "./mapping/providers/gam/tecnacar-general.js";
+import { resolveGamIndividualizedGeneral } from "./mapping/providers/gam/individualized-general.js";
+import { resolveGamUsedYearGeneral } from "./mapping/providers/gam/used-year-general.js";
+import { resolveGamUsedHoursGeneral } from "./mapping/providers/gam/used-hours-general.js";
+import { resolveGamUsedUnitGeneral } from "./mapping/providers/gam/used-unit-general.js";
+import { resolveGamYaleDieselDimensions } from "./mapping/providers/gam/yale-diesel-dimensions.js";
+import { resolveGamModelIdentifiedGeneral } from "./mapping/providers/gam/model-identified-general.js";
+import { resolveGomarizIndividualizedGeneral } from "./mapping/providers/gomariz/individualized-general.js";
 import { resolveGomarizShortDescription } from "./mapping/providers/gomariz/short-description.js";
 import { resolveGomarizCriticalBriefGeneral } from "./mapping/providers/gomariz/critical-brief-general.js";
 import { resolveGomarizGeneralDescription } from "./mapping/providers/gomariz/general-description.js";
+import { resolveGomarizResidualGeneral } from "./mapping/providers/gomariz/residual-general.js";
 import { gamElevationSourceIdentityConflict } from "./evidence/providers/gam/elevation-identity.js";
 import { reconcileGamInitialIdentity, reconcileGamForPreparation } from "./reconciliation/gam.js";
+import { recoverGamExplicitWorkHeightSpec } from "./evidence/providers/gam/work-height-evidence.js";
+import { recoverGamExplicitHorizontalReachSpec } from "./evidence/providers/gam/reach-evidence.js";
+import { recoverGamExplicitLoadCapacitySpec } from "./evidence/providers/gam/load-capacity-evidence.js";
+import { recoverGamExplicitMachineSpecs } from "./evidence/providers/gam/measured-machine-specs.js";
+import { recoverGamOperationalSpecs } from "./evidence/providers/gam/operational-measures-evidence.js";
+import { recoverGamCleaningTankSpecs } from "./evidence/providers/gam/cleaning-tank-evidence.js";
+import { recoverGamVerifiedTechnicalSpecs } from "./evidence/providers/gam/verified-technical-measures.js";
+import { recoverGamElectricMotorPowerSpecs } from "./evidence/providers/gam/electric-motor-power-evidence.js";
+import { recoverGamBatteryMeasures } from "./evidence/providers/gam/battery-measures-evidence.js";
+import { recoverGamClearanceAndPlatform } from "./evidence/providers/gam/clearance-platform-evidence.js";
 import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation } from "./reconciliation/mercaeleva.js";
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
@@ -38,7 +57,16 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const publicationConflict = publicationConflictForMercaeleva(record);
   const semanticIssues = sourceSemanticQualityIssues(record);
   record = reconcileGamInitialIdentity(record);
-  const originalSpecs = record.specs;
+  const workHeightSpecs = recoverGamExplicitWorkHeightSpec(record);
+  const reachSpecs = recoverGamExplicitHorizontalReachSpec({ ...record, specs: workHeightSpecs });
+  const capacitySpecs = recoverGamExplicitLoadCapacitySpec({ ...record, specs: reachSpecs });
+  const measuredSpecs = recoverGamExplicitMachineSpecs({ ...record, specs: capacitySpecs });
+  const operationalSpecs = recoverGamOperationalSpecs({ ...record, specs: measuredSpecs });
+  const cleaningSpecs = recoverGamCleaningTankSpecs({ ...record, specs: operationalSpecs });
+  const verifiedSpecs = recoverGamVerifiedTechnicalSpecs({ ...record, specs: cleaningSpecs });
+  const enrichedSpecs = recoverGamElectricMotorPowerSpecs({ ...record, specs: verifiedSpecs });
+  const batterySpecs = recoverGamBatteryMeasures({ ...record, specs: enrichedSpecs });
+  const measuredGeometrySpecs = recoverGamClearanceAndPlatform({ ...record, specs: batterySpecs });
   record = reconcileGamForPreparation(record);
   record = reconcileMercaelevaForPreparation(record);
   const issues: string[] = [];
@@ -52,10 +80,18 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const conciseMercaelevaShort = resolveMercaelevaConciseDescription(record);
   const missingDescriptions = mercaelevaMissingDescriptions(record);
   const missingGamDescriptions = gamMissingDescriptions(record);
+  const general = resolveGamIndividualizedGeneral(record) ?? resolveGomarizIndividualizedGeneral(record) ?? resolveGomarizCriticalBriefGeneral(record) ?? resolveGomarizGeneralDescription(record) ?? resolveGomarizResidualGeneral(record) ?? verifiedMercaelevaCriticalGeneral(record) ?? verifiedPriorityPlatformGeneral(record) ?? resolveMercaelevaGeneralDescription(record) ?? resolveGamPriorityBriefGeneral(record) ?? resolveGamCriticalBriefGeneral(record) ?? resolveGamGeneralDescription(record) ?? resolveGamModelSpecificGeneral(record) ?? resolveGamLongDescription(record) ?? verifiedGamFamilyGeneral ?? resolveGamTecnacarGeneral(record) ?? record.longDescription ?? missingDescriptions.long ?? missingGamDescriptions.long;
+  const balanced = conciseGamShort === null ? rebalanceGamOverlongShort(record, general) : null;
+  const conciseResidual = conciseGamShort === null && balanced === null ? resolveGamResidualConciseShort(record, general) : null;
   const descriptions = distinguishDescriptions(
-    conciseGamShort ?? conciseMercaelevaShort ?? record.shortDescription ?? descriptionEvidence.description ?? resolveGomarizShortDescription(record) ?? missingGamDescriptions.short,
-    resolveGomarizCriticalBriefGeneral(record) ?? resolveGomarizGeneralDescription(record) ?? verifiedMercaelevaCriticalGeneral(record) ?? verifiedPriorityPlatformGeneral(record) ?? resolveMercaelevaGeneralDescription(record) ?? resolveGamPriorityBriefGeneral(record) ?? resolveGamCriticalBriefGeneral(record) ?? resolveGamGeneralDescription(record) ?? resolveGamModelSpecificGeneral(record) ?? resolveGamLongDescription(record) ?? verifiedGamFamilyGeneral ?? record.longDescription ?? missingDescriptions.long ?? missingGamDescriptions.long
+    conciseGamShort ?? balanced?.short ?? conciseResidual ?? conciseMercaelevaShort ?? record.shortDescription ?? descriptionEvidence.description ?? resolveGomarizShortDescription(record) ?? missingGamDescriptions.short,
+    balanced?.general ?? general
   );
+  const usedYearGeneral = resolveGamUsedYearGeneral(record, descriptions.short, descriptions.long);
+  const usedHoursGeneral = resolveGamUsedHoursGeneral(record, usedYearGeneral ?? descriptions.long);
+  const usedUnitGeneral = resolveGamUsedUnitGeneral(record, usedHoursGeneral ?? usedYearGeneral ?? descriptions.long);
+  const yaleDieselDimensions = resolveGamYaleDieselDimensions(record, usedUnitGeneral ?? usedHoursGeneral ?? usedYearGeneral ?? descriptions.long);
+  const modelIdentifiedGeneral = resolveGamModelIdentifiedGeneral(record, yaleDieselDimensions ?? usedUnitGeneral ?? usedHoursGeneral ?? usedYearGeneral ?? descriptions.long);
   if (descriptionEvidence.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
   if (gamElevationSourceIdentityConflict(record)) issues.push("Identidad GAM contradictoria entre título, resumen y ficha técnica");
   const attributeResult = catalog ? productAttributes(record, category, catalog) : null;
@@ -80,10 +116,10 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     price,
     description_title: title,
     description: descriptions.short,
-    description_general: descriptions.long,
+    description_general: modelIdentifiedGeneral ?? yaleDieselDimensions ?? usedUnitGeneral ?? usedHoursGeneral ?? usedYearGeneral ?? descriptions.long,
     image: images[0] ?? null,
     images,
-    spec: originalSpecs ?? {},
+    spec: measuredGeometrySpecs,
     attributes: attributeResult?.attributes ?? []
   };
   return {

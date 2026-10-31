@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamLongDescription } from "../mapping/providers/gam/long-description.js";
+import { resolveGamResidualConciseShort } from "../mapping/providers/gam/short-description.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -48,8 +49,32 @@ test("GAM: las generales extensas se organizan sin perder cifras, frases técnic
       removedWords += difference;
       const prepared = prepareSourceProduct(record);
       assert.equal(prepared.product.description_general, general);
-      assert.equal(prepared.product.description, record.shortDescription?.trim() ?? null);
-      assert.deepEqual(prepared.product.spec, record.specs);
+      assert.equal(prepared.product.description,
+        resolveGamResidualConciseShort(record, general) ?? record.shortDescription?.trim() ?? null);
+      const addedSpecs = record.reference === "6963"
+        ? { "Altura de trabajo (m)": "7,8 m", "Capacidad de carga (kg)": "280 KG", "Anchura (mm)": "810 mm" }
+        : record.reference === "6480" || record.reference === "6481" ? { "Radio de giro (mm)": "1455 mm" } : {};
+      const speed = ["5995", "5996", "5997"].includes(record.reference)
+        ? { "Velocidad de desplazamiento con/sin carga (km/h)": "19 / 20 km/h" }
+        : ["6480", "6481"].includes(record.reference)
+          ? { "Velocidad de desplazamiento con/sin carga (km/h)": "4 / 4,5 km/h" } : {};
+      const power = ["5993", "5994", "5995", "5996", "5997"].includes(record.reference ?? "")
+        ? {
+          "Potencia de tracción (kW)": ["5993", "5994"].includes(record.reference ?? "") ? "30 kW" : "40 kW",
+          "Potencia de elevación (kW)": ["5993", "5994"].includes(record.reference ?? "") ? "25 kW" : "40 kW"
+        }
+        : ["6480", "6481"].includes(record.reference ?? "") ? { "Potencia de elevación (kW)": "2,5 kW" } : {};
+      const battery = record.reference === "6963" ? ["24 V", "75 Ah"] :
+        ["5993", "5994"].includes(record.reference ?? "") ? ["154,5 V", "302 Ah"] :
+          ["5995", "5996", "5997"].includes(record.reference ?? "") ? ["354,2 V", "228 Ah"] : null;
+      const clearanceByReference: Readonly<Record<string, number>> = {
+        "5988": 130, "5989": 130, "5990": 155, "5993": 186, "5999": 186,
+        "6000": 186, "5994": 186, "6001": 230, "5995": 230, "5996": 230, "5997": 230
+      };
+      const clearance = record.reference ? clearanceByReference[record.reference] : undefined;
+      assert.deepEqual(prepared.product.spec, { ...record.specs, ...addedSpecs, ...speed, ...power,
+        ...(battery === null ? {} : { "Voltaje batería (V)": battery[0], "Capacidad de la batería (Ah)": battery[1] }),
+        ...(clearance === undefined ? {} : { "Altura al suelo (mm)": `${clearance} mm` }) });
       assert.equal(prepared.product.reference, record.reference);
       assert.equal(prepared.product.sourceUrl, record.url);
     }
