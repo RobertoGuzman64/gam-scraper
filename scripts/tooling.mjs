@@ -151,7 +151,7 @@ if (rawCommand === "ayuda") {
 } else if (selected.entry.startsWith("tools/") && args.some((argument) => ["--help", "--ayuda", "-h"].includes(argument))) {
   fail("La ayuda no admite argumentos adicionales", command);
 } else {
-  const normalized = args.map((argument) => command === "huecos" && argument === "--catalogo"
+  const normalized = args.map((argument) => command === "huecos" && (argument === "--catalogo" || argument === "--comparar")
     ? argument
     : options[argument] ?? argument);
   for (let index = 0; index < normalized.length - 1; index += 1) {

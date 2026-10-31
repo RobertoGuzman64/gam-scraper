@@ -91,7 +91,7 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
     mkdirSync(join(temp, "dist/cli/commands/interventions"), { recursive: true });
     writeFileSync(join(temp, "dist/cli/commands/interventions/intervene.js"), 'console.log("MANUAL " + JSON.stringify(process.argv.slice(2)));\n');
     const fake = join(temp, "scripts/tooling.mjs");
-    const [spanish, providerExtract, validate, campaignHelp, cleanup, applied, simulation, denied, campaignExtract, campaignReview, campaignStatus, referenceRead, referenceUpdate, referenceRecovery, referenceExport, referenceImport, referenceDenied, gaps, legacyCatalog] = await Promise.all([
+    const [spanish, providerExtract, validate, campaignHelp, cleanup, applied, simulation, denied, campaignExtract, campaignReview, campaignStatus, referenceRead, referenceUpdate, referenceRecovery, referenceExport, referenceImport, referenceDenied, gaps, gapsComparison, legacyCatalog] = await Promise.all([
       run(fake, ["preparar", "gam", "--origen", "origen-catalog.json", "--simular"]),
       run(fake, ["extraer:proveedor", "gam", "--categoria", "venta"]),
       run(fake, ["validar", "gam", "--etapa", "preparacion", "--preparacion", "x-preparation.json"]),
@@ -110,6 +110,7 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
       run(fake, ["referencia", "--importar", "copia", "--sustituir"]),
       run(fake, ["referencia", "--aplicar"]),
       run(fake, ["huecos", "--catalogo", "fixture-catalog.json", "--top", "10"]),
+      run(fake, ["huecos", "--comparar", "--specs", "--json"]),
       run(fake, ["preparar", "gam", "--catalogo", "fixture-catalog.json"])
     ]);
     const [migrationPreview, migrationApply, migrationConflict] = await Promise.all([
@@ -170,6 +171,8 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
     assert.equal(referenceDenied.status, 1);
     assert.equal(gaps.status, 0, gaps.stderr);
     assert.deepEqual(JSON.parse(gaps.stdout.trim()), ["--catalogo", "fixture-catalog.json", "--top", "10"]);
+    assert.equal(gapsComparison.status, 0, gapsComparison.stderr);
+    assert.deepEqual(JSON.parse(gapsComparison.stdout.trim()), ["--comparar", "--specs", "--json"]);
     assert.equal(legacyCatalog.status, 0, legacyCatalog.stderr);
     assert.deepEqual(JSON.parse(legacyCatalog.stdout.trim()), ["gam", "--catalog", "fixture-catalog.json"]);
     const decision = await run(fake, ["acreditar", "--decidir", "gam", "6682", "excluir",
