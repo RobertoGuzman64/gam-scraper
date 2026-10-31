@@ -37,12 +37,15 @@ test("GAM: recupera únicamente las dos carretillas HELI con identidad y carga a
   }
 });
 
-test("GAM: mantiene SKY DECK sin descripciones porque el origen no acredita su función", () => {
+test("GAM: completa SKY DECK con evidencia del accesorio BRAVI sin atribuirle altura de trabajo", () => {
   const record = find("2364");
-  assert.deepEqual(gamMissingDescriptions(record), { short: null, long: null });
+  const generated = gamMissingDescriptions(record);
+  assert.match(generated.short ?? "", /soporte de paneles/i);
+  assert.match(generated.long ?? "", /16 kg por soporte/);
+  assert.doesNotMatch(generated.long ?? "", /altura de trabajo|motor eléctrico/i);
   const prepared = prepareSourceProduct(record);
-  assert.equal(prepared.product.description, null);
-  assert.equal(prepared.product.description_general, null);
+  assert.equal(prepared.product.description, generated.short);
+  assert.equal(prepared.product.description_general, generated.long);
   assert.equal(prepared.product.reference, "2364");
 });
 
@@ -78,7 +81,7 @@ test("GAM: rechaza contradicciones de identidad, fuente, combustible y capacidad
 });
 
 test("GAM: no altera el resto del catálogo ni los estados en preparación completa", () => {
-  const expected = new Set(["4683", "4691"]);
+  const expected = new Set(["4683", "4691", "2364"]);
   let recovered = 0;
   for (const record of source.products) {
     const result = gamMissingDescriptions(record);
@@ -90,16 +93,16 @@ test("GAM: no altera el resto del catálogo ni los estados en preparación compl
     }
   }
   assert.equal(source.products.length, 983);
-  assert.equal(recovered, 2);
+  assert.equal(recovered, 3);
 
   const batch = prepareImportBatch(source.products, catalog);
   assert.equal(batch.products.length, source.products.length);
   assert.deepEqual(batch.products.filter((item) => item.status === "review").map((item) => item.product.reference).sort(), ["6682", "6703"]);
   const generated = batch.products.filter((item) => item.product.description &&
-    ["4683", "4691"].includes(item.product.reference ?? ""));
-  assert.equal(generated.length, 2);
-  assert.equal(batch.products.find((item) => item.product.reference === "2364")?.product.description, null);
-  assert.equal(batch.products.find((item) => item.product.reference === "2364")?.product.description_general, null);
+    ["4683", "4691", "2364"].includes(item.product.reference ?? ""));
+  assert.equal(generated.length, 3);
+  assert.ok(batch.products.find((item) => item.product.reference === "2364")?.product.description);
+  assert.ok(batch.products.find((item) => item.product.reference === "2364")?.product.description_general);
 });
 
 test("GAM: las derivaciones son deterministas y no interfieren con Gomariz o Mercaeleva", async () => {

@@ -87,3 +87,24 @@ test("Gomariz: el piloto se aplica solo a la cohorte segura y preserva todas las
     assert.deepEqual(prepared.product.spec, record.specs);
   }
 });
+
+test("Gomariz: incorpora alcance lateral solo cuando está publicado con unidad y valor válido", () => {
+  const reference = find("BA1335");
+  const general = resolveGomarizGeneralDescription(reference);
+  assert.ok(general?.includes("un alcance lateral de 17,07 m"));
+  assert.ok(prepareSourceProduct(reference).product.description_general?.includes("17,07 m"));
+  const other = find("MT1661");
+  assert.ok(resolveGomarizGeneralDescription(other)?.includes("un alcance lateral de 9,25 m"));
+  const zero = find("TE1602");
+  assert.equal(zero.specs?.["Alcance lateral"], "0 m");
+  assert.ok(!resolveGomarizGeneralDescription(zero)?.includes("alcance lateral"));
+  for (const value of ["0 m", "-1 m", "8.45 kg", "8 y 10 m", ["8 m", "10 m"]]) {
+    const variant = { ...reference, specs: { ...reference.specs, "Alcance lateral": value } };
+    const description = resolveGomarizGeneralDescription(variant);
+    assert.ok(description);
+    assert.equal(description.includes("alcance lateral"), false);
+  }
+  const enriched = source.products.filter((record) =>
+    resolveGomarizGeneralDescription(record)?.includes("alcance lateral"));
+  assert.equal(enriched.length, 37);
+});

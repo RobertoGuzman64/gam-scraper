@@ -4,6 +4,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../legacy-export/contracts.js";
 import { resolveMercaelevaConciseDescription } from "../mapping/providers/mercaeleva/concise-description.js";
+import { resolveMercaelevaGeneralDescription } from "../mapping/providers/mercaeleva/general-description.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const published = JSON.parse(readFileSync(
@@ -60,7 +61,8 @@ test("Mercaeleva: enriquece solo resúmenes escuetos con evidencia propia", () =
     assert.ok(newShort.includes(record.model ?? ""), reference);
     const output = prepareSourceProduct(record);
     assert.equal(output.product.description, newShort, reference);
-    assert.equal(output.product.description_general, record.longDescription, reference);
+    assert.equal(output.product.description_general,
+      resolveMercaelevaGeneralDescription(record) ?? record.longDescription, reference);
     assert.equal(output.product.reference, record.reference, reference);
     assert.equal(output.product.sourceUrl, record.url, reference);
     assert.deepEqual(output.product.spec, record.specs, reference);

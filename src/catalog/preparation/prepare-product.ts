@@ -12,6 +12,8 @@ import type { PreparedProduct } from "./contracts.js";
 import { resolveMercaelevaShortDescription } from "./mapping/providers/mercaeleva/descriptions.js";
 import { resolveMercaelevaConciseDescription } from "./mapping/providers/mercaeleva/concise-description.js";
 import { resolveMercaelevaGeneralDescription } from "./mapping/providers/mercaeleva/general-description.js";
+import { verifiedMercaelevaCriticalGeneral } from "./evidence/providers/mercaeleva/critical-general-descriptions.js";
+import { verifiedPriorityPlatformGeneral } from "./evidence/providers/mercaeleva/priority-platform-generals.js";
 import { mercaelevaMissingDescriptions } from "./mapping/providers/mercaeleva/missing-descriptions.js";
 import { gamMissingDescriptions } from "./mapping/providers/gam/missing-descriptions.js";
 import { resolveGamShortDescription } from "./mapping/providers/gam/short-description.js";
@@ -20,6 +22,9 @@ import { resolveGomarizEditorialTitle } from "./mapping/providers/gomariz/editor
 import { resolveGamGeneralDescription } from "./mapping/providers/gam/general-description.js";
 import { resolveGamModelSpecificGeneral } from "./mapping/providers/gam/model-specific-general.js";
 import { resolveGamLongDescription } from "./mapping/providers/gam/long-description.js";
+import { resolveGamPriorityBriefGeneral } from "./mapping/providers/gam/priority-brief-general.js";
+import { resolveGamCriticalBriefGeneral } from "./mapping/providers/gam/critical-brief-general.js";
+import { resolveGamFamilyTechnicalDescription } from "./mapping/providers/gam/family-technical-description.js";
 import { resolveGomarizShortDescription } from "./mapping/providers/gomariz/short-description.js";
 import { resolveGomarizGeneralDescription } from "./mapping/providers/gomariz/general-description.js";
 import { gamElevationSourceIdentityConflict } from "./evidence/providers/gam/elevation-identity.js";
@@ -28,6 +33,7 @@ import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation } f
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
   const conciseGamShort = resolveGamShortDescription(record);
+  const verifiedGamFamilyGeneral = resolveGamFamilyTechnicalDescription(record);
   const publicationConflict = publicationConflictForMercaeleva(record);
   const semanticIssues = sourceSemanticQualityIssues(record);
   record = reconcileGamInitialIdentity(record);
@@ -47,7 +53,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const missingGamDescriptions = gamMissingDescriptions(record);
   const descriptions = distinguishDescriptions(
     conciseGamShort ?? conciseMercaelevaShort ?? record.shortDescription ?? descriptionEvidence.description ?? resolveGomarizShortDescription(record) ?? missingGamDescriptions.short,
-    resolveGomarizGeneralDescription(record) ?? resolveMercaelevaGeneralDescription(record) ?? resolveGamGeneralDescription(record) ?? resolveGamModelSpecificGeneral(record) ?? resolveGamLongDescription(record) ?? record.longDescription ?? missingDescriptions.long ?? missingGamDescriptions.long
+    resolveGomarizGeneralDescription(record) ?? verifiedMercaelevaCriticalGeneral(record) ?? verifiedPriorityPlatformGeneral(record) ?? resolveMercaelevaGeneralDescription(record) ?? resolveGamPriorityBriefGeneral(record) ?? resolveGamCriticalBriefGeneral(record) ?? resolveGamGeneralDescription(record) ?? resolveGamModelSpecificGeneral(record) ?? resolveGamLongDescription(record) ?? verifiedGamFamilyGeneral ?? record.longDescription ?? missingDescriptions.long ?? missingGamDescriptions.long
   );
   if (descriptionEvidence.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
   if (gamElevationSourceIdentityConflict(record)) issues.push("Identidad GAM contradictoria entre título, resumen y ficha técnica");

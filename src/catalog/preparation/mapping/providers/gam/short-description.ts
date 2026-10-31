@@ -62,7 +62,8 @@ const conciseLongShort = (record: ProductRecord): string | null => {
   if (!first || wordCount(first) < 12 || wordCount(first) > 45) return null;
 
   const second = sentences[1]?.trim();
-  const summary = second && wordCount(`${first} ${second}`) <= 45 ? `${first} ${second}` : first;
+  const summary = wordCount(original) >= 75 && wordCount(first) <= 25 ? first :
+    second && wordCount(`${first} ${second}`) <= 45 ? `${first} ${second}` : first;
   const normalizedSummary = normalize(summary);
   if (record.model && !normalizedSummary.includes(normalize(record.model))) return null;
   if (record.brand && !normalizedSummary.includes(normalize(record.brand))) return null;
@@ -70,6 +71,43 @@ const conciseLongShort = (record: ProductRecord): string | null => {
     missingFacts(original, summary, general)) return null;
 
   return summary;
+};
+
+const conciseCompactTranspaleta = (record: ProductRecord): string | null => {
+  if (record.providerId !== "gam" || record.condition !== "Nuevo" ||
+    !record.title || !record.brand || !record.model || !record.reference ||
+    !/transpaleta/iu.test(record.title) ||
+    normalize(record.title).includes(normalize(record.brand)) === false ||
+    normalize(record.title).includes(normalize(record.model)) === false ||
+    (typeof record.specs?.Marca !== "string" || normalize(record.specs.Marca) !== normalize(record.brand)) ||
+    (typeof record.specs?.Modelo !== "string" || normalize(record.specs.Modelo) !== normalize(record.model))) return null;
+
+  try {
+    const url = new URL(record.url);
+    if (url.protocol !== "https:" || url.hostname !== "online.gamrentals.com" ||
+      url.pathname.split("/")[2] !== "transpaletas-yale" ||
+      !url.pathname.split("/").at(-1)?.startsWith(`${record.reference}-`) ||
+      !normalize(url.pathname.split("/").at(-1) ?? "").includes(normalize(record.model)) ||
+      url.search || url.hash) return null;
+  } catch {
+    return null;
+  }
+
+  const original = record.shortDescription?.trim();
+  const general = record.longDescription?.trim();
+  if (!original || !general || wordCount(original) < 40 || wordCount(original) > 45 ||
+    wordCount(general) < 150 || !/transpaleta motorizada/iu.test(original)) return null;
+  const summary = original.split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÜÑ0-9])/u)[0]?.trim();
+  const match = summary ? /^Transpaleta S[uú]per Compacta con transporte f[aá]cil de cargas de hasta (\d{1,2}(?:[.,]\d{1,2})?) toneladas? Transpaleta motorizada s[uú]per compacta de operario a pie que ofrece una maniobrabilidad excelente en espacios confinados\.$/iu.exec(summary) : null;
+  const capacity = record.specs?.["Capacidad de carga (kg)"];
+  const capacityMatch = typeof capacity === "string" ? /^(\d{3,5}) KG$/u.exec(capacity) : null;
+  if (!match?.[1] || !capacityMatch?.[1] ||
+    Math.round(Number(match[1].replace(",", ".")) * 1000) !== Number(capacityMatch[1])) return null;
+  const concise = `La transpaleta ${record.brand} ${record.model} es motorizada y compacta, de operario a pie, ` +
+    `para transportar cargas de hasta ${match[1]} toneladas y maniobrar en espacios confinados.`;
+  const missingNumbers = [...numericTokens(original)].some((number) =>
+    !numericTokens(`${concise} ${general}`).has(number));
+  return missingNumbers ? null : concise;
 };
 
 const conciseModule = (record: ProductRecord): string | null => {
@@ -86,4 +124,4 @@ const conciseModule = (record: ProductRecord): string | null => {
 };
 
 export const resolveGamShortDescription = (record: ProductRecord): string | null =>
-  record.providerId === "gam" ? conciseModule(record) ?? conciseLongShort(record) : null;
+  record.providerId === "gam" ? conciseModule(record) ?? conciseCompactTranspaleta(record) ?? conciseLongShort(record) : null;

@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { fold, numberToken } from "../../attribute-utils.js";
+import { braviSkydeckEditorialEvidence } from "../../../evidence/providers/gam/bravi-skydeck-editorial.js";
 
 type MissingGamDescriptions = {
   readonly short: string | null;
@@ -13,7 +14,26 @@ const sourceValue = (record: ProductRecord, key: string): string | null => {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 };
 
+const skydeckDescriptions = (record: ProductRecord): MissingGamDescriptions => {
+  const evidence = braviSkydeckEditorialEvidence;
+  if (record.providerId !== "gam" || record.categoryKey !== "marcas-nuevas" ||
+    record.condition !== "Nuevo" || record.reference !== evidence.reference ||
+    record.url !== evidence.sellerUrl || record.title !== evidence.model ||
+    record.brand !== evidence.brand || record.model !== evidence.model ||
+    record.externalReference !== evidence.model || record.shortDescription?.trim() ||
+    record.longDescription?.trim() ||
+    Object.keys(record.specs ?? {}).length !== 2 ||
+    sourceValue(record, "Marca") !== evidence.brand ||
+    sourceValue(record, "Modelo") !== evidence.model) return unavailable;
+  return {
+    short: "Soporte de paneles BRAVI SKY DECK para uso como accesorio en plataformas elevadoras compatibles.",
+    long: "El SKY DECK de BRAVI es un accesorio de sujeción de paneles destinado a plataformas elevadoras compatibles, no una plataforma elevadora autónoma. El manual del fabricante describe el montaje del soporte en la cesta y especifica una carga nominal de 16 kg por soporte para un panel. La compatibilidad con la plataforma, el montaje autorizado y los límites de carga deben comprobarse en los manuales de ambos equipos antes de utilizarlo."
+  };
+};
+
 export const gamMissingDescriptions = (record: ProductRecord): MissingGamDescriptions => {
+  const skydeck = skydeckDescriptions(record);
+  if (skydeck.short || skydeck.long) return skydeck;
   if (record.providerId !== "gam" || record.categoryKey !== "carretillas-nuevas" ||
     record.condition !== "Nuevo" || record.shortDescription?.trim() || record.longDescription?.trim() ||
     fold(record.brand ?? "") !== "heli" || !record.model || !record.reference ||

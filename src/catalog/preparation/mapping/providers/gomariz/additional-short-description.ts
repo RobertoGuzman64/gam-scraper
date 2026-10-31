@@ -1,10 +1,12 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
+import { fold } from "../../category-utils.js";
 
 const families: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   "elevacion-y-trabajos-en-altura": {
     "brazo-telescopico": "Plataforma telescópica",
     "brazo-articulado-boom-lift": "Plataforma articulada",
-    "elevador-mastil-vertical": "Elevador de mástil vertical"
+    "elevador-mastil-vertical": "Elevador de mástil vertical",
+    "camion-plataforma": "Camión cesta"
   },
   "manipulacion-de-materiales": {
     "manipulador-telescopico": "Manipulador telescópico",
@@ -18,7 +20,8 @@ const families: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   limpieza: { fregadora: "Fregadora" },
   "movimiento-de-tierras-demolicion-y-compactacion": {
     dumper: "Dúmper",
-    rodillo: "Rodillo compactador"
+    rodillo: "Rodillo compactador",
+    retroexcavadora: "Retroexcavadora"
   },
   camion: { "camion-porta-maquinaria": "Camión portamaquinaria" }
 };
@@ -72,6 +75,20 @@ export const resolveGomarizAdditionalShortDescription = (record: ProductRecord):
   if (record.shortDescription?.trim()) return null;
   const source = sourceFamily(record);
   const title = record.title?.trim();
+  if (source?.family === "camion-plataforma" && title && /^(?:19|20)\d{2}$/.test(record.year ?? "") &&
+    /^SOCAGE IVECO [A-Z0-9 ]+$/.test(title) &&
+    (!record.model || fold(title).includes(fold(record.model))) &&
+    fold(record.longDescription ?? "").includes("camiones cesta")) {
+    const urlName = new URL(record.url).pathname.split("/").filter(Boolean)[3] ?? "";
+    const expected = fold(title).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const height = measurement(record.specs?.["Altura de trabajo"], "m");
+    const reach = measurement(record.specs?.["Alcance lateral"], "m");
+    const capacity = measurement(record.specs?.Capacidad, "kg");
+    if ((urlName === expected || /^\d+$/.test(urlName.slice(expected.length + 1)) && urlName.startsWith(`${expected}-`)) &&
+      height && reach && capacity) {
+      return `Camión cesta ${title}, año ${record.year}. Altura de trabajo de ${height} m, alcance lateral de ${reach} m y capacidad de ${capacity} kg.`;
+    }
+  }
   const brand = record.brand?.trim();
   const model = record.model?.trim();
   if (!source || !title || !brand ||
@@ -126,8 +143,13 @@ export const resolveGomarizAdditionalShortDescription = (record: ProductRecord):
       return weight && engine === "diésel" ? `${prefix} Motor diésel y peso indicado de ${weight} kg.` : null;
     case "camion-porta-maquinaria": {
       const length = measurement(specs.Longitud, "m");
-      return length && weight ? `${prefix} Longitud de ${length} m y peso indicado de ${weight} kg.` : null;
+      if (length && weight) return `${prefix} Longitud de ${length} m y peso indicado de ${weight} kg.`;
+      return engine === "diésel" && /\bcami[oó]n\b/i.test(record.longDescription ?? "")
+        ? `${prefix} Motorización diésel según la ficha del proveedor.` : null;
     }
+    case "retroexcavadora":
+      return weight && /\bretroexcavadora\b/i.test(record.longDescription ?? "")
+        ? `${prefix} Peso indicado de ${weight} kg.` : null;
     default:
       return null;
   }

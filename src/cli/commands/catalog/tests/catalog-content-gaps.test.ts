@@ -203,3 +203,82 @@ const isEditorialReport = (value: unknown): value is EditorialReport => {
     'longestGeneral' in editorial && Array.isArray(editorial.longestGeneral) &&
     'source' in value.provenance && typeof value.provenance.source === "string";
 };
+
+test("huecos compara las 1341 publicaciones y acredita la cobertura completa de descripciones", async () => {
+  const raw = await execute(["--comparar", "--json", "--top", "1"]);
+  const report: unknown = JSON.parse(raw);
+  assert.ok(isComparisonReport(report));
+  assert.equal(report.provenance.source, "comparacion_publicaciones_y_preparacion");
+  assert.equal(report.coverage.totals.products, 1341);
+  assert.deepEqual(report.coverage.totals.publishedMissing, { description: 163, description_general: 11 });
+  assert.deepEqual(report.coverage.totals.recovered, { description: 163, description_general: 11 });
+  assert.deepEqual(report.coverage.totals.pending, { description: 0, description_general: 0 });
+  assert.deepEqual(report.coverage.totals.lost, { description: 0, description_general: 0 });
+  assert.equal(report.coverage.totals.incompleteProducts, 0);
+  assert.equal(report.coverage.totals.bothPending, 0);
+  assert.equal(report.coverage.pendingCases.length, 0);
+  assert.equal(report.coverage.providers.find((item) => item.providerId === "mercaeleva")?.origin, "reconstruccion_publicada");
+  assert.equal(report.editorial.providers.length, 3);
+  assert.equal(report.editorialPrepared.providers.length, 3);
+  assert.equal(report.priorities.totals.pendingByStage.P0, 0);
+  assert.equal(report.priorities.pending.length, 444);
+  for (const reference of ["M432-1479", "M913-0641", "M736-5615", "M095-5362", "M144-5512", "M171-6370", "M200-9533", "M178-6194", "M205-2951", "M572-8190", "M030-7485", "M005-4474"]) {
+    assert.ok(!report.priorities.pending.some((item) => item.reference === reference && item.signal === "general_muy_breve"));
+    assert.ok(report.priorities.resolved.some((item) => item.reference === reference && item.signal === "general_muy_breve"));
+  }
+  assert.ok(!report.priorities.pending.some((item) => item.reference === "5996" && item.signal === "general_desproporcionada"));
+  assert.ok(report.priorities.pending.some((item) => item.reference === "5992" && item.signal === "general_desproporcionada" && item.preparedWords > 2000));
+  for (const reference of ["2628", "6217", "2150", "5710", "6358", "6367", "920", "2263", "2111"]) {
+    assert.ok(!report.priorities.pending.some((item) => item.reference === reference && item.signal === "general_muy_breve"));
+    assert.ok(report.priorities.resolved.some((item) => item.reference === reference && item.signal === "general_muy_breve"));
+  }
+  assert.equal(report.priorities.totals.pendingByStage.P0, 0);
+  assert.ok(report.priorities.pending.some((item) => item.signal === "general_muy_breve"));
+  assert.ok(report.priorities.pending.some((item) => item.stage === "P2" && item.familySamples >= 5));
+  assert.equal(report.priorities.resolved.filter((item) => item.stage === "P0").length, 174);
+  assert.ok(report.priorities.technical.some((item) => item.contradictions.length > 0));
+  const text = await execute(["--comparar", "--top", "1"]);
+  assert.match(text, /P0 COLA RESIDUAL \| 0 fichas, sin recorte por --top/);
+  assert.match(text, /ORDEN DE TRABAJO \| P0 vacíos 0/);
+  assert.match(text, /INCIDENCIAS TÉCNICAS/);
+  await assert.rejects(execute(["--comparar", "--finales"]), /no se combina/);
+});
+
+type ComparisonReport = {
+  readonly provenance: { readonly source: string };
+  readonly editorial: { readonly providers: readonly unknown[] };
+  readonly editorialPrepared: { readonly providers: readonly unknown[] };
+  readonly priorities: {
+    readonly totals: { readonly pendingByStage: { readonly P0: number } };
+    readonly pending: readonly { readonly reference: string | null; readonly signal: string;
+      readonly stage: string; readonly preparedWords: number; readonly familySamples: number }[];
+    readonly resolved: readonly { readonly stage: string; readonly reference: string | null; readonly signal: string }[];
+    readonly technical: readonly { readonly contradictions: readonly string[] }[];
+  };
+  readonly coverage: {
+    readonly totals: {
+      readonly products: number;
+      readonly publishedMissing: { readonly description: number; readonly description_general: number };
+      readonly recovered: { readonly description: number; readonly description_general: number };
+      readonly pending: { readonly description: number; readonly description_general: number };
+      readonly lost: { readonly description: number; readonly description_general: number };
+      readonly incompleteProducts: number;
+      readonly bothPending: number;
+    };
+    readonly pendingCases: readonly { readonly reference: string | null; readonly missing: readonly string[] }[];
+    readonly providers: readonly { readonly providerId: string; readonly origin: string }[];
+  };
+};
+const isComparisonReport = (value: unknown): value is ComparisonReport => {
+  if (typeof value !== "object" || value === null || !("coverage" in value) || !("editorial" in value) ||
+    !("editorialPrepared" in value) || !("provenance" in value) ||
+    typeof value.coverage !== "object" || value.coverage === null ||
+    typeof value.provenance !== "object" || value.provenance === null ||
+    typeof value.editorial !== "object" || value.editorial === null ||
+    typeof value.editorialPrepared !== "object" || value.editorialPrepared === null) return false;
+  return "totals" in value.coverage && "pendingCases" in value.coverage && "providers" in value.coverage &&
+    "source" in value.provenance && "providers" in value.editorial && "providers" in value.editorialPrepared &&
+    "priorities" in value && typeof value.priorities === "object" && value.priorities !== null &&
+    "totals" in value.priorities && "pending" in value.priorities && "resolved" in value.priorities &&
+    "technical" in value.priorities;
+};

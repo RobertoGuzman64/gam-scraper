@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 import { resolveGomarizShortDescription } from "../mapping/providers/gomariz/short-description.js";
+import { gomarizPriorityShortEvidence, verifiedGomarizPriorityShortDescription } from "../evidence/providers/gomariz/priority-short-descriptions.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { prepareSourceProduct } from "../prepare-product.js";
 
 const record = (family: string, specs: SpecsMap, title = "LGMG S1413EII"): ProductRecord => ({
   providerId: "gomariz", categoryKey: "venta", categoryName: "Maquinaria de ocasión",
@@ -145,4 +148,68 @@ test("Gomariz: deja ausencias ante información insuficiente, contradicción o p
   assert.equal(resolveGomarizShortDescription({ ...generator, specs: { Potencia: "45 kVA" },
     longDescription: "Las torres de iluminación son regulables." }), null);
   assert.equal(manipulator.shortDescription, null);
+});
+
+
+test("Gomariz: cubre los camiones cesta, camión y retroexcavadora con datos del original", async () => {
+  const original = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+  const expected = ["CC1535", "CC1665", "CC1666", "1011JFB", "RE454"];
+  for (const reference of expected) {
+    const source = original.products.find((item) => item.reference === reference);
+    assert.ok(source, reference);
+    const before = JSON.stringify(source);
+    const result = prepareSourceProduct(source);
+    assert.ok(result.product.description, reference);
+    assert.equal(result.product.reference, reference);
+    assert.equal(result.product.sourceUrl, source.url);
+    assert.deepEqual(result.product.spec, source.specs);
+    assert.equal(JSON.stringify(source), before);
+  }
+  const truck = original.products.find((item) => item.reference === "CC1535");
+  assert.ok(truck);
+  const value = resolveGomarizShortDescription(truck);
+  assert.match(value ?? "", /20 m.*9 m.*230 kg/);
+  assert.equal(resolveGomarizShortDescription({ ...truck, specs: { ...truck.specs, Capacidad: "320 litros" } }), null);
+  assert.equal(resolveGomarizShortDescription({ ...truck, url: truck.url.replace("gomarizrent.com", "otro.example") }), null);
+  assert.equal(resolveGomarizShortDescription({ ...truck, shortDescription: "Descripción editorial existente" }), null);
+  assert.equal(resolveGomarizShortDescription({ ...truck, specs: { ...truck.specs, "Altura de trabajo": "" } }), null);
+});
+
+
+test("Gomariz: recupera las cortas pendientes con origen y medidas acreditadas, sin suprimir contradicciones", async () => {
+  const original = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+  const references = Object.keys(gomarizPriorityShortEvidence);
+  for (const reference of references) {
+    const source = original.products.find((product) => product.reference === reference);
+    assert.ok(source, reference);
+    const serialized = JSON.stringify(source);
+    const text = verifiedGomarizPriorityShortDescription(source);
+    assert.ok(text, reference);
+    const prepared = prepareSourceProduct(source);
+    assert.equal(prepared.product.description, text, reference);
+    assert.equal(prepared.product.description_general, source.longDescription, reference);
+    assert.deepEqual(prepared.product.spec, source.specs, reference);
+    assert.equal(JSON.stringify(source), serialized, reference);
+    const variants: readonly ProductRecord[] = [
+      { ...source, providerId: "gam" },
+      { ...source, categoryKey: "alquiler" },
+      { ...source, reference: "OTRA" },
+      { ...source, url: source.url.replace("gomarizrent.com", "example.com") },
+      { ...source, model: "OTRO" },
+      { ...source, title: "OTRA MÁQUINA" },
+      { ...source, year: "2020" },
+      { ...source, longDescription: "Otra general" },
+      { ...source, shortDescription: "Corta anterior" },
+      { ...source, specs: { ...source.specs, [reference === "BA1465" ? "Motor" : "Potencia"]: "INCOHERENTE" } }
+    ];
+    for (const variant of variants) {
+      assert.equal(verifiedGomarizPriorityShortDescription(variant), null, reference);
+    }
+  }
+  const affected = original.products.filter((source) => verifiedGomarizPriorityShortDescription(source) !== null);
+  assert.deepEqual(affected.map((source) => source.reference).sort(), [...references].sort());
+  const contradictory = original.products.find((product) => product.reference === "BA1465");
+  assert.ok(contradictory);
+  assert.equal(prepareSourceProduct(contradictory).status, "review");
+  assert.match(prepareSourceProduct(contradictory).issues.join(" "), /Motorizaci[oó]n contradictoria/iu);
 });

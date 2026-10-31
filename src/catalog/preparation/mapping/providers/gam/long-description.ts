@@ -87,9 +87,97 @@ const identityMatches = (record: ProductRecord): boolean => {
   }
 };
 
+const extremeTopics = [
+  /\bcapacidad de carga\b/iu,
+  /\bcentro de carga\b/iu,
+  /\bion de litio|bater[ií]a LFP\b/iu,
+  /\brecargas parciales|carga lateral|cargadores\b/iu,
+  /\btemperatura de la bater[ií]a|calentamiento autom[aá]tico\b/iu,
+  /\bmotor de tracci[oó]n|imanes permanentes\b/iu,
+  /\bmotor de elevaci[oó]n|refrigeraci[oó]n por agua\b/iu,
+  /\baltura de elevaci[oó]n|configuraciones de m[aá]stil\b/iu,
+  /\bcapacidad residual|tablas de capacidades\b/iu,
+  /\bradio de giro\b/iu,
+  /\bvelocidad de desplazamiento\b/iu,
+  /\baltura libre al suelo\b/iu,
+  /\bneum[aá]ticos|ruedas delanteras dobles\b/iu,
+  /\bIPX4|salpicaduras de agua\b/iu,
+  /\bsistema de presencia|reducci[oó]n de velocidad en curvas\b/iu,
+  /\biluminaci[oó]n LED|pantalla informativa|pantalla en color\b/iu,
+  /\bvisibilidad|ergon[oó]mico\b/iu,
+  /\bfrenado regenerativo\b/iu,
+  /\bdesplazadores laterales|posicionadores de horquillas|telemetr[ií]a\b/iu,
+  /\bno (?:es(?:t[aá])?|est[aá]) dise[nñ]ad[ao]|no es un equipo todoterreno\b/iu,
+  /\balmacenes|muelles de carga|patios industriales\b/iu
+] as const;
+
+const technicalTopics = (sentence: string): Set<number> => new Set(
+  extremeTopics.flatMap((pattern, index) => pattern.test(sentence) ? [index] : [])
+);
+
+const extremeRedundant = (sentence: string): boolean =>
+  /^(?:Por (?:todo )?ello|Gracias a estas caracter[ií]sticas|En este sentido),/iu.test(sentence) ||
+  /\b(?:representa|constituye) una (?:soluci[oó]n|alternativa)\b/iu.test(sentence);
+
+const summarizeExtremeDescription = (record: ProductRecord, original: string): string | null => {
+  if (words(original).length <= 2000 || !identityMatches(record)) return null;
+  const source = sentences(original);
+  if (source.length < 35) return null;
+
+  const numeric = source.map(technicalNumbers);
+  const topics = source.map(technicalTopics);
+  const selected = new Set<number>([0, 1]);
+  const coveredNumbers = new Set<string>([...numeric[0] ?? [], ...numeric[1] ?? []]);
+  const coveredTopics = new Set<number>([...topics[0] ?? [], ...topics[1] ?? []]);
+  let totalWords = words(source[0] ?? "").length + words(source[1] ?? "").length;
+  const targetWords = 750;
+  const allNumbers = technicalNumbers(original);
+  const allTopics = new Set(topics.flatMap((items) => [...items]));
+
+  while ([...allNumbers].some((value) => !coveredNumbers.has(value)) ||
+    [...allTopics].some((value) => !coveredTopics.has(value))) {
+    let bestIndex: number | null = null;
+    let bestScore = -Infinity;
+    for (let index = 2; index < source.length; index++) {
+      if (selected.has(index)) continue;
+      const sentence = source[index];
+      if (!sentence) continue;
+      const count = words(sentence).length;
+      if (totalWords + count > targetWords) continue;
+      const newNumbers = [...numeric[index] ?? []].filter((value) => !coveredNumbers.has(value)).length;
+      const newTopics = [...topics[index] ?? []].filter((value) => !coveredTopics.has(value)).length;
+      if (newNumbers === 0 && newTopics === 0) continue;
+      const score = newNumbers * 25 + newTopics * 15 - count * 0.18 -
+        (extremeRedundant(sentence) ? 20 : 0) -
+        (/^(?:Esta|Este|Estas|Estos|Gracias|Por ello)\b/iu.test(sentence) ? 8 : 0);
+      if (score > bestScore) {
+        bestIndex = index;
+        bestScore = score;
+      }
+    }
+    if (bestIndex === null) return null;
+    selected.add(bestIndex);
+    totalWords += words(source[bestIndex] ?? "").length;
+    for (const value of numeric[bestIndex] ?? []) coveredNumbers.add(value);
+    for (const value of topics[bestIndex] ?? []) coveredTopics.add(value);
+  }
+
+  const chosen = [...selected].sort((a, b) => a - b).map((index) => source[index] ?? "");
+  if (chosen.length < 7 || totalWords >= words(original).length / 2 ||
+    [...allNumbers].some((value) => !technicalNumbers(chosen.join(" ")).has(value))) return null;
+  const paragraphs: string[] = [];
+  for (let index = 0; index < chosen.length; index += 3) {
+    paragraphs.push(chosen.slice(index, index + 3).join(" "));
+  }
+  return paragraphs.join("\n\n");
+};
+
 export const resolveGamLongDescription = (record: ProductRecord): string | null => {
   const original = record.longDescription;
-  if (!original || words(original).length <= 800 || original.includes("\n\n") || !identityMatches(record)) return null;
+  if (!original) return null;
+  const extreme = summarizeExtremeDescription(record, original);
+  if (extreme !== null) return extreme;
+  if (words(original).length <= 800 || original.includes("\n\n") || !identityMatches(record)) return null;
 
   const sourceSentences = sentences(original);
   if (sourceSentences.length < 20) return null;

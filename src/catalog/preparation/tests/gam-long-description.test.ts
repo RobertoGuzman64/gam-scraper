@@ -58,7 +58,21 @@ test("GAM: las generales extensas se organizan sin perder cifras, frases técnic
   assert.equal(gam.products.length, 983);
   assert.deepEqual(new Set(changed), changedReferences);
   assert.equal(trimmed, 19);
-  assert.equal(removedWords, 1768);
+  assert.ok(removedWords > 10000, `síntesis insuficiente: ${removedWords} palabras`);
+});
+
+test("GAM: las generales gigantes mantienen los hechos técnicos y dejan de ser extremas", () => {
+  for (const reference of ["5989", "5990", "5993", "5994", "5995", "5996", "5997", "5999", "6000", "6001"]) {
+    const record = find(reference);
+    const summary = resolveGamLongDescription(record);
+    assert.ok(summary, reference);
+    assert.ok(record.longDescription);
+    assert.ok(wordCount(summary) <= 800, reference);
+    assert.deepEqual(numbers(summary), numbers(record.longDescription), reference);
+    assert.ok(summary.includes(record.model ?? ""), reference);
+    assert.match(summary, /bater[ií]a|litio/iu, reference);
+    assert.match(summary, /capacidad de carga/iu, reference);
+  }
 });
 
 test("GAM: los dos extremos mantienen identidad, medidas, capacidades y datos energéticos", () => {

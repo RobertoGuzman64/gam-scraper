@@ -1,6 +1,7 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
-import { invalidGomarizPlatformHeight } from "../../../../normalization/providers/gomariz/technical.js";
+import { invalidGomarizPlatformHeight, verifiedGomarizPlatformHeight } from "../../../../normalization/providers/gomariz/technical.js";
 import { resolveGomarizAdditionalShortDescription } from "./additional-short-description.js";
+import { verifiedGomarizPriorityShortDescription } from "../../../evidence/providers/gomariz/priority-short-descriptions.js";
 
 const familyNames: Readonly<Record<string, string>> = {
   "elevador-tijera": "Plataforma de tijera",
@@ -32,6 +33,8 @@ const quantity = (value: unknown, unit: "m" | "kg"): string | null => {
 
 export const resolveGomarizShortDescription = (record: ProductRecord): string | null => {
   if (record.shortDescription?.trim()) return null;
+  const verified = verifiedGomarizPriorityShortDescription(record);
+  if (verified) return verified;
   const family = sourceFamily(record);
   if (!family) return resolveGomarizAdditionalShortDescription(record);
   if (!record.title?.trim() || !record.brand?.trim() || !record.model?.trim() ||
@@ -41,7 +44,7 @@ export const resolveGomarizShortDescription = (record: ProductRecord): string | 
   if (!lowered.includes(record.brand.trim().toLocaleLowerCase("es")) ||
     !lowered.includes(record.model.trim().toLocaleLowerCase("es"))) return null;
   const specs = record.specs ?? {};
-  if (invalidGomarizPlatformHeight(record.url, specs)) return null;
+  if (invalidGomarizPlatformHeight(record.url, specs) && verifiedGomarizPlatformHeight(record) === null) return null;
   const height = quantity(specs["Altura de trabajo"], "m");
   const capacity = quantity(specs.Capacidad, "kg");
   if (!height || !capacity) return null;

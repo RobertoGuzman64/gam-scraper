@@ -1,6 +1,7 @@
 import { printReportLine } from "../../reporting/terminal.js";
 import { createHash } from "node:crypto";
-import { resolve } from "node:path";
+import { readdir } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { analyzeSourceContentGaps, prioritizeCatalogGaps } from "../../../catalog/diagnostics/content-gaps-source.js";
 import { analyzeEditorialQuality, analyzePublishedEditorialQuality } from "../../../catalog/diagnostics/editorial-quality.js";
@@ -12,10 +13,17 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { loadPreparationInputs } from "../../../infrastructure/filesystem/preparation/preparation-inputs.js";
 import { prepareSourceProduct } from "../../../catalog/preparation/prepare-product.js";
 import { printCommandError } from "../../reporting/errors.js";
+import { buildProductIdentity } from "../../../catalog/identity.js";
+import { analyzeDescriptionCoverage } from "../../../catalog/diagnostics/description-coverage.js";
+import type { DescriptionCoverageInput } from "../../../catalog/diagnostics/description-coverage.js";
+import { reconstructMercaelevaSource } from "../../../catalog/diagnostics/description-source.js";
+import { analyzeDescriptionPriorities } from "../../../catalog/diagnostics/description-priorities.js";
+import type { DescriptionPriorities } from "../../../catalog/diagnostics/description-priorities.js";
+import type { ProductRecord } from "../../../contracts/catalog.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 
-type CommandOptions = { readonly json: boolean; readonly finales: boolean; readonly groupBy: GapGroupBy; readonly minGroup: number;
+type CommandOptions = { readonly json: boolean; readonly finales: boolean; readonly comparar: boolean; readonly groupBy: GapGroupBy; readonly minGroup: number;
   readonly minMissing: number; readonly limit: number; readonly catalogs: readonly string[];
   readonly publications: readonly string[] };
 
@@ -29,6 +37,7 @@ const parsePositive = (value: string | undefined, flag: string): number => {
 const readOptions = (args: readonly string[]): CommandOptions => {
   let json = false;
   let finales = false;
+  let comparar = false;
   let groupBy: GapGroupBy = "categoria";
   let minGroup = 8;
   let minMissing = 3;
@@ -39,6 +48,7 @@ const readOptions = (args: readonly string[]): CommandOptions => {
     const arg = args[index];
     if (arg === "--json") json = true;
     else if (arg === "--finales") finales = true;
+    else if (arg === "--comparar") comparar = true;
     else if (arg === "--catalogo") {
       const value = args[++index];
       if (!value?.trim() || value.startsWith("--")) throw new Error("--catalogo requiere la ruta de un -catalog.json");
@@ -64,7 +74,10 @@ const readOptions = (args: readonly string[]): CommandOptions => {
   if (finales && (catalogs.length > 0 || publications.length > 0)) {
     throw new Error("--finales no se combina con --catalogo ni --publicacion");
   }
-  return { json, finales, groupBy, minGroup, minMissing, limit, catalogs, publications };
+  if (comparar && (finales || catalogs.length > 0 || publications.length > 0)) {
+    throw new Error("--comparar no se combina con --finales, --catalogo ni --publicacion");
+  }
+  return { json, finales, comparar, groupBy, minGroup, minMissing, limit, catalogs, publications };
 };
 
 const printEditorial = (editorial: EditorialAnalysis, limit: number): void => {
@@ -108,12 +121,126 @@ const reportPublications = async (paths: readonly string[], options: CommandOpti
   }
 };
 
+const originalSources = async (providerId: string): Promise<Map<string, ProductRecord> | null> => {
+  const directory = join(root, "catalogs", "providers", providerId, "original");
+  let filenames: string[];
+  try {
+    filenames = (await readdir(directory)).filter((name) => name.endsWith("-catalog.json"));
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") return null;
+    throw error;
+  }
+  if (filenames.length === 0) return null;
+  if (filenames.length !== 1) throw new Error(`Original canónico ambiguo para ${providerId}`);
+  const original = await readCanonicalCatalog(join(directory, filenames[0]!));
+  if (original.providerId !== providerId) throw new Error(`Proveedor incorrecto en original ${providerId}`);
+  const sources = new Map<string, ProductRecord>();
+  for (const source of original.products) {
+    const key = buildProductIdentity(source).key;
+    if (sources.has(key)) throw new Error(`Identidad duplicada en original ${key}`);
+    sources.set(key, source);
+  }
+  return sources;
+};
+
+const printDescriptionCoverage = (coverage: ReturnType<typeof analyzeDescriptionCoverage>): void => {
+  const { totals } = coverage;
+  const sum = (counts: Readonly<Record<"description" | "description_general", number>>): number =>
+    counts.description + counts.description_general;
+  printReportLine(`P0 DESCRIPCIONES | publicadas ${totals.products} | emparejadas ${totals.products} | vacíos publicados ${sum(totals.publishedMissing)} (cortas ${totals.publishedMissing.description}, generales ${totals.publishedMissing.description_general})`);
+  printReportLine(`P0 RESULTADO DE PREPARACIÓN | recuperados ${sum(totals.recovered)} (cortas ${totals.recovered.description}, generales ${totals.recovered.description_general}) | pendientes ${sum(totals.pending)} (cortas ${totals.pending.description}, generales ${totals.pending.description_general}) | campos perdidos ${sum(totals.lost)} | fichas incompletas ${totals.incompleteProducts} | ambas vacías ${totals.bothPending}`);
+  for (const item of coverage.providers) {
+    printReportLine(`P0 PROVEEDOR | ${item.providerId} | publicadas ${item.products} | origen ${item.origin} | vacíos ${sum(item.publishedMissing)} | recuperados ${sum(item.recovered)} | pendientes ${sum(item.pending)} | perdidos ${sum(item.lost)}`);
+  }
+  printReportLine(`P0 FAMILIAS | ${coverage.families.length} grupos con ausencias, ordenados por campos pendientes y proporción | clasificación provisional cuando se indica`);
+  for (const family of coverage.families) {
+    printReportLine(`  ${family.providerId} | ${family.family} | ${family.missingFields} campos | ${family.incomplete}/${family.total} fichas | ${family.familyMethod}`);
+  }
+  printReportLine(`P0 COLA RESIDUAL | ${coverage.pendingCases.length} fichas, sin recorte por --top`);
+  for (const item of coverage.pendingCases) {
+    printReportLine(`  ${item.providerId} | ${item.reference ?? item.identity} | ${item.family} | faltan ${item.missing.join(", ")} | ${item.evidence} | ${item.origin}`);
+    printReportLine(`    ${item.title ?? "Sin título"} | ${item.url}`);
+    if (item.issues.some((issue) => /contradic|conflict|incompatible/i.test(issue))) {
+      printReportLine(`    Incidencias: ${item.issues.filter((issue) => /contradic|conflict|incompatible/i.test(issue)).join("; ")}`);
+    }
+  }
+  for (const item of coverage.lostCases) printReportLine(`  REGRESIÓN | ${item.identity} | ${item.lost.join(", ")} | ${item.url}`);
+};
+
+const printDescriptionPriorities = (report: DescriptionPriorities, limit: number): void => {
+  printReportLine(`PRIORIDADES EDITORIALES | pendientes ${report.totals.pending} | resueltos por preparación ${report.totals.resolved} | aparecidos ${report.totals.appeared} | incidencias técnicas ${report.totals.technical}`);
+  printReportLine(`ORDEN DE TRABAJO | P0 vacíos ${report.totals.pendingByStage.P0} | P1 insuficiencia/extremos ${report.totals.pendingByStage.P1} | P2 diferencias familiares ${report.totals.pendingByStage.P2}`);
+  const visible = report.pending.filter((item) => item.stage !== "P0").slice(0, limit);
+  printReportLine(`COLA EDITORIAL | P0 íntegro en la sección de cobertura | P1/P2 TOP ${visible.length} de ${report.pending.filter((item) => item.stage !== "P0").length} | sin mezclar incidencias técnicas`);
+  for (const item of visible) {
+    printReportLine(`  ${item.stage} | ${item.providerId} | ${item.reference ?? item.identity} | ${item.family} | ${item.signal} | publicada ${item.publishedWords} palabras → preparada ${item.preparedWords} | mediana familiar ${item.familyMedianWords ?? "-"} (${item.familySamples} muestras) | ${item.state}`);
+    printReportLine(`    ${item.url} | ${item.evidence}`);
+  }
+  printReportLine(`RESUELTOS POR PREPARACIÓN | ${report.resolved.length} señales, incluidos vacíos | ejemplos TOP ${Math.min(limit, report.resolved.length)}`);
+  for (const item of report.resolved.slice(0, limit)) {
+    printReportLine(`  ${item.providerId} | ${item.reference ?? item.identity} | ${item.signal} | ${item.publishedWords} → ${item.preparedWords} palabras`);
+  }
+  printReportLine(`INCIDENCIAS TÉCNICAS | ${report.technical.length} fichas detectadas por preparación; no confundir con avisos de longitud`);
+  for (const item of report.technical) {
+    printReportLine(`  ${item.providerId} | ${item.reference ?? item.identity} | ${item.family} | ${item.issues.join("; ")} | ${item.url}`);
+  }
+  printReportLine("El JSON incluye la cola editorial completa, referencias, evidencias, muestras familiares y casos resueltos.");
+};
+
+const reportDescriptionComparison = async (paths: readonly string[], options: CommandOptions): Promise<void> => {
+  const publications = await Promise.all(paths.map(readAccreditedPublication));
+  const providers = new Set<string>();
+  const inputs: DescriptionCoverageInput[] = [];
+  const sourceProvenance: { providerId: string; origin: "original_canonico" | "reconstruccion_publicada"; originalProducts: number | null; publishedProducts: number; publicationSha256: string }[] = [];
+  for (const publication of publications) {
+    if (providers.has(publication.providerId)) throw new Error(`Proveedor duplicado en publicaciones: ${publication.providerId}`);
+    providers.add(publication.providerId);
+    const sources = await originalSources(publication.providerId);
+    if (sources === null && publication.providerId !== "mercaeleva") {
+      throw new Error(`No existe original canónico para comparar ${publication.providerId}; no se atribuye fuente inexistente`);
+    }
+    const origin = sources === null ? "reconstruccion_publicada" : "original_canonico";
+    sourceProvenance.push({ providerId: publication.providerId, origin, originalProducts: sources?.size ?? null,
+      publishedProducts: publication.products.length, publicationSha256: publication.sha256 });
+    for (const published of publication.products) {
+      const identity = buildProductIdentity({ providerId: published.providerId, reference: published.reference,
+        serialNumber: null, url: published.sourceUrl }).key;
+      const source = sources === null ? reconstructMercaelevaSource(published) : sources.get(identity);
+      if (!source) throw new Error(`Publicación sin origen canónico emparejado: ${identity}`);
+      inputs.push({ published, source, prepared: prepareSourceProduct(source), origin });
+    }
+  }
+  const coverage = analyzeDescriptionCoverage(inputs);
+  const products = publications.flatMap((item) => item.products);
+  const editorial = analyzePublishedEditorialQuality(products);
+  const editorialPrepared = analyzeEditorialQuality(inputs);
+  const priorities = analyzeDescriptionPriorities(inputs, editorial, editorialPrepared);
+  const { fingerprints } = await loadPreparationInputs();
+  const provenance = { source: "comparacion_publicaciones_y_preparacion", publications: sourceProvenance,
+    rulesSha256: fingerprints.rulesSha256, preparation: "Recalculada; Mercaeleva reconstruida únicamente desde campos de su publicación, no desde un original canónico" };
+  if (options.json) {
+    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, coverage, editorial, editorialPrepared, priorities }, null, 2));
+  } else {
+    printReportLine(`HUECOS | publicaciones finales ${coverage.totals.products} | comparación frente a preparación actual; sin modificar publicaciones`);
+    printDescriptionCoverage(coverage);
+    printDescriptionPriorities(priorities, options.limit);
+    printReportLine("CALIDAD EDITORIAL | vista derivada tras preparación; señales orientativas independientes de P0");
+    printEditorial(editorialPrepared, options.limit);
+  }
+};
+
 export const runCatalogContentGaps = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    printReportLine("Uso: npm run huecos -- [--finales | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, publicaciones finales acreditadas de catalogs/. --finales descubre las publicaciones acreditadas sin rutas manuales. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. Los textos finales no representan gaps técnicos de specs.");
+    printReportLine("Uso: npm run huecos -- [--comparar | --finales | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, comparación de publicaciones acreditadas frente a preparación actual. --comparar fuerza esa comparación. --finales analiza solo las publicaciones acreditadas. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. Los textos finales no representan gaps técnicos de specs.");
     return;
   }
   const options = readOptions(args);
+  if (options.comparar) {
+    const paths = await discoverAccreditedPublications(root);
+    if (paths.length === 0) throw new Error("No hay publicaciones acreditadas en catalogs/providers/*/publications");
+    await reportDescriptionComparison(paths, options);
+    return;
+  }
   if (options.publications.length > 0 || options.finales) {
     const paths = options.finales ? await discoverAccreditedPublications(root) : options.publications;
     if (paths.length === 0) throw new Error("No hay publicaciones acreditadas en catalogs/providers/*/publications");
@@ -126,7 +253,7 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
       if (paths.length === 0) {
         throw new Error("No existe campaña entregada ni publicaciones acreditadas; utiliza --catalogo con un canónico completo");
       }
-      await reportPublications(paths, options);
+      await reportDescriptionComparison(paths, options);
       return;
   }
   const { fingerprints } = await loadPreparationInputs();

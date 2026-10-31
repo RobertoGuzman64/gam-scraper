@@ -2,6 +2,7 @@ import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { fold } from "../../category-utils.js";
 import { verifiedMercaelevaA14jeWorkingHeight } from "../../../evidence/providers/mercaeleva/lgmg-a14je-work-height-evidence.js";
 import { mercaelevaMissingDescriptions } from "./missing-descriptions.js";
+import { verifiedMercaelevaPriorityShortDescription } from "../../../evidence/providers/mercaeleva/priority-short-descriptions.js";
 
 const identity = (value: string): string => fold(value).replace(/[^a-z0-9]/g, "");
 
@@ -70,8 +71,30 @@ type ShortDescriptionResolution = {
 
 const notAvailable: ShortDescriptionResolution = { description: null, heightConflict: false };
 
+const documentedElectricForklift = (record: ProductRecord): string | null => {
+  if (record.providerId !== "mercaeleva" || record.categoryKey !== "venta" ||
+    record.reference !== "M818-7811" || record.condition !== "Segunda mano" ||
+    record.brand !== "Linde" || record.model !== "E25/600-336" ||
+    record.title !== "Linde E25/600-336 CARRETILLA ELEVADORA ELECTRICA 2500 KG" ||
+    record.url !== "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E25-600-336-M818-7811" ||
+    record.year !== "2008" || !["3404", "3404 h"].includes(record.horometer ?? "") ||
+    record.longDescription !== "Ref. MER0670 CARRETILLA ELEVADORA ELECTRICA 2500 KG DUPLEX TRIPLEX LINDE E25/600-336 ALTURA DE TRABAJO 4.300mm HORAS 3404 AÑO DE FABRICACION 2008") return null;
+  const specs = record.specs;
+  if (specs?.Marca !== "Linde" || specs.Modelo !== "E25/600-336" ||
+    specs["Título adicional"] !== "CARRETILLA ELEVADORA ELECTRICA 2500 KG" ||
+    specs["Artículo No."] !== "MER0670" || specs["Año de fabricación"] !== "2008" ||
+    specs["Horas laborales"] !== "3404 h" || specs.Estado !== "Usado" ||
+    specs["Capacidad máxima de elevación"] !== "2500 kg" ||
+    specs["Tipo de Batería"] !== "Plomo-ácido" ||
+    specs["Altura máxima de elevación"] !== "4300 mm" ||
+    specs["Tipo de mástil"] !== "Dúplex/estándar") return null;
+  return "Carretilla elevadora eléctrica Linde E25/600-336, año 2008, con capacidad de 2.500 kg, elevación de 4.300 mm y 3.404 horas registradas.";
+};
+
 export const resolveMercaelevaShortDescription = (record: ProductRecord): ShortDescriptionResolution => {
   if (record.providerId !== "mercaeleva" || record.shortDescription?.trim()) return notAvailable;
+  const documented = documentedElectricForklift(record) ?? verifiedMercaelevaPriorityShortDescription(record);
+  if (documented) return { description: documented, heightConflict: false };
   const general = record.longDescription?.trim();
   if (!general || !record.brand?.trim() || !record.model?.trim()) {
     return { description: mercaelevaMissingDescriptions(record).short, heightConflict: false };

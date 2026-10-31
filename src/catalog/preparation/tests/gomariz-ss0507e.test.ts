@@ -66,3 +66,24 @@ test("las tres recuperaciones conservan el resto de las 143 identidades", () => 
   assert.equal(new Set(preparedRecords.map((item) => item.product.reference)).size, records.length);
   assert.equal(preparedRecords.filter((item) => item.status === "review").length, 0);
 });
+
+test("SS0507E: las tres cortas ausentes reutilizan la altura acreditada sin adoptar los 14,30 m erróneos", () => {
+  for (const record of prepared) {
+    const snapshot = JSON.stringify(record);
+    const result = prepareCached(record, importCatalog);
+    assert.equal(result.status, "ready", record.reference ?? "");
+    assert.match(result.product.description ?? "", /LGMG SS0507E.*6,3 m.*230 kg/u);
+    assert.doesNotMatch(result.product.description ?? "", /14,30 m/u);
+    assert.deepEqual(result.product.spec, record.specs);
+    assert.equal(JSON.stringify(record), snapshot);
+    for (const variant of [
+      { ...record, model: "SS0607E" },
+      { ...record, specs: { ...record.specs, "Altura plataforma": "18 m" } },
+      { ...record, specs: { ...record.specs, "Altura de trabajo": "7.5 m" } },
+      { ...record, specs: { ...record.specs, Motor: "Diésel" } },
+      { ...record, url: record.url.replace("gomarizrent.com", "example.com") }
+    ]) {
+      assert.equal(prepareCached(variant, importCatalog).product.description, null);
+    }
+  }
+});

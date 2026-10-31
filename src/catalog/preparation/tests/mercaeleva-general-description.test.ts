@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readFileSync } from "node:fs";
+import type { ImportCandidate } from "../../legacy-export/contracts.js";
+import { reconstructMercaelevaSource } from "../../diagnostics/description-source.js";
 import { resolveMercaelevaGeneralDescription } from "../mapping/providers/mercaeleva/general-description.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 import { mercaelevaShortDescription } from "../mapping/providers/mercaeleva/descriptions.js";
@@ -80,7 +83,7 @@ test("Mercaeleva: exige coincidencia de identidad, procedencia, horas, altura, a
 });
 
 test("Mercaeleva: respeta el resto del corte disponible sin perder generales existentes", () => {
-  const expected = new Set(["M571-2568", "M976-1043", "M044-4093"]);
+  const expected = new Set(["M571-2568", "M976-1043", "M044-4093", "M239-6301"]);
   const affected = source.products.filter((record) => resolveMercaelevaGeneralDescription(record) !== null);
   assert.deepEqual(new Set(affected.map((record) => record.reference)), expected);
   for (const record of source.products) {
@@ -90,5 +93,85 @@ test("Mercaeleva: respeta el resto del corte disponible sin perder generales exi
     else assert.ok(output.product.description_general || !record.longDescription?.trim());
     assert.equal(output.product.reference, record.reference);
     assert.equal(output.product.sourceUrl, record.url);
+  }
+});
+
+const published = JSON.parse(readFileSync(
+  "catalogs/providers/mercaeleva/publications/9a8db5bd6929fdc7fce8ceb7e63705b9b168a34161cc52d9536269cff26442e2/mercaeleva-publishable.json", "utf8"
+)) as readonly ImportCandidate[];
+const publishedSources = published.map(reconstructMercaelevaSource);
+const publishedRecord = (reference: string): ProductRecord => {
+  const record = publishedSources.find((entry) => entry.reference === reference);
+  assert.ok(record, reference);
+  return record;
+};
+
+test("Mercaeleva: normaliza únicamente telegramas de plataformas acreditados, sin suprimir datos", () => {
+  const improved = publishedSources.filter((record) => resolveMercaelevaGeneralDescription(record) !== null);
+  assert.equal(publishedSources.length, 220);
+  assert.equal(improved.length, 135);
+  assert.equal(new Set(improved.map((record) => record.reference)).size, 135);
+  for (const record of publishedSources) {
+    const original = JSON.stringify(record);
+    const text = resolveMercaelevaGeneralDescription(record);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.product.reference, record.reference);
+    assert.equal(prepared.product.sourceUrl, record.url);
+    assert.deepEqual(prepared.product.spec, record.specs);
+    if (text) {
+      assert.equal(prepared.product.description_general, text, record.reference ?? "sin referencia");
+      assert.ok(text.includes(record.brand ?? ""));
+      assert.ok(text.includes(record.model ?? ""));
+      assert.ok(text.includes(record.year ?? ""));
+      assert.ok(text.includes(String(record.specs?.["Artículo No."] ?? "")));
+      assert.ok(!text.includes("ALTURA DE TRABAJO"));
+    }
+    assert.equal(JSON.stringify(record), original);
+  }
+  for (const reference of ["M563-8693", "M140-0406", "M057-0589", "M971-8124",
+    "M940-4770", "M239-6301", "M879-4639", "M570-8735", "M017-2019"]) {
+    assert.ok(resolveMercaelevaGeneralDescription(publishedRecord(reference)), reference);
+  }
+  for (const reference of ["M887-9469", "M028-8481", "M486-0114", "M018-7013", "M620-2142", "M838-0666", "M582-1882"]) {
+    assert.equal(resolveMercaelevaGeneralDescription(publishedRecord(reference)), null, reference);
+  }
+});
+
+test("Mercaeleva: rechaza divergencias entre el telegrama, los atributos y la identidad", () => {
+  const record = publishedRecord("M563-8693");
+  const variants: readonly ProductRecord[] = [
+    { ...record, providerId: "gam" },
+    { ...record, reference: "M563-8694" },
+    { ...record, title: record.title?.replace("14 MT", "16 MT") ?? null },
+    { ...record, brand: "JLG" },
+    { ...record, model: "OTRO" },
+    { ...record, year: "2022" },
+    { ...record, horometer: "198 h" },
+    { ...record, longDescription: `${record.longDescription} SEGUNDA VIDA` },
+    { ...record, specs: { ...record.specs, "Artículo No.": "1283" } },
+    { ...record, specs: { ...record.specs, "Altura de trabajo": "16 m" } },
+    { ...record, specs: { ...record.specs, "Tipo de motor": "Diesel" } },
+    { ...record, specs: { ...record.specs, "Horas laborales": "198 h" } },
+    { ...record, specs: { ...record.specs, "Año de fabricación": "2022" } }
+  ];
+  for (const [index, variant] of variants.entries()) {
+    assert.equal(resolveMercaelevaGeneralDescription(variant), null, String(index));
+  }
+});
+
+test("Mercaeleva: no sintetiza capacidades ni uso contradictorios en carretillas", () => {
+  const record = publishedRecord("M940-4770");
+  assert.ok(resolveMercaelevaGeneralDescription(record)?.includes("2000 kg"));
+  for (const variant of [
+    { ...record, title: record.title?.replace("2000 KG", "2500 KG") ?? null },
+    { ...record, specs: { ...record.specs, "Capacidad máxima de elevación": "2500 kg" } },
+    { ...record, specs: { ...record.specs, "Tipo de motor": "Diesel" } },
+    { ...record, specs: { ...record.specs, "Horas laborales": "16 617 h" } },
+    { ...record, specs: { ...record.specs, "Año de fabricación": "2011" } },
+    { ...record, horometer: "16000 h" },
+    { ...record, longDescription: `${record.longDescription} BATERÍA REVISADA` }
+  ]) assert.equal(resolveMercaelevaGeneralDescription(variant), null);
+  for (const reference of ["M582-1882", "M011-3720", "M547-2372"]) {
+    assert.equal(resolveMercaelevaGeneralDescription(publishedRecord(reference)), null, reference);
   }
 });

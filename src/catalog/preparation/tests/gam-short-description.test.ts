@@ -17,7 +17,7 @@ const numbers = (value: string): ReadonlySet<string> => new Set(value.match(/\d+
 
 const expected = new Set([
   "6814", "6815", "6874", "6873", "6953", "6954", "6190", "6192", "6020",
-  "2368", "2369", "2370", "4019", "4020", "4021", "4022", "4025", "4027",
+  "1152", "2368", "2369", "2370", "4019", "4020", "4021", "4022", "4025", "4027",
   "4033", "4034", "4012", "2373", "3425", "4035", "4036", "4037", "4038", "4040"
 ]);
 
@@ -46,6 +46,33 @@ test("GAM: resume exclusivamente fichas seguras sin retirar cifras de la descrip
   }
   assert.equal(catalog.products.length, 983);
   assert.deepEqual(changed, expected);
+});
+
+test("GAM: equilibra cortas en transpaletas y barredoras conservando los datos de origen", () => {
+  for (const [reference, expectedWords] of [["1152", 24], ["4025", 20]] as const) {
+    const record = find(reference);
+    const short = resolveGamShortDescription(record);
+    assert.ok(short);
+    assert.equal(words(short), expectedWords);
+    if (reference === "1152") {
+      assert.match(short, /Yale MPSC12.*1,2 toneladas/iu);
+      assert.match(short, /espacios confinados/iu);
+    } else {
+      assert.ok(record.shortDescription?.startsWith(short));
+    }
+    const combined = `${short} ${prepareSourceProduct(record).product.description_general ?? ""}`;
+    for (const number of numbers(record.shortDescription ?? "")) {
+      assert.ok(numbers(combined).has(number), `${reference}: ${number}`);
+    }
+  }
+  const transpaleta = find("1152");
+  for (const changed of [
+    { ...transpaleta, reference: "1153" },
+    { ...transpaleta, model: "MPSC14" },
+    { ...transpaleta, specs: { ...transpaleta.specs, "Capacidad de carga (kg)": "1400 KG" } },
+    { ...transpaleta, url: transpaleta.url.replace("online.gamrentals.com", "example.com") },
+    { ...transpaleta, shortDescription: transpaleta.shortDescription?.replace("1,2 toneladas", "1,4 toneladas") ?? null }
+  ]) assert.equal(resolveGamShortDescription(changed), null);
 });
 
 test("GAM: las generales acreditadas permiten enriquecer solo los dos módulos de baño", () => {
