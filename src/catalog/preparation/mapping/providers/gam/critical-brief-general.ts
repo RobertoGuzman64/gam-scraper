@@ -110,5 +110,27 @@ const yaleAndHyster = (record: ProductRecord): string | null => {
   return null;
 };
 
+const genieS65 = (record: ProductRecord): string | null => {
+  if (!identity(record, "6617", "https://online.gamrentals.com/es/elevadores-telescopicos-segunda-mano/6617-2005-genie-s-65") ||
+    record.categoryKey !== "elevacion" || record.brand !== "GENIE" || record.model !== "S-65" ||
+    record.title !== "GENIE S-65 | Plataforma Telescópica Diésel 20M | GAM Online" ||
+    record.externalReference !== "JP-00316" || record.condition !== "Segunda mano" ||
+    record.shortDescription !== record.longDescription ||
+    record.shortDescription !== "➨ GENIE S-65 de ocasión ➨ Venta de plataforma telescópica diésel de 20 metros de altura ⭐Capacidad de la cesta 227 kg" ||
+    spec(record, "Marca") !== "GENIE" || spec(record, "Modelo") !== "S-65" ||
+    spec(record, "Capacidad de carga (kg)") !== "227 KG" ||
+    spec(record, "Pendiente superable") !== "45%" ||
+    spec(record, "Longitud") !== "9500 mm" || spec(record, "Anchura") !== "2490 mm" ||
+    spec(record, "Peso") !== "10430 KG" || spec(record, "Horómetro") !== "6043 horas" ||
+    spec(record, "Nº de serie") !== "S6005-11160") return null;
+
+  return "La plataforma telescópica diésel Genie S-65 se ofrece como unidad de segunda mano, " +
+    "con una capacidad de carga en cesta declarada de 227 kg. La ficha identifica " +
+    "una pendiente superable del 45 % y unas dimensiones de 9.500 mm de longitud " +
+    "y 2.490 mm de anchura, con un peso de 10.430 kg. Consta un horómetro de 6.043 horas " +
+    "y el número de serie S6005-11160, útiles para identificar y comprobar esta unidad. " +
+    "La altura operativa debe contrastarse antes de su utilización, ya que el anuncio y la ficha técnica difieren.";
+};
+
 export const resolveGamCriticalBriefGeneral = (record: ProductRecord): string | null =>
-  trailers(record) ?? knott(record) ?? yaleAndHyster(record);
+  trailers(record) ?? knott(record) ?? yaleAndHyster(record) ?? genieS65(record);

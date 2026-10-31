@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { resolveGomarizCriticalBriefGeneral } from "../mapping/providers/gomariz/critical-brief-general.js";
 import { resolveGomarizGeneralDescription } from "../mapping/providers/gomariz/general-description.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
@@ -39,7 +40,7 @@ test("Gomariz: las generales sustituyen texto de familia por datos específicos 
 
 test("Gomariz: contradicciones o descripción propia acreditada no se reescriben", () => {
   for (const reference of [
-    "TE1858", "TE1621", "TE1622", "BA1465", "GR1113", "BT1461", "OR1537",
+    "TE1858", "TE1621", "TE1622", "BA1465", "GR1113", "OR1537",
     "CC1535", "CC1666", "5051BDX", "PV556"
   ]) {
     const record = find(reference);
@@ -83,7 +84,7 @@ test("Gomariz: el piloto se aplica solo a la cohorte segura y preserva todas las
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.product.reference, reference);
     assert.equal(prepared.product.description_general,
-      resolveGomarizGeneralDescription(record) ?? record.longDescription);
+      resolveGomarizCriticalBriefGeneral(record) ?? resolveGomarizGeneralDescription(record) ?? record.longDescription);
     assert.deepEqual(prepared.product.spec, record.specs);
   }
 });

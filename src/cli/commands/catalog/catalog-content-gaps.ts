@@ -14,6 +14,7 @@ import { loadPreparationInputs } from "../../../infrastructure/filesystem/prepar
 import { prepareSourceProduct } from "../../../catalog/preparation/prepare-product.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { buildProductIdentity } from "../../../catalog/identity.js";
+import { analyzeSpecificationCoverage } from "../../../catalog/diagnostics/specification-coverage.js";
 import { analyzeDescriptionCoverage } from "../../../catalog/diagnostics/description-coverage.js";
 import type { DescriptionCoverageInput } from "../../../catalog/diagnostics/description-coverage.js";
 import { reconstructMercaelevaSource } from "../../../catalog/diagnostics/description-source.js";
@@ -23,7 +24,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 
-type CommandOptions = { readonly json: boolean; readonly finales: boolean; readonly comparar: boolean; readonly groupBy: GapGroupBy; readonly minGroup: number;
+type CommandOptions = { readonly json: boolean; readonly specs: boolean; readonly finales: boolean; readonly comparar: boolean; readonly groupBy: GapGroupBy; readonly minGroup: number;
   readonly minMissing: number; readonly limit: number; readonly catalogs: readonly string[];
   readonly publications: readonly string[] };
 
@@ -36,6 +37,7 @@ const parsePositive = (value: string | undefined, flag: string): number => {
 
 const readOptions = (args: readonly string[]): CommandOptions => {
   let json = false;
+  let specs = false;
   let finales = false;
   let comparar = false;
   let groupBy: GapGroupBy = "categoria";
@@ -47,6 +49,7 @@ const readOptions = (args: readonly string[]): CommandOptions => {
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === "--json") json = true;
+    else if (arg === "--specs") specs = true;
     else if (arg === "--finales") finales = true;
     else if (arg === "--comparar") comparar = true;
     else if (arg === "--catalogo") {
@@ -77,7 +80,8 @@ const readOptions = (args: readonly string[]): CommandOptions => {
   if (comparar && (finales || catalogs.length > 0 || publications.length > 0)) {
     throw new Error("--comparar no se combina con --finales, --catalogo ni --publicacion");
   }
-  return { json, finales, comparar, groupBy, minGroup, minMissing, limit, catalogs, publications };
+  if (specs && !comparar) throw new Error("--specs requiere --comparar; las publicaciones solas no acreditan especificaciones de origen");
+  return { json, specs, finales, comparar, groupBy, minGroup, minMissing, limit, catalogs, publications };
 };
 
 const printEditorial = (editorial: EditorialAnalysis, limit: number): void => {
@@ -215,23 +219,33 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
   const editorial = analyzePublishedEditorialQuality(products);
   const editorialPrepared = analyzeEditorialQuality(inputs);
   const priorities = analyzeDescriptionPriorities(inputs, editorial, editorialPrepared);
+  const technicalSpecs = options.specs ? analyzeSpecificationCoverage(inputs) : null;
   const { fingerprints } = await loadPreparationInputs();
   const provenance = { source: "comparacion_publicaciones_y_preparacion", publications: sourceProvenance,
     rulesSha256: fingerprints.rulesSha256, preparation: "Recalculada; Mercaeleva reconstruida únicamente desde campos de su publicación, no desde un original canónico" };
   if (options.json) {
-    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, coverage, editorial, editorialPrepared, priorities }, null, 2));
+    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, coverage, editorial, editorialPrepared, priorities, ...(technicalSpecs ? { technicalSpecs } : {}) }, null, 2));
   } else {
     printReportLine(`HUECOS | publicaciones finales ${coverage.totals.products} | comparación frente a preparación actual; sin modificar publicaciones`);
     printDescriptionCoverage(coverage);
     printDescriptionPriorities(priorities, options.limit);
     printReportLine("CALIDAD EDITORIAL | vista derivada tras preparación; señales orientativas independientes de P0");
     printEditorial(editorialPrepared, options.limit);
+    if (technicalSpecs) {
+      const totals = technicalSpecs.totals;
+      printReportLine(`SPECS | originales canónicos ${totals.canonicalOriginals} | fuentes reconstruidas ${totals.reconstructedSources} | pendientes de publicar ${totals.pendingPublication} | diferencias origen/preparación ${totals.sourceNotPreserved} | pérdidas respecto al final ${totals.lostAfterPublication} | normalizaciones ambiguas ${totals.ambiguousNormalization} | ausencias observacionales ${totals.observationalMissing}`);
+      printReportLine(technicalSpecs.note);
+      for (const item of technicalSpecs.cases.slice(0, options.limit)) {
+        printReportLine(`  ${item.stage} | ${item.providerId} | ${item.family} | ${item.reference ?? item.identity} | ${item.key} | ${item.origin}`);
+      }
+      printReportLine(`SPECS | ${technicalSpecs.cases.length} observaciones | ${technicalSpecs.patterns.length} patrones familiares | TOP ${Math.min(options.limit, technicalSpecs.cases.length)}`);
+    }
   }
 };
 
 export const runCatalogContentGaps = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    printReportLine("Uso: npm run huecos -- [--comparar | --finales | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, comparación de publicaciones acreditadas frente a preparación actual. --comparar fuerza esa comparación. --finales analiza solo las publicaciones acreditadas. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. Los textos finales no representan gaps técnicos de specs.");
+    printReportLine("Uso: npm run huecos -- [--comparar | --finales | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json] [--specs]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, comparación de publicaciones acreditadas frente a preparación actual. --comparar fuerza esa comparación. --finales analiza solo las publicaciones acreditadas. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. --comparar --specs compara las claves técnicas del origen canónico, preparación y publicación; las ausencias familiares no son atributos obligatorios.");
     return;
   }
   const options = readOptions(args);

@@ -12,9 +12,9 @@ const find = (reference: string): ProductRecord => {
   return record;
 };
 const count = (value: string): number => value.split(/\s+/u).filter(Boolean).length;
-const references = ["5710", "6358", "6367", "920", "2263", "2111"] as const;
+const references = ["5710", "6358", "6367", "920", "2263", "2111", "6617"] as const;
 
-test("GAM F10: resuelve únicamente seis generales extremas de la preparación acreditada", () => {
+test("GAM: conserva las seis generales de F10 y recupera la 6617", () => {
   const modified: string[] = [];
   for (const record of catalog.products) {
     const baseline = JSON.stringify(record);
@@ -22,7 +22,7 @@ test("GAM F10: resuelve únicamente seis generales extremas de la preparación a
     if (editorial) {
       assert.ok(record.reference);
       modified.push(record.reference);
-      assert.ok(count(record.longDescription ?? "") < 20, record.reference);
+      assert.ok(record.reference === "6617" ? count(record.longDescription ?? "") === 22 : count(record.longDescription ?? "") < 20, record.reference);
       assert.ok(count(editorial) >= 60, record.reference);
       const prepared = prepareSourceProduct(record);
       assert.equal(prepared.product.description_general, editorial);
@@ -48,6 +48,8 @@ test("GAM F10: conserva los datos técnicos y diferencia unidades de un mismo mo
   assert.ok(outputs.get("2111")?.includes("10.880 mm"));
   assert.ok(!outputs.get("2263")?.includes("6085 metros"));
   assert.ok(!outputs.get("920")?.includes("2.420 mm"));
+  assert.ok(outputs.get("6617")?.includes("6.043 horas"));
+  assert.ok(outputs.get("6617")?.includes("la ficha técnica difieren"));
 });
 
 test("GAM F10: no propaga contenido a unidades o fichas alteradas", () => {

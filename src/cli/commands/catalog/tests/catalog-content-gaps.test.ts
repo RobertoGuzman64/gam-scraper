@@ -221,8 +221,12 @@ test("huecos compara las 1341 publicaciones y acredita la cobertura completa de 
   assert.equal(report.editorial.providers.length, 3);
   assert.equal(report.editorialPrepared.providers.length, 3);
   assert.equal(report.priorities.totals.pendingByStage.P0, 0);
-  assert.equal(report.priorities.pending.length, 444);
+  assert.equal(report.priorities.pending.length, 442);
   for (const reference of ["M432-1479", "M913-0641", "M736-5615", "M095-5362", "M144-5512", "M171-6370", "M200-9533", "M178-6194", "M205-2951", "M572-8190", "M030-7485", "M005-4474"]) {
+    assert.ok(!report.priorities.pending.some((item) => item.reference === reference && item.signal === "general_muy_breve"));
+    assert.ok(report.priorities.resolved.some((item) => item.reference === reference && item.signal === "general_muy_breve"));
+  }
+  for (const reference of ["6617", "BT1461"]) {
     assert.ok(!report.priorities.pending.some((item) => item.reference === reference && item.signal === "general_muy_breve"));
     assert.ok(report.priorities.resolved.some((item) => item.reference === reference && item.signal === "general_muy_breve"));
   }
@@ -282,3 +286,24 @@ const isComparisonReport = (value: unknown): value is ComparisonReport => {
     "totals" in value.priorities && "pending" in value.priorities && "resolved" in value.priorities &&
     "technical" in value.priorities;
 };
+
+test("huecos --comparar --specs diferencia cobertura técnica sin alterar el informe editorial", async () => {
+  const comparison = JSON.parse(await execute(["--comparar", "--specs", "--json"])) as {
+    coverage: { totals: { products: number; pending: { description: number; description_general: number } } };
+    priorities: { totals: { pending: number } };
+    technicalSpecs: { totals: { products: number; canonicalOriginals: number; reconstructedSources: number;
+      pendingPublication: number; observationalMissing: number };
+      cases: { providerId: string; reference: string | null; stage: string }[] };
+  };
+  assert.equal(comparison.coverage.totals.products, 1341);
+  assert.deepEqual(comparison.coverage.totals.pending, { description: 0, description_general: 0 });
+  assert.equal(comparison.priorities.totals.pending, 442);
+  assert.equal(comparison.technicalSpecs.totals.products, 1341);
+  assert.equal(comparison.technicalSpecs.totals.canonicalOriginals, 1121);
+  assert.equal(comparison.technicalSpecs.totals.reconstructedSources, 220);
+  assert.equal(comparison.technicalSpecs.totals.pendingPublication, 0);
+  assert.ok(comparison.technicalSpecs.totals.observationalMissing > 0);
+  assert.ok(comparison.technicalSpecs.cases.some((item) => item.providerId === "gam" &&
+    item.reference === "6807" && item.stage === "diferencia_origen_preparacion"));
+  await assert.rejects(execute(["--finales", "--specs"]), /requiere --comparar/);
+});

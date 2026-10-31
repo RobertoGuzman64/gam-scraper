@@ -24,7 +24,7 @@ test("capacidad de unidad UniCarriers documentada y original intacto", () => {
   assert.equal(result.status, "ready");
   assert.deepEqual(result.issues, []);
   assert.equal(result.product.title, preparedRecord.title);
-  assert.equal(result.product.description_general, preparedRecord.longDescription);
+  assert.equal(result.product.description_general, "Carretilla elevadora diésel UniCarriers E2D2A30, con capacidad máxima de elevación de 2500 kg. Horas de uso publicadas: 8142 h. Referencia del vendedor: MER0987.");
   assert.deepEqual(result.product.spec, original.specs);
   assert.deepEqual(record, original);
 });

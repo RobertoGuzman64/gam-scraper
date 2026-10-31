@@ -26,6 +26,7 @@ import { resolveGamPriorityBriefGeneral } from "./mapping/providers/gam/priority
 import { resolveGamCriticalBriefGeneral } from "./mapping/providers/gam/critical-brief-general.js";
 import { resolveGamFamilyTechnicalDescription } from "./mapping/providers/gam/family-technical-description.js";
 import { resolveGomarizShortDescription } from "./mapping/providers/gomariz/short-description.js";
+import { resolveGomarizCriticalBriefGeneral } from "./mapping/providers/gomariz/critical-brief-general.js";
 import { resolveGomarizGeneralDescription } from "./mapping/providers/gomariz/general-description.js";
 import { gamElevationSourceIdentityConflict } from "./evidence/providers/gam/elevation-identity.js";
 import { reconcileGamInitialIdentity, reconcileGamForPreparation } from "./reconciliation/gam.js";
@@ -53,7 +54,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const missingGamDescriptions = gamMissingDescriptions(record);
   const descriptions = distinguishDescriptions(
     conciseGamShort ?? conciseMercaelevaShort ?? record.shortDescription ?? descriptionEvidence.description ?? resolveGomarizShortDescription(record) ?? missingGamDescriptions.short,
-    resolveGomarizGeneralDescription(record) ?? verifiedMercaelevaCriticalGeneral(record) ?? verifiedPriorityPlatformGeneral(record) ?? resolveMercaelevaGeneralDescription(record) ?? resolveGamPriorityBriefGeneral(record) ?? resolveGamCriticalBriefGeneral(record) ?? resolveGamGeneralDescription(record) ?? resolveGamModelSpecificGeneral(record) ?? resolveGamLongDescription(record) ?? verifiedGamFamilyGeneral ?? record.longDescription ?? missingDescriptions.long ?? missingGamDescriptions.long
+    resolveGomarizCriticalBriefGeneral(record) ?? resolveGomarizGeneralDescription(record) ?? verifiedMercaelevaCriticalGeneral(record) ?? verifiedPriorityPlatformGeneral(record) ?? resolveMercaelevaGeneralDescription(record) ?? resolveGamPriorityBriefGeneral(record) ?? resolveGamCriticalBriefGeneral(record) ?? resolveGamGeneralDescription(record) ?? resolveGamModelSpecificGeneral(record) ?? resolveGamLongDescription(record) ?? verifiedGamFamilyGeneral ?? record.longDescription ?? missingDescriptions.long ?? missingGamDescriptions.long
   );
   if (descriptionEvidence.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
   if (gamElevationSourceIdentityConflict(record)) issues.push("Identidad GAM contradictoria entre título, resumen y ficha técnica");
