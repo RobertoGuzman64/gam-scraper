@@ -6,88 +6,102 @@
 
 ## Finalidad y límites
 
-`npm run huecos` es una **consulta opcional y estadística** sobre los originales de la última campaña entregada íntegra conservada; si no la hay, puede utilizar una referencia histórica válida de `data/reference/`, o catálogos completos suministrados explícitamente con `--catalogo`. Identifica campos ausentes repetidos, muestra a qué fichas afectan y permite inspeccionar la evidencia conservada. **No completa fichas, no asigna categorías comerciales, no genera `review` y no interviene en campañas, acreditaciones o entregas.**
+`npm run huecos` es el auditor de **descripciones y especificaciones técnicas** ya existente. Permite distinguir el contenido de las publicaciones acreditadas, el que producen las reglas de preparación actuales y las ausencias observables en sus fuentes. Sus señales ayudan a **elegir qué máquinas merecen una intervención productiva**, no constituyen por sí solas defectos verificados ni requisitos del backend.
 
-Que dos máquinas compartan categoría, marca o modelo no significa que deban tener las mismas especificaciones. Una ausencia observada **no acredita obligatoriedad técnica ni error del proveedor**.
+El auditor es **de solo lectura** respecto a originales, preparaciones guardadas, decisiones, acreditaciones y publicaciones. No completa textos, no añade `spec`, no aprueba exclusiones y no activa una publicación. La mejora se implementa en los productores, mapeadores, normalizadores o mecanismos editoriales existentes y se acredita después mediante el flujo de preparación/publicación.
 
-## Uso para mejorar el catálogo, no para acumular auditorías
+## Fuentes y modos de consulta
 
-El propósito de la consulta es descubrir **posibles oportunidades de recuperación fiable**. Si un campo existe en la fuente y se está perdiendo por el extractor o la preparación, el trabajo de ingeniería consiste en **corregir el módulo productivo, probar la causa común y volver a medir la cobertura del catálogo**; no entregar un TOP de fichas para que el operador las arregle una por una. Si la fuente no publica ese campo, la ausencia sigue siendo válida y no debe generar un valor, una review artificial ni una obligación de completitud no acreditada. Una similitud de modelo no es prueba de que el atributo corresponda a esa unidad.
+| Modo                   | Qué analiza                                                                                                                                  | Alcance / precaución                                                                                  |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `npm run huecos`       | Campaña íntegra conservada o referencia histórica verificable; si faltan, comparación de publicaciones acreditadas con la preparación actual | La fuente elegida determina la población: consultar `provenance` antes de comparar cifras             |
+| `--comparar`           | Publicaciones acreditadas seleccionadas frente a preparación recalculada para sus mismas identidades                                         | Muestra vacíos recuperados, pendientes, pérdidas y prioridades editoriales; **no** publica resultados |
+| `--comparar --specs`   | La misma comparación, con diagnóstico separado de **claves técnicas** del origen, la preparación y el final                                  | No compara valores semánticos ni acredita por sí mismo atributos obligatorios o datos recuperados     |
+| `--finales`            | Solo descripciones **publicadas** de los JSON acreditados seleccionados                                                                      | No calcula recuperaciones de la preparación; salida editorial                                         |
+| `--publicacion <ruta>` | Descripciones de uno o varios `-publishable.json` acreditados indicados explícitamente                                                       | No mezclar proveedores repetidos ni confundir una publicación histórica con la vigente                |
+| `--catalogo <ruta>`    | Originales canónicos completos aportados explícitamente; aplica en memoria las reglas actuales                                               | Requiere canónico verificable; admite varias rutas, no CSV parciales                                  |
 
-`huecos` nunca resuelve ni acredita la mejora: el éxito es la **recuperación verificable de información realmente disponible**, sin contaminación de otros registros. Ver [Objetivos](SCRAPER_OBJECTIVES.md).
+La selección de `--comparar` y `--finales` usa `discoverAccreditedPublications` y el mecanismo de **publicación vigente**, no el último directorio SHA por su fecha. El versionado, la activación y la reversión se gestionan por el flujo de publicaciones, **fuera de `huecos`**. Para comparar con una versión histórica, utilizar el modo de publicación explícita o el selector correspondiente, sin modificar el índice para una simple consulta.
 
+La comparación vincula por **identidad de producto**, no por posición en un array. GAM y Gomariz pueden tomar el original canónico existente en `catalogs/providers/<proveedor>/original/`; cuando falte el canónico independiente de Mercaeleva, la entrada se reconstruye **solo con los campos de su publicación**, etiquetada `reconstruccion_publicada`. Esto **no** equivale a recuperar evidencia desde la web ni acredita una extracción original completa. La comparación de un proveedor distinto sin canónico exige resolver esa ausencia: no genera uno ficticio.
 
-## Procedencia y componentes
+## Prioridades de las descripciones
 
-- **Entrada:** `findCampaignBaseline` (`src/pipeline/campaign/reference/compare.ts`) busca una entrega íntegra conservada y verifica su procedencia por `runId`; si no existe, consulta `data/reference/` como compatibilidad. `--catalogo <ruta>` (repetible) utiliza `readCanonicalCatalog` y exige manifiesto y resumen verificables para cada original; no admite CSV parciales.
-- **Universo:** todos los `ProductRecord` originales de la fuente elegida, también los excluidos de la entrega editorial. Se conservan `providerId`, `categoryKey`, `categoryName`, identidad, URL, descripciones y `specs`.
-- **Preparación temporal:** `prepareSourceProduct` calcula en memoria el estado técnico y las descripciones preparadas. No consulta snapshots comerciales ni asigna `categorySellID` o `attributeID`.
-- **Análisis:** `analyzeSourceContentGaps` (`src/catalog/diagnostics/content-gaps-source.ts`) agrupa por categoría de origen, con desglose opcional por marca o modelo, y calcula la cobertura de descripciones y claves técnicas observadas.
-- **CLI:** `src/cli/commands/catalog/catalog-content-gaps.ts` presenta resumen o JSON por `stdout`. La procedencia identifica el `runId` de la entrega conservada o las rutas de los canónicos explícitos; incluye la huella de reglas técnicas (`rulesSha256`).
+Las secciones `coverage`, `editorial`, `editorialPrepared` y `priorities` de `--comparar --json` tienen responsabilidades distintas:
 
-La consulta usa las **reglas técnicas actuales**, no una preparación guardada cuando se extrajo el catálogo. Los recuentos `ready/review` del universo expresan ese diagnóstico recalculado; no cambian los estados de una campaña.
+- `coverage`: por campo `description` y `description_general`, cuenta vacíos publicados, recuperados por preparación, pendientes y **pérdidas**; presenta proveedor, familia y referencias. La cola P0 no se recorta con `--top`.
+- `editorial`: mide únicamente los textos finales publicados: coberturas, medianas, percentil 90, patrones, fichas y listado de generales más extensas.
+- `editorialPrepared`: aplica esas métricas a la preparación actual, **sin publicar** sus cambios.
+- `priorities`: ordena por gravedad la cola pendiente, las señales resueltas por preparación y las señales aparecidas; aporta referencia, origen, familia, palabras antes/después, mediana y tamaño de muestra. Los problemas técnicos de preparación se muestran **aparte** en `technical`.
 
-## Campos y agrupaciones
+**Orden de intervención:** P0 = descripciones vacías; P1 = insuficiencias y extremos evidentes; P2 = desequilibrios respecto a familias comparables. Dentro de cada cohorte se revisa primero el caso más grave y con evidencia aprovechable. No se selecciona una máquina porque resulte sencillo añadirle texto; tampoco se exige eliminar todos los avisos para cerrar una intervención.
 
-| Campo                  | Criterio de presencia                                          | Evidencia conservada                                               |
-| ---------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Descripción corta      | `description` preparada no vacía tras `trim()`                 | `shortDescription` original y texto relacionado                    |
-| Descripción general    | `description_general` preparada no vacía tras `trim()`         | `longDescription` original y texto relacionado                     |
-| Especificación técnica | Clave normalizada de `ProductRecord.specs` con valor informado | Claves y valores originales, sin deducir equivalencias comerciales |
+Los umbrales del analizador son **orientativos**: corta de 10–45 palabras y general de 60–800. En prioridades destacan generales inferiores a 20 palabras, generales de 2.000 o más y cortas de 100 o más. Las comparaciones relativas requieren al menos **5 muestras** de familia y no convierten una mediana en longitud obligatoria. El código también identifica textos repetidos, telegráficos, equivalentes al título o con reiteración interna.
 
-Una clave técnica entra en la comparación **solo si aparece informada en al menos dos fichas del mismo grupo**. Se normaliza el nombre de clave conforme a las reglas del proyecto; no se atribuye automáticamente un significado distinto ni se exige a todas las máquinas una especificación publicada en otra categoría. Para las claves observadas se calculan `applicable`, `present`, `missing` y `coveragePercent`; `applicable` es el tamaño del grupo, **no una declaración de obligatoriedad**. Los valores numéricos `0` y booleanos `false` cuentan como presentes.
+Una ficha **mejorada** no equivale a una **carencia resuelta**: si una general aumenta de calidad pero sigue bajo el criterio orientativo, puede conservar su aviso. Si desaparece la señal de insuficiencia y aparece una diferencia familiar, informar ambos cambios. Una reducción numérica lograda con frases genéricas no es un éxito editorial.
 
-La separación de grupos es siempre por **proveedor y `categoryKey` original**. `--agrupar marca` subdivide por marca declarada; `--agrupar modelo` subdivide por marca y modelo. No mezcla equivalencias de proveedores distintos ni sustituye la clasificación original por `categorySellID`.
+## Diagnóstico diferenciado de especificaciones
 
-La cobertura se clasifica como `completa`, `desigual` o `sistematica`. El TOP prioriza ausencias relevantes según frecuencia y evidencias; sus filtros no eliminan los detalles completos de `groups` ni `cases` en el JSON.
+`--comparar --specs` añade `technicalSpecs`, generado por `analyzeSpecificationCoverage` (`src/catalog/diagnostics/specification-coverage.ts`). Considera claves normalizadas de `ProductRecord.specs` del original, `spec` preparado y `spec` publicado. Los valores `0` y `false` cuentan como informados; una clave renombrada no es una prestación técnica nueva.
 
-## Evidencias y límites
+| Estado en `technicalSpecs.cases[].stage` | Lectura correcta                                                                                                    |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `pendiente_publicacion`                  | Clave presente en preparación y ausente del final seleccionado; puede existir una mejora no activada                |
+| `diferencia_origen_preparacion`          | Clave presente en original canónico y ausente en preparación; **no implica pérdida sin revisar reconciliaciones**   |
+| `perdida_tras_publicacion`               | Clave publicada que no aparece en la preparación recalculada; revisar antes de actualizar el final                  |
+| `normalizacion_ambigua`                  | Dos entradas de la misma clave normalizada tienen representaciones diferentes; requiere contraste                   |
+| `sin_evidencia_directa`                  | Otros equipos del grupo muestran la clave, pero la máquina no la publica ni prepara; **no prueba que deba tenerla** |
 
-- `directa_del_campo`: contenido original correspondiente a una descripción que falta en la salida preparada.
-- `texto_relacionado`: texto en la otra descripción; no prueba que ambos campos sean equivalentes.
-- `especificaciones_sin_vinculo_acreditado`: hay otras claves técnicas, sin demostrar relación con la clave ausente.
-- `sin_evidencia_observable`: no se observó evidencia suficiente **en los datos conservados**, no necesariamente en la web.
-- `desconocida`: el dato disponible no permite otra clasificación segura.
+Los patrones familiares solo se señalan con un mínimo de **5 máquinas**, **3 observaciones** y cobertura observada de al menos **60 %**. Son criterios estadísticos del auditor, no pruebas de aplicabilidad a cada unidad. El informe reconoce la procedencia `original_canonico` o `reconstruccion_publicada`; en este segundo caso no se debe atribuir una recuperación al original independiente. La comparación actual examina **presencia de claves**, no certifica exactitud de capacidades, unidades, rendimiento o variantes; esas contradicciones necesitan comprobación de valores y fuentes mediante los mecanismos de calidad ya existentes.
 
-El JSON mantiene nombres de compatibilidad como `categorySellID` y `prepared.attributes`, pero **sus valores son `null` y `[]` en el análisis actual**. No deben interpretarse como IDs comerciales pendientes de resolver ni como atributos obligatorios del backend. `sourceCategoryKey` identifica el grupo de origen; `original.specs` es la evidencia técnica relevante.
+Antes de incorporar una especificación, preferir datos de la **misma máquina** y su fuente original; después documentos de fabricante/manuales de **modelo y variante verificables**. Los equipos de una familia ayudan a identificar qué investigar, **nunca** autorizan copiar una capacidad, altura, energía, año, horas o número de serie a otra unidad. Si no hay prueba, conservar la ausencia como observación.
 
 ## Ejecución
 
-Desde la raíz del repositorio, con una entrega íntegra conservada, una referencia histórica válida o catálogos canónicos explícitos:
+Desde la raíz del repositorio:
 
 ```powershell
-npm run huecos
-npm run huecos -- --agrupar marca --min-grupo 8 --min-ausentes 3 --top 20
-npm run huecos -- --agrupar modelo --top 10
-npm run huecos -- --catalogo <ruta-al-catalog.json> --json
-npm run huecos -- --json > huecos-consulta.json
-npm run ayuda -- huecos
+npm run huecos -- --comparar
+npm run huecos -- --comparar --specs
+npm run huecos -- --comparar --specs --json
+npm run huecos -- --finales
+npm run huecos -- --comparar --top 20
+npm run huecos -- --catalogo catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json --agrupar marca --top 20
+npm run huecos -- --publicacion <ruta-a-publicacion-acreditada> --json
+npm run huecos -- --help
 ```
 
-| Opción                               | Significado                               | Valor inicial                          |
-| ------------------------------------ | ----------------------------------------- | -------------------------------------- |
-| `--agrupar categoria\|marca\|modelo` | Agrupación; admite un único valor         | `categoria`                            |
-| `--min-grupo N`                      | Tamaño mínimo para el TOP                 | `8`                                    |
-| `--min-ausentes N`                   | Ausencias mínimas de un campo para el TOP | `3`                                    |
-| `--top N`                            | Máximo de patrones priorizados mostrados  | `20`                                   |
-| `--json`                             | Informe completo por `stdout`             | Desactivado                            |
-| `--catalogo <ruta>`                  | Canónico íntegro explícito; repetible     | Entrega conservada o referencia legada |
+| Opción                                                   | Restricción / efecto                                                                       |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `--comparar`, `--finales`, `--catalogo`, `--publicacion` | Modos alternativos; `--catalogo` y `--publicacion` admiten repetición de su propia opción  |
+| `--specs`                                                | Solo con `--comparar`; no es un auditor independiente ni una opción de `--finales`         |
+| `--agrupar categoria\|marca\|modelo`                     | Agrupa el diagnóstico de originales; valor inicial `categoria`                             |
+| `--min-grupo N`, `--min-ausentes N`                      | Filtros del TOP de patrones de originales; valores iniciales `8` y `3`                     |
+| `--top N`                                                | Máximo de entradas visibles de los listados priorizados; valor inicial `20`                |
+| `--json`                                                 | Informe estructurado completo, con procedencia y colecciones sin el recorte visual del TOP |
 
-Los argumentos numéricos requieren enteros positivos. `--top` limita `prioritized`, no las colecciones completas `groups` y `cases`. El despachador puede compilar y actualizar `dist/`, pero **el auditor no escribe en `data/reference/`, `storage/` ni en los catálogos**. Una redirección `>` sí crea el archivo indicado por el operador; debe mantenerse fuera de Git y del ZIP público.
+Los límites numéricos deben ser enteros positivos. `--top` **no** elimina las colecciones completas de casos del JSON ni recorta la cola P0 en texto. El despachador puede compilar `dist/`; una redirección de salida a archivo la realiza el operador, no el auditor, y debe quedar fuera del ZIP aplicable al repositorio.
 
-## Lectura del resultado
+## Método de mejora del catálogo
 
-1. Identificar proveedor, categoría original, clave/descripción, frecuencia y fichas afectadas.
-2. Usar `--json` para consultar `provenance` (fuente, `runId` cuando existe o catálogos explícitos, y `rulesSha256`), `universe` y la vista recalculada.
-3. Consultar `prioritized` para el TOP, `groups[].observations` para todas las coberturas y `cases[]` para las fichas afectadas.
-4. Revisar `original.shortDescription`, `original.longDescription` y `original.specs` antes de sugerir cualquier cambio. `observations[].originalSpecKeys` contiene **claves literales relacionadas por coexistencia**, nunca equivalencias acreditadas.
-5. Contrastar los anuncios vigentes y los contraejemplos antes de corregir extractores o normalizadores. Si no hay evidencia suficiente, conservar el hueco como observación.
+El trabajo sobre descripciones y specs comparte un único ciclo técnico, **repetible por familias y proveedores**:
 
-## Seguridad y verificación
+1. Ejecutar el auditor sobre las publicaciones seleccionadas y la preparación actual; registrar la población, procedencia y la cola priorizada del campo correspondiente.
+2. Seleccionar máquinas con carencia concreta de alto impacto, sin confundir observaciones familiares con errores técnicos acreditados.
+3. Investigar la información utilizable del original, productor, preparación y fuentes fiables; documentar procedencia cuando haga falta evidencia adicional.
+4. Aplicar una regla reutilizable en el productor/mapeador o una intervención editorial específica y controlada si es la opción más fiel; **no** obligar a pasar cada JSON final por una IA.
+5. Comparar preparación antes/después de la población afectada; distinguir **fichas cambiadas**, **carencias efectivamente resueltas**, nuevas señales, exclusiones y contradicciones. Proteger también otras familias y proveedores.
+6. Ejecutar pruebas proporcionadas al riesgo, `npm test` y `npm run build` cuando corresponda y estén disponibles. Preparar **no** significa aprobar, entregar o activar; esas acciones siguen sus controles específicos.
 
-- No usar el auditor para aprobar campañas, resolver `review`, rellenar por analogía ni sustituir la revisión humana.
-- Mantener separación de proveedores, identidades únicas, agrupación por categoría de origen, orden determinista y pruebas de referencia íntegra.
-- Verificar campos vacíos, valores `0`/`false`, cobertura total y cero, y ausencia de escrituras al modificar el analizador.
-- Ejecutar la suite completa y el build antes de integrar cambios productivos. Una consulta estadística correcta no acredita cobertura externa del proveedor.
+La mejora de descripciones busca cortas diferenciadoras y generales útiles y proporcionadas, sin relleno ni pérdida de prestaciones. La mejora de specs busca **claves y valores técnicos reales, con unidades e identidad correctas**, sin inventar atributos. Pueden alternarse ambos frentes sin duplicar el auditor ni modificar el contrato de publicación. La progresión se mide por **defectos de contenido realmente reducidos**, no por número de reglas, avisos o tests.
 
-Referencias: [Arquitectura](ARCHITECTURE.md), [Reglas de datos](SCRAPER_DATA_RULES.md), [Referencia operativa](OPERATIONAL_REFERENCE.md) y [README](../README.md).
+## Seguridad y componentes
+
+- CLI: `src/cli/commands/catalog/catalog-content-gaps.ts`.
+- Auditor de originales: `src/catalog/diagnostics/content-gaps-source.ts` y contratos `content-gaps-types.ts`.
+- Comparación editorial: `description-coverage.ts`, `editorial-quality.ts` y `description-priorities.ts`.
+- Comparación técnica: `specification-coverage.ts`.
+- Preparación: `src/catalog/preparation/prepare-product.ts`, usando las reglas productivas existentes.
+- Publicaciones: `src/infrastructure/filesystem/catalog/accredited-publication.ts` y el selector vigente.
+
+No alterar originales, JSON acreditados, manifiestos ni aprobaciones para disminuir los indicadores. No atribuir al backend obligaciones de `spec` sin revisar su contrato real. No duplicar motores de reglas, auditores o sistemas de versiones. Ver [Objetivos](SCRAPER_OBJECTIVES.md), [Arquitectura](ARCHITECTURE.md), [Reglas de datos](SCRAPER_DATA_RULES.md) y [Validación](VALIDATION.md).

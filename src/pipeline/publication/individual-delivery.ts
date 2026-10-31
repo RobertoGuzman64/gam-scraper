@@ -4,7 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { sha256 } from "../../catalog/editorial/campaign-accreditation.js";
 import type { PublishableSelection } from "../../catalog/editorial/select-publishable.js";
-import { inspectIndividualEditorial } from "./individual-editorial.js";
+import { readIndividualEditorialState } from "./individual-editorial.js";
 import type { IndividualEditorialOptions } from "./individual-editorial.js";
 import { readIndividualSelection, selectIndividualPublishable } from "./individual-selection.js";
 
@@ -81,13 +81,12 @@ const createFiles = (
 export const deliverIndividualProvider = async (
   options: IndividualEditorialOptions, mode: "simulation" | "publish" | "verify" = "publish"
 ): Promise<IndividualDeliveryResult> => {
-  const review = await inspectIndividualEditorial(options);
-  if (!review.inspection.approved || review.inspection.issues.length) {
+  const state = await readIndividualEditorialState(options);
+  if (!state.inspection.approved || state.inspection.issues.length) {
     throw new Error("Publicación individual bloqueada: faltan aprobación humana o decisiones editoriales válidas");
   }
-  const context = await readIndividualSelection(options.providerId, options.catalogFile, options.preparationFile);
-  if (context.runId !== review.runId) throw new Error("La acreditación no corresponde a esta preparación");
-  const accreditationText = await readFile(review.draftFile, "utf8");
+  const context = state.context;
+  const accreditationText = state.raw;
   const selection = selectIndividualPublishable(context, accreditationText);
   if (!selection.accreditation || selection.source.length !== 1 || selection.source[0]?.providerId !== options.providerId ||
     selection.totals.original !== selection.totals.publishable + selection.totals.excluded ||
@@ -128,7 +127,7 @@ export const deliverIndividualProvider = async (
     await mkdir(stage);
     for (const file of files) await writeFile(join(stage, file.name), file.content, { flag: "wx" });
     const refreshed = await readIndividualSelection(options.providerId, options.catalogFile, options.preparationFile);
-    const latestApproval = await readFile(review.draftFile, "utf8");
+    const latestApproval = await readFile(state.draftFile, "utf8");
     if (refreshed.runId !== context.runId || !isDeepStrictEqual(refreshed.sources, context.sources) ||
       latestApproval !== accreditationText) {
       throw new Error("La preparación o aprobación cambió durante la publicación");

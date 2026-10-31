@@ -71,7 +71,7 @@ export const startIndividualEditorial = async (options: IndividualEditorialOptio
   return inspectIndividualEditorial(options);
 };
 
-const readState = async (options: IndividualEditorialOptions) => {
+export const readIndividualEditorialState = async (options: IndividualEditorialOptions) => {
   const context = await contextFor(options);
   const draftFile = draftPath(options, context);
   let metadata;
@@ -94,7 +94,7 @@ const readState = async (options: IndividualEditorialOptions) => {
 };
 
 export const inspectIndividualEditorial = async (options: IndividualEditorialOptions): Promise<IndividualEditorialReview> => {
-  const state = await readState(options);
+  const state = await readIndividualEditorialState(options);
   return { runId: state.context.runId, draftFile: state.draftFile,
     accreditation: state.accreditation, inspection: state.inspection };
 };
@@ -103,7 +103,7 @@ const update = async (
   options: IndividualEditorialOptions,
   makeNext: (draft: CampaignAccreditation) => CampaignAccreditation
 ): Promise<IndividualEditorialReview> => {
-  const initial = await readState(options);
+  const initial = await readIndividualEditorialState(options);
   if (initial.accreditation.approved) throw new Error("La acreditación individual ya está aprobada y no admite cambios");
   const next = makeNext(initial.accreditation);
   const inspection = inspectAccreditationDraft(

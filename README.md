@@ -130,7 +130,7 @@ La entrega se guarda en `catalogs/providers/<proveedor>/publications/<sha-aproba
 
 - `npm run ayuda` y `npm run ayuda -- <comando>`: ayuda desde la terminal; distingue lectura, preparación, escritura y autorización destructiva.
 - `npm run estado`: inventario de fuentes operativas, originales de `catalogs/`, JSON finales acreditados, integridad y discrepancias, sin escritura.
-- `npm run huecos`: auditor opcional de la última entrega íntegra conservada (o referencia histórica si no hay entrega); admite `--catalogo <ruta>` para canónicos explícitos. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md).
+- `npm run huecos`: auditor de descripciones y specs; `--comparar` contrasta publicaciones acreditadas con la preparación actual, `--comparar --specs` añade las ausencias técnicas observadas, `--finales` consulta solo textos publicados y `--catalogo <ruta>` analiza canónicos explícitos. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md).
 - `npm run build` y `npm test`: compilación y pruebas del repositorio.
 - `npm run extraer:proveedor`, `extraer:todos`, `intervenir:manual`, `preparar`, `validar`, `seleccionar`, `seleccionar:proveedor`, `acreditar:proveedor`, `entregar:proveedor` y `cobertura`: operaciones avanzadas con finalidades distintas del flujo principal.
 - `npm run manain:muestra` y `npm run manain:censo`: herramientas de diagnóstico específicas de Manain; no acreditan por sí solas una extracción completa.
@@ -142,15 +142,16 @@ La entrega se guarda en `catalogs/providers/<proveedor>/publications/<sha-aproba
 
 ### Auditor de huecos de contenido
 
-`npm run huecos` agrupa los originales de la última campaña entregada íntegra, o de una referencia histórica válida cuando no existe aquella, por proveedor y categoría, con refinamiento opcional por marca o modelo declarado. Señala ausencias repetidas de claves técnicas observadas en fichas de la misma familia de origen y de descripciones, muestra referencias concretas y permite consultar las evidencias en un JSON generado por `stdout`. No depende de `categorySellID` ni de los atributos comerciales de Equipzilla. **No rellena fichas, no declara errores de calidad ni crea `Review`**.
+`npm run huecos` permite seleccionar el trabajo editorial o técnico por **carencia real**. Con `--comparar` analiza por identidad las descripciones publicadas y la preparación recalculada, muestra vacíos recuperados, pendientes, extremos, diferencias familiares y posibles pérdidas. Con `--comparar --specs` añade un informe separado de claves técnicas del original, la preparación y el final: sus ausencias familiares son **observaciones, no datos obligatorios**. `--finales` mide únicamente descripciones publicadas. Para originales de campaña/referencia o canónicos explícitos mantiene el diagnóstico agrupado por proveedor y categoría original.
 
 ```powershell
-npm run huecos
-npm run huecos -- --agrupar marca --top 10
-npm run huecos -- --json > huecos-consulta.json
+npm run huecos -- --comparar
+npm run huecos -- --comparar --specs --json
+npm run huecos -- --finales
+npm run huecos -- --catalogo catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json --agrupar marca --top 10
 ```
 
-Exige una entrega íntegra conservada, una referencia histórica válida o catálogos explícitos completos verificables con `--catalogo <ruta>` (repetible). No modifica su fuente. Los recuentos se refieren a **todos los originales**, incluidos excluidos de entrega, preparados en memoria con el código actual. Es una herramienta de investigación, nunca un requisito para entregar una campaña. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md) para opciones, límites y lectura de evidencias.
+La población depende de la **publicación vigente seleccionada** o de la fuente explícita; no asumir que la última carpeta SHA está activa. En Mercaeleva la comparación parte de su publicación si no existe un original canónico independiente: no debe atribuirse a extracción original. El auditor es de **solo lectura**: no rellena fichas, no genera `review`, no acredita ni publica. La recuperación se implementa en el motor, con evidencia y comparación antes/después. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md) para criterios, prioridades y límites.
 
 ### Herramientas complementarias
 
@@ -210,7 +211,7 @@ El contrato de cuatro proveedores describe el software, **no acredita por sí so
 
 - [Objetivos y alcance](docs/SCRAPER_OBJECTIVES.md): prioridades y criterios de aceptación.
 - [Arquitectura](docs/ARCHITECTURE.md): módulos, responsabilidades y extensibilidad.
-- [Auditor de huecos de contenido](docs/CATALOG_CONTENT_GAPS.md): consulta opcional, campos observados, evidencias originales y límites.
+- [Auditor de huecos de contenido](docs/CATALOG_CONTENT_GAPS.md): comparación editorial, diagnóstico técnico de specs, procedencia, prioridades y límites.
 - [Reglas de datos](docs/SCRAPER_DATA_RULES.md): contratos, origen, preservación y revisión editorial.
 - [Protocolo de campañas completas](docs/CAMPAIGNS.md): extracción global obligatoria, validación de todos los proveedores, intervenciones excepcionales y entrega acreditada.
 - [Intervenciones manuales por campaña](docs/CAMPAIGN_INTERVENTIONS.md): principios y controles de la ejecución manual.

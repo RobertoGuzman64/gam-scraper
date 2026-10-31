@@ -169,7 +169,7 @@ if (rawCommand === "ayuda") {
   } else {
     const cleaned = command === "intervenir" || command === "intervenir:manual" || command === "recuperar" || command === "migrar:catalogos" ? normalized : normalized.filter((argument) => argument !== "--aplicar");
     if (selected.defaultSimulation && !normalized.includes("--aplicar") && !cleaned.includes("--dry-run")) cleaned.push("--dry-run");
-    const compile = spawnSync(process.execPath, [join(root, "scripts/run-build.mjs"), "--quiet"], {
+    const compile = spawnSync(process.execPath, [join(root, "scripts/run-build.mjs"), "--quiet", "--if-needed"], {
       cwd: root, stdio: "inherit", windowsHide: true
     });
     if (compile.error || compile.status !== 0) {
