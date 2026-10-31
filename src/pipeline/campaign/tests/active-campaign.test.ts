@@ -39,7 +39,7 @@ test("la activación global requiere aprobación, es expresa, atómica y reversi
     assert.equal(portable.issues.some((issue) => issue.includes("active.json")), false);
     for (const id of CAMPAIGN_PROVIDERS) {
       const file = await resolveAccreditedPublication(data.root, id);
-      assert.ok(file?.endsWith(`/${data.runId}/${id}/publishable.json`));
+      assert.equal(file, join(data.root, "catalogs", "campaigns", data.runId, id, "publishable.json"));
       if (!file) throw new Error(`No hay publicación para ${id}`);
       const publication = await readAccreditedPublication(file);
       assert.equal(publication.providerId, id);
@@ -69,7 +69,7 @@ test("una publicación individual posterior cambia solo su proveedor y puede rev
     for (const id of CAMPAIGN_PROVIDERS.filter((item) => item !== providerId)) {
       assert.equal((await readActiveCatalogIndex(data.root))?.providers[id]?.runId, data.runId);
     }
-    assert.ok((await resolveAccreditedPublication(data.root, providerId))?.endsWith(`${sha}/gomariz-publishable.json`));
+    assert.equal(await resolveAccreditedPublication(data.root, providerId), join(destination, `${providerId}-publishable.json`));
     assert.equal((await selectActiveCampaign(data.root, data.runId, true)).status, "activated");
     assert.equal((await readActiveCatalogIndex(data.root))?.providers.gomariz?.runId, data.runId);
   } finally { await data.cleanup(); }
