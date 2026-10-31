@@ -3,6 +3,7 @@ import test from "node:test";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
 import { recoverGamExplicitMachineSpecs } from "../evidence/providers/gam/measured-machine-specs.js";
+import { recoverGamWheelbaseSpec } from "../evidence/providers/gam/wheelbase-evidence.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -62,8 +63,52 @@ test("solo recupera las referencias GAM con medidas verificadas en el catálogo 
     const added = Object.keys(recovered).filter((key) => !Object.hasOwn(original, key));
     return added.length ? [{ reference: record.reference, added }] : [];
   });
-  assert.equal(changed.length, 19);
-  assert.equal(new Set(changed.map(({ reference }) => reference)).size, 19);
-  assert.equal(changed.filter(({ added }) => added.includes("Radio de giro (mm)")).length, 13);
+  assert.equal(changed.length, 36);
+  assert.equal(new Set(changed.map(({ reference }) => reference)).size, 36);
+  assert.equal(changed.filter(({ added }) => added.includes("Radio de giro (mm)")).length, 22);
   assert.equal(changed.filter(({ added }) => added.includes("Potencia (kW)")).length, 6);
+  assert.equal(changed.filter(({ added }) => added.includes("Centro de carga (mm)")).length, 12);
+});
+
+
+test("recupera distancias entre ejes explícitas de modelos identificados y conserva las especificaciones originales", () => {
+  const verified = [
+    ["6767", 3750], ["2072", 1570], ["2064", 3300], ["2068", 3500], ["2069", 3500],
+    ["2067", 3500], ["2041", 3500], ["2042", 3750], ["2043", 3500], ["2049", 4825],
+    ["2045", 3655], ["2044", 4315], ["2046", 4315], ["2048", 3935], ["2047", 4315]
+  ] as const;
+  for (const [reference, distance] of verified) {
+    const record = recordOf(reference);
+    const original = structuredClone(record);
+    const prepared = prepareSourceProduct(record);
+    const key = "Distancia entre ejes (mm)";
+    assert.equal(prepared.product.spec[key], `${distance} mm`, reference);
+    assert.equal(normalizeSpecsObject({ [key]: prepared.product.spec[key] }).normalized[key], distance, reference);
+    for (const [name, value] of Object.entries(record.specs ?? {})) {
+      assert.deepEqual(prepared.product.spec[name], value, `${reference}: ${name}`);
+    }
+    assert.deepEqual(record, original);
+  }
+  const changed = catalog.products.filter((record) =>
+    !Object.hasOwn(record.specs ?? {}, "Distancia entre ejes (mm)") &&
+    Object.hasOwn(recoverGamWheelbaseSpec(record), "Distancia entre ejes (mm)"));
+  assert.deepEqual(changed.map((record) => record.reference).sort(),
+    verified.map(([reference]) => reference).sort());
+});
+
+test("no crea distancia entre ejes con identidad no acreditada, contradicciones o un valor preexistente", () => {
+  const record = recordOf("2067");
+  const source = record.specs ?? {};
+  for (const variant of [
+    { ...record, providerId: "gomariz" },
+    { ...record, condition: "Segunda mano" as const },
+    { ...record, categoryKey: "otros" },
+    { ...record, model: "H16XDS12" },
+    { ...record, brand: "YALE" },
+    { ...record, url: record.url.replace("2067-", "2068-") },
+    { ...record, specs: { ...source, "Batalla": "3.500 mm" } },
+    { ...record, specs: { ...source, "Distancia entre ejes (mm)": "3500 mm" } },
+    { ...record, longDescription: `${record.longDescription} Batalla de 3.750 mm.` },
+    { ...record, longDescription: `${record.longDescription} Batalla de 35000 mm.` }
+  ]) assert.deepEqual(recoverGamWheelbaseSpec(variant), variant.specs);
 });

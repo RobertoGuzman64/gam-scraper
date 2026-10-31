@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamIndividualizedGeneral } from "../mapping/providers/gam/individualized-general.js";
+import { removeGamResidualEditorialArtifacts } from "../mapping/providers/gam/long-description.js";
 import { resolveGomarizIndividualizedGeneral } from "../mapping/providers/gomariz/individualized-general.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
@@ -32,7 +33,7 @@ test("Fase 8: diferencia 18 fichas con evidencias propias sin modificar los orig
         assert.ok(text.includes(record.providerId === "gam" && !record.brand ?
           record.title?.trim() ?? "" : record.model?.trim() ?? record.title?.trim() ?? ""));
         const prepared = prepareSourceProduct(record).product;
-        assert.equal(prepared.description_general, text, record.reference);
+        assert.equal(prepared.description_general, removeGamResidualEditorialArtifacts(record, text) ?? text, record.reference);
         assert.equal(prepared.sourceUrl, record.url);
         assert.equal(prepared.reference, record.reference);
         assert.deepEqual(prepared.spec, record.specs);

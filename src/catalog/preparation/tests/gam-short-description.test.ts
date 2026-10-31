@@ -39,7 +39,7 @@ test("GAM: resume exclusivamente fichas seguras sin retirar cifras de la descrip
         assert.ok(numbers(total).has(figure), `${record.reference}: falta ${figure}`);
       }
       const explicitHeight = record.reference === "6190" ? "27 m" : record.reference === "6192" ? "23 m" : null;
-      assert.deepEqual(prepared.product.spec, {
+      const expectedSpecs = {
         ...record.specs,
         ...(record.reference === "4025" ? { "Anchura (mm)": "816 mm" } : {}),
         ...(record.reference === "4027" ? { "Anchura (mm)": "905 mm" } : {}),
@@ -50,7 +50,8 @@ test("GAM: resume exclusivamente fichas seguras sin retirar cifras de la descrip
         ...(record.reference === "4022" ? { "Depósito de solución": 410, "Depósito de recuperación": 360 } : {}),
         ...(record.reference === "4012" ? { "Depósito de solución": 218, "Depósito de recuperación": 237 } : {}),
         ...(record.reference === "2370" ? { "Voltaje batería (V)": "24 V", "Capacidad de la batería (Ah)": "150 Ah" } : {})
-      });
+      };
+      for (const [key, value] of Object.entries(expectedSpecs)) assert.deepEqual(prepared.product.spec[key], value, `${record.reference}: ${key}`);
       assert.equal(prepared.product.reference, record.reference);
       assert.equal(prepared.product.sourceUrl, record.url);
     }

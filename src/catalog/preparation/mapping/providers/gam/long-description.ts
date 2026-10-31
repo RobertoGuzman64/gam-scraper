@@ -120,7 +120,7 @@ const extremeRedundant = (sentence: string): boolean =>
   /\b(?:representa|constituye) una (?:soluci[oó]n|alternativa)\b/iu.test(sentence);
 
 const summarizeExtremeDescription = (record: ProductRecord, original: string): string | null => {
-  if (words(original).length <= 2000 || !identityMatches(record)) return null;
+  if (words(original).length <= 800 || !identityMatches(record)) return null;
   const source = sentences(original);
   if (source.length < 35) return null;
 
@@ -172,6 +172,18 @@ const summarizeExtremeDescription = (record: ProductRecord, original: string): s
   return paragraphs.join("\n\n");
 };
 
+export const removeGamOrphanAffirmative = (record: ProductRecord, preparedGeneral: string | null): string | null => {
+  const original = record.longDescription;
+  if (!original || preparedGeneral !== original) return null;
+  const count = words(original).length;
+  if (record.brand !== "HYSTER" || record.categoryKey !== "carretillas-nuevas" ||
+    count < 150 || count > 400 || original.includes("\n\n") || !identityMatches(record)) return null;
+  const pattern = /(?<=\.)\s+Sí\.\s+(?=[A-ZÁÉÍÓÚÑ])/gu;
+  const matches = [...original.matchAll(pattern)];
+  if (matches.length !== 1) return null;
+  return original.replace(pattern, " ");
+};
+
 export const resolveGamLongDescription = (record: ProductRecord): string | null => {
   const original = record.longDescription;
   if (!original) return null;
@@ -205,4 +217,102 @@ export const resolveGamLongDescription = (record: ProductRecord): string | null 
   }
   if (paragraph.length > 0) paragraphs.push(paragraph.join(" "));
   return paragraphs.length > 1 ? paragraphs.join("\n\n") : null;
+};
+
+export const removeGamDetachedAffirmatives = (record: ProductRecord, preparedGeneral: string | null): string | null => {
+  const original = record.longDescription;
+  if (removeGamOrphanAffirmative(record, preparedGeneral) !== null) return null;
+  if (!original || !preparedGeneral || record.providerId !== "gam" || record.condition !== "Nuevo" ||
+    !record.brand || !record.model || !record.reference || !record.title ||
+    !["carretillas-nuevas", "apiladores-nuevos", "elevacion-nueva", "limpieza-fregadoras"].includes(record.categoryKey) ||
+    normalize(spec(record, "Marca") ?? "") !== normalize(record.brand) ||
+    normalize(spec(record, "Modelo") ?? "") !== normalize(record.model) ||
+    (record.externalReference && normalize(record.externalReference) !== normalize(record.model)) ||
+    !normalize(record.title).includes(normalize(record.brand)) ||
+    !normalize(record.title).includes(normalize(record.model)) ||
+    !normalize(original).includes(normalize(record.brand)) ||
+    !normalize(original).includes(normalize(record.model)) ||
+    /\bNo\.\s+[A-ZÁÉÍÓÚÑ]/u.test(original)) return null;
+  try {
+    const url = new URL(record.url);
+    const slug = url.pathname.split("/").at(-1) ?? "";
+    if (url.protocol !== "https:" || url.hostname !== "online.gamrentals.com" ||
+      !slug.startsWith(`${record.reference}-`) || !normalize(slug).includes(normalize(record.brand)) ||
+      !normalize(slug).includes(normalize(record.model)) || url.search || url.hash) return null;
+  } catch {
+    return null;
+  }
+  const pattern = /(?<=\.)\s+Sí\.\s+(?=[A-ZÁÉÍÓÚÑ])/gu;
+  const sourceCount = [...original.matchAll(pattern)].length;
+  const preparedCount = [...preparedGeneral.matchAll(pattern)].length;
+  if (sourceCount !== 1 || preparedCount !== 1 ||
+    words(preparedGeneral).length < 150) return null;
+  return preparedGeneral.replace(pattern, " ");
+};
+
+
+const residualResponseModels: Readonly<Record<string, number>> = {
+  "HYSTER:H20FT": 1,
+  "HYSTER:H25A6": 1,
+  "HYSTER:H25FT": 1,
+  "HYSTER:J20UTTL": 2,
+  "TENNANT:FAX6ROVR": 3,
+  "BRAVI:SMALLE": 3,
+  "BRAVI:LEONARDOHD430": 1,
+  "HYSTER:H45FT6": 1,
+  "HYSTER:H28XD12": 1
+};
+
+const residualResponse = /(?<=\.)\s+(?:Sí|No)\.\s+(?=[A-ZÁÉÍÓÚÑ])/gu;
+const pramacEmptyHeadings = "El panel de control manual está montado en grupo y está completo con: Instrumentación: Comandos: Protección con alarma: Protecciones con paro:";
+
+export const removeGamResidualEditorialArtifacts = (record: ProductRecord, preparedGeneral: string | null): string | null => {
+  if (record.providerId !== "gam" || record.condition !== "Nuevo" ||
+    !record.reference || !record.brand || !record.model || !record.title ||
+    !record.longDescription || !preparedGeneral ||
+    normalize(spec(record, "Marca") ?? "") !== normalize(record.brand) ||
+    normalize(spec(record, "Modelo") ?? "") !== normalize(record.model) ||
+    (record.externalReference && normalize(record.externalReference) !== normalize(record.model)) ||
+    !normalize(record.title).includes(normalize(record.brand)) ||
+    !normalize(record.title).includes(normalize(record.model))) return null;
+
+  try {
+    const url = new URL(record.url);
+    const slug = url.pathname.split("/").at(-1) ?? "";
+    if (url.protocol !== "https:" || url.hostname !== "online.gamrentals.com" ||
+      url.search || url.hash || !slug.startsWith(`${record.reference}-`) ||
+      !normalize(slug).includes(normalize(record.model))) return null;
+  } catch {
+    return null;
+  }
+
+  const modelKey = `${normalize(record.brand).toUpperCase()}:${normalize(record.model).toUpperCase()}`;
+  if (record.brand.toUpperCase() === "PRAMAC" &&
+    ["GSW65P", "GSW80P", "GSW110V", "GSW165P", "GSW200P"].includes(record.model) &&
+    record.longDescription.endsWith(pramacEmptyHeadings) &&
+    preparedGeneral.endsWith(pramacEmptyHeadings)) {
+    return preparedGeneral.slice(0, -pramacEmptyHeadings.length) +
+      "El panel de control manual está montado en grupo.";
+  }
+
+  const expected = residualResponseModels[modelKey];
+  if (expected === undefined ||
+    (preparedGeneral !== record.longDescription &&
+      !(record.model === "H2.5FT" && removeGamOrphanAffirmative(record, record.longDescription) === preparedGeneral))) return null;
+  let revised = preparedGeneral;
+  if (record.model === "H2.0FT") {
+    revised = revised.replace("La Hyster H2.0FT es ideal para: Sí. ", "");
+  } else if (record.model === "H2.5A6") {
+    revised = revised.replace("La H2.5A6 está diseñada para tareas en sectores como: Sí. ", "");
+  } else if (record.model === "H2.5FT") {
+    revised = revised.replace("Incluye: La Hyster H2.5FT es ideal para trabajar en entornos como: Sí. ", "");
+  } else {
+    const matches = [...revised.matchAll(residualResponse)];
+    if (matches.length !== expected) return null;
+    revised = revised.replace(residualResponse, " ");
+  }
+  if (revised === preparedGeneral) return null;
+  const removed = [...preparedGeneral.matchAll(/\b(?:Sí|No)\.\s+(?=[A-ZÁÉÍÓÚÑ])/gu)].length -
+    [...revised.matchAll(/\b(?:Sí|No)\.\s+(?=[A-ZÁÉÍÓÚÑ])/gu)].length;
+  return removed === expected ? revised : null;
 };

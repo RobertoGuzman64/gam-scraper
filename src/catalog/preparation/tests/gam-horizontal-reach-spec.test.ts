@@ -47,6 +47,6 @@ test("detecta exclusivamente las fichas GAM que reciben alcance acreditado", () 
   const recovered = gam.products.filter((record) =>
     Object.hasOwn(recoverGamExplicitHorizontalReachSpec(record), "Alcance horizontal (m)") &&
     !Object.hasOwn(record.specs ?? {}, "Alcance horizontal (m)"));
-  assert.equal(recovered.length, 22);
-  assert.equal(new Set(recovered.map((record) => record.reference)).size, 22);
+  assert.equal(recovered.length, 28);
+  assert.equal(new Set(recovered.map((record) => record.reference)).size, 28);
 });

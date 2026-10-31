@@ -5,7 +5,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { resolveGomarizCriticalBriefGeneral } from "../mapping/providers/gomariz/critical-brief-general.js";
 import { resolveGomarizGeneralDescription } from "../mapping/providers/gomariz/general-description.js";
 import { resolveGomarizIndividualizedGeneral } from "../mapping/providers/gomariz/individualized-general.js";
-import { resolveGomarizResidualGeneral } from "../mapping/providers/gomariz/residual-general.js";
+import { removeGomarizConversationalLead, resolveGomarizResidualGeneral } from "../mapping/providers/gomariz/residual-general.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const source = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
@@ -101,9 +101,9 @@ test("Gomariz: el piloto se aplica solo a la cohorte segura y preserva todas las
     seen.add(reference);
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.product.reference, reference);
-    assert.equal(prepared.product.description_general,
-      resolveGomarizIndividualizedGeneral(record) ?? resolveGomarizCriticalBriefGeneral(record) ??
-      resolveGomarizGeneralDescription(record) ?? resolveGomarizResidualGeneral(record) ?? record.longDescription);
+    const base = resolveGomarizIndividualizedGeneral(record) ?? resolveGomarizCriticalBriefGeneral(record) ??
+      resolveGomarizGeneralDescription(record) ?? resolveGomarizResidualGeneral(record) ?? record.longDescription;
+    assert.equal(prepared.product.description_general, removeGomarizConversationalLead(record, base) ?? base);
     assert.deepEqual(prepared.product.spec, record.specs);
   }
 });
@@ -127,4 +127,131 @@ test("Gomariz: incorpora alcance lateral solo cuando está publicado con unidad 
   const enriched = source.products.filter((record) =>
     resolveGomarizGeneralDescription(record)?.includes("alcance lateral"));
   assert.equal(enriched.length, 37);
+});
+
+test("Gomariz: recupera usos y elementos documentados de tijeras LGMG sin generalizar otras máquinas", () => {
+  const expected = new Set([
+    "TE1616", "TE1617", "TE1619",
+    "TE1735", "TE1736", "TE1737", "TE1738", "TE1739", "TE1740", "TE1741",
+    "TE1742", "TE1743", "TE1744", "TE1745", "TE1747", "TE1748",
+    "TE1585", "TE1586", "TE1588", "TE1591", "TE1594", "TE1595", "TE1596",
+    "TE1597", "TE1598", "TE1599", "TE1601", "TE1602", "TE1610",
+    "TE1651", "TE1652", "TE1653", "TE1654", "TE1655", "TE1656", "TE1657",
+    "TE1620", "TE1614", "TE61", "TE1222", "TE961", "TE980", "TE754",
+    "TE1756", "TE1603", "TE1604", "TE1754", "TE1607", "TE1606", "TE1605"
+  ]);
+  const feature = "El proveedor también describe las tijeras eléctricas de esta categoría como equipos para trabajar en interiores, con ruedas antihuellas y plataforma extensible.";
+  const actual = source.products.filter((record) => resolveGomarizGeneralDescription(record)?.includes(feature));
+  assert.deepEqual(new Set(actual.map((record) => record.reference)), expected);
+  for (const record of actual) {
+    const prepared = prepareSourceProduct(record);
+    assert.ok(prepared.product.description_general?.endsWith(feature));
+    assert.equal(prepared.status, "ready");
+    assert.deepEqual(prepared.product.spec, record.specs);
+  }
+  for (const reference of ["TE1746", "TE1618", "TE1621", "TE1858"]) {
+    assert.equal(resolveGomarizGeneralDescription(find(reference))?.includes(feature) ?? false, false, reference);
+  }
+  const original = find("TE1742");
+  const invalid: readonly ProductRecord[] = [
+    { ...original, condition: "Nuevo" },
+    { ...original, model: "S0812II" },
+    { ...original, brand: "OTRA" },
+    { ...original, specs: { ...original.specs, Motor: "Diésel" } },
+    { ...original, longDescription: original.longDescription?.replace("ruedas anti-huellas", "ruedas estándar") ?? null },
+    { ...original, url: original.url.replace("lgmg-s0607e-2-9", "lgmg-s0607e-9") },
+    { ...original, url: original.url.replace("lgmg-s0607e-2-9", "lgmg-s0607e-2-brazo-articulado") }
+  ];
+  for (const record of invalid) {
+    assert.equal(resolveGomarizGeneralDescription(record)?.includes(feature) ?? false, false);
+  }
+});
+
+
+test("Gomariz: conserva la evidencia funcional por modelo y descarta variantes cruzadas", () => {
+  const feature = "con ruedas antihuellas y plataforma extensible.";
+  for (const reference of ["TE1585", "TE1610", "TE1654", "TE1651"]) {
+    const record = find(reference);
+    const sourceSnapshot = JSON.stringify(record);
+    const resolved = resolveGomarizGeneralDescription(record);
+    assert.ok(resolved, reference);
+    assert.ok(resolved.endsWith(feature), reference);
+    assert.ok(resolved.includes(record.model ?? ""), reference);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.product.description_general, resolved);
+    assert.deepEqual(prepared.product.spec, record.specs);
+    assert.equal(JSON.stringify(record), sourceSnapshot);
+    const variants: readonly ProductRecord[] = [
+      { ...record, brand: "OTRA" },
+      { ...record, model: "MODELO DIFERENTE" },
+      { ...record, condition: "Nuevo" },
+      { ...record, specs: { ...record.specs, Motor: "Diésel" } },
+      { ...record, url: `${record.url}?otro-modelo=1` },
+      { ...record, longDescription: "Descripción técnica no acreditada" },
+      { ...record, longDescription: record.longDescription?.replace("ruedas anti-huellas", "ruedas estándar") ?? null }
+    ];
+    for (const variant of variants) {
+      assert.equal(resolveGomarizGeneralDescription(variant)?.includes(feature) ?? false, false, reference);
+    }
+  }
+});
+
+
+test("Gomariz: mantiene identidad y evidencia al recuperar funcionalidades en otras tijeras eléctricas", () => {
+  for (const reference of ["TE61", "TE1614", "TE1222", "TE754", "TE1604", "TE1607"]) {
+    const record = find(reference);
+    const snapshot = JSON.stringify(record);
+    const prepared = prepareSourceProduct(record);
+    const result = resolveGomarizGeneralDescription(record);
+    assert.ok(result?.includes("con ruedas antihuellas y plataforma extensible."), reference);
+    assert.equal(prepared.product.description_general, result, reference);
+    assert.deepEqual(prepared.product.spec, record.specs, reference);
+    assert.equal(JSON.stringify(record), snapshot, reference);
+    const invalid: readonly ProductRecord[] = [
+      { ...record, model: "OTRO" },
+      { ...record, specs: { ...record.specs, Motor: "Diésel" } },
+      { ...record, url: `${record.url}?variacion=1` },
+      { ...record, url: record.url.replace("elevador-tijera/", "brazo-articulado/") },
+      { ...record, longDescription: record.longDescription?.replace("ruedas anti-huellas", "ruedas estándar") ?? null }
+    ];
+    for (const variant of invalid) {
+      assert.equal(resolveGomarizGeneralDescription(variant)?.includes("con ruedas antihuellas y plataforma extensible.") ?? false, false, reference);
+    }
+  }
+});
+
+test("Gomariz: recupera elementos de la familia de tijeras diésel sin atribuirlos a cada unidad", () => {
+  const expected = new Set([
+    "TD1511", "TD1543", "TD815", "TD841", "TD1295", "TD1564",
+    "TD1625", "TD1624", "TD1623", "TD1799", "TD1794", "TD1792",
+    "TD1767", "TD1726", "TD1725", "TD1626", "TD1572", "TD1339", "TD1337"
+  ]);
+  const feature = "El proveedor menciona plataformas extensibles y estabilizadores en la descripción de esta familia de tijeras diésel; su presencia debe verificarse para cada unidad.";
+  const enriched = source.products.filter((record) =>
+    resolveGomarizGeneralDescription(record)?.includes(feature));
+  assert.deepEqual(new Set(enriched.map((record) => record.reference)), expected);
+  for (const record of enriched) {
+    const snapshot = JSON.stringify(record);
+    const prepared = prepareSourceProduct(record);
+    assert.ok(prepared.product.description_general?.endsWith(feature), record.reference ?? "");
+    assert.equal(prepared.product.description_general, resolveGomarizGeneralDescription(record));
+    assert.deepEqual(prepared.product.spec, record.specs);
+    assert.equal(JSON.stringify(record), snapshot);
+  }
+  const record = find("TD1625");
+  const variants: readonly ProductRecord[] = [
+    { ...record, providerId: "gam" },
+    { ...record, condition: "Nuevo" },
+    { ...record, model: "SR1623D" },
+    { ...record, brand: "Genie" },
+    { ...record, title: "LGMG SR1623D" },
+    { ...record, specs: { ...record.specs, Motor: "Eléctrico" } },
+    { ...record, url: `${record.url}?otro=1` },
+    { ...record, url: record.url.replace("elevador-tijera", "brazo-articulado") },
+    { ...record, url: record.url.replace("lgmg-sr1018d", "lgmg-sr1623d") },
+    { ...record, longDescription: record.longDescription?.replace("estabilizadores", "apoyos") ?? null }
+  ];
+  for (const variant of variants) {
+    assert.equal(resolveGomarizGeneralDescription(variant)?.includes(feature) ?? false, false);
+  }
 });

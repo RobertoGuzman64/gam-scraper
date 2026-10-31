@@ -53,3 +53,24 @@ test("Gomariz preserva fuentes no coherentes o fuera de identidad", () => {
     assert.equal(resolveGomarizResidualGeneral(invalid), null, String(index));
   }
 });
+
+
+test("Gomariz: dos tijeras sin motor publicado conservan los detalles funcionales de su categoría", () => {
+  for (const reference of ["TE1814", "TE1772"]) {
+    const record = find(reference);
+    const snapshot = JSON.stringify(record);
+    const general = resolveGomarizResidualGeneral(record);
+    assert.ok(general?.includes("con ruedas antihuellas y plataforma extensible."), reference);
+    assert.equal(prepareSourceProduct(record).product.description_general, general, reference);
+    assert.equal(JSON.stringify(record), snapshot, reference);
+    const variants: readonly ProductRecord[] = [
+      { ...record, model: "OTRO" },
+      { ...record, specs: { ...record.specs, Motor: "Diésel" } },
+      { ...record, url: `${record.url}?variation=2` },
+      { ...record, longDescription: record.longDescription?.replace("plataforma extensible", "plataforma fija") ?? null }
+    ];
+    for (const variant of variants) {
+      assert.equal(resolveGomarizResidualGeneral(variant)?.includes("con ruedas antihuellas y plataforma extensible.") ?? false, false, reference);
+    }
+  }
+});

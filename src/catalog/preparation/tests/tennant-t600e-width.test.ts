@@ -28,7 +28,12 @@ test("Tennant T600e D80 distingue anchura de fregado y anchura de secado", () =>
   const prepared = prepareProduct(original, catalog);
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
-  assert.deepEqual(prepared.product.spec, { ...original.specs, "Depósito de solución": 121, "Depósito de recuperación": 140 });
+  assert.deepEqual(prepared.product.spec, {
+    ...original.specs,
+    "Depósito de solución": 121,
+    "Depósito de recuperación": 140,
+    "Rendimiento de limpieza (m²/h)": 4415
+  });
   assert.equal(prepared.product.description_general?.includes("hasta 900 mm"), true);
   assert.ok(prepared.product.attributes.some((value) => value.attributeID === width.id && value.value === 800));
   assert.equal(JSON.stringify(original), before);

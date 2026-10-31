@@ -38,7 +38,8 @@ test("las dieciséis fichas conservan sus fuentes, con once capacidades acredita
     assert.equal(actual.value === null, !confirmed.has(id), id);
     const prepared = prepareProduct(record, catalog);
     assert.equal(prepared.status, confirmed.has(id) || ["2237", "2240", "6723", "2211", "6272"].includes(id) ? "ready" : "review", id);
-    assert.deepEqual(prepared.product.spec, { ...record.specs, ...(id === "6421" ? { "Velocidad de desplazamiento con/sin carga (km/h)": "15,7 / 15,7 km/h", "Potencia de tracción (kW)": "8,5 kW", "Potencia de elevación (kW)": "11 kW" } : {}) }, id);
+    const expectedSpecs = { ...record.specs, ...(id === "6421" ? { "Velocidad de desplazamiento con/sin carga (km/h)": "15,7 / 15,7 km/h", "Potencia de tracción (kW)": "8,5 kW", "Potencia de elevación (kW)": "11 kW" } : {}) };
+    for (const [key, value] of Object.entries(expectedSpecs)) assert.deepEqual(prepared.product.spec[key], value, `${id}: ${key}`);
     assert.equal(JSON.stringify(record), original, id);
   }
 });

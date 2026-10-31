@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { resolveGamModelIdentifiedGeneral } from "../mapping/providers/gam/model-identified-general.js";
+import { resolveGamExactVariantGeneral, resolveGamModelIdentifiedGeneral } from "../mapping/providers/gam/model-identified-general.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -25,7 +25,7 @@ test("Fase 19: identifica 15 modelos acreditados sin modificar los originales", 
       assert.ok(record.reference);
       changed.add(record.reference);
       assert.equal(prepared.description_general, result);
-      assert.ok(result.includes(`${record.brand} ${record.model}`));
+      assert.ok(result.toLocaleLowerCase("es").includes(`${record.brand} ${record.model}`.toLocaleLowerCase("es")));
       assert.ok(result.endsWith(record.longDescription?.trim() ?? ""));
       assert.equal(prepared.reference, record.reference);
       assert.equal(prepared.sourceUrl, record.url);
@@ -66,4 +66,56 @@ test("Fase 19: mantiene fuera referencias ambiguas y casos con variantes incompa
     const record = find(reference);
     assert.equal(resolveGamModelIdentifiedGeneral(record, record.longDescription), null, reference);
   }
+});
+
+test("conserva el relato original e identifica solo 15 variantes inequívocas en sus descripciones", () => {
+  const expected = new Set(["2276", "2277", "2278", "2279", "2280", "2291", "2293", "2294",
+    "4734", "4739", "4741", "4743", "4745", "4747", "4768"]);
+  const changed = new Set<string>();
+  for (const record of catalog.products) {
+    const snapshot = JSON.stringify(record);
+    const result = resolveGamExactVariantGeneral(record, record.longDescription);
+    if (result !== null) {
+      assert.ok(record.reference);
+      changed.add(record.reference);
+      assert.ok(record.model);
+      assert.ok(result.toLocaleLowerCase("es").includes(`${record.brand} ${record.model}`.toLocaleLowerCase("es")));
+      assert.ok(!record.longDescription?.includes(`${record.brand} ${record.model}`));
+      const prepared = prepareSourceProduct(record);
+      assert.equal(prepared.product.description_general, result);
+      assert.equal(prepared.product.reference, record.reference);
+      assert.equal(prepared.product.sourceUrl, record.url);
+    }
+    assert.equal(JSON.stringify(record), snapshot);
+  }
+  assert.deepEqual(changed, expected);
+});
+
+test("rechaza discrepancias de procedencia, versión, identidad y batería", () => {
+  const record = find("4743");
+  const general = record.longDescription;
+  assert.ok(resolveGamExactVariantGeneral(record, general));
+  const invalid: readonly ProductRecord[] = [
+    { ...record, providerId: "gomariz" },
+    { ...record, reference: "4745" },
+    { ...record, model: "XG1412AC-LI" },
+    { ...record, title: "Plataforma elevadora XCMG XG1412AC" },
+    { ...record, shortDescription: "Equipo sin variante identificada" },
+    { ...record, brand: "OTRA" },
+    { ...record, categoryKey: "carretillas-nuevas" },
+    { ...record, condition: "Segunda mano" },
+    { ...record, specs: { ...record.specs, Modelo: "XG1412AC-LI" } },
+    { ...record, specs: { ...record.specs, "Tipo de batería": "Batería de plomo" } },
+    { ...record, longDescription: "Descripción no acreditada." },
+    { ...record, url: "https://example.com/es/plataformas-de-tijera-electricas-xcmg/4743-xcmg-xg1212ac-li" },
+    { ...record, url: record.url.replace("4743-", "4745-") },
+    { ...record, url: "no-es-una-url" }
+  ];
+  for (const [index, candidate] of invalid.entries()) {
+    assert.equal(resolveGamExactVariantGeneral(candidate, general), null, String(index));
+  }
+  assert.equal(resolveGamExactVariantGeneral(record, general?.replace("XG1212AC", "XG1212AC-LI") ?? null), null);
+  const yale = find("2279");
+  assert.ok(resolveGamExactVariantGeneral(yale, yale.longDescription));
+  assert.equal(resolveGamExactVariantGeneral({ ...yale, specs: { ...yale.specs, Modelo: "ERC32VG (MWB)" } }, yale.longDescription), null);
 });

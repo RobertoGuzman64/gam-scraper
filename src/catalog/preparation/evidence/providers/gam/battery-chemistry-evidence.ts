@@ -1,0 +1,42 @@
+import type { ProductRecord, SpecsMap } from "../../../../../contracts/catalog.js";
+import { identifiedGamMachineModel } from "./measured-machine-specs.js";
+
+const normalize = (value: string): string => value.toLowerCase().normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+
+const lithiumBattery = /\bbater[ií]as?\s+(?:(?:integrada|extra[ií]ble)s?\s+de\s+)?(?:de\s+)?(?:iones?\s+de\s+)?litio\b/iu;
+const alternativeChemistry = /\b(?:plomo[\s-]?[aá]cido|bater[ií]as?\s+de\s+(?:gel|n[ií]quel|sodio)|ni-?mh|agm)\b/iu;
+const optionalLithium = /\b(?:opci[oó]n\s+de|opcionalmente\s+con|puede\s+equiparse\s+con|posibilidad\s+de\s+elegir\s+entre|disponible\s+con)\s+(?:\w+\s+){0,4}bater[ií]as?\s+(?:de\s+)?(?:de\s+)?(?:iones?\s+de\s+)?litio\b/iu;
+const deniedLithium = /\b(?:no\s+(?:incorpora|lleva|incluye|utiliza)|sin)\s+(?:una\s+)?bater[ií]a\s+de\s+litio\b/iu;
+const batteryKey = /^(?:bater[ií]as?|acumuladores?|tipo\s+de\s+bater[ií]a|qu[ií]mica\s+de\s+bater[ií]a)$/iu;
+
+const identifiedBatteryProduct = (record: ProductRecord): boolean => {
+  if (record.providerId !== "gam" || !identifiedGamMachineModel(record)) return false;
+  const allowed = record.categoryKey === "maquinaria" && record.condition === "Segunda mano" &&
+      ["lvneng", "urban"].includes(normalize(record.brand ?? "")) ||
+    record.condition === "Nuevo" && (
+      ["carretillas-nuevas", "apiladores-nuevos"].includes(record.categoryKey) && normalize(record.brand ?? "") === "hyster" ||
+      record.categoryKey === "elevacion-nueva" && normalize(record.brand ?? "") === "xcmg"
+    );
+  if (!allowed || !record.brand || normalize(String(record.specs?.["Marca"] ?? "")) !== normalize(record.brand)) return false;
+  if (![record.title, record.longDescription].every((part) =>
+    normalize(part ?? "").includes(normalize(record.brand ?? "")))) return false;
+  try {
+    const url = new URL(record.url);
+    const parts = url.pathname.split("/").filter(Boolean);
+    return url.hostname === "online.gamrentals.com" && !url.search && !url.hash &&
+      parts.length === 3 && parts[0] === "es" && parts[2]?.startsWith(`${record.reference}-`) === true &&
+      normalize(parts[2]).includes(normalize(record.model ?? ""));
+  } catch {
+    return false;
+  }
+};
+
+export const recoverGamLithiumBatteryType = (record: ProductRecord): SpecsMap => {
+  const source = record.specs ?? {};
+  const description = record.longDescription ?? "";
+  if (!identifiedBatteryProduct(record) || Object.keys(source).some((key) => batteryKey.test(key)) ||
+    !lithiumBattery.test(description) || alternativeChemistry.test(description) || optionalLithium.test(description) ||
+    deniedLithium.test(description) || /\bbater[ií]a\s+de\s+litio\s+(?:opcional|como\s+opci[oó]n)\b/iu.test(description)) return source;
+  return { ...source, "Tipo de batería": "Litio" };
+};

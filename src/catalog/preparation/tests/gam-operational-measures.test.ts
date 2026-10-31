@@ -66,17 +66,76 @@ test("GAM descarta identidades discordantes, velocidades contradictorias y varia
   }
 });
 
-test("solo 19 referencias GAM reciben un campo nuevo, sin herencias a Gomariz", () => {
+test("34 referencias GAM reciben velocidades acreditadas, sin herencias a Gomariz", () => {
   const changes = gam.products.flatMap((record) => {
     const current = recoverGamOperationalSpecs(record);
     const added = Object.keys(current).filter((key) => !Object.hasOwn(record.specs ?? {}, key));
     return added.length ? [{ reference: record.reference, added }] : [];
   });
-  assert.equal(changes.length, 19);
-  assert.equal(new Set(changes.map(({ reference }) => reference)).size, 19);
-  assert.equal(changes.filter(({ added }) => added[0] === "Velocidad de desplazamiento (km/h)").length, 10);
+  assert.equal(changes.length, 34);
+  assert.equal(new Set(changes.map(({ reference }) => reference)).size, 34);
+  assert.equal(changes.filter(({ added }) => added[0] === "Velocidad de desplazamiento (km/h)").length, 25);
   assert.equal(changes.filter(({ added }) => added[0] === "Velocidad de desplazamiento con/sin carga (km/h)").length, 9);
   assert.ok(changes.every(({ added }) => added.length === 1));
   assert.ok(gomariz.products.every((record) =>
     JSON.stringify(recoverGamOperationalSpecs(record)) === JSON.stringify(record.specs ?? {})));
+});
+
+const isolatedCases = [
+  ["4790", "5 km/h", 5], ["31", "21 km/h", 21],
+  ["6322", "15 km/h", 15], ["6323", "15 km/h", 15], ["6325", "15 km/h", 15],
+  ["5993", "18 km/h", 18], ["5994", "18 km/h", 18], ["3799", "24 km/h", 24],
+  ["4019", "9 km/h", 9], ["4020", "9 km/h", 9], ["4022", "12,9 km/h", 12.9],
+  ["4025", "6 km/h", 6], ["4026", "6,2 km/h", 6.2],
+  ["4027", "6,2 km/h", 6.2], ["4034", "16 km/h", 16]
+] as const;
+
+test("recupera 15 velocidades nuevas propias y normalizables, conservando todas las especificaciones originales", () => {
+  const key = "Velocidad de desplazamiento (km/h)";
+  for (const [reference, expected, numeric] of isolatedCases) {
+    const record = recordOf(reference);
+    const snapshot = structuredClone(record);
+    const actual = prepareSourceProduct(record);
+    assert.equal(actual.product.spec[key], expected, reference);
+    assert.deepEqual(normalizeSpecsObject({ [key]: expected }).normalized[key], [numeric], reference);
+    for (const [name, value] of Object.entries(record.specs ?? {})) {
+      assert.deepEqual(actual.product.spec[name], value, `${reference}: ${name}`);
+    }
+    assert.deepEqual(record, snapshot, reference);
+  }
+});
+
+test("rechaza velocidades alternativas, cargas específicas, modelos incompatibles y especificaciones previas", () => {
+  const vehicle = recordOf("4019");
+  for (const variant of [
+    { ...vehicle, providerId: "gomariz" },
+    { ...vehicle, categoryKey: "limpieza-fregadoras" },
+    { ...vehicle, condition: "Segunda mano" as const },
+    { ...vehicle, model: "BF M17 C" },
+    { ...vehicle, brand: "XCMG" },
+    { ...vehicle, title: "Barredora Tennant BF M20" },
+    { ...vehicle, url: vehicle.url.replace("4019-", "4018-") },
+    { ...vehicle, specs: { ...vehicle.specs, "Velocidad máxima": "9 km/h" } },
+    { ...vehicle, longDescription: `${vehicle.longDescription} Velocidad de desplazamiento de hasta 11 km/h.` },
+    { ...vehicle, longDescription: `${vehicle.longDescription} Velocidad de desplazamiento de hasta 9 km/h sin carga.` },
+    { ...vehicle, longDescription: `${vehicle.longDescription} Velocidad de desplazamiento de hasta 900 km/h.` }
+  ]) assert.deepEqual(recoverGamOperationalSpecs(variant), variant.specs ?? {});
+  for (const reference of ["6324", "5992", "6326", "6327", "6420", "6573", "6574", "4021", "4029", "4017", "6807"]) {
+    const record = recordOf(reference);
+    const after = recoverGamOperationalSpecs(record);
+    if (reference === "6420") assert.equal(after["Velocidad de desplazamiento con/sin carga (km/h)"], "14,8 / 15,7 km/h");
+    else assert.deepEqual(after, record.specs ?? {}, reference);
+  }
+});
+
+test("las 15 velocidades aisladas se atribuyen a su ficha y no se duplican con las 19 medidas previas", () => {
+  const expected = new Set(isolatedCases.map(([reference]) => reference));
+  const newOnly = gam.products.flatMap((record) => {
+    const after = recoverGamOperationalSpecs(record);
+    if (!Object.hasOwn(after, "Velocidad de desplazamiento (km/h)")) return [];
+    if (record.categoryKey === "maquinaria") return [];
+    return [record.reference];
+  });
+  assert.deepEqual(new Set(newOnly), expected);
+  assert.equal(newOnly.length, 15);
 });

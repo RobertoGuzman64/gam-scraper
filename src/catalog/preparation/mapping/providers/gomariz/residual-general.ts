@@ -1,4 +1,5 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
+import { sourcedGomarizScissorFeatures } from "./general-description.js";
 
 const normalize = (value: string): string => value.normalize("NFD")
   .replace(/[\u0300-\u036f]/gu, "").toLowerCase().replace(/[^a-z0-9]/gu, "");
@@ -84,5 +85,29 @@ export const resolveGomarizResidualGeneral = (record: ProductRecord): string | n
   if (reach !== null && reach > 0) facts.push(`${format(reach)} m de alcance lateral`);
   if (cleaningWidth !== null) facts.push(`${format(cleaningWidth)} m de anchura de limpieza`);
   const engine = motor ? ` El motor indicado es ${motor.toLowerCase()}.` : "";
-  return `La ficha técnica de ${title} (${category.label}) recoge ${facts.join(", ")}.` + engine;
+  const sourcedFeatures = sourcedGomarizScissorFeatures(record, family, original);
+  return `La ficha técnica de ${title} (${category.label}) recoge ${facts.join(", ")}.` + engine +
+    (sourcedFeatures ? ` ${sourcedFeatures}` : "");
+};
+
+
+export const removeGomarizConversationalLead = (record: ProductRecord, preparedGeneral: string | null): string | null => {
+  const original = record.longDescription;
+  if (record.providerId !== "gomariz" || record.categoryKey !== "venta" ||
+    record.condition !== "Segunda mano" || record.reference !== "1011JFB" ||
+    record.brand !== "Renault" || record.model !== "PREMIUM 320.26" ||
+    normalize(record.title ?? "") !== normalize("RENAULT PREMIUM 320.26") ||
+    !original?.startsWith("Claro. El Renault Premium 320.26 es un camión") ||
+    preparedGeneral !== original) return null;
+  try {
+    const url = new URL(record.url);
+    const path = url.pathname.split("/").filter(Boolean);
+    if (url.protocol !== "https:" || url.hostname !== "www.gomarizrent.com" ||
+      url.search || url.hash || path.length !== 4 || path[0] !== "venta" ||
+      path[1] !== "camion" || path[2] !== "camion-porta-maquinaria" ||
+      path[3] !== "renault-premium-320-26-camion-portamaquinaria") return null;
+  } catch {
+    return null;
+  }
+  return preparedGeneral.slice("Claro. ".length);
 };

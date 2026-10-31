@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { resolveGamLongDescription } from "../mapping/providers/gam/long-description.js";
+import { removeGamDetachedAffirmatives, removeGamOrphanAffirmative, removeGamResidualEditorialArtifacts, resolveGamLongDescription } from "../mapping/providers/gam/long-description.js";
 import { resolveGamResidualConciseShort } from "../mapping/providers/gam/short-description.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
@@ -48,13 +48,18 @@ test("GAM: las generales extensas se organizan sin perder cifras, frases técnic
       if (difference > 0) trimmed++;
       removedWords += difference;
       const prepared = prepareSourceProduct(record);
-      assert.equal(prepared.product.description_general, general);
+      const baseGeneral = removeGamOrphanAffirmative(record, general) ?? removeGamDetachedAffirmatives(record, general) ?? general;
+      const finalGeneral = removeGamResidualEditorialArtifacts(record, baseGeneral) ?? baseGeneral;
+      assert.equal(prepared.product.description_general, finalGeneral);
+      assert.deepEqual(numbers(finalGeneral), numbers(general), record.reference);
       assert.equal(prepared.product.description,
         resolveGamResidualConciseShort(record, general) ?? record.shortDescription?.trim() ?? null);
       const addedSpecs = record.reference === "6963"
         ? { "Altura de trabajo (m)": "7,8 m", "Capacidad de carga (kg)": "280 KG", "Anchura (mm)": "810 mm" }
         : record.reference === "6480" || record.reference === "6481" ? { "Radio de giro (mm)": "1455 mm" } : {};
-      const speed = ["5995", "5996", "5997"].includes(record.reference)
+      const speed = ["5993", "5994"].includes(record.reference)
+        ? { "Velocidad de desplazamiento (km/h)": "18 km/h" }
+        : ["5995", "5996", "5997"].includes(record.reference)
         ? { "Velocidad de desplazamiento con/sin carga (km/h)": "19 / 20 km/h" }
         : ["6480", "6481"].includes(record.reference)
           ? { "Velocidad de desplazamiento con/sin carga (km/h)": "4 / 4,5 km/h" } : {};
@@ -72,9 +77,13 @@ test("GAM: las generales extensas se organizan sin perder cifras, frases técnic
         "6000": 186, "5994": 186, "6001": 230, "5995": 230, "5996": 230, "5997": 230
       };
       const clearance = record.reference ? clearanceByReference[record.reference] : undefined;
-      assert.deepEqual(prepared.product.spec, { ...record.specs, ...addedSpecs, ...speed, ...power,
+      const expectedSpecs = { ...record.specs, ...addedSpecs, ...speed, ...power,
         ...(battery === null ? {} : { "Voltaje batería (V)": battery[0], "Capacidad de la batería (Ah)": battery[1] }),
-        ...(clearance === undefined ? {} : { "Altura al suelo (mm)": `${clearance} mm` }) });
+        ...(["6480", "6481", "6990", "6991"].includes(record.reference ?? "") ? { "Centro de carga (mm)": "600 mm" } : {}),
+        ...(clearance === undefined ? {} : { "Altura al suelo (mm)": `${clearance} mm` }) };
+      for (const [key, value] of Object.entries(expectedSpecs)) {
+        assert.deepEqual(prepared.product.spec[key], value, `${record.reference}: ${key}`);
+      }
       assert.equal(prepared.product.reference, record.reference);
       assert.equal(prepared.product.sourceUrl, record.url);
     }
@@ -82,7 +91,7 @@ test("GAM: las generales extensas se organizan sin perder cifras, frases técnic
   }
   assert.equal(gam.products.length, 983);
   assert.deepEqual(new Set(changed), changedReferences);
-  assert.equal(trimmed, 19);
+  assert.equal(trimmed, 21);
   assert.ok(removedWords > 10000, `síntesis insuficiente: ${removedWords} palabras`);
 });
 

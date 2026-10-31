@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamGeneralDescription } from "../mapping/providers/gam/general-description.js";
+import { resolveGamVerifiedBriefGeneral } from "../mapping/providers/gam/brief-technical-general.js";
 import { resolveGamShortDescription } from "../mapping/providers/gam/short-description.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
@@ -27,7 +28,7 @@ test("GAM: mejora únicamente las 18 generales con evidencia propia", () => {
     if (improved) {
       assert.ok(record.reference);
       changed.push(record.reference);
-      assert.equal(prepared.product.description_general, improved);
+      assert.equal(prepared.product.description_general, resolveGamVerifiedBriefGeneral(record, improved) ?? improved);
       assert.equal(prepared.product.description, resolveGamShortDescription(record) ?? record.shortDescription?.trim() ?? null);
       assert.ok(improved.length > (record.longDescription?.length ?? 0));
       assert.equal(improved.includes("Equipamiento Estándar:"), false);

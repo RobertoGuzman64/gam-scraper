@@ -58,6 +58,8 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Elevación libre disponible": "bool",
     "Características de elevación": "string",
 
+    "Autonomía máxima (km)": "number",
+    "Autonomía máxima (h)": "number",
     "Velocidad (km/h)": "number_array",
     "Velocidad de desplazamiento (km/h)": "number_array",
     "Velocidad de desplazamiento con/sin carga (km/h)": "number_array",
@@ -81,6 +83,8 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Rotación de torreta": "string",
     "Depósito de solución": "number",
     "Depósito de recuperación": "number",
+    "Nivel sonoro": "string",
+    "Rendimiento de limpieza (m²/h)": "number",
     "Estado de las ruedas": "string",
 
     "Marcado CE": "bool",
@@ -342,6 +346,8 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "rpm": "RPM cepillo",
     "rpm cepillo": "RPM cepillo",
     "rpm del cepillo": "RPM del cepillo",
+
+    "rendimiento de limpieza (m²/h)": "Rendimiento de limpieza (m²/h)",
 
     "estado ruedas": "Estado de las ruedas",
     "estado de las ruedas": "Estado de las ruedas",

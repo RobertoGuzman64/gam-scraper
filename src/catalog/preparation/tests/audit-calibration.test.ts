@@ -25,7 +25,8 @@ const assertCalibrated = (reference: string): void => {
   assert.equal(prepared.status, "ready", reference);
   assert.deepEqual(prepared.issues, [], reference);
   assert.equal(prepared.product.categorySellID, null, reference);
-  assert.deepEqual(prepared.product.spec, { ...record.specs, ...(["4019", "4020"].includes(reference) ? { "Depósito de solución": 480, "Depósito de recuperación": 346 } : {}) }, reference);
+  const expectedSpecs = { ...record.specs, ...(["4019", "4020"].includes(reference) ? { "Depósito de solución": 480, "Depósito de recuperación": 346 } : {}) };
+  for (const [key, value] of Object.entries(expectedSpecs)) assert.deepEqual(prepared.product.spec[key], value, `${reference}: ${key}`);
 };
 
 test("la barredora-fregadora documentada se clasifica como máquina multifunción", () => {

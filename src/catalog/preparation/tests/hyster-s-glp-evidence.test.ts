@@ -36,7 +36,10 @@ for (const [record, model, capacity] of [
     const prepared = prepareProduct(record, catalog);
     assert.equal(prepared.status, "ready");
     assert.deepEqual(prepared.issues, []);
-    assert.deepEqual(prepared.product.spec, originalSpec);
+    assert.deepEqual(prepared.product.spec, {
+      ...originalSpec,
+      ...(record.reference === "2072" ? { "Distancia entre ejes (mm)": "1570 mm" } : {})
+    });
     assert.equal(prepared.product.title, preparedRecord.title);
     assert.equal(prepared.product.description, preparedRecord.shortDescription);
     assert.equal(prepared.product.description_general, preparedRecord.longDescription);
