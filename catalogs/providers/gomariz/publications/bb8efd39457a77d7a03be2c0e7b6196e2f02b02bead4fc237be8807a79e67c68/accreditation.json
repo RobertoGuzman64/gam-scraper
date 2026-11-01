@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "runId": "individual-gomariz-29288252969f8959d6798ad2a971e7c6",
+  "approved": true,
+  "approvalReason": "Aprobada la exclusion de BA1465 por contradiccion de motorizacion pendiente de confirmar",
+  "sources": [
+    {
+      "providerId": "gomariz",
+      "catalogSha256": "52cd6523ac4150f4059ca8c50147ad3ecddf6c7f69daebe5dd2b79f113f594e6",
+      "preparationSha256": "3f4808106ff52678373c5194a1b464761fb74b0326e36283894cadd1ce36de0e",
+      "productCount": 143
+    }
+  ],
+  "exclusions": [
+    {
+      "providerId": "gomariz",
+      "reference": "BA1465",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/lgmg-a14je-3/",
+      "status": "review",
+      "issues": [
+        "Motorización contradictoria: la ficha técnica indica eléctrico y la descripción dice diésel"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión por motorización contradictoria: ficha técnica eléctrica y descripción diésel. Pendiente de confirmación del proveedor.",
+      "evidenceUrls": [
+        "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/lgmg-a14je-3/"
+      ]
+    }
+  ]
+}
