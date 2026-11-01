@@ -80,7 +80,7 @@ test("GAM rechaza fuentes incompatibles, medidas contradictorias y claves existe
       assert.deepEqual(recoverGamCleaningTankSpecs(variant), variant.specs);
     }
   }
-  for (const reference of ["6148", "4018", "4021"]) {
+  for (const reference of ["6148"]) {
     const excluded = recordOf(reference);
     assert.deepEqual(recoverGamCleaningTankSpecs(excluded), excluded.specs ?? {}, reference);
   }
@@ -90,7 +90,7 @@ test("solo las 25 fichas GAM con prueba atribuible reciben depósitos, sin arras
   const expected = [
     "4019", "4020", "4022", "3996", "3999", "6149", "4000", "4005", "4001", "4002",
     "5773", "4008", "4011", "4006", "4007", "4003", "4004", "4009", "4010", "5771",
-    "4012", "4013", "4014", "4015", "4017"
+    "4012", "4013", "4014", "4015", "4017", "4018", "4021"
   ];
   const changed = gam.products.flatMap((record) => {
     const source = record.specs ?? {};
@@ -99,8 +99,8 @@ test("solo las 25 fichas GAM con prueba atribuible reciben depósitos, sin arras
     return keys.length > 0 ? [{ reference: record.reference, keys }] : [];
   });
   assert.deepEqual(new Set(changed.map(({ reference }) => reference)), new Set(expected));
-  assert.equal(changed.length, 25);
-  assert.equal(changed.reduce((count, row) => count + row.keys.length, 0), 45);
+  assert.equal(changed.length, 27);
+  assert.equal(changed.reduce((count, row) => count + row.keys.length, 0), 48);
   assert.ok(changed.every(({ keys }) => keys.every((key) => key === solutionKey || key === recoveryKey)));
   assert.ok(gomariz.products.every((record) =>
     JSON.stringify(recoverGamCleaningTankSpecs(record)) === JSON.stringify(record.specs ?? {})));

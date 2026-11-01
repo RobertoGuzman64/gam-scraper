@@ -1,0 +1,244 @@
+import { createHash } from "node:crypto";
+import type { ProductRecord } from "../../../../../contracts/catalog.js";
+
+export type EditorialEvidence = {
+  readonly url: string;
+  readonly title: string;
+  readonly categoryKey: string;
+  readonly brand: string;
+  readonly model: string;
+  readonly sourceHash: string;
+  readonly sourceSpecs: Readonly<Record<string, string>>;
+  readonly general: string;
+  readonly originalShort?: string;
+  readonly revisedShort?: string;
+};
+
+const evidence: Readonly<Record<string, EditorialEvidence>> = {
+  "4991": {
+    "url": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/4991-carretilla-elevadora-electrica-hyster-j35xtlg",
+    "title": "CARRETILLA ELEVADORA ELÉCTRICA 3500KG HYSTER J3.5XTLG",
+    "categoryKey": "carretillas-nuevas",
+    "brand": "HYSTER",
+    "model": "J3.5XTLG",
+    "sourceHash": "54556867ae88b42ebcdd01f3b2599c73bf8a7ca421f5ebaeec291d9eec5f1754",
+    "sourceSpecs": { "Marca": "HYSTER", "Modelo": "J3.5XTLG", "Longitud": "3850 mm", "Anchura": "1230 mm", "Altura": "2150 mm", "Peso": "4725 KG", "Tipo motor": "Eléctrico", "Capacidad de carga (kg)": "3500 KG", "Centro de carga": "500 mm", "Radio de giro": "2500", "Altura de elevación (mm)": "3700 mm" },
+    "general": "La carretilla elevadora eléctrica Hyster J3.5XTLG está orientada a operaciones de manutención de hasta 3.500 kg en naves, almacenes y patios industriales con superficies firmes. Su propulsión eléctrica con batería de ion de litio combina trabajo sin emisiones directas de escape y posibilidad de recargas durante las pausas, cuando la instalación lo permite. Los neumáticos industriales y la altura libre al suelo facilitan las transiciones entre pavimentos con irregularidades moderadas; no debe confundirse con una máquina todoterreno. La ficha indica un centro de carga de 500 mm, una altura de elevación de 3.700 mm y un peso de 4.725 kg. Las dimensiones declaradas son 3.850 mm de longitud, 1.230 mm de anchura y 2.150 mm de altura. La selección del mástil y las condiciones de suelo deben verificarse según el trabajo."
+  },
+  "4988": {
+    "url": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/4988-carretilla-elevadora-electrica-hyster-j20xtlg",
+    "title": "CARRETILLA ELEVADORA ELÉCTRICA 2000KG HYSTER J2.0XTLG",
+    "categoryKey": "carretillas-nuevas",
+    "brand": "HYSTER",
+    "model": "J2.0XTLG",
+    "sourceHash": "49ca3600f4ef55441caf16919f6f67ef379071a7baabf0d4813092d012cc1b4e",
+    "sourceSpecs": { "Marca": "HYSTER", "Modelo": "J2.0XTLG", "Longitud": "3630 mm", "Anchura": "1160 mm", "Altura": "2010 mm", "Peso": "3520 KG", "Tipo motor": "Eléctrico", "Capacidad de carga (kg)": "2000 KG", "Centro de carga": "500 mm", "Radio de giro": "2290", "Altura de elevación (mm)": "3575 mm" },
+    "general": "La Hyster J2.0XTLG es una carretilla elevadora eléctrica de 2.000 kg de capacidad nominal, concebida para carga, descarga y movimiento de palés en instalaciones industriales. Su batería de ion de litio LFP y los motores eléctricos de corriente alterna permiten utilizar propulsión eléctrica sin emisiones directas de escape y realizar recargas parciales según las condiciones de uso. La mayor altura libre al suelo y los neumáticos industriales favorecen el tránsito entre interiores y superficies exteriores firmes con pequeñas irregularidades, sin convertirla en una carretilla todoterreno. La ficha recoge 3.575 mm de altura de elevación, centro de carga de 500 mm, 3.630 mm de longitud, 1.160 mm de anchura, 2.010 mm de altura y un peso de 3.520 kg. Conviene comprobar pavimento y configuración de mástil antes de utilizarla. En el texto comercial se precisan 130 mm de altura libre entre ejes y 125 mm bajo el mástil con carga, medidas relevantes para evaluar las transiciones de pavimento."
+  },
+  "4990": {
+    "url": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/4990-carretilla-elevadora-electrica-hyster-j30xtlg",
+    "title": "CARRETILLA ELEVADORA ELÉCTRICA 3000KG HYSTER J3.0XTLG",
+    "categoryKey": "carretillas-nuevas",
+    "brand": "HYSTER",
+    "model": "J3.0XTLG",
+    "sourceHash": "4a5d6669f51aa77e5e28961b4f38f4c3390c911633487c247634e0bd59f034c0",
+    "sourceSpecs": { "Marca": "HYSTER", "Modelo": "J3.0XTLG", "Longitud": "3760 mm", "Anchura": "1230 mm", "Altura": "2150 mm", "Peso": "4330 KG", "Tipo motor": "Eléctrico", "Capacidad de carga (kg)": "3000 KG", "Centro de carga": "500 mm", "Altura de elevación (mm)": "3640 mm" },
+    "general": "La Hyster J3.0XTLG es una carretilla elevadora eléctrica con capacidad nominal de 3.000 kg para manutención de cargas en almacenes, zonas de producción y patios logísticos. La ficha describe una batería de ion de litio, neumáticos industriales y una altura libre al suelo pensada para circular sobre superficies firmes con pequeñas irregularidades. El equipo funciona sin emisiones directas de gases de escape y admite operaciones entre interiores y exteriores cuando el estado del pavimento lo permite. Su altura de elevación indicada es de 3.640 mm, con un centro de carga de 500 mm. Mide 3.760 mm de longitud, 1.230 mm de anchura y 2.150 mm de altura, con un peso de 4.330 kg. Las condiciones de estabilidad, carga y paso deben contrastarse con la configuración elegida."
+  },
+  "4989": {
+    "url": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/4989-carretilla-elevadora-electrica-hyster-j25xtlg",
+    "title": "CARRETILLA ELEVADORA ELÉCTRICA 2500KG HYSTER J2.5XTLG",
+    "categoryKey": "carretillas-nuevas",
+    "brand": "HYSTER",
+    "model": "J2.5XTLG",
+    "sourceHash": "60e09269e26983a5edcc4f33e0a7583fda7f3726d9775fd3da6f7992debe2f6a",
+    "sourceSpecs": { "Marca": "HYSTER", "Modelo": "J2.5XTLG", "Longitud": "3693 mm", "Anchura": "1160 mm", "Altura": "2010 mm", "Peso": "3775 KG", "Tipo motor": "Eléctrico", "Capacidad de carga (kg)": "2500 KG", "Centro de carga": "500 mm", "Radio de giro": "2349mm", "Altura de elevación (mm)": "3575 mm" },
+    "general": "La carretilla eléctrica Hyster J2.5XTLG ofrece una capacidad nominal de 2.500 kg para cargar, descargar y trasladar mercancía paletizada en entornos logísticos e industriales. Según la descripción de origen, su propulsión eléctrica con batería de ion de litio se combina con neumáticos industriales y una altura libre al suelo favorable para transitar por pavimentos firmes con juntas o pequeñas irregularidades. Esta versatilidad no implica aptitud para terrenos blandos o muy accidentados. La altura de elevación publicada es de 3.575 mm y el centro de carga, de 500 mm. Las dimensiones declaradas son 3.693 mm de longitud, 1.160 mm de anchura y 2.010 mm de altura, con un peso de 3.775 kg. Antes de operar deben comprobarse el suelo, el espacio de giro y las condiciones reales de carga."
+  },
+  "6308": {
+    "url": "https://online.gamrentals.com/es/cte/6308-plataforma-sobre-camion-articulada-cte-az16-pickup",
+    "title": "Plataforma sobre camión articulada CTE AZ16 PICKUP",
+    "categoryKey": "elevacion-nueva",
+    "brand": "CTE",
+    "model": "AZ16 PICKUP",
+    "sourceHash": "8031d49b496de1b1e6aea310856a503f4ea5c273e0fcbeffd95bfb75ed120f21",
+    "sourceSpecs": { "Marca": "CTE", "Modelo": "AZ16 PICKUP", "Longitud": "6000 mm", "Altura": "2700 mm", "Altura de elevación (m)": "15,5 metros", "Capacidad de carga (kg)": "230 KG" },
+    "general": "La plataforma articulada sobre vehículo pick-up CTE AZ16 PICKUP está destinada a trabajos de mantenimiento e instalación en altura que requieren desplazamientos frecuentes. La descripción del proveedor recoge una altura máxima de trabajo de 15,50 m y un alcance lateral de hasta 7,30 m; la capacidad declarada de la cesta es de 230 kg. La articulación permite salvar obstáculos al posicionar la cesta, mientras que el montaje sobre vehículo facilita el traslado entre intervenciones. La ficha indica una longitud de 6.000 mm y una altura del conjunto de 2.700 mm. La rotación de la torreta anunciada es de 700° y la de la cesta, de 90°; ambos valores proceden del texto de origen. La configuración del vehículo, la estabilización y el espacio de maniobra deben verificarse antes de cada trabajo. La altura de cesta anunciada es de 13,50 m y la plataforma de trabajo mide 1.200 × 700 × 1.100 mm. Estos datos distinguen la altura de la cesta de la altura máxima de trabajo."
+  },
+  "6954": {
+    "url": "https://online.gamrentals.com/es/cte/6954-plataforma-sobre-furgon-cte-vj12-fib",
+    "title": "PLATAFORMA SOBRE FURGÓN 12M CTE VJ12 FIB",
+    "categoryKey": "elevacion-nueva",
+    "brand": "CTE",
+    "model": "VJ12 FIB",
+    "sourceHash": "df826d816a0377542e43c65b86d565096f193d3aa63b67f32c8bd36aecbffa6a",
+    "sourceSpecs": { "Marca": "CTE", "Modelo": "VJ12 FIB", "Altura de elevación (m)": "12 metros", "Capacidad de carga (kg)": "120 KG" },
+    "general": "La CTE VJ12 FIB es una plataforma elevadora sobre furgón con cesta de fibra, destinada a mantenimiento, instalaciones y servicios técnicos que requieren desplazarse entre distintos puntos de trabajo. Su configuración sobre furgón con P.M.A. indicada de 3,5 toneladas combina transporte y acceso elevado en el mismo vehículo; la cesta de fibra es el elemento diferenciador frente a la VJ12 convencional. La ficha técnica publicada declara 12 metros de altura de elevación y 120 kg de capacidad de carga en la cesta. La descripción original menciona aplicaciones en mantenimiento de redes y servicios urbanos, pero el tipo de cesta no exime de comprobar los procedimientos específicos para trabajos eléctricos. Antes de emplearla hay que verificar las condiciones de apoyo, los accesos, las limitaciones de carga y la configuración concreta del vehículo."
+  },
+  "6573": {
+    "url": "https://online.gamrentals.com/es/hyster/6573-carretilla-retractil-hyster-ro16",
+    "title": "Carretilla retráctil 1600KG Hyster RO1.6",
+    "categoryKey": "carretillas-nuevas",
+    "brand": "HYSTER",
+    "model": "RO1.6",
+    "sourceHash": "f497f02e33cf5d412bdaa3eb84325857c71d48715dda469873677d1895957547",
+    "sourceSpecs": { "Marca": "HYSTER", "Modelo": "RO1.6", "Capacidad de carga (kg)": "1600 KG", "Centro de carga": "600 mm", "Altura de elevación (mm)": "5500 mm" },
+    "general": "La carretilla retráctil Hyster RO1.6 está concebida para operaciones de almacenaje y movimiento de palés en pasillos estrechos. Su capacidad nominal publicada es de 1.600 kg, con centro de carga de 600 mm y altura de elevación de 5.500 mm según la tabla de la ficha. La descripción del proveedor menciona propulsión eléctrica, un motor de tracción de 9,6 kW y velocidad máxima de hasta 12,5 km/h sin carga. El diseño retráctil permite realizar maniobras de apilado sin las dimensiones habituales de una carretilla contrapesada. Las alturas y dimensiones del mástil pueden variar según la configuración; el texto comercial también describe otras opciones de elevación. Es necesario contrastar el pasillo disponible, el mástil instalado y la capacidad residual a la altura de trabajo. Como configuración descrita, el mástil estándar eleva 5.000 mm, queda a 2.212 mm recogido y alcanza 5.580 mm extendido; se citan opciones de hasta 7.500 mm. La anchura publicada varía entre 1.265 y 1.414 mm. Las horquillas estándar son de 40 × 120 × 1.150 mm, con separación ajustable de 260 a 680 mm. También se ofrecen opciones de dirección de 180 o 360 grados."
+  },
+  "6574": {
+    "url": "https://online.gamrentals.com/es/hyster/6574-carretilla-retractil-hyster-ro20",
+    "title": "Carretilla retráctil 2000KG Hyster RO2.0",
+    "categoryKey": "carretillas-nuevas",
+    "brand": "HYSTER",
+    "model": "RO2.0",
+    "sourceHash": "2d71126ef88964710a0e1e9cca6391868d9f04fe75c70f829e2913bd2aabeddc",
+    "sourceSpecs": { "Marca": "HYSTER", "Modelo": "RO2.0", "Capacidad de carga (kg)": "2000 KG", "Centro de carga": "600 mm", "Altura de elevación (mm)": "5500 mm" },
+    "general": "La Hyster RO2.0 es una carretilla retráctil eléctrica orientada a manipular palés en almacenes y pasillos estrechos. La ficha técnica de este modelo declara 2.000 kg de capacidad de carga, centro de carga de 600 mm y altura de elevación de 5.500 mm. En el texto comercial se describen un motor de tracción de 9,6 kW, velocidad de desplazamiento de hasta 12,5 km/h sin carga y distintas configuraciones de mástil. La descripción también contempla opciones de batería de 48 V, cuyas capacidades dependen de la versión. Conviene comprobar el mástil instalado, los espacios de maniobra y la carga admisible a la altura de apilado: las prestaciones de las opciones mencionadas no deben darse por incluidas en todas las unidades. El texto identifica batería de 48 V y 560 Ah, con opciones de 620 Ah y litio. El mástil estándar se describe con 4.650 mm de elevación, 2.212 mm recogido y 5.280 mm extendido, y se anuncian opciones de hasta 7.400 mm. La anchura depende de la configuración (1.265 o 1.414 mm); las horquillas estándar son de 40 × 120 × 1.150 mm, separables entre 260 y 680 mm. La dirección de 180 o 360 grados es opcional.",
+    "originalShort": "➨ Hyster RO1.6 ➨ Venta de Carretilla Retráctil nueva ⭐Capacidad de carga de 1600 kg",
+    "revisedShort": "La carretilla retráctil eléctrica Hyster RO2.0 tiene una capacidad nominal de 2.000 kg, con centro de carga de 600 mm, para trabajos de almacén y apilado."
+  },
+  "6767": {
+    "url": "https://online.gamrentals.com/es/cte/6767-plataforma-sobre-camion-telescopico-cte-b-lift-20-auto",
+    "title": "PLATAFORMA SOBRE CAMIÓN TELESCÓPICO CTE B-LIFT 20 AUTO",
+    "categoryKey": "elevacion-nueva",
+    "brand": "CTE",
+    "model": "B-LIFT 20 AUTO",
+    "sourceHash": "73cb679a035a492fa99afec16fab3124b1be3c0cfdc080c0bfb7705a20950d32",
+    "sourceSpecs": { "Marca": "CTE", "Modelo": "B-LIFT 20 AUTO", "Longitud": "7840 mm", "Altura": "2950 mm", "Peso": "3500 KG", "Altura de elevación (m)": "20 metros", "Capacidad de carga (kg)": "230 KG" },
+    "general": "La plataforma telescópica sobre camión CTE B-LIFT 20 AUTO está destinada a mantenimiento, instalaciones y trabajos de acceso en altura con desplazamientos entre ubicaciones. La descripción original especifica 19,60 m de altura máxima de trabajo, 17,60 m de altura de plataforma y hasta 12,30 m de alcance lateral. La ficha la comercializa en la categoría de 20 metros y declara 230 kg de capacidad de cesta. Incorpora torreta con rotación anunciada de 700° y cesta orientable, para facilitar el posicionamiento frente al punto de trabajo. El conjunto tiene 7.840 mm de longitud y 2.950 mm de altura, con un peso declarado de 3.500 kg. Las condiciones de estabilización, alcance con carga y espacio de maniobra deben comprobarse sobre la configuración concreta. La cesta publicada mide 1.400 × 700 × 1.100 mm y ofrece giro de 90° + 90° según el texto del proveedor."
+  },
+  "6114": {
+    "url": "https://online.gamrentals.com/es/yale/6114-carretilla-elevadora-electrica-yale-erp18uxtl",
+    "title": "CARRETILLA ELEVADORA ELÉCTRICA 1800KG YALE ERP18UXTL",
+    "categoryKey": "carretillas-nuevas",
+    "brand": "YALE",
+    "model": "ERP18UXTL",
+    "sourceHash": "f575ef34e5f000900b904b59871da51f172828f722177942f0f09919aa410d8f",
+    "sourceSpecs": { "Marca": "YALE", "Modelo": "ERP18UXTL", "Longitud": "2894 mm", "Anchura": "1084 mm", "Altura": "1992 mm", "Peso": "3190 KG", "Tipo motor": "Eléctrico", "Capacidad de carga (kg)": "1800 KG", "Centro de carga": "500 mm", "Radio de giro (exterior)": "1601 metros", "Altura de elevación (mm)": "3036 mm" },
+    "general": "La Yale ERP18UXTL es una carretilla elevadora eléctrica de tres ruedas para manutención en interiores y espacios de maniobra reducidos. Su capacidad nominal declarada es de 1.800 kg con centro de carga de 500 mm. El texto del proveedor describe una alimentación eléctrica de 48 V y alternativas de batería según configuración; no todas las capacidades indicadas corresponden necesariamente a la misma unidad. La ficha técnica recoge una altura de elevación de 3.036 mm, 2.894 mm de longitud, 1.084 mm de anchura, 1.992 mm de altura y un peso de 3.190 kg. El diseño de tres ruedas facilita los giros en almacenes y áreas de carga compactas. Antes de usarla deben verificarse la batería instalada, la altura del mástil, el pavimento y la capacidad residual a la elevación prevista. Se citan dos motores de tracción de 5 kW, velocidades de hasta 16 km/h sin carga y 14 km/h con carga, y mástiles opcionales de hasta 6.000 mm. Las alternativas de alimentación incluyen baterías de plomo de 48 V y litio de 51,2 V en capacidades de hasta 500 Ah. El consumo de referencia indicado es de 5,3 kWh/h, según ciclo VDI."
+  },
+  "6744": {
+    "url": "https://online.gamrentals.com/es/yale/6744-preparapedidos-yale-mo25x",
+    "title": "Preparapedidos 2500kg Yale MO25X",
+    "categoryKey": "carretillas-nuevas",
+    "brand": "YALE",
+    "model": "MO25X",
+    "sourceHash": "a135e26b7bdcc8aed80e0ab430027cf0022dbe19984314a6c9e9d3d6eb181fe3",
+    "sourceSpecs": { "Marca": "YALE", "Modelo": "MO25X", "Longitud": "2550 mm", "Anchura": "750 mm", "Altura": "1285 mm", "Capacidad de carga (kg)": "2500 KG" },
+    "general": "El preparapedidos Yale MO25X es un equipo eléctrico de conductor a bordo destinado al traslado interno de palés y a la preparación de pedidos en almacenes y centros logísticos. Su capacidad de carga publicada es de 2.500 kg. La descripción de origen recoge plataforma de conducción de pie, alimentación de 24 V y sistemas de tracción y elevación eléctricos, además de diversas medidas correspondientes a la geometría del equipo. La ficha estructurada indica 2.550 mm de longitud, 750 mm de anchura y 1.285 mm de altura. Estas medidas permiten una primera comprobación de compatibilidad con pasillos y recorridos. Las capacidades de batería, la pendiente admisible y los radios de giro citados en el texto comercial dependen de la configuración y deben contrastarse con el equipo seleccionado. El texto técnico especifica velocidad de hasta 13 km/h sin carga, horquillas de 55 × 170 × 1.180 mm y elevación de 120 mm. Para palés de 800 × 1.200 mm indica un pasillo aproximado de 2.985 mm y una longitud con conductor a bordo de 2.549 mm, muy próxima al redondeo de la ficha. La elevación utiliza motor de 2,2 kW y la batería descrita pesa aproximadamente 288 kg."
+  },
+  "2370": {
+    "url": "https://online.gamrentals.com/es/apiladores-yale/2370-apilador-electrico-yale-ms24hbe",
+    "title": "Apilador eléctrico 2400Kg Yale MS24HBE",
+    "categoryKey": "apiladores-nuevos",
+    "brand": "YALE",
+    "model": "MS24HBE",
+    "sourceHash": "a74f3e6de5e90622dc0ed0b859385b1bb2543da1f824c3d84c5425a59a9d3cac",
+    "sourceSpecs": { "Marca": "YALE", "Modelo": "MS24HBE", "Capacidad de carga (kg)": "2400 KG", "Motorización": "Eléctrico" },
+    "general": "El apilador eléctrico Yale MS24HBE se dirige al movimiento y apilado de palés en almacenes y operaciones logísticas intensivas. Su capacidad de carga declarada es de 2.400 kg y dispone de plataforma plegable, lo que permite alternar operación como conductor acompañante y trabajo con operario a bordo según las condiciones del equipo. El texto del proveedor indica motorización eléctrica de 24 V y batería de 150 Ah, junto con soluciones orientadas a maniobras en espacios de almacenamiento. La plataforma y los controles de desplazamiento facilitan recorridos frecuentes de manutención; la elección del mástil determina la altura de trabajo. Antes de incorporarlo a una instalación conviene verificar el ancho útil de los pasillos, el pavimento y la capacidad residual con la elevación requerida."
+  },
+  "6768": {
+    "url": "https://online.gamrentals.com/es/cte/6768-plataforma-sobre-camion-telescopico-cte-b-lift-20-auto-fib",
+    "title": "PLATAFORMA SOBRE CAMIÓN TELESCÓPICO CTE B-LIFT 20 AUTO FIB",
+    "categoryKey": "elevacion-nueva",
+    "brand": "CTE",
+    "model": "B-LIFT 20 AUTO FIB",
+    "sourceHash": "de61fe9698ab2674826d002b1da8d12bac9e8199f47b7c88f0a7bddc32249fb9",
+    "sourceSpecs": { "Marca": "CTE", "Modelo": "B-LIFT 20 AUTO FIB", "Longitud": "7840 mm", "Altura": "2950 mm", "Peso": "3500 KG", "Altura de elevación (m)": "20 metros", "Capacidad de carga (kg)": "230 KG" },
+    "general": "La CTE B-LIFT 20 AUTO FIB es una plataforma telescópica sobre camión con cesta de fibra, destinada a intervenciones en altura en las que se requiere esa configuración de cesta. La descripción del proveedor indica 19,60 m de altura máxima de trabajo, 17,60 m de altura de plataforma y hasta 12,30 m de alcance lateral. Su capacidad nominal de cesta es de 230 kg. La ficha recoge 7.840 mm de longitud y 2.950 mm de altura del conjunto, con un peso declarado de 3.500 kg. También se anuncian rotación de torreta de 700° y giro de cesta de 90°. La cesta de fibra no implica por sí sola una autorización para trabajar con tensión: deben verificarse las condiciones de aislamiento, los procedimientos aplicables y la configuración exacta del equipo. La cesta de fibra presenta dimensiones publicadas de 1.400 × 700 × 1.100 mm, dato relevante para comprobar el espacio del operador y del material."
+  },
+  "6115": {
+    "url": "https://online.gamrentals.com/es/yale/6115-carretilla-elevadora-electrica-yale-erp20uxtl",
+    "title": "CARRETILLA ELEVADORA ELÉCTRICA 2000KG YALE ERP20UXTL",
+    "categoryKey": "carretillas-nuevas",
+    "brand": "YALE",
+    "model": "ERP20UXTL",
+    "sourceHash": "4da7e503af0eb9e266a15a4b6d4f719abc3b6854bf660bfc5c2c6be51c0b9375",
+    "sourceSpecs": { "Marca": "YALE", "Modelo": "ERP20UXTL", "Longitud": "3153 mm", "Anchura": "1140 mm", "Altura": "1990 mm", "Peso": "3380 KG", "Tipo motor": "Eléctrico", "Capacidad de carga (kg)": "2000 KG", "Centro de carga": "500 mm", "Radio de giro (exterior)": "1716 metros", "Altura de elevación (mm)": "3045 mm" },
+    "general": "La Yale ERP20UXTL es una carretilla elevadora eléctrica de tres ruedas para carga, descarga y manutención en instalaciones con pasillos y espacios de giro ajustados. Ofrece una capacidad nominal de 2.000 kg con centro de carga de 500 mm. El texto comercial presenta una alimentación de 48 V y distintas alternativas de batería, por lo que la autonomía y los tiempos de recarga dependen de la configuración elegida. La ficha indica una altura de elevación de 3.045 mm, longitud de 3.153 mm, anchura de 1.140 mm, altura de 1.990 mm y peso de 3.380 kg. Su diseño está orientado a maniobras interiores repetitivas. Es preciso comprobar las dimensiones reales del mástil y la carga admisible a la elevación prevista antes de utilizarla. El proveedor cita dos motores de tracción de 5 kW y un consumo de referencia de 5,7 kWh/h en ciclo VDI. Se contemplan baterías de plomo de 48 V hasta 640 Ah y opciones de litio de 51,2 V, con capacidades entre 250 y 500 Ah. Estos valores son alternativas, no especificaciones garantizadas de todas las unidades."
+  },
+  "6743": {
+    "url": "https://online.gamrentals.com/es/yale/6743-preparapedidos-yale-mo20x",
+    "title": "Preparapedidos 2000kg Yale MO20X",
+    "categoryKey": "carretillas-nuevas",
+    "brand": "YALE",
+    "model": "MO20X",
+    "sourceHash": "c0e96895eeea79264da9f4ea84e16d4ce4ef4ff4402a3b70e0c3b346c1220562",
+    "sourceSpecs": { "Marca": "YALE", "Modelo": "MO20X", "Longitud": "2550 mm", "Anchura": "750 mm", "Altura": "1285 mm", "Capacidad de carga (kg)": "2000 KG" },
+    "general": "El Yale MO20X es un preparapedidos eléctrico con conductor a bordo destinado al movimiento interno de palés, abastecimiento de líneas y preparación de pedidos. La capacidad nominal declarada es de 2.000 kg. La descripción comercial recoge una plataforma para el operario, alimentación de 24 V y sistemas de tracción y elevación eléctricos, con opciones de batería que deben confirmarse para cada configuración. Sus dimensiones publicadas en la ficha son 2.550 mm de longitud, 750 mm de anchura y 1.285 mm de altura. Estos valores facilitan la comprobación preliminar de recorridos y espacios en el almacén. Antes de incorporarlo a una operación hay que contrastar los radios de maniobra, las pendientes autorizadas y las limitaciones de carga con la unidad elegida. La ficha comercial menciona velocidades de hasta 9,7 km/h con carga y 13 km/h sin ella; horquillas de 55 × 170 × 1.180 mm, elevación de hasta 120 mm y pasillo de trabajo aproximado de 2.985 mm para palés de 800 × 1.200 mm. La batería descrita tiene 24 V y 375 Ah, con peso aproximado de 288 kg. Las pendientes máximas anunciadas son 11,4 % con carga y 20 % sin carga, según condiciones."
+  },
+  "6873": {
+    "url": "https://online.gamrentals.com/es/cte/6873-plataforma-sobre-furgon-cte-vj15",
+    "title": "PLATAFORMA SOBRE FURGÓN 15M CTE VJ15",
+    "categoryKey": "elevacion-nueva",
+    "brand": "CTE",
+    "model": "VJ15",
+    "sourceHash": "47b5bf5505e5dc83a894942367f0eb05a48be2768bc3d3d12f888aedb9eb86fe",
+    "sourceSpecs": { "Marca": "CTE", "Modelo": "VJ15", "Longitud": "6850 mm", "Altura": "3280 mm", "Altura de trabajo (m)": "14,40 metros", "Capacidad de carga (kg)": "225 KG", "Dimensiones Cesta": "1400x700x1100 mm metros", "Alcance Lateral": "8,5 m metros", "Distancia entre ejes": "3682 mm", "Rotación": "400º" },
+    "general": "La plataforma sobre furgón CTE VJ15 combina desplazamiento por carretera, espacio de transporte y acceso elevado para mantenimiento e instalaciones en distintas ubicaciones. La ficha recoge una altura máxima de trabajo de 14,40 m, un alcance lateral de 8,50 m y una capacidad de cesta de 225 kg. En la descripción de origen también se menciona una altura de plataforma de 12,40 m. El conjunto tiene una longitud publicada de 6.850 mm y una altura de 3.280 mm; la rotación anunciada es de 400°. La instalación sobre furgón permite transportar materiales junto al equipo, aunque la carga del vehículo y la de la cesta deben comprobarse por separado. Antes de operar se deben verificar los apoyos, el alcance permitido y los límites de utilización de la configuración concreta. El anuncio también menciona una línea auxiliar de 230 V con protección diferencial; cualquier uso de tomas eléctricas exige verificar su instalación y sus protecciones."
+  },
+  "6113": {
+    "url": "https://online.gamrentals.com/es/yale/6113-carretilla-elevadora-electrica-yale-erp16uxtl",
+    "title": "CARRETILLA ELEVADORA ELÉCTRICA 1600KG YALE ERP16UXTL",
+    "categoryKey": "carretillas-nuevas",
+    "brand": "YALE",
+    "model": "ERP16UXTL",
+    "sourceHash": "3d89b0cc479d7bbad1fb52a300afbb5d0df95f483de1cbf13eb9e377ec723ff5",
+    "sourceSpecs": { "Marca": "YALE", "Modelo": "ERP16UXTL", "Longitud": "2894 mm", "Anchura": "1084 mm", "Altura": "1992 mm", "Peso": "3120 KG", "Tipo motor": "Eléctrico", "Capacidad de carga (kg)": "1600 KG", "Centro de carga": "500 mm", "Radio de giro (exterior)": "2.1 metros", "Altura de elevación (mm)": "3036 mm" },
+    "general": "La carretilla eléctrica Yale ERP16UXTL está destinada a operaciones de manutención en interiores, con un diseño de tres ruedas que facilita las maniobras en pasillos y áreas de carga compactas. La ficha declara 1.600 kg de capacidad nominal a 500 mm de centro de carga y una altura de elevación de 3.036 mm. El texto del proveedor cita una alimentación de 48 V y varias alternativas de batería, que requieren confirmación según el equipamiento. Las dimensiones estructuradas son 2.894 mm de longitud, 1.084 mm de anchura y 1.992 mm de altura, con un peso publicado de 3.120 kg. La selección debe considerar pavimento, espacio de giro, altura de paso y capacidad residual con el mástil instalado. Entre las alternativas energéticas se mencionan baterías de plomo de 48 V y 500–640 Ah y opciones de litio de 51,2 V, con capacidades de 250 a 500 Ah. El consumo de referencia publicado para el ciclo VDI es de 5,19 kWh/h y depende del ciclo operativo."
+  },
+  "5995": {
+    "url": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-yale/5995-carretilla-elevadora-electrica-yale-erp50mxlg6",
+    "title": "CARRETILLA ELEVADORA ELÉCTRICA 5000KG YALE ERP5.0MXLG6",
+    "categoryKey": "carretillas-nuevas",
+    "brand": "YALE",
+    "model": "ERP5.0MXLG6",
+    "sourceHash": "a36185f4021a54f8ec6f728da88d29068aa2c24803f4debc86b76210f1ec17e2",
+    "sourceSpecs": { "Marca": "YALE", "Modelo": "ERP5.0MXLG6", "Longitud": "4715 mm", "Anchura": "2020 mm", "Altura": "2500 mm", "Peso": "8510 KG", "Tipo motor": "Eléctrico", "Capacidad de carga (kg)": "5000 KG", "Centro de carga": "600 mm", "Radio de giro": "3250", "Altura de elevación (mm)": "3000 mm" },
+    "general": "La Yale ERP5.0MXLG6 es una carretilla elevadora eléctrica de 5.000 kg de capacidad nominal, con centro de carga de 600 mm, destinada a la manutención de cargas pesadas en entornos industriales. Su descripción comercial identifica batería de ion de litio LFP de 80,8 kWh, con tensión nominal de 354,2 V y capacidad de 228 Ah, y motores eléctricos de tracción y elevación de 40 kW. La ficha técnica indica una altura de elevación de 3.000 mm, 4.715 mm de longitud, 2.020 mm de anchura, 2.500 mm de altura y un peso de 8.510 kg. Los neumáticos industriales y el diseño de la máquina están orientados a superficies firmes, incluidas áreas exteriores con pequeñas irregularidades. La capacidad admisible y las condiciones de maniobra deben comprobarse para la carga y el mástil concretos. La descripción añade 3.250 mm de radio de giro, velocidad de hasta 19 km/h con carga, 230 mm de altura libre entre ejes y 200 mm bajo mástil. El mástil estándar eleva 3 metros y se anuncian variantes hasta 6.500 mm; la capacidad nominal se describe hasta 5.000 mm de elevación. Para la batería se declara un rango térmico de -25 °C a +45 °C, con posible pérdida de rendimiento por debajo de -10 °C."
+  },
+  "5996": {
+    "url": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-yale/5996-carretilla-elevadora-electrica-yale-erp60mxlg6",
+    "title": "CARRETILLA ELEVADORA ELÉCTRICA 6000KG YALE ERP6.0MXLG6",
+    "categoryKey": "carretillas-nuevas",
+    "brand": "YALE",
+    "model": "ERP6.0MXLG6",
+    "sourceHash": "ce413ecba969ae82c48b8109a71ea2d1c4d21ca315d3d3cf0c3511bdf18334cd",
+    "sourceSpecs": { "Marca": "YALE", "Modelo": "ERP6.0MXLG6", "Longitud": "4785 mm", "Anchura": "2020 mm", "Altura": "2500 mm", "Peso": "9190 KG", "Tipo motor": "Eléctrico", "Capacidad de carga (kg)": "6000 KG", "Centro de carga": "600 mm", "Radio de giro": "3.8 / 6.0", "Altura de elevación (mm)": "3000 mm" },
+    "originalShort": "La carretilla elevadora eléctrica Yale ERP6.0MXLG6 combina una capacidad de carga de 6.000 kg, con centro de carga de 600 mm, con la eficiencia de la tecnología de ion de litio y la robustez necesaria para afrontar operaciones de manutención de gran tonelaje en diferentes entornos industriales. Una de sus principales ventajas es su altura libre al suelo de 230 mm en el centro de la distancia entre ejes y 200 mm bajo el mástil con carga, combinada con neumáticos industriales de gran tamaño y ruedas delantera",
+    "revisedShort": "La carretilla elevadora eléctrica Yale ERP6.0MXLG6 es una solución de manutención industrial diseñada para empresas que necesitan combinar una elevada capacidad de carga, eficiencia energética y versatilidad operativa.",
+    "general": "La Yale ERP6.0MXLG6 es una carretilla elevadora eléctrica para operaciones de manutención de hasta 6.000 kg de capacidad nominal con centro de carga de 600 mm. La descripción original recoge batería LFP de 80,8 kWh, 354,2 V de tensión nominal y 228 Ah de capacidad, junto con motores eléctricos de tracción y elevación de 40 kW. Su funcionamiento eléctrico evita emisiones directas de gases de escape durante la operación. La ficha indica 3.000 mm de altura de elevación, 4.785 mm de longitud, 2.020 mm de anchura y 2.500 mm de altura, con un peso declarado de 9.190 kg. La descripción indica 230 mm de altura libre al suelo entre ejes y 200 mm bajo el mástil con carga, junto con neumáticos industriales para maniobrar sobre superficies firmes. Deben verificarse las limitaciones de carga, pavimento y espacio en función del mástil y las condiciones reales de trabajo. El radio de giro anunciado es de 3.300 mm y la velocidad puede alcanzar 19 km/h con carga. El mástil estándar eleva 3 metros y existen opciones hasta 6.500 mm, con la capacidad nominal descrita hasta 5.000 mm de elevación. El texto declara para la batería un intervalo de funcionamiento de -25 °C a +45 °C, con reducción de rendimiento posible por debajo de -10 °C."
+  },
+  "5997": {
+    "url": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-yale/5997-carretilla-elevadora-electrica-yale-erp70mxlg6",
+    "title": "CARRETILLA ELEVADORA ELÉCTRICA 7000KG YALE ERP7.0MXLG6",
+    "categoryKey": "carretillas-nuevas",
+    "brand": "YALE",
+    "model": "ERP7.0MXLG6",
+    "sourceHash": "c5ee09ac211259624f2a954bdd1b366c8423e3857fb1b9b0b5522f91c5a0f90b",
+    "sourceSpecs": { "Marca": "YALE", "Modelo": "ERP7.0MXLG6", "Longitud": "4830 mm", "Anchura": "2020 mm", "Altura": "2625 mm", "Peso": "9800 KG", "Tipo motor": "Eléctrico", "Capacidad de carga (kg)": "7000 KG", "Centro de carga": "600 mm", "Radio de giro": "3360", "Altura de elevación (mm)": "3000 mm" },
+    "general": "La Yale ERP7.0MXLG6 es una carretilla elevadora eléctrica destinada a manipular cargas pesadas en almacenes, industrias y patios logísticos. Su capacidad nominal declarada es de 7.000 kg con centro de carga de 600 mm. Según el texto comercial, equipa batería de ion de litio LFP de 80,8 kWh, con tensión nominal de 354,2 V y capacidad de 228 Ah; los motores de tracción y elevación anunciados son de 40 kW. La ficha recoge 3.000 mm de altura de elevación, 4.830 mm de longitud, 2.020 mm de anchura, 2.625 mm de altura y 9.800 kg de peso. Su diseño y neumáticos industriales favorecen el trabajo en pavimentos firmes con irregularidades moderadas. La estabilidad, la capacidad residual y la geometría del mástil deben comprobarse según la aplicación. El radio de giro anunciado es de 3.360 mm y la velocidad puede alcanzar 19 km/h con carga. Se indican 230 mm de despeje entre ejes y 200 mm bajo mástil. El mástil estándar eleva 3 metros y hay opciones hasta 6.500 mm, con capacidad nominal descrita hasta 5.000 mm. La batería tiene rango térmico declarado de -25 °C a +45 °C, aunque su rendimiento puede bajar por debajo de -10 °C."
+  },
+};
+
+export const verifyGamEditorialEvidence = (record: ProductRecord, evidenceSet: Readonly<Record<string, EditorialEvidence>>): EditorialEvidence | null => {
+  if (record.providerId !== "gam" || record.condition !== "Nuevo" || !record.reference ||
+    !record.longDescription || !record.title || !record.brand || !record.model) return null;
+  const entry = evidenceSet[record.reference];
+  if (!entry || record.url !== entry.url || record.title !== entry.title ||
+    record.categoryKey !== entry.categoryKey || record.brand !== entry.brand ||
+    record.model !== entry.model || record.externalReference !== entry.model ||
+    Object.keys(record.specs ?? {}).length !== Object.keys(entry.sourceSpecs).length ||
+    Object.entries(entry.sourceSpecs).some(([key, value]) => record.specs?.[key] !== value)) return null;
+  const fingerprint = createHash("sha256").update(record.longDescription.trim()).digest("hex");
+  return fingerprint === entry.sourceHash ? entry : null;
+};
+
+export const resolveGamCondensedGeneral = (record: ProductRecord): string | null =>
+  verifyGamEditorialEvidence(record, evidence)?.general ?? null;
+
+export const resolveGamCondensedShort = (record: ProductRecord): string | null => {
+  const entry = verifyGamEditorialEvidence(record, evidence);
+  return entry?.originalShort && record.shortDescription === entry.originalShort ?
+    entry.revisedShort ?? null : null;
+};

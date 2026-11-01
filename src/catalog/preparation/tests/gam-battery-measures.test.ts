@@ -45,13 +45,16 @@ test("GAM rechaza variantes, configuraciones alternativas y medidas contradictor
     { ...record, reference: "6964" },
     { ...record, specs: { ...record.specs, Marca: "HYSTER" } },
     { ...record, specs: { ...record.specs, "Voltaje batería (V)": "24 V" } },
-    { ...record, specs: { ...record.specs, "Capacidad de la batería": "75 Ah" } },
     { ...record, longDescription: `${record.longDescription} También hay una batería de 48 V / 150 Ah.` },
     { ...record, longDescription: `${record.longDescription} Existe una opción de batería de 24 V / 90 Ah.` },
     { ...record, longDescription: `${record.longDescription} La batería auxiliar de 12 V admite el sistema.` }
   ]) {
     assert.deepEqual(recoverGamBatteryMeasures(variant), variant.specs);
   }
+  const knownCapacity = { ...record, specs: { ...record.specs, "Capacidad de la batería": "75 Ah" } };
+  const withVoltage = recoverGamBatteryMeasures(knownCapacity);
+  assert.equal(withVoltage["Capacidad de la batería"], "75 Ah");
+  assert.equal(withVoltage["Voltaje batería (V)"], "24 V");
   for (const reference of ["5988", "5992", "3799", "3800", "6368", "6002"]) {
     const incompatible = recordOf(reference);
     assert.deepEqual(recoverGamBatteryMeasures(incompatible), incompatible.specs ?? {}, reference);
@@ -61,4 +64,71 @@ test("GAM rechaza variantes, configuraciones alternativas y medidas contradictor
 test("Gomariz permanece fuera del enriquecimiento de baterías GAM", () => {
   assert.ok(gomariz.products.every((record) =>
     JSON.stringify(recoverGamBatteryMeasures(record)) === JSON.stringify(record.specs ?? {})));
+});
+
+test("recupera únicamente tensiones de batería coincidentes en plataformas, apiladores y limpieza", () => {
+  for (const [reference, voltage] of [["4731", 24], ["2103", 24], ["5771", 36]] as const) {
+    const record = recordOf(reference);
+    const original = structuredClone(record);
+    const prepared = prepareSourceProduct(record);
+    const normalized = normalizeSpecsObject(prepared.product.spec);
+    assert.equal(normalized.normalized["Voltaje batería (V)"], voltage, reference);
+    assert.ok(!normalized.unknownKeys.includes("Voltaje batería (V)"));
+    for (const [key, value] of Object.entries(record.specs ?? {})) {
+      assert.deepEqual(prepared.product.spec[key], value, `${reference}: ${key}`);
+    }
+    assert.deepEqual(record, original);
+  }
+  const record = recordOf("4731");
+  for (const invalid of [
+    { ...record, brand: "Otra" },
+    { ...record, model: "XG0607AC" },
+    { ...record, reference: "4732" },
+    { ...record, specs: { ...record.specs, "Voltaje batería (V)": "24 V" } },
+    { ...record, longDescription: `${record.longDescription} Batería opcional de 48 V.` },
+    { ...record, longDescription: `${record.longDescription} Batería de 24 o 48 V.` },
+    { ...record, longDescription: `${record.longDescription} El cargador auxiliar utiliza 12 V.` }
+  ]) {
+    assert.deepEqual(recoverGamBatteryMeasures(invalid), invalid.specs ?? {});
+  }
+});
+
+test("GAM recupera tensiones no representadas en quince carretillas eléctricas identificadas", () => {
+  for (const [reference, voltage] of [
+    ["2221", 48], ["2222", 48], ["2223", 48],
+    ["2254", 80], ["2255", 80], ["2256", 80],
+    ["6419", 51.2], ["2012", 48], ["4625", 48],
+    ["6420", 51.2], ["4626", 48], ["6325", 48],
+    ["6421", 51.2], ["6425", 77.6], ["6424", 77.6]
+  ] as const) {
+    const record = recordOf(reference);
+    const original = structuredClone(record);
+    const prepared = prepareSourceProduct(record);
+    const normalized = normalizeSpecsObject(prepared.product.spec);
+    assert.equal(normalized.normalized["Voltaje batería (V)"], voltage, reference);
+    assert.ok(!normalized.unknownKeys.includes("Voltaje batería (V)"), reference);
+    for (const [key, value] of Object.entries(record.specs ?? {})) {
+      assert.deepEqual(prepared.product.spec[key], value, `${reference}: ${key}`);
+    }
+    assert.deepEqual(record, original, reference);
+  }
+});
+
+test("no duplica voltajes ya incluidos en otro spec ni acepta referencias o tensiones cruzadas", () => {
+  const original = recordOf("6420");
+  for (const record of [
+    { ...original, brand: "YALE" },
+    { ...original, model: "J2.0UTL" },
+    { ...original, reference: "6421" },
+    { ...original, url: original.url.replace("6420-", "6421-") },
+    { ...original, specs: { ...original.specs, "Capacidad de la batería": "51,2 V / 460 Ah" } },
+    { ...original, longDescription: `${original.longDescription} Cargador auxiliar de 24 V.` },
+    { ...original, longDescription: `${original.longDescription} Batería alternativa de 48 V.` }
+  ]) {
+    assert.deepEqual(recoverGamBatteryMeasures(record), record.specs ?? {});
+  }
+  for (const reference of ["2015", "2037", "2289"]) {
+    const record = recordOf(reference);
+    assert.deepEqual(recoverGamBatteryMeasures(record), record.specs ?? {}, reference);
+  }
 });

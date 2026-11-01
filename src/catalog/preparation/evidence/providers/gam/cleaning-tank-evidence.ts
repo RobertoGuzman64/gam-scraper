@@ -20,6 +20,27 @@ const measuredVolume = (text: string, pattern: RegExp): VolumeEvidence => {
     values.every((value) => value === first) ? first : "conflict";
 };
 
+const verifiedResidualCleaningIdentity = (record: ProductRecord): boolean => {
+  if (record.providerId !== "gam" || record.condition !== "Nuevo" ||
+    !["limpieza-fregadoras", "limpieza-barredoras"].includes(record.categoryKey)) return false;
+  const model = record.reference === "4018" && record.model === "T20" &&
+    record.brand?.toLowerCase() === "tennant" && record.specs?.["Marca"] === "Tennant" ? "FCS T20 C" :
+    record.reference === "4021" && record.model === "BF M20" && !record.brand &&
+      record.specs?.["Modelo"] === "BF M20" ? "BF M20" : null;
+  if (model === null || ![record.title, record.shortDescription, record.longDescription].every((text) =>
+    typeof text === "string" && text.toLowerCase().includes(model.toLowerCase()) && /tennant/iu.test(text))) return false;
+  try {
+    const url = new URL(record.url);
+    const path = url.pathname.split("/").filter(Boolean);
+    const slug = model.toLowerCase().replace(/\s+/g, "-");
+    return url.hostname === "online.gamrentals.com" && !url.search && !url.hash && path.length === 3 &&
+      path[0] === "es" && path[2]?.startsWith(`${record.reference}-`) === true &&
+      path[2]?.endsWith(slug) === true;
+  } catch {
+    return false;
+  }
+};
+
 const matchesSourceIdentity = (record: ProductRecord): boolean => {
   if (record.providerId !== "gam" || !["limpieza-fregadoras", "limpieza-barredoras"].includes(record.categoryKey) ||
     record.condition !== "Nuevo" || !identifiedGamMachineModel(record) ||
@@ -45,7 +66,7 @@ const matchesSourceIdentity = (record: ProductRecord): boolean => {
 
 export const recoverGamCleaningTankSpecs = (record: ProductRecord): SpecsMap => {
   const source = record.specs ?? {};
-  if (!matchesSourceIdentity(record) ||
+  if (!(matchesSourceIdentity(record) || verifiedResidualCleaningIdentity(record)) ||
     Object.keys(source).some((key) => /dep[oó]sito\s+(?:de\s+)?(?:soluci[oó]n|recuperaci[oó]n)/iu.test(key))) return source;
 
   const text = record.longDescription ?? "";
@@ -64,4 +85,44 @@ export const recoverGamCleaningTankSpecs = (record: ProductRecord): SpecsMap => 
     ...(solutionVolume === null ? {} : { [keySolution]: solutionVolume }),
     ...(recoveryVolume === null ? {} : { [keyRecovery]: recoveryVolume })
   };
+};
+
+const hopperVolumePatterns = [
+  /\b(?:capacidad\s+de\s+(?:la\s+)?tolva|tolva\s+con\s+capacidad)\s+de\s+(\d{2,4})\s*litros?\b/giu,
+  /\btolva\s+de\s+(?:(?:alta|gran)\s+capacidad\s+de\s+|residuos\s+de\s+)?(\d{2,4})\s*litros?\b/giu
+] as const;
+
+const verifiedSweeperIdentity = (record: ProductRecord): boolean => {
+  if (record.providerId !== "gam" || record.condition !== "Nuevo" ||
+    record.categoryKey !== "limpieza-barredoras" || record.brand !== "Tennant" ||
+    record.specs?.["Marca"] !== "Tennant" || record.specs?.["Modelo"] !== record.model ||
+    !identifiedGamMachineModel(record) || !/^(?:BCS)\s/iu.test(record.model ?? "") ||
+    !/\btennant\b/iu.test(record.title ?? "")) return false;
+  const short = record.shortDescription ?? "";
+  const competingModel = short.match(/\bBCS\s+(?:S\d+|\d+)\b/iu)?.[0];
+  if (competingModel && !(record.model ?? "").toLowerCase().startsWith(competingModel.toLowerCase())) return false;
+  try {
+    const url = new URL(record.url);
+    const parts = url.pathname.split("/").filter(Boolean);
+    const compact = (value: string): string => value.toLowerCase().replace(/[^a-z0-9]/g, "");
+    return url.hostname === "online.gamrentals.com" && !url.search && !url.hash && parts.length === 3 &&
+      parts[0] === "es" && ["tennant", "barredoras-industriales-nuevas"].includes(parts[1] ?? "") &&
+      parts[2]?.startsWith(`${record.reference}-`) === true &&
+      compact(parts[2]).includes(compact(record.model ?? ""));
+  } catch {
+    return false;
+  }
+};
+
+export const recoverGamSweeperHopperCapacity = (record: ProductRecord): SpecsMap => {
+  const source = record.specs ?? {};
+  if (!verifiedSweeperIdentity(record) || Object.keys(source).some((key) =>
+    /\b(?:tolva|dep[oó]sito\s+de\s+residuos)\b/iu.test(key))) return source;
+  const description = record.longDescription ?? "";
+  const values = hopperVolumePatterns.flatMap((pattern) => [...description.matchAll(pattern)]
+    .map((match) => Number(match[1])));
+  const volume = values[0];
+  if (volume === undefined || !Number.isInteger(volume) || volume < 20 || volume > 2000 ||
+    values.some((value) => value !== volume)) return source;
+  return { ...source, "Capacidad de la tolva": volume };
 };

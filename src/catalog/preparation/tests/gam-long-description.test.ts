@@ -4,6 +4,9 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { removeGamDetachedAffirmatives, removeGamOrphanAffirmative, removeGamResidualEditorialArtifacts, resolveGamLongDescription } from "../mapping/providers/gam/long-description.js";
 import { resolveGamResidualConciseShort } from "../mapping/providers/gam/short-description.js";
+import { resolveGamCondensedGeneral } from "../mapping/providers/gam/verified-condensed-general.js";
+import { resolveGamHysterCondensedGeneral, resolveGamHysterCondensedShort } from "../mapping/providers/gam/verified-condensed-hyster.js";
+import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../mapping/providers/gam/verified-condensed-additional.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -50,10 +53,10 @@ test("GAM: las generales extensas se organizan sin perder cifras, frases técnic
       const prepared = prepareSourceProduct(record);
       const baseGeneral = removeGamOrphanAffirmative(record, general) ?? removeGamDetachedAffirmatives(record, general) ?? general;
       const finalGeneral = removeGamResidualEditorialArtifacts(record, baseGeneral) ?? baseGeneral;
-      assert.equal(prepared.product.description_general, finalGeneral);
+      assert.equal(prepared.product.description_general, resolveGamCondensedGeneral(record) ?? resolveGamAdditionalCondensedGeneral(record) ?? resolveGamHysterCondensedGeneral(record) ?? finalGeneral);
       assert.deepEqual(numbers(finalGeneral), numbers(general), record.reference);
       assert.equal(prepared.product.description,
-        resolveGamResidualConciseShort(record, general) ?? record.shortDescription?.trim() ?? null);
+        resolveGamAdditionalCondensedShort(record) ?? resolveGamHysterCondensedShort(record) ?? resolveGamResidualConciseShort(record, general) ?? record.shortDescription?.trim() ?? null);
       const addedSpecs = record.reference === "6963"
         ? { "Altura de trabajo (m)": "7,8 m", "Capacidad de carga (kg)": "280 KG", "Anchura (mm)": "810 mm" }
         : record.reference === "6480" || record.reference === "6481" ? { "Radio de giro (mm)": "1455 mm" } : {};

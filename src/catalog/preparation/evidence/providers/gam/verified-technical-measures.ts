@@ -3,6 +3,7 @@ import { identifiedGamMachineModel } from "./measured-machine-specs.js";
 
 const turret = /\b(?:rotaci[oó]n|giro)\s+de\s+(?:la\s+)?(?:torreta|torre)\s*(?::|de)?\s*(?:de\s+)?(±\s*)?(\d{2,3})\s*[°º](?:\s*\+\s*(\d{2,3})\s*[°º])?/giu;
 const width = /\banchura(?:\s+total)?\s+de\s+(?:apenas\s+)?(\d{3,4})\s*mm\b/giu;
+const slope = /\bpendiente superable\s+del?\s+(\d{1,2})\s*%/giu;
 const fuel = /\bdep[oó]sito\s+de\s+combustible\s+de\s+(\d{2,3})\s*(?:l|litros?)\b/giu;
 
 const normalizedIdentity = (value: string): string => value.toLowerCase().normalize("NFD")
@@ -64,6 +65,11 @@ export const recoverGamVerifiedTechnicalSpecs = (record: ProductRecord): SpecsMa
     !Object.keys(source).some((key) => /dep[oó]sito\s+de\s+combustible|capacidad\s+de\s+combustible/iu.test(key))) {
     const value = uniqueNumber(text, fuel, 10, 1000);
     if (value !== null) result = { ...result, "Depósito de combustible": value };
+  }
+  if (record.categoryKey === "elevacion-nueva" &&
+    !Object.keys(source).some((key) => /pendiente|inclinaci[oó]n superable/iu.test(key))) {
+    const value = uniqueNumber(text, slope, 1, 60);
+    if (value !== null) result = { ...result, "Pendiente superable": `${value}%` };
   }
   return result;
 };

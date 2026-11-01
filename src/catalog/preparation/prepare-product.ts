@@ -21,6 +21,16 @@ import { resolveGamConciseTitle } from "./mapping/providers/gam/concise-titles.j
 import { rebalanceGamTechnicalShort } from "./mapping/providers/gam/rebalance-technical-short.js";
 import { resolveGomarizEditorialTitle } from "./mapping/providers/gomariz/editorial-title.js";
 import { resolveGamGeneralDescription } from "./mapping/providers/gam/general-description.js";
+import { resolveGamCondensedGeneral, resolveGamCondensedShort } from "./mapping/providers/gam/verified-condensed-general.js";
+import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "./mapping/providers/gam/verified-condensed-additional.js";
+import { resolveGamExtendedCondensedGeneral, resolveGamExtendedCondensedShort } from "./mapping/providers/gam/verified-condensed-extended.js";
+import { resolveGamCleaningCondensedGeneral, resolveGamCleaningCondensedShort } from "./mapping/providers/gam/verified-condensed-cleaning.js";
+import { resolveGamForkliftCondensedGeneral, resolveGamForkliftCondensedShort } from "./mapping/providers/gam/verified-condensed-forklifts.js";
+import { resolveGamHandlingCondensedGeneral, resolveGamHandlingCondensedShort } from "./mapping/providers/gam/verified-condensed-handling.js";
+import { resolveGamPlatformCondensedGeneral, resolveGamPlatformCondensedShort } from "./mapping/providers/gam/verified-condensed-platforms.js";
+import { resolveGamWarehouseCondensedGeneral, resolveGamWarehouseCondensedShort } from "./mapping/providers/gam/verified-condensed-warehouse.js";
+import { resolveGamHysterCondensedGeneral, resolveGamHysterCondensedShort } from "./mapping/providers/gam/verified-condensed-hyster.js";
+import { resolveGamTennantCondensedGeneral, resolveGamTennantCondensedShort } from "./mapping/providers/gam/verified-condensed-tennant.js";
 import { resolveGamModelSpecificGeneral } from "./mapping/providers/gam/model-specific-general.js";
 import { removeGamDetachedAffirmatives, removeGamOrphanAffirmative, removeGamResidualEditorialArtifacts, resolveGamLongDescription } from "./mapping/providers/gam/long-description.js";
 import { resolveGamVerifiedBriefGeneral } from "./mapping/providers/gam/brief-technical-general.js";
@@ -46,7 +56,7 @@ import { recoverGamExplicitHorizontalReachSpec } from "./evidence/providers/gam/
 import { recoverGamExplicitLoadCapacitySpec } from "./evidence/providers/gam/load-capacity-evidence.js";
 import { recoverGamExplicitMachineSpecs } from "./evidence/providers/gam/measured-machine-specs.js";
 import { recoverGamOperationalSpecs } from "./evidence/providers/gam/operational-measures-evidence.js";
-import { recoverGamCleaningTankSpecs } from "./evidence/providers/gam/cleaning-tank-evidence.js";
+import { recoverGamCleaningTankSpecs, recoverGamSweeperHopperCapacity } from "./evidence/providers/gam/cleaning-tank-evidence.js";
 import { recoverGamVerifiedTechnicalSpecs } from "./evidence/providers/gam/verified-technical-measures.js";
 import { recoverGamElectricMotorPowerSpecs } from "./evidence/providers/gam/electric-motor-power-evidence.js";
 import { recoverGamBatteryMeasures } from "./evidence/providers/gam/battery-measures-evidence.js";
@@ -57,7 +67,10 @@ import { recoverGamAutonomySpec } from "./evidence/providers/gam/autonomy-eviden
 import { recoverGamAcousticSpec } from "./evidence/providers/gam/acoustic-evidence.js";
 import { recoverGamCleaningProductivitySpec } from "./evidence/providers/gam/cleaning-productivity-evidence.js";
 import { recoverGamMaximumLiftHeightSpec } from "./evidence/providers/gam/lift-height-evidence.js";
-import { recoverGamHysterForkliftTyresSpec, recoverGamNonMarkingTyresSpec } from "./evidence/providers/gam/non-marking-tyres-evidence.js";
+import { recoverGamElectricalBatterySpecs, recoverGamVerifiedBatteryPairSpecs } from "./evidence/providers/gam/battery-electrical-evidence.js";
+import { recoverGamMotorConfigurationSpecs, recoverGamVerifiedEnginePowerSpecs, recoverGamVerifiedEngineTorqueSpecs } from "./evidence/providers/gam/motor-configuration-evidence.js";
+import { recoverGamPhysicalMeasures } from "./evidence/providers/gam/physical-measures-evidence.js";
+import { recoverGamHysterForkliftTyresSpec, recoverGamNonMarkingTyresSpec, recoverGamYaleSuperelasticTyresSpec, recoverGamVerifiedSuperelasticTyresSpec, recoverGamVerifiedTyreMaterialsSpec } from "./evidence/providers/gam/non-marking-tyres-evidence.js";
 import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation } from "./reconciliation/mercaeleva.js";
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
@@ -83,7 +96,17 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const cleaningProductivitySpecs = recoverGamCleaningProductivitySpec({ ...record, specs: acousticSpecs });
   const tyreSpecs = recoverGamNonMarkingTyresSpec({ ...record, specs: cleaningProductivitySpecs });
   const forkliftTyreSpecs = recoverGamHysterForkliftTyresSpec({ ...record, specs: tyreSpecs });
-  const liftSpecs = recoverGamMaximumLiftHeightSpec({ ...record, specs: forkliftTyreSpecs });
+  const yaleTyreSpecs = recoverGamYaleSuperelasticTyresSpec({ ...record, specs: forkliftTyreSpecs });
+  const liftSpecs = recoverGamMaximumLiftHeightSpec({ ...record, specs: yaleTyreSpecs });
+  const physicalSpecs = recoverGamPhysicalMeasures({ ...record, specs: liftSpecs });
+  const electricalSpecs = recoverGamElectricalBatterySpecs({ ...record, specs: physicalSpecs });
+  const batteryPairSpecs = recoverGamVerifiedBatteryPairSpecs({ ...record, specs: electricalSpecs });
+  const motorSpecs = recoverGamMotorConfigurationSpecs({ ...record, specs: batteryPairSpecs });
+  const engineSpecs = recoverGamVerifiedEnginePowerSpecs({ ...record, specs: motorSpecs });
+  const engineTorqueSpecs = recoverGamVerifiedEngineTorqueSpecs({ ...record, specs: engineSpecs });
+  const superelasticSpecs = recoverGamVerifiedSuperelasticTyresSpec({ ...record, specs: engineTorqueSpecs });
+  const tyreMaterialSpecs = recoverGamVerifiedTyreMaterialsSpec({ ...record, specs: superelasticSpecs });
+  const finalSpecs = recoverGamSweeperHopperCapacity({ ...record, specs: tyreMaterialSpecs });
   record = reconcileGamForPreparation(record);
   record = reconcileMercaelevaForPreparation(record);
   const issues: string[] = [];
@@ -97,12 +120,12 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const conciseMercaelevaShort = resolveMercaelevaConciseDescription(record);
   const missingDescriptions = mercaelevaMissingDescriptions(record);
   const missingGamDescriptions = gamMissingDescriptions(record);
-  const general = resolveGamIndividualizedGeneral(record) ?? resolveGomarizIndividualizedGeneral(record) ?? resolveGomarizCriticalBriefGeneral(record) ?? resolveGomarizGeneralDescription(record) ?? resolveGomarizResidualGeneral(record) ?? verifiedMercaelevaCriticalGeneral(record) ?? verifiedPriorityPlatformGeneral(record) ?? resolveMercaelevaGeneralDescription(record) ?? resolveGamPriorityBriefGeneral(record) ?? resolveGamCriticalBriefGeneral(record) ?? resolveGamGeneralDescription(record) ?? resolveGamModelSpecificGeneral(record) ?? resolveGamLongDescription(record) ?? verifiedGamFamilyGeneral ?? resolveGamTecnacarGeneral(record) ?? record.longDescription ?? missingDescriptions.long ?? missingGamDescriptions.long;
+  const general = resolveGamCondensedGeneral(record) ?? resolveGamAdditionalCondensedGeneral(record) ?? resolveGamExtendedCondensedGeneral(record) ?? resolveGamCleaningCondensedGeneral(record) ?? resolveGamForkliftCondensedGeneral(record) ?? resolveGamHandlingCondensedGeneral(record) ?? resolveGamPlatformCondensedGeneral(record) ?? resolveGamWarehouseCondensedGeneral(record) ?? resolveGamHysterCondensedGeneral(record) ?? resolveGamTennantCondensedGeneral(record) ?? resolveGamIndividualizedGeneral(record) ?? resolveGomarizIndividualizedGeneral(record) ?? resolveGomarizCriticalBriefGeneral(record) ?? resolveGomarizGeneralDescription(record) ?? resolveGomarizResidualGeneral(record) ?? verifiedMercaelevaCriticalGeneral(record) ?? verifiedPriorityPlatformGeneral(record) ?? resolveMercaelevaGeneralDescription(record) ?? resolveGamPriorityBriefGeneral(record) ?? resolveGamCriticalBriefGeneral(record) ?? resolveGamGeneralDescription(record) ?? resolveGamModelSpecificGeneral(record) ?? resolveGamLongDescription(record) ?? verifiedGamFamilyGeneral ?? resolveGamTecnacarGeneral(record) ?? record.longDescription ?? missingDescriptions.long ?? missingGamDescriptions.long;
   const balanced = conciseGamShort === null ? rebalanceGamOverlongShort(record, general) : null;
   const technicalBalance = conciseGamShort === null && balanced === null ? rebalanceGamTechnicalShort(record, general) : null;
   const conciseResidual = conciseGamShort === null && balanced === null && technicalBalance === null ? resolveGamResidualConciseShort(record, general) : null;
   const descriptions = distinguishDescriptions(
-    conciseGamShort ?? balanced?.short ?? technicalBalance?.short ?? conciseResidual ?? conciseMercaelevaShort ?? record.shortDescription ?? descriptionEvidence.description ?? resolveGomarizShortDescription(record) ?? missingGamDescriptions.short,
+    resolveGamCondensedShort(record) ?? resolveGamAdditionalCondensedShort(record) ?? resolveGamExtendedCondensedShort(record) ?? resolveGamCleaningCondensedShort(record) ?? resolveGamForkliftCondensedShort(record) ?? resolveGamHandlingCondensedShort(record) ?? resolveGamPlatformCondensedShort(record) ?? resolveGamWarehouseCondensedShort(record) ?? resolveGamHysterCondensedShort(record) ?? resolveGamTennantCondensedShort(record) ?? conciseGamShort ?? balanced?.short ?? technicalBalance?.short ?? conciseResidual ?? conciseMercaelevaShort ?? record.shortDescription ?? descriptionEvidence.description ?? resolveGomarizShortDescription(record) ?? missingGamDescriptions.short,
     balanced?.general ?? technicalBalance?.general ?? general
   );
   const usedYearGeneral = resolveGamUsedYearGeneral(record, descriptions.short, descriptions.long);
@@ -143,7 +166,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     description_general: editorialGeneral,
     image: images[0] ?? null,
     images,
-    spec: liftSpecs,
+    spec: finalSpecs,
     attributes: attributeResult?.attributes ?? []
   };
   return {

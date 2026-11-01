@@ -1,8 +1,8 @@
 import type { ProductRecord, SpecsMap } from "../../../../../contracts/catalog.js";
 import { identifiedGamMachineModel } from "./measured-machine-specs.js";
 
-const autonomy = /\bautonom[ií]a\s+(?:m[aá]xima\s+|indicada\s+)?(?:de\s+|:\s*)?(?:hasta\s+)?(\d{1,3})\s*(km|kil[oó]metros?|horas?|h)\b/giu;
-const reverseAutonomy = /\bhasta\s+(\d{1,3})\s*(km|kil[oó]metros?|horas?|h)\s+de\s+autonom[ií]a\b/giu;
+const autonomy = /\bautonom[ií]a\s+(?:m[aá]xima\s+|indicada\s+)?(?:de\s+|:\s*)?(?:hasta\s+)?(\d{1,3}(?:[.,]\d)?)\s*(km|kil[oó]metros?|horas?|h)\b/giu;
+const reverseAutonomy = /\bhasta\s+(\d{1,3}(?:[.,]\d)?)\s*(km|kil[oó]metros?|horas?|h)\s+de\s+autonom[ií]a\b/giu;
 const alternativeRange = /\b(?:o|u)\s+\d{1,3}\s+(?:horas?|km)(?!\/h)\b/iu;
 const existingAutonomy = /\bautonom[ií]a\b/iu;
 const electricVehicle = /\b(?:ciclomotor|scooter|motocicleta|bicicleta)\s+el[eé]ctric[oa]\b/iu;
@@ -36,7 +36,7 @@ const measuresOf = (description: string): readonly Measure[] => {
   for (const pattern of [autonomy, reverseAutonomy]) {
     for (const match of description.matchAll(pattern)) {
       const unit = /^(?:km|kil[oó]metros?)$/iu.test(match[2] ?? "") ? "km" : "h";
-      results.push({ value: Number(match[1]), unit });
+      results.push({ value: Number((match[1] ?? "").replace(",", ".")), unit });
     }
   }
   return results;
@@ -52,8 +52,8 @@ export const recoverGamAutonomySpec = (record: ProductRecord): SpecsMap => {
   if (!eligible || alternativeRange.test(description)) return source;
   const measures = measuresOf(description);
   const first = measures[0];
-  if (!first || !Number.isInteger(first.value) || first.value < 1 ||
+  if (!first || !Number.isFinite(first.value) || first.value * 2 !== Math.round(first.value * 2) || first.value < 1 ||
     first.value > (first.unit === "km" ? 500 : 24) ||
     measures.some((item) => item.value !== first.value || item.unit !== first.unit)) return source;
-  return { ...source, [`Autonomía máxima (${first.unit})`]: `${first.value} ${first.unit}` };
+  return { ...source, [`Autonomía máxima (${first.unit})`]: `${String(first.value).replace(".", ",")} ${first.unit}` };
 };

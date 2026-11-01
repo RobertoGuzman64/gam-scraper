@@ -1,7 +1,7 @@
 import type { ProductRecord, SpecsMap } from "../../../../../contracts/catalog.js";
 import { identifiedGamMachineModel } from "./measured-machine-specs.js";
 
-const tractionPower = /\bmotor\s+de\s+tracci[oó]n\s*(?:el[eé]ctrico\s+|AC\s+|CA\s+|de\s+CA\s+|de\s+corriente\s+alterna\s+)?(?:de\s+)?(\d{1,2}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+const tractionPower = /\bmotor\s+de\s+tracci[oó]n\s*(?:el[eé]ctrico\s+|sin\s+escobillas\s+|AC\s+|CA\s+|de\s+CA\s+|de\s+corriente\s+alterna\s+)?(?:de\s+)?(\d{1,2}(?:[.,]\d{1,2})?)\s*kW\b/giu;
 const liftingPower = /\bmotor\s+de\s+elevaci[oó]n\s*(?:el[eé]ctrico\s+|AC\s+|CA\s+|de\s+CA\s+|de\s+corriente\s+alterna\s+)?(?:de\s+)?(\d{1,2}(?:[.,]\d{1,2})?)\s*kW\b/giu;
 
 const normalizedIdentity = (value: string): string => value.toLowerCase().normalize("NFD")
@@ -9,7 +9,7 @@ const normalizedIdentity = (value: string): string => value.toLowerCase().normal
 
 const correctIdentity = (record: ProductRecord): boolean => {
   if (record.providerId !== "gam" || record.condition !== "Nuevo" ||
-    !["carretillas-nuevas", "apiladores-nuevos", "otros-nuevos"].includes(record.categoryKey) ||
+    !["carretillas-nuevas", "apiladores-nuevos", "otros-nuevos", "marcas-nuevas"].includes(record.categoryKey) ||
     !identifiedGamMachineModel(record)) return false;
   const brand = record.brand?.trim();
   if (!brand || typeof record.specs?.["Marca"] !== "string" ||

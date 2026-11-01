@@ -90,7 +90,7 @@ test("el lote aporta solo 18 fichas GAM con 18 especificaciones sin trasladarlas
   });
   assert.deepEqual(new Set(changes.map(({ reference }) => reference)), new Set(expected));
   assert.equal(changes.length, 18);
-  assert.ok(changes.every(({ added }) => added.length === 1));
+  assert.ok(changes.every(({ reference, added }) => added.length === (reference === "6542" ? 2 : 1)));
   assert.ok(gomariz.products.every((record) =>
     JSON.stringify(recoverGamVerifiedTechnicalSpecs(record)) === JSON.stringify(record.specs ?? {})));
 });

@@ -3,6 +3,8 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamYaleDieselDimensions } from "../mapping/providers/gam/yale-diesel-dimensions.js";
+import { resolveGamForkliftCondensedGeneral } from "../mapping/providers/gam/verified-condensed-forklifts.js";
+import { resolveGamWarehouseCondensedGeneral } from "../mapping/providers/gam/verified-condensed-warehouse.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -27,7 +29,7 @@ test("GAM: incorpora dimensiones originales que faltaban en la descripción de 1
     if (result !== null) {
       assert.ok(record.reference && record.model && record.longDescription);
       const originalGeneral = record.longDescription.trim();
-      assert.equal(prepared.product.description_general, result, record.reference);
+      assert.equal(prepared.product.description_general, resolveGamWarehouseCondensedGeneral(record) ?? resolveGamForkliftCondensedGeneral(record) ?? result, record.reference);
       assert.ok(result.endsWith(`\n\n${originalGeneral}`), record.reference);
       assert.ok(result.includes(`YALE ${record.model}`), record.reference);
       for (const [key, unit] of [["Longitud", "mm"], ["Anchura", "mm"], ["Altura", "mm"], ["Peso", "kg"]] as const) {

@@ -3,6 +3,8 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { rebalanceGamTechnicalShort } from "../mapping/providers/gam/rebalance-technical-short.js";
+import { resolveGamCleaningCondensedGeneral, resolveGamCleaningCondensedShort } from "../mapping/providers/gam/verified-condensed-cleaning.js";
+import { resolveGamTennantCondensedGeneral, resolveGamTennantCondensedShort } from "../mapping/providers/gam/verified-condensed-tennant.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -28,7 +30,7 @@ test("GAM: reequilibra ocho cortas y preserva cifras acreditadas sin trasladar f
       found.add(record.reference);
       assert.ok(record.shortDescription);
       assert.ok(prepared.product.description_general);
-      assert.equal(prepared.product.description, rewritten.short);
+      assert.equal(prepared.product.description, resolveGamCleaningCondensedShort(record) ?? resolveGamTennantCondensedShort(record) ?? rewritten.short);
       assert.ok(words(rewritten.short) <= 45);
       assert.ok(words(rewritten.short) >= 12);
       assert.ok(words(prepared.product.description_general) <= 800);
@@ -37,7 +39,7 @@ test("GAM: reequilibra ocho cortas y preserva cifras acreditadas sin trasladar f
       for (const number of numbers(complete.join(" "))) {
         assert.ok(numbers(`${rewritten.short} ${general ?? ""}`).has(number), `${record.reference}: ${number}`);
       }
-      assert.equal(prepared.product.description_general, rewritten.general);
+      assert.equal(prepared.product.description_general, resolveGamCleaningCondensedGeneral(record) ?? resolveGamTennantCondensedGeneral(record) ?? rewritten.general);
       assert.ok(!/[a-z] (?:p|con un bajo co|rendi)$/iu.test(rewritten.general));
     }
     assert.equal(JSON.stringify(record), source);

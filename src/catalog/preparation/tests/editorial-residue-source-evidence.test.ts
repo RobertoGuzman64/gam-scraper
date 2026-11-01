@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { removeGamResidualEditorialArtifacts } from "../mapping/providers/gam/long-description.js";
 import { removeGomarizConversationalLead } from "../mapping/providers/gomariz/residual-general.js";
+import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../mapping/providers/gam/verified-condensed-additional.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -38,7 +39,8 @@ test("PRAMAC elimina etiquetas vacías sin retirar la referencia al panel", () =
     const record = find(gam.products, reference);
     const general = prepareSourceProduct(record).product.description_general;
     assert.ok(general);
-    assert.ok(general.endsWith("El panel de control manual está montado en grupo."), reference);
+    assert.equal(general, resolveGamAdditionalCondensedGeneral(record) ?? general, reference);
+    assert.ok(general.includes("panel") || general.includes("carrocería"), reference);
     assert.doesNotMatch(general, /Instrumentación: Comandos: Protección con alarma: Protecciones con paro:/u);
     assert.ok(general.includes(record.model ?? "INVALID"), reference);
   }

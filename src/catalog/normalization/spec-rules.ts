@@ -19,6 +19,7 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Baterías": "string",
     "Tipo de batería": "enum",
     "Capacidad de la batería (Ah)": "number_array",
+    "Energía de batería (kWh)": "number",
     "Capacidad batería (Ah)": "number_array",
     "Voltaje batería (V)": "number",
     "Cargador de batería": "string",
@@ -83,6 +84,7 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Rotación de torreta": "string",
     "Depósito de solución": "number",
     "Depósito de recuperación": "number",
+    "Capacidad de la tolva": "number",
     "Nivel sonoro": "string",
     "Rendimiento de limpieza (m²/h)": "number",
     "Estado de las ruedas": "string",
@@ -98,6 +100,7 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Potencia de tracción (kW)": "number_array",
     "Potencia de elevación (kW)": "number_array",
     "Potencia (CV)": "number_array",
+    "Par motor (Nm)": "number",
 
     "Nº de serie": "string",
     "Estado baterías": "string"
@@ -179,6 +182,8 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "amp": "Capacidad de la batería (Ah)",
     "amperios": "Capacidad de la batería (Ah)",
 
+    "energia de bateria (kwh)": "Energía de batería (kWh)",
+    "energía de batería (kwh)": "Energía de batería (kWh)",
     "voltaje batería": "Voltaje batería (V)",
     "voltaje bateria": "Voltaje batería (V)",
     "voltaje (v)": "Voltaje batería (V)",
@@ -205,6 +210,11 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "potencia nominal": "Potencia (kW)",
     "potencia continua": "Potencia (kW)",
     "kw": "Potencia (kW)",
+
+    "par motor": "Par motor (Nm)",
+    "par motor (nm)": "Par motor (Nm)",
+    "par máximo": "Par motor (Nm)",
+    "par maximo": "Par motor (Nm)",
 
     "potencia cv": "Potencia (CV)",
     "potencia (cv)": "Potencia (CV)",
@@ -335,6 +345,8 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "transmision": "Transmisión",
     "transmisión": "Transmisión",
 
+    "capacidad de la tolva": "Capacidad de la tolva",
+    "capacidad tolva": "Capacidad de la tolva",
     "neumaticos": "Neumáticos",
     "neumáticos": "Neumáticos",
 

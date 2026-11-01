@@ -1,0 +1,116 @@
+import type { ProductRecord, SpecsMap } from "../../../../../contracts/catalog.js";
+import { normalizedElectricalIdentity, verifiedGamElectricalIdentity } from "./electrical-identity-evidence.js";
+
+const twinMotor = /\bdoble\s+motor\s+(?:el[eé]ctrico\s+)?de\s+(\d{1,2}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+const twinConfirmation = /\b2\s*[x×]\s*(\d{1,2}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+const lifting = /\belevaci[oó]n\s+de\s+(\d{1,3}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+const dieselPower = /\bmotor\s+de\s+(\d{2,3}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+const parse = (value: string): number => Number(value.replace(",", "."));
+const unique = (text: string, pattern: RegExp, min: number, max: number): number | null => {
+  const matches = [...text.matchAll(pattern)];
+  const value = matches[0] ? parse(matches[0][1] ?? "") : null;
+  return value !== null && Number.isFinite(value) && value >= min && value <= max &&
+    matches.every((match) => parse(match[1] ?? "") === value) ? value : null;
+};
+
+export const recoverGamMotorConfigurationSpecs = (record: ProductRecord): SpecsMap => {
+  const source = record.specs ?? {};
+  if (!verifiedGamElectricalIdentity(record) || record.categoryKey !== "carretillas-nuevas" ||
+    normalizedElectricalIdentity(record.brand ?? "") !== "hyster" ||
+    Object.keys(source).some((key) => /\bpotencia\b/iu.test(key))) return source;
+  const text = record.longDescription ?? "";
+  const first = unique(text, twinMotor, 1, 100);
+  const confirmed = unique(text, twinConfirmation, 1, 100);
+  if (first !== null && first === confirmed && /\btracci[oó]n\s+el[eé]ctrica\b/iu.test(text)) {
+    return { ...source, "Potencia de tracción (kW)": `${String(first * 2).replace(".", ",")} kW` };
+  }
+
+  const lifted = unique(text, lifting, 1, 150);
+  if (lifted !== null && /\b(?:motor(?:es)?\s+de\s+tracci[oó]n|tracci[oó]n\s+doble)\b[^.!?]{0,65}\b\d{1,3}\s*kW\b/iu.test(text)) {
+    return { ...source, "Potencia de elevación (kW)": `${String(lifted).replace(".", ",")} kW` };
+  }
+
+  if (/\bcarretilla\s+elevadora\s+di[eé]sel\b/iu.test(record.title ?? "") &&
+    /\bmotor\s+Kubota\b/iu.test(text)) {
+    const power = unique(text, dieselPower, 10, 300);
+    if (power !== null) return { ...source, "Potencia (kW)": `${String(power).replace(".", ",")} kW` };
+  }
+  return source;
+};
+
+const enginePower = /\b(\d{1,3}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+const mercedesEngine = /\bmotor\s+Mercedes-Benz\s+OM934(?:LA)?\b[^.!?]{0,130}?\b(\d{2,3}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+const kubotaEngine = /\bmotor\s+(?:di[eé]sel\s+)?Kubota\b[^.!?]{0,100}?\b(\d{1,3}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+const yuchaiEngine = /\bmotor\s*:\s*Yuchai\b[^.!?]{0,100}?\b(\d{1,3}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+const packmatEngine = /\bmotor\s+di[eé]sel\s+de\s+4\s+cilindros\s+con\s+(\d{1,3}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+
+export const recoverGamVerifiedEnginePowerSpecs = (record: ProductRecord): SpecsMap => {
+  const source = record.specs ?? {};
+  if (!verifiedGamElectricalIdentity(record) || Object.keys(source).some((key) => /potencia/iu.test(key))) return source;
+  const brand = normalizedElectricalIdentity(record.brand ?? "");
+  const engineType = normalizedElectricalIdentity(String(source["Tipo motor"] ?? source["Motorización"] ?? ""));
+  const title = normalizedElectricalIdentity(record.title ?? "");
+  let pattern: RegExp | null = null;
+
+  if (brand === "hyster" && record.categoryKey === "carretillas-nuevas" &&
+    title.includes("diesel") && engineType === "diesel") {
+    const conflictingManufacturer = /\b(?:MTU|Yuchai)\b|\bmotor\s+(?:di[eé]sel\s+)?Kubota\b/iu.test(record.longDescription ?? "");
+    if (conflictingManufacturer) return source;
+    pattern = /\bMercedes-Benz\s+OM934(?:LA)?\b/iu.test(record.longDescription ?? "") ? mercedesEngine : kubotaEngine;
+  } else if (brand === "xcmg" && record.categoryKey === "elevacion-nueva" &&
+    ["diesel", "hibrida"].includes(engineType)) {
+    const text = record.longDescription ?? "";
+    const yuchai = /\bmotor\s*:\s*Yuchai\b/iu.test(text);
+    const kubota = /\bmotor\s+(?:di[eé]sel\s+)?Kubota\b/iu.test(text);
+    if (yuchai === kubota) return source;
+    pattern = yuchai ? yuchaiEngine : kubotaEngine;
+  } else if (brand === "packmat" && record.categoryKey === "otros-nuevos" &&
+    engineType === "diesel") {
+    pattern = packmatEngine;
+  }
+
+  if (pattern === null) return source;
+  const text = record.longDescription ?? "";
+  const value = unique(text, pattern, 5, 300);
+  if (value === null || value !== unique(text, enginePower, 5, 300)) return source;
+  return { ...source, "Potencia (kW)": `${String(value).replace(".", ",")} kW` };
+};
+
+const torque = /\bpar\s+(?:motor\s+)?(?:m[aá]ximo\s+)?(?:de\s+)?(\d{2,4}(?:\.\d{3})?)\s*N\s*[·.]?\s*m\b|\b(\d{2,4}(?:\.\d{3})?)\s*N\s*[·.]?\s*m\s+de\s+par\b/giu;
+const anyTorque = /\b(\d{2,4}(?:\.\d{3})?)\s*N\s*[·.]?\s*m\b/giu;
+const numericTorque = (value: string): number => Number(value.replace(/\./g, ""));
+
+export const recoverGamVerifiedEngineTorqueSpecs = (record: ProductRecord): SpecsMap => {
+  const source = record.specs ?? {};
+  if (!verifiedGamElectricalIdentity(record) || !["carretillas-nuevas", "elevacion-nueva", "otros-nuevos"].includes(record.categoryKey) ||
+    Object.keys(source).some((key) => /\b(?:par\s+(?:motor|m[aá]ximo)|torque|momento\s+motor)\b/iu.test(key)) ||
+    !normalizedElectricalIdentity(record.shortDescription ?? "").includes(normalizedElectricalIdentity(record.model ?? ""))) return source;
+
+  const text = record.longDescription ?? "";
+  const matches = [...text.matchAll(torque)];
+  const mentions = [...text.matchAll(anyTorque)];
+  const first = matches[0] ? numericTorque(matches[0][1] ?? matches[0][2] ?? "") : null;
+  if (first === null || !Number.isInteger(first) || first < 100 || first > 2000 ||
+    matches.some((match) => numericTorque(match[1] ?? match[2] ?? "") !== first) ||
+    mentions.length !== matches.length || mentions.some((match) => numericTorque(match[1] ?? "") !== first)) return source;
+
+  const brand = normalizedElectricalIdentity(record.brand ?? "");
+  const engineType = normalizedElectricalIdentity(String(source["Tipo motor"] ?? source["Motorización"] ?? ""));
+  const normalizedTitle = normalizedElectricalIdentity(record.title ?? "");
+  const existingPower = String(source["Potencia (kW)"] ?? "");
+  const engineIdentityIsUnambiguous = brand === "hyster" && record.categoryKey === "carretillas-nuevas" &&
+    normalizedTitle.includes("diesel") && engineType === "diesel" && (
+      (first === 750 && /\bMercedes-Benz\s+OM934(?:LA)?\b/iu.test(text) &&
+        /\b129\s*kW\b/iu.test(text) && existingPower === "129 kW") ||
+      (first === 373 && /\bmotor\s+Kubota\s+V3800\b/iu.test(text) &&
+        /\b82\s*kW\b/iu.test(text) && existingPower === "82 kW")
+    ) && !/\b(?:MTU|Yanmar|PSI|Yuchai)\b|\bmotor\s+(?:di[eé]sel\s+)?Kubota\b/iu.test(first === 750 ? text : "");
+  const xcmgIdentity = brand === "xcmg" && record.categoryKey === "elevacion-nueva" &&
+    engineType === "diesel" && first === 289 && /\bmotor\s+Kubota\s+V3307\b/iu.test(text) &&
+    existingPower === "54,6 kW";
+  const packmatIdentity = brand === "packmat" && record.categoryKey === "otros-nuevos" &&
+    engineType === "diesel" && first === 225 && /\bmotor\s+di[eé]sel\s+de\s+4\s+cilindros\b/iu.test(text) &&
+    existingPower === "51,7 kW";
+  if (!engineIdentityIsUnambiguous && !xcmgIdentity && !packmatIdentity) return source;
+  return { ...source, "Par motor (Nm)": `${first} Nm` };
+};

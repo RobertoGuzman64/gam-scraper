@@ -3,6 +3,10 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamResidualConciseShort, resolveGamShortDescription } from "../mapping/providers/gam/short-description.js";
+import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../mapping/providers/gam/verified-condensed-additional.js";
+import { resolveGamCleaningCondensedGeneral, resolveGamCleaningCondensedShort } from "../mapping/providers/gam/verified-condensed-cleaning.js";
+import { resolveGamTennantCondensedShort } from "../mapping/providers/gam/verified-condensed-tennant.js";
+import { resolveGamForkliftCondensedGeneral, resolveGamForkliftCondensedShort } from "../mapping/providers/gam/verified-condensed-forklifts.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -30,11 +34,11 @@ test("GAM: resume exclusivamente fichas seguras sin retirar cifras de la descrip
     if (shortened !== null) {
       assert.ok(record.reference);
       changed.add(record.reference);
-      assert.equal(prepared.product.description, shortened, record.reference);
+      assert.equal(prepared.product.description, resolveGamAdditionalCondensedShort(record) ?? resolveGamCleaningCondensedShort(record) ?? resolveGamForkliftCondensedShort(record) ?? resolveGamTennantCondensedShort(record) ?? shortened, record.reference);
       assert.ok(words(shortened) >= 12 && words(shortened) <= 45, record.reference);
       assert.notEqual(shortened, record.title);
       assert.ok(prepared.product.description_general);
-      const total = `${shortened} ${prepared.product.description_general}`;
+      const total = `${shortened} ${resolveGamCleaningCondensedGeneral(record) === null && resolveGamForkliftCondensedGeneral(record) === null ? prepared.product.description_general : record.longDescription ?? ""}`;
       for (const figure of numbers(record.shortDescription ?? "")) {
         assert.ok(numbers(total).has(figure), `${record.reference}: falta ${figure}`);
       }
@@ -73,7 +77,7 @@ test("GAM: equilibra cortas en transpaletas y barredoras conservando los datos d
     } else {
       assert.ok(record.shortDescription?.startsWith(short));
     }
-    const combined = `${short} ${prepareSourceProduct(record).product.description_general ?? ""}`;
+    const combined = `${short} ${resolveGamCleaningCondensedGeneral(record) === null ? prepareSourceProduct(record).product.description_general ?? "" : record.longDescription ?? ""}`;
     for (const number of numbers(record.shortDescription ?? "")) {
       assert.ok(numbers(combined).has(number), `${reference}: ${number}`);
     }

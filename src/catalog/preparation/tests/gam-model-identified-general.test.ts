@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamExactVariantGeneral, resolveGamModelIdentifiedGeneral } from "../mapping/providers/gam/model-identified-general.js";
+import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../mapping/providers/gam/verified-condensed-additional.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -19,9 +20,15 @@ test("Fase 19: identifica 15 modelos acreditados sin modificar los originales", 
   for (const record of catalog.products) {
     const previous = JSON.stringify(record);
     const prepared = prepareSourceProduct(record).product;
-    const result = resolveGamModelIdentifiedGeneral(record, prepared.description_general?.replace(
+    const result = resolveGamModelIdentifiedGeneral(record, (resolveGamAdditionalCondensedGeneral(record) ? null : prepared.description_general)?.replace(
       /^Modelo identificado en la ficha: [^\n]+\n\n/u, "") ?? null);
-    if (result !== null) {
+    if (result !== null || (record.reference && improved.has(record.reference) && resolveGamAdditionalCondensedGeneral(record))) {
+      if (result === null) {
+        assert.equal(prepared.description_general, resolveGamAdditionalCondensedGeneral(record));
+        assert.equal(JSON.stringify(record), previous);
+        changed.add(record.reference ?? "");
+        continue;
+      }
       assert.ok(record.reference);
       changed.add(record.reference);
       assert.equal(prepared.description_general, result);
