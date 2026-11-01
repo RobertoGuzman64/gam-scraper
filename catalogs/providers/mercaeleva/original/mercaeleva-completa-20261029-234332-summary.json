@@ -1,0 +1,63 @@
+{
+  "startedAt": "2026-10-29T22:43:36.778Z",
+  "endedAt": "2026-10-29T22:44:15.165Z",
+  "quality": {
+    "status": "complete",
+    "reasons": [],
+    "published": true
+  },
+  "artifacts": {
+    "csvSha256": "e3a72463782634f0e8d38adc26662a9d094ac6838b37321bc5380e6a24a3b6b2",
+    "preparationSha256": "ab2bd3f646f7d61d80bfa3622fe5ba205093f3a0f99d785bfeaf7595610c7f3a",
+    "catalogSha256": "83e0265743ba1ec0b6ebb1c1bc8bbb9cd3b26eba77d208d659d35e7a62bba792"
+  },
+  "totals": {
+    "categories": 1,
+    "discoveredProductUrls": 221,
+    "scrapedProductsRaw": 221,
+    "scrapedProductsByCategorySum": 221,
+    "scrapedProducts": 221,
+    "failures": 0,
+    "dedupe": {
+      "withinCategories": {
+        "kept": 221,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      },
+      "globalAll": {
+        "kept": 221,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    }
+  },
+  "categories": [
+    {
+      "key": "venta",
+      "name": "Maquinaria en venta",
+      "url": "https://sales.mercaeleva.com/es/for-sale",
+      "discoveredProductUrls": 221,
+      "expectedProductUrls": 221,
+      "scrapedProductsRaw": 221,
+      "scrapedProducts": 221,
+      "failures": 0,
+      "dedupe": {
+        "kept": 221,
+        "removed": 0,
+        "byReason": {
+          "reference": 0,
+          "serialNumber": 0,
+          "canonicalUrl": 0
+        }
+      }
+    }
+  ]
+}

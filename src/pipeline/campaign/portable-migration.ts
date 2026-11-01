@@ -3,6 +3,7 @@ import { lstat, readFile, readdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readActiveCatalogIndex } from "../../infrastructure/filesystem/catalog/active-selection.js";
 import { consolidatePortableCampaign, readPortableCampaign } from "../../infrastructure/filesystem/catalog/portable-campaign.js";
 import { consolidatePortableOriginal, readPortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
 import { discoverCampaign, listCampaignRuns } from "./discovery/search.js";
@@ -108,15 +109,22 @@ const inspectProvider = async (root: string, providerId: string): Promise<Migrat
   const target = join(root, "catalogs", "providers", providerId, "original");
   const hasPortable = await kind(target) !== "absent";
   const portable = hasPortable ? await readPortableOriginal(root, providerId) : null;
-  // A pending swap or unknown file is an error, including when the current original is missing.
   const providerRoot = join(root, "catalogs", "providers", providerId);
   const targetNames = await namesIn(providerRoot);
-  if (targetNames.some((name) => name !== "original") || (targetNames.length && !hasPortable)) {
+  const allowed = providerId === "manain" ? ["original", "publications", "records"] : ["original", "publications"];
+  if (targetNames.some((name) => !allowed.includes(name))) {
     throw new Error(`Promoción pendiente o entrada desconocida en ${providerRoot}`);
   }
+  for (const name of targetNames) {
+    if (await kind(join(providerRoot, name)) !== "directory") {
+      throw new Error(`Directorio portátil no regular: ${join(providerRoot, name)}`);
+    }
+  }
   if (!catalogs.length) {
-    return { providerId, status: portable ? "solo-portatil" : (await inspectPartial(dir, names) ? "parcial" : "ausente"),
-      source: null, count: portable?.productCount ?? null };
+    return {
+      providerId, status: portable ? "solo-portatil" : (await inspectPartial(dir, names) ? "parcial" : "ausente"),
+      source: null, count: portable?.productCount ?? null
+    };
   }
   const source = join(dir, catalogs[0]!);
   if (await kind(source) !== "file") throw new Error(`Canónico no regular: ${source}`);
@@ -165,9 +173,10 @@ export const planPortableMigration = async (workspace: string): Promise<Portable
   const root = resolve(workspace);
   const catalogsRoot = join(root, "catalogs");
   const entries = await namesIn(catalogsRoot);
-  if (entries.some((name) => name !== "providers" && name !== "campaigns")) {
+  if (entries.some((name) => name !== "providers" && name !== "campaigns" && name !== "active.json")) {
     throw new Error("catalogs/ contiene archivos o carpetas ajenos al contrato");
   }
+  await readActiveCatalogIndex(root);
   const providerEntries = await namesIn(join(catalogsRoot, "providers"));
   if (providerEntries.some((name) => !CAMPAIGN_PROVIDERS.some((id) => id === name))) {
     throw new Error("catalogs/providers contiene proveedores desconocidos");

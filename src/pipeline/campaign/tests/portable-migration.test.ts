@@ -178,3 +178,40 @@ test("una campaña sin entrega no se transforma en campaña acreditada por la mi
     await assert.rejects(readFile(join(data.root, "storage", "campaigns", data.runId, "delivery.json")));
   } finally { await data.cleanup(); }
 });
+
+
+test("las publicaciones vigentes y el registro Manain no bloquean la migración de originales", async () => {
+  await withOriginal(async (root) => {
+    const publicationDir = join(root, "catalogs", "providers", "gomariz", "publications");
+    const recordsDir = join(root, "catalogs", "providers", "manain", "records");
+    await mkdir(publicationDir, { recursive: true });
+    await mkdir(recordsDir, { recursive: true });
+    await writeFile(join(recordsDir, "manain-record.json"), "{}");
+    await writeFile(join(root, "catalogs", "active.json"), JSON.stringify({
+      version: 1, providers: { gomariz: { approvalSha256: "a".repeat(64) } }
+    }));
+    const plan = await planPortableMigration(root);
+    assert.equal(plan.providers.find((item) => item.providerId === "gomariz")?.status, "consolidar");
+    assert.equal(plan.providers.find((item) => item.providerId === "manain")?.status, "ausente");
+    await applyPortableMigration(root);
+    assert.equal((await readPortableOriginal(root, "gomariz")).productCount, 14);
+    assert.equal(await readFile(join(recordsDir, "manain-record.json"), "utf8"), "{}");
+    assert.deepEqual(await readdir(publicationDir), []);
+  });
+});
+
+test("la migración conserva el bloqueo de entradas desconocidas e índices inválidos", async () => {
+  await withOriginal(async (root) => {
+    const providerDir = join(root, "catalogs", "providers", "gomariz");
+    await mkdir(providerDir, { recursive: true });
+    await mkdir(join(providerDir, "records"));
+    await assert.rejects(planPortableMigration(root), /Promoción pendiente o entrada desconocida/);
+    await rm(join(providerDir, "records"), { recursive: true });
+    await writeFile(join(root, "catalogs", "active.json"), "{}");
+    await assert.rejects(planPortableMigration(root), /Índice global de publicaciones inválido/);
+    await rm(join(root, "catalogs", "active.json"));
+    await writeFile(join(providerDir, "publications"), "no es un directorio");
+    await assert.rejects(planPortableMigration(root), /Directorio portátil no regular/);
+    assert.equal((await readdir(providerDir)).includes("original"), false);
+  });
+});
