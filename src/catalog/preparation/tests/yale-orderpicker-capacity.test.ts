@@ -27,7 +27,7 @@ test("Yale MO10L corrige 2000 a 1000 kg con ficha técnica y resumen coincidente
   assert.deepEqual(prepared.issues, []);
   assert.equal(prepared.product.title, corrected.title);
   assert.equal(prepared.product.description_general, corrected.longDescription);
-  assert.deepEqual(prepared.product.spec, base.specs);
+  assert.deepEqual(prepared.product.spec, { ...base.specs, "Dirección asistida": true });
   assert.equal(JSON.stringify(base), original);
   assert.strictEqual(reconcileGamOrderPickerEditorial(corrected), corrected);
 });

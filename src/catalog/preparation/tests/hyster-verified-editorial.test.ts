@@ -48,7 +48,8 @@ test("HYSTER 6272 normaliza la capacidad solo si el modelo y la ficha concuerdan
   assert.deepEqual(prepared.issues, []);
   assert.deepEqual(prepared.product.spec, {
     ...record.specs,
-    "Transmisión": "ZF 3WG161 (3 velocidades adelante/atrás)"
+    "Transmisión": "ZF 3WG161 (3 velocidades adelante/atrás)",
+    "Radio de giro exterior": "≈ 4874 mm (según configuración)"
   });
   assert.match(record.longDescription ?? "", /ZF 3WG161/u);
   assert.equal(prepared.product.description, corrected.shortDescription);

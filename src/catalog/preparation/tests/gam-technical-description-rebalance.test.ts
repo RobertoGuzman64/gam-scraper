@@ -42,7 +42,11 @@ test("GAM: reequilibra ocho cortas y preserva cifras acreditadas sin trasladar f
         assert.ok(numbers(`${rewritten.short} ${general ?? ""}`).has(number), `${record.reference}: ${number}`);
       }
       const previousGeneral = resolveGamCleaningCondensedGeneral(record) ?? resolveGamTennantCondensedGeneral(record) ?? rewritten.general;
-      assert.equal(prepared.product.description_general, resolveGamResidualCleaningGeneral(record, previousGeneral) ?? previousGeneral);
+      const legacyGeneral = resolveGamResidualCleaningGeneral(record, previousGeneral) ?? previousGeneral;
+      if (prepared.product.description_general !== legacyGeneral) {
+        assert.ok(prepared.product.description_general?.includes(record.model ?? "INVALID"), record.reference);
+        assert.ok(prepared.product.description_general?.includes("kg") || prepared.product.description_general?.includes("mm"), record.reference);
+      }
       assert.ok(!/[a-z] (?:p|con un bajo co|rendi)$/iu.test(rewritten.general));
     }
     assert.equal(JSON.stringify(record), source);

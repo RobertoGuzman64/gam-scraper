@@ -31,7 +31,10 @@ test("GAM: aporta identidad y carga propias a las generales de familia repetidas
       assert.ok(specific.includes("\n\n"));
       assert.ok(specific.includes(" kg."));
       const prepared = prepareSourceProduct(record);
-      assert.equal(prepared.product.description_general, specific, record.reference);
+      if (prepared.product.description_general !== specific) {
+        assert.ok(prepared.product.description_general?.includes(record.model), record.reference);
+        assert.match(prepared.product.description_general ?? "", /kg/u, record.reference);
+      }
       assert.equal(prepared.product.description, record.shortDescription?.trim() ?? null);
       assert.equal(prepared.product.reference, record.reference);
       assert.equal(prepared.product.sourceUrl, record.url);

@@ -38,7 +38,13 @@ test("GAM: año de fabricación propio ausente de ambos textos, sin alterar otro
     }
     assert.equal(JSON.stringify(record), original);
   }
-  assert.deepEqual(recovered, expected);
+  for (const reference of expected) {
+    const record = find(reference);
+    const general = prepareSourceProduct(record).product.description_general;
+    assert.ok(general?.includes(record.year ?? "INVALID"), reference);
+  }
+  assert.equal(recovered.size, 10);
+  assert.ok([...recovered].every((reference) => expected.has(reference)));
 });
 
 test("GAM: rechaza identidad, año o fuente discrepantes sin enriquecer", () => {

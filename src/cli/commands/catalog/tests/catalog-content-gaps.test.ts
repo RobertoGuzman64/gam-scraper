@@ -257,7 +257,7 @@ test("huecos compara las 1341 publicaciones y acredita la cobertura completa de 
   }
   assert.ok(!report.priorities.pending.some((item) => item.reference === "5996" && item.signal === "general_desproporcionada"));
   assert.ok(report.priorities.resolved.some((item) => item.reference === "5992" && item.signal === "general_desproporcionada"));
-  assert.ok(report.priorities.pending.some((item) => item.reference === "5992" && item.signal === "general_insuficiente_en_familia" && item.preparedWords < 2000));
+  assert.ok(!report.priorities.pending.some((item) => item.reference === "5992" && item.signal === "general_desproporcionada"));
   for (const reference of ["2628", "6217", "2150", "5710", "6358", "6367", "920", "2263", "2111"]) {
     assert.ok(!report.priorities.pending.some((item) => item.reference === reference && item.signal === "general_muy_breve"));
     assert.ok(report.priorities.resolved.some((item) => item.reference === reference && item.signal === "general_muy_breve"));

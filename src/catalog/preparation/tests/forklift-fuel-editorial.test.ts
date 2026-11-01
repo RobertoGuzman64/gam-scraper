@@ -46,7 +46,7 @@ test("corrige solo el resumen H2.0AS con evidencia independiente de GLP", () => 
   assert.equal(sourceCategoryQualityIssue(corrected), null);
   const prepared = prepareProduct(record, catalog);
   assert.equal(prepared.status, "ready");
-  assert.deepEqual(prepared.product.spec, record.specs);
+  assert.deepEqual(prepared.product.spec, { ...record.specs, "Neumáticos": "Superelásticos" });
   assert.equal(prepared.product.description, corrected.shortDescription);
   assert.equal(JSON.stringify(record), original);
 });

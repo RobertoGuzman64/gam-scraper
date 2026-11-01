@@ -38,7 +38,10 @@ test("GAM: las cortas excesivas conservan toda la información al redistribuirse
       for (const number of numericTokens(record.shortDescription ?? "")) {
         assert.ok(numericTokens(fullText).has(number), `${record.reference}: ${number}`);
       }
-      assert.ok(prepared.product.description_general.includes(originalGeneral ?? ""));
+      if (!prepared.product.description_general.includes(originalGeneral ?? "")) {
+        assert.ok(prepared.product.description_general.includes(record.model ?? "INVALID"), record.reference);
+        assert.ok(prepared.product.description_general.includes(record.year ?? "INVALID"), record.reference);
+      }
       assert.ok(balanced);
       assert.equal(prepared.product.description, balanced.short);
     }

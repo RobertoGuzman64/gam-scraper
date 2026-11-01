@@ -27,7 +27,9 @@ test("GAM: completa medidas documentadas en familias sin sustituir ni resumir la
       assert.equal(prepareSourceProduct(record).product.description_general, result);
       assert.deepEqual(prepareSourceProduct(record).product.spec, {
         ...record.specs,
-        ...(record.reference === "2105" ? { "Neumáticos": "Poliuretano" } : {})
+        ...(record.reference === "2105" ? { "Neumáticos": "Poliuretano" } : {}),
+        ...(["2106"].includes(record.reference ?? "") ? { "Freno electromagnético": true } : {}),
+        ...(record.reference === "2154" ? { "Frenado regenerativo": true } : {})
       });
     }
     assert.equal(JSON.stringify(record), snapshot);

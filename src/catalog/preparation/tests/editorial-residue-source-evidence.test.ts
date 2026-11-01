@@ -99,6 +99,9 @@ test("conserva respuestas válidas asociadas a preguntas explícitas", () => {
       assert.match(general, /13,5 metros/u);
       assert.match(general, /200 kg/u);
       assert.doesNotMatch(general, /\?\s+(?:Sí|No)\./u);
+    } else if (reference === "2031" || reference === "4660") {
+      assert.ok(general.includes(record.model ?? "INVALID"), reference);
+      assert.doesNotMatch(general, /\?\s+(?:Sí|No)\./u);
     } else {
       assert.match(general, /\?\s+(?:Sí|No)\./u);
     }

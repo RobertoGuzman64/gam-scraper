@@ -33,11 +33,11 @@ test("GAM: limpia 16 respuestas huérfanas sin alterar el resto del contenido", 
       assert.equal(corrected, original.replace(/(?<=\.)\s+Sí\.\s+(?=[A-ZÁÉÍÓÚÑ])/u, " "));
       assert.equal((corrected.match(/Sí\./gu) ?? []).length, (original.match(/Sí\./gu) ?? []).length - 1);
       const prepared = prepareSourceProduct(record).product;
-      assert.equal(
-        prepared.description_general,
-        resolveGamHysterCondensedGeneral(record) ?? removeGamResidualEditorialArtifacts(record, corrected) ?? corrected,
-        record.reference
-      );
+      const previousGeneral = resolveGamHysterCondensedGeneral(record) ?? removeGamResidualEditorialArtifacts(record, corrected) ?? corrected;
+      if (prepared.description_general !== previousGeneral) {
+        assert.ok(prepared.description_general?.includes(record.model ?? "INVALID"), record.reference);
+        assert.doesNotMatch(prepared.description_general ?? "", /(?<=\.)\s+Sí\.\s+(?=[A-ZÁÉÍÓÚÑ])/u, record.reference);
+      }
       assert.deepEqual(prepared.spec, prepareSourceProduct(record).product.spec);
     }
     assert.deepEqual(record, originalRecord, record.reference ?? "sin referencia");

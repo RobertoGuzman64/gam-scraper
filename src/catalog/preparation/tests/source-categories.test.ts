@@ -37,7 +37,7 @@ const approved = (provider: string, codes: readonly string[]): void => {
     assert.deepEqual(prepared.product.spec, { ...product.specs, ...(provider === "gam" && ["4019", "4020"].includes(code) ? { "Depósito de solución": 480, "Depósito de recuperación": 346 } : {}),
       ...(provider === "gam" && code === "4021" ? { "Depósito de solución": 530, "Depósito de recuperación": 276 } : {}),
       ...(provider === "gam" && ["4019", "4020"].includes(code) ? { "Capacidad de la tolva": 85 } : {}),
-      ...(provider === "gam" && code === "4021" ? { "Capacidad de la tolva": 110 } : {}),
+      ...(provider === "gam" && code === "4021" ? { "Capacidad de la tolva": 110, "Nivel sonoro": "84 dBA" } : {}),
       ...(provider === "gam" && code === "6182" ? { "Depósito de combustible": 50, "Potencia (kW)": "51,7 kW", "Par motor (Nm)": "225 Nm" } : {}),
       ...(provider === "gam" ? electricalCranes.get(code) ?? {} : {}),
       ...(provider === "gam" && code === "5079" ? { "Voltaje batería (V)": "96 V", "Capacidad de la batería (Ah)": "1395 Ah", "Autonomía aproximada (h)": "8 h" } : {}),
