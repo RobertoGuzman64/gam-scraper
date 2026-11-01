@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { removeGamOrphanAffirmative, removeGamResidualEditorialArtifacts } from "../mapping/providers/gam/long-description.js";
+import { resolveGamHysterCondensedGeneral } from "../mapping/providers/gam/verified-condensed-hyster.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -32,7 +33,11 @@ test("GAM: limpia 16 respuestas huérfanas sin alterar el resto del contenido", 
       assert.equal(corrected, original.replace(/(?<=\.)\s+Sí\.\s+(?=[A-ZÁÉÍÓÚÑ])/u, " "));
       assert.equal((corrected.match(/Sí\./gu) ?? []).length, (original.match(/Sí\./gu) ?? []).length - 1);
       const prepared = prepareSourceProduct(record).product;
-      assert.equal(prepared.description_general, removeGamResidualEditorialArtifacts(record, corrected) ?? corrected, record.reference);
+      assert.equal(
+        prepared.description_general,
+        resolveGamHysterCondensedGeneral(record) ?? removeGamResidualEditorialArtifacts(record, corrected) ?? corrected,
+        record.reference
+      );
       assert.deepEqual(prepared.spec, prepareSourceProduct(record).product.spec);
     }
     assert.deepEqual(record, originalRecord, record.reference ?? "sin referencia");

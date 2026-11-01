@@ -30,7 +30,7 @@ test("tipo de origen corroborado sin categoría del receptor no es motivo de rev
       ...record.specs,
       ...(explicitHeight === null ? {} : { "Altura de trabajo (m)": explicitHeight }),
       ...(code === "4778" ? { "Alcance horizontal (m)": "8,22 m" } : {}),
-      ...(code === "4779" ? { "Alcance horizontal (m)": "10,26 m" } : {}),
+      ...(code === "4779" ? { "Alcance horizontal (m)": "10,26 m", "Potencia (kW)": "36,8 kW" } : {}),
       ...(code === "4780" ? { "Voltaje batería (V)": "51,2 V", "Capacidad de la batería (Ah)": "346 Ah", "Tipo de batería": "Litio" } : {})
     }, code);
     assert.deepEqual(prepared.product.attributes, [], code);

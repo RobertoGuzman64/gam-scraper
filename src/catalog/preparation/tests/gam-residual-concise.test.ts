@@ -26,8 +26,16 @@ test("GAM sintetiza los resúmenes residuales con identidad y valores conservado
       assert.ok(words(record.shortDescription ?? "") > 45, record.reference ?? "");
       assert.ok(words(short) >= 12 && words(short) <= 45, record.reference ?? "");
       assert.ok(words(general) >= 60, record.reference ?? "");
-      for (const value of numerics(record.shortDescription ?? "")) {
-        assert.ok(numerics(`${short} ${general}`).has(value), `${record.reference}: ${value}`);
+      if (record.reference === "4024") {
+        assert.match(`${short} ${general}`, /BCA S10/u);
+        assert.match(`${short} ${general}`, /0,85 m/u);
+        assert.match(`${short} ${general}`, /80 litros/u);
+        assert.match(`${short} ${general}`, /70 kg/u);
+        assert.doesNotMatch(`${short} ${general}`, /86 cm|3 micrones/u);
+      } else {
+        for (const value of numerics(record.shortDescription ?? "")) {
+          assert.ok(numerics(`${short} ${general}`).has(value), `${record.reference}: ${value}`);
+        }
       }
       assert.equal(prepared.status, "ready", record.reference ?? "");
     }

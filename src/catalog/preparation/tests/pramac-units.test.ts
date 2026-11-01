@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../mapping/attribute-mapping.js";
+import { resolveGamAdditionalCondensedShort } from "../mapping/providers/gam/verified-condensed-additional.js";
 import { prepareProduct } from "../../legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -31,7 +32,13 @@ test("siete potencias nominales en kVA no se comparan con teasers sin unidad vá
     assert.deepEqual(resolveAttribute(original, power), { status: "resolved", value: nominal }, reference);
     assert.equal(prepared.status, "ready", reference);
     assert.ok(prepared.product.attributes.some((attribute) => attribute.attributeID === power.id && attribute.value === nominal));
-    assert.equal(prepared.product.description, original.shortDescription);
+    const revisedShort = resolveGamAdditionalCondensedShort(original);
+    assert.equal(prepared.product.description, revisedShort ?? original.shortDescription);
+    if (["1210", "1212", "1213"].includes(reference)) {
+      assert.ok(revisedShort, reference);
+      assert.match(prepared.product.description ?? "", new RegExp(`\\b${original.model}\\b`, "u"));
+      assert.match(prepared.product.description ?? "", new RegExp(`\\b${nominal} kVA\\b`, "u"));
+    }
     assert.deepEqual(prepared.product.spec, original.specs);
     assert.equal(JSON.stringify(original), snapshot);
   }

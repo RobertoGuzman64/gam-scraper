@@ -25,7 +25,10 @@ test("GAM: completa medidas documentadas en familias sin sustituir ni resumir la
       assert.ok(record.longDescription);
       assert.ok(result.startsWith(`${record.longDescription.trim()}\n\n`));
       assert.equal(prepareSourceProduct(record).product.description_general, result);
-      assert.deepEqual(prepareSourceProduct(record).product.spec, record.specs);
+      assert.deepEqual(prepareSourceProduct(record).product.spec, {
+        ...record.specs,
+        ...(record.reference === "2105" ? { "Neumáticos": "Poliuretano" } : {})
+      });
     }
     assert.equal(JSON.stringify(record), snapshot);
   }
