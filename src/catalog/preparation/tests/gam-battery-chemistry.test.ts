@@ -3,7 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
-import { recoverGamLithiumBatteryType } from "../evidence/providers/gam/battery-chemistry-evidence.js";
+import { recoverGamLithiumBatteryType, recoverGamVerifiedMobilityBatteryType } from "../evidence/providers/gam/battery-chemistry-evidence.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -84,4 +84,21 @@ test("solo modifica la cohorte acreditada y no aplica recuperaciones GAM a Gomar
   for (const record of gomariz.products) {
     assert.deepEqual(recoverGamLithiumBatteryType(record), record.specs ?? {});
   }
+});
+
+
+test("recupera química identificada y excluye modelos cruzados y alternativas", () => {
+  const used = recordOf("6803");
+  assert.equal(recoverGamVerifiedMobilityBatteryType(used)["Tipo de batería"], "Litio");
+  for (const invalid of [
+    { ...used, brand: "OTRA" },
+    { ...used, model: "Ibiza Titanium" },
+    { ...used, reference: "5949" },
+    { ...used, url: `${used.url}?version=otra` },
+    { ...used, longDescription: `${used.longDescription} Esta variante monta batería de plomo-ácido.` },
+    { ...used, specs: { ...used.specs, "Tipo de batería": "Plomo-ácido" } }
+  ]) assert.deepEqual(recoverGamVerifiedMobilityBatteryType(invalid), invalid.specs ?? {});
+  assert.deepEqual(recoverGamVerifiedMobilityBatteryType(recordOf("5949")), recordOf("5949").specs);
+  assert.deepEqual(recoverGamVerifiedMobilityBatteryType(recordOf("2098")), recordOf("2098").specs);
+  assert.equal(recoverGamVerifiedMobilityBatteryType(recordOf("2037"))["Tipo de batería"], "Litio");
 });

@@ -29,6 +29,7 @@ import { resolveGamSpecialtyEditorial } from "./mapping/providers/gam/specialty-
 import { resolveGamWarehouseTechnicalEditorial } from "./mapping/providers/gam/warehouse-technical-editorial.js";
 import { resolveGamHandlingSourceEditorial } from "./mapping/providers/gam/handling-source-editorial.js";
 import { resolveGamVerifiedResidualEditorial } from "./mapping/providers/gam/verified-residual-editorial.js";
+import { resolveGamVerifiedExtendedGeneral } from "./mapping/providers/gam/verified-extended-general.js";
 import { resolveGamCondensedGeneral, resolveGamCondensedShort } from "./mapping/providers/gam/verified-condensed-general.js";
 import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "./mapping/providers/gam/verified-condensed-additional.js";
 import { resolveGamExtendedCondensedGeneral, resolveGamExtendedCondensedShort } from "./mapping/providers/gam/verified-condensed-extended.js";
@@ -69,6 +70,20 @@ import { recoverGamCleaningTankSpecs, recoverGamSweeperHopperCapacity } from "./
 import { recoverGamScrubbingPressureSpec } from "./evidence/providers/gam/scrubbing-pressure-evidence.js";
 import { recoverGamSweepingBrushSpecs } from "./evidence/providers/gam/sweeping-brush-evidence.js";
 import { recoverGamSourceGradeabilitySpecs } from "./evidence/providers/gam/source-gradeability-evidence.js";
+import { recoverGamVerifiedTowingSpecs } from "./evidence/providers/gam/towing-evidence.js";
+import { recoverGamStatedTwinTractionPower } from "./evidence/providers/gam/motor-configuration-evidence.js";
+import { recoverGamVerifiedMobilityBatteryType } from "./evidence/providers/gam/battery-chemistry-evidence.js";
+import { recoverGamMislabelledBatterySpec } from "./evidence/providers/gam/source-battery-label-evidence.js";
+import { recoverGamVerifiedVariantAcoustics } from "./evidence/providers/gam/variant-acoustics-evidence.js";
+import { recoverGamVerifiedTyreDimensions } from "./evidence/providers/gam/verified-tyre-dimensions-evidence.js";
+import { recoverGamVerifiedConditionalAcoustics } from "./evidence/providers/gam/verified-conditional-acoustics-evidence.js";
+import { recoverGamVerifiedResidualOperationSpecs } from "./evidence/providers/gam/verified-residual-operation-evidence.js";
+import { recoverGamVerifiedResidualGeometrySpecs } from "./evidence/providers/gam/verified-residual-geometry-evidence.js";
+import { recoverGamVerifiedResidualPerformanceSpecs } from "./evidence/providers/gam/verified-residual-performance-evidence.js";
+import { recoverGamVerifiedTractionBraking } from "./evidence/providers/gam/verified-traction-braking-evidence.js";
+import { recoverGamVerifiedSteeringBraking } from "./evidence/providers/gam/verified-steering-braking-evidence.js";
+import { recoverGamVerifiedDrivetrainBrakes } from "./evidence/providers/gam/verified-drivetrain-brakes-evidence.js";
+import { recoverGamVerifiedOperatorControls } from "./evidence/providers/gam/verified-operator-controls-evidence.js";
 import { recoverGamVerifiedTechnicalSpecs } from "./evidence/providers/gam/verified-technical-measures.js";
 import { recoverGamElectricMotorPowerSpecs } from "./evidence/providers/gam/electric-motor-power-evidence.js";
 import { recoverGamBatteryMeasures } from "./evidence/providers/gam/battery-measures-evidence.js";
@@ -103,7 +118,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const twinMotorSpecs = recoverGamVerifiedTwinMotorSpecs({ ...record, specs: enrichedSpecs });
   const batterySpecs = recoverGamBatteryMeasures({ ...record, specs: twinMotorSpecs });
   const batteryTypeSpecs = recoverGamLithiumBatteryType({ ...record, specs: batterySpecs });
-  const measuredGeometrySpecs = recoverGamClearanceAndPlatform({ ...record, specs: batteryTypeSpecs });
+  const mobilityBatterySpecs = recoverGamVerifiedMobilityBatteryType({ ...record, specs: batteryTypeSpecs });
+  const measuredGeometrySpecs = recoverGamClearanceAndPlatform({ ...record, specs: mobilityBatterySpecs });
   const wheelbaseSpecs = recoverGamWheelbaseSpec({ ...record, specs: measuredGeometrySpecs });
   const autonomySpecs = recoverGamAutonomySpec({ ...record, specs: wheelbaseSpecs });
   const acousticSpecs = recoverGamAcousticSpec({ ...record, specs: autonomySpecs });
@@ -117,8 +133,10 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const physicalSpecs = recoverGamPhysicalMeasures({ ...record, specs: liftSpecs });
   const electricalSpecs = recoverGamElectricalBatterySpecs({ ...record, specs: physicalSpecs });
   const batteryPairSpecs = recoverGamVerifiedBatteryPairSpecs({ ...record, specs: electricalSpecs });
-  const motorSpecs = recoverGamMotorConfigurationSpecs({ ...record, specs: batteryPairSpecs });
-  const engineSpecs = recoverGamVerifiedEnginePowerSpecs({ ...record, specs: motorSpecs });
+  const labelledBatterySpecs = recoverGamMislabelledBatterySpec({ ...record, specs: batteryPairSpecs });
+  const motorSpecs = recoverGamMotorConfigurationSpecs({ ...record, specs: labelledBatterySpecs });
+  const tractionSpecs = recoverGamStatedTwinTractionPower({ ...record, specs: motorSpecs });
+  const engineSpecs = recoverGamVerifiedEnginePowerSpecs({ ...record, specs: tractionSpecs });
   const engineTorqueSpecs = recoverGamVerifiedEngineTorqueSpecs({ ...record, specs: engineSpecs });
   const combustionDriveSpecs = recoverGamVerifiedCombustionDriveSpecs({ ...record, specs: engineTorqueSpecs });
   const superelasticSpecs = recoverGamVerifiedSuperelasticTyresSpec({ ...record, specs: combustionDriveSpecs });
@@ -126,7 +144,18 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const hopperSpecs = recoverGamSweeperHopperCapacity({ ...record, specs: tyreMaterialSpecs });
   const pressureSpecs = recoverGamScrubbingPressureSpec({ ...record, specs: hopperSpecs });
   const brushSpecs = recoverGamSweepingBrushSpecs({ ...record, specs: pressureSpecs });
-  const finalSpecs = recoverGamSourceGradeabilitySpecs({ ...record, specs: brushSpecs });
+  const gradeabilitySpecs = recoverGamSourceGradeabilitySpecs({ ...record, specs: brushSpecs });
+  const towingSpecs = recoverGamVerifiedTowingSpecs({ ...record, specs: gradeabilitySpecs });
+  const variantAcousticSpecs = recoverGamVerifiedVariantAcoustics({ ...record, specs: towingSpecs });
+  const tyreDimensionSpecs = recoverGamVerifiedTyreDimensions({ ...record, specs: variantAcousticSpecs });
+  const confirmedSpecs = recoverGamVerifiedConditionalAcoustics({ ...record, specs: tyreDimensionSpecs });
+  const finalSpecs = recoverGamVerifiedResidualOperationSpecs({ ...record, specs: confirmedSpecs });
+  const recoveredGeometrySpecs = recoverGamVerifiedResidualGeometrySpecs({ ...record, specs: finalSpecs });
+  const recoveredPerformanceSpecs = recoverGamVerifiedResidualPerformanceSpecs({ ...record, specs: recoveredGeometrySpecs });
+  const tractionBrakingSpecs = recoverGamVerifiedTractionBraking({ ...record, specs: recoveredPerformanceSpecs });
+  const steeringBrakingSpecs = recoverGamVerifiedSteeringBraking({ ...record, specs: tractionBrakingSpecs });
+  const drivetrainBrakesSpecs = recoverGamVerifiedDrivetrainBrakes({ ...record, specs: steeringBrakingSpecs });
+  const operatorControlsSpecs = recoverGamVerifiedOperatorControls({ ...record, specs: drivetrainBrakesSpecs });
   record = reconcileGamForPreparation(record);
   record = reconcileMercaelevaForPreparation(record);
   const issues: string[] = [];
@@ -179,6 +208,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     record, handlingEditorial?.short ?? warehouseEditorial?.short ?? specialtyEditorial?.short ?? residualCleaningShort ?? descriptions.short,
     handlingEditorial?.general ?? warehouseEditorial?.general ?? specialtyEditorial?.general ?? residualCleaningGeneral ?? elevationGeneral ?? conciseVerifiedGeneral ?? editorialGeneral
   );
+  const extendedGeneral = resolveGamVerifiedExtendedGeneral(record, verifiedResidualEditorial?.general ?? handlingEditorial?.general ?? warehouseEditorial?.general ?? specialtyEditorial?.general ?? residualCleaningGeneral ?? elevationGeneral ?? conciseVerifiedGeneral ?? editorialGeneral);
   if (descriptionEvidence.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
   if (gamElevationSourceIdentityConflict(record)) issues.push("Identidad GAM contradictoria entre título, resumen y ficha técnica");
   const attributeResult = catalog ? productAttributes(record, category, catalog) : null;
@@ -203,10 +233,10 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     price,
     description_title: title,
     description: verifiedResidualEditorial?.short ?? handlingEditorial?.short ?? warehouseEditorial?.short ?? specialtyEditorial?.short ?? residualCleaningShort ?? descriptions.short,
-    description_general: verifiedResidualEditorial?.general ?? handlingEditorial?.general ?? warehouseEditorial?.general ?? specialtyEditorial?.general ?? residualCleaningGeneral ?? elevationGeneral ?? conciseVerifiedGeneral ?? editorialGeneral,
+    description_general: extendedGeneral ?? verifiedResidualEditorial?.general ?? handlingEditorial?.general ?? warehouseEditorial?.general ?? specialtyEditorial?.general ?? residualCleaningGeneral ?? elevationGeneral ?? conciseVerifiedGeneral ?? editorialGeneral,
     image: images[0] ?? null,
     images,
-    spec: finalSpecs,
+    spec: operatorControlsSpecs,
     attributes: attributeResult?.attributes ?? []
   };
   return {

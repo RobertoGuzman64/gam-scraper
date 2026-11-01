@@ -51,3 +51,57 @@ export const recoverGamLithiumBatteryType = (record: ProductRecord): SpecsMap =>
     deniedLithium.test(description) || /\bbater[ií]a\s+de\s+litio\s+(?:opcional|como\s+opci[oó]n)\b/iu.test(description)) return source;
   return { ...source, "Tipo de batería": "Litio" };
 };
+
+
+const isVerifiedUsedElectricMobility = (record: ProductRecord): boolean => {
+  if (record.providerId !== "gam" || record.categoryKey !== "maquinaria" ||
+    record.condition !== "Segunda mano" || !record.reference) return false;
+  if (record.reference === "6805") {
+    return record.title === "LVNENG LX05" && record.brand === null && record.model === null &&
+      record.url === "https://online.gamrentals.com/es/ciclomotores-electricos-segunda-mano/6805-lvneng-lx05" &&
+      normalize(record.shortDescription ?? "").includes("lvnenglx05") &&
+      normalize(record.longDescription ?? "").includes("lvnenglx05");
+  }
+  if (!identifiedGamMachineModel(record) || !record.brand || !record.model ||
+    !["littium", "silence", "paxster"].includes(normalize(record.brand)) ||
+    normalize(String(record.specs?.["Marca"] ?? "")) !== normalize(record.brand) ||
+    normalize(String(record.specs?.["Modelo"] ?? "")) !== normalize(record.model) ||
+    ![record.title, record.shortDescription, record.longDescription].every((text) =>
+      normalize(text ?? "").includes(normalize(record.brand ?? "")) &&
+      normalize(text ?? "").includes(normalize(record.model ?? "")))) return false;
+  try {
+    const url = new URL(record.url);
+    const parts = url.pathname.split("/").filter(Boolean);
+    return url.hostname === "online.gamrentals.com" && !url.search && !url.hash &&
+      parts.length === 3 && parts[0] === "es" && parts[2]?.startsWith(`${record.reference}-`) === true &&
+      normalize(parts[2]).includes(normalize(record.model));
+  } catch {
+    return false;
+  }
+};
+
+const verifiedLithiumWithoutAlternative = (record: ProductRecord): boolean => {
+  const text = record.longDescription ?? "";
+  if (!lithiumBattery.test(text) || optionalLithium.test(text) || deniedLithium.test(text)) return false;
+  if (isVerifiedUsedElectricMobility(record)) return !alternativeChemistry.test(text);
+  if (record.providerId === "gam" && record.categoryKey === "marcas-nuevas" &&
+    record.condition === "Nuevo" && record.reference === "915" && record.brand === "YALE" &&
+    record.model === "MPC15" && record.specs?.["Marca"] === "YALE" && record.specs?.["Modelo"] === "MPC15" &&
+    record.url === "https://online.gamrentals.com/es/transpaletas-yale/915-transpaleta-propulsada-con-ion-de-litio" &&
+    [record.title, record.shortDescription, text].every((part) => normalize(part ?? "").includes("yale") &&
+      normalize(part ?? "").includes("mpc15"))) return !alternativeChemistry.test(text);
+  if (record.providerId === "gam" && record.reference === "2037" &&
+    verifiedGamElectricalIdentity(record) && record.categoryKey === "carretillas-nuevas" &&
+    record.brand === "HYSTER" && record.model === "J2.5XNL" &&
+    /\bbater[ií]a de iones de litio integrada\b/iu.test(text) &&
+    /\bmayor vida [uú]til que las de plomo-[aá]cido\b/iu.test(text)) {
+    return !alternativeChemistry.test(text.replace(/\bmayor vida [uú]til que las de plomo-[aá]cido\b/giu, ""));
+  }
+  return false;
+};
+
+export const recoverGamVerifiedMobilityBatteryType = (record: ProductRecord): SpecsMap => {
+  const source = record.specs ?? {};
+  if (Object.keys(source).some((key) => batteryKey.test(key)) || !verifiedLithiumWithoutAlternative(record)) return source;
+  return { ...source, "Tipo de batería": "Litio" };
+};

@@ -203,3 +203,17 @@ export const recoverGamVerifiedCombustionDriveSpecs = (record: ProductRecord): S
   }
   return result;
 };
+
+
+const statedTwinTraction = /\bdos\s+motores\s+de\s+tracci[oó]n\s+de\s+(\d{1,2}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+
+export const recoverGamStatedTwinTractionPower = (record: ProductRecord): SpecsMap => {
+  const source = record.specs ?? {};
+  if (!verifiedGamElectricalIdentity(record) || record.categoryKey !== "carretillas-nuevas" ||
+    normalizedElectricalIdentity(record.brand ?? "") !== "hyster" ||
+    Object.keys(source).some((key) => /potencia\s+(?:de\s+)?tracci[oó]n/iu.test(key))) return source;
+  const text = record.longDescription ?? "";
+  const power = unique(text, statedTwinTraction, 1, 100);
+  if (power === null) return source;
+  return { ...source, "Potencia de tracción (kW)": `${String(power * 2).replace(".", ",")} kW` };
+};

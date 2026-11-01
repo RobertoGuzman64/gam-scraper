@@ -3,6 +3,7 @@ import test from "node:test";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
 import { recoverGamElectricMotorPowerSpecs } from "../evidence/providers/gam/electric-motor-power-evidence.js";
+import { recoverGamStatedTwinTractionPower } from "../evidence/providers/gam/motor-configuration-evidence.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -17,7 +18,7 @@ test("GAM distingue las potencias de tracción y elevación medidas en kW", () =
   for (const [reference, traction, lifting] of [
     ["2030", 6.5, 8.6], ["2034", 11.5, 15], ["6425", 11.5, 15],
     ["5995", 40, 40], ["4388", 0.35, 2.2], ["2038", 10, null],
-    ["2011", null, 12], ["6480", null, 2.5]
+    ["2011", 10, 12], ["6480", null, 2.5]
   ] as const) {
     const record = recordOf(reference);
     const original = structuredClone(record);
@@ -64,4 +65,18 @@ test("la recuperación no incorpora potencias en proveedores ni fichas ajenas", 
     const record = recordOf(reference);
     assert.deepEqual(recoverGamElectricMotorPowerSpecs(record), record.specs ?? {}, reference);
   }
+});
+
+
+test("solo suma la potencia de dos motores de tracción identificados, sin trasvasar variantes", () => {
+  const original = recordOf("3799");
+  assert.equal(recoverGamStatedTwinTractionPower(original)["Potencia de tracción (kW)"], "90 kW");
+  for (const variant of [
+    { ...original, providerId: "gomariz" },
+    { ...original, model: "J8.0XNL9" },
+    { ...original, url: `${original.url}?variante=otra` },
+    { ...original, specs: { ...original.specs, "Potencia de tracción (kW)": "100 kW" } },
+    { ...original, longDescription: `${original.longDescription} Dos motores de tracción de 50 kW.` },
+    { ...original, longDescription: "HYSTER J7.0XNSL incorpora motores de tracción de 45 kW." }
+  ]) assert.deepEqual(recoverGamStatedTwinTractionPower(variant), variant.specs ?? {});
 });
