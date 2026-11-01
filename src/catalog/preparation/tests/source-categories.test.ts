@@ -21,10 +21,10 @@ const record = (provider: string, code: string): ProductRecord => {
 };
 
 const electricalCranes = new Map<string, Readonly<Record<string, string>>>([
-  ["1884", { "Voltaje batería (V)": "80 V", "Capacidad de la batería (Ah)": "1085 Ah" }],
-  ["1885", { "Voltaje batería (V)": "96 V", "Capacidad de la batería (Ah)": "1240 Ah" }],
-  ["1886", { "Voltaje batería (V)": "96 V", "Capacidad de la batería (Ah)": "1395 Ah" }],
-  ["1887", { "Voltaje batería (V)": "96 V", "Capacidad de la batería (Ah)": "1395 Ah" }]
+  ["1884", { "Potencia de tracción (kW)": "12 kW", "Autonomía aproximada (h)": "8 h", "Voltaje batería (V)": "80 V", "Capacidad de la batería (Ah)": "1085 Ah" }],
+  ["1885", { "Potencia de tracción (kW)": "30 kW", "Autonomía aproximada (h)": "8 h", "Voltaje batería (V)": "96 V", "Capacidad de la batería (Ah)": "1240 Ah" }],
+  ["1886", { "Potencia de tracción (kW)": "40 kW", "Autonomía aproximada (h)": "8 h", "Voltaje batería (V)": "96 V", "Capacidad de la batería (Ah)": "1395 Ah" }],
+  ["1887", { "Potencia de tracción (kW)": "50 kW", "Autonomía aproximada (h)": "8 h", "Voltaje batería (V)": "96 V", "Capacidad de la batería (Ah)": "1395 Ah" }]
 ]);
 
 const approved = (provider: string, codes: readonly string[]): void => {
@@ -36,10 +36,13 @@ const approved = (provider: string, codes: readonly string[]): void => {
     assert.equal(prepared.product.reference, code);
     assert.deepEqual(prepared.product.spec, { ...product.specs, ...(provider === "gam" && ["4019", "4020"].includes(code) ? { "Depósito de solución": 480, "Depósito de recuperación": 346 } : {}),
       ...(provider === "gam" && code === "4021" ? { "Depósito de solución": 530, "Depósito de recuperación": 276 } : {}),
+      ...(provider === "gam" && ["4019", "4020"].includes(code) ? { "Capacidad de la tolva": 85 } : {}),
+      ...(provider === "gam" && code === "4021" ? { "Capacidad de la tolva": 110 } : {}),
       ...(provider === "gam" && code === "6182" ? { "Depósito de combustible": 50, "Potencia (kW)": "51,7 kW", "Par motor (Nm)": "225 Nm" } : {}),
       ...(provider === "gam" ? electricalCranes.get(code) ?? {} : {}),
-      ...(provider === "gam" && code === "5079" ? { "Voltaje batería (V)": "96 V", "Capacidad de la batería (Ah)": "1395 Ah" } : {}),
-      ...(provider === "gam" && ["4019", "4020"].includes(code) ? { "Nivel sonoro": "75 dBA", "Velocidad de desplazamiento (km/h)": "9 km/h" } : {}) });
+      ...(provider === "gam" && code === "5079" ? { "Voltaje batería (V)": "96 V", "Capacidad de la batería (Ah)": "1395 Ah", "Autonomía aproximada (h)": "8 h" } : {}),
+      ...(provider === "gam" && code === "1888" ? { "Autonomía aproximada (h)": "8 h" } : {}),
+      ...(provider === "gam" && ["4019", "4020"].includes(code) ? { "Nivel sonoro": "75 dBA", "Velocidad de desplazamiento (km/h)": "9 km/h", "Anchura del cepillo principal (mm)": 915 } : {}) });
   }
 };
 

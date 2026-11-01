@@ -38,7 +38,8 @@ test("recupera solo la autonomía explícita y atribuible al modelo, manteniendo
     const after = recoverGamAutonomySpec(record);
     return Object.keys(after).some((key) => !Object.hasOwn(before, key));
   });
-  assert.deepEqual(changed.map((record) => record.reference).sort(), expected.map(([reference]) => reference).sort());
+  assert.deepEqual(changed.map((record) => record.reference).sort(),
+    [...expected.map(([reference]) => reference), "1884", "1885", "1886", "5079", "1887", "1888"].sort());
 });
 
 test("ignora modelos contradictorios, proveedores ajenos y valores alternativos o preexistentes", () => {
@@ -62,4 +63,33 @@ test("ignora modelos contradictorios, proveedores ajenos y valores alternativos 
     const sourceRecord = recordOf(reference);
     assert.deepEqual(recoverGamAutonomySpec(sourceRecord), sourceRecord.specs, reference);
   }
+});
+
+test("recupera únicamente la autonomía aproximada explícita de las grúas ORMIG identificadas", () => {
+  const references = ["1884", "1885", "1886", "5079", "1887", "1888"];
+  for (const reference of references) {
+    const record = recordOf(reference);
+    const snapshot = structuredClone(record);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.product.spec["Autonomía aproximada (h)"], "8 h", reference);
+    assert.equal(normalizeSpecsObject({ "Autonomía aproximada (h)": "8 h" }).normalized["Autonomía aproximada (h)"], 8);
+    for (const [key, value] of Object.entries(record.specs ?? {})) {
+      assert.deepEqual(prepared.product.spec[key], value, `${reference}: ${key}`);
+    }
+    assert.deepEqual(record, snapshot);
+  }
+});
+
+test("no asigna autonomía aproximada a variantes contradictorias o datos ya presentes", () => {
+  const record = recordOf("1884");
+  for (const variant of [
+    { ...record, providerId: "gomariz" },
+    { ...record, brand: "OTRA" },
+    { ...record, model: "35iE" },
+    { ...record, specs: { ...record.specs, Modelo: "35iE" } },
+    { ...record, specs: { ...record.specs, "Autonomía": "10 h" } },
+    { ...record, url: record.url.replace("1884-", "1885-") },
+    { ...record, longDescription: `${record.longDescription} Autonomía entorno a 12 horas.` },
+    { ...record, longDescription: `${record.longDescription} Autonomía de 8 a 12 horas.` }
+  ]) assert.deepEqual(recoverGamAutonomySpec(variant), variant.specs ?? {});
 });

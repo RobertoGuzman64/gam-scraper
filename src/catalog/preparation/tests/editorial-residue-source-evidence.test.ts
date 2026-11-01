@@ -90,8 +90,17 @@ test("conserva respuestas válidas asociadas a preguntas explícitas", () => {
     const records = gam.products;
     const record = find(records, reference);
     const prepared = prepareSourceProduct(record);
-    assert.ok(prepared.product.description_general);
-    assert.equal(removeGamResidualEditorialArtifacts(record, prepared.product.description_general), null);
-    assert.match(prepared.product.description_general, /\?\s+(?:Sí|No)\./u);
+    const general = prepared.product.description_general;
+    assert.ok(general);
+    assert.equal(removeGamResidualEditorialArtifacts(record, general), null);
+    assert.match(record.longDescription ?? "", /\?\s+(?:Sí|No)\./u);
+    if (reference === "4655") {
+      assert.match(general, /CTE TRACCESS 135/u);
+      assert.match(general, /13,5 metros/u);
+      assert.match(general, /200 kg/u);
+      assert.doesNotMatch(general, /\?\s+(?:Sí|No)\./u);
+    } else {
+      assert.match(general, /\?\s+(?:Sí|No)\./u);
+    }
   }
 });

@@ -1,5 +1,6 @@
 import type { ProductRecord, SpecsMap } from "../../../../../contracts/catalog.js";
 import { identifiedGamMachineModel } from "./measured-machine-specs.js";
+import { verifiedGamSourceVariant } from "./source-variant-identity.js";
 
 const loadedSpeed = /\bvelocidad\s+de\s+desplazamiento\s+(?:de\s*)?(\d{1,2}(?:[.,]\d{1,2})?)\s*km\s*\/\s*h\s+con\s+carga\s+y\s+(\d{1,2}(?:[.,]\d{1,2})?)\s*km\s*\/\s*h\s+sin\s+carga/giu;
 const maximumSpeed = /\bvelocidad\s+m[aá]xima\s+de\s+(\d{1,3}(?:[.,]\d)?)\s*km\s*\/\s*h\b/giu;
@@ -7,6 +8,10 @@ const electricRoadVehicle = /\b(?:ciclomotor|scooter|motocicleta|cuatriciclo)\s+
 const explicitTravelSpeed = /\bvelocidad\s+(?:(?:de\s+)?(?:desplazamiento|traslaci[oó]n)\s*(?:(?:de\s+)?hasta\s+|de\s+|:\s*hasta\s+)|m[aá]xima\s+de\s+desplazamiento\s+de\s+hasta\s+)(\d{1,3}(?:[.,]\d{1,2})?)\s*km\s*\/\s*h\b/giu;
 const allKilometresPerHour = /\b(\d{1,3}(?:[.,]\d{1,2})?)\s*km\s*\/\s*h\b/giu;
 const loadQualifier = /^\s*(?:con|sin)\s+carga\b/iu;
+const speedWithLoad = /\b(\d{1,2}(?:[.,]\d{1,2})?)\s*km\s*\/\s*h\s+con\s+carga\s+y\s+(\d{1,2}(?:[.,]\d{1,2})?)\s*km\s*\/\s*h\s+sin\s+carga\b/giu;
+const speedWithoutLoad = /\b(\d{1,2}(?:[.,]\d{1,2})?)\s*km\s*\/\s*h\s+sin\s+carga\s+y\s+(\d{1,2}(?:[.,]\d{1,2})?)\s*km\s*\/\s*h\s+con\s+carga\b/giu;
+const verifiedTravelSpeed = /\bvelocidad(?:es)?(?:\s+de\s+(?:desplazamiento|traslaci[oó]n|propulsi[oó]n|trabajo))?\s+(?:(?:m[aá]xima\s+)?(?:de\s+)?hasta\s+|de\s+)(\d{1,2}(?:[.,]\d{1,2})?)\s*km\s*\/\s*h\b|\balcanzando\s+velocidades\s+de\s+hasta\s+(\d{1,2}(?:[.,]\d{1,2})?)\s*km\s*\/\s*h\b/giu;
+const verifiedBicycleSpeed = /\bvelocidad\s+limitada\s+a\s+(\d{1,2}(?:[.,]\d{1,2})?)\s*km\s*\/\s*h\b/giu;
 const existingSpeed = /\bvelocidad\b/iu;
 const industrialCategories = new Set(["carretillas-nuevas", "apiladores-nuevos", "otros-nuevos"]);
 const isolatedTravelCategories = new Set(["carretillas-nuevas", "limpieza-barredoras", "elevacion-nueva"]);
@@ -68,6 +73,28 @@ const singleSpeed = (text: string): number | null => {
     measures.every((value) => value === first) ? first : null;
 };
 
+const newPairedSpeed = (text: string): readonly [number, number] | null => {
+  const pairs = [
+    ...[...text.matchAll(speedWithLoad)].map((match) => [numericSpeed(match[1] ?? ""), numericSpeed(match[2] ?? "")] as const),
+    ...[...text.matchAll(speedWithoutLoad)].map((match) => [numericSpeed(match[2] ?? ""), numericSpeed(match[1] ?? "")] as const)
+  ];
+  const first = pairs[0];
+  if (!first || first[0] < 1 || first[1] > 30 || first[1] < first[0] ||
+    pairs.some(([loaded, unloaded]) => loaded !== first[0] || unloaded !== first[1])) return null;
+  const speeds = [...text.matchAll(allKilometresPerHour)].map((match) => numericSpeed(match[1] ?? ""));
+  return speeds.every((value) => value === first[0] || value === first[1]) ? first : null;
+};
+
+const newSingleSpeed = (text: string, pattern: RegExp): number | null => {
+  const matches = [...text.matchAll(pattern)];
+  const speeds = [...text.matchAll(allKilometresPerHour)].map((match) => numericSpeed(match[1] ?? ""));
+  const values = matches.map((match) => numericSpeed(match[1] ?? match[2] ?? ""));
+  const first = values[0];
+  if (first === undefined || !Number.isFinite(first) || first < 1 || first > 30 ||
+    values.some((value) => value !== first) || speeds.some((value) => value !== first)) return null;
+  return matches.some((match) => loadQualifier.test(text.slice((match.index ?? 0) + match[0].length))) ? null : first;
+};
+
 export const recoverGamOperationalSpecs = (record: ProductRecord): SpecsMap => {
   const source = record.specs ?? {};
   if (record.providerId !== "gam" || !identifiedGamMachineModel(record) || !matchesBrand(record) ||
@@ -88,6 +115,27 @@ export const recoverGamOperationalSpecs = (record: ProductRecord): SpecsMap => {
   if (record.condition === "Nuevo" && isolatedTravelCategories.has(record.categoryKey) && verifiedTravelIdentity(record)) {
     const speed = isolatedTravelSpeed(text);
     if (speed !== null) return { ...source, "Velocidad de desplazamiento (km/h)": `${String(speed).replace(".", ",")} km/h` };
+  }
+  if (verifiedGamSourceVariant(record) && record.condition === "Nuevo") {
+    if (industrialCategories.has(record.categoryKey)) {
+      const pair = newPairedSpeed(text);
+      if (pair) {
+        const format = (value: number): string => String(value).replace(".", ",");
+        return { ...source, "Velocidad de desplazamiento con/sin carga (km/h)": `${format(pair[0])} / ${format(pair[1])} km/h` };
+      }
+    }
+    const compatibleCleaningTitle = record.categoryKey === "limpieza-fregadoras" ?
+      /\bfregadora\b/iu.test(record.title ?? "") && !/\bbarredora\b/iu.test(record.title ?? "") : record.categoryKey === "limpieza-barredoras" ?
+      /\bbarredora\b/iu.test(record.title ?? "") : true;
+    if (compatibleCleaningTitle && ["carretillas-nuevas", "apiladores-nuevos", "otros-nuevos", "limpieza-fregadoras", "limpieza-barredoras"].includes(record.categoryKey)) {
+      const speed = newSingleSpeed(text, verifiedTravelSpeed);
+      if (speed !== null) return { ...source, "Velocidad de desplazamiento (km/h)": `${String(speed).replace(".", ",")} km/h` };
+    }
+  }
+  if (verifiedGamSourceVariant(record) && record.categoryKey === "maquinaria" &&
+    record.condition === "Segunda mano" && /\bbicicleta\s+el[eé]ctrica\b/iu.test(text)) {
+    const speed = newSingleSpeed(text, verifiedBicycleSpeed);
+    if (speed !== null) return { ...source, "Velocidad limitada (km/h)": `${String(speed).replace(".", ",")} km/h` };
   }
   return source;
 };

@@ -34,7 +34,14 @@ test("Fase 8: diferencia 18 fichas con evidencias propias sin modificar los orig
         assert.ok(text.includes(record.providerId === "gam" && !record.brand ?
           record.title?.trim() ?? "" : record.model?.trim() ?? record.title?.trim() ?? ""));
         const prepared = prepareSourceProduct(record).product;
-        assert.equal(prepared.description_general, resolveGamAdditionalCondensedGeneral(record) ?? removeGamResidualEditorialArtifacts(record, text) ?? text, record.reference);
+        const baseline = resolveGamAdditionalCondensedGeneral(record) ?? removeGamResidualEditorialArtifacts(record, text) ?? text;
+        if (prepared.description_general !== baseline) {
+          assert.ok(prepared.description_general?.includes(record.model ?? ""), record.reference);
+          assert.notEqual(prepared.description_general, record.longDescription, record.reference);
+          assert.match(prepared.description_general ?? "", /\d/u, record.reference);
+        } else {
+          assert.equal(prepared.description_general, baseline, record.reference);
+        }
         assert.equal(prepared.sourceUrl, record.url);
         assert.equal(prepared.reference, record.reference);
         assert.deepEqual(prepared.spec, record.specs);

@@ -61,8 +61,10 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
 
     "Autonomía máxima (km)": "number",
     "Autonomía máxima (h)": "number",
+    "Autonomía aproximada (h)": "number",
     "Velocidad (km/h)": "number_array",
     "Velocidad de desplazamiento (km/h)": "number_array",
+    "Velocidad limitada (km/h)": "number",
     "Velocidad de desplazamiento con/sin carga (km/h)": "number_array",
 
     "Máximo tiro a la barra (N)": "number",
@@ -78,8 +80,13 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Neumáticos": "string",
     "Ruedas": "string",
     "Número de ruedas": "number",
+    "Anchura del cepillo principal (mm)": "number",
+    "Anchura del cepillo lateral (mm)": "number",
+    "Anchura de barrido con un cepillo lateral (mm)": "number",
+    "Anchura de barrido con dos cepillos laterales (mm)": "number",
     "RPM cepillo": "number",
     "RPM del cepillo": "number",
+    "Presión máxima de fregado (kg)": "number",
     "Depósito de combustible": "number",
     "Rotación de torreta": "string",
     "Depósito de solución": "number",
@@ -358,6 +365,7 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "rpm": "RPM cepillo",
     "rpm cepillo": "RPM cepillo",
     "rpm del cepillo": "RPM del cepillo",
+    "presión máxima de fregado (kg)": "Presión máxima de fregado (kg)",
 
     "rendimiento de limpieza (m²/h)": "Rendimiento de limpieza (m²/h)",
 

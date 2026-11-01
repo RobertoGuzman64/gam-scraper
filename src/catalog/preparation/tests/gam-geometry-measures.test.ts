@@ -14,7 +14,8 @@ const recordOf = (reference: string) => {
 
 const expectedRadius = [
   ["5", 2149], ["6", 2216], ["2254", 2076], ["2255", 2076], ["2256", 2076],
-  ["6743", 2374], ["6744", 2374], ["4388", 1344], ["4623", 1425]
+  ["6743", 2374], ["6744", 2374], ["4388", 1344], ["4623", 1425],
+  ["4010", 1854], ["4011", 1854]
 ] as const;
 const expectedCentre = [
   ["2369", 600], ["2041", 900], ["3799", 600], ["3800", 900], ["3801", 600],
@@ -39,11 +40,11 @@ test("recupera medidas geométricas explícitas sin alterar las especificaciones
       assert.deepEqual(record, snapshot);
     }
   }
-  assert.equal(new Set([...expectedRadius, ...expectedCentre].map(([reference]) => reference)).size, 19);
+  assert.equal(new Set([...expectedRadius, ...expectedCentre].map(([reference]) => reference)).size, 21);
 });
 
 test("descarta identidades y procedencias contradictorias, aproximaciones y medidas previas", () => {
-  for (const reference of ["3802", "6745", "6272", "2795", "5902", "5903", "4010", "4011"]) {
+  for (const reference of ["3802", "6745", "6272", "2795", "5902", "5903"]) {
     const record = recordOf(reference);
     assert.deepEqual(recoverGamExplicitMachineSpecs(record), record.specs, reference);
   }

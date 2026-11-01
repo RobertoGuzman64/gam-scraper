@@ -20,7 +20,9 @@ const tyreExamples = [
 ] as const;
 const hopperExamples = [
   ["4025", 70], ["4026", 67], ["4027", 67],
-  ["4032", 310], ["4033", 395], ["4034", 850]
+  ["4032", 310], ["4033", 395], ["4034", 850],
+  ["6150", 135], ["4019", 85], ["4020", 85], ["4021", 110],
+  ["4022", 198], ["4024", 80], ["4016", 20]
 ] as const;
 
 const source = (reference: string): ProductRecord => {
@@ -115,7 +117,7 @@ test("no atribuye materiales de opciones o configuraciones contradichas", () => 
   }
 });
 
-test("el enriquecimiento se limita a diecisiete referencias GAM y excluye Gomariz", () => {
+test("el enriquecimiento se limita a veinticuatro referencias GAM y excluye Gomariz", () => {
   const changes = gam.products.flatMap((record) => {
     const previousTyres = recoverGamVerifiedSuperelasticTyresSpec({
       ...record, specs: recoverGamYaleSuperelasticTyresSpec({
@@ -130,7 +132,7 @@ test("el enriquecimiento se limita a diecisiete referencias GAM y excluye Gomari
   });
   const expected = [...tyreExamples, ...hopperExamples].map(([reference]) => reference);
   assert.deepEqual(new Set(changes), new Set(expected));
-  assert.equal(changes.length, 17);
+  assert.equal(changes.length, 24);
   for (const record of gomariz.products) {
     assert.deepEqual(recoverGamSweeperHopperCapacity(record), record.specs ?? {});
     assert.deepEqual(recoverGamVerifiedTyreMaterialsSpec(record), record.specs ?? {});

@@ -38,10 +38,45 @@ export const recoverGamMotorConfigurationSpecs = (record: ProductRecord): SpecsM
   return source;
 };
 
+const ormigElectricMotors = /\bmotor\s+el[eé]ctrico\s*:\s*(\d{1,2}(?:[.,]\d{1,2})?)\s*\+\s*(\d{1,2}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+const xcmgTwinTraction = /\bmotor\s+de\s+tracci[oó]n\s*:\s*AC\s*2\s*[x×]\s*(\d{1,2}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+const hysterTwinTraction = /\bdoble\s+motor\s+el[eé]ctrico\s+de\s+(\d{1,2}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+const hysterTwinConfirmation = /\bmotor\s*:\s*el[eé]ctrico\s+doble\s+2\s*[x×]\s*(\d{1,2}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+
+export const recoverGamVerifiedTwinMotorSpecs = (record: ProductRecord): SpecsMap => {
+  const source = record.specs ?? {};
+  if (!verifiedGamElectricalIdentity(record) ||
+    Object.keys(source).some((key) => /\bpotencia\b|motor\s+de\s+tracci[oó]n/iu.test(key))) return source;
+  const brand = normalizedElectricalIdentity(record.brand ?? "");
+  const text = record.longDescription ?? "";
+  let motor: number | null = null;
+  if (brand === "ormig" && record.categoryKey === "otros-nuevos" &&
+    normalizedElectricalIdentity(String(source["Tipo motor"] ?? "")) === "electrico" &&
+    /\btracci[oó]n\s*:\s*frontal\b/iu.test(text) &&
+    /\bmotor\s+del\s+sistema\s+hidr[aá]ulico\s*\/\s*servicios\s*:/iu.test(text)) {
+    const pairs = [...text.matchAll(ormigElectricMotors)].map((match) => ({
+      first: parse(match[1] ?? ""), second: parse(match[2] ?? "")
+    }));
+    const pair = pairs[0];
+    if (pair && pair.first === pair.second && pair.first >= 1 && pair.first <= 50 &&
+      pairs.every(({ first, second }) => first === pair.first && second === pair.second)) motor = pair.first * 2;
+  } else if (brand === "xcmg" && record.categoryKey === "elevacion-nueva" &&
+    /\bplataforma\s+elevadora\s+articulada\s+el[eé]ctrica\b/iu.test(text)) {
+    const value = unique(text, xcmgTwinTraction, 1, 50);
+    if (value !== null) motor = value * 2;
+  } else if (brand === "hyster" && record.categoryKey === "carretillas-nuevas" &&
+    normalizedElectricalIdentity(String(source["Tipo motor"] ?? "")) === "electrico") {
+    const value = unique(text, hysterTwinTraction, 1, 50);
+    if (value !== null && value === unique(text, hysterTwinConfirmation, 1, 50)) motor = value * 2;
+  }
+  return motor === null ? source : { ...source, "Potencia de tracción (kW)": `${String(motor).replace(".", ",")} kW` };
+};
+
 const enginePower = /\b(\d{1,3}(?:[.,]\d{1,2})?)\s*kW\b/giu;
 const mercedesEngine = /\bmotor\s+Mercedes-Benz\s+OM934(?:LA)?\b[^.!?]{0,130}?\b(\d{2,3}(?:[.,]\d{1,2})?)\s*kW\b/giu;
 const kubotaEngine = /\bmotor\s+(?:di[eé]sel\s+)?Kubota\b[^.!?]{0,100}?\b(\d{1,3}(?:[.,]\d{1,2})?)\s*kW\b/giu;
 const yuchaiEngine = /\bmotor\s*:\s*Yuchai\b[^.!?]{0,100}?\b(\d{1,3}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+const cumminsEngine = /\bmotor\s+Cummins\s+F3\.8\s+de\s+(\d{1,3}(?:[.,]\d{1,2})?)\s*kW\b/giu;
 const packmatEngine = /\bmotor\s+di[eé]sel\s+de\s+4\s+cilindros\s+con\s+(\d{1,3}(?:[.,]\d{1,2})?)\s*kW\b/giu;
 
 export const recoverGamVerifiedEnginePowerSpecs = (record: ProductRecord): SpecsMap => {
@@ -62,8 +97,9 @@ export const recoverGamVerifiedEnginePowerSpecs = (record: ProductRecord): Specs
     const text = record.longDescription ?? "";
     const yuchai = /\bmotor\s*:\s*Yuchai\b/iu.test(text);
     const kubota = /\bmotor\s+(?:di[eé]sel\s+)?Kubota\b/iu.test(text);
-    if (yuchai === kubota) return source;
-    pattern = yuchai ? yuchaiEngine : kubotaEngine;
+    const cummins = /\bmotor\s+Cummins\s+F3\.8\b/iu.test(text);
+    if (Number(yuchai) + Number(kubota) + Number(cummins) !== 1) return source;
+    pattern = yuchai ? yuchaiEngine : kubota ? kubotaEngine : cumminsEngine;
   } else if (brand === "packmat" && record.categoryKey === "otros-nuevos" &&
     engineType === "diesel") {
     pattern = packmatEngine;
@@ -113,4 +149,57 @@ export const recoverGamVerifiedEngineTorqueSpecs = (record: ProductRecord): Spec
     existingPower === "51,7 kW";
   if (!engineIdentityIsUnambiguous && !xcmgIdentity && !packmatIdentity) return source;
   return { ...source, "Par motor (Nm)": `${first} Nm` };
+};
+
+const dieselKubota = /\bKubota\s+3[.,]8\s*L\s+Diesel\b/iu;
+const kubotaPower = /\b(\d{2,3}(?:[.,]\d{1,2})?)\s*kW\b/giu;
+const measuredTorque = /\bpar\s+motor\s+de\s+(\d{2,4})\s*N\s*[·.]?\s*m\b/giu;
+const conflictingKubotaFuel = /\bmotor\s+(?:di[eé]sel\s+)?Kubota[^!?]{0,60}\b(?:GLP|LPG)\b/iu;
+const duramatchOptions = /\btransmisi[oó]n\s+DuraMatch(?:™)?[^.!?]{0,55}\b(?:1\s+o\s+2|una\s+o\s+dos)\s+velocidades\b/iu;
+const duramatchThree = /\btransmisi[oó]n\s+DuraMatch(?:™)?\s+de\s+3\s+velocidades\b/iu;
+const zfThree = /\btransmisi[oó]n\s+ZF\s+3WG161\s+de\s+3\s+velocidades\s+adelante\s*\/\s*atr[aá]s\b/iu;
+
+export const recoverGamVerifiedCombustionDriveSpecs = (record: ProductRecord): SpecsMap => {
+  const source = record.specs ?? {};
+  if (!verifiedGamElectricalIdentity(record) || record.categoryKey !== "carretillas-nuevas" ||
+    normalizedElectricalIdentity(record.brand ?? "") !== "hyster" ||
+    !/\bdi[eé]sel\b/iu.test(record.title ?? "") ||
+    Object.keys(source).some((key) => /\btransmisi[oó]n\b/iu.test(key))) return source;
+  const text = record.longDescription ?? "";
+  const engineType = String(source["Tipo motor"] ?? "");
+  const declaredFuel = normalizedElectricalIdentity(String(source["Motorización"] ?? ""));
+  const diesel = declaredFuel === "diesel" || normalizedElectricalIdentity(engineType) === "diesel";
+  if (!diesel) return source;
+
+  let result: SpecsMap = source;
+  if (dieselKubota.test(engineType) &&
+    /\bmotor\s+(?:di[eé]sel\s+)?Kubota\b/iu.test(text) &&
+    !conflictingKubotaFuel.test(text) && !/\bWG3800\b/iu.test(text) &&
+    !/\bmotor\s+(?:Mercedes-Benz|MTU|Yanmar|PSI|Cummins)\b/iu.test(text)) {
+    const power = unique(text, kubotaPower, 20, 200);
+    const existingPower = String(source["Potencia (kW)"] ?? "");
+    if ((power === null && /\b\d{2,3}(?:[.,]\d{1,2})?\s*kW\b/iu.test(text)) ||
+      /\btransmisi[oó]n\s+(?:autom[aá]tica\s+)?(?:ZF|Techtronix)\b/iu.test(text)) return source;
+    if (existingPower !== "" && (power === null || existingPower !== `${String(power).replace(".", ",")} kW`)) return source;
+    if (duramatchOptions.test(text)) {
+      result = { ...result, "Transmisión": "DuraMatch (1 o 2 velocidades, según configuración)" };
+    }
+    if (power === 55 && !/\bpotencia\s+de\s+hasta\s+55\s*kW\b/iu.test(text)) {
+      if (existingPower === "" && !Object.keys(source).some((key) => /\bpotencia\b/iu.test(key))) {
+        result = { ...result, "Potencia (kW)": "55 kW" };
+      }
+      const motorTorque = unique(text, measuredTorque, 100, 1500);
+      if (motorTorque === 308 && !Object.keys(result).some((key) => /\bpar\s+(?:motor|m[aá]ximo)\b/iu.test(key))) {
+        result = { ...result, "Par motor (Nm)": "308 Nm" };
+      }
+    }
+  } else if (engineType.trim() === "" && declaredFuel === "diesel" &&
+    unique(text, kubotaPower, 20, 200) === 82 && unique(text, measuredTorque, 100, 1500) === 373 &&
+    /\bmotor\s+Kubota\s+V3800\b/iu.test(text) && duramatchThree.test(text)) {
+    result = { ...result, "Transmisión": "DuraMatch (3 velocidades)" };
+  } else if (normalizedElectricalIdentity(engineType) === "diesel" &&
+    zfThree.test(text) && !/\b(?:Mercedes-Benz|MTU|Kubota|Yanmar|GLP|LPG)\b/iu.test(text)) {
+    result = { ...result, "Transmisión": "ZF 3WG161 (3 velocidades adelante/atrás)" };
+  }
+  return result;
 };

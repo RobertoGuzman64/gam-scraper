@@ -14,7 +14,9 @@ const cases = [
   ["3997", "69 dB"], ["3999", "56 dBA"], ["4000", "56 dBA"],
   ["4005", "65 dBA"], ["4001", "66,9 dBA"], ["4002", "66,9 dBA"],
   ["4008", "75 dBA"], ["4006", "67 dBA"], ["4007", "67 dBA"],
-  ["4009", "72 dBA"]
+  ["4009", "72 dBA"],
+  ["4035", "68 dBA"], ["4036", "63 dBA"], ["4037", "63 dBA"],
+  ["4038", "70 dBA"], ["4039", "74 dBA"], ["4040", "76 dBA"]
 ] as const;
 
 const byReference = (reference: string) => {
@@ -23,7 +25,7 @@ const byReference = (reference: string) => {
   return record;
 };
 
-test("recupera las 16 medidas acústicas sin perder unidades ni especificaciones originales", () => {
+test("recupera las 22 medidas acústicas sin perder unidades ni especificaciones originales", () => {
   for (const [reference, expected] of cases) {
     const record = byReference(reference);
     const snapshot = structuredClone(record);
@@ -65,14 +67,14 @@ test("rechaza identidades alteradas, lecturas contradictorias y claves acústica
   }
 });
 
-test("las 16 fichas únicas pertenecen a GAM y Gomariz queda intacto", () => {
+test("las 22 fichas únicas pertenecen a GAM y Gomariz queda intacto", () => {
   const changed = gam.products.flatMap((record) => {
     const next = recoverGamAcousticSpec(record);
     const added = Object.keys(next).filter((key) => !Object.hasOwn(record.specs ?? {}, key));
     return added.length ? [{ reference: record.reference, added }] : [];
   });
   assert.deepEqual(new Set(changed.map(({ reference }) => reference)), new Set(cases.map(([reference]) => reference)));
-  assert.equal(changed.length, 16);
+  assert.equal(changed.length, 22);
   assert.ok(changed.every(({ added }) => added.length === 1 && added[0] === "Nivel sonoro"));
   assert.ok(gomariz.products.every((record) =>
     JSON.stringify(recoverGamAcousticSpec(record)) === JSON.stringify(record.specs ?? {})));

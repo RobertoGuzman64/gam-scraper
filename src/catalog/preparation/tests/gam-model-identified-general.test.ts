@@ -20,6 +20,21 @@ test("Fase 19: identifica 15 modelos acreditados sin modificar los originales", 
   for (const record of catalog.products) {
     const previous = JSON.stringify(record);
     const prepared = prepareSourceProduct(record).product;
+    if (record.reference === "4031") {
+      assert.ok(resolveGamModelIdentifiedGeneral(record, record.longDescription));
+      assert.match(prepared.description_general ?? "", /Tennant BCS S20 Batería/u);
+      changed.add(record.reference);
+      assert.equal(JSON.stringify(record), previous);
+      continue;
+    }
+    if (record.reference && ["211", "213", "215"].includes(record.reference)) {
+      assert.ok(resolveGamModelIdentifiedGeneral(record, record.longDescription));
+      assert.ok(prepared.description_general?.includes(record.model ?? ""));
+      assert.ok(prepared.description_general?.includes("kg"));
+      changed.add(record.reference);
+      assert.equal(JSON.stringify(record), previous);
+      continue;
+    }
     const result = resolveGamModelIdentifiedGeneral(record, (resolveGamAdditionalCondensedGeneral(record) ? null : prepared.description_general)?.replace(
       /^Modelo identificado en la ficha: [^\n]+\n\n/u, "") ?? null);
     if (result !== null || (record.reference && improved.has(record.reference) && resolveGamAdditionalCondensedGeneral(record))) {

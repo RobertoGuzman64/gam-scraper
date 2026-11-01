@@ -48,3 +48,22 @@ export const recoverGamCleaningProductivitySpec = (record: ProductRecord): Specs
   const value = measuredCoverage(record.longDescription ?? "");
   return value === null ? source : { ...source, "Rendimiento de limpieza (m²/h)": value };
 };
+
+const definiteWorkingWidth = [
+  /\bfranja\s+de\s+limpieza\s+de\s+(\d{1,2}(?:\.\d{3})|\d{3,4})\s*mm\b/giu,
+  /\btrayectoria\s+de\s+limpieza\s+total\s+de\s+(\d{1,2}(?:\.\d{3})|\d{3,4})\s*mm\b/giu,
+  /\bancho\s+de\s+fregado\s+de\s+(\d{1,2}(?:\.\d{3})|\d{3,4})\s*mm\b/giu
+] as const;
+
+export const recoverGamCleaningWorkingWidthSpec = (record: ProductRecord): SpecsMap => {
+  const source = record.specs ?? {};
+  if (!hasOwnIdentity(record) || Object.keys(source).some((key) =>
+    /\b(?:anchura|ancho)\s*(?:de\s+)?(?:trabajo|fregado|barrido)\b/iu.test(key))) return source;
+  const description = record.longDescription ?? "";
+  if (/\b(?:anchura|ancho|trayectoria|franja)\b[^.!?]{0,65}\b(?:mm\s+o\s+\d|mm\s+a\s+\d|versi[oó]n|opci[oó]n)\b/iu.test(description)) return source;
+  const values = definiteWorkingWidth.flatMap((pattern) => [...description.matchAll(pattern)]
+    .map((match) => Number((match[1] ?? "").replace(/\./g, ""))));
+  const width = values[0];
+  return width !== undefined && Number.isInteger(width) && width >= 300 && width <= 3000 &&
+    values.every((value) => value === width) ? { ...source, "Anchura trabajo (mm)": width } : source;
+};

@@ -22,7 +22,8 @@ const platformCases = [
   ["4731", 3.9], ["4733", 5.8], ["4803", 13], ["4805", 16.1],
   ["4804", 16.1], ["4799", 20], ["4806", 20], ["4785", 20],
   ["4787", 26.8], ["4788", 30.6], ["4790", 38.2], ["4808", 6.2],
-  ["4809", 8.1], ["4810", 10.65]
+  ["4809", 8.1], ["4810", 10.65], ["6669", 3], ["6963", 5.8],
+  ["6767", 17.6], ["6768", 17.6], ["5903", 1.7]
 ] as const;
 
 test("las alturas libres al suelo proceden del modelo y conservan las especificaciones previas", () => {
@@ -78,22 +79,33 @@ test("no se recuperan valores si existe una atribución dudosa, alternativa o co
   ]) {
     assert.deepEqual(recoverGamClearanceAndPlatform(variant), variant.specs ?? {});
   }
+  const additional = recordOf("6963");
+  for (const variant of [
+    { ...additional, model: "XG0807AC" },
+    { ...additional, brand: "GENIE" },
+    { ...additional, reference: "6964" },
+    { ...additional, url: additional.url.replace("6963-", "6964-") },
+    { ...additional, specs: { ...additional.specs, "Altura plataforma (m)": "5,5 m" } },
+    { ...additional, longDescription: `${additional.longDescription} Altura de plataforma de 6,8 metros.` }
+  ]) {
+    assert.equal(recoverGamClearanceAndPlatform(variant)["Altura plataforma (m)"], variant.specs?.["Altura plataforma (m)"]);
+  }
   for (const reference of ["5991", "5992", "6002", "6003", "4802", "4737"]) {
     const record = recordOf(reference);
     assert.deepEqual(recoverGamClearanceAndPlatform(record), record.specs ?? {}, reference);
   }
 });
 
-test("solo 25 referencias GAM reciben una medida nueva y Gomariz queda intacto", () => {
+test("solo las referencias acreditadas reciben medidas nuevas y Gomariz queda intacto", () => {
   const expected = new Set([...clearanceCases, ...platformCases].map(([reference]) => reference));
   const changed = gam.products.flatMap((record) => {
     const next = recoverGamClearanceAndPlatform(record);
     const added = Object.keys(next).filter((key) => !Object.hasOwn(record.specs ?? {}, key));
     return added.length ? [{ reference: record.reference, added }] : [];
   });
-  assert.equal(expected.size, 25);
+  assert.equal(expected.size, 30);
   assert.deepEqual(new Set(changed.map(({ reference }) => reference)), expected);
-  assert.equal(changed.length, 25);
+  assert.equal(changed.length, 30);
   assert.ok(changed.every(({ added }) => added.length === 1));
   assert.ok(gomariz.products.every((record) =>
     JSON.stringify(recoverGamClearanceAndPlatform(record)) === JSON.stringify(record.specs ?? {})));

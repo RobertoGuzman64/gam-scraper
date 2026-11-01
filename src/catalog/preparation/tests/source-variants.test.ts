@@ -37,7 +37,9 @@ test("tipo de origen corroborado por identidad y descripción sin inventar subti
         "Velocidad de desplazamiento (km/h)": "12,9 km/h",
         "Depósito de solución": 410,
         "Depósito de recuperación": 360,
-        "Nivel sonoro": "84 dBA"
+        "Nivel sonoro": "84 dBA",
+        "Capacidad de la tolva": 198,
+        "Anchura del cepillo principal (mm)": 1220
       } : {}) }, reference);
     assert.equal(prepared.product.categorySellID, null, reference);
     assert.equal(prepared.product.category, null, reference);

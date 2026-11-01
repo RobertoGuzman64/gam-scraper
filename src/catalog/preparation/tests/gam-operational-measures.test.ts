@@ -66,16 +66,17 @@ test("GAM descarta identidades discordantes, velocidades contradictorias y varia
   }
 });
 
-test("34 referencias GAM reciben velocidades acreditadas, sin herencias a Gomariz", () => {
+test("53 referencias GAM reciben velocidades acreditadas, sin herencias a Gomariz", () => {
   const changes = gam.products.flatMap((record) => {
     const current = recoverGamOperationalSpecs(record);
     const added = Object.keys(current).filter((key) => !Object.hasOwn(record.specs ?? {}, key));
     return added.length ? [{ reference: record.reference, added }] : [];
   });
-  assert.equal(changes.length, 34);
-  assert.equal(new Set(changes.map(({ reference }) => reference)).size, 34);
-  assert.equal(changes.filter(({ added }) => added[0] === "Velocidad de desplazamiento (km/h)").length, 25);
-  assert.equal(changes.filter(({ added }) => added[0] === "Velocidad de desplazamiento con/sin carga (km/h)").length, 9);
+  assert.equal(changes.length, 53);
+  assert.equal(new Set(changes.map(({ reference }) => reference)).size, 53);
+  assert.equal(changes.filter(({ added }) => added[0] === "Velocidad de desplazamiento (km/h)").length, 34);
+  assert.equal(changes.filter(({ added }) => added[0] === "Velocidad de desplazamiento con/sin carga (km/h)").length, 14);
+  assert.equal(changes.filter(({ added }) => added[0] === "Velocidad limitada (km/h)").length, 5);
   assert.ok(changes.every(({ added }) => added.length === 1));
   assert.ok(gomariz.products.every((record) =>
     JSON.stringify(recoverGamOperationalSpecs(record)) === JSON.stringify(record.specs ?? {})));
@@ -129,7 +130,8 @@ test("rechaza velocidades alternativas, cargas específicas, modelos incompatibl
 });
 
 test("las 15 velocidades aisladas se atribuyen a su ficha y no se duplican con las 19 medidas previas", () => {
-  const expected = new Set(isolatedCases.map(([reference]) => reference));
+  const expected = new Set([...isolatedCases.map(([reference]) => reference),
+    ...["50", "2117", "52", "53", "2239", "2151", "4032", "4033", "5771"]]);
   const newOnly = gam.products.flatMap((record) => {
     const after = recoverGamOperationalSpecs(record);
     if (!Object.hasOwn(after, "Velocidad de desplazamiento (km/h)")) return [];
@@ -137,5 +139,60 @@ test("las 15 velocidades aisladas se atribuyen a su ficha y no se duplican con l
     return [record.reference];
   });
   assert.deepEqual(new Set(newOnly), expected);
-  assert.equal(newOnly.length, 15);
+  assert.equal(newOnly.length, 24);
+});
+
+const additionalPaired = [
+  ["6419", "15 / 15,7 km/h", [15, 15.7]], ["6114", "14 / 16 km/h", [14, 16]],
+  ["6425", "15 / 16 km/h", [15, 16]], ["6743", "9,7 / 13 km/h", [9.7, 13]],
+  ["6368", "8,4 / 13 km/h", [8.4, 13]]
+] as const;
+const additionalSpeeds = [
+  ["50", "14 km/h", 14], ["2117", "14 km/h", 14], ["52", "14 km/h", 14],
+  ["53", "14 km/h", 14], ["2239", "13 km/h", 13], ["2151", "6 km/h", 6],
+  ["4032", "10 km/h", 10], ["4033", "13 km/h", 13], ["5771", "7,2 km/h", 7.2]
+] as const;
+
+ test("recupera velocidades con y sin carga, velocidades aisladas y límites explícitos de bicicleta", () => {
+  for (const [reference, expected, numbers] of additionalPaired) {
+    const record = recordOf(reference);
+    const original = structuredClone(record);
+    const key = "Velocidad de desplazamiento con/sin carga (km/h)";
+    assert.equal(prepareSourceProduct(record).product.spec[key], expected, reference);
+    assert.deepEqual(normalizeSpecsObject({ [key]: expected }).normalized[key], numbers, reference);
+    assert.deepEqual(record, original);
+  }
+  for (const [reference, expected, number] of additionalSpeeds) {
+    const record = recordOf(reference);
+    const key = "Velocidad de desplazamiento (km/h)";
+    assert.equal(prepareSourceProduct(record).product.spec[key], expected, reference);
+    assert.deepEqual(normalizeSpecsObject({ [key]: expected }).normalized[key], [number], reference);
+  }
+  for (const reference of ["6803", "6802", "5950", "5952", "5953"]) {
+    const record = recordOf(reference);
+    assert.equal(prepareSourceProduct(record).product.spec["Velocidad limitada (km/h)"], "25 km/h", reference);
+    assert.equal(normalizeSpecsObject({ "Velocidad limitada (km/h)": "25 km/h" }).normalized["Velocidad limitada (km/h)"], 25);
+  }
+});
+
+test("protege las nuevas velocidades frente a variantes cruzadas, mediciones alternativas y datos preexistentes", () => {
+  const paired = recordOf("6419");
+  const source = paired.specs ?? {};
+  for (const variant of [
+    { ...paired, providerId: "gomariz" },
+    { ...paired, brand: "YALE" },
+    { ...paired, model: "J2.0UTL" },
+    { ...paired, title: "Carretilla de otro modelo" },
+    { ...paired, url: paired.url.replace("6419-", "6418-") },
+    { ...paired, specs: { ...source, "Velocidad de desplazamiento": "15 km/h" } },
+    { ...paired, longDescription: `${paired.longDescription} Velocidad de desplazamiento de 20 km/h.` },
+    { ...paired, longDescription: `${paired.longDescription} La velocidad es de 14 km/h con carga y 15,7 km/h sin carga.` }
+  ]) assert.deepEqual(recoverGamOperationalSpecs(variant), variant.specs ?? {});
+  const bicycle = recordOf("6803");
+  for (const variant of [
+    { ...bicycle, model: "Ibiza Titanium" },
+    { ...bicycle, url: bicycle.url.replace("6803-", "6804-") },
+    { ...bicycle, specs: { ...bicycle.specs, "Velocidad limitada": "25 km/h" } },
+    { ...bicycle, longDescription: `${bicycle.longDescription} Velocidad limitada a 35 km/h.` }
+  ]) assert.deepEqual(recoverGamOperationalSpecs(variant), variant.specs ?? {});
 });

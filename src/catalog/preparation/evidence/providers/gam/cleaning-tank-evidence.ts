@@ -87,6 +87,37 @@ export const recoverGamCleaningTankSpecs = (record: ProductRecord): SpecsMap => 
   };
 };
 
+const additionalHopperPatterns = [
+  /\bcapacidad\s+de\s+la\s+tolva\s*\([^)]{1,30}\)\s+es\s+de\s+(\d{2,4})\s*(?:litros?|l)\b/giu,
+  /\b(?:su|la)\s+tolva\s+de\s+(\d{2,4})\s*litros?\b/giu,
+  /\btolva\s+de\s+residuos\s*,?\s+con\s+una\s+capacidad\s+de\s+(\d{2,4})\s*litros?\b/giu,
+  /\btolva\s+de\s+residuos\s+de\s+(\d{2,4})\s*litros?\b/giu,
+  /\btolva\s+de\s+acero\s+de\s+gran\s+capacidad\s*,?\s+que\s+puede\s+contener\s+hasta\s+(\d{2,4})\s*litros?\b/giu
+] as const;
+
+const verifiedAdditionalHopperIdentity = (record: ProductRecord): boolean => {
+  if (record.providerId !== "gam" || record.condition !== "Nuevo" ||
+    !["limpieza-barredoras", "limpieza-fregadoras"].includes(record.categoryKey) ||
+    record.brand?.toLowerCase() !== "tennant" || record.specs?.["Marca"] !== "Tennant" ||
+    !identifiedGamMachineModel(record) ||
+    (!/\btennant\b/iu.test(record.title ?? "") && !/\btennant\b/iu.test(record.shortDescription ?? "")) ||
+    !/\btennant\b/iu.test(record.longDescription ?? "") ||
+    !record.shortDescription?.toLowerCase().includes(record.model?.toLowerCase() ?? "\0")) return false;
+  try {
+    const url = new URL(record.url);
+    const parts = url.pathname.split("/").filter(Boolean);
+    const compact = (value: string): string => value.toLowerCase().normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    return url.hostname === "online.gamrentals.com" && !url.search && !url.hash &&
+      parts.length === 3 && parts[0] === "es" &&
+      ["tennant", "barredoras-industriales-nuevas", "fregadoras-industriales-nuevas"].includes(parts[1] ?? "") &&
+      parts[2]?.startsWith(`${record.reference}-`) === true &&
+      compact(parts[2]).includes(compact(record.model ?? ""));
+  } catch {
+    return false;
+  }
+};
+
 const hopperVolumePatterns = [
   /\b(?:capacidad\s+de\s+(?:la\s+)?tolva|tolva\s+con\s+capacidad)\s+de\s+(\d{2,4})\s*litros?\b/giu,
   /\btolva\s+de\s+(?:(?:alta|gran)\s+capacidad\s+de\s+|residuos\s+de\s+)?(\d{2,4})\s*litros?\b/giu
@@ -116,10 +147,10 @@ const verifiedSweeperIdentity = (record: ProductRecord): boolean => {
 
 export const recoverGamSweeperHopperCapacity = (record: ProductRecord): SpecsMap => {
   const source = record.specs ?? {};
-  if (!verifiedSweeperIdentity(record) || Object.keys(source).some((key) =>
+  if (!(verifiedSweeperIdentity(record) || verifiedAdditionalHopperIdentity(record) || verifiedResidualCleaningIdentity(record)) || Object.keys(source).some((key) =>
     /\b(?:tolva|dep[oó]sito\s+de\s+residuos)\b/iu.test(key))) return source;
   const description = record.longDescription ?? "";
-  const values = hopperVolumePatterns.flatMap((pattern) => [...description.matchAll(pattern)]
+  const values = [...hopperVolumePatterns, ...additionalHopperPatterns].flatMap((pattern) => [...description.matchAll(pattern)]
     .map((match) => Number(match[1])));
   const volume = values[0];
   if (volume === undefined || !Number.isInteger(volume) || volume < 20 || volume > 2000 ||

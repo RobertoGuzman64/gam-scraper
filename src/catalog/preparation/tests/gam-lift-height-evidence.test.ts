@@ -14,7 +14,7 @@ const expected = [
   ["2195", 3500], ["2197", 3500], ["2260", 3500], ["2203", 3500],
   ["2198", 3500], ["2199", 3500], ["2204", 3500], ["2200", 3500],
   ["2201", 3500], ["2335", 3500], ["2205", 3500], ["2206", 5400],
-  ["6991", 200]
+  ["6991", 200], ["6980", 8000], ["6582", 1700], ["6743", 120], ["6990", 115]
 ] as const;
 
 const recordOf = (reference: string): ProductRecord => {
@@ -78,7 +78,24 @@ test("descarta medidas contradictorias, ambiguas o fuera de rango", () => {
   }
 });
 
-test("el cambio queda limitado a las diecisiete fichas identificadas y excluye Gomariz", () => {
+test("respeta la identidad y las alturas originales en usados y equipos de baja elevación", () => {
+  for (const reference of ["6582", "6743", "6990"]) {
+    const record = recordOf(reference);
+    for (const variant of [
+      { ...record, providerId: "gomariz" },
+      { ...record, brand: "OTRA MARCA" },
+      { ...record, model: "OTRO MODELO" },
+      { ...record, reference: "0000" },
+      { ...record, url: `${record.url}?version=1` },
+      { ...record, longDescription: `${record.longDescription} Altura de elevación de 2000 mm.` },
+      { ...record, specs: { ...record.specs, "Altura de elevación (mm)": "800 mm" } }
+    ]) {
+      assert.equal(recoverGamMaximumLiftHeightSpec(variant)[key], variant.specs?.[key], reference);
+    }
+  }
+});
+
+test("las alturas recuperadas quedan limitadas a las fichas acreditadas y excluyen Gomariz", () => {
   const improved = gam.products.filter((record) =>
     !Object.hasOwn(record.specs ?? {}, key) && Object.hasOwn(recoverGamMaximumLiftHeightSpec(record), key)
   ).map((record) => record.reference);

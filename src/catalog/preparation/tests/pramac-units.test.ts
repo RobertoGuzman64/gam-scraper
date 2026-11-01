@@ -33,7 +33,13 @@ test("siete potencias nominales en kVA no se comparan con teasers sin unidad vá
     assert.equal(prepared.status, "ready", reference);
     assert.ok(prepared.product.attributes.some((attribute) => attribute.attributeID === power.id && attribute.value === nominal));
     const revisedShort = resolveGamAdditionalCondensedShort(original);
-    assert.equal(prepared.product.description, revisedShort ?? original.shortDescription);
+    if (["1216", "1217"].includes(reference)) {
+      assert.match(prepared.product.description ?? "", /Grupo electrógeno Pramac/u);
+      assert.ok(prepared.product.description?.includes(original.model ?? ""), reference);
+      assert.doesNotMatch(prepared.product.description ?? "", /\bkWA\b/u);
+    } else {
+      assert.equal(prepared.product.description, revisedShort ?? original.shortDescription);
+    }
     if (["1210", "1212", "1213"].includes(reference)) {
       assert.ok(revisedShort, reference);
       assert.match(prepared.product.description ?? "", new RegExp(`\\b${original.model}\\b`, "u"));

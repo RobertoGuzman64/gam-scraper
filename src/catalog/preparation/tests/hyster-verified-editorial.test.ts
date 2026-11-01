@@ -46,7 +46,11 @@ test("HYSTER 6272 normaliza la capacidad solo si el modelo y la ficha concuerdan
   const prepared = prepareProduct(record, catalog);
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
-  assert.deepEqual(prepared.product.spec, record.specs);
+  assert.deepEqual(prepared.product.spec, {
+    ...record.specs,
+    "Transmisión": "ZF 3WG161 (3 velocidades adelante/atrás)"
+  });
+  assert.match(record.longDescription ?? "", /ZF 3WG161/u);
   assert.equal(prepared.product.description, corrected.shortDescription);
   assert.ok(prepared.product.attributes.some((item) => item.value === 12500));
 });

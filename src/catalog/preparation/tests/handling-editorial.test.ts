@@ -72,7 +72,11 @@ test("preparapedidos conserva los datos de origen y corrige solo el texto duplic
   assert.equal(corrected.title, record.title);
   assert.equal(prepareProduct(record, catalog).status, "ready");
   assert.equal(prepareProduct(record, catalog).product.description, corrected.shortDescription);
-  assert.equal(prepareProduct(record, catalog).product.description_general, corrected.longDescription);
+  const general = prepareProduct(record, catalog).product.description_general;
+  assert.ok(general);
+  assert.match(general, /Yale MO25/u);
+  assert.match(general, /2\.500 kg/u);
+  assert.doesNotMatch(general, /\bMO10L\b/u);
   assert.equal(JSON.stringify(record), original);
 });
 

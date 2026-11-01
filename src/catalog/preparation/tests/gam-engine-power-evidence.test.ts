@@ -15,7 +15,7 @@ const ofReference = (reference: string) => {
 
 const expected: ReadonlyArray<readonly [string, number]> = [
   ["4748", 18.2], ["4749", 18.2], ["4779", 36.8], ["6542", 54.6],
-  ["4782", 36], ["4783", 36.8], ["4790", 55], ["4791", 55.4],
+  ["4782", 36], ["4783", 36.8], ["4790", 55], ["4791", 55.4], ["4793", 95],
   ["2058", 129], ["2060", 129], ["2063", 129], ["2062", 129],
   ["2064", 129], ["2068", 129], ["2065", 129], ["2069", 129],
   ["2067", 129], ["2070", 129], ["6182", 51.7]
@@ -34,7 +34,7 @@ test("recupera potencias propias verificables y conserva los datos originales", 
     }
     assert.deepEqual(original, snapshot, reference);
   }
-  assert.equal(expected.length, 19);
+  assert.equal(expected.length, 20);
 });
 
 test("rechaza errores de identidad, motor y potencias inconsistentes", () => {

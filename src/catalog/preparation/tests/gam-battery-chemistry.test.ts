@@ -73,11 +73,13 @@ test("excluye versiones de batería alternativas y fichas sin identidad firme", 
 });
 
 test("solo modifica la cohorte acreditada y no aplica recuperaciones GAM a Gomariz", () => {
-  const expected = new Set<string>(references);
+  const expected = new Set<string>([
+    ...references, "6322", "6325", "6326", "6327", "2649", "2796", "2797", "3442"
+  ]);
   const improved = gam.products.filter((record) =>
     Object.keys(recoverGamLithiumBatteryType(record)).length > Object.keys(record.specs ?? {}).length
   ).map((record) => record.reference);
-  assert.equal(improved.length, references.length);
+  assert.equal(improved.length, expected.size);
   assert.deepEqual(new Set(improved), expected);
   for (const record of gomariz.products) {
     assert.deepEqual(recoverGamLithiumBatteryType(record), record.specs ?? {});

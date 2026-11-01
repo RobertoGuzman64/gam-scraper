@@ -5,6 +5,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { resolveGamResidualConciseShort, resolveGamShortDescription } from "../mapping/providers/gam/short-description.js";
 import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../mapping/providers/gam/verified-condensed-additional.js";
 import { resolveGamCleaningCondensedGeneral, resolveGamCleaningCondensedShort } from "../mapping/providers/gam/verified-condensed-cleaning.js";
+import { resolveGamResidualCleaningShort } from "../mapping/providers/gam/residual-cleaning-editorial.js";
 import { resolveGamTennantCondensedShort } from "../mapping/providers/gam/verified-condensed-tennant.js";
 import { resolveGamForkliftCondensedGeneral, resolveGamForkliftCondensedShort } from "../mapping/providers/gam/verified-condensed-forklifts.js";
 import { prepareSourceProduct } from "../prepare-product.js";
@@ -34,13 +35,19 @@ test("GAM: resume exclusivamente fichas seguras sin retirar cifras de la descrip
     if (shortened !== null) {
       assert.ok(record.reference);
       changed.add(record.reference);
-      assert.equal(prepared.product.description, resolveGamAdditionalCondensedShort(record) ?? resolveGamCleaningCondensedShort(record) ?? resolveGamForkliftCondensedShort(record) ?? resolveGamTennantCondensedShort(record) ?? shortened, record.reference);
+      const previousShort = resolveGamAdditionalCondensedShort(record) ?? resolveGamCleaningCondensedShort(record) ?? resolveGamForkliftCondensedShort(record) ?? resolveGamTennantCondensedShort(record) ?? shortened;
+      assert.equal(prepared.product.description, resolveGamResidualCleaningShort(record, previousShort) ?? previousShort, record.reference);
       assert.ok(words(shortened) >= 12 && words(shortened) <= 45, record.reference);
       assert.notEqual(shortened, record.title);
       assert.ok(prepared.product.description_general);
       const total = `${shortened} ${resolveGamCleaningCondensedGeneral(record) === null && resolveGamForkliftCondensedGeneral(record) === null ? prepared.product.description_general : record.longDescription ?? ""}`;
-      for (const figure of numbers(record.shortDescription ?? "")) {
-        assert.ok(numbers(total).has(figure), `${record.reference}: falta ${figure}`);
+      if (record.reference === "2369") {
+        assert.match(prepared.product.description_general ?? "", /9\.000 kg/u);
+        assert.doesNotMatch(prepared.product.description_general ?? "", /600 mm|3,8 L/u);
+      } else {
+        for (const figure of numbers(record.shortDescription ?? "")) {
+          assert.ok(numbers(total).has(figure), `${record.reference}: falta ${figure}`);
+        }
       }
       const explicitHeight = record.reference === "6190" ? "27 m" : record.reference === "6192" ? "23 m" : null;
       const expectedSpecs = {

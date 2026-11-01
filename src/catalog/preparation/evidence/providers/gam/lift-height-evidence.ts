@@ -1,7 +1,9 @@
 import type { ProductRecord, SpecsMap } from "../../../../../contracts/catalog.js";
 import { identifiedGamMachineModel } from "./measured-machine-specs.js";
+import { verifiedGamSourceVariant } from "./source-variant-identity.js";
 
 const maximumLiftHeight = /\baltura\s+(?:m[aá]xima\s+)?de\s+elevaci[oó]n\s+de\s+(?:hasta\s+)?(\d{1,2}(?:[.,]\d{3})|\d{1,5}(?:[.,]\d{1,2})?)\s*(mm|metros?|m)\b/giu;
+const identifiedLiftHeight = /\baltura\s+de\s+elevaci[oó]n\s+(?:de\s+hasta\s+|de\s+|hasta\s+)?(\d{1,5}(?:[.,]\d{1,2})?)\s*(mm|metros?|m)\b/giu;
 const existingLiftHeight = /\baltura\s+(?:m[aá]xima\s+)?(?:de\s+)?elevaci[oó]n\b/iu;
 const categoryBrands: Readonly<Record<string, readonly string[]>> = {
   "apiladores-nuevos": ["yale"],
@@ -41,11 +43,18 @@ const heightInMillimetres = (raw: string, unit: string): number | null => {
 
 export const recoverGamMaximumLiftHeightSpec = (record: ProductRecord): SpecsMap => {
   const source = record.specs ?? {};
-  if (!hasSourceIdentity(record) || Object.keys(source).some((key) => existingLiftHeight.test(key))) return source;
-  const measures = [...(record.longDescription ?? "").matchAll(maximumLiftHeight)]
+  if (Object.keys(source).some((key) => existingLiftHeight.test(key))) return source;
+  const identifiedSource = hasSourceIdentity(record);
+  const verifiedAdditional = verifiedGamSourceVariant(record) && (
+    (record.condition === "Segunda mano" && ["elevacion", "manutencion"].includes(record.categoryKey)) ||
+    (record.condition === "Nuevo" && ["carretillas-nuevas", "marcas-nuevas"].includes(record.categoryKey))
+  );
+  if (!identifiedSource && !verifiedAdditional) return source;
+  const pattern = identifiedSource ? maximumLiftHeight : identifiedLiftHeight;
+  const measures = [...(record.longDescription ?? "").matchAll(pattern)]
     .map((match) => heightInMillimetres(match[1] ?? "", match[2] ?? ""));
   const value = measures[0];
-  if (value === undefined || value === null || !Number.isInteger(value) || value < 150 || value > 14000 ||
+  if (value === undefined || value === null || !Number.isInteger(value) || value < (verifiedAdditional ? 100 : 150) || value > 14000 ||
     measures.some((measure) => measure !== value)) return source;
   return { ...source, "Altura de elevación (mm)": `${value} mm` };
 };

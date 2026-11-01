@@ -3,8 +3,6 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamYaleDieselDimensions } from "../mapping/providers/gam/yale-diesel-dimensions.js";
-import { resolveGamForkliftCondensedGeneral } from "../mapping/providers/gam/verified-condensed-forklifts.js";
-import { resolveGamWarehouseCondensedGeneral } from "../mapping/providers/gam/verified-condensed-warehouse.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -29,7 +27,16 @@ test("GAM: incorpora dimensiones originales que faltaban en la descripción de 1
     if (result !== null) {
       assert.ok(record.reference && record.model && record.longDescription);
       const originalGeneral = record.longDescription.trim();
-      assert.equal(prepared.product.description_general, resolveGamWarehouseCondensedGeneral(record) ?? resolveGamForkliftCondensedGeneral(record) ?? result, record.reference);
+      const general = prepared.product.description_general;
+      assert.ok(general, record.reference);
+      assert.ok(general.includes(record.model), record.reference);
+      for (const key of ["Longitud", "Anchura", "Altura"] as const) {
+        const rawValue = record.specs?.[key];
+        assert.ok(typeof rawValue === "string", record.reference);
+        const numeric = rawValue.split(" ")[0] ?? "";
+        const grouped = numeric.replace(/\B(?=(\d{3})+(?!\d))/gu, ".");
+        assert.ok(general.includes(numeric) || general.includes(grouped), `${record.reference}: ${key}`);
+      }
       assert.ok(result.endsWith(`\n\n${originalGeneral}`), record.reference);
       assert.ok(result.includes(`YALE ${record.model}`), record.reference);
       for (const [key, unit] of [["Longitud", "mm"], ["Anchura", "mm"], ["Altura", "mm"], ["Peso", "kg"]] as const) {

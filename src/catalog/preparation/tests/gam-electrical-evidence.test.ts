@@ -3,7 +3,7 @@ import test from "node:test";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
 import { recoverGamElectricalBatterySpecs } from "../evidence/providers/gam/battery-electrical-evidence.js";
-import { recoverGamMotorConfigurationSpecs } from "../evidence/providers/gam/motor-configuration-evidence.js";
+import { recoverGamMotorConfigurationSpecs, recoverGamVerifiedTwinMotorSpecs } from "../evidence/providers/gam/motor-configuration-evidence.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
@@ -100,4 +100,41 @@ test("no modifica las fichas Gomariz", () => {
     assert.deepEqual(recoverGamElectricalBatterySpecs(record), record.specs ?? {});
     assert.deepEqual(recoverGamMotorConfigurationSpecs(record), record.specs ?? {});
   }
+});
+
+test("distingue los dos motores de tracción de los circuitos auxiliares y no mezcla variantes", () => {
+  const cases = [
+    ["1884", 12], ["1885", 30], ["1886", 40], ["1887", 50],
+    ["4772", 6.6], ["5891", 24]
+  ] as const;
+  for (const [reference, power] of cases) {
+    const record = recordOf(reference);
+    const snapshot = structuredClone(record);
+    const prepared = prepareSourceProduct(record).product.spec;
+    assert.deepEqual(normalizeSpecsObject(prepared).normalized["Potencia de tracción (kW)"], [power], reference);
+    for (const [key, value] of Object.entries(record.specs ?? {})) {
+      assert.deepEqual(prepared[key], value, `${reference}: ${key}`);
+    }
+    assert.deepEqual(record, snapshot, reference);
+    for (const invalid of [
+      { ...record, providerId: "gomariz" },
+      { ...record, condition: "Segunda mano" as const },
+      { ...record, model: "MODELO AJENO" },
+      { ...record, reference: "999999" },
+      { ...record, url: record.url.replace(`${reference}-`, "999999-") },
+      { ...record, specs: { ...record.specs, "Potencia de tracción (kW)": "99 kW" } }
+    ]) {
+      assert.deepEqual(recoverGamVerifiedTwinMotorSpecs(invalid), invalid.specs ?? {}, `${reference}: variante`);
+    }
+  }
+  const crane = recordOf("1884");
+  assert.deepEqual(recoverGamVerifiedTwinMotorSpecs({
+    ...crane, longDescription: `${crane.longDescription} Motor eléctrico: 9+9 kW.`
+  }), crane.specs);
+  const hyster = recordOf("5891");
+  assert.deepEqual(recoverGamVerifiedTwinMotorSpecs({
+    ...hyster, longDescription: `${hyster.longDescription} Motor: eléctrico doble 2 × 10 kW.`
+  }), hyster.specs);
+  assert.ok(gomariz.products.every((record) =>
+    JSON.stringify(recoverGamVerifiedTwinMotorSpecs(record)) === JSON.stringify(record.specs ?? {})));
 });

@@ -63,9 +63,9 @@ test("solo recupera las referencias GAM con medidas verificadas en el catálogo 
     const added = Object.keys(recovered).filter((key) => !Object.hasOwn(original, key));
     return added.length ? [{ reference: record.reference, added }] : [];
   });
-  assert.equal(changed.length, 36);
-  assert.equal(new Set(changed.map(({ reference }) => reference)).size, 36);
-  assert.equal(changed.filter(({ added }) => added.includes("Radio de giro (mm)")).length, 22);
+  assert.equal(changed.length, 38);
+  assert.equal(new Set(changed.map(({ reference }) => reference)).size, 38);
+  assert.equal(changed.filter(({ added }) => added.includes("Radio de giro (mm)")).length, 24);
   assert.equal(changed.filter(({ added }) => added.includes("Potencia (kW)")).length, 6);
   assert.equal(changed.filter(({ added }) => added.includes("Centro de carga (mm)")).length, 12);
 });

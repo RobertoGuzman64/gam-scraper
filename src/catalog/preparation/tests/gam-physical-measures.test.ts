@@ -49,7 +49,7 @@ test("las medidas propias explícitas se preparan sin sobrescribir las especific
 });
 
 test("rechaza variantes ambiguas, identidades cruzadas y medidas existentes", () => {
-  for (const reference of ["4029", "4009", "6364", "6802"]) {
+  for (const reference of ["4029", "4009", "6364", "5949"]) {
     const record = recordOf(reference);
     assert.deepEqual(recoverGamPhysicalMeasures(record), record.specs ?? {}, reference);
   }
@@ -93,4 +93,73 @@ test("no duplica anchuras ya recuperadas y conserva rangos dependientes de varia
   const variable = recordOf("4008");
   assert.equal(recoverGamPhysicalMeasures(variable)["Anchura"], undefined);
   assert.equal(recoverGamPhysicalMeasures(recordOf("4009"))["Longitud"], undefined);
+});
+
+
+test("recupera pesos y dimensiones de equipos identificados sin duplicar ni alterar el origen", () => {
+  const expectedMeasurements = [
+    ["6802", { "Peso (kg)": 21 }],
+    ["5950", { "Peso (kg)": 21 }],
+    ["5952", { "Peso (kg)": 21 }],
+    ["5953", { "Peso (kg)": 21 }],
+    ["4005", { "Longitud (mm)": 1310 }],
+    ["4035", { "Peso (kg)": 4.1, "Longitud (mm)": 335, "Altura (mm)": 330 }],
+    ["4036", { "Peso (kg)": 6.1, "Longitud (mm)": 385, "Anchura (mm)": 390, "Altura (mm)": 325 }],
+    ["4037", { "Peso (kg)": 6.1, "Longitud (mm)": 385, "Anchura (mm)": 390 }],
+    ["4038", { "Peso (kg)": 7.8, "Anchura (mm)": 392, "Altura (mm)": 630 }],
+    ["4039", { "Longitud (mm)": 690, "Anchura (mm)": 565, "Altura (mm)": 920 }]
+  ] as const;
+  for (const [reference, expected] of expectedMeasurements) {
+    const record = recordOf(reference);
+    const before = structuredClone(record);
+    const result = prepareSourceProduct(record);
+    const normalized = normalizeSpecsObject(result.product.spec);
+    for (const [key, value] of Object.entries(expected)) {
+      assert.equal(normalized.normalized[key], value, `${reference}: ${key}`);
+      assert.ok(!normalized.unknownKeys.includes(key), `${reference}: ${key}`);
+    }
+    for (const [key, value] of Object.entries(record.specs ?? {})) {
+      assert.deepEqual(result.product.spec[key], value, `${reference}: ${key}`);
+    }
+    assert.deepEqual(record, before);
+  }
+});
+
+test("rechaza dimensiones contradictorias, identidades ajenas y pesos de componentes", () => {
+  const vacuum = recordOf("4036");
+  for (const changed of [
+    { ...vacuum, providerId: "gomariz" },
+    { ...vacuum, model: "AP V-CAN-16" },
+    { ...vacuum, specs: { ...vacuum.specs, Modelo: "AP V-CAN-16" } },
+    { ...vacuum, title: "Aspiradora TENNANT AP V-CAN-16" },
+    { ...vacuum, url: vacuum.url.replace("4036-", "4037-") },
+    { ...vacuum, shortDescription: "Aspiradora de otro modelo" }
+  ]) assert.deepEqual(recoverGamPhysicalMeasures(changed), changed.specs ?? {});
+
+  const conflictingWeight = recoverGamPhysicalMeasures({
+    ...vacuum, longDescription: `${vacuum.longDescription} Peso de solo 8,5 kg.`
+  });
+  assert.equal(conflictingWeight["Peso"], undefined);
+  const conflictingWidth = recoverGamPhysicalMeasures({
+    ...vacuum, longDescription: `${vacuum.longDescription} Dimensiones de 410 mm de ancho.`
+  });
+  assert.equal(conflictingWidth["Anchura"], undefined);
+
+  const existing = { ...vacuum, specs: { ...vacuum.specs, Peso: "9 kg", Anchura: "420 mm" } };
+  const recovered = recoverGamPhysicalMeasures(existing);
+  assert.equal(recovered["Peso"], "9 kg");
+  assert.equal(recovered["Anchura"], "420 mm");
+
+  const bicycle = recordOf("6802");
+  for (const changed of [
+    { ...bicycle, model: "Ibiza Titanium" },
+    { ...bicycle, title: "Littium Ibiza Titanium" },
+    { ...bicycle, url: bicycle.url.replace("6802-", "5949-") },
+    { ...bicycle, longDescription: `${bicycle.longDescription} Su peso de 24 kg.` }
+  ]) assert.deepEqual(recoverGamPhysicalMeasures(changed), changed.specs ?? {});
+
+  for (const reference of ["6743", "6744", "6745", "6364", "5899", "4029", "4009"]) {
+    const record = recordOf(reference);
+    assert.deepEqual(recoverGamPhysicalMeasures(record), record.specs ?? {}, reference);
+  }
 });
