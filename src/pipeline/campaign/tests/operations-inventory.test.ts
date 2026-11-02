@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { getProvider } from "../../../scraping/registry.js";
 import { inspectCampaignOperations } from "../operations-status.js";
 import { inspectOperationsInventory } from "../operations-inventory.js";
 
@@ -60,11 +61,11 @@ test("estado distingue parcial acreditado y archivo alterado sin crear archivos 
   }
 });
 
-test("estado mantiene la preparación acreditada al rotar el nombre original", async () => {
+test("estado mantiene la preparación acreditada al rotar la versión anterior", async () => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-inventory-retention-"));
   try {
     const providerId = "gam";
-    const prefix = "scrape-gam-marzo-2026";
+    const prefix = getProvider(providerId).defaultOptions.outPrefix;
     const sourceDir = join(root, "storage", "scraped", providerId);
     const folder = join(root, "storage", "prepared", providerId);
     await mkdir(sourceDir, { recursive: true });
@@ -112,6 +113,26 @@ test("estado mantiene la preparación acreditada al rotar el nombre original", a
     await writeFile(join(folder, `${prefix}-20261102-preparation.manifest.json`), "{}");
     const altered = await inspectOperationsInventory(root, status);
     assert.equal(altered.providers.find((entry) => entry.providerId === providerId)?.preparation.state, "error");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("estado reconoce un original GAM acreditado anterior al prefijo vigente", async () => {
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-naming-legacy-"));
+  const source = join("catalogs", "providers", "gam", "original");
+  const portable = join(root, source);
+  const scraped = join(root, "storage", "scraped", "gam");
+  try {
+    await mkdir(scraped, { recursive: true });
+    await cp(source, portable, { recursive: true });
+    await cp(source, scraped, { recursive: true });
+    const status = await inspectCampaignOperations(root);
+    const inventory = await inspectOperationsInventory(root, status);
+    const gam = inventory.providers.find((entry) => entry.providerId === "gam");
+    assert.equal(gam?.original.state, "correcto");
+    assert.equal(gam?.portableOriginal.state, "correcto");
+    assert.equal(gam?.consistency.state, "correcto");
   } finally {
     await rm(root, { recursive: true, force: true });
   }

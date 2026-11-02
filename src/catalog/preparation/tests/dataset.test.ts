@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -83,8 +83,12 @@ for (const [company, options] of [
 ] as const) {
   const prefix = options.outPrefix;
   test(`preparación offline real de ${company} desde catálogo canónico acreditado`, async () => {
-    const file = fileURLToPath(new URL(`../../../../src/testing/fixtures/${company}/${prefix}-catalog.json`, import.meta.url));
-    const source = await readCanonicalCatalog(file);
+    const directory = fileURLToPath(new URL(`../../../../src/testing/fixtures/${company}/`, import.meta.url));
+    const catalogs = (await readdir(directory)).filter((name) => name.endsWith("-catalog.json"));
+    assert.equal(catalogs.length, 1, `${company}: debe existir un único catálogo de prueba`);
+    const fixture = catalogs[0];
+    assert.ok(fixture);
+    const source = await readCanonicalCatalog(join(directory, fixture));
     assert.equal(source.providerId, company);
     assert.equal(source.productCount, source.products.length);
     assertPrepared(source.products, company, catalog);

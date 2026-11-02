@@ -7,6 +7,7 @@ import { parseCsv } from "../../shared/csv-parse.js";
 import { toCsv } from "../../shared/csv.js";
 import { normalizeGamRows, type Report } from "./normalization/normalize-rows.js";
 import { formatNormalizationWork } from "../../cli/reporting/normalization-work.js";
+import { DEFAULT_OPTIONS } from "../../scraping/providers/gam/config.js";
 
 type Args = {
   readonly input: string;
@@ -17,8 +18,8 @@ type Args = {
   readonly maxValuesPerKey: number;
 };
 
-const defaultInput = "storage/scraped/gam/scrape-gam-marzo-2026-all.csv";
-const defaultOutput = "storage/normalized/gam/scrape-gam-marzo-2026-all.normalized.csv";
+const defaultInput = `storage/scraped/gam/${DEFAULT_OPTIONS.outPrefix}-all.csv`;
+const defaultOutput = `storage/normalized/gam/${DEFAULT_OPTIONS.outPrefix}-all.normalized.csv`;
 const defaultReport = "storage/normalized/gam/normalize.report.json";
 
 const parseArgs = (argv: readonly string[]): Args => {

@@ -1,11 +1,17 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { fetchHtml, sleep } from "../../infrastructure/http/fetch-html.js";
 import { DEFAULT_OPTIONS } from "../../scraping/providers/gam/config.js";
 import { inspectGamBasketDom, pendingGamBasketRecords } from "./basket-dom-evidence.js";
 
-const catalogPath = "storage/scraped/gam/scrape-gam-marzo-2026-catalog.json";
+const resolveCatalogPath = async (): Promise<string> => {
+  const directory = join("catalogs", "providers", "gam", "original");
+  const entries = (await readdir(directory, { withFileTypes: true })).filter((entry) =>
+    entry.isFile() && !entry.isSymbolicLink() && entry.name.endsWith("-catalog.json"));
+  if (entries.length !== 1) throw new Error("Se requiere un único original portátil GAM");
+  return join(directory, entries[0]!.name);
+};
 
 type Inspection = {
   readonly reference: string;
@@ -22,6 +28,7 @@ const main = async (): Promise<void> => {
     throw new Error("Uso: node dist/tools/gam/audit-basket-dom.js <directorio-salida>");
   }
   const destination = resolve(args[0]);
+  const catalogPath = await resolveCatalogPath();
   const catalog = await readCanonicalCatalog(catalogPath);
   if (catalog.providerId !== "gam") throw new Error("El catálogo de origen no es GAM");
   const pending = pendingGamBasketRecords(catalog.products);

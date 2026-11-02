@@ -4,6 +4,7 @@ import { lstat, readFile, readdir } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readPortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
 import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { getProvider } from "../../scraping/registry.js";
@@ -186,6 +187,22 @@ const inspectPreparation = async (
   }
 };
 
+const operationalPrefix = async (root: string, providerId: string): Promise<string> => {
+  const current = getProvider(providerId).defaultOptions.outPrefix;
+  const dir = join(root, "storage", "scraped", providerId);
+  if (await regularFile(join(dir, `${current}-catalog.json`))) return current;
+  let portablePrefix: string | null = null;
+  try {
+    portablePrefix = (await readPortableOriginal(root, providerId)).prefix;
+    if (await regularFile(join(dir, `${portablePrefix}-catalog.json`))) return portablePrefix;
+  } catch (error) {
+    if (!missing(error)) portablePrefix = null;
+  }
+  if (await regularFile(join(dir, `${current}-partial-all.csv`)) ||
+    await regularFile(join(dir, `${current}-all.csv`))) return current;
+  return portablePrefix ?? current;
+};
+
 export const inspectOperationsInventory = async (
   rootDirectory: string, status: CampaignOperationsStatus, desktopDirectory?: string
 ): Promise<OperationsInventory> => {
@@ -222,12 +239,14 @@ export const inspectOperationsInventory = async (
     campaignIssues.push(`Historial de campañas no verificable: ${describe(error)}`);
   }
   if (retainedDeliveries > 2) campaignIssues.push(`Retención excedida: ${retainedDeliveries} entregas acreditadas (máximo 2)`);
-  const portable = await inspectPortableInventory(root, Object.fromEntries(CAMPAIGN_PROVIDERS.map((providerId) => {
-    const prefix = getProvider(providerId).defaultOptions.outPrefix;
-    return [providerId, join(root, "storage", "scraped", providerId, `${prefix}-catalog.json`)];
-  })));
+  const prefixes = new Map<string, string>();
+  for (const providerId of CAMPAIGN_PROVIDERS) prefixes.set(providerId, await operationalPrefix(root, providerId));
+  const portable = await inspectPortableInventory(root, Object.fromEntries(CAMPAIGN_PROVIDERS.map((providerId) => [
+    providerId, join(root, "storage", "scraped", providerId,
+      `${prefixes.get(providerId) ?? getProvider(providerId).defaultOptions.outPrefix}-catalog.json`)
+  ])));
   const providers = await Promise.all(CAMPAIGN_PROVIDERS.map(async (providerId): Promise<ProviderInventory> => {
-    const prefix = getProvider(providerId).defaultOptions.outPrefix;
+    const prefix = prefixes.get(providerId) ?? getProvider(providerId).defaultOptions.outPrefix;
     const dir = join(root, "storage", "scraped", providerId);
     const fromCampaign = status.campaign.providers.find((entry) => entry.providerId === providerId);
     const localOriginal = await inspectOriginal(dir, prefix, providerId);

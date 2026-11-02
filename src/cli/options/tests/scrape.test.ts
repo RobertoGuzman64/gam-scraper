@@ -26,3 +26,10 @@ test("rechaza errores tipográficos y ambigüedades antes de ejecutar", () => {
   assert.throws(() => resolveCliSelection(["gam", "gomariz"]), /no reconocido/);
   assert.throws(() => resolveCliSelection(["gam", "--rootUrl", "https://example.com"]), /requiere --discoverTree/);
 });
+
+test("GAM genera extracciones sin una fecha histórica fijada en el prefijo", () => {
+  assert.equal(resolveCliSelection(["gam"]).options.outPrefix, "scrape-gam");
+  assert.equal(getProvider("gam").defaultOptions.outPrefix, "scrape-gam");
+  assert.equal(resolveCliSelection(["gam", "--prefix", "scrape-gam-marzo-2026"]).options.outPrefix,
+    "scrape-gam-marzo-2026");
+});
