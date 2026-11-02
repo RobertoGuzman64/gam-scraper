@@ -45,6 +45,8 @@ const parseOptions = (argumentsList) => {
 
 const PRIORITIZED_TESTS = [
   "pipeline/campaign/tests/finalization-and-delivery/delivery.test.js",
+  "pipeline/campaign/tests/finalization-and-delivery/delivery-retention.test.js",
+  "pipeline/campaign/tests/finalization-and-delivery/delivery-recovery.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/finalization-interventions.test.js",
   "catalog/interventions/tests/multiple-scripts.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/finalization.test.js",
