@@ -27,7 +27,7 @@ const makeScript = (content: string): { path: string; cleanup: () => void } => {
   return { path, cleanup: () => rmSync(folder, { recursive: true, force: true }) };
 };
 
-const validScript = `import type { ManualInterventionProposal } from "../contracts.js";
+const validScript = `import type { ManualInterventionProposal } from "../../../../src/catalog/interventions/contracts.js";
 export const proposals = [{
   providerId: "gam", identity: "gam:ref:caso-prueba", field: "shortDescription",
   expected: "Texto anterior", next: "Texto revisado",
