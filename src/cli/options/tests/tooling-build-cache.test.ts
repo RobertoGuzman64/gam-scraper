@@ -9,6 +9,8 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const buildScript = join(root, "scripts/run-build.mjs");
 const terminalScript = join(root, "scripts/terminal.mjs");
+const cacheScript = join(root, "scripts/build-cache.mjs");
+const toolingScript = join(root, "scripts/tooling.mjs");
 
 const invoke = (directory: string, args: readonly string[] = []): void => {
   const result = spawnSync(process.execPath, ["scripts/run-build.mjs", "--quiet", ...args], {
@@ -28,6 +30,8 @@ test("el tooling reutiliza un build íntegro e invalida la caché ante cambios",
     mkdirSync(join(directory, "node_modules", "typescript", "bin"), { recursive: true });
     copyFileSync(buildScript, join(directory, "scripts/run-build.mjs"));
     copyFileSync(terminalScript, join(directory, "scripts/terminal.mjs"));
+    copyFileSync(cacheScript, join(directory, "scripts/build-cache.mjs"));
+    copyFileSync(toolingScript, join(directory, "scripts/tooling.mjs"));
     writeFileSync(join(directory, "package.json"), '{"type":"module"}');
     writeFileSync(join(directory, "package-lock.json"), '{}');
     writeFileSync(join(directory, "tsconfig.json"), '{"compilerOptions":{"outDir":"dist"}}');
@@ -44,16 +48,32 @@ writeFileSync("count.txt", String(count + 1));
     assert.equal(compilationCount(directory), 1);
     invoke(directory, ["--if-needed"]);
     assert.equal(compilationCount(directory), 1);
+    const statusPath = join(directory, "dist/cli/commands/campaign/campaign-status.js");
+    mkdirSync(dirname(statusPath), { recursive: true });
+    writeFileSync(statusPath, 'console.log("ESTADO | correcto");\n');
+    const status = (): void => {
+      const result = spawnSync(process.execPath, ["scripts/tooling.mjs", "estado"], {
+        cwd: directory, encoding: "utf8", windowsHide: true
+      });
+      assert.equal(result.status, 0, result.stderr || result.stdout);
+      assert.match(result.stdout, /ESTADO \| correcto/);
+    };
+    status();
+    assert.equal(compilationCount(directory), 1);
     writeFileSync(join(directory, "src/cli/program.ts"), 'export const value = 2;\n');
+    status();
+    assert.equal(compilationCount(directory), 2);
     invoke(directory, ["--if-needed"]);
     assert.equal(compilationCount(directory), 2);
     writeFileSync(join(directory, "tsconfig.json"), '{"compilerOptions":{"outDir":"dist","strict":true}}');
-    invoke(directory, ["--if-needed"]);
+    status();
     assert.equal(compilationCount(directory), 3);
     rmSync(join(directory, "dist/cli/program.js"));
-    invoke(directory, ["--if-needed"]);
+    status();
     assert.equal(compilationCount(directory), 4);
     invoke(directory);
+    assert.equal(compilationCount(directory), 5);
+    status();
     assert.equal(compilationCount(directory), 5);
     assert.ok(existsSync(join(directory, "dist/.tooling-build.json")));
   } finally {

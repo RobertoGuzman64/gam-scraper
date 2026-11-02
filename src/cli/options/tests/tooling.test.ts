@@ -80,6 +80,7 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
     writeFileSync(join(temp, "package.json"), '{"type":"module"}');
     copyFileSync(script, join(temp, "scripts/tooling.mjs"));
     copyFileSync(join(root, "scripts/terminal.mjs"), join(temp, "scripts/terminal.mjs"));
+    copyFileSync(join(root, "scripts/build-cache.mjs"), join(temp, "scripts/build-cache.mjs"));
     writeFileSync(join(temp, "scripts/run-build.mjs"), "process.exitCode = 0;\n");
     const echo = 'console.log(JSON.stringify(process.argv.slice(2)));\n';
     for (const filename of ["cli/commands/catalog/prepare.js", "cli/index.js", "cli/commands/maintenance/storage-clean.js", "cli/commands/maintenance/catalogs-migrate.js", "cli/commands/campaign/campaign-extract.js", "cli/commands/campaign/campaign-status.js", "cli/commands/campaign/campaign-review.js", "cli/commands/campaign/campaign-reference.js", "cli/commands/campaign/campaign-finalize.js", "cli/commands/catalog/catalog-content-gaps.js", "cli/commands/catalog/deliver-provider.js"]) {

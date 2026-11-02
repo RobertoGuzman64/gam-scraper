@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { formatScriptStatus } from "./terminal.mjs";
+import { isCurrentBuild } from "./build-cache.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -169,10 +170,11 @@ if (rawCommand === "ayuda") {
   } else {
     const cleaned = command === "intervenir" || command === "intervenir:manual" || command === "recuperar" || command === "migrar:catalogos" ? normalized : normalized.filter((argument) => argument !== "--aplicar");
     if (selected.defaultSimulation && !normalized.includes("--aplicar") && !cleaned.includes("--dry-run")) cleaned.push("--dry-run");
-    const compile = spawnSync(process.execPath, [join(root, "scripts/run-build.mjs"), "--quiet", "--if-needed"], {
+    const cached = isCurrentBuild(root);
+    const compile = cached ? null : spawnSync(process.execPath, [join(root, "scripts/run-build.mjs"), "--quiet", "--if-needed"], {
       cwd: root, stdio: "inherit", windowsHide: true
     });
-    if (compile.error || compile.status !== 0) {
+    if (compile && (compile.error || compile.status !== 0)) {
       fail(compile.error?.message ?? `No se pudo compilar (código ${compile.status ?? "desconocido"})`);
     } else {
       const result = spawnSync(process.execPath, [join(root, "dist", selected.entry), ...(selected.prefix ?? []), ...(selected.fixed ?? []), ...cleaned], {
