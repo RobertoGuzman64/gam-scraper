@@ -1,7 +1,7 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ImportCandidate, ImportCatalog } from "../../legacy-export/contracts.js";
 import { fold } from "./category-utils.js";
-import { gamUsedCategorySlug, newCategorySlug } from "./providers/gam/categorias-atributos/categories.js";
+import { gamUsedCategorySlug, newCategorySlug } from "./providers/gam/categories-and-attributes/categories.js";
 import { gomarizCategorySlug } from "./providers/gomariz/categories.js";
 import { mercaelevaCategorySlug, mercaelevaNewCategorySlug } from "./providers/mercaeleva/categories.js";
 import { manainCategorySlug } from "./providers/manain/categories.js";

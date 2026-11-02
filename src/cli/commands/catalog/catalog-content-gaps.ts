@@ -24,7 +24,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 
-type CommandOptions = { readonly json: boolean; readonly specs: boolean; readonly finales: boolean; readonly comparar: boolean; readonly groupBy: GapGroupBy; readonly minGroup: number;
+type CommandOptions = { readonly json: boolean; readonly specs: boolean; readonly finalPublications: boolean; readonly compareSources: boolean; readonly groupBy: GapGroupBy; readonly minGroup: number;
   readonly minMissing: number; readonly limit: number; readonly catalogs: readonly string[];
   readonly publications: readonly string[] };
 
@@ -38,8 +38,8 @@ const parsePositive = (value: string | undefined, flag: string): number => {
 const readOptions = (args: readonly string[]): CommandOptions => {
   let json = false;
   let specs = false;
-  let finales = false;
-  let comparar = false;
+  let finalPublications = false;
+  let compareSources = false;
   let groupBy: GapGroupBy = "categoria";
   let minGroup = 8;
   let minMissing = 3;
@@ -50,8 +50,8 @@ const readOptions = (args: readonly string[]): CommandOptions => {
     const arg = args[index];
     if (arg === "--json") json = true;
     else if (arg === "--specs") specs = true;
-    else if (arg === "--finales") finales = true;
-    else if (arg === "--comparar") comparar = true;
+    else if (arg === "--finales") finalPublications = true;
+    else if (arg === "--comparar") compareSources = true;
     else if (arg === "--catalogo") {
       const value = args[++index];
       if (!value?.trim() || value.startsWith("--")) throw new Error("--catalogo requiere la ruta de un -catalog.json");
@@ -74,14 +74,14 @@ const readOptions = (args: readonly string[]): CommandOptions => {
   if (catalogs.length > 0 && publications.length > 0) {
     throw new Error("--catalogo y --publicacion son modos alternativos; no mezclarlos");
   }
-  if (finales && (catalogs.length > 0 || publications.length > 0)) {
+  if (finalPublications && (catalogs.length > 0 || publications.length > 0)) {
     throw new Error("--finales no se combina con --catalogo ni --publicacion");
   }
-  if (comparar && (finales || catalogs.length > 0 || publications.length > 0)) {
+  if (compareSources && (finalPublications || catalogs.length > 0 || publications.length > 0)) {
     throw new Error("--comparar no se combina con --finales, --catalogo ni --publicacion");
   }
-  if (specs && !comparar) throw new Error("--specs requiere --comparar; las publicaciones solas no acreditan especificaciones de origen");
-  return { json, specs, finales, comparar, groupBy, minGroup, minMissing, limit, catalogs, publications };
+  if (specs && !compareSources) throw new Error("--specs requiere --comparar; las publicaciones solas no acreditan especificaciones de origen");
+  return { json, specs, finalPublications, compareSources, groupBy, minGroup, minMissing, limit, catalogs, publications };
 };
 
 const printEditorial = (editorial: EditorialAnalysis, limit: number): void => {
@@ -249,14 +249,14 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
     return;
   }
   const options = readOptions(args);
-  if (options.comparar) {
+  if (options.compareSources) {
     const paths = await discoverAccreditedPublications(root);
     if (paths.length === 0) throw new Error("No hay publicaciones acreditadas en catalogs/providers/*/publications");
     await reportDescriptionComparison(paths, options);
     return;
   }
-  if (options.publications.length > 0 || options.finales) {
-    const paths = options.finales ? await discoverAccreditedPublications(root) : options.publications;
+  if (options.publications.length > 0 || options.finalPublications) {
+    const paths = options.finalPublications ? await discoverAccreditedPublications(root) : options.publications;
     if (paths.length === 0) throw new Error("No hay publicaciones acreditadas en catalogs/providers/*/publications");
     await reportPublications(paths, options);
     return;

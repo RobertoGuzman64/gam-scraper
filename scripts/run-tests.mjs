@@ -44,17 +44,17 @@ const parseOptions = (argumentsList) => {
 };
 
 const PRIORITIZED_TESTS = [
-  "pipeline/campaign/tests/finalizacion-entrega/delivery.test.js",
-  "pipeline/campaign/tests/finalizacion-entrega/finalization-interventions.test.js",
+  "pipeline/campaign/tests/finalization-and-delivery/delivery.test.js",
+  "pipeline/campaign/tests/finalization-and-delivery/finalization-interventions.test.js",
   "catalog/interventions/tests/multiple-scripts.test.js",
-  "pipeline/campaign/tests/finalizacion-entrega/finalization.test.js",
-  "pipeline/campaign/tests/finalizacion-entrega/finalization-recovery.test.js",
-  "pipeline/campaign/tests/flujo-descubrimiento/workflow.test.js",
+  "pipeline/campaign/tests/finalization-and-delivery/finalization.test.js",
+  "pipeline/campaign/tests/finalization-and-delivery/finalization-recovery.test.js",
+  "pipeline/campaign/tests/discovery-flow/workflow.test.js",
   "cli/commands/catalog/tests/catalog-content-gaps.test.js",
   "catalog/interventions/tests/manual-interventions.test.js",
   "catalog/interventions/tests/intervention-application.test.js",
-  "pipeline/campaign/tests/referencia/reference-update.test.js",
-  "pipeline/campaign/tests/operaciones/operations-status.test.js",
+  "pipeline/campaign/tests/reference/reference-update.test.js",
+  "pipeline/campaign/tests/operations/operations-status.test.js",
   "catalog/interventions/tests/intervention-simulation.test.js",
   "catalog/interventions/tests/catalog.test.js",
   "infrastructure/filesystem/catalog/tests/campaign-accreditation.test.js"

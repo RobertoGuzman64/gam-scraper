@@ -1,7 +1,7 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import { gamElevationSourceIdentityConflict } from "../evidence/providers/gam/identidad/elevation-identity.js";
+import { gamElevationSourceIdentityConflict } from "../evidence/providers/gam/identity/elevation-identity.js";
 import { reconcileGamElevationEditorialIdentity } from "../evidence/providers/gam/editorial/elevation-editorial.js";
-import { reconcileGamOutdatedSourceTitle } from "../mapping/providers/gam/descripciones-editorial/editorial-titles.js";
+import { reconcileGamOutdatedSourceTitle } from "../mapping/providers/gam/editorial-descriptions/editorial-titles.js";
 import { reconcileGamBtsEditorialSummary } from "../evidence/providers/gam/editorial/bts-editorial.js";
 import { reconcileGamForkliftFuelEditorial } from "../evidence/providers/gam/editorial/forklift-fuel-editorial.js";
 import { reconcileGamHandlingHeightEditorial } from "../evidence/providers/gam/editorial/handling-height-editorial.js";
@@ -11,19 +11,19 @@ import { reconcileGamVerifiedHandlingEditorial } from "../evidence/providers/gam
 import { reconcileGamUsedLiftEditorial } from "../evidence/providers/gam/editorial/used-lift-editorial.js";
 import { reconcileGamVerifiedXga43kEditorial } from "../evidence/providers/gam/editorial/xga43k-editorial.js";
 import { reconcileGamVerifiedGenie5390Editorial } from "../evidence/providers/gam/editorial/genie-5390-editorial.js";
-import { reconcileGamVerifiedXcmg1523Model } from "../evidence/providers/gam/modelos-verificados/xcmg-1523-model-evidence.js";
-import { reconcileGamVerifiedXcmg1823Model } from "../evidence/providers/gam/modelos-verificados/xcmg-1823-model-evidence.js";
-import { reconcileGamVerifiedXcmg0810Crawler } from "../evidence/providers/gam/modelos-verificados/xcmg-0810-crawler-evidence.js";
-import { reconcileGamVerifiedXcmg0807acwLithium } from "../evidence/providers/gam/modelos-verificados/xcmg-0807acw-lithium-evidence.js";
-import { reconcileGamVerifiedXcmg12kDiesel } from "../evidence/providers/gam/energia-motorizacion/xcmg-12k-diesel-evidence.js";
-import { reconcileGamVerifiedHysterSGlp } from "../evidence/providers/gam/energia-motorizacion/hyster-s-glp-evidence.js";
-import { reconcileGamVerifiedHysterH18xdDiesel } from "../evidence/providers/gam/energia-motorizacion/hyster-h18xd-diesel-evidence.js";
-import { reconcileGamVerifiedSnorkelS4732e } from "../evidence/providers/gam/modelos-verificados/snorkel-s4732e-evidence.js";
-import { reconcileGamVerifiedYaleGc60vx } from "../evidence/providers/gam/modelos-verificados/yale-gc60vx-evidence.js";
-import { reconcileGamVerifiedYaleGc55vxGlp } from "../evidence/providers/gam/energia-motorizacion/yale-gc55vx-glp-evidence.js";
-import { reconcileGamVerifiedYaleGc40vxLpg } from "../evidence/providers/gam/energia-motorizacion/yale-gc40vx-lpg-evidence.js";
-import { reconcileGamVerifiedYaleGc45vxLpg } from "../evidence/providers/gam/energia-motorizacion/yale-gc45vx-lpg-evidence.js";
-import { reconcileGamVerifiedZeroSerial } from "../evidence/providers/gam/identidad/musoshi-serial-evidence.js";
+import { reconcileGamVerifiedXcmg1523Model } from "../evidence/providers/gam/verified-models/xcmg-1523-model-evidence.js";
+import { reconcileGamVerifiedXcmg1823Model } from "../evidence/providers/gam/verified-models/xcmg-1823-model-evidence.js";
+import { reconcileGamVerifiedXcmg0810Crawler } from "../evidence/providers/gam/verified-models/xcmg-0810-crawler-evidence.js";
+import { reconcileGamVerifiedXcmg0807acwLithium } from "../evidence/providers/gam/verified-models/xcmg-0807acw-lithium-evidence.js";
+import { reconcileGamVerifiedXcmg12kDiesel } from "../evidence/providers/gam/energy-and-powertrain/xcmg-12k-diesel-evidence.js";
+import { reconcileGamVerifiedHysterSGlp } from "../evidence/providers/gam/energy-and-powertrain/hyster-s-glp-evidence.js";
+import { reconcileGamVerifiedHysterH18xdDiesel } from "../evidence/providers/gam/energy-and-powertrain/hyster-h18xd-diesel-evidence.js";
+import { reconcileGamVerifiedSnorkelS4732e } from "../evidence/providers/gam/verified-models/snorkel-s4732e-evidence.js";
+import { reconcileGamVerifiedYaleGc60vx } from "../evidence/providers/gam/verified-models/yale-gc60vx-evidence.js";
+import { reconcileGamVerifiedYaleGc55vxGlp } from "../evidence/providers/gam/energy-and-powertrain/yale-gc55vx-glp-evidence.js";
+import { reconcileGamVerifiedYaleGc40vxLpg } from "../evidence/providers/gam/energy-and-powertrain/yale-gc40vx-lpg-evidence.js";
+import { reconcileGamVerifiedYaleGc45vxLpg } from "../evidence/providers/gam/energy-and-powertrain/yale-gc45vx-lpg-evidence.js";
+import { reconcileGamVerifiedZeroSerial } from "../evidence/providers/gam/identity/musoshi-serial-evidence.js";
 
 export const reconcileGamInitialIdentity = (record: ProductRecord): ProductRecord => reconcileGamVerifiedZeroSerial(record);
 

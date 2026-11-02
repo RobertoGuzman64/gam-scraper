@@ -1,6 +1,6 @@
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { fold } from "../../../../mapping/attribute-utils.js";
-import { gamElevationIdentityConflict } from "../identidad/elevation-identity.js";
+import { gamElevationIdentityConflict } from "../identity/elevation-identity.js";
 
 const compact = (value: string): string => fold(value).replace(/[^a-z0-9]/g, "");
 

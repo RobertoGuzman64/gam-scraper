@@ -1,6 +1,6 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate } from "../legacy-export/contracts.js";
-import { gamConditionEvidence } from "./mapping/providers/gam/categorias-atributos/condition.js";
+import { gamConditionEvidence } from "./mapping/providers/gam/categories-and-attributes/condition.js";
 import { mercaelevaConditionEvidence } from "./mapping/providers/mercaeleva/condition.js";
 import { manainConditionEvidence } from "./mapping/providers/manain/condition.js";
 import { isGomarizOccasionSale } from "../normalization/providers/gomariz/sale.js";

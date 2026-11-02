@@ -1,6 +1,6 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { fold } from "../mapping/category-utils.js";
-import { gamDocumentedSourceType } from "../evidence/providers/gam/identidad/source-category.js";
+import { gamDocumentedSourceType } from "../evidence/providers/gam/identity/source-category.js";
 import { gomarizDocumentedSourceType } from "../evidence/providers/gomariz/source-category.js";
 import { mercaelevaDocumentedSourceType } from "../evidence/providers/mercaeleva/source-category.js";
 
