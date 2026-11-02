@@ -17,6 +17,11 @@ const sourceIdentifiedReferences = ["6641", "6640", "6639", "6638", "6880", "686
 
 const sourceConfirmedHandlingReferences = ["6679", "6704", "6755", "5227", "6662", "6657", "5280", "6885", "5213", "6686", "6684", "5714", "6819", "6821", "6822", "6849", "6878", "5910", "6582", "6601", "6754", "6941"] as const;
 
+const featureReferences = [
+  "18", "1022", "6582", "6601", "2085", "6663", "6626", "6754",
+  "2027", "2037", "6024", "6625", "4717"
+] as const;
+
 const findOriginal = (reference: string): ProductRecord => {
   const record = source.products.find((item) => item.reference === reference);
   assert.ok(record, reference);
@@ -232,6 +237,62 @@ test("GAM: la evidencia editorial posterior conserva identidad, original y espec
       { ...record, specs: { ...record.specs, Modelo: "OTRO" } }
     ] satisfies readonly ProductRecord[]) {
       assert.equal(resolveGamVerifiedSourceCondensedGeneral(altered), null, reference);
+    }
+  }
+});
+
+
+test("GAM: las mejoras de contexto técnico verificadas conservan la identidad original", () => {
+  for (const reference of featureReferences) {
+    const record = findOriginal(reference);
+    const snapshot = JSON.stringify(record);
+    const general = resolveGamVerifiedSourceCondensedGeneral(record);
+    assert.ok(general, reference);
+    const prepared = prepareSourceProduct(record).product;
+    assert.equal(prepared.description_general, general, reference);
+    assert.equal(JSON.stringify(record), snapshot, reference);
+    for (const altered of [
+      { ...record, url: `${record.url}?revision=1` },
+      { ...record, longDescription: `${record.longDescription ?? ""} otra variante` },
+      { ...record, specs: { ...record.specs, "Dato adicional": "nuevo" } }
+    ] satisfies readonly ProductRecord[]) {
+      assert.equal(resolveGamVerifiedSourceCondensedGeneral(altered), null, reference);
+    }
+  }
+});
+
+const phase125Editorial = [
+  ["2087", "ruedas superelásticas, neumáticas y radiales"],
+  ["2058", "100 l/min y presión de 195 bar"],
+  ["2060", "100 l/min a 195 bar"],
+  ["2068", "100 l/min y 195 bar"],
+  ["2066", "100 l/min de caudal hidráulico y 195 bar"],
+] as const;
+
+test("GAM: fase 125 recupera cinco detalles técnicos editoriales individuales", () => {
+  assert.equal(new Set(phase125Editorial.map(([reference]) => reference)).size, 5);
+  for (const [reference, marker] of phase125Editorial) {
+    const record = findOriginal(reference);
+    const before = structuredClone(record);
+    const general = resolveGamVerifiedSourceCondensedGeneral(record);
+    assert.ok(general?.includes(marker), reference);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.status, "ready", reference);
+    assert.ok(prepared.product.description_general?.includes(marker), reference);
+    for (const [key, value] of Object.entries(record.specs ?? {})) {
+      assert.equal(prepared.product.spec[key], value, `${reference}: ${key}`);
+    }
+    assert.deepEqual(record, before, reference);
+    for (const altered of [
+      { ...record, providerId: "gomariz" },
+      { ...record, reference: `${reference}-otro` },
+      { ...record, url: `${record.url}?variante=otra` },
+      { ...record, title: `${record.title} variante"` },
+      { ...record, model: "MODELO-DISTINTO" },
+      { ...record, longDescription: `${record.longDescription ?? ""} texto alterado` },
+      { ...record, specs: { ...record.specs, Marca: "OTRA" } }
+    ] satisfies readonly ProductRecord[]) {
+      assert.equal(resolveGamVerifiedSourceCondensedGeneral(altered), null, `${reference}: variante`);
     }
   }
 });

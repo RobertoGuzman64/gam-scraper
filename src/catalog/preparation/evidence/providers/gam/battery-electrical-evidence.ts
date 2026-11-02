@@ -1,5 +1,6 @@
 import type { ProductRecord, SpecsMap } from "../../../../../contracts/catalog.js";
 import { normalizedElectricalIdentity, verifiedGamElectricalIdentity } from "./electrical-identity-evidence.js";
+import { verifiedGamSourceVariant } from "./source-variant-identity.js";
 
 const energy = /\bbater[ií]a\b[^.!?]{0,90}?\bde\s+(\d{1,3}(?:[.,]\d{1,2})?)\s*kWh\b/giu;
 const everyEnergy = /\b(\d{1,3}(?:[.,]\d{1,2})?)\s*kWh\b/giu;
@@ -140,4 +141,41 @@ export const recoverGamVerifiedBatteryPairSpecs = (record: ProductRecord): Specs
       { "Voltaje batería (V)": formatted(voltage, "V") } : {}),
     "Capacidad de la batería (Ah)": formatted(capacity, "Ah")
   };
+};
+
+
+type IntegratedChargerEvidence = Readonly<{
+  reference: string;
+  brand: string;
+  model: string;
+  category: string;
+  pattern: RegExp;
+}>;
+
+const integratedChargers: readonly IntegratedChargerEvidence[] = [
+  { reference: "2194", brand: "YALE", model: "MS10E", category: "apiladores-nuevos", pattern: /\bcargador incorporado\b/iu },
+  { reference: "2258", brand: "YALE", model: "MC10", category: "apiladores-nuevos", pattern: /\bcargador integrado\b/iu },
+  { reference: "2195", brand: "YALE", model: "MS12E", category: "apiladores-nuevos", pattern: /\bcargador incorporado\b/iu },
+  { reference: "2260", brand: "YALE", model: "MS12 IL", category: "apiladores-nuevos", pattern: /\bcargador integrado\b/iu },
+  { reference: "2203", brand: "YALE", model: "MS12XIL", category: "apiladores-nuevos", pattern: /\bcargador incorporado\b/iu },
+  { reference: "3996", brand: "Tennant", model: "FCA CS16", category: "limpieza-fregadoras", pattern: /\bcargador incorporado\b/iu },
+  { reference: "3999", brand: "Tennant", model: "FCA T291 Tracción", category: "limpieza-fregadoras", pattern: /\bcargador incorporado\b/iu },
+  { reference: "4000", brand: "Tennant", model: "FCA T391 70", category: "limpieza-fregadoras", pattern: /\bcargador incorporado\b/iu },
+  { reference: "2199", brand: "YALE", model: "MS14XIL", category: "apiladores-nuevos", pattern: /\bcargador incorporado\b/iu },
+  { reference: "2204", brand: "YALE", model: "MS14X", category: "apiladores-nuevos", pattern: /\bcargador integrado\b/iu },
+  { reference: "2201", brand: "YALE", model: "MS16 IL", category: "apiladores-nuevos", pattern: /\bcargador integrado\b/iu },
+  { reference: "2205", brand: "YALE", model: "MS16XIL", category: "apiladores-nuevos", pattern: /\bcargador incorporado\b/iu },
+  { reference: "2206", brand: "YALE", model: "MS16XSL", category: "apiladores-nuevos", pattern: /\bcargador integrado\b/iu }
+];
+
+const integratedChargerByReference = new Map(integratedChargers.map((entry) => [entry.reference, entry]));
+
+export const recoverGamVerifiedIntegratedCharger = (record: ProductRecord): SpecsMap => {
+  const source = record.specs ?? {};
+  const entry = integratedChargerByReference.get(record.reference ?? "");
+  if (!entry || record.condition !== "Nuevo" || record.brand !== entry.brand || record.model !== entry.model ||
+    record.categoryKey !== entry.category || !verifiedGamSourceVariant(record) ||
+    Object.keys(source).some((key) => /cargador(?:\s+de\s+bater[ií]a)?/iu.test(key)) ||
+    !entry.pattern.test(record.longDescription ?? "")) return source;
+  return { ...source, "Cargador de batería": "Integrado" };
 };

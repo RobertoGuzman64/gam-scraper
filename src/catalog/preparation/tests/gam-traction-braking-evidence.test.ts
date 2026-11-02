@@ -7,7 +7,7 @@ import { recoverGamVerifiedTractionBraking } from "../evidence/providers/gam/ver
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
-const fourWheel = ["4778", "4779", "4780", "4782", "4785", "4787", "4795", "4788", "4796", "4790", "4793", "4813"] as const;
+const fourWheel = ["4778", "4779", "4780", "4782", "4785", "4787", "4795", "4788", "4796", "4790", "4793", "4813", "4798"] as const;
 const braking = ["2194", "2258", "2195", "2260", "2203", "2199", "2204", "2201"] as const;
 const references = [...fourWheel, ...braking];
 const keyFor = (reference: string): string => fourWheel.some((entry) => entry === reference) ? "Tracción 4x4" : "Frenado regenerativo";
@@ -17,7 +17,7 @@ const record = (reference: string): ProductRecord => {
   return found;
 };
 
-test("añade una prestación acreditada a veinte fichas sin modificar originales", () => {
+test("añade una prestación acreditada a veintiuna fichas sin modificar originales", () => {
   const changed: string[] = [];
   for (const source of catalog.products) {
     const snapshot = structuredClone(source);
@@ -35,10 +35,10 @@ test("añade una prestación acreditada a veinte fichas sin modificar originales
     }
   }
   assert.deepEqual(new Set(changed), new Set(references));
-  assert.equal(changed.length, 20);
+  assert.equal(changed.length, 21);
 });
 
-test("las veinte prestaciones sobreviven al preparador y al normalizador", () => {
+test("las veintiuna prestaciones sobreviven al preparador y al normalizador", () => {
   for (const reference of references) {
     const prepared = prepareSourceProduct(record(reference));
     const normalized = normalizeSpecsObject(prepared.product.spec);

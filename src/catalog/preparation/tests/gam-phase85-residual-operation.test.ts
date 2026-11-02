@@ -38,7 +38,25 @@ const find = (reference: string): ProductRecord => {
   return result;
 };
 
-test("fase 85: exactamente veinte fichas originales GAM incorporan especificaciones acreditadas", () => {
+const phase125Specs = [
+  ["2079", "Transmisión", "DuraMatch (una velocidad)"],
+  ["2082", "Transmisión", "Electronic Powershift DuraMatch (una velocidad)"],
+  ["2072", "Transmisión", "DuraMatch (una o dos velocidades; según configuración)"],
+  ["2073", "Transmisión", "DuraMatch (dos velocidades)"],
+  ["2074", "Transmisión", "DuraMatch (dos velocidades)"],
+  ["2075", "Transmisión", "DuraMatch (una o dos velocidades; según configuración)"],
+  ["2091", "Transmisión", "DuraMatch (hasta tres velocidades; según configuración)"],
+  ["2092", "Transmisión", "DuraMatch (hasta tres velocidades; según configuración)"],
+  ["2093", "Transmisión", "DuraMatch (hasta tres velocidades; según configuración)"],
+  ["2095", "Transmisión", "DuraMatch (dos o tres velocidades; según configuración)"],
+  ["2369", "Transmisión", "Techtronix / DuraMatch 3 (tres velocidades)"],
+  ["5900", "Radio de giro (mm)", "7500 mm"],
+  ["2136", "Consumo", "0,32 kWh/h (dato del proveedor)"],
+  ["2137", "Consumo", "0,36 kWh/h (dato del proveedor)"],
+  ["6368", "Batería", "24 V / 620 Ah (alternativa de 465 Ah)"],
+] as const;
+
+test("GAM: conserva las veinte recuperaciones originales y las cohortes posteriores hasta la fase 125", () => {
   assert.equal(new Set(expected.map(([reference]) => reference)).size, 20);
   const changed: string[] = [];
   for (const record of gam.products) {
@@ -53,8 +71,8 @@ test("fase 85: exactamente veinte fichas originales GAM incorporan especificacio
       changed.push(String(record.reference));
     }
   }
-  assert.deepEqual(new Set(changed), new Set(expected.map(([reference]) => reference)));
-  assert.equal(changed.length, 20);
+  assert.deepEqual(new Set(changed), new Set([...expected.map(([reference]) => reference), "4790", ...phase125Specs.map(([reference]) => reference)]));
+  assert.equal(changed.length, 36);
 });
 
 test("fase 85: las veinte especificaciones llegan al preparador y sobreviven al normalizador", () => {
@@ -124,4 +142,56 @@ test("fase 85: rechaza valores incompatibles y conserva las condiciones expresas
   assert.equal(prepareSourceProduct(find("6272")).product.spec["Radio de giro exterior"], "≈ 4874 mm (según configuración)");
   assert.equal(prepareSourceProduct(find("6746")).product.spec["Nivel sonoro"], "< 70 dB(A) (puesto de conducción)");
   assert.equal(prepareSourceProduct(find("2094")).product.spec["Consumo"], "6,2 l/h (ciclo VDI)");
+});
+
+test("GAM: conserva radios de giro de doble dirección publicados para XCMG XGS40K", () => {
+  const source = find("4790");
+  const original = structuredClone(source);
+  const key = "Radio de giro exterior";
+  const expected = "10,8 m (dos ruedas); 6,8 m (cuatro ruedas)";
+  assert.equal(Object.hasOwn(source.specs ?? {}, key), false);
+  assert.equal(recoverGamVerifiedResidualOperationSpecs(source)[key], expected);
+  const prepared = prepareSourceProduct(source).product;
+  assert.equal(prepared.spec[key], expected);
+  assert.equal(normalizeSpecsObject(prepared.spec).normalized[key], expected);
+  assert.deepEqual(source, original);
+  for (const variant of [
+    { ...source, reference: "4791" },
+    { ...source, model: "XGS40N" },
+    { ...source, url: `${source.url}?variante=otra` },
+    { ...source, longDescription: (source.longDescription ?? "").replace("10,8 m", "11,8 m") },
+    { ...source, specs: { ...source.specs, [key]: "9 m" } }
+  ] satisfies readonly ProductRecord[]) {
+    assert.deepEqual(recoverGamVerifiedResidualOperationSpecs(variant), variant.specs ?? {});
+  }
+});
+
+test("GAM: fase 125 incorpora quince especificaciones de fuente sin alterar el resto", () => {
+  assert.equal(new Set(phase125Specs.map(([reference]) => reference)).size, 15);
+  for (const [reference, key, value] of phase125Specs) {
+    const record = find(reference);
+    const before = structuredClone(record);
+    assert.equal(Object.hasOwn(record.specs ?? {}, key), false, reference);
+    const result = recoverGamVerifiedResidualOperationSpecs(record);
+    assert.equal(result[key], value, reference);
+    assert.deepEqual(Object.entries(result).filter(([candidate]) => !Object.hasOwn(record.specs ?? {}, candidate)), [[key, value]], reference);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.status, "ready", reference);
+    assert.equal(prepared.product.spec[key], value, reference);
+    const normalized = normalizeSpecsObject(prepared.product.spec);
+    assert.equal(normalized.unknownKeys.includes(key), false, reference);
+    assert.ok(Object.hasOwn(normalized.normalized, key), reference);
+    assert.deepEqual(record, before, reference);
+    for (const altered of [
+      { ...record, providerId: "gomariz" },
+      { ...record, reference: `${reference}-otro` },
+      { ...record, url: `${record.url}?modelo=otro` },
+      { ...record, title: "Equipo de otra marca y modelo" },
+      { ...record, model: "MODELO-DISTINTO" },
+      { ...record, longDescription: "descripción sin evidencia técnica" },
+      { ...record, specs: { ...record.specs, [key]: "valor existente" } }
+    ] satisfies readonly ProductRecord[]) {
+      assert.deepEqual(recoverGamVerifiedResidualOperationSpecs(altered), altered.specs ?? {}, `${reference}: variante`);
+    }
+  }
 });

@@ -44,10 +44,6 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
   "fingerprint": "fdf6ff5e081b5d921f27c369f7ba20562262b3e2bc9032e56bdc5e99f25c46f8",
   "general": "La plataforma de tijera eléctrica Jlg 10RS, anunciada como unidad de ocasión de 2015, tiene 12 metros de altura de elevación y 320 kg de capacidad de carga según la ficha técnica. La máquina figura ubicada en Ferrol, con número de serie B200024090. El horómetro registra 677 horas. Sus medidas publicadas son longitud: 2.410 mm; anchura: 1.220 mm; altura: 1.970 mm; peso: 2.775 kg. La pendiente superable declarada es del 25%."
 },
-  "6912": {
-  "fingerprint": "041aec1f55d1005206b6f58655957b5463d3ac2e4c5c1dced705d31d4525d14a",
-  "general": "La plataforma articulada diésel Snorkel A46JRT, anunciada como unidad de ocasión de 2018, tiene 16 metros de altura de elevación y 227 kg de capacidad de carga según la ficha técnica. La máquina figura ubicada en Almería, con número de serie A46JRT-01-180300108. El proveedor indica que el horómetro ha sido sustituido, sin lectura total de horas acreditada. Sus medidas publicadas son longitud: 5.700 mm; anchura: 2.100 mm; altura: 2.160 mm; peso: 7.550 kg. La pendiente superable declarada es del 40%."
-},
   "6492": {
   "fingerprint": "e04ed22a09bc0cd7ebf966499022dc7e7a6b5161e150827159133a43f2e69899",
   "general": "La plataforma unipersonal eléctrica Haulotte STAR 10, anunciada como unidad de ocasión de 2015, tiene 10 metros de altura de elevación y 200 kg de capacidad de carga según la ficha técnica. La máquina figura ubicada en León, con número de serie ME114570. El proveedor indica que el horómetro ha sido sustituido, sin lectura total de horas acreditada. Sus medidas publicadas son longitud: 2.700 mm; anchura: 1.000 mm; altura: 1.990 mm; peso: 2.680 kg. La pendiente superable declarada es del 25%."
@@ -79,10 +75,6 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
   "6631": {
   "fingerprint": "beceab4dcd43017f446f1205acf1d1bc87707ace0cbb9f7bc6e027932c515884",
   "general": "La plataforma articulada eléctrica Manitou 150 AETJC, anunciada como unidad de ocasión de 2008, tiene 15 metros de altura de elevación y 200 kg de capacidad de carga según la ficha técnica. La máquina figura ubicada en Alicante, con número de serie 515512. El horómetro registra 268 horas. Sus medidas publicadas son longitud: 4.400 mm; anchura: 1.500 mm; altura: 2.080 mm; peso: 6.700 kg."
-},
-  "6984": {
-  "fingerprint": "ec2443ee97e1fedc9fc228c84386a7f9c0affd16f2feab93849c7024f40bdad1",
-  "general": "La plataforma articulada diésel Genie Z45/25J, anunciada como unidad de ocasión de 2018, tiene 16 metros de altura de elevación y 230 kg de capacidad de carga según la ficha técnica. La máquina figura ubicada en Toledo, con número de serie Z4525M-7794. El horómetro registra 2.002 horas. Sus medidas publicadas son longitud: 6.830 mm; anchura: 1.790 mm; altura: 2.000 mm; peso: 6.130 kg. La pendiente superable declarada es del 25%."
 },
   "6139": {
   "fingerprint": "c3e6ea731c29aefe1f1900f9bfd5cf1cf5b962970791cc8a342205d58ab3a56e",
@@ -184,10 +176,6 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
     "fingerprint": "a2f497fb33e9e76d920377fe7201887716b9091fa530879be4c184f2e766c113",
     "general": "El recogepedidos Crown GPC 3020 2.0 de ocasión, fabricado en 2019 según la ficha, admite 2.000 kg de carga. La unidad de Pontevedra está identificada con la serie 5A415365 y registra 5.755 horas. Sus medidas publicadas son 3.700 mm de largo y 810 mm de ancho, con un peso declarado de 2.073 kg. Los valores corresponden a esta unidad concreta, no a toda la gama."
   },
-  "6639": {
-    "fingerprint": "20287fcb7e92283412e7129fc90b1bb5c1d2b7eb477cc8b5bf4a2ea15065fc56",
-    "general": "El recogepedidos Crown GPC 3020 2.0 de ocasión, fabricado en 2019 según la ficha, admite 2.000 kg de carga. La unidad de Pontevedra está identificada con la serie 5A415363 y registra 5.970 horas. Sus medidas publicadas son 3.700 mm de largo y 810 mm de ancho, con un peso declarado de 2.073 kg. Los valores corresponden a esta unidad concreta, no a toda la gama."
-  },
   "6638": {
     "fingerprint": "d8bbc2a55000b74e3ddd9722372840bb00c176ac586b28e321e82ab1ba892dd4",
     "general": "El recogepedidos Crown GPC 3020 2.0 de ocasión, fabricado en 2019 según la ficha, admite 2.000 kg de carga. La unidad de Pontevedra está identificada con la serie 5A415360 y registra 6.899 horas. Sus medidas publicadas son 3.700 mm de largo y 810 mm de ancho, con un peso declarado de 2.079 kg. Los valores corresponden a esta unidad concreta, no a toda la gama."
@@ -202,19 +190,11 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
   },
   "6024": {
     "fingerprint": "16246d6850f1466dc4451dff21e6e9944b5e7cc8915f1e3d283bc2cd077274aa",
-    "general": "La carretilla frontal diésel Jungheinrich DFG320S de segunda mano, anunciada del año 2017, tiene capacidad de 2.000 kg y elevación a 4.000 mm. Está equipada con horquillas de 1.200 mm y su mástil replegado mide 2.400 mm. La unidad situada en Alicante registra 12.360 horas, serie FN534195, y declara 3.400 mm de longitud por 1.120 mm de anchura."
-  },
-  "6950": {
-    "fingerprint": "0d15225cbd9564a88077766db4a5e38d4cbbba755d69e3ccbcafe21b44a3c258",
-    "general": "La carretilla retráctil eléctrica Hyster R1.6, anunciada como unidad de ocasión de 2021, tiene capacidad de 1.600 kg y alcanza 7.400 mm de elevación. La ficha indica desplazador lateral y 3.000 mm de altura con mástil replegado. Está ubicada en Vigo y se identifica mediante la serie D435T07766V. Sus dimensiones declaradas son 2.380 mm de largo, 1.265 mm de ancho y 3.000 mm de alto; peso de 3.950 kg. La ficha no publica una lectura de horas."
+    "general": "La carretilla frontal diésel Jungheinrich DFG320S de segunda mano, anunciada del año 2017, tiene capacidad de 2.000 kg y elevación a 4.000 mm. Está equipada con horquillas de 1.200 mm y su mástil replegado mide 2.400 mm. La unidad situada en Alicante registra 12.360 horas, serie FN534195, y declara 3.400 mm de longitud por 1.120 mm de anchura. La descripción de origen destaca el uso en exteriores o interiores ventilados y los mandos hidráulicos para el posicionamiento de cargas."
   },
   "6893": {
     "fingerprint": "cc14926ac20ba4e73d2c0d363043ab032a9626af6a6d190332377a90411f7f38",
     "general": "El manipulador telescópico Haulotte HTL 4014 de segunda mano, del año 2018, declara 14 metros de elevación, 4.000 kg de carga y una pendiente superable del 45%. La unidad de Tarragona registra 6.180 horas, serie 2034956 y matrícula E-8629-BGW. Sus dimensiones son 6.470 mm de largo por 2.430 mm de ancho, con 16.000 kg de peso. El anuncio advierte que falta la documentación original y que la ITV corre por cuenta del comprador."
-  },
-  "6650": {
-    "fingerprint": "e13faf1cba97f5d6918c1edb5c48d1f70c4dacd58f5287f3bc6f54ad4f667120",
-    "general": "La plataforma articulada eléctrica JLG E300AJP de ocasión, fabricada en 2006 según el anuncio, alcanza 11 metros y soporta 230 kg en la cesta. La unidad ubicada en Barcelona registra 2.047 horas y serie 30097810. La ficha publica longitud de 5.740 mm, anchura de 1.220 mm, altura de 2.010 mm y peso de 6.859 kg; pendiente superable del 25%."
   },
   "6634": {
     "fingerprint": "0028d64f7bf915208af5dc50e9ba00199e8e3be38def2bfafaca07de2c3264e8",
@@ -226,7 +206,7 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
   },
   "6663": {
     "fingerprint": "b3ffe228ed83a322019762f09bda58d8c3057ab998319588a41a10b2c79cb261",
-    "general": "El apilador eléctrico a pie Still EXV 14 I de ocasión, del año 2018, dispone de 1.400 kg de capacidad, mástil duplex y elevación a 2.950 mm. Su ficha indica 1.900 mm de mástil replegado, 830 mm de anchura y 1.320 kg de peso. Ubicado en Valencia, serie F20323J00104; el horómetro figura sustituido, sin horas totales acreditadas."
+    "general": "El apilador eléctrico a pie Still EXV 14 I de ocasión, del año 2018, dispone de 1.400 kg de capacidad, mástil duplex y elevación a 2.950 mm. Su ficha indica 1.900 mm de mástil replegado, 830 mm de anchura y 1.320 kg de peso. Ubicado en Valencia, serie F20323J00104; el horómetro figura sustituido, sin horas totales acreditadas. El anuncio describe un sistema de control de velocidad y frenado, además de un mástil de gran visibilidad; no aporta medidas de frenada."
   },
   "6997": {
     "fingerprint": "72a6f5c964c291edc764567015232ad3b539f838b6af053269c8c7d261623e16",
@@ -234,7 +214,7 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
   },
   "6625": {
     "fingerprint": "0e9caebd6b78acc889e68af8f8c143159fbbce20073a364d3a5a3d0c90f77d08",
-    "general": "La plataforma de tijera diésel Genie GS-5390 de ocasión, anunciada de 2014, tiene 18 metros de elevación y 1.400 kg de capacidad de carga. La unidad ubicada en Alicante registra 1.522 horas, serie GS9014-49496. Declara 4.880 mm de largo, 2.290 mm de ancho, 2.470 mm de alto, peso de 7.920 kg y pendiente superable del 40%."
+    "general": "La plataforma de tijera diésel Genie GS-5390 de ocasión, anunciada de 2014, tiene 18 metros de elevación y 1.400 kg de capacidad de carga. La unidad ubicada en Alicante registra 1.522 horas, serie GS9014-49496. Declara 4.880 mm de largo, 2.290 mm de ancho, 2.470 mm de alto, peso de 7.920 kg y pendiente superable del 40%. El origen menciona tracción en las cuatro ruedas para trabajar sobre terreno irregular; esa cualidad se añade sin sustituir la capacidad de carga consignada en la ficha técnica."
   },
   "6644": {
     "fingerprint": "dc031fc2ff32e06cf40f8d5e3f5b7bbe682c698c3abab729108c64de0471bf92",
@@ -250,7 +230,7 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
   },
   "6626": {
     "fingerprint": "27285e2bb8f79a79dacaa0d756451ee753019b3f54843a1e519ec17340095f54",
-    "general": "La plataforma telescópica diésel JLG 860SJ de ocasión, anunciada del año 2008, dispone de 28 metros de elevación y 230 kg de capacidad de cesta. Esta unidad, ubicada en Alicante y con serie 300124592, mide 12.200 mm de largo por 2.490 mm de ancho y pesa 17.200 kg. La ficha declara pendiente superable del 45%; no publica horas acreditadas."
+    "general": "La plataforma telescópica diésel JLG 860SJ de ocasión, anunciada del año 2008, dispone de 28 metros de elevación y 230 kg de capacidad de cesta. Esta unidad, ubicada en Alicante y con serie 300124592, mide 12.200 mm de largo por 2.490 mm de ancho y pesa 17.200 kg. La ficha declara pendiente superable del 45%; no publica horas acreditadas. El anuncio identifica un chasis 4×4 con tracción todoterreno y brazo telescópico, prestaciones de diseño relevantes para trabajos exteriores."
   },
   "6372": {
     "fingerprint": "7cff60f658a0725d558dd596c57eb1a9e025d465e9b42cec4bb361c8b8b155af",
@@ -338,15 +318,15 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
   },
   "6582": {
     "fingerprint": "3ecb880c19d9849e328ae01130e0c740c8450381cee36116d9021a56f7098fcd",
-    "general": "El preparapedidos eléctrico Yale MO10E AC, anunciado de ocasión del año 2014, admite 1.000 kg de carga. Esta unidad de Zaragoza, con serie C862T02266M, registra 19.823 horas en el horómetro. La ficha publica longitud 2.930 mm, anchura 775 mm, altura 1.675 mm, peso 1.781 kg."
+    "general": "El preparapedidos eléctrico Yale MO10E AC, anunciado de ocasión del año 2014, admite 1.000 kg de carga. Esta unidad de Zaragoza, con serie C862T02266M, registra 19.823 horas en el horómetro. La ficha publica longitud 2.930 mm, anchura 775 mm, altura 1.675 mm, peso 1.781 kg. El proveedor la identifica como preparapedidos de bajo nivel con accionamiento AC y plataforma de operador para operaciones de picking."
   },
   "6601": {
     "fingerprint": "54f3a9a0e15dc2cbff52a07b38d1a14ef4ccfd8a33f49d9b1649421db7174073",
-    "general": "El preparapedidos eléctrico Yale MO10E AC, anunciado de ocasión del año 2017, admite 1.000 kg de carga. Esta unidad de Tarragona, con serie C862T02658R, registra 7.031 horas en el horómetro. La ficha publica longitud 3.100 mm, anchura 950 mm, altura 3.070 mm, peso 1.781 kg."
+    "general": "El preparapedidos eléctrico Yale MO10E AC, anunciado de ocasión del año 2017, admite 1.000 kg de carga. Esta unidad de Tarragona, con serie C862T02658R, registra 7.031 horas en el horómetro. La ficha publica longitud 3.100 mm, anchura 950 mm, altura 3.070 mm, peso 1.781 kg. La descripción de origen precisa que es un preparapedidos de bajo nivel, con accionamiento AC, pensado para picking y traslado interno."
   },
   "6754": {
     "fingerprint": "ac6b0bffec1dddb13e672a83b4078c09c7fbe74da04383e5e201cd139a9fb2a7",
-    "general": "El recogepedidos eléctrico Hyster LO2.5, anunciado de ocasión del año 2021, admite 2.500 kg de carga. Esta unidad de Valladolid, con serie E444T05415V, registra 2.576 horas en el horómetro. La ficha publica horquillas 2.350 mm, longitud 4.000 mm, anchura 800 mm, altura 1.500 mm, peso 900 kg. Equipamiento o condiciones declaradas: estado de baterías indicado: 80%."
+    "general": "El recogepedidos eléctrico Hyster LO2.5, anunciado de ocasión del año 2021, admite 2.500 kg de carga. Esta unidad de Valladolid, con serie E444T05415V, registra 2.576 horas en el horómetro. La ficha publica horquillas 2.350 mm, longitud 4.000 mm, anchura 800 mm, altura 1.500 mm, peso 900 kg. Equipamiento o condiciones declaradas: estado de baterías indicado: 80%. El fabricante lo presenta como preparapedidos de bajo nivel para picking y transporte horizontal, con acceso frecuente del operario."
   },
   "6941": {
     "fingerprint": "bf6f29e9266833221c71842a0327d939571c438c96f1f69691038130f955fdca",
@@ -490,7 +470,7 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
   },
   "2085": {
     "fingerprint": "188a18da04b0aac6acb8ada2f376caa8b9673dc2ada89115e2dcf49524a41dbb",
-    "general": "La carretilla elevadora diésel Hyster H4.0FT5 se ofrece como modelo nuevo. La ficha técnica declara elevación de 6000 mm y capacidad de carga de 4000 KG. Dimensiones y peso publicados: longitud 3946 mm, anchura 1485 mm, altura 2171 mm, peso 6264 KG. Datos adicionales consignados: centro de carga: 600 mm; radio de giro: 2599mm."
+    "general": "La carretilla elevadora diésel Hyster H4.0FT5 se ofrece como modelo nuevo. La ficha técnica declara elevación de 6000 mm y capacidad de carga de 4000 KG. Dimensiones y peso publicados: longitud 3946 mm, anchura 1485 mm, altura 2171 mm, peso 6264 KG. Datos adicionales consignados: centro de carga: 600 mm; radio de giro: 2599mm. El anuncio presenta la transmisión DuraMatch como disponible en una o dos velocidades según configuración; no identifica cuál corresponde a una unidad concreta."
   },
   "2041": {
     "fingerprint": "c78974fc9db31da67adaaef9b3e8a5c4a65df95db19bfab21de8bfa7e31660df",
@@ -518,15 +498,15 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
   },
   "18": {
     "fingerprint": "de151cb744baf37238c5a7bf7c89bfb9490f98081128554b8457269bc792e823",
-    "general": "La carretilla elevadora eléctrica Hyster A1.3XNT se ofrece como modelo nuevo. La ficha técnica declara capacidad de carga de 1300 KG. Dimensiones y peso publicados: longitud 2724 mm, altura 2060 mm. Datos adicionales consignados: radio de giro: 1398; batería: 24V / 735-875Ah(V/Ah)."
+    "general": "La carretilla elevadora eléctrica Hyster A1.3XNT se ofrece como modelo nuevo. La ficha técnica declara capacidad de carga de 1300 KG. Dimensiones y peso publicados: longitud 2724 mm, altura 2060 mm. Datos adicionales consignados: radio de giro: 1398; batería: 24V / 735-875Ah(V/Ah). El texto de origen describe una configuración de tres ruedas, con eje trasero orientable y motor de corriente alterna, destinada a maniobrar en pasillos interiores estrechos."
   },
   "2027": {
     "fingerprint": "e07ba13d0cf19018430c4c03b102390583d7595a0ae621e957ea67f7246aa578",
-    "general": "La carretilla elevadora eléctrica Hyster E5.0XN se ofrece como modelo nuevo. La ficha técnica declara elevación de 5740 mm y capacidad de carga de 5000 KG. Dimensiones y peso publicados: longitud 3821 mm, anchura 1420 mm, altura 2138 mm, peso 8112 KG. Datos adicionales consignados: centro de carga: 500 mm; radio de giro: 2341mm; batería: 80V / 750Ah(V/Ah)."
+    "general": "La carretilla elevadora eléctrica Hyster E5.0XN se ofrece como modelo nuevo. La ficha técnica declara elevación de 5740 mm y capacidad de carga de 5000 KG. Dimensiones y peso publicados: longitud 3821 mm, anchura 1420 mm, altura 2138 mm, peso 8112 KG. Datos adicionales consignados: centro de carga: 500 mm; radio de giro: 2341mm; batería: 80V / 750Ah(V/Ah). El origen identifica la variante LWB de batalla larga, con ruedas macizas y control electrónico de tracción; menciona extracción lateral de batería como opción, no como equipamiento instalado."
   },
   "2037": {
     "fingerprint": "e45d4596d3950142f248dda789b51ad12ddd076240ff4aa7c81f7fed77a321d7",
-    "general": "La carretilla elevadora eléctrica Hyster J2.5XNL se ofrece como modelo nuevo. La ficha técnica declara elevación de 5250 mm y capacidad de carga de 2500 KG. Dimensiones y peso publicados: longitud 3480 mm, anchura 1289 mm, altura 2192 mm. Datos adicionales consignados: centro de carga: 500 mm; radio de giro: 2073mm."
+    "general": "La carretilla elevadora eléctrica Hyster J2.5XNL se ofrece como modelo nuevo. La ficha técnica declara elevación de 5250 mm y capacidad de carga de 2500 KG. Dimensiones y peso publicados: longitud 3480 mm, anchura 1289 mm, altura 2192 mm. Datos adicionales consignados: centro de carga: 500 mm; radio de giro: 2073mm. El origen describe motores de tracción dobles de corriente alterna y control ZAPI; distingue versiones Advance y Advance+, sin acreditar cuál se entrega."
   },
   "6976": {
     "fingerprint": "d722f6299346071058426beddec4764846fb904e9ea90a91b575b4c43a93ca9e",
@@ -536,14 +516,6 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
     "fingerprint": "dfeb0b0ca8704e3fe6fdb5a92d0654175a89e8fe3dd5bc8788898c0b686bfa21",
     "general": "La unidad de ocasión MANITOU MI50D, anunciada como «Carretilla elevadora diésel 5000Kg MANITOU MI50D», figura como fabricada en 2026, con número de serie MAN00000C01170517. Ubicación declarada: VALENCIA, ESPAÑA. Horómetro declarado: 385 horas. Prestaciones registradas en la ficha: capacidad de carga (kg): 5000 KG; altura de elevación (mm): 4000 mm; tipo mástil: DUPLEX. Dimensiones y peso publicados: longitud: 3250 mm; anchura: 1490 mm; altura: 3250 mm; peso: 7140 KG. El anuncio especifica cabina con aire acondicionado y cuarta válvula; se entrega sin pinzas ni horquillas."
   },
-  "6966": {
-    "fingerprint": "869bcb8ec5dee6c2b56bda73a19e2a64b7f9fba998c4d41a269b73b09debd08d",
-    "general": "La unidad de ocasión TECNA VTA25, anunciada como «Tractor de arrastre 25TN TECNA VTA25», figura como fabricada en 2015, con número de serie 0125E0515166. Ubicación declarada: VALLADOLID, ESPAÑA. Horómetro declarado: 4000 horas. Prestaciones registradas en la ficha: capacidad de carga (kg): 2000 KG. Dimensiones y peso publicados: longitud: 2525 mm; anchura: 1250 mm; altura: 2440 mm; peso: 3165 KG."
-  },
-  "6391": {
-    "fingerprint": "88f7199c60a61db2812b95166f92e1461d17bf789a5a100d5c1d2a870513ae91",
-    "general": "La unidad de ocasión JLG 4013, anunciada como «Manipulador telescópico 13M 4000Kg JLG 4013», figura como fabricada en 2006, con número de serie 1160001557. Ubicación declarada: ALICANTE, ESPAÑA. Horómetro declarado: 6627 horas. Prestaciones registradas en la ficha: capacidad de carga (kg): 4000 KG; altura de elevación (m): 13 metros. Dimensiones y peso publicados: longitud: 6000 mm; anchura: 2380 mm; altura: 2450 mm; peso: 11710 KG."
-  },
   "6858": {
     "fingerprint": "9b5d053021a799ebc8a8c352b5218dc897bbfb09d22360372ed3c5c6e74b2f6d",
     "general": "La unidad de ocasión YALE ERP35VL, anunciada como «Carretilla elevadora eléctrica 3500 Kg YALE ERP35VL», figura como fabricada en 2019, con número de serie A976B08243T. Ubicación declarada: TARRAGONA, ESPAÑA. Horómetro declarado: 1662 horas. Prestaciones registradas en la ficha: capacidad de carga (kg): 3500 KG; altura de elevación (mm): 4100 mm; tipo mástil: DUPLEX; desplazador lateral: SI. Dimensiones y peso publicados: longitud: 2600 mm; anchura: 1180 mm; altura: 2750 mm; peso: 5430 KG."
@@ -551,10 +523,6 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
   "6947": {
     "fingerprint": "7a66c4d6040fd3263888a28b1112f3ed0857ddbf5cc78c1c05fed4d7fce0be93",
     "general": "La unidad de ocasión HAULOTTE HA20 RTJ, anunciada como «PLATAFORMA ARTICULADA DIÉSEL 20M HAULOTE HA20 RTJ», figura como fabricada en 2016, con número de serie AD127829. Ubicación declarada: PALENCIA, ESPAÑA. Prestaciones registradas en la ficha: capacidad de carga (kg): 230 KG; altura de elevación (m): 20 metros; pendiente superable: 45%. Dimensiones y peso publicados: longitud: 6160 mm; anchura: 2430 mm; altura: 2980 mm; peso: 9300 KG."
-  },
-  "5961": {
-    "fingerprint": "6e543a8d2cc3fe11cf7c82e37423a6a82f7216cf4a24ae69d079e673bc9f042b",
-    "general": "La unidad de ocasión HYSTER P2.0S FBW, anunciada como «Transpaleta eléctrica conductor montado 2000 kg HYSTER P2.0S FBW», figura como fabricada en 2015, con número de serie D439T05114N. Ubicación declarada: MONTIJO, PORTUGAL. Horómetro declarado: 2865 horas. Prestaciones registradas en la ficha: capacidad de carga (kg): 2000 KG. Dimensiones y peso publicados: longitud: 1955 mm; anchura: 800 mm; altura: 1565 mm; peso: 1007 KG."
   },
   "6196": {
     "fingerprint": "d9e773296eadde9f4e91834a02fc4c59566a1b3bf11b41809ae646b4f601724c",
@@ -570,7 +538,7 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
   },
   "4717": {
     "fingerprint": "ddffae4e5335e78f366dc4a96b8e256bfa60ba8728b611ad57a5abccdb76ab46",
-    "general": "La ficha del equipo CTE ZED 20.4 HN corresponde al anuncio de maquinaria nueva «Plataforma sobre camión articulada CTE ZED 20.4 HN ISUZU». Prestaciones registradas en la ficha: capacidad de carga (kg): 250 KG; altura de elevación (m): 20 metros."
+    "general": "La ficha del equipo CTE ZED 20.4 HN corresponde al anuncio de maquinaria nueva «Plataforma sobre camión articulada CTE ZED 20.4 HN ISUZU». Prestaciones registradas en la ficha: capacidad de carga (kg): 250 KG; altura de elevación (m): 20 metros. La descripción del modelo detalla un brazo de doble articulación con extensión telescópica y controles electrohidráulicos proporcionales; no se atribuye una marca de chasis porque las fuentes discrepan."
   },
   "3802": {
     "fingerprint": "b2cb0096a288f87e45321f0b1ef4baf964c9a54896e705f387cfa3168372e663",
@@ -607,7 +575,122 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
   "4747": {
     "fingerprint": "4e7a871f098fb8d6e0c4e64ee27b9c502abdbac50d0b415781cdc64eb49f405b",
     "general": "La ficha del equipo XCMG XG1614AC-LI corresponde al anuncio de maquinaria nueva «Plataforma elevadora de tijera eléctrica 16M XCMG XG1614AC con batería de litio». Prestaciones registradas en la ficha: capacidad de carga (kg): 350 KG; altura de elevación (m): 16 metros; tipo de batería: Batería de litio; pendiente superable: 25%. Dimensiones y peso publicados: longitud: 2840 mm; anchura: 1390 mm; altura: 2721 mm; peso: 3680 KG."
-  }
+  },
+
+  "1022": {
+    "fingerprint": "8fc22a6f21e15291302f77618411e96749906c7371bdacdc0ba99c96879bed78",
+    "general": "La Hyster PC1.5 es una transpaleta eléctrica compacta de conductor a pie, con capacidad de 1.500 kg y batería de litio extraíble. Las especificaciones declaran longitud de 1.622 mm, anchura de 685 mm, peso de 120 kg y centro de carga de 600 mm. El origen ofrece capacidades de batería diferentes; no se identifica una única configuración instalada. El fabricante la presenta con un chasis de formato similar al manual, para desplazamientos cortos y reposición en espacios reducidos."
+  },
+
+
+  "6481": {
+    "fingerprint": "6129b58dbc0c6f162da5019d3cf2bc316e191cd04abddf908151733952a91d33",
+    "general": "El apilador a pie Hyster SC1.5 SL está orientado al traslado y apilado de palés en almacenes de tamaño reducido y zonas de expedición. Su estructura compacta favorece la circulación en pasillos donde debe verificarse el margen de maniobra. La capacidad nominal indicada es de 1.500 kg, con 1.670 mm de longitud y 820 mm de anchura. El proveedor ofrece distintas opciones de altura de elevación, sujetas al mástil instalado. La capacidad nominal no sustituye a la comprobación de la carga admisible en el nivel superior de estantería. El fabricante especifica freno electromagnético, control de velocidad de corriente continua y descenso proporcional. La gama ofrece distintas alturas de mástil entre 2.000 y 3.500 mm, sin que esos valores identifiquen la configuración de una máquina concreta."
+  },
+  "6423": {
+    "fingerprint": "b083cc43e05bf485f8c124979be8bf3b063f88c950c3258c7c24bb7f96b405b4",
+    "general": "La Hyster J3.0UTL es una carretilla elevadora eléctrica de operador sentado con batería integrada de litio, destinada al traslado y apilado de palés en almacenes y muelles. El texto de origen declara 3.000 kg de capacidad nominal, centro de carga de 500 mm y elevación de 3.000 mm. También indica un radio de giro de 2.349 mm y diferentes capacidades de batería LFP, sin identificar una única configuración instalada. La autonomía y las prestaciones de elevación deben contrastarse con el mástil y la batería concretos. La descripción del modelo añade inclinación de mástil de 5° hacia delante y 10° hacia atrás, y anchos de pasillo Ast de 4.025 mm para palé 1.000 × 1.200 transversal y 4.225 mm para palé 800 × 1.200 longitudinal. Ofrece baterías LFP de 250, 375 o 500 Ah, sin indicar cuál equipa una unidad concreta."
+  },
+  "2335": {
+    "fingerprint": "39cfd7af5c71ef0e35b75576a041884783b93572c434c88e0ba6aaf84a866f80",
+    "general": "El Yale MS16X es un apilador eléctrico para labores de almacenamiento y colocación de palés, con capacidad nominal de 1.600 kg. La ficha recoge 2.081 mm de longitud, 790 mm de anchura y 2.100 mm de altura, además de un peso de 1.240 kg. Se anuncian alternativas de batería a 24 V, convencional y de litio, sin especificar cuál se instala en la máquina ofertada. El fabricante describe dirección eléctrica, cargador integrado y reducción automática de velocidad en curvas para este modelo; no identifica una configuración de batería instalada."
+  },
+  "6172": {
+    "fingerprint": "ee7956e0ae883ab7c3f3f00c0e31151b9a2fea6b168f976127ebf31022609a79",
+    "general": "La CTE TRACCESS 230E es una plataforma sobre orugas de accionamiento eléctrico destinada a intervenciones en altura con acceso condicionado. El anuncio declara 23 metros de altura de trabajo y una capacidad de cesta de 200 kg; el texto de origen indica hasta 9,5 metros de alcance lateral. El brazo articulado permite posicionar la cesta evitando determinados obstáculos. La carga de la cesta, la estabilización y el terreno condicionan el alcance efectivo. La descripción técnica identifica un brazo articulado con tramos telescópicos y un alcance lateral declarado de hasta 9,5 m. La propulsión sobre orugas favorece el acceso a terrenos irregulares, sin asignar una capacidad de batería no especificada."
+  },
+  "4657": {
+    "fingerprint": "573711671af7bdf70dfc1376c1ba59a834573a54a7ac144d09734eca7ae22bff",
+    "general": "La CTE TRACCESS 170E es una plataforma articulada sobre orugas con accionamiento eléctrico, adecuada para tareas de mantenimiento en puntos con acceso reducido. La altura indicada en la ficha es de 17 metros y la capacidad de cesta de 200 kg. El tren de orugas permite desplazar la máquina hasta la zona de trabajo; su utilización en pendiente requiere comprobar los límites del fabricante y el apoyo de los estabilizadores. No se atribuye una autonomía de batería sin dato de la configuración concreta. La configuración del modelo comprende brazo articulado, sección telescópica y jib sobre orugas. La fuente cita baterías de distintas capacidades según versión, por lo que no se asigna a esta ficha una batería concreta."
+  },
+  "4024": {
+    "fingerprint": "49f380023b7a11992a6a5f651fc54a9e9ac95a1b5c27aacb24ae4b4c0601aad5",
+    "general": "El modelo Tennant BCA S10 es una barredora industrial de conductor acompañante para la recogida de polvo y residuos en espacios de trabajo y áreas de circulación. El catálogo indica 0,85 m de anchura de trabajo. La descripción detalla una tolva de hasta 80 litros o 70 kg de residuos, un filtro de 4,9 m² con sacudidor y control de polvo. También menciona alimentación por baterías de 24 V y autonomía de hasta tres horas, condicionada al estado y uso del equipo. Conviene comprobar la superficie y el tipo de residuo. Para la BCA S10, el texto técnico declara cepillo principal de 660 mm, anchura de barrido de 860 mm, tolva de 80 litros y superficie filtrante de 4,9 m² con sacudidor mecánico."
+  },
+  "6480": {
+    "fingerprint": "1d78baf7aa5f5f9a5f025627e2aa6337e2f1681fff35fceebb617af858dd6e26",
+    "general": "El apilador eléctrico peatonal Hyster SC1.2 SL está orientado a la elevación y colocación de palés en almacenes y áreas de preparación de pedidos. Su anchura contenida ayuda a plantear el trabajo en pasillos interiores. La capacidad nominal indicada es de 1.200 kg, con 1.670 mm de longitud y 820 mm de anchura. El proveedor menciona varias alturas de mástil disponibles; la altura alcanzable por cada equipo depende de la configuración instalada. Conviene confirmar la sección de paso, la carga residual y la superficie de trabajo. El texto del modelo añade freno electromagnético y control de velocidad de corriente continua. Menciona mástiles opcionales con elevaciones de 2.000 a 3.500 mm, que no permiten dar por instalada una altura concreta."
+  },
+
+  "6170": {
+    "fingerprint": "136142e68b4d82ec8dd2fe96a59e0ab56dc4b3c178c576efe8b2e10fee5cc0cb",
+    "general": "La CTE TRACCESS 180E es una plataforma eléctrica sobre orugas para mantenimiento e instalaciones en altura, especialmente en accesos estrechos. Su ficha declara 18 m de altura de elevación y 230 kg de capacidad de cesta. Mide 5.200 mm de longitud, 1.390 mm de anchura y 2.050 mm de altura. El desplazamiento mediante orugas y el accionamiento eléctrico facilitan intervenciones en espacios con restricciones de acceso y sin emisiones directas de escape. La altura efectiva y el alcance lateral deben contrastarse con la posición y las condiciones de apoyo del equipo. La descripción del modelo declara un alcance lateral de hasta 7,5 m y brazo articulado con secciones telescópicas, sin que el alcance nominal sustituya el diagrama de carga y estabilización aplicable."
+  },
+
+  "5961": {
+    "fingerprint": "6e543a8d2cc3fe11cf7c82e37423a6a82f7216cf4a24ae69d079e673bc9f042b",
+    "general": "La unidad de ocasión HYSTER P2.0S FBW, anunciada como «Transpaleta eléctrica conductor montado 2000 kg HYSTER P2.0S FBW», figura como fabricada en 2015, con número de serie D439T05114N. Ubicación declarada: MONTIJO, PORTUGAL. Horómetro declarado: 2865 horas. Prestaciones registradas en la ficha: capacidad de carga (kg): 2000 KG. Dimensiones y peso publicados: longitud: 1955 mm; anchura: 800 mm; altura: 1565 mm; peso: 1007 KG. La fuente describe una plataforma para el conductor montado y mando de timón, una configuración para transporte horizontal en recorridos de almacén; no se atribuyen velocidades ni autonomía ausentes de la ficha."
+  },
+  "6984": {
+    "fingerprint": "ec2443ee97e1fedc9fc228c84386a7f9c0affd16f2feab93849c7024f40bdad1",
+    "general": "La plataforma articulada diésel Genie Z45/25J, anunciada como unidad de ocasión de 2018, tiene 16 metros de altura de elevación y 230 kg de capacidad de carga según la ficha técnica. La máquina figura ubicada en Toledo, con número de serie Z4525M-7794. El horómetro registra 2.002 horas. Sus medidas publicadas son longitud: 6.830 mm; anchura: 1.790 mm; altura: 2.000 mm; peso: 6.130 kg. La pendiente superable declarada es del 25%. La descripción individual del modelo indica un brazo articulado con plumín (jib) para salvar obstáculos y controles proporcionales para posicionar la cesta. No se deduce un alcance lateral numérico que no figure en las especificaciones."
+  },
+  "6950": {
+    "fingerprint": "0d15225cbd9564a88077766db4a5e38d4cbbba755d69e3ccbcafe21b44a3c258",
+    "general": "La carretilla retráctil eléctrica Hyster R1.6, anunciada como unidad de ocasión de 2021, tiene capacidad de 1.600 kg y alcanza 7.400 mm de elevación. La ficha indica desplazador lateral y 3.000 mm de altura con mástil replegado. Está ubicada en Vigo y se identifica mediante la serie D435T07766V. Sus dimensiones declaradas son 2.380 mm de largo, 1.265 mm de ancho y 3.000 mm de alto; peso de 3.950 kg. La ficha no publica una lectura de horas. El anuncio indica inclinación de horquillas, control programable de altura del mástil y cabina con cristales calefactados. Publica batería de 38 V, cargador y autonomía comercial de hasta 8 horas, no verificada para esta unidad."
+  },
+  "6966": {
+    "fingerprint": "869bcb8ec5dee6c2b56bda73a19e2a64b7f9fba998c4d41a269b73b09debd08d",
+    "general": "La unidad de ocasión TECNA VTA25, anunciada como «Tractor de arrastre 25TN TECNA VTA25», figura como fabricada en 2015, con número de serie 0125E0515166. Ubicación declarada: VALLADOLID, ESPAÑA. Horómetro declarado: 4000 horas. Prestaciones registradas en la ficha: capacidad de carga (kg): 2000 KG. Dimensiones y peso publicados: longitud: 2525 mm; anchura: 1250 mm; altura: 2440 mm; peso: 3165 KG. El texto del proveedor diferencia expresamente 25.000 kg de capacidad de arrastre de los 2.000 kg de capacidad de carga de la ficha; la primera cifra corresponde a remolques y no debe interpretarse como capacidad de elevación. La propulsión del tractor es eléctrica."
+  },
+  "6588": {
+    "fingerprint": "e9a7d18d8d3da08178addd74093e947f7a2712636a996e696da72e279ae097fa",
+    "general": "Preparapedidos eléctrico Yale MO20P de ocasión con horquillas largas, capacidad de 2.000 kg y elevación de 810 mm según la ficha técnica. El horómetro registra 4.509 horas. El año no se consolida: el campo extraído indica 2000, mientras que la URL y la descripción comercial contienen 2019; esa discrepancia necesita comprobación documental. La elevación indicada corresponde al equipo preparapedidos y no a una altura de trabajo del operario. La descripción original precisa que las horquillas XL están orientadas a cargas largas o a la manipulación de varios palés y que la elevación es de tipo tijera para el trabajo de picking. Estos datos no resuelven la contradicción documental del año."
+  },
+  "6639": {
+    "fingerprint": "20287fcb7e92283412e7129fc90b1bb5c1d2b7eb477cc8b5bf4a2ea15065fc56",
+    "general": "El recogepedidos Crown GPC 3020 2.0 de ocasión, fabricado en 2019 según la ficha, admite 2.000 kg de carga. La unidad de Pontevedra está identificada con la serie 5A415363 y registra 5.970 horas. Sus medidas publicadas son 3.700 mm de largo y 810 mm de ancho, con un peso declarado de 2.073 kg. Los valores corresponden a esta unidad concreta, no a toda la gama. El texto del proveedor sitúa la preparación de pedidos de esta Crown a nivel del suelo y de estanterías bajas; describe plataforma de acceso para el operario y mandos de conducción para maniobrar en pasillos. No se publica una altura de recogida concreta."
+  },
+  "6391": {
+    "fingerprint": "88f7199c60a61db2812b95166f92e1461d17bf789a5a100d5c1d2a870513ae91",
+    "general": "La unidad de ocasión JLG 4013, anunciada como «Manipulador telescópico 13M 4000Kg JLG 4013», figura como fabricada en 2006, con número de serie 1160001557. Ubicación declarada: ALICANTE, ESPAÑA. Horómetro declarado: 6627 horas. Prestaciones registradas en la ficha: capacidad de carga (kg): 4000 KG; altura de elevación (m): 13 metros. Dimensiones y peso publicados: longitud: 6000 mm; anchura: 2380 mm; altura: 2450 mm; peso: 11710 KG. La descripción del JLG 4013 identifica tracción a las cuatro ruedas (4x4), brazo telescópico de accionamiento hidráulico y cabina para el operador. Estas características explican su aplicación en terreno irregular sin aumentar la capacidad o altura declaradas."
+  },
+  "5994": {
+    "fingerprint": "dd9be935b96ddac5322960406b652a67448155eb30a8fc2501f43aa0998a7887",
+    "general": "La Yale ERP5.0MXLGS6 es una carretilla elevadora eléctrica para manipulación de palés y cargas en instalaciones industriales. La ficha declara 5.000 kg de capacidad nominal a 600 mm de centro de carga y una elevación de 3.000 mm. Sus dimensiones publicadas son 4.345 mm de longitud, 1.924 mm de anchura y 2.250 mm de altura. El peso indicado es de 7.420 kg. La elección del mástil y la capacidad residual deben comprobarse para cada aplicación. La descripción técnica del modelo identifica batería LFP de 46,7 kWh, 154,5 V y 302 Ah, tracción eléctrica de imanes permanentes y refrigeración por agua. También publica hasta 18 km/h de velocidad; conviene comprobar la configuración real del mástil y de la batería."
+  },
+  "5989": {
+    "fingerprint": "ff256b2031d1af2a3d4d44716d055846896052daf679a86e9a30d7addc694de0",
+    "general": "La carretilla elevadora eléctrica Yale ERP2.5MXLG permite el traslado y la elevación de mercancías en zonas de almacén y operaciones de carga. La ficha técnica declara una capacidad de 2.500 kg a 500 mm de centro de carga y una altura de elevación de 3.000 mm. Mide 3.690 mm de longitud, 1.160 mm de anchura y 2.010 mm de altura, con un peso de 3.900 kg. Para operar en estanterías hay que comprobar el mástil y la capacidad residual. El texto del modelo ofrece dos configuraciones alternativas de batería LFP: 115,2 V, 228 Ah y 26,3 kWh, o 153,6 V, 228 Ah y 35 kWh. No consta cuál equipa una unidad concreta. La fuente menciona tracción de imanes permanentes y 130 mm de despeje entre ejes."
+  },
+  "5990": {
+    "fingerprint": "7ea06e4055e34fbdc715e009d79a24ed1c149e040c38352473726827e5154611",
+    "general": "La Yale ERP3.0MXLG es una carretilla elevadora eléctrica destinada a carga, descarga y manutención de palés en entornos logísticos. Su capacidad nominal publicada es de 3.000 kg con centro de carga de 500 mm; la elevación consignada es de 3.000 mm. La ficha indica 3.760 mm de longitud, 1.230 mm de anchura, 2.150 mm de altura y 4.330 kg de peso. La altura del mástil y la carga admisible en elevación se deben contrastar con el trabajo previsto. La descripción original ofrece batería LFP de 26,3 kWh (115,2 V, 228 Ah) o de 35 kWh (153,6 V, 228 Ah), como configuraciones alternativas, y tecnología de tracción de imanes permanentes. El despeje entre ejes indicado para este modelo es de 155 mm."
+  },
+  "6389": {
+    "fingerprint": "e4d479e63fbfd4a5021db9b9fcb26e6afc08a22e23bc98d0c47accb6e7f07ea4",
+    "general": "La Genie GS-3246 anunciada es una plataforma de tijera eléctrica de ocasión para mantenimiento y montajes en altura. La ficha declara 12 m de altura de elevación, 318 kg de capacidad de cesta y plataforma de 2,26 × 1,15 m. Sus dimensiones publicadas son 2.410 × 1.170 × 2.080 mm, con un peso de 2.800 kg. La unidad está identificada mediante número de serie y ubicación en Tarragona; el horómetro figura como sustituido y no permite atribuir un número de horas fiable. La autonomía y las condiciones de nivelación deben verificarse antes de planificar el trabajo. El anuncio del modelo señala barandillas plegables, sistema de nivelación automática, frenos automáticos y alarmas de inclinación. Son características descritas por el proveedor, sin acreditar por ello una lectura de horómetro ni autonomía de esta unidad."
+  },
+  "6650": {
+    "fingerprint": "e13faf1cba97f5d6918c1edb5c48d1f70c4dacd58f5287f3bc6f54ad4f667120",
+    "general": "La plataforma articulada eléctrica JLG E300AJP de ocasión, fabricada en 2006 según el anuncio, alcanza 11 metros y soporta 230 kg en la cesta. La unidad ubicada en Barcelona registra 2.047 horas y serie 30097810. La ficha publica longitud de 5.740 mm, anchura de 1.220 mm, altura de 2.010 mm y peso de 6.859 kg; pendiente superable del 25%. La descripción del modelo destaca el brazo articulado para sortear obstáculos y los mandos de control de la plataforma, útiles para posicionar la cesta en mantenimiento e instalaciones. No se deduce un alcance horizontal numérico ausente en la ficha."
+  },
+
+  "6912": {
+    "fingerprint": "041aec1f55d1005206b6f58655957b5463d3ac2e4c5c1dced705d31d4525d14a",
+    "general": "La plataforma articulada diésel Snorkel A46JRT, anunciada como unidad de ocasión de 2018, tiene 16 metros de altura de elevación y 227 kg de capacidad de carga según la ficha técnica. La máquina figura ubicada en Almería, con número de serie A46JRT-01-180300108. El proveedor indica que el horómetro ha sido sustituido, sin lectura total de horas acreditada. Sus medidas publicadas son longitud: 5.700 mm; anchura: 2.100 mm; altura: 2.160 mm; peso: 7.550 kg. La pendiente superable declarada es del 40%. El anuncio especifica plumín (jib), tracción todoterreno y controles proporcionales para posicionar la cesta."
+  },
+
+  "2087": {
+    "fingerprint": "297644b174c48f26c43868bc73495f60b1a2ada873908f86a34e3447226e601e",
+    "general": "La Hyster H4.5FT6 es una carretilla elevadora diésel para cargas industriales de hasta 4.500 kg, con centro de carga de 600 mm. Su ficha recoge 5.300 mm de altura de elevación, dimensiones de 4.266 × 1.485 × 2.215 mm y un peso de 6.826 kg. El radio de giro indicado es de 2.837 mm. La descripción identifica motor Kubota de 3,8 litros y transmisión de la gama DuraMatch, con alternativas de configuración para distintas operaciones. Antes del trabajo deben comprobarse el mástil, la ventilación, el pavimento y la capacidad residual a la altura elegida. La ficha del modelo enumera opciones de ruedas superelásticas, neumáticas y radiales, con diferentes bandas de rodadura. Se trata de configuraciones disponibles: el anuncio no permite identificar qué neumáticos lleva una máquina concreta."
+  },
+  "2058": {
+    "fingerprint": "9c6b58d11f0181d228b2a609ff2306da3b151550767621e3fc00c8a90be619be",
+    "general": "La Hyster H10XD-6 es una carretilla elevadora diésel para cargas industriales de gran tonelaje. Según la ficha, su capacidad nominal es de 10.500 kg con centro de carga de 600 mm y una elevación de 7.000 mm. Sus dimensiones publicadas son 5.724 × 2.490 × 4.135 mm, con peso de 15.882 kg y radio de giro de 4.637 mm. La descripción de origen la sitúa en la familia H8-18XD. La resistencia del pavimento, el espacio de maniobra y el diagrama de cargas deben comprobarse para cada operación. El origen especifica un circuito hidráulico con caudal de 100 l/min y presión de 195 bar para el modelo H10XD-6. Son prestaciones de la descripción técnica y no sustituyen la verificación de la configuración y del diagrama de cargas."
+  },
+  "2060": {
+    "fingerprint": "4b9039e6b60e0e4f8b332b2315568b4e09b683b9184e2126b426f8d755f3ca54",
+    "general": "La Hyster H13XD-6 es una carretilla elevadora diésel de gran tonelaje para manutención de cargas industriales y logísticas. Su ficha declara 13.500 kg de capacidad nominal a 600 mm de centro de carga y elevación de 7.000 mm. Mide 6.814 × 2.541 × 4.193 mm, pesa 18.629 kg y publica radio de giro de 4.637 mm. El texto original identifica un motor Mercedes-Benz y una construcción orientada al servicio intensivo, con transmisión y sistema hidráulico para operaciones de carga. La capacidad residual debe verificarse para el mástil, las horquillas y la altura realmente utilizados. La descripción de la H13XD-6 declara un caudal hidráulico de 100 l/min a 195 bar, útil para evaluar los ciclos de manipulación; la cifra no modifica su capacidad nominal ni el centro de carga."
+  },
+  "2068": {
+    "fingerprint": "c44cf3d5ae32da8157a8a76848e2e90ab5119d7d17fb678aac0c1656a97da5e4",
+    "general": "La Hyster H16XD-9 es una carretilla elevadora diésel de alto tonelaje para manipulación de materiales industriales especialmente pesados. La ficha publica una capacidad de 16.400 kg a 900 mm de centro de carga y una elevación de 7.000 mm. Sus dimensiones son 8.056 × 2.541 × 4.008 mm, con peso de 18.631 kg y radio de giro de 5.200 mm. El origen describe un equipo orientado a operaciones portuarias e industriales y un sistema hidráulico de trabajo intensivo. Para cargas largas o descentradas deben comprobarse la capacidad residual y el espacio de maniobra de la configuración concreta. La ficha del modelo H16XD-9 declara sistema hidráulico de 100 l/min y 195 bar, distinto del radio de giro y la altura de elevación que recoge la tabla técnica."
+  },
+  "2066": {
+    "fingerprint": "c3442516abc18e14480aae414363ce704c742920975048074384c1bc28cd9f67",
+    "general": "La Hyster H16XD-6 es una carretilla elevadora diésel de gran tonelaje para transporte y apilado de cargas industriales especialmente pesadas. La ficha registra 16.500 kg de capacidad nominal con centro de carga de 600 mm y 7.000 mm de elevación. Sus medidas publicadas son 6.814 × 2.541 × 4.193 mm, con 21.654 kg de peso y radio de giro de 4.637 mm. La descripción comercial destaca un bastidor contrapesado orientado a trabajos continuados de manutención en terminales y plantas industriales. Para cargas descentradas o implementos especiales debe verificarse la capacidad residual disponible. La descripción técnica de la H16XD-6 especifica 100 l/min de caudal hidráulico y 195 bar de presión, datos de funcionamiento que no alteran la capacidad nominal indicada para el centro de carga de esta variante."
+  },
 
 };
 

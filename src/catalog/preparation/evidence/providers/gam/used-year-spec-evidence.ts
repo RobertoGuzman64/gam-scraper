@@ -4,12 +4,26 @@ type YearEvidence = Readonly<{
   reference: string;
   year: string;
   brand: string;
-  model: string;
+  model: string | null;
   category: string;
+  title?: string;
+  sourceBrand?: string;
+  sourceModel?: string;
+  condition?: ProductRecord["condition"];
   url: string;
 }>;
 
 const evidence: readonly YearEvidence[] = [
+  { reference: "6997", year: "2007", brand: "SKYJACK", model: "SJ-6826 RT", url: "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-diesel-segunda-mano/6997-2007-sky-jack-sj-6826-rt", category: "elevacion", title: "Plataforma tijera diésel 10M SKY JACK SJ-6826 RT" },
+  { reference: "6196", year: "2015", brand: "JLG", model: "1930 ES", url: "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/6196-jp-00309", category: "elevacion", title: "Plataforma Tijera Eléctrica 8M JLG 1930ES" },
+  { reference: "6195", year: "2016", brand: "JLG", model: "1930 ES", url: "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/6195-jp-00368", category: "elevacion", title: "Plataforma Tijera Eléctrica 8M JLG 1930ES" },
+  { reference: "6857", year: "2006", brand: "JLG", model: "3512", url: "https://online.gamrentals.com/es/manipuladores-frontales-segunda-mano/6857-2006-jlg-3512", category: "manipulacion", title: "Manipulador telescópico 11M 3500Kg JLG 3512" },
+  { reference: "6834", year: "2026", brand: "DEVOL", model: "VGR-30", url: "https://online.gamrentals.com/es/generadores-electricos-segunda-mano/6834-2026-devol-vgr-30", category: "energia", title: "Grupo electrógeno DEVOL VGR-30" },
+  { reference: "6358", condition: null, year: "2019", brand: "KNOTT", model: "KRV20", url: "https://online.gamrentals.com/es/carro-de-equipaje/6358-2019-knott-krv20", category: "otros", title: "Carro de arrastre 2000Kg KNOTT KRV20" },
+  { reference: "6367", condition: null, year: "2019", brand: "KNOTT", model: "KRV20", url: "https://online.gamrentals.com/es/carro-de-equipaje/6367-2019-knott-krv20", category: "otros", title: "Carro de arrastre 2000Kg KNOTT KRV20" },
+  { reference: "6920", year: "2019", brand: "HYSTER", model: null, url: "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6920-2019-hyster-h25ft", category: "manutencion", title: "Carretilla elevadora GLP 2500Kg Hyster H2.5FT", sourceModel: "H2.5FT" },
+  { reference: "6881", year: "2016", brand: "DOOSAN", model: null, url: "https://online.gamrentals.com/es/carretillas-elevadoras-diesel-segunda-mano/6881-2016-doosan-d25g", category: "manutencion", title: "Carretilla elevadora diésel 2500Kg DOOSAN D25G", sourceModel: "D25G" },
+  { reference: "6947", year: "2016", brand: "HAULOTTE", model: "HA20 RTJ", url: "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-diesel-segunda-mano/6947-2016-haulotte-ha20-rtj", category: "elevacion", title: "PLATAFORMA ARTICULADA DIÉSEL 20M HAULOTE HA20 RTJ", sourceBrand: "HAULOTE" },
   { reference: "6607", year: "2012", brand: "GENIE", model: "Z45/25J", category: "elevacion", url: "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-diesel-segunda-mano/6607-2012-genie-z45-25-j" },
   { reference: "6571", year: "2009", brand: "HAULOTTE", model: "HA32PX", category: "elevacion", url: "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-diesel-segunda-mano/6571-2009-haulotte-ha32px-" },
   { reference: "6631", year: "2008", brand: "MANITOU", model: "150 AETJC", category: "elevacion", url: "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-electricas-segunda-mano/6631-2008-manitou-150-aetj-c" },
@@ -152,16 +166,19 @@ const recordedYears = (text: string): readonly string[] =>
 export const recoverGamVerifiedUsedYearSpec = (record: ProductRecord): SpecsMap => {
   const source = record.specs ?? {};
   const item = byReference.get(record.reference ?? "");
-  if (!item || record.providerId !== "gam" || record.condition !== "Segunda mano" ||
+  if (!item || record.providerId !== "gam" || record.condition !== (item.condition === undefined ? "Segunda mano" : item.condition) ||
     record.year !== item.year || record.brand !== item.brand || record.model !== item.model ||
     record.categoryKey !== item.category || record.url !== item.url ||
     (record.yearSource !== "url" && record.yearSource !== "descripcion") ||
     Object.keys(source).some((key) => /^(?:año|año de fabricación)$/iu.test(key))) return source;
 
   const longDescription = normalizedIdentity(record.longDescription ?? "");
-  if (!normalizedIdentity(record.title ?? "").includes(normalizedIdentity(item.brand)) ||
-    !longDescription.includes(normalizedIdentity(item.brand)) ||
-    !longDescription.includes(normalizedIdentity(item.model))) return source;
+  const title = normalizedIdentity(record.title ?? "");
+  const brandInText = normalizedIdentity(item.sourceBrand ?? item.brand);
+  const modelInText = normalizedIdentity(item.sourceModel ?? item.model ?? "");
+  if (!modelInText || (item.title !== undefined && record.title !== item.title) ||
+    !title.includes(brandInText) || (item.title !== undefined && !title.includes(modelInText)) ||
+    !longDescription.includes(brandInText) || !longDescription.includes(modelInText)) return source;
 
   const years = recordedYears(record.longDescription ?? "");
   if (!years.length || years.some((year) => year !== item.year)) return source;

@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "runId": "individual-mercaeleva-8769a794c046720ca5a8872b24069b62",
+  "approved": true,
+  "approvalReason": "Cierre editorial acreditado del catalogo EQUIPZILLA, fases 121 a 130",
+  "sources": [
+    {
+      "providerId": "mercaeleva",
+      "catalogSha256": "83e0265743ba1ec0b6ebb1c1bc8bbb9cd3b26eba77d208d659d35e7a62bba792",
+      "preparationSha256": "97def1108f82429d97da3f96c9f7a319c4bd00077192e6fe70086ba740e47095",
+      "productCount": 221
+    }
+  ],
+  "exclusions": [
+    {
+      "providerId": "mercaeleva",
+      "reference": "M547-2372",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Toyota-6FBRE14-M547-2372",
+      "status": "review",
+      "issues": [
+        "Familia contradictoria: el título indica carretilla retráctil y la descripción transpaleta"
+      ],
+      "decision": "excluir",
+      "reason": "Familia de maquina contradictoria entre carretilla retractil y transpaleta; se mantiene exclusion.",
+      "evidenceUrls": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/Toyota-6FBRE14-M547-2372"
+      ]
+    },
+    {
+      "providerId": "mercaeleva",
+      "reference": "M838-0666",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/JLG-450-AJ-SIII-M838-0666",
+      "status": "review",
+      "issues": [
+        "Versión contradictoria: el modelo de la descripción no coincide con título y ficha técnica"
+      ],
+      "decision": "excluir",
+      "reason": "Variante JLG SIII contradictoria con modelo SII declarado en descripcion; se mantiene exclusion.",
+      "evidenceUrls": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/JLG-450-AJ-SIII-M838-0666"
+      ]
+    },
+    {
+      "providerId": "mercaeleva",
+      "reference": "M827-8304",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E48P-M827-8304",
+      "status": "review",
+      "issues": [
+        "MER0798: el anuncio del vendedor publica 4.800 kg y mástil dúplex en el texto, pero 3.000 kg y mástil tríplex en los campos técnicos; la republicación en Machineryline conserva ambas discrepancias. Confirmar capacidad efectiva y mástil instalado con el vendedor o la placa antes de validar la ficha",
+        "Atributo contradictorio: Capacidad de carga",
+        "Atributo contradictorio: Tipo de mástil"
+      ],
+      "decision": "excluir",
+      "reason": "Capacidad y configuracion de mastil contradictorias entre titulo descripcion y ficha tecnica; se mantiene exclusion.",
+      "evidenceUrls": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E48P-M827-8304"
+      ]
+    },
+    {
+      "providerId": "mercaeleva",
+      "reference": "M969-4655",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/JLG-450-AJ-SIII-M969-4655",
+      "status": "review",
+      "issues": [
+        "Versión contradictoria: el modelo de la descripción no coincide con título y ficha técnica"
+      ],
+      "decision": "excluir",
+      "reason": "Variante JLG SIII contradictoria con modelo SII declarado en descripcion; se mantiene exclusion.",
+      "evidenceUrls": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/JLG-450-AJ-SIII-M969-4655"
+      ]
+    }
+  ]
+}

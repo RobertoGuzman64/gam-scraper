@@ -6,6 +6,7 @@ import { recoverGamVerifiedUsedYearSpec } from "../evidence/providers/gam/used-y
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
 const expected = [
+  "6947", "6997", "6196", "6195", "6920", "6881", "6857", "6834", "6358", "6367",
   "6607", "6571", "6631", "6614", "6886", "6486", "6845", "6362", "6116",
   "6514", "5227", "6884", "5213", "6686", "6684", "5714", "6627", "6618", "5739",
   "6616", "6615", "6974", "6975", "6130", "6284", "6389", "6226", "6980", "6233", "6626", "6776", "6492", "5280", "6885", "6950", "6436", "5719", "5962", "5228", "6391",
@@ -72,6 +73,21 @@ test("GAM: el año contradictorio o la identidad alterada no se publican como sp
   }
   assert.deepEqual(recoverGamVerifiedUsedYearSpec(source("6911")), source("6911").specs ?? {});
   assert.deepEqual(recoverGamVerifiedUsedYearSpec(source("6759")), source("6759").specs ?? {});
+  for (const reference of ["6920", "6881", "6947", "6358"] as const) {
+    const verified = source(reference);
+    assert.equal(recoverGamVerifiedUsedYearSpec(verified)["Año de fabricación"], verified.year, reference);
+    const blocked = [
+      { ...verified, url: `${verified.url}?variant=1` },
+      { ...verified, title: `${verified.title} OTRO MODELO` },
+      { ...verified, longDescription: `${verified.longDescription} Fabricada en 2001.` },
+      { ...verified, year: "2001" },
+      { ...verified, specs: { ...verified.specs, "Año de fabricación": "2001" } }
+    ];
+    for (const invalid of blocked) {
+      assert.deepEqual(recoverGamVerifiedUsedYearSpec(invalid), invalid.specs ?? {}, reference);
+    }
+  }
+
 });
 
 test("GAM: la nueva cohorte de años rechaza identidad, texto y fecha alterados", () => {

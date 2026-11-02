@@ -21,7 +21,7 @@ test("potencia comercial y bloque técnico mantienen sus unidades y evidencia or
   assert.deepEqual(resolution(original), { status: "resolved", value: 32 });
   assert.equal(result.status, "ready");
   assert.deepEqual(result.issues, []);
-  assert.deepEqual(result.product.spec, original.specs);
+  assert.deepEqual(result.product.spec, { ...original.specs, "Año de fabricación": "2026" });
   assert.equal(result.product.description, original.shortDescription);
   assert.equal(result.product.description_general, original.longDescription);
   assert.ok(result.product.attributes.some((item) => item.attributeID === power.id && item.value === 32));

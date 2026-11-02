@@ -9,6 +9,7 @@ import { resolveGamHysterCondensedGeneral, resolveGamHysterCondensedShort } from
 import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../mapping/providers/gam/verified-condensed-additional.js";
 import { resolveGamVerifiedConciseGeneral } from "../mapping/providers/gam/verified-concise-long.js";
 import { prepareSourceProduct } from "../prepare-product.js";
+import { resolveGamVerifiedSourceCondensedGeneral } from "../evidence/providers/gam/verified-source-condensed-generals.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
 const find = (reference: string): ProductRecord => {
@@ -61,7 +62,7 @@ test("GAM: las generales extensas se organizan sin perder cifras, frases técnic
         assert.match(prepared.product.description_general ?? "", /4,4 metros/u);
         assert.match(prepared.product.description ?? "", /3\.000 mm/u);
       } else {
-        assert.equal(prepared.product.description_general, resolveGamVerifiedConciseGeneral(record, previousGeneral) ?? previousGeneral);
+        assert.equal(prepared.product.description_general, resolveGamVerifiedSourceCondensedGeneral(record) ?? resolveGamVerifiedConciseGeneral(record, previousGeneral) ?? previousGeneral);
         assert.equal(prepared.product.description,
           resolveGamAdditionalCondensedShort(record) ?? resolveGamHysterCondensedShort(record) ?? resolveGamResidualConciseShort(record, general) ?? record.shortDescription?.trim() ?? null);
       }

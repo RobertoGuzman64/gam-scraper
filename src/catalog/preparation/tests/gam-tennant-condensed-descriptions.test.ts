@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamTennantCondensedGeneral, resolveGamTennantCondensedShort } from "../mapping/providers/gam/verified-condensed-tennant.js";
 import { prepareSourceProduct } from "../prepare-product.js";
+import { resolveGamVerifiedSourceCondensedGeneral } from "../evidence/providers/gam/verified-source-condensed-generals.js";
 
 const expected = new Set([
   "4011", "4010", "4024", "4002", "4001", "4003", "4004", "4022", "4012", "3996",
@@ -30,7 +31,11 @@ test("condensa veinte textos de limpieza Tennant solo con identidad y evidencia 
       assert.ok(general.includes(record.model));
       assert.ok(general.split(/\s+/u).length < record.longDescription.split(/\s+/u).length * 0.63);
       const prepared = prepareSourceProduct(record).product;
-      assert.equal(prepared.description_general, general);
+      assert.equal(prepared.description_general, resolveGamVerifiedSourceCondensedGeneral(record) ?? general);
+      if (record.reference === "4024") {
+        assert.match(prepared.description_general ?? "", /cepillo principal de 660 mm/u);
+        assert.match(prepared.description_general ?? "", /superficie filtrante de 4,9 m²/u);
+      }
       assert.equal(prepared.description, short);
       assert.equal(prepared.reference, record.reference);
       assert.equal(prepared.sourceUrl, record.url);

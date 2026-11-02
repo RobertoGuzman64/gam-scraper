@@ -30,14 +30,12 @@ const aliases: Readonly<Record<string, readonly string[]>> = {
   "Tipo de motor": ["Tipo motor"]
 };
 
-const unitOf = (source: string): "mm" | "cm" | "m" | "kg" | "kw" | "h" | "%" | null => {
+const unitOf = (source: string): "mm" | "cm" | "m" | "km" | "kg" | "kw" | "h" | "%" | null => {
   const value = fold(source);
-  if (["mm", "cm", "m", "metros", "metro", "kg", "kilogramos", "kilogramo", "kw", "h", "horas", "hora", "%"].includes(value)) {
-    if (value.startsWith("metro") || value === "m") return "m";
-    if (value.startsWith("kilo") || value === "kg") return "kg";
-    if (value.startsWith("hora") || value === "h") return "h";
-    return value as "mm" | "cm" | "kw" | "%";
-  }
+  if (value === "metro" || value === "metros" || value === "m") return "m";
+  if (value === "kilogramo" || value === "kilogramos" || value === "kg") return "kg";
+  if (value === "hora" || value === "horas" || value === "h") return "h";
+  if (value === "mm" || value === "cm" || value === "km" || value === "kw" || value === "%") return value;
   return null;
 };
 
@@ -57,7 +55,7 @@ const numberValue = (value: SpecScalar, sourceKey: string, attribute: Attribute)
     explicit = matched[2] ? unitOf(matched[2]) : null;
     if (matched[2] && !explicit) return null;
   }
-  const keyUnitMatch = sourceKey.match(/\((mm|cm|m|kg|kw|h|%)\)/i)?.[1];
+  const keyUnitMatch = sourceKey.match(/\((mm|cm|km|m|kg|kw|h|%)\)/i)?.[1];
   const keyUnit = keyUnitMatch ? unitOf(keyUnitMatch) : null;
   if (explicit && keyUnit && explicit !== keyUnit) return null;
   const sourceUnit = explicit ?? keyUnit;

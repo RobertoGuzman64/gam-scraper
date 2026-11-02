@@ -31,7 +31,12 @@ const evidence: readonly Evidence[] = [
   { reference: "5998", brand: "HYSTER", model: "J4.0XTLG", category: "carretillas-nuevas", key: "Sistema de presencia del operador" },
   { reference: "5999", brand: "HYSTER", model: "J4.5XTLG", category: "carretillas-nuevas", key: "Sistema de presencia del operador" },
   { reference: "6000", brand: "HYSTER", model: "J5.0XTLG", category: "carretillas-nuevas", key: "Sistema de presencia del operador" },
-  { reference: "6001", brand: "HYSTER", model: "J5.0XTLGS6", category: "carretillas-nuevas", key: "Sistema de presencia del operador" }
+  { reference: "6001", brand: "HYSTER", model: "J5.0XTLGS6", category: "carretillas-nuevas", key: "Sistema de presencia del operador" },
+  { reference: "5988", brand: "YALE", model: "ERP2.0MXLG", category: "carretillas-nuevas", key: "Sistema de presencia del operador" },
+  { reference: "5993", brand: "YALE", model: "ERP4.5MXLG", category: "carretillas-nuevas", key: "Sistema de presencia del operador" },
+  { reference: "5995", brand: "YALE", model: "ERP5.0MXLG6", category: "carretillas-nuevas", key: "Sistema de presencia del operador" },
+  { reference: "5996", brand: "YALE", model: "ERP6.0MXLG6", category: "carretillas-nuevas", key: "Sistema de presencia del operador" },
+  { reference: "5997", brand: "YALE", model: "ERP7.0MXLG6", category: "carretillas-nuevas", key: "Sistema de presencia del operador" }
 ];
 
 const byReference = new Map(evidence.map((entry) => [entry.reference, entry]));

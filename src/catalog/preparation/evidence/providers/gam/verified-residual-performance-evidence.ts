@@ -1,7 +1,7 @@
 import type { ProductRecord, SpecsMap } from "../../../../../contracts/catalog.js";
 import { verifiedGamSourceVariant } from "./source-variant-identity.js";
 
-type Claim = Readonly<{ key: string; value: string | number }>;
+type Claim = Readonly<{ key: string; value: string | number | boolean }>;
 type Evidence = Readonly<{
   reference: string;
   brand: string;
@@ -77,19 +77,110 @@ const evidence: readonly Evidence[] = [
     expected: ["0,45"], claims: [{ key: "Potencia de aspiración (kW)", value: 0.45 }], collision: /potencia.*aspiraci[oó]n|motor.*aspiraci[oó]n/iu },
   { reference: "4007", brand: "Tennant", model: "FCS T7+ D80", category: "limpieza-fregadoras",
     pattern: /motor de aspiraci[oó]n de (\d,\d{2}) kW/giu,
-    expected: ["0,45"], claims: [{ key: "Potencia de aspiración (kW)", value: 0.45 }], collision: /potencia.*aspiraci[oó]n|motor.*aspiraci[oó]n/iu }
+    expected: ["0,45"], claims: [{ key: "Potencia de aspiración (kW)", value: 0.45 }], collision: /potencia.*aspiraci[oó]n|motor.*aspiraci[oó]n/iu },
+  { reference: "6113", brand: "YALE", model: "ERP16UXTL", category: "carretillas-nuevas",
+    pattern: /consumo[^!?]{0,120}?\b(\d{1,2}(?:[.,]\d{1,2})?)\s*kWh\/h/giu, expected: ["5,19"], claims: [{ key: "Consumo", value: "5,19 kWh/h (aprox., ciclo VDI)" }], collision: /consumo/iu },
+  { reference: "6114", brand: "YALE", model: "ERP18UXTL", category: "carretillas-nuevas",
+    pattern: /consumo[^!?]{0,120}?\b(\d{1,2}(?:[.,]\d{1,2})?)\s*kWh\/h/giu, expected: ["5,3"], claims: [{ key: "Consumo", value: "5,3 kWh/h (aprox., ciclo VDI)" }], collision: /consumo/iu },
+  { reference: "6115", brand: "YALE", model: "ERP20UXTL", category: "carretillas-nuevas",
+    pattern: /consumo[^!?]{0,120}?\b(\d{1,2}(?:[.,]\d{1,2})?)\s*kWh\/h/giu, expected: ["5,7"], claims: [{ key: "Consumo", value: "5,7 kWh/h (aprox., ciclo VDI)" }], collision: /consumo/iu },
+  { reference: "4388", brand: "HYSTER", model: "SC1.0", category: "apiladores-nuevos",
+    pattern: /consumo[^!?]{0,120}?\b(\d{1,2}(?:[.,]\d{1,2})?)\s*kWh\/h/giu, expected: ["0,45"], claims: [{ key: "Consumo", value: "0,45 kWh/h (consumo medio declarado)" }], collision: /consumo/iu },
+  { reference: "2100", brand: "HYSTER", model: "S1.0C", category: "apiladores-nuevos",
+    pattern: /consumo[^!?]{0,120}?\b(\d{1,2}(?:[.,]\d{1,2})?)\s*kWh\/h/giu, expected: ["1,53"], claims: [{ key: "Consumo", value: "1,53 kWh/h (declarado)" }], collision: /consumo/iu },
+  { reference: "2101", brand: "HYSTER", model: "S1.2C", category: "apiladores-nuevos",
+    pattern: /consumo[^!?]{0,120}?\b(\d{1,2}(?:[.,]\d{1,2})?)\s*kWh\/h/giu, expected: ["1,97"], claims: [{ key: "Consumo", value: "1,97 kWh/h (declarado)" }], collision: /consumo/iu },
+  { reference: "2102", brand: "HYSTER", model: "S1.5C", category: "apiladores-nuevos",
+    pattern: /consumo[^!?]{0,120}?\b(\d{1,2}(?:[.,]\d{1,2})?)\s*kWh\/h/giu, expected: ["2,4"], claims: [{ key: "Consumo", value: "2,4 kWh/h (declarado)" }], collision: /consumo/iu },
+  { reference: "6990", brand: "HYSTER", model: "PC2.0", category: "marcas-nuevas",
+    pattern: /consumo[^!?]{0,120}?\b(\d{1,2}(?:[.,]\d{1,2})?)\s*kWh\/h/giu, expected: ["0,42"], claims: [{ key: "Consumo", value: "≈ 0,42 kWh/h (ciclo VDI)" }], collision: /consumo/iu },
+  { reference: "4622", brand: "HYSTER", model: "P1.6UT", category: "marcas-nuevas",
+    pattern: /consumo[^!?]{0,120}?\b(\d{1,2}(?:[.,]\d{1,2})?)\s*kWh\/h/giu, expected: ["0.25"], claims: [{ key: "Consumo", value: "0,25 kWh/h (declarado)" }], collision: /consumo/iu },
+  { reference: "2089", brand: "HYSTER", model: "H5.0FT", category: "carretillas-nuevas",
+    pattern: /\bfrenos en ba[ñn]o de aceite\b/giu, expected: [], claims: [{ key: "Frenos en baño de aceite", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2076", brand: "HYSTER", model: "S7.0FT", category: "carretillas-nuevas",
+    pattern: /\bfrenos en ba[ñn]o de aceite\b/giu, expected: [], claims: [{ key: "Frenos en baño de aceite", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2070", brand: "HYSTER", model: "H18XD-6", category: "carretillas-nuevas",
+    pattern: /\bfrenos en ba[ñn]o de aceite\b/giu, expected: [], claims: [{ key: "Frenos en baño de aceite", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2043", brand: "HYSTER", model: "H20XDS-9", category: "carretillas-nuevas",
+    pattern: /\bfrenos en ba[ñn]o de aceite\b/giu, expected: [], claims: [{ key: "Frenos en baño de aceite", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2367", brand: "HYSTER", model: "S5.5FT", category: "carretillas-nuevas",
+    pattern: /\bfrenos en ba[ñn]o de aceite\b/giu, expected: [], claims: [{ key: "Frenos en baño de aceite", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2040", brand: "HYSTER", model: "J5.5XN6", category: "carretillas-nuevas",
+    pattern: /\bfrenos en ba[ñn]o de aceite\b/giu, expected: [], claims: [{ key: "Frenos en baño de aceite", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2026", brand: "HYSTER", model: "E4.0XN", category: "carretillas-nuevas",
+    pattern: /\bfrenos en ba[ñn]o de aceite\b/giu, expected: [], claims: [{ key: "Frenos en baño de aceite", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2025", brand: "HYSTER", model: "E3.5XN", category: "carretillas-nuevas",
+    pattern: /\bfreno(?:s)? (?:el[eé]ctrico )?regenerativ[oa]s?\b/giu, expected: [], claims: [{ key: "Frenado regenerativo", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2014", brand: "HYSTER", model: "J2.0XNT", category: "carretillas-nuevas",
+    pattern: /\bfreno(?:s)? (?:el[eé]ctrico )?regenerativ[oa]s?\b/giu, expected: [], claims: [{ key: "Frenado regenerativo", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "5079", brand: "ORMIG", model: "50iEk", category: "otros-nuevos",
+    pattern: /ruedas delanteras gemelas (cushion) y las traseras (superel[aá]sticas)/giu, expected: ["cushion", "superelásticas"], claims: [{ key: "Ruedas", value: "Delanteras gemelas cushion; traseras superelásticas" }], collision: /ruedas|neum[aá]ticos/iu },
+  { reference: "159", brand: "BRAVI", model: "SPRINT", category: "carretillas-nuevas",
+    pattern: /es capaz de recorrer (30) km con una carga completa de bater[ií]a/giu, expected: ["30"], claims: [{ key: "Autonomía máxima (km)", value: 30 }], collision: /autonom[ií]a|recorrido|alcance.*km/iu },
+
+  { reference: "2080", brand: "HYSTER", model: "H2.0A", category: "carretillas-nuevas",
+    pattern: /\bfrenos de disco h[uú]medos\b/giu, expected: [], claims: [{ key: "Frenos de disco húmedos", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2081", brand: "HYSTER", model: "H2.5A", category: "carretillas-nuevas",
+    pattern: /\bfrenos de disco h[uú]medos\b/giu, expected: [], claims: [{ key: "Frenos de disco húmedos", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2083", brand: "HYSTER", model: "H3.0A", category: "carretillas-nuevas",
+    pattern: /\bfrenos de disco h[uú]medos\b/giu, expected: [], claims: [{ key: "Frenos de disco húmedos", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2084", brand: "HYSTER", model: "H3.5A", category: "carretillas-nuevas",
+    pattern: /\bfrenos de disco h[uú]medos\b/giu, expected: [], claims: [{ key: "Frenos de disco húmedos", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2220", brand: "YALE", model: "ERP15VT", category: "carretillas-nuevas",
+    pattern: /\bfrenos regenerativos\b/giu, expected: [], claims: [{ key: "Frenado regenerativo", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2221", brand: "YALE", model: "ERP16VT", category: "carretillas-nuevas",
+    pattern: /\bfrenos regenerativos\b/giu, expected: [], claims: [{ key: "Frenado regenerativo", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2222", brand: "YALE", model: "ERP18VT", category: "carretillas-nuevas",
+    pattern: /\bfrenos regenerativos\b/giu, expected: [], claims: [{ key: "Frenado regenerativo", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2223", brand: "YALE", model: "ERP20VT", category: "carretillas-nuevas",
+    pattern: /\bfrenos regenerativos\b/giu, expected: [], claims: [{ key: "Frenado regenerativo", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2254", brand: "YALE", model: "ERP22VL", category: "carretillas-nuevas",
+    pattern: /\bfrenos regenerativos\b/giu, expected: [], claims: [{ key: "Frenado regenerativo", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2285", brand: "YALE", model: "ERP15UX", category: "carretillas-nuevas",
+    pattern: /\bfrenos regenerativos\b/giu, expected: [], claims: [{ key: "Frenado regenerativo", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2286", brand: "YALE", model: "ERP18UX", category: "carretillas-nuevas",
+    pattern: /\bfrenos regenerativos\b/giu, expected: [], claims: [{ key: "Frenado regenerativo", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2030", brand: "HYSTER", model: "J1.5UT", category: "carretillas-nuevas",
+    pattern: /\bfrenos hidr[aá]ulicos autocompensados\b/giu, expected: [], claims: [{ key: "Frenos hidráulicos autocompensados", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2031", brand: "HYSTER", model: "J1.8UT", category: "carretillas-nuevas",
+    pattern: /\bfrenos hidr[aá]ulicos autocompensados\b/giu, expected: [], claims: [{ key: "Frenos hidráulicos autocompensados", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2032", brand: "HYSTER", model: "J2.0UT", category: "carretillas-nuevas",
+    pattern: /\bfrenos hidr[aá]ulicos autocompensados\b/giu, expected: [], claims: [{ key: "Frenos hidráulicos autocompensados", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2033", brand: "HYSTER", model: "J2.5UT", category: "carretillas-nuevas",
+    pattern: /\bfrenos hidr[aá]ulicos\b/giu, expected: [], claims: [{ key: "Frenos hidráulicos", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "3800", brand: "HYSTER", model: "J7.0XNSL9", category: "carretillas-nuevas",
+    pattern: /\bfrenos en ba[ñn]o de aceite\b/giu, expected: [], claims: [{ key: "Frenos en baño de aceite", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "4738", brand: "XCMG", model: "XG1008AC", category: "elevacion-nueva",
+    pattern: /\bfrenos autom[aá]ticos\b/giu, expected: [], claims: [{ key: "Frenado automático", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "6963", brand: "XCMG", model: "XG0807AEW", category: "elevacion-nueva",
+    pattern: /\bfrenado autom[aá]tico\b/giu, expected: [], claims: [{ key: "Frenado automático", value: true }], collision: /fren(?:o|ad)/iu },
+  { reference: "2010", brand: "HYSTER", model: "A1.5XNT", category: "carretillas-nuevas",
+    pattern: /con una bater[ií]a de (875) Ah/giu, expected: ["875"], claims: [{ key: "Capacidad de la batería (Ah)", value: 875 }], collision: /bater[ií]a|capacidad.*Ah/iu },
+  { reference: "6542", brand: "XCMG", model: "XGA43K", category: "elevacion-nueva",
+    pattern: /La rotaci[oó]n de plataforma es de (160)°/giu, expected: ["160"], claims: [{ key: "Rotación de plataforma", value: "160°" }], collision: /rotaci[oó]n.*plataforma|giro.*plataforma|giro.*cesta/iu },
 ];
 
-const byReference = new Map(evidence.map((entry) => [entry.reference, entry]));
+const byReference = new Map<string, Evidence[]>();
+for (const entry of evidence) {
+  const entries = byReference.get(entry.reference) ?? [];
+  entries.push(entry);
+  byReference.set(entry.reference, entries);
+}
 
 export const recoverGamVerifiedResidualPerformanceSpecs = (record: ProductRecord): SpecsMap => {
   const source = record.specs ?? {};
-  const entry = byReference.get(record.reference ?? "");
-  if (!entry || record.condition !== "Nuevo" || record.brand !== entry.brand || record.model !== entry.model ||
-    record.categoryKey !== entry.category || !verifiedGamSourceVariant(record) ||
-    Object.keys(source).some((key) => entry.collision.test(key) || entry.claims.some((claim) => claim.key === key))) return source;
-  const matches = [...(record.longDescription ?? "").matchAll(entry.pattern)];
-  if (matches.length === 0 || matches.some((match) =>
-    !entry.expected.every((value, index) => match[index + 1] === value))) return source;
-  return { ...source, ...Object.fromEntries(entry.claims.map((claim) => [claim.key, claim.value])) };
+  const entries = byReference.get(record.reference ?? "");
+  if (!entries || record.condition !== "Nuevo" || !verifiedGamSourceVariant(record)) return source;
+
+  let result: SpecsMap = source;
+  for (const entry of entries) {
+    if (record.brand !== entry.brand || record.model !== entry.model || record.categoryKey !== entry.category ||
+      Object.keys(result).some((key) => entry.collision.test(key) || entry.claims.some((claim) => claim.key === key))) continue;
+    const matches = [...(record.longDescription ?? "").matchAll(entry.pattern)];
+    if (matches.length === 0 || matches.some((match) =>
+      !entry.expected.every((value, index) => match[index + 1] === value))) continue;
+    result = { ...result, ...Object.fromEntries(entry.claims.map((claim) => [claim.key, claim.value])) };
+  }
+  return result;
 };

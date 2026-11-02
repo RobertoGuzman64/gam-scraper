@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "runId": "individual-gomariz-4b6e7be884b20780858602de39029630",
+  "approved": true,
+  "approvalReason": "Cierre editorial acreditado del catalogo EQUIPZILLA, fases 121 a 130",
+  "sources": [
+    {
+      "providerId": "gomariz",
+      "catalogSha256": "52cd6523ac4150f4059ca8c50147ad3ecddf6c7f69daebe5dd2b79f113f594e6",
+      "preparationSha256": "a7bd83ce86f864da8897dd4895dcadbb04c3af526b8e1ce2b9a5c94c955dc579",
+      "productCount": 143
+    }
+  ],
+  "exclusions": [
+    {
+      "providerId": "gomariz",
+      "reference": "BA1465",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/lgmg-a14je-3/",
+      "status": "review",
+      "issues": [
+        "Motorización contradictoria: la ficha técnica indica eléctrico y la descripción dice diésel"
+      ],
+      "decision": "excluir",
+      "reason": "Motorizacion contradictoria entre ficha tecnica electrica y descripcion comercial diesel; se mantiene exclusion.",
+      "evidenceUrls": [
+        "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/lgmg-a14je-3/"
+      ]
+    }
+  ]
+}

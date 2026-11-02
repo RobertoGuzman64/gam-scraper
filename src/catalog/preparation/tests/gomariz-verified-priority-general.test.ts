@@ -10,10 +10,10 @@ const references = new Set([
   "OR1537", "FR1077", "DU473", "GR1113", "BA1358", "BA1522",
   "RO1197", "TO1241", "CC1665", "CAE1207", "CA1041", "CA1436",
   "CAE1054", "CAE1525", "MT1314", "TE1746", "TE1772", "TE1814",
-  "MT1659", "MT1661", "BA1575", "5051BDX"
+  "MT1659", "MT1661", "BA1575", "5051BDX", "TE1621", "TE1622", "TE1858", "RE454"
 ]);
 
-test("Gomariz: las 22 descripciones individualizadas se aplican sin alterar fichas técnicas ni originales", () => {
+test("Gomariz: las 26 descripciones individualizadas se aplican sin alterar fichas técnicas ni originales", () => {
   const changed = new Set<string>();
   for (const record of catalog.products) {
     const snapshot = JSON.stringify(record);

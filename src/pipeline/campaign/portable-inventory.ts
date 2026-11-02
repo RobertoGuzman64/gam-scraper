@@ -69,10 +69,33 @@ const inspectProvider = async (root: string, providerId: string): Promise<Invent
   if (!await directoryExists(base)) return absent("Sin original definitivo en catalogs/");
   try {
     const names = await readdir(base);
-    if (names.some((name) => name !== "original" && name !== "publications")) {
+    const hasManainRecord = providerId === "manain" && names.includes("records");
+    if (names.some((name) => name !== "original" && name !== "publications" && !(hasManainRecord && name === "records"))) {
       return invalid("Archivos inesperados o promoción pendiente en original portátil");
     }
-    if (!names.includes("original")) return absent("Sin original definitivo en catalogs/");
+    if (hasManainRecord) {
+      const recordsDirectory = join(base, "records");
+      if (!await directoryExists(recordsDirectory)) return invalid("Directorio del registro Manain no válido");
+      const entries = await readdir(recordsDirectory);
+      if (entries.length !== 1 || entries[0] !== "manain-record.json") {
+        return invalid("Registro Manain con archivos inesperados o incompleto");
+      }
+      const recordPath = join(recordsDirectory, "manain-record.json");
+      const metadata = await lstat(recordPath);
+      if (!metadata.isFile() || metadata.isSymbolicLink()) return invalid("Registro Manain no regular");
+      const content: unknown = JSON.parse(await readFile(recordPath, "utf8"));
+      if (content === null || typeof content !== "object" || Array.isArray(content) ||
+        !("providerId" in content) || content.providerId !== "manain" ||
+        !("quality" in content) || content.quality === null || typeof content.quality !== "object" ||
+        !("status" in content.quality) || content.quality.status !== "partial" ||
+        !("published" in content.quality) || content.quality.published !== false ||
+        !("products" in content) || !Array.isArray(content.products)) {
+        return invalid("Registro Manain parcial inválido");
+      }
+    }
+    if (!names.includes("original")) return hasManainRecord
+      ? partial("Registro parcial de Manain conservado; sin original canónico")
+      : absent("Sin original definitivo en catalogs/");
     const catalog = await readPortableOriginal(root, providerId);
     return ok(`Original portátil íntegro (${catalog.productCount} fichas)`);
   } catch (error) {
@@ -84,6 +107,7 @@ const inspectConsistency = async (
   root: string, providerId: string, original: InventoryItem, localCatalogFile: string
 ): Promise<InventoryItem> => {
   if (original.state === "error") return invalid("No se puede comparar un original portátil inválido");
+  if (original.state === "parcial") return partial("Registro parcial de Manain; sin original canónico para comparar");
   if (original.state === "ausente") {
     try {
       await readCanonicalCatalog(localCatalogFile);

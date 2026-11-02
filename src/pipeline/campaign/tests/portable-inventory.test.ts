@@ -143,3 +143,35 @@ test("se detecta exceso de campañas sin borrar ni interpretar carpetas desconoc
     assert.deepEqual((await readdir(join(root, "catalogs", "campaigns"))).sort(), ["run-1", "run-2", "run-3"]);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
+
+
+test("registro parcial Manain se distingue de un original inválido sin promocionarlo", async () => {
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-inventory-manain-record-"));
+  try {
+    const directory = join(root, "catalogs", "providers", "manain", "records");
+    await mkdir(directory, { recursive: true });
+    const record = JSON.stringify({ providerId: "manain", quality: { status: "partial", published: false }, products: [] });
+    await writeFile(join(directory, "manain-record.json"), record);
+    const entry = (await inspectPortableInventory(root, input(root))).providers.find((provider) => provider.providerId === "manain");
+    assert.equal(entry?.original.state, "parcial");
+    assert.equal(entry?.consistency.state, "parcial");
+    assert.equal(entry?.final.state, "ausente");
+    assert.equal(await readFile(join(directory, "manain-record.json"), "utf8"), record);
+    await writeFile(join(directory, "manain-record.json"), "{}");
+    const invalid = (await inspectPortableInventory(root, input(root))).providers.find((provider) => provider.providerId === "manain");
+    assert.equal(invalid?.original.state, "error");
+    assert.equal(invalid?.consistency.state, "error");
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test("otros proveedores no admiten registros Manain ni entradas desconocidas", async () => {
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-inventory-foreign-record-"));
+  try {
+    const directory = join(root, "catalogs", "providers", "gam", "records");
+    await mkdir(directory, { recursive: true });
+    await writeFile(join(directory, "manain-record.json"), JSON.stringify({ providerId: "manain", quality: { status: "partial", published: false }, products: [] }));
+    const entry = (await inspectPortableInventory(root, input(root))).providers.find((provider) => provider.providerId === "gam");
+    assert.equal(entry?.original.state, "error");
+    assert.equal(entry?.consistency.state, "error");
+  } finally { await rm(root, { recursive: true, force: true }); }
+});

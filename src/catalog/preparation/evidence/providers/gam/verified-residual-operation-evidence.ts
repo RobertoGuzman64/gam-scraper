@@ -31,6 +31,20 @@ const distinct = (text: string, pattern: RegExp): readonly string[] | null => {
 const isAbsent = (source: SpecsMap, key: string, conflicting: RegExp): boolean =>
   !Object.hasOwn(source, key) && !Object.keys(source).some((candidate) => conflicting.test(candidate));
 
+const transmissionEvidence: Readonly<Record<string, Readonly<{ brand: string; model: string; pattern: RegExp; value: string }>>> = {
+  "2079": { brand: "HYSTER", model: "H2.0FTS", pattern: /transmisi[oó]n DuraMatch™ de una velocidad/iu, value: "DuraMatch (una velocidad)" },
+  "2082": { brand: "HYSTER", model: "H2.5A6", pattern: /transmisi[oó]n Electronic Powershift Duramatch™ de una velocidad/iu, value: "Electronic Powershift DuraMatch (una velocidad)" },
+  "2072": { brand: "HYSTER", model: "S4.0FT", pattern: /transmisi[oó]n DuraMatch™ de una o dos velocidades/iu, value: "DuraMatch (una o dos velocidades; según configuración)" },
+  "2073": { brand: "HYSTER", model: "S4.5FT", pattern: /transmisi[oó]n DuraMatch™ de 2 velocidades/iu, value: "DuraMatch (dos velocidades)" },
+  "2074": { brand: "HYSTER", model: "S5.5FTS", pattern: /transmisi[oó]n DuraMatch™ de 2 velocidades/iu, value: "DuraMatch (dos velocidades)" },
+  "2075": { brand: "HYSTER", model: "S6.0FT", pattern: /transmisi[oó]n DuraMatch™ \(1 o 2 velocidades\)/iu, value: "DuraMatch (una o dos velocidades; según configuración)" },
+  "2091": { brand: "HYSTER", model: "H6.0FT", pattern: /transmisi[oó]n DuraMatch™ de hasta 3 velocidades/iu, value: "DuraMatch (hasta tres velocidades; según configuración)" },
+  "2092": { brand: "HYSTER", model: "H7.0FT", pattern: /transmisi[oó]n DuraMatch™ de hasta 3 velocidades/iu, value: "DuraMatch (hasta tres velocidades; según configuración)" },
+  "2093": { brand: "HYSTER", model: "H7.0FTS", pattern: /transmisi[oó]n DuraMatch™ de hasta 3 velocidadesgarantiza/iu, value: "DuraMatch (hasta tres velocidades; según configuración)" },
+  "2095": { brand: "HYSTER", model: "H8.0FTS", pattern: /transmisi[oó]n DuraMatch™ de 2 o 3 velocidades/iu, value: "DuraMatch (dos o tres velocidades; según configuración)" },
+  "2369": { brand: "YALE", model: "GP90VX", pattern: /transmisi[oó]n Techtronix™ \/ DuraMatch™ 3 de 3 velocidades/iu, value: "Techtronix / DuraMatch 3 (tres velocidades)" },
+};
+
 export const recoverGamVerifiedResidualOperationSpecs = (record: ProductRecord): SpecsMap => {
   const source = record.specs ?? {};
   if (record.providerId !== "gam" || record.condition !== "Nuevo" || !record.reference ||
@@ -125,6 +139,41 @@ export const recoverGamVerifiedResidualOperationSpecs = (record: ProductRecord):
     isAbsent(source, "Nivel sonoro", /ruido|sonoro|ac[uú]stic/iu)) {
     const match = distinct(text, /\bnivel de presi[oó]n sonora indicado por Yale es inferior a (\d{2}) dB\(A\) en el puesto de conducci[oó]n\b/giu);
     if (match?.[0] === "70") return { ...source, "Nivel sonoro": "< 70 dB(A) (puesto de conducción)" };
+  }
+  if (reference === "4790" && record.categoryKey === "elevacion-nueva" &&
+    record.brand === "XCMG" && record.model === "XGS40K" &&
+    isAbsent(source, "Radio de giro exterior", /radio.*giro/iu)) {
+    const match = distinct(text, /\bradio de giro exterior:\s*(\d{2},\d) m \(dos ruedas\) \/ (\d,\d) m \(cuatro ruedas\)/giu);
+    if (match?.[0] === "10,8" && match[1] === "6,8") {
+      return { ...source, "Radio de giro exterior": "10,8 m (dos ruedas); 6,8 m (cuatro ruedas)" };
+    }
+  }
+  const transmission = transmissionEvidence[reference];
+  if (transmission && record.categoryKey === "carretillas-nuevas" &&
+    record.brand === transmission.brand && record.model === transmission.model &&
+    isAbsent(source, "Transmisión", /transmisi[oó]n/iu) &&
+    transmission.pattern.test(text)) {
+    return { ...source, Transmisión: transmission.value };
+  }
+  if (reference === "5900" && record.categoryKey === "elevacion-nueva" &&
+    record.brand === "XCMG" && record.model === "XGA36K" &&
+    isAbsent(source, "Radio de giro (mm)", /radio.*giro/iu)) {
+    const match = distinct(text, /radio de giro m[ií]nimo:\s*(7,5) m/giu);
+    if (match?.[0] === "7,5") return { ...source, "Radio de giro (mm)": "7500 mm" };
+  }
+  if ((reference === "2136" || reference === "2137") && record.categoryKey === "marcas-nuevas" &&
+    record.brand === "HYSTER" && record.model === (reference === "2136" ? "P1.6" : "P1.8") &&
+    isAbsent(source, "Consumo", /consumo/iu)) {
+    const match = distinct(text, /(?:consumo (?:de energ[ií]a|energ[eé]tico) \(0,(32|36) kWh\/h\))/giu);
+    if (match?.[0] === (reference === "2136" ? "32" : "36")) {
+      return { ...source, Consumo: `0,${match[0]} kWh/h (dato del proveedor)` };
+    }
+  }
+  if (reference === "6368" && record.categoryKey === "otros-nuevos" &&
+    record.brand === "YALE" && record.model === "MO70T" &&
+    isAbsent(source, "Batería", /bater[ií]a|voltaje|capacidad.*ah/iu) &&
+    /bater[ií]a de 24V \/ 620Ah \(con alternativa disponible de 465Ah\)/iu.test(text)) {
+    return { ...source, "Batería": "24 V / 620 Ah (alternativa de 465 Ah)" };
   }
   return source;
 };

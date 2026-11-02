@@ -8,7 +8,7 @@ import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
 const proportional = ["4738", "4742", "4800", "4746", "6963", "4762", "4772", "4777", "4776", "5900", "4791", "6767", "6768", "4807", "5903"];
-const operatorPresence = ["4626", "5998", "5999", "6000", "6001"];
+const operatorPresence = ["4626", "5998", "5999", "6000", "6001", "5988", "5993", "5995", "5996", "5997"];
 const expected = new Map([
   ...proportional.map((reference) => [reference, "Controles proporcionales"] as const),
   ...operatorPresence.map((reference) => [reference, "Sistema de presencia del operador"] as const)
@@ -41,7 +41,7 @@ test("recupera prestaciones de mando y presencia acreditadas y normalizables", (
     assert.ok(!normalized.unknownKeys.includes(key), reference);
     changed.push(reference);
   }
-  assert.equal(changed.length, 20);
+  assert.equal(changed.length, 25);
   assert.deepEqual(new Set(changed), new Set(expected.keys()));
 });
 

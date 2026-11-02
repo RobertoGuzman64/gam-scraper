@@ -16,6 +16,7 @@ const evidence: readonly Evidence[] = [
   { reference: "4790", brand: "XCMG", model: "XGS40K", category: "elevacion-nueva", pattern: /\btracci[oó]n en las cuatro ruedas\b/iu, key: "Tracción 4x4" },
   { reference: "4793", brand: "XCMG", model: "XGS70K", category: "elevacion-nueva", pattern: /\btracci[oó]n 4x4\b/iu, key: "Tracción 4x4" },
   { reference: "4813", brand: "XCMG", model: "XT2506KH", category: "otros-nuevos", pattern: /\btracci[oó]n en las cuatro ruedas\b/iu, key: "Tracción 4x4" },
+  { reference: "4798", brand: "XCMG", model: "XGS40ACK", category: "elevacion-nueva", pattern: /\btracci[oó]n 4x4\b/iu, key: "Tracción 4x4" },
   { reference: "2194", brand: "YALE", model: "MS10E", category: "apiladores-nuevos", pattern: /\bsistema de frenado regenerativo\b/iu, key: "Frenado regenerativo" },
   { reference: "2258", brand: "YALE", model: "MC10", category: "apiladores-nuevos", pattern: /\bsistema de frenado regenerativo\b/iu, key: "Frenado regenerativo" },
   { reference: "2195", brand: "YALE", model: "MS12E", category: "apiladores-nuevos", pattern: /\bsistema de frenado regenerativo\b/iu, key: "Frenado regenerativo" },

@@ -30,7 +30,7 @@ test("diez publicaciones GAM sin estado comercial se preservan sin inferir nueva
     assert.equal(prepared.product.categorySellID, null, reference);
     assert.deepEqual(prepared.product.spec, {
       ...record.specs,
-      ...(["6358", "6367"].includes(reference) ? { "Capacidad de carga (kg)": "2000 KG" } : {})
+      ...(["6358", "6367"].includes(reference) ? { "Capacidad de carga (kg)": "2000 KG", "Año de fabricación": "2019" } : {})
     }, reference);
     assert.equal(sourceCategoryQualityIssue(record), null, reference);
   }
@@ -43,7 +43,9 @@ test("dos publicaciones Mercaeleva sin estado se conservan sin alterar especific
     assert.equal(record.condition, null, reference);
     assert.equal(prepared.status, "ready", reference);
     assert.equal(prepared.product.condition, null, reference);
-    assert.deepEqual(prepared.product.spec, record.specs ?? {}, reference);
+    assert.deepEqual(prepared.product.spec, { ...record.specs,
+      ...(reference === "M958-0132" ? { "Año de fabricación": "2004" } : {})
+    }, reference);
   }
 });
 

@@ -88,6 +88,7 @@ import { recoverGamVerifiedTractionBraking } from "./evidence/providers/gam/veri
 import { recoverGamVerifiedSteeringBraking } from "./evidence/providers/gam/verified-steering-braking-evidence.js";
 import { recoverGamVerifiedDrivetrainBrakes } from "./evidence/providers/gam/verified-drivetrain-brakes-evidence.js";
 import { recoverGamVerifiedOperatorControls } from "./evidence/providers/gam/verified-operator-controls-evidence.js";
+import { recoverGamVerifiedOperationalSafety } from "./evidence/providers/gam/verified-operational-safety-evidence.js";
 import { recoverGamVerifiedUsedYearSpec } from "./evidence/providers/gam/used-year-spec-evidence.js";
 import { recoverGamVerifiedElectricDriveSpec } from "./evidence/providers/gam/verified-electric-drive-evidence.js";
 import { recoverGamVerifiedTechnicalSpecs } from "./evidence/providers/gam/verified-technical-measures.js";
@@ -100,10 +101,11 @@ import { recoverGamAutonomySpec } from "./evidence/providers/gam/autonomy-eviden
 import { recoverGamAcousticSpec, recoverGamHandlingAcousticSpec } from "./evidence/providers/gam/acoustic-evidence.js";
 import { recoverGamCleaningProductivitySpec, recoverGamCleaningWorkingWidthSpec } from "./evidence/providers/gam/cleaning-productivity-evidence.js";
 import { recoverGamMaximumLiftHeightSpec } from "./evidence/providers/gam/lift-height-evidence.js";
-import { recoverGamElectricalBatterySpecs, recoverGamVerifiedBatteryPairSpecs } from "./evidence/providers/gam/battery-electrical-evidence.js";
+import { recoverGamElectricalBatterySpecs, recoverGamVerifiedBatteryPairSpecs, recoverGamVerifiedIntegratedCharger } from "./evidence/providers/gam/battery-electrical-evidence.js";
 import { recoverGamMotorConfigurationSpecs, recoverGamVerifiedTwinMotorSpecs, recoverGamVerifiedEnginePowerSpecs, recoverGamVerifiedEngineTorqueSpecs, recoverGamVerifiedCombustionDriveSpecs } from "./evidence/providers/gam/motor-configuration-evidence.js";
 import { recoverGamPhysicalMeasures } from "./evidence/providers/gam/physical-measures-evidence.js";
 import { recoverGamHysterForkliftTyresSpec, recoverGamNonMarkingTyresSpec, recoverGamYaleSuperelasticTyresSpec, recoverGamVerifiedSuperelasticTyresSpec, recoverGamVerifiedTyreMaterialsSpec } from "./evidence/providers/gam/non-marking-tyres-evidence.js";
+import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "./evidence/providers/mercaeleva/verified-platform-source-specs.js";
 import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation } from "./reconciliation/mercaeleva.js";
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
@@ -114,6 +116,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const publicationConflict = publicationConflictForMercaeleva(record);
   const semanticIssues = sourceSemanticQualityIssues(record);
   record = reconcileGamInitialIdentity(record);
+  record = reconcileMercaelevaVerifiedPlatformSourceSpecs(record);
   const workHeightSpecs = recoverGamExplicitWorkHeightSpec(record);
   const reachSpecs = recoverGamExplicitHorizontalReachSpec({ ...record, specs: workHeightSpecs });
   const capacitySpecs = recoverGamExplicitLoadCapacitySpec({ ...record, specs: reachSpecs });
@@ -139,7 +142,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const liftSpecs = recoverGamMaximumLiftHeightSpec({ ...record, specs: yaleTyreSpecs });
   const physicalSpecs = recoverGamPhysicalMeasures({ ...record, specs: liftSpecs });
   const electricalSpecs = recoverGamElectricalBatterySpecs({ ...record, specs: physicalSpecs });
-  const batteryPairSpecs = recoverGamVerifiedBatteryPairSpecs({ ...record, specs: electricalSpecs });
+  const integratedChargerSpecs = recoverGamVerifiedIntegratedCharger({ ...record, specs: electricalSpecs });
+  const batteryPairSpecs = recoverGamVerifiedBatteryPairSpecs({ ...record, specs: integratedChargerSpecs });
   const labelledBatterySpecs = recoverGamMislabelledBatterySpec({ ...record, specs: batteryPairSpecs });
   const motorSpecs = recoverGamMotorConfigurationSpecs({ ...record, specs: labelledBatterySpecs });
   const tractionSpecs = recoverGamStatedTwinTractionPower({ ...record, specs: motorSpecs });
@@ -163,7 +167,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const steeringBrakingSpecs = recoverGamVerifiedSteeringBraking({ ...record, specs: tractionBrakingSpecs });
   const drivetrainBrakesSpecs = recoverGamVerifiedDrivetrainBrakes({ ...record, specs: steeringBrakingSpecs });
   const operatorControlsSpecs = recoverGamVerifiedOperatorControls({ ...record, specs: drivetrainBrakesSpecs });
-  const electricDriveSpecs = recoverGamVerifiedElectricDriveSpec({ ...record, specs: operatorControlsSpecs });
+  const operationalSafetySpecs = recoverGamVerifiedOperationalSafety({ ...record, specs: operatorControlsSpecs });
+  const electricDriveSpecs = recoverGamVerifiedElectricDriveSpec({ ...record, specs: operationalSafetySpecs });
   const usedYearSpecs = recoverGamVerifiedUsedYearSpec({ ...record, specs: electricDriveSpecs });
   record = reconcileGamForPreparation(record);
   record = reconcileMercaelevaForPreparation(record);

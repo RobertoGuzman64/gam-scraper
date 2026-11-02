@@ -85,7 +85,7 @@ test("Mercaeleva: equivalencia entre horas canónicas y horas publicadas con uni
 
 
 test("Mercaeleva: los anuncios de unidades se individualizan únicamente con evidencia idéntica", () => {
-  for (const reference of ["M208-7097", "M264-2806", "M281-3486"] as const) {
+  for (const reference of ["M208-7097", "M264-2806", "M281-3486", "M035-8084", "M373-1421", "M818-7811", "M640-1938", "M855-6850"] as const) {
     const record = sourceRecord(reference);
     const original = JSON.stringify(record);
     const general = verifiedMercaelevaUnitGeneral(record);
@@ -102,7 +102,7 @@ test("Mercaeleva: los anuncios de unidades se individualizan únicamente con evi
       { ...record, horometer: "9999" },
       { ...record, longDescription: `${record.longDescription} OTRO DATO` },
       { ...record, specs: { ...record.specs, "Horas laborales": "9999 h" } },
-      { ...record, specs: { ...record.specs, "Año de fabricación": "2026" } }
+      { ...record, specs: { ...record.specs, "Año de fabricación": String(Number(record.year) + 1) } }
     ] satisfies readonly ProductRecord[]) {
       assert.equal(verifiedMercaelevaUnitGeneral(variant), null, reference);
     }

@@ -31,7 +31,7 @@ test("GAM: conserva las seis generales de F10 y recupera la 6617", () => {
       assert.equal(prepared.product.sourceUrl, record.url);
       assert.deepEqual(prepared.product.spec, {
         ...record.specs,
-        ...(["6358", "6367"].includes(record.reference) ? { "Capacidad de carga (kg)": "2000 KG" } : {})
+        ...(["6358", "6367"].includes(record.reference) ? { "Capacidad de carga (kg)": "2000 KG", "Año de fabricación": "2019" } : {})
       });
     }
     assert.equal(JSON.stringify(record), baseline);

@@ -6,6 +6,7 @@ import { prepareSourceProduct } from "../prepare-product.js";
 import { mercaelevaShortDescription } from "../mapping/providers/mercaeleva/descriptions.js";
 import { mercaelevaMissingDescriptions } from "../mapping/providers/mercaeleva/missing-descriptions.js";
 import { verifiedMercaelevaResidualGeneral } from "../evidence/providers/mercaeleva/verified-residual-generals.js";
+import { verifiedMercaelevaUnitGeneral } from "../evidence/providers/mercaeleva/verified-unit-generals.js";
 import { readMercaelevaAccreditedBaseline } from "../../../testing/accredited-publication-fixture.js";
 import { reconstructMercaelevaSource } from "../../diagnostics/description-source.js";
 
@@ -35,7 +36,10 @@ test("Mercaeleva: convierte especificaciones propias en descripciones de máquin
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.status, "ready", reference);
     assert.equal(prepared.product.description, generated.short, reference);
-    assert.equal(prepared.product.description_general, generated.long, reference);
+    const verifiedGeneral = verifiedMercaelevaUnitGeneral(record);
+    assert.ok(verifiedGeneral, reference);
+    assert.equal(prepared.product.description_general, verifiedGeneral, reference);
+    assert.notEqual(verifiedGeneral, generated.long, reference);
     assert.equal(prepared.product.reference, record.reference, reference);
     assert.equal(prepared.product.sourceUrl, record.url, reference);
     assert.deepEqual(prepared.product.spec, record.specs, reference);
@@ -142,7 +146,10 @@ test("Mercaeleva: corta Linde recuperada solo con identidad y datos concordantes
   const snapshot = JSON.stringify(record);
   const prepared = prepareSourceProduct(record);
   assert.match(prepared.product.description ?? "", /Linde E25\/600-336.*2\.500 kg.*4\.300 mm.*3\.404 horas/u);
-  assert.equal(prepared.product.description_general, record.longDescription);
+  const verifiedGeneral = verifiedMercaelevaUnitGeneral(record);
+  assert.ok(verifiedGeneral);
+  assert.equal(prepared.product.description_general, verifiedGeneral);
+  assert.match(verifiedGeneral, /mástil.*dúplex.*tríplex/u);
   assert.deepEqual(prepared.product.spec, record.specs);
   assert.equal(JSON.stringify(record), snapshot);
   for (const variant of [

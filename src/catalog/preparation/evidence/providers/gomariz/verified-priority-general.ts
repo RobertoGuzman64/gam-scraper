@@ -494,7 +494,98 @@ const evidence = {
       }
     },
     "general": "El camión portamaquinaria Scania P220 aparece como unidad de ocasión con año indicado 2001. En su ficha el proveedor publica 7,53 m de longitud, 2,50 m de anchura y 9.050 kg de peso. La descripción de origen habla del Scania P220 94L y de un motor diésel; esos datos descriptivos no sustituyen una ficha técnica de carga útil. Para esta unidad no consta en el registro una capacidad de transporte individualizada, por lo que no se le atribuye una cifra no acreditada."
-  }
+  },
+  "TE1621": {
+    "source": {
+      "url": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-ss0507e-tijera-electrica-scissor-lift/",
+      "title": "LGMG SS0507E",
+      "brand": "LGMG",
+      "model": "SS0507E",
+      "year": "2022",
+      "condition": "Segunda mano",
+      "shortDescription": null,
+      "longDescription": "Las Tijeras Eléctricas están diseñadas para trabajar en interior, alcanzan una altura desde los 6m a los 20m. Se caracterizan por llevas ruedas anti-huellas y plataforma extensible, lo que permite ampliar la zona de trabajo.",
+      "specs": {
+        "Altura plataforma": "14.30 m",
+        "Altura de trabajo": "6.3 m",
+        "Altura almacenaje": "2.15 m",
+        "Longitud": "1.53 m",
+        "Anchura": "0.81 m",
+        "Peso": "985 kg",
+        "Motor": "Eléctrico",
+        "Capacidad": "230 kg"
+      }
+    },
+    "general": "La plataforma de tijera eléctrica LGMG SS0507E de ocasión está identificada en su ficha con 6,3 m de altura de trabajo y 230 kg de capacidad. Sus dimensiones publicadas son 1,53 m de longitud y 0,81 m de anchura, con un peso de 985 kg y 2,15 m de altura de almacenaje. El campo de altura de plataforma del anuncio indica 14,30 m, un valor incompatible con la altura de trabajo publicada; por prudencia no se utiliza para describir la elevación real."
+  },
+  "TE1622": {
+    "source": {
+      "url": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-ss0507e-tijera-electrica-scissor-lift-2/",
+      "title": "LGMG SS0507E",
+      "brand": "LGMG",
+      "model": "SS0507E",
+      "year": "2023",
+      "condition": "Segunda mano",
+      "shortDescription": null,
+      "longDescription": "Las Tijeras Eléctricas están diseñadas para trabajar en interior, alcanzan una altura desde los 6m a los 20m. Se caracterizan por llevas ruedas anti-huellas y plataforma extensible, lo que permite ampliar la zona de trabajo.",
+      "specs": {
+        "Altura plataforma": "14.30 m",
+        "Altura de trabajo": "6.3 m",
+        "Altura almacenaje": "2.15 m",
+        "Longitud": "1.53 m",
+        "Anchura": "0.81 m",
+        "Peso": "985 kg",
+        "Motor": "Eléctrico",
+        "Capacidad": "230 kg"
+      }
+    },
+    "general": "La LGMG SS0507E de segunda mano corresponde a una plataforma de tijera eléctrica con 6,3 m de altura de trabajo y capacidad declarada de 230 kg. La ficha recoge 1,53 m de largo, 0,81 m de ancho y 985 kg de peso. Figura una altura de almacenaje de 2,15 m. La altura de plataforma consignada como 14,30 m no concuerda con los 6,3 m de trabajo; por esa contradicción no se presenta como una prestación acreditada."
+  },
+  "TE1858": {
+    "source": {
+      "url": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-ss0507etijera-electrica-electric-scissor/",
+      "title": "LGMG SS0507E",
+      "brand": "LGMG",
+      "model": "SS0507E",
+      "year": "2022",
+      "condition": "Segunda mano",
+      "shortDescription": null,
+      "longDescription": "Las Tijeras Eléctricas están diseñadas para trabajar en interior, alcanzan una altura desde los 6m a los 20m. Se caracterizan por llevas ruedas anti-huellas y plataforma extensible, lo que permite ampliar la zona de trabajo.",
+      "specs": {
+        "Altura plataforma": "14.30 m",
+        "Altura de trabajo": "6.3 m",
+        "Altura almacenaje": "2.15 m",
+        "Longitud": "1.53 m",
+        "Anchura": "0.81 m",
+        "Peso": "985 kg",
+        "Motor": "Eléctrico",
+        "Capacidad": "230 kg"
+      }
+    },
+    "general": "La plataforma de tijera eléctrica LGMG SS0507E anunciada de ocasión registra 230 kg de capacidad, 6,3 m de altura de trabajo y un peso declarado de 985 kg. Sus medidas son 1,53 m de longitud, 0,81 m de anchura y 2,15 m en posición de almacenaje, según la ficha técnica. El anuncio contiene además un valor de 14,30 m para la altura de plataforma, contradictorio con la altura de trabajo; esa cifra queda expresamente sin atribuir a la máquina."
+  },
+  "RE454": {
+    "source": {
+      "url": "https://www.gomarizrent.com/venta/movimiento-de-tierras-demolicion-y-compactacion/retroexcavadora/jcb-1cx-retroexcavadora-backhoe-gomariz-1/",
+      "title": "JCB 1CX",
+      "brand": "Jcb",
+      "model": "1CX",
+      "year": "1998",
+      "condition": "Segunda mano",
+      "shortDescription": null,
+      "longDescription": "La retroexcavadora se utiliza habitualmente para poder remover, abrir surcos y posteriormente extraer cantidades grandes de tierra. Estas excavaciones generalmente son aprovechadas para colocar tuberías, cables, drenajes y, sobre todo, para la colocación de los cimientos en edificaciones.",
+      "specs": {
+        "Altura": "2.25 metros",
+        "Altura de trabajo": "2.51 m",
+        "Longitud": "3.31 m",
+        "Anchura": "1.58 m",
+        "Peso": "3158 KG",
+        "Motor": "Eléctrico",
+        "Capacidad": "660 kg"
+      }
+    },
+    "general": "La JCB 1CX está anunciada como retroexcavadora de ocasión del año 1998. El proveedor consigna 3,31 m de longitud, 1,58 m de anchura y 3.158 kg de peso, y señala 660 kg en el campo de capacidad. También registra 2,25 m de altura y 2,51 m en el campo de altura de trabajo, sin justificar su interpretación como alcance de excavación. La ficha asigna un motor eléctrico, dato que no se traslada a esta descripción por no estar corroborado frente a la identidad de la retroexcavadora."
+  },
 } as const satisfies Readonly<Record<string, Evidence>>;
 
 const entries: ReadonlyMap<string, Evidence> = new Map(Object.entries(evidence));
