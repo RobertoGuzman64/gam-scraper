@@ -2,14 +2,14 @@ import { SPEC_KEY_NORMALIZATION } from "../../normalization/spec-rules.js";
 import type { ProductRecord, SpecScalar } from "../../../contracts/catalog.js";
 import type { Attribute, AttributeResolution, Candidate } from "./attribute-types.js";
 import { fold, scalar, numberToken } from "./attribute-utils.js";
-import { applyGamAliasesDetailed, convertGamCandidate, isGamUnmeasuredNumeric, gamUnspecifiedTurningRadius } from "./providers/gam/attributes.js";
+import { applyGamAliasesDetailed, convertGamCandidate, isGamUnmeasuredNumeric, gamUnspecifiedTurningRadius } from "./providers/gam/categorias-atributos/attributes.js";
 import { applyGomarizAliases, convertGomarizCandidate } from "./providers/gomariz/attributes.js";
 import { applyMercaelevaAliasesDetailed } from "./providers/mercaeleva/attributes.js";
 import { normalizeMercaelevaCandidate } from "./providers/mercaeleva/technical.js";
 import { mercaelevaUnspecifiedMast } from "../evidence/providers/mercaeleva/handling-evidence.js";
 import { mercaelevaUnpublishedHours } from "../evidence/providers/mercaeleva/hours-evidence.js";
-import { gamConfirmedAbsentScalar } from "./providers/gam/unrepresentable.js";
-import { gamMislabelledSpecKey } from "./providers/gam/crossed-specifications.js";
+import { gamConfirmedAbsentScalar } from "./providers/gam/categorias-atributos/unrepresentable.js";
+import { gamMislabelledSpecKey } from "./providers/gam/reglas-tecnicas/crossed-specifications.js";
 import { applyManainAliases, convertManainCandidate, isManainUnmeasuredNumeric } from "./providers/manain/attributes.js";
 
 const notPublished = (value: SpecScalar): boolean =>

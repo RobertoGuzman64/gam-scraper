@@ -18,7 +18,7 @@ import { base, journalPath, journalStagePath, missing, validName, discardIncompl
 import type { RemovalJournal } from "./journal.js";
 import { removalAreas, describeOutputs, planRemoval, planUnreportedRemoval, readableFile, regularDirectory } from "./inventory.js";
 import type { CampaignRemoval } from "./inventory.js";
-import { withCampaignAdmissionLock } from "./admission.js";
+import { withCampaignAdmissionLock } from "./lock.js";
 
 export const finishRemoval = async (root: string, journal: RemovalJournal): Promise<void> => {
   const runFile = join(root, "storage", "runs", journal.runId, "run.json");

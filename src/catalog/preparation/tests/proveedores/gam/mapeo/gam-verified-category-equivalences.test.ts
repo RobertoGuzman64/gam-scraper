@@ -1,0 +1,47 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import type { ProductRecord } from "../../../../../../contracts/catalog.js";
+import { catalog, categorySlug, reference } from "../soporte/gam-historical-category-fixture.js";
+import { prepareCached } from "../../../transversal/soporte/prepare-cached.js";
+
+test("GAM: Logitrans manual acreditada en LogiQ y WSP, no por batería de balanza", () => {
+  for (const code of ["238", "239"]) {
+    const record = reference(code);
+    const prepared = prepareCached(record, catalog);
+    assert.equal(categorySlug(record), "transpaleta-manual", code);
+    assert.equal(prepared.status, "ready", code);
+    if (code === "239") {
+      const capacity = catalog.attributes.find((item) => item.name === "Capacidad de carga");
+      assert.ok(capacity);
+      assert.ok(!prepared.product.attributes.some((item) => item.attributeID === capacity.id));
+      assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "200/300 KG");
+    }
+    assert.equal(categorySlug({ ...record, brand: null }), null, code);
+    assert.equal(categorySlug({ ...record, specs: { ...record.specs, Modelo: "Modelo distinto" } }), null, code);
+    assert.equal(categorySlug({ ...record, longDescription: "Transpaleta con documentación insuficiente" }), null, code);
+    assert.equal(categorySlug({ ...record, specs: { ...record.specs, "Tipo motor": "Eléctrico" } }), null, code);
+    assert.equal(categorySlug({ ...record, url: record.url.replace("transpaletas-logitrans", "transpaletas-hyster") }), null, code);
+  }
+});
+
+test("GAM: Sprint TL eleva un ocupante, exige modelo, marca y ficha coincidentes", () => {
+  const record = reference("157");
+  assert.equal(categorySlug(record), "plataforma-unipersonal-electrica");
+  assert.equal(prepareCached(record, catalog).status, "ready");
+  assert.equal(categorySlug({ ...record, brand: "OTRA" }), null);
+  assert.equal(categorySlug({ ...record, specs: { ...record.specs, Modelo: "LUI 460" } }), null);
+  assert.equal(categorySlug({ ...record, specs: { ...record.specs, "Tipo motor": "Diésel" } }), null);
+  assert.equal(categorySlug({ ...record, longDescription: "Plataforma elevadora sin modelo documentado" }), null);
+  assert.equal(categorySlug({ ...record, url: record.url.replace("plataformas-elevadoras-neumaticos-bravi", "plataformas-elevadoras-bravi") }), null);
+});
+
+test("GAM: Lui 460 y CTE carecen de equivalencia, sin bloquear un tipo acreditado", () => {
+  for (const code of ["2159", "6874", "6873", "6953", "6954"]) {
+    const record = reference(code);
+    assert.equal(categorySlug(record), null, code);
+    const prepared = prepareCached(record, catalog);
+    assert.equal(prepared.status, "ready", code);
+    assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")), code);
+    assert.ok(!prepared.issues.includes("Tipo de máquina de origen sin confirmar"), code);
+  }
+});

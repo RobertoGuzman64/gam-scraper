@@ -1,4 +1,4 @@
-import { accreditedPublicationSha } from "../../../testing/accredited-publication-fixture.js";
+import { accreditedPublicationSha } from "../../../testing/builders/accredited-publication-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { cp, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";

@@ -1,9 +1,9 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
 import { buildProductIdentity } from "../identity.js";
 import { findSerialNumberCollisions } from "../identity-conflicts.js";
-import { describeHysterH35ftStockConflict } from "./evidence/providers/gam/hyster-h35ft-serial-evidence.js";
-import { verifiedMusoshiSerialOwner, verifiedZeroMisattributedSerial } from "./evidence/providers/gam/musoshi-serial-evidence.js";
-import { verifiedYaleErp35vlCrossListing, verifiedYaleErp35vlSerialOwner } from "./evidence/providers/gam/yale-erp35vl-serial-evidence.js";
+import { describeHysterH35ftStockConflict } from "./evidence/providers/gam/identidad/hyster-h35ft-serial-evidence.js";
+import { verifiedMusoshiSerialOwner, verifiedZeroMisattributedSerial } from "./evidence/providers/gam/identidad/musoshi-serial-evidence.js";
+import { verifiedYaleErp35vlCrossListing, verifiedYaleErp35vlSerialOwner } from "./evidence/providers/gam/identidad/yale-erp35vl-serial-evidence.js";
 import type { ImportCatalog } from "../legacy-export/contracts.js";
 import type { PreparedProduct } from "./contracts.js";
 import { prepareProduct } from "../legacy-export/prepare-product.js";

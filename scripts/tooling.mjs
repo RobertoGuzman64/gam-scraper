@@ -186,7 +186,7 @@ if (rawCommand === "ayuda") {
         const deliverIndividual = command === "entregar:proveedor" &&
           !cleaned.some((arg) => ["--dry-run", "--verificar", "--solo-candidata"].includes(arg));
         if (process.exitCode === 0 && (activateIndividual || deliverIndividual)) {
-          const retention = spawnSync(process.execPath, [join(root, "scripts/consolidate-local-artifacts.mjs"), "--aplicar"], {
+          const retention = spawnSync(process.execPath, [join(root, "scripts/maintenance/consolidate-local-artifacts.mjs"), "--aplicar"], {
             cwd: root, stdio: "inherit", windowsHide: true
           });
           if (retention.error || retention.status !== 0) {

@@ -7,7 +7,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/scraping.js";
 import { offlinePreparationManifestPath } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { prepareSavedCatalog } from "../../preparation/prepare.js";
-import { writeOutputs } from "../../publication/publish.js";
+import { writeOutputs } from "../publish.js";
 import { readIndividualSelection, selectIndividualPublishable } from "../individual-selection.js";
 
 const category: CategoryConfig = {

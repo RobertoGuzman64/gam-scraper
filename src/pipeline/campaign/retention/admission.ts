@@ -1,8 +1,6 @@
-import { randomUUID } from "node:crypto";
 import { lstat, mkdir, open, readdir, readFile, rename, rm } from "node:fs/promises";
 import { basename, dirname, join, resolve, sep } from "node:path";
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
-import { acquireBatchLock } from "../../../infrastructure/locking/batch-lock.js";
 import { inspectCampaignReference } from "../../../infrastructure/filesystem/reference/store.js";
 import { inspectCleanupArea, removeCleanupDirectories } from "../../../infrastructure/filesystem/campaign/campaign-cleanup.js";
 import type { CleanupArea } from "../../../infrastructure/filesystem/campaign/campaign-cleanup.js";
@@ -17,15 +15,7 @@ import { base, missing } from "./journal.js";
 import { planRemoval } from "./inventory.js";
 import { beginRemoval, resumePendingCampaignRemoval } from "./recovery.js";
 
-export const withCampaignAdmissionLock = async <T>(rootDirectory: string, action: () => Promise<T>): Promise<T> => {
-  const root = resolve(rootDirectory);
-  await mkdir(base(root), { recursive: true });
-  const lock = await acquireBatchLock(base(root), {
-    runId: `campaign-admission-${randomUUID()}`, pid: process.pid, startedAt: new Date().toISOString()
-  });
-  try { return await action(); }
-  finally { await lock.release(); }
-};
+export { withCampaignAdmissionLock } from "./lock.js";
 
 const ensureNoOrphans = async (root: string, runs: readonly CampaignRun[]): Promise<void> => {
   const known = new Set(runs.flatMap((run) => [

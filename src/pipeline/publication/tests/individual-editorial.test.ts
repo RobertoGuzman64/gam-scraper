@@ -14,7 +14,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/scraping.js";
 import { prepareSavedCatalog } from "../../preparation/prepare.js";
-import { writeOutputs } from "../../publication/publish.js";
+import { writeOutputs } from "../publish.js";
 import { selectIndividualPublishable, readIndividualSelection } from "../individual-selection.js";
 import {
   approveIndividualEditorial, decideIndividualEditorial, inspectIndividualEditorial,

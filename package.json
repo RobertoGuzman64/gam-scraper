@@ -37,7 +37,7 @@
     "entregar:proveedor": "node scripts/tooling.mjs entregar:proveedor",
     "limpiar:almacen": "node scripts/tooling.mjs limpiar:almacen",
     "migrar:catalogos": "node scripts/tooling.mjs migrar:catalogos",
-    "limpiar:versionados": "node scripts/untrack-generated-files.mjs",
+    "limpiar:versionados": "node scripts/maintenance/untrack-generated-files.mjs",
     "normalizar:gam": "node scripts/tooling.mjs normalizar:gam",
     "normalizar:gam:base": "node scripts/tooling.mjs normalizar:gam:base",
     "convertir:gam": "node scripts/tooling.mjs convertir:gam",
@@ -46,9 +46,9 @@
     "categorias:arbol": "node scripts/tooling.mjs categorias:arbol",
     "urls:gam": "node scripts/tooling.mjs urls:gam",
     "consola": "node scripts/tooling.mjs consola",
-    "medir:ejecucion": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/measure-execution.ps1",
+    "medir:ejecucion": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/operations/measure-execution.ps1",
     "build": "node scripts/run-build.mjs",
-    "test": "node scripts/run-build.mjs --quiet && node scripts/run-tests.mjs && node --test scripts/tests/consolidate-local-artifacts.test.mjs",
+    "test": "node scripts/run-build.mjs --quiet && node scripts/run-tests.mjs",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
   },
   "dependencies": {

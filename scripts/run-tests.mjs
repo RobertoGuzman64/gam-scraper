@@ -44,20 +44,20 @@ const parseOptions = (argumentsList) => {
 };
 
 const PRIORITIZED_TESTS = [
-  "pipeline/campaign/tests/delivery.test.js",
-  "pipeline/campaign/tests/finalization-interventions.test.js",
+  "pipeline/campaign/tests/finalizacion-entrega/delivery.test.js",
+  "pipeline/campaign/tests/finalizacion-entrega/finalization-interventions.test.js",
   "catalog/interventions/tests/multiple-scripts.test.js",
-  "pipeline/campaign/tests/finalization.test.js",
-  "pipeline/campaign/tests/finalization-recovery.test.js",
-  "pipeline/campaign/tests/workflow.test.js",
+  "pipeline/campaign/tests/finalizacion-entrega/finalization.test.js",
+  "pipeline/campaign/tests/finalizacion-entrega/finalization-recovery.test.js",
+  "pipeline/campaign/tests/flujo-descubrimiento/workflow.test.js",
   "cli/commands/catalog/tests/catalog-content-gaps.test.js",
   "catalog/interventions/tests/manual-interventions.test.js",
   "catalog/interventions/tests/intervention-application.test.js",
-  "pipeline/campaign/tests/reference-update.test.js",
-  "pipeline/campaign/tests/operations-status.test.js",
+  "pipeline/campaign/tests/referencia/reference-update.test.js",
+  "pipeline/campaign/tests/operaciones/operations-status.test.js",
   "catalog/interventions/tests/intervention-simulation.test.js",
   "catalog/interventions/tests/catalog.test.js",
-  "infrastructure/filesystem/tests/campaign-accreditation.test.js"
+  "infrastructure/filesystem/catalog/tests/campaign-accreditation.test.js"
 ];
 const testPriority = new Map(PRIORITIZED_TESTS.map((path, index) => [path, index]));
 
@@ -71,9 +71,19 @@ const collectTests = (directory) => readdirSync(directory, { withFileTypes: true
   return entry.isFile() && entry.name.endsWith(".test.ts") ? [path] : [];
 });
 
+const collectScriptTests = (directory) => readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+  const path = join(directory, entry.name);
+  if (entry.isDirectory()) return collectScriptTests(path);
+  return entry.isFile() && entry.name.endsWith(".test.mjs") ? [path] : [];
+});
+
 const sources = collectTests("src").sort();
+const scriptTests = collectScriptTests("scripts").sort();
 if (sources.length === 0) throw new Error("No se encontraron pruebas en src");
-const files = sources.map((source) => join("dist", relative("src", source).replace(/\.test\.ts$/, ".test.js")));
+const files = [
+  ...sources.map((source) => join("dist", relative("src", source).replace(/\.test\.ts$/, ".test.js"))),
+  ...scriptTests
+];
 files.sort((left, right) => {
   const leftPriority = testPriority.get(relative("dist", left).replaceAll("\\", "/")) ?? testPriority.size;
   const rightPriority = testPriority.get(relative("dist", right).replaceAll("\\", "/")) ?? testPriority.size;

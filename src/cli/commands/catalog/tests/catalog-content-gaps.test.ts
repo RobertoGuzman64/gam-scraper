@@ -7,7 +7,7 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import test from "node:test";
-import { accreditedPublicationSha, accreditedPublicationFile } from "../../../../testing/accredited-publication-fixture.js";
+import { accreditedPublicationSha, accreditedPublicationFile } from "../../../../testing/builders/accredited-publication-fixture.js";
 
 const run = promisify(execFile);
 const root = fileURLToPath(new URL("../../../../../", import.meta.url));
