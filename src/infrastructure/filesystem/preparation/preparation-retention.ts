@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { lstat, readFile, readdir } from "node:fs/promises";
-import { basename, join, resolve } from "node:path";
+import { basename, join, relative, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { readOfflinePreparation } from "./offline-preparation.js";
 import { planRetentionSimulation, type RetentionSimulation, type RetentionVersion } from "../retention/simulation.js";
@@ -11,7 +11,7 @@ const referenceRoots = [
   "storage/runs", "storage/campaigns", "storage/interventions", "storage/providers",
   "catalogs/campaigns", "catalogs/providers"
 ] as const;
-const textFile = /\.(json|jsonl|log|txt|csv)$/i;
+const textFile = /\.(json|jsonl|log|txt|csv|ts|md)$/i;
 
 type PreparedSet = {
   readonly id: string;
@@ -28,14 +28,19 @@ const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 const scanReferences = async (workspace: string, sets: readonly PreparedSet[]): Promise<{
-  readonly referenced: ReadonlySet<string>;
+  readonly referenced: ReadonlyMap<string, readonly string[]>;
   readonly issues: readonly string[];
 }> => {
-  const referenced = new Set<string>();
+  const referenced = new Map<string, Set<string>>();
   const issues: string[] = [];
-  const tokens = sets.flatMap((item) => [item.path, item.sourceHash, basename(item.path)]
-    .filter((value): value is string => typeof value === "string" && value.length > 0)
-    .map((value) => ({ id: item.id, value })));
+  const tokens = sets.flatMap((item) => {
+    const entries = [
+      { id: item.id, value: item.path, kind: "ruta" },
+      { id: item.id, value: basename(item.path), kind: "nombre" }
+    ];
+    if (item.sourceHash) entries.push({ id: item.id, value: item.sourceHash, kind: "SHA-256" });
+    return entries;
+  });
   const visit = async (path: string): Promise<void> => {
     let entries;
     try { entries = await readdir(path, { withFileTypes: true }); }
@@ -61,12 +66,17 @@ const scanReferences = async (workspace: string, sets: readonly PreparedSet[]): 
       }
       try {
         const raw = await readFile(item, "utf8");
-        for (const token of tokens) if (raw.includes(token.value)) referenced.add(token.id);
+        for (const token of tokens) {
+          if (!raw.includes(token.value)) continue;
+          const matches = referenced.get(token.id) ?? new Set<string>();
+          matches.add(`${relative(workspace, item)} (${token.kind})`);
+          referenced.set(token.id, matches);
+        }
       } catch { issues.push(`Referencia ilegible: ${item}`); }
     }
   };
-  for (const relative of referenceRoots) {
-    const root = join(workspace, relative);
+  for (const referenceRoot of referenceRoots) {
+    const root = join(workspace, referenceRoot);
     try {
       const info = await lstat(root);
       if (!info.isDirectory() || info.isSymbolicLink()) {
@@ -80,7 +90,7 @@ const scanReferences = async (workspace: string, sets: readonly PreparedSet[]): 
     }
     await visit(root);
   }
-  return { referenced, issues };
+  return { referenced: new Map([...referenced].map(([id, sources]) => [id, [...sources].sort()])), issues };
 };
 
 const readPreparedSet = async (
@@ -176,10 +186,14 @@ export const simulatePreparedRetention = async (
     ...(unknown.length ? [`Entradas no clasificadas en ${allowed}: ${unknown.sort().join(", ")}`] : []),
     ...referenced.issues
   ];
-  const versions = sets.map((item) => ({ ...item.version, blockers: [
-    ...item.version.blockers,
-    ...commonBlockers,
-    ...(referenced.referenced.has(item.id) || explicit.has(item.path) ? ["Referenciada por operación, campaña o acreditación"] : [])
-  ] }));
+  const versions = sets.map((item) => {
+    const sources = referenced.referenced.get(item.id) ?? [];
+    return { ...item.version, blockers: [
+      ...item.version.blockers,
+      ...commonBlockers,
+      ...(sources.length ? [`Referenciada por operación, campaña o acreditación: ${sources.join(", ")}`] : []),
+      ...(explicit.has(item.path) ? ["Referenciada explícitamente por la operación actual"] : [])
+    ] };
+  });
   return planRetentionSimulation(versions);
 };

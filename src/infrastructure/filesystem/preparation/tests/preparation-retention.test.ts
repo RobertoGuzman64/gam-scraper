@@ -111,6 +111,50 @@ test("referencias en rutas gestionadas, ilegibles o enlazadas bloquean candidato
   });
 });
 
+test("archivos TypeScript y Markdown sin referencias no bloquean preparaciones", async () => {
+  await withWorkspace(async (root, source) => {
+    await saveVersion(root, source, 1);
+    await saveVersion(root, source, 2);
+    await saveVersion(root, source, 3);
+    const scripts = join(root, "storage", "interventions", "lote", "scripts");
+    const editorial = join(root, "storage", "interventions", "lote", "editorial");
+    await mkdir(scripts, { recursive: true });
+    await mkdir(editorial, { recursive: true });
+    await writeFile(join(scripts, "identidad.ts"), 'export const identidad = "GAM-123";');
+    await writeFile(join(editorial, "propuesta.md"), "Propuesta editorial pendiente de revisión");
+    const result = await simulatePreparedRetention(root, "gam");
+    assert.equal(result.kept, 2);
+    assert.equal(result.candidates, 1);
+    assert.equal(result.protected, 0);
+    assert.equal(result.actualDeletions, 0);
+  });
+});
+
+test("referencias de preparación en TypeScript y Markdown protegen sus versiones con procedencia", async () => {
+  await withWorkspace(async (root, source) => {
+    const first = await saveVersion(root, source, 1);
+    const second = await saveVersion(root, source, 2);
+    await saveVersion(root, source, 3);
+    const firstName = first.split(/[\\/]/).at(-1);
+    if (!firstName) throw new Error("Nombre de preparación ausente");
+    const secondHash = createHash("sha256").update(await readFile(second)).digest("hex");
+    const scripts = join(root, "storage", "interventions", "lote", "scripts");
+    const editorial = join(root, "storage", "interventions", "lote", "editorial");
+    await mkdir(scripts, { recursive: true });
+    await mkdir(editorial, { recursive: true });
+    await writeFile(join(scripts, "correcciones.ts"), `export const preparationFile = "${firstName}";`);
+    await writeFile(join(editorial, "evidencia.md"), `Preparación acreditada: ${secondHash}`);
+    const result = await simulatePreparedRetention(root, "gam");
+    assert.equal(result.protected, 2);
+    assert.equal(result.kept, 1);
+    assert.equal(result.candidates, 0);
+    const firstDecision = result.versions.find((item) => item.id === "lote-v1");
+    const secondDecision = result.versions.find((item) => item.id === "lote-v2");
+    assert.match(firstDecision?.reason ?? "", /correcciones\.ts \(nombre\)/);
+    assert.match(secondDecision?.reason ?? "", /evidencia\.md \(SHA-256\)/);
+  });
+});
+
 test("solo admite la raíz autorizada; el almacén preparado enlazado se rechaza", async () => {
   await withWorkspace(async (root, source) => {
     await saveVersion(root, source, 1);
