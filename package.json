@@ -48,7 +48,7 @@
     "consola": "node scripts/tooling.mjs consola",
     "medir:ejecucion": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/measure-execution.ps1",
     "build": "node scripts/run-build.mjs",
-    "test": "node scripts/run-build.mjs --quiet && node scripts/run-tests.mjs",
+    "test": "node scripts/run-build.mjs --quiet && node scripts/run-tests.mjs && node --test scripts/tests/consolidate-local-artifacts.test.mjs",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
   },
   "dependencies": {

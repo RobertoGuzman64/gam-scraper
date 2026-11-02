@@ -180,7 +180,20 @@ if (rawCommand === "ayuda") {
       });
       if (result.error) fail(result.error.message);
       else if (result.signal) fail(`La operación terminó por señal ${result.signal}`);
-      else process.exitCode = result.status ?? 1;
+      else {
+        process.exitCode = result.status ?? 1;
+        const activateIndividual = command === "publicacion:vigente" && cleaned.includes("--activar") && cleaned[0] !== "--campana";
+        const deliverIndividual = command === "entregar:proveedor" &&
+          !cleaned.some((arg) => ["--dry-run", "--verificar", "--solo-candidata"].includes(arg));
+        if (process.exitCode === 0 && (activateIndividual || deliverIndividual)) {
+          const retention = spawnSync(process.execPath, [join(root, "scripts/consolidate-local-artifacts.mjs"), "--aplicar"], {
+            cwd: root, stdio: "inherit", windowsHide: true
+          });
+          if (retention.error || retention.status !== 0) {
+            console.error(`WARN | Publicación válida, pero el archivado local no se completó: ${retention.error?.message ?? retention.status}`);
+          }
+        }
+      }
     }
   }
 }
