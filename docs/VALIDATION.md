@@ -8,6 +8,24 @@
 
 Distinguir **integridad de los archivos**, **calidad de las fichas** y **cobertura externa**. Son comprobaciones diferentes: aprobar una no implica aprobar las otras. Los tests del software protegen regresiones, pero tampoco sustituyen la comparación con los anuncios publicados por cada proveedor.
 
+## Verificación técnica tras cambios estructurales
+
+Desde la raíz del proyecto, con dependencias instaladas, ejecutar:
+
+```powershell
+npm ci
+npm test
+npm run build
+npm run estado
+git status --short
+```
+
+`npm test` **ya ejecuta la compilación** antes de lanzar `scripts/run-tests.mjs`: descubre los `.test.ts` de `src/` (que se ejecutan compilados desde `dist/`) y las suites `.test.mjs` de `scripts/`. `npm run build` por separado confirma la compilación explícita. La cantidad de pruebas puede variar al añadir o mover suites; para diagnosticar resultados, ejecutar después del build `node scripts/run-tests.mjs --concurrencia 2` o `node scripts/run-tests.mjs --medicion <informe.json>`. La medición es un informe local generado, no un archivo de catálogo.
+
+Al renombrar archivos o carpetas, comprobar además referencias dinámicas, rutas relativas desde `import.meta.url`, scripts programados, imports dentro de **cadenas que generan TypeScript temporal** y las rutas de prioridad del runner. Un `PASS` de TypeScript no garantiza que esas rutas apunten a los fixtures esperados; las suites de integración deben ejecutarse realmente. En Git, movimientos físicos pueden aparecer como eliminaciones y archivos no rastreados hasta incorporarlos al índice, por lo que se debe inspeccionar el diff antes del commit.
+
+**Huellas de preparación:** `rulesSha256` se obtiene del contenido compilado y de los nombres relativos de módulos del catálogo. Tras cambios estructurales puede variar aunque los datos publicados no hayan cambiado. Verificar la compatibilidad de preparaciones y aprobaciones existentes sin reescribir sus hashes, sin regenerar de forma encubierta `catalogs/` y sin considerar `npm run estado` una acreditación de reglas nuevas. `PASS` de tests, `PASS` de build, integridad de `catalogs/` y aceptación editorial son comprobaciones diferentes.
+
 ## Responsabilidad productiva ante reviews
 
 La validación identifica fallos; **el trabajo de calidad no termina al encontrarlos**. Ante una preparación con cualquier ficha `review`, el siguiente trabajo del desarrollador es localizar y corregir la causa **en código productivo reutilizable** (extracción, parseo, asociación semántica, normalización, calidad o identidad), siempre que haya evidencia de una transformación segura. Los informes de auditoría, las consultas por ID y las comparaciones son instrumentación interna para esa tarea, no un proceso editorial que deba dirigir el propietario.

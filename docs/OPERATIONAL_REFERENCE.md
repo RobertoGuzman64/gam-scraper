@@ -26,7 +26,7 @@ npm run referencia -- --importar <carpeta-existente> --sustituir
 - `--exportar`: crea una carpeta nueva con los archivos verificados (seis en el formato de cuatro proveedores o cinco en el histórico de tres), sin sobrescribir el destino. Guardar fuera del repositorio y solo para operadores autorizados.
 - `--importar`: valida la copia y la instala transaccionalmente; no sustituye una referencia presente salvo con `--sustituir`. Si hay transacciones incompatibles o datos corruptos, bloquea el reemplazo sin borrados.
 
-`node scripts/migrate-storage.mjs` es una migración de **rutas heredadas** (`data/referencia/`, `diferencias.json`), no un paso de instalación nueva ni de la rotación. Ejecutarla solo al actualizar una instalación antigua que use esos nombres y tras verificar que no haya campañas o transacciones abiertas. Para una copia externa antigua admite `--transfer <carpeta-externa>`; las importaciones ordinarias usan el formato de nombres vigente.
+`node scripts/maintenance/migrate-storage.mjs` es una migración de **rutas heredadas** (`data/referencia/`, `diferencias.json`), no un paso de instalación nueva ni de la rotación. Ejecutarla solo al actualizar una instalación antigua que use esos nombres y tras verificar que no haya campañas o transacciones abiertas. Para una copia externa antigua admite `--transfer <carpeta-externa>`; las importaciones ordinarias usan el formato de nombres vigente.
 
 Las operaciones de exportación/importación trasladan **solo la referencia legada**, no las campañas, sus catálogos originales retenidos, selecciones ni recibos de entrega. No son un mecanismo de copia de seguridad integral del ciclo actual y no envían archivos por red. Para operar una campaña normal no hace falta utilizar estos comandos.
 

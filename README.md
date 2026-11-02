@@ -32,7 +32,7 @@ Una consulta o un plan no equivalen a permiso para editar; una intervención pro
 
 ## Instalaciones existentes
 
-Una instalación nueva no requiere ejecutar migraciones de nombres. Si se actualiza una instalación antigua con rutas de almacenamiento heredadas, consultar primero [Referencia operativa](docs/OPERATIONAL_REFERENCE.md) y el comportamiento de `scripts/migrate-storage.mjs`. No mover datos ni ejecutar migraciones sobre campañas o transacciones abiertas sin comprobar su estado.
+Una instalación nueva no requiere ejecutar migraciones de nombres. Si se actualiza una instalación antigua con rutas de almacenamiento heredadas, consultar primero [Referencia operativa](docs/OPERATIONAL_REFERENCE.md) y el comportamiento de `scripts/maintenance/migrate-storage.mjs`. No mover datos ni ejecutar migraciones sobre campañas o transacciones abiertas sin comprobar su estado.
 
 ## Requisitos e instalación
 
@@ -49,6 +49,24 @@ npm run ayuda
 `PASS` confirma una operación completada (incluidos `npm test` y `npm run build`), `WARN` señala revisiones o simulaciones pendientes, `FAIL` indica un error y `RUN` identifica trabajo en curso. En terminal interactiva los estados llevan color y las operaciones largas muestran un spinner; el progreso se representa mediante contadores reales. Con `NO_COLOR`, `CI=true` o salida redirigida no se emiten secuencias ANSI y los mensajes siguen siendo legibles. Los comandos siguen en español y los nombres internos de archivos y carpetas en inglés.
 
 `npm ci` **solo instala dependencias**: el script reservado `prepare` de npm no se utiliza para preparar catálogos. Los comandos operativos invocan su compilación interna cuando es necesaria. `storage/` contiene estado operativo excluido de Git. `catalogs/` guarda los originales y las campañas acreditadas que se han consolidado como datos portátiles versionables; ambos espacios tienen responsabilidades distintas. Ver [Reglas de datos](docs/SCRAPER_DATA_RULES.md).
+
+## Estructura técnica y pruebas
+
+La estructura de `src/` agrupa responsabilidades, no fases históricas del desarrollo:
+
+- `src/scraping/`: extracción, parsing y adaptadores por proveedor.
+- `src/catalog/`: identidad, normalización, preparación técnica, evidencias, mapeos, cobertura, editorial, intervenciones y exportación heredada.
+- `src/pipeline/`: orquestación de extracciones, lotes, campañas, preparaciones, publicaciones y validaciones.
+- `src/infrastructure/`: filesystem, HTTP, navegador, bloqueo local y salida heredada.
+- `src/cli/`: comandos y presentación; `src/contracts/` y `src/shared/`: contratos y utilidades transversales.
+- `src/testing/`: fixtures y builders compartidos; los tests de cada dominio permanecen junto a su módulo, en carpetas `tests/` separadas por proveedor o responsabilidad.
+- `scripts/`: entradas de ejecución y compilación en la raíz; `scripts/inspection/`, `scripts/maintenance/` y `scripts/operations/` para las herramientas especializadas.
+
+Los nombres **internos** de archivos, directorios y módulos técnicos se mantienen en inglés; los comandos npm y la salida operativa conservan sus nombres en español. No se traducen IDs de proveedores, rutas persistidas, campos de contratos ni formatos acreditados por una cuestión estética. Ver [Arquitectura](docs/ARCHITECTURE.md).
+
+`npm test` compila antes de ejecutar `scripts/run-tests.mjs`. El runner descubre recursivamente `src/**/*.test.ts`, ejecuta sus equivalentes compilados en `dist/` e incluye además `scripts/**/*.test.mjs`. No se debe deducir la cantidad de tests por la cantidad de carpetas ni fijar un número constante de archivos. Para diagnosticar la ejecución se puede ejecutar `node scripts/run-tests.mjs --concurrencia 2` después del build o generar una medición JSON con `--medicion <ruta.json>`; el archivo de medición es un artefacto temporal, no un dato acreditado.
+
+**Precaución con los renombrados:** la huella `rulesSha256` de la preparación incluye nombres relativos y contenidos de módulos JavaScript compilados. Cambiar rutas puede invalidar la compatibilidad de una preparación previa sin modificar la lógica. No modificar huellas, documentos de aprobación ni JSON publicados para forzar una coincidencia. Ver [Validación](docs/VALIDATION.md) y [Reglas de datos](docs/SCRAPER_DATA_RULES.md).
 
 ## Catálogos definitivos y trabajo operativo
 

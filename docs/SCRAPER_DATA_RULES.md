@@ -59,6 +59,12 @@ La **retención global** de hasta dos campañas se aplica por `runId` y mediante
 
 **Git versiona el árbol de trabajo, no valida los catálogos.** `storage/` permanece excluido y `catalogs/` es versionable. Los procesos actualizan los datos consolidados; el propietario decide `git add`, commit y push. El comando `estado` no determina qué está staged ni qué contiene el último commit. Antes de cerrar un cambio de catálogo, comprobar que el conjunto definitivo afectado está validado y que figura en el commit correspondiente. Los históricos internos de Git son independientes de la retención del scraper. Una copia limpia puede comprobar `catalogs/` sin `storage/`, pero sin este último no se reanudan trabajos operativos antiguos ni se reconstruyen acreditaciones pendientes.
 
+## Huella de reglas y estabilidad de las rutas
+
+Para preparaciones con `rulesVersion: 2`, `rulesSha256` se calcula en `src/infrastructure/filesystem/preparation/preparation-inputs.ts` leyendo los módulos JavaScript compilados de preparación, normalización, identidad y componentes heredados incluidos explícitamente. El hash depende **tanto de sus nombres relativos como de su contenido**; por eso un renombrado de carpetas, un import recompilado o una redistribución del código puede modificar la huella sin cambiar los datos originales.
+
+La huella se usa para detectar incompatibilidades entre la preparación almacenada y las reglas vigentes. No normalizar, sustituir ni recalcular a mano hashes de preparaciones, aprobaciones o publicaciones para adaptar un refactor. Los originales y finales acreditados permanecen inmutables; la validez de cualquier nueva preparación o decisión debe comprobarse mediante los comandos y controles previstos. Ver [Validación](VALIDATION.md).
+
 ## Identidad y cobertura
 
 - La identidad de una **unidad** no es únicamente marca/modelo: usar referencias, series, URLs canónicas y otras evidencias coherentes para deduplicar sin fusionar máquinas distintas.

@@ -30,10 +30,10 @@ No planificar un proveedor hasta haber acreditado su cobertura y revisado su com
 
 ### Windows
 
-El repositorio incluye `scripts/run-scheduled.ps1`. Desde una tarea programada puede invocarse con la ruta real del proyecto:
+El repositorio incluye `scripts/operations/run-scheduled.ps1`. Desde una tarea programada puede invocarse con la ruta real del proyecto:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\RUTA\REPOSITORIO\scripts\run-scheduled.ps1" -Providers "gam,gomariz"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\RUTA\REPOSITORIO\scripts\operations\run-scheduled.ps1" -Providers "gam,gomariz"
 ```
 
 La tarea ejecuta `extraer:todos`, no el flujo completo de campaña. Debe usar una cuenta con permisos y herramientas disponibles, conservar el disco entre ejecuciones, supervisar códigos de salida y **no iniciar otra instancia** si la anterior sigue activa. Para incluir Manain hay que prever una sesión gráfica y la posible verificación humana; no asumir que funcionará sin supervisión.
