@@ -129,3 +129,67 @@ test("no restaura un archivo externo con huellas alteradas", async () => {
     assert.equal((await readdir(join(root, "storage/prepared/gam"))).filter((name) => name.endsWith("-preparation.json")).length, 2);
   });
 });
+
+test("admite cambios de cifras entre preparaciones acreditadas sin degradar su estado", async () => {
+  await workspace(async ({ root, outside }) => {
+    await rootFiles(root, 3);
+    await save(root, "scripts/tooling.mjs", `import { readdir } from "node:fs/promises";
+const count = (await readdir("storage/prepared/gam")).filter((name) => name.endsWith("-preparation.json")).length;
+console.log("PASS |   PREPARACIÓN | CORRECTO | Preparación acreditada (" + count + " Ready / 0 Review)");`);
+    const result = await consolidateLocalArtifacts(root, outside);
+    assert.equal(result.versions, 4);
+    assert.equal((await readdir(join(root, "storage/prepared/gam"))).filter((name) => name.endsWith("-preparation.json")).length, 2);
+  });
+});
+
+test("revierte la consolidación si una preparación deja de estar acreditada", async () => {
+  await workspace(async ({ root, outside }) => {
+    await rootFiles(root, 3);
+    await save(root, "scripts/tooling.mjs", `import { readdir } from "node:fs/promises";
+const count = (await readdir("storage/prepared/gam")).filter((name) => name.endsWith("-preparation.json")).length;
+console.log(count === 3
+  ? "PASS |   PREPARACIÓN | CORRECTO | Preparación acreditada (3 Ready / 0 Review)"
+  : "WARN |   PREPARACIÓN | PARCIAL | Preparación heredada disponible");`);
+    await assert.rejects(consolidateLocalArtifacts(root, outside), /estado operativo cambió/);
+    assert.equal((await readdir(join(root, "storage/prepared/gam"))).filter((name) => name.endsWith("-preparation.json")).length, 3);
+  });
+});
+
+test("retira una extracción vacía sin exigir que siga figurando como parcial", async () => {
+  await workspace(async ({ root, outside }) => {
+    await rootFiles(root, 3);
+    await save(root, "storage/scraped/mercaeleva/scrape-mercaeleva-summary.json", JSON.stringify({
+      quality: { status: "blocked", published: false }, totals: { scrapedProducts: 0 }
+    }));
+    await save(root, "scripts/tooling.mjs", `import { existsSync } from "node:fs";
+console.log("  MERCAELEVA");
+if (existsSync("storage/scraped/mercaeleva/scrape-mercaeleva-summary.json")) {
+  console.log("WARN |   ORIGINAL OPERATIVO | PARCIAL | Extracción parcial conservada; CSV coincide con el resumen");
+  console.log("WARN |   PREPARACIÓN | PARCIAL | Preparación heredada disponible; no acreditada como preparación offline");
+} else {
+  console.log("    ORIGINAL OPERATIVO | AUSENTE | Sin extracción conservada");
+  console.log("    PREPARACIÓN | AUSENTE | Sin preparación conservada");
+}
+console.log("PASS |   JSON FINAL | CORRECTO | Publicación vigente");`);
+    const result = await consolidateLocalArtifacts(root, outside);
+    assert.equal(result.versions, 5);
+    assert.equal((await readdir(join(root, "storage/prepared/gam"))).filter((name) => name.endsWith("-preparation.json")).length, 2);
+    await assert.rejects(readFile(join(root, "storage/scraped/mercaeleva/scrape-mercaeleva-summary.json")), { code: "ENOENT" });
+  });
+});
+
+test("no permite perder una publicación al descartar una extracción vacía", async () => {
+  await workspace(async ({ root, outside }) => {
+    await rootFiles(root, 3);
+    await save(root, "storage/scraped/mercaeleva/scrape-mercaeleva-summary.json", JSON.stringify({
+      quality: { status: "blocked", published: false }, totals: { scrapedProducts: 0 }
+    }));
+    await save(root, "scripts/tooling.mjs", `import { existsSync } from "node:fs";
+console.log("  MERCAELEVA");
+console.log(existsSync("storage/scraped/mercaeleva/scrape-mercaeleva-summary.json")
+  ? "PASS |   JSON FINAL | CORRECTO | Publicación vigente"
+  : "    JSON FINAL | AUSENTE | Sin publicación");`);
+    await assert.rejects(consolidateLocalArtifacts(root, outside), /estado operativo cambió/);
+    assert.equal((await readFile(join(root, "storage/scraped/mercaeleva/scrape-mercaeleva-summary.json"), "utf8")).includes("blocked"), true);
+  });
+});

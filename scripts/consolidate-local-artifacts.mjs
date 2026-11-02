@@ -330,6 +330,32 @@ const runStatus = (root) => {
   return result.stdout.trim();
 };
 
+const preservedOperationalState = (before, after, items) => {
+  const previous = before.split(/\r?\n/);
+  const current = after.split(/\r?\n/);
+  if (previous.length !== current.length) return false;
+  const archivedPartial = items.some((item) =>
+    item.path === "storage/scraped/mercaeleva/scrape-mercaeleva-summary.json");
+  let provider = "";
+  for (let index = 0; index < previous.length; index += 1) {
+    const first = previous[index];
+    const next = current[index];
+    if (first === next) {
+      if (/^ {0,2}(GAM|GOMARIZ|MERCAELEVA|MANAIN)$/.test(first)) provider = first.trim();
+      continue;
+    }
+    if (/^PASS \|\s+PREPARACIÓN \| CORRECTO \| Preparación acreditada \(\d+ Ready \/ \d+ Review\)$/.test(first) &&
+      /^PASS \|\s+PREPARACIÓN \| CORRECTO \| Preparación acreditada \(\d+ Ready \/ \d+ Review\)$/.test(next)) continue;
+    if (provider === "MERCAELEVA" && archivedPartial &&
+      (first === "WARN |   ORIGINAL OPERATIVO | PARCIAL | Extracción parcial conservada; CSV coincide con el resumen" &&
+        next === "    ORIGINAL OPERATIVO | AUSENTE | Sin extracción conservada" ||
+       first === "WARN |   PREPARACIÓN | PARCIAL | Preparación heredada disponible; no acreditada como preparación offline" &&
+        next === "    PREPARACIÓN | AUSENTE | Sin preparación conservada")) continue;
+    return false;
+  }
+  return true;
+};
+
 const retentionIndexes = async (root) => {
   const indexes = [];
   for (const provider of providers) {
@@ -420,7 +446,9 @@ export const consolidateLocalArtifacts = async (root, destination) => {
       await rm(join(root, record.path), { recursive: record.type === "directory" });
     }
     const finalState = runStatus(root);
-    if (finalState !== initialState) throw new Error("El estado operativo cambió tras retirar los históricos");
+    if (!preservedOperationalState(initialState, finalState, items)) {
+      throw new Error("El estado operativo cambió tras retirar los históricos");
+    }
     await cleanEmptyParents(root, items);
     const bytes = records.flatMap((record) => record.files).reduce((sum, file) => sum + file.size, 0);
     return { versions: records.length, files: records.flatMap((record) => record.files).length, bytes, destination };

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { lstat, readFile } from "node:fs/promises";
+import type { Dirent } from "node:fs";
+import { lstat, readFile, readdir } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -145,16 +146,38 @@ const inspectOriginal = async (dir: string, prefix: string, providerId: string):
 const inspectPreparation = async (
   root: string, dir: string, prefix: string, providerId: string, original: InventoryItem
 ): Promise<InventoryItem> => {
-  const canonicalPath = join(root, "storage", "prepared", providerId, `${prefix}-preparation.json`);
+  const folder = join(root, "storage", "prepared", providerId);
   try {
-    if (await regularFile(canonicalPath)) {
-      const preparation = await readOfflinePreparation(canonicalPath, providerId);
-      const originalFile = join(dir, `${prefix}-catalog.json`);
-      if (!await regularFile(originalFile)) return partial("Preparación acreditada, pero sin original vigente");
-      const digest = createHash("sha256").update(await readFile(originalFile)).digest("hex");
-      if (preparation.source.catalogSha256 !== digest) return invalid("La preparación no corresponde al original vigente");
-      return ok(`Preparación acreditada (${preparation.totals.ready} Ready / ${preparation.totals.review} Review)`);
+    let entries: Dirent[];
+    try { entries = await readdir(folder, { withFileTypes: true }); }
+    catch (error) { if (!missing(error)) throw error; entries = []; }
+    const candidates = entries.filter((entry) =>
+      entry.name.startsWith(`${prefix}-`) && entry.name.endsWith("-preparation.json"));
+    const originalFile = join(dir, `${prefix}-catalog.json`);
+    const hasOriginal = await regularFile(originalFile);
+    const originalSha = hasOriginal
+      ? createHash("sha256").update(await readFile(originalFile)).digest("hex") : null;
+    const matching: { preparedAt: number; ready: number; review: number }[] = [];
+    let foundSource = false;
+    for (const entry of candidates) {
+      if (!entry.isFile() || entry.isSymbolicLink()) {
+        throw new Error(`Preparación irregular: ${entry.name}`);
+      }
+      const path = join(folder, entry.name);
+      const preparation = await readOfflinePreparation(path, providerId);
+      if (preparation.source.prefix !== prefix) continue;
+      foundSource = true;
+      if (originalSha !== null && preparation.source.catalogSha256 !== originalSha) continue;
+      matching.push({ preparedAt: Date.parse(preparation.preparedAt),
+        ready: preparation.totals.ready, review: preparation.totals.review });
     }
+    matching.sort((left, right) => right.preparedAt - left.preparedAt);
+    const current = matching[0];
+    if (current) {
+      if (!hasOriginal) return partial("Preparación acreditada, pero sin original vigente");
+      return ok(`Preparación acreditada (${current.ready} Ready / ${current.review} Review)`);
+    }
+    if (foundSource && hasOriginal) return invalid("La preparación no corresponde al original vigente");
     const legacy = join(dir, `${prefix}-${original.state === "parcial" ? "partial-" : ""}preparation.json`);
     if (await regularFile(legacy)) return partial("Preparación heredada disponible; no acreditada como preparación offline");
     return absent("Sin preparación conservada");

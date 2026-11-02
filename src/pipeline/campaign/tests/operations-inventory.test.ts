@@ -59,3 +59,60 @@ test("estado distingue parcial acreditado y archivo alterado sin crear archivos 
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("estado mantiene la preparación acreditada al rotar el nombre original", async () => {
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-inventory-retention-"));
+  try {
+    const providerId = "gam";
+    const prefix = "scrape-gam-marzo-2026";
+    const sourceDir = join(root, "storage", "scraped", providerId);
+    const folder = join(root, "storage", "prepared", providerId);
+    await mkdir(sourceDir, { recursive: true });
+    await mkdir(folder, { recursive: true });
+    const original = "original-de-prueba";
+    await writeFile(join(sourceDir, `${prefix}-catalog.json`), original);
+    const catalogSha256 = createHash("sha256").update(original).digest("hex");
+    const writePreparation = async (name: string, preparedAt: string, ready: boolean): Promise<void> => {
+      const item = {
+        status: ready ? "ready" : "review",
+        issues: ready ? [] : ["Pendiente de revisión"],
+        product: {
+          providerId, sourceUrl: "https://example.org/producto", reference: "GAM-1", title: "Máquina de prueba",
+          categorySellID: null, category: null, condition: null, price: null,
+          description_title: null, description: null, description_general: null, images: [], attributes: []
+        }
+      };
+      const preparation = JSON.stringify({
+        version: 1, quality: "complete", published: true, preparedAt,
+        source: { providerId, prefix, scope: "0".repeat(16), catalogSha256, productCount: 1 },
+        fingerprints: { rulesVersion: 2, rulesSha256: "a".repeat(64) },
+        totals: { ready: ready ? 1 : 0, review: ready ? 0 : 1 },
+        identities: ["gam:ref:GAM-1"], products: [item]
+      });
+      const stem = join(folder, name);
+      await writeFile(`${stem}-preparation.json`, preparation);
+      await writeFile(`${stem}-preparation.manifest.json`, JSON.stringify({
+        version: 1, providerId, catalogSha256,
+        preparationSha256: createHash("sha256").update(preparation).digest("hex")
+      }));
+    };
+    await writePreparation(prefix, "2026-10-29T00:00:00.000Z", true);
+    await writePreparation(`${prefix}-20261101`, "2026-11-01T00:00:00.000Z", false);
+    await writePreparation(`${prefix}-20261102`, "2026-11-02T00:00:00.000Z", false);
+    const status = await inspectCampaignOperations(root);
+    const before = await inspectOperationsInventory(root, status);
+    assert.deepEqual(before.providers.find((entry) => entry.providerId === providerId)?.preparation, {
+      state: "correcto", detail: "Preparación acreditada (0 Ready / 1 Review)"
+    });
+    await rm(join(folder, `${prefix}-preparation.json`));
+    await rm(join(folder, `${prefix}-preparation.manifest.json`));
+    const after = await inspectOperationsInventory(root, status);
+    assert.deepEqual(after.providers.find((entry) => entry.providerId === providerId)?.preparation,
+      before.providers.find((entry) => entry.providerId === providerId)?.preparation);
+    await writeFile(join(folder, `${prefix}-20261102-preparation.manifest.json`), "{}");
+    const altered = await inspectOperationsInventory(root, status);
+    assert.equal(altered.providers.find((entry) => entry.providerId === providerId)?.preparation.state, "error");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
