@@ -122,19 +122,15 @@ export const deliverIndividualArchive = async (
     const zipFile = join(desktop, `equipzilla-${options.providerId}-${date}-${approvalSha256.slice(0, 16)}.zip`);
     const data = createZipArchive([{ name: `${options.providerId}-${date}.json`, data: productText }]);
     const pending = join(desktop, `.equipzilla-${randomUUID()}.tmp`);
+    let created = false;
     try {
       await writeFile(pending, data, { flag: "wx" });
-      const content = readZipArchive(await readFile(pending));
-      if (content.length !== 1 || content[0]?.name !== `${options.providerId}-${date}.json` ||
-        !content[0].data.equals(Buffer.from(productText, "utf8"))) {
-        throw new Error("El ZIP individual temporal no contiene el JSON esperado");
-      }
-      try { await copyFile(pending, zipFile, constants.COPYFILE_EXCL); }
-      catch (error) {
+      try {
+        await copyFile(pending, zipFile, constants.COPYFILE_EXCL);
+        created = true;
+      } catch (error) {
         if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
       }
-      const actual = await readFile(zipFile);
-      if (!actual.equals(data)) throw new Error("Ya existe un ZIP distinto con ese nombre; no se sobrescribe");
     } finally {
       await rm(pending, { force: true });
     }
@@ -142,7 +138,13 @@ export const deliverIndividualArchive = async (
       version: 1, providerId: options.providerId, approvalSha256,
       productSha256: sha256(productText), date, zipFile, zipSha256: digest(data)
     };
-    await checkArchive(receipt, options.providerId, approvalSha256, productText, desktop);
+    try {
+      await checkArchive(receipt, options.providerId, approvalSha256, productText, desktop);
+    } catch (error) {
+      if (!created) throw new Error("Ya existe un ZIP distinto con ese nombre; no se sobrescribe", { cause: error });
+      await rm(zipFile, { force: true });
+      throw error;
+    }
     await writeFile(receiptFile, JSON.stringify(receipt, null, 2), { flag: "wx" });
     return { ...publication, status: "published", zipFile };
   } finally {

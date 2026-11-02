@@ -27,7 +27,10 @@ const createBaselineRoot = async (): Promise<string> => {
   await mkdir(temporary, { recursive: true });
   const destination = await mkdtemp(join(temporary, "huecos-baseline-"));
   try {
-    await cp(join(root, "dist"), join(destination, "dist"), { recursive: true });
+    await cp(join(root, "dist"), join(destination, "dist"), {
+      recursive: true,
+      filter: (path) => !path.split(/[\\/]/u).includes("tests")
+    });
     for (const providerId of ["gam", "gomariz", "mercaeleva"] as const) {
       const source = join(root, "catalogs", "providers", providerId);
       const target = join(destination, "catalogs", "providers", providerId);
@@ -229,9 +232,14 @@ const isEditorialReport = (value: unknown): value is EditorialReport => {
     'source' in value.provenance && typeof value.provenance.source === "string";
 };
 
+let baselineComparison: Promise<unknown> | undefined;
+const readBaselineComparison = (): Promise<unknown> => {
+  baselineComparison ??= executeBaseline(["--comparar", "--specs", "--json", "--top", "1"]).then((raw) => JSON.parse(raw) as unknown);
+  return baselineComparison;
+};
+
 test("huecos compara las 1341 publicaciones y acredita la cobertura completa de descripciones", async () => {
-  const raw = await executeBaseline(["--comparar", "--json", "--top", "1"]);
-  const report: unknown = JSON.parse(raw);
+  const report = await readBaselineComparison();
   assert.ok(isComparisonReport(report));
   assert.equal(report.provenance.source, "comparacion_publicaciones_y_preparacion");
   assert.equal(report.coverage.totals.products, 1341);
@@ -313,14 +321,22 @@ const isComparisonReport = (value: unknown): value is ComparisonReport => {
     "technical" in value.priorities;
 };
 
-test("huecos --comparar --specs diferencia cobertura técnica sin alterar el informe editorial", async () => {
-  const comparison = JSON.parse(await executeBaseline(["--comparar", "--specs", "--json"])) as {
-    coverage: { totals: { products: number; pending: { description: number; description_general: number } } };
-    priorities: { totals: { pending: number } };
-    technicalSpecs: { totals: { products: number; canonicalOriginals: number; reconstructedSources: number;
-      pendingPublication: number; observationalMissing: number };
-      cases: { providerId: string; reference: string | null; stage: string }[] };
+type SpecificationComparisonReport = ComparisonReport & {
+  readonly priorities: ComparisonReport["priorities"] & { readonly totals: { readonly pending: number } };
+  readonly technicalSpecs: {
+    readonly totals: { readonly products: number; readonly canonicalOriginals: number; readonly reconstructedSources: number;
+      readonly pendingPublication: number; readonly observationalMissing: number };
+    readonly cases: readonly { readonly providerId: string; readonly reference: string | null; readonly stage: string }[];
   };
+};
+const isSpecificationComparisonReport = (value: unknown): value is SpecificationComparisonReport =>
+  isComparisonReport(value) && "technicalSpecs" in value && typeof value.technicalSpecs === "object" &&
+  value.technicalSpecs !== null && "totals" in value.technicalSpecs && "cases" in value.technicalSpecs &&
+  Array.isArray(value.technicalSpecs.cases) && "pending" in value.priorities.totals;
+
+test("huecos --comparar --specs diferencia cobertura técnica sin alterar el informe editorial", async () => {
+  const comparison = await readBaselineComparison();
+  assert.ok(isSpecificationComparisonReport(comparison));
   assert.equal(comparison.coverage.totals.products, 1341);
   assert.deepEqual(comparison.coverage.totals.pending, { description: 0, description_general: 0 });
   assert.ok(comparison.priorities.totals.pending > 0);
