@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { validMercaelevaTechnicalSource } from "../../../mapping/providers/mercaeleva/technical.js";
+import { matchesVerifiedHorometer } from "./verified-horometer.js";
 
 export const mercaelevaPriorityShortEvidence = {
   "M106-1389": {
@@ -129,7 +130,7 @@ export const verifiedMercaelevaPriorityShortDescription = (record: ProductRecord
   if (!evidence || record.url !== evidence.url || record.brand !== evidence.brand ||
     record.model !== evidence.model || record.title !== evidence.title ||
     record.longDescription !== evidence.general || record.condition !== evidence.condition ||
-    record.year !== evidence.year || (record.horometer ?? null) !== evidence.horometer) return null;
+    record.year !== evidence.year || !matchesVerifiedHorometer(record.horometer, evidence.horometer)) return null;
   for (const [key, value] of Object.entries(evidence.specs)) {
     if (record.specs?.[key] !== value) return null;
   }

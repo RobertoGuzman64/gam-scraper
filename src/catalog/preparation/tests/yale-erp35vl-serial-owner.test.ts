@@ -27,8 +27,8 @@ test("GAM: Yale 6835 y 6858 conservan el mismo VIN acreditado sin bloqueo", () =
   assert.deepEqual(result.products[0]?.issues, []);
   assert.equal(result.products[1]?.status, "ready");
   assert.deepEqual(result.products[1]?.issues, []);
-  assert.deepEqual(result.products[0]?.product.spec, older.specs);
-  assert.deepEqual(result.products[1]?.product.spec, accredited.specs);
+  assert.deepEqual(result.products[0]?.product.spec, { ...older.specs, "Año de fabricación": "2019", "Motorización": "Eléctrico" });
+  assert.deepEqual(result.products[1]?.product.spec, { ...accredited.specs, "Año de fabricación": "2019", "Motorización": "Eléctrico" });
   assert.equal(result.products[1]?.product.reference, "6858");
   assert.deepEqual([older, accredited], original);
 });

@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { validMercaelevaTechnicalSource } from "../../../mapping/providers/mercaeleva/technical.js";
+import { matchesVerifiedHorometer } from "./verified-horometer.js";
 
 const manitouUnits = {
   "M178-6194": { article: "784", hours: "3233" },
@@ -21,7 +22,7 @@ const verifiedIdentity = (
     `https://sales.mercaeleva.com/es/for-sale/machine/${brand}-${model}-${reference}` &&
   record.title === `${brand} ${model} ${additional}` &&
   record.brand === brand && record.model === model && record.year === year &&
-  record.horometer === (hours === null ? null : `${hours} h`) && record.condition === condition &&
+  matchesVerifiedHorometer(record.horometer, hours === null ? null : `${hours} h`) && record.condition === condition &&
   record.longDescription?.trim() === original && record.specs?.["Marca"] === brand &&
   record.specs?.["Modelo"] === model && record.specs?.["Título adicional"] === additional &&
   record.specs?.["Año de fabricación"] === year && record.specs?.["Artículo No."] === article &&

@@ -103,7 +103,10 @@ test("conserva respuestas válidas asociadas a preguntas explícitas", () => {
       assert.ok(general.includes(record.model ?? "INVALID"), reference);
       assert.doesNotMatch(general, /\?\s+(?:Sí|No)\./u);
     } else {
-      assert.match(general, /\?\s+(?:Sí|No)\./u);
+      assert.match(general, /Hyster J1\.6XN/u);
+      assert.match(general, /1600 KG/u);
+      assert.match(general, /48V \/ 625Ah/u);
+      assert.doesNotMatch(general, /\?\s+(?:Sí|No)\./u);
     }
   }
 });

@@ -6,6 +6,8 @@ import { prepareSourceProduct } from "../prepare-product.js";
 import { resolveGamVerifiedResidualEditorial } from "../mapping/providers/gam/verified-residual-editorial.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const additional = new Set(["6206", "6817", "6585", "6545", "6707", "4776", "2159", "2061", "2049", "2172", "2241", "2649", "1022", "2138", "2167", "2168", "2173", "2162", "2183", "2074", "2016", "2028"]);
+const revisedShorts = new Set(["6585", "2159", "2049", "2168", "2162", "2016"]);
 const selected = new Set(["2148", "6190", "6192", "6191", "6163", "2300", "5899", "2292", "2211", "6542", "2301", "2232", "4725", "2050", "3134", "2302", "2365", "52", "53", "5081"]);
 
 const find = (reference: string): ProductRecord => {
@@ -44,4 +46,33 @@ test("la evidencia editorial no se traslada a otra fuente, identidad ni versión
     { ...record, specs: { ...record.specs, "Capacidad de carga (kg)": "2500 KG" } }
   ];
   for (const changed of variants) assert.notEqual(prepareSourceProduct(changed).product.description_general, product.description_general);
+});
+
+test("las fichas adicionales conservan identidad, especificaciones y contenido individual", () => {
+  for (const reference of additional) {
+    const record = find(reference);
+    const original = JSON.stringify(record);
+    const result = prepareSourceProduct(record).product;
+    assert.ok(result.description_general && result.description_general.length >= 200, reference);
+    assert.ok(record.longDescription && result.description_general.length < record.longDescription.length, reference);
+    assert.notEqual(result.description_general, record.longDescription, reference);
+    assert.equal(JSON.stringify(record), original, reference);
+    for (const [key, value] of Object.entries(record.specs ?? {})) assert.equal(result.spec[key], value, `${reference}: ${key}`);
+    if (revisedShorts.has(reference)) assert.ok(result.description && !result.description.includes("➨"), reference);
+  }
+});
+
+test("la cohorte adicional no se aplica a fuentes o especificaciones alteradas", () => {
+  for (const reference of ["6206", "2159", "2168", "6585"]) {
+    const record = find(reference);
+    const current = prepareSourceProduct(record).product.description_general;
+    const variants: readonly ProductRecord[] = [
+      { ...record, providerId: "gomariz" },
+      { ...record, url: `${record.url}?otra=1` },
+      { ...record, model: "MODELO INEXISTENTE" },
+      { ...record, longDescription: `${record.longDescription ?? ""} Texto añadido.` },
+      { ...record, specs: { ...record.specs, "Capacidad de carga (kg)": "0 KG" } }
+    ];
+    for (const variant of variants) assert.notEqual(prepareSourceProduct(variant).product.description_general, current);
+  }
 });

@@ -27,8 +27,8 @@ test("GAM: los anuncios Yale 6835 y 6858 comparten stock acreditado y conservan 
   assert.deepEqual(result.products[0]?.issues, []);
   assert.equal(result.products[1]?.status, "ready");
   assert.deepEqual(result.products[1]?.issues, []);
-  assert.deepEqual(result.products[0]?.product.spec, older.specs);
-  assert.deepEqual(result.products[1]?.product.spec, listed.specs);
+  assert.deepEqual(result.products[0]?.product.spec, { ...older.specs, "Año de fabricación": "2019", "Motorización": "Eléctrico" });
+  assert.deepEqual(result.products[1]?.product.spec, { ...listed.specs, "Año de fabricación": "2019", "Motorización": "Eléctrico" });
   assert.deepEqual([older, listed], originals);
 });
 

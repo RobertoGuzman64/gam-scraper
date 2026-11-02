@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamGeneralDescription } from "../mapping/providers/gam/general-description.js";
+import { resolveGamVerifiedSourceCondensedGeneral } from "../evidence/providers/gam/verified-source-condensed-generals.js";
 import { resolveGamVerifiedBriefGeneral } from "../mapping/providers/gam/brief-technical-general.js";
 import { resolveGamSourceIdentifiedModel } from "../mapping/providers/gam/model-identified-general.js";
 import { prepareSourceProduct } from "../prepare-product.js";
@@ -49,7 +50,14 @@ test("identifica dos modelos sin modificar la narración acreditada", () => {
       modified.add(record.reference);
       assert.ok(identifiedGeneral.endsWith(general ?? ""));
       assert.ok(identifiedGeneral.startsWith(`Modelo identificado en la ficha: ${record.brand} ${record.model}.`));
-      assert.equal(prepareSourceProduct(record).product.description_general, identifiedGeneral);
+      const condensed = resolveGamVerifiedSourceCondensedGeneral(record);
+      const prepared = prepareSourceProduct(record).product.description_general;
+      assert.equal(prepared, condensed ?? identifiedGeneral);
+      if (condensed) {
+        assert.match(prepared ?? "", /Logitrans Logiq 200/u);
+        assert.match(prepared ?? "", /212H04217979/u);
+        assert.match(prepared ?? "", /sin lectura válida/u);
+      }
     }
   }
   assert.deepEqual(modified, identified);

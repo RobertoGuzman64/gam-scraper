@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { validMercaelevaTechnicalSource } from "../../../mapping/providers/mercaeleva/technical.js";
+import { matchesVerifiedHorometer } from "./verified-horometer.js";
 
 const evidence = {
   "M432-1479": {
@@ -74,7 +75,7 @@ export const verifiedMercaelevaCriticalGeneral = (record: ProductRecord): string
   if (!item || record.url !== item.url || record.title !== item.title ||
     record.brand !== item.brand || record.model !== item.model ||
     record.longDescription.trim() !== item.original || record.year !== item.year ||
-    record.horometer !== item.hours || record.specs?.["Marca"] !== item.brand ||
+    !matchesVerifiedHorometer(record.horometer, item.hours) || record.specs?.["Marca"] !== item.brand ||
     record.specs?.["Modelo"] !== item.model || record.specs?.["Título adicional"] !== item.additional ||
     record.specs?.["Año de fabricación"] !== item.year || record.specs?.["Artículo No."] !== item.article ||
     record.specs?.["Horas laborales"] !== item.hours || record.specs?.["Estado"] !== "Usado" ||

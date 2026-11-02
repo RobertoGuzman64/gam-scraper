@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { verifiedGomarizPriorityGeneral } from "../evidence/providers/gomariz/verified-priority-general.js";
 import { resolveGomarizResidualGeneral } from "../mapping/providers/gomariz/residual-general.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
@@ -22,7 +23,7 @@ test("Gomariz personaliza generales genéricas con medidas de su propia ficha", 
       const general = prepared.product.description_general;
       const replacement = resolveGomarizResidualGeneral(record);
       assert.ok(record.reference && general && replacement);
-      assert.equal(general, replacement, record.reference);
+      assert.equal(general, verifiedGomarizPriorityGeneral(record) ?? replacement, record.reference);
       assert.ok(general.includes(record.title ?? ""), record.reference);
       assert.ok(general.includes("longitud") && general.includes("anchura") && general.includes("peso"), record.reference);
       assert.equal(prepared.status, record.reference === "BA1465" ? "review" : "ready", record.reference);
@@ -61,7 +62,7 @@ test("Gomariz: dos tijeras sin motor publicado conservan los detalles funcionale
     const snapshot = JSON.stringify(record);
     const general = resolveGomarizResidualGeneral(record);
     assert.ok(general?.includes("con ruedas antihuellas y plataforma extensible."), reference);
-    assert.equal(prepareSourceProduct(record).product.description_general, general, reference);
+    assert.equal(prepareSourceProduct(record).product.description_general, verifiedGomarizPriorityGeneral(record) ?? general, reference);
     assert.equal(JSON.stringify(record), snapshot, reference);
     const variants: readonly ProductRecord[] = [
       { ...record, model: "OTRO" },

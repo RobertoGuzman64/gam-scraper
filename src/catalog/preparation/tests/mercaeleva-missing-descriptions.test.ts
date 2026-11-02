@@ -5,6 +5,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { prepareSourceProduct } from "../prepare-product.js";
 import { mercaelevaShortDescription } from "../mapping/providers/mercaeleva/descriptions.js";
 import { mercaelevaMissingDescriptions } from "../mapping/providers/mercaeleva/missing-descriptions.js";
+import { verifiedMercaelevaResidualGeneral } from "../evidence/providers/mercaeleva/verified-residual-generals.js";
 import { readMercaelevaAccreditedBaseline } from "../../../testing/accredited-publication-fixture.js";
 import { reconstructMercaelevaSource } from "../../diagnostics/description-source.js";
 
@@ -90,7 +91,9 @@ test("Mercaeleva: cabina modular solo se resume si el texto original respalda di
   assert.equal(mercaelevaShortDescription(record), expected);
   const prepared = prepareSourceProduct(record);
   assert.equal(prepared.product.description, expected);
-  assert.equal(prepared.product.description_general, record.longDescription);
+  const general = verifiedMercaelevaResidualGeneral(record);
+  assert.ok(general);
+  assert.equal(prepared.product.description_general, general);
   for (const variant of [
     { ...record, title: record.title?.replace("6m", "7m") ?? null },
     { ...record, longDescription: record.longDescription?.replace("LADO CORTO", "LADO LARGO") ?? null },

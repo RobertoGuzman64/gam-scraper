@@ -14,6 +14,8 @@ import { resolveMercaelevaConciseDescription } from "./mapping/providers/mercael
 import { resolveMercaelevaGeneralDescription } from "./mapping/providers/mercaeleva/general-description.js";
 import { verifiedMercaelevaCriticalGeneral } from "./evidence/providers/mercaeleva/critical-general-descriptions.js";
 import { verifiedPriorityPlatformGeneral } from "./evidence/providers/mercaeleva/priority-platform-generals.js";
+import { verifiedMercaelevaResidualGeneral } from "./evidence/providers/mercaeleva/verified-residual-generals.js";
+import { verifiedMercaelevaUnitGeneral } from "./evidence/providers/mercaeleva/verified-unit-generals.js";
 import { mercaelevaMissingDescriptions } from "./mapping/providers/mercaeleva/missing-descriptions.js";
 import { gamMissingDescriptions } from "./mapping/providers/gam/missing-descriptions.js";
 import { rebalanceGamOverlongShort, resolveGamResidualConciseShort, resolveGamShortDescription } from "./mapping/providers/gam/short-description.js";
@@ -31,6 +33,7 @@ import { resolveGamHandlingSourceEditorial } from "./mapping/providers/gam/handl
 import { resolveGamVerifiedResidualEditorial } from "./mapping/providers/gam/verified-residual-editorial.js";
 import { resolveGamVerifiedExtendedGeneral } from "./mapping/providers/gam/verified-extended-general.js";
 import { resolveGamCondensedGeneral, resolveGamCondensedShort } from "./mapping/providers/gam/verified-condensed-general.js";
+import { resolveGamVerifiedSourceCondensedGeneral } from "./evidence/providers/gam/verified-source-condensed-generals.js";
 import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "./mapping/providers/gam/verified-condensed-additional.js";
 import { resolveGamExtendedCondensedGeneral, resolveGamExtendedCondensedShort } from "./mapping/providers/gam/verified-condensed-extended.js";
 import { resolveGamCleaningCondensedGeneral, resolveGamCleaningCondensedShort } from "./mapping/providers/gam/verified-condensed-cleaning.js";
@@ -54,6 +57,7 @@ import { resolveGamUsedHoursGeneral } from "./mapping/providers/gam/used-hours-g
 import { resolveGamUsedUnitGeneral } from "./mapping/providers/gam/used-unit-general.js";
 import { resolveGamYaleDieselDimensions } from "./mapping/providers/gam/yale-diesel-dimensions.js";
 import { resolveGamExactVariantGeneral, resolveGamModelIdentifiedGeneral, resolveGamSourceIdentifiedModel } from "./mapping/providers/gam/model-identified-general.js";
+import { verifiedGomarizPriorityGeneral } from "./evidence/providers/gomariz/verified-priority-general.js";
 import { resolveGomarizIndividualizedGeneral } from "./mapping/providers/gomariz/individualized-general.js";
 import { resolveGomarizShortDescription } from "./mapping/providers/gomariz/short-description.js";
 import { resolveGomarizCriticalBriefGeneral } from "./mapping/providers/gomariz/critical-brief-general.js";
@@ -84,6 +88,8 @@ import { recoverGamVerifiedTractionBraking } from "./evidence/providers/gam/veri
 import { recoverGamVerifiedSteeringBraking } from "./evidence/providers/gam/verified-steering-braking-evidence.js";
 import { recoverGamVerifiedDrivetrainBrakes } from "./evidence/providers/gam/verified-drivetrain-brakes-evidence.js";
 import { recoverGamVerifiedOperatorControls } from "./evidence/providers/gam/verified-operator-controls-evidence.js";
+import { recoverGamVerifiedUsedYearSpec } from "./evidence/providers/gam/used-year-spec-evidence.js";
+import { recoverGamVerifiedElectricDriveSpec } from "./evidence/providers/gam/verified-electric-drive-evidence.js";
 import { recoverGamVerifiedTechnicalSpecs } from "./evidence/providers/gam/verified-technical-measures.js";
 import { recoverGamElectricMotorPowerSpecs } from "./evidence/providers/gam/electric-motor-power-evidence.js";
 import { recoverGamBatteryMeasures } from "./evidence/providers/gam/battery-measures-evidence.js";
@@ -102,6 +108,7 @@ import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation } f
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
   const crossedIdentity = resolveGamCrossedIdentityEditorial(record);
+  const verifiedGamCondensedGeneral = resolveGamVerifiedSourceCondensedGeneral(record);
   const conciseGamShort = resolveGamShortDescription(record);
   const verifiedGamFamilyGeneral = resolveGamFamilyTechnicalDescription(record);
   const publicationConflict = publicationConflictForMercaeleva(record);
@@ -156,6 +163,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const steeringBrakingSpecs = recoverGamVerifiedSteeringBraking({ ...record, specs: tractionBrakingSpecs });
   const drivetrainBrakesSpecs = recoverGamVerifiedDrivetrainBrakes({ ...record, specs: steeringBrakingSpecs });
   const operatorControlsSpecs = recoverGamVerifiedOperatorControls({ ...record, specs: drivetrainBrakesSpecs });
+  const electricDriveSpecs = recoverGamVerifiedElectricDriveSpec({ ...record, specs: operatorControlsSpecs });
+  const usedYearSpecs = recoverGamVerifiedUsedYearSpec({ ...record, specs: electricDriveSpecs });
   record = reconcileGamForPreparation(record);
   record = reconcileMercaelevaForPreparation(record);
   const issues: string[] = [];
@@ -169,7 +178,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const conciseMercaelevaShort = resolveMercaelevaConciseDescription(record);
   const missingDescriptions = mercaelevaMissingDescriptions(record);
   const missingGamDescriptions = gamMissingDescriptions(record);
-  const general = crossedIdentity?.general ?? resolveGamCondensedGeneral(record) ?? resolveGamAdditionalCondensedGeneral(record) ?? resolveGamExtendedCondensedGeneral(record) ?? resolveGamCleaningCondensedGeneral(record) ?? resolveGamForkliftCondensedGeneral(record) ?? resolveGamHandlingCondensedGeneral(record) ?? resolveGamPlatformCondensedGeneral(record) ?? resolveGamWarehouseCondensedGeneral(record) ?? resolveGamHysterCondensedGeneral(record) ?? resolveGamTennantCondensedGeneral(record) ?? resolveGamIndividualizedGeneral(record) ?? resolveGomarizIndividualizedGeneral(record) ?? resolveGomarizCriticalBriefGeneral(record) ?? resolveGomarizGeneralDescription(record) ?? resolveGomarizResidualGeneral(record) ?? verifiedMercaelevaCriticalGeneral(record) ?? verifiedPriorityPlatformGeneral(record) ?? resolveMercaelevaGeneralDescription(record) ?? resolveGamPriorityBriefGeneral(record) ?? resolveGamCriticalBriefGeneral(record) ?? resolveGamGeneralDescription(record) ?? resolveGamModelSpecificGeneral(record) ?? resolveGamLongDescription(record) ?? verifiedGamFamilyGeneral ?? resolveGamTecnacarGeneral(record) ?? record.longDescription ?? missingDescriptions.long ?? missingGamDescriptions.long;
+  const general = crossedIdentity?.general ?? verifiedGamCondensedGeneral ?? resolveGamCondensedGeneral(record) ?? resolveGamAdditionalCondensedGeneral(record) ?? resolveGamExtendedCondensedGeneral(record) ?? resolveGamCleaningCondensedGeneral(record) ?? resolveGamForkliftCondensedGeneral(record) ?? resolveGamHandlingCondensedGeneral(record) ?? resolveGamPlatformCondensedGeneral(record) ?? resolveGamWarehouseCondensedGeneral(record) ?? resolveGamHysterCondensedGeneral(record) ?? resolveGamTennantCondensedGeneral(record) ?? resolveGamIndividualizedGeneral(record) ?? verifiedGomarizPriorityGeneral(record) ?? resolveGomarizIndividualizedGeneral(record) ?? resolveGomarizCriticalBriefGeneral(record) ?? resolveGomarizGeneralDescription(record) ?? resolveGomarizResidualGeneral(record) ?? verifiedMercaelevaCriticalGeneral(record) ?? verifiedPriorityPlatformGeneral(record) ?? verifiedMercaelevaResidualGeneral(record) ?? verifiedMercaelevaUnitGeneral(record) ?? resolveMercaelevaGeneralDescription(record) ?? resolveGamPriorityBriefGeneral(record) ?? resolveGamCriticalBriefGeneral(record) ?? resolveGamGeneralDescription(record) ?? resolveGamModelSpecificGeneral(record) ?? resolveGamLongDescription(record) ?? verifiedGamFamilyGeneral ?? resolveGamTecnacarGeneral(record) ?? record.longDescription ?? missingDescriptions.long ?? missingGamDescriptions.long;
   const balanced = conciseGamShort === null ? rebalanceGamOverlongShort(record, general) : null;
   const technicalBalance = conciseGamShort === null && balanced === null ? rebalanceGamTechnicalShort(record, general) : null;
   const conciseResidual = conciseGamShort === null && balanced === null && technicalBalance === null ? resolveGamResidualConciseShort(record, general) : null;
@@ -236,7 +245,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     description_general: extendedGeneral ?? verifiedResidualEditorial?.general ?? handlingEditorial?.general ?? warehouseEditorial?.general ?? specialtyEditorial?.general ?? residualCleaningGeneral ?? elevationGeneral ?? conciseVerifiedGeneral ?? editorialGeneral,
     image: images[0] ?? null,
     images,
-    spec: operatorControlsSpecs,
+    spec: usedYearSpecs,
     attributes: attributeResult?.attributes ?? []
   };
   return {

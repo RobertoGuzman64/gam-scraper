@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGomarizCriticalBriefGeneral } from "../mapping/providers/gomariz/critical-brief-general.js";
 import { resolveGomarizGeneralDescription } from "../mapping/providers/gomariz/general-description.js";
+import { verifiedGomarizPriorityGeneral } from "../evidence/providers/gomariz/verified-priority-general.js";
 import { resolveGomarizIndividualizedGeneral } from "../mapping/providers/gomariz/individualized-general.js";
 import { removeGomarizConversationalLead, resolveGomarizResidualGeneral } from "../mapping/providers/gomariz/residual-general.js";
 import { prepareSourceProduct } from "../prepare-product.js";
@@ -32,7 +33,7 @@ test("Gomariz: las generales sustituyen texto de familia por datos específicos 
     for (const fragment of [identity, first, second, third]) assert.ok(general.includes(fragment), `${reference}: ${fragment}`);
     assert.equal(general.includes(record.longDescription ?? ""), false, reference);
     const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.product.description_general, general, reference);
+    assert.equal(prepared.product.description_general, verifiedGomarizPriorityGeneral(record) ?? general, reference);
     assert.equal(prepared.product.reference, reference);
     assert.equal(prepared.product.sourceUrl, record.url);
     assert.deepEqual(prepared.product.spec, record.specs);
@@ -63,7 +64,7 @@ test("Gomariz: contradicciones o descripción propia acreditada no se reescriben
     const record = find(reference);
     assert.equal(resolveGomarizGeneralDescription(record), null, reference);
     assert.equal(prepareSourceProduct(record).product.description_general,
-      resolveGomarizResidualGeneral(record) ?? record.longDescription, reference);
+      verifiedGomarizPriorityGeneral(record) ?? resolveGomarizResidualGeneral(record) ?? record.longDescription, reference);
   }
 });
 
@@ -101,7 +102,7 @@ test("Gomariz: el piloto se aplica solo a la cohorte segura y preserva todas las
     seen.add(reference);
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.product.reference, reference);
-    const base = resolveGomarizIndividualizedGeneral(record) ?? resolveGomarizCriticalBriefGeneral(record) ??
+    const base = verifiedGomarizPriorityGeneral(record) ?? resolveGomarizIndividualizedGeneral(record) ?? resolveGomarizCriticalBriefGeneral(record) ??
       resolveGomarizGeneralDescription(record) ?? resolveGomarizResidualGeneral(record) ?? record.longDescription;
     assert.equal(prepared.product.description_general, removeGomarizConversationalLead(record, base) ?? base);
     assert.deepEqual(prepared.product.spec, record.specs);

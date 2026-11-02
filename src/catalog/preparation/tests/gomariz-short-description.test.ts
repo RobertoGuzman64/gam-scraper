@@ -4,6 +4,7 @@ import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 import { resolveGomarizShortDescription } from "../mapping/providers/gomariz/short-description.js";
 import { resolveGomarizIndividualizedGeneral } from "../mapping/providers/gomariz/individualized-general.js";
 import { resolveGomarizResidualGeneral } from "../mapping/providers/gomariz/residual-general.js";
+import { verifiedGomarizPriorityGeneral } from "../evidence/providers/gomariz/verified-priority-general.js";
 import { gomarizPriorityShortEvidence, verifiedGomarizPriorityShortDescription } from "../evidence/providers/gomariz/priority-short-descriptions.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { prepareSourceProduct } from "../prepare-product.js";
@@ -190,7 +191,7 @@ test("Gomariz: recupera las cortas pendientes con origen y medidas acreditadas, 
     const prepared = prepareSourceProduct(source);
     assert.equal(prepared.product.description, text, reference);
     assert.equal(prepared.product.description_general,
-      resolveGomarizIndividualizedGeneral(source) ?? resolveGomarizResidualGeneral(source) ?? source.longDescription, reference);
+      verifiedGomarizPriorityGeneral(source) ?? resolveGomarizIndividualizedGeneral(source) ?? resolveGomarizResidualGeneral(source) ?? source.longDescription, reference);
     assert.deepEqual(prepared.product.spec, source.specs, reference);
     assert.equal(JSON.stringify(source), serialized, reference);
     const variants: readonly ProductRecord[] = [

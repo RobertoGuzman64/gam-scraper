@@ -33,7 +33,7 @@ test("GAM: la edición canónica de Yale mantiene ambas referencias sin conflict
   assert.equal(verifiedYaleErp35vlCrossListing(collisionFor(yale)), true);
   const prepared = prepareImportBatch(yale, catalog);
   assert.deepEqual(prepared.totals, { ready: 2, review: 0 });
-  assert.deepEqual(prepared.products.map((product) => product.product.spec), yale.map((product) => product.specs));
+  assert.deepEqual(prepared.products.map((product) => product.product.spec), yale.map((product) => ({ ...product.specs, "Año de fabricación": "2019", "Motorización": "Eléctrico" })));
   assert.deepEqual(prepared.products.map((product) => product.product.reference), ["6835", "6858"]);
   assert.deepEqual(yale, previous);
 });

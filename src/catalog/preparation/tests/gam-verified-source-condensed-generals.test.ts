@@ -1,0 +1,237 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import type { ProductRecord } from "../../../contracts/catalog.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { resolveGamVerifiedSourceCondensedGeneral } from "../evidence/providers/gam/verified-source-condensed-generals.js";
+import { prepareSourceProduct } from "../prepare-product.js";
+
+const source = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const references = [
+  "6186", "6187", "6746", "5900", "5902", "5739", "5937", "6572", "5855", "6311", "6630",
+  "6921", "3130", "6776", "2294", "2076", "6974", "6922", "6982", "6272", "2367"
+] as const;
+
+const additionalReferences = ["6126", "6228", "6778", "6779", "6859", "6845", "6130", "6937", "6967", "5845", "6912", "6492", "6972", "6983", "6483", "6642", "6886", "6669", "6631", "6984", "6139", "6233"] as const;
+
+const sourceIdentifiedReferences = ["6641", "6640", "6639", "6638", "6880", "6860", "6024", "6950", "6893", "6650", "6634", "6632", "6663", "6997", "6625", "6644", "6436", "6915", "6626", "6372", "6675", "6823"] as const;
+
+const sourceConfirmedHandlingReferences = ["6679", "6704", "6755", "5227", "6662", "6657", "5280", "6885", "5213", "6686", "6684", "5714", "6819", "6821", "6822", "6849", "6878", "5910", "6582", "6601", "6754", "6941"] as const;
+
+const findOriginal = (reference: string): ProductRecord => {
+  const record = source.products.find((item) => item.reference === reference);
+  assert.ok(record, reference);
+  return record;
+};
+
+test("GAM: se condensan 21 generales con identidad exacta y sin alterar otros campos", () => {
+  assert.equal(new Set(references).size, 21);
+  for (const reference of [...references, ...additionalReferences, ...sourceIdentifiedReferences, ...sourceConfirmedHandlingReferences]) {
+    const record = findOriginal(reference);
+    const snapshot = JSON.stringify(record);
+    const general = resolveGamVerifiedSourceCondensedGeneral(record);
+    assert.ok(general, reference);
+    assert.ok(general.length < (record.longDescription?.length ?? 0) / 2, reference);
+    const prepared = prepareSourceProduct(record);
+    assert.ok(prepared.product.description_general?.includes(general), reference);
+    assert.equal(prepared.status, "ready", reference);
+    assert.deepEqual(prepared.issues, [], reference);
+    assert.equal(JSON.stringify(record), snapshot, reference);
+  }
+});
+
+test("GAM: una modificación de identidad, técnica o de fuente invalida la evidencia", () => {
+  for (const reference of [...references, ...additionalReferences, ...sourceIdentifiedReferences, ...sourceConfirmedHandlingReferences]) {
+    const record = findOriginal(reference);
+    for (const altered of [
+      { ...record, reference: `${reference}-alt` },
+      { ...record, url: `${record.url}?rev=1` },
+      { ...record, title: `${record.title} ALTERNATIVA` },
+      { ...record, model: `${record.model ?? ""}-alt` },
+      { ...record, shortDescription: `${record.shortDescription ?? ""} edición` },
+      { ...record, longDescription: `${record.longDescription ?? ""} edición` },
+      { ...record, specs: { ...record.specs, "Altura de elevación (m)": "dato alternativo" } }
+    ] satisfies readonly ProductRecord[]) {
+      assert.equal(resolveGamVerifiedSourceCondensedGeneral(altered), null, reference);
+    }
+  }
+});
+
+test("GAM: no se aplican textos acreditados a otros proveedores o fichas excluidas", () => {
+  for (const reference of ["6002", "6003", "6004", "4802", "6169", "6171", "6421", "2313"]) {
+    assert.equal(resolveGamVerifiedSourceCondensedGeneral(findOriginal(reference)), null, reference);
+  }
+  assert.equal(resolveGamVerifiedSourceCondensedGeneral({ ...findOriginal("5900"), providerId: "gomariz" }), null);
+});
+
+
+test("GAM: las descripciones verificadas de ocasión preservan identidad y lectura del horómetro", () => {
+  assert.equal(new Set(additionalReferences).size, 22);
+  for (const reference of additionalReferences) {
+    const record = findOriginal(reference);
+    const general = resolveGamVerifiedSourceCondensedGeneral(record);
+    assert.ok(general, reference);
+    assert.ok(general.length < (record.longDescription?.length ?? 0) / 2, reference);
+    const serial = record.specs?.["Nº de serie"];
+    assert.ok(typeof serial === "string" && general.includes(serial), reference);
+    const hour = record.specs?.["Horómetro"];
+    if (typeof hour === "string" && hour.includes("sustituido")) assert.ok(general.includes("sustituido"), reference);
+    if (hour === "NA horas") assert.ok(general.includes("no acredita"), reference);
+    const prepared = prepareSourceProduct(record);
+    assert.ok(prepared.product.description_general?.includes(general), reference);
+    assert.deepEqual(prepared.issues, [], reference);
+  }
+});
+
+
+test("GAM: la condensación adicional conserva cifras y características de cada unidad", () => {
+  assert.equal(new Set(sourceIdentifiedReferences).size, 22);
+  for (const reference of sourceIdentifiedReferences) {
+    const record = findOriginal(reference);
+    const general = resolveGamVerifiedSourceCondensedGeneral(record);
+    assert.ok(general, reference);
+    const serial = record.specs?.["Nº de serie"];
+    assert.ok(typeof serial === "string" && general.includes(serial), reference);
+    assert.ok(general.includes(record.year ?? ""), reference);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.status, "ready", reference);
+    assert.deepEqual(prepared.issues, [], reference);
+    assert.ok(prepared.product.description_general?.includes(general), reference);
+    for (const [key, value] of Object.entries(record.specs ?? {})) {
+      assert.equal(prepared.product.spec?.[key], value, `${reference}: ${key}`);
+    }
+  }
+});
+
+
+test("GAM: 22 fichas de manutención conservan datos individuales al condensar textos de origen", () => {
+  assert.equal(new Set(sourceConfirmedHandlingReferences).size, 22);
+  for (const reference of sourceConfirmedHandlingReferences) {
+    const record = findOriginal(reference);
+    const general = resolveGamVerifiedSourceCondensedGeneral(record);
+    assert.ok(general, reference);
+    assert.ok(general.length < (record.longDescription?.length ?? 0) * 0.7, reference);
+    const serial = record.specs?.["Nº de serie"];
+    assert.ok(typeof serial === "string" && general.includes(serial), reference);
+    assert.ok(typeof record.year === "string" && general.includes(record.year), reference);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.status, "ready", reference);
+    assert.deepEqual(prepared.issues, [], reference);
+    assert.ok(prepared.product.description_general?.includes(general), reference);
+    for (const [key, value] of Object.entries(record.specs ?? {})) {
+      assert.equal(prepared.product.spec?.[key], value, `${reference}: ${key}`);
+    }
+  }
+});
+
+
+const sourceVerifiedRemainingReferences = ["6861", "6761", "5848", "5792", "6738", "6664", "6691", "6788", "6627", "6835", "6587", "6951", "6084", "6949", "5228", "5880", "6510", "6123", "6571", "6879", "6977", "6752"] as const;
+
+test("GAM: 22 descripciones pendientes incorporan evidencia individual y conservan los datos técnicos", () => {
+  assert.equal(new Set(sourceVerifiedRemainingReferences).size, 22);
+  for (const reference of sourceVerifiedRemainingReferences) {
+    const record = findOriginal(reference);
+    const before = JSON.stringify(record);
+    const prepared = prepareSourceProduct(record);
+    const general = resolveGamVerifiedSourceCondensedGeneral(record);
+    assert.ok(general, reference);
+    assert.ok(general.length < (record.longDescription?.length ?? 0) * 0.75, reference);
+    assert.ok(general.includes(record.serialNumber ?? ""), reference);
+    assert.ok(general.includes(record.year ?? ""), reference);
+    assert.ok(prepared.product.description_general?.includes(general), reference);
+    assert.equal(prepared.status, "ready", reference);
+    assert.deepEqual(prepared.issues, [], reference);
+    assert.equal(JSON.stringify(record), before, reference);
+    for (const [key, value] of Object.entries(record.specs ?? {})) {
+      assert.equal(prepared.product.spec?.[key], value, `${reference}: ${key}`);
+    }
+  }
+});
+
+test("GAM: 22 descripciones acreditadas no se transfieren a identidades o versiones alteradas", () => {
+  for (const reference of sourceVerifiedRemainingReferences) {
+    const record = findOriginal(reference);
+    for (const altered of [
+      { ...record, providerId: "gomariz" },
+      { ...record, reference: `${reference}-alt` },
+      { ...record, url: `${record.url}?rev=1` },
+      { ...record, title: `${record.title} alternativa` },
+      { ...record, model: `${record.model ?? ""} alternativa` },
+      { ...record, longDescription: `${record.longDescription ?? ""} nueva` },
+      { ...record, specs: { ...record.specs, Modelo: "VARIANTE" } }
+    ] satisfies readonly ProductRecord[]) {
+      assert.equal(resolveGamVerifiedSourceCondensedGeneral(altered), null, reference);
+    }
+  }
+});
+
+
+const sourcedRemainingUsedReferences = ["6980", "6846", "6945", "6726", "5962", "5719", "6618", "6116", "6486", "6284"] as const;
+const sourcedNewMachineReferences = ["2082", "2084", "2085", "2041", "2045", "2046", "2048", "2047", "22", "18", "2027", "2037"] as const;
+
+test("GAM: condensación acreditada preserva identificación de ocasión y prestaciones de modelos nuevos", () => {
+  assert.equal(new Set([...sourcedRemainingUsedReferences, ...sourcedNewMachineReferences]).size, 22);
+  for (const reference of [...sourcedRemainingUsedReferences, ...sourcedNewMachineReferences]) {
+    const record = findOriginal(reference);
+    const general = resolveGamVerifiedSourceCondensedGeneral(record);
+    assert.ok(general, reference);
+    assert.ok(general.length < (record.longDescription?.length ?? 0) * 0.78, reference);
+    assert.ok(general.includes(record.model ?? ""), reference);
+    if (record.condition === "Segunda mano") {
+      assert.ok(general.includes(record.serialNumber ?? ""), reference);
+      assert.ok(general.includes(record.year ?? ""), reference);
+    } else {
+      assert.equal(record.condition, "Nuevo", reference);
+      const capacity = record.specs?.["Capacidad de carga (kg)"];
+      assert.ok(capacity != null, reference);
+      assert.ok(general.includes(String(capacity)), reference);
+    }
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.status, "ready", reference);
+    assert.deepEqual(prepared.issues, [], reference);
+    assert.ok(prepared.product.description_general?.includes(general), reference);
+    for (const [key, value] of Object.entries(record.specs ?? {})) {
+      assert.equal(prepared.product.spec?.[key], value, `${reference}: ${key}`);
+    }
+    assert.equal(resolveGamVerifiedSourceCondensedGeneral({ ...record, title: `${record.title} otra variante` }), null, reference);
+    assert.equal(resolveGamVerifiedSourceCondensedGeneral({ ...record, specs: { ...record.specs, Modelo: "otra variante" } }), null, reference);
+  }
+});
+
+
+const additionalSourceCondensedReferences = [
+  "6976", "6975", "6966", "6391", "6858",
+  "6947", "5961", "6196", "6195", "6122",
+  "4717", "3802", "4814", "2086", "2065",
+  "2293", "157", "4741", "4745", "4747",
+] as const;
+
+test("GAM: la evidencia editorial posterior conserva identidad, original y especificaciones", () => {
+  assert.equal(new Set(additionalSourceCondensedReferences).size, 20);
+  for (const reference of additionalSourceCondensedReferences) {
+    const record = findOriginal(reference);
+    const originalSnapshot = JSON.stringify(record);
+    const general = resolveGamVerifiedSourceCondensedGeneral(record);
+    assert.ok(general, reference);
+    assert.ok(general.length < (record.longDescription?.length ?? 0) * 0.76, reference);
+    assert.ok(general.includes(record.model ?? ""), reference);
+    if (record.condition === "Segunda mano") {
+      assert.ok(general.includes(record.year ?? ""), reference);
+      assert.ok(general.includes(record.serialNumber ?? ""), reference);
+    }
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.status, "ready", reference);
+    assert.deepEqual(prepared.issues, [], reference);
+    assert.ok(prepared.product.description_general?.includes(general), reference);
+    assert.equal(JSON.stringify(record), originalSnapshot, reference);
+    for (const [key, value] of Object.entries(record.specs ?? {})) {
+      assert.equal(prepared.product.spec?.[key], value, `${reference}: ${key}`);
+    }
+    for (const altered of [
+      { ...record, url: `${record.url}?other=1` },
+      { ...record, title: `${record.title} otra variante` },
+      { ...record, specs: { ...record.specs, Modelo: "OTRO" } }
+    ] satisfies readonly ProductRecord[]) {
+      assert.equal(resolveGamVerifiedSourceCondensedGeneral(altered), null, reference);
+    }
+  }
+});

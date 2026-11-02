@@ -114,7 +114,11 @@ test("conserva el relato original e identifica solo 15 variantes inequívocas en
       assert.ok(!record.longDescription?.includes(`${record.brand} ${record.model}`));
       const prepared = prepareSourceProduct(record);
       if (prepared.product.description_general !== result) {
-        assert.ok(prepared.product.description_general?.includes(record.model ?? "INVALID"), record.reference);
+        if (record.reference === "2294") {
+          assert.match(prepared.product.description_general ?? "", /ERP35VL.*LWB/u);
+        } else {
+          assert.ok(prepared.product.description_general?.includes(record.model ?? "INVALID"), record.reference);
+        }
         assert.ok(prepared.product.description_general?.includes("kg"), record.reference);
       }
       assert.equal(prepared.product.reference, record.reference);
