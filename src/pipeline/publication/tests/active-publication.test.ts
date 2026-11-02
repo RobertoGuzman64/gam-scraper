@@ -40,7 +40,7 @@ const setup = async (): Promise<{ root: string; publications: string; original: 
   return { root: temp, publications, original, other: nextSha };
 };
 
-test("selección explícita de dos versiones, simulación, activación, idempotencia y reversión", async () => {
+test("selección explícita, simulación, idempotencia y rechazo de pérdidas", async () => {
   const ctx = await setup();
   try {
     await assert.rejects(discoverAccreditedPublications(ctx.root), /Varias publicaciones/);
@@ -59,9 +59,9 @@ test("selección explícita de dos versiones, simulación, activación, idempote
     assert.equal(old.difference.added.length, 0);
     assert.equal(old.difference.removed.length, 0);
     assert.equal((await selectActivePublication(ctx.root, providerId, ctx.other, true)).status, "unchanged");
-    assert.equal((await selectActivePublication(ctx.root, providerId, existingSha, true)).status, "activated");
+    await assert.rejects(selectActivePublication(ctx.root, providerId, existingSha, true), /Descripciones vaciadas/);
     assert.equal(await resolveAccreditedPublication(ctx.root, providerId),
-      join(ctx.publications, existingSha, `${providerId}-publishable.json`));
+      join(ctx.publications, ctx.other, `${providerId}-publishable.json`));
     assert.equal(await readFile(join(ctx.original, `${providerId}-publishable.json`), "utf8"), before);
   } finally { await rm(ctx.root, { recursive: true, force: true }); }
 });
@@ -123,5 +123,38 @@ test("la simulación revela pérdidas de contenido y rechaza activaciones concur
     await writeFile(lock, "concurrente", { flag: "wx" });
     await assert.rejects(selectActivePublication(ctx.root, providerId, ctx.other, true), /Otra selección/);
     assert.equal((await resolveAccreditedPublication(ctx.root, providerId))?.includes(existingSha), true);
+  } finally { await rm(ctx.root, { recursive: true, force: true }); }
+});
+
+
+test("valores técnicos vaciados o procedencias cambiadas bloquean la selección sin alterar la vigente", async () => {
+  const ctx = await setup();
+  try {
+    await selectActivePublication(ctx.root, providerId, existingSha, true);
+    const path = join(ctx.publications, ctx.other, `${providerId}-publishable.json`);
+    const products = JSON.parse(await readFile(path, "utf8")) as Record<string, unknown>[];
+    const first = products[0];
+    assert.ok(first);
+    const specs = first.spec;
+    assert.ok(specs && typeof specs === "object" && !Array.isArray(specs));
+    const spec = specs as Record<string, unknown>;
+    const key = Object.keys(spec)[0];
+    assert.ok(key);
+    products[0] = { ...first, sourceUrl: "https://example.test/producto-nuevo", spec: { ...spec, [key]: "" } };
+    const changed = JSON.stringify(products, null, 2);
+    const manifestPath = join(ctx.publications, ctx.other, "manifest.json");
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as Record<string, unknown>;
+    const files = manifest.files as Record<string, string>;
+    await writeFile(path, changed);
+    await writeFile(manifestPath, JSON.stringify({
+      ...manifest, files: { ...files, [`${providerId}-publishable.json`]: hash(changed) }
+    }, null, 2));
+    const preview = await selectActivePublication(ctx.root, providerId, ctx.other);
+    assert.equal(preview.acceptance.accepted, false);
+    assert.ok(preview.difference.lostSpecificationValues.some((entry) => entry.endsWith(`:${key}`)));
+    assert.deepEqual(preview.difference.changedSources, [`ref:${String(first.reference).toLowerCase()}`]);
+    await assert.rejects(selectActivePublication(ctx.root, providerId, ctx.other, true), /Valores técnicos vaciados/);
+    assert.equal(await resolveAccreditedPublication(ctx.root, providerId),
+      join(ctx.publications, existingSha, `${providerId}-publishable.json`));
   } finally { await rm(ctx.root, { recursive: true, force: true }); }
 });

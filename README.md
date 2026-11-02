@@ -119,12 +119,14 @@ npm run acreditar:proveedor -- gam --origen $gam --preparacion $preparacion --co
 Tras contrastar la ficha con su origen, se puede registrar una decisión con `--decidir 6682 excluir --motivo "..." --evidencia <URL original mostrada por --consultar>`, repitiendo `--evidencia` para pruebas adicionales. `--validar` comprueba decisiones sin escritura y `--aprobar --motivo "..."` exige una aprobación humana global y bloquea cambios posteriores. El borrador se conserva en `storage/providers/<proveedor>/editorial/` con huella de las fuentes: no se reutiliza después de cambiar la preparación. Una vez aprobadas las decisiones y la aprobación global individual, el JSON comercial de un solo proveedor puede generarse sin campaña global:
 
 ```powershell
-npm run entregar:proveedor -- gam --origen $gam --preparacion $preparacion --simular
-npm run entregar:proveedor -- gam --origen $gam --preparacion $preparacion
-npm run entregar:proveedor -- gam --origen $gam --preparacion $preparacion --verificar
+npm run entregar:proveedor -- gam --source $gam --preparation $preparacion --dry-run
+npm run entregar:proveedor -- gam --source $gam --preparation $preparacion
+npm run entregar:proveedor -- gam --source $gam --preparation $preparacion --verificar
 ```
 
-La entrega se guarda en `catalogs/providers/<proveedor>/publications/<sha-aprobacion>/`: `<proveedor>-publishable.json` (`ImportCandidate[]`), `accreditation.json` y `manifest.json`. Solo se crea con aprobación editorial válida y vinculada a la preparación; `--simular` no escribe y `--verificar` comprueba el destino existente. Cada destino es inmutable: una repetición idéntica se verifica; si ha sido alterado no se sobrescribe. La selección elimina las fichas excluidas, sin maquillar los reviews que permanecen en el original. `acreditar` y `entregar` conservan exclusivamente el contrato global de cuatro proveedores. `npm run estado` conserva por ahora su inventario de campañas globales; para verificar una publicación individual se utiliza `entregar:proveedor --verificar`.
+La entrega se guarda en `catalogs/providers/<proveedor>/publications/<alias-o-sha-aprobacion>/`: `<proveedor>-publishable.json` (`ImportCandidate[]`), `accreditation.json` y `manifest.json`. La aprobación editorial humana sigue siendo obligatoria y debe corresponder a la preparación verificada. El comando definitivo entrega el JSON y, salvo `--solo-json`, verifica el ZIP y su recibo **antes** de evaluar las diferencias y seleccionar automáticamente la publicación individual vigente. El lector oficial debe resolver la nueva selección; no es necesario ejecutar después `publicacion:vigente --activar`. Las bajas de fichas, los vaciados de descripciones y las claves técnicas retiradas sin equivalencia acreditada bloquean la activación; la candidata verificada queda íntegra y la versión vigente anterior no se sustituye. Una campaña global vigente no puede ser reemplazada parcialmente.
+
+`--dry-run` simula sin escrituras, `--verificar` comprueba sin activar, `--solo-candidata` genera y verifica sin activar y `--solo-json` omite el ZIP sin omitir la activación en modo definitivo. La repetición de una entrega ya verificada puede completar la selección y, una vez vigente, es idempotente. Los directorios acreditados son inmutables. Para recuperar o consultar una selección excepcional permanece disponible `publicacion:vigente`, sujeto a la política de protección. Las reclasificaciones técnicas no demostradas se bloquean; no existe una opción para forzarlas genéricamente. `acreditar` y `entregar` conservan el contrato global de cuatro proveedores.
 
 ### Otros comandos disponibles
 

@@ -48,9 +48,11 @@ export const runActivePublication = async (args: readonly string[]): Promise<voi
   printReportLine(`PUBLICACIÓN VIGENTE | ${providerId} | ${result.status}`);
   printReportLine(`  Anterior: ${d.previous ?? "sin selección inequívoca"} | Candidata: ${d.candidate}`);
   printReportLine(`  Fichas: ${d.previousProducts} -> ${d.candidateProducts} | Altas: ${d.added.length} | Ausencias: ${d.removed.length} | Modificadas: ${d.modified.length}`);
-  printReportLine(`  Pérdidas de descripción: ${d.lostDescriptions.length} | Especificaciones retiradas: ${d.removedSpecifications.length}`);
+  printReportLine(`  Pérdidas de descripción: ${d.lostDescriptions.length} | Especificaciones retiradas: ${d.removedSpecifications.length} | Valores vaciados: ${d.lostSpecificationValues.length} | Orígenes cambiados: ${d.changedSources.length}`);
+  printReportLine(`  Evaluación: ${result.acceptance.accepted ? "ACEPTADA" : "BLOQUEADA"}`);
   for (const [label, ids] of [["Altas", d.added], ["Ausencias", d.removed], ["Cambios", d.modified],
-  ["Descripciones perdidas", d.lostDescriptions], ["Especificaciones retiradas", d.removedSpecifications]] as const) {
+  ["Descripciones perdidas", d.lostDescriptions], ["Especificaciones retiradas", d.removedSpecifications],
+  ["Valores técnicos vaciados", d.lostSpecificationValues], ["Orígenes cambiados", d.changedSources]] as const) {
     if (ids.length) printReportLine(`  ${label}: ${ids.slice(0, 20).join(", ")}${ids.length > 20 ? ` (+${ids.length - 20}; consulta --json)` : ""}`);
   }
   if (result.status === "simulation") printReportLine("  Simulación de solo lectura; requiere --activar para cambiar la versión vigente");

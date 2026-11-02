@@ -6,6 +6,8 @@ import type { ImportCandidate } from "../../catalog/legacy-export/contracts.js";
 import { readActiveCatalogIndex, withActiveCatalogLock, writeActiveCatalogIndex } from "../../infrastructure/filesystem/catalog/active-selection.js";
 import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { publicationApprovalSha, resolvePublicationDirectory } from "../../infrastructure/filesystem/catalog/publication-identity.js";
+import { evaluatePublicationDifference, PublicationAcceptanceError } from "./publication-acceptance.js";
+import type { PublicationAcceptance } from "./publication-acceptance.js";
 
 export type PublicationDifference = {
   readonly previous: string | null;
@@ -17,12 +19,17 @@ export type PublicationDifference = {
   readonly modified: readonly string[];
   readonly lostDescriptions: readonly string[];
   readonly removedSpecifications: readonly string[];
+  readonly addedSpecifications: readonly string[];
+  readonly changedSpecifications: readonly string[];
+  readonly lostSpecificationValues: readonly string[];
+  readonly changedSources: readonly string[];
 };
 
 export type PublicationActivation = {
   readonly status: "simulation" | "activated" | "unchanged";
   readonly providerId: string;
   readonly difference: PublicationDifference;
+  readonly acceptance: PublicationAcceptance;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -34,6 +41,9 @@ const isHash = (text: string): boolean => /^[a-f0-9]{64}$/.test(text);
 
 const productIdentity = (product: ImportCandidate): string =>
   product.reference?.trim() ? `ref:${product.reference.trim().toLowerCase()}` : `url:${product.sourceUrl}`;
+
+const emptySpecification = (value: ImportCandidate["spec"][string]): boolean =>
+  typeof value === "string" ? value.trim() === "" : Array.isArray(value) && value.length === 0;
 
 const indexProducts = (products: readonly ImportCandidate[]): Map<string, ImportCandidate> => {
   const result = new Map<string, ImportCandidate>();
@@ -56,21 +66,39 @@ export const differenceBetween = (
   const modified: string[] = [];
   const lostDescriptions: string[] = [];
   const removedSpecifications: string[] = [];
+  const addedSpecifications: string[] = [];
+  const changedSpecifications: string[] = [];
+  const lostSpecificationValues: string[] = [];
+  const changedSources: string[] = [];
   for (const [id, product] of before) {
     const next = after.get(id);
     if (!next) { removed.push(id); continue; }
     if (!isDeepStrictEqual(product, next)) modified.push(id);
+    if (product.sourceUrl !== next.sourceUrl || product.externalReference !== next.externalReference) {
+      changedSources.push(id);
+    }
     for (const field of ["description", "description_general"] as const) {
       if (product[field]?.trim() && !next[field]?.trim()) lostDescriptions.push(`${id}:${field}`);
     }
-    for (const key of Object.keys(product.spec)) {
-      if (!(key in next.spec)) removedSpecifications.push(`${id}:${key}`);
+    for (const [key, value] of Object.entries(product.spec)) {
+      if (!(key in next.spec)) {
+        removedSpecifications.push(`${id}:${key}`);
+        continue;
+      }
+      const updated = next.spec[key];
+      if (updated === undefined) continue;
+      if (!isDeepStrictEqual(value, updated)) changedSpecifications.push(`${id}:${key}`);
+      if (!emptySpecification(value) && emptySpecification(updated)) lostSpecificationValues.push(`${id}:${key}`);
+    }
+    for (const key of Object.keys(next.spec)) {
+      if (!(key in product.spec)) addedSpecifications.push(`${id}:${key}`);
     }
   }
   for (const id of after.keys()) if (!before.has(id)) added.push(id);
   return {
     previous, candidate, previousProducts: oldProducts.length, candidateProducts: newProducts.length,
-    added, removed, modified, lostDescriptions, removedSpecifications
+    added, removed, modified, lostDescriptions, removedSpecifications, addedSpecifications,
+    changedSpecifications, lostSpecificationValues, changedSources
   };
 };
 
@@ -104,12 +132,41 @@ const describe = async (root: string, providerId: string, sha: string): Promise<
   return differenceBetween(previous, sha, old, candidate.products);
 };
 
+const writeAtomicSelection = async (target: string, contents: string): Promise<void> => {
+  const stage = join(dirname(target), `.active-${randomUUID()}.tmp`);
+  try {
+    await writeFile(stage, contents, { flag: "wx" });
+    await rename(stage, target);
+  } finally {
+    await rm(stage, { force: true });
+  }
+};
+
+const readSelectionSnapshot = async (target: string): Promise<string | null> => {
+  try {
+    const info = await lstat(target);
+    if (!info.isFile() || info.isSymbolicLink()) throw new Error("El índice vigente no es un archivo regular");
+    return await readFile(target, "utf8");
+  } catch (error) {
+    if (missing(error)) return null;
+    throw error;
+  }
+};
+
+const restoreSelection = async (target: string, previous: string | null, written: string): Promise<void> => {
+  const current = await readSelectionSnapshot(target);
+  if (current !== written) throw new Error("El índice cambió durante la recuperación; se requiere intervención manual");
+  if (previous === null) await rm(target);
+  else await writeAtomicSelection(target, previous);
+};
+
 export const selectActivePublication = async (
   rootDirectory: string, providerId: string, approvalSha256: string, activate = false
 ): Promise<PublicationActivation> => {
   const root = resolve(rootDirectory);
   const difference = await describe(root, providerId, approvalSha256);
-  if (!activate) return { status: "simulation", providerId, difference };
+  const acceptance = evaluatePublicationDifference(difference);
+  if (!activate) return { status: "simulation", providerId, difference, acceptance };
   const folder = join(root, "catalogs", "providers", providerId, "publications");
   const lockPath = join(folder, ".active.lock");
   let lock;
@@ -118,45 +175,55 @@ export const selectActivePublication = async (
     if (isRecord(error) && error.code === "EEXIST") throw new Error("Otra selección de publicación está en curso");
     throw error;
   }
-  const stage = join(folder, `.active-${randomUUID()}.tmp`);
   try {
     return await withActiveCatalogLock(root, async () => {
       const latest = await describe(root, providerId, approvalSha256);
       if (!isDeepStrictEqual(latest, difference)) {
         throw new Error("La publicación vigente cambió durante la selección; vuelve a simular");
       }
-      const activePath = join(folder, "active.json");
-      let hasIndex = false;
-      try {
-        const meta = await lstat(activePath);
-        if (!meta.isFile() || meta.isSymbolicLink()) throw new Error("El índice de publicación vigente no es un archivo regular");
-        hasIndex = true;
-      } catch (error) { if (!missing(error)) throw error; }
       const global = await readActiveCatalogIndex(root);
-      if (global) {
-        const selected = global.providers[providerId];
-        if (selected?.approvalSha256 === approvalSha256 && selected.runId === undefined) {
-          return { status: "unchanged", providerId, difference: latest };
-        }
-        await writeActiveCatalogIndex(root, {
-          version: 1, providers: { ...global.providers, [providerId]: { approvalSha256 } }
-        });
-      } else {
-        if (latest.previous === approvalSha256 && hasIndex) {
-          return { status: "unchanged", providerId, difference: latest };
-        }
-        await writeFile(stage, JSON.stringify({ version: 1, providerId, approvalSha256 }, null, 2) + "\n", { flag: "wx" });
-        await rename(stage, activePath);
+      if (global && Object.values(global.providers).some((source) => source.runId !== undefined)) {
+        throw new PublicationAcceptanceError(["Hay una campaña global vigente; no se puede sustituir parcialmente"]);
       }
-      const selectedPath = await resolveAccreditedPublication(root, providerId);
-      const selectedDirectory = await resolvePublicationDirectory(folder, approvalSha256);
-      if (!selectedDirectory || selectedPath !== join(selectedDirectory, `${providerId}-publishable.json`)) {
-        throw new Error("La publicación vigente no corresponde al índice activado");
+      const activePath = join(folder, "active.json");
+      const current = await resolveAccreditedPublication(root, providerId, true);
+      const accepted = evaluatePublicationDifference(latest);
+      if (!accepted.accepted) throw new PublicationAcceptanceError(accepted.blockers);
+      const candidate = await validateVersion(root, providerId, approvalSha256);
+      if (current === candidate.path && (global?.providers[providerId]?.approvalSha256 === approvalSha256 ||
+        (!global && await readSelectionSnapshot(activePath) !== null))) {
+        return { status: "unchanged", providerId, difference: latest, acceptance: accepted };
       }
-      return { status: "activated", providerId, difference: latest };
+      const indexPath = global ? join(root, "catalogs", "active.json") : activePath;
+      const previous = await readSelectionSnapshot(indexPath);
+      const next = global
+        ? `${JSON.stringify({ version: 1, providers: { ...global.providers, [providerId]: { approvalSha256 } } }, null, 2)}\n`
+        : `${JSON.stringify({ version: 1, providerId, approvalSha256 }, null, 2)}\n`;
+      try {
+        if (global) {
+          await writeActiveCatalogIndex(root, {
+            version: 1, providers: { ...global.providers, [providerId]: { approvalSha256 } }
+          });
+        } else {
+          await writeAtomicSelection(indexPath, next);
+        }
+        const selected = await resolveAccreditedPublication(root, providerId);
+        if (selected !== candidate.path) throw new Error("La publicación vigente no corresponde al índice activado");
+        return { status: "activated", providerId, difference: latest, acceptance: accepted };
+      } catch (error) {
+        try {
+          const currentSelection = await readSelectionSnapshot(indexPath);
+          if (currentSelection === next) await restoreSelection(indexPath, previous, next);
+          else if (currentSelection !== previous) {
+            throw new Error("El índice cambió durante la activación; se requiere intervención manual");
+          }
+        } catch (recoveryError) {
+          throw new Error(`La selección falló y la recuperación es incompleta: ${String(recoveryError)}`, { cause: error });
+        }
+        throw error;
+      }
     });
   } finally {
-    await rm(stage, { force: true });
     await lock.close();
     await rm(lockPath, { force: true });
   }

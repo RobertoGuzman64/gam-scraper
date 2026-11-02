@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { sha256 } from "../../../catalog/editorial/campaign-accreditation.js";
@@ -8,6 +8,8 @@ import type { CampaignAccreditation } from "../../../catalog/editorial/campaign-
 import { readZipArchive } from "../../../infrastructure/archive/zip.js";
 import { deliverIndividualArchive } from "../individual-archive.js";
 import { deliverIndividualProvider } from "../individual-delivery.js";
+import { completeIndividualDelivery } from "../complete-individual-delivery.js";
+import { resolveAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/scraping.js";
@@ -353,5 +355,110 @@ test("propuestas no descartan errores técnicos, intervenciones ni inventan evid
     });
     assert.deepEqual(proposed.exclusions, [intervention, invalidUrl, attributeIssue, mixedIssue]);
     assert.equal(proposed.approved, false);
+  });
+});
+
+
+test("el cierre JSON respeta simulación, candidata y verificación, y activa al entregar definitivamente", async () => {
+  await fixture(async (options) => {
+    const draft = await startIndividualEditorial(options);
+    for (const item of draft.accreditation.exclusions) {
+      await decideIndividualEditorial(options, {
+        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
+      });
+    }
+    await approveIndividualEditorial(options, "Publicación individual aceptada editorialmente");
+    const preview = await completeIndividualDelivery(options, null, "simulation");
+    assert.equal(preview.activation, "not_requested");
+    await assert.rejects(readdir(join(options.rootDirectory, "catalogs")), /ENOENT/);
+    const candidate = await completeIndividualDelivery(options, null, "candidate");
+    assert.equal(candidate.delivery.status, "published");
+    assert.equal(candidate.activation, "not_requested");
+    const selector = join(options.rootDirectory, "catalogs", "providers", "gam", "publications", "active.json");
+    await assert.rejects(readFile(selector), /ENOENT/);
+    const verified = await completeIndividualDelivery(options, null, "verify");
+    assert.equal(verified.delivery.status, "verified");
+    assert.equal(verified.activation, "not_requested");
+    await assert.rejects(readFile(selector), /ENOENT/);
+    const closed = await completeIndividualDelivery(options, null, "publish");
+    assert.equal(closed.activation, "activated");
+    assert.equal(await resolveAccreditedPublication(options.rootDirectory, "gam"), closed.delivery.productFile);
+    const selectorBefore = await readFile(selector, "utf8");
+    const again = await completeIndividualDelivery(options, null, "publish");
+    assert.equal(again.activation, "unchanged");
+    assert.equal(await readFile(selector, "utf8"), selectorBefore);
+  });
+});
+
+test("el cierre ZIP exige recibo íntegro antes de activar y permite reanudar una candidata", async () => {
+  await fixture(async (options) => {
+    const draft = await startIndividualEditorial(options);
+    for (const item of draft.accreditation.exclusions) {
+      await decideIndividualEditorial(options, {
+        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
+      });
+    }
+    await approveIndividualEditorial(options, "Cierre con ZIP aprobado editorialmente");
+    const desktop = join(options.rootDirectory, "Escritorio");
+    await mkdir(desktop);
+    const candidate = await completeIndividualDelivery(options, desktop, "candidate");
+    assert.equal(candidate.activation, "not_requested");
+    assert.ok(candidate.delivery.zipFile);
+    const selector = join(options.rootDirectory, "catalogs", "providers", "gam", "publications", "active.json");
+    await assert.rejects(readFile(selector), /ENOENT/);
+    const zip = candidate.delivery.zipFile;
+    await writeFile(zip, "ZIP externo alterado");
+    await assert.rejects(completeIndividualDelivery(options, desktop, "publish"), /ZIP individual alterado/);
+    await assert.rejects(readFile(selector), /ENOENT/);
+    await assert.rejects(completeIndividualDelivery(options, desktop, "verify"), /ZIP individual alterado/);
+  });
+});
+
+test("el cierre ZIP nuevo completa entrega y activación sin un segundo comando", async () => {
+  await fixture(async (options) => {
+    const draft = await startIndividualEditorial(options);
+    for (const item of draft.accreditation.exclusions) {
+      await decideIndividualEditorial(options, {
+        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
+      });
+    }
+    await approveIndividualEditorial(options, "Entrega ZIP definitiva aprobada");
+    const desktop = join(options.rootDirectory, "Escritorio");
+    await mkdir(desktop);
+    const closed = await completeIndividualDelivery(options, desktop);
+    assert.equal(closed.activation, "activated");
+    assert.ok(closed.delivery.zipFile);
+    assert.equal(await resolveAccreditedPublication(options.rootDirectory, "gam"), closed.delivery.productFile);
+    assert.equal((await completeIndividualDelivery(options, desktop)).activation, "unchanged");
+  });
+});
+
+
+test("el cierre definitivo no elige una publicación entre históricos sin selección inequívoca", async () => {
+  await fixture(async (options) => {
+    const draft = await startIndividualEditorial(options);
+    for (const item of draft.accreditation.exclusions) {
+      await decideIndividualEditorial(options, {
+        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
+      });
+    }
+    await approveIndividualEditorial(options, "Aprobación individual del cierre");
+    const candidate = await completeIndividualDelivery(options, null, "candidate");
+    const directory = candidate.delivery.publicationDirectory;
+    const accreditation = JSON.parse(await readFile(join(directory, "accreditation.json"), "utf8")) as Record<string, unknown>;
+    const alternateAccreditation = JSON.stringify({ ...accreditation, edition: "histórica" }, null, 2);
+    const alternateSha = sha256(alternateAccreditation);
+    const alternateDirectory = join(dirname(directory), alternateSha);
+    await cp(directory, alternateDirectory, { recursive: true });
+    const manifest = JSON.parse(await readFile(join(alternateDirectory, "manifest.json"), "utf8")) as Record<string, unknown>;
+    const files = manifest.files as Record<string, string>;
+    await writeFile(join(alternateDirectory, "accreditation.json"), alternateAccreditation);
+    await writeFile(join(alternateDirectory, "manifest.json"), JSON.stringify({
+      ...manifest, approvalSha256: alternateSha, files: { ...files, "accreditation.json": alternateSha }
+    }, null, 2));
+    const result = await completeIndividualDelivery(options, null, "publish");
+    assert.equal(result.activation, "blocked");
+    assert.match(result.blockers[0] ?? "", /selección inicial inequívoca/);
+    await assert.rejects(readFile(join(dirname(directory), "active.json")), /ENOENT/);
   });
 });

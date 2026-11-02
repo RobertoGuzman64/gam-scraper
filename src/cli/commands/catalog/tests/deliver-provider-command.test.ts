@@ -11,9 +11,10 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../..");
 
 test("entregar:proveedor rechaza modos incompatibles sin escribir", async () => {
   const prefix = ["gam", "--source", "origen.json", "--preparation", "preparacion.json"];
-  await assert.rejects(runDeliverProvider([...prefix, "--solo-json", "--verificar"]), /Uso:/);
-  await assert.rejects(runDeliverProvider([...prefix, "--dry-run", "--solo-json"]), /Uso:/);
+  await assert.rejects(runDeliverProvider([...prefix, "--verificar", "--solo-candidata"]), /Uso:/);
+  await assert.rejects(runDeliverProvider([...prefix, "--dry-run", "--verificar"]), /Uso:/);
   await assert.rejects(runDeliverProvider([...prefix, "--solo-json", "--solo-json"]), /Uso:/);
+  await assert.rejects(runDeliverProvider([...prefix, "--solo-candidata", "--verificar"]), /Uso:/);
 });
 
 test("entregar:proveedor libera la terminal tras terminar con recursos ajenos abiertos", () => {

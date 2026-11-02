@@ -51,7 +51,7 @@ test("la activación global requiere aprobación, es expresa, atómica y reversi
   } finally { await data.cleanup(); }
 });
 
-test("una publicación individual posterior cambia solo su proveedor y puede revertirse globalmente", async () => {
+test("no se sustituye parcialmente una campaña global por una publicación individual", async () => {
   const data = await approved();
   try {
     await selectActiveCampaign(data.root, data.runId, true);
@@ -64,13 +64,13 @@ test("una publicación individual posterior cambia solo su proveedor y puede rev
     const preview = await selectActivePublication(data.root, providerId, sha);
     assert.equal(preview.status, "simulation");
     assert.equal(preview.difference.previous, data.runId);
-    assert.equal((await selectActivePublication(data.root, providerId, sha, true)).status, "activated");
-    assert.equal((await readActiveCatalogIndex(data.root))?.providers.gomariz?.runId, undefined);
+    await assert.rejects(selectActivePublication(data.root, providerId, sha, true), /campaña global vigente/);
+    assert.equal((await readActiveCatalogIndex(data.root))?.providers.gomariz?.runId, data.runId);
     for (const id of CAMPAIGN_PROVIDERS.filter((item) => item !== providerId)) {
       assert.equal((await readActiveCatalogIndex(data.root))?.providers[id]?.runId, data.runId);
     }
-    assert.equal(await resolveAccreditedPublication(data.root, providerId), join(destination, `${providerId}-publishable.json`));
-    assert.equal((await selectActiveCampaign(data.root, data.runId, true)).status, "activated");
+    assert.equal(await resolveAccreditedPublication(data.root, providerId), join(data.root, "catalogs", "campaigns", data.runId, providerId, "publishable.json"));
+    assert.equal((await selectActiveCampaign(data.root, data.runId, true)).status, "unchanged");
     assert.equal((await readActiveCatalogIndex(data.root))?.providers.gomariz?.runId, data.runId);
   } finally { await data.cleanup(); }
 });
