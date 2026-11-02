@@ -113,6 +113,7 @@ const todoTests = [];
 const standardErrors = new Map();
 const counts = { passed: 0, failed: 0, skipped: 0, todo: 0 };
 const profile = options.report ? { tests: [], files: [] } : null;
+const profileStarts = profile ? new Map() : null;
 
 const clearProgress = () => {
   if (!interactive) return;
@@ -165,6 +166,7 @@ try {
     if (event.type === "test:dequeue" && typeof event.data.name === "string" && filePaths.has(resolve(event.data.name))) {
       const file = resolve(event.data.name);
       startedFiles.add(file);
+      if (profileStarts && !profileStarts.has(file)) profileStarts.set(file, Date.now() - startedAt);
       renderProgress();
     }
 
@@ -181,6 +183,8 @@ try {
       profile.files.push({
         archivo: relative(process.cwd(), event.data.file),
         tiempo_ms: event.data.duration_ms ?? 0,
+        inicio_ms: profileStarts?.get(resolve(event.data.file)) ?? null,
+        fin_ms: Date.now() - startedAt,
         correctos: event.data.counts?.passed ?? 0,
         fallidos: event.data.counts?.failed ?? 0
       });
@@ -237,6 +241,9 @@ try {
 if (!summary) throw new Error("La ejecución de pruebas terminó sin resumen");
 
 if (profile) {
+  const totalFileDuration = profile.files.reduce((total, file) => total + file.tiempo_ms, 0);
+  const longestFileDuration = Math.max(0, ...profile.files.map((file) => file.tiempo_ms));
+  const idealLowerBound = Math.max(longestFileDuration, totalFileDuration / effectiveConcurrency);
   writeFileSync(options.report, JSON.stringify({
     modo: options.concurrency === undefined ? "predeterminado" : "concurrencia configurada",
     concurrencia: effectiveConcurrency,
@@ -248,6 +255,12 @@ if (profile) {
       omitidos: summary.counts.skipped,
       pendientes: summary.counts.todo,
       tiempo_ms: summary.duration_ms
+    },
+    diagnostico: {
+      tiempo_acumulado_archivos_ms: totalFileDuration,
+      archivo_mas_lento_ms: longestFileDuration,
+      cota_inferior_ideal_ms: idealLowerBound,
+      diferencia_cota_ideal_ms: Math.max(0, summary.duration_ms - idealLowerBound)
     },
     archivos: profile.files,
     pruebas: profile.tests

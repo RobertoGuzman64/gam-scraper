@@ -49,6 +49,19 @@ test("el runner incluye pruebas TypeScript y MJS en un único informe", () => {
     assert.equal(summary.correctos, 2);
     assert.equal(summary.fallidos, 0);
     assert.equal(summary.omitidos, 0);
+    assert.ok("archivos" in report && Array.isArray(report.archivos));
+    assert.equal(report.archivos.length, 2);
+    for (const file of report.archivos) {
+      assert.ok(typeof file === "object" && file !== null && "inicio_ms" in file &&
+        "fin_ms" in file && "tiempo_ms" in file);
+      assert.equal(typeof file.inicio_ms, "number");
+      assert.equal(typeof file.fin_ms, "number");
+      assert.equal(typeof file.tiempo_ms, "number");
+      assert.ok(file.fin_ms >= file.inicio_ms);
+    }
+    assert.ok("diagnostico" in report && typeof report.diagnostico === "object" &&
+      report.diagnostico !== null && "cota_inferior_ideal_ms" in report.diagnostico);
+    assert.equal(typeof report.diagnostico.cota_inferior_ideal_ms, "number");
   });
 });
 
