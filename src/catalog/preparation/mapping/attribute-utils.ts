@@ -1,7 +1,15 @@
 import type { SpecScalar, SpecValue } from "../../../contracts/catalog.js";
 
-export const fold = (value: string): string => value.toLocaleLowerCase("es").normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+const foldCache = new Map<string, string>();
+export const fold = (value: string): string => {
+  const cached = foldCache.get(value);
+  if (cached !== undefined) return cached;
+  const normalized = value.toLocaleLowerCase("es").normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+  if (foldCache.size >= 16384) foldCache.clear();
+  foldCache.set(value, normalized);
+  return normalized;
+};
 
 export const scalar = (value: SpecValue): SpecScalar | null => {
   if (Array.isArray(value)) return value.length === 1 ? value[0] ?? null : null;

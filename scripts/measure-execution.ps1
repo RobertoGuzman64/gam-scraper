@@ -19,7 +19,7 @@ try {
     $baseLog = Join-Path $work "baseline.log"
     $adjustedLog = Join-Path $work "candidate.log"
 
-    Write-Host "Measuring baseline (concurrencia 6)"
+    Write-Host "Measuring baseline (concurrencia predeterminada)"
     & node scripts/run-tests.mjs --medicion $basePath *> $baseLog
     $baseExit = $LASTEXITCODE
 
@@ -35,7 +35,7 @@ try {
 
     if (Test-Path $basePath) {
         $base = Get-Content $basePath -Raw -Encoding UTF8 | ConvertFrom-Json
-        $lines += "Predeterminada (6): $([math]::Round($base.resumen.tiempo_ms)) ms, $($base.resumen.correctos) correctos, $($base.resumen.fallidos) fallidos"
+        $lines += "Predeterminada ($($base.concurrencia)): $([math]::Round($base.resumen.tiempo_ms)) ms, $($base.resumen.correctos) correctos, $($base.resumen.fallidos) fallidos"
         $base.pruebas | Sort-Object tiempo_ms -Descending | Select-Object -First 15 | Export-Csv (Join-Path $work "TOP15-BASELINE.csv") -NoTypeInformation -Delimiter ";" -Encoding UTF8
         $base.archivos | Sort-Object tiempo_ms -Descending | Select-Object -First 15 | Export-Csv (Join-Path $work "TOP15-ARCHIVOS-BASELINE.csv") -NoTypeInformation -Delimiter ";" -Encoding UTF8
     }

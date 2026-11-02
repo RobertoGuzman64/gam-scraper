@@ -1,4 +1,5 @@
 import { existsSync, readdirSync, writeFileSync } from "node:fs";
+import { availableParallelism } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { clearLine, cursorTo } from "node:readline";
 import { run } from "node:test";
@@ -60,7 +61,7 @@ const PRIORITIZED_TESTS = [
 ];
 const testPriority = new Map(PRIORITIZED_TESTS.map((path, index) => [path, index]));
 
-const DEFAULT_CONCURRENCY = 6;
+const DEFAULT_CONCURRENCY = Math.min(6, availableParallelism());
 const options = parseOptions(process.argv.slice(2));
 const effectiveConcurrency = options.concurrency ?? DEFAULT_CONCURRENCY;
 
