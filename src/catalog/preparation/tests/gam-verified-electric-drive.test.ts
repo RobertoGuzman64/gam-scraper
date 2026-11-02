@@ -4,7 +4,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
 import { recoverGamVerifiedElectricDriveSpec } from "../evidence/providers/gam/verified-electric-drive-evidence.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const expected = [
   "6077", "6126", "6202", "6228", "6206", "6937", "6854", "6362",
   "6878", "6706", "5880", "6819", "6820", "6823", "6841", "5910",

@@ -5,7 +5,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { resolveGamWarehouseTechnicalEditorial } from "../mapping/providers/gam/warehouse-technical-editorial.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
 const references = new Set([
   "5991", "5992", "2281", "2282", "2283", "2284", "3141", "3143", "3145", "3146",

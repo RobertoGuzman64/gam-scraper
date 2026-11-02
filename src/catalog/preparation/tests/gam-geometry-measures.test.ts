@@ -5,7 +5,7 @@ import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
 import { recoverGamExplicitMachineSpecs } from "../evidence/providers/gam/measured-machine-specs.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const recordOf = (reference: string) => {
   const record = catalog.products.find((product) => product.reference === reference);
   assert.ok(record, reference);

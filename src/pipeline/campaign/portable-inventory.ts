@@ -5,7 +5,7 @@ import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { readActiveCatalogIndex } from "../../infrastructure/filesystem/catalog/active-selection.js";
 import { readPortableCampaign } from "../../infrastructure/filesystem/catalog/portable-campaign.js";
-import { readPortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPortableOriginal, readPortableOriginalArtifacts } from "../../infrastructure/filesystem/catalog/portable-original.js";
 import type { InventoryItem } from "./operations-inventory.js";
 
 export type PortableProviderInventory = {
@@ -119,10 +119,10 @@ const inspectConsistency = async (
   }
   try {
     const local = await readCanonicalCatalog(localCatalogFile);
-    const portable = await readPortableOriginal(root, providerId);
+    const artifacts = await readPortableOriginalArtifacts(root, providerId);
+    const portable = artifacts.catalog;
     const localContent = await readFile(localCatalogFile, "utf8");
-    const portableContent = await readFile(join(root, "catalogs", "providers", providerId, "original",
-      `${portable.prefix}-catalog.json`), "utf8");
+    const portableContent = artifacts.files.find((file) => file.name.endsWith("-catalog.json"))!.content;
     if (local.providerId !== providerId || portable.providerId !== providerId) {
       return invalid("Original operativo de otro proveedor");
     }

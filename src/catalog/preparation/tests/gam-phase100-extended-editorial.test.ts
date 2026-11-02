@@ -6,7 +6,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { prepareSourceProduct } from "../prepare-product.js";
 import { resolveGamVerifiedExtendedGeneral } from "../mapping/providers/gam/verified-extended-general.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const expected = new Map<string, string>([
   ["4845", "2343e00aae743e50b5b7e495fd70d9a8310837fb7aaa904943a02c2ee88dff29"],
   ["2090", "7e28a53c9eca2d64ccde5b9bdad3918fb21304974fd961501bbaa4cd0781b4a6"],

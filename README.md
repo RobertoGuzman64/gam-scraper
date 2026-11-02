@@ -109,8 +109,8 @@ Si una ficha necesita una corrección puntual acreditada, consulta los scripts e
 La preparación completa de un proveedor puede verificarse y acreditarse por separado mediante `seleccionar:proveedor` y `acreditar:proveedor`. Debe aportarse el catálogo original y la preparación offline correspondiente; ambos se validan contra sus huellas actuales. Este recorrido no acepta catálogos intervenidos ni promueve extracciones parciales a una entrega.
 
 ```powershell
-$gam = ".\catalogs\providers\gam\original\scrape-gam-marzo-2026-catalog.json"
-$preparacion = ".\storage\prepared\gam\scrape-gam-marzo-2026-preparation.json"
+$gam = ".\catalogs\providers\gam\original\scrape-gam-catalog.json"
+$preparacion = (Get-ChildItem ".\storage\prepared\gam\*-preparation.json" | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1).FullName
 npm run acreditar:proveedor -- gam --origen $gam --preparacion $preparacion
 npm run acreditar:proveedor -- gam --origen $gam --preparacion $preparacion --listar
 npm run acreditar:proveedor -- gam --origen $gam --preparacion $preparacion --consultar 6682
@@ -150,7 +150,7 @@ La entrega se guarda en `catalogs/providers/<proveedor>/publications/<alias-o-sh
 npm run huecos -- --comparar
 npm run huecos -- --comparar --specs --json
 npm run huecos -- --finales
-npm run huecos -- --catalogo catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json --agrupar marca --top 10
+npm run huecos -- --catalogo catalogs/providers/gam/original/scrape-gam-catalog.json --agrupar marca --top 10
 ```
 
 La población depende de la **publicación vigente seleccionada** o de la fuente explícita; no asumir que la última carpeta SHA está activa. En Mercaeleva la comparación parte de su publicación si no existe un original canónico independiente: no debe atribuirse a extracción original. El auditor es de **solo lectura**: no rellena fichas, no genera `review`, no acredita ni publica. La recuperación se implementa en el motor, con evidencia y comparación antes/después. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md) para criterios, prioridades y límites.

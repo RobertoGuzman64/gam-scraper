@@ -8,7 +8,7 @@ import { resolveGamVerifiedBriefGeneral } from "../mapping/providers/gam/brief-t
 import { resolveGamSourceIdentifiedModel } from "../mapping/providers/gam/model-identified-general.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
 const verifiedBrief = new Set(["2620", "2621", "2622", "2623", "2624", "2625", "2626", "2627", "2297", "2229", "2334", "2202", "4774"]);
 const identified = new Set(["6634", "3314"]);

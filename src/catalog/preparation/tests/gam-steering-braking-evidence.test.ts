@@ -6,7 +6,7 @@ import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
 import { recoverGamVerifiedSteeringBraking } from "../evidence/providers/gam/verified-steering-braking-evidence.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const braking = ["5888", "5889", "5890", "5891", "3803", "2335", "2205", "2206", "2370", "2154", "2259", "2243", "2244", "2018", "2019", "2021", "2022", "2023", "2024", "2010", "6990", "2248", "2251", "2245", "2249", "2250"] as const;
 const steering = ["6322", "6325", "2237", "2302", "2241", "2240", "2238", "6113", "6114", "6323", "6115", "6326", "6327", "2129"] as const;
 const selected = new Set<string>([...braking, ...steering]);

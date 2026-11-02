@@ -77,9 +77,12 @@ const identicalFiles = (
   left: readonly { readonly name: string; readonly content: string }[],
   right: readonly { readonly name: string; readonly content: string }[]
 ): boolean => left.length === right.length && left.every((item, i) =>
-  item.name === right[i]?.name && item.content === right[i]?.content);
+  item.content === right[i]?.content);
 
-export const readPortableOriginal = async (workspace: string, providerId: string): Promise<CanonicalCatalog> => {
+export const readPortableOriginalArtifacts = async (workspace: string, providerId: string): Promise<{
+  readonly catalog: CanonicalCatalog;
+  readonly files: readonly { readonly name: string; readonly content: string }[];
+}> => {
   const base = portableRoot(workspace, providerId);
   for (const path of [join(resolve(workspace), "catalogs"), join(resolve(workspace), "catalogs", "providers"), base]) {
     if (!await safeDirectory(path)) throw new Error(`Falta almacén portátil: ${providerId}`);
@@ -87,8 +90,11 @@ export const readPortableOriginal = async (workspace: string, providerId: string
   if (await safeDirectory(join(base, rollbackFolder))) {
     throw new Error(`Original portátil pendiente de recuperación: ${providerId}`);
   }
-  return (await inspectOriginal(join(base, originalFolder), providerId)).catalog;
+  return inspectOriginal(join(base, originalFolder), providerId);
 };
+
+export const readPortableOriginal = async (workspace: string, providerId: string): Promise<CanonicalCatalog> =>
+  (await readPortableOriginalArtifacts(workspace, providerId)).catalog;
 
 /** Recovers a directory swap interrupted after its former original was secured. */
 export const recoverPortableOriginal = async (workspace: string, providerId: string): Promise<boolean> => {

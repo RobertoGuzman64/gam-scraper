@@ -5,7 +5,7 @@ import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
 import { recoverGamBatteryMeasures } from "../evidence/providers/gam/battery-measures-evidence.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
 const recordOf = (reference: string) => {
   const record = gam.products.find((product) => product.reference === reference);

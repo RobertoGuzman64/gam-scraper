@@ -11,7 +11,7 @@ import { resolveGamVerifiedConciseGeneral } from "../mapping/providers/gam/verif
 import { prepareSourceProduct } from "../prepare-product.js";
 import { resolveGamVerifiedSourceCondensedGeneral } from "../evidence/providers/gam/verified-source-condensed-generals.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const find = (reference: string): ProductRecord => {
   const record = gam.products.find((item) => item.reference === reference);
   assert.ok(record, reference);

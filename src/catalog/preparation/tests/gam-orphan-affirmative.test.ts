@@ -6,7 +6,7 @@ import { removeGamOrphanAffirmative, removeGamResidualEditorialArtifacts } from 
 import { resolveGamHysterCondensedGeneral } from "../mapping/providers/gam/verified-condensed-hyster.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
 const expected = new Set([
   "2079", "6", "2090", "2075", "2091", "2076", "2092", "2094",

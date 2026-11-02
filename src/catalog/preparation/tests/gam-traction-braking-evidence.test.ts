@@ -6,7 +6,7 @@ import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
 import { recoverGamVerifiedTractionBraking } from "../evidence/providers/gam/verified-traction-braking-evidence.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const fourWheel = ["4778", "4779", "4780", "4782", "4785", "4787", "4795", "4788", "4796", "4790", "4793", "4813", "4798"] as const;
 const braking = ["2194", "2258", "2195", "2260", "2203", "2199", "2204", "2201"] as const;
 const references = [...fourWheel, ...braking];

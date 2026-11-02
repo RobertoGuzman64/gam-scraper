@@ -7,7 +7,7 @@ import { sourceSemanticQualityIssues } from "../source/semantic-quality.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const gomariz = (await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json")).products;
-const gam = (await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json")).products;
+const gam = (await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json")).products;
 const mercaeleva = await readMercaelevaSource();
 const find = (records: readonly ProductRecord[], reference: string): ProductRecord => {
   const record = records.find((item) => item.reference === reference);

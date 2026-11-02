@@ -10,7 +10,7 @@ const expected = new Set([
   "4011", "4010", "4024", "4002", "4001", "4003", "4004", "4022", "4012", "3996",
   "4005", "4039", "3993", "4028", "4036", "4038", "4035", "4037", "5771", "5773"
 ]);
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
 
 const find = (reference: string): ProductRecord => {

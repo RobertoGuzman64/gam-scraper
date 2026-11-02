@@ -5,7 +5,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "../evidence/providers/mercaeleva/verified-platform-source-specs.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const source = await readCanonicalCatalog("catalogs/providers/mercaeleva/original/mercaeleva-completa-20261029-234332-catalog.json");
+const source = await readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json");
 const sourceRecord = (reference: string): ProductRecord => {
   const record = source.products.find((item) => item.reference === reference);
   assert.ok(record, reference);

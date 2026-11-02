@@ -7,7 +7,7 @@ import { resolveGamVerifiedBriefGeneral } from "../mapping/providers/gam/brief-t
 import { resolveGamShortDescription } from "../mapping/providers/gam/short-description.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const find = (reference: string): ProductRecord => {
   const record = catalog.products.find((item) => item.reference === reference);
   assert.ok(record, reference);

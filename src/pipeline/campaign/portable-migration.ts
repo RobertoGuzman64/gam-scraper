@@ -5,7 +5,7 @@ import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { readActiveCatalogIndex } from "../../infrastructure/filesystem/catalog/active-selection.js";
 import { consolidatePortableCampaign, readPortableCampaign } from "../../infrastructure/filesystem/catalog/portable-campaign.js";
-import { consolidatePortableOriginal, readPortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
+import { consolidatePortableOriginal, readPortableOriginalArtifacts } from "../../infrastructure/filesystem/catalog/portable-original.js";
 import { discoverCampaign, listCampaignRuns } from "./discovery/search.js";
 import { verifyDeliveredCampaign } from "./delivery/verification.js";
 import { finalizeActiveCampaign } from "./finalization.js";
@@ -108,7 +108,8 @@ const inspectProvider = async (root: string, providerId: string): Promise<Migrat
   if (catalogs.length > 1) throw new Error(`Varios canónicos en ${dir}: no se elige uno por intuición`);
   const target = join(root, "catalogs", "providers", providerId, "original");
   const hasPortable = await kind(target) !== "absent";
-  const portable = hasPortable ? await readPortableOriginal(root, providerId) : null;
+  const portableArtifacts = hasPortable ? await readPortableOriginalArtifacts(root, providerId) : null;
+  const portable = portableArtifacts?.catalog ?? null;
   const providerRoot = join(root, "catalogs", "providers", providerId);
   const targetNames = await namesIn(providerRoot);
   const allowed = providerId === "manain" ? ["original", "publications", "records"] : ["original", "publications"];
@@ -132,8 +133,8 @@ const inspectProvider = async (root: string, providerId: string): Promise<Migrat
   if (canonical.providerId !== providerId) throw new Error(`Canónico de otro proveedor en ${source}`);
   if (portable) {
     const sourceContent = await readFile(source, "utf8");
-    const stored = join(target, `${portable.prefix}-catalog.json`);
-    if (hash(sourceContent) === hash(await readFile(stored, "utf8"))) {
+    const stored = portableArtifacts?.files.find((file) => file.name.endsWith("-catalog.json"));
+    if (stored && hash(sourceContent) === hash(stored.content)) {
       return { providerId, status: "actualizado", source, count: canonical.productCount };
     }
     const sourceDate = Date.parse(canonical.endedAt);

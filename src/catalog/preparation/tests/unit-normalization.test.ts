@@ -125,7 +125,7 @@ test("no convierte medidas ambiguas, contradictorias ni compuestos en números t
 
 test("contrasta medidas reales de GAM sin confundir radios, alturas ni mezclas de unidades", async () => {
   const { readCanonicalCatalog } = await import("../../../infrastructure/filesystem/catalog/canonical-catalog.js");
-  const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+  const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
   const byReference = new Map(catalog.products.map((record) => [record.reference, record]));
   for (const [reference, expected] of [["6542", 6020], ["1152", 1980], ["1145", 1980], ["912", 1980]] as const) {
     const record = byReference.get(reference);

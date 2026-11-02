@@ -8,7 +8,7 @@ import { removeGamResidualEditorialArtifacts } from "../mapping/providers/gam/lo
 import { resolveGomarizIndividualizedGeneral } from "../mapping/providers/gomariz/individualized-general.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
 const gamReferences = new Set(["6688", "6689", "6690", "1210", "1211", "1212", "1213", "1214", "1217", "1219"]);
 const gomarizReferences = new Set(["GR1356", "GR1113", "TO1242", "TO1245", "RO457", "GR1681", "GR1680", "GR1679"]);

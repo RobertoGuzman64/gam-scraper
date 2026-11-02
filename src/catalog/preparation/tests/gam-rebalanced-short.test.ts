@@ -6,7 +6,7 @@ import { rebalanceGamOverlongShort } from "../mapping/providers/gam/short-descri
 import { resolveGamTecnacarGeneral } from "../mapping/providers/gam/tecnacar-general.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const expected = new Set([
   "6218", "6477", "6262", "6478", "6479", "6813", "6811", "6803",
   "6802", "5950", "5952", "5953", "5918", "6805", "298"

@@ -6,7 +6,7 @@ import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
 import { recoverGamVerifiedResidualGeometrySpecs } from "../evidence/providers/gam/verified-residual-geometry-evidence.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const references = [
   "6419", "6425", "6424", "2151", "4623", "2108", "1713", "2102",
   "4798", "4846", "4725", "6743", "6744", "2103", "4024",

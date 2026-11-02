@@ -5,7 +5,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { resolveGamVerifiedCommercialShort } from "../mapping/providers/gam/verified-commercial-short.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const refs = [
   "6901", "6984", "6139", "6846", "6391", "6893", "6502", "6644", "6679", "6704",
   "5227", "2260", "2335", "4388", "2104", "1884", "1885", "1886", "1022", "2138"

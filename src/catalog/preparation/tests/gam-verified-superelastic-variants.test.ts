@@ -7,7 +7,7 @@ import { recoverGamVerifiedSuperelasticTyresSpec } from "../evidence/providers/g
 import { recoverGamPhysicalMeasures } from "../evidence/providers/gam/physical-measures-evidence.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
 const references = [
   "2079", "2080", "2081", "2083", "2084", "2094", "6573",

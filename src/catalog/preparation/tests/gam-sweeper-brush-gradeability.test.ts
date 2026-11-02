@@ -7,7 +7,7 @@ import { recoverGamSourceGradeabilitySpecs } from "../evidence/providers/gam/sou
 import { recoverGamSweepingBrushSpecs } from "../evidence/providers/gam/sweeping-brush-evidence.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
 
 const main = "Anchura del cepillo principal (mm)";

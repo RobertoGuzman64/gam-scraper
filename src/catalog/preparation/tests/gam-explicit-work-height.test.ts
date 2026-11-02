@@ -4,7 +4,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { prepareSourceProduct } from "../prepare-product.js";
 import { recoverGamExplicitWorkHeightSpec } from "../evidence/providers/gam/work-height-evidence.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const find = (reference: string) => {
   const record = gam.products.find((product) => product.reference === reference);
   assert.ok(record, reference);

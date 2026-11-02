@@ -6,7 +6,7 @@ import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
 import { recoverGamVerifiedDrivetrainBrakes } from "../evidence/providers/gam/verified-drivetrain-brakes-evidence.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const expected: Readonly<Record<string, Readonly<{ key: string; value: string | boolean }>>> = {
   "2239": { key: "Freno electromagnético", value: true },
   "2099": { key: "Freno electromagnético", value: true },

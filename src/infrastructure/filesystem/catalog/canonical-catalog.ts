@@ -14,6 +14,13 @@ const digest = (content: string): string => createHash("sha256").update(content)
 
 const readJson = async (path: string): Promise<unknown> => JSON.parse(await readFile(path, "utf8"));
 
+const isPortableAlias = (directory: string, prefix: string, providerId: string): boolean =>
+  prefix === `scrape-${providerId}` &&
+  basename(directory) === "original" &&
+  basename(dirname(directory)) === providerId &&
+  basename(dirname(dirname(directory))) === "providers" &&
+  basename(dirname(dirname(dirname(directory)))) === "catalogs";
+
 const readActiveSummary = async (dir: string, prefix: string): Promise<unknown> => {
   try {
     const active = await readJson(join(dir, ".history", prefix, "active.json"));
@@ -69,7 +76,8 @@ export const readCanonicalCatalog = async (file: string): Promise<CanonicalCatal
   const catalog = parseCanonicalCatalog(JSON.parse(raw) as unknown);
   const manifest = parseCanonicalManifest(rawManifest);
   const hash = digest(raw);
-  if (catalog.prefix !== prefix || manifest.prefix !== prefix ||
+  if ((catalog.prefix !== prefix && !isPortableAlias(dir, prefix, catalog.providerId)) ||
+    manifest.prefix !== catalog.prefix ||
     manifest.providerId !== catalog.providerId || manifest.scope !== catalog.scope ||
     manifest.productCount !== catalog.productCount || manifest.startedAt !== catalog.startedAt ||
     manifest.endedAt !== catalog.endedAt || manifest.catalogSha256 !== hash) {

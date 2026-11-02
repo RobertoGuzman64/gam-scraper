@@ -3,7 +3,7 @@ import { lstat, readFile, readdir, rm, stat } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { readCanonicalCatalog } from "./canonical-catalog.js";
-import { readPortableOriginal } from "./portable-original.js";
+import { readPortableOriginalArtifacts } from "./portable-original.js";
 import { archiveRoot, currentMetadata, isRecord, readJson, optionalRead, parseRecord, isPublished, verifyPublished } from "./catalog-retention-metadata.js";
 
 export type RetentionCandidate = { readonly path: string; readonly bytes: number };
@@ -247,17 +247,21 @@ export const cleanConsolidatedCatalogHistory = async (
     if (!info.isDirectory() || info.isSymbolicLink()) throw new Error("Almacén operativo enlazado o no regular");
   }
   const source = await readCanonicalCatalog(join(dir, `${prefix}-catalog.json`));
-  const portable = await readPortableOriginal(root, providerId);
+  const artifacts = await readPortableOriginalArtifacts(root, providerId);
+  const portable = artifacts.catalog;
   if (source.providerId !== providerId || source.prefix !== prefix ||
     !isDeepStrictEqual(source, portable)) {
     throw new Error("El original portátil no acredita la publicación individual vigente");
   }
   // Comparing canonical payloads alone is insufficient: guard the exact
   // persisted bytes and the publication summary as well.
-  for (const name of [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`]) {
+  for (const suffix of ["-catalog.json", "-catalog.manifest.json", "-summary.json"]) {
+    const name = `${prefix}${suffix}`;
     const current = await readFile(join(dir, name), "utf8");
-    const saved = await readFile(join(root, "catalogs", "providers", providerId, "original", name), "utf8");
-    if (current !== saved) throw new Error(`El original portátil difiere de ${name}; se conserva el historial`);
+    const saved = artifacts.files.find((file) => file.name.endsWith(suffix));
+    if (!saved || current !== saved.content) {
+      throw new Error(`El original portátil difiere de ${name}; se conserva el historial`);
+    }
   }
   const history = archiveRoot(dir, prefix);
   let entries;

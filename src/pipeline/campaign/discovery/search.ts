@@ -3,7 +3,7 @@ import { CAMPAIGN_PROVIDERS, isReferenceProviderSet } from "../../../contracts/c
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { basename, dirname, join, resolve, sep } from "node:path";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPortableOriginalArtifacts } from "../../../infrastructure/filesystem/catalog/portable-original.js";
 import { readAppliedIntervention } from "../../../infrastructure/filesystem/interventions/intervention-derived.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
 import type { OfflinePreparation } from "../../../catalog/preparation/offline-document.js";
@@ -72,21 +72,19 @@ export const listCampaignRuns = async (rootDirectory: string, skipRunId?: string
 
 const isConsolidatedLegacyOriginal = async (root: string, providerId: string, source: string): Promise<boolean> => {
   try {
-    const [catalog, portable] = await Promise.all([
-      readCanonicalCatalog(source), readPortableOriginal(root, providerId)
+    const [catalog, artifacts] = await Promise.all([
+      readCanonicalCatalog(source), readPortableOriginalArtifacts(root, providerId)
     ]);
-    if (catalog.providerId !== providerId || catalog.prefix !== portable.prefix) return false;
-    const portableDirectory = join(root, "catalogs", "providers", providerId, "original");
-    for (const name of [
-      `${catalog.prefix}-catalog.json`, `${catalog.prefix}-catalog.manifest.json`, `${catalog.prefix}-summary.json`
-    ]) {
+    if (catalog.providerId !== providerId || catalog.prefix !== artifacts.catalog.prefix) return false;
+    for (const suffix of ["-catalog.json", "-catalog.manifest.json", "-summary.json"]) {
+      const name = `${catalog.prefix}${suffix}`;
       const sourceFile = join(dirname(source), name);
-      const portableFile = join(portableDirectory, name);
-      const [sourceInfo, portableInfo] = await Promise.all([lstat(sourceFile), lstat(portableFile)]);
-      if (!sourceInfo.isFile() || sourceInfo.isSymbolicLink() ||
-        !portableInfo.isFile() || portableInfo.isSymbolicLink()) return false;
-      const [sourceContent, portableContent] = await Promise.all([readFile(sourceFile), readFile(portableFile)]);
-      if (!sourceContent.equals(portableContent)) return false;
+      const portableFile = artifacts.files.find((file) => file.name.endsWith(suffix));
+      if (!portableFile) return false;
+      const sourceInfo = await lstat(sourceFile);
+      if (!sourceInfo.isFile() || sourceInfo.isSymbolicLink()) return false;
+      const sourceContent = await readFile(sourceFile, "utf8");
+      if (sourceContent !== portableFile.content) return false;
     }
     return true;
   } catch {

@@ -6,7 +6,7 @@ import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
 import { recoverGamVerifiedOperationalSafety } from "../evidence/providers/gam/verified-operational-safety-evidence.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const overload = ["4730", "4803", "4805", "4804", "4799", "4785", "4787", "4795", "4788", "4796", "4808", "4809", "4810"];
 const alarms = ["4735", "4740", "4742", "4746", "4807"];
 const sensors = ["2155", "2159"];

@@ -6,7 +6,7 @@ import { resolveGamExactVariantGeneral, resolveGamModelIdentifiedGeneral } from 
 import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../mapping/providers/gam/verified-condensed-additional.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const improved = new Set(["4765", "6185", "6188", "217", "215", "216", "211", "212", "213", "4031", "234", "239", "237", "243", "235"]);
 
 const find = (reference: string): ProductRecord => {

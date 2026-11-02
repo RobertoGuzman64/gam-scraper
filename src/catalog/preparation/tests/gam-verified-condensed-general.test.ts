@@ -5,7 +5,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { resolveGamCondensedGeneral, resolveGamCondensedShort } from "../mapping/providers/gam/verified-condensed-general.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const targeted = new Set([
   "4991", "4988", "4990", "4989", "6308", "6954", "6573", "6574", "6767", "6114",
   "6744", "2370", "6768", "6115", "6743", "6873", "6113", "5995", "5996", "5997"

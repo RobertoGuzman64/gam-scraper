@@ -5,7 +5,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { resolveGamCrossedIdentityEditorial } from "../mapping/providers/gam/crossed-identity-editorial.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const refs = [
   "6650", "5730", "6998", "6849", "6915", "6857", "6164", "1894", "4023", "2242",
   "1936", "3442", "5949", "2305", "4029", "2794", "2795", "2796", "2797", "1144"

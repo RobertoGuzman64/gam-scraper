@@ -5,7 +5,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { resolveGamResidualConciseShort } from "../mapping/providers/gam/short-description.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const references = new Set(["6807", "8", "2323", "2311", "5996", "921", "922", "4024", "4026", "911"]);
 const words = (text: string): number => text.trim().split(/\s+/u).filter(Boolean).length;
 const numerics = (text: string): ReadonlySet<string> => new Set(text.match(/\d+(?:[.,]\d+)*/gu) ?? []);

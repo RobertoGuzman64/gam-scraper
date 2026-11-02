@@ -5,7 +5,7 @@ import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog
 import { prepareSourceProduct } from "../prepare-product.js";
 import { resolveGamVerifiedResidualEditorial } from "../mapping/providers/gam/verified-residual-editorial.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const additional = new Set(["6206", "6817", "6585", "6545", "6707", "4776", "2159", "2061", "2049", "2172", "2241", "2649", "1022", "2138", "2167", "2168", "2173", "2162", "2183", "2074", "2016", "2028"]);
 const revisedShorts = new Set(["6585", "2159", "2049", "2168", "2162", "2016"]);
 const selected = new Set(["2148", "6190", "6192", "6191", "6163", "2300", "5899", "2292", "2211", "6542", "2301", "2232", "4725", "2050", "3134", "2302", "2365", "52", "53", "5081"]);

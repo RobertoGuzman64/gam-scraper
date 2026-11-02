@@ -8,7 +8,7 @@ import { resolveGamCleaningCondensedGeneral, resolveGamCleaningCondensedShort } 
 import { resolveGamTennantCondensedGeneral, resolveGamTennantCondensedShort } from "../mapping/providers/gam/verified-condensed-tennant.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
 const affected = new Set(["4030", "4039", "4018", "4778", "2110", "6806", "12", "912"]);
 const words = (value: string): number => value.split(/\s+/u).filter(Boolean).length;

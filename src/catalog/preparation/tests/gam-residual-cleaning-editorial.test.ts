@@ -6,7 +6,7 @@ import { resolveGamResidualCleaningGeneral, resolveGamResidualCleaningShort } fr
 import { reconcileGamForPreparation, reconcileGamInitialIdentity } from "../reconciliation/gam.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const references = ["4031", "4018", "4021", "4023", "3999", "4026", "171", "4040"] as const;
 
 const original = (reference: string): ProductRecord => {

@@ -6,7 +6,7 @@ import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
 import { recoverGamVerifiedIntegratedCharger } from "../evidence/providers/gam/battery-electrical-evidence.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const references = ["2194", "2258", "2195", "2260", "2203", "3996", "3999", "4000", "2199", "2204", "2201", "2205", "2206"] as const;
 const key = "Cargador de batería";
 

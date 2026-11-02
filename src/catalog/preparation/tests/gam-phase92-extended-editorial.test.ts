@@ -5,7 +5,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const expected = new Map<string, string>([
   ["2336", "fedf9b3aff9b5c0bcdbdb01506f8a6d2831ae09327c1941b8c48788790edff09"],
   ["2337", "0489bc8d3b0f92a292f72571b9571d7e2d79b3ed8771902d7a6958fe0a7f59e4"],

@@ -6,7 +6,7 @@ import { prepareSourceProduct } from "../prepare-product.js";
 import { mbModelEditorialEvidence } from "../evidence/providers/mercaeleva/mb-model-description.js";
 import { braviSkydeckEditorialEvidence } from "../evidence/providers/gam/bravi-skydeck-editorial.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const mercaeleva = await readMercaelevaSource();
 
 const originalGam = gam.products.find((record) => record.reference === "2364");

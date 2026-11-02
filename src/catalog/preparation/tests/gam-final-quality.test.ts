@@ -7,7 +7,7 @@ import { prepareImportBatch } from "../batch-identity.js";
 import { resolveAttribute } from "../mapping/attribute-mapping.js";
 import { SOURCE_TECHNICAL_FIELDS } from "../source/technical-fields.js";
 
-const source = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
+const source = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const catalog = await loadImportCatalog();
 const original = (reference: string) => {
   const value = source.products.find((record) => record.reference === reference);

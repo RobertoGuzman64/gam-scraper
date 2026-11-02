@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/scraping.js";
 import { writeOutputs } from "../../../pipeline/publication/publish.js";
 import { readCanonicalCatalog } from "../catalog/canonical-catalog.js";
+import { readPortableOriginal } from "../catalog/portable-original.js";
 
 const category: CategoryConfig = { key: "venta", name: "Venta", url: "https://test.example/venta" };
 const stamp = (day: number): string => `2026-10-${String(day).padStart(2, "0")}T10:00:00Z`;
@@ -160,5 +161,38 @@ test("migra una publicación histórica sin archivo canónico sin inventar conte
     assert.ok(!names.includes("inventario-catalog.json"));
     assert.ok(names.includes("inventario-all.csv"));
     assert.equal((await readCanonicalCatalog(paths(dir).canonical)).products[0]?.price, "2000 €");
+  });
+});
+
+
+test("un alias portátil estable conserva íntegros los bytes y la acreditación del original histórico", async () => {
+  await withDir(async (root) => {
+    const provider = "gam";
+    const original = join(root, "catalogs", "providers", provider, "original");
+    const fixture = resolve("src/testing/fixtures/gam");
+    const previous = "scrape-gam-marzo-2026";
+    const current = "scrape-gam";
+    const suffixes = ["-catalog.json", "-catalog.manifest.json", "-summary.json"] as const;
+    await mkdir(original, { recursive: true });
+    for (const suffix of suffixes) {
+      await copyFile(join(fixture, `${previous}${suffix}`), join(original, `${previous}${suffix}`));
+    }
+    const before = await readCanonicalCatalog(join(original, `${previous}-catalog.json`));
+    const contents = await Promise.all(suffixes.map((suffix) => readFile(join(original, `${previous}${suffix}`))));
+    for (const suffix of suffixes) {
+      await rename(join(original, `${previous}${suffix}`), join(original, `${current}${suffix}`));
+    }
+    const after = await readPortableOriginal(root, provider);
+    assert.equal(after.prefix, before.prefix);
+    assert.equal(after.productCount, before.productCount);
+    for (const [index, suffix] of suffixes.entries()) {
+      assert.deepEqual(await readFile(join(original, `${current}${suffix}`)), contents[index]);
+    }
+    const other = join(root, "unrelated");
+    await mkdir(other);
+    for (const suffix of suffixes) {
+      await copyFile(join(original, `${current}${suffix}`), join(other, `${current}${suffix}`));
+    }
+    await assert.rejects(readCanonicalCatalog(join(other, `${current}-catalog.json`)), /ejecuciones distintas/);
   });
 });
