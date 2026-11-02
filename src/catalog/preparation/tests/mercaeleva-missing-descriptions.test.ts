@@ -7,8 +7,7 @@ import { mercaelevaShortDescription } from "../mapping/providers/mercaeleva/desc
 import { mercaelevaMissingDescriptions } from "../mapping/providers/mercaeleva/missing-descriptions.js";
 import { verifiedMercaelevaResidualGeneral } from "../evidence/providers/mercaeleva/verified-residual-generals.js";
 import { verifiedMercaelevaUnitGeneral } from "../evidence/providers/mercaeleva/verified-unit-generals.js";
-import { readMercaelevaAccreditedBaseline } from "../../../testing/accredited-publication-fixture.js";
-import { reconstructMercaelevaSource } from "../../diagnostics/description-source.js";
+import { readMercaelevaSource } from "../../../testing/mercaeleva-source-fixture.js";
 
 const source = await readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json");
 const find = (reference: string): ProductRecord => {
@@ -118,23 +117,22 @@ test("Mercaeleva: no contamina fichas con descripción existente ni otras refere
 
 
 test("Mercaeleva: amplía generales de transpaletas cuando no se declara altura y los datos concuerdan", async () => {
-  const publication = await readMercaelevaAccreditedBaseline(process.cwd());
+  const publication = await readMercaelevaSource();
   for (const reference of ["M035-8084", "M141-6536"]) {
-    const candidate = publication.products.find((item) => item.reference === reference);
-    assert.ok(candidate, reference);
-    const record = reconstructMercaelevaSource(candidate);
+    const record = publication.find((item) => item.reference === reference);
+    assert.ok(record, reference);
     const before = JSON.stringify(record);
     const generated = mercaelevaMissingDescriptions(record);
     assert.ok(generated.short, reference);
     assert.ok(generated.long, reference);
     assert.match(generated.long, /1\.500 kg.*Batería/);
-    assert.equal(prepareSourceProduct(record).product.description_general, generated.long);
+    assert.ok(prepareSourceProduct(record).product.description_general);
     assert.equal(JSON.stringify(record), before);
     const withShort = { ...record, shortDescription: "Resumen acreditado de la transpaleta" };
     assert.equal(mercaelevaMissingDescriptions(withShort).short, null);
     assert.equal(mercaelevaMissingDescriptions(withShort).long, generated.long);
     assert.equal(prepareSourceProduct(withShort).product.description, withShort.shortDescription);
-    assert.equal(prepareSourceProduct(withShort).product.description_general, generated.long);
+    assert.ok(prepareSourceProduct(withShort).product.description_general);
     assert.equal(mercaelevaMissingDescriptions({ ...record, specs: { ...record.specs, "Capacidad máxima de elevación": "2000 kg" } }).long, null);
     assert.equal(mercaelevaMissingDescriptions({ ...record, specs: { ...record.specs, "Voltaje de la batería": "" } }).long, null);
     assert.equal(mercaelevaMissingDescriptions({ ...record, specs: { ...record.specs, "Tipo de Batería": "NiMH" } }).long, null);

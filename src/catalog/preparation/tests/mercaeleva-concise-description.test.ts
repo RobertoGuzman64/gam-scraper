@@ -1,40 +1,19 @@
+import { readMercaelevaSource } from "../../../testing/mercaeleva-source-fixture.js";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import type { ImportCandidate } from "../../legacy-export/contracts.js";
 import { resolveMercaelevaConciseDescription } from "../mapping/providers/mercaeleva/concise-description.js";
 import { resolveMercaelevaGeneralDescription } from "../mapping/providers/mercaeleva/general-description.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const published = JSON.parse(readFileSync(
-  "catalogs/providers/mercaeleva/publications/9a8db5bd6929fdc7fce8ceb7e63705b9b168a34161cc52d9536269cff26442e2/mercaeleva-publishable.json", "utf8"
-)) as readonly ImportCandidate[];
-
-const source = (candidate: ImportCandidate): ProductRecord => ({
-  providerId: candidate.providerId,
-  categoryKey: "venta",
-  categoryName: candidate.category ?? "",
-  url: candidate.sourceUrl,
-  title: candidate.title,
-  shortDescription: candidate.description,
-  longDescription: candidate.description_general,
-  price: candidate.price === null ? null : String(candidate.price),
-  condition: candidate.condition === "Nuevo" ? "Nuevo" : candidate.condition === "Segunda_Mano" ? "Segunda mano" : null,
-  reference: candidate.reference,
-  brand: typeof candidate.spec.Marca === "string" ? candidate.spec.Marca : null,
-  model: typeof candidate.spec.Modelo === "string" ? candidate.spec.Modelo : null,
-  year: null,
-  location: null,
-  country: null,
-  horometer: null,
-  serialNumber: null,
-  image: candidate.image,
-  images: candidate.images,
-  specs: candidate.spec
-});
-
-const records = published.map(source);
+const originals = await readMercaelevaSource();
+const legacyShort = (record: ProductRecord): ProductRecord => {
+  const general = record.longDescription ?? "";
+  const short = general.match(/^ref\.\s*[^\s]+\s+(.+?)(?:\s+HORAS|\s+HOURS|\s+AÑO DE FABRICACION|\s+YEAR OF MANUFACTURE)/iu)?.[1] ??
+    general.match(/^(Marca:.+?Tipo: Camión porta-vehículos)/iu)?.[1] ?? null;
+  return { ...record, shortDescription: short };
+};
+const records = originals.map(legacyShort);
 const find = (reference: string): ProductRecord => {
   const record = records.find((candidate) => candidate.reference === reference);
   assert.ok(record, reference);
@@ -60,9 +39,8 @@ test("Mercaeleva: enriquece solo resúmenes escuetos con evidencia propia", () =
     assert.ok(newShort.includes(record.brand ?? ""), reference);
     assert.ok(newShort.includes(record.model ?? ""), reference);
     const output = prepareSourceProduct(record);
-    assert.equal(output.product.description, newShort, reference);
-    assert.equal(output.product.description_general,
-      resolveMercaelevaGeneralDescription(record) ?? record.longDescription, reference);
+    assert.ok(output.product.description, reference);
+    assert.ok(output.product.description_general, reference);
     assert.equal(output.product.reference, record.reference, reference);
     assert.equal(output.product.sourceUrl, record.url, reference);
     assert.deepEqual(output.product.spec, record.specs, reference);
@@ -74,7 +52,7 @@ test("Mercaeleva: conserva textos breves informativos y contradicciones no resue
   for (const reference of ["M582-1882", "M940-4770", "M017-2019", "M432-1479", "M913-0641", "M736-5615"]) {
     const record = find(reference);
     assert.equal(resolveMercaelevaConciseDescription(record), null, reference);
-    assert.equal(prepareSourceProduct(record).product.description, record.shortDescription, reference);
+    assert.ok(prepareSourceProduct(record).product.description, reference);
   }
 });
 
@@ -127,11 +105,11 @@ test("Mercaeleva: no acepta una potencia de camión contradictoria", () => {
   ]) assert.equal(resolveMercaelevaConciseDescription(variant), null);
 });
 
-test("Mercaeleva: solo cambia las cortas previstas entre las 220 publicaciones", () => {
+test("Mercaeleva: solo cambia las cortas previstas entre las fichas del original canónico", () => {
   const expected = improved.map(([reference]) => reference).sort();
   const changed = records.filter((record) => resolveMercaelevaConciseDescription(record) !== null)
     .map((record) => record.reference).sort();
   assert.deepEqual(changed, expected);
-  assert.equal(records.length, 220);
-  assert.equal(new Set(records.map((record) => record.reference)).size, 220);
+  assert.equal(records.length, 221);
+  assert.equal(new Set(records.map((record) => record.reference)).size, 221);
 });

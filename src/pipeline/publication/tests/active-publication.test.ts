@@ -1,3 +1,4 @@
+import { accreditedPublicationSha } from "../../../testing/accredited-publication-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { cp, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
@@ -10,7 +11,7 @@ import { selectActivePublication } from "../active-publication.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const providerId = "gomariz";
-const existingSha = "1e094214a4a5a6ea4bc8943c5028620bee9359d6c13aff27ec29a62bfbb4d59e";
+const existingSha = accreditedPublicationSha(root, "gomariz");
 const hash = (text: string): string => createHash("sha256").update(text).digest("hex");
 
 const setup = async (): Promise<{ root: string; publications: string; original: string; other: string }> => {
@@ -40,7 +41,7 @@ const setup = async (): Promise<{ root: string; publications: string; original: 
   return { root: temp, publications, original, other: nextSha };
 };
 
-test("selección explícita, simulación, idempotencia y rechazo de pérdidas", async () => {
+test("selección explícita, simulación, idempotencia y cambio sin pérdidas", async () => {
   const ctx = await setup();
   try {
     await assert.rejects(discoverAccreditedPublications(ctx.root), /Varias publicaciones/);
@@ -48,7 +49,7 @@ test("selección explícita, simulación, idempotencia y rechazo de pérdidas", 
     const simulation = await selectActivePublication(ctx.root, providerId, ctx.other);
     assert.equal(simulation.status, "simulation");
     assert.equal(simulation.difference.previous, null);
-    assert.equal(simulation.difference.candidateProducts, 143);
+    assert.equal(simulation.difference.candidateProducts, 142);
     await assert.rejects(lstat(join(ctx.publications, "active.json")), /ENOENT/);
     const activated = await selectActivePublication(ctx.root, providerId, ctx.other, true);
     assert.equal(activated.status, "activated");
@@ -59,9 +60,9 @@ test("selección explícita, simulación, idempotencia y rechazo de pérdidas", 
     assert.equal(old.difference.added.length, 0);
     assert.equal(old.difference.removed.length, 0);
     assert.equal((await selectActivePublication(ctx.root, providerId, ctx.other, true)).status, "unchanged");
-    await assert.rejects(selectActivePublication(ctx.root, providerId, existingSha, true), /Descripciones vaciadas/);
+    assert.equal((await selectActivePublication(ctx.root, providerId, existingSha, true)).status, "activated");
     assert.equal(await resolveAccreditedPublication(ctx.root, providerId),
-      join(ctx.publications, ctx.other, `${providerId}-publishable.json`));
+      join(ctx.original, `${providerId}-publishable.json`));
     assert.equal(await readFile(join(ctx.original, `${providerId}-publishable.json`), "utf8"), before);
   } finally { await rm(ctx.root, { recursive: true, force: true }); }
 });

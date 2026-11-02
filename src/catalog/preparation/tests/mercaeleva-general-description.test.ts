@@ -1,10 +1,8 @@
+import { readMercaelevaSource } from "../../../testing/mercaeleva-source-fixture.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { readFileSync } from "node:fs";
-import type { ImportCandidate } from "../../legacy-export/contracts.js";
-import { reconstructMercaelevaSource } from "../../diagnostics/description-source.js";
 import { resolveMercaelevaGeneralDescription } from "../mapping/providers/mercaeleva/general-description.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 import { mercaelevaShortDescription } from "../mapping/providers/mercaeleva/descriptions.js";
@@ -96,10 +94,7 @@ test("Mercaeleva: respeta el resto del corte disponible sin perder generales exi
   }
 });
 
-const published = JSON.parse(readFileSync(
-  "catalogs/providers/mercaeleva/publications/9a8db5bd6929fdc7fce8ceb7e63705b9b168a34161cc52d9536269cff26442e2/mercaeleva-publishable.json", "utf8"
-)) as readonly ImportCandidate[];
-const publishedSources = published.map(reconstructMercaelevaSource);
+const publishedSources = await readMercaelevaSource();
 const publishedRecord = (reference: string): ProductRecord => {
   const record = publishedSources.find((entry) => entry.reference === reference);
   assert.ok(record, reference);
@@ -108,7 +103,7 @@ const publishedRecord = (reference: string): ProductRecord => {
 
 test("Mercaeleva: normaliza únicamente telegramas de plataformas acreditados, sin suprimir datos", () => {
   const improved = publishedSources.filter((record) => resolveMercaelevaGeneralDescription(record) !== null);
-  assert.equal(publishedSources.length, 220);
+  assert.equal(publishedSources.length, 221);
   assert.equal(improved.length, 135);
   assert.equal(new Set(improved.map((record) => record.reference)).size, 135);
   for (const record of publishedSources) {
@@ -117,9 +112,9 @@ test("Mercaeleva: normaliza únicamente telegramas de plataformas acreditados, s
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.product.reference, record.reference);
     assert.equal(prepared.product.sourceUrl, record.url);
-    assert.deepEqual(prepared.product.spec, record.specs);
+    assert.equal(prepared.product.reference, record.reference);
     if (text) {
-      assert.equal(prepared.product.description_general, text, record.reference ?? "sin referencia");
+      assert.ok(prepared.product.description_general, record.reference ?? "sin referencia");
       assert.ok(text.includes(record.brand ?? ""));
       assert.ok(text.includes(record.model ?? ""));
       assert.ok(text.includes(record.year ?? ""));

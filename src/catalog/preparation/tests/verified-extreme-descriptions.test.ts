@@ -1,21 +1,20 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { readMercaelevaAccreditedBaseline } from "../../../testing/accredited-publication-fixture.js";
-import { reconstructMercaelevaSource } from "../../diagnostics/description-source.js";
+import { readMercaelevaSource } from "../../../testing/mercaeleva-source-fixture.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 import { mbModelEditorialEvidence } from "../evidence/providers/mercaeleva/mb-model-description.js";
 import { braviSkydeckEditorialEvidence } from "../evidence/providers/gam/bravi-skydeck-editorial.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json");
-const mercaeleva = await readMercaelevaAccreditedBaseline(process.cwd());
+const mercaeleva = await readMercaelevaSource();
 
 const originalGam = gam.products.find((record) => record.reference === "2364");
 assert.ok(originalGam);
 const originalMb = ["M062-8951", "M119-9334"].map((reference) => {
-  const publication = mercaeleva.products.find((record) => record.reference === reference);
-  assert.ok(publication);
-  return reconstructMercaelevaSource(publication);
+  const original = mercaeleva.find((record) => record.reference === reference);
+  assert.ok(original);
+  return original;
 });
 
 test("completa primero las tres fichas sin descripciones mediante fuentes de modelo acreditadas", () => {

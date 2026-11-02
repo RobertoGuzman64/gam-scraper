@@ -1,3 +1,4 @@
+import { accreditedPublicationSha } from "../../../testing/accredited-publication-fixture.js";
 import assert from "node:assert/strict";
 import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -9,7 +10,7 @@ import { inspectCampaignOperations } from "../operations-status.js";
 import { inspectOperationsInventory } from "../operations-inventory.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
-const sha = "1e094214a4a5a6ea4bc8943c5028620bee9359d6c13aff27ec29a62bfbb4d59e";
+const sha = accreditedPublicationSha(root, "gomariz");
 
 test("estado consulta el final individual vigente sin acreditarlo como campaña global", async () => {
   const temp = await mkdtemp(join(tmpdir(), "inventario-final-vigente-"));

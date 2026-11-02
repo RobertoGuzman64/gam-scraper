@@ -1,16 +1,11 @@
+import { readMercaelevaSource } from "../../../testing/mercaeleva-source-fixture.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFileSync } from "node:fs";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import type { ImportCandidate } from "../../legacy-export/contracts.js";
-import { reconstructMercaelevaSource } from "../../diagnostics/description-source.js";
 import { verifiedMercaelevaCriticalGeneral } from "../evidence/providers/mercaeleva/critical-general-descriptions.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const published: readonly ImportCandidate[] = JSON.parse(readFileSync(
-  "catalogs/providers/mercaeleva/publications/9a8db5bd6929fdc7fce8ceb7e63705b9b168a34161cc52d9536269cff26442e2/mercaeleva-publishable.json", "utf8"
-));
-const sources = published.map(reconstructMercaelevaSource);
+const sources = await readMercaelevaSource();
 const targets = ["M432-1479", "M913-0641", "M736-5615", "M095-5362", "M144-5512", "M171-6370", "M200-9533"] as const;
 const find = (reference: string): ProductRecord => {
   const found = sources.find((record) => record.reference === reference);
@@ -20,7 +15,7 @@ const find = (reference: string): ProductRecord => {
 const words = (text: string | null): number => text?.split(/\s+/u).filter(Boolean).length ?? 0;
 
 test("Mercaeleva: resuelve siete generales prioritarias breves con evidencia del modelo", () => {
-  assert.equal(sources.length, 220);
+  assert.equal(sources.length, 221);
   const matched = sources.filter((record) => verifiedMercaelevaCriticalGeneral(record) !== null);
   assert.deepEqual(new Set(matched.map((record) => record.reference)), new Set(targets));
   for (const record of matched) {

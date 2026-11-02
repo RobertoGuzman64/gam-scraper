@@ -1,42 +1,14 @@
+import { readMercaelevaSource } from "../../../testing/mercaeleva-source-fixture.js";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import type { ImportCandidate } from "../../legacy-export/contracts.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { sourceSemanticQualityIssues } from "../source/semantic-quality.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const gomariz = (await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json")).products;
 const gam = (await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json")).products;
-const published = JSON.parse(readFileSync(
-  "catalogs/providers/mercaeleva/publications/9a8db5bd6929fdc7fce8ceb7e63705b9b168a34161cc52d9536269cff26442e2/mercaeleva-publishable.json", "utf8"
-)) as readonly ImportCandidate[];
-
-const source = (candidate: ImportCandidate): ProductRecord => ({
-  providerId: candidate.providerId,
-  categoryKey: "venta",
-  categoryName: candidate.category ?? "",
-  url: candidate.sourceUrl,
-  title: candidate.title,
-  shortDescription: candidate.description,
-  longDescription: candidate.description_general,
-  price: candidate.price === null ? null : String(candidate.price),
-  condition: candidate.condition === "Nuevo" ? "Nuevo" : candidate.condition === "Segunda_Mano" ? "Segunda mano" : null,
-  reference: candidate.reference,
-  brand: typeof candidate.spec.Marca === "string" ? candidate.spec.Marca : null,
-  model: typeof candidate.spec.Modelo === "string" ? candidate.spec.Modelo : null,
-  year: null,
-  location: null,
-  country: null,
-  horometer: null,
-  serialNumber: null,
-  image: candidate.image,
-  images: candidate.images,
-  specs: candidate.spec
-});
-
-const mercaeleva = published.map(source);
+const mercaeleva = await readMercaelevaSource();
 const find = (records: readonly ProductRecord[], reference: string): ProductRecord => {
   const record = records.find((item) => item.reference === reference);
   assert.ok(record, reference);
@@ -116,7 +88,7 @@ test("Miles expresados como 3000 y 3.000 kg son la misma capacidad", () => {
 test("Corte completo: solo cuatro conflictos no resueltos y sin contaminación de GAM", () => {
   assert.equal(gomariz.length, 143);
   assert.equal(gam.length, 983);
-  assert.equal(mercaeleva.length, 220);
+  assert.equal(mercaeleva.length, 221);
   const sources: readonly ProductRecord[] = [...gomariz, ...gam, ...mercaeleva];
   const found = sources.filter((record) => sourceSemanticQualityIssues(record).length).map((record) => record.reference);
   assert.deepEqual(found.sort(), [...conflicts].sort());

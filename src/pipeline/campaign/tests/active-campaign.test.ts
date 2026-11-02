@@ -1,3 +1,4 @@
+import { accreditedPublicationSha } from "../../../testing/accredited-publication-fixture.js";
 import assert from "node:assert/strict";
 import { cp, lstat, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -56,7 +57,7 @@ test("no se sustituye parcialmente una campaña global por una publicación indi
   try {
     await selectActiveCampaign(data.root, data.runId, true);
     const providerId = "gomariz";
-    const sha = "1e094214a4a5a6ea4bc8943c5028620bee9359d6c13aff27ec29a62bfbb4d59e";
+    const sha = accreditedPublicationSha(resolve("."), "gomariz");
     const original = resolve("catalogs", "providers", providerId, "publications", sha);
     const destination = join(data.root, "catalogs", "providers", providerId, "publications", sha);
     await mkdir(join(data.root, "catalogs", "providers", providerId, "publications"), { recursive: true });

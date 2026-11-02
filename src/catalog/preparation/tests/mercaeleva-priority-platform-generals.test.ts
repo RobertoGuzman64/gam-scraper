@@ -1,16 +1,11 @@
+import { readMercaelevaSource } from "../../../testing/mercaeleva-source-fixture.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFileSync } from "node:fs";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import type { ImportCandidate } from "../../legacy-export/contracts.js";
-import { reconstructMercaelevaSource } from "../../diagnostics/description-source.js";
 import { verifiedPriorityPlatformGeneral, priorityPlatformManufacturerSources } from "../evidence/providers/mercaeleva/priority-platform-generals.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const published: readonly ImportCandidate[] = JSON.parse(readFileSync(
-  "catalogs/providers/mercaeleva/publications/9a8db5bd6929fdc7fce8ceb7e63705b9b168a34161cc52d9536269cff26442e2/mercaeleva-publishable.json", "utf8"
-));
-const sources = published.map(reconstructMercaelevaSource);
+const sources = await readMercaelevaSource();
 const targets = ["M178-6194", "M205-2951", "M572-8190", "M030-7485", "M005-4474"] as const;
 const find = (reference: string): ProductRecord => {
   const record = sources.find((item) => item.reference === reference);
@@ -20,7 +15,7 @@ const find = (reference: string): ProductRecord => {
 const words = (value: string | null | undefined): number => value?.split(/\s+/u).filter(Boolean).length ?? 0;
 
 test("Mercaeleva: las generales de plataformas prioritarias se enriquecen solo con identidad acreditada", () => {
-  assert.equal(sources.length, 220);
+  assert.equal(sources.length, 221);
   const matched = sources.filter((record) => verifiedPriorityPlatformGeneral(record) !== null);
   assert.deepEqual(new Set(matched.map((item) => item.reference)), new Set(targets));
   assert.equal(priorityPlatformManufacturerSources.length, 3);

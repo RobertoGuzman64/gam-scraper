@@ -1,3 +1,4 @@
+import { accreditedPublicationSha } from "../../../testing/accredited-publication-fixture.js";
 import assert from "node:assert/strict";
 import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -10,7 +11,7 @@ import { selectActivePublication } from "../../../pipeline/publication/active-pu
 
 const repository = fileURLToPath(new URL("../../../../", import.meta.url));
 const providerId = "gomariz";
-const sha = "1e094214a4a5a6ea4bc8943c5028620bee9359d6c13aff27ec29a62bfbb4d59e";
+const sha = accreditedPublicationSha(repository, "gomariz");
 const relative = join("catalogs", "providers", providerId, "publications");
 
 const withPublishedVersion = async (task: (root: string, directory: string, folder: string) => Promise<void>): Promise<void> => {
