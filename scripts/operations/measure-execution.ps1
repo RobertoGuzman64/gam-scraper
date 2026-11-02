@@ -1,6 +1,6 @@
 param(
     [ValidateRange(1, 64)]
-    [int]$Concurrency = 8
+    [int]$Concurrency = 6
 )
 
 $ErrorActionPreference = "Stop"
@@ -20,13 +20,25 @@ try {
     $adjustedLog = Join-Path $work "candidate.log"
 
     Write-Host "Measuring baseline (concurrencia predeterminada)"
-    & node scripts/run-tests.mjs --medicion $basePath *> $baseLog
-    $baseExit = $LASTEXITCODE
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & node scripts/run-tests.mjs --medicion $basePath 2>&1 | Tee-Object -FilePath $baseLog | Out-Host
+        $baseExit = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
 
     if ($baseExit -eq 0) {
         Write-Host "Measuring candidate con concurrencia $Concurrency"
-        & node scripts/run-tests.mjs --concurrencia $Concurrency --medicion $adjustedPath *> $adjustedLog
-        $adjustedExit = $LASTEXITCODE
+        $previousPreference = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        try {
+            & node scripts/run-tests.mjs --concurrencia $Concurrency --medicion $adjustedPath 2>&1 | Tee-Object -FilePath $adjustedLog | Out-Host
+            $adjustedExit = $LASTEXITCODE
+        } finally {
+            $ErrorActionPreference = $previousPreference
+        }
     } else {
         $adjustedExit = 1
     }

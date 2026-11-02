@@ -44,32 +44,35 @@ const parseOptions = (argumentsList) => {
 };
 
 const PRIORITIZED_TESTS = [
-  "pipeline/campaign/tests/finalization-and-delivery/delivery.test.js",
-  "pipeline/campaign/tests/finalization-and-delivery/delivery-retention.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/delivery-recovery.test.js",
+  "pipeline/campaign/tests/finalization-and-delivery/delivery-retention.test.js",
+  "pipeline/campaign/tests/finalization-and-delivery/delivery.test.js",
+  "pipeline/campaign/tests/finalization-and-delivery/finalization-interventions.test.js",
+  "pipeline/campaign/tests/finalization-and-delivery/finalization-recovery.test.js",
+  "cli/commands/catalog/tests/catalog-content-gaps-comparison.test.js",
+  "pipeline/campaign/tests/reference/reference-update.test.js",
+  "pipeline/campaign/tests/operations/operations-status.test.js",
+  "pipeline/publication/tests/individual-editorial.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/finalization-editorial.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/finalization-draft-integrity.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/finalization-operations.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/finalization.test.js",
-  "cli/commands/catalog/tests/catalog-content-gaps-comparison.test.js",
   "cli/commands/catalog/tests/catalog-content-gaps-discovery.test.js",
   "cli/commands/catalog/tests/catalog-content-gaps.test.js",
   "cli/commands/catalog/tests/catalog-content-gaps-publications.test.js",
-  "pipeline/campaign/tests/finalization-and-delivery/finalization-interventions.test.js",
   "catalog/interventions/tests/multiple-scripts.test.js",
-  "pipeline/campaign/tests/finalization-and-delivery/finalization-recovery.test.js",
+  "pipeline/campaign/tests/discovery-flow/active-campaign.test.js",
+  "infrastructure/filesystem/campaign/tests/portable-campaign.test.js",
   "pipeline/campaign/tests/discovery-flow/workflow.test.js",
   "catalog/interventions/tests/manual-interventions.test.js",
   "catalog/interventions/tests/intervention-application.test.js",
-  "pipeline/campaign/tests/reference/reference-update.test.js",
-  "pipeline/campaign/tests/operations/operations-status.test.js",
   "catalog/interventions/tests/intervention-simulation.test.js",
   "catalog/interventions/tests/catalog.test.js",
   "infrastructure/filesystem/catalog/tests/campaign-accreditation.test.js"
 ];
 const testPriority = new Map(PRIORITIZED_TESTS.map((path, index) => [path, index]));
 
-const DEFAULT_CONCURRENCY = Math.min(6, availableParallelism());
+const DEFAULT_CONCURRENCY = Math.min(12, Math.max(1, availableParallelism() * 2));
 const options = parseOptions(process.argv.slice(2));
 const effectiveConcurrency = options.concurrency ?? DEFAULT_CONCURRENCY;
 
@@ -104,7 +107,7 @@ const filePaths = new Set(files.map((file) => resolve(file)));
 const interactive = process.stdout.isTTY === true && process.env.CI !== "true" && process.env.TERM !== "dumb";
 const completedFiles = new Set();
 const startedFiles = new Set();
-const startedAt = Date.now();
+const startedAt = performance.now();
 const frames = ["|", "/", "-", "\\"];
 let frameIndex = 0;
 const errors = [];
@@ -126,7 +129,7 @@ const renderProgress = () => {
 
   const started = startedFiles.size;
   const completed = completedFiles.size;
-  const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+  const elapsed = Math.floor((performance.now() - startedAt) / 1000);
   const frame = frames[frameIndex % frames.length];
   frameIndex += 1;
   const pending = Math.max(0, started - completed);
@@ -159,14 +162,24 @@ const describeOmission = ({ name, file, line, reason }) => {
 
 let summary;
 renderProgress();
-const progressTimer = interactive ? setInterval(renderProgress, 350) : undefined;
+let lastPeriodicReport = 0;
+const renderMeasuredProgress = () => {
+  if (interactive || !profile) return;
+  const elapsed = Math.floor((performance.now() - startedAt) / 1000);
+  if (elapsed - lastPeriodicReport < 10) return;
+  lastPeriodicReport = elapsed;
+  process.stdout.write(`TESTS | ${completedFiles.size}/${files.length} archivos informados | ${counts.passed} correctos | ${counts.failed} fallidos | ${elapsed}s transcurridos\n`);
+};
+const progressTimer = interactive || profile
+  ? setInterval(interactive ? renderProgress : renderMeasuredProgress, interactive ? 350 : 1000)
+  : undefined;
 
 try {
   for await (const event of run({ files, concurrency: effectiveConcurrency })) {
     if (event.type === "test:dequeue" && typeof event.data.name === "string" && filePaths.has(resolve(event.data.name))) {
       const file = resolve(event.data.name);
       startedFiles.add(file);
-      if (profileStarts && !profileStarts.has(file)) profileStarts.set(file, Date.now() - startedAt);
+      if (profileStarts && !profileStarts.has(file)) profileStarts.set(file, performance.now() - startedAt);
       renderProgress();
     }
 
@@ -180,11 +193,16 @@ try {
     }
 
     if (profile && event.type === "test:summary" && event.data.file) {
+      const inicio = profileStarts?.get(resolve(event.data.file)) ?? null;
+      const duracion = event.data.duration_ms ?? 0;
+      const recibido = performance.now() - startedAt;
       profile.files.push({
         archivo: relative(process.cwd(), event.data.file),
-        tiempo_ms: event.data.duration_ms ?? 0,
-        inicio_ms: profileStarts?.get(resolve(event.data.file)) ?? null,
-        fin_ms: Date.now() - startedAt,
+        tiempo_ms: duracion,
+        inicio_ms: inicio,
+        fin_ms: inicio === null ? null : inicio + duracion,
+        informe_recibido_ms: recibido,
+        retraso_informe_ms: inicio === null ? null : Math.max(0, recibido - inicio - duracion),
         correctos: event.data.counts?.passed ?? 0,
         fallidos: event.data.counts?.failed ?? 0
       });
@@ -260,7 +278,9 @@ if (profile) {
       tiempo_acumulado_archivos_ms: totalFileDuration,
       archivo_mas_lento_ms: longestFileDuration,
       cota_inferior_ideal_ms: idealLowerBound,
-      diferencia_cota_ideal_ms: Math.max(0, summary.duration_ms - idealLowerBound)
+      diferencia_cota_ideal_ms: Math.max(0, summary.duration_ms - idealLowerBound),
+      ultimo_fin_estimado_ms: Math.max(0, ...profile.files.map((file) => file.fin_ms ?? 0)),
+      maximo_retraso_informe_ms: Math.max(0, ...profile.files.map((file) => file.retraso_informe_ms ?? 0))
     },
     archivos: profile.files,
     pruebas: profile.tests
