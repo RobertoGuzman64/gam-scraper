@@ -157,6 +157,9 @@ test("CLI simula y aplica manualmente con el SHA exacto, sin publicar", async ()
     });
     assert.match(applied, /APLICADA/);
     assert.match(applied, /Salida derivada, no publicable aún/);
+    assert.equal((applied.match(/TRABAJO REALIZADO \| INTERVENCIÓN/g) ?? []).length, 1);
+    assert.match(applied, /Máquinas transformadas: 1/);
+    assert.doesNotMatch(simulated, /TRABAJO REALIZADO/);
     const second = spawnSync(process.execPath, [...args, "--campana", fixture.campaign, "--aplicar", "--plan", fixture.simulation.planSha256], {
       cwd: process.cwd(), encoding: "utf8", timeout: 20000
     });

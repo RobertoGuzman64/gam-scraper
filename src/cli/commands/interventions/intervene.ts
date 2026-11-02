@@ -1,4 +1,5 @@
 import { printReportLine } from "../../reporting/terminal.js";
+import { formatInterventionWork } from "../../reporting/intervention-work.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readInterventionSource } from "../../../infrastructure/filesystem/interventions/intervention-source.js";
@@ -87,6 +88,7 @@ export const runIntervene = async (args: readonly string[]): Promise<void> => {
     `  Resultado: ${applied.path}`,
     "  Originales: SIN MODIFICAR | Salida derivada, no publicable aún"
   ].join("\n"));
+  for (const line of formatInterventionWork(applied.workSummary)) printReportLine(line);
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

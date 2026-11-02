@@ -22,6 +22,7 @@ test("rechaza un script de otra campaña y requiere autorización explícita par
     const script = await campaignScript(data.root, data.runId);
     const preview = await interveneActiveCampaign(data.root, "gam", [script], false);
     assert.equal(preview.applied, false);
+    assert.equal(preview.workSummary, undefined);
     assert.ok(preview.simulation);
     assert.equal(preview.simulation.changes.length, 1);
     const oldDir = join(data.root, "storage", "interventions", "otro-lote", "scripts");
@@ -35,6 +36,8 @@ test("rechaza un script de otra campaña y requiere autorización explícita par
     const before = await readFile(originalFile);
     const applied = await interveneActiveCampaign(data.root, "gam", [script], true);
     assert.equal(applied.applied, true);
+    assert.ok(applied.workSummary);
+    assert.equal(applied.workSummary.transformedProducts, 1);
     assert.ok(applied.derivedFile);
     assert.ok(applied.preparationFile);
     assert.deepEqual(await readFile(originalFile), before);

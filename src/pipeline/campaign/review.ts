@@ -1,5 +1,6 @@
 import { basename, dirname, join } from "node:path";
 import { prepareSavedCatalog } from "../preparation/prepare.js";
+import type { PreparationWorkSummary } from "../../catalog/diagnostics/preparation-work.js";
 import { validateCanonicalSource, validateOfflinePreparation } from "../validation/offline.js";
 import { discoverCampaign, listCampaignRuns } from "./discovery/search.js";
 import type { CampaignDiscovery, ProviderDiscovery } from "./discovery/search.js";
@@ -18,6 +19,7 @@ export type ReviewedProvider = {
   readonly ready?: number;
   readonly review?: number;
   readonly preparationFile?: string;
+  readonly workSummary?: PreparationWorkSummary;
   readonly items?: readonly ReviewItem[];
   readonly message?: string;
 };
@@ -44,12 +46,10 @@ const inspectPreparation = async (
       root, "storage", "campaigns", campaignId, provider.providerId,
       `${basename(provider.catalog.path, "-catalog.json")}-preparation.json`
     );
-    if (!provider.preparation) {
-      await prepareSavedCatalog({
+    const newPreparation = !provider.preparation ? await prepareSavedCatalog({
         providerId: provider.providerId, source: provider.catalog.path, out: preparationFile,
         dryRun: false, compare: null
-      });
-    }
+      }) : null;
     const intervened = provider.preparation?.intervened === true;
     const verifiedSource = intervened ? join(dirname(dirname(preparationFile)), "catalog-derived.json") : provider.catalog.path;
     const result = await validateOfflinePreparation(provider.providerId, preparationFile, verifiedSource, null,
@@ -59,6 +59,7 @@ const inspectPreparation = async (
     return {
       providerId: provider.providerId, state: "validated", products: result.catalog.productCount,
       ready: result.ready, review: result.review, preparationFile,
+      ...(newPreparation === null ? {} : { workSummary: newPreparation.workSummary }),
       items: result.preparation.products.filter((entry) => entry.status === "review").map((entry) => ({
         reference: entry.product.reference?.trim() || "sin referencia",
         title: entry.product.title ?? "sin título",

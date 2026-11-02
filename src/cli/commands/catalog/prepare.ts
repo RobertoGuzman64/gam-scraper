@@ -1,5 +1,5 @@
 import { printReportLine } from "../../reporting/terminal.js";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
 import { prepareManainRecord } from "../../../pipeline/preparation/manain-record.js";
@@ -7,6 +7,9 @@ import { parseManainRecordOptions, parsePrepareOptions, prepareHelp } from "../.
 import { formatPriceAvailability } from "../../reporting/review-diagnostics.js";
 import { formatImportDiagnostics } from "../../reporting/import-diagnostics.js";
 import { printCommandError } from "../../reporting/errors.js";
+import { simulatePreparedRetention } from "../../../infrastructure/filesystem/preparation/preparation-retention.js";
+import { formatRetentionSimulation } from "../../reporting/retention-simulation.js";
+import { formatPreparationWork } from "../../reporting/preparation-work.js";
 
 export const runPrepare = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
@@ -52,8 +55,21 @@ export const runPrepare = async (args: readonly string[]): Promise<void> => {
     else printReportLine(`  Comparación: review→ready ${result.comparison.reviewToReady.length} | ready→review ${result.comparison.readyToReview.length} | categorías ${result.comparison.categoryChanged.length} | atributos ${result.comparison.attributesChanged.length}`);
     printReportLine(`  Reglas diferentes: ${result.comparison.rulesChanged ? "sí" : "no"} | Snapshots diferentes: ${result.comparison.snapshotsChanged ? "sí" : "no"}`);
   }
+  for (const line of formatPreparationWork(result.workSummary, options.dryRun)) printReportLine(line);
   if (options.dryRun) printReportLine("  Sin archivos escritos; la ejecución no consulta portales");
-  else printReportLine(`  Preparación: ${result.preparationFile}\n  Diagnósticos: ${result.diagnosticsFile}\n  Manifest: ${result.manifestFile}${result.comparisonFile ? `\n  Comparación: ${result.comparisonFile}` : ""}`);
+  else {
+    printReportLine(`  Preparación: ${result.preparationFile}\n  Diagnósticos: ${result.diagnosticsFile}\n  Manifest: ${result.manifestFile}${result.comparisonFile ? `\n  Comparación: ${result.comparisonFile}` : ""}`);
+    if (dirname(result.preparationFile) === resolve("storage", "prepared", options.providerId)) {
+      try {
+        const simulated = await simulatePreparedRetention(process.cwd(), options.providerId, undefined,
+          options.compare ? [options.compare] : []);
+        for (const line of formatRetentionSimulation(options.providerId, simulated)) printReportLine(line);
+      } catch (error) {
+        printReportLine(`RETENCIÓN (SIMULACIÓN) | No evaluable: ${error instanceof Error ? error.message : String(error)}`);
+        printReportLine("Eliminaciones reales: 0");
+      }
+    }
+  }
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

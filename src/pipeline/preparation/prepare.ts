@@ -5,6 +5,8 @@ import { buildProductIdentity } from "../../catalog/identity.js";
 import { prepareImportBatch } from "../../catalog/preparation/prepare.js";
 import { buildOfflineDiagnostics, compareOfflinePreparations } from "../../catalog/preparation/offline-diagnostics.js";
 import { buildSourceTriage } from "../../catalog/diagnostics/source-triage.js";
+import { measurePreparationWork } from "../../catalog/diagnostics/preparation-work.js";
+import type { PreparationWorkSummary } from "../../catalog/diagnostics/preparation-work.js";
 import type { SourceTriageGroup } from "../../catalog/diagnostics/source-triage.js";
 import type { OfflineDiagnostics, PreparationComparison } from "../../catalog/preparation/offline-diagnostics.js";
 import { parseOfflinePreparation } from "../../catalog/preparation/offline-document.js";
@@ -27,6 +29,7 @@ export type PrepareResult = {
   readonly preparation: OfflinePreparation;
   readonly diagnostics: OfflineDiagnostics & { readonly sourceTriage: readonly SourceTriageGroup[] };
   readonly comparison: PreparationComparison | null;
+  readonly workSummary: PreparationWorkSummary;
   readonly preparationFile: string;
   readonly diagnosticsFile: string;
   readonly manifestFile: string;
@@ -86,6 +89,7 @@ export const prepareSavedCatalog = async (options: PrepareOptions): Promise<Prep
     products: prepared.products
   }, options.providerId);
   const diagnostics = { ...buildOfflineDiagnostics(preparation), sourceTriage: buildSourceTriage(preparation, catalog.products) };
+  const workSummary = measurePreparationWork(catalog.products, preparation);
   let comparison: PreparationComparison | null = null;
   if (options.compare) {
     const previous = await readOfflinePreparation(resolve(options.compare), options.providerId);
@@ -109,5 +113,5 @@ export const prepareSavedCatalog = async (options: PrepareOptions): Promise<Prep
     ];
     await writeExclusive(files);
   }
-  return { preparation, diagnostics, comparison, preparationFile: out, diagnosticsFile, manifestFile, comparisonFile };
+  return { preparation, diagnostics, comparison, workSummary, preparationFile: out, diagnosticsFile, manifestFile, comparisonFile };
 };

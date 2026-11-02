@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
 import { interventionPreparationHelp, parseInterventionPreparationOptions } from "../../options/intervention-preparation.js";
 import { printCommandError } from "../../reporting/errors.js";
+import { formatPreparationWork } from "../../reporting/preparation-work.js";
 
 export const runPrepareIntervention = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
@@ -23,6 +24,7 @@ export const runPrepareIntervention = async (args: readonly string[]): Promise<v
     `  Salida: ${result.preparationFile}`,
     "  Estado: no publicable automáticamente; conserva las revisiones editoriales"
   ].join("\n"));
+  for (const line of formatPreparationWork(result.workSummary, options.dryRun)) printReportLine(line);
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

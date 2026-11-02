@@ -68,7 +68,48 @@ type NormalizeOptions = {
   readonly maxValuesPerKey: number;
 };
 
-type NormalizationStatistics = Pick<Report, "rowsWithSpecJson" | "rowsWithInvalidSpecJson" | "unknownKeys" | "renamedKeysTop" | "specsSummary">;
+export type NormalizationStatistics = Pick<Report, "rowsWithSpecJson" | "rowsWithInvalidSpecJson" | "unknownKeys" | "renamedKeysTop" | "specsSummary"> & {
+  readonly rowsProcessed: number;
+  readonly rowsTransformed: number;
+  readonly renamedKeysTotal: number;
+  readonly technicalValuesTransformed: number;
+};
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const rowChanged = (before: Readonly<Record<string, string>>, after: Readonly<Record<string, string>>): boolean =>
+  Object.keys(before).length !== Object.keys(after).length ||
+  Object.entries(before).some(([key, value]) => after[key] !== value);
+
+const countTechnicalChanges = (
+  raw: unknown,
+  renamedKeys: ReadonlyArray<{ readonly from: string; readonly to: string }>,
+  normalized: Readonly<Record<string, string | number | boolean>>
+): { readonly renamed: number; readonly values: number } => {
+  if (!isObject(raw)) return { renamed: 0, values: 0 };
+  const mappings = new Map(renamedKeys.map(({ from, to }) => [from, to]));
+  const sources = new Map<string, string[]>();
+  for (const key of Object.keys(raw)) {
+    const target = mappings.get(key) ?? key.trim();
+    const existing = sources.get(target) ?? [];
+    existing.push(key);
+    sources.set(target, existing);
+  }
+  let renamed = 0;
+  let values = 0;
+  for (const [key, value] of Object.entries(normalized)) {
+    const from = sources.get(key);
+    if (!from || from.length !== 1) continue;
+    const sourceKey = from[0];
+    if (sourceKey === undefined) continue;
+    if (sourceKey !== key) renamed += 1;
+    const originalValue = raw[sourceKey];
+    if ((typeof originalValue === "string" || typeof originalValue === "number" || typeof originalValue === "boolean") &&
+      originalValue !== value) values += 1;
+  }
+  return { renamed, values };
+};
 
 export const normalizeGamRows = async (
   rows: readonly Record<string, string>[],
@@ -78,6 +119,9 @@ export const normalizeGamRows = async (
 ): Promise<NormalizationStatistics> => {
   let rowsWithSpecJson = 0;
   let rowsWithInvalidSpecJson = 0;
+  let rowsTransformed = 0;
+  let renamedKeysTotal = 0;
+  let technicalValuesTransformed = 0;
 
   const unknownCounts = new Map<string, number>();
   const renamedCounts = new Map<string, { readonly from: string; readonly to: string; count: number }>();
@@ -87,6 +131,7 @@ export const normalizeGamRows = async (
 
   let processed = 0;
   for (const row of rows) {
+    const before = { ...row };
     processed += 1;
     if (processed % 250 === 0) {
       await onProgress(processed, rows.length);
@@ -149,6 +194,9 @@ export const normalizeGamRows = async (
       allNormalizedSpecKeys.add(k);
     }
 
+    const changes = countTechnicalChanges(parsedSpec.value, norm.renamedKeys, scalarSpec);
+    renamedKeysTotal += changes.renamed;
+    technicalValuesTransformed += changes.values;
     row["specJson"] = JSON.stringify(scalarSpec);
 
     if (options.expandSpecColumns) {
@@ -162,6 +210,7 @@ export const normalizeGamRows = async (
         if (!Object.prototype.hasOwnProperty.call(scalarSpec, key)) row[h] = "";
       }
     }
+    if (rowChanged(before, row)) rowsTransformed += 1;
   }
 
   const unknownKeysObj: Record<string, number> = {};
@@ -204,6 +253,10 @@ export const normalizeGamRows = async (
   }
 
   return {
+    rowsProcessed: rows.length,
+    rowsTransformed,
+    renamedKeysTotal,
+    technicalValuesTransformed,
     rowsWithSpecJson,
     rowsWithInvalidSpecJson,
     unknownKeys: unknownKeysObj,

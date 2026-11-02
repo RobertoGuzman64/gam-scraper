@@ -8,8 +8,10 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/scraping.js";
 import { writeOutputs } from "../../publication/publish.js";
 import { prepareSavedCatalog } from "../prepare.js";
+import { runPrepare } from "../../../cli/commands/catalog/prepare.js";
 import { compareOfflinePreparations } from "../../../catalog/preparation/offline-diagnostics.js";
 import { buildSourceTriage } from "../../../catalog/diagnostics/source-triage.js";
+import { measurePreparationWork } from "../../../catalog/diagnostics/preparation-work.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 
@@ -51,6 +53,8 @@ test("replay offline conserva máquinas sin precio, condiciones inciertas e iden
     try {
       const result = await prepareSavedCatalog(options(source, out));
       assert.equal(result.preparation.products.length, 12);
+      assert.deepEqual(result.workSummary, measurePreparationWork((await readCanonicalCatalog(source)).products, result.preparation));
+      assert.equal(result.workSummary.processedProducts, 12);
       assert.equal(result.preparation.totals.ready + result.preparation.totals.review, 12);
       assert.equal(result.preparation.products[0]?.product.condition, "Nuevo");
       assert.equal(result.preparation.products[1]?.product.condition, "Segunda_Mano");
@@ -182,6 +186,7 @@ for (const providerId of ["gomariz", "mercaeleva"] as const) {
       }], when, when);
       const result = await prepareSavedCatalog({ providerId, source, out, dryRun: false, compare: null });
       assert.equal(result.preparation.products.length, products.length);
+      assert.equal(result.workSummary.processedProducts, products.length);
       assert.equal(result.preparation.source.providerId, providerId);
       assert.equal(result.preparation.totals.ready + result.preparation.totals.review, 12);
       assert.ok(result.preparation.products.every((entry) => entry.product.price === null));
@@ -198,5 +203,21 @@ test("si el diagnóstico ya existe, rollback conserva el archivo ajeno y no deja
     await assert.rejects(prepareSavedCatalog(options(source, out)), { code: "EEXIST" });
     await assert.rejects(access(out), { code: "ENOENT" });
     assert.equal(await readFile(diagnostics, "utf8"), "contenido anterior");
+  });
+});
+
+
+test("preparar emite una sola medición operativa y distingue la simulación", async () => {
+  await withFixture(async ({ source, out }) => {
+    const messages: string[] = [];
+    const previous = console.log;
+    console.log = (...args: unknown[]): void => { messages.push(args.map(String).join(" ")); };
+    try {
+      await runPrepare(["gam", "--source", source, "--out", out, "--dry-run"]);
+    } finally { console.log = previous; }
+    assert.equal(messages.filter((message) => message === "EQUIPZILLA | TRABAJO SIMULADO").length, 1);
+    assert.ok(messages.includes("  Máquinas procesadas: 12"));
+    assert.ok(messages.every((message) => !message.includes("RETENCIÓN (SIMULACIÓN)")));
+    await assert.rejects(access(out), { code: "ENOENT" });
   });
 });

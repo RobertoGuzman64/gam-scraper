@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { lstat, mkdir, open, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
+import { publicationDirectoryForApproval } from "../../infrastructure/filesystem/catalog/publication-identity.js";
 import { isDeepStrictEqual } from "node:util";
 import { sha256 } from "../../catalog/editorial/campaign-accreditation.js";
 import type { PublishableSelection } from "../../catalog/editorial/select-publishable.js";
@@ -96,20 +97,20 @@ export const deliverIndividualProvider = async (
     throw new Error("Publicación individual: selección incoherente");
   }
   const files = createFiles(options.providerId, selection, accreditationText);
-  const directory = join(resolve(options.rootDirectory), "catalogs", "providers", options.providerId,
-    "publications", sha256(accreditationText));
-  const productFile = join(directory, `${options.providerId}-publishable.json`);
-  const result = {
-    providerId: options.providerId, publicationDirectory: directory, productFile,
+  const parent = join(resolve(options.rootDirectory), "catalogs", "providers", options.providerId, "publications");
+  const approvalSha256 = sha256(accreditationText);
+  const resultFor = (directory: string, status: IndividualDeliveryResult["status"]): IndividualDeliveryResult => ({
+    status, providerId: options.providerId, publicationDirectory: directory,
+    productFile: join(directory, `${options.providerId}-publishable.json`),
     publishable: selection.totals.publishable, excluded: selection.totals.excluded
-  };
-  if (mode === "simulation") return { ...result, status: "simulation" };
+  });
+  const directory = await publicationDirectoryForApproval(parent, approvalSha256);
+  if (mode === "simulation") return resultFor(directory, "simulation");
   if (await existing(directory)) {
     await verifyPublication(directory, files);
-    return { ...result, status: "verified" };
+    return resultFor(directory, "verified");
   }
   if (mode === "verify") throw new Error("No existe una publicación individual para esta acreditación");
-  const parent = dirname(directory);
   await mkdir(parent, { recursive: true });
   const lockFile = join(parent, ".publication.lock");
   let lock;
@@ -120,9 +121,10 @@ export const deliverIndividualProvider = async (
   }
   const stage = join(parent, `.publication-${randomUUID()}.tmp`);
   try {
-    if (await existing(directory)) {
-      await verifyPublication(directory, files);
-      return { ...result, status: "verified" };
+    const lockedDirectory = await publicationDirectoryForApproval(parent, approvalSha256);
+    if (await existing(lockedDirectory)) {
+      await verifyPublication(lockedDirectory, files);
+      return resultFor(lockedDirectory, "verified");
     }
     await mkdir(stage);
     for (const file of files) await writeFile(join(stage, file.name), file.content, { flag: "wx" });
@@ -132,10 +134,11 @@ export const deliverIndividualProvider = async (
       latestApproval !== accreditationText) {
       throw new Error("La preparación o aprobación cambió durante la publicación");
     }
-    if (await existing(directory)) throw new Error("Otra publicación creó este destino; no se sobrescribe");
-    await rename(stage, directory);
-    await verifyPublication(directory, files);
-    return { ...result, status: "published" };
+    if (await publicationDirectoryForApproval(parent, approvalSha256) !== lockedDirectory ||
+      await existing(lockedDirectory)) throw new Error("Otra publicación creó este destino; no se sobrescribe");
+    await rename(stage, lockedDirectory);
+    await verifyPublication(lockedDirectory, files);
+    return resultFor(lockedDirectory, "published");
   } finally {
     await rm(stage, { recursive: true, force: true });
     await lock.close();

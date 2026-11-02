@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { Dirent } from "node:fs";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
+import { isPublicationDirectoryName, publicationApprovalSha, resolvePublicationDirectory } from "./publication-identity.js";
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { readActiveCatalogIndex } from "./active-selection.js";
 import { readPortableCampaign } from "./portable-campaign.js";
@@ -36,7 +37,6 @@ const parsePublicationJson = (raw: string, path: string): unknown => {
   }
 };
 
-const approvalId = (value: string): boolean => /^[a-f0-9]{64}$/.test(value);
 const providerName = (value: string): boolean => /^[a-z][a-z0-9_-]*$/.test(value);
 
 const verifiedFile = async (path: string): Promise<string> => {
@@ -67,37 +67,36 @@ export const resolveAccreditedPublication = async (root: string, providerId: str
     if (isRecord(error) && error.code === "ENOENT") throw publicationError(folder, "versión individual vigente ausente");
     throw error;
   }
-  const versions = entries.filter((entry) => entry.isDirectory() && approvalId(entry.name));
+  const versions = entries.filter((entry) => isPublicationDirectoryName(entry.name));
   const index = join(folder, "active.json");
   const hasIndex = entries.some((entry) => entry.name === "active.json");
   let selected: string | undefined;
   if (selectedSource) {
     selected = selectedSource.approvalSha256;
-    if (!versions.some((entry) => entry.name === selected)) {
+    if (!await resolvePublicationDirectory(folder, selected)) {
       throw publicationError(folder, "la versión individual seleccionada no existe");
     }
   } else if (hasIndex) {
     const document = parsePublicationJson(await verifiedFile(index), index);
     if (!isRecord(document) || document.version !== 1 || document.providerId !== providerId ||
-      typeof document.approvalSha256 !== "string" || !approvalId(document.approvalSha256) ||
+      typeof document.approvalSha256 !== "string" || !/^[a-f0-9]{64}$/.test(document.approvalSha256) ||
       Object.keys(document).length !== 3) {
       throw publicationError(index, "selección vigente inválida");
     }
     selected = document.approvalSha256;
-    if (!versions.some((entry) => entry.name === selected)) {
+    if (!await resolvePublicationDirectory(folder, selected)) {
       throw publicationError(index, "la versión seleccionada no existe o no es un directorio regular");
     }
   } else if (versions.length > 1) {
     if (allowAmbiguous) return null;
     throw new Error(`Varias publicaciones de ${providerId} en ${folder}; utiliza publicacion:vigente para seleccionar una expresamente`);
-  } else selected = versions[0]?.name;
+  } else if (versions[0]) {
+    const directory = join(folder, versions[0].name);
+    selected = await publicationApprovalSha(directory);
+  }
   if (!selected) return null;
-  const directory = join(folder, selected);
-  const dirInfo = await lstat(directory);
-  if (!dirInfo.isDirectory() || dirInfo.isSymbolicLink()) throw publicationError(directory, "directorio de versión no regular");
-  const accreditationFile = join(directory, "accreditation.json");
-  const approvalHash = sha256(await verifiedFile(accreditationFile));
-  if (approvalHash !== selected) throw publicationError(directory, "carpeta SHA distinta de la aprobación acreditada");
+  const directory = await resolvePublicationDirectory(folder, selected);
+  if (!directory) throw publicationError(folder, "versión seleccionada ausente");
   const file = join(directory, `${providerId}-publishable.json`);
   for (const name of [`${providerId}-publishable.json`, "manifest.json"]) await verifiedFile(join(directory, name));
   const verified = await readAccreditedPublication(file);
@@ -178,6 +177,9 @@ export const readAccreditedPublication = async (file: string): Promise<{
     throw publicationError(path, `SHA256 distinto del manifest: esperado ${String(expectedProductHash)}, actual ${productHash}${crlfDiagnostic(raw, expectedProductHash)}`);
   }
   const approvalHash = sha256(rawAccreditation);
+  if (isPublicationDirectoryName(basename(directory)) && !approvalHash.startsWith(basename(directory))) {
+    throw publicationError(directory, "alias o carpeta SHA distinta de la aprobación acreditada");
+  }
   const expectedApprovalHash = manifest.files["accreditation.json"];
   if (expectedApprovalHash !== approvalHash || manifest.approvalSha256 !== approvalHash) {
     throw publicationError(accreditationPath, `SHA256 de acreditación distinto del manifest: esperados ${String(expectedApprovalHash)} y ${String(manifest.approvalSha256)}, actual ${approvalHash}${crlfDiagnostic(rawAccreditation, expectedApprovalHash)}`);

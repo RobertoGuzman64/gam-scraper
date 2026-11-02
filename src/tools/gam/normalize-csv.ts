@@ -6,6 +6,7 @@ import { dirname, resolve } from "node:path";
 import { parseCsv } from "../../shared/csv-parse.js";
 import { toCsv } from "../../shared/csv.js";
 import { normalizeGamRows, type Report } from "./normalization/normalize-rows.js";
+import { formatNormalizationWork } from "../../cli/reporting/normalization-work.js";
 
 type Args = {
   readonly input: string;
@@ -110,7 +111,7 @@ const main = async (status: LiveStatus): Promise<string> => {
   if (!args.allowUnknown && (unknownTotal > 0 || stats.rowsWithInvalidSpecJson > 0)) {
     process.exitCode = 1;
   }
-  return `${rows.length} filas | JSON inválidos: ${stats.rowsWithInvalidSpecJson} | Claves desconocidas: ${unknownTotal}\n  CSV: ${outputPath}\n  Informe: ${reportPath}`;
+  return [...formatNormalizationWork(stats), `${rows.length} filas | JSON inválidos: ${stats.rowsWithInvalidSpecJson} | Claves desconocidas: ${unknownTotal}`, `  CSV: ${outputPath}`, `  Informe: ${reportPath}`].join("\n");
 };
 
 await runToolTask("NORMALIZACIÓN GAM", main);

@@ -7,6 +7,7 @@ import { discoverCampaignCatalogHistory } from "../../../pipeline/campaign/disco
 import { assessInterventionMaintenance } from "../../../catalog/interventions/maintenance.js";
 import { formatInterventionSimulation } from "../interventions/intervene.js";
 import { formatInterventionComparison } from "../../reporting/intervention-comparison.js";
+import { formatInterventionWork } from "../../reporting/intervention-work.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { formatHeader, printStatus, printReportLine } from "../../reporting/terminal.js";
 
@@ -130,6 +131,7 @@ export const runCampaignIntervention = async (args: readonly string[]): Promise<
   printStatus("PASS", `INTERVENCIÓN APLICADA | ${result.derivedFile}`);
   printStatus("PASS", `PREPARACIÓN VALIDADA | ${result.preparationFile}`);
   printReportLine(`  Ready ${result.ready} | Review ${result.review}`);
+  if (result.workSummary) for (const line of formatInterventionWork(result.workSummary)) printReportLine(line);
   printReportLine("  La publicación requiere acreditación editorial explícita; continúa con acreditar");
 };
 

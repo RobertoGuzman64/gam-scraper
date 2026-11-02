@@ -86,6 +86,7 @@ test("prepara y valida los tres catálogos del mismo run sin cambiar los Review;
       assert.equal(p.ready! + p.review!, p.products);
       assert.ok(p.preparationFile?.includes(join("storage", "campaigns", "revision-actual")));
       assert.equal(p.items?.length, p.review);
+      assert.equal(p.workSummary?.processedProducts, p.products);
       for (const issue of p.items ?? []) {
         assert.ok(issue.reference.length > 0);
         assert.ok(issue.url.length > 0);
@@ -95,6 +96,7 @@ test("prepara y valida los tres catálogos del mismo run sin cambiar los Review;
     const second = await reviewActiveCampaign(root);
     assert.equal(second.complete, true, JSON.stringify(second.providers.filter((p) => p.state !== "validated")));
     assert.deepEqual(second.providers.map((p) => p.preparationFile), first.providers.map((p) => p.preparationFile));
+    assert.ok(second.providers.every((provider) => provider.workSummary === undefined));
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 

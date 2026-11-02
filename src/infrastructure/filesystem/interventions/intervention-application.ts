@@ -3,6 +3,7 @@ import { isDeepStrictEqual } from "node:util";
 import { mkdir, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { basename, join, relative, resolve, sep } from "node:path";
 import { applyInterventionToCatalog } from "../../../catalog/interventions/application.js";
+import { measureAppliedIntervention, type InterventionWorkSummary } from "../../../catalog/diagnostics/intervention-work.js";
 import { validateInterventionScriptSelection } from "../intervention-scripts/script-location.js";
 import { simulateIntervention } from "../../../catalog/interventions/simulation.js";
 import { readInterventionScriptVersions } from "../intervention-scripts/script-selection.js";
@@ -35,6 +36,7 @@ export type AppliedIntervention = {
   readonly derivedSha256: string;
   readonly planSha256: string;
   readonly affectedProducts: number;
+  readonly workSummary: InterventionWorkSummary;
 };
 
 export const persistAppliedIntervention = async (options: {
@@ -68,6 +70,7 @@ export const persistAppliedIntervention = async (options: {
     throw new Error("El plan no coincide con la extracción verificada");
   }
   const derived = applyInterventionToCatalog(latest.catalog, verifiedPlan);
+  const workSummary = measureAppliedIntervention(latest.catalog, derived, verifiedPlan);
   const data = JSON.stringify({
     kind: "manual-intervention-derived-catalog",
     version: 1,
@@ -126,7 +129,8 @@ export const persistAppliedIntervention = async (options: {
       catalogSha256: latest.catalogSha256,
       derivedSha256,
       planSha256: simulation.planSha256,
-      affectedProducts: simulation.affectedProducts
+      affectedProducts: simulation.affectedProducts,
+      workSummary
     };
   } catch (error) {
     await rm(stage, { recursive: true, force: true });

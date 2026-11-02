@@ -5,6 +5,7 @@ import { isDeepStrictEqual } from "node:util";
 import type { ImportCandidate } from "../../catalog/legacy-export/contracts.js";
 import { readActiveCatalogIndex, withActiveCatalogLock, writeActiveCatalogIndex } from "../../infrastructure/filesystem/catalog/active-selection.js";
 import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { publicationApprovalSha, resolvePublicationDirectory } from "../../infrastructure/filesystem/catalog/publication-identity.js";
 
 export type PublicationDifference = {
   readonly previous: string | null;
@@ -79,9 +80,8 @@ const validateVersion = async (root: string, providerId: string, sha: string): P
   if (!/^[a-z][a-z0-9_-]*$/.test(providerId) || !isHash(sha)) {
     throw new Error("Proveedor o SHA de acreditación inválidos");
   }
-  const directory = join(root, "catalogs", "providers", providerId, "publications", sha);
-  const info = await lstat(directory);
-  if (!info.isDirectory() || info.isSymbolicLink()) throw new Error("La publicación no es un directorio regular");
+  const directory = await resolvePublicationDirectory(join(root, "catalogs", "providers", providerId, "publications"), sha);
+  if (!directory) throw new Error("La publicación acreditada no existe");
   for (const name of ["manifest.json", "accreditation.json", `${providerId}-publishable.json`]) {
     const meta = await lstat(join(directory, name));
     if (!meta.isFile() || meta.isSymbolicLink()) throw new Error(`Archivo de publicación no regular: ${name}`);
@@ -99,7 +99,7 @@ const describe = async (root: string, providerId: string, sha: string): Promise<
   const candidate = await validateVersion(root, providerId, sha);
   const current = await resolveAccreditedPublication(root, providerId, true);
   const previous = current ? basename(current) === "publishable.json" ? basename(dirname(dirname(current))) :
-    basename(dirname(current)) : null;
+    await publicationApprovalSha(dirname(current)) : null;
   const old = current ? (await readAccreditedPublication(current)).products : [];
   return differenceBetween(previous, sha, old, candidate.products);
 };
@@ -149,7 +149,8 @@ export const selectActivePublication = async (
         await rename(stage, activePath);
       }
       const selectedPath = await resolveAccreditedPublication(root, providerId);
-      if (selectedPath !== join(folder, approvalSha256, `${providerId}-publishable.json`)) {
+      const selectedDirectory = await resolvePublicationDirectory(folder, approvalSha256);
+      if (!selectedDirectory || selectedPath !== join(selectedDirectory, `${providerId}-publishable.json`)) {
         throw new Error("La publicación vigente no corresponde al índice activado");
       }
       return { status: "activated", providerId, difference: latest };

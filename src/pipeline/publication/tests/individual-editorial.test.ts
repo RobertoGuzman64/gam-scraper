@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { sha256 } from "../../../catalog/editorial/campaign-accreditation.js";
 import { proposeIndividualExclusions } from "../../../catalog/editorial/individual-decision-proposals.js";
 import type { CampaignAccreditation } from "../../../catalog/editorial/campaign-accreditation.js";
@@ -143,6 +143,7 @@ test("entrega individual guarda JSON exacto, acreditación y manifiesto sin sobr
     await assert.rejects(deliverIndividualProvider(options, "verify"), /No existe una publicación/);
     const delivered = await deliverIndividualProvider(options);
     assert.equal(delivered.status, "published");
+    assert.match(basename(delivered.publicationDirectory), /^[a-f0-9]{12}$/);
     assert.equal(delivered.publishable, 1);
     assert.equal(delivered.excluded, 2);
     assert.equal(delivered.productFile, simulated.productFile);
@@ -200,7 +201,7 @@ test("la entrega individual empaqueta el JSON aprobado y verifica el ZIP sin dup
     await approveIndividualEditorial(options, "Exclusiones revisadas y aprobadas editorialmente");
     const desktop = join(options.rootDirectory, "Escritorio");
     await mkdir(desktop);
-    const date = new Date(2026, 9, 29);
+    const date = new Date("2026-10-29T10:00:00Z");
     const simulated = await deliverIndividualArchive(options, desktop, "simulation", date);
     assert.equal(simulated.status, "simulation");
     assert.equal(simulated.zipFile, null);
@@ -210,13 +211,13 @@ test("la entrega individual empaqueta el JSON aprobado y verifica el ZIP sin dup
     await assert.rejects(deliverIndividualArchive(options, desktop, "verify", date), /No existe todavía un ZIP/);
     const published = await deliverIndividualArchive(options, desktop, "publish", date);
     assert.equal(published.status, "published");
-    assert.match(published.zipFile ?? "", /equipzilla-gam-2026-10-29-[a-f0-9]{16}\.zip$/);
+    assert.match(published.zipFile ?? "", /equipzilla-gam-20261029-[a-f0-9]{16}\.zip$/);
     const zip = readZipArchive(await readFile(published.zipFile ?? ""));
     assert.equal(zip.length, 1);
     assert.equal(zip[0]?.name, "gam-2026-10-29.json");
     assert.equal(zip[0]?.data.toString("utf8"), await readFile(published.productFile, "utf8"));
     assert.equal((await deliverIndividualArchive(options, desktop, "verify", date)).status, "verified");
-    const repeated = await deliverIndividualArchive(options, desktop, "publish", new Date(2026, 9, 30));
+    const repeated = await deliverIndividualArchive(options, desktop, "publish", new Date("2026-10-30T10:00:00Z"));
     assert.equal(repeated.status, "verified");
     assert.equal(repeated.zipFile, published.zipFile);
     assert.equal((await readdir(desktop)).length, 1);
@@ -225,6 +226,53 @@ test("la entrega individual empaqueta el JSON aprobado y verifica el ZIP sin dup
     await assert.rejects(deliverIndividualArchive(options, desktop, "verify", date), /ZIP individual alterado/);
     await assert.rejects(deliverIndividualArchive(options, desktop, "publish", date), /ZIP individual alterado/);
     assert.equal(await readFile(published.zipFile ?? "", "utf8"), "ZIP alterado");
+  });
+});
+
+test("la generación posterior reutiliza publicaciones legadas de SHA completo sin duplicar", async () => {
+  await fixture(async (options) => {
+    const draft = await startIndividualEditorial(options);
+    for (const item of draft.accreditation.exclusions) {
+      await decideIndividualEditorial(options, {
+        reference: item.reference, decision: "excluir", reason: "Exclusión validada manualmente", evidenceUrls: [item.sourceUrl]
+      });
+    }
+    const approved = await approveIndividualEditorial(options, "Aprobación humana confirmada");
+    const delivered = await deliverIndividualProvider(options);
+    const fullSha = sha256(await readFile(approved.draftFile, "utf8"));
+    const legacyDirectory = join(dirname(delivered.publicationDirectory), fullSha);
+    await rename(delivered.publicationDirectory, legacyDirectory);
+    const verified = await deliverIndividualProvider(options, "publish");
+    assert.equal(verified.status, "verified");
+    assert.equal(verified.publicationDirectory, legacyDirectory);
+    assert.deepEqual((await readdir(dirname(legacyDirectory))).sort(), [fullSha]);
+  });
+});
+
+test("un recibo y ZIP de nomenclatura anterior siguen verificándose íntegros", async () => {
+  await fixture(async (options) => {
+    const draft = await startIndividualEditorial(options);
+    for (const item of draft.accreditation.exclusions) {
+      await decideIndividualEditorial(options, {
+        reference: item.reference, decision: "excluir", reason: "Exclusión acreditada manualmente", evidenceUrls: [item.sourceUrl]
+      });
+    }
+    const approved = await approveIndividualEditorial(options, "Decisiones revisadas y aprobadas");
+    const desktop = join(options.rootDirectory, "Escritorio");
+    await mkdir(desktop);
+    const date = new Date("2026-10-29T10:00:00Z");
+    const published = await deliverIndividualArchive(options, desktop, "publish", date);
+    const fullSha = sha256(await readFile(approved.draftFile, "utf8"));
+    const receiptPath = join(options.rootDirectory, "storage", "providers", "gam", "deliveries", `${fullSha}.json`);
+    const raw: unknown = JSON.parse(await readFile(receiptPath, "utf8"));
+    assert.ok(raw && typeof raw === "object" && "zipFile" in raw && typeof raw.zipFile === "string");
+    const legacyZip = join(desktop, `equipzilla-gam-2026-10-29-${fullSha.slice(0, 16)}.zip`);
+    await rename(published.zipFile!, legacyZip);
+    await writeFile(receiptPath, JSON.stringify({ ...raw, zipFile: legacyZip }, null, 2));
+    const verified = await deliverIndividualArchive(options, desktop, "verify", date);
+    assert.equal(verified.status, "verified");
+    assert.equal(verified.zipFile, legacyZip);
+    assert.equal((await readdir(desktop)).length, 1);
   });
 });
 
@@ -239,9 +287,9 @@ test("la entrega individual no sobrescribe ZIP ajenos con el mismo nombre", asyn
     const approved = await approveIndividualEditorial(options, "Exclusiones verificadas y aprobadas expresamente");
     const desktop = join(options.rootDirectory, "Escritorio");
     await mkdir(desktop);
-    const date = new Date(2026, 9, 29);
+    const date = new Date("2026-10-29T10:00:00Z");
     const identifier = sha256(await readFile(approved.draftFile, "utf8")).slice(0, 16);
-    const zipFile = join(desktop, `equipzilla-gam-2026-10-29-${identifier}.zip`);
+    const zipFile = join(desktop, `equipzilla-gam-20261029-${identifier}.zip`);
     await writeFile(zipFile, "Archivo externo que debe conservarse");
     await assert.rejects(deliverIndividualArchive(options, desktop, "publish", date), /no se sobrescribe/);
     assert.equal(await readFile(zipFile, "utf8"), "Archivo externo que debe conservarse");

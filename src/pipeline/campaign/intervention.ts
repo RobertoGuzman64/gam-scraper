@@ -2,6 +2,7 @@ import { basename, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { readFile, realpath, stat } from "node:fs/promises";
 import { readAppliedIntervention } from "../../infrastructure/filesystem/interventions/intervention-derived.js";
+import { measureAppliedIntervention, type InterventionWorkSummary } from "../../catalog/diagnostics/intervention-work.js";
 import { readInterventionSource } from "../../infrastructure/filesystem/interventions/intervention-source.js";
 import { persistAppliedIntervention } from "../../infrastructure/filesystem/interventions/intervention-application.js";
 import { validateOfflinePreparation } from "../validation/offline.js";
@@ -22,6 +23,7 @@ export type CampaignInterventionResult = {
   readonly simulation: InterventionSimulation | null;
   readonly comparison: InterventionComparison;
   readonly applied: boolean;
+  readonly workSummary?: InterventionWorkSummary;
   readonly derivedFile?: string;
   readonly preparationFile?: string;
   readonly ready?: number;
@@ -98,13 +100,14 @@ export const interveneActiveCampaign = async (
   if (verified.provenance.planSha256 !== simulation.planSha256 || verified.catalogSha256 !== derivedSha256) {
     throw new Error("El derivado no corresponde al plan que se acaba de aplicar");
   }
+  const workSummary = measureAppliedIntervention(original.catalog, verified.catalog, simulation);
   await prepareSavedCatalog({
     providerId, source: derivedFile, originalSource: source, out: preparationFile,
     dryRun: false, compare: null
   });
   const validation = await validateOfflinePreparation(providerId, preparationFile, derivedFile, null, source);
   return {
-    runId: campaign.runId, simulation, comparison, applied: true, derivedFile, preparationFile,
+    runId: campaign.runId, simulation, comparison, applied: true, workSummary, derivedFile, preparationFile,
     ready: validation.ready, review: validation.review
   };
 };

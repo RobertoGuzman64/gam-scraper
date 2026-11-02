@@ -1,7 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import { copyFile, lstat, mkdir, open, readFile, rm, stat, writeFile } from "node:fs/promises";
-import { basename, dirname, join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { publicationApprovalSha } from "../../infrastructure/filesystem/catalog/publication-identity.js";
 import { sha256 } from "../../catalog/editorial/campaign-accreditation.js";
 import { createZipArchive, readZipArchive } from "../../infrastructure/archive/zip.js";
 import { deliverIndividualProvider } from "./individual-delivery.js";
@@ -34,7 +35,7 @@ const exists = async (path: string): Promise<boolean> => {
 
 const dateText = (date: Date): string => {
   if (!Number.isFinite(date.getTime())) throw new Error("Fecha de entrega individual inválida");
-  return `${date.getFullYear().toString().padStart(4, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  return `${date.getUTCFullYear().toString().padStart(4, "0")}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
 };
 
 const isReceipt = (value: unknown): value is ArchiveReceipt => {
@@ -64,7 +65,10 @@ const checkArchive = async (
     receipt.productSha256 !== sha256(productText) ||
     !/^\d{4}-\d{2}-\d{2}$/.test(receipt.date) ||
     !/^[a-f0-9]{64}$/.test(receipt.zipSha256) ||
-    receipt.zipFile !== join(desktop, `equipzilla-${providerId}-${receipt.date}-${approvalSha256.slice(0, 16)}.zip`)) {
+    ![
+      join(desktop, `equipzilla-${providerId}-${receipt.date.replaceAll("-", "")}-${approvalSha256.slice(0, 16)}.zip`),
+      join(desktop, `equipzilla-${providerId}-${receipt.date}-${approvalSha256.slice(0, 16)}.zip`)
+    ].includes(receipt.zipFile)) {
     throw new Error("Recibo de entrega individual incoherente");
   }
   const metadata = await lstat(receipt.zipFile);
@@ -90,8 +94,7 @@ export const deliverIndividualArchive = async (
   const publication = await deliverIndividualProvider(options, mode);
   if (mode === "simulation") return { ...publication, zipFile: null };
 
-  const approvalSha256 = basename(publication.publicationDirectory);
-  if (!/^[a-f0-9]{64}$/.test(approvalSha256)) throw new Error("Identificador de publicación individual inválido");
+  const approvalSha256 = await publicationApprovalSha(publication.publicationDirectory);
   const productText = await readFile(publication.productFile, "utf8");
   const receiptFile = join(resolve(options.rootDirectory), "storage", "providers", options.providerId,
     "deliveries", `${approvalSha256}.json`);
@@ -119,7 +122,7 @@ export const deliverIndividualArchive = async (
       return { ...publication, status: "verified", zipFile: receipt.zipFile };
     }
     const date = dateText(deliveredAt);
-    const zipFile = join(desktop, `equipzilla-${options.providerId}-${date}-${approvalSha256.slice(0, 16)}.zip`);
+    const zipFile = join(desktop, `equipzilla-${options.providerId}-${date.replaceAll("-", "")}-${approvalSha256.slice(0, 16)}.zip`);
     const data = createZipArchive([{ name: `${options.providerId}-${date}.json`, data: productText }]);
     const pending = join(desktop, `.equipzilla-${randomUUID()}.tmp`);
     let created = false;

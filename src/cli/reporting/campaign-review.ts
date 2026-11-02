@@ -1,5 +1,6 @@
 import type { CampaignReview } from "../../pipeline/campaign/review.js";
 import { formatStatus, printStatus, printReportLine } from "./terminal.js";
+import { formatPreparationWork } from "./preparation-work.js";
 
 export const printCampaignReview = (result: CampaignReview): void => {
   printReportLine(`CAMPAÑA | ${result.campaign.runId ?? "sin lote"} | ${result.campaign.status}`);
@@ -12,6 +13,7 @@ export const printCampaignReview = (result: CampaignReview): void => {
     }
     printReportLine(`  ${formatStatus(provider.review === 0 ? "PASS" : "WARN", `${provider.providerId.toUpperCase()} | VALIDADO | ${provider.products} productos | Ready: ${provider.ready} | Review: ${provider.review}`)}`);
     printReportLine(`    Preparación: ${provider.preparationFile}`);
+    if (provider.workSummary) for (const line of formatPreparationWork(provider.workSummary, false)) printReportLine(line);
     for (const item of provider.items ?? []) {
       printReportLine(`    REVIEW | ${item.reference} | ${item.title}`);
       printReportLine(`      Fuente: ${item.url}`);
