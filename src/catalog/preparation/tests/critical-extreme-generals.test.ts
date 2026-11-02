@@ -1,12 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
-const original = async (provider: "gam" | "gomariz") => readCanonicalCatalog(fileURLToPath(new URL(
-  `../../../../catalogs/providers/${provider}/original/${provider === "gam" ? "scrape-gam-marzo-2026" : "scrape-gomariz"}-catalog.json`, import.meta.url
-)));
+const original = async (provider: "gam" | "gomariz") => readPortableOriginal(process.cwd(), provider);
 
 test("recupera dos generales extremas sin asignar datos técnicos a otras identidades", async () => {
   const [gam, gomariz] = await Promise.all([original("gam"), original("gomariz")]);

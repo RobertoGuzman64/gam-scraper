@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { cp, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { getProvider } from "../../../scraping/registry.js";
+import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
 import { inspectCampaignOperations } from "../operations-status.js";
 import { inspectOperationsInventory } from "../operations-inventory.js";
 
@@ -127,6 +128,12 @@ test("estado reconoce un original GAM acreditado anterior al prefijo vigente", a
     await mkdir(scraped, { recursive: true });
     await cp(source, portable, { recursive: true });
     await cp(source, scraped, { recursive: true });
+    const legacyPrefix = (await readPortableOriginal(root, "gam")).prefix;
+    const currentPrefix = getProvider("gam").defaultOptions.outPrefix;
+    assert.notEqual(legacyPrefix, currentPrefix);
+    for (const suffix of ["-catalog.json", "-catalog.manifest.json", "-summary.json"]) {
+      await rename(join(scraped, `${currentPrefix}${suffix}`), join(scraped, `${legacyPrefix}${suffix}`));
+    }
     const status = await inspectCampaignOperations(root);
     const inventory = await inspectOperationsInventory(root, status);
     const gam = inventory.providers.find((entry) => entry.providerId === "gam");
