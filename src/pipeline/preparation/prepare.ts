@@ -15,6 +15,7 @@ import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/ca
 import { readAppliedIntervention } from "../../infrastructure/filesystem/interventions/intervention-derived.js";
 import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation/preparation-inputs.js";
 import { offlinePreparationManifest, offlinePreparationManifestPath, readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
+import { preparedWorkspaceForOutput, withPreparedStorageWriteLock } from "../../infrastructure/filesystem/preparation/prepared-storage-lock.js";
 
 export type PrepareOptions = {
   readonly providerId: string;
@@ -98,6 +99,7 @@ export const prepareSavedCatalog = async (options: PrepareOptions): Promise<Prep
   const diagnosticsFile = out.slice(0, -"-preparation.json".length) + "-diagnostics.json";
   const manifestFile = offlinePreparationManifestPath(out);
   const comparisonFile = comparison ? out.slice(0, -"-preparation.json".length) + "-comparison.json" : null;
+  const workspace = preparedWorkspaceForOutput(out, options.providerId);
   if (!options.dryRun) {
     if (derived !== null && options.originalSource !== undefined) {
       const current = await readAppliedIntervention(source, options.originalSource);
@@ -111,7 +113,8 @@ export const prepareSavedCatalog = async (options: PrepareOptions): Promise<Prep
       ...(comparison && comparisonFile ? [{ path: comparisonFile, content: JSON.stringify(comparison, null, 2) }] : []),
       { path: manifestFile, content: offlinePreparationManifest(rawPreparation, preparation) }
     ];
-    await writeExclusive(files);
+    if (workspace) await withPreparedStorageWriteLock(workspace, options.providerId, () => writeExclusive(files));
+    else await writeExclusive(files);
   }
   return { preparation, diagnostics, comparison, workSummary, preparationFile: out, diagnosticsFile, manifestFile, comparisonFile };
 };

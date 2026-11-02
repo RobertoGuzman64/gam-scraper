@@ -92,17 +92,18 @@ test("una extracción parcial no modifica el catálogo canónico publicado", asy
   });
 });
 
-test("el historial versiona catálogos completos y permite relectura histórica", async () => {
-  await withDir(async (dir) => {
+test("el historial conserva dos versiones canónicas y permite relectura histórica", async () => {
+  await withDir(async (root) => {
+    const dir = join(root, "storage", "scraped", "proveedor-prueba");
     for (let day = 1; day <= 4; day += 1) {
       await writeOutputs(dir, "inventario", [result(`${day}000 €`)], stamp(day), stamp(day));
     }
     const historyRoot = join(dir, ".history", "inventario");
     const archives = (await readdir(historyRoot)).filter((name) => name.startsWith("archive-")).sort();
-    assert.equal(archives.length, 2);
+    assert.equal(archives.length, 1);
     const archived = join(historyRoot, archives[0]!, "inventario-catalog.json");
     const previous = await readCanonicalCatalog(archived);
-    assert.equal(previous.products[0]?.price, "2000 €");
+    assert.equal(previous.products[0]?.price, "3000 €");
     assert.equal((await readCanonicalCatalog(paths(dir).canonical)).products[0]?.price, "4000 €");
   });
 });

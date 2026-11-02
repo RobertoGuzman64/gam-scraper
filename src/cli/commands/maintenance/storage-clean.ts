@@ -43,7 +43,7 @@ export const cleanStorage = async (argv: readonly string[]): Promise<void> => {
   for (const item of results) printReportLine(`${dryRun ? "ELIMINARÍA" : "ELIMINADO"} | ${(item.bytes / (1024 * 1024)).toFixed(2)} MB | ${item.path}`);
   const bytes = results.reduce((sum, item) => sum + item.bytes, 0);
   printReportLine(`LIMPIEZA | ${dryRun ? "SIMULACIÓN" : "COMPLETADA"} | ${results.length} elementos | ${(bytes / (1024 * 1024)).toFixed(2)} MB`);
-  printReportLine("Protegidos: catálogo actual, dos versiones anteriores y snapshots. Prefijos alternativos solo con --legacy.");
+  printReportLine("Protegidos: catálogo actual, una versión anterior y snapshots. Prefijos alternativos solo con --legacy.");
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

@@ -81,7 +81,8 @@ export const executePreparedRetention = async (
   workspace: string,
   providerId: string,
   planned: RetentionSimulation,
-  approval: PreparedRetentionApproval
+  approval: PreparedRetentionApproval,
+  referencedPaths: readonly string[] = []
 ): Promise<PreparedRetentionExecution> => {
   if (!approval.phase3Closed || !approval.externalReferencesVerified ||
     !approval.writersCoordinated || !approval.familyApproved) {
@@ -119,7 +120,7 @@ export const executePreparedRetention = async (
   let deletedBytes = 0;
   const failures: string[] = [];
   try {
-    const current = await simulatePreparedRetention(root, providerId);
+    const current = await simulatePreparedRetention(root, providerId, undefined, referencedPaths);
     if (!samePlan(planned, current)) return blocked(current, "La planificación cambió antes de ejecutar la retención");
     const candidates = current.versions.filter((item) => item.action === "candidato");
     const snapshots = new Map<string, ReadonlyMap<string, string>>();
@@ -139,7 +140,7 @@ export const executePreparedRetention = async (
       snapshots.set(candidate.id, recorded);
     }
     for (const candidate of candidates) {
-      const state = await simulatePreparedRetention(root, providerId);
+      const state = await simulatePreparedRetention(root, providerId, undefined, referencedPaths);
       const remaining = candidates.filter((item) => item.id >= candidate.id);
       const plannedRemaining: RetentionSimulation = { ...current, versions: remaining, candidates: remaining.length };
       if (!ensureSameCandidates(plannedRemaining, state)) {

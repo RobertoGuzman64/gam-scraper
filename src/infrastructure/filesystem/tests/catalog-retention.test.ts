@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -31,16 +32,17 @@ const archives = async (dir: string): Promise<readonly string[]> => {
   return names.filter((name) => name.startsWith("archive-")).sort();
 };
 
-test("rotación conserva publicación actual y dos anteriores con CSV, preparación y snapshot", async () => {
-  await withDir(async (dir) => {
+test("rotación conserva publicación actual y una anterior con CSV, preparación y snapshot", async () => {
+  await withDir(async (root) => {
+    const dir = join(root, "storage", "scraped", "proveedor-prueba");
     for (let n = 1; n <= 4; n += 1) {
       await writeOutputs(dir, "inventario", [products(`${n * 1000} €`)], stamp(n), stamp(n));
     }
     const names = await archives(dir);
-    assert.equal(names.length, 2);
+    assert.equal(names.length, 1);
     const archiveDir = join(dir, ".history", "inventario", names[0]!);
     const oldCsv = await readFile(join(archiveDir, "inventario-all.csv"), "utf8");
-    assert.ok(oldCsv.includes("2000 €"));
+    assert.ok(oldCsv.includes("3000 €"));
     assert.ok((await readFile(join(archiveDir, "inventario-preparation.json"), "utf8")).includes("quality"));
     assert.ok((await readFile(join(archiveDir, `inventario-snapshot-${categoryScope([category])}.json`), "utf8")).includes("items"));
     assert.ok((await readFile(join(dir, "inventario-all.csv"), "utf8")).includes("4000 €"));
@@ -126,5 +128,40 @@ test("la consolidación no elimina respaldos anteriores que no se conservan en c
     assert.equal((await cleanConsolidatedCatalogHistory(root, "gomariz", dir, "inventario")).length, 1);
     assert.deepEqual(await archives(dir), []);
     assert.equal((await readFile(join(history, "active.json"), "utf8")).includes("complete"), true);
+  });
+});
+
+
+test("un histórico referenciado por SHA permanece protegido aunque exceda la cuota", async () => {
+  await withDir(async (root) => {
+    const dir = join(root, "storage", "scraped", "proveedor-prueba");
+    await writeOutputs(dir, "inventario", [products("1000 €")], stamp(1), stamp(1));
+    await writeOutputs(dir, "inventario", [products("2000 €")], stamp(2), stamp(2));
+    const archived = join(dir, ".history", "inventario", (await archives(dir))[0]!);
+    const original = await readFile(join(archived, "inventario-catalog.json"));
+    const hash = createHash("sha256").update(original).digest("hex");
+    const references = join(root, "storage", "providers", "proveedor-prueba", "editorial");
+    await mkdir(references, { recursive: true });
+    await writeFile(join(references, "evidence.json"), JSON.stringify({ previousCatalogSha256: hash.toUpperCase() }));
+    await writeOutputs(dir, "inventario", [products("3000 €")], stamp(3), stamp(3));
+    assert.equal((await archives(dir)).length, 2);
+    assert.deepEqual(await catalogArchiveExcess(dir, "inventario"), []);
+    await rm(join(references, "evidence.json"));
+    const candidates = await catalogArchiveExcess(dir, "inventario");
+    assert.equal(candidates.length, 1);
+    assert.equal(candidates[0]?.path, archived);
+  });
+});
+
+test("un archivo de recuperación con SHA corrupto no se trata como eliminable", async () => {
+  await withDir(async (root) => {
+    const dir = join(root, "storage", "scraped", "proveedor-prueba");
+    await writeOutputs(dir, "inventario", [products("1000 €")], stamp(1), stamp(1));
+    await writeOutputs(dir, "inventario", [products("2000 €")], stamp(2), stamp(2));
+    const archived = join(dir, ".history", "inventario", (await archives(dir))[0]!);
+    await writeFile(join(archived, "inventario-all.csv"), "contenido alterado");
+    await writeOutputs(dir, "inventario", [products("3000 €")], stamp(3), stamp(3));
+    assert.equal((await archives(dir)).length, 2);
+    assert.deepEqual(await catalogArchiveExcess(dir, "inventario"), []);
   });
 });

@@ -3,10 +3,11 @@ import type { PreparedRetentionExecution } from "../../infrastructure/filesystem
 export const formatRetentionExecution = (
   providerId: string, result: PreparedRetentionExecution
 ): readonly string[] => {
-  if (result.deletedFiles === 0 && result.failures.length === 0) return [];
+  if (result.deletedFiles === 0 && result.failures.length === 0 && result.protectedVersions <= 2) return [];
   const lines = [
     `RETENCIÓN AUTOMÁTICA | preparaciones ${providerId.toUpperCase()}`,
     `Versiones eliminadas: ${result.deletedVersions} | Archivos eliminados: ${result.deletedFiles}`,
+    `Versiones protegidas: ${result.protectedVersions}`,
     `Tamaño lógico retirado: ${(result.deletedBytes / (1024 * 1024)).toFixed(2)} MB`,
     `Estado: ${result.status === "sin_borrado_por_proteccion" ? "sin borrado por protección" : result.status}`
   ];

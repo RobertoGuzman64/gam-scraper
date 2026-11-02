@@ -87,10 +87,12 @@ export const runBatch = async (
     const status = controller.signal.aborted ? (completed.some((run) => run.status === "complete") ? "partial" : "failed") : getBatchStatus(completed);
     const report = makeReport(status, timestamp());
     await writeBatchReport(reportFile, report);
-    try {
-      await cleanBatchExcess(historyDir, false);
-    } catch (error) {
-      console.warn(`Aviso: historial pendiente de limpieza: ${error instanceof Error ? error.message : String(error)}`);
+    if (status === "complete") {
+      try {
+        await cleanBatchExcess(historyDir, false);
+      } catch (error) {
+        console.warn(`Aviso: historial pendiente de limpieza: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }
     return { report, reportFile };
   } finally {

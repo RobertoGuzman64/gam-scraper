@@ -1,14 +1,13 @@
 import { printReportLine } from "../../reporting/terminal.js";
-import { dirname, resolve } from "node:path";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
+import { prepareSavedCatalogWithRetention } from "../../../pipeline/preparation/retained-prepare.js";
 import { prepareManainRecord } from "../../../pipeline/preparation/manain-record.js";
 import { parseManainRecordOptions, parsePrepareOptions, prepareHelp } from "../../options/prepare.js";
 import { formatPriceAvailability } from "../../reporting/review-diagnostics.js";
 import { formatImportDiagnostics } from "../../reporting/import-diagnostics.js";
 import { printCommandError } from "../../reporting/errors.js";
-import { simulatePreparedRetention } from "../../../infrastructure/filesystem/preparation/preparation-retention.js";
-import { formatRetentionSimulation } from "../../reporting/retention-simulation.js";
+import { formatRetentionExecution } from "../../reporting/retention-execution.js";
 import { formatPreparationWork } from "../../reporting/preparation-work.js";
 
 export const runPrepare = async (args: readonly string[]): Promise<void> => {
@@ -31,7 +30,7 @@ export const runPrepare = async (args: readonly string[]): Promise<void> => {
     return;
   }
   const options = parsePrepareOptions(args);
-  const result = await prepareSavedCatalog(options);
+  const result = await prepareSavedCatalogWithRetention(options);
   const totals = result.diagnostics.totals;
   printReportLine(`PREPARACIÓN | ${options.providerId.toUpperCase()} | ${options.dryRun ? "SIMULACIÓN" : "GUARDADA"}`);
   printReportLine(`  Productos: ${totals.products} | Calidad ready: ${totals.ready} | Calidad review: ${totals.review}`);
@@ -59,15 +58,8 @@ export const runPrepare = async (args: readonly string[]): Promise<void> => {
   if (options.dryRun) printReportLine("  Sin archivos escritos; la ejecución no consulta portales");
   else {
     printReportLine(`  Preparación: ${result.preparationFile}\n  Diagnósticos: ${result.diagnosticsFile}\n  Manifest: ${result.manifestFile}${result.comparisonFile ? `\n  Comparación: ${result.comparisonFile}` : ""}`);
-    if (dirname(result.preparationFile) === resolve("storage", "prepared", options.providerId)) {
-      try {
-        const simulated = await simulatePreparedRetention(process.cwd(), options.providerId, undefined,
-          options.compare ? [options.compare] : []);
-        for (const line of formatRetentionSimulation(options.providerId, simulated)) printReportLine(line);
-      } catch (error) {
-        printReportLine(`RETENCIÓN (SIMULACIÓN) | No evaluable: ${error instanceof Error ? error.message : String(error)}`);
-        printReportLine("Eliminaciones reales: 0");
-      }
+    if (result.retention) {
+      for (const line of formatRetentionExecution(options.providerId, result.retention)) printReportLine(line);
     }
   }
 };
