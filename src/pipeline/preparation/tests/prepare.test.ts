@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -77,6 +77,23 @@ test("replay offline conserva máquinas sin precio, condiciones inciertas e iden
       assert.deepEqual(saved.products, result.preparation.products);
       assert.equal(saved.source.catalogSha256, createHash("sha256").update(await readFile(source, "utf8")).digest("hex"));
     } finally { globalThis.fetch = oldFetch; }
+  });
+});
+
+test("preparación acepta alias portable sin alterar prefijo ni huella del original", async () => {
+  await withFixture(async ({ root, source }) => {
+    const portableDir = join(root, "catalogs", "providers", "gam", "original");
+    await mkdir(portableDir, { recursive: true });
+    for (const suffix of ["-catalog.json", "-catalog.manifest.json", "-summary.json"]) {
+      await copyFile(join(dirname(source), `inventario${suffix}`), join(portableDir, `scrape-gam${suffix}`));
+    }
+    const portableSource = join(portableDir, "scrape-gam-catalog.json");
+    const portableOut = join(root, "prepared", "scrape-gam-preparation.json");
+    const result = await prepareSavedCatalog(options(portableSource, portableOut));
+    assert.equal(result.preparation.source.prefix, "inventario");
+    assert.equal(result.preparation.source.catalogSha256, createHash("sha256").update(await readFile(portableSource, "utf8")).digest("hex"));
+    assert.equal(result.preparation.products.length, 12);
+    assert.equal((await readOfflinePreparation(portableOut, "gam")).products.length, 12);
   });
 });
 

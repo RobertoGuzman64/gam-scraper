@@ -70,7 +70,7 @@ export const prepareSavedCatalog = async (options: PrepareOptions): Promise<Prep
   if (catalog.providerId !== options.providerId) throw new Error("El proveedor solicitado no coincide con el catálogo de origen");
   const sourceHash = derived?.catalogSha256 ?? sha(await readFile(source, "utf8"));
   if (derived === null) {
-    const manifest: unknown = JSON.parse(await readFile(join(dirname(source), `${catalog.prefix}-catalog.manifest.json`), "utf8"));
+    const manifest: unknown = JSON.parse(await readFile(join(dirname(source), `${basename(source).slice(0, -"-catalog.json".length)}-catalog.manifest.json`), "utf8"));
     if (!manifest || typeof manifest !== "object" || !("catalogSha256" in manifest) || manifest.catalogSha256 !== sourceHash) {
       throw new Error("El catálogo ha cambiado durante la lectura de la preparación");
     }
