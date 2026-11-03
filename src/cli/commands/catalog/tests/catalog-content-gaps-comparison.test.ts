@@ -1,12 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { cleanupBaseline, execute, executeBaseline, gam } from "./catalog-content-gaps-fixtures.js";
+import type { DescriptionCoverage } from "../../../../catalog/diagnostics/description-coverage.js";
+import type { DescriptionPriorities } from "../../../../catalog/diagnostics/description-priorities.js";
+import type { SpecificationCoverage } from "../../../../catalog/diagnostics/specification-coverage.js";
+import { cleanupBaseline, execute, executeBaseline } from "./catalog-content-gaps-fixtures.js";
 
 test.after(cleanupBaseline);
 
 let baselineComparison: Promise<unknown> | undefined;
 const readBaselineComparison = (): Promise<unknown> => {
-  baselineComparison ??= executeBaseline(["--comparar", "--specs", "--json", "--top", "1"]).then((raw) => JSON.parse(raw) as unknown);
+  baselineComparison ??= executeBaseline(["--comparar", "--specs", "--json", "--top", "1"]).then((raw): unknown => JSON.parse(raw));
   return baselineComparison;
 };
 
@@ -26,8 +29,15 @@ test("huecos compara las publicaciones activas y acredita la cobertura de descri
   assert.equal(report.editorial.providers.length, 3);
   assert.equal(report.editorialPrepared.providers.length, 3);
   assert.equal(report.priorities.totals.pendingByStage.P0, 0);
-  assert.ok(report.priorities.pending.some((item) => item.signal === "general_muy_breve"));
-  assert.ok(report.priorities.resolved.some((item) => item.stage === "P2"));
+  assert.equal(report.priorities.totals.pending, report.priorities.pending.length);
+  assert.equal(report.priorities.totals.resolved, report.priorities.resolved.length);
+  assert.equal(report.priorities.totals.technical, report.priorities.technical.length);
+  assert.equal(report.priorities.totals.appeared,
+    report.priorities.pending.filter((item) => item.state === "aparecido").length);
+  for (const stage of ["P0", "P1", "P2"] as const) {
+    assert.equal(report.priorities.totals.pendingByStage[stage],
+      report.priorities.pending.filter((item) => item.stage === stage).length);
+  }
   const text = await executeBaseline(["--comparar", "--top", "1"]);
   assert.match(text, /P0 COLA RESIDUAL \| 0 fichas, sin recorte por --top/);
   assert.match(text, /ORDEN DE TRABAJO \| P0 vacíos 0/);
@@ -39,26 +49,8 @@ type ComparisonReport = {
   readonly provenance: { readonly source: string };
   readonly editorial: { readonly providers: readonly unknown[] };
   readonly editorialPrepared: { readonly providers: readonly unknown[] };
-  readonly priorities: {
-    readonly totals: { readonly pendingByStage: { readonly P0: number } };
-    readonly pending: readonly { readonly reference: string | null; readonly signal: string;
-      readonly stage: string; readonly preparedWords: number; readonly familySamples: number }[];
-    readonly resolved: readonly { readonly stage: string; readonly reference: string | null; readonly signal: string }[];
-    readonly technical: readonly { readonly contradictions: readonly string[] }[];
-  };
-  readonly coverage: {
-    readonly totals: {
-      readonly products: number;
-      readonly publishedMissing: { readonly description: number; readonly description_general: number };
-      readonly recovered: { readonly description: number; readonly description_general: number };
-      readonly pending: { readonly description: number; readonly description_general: number };
-      readonly lost: { readonly description: number; readonly description_general: number };
-      readonly incompleteProducts: number;
-      readonly bothPending: number;
-    };
-    readonly pendingCases: readonly { readonly reference: string | null; readonly missing: readonly string[] }[];
-    readonly providers: readonly { readonly providerId: string; readonly origin: string }[];
-  };
+  readonly priorities: DescriptionPriorities;
+  readonly coverage: DescriptionCoverage;
 };
 const isComparisonReport = (value: unknown): value is ComparisonReport => {
   if (typeof value !== "object" || value === null || !("coverage" in value) || !("editorial" in value) ||
@@ -75,24 +67,20 @@ const isComparisonReport = (value: unknown): value is ComparisonReport => {
 };
 
 type SpecificationComparisonReport = ComparisonReport & {
-  readonly priorities: ComparisonReport["priorities"] & { readonly totals: { readonly pending: number } };
-  readonly technicalSpecs: {
-    readonly totals: { readonly products: number; readonly canonicalOriginals: number; readonly reconstructedSources: number;
-      readonly pendingPublication: number; readonly observationalMissing: number };
-    readonly cases: readonly { readonly providerId: string; readonly reference: string | null; readonly stage: string }[];
-  };
+  readonly technicalSpecs: SpecificationCoverage;
 };
 const isSpecificationComparisonReport = (value: unknown): value is SpecificationComparisonReport =>
   isComparisonReport(value) && "technicalSpecs" in value && typeof value.technicalSpecs === "object" &&
   value.technicalSpecs !== null && "totals" in value.technicalSpecs && "cases" in value.technicalSpecs &&
-  Array.isArray(value.technicalSpecs.cases) && "pending" in value.priorities.totals;
+  Array.isArray(value.technicalSpecs.cases);
 
 test("huecos --comparar --specs diferencia cobertura técnica sin alterar el informe editorial", async () => {
   const comparison = await readBaselineComparison();
   assert.ok(isSpecificationComparisonReport(comparison));
   assert.equal(comparison.coverage.totals.products, comparison.technicalSpecs.totals.products);
   assert.deepEqual(comparison.coverage.totals.pending, { description: 0, description_general: 0 });
-  assert.ok(comparison.priorities.totals.pending > 0);
+  assert.equal(comparison.priorities.totals.pending, comparison.priorities.pending.length);
+  assert.equal(comparison.priorities.totals.pendingByStage.P0, 0);
   assert.ok(comparison.technicalSpecs.totals.products > 0);
   assert.ok(comparison.technicalSpecs.totals.canonicalOriginals > 0);
   assert.ok(comparison.technicalSpecs.totals.reconstructedSources > 0);
