@@ -171,7 +171,7 @@ npm run huecos -- --finales
 npm run huecos -- --catalogo catalogs/providers/gam/original/scrape-gam-catalog.json --agrupar marca --top 10
 ```
 
-La población depende de la **publicación vigente seleccionada** o de la fuente explícita; no asumir que la última carpeta SHA está activa. En Mercaeleva la comparación parte de su publicación si no existe un original canónico independiente: no debe atribuirse a extracción original. El auditor es de **solo lectura**: no rellena fichas, no genera `review`, no acredita ni publica. La recuperación se implementa en el motor, con evidencia y comparación antes/después. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md) para criterios, prioridades y límites.
+La población depende de la **publicación vigente seleccionada** o de la fuente explícita; no asumir que la última carpeta SHA está activa. En Mercaeleva la comparación parte de su publicación si no existe un original canónico independiente: no debe atribuirse a extracción original. El auditor es de **solo lectura**: no rellena fichas, no genera `review`, no acredita ni publica. La recuperación se implementa en el motor, con evidencia y comparación antes/después. El [método oficial de investigación y mejora](docs/CATALOG_CONTENT_GAPS.md#método-de-investigación-y-mejora-del-catálogo) contiene la alternancia técnica/editorial, las tres vías de recuperación, los criterios de evidencia, el recuento de mejoras reales y la comparación completa antes/después. El método se mantiene junto al código; las decisiones temporales y los frentes aún no ejecutados permanecen fuera de esta guía. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md) para criterios, prioridades y límites.
 
 ### Herramientas complementarias
 
