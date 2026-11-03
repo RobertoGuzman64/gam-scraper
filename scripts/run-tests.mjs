@@ -5,6 +5,7 @@ import { clearLine, cursorTo } from "node:readline";
 import { run } from "node:test";
 import { formatScriptStatus } from "./terminal.mjs";
 import { durationRegressions, loadTestDurations, orderTestsByDuration, saveTestDurations } from "./test-performance.mjs";
+import { CACHEABLE_TESTS, discardTestResultsCache, fingerprintTestInputs, loadTestResultsCache, relativeCacheFile, saveTestResultsCache } from "./test-result-cache.mjs";
 
 const parseOptions = (argumentsList) => {
   let concurrency;
@@ -103,9 +104,28 @@ orderTestsByDuration(files, previousDurations, testPriority);
 const missing = files.filter((file) => !existsSync(file));
 if (missing.length > 0) throw new Error(`Faltan ${missing.length} pruebas compiladas: ${missing.join(", ")}`);
 
-const filePaths = new Set(files.map((file) => resolve(file)));
+const automaticCache = options.concurrency === undefined && options.report === undefined &&
+  process.env.EQUIPZILLA_TEST_CACHE !== "0" && !/^(1|true)$/i.test(process.env.CI ?? "");
+let inputFingerprint = null;
+let cachedResults = new Map();
+if (automaticCache) {
+  try {
+    inputFingerprint = fingerprintTestInputs();
+    cachedResults = loadTestResultsCache(inputFingerprint);
+  } catch (error) {
+    process.stdout.write(`${formatScriptStatus("WARN", `CACHÉ | Sin reutilización: ${error instanceof Error ? error.message : String(error)}`)}\n`);
+  }
+}
+const cachedFiles = files.filter((file) => cachedResults.has(relativeCacheFile(file)));
+const executableFiles = files.filter((file) => !cachedResults.has(relativeCacheFile(file)));
+const cachedCounts = { passed: 0, failed: 0, skipped: 0, todo: 0 };
+for (const file of cachedFiles) {
+  const value = cachedResults.get(relativeCacheFile(file));
+  cachedCounts.passed += value.passed;
+}
+const filePaths = new Set(executableFiles.map((file) => resolve(file)));
 const interactive = process.stdout.isTTY === true && process.env.CI !== "true" && process.env.TERM !== "dumb";
-const completedFiles = new Set();
+const completedFiles = new Set(cachedFiles.map((file) => resolve(file)));
 const startedFiles = new Set();
 const startedAt = performance.now();
 const frames = ["|", "/", "-", "\\"];
@@ -114,7 +134,8 @@ const errors = [];
 const skippedTests = [];
 const todoTests = [];
 const standardErrors = new Map();
-const counts = { passed: 0, failed: 0, skipped: 0, todo: 0 };
+const counts = { ...cachedCounts };
+const resultsForCache = new Map(cachedResults);
 const profile = options.report ? { tests: [], files: [] } : null;
 const profileStarts = profile ? new Map() : null;
 const durations = [];
@@ -176,7 +197,7 @@ const progressTimer = interactive || profile
   : undefined;
 
 try {
-  for await (const event of run({ files, concurrency: effectiveConcurrency })) {
+  for await (const event of run({ files: executableFiles, concurrency: effectiveConcurrency })) {
     if (event.type === "test:dequeue" && typeof event.data.name === "string" && filePaths.has(resolve(event.data.name))) {
       const file = resolve(event.data.name);
       startedFiles.add(file);
@@ -195,6 +216,14 @@ try {
 
     if (event.type === "test:summary" && event.data.file) {
       durations.push({ file: event.data.file, milliseconds: event.data.duration_ms ?? 0 });
+      const cacheFile = relativeCacheFile(event.data.file);
+      if (CACHEABLE_TESTS.has(cacheFile)) {
+        const value = event.data.counts;
+        if (value && value.failed === 0 && value.skipped === 0 && value.todo === 0 &&
+          Number.isSafeInteger(value.passed) && value.passed > 0) {
+          resultsForCache.set(cacheFile, { passed: value.passed, failed: 0, skipped: 0, todo: 0 });
+        } else resultsForCache.delete(cacheFile);
+      }
     }
 
     if (profile && event.type === "test:summary" && event.data.file) {
@@ -262,6 +291,14 @@ try {
   clearProgress();
 }
 if (!summary) throw new Error("La ejecución de pruebas terminó sin resumen");
+let stableInputs = true;
+if (inputFingerprint !== null) {
+  try { stableInputs = fingerprintTestInputs() === inputFingerprint; } catch { stableInputs = false; }
+}
+const success = summary.success && stableInputs;
+if (!stableInputs) {
+  process.stdout.write(`${formatScriptStatus("FAIL", "CACHÉ | Entradas modificadas durante las pruebas; resultados no acreditables")}\n`);
+}
 
 if (profile) {
   const totalFileDuration = profile.files.reduce((total, file) => total + file.tiempo_ms, 0);
@@ -271,13 +308,14 @@ if (profile) {
     modo: options.concurrency === undefined ? "predeterminado" : "concurrencia configurada",
     concurrencia: effectiveConcurrency,
     resumen: {
-      correcto: summary.success,
+      correcto: success,
       archivos: files.length,
-      correctos: summary.counts.passed,
+      correctos: summary.counts.passed + cachedCounts.passed,
       fallidos: summary.counts.failed,
       omitidos: summary.counts.skipped,
       pendientes: summary.counts.todo,
-      tiempo_ms: summary.duration_ms
+      tiempo_ms: summary.duration_ms,
+      cache: { reutilizados: cachedFiles.length, ejecutados: executableFiles.length, tests_reutilizados: cachedCounts.passed }
     },
     diagnostico: {
       tiempo_acumulado_archivos_ms: totalFileDuration,
@@ -309,9 +347,29 @@ if (todoTests.length > 0) {
   for (const todo of todoTests) process.stdout.write(describeOmission(todo));
 }
 
-const { counts: finalCounts, duration_ms: duration } = summary;
-process.stdout.write(`${formatScriptStatus(summary.success ? "PASS" : "FAIL", `${completedFiles.size}/${files.length} archivos | ${finalCounts.passed} correctos | ${finalCounts.failed} fallidos | ${finalCounts.skipped} omitidos | ${Math.round(duration)} ms`)}\n`);
-if (summary.success && durations.length === files.length) {
+const { counts: executedCounts, duration_ms: duration } = summary;
+const finalCounts = {
+  passed: executedCounts.passed + cachedCounts.passed,
+  failed: executedCounts.failed,
+  skipped: executedCounts.skipped,
+  todo: executedCounts.todo
+};
+if (automaticCache) {
+  process.stdout.write(`${formatScriptStatus(success ? "PASS" : "WARN", `CACHÉ | ${cachedFiles.length} suites y ${cachedCounts.passed} tests reutilizados | ${executableFiles.length} suites ejecutadas`)}\n`);
+}
+process.stdout.write(`${formatScriptStatus(success ? "PASS" : "FAIL", `${completedFiles.size}/${files.length} archivos | ${finalCounts.passed} correctos${cachedFiles.length ? ` (${cachedCounts.passed} reutilizados)` : ""} | ${finalCounts.failed} fallidos | ${finalCounts.skipped} omitidos | ${Math.round(duration)} ms`)}\n`);
+if (success && inputFingerprint) {
+  try {
+    saveTestResultsCache(inputFingerprint, resultsForCache);
+  } catch (error) {
+    process.stdout.write(`${formatScriptStatus("WARN", `CACHÉ | No se pudo guardar: ${error instanceof Error ? error.message : String(error)}`)}\n`);
+  }
+} else if (automaticCache && !success) {
+  try { discardTestResultsCache(); } catch (error) {
+    process.stdout.write(`${formatScriptStatus("WARN", `CACHÉ | No se pudo invalidar: ${error instanceof Error ? error.message : String(error)}`)}\n`);
+  }
+}
+if (success && cachedFiles.length === 0 && durations.length === files.length) {
   if (options.concurrency === undefined) {
     const regressions = durationRegressions(durations, previousDurations);
     if (regressions.length > 0) {
@@ -328,4 +386,4 @@ if (summary.success && durations.length === files.length) {
     }
   }
 }
-if (!summary.success) process.exitCode = 1;
+if (!success) process.exitCode = 1;

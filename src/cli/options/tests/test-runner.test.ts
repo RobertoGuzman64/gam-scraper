@@ -8,8 +8,8 @@ import { fileURLToPath } from "node:url";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 
-const spawnRunner = (root: string, args: readonly string[]) => {
-  const env = { ...process.env };
+const spawnRunner = (root: string, args: readonly string[], overrides: NodeJS.ProcessEnv = {}) => {
+  const env: NodeJS.ProcessEnv = { ...process.env, CI: "false", ...overrides };
   delete env.NODE_TEST_CONTEXT;
   return spawnSync(process.execPath, [join(root, "scripts", "run-tests.mjs"), ...args],
     { cwd: root, encoding: "utf8", env });
@@ -24,6 +24,7 @@ const withRunner = (action: (root: string) => void): void => {
     copyFileSync(join(projectRoot, "scripts", "run-tests.mjs"), join(root, "scripts", "run-tests.mjs"));
     copyFileSync(join(projectRoot, "scripts", "terminal.mjs"), join(root, "scripts", "terminal.mjs"));
     copyFileSync(join(projectRoot, "scripts", "test-performance.mjs"), join(root, "scripts", "test-performance.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "test-result-cache.mjs"), join(root, "scripts", "test-result-cache.mjs"));
     writeFileSync(join(root, "package.json"), '{"type":"module"}');
     writeFileSync(join(root, "src", "prueba.test.ts"), "export {};\n");
     writeFileSync(join(root, "dist", "prueba.test.js"),
@@ -215,5 +216,100 @@ test("sin perfil previo adelanta FINISH y acreditación antes que las suites lig
     };
     assert.ok(getStart("individual-finish.test.js") < getStart("individual-accreditation-session.test.js"));
     assert.ok(getStart("individual-accreditation-session.test.js") < getStart("dist/prueba.test.js"));
+  });
+});
+
+const addCacheableSuites = (root: string): void => {
+  for (const name of ["individual-finish", "individual-accreditation-session"]) {
+    const source = join(root, "src", "pipeline", "publication", "tests", `${name}.test.ts`);
+    const compiled = join(root, "dist", "pipeline", "publication", "tests", `${name}.test.js`);
+    mkdirSync(dirname(source), { recursive: true });
+    mkdirSync(dirname(compiled), { recursive: true });
+    writeFileSync(source, 'export {};\n');
+    writeFileSync(compiled, `import { appendFileSync } from "node:fs"; import test from "node:test"; test("${name}", () => appendFileSync("ejecuciones-cache.txt", "${name}\\n"));\n`);
+  }
+};
+
+test("npm test reutiliza automáticamente solo suites seguras cuando no cambia ninguna entrada", () => {
+  withRunner((root) => {
+    addCacheableSuites(root);
+    const initial = spawnRunner(root, []);
+    assert.equal(initial.status, 0, `${initial.stdout}${initial.stderr}`);
+    assert.match(initial.stdout, /CACHÉ \| 0 suites/);
+    const first = readFileSync(join(root, "ejecuciones-cache.txt"), "utf8");
+    assert.equal(first.trim().split("\n").length, 2);
+    const next = spawnRunner(root, []);
+    assert.equal(next.status, 0, `${next.stdout}${next.stderr}`);
+    assert.match(next.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 2 suites ejecutadas/);
+    assert.match(next.stdout, /4 correctos \(2 reutilizados\)/);
+    assert.equal(readFileSync(join(root, "ejecuciones-cache.txt"), "utf8"), first);
+  });
+});
+
+test("cambios de código, fixtures y entorno invalidan automáticamente la caché", () => {
+  withRunner((root) => {
+    addCacheableSuites(root);
+    assert.equal(spawnRunner(root, []).status, 0);
+    assert.equal(spawnRunner(root, []).status, 0);
+    writeFileSync(join(root, "src", "prueba.test.ts"), "export const version = 2;\n");
+    const sourceChanged = spawnRunner(root, []);
+    assert.equal(sourceChanged.status, 0, `${sourceChanged.stdout}${sourceChanged.stderr}`);
+    assert.match(sourceChanged.stdout, /CACHÉ \| 0 suites/);
+    assert.equal(spawnRunner(root, []).status, 0);
+    mkdirSync(join(root, "catalogs"));
+    writeFileSync(join(root, "catalogs", "fixture.json"), '{"valor":1}');
+    const fixtureChanged = spawnRunner(root, []);
+    assert.equal(fixtureChanged.status, 0, `${fixtureChanged.stdout}${fixtureChanged.stderr}`);
+    assert.match(fixtureChanged.stdout, /CACHÉ \| 0 suites/);
+    assert.equal(spawnRunner(root, []).status, 0);
+    const environmentChanged = spawnRunner(root, [], { EQUIPZILLA_TEST_CONTEXT: "otro" });
+    assert.equal(environmentChanged.status, 0, `${environmentChanged.stdout}${environmentChanged.stderr}`);
+    assert.match(environmentChanged.stdout, /CACHÉ \| 0 suites/);
+  });
+});
+
+test("mediciones, concurrencia personalizada y CI ejecutan toda la batería", () => {
+  withRunner((root) => {
+    addCacheableSuites(root);
+    assert.equal(spawnRunner(root, []).status, 0);
+    const cached = spawnRunner(root, []);
+    assert.match(cached.stdout, /CACHÉ \| 2 suites/);
+    const reportPath = join(root, "medicion.json");
+    const measured = spawnRunner(root, ["--medicion", reportPath]);
+    assert.equal(measured.status, 0, `${measured.stdout}${measured.stderr}`);
+    const report: unknown = JSON.parse(readFileSync(reportPath, "utf8"));
+    assert.ok(report && typeof report === "object" && "resumen" in report &&
+      report.resumen && typeof report.resumen === "object" && "cache" in report.resumen);
+    assert.deepEqual(report.resumen.cache, { reutilizados: 0, ejecutados: 4, tests_reutilizados: 0 });
+    const manual = spawnRunner(root, ["--concurrencia", "2"]);
+    assert.equal(manual.status, 0, `${manual.stdout}${manual.stderr}`);
+    assert.doesNotMatch(manual.stdout, /CACHÉ \| 2 suites/);
+    const ci = spawnRunner(root, [], { CI: "true" });
+    assert.equal(ci.status, 0, `${ci.stdout}${ci.stderr}`);
+    assert.doesNotMatch(ci.stdout, /CACHÉ \| 2 suites/);
+    const forced = spawnRunner(root, [], { EQUIPZILLA_TEST_CACHE: "0" });
+    assert.equal(forced.status, 0, `${forced.stdout}${forced.stderr}`);
+    assert.doesNotMatch(forced.stdout, /CACHÉ \| 2 suites/);
+    assert.equal(readFileSync(join(root, "ejecuciones-cache.txt"), "utf8").trim().split("\n").length, 10);
+  });
+});
+
+test("caché corrupta y resultados fallidos nunca acreditan tests", () => {
+  withRunner((root) => {
+    addCacheableSuites(root);
+    assert.equal(spawnRunner(root, []).status, 0);
+    writeFileSync(join(root, "dist", ".test-results-cache.json"), "not valid JSON");
+    const corrupted = spawnRunner(root, []);
+    assert.equal(corrupted.status, 0, `${corrupted.stdout}${corrupted.stderr}`);
+    assert.match(corrupted.stdout, /CACHÉ \| 0 suites/);
+    const script = join(root, "scripts", "inspection", "tests", "prueba.test.mjs");
+    writeFileSync(script, 'import test from "node:test"; test("falla", () => { throw new Error("fallo"); });\n');
+    const failed = spawnRunner(root, []);
+    assert.equal(failed.status, 1, `${failed.stdout}${failed.stderr}`);
+    assert.match(failed.stdout, /1 fallidos/);
+    writeFileSync(script, 'import test from "node:test"; test("prueba MJS", () => {});\n');
+    const following = spawnRunner(root, []);
+    assert.equal(following.status, 0, `${following.stdout}${following.stderr}`);
+    assert.match(following.stdout, /CACHÉ \| 0 suites/);
   });
 });
