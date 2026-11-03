@@ -3,7 +3,7 @@ import { existsSync, lstatSync, readFileSync, readdirSync, renameSync, rmSync, w
 import { isBuiltin } from "node:module";
 import { extname, join, relative, resolve } from "node:path";
 
-const VERSION = 3;
+const VERSION = 4;
 const CACHE_PATH = resolve("dist", ".test-results-cache.json");
 const DATA_DIRECTORIES = ["catalogs", "data", "interventions", "docs"];
 const SOURCE_DIRECTORIES = ["src", "scripts"];
@@ -13,6 +13,14 @@ const ROOT_FILES = ["README.md", "package.json", "package-lock.json", "tsconfig.
   "node_modules/cheerio/package.json", "node_modules/p-limit/package.json",
   "scripts/run-tests.mjs", "scripts/test-result-cache.mjs", "scripts/test-performance.mjs",
   "scripts/run-build.mjs", "scripts/build-cache.mjs", "scripts/terminal.mjs"];
+const PURE_ROOT_FILES = new Set([
+  "package.json", "package-lock.json", "tsconfig.json",
+  "node_modules/.package-lock.json", "node_modules/typescript/package.json",
+  "node_modules/cheerio/package.json", "node_modules/p-limit/package.json",
+  "scripts/run-tests.mjs", "scripts/test-result-cache.mjs", "scripts/test-performance.mjs",
+  "scripts/run-build.mjs", "scripts/build-cache.mjs", "scripts/terminal.mjs"
+]);
+const EXTERNAL_DATA_ACCESS = /\b(?:node:fs(?:\/promises)?|fs\/promises|process\.(?:binding|loadEnvFile))\b/u;
 const AUDITED_FAMILIES = [
   "src/catalog/preparation/tests/",
   "src/catalog/coverage/tests/",
@@ -72,15 +80,16 @@ const walkFiles = (directory, accept = () => true) => {
   return paths;
 };
 
-const sharedFingerprint = () => {
+const sharedFingerprint = (withExternalData) => {
   const inputs = [
-    ...DATA_DIRECTORIES.flatMap((directory) => walkFiles(resolve(directory))),
-    ...SOURCE_DIRECTORIES.flatMap((directory) => walkFiles(resolve(directory), (path) =>
-      !/\.(?:ts|tsx|js|mjs|cjs)$/u.test(path))),
-    ...ROOT_FILES.filter((path) => existsSync(path)).map((path) => resolve(path))
+    ...(withExternalData ? DATA_DIRECTORIES.flatMap((directory) => walkFiles(resolve(directory))) : []),
+    ...(withExternalData ? SOURCE_DIRECTORIES.flatMap((directory) => walkFiles(resolve(directory), (path) =>
+      !/\.(?:ts|tsx|js|mjs|cjs)$/u.test(path))) : []),
+    ...ROOT_FILES.filter((path) => (withExternalData || PURE_ROOT_FILES.has(path)) && existsSync(path))
+      .map((path) => resolve(path))
   ].sort((left, right) => canonical(left).localeCompare(canonical(right)));
   const sha = createHash("sha256");
-  sha.update(JSON.stringify({ version: VERSION, root: process.cwd(), node: process.version,
+  sha.update(JSON.stringify({ version: VERSION, withExternalData, root: process.cwd(), node: process.version,
     executable: process.execPath, platform: process.platform, architecture: process.arch,
     env: Object.fromEntries(Object.entries(process.env).sort(([left], [right]) => left.localeCompare(right))) }));
   for (const file of inputs) {
@@ -137,10 +146,15 @@ const moduleFingerprint = (file, hashes, visiting = new Set()) => {
   const dependencies = importsOf(code);
   if (dependencies === null) return null;
   const parts = [canonical(path), hashBytes(content)];
+  let withExternalData = EXTERNAL_DATA_ACCESS.test(code) || /\b(?:node:)?fs(?:\/promises)?["']/u.test(code);
   const source = sourceOf(path);
   if (source) {
     if (!existsSync(source)) return null;
-    parts.push(canonical(source), hashBytes(readRegular(source)));
+    const sourceContent = readRegular(source);
+    const sourceText = sourceContent.toString("utf8");
+    parts.push(canonical(source), hashBytes(sourceContent));
+    withExternalData ||= EXTERNAL_DATA_ACCESS.test(sourceText) ||
+      /\b(?:node:)?fs(?:\/promises)?["']/u.test(sourceText);
   }
   for (const specifier of dependencies) {
     const dependency = resolveDependency(path, specifier);
@@ -148,10 +162,11 @@ const moduleFingerprint = (file, hashes, visiting = new Set()) => {
     if (dependency === undefined) continue;
     const fingerprint = moduleFingerprint(dependency, hashes, visiting);
     if (fingerprint === null) return null;
-    parts.push(canonical(dependency), fingerprint);
+    parts.push(canonical(dependency), fingerprint.digest);
+    withExternalData ||= fingerprint.withExternalData;
   }
   visiting.delete(path);
-  const fingerprint = hashBytes(Buffer.from(parts.join("\0")));
+  const fingerprint = { digest: hashBytes(Buffer.from(parts.join("\0"))), withExternalData };
   hashes.set(path, fingerprint);
   return fingerprint;
 };
@@ -172,7 +187,11 @@ const legacyFingerprint = () => {
   return sha.digest("hex");
 };
 export const fingerprintTestInputs = (files) => {
-  const shared = sharedFingerprint();
+  const shared = new Map();
+  const sharedFor = (withExternalData) => {
+    if (!shared.has(withExternalData)) shared.set(withExternalData, sharedFingerprint(withExternalData));
+    return shared.get(withExternalData);
+  };
   const hashes = new Map();
   const fingerprints = new Map();
   const legacy = files.some((file) => LEGACY_AUDITED_SUITES.has(canonical(file)))
@@ -180,12 +199,12 @@ export const fingerprintTestInputs = (files) => {
   for (const file of files) {
     const name = canonical(file);
     if (LEGACY_AUDITED_SUITES.has(name)) {
-      fingerprints.set(name, hashBytes(Buffer.from(`${shared}\0${legacy}\0${name}`)));
+      fingerprints.set(name, hashBytes(Buffer.from(`${sharedFor(true)}\0${legacy}\0${name}`)));
       continue;
     }
     if (!auditedSource(file)) continue;
     const digest = moduleFingerprint(file, hashes);
-    if (digest !== null) fingerprints.set(name, hashBytes(Buffer.from(`${shared}\0${digest}`)));
+    if (digest !== null) fingerprints.set(name, hashBytes(Buffer.from(`${sharedFor(digest.withExternalData)}\0${digest.digest}`)));
   }
   return fingerprints;
 };

@@ -1,9 +1,9 @@
 import { createHash, randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, lstatSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 const stampName = ".tooling-build.json";
-const version = 2;
+const version = 3;
 
 export const sourcePaths = (root) => {
   const files = [];
@@ -41,13 +41,21 @@ export const snapshot = (root, files) => files.map((path) => {
   return [relative(root, path), info.size, info.mtimeMs, info.ctimeMs, info.birthtimeMs, info.ino];
 });
 
-const compiled = (root, sources) => sources.every((path) => path.endsWith(".d.ts") ||
-  existsSync(join(root, "dist", relative(join(root, "src"), path).replace(/\.ts$/, ".js"))));
+export const outputPaths = (root, sources) => sources.filter((path) => !path.endsWith(".d.ts"))
+  .map((path) => join(root, "dist", relative(join(root, "src"), path).replace(/\.ts$/, ".js")));
+
+const regularOutputs = (paths) => paths.every((path) => {
+  try {
+    const info = lstatSync(path);
+    return info.isFile() && !info.isSymbolicLink();
+  } catch { return false; }
+});
 
 export const loadStamp = (root) => {
   try {
     const value = JSON.parse(readFileSync(join(root, "dist", stampName), "utf8"));
-    return value?.version === version && typeof value.fingerprint === "string" && Array.isArray(value.snapshot)
+    return value?.version === version && typeof value.fingerprint === "string" &&
+      typeof value.outputFingerprint === "string" && Array.isArray(value.snapshot)
       ? value : null;
   } catch { return null; }
 };
@@ -57,18 +65,24 @@ export const isCurrentBuild = (root, sources, inputs) => {
   if (!value) return false;
   try {
     const currentSources = sources ?? sourcePaths(root);
-    if (!compiled(root, currentSources)) return false;
+    const outputs = outputPaths(root, currentSources);
+    if (!regularOutputs(outputs) || fingerprint(root, outputs) !== value.outputFingerprint) return false;
     const current = snapshot(root, inputs ?? buildInputs(root, currentSources));
-    return JSON.stringify(value.snapshot) === JSON.stringify(current);
+    if (JSON.stringify(value.snapshot) === JSON.stringify(current)) return true;
+    const currentInputs = inputs ?? buildInputs(root, currentSources);
+    if (fingerprint(root, currentInputs) !== value.fingerprint ||
+      JSON.stringify(snapshot(root, currentInputs)) !== JSON.stringify(current)) return false;
+    saveStamp(root, value.fingerprint, current, value.outputFingerprint);
+    return true;
   } catch { return false; }
 };
 
-export const saveStamp = (root, value, inputSnapshot) => {
+export const saveStamp = (root, value, inputSnapshot, outputFingerprint) => {
   const path = join(root, "dist", stampName);
   mkdirSync(join(root, "dist"), { recursive: true });
   const stage = `${path}.${randomUUID()}.tmp`;
   try {
-    writeFileSync(stage, JSON.stringify({ version, fingerprint: value, snapshot: inputSnapshot }));
+    writeFileSync(stage, JSON.stringify({ version, fingerprint: value, outputFingerprint, snapshot: inputSnapshot }));
     renameSync(stage, path);
   } finally {
     rmSync(stage, { force: true });

@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { formatScriptStatus } from "./terminal.mjs";
-import { buildInputs, fingerprint, isCurrentBuild, saveStamp, snapshot, sourcePaths } from "./build-cache.mjs";
+import { buildInputs, fingerprint, isCurrentBuild, outputPaths, saveStamp, snapshot, sourcePaths } from "./build-cache.mjs";
 
 const quiet = process.argv.includes("--quiet");
 const ifNeeded = process.argv.includes("--if-needed");
@@ -79,7 +79,10 @@ if (!existsSync(script)) {
       JSON.stringify(snapshot(root, inputs)) !== JSON.stringify(beforeSnapshot)) {
       console.error(formatScriptStatus("FAIL", "BUILD | Los archivos cambiaron durante la compilación", process.stderr));
       result.code = 1;
-    } else saveStamp(root, sourceFingerprint, beforeSnapshot);
+    } else {
+      const outputs = outputPaths(root, currentSources);
+      saveStamp(root, sourceFingerprint, beforeSnapshot, fingerprint(root, outputs));
+    }
   }
   if (!quiet || result.code !== 0) {
     console.log(formatScriptStatus(result.code === 0 ? "PASS" : "FAIL", `BUILD | ${duration()} | código ${result.code}`));

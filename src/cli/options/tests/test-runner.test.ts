@@ -72,6 +72,57 @@ test("el runner incluye pruebas TypeScript y MJS en un único informe", () => {
   });
 });
 
+test("el runner distribuye las pruebas intensivas sin perder resultados ni superar la concurrencia", () => {
+  withRunner((root) => {
+    const heavy = ["individual-finish", "individual-accreditation-session"];
+    for (const name of heavy) {
+      const source = join(root, "src", "pipeline", "publication", "tests", `${name}.test.ts`);
+      const compiled = join(root, "dist", "pipeline", "publication", "tests", `${name}.test.js`);
+      mkdirSync(dirname(source), { recursive: true });
+      mkdirSync(dirname(compiled), { recursive: true });
+      writeFileSync(source, "export {};\n");
+      writeFileSync(compiled, `import test from "node:test"; test("${name}", () => {});\n`);
+    }
+    for (let index = 0; index < 18; index += 1) {
+      const source = join(root, "src", `ligera-${index}.test.ts`);
+      const compiled = join(root, "dist", `ligera-${index}.test.js`);
+      writeFileSync(source, "export {};\n");
+      writeFileSync(compiled, `import test from "node:test"; test("ligera-${index}", () => {});\n`);
+    }
+    const reportFile = join(root, "medicion.json");
+    const result = spawnRunner(root, ["--concurrencia=12", "--medicion", reportFile]);
+    assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+    const report: unknown = JSON.parse(readFileSync(reportFile, "utf8"));
+    assert.ok(report !== null && typeof report === "object" &&
+      "resumen" in report && "distribucion" in report && Array.isArray(report.distribucion));
+    assert.ok(report.resumen !== null && typeof report.resumen === "object" &&
+      "archivos" in report.resumen && "correctos" in report.resumen && "fallidos" in report.resumen);
+    assert.equal(report.resumen.archivos, 22);
+    assert.equal(report.resumen.correctos, 22);
+    assert.equal(report.resumen.fallidos, 0);
+    assert.equal(report.distribucion.length, 2);
+    assert.ok(report.distribucion.every((lane) => lane !== null && typeof lane === "object" &&
+      "archivos" in lane && "concurrencia" in lane && typeof lane.archivos === "number" &&
+      typeof lane.concurrencia === "number"));
+    assert.equal(report.distribucion.reduce((total, lane) => total + lane.concurrencia, 0), 12);
+    assert.equal(report.distribucion.reduce((total, lane) => total + lane.archivos, 0), 22);
+    rmSync(join(root, "dist", ".test-runner-durations.json"), { force: true });
+    writeFileSync(join(root, "dist", "pipeline", "publication", "tests", "individual-finish.test.js"),
+      'import test from "node:test"; test("fallo de cola intensiva", () => { throw new Error("fallo controlado"); });\n');
+    const failed = spawnRunner(root, ["--concurrencia=12", "--medicion", reportFile]);
+    assert.equal(failed.status, 1, `${failed.stdout}${failed.stderr}`);
+    assert.match(failed.stdout, /fallo de cola intensiva/);
+    const failedReport: unknown = JSON.parse(readFileSync(reportFile, "utf8"));
+    assert.ok(failedReport !== null && typeof failedReport === "object" &&
+      "resumen" in failedReport && failedReport.resumen !== null && typeof failedReport.resumen === "object" &&
+      "fallidos" in failedReport.resumen && "correctos" in failedReport.resumen &&
+      "distribucion" in failedReport && Array.isArray(failedReport.distribucion));
+    assert.equal(failedReport.resumen.fallidos, 1);
+    assert.equal(failedReport.resumen.correctos, 21);
+    assert.equal(failedReport.distribucion.length, 2);
+  });
+});
+
 test("el runner propaga al comando el error de una prueba MJS", () => {
   withRunner((root) => {
     writeFileSync(join(root, "scripts", "inspection", "tests", "prueba.test.mjs"),
@@ -90,7 +141,7 @@ test("el runner usa la concurrencia adaptativa predeterminada", () => {
     assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
     const report: unknown = JSON.parse(readFileSync(reportFile, "utf8"));
     assert.ok(typeof report === "object" && report !== null && "concurrencia" in report);
-    assert.equal(report.concurrencia, Math.min(12, Math.max(1, availableParallelism() * 2)));
+    assert.equal(report.concurrencia, Math.min(12, Math.max(1, availableParallelism())));
   });
 });
 
@@ -362,7 +413,7 @@ test("el cambio de una dependencia invalida solo su suite, no las demás", () =>
   });
 });
 
-test("los datos versionados invalidan las suites y las operaciones inseguras no se cachean", () => {
+test("los datos externos solo invalidan suites que dependen de ellos", () => {
   withRunner((root) => {
     addAuditedCatalogSuites(root);
     const sourceDir = join(root, "src", "catalog", "preparation", "tests", "cache");
@@ -371,15 +422,30 @@ test("los datos versionados invalidan las suites y las operaciones inseguras no 
       'import { writeFileSync } from "node:fs";\nexport { writeFileSync };\n');
     writeFileSync(join(compiledDir, "unsafe.test.js"),
       'import test from "node:test"; test("unsafe", () => {});\n');
+    mkdirSync(join(root, "catalogs"));
+    writeFileSync(join(root, "catalogs", "nuevo.json"), '{"revision":1}');
+    writeFileSync(join(sourceDir, "file-reader.ts"),
+      'import { readFileSync } from "node:fs";\nexport const readCatalog = (): string => readFileSync("catalogs/nuevo.json", "utf8");\n');
+    writeFileSync(join(compiledDir, "file-reader.js"),
+      'import { readFileSync } from "node:fs";\nexport const readCatalog = () => readFileSync("catalogs/nuevo.json", "utf8");\n');
+    writeFileSync(join(sourceDir, "external.test.ts"),
+      'import { readCatalog } from "./file-reader.js";\nexport { readCatalog };\n');
+    writeFileSync(join(compiledDir, "external.test.js"),
+      'import { readCatalog } from "./file-reader.js"; import test from "node:test"; test("external", () => { if (!readCatalog().includes("revision")) throw new Error("sin datos"); });\n');
     assert.equal(spawnRunner(root, []).status, 0);
     const second = spawnRunner(root, []);
     assert.equal(second.status, 0, `${second.stdout}${second.stderr}`);
-    assert.match(second.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 3 suites ejecutadas/);
-    mkdirSync(join(root, "catalogs"));
-    writeFileSync(join(root, "catalogs", "nuevo.json"), '{"revision":1}');
+    assert.match(second.stdout, /CACHÉ \| 3 suites y 3 tests reutilizados \| 3 suites ejecutadas/);
+    writeFileSync(join(root, "catalogs", "nuevo.json"), '{"revision":2}');
     const changed = spawnRunner(root, []);
     assert.equal(changed.status, 0, `${changed.stdout}${changed.stderr}`);
-    assert.match(changed.stdout, /CACHÉ \| 0 suites/);
+    assert.match(changed.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 4 suites ejecutadas/);
+    const unrelated = join(root, "docs");
+    mkdirSync(unrelated);
+    writeFileSync(join(unrelated, "notes.md"), "Actualización editorial");
+    const docsChanged = spawnRunner(root, []);
+    assert.equal(docsChanged.status, 0, `${docsChanged.stdout}${docsChanged.stderr}`);
+    assert.match(docsChanged.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 4 suites ejecutadas/);
   });
 });
 
