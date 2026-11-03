@@ -44,7 +44,7 @@ test("FINISH via npm y Node conserva opciones, ayuda, espacios y selección sin 
       cwd: workspace, encoding: "utf8", windowsHide: true
     });
     assert.equal(help.status, 0, help.stderr);
-    assert.match(help.stdout, /Paso 3\/3/);
+    assert.match(help.stdout, /Paso 2\/2/);
     const json: unknown = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
     assert.ok(typeof json === "object" && json !== null && "scripts" in json);
     assert.ok(typeof json.scripts === "object" && json.scripts !== null && "catalogo:publicar" in json.scripts);

@@ -41,7 +41,7 @@ test("catalogo:preparar llega desde npm a la CLI con opciones normalizadas y rut
       cwd: workspace, encoding: "utf8", windowsHide: true
     });
     assert.equal(help.status, 0, help.stderr);
-    assert.match(help.stdout, /PASO|Paso 1\/3/);
+    assert.match(help.stdout, /Paso 1\/2/);
     const direct = spawnSync(process.execPath, [join(workspace, "scripts", "tooling.mjs"), "catalogo:preparar", "--proveedor", "mercaeleva"], {
       cwd: workspace, encoding: "utf8", windowsHide: true
     });
