@@ -84,7 +84,7 @@ export const deliverIndividualProvider = async (
 ): Promise<IndividualDeliveryResult> => {
   const state = await readIndividualEditorialState(options);
   if (!state.inspection.approved || state.inspection.issues.length) {
-    throw new Error("Publicación individual bloqueada: faltan aprobación humana o decisiones editoriales válidas");
+    throw new Error("Publicación individual bloqueada: falta acreditación aprobada o existen decisiones editoriales inválidas");
   }
   const context = state.context;
   const accreditationText = state.raw;

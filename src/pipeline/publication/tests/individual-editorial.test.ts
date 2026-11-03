@@ -146,8 +146,8 @@ test("entrega individual bloquea borradores y validaciones sin aprobación", asy
   await fixture(async (options) => {
     await assert.rejects(deliverIndividualProvider(options, "simulation"), /No hay borrador individual/);
     await startIndividualEditorial(options);
-    await assert.rejects(deliverIndividualProvider(options), /aprobación humana/);
-    await assert.rejects(deliverIndividualProvider(options, "verify"), /aprobación humana/);
+    await assert.rejects(deliverIndividualProvider(options), /acreditación aprobada/);
+    await assert.rejects(deliverIndividualProvider(options, "verify"), /acreditación aprobada/);
     const folder = join(options.rootDirectory, "catalogs", "providers", "gam");
     await assert.rejects(readdir(folder), /ENOENT/);
   });
@@ -341,7 +341,7 @@ test("propuestas individuales conservan decisiones humanas, no aprueban y son id
     assert.equal(assisted.decision, "excluir");
     assert.match(assisted.reason ?? "", /incidencias documentadas en la preparación/);
     assert.deepEqual(assisted.evidenceUrls, [assisted.sourceUrl]);
-    await assert.rejects(deliverIndividualProvider(options), /aprobación humana/);
+    await assert.rejects(deliverIndividualProvider(options), /acreditación aprobada/);
     const before = await readFile(proposed.draftFile, "utf8");
     await prepareIndividualEditorialProposals(options);
     assert.equal(await readFile(proposed.draftFile, "utf8"), before);

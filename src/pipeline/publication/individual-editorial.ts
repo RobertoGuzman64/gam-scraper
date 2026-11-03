@@ -183,6 +183,32 @@ const update = async (
   return { runId: initial.context.runId, draftFile: initial.draftFile, accreditation: next, inspection };
 };
 
+export const approveAutomaticIndividualEditorial = async (
+  options: IndividualEditorialOptions, planned: CampaignAccreditation
+): Promise<IndividualEditorialReview> => {
+  await startIndividualEditorial(options);
+  return update(options, (current) => {
+    if (current.approved) {
+      if (!isDeepStrictEqual(current, planned)) throw new Error("La aprobación existente cambió durante la acreditación automática");
+      return current;
+    }
+    if (current.runId !== planned.runId || !isDeepStrictEqual(current.sources, planned.sources) ||
+      current.exclusions.length !== planned.exclusions.length) {
+      throw new Error("La preparación cambió durante la acreditación automática");
+    }
+    for (let index = 0; index < current.exclusions.length; index += 1) {
+      const old = current.exclusions[index];
+      const next = planned.exclusions[index];
+      if (!old || !next || old.providerId !== next.providerId || old.reference !== next.reference ||
+        old.sourceUrl !== next.sourceUrl || old.status !== next.status || !isDeepStrictEqual(old.issues, next.issues) ||
+        (old.decision !== null && !isDeepStrictEqual(old, next))) {
+        throw new Error("Una decisión editorial cambió durante la acreditación automática");
+      }
+    }
+    return planned;
+  });
+};
+
 export const prepareIndividualEditorialProposals = async (
   options: IndividualEditorialOptions
 ): Promise<IndividualEditorialReview> => update(options, proposeIndividualExclusions);

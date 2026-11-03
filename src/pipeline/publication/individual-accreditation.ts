@@ -15,6 +15,9 @@ import { readIndividualSelection } from "./individual-selection.js";
 
 export type IndividualEditorialAntecedent = {
   readonly reference: string;
+  readonly sourceUrl: string;
+  readonly status: "review" | "identity" | "intervention";
+  readonly issues: readonly string[];
   readonly reason: string;
   readonly evidenceUrls: readonly string[];
 };
@@ -41,14 +44,25 @@ const historicalExclusions = async (
     throw new Error(`Antecedentes de ${providerId}: acreditación vigente inválida`);
   }
   const result: IndividualEditorialAntecedent[] = [];
+  const references = new Set<string>();
   for (const item of parsed.exclusions) {
     if (isRecord(item) && item.decision === "incluir") continue;
-    if (!isRecord(item) || typeof item.reference !== "string" || typeof item.reason !== "string" ||
+    if (!isRecord(item) || typeof item.reference !== "string" || typeof item.sourceUrl !== "string" ||
+      typeof item.reason !== "string" || item.reason.trim().length < 15 ||
+      !["review", "identity", "intervention"].includes(String(item.status)) ||
+      !Array.isArray(item.issues) || !item.issues.every((issue: unknown) => typeof issue === "string") ||
       item.decision !== "excluir" || item.providerId !== providerId || !Array.isArray(item.evidenceUrls) ||
-      !item.evidenceUrls.every((url: unknown) => typeof url === "string")) {
+      !item.evidenceUrls.every((url: unknown) => typeof url === "string" && url.startsWith("https://")) ||
+      !item.evidenceUrls.includes(item.sourceUrl) || references.has(item.reference)) {
       throw new Error(`Antecedentes de ${providerId}: exclusión vigente inválida`);
     }
-    result.push({ reference: item.reference, reason: item.reason, evidenceUrls: item.evidenceUrls });
+    references.add(item.reference);
+    const status = item.status;
+    if (status !== "review" && status !== "identity" && status !== "intervention") {
+      throw new Error(`Antecedentes de ${providerId}: estado inválido`);
+    }
+    result.push({ reference: item.reference, sourceUrl: item.sourceUrl, status,
+      issues: item.issues, reason: item.reason, evidenceUrls: item.evidenceUrls });
   }
   return result;
 };
@@ -70,7 +84,7 @@ export const preflightIndividualAccreditations = async (
       checked.push({ providerId, options, expected: selection.draft, existing,
         proposed: proposeIndividualExclusions(selection.draft), antecedents });
     } catch (error) {
-      throw new Error(`PASO 2 | ${providerId.toUpperCase()} | Sin aprobación ni publicación. ${error instanceof Error ? error.message : String(error)}. Corrige la causa y repite catalogo:preparar o catalogo:acreditar`, { cause: error });
+      throw new Error(`ACREDITACIÓN | ${providerId.toUpperCase()} | Sin aprobación ni publicación. ${error instanceof Error ? error.message : String(error)}. Corrige la causa y repite catalogo:preparar o catalogo:publicar`, { cause: error });
     }
   }
   return checked;
@@ -84,7 +98,7 @@ export const openIndividualAccreditations = async (
     try {
       opened.push(await startIndividualEditorial(context.options));
     } catch (error) {
-      throw new Error(`PASO 2 | ${context.providerId.toUpperCase()} | Borradores abiertos: ${opened.map((item) => item.accreditation.sources[0]?.providerId).join(", ") || "ninguno"}. Sin aprobaciones nuevas. Corrige el bloqueo y reanuda catalogo:acreditar: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+      throw new Error(`ACREDITACIÓN | ${context.providerId.toUpperCase()} | Borradores abiertos: ${opened.map((item) => item.accreditation.sources[0]?.providerId).join(", ") || "ninguno"}. Sin aprobaciones nuevas. Corrige el bloqueo y reanuda catalogo:publicar: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
     }
   }
   return opened;
@@ -138,7 +152,7 @@ export const approveIndividualAccreditations = async (
       approved.push(await approveIndividualEditorial(context.options, `Aprobación expresa del conjunto (${scope}): ${reason.trim()}`));
     } catch (error) {
       const completed = approved.filter((item) => item.inspection.approved).map((item) => item.accreditation.sources[0]?.providerId).join(", ");
-      throw new Error(`Aprobación PARCIAL | completados: ${completed || "ninguno"} | falló ${context.providerId}. No se publicó nada. Consulta las acreditaciones y reanuda catalogo:acreditar: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+      throw new Error(`Aprobación PARCIAL | completados: ${completed || "ninguno"} | falló ${context.providerId}. No se publicó nada. Consulta las acreditaciones y reanuda catalogo:publicar: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
     }
   }
   return approved;

@@ -45,7 +45,7 @@ test("catalogo:acreditar se invoca desde npm y Node con --proveedor, --simular y
       cwd: workspace, encoding: "utf8", windowsHide: true
     });
     assert.equal(help.status, 0, help.stderr);
-    assert.match(help.stdout, /Paso 2\/3/);
+    assert.match(help.stdout, /Comando opcional/);
     const json: unknown = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
     assert.ok(typeof json === "object" && json !== null && "scripts" in json);
     assert.ok(typeof json.scripts === "object" && json.scripts !== null && "catalogo:acreditar" in json.scripts);

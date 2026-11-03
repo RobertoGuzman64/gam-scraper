@@ -22,7 +22,7 @@ export const runPrepareIndividual = async (args: readonly string[], workspace: s
   }
   if (args.includes("--help")) throw new Error("--help no admite otros argumentos");
   const options = parseIndividualCatalogProviders(args);
-  printReportLine(formatHeader(`PASO 1/3 · PREPARAR ${options.dryRun ? "· SIMULACIÓN" : ""}`));
+  printReportLine(formatHeader(`PASO 1/2 · PREPARAR ${options.dryRun ? "· SIMULACIÓN" : ""}`));
   const results = await prepareIndividualCatalogs({ workspace, providers: options.providerIds, dryRun: options.dryRun });
   let total = 0;
   let ready = 0;
@@ -59,10 +59,10 @@ export const runPrepareIndividual = async (args: readonly string[], workspace: s
   }
   printReportLine(`RESUMEN | proveedores: ${results.length - blocked}/${results.length} | fichas: ${total} | ready: ${ready} | review: ${review} | bloqueados: ${blocked}`);
   if (blocked) {
-    printStatus("FAIL", "PASO 1 BLOQUEADO | No continuar a la acreditación hasta resolver los bloqueos");
+    printStatus("FAIL", "PASO 1 BLOQUEADO | Corrige los bloqueos antes de publicar");
     return false;
   }
-  printStatus("PASS", options.dryRun ? "SIMULACIÓN COMPLETA | Sin escrituras" : "PASO 1 COMPLETO | Siguiente: npm run catalogo:acreditar");
+  printStatus("PASS", options.dryRun ? "SIMULACIÓN COMPLETA | Sin escrituras" : "PASO 1 COMPLETO | Siguiente: npm run catalogo:publicar");
   return true;
 };
 

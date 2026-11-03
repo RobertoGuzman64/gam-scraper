@@ -5,26 +5,28 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { resolveAccreditedPublication, readAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { publicationApprovalSha } from "../../../infrastructure/filesystem/catalog/publication-identity.js";
-import { runAccreditIndividual } from "../../../cli/commands/catalog/accredit-individual.js";
+import { startIndividualEditorial, decideIndividualEditorial, approveIndividualEditorial } from "../individual-editorial.js";
 import { runPublishIndividual } from "../../../cli/commands/catalog/publish-individual.js";
 import { preflightIndividualAccreditations } from "../individual-accreditation.js";
 import { selectActivePublication } from "../active-publication.js";
 import { publishIndividualCatalogs } from "../individual-finish.js";
 import { createIndividualWorkspaceFixture, prepareIndividualTestWorkspace } from "../../../testing/builders/individual-workspace-fixture.js";
-import type { EditorialSessionInput } from "../../../cli/commands/catalog/accredit-individual.js";
 
 const ids = ["gam", "gomariz", "mercaeleva"] as const;
-const answers = (...values: readonly string[]): EditorialSessionInput => {
-  const queue = [...values];
-  return { ask: async () => queue.shift() ?? "q", close: () => undefined };
-};
 const reason = "Contraste editorial realizado con evidencia de origen";
 const approve = async (root: string): Promise<void> => {
   const contexts = await preflightIndividualAccreditations(root, ids);
-  const evidence = contexts[2]?.expected.exclusions[0]?.sourceUrl;
-  assert.ok(evidence);
-  assert.equal(await runAccreditIndividual([], root,
-    answers("p", "EXCLUIR", "p", "EXCLUIR", "e", reason, evidence, reason, "APROBAR")), true);
+  for (const context of contexts) {
+    await startIndividualEditorial(context.options);
+    for (const entry of context.expected.exclusions) {
+      const proposal = context.proposed.exclusions.find((item) => item.reference === entry.reference);
+      await decideIndividualEditorial(context.options, {
+        reference: entry.reference, decision: "excluir",
+        reason: proposal?.reason ?? reason, evidenceUrls: [entry.sourceUrl]
+      });
+    }
+    await approveIndividualEditorial(context.options, reason);
+  }
 };
 const withWorkspace = createIndividualWorkspaceFixture({
   prefix: "equipzilla-finish con espacios ", serialNumber: "SERIAL-REPETIDO",
@@ -36,13 +38,13 @@ const publish = (root: string, desktop: string) => publishIndividualCatalogs({
 });
 const fileSha = async (file: string): Promise<string> => createHash("sha256").update(await readFile(file)).digest("hex");
 
-test("FINISH exige preparar y aprobación explícita, sin versiones ni diario si está bloqueado", async () => {
+test("FINISH exige preparar y bloquea incidencias nuevas sin antecedente acreditado", async () => {
   await withWorkspace(async (root) => {
     await assert.rejects(publishIndividualCatalogs({ workspace: root, providers: ids, dryRun: true, desktopDirectory: null }),
       /catalogo:preparar/);
     await prepareIndividualTestWorkspace(root);
     await assert.rejects(publishIndividualCatalogs({ workspace: root, providers: ids, dryRun: false, desktopDirectory: root }),
-      /PASO 2|borrador/);
+      /incidencia nueva|exclusión vigente/);
     await assert.rejects(lstat(join(root, "storage", "publication")), { code: "ENOENT" });
     for (const id of ids) {
       await assert.rejects(lstat(join(root, "catalogs", "providers", id, "publications")), { code: "ENOENT" });
@@ -92,6 +94,27 @@ test("ciclo completo: simular sin escrituras, 3 activaciones, ZIPs, SHA, y repet
       assert.ok(active);
       assert.equal(await publicationApprovalSha(dirname(active)), versions[index]);
     }
+  });
+});
+
+test("FINISH reacredita sin interacción las exclusiones idénticas de la publicación vigente", async () => {
+  await withWorkspace(async (root, desktop) => {
+    await publish(root, desktop);
+    const contexts = await preflightIndividualAccreditations(root, ids);
+    const gam = contexts[0];
+    assert.ok(gam?.existing);
+    await rm(gam.existing.draftFile);
+    const preview = await publishIndividualCatalogs({
+      workspace: root, providers: ids, dryRun: true, desktopDirectory: null
+    });
+    assert.equal(preview.providers[0]?.excluded, 2);
+    await assert.rejects(lstat(gam.existing.draftFile), { code: "ENOENT" });
+    const result = await publish(root, desktop);
+    assert.equal(result.providers[0]?.excluded, 2);
+    const updated = await preflightIndividualAccreditations(root, ["gam"]);
+    assert.equal(updated[0]?.existing?.inspection.approved, true);
+    assert.equal(updated[0]?.existing?.inspection.completed, 2);
+    assert.ok(updated[0]?.existing?.accreditation.approvalReason?.includes("automática"));
   });
 });
 

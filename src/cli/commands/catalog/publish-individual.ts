@@ -15,10 +15,10 @@ export const publishIndividualHelp = `Uso:
   npm run catalogo:publicar -- --simular
   npm run catalogo:publicar -- --proveedor gomariz --simular
 
-Paso 3/3: FINISH. Simula el conjunto antes de escribir; solo publica acreditaciones aprobadas.
+Paso 2/2: FINISH. Reutiliza automáticamente exclusiones históricas idénticas y acredita antes de publicar.
 Verifica los ZIP y recibos antes de activar; activa proveedores individuales con diario de recuperación,
 comprueba integridad, ejecuta retención y auditor de huecos. --simular no escribe ni activa.
-Repetir el comando recupera un conjunto parcial sin aprobar decisiones ni sobrescribir entregas.
+Repetir el comando recupera un conjunto parcial sin sobrescribir entregas.
 No sustituye una campaña global de cuatro proveedores.`;
 
 const consolidate = (workspace: string): void => {
@@ -57,13 +57,13 @@ export const runPublishIndividual = async (
   }
   if (args.includes("--help")) throw new Error("--help no admite otras opciones");
   const parsed = parseIndividualCatalogProviders(args);
-  printReportLine(formatHeader(`PASO 3/3 · FINISH${parsed.dryRun ? " · SIMULACIÓN" : ""}`));
+  printReportLine(formatHeader(`PASO 2/2 · FINISH${parsed.dryRun ? " · SIMULACIÓN" : ""}`));
   const root = resolve(workspace);
   if (!parsed.dryRun) {
     const preflight = await publishIndividualCatalogs({
       workspace: root, providers: parsed.providerIds, dryRun: true, desktopDirectory: null
     });
-    printStatus("PASS", `PREFLIGHT | ${preflight.providers.length} proveedores con aprobación y diferencias aceptadas`);
+    printStatus("PASS", `PREFLIGHT | ${preflight.providers.length} proveedores con exclusiones acreditadas y diferencias aceptadas`);
     describeResult(preflight);
   }
   const result = await publishIndividualCatalogs({

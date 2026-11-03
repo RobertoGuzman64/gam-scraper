@@ -10,8 +10,10 @@ import {
 import type { IndividualFinishTarget, IndividualFinishJournal } from "../../infrastructure/filesystem/catalog/individual-finish-journal.js";
 import type { IndividualCatalogProvider } from "../preparation/individual-context.js";
 import { preflightIndividualAccreditations } from "./individual-accreditation.js";
-import type { IndividualEditorialOptions } from "./individual-editorial.js";
+import { ensureAutomaticIndividualAccreditations, planAutomaticIndividualAccreditation } from "./automatic-individual-accreditation.js";
+import { readIndividualSelection } from "./individual-selection.js";
 import { readIndividualEditorialState } from "./individual-editorial.js";
+import type { IndividualEditorialOptions } from "./individual-editorial.js";
 import { selectIndividualPublishable } from "./individual-selection.js";
 import { deliverIndividualArchive } from "./individual-archive.js";
 import { deliverIndividualProvider } from "./individual-delivery.js";
@@ -81,15 +83,14 @@ const inspected = async (
   const checked: Checked[] = [];
   const blockers: string[] = [];
   for (const context of contexts) {
-    let state;
-    try { state = await readIndividualEditorialState(context.options); }
-    catch (error) { throw new Error(`PASO 3 | ${context.providerId.toUpperCase()} | Sin nuevas publicaciones ni activaciones: ${error instanceof Error ? error.message : String(error)}. Ejecuta catalogo:acreditar tras revisar la preparación`, { cause: error }); }
-    if (!state.inspection.approved || state.inspection.issues.length) {
-      blockers.push(`${context.providerId}: falta aprobación humana válida o existen decisiones pendientes`);
-      continue;
-    }
-    const selection = selectIndividualPublishable(state.context, state.raw);
-    const approvalSha256 = sha256(state.raw);
+    const planned = planAutomaticIndividualAccreditation(context);
+    const selectionContext = await readIndividualSelection(context.providerId, context.options.catalogFile, context.options.preparationFile);
+    if (planned.runId !== selectionContext.runId) throw new Error(`${context.providerId}: preparación cambiada durante el preflight`);
+    const raw = context.existing?.inspection.approved
+      ? (await readIndividualEditorialState(context.options)).raw
+      : JSON.stringify(planned, null, 2);
+    const selection = selectIndividualPublishable(selectionContext, raw);
+    const approvalSha256 = sha256(raw);
     const currentSha256 = await activeSha(root, context.providerId, approvalSha256);
     const activeFile = currentSha256 ? await resolveAccreditedPublication(root, context.providerId) : null;
     if (currentSha256 && !activeFile) throw new Error(`${context.providerId}: índice activo sin publicación acreditada`);
@@ -104,7 +105,7 @@ const inspected = async (
       activeSha256: currentSha256, difference, publishable: selection.totals.publishable,
       excluded: selection.totals.excluded, unchanged: currentSha256 === approvalSha256 });
   }
-  if (blockers.length) throw new Error(`FINISH / PREFLIGHT BLOQUEADO | Sin publicaciones ni activaciones nuevas. ${blockers.join("; ")}. Corrige las acreditaciones y vuelve a simular`);
+  if (blockers.length) throw new Error(`FINISH / PREFLIGHT BLOQUEADO | Sin publicaciones ni activaciones nuevas. ${blockers.join("; ")}. Corrige la evidencia o las reglas y vuelve a simular`);
   if (checked.length !== providers.length) throw new Error("FINISH / PREFLIGHT: conjunto incompleto");
   return checked;
 };
@@ -201,5 +202,8 @@ export const publishIndividualCatalogs = async (options: {
   };
   if (options.dryRun) return execute();
   await inspected(root, options.providers);
-  return withIndividualFinishLock(root, execute);
+  return withIndividualFinishLock(root, async () => {
+    await ensureAutomaticIndividualAccreditations(root, options.providers);
+    return execute();
+  });
 };
