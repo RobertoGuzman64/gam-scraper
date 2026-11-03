@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import type { ProductRecord } from "../../../contracts/catalog.js";
-import { verifiedPhase162Editorial } from "../evidence/verified-phase162-editorial.js";
+import type { ProductRecord } from "../../../../../../contracts/catalog.js";
+import { verifiedGamUnitSourceGenerals } from "../../../../evidence/providers/gam/general-evidence/verified-unit-source-generals.js";
 
 const digest = (value: string): string => createHash("sha256").update(value).digest("hex");
 
@@ -12,26 +12,21 @@ const sourceDigest = (record: ProductRecord): string => digest(JSON.stringify({
   externalReference: record.externalReference,
   condition: record.condition,
   categoryKey: record.categoryKey,
-  year: record.year,
-  horometer: record.horometer,
   shortDescription: record.shortDescription,
   longDescription: record.longDescription,
   specs: record.specs
 }));
 
-export const resolveVerifiedPhase162Editorial = (
-  record: ProductRecord,
-  previousGeneral: string | null
-): string | null => {
-  if (!record.reference || !previousGeneral) return null;
+export const resolveGamVerifiedUnitSourceGeneral = (record: ProductRecord, preparedGeneral: string | null): string | null => {
+  if (record.providerId !== "gam" || !record.reference || !preparedGeneral) return null;
   const entries: Readonly<Record<string, {
     readonly sourceDigest: string;
+    readonly preparedDigest: string;
     readonly sourceUrl: string;
-    readonly preparedGeneralDigest: string;
     readonly general: string;
-  }>> = verifiedPhase162Editorial;
-  const evidence = entries[`${record.providerId}:${record.reference}`];
+  }>> = verifiedGamUnitSourceGenerals;
+  const evidence = entries[record.reference];
   if (!evidence || record.url !== evidence.sourceUrl || sourceDigest(record) !== evidence.sourceDigest ||
-    digest(previousGeneral) !== evidence.preparedGeneralDigest) return null;
+    digest(preparedGeneral) !== evidence.preparedDigest) return null;
   return evidence.general;
 };

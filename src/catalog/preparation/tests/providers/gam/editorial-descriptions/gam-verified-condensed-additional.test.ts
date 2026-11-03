@@ -4,7 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-additional.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
-import { verifiedPhase161Editorial } from "../../../../evidence/verified-phase161-editorial.js";
+import { verifiedUnitContextEditorial } from "../../../../evidence/verified-unit-context-editorial.js";
 import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
 import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
 
@@ -37,8 +37,8 @@ test("aplica síntesis editorial contrastada únicamente a veinte fichas GAM", (
       assert.equal(prepared.description_general,
         includeGamSourceSafetyControlsInGeneral(record,
           includeGamRegenerativeBrakingInGeneral(record, general, prepared.spec), prepared.spec), record.reference);
-      const phase161Evidence: Readonly<Record<string, { readonly sourceDigest: string; readonly short?: string }>> = verifiedPhase161Editorial;
-      assert.equal(prepared.description, phase161Evidence[`gam:${record.reference}`]?.short ?? resolveGamAdditionalCondensedShort(record) ?? record.shortDescription?.trim(), record.reference);
+      const unitContextEvidence: Readonly<Record<string, { readonly sourceDigest: string; readonly short?: string }>> = verifiedUnitContextEditorial;
+      assert.equal(prepared.description, unitContextEvidence[`gam:${record.reference}`]?.short ?? resolveGamAdditionalCondensedShort(record) ?? record.shortDescription?.trim(), record.reference);
       assert.equal(prepared.reference, record.reference);
       assert.equal(prepared.sourceUrl, record.url);
       for (const [key, value] of Object.entries(record.specs ?? {})) {

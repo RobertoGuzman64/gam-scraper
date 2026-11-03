@@ -5,7 +5,7 @@ import { readCanonicalCatalog } from "../../../../../../infrastructure/filesyste
 import { resolveGamCrossedIdentityEditorial } from "../../../../mapping/providers/gam/identity/crossed-identity-editorial.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { verifiedCanonicalBriefEditorial } from "../../../../evidence/verified-canonical-brief-editorial.js";
-import { verifiedPhase163Editorial } from "../../../../evidence/verified-phase163-editorial.js";
+import { verifiedEditorialClosure } from "../../../../evidence/verified-editorial-closure.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const refs = [
@@ -37,8 +37,8 @@ test("corrige descripciones cruzadas usando identidad y datos del anuncio acredi
     assert.deepEqual(prepared.product.spec, prepareSourceProduct({ ...record }).product.spec, reference);
     if (evidence.general) {
       const revised: Readonly<Record<string, { readonly general: string }>> = verifiedCanonicalBriefEditorial;
-      const phase163: Readonly<Record<string, { readonly general: string }>> = verifiedPhase163Editorial;
-      assert.equal(prepared.product.description_general, phase163[`gam:${reference}`]?.general ?? revised[`gam:${reference}`]?.general ?? evidence.general, reference);
+      const closureEvidence: Readonly<Record<string, { readonly general: string }>> = verifiedEditorialClosure;
+      assert.equal(prepared.product.description_general, closureEvidence[`gam:${reference}`]?.general ?? revised[`gam:${reference}`]?.general ?? evidence.general, reference);
     }
   }
 });

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -45,5 +46,47 @@ test("un original sin manifest queda bloqueado con diagnóstico explícito", asy
     assert.equal(report.issues.length, 1);
     assert.match(report.issues[0].reason, /incompleto/);
     assert.equal(report.counts.migrations, 0);
+  });
+});
+
+test("acepta el alias portátil cuando original y acreditación mantienen el prefijo canónico", async () => {
+  await withRoot(async (root) => {
+    const providerId = "gam";
+    const name = `scrape-${providerId}`;
+    const prefix = "scrape-gam-historico";
+    const directory = join(root, "catalogs", "providers", providerId, "original");
+    await mkdir(directory, { recursive: true });
+    const catalog = {
+      prefix, providerId, scope: "historico", startedAt: "2026-01-01T00:00:00Z",
+      endedAt: "2026-01-01T01:00:00Z", productCount: 1
+    };
+    const content = JSON.stringify(catalog);
+    const hash = createHash("sha256").update(content).digest("hex");
+    const manifest = { ...catalog, catalogSha256: hash };
+    const summary = {
+      quality: { status: "complete", published: true },
+      totals: { scrapedProducts: 1 }, startedAt: catalog.startedAt, endedAt: catalog.endedAt,
+      artifacts: { catalogSha256: hash }
+    };
+    await writeFile(join(directory, `${name}-catalog.json`), content);
+    await writeFile(join(directory, `${name}-catalog.manifest.json`), JSON.stringify(manifest));
+    await writeFile(join(directory, `${name}-summary.json`), JSON.stringify(summary));
+    await mkdir(join(root, "storage"));
+    const valid = run(root);
+    assert.equal(valid.status, 0);
+    assert.deepEqual(JSON.parse(valid.stdout).originals.verified, [
+      `catalogs/providers/${providerId}/original/${name}-catalog.json`
+    ]);
+
+    await writeFile(join(directory, `${name}-catalog.manifest.json`), JSON.stringify({ ...manifest, prefix: "otro" }));
+    const invalidManifest = run(root);
+    assert.equal(invalidManifest.status, 1);
+    assert.equal(JSON.parse(invalidManifest.stdout).originals.issues.length, 1);
+
+    await writeFile(join(directory, `${name}-catalog.manifest.json`), JSON.stringify(manifest));
+    await writeFile(join(directory, `${name}-catalog.json`), JSON.stringify({ ...catalog, prefix: "otro" }));
+    const invalidCatalog = run(root);
+    assert.equal(invalidCatalog.status, 1);
+    assert.equal(JSON.parse(invalidCatalog.stdout).originals.issues.length, 1);
   });
 });

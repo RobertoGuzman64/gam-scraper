@@ -1,4 +1,4 @@
-export const verifiedPhase161Editorial = {
+export const verifiedUnitContextEditorial = {
   "mercaeleva:M239-6301": {
     "sourceDigest": "5e6de6961156e966963b424138ee04be5148f7c9b4d06ac678d071e4e78af684",
     "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/BT-LPE200-8-M239-6301",

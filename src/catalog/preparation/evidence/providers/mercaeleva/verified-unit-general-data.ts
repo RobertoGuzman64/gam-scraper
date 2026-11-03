@@ -1,14 +1,13 @@
 import type { ProductRecord, SpecsMap } from "../../../../../contracts/catalog.js";
-import { validMercaelevaTechnicalSource } from "../../../mapping/providers/mercaeleva/technical.js";
 
-type Evidence = Readonly<{
+export type VerifiedUnitGeneralEvidence = Readonly<{
   source: Readonly<Pick<ProductRecord,
     "url" | "title" | "brand" | "model" | "year" | "horometer" | "condition" | "shortDescription" | "longDescription">> &
     { readonly specs: SpecsMap };
   general: string;
 }>;
 
-const evidence = {
+export const verifiedMercaelevaUnitEvidence = {
   "M208-7097": {
     "source": {
       "url": "https://sales.mercaeleva.com/es/for-sale/machine/Jungheinrich-EFG-318-M208-7097",
@@ -1362,29 +1361,4 @@ const evidence = {
     },
     "general": "El Manitou MT1440 SLT es un manipulador telescópico diésel de ocasión, fabricado en 2012, con capacidad declarada de 4.000 kg y altura máxima de elevación de 14 m. El anuncio registra 6.964 horas y la ficha estructurada, 6.813 h. No se fija una lectura definitiva por esa contradicción. Referencia del vendedor: 468."
   },
-} as const satisfies Readonly<Record<string, Evidence>>;
-
-const entries: ReadonlyMap<string, Evidence> = new Map(Object.entries(evidence));
-
-const sameSpecs = (actual: SpecsMap | undefined, expected: SpecsMap): boolean => {
-  if (!actual) return false;
-  const names = Object.keys(expected);
-  return Object.keys(actual).length === names.length && names.every((name) => actual[name] === expected[name]);
-};
-
-export const verifiedMercaelevaUnitGeneral = (record: ProductRecord): string | null => {
-  if (!validMercaelevaTechnicalSource(record) || record.categoryKey !== "venta" ||
-    (record.condition !== "Segunda mano" && (record.condition !== "Nuevo" || record.specs?.Estado !== "Nuevo")) ||
-    !record.reference) return null;
-  const entry = entries.get(record.reference);
-  if (!entry) return null;
-  const source = entry.source;
-  if (record.url !== source.url || record.title !== source.title ||
-    record.brand !== source.brand || record.model !== source.model ||
-    record.year !== source.year || record.horometer !== source.horometer ||
-    record.condition !== source.condition ||
-    record.shortDescription !== source.shortDescription ||
-    record.longDescription !== source.longDescription ||
-    !sameSpecs(record.specs, source.specs)) return null;
-  return entry.general;
-};
+} as const satisfies Readonly<Record<string, VerifiedUnitGeneralEvidence>>;

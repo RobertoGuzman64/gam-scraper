@@ -1,4 +1,4 @@
-export const verifiedPhase163Editorial = {
+export const verifiedEditorialClosure = {
   "gam:5845": {
     "sourceDigest": "2000b25c3f4d2434c6fccf88f1f9236ecb39095774c822b88ecf5f1fc724a710",
     "sourceUrl": "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/5845-2015-jlg-10rs",

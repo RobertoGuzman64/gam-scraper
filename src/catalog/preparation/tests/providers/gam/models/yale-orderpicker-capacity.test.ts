@@ -5,7 +5,7 @@ import { readCanonicalCatalog } from "../../../../../../infrastructure/filesyste
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { reconcileGamOrderPickerEditorial } from "../../../../evidence/providers/gam/editorial/orderpicker-editorial.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
-import { verifiedPhase161Editorial } from "../../../../evidence/verified-phase161-editorial.js";
+import { verifiedUnitContextEditorial } from "../../../../evidence/verified-unit-context-editorial.js";
 
 const catalog = await loadImportCatalog();
 const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
@@ -27,7 +27,7 @@ test("Yale MO10L corrige 2000 a 1000 kg con ficha técnica y resumen coincidente
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
   assert.equal(prepared.product.title, corrected.title);
-  assert.equal(prepared.product.description_general, verifiedPhase161Editorial["gam:2237"].general);
+  assert.equal(prepared.product.description_general, verifiedUnitContextEditorial["gam:2237"].general);
   assert.match(prepared.product.description_general ?? "", /1\.000 kg con centro de carga de 600 mm/);
   assert.match(prepared.product.description_general ?? "", /2\.000 kg, pero esa cifra contradice/);
   assert.match(prepared.product.description_general ?? "", /unidad mal formada y requiere verificaci[oó]n/);

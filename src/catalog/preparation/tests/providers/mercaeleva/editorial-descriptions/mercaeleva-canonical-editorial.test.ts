@@ -7,12 +7,12 @@ import { verifiedMercaelevaCriticalGeneral } from "../../../../evidence/provider
 import { verifiedPriorityPlatformGeneral } from "../../../../evidence/providers/mercaeleva/priority-platform-generals.js";
 import { verifiedMercaelevaPriorityShortDescription } from "../../../../evidence/providers/mercaeleva/priority-short-descriptions.js";
 import { verifiedMercaelevaResidualGeneral } from "../../../../evidence/providers/mercaeleva/verified-residual-generals.js";
-import { verifiedMercaelevaUnitGeneral } from "../../../../evidence/providers/mercaeleva/verified-unit-generals.js";
-import { verifiedPhase162Editorial } from "../../../../evidence/verified-phase162-editorial.js";
+import { verifiedMercaelevaUnitGeneral } from "../../../../mapping/providers/mercaeleva/verified-unit-general.js";
+import { verifiedFamilyProportionEditorial } from "../../../../evidence/verified-family-proportion-editorial.js";
 import { matchesVerifiedHorometer } from "../../../../evidence/providers/mercaeleva/verified-horometer.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { resolveMercaelevaDocumentedFurtherPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-further-platform-general.js";
-import { resolveMercaelevaPhase157PlatformGeneral } from "../../../../mapping/providers/mercaeleva/phase157-platform-general.js";
+import { resolveMercaelevaLegacyPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-legacy-platform-general.js";
 import { resolveMercaelevaVerifiedSourceEditorial } from "../../../../mapping/providers/mercaeleva/verified-source-editorial.js";
 
 const source = await readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json");
@@ -55,8 +55,8 @@ test("Mercaeleva: los originales canónicos activan las evidencias editoriales v
     const prepared = prepareSourceProduct(record).product;
     const previous = resolveMercaelevaDocumentedFurtherPlatformGeneral(record) ?? general;
     assert.ok(prepared.description_general === (resolveMercaelevaVerifiedSourceEditorial(record, previous) ?? previous) ||
-      prepared.description_general === resolveMercaelevaPhase157PlatformGeneral(record) ||
-      (reference === "M294-4678" && prepared.description_general === verifiedPhase162Editorial["mercaeleva:M294-4678"].general), reference);
+      prepared.description_general === resolveMercaelevaLegacyPlatformGeneral(record) ||
+      (reference === "M294-4678" && prepared.description_general === verifiedFamilyProportionEditorial["mercaeleva:M294-4678"].general), reference);
     assert.deepEqual(prepared.spec, recoverMercaelevaSourceFuel(record, record.specs ?? {}), reference);
     assert.notEqual(general, record.longDescription, reference);
   }

@@ -4,7 +4,7 @@ import { join, relative, resolve } from "node:path";
 import { clearLine, cursorTo } from "node:readline";
 import { run } from "node:test";
 import { formatScriptStatus } from "./terminal.mjs";
-import { durationRegressions, loadTestDurations, orderTestsByDuration, saveTestDurations } from "./test-performance.mjs";
+import { durationRegressions, loadTestDurations, orderTestsByDuration, recommendedTestConcurrency, saveTestDurations } from "./test-performance.mjs";
 import { discardTestResultsCache, fingerprintTestInputs, loadTestResultsCache, relativeCacheFile, saveTestResultsCache } from "./test-result-cache.mjs";
 
 const parseOptions = (argumentsList) => {
@@ -76,7 +76,7 @@ const PRIORITIZED_TESTS = [
 ];
 const testPriority = new Map(PRIORITIZED_TESTS.map((path, index) => [path, index]));
 
-const DEFAULT_CONCURRENCY = Math.min(12, Math.max(1, availableParallelism() * 2));
+const DEFAULT_CONCURRENCY = recommendedTestConcurrency(availableParallelism());
 const options = parseOptions(process.argv.slice(2));
 const effectiveConcurrency = options.concurrency ?? DEFAULT_CONCURRENCY;
 

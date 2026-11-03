@@ -17,17 +17,15 @@ import { resolveMercaelevaDocumentedAdditionalPlatformGeneral } from "./mapping/
 import { resolveMercaelevaDocumentedResidualPlatformGeneral } from "./mapping/providers/mercaeleva/documented-residual-platform-general.js";
 import { resolveMercaelevaDocumentedFurtherPlatformGeneral } from "./mapping/providers/mercaeleva/documented-further-platform-general.js";
 import { resolveMercaelevaDocumentedPendingPlatformGeneral } from "./mapping/providers/mercaeleva/documented-pending-platform-general.js";
-import { resolveMercaelevaPhase157PlatformGeneral } from "./mapping/providers/mercaeleva/phase157-platform-general.js";
+import { resolveMercaelevaLegacyPlatformGeneral } from "./mapping/providers/mercaeleva/documented-legacy-platform-general.js";
 import { resolveMercaelevaVerifiedSourceEditorial } from "./mapping/providers/mercaeleva/verified-source-editorial.js";
-import { resolveGamPhase158SourceEditorial } from "./mapping/providers/gam/editorial-descriptions/phase158-source-editorial.js";
+import { resolveGamVerifiedUnitSourceGeneral } from "./mapping/providers/gam/editorial-descriptions/verified-unit-source-general.js";
 import { resolveVerifiedCanonicalBriefEditorial } from "./mapping/verified-canonical-brief-editorial.js";
-import { resolveVerifiedPhase161Editorial } from "./mapping/verified-phase161-editorial.js";
-import { resolveVerifiedPhase162Editorial } from "./mapping/verified-phase162-editorial.js";
-import { resolveVerifiedPhase163Editorial } from "./mapping/verified-phase163-editorial.js";
+import { applyVerifiedEditorialComposition } from "./mapping/verified-editorial-composition.js";
 import { verifiedMercaelevaCriticalGeneral } from "./evidence/providers/mercaeleva/critical-general-descriptions.js";
 import { verifiedPriorityPlatformGeneral } from "./evidence/providers/mercaeleva/priority-platform-generals.js";
 import { verifiedMercaelevaResidualGeneral } from "./evidence/providers/mercaeleva/verified-residual-generals.js";
-import { verifiedMercaelevaUnitGeneral } from "./evidence/providers/mercaeleva/verified-unit-generals.js";
+import { verifiedMercaelevaUnitGeneral } from "./mapping/providers/mercaeleva/verified-unit-general.js";
 import { mercaelevaMissingDescriptions } from "./mapping/providers/mercaeleva/missing-descriptions.js";
 import { gamMissingDescriptions } from "./mapping/providers/gam/editorial-descriptions/missing-descriptions.js";
 import { rebalanceGamOverlongShort, resolveGamResidualConciseShort, resolveGamShortDescription } from "./mapping/providers/gam/editorial-descriptions/short-description.js";
@@ -224,7 +222,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const existingMercaelevaGeneral = resolveMercaelevaDocumentedPendingPlatformGeneral(record) ?? resolveMercaelevaDocumentedFurtherPlatformGeneral(record) ?? verifiedMercaelevaCriticalGeneral(record) ?? verifiedPriorityPlatformGeneral(record) ?? verifiedMercaelevaResidualGeneral(record) ?? verifiedMercaelevaUnitGeneral(record) ?? resolveMercaelevaDocumentedPlatformGeneral(record) ?? resolveMercaelevaDocumentedAdditionalPlatformGeneral(record) ?? resolveMercaelevaDocumentedResidualPlatformGeneral(record) ?? resolveMercaelevaGeneralDescription(record);
   const mercaelevaGeneral = existingMercaelevaGeneral && existingMercaelevaGeneral.trim().split(/\s+/u).length >= 60
     ? existingMercaelevaGeneral
-    : resolveMercaelevaPhase157PlatformGeneral(record) ?? existingMercaelevaGeneral;
+    : resolveMercaelevaLegacyPlatformGeneral(record) ?? existingMercaelevaGeneral;
   const general = crossedIdentity?.general ?? verifiedGamCondensedGeneral ?? resolveGamCondensedGeneral(record) ?? resolveGamAdditionalCondensedGeneral(record) ?? resolveGamExtendedCondensedGeneral(record) ?? resolveGamCleaningCondensedGeneral(record) ?? resolveGamForkliftCondensedGeneral(record) ?? resolveGamHandlingCondensedGeneral(record) ?? resolveGamPlatformCondensedGeneral(record) ?? resolveGamWarehouseCondensedGeneral(record) ?? resolveGamHysterCondensedGeneral(record) ?? resolveGamTennantCondensedGeneral(record) ?? resolveGamIndividualizedGeneral(record) ?? verifiedGomarizPriorityGeneral(record) ?? resolveGomarizIndividualizedGeneral(record) ?? resolveGomarizCriticalBriefGeneral(record) ?? resolveGomarizGeneralDescription(record) ?? resolveGomarizResidualGeneral(record) ?? mercaelevaGeneral ?? resolveGamPriorityBriefGeneral(record) ?? resolveGamCriticalBriefGeneral(record) ?? resolveGamGeneralDescription(record) ?? resolveGamModelSpecificGeneral(record) ?? resolveGamLongDescription(record) ?? verifiedGamFamilyGeneral ?? resolveGamTecnacarGeneral(record) ?? record.longDescription ?? missingDescriptions.long ?? missingGamDescriptions.long;
   const balanced = conciseGamShort === null ? rebalanceGamOverlongShort(record, general) : null;
   const technicalBalance = conciseGamShort === null && balanced === null ? rebalanceGamTechnicalShort(record, general) : null;
@@ -301,19 +299,14 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const sourcedBatteryGeneral = issues.length === 0
     ? includeGamSourceBatteryVoltageInGeneral(sourceUnitRecord, sourcedForkliftGeneral, sourceFuelSpecs) : sourcedForkliftGeneral;
   const verifiedSourceGeneral = issues.length === 0
-    ? resolveGamPhase158SourceEditorial(record, sourcedBatteryGeneral) ?? sourcedBatteryGeneral : sourcedBatteryGeneral;
+    ? resolveGamVerifiedUnitSourceGeneral(record, sourcedBatteryGeneral) ?? sourcedBatteryGeneral : sourcedBatteryGeneral;
   const verifiedEditorialGeneral = issues.length === 0
     ? resolveMercaelevaVerifiedSourceEditorial(sourceUnitRecord, verifiedSourceGeneral) ?? verifiedSourceGeneral : verifiedSourceGeneral;
   const canonicalBriefGeneral = issues.length === 0
     ? resolveVerifiedCanonicalBriefEditorial(sourceUnitRecord, verifiedEditorialGeneral) ?? verifiedEditorialGeneral : verifiedEditorialGeneral;
-  const verifiedPhase161 = issues.length === 0
-    ? resolveVerifiedPhase161Editorial(sourceUnitRecord, preparedShort, canonicalBriefGeneral) : null;
-
-  const phase161General = verifiedPhase161?.general ?? canonicalBriefGeneral;
-  const phase162General = issues.length === 0
-    ? resolveVerifiedPhase162Editorial(sourceUnitRecord, phase161General) ?? phase161General : phase161General;
-  const phase163General = issues.length === 0
-    ? resolveVerifiedPhase163Editorial(sourceUnitRecord, phase162General) ?? phase162General : phase162General;
+  const verifiedDescriptions = applyVerifiedEditorialComposition(
+    sourceUnitRecord, preparedShort, canonicalBriefGeneral, issues.length === 0
+  );
 
   const product: ImportCandidate = {
     providerId: record.providerId,
@@ -326,8 +319,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     condition,
     price,
     description_title: title,
-    description: verifiedPhase161?.short ?? preparedShort,
-    description_general: phase163General,
+    description: verifiedDescriptions.short,
+    description_general: verifiedDescriptions.general,
     image: images[0] ?? null,
     images,
     spec: sourceFuelSpecs,

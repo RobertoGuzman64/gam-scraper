@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { verifiedPhase163Editorial } from "../evidence/verified-phase163-editorial.js";
-import { resolveVerifiedPhase163Editorial } from "../mapping/verified-phase163-editorial.js";
+import { verifiedEditorialClosure } from "../evidence/verified-editorial-closure.js";
+import { resolveVerifiedEditorialClosure } from "../mapping/verified-editorial-closure.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalogs = await Promise.all([
@@ -24,7 +24,7 @@ const evidence: Readonly<Record<string, {
   readonly sourceUrl: string;
   readonly general: string;
   readonly verificationUrl: string;
-}>> = verifiedPhase163Editorial;
+}>> = verifiedEditorialClosure;
 
 test("La fase 163 acredita veintisiete mejoras de referencias canónicas diferentes", () => {
   assert.equal(records.length, 1347);
@@ -54,9 +54,9 @@ test("La evidencia requiere fuente y descripción previa inalteradas", () => {
   for (const [identity, previous] of known) {
     const record = byIdentity.get(identity);
     assert.ok(record, identity);
-    assert.equal(resolveVerifiedPhase163Editorial(record, previous), evidence[identity]?.general, identity);
-    assert.equal(resolveVerifiedPhase163Editorial(record, null), null, identity);
-    assert.equal(resolveVerifiedPhase163Editorial(record, `${previous} variante`), null, identity);
+    assert.equal(resolveVerifiedEditorialClosure(record, previous), evidence[identity]?.general, identity);
+    assert.equal(resolveVerifiedEditorialClosure(record, null), null, identity);
+    assert.equal(resolveVerifiedEditorialClosure(record, `${previous} variante`), null, identity);
     for (const modified of [
       { ...record, providerId: "otro" },
       { ...record, reference: `${record.reference}-otro` },
@@ -66,7 +66,7 @@ test("La evidencia requiere fuente y descripción previa inalteradas", () => {
       { ...record, specs: { ...record.specs, "Capacidad revisada": "pendiente" } },
       { ...record, longDescription: "Descripción no acreditada" }
     ] satisfies readonly ProductRecord[]) {
-      assert.equal(resolveVerifiedPhase163Editorial(modified, previous), null, identity);
+      assert.equal(resolveVerifiedEditorialClosure(modified, previous), null, identity);
     }
   }
 });

@@ -1,4 +1,4 @@
-export const verifiedPhase158GamEditorial = {
+export const verifiedGamUnitSourceGenerals = {
   "2185": {
     "sourceDigest": "f2df8bc1a7b1d3989c3d5e36f9da1c6b6dd0ff6929d3dc6da50a2ec52cd948b7",
     "preparedDigest": "2b5ee316b92176d119fa504501552fc432ce5a8c0688d6fd1de5c78c17b8e298",

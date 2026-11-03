@@ -6,6 +6,8 @@ const PROFILE_VERSION = 1;
 const PROFILE_PATH = resolve("dist", ".test-runner-durations.json");
 const canonical = (path) => relative(process.cwd(), resolve(path)).replaceAll("\\", "/");
 
+export const recommendedTestConcurrency = (parallelism) => Math.min(12, Math.max(1, parallelism));
+
 export const loadTestDurations = (concurrency) => {
   try {
     if (!existsSync(PROFILE_PATH) || !lstatSync(PROFILE_PATH).isFile() || lstatSync(PROFILE_PATH).isSymbolicLink()) return null;

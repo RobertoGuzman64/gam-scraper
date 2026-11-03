@@ -112,9 +112,21 @@ const verifyOriginals = async (files) => {
       const rawCatalog = JSON.parse(await readFile(original.path, "utf8"));
       const rawSummary = JSON.parse(await readFile(summary.path, "utf8"));
       const name = basename(prefix);
-      if (rawManifest.catalogSha256 !== original.sha256 || rawCatalog.prefix !== name ||
-        rawManifest.prefix !== name || rawCatalog.providerId !== rawManifest.providerId ||
+      const portableAlias = name === `scrape-${rawCatalog.providerId}` &&
+        original.relative === `catalogs/providers/${rawCatalog.providerId}/original/${name}-catalog.json`;
+      if (rawManifest.catalogSha256 !== original.sha256 ||
+        (rawCatalog.prefix !== name && !portableAlias) ||
+        rawManifest.prefix !== rawCatalog.prefix ||
+        rawCatalog.providerId !== rawManifest.providerId ||
+        rawCatalog.scope !== rawManifest.scope ||
+        rawCatalog.startedAt !== rawManifest.startedAt ||
+        rawCatalog.endedAt !== rawManifest.endedAt ||
         rawCatalog.productCount !== rawManifest.productCount ||
+        rawSummary?.quality?.status !== "complete" ||
+        rawSummary?.quality?.published !== true ||
+        rawSummary?.totals?.scrapedProducts !== rawCatalog.productCount ||
+        rawSummary?.startedAt !== rawCatalog.startedAt ||
+        rawSummary?.endedAt !== rawCatalog.endedAt ||
         rawSummary?.artifacts?.catalogSha256 !== original.sha256) {
         issues.push({ path: original.relative, reason: "Original y manifest/summary no concuerdan" });
       } else verified.push(original.relative);

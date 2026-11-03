@@ -6,7 +6,7 @@ import { resolveGamGeneralDescription } from "../../../../mapping/providers/gam/
 import { resolveGamVerifiedBriefGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/brief-technical-general.js";
 import { resolveGamShortDescription } from "../../../../mapping/providers/gam/editorial-descriptions/short-description.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
-import { verifiedPhase158GamEditorial } from "../../../../evidence/providers/gam/general-evidence/phase158-source-editorial.js";
+import { verifiedGamUnitSourceGenerals } from "../../../../evidence/providers/gam/general-evidence/verified-unit-source-generals.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const find = (reference: string): ProductRecord => {
@@ -22,7 +22,7 @@ const expected = new Set([
 
 test("GAM: mejora únicamente las 18 generales con evidencia propia", () => {
   const changed: string[] = [];
-  const phase158Entries: Readonly<Record<string, { readonly general: string }>> = verifiedPhase158GamEditorial;
+  const verifiedUnitSourceEntries: Readonly<Record<string, { readonly general: string }>> = verifiedGamUnitSourceGenerals;
   for (const record of catalog.products) {
     const before = JSON.stringify(record);
     const improved = resolveGamGeneralDescription(record);
@@ -30,7 +30,7 @@ test("GAM: mejora únicamente las 18 generales con evidencia propia", () => {
     if (improved) {
       assert.ok(record.reference);
       changed.push(record.reference);
-      assert.equal(prepared.product.description_general, phase158Entries[record.reference]?.general ?? resolveGamVerifiedBriefGeneral(record, improved) ?? improved);
+      assert.equal(prepared.product.description_general, verifiedUnitSourceEntries[record.reference]?.general ?? resolveGamVerifiedBriefGeneral(record, improved) ?? improved);
       assert.equal(prepared.product.description, resolveGamShortDescription(record) ?? record.shortDescription?.trim() ?? null);
       assert.ok(improved.length > (record.longDescription?.length ?? 0));
       assert.equal(improved.includes("Equipamiento Estándar:"), false);

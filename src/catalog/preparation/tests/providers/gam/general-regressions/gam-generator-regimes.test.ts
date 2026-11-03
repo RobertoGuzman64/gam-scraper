@@ -4,7 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../../../mapping/attribute-mapping.js";
-import { verifiedPhase161Editorial } from "../../../../evidence/verified-phase161-editorial.js";
+import { verifiedUnitContextEditorial } from "../../../../evidence/verified-unit-context-editorial.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -28,7 +28,7 @@ test("GAM: potencia nominal explícita compatible con emergencia y continuo cons
   assert.ok(prepared.product.attributes.some((attribute) => attribute.value === 80 && attribute.attributeID === power.id));
   assert.equal(JSON.stringify(prepared.product.spec), specs);
   assert.equal(JSON.stringify(generator.specs), specs);
-  assert.equal(prepared.product.description, verifiedPhase161Editorial["gam:1211"].short);
+  assert.equal(prepared.product.description, verifiedUnitContextEditorial["gam:1211"].short);
   assert.match(prepared.product.description ?? "", /83 kVA de emergencia/);
   assert.match(prepared.product.description ?? "", /78 kVA de potencia continua/);
 });

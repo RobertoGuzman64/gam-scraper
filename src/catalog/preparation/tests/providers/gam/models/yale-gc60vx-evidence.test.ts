@@ -5,7 +5,7 @@ import { readCanonicalCatalog } from "../../../../../../infrastructure/filesyste
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { reconcileGamVerifiedYaleGc60vx } from "../../../../evidence/providers/gam/verified-models/yale-gc60vx-evidence.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
-import { verifiedPhase162Editorial } from "../../../../evidence/verified-phase162-editorial.js";
+import { verifiedFamilyProportionEditorial } from "../../../../evidence/verified-family-proportion-editorial.js";
 
 const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
@@ -30,7 +30,7 @@ test("Yale GC60VX reconcilia la motorización declarada sin modificar el spec or
   assert.equal(prepared.product.category, "Carretillas Elevadoras Diésel");
   assert.equal(prepared.product.title, record.title);
   assert.equal(prepared.product.description, corrected.shortDescription);
-  assert.equal(prepared.product.description_general, verifiedPhase162Editorial["gam:2314"].general);
+  assert.equal(prepared.product.description_general, verifiedFamilyProportionEditorial["gam:2314"].general);
   assert.match(prepared.product.description_general ?? "", /6\.000 kg a centro de carga de 600 mm/);
   assert.match(prepared.product.description_general ?? "", /contradicci[oó]n t[eé]cnica en el combustible/i);
   assert.match(prepared.product.description_general ?? "", /No se acredita una variante concreta/i);

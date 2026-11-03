@@ -1,15 +1,10 @@
-import { readFile, realpath } from "node:fs/promises";
+import { realpath } from "node:fs/promises";
 import { isDeepStrictEqual } from "node:util";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { buildProductIdentity } from "../../../catalog/identity.js";
-import { readCanonicalCatalog } from "../catalog/canonical-catalog.js";
 import { readAppliedIntervention } from "../interventions/intervention-derived.js";
-import { validateOfflinePreparation } from "../../../pipeline/validation/offline.js";
-import { sha256 } from "../../../catalog/editorial/campaign-accreditation.js";
 import type { AccreditedSource } from "../../../catalog/editorial/campaign-accreditation.js";
 import type { OfflinePreparation } from "../../../catalog/preparation/offline-document.js";
-import type { BatchReport } from "../../../contracts/batch-report.js";
-import { isReferenceProviderSet } from "../../../contracts/campaign-providers.js";
 
 
 export const interventionForPreparation = async (

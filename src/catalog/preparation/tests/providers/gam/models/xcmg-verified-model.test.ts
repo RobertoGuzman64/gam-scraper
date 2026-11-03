@@ -6,7 +6,7 @@ import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/l
 import { gamElevationIdentityConflict } from "../../../../evidence/providers/gam/identity/elevation-identity.js";
 import { reconcileGamVerifiedXcmg1523Model } from "../../../../evidence/providers/gam/verified-models/xcmg-1523-model-evidence.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
-import { verifiedPhase162Editorial } from "../../../../evidence/verified-phase162-editorial.js";
+import { verifiedFamilyProportionEditorial } from "../../../../evidence/verified-family-proportion-editorial.js";
 
 const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
@@ -35,7 +35,7 @@ for (const record of records) {
     assert.equal(output.product.spec["Modelo"], record.specs?.["Modelo"]);
     assert.ok(output.product.attributes.some((attribute) => attribute.attributeID === 116 && attribute.value === model));
     assert.equal(output.product.description_general, record.reference === "4802"
-      ? verifiedPhase162Editorial["gam:4802"].general : record.longDescription);
+      ? verifiedFamilyProportionEditorial["gam:4802"].general : record.longDescription);
     assert.equal(output.product.description, record.shortDescription);
     assert.equal(output.product.title, record.title);
   });

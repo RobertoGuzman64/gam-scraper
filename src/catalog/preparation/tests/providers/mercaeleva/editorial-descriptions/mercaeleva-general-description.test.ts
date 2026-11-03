@@ -5,9 +5,9 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveMercaelevaGeneralDescription } from "../../../../mapping/providers/mercaeleva/general-description.js";
 import { resolveMercaelevaDocumentedAdditionalPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-additional-platform-general.js";
-import { resolveMercaelevaPhase157PlatformGeneral } from "../../../../mapping/providers/mercaeleva/phase157-platform-general.js";
+import { resolveMercaelevaLegacyPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-legacy-platform-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
-import { verifiedPhase161Editorial } from "../../../../evidence/verified-phase161-editorial.js";
+import { verifiedUnitContextEditorial } from "../../../../evidence/verified-unit-context-editorial.js";
 import { mercaelevaShortDescription } from "../../../../mapping/providers/mercaeleva/descriptions.js";
 
 const source = await readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json");
@@ -32,7 +32,7 @@ test("Mercaeleva: convierte el anuncio telegráfico coherente en prosa y conserv
     }
     assert.equal(text.includes("ALTURA DE TRABAJO"), false);
     const result = prepareSourceProduct(record);
-    assert.equal(result.product.description_general, resolveMercaelevaDocumentedAdditionalPlatformGeneral(record) ?? resolveMercaelevaPhase157PlatformGeneral(record) ?? text);
+    assert.equal(result.product.description_general, resolveMercaelevaDocumentedAdditionalPlatformGeneral(record) ?? resolveMercaelevaLegacyPlatformGeneral(record) ?? text);
     assert.equal(result.product.description, record.shortDescription ?? mercaelevaShortDescription(record));
     assert.equal(result.product.sourceUrl, record.url);
     assert.equal(result.product.reference, record.reference);
@@ -90,11 +90,11 @@ test("Mercaeleva: respeta el resto del corte disponible sin perder generales exi
   for (const record of source.products) {
     const output = prepareSourceProduct(record);
     const improved = resolveMercaelevaGeneralDescription(record);
-    const editorial: Readonly<Record<string, { readonly sourceDigest: string; readonly general?: string }>> = verifiedPhase161Editorial;
+    const editorial: Readonly<Record<string, { readonly sourceDigest: string; readonly general?: string }>> = verifiedUnitContextEditorial;
     if (editorial[`mercaeleva:${record.reference}`]?.general) {
       assert.equal(output.product.description_general, editorial[`mercaeleva:${record.reference}`]?.general);
     } else if (improved) {
-      assert.equal(output.product.description_general, resolveMercaelevaDocumentedAdditionalPlatformGeneral(record) ?? resolveMercaelevaPhase157PlatformGeneral(record) ?? improved);
+      assert.equal(output.product.description_general, resolveMercaelevaDocumentedAdditionalPlatformGeneral(record) ?? resolveMercaelevaLegacyPlatformGeneral(record) ?? improved);
     }
     else assert.ok(output.product.description_general || !record.longDescription?.trim());
     assert.equal(output.product.reference, record.reference);

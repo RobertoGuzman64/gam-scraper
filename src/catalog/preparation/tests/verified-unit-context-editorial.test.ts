@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { verifiedPhase161Editorial } from "../evidence/verified-phase161-editorial.js";
-import { resolveVerifiedPhase161Editorial } from "../mapping/verified-phase161-editorial.js";
+import { verifiedUnitContextEditorial } from "../evidence/verified-unit-context-editorial.js";
+import { resolveVerifiedUnitContextEditorial } from "../mapping/verified-unit-context-editorial.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalogs = await Promise.all([
@@ -28,11 +28,11 @@ const evidenceEntries: Readonly<Record<string, {
   readonly sourceUrl: string;
   readonly short?: string;
   readonly general?: string;
-}>> = verifiedPhase161Editorial;
+}>> = verifiedUnitContextEditorial;
 
 test("La fase editorial conserva los originales y mejora exactamente veinte referencias", () => {
   assert.equal(byIdentity.size, 1347);
-  assert.deepEqual(new Set(Object.keys(verifiedPhase161Editorial)), expected);
+  assert.deepEqual(new Set(Object.keys(verifiedUnitContextEditorial)), expected);
   let shortCount = 0;
   let generalCount = 0;
   for (const identity of expected) {
@@ -71,12 +71,12 @@ test("La evidencia exige identidad, origen técnico y textos preparados exactos"
   ] as const) {
     const record = byIdentity.get(identity);
     assert.ok(record);
-    const outcome = resolveVerifiedPhase161Editorial(record, oldShort, oldGeneral);
+    const outcome = resolveVerifiedUnitContextEditorial(record, oldShort, oldGeneral);
     assert.ok(outcome, identity);
-    assert.equal(resolveVerifiedPhase161Editorial(record, null, oldGeneral), null);
-    assert.equal(resolveVerifiedPhase161Editorial(record, oldShort, null), null);
-    assert.equal(resolveVerifiedPhase161Editorial(record, oldShort + " adulterado", oldGeneral), null);
-    assert.equal(resolveVerifiedPhase161Editorial(record, oldShort, oldGeneral + " adulterado"), null);
+    assert.equal(resolveVerifiedUnitContextEditorial(record, null, oldGeneral), null);
+    assert.equal(resolveVerifiedUnitContextEditorial(record, oldShort, null), null);
+    assert.equal(resolveVerifiedUnitContextEditorial(record, oldShort + " adulterado", oldGeneral), null);
+    assert.equal(resolveVerifiedUnitContextEditorial(record, oldShort, oldGeneral + " adulterado"), null);
     for (const changed of [
       { ...record, reference: `${record.reference}-otra` },
       { ...record, providerId: "otro-proveedor" },
@@ -85,7 +85,7 @@ test("La evidencia exige identidad, origen técnico y textos preparados exactos"
       { ...record, specs: { ...record.specs, Capacidad: "no verificada" } },
       { ...record, longDescription: "Origen sustituido" }
     ] satisfies readonly ProductRecord[]) {
-      assert.equal(resolveVerifiedPhase161Editorial(changed, oldShort, oldGeneral), null, identity);
+      assert.equal(resolveVerifiedUnitContextEditorial(changed, oldShort, oldGeneral), null, identity);
     }
   }
 });

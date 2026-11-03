@@ -1,6 +1,6 @@
 import { verifiedArticulatedPlatformModelDocumentation } from "./articulated-platform-model-documentation.js";
 
-export const verifiedPhase157PlatformModelDocumentation = [
+export const documentedLegacyPlatformModels = [
   {
     brand: "Genie", model: "S-65", kind: "telescopic", condition: "Segunda mano", motor: "Diesel",
     title: "PLATAFORMA TELESCOPICA DIESEL 22 MT", advertisedHeight: "22 m", manufacturerHeight: "21,6 m",

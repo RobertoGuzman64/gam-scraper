@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { verifiedPhase162Editorial } from "../evidence/verified-phase162-editorial.js";
-import { resolveVerifiedPhase162Editorial } from "../mapping/verified-phase162-editorial.js";
+import { verifiedFamilyProportionEditorial } from "../evidence/verified-family-proportion-editorial.js";
+import { resolveVerifiedFamilyProportionEditorial } from "../mapping/verified-family-proportion-editorial.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalogs = await Promise.all([
@@ -24,11 +24,11 @@ const expected = new Set([
 const evidenceEntries: Readonly<Record<string, {
   readonly general: string;
   readonly sourceUrl: string;
-}>> = verifiedPhase162Editorial;
+}>> = verifiedFamilyProportionEditorial;
 
 test("La fase 162 mejora exactamente veinte fichas canónicas sin alterar datos técnicos", () => {
   assert.equal(records.length, 1347);
-  assert.deepEqual(new Set(Object.keys(verifiedPhase162Editorial)), expected);
+  assert.deepEqual(new Set(Object.keys(verifiedFamilyProportionEditorial)), expected);
   for (const identity of expected) {
     const record = byIdentity.get(identity);
     assert.ok(record, identity);
@@ -53,8 +53,8 @@ test("La regla exige identidad, fuente, especificaciones y descripción previa e
   ] as const) {
     const record = byIdentity.get(identity);
     assert.ok(record, identity);
-    assert.equal(resolveVerifiedPhase162Editorial(record, null), null);
-    assert.equal(resolveVerifiedPhase162Editorial(record, general + " texto alterado"), null);
+    assert.equal(resolveVerifiedFamilyProportionEditorial(record, null), null);
+    assert.equal(resolveVerifiedFamilyProportionEditorial(record, general + " texto alterado"), null);
     for (const changed of [
       { ...record, providerId: "otro" },
       { ...record, reference: `${record.reference}-otro` },
@@ -64,7 +64,7 @@ test("La regla exige identidad, fuente, especificaciones y descripción previa e
       { ...record, specs: { ...record.specs, revisión: "pendiente" } },
       { ...record, longDescription: "Texto sustituido" }
     ] satisfies readonly ProductRecord[]) {
-      assert.equal(resolveVerifiedPhase162Editorial(changed, general), null, identity);
+      assert.equal(resolveVerifiedFamilyProportionEditorial(changed, general), null, identity);
     }
   }
 });

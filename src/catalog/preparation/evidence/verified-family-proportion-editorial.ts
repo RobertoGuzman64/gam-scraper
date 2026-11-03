@@ -1,4 +1,4 @@
-export const verifiedPhase162Editorial = {
+export const verifiedFamilyProportionEditorial = {
   "gam:6745": {
     "sourceDigest": "d977e7de3859c2cf47ed39b246221eea1180e6b67eab4a77452eeb5d26edacb0",
     "sourceUrl": "https://online.gamrentals.com/es/yale/6745-preparapedidos-yale-mo30x",

@@ -38,7 +38,7 @@ const find = (reference: string): ProductRecord => {
   return result;
 };
 
-const phase125Specs = [
+const additionalVerifiedSpecs = [
   ["2079", "Transmisión", "DuraMatch (una velocidad)"],
   ["2082", "Transmisión", "Electronic Powershift DuraMatch (una velocidad)"],
   ["2072", "Transmisión", "DuraMatch (una o dos velocidades; según configuración)"],
@@ -71,7 +71,7 @@ test("GAM: conserva las veinte recuperaciones originales y las cohortes posterio
       changed.push(String(record.reference));
     }
   }
-  assert.deepEqual(new Set(changed), new Set([...expected.map(([reference]) => reference), "4790", ...phase125Specs.map(([reference]) => reference)]));
+  assert.deepEqual(new Set(changed), new Set([...expected.map(([reference]) => reference), "4790", ...additionalVerifiedSpecs.map(([reference]) => reference)]));
   assert.equal(changed.length, 36);
 });
 
@@ -167,8 +167,8 @@ test("GAM: conserva radios de giro de doble dirección publicados para XCMG XGS4
 });
 
 test("GAM: fase 125 incorpora quince especificaciones de fuente sin alterar el resto", () => {
-  assert.equal(new Set(phase125Specs.map(([reference]) => reference)).size, 15);
-  for (const [reference, key, value] of phase125Specs) {
+  assert.equal(new Set(additionalVerifiedSpecs.map(([reference]) => reference)).size, 15);
+  for (const [reference, key, value] of additionalVerifiedSpecs) {
     const record = find(reference);
     const before = structuredClone(record);
     assert.equal(Object.hasOwn(record.specs ?? {}, key), false, reference);

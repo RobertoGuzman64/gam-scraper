@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readMercaelevaSource } from "../../../../../../testing/builders/mercaeleva-source-fixture.js";
-import { verifiedPhase157PlatformModelDocumentation } from "../../../../evidence/providers/mercaeleva/phase157-platform-model-documentation.js";
-import { resolveMercaelevaPhase157PlatformGeneral } from "../../../../mapping/providers/mercaeleva/phase157-platform-general.js";
+import { documentedLegacyPlatformModels } from "../../../../evidence/providers/mercaeleva/documented-legacy-platform-models.js";
+import { resolveMercaelevaLegacyPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-legacy-platform-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 
 const records = await readMercaelevaSource();
@@ -27,19 +27,19 @@ const preparedGeneral = (reference: string): string => {
 };
 
 test("Mercaeleva: documenta modelos de plataformas sin sobrescribir descripciones previas suficientes", () => {
-  const matched = records.filter((record) => resolveMercaelevaPhase157PlatformGeneral(record) !== null);
+  const matched = records.filter((record) => resolveMercaelevaLegacyPlatformGeneral(record) !== null);
   assert.equal(matched.length, 33);
-  assert.equal(verifiedPhase157PlatformModelDocumentation.length, 18);
-  assert.equal(new Set(verifiedPhase157PlatformModelDocumentation.map((item) => `${item.brand}:${item.model}`)).size, 18);
+  assert.equal(documentedLegacyPlatformModels.length, 18);
+  assert.equal(new Set(documentedLegacyPlatformModels.map((item) => `${item.brand}:${item.model}`)).size, 18);
 
   const improved = new Set<string>();
   for (const record of matched) {
     const snapshot = JSON.stringify(record);
-    const documentation = verifiedPhase157PlatformModelDocumentation.find((item) =>
+    const documentation = documentedLegacyPlatformModels.find((item) =>
       item.brand === record.brand && item.model === record.model && item.condition === record.condition);
     assert.ok(documentation);
     assert.match(documentation.source, /^https:\/\//u);
-    const general = resolveMercaelevaPhase157PlatformGeneral(record);
+    const general = resolveMercaelevaLegacyPlatformGeneral(record);
     assert.ok(general);
     assert.ok(general.split(/\s+/u).length >= 85, record.reference ?? "");
     for (const value of [documentation.manufacturerHeight, documentation.platformHeight,
@@ -65,7 +65,7 @@ test("Mercaeleva: documenta modelos de plataformas sin sobrescribir descripcione
   }
 
   const reconciled = find("M777-6495");
-  assert.equal(resolveMercaelevaPhase157PlatformGeneral(reconciled), null);
+  assert.equal(resolveMercaelevaLegacyPlatformGeneral(reconciled), null);
   const prepared = prepareSourceProduct(reconciled);
   assert.equal(prepared.status, "ready");
   assert.match(preparedGeneral("M777-6495"), /21,6 m/u);
@@ -99,9 +99,9 @@ test("Mercaeleva: distingue conflictos de horómetro y conserva avisos comercial
 
 test("Mercaeleva: no aplica documentación a identidad, procedencia, estado, horas o técnica manipulados", () => {
   for (const reference of ["M725-7107", "M547-1056", "M198-7237", "M887-9469"]) {
-    assert.equal(resolveMercaelevaPhase157PlatformGeneral(find(reference)), null, reference);
+    assert.equal(resolveMercaelevaLegacyPlatformGeneral(find(reference)), null, reference);
   }
-  for (const record of records.filter((item) => resolveMercaelevaPhase157PlatformGeneral(item))) {
+  for (const record of records.filter((item) => resolveMercaelevaLegacyPlatformGeneral(item))) {
     const cases: readonly ProductRecord[] = [
       { ...record, providerId: "gam" },
       { ...record, categoryKey: "alquiler" },
@@ -123,7 +123,7 @@ test("Mercaeleva: no aplica documentación a identidad, procedencia, estado, hor
       { ...record, specs: { ...record.specs, "Horas laborales": "99999 h" } }
     ];
     for (const [index, candidate] of cases.entries()) {
-      assert.equal(resolveMercaelevaPhase157PlatformGeneral(candidate), null, `${record.reference}:${index}`);
+      assert.equal(resolveMercaelevaLegacyPlatformGeneral(candidate), null, `${record.reference}:${index}`);
     }
   }
 });

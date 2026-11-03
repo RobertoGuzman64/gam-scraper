@@ -7,8 +7,8 @@ import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { mercaelevaShortDescription } from "../../../../mapping/providers/mercaeleva/descriptions.js";
 import { mercaelevaMissingDescriptions } from "../../../../mapping/providers/mercaeleva/missing-descriptions.js";
 import { verifiedMercaelevaResidualGeneral } from "../../../../evidence/providers/mercaeleva/verified-residual-generals.js";
-import { verifiedMercaelevaUnitGeneral } from "../../../../evidence/providers/mercaeleva/verified-unit-generals.js";
-import { verifiedPhase162Editorial } from "../../../../evidence/verified-phase162-editorial.js";
+import { verifiedMercaelevaUnitGeneral } from "../../../../mapping/providers/mercaeleva/verified-unit-general.js";
+import { verifiedFamilyProportionEditorial } from "../../../../evidence/verified-family-proportion-editorial.js";
 import { resolveMercaelevaVerifiedSourceEditorial } from "../../../../mapping/providers/mercaeleva/verified-source-editorial.js";
 import { readMercaelevaSource } from "../../../../../../testing/builders/mercaeleva-source-fixture.js";
 
@@ -100,7 +100,7 @@ test("Mercaeleva: cabina modular solo se resume si el texto original respalda di
   const general = verifiedMercaelevaResidualGeneral(record);
   assert.ok(general);
   assert.ok(general.includes("6 × 2,35 m"));
-  assert.equal(prepared.product.description_general, verifiedPhase162Editorial["mercaeleva:M294-4678"].general);
+  assert.equal(prepared.product.description_general, verifiedFamilyProportionEditorial["mercaeleva:M294-4678"].general);
   for (const variant of [
     { ...record, title: record.title?.replace("6m", "7m") ?? null },
     { ...record, longDescription: record.longDescription?.replace("LADO CORTO", "LADO LARGO") ?? null },

@@ -1,23 +1,6 @@
-import { createHash } from "node:crypto";
+import { matchesVerifiedGeneralSource } from "./verified-editorial-provenance.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { verifiedCanonicalBriefEditorial } from "../evidence/verified-canonical-brief-editorial.js";
-
-const digest = (value: string): string => createHash("sha256").update(value).digest("hex");
-
-const sourceDigest = (record: ProductRecord): string => digest(JSON.stringify({
-  url: record.url,
-  title: record.title,
-  brand: record.brand,
-  model: record.model,
-  externalReference: record.externalReference,
-  condition: record.condition,
-  categoryKey: record.categoryKey,
-  year: record.year,
-  horometer: record.horometer,
-  shortDescription: record.shortDescription,
-  longDescription: record.longDescription,
-  specs: record.specs
-}));
 
 export const resolveVerifiedCanonicalBriefEditorial = (
   record: ProductRecord,
@@ -31,7 +14,6 @@ export const resolveVerifiedCanonicalBriefEditorial = (
     readonly general: string;
   }>> = verifiedCanonicalBriefEditorial;
   const evidence = entries[`${record.providerId}:${record.reference}`];
-  if (!evidence || record.url !== evidence.sourceUrl || sourceDigest(record) !== evidence.sourceDigest ||
-    digest(previousGeneral) !== evidence.preparedDigest) return null;
+  if (!evidence || !matchesVerifiedGeneralSource(record, previousGeneral, evidence)) return null;
   return evidence.general;
 };

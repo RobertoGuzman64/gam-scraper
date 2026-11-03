@@ -1,16 +1,16 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
-import { verifiedPhase157PlatformModelDocumentation } from "../../../evidence/providers/mercaeleva/phase157-platform-model-documentation.js";
+import { documentedLegacyPlatformModels } from "../../../evidence/providers/mercaeleva/documented-legacy-platform-models.js";
 import { validMercaelevaTechnicalSource } from "./technical.js";
 
 const identity = (value: string): string => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
   .toLowerCase().replace(/[^a-z0-9]/g, "").replaceAll("dabricacion", "fabricacion");
 
-export const resolveMercaelevaPhase157PlatformGeneral = (record: ProductRecord): string | null => {
+export const resolveMercaelevaLegacyPlatformGeneral = (record: ProductRecord): string | null => {
   if (record.providerId !== "mercaeleva" || record.categoryKey !== "venta" ||
     !validMercaelevaTechnicalSource(record) || !record.reference || !/^M\d+-\d+$/.test(record.reference) ||
     !record.url.replace(/\/$/, "").endsWith(`-${record.reference}`)) return null;
 
-  const model = verifiedPhase157PlatformModelDocumentation.find((entry) =>
+  const model = documentedLegacyPlatformModels.find((entry) =>
     entry.brand === record.brand && entry.model === record.model && entry.condition === record.condition);
   if (!model || !record.year || !/^(?:19|20)\d{2}$/.test(record.year)) return null;
 

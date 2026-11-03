@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { verifiedPhase158GamEditorial } from "../../../../evidence/providers/gam/general-evidence/phase158-source-editorial.js";
-import { resolveGamPhase158SourceEditorial } from "../../../../mapping/providers/gam/editorial-descriptions/phase158-source-editorial.js";
+import { verifiedGamUnitSourceGenerals } from "../../../../evidence/providers/gam/general-evidence/verified-unit-source-generals.js";
+import { resolveGamVerifiedUnitSourceGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/verified-unit-source-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
@@ -20,14 +20,14 @@ const find = (reference: string): ProductRecord => {
 
 test("GAM: acredita veinte descripciones generales propias sin modificar otros campos", () => {
   assert.equal(catalog.products.length, 983);
-  assert.deepEqual(new Set(Object.keys(verifiedPhase158GamEditorial)), expected);
+  assert.deepEqual(new Set(Object.keys(verifiedGamUnitSourceGenerals)), expected);
   for (const record of catalog.products) {
     const before = JSON.stringify(record);
     const result = prepareSourceProduct(record);
     assert.equal(JSON.stringify(record), before);
     if (!expected.has(record.reference ?? "")) continue;
     assert.ok(record.reference);
-    const evidenceEntries: Readonly<Record<string, { readonly general: string }>> = verifiedPhase158GamEditorial;
+    const evidenceEntries: Readonly<Record<string, { readonly general: string }>> = verifiedGamUnitSourceGenerals;
     const evidence = evidenceEntries[record.reference];
     assert.ok(evidence);
     assert.equal(result.status, "ready", record.reference);
@@ -42,10 +42,10 @@ test("GAM: acredita veinte descripciones generales propias sin modificar otros c
 test("GAM: el documento queda vinculado al origen y al texto preparado anterior", () => {
   const record = find("2185");
   const previous = "El recogepedidos contrapesado HYSTER LO1.2C tiene una capacidad de carga publicada de 1200 kg. Su ficha técnica indica una altura de elevación de 4500 mm y un peso de 1650 kg.";
-  const value = resolveGamPhase158SourceEditorial(record, previous);
-  assert.equal(value, verifiedPhase158GamEditorial["2185"].general);
-  assert.equal(resolveGamPhase158SourceEditorial(record, previous + " Información ajena"), null);
-  assert.equal(resolveGamPhase158SourceEditorial(record, null), null);
+  const value = resolveGamVerifiedUnitSourceGeneral(record, previous);
+  assert.equal(value, verifiedGamUnitSourceGenerals["2185"].general);
+  assert.equal(resolveGamVerifiedUnitSourceGeneral(record, previous + " Información ajena"), null);
+  assert.equal(resolveGamVerifiedUnitSourceGeneral(record, null), null);
   for (const variant of [
     { ...record, providerId: "mercaeleva" },
     { ...record, reference: "2207" },
@@ -56,7 +56,7 @@ test("GAM: el documento queda vinculado al origen y al texto preparado anterior"
     { ...record, specs: { ...record.specs, "Capacidad de carga (kg)": "1800 KG" } },
     { ...record, specs: { ...record.specs, Peso: "1200 KG" } }
   ] satisfies readonly ProductRecord[]) {
-    assert.equal(resolveGamPhase158SourceEditorial(variant, previous), null);
+    assert.equal(resolveGamVerifiedUnitSourceGeneral(variant, previous), null);
   }
 });
 

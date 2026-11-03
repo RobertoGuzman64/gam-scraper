@@ -4,16 +4,16 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamVerifiedSourceCondensedGeneral } from "../../../../evidence/providers/gam/editorial/verified-source-condensed-generals.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
-import { verifiedPhase158GamEditorial } from "../../../../evidence/providers/gam/general-evidence/phase158-source-editorial.js";
+import { verifiedGamUnitSourceGenerals } from "../../../../evidence/providers/gam/general-evidence/verified-unit-source-generals.js";
 import { verifiedCanonicalBriefEditorial } from "../../../../evidence/verified-canonical-brief-editorial.js";
-import { verifiedPhase162Editorial } from "../../../../evidence/verified-phase162-editorial.js";
+import { verifiedFamilyProportionEditorial } from "../../../../evidence/verified-family-proportion-editorial.js";
 
-const phase158Entries: Readonly<Record<string, { readonly general: string }>> = verifiedPhase158GamEditorial;
+const verifiedUnitSourceEntries: Readonly<Record<string, { readonly general: string }>> = verifiedGamUnitSourceGenerals;
 
 const checkPreparedGeneral = (reference: string, actual: string | null, previous: string): void => {
   const revised: Readonly<Record<string, { readonly general: string }>> = verifiedCanonicalBriefEditorial;
-  const phase162: Readonly<Record<string, { readonly general: string }>> = verifiedPhase162Editorial;
-  const editorial = phase162[`gam:${reference}`] ?? revised[`gam:${reference}`] ?? phase158Entries[reference];
+  const proportionEvidence: Readonly<Record<string, { readonly general: string }>> = verifiedFamilyProportionEditorial;
+  const editorial = proportionEvidence[`gam:${reference}`] ?? revised[`gam:${reference}`] ?? verifiedUnitSourceEntries[reference];
   if (editorial) assert.equal(actual, editorial.general, reference);
   else assert.ok(actual?.includes(previous), reference);
 };
@@ -274,7 +274,7 @@ test("GAM: las mejoras de contexto técnico verificadas conservan la identidad o
   }
 });
 
-const phase125Editorial = [
+const additionalVerifiedEditorial = [
   ["2087", "ruedas superelásticas, neumáticas y radiales"],
   ["2058", "100 l/min y presión de 195 bar"],
   ["2060", "100 l/min a 195 bar"],
@@ -283,8 +283,8 @@ const phase125Editorial = [
 ] as const;
 
 test("GAM: fase 125 recupera cinco detalles técnicos editoriales individuales", () => {
-  assert.equal(new Set(phase125Editorial.map(([reference]) => reference)).size, 5);
-  for (const [reference, marker] of phase125Editorial) {
+  assert.equal(new Set(additionalVerifiedEditorial.map(([reference]) => reference)).size, 5);
+  for (const [reference, marker] of additionalVerifiedEditorial) {
     const record = findOriginal(reference);
     const before = structuredClone(record);
     const general = resolveGamVerifiedSourceCondensedGeneral(record);
