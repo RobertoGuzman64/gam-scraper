@@ -14,6 +14,8 @@ test("Gomariz: extrae metadatos etiquetados y potencia sin confundirlos con el t
   const result = parseGomarizProduct(html, url);
   assert.equal(result.brand, "PRAMAC");
   assert.equal(result.model, "GPW200P-FN");
+  assert.equal(result.year, "2022");
+  assert.equal(result.yearSource, "ficha");
   assert.equal(result.location, "Murcia");
   assert.equal(result.horometer, "1250 h");
   assert.equal(result.serialNumber, "ABC123");
@@ -62,6 +64,7 @@ test("Gomariz: recupera marca y modelo del título cuando la referencia y el slu
     assert.equal(parsed.brand, brand, reference);
     assert.equal(parsed.model, model, reference);
     assert.equal(parsed.price, null, reference);
+    assert.equal(parsed.yearSource, null, reference);
   }
 });
 

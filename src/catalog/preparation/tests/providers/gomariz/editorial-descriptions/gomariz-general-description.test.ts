@@ -36,7 +36,7 @@ test("Gomariz: las generales sustituyen texto de familia por datos específicos 
     assert.equal(prepared.product.description_general, verifiedGomarizPriorityGeneral(record) ?? general, reference);
     assert.equal(prepared.product.reference, reference);
     assert.equal(prepared.product.sourceUrl, record.url);
-    assert.deepEqual(prepared.product.spec, record.specs);
+    assert.deepEqual(prepared.product.spec, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) });
     assert.equal(JSON.stringify(record), original);
   }
 });
@@ -63,8 +63,10 @@ test("Gomariz: contradicciones o descripción propia acreditada no se reescriben
   ]) {
     const record = find(reference);
     assert.equal(resolveGomarizGeneralDescription(record), null, reference);
-    assert.equal(prepareSourceProduct(record).product.description_general,
-      verifiedGomarizPriorityGeneral(record) ?? resolveGomarizResidualGeneral(record) ?? record.longDescription, reference);
+    const prepared = prepareSourceProduct(record).product.description_general;
+    const suffix = record.year ? ` Año de fabricación de esta unidad: ${record.year}.` : "";
+    const underlying = suffix && prepared?.endsWith(suffix) ? prepared.slice(0, -suffix.length) : prepared;
+    assert.equal(underlying, verifiedGomarizPriorityGeneral(record) ?? resolveGomarizResidualGeneral(record) ?? record.longDescription, reference);
   }
 });
 
@@ -104,8 +106,11 @@ test("Gomariz: el piloto se aplica solo a la cohorte segura y preserva todas las
     assert.equal(prepared.product.reference, reference);
     const base = verifiedGomarizPriorityGeneral(record) ?? resolveGomarizIndividualizedGeneral(record) ?? resolveGomarizCriticalBriefGeneral(record) ??
       resolveGomarizGeneralDescription(record) ?? resolveGomarizResidualGeneral(record) ?? record.longDescription;
-    assert.equal(prepared.product.description_general, removeGomarizConversationalLead(record, base) ?? base);
-    assert.deepEqual(prepared.product.spec, record.specs);
+    const general = prepared.product.description_general;
+    const suffix = record.year ? ` Año de fabricación de esta unidad: ${record.year}.` : "";
+    const underlying = suffix && general?.endsWith(suffix) ? general.slice(0, -suffix.length) : general;
+    assert.equal(underlying, removeGomarizConversationalLead(record, base) ?? base);
+    assert.deepEqual(prepared.product.spec, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) });
   }
 });
 
@@ -148,7 +153,7 @@ test("Gomariz: recupera usos y elementos documentados de tijeras LGMG sin genera
     const prepared = prepareSourceProduct(record);
     assert.ok(prepared.product.description_general?.endsWith(feature));
     assert.equal(prepared.status, "ready");
-    assert.deepEqual(prepared.product.spec, record.specs);
+    assert.deepEqual(prepared.product.spec, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) });
   }
   for (const reference of ["TE1746", "TE1618", "TE1621", "TE1858"]) {
     assert.equal(resolveGomarizGeneralDescription(find(reference))?.includes(feature) ?? false, false, reference);
@@ -180,7 +185,7 @@ test("Gomariz: conserva la evidencia funcional por modelo y descarta variantes c
     assert.ok(resolved.includes(record.model ?? ""), reference);
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.product.description_general, resolved);
-    assert.deepEqual(prepared.product.spec, record.specs);
+    assert.deepEqual(prepared.product.spec, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) });
     assert.equal(JSON.stringify(record), sourceSnapshot);
     const variants: readonly ProductRecord[] = [
       { ...record, brand: "OTRA" },
@@ -206,7 +211,7 @@ test("Gomariz: mantiene identidad y evidencia al recuperar funcionalidades en ot
     const result = resolveGomarizGeneralDescription(record);
     assert.ok(result?.includes("con ruedas antihuellas y plataforma extensible."), reference);
     assert.equal(prepared.product.description_general, result, reference);
-    assert.deepEqual(prepared.product.spec, record.specs, reference);
+    assert.deepEqual(prepared.product.spec, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) }, reference);
     assert.equal(JSON.stringify(record), snapshot, reference);
     const invalid: readonly ProductRecord[] = [
       { ...record, model: "OTRO" },
@@ -236,7 +241,7 @@ test("Gomariz: recupera elementos de la familia de tijeras diésel sin atribuirl
     const prepared = prepareSourceProduct(record);
     assert.ok(prepared.product.description_general?.endsWith(feature), record.reference ?? "");
     assert.equal(prepared.product.description_general, resolveGomarizGeneralDescription(record));
-    assert.deepEqual(prepared.product.spec, record.specs);
+    assert.deepEqual(prepared.product.spec, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) });
     assert.equal(JSON.stringify(record), snapshot);
   }
   const record = find("TD1625");

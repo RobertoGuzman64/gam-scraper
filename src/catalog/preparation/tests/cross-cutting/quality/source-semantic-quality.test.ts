@@ -31,7 +31,7 @@ test("Las contradicciones reales se documentan por campo y fuerzan revisión sin
     assert.ok(result.issues.includes(findings[0] ?? ""), reference);
     assert.equal(result.product.reference, record.reference, reference);
     assert.equal(result.product.sourceUrl, record.url, reference);
-    assert.deepEqual(result.product.spec, record.specs, reference);
+    assert.deepEqual(result.product.spec, { ...record.specs, ...(record.providerId === "gomariz" && record.year ? { "Año de fabricación": record.year } : {}) }, reference);
     assert.equal(JSON.stringify(record), before, reference);
   }
 });

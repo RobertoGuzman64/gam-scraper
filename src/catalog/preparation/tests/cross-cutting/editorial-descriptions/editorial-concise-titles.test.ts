@@ -34,7 +34,7 @@ test("Gomariz: el encabezado incorpora solo la familia corroborada por el propio
     assert.equal(prepared.product.description_title, title);
     assert.equal(prepared.product.reference, source.reference);
     assert.equal(prepared.product.sourceUrl, source.url);
-    assert.deepEqual(prepared.product.spec, source.specs);
+    assert.deepEqual(prepared.product.spec, { ...source.specs, ...(source.year ? { "Año de fabricación": source.year } : {}) });
     assert.equal(JSON.stringify(source), original);
   }
 });

@@ -1,3 +1,4 @@
+import { recoverMercaelevaSourceFuel } from "../../../../evidence/providers/mercaeleva/source-fuel-evidence.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -34,7 +35,7 @@ test("Mercaeleva: los originales canónicos activan las evidencias editoriales v
     assert.ok(short, reference);
     const prepared = prepareSourceProduct(record).product;
     assert.equal(prepared.description, short);
-    assert.deepEqual(prepared.spec, record.specs);
+    assert.deepEqual(prepared.spec, recoverMercaelevaSourceFuel(record, record.specs ?? {}));
     assert.equal(JSON.stringify(record), snapshot);
   }
   for (const reference of generalReferences) {
@@ -49,7 +50,7 @@ test("Mercaeleva: los originales canónicos activan las evidencias editoriales v
     assert.ok(general, reference);
     const prepared = prepareSourceProduct(record).product;
     assert.equal(prepared.description_general, general, reference);
-    assert.deepEqual(prepared.spec, record.specs, reference);
+    assert.deepEqual(prepared.spec, recoverMercaelevaSourceFuel(record, record.specs ?? {}), reference);
     assert.notEqual(general, record.longDescription, reference);
   }
 });
@@ -93,7 +94,7 @@ test("Mercaeleva: los anuncios de unidades se individualizan únicamente con evi
     assert.notEqual(general, record.longDescription, reference);
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.product.description_general, general, reference);
-    assert.deepEqual(prepared.product.spec, record.specs, reference);
+    assert.deepEqual(prepared.product.spec, recoverMercaelevaSourceFuel(record, record.specs ?? {}), reference);
     assert.equal(JSON.stringify(record), original, reference);
     for (const variant of [
       { ...record, reference: "M000-0000" },

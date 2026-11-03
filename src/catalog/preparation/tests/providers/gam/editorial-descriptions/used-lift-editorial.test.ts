@@ -30,7 +30,8 @@ test("alturas de unidades HYSTER con serie y especificación concordantes", () =
     const prepared = prepareProduct(record, catalog);
     assert.equal(prepared.status, "ready", reference);
     assert.deepEqual(prepared.issues, [], reference);
-    assert.deepEqual(prepared.product.spec, record.specs, reference);
+    assert.deepEqual(prepared.product.spec, reference === "5275"
+      ? { ...record.specs, "Motorización": "GLP" } : record.specs, reference);
     assert.equal(prepared.product.description_general, corrected.longDescription, reference);
   }
 });

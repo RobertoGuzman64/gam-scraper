@@ -82,6 +82,7 @@ export const parseGomarizProduct = (html: string, pageUrl: string): ParsedProduc
     brand,
     model: metadataValue(overview, "Modelo") ?? modelFromTitle(title, brand),
     year,
+    yearSource: year === null ? null : "ficha",
     price,
     shortDescription: null,
     longDescription: description || null,

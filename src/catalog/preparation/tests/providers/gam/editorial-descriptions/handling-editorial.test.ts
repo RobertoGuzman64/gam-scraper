@@ -6,6 +6,7 @@ import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/l
 import { reconcileGamHandlingHeightEditorial } from "../../../../evidence/providers/gam/editorial/handling-height-editorial.js";
 import { reconcileGamOrderPickerEditorial } from "../../../../evidence/providers/gam/editorial/orderpicker-editorial.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
+import { includeGamSourceForkliftMeasuresInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-forklift-measures-general.js";
 
 const catalog = await loadImportCatalog();
 const sourceCatalog = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
@@ -26,7 +27,9 @@ test("altura editorial solo con resumen, ficha técnica e identidad concordantes
   assert.equal(corrected.title, record.title);
   assert.strictEqual(corrected.specs, record.specs);
   assert.equal(prepareProduct(record, catalog).status, "ready");
-  assert.equal(prepareProduct(record, catalog).product.description_general, corrected.longDescription);
+  const prepared = prepareProduct(record, catalog);
+  assert.equal(prepared.product.description_general,
+    includeGamSourceForkliftMeasuresInGeneral(record, corrected.longDescription, prepared.product.spec));
   assert.equal(JSON.stringify(record), original);
 });
 

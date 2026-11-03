@@ -23,7 +23,9 @@ test("Gomariz personaliza generales genéricas con medidas de su propia ficha", 
       const general = prepared.product.description_general;
       const replacement = resolveGomarizResidualGeneral(record);
       assert.ok(record.reference && general && replacement);
-      assert.equal(general, verifiedGomarizPriorityGeneral(record) ?? replacement, record.reference);
+      const suffix = record.year ? ` Año de fabricación de esta unidad: ${record.year}.` : "";
+      const underlying = suffix && general.endsWith(suffix) ? general.slice(0, -suffix.length) : general;
+      assert.equal(underlying, verifiedGomarizPriorityGeneral(record) ?? replacement, record.reference);
       assert.ok(general.includes(record.title ?? ""), record.reference);
       assert.ok(general.includes("longitud") && general.includes("anchura") && general.includes("peso"), record.reference);
       assert.equal(prepared.status, record.reference === "BA1465" ? "review" : "ready", record.reference);

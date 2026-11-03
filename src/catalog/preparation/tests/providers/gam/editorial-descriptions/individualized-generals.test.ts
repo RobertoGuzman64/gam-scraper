@@ -44,7 +44,8 @@ test("Fase 8: diferencia 18 fichas con evidencias propias sin modificar los orig
         }
         assert.equal(prepared.sourceUrl, record.url);
         assert.equal(prepared.reference, record.reference);
-        assert.deepEqual(prepared.spec, record.specs);
+        assert.deepEqual(prepared.spec, record.providerId === "gomariz" && record.year ?
+          { ...record.specs, "Año de fabricación": record.year } : record.specs);
       }
       assert.equal(JSON.stringify(record), before);
     }

@@ -32,7 +32,12 @@ test("GAM: diferencia 18 fichas Tecnacar con hechos atribuibles sin alterar sus 
       assert.equal(preparation.sourceUrl, record.url);
       assert.equal(preparation.reference, record.reference);
       assert.equal(preparation.description_general?.includes(record.model ?? ""), true);
-      assert.deepEqual(preparation.spec, record.specs);
+      const { "Control de tracción TCS": tractionControl, "Sistema antivuelco ACS": rolloverControl, ...unchangedSpecs } = preparation.spec;
+      assert.deepEqual(unchangedSpecs, record.specs);
+      const hasDeclaredControls = /sistema de control de tracci[oó]n TCS/iu.test(record.longDescription) &&
+        /sistema antivuelco ACS/iu.test(record.longDescription);
+      assert.equal(tractionControl, hasDeclaredControls ? true : undefined);
+      assert.equal(rolloverControl, hasDeclaredControls ? true : undefined);
       assert.ok(improvement.trim().split(/\s+/u).length >= 60);
     }
     assert.equal(JSON.stringify(record), before);

@@ -21,10 +21,13 @@ test("Gomariz: las 26 descripciones individualizadas se aplican sin alterar fich
     if (references.has(record.reference ?? "")) {
       assert.ok(general, record.reference ?? "");
       const prepared = prepareSourceProduct(record).product;
-      assert.equal(prepared.description_general, general, record.reference ?? "");
+      const suffix = record.year ? ` Año de fabricación de esta unidad: ${record.year}.` : "";
+      const preparedGeneral = prepared.description_general;
+      assert.equal(suffix && preparedGeneral?.endsWith(suffix) ? preparedGeneral.slice(0, -suffix.length) : preparedGeneral,
+        general, record.reference ?? "");
       assert.ok(general.split(/\s+/u).length >= 65, record.reference ?? "");
       assert.notEqual(general, record.longDescription, record.reference ?? "");
-      assert.deepEqual(prepared.spec, record.specs, record.reference ?? "");
+      assert.deepEqual(prepared.spec, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) }, record.reference ?? "");
       assert.equal(prepared.sourceUrl, record.url);
       assert.ok(record.reference ?? "");
       changed.add(record.reference ?? "");

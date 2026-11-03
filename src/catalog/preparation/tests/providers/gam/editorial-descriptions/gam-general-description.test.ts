@@ -36,7 +36,7 @@ test("GAM: mejora únicamente las 18 generales con evidencia propia", () => {
     assert.equal(JSON.stringify(record), before);
     assert.equal(prepared.product.reference, record.reference);
     assert.equal(prepared.product.sourceUrl, record.url);
-    if (improved) assert.deepEqual(prepared.product.spec, record.specs);
+    if (improved) assert.deepEqual(prepared.product.spec, { ...record.specs, ...(record.reference === "4774" ? { "Motorización": "Eléctrico" } : {}) });
   }
   assert.equal(catalog.products.length, 983);
   assert.deepEqual(new Set(changed), expected);

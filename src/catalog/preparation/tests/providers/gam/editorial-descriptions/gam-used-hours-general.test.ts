@@ -3,6 +3,10 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamUsedHoursGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/used-hours-general.js";
+import { includeGamSourceUnitDetailsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-unit-details-general.js";
+import { includeGamSourceGradeabilityInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-gradeability-general.js";
+import { includeGamSourceDeclaredWeightInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-declared-weight-general.js";
+import { includeGamSourceMachineDimensionsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-machine-dimensions-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
@@ -30,7 +34,12 @@ test("GAM individualiza 21 unidades usadas con horómetros propios acreditados",
       assert.equal(prefix[1], record.horometer, record.reference);
       assert.equal(record.specs?.["Horómetro"], record.horometer);
       assert.ok(expected.has(record.reference), record.reference);
-      assert.equal(prepared.product.description_general, resolveGamUsedHoursGeneral(record, text.slice(prefix[0].length)));
+      const sourceGeneral = resolveGamUsedHoursGeneral(record, record.longDescription);
+      assert.ok(sourceGeneral, record.reference);
+      const previousGeneral = includeGamSourceUnitDetailsInGeneral(record, sourceGeneral, prepared.product.spec);
+      const gradeabilityGeneral = includeGamSourceGradeabilityInGeneral(record, previousGeneral, prepared.product.spec);
+      const weightGeneral = includeGamSourceDeclaredWeightInGeneral(record, gradeabilityGeneral, prepared.product.spec);
+      assert.equal(text, includeGamSourceMachineDimensionsInGeneral(record, weightGeneral, prepared.product.spec));
       assert.equal(record.condition, "Segunda mano");
       assert.equal(prepared.product.spec["Horómetro"], record.horometer);
       changed.add(record.reference);

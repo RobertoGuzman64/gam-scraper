@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../../mapping/attribute-mapping.js";
+import { recoverMercaelevaSourceFuel } from "../../../evidence/providers/mercaeleva/source-fuel-evidence.js";
 import { prepareProduct } from "../../../../legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -54,7 +55,7 @@ test("mástil opcional Mercaeleva no elige Dúplex ni Tríplex", () => {
   assert.deepEqual(resolveAttribute(source, mast), { status: "not_observed", value: null });
   const prepared = prepareProduct(source, catalog);
   assert.equal(prepared.status, "ready");
-  assert.deepEqual(prepared.product.spec, source.specs);
+  assert.deepEqual(prepared.product.spec, recoverMercaelevaSourceFuel(source, source.specs ?? {}));
   assert.equal(prepared.product.attributes.some((item) => item.attributeID === mast.id), false);
   for (const reference of ["M827-8304", "M104-0836"]) {
     assert.equal(resolveAttribute(find("mercaeleva", reference), mast).status, "contradiction");

@@ -4,6 +4,9 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamCondensedGeneral, resolveGamCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
+import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
+import { includeGamSourceForkliftMeasuresInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-forklift-measures-general.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const targeted = new Set([
@@ -32,7 +35,10 @@ test("GAM: sintetiza solo veinte descripciones acreditadas sin alterar el origin
       assert.ok(words(general) >= 80 && words(general) <= 270, record.reference);
       assert.ok(words(general) < words(record.longDescription ?? "") / 2, record.reference);
       const prepared = prepareSourceProduct(record).product;
-      assert.equal(prepared.description_general, general, record.reference);
+      assert.equal(prepared.description_general,
+        includeGamSourceForkliftMeasuresInGeneral(record,
+          includeGamSourceSafetyControlsInGeneral(record,
+            includeGamRegenerativeBrakingInGeneral(record, general, prepared.spec), prepared.spec), prepared.spec), record.reference);
       if (record.reference !== "6308" && record.reference !== "6574") {
         const numbers = new Set(`${prepared.description ?? ""} ${general}`.match(/\d+(?:[.,]\d+)*/gu) ?? []);
         for (const number of record.shortDescription?.match(/\d+(?:[.,]\d+)*/gu) ?? []) {

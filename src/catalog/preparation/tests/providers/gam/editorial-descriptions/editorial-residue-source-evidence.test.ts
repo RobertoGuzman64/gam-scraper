@@ -50,7 +50,8 @@ test("Gomariz elimina el prefacio conversacional solo para la ficha acreditada",
   const record = find(gomariz.products, "1011JFB");
   const general = prepareSourceProduct(record).product.description_general;
   assert.ok(general);
-  assert.equal(general, record.longDescription?.slice("Claro. ".length));
+  const suffix = ` Año de fabricación de esta unidad: ${record.year}.`;
+  assert.equal(general.endsWith(suffix) ? general.slice(0, -suffix.length) : general, record.longDescription?.slice("Claro. ".length));
   const variations: readonly ProductRecord[] = [
     { ...record, reference: "OTRA" },
     { ...record, model: "PREMIUM 320" },

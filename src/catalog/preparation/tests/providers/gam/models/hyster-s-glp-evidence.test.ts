@@ -7,6 +7,7 @@ import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/l
 import { isGamVerifiedHysterSGlp, reconcileGamVerifiedHysterSGlp } from "../../../../evidence/providers/gam/energy-and-powertrain/hyster-s-glp-evidence.js";
 import { sourceCategoryQualityIssue } from "../../../../source/category-quality.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
+import { includeGamSourceForkliftMeasuresInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-forklift-measures-general.js";
 
 const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog(fileURLToPath(new URL(
@@ -44,7 +45,8 @@ for (const [record, model, capacity] of [
     });
     assert.equal(prepared.product.title, preparedRecord.title);
     assert.equal(prepared.product.description, preparedRecord.shortDescription);
-    assert.equal(prepared.product.description_general, preparedRecord.longDescription);
+    assert.equal(prepared.product.description_general,
+      includeGamSourceForkliftMeasuresInGeneral(record, preparedRecord.longDescription, prepared.product.spec));
     assert.equal(reconcileGamVerifiedHysterSGlp(preparedRecord), preparedRecord);
   });
 }

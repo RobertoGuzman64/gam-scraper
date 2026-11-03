@@ -9,7 +9,11 @@ import { resolveGamHysterCondensedGeneral, resolveGamHysterCondensedShort } from
 import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-additional.js";
 import { resolveGamVerifiedConciseGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/verified-concise-long.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { includeGamSourceBatteryVoltageInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-battery-voltage-general.js";
+import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
+import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
 import { resolveGamVerifiedSourceCondensedGeneral } from "../../../../evidence/providers/gam/editorial/verified-source-condensed-generals.js";
+import { includeGamSourceForkliftMeasuresInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-forklift-measures-general.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const find = (reference: string): ProductRecord => {
@@ -62,7 +66,14 @@ test("GAM: las generales extensas se organizan sin perder cifras, frases técnic
         assert.match(prepared.product.description_general ?? "", /4,4 metros/u);
         assert.match(prepared.product.description ?? "", /3\.000 mm/u);
       } else {
-        assert.equal(prepared.product.description_general, resolveGamVerifiedSourceCondensedGeneral(record) ?? resolveGamVerifiedConciseGeneral(record, previousGeneral) ?? previousGeneral);
+        const previousEditorialGeneral = includeGamRegenerativeBrakingInGeneral(record,
+          resolveGamVerifiedSourceCondensedGeneral(record) ?? resolveGamVerifiedConciseGeneral(record, previousGeneral) ?? previousGeneral,
+          prepared.product.spec);
+        assert.equal(prepared.product.description_general,
+          includeGamSourceBatteryVoltageInGeneral(record,
+            includeGamSourceForkliftMeasuresInGeneral(record,
+              includeGamSourceSafetyControlsInGeneral(record, previousEditorialGeneral, prepared.product.spec), prepared.product.spec),
+            prepared.product.spec));
         assert.equal(prepared.product.description,
           resolveGamAdditionalCondensedShort(record) ?? resolveGamHysterCondensedShort(record) ?? resolveGamResidualConciseShort(record, general) ?? record.shortDescription?.trim() ?? null);
       }

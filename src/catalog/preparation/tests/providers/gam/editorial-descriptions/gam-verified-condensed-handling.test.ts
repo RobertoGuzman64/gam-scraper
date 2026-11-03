@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamHandlingCondensedGeneral, resolveGamHandlingCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-handling.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
@@ -33,7 +34,7 @@ test("las reescrituras de manutención se aplican únicamente a veinte fichas ac
     assert.ok(words(general) >= 74 && words(general) < words(record.longDescription ?? "") * 0.6, record.reference);
     assert.ok(words(short) <= 28, record.reference);
     const prepared = prepareSourceProduct(record).product;
-    assert.equal(prepared.description_general, general, record.reference);
+    assert.equal(prepared.description_general, includeGamRegenerativeBrakingInGeneral(record, general, prepared.spec), record.reference);
     assert.equal(prepared.description, short, record.reference);
     assert.equal(prepared.reference, record.reference);
     assert.equal(prepared.sourceUrl, record.url);

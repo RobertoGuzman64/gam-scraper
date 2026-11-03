@@ -4,6 +4,8 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-additional.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
+import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
@@ -31,7 +33,9 @@ test("aplica síntesis editorial contrastada únicamente a veinte fichas GAM", (
       assert.ok(general.includes(record.model) || record.reference === "6168", record.reference);
       assert.ok(wordCount(general) >= 70 && wordCount(general) < wordCount(record.longDescription ?? "") / 2);
       const prepared = prepareSourceProduct(record).product;
-      assert.equal(prepared.description_general, general, record.reference);
+      assert.equal(prepared.description_general,
+        includeGamSourceSafetyControlsInGeneral(record,
+          includeGamRegenerativeBrakingInGeneral(record, general, prepared.spec), prepared.spec), record.reference);
       assert.equal(prepared.description, resolveGamAdditionalCondensedShort(record) ?? record.shortDescription?.trim(), record.reference);
       assert.equal(prepared.reference, record.reference);
       assert.equal(prepared.sourceUrl, record.url);

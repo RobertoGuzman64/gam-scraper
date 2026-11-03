@@ -43,7 +43,9 @@ test("GAM: reequilibra ocho cortas y preserva cifras acreditadas sin trasladar f
       }
       const previousGeneral = resolveGamCleaningCondensedGeneral(record) ?? resolveGamTennantCondensedGeneral(record) ?? rewritten.general;
       const legacyGeneral = resolveGamResidualCleaningGeneral(record, previousGeneral) ?? previousGeneral;
-      if (prepared.product.description_general !== legacyGeneral) {
+      const suffix = record.year ? ` Año de fabricación de esta unidad: ${record.year}.` : "";
+      const underlying = suffix && general?.endsWith(suffix) ? general.slice(0, -suffix.length) : general;
+      if (underlying !== legacyGeneral) {
         assert.ok(prepared.product.description_general?.includes(record.model ?? "INVALID"), record.reference);
         assert.ok(prepared.product.description_general?.includes("kg") || prepared.product.description_general?.includes("mm"), record.reference);
       }

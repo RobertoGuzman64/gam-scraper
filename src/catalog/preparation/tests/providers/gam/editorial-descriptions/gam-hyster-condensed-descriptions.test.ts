@@ -4,7 +4,11 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamHysterCondensedGeneral, resolveGamHysterCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-hyster.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { includeGamSourceBatteryVoltageInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-battery-voltage-general.js";
+import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
+import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
 import { resolveGamVerifiedSourceCondensedGeneral } from "../../../../evidence/providers/gam/editorial/verified-source-condensed-generals.js";
+import { includeGamSourceForkliftMeasuresInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-forklift-measures-general.js";
 
 const expected = new Set([
   "4622", "4626", "6480", "2100", "2099", "4623", "2098", "2101", "2151", "2140",
@@ -33,7 +37,12 @@ test("GAM: condensa las generales y cortas de veinte referencias Hyster acredita
       assert.ok(general.includes(`Hyster ${record.model}`), record.reference);
       assert.ok(general.split(/\s+/u).length < record.longDescription.trim().split(/\s+/u).length);
       const prepared = prepareSourceProduct(record);
-      assert.equal(prepared.product.description_general, resolveGamVerifiedSourceCondensedGeneral(record) ?? general, record.reference);
+      assert.equal(prepared.product.description_general,
+        includeGamSourceBatteryVoltageInGeneral(record,
+          includeGamSourceForkliftMeasuresInGeneral(record,
+            includeGamSourceSafetyControlsInGeneral(record,
+              includeGamRegenerativeBrakingInGeneral(record, resolveGamVerifiedSourceCondensedGeneral(record) ?? general, prepared.product.spec),
+              prepared.product.spec), prepared.product.spec), prepared.product.spec), record.reference);
       if (record.reference === "6480" || record.reference === "6481") {
         assert.match(prepared.product.description_general ?? "", /freno electromagnético/u, record.reference);
         assert.match(prepared.product.description_general ?? "", /2\.000 (?:a|y) 3\.500 mm/u, record.reference);

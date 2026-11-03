@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamFamilyTechnicalDescription } from "../../../../mapping/providers/gam/editorial-descriptions/family-technical-description.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { includeGamSourceForkliftMeasuresInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-forklift-measures-general.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const find = (reference: string): ProductRecord => {
@@ -24,7 +25,9 @@ test("GAM: completa medidas documentadas en familias sin sustituir ni resumir la
       changed.add(record.reference);
       assert.ok(record.longDescription);
       assert.ok(result.startsWith(`${record.longDescription.trim()}\n\n`));
-      assert.equal(prepareSourceProduct(record).product.description_general, result);
+      const prepared = prepareSourceProduct(record);
+      assert.equal(prepared.product.description_general,
+        includeGamSourceForkliftMeasuresInGeneral(record, result, prepared.product.spec));
       assert.deepEqual(prepareSourceProduct(record).product.spec, {
         ...record.specs,
         ...(record.reference === "2105" ? { "Neumáticos": "Poliuretano" } : {}),

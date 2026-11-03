@@ -22,6 +22,17 @@ import { rebalanceGamOverlongShort, resolveGamResidualConciseShort, resolveGamSh
 import { resolveGamConciseTitle } from "./mapping/providers/gam/editorial-descriptions/concise-titles.js";
 import { rebalanceGamTechnicalShort } from "./mapping/providers/gam/editorial-descriptions/rebalance-technical-short.js";
 import { resolveGomarizEditorialTitle } from "./mapping/providers/gomariz/editorial-title.js";
+import { recoverGomarizSourceYearSpec } from "./mapping/providers/gomariz/source-year-spec.js";
+import { recoverMercaelevaSourceFuel } from "./evidence/providers/mercaeleva/source-fuel-evidence.js";
+import { includeSourceYearInGeneral } from "./mapping/source-year-general.js";
+import { includeGamRegenerativeBrakingInGeneral } from "./mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
+import { includeGamSourceUnitDetailsInGeneral } from "./mapping/providers/gam/editorial-descriptions/source-unit-details-general.js";
+import { includeGamSourceGradeabilityInGeneral } from "./mapping/providers/gam/editorial-descriptions/source-gradeability-general.js";
+import { includeGamSourceDeclaredWeightInGeneral } from "./mapping/providers/gam/editorial-descriptions/source-declared-weight-general.js";
+import { includeGamSourceSafetyControlsInGeneral } from "./mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
+import { includeGamSourceBatteryVoltageInGeneral } from "./mapping/providers/gam/editorial-descriptions/source-battery-voltage-general.js";
+import { includeGamSourceMachineDimensionsInGeneral } from "./mapping/providers/gam/editorial-descriptions/source-machine-dimensions-general.js";
+import { includeGamSourceForkliftMeasuresInGeneral } from "./mapping/providers/gam/editorial-descriptions/source-forklift-measures-general.js";
 import { resolveGamGeneralDescription } from "./mapping/providers/gam/editorial-descriptions/general-description.js";
 import { resolveGamCrossedIdentityEditorial } from "./mapping/providers/gam/identity/crossed-identity-editorial.js";
 import { resolveGamVerifiedCommercialShort } from "./mapping/providers/gam/editorial-descriptions/verified-commercial-short.js";
@@ -86,9 +97,15 @@ import { recoverGamVerifiedResidualGeometrySpecs } from "./evidence/providers/ga
 import { recoverGamVerifiedResidualPerformanceSpecs } from "./evidence/providers/gam/operations-and-safety/verified-residual-performance-evidence.js";
 import { recoverGamVerifiedTractionBraking } from "./evidence/providers/gam/mobility/verified-traction-braking-evidence.js";
 import { recoverGamVerifiedSteeringBraking } from "./evidence/providers/gam/mobility/verified-steering-braking-evidence.js";
+import { recoverGamSourceRegenerativeBraking } from "./evidence/providers/gam/mobility/source-regenerative-braking.js";
+import { recoverGamUsedForkliftFuel } from "./evidence/providers/gam/energy-and-powertrain/used-forklift-fuel-evidence.js";
+import { recoverGamUsedDieselFuel } from "./evidence/providers/gam/energy-and-powertrain/used-diesel-fuel-evidence.js";
+import { recoverGamSourceElectricDrive } from "./evidence/providers/gam/energy-and-powertrain/source-electric-drive-evidence.js";
 import { recoverGamVerifiedDrivetrainBrakes } from "./evidence/providers/gam/mobility/verified-drivetrain-brakes-evidence.js";
 import { recoverGamVerifiedOperatorControls } from "./evidence/providers/gam/operations-and-safety/verified-operator-controls-evidence.js";
 import { recoverGamVerifiedOperationalSafety } from "./evidence/providers/gam/operations-and-safety/verified-operational-safety-evidence.js";
+import { recoverGamSourceSafetyControls } from "./evidence/providers/gam/operations-and-safety/source-safety-controls-evidence.js";
+import { recoverGamSourceStabilization } from "./evidence/providers/gam/operations-and-safety/source-stabilization-evidence.js";
 import { recoverGamVerifiedUsedYearSpec } from "./evidence/providers/gam/general-evidence/used-year-spec-evidence.js";
 import { recoverGamVerifiedElectricDriveSpec } from "./evidence/providers/gam/energy-and-powertrain/verified-electric-drive-evidence.js";
 import { recoverGamVerifiedTechnicalSpecs } from "./evidence/providers/gam/measurements-and-capacities/verified-technical-measures.js";
@@ -109,6 +126,7 @@ import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "./evidence/provi
 import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation } from "./reconciliation/mercaeleva.js";
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
+  const sourceUnitRecord = record;
   const crossedIdentity = resolveGamCrossedIdentityEditorial(record);
   const verifiedGamCondensedGeneral = resolveGamVerifiedSourceCondensedGeneral(record);
   const conciseGamShort = resolveGamShortDescription(record);
@@ -165,11 +183,19 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const recoveredPerformanceSpecs = recoverGamVerifiedResidualPerformanceSpecs({ ...record, specs: recoveredGeometrySpecs });
   const tractionBrakingSpecs = recoverGamVerifiedTractionBraking({ ...record, specs: recoveredPerformanceSpecs });
   const steeringBrakingSpecs = recoverGamVerifiedSteeringBraking({ ...record, specs: tractionBrakingSpecs });
-  const drivetrainBrakesSpecs = recoverGamVerifiedDrivetrainBrakes({ ...record, specs: steeringBrakingSpecs });
+  const sourceBrakingSpecs = recoverGamSourceRegenerativeBraking(record, steeringBrakingSpecs);
+  const drivetrainBrakesSpecs = recoverGamVerifiedDrivetrainBrakes({ ...record, specs: sourceBrakingSpecs });
   const operatorControlsSpecs = recoverGamVerifiedOperatorControls({ ...record, specs: drivetrainBrakesSpecs });
   const operationalSafetySpecs = recoverGamVerifiedOperationalSafety({ ...record, specs: operatorControlsSpecs });
   const electricDriveSpecs = recoverGamVerifiedElectricDriveSpec({ ...record, specs: operationalSafetySpecs });
   const usedYearSpecs = recoverGamVerifiedUsedYearSpec({ ...record, specs: electricDriveSpecs });
+  const usedForkliftFuelSpecs = recoverGamUsedForkliftFuel(record, usedYearSpecs);
+  const sourceElectricSpecs = recoverGamSourceElectricDrive(sourceUnitRecord, usedForkliftFuelSpecs);
+  const sourceDieselSpecs = recoverGamUsedDieselFuel(sourceUnitRecord, sourceElectricSpecs);
+  const sourceSafetySpecs = recoverGamSourceSafetyControls(sourceUnitRecord, sourceDieselSpecs);
+  const sourceStabilizationSpecs = recoverGamSourceStabilization(sourceUnitRecord, sourceSafetySpecs);
+  const sourceYearSpecs = recoverGomarizSourceYearSpec(record, sourceStabilizationSpecs);
+  const sourceFuelSpecs = recoverMercaelevaSourceFuel(sourceUnitRecord, sourceYearSpecs);
   record = reconcileGamForPreparation(record);
   record = reconcileMercaelevaForPreparation(record);
   const issues: string[] = [];
@@ -235,6 +261,30 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   issues.push(...(catalog === null ? sourceTechnicalQualityIssues(record) :
     category ? attributeResult!.qualityIssues : sourceAttributeQualityIssues(record, catalog)));
 
+  const preparedShort = verifiedResidualEditorial?.short ?? handlingEditorial?.short ?? warehouseEditorial?.short ?? specialtyEditorial?.short ?? residualCleaningShort ?? descriptions.short;
+  const preparedLong = extendedGeneral ?? verifiedResidualEditorial?.general ?? handlingEditorial?.general ?? warehouseEditorial?.general ?? specialtyEditorial?.general ?? residualCleaningGeneral ?? elevationGeneral ?? conciseVerifiedGeneral ?? editorialGeneral;
+  const sourceYearGeneral = issues.length === 0 ? includeSourceYearInGeneral(record, preparedLong, preparedShort, sourceFuelSpecs) : preparedLong;
+  const sourcedBrakingGeneral = issues.length === 0
+    ? includeGamRegenerativeBrakingInGeneral(record, sourceYearGeneral, sourceFuelSpecs) : sourceYearGeneral;
+  const sourcedUnitGeneral = issues.length === 0
+    ? includeGamSourceUnitDetailsInGeneral(sourceUnitRecord, sourcedBrakingGeneral, sourceFuelSpecs) : sourcedBrakingGeneral;
+  const sourcedGradeabilityGeneral = issues.length === 0
+    ? includeGamSourceGradeabilityInGeneral(sourceUnitRecord, sourcedUnitGeneral, sourceFuelSpecs) : sourcedUnitGeneral;
+  const sourcedWeightGeneral = issues.length === 0
+    ? includeGamSourceDeclaredWeightInGeneral(sourceUnitRecord, sourcedGradeabilityGeneral, sourceFuelSpecs) : sourcedGradeabilityGeneral;
+
+  const sourcedSafetyGeneral = issues.length === 0
+    ? includeGamSourceSafetyControlsInGeneral(sourceUnitRecord, sourcedWeightGeneral, sourceFuelSpecs) : sourcedWeightGeneral;
+
+  const sourcedDimensionsGeneral = issues.length === 0
+    ? includeGamSourceMachineDimensionsInGeneral(sourceUnitRecord, sourcedSafetyGeneral, sourceFuelSpecs) : sourcedSafetyGeneral;
+
+  const sourcedForkliftGeneral = issues.length === 0
+    ? includeGamSourceForkliftMeasuresInGeneral(sourceUnitRecord, sourcedDimensionsGeneral, sourceFuelSpecs) : sourcedDimensionsGeneral;
+
+  const sourcedBatteryGeneral = issues.length === 0
+    ? includeGamSourceBatteryVoltageInGeneral(sourceUnitRecord, sourcedForkliftGeneral, sourceFuelSpecs) : sourcedForkliftGeneral;
+
   const product: ImportCandidate = {
     providerId: record.providerId,
     sourceUrl: record.url,
@@ -246,11 +296,11 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     condition,
     price,
     description_title: title,
-    description: verifiedResidualEditorial?.short ?? handlingEditorial?.short ?? warehouseEditorial?.short ?? specialtyEditorial?.short ?? residualCleaningShort ?? descriptions.short,
-    description_general: extendedGeneral ?? verifiedResidualEditorial?.general ?? handlingEditorial?.general ?? warehouseEditorial?.general ?? specialtyEditorial?.general ?? residualCleaningGeneral ?? elevationGeneral ?? conciseVerifiedGeneral ?? editorialGeneral,
+    description: preparedShort,
+    description_general: sourcedBatteryGeneral,
     image: images[0] ?? null,
     images,
-    spec: usedYearSpecs,
+    spec: sourceFuelSpecs,
     attributes: attributeResult?.attributes ?? []
   };
   return {

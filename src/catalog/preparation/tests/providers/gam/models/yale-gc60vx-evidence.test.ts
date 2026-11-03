@@ -5,6 +5,7 @@ import { readCanonicalCatalog } from "../../../../../../infrastructure/filesyste
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { reconcileGamVerifiedYaleGc60vx } from "../../../../evidence/providers/gam/verified-models/yale-gc60vx-evidence.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
+import { includeGamSourceForkliftMeasuresInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-forklift-measures-general.js";
 
 const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
@@ -29,7 +30,8 @@ test("Yale GC60VX reconcilia la motorización declarada sin modificar el spec or
   assert.equal(prepared.product.category, "Carretillas Elevadoras Diésel");
   assert.equal(prepared.product.title, record.title);
   assert.equal(prepared.product.description, corrected.shortDescription);
-  assert.equal(prepared.product.description_general, corrected.longDescription);
+  assert.equal(prepared.product.description_general,
+    includeGamSourceForkliftMeasuresInGeneral(record, corrected.longDescription, prepared.product.spec));
   assert.deepEqual(prepared.product.spec, original.specs);
   assert.deepEqual(record, original);
 });

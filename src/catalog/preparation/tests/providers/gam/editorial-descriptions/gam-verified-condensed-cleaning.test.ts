@@ -48,7 +48,9 @@ test("condensa veinte descripciones GAM verificadas sin modificar otras propieda
       assert.ok(general.toLowerCase().includes(record.model.toLowerCase()), record.reference);
       assert.ok(words(general) >= 75 && words(general) < words(record.longDescription ?? "") * 0.6, record.reference);
       const prepared = prepareSourceProduct(record).product;
-      assert.equal(prepared.description_general, general, record.reference);
+      assert.equal(prepared.description_general,
+        record.reference === "6332" ? `${general} El proveedor declara un sistema de detección de obstáculos.` : general,
+        record.reference);
       assert.equal(prepared.description, short, record.reference);
       assert.equal(prepared.reference, record.reference);
       assert.equal(prepared.sourceUrl, record.url);

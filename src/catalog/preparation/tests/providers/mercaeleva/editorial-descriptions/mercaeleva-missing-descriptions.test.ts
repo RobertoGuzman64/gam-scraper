@@ -1,3 +1,4 @@
+import { recoverMercaelevaSourceFuel } from "../../../../evidence/providers/mercaeleva/source-fuel-evidence.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -55,7 +56,7 @@ test("Mercaeleva: distingue los modelos investigados y usa capacidades ya verifi
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.product.description, generated.short);
     assert.ok(!prepared.issues.some((issue) => issue.includes("Capacidad contradictoria")));
-    assert.deepEqual(prepared.product.spec, record.specs);
+    assert.deepEqual(prepared.product.spec, recoverMercaelevaSourceFuel(record, record.specs ?? {}));
   }
 });
 
@@ -148,7 +149,7 @@ test("Mercaeleva: corta Linde recuperada solo con identidad y datos concordantes
   assert.ok(verifiedGeneral);
   assert.equal(prepared.product.description_general, verifiedGeneral);
   assert.match(verifiedGeneral, /mástil.*dúplex.*tríplex/u);
-  assert.deepEqual(prepared.product.spec, record.specs);
+  assert.deepEqual(prepared.product.spec, recoverMercaelevaSourceFuel(record, record.specs ?? {}));
   assert.equal(JSON.stringify(record), snapshot);
   for (const variant of [
     { ...record, reference: "M818-7812" },

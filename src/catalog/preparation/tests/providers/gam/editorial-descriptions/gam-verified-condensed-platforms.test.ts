@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamPlatformCondensedGeneral, resolveGamPlatformCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-platforms.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { includeGamSourceBatteryVoltageInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-battery-voltage-general.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
@@ -33,7 +34,8 @@ test("las descripciones de plataformas requieren la evidencia exacta de veinte f
     assert.ok(words(general) >= 90 && words(general) < words(record.longDescription) * 0.64, record.reference);
     assert.ok(words(short) <= 25, record.reference);
     const prepared = prepareSourceProduct(record).product;
-    assert.equal(prepared.description_general, general, record.reference);
+    assert.equal(prepared.description_general,
+      includeGamSourceBatteryVoltageInGeneral(record, general, prepared.spec), record.reference);
     assert.equal(prepared.description, short, record.reference);
     assert.equal(prepared.reference, record.reference);
     assert.equal(prepared.sourceUrl, record.url);

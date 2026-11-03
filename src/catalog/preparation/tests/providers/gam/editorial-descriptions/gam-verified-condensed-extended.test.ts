@@ -4,6 +4,8 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamExtendedCondensedGeneral, resolveGamExtendedCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-extended.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
+import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
@@ -30,7 +32,9 @@ test("sintetiza solamente veinte referencias GAM con evidencia propia y conserva
       assert.ok(general.toLowerCase().includes(record.model.toLowerCase()), record.reference);
       assert.ok(count(general) >= 75 && count(general) < count(record.longDescription ?? "") * 0.6, record.reference);
       const prepared = prepareSourceProduct(record).product;
-      assert.equal(prepared.description_general, general, record.reference);
+      assert.equal(prepared.description_general,
+        includeGamSourceSafetyControlsInGeneral(record,
+          includeGamRegenerativeBrakingInGeneral(record, general, prepared.spec), prepared.spec), record.reference);
       assert.equal(prepared.description, short, record.reference);
       assert.equal(prepared.reference, record.reference);
       assert.equal(prepared.sourceUrl, record.url);

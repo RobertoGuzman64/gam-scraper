@@ -62,7 +62,7 @@ test("GAM: Hyster conserva stocks distintos y su serie duplicada en revisión", 
   assert.deepEqual(prepared.totals, { ready: 0, review: 2 });
   assert.ok(prepared.products.every(({ issues }) => issues.some((issue) => issue.includes("Número de serie P177B10585U compartido"))));
   assert.ok(prepared.products.every(({ issues }) => issues.some((issue) => issue.startsWith("Stock GAM diferenciado:"))));
-  assert.deepEqual(prepared.products.map((product) => product.product.spec), hyster.map((product) => product.specs));
+  assert.deepEqual(prepared.products.map((product) => product.product.spec), hyster.map((product) => ({ ...product.specs, "Motorización": "GLP" })));
   assert.deepEqual(hyster, previous);
 });
 

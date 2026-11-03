@@ -4,6 +4,8 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
+import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const expected = new Map<string, string>([
@@ -42,7 +44,15 @@ test("fase 92: 20 fichas GAM con descripciones individuales respaldadas por el o
     const original = JSON.stringify(record);
     const product = prepareSourceProduct(record).product;
     assert.ok(product.description_general, reference);
-    assert.equal(digest(product.description_general), hash, reference);
+    const safetySuffix = " La ficha del proveedor confirma que dispone de dirección asistida.";
+    const beforeSafety = product.description_general.endsWith(safetySuffix)
+      ? product.description_general.slice(0, -safetySuffix.length) : product.description_general;
+    const brakingSuffix = " La ficha del proveedor confirma que este modelo dispone de frenado regenerativo.";
+    const precedingGeneral = beforeSafety.endsWith(brakingSuffix)
+      ? beforeSafety.slice(0, -brakingSuffix.length) : beforeSafety;
+    assert.equal(digest(precedingGeneral), hash, reference);
+    assert.equal(product.description_general, includeGamSourceSafetyControlsInGeneral(record,
+      includeGamRegenerativeBrakingInGeneral(record, precedingGeneral, product.spec), product.spec), reference);
     assert.ok(product.description_general.split(/\s+/u).length >= 65, reference);
     assert.ok(record.longDescription && product.description_general.length < record.longDescription.length, reference);
     assert.equal(JSON.stringify(record), original, reference);

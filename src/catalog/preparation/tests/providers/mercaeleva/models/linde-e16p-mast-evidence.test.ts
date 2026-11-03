@@ -1,3 +1,4 @@
+import { recoverMercaelevaSourceFuel } from "../../../../evidence/providers/mercaeleva/source-fuel-evidence.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -30,7 +31,7 @@ test("MER0624 corrige el encabezado de mástil con concordancia del vendedor en 
   assert.deepEqual(prepared.issues, []);
   assert.equal(prepared.product.reference, "M104-0836");
   assert.equal(prepared.product.description_general, reconciled.longDescription);
-  assert.deepEqual(prepared.product.spec, sourceSnapshot.specs);
+  assert.deepEqual(prepared.product.spec, recoverMercaelevaSourceFuel(original, sourceSnapshot.specs ?? {}));
   assert.ok(prepared.product.attributes.some((item) => item.attributeID === mast.id && item.value === "Dúplex"));
   assert.deepEqual(original, sourceSnapshot);
 });

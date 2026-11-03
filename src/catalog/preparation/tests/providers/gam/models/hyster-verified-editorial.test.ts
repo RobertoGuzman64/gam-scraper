@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { reconcileGamVerifiedHandlingEditorial } from "../../../../evidence/providers/gam/editorial/handling-verified-editorial.js";
+import { includeGamSourceUnitDetailsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-unit-details-general.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -28,8 +29,8 @@ test("HYSTER 6702 confirma 3600 mm y conserva la ficha de origen", () => {
   const prepared = prepareProduct(record, catalog);
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
-  assert.deepEqual(prepared.product.spec, record.specs);
-  assert.equal(prepared.product.description_general, corrected.longDescription);
+  assert.deepEqual(prepared.product.spec, { ...record.specs, "Motorización": "GLP" });
+  assert.equal(prepared.product.description_general, includeGamSourceUnitDetailsInGeneral(record, corrected.longDescription, prepared.product.spec));
   assert.ok(prepared.product.attributes.some((item) => item.value === 3600));
 });
 

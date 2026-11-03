@@ -4,6 +4,8 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
+import { includeGamSourceBatteryVoltageInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-battery-voltage-general.js";
 import { resolveGamVerifiedExtendedGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/verified-extended-general.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
@@ -43,7 +45,13 @@ test("fase 100: veinte descripciones GAM individualizadas sin alterar especifica
     const original = JSON.stringify(record);
     const prepared = prepareSourceProduct(record).product;
     assert.ok(prepared.description_general, reference);
-    assert.equal(digest(prepared.description_general), hash, reference);
+    const previousGeneral = prepared.description_general
+      .replace(/ La ficha del proveedor especifica una tensión de batería de \d+(?:[,.]\d+)? V\.$/u, "")
+      .replace(/ El proveedor declara un dispositivo de parada de emergencia\.$/u, "");
+    assert.equal(digest(previousGeneral), hash, reference);
+    assert.equal(prepared.description_general,
+      includeGamSourceBatteryVoltageInGeneral(record,
+        includeGamSourceSafetyControlsInGeneral(record, previousGeneral, prepared.spec), prepared.spec), reference);
     assert.ok(prepared.description_general.split(/\s+/u).length >= 65, reference);
     assert.ok(record.longDescription && prepared.description_general.length < record.longDescription.length, reference);
     assert.equal(JSON.stringify(record), original, reference);

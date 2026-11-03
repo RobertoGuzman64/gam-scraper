@@ -32,7 +32,8 @@ test("tipo de origen corroborado sin categoría del receptor no es motivo de rev
       ...(code === "4778" ? { "Alcance horizontal (m)": "8,22 m", "Tracción 4x4": true } : {}),
       ...(code === "4779" ? { "Alcance horizontal (m)": "10,26 m", "Potencia (kW)": "36,8 kW", "Tracción 4x4": true } : {}),
       ...(code === "4780" ? { "Voltaje batería (V)": "51,2 V", "Capacidad de la batería (Ah)": "346 Ah", "Tipo de batería": "Litio", "Tracción 4x4": true } : {}),
-      ...(code === "2159" ? { "Sensor de inclinación": true } : {})
+      ...(code === "2159" ? { "Sensor de inclinación": true } : {}),
+      ...(["2134", "2135"].includes(code) ? { "Frenado automático": true } : {})
     }, code);
     assert.deepEqual(prepared.product.attributes, [], code);
     assert.ok(prepared.importIssues?.excel.some((issue) => issue.startsWith("Categoría no ")), code);

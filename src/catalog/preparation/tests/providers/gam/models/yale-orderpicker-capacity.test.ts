@@ -5,6 +5,7 @@ import { readCanonicalCatalog } from "../../../../../../infrastructure/filesyste
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { reconcileGamOrderPickerEditorial } from "../../../../evidence/providers/gam/editorial/orderpicker-editorial.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
+import { includeGamSourceForkliftMeasuresInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-forklift-measures-general.js";
 
 const catalog = await loadImportCatalog();
 const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
@@ -26,7 +27,8 @@ test("Yale MO10L corrige 2000 a 1000 kg con ficha técnica y resumen coincidente
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
   assert.equal(prepared.product.title, corrected.title);
-  assert.equal(prepared.product.description_general, corrected.longDescription);
+  assert.equal(prepared.product.description_general,
+    includeGamSourceForkliftMeasuresInGeneral(base, corrected.longDescription, prepared.product.spec));
   assert.deepEqual(prepared.product.spec, { ...base.specs, "Dirección asistida": true });
   assert.equal(JSON.stringify(base), original);
   assert.strictEqual(reconcileGamOrderPickerEditorial(corrected), corrected);

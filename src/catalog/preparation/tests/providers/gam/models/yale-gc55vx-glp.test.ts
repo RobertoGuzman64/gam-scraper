@@ -7,6 +7,7 @@ import { isGamVerifiedYaleGc55vxGlp, reconcileGamVerifiedYaleGc55vxGlp } from ".
 import { newCategorySlug } from "../../../../mapping/providers/gam/categories-and-attributes/categories.js";
 import { sourceCategoryQualityIssue } from "../../../../source/category-quality.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
+import { includeGamSourceForkliftMeasuresInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-forklift-measures-general.js";
 
 const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
@@ -31,7 +32,8 @@ test("Yale GC55VX confirma GLP sin alterar specs ni JSON canónicos", () => {
   assert.deepEqual(prepared.issues, []);
   assert.equal(prepared.product.category, "Carretillas Elevadoras GLP");
   assert.equal(prepared.product.title, corrected.title);
-  assert.equal(prepared.product.description_general, corrected.longDescription);
+  assert.equal(prepared.product.description_general,
+    includeGamSourceForkliftMeasuresInGeneral(record, corrected.longDescription, prepared.product.spec));
   assert.deepEqual(prepared.product.spec, original.specs);
   assert.deepEqual(record, original);
 });

@@ -3,6 +3,9 @@ import test from "node:test";
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttributeValue } from "../../../../mapping/attribute-mapping.js";
 import { prepareCached } from "../../../cross-cutting/support/prepare-cached.js";
+import { recoverGomarizSourceYearSpec } from "../../../../mapping/providers/gomariz/source-year-spec.js";
+import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { prepareSourceProduct } from "../../../../prepare-product.js";
 import type { ProductRecord, SpecsMap } from "../../../../../../contracts/catalog.js";
 
 const catalog = await loadImportCatalog();
@@ -74,3 +77,50 @@ test("Gomariz: conserva y rechaza especificaciones con valores múltiples incomp
   assert.equal(prepared.product.attributes.some((item) => item.value === 350 || item.value === 400), false);
 });
 
+
+
+test("Gomariz: traslada el año explícito de la ficha a spec sin alterar los originales", async () => {
+  const source = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+  const records = source.products.filter((record) => record.year !== null);
+  assert.ok(records.length > 0);
+  for (const record of records) {
+    const before = JSON.stringify(record);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.product.spec["Año de fabricación"], record.year, record.reference ?? "");
+    assert.deepEqual(prepared.product.spec, { ...record.specs, "Año de fabricación": record.year });
+    assert.equal(JSON.stringify(record), before);
+  }
+  for (const record of source.products.filter((item) => item.year === null)) {
+    assert.equal(prepareSourceProduct(record).product.spec["Año de fabricación"], undefined);
+  }
+});
+
+test("Gomariz: conserva años existentes y rechaza proveedores, fuentes y fechas sin acreditar", () => {
+  const record: ProductRecord = {
+    ...source(energy, "generador", { Potencia: "125 kVA" }),
+    title: "PRAMAC GPW125", reference: "GR1356", year: "2022", yearSource: "ficha", condition: "Segunda mano"
+  };
+  const original = record.specs ?? {};
+  assert.deepEqual(recoverGomarizSourceYearSpec(record, original), { ...original, "Año de fabricación": "2022" });
+  const invalid: readonly ProductRecord[] = [
+    { ...record, providerId: "gam" },
+    { ...record, categoryKey: "alquiler" },
+    { ...record, reference: null },
+    { ...record, title: null },
+    { ...record, condition: "Nuevo" },
+    { ...record, year: "2022/2023" },
+    { ...record, year: "1890" },
+    { ...record, year: null },
+    { ...record, yearSource: "url" },
+    { ...record, yearSource: "descripcion" },
+    { ...record, url: record.url.replace("gomarizrent.com", "example.com") },
+    { ...record, url: record.url.replace("https:", "http:") },
+    { ...record, url: "https://www.gomarizrent.com/venta/ficha" }
+  ];
+  for (const item of invalid) assert.strictEqual(recoverGomarizSourceYearSpec(item, original), original);
+  for (const key of ["Año", "Año de fabricación", "Ano de fabricacion"]) {
+    const specs = { ...original, [key]: "2019" };
+    assert.strictEqual(recoverGomarizSourceYearSpec(record, specs), specs);
+  }
+  assert.deepEqual(original, { Potencia: "125 kVA" });
+});
