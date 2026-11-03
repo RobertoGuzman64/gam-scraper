@@ -12,12 +12,10 @@ const readRuleFiles = async (directory: string): Promise<readonly { name: string
   const files = await Promise.all(paths.map(async (entry) => ({
     name: entry.name, content: await readFile(join(directory, entry.name), "utf8")
   })));
-  for (const subdirectory of entries.filter((entry) => entry.isDirectory() && entry.name !== "tests")) {
-    for (const child of await readRuleFiles(join(directory, subdirectory.name))) {
-      files.push({ name: `${subdirectory.name}/${child.name}`, content: child.content });
-    }
-  }
-  return files;
+  const nested = await Promise.all(entries.filter((entry) => entry.isDirectory() && entry.name !== "tests")
+    .map(async (subdirectory) => (await readRuleFiles(join(directory, subdirectory.name)))
+      .map((child) => ({ name: `${subdirectory.name}/${child.name}`, content: child.content }))));
+  return [...files, ...nested.flat()];
 };
 
 export const loadPreparationInputs = async (): Promise<{ fingerprints: PreparationFingerprints }> => {

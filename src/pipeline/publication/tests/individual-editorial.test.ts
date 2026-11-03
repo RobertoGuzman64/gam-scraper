@@ -10,7 +10,7 @@ import { deliverIndividualArchive } from "../individual-archive.js";
 import { deliverIndividualProvider } from "../individual-delivery.js";
 import { completeIndividualDelivery } from "../complete-individual-delivery.js";
 import { resolveAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
-import test from "node:test";
+import test, { after } from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/scraping.js";
 import { prepareSavedCatalog } from "../../preparation/prepare.js";
@@ -36,21 +36,44 @@ const machine = (reference: string, serialNumber: string | null): ProductRecord 
   specs: { "Altura de trabajo": "8 m" }
 });
 
-const fixture = async (run: (options: IndividualEditorialOptions) => Promise<void>): Promise<void> => {
-  const root = await mkdtemp(join(tmpdir(), "equipzilla-editorial-individual-"));
-  const catalogFile = join(root, "original", "catalogo-ejemplo-catalog.json");
-  const preparationFile = join(root, "prepared", "catalogo-ejemplo-preparation.json");
+let baseWorkspace: Promise<string> | undefined;
+const createBaseWorkspace = async (): Promise<string> => {
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-editorial-seed-"));
   const now = new Date().toISOString();
   const products = [machine("11111", "SERIE-COMPARTIDA"), machine("22222", "SERIE-COMPARTIDA"), machine("33333", null)];
   const result: CategoryScrapeResult = { category, discoveredProductUrls: products.length, products, failures: [] };
   try {
     await writeOutputs(join(root, "original"), "catalogo-ejemplo", [result], now, now);
-    await prepareSavedCatalog({ providerId: "gam", source: catalogFile, out: preparationFile, dryRun: false, compare: null });
-    await run({ rootDirectory: root, providerId: "gam", catalogFile, preparationFile });
+    await prepareSavedCatalog({
+      providerId: "gam", source: join(root, "original", "catalogo-ejemplo-catalog.json"),
+      out: join(root, "prepared", "catalogo-ejemplo-preparation.json"), dryRun: false, compare: null
+    });
+    return root;
+  } catch (error) {
+    await rm(root, { recursive: true, force: true });
+    throw error;
+  }
+};
+
+const fixture = async (run: (options: IndividualEditorialOptions) => Promise<void>): Promise<void> => {
+  baseWorkspace ??= createBaseWorkspace();
+  const source = await baseWorkspace;
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-editorial-individual-"));
+  try {
+    await cp(source, root, { recursive: true });
+    await run({
+      rootDirectory: root, providerId: "gam",
+      catalogFile: join(root, "original", "catalogo-ejemplo-catalog.json"),
+      preparationFile: join(root, "prepared", "catalogo-ejemplo-preparation.json")
+    });
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 };
+
+after(async () => {
+  if (baseWorkspace) await rm(await baseWorkspace, { recursive: true, force: true });
+});
 
 const reason = "Identidad de origen sin garantías suficientes para publicar";
 
