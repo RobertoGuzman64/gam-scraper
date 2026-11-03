@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
-import { planTestLanes } from "../test-performance.mjs";
+import { planTestLanes, orderTestsByDuration } from "../test-performance.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { recommendedTestConcurrency } from "../test-performance.mjs";
@@ -45,6 +45,26 @@ test("las medidas reales determinan la cola y descartan prioridades históricas 
   assert.ok(lanes[1].files.includes(files[24]));
 });
 
+test("los shards críticos nuevos se planifican antes que suites históricas ya medidas", () => {
+  const files = ["dist/ligera.test.js", "dist/pipeline/publication/tests/individual-finish-cycle.test.js",
+    "dist/pipeline/publication/tests/individual-finish.test.js",
+    "dist/pipeline/publication/tests/individual-finish-editorial.test.js"];
+  const measured = new Map([["dist/ligera.test.js", 1000],
+    ["dist/pipeline/publication/tests/individual-finish.test.js", 107940]]);
+  const priority = new Map([
+    ["pipeline/publication/tests/individual-finish.test.js", 0],
+    ["pipeline/publication/tests/individual-finish-cycle.test.js", 1],
+    ["pipeline/publication/tests/individual-finish-editorial.test.js", 2]
+  ]);
+  orderTestsByDuration(files, measured, priority);
+  assert.deepEqual(files, [
+    "dist/pipeline/publication/tests/individual-finish-cycle.test.js",
+    "dist/pipeline/publication/tests/individual-finish-editorial.test.js",
+    "dist/pipeline/publication/tests/individual-finish.test.js",
+    "dist/ligera.test.js"
+  ]);
+});
+
 test("los perfiles guardan las duraciones de distintas concurrencias y siguen leyendo el formato anterior", () => {
   const temporary = mkdtempSync(join(tmpdir(), "equipzilla-durations-"));
   try {
@@ -66,4 +86,28 @@ test("los perfiles guardan las duraciones de distintas concurrencias y siguen le
   } finally {
     rmSync(temporary, { recursive: true, force: true });
   }
+});
+
+test("redistribuye capacidad solo cuando un perfil completo acredita desequilibrio", () => {
+  const heavy = Array.from({ length: 10 }, (_, index) => `dist/intensiva-${index}.test.js`);
+  const general = Array.from({ length: 120 }, (_, index) => `dist/general-${index}.test.js`);
+  const files = [...heavy, ...general];
+  const measured = new Map(files.map((file, index) => [file, index < heavy.length ? 20000 : 2000]));
+  const lanes = planTestLanes(files, 12, measured, []);
+  assert.equal(lanes.length, 2);
+  assert.equal(lanes[0].concurrency, 5);
+  assert.equal(lanes[1].concurrency, 7);
+  assert.deepEqual(lanes.flatMap((lane) => lane.files), files);
+  assert.equal(lanes.reduce((sum, lane) => sum + lane.concurrency, 0), 12);
+  measured.delete(general[0]);
+  assert.equal(planTestLanes(files, 12, measured, [])[0].concurrency, 4);
+});
+
+test("mantiene el reparto conocido ante perfiles equilibrados o cambios pequeños", () => {
+  const heavy = Array.from({ length: 8 }, (_, index) => `dist/intensiva-${index}.test.js`);
+  const general = Array.from({ length: 80 }, (_, index) => `dist/general-${index}.test.js`);
+  const files = [...heavy, ...general];
+  const measured = new Map(files.map((file, index) => [file, index < heavy.length ? 20000 : 4000]));
+  assert.equal(planTestLanes(files, 12, measured, [])[0].concurrency, 4);
+  assert.equal(planTestLanes(files, 8, measured, [])[0].concurrency, 3);
 });

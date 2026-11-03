@@ -27,6 +27,38 @@ export const loadTestDurations = (concurrency) => {
   }
 };
 
+const estimatedLaneTime = (files, workers, previous) => {
+  const slots = Array.from({ length: workers }, () => 0);
+  for (const duration of files.map((file) => previous.get(canonical(file))).sort((left, right) => right - left)) {
+    const slot = slots.indexOf(Math.min(...slots));
+    slots[slot] += duration;
+  }
+  return Math.max(...slots);
+};
+
+const balancedConcurrency = (intensive, remaining, concurrency, previous) => {
+  const standard = Math.min(4, Math.max(2, Math.floor(concurrency / 3)));
+  if (!previous || intensive.length < 6 || remaining.length < 10 ||
+    [...intensive, ...remaining].some((file) => !previous.has(canonical(file)))) return standard;
+  const baseline = Math.max(
+    estimatedLaneTime(intensive, standard, previous),
+    estimatedLaneTime(remaining, concurrency - standard, previous)
+  );
+  let chosen = standard;
+  let best = baseline;
+  for (let intensiveWorkers = 2; intensiveWorkers <= Math.min(6, concurrency - 4); intensiveWorkers += 1) {
+    const estimate = Math.max(
+      estimatedLaneTime(intensive, intensiveWorkers, previous),
+      estimatedLaneTime(remaining, concurrency - intensiveWorkers, previous)
+    );
+    if (estimate < best) {
+      best = estimate;
+      chosen = intensiveWorkers;
+    }
+  }
+  return best <= baseline * 0.9 ? chosen : standard;
+};
+
 export const planTestLanes = (files, concurrency, previous, defaults) => {
   if (files.length === 0) return [];
   const single = [{ name: "general", files, concurrency }];
@@ -41,7 +73,7 @@ export const planTestLanes = (files, concurrency, previous, defaults) => {
     else remaining.push(file);
   }
   if (intensive.length < 2 || remaining.length === 0) return single;
-  const intensiveConcurrency = Math.min(4, Math.max(2, Math.floor(concurrency / 3)));
+  const intensiveConcurrency = balancedConcurrency(intensive, remaining, concurrency, previous);
   return [
     { name: "intensiva", files: intensive, concurrency: intensiveConcurrency },
     { name: "general", files: remaining, concurrency: concurrency - intensiveConcurrency }
@@ -56,10 +88,13 @@ export const orderTestsByDuration = (files, previous, preferred) => files.sort((
   if (leftDuration !== undefined && rightDuration !== undefined && leftDuration !== rightDuration) {
     return rightDuration - leftDuration;
   }
-  if (leftDuration !== undefined && rightDuration === undefined) return -1;
-  if (rightDuration !== undefined && leftDuration === undefined) return 1;
   const leftPriority = preferred.get(leftPath.replace(/^dist\//, "")) ?? preferred.size;
   const rightPriority = preferred.get(rightPath.replace(/^dist\//, "")) ?? preferred.size;
+  const leftNewCritical = leftDuration === undefined && leftPriority < preferred.size;
+  const rightNewCritical = rightDuration === undefined && rightPriority < preferred.size;
+  if (leftNewCritical !== rightNewCritical) return leftNewCritical ? -1 : 1;
+  if (leftDuration !== undefined && rightDuration === undefined) return -1;
+  if (rightDuration !== undefined && leftDuration === undefined) return 1;
   return leftPriority - rightPriority || leftPath.localeCompare(rightPath);
 });
 

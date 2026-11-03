@@ -67,12 +67,13 @@ export const isCurrentBuild = (root, sources, inputs) => {
     const currentSources = sources ?? sourcePaths(root);
     const outputs = outputPaths(root, currentSources);
     if (!regularOutputs(outputs) || fingerprint(root, outputs) !== value.outputFingerprint) return false;
-    const current = snapshot(root, inputs ?? buildInputs(root, currentSources));
-    if (JSON.stringify(value.snapshot) === JSON.stringify(current)) return true;
     const currentInputs = inputs ?? buildInputs(root, currentSources);
+    const before = snapshot(root, currentInputs);
     if (fingerprint(root, currentInputs) !== value.fingerprint ||
-      JSON.stringify(snapshot(root, currentInputs)) !== JSON.stringify(current)) return false;
-    saveStamp(root, value.fingerprint, current, value.outputFingerprint);
+      JSON.stringify(snapshot(root, currentInputs)) !== JSON.stringify(before)) return false;
+    if (JSON.stringify(value.snapshot) !== JSON.stringify(before)) {
+      saveStamp(root, value.fingerprint, before, value.outputFingerprint);
+    }
     return true;
   } catch { return false; }
 };

@@ -137,7 +137,7 @@ test("rechaza acreditación modificada y nombre de publicación irregular", asyn
 });
 
 test("rechaza enlaces simbólicos a publicaciones antes de proponer el archivado", {
-  skip: process.platform === "win32"
+  skip: process.platform === "win32" ? "Windows: la creación de enlaces simbólicos puede requerir privilegios especiales" : false
 }, async () => {
   await workspace(async ({ root }) => {
     const { publicationIds } = await rootFiles(root, 3);

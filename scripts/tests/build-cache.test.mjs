@@ -74,3 +74,18 @@ test("invalida salidas desaparecidas, fuentes nuevas y sellos corruptos", () => 
     assert.equal(isCurrentBuild(root), false);
   });
 });
+
+test("no acepta compilaciones cuando el contenido cambia con metadatos aparentemente vigentes", () => {
+  withBuild((root) => {
+    const original = loadStamp(root);
+    const source = join(root, "src/catalog/example.ts");
+    writeFileSync(source, "export const value = 2;\n");
+    const inputs = buildInputs(root, sourcePaths(root));
+    saveStamp(root, original.fingerprint, snapshot(root, inputs), original.outputFingerprint);
+    assert.deepEqual(loadStamp(root).snapshot, snapshot(root, inputs));
+    assert.equal(isCurrentBuild(root), false);
+    assert.equal(loadStamp(root).fingerprint, original.fingerprint);
+    writeFileSync(source, "export const value = 1;\n");
+    assert.equal(isCurrentBuild(root), true);
+  });
+});

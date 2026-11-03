@@ -11,13 +11,13 @@ const ROOT_FILES = ["README.md", "package.json", "package-lock.json", "tsconfig.
   ".env", ".env.local", ".env.test", ".env.test.local",
   "node_modules/.package-lock.json", "node_modules/typescript/package.json",
   "node_modules/cheerio/package.json", "node_modules/p-limit/package.json",
-  "scripts/run-tests.mjs", "scripts/test-result-cache.mjs", "scripts/test-performance.mjs",
+  "scripts/run-tests.mjs", "scripts/test-result-cache.mjs", "scripts/test-performance.mjs", "scripts/test-runner-observability.mjs",
   "scripts/run-build.mjs", "scripts/build-cache.mjs", "scripts/terminal.mjs"];
 const PURE_ROOT_FILES = new Set([
   "package.json", "package-lock.json", "tsconfig.json",
   "node_modules/.package-lock.json", "node_modules/typescript/package.json",
   "node_modules/cheerio/package.json", "node_modules/p-limit/package.json",
-  "scripts/run-tests.mjs", "scripts/test-result-cache.mjs", "scripts/test-performance.mjs",
+  "scripts/run-tests.mjs", "scripts/test-result-cache.mjs", "scripts/test-performance.mjs", "scripts/test-runner-observability.mjs",
   "scripts/run-build.mjs", "scripts/build-cache.mjs", "scripts/terminal.mjs"
 ]);
 const EXTERNAL_DATA_ACCESS = /\b(?:node:fs(?:\/promises)?|fs\/promises|process\.(?:binding|loadEnvFile))\b/u;
@@ -211,6 +211,8 @@ export const fingerprintTestInputs = (files) => {
 
 const LEGACY_AUDITED_SUITES = new Set([
   "dist/pipeline/publication/tests/individual-finish.test.js",
+  "dist/pipeline/publication/tests/individual-finish-cycle.test.js",
+  "dist/pipeline/publication/tests/individual-finish-editorial.test.js",
   "dist/pipeline/publication/tests/individual-accreditation-session.test.js"
 ]);
 

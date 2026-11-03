@@ -24,6 +24,8 @@ const withRunner = (action: (root: string) => void): void => {
     copyFileSync(join(projectRoot, "scripts", "run-tests.mjs"), join(root, "scripts", "run-tests.mjs"));
     copyFileSync(join(projectRoot, "scripts", "terminal.mjs"), join(root, "scripts", "terminal.mjs"));
     copyFileSync(join(projectRoot, "scripts", "test-performance.mjs"), join(root, "scripts", "test-performance.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "test-runner-observability.mjs"), join(root, "scripts", "test-runner-observability.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "test-runner-ui.mjs"), join(root, "scripts", "test-runner-ui.mjs"));
     copyFileSync(join(projectRoot, "scripts", "test-result-cache.mjs"), join(root, "scripts", "test-result-cache.mjs"));
     writeFileSync(join(root, "package.json"), '{"type":"module"}');
     writeFileSync(join(root, "src", "prueba.test.ts"), "export {};\n");
@@ -131,6 +133,19 @@ test("el runner propaga al comando el error de una prueba MJS", () => {
     assert.equal(result.status, 1, `${result.stdout}${result.stderr}`);
     assert.match(result.stdout, /prueba MJS fallida/);
     assert.match(result.stdout, /1 fallidos/);
+  });
+});
+
+test("la consola conserva el motivo de omisión y termina en un resultado inequívoco", () => {
+  withRunner((root) => {
+    writeFileSync(join(root, "scripts", "inspection", "tests", "prueba.test.mjs"),
+      'import test from "node:test"; test("omisión deliberada", { skip: "condición acreditada" }, () => {});\n');
+    const result = spawnRunner(root, ["--concurrencia=2"]);
+    assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+    assert.match(result.stdout, /OMITIDOS \| 1/);
+    assert.match(result.stdout, /omisión deliberada.*condición acreditada/);
+    assert.match(result.stdout, /TIEMPOS \| Último informe.*Fin del runner.*Intervalo posterior/);
+    assert.match(result.stdout.trim().split("\n").at(-1) ?? "", /^PASS \| 2\/2 archivos \| 1 correctos \| 0 fallidos \| 1 omitidos/);
   });
 });
 
@@ -468,5 +483,28 @@ test("importaciones dinámicas y módulos externos quedan fuera de la caché", (
     const again = spawnRunner(root, []);
     assert.equal(again.status, 0, `${again.stdout}${again.stderr}`);
     assert.match(again.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 4 suites ejecutadas/);
+  });
+});
+
+test("el perfil caliente conserva la reutilización real y mide solo las suites ejecutadas", () => {
+  withRunner((root) => {
+    addCacheableSuites(root);
+    const first = spawnRunner(root, []);
+    assert.equal(first.status, 0, `${first.stdout}${first.stderr}`);
+    const reportPath = join(root, "perfil-caliente.json");
+    const warm = spawnRunner(root, ["--medicion-cache", reportPath]);
+    assert.equal(warm.status, 0, `${warm.stdout}${warm.stderr}`);
+    assert.match(warm.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 2 suites ejecutadas/);
+    const report: unknown = JSON.parse(readFileSync(reportPath, "utf8"));
+    assert.ok(report && typeof report === "object" && "resumen" in report && report.resumen &&
+      typeof report.resumen === "object" && "cache" in report.resumen && "correctos" in report.resumen &&
+      "archivos" in report && Array.isArray(report.archivos));
+    assert.deepEqual(report.resumen.cache, { reutilizados: 2, ejecutados: 2, tests_reutilizados: 2 });
+    assert.equal(report.archivos.length, 2);
+    assert.equal(report.resumen.correctos, 4);
+    assert.equal(readFileSync(join(root, "ejecuciones-cache.txt"), "utf8").trim().split("\n").length, 2);
+    const conflicting = spawnRunner(root, ["--medicion", reportPath, "--medicion-cache", reportPath]);
+    assert.notEqual(conflicting.status, 0);
+    assert.match(conflicting.stderr, /No se combinan --medicion y --medicion-cache/);
   });
 });

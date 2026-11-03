@@ -1,15 +1,17 @@
 import { existsSync, readdirSync, writeFileSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { join, relative, resolve } from "node:path";
-import { clearLine, cursorTo } from "node:readline";
 import { run } from "node:test";
 import { formatScriptStatus } from "./terminal.mjs";
+import { createRunnerTimeline } from "./test-runner-observability.mjs";
+import { createRunnerDisplay, formatRunnerCompletion, formatRunnerOmission, formatRunnerRegression, formatRunnerTime } from "./test-runner-ui.mjs";
 import { durationRegressions, loadTestDurations, orderTestsByDuration, planTestLanes, recommendedTestConcurrency, saveTestDurations } from "./test-performance.mjs";
 import { discardTestResultsCache, fingerprintTestInputs, loadTestResultsCache, relativeCacheFile, saveTestResultsCache } from "./test-result-cache.mjs";
 
 const parseOptions = (argumentsList) => {
   let concurrency;
   let report;
+  let cacheReport;
 
   for (let index = 0; index < argumentsList.length; index += 1) {
     const argument = argumentsList[index];
@@ -39,24 +41,40 @@ const parseOptions = (argumentsList) => {
       continue;
     }
 
+    const cacheReportValue = argument.startsWith("--medicion-cache=")
+      ? argument.slice("--medicion-cache=".length)
+      : argument === "--medicion-cache"
+        ? argumentsList[++index]
+        : null;
+    if (cacheReportValue !== null) {
+      if (!cacheReportValue || cacheReportValue.startsWith("--")) throw new Error("--medicion-cache requiere una ruta JSON");
+      cacheReport = cacheReportValue;
+      continue;
+    }
+
     throw new Error(`Opción de pruebas desconocida: ${argument}`);
   }
-
-  return { concurrency, report };
+  if (report !== undefined && cacheReport !== undefined) throw new Error("No se combinan --medicion y --medicion-cache");
+  if (cacheReport !== undefined && concurrency !== undefined) throw new Error("--medicion-cache utiliza la concurrencia habitual");
+  return { concurrency, report, cacheReport };
 };
 
 const PRIORITIZED_TESTS = [
   "pipeline/publication/tests/individual-finish.test.js",
+  "pipeline/publication/tests/individual-finish-cycle.test.js",
+  "pipeline/publication/tests/individual-finish-editorial.test.js",
+  "pipeline/publication/tests/individual-editorial.test.js",
   "pipeline/publication/tests/individual-accreditation-session.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/delivery-recovery.test.js",
+  "pipeline/campaign/tests/finalization-and-delivery/delivery-recovery-resumption.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/delivery-retention.test.js",
+  "pipeline/campaign/tests/finalization-and-delivery/delivery-retention-historic.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/delivery.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/finalization-interventions.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/finalization-recovery.test.js",
   "cli/commands/catalog/tests/catalog-content-gaps-comparison.test.js",
   "pipeline/campaign/tests/reference/reference-update.test.js",
   "pipeline/campaign/tests/operations/operations-status.test.js",
-  "pipeline/publication/tests/individual-editorial.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/finalization-editorial.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/finalization-draft-integrity.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/finalization-operations.test.js",
@@ -118,7 +136,7 @@ if (automaticCache) {
 }
 const cachedFiles = files.filter((file) => cachedResults.has(relativeCacheFile(file)));
 const executableFiles = files.filter((file) => !cachedResults.has(relativeCacheFile(file)));
-const lanes = planTestLanes(executableFiles, effectiveConcurrency, previousDurations, PRIORITIZED_TESTS.slice(0, 8));
+const lanes = planTestLanes(executableFiles, effectiveConcurrency, previousDurations, PRIORITIZED_TESTS.slice(0, 12));
 const cachedCounts = { passed: 0, failed: 0, skipped: 0, todo: 0 };
 for (const file of cachedFiles) {
   const value = cachedResults.get(relativeCacheFile(file));
@@ -126,49 +144,30 @@ for (const file of cachedFiles) {
 }
 const filePaths = new Set(executableFiles.map((file) => resolve(file)));
 const interactive = process.stdout.isTTY === true && process.env.CI !== "true" && process.env.TERM !== "dumb";
-const completedFiles = new Set(cachedFiles.map((file) => resolve(file)));
-const startedFiles = new Set();
 const startedAt = performance.now();
-const frames = ["|", "/", "-", "\\"];
-let frameIndex = 0;
+const timeline = createRunnerTimeline(files, cachedFiles, lanes, () => performance.now() - startedAt);
+const completedFiles = timeline.reported;
 const errors = [];
 const skippedTests = [];
 const todoTests = [];
 const standardErrors = new Map();
 const counts = { ...cachedCounts };
 const resultsForCache = new Map(cachedResults);
-const profile = options.report ? { tests: [], files: [] } : null;
-const profileStarts = profile ? new Map() : null;
+const reportPath = options.report ?? options.cacheReport;
+const profile = reportPath ? { tests: [], files: [] } : null;
 const durations = [];
-
-const clearProgress = () => {
-  if (!interactive) return;
-  cursorTo(process.stdout, 0);
-  clearLine(process.stdout, 0);
-};
-
-const renderProgress = () => {
-  if (!interactive) return;
-
-  const started = startedFiles.size;
-  const completed = completedFiles.size;
-  const elapsed = Math.floor((performance.now() - startedAt) / 1000);
-  const frame = frames[frameIndex % frames.length];
-  frameIndex += 1;
-  const pending = Math.max(0, started - completed);
-  const result = `${started}/${files.length} iniciados | ${completed} informados | ${pending} pendientes | OK ${counts.passed} | KO ${counts.failed} | ${elapsed}s`;
-  const omissions = counts.skipped || counts.todo
-    ? ` | omit ${counts.skipped}${counts.todo ? ` | TODO ${counts.todo}` : ""}`
-    : "";
-  const columns = process.stdout.columns > 0 ? process.stdout.columns : 100;
-  const available = columns - result.length - omissions.length - 12;
-  const barWidth = available >= 8 ? Math.min(20, available) : 0;
-  const filled = Math.round((completed / files.length) * barWidth);
-  const bar = barWidth ? ` [${"█".repeat(filled)}${"░".repeat(barWidth - filled)}]` : "";
-
-  clearProgress();
-  process.stdout.write(`TESTS ${frame}${bar} ${result}${omissions}`);
-};
+const display = createRunnerDisplay(process.stdout, {
+  interactive,
+  now: () => performance.now() - startedAt,
+  getState: () => ({
+    progress: timeline.progress(),
+    counts,
+    lanes: timeline.metrics().lanes,
+    cachedTests: cachedCounts.passed,
+    elapsed_ms: performance.now() - startedAt,
+    laneFinished: timeline.metrics().lanes.every((lane) => lane.finished_ms !== null)
+  })
+});
 
 const describeError = (error) => {
   if (typeof error === "string") return error === "test failed" ? "" : error;
@@ -177,34 +176,12 @@ const describeError = (error) => {
   return "";
 };
 
-const describeOmission = ({ name, file, line, reason }) => {
-  const location = file ? ` (${relative(process.cwd(), file)}${line ? `:${line}` : ""})` : "";
-  const explanation = typeof reason === "string" && reason.trim() ? reason.trim() : "motivo no indicado";
-  return `  - ${name}${location} | ${explanation}\n`;
-};
-
 const summaries = [];
-renderProgress();
-let lastPeriodicReport = 0;
-const renderMeasuredProgress = () => {
-  if (interactive || !profile) return;
-  const elapsed = Math.floor((performance.now() - startedAt) / 1000);
-  if (elapsed - lastPeriodicReport < 10) return;
-  lastPeriodicReport = elapsed;
-  process.stdout.write(`TESTS | ${startedFiles.size} iniciados | ${completedFiles.size}/${files.length} informados | ${counts.passed} correctos | ${counts.failed} fallidos | ${elapsed}s transcurridos\n`);
-};
-const progressTimer = interactive || profile
-  ? setInterval(interactive ? renderProgress : renderMeasuredProgress, interactive ? 350 : 1000)
-  : undefined;
+display.show();
+const progressTimer = setInterval(() => display.tick(), interactive ? 500 : 1000);
 
-const consumeEvent = (event) => {
-  if (event.type === "test:dequeue" && typeof event.data.name === "string" && filePaths.has(resolve(event.data.name))) {
-    const file = resolve(event.data.name);
-    startedFiles.add(file);
-    if (profileStarts && !profileStarts.has(file)) profileStarts.set(file, performance.now() - startedAt);
-    renderProgress();
-  }
-
+const consumeEvent = (event, laneName) => {
+  timeline.register(event, laneName);
   if (profile && (event.type === "test:pass" || event.type === "test:fail") && event.data.details?.type === "test") {
     profile.tests.push({
       archivo: event.data.file ? relative(process.cwd(), event.data.file) : "",
@@ -227,7 +204,7 @@ const consumeEvent = (event) => {
   }
 
   if (profile && event.type === "test:summary" && event.data.file) {
-    const inicio = profileStarts?.get(resolve(event.data.file)) ?? null;
+    const inicio = timeline.started.get(resolve(event.data.file)) ?? null;
     const duracion = event.data.duration_ms ?? 0;
     const recibido = performance.now() - startedAt;
     profile.files.push({
@@ -271,31 +248,29 @@ const consumeEvent = (event) => {
       const fileFailure = filePaths.has(resolve(name));
       counts.failed += 1;
       errors.push({ name, file, line, fileFailure, error: details?.error?.cause ?? details?.error });
-      if (fileFailure) {
-        completedFiles.add(resolve(name));
-      }
     }
   }
 
   if (event.type === "test:summary") {
-    if (event.data.file) {
-      completedFiles.add(resolve(event.data.file));
-    } else summaries.push(event.data);
+    if (!event.data.file) summaries.push(event.data);
   }
 
-  if (event.type === "test:summary" && event.data.file) renderProgress();
-  if (event.type === "test:fail" && filePaths.has(resolve(event.data.name))) renderProgress();
 };
 try {
   await Promise.all(lanes.map(async (lane) => {
-    for await (const event of run({ files: lane.files, concurrency: lane.concurrency })) consumeEvent(event);
+    try {
+      for await (const event of run({ files: lane.files, concurrency: lane.concurrency })) consumeEvent(event, lane.name);
+    } finally {
+      timeline.finishLane(lane.name);
+    }
   }));
 } finally {
-  if (progressTimer) clearInterval(progressTimer);
-  clearProgress();
+  clearInterval(progressTimer);
+  display.finish();
 }
 if (summaries.length !== lanes.length) throw new Error("La ejecución de pruebas terminó sin todos los resúmenes");
 const elapsedDuration = performance.now() - startedAt;
+const timelineMetrics = timeline.metrics();
 const summary = {
   success: summaries.every((item) => item.success),
   duration_ms: elapsedDuration,
@@ -313,7 +288,11 @@ if (inputFingerprints !== null) {
     stableInputs = [...inputFingerprints].every(([name, fingerprint]) => current.get(name) === fingerprint);
   } catch { stableInputs = false; }
 }
-const success = summary.success && stableInputs;
+const completeReports = timeline.progress().remaining === 0;
+const success = summary.success && stableInputs && completeReports;
+if (!completeReports) {
+  process.stdout.write(`${formatScriptStatus("FAIL", `RUNNER | ${timeline.progress().remaining} archivos terminaron sin informe recibido`)}\n`);
+}
 if (!stableInputs) {
   process.stdout.write(`${formatScriptStatus("FAIL", "CACHÉ | Entradas modificadas durante las pruebas; resultados no acreditables")}\n`);
 }
@@ -322,7 +301,7 @@ if (profile) {
   const totalFileDuration = profile.files.reduce((total, file) => total + file.tiempo_ms, 0);
   const longestFileDuration = Math.max(0, ...profile.files.map((file) => file.tiempo_ms));
   const idealLowerBound = Math.max(longestFileDuration, totalFileDuration / effectiveConcurrency);
-  writeFileSync(options.report, JSON.stringify({
+  writeFileSync(reportPath, JSON.stringify({
     modo: options.concurrency === undefined ? "predeterminado" : "concurrencia configurada",
     concurrencia: effectiveConcurrency,
     resumen: {
@@ -336,6 +315,20 @@ if (profile) {
       cache: { reutilizados: cachedFiles.length, ejecutados: executableFiles.length, tests_reutilizados: cachedCounts.passed }
     },
     distribucion: lanes.map(({ name, files: assigned, concurrency }) => ({ cola: name, archivos: assigned.length, concurrencia: concurrency })),
+    observabilidad: {
+      ultimo_inicio_ms: timelineMetrics.last_start_ms,
+      ultimo_informe_ms: timelineMetrics.last_report_ms,
+      ultima_cola_finalizada_ms: timelineMetrics.last_lane_finished_ms,
+      colas: timelineMetrics.lanes,
+      muestras: timelineMetrics.snapshots.map((sample) => ({
+        ...sample,
+        oldest_without_report: sample.oldest_without_report.map(({ file, elapsed_ms }) => ({
+          archivo: relative(process.cwd(), file), tiempo_sin_informe_ms: elapsed_ms
+        }))
+      })),
+      estado_final: timelineMetrics.final_progress,
+      nota: "Los tiempos de finalización de archivos calculados a partir de duración e inicio son estimaciones. La recepción tardía de un informe no demuestra trabajo activo ni espera de cierre."
+    },
     diagnostico: {
       tiempo_acumulado_archivos_ms: totalFileDuration,
       archivo_mas_lento_ms: longestFileDuration,
@@ -358,12 +351,12 @@ for (const failure of errors) {
 
 if (skippedTests.length > 0) {
   process.stdout.write(`OMITIDOS | ${skippedTests.length}\n`);
-  for (const skipped of skippedTests) process.stdout.write(describeOmission(skipped));
+  for (const skipped of skippedTests) process.stdout.write(formatRunnerOmission(skipped));
 }
 
 if (todoTests.length > 0) {
   process.stdout.write(`TODO | ${todoTests.length}\n`);
-  for (const todo of todoTests) process.stdout.write(describeOmission(todo));
+  for (const todo of todoTests) process.stdout.write(formatRunnerOmission(todo));
 }
 
 const { counts: executedCounts, duration_ms: duration } = summary;
@@ -376,7 +369,6 @@ const finalCounts = {
 if (automaticCache) {
   process.stdout.write(`${formatScriptStatus(success ? "PASS" : "WARN", `CACHÉ | ${cachedFiles.length} suites y ${cachedCounts.passed} tests reutilizados | ${executableFiles.length} suites ejecutadas`)}\n`);
 }
-process.stdout.write(`${formatScriptStatus(success ? "PASS" : "FAIL", `${completedFiles.size}/${files.length} archivos | ${finalCounts.passed} correctos${cachedFiles.length ? ` (${cachedCounts.passed} reutilizados)` : ""} | ${finalCounts.failed} fallidos | ${finalCounts.skipped} omitidos | ${Math.round(duration)} ms`)}\n`);
 if (success && inputFingerprints) {
   try {
     saveTestResultsCache(inputFingerprints, resultsForCache);
@@ -394,7 +386,9 @@ if (success && cachedFiles.length === 0 && durations.length === files.length && 
     process.stdout.write(`${formatScriptStatus("WARN", `RENDIMIENTO | ${regressions.length} archivos duplicaron su duración y aumentaron al menos 10 s`)}\n`);
     for (const item of regressions.slice(0, 5)) {
       const previous = previousDurations?.get(relative(process.cwd(), item.file).replaceAll("\\", "/"));
-      process.stdout.write(`  ${relative(process.cwd(), item.file)} | ${Math.round(previous ?? 0)} -> ${Math.round(item.milliseconds)} ms\n`);
+      process.stdout.write(formatRunnerRegression({
+        file: relative(process.cwd(), item.file), before: previous ?? 0, after: item.milliseconds
+      }, interactive ? process.stdout.columns || 100 : 120));
     }
   }
   try {
@@ -403,4 +397,22 @@ if (success && cachedFiles.length === 0 && durations.length === files.length && 
     process.stdout.write(`${formatScriptStatus("WARN", `RENDIMIENTO | No se pudo guardar el perfil local: ${error instanceof Error ? error.message : String(error)}`)}\n`);
   }
 }
+const finishedLanes = timelineMetrics.lanes.map((lane) => `${lane.name} ${lane.reported}/${lane.files} informes (${formatRunnerTime(lane.finished_ms ?? duration)})`).join(" · ");
+if (finishedLanes) process.stdout.write(`COLAS | ${finishedLanes}\n`);
+if (executableFiles.length === 0) {
+  process.stdout.write(`TIEMPOS | Sin ejecución (caché completa) | Total ${formatRunnerTime(duration)}\n`);
+} else {
+  const lastReportTime = timelineMetrics.last_report_ms;
+  process.stdout.write(`TIEMPOS | Último informe ${lastReportTime === null ? "no recibido" : formatRunnerTime(lastReportTime)} | Fin del runner ${formatRunnerTime(duration)} | Intervalo posterior ${lastReportTime === null ? "no calculable" : formatRunnerTime(Math.max(0, duration - lastReportTime))}\n`);
+}
+if (interactive) {
+  for (const line of formatRunnerCompletion({
+    success, progress: timelineMetrics.final_progress, counts: finalCounts,
+    lanes: timelineMetrics.lanes, cachedTests: cachedCounts.passed, elapsed_ms: duration,
+    slowest: durations.reduce((highest, current) => !highest || current.milliseconds > highest.milliseconds ? current : highest, null)
+  }, process.stdout.columns || 100, process.env.NO_COLOR === undefined)) {
+    process.stdout.write(`${line}\n`);
+  }
+}
+process.stdout.write(`${formatScriptStatus(success ? "PASS" : "FAIL", `${completedFiles.size}/${files.length} archivos | ${finalCounts.passed} correctos${cachedFiles.length ? ` (${cachedCounts.passed} reutilizados)` : ""} | ${finalCounts.failed} fallidos | ${finalCounts.skipped} omitidos | ${Math.round(duration)} ms`)}\n`);
 if (!success) process.exitCode = 1;
