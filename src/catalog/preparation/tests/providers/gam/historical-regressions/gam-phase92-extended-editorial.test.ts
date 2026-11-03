@@ -44,9 +44,11 @@ test("fase 92: 20 fichas GAM con descripciones individuales respaldadas por el o
     const original = JSON.stringify(record);
     const product = prepareSourceProduct(record).product;
     assert.ok(product.description_general, reference);
-    const safetySuffix = " La ficha del proveedor confirma que dispone de dirección asistida.";
-    const beforeSafety = product.description_general.endsWith(safetySuffix)
-      ? product.description_general.slice(0, -safetySuffix.length) : product.description_general;
+    const beforeSafety = [
+      " La ficha del proveedor señala que dispone de control de estabilidad.",
+      " La ficha del proveedor confirma que dispone de dirección asistida."
+    ].reduce((general, suffix) => general.endsWith(suffix)
+      ? general.slice(0, -suffix.length) : general, product.description_general);
     const brakingSuffix = " La ficha del proveedor confirma que este modelo dispone de frenado regenerativo.";
     const precedingGeneral = beforeSafety.endsWith(brakingSuffix)
       ? beforeSafety.slice(0, -brakingSuffix.length) : beforeSafety;
