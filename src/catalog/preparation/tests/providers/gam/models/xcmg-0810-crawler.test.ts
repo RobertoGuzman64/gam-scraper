@@ -5,6 +5,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { reconcileGamVerifiedXcmg0810Crawler } from "../../../../evidence/providers/gam/verified-models/xcmg-0810-crawler-evidence.js";
+import { verifiedPhase162Editorial } from "../../../../evidence/verified-phase162-editorial.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -21,9 +22,10 @@ test("reconcilia solo la XCMG de orugas con identidad y evidencia completas", ()
   assert.equal(prepared.product.reference, "4737");
   assert.deepEqual(prepared.product.spec, record.specs);
   assert.equal(prepared.product.attributes.some((attribute) => attribute.value === "XG0810C"), true);
-  assert.equal(prepared.product.description_general?.includes("orugas de goma"), true);
-  assert.equal(prepared.product.description_general?.includes("hasta un 30%"), true);
-  assert.equal(prepared.product.description_general?.includes("hasta un 25%"), false);
+  assert.equal(prepared.product.description_general, verifiedPhase162Editorial["gam:4737"].general);
+  assert.match(prepared.product.description_general ?? "", /plataforma elevadora de tijera sobre orugas/);
+  assert.match(prepared.product.description_general ?? "", /no debe equipararse la versi[oó]n de ruedas/);
+  assert.match(prepared.product.description_general ?? "", /pendiente superable del 30 %, pero el texto comercial habla del 25 %/);
   assert.equal(record.specs?.["Modelo"], "XG0807ACW-LI");
   assert.equal(record.longDescription?.includes("hasta un 25%"), true);
 });
