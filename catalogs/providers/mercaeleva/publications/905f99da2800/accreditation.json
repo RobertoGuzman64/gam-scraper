@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "runId": "individual-mercaeleva-ae6ab08f4a40b755eb291ed7df49d1f3",
+  "runId": "individual-mercaeleva-0e6650de23498655c72af9ba17812f58",
   "approved": true,
-  "approvalReason": "Cierre editorial revisado de las fases 101 a 120",
+  "approvalReason": "Acreditación automática de exclusiones históricas coincidentes, con evidencia y preparación verificadas",
   "sources": [
     {
       "providerId": "mercaeleva",
       "catalogSha256": "83e0265743ba1ec0b6ebb1c1bc8bbb9cd3b26eba77d208d659d35e7a62bba792",
-      "preparationSha256": "6080ea4ce25ea99f82bd60dcb0d9cffe8c7679524e479bdd4ea1c0468d42b50b",
+      "preparationSha256": "29deeed18746425bbbb1de5ebb9a80089d8891e9d7898a0cc5827f068ea78765",
       "productCount": 221
     }
   ],
@@ -21,7 +21,7 @@
         "Familia contradictoria: el título indica carretilla retráctil y la descripción transpaleta"
       ],
       "decision": "excluir",
-      "reason": "Familia de maquina contradictoria entre carretilla retractil y transpaleta; se mantiene exclusion.",
+      "reason": "Familia contradictoria entre carretilla retractil y transpaleta; mantener exclusion.",
       "evidenceUrls": [
         "https://sales.mercaeleva.com/es/for-sale/machine/Toyota-6FBRE14-M547-2372"
       ]
@@ -35,7 +35,7 @@
         "Versión contradictoria: el modelo de la descripción no coincide con título y ficha técnica"
       ],
       "decision": "excluir",
-      "reason": "Variante JLG SIII contradictoria con modelo SII declarado en descripcion; se mantiene exclusion.",
+      "reason": "Variante JLG SIII contradictoria con modelo SII declarado en descripcion; mantener exclusion.",
       "evidenceUrls": [
         "https://sales.mercaeleva.com/es/for-sale/machine/JLG-450-AJ-SIII-M838-0666"
       ]
@@ -51,7 +51,7 @@
         "Atributo contradictorio: Tipo de mástil"
       ],
       "decision": "excluir",
-      "reason": "Capacidad y configuracion de mastil contradictorias entre titulo descripcion y ficha tecnica; se mantiene exclusion.",
+      "reason": "Capacidad y configuracion de mastil contradictorias entre descripcion y ficha tecnica; mantener exclusion.",
       "evidenceUrls": [
         "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E48P-M827-8304"
       ]
@@ -65,7 +65,7 @@
         "Versión contradictoria: el modelo de la descripción no coincide con título y ficha técnica"
       ],
       "decision": "excluir",
-      "reason": "Variante JLG SIII contradictoria con modelo SII declarado en descripcion; se mantiene exclusion.",
+      "reason": "Variante JLG SIII contradictoria con modelo SII declarado en descripcion; mantener exclusion.",
       "evidenceUrls": [
         "https://sales.mercaeleva.com/es/for-sale/machine/JLG-450-AJ-SIII-M969-4655"
       ]

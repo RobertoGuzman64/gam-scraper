@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "runId": "individual-gam-0870219c312cdfd57fc544f5dc3e2eaa",
+  "runId": "individual-gam-0a29c52ce1f1ad876a5b0a5846328bee",
   "approved": true,
-  "approvalReason": "Mantener las cinco exclusiones por incidencias documentadas de identidad y numero de serie",
+  "approvalReason": "Acreditación automática de exclusiones históricas coincidentes, con evidencia y preparación verificadas",
   "sources": [
     {
       "providerId": "gam",
       "catalogSha256": "855865e4a99f709cd9b10b68e77d594841b8cbd8c64b4fc9eb851cb397162483",
-      "preparationSha256": "0afc474a1da3a9716d7a152a203058835b81a99778ad458d8692a9e8cbf1c99d",
+      "preparationSha256": "6a20a13e796551001cbfb996b0e62b5c5585a228bff3fd9a1e8393187058b51f",
       "productCount": 983
     }
   ],
