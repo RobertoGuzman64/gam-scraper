@@ -12,12 +12,14 @@ const ROOT_FILES = ["README.md", "package.json", "package-lock.json", "tsconfig.
   "node_modules/.package-lock.json", "node_modules/typescript/package.json",
   "node_modules/cheerio/package.json", "node_modules/p-limit/package.json",
   "scripts/run-tests.mjs", "scripts/test-result-cache.mjs", "scripts/test-performance.mjs", "scripts/test-runner-observability.mjs",
+  "scripts/test-runner-execution.mjs", "scripts/test-runner-worker.mjs", "scripts/test-runner-ui.mjs",
   "scripts/run-build.mjs", "scripts/build-cache.mjs", "scripts/terminal.mjs"];
 const PURE_ROOT_FILES = new Set([
   "package.json", "package-lock.json", "tsconfig.json",
   "node_modules/.package-lock.json", "node_modules/typescript/package.json",
   "node_modules/cheerio/package.json", "node_modules/p-limit/package.json",
   "scripts/run-tests.mjs", "scripts/test-result-cache.mjs", "scripts/test-performance.mjs", "scripts/test-runner-observability.mjs",
+  "scripts/test-runner-execution.mjs", "scripts/test-runner-worker.mjs", "scripts/test-runner-ui.mjs",
   "scripts/run-build.mjs", "scripts/build-cache.mjs", "scripts/terminal.mjs"
 ]);
 const EXTERNAL_DATA_ACCESS = /\b(?:node:fs(?:\/promises)?|fs\/promises|process\.(?:binding|loadEnvFile))\b/u;

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { PassThrough } from "node:stream";
 import test from "node:test";
 import {
-  createRunnerDisplay, formatRunnerCompletion, formatRunnerLog, formatRunnerOmission,
+  createRunnerDisplay, formatRunnerCompletion, formatRunnerLog, formatRunnerOmission, supportsInteractiveRunner,
   formatRunnerProgress, formatRunnerRegression, formatRunnerTime
 } from "../test-runner-ui.mjs";
 
@@ -31,7 +31,7 @@ test("el progreso distingue informes, inicios, pendientes, colas y reutilizació
   assert.match(lines[3], /CACHÉ 285 suites \/ 1\.153 tests.*EJECUCIÓN 131 suites/);
   assert.match(lines[4], /INICIADOS 120\/131.*SIN INFORME 6.*EN COLA 11/);
   assert.match(lines[5], /INTENSIVA 12\/16.*GENERAL 102\/115/);
-  assert.match(lines[6], /SIN INFORME DESDE 00:31.*individual-finish\.test\.js/);
+  assert.match(lines[6], /INFORME PENDIENTE HACE 00:31.*individual-finish\.test\.js/);
   assert.ok(lines.every((line) => line.length < 120));
 });
 
@@ -131,4 +131,30 @@ test("los logs de CI no contienen control de terminal y mantienen una cadencia m
   display.tick();
   assert.equal(written.split("\n").filter(Boolean).length, 1);
   assert.doesNotMatch(written, /\u001b\[/);
+});
+
+
+test("la consola clásica de Windows usa progreso por líneas sin controlar el cursor", () => {
+  const stream = { isTTY: true };
+  assert.equal(supportsInteractiveRunner(stream, "win32", { CI: "false" }), false);
+  assert.equal(supportsInteractiveRunner(stream, "win32", { CI: "false", WT_SESSION: "terminal" }), true);
+  assert.equal(supportsInteractiveRunner(stream, "win32", { CI: "false", TERM_PROGRAM: "vscode" }), true);
+  assert.equal(supportsInteractiveRunner(stream, "linux", { CI: "false" }), true);
+  assert.equal(supportsInteractiveRunner(stream, "linux", { CI: "true" }), false);
+  assert.equal(supportsInteractiveRunner({ isTTY: false }, "win32", { CI: "false" }), false);
+});
+
+test("no repinta un estado idéntico y no acumula escrituras de cursor", () => {
+  const stream = new PassThrough();
+  stream.isTTY = true;
+  stream.columns = 100;
+  let written = "";
+  stream.on("data", (chunk) => { written += chunk.toString(); });
+  const display = createRunnerDisplay(stream, { interactive: true, getState: state, now: () => 0 });
+  display.show();
+  const before = written.length;
+  display.tick();
+  display.tick();
+  assert.equal(written.length, before);
+  display.finish();
 });

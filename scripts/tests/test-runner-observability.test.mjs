@@ -19,10 +19,11 @@ test("separa suites iniciadas de informes recibidos y de archivos reutilizados",
     without_report: 0, remaining: 2, oldest_without_report: []
   });
   time = 10;
-  timeline.register({ type: "test:dequeue", data: { name: a } }, "intensiva");
+  timeline.register({ type: "runner:dispatch", data: { file: a } }, "intensiva");
   time = 15;
-  timeline.register({ type: "test:dequeue", data: { name: b } }, "general");
+  timeline.register({ type: "runner:dispatch", data: { file: b } }, "general");
   time = 20;
+  timeline.register({ type: "test:dequeue", data: { name: a } }, "intensiva");
   timeline.register({ type: "test:pass", data: { name: "escenario", details: { type: "test" } } }, "intensiva");
   const before = timeline.progress();
   assert.equal(before.started, 2);
@@ -48,13 +49,13 @@ test("separa suites iniciadas de informes recibidos y de archivos reutilizados",
 test("evita duplicados y contabiliza fallos de archivo sin resumen individual", () => {
   let time = 5;
   const timeline = createRunnerTimeline([a, b], [], [{ name: "general", files: [a, b], concurrency: 2 }], () => time);
-  timeline.register({ type: "test:dequeue", data: { name: a } }, "general");
-  timeline.register({ type: "test:dequeue", data: { name: a } }, "general");
-  timeline.register({ type: "test:dequeue", data: { name: "otra prueba" } }, "general");
+  timeline.register({ type: "runner:dispatch", data: { file: a } }, "general");
+  timeline.register({ type: "runner:dispatch", data: { file: a } }, "general");
+  timeline.register({ type: "runner:dispatch", data: { file: "otra prueba" } }, "general");
   time = 12;
   timeline.register({ type: "test:fail", data: { name: a, details: { type: "test-file" } } }, "general");
   timeline.register({ type: "test:summary", data: { file: a } }, "general");
-  timeline.register({ type: "test:fail", data: { name: b, details: { type: "test" } } }, "general");
+  timeline.register({ type: "test:fail", data: { name: "otro escenario", details: { type: "test" } } }, "general");
   const state = timeline.sample({ passed: 1, failed: 1 });
   assert.equal(state.started, 1);
   assert.equal(state.reported, 1);
@@ -67,5 +68,14 @@ test("evita duplicados y contabiliza fallos de archivo sin resumen individual", 
 
 test("no acepta eventos asignados a una cola desconocida", () => {
   const timeline = createRunnerTimeline([a], [], lanes, () => 0);
-  assert.throws(() => timeline.register({ type: "test:dequeue", data: { name: a } }, "otra"), /Cola de pruebas desconocida/);
+  assert.throws(() => timeline.register({ type: "runner:dispatch", data: { file: a } }, "otra"), /Cola de pruebas desconocida/);
+});
+
+
+test("un fallo de carga de archivo cuenta como informe aunque Node lo clasifique como test", () => {
+  const timeline = createRunnerTimeline([a], [], [{ name: "general", files: [a], concurrency: 1 }], () => 10);
+  timeline.register({ type: "runner:dispatch", data: { file: a } }, "general");
+  timeline.register({ type: "test:fail", data: { name: resolve(a), details: { type: "test" } } }, "general");
+  assert.equal(timeline.progress().reported, 1);
+  assert.equal(timeline.progress().remaining, 0);
 });

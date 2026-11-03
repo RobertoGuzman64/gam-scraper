@@ -29,7 +29,7 @@ export const createRunnerTimeline = (files, cachedFiles, lanes, now) => {
     lane.events += 1;
     lane.first_event_ms ??= elapsed;
     lane.last_event_ms = elapsed;
-    const candidate = event.type === "test:dequeue" ? event.data?.name : null;
+    const candidate = event.type === "runner:dispatch" ? event.data?.file : null;
     if (typeof candidate === "string") {
       const name = resolve(candidate);
       if (known.has(name) && !reused.has(name) && !started.has(name)) {
@@ -40,7 +40,7 @@ export const createRunnerTimeline = (files, cachedFiles, lanes, now) => {
     }
     const isFileSummary = event.type === "test:summary" && typeof event.data?.file === "string";
     const isFileFailure = event.type === "test:fail" && typeof event.data?.name === "string" &&
-      event.data?.details?.type !== "test" && known.has(resolve(event.data.name));
+      known.has(resolve(event.data.name));
     const reportName = isFileSummary ? event.data.file : isFileFailure ? event.data.name : null;
     if (reportName !== null) {
       const name = resolve(reportName);

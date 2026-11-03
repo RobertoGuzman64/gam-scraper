@@ -5,6 +5,10 @@ const tone = (value, code, enabled) => enabled ? `\u001b[${code}m${value}\u001b[
 const normalize = (value) => String(value).replaceAll("\\", "/");
 const compact = (value) => String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
+export const supportsInteractiveRunner = (stream, platform = process.platform, env = process.env) =>
+  stream.isTTY === true && env.CI !== "true" && env.TERM !== "dumb" &&
+  (platform !== "win32" || Boolean(env.WT_SESSION) || env.TERM_PROGRAM === "vscode" || env.ConEmuANSI === "ON");
+
 export const formatRunnerTime = (milliseconds) => {
   const seconds = Math.floor(Math.max(0, milliseconds) / 1000);
   const hours = Math.floor(seconds / 3600);
@@ -39,7 +43,7 @@ export const formatRunnerProgress = ({ progress, counts, lanes, elapsed_ms, cach
   const oldest = progress.oldest_without_report[0];
   const oldestName = oldest ? normalize(relative(process.cwd(), oldest.file)) : "";
   const mostDelayed = oldest
-    ? `SIN INFORME DESDE ${formatRunnerTime(oldest.elapsed_ms)}  ${shorten(oldestName, Math.max(3, width - 25))}`
+    ? `INFORME PENDIENTE HACE ${formatRunnerTime(oldest.elapsed_ms)}  ${shorten(oldestName, Math.max(3, width - 29))}`
     : pending === 0 && !laneFinished
       ? "ESPERANDO  Los informes llegaron; cerrando ejecutores"
       : pending === 0 ? "INFORMES  Todos recibidos" : "SIN INFORME  Ningún archivo iniciado pendiente";
@@ -134,11 +138,15 @@ export const formatRunnerRegression = ({ file, before, after }, columns = 100) =
 export const createRunnerDisplay = (stream, { interactive, getState, now, intervalMs = 10000 }) => {
   let linesShown = 0;
   let lastLog = 0;
+  let lastFrame = "";
   const color = interactive && process.env.NO_COLOR === undefined;
 
   const show = () => {
     if (!interactive) return;
     const lines = formatRunnerProgress(getState(), stream.columns || 100, color);
+    const frame = lines.join("\n");
+    if (frame === lastFrame) return;
+    lastFrame = frame;
     if (linesShown) moveCursor(stream, 0, -(linesShown - 1));
     for (const [index, line] of lines.entries()) {
       cursorTo(stream, 0);
@@ -166,6 +174,7 @@ export const createRunnerDisplay = (stream, { interactive, getState, now, interv
     cursorTo(stream, 0);
     clearScreenDown(stream);
     linesShown = 0;
+    lastFrame = "";
   };
 
   return { show, tick, finish };

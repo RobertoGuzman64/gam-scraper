@@ -25,6 +25,8 @@ const withRunner = (action: (root: string) => void): void => {
     copyFileSync(join(projectRoot, "scripts", "terminal.mjs"), join(root, "scripts", "terminal.mjs"));
     copyFileSync(join(projectRoot, "scripts", "test-performance.mjs"), join(root, "scripts", "test-performance.mjs"));
     copyFileSync(join(projectRoot, "scripts", "test-runner-observability.mjs"), join(root, "scripts", "test-runner-observability.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "test-runner-execution.mjs"), join(root, "scripts", "test-runner-execution.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "test-runner-worker.mjs"), join(root, "scripts", "test-runner-worker.mjs"));
     copyFileSync(join(projectRoot, "scripts", "test-runner-ui.mjs"), join(root, "scripts", "test-runner-ui.mjs"));
     copyFileSync(join(projectRoot, "scripts", "test-result-cache.mjs"), join(root, "scripts", "test-result-cache.mjs"));
     writeFileSync(join(root, "package.json"), '{"type":"module"}');
@@ -506,5 +508,66 @@ test("el perfil caliente conserva la reutilización real y mide solo las suites 
     const conflicting = spawnRunner(root, ["--medicion", reportPath, "--medicion-cache", reportPath]);
     assert.notEqual(conflicting.status, 0);
     assert.match(conflicting.stderr, /No se combinan --medicion y --medicion-cache/);
+  });
+});
+
+
+test("recibe el informe de una suite rápida aunque otra anterior siga ejecutándose", () => {
+  withRunner((root) => {
+    writeFileSync(join(root, "dist", "prueba.test.js"),
+      'import test from "node:test"; test("lenta", async () => { await new Promise((resolve) => setTimeout(resolve, 1400)); });\n');
+    const reportFile = join(root, "tiempos-desordenados.json");
+    const result = spawnRunner(root, ["--concurrencia=2", "--medicion", reportFile]);
+    assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+    const report: unknown = JSON.parse(readFileSync(reportFile, "utf8"));
+    assert.ok(report && typeof report === "object" && "archivos" in report && Array.isArray(report.archivos));
+    const slow = report.archivos.find((item: unknown) =>
+      item && typeof item === "object" && "archivo" in item &&
+      typeof item.archivo === "string" && item.archivo.replaceAll("\\", "/").endsWith("dist/prueba.test.js"));
+    const fast = report.archivos.find((item: unknown) =>
+      item && typeof item === "object" && "archivo" in item &&
+      typeof item.archivo === "string" && item.archivo.replaceAll("\\", "/").endsWith("prueba.test.mjs"));
+    assert.ok(slow && fast && "informe_recibido_ms" in slow && "informe_recibido_ms" in fast &&
+      typeof slow.informe_recibido_ms === "number" && typeof fast.informe_recibido_ms === "number");
+    assert.ok(fast.informe_recibido_ms + 500 < slow.informe_recibido_ms,
+      `Los informes deben llegar al finalizar cada suite: ${JSON.stringify(report.archivos)}`);
+    assert.ok("resumen" in report && report.resumen && typeof report.resumen === "object" &&
+      "correctos" in report.resumen && report.resumen.correctos === 2);
+  });
+});
+
+
+test("cambiar el ejecutor del runner invalida las suites cacheadas", () => {
+  withRunner((root) => {
+    addCacheableSuites(root);
+    const initial = spawnRunner(root, []);
+    assert.equal(initial.status, 0, `${initial.stdout}${initial.stderr}`);
+    const warm = spawnRunner(root, []);
+    assert.equal(warm.status, 0, `${warm.stdout}${warm.stderr}`);
+    assert.match(warm.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados/);
+    const module = join(root, "scripts", "test-runner-execution.mjs");
+    writeFileSync(module, `${readFileSync(module, "utf8")}\n`);
+    const invalidated = spawnRunner(root, []);
+    assert.equal(invalidated.status, 0, `${invalidated.stdout}${invalidated.stderr}`);
+    assert.match(invalidated.stdout, /CACHÉ \| 0 suites y 0 tests reutilizados/);
+    const warmedAgain = spawnRunner(root, []);
+    assert.equal(warmedAgain.status, 0, `${warmedAgain.stdout}${warmedAgain.stderr}`);
+    assert.match(warmedAgain.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados/);
+    const workerModule = join(root, "scripts", "test-runner-worker.mjs");
+    writeFileSync(workerModule, `${readFileSync(workerModule, "utf8")}\n`);
+    const workerChanged = spawnRunner(root, []);
+    assert.equal(workerChanged.status, 0, `${workerChanged.stdout}${workerChanged.stderr}`);
+    assert.match(workerChanged.stdout, /CACHÉ \| 0 suites y 0 tests reutilizados/);
+  });
+});
+
+test("un error de carga informa el archivo fallido y no simula una suite bloqueada", () => {
+  withRunner((root) => {
+    writeFileSync(join(root, "dist", "prueba.test.js"), 'import "./no-existe.js";\n');
+    const result = spawnRunner(root, ["--concurrencia=2"]);
+    assert.equal(result.status, 1, `${result.stdout}${result.stderr}`);
+    assert.match(result.stdout, /FAIL \| 2\/2 archivos/);
+    assert.match(result.stdout, /1 fallidos/);
+    assert.doesNotMatch(result.stdout, /archivos terminaron sin informe recibido/);
   });
 });

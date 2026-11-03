@@ -1,10 +1,10 @@
 import { existsSync, readdirSync, writeFileSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { join, relative, resolve } from "node:path";
-import { run } from "node:test";
 import { formatScriptStatus } from "./terminal.mjs";
 import { createRunnerTimeline } from "./test-runner-observability.mjs";
-import { createRunnerDisplay, formatRunnerCompletion, formatRunnerOmission, formatRunnerRegression, formatRunnerTime } from "./test-runner-ui.mjs";
+import { executeTestLanes } from "./test-runner-execution.mjs";
+import { createRunnerDisplay, formatRunnerCompletion, formatRunnerOmission, formatRunnerRegression, formatRunnerTime, supportsInteractiveRunner } from "./test-runner-ui.mjs";
 import { durationRegressions, loadTestDurations, orderTestsByDuration, planTestLanes, recommendedTestConcurrency, saveTestDurations } from "./test-performance.mjs";
 import { discardTestResultsCache, fingerprintTestInputs, loadTestResultsCache, relativeCacheFile, saveTestResultsCache } from "./test-result-cache.mjs";
 
@@ -143,7 +143,7 @@ for (const file of cachedFiles) {
   cachedCounts.passed += value.passed;
 }
 const filePaths = new Set(executableFiles.map((file) => resolve(file)));
-const interactive = process.stdout.isTTY === true && process.env.CI !== "true" && process.env.TERM !== "dumb";
+const interactive = supportsInteractiveRunner(process.stdout, process.platform, process.env);
 const startedAt = performance.now();
 const timeline = createRunnerTimeline(files, cachedFiles, lanes, () => performance.now() - startedAt);
 const completedFiles = timeline.reported;
@@ -257,18 +257,12 @@ const consumeEvent = (event, laneName) => {
 
 };
 try {
-  await Promise.all(lanes.map(async (lane) => {
-    try {
-      for await (const event of run({ files: lane.files, concurrency: lane.concurrency })) consumeEvent(event, lane.name);
-    } finally {
-      timeline.finishLane(lane.name);
-    }
-  }));
+  await executeTestLanes(lanes, consumeEvent, (name) => timeline.finishLane(name));
 } finally {
   clearInterval(progressTimer);
   display.finish();
 }
-if (summaries.length !== lanes.length) throw new Error("La ejecución de pruebas terminó sin todos los resúmenes");
+if (summaries.length !== executableFiles.length) throw new Error(`La ejecución terminó con ${summaries.length} resúmenes para ${executableFiles.length} archivos`);
 const elapsedDuration = performance.now() - startedAt;
 const timelineMetrics = timeline.metrics();
 const summary = {
@@ -405,12 +399,12 @@ if (executableFiles.length === 0) {
   const lastReportTime = timelineMetrics.last_report_ms;
   process.stdout.write(`TIEMPOS | Último informe ${lastReportTime === null ? "no recibido" : formatRunnerTime(lastReportTime)} | Fin del runner ${formatRunnerTime(duration)} | Intervalo posterior ${lastReportTime === null ? "no calculable" : formatRunnerTime(Math.max(0, duration - lastReportTime))}\n`);
 }
-if (interactive) {
+if (process.stdout.isTTY === true) {
   for (const line of formatRunnerCompletion({
     success, progress: timelineMetrics.final_progress, counts: finalCounts,
     lanes: timelineMetrics.lanes, cachedTests: cachedCounts.passed, elapsed_ms: duration,
     slowest: durations.reduce((highest, current) => !highest || current.milliseconds > highest.milliseconds ? current : highest, null)
-  }, process.stdout.columns || 100, process.env.NO_COLOR === undefined)) {
+  }, process.stdout.columns || 100, interactive && process.env.NO_COLOR === undefined)) {
     process.stdout.write(`${line}\n`);
   }
 }
