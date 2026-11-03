@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, copyFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, copyFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
@@ -22,6 +22,26 @@ const run = (file: string, args: readonly string[]): Promise<CommandResult> => n
   child.once("error", reject);
   child.once("close", (status) => resolve({ status, stdout, stderr }));
 });
+
+const runNpm = (cwd: string, scriptName: string, args: readonly string[]): Promise<CommandResult> =>
+  new Promise((resolve, reject) => {
+    const npmEntrypoint = process.env.npm_execpath && /\.[cm]?js$/iu.test(process.env.npm_execpath) && existsSync(process.env.npm_execpath)
+      ? process.env.npm_execpath
+      : join(dirname(process.execPath), process.platform === "win32" ? "node_modules" : "../lib/node_modules", "npm", "bin", "npm-cli.js");
+    if (!existsSync(npmEntrypoint)) {
+      reject(new Error(`No se encuentra el ejecutable JavaScript de npm: ${npmEntrypoint}`));
+      return;
+    }
+    const child = spawn(process.execPath, [npmEntrypoint, "run", scriptName, "--", ...args], {
+      cwd, windowsHide: true, stdio: ["ignore", "pipe", "pipe"]
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.setEncoding("utf8").on("data", (chunk: string) => { stdout += chunk; });
+    child.stderr.setEncoding("utf8").on("data", (chunk: string) => { stderr += chunk; });
+    child.once("error", reject);
+    child.once("close", (status) => resolve({ status, stdout, stderr }));
+  });
 
 test("npm ci no ejecuta preparación de catálogos como lifecycle", () => {
   const pkg: unknown = JSON.parse(readFileSync(packageFile, "utf8"));
@@ -77,11 +97,18 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
   try {
     mkdirSync(join(temp, "scripts"));
     mkdirSync(join(temp, "dist/cli"), { recursive: true });
-    writeFileSync(join(temp, "package.json"), '{"type":"module"}');
+    writeFileSync(join(temp, "package.json"), JSON.stringify({
+      name: "equipzilla-tooling-test", type: "module", scripts: {
+        "preparacion-prueba": "node scripts/tooling.mjs preparar",
+        "publicacion-prueba": "node scripts/tooling.mjs entregar:proveedor"
+      }
+    }));
     copyFileSync(script, join(temp, "scripts/tooling.mjs"));
     copyFileSync(join(root, "scripts/terminal.mjs"), join(temp, "scripts/terminal.mjs"));
     copyFileSync(join(root, "scripts/build-cache.mjs"), join(temp, "scripts/build-cache.mjs"));
     writeFileSync(join(temp, "scripts/run-build.mjs"), "process.exitCode = 0;\n");
+    mkdirSync(join(temp, "scripts/maintenance"), { recursive: true });
+    writeFileSync(join(temp, "scripts/maintenance/consolidate-local-artifacts.mjs"), 'process.stdout.write("ARCHIVADO COMPLETO\\n");\n');
     const echo = 'console.log(JSON.stringify(process.argv.slice(2)));\n';
     for (const filename of ["cli/commands/catalog/prepare.js", "cli/index.js", "cli/commands/maintenance/storage-clean.js", "cli/commands/maintenance/catalogs-migrate.js", "cli/commands/campaign/campaign-extract.js", "cli/commands/campaign/campaign-status.js", "cli/commands/campaign/campaign-review.js", "cli/commands/campaign/campaign-reference.js", "cli/commands/campaign/campaign-finalize.js", "cli/commands/catalog/catalog-content-gaps.js", "cli/commands/catalog/deliver-provider.js"]) {
       const target = join(temp, "dist", filename);
@@ -143,7 +170,19 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
     assert.deepEqual(JSON.parse(spanish.stdout.trim()), ["gam", "--source", "origen-catalog.json", "--dry-run"]);
     const deliverOnlyJson = await run(fake, ["entregar:proveedor", "gam", "--origen", "origen-catalog.json", "--preparacion", "x-preparation.json", "--solo-json"]);
     assert.equal(deliverOnlyJson.status, 0, deliverOnlyJson.stderr);
-    assert.deepEqual(JSON.parse(deliverOnlyJson.stdout.trim()), ["gam", "--source", "origen-catalog.json", "--preparation", "x-preparation.json", "--solo-json"]);
+    assert.deepEqual(JSON.parse(deliverOnlyJson.stdout.trim().split(/\r?\n/)[0] ?? ""), ["gam", "--source", "origen-catalog.json", "--preparation", "x-preparation.json", "--solo-json"]);
+    const withSpaces = await runNpm(temp, "preparacion-prueba", ["gam", "--origen", "C:\\Mi equipo\\catalogo completo.json", "--simular"]);
+    assert.equal(withSpaces.status, 0, withSpaces.stderr);
+    const received = withSpaces.stdout.trim().split(/\r?\n/).at(-1);
+    assert.ok(received);
+    assert.deepEqual(JSON.parse(received), ["gam", "--source", "C:\\Mi equipo\\catalogo completo.json", "--dry-run"]);
+    const npmDelivery = await runNpm(temp, "publicacion-prueba", ["gam", "--origen", "catalogo.json", "--preparacion", "preparacion.json", "--solo-json"]);
+    assert.equal(npmDelivery.status, 0, npmDelivery.stderr);
+    assert.match(npmDelivery.stdout, /ARCHIVADO COMPLETO/);
+    writeFileSync(join(temp, "scripts/maintenance/consolidate-local-artifacts.mjs"), "process.exitCode = 1;\n");
+    const incomplete = await runNpm(temp, "publicacion-prueba", ["gam", "--origen", "catalogo.json", "--preparacion", "preparacion.json", "--solo-json"]);
+    assert.equal(incomplete.status, 1);
+    assert.match(incomplete.stderr, /archivado local quedó PENDIENTE/);
     assert.equal(providerExtract.status, 0, providerExtract.stderr);
     assert.deepEqual(JSON.parse(providerExtract.stdout.trim()), ["scrape", "gam", "--category", "venta"]);
     assert.equal(validate.status, 0, validate.stderr);

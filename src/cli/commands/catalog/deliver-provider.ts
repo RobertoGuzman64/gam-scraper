@@ -56,7 +56,7 @@ export const runDeliverProvider = async (args: readonly string[]): Promise<void>
     if (files.zipFile) printReportLine(`  ZIP verificado: ${files.zipFile}`);
     else printReportLine("  Solo JSON; ZIP no solicitado");
     printReportLine(`  Vigente: ${activation === "activated" ? "ACTIVADA" : activation === "unchanged" ?
-      "YA VIGENTE" : activation === "blocked" ? "BLOQUEADA" : "NO ACTIVADA (MODO SOLICITADO)"}`);
+      "YA VIGENTE" : activation === "blocked" ? "BLOQUEADA" : "SIN CAMBIOS DE VIGENCIA (MODO DE CONSULTA/CANDIDATA)"}`);
   }
   for (const blocker of result.blockers) printReportLine(`  Bloqueo: ${blocker}`);
   if (activation === "blocked") throw new Error("Entrega verificada, pero la política de aceptación impide activarla");

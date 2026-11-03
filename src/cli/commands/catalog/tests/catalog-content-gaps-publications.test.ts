@@ -4,12 +4,12 @@ import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { accreditedPublicationSha, accreditedPublicationFile } from "../../../../testing/builders/accredited-publication-fixture.js";
+import { accreditedPublicationDirectory, accreditedPublicationFile } from "../../../../testing/builders/accredited-publication-fixture.js";
 import { execute, gam, root } from "./catalog-content-gaps-fixtures.js";
 
 test("huecos audita las publicaciones finales acreditadas sin atribuirles originales", async () => {
-  const publications = (["gam", "gomariz", "mercaeleva"] as const)
-    .map((providerId) => accreditedPublicationFile(root, providerId));
+  const publications = await Promise.all((["gam", "gomariz", "mercaeleva"] as const)
+    .map((providerId) => accreditedPublicationFile(root, providerId)));
   const raw = await execute(publications.flatMap((path) => ["--publicacion", path]).concat(["--top", "2", "--json"]));
   const report: unknown = JSON.parse(raw);
   assert.ok(isEditorialReport(report));
@@ -27,9 +27,7 @@ test("huecos audita las publicaciones finales acreditadas sin atribuirles origin
 });
 
 test("huecos no acepta publicaciones manipuladas aunque el JSON siga siendo válido", async () => {
-  const rootDir = join(root, "catalogs", "providers", "gomariz", "publications");
-  const folder = accreditedPublicationSha(root, "gomariz");
-  const from = join(rootDir, folder);
+  const from = await accreditedPublicationDirectory(root, "gomariz");
   const temp = await mkdtemp(join(tmpdir(), "huecos-publicacion-"));
   try {
     for (const name of ["gomariz-publishable.json", "manifest.json", "accreditation.json"]) {
@@ -45,9 +43,7 @@ test("huecos no acepta publicaciones manipuladas aunque el JSON siga siendo vál
 });
 
 test("huecos identifica la conversión CRLF sin aceptar una publicación modificada", async () => {
-  const publicationsRoot = join(root, "catalogs", "providers", "gomariz", "publications");
-  const folder = accreditedPublicationSha(root, "gomariz");
-  const source = join(publicationsRoot, folder);
+  const source = await accreditedPublicationDirectory(root, "gomariz");
   const temp = await mkdtemp(join(tmpdir(), "huecos-crlf-"));
   try {
     for (const name of ["gomariz-publishable.json", "manifest.json", "accreditation.json"]) {
@@ -69,9 +65,7 @@ test("huecos identifica la conversión CRLF sin aceptar una publicación modific
 });
 
 test("huecos identifica el motivo y la ficha exacta si falla la validación de Gomariz", async () => {
-  const publicationsRoot = join(root, "catalogs", "providers", "gomariz", "publications");
-  const folder = accreditedPublicationSha(root, "gomariz");
-  const source = join(publicationsRoot, folder);
+  const source = await accreditedPublicationDirectory(root, "gomariz");
   const temp = await mkdtemp(join(tmpdir(), "huecos-diagnostico-"));
   try {
     for (const name of ["gomariz-publishable.json", "manifest.json", "accreditation.json"]) {

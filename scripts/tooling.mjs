@@ -25,6 +25,9 @@ const definitions = {
   "intervenir:manual": { entry: "cli/commands/interventions/intervene.js", usage: "intervenir:manual -- gam --script <archivo.ts> [--script <otro.ts> ...] --origen <catalog.json> [--detalle] [--campana <id> --aplicar --plan <sha>]", description: "Simular o aplicar manualmente intervención con SHA aprobado", requiresProvider: true },
   "intervenir:preparar": { entry: "cli/commands/interventions/prepare-intervention.js", usage: "intervenir:preparar -- gam --derivado <catalog-derived.json> --origen <original-catalog.json> [--simular]", description: "Preparar manualmente un catálogo intervenido", requiresProvider: true },
   "intervenir:validar": { entry: "cli/commands/interventions/validate-intervention.js", usage: "intervenir:validar -- gam --derivado <catalog-derived.json> --origen <original-catalog.json> --preparacion <preparation.json>", description: "Validar preparación intervenida y su procedencia", requiresProvider: true },
+  "catalogo:acreditar": { entry: "cli/commands/catalog/accredit-individual.js", usage: "catalogo:acreditar [-- --proveedor gam|gomariz|mercaeleva] [--simular]", description: "Paso 2/3: revisar en una sesión y aprobar expresamente decisiones editoriales individuales sin publicar" },
+  "catalogo:publicar": { entry: "cli/commands/catalog/publish-individual.js", usage: "catalogo:publicar [-- --proveedor gam|gomariz|mercaeleva] [--simular]", description: "Paso 3/3: FINISH, preflight conjunto, ZIP, activación verificada, diario de recuperación, retención y auditor" },
+  "catalogo:preparar": { entry: "cli/commands/catalog/prepare-individual.js", usage: "catalogo:preparar [-- --proveedor gam|gomariz|mercaeleva] [--simular]", description: "Paso 1/3: preparar offline los tres proveedores individuales desde originales portátiles, con diagnóstico y reutilización segura" },
   preparar: { entry: "cli/commands/catalog/prepare.js", usage: "preparar -- gam --origen <catalog.json> | manain --origen <partial-all.csv> --censo <censo.json> [--simular]", description: "Preparar un catálogo completo o un registro parcial verificado de Manain", requiresProvider: true },
   validar: { entry: "cli/index.js", prefix: ["validate"], usage: "validar -- gam [--etapa catalogo --origen <catalog.json>]", description: "Validar catálogo o preparación", requiresProvider: true },
   exportar: { entry: "cli/index.js", prefix: ["export"], usage: "exportar -- gam --companyID <id> --preparacion <archivo> --inventario <csv> --salida <xlsx> --simular", description: "Revisar o generar una exportación", requiresProvider: true },
@@ -107,6 +110,12 @@ const printHelp = (requested) => {
     console.log("  npm run limpiar:versionados  (limpia solo archivos históricos rastreados por Git)");
     console.log("  npm run extraer:proveedor -- gam");
     console.log("  npm run extraer:todos -- --simular");
+    console.log("  npm run catalogo:preparar  (paso 1/3, original portátil y sin rutas manuales)");
+    console.log("  npm run catalogo:preparar -- --proveedor gam --simular  (solo lectura)");
+    console.log("  npm run catalogo:acreditar  (paso 2/3, revisión y aprobación humana en sesión)");
+    console.log("  npm run catalogo:acreditar -- --proveedor gam --simular  (sin escrituras)");
+    console.log("  npm run catalogo:publicar  (paso 3/3 FINISH: simula, genera, verifica, activa, archiva y audita)");
+    console.log("  npm run catalogo:publicar -- --proveedor gam --simular  (consulta sin escrituras)");
     console.log("  npm run preparar -- gam --origen storage/scraped/gam/archivo-catalog.json --simular");
     console.log("  npm run validar -- gam --etapa catalogo --origen archivo-catalog.json");
     console.log("  npm run limpiar:almacen");
@@ -192,7 +201,8 @@ if (rawCommand === "ayuda") {
             cwd: root, stdio: "inherit", windowsHide: true
           });
           if (retention.error || retention.status !== 0) {
-            console.error(`WARN | Publicación válida, pero el archivado local no se completó: ${retention.error?.message ?? retention.status}`);
+            console.error(formatScriptStatus("WARN", `Publicación individual activada, pero el archivado local quedó PENDIENTE: ${retention.error?.message ?? `código ${retention.status}`}. Revisar antes de continuar`, process.stderr));
+            process.exitCode = 1;
           }
         }
       }

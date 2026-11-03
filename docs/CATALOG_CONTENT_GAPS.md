@@ -82,46 +82,18 @@ npm run huecos -- --help
 
 Los límites numéricos deben ser enteros positivos. `--top` **no** elimina las colecciones completas de casos del JSON ni recorta la cola P0 en texto. El despachador puede compilar `dist/`; una redirección de salida a archivo la realiza el operador, no el auditor, y debe quedar fuera del ZIP aplicable al repositorio.
 
-## Método de investigación y mejora del catálogo
+## Método de mejora del catálogo
 
-Este es el **procedimiento operativo oficial** para los trabajos de contenido. No sustituye el contrato de datos, el auditor, la acreditación ni el mecanismo de intervenciones. El objetivo es completar con fidelidad `spec`, `description` y `description_general` en todas las fichas que dispongan de evidencia recuperable; **una ficha cambiada no se considera automáticamente terminada**. Las carencias sin fuente suficiente quedan identificadas para investigación posterior. Las exclusiones de publicación por identidad no equivalen a una mejora editorial.
+El trabajo sobre descripciones y specs comparte un único ciclo técnico, **repetible por familias y proveedores**:
 
-### Organización del trabajo y selección de cohortes
+1. Ejecutar el auditor sobre las publicaciones seleccionadas y la preparación actual; registrar la población, procedencia y la cola priorizada del campo correspondiente.
+2. Seleccionar máquinas con carencia concreta de alto impacto, sin confundir observaciones familiares con errores técnicos acreditados.
+3. Investigar la información utilizable del original, productor, preparación y fuentes fiables; documentar procedencia cuando haga falta evidencia adicional.
+4. Aplicar una regla reutilizable en el productor/mapeador o una intervención editorial específica y controlada si es la opción más fiel; **no** obligar a pasar cada JSON final por una IA.
+5. Comparar preparación antes/después de la población afectada; distinguir **fichas cambiadas**, **carencias efectivamente resueltas**, nuevas señales, exclusiones y contradicciones. Proteger también otras familias y proveedores.
+6. Ejecutar pruebas proporcionadas al riesgo, `npm test` y `npm run build` cuando corresponda y estén disponibles. Preparar **no** significa aprobar, entregar o activar; esas acciones siguen sus controles específicos.
 
-- **Alternar intervenciones técnicas y editoriales** cuando se trabaje en una serie de mejoras: primero `spec`, después descripciones cortas o generales, y repetir. La alternancia ordena la investigación; **no** autoriza a incorporar datos sin prueba para completar una cuota.
-- **Objetivo de producción acordado: al menos 20 fichas únicas con mejoras reales por intervención**, siempre que exista una cohorte acreditable. Si la fuente no respalda veinte casos, registrar el número real y la limitación; no añadir ruido, duplicados ni texto de relleno. Una misma referencia puede seguir necesitando trabajo en ciclos posteriores y no se vuelve a contabilizar como máquina distinta del historial acumulado.
-- Seleccionar según **carencia concreta**, prioridad P0/P1/P2, gravedad, aplicabilidad, evidencia disponible y familia, no porque una plantilla sea fácil de ejecutar. No interpretar el número de avisos como número de errores demostrados; investigar también contradicciones de modelos, valores y unidades que el auditor de longitudes no detecta.
-- Registrar la línea de base antes de cambiar el motor: comando y modo, publicación activa/identidad de la fuente, tamaño de población, incidencias por referencia y familia, duplicados y señales ya resueltas. Las estadísticas de una publicación anterior o de una preparación diferente no son el backlog actual.
-- Consultar primero los JSON acreditados y originales canónicos del repositorio. Recalcular la preparación con el **mismo código y las mismas fuentes** para medir diferencias. No reextraer por rutina ni usar las publicaciones como sustituto de originales independientes.
-
-### Evidencia y vías permitidas
-
-1. **Recuperación productiva reutilizable.** Comprobar la ficha concreta y su fuente: anuncio original, campos técnicos, título, descripción, identificadores, variante, unidades y contexto afirmativo. Si el problema proviene de extracción, mapeo, normalización o calidad, corregir el módulo **productivo responsable** y reutilizar contratos y garantías existentes. Preferir una regla general que corrija el patrón; no mantener tablas crecientes de referencias o huellas individuales en el preparador para disimular excepciones.
-2. **Investigación externa dirigida.** Cuando el origen no alcance, contrastar páginas del fabricante, ficha técnica, manual o publicación fiable con **marca, modelo y variante** verificables. Conservar la URL, el fragmento relevante y las condiciones/unidades. Una especificación de otro equipo de la familia es una pista para buscar, **no** evidencia transferible a esta máquina. Años, horómetros, series, baterías, capacidades y prestaciones opcionales requieren certeza de la unidad o configuración correcta.
-3. **Intervención individual/editorial acreditada.** Cuando el defecto es particular y no existe un patrón general real, usar los contratos de [Intervenciones manuales](CAMPAIGN_INTERVENTIONS.md) y [Composición de intervenciones](INTERVENTION_COMPOSITION.md), con original intacto, derivado, expediente y aprobación de la campaña cuando proceda. No crear overrides automáticos permanentes por producto ni transformar una decisión `review` en `ready`. Las redacciones específicas que no encajen en el mecanismo actual exigen revisar primero los contratos y acordar su integración; **no se presupone que exista un almacén universal de textos personalizados**.
-
-Antes de aceptar un dato, descartar identidades cruzadas, modelo anunciado distinto del técnico, variantes de combustible incompatibles, afirmaciones negadas/condicionales, opciones no instaladas y medidas sin unidad inequívoca. Ante conflicto de fuentes: **investigar o mantener pendiente**, nunca escoger silenciosamente el valor más favorable. Registrar por qué se descarta una candidata; no contarla como mejora.
-
-### Criterios editoriales y técnicos de calidad
-
-- En `spec`, recuperar **clave y valor acreditados**, preservando unidades, precisión, `0`/`false`, claves anteriores e identidad; no duplicar un dato ya existente bajo un alias ni atribuir una prestación de familia a una unidad. Resolver distinciones como horas frente a kilometraje con evidencia y reconciliadores pertinentes, no mediante sustituciones silenciosas.
-- En `description`, buscar una presentación breve pero diferenciadora; en `description_general`, información útil, natural, específica del equipo y coherente con `spec`. **Ampliar, sintetizar, reducir o reescribir** cuando mejore realmente la exactitud. Eliminar muletillas, anuncios genéricos, repeticiones, fragmentos truncados y contradicciones, **sin perder hechos acreditados**.
-- No convertir una frase de especificaciones en una descripción larga sin aportar sentido, ni copiar un mismo párrafo entre modelos. Los intervalos de palabras del auditor son orientativos, **no objetivos editoriales**. La pérdida de un aviso por superar 60 palabras no demuestra calidad; su persistencia tampoco niega una mejora sustantiva.
-- Una ficha **mejorada** es una referencia con al menos una corrección validada. Una ficha **terminada** requiere revisar además las demás carencias razonablemente verificables de esa misma unidad. Un aviso **resuelto** es una señal que desaparece al aplicar el mismo auditor y población; si aparecen otras señales, deben contarse separadamente. Ninguno de esos indicadores sustituye al resto.
-
-### Comparación obligatoria antes/después
-
-1. Preparar una línea base y una candidata **desde los mismos originales canónicos**, con las mismas referencias; comprobar que las fuentes y contratos son comparables. Identificar por proveedor y referencia todo campo que cambie.
-2. Exigir una **lista exacta de fichas mejoradas** y desglosar: claves `spec` incorporadas, alias/valores transformados, descripciones cortas y generales ampliadas/reducidas/reescritas, avisos cerrados, avisos aparecidos, fichas ya terminadas y trabajo pendiente. No sumar afirmaciones como si fueran máquinas distintas ni sumar entre intervenciones como si no hubiera solapamiento.
-3. Comprobar el universo íntegro: ninguna alta/baja accidental, pérdida de `spec`, cambio de estado/identidad/modelo/variante, eliminación de texto útil, duplicado o variación de otro proveedor no justificada. Distinguir explícitamente los cambios intencionados de los colaterales y las diferencias de representación de pérdidas semánticas.
-4. Validar casos positivos y negativos que protejan el riesgo real (fuentes alteradas, negación, opción, modelo cruzado, duplicados, unidades) aprovechando pruebas existentes. Ejecutar compilación y regresiones pertinentes; no fijar tests por fase, referencia o cifra de cohortes sin una garantía funcional nueva. Informar cualquier bloqueo de entorno o test no ejecutado, sin denominarlo PASS.
-5. Concluir solo con el **resultado medido**. Las modificaciones viven en código productivo o derivados acreditados, no en el auditor. No editar JSON finales, originales, manifiestos, aprobaciones ni SHA para que el diagnóstico parezca mejor.
-
-### Publicación y siguiente ciclo
-
-Las intervenciones de contenido **no publican por sí mismas**. Acumular cambios en la base correcta y, cuando el propietario abra un cierre de publicación, ejecutar preparación → revisión de `review` → decisiones y aprobación humana → simulación → entrega/verificación. El final solo se considera activo cuando el selector de publicación lo confirma. Una nueva preparación invalida la aprobación ligada a la huella anterior; no trasladar exclusiones o aprobaciones por automatismo. Ver [Acreditación](CAMPAIGN_ACCREDITATION.md) y [Campañas](CAMPAIGNS.md).
-
-Después de publicar, volver a ejecutar `npm run huecos -- --comparar --specs` sobre los **activos reales**. Que las claves pendientes de publicar pasen a cero no significa que las demás carencias editoriales o las **ausencias técnicas observacionales** estén resueltas. Priorizar la siguiente cohorte desde la nueva línea de base y mantener separados los frentes de investigación de contenido, tooling de publicación e integración comercial.
+La mejora de descripciones busca cortas diferenciadoras y generales útiles y proporcionadas, sin relleno ni pérdida de prestaciones. La mejora de specs busca **claves y valores técnicos reales, con unidades e identidad correctas**, sin inventar atributos. Pueden alternarse ambos frentes sin duplicar el auditor ni modificar el contrato de publicación. La progresión se mide por **defectos de contenido realmente reducidos**, no por número de reglas, avisos o tests.
 
 ## Seguridad y componentes
 

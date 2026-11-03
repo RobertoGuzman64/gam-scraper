@@ -2,10 +2,9 @@ import { createHash } from "node:crypto";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { basename, join } from "node:path";
 
-const fullSha = /^[a-f0-9]{64}$/;
-const directoryName = /^[a-f0-9]{12,64}$/;
+import { isFullPublicationSha, isPublicationDirectoryName, matchesPublicationApproval } from "../../../../scripts/shared/publication-identity.mjs";
 
-export const isPublicationDirectoryName = (name: string): boolean => directoryName.test(name);
+export { isPublicationDirectoryName };
 
 export const publicationApprovalSha = async (directory: string): Promise<string> => {
   const name = basename(directory);
@@ -14,14 +13,16 @@ export const publicationApprovalSha = async (directory: string): Promise<string>
   if (!info.isDirectory() || info.isSymbolicLink()) throw new Error(`Directorio de publicación no regular: ${directory}`);
   const accreditation = join(directory, "accreditation.json");
   const metadata = await lstat(accreditation);
-  if (!metadata.isFile() || metadata.isSymbolicLink()) throw new Error(`Acreditación no regular: ${accreditation}`);
+  if (!metadata.isFile() || metadata.isSymbolicLink() || metadata.nlink !== 1) {
+    throw new Error(`Acreditación no regular: ${accreditation}`);
+  }
   const sha = createHash("sha256").update(await readFile(accreditation)).digest("hex");
-  if (!sha.startsWith(name)) throw new Error(`La huella de la aprobación no coincide con el alias o SHA-256 completo: ${directory}`);
+  if (!matchesPublicationApproval(name, sha)) throw new Error(`La huella de la aprobación no coincide con el alias o SHA-256 completo: ${directory}`);
   return sha;
 };
 
 export const resolvePublicationDirectory = async (folder: string, approvalSha256: string): Promise<string | null> => {
-  if (!fullSha.test(approvalSha256)) throw new Error("SHA-256 de aprobación inválido");
+  if (!isFullPublicationSha(approvalSha256)) throw new Error("SHA-256 de aprobación inválido");
   const entries = await readdir(folder, { withFileTypes: true });
   const matching = entries.filter((entry) => isPublicationDirectoryName(entry.name) &&
     approvalSha256.startsWith(entry.name));
@@ -37,7 +38,7 @@ export const resolvePublicationDirectory = async (folder: string, approvalSha256
 };
 
 export const publicationDirectoryForApproval = async (folder: string, approvalSha256: string): Promise<string> => {
-  if (!fullSha.test(approvalSha256)) throw new Error("SHA-256 de aprobación inválido");
+  if (!isFullPublicationSha(approvalSha256)) throw new Error("SHA-256 de aprobación inválido");
   try {
     const existing = await resolvePublicationDirectory(folder, approvalSha256);
     if (existing) return existing;

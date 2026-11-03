@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mkdtemp, mkdir, readFile, writeFile, rm, readdir } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile, rm, readdir, rename, cp, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
@@ -79,13 +79,153 @@ test("conserva dos versiones completas y archiva las anteriores con recuperació
   });
 });
 
-test("bloquea la limpieza cuando la publicación activa está fuera de las dos últimas", async () => {
+test("conserva la vigente antigua aunque existan candidatas más recientes", async () => {
   await workspace(async ({ root }) => {
     const { publicationIds } = await rootFiles(root, 3);
     await save(root, "catalogs/providers/gam/publications/active.json", JSON.stringify({
       version: 1, providerId: provider, approvalSha256: publicationIds[0]
     }));
-    await assert.rejects(planConsolidation(root), /vigente no está entre las dos/);
+    const planned = await planConsolidation(root);
+    assert.equal(planned.length, 0);
+    assert.equal((await readdir(join(root, "catalogs/providers/gam/publications"))).filter((name) => /^[a-f0-9]{64}$/.test(name)).length, 3);
+  });
+});
+
+
+test("admite y conserva alias de 12 caracteres que coinciden con el SHA completo", async () => {
+  await workspace(async ({ root, outside }) => {
+    const { publicationIds } = await rootFiles(root, 3);
+    const approval = publicationIds[2];
+    await rename(join(root, "catalogs/providers/gam/publications", approval),
+      join(root, "catalogs/providers/gam/publications", approval.slice(0, 12)));
+    await save(root, "scripts/tooling.mjs", 'console.log("ESTADO INTACTO");');
+    const planned = await planConsolidation(root);
+    assert.equal(planned.length, 4);
+    assert.ok(planned.every((item) => !item.path.includes(approval.slice(0, 12))));
+    const outcome = await consolidateLocalArtifacts(root, outside);
+    assert.equal(outcome.versions, 4);
+    const retained = await readdir(join(root, "catalogs/providers/gam/publications"));
+    assert.ok(retained.includes(approval.slice(0, 12)));
+  });
+});
+
+test("detecta colisión de SHA completo y alias sin borrar ninguno", async () => {
+  await workspace(async ({ root }) => {
+    const { publicationIds } = await rootFiles(root, 3);
+    const approval = publicationIds[2];
+    const folder = join(root, "catalogs/providers/gam/publications");
+    await cp(join(folder, approval), join(folder, approval.slice(0, 12)), { recursive: true });
+    await assert.rejects(planConsolidation(root), /Alias de publicación ambiguo/);
+    assert.ok((await readdir(folder)).includes(approval));
+    assert.ok((await readdir(folder)).includes(approval.slice(0, 12)));
+  });
+});
+
+test("rechaza acreditación modificada y nombre de publicación irregular", async () => {
+  await workspace(async ({ root }) => {
+    const { publicationIds } = await rootFiles(root, 3);
+    const folder = join(root, "catalogs/providers/gam/publications");
+    await writeFile(join(folder, publicationIds[2], "accreditation.json"), "{}");
+    await assert.rejects(planConsolidation(root), /Integridad de publicación no acreditada/);
+  });
+  await workspace(async ({ root }) => {
+    const { publicationIds } = await rootFiles(root, 3);
+    const folder = join(root, "catalogs/providers/gam/publications");
+    await rename(join(folder, publicationIds[2]), join(folder, publicationIds[2].slice(0, 11)));
+    await assert.rejects(planConsolidation(root), /Publicación sin clasificar/);
+  });
+});
+
+test("rechaza enlaces simbólicos a publicaciones antes de proponer el archivado", {
+  skip: process.platform === "win32"
+}, async () => {
+  await workspace(async ({ root }) => {
+    const { publicationIds } = await rootFiles(root, 3);
+    const folder = join(root, "catalogs/providers/gam/publications");
+    await symlink(join(folder, publicationIds[2]), join(folder, "f".repeat(12)), "dir");
+    await assert.rejects(planConsolidation(root), /Publicación sin clasificar/);
+  });
+});
+
+test("mantiene vigente, anterior y candidatas nuevas sin archivar su preparación", async () => {
+  await workspace(async ({ root, outside }) => {
+    const { preparations, publicationIds } = await rootFiles(root, 4);
+    await save(root, "catalogs/providers/gam/publications/active.json", JSON.stringify({
+      version: 1, providerId: provider, approvalSha256: publicationIds[2]
+    }));
+    await save(root, "scripts/tooling.mjs", 'console.log("ESTADO INTACTO");');
+    const planned = await planConsolidation(root);
+    assert.equal(planned.length, 4);
+    assert.ok(planned.some((entry) => entry.path.includes(publicationIds[0])));
+    assert.ok(planned.some((entry) => entry.path.includes(preparations[0].id)));
+    assert.ok(planned.every((entry) => !entry.path.includes(publicationIds[3])));
+    assert.ok(planned.every((entry) => !entry.path.includes(publicationIds[2])));
+    assert.ok(planned.every((entry) => !entry.path.includes(publicationIds[1])));
+    await consolidateLocalArtifacts(root, outside);
+    const retained = (await readdir(join(root, "catalogs/providers/gam/publications"))).filter((entry) => /^[a-f0-9]{64}$/.test(entry));
+    assert.deepEqual(retained.sort(), publicationIds.slice(1).sort());
+    const index = JSON.parse(await readFile(join(root, "storage/providers/gam/publication-retention.json"), "utf8"));
+    assert.deepEqual(index.publications.map((entry) => entry.approvalSha256), [publicationIds[2], publicationIds[1]]);
+  });
+});
+
+test("sin preparaciones no archiva versiones cuyo orden no puede acreditar", async () => {
+  await workspace(async ({ root }) => {
+    await rootFiles(root, 3);
+    await rm(join(root, "storage/prepared/gam"), { recursive: true });
+    assert.deepEqual(await planConsolidation(root), []);
+  });
+});
+
+
+test("con preparación nueva conserva publicaciones anteriores sin fecha histórica acreditable", async () => {
+  await workspace(async ({ root, outside }) => {
+    const { preparations, publicationIds } = await rootFiles(root, 3);
+    for (const item of preparations.slice(0, 2)) {
+      for (const suffix of ["-preparation.json", "-preparation.manifest.json", "-diagnostics.json"]) {
+        await rm(join(root, "storage/prepared/gam", `${item.id}${suffix}`));
+      }
+    }
+    await save(root, "scripts/tooling.mjs", 'console.log("ESTADO INTACTO");');
+    const planned = await planConsolidation(root);
+    assert.deepEqual(planned, []);
+    await consolidateLocalArtifacts(root, outside);
+    const kept = await readdir(join(root, "catalogs/providers/gam/publications"));
+    for (const sha of publicationIds) assert.ok(kept.includes(sha));
+    await assert.rejects(readFile(join(root, "storage/providers/gam/publication-retention.json")), { code: "ENOENT" });
+  });
+});
+
+test("sin fecha de la publicación activa nunca inventa 1970 ni descarta versiones", async () => {
+  await workspace(async ({ root }) => {
+    const { preparations, publicationIds } = await rootFiles(root, 3);
+    for (const item of preparations.slice(0, 2)) {
+      for (const suffix of ["-preparation.json", "-preparation.manifest.json", "-diagnostics.json"]) {
+        await rm(join(root, "storage/prepared/gam", `${item.id}${suffix}`));
+      }
+    }
+    await save(root, "catalogs/providers/gam/publications/active.json", JSON.stringify({
+      version: 1, providerId: "gam", approvalSha256: publicationIds[0]
+    }));
+    assert.deepEqual(await planConsolidation(root), []);
+    assert.ok((await readdir(join(root, "catalogs/providers/gam/publications"))).includes(publicationIds[0]));
+  });
+});
+
+test("bloquea índices de retención corruptos o con publicaciones ausentes", async () => {
+  await workspace(async ({ root }) => {
+    const { preparations } = await rootFiles(root, 3);
+    const path = "storage/providers/gam/publication-retention.json";
+    await save(root, path, JSON.stringify({ version: 1, providerId: provider, publications: [{
+      approvalSha256: "f".repeat(64), preparationSha256: preparations[0].digest,
+      preparedAt: "2026-11-01T00:00:00.000Z"
+    }] }));
+    await assert.rejects(planConsolidation(root), /Índice de retención referencia publicación ausente/);
+    await save(root, path, JSON.stringify({ version: 1, providerId: provider, publications: [{
+      approvalSha256: "no-es-sha", preparationSha256: preparations[0].digest,
+      preparedAt: "2026-11-01T00:00:00.000Z"
+    }] }));
+    await assert.rejects(planConsolidation(root), /Índice de retención inválido/);
   });
 });
 

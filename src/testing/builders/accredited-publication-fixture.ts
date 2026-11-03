@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { resolvePublicationDirectory } from "../../infrastructure/filesystem/catalog/publication-identity.js";
 
 export type AccreditedPublicationProvider = "gam" | "gomariz" | "mercaeleva";
 
@@ -14,5 +15,13 @@ export const accreditedPublicationSha = (root: string, providerId: AccreditedPub
   return index.approvalSha256;
 };
 
-export const accreditedPublicationFile = (root: string, providerId: AccreditedPublicationProvider): string =>
-  join(root, "catalogs", "providers", providerId, "publications", accreditedPublicationSha(root, providerId), `${providerId}-publishable.json`);
+export const accreditedPublicationDirectory = async (root: string, providerId: AccreditedPublicationProvider): Promise<string> => {
+  const folder = join(root, "catalogs", "providers", providerId, "publications");
+  const sha = accreditedPublicationSha(root, providerId);
+  const directory = await resolvePublicationDirectory(folder, sha);
+  if (!directory) throw new Error(`Publicación vigente no encontrada: ${providerId} (${sha})`);
+  return directory;
+};
+
+export const accreditedPublicationFile = async (root: string, providerId: AccreditedPublicationProvider): Promise<string> =>
+  join(await accreditedPublicationDirectory(root, providerId), `${providerId}-publishable.json`);

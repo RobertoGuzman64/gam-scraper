@@ -1,4 +1,4 @@
-import { accreditedPublicationSha } from "../../../../testing/builders/accredited-publication-fixture.js";
+import { accreditedPublicationDirectory, accreditedPublicationSha } from "../../../../testing/builders/accredited-publication-fixture.js";
 import assert from "node:assert/strict";
 import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -19,7 +19,8 @@ const withPublishedVersion = async (task: (root: string, directory: string, fold
   const folder = join(root, relative);
   try {
     await mkdir(folder, { recursive: true });
-    await cp(join(repository, relative, sha), join(folder, sha), { recursive: true });
+    const source = await accreditedPublicationDirectory(repository, "gomariz");
+    await cp(source, join(folder, sha), { recursive: true });
     await task(root, join(folder, sha), folder);
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -86,4 +87,18 @@ test("la generación no sortea una colisión de alias que impediría resolver la
     const collidingSha = `${sha.slice(0, 12)}${"f".repeat(52)}`;
     await assert.rejects(publicationDirectoryForApproval(folder, collidingSha), /distinta/);
   });
+});
+
+test("los alias individuales vigentes de los tres proveedores son verificables sin alteraciones", async () => {
+  for (const currentProvider of ["gam", "gomariz", "mercaeleva"]) {
+    const folder = join(repository, "catalogs", "providers", currentProvider, "publications");
+    const index: unknown = JSON.parse(await readFile(join(folder, "active.json"), "utf8"));
+    assert.ok(typeof index === "object" && index !== null && "approvalSha256" in index);
+    assert.equal(typeof index.approvalSha256, "string");
+    const full = index.approvalSha256;
+    if (typeof full !== "string") throw new Error("SHA de publicación no disponible");
+    const directory = await resolvePublicationDirectory(folder, full);
+    assert.ok(directory);
+    assert.equal(await publicationApprovalSha(directory), full);
+  }
 });

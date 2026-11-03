@@ -5,6 +5,7 @@ import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { isPublicationDirectoryName, matchesPublicationApproval } from "../shared/publication-identity.mjs";
 
 const providers = ["gam", "gomariz", "mercaeleva"];
 const memberSuffixes = ["-preparation.manifest.json", "-preparation.json", "-diagnostics.json", "-comparison.json"];
@@ -109,13 +110,17 @@ const publicationSets = async (root, provider, prepared) => {
   try { historic = await readJson(indexPath); }
   catch (error) { if (!missing(error)) throw error; }
   if (!Array.isArray(historic.publications) ||
-    (historic.version !== undefined && (historic.version !== 1 || historic.providerId !== provider))) {
+    (historic.version !== undefined && (historic.version !== 1 || historic.providerId !== provider)) ||
+    historic.publications.some((item) => !isRecord(item) || !validSha(item.approvalSha256) ||
+      !validSha(item.preparationSha256) || !Number.isFinite(Date.parse(item.preparedAt))) ||
+    new Set(historic.publications.map((item) => item.approvalSha256)).size !== historic.publications.length) {
     throw new Error(`Índice de retención inválido: ${provider}`);
   }
   const result = [];
+  const seenApprovals = new Set();
   for (const entry of entries) {
     if (entry.name === "active.json") continue;
-    if (!entry.isDirectory() || entry.isSymbolicLink() || !/^[a-f0-9]{16,64}$/.test(entry.name)) {
+    if (!entry.isDirectory() || entry.isSymbolicLink() || !isPublicationDirectoryName(entry.name)) {
       throw new Error(`Publicación sin clasificar: ${entry.name}`);
     }
     const directory = join(folder, entry.name);
@@ -130,19 +135,49 @@ const publicationSets = async (root, provider, prepared) => {
     const productBytes = await readFile(join(directory, `${provider}-publishable.json`));
     const approval = sha256(approvalBytes);
     if (!isRecord(manifest) || manifest.version !== 1 || manifest.providerId !== provider ||
-      manifest.approvalSha256 !== approval || !approval.startsWith(entry.name) ||
+      typeof manifest.runId !== "string" || !validSha(manifest.preparationSha256) ||
+      manifest.approvalSha256 !== approval || !matchesPublicationApproval(entry.name, approval) ||
       manifest.files?.[`${provider}-publishable.json`] !== sha256(productBytes) ||
       manifest.files?.["accreditation.json"] !== approval) {
       throw new Error(`Integridad de publicación no acreditada: ${directory}`);
     }
+    if (seenApprovals.has(approval) || result.some((item) =>
+      entry.name.startsWith(basename(item.directory)) || basename(item.directory).startsWith(entry.name))) {
+      throw new Error(`Alias de publicación ambiguo para ${approval}`);
+    }
+    seenApprovals.add(approval);
     const stored = historic.publications.find((item) => item.approvalSha256 === approval &&
       item.preparationSha256 === manifest.preparationSha256);
     const stamp = times.get(manifest.preparationSha256) ?? (stored ? Date.parse(stored.preparedAt) : NaN);
-    if (!Number.isFinite(stamp)) throw new Error(`Publicación sin fecha verificable: ${directory}`);
-    result.push({ directory, approval, runId: manifest.runId, timestamp: stamp, prepSha: manifest.preparationSha256 });
+    result.push({ directory, approval, runId: manifest.runId,
+      timestamp: Number.isFinite(stamp) ? stamp : null, prepSha: manifest.preparationSha256 });
   }
   if (!result.some((item) => item.approval === active.approvalSha256)) throw new Error(`Publicación activa ausente: ${provider}`);
-  return { result, active: active.approvalSha256 };
+  if (historic.publications.some((item) => !result.some((published) => published.approval === item.approvalSha256 &&
+    published.prepSha === item.preparationSha256))) {
+    throw new Error(`Índice de retención referencia publicación ausente o modificada: ${provider}`);
+  }
+  return { result, active: active.approvalSha256, retained: historic.publications };
+};
+
+const retainPublications = (publications, active, retained) => {
+  const current = publications.find((item) => item.approval === active);
+  if (!current) throw new Error(`Publicación activa ausente: ${active}`);
+  const byApproval = new Map(publications.map((item) => [item.approval, item]));
+  const indexedPrevious = retained.map((item) => byApproval.get(item.approvalSha256))
+    .find((item) => item && item.approval !== active && item.timestamp !== null &&
+      current.timestamp !== null && item.timestamp <= current.timestamp);
+  const previous = indexedPrevious ?? publications.filter((item) => item.approval !== active &&
+    item.timestamp !== null && current.timestamp !== null && item.timestamp <= current.timestamp)
+    .sort((a, b) => b.timestamp - a.timestamp || b.approval.localeCompare(a.approval))[0];
+  const keep = [current, ...(previous ? [previous] : [])];
+  const protectedApprovals = new Set(keep.map((item) => item.approval));
+  for (const item of publications) {
+    if (item.timestamp === null || current.timestamp === null || item.timestamp > current.timestamp) {
+      protectedApprovals.add(item.approval);
+    }
+  }
+  return { keep, protectedApprovals };
 };
 
 const planForProvider = async (root, provider, units) => {
@@ -154,22 +189,26 @@ const planForProvider = async (root, provider, units) => {
     sets.sort((a, b) => b.timestamp - a.timestamp || b.id.localeCompare(a.id));
     if (new Set(sets.map((item) => item.timestamp)).size !== sets.length) throw new Error(`Fechas ambiguas: ${provider}`);
     for (const set of sets.slice(0, 2)) keptPreps.add(set.sha);
-    for (const set of sets.slice(2)) addUnit(units, set.paths, `preparación anterior: ${provider}`);
   }
   if (preparations.length === 0) {
     const publicationsRoot = join(root, "catalogs", "providers", provider, "publications");
     if ((await list(publicationsRoot)).length === 0) return { prepared: 0, publications: 0, keptPrepared: 0, keptPublications: 0 };
+    const inspected = await publicationSets(root, provider, preparations);
+    return { prepared: 0, publications: inspected.result.length, keptPrepared: 0,
+      keptPublications: inspected.result.length };
   }
-  const { result: publications, active } = await publicationSets(root, provider, preparations);
-  publications.sort((a, b) => b.timestamp - a.timestamp || b.approval.localeCompare(a.approval));
-  const keep = publications.slice(0, 2);
-  if (!keep.some((item) => item.approval === active)) {
-    throw new Error(`La publicación vigente no está entre las dos más recientes: ${provider}`);
+  const { result: publications, active, retained } = await publicationSets(root, provider, preparations);
+  const { keep, protectedApprovals } = retainPublications(publications, active, retained);
+  for (const publication of publications) {
+    if (!protectedApprovals.has(publication.approval)) {
+      addUnit(units, [publication.directory], `publicación anterior: ${provider}`);
+    } else {
+      keptPreps.add(publication.prepSha);
+    }
   }
-  for (const publication of publications.slice(2)) {
-    addUnit(units, [publication.directory], `publicación anterior: ${provider}`);
+  for (const prepared of preparations) {
+    if (!keptPreps.has(prepared.sha)) addUnit(units, prepared.paths, `preparación anterior: ${provider}`);
   }
-  const keepApprovals = new Set(keep.map((item) => item.approval));
   const preparedTimes = new Map(preparations.map((item) => [item.sha, item.timestamp]));
   const editorialFolder = join(root, "storage", "providers", provider, "editorial");
   const editorial = [];
@@ -183,11 +222,15 @@ const planForProvider = async (root, provider, units) => {
     if (typeof data?.runId !== "string" || !validSha(preparedHash)) {
       throw new Error(`Acreditación editorial irregular: ${path}`);
     }
-    editorial.push({ path, runId: data.runId, timestamp: preparedTimes.get(preparedHash) ?? -1 });
+    editorial.push({ path, runId: data.runId, sha: preparedHash, timestamp: preparedTimes.get(preparedHash) ?? -1 });
   }
   editorial.sort((a, b) => b.timestamp - a.timestamp || b.runId.localeCompare(a.runId));
-  for (const item of editorial.slice(2)) {
-    addUnit(units, [item.path], `acreditación editorial histórica: ${provider}`);
+  const keptEditorial = new Set(editorial.slice(0, 2).map((item) => item.path));
+  for (const item of editorial) {
+    if (keptPreps.has(item.sha)) keptEditorial.add(item.path);
+  }
+  for (const item of editorial) {
+    if (!keptEditorial.has(item.path)) addUnit(units, [item.path], `acreditación editorial histórica: ${provider}`);
   }
   const receiptFolder = join(root, "storage", "providers", provider, "deliveries");
   for (const entry of await list(receiptFolder)) {
@@ -196,11 +239,11 @@ const planForProvider = async (root, provider, units) => {
     }
     const path = join(receiptFolder, entry.name);
     const data = await readJson(path);
-    if (typeof data?.approvalSha256 !== "string") throw new Error(`Recibo sin aprobación: ${path}`);
-    if (!keepApprovals.has(data.approvalSha256)) addUnit(units, [path], `recibo histórico: ${provider}`);
+    if (!validSha(data?.approvalSha256)) throw new Error(`Recibo sin aprobación válida: ${path}`);
+    if (!protectedApprovals.has(data.approvalSha256)) addUnit(units, [path], `recibo histórico: ${provider}`);
   }
   return { prepared: preparations.length, publications: publications.length,
-    keptPrepared: keptPreps.size, keptPublications: keep.length };
+    keptPrepared: keptPreps.size, keptPublications: protectedApprovals.size };
 };
 
 const additionalArtifacts = async (root, units) => {
@@ -361,16 +404,14 @@ const retentionIndexes = async (root) => {
   for (const provider of providers) {
     const prepared = await preparedSets(root, provider);
     if (prepared.length === 0) continue;
-    const { result: publications, active } = await publicationSets(root, provider, prepared);
-    publications.sort((a, b) => b.timestamp - a.timestamp || b.approval.localeCompare(a.approval));
-    if (!publications.slice(0, 2).some((item) => item.approval === active)) {
-      throw new Error(`La publicación vigente no está entre las dos últimas: ${provider}`);
-    }
+    const { result: publications, active, retained } = await publicationSets(root, provider, prepared);
+    const { keep } = retainPublications(publications, active, retained);
+    if (keep.some((item) => item.timestamp === null)) continue;
     const path = join(root, "storage", "providers", provider, "publication-retention.json");
     let previous = null;
     try { previous = await readFile(path); } catch (error) { if (!missing(error)) throw error; }
     const current = JSON.stringify({ version: 1, providerId: provider,
-      publications: publications.slice(0, 2).map((item) => ({
+      publications: keep.map((item) => ({
         approvalSha256: item.approval, preparationSha256: item.prepSha,
         preparedAt: new Date(item.timestamp).toISOString()
       }))

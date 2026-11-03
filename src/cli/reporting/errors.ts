@@ -16,5 +16,7 @@ export const errorDetail = (error: unknown): string => {
 
 export const printCommandError = (command: string, error: unknown): void => {
   printStatus("FAIL", `${command} | código 1\n  ${errorDetail(error)}`);
-  if (error instanceof Error && error.stack) console.error(`  Stack: ${error.stack}`);
+  if (process.env.EQUIPZILLA_DEBUG === "1" && error instanceof Error && error.stack) {
+    console.error(`  Stack: ${error.stack}`);
+  }
 };

@@ -13,7 +13,7 @@ const printItem = (label: string, item: InventoryItem): void => {
 
 export const printOperationsInventory = (status: CampaignOperationsStatus, inventory: OperationsInventory): void => {
   printReportLine(formatHeader("ESTADO OPERATIVO"));
-  printReportLine(`LOTE RECONOCIDO | ${status.campaign.runId ?? "sin lote"} | ${status.description}`);
+  printReportLine(`CAMPAÑA GLOBAL | ${status.campaign.runId ?? "sin lote"} | ${status.description}`);
   for (const issue of status.campaign.issues) printStatus("WARN", issue);
   printItem("REFERENCIA", status.reference.status === "valid"
     ? { state: "correcto", detail: "Válida" }
@@ -22,6 +22,10 @@ export const printOperationsInventory = (status: CampaignOperationsStatus, inven
         detail: status.reference.reason });
   printReportLine("\nDOCUMENTACIÓN Y RECURSOS ESENCIALES");
   for (const entry of inventory.essentials) printItem(entry.path, entry.status);
+  const individual = inventory.providers.filter((entry) =>
+    ["gam", "gomariz", "mercaeleva"].includes(entry.providerId));
+  const verified = individual.filter((entry) => entry.final.state === "correcto").length;
+  printReportLine(`PUBLICACIONES INDIVIDUALES | ${verified}/${individual.length} vigentes verificables (independientes de la campaña global)`);
   printReportLine("\nPROVEEDORES");
   for (const provider of inventory.providers) {
     printReportLine(`  ${provider.providerId.toUpperCase()}`);

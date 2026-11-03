@@ -122,6 +122,36 @@ npm run estado
 
 Si una ficha necesita una corrección puntual acreditada, consulta los scripts existentes con `npm run intervenir -- gam --listar` y simula uno seleccionado con `npm run intervenir -- gam --script interventions/gam/6002.ts`. Tras revisar las diferencias, autoriza expresamente `--aplicar` para ese script. Cada intervención nueva se guarda en `interventions/<proveedor>/` y se versiona en Git; no se registra en `storage/`. No hay cambios ni aprobaciones editoriales automáticas. Ver [Protocolo completo](docs/CAMPAIGNS.md), [Intervenciones](docs/CAMPAIGN_INTERVENTIONS.md) y [Acreditación](docs/CAMPAIGN_ACCREDITATION.md).
 
+### Tooling simplificado — Tres comandos para publicar
+
+`npm run catalogo:preparar` ya prepara **GAM, Gomariz y Mercaeleva** en una sola operación desde los originales completos verificados de `catalogs/providers/<proveedor>/original/`. No pide rutas ni selecciona ficheros por fecha. Reutiliza una preparación vigente con idéntico SHA de origen y reglas, o genera otra versión offline con manifest y diagnósticos, sin tocar la anterior ni las publicaciones acreditadas. El modo `--simular` no escribe archivos:
+
+```powershell
+npm run catalogo:preparar
+npm run catalogo:preparar -- --proveedor gam
+npm run catalogo:preparar -- --simular
+```
+
+El resumen incluye `ready`, `review`, incidencias, referencias y diferencias **provisionales** respecto a la publicación vigente. Las ausencias observadas no autorizan exclusiones ni bajas. Si los originales son ambiguos, faltan evidencias, hay un manifest corrupto o dos preparaciones coincidentes, el proveedor queda bloqueado con diagnóstico; no se elige un fichero «más reciente» ni se sobrescribe nada. Manain y las campañas globales de cuatro conservan sus circuitos. **El ciclo individual ya está integrado en tres comandos:** preparar, acreditar y publicar. La sesión editorial del segundo exige confirmación humana. Ver [Preparación](docs/TOOLING_FASE2_PREPARACION.md), [Acreditación](docs/TOOLING_FASE3_ACREDITACION.md) y [FINISH](docs/TOOLING_FASE4_FINISH.md).
+
+```powershell
+npm run catalogo:acreditar
+npm run catalogo:acreditar -- --proveedor gam
+npm run catalogo:acreditar -- --simular
+```
+
+La sesión exige terminal interactivo para decisiones y aprobación; `--simular` no escribe. Permite consultar, confirmar propuestas fundadas, excluir con evidencia/motivo, rechazar o aplazar y reanudar sin aprobar implícitamente. Las intervenciones técnicas sobre derivados siguen bloqueadas por su contrato actual.
+
+**Paso 3 — FINISH**, tras la aprobación individual de los tres proveedores:
+
+```powershell
+npm run catalogo:publicar
+npm run catalogo:publicar -- --proveedor gam
+npm run catalogo:publicar -- --simular
+```
+
+FINISH realiza el preflight del conjunto, contrasta diferencias y pérdidas, crea y verifica las candidatas comerciales con ZIP y recibos, y solo después activa y comprueba las publicaciones individuales. Un diario en `storage/publication/individual-finish/` permite recuperar activaciones parciales repitiendo el mismo comando. Retención y auditor (`huecos --comparar --specs`) se ejecutan internamente: un fallo de archivado o auditor se informa por separado, sin fingir un FINISH completo. Cuando las mismas acreditaciones ya están vigentes, no genera publicaciones ni ZIP nuevos. Se mantienen el color y los comandos avanzados existentes, así como las campañas globales de cuatro proveedores. Si hay bloqueo, se preservan las publicaciones anteriores. Ver [Guía de FINISH](docs/TOOLING_FASE4_FINISH.md).
+
 ### Acreditación editorial individual (sin campaña global)
 
 La preparación completa de un proveedor puede verificarse y acreditarse por separado mediante `seleccionar:proveedor` y `acreditar:proveedor`. Debe aportarse el catálogo original y la preparación offline correspondiente; ambos se validan contra sus huellas actuales. Este recorrido no acepta catálogos intervenidos ni promueve extracciones parciales a una entrega.
@@ -171,7 +201,7 @@ npm run huecos -- --finales
 npm run huecos -- --catalogo catalogs/providers/gam/original/scrape-gam-catalog.json --agrupar marca --top 10
 ```
 
-La población depende de la **publicación vigente seleccionada** o de la fuente explícita; no asumir que la última carpeta SHA está activa. En Mercaeleva la comparación parte de su publicación si no existe un original canónico independiente: no debe atribuirse a extracción original. El auditor es de **solo lectura**: no rellena fichas, no genera `review`, no acredita ni publica. La recuperación se implementa en el motor, con evidencia y comparación antes/después. El [método oficial de investigación y mejora](docs/CATALOG_CONTENT_GAPS.md#método-de-investigación-y-mejora-del-catálogo) contiene la alternancia técnica/editorial, las tres vías de recuperación, los criterios de evidencia, el recuento de mejoras reales y la comparación completa antes/después. El método se mantiene junto al código; las decisiones temporales y los frentes aún no ejecutados permanecen fuera de esta guía. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md) para criterios, prioridades y límites.
+La población depende de la **publicación vigente seleccionada** o de la fuente explícita; no asumir que la última carpeta SHA está activa. En Mercaeleva la comparación parte de su publicación si no existe un original canónico independiente: no debe atribuirse a extracción original. El auditor es de **solo lectura**: no rellena fichas, no genera `review`, no acredita ni publica. La recuperación se implementa en el motor, con evidencia y comparación antes/después. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md) para criterios, prioridades y límites.
 
 ### Herramientas complementarias
 

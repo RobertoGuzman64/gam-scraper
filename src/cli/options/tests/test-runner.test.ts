@@ -23,6 +23,7 @@ const withRunner = (action: (root: string) => void): void => {
     mkdirSync(join(root, "dist"));
     copyFileSync(join(projectRoot, "scripts", "run-tests.mjs"), join(root, "scripts", "run-tests.mjs"));
     copyFileSync(join(projectRoot, "scripts", "terminal.mjs"), join(root, "scripts", "terminal.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "test-performance.mjs"), join(root, "scripts", "test-performance.mjs"));
     writeFileSync(join(root, "package.json"), '{"type":"module"}');
     writeFileSync(join(root, "src", "prueba.test.ts"), "export {};\n");
     writeFileSync(join(root, "dist", "prueba.test.js"),
@@ -124,5 +125,95 @@ test("el runner adelanta las pruebas costosas y no confunde recepción con final
         typeof entry.tiempo_ms === "number" && typeof entry.informe_recibido_ms === "number");
       assert.ok(Math.abs(entry.inicio_ms + entry.tiempo_ms - entry.fin_ms) < 0.01);
     }
+  });
+});
+
+
+test("el runner aprende las duraciones sin cambiar el resultado ni publicar artefactos", () => {
+  withRunner((root) => {
+    const reportFile = join(root, "medicion.json");
+    const result = spawnRunner(root, ["--medicion", reportFile]);
+    assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+    const file = join(root, "dist", ".test-runner-durations.json");
+    const profile: unknown = JSON.parse(readFileSync(file, "utf8"));
+    assert.ok(profile && typeof profile === "object" && "durations" in profile);
+    assert.ok(profile.durations && typeof profile.durations === "object" &&
+      "dist/prueba.test.js" in profile.durations && "scripts/inspection/tests/prueba.test.mjs" in profile.durations);
+    assert.equal(typeof profile.durations["dist/prueba.test.js"], "number");
+    assert.equal(typeof profile.durations["scripts/inspection/tests/prueba.test.mjs"], "number");
+  });
+});
+
+test("el runner prioriza el trabajo más lento según el perfil de la misma concurrencia", () => {
+  withRunner((root) => {
+    writeFileSync(join(root, "dist", ".test-runner-durations.json"), JSON.stringify({
+      version: 1, platform: process.platform, concurrency: 1,
+      durations: { "dist/prueba.test.js": 1, "scripts/inspection/tests/prueba.test.mjs": 50000 }
+    }));
+    const reportFile = join(root, "medicion.json");
+    const result = spawnRunner(root, ["--concurrencia", "1", "--medicion", reportFile]);
+    assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+    const report: unknown = JSON.parse(readFileSync(reportFile, "utf8"));
+    assert.ok(report && typeof report === "object" && "archivos" in report && Array.isArray(report.archivos));
+    const file = report.archivos.find((item: unknown) =>
+      item !== null && typeof item === "object" && "archivo" in item &&
+      typeof item.archivo === "string" && item.archivo.replaceAll("\\", "/").endsWith("scripts/inspection/tests/prueba.test.mjs"));
+    const base = report.archivos.find((item: unknown) =>
+      item !== null && typeof item === "object" && "archivo" in item &&
+      typeof item.archivo === "string" && item.archivo.replaceAll("\\", "/").endsWith("dist/prueba.test.js"));
+    assert.ok(file && base && "inicio_ms" in file && "inicio_ms" in base &&
+      typeof file.inicio_ms === "number" && typeof base.inicio_ms === "number");
+    assert.ok(file.inicio_ms < base.inicio_ms);
+  });
+});
+
+test("perfiles dañados no impiden los tests ni se sobrescribe un perfil tras un FAIL", () => {
+  withRunner((root) => {
+    const profileFile = join(root, "dist", ".test-runner-durations.json");
+    writeFileSync(profileFile, "INVALID JSON");
+    assert.equal(spawnRunner(root, []).status, 0);
+    const before = readFileSync(profileFile, "utf8");
+    writeFileSync(join(root, "scripts", "inspection", "tests", "prueba.test.mjs"),
+      'import test from "node:test"; test("falla", () => { throw new Error("controlado"); });\n');
+    const failed = spawnRunner(root, []);
+    assert.equal(failed.status, 1, `${failed.stdout}${failed.stderr}`);
+    assert.equal(readFileSync(profileFile, "utf8"), before);
+  });
+});
+
+
+test("sin perfil previo adelanta FINISH y acreditación antes que las suites ligeras", () => {
+  withRunner((root) => {
+    const files = [
+      "pipeline/publication/tests/individual-finish.test",
+      "pipeline/publication/tests/individual-accreditation-session.test"
+    ];
+    for (const path of files) {
+      const source = join(root, "src", `${path}.ts`);
+      const compiled = join(root, "dist", `${path}.js`);
+      mkdirSync(dirname(source), { recursive: true });
+      mkdirSync(dirname(compiled), { recursive: true });
+      writeFileSync(source, "export {};\n");
+      writeFileSync(compiled, 'import test from "node:test"; test("protegida", () => {});\n');
+    }
+    const reportFile = join(root, "medicion.json");
+    const result = spawnRunner(root, ["--concurrencia", "1", "--medicion", reportFile]);
+    assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+    const report: unknown = JSON.parse(readFileSync(reportFile, "utf8"));
+    assert.ok(report && typeof report === "object" && "archivos" in report && Array.isArray(report.archivos));
+    const starts = new Map<string, number>();
+    for (const item of report.archivos) {
+      if (item && typeof item === "object" && "archivo" in item && "inicio_ms" in item &&
+        typeof item.archivo === "string" && typeof item.inicio_ms === "number") {
+        starts.set(item.archivo.replaceAll("\\", "/"), item.inicio_ms);
+      }
+    }
+    const getStart = (suffix: string): number => {
+      const item = [...starts].find(([key]) => key.endsWith(suffix));
+      assert.ok(item);
+      return item[1];
+    };
+    assert.ok(getStart("individual-finish.test.js") < getStart("individual-accreditation-session.test.js"));
+    assert.ok(getStart("individual-accreditation-session.test.js") < getStart("dist/prueba.test.js"));
   });
 });

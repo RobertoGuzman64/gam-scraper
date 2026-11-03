@@ -1,9 +1,9 @@
 import { execFile } from "node:child_process";
 import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { accreditedPublicationSha } from "../../../../testing/builders/accredited-publication-fixture.js";
+import { accreditedPublicationDirectory } from "../../../../testing/builders/accredited-publication-fixture.js";
 
 const run = promisify(execFile);
 export const root = fileURLToPath(new URL("../../../../../", import.meta.url));
@@ -27,11 +27,12 @@ const createBaselineRoot = async (): Promise<string> => {
       recursive: true,
       filter: (path) => !path.split(/[\\/]/u).includes("tests")
     });
+    await cp(join(root, "scripts", "shared"), join(destination, "scripts", "shared"), { recursive: true });
     for (const providerId of ["gam", "gomariz", "mercaeleva"] as const) {
       const source = join(root, "catalogs", "providers", providerId);
       const target = join(destination, "catalogs", "providers", providerId);
-      await cp(join(source, "publications", accreditedPublicationSha(root, providerId)),
-        join(target, "publications", accreditedPublicationSha(root, providerId)), { recursive: true });
+      const published = await accreditedPublicationDirectory(root, providerId);
+      await cp(published, join(target, "publications", basename(published)), { recursive: true });
       if (providerId !== "mercaeleva") {
         await cp(join(source, "original"), join(target, "original"), { recursive: true });
       }

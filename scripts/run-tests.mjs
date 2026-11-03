@@ -4,6 +4,7 @@ import { join, relative, resolve } from "node:path";
 import { clearLine, cursorTo } from "node:readline";
 import { run } from "node:test";
 import { formatScriptStatus } from "./terminal.mjs";
+import { durationRegressions, loadTestDurations, orderTestsByDuration, saveTestDurations } from "./test-performance.mjs";
 
 const parseOptions = (argumentsList) => {
   let concurrency;
@@ -44,6 +45,8 @@ const parseOptions = (argumentsList) => {
 };
 
 const PRIORITIZED_TESTS = [
+  "pipeline/publication/tests/individual-finish.test.js",
+  "pipeline/publication/tests/individual-accreditation-session.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/delivery-recovery.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/delivery-retention.test.js",
   "pipeline/campaign/tests/finalization-and-delivery/delivery.test.js",
@@ -95,11 +98,8 @@ const files = [
   ...sources.map((source) => join("dist", relative("src", source).replace(/\.test\.ts$/, ".test.js"))),
   ...scriptTests
 ];
-files.sort((left, right) => {
-  const leftPriority = testPriority.get(relative("dist", left).replaceAll("\\", "/")) ?? testPriority.size;
-  const rightPriority = testPriority.get(relative("dist", right).replaceAll("\\", "/")) ?? testPriority.size;
-  return leftPriority - rightPriority;
-});
+const previousDurations = loadTestDurations(effectiveConcurrency);
+orderTestsByDuration(files, previousDurations, testPriority);
 const missing = files.filter((file) => !existsSync(file));
 if (missing.length > 0) throw new Error(`Faltan ${missing.length} pruebas compiladas: ${missing.join(", ")}`);
 
@@ -117,6 +117,7 @@ const standardErrors = new Map();
 const counts = { passed: 0, failed: 0, skipped: 0, todo: 0 };
 const profile = options.report ? { tests: [], files: [] } : null;
 const profileStarts = profile ? new Map() : null;
+const durations = [];
 
 const clearProgress = () => {
   if (!interactive) return;
@@ -190,6 +191,10 @@ try {
         tiempo_ms: event.data.details.duration_ms ?? 0,
         estado: event.type === "test:fail" ? "fallido" : event.data.skip ? "omitido" : event.data.todo ? "todo" : "correcto"
       });
+    }
+
+    if (event.type === "test:summary" && event.data.file) {
+      durations.push({ file: event.data.file, milliseconds: event.data.duration_ms ?? 0 });
     }
 
     if (profile && event.type === "test:summary" && event.data.file) {
@@ -306,4 +311,21 @@ if (todoTests.length > 0) {
 
 const { counts: finalCounts, duration_ms: duration } = summary;
 process.stdout.write(`${formatScriptStatus(summary.success ? "PASS" : "FAIL", `${completedFiles.size}/${files.length} archivos | ${finalCounts.passed} correctos | ${finalCounts.failed} fallidos | ${finalCounts.skipped} omitidos | ${Math.round(duration)} ms`)}\n`);
+if (summary.success && durations.length === files.length) {
+  if (options.concurrency === undefined) {
+    const regressions = durationRegressions(durations, previousDurations);
+    if (regressions.length > 0) {
+      process.stdout.write(`${formatScriptStatus("WARN", `RENDIMIENTO | ${regressions.length} archivos duplicaron su duración y aumentaron al menos 10 s`)}\n`);
+      for (const item of regressions.slice(0, 5)) {
+        const previous = previousDurations?.get(relative(process.cwd(), item.file).replaceAll("\\", "/"));
+        process.stdout.write(`  ${relative(process.cwd(), item.file)} | ${Math.round(previous ?? 0)} -> ${Math.round(item.milliseconds)} ms\n`);
+      }
+    }
+    try {
+      saveTestDurations(effectiveConcurrency, durations);
+    } catch (error) {
+      process.stdout.write(`${formatScriptStatus("WARN", `RENDIMIENTO | No se pudo guardar el perfil local: ${error instanceof Error ? error.message : String(error)}`)}\n`);
+    }
+  }
+}
 if (!summary.success) process.exitCode = 1;

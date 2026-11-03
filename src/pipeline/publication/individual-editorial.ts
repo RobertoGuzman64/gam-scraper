@@ -57,13 +57,40 @@ const exists = async (path: string): Promise<boolean> => {
   }
 };
 
+const assertEditorialDirectory = async (options: IndividualEditorialOptions, create: boolean): Promise<void> => {
+  const root = resolve(options.rootDirectory);
+  for (const directory of [root, join(root, "storage"), join(root, "storage", "providers"),
+    join(root, "storage", "providers", options.providerId),
+    join(root, "storage", "providers", options.providerId, "editorial")]) {
+    try {
+      const stat = await lstat(directory);
+      if (!stat.isDirectory() || stat.isSymbolicLink()) {
+        throw new Error(`Directorio editorial no regular: ${directory}`);
+      }
+    } catch (error) {
+      if (!isRecord(error) || error.code !== "ENOENT" || !create) {
+        if (isRecord(error) && error.code === "ENOENT" && !create) return;
+        throw error;
+      }
+      try { await mkdir(directory); }
+      catch (creationError) {
+        if (!isRecord(creationError) || creationError.code !== "EEXIST") throw creationError;
+      }
+      const verified = await lstat(directory);
+      if (!verified.isDirectory() || verified.isSymbolicLink()) {
+        throw new Error(`Directorio editorial no regular: ${directory}`);
+      }
+    }
+  }
+};
+
 const contextFor = async (options: IndividualEditorialOptions): Promise<IndividualSelectionContext> =>
   readIndividualSelection(options.providerId, options.catalogFile, options.preparationFile);
 
 export const startIndividualEditorial = async (options: IndividualEditorialOptions): Promise<IndividualEditorialReview> => {
   const context = await contextFor(options);
   const draftFile = draftPath(options, context);
-  await mkdir(dirname(draftFile), { recursive: true });
+  await assertEditorialDirectory(options, true);
   try { await writeFile(draftFile, JSON.stringify(context.draft, null, 2), { flag: "wx" }); }
   catch (error) {
     if (!isRecord(error) || error.code !== "EEXIST") throw error;
@@ -72,6 +99,7 @@ export const startIndividualEditorial = async (options: IndividualEditorialOptio
 };
 
 export const readIndividualEditorialState = async (options: IndividualEditorialOptions) => {
+  await assertEditorialDirectory(options, false);
   const context = await contextFor(options);
   const draftFile = draftPath(options, context);
   let metadata;
@@ -91,6 +119,15 @@ export const readIndividualEditorialState = async (options: IndividualEditorialO
   const inspection = inspectAccreditationDraft([context.preparation], context.sources, context.runId, parsed);
   if (!isAccreditation(parsed)) throw new Error("Acreditación individual: estructura de decisiones inválida");
   return { context, draftFile, raw, accreditation: parsed, inspection };
+};
+
+export const inspectIndividualEditorialIfExists = async (
+  options: IndividualEditorialOptions
+): Promise<IndividualEditorialReview | null> => {
+  await assertEditorialDirectory(options, false);
+  const context = await contextFor(options);
+  if (!await exists(draftPath(options, context))) return null;
+  return inspectIndividualEditorial(options);
 };
 
 export const inspectIndividualEditorial = async (options: IndividualEditorialOptions): Promise<IndividualEditorialReview> => {

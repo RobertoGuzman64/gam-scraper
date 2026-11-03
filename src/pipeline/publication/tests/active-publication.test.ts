@@ -1,4 +1,4 @@
-import { accreditedPublicationSha } from "../../../testing/builders/accredited-publication-fixture.js";
+import { accreditedPublicationDirectory, accreditedPublicationSha } from "../../../testing/builders/accredited-publication-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { cp, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
@@ -19,7 +19,7 @@ const setup = async (): Promise<{ root: string; publications: string; original: 
   const publications = join(temp, "catalogs", "providers", providerId, "publications");
   const original = join(publications, existingSha);
   await mkdir(publications, { recursive: true });
-  await cp(join(root, "catalogs", "providers", providerId, "publications", existingSha), original, { recursive: true });
+  await cp(await accreditedPublicationDirectory(root, providerId), original, { recursive: true });
   const approval = JSON.parse(await readFile(join(original, "accreditation.json"), "utf8")) as Record<string, unknown>;
   const nextApproval = JSON.stringify({ ...approval, edition: "nueva versión acreditada" }, null, 2);
   const nextSha = hash(nextApproval);

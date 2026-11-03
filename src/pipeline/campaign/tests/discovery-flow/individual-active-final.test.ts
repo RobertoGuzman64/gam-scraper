@@ -1,4 +1,4 @@
-import { accreditedPublicationSha } from "../../../../testing/builders/accredited-publication-fixture.js";
+import { accreditedPublicationDirectory, accreditedPublicationSha } from "../../../../testing/builders/accredited-publication-fixture.js";
 import assert from "node:assert/strict";
 import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -17,7 +17,7 @@ test("estado consulta el final individual vigente sin acreditarlo como campaña 
   try {
     const dir = join(temp, "catalogs", "providers", "gomariz", "publications");
     await mkdir(dir, { recursive: true });
-    await cp(join(root, "catalogs", "providers", "gomariz", "publications", sha), join(dir, sha), { recursive: true });
+    await cp(await accreditedPublicationDirectory(root, "gomariz"), join(dir, sha), { recursive: true });
     assert.equal((await selectActivePublication(temp, "gomariz", sha, true)).status, "activated");
     const status = await inspectCampaignOperations(temp);
     const inventory = await inspectOperationsInventory(temp, status);
