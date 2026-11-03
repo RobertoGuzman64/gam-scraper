@@ -105,7 +105,9 @@ test("GAM: las generales acreditadas permiten enriquecer solo los dos módulos d
     const short = resolveGamShortDescription(record);
     const general = prepareSourceProduct(record).product.description_general;
     assert.ok(short && general);
-    assert.ok(general.startsWith(short));
+    assert.match(general, reference === "6814" ? /baño unitario/u : /baño doble WC/u);
+    assert.ok(general.includes("2.400 mm"));
+    assert.ok(general.includes(reference === "6814" ? "1.300 mm de longitud" : "2.150 mm de longitud"));
     for (const key of ["Longitud", "Anchura", "Altura"]) {
       const value = record.specs?.[key];
       assert.ok(typeof value === "string");

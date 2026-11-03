@@ -8,6 +8,8 @@ import { mercaelevaShortDescription } from "../../../../mapping/providers/mercae
 import { mercaelevaMissingDescriptions } from "../../../../mapping/providers/mercaeleva/missing-descriptions.js";
 import { verifiedMercaelevaResidualGeneral } from "../../../../evidence/providers/mercaeleva/verified-residual-generals.js";
 import { verifiedMercaelevaUnitGeneral } from "../../../../evidence/providers/mercaeleva/verified-unit-generals.js";
+import { verifiedPhase162Editorial } from "../../../../evidence/verified-phase162-editorial.js";
+import { resolveMercaelevaVerifiedSourceEditorial } from "../../../../mapping/providers/mercaeleva/verified-source-editorial.js";
 import { readMercaelevaSource } from "../../../../../../testing/builders/mercaeleva-source-fixture.js";
 
 const source = await readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json");
@@ -38,7 +40,7 @@ test("Mercaeleva: convierte especificaciones propias en descripciones de máquin
     assert.equal(prepared.product.description, generated.short, reference);
     const verifiedGeneral = verifiedMercaelevaUnitGeneral(record);
     assert.ok(verifiedGeneral, reference);
-    assert.equal(prepared.product.description_general, verifiedGeneral, reference);
+    assert.equal(prepared.product.description_general, resolveMercaelevaVerifiedSourceEditorial(record, verifiedGeneral) ?? verifiedGeneral, reference);
     assert.notEqual(verifiedGeneral, generated.long, reference);
     assert.equal(prepared.product.reference, record.reference, reference);
     assert.equal(prepared.product.sourceUrl, record.url, reference);
@@ -97,7 +99,8 @@ test("Mercaeleva: cabina modular solo se resume si el texto original respalda di
   assert.equal(prepared.product.description, expected);
   const general = verifiedMercaelevaResidualGeneral(record);
   assert.ok(general);
-  assert.equal(prepared.product.description_general, general);
+  assert.ok(general.includes("6 × 2,35 m"));
+  assert.equal(prepared.product.description_general, verifiedPhase162Editorial["mercaeleva:M294-4678"].general);
   for (const variant of [
     { ...record, title: record.title?.replace("6m", "7m") ?? null },
     { ...record, longDescription: record.longDescription?.replace("LADO CORTO", "LADO LARGO") ?? null },

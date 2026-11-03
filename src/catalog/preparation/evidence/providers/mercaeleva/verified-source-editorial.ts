@@ -1,0 +1,122 @@
+export const verifiedMercaelevaSourceEditorial = {
+  "M928-9933": {
+    "sourceDigest": "462b0104deb0f3beeaef3eaffa923360e11f41884e5b10f1a768809e391fca4e",
+    "preparedDigest": "a4f7786413b02b103d99eddc76bbbbcae013afb17c108181d33c28ab53c9fadd",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Iveco-ML120E22-P-M928-9933",
+    "general": "El Iveco ML120E22/P anunciado de segunda mano es un camión portavehículos con configuración 4×2, clasificado en el anuncio como vehículo N2. El proveedor indica fabricación en 2019, matrícula 1754KYC y motor Iveco F4AE3681B*M de seis cilindros en línea, con potencia declarada de 160 CV y normativa Euro V. La información de origen menciona una masa máxima autorizada de hasta 12.000 kg y una mínima de 3.500 kg; no debe interpretarse ese intervalo como la MMA homologada de esta unidad. Para planificar un transporte es imprescindible contrastar la ficha técnica, la carga útil y las dimensiones reales de la plataforma."
+  },
+  "M017-2019": {
+    "sourceDigest": "4cc9fc2e2972c199dd7b164df948f960fc50198bcdcff09976dae5b02646d78b",
+    "preparedDigest": "f7680af663e826820cde5620ecaeaae09dcd6d4bb9b299956baceee6d3a79175",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E16P-02-M017-2019",
+    "general": "La Linde E16P-02 es una carretilla elevadora eléctrica usada, fabricada en 2006 y anunciada con una capacidad máxima de 1.600 kg. La ficha individual indica batería de plomo-ácido, cuatro ruedas y protección superior del puesto de conducción. El vendedor registra 16.939 horas de horómetro y la referencia MER0685. Está orientada a trasladar y apilar cargas paletizadas, pero este registro no precisa la altura de elevación ni la configuración del mástil. Para comprobar su idoneidad frente a las estanterías deben verificarse esos datos, la capacidad residual y el estado de la batería de esta unidad."
+  },
+  "M476-1722": {
+    "sourceDigest": "a54d2d97baa8bcf736e89f18a288412b395091d432d253c3278abc1e0dda63be",
+    "preparedDigest": "5866f3beded0c380f2df4a99c861456def474bde2d7d32981e6d9ea2a6f7d62a",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Caterpillar-EP16NT-M476-1722",
+    "general": "La Caterpillar EP16NT es una carretilla elevadora eléctrica de segunda mano anunciada con capacidad máxima de 1.600 kg. Según los campos técnicos de esta referencia, dispone de mástil tríplex y alcanza 4.750 mm de altura máxima de elevación. Se declaran batería de plomo-ácido, tres ruedas y protección superior para el operador; esta configuración importa para maniobrar entre pasillos y verificar las condiciones del pavimento. El proveedor indica fabricación en 2007 y referencia MER0742. La capacidad nominal no acredita por sí sola cuánto peso puede elevarse a 4.750 mm: corresponde comprobar el diagrama de cargas del equipo."
+  },
+  "M722-8895": {
+    "sourceDigest": "fa9bc59e0b87ef53e59ff93627aea119d032fb85067d2dfb7ddca333baf14049",
+    "preparedDigest": "7a8930ca3715135fd460989ae6670ddf478df89050a640484350e16de1e5a3ae",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/OM-PIMESPO-XD40-M722-8895",
+    "general": "La OM Pimespo XD40 se anuncia como carretilla elevadora diésel de ocasión, fabricada en 2007 y con capacidad nominal de 4.000 kg. La ficha de esta máquina especifica mástil tríplex, altura máxima de elevación de 5.400 mm y protección superior del puesto de conducción. Es una configuración destinada al manejo y apilado de cargas industriales donde importan tanto el peso como la altura requerida. La capacidad disponible con el mástil extendido depende del centro de carga y debe confirmarse mediante la placa y el diagrama de cargas. El proveedor identifica la unidad como MER0604, sin publicar horas de horómetro."
+  },
+  "M402-2703": {
+    "sourceDigest": "3839de693e225a2f0afa77bd5f8a147f4c39df5c8d826dda503fb60a3d14efbe",
+    "preparedDigest": "4e8a702b37d719c459d87f43f75fa1891f80c3b60f75101149723be29c8d1cf1",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/MB-EFL253-M402-2703",
+    "general": "La MB EFL253 es una carretilla elevadora eléctrica nueva anunciada con capacidad de 2.500 kg y mástil tríplex para alcanzar 4.800 mm de elevación. La ficha individual identifica batería de litio de 80 V y 205 Ah y cargador MB de 80 V y 60 A, datos que permiten estudiar la infraestructura de recarga. Se publican horquillas de 1.220 mm, cuatro ruedas y año de fabricación 2025. La hora consignada en el registro es una lectura declarada, no una acreditación de uso real. Para trabajar a máxima altura debe comprobarse la capacidad residual de la configuración suministrada."
+  },
+  "M816-3394": {
+    "sourceDigest": "e66ed4abe43067e8fff1029dd2a269e02361ce1524f16632a3de6f37e8318aa0",
+    "preparedDigest": "0f785ebfc62abf3fd4af22dcc77b15b06cec12dea55e5644814ad1d61c249ee0",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Caterpillar-EP25CN-M816-3394",
+    "general": "La Caterpillar EP25CN es una carretilla elevadora eléctrica de segunda mano con capacidad máxima publicada de 2.500 kg. La ficha de esta unidad identifica mástil tríplex, elevación máxima de 4.750 mm, batería de plomo-ácido, cuatro ruedas y protección superior. El anuncio la sitúa en el año 2015 y la identifica mediante la referencia MER0861; su texto comercial menciona 4.653 horas, pero el campo estructurado de horómetro no aporta una lectura. La altura de elevación no equivale a altura total de paso, y la carga admisible a esa cota debe contrastarse con la placa y el mástil concretos."
+  },
+  "M940-4770": {
+    "sourceDigest": "87f50473b11346c4259e412c73e5d743ba9abf7247eaab7d3f7738c71fbe465b",
+    "preparedDigest": "f5382e6144c37a3daf250caeb18ecf333951ea647e37e191ee043cef9a942006",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E20PL-M940-4770",
+    "general": "La Linde E20PL es una carretilla elevadora eléctrica de segunda mano destinada al movimiento de cargas paletizadas, con capacidad nominal de 2.000 kg en la ficha del proveedor. Para esta unidad se declaran batería de plomo-ácido, cuatro ruedas y protección superior de cabina. El vendedor comunica año de fabricación 2012, 19.617 horas de funcionamiento y referencia MER0676. No se publica una altura máxima de elevación ni el tipo de mástil, información esencial para valorar el acceso a estanterías y la altura libre de puertas. También debe examinarse el estado de la batería antes de estimar autonomía operativa."
+  },
+  "M288-9739": {
+    "sourceDigest": "be22675042140100de6703ca8198a5b0f8f4dfa843994dfa9389395912d98256",
+    "preparedDigest": "074e6cc70430d6f847834e8e0a71d4132f2184dd1adb3629c9c424d35364fdbc",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/MB-ESL122-M288-9739",
+    "general": "El MB ESL122 es un apilador eléctrico anunciado como nuevo, con capacidad máxima de 1.200 kg y mástil dúplex que alcanza 3.600 mm de elevación. La ficha consigna plataforma para el conductor, horquillas de 1.150 mm y batería de litio de 24 V y 100 Ah. Figura un cargador MB de 24 V y 30 A, relevante para planificar la recarga en almacén. El equipo se anuncia fabricado en 2026, mientras el año declarado de la batería es 2025: son fechas de componentes diferentes. La capacidad residual a máxima elevación debe comprobarse antes de asignarle una estantería."
+  },
+  "M141-6536": {
+    "sourceDigest": "d9746028b79fcb8d042339954a60c3bc6f0216cd4cb2f1342bc115b17493961e",
+    "preparedDigest": "c40df4dfd7adfee6ecf33cd4842fa7402338a72bb681f1b274c87f06e89f8ff5",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/MB-EPL154-M141-6536",
+    "general": "La MB EPL154 es una transpaleta eléctrica nueva para el movimiento horizontal de mercancías paletizadas, con capacidad nominal publicada de 1.500 kg. Esta referencia indica conducción peatonal, horquillas de 1.150 mm y centro de carga de 540 mm; este último dato influye en la distribución admisible del peso y no describe la longitud de las horquillas. La ficha declara batería de litio de 24 V y 30 Ah y cargador MB de entrada a 220 V con corriente de 10 A. Año de fabricación: 2025. No se acredita una altura de apilado ni autonomía concreta en esta unidad."
+  },
+  "M035-8084": {
+    "sourceDigest": "922396da9efcdfd4ee35511adb490ada1d8643f73aeaff84384639e95a6906e9",
+    "preparedDigest": "2da91e4928528358ae47b0e03668002c0cbd52b4bd0b8952c4d59e150f8a48e9",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/MB-F4-M035-8084",
+    "general": "La MB F4 es una transpaleta eléctrica nueva de conducción peatonal que se anuncia con capacidad de 1.500 kg, adecuada para trasladar palés a nivel de suelo. La ficha individual especifica horquillas de 1.150 mm y distancia del centro de gravedad de 560 mm, medidas relevantes al elegir tipo y distribución de carga. A diferencia de las versiones de litio, esta referencia declara batería de gel de 24 V y 20 Ah y cargador MB de 24 V y 4 A. El equipo y la batería figuran fabricados en 2025; no se especifica una autonomía verificable."
+  },
+  "M346-8712": {
+    "sourceDigest": "cac41202dd17cc27933c95b43ed91ac047a39fb6e16faf5366882d2835e0d266",
+    "preparedDigest": "c5ed7c445741112243cca14e6aba0b50a793744672f8276428f5605f82280a81",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/MB-WSI161L-M346-8712",
+    "general": "El MB WSI161L se presenta como apilador eléctrico nuevo de elevación inicial y conducción peatonal. La ficha de esta referencia indica 1.600 kg de capacidad y mástil tríplex con altura máxima de elevación de 4.800 mm, así como horquillas de 1.151 mm. Se anuncian batería de litio de 24 V y 205 Ah y cargador MB de 24 V y 100 A, magnitudes importantes para organizar la recarga. La fabricación de la unidad figura en 2026 y la de la batería en 2025. El trabajo a 4.800 mm exige verificar la capacidad residual del mástil concreto."
+  },
+  "M855-6850": {
+    "sourceDigest": "11ba7258a3804dcfb170a8b46afc39c312c86e6fe341fc94435cd343b9a7e7c7",
+    "preparedDigest": "e1f6a4886683ba7195b627c78a4d05962bcff6eccf433e40854b6beda00dd01b",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Ausa-C250HX4-M855-6850",
+    "general": "La Ausa C250HX4 se anuncia como carretilla elevadora todoterreno 4×4 usada, fabricada en 2017. La ficha de esta unidad indica capacidad nominal de 2.500 kg, mástil tríplex y elevación máxima de 4.300 mm. El anuncio abrevia esta altura como «4.30mm», mientras que el campo técnico la expresa en milímetros de forma inequívoca. El proveedor declara 4.257 horas y certificación CE, con referencia 504. Su tracción 4×4 orienta el uso a terrenos apropiados, pero no acredita condiciones de pendiente, neumáticos ni capacidad residual con el mástil extendido; deben verificarse para el trabajo previsto."
+  },
+  "M640-1938": {
+    "sourceDigest": "9e15cf0d39a03c357f48e96f470c27ed19348ea5d88226128115af9b6505b643",
+    "preparedDigest": "63b7e2f69e2ff660ec0cf40a74c137b133da62dd4fd36d7082b3ac85ef05df9f",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Ausa-C250HX4-M640-1938",
+    "general": "La Ausa C250HX4 identificada con referencia 501 es una carretilla elevadora todoterreno 4×4 de segunda mano, anunciada con 5.406 horas y fabricación en 2017. Su ficha publica capacidad de 2.500 kg, mástil tríplex y elevación de 4.300 mm, frente a la escritura abreviada e imprecisa «4.30mm» del anuncio. También consigna certificación CE. Al elegirla para movimiento de cargas en exterior, es importante contrastar el tipo de terreno, la altura de paso del mástil y la carga admisible al elevar; esos datos no se deducen únicamente de la capacidad nominal."
+  },
+  "M121-6486": {
+    "sourceDigest": "c526a87a4503bd49307694f758259ccfbdbec0c8d3e1818a4892347f49967d86",
+    "preparedDigest": "34e79243cf4a3c0a738236b637d9ee6b9788d6251b44c0e0893fbe3d0dd22423",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Nissan-Q02L20CU-M121-6486",
+    "general": "La Nissan Q02L20CU es una carretilla elevadora eléctrica usada, fabricada en 2006, con capacidad declarada de 2.000 kg. La ficha identifica mástil tríplex y altura máxima de elevación de 6.000 mm, además de batería de plomo-ácido, cuatro ruedas y protección superior. Existe una discrepancia de uso: el texto comercial registra 13.760 horas, mientras que el campo técnico «Horas laborales» indica 16.169 h. Ninguna lectura se toma como definitiva sin contrastar el horómetro. La referencia comercial es MER0561. La altura total de paso y la capacidad residual a seis metros requieren comprobación específica."
+  },
+  "M005-5167": {
+    "sourceDigest": "395a616745638e1d6ee06d3aa104d7ceda6594a83f5e1911a6e3eaf986b41efe",
+    "preparedDigest": "aecbcb52c7e8b88b6441ac2b806370d07db32d5eed266e039321008b9cde43f0",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-MT1440-SLT-M005-5167",
+    "general": "El Manitou MT1440 SLT es un manipulador telescópico diésel de segunda mano, anunciado como fabricado en 2012. La ficha individual declara capacidad máxima de 4.000 kg y altura de elevación de 14 m. El texto menciona la variante «3E2», sin documentación suficiente para extenderle prestaciones adicionales. Las horas también discrepan: 6.964 en el anuncio y 6.813 en el campo técnico, de modo que deben verificarse en la máquina. En el manejo telescópico, la carga permitida depende del alcance, la altura y el implemento; la cifra nominal no sustituye el diagrama de cargas. Referencia 468."
+  },
+  "M011-3720": {
+    "sourceDigest": "e2f959ee93516a4ece48f5db075965eecc82aef02be4f4ab6dd7c6b70a7399ce",
+    "preparedDigest": "b04dd6e95e4d0a7b9903e55fd4db9636701d55ff4990236a46611aee01654338",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/BT-LPE200-8-M011-3720",
+    "general": "La BT LPE200/8 es una transpaleta eléctrica de segunda mano anunciada con capacidad de carga de 2.000 kg, fabricación en 2012 y 2.261 horas según los campos estructurados. El equipo se destina al traslado de palés y mercancía a nivel de suelo; el registro no acredita una altura de apilado ni una batería específica. Hay una discrepancia de identificación que conviene resolver antes de cualquier operación: el texto comercial indica MER0825 y el campo «Artículo No.» publica MER0525. Ambos códigos se conservan como lecturas distintas y no se presume que correspondan a la misma unidad."
+  },
+  "M209-3306": {
+    "sourceDigest": "f5cde9339c287d653cb8c71a0c3876be8652aadee0055ac08f9a675d2a51eafe",
+    "preparedDigest": "ed77abfecb52c8d1b8daace6497994738a29a6a5f9731aa93e964fa913aa498b",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/JLG-660SJ-M209-3306",
+    "general": "La JLG 660SJ es una plataforma telescópica diésel de ocasión, con altura de trabajo anunciada de 22 m y año de fabricación 2015. El brazo telescópico permite acercar la cesta a puntos elevados, pero la ficha no proporciona un alcance horizontal contrastable ni una capacidad de cesta para esta unidad. El horómetro presenta una contradicción importante: el anuncio comunica 875 horas y el campo técnico registra 3.457 h. El vendedor indica que la máquina está repintada y tiene ruedas nuevas; son afirmaciones comerciales, no una inspección independiente. Referencia 1838. Deben confirmarse esos extremos antes de dimensionar la operación."
+  },
+  "M567-8260": {
+    "sourceDigest": "e8e45baaf40f5bbfd0b908e8d59e869a10043a0613edd8c35a133af9c0514324",
+    "preparedDigest": "7a5fd31a09ef4000f463cb7b2540f98d20479f13c45edcc7659592650f633397",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Genie-GS2646-M567-8260",
+    "general": "La Genie GS2646 es una plataforma de tijera eléctrica de segunda mano, anunciada con 10 m de altura de trabajo y año 2011. Su elevación vertical puede resultar apropiada para instalaciones y mantenimiento sobre superficies compatibles, pero la ficha no identifica la carga máxima de plataforma ni la anchura de trabajo de esta unidad. El anuncio indica 722 horas y el registro técnico consigna 747 h; se mantienen ambas cifras porque no hay evidencia para elegir una. La referencia comercial es 216. La altura de trabajo declarada tampoco equivale a la altura de plataforma y deben comprobarse los requisitos de uso interior o exterior."
+  },
+  "M620-2142": {
+    "sourceDigest": "a0336cc5b21f95fd86e622b53c0942e77af7be8d5247e14f37ea053bb1e2b02a",
+    "preparedDigest": "a70f0fdf591e601cdcab1a62c72bf41560472cb01b80041820f5c136530bd4af",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Haulotte-HA16RTJ-M620-2142",
+    "general": "La Haulotte HA16RTJ es una plataforma articulada diésel usada, fabricada en 2018 y anunciada con 16 m de altura de trabajo. El brazo articulado permite posicionar la cesta sorteando obstáculos, aunque el alcance lateral y la carga de cesta de esta unidad no figuran en los campos de origen. El texto del vendedor registra 3.185 horas, mientras que el campo estructurado de horómetro refleja 3.190 h; ambas lecturas deben contrastarse antes de cerrar el historial de uso. La referencia comercial es 608. La altura anunciada corresponde a trabajo, no a altura geométrica de la plataforma."
+  },
+  "M106-1389": {
+    "sourceDigest": "6cfa80c833577b8615b4fa5b97fdae4884d3fa9285c69ff155e5c6584664c4db",
+    "preparedDigest": "79bff344923a05f004b894ec456fb067cfca6b3a07fca3202820af6f1e41f8cb",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-170AETJL-M106-1389",
+    "general": "La Manitou 170AETJL se anuncia como plataforma articulada eléctrica de segunda mano, fabricada en 2015, con altura de trabajo de 17 m y 294 horas publicadas. Su configuración articulada permite aproximarse a puntos elevados evitando obstáculos, si el entorno y el terreno lo permiten. La ficha no concreta la capacidad de la cesta ni el alcance lateral de esta máquina; esos límites deben contrastarse antes de planificar el trabajo. También existe una diferencia documental: el anuncio escribe «Ref. 686» y el campo «Artículo No.» indica 689. No debe unificarse esa identificación sin verificarla con el proveedor."
+  }
+} as const;

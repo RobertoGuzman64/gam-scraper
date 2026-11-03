@@ -1,10 +1,11 @@
 import { buildProductIdentity } from "../identity.js";
 import { normalizedSpecKey, specHasValue } from "./content-gaps-source.js";
 import { familyOf } from "./description-coverage.js";
+import { accreditedSpecificationReconciliations, type AccreditedSpecificationReconciliation } from "./accredited-specification-reconciliations.js";
 import type { DescriptionCoverageInput } from "./description-coverage.js";
 import type { SpecValue } from "../../contracts/catalog.js";
 
-type Stage = "pendiente_publicacion" | "diferencia_origen_preparacion" | "perdida_tras_publicacion" | "sin_evidencia_directa" | "normalizacion_ambigua";
+type Stage = "pendiente_publicacion" | "diferencia_origen_preparacion" | "perdida_tras_publicacion" | "sin_evidencia_directa" | "normalizacion_ambigua" | "reconciliacion_acreditada";
 type SpecMap = Readonly<Record<string, SpecValue>>;
 type Indexed = {
   readonly input: DescriptionCoverageInput;
@@ -14,6 +15,7 @@ type Indexed = {
   readonly prepared: ReadonlySet<string>;
   readonly published: ReadonlySet<string>;
   readonly ambiguous: ReadonlySet<string>;
+  readonly reconciliations: ReadonlyMap<string, AccreditedSpecificationReconciliation>;
 };
 type Group = { readonly providerId: string; readonly family: string; readonly origin: DescriptionCoverageInput["origin"]; readonly items: Indexed[] };
 export type SpecificationCase = {
@@ -25,6 +27,7 @@ export type SpecificationCase = {
   readonly origin: DescriptionCoverageInput["origin"];
   readonly key: string;
   readonly stage: Stage;
+  readonly reconciliation?: AccreditedSpecificationReconciliation;
 };
 export type SpecificationPattern = {
   readonly providerId: string;
@@ -48,6 +51,7 @@ export type SpecificationCoverage = {
     readonly reconstructedSources: number;
     readonly pendingPublication: number;
     readonly sourceNotPreserved: number;
+    readonly accreditedReconciliations: number;
     readonly lostAfterPublication: number;
     readonly ambiguousNormalization: number;
     readonly observationalMissing: number;
@@ -106,7 +110,8 @@ export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverag
     const prepared = normalizeValues(input.prepared.product.spec);
     const published = normalizeValues(input.published.spec);
     group.items.push({ input, identity, family, original: original.keys, prepared: prepared.keys,
-      published: published.keys, ambiguous: new Set([...original.ambiguous, ...prepared.ambiguous, ...published.ambiguous]) });
+      published: published.keys, ambiguous: new Set([...original.ambiguous, ...prepared.ambiguous, ...published.ambiguous]),
+      reconciliations: accreditedSpecificationReconciliations(input) });
   }
   for (const group of grouped.values()) {
     group.items.sort((a, b) => compare(a.identity, b.identity));
@@ -125,14 +130,17 @@ export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverag
         if (inPublished) publishedCount++;
         let stage: Stage | null = null;
         if (item.ambiguous.has(key)) stage = "normalizacion_ambigua";
-        else if (inSource && !inPrepared && item.input.origin === "original_canonico") stage = "diferencia_origen_preparacion";
+        else if (inSource && !inPrepared && item.input.origin === "original_canonico") stage =
+          item.reconciliations.has(key) ? "reconciliacion_acreditada" : "diferencia_origen_preparacion";
         else if (inPrepared && !inPublished) stage = "pendiente_publicacion";
         else if (inPublished && !inPrepared) stage = "perdida_tras_publicacion";
         else if (!inPrepared && !inPublished && !inSource && comparable) stage = "sin_evidencia_directa";
         if (!stage) continue;
         missing.push(item);
+        const reconciliation = stage === "reconciliacion_acreditada" ? item.reconciliations.get(key) : undefined;
         cases.push({ identity: item.identity, providerId: group.providerId, reference: item.input.source.reference,
-          url: item.input.source.url, family: group.family, origin: group.origin, key, stage });
+          url: item.input.source.url, family: group.family, origin: group.origin, key, stage,
+          ...(reconciliation === undefined ? {} : { reconciliation }) });
       }
       if (comparable && missing.length > 0) {
         patterns.push({ providerId: group.providerId, family: group.family, origin: group.origin, key,
@@ -142,17 +150,18 @@ export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverag
       }
     }
   }
-  const stages: readonly Stage[] = ["diferencia_origen_preparacion", "perdida_tras_publicacion", "normalizacion_ambigua", "pendiente_publicacion", "sin_evidencia_directa"];
+  const stages: readonly Stage[] = ["diferencia_origen_preparacion", "reconciliacion_acreditada", "perdida_tras_publicacion", "normalizacion_ambigua", "pendiente_publicacion", "sin_evidencia_directa"];
   cases.sort((a, b) => stages.indexOf(a.stage) - stages.indexOf(b.stage) ||
     compare(a.providerId, b.providerId) || compare(a.family, b.family) || compare(a.key, b.key) || compare(a.identity, b.identity));
   patterns.sort((a, b) => b.missingPrepared - a.missingPrepared || b.missingPublished - a.missingPublished ||
     compare(a.providerId, b.providerId) || compare(a.family, b.family) || compare(a.key, b.key));
   const count = (stage: Stage): number => cases.filter((item) => item.stage === stage).length;
   return {
-    note: "Cobertura observada, no atributos obligatorios. Diferencia entre origen y preparación no implica un fallo: puede corresponder a una reconciliación acreditada. Las fuentes reconstruidas de publicaciones no acreditan recuperación desde un original independiente. Las claves equivalentes se agrupan sin transferir valores entre fichas.",
+    note: "Cobertura observada, no atributos obligatorios. Las reconciliaciones acreditadas conservan la clave y el valor original en los casos, con las claves de destino verificadas mediante las reglas productivas; no se contabilizan como pérdidas. Las fuentes reconstruidas de publicaciones no acreditan recuperación desde un original independiente. Las claves equivalentes se agrupan sin transferir valores entre fichas.",
     criteria: { minimumFamily: MIN_FAMILY, minimumObserved: MIN_OBSERVED, minimumCoveragePercent: MIN_PERCENT },
     totals: { products: inputs.length, canonicalOriginals, reconstructedSources,
       pendingPublication: count("pendiente_publicacion"), sourceNotPreserved: count("diferencia_origen_preparacion"),
+      accreditedReconciliations: count("reconciliacion_acreditada"),
       lostAfterPublication: count("perdida_tras_publicacion"), ambiguousNormalization: count("normalizacion_ambigua"),
       observationalMissing: count("sin_evidencia_directa") },
     patterns, cases

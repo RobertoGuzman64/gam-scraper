@@ -8,8 +8,12 @@ import { verifiedPriorityPlatformGeneral } from "../../../../evidence/providers/
 import { verifiedMercaelevaPriorityShortDescription } from "../../../../evidence/providers/mercaeleva/priority-short-descriptions.js";
 import { verifiedMercaelevaResidualGeneral } from "../../../../evidence/providers/mercaeleva/verified-residual-generals.js";
 import { verifiedMercaelevaUnitGeneral } from "../../../../evidence/providers/mercaeleva/verified-unit-generals.js";
+import { verifiedPhase162Editorial } from "../../../../evidence/verified-phase162-editorial.js";
 import { matchesVerifiedHorometer } from "../../../../evidence/providers/mercaeleva/verified-horometer.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { resolveMercaelevaDocumentedFurtherPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-further-platform-general.js";
+import { resolveMercaelevaPhase157PlatformGeneral } from "../../../../mapping/providers/mercaeleva/phase157-platform-general.js";
+import { resolveMercaelevaVerifiedSourceEditorial } from "../../../../mapping/providers/mercaeleva/verified-source-editorial.js";
 
 const source = await readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json");
 const sourceRecord = (reference: string): ProductRecord => {
@@ -49,7 +53,10 @@ test("Mercaeleva: los originales canónicos activan las evidencias editoriales v
     const general = verifiedMercaelevaResidualGeneral(record);
     assert.ok(general, reference);
     const prepared = prepareSourceProduct(record).product;
-    assert.equal(prepared.description_general, general, reference);
+    const previous = resolveMercaelevaDocumentedFurtherPlatformGeneral(record) ?? general;
+    assert.ok(prepared.description_general === (resolveMercaelevaVerifiedSourceEditorial(record, previous) ?? previous) ||
+      prepared.description_general === resolveMercaelevaPhase157PlatformGeneral(record) ||
+      (reference === "M294-4678" && prepared.description_general === verifiedPhase162Editorial["mercaeleva:M294-4678"].general), reference);
     assert.deepEqual(prepared.spec, recoverMercaelevaSourceFuel(record, record.specs ?? {}), reference);
     assert.notEqual(general, record.longDescription, reference);
   }
@@ -93,7 +100,8 @@ test("Mercaeleva: los anuncios de unidades se individualizan únicamente con evi
     assert.ok(general, reference);
     assert.notEqual(general, record.longDescription, reference);
     const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.product.description_general, general, reference);
+    const previous = resolveMercaelevaDocumentedFurtherPlatformGeneral(record) ?? general;
+    assert.equal(prepared.product.description_general, resolveMercaelevaVerifiedSourceEditorial(record, previous) ?? previous, reference);
     assert.deepEqual(prepared.product.spec, recoverMercaelevaSourceFuel(record, record.specs ?? {}), reference);
     assert.equal(JSON.stringify(record), original, reference);
     for (const variant of [

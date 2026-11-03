@@ -233,10 +233,10 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
     printEditorial(editorialPrepared, options.limit);
     if (technicalSpecs) {
       const totals = technicalSpecs.totals;
-      printReportLine(`SPECS | originales canónicos ${totals.canonicalOriginals} | fuentes reconstruidas ${totals.reconstructedSources} | pendientes de publicar ${totals.pendingPublication} | diferencias origen/preparación ${totals.sourceNotPreserved} | pérdidas respecto al final ${totals.lostAfterPublication} | normalizaciones ambiguas ${totals.ambiguousNormalization} | ausencias observacionales ${totals.observationalMissing}`);
+      printReportLine(`SPECS | originales canónicos ${totals.canonicalOriginals} | fuentes reconstruidas ${totals.reconstructedSources} | pendientes de publicar ${totals.pendingPublication} | diferencias origen/preparación ${totals.sourceNotPreserved} | reconciliaciones acreditadas ${totals.accreditedReconciliations} | pérdidas respecto al final ${totals.lostAfterPublication} | normalizaciones ambiguas ${totals.ambiguousNormalization} | ausencias observacionales ${totals.observationalMissing}`);
       printReportLine(technicalSpecs.note);
       for (const item of technicalSpecs.cases.slice(0, options.limit)) {
-        printReportLine(`  ${item.stage} | ${item.providerId} | ${item.family} | ${item.reference ?? item.identity} | ${item.key} | ${item.origin}`);
+        printReportLine(`  ${item.stage} | ${item.providerId} | ${item.family} | ${item.reference ?? item.identity} | ${item.key} | ${item.origin}${item.reconciliation ? ` | origen ${JSON.stringify(item.reconciliation.originalValue)} | destino ${item.reconciliation.destinationKeys.join(", ") || "retirado por atribución errónea"}` : ""}`);
       }
       printReportLine(`SPECS | ${technicalSpecs.cases.length} observaciones | ${technicalSpecs.patterns.length} patrones familiares | TOP ${Math.min(options.limit, technicalSpecs.cases.length)}`);
     }

@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { reconcileMercaelevaVerifiedUnicarriersCapacity } from "../../../../evidence/providers/mercaeleva/unicarriers-used-capacity-evidence.js";
+import { verifiedCanonicalBriefEditorial } from "../../../../evidence/verified-canonical-brief-editorial.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
 
 const source = await readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json");
@@ -24,7 +25,8 @@ test("capacidad de unidad UniCarriers documentada y original intacto", () => {
   assert.equal(result.status, "ready");
   assert.deepEqual(result.issues, []);
   assert.equal(result.product.title, preparedRecord.title);
-  assert.equal(result.product.description_general, "Carretilla elevadora diésel UniCarriers E2D2A30, con capacidad máxima de elevación de 2500 kg. Horas de uso publicadas: 8142 h. Referencia del vendedor: MER0987.");
+  assert.equal(result.product.description_general, verifiedCanonicalBriefEditorial["mercaeleva:M582-1882"].general);
+  assert.match(result.product.description_general ?? "", /reconciliación individual acreditada/);
   assert.deepEqual(result.product.spec, original.specs);
   assert.deepEqual(record, original);
 });

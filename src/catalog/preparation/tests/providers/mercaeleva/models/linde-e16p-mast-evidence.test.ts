@@ -6,6 +6,7 @@ import { readCanonicalCatalog } from "../../../../../../infrastructure/filesyste
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../../../mapping/attribute-mapping.js";
 import { reconcileMercaelevaVerifiedLindeE16pMast } from "../../../../evidence/providers/mercaeleva/linde-e16p-duplex-evidence.js";
+import { verifiedCanonicalBriefEditorial } from "../../../../evidence/verified-canonical-brief-editorial.js";
 import { prepareImportBatch } from "../../../../batch-identity.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
 
@@ -30,7 +31,8 @@ test("MER0624 corrige el encabezado de mástil con concordancia del vendedor en 
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
   assert.equal(prepared.product.reference, "M104-0836");
-  assert.equal(prepared.product.description_general, reconciled.longDescription);
+  assert.equal(prepared.product.description_general, verifiedCanonicalBriefEditorial["mercaeleva:M104-0836"].general);
+  assert.match(prepared.product.description_general ?? "", /reconciliación acreditada/);
   assert.deepEqual(prepared.product.spec, recoverMercaelevaSourceFuel(original, sourceSnapshot.specs ?? {}));
   assert.ok(prepared.product.attributes.some((item) => item.attributeID === mast.id && item.value === "Dúplex"));
   assert.deepEqual(original, sourceSnapshot);

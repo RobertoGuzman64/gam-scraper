@@ -5,9 +5,12 @@ import { readCanonicalCatalog } from "../../../../../../infrastructure/filesyste
 import { resolveGomarizCriticalBriefGeneral } from "../../../../mapping/providers/gomariz/critical-brief-general.js";
 import { resolveGomarizGeneralDescription } from "../../../../mapping/providers/gomariz/general-description.js";
 import { verifiedGomarizPriorityGeneral } from "../../../../evidence/providers/gomariz/verified-priority-general.js";
+import { verifiedCanonicalBriefEditorial } from "../../../../evidence/verified-canonical-brief-editorial.js";
 import { resolveGomarizIndividualizedGeneral } from "../../../../mapping/providers/gomariz/individualized-general.js";
 import { removeGomarizConversationalLead, resolveGomarizResidualGeneral } from "../../../../mapping/providers/gomariz/residual-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+
+const signedGenerals: Readonly<Record<string, { readonly general: string }>> = verifiedCanonicalBriefEditorial;
 
 const source = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
 const find = (reference: string): ProductRecord => {
@@ -66,7 +69,8 @@ test("Gomariz: contradicciones o descripción propia acreditada no se reescriben
     const prepared = prepareSourceProduct(record).product.description_general;
     const suffix = record.year ? ` Año de fabricación de esta unidad: ${record.year}.` : "";
     const underlying = suffix && prepared?.endsWith(suffix) ? prepared.slice(0, -suffix.length) : prepared;
-    assert.equal(underlying, verifiedGomarizPriorityGeneral(record) ?? resolveGomarizResidualGeneral(record) ?? record.longDescription, reference);
+    const verified = signedGenerals[`gomariz:${reference}`];
+    assert.equal(underlying, verified?.general ?? verifiedGomarizPriorityGeneral(record) ?? resolveGomarizResidualGeneral(record) ?? record.longDescription, reference);
   }
 });
 
@@ -109,7 +113,8 @@ test("Gomariz: el piloto se aplica solo a la cohorte segura y preserva todas las
     const general = prepared.product.description_general;
     const suffix = record.year ? ` Año de fabricación de esta unidad: ${record.year}.` : "";
     const underlying = suffix && general?.endsWith(suffix) ? general.slice(0, -suffix.length) : general;
-    assert.equal(underlying, removeGomarizConversationalLead(record, base) ?? base);
+    const verified = signedGenerals[`gomariz:${reference}`];
+    assert.equal(underlying, verified?.general ?? removeGomarizConversationalLead(record, base) ?? base);
     assert.deepEqual(prepared.product.spec, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) });
   }
 });

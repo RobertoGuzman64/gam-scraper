@@ -27,7 +27,7 @@ test("huecos compara las publicaciones activas y acredita la cobertura de descri
   assert.equal(report.editorialPrepared.providers.length, 3);
   assert.equal(report.priorities.totals.pendingByStage.P0, 0);
   assert.ok(report.priorities.pending.some((item) => item.signal === "general_muy_breve"));
-  assert.ok(report.priorities.pending.some((item) => item.stage === "P2" && item.familySamples >= 5));
+  assert.ok(report.priorities.resolved.some((item) => item.stage === "P2"));
   const text = await executeBaseline(["--comparar", "--top", "1"]);
   assert.match(text, /P0 COLA RESIDUAL \| 0 fichas, sin recorte por --top/);
   assert.match(text, /ORDEN DE TRABAJO \| P0 vacíos 0/);
@@ -100,6 +100,6 @@ test("huecos --comparar --specs diferencia cobertura técnica sin alterar el inf
     comparison.technicalSpecs.cases.filter((item) => item.stage === "pendiente_publicacion").length);
   assert.ok(comparison.technicalSpecs.totals.observationalMissing > 0);
   assert.ok(comparison.technicalSpecs.cases.some((item) => item.providerId === "gam" &&
-    item.reference === "6807" && item.stage === "diferencia_origen_preparacion"));
+    item.reference === "6807" && item.stage === "reconciliacion_acreditada"));
   await assert.rejects(execute(["--finales", "--specs"]), /requiere --comparar/);
 });

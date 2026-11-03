@@ -6,6 +6,7 @@ import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/l
 import { prepareImportBatch } from "../../../../batch-identity.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { gamMissingDescriptions } from "../../../../mapping/providers/gam/editorial-descriptions/missing-descriptions.js";
+import { verifiedPhase161Editorial } from "../../../../evidence/verified-phase161-editorial.js";
 
 const source = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const catalog = await loadImportCatalog();
@@ -29,7 +30,8 @@ test("GAM: recupera únicamente las dos carretillas HELI con identidad y carga a
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.status, "ready", reference);
     assert.equal(prepared.product.description, generated.short, reference);
-    assert.equal(prepared.product.description_general, generated.long, reference);
+    const editorial: Readonly<Record<string, { readonly sourceDigest: string; readonly general?: string }>> = verifiedPhase161Editorial;
+    assert.equal(prepared.product.description_general, editorial[`gam:${reference}`]?.general ?? generated.long, reference);
     assert.equal(prepared.product.reference, record.reference, reference);
     assert.equal(prepared.product.sourceUrl, record.url, reference);
     assert.deepEqual(prepared.product.spec, record.specs, reference);

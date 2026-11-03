@@ -4,6 +4,19 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamVerifiedSourceCondensedGeneral } from "../../../../evidence/providers/gam/editorial/verified-source-condensed-generals.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { verifiedPhase158GamEditorial } from "../../../../evidence/providers/gam/general-evidence/phase158-source-editorial.js";
+import { verifiedCanonicalBriefEditorial } from "../../../../evidence/verified-canonical-brief-editorial.js";
+import { verifiedPhase162Editorial } from "../../../../evidence/verified-phase162-editorial.js";
+
+const phase158Entries: Readonly<Record<string, { readonly general: string }>> = verifiedPhase158GamEditorial;
+
+const checkPreparedGeneral = (reference: string, actual: string | null, previous: string): void => {
+  const revised: Readonly<Record<string, { readonly general: string }>> = verifiedCanonicalBriefEditorial;
+  const phase162: Readonly<Record<string, { readonly general: string }>> = verifiedPhase162Editorial;
+  const editorial = phase162[`gam:${reference}`] ?? revised[`gam:${reference}`] ?? phase158Entries[reference];
+  if (editorial) assert.equal(actual, editorial.general, reference);
+  else assert.ok(actual?.includes(previous), reference);
+};
 
 const source = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const references = [
@@ -37,7 +50,7 @@ test("GAM: se condensan 21 generales con identidad exacta y sin alterar otros ca
     assert.ok(general, reference);
     assert.ok(general.length < (record.longDescription?.length ?? 0) / 2, reference);
     const prepared = prepareSourceProduct(record);
-    assert.ok(prepared.product.description_general?.includes(general), reference);
+    checkPreparedGeneral(reference, prepared.product.description_general, general);
     assert.equal(prepared.status, "ready", reference);
     assert.deepEqual(prepared.issues, [], reference);
     assert.equal(JSON.stringify(record), snapshot, reference);
@@ -82,7 +95,7 @@ test("GAM: las descripciones verificadas de ocasión preservan identidad y lectu
     if (typeof hour === "string" && hour.includes("sustituido")) assert.ok(general.includes("sustituido"), reference);
     if (hour === "NA horas") assert.ok(general.includes("no acredita"), reference);
     const prepared = prepareSourceProduct(record);
-    assert.ok(prepared.product.description_general?.includes(general), reference);
+    checkPreparedGeneral(reference, prepared.product.description_general, general);
     assert.deepEqual(prepared.issues, [], reference);
   }
 });
@@ -100,7 +113,7 @@ test("GAM: la condensación adicional conserva cifras y características de cada
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.status, "ready", reference);
     assert.deepEqual(prepared.issues, [], reference);
-    assert.ok(prepared.product.description_general?.includes(general), reference);
+    checkPreparedGeneral(reference, prepared.product.description_general, general);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
       assert.equal(prepared.product.spec?.[key], value, `${reference}: ${key}`);
     }
@@ -121,7 +134,7 @@ test("GAM: 22 fichas de manutención conservan datos individuales al condensar t
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.status, "ready", reference);
     assert.deepEqual(prepared.issues, [], reference);
-    assert.ok(prepared.product.description_general?.includes(general), reference);
+    checkPreparedGeneral(reference, prepared.product.description_general, general);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
       assert.equal(prepared.product.spec?.[key], value, `${reference}: ${key}`);
     }
@@ -142,7 +155,7 @@ test("GAM: 22 descripciones pendientes incorporan evidencia individual y conserv
     assert.ok(general.length < (record.longDescription?.length ?? 0) * 0.75, reference);
     assert.ok(general.includes(record.serialNumber ?? ""), reference);
     assert.ok(general.includes(record.year ?? ""), reference);
-    assert.ok(prepared.product.description_general?.includes(general), reference);
+    checkPreparedGeneral(reference, prepared.product.description_general, general);
     assert.equal(prepared.status, "ready", reference);
     assert.deepEqual(prepared.issues, [], reference);
     assert.equal(JSON.stringify(record), before, reference);
@@ -193,7 +206,7 @@ test("GAM: condensación acreditada preserva identificación de ocasión y prest
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.status, "ready", reference);
     assert.deepEqual(prepared.issues, [], reference);
-    assert.ok(prepared.product.description_general?.includes(general), reference);
+    checkPreparedGeneral(reference, prepared.product.description_general, general);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
       assert.equal(prepared.product.spec?.[key], value, `${reference}: ${key}`);
     }
@@ -226,7 +239,7 @@ test("GAM: la evidencia editorial posterior conserva identidad, original y espec
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.status, "ready", reference);
     assert.deepEqual(prepared.issues, [], reference);
-    assert.ok(prepared.product.description_general?.includes(general), reference);
+    checkPreparedGeneral(reference, prepared.product.description_general, general);
     assert.equal(JSON.stringify(record), originalSnapshot, reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
       assert.equal(prepared.product.spec?.[key], value, `${reference}: ${key}`);

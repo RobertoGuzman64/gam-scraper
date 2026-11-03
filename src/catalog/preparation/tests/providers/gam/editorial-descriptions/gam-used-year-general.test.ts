@@ -43,7 +43,13 @@ test("GAM: año de fabricación propio ausente de ambos textos, sin alterar otro
     const general = prepareSourceProduct(record).product.description_general;
     assert.ok(general?.includes(record.year ?? "INVALID"), reference);
   }
-  assert.equal(recovered.size, 10);
+  assert.equal(recovered.size, 9);
+  assert.ok(!recovered.has("6623"));
+  const editorialRecord = find("6623");
+  const editorial = prepareSourceProduct(editorialRecord).product.description_general;
+  assert.ok(editorial);
+  assert.ok(editorial.includes("2007"));
+  assert.ok(editorial.includes("2024"));
   assert.ok([...recovered].every((reference) => expected.has(reference)));
 });
 

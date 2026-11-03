@@ -246,7 +246,7 @@ test("npm test reutiliza automáticamente solo suites seguras cuando no cambia n
   });
 });
 
-test("cambios de código, fixtures y entorno invalidan automáticamente la caché", () => {
+test("las suites legadas conservan invalidación global por código, datos y entorno", () => {
   withRunner((root) => {
     addCacheableSuites(root);
     assert.equal(spawnRunner(root, []).status, 0);
@@ -311,5 +311,96 @@ test("caché corrupta y resultados fallidos nunca acreditan tests", () => {
     const following = spawnRunner(root, []);
     assert.equal(following.status, 0, `${following.stdout}${following.stderr}`);
     assert.match(following.stdout, /CACHÉ \| 0 suites/);
+  });
+});
+
+const addAuditedCatalogSuites = (root: string): void => {
+  for (const name of ["alpha", "beta"]) {
+    const sourceDir = join(root, "src", "catalog", "preparation", "tests", "cache");
+    const compiledDir = join(root, "dist", "catalog", "preparation", "tests", "cache");
+    mkdirSync(sourceDir, { recursive: true });
+    mkdirSync(compiledDir, { recursive: true });
+    writeFileSync(join(sourceDir, `${name}-helper.ts`), "export const value = 1;\n");
+    writeFileSync(join(compiledDir, `${name}-helper.js`), "export const value = 1;\n");
+    writeFileSync(join(sourceDir, `${name}.test.ts`), `import { value } from "./${name}-helper.js";\nexport { value };\n`);
+    writeFileSync(join(compiledDir, `${name}.test.js`),
+      `import test from "node:test"; import { value } from "./${name}-helper.js"; test("${name}", () => { if (value !== 1) throw new Error("valor modificado"); });\n`);
+  }
+};
+
+test("la caché automática abarca suites de preparación auditadas sin nuevos comandos", () => {
+  withRunner((root) => {
+    addAuditedCatalogSuites(root);
+    const first = spawnRunner(root, []);
+    assert.equal(first.status, 0, `${first.stdout}${first.stderr}`);
+    assert.match(first.stdout, /CACHÉ \| 0 suites/);
+    const second = spawnRunner(root, []);
+    assert.equal(second.status, 0, `${second.stdout}${second.stderr}`);
+    assert.match(second.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 2 suites ejecutadas/);
+    assert.match(second.stdout, /4 correctos \(2 reutilizados\)/);
+  });
+});
+
+test("el cambio de una dependencia invalida solo su suite, no las demás", () => {
+  withRunner((root) => {
+    addAuditedCatalogSuites(root);
+    assert.equal(spawnRunner(root, []).status, 0);
+    assert.equal(spawnRunner(root, []).status, 0);
+    const source = join(root, "src", "catalog", "preparation", "tests", "cache", "alpha-helper.ts");
+    const compiled = join(root, "dist", "catalog", "preparation", "tests", "cache", "alpha-helper.js");
+    writeFileSync(source, "export const value =  1;\n");
+    writeFileSync(compiled, "export const value =  1;\n");
+    const changed = spawnRunner(root, []);
+    assert.equal(changed.status, 0, `${changed.stdout}${changed.stderr}`);
+    assert.match(changed.stdout, /CACHÉ \| 1 suites y 1 tests reutilizados \| 3 suites ejecutadas/);
+    assert.equal(spawnRunner(root, []).status, 0);
+    const unrelated = join(root, "src", "catalog", "unrelated.ts");
+    writeFileSync(unrelated, "export const unaffected = true;\n");
+    const independent = spawnRunner(root, []);
+    assert.equal(independent.status, 0, `${independent.stdout}${independent.stderr}`);
+    assert.match(independent.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 2 suites ejecutadas/);
+  });
+});
+
+test("los datos versionados invalidan las suites y las operaciones inseguras no se cachean", () => {
+  withRunner((root) => {
+    addAuditedCatalogSuites(root);
+    const sourceDir = join(root, "src", "catalog", "preparation", "tests", "cache");
+    const compiledDir = join(root, "dist", "catalog", "preparation", "tests", "cache");
+    writeFileSync(join(sourceDir, "unsafe.test.ts"),
+      'import { writeFileSync } from "node:fs";\nexport { writeFileSync };\n');
+    writeFileSync(join(compiledDir, "unsafe.test.js"),
+      'import test from "node:test"; test("unsafe", () => {});\n');
+    assert.equal(spawnRunner(root, []).status, 0);
+    const second = spawnRunner(root, []);
+    assert.equal(second.status, 0, `${second.stdout}${second.stderr}`);
+    assert.match(second.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 3 suites ejecutadas/);
+    mkdirSync(join(root, "catalogs"));
+    writeFileSync(join(root, "catalogs", "nuevo.json"), '{"revision":1}');
+    const changed = spawnRunner(root, []);
+    assert.equal(changed.status, 0, `${changed.stdout}${changed.stderr}`);
+    assert.match(changed.stdout, /CACHÉ \| 0 suites/);
+  });
+});
+
+test("importaciones dinámicas y módulos externos quedan fuera de la caché", () => {
+  withRunner((root) => {
+    addAuditedCatalogSuites(root);
+    const sourceDir = join(root, "src", "catalog", "preparation", "tests", "cache");
+    const compiledDir = join(root, "dist", "catalog", "preparation", "tests", "cache");
+    writeFileSync(join(sourceDir, "dynamic.test.ts"), "export {};\n");
+    writeFileSync(join(compiledDir, "dynamic.test.js"),
+      'import test from "node:test"; test("dynamic", async () => { await import("./alpha-helper.js"); });\n');
+    writeFileSync(join(sourceDir, "external.test.ts"), "export {};\n");
+    const packageDir = join(root, "node_modules", "external-test-module");
+    mkdirSync(packageDir, { recursive: true });
+    writeFileSync(join(packageDir, "package.json"), '{"name":"external-test-module","type":"module","exports":"./index.js"}');
+    writeFileSync(join(packageDir, "index.js"), "export const value = 1;\n");
+    writeFileSync(join(compiledDir, "external.test.js"),
+      'import test from "node:test"; import { value } from "external-test-module"; test("external", () => { if (value !== 1) throw new Error("valor"); });\n');
+    assert.equal(spawnRunner(root, []).status, 0);
+    const again = spawnRunner(root, []);
+    assert.equal(again.status, 0, `${again.stdout}${again.stderr}`);
+    assert.match(again.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 4 suites ejecutadas/);
   });
 });

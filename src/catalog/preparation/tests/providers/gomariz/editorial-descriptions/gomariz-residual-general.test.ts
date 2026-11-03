@@ -3,8 +3,11 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { verifiedGomarizPriorityGeneral } from "../../../../evidence/providers/gomariz/verified-priority-general.js";
+import { verifiedCanonicalBriefEditorial } from "../../../../evidence/verified-canonical-brief-editorial.js";
 import { resolveGomarizResidualGeneral } from "../../../../mapping/providers/gomariz/residual-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+
+const signedGenerals: Readonly<Record<string, { readonly general: string }>> = verifiedCanonicalBriefEditorial;
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
 const references = new Set(["CC1535", "CC1666", "FR1077", "BA1522", "PV556", "BA1465", "TE1814", "TE1772", "BA1358"]);
@@ -25,9 +28,16 @@ test("Gomariz personaliza generales genéricas con medidas de su propia ficha", 
       assert.ok(record.reference && general && replacement);
       const suffix = record.year ? ` Año de fabricación de esta unidad: ${record.year}.` : "";
       const underlying = suffix && general.endsWith(suffix) ? general.slice(0, -suffix.length) : general;
-      assert.equal(underlying, verifiedGomarizPriorityGeneral(record) ?? replacement, record.reference);
-      assert.ok(general.includes(record.title ?? ""), record.reference);
-      assert.ok(general.includes("longitud") && general.includes("anchura") && general.includes("peso"), record.reference);
+      const verified = signedGenerals[`gomariz:${record.reference}`];
+      assert.equal(underlying, verified?.general ?? verifiedGomarizPriorityGeneral(record) ?? replacement, record.reference);
+      if (verified) {
+        const modelEvidence = record.reference === "PV556" ? "SLA15" : "20D SPEED";
+        assert.ok(general.includes(modelEvidence), record.reference);
+        assert.ok((record.brand ?? "").split(/\s+/).every((part) => general.toLowerCase().includes(part.toLowerCase())), record.reference);
+      } else {
+        assert.ok(general.includes(record.title ?? ""), record.reference);
+      }
+      assert.ok(general.includes("longitud") && general.includes("anchura") && (general.includes("peso") || general.includes("masa")), record.reference);
       assert.equal(prepared.status, record.reference === "BA1465" ? "review" : "ready", record.reference);
       improved.add(record.reference);
     }

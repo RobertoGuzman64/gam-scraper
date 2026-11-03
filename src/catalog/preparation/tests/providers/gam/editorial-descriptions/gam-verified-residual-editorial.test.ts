@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { resolveGamVerifiedResidualEditorial } from "../../../../mapping/providers/gam/editorial-descriptions/verified-residual-editorial.js";
+import { verifiedCanonicalBriefEditorial } from "../../../../evidence/verified-canonical-brief-editorial.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const additional = new Set(["6206", "6817", "6585", "6545", "6707", "4776", "2159", "2061", "2049", "2172", "2241", "2649", "1022", "2138", "2167", "2168", "2173", "2162", "2183", "2074", "2016", "2028"]);
@@ -21,7 +22,14 @@ test("las redacciones verificadas preservan el original y las especificaciones d
     const record = find(reference);
     const initial = JSON.stringify(record);
     const result = prepareSourceProduct(record).product;
-    assert.ok(result.description_general && result.description_general.length >= 200 && result.description_general.length < 650, reference);
+    const revised: Readonly<Record<string, { readonly general: string }>> = verifiedCanonicalBriefEditorial;
+    const editorial = revised[`gam:${reference}`];
+    if (editorial) {
+      assert.equal(result.description_general, editorial.general, reference);
+      assert.ok(result.description_general.length >= 200 && result.description_general.length < 900, reference);
+    } else {
+      assert.ok(result.description_general && result.description_general.length >= 200 && result.description_general.length < 650, reference);
+    }
     assert.ok(record.longDescription && result.description_general.length < record.longDescription.length / 2, reference);
     assert.equal(JSON.stringify(record), initial, reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) assert.equal(result.spec[key], value, `${reference}: ${key}`);

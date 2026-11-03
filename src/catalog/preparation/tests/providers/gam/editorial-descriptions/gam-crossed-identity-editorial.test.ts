@@ -4,6 +4,8 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamCrossedIdentityEditorial } from "../../../../mapping/providers/gam/identity/crossed-identity-editorial.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { verifiedCanonicalBriefEditorial } from "../../../../evidence/verified-canonical-brief-editorial.js";
+import { verifiedPhase163Editorial } from "../../../../evidence/verified-phase163-editorial.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const refs = [
@@ -33,7 +35,11 @@ test("corrige descripciones cruzadas usando identidad y datos del anuncio acredi
     assert.ok(model && normalize(evidence.short).includes(normalize(model)), reference);
     assert.equal(JSON.stringify(record), original, reference);
     assert.deepEqual(prepared.product.spec, prepareSourceProduct({ ...record }).product.spec, reference);
-    if (evidence.general) assert.equal(prepared.product.description_general, evidence.general, reference);
+    if (evidence.general) {
+      const revised: Readonly<Record<string, { readonly general: string }>> = verifiedCanonicalBriefEditorial;
+      const phase163: Readonly<Record<string, { readonly general: string }>> = verifiedPhase163Editorial;
+      assert.equal(prepared.product.description_general, phase163[`gam:${reference}`]?.general ?? revised[`gam:${reference}`]?.general ?? evidence.general, reference);
+    }
   }
 });
 
@@ -45,7 +51,16 @@ test("no atribuye características de Ibiza Dogma, Hyster H2.0FT ni Tennant BCS 
   ] as const) {
     const prepared = prepareSourceProduct(find(reference));
     assert.doesNotMatch(prepared.product.description ?? "", forbidden, reference);
-    assert.doesNotMatch(prepared.product.description_general ?? "", forbidden, reference);
+    const general = prepared.product.description_general ?? "";
+    if (reference === "2305") {
+      assert.match(general, /H2\.0FT, modelo diferente del C1\.5L/iu);
+    } else if (reference === "4029") {
+      assert.match(general, /S16H.*S16L.*no se debe trasladar/isu);
+    } else {
+      assert.match(general, /Ibiza Titanium.*Ibiza Dogma/isu);
+      assert.match(general, /no se asigna una autonomía, batería o equipamiento efectivo/iu);
+      assert.doesNotMatch(general, /Titanium.{0,60}50 km de autonomía/iu);
+    }
     assert.match(`${find(reference).shortDescription ?? ""} ${find(reference).longDescription ?? ""}`, forbidden);
   }
   assert.match(prepareSourceProduct(find("6857")).product.description ?? "", /carece de placa identificativa/iu);

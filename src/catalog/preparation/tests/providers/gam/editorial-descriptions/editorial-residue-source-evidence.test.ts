@@ -6,6 +6,7 @@ import { removeGamResidualEditorialArtifacts } from "../../../../mapping/provide
 import { removeGomarizConversationalLead } from "../../../../mapping/providers/gomariz/residual-general.js";
 import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-additional.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { verifiedCanonicalBriefEditorial } from "../../../../evidence/verified-canonical-brief-editorial.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
@@ -50,8 +51,11 @@ test("Gomariz elimina el prefacio conversacional solo para la ficha acreditada",
   const record = find(gomariz.products, "1011JFB");
   const general = prepareSourceProduct(record).product.description_general;
   assert.ok(general);
-  const suffix = ` Año de fabricación de esta unidad: ${record.year}.`;
-  assert.equal(general.endsWith(suffix) ? general.slice(0, -suffix.length) : general, record.longDescription?.slice("Claro. ".length));
+  assert.equal(removeGomarizConversationalLead(record, record.longDescription ?? null),
+    record.longDescription?.slice("Claro. ".length));
+  assert.equal(general, verifiedCanonicalBriefEditorial["gomariz:1011JFB"].general);
+  assert.match(general, /26\.000 kg/);
+  assert.doesNotMatch(general, /^Claro\./);
   const variations: readonly ProductRecord[] = [
     { ...record, reference: "OTRA" },
     { ...record, model: "PREMIUM 320" },
@@ -105,8 +109,8 @@ test("conserva respuestas válidas asociadas a preguntas explícitas", () => {
       assert.doesNotMatch(general, /\?\s+(?:Sí|No)\./u);
     } else {
       assert.match(general, /Hyster J1\.6XN/u);
-      assert.match(general, /1600 KG/u);
-      assert.match(general, /48V \/ 625Ah/u);
+      assert.match(general, /(?:1600 KG|1\.600 kg)/u);
+      assert.match(general, /(?:48V \/ 625Ah|48 V y 625 Ah)/u);
       assert.doesNotMatch(general, /\?\s+(?:Sí|No)\./u);
     }
   }
