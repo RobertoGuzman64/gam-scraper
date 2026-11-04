@@ -172,7 +172,13 @@ test("el cierre operativo exige evidencia, distingue trabajo real y no bloquea p
     .some((line) => line.includes("REQUIERE INTERVENCIÓN")));
   assert.equal(hasUnresolvedCatalogAuditContracts(coverage, cleanPriorities, completeSpecifications), false);
 
-  assert.ok(formatCatalogAuditClosureReport(coverage, cleanPriorities, technicalSpecs)
+  const limitedSpecifications = { ...completeSpecifications, totals: {
+    ...completeSpecifications.totals, canonicalOriginals: technicalSpecs.totals.canonicalOriginals,
+    reconstructedSources: technicalSpecs.totals.reconstructedSources
+  } };
+  assert.equal(hasUnresolvedCatalogAuditContracts(coverage, cleanPriorities, limitedSpecifications), false);
+  assert.equal(hasCompleteCatalogAuditEvidence(coverage, limitedSpecifications), false);
+  assert.ok(formatCatalogAuditClosureReport(coverage, cleanPriorities, limitedSpecifications)
     .some((line) => line.includes("ALCANCE LIMITADO")));
   const missingDescription = { ...coverage, totals: { ...coverage.totals,
     pending: { ...coverage.totals.pending, description_general: 1 }
