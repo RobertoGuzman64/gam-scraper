@@ -90,8 +90,10 @@ const preparedSets = async (root, provider) => {
     }
     for (const name of members) await regularFile(join(folder, name));
     const group = [provider, preparation.source.scope, preparation.source.prefix, preparation.source.catalogSha256].join(":");
-    sets.push({ id, group, timestamp: stamp, sha: manifest.preparationSha256,
-      paths: members.map((name) => join(folder, name)) });
+    sets.push({
+      id, group, timestamp: stamp, sha: manifest.preparationSha256,
+      paths: members.map((name) => join(folder, name))
+    });
   }
   return sets;
 };
@@ -146,28 +148,24 @@ const publicationSets = async (root, provider, prepared) => {
       throw new Error(`Alias de publicación ambiguo para ${approval}`);
     }
     seenApprovals.add(approval);
-    const stored = historic.publications.find((item) => item.approvalSha256 === approval &&
-      item.preparationSha256 === manifest.preparationSha256);
+    const stored = historic.publications.find((item) => item.approvalSha256 === approval);
+    if (stored && stored.preparationSha256 !== manifest.preparationSha256) {
+      throw new Error(`Índice de retención referencia publicación modificada: ${provider}`);
+    }
     const stamp = times.get(manifest.preparationSha256) ?? (stored ? Date.parse(stored.preparedAt) : NaN);
-    result.push({ directory, approval, runId: manifest.runId,
-      timestamp: Number.isFinite(stamp) ? stamp : null, prepSha: manifest.preparationSha256 });
+    result.push({
+      directory, approval, runId: manifest.runId,
+      timestamp: Number.isFinite(stamp) ? stamp : null, prepSha: manifest.preparationSha256
+    });
   }
   if (!result.some((item) => item.approval === active.approvalSha256)) throw new Error(`Publicación activa ausente: ${provider}`);
-  if (historic.publications.some((item) => !result.some((published) => published.approval === item.approvalSha256 &&
-    published.prepSha === item.preparationSha256))) {
-    throw new Error(`Índice de retención referencia publicación ausente o modificada: ${provider}`);
-  }
-  return { result, active: active.approvalSha256, retained: historic.publications };
+  return { result, active: active.approvalSha256 };
 };
 
-const retainPublications = (publications, active, retained) => {
+const retainPublications = (publications, active) => {
   const current = publications.find((item) => item.approval === active);
   if (!current) throw new Error(`Publicación activa ausente: ${active}`);
-  const byApproval = new Map(publications.map((item) => [item.approval, item]));
-  const indexedPrevious = retained.map((item) => byApproval.get(item.approvalSha256))
-    .find((item) => item && item.approval !== active && item.timestamp !== null &&
-      current.timestamp !== null && item.timestamp <= current.timestamp);
-  const previous = indexedPrevious ?? publications.filter((item) => item.approval !== active &&
+  const previous = publications.filter((item) => item.approval !== active &&
     item.timestamp !== null && current.timestamp !== null && item.timestamp <= current.timestamp)
     .sort((a, b) => b.timestamp - a.timestamp || b.approval.localeCompare(a.approval))[0];
   const keep = [current, ...(previous ? [previous] : [])];
@@ -194,11 +192,13 @@ const planForProvider = async (root, provider, units) => {
     const publicationsRoot = join(root, "catalogs", "providers", provider, "publications");
     if ((await list(publicationsRoot)).length === 0) return { prepared: 0, publications: 0, keptPrepared: 0, keptPublications: 0 };
     const inspected = await publicationSets(root, provider, preparations);
-    return { prepared: 0, publications: inspected.result.length, keptPrepared: 0,
-      keptPublications: inspected.result.length };
+    return {
+      prepared: 0, publications: inspected.result.length, keptPrepared: 0,
+      keptPublications: inspected.result.length
+    };
   }
-  const { result: publications, active, retained } = await publicationSets(root, provider, preparations);
-  const { keep, protectedApprovals } = retainPublications(publications, active, retained);
+  const { result: publications, active } = await publicationSets(root, provider, preparations);
+  const { keep, protectedApprovals } = retainPublications(publications, active);
   for (const publication of publications) {
     if (!protectedApprovals.has(publication.approval)) {
       addUnit(units, [publication.directory], `publicación anterior: ${provider}`);
@@ -242,8 +242,10 @@ const planForProvider = async (root, provider, units) => {
     if (!validSha(data?.approvalSha256)) throw new Error(`Recibo sin aprobación válida: ${path}`);
     if (!protectedApprovals.has(data.approvalSha256)) addUnit(units, [path], `recibo histórico: ${provider}`);
   }
-  return { prepared: preparations.length, publications: publications.length,
-    keptPrepared: keptPreps.size, keptPublications: protectedApprovals.size };
+  return {
+    prepared: preparations.length, publications: publications.length,
+    keptPrepared: keptPreps.size, keptPublications: protectedApprovals.size
+  };
 };
 
 const additionalArtifacts = async (root, units) => {
@@ -257,7 +259,7 @@ const additionalArtifacts = async (root, units) => {
     }
   }
   for (const [provider, prefixes] of [["manain", ["prueba-manain-cdp", "prueba-manain"]],
-    ["mercaeleva", ["scrape-mercaeleva"]]]) {
+  ["mercaeleva", ["scrape-mercaeleva"]]]) {
     const directory = join(root, "storage", "scraped", provider);
     for (const prefix of prefixes) {
       const summary = join(directory, `${prefix}-summary.json`);
@@ -397,7 +399,7 @@ const operationalStateChange = (before, after, items) => {
     if (archivedPartial.has(provider) &&
       (first === "WARN |   ORIGINAL OPERATIVO | PARCIAL | Extracción parcial conservada; CSV coincide con el resumen" &&
         next === "    ORIGINAL OPERATIVO | AUSENTE | Sin extracción conservada" ||
-       first === "WARN |   PREPARACIÓN | PARCIAL | Preparación heredada disponible; no acreditada como preparación offline" &&
+        first === "WARN |   PREPARACIÓN | PARCIAL | Preparación heredada disponible; no acreditada como preparación offline" &&
         next === "    PREPARACIÓN | AUSENTE | Sin preparación conservada")) continue;
     return `Línea ${index + 1}: antes ${JSON.stringify(first)}; después ${JSON.stringify(next)}`;
   }
@@ -409,14 +411,15 @@ const retentionIndexes = async (root) => {
   for (const provider of providers) {
     const prepared = await preparedSets(root, provider);
     if (prepared.length === 0) continue;
-    const { result: publications, active, retained } = await publicationSets(root, provider, prepared);
-    const { keep } = retainPublications(publications, active, retained);
-    if (keep.some((item) => item.timestamp === null)) continue;
+    const { result: publications, active } = await publicationSets(root, provider, prepared);
+    const { keep } = retainPublications(publications, active);
+    if (keep[0].timestamp === null) continue;
     const path = join(root, "storage", "providers", provider, "publication-retention.json");
     let previous = null;
     try { previous = await readFile(path); } catch (error) { if (!missing(error)) throw error; }
-    const current = JSON.stringify({ version: 1, providerId: provider,
-      publications: keep.map((item) => ({
+    const current = JSON.stringify({
+      version: 1, providerId: provider,
+      publications: keep.filter((item) => item.timestamp !== null).map((item) => ({
         approvalSha256: item.approval, preparationSha256: item.prepSha,
         preparedAt: new Date(item.timestamp).toISOString()
       }))

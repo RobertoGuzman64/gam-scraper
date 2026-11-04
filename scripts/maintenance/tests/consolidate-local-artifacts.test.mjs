@@ -17,8 +17,10 @@ const rootFiles = async (root, count) => {
   const preparations = [];
   for (let index = 1; index <= count; index += 1) {
     const id = `catalog-${String(index).padStart(2, "0")}`;
-    const text = JSON.stringify({ source: { providerId: provider, prefix: "catalog", scope: "s1", catalogSha256: "a".repeat(64) },
-      preparedAt: `2026-11-0${index}T00:00:00.000Z`, products: [], totals: { ready: 0, review: 0 } });
+    const text = JSON.stringify({
+      source: { providerId: provider, prefix: "catalog", scope: "s1", catalogSha256: "a".repeat(64) },
+      preparedAt: `2026-11-0${index}T00:00:00.000Z`, products: [], totals: { ready: 0, review: 0 }
+    });
     const digest = sha(text);
     await save(root, `storage/prepared/gam/${id}-preparation.json`, text);
     await save(root, `storage/prepared/gam/${id}-preparation.manifest.json`, JSON.stringify({
@@ -34,9 +36,11 @@ const rootFiles = async (root, count) => {
     const accreditation = JSON.stringify({ version: 1, runId: `individual-gam-${index}`, approved: true });
     const approval = sha(accreditation);
     const products = "[]";
-    const manifest = { version: 1, providerId: provider, runId: `individual-gam-${index}`,
+    const manifest = {
+      version: 1, providerId: provider, runId: `individual-gam-${index}`,
       preparationSha256: prepared.digest, approvalSha256: approval,
-      files: { "gam-publishable.json": sha(products), "accreditation.json": approval } };
+      files: { "gam-publishable.json": sha(products), "accreditation.json": approval }
+    };
     const target = `catalogs/providers/gam/publications/${approval}`;
     await save(root, `${target}/accreditation.json`, accreditation);
     await save(root, `${target}/gam-publishable.json`, products);
@@ -212,19 +216,70 @@ test("sin fecha de la publicación activa nunca inventa 1970 ni descarta version
   });
 });
 
-test("bloquea índices de retención corruptos o con publicaciones ausentes", async () => {
-  await workspace(async ({ root }) => {
-    const { preparations } = await rootFiles(root, 3);
+test("reconcilia referencias históricas ausentes y conserva las dos últimas publicaciones", async () => {
+  await workspace(async ({ root, outside }) => {
+    const { preparations, publicationIds } = await rootFiles(root, 3);
     const path = "storage/providers/gam/publication-retention.json";
-    await save(root, path, JSON.stringify({ version: 1, providerId: provider, publications: [{
-      approvalSha256: "f".repeat(64), preparationSha256: preparations[0].digest,
-      preparedAt: "2026-11-01T00:00:00.000Z"
-    }] }));
-    await assert.rejects(planConsolidation(root), /Índice de retención referencia publicación ausente/);
-    await save(root, path, JSON.stringify({ version: 1, providerId: provider, publications: [{
-      approvalSha256: "no-es-sha", preparationSha256: preparations[0].digest,
-      preparedAt: "2026-11-01T00:00:00.000Z"
-    }] }));
+    await save(root, path, JSON.stringify({
+      version: 1, providerId: provider, publications: [{
+        approvalSha256: publicationIds[0], preparationSha256: preparations[0].digest,
+        preparedAt: "2026-11-01T00:00:00.000Z"
+      }, {
+        approvalSha256: "f".repeat(64), preparationSha256: "e".repeat(64),
+        preparedAt: "2026-10-31T00:00:00.000Z"
+      }]
+    }));
+    await save(root, "scripts/tooling.mjs", 'console.log("ESTADO INTACTO");');
+    assert.equal((await planConsolidation(root)).length, 4);
+    await consolidateLocalArtifacts(root, outside);
+    const remaining = (await readdir(join(root, "catalogs/providers/gam/publications")))
+      .filter((entry) => /^[a-f0-9]{64}$/.test(entry));
+    assert.deepEqual(remaining.sort(), publicationIds.slice(1).sort());
+    const index = JSON.parse(await readFile(join(root, path), "utf8"));
+    assert.deepEqual(index.publications.map((item) => item.approvalSha256),
+      [publicationIds[2], publicationIds[1]]);
+  });
+});
+
+test("el índice antiguo no sustituye a la publicación inmediatamente anterior", async () => {
+  await workspace(async ({ root, outside }) => {
+    const { preparations, publicationIds } = await rootFiles(root, 4);
+    const path = "storage/providers/gam/publication-retention.json";
+    await save(root, path, JSON.stringify({
+      version: 1, providerId: provider, publications: [{
+        approvalSha256: publicationIds[0], preparationSha256: preparations[0].digest,
+        preparedAt: "2026-11-01T00:00:00.000Z"
+      }, {
+        approvalSha256: publicationIds[1], preparationSha256: preparations[1].digest,
+        preparedAt: "2026-11-02T00:00:00.000Z"
+      }]
+    }));
+    await save(root, "scripts/tooling.mjs", 'console.log("ESTADO INTACTO");');
+    assert.equal((await planConsolidation(root)).length, 8);
+    await consolidateLocalArtifacts(root, outside);
+    const remaining = (await readdir(join(root, "catalogs/providers/gam/publications")))
+      .filter((entry) => /^[a-f0-9]{64}$/.test(entry));
+    assert.deepEqual(remaining.sort(), publicationIds.slice(2).sort());
+  });
+});
+
+test("bloquea índices de retención corruptos o referencias alteradas", async () => {
+  await workspace(async ({ root }) => {
+    const { preparations, publicationIds } = await rootFiles(root, 3);
+    const path = "storage/providers/gam/publication-retention.json";
+    await save(root, path, JSON.stringify({
+      version: 1, providerId: provider, publications: [{
+        approvalSha256: publicationIds[0], preparationSha256: "e".repeat(64),
+        preparedAt: "2026-11-01T00:00:00.000Z"
+      }]
+    }));
+    await assert.rejects(planConsolidation(root), /Índice de retención referencia publicación modificada/);
+    await save(root, path, JSON.stringify({
+      version: 1, providerId: provider, publications: [{
+        approvalSha256: "no-es-sha", preparationSha256: preparations[0].digest,
+        preparedAt: "2026-11-01T00:00:00.000Z"
+      }]
+    }));
     await assert.rejects(planConsolidation(root), /Índice de retención inválido/);
   });
 });
