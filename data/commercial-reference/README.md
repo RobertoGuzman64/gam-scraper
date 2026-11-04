@@ -1,22 +1,34 @@
-# Referencias comerciales del backend (solo lectura)
+# Referencias para la salida comercial de EQUIPZILLA
 
-Este directorio se añade al repositorio del **scraper** como evidencia de comparación para la siguiente campaña comercial. **No es el contrato runtime ni la taxonomía oficial de una base de datos viva** y los programas actuales no deben leerlo de manera automática. No reemplaza `data/category/categorySell-flat.json`, `data/category/categorySell-tree.json` ni `data/import/attributeCatalog.json`.
+Estas referencias permiten **construir en el scraper** el catálogo comercial propio. El backend aportado sirve para conocer IDs, tipos, relaciones y campos; **no** para copiar productos ni adaptar la calidad del catálogo a sus seeds. Esta carpeta no alimenta automáticamente el runtime. El backend y la BD no se modifican en este trabajo.
 
-## Archivos
+## Fuentes únicas (no duplicar catálogos)
 
-- `backend-taxonomy-reference.json`: representación plana, preservando campos, del seed de `CategorySell` (**116** categorías), `CategoryAttribute` (**123** atributos), `CategoryAttribute_CategorySell` (**1.837** relaciones) y `BrandLogo` (**20** logotipos). Enum `AttributeType.X` se serializa como `X`, sin cambiar los IDs. Las relaciones conservan `actived` y las categorías conservan sus metadatos de seed.
-- `legacy-products/gam.json`: **927** entradas comerciales de `seedDataGAM.ts`.
-- `legacy-products/gomariz.json`: **140** entradas de `seedDataGomariz.ts`.
-- `legacy-products/mercaeleva.json`: **214** entradas de `seedDataMercaEleva.ts`.
-- `company-ids-reference.json`: IDs **comunicados por Fernando el 30/10/2026**, no acreditados contra BD viva. Para Europa Prefabri, 184 en develop y 964 en producción; para los otros cuatro proveedores coinciden.
-- `source-manifest.json`: origen exacto, hashes de fuentes y archivos, criterios de extracción.
+| Necesidad                        | Archivo vigente                               | Contenido                                                             |
+| -------------------------------- | --------------------------------------------- | --------------------------------------------------------------------- |
+| Categorías e IDs                 | `../category/categorySell-flat.json`          | 116 categorías, `id`, `parentId`, `name`, `slug`                      |
+| Árbol para consulta              | `../category/categorySell-tree.json` / `.txt` | Las mismas 116 categorías; no es otro catálogo                        |
+| Atributos y reglas de asociación | `../import/attributeCatalog.json`             | 123 atributos y 1.837 relaciones `categoryID`–`attributeID`           |
+| Logos comerciales                | `backend-taxonomy-reference.json`             | 20 `logoID`, marca, slug y URL del seed                               |
+| Empresas por entorno             | `company-ids-reference.json`                  | Referencias de `companyID` develop/production; configurar por entorno |
+| Forma de productos antiguos      | `legacy-products/*.json`                      | **Un ejemplo parcial por proveedor**, no productos para importar      |
+| Procedencia                      | `source-manifest.json`                        | Rutas y hashes de los seeds de backend utilizados                     |
 
-Los tres seeds comerciales son **referencia histórica**, no verdad técnica. Se han trasladado los objetos de datos presentes en el código del backend, sin executar imports ni conectarse a BD. Los miembros `ProductCondition.X` se serializan como `X` para JSON. No contienen `metadata` por producto porque esos seeds no la incluían. Algunos textos/valores o categorías heredados pueden estar equivocados; **comparar y contrastar antes de reutilizar**. Los productos de Europa Prefabri y Manain no se incorporan a los seeds de este primer corte porque no están entre las 1.337 publicaciones técnicas acreditadas del piloto.
+Los archivos `data/category` y `data/import` son recursos operativos existentes, **no documentación para recortar**. Se han incorporado a las categorías los IDs 115–120 presentes en el seed de backend. El catálogo de atributos y sus relaciones ya coincide exactamente con esos seeds y no se duplica aquí. Las nuevas categorías no tienen relaciones de atributo en el seed.
 
-**Discrepancia documentada:** el scraper tiene **110** categorías en `data/category/categorySell-flat.json`; el seed de backend aportado contiene **116** (IDs adicionales 115, 116, 117, 118, 119 y 120). Se conservan ambos como evidencia; no actualizar la taxonomía runtime sin validar con la BD real y el dueño de producto.
+## Reglas para generar los JSON comerciales (pendientes de implementar)
 
-Los `logoID`, `categorySellID` y `attributeID` de estos datos pertenecen al **snapshot del backend adjunto**, no son confirmación de sus valores desplegados. Los `companyID` por entorno tampoco están validados en la BD. No utilizar las referencias comerciales como claves de identidad. Los JSON legados contienen referencias duplicadas o reutilizadas posibles y no sustituyen las identidades de origen del scraper.
+1. **Entrada:** usar exclusivamente fichas técnicas acreditadas, con identidad de proveedor, referencia, URL, condición, specs, imágenes y procedencia. No modificar originales, publicaciones ni sus hashes.
+2. **Alcance:** **excluir lotes de productos y herramientas** del JSON comercial; identificar por naturaleza real del artículo y evidencia de la ficha, no por coincidencias ingenuas de palabras. No confundir los lotes de venta con los lotes técnicos de proceso. Mantener un registro comprobable de excluidos con motivo, sin borrarlos del catálogo técnico.
+3. **Categoría:** asignar `categorySellID` de `categorySell-flat.json` según familia, características y `condition` (`Nuevo` o `Segunda_Mano`); utilizar una categoría activa y hoja coherente con su rama. No asignar por proximidad ni heredar ciegamente `categorySellID` del seed antiguo. Si falta evidencia, registrar excepción.
+4. **Atributos:** partir de `spec` acreditadas, consultar `attributeCatalog.json`, usar solo `attributeID` real asociado a la categoría y una sola asignación por ID. Respetar `type`, unidades, relaciones y `required`; normalizar magnitudes cuando haya equivalencia demostrable. `SELECT` y `MULTISELECT` necesitan opciones y reglas verificables: `unit_option` no siempre define un vocabulario cerrado. No inventar valores ni tratar desconocido como cero.
+5. **Contenido:** componer `title`, `description_title`, `description`, `description_general`, `image`, `images`, `spec` y `metadata` a partir de datos acreditados; evitar textos genéricos, contradicciones y reutilización literal de marketing histórico sin contrastar. `price` solo con precio acreditado; su ausencia es una excepción comercial, no motivo para falsificarlo.
+6. **IDs e identidad:** conservar `providerId`, `reference`, `externalReference` y `sourceUrl` del scraper para trazabilidad. Para GAM, la referencia comercial antigua corresponde a `externalReference`, que **no es identidad única**. Resolver colisiones con identidad de origen; nunca fusionar máquinas por el nombre o la referencia visible.
+7. **Logo y empresa:** resolver `logoID` solo con marca inequívoca de la lista de 20; no deducir fabricantes desconocidos de `Otras Marcas` (ID 18). `companyID` depende del proveedor y entorno y debe ser configurable. No copiar automáticamente IDs de un producto histórico.
+8. **Salida y control:** crear JSON comercial **independiente** de la publicación técnica, con todas las unidades elegibles y excepciones explícitas para excluidos, no categorizados y datos pendientes. Contrastar cobertura, tipos, relaciones y diferencias antes de aprobar una exportación. No importar en backend todavía.
 
-## Uso correcto en el siguiente hilo
+## Modelo de datos real
 
-Auditar primero el repositorio y el censo real; comparar **por proveedor y referencia inequívoca, con comprobación de colisiones**, y luego contrastar diferencias con specs y publicaciones acreditadas. Usar los seeds para detectar pérdidas de información comercial y diseños anteriores, no para copiar información sin evidencia. Las nuevas reglas deben tener pruebas y un diff global antes de aceptarse.
+El backend define en `prisma/schema.prisma` un `Product` con `categorySellID`, `companyID`, `logoID`, `condition`, `title`, `reference`, `price`, textos, imágenes, `spec` y `metadata`. Los atributos son una relación **`ProductAttribute`** (`attributeID` y `value` persistido como `String?`), no una columna `attributes` de `Product`. Los seeds antiguos expresan atributos como `[ {"attributeID": 115, "value": "GENIE"} ]`; la futura importación deberá resolver la conversión y persistencia, sin atribuir esa responsabilidad al contrato técnico. Los tres JSON de `legacy-products/` **solo ilustran campos reales**, están abreviados y no forman un dataset histórico ni un contrato de importación.
+
+**Verificación antes de trabajar:** 116 IDs de categoría únicos con padres existentes, 123 IDs de atributo únicos, 1.837 relaciones válidas, 20 IDs de logo únicos; ninguna categoría/atributo inventado y exclusiones justificadas. La implementación comercial, sus pruebas y cualquier adaptación del backend corresponden a fases posteriores.

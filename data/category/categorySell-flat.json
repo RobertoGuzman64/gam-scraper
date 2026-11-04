@@ -336,6 +336,30 @@
     "slug": "tractor-electrico"
   },
   {
+    "id": 117,
+    "parentId": 24,
+    "name": "Casetas, Contenedores y Vallas de obra",
+    "slug": "casetas-contenedores-vallas-obras"
+  },
+  {
+    "id": 118,
+    "parentId": 117,
+    "name": "Casetas de Obra",
+    "slug": "casetas-obra"
+  },
+  {
+    "id": 119,
+    "parentId": 117,
+    "name": "Contenedores Marítimos",
+    "slug": "contenedores-maritimos"
+  },
+  {
+    "id": 120,
+    "parentId": 117,
+    "name": "Aseo",
+    "slug": "aseo-modular"
+  },
+  {
     "id": 3,
     "parentId": 1,
     "name": "Maquinaria de Ocasión",
@@ -658,5 +682,17 @@
     "parentId": 75,
     "name": "Furgonetas Eléctricas de Segunda Mano",
     "slug": "furgonetas-electricas-segunda-mano"
+  },
+  {
+    "id": 115,
+    "parentId": 3,
+    "name": "Casetas, Contenedores y Vallas de obra Segunda Mano",
+    "slug": "casetas-contenedores-vallas-segunda-mano"
+  },
+  {
+    "id": 116,
+    "parentId": 115,
+    "name": "Contenedores Marítimos de Segunda Mano",
+    "slug": "contenedores-maritimos-segunda-mano"
   }
 ]

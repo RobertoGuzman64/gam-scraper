@@ -1,9 +1,7 @@
 {
-  "origin": "Marketplace-Back-develop.zip (copia subida por el usuario; fuente de seed, no BD viva)",
-  "originArchiveSha256": "08918bfe85545e9eafbc1fa89c56e0906e2daa2902bbeb14c9f065e498f96075",
-  "scraperComparedArchiveSha256": "8a17e5500ad92941efef18d57b1f15952baed526fd0548a16bfc15b08b0cd240",
-  "extractionMethod": "AST TypeScript de literales seed, con enums Prisma serializados a su miembro string; sin ejecutar el código seed ni acceder a BD",
-  "backendSeedSources": {
+  "backendSeedOrigin": "Marketplace-Back-develop.zip / prisma/seedData",
+  "archiveSha256": "08918bfe85545e9eafbc1fa89c56e0906e2daa2902bbeb14c9f065e498f96075",
+  "seedSha256": {
     "categories": {
       "path": "prisma/seedData/seedDataCategorySell.ts",
       "sha256": "cd6e03c99982cb338c0694af2169e7ca3e24b92fab45ec377cd4ea54ea4a8ac5"
@@ -33,35 +31,26 @@
       "sha256": "693345d8327213f72bba9819e4d21c4ffe4913061f8d81aae7cc99eebbcc43be"
     }
   },
-  "inventory": {
+  "sourceCounts": {
     "categories": 116,
     "attributes": 123,
     "relations": 1837,
-    "brandLogos": 20,
-    "legacyProducts": {
-      "gam": 927,
-      "gomariz": 140,
-      "mercaeleva": 214
-    },
-    "legacyTotal": 1281,
-    "existingScraperCategories": 110,
-    "additionalBackendCategoryIDs": [
-      117,
-      118,
-      119,
-      120,
-      115,
-      116
-    ]
+    "brandLogos": 20
   },
-  "companyIdsSource": "Fernando Ojeda, mensaje del 30/10/2026; sin confirmación de BD viva",
-  "snapshotStatus": "Referencia histórica de código, no contrato aprobado ni datos de producción",
-  "generatedFilesSha256": {
-    "data/commercial-reference/README.md": "0ee3bbafb548836e6e551e62301e5de013007d677883c142f73f6aefd59b7eea",
-    "data/commercial-reference/backend-taxonomy-reference.json": "314b08cb5606099083ed6d1c805e32aa068dd13b3a3100dda911c9d9dfcc8fd6",
-    "data/commercial-reference/company-ids-reference.json": "12ca0c36219d796bd19c5fd886e249c68e1e59c98ae5176bd15911ae930dfd38",
-    "data/commercial-reference/legacy-products/gam.json": "33759232d83babd22ca3a5d53044e45c64f0209dd75f43701a104864dc81c2e1",
-    "data/commercial-reference/legacy-products/gomariz.json": "fcff9d428511abde7e44cd150e26145708969ada145d16f47cd7256546d787b9",
-    "data/commercial-reference/legacy-products/mercaeleva.json": "472ee0955be85f05e391ef07a0fb366b98722f6a88e1a0e93c5675445ec1d608"
+  "legacySamples": {
+    "gam": 1,
+    "gomariz": 1,
+    "mercaeleva": 1
+  },
+  "policy": "Referencias mínimas para construir el catálogo comercial en el scraper; los seeds históricos completos no forman parte de estos archivos.",
+  "fileSha256": {
+    "data/category/categorySell-flat.json": "308ddfe632fda15f2cdc60893aae66d83d04974c97d7fa89d764d99d0cee38f8",
+    "data/category/categorySell-tree.json": "d386ebc6bfa633ec0e19a2d4dacb3125602662cc9f4e7b51a7c4fd4482640782",
+    "data/category/categorySell-tree.txt": "0dce7cd1eebc501208c739d24d64f5f957123be6ef4b431cdf3e9656ad7f4576",
+    "data/commercial-reference/README.md": "4c21833c7da09d7de53fece703d7334e9bc67e0f34fdecc4f362f1517c8dbce7",
+    "data/commercial-reference/backend-taxonomy-reference.json": "b2ab3eaba68feb819f8b78f36d38c56d063f81da926169374c48c1899d496700",
+    "data/commercial-reference/legacy-products/gam.json": "880971aed4d83b9f1cf73ae49ea61a0ab1ba986d0656a70360cc944c5fb62809",
+    "data/commercial-reference/legacy-products/gomariz.json": "9a636ce912e7ea393b64a56ac95c23506929c951a43575849272a916c98d8a87",
+    "data/commercial-reference/legacy-products/mercaeleva.json": "4903fda22d25d6ba82def069d64ccf6d4923b02540c8f70d8b6b258d4e479635"
   }
 }
