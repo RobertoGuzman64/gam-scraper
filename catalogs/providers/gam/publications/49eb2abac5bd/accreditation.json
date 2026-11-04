@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "runId": "individual-gam-917d0b39b09abd0eb97755a81aebad76",
+  "runId": "individual-gam-874c2ac0c9b6338628ff28ff8043d1a5",
   "approved": true,
-  "approvalReason": "Cierre editorial acreditado del catalogo EQUIPZILLA, fases 121 a 130",
+  "approvalReason": "Acreditación automática de exclusiones históricas coincidentes, con evidencia y preparación verificadas",
   "sources": [
     {
       "providerId": "gam",
       "catalogSha256": "855865e4a99f709cd9b10b68e77d594841b8cbd8c64b4fc9eb851cb397162483",
-      "preparationSha256": "1ed176bae8286c05fd58c494f40ebe5b5e2c9f562e4f21ffdf93c32f6baacf13",
+      "preparationSha256": "dea6689e16f5654dd142cad14e0c74c830d6d8b3ff4f64fe0220eafc9db63b73",
       "productCount": 983
     }
   ],
@@ -22,7 +22,7 @@
         "Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo número de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicación"
       ],
       "decision": "excluir",
-      "reason": "ExclusiÃ³n propuesta por incidencias documentadas en la preparaciÃ³n: NÃºmero de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen; Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo nÃºmero de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicaciÃ³n",
+      "reason": "Exclusión propuesta por incidencias documentadas en la preparación: Número de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen; Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo número de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicación",
       "evidenceUrls": [
         "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6682-2020-hyster-h35ft"
       ]
@@ -37,7 +37,7 @@
         "Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo número de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicación"
       ],
       "decision": "excluir",
-      "reason": "ExclusiÃ³n propuesta por incidencias documentadas en la preparaciÃ³n: NÃºmero de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen; Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo nÃºmero de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicaciÃ³n",
+      "reason": "Exclusión propuesta por incidencias documentadas en la preparación: Número de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen; Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo número de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicación",
       "evidenceUrls": [
         "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6703-2020-hyster-h35ft"
       ]
@@ -51,7 +51,7 @@
         "Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha técnica"
       ],
       "decision": "excluir",
-      "reason": "ExclusiÃ³n propuesta por incidencias documentadas en la preparaciÃ³n: Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha tÃ©cnica",
+      "reason": "Exclusión propuesta por incidencias documentadas en la preparación: Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha técnica",
       "evidenceUrls": [
         "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6002-carretilla-elevadora-electrica-hyster-j50xtg6"
       ]
@@ -65,7 +65,7 @@
         "Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha técnica"
       ],
       "decision": "excluir",
-      "reason": "ExclusiÃ³n propuesta por incidencias documentadas en la preparaciÃ³n: Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha tÃ©cnica",
+      "reason": "Exclusión propuesta por incidencias documentadas en la preparación: Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha técnica",
       "evidenceUrls": [
         "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6003-carretilla-elevadora-electrica-hyster-j60xtg6"
       ]
@@ -80,7 +80,7 @@
         "Identidad GAM contradictoria: modelo anunciado distinto de J7.0XTG6 en ficha técnica"
       ],
       "decision": "excluir",
-      "reason": "ExclusiÃ³n propuesta por incidencias documentadas en la preparaciÃ³n: Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha tÃ©cnica; Identidad GAM contradictoria: modelo anunciado distinto de J7.0XTG6 en ficha tÃ©cnica",
+      "reason": "Exclusión propuesta por incidencias documentadas en la preparación: Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha técnica; Identidad GAM contradictoria: modelo anunciado distinto de J7.0XTG6 en ficha técnica",
       "evidenceUrls": [
         "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6004-carretilla-elevadora-electrica-hyster-j70xtg6"
       ]
