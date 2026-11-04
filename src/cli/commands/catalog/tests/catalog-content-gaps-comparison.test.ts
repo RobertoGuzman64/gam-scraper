@@ -50,7 +50,8 @@ test("huecos compara las publicaciones activas y acredita la cobertura de descri
   assert.equal(report.technicalDensity.totals.medium,
     report.technicalDensity.providers.reduce((sum, provider) => sum + provider.medium, 0));
   assert.ok(report.technicalDensity.providers.every((provider) => provider.sparse + provider.medium <= provider.products));
-  assert.ok(report.technicalDensity.providers.some((provider) => provider.providerId === "mercaeleva" && provider.median <= 2));
+  assert.equal(report.technicalDensity.totals.sparse, 0);
+  assert.equal(report.technicalDensity.totals.medium, 0);
   assert.equal(report.priorities.totals.appeared,
     report.priorities.pending.filter((item) => item.state === "aparecido").length);
   for (const stage of ["P0", "P1", "P2"] as const) {
@@ -150,18 +151,22 @@ test("el cierre operativo exige evidencia, distingue trabajo real y no bloquea p
     technicalSpecs.totals.pendingPublication > 0);
 
   const cleanPriorities = { ...priorities, totals: { ...priorities.totals, technical: 0 } };
-  const completeSpecifications = { ...technicalSpecs, totals: {
-    ...technicalSpecs.totals, canonicalOriginals: technicalSpecs.totals.products, reconstructedSources: 0,
-    pendingPublication: 0, sourceNotPreserved: 0, lostAfterPublication: 0, ambiguousNormalization: 0
-  } };
+  const completeSpecifications = {
+    ...technicalSpecs, totals: {
+      ...technicalSpecs.totals, canonicalOriginals: technicalSpecs.totals.products, reconstructedSources: 0,
+      pendingPublication: 0, sourceNotPreserved: 0, lostAfterPublication: 0, ambiguousNormalization: 0
+    }
+  };
   assert.equal(hasUnresolvedCatalogAuditContracts(coverage, cleanPriorities, completeSpecifications), false);
   assert.equal(hasCompleteCatalogAuditEvidence(coverage, completeSpecifications), true);
   assert.ok(formatCatalogAuditClosureReport(coverage, cleanPriorities, completeSpecifications)
     .some((line) => line.includes("CONFORME EN ALCANCE COMPARADO")));
 
-  const observations = { ...completeSpecifications, totals: {
-    ...completeSpecifications.totals, observationalMissing: completeSpecifications.totals.observationalMissing + 100
-  } };
+  const observations = {
+    ...completeSpecifications, totals: {
+      ...completeSpecifications.totals, observationalMissing: completeSpecifications.totals.observationalMissing + 100
+    }
+  };
   assert.equal(hasUnresolvedCatalogAuditContracts(coverage, cleanPriorities, observations), false);
   assert.ok(formatCatalogAuditClosureReport(coverage, cleanPriorities, observations)
     .some((line) => line.includes("CONFORME EN ALCANCE COMPARADO")));
@@ -172,17 +177,22 @@ test("el cierre operativo exige evidencia, distingue trabajo real y no bloquea p
     .some((line) => line.includes("REQUIERE INTERVENCIÓN")));
   assert.equal(hasUnresolvedCatalogAuditContracts(coverage, cleanPriorities, completeSpecifications), false);
 
-  const limitedSpecifications = { ...completeSpecifications, totals: {
-    ...completeSpecifications.totals, canonicalOriginals: technicalSpecs.totals.canonicalOriginals,
-    reconstructedSources: technicalSpecs.totals.reconstructedSources
-  } };
+  const limitedSpecifications = {
+    ...completeSpecifications, totals: {
+      ...completeSpecifications.totals, canonicalOriginals: technicalSpecs.totals.canonicalOriginals,
+      reconstructedSources: technicalSpecs.totals.reconstructedSources
+    }
+  };
   assert.equal(hasUnresolvedCatalogAuditContracts(coverage, cleanPriorities, limitedSpecifications), false);
   assert.equal(hasCompleteCatalogAuditEvidence(coverage, limitedSpecifications), false);
   assert.ok(formatCatalogAuditClosureReport(coverage, cleanPriorities, limitedSpecifications)
     .some((line) => line.includes("ALCANCE LIMITADO")));
-  const missingDescription = { ...coverage, totals: { ...coverage.totals,
-    pending: { ...coverage.totals.pending, description_general: 1 }
-  } };
+  const missingDescription = {
+    ...coverage, totals: {
+      ...coverage.totals,
+      pending: { ...coverage.totals.pending, description_general: 1 }
+    }
+  };
   assert.equal(hasUnresolvedCatalogAuditContracts(missingDescription, cleanPriorities, completeSpecifications), true);
   const technicalPreparation = { ...cleanPriorities, totals: { ...cleanPriorities.totals, technical: 1 } };
   assert.equal(hasUnresolvedCatalogAuditContracts(coverage, technicalPreparation, completeSpecifications), true);
