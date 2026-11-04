@@ -1,8 +1,9 @@
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseIndividualCatalogProviders } from "../../options/individual-catalog.js";
 import { formatHeader, printReportLine, printStatus } from "../../reporting/terminal.js";
+import { LiveStatus } from "../../reporting/live-status.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { findDesktopDirectory } from "../../../infrastructure/filesystem/desktop-directory.js";
 import { publishIndividualCatalogs } from "../../../pipeline/publication/individual-finish.js";
@@ -21,12 +22,32 @@ comprueba integridad, ejecuta retención y auditor de huecos. --simular no escri
 Repetir el comando recupera un conjunto parcial sin sobrescribir entregas.
 No sustituye una campaña global de cuatro proveedores.`;
 
-const consolidate = (workspace: string): void => {
-  const processResult = spawnSync(process.execPath,
-    [join(workspace, "scripts", "maintenance", "consolidate-local-artifacts.mjs"), "--aplicar"],
-    { cwd: workspace, stdio: "inherit", windowsHide: true });
-  if (processResult.error || processResult.status !== 0) {
-    throw new Error(`ARCHIVADO PENDIENTE | Publicaciones activas conservadas. ${processResult.error?.message ?? `código ${processResult.status}`}. Corrige el bloqueo y repite catalogo:publicar`);
+export const consolidate = async (workspace: string): Promise<void> => {
+  const progress = new LiveStatus();
+  progress.update("FINISH | RETENCIÓN | archivando históricos");
+  try {
+    const child = spawn(process.execPath,
+      [join(workspace, "scripts", "maintenance", "consolidate-local-artifacts.mjs"), "--aplicar"],
+      { cwd: workspace, stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.setEncoding("utf8").on("data", (chunk: string) => { stdout += chunk; });
+    child.stderr.setEncoding("utf8").on("data", (chunk: string) => { stderr += chunk; });
+    const processResult = await new Promise<{ code: number | null; signal: NodeJS.Signals | null; error: Error | null }>((resolve) => {
+      let error: Error | null = null;
+      child.once("error", (reason) => { error = reason; });
+      child.once("close", (code, signal) => resolve({ code, signal, error }));
+    });
+    progress.stop();
+    if (stdout) process.stdout.write(stdout);
+    if (stderr) process.stderr.write(stderr);
+    if (processResult.error || processResult.code !== 0) {
+      const reason = processResult.error?.message ?? (processResult.signal
+        ? `señal ${processResult.signal}` : `código ${processResult.code}`);
+      throw new Error(`ARCHIVADO PENDIENTE | Publicaciones activas conservadas. ${reason}. Corrige el bloqueo y repite catalogo:publicar`);
+    }
+  } finally {
+    progress.stop();
   }
 };
 

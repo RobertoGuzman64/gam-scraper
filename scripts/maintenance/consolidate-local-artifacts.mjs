@@ -373,12 +373,17 @@ const runStatus = (root) => {
   return result.stdout.trim();
 };
 
-const preservedOperationalState = (before, after, items) => {
+const operationalStateChange = (before, after, items) => {
   const previous = before.split(/\r?\n/);
   const current = after.split(/\r?\n/);
-  if (previous.length !== current.length) return false;
-  const archivedPartial = items.some((item) =>
-    item.path === "storage/scraped/mercaeleva/scrape-mercaeleva-summary.json");
+  if (previous.length !== current.length) return `Número de líneas: antes ${previous.length}, después ${current.length}`;
+  const archivedPartial = new Set();
+  if (items.some((item) => item.path === "storage/scraped/mercaeleva/scrape-mercaeleva-summary.json")) {
+    archivedPartial.add("MERCAELEVA");
+  }
+  if (items.some((item) => /^storage\/scraped\/manain\/prueba-manain(?:-cdp)?-summary\.json$/.test(item.path))) {
+    archivedPartial.add("MANAIN");
+  }
   let provider = "";
   for (let index = 0; index < previous.length; index += 1) {
     const first = previous[index];
@@ -389,14 +394,14 @@ const preservedOperationalState = (before, after, items) => {
     }
     if (/^PASS \|\s+PREPARACIÓN \| CORRECTO \| Preparación acreditada \(\d+ Ready \/ \d+ Review\)$/.test(first) &&
       /^PASS \|\s+PREPARACIÓN \| CORRECTO \| Preparación acreditada \(\d+ Ready \/ \d+ Review\)$/.test(next)) continue;
-    if (provider === "MERCAELEVA" && archivedPartial &&
+    if (archivedPartial.has(provider) &&
       (first === "WARN |   ORIGINAL OPERATIVO | PARCIAL | Extracción parcial conservada; CSV coincide con el resumen" &&
         next === "    ORIGINAL OPERATIVO | AUSENTE | Sin extracción conservada" ||
        first === "WARN |   PREPARACIÓN | PARCIAL | Preparación heredada disponible; no acreditada como preparación offline" &&
         next === "    PREPARACIÓN | AUSENTE | Sin preparación conservada")) continue;
-    return false;
+    return `Línea ${index + 1}: antes ${JSON.stringify(first)}; después ${JSON.stringify(next)}`;
   }
-  return true;
+  return null;
 };
 
 const retentionIndexes = async (root) => {
@@ -487,8 +492,9 @@ export const consolidateLocalArtifacts = async (root, destination) => {
       await rm(join(root, record.path), { recursive: record.type === "directory" });
     }
     const finalState = runStatus(root);
-    if (!preservedOperationalState(initialState, finalState, items)) {
-      throw new Error("El estado operativo cambió tras retirar los históricos");
+    const stateChange = operationalStateChange(initialState, finalState, items);
+    if (stateChange !== null) {
+      throw new Error(`El estado operativo cambió tras retirar los históricos: ${stateChange}`);
     }
     await cleanEmptyParents(root, items);
     const bytes = records.flatMap((record) => record.files).reduce((sum, file) => sum + file.size, 0);

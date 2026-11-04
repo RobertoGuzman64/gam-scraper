@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
-import { lstat, rm } from "node:fs/promises";
+import { lstat, mkdir, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import test from "node:test";
-import { runPublishIndividual } from "../../../cli/commands/catalog/publish-individual.js";
+import { consolidate, runPublishIndividual } from "../../../cli/commands/catalog/publish-individual.js";
 import { preflightIndividualAccreditations } from "../individual-accreditation.js";
 import { publishIndividualCatalogs } from "../individual-finish.js";
 import { createIndividualFinishWorkspace, finishProviders, publishIndividualTestWorkspace } from "../../../testing/builders/individual-finish-fixture.js";
@@ -50,5 +51,18 @@ test("CLI FINISH conserva colores de reporting, admite selección y ejecuta rete
     assert.ok(second?.providers.every((item) => item.status === "YA VIGENTE"));
     assert.equal(retentionCount, 2);
     assert.equal(auditorCount, 2);
+  });
+});
+
+
+test("FINISH muestra actividad mientras espera la poda y conserva su código de error", async () => {
+  await withWorkspace(async (root) => {
+    const maintenance = join(root, "scripts", "maintenance");
+    await mkdir(maintenance, { recursive: true });
+    const script = join(maintenance, "consolidate-local-artifacts.mjs");
+    await writeFile(script, 'await new Promise((resolve) => setTimeout(resolve, 40)); console.log("CONSOLIDACIÓN CORRECTA");\n');
+    await consolidate(root);
+    await writeFile(script, 'console.error("BLOQUEO REAL"); process.exitCode = 5;\n');
+    await assert.rejects(consolidate(root), /ARCHIVADO PENDIENTE.*código 5/);
   });
 });

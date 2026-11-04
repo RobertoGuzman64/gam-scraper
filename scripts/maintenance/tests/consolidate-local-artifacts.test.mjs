@@ -318,6 +318,42 @@ console.log("PASS |   JSON FINAL | CORRECTO | Publicación vigente");`);
   });
 });
 
+test("archiva una extracción vacía de Manain sin bloquear el estado parcial anterior", async () => {
+  await workspace(async ({ root, outside }) => {
+    await rootFiles(root, 3);
+    await save(root, "storage/scraped/manain/prueba-manain-summary.json", JSON.stringify({
+      quality: { status: "blocked", published: false }, totals: { scrapedProducts: 0 }
+    }));
+    await save(root, "storage/scraped/manain/prueba-manain-partial-all.csv", "referencia\n");
+    await save(root, "scripts/tooling.mjs", `import { existsSync } from "node:fs";
+console.log("  MANAIN");
+if (existsSync("storage/scraped/manain/prueba-manain-summary.json")) {
+  console.log("WARN |   ORIGINAL OPERATIVO | PARCIAL | Extracción parcial conservada; CSV coincide con el resumen");
+  console.log("WARN |   PREPARACIÓN | PARCIAL | Preparación heredada disponible; no acreditada como preparación offline");
+} else {
+  console.log("    ORIGINAL OPERATIVO | AUSENTE | Sin extracción conservada");
+  console.log("    PREPARACIÓN | AUSENTE | Sin preparación conservada");
+}
+console.log("PASS |   JSON FINAL | CORRECTO | Publicación vigente");`);
+    const result = await consolidateLocalArtifacts(root, outside);
+    assert.equal(result.versions, 6);
+    await assert.rejects(readFile(join(root, "storage/scraped/manain/prueba-manain-summary.json")), { code: "ENOENT" });
+    await assert.rejects(readFile(join(root, "storage/scraped/manain/prueba-manain-partial-all.csv")), { code: "ENOENT" });
+    assert.equal((await readdir(join(root, "catalogs/providers/gam/publications"))).filter((entry) => /^[a-f0-9]{64}$/.test(entry)).length, 2);
+  });
+});
+
+test("identifica la primera diferencia operativa no autorizada sin borrar históricos", async () => {
+  await workspace(async ({ root, outside }) => {
+    await rootFiles(root, 3);
+    await save(root, "scripts/tooling.mjs", `import { readdir } from "node:fs/promises";
+const count = (await readdir("catalogs/providers/gam/publications")).filter((name) => name !== "active.json").length;
+console.log("PUBLICACIONES VIGENTES: " + count);`);
+    await assert.rejects(consolidateLocalArtifacts(root, outside), /estado operativo cambió.*Línea 1: antes/);
+    assert.equal((await readdir(join(root, "catalogs/providers/gam/publications"))).filter((entry) => /^[a-f0-9]{64}$/.test(entry)).length, 3);
+  });
+});
+
 test("no permite perder una publicación al descartar una extracción vacía", async () => {
   await workspace(async ({ root, outside }) => {
     await rootFiles(root, 3);

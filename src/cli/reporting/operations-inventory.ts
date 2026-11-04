@@ -20,19 +20,19 @@ export const printOperationsInventory = (status: CampaignOperationsStatus, inven
     : status.reference.status === "absent" ? { state: "ausente", detail: "No existe referencia" }
       : { state: status.reference.status === "recoverable" ? "parcial" : "error",
         detail: status.reference.reason });
-  printReportLine("\nDOCUMENTACIÓN Y RECURSOS ESENCIALES");
-  for (const entry of inventory.essentials) printItem(entry.path, entry.status);
   const individual = inventory.providers.filter((entry) =>
     ["gam", "gomariz", "mercaeleva"].includes(entry.providerId));
   const verified = individual.filter((entry) => entry.final.state === "correcto").length;
   printReportLine(`PUBLICACIONES INDIVIDUALES | ${verified}/${individual.length} vigentes verificables (independientes de la campaña global)`);
   printReportLine("\nPROVEEDORES");
-  for (const provider of inventory.providers) {
+  for (const [index, provider] of inventory.providers.entries()) {
+    if (index > 0) printReportLine("");
     printReportLine(`  ${provider.providerId.toUpperCase()}`);
     printItem("  ORIGINAL OPERATIVO", provider.original);
     printItem("  ORIGINAL REPOSITORIO", provider.portableOriginal);
     if (provider.consistency.state !== "ausente") printItem("  COHERENCIA", provider.consistency);
     printItem("  PREPARACIÓN", provider.preparation);
+    if (provider.final.state === "ausente") printReportLine("");
     printItem("  JSON FINAL", provider.final);
   }
   printReportLine("\nCAMPAÑAS CONSERVADAS");
