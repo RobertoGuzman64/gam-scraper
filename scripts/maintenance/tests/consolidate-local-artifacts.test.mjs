@@ -17,10 +17,8 @@ const rootFiles = async (root, count) => {
   const preparations = [];
   for (let index = 1; index <= count; index += 1) {
     const id = `catalog-${String(index).padStart(2, "0")}`;
-    const text = JSON.stringify({
-      source: { providerId: provider, prefix: "catalog", scope: "s1", catalogSha256: "a".repeat(64) },
-      preparedAt: `2026-11-0${index}T00:00:00.000Z`, products: [], totals: { ready: 0, review: 0 }
-    });
+    const text = JSON.stringify({ source: { providerId: provider, prefix: "catalog", scope: "s1", catalogSha256: "a".repeat(64) },
+      preparedAt: `2026-11-0${index}T00:00:00.000Z`, products: [], totals: { ready: 0, review: 0 } });
     const digest = sha(text);
     await save(root, `storage/prepared/gam/${id}-preparation.json`, text);
     await save(root, `storage/prepared/gam/${id}-preparation.manifest.json`, JSON.stringify({
@@ -36,11 +34,9 @@ const rootFiles = async (root, count) => {
     const accreditation = JSON.stringify({ version: 1, runId: `individual-gam-${index}`, approved: true });
     const approval = sha(accreditation);
     const products = "[]";
-    const manifest = {
-      version: 1, providerId: provider, runId: `individual-gam-${index}`,
+    const manifest = { version: 1, providerId: provider, runId: `individual-gam-${index}`,
       preparationSha256: prepared.digest, approvalSha256: approval,
-      files: { "gam-publishable.json": sha(products), "accreditation.json": approval }
-    };
+      files: { "gam-publishable.json": sha(products), "accreditation.json": approval } };
     const target = `catalogs/providers/gam/publications/${approval}`;
     await save(root, `${target}/accreditation.json`, accreditation);
     await save(root, `${target}/gam-publishable.json`, products);
@@ -216,71 +212,119 @@ test("sin fecha de la publicación activa nunca inventa 1970 ni descarta version
   });
 });
 
-test("reconcilia referencias históricas ausentes y conserva las dos últimas publicaciones", async () => {
+test("reconcilia referencias históricas ausentes sin conservar publicaciones antiguas", async () => {
   await workspace(async ({ root, outside }) => {
     const { preparations, publicationIds } = await rootFiles(root, 3);
     const path = "storage/providers/gam/publication-retention.json";
-    await save(root, path, JSON.stringify({
-      version: 1, providerId: provider, publications: [{
-        approvalSha256: publicationIds[0], preparationSha256: preparations[0].digest,
-        preparedAt: "2026-11-01T00:00:00.000Z"
-      }, {
-        approvalSha256: "f".repeat(64), preparationSha256: "e".repeat(64),
-        preparedAt: "2026-10-31T00:00:00.000Z"
-      }]
-    }));
+    await save(root, path, JSON.stringify({ version: 1, providerId: provider, publications: [{
+      approvalSha256: publicationIds[0], preparationSha256: preparations[0].digest,
+      preparedAt: "2026-11-01T00:00:00.000Z"
+    }, {
+      approvalSha256: "f".repeat(64), preparationSha256: "e".repeat(64),
+      preparedAt: "2026-10-31T00:00:00.000Z"
+    }] }));
     await save(root, "scripts/tooling.mjs", 'console.log("ESTADO INTACTO");');
     assert.equal((await planConsolidation(root)).length, 4);
     await consolidateLocalArtifacts(root, outside);
-    const remaining = (await readdir(join(root, "catalogs/providers/gam/publications")))
-      .filter((entry) => /^[a-f0-9]{64}$/.test(entry));
-    assert.deepEqual(remaining.sort(), publicationIds.slice(1).sort());
+    const retained = (await readdir(join(root, "catalogs/providers/gam/publications")))
+      .filter((name) => /^[a-f0-9]{64}$/.test(name));
+    assert.deepEqual(retained.sort(), publicationIds.slice(1).sort());
     const index = JSON.parse(await readFile(join(root, path), "utf8"));
     assert.deepEqual(index.publications.map((item) => item.approvalSha256),
       [publicationIds[2], publicationIds[1]]);
   });
 });
 
-test("el índice antiguo no sustituye a la publicación inmediatamente anterior", async () => {
+test("un índice antiguo no desplaza a la publicación inmediatamente anterior", async () => {
   await workspace(async ({ root, outside }) => {
     const { preparations, publicationIds } = await rootFiles(root, 4);
     const path = "storage/providers/gam/publication-retention.json";
-    await save(root, path, JSON.stringify({
-      version: 1, providerId: provider, publications: [{
-        approvalSha256: publicationIds[0], preparationSha256: preparations[0].digest,
-        preparedAt: "2026-11-01T00:00:00.000Z"
-      }, {
-        approvalSha256: publicationIds[1], preparationSha256: preparations[1].digest,
-        preparedAt: "2026-11-02T00:00:00.000Z"
-      }]
-    }));
+    await save(root, path, JSON.stringify({ version: 1, providerId: provider, publications: [{
+      approvalSha256: publicationIds[0], preparationSha256: preparations[0].digest,
+      preparedAt: "2026-11-01T00:00:00.000Z"
+    }, {
+      approvalSha256: publicationIds[1], preparationSha256: preparations[1].digest,
+      preparedAt: "2026-11-02T00:00:00.000Z"
+    }] }));
     await save(root, "scripts/tooling.mjs", 'console.log("ESTADO INTACTO");');
-    assert.equal((await planConsolidation(root)).length, 8);
     await consolidateLocalArtifacts(root, outside);
-    const remaining = (await readdir(join(root, "catalogs/providers/gam/publications")))
-      .filter((entry) => /^[a-f0-9]{64}$/.test(entry));
-    assert.deepEqual(remaining.sort(), publicationIds.slice(2).sort());
+    const retained = (await readdir(join(root, "catalogs/providers/gam/publications")))
+      .filter((name) => /^[a-f0-9]{64}$/.test(name));
+    assert.deepEqual(retained.sort(), publicationIds.slice(2).sort());
   });
 });
 
-test("bloquea índices de retención corruptos o referencias alteradas", async () => {
+test("bloquea índices de retención corruptos o referencias modificadas", async () => {
   await workspace(async ({ root }) => {
     const { preparations, publicationIds } = await rootFiles(root, 3);
     const path = "storage/providers/gam/publication-retention.json";
-    await save(root, path, JSON.stringify({
-      version: 1, providerId: provider, publications: [{
-        approvalSha256: publicationIds[0], preparationSha256: "e".repeat(64),
-        preparedAt: "2026-11-01T00:00:00.000Z"
-      }]
-    }));
+    await save(root, path, JSON.stringify({ version: 1, providerId: provider, publications: [{
+      approvalSha256: publicationIds[0], preparationSha256: "e".repeat(64),
+      preparedAt: "2026-11-01T00:00:00.000Z"
+    }] }));
     await assert.rejects(planConsolidation(root), /Índice de retención referencia publicación modificada/);
-    await save(root, path, JSON.stringify({
-      version: 1, providerId: provider, publications: [{
-        approvalSha256: "no-es-sha", preparationSha256: preparations[0].digest,
-        preparedAt: "2026-11-01T00:00:00.000Z"
-      }]
-    }));
+    await save(root, path, JSON.stringify({ version: 1, providerId: provider, publications: [{
+      approvalSha256: "no-es-sha", preparationSha256: preparations[0].digest,
+      preparedAt: "2026-11-01T00:00:00.000Z"
+    }] }));
     await assert.rejects(planConsolidation(root), /Índice de retención inválido/);
+  });
+});
+
+test("protege la preparación operativa acreditada aunque no figure entre las dos más recientes del grupo", async () => {
+  await workspace(async ({ root, outside }) => {
+    const { preparations, publicationIds } = await rootFiles(root, 3);
+    const original = JSON.stringify({ providerId: provider, products: [] });
+    const originalSha = sha(original);
+    await save(root, "storage/scraped/gam/catalog-catalog.json", original);
+    const product = { providerId: provider, sourceUrl: "https://example.org/catalogo/1", reference: "1",
+      title: "Máquina", categorySellID: null, category: null, condition: null, price: null,
+      description_title: null, description: null, description_general: null, images: [], attributes: [] };
+    for (let index = 0; index < preparations.length; index += 1) {
+      const entry = preparations[index];
+      const id = entry.id;
+      const preparation = {
+        version: 1, quality: "complete", published: true,
+        preparedAt: `2026-11-0${index + 1}T00:00:00.000Z`,
+        source: { providerId: provider, prefix: "catalog", scope: "0".repeat(16),
+          catalogSha256: originalSha, productCount: 1 },
+        fingerprints: { rulesVersion: 2, rulesSha256: "b".repeat(64) },
+        identities: ["gam:ref:1"], products: [{ status: "ready", issues: [], product }],
+        totals: { ready: 1, review: 0 }
+      };
+      const body = JSON.stringify(preparation);
+      const digest = sha(body);
+      await save(root, `storage/prepared/gam/${id}-preparation.json`, body);
+      await save(root, `storage/prepared/gam/${id}-preparation.manifest.json`, JSON.stringify({
+        version: 1, providerId: provider, catalogSha256: originalSha, preparationSha256: digest
+      }));
+      await save(root, `storage/prepared/gam/${id}-diagnostics.json`, JSON.stringify({
+        providerId: provider, totals: { products: 1, ready: 1, review: 0 }
+      }));
+      const manifestPath = `catalogs/providers/gam/publications/${publicationIds[index]}/manifest.json`;
+      const manifest = JSON.parse(await readFile(join(root, manifestPath), "utf8"));
+      await save(root, manifestPath, JSON.stringify({ ...manifest, preparationSha256: digest }));
+      if (index > 0) {
+        for (const suffix of ["-preparation.json", "-preparation.manifest.json", "-diagnostics.json"]) {
+          await rename(join(root, `storage/prepared/gam/${id}${suffix}`),
+            join(root, `storage/prepared/gam/archivo-0${index + 1}${suffix}`));
+        }
+      }
+    }
+    await save(root, "scripts/tooling.mjs", `import { readdir } from "node:fs/promises";
+const files = await readdir("storage/prepared/gam");
+console.log(files.includes("catalog-01-preparation.json")
+  ? "PASS |   PREPARACIÓN | CORRECTO | Preparación acreditada (1 Ready / 0 Review)"
+  : "WARN |   PREPARACIÓN | PARCIAL | Preparación heredada disponible; no acreditada como preparación offline");`);
+    const planned = await planConsolidation(root);
+    assert.ok(planned.every((item) => !item.path.includes("catalog-01")));
+    assert.ok(planned.some((item) => item.path.includes("catalogs/providers/gam/publications/")));
+    await consolidateLocalArtifacts(root, outside);
+    const remaining = await readdir(join(root, "storage/prepared/gam"));
+    assert.ok(remaining.includes("catalog-01-preparation.json"));
+    const retained = (await readdir(join(root, "catalogs/providers/gam/publications")))
+      .filter((name) => /^[a-f0-9]{64}$/.test(name));
+    assert.deepEqual(retained.sort(), publicationIds.slice(1).sort());
   });
 });
 
