@@ -53,3 +53,19 @@ test("comparación impide mezclar proveedores e identidades duplicadas", () => {
   const other = { ...record, prepared: { ...record.prepared, product: { ...record.prepared.product, providerId: "gam" } } };
   assert.throws(() => analyzeDescriptionCoverage([other]), /Identidad o URL discordante/);
 });
+
+test("calibración: el campo publicado preservado no genera aviso, la pérdida sí y la reparación lo cierra", () => {
+  const valid = pair("calibrada", ["Descripción publicada", "General publicada"],
+    ["Descripción publicada", "General publicada"]);
+  const broken = pair("calibrada", ["Descripción publicada", "General publicada"],
+    ["Descripción publicada", null]);
+  const initial = analyzeDescriptionCoverage([valid]);
+  assert.deepEqual(initial.totals.pending, { description: 0, description_general: 0 });
+  assert.deepEqual(initial.totals.lost, { description: 0, description_general: 0 });
+  assert.equal(initial.lostCases.length, 0);
+  const regression = analyzeDescriptionCoverage([broken]);
+  assert.equal(regression.totals.lost.description_general, 1);
+  assert.deepEqual(regression.lostCases[0]?.lost, ["description_general"]);
+  assert.deepEqual(analyzeDescriptionCoverage([valid]), initial);
+  assert.deepEqual(analyzeDescriptionCoverage([broken]), regression);
+});

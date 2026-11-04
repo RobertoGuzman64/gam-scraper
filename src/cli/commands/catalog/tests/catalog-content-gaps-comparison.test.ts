@@ -4,6 +4,8 @@ import type { DescriptionCoverage } from "../../../../catalog/diagnostics/descri
 import type { DescriptionPriorities } from "../../../../catalog/diagnostics/description-priorities.js";
 import type { SpecificationCoverage } from "../../../../catalog/diagnostics/specification-coverage.js";
 import { cleanupBaseline, execute, executeBaseline } from "./catalog-content-gaps-fixtures.js";
+import { hasCompleteCatalogAuditEvidence, hasUnresolvedCatalogAuditContracts } from "../../../../catalog/diagnostics/audit-closure.js";
+import { formatCatalogAuditClosureReport } from "../catalog-audit-closure-report.js";
 
 test.after(cleanupBaseline);
 
@@ -25,7 +27,11 @@ test("huecos compara las publicaciones activas y acredita la cobertura de descri
   assert.equal(report.coverage.totals.incompleteProducts, 0);
   assert.equal(report.coverage.totals.bothPending, 0);
   assert.equal(report.coverage.pendingCases.length, 0);
-  assert.equal(report.coverage.providers.find((item) => item.providerId === "mercaeleva")?.origin, "reconstruccion_publicada");
+  for (const provider of report.coverage.providers) {
+    const publication: ComparisonReport["provenance"]["publications"][number] | undefined =
+      report.provenance.publications.find((item) => item.providerId === provider.providerId);
+    assert.equal(provider.origin, publication?.origin);
+  }
   assert.equal(report.editorial.providers.length, 3);
   assert.equal(report.editorialPrepared.providers.length, 3);
   assert.equal(report.priorities.totals.pendingByStage.P0, 0);
@@ -42,11 +48,19 @@ test("huecos compara las publicaciones activas y acredita la cobertura de descri
   assert.match(text, /P0 COLA RESIDUAL \| 0 fichas, sin recorte por --top/);
   assert.match(text, /ORDEN DE TRABAJO \| P0 vacíos 0/);
   assert.match(text, /INCIDENCIAS TÉCNICAS/);
+  assert.doesNotMatch(text, /CIERRE AUDITOR/);
   await assert.rejects(execute(["--comparar", "--finales"]), /no se combina/);
 });
 
 type ComparisonReport = {
-  readonly provenance: { readonly source: string };
+  readonly provenance: {
+    readonly source: string;
+    readonly publications: readonly {
+      readonly providerId: string;
+      readonly origin: "original_canonico" | "reconstruccion_publicada";
+      readonly publishedProducts: number;
+    }[];
+  };
   readonly editorial: { readonly providers: readonly unknown[] };
   readonly editorialPrepared: { readonly providers: readonly unknown[] };
   readonly priorities: DescriptionPriorities;
@@ -60,7 +74,8 @@ const isComparisonReport = (value: unknown): value is ComparisonReport => {
     typeof value.editorial !== "object" || value.editorial === null ||
     typeof value.editorialPrepared !== "object" || value.editorialPrepared === null) return false;
   return "totals" in value.coverage && "pendingCases" in value.coverage && "providers" in value.coverage &&
-    "source" in value.provenance && "providers" in value.editorial && "providers" in value.editorialPrepared &&
+    "source" in value.provenance && "publications" in value.provenance && Array.isArray(value.provenance.publications) &&
+    "providers" in value.editorial && "providers" in value.editorialPrepared &&
     "priorities" in value && typeof value.priorities === "object" && value.priorities !== null &&
     "totals" in value.priorities && "pending" in value.priorities && "resolved" in value.priorities &&
     "technical" in value.priorities;
@@ -83,11 +98,65 @@ test("huecos --comparar --specs diferencia cobertura técnica sin alterar el inf
   assert.equal(comparison.priorities.totals.pendingByStage.P0, 0);
   assert.ok(comparison.technicalSpecs.totals.products > 0);
   assert.ok(comparison.technicalSpecs.totals.canonicalOriginals > 0);
-  assert.ok(comparison.technicalSpecs.totals.reconstructedSources > 0);
+  assert.equal(comparison.technicalSpecs.totals.canonicalOriginals +
+    comparison.technicalSpecs.totals.reconstructedSources, comparison.technicalSpecs.totals.products);
+  assert.equal(comparison.technicalSpecs.totals.reconstructedSources,
+    comparison.provenance.publications.filter((item) => item.origin === "reconstruccion_publicada")
+      .reduce((total, item) => total + item.publishedProducts, 0));
   assert.equal(comparison.technicalSpecs.totals.pendingPublication,
     comparison.technicalSpecs.cases.filter((item) => item.stage === "pendiente_publicacion").length);
   assert.ok(comparison.technicalSpecs.totals.observationalMissing > 0);
-  assert.ok(comparison.technicalSpecs.cases.some((item) => item.providerId === "gam" &&
-    item.reference === "6807" && item.stage === "reconciliacion_acreditada"));
+  assert.equal(comparison.technicalSpecs.totals.accreditedReconciliations,
+    comparison.technicalSpecs.cases.filter((item) => item.stage === "reconciliacion_acreditada").length);
   await assert.rejects(execute(["--finales", "--specs"]), /requiere --comparar/);
+});
+
+
+test("el cierre operativo exige evidencia, distingue trabajo real y no bloquea por observaciones", async () => {
+  const comparison = await readBaselineComparison();
+  assert.ok(isSpecificationComparisonReport(comparison));
+  const { coverage, priorities, technicalSpecs } = comparison;
+  assert.equal(hasCompleteCatalogAuditEvidence(coverage, technicalSpecs), false);
+  assert.equal(hasUnresolvedCatalogAuditContracts(coverage, priorities, technicalSpecs),
+    priorities.totals.technical > 0 || technicalSpecs.totals.sourceNotPreserved > 0 ||
+    technicalSpecs.totals.lostAfterPublication > 0 || technicalSpecs.totals.ambiguousNormalization > 0 ||
+    technicalSpecs.totals.pendingPublication > 0);
+
+  const cleanPriorities = { ...priorities, totals: { ...priorities.totals, technical: 0 } };
+  const completeSpecifications = { ...technicalSpecs, totals: {
+    ...technicalSpecs.totals, canonicalOriginals: technicalSpecs.totals.products, reconstructedSources: 0,
+    pendingPublication: 0, sourceNotPreserved: 0, lostAfterPublication: 0, ambiguousNormalization: 0
+  } };
+  assert.equal(hasUnresolvedCatalogAuditContracts(coverage, cleanPriorities, completeSpecifications), false);
+  assert.equal(hasCompleteCatalogAuditEvidence(coverage, completeSpecifications), true);
+  assert.ok(formatCatalogAuditClosureReport(coverage, cleanPriorities, completeSpecifications)
+    .some((line) => line.includes("CONFORME EN ALCANCE COMPARADO")));
+
+  const observations = { ...completeSpecifications, totals: {
+    ...completeSpecifications.totals, observationalMissing: completeSpecifications.totals.observationalMissing + 100
+  } };
+  assert.equal(hasUnresolvedCatalogAuditContracts(coverage, cleanPriorities, observations), false);
+  assert.ok(formatCatalogAuditClosureReport(coverage, cleanPriorities, observations)
+    .some((line) => line.includes("CONFORME EN ALCANCE COMPARADO")));
+
+  const regression = { ...completeSpecifications, totals: { ...completeSpecifications.totals, sourceNotPreserved: 1 } };
+  assert.equal(hasUnresolvedCatalogAuditContracts(coverage, cleanPriorities, regression), true);
+  assert.ok(formatCatalogAuditClosureReport(coverage, cleanPriorities, regression)
+    .some((line) => line.includes("REQUIERE INTERVENCIÓN")));
+  assert.equal(hasUnresolvedCatalogAuditContracts(coverage, cleanPriorities, completeSpecifications), false);
+
+  assert.ok(formatCatalogAuditClosureReport(coverage, cleanPriorities, technicalSpecs)
+    .some((line) => line.includes("ALCANCE LIMITADO")));
+  const missingDescription = { ...coverage, totals: { ...coverage.totals,
+    pending: { ...coverage.totals.pending, description_general: 1 }
+  } };
+  assert.equal(hasUnresolvedCatalogAuditContracts(missingDescription, cleanPriorities, completeSpecifications), true);
+  const technicalPreparation = { ...cleanPriorities, totals: { ...cleanPriorities.totals, technical: 1 } };
+  assert.equal(hasUnresolvedCatalogAuditContracts(coverage, technicalPreparation, completeSpecifications), true);
+
+  const text = await executeBaseline(["--comparar", "--specs", "--top", "1"]);
+  const expected = hasUnresolvedCatalogAuditContracts(coverage, priorities, technicalSpecs) ?
+    "REQUIERE INTERVENCIÓN" : hasCompleteCatalogAuditEvidence(coverage, technicalSpecs) ?
+      "CONFORME EN ALCANCE COMPARADO" : "ALCANCE LIMITADO";
+  assert.ok(text.includes(`CIERRE AUDITOR | ${expected}`));
 });

@@ -167,3 +167,15 @@ export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverag
     patterns, cases
   };
 };
+
+export type SpecificationWorkload = {
+  readonly requiresReview: readonly SpecificationCase[];
+  readonly pendingActivation: readonly SpecificationCase[];
+};
+
+export const classifySpecificationWork = (coverage: SpecificationCoverage): SpecificationWorkload => ({
+  requiresReview: coverage.cases.filter((item) =>
+    item.stage === "diferencia_origen_preparacion" || item.stage === "perdida_tras_publicacion" ||
+    item.stage === "normalizacion_ambigua"),
+  pendingActivation: coverage.cases.filter((item) => item.stage === "pendiente_publicacion")
+});

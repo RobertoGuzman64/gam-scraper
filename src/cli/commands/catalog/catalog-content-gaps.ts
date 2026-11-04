@@ -15,6 +15,8 @@ import { prepareSourceProduct } from "../../../catalog/preparation/prepare-produ
 import { printCommandError } from "../../reporting/errors.js";
 import { buildProductIdentity } from "../../../catalog/identity.js";
 import { analyzeSpecificationCoverage } from "../../../catalog/diagnostics/specification-coverage.js";
+import { formatSpecificationCoverageReport } from "./specification-coverage-report.js";
+import { formatCatalogAuditClosureReport } from "./catalog-audit-closure-report.js";
 import { analyzeDescriptionCoverage } from "../../../catalog/diagnostics/description-coverage.js";
 import type { DescriptionCoverageInput } from "../../../catalog/diagnostics/description-coverage.js";
 import { reconstructMercaelevaSource } from "../../../catalog/diagnostics/description-source.js";
@@ -232,13 +234,8 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
     printReportLine("CALIDAD EDITORIAL | vista derivada tras preparación; señales orientativas independientes de P0");
     printEditorial(editorialPrepared, options.limit);
     if (technicalSpecs) {
-      const totals = technicalSpecs.totals;
-      printReportLine(`SPECS | originales canónicos ${totals.canonicalOriginals} | fuentes reconstruidas ${totals.reconstructedSources} | pendientes de publicar ${totals.pendingPublication} | diferencias origen/preparación ${totals.sourceNotPreserved} | reconciliaciones acreditadas ${totals.accreditedReconciliations} | pérdidas respecto al final ${totals.lostAfterPublication} | normalizaciones ambiguas ${totals.ambiguousNormalization} | ausencias observacionales ${totals.observationalMissing}`);
-      printReportLine(technicalSpecs.note);
-      for (const item of technicalSpecs.cases.slice(0, options.limit)) {
-        printReportLine(`  ${item.stage} | ${item.providerId} | ${item.family} | ${item.reference ?? item.identity} | ${item.key} | ${item.origin}${item.reconciliation ? ` | origen ${JSON.stringify(item.reconciliation.originalValue)} | destino ${item.reconciliation.destinationKeys.join(", ") || "retirado por atribución errónea"}` : ""}`);
-      }
-      printReportLine(`SPECS | ${technicalSpecs.cases.length} observaciones | ${technicalSpecs.patterns.length} patrones familiares | TOP ${Math.min(options.limit, technicalSpecs.cases.length)}`);
+      for (const line of formatSpecificationCoverageReport(technicalSpecs, options.limit)) printReportLine(line);
+      for (const line of formatCatalogAuditClosureReport(coverage, priorities, technicalSpecs)) printReportLine(line);
     }
   }
 };

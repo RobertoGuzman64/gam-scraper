@@ -1,0 +1,24 @@
+import { classifySpecificationWork, type SpecificationCoverage, type SpecificationCase } from "../../../catalog/diagnostics/specification-coverage.js";
+
+const formatCase = (item: SpecificationCase, label: string): string =>
+  `  ${label} | ${item.stage} | ${item.providerId} | ${item.family} | ${item.reference ?? item.identity} | ${item.key} | ${item.origin}`;
+
+export const formatSpecificationCoverageReport = (coverage: SpecificationCoverage, limit: number): readonly string[] => {
+  const totals = coverage.totals;
+  const { requiresReview, pendingActivation } = classifySpecificationWork(coverage);
+  const lines = [
+    `SPECS | revisar ${requiresReview.length} | pendientes de activar ${pendingActivation.length} | reconciliaciones acreditadas ${totals.accreditedReconciliations} | observaciones familiares no obligatorias ${totals.observationalMissing}`,
+    `SPECS | originales canónicos ${totals.canonicalOriginals} | fuentes reconstruidas ${totals.reconstructedSources} | diferencias origen/preparación ${totals.sourceNotPreserved} | pérdidas frente al final ${totals.lostAfterPublication} | normalizaciones ambiguas ${totals.ambiguousNormalization}`
+  ];
+  if (requiresReview.length === 0 && pendingActivation.length === 0) {
+    lines.push("SPECS | SIN INCIDENCIAS TÉCNICAS PENDIENTES DE REVISIÓN NI ACTIVACIÓN en esta comparación");
+  } else {
+    for (const item of requiresReview.slice(0, limit)) lines.push(formatCase(item, "REVISAR"));
+    for (const item of pendingActivation.slice(0, Math.max(0, limit - requiresReview.length))) {
+      lines.push(formatCase(item, "ACTIVACIÓN"));
+    }
+  }
+  lines.push(`SPECS | ${coverage.patterns.length} patrones comparativos no vinculantes | ${coverage.cases.length} casos en JSON, incluidos los ${totals.observationalMissing} sin evidencia directa`);
+  lines.push("SPECS | Una ausencia inferida de otras máquinas no obliga a completar la ficha; sin evidencia de la misma máquina no se abre una tarea.");
+  return lines;
+};

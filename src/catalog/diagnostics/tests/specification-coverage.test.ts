@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { analyzeSpecificationCoverage } from "../specification-coverage.js";
+import { analyzeSpecificationCoverage, classifySpecificationWork } from "../specification-coverage.js";
 import type { DescriptionCoverageInput } from "../description-coverage.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { SpecValue } from "../../../contracts/catalog.js";
@@ -45,6 +45,9 @@ test("separa recuperaciones, pérdidas técnicas y ausencias relativas sin impon
     ["2", "pendiente_publicacion"], ["4", "sin_evidencia_directa"]
   ]);
   assert.equal(result.patterns.find((item) => item.key === "Peso (kg)")?.comparable, 6);
+  const workload = classifySpecificationWork(result);
+  assert.deepEqual(workload.requiresReview.map((item) => item.reference), ["3", "6"]);
+  assert.deepEqual(workload.pendingActivation.map((item) => item.reference), ["2"]);
   assert.equal(JSON.stringify(inputs), before);
 });
 
@@ -71,4 +74,66 @@ test("marca las normalizaciones ambiguas sin elegir un valor por su cuenta", () 
   const result = analyzeSpecificationCoverage([item]);
   assert.equal(result.totals.ambiguousNormalization, 1);
   assert.equal(result.cases[0]?.stage, "normalizacion_ambigua");
+});
+
+test("una ausencia familiar sin evidencia no abre trabajo y una pérdida demostrada sí", () => {
+  const clean = analyzeSpecificationCoverage([
+    input("1", { Peso: "100" }, { Peso: "100" }, { Peso: "100" }),
+    input("2", { Peso: "110" }, { Peso: "110" }, { Peso: "110" }),
+    input("3", { Peso: "120" }, { Peso: "120" }, { Peso: "120" }),
+    input("4", {}, {}, {}),
+    input("5", { Peso: "130" }, { Peso: "130" }, { Peso: "130" })
+  ]);
+  assert.equal(clean.totals.observationalMissing, 1);
+  assert.equal(classifySpecificationWork(clean).requiresReview.length, 0);
+  assert.equal(classifySpecificationWork(clean).pendingActivation.length, 0);
+  const changed = analyzeSpecificationCoverage([
+    input("1", { Peso: "100" }, {}, { Peso: "100" }),
+    input("2", { Peso: "110" }, { Peso: "110" }, { Peso: "110" }),
+    input("3", { Peso: "120" }, { Peso: "120" }, { Peso: "120" }),
+    input("4", {}, {}, {}),
+    input("5", { Peso: "130" }, { Peso: "130" }, { Peso: "130" })
+  ]);
+  assert.equal(changed.totals.observationalMissing, 1);
+  assert.deepEqual(classifySpecificationWork(changed).requiresReview.map((item) => item.reference), ["1"]);
+});
+
+
+test("calibración: pérdida demostrada, reparación legítima y reintroducción vuelven a su estado correcto", () => {
+  const valid = input("calibrada", { Peso: "100" }, { Peso: "100" }, { Peso: "100" });
+  const removeFromPreparation = (): DescriptionCoverageInput => ({ ...valid, prepared: {
+    ...valid.prepared, product: { ...valid.prepared.product, spec: {} }
+  } });
+  const initial = analyzeSpecificationCoverage([valid]);
+  assert.equal(initial.cases.length, 0);
+  assert.equal(classifySpecificationWork(initial).requiresReview.length, 0);
+  const broken = analyzeSpecificationCoverage([removeFromPreparation()]);
+  assert.equal(broken.totals.sourceNotPreserved, 1);
+  assert.deepEqual(classifySpecificationWork(broken).requiresReview.map((item) => item.stage),
+    ["diferencia_origen_preparacion"]);
+  const repaired = analyzeSpecificationCoverage([valid]);
+  assert.deepEqual(repaired, initial);
+  assert.deepEqual(analyzeSpecificationCoverage([removeFromPreparation()]), broken);
+});
+
+test("calibración: una ausencia familiar no vinculante nunca oculta una pérdida real", () => {
+  const source = [
+    input("1", { Peso: "100" }, { Peso: "100" }, { Peso: "100" }),
+    input("2", { Peso: "110" }, { Peso: "110" }, { Peso: "110" }),
+    input("3", { Peso: "120" }, { Peso: "120" }, { Peso: "120" }),
+    input("4", {}, {}, {}),
+    input("5", { Peso: "130" }, { Peso: "130" }, { Peso: "130" })
+  ];
+  const initial = analyzeSpecificationCoverage(source);
+  assert.equal(initial.totals.observationalMissing, 1);
+  assert.equal(classifySpecificationWork(initial).requiresReview.length, 0);
+  const changed = source.map((item) => item.source.reference === "2" ? {
+    ...item, prepared: { ...item.prepared, product: { ...item.prepared.product, spec: {} } }
+  } : item);
+  const regression = analyzeSpecificationCoverage(changed);
+  assert.equal(regression.totals.observationalMissing, 1);
+  assert.equal(regression.totals.sourceNotPreserved, 1);
+  assert.deepEqual(classifySpecificationWork(regression).requiresReview.map((item) => item.reference), ["2"]);
+  assert.deepEqual(analyzeSpecificationCoverage(source), initial);
+  assert.deepEqual(analyzeSpecificationCoverage(changed), regression);
 });
