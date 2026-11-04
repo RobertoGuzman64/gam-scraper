@@ -16,9 +16,9 @@ import { recoverGamMislabelledBatterySpec } from "../evidence/providers/gam/ener
 import { recoverGamVerifiedVariantAcoustics } from "../evidence/providers/gam/identity/variant-acoustics-evidence.js";
 import { recoverGamVerifiedTyreDimensions } from "../evidence/providers/gam/mobility/verified-tyre-dimensions-evidence.js";
 import { recoverGamVerifiedConditionalAcoustics } from "../evidence/providers/gam/operations-and-safety/verified-conditional-acoustics-evidence.js";
-import { recoverGamVerifiedResidualOperationSpecs } from "../evidence/providers/gam/general-evidence/verified-residual-operation-evidence.js";
-import { recoverGamVerifiedResidualGeometrySpecs } from "../evidence/providers/gam/measurements-and-capacities/verified-residual-geometry-evidence.js";
-import { recoverGamVerifiedResidualPerformanceSpecs } from "../evidence/providers/gam/operations-and-safety/verified-residual-performance-evidence.js";
+import { recoverGamVerifiedUnitOperationSpecs } from "../evidence/providers/gam/general-evidence/verified-unit-operation-specs.js";
+import { recoverGamVerifiedUnitGeometrySpecs } from "../evidence/providers/gam/measurements-and-capacities/verified-unit-geometry-specs.js";
+import { recoverGamVerifiedUnitPerformanceSpecs } from "../evidence/providers/gam/operations-and-safety/verified-unit-performance-specs.js";
 import { recoverGamVerifiedTractionBraking } from "../evidence/providers/gam/mobility/verified-traction-braking-evidence.js";
 import { recoverGamVerifiedSteeringBraking } from "../evidence/providers/gam/mobility/verified-steering-braking-evidence.js";
 import { recoverGamSourceRegenerativeBraking } from "../evidence/providers/gam/mobility/source-regenerative-braking.js";
@@ -91,9 +91,9 @@ export const recoverBaseTechnicalSpecs = (record: ProductRecord, sourceUnitRecor
   const variantAcousticSpecs = recoverGamVerifiedVariantAcoustics({ ...record, specs: towingSpecs });
   const tyreDimensionSpecs = recoverGamVerifiedTyreDimensions({ ...record, specs: variantAcousticSpecs });
   const confirmedSpecs = recoverGamVerifiedConditionalAcoustics({ ...record, specs: tyreDimensionSpecs });
-  const finalSpecs = recoverGamVerifiedResidualOperationSpecs({ ...record, specs: confirmedSpecs });
-  const recoveredGeometrySpecs = recoverGamVerifiedResidualGeometrySpecs({ ...record, specs: finalSpecs });
-  const recoveredPerformanceSpecs = recoverGamVerifiedResidualPerformanceSpecs({ ...record, specs: recoveredGeometrySpecs });
+  const finalSpecs = recoverGamVerifiedUnitOperationSpecs({ ...record, specs: confirmedSpecs });
+  const recoveredGeometrySpecs = recoverGamVerifiedUnitGeometrySpecs({ ...record, specs: finalSpecs });
+  const recoveredPerformanceSpecs = recoverGamVerifiedUnitPerformanceSpecs({ ...record, specs: recoveredGeometrySpecs });
   const tractionBrakingSpecs = recoverGamVerifiedTractionBraking({ ...record, specs: recoveredPerformanceSpecs });
   const steeringBrakingSpecs = recoverGamVerifiedSteeringBraking({ ...record, specs: tractionBrakingSpecs });
   const sourceBrakingSpecs = recoverGamSourceRegenerativeBraking(record, steeringBrakingSpecs);

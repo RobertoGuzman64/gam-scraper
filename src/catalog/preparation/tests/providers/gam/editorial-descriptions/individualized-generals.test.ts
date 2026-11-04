@@ -6,8 +6,8 @@ import { resolveGamIndividualizedGeneral } from "../../../../mapping/providers/g
 import { removeGamResidualEditorialArtifacts } from "../../../../mapping/providers/gam/editorial-descriptions/long-description.js";
 import { resolveGomarizIndividualizedGeneral } from "../../../../mapping/providers/gomariz/individualized-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
-import { recoverGamDocumentedResidualDensitySpecs } from "../../../../evidence/providers/gam/verified-models/documented-density-residual.js";
-import { recoverGomarizDocumentedResidualDensitySpecs } from "../../../../evidence/providers/gomariz/documented-density-residual.js";
+import { recoverGamDocumentedMobilityAndAccessSpecs } from "../../../../evidence/providers/gam/verified-models/documented-mobility-and-access-specs.js";
+import { recoverGomarizDocumentedRenaultPremiumSpecs } from "../../../../evidence/providers/gomariz/documented-renault-premium-specs.js";
 import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";
 import { multiSectorSecondaryEvidence } from "../../../../evidence/providers/gam/editorial/condensed/multi-sector-secondary.js";
 
@@ -51,8 +51,8 @@ test("Fase 8: diferencia 18 fichas con evidencias propias sin modificar los orig
         assert.equal(prepared.sourceUrl, record.url);
         assert.equal(prepared.reference, record.reference);
         assert.deepEqual(prepared.spec, record.providerId === "gomariz" ?
-          recoverGomarizDocumentedResidualDensitySpecs(record, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) }) :
-          recoverGamDocumentedResidualDensitySpecs(record, record.specs ?? {}));
+          recoverGomarizDocumentedRenaultPremiumSpecs(record, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) }) :
+          recoverGamDocumentedMobilityAndAccessSpecs(record, record.specs ?? {}));
       }
       assert.equal(JSON.stringify(record), before);
     }

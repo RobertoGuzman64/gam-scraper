@@ -5,7 +5,7 @@ import { readCanonicalCatalog } from "../../../../../../infrastructure/filesyste
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { prepareImportBatch } from "../../../../batch-identity.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
-import { recoverGamDocumentedDensity180Specs } from "../../../../evidence/providers/gam/verified-models/documented-density-180.js";
+import { recoverGamDocumentedIndustrialEquipmentSpecs } from "../../../../evidence/providers/gam/verified-models/documented-industrial-equipment-specs.js";
 import { gamMissingDescriptions } from "../../../../mapping/providers/gam/editorial-descriptions/missing-descriptions.js";
 import { verifiedUnitContextEditorial } from "../../../../evidence/verified-unit-context-editorial.js";
 
@@ -35,7 +35,7 @@ test("GAM: recupera únicamente las dos carretillas HELI con identidad y carga a
     assert.equal(prepared.product.description_general, editorial[`gam:${reference}`]?.general ?? generated.long, reference);
     assert.equal(prepared.product.reference, record.reference, reference);
     assert.equal(prepared.product.sourceUrl, record.url, reference);
-    assert.deepEqual(prepared.product.spec, recoverGamDocumentedDensity180Specs(record, record.specs ?? {}), reference);
+    assert.deepEqual(prepared.product.spec, recoverGamDocumentedIndustrialEquipmentSpecs(record, record.specs ?? {}), reference);
     assert.equal(JSON.stringify(record), before, reference);
   }
 });

@@ -3,7 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { removeGamResidualEditorialArtifacts } from "../../../../mapping/providers/gam/editorial-descriptions/long-description.js";
-import { removeGomarizConversationalLead } from "../../../../mapping/providers/gomariz/residual-general.js";
+import { removeGomarizConversationalLead } from "../../../../mapping/providers/gomariz/unit-specific-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { verifiedCanonicalBriefEditorial } from "../../../../evidence/verified-canonical-brief-editorial.js";
 import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { resolveGamResidualCleaningGeneral, resolveGamResidualCleaningShort } from "../../../../mapping/providers/gam/editorial-descriptions/residual-cleaning-editorial.js";
+import { resolveGamVerifiedIndustrialCleaningGeneral, resolveGamVerifiedIndustrialCleaningShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-industrial-cleaning-editorial.js";
 import { rebalanceGamTechnicalShort } from "../../../../mapping/providers/gam/editorial-descriptions/rebalance-technical-short.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";
@@ -36,7 +36,7 @@ test("GAM: reequilibra ocho cortas y preserva cifras acreditadas sin trasladar f
       assert.ok(record.shortDescription);
       assert.ok(prepared.product.description_general);
       const previousShort = resolveGamCleaningCondensedShort(record) ?? resolveGamTennantCondensedShort(record) ?? rewritten.short;
-      assert.equal(prepared.product.description, resolveGamResidualCleaningShort(record, previousShort) ?? previousShort);
+      assert.equal(prepared.product.description, resolveGamVerifiedIndustrialCleaningShort(record, previousShort) ?? previousShort);
       assert.ok(words(rewritten.short) <= 45);
       assert.ok(words(rewritten.short) >= 12);
       assert.ok(words(prepared.product.description_general) <= 800);
@@ -46,7 +46,7 @@ test("GAM: reequilibra ocho cortas y preserva cifras acreditadas sin trasladar f
         assert.ok(numbers(`${rewritten.short} ${general ?? ""}`).has(number), `${record.reference}: ${number}`);
       }
       const previousGeneral = resolveGamCleaningCondensedGeneral(record) ?? resolveGamTennantCondensedGeneral(record) ?? rewritten.general;
-      const legacyGeneral = resolveGamResidualCleaningGeneral(record, previousGeneral) ?? previousGeneral;
+      const legacyGeneral = resolveGamVerifiedIndustrialCleaningGeneral(record, previousGeneral) ?? previousGeneral;
       const suffix = record.year ? ` Año de fabricación de esta unidad: ${record.year}.` : "";
       const underlying = suffix && general?.endsWith(suffix) ? general.slice(0, -suffix.length) : general;
       if (underlying !== legacyGeneral) {

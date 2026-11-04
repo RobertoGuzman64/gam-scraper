@@ -3,7 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamResidualConciseShort, resolveGamShortDescription } from "../../../../mapping/providers/gam/editorial-descriptions/short-description.js";
-import { resolveGamResidualCleaningShort } from "../../../../mapping/providers/gam/editorial-descriptions/residual-cleaning-editorial.js";
+import { resolveGamVerifiedIndustrialCleaningShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-industrial-cleaning-editorial.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";
 import { multiSectorSecondaryEvidence } from "../../../../evidence/providers/gam/editorial/condensed/multi-sector-secondary.js";
@@ -42,7 +42,7 @@ test("GAM: resume exclusivamente fichas seguras sin retirar cifras de la descrip
       assert.ok(record.reference);
       changed.add(record.reference);
       const previousShort = resolveGamAdditionalCondensedShort(record) ?? resolveGamCleaningCondensedShort(record) ?? resolveGamForkliftCondensedShort(record) ?? resolveGamTennantCondensedShort(record) ?? shortened;
-      assert.equal(prepared.product.description, resolveGamResidualCleaningShort(record, previousShort) ?? previousShort, record.reference);
+      assert.equal(prepared.product.description, resolveGamVerifiedIndustrialCleaningShort(record, previousShort) ?? previousShort, record.reference);
       assert.ok(words(shortened) >= 12 && words(shortened) <= 45, record.reference);
       assert.notEqual(shortened, record.title);
       assert.ok(prepared.product.description_general);

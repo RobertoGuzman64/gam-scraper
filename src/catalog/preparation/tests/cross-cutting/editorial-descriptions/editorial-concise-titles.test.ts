@@ -4,8 +4,8 @@ import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamConciseTitle } from "../../../mapping/providers/gam/editorial-descriptions/concise-titles.js";
 import { resolveGomarizEditorialTitle } from "../../../mapping/providers/gomariz/editorial-title.js";
-import { verifiedGomarizResidualTitles } from "../../../evidence/providers/gomariz/verified-residual-titles.js";
-import { verifiedGamResidualTitles } from "../../../evidence/providers/gam/editorial/verified-residual-titles.js";
+import { verifiedGomarizUnitSpecificTitles } from "../../../evidence/providers/gomariz/verified-unit-specific-titles.js";
+import { verifiedGamSourceMatchedTitles } from "../../../evidence/providers/gam/editorial/verified-source-matched-titles.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
@@ -45,7 +45,7 @@ test("Gomariz: títulos ya completos, fuentes ambiguas y referencias no acredita
   for (const reference of ["TE1618", "TE1746", "GR1113", "PV556", "BA1294", "BT1461"]) {
     const record = find(gomariz.products, reference);
     assert.equal(resolveGomarizEditorialTitle(record), null, reference);
-    const replacement: Readonly<Record<string, { readonly title: string }>> = verifiedGomarizResidualTitles;
+    const replacement: Readonly<Record<string, { readonly title: string }>> = verifiedGomarizUnitSpecificTitles;
     assert.equal(prepareSourceProduct(record).product.title, replacement[reference]?.title ?? record.title, reference);
   }
   const record = find(gomariz.products, "TE1620");
@@ -96,7 +96,7 @@ test("GAM: vehículos confirmados y títulos de lotes individualizados", () => {
     for (const [key, value] of Object.entries(expectedSpecs)) assert.deepEqual(prepared.product.spec[key], value, `${record.reference}: ${key}`);
     assert.equal(JSON.stringify(record), original);
   }
-  const residualTitles: Readonly<Record<string, { readonly title: string }>> = verifiedGamResidualTitles;
+  const residualTitles: Readonly<Record<string, { readonly title: string }>> = verifiedGamSourceMatchedTitles;
   for (const reference of ["6805", "6971", "6987", "6988", "6989", "6993", "6994", "6995", "2364"]) {
     const record = find(gam.products, reference);
     assert.equal(resolveGamConciseTitle(record), null, reference);

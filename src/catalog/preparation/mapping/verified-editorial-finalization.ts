@@ -5,7 +5,7 @@ import { resolveVerifiedCanonicalBriefEditorial } from "./verified-canonical-bri
 import { applyVerifiedEditorialComposition } from "./verified-editorial-composition.js";
 import { resolveVerifiedUnitSummaryEditorial } from "./verified-unit-summary-editorial.js";
 import { resolveGomarizVerifiedModelGeneral } from "./providers/gomariz/verified-model-general.js";
-import { resolveGamVerifiedResidualGeneral } from "./providers/gam/editorial-descriptions/verified-residual-general.js";
+import { resolveGamVerifiedSourceMatchedGeneral } from "./providers/gam/editorial-descriptions/verified-source-matched-general.js";
 import { includeSourceYearInGeneral } from "./source-year-general.js";
 import { includeGamRegenerativeBrakingInGeneral } from "./providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
 import { includeGamSourceUnitDetailsInGeneral } from "./providers/gam/editorial-descriptions/source-unit-details-general.js";
@@ -58,7 +58,7 @@ export const finalizePreparedEditorial = (
   const verifiedModelGeneral = allowVerifiedEnrichment
     ? resolveGomarizVerifiedModelGeneral(sourceUnitRecord, verifiedDescriptions.general) : null;
   const verifiedResidualGeneral = allowVerifiedEnrichment
-    ? resolveGamVerifiedResidualGeneral(sourceUnitRecord, verifiedModelGeneral ?? verifiedDescriptions.general) : null;
+    ? resolveGamVerifiedSourceMatchedGeneral(sourceUnitRecord, verifiedModelGeneral ?? verifiedDescriptions.general) : null;
   const verifiedUnitSummary = allowVerifiedEnrichment
     ? resolveVerifiedUnitSummaryEditorial(sourceUnitRecord, verifiedDescriptions.short, verifiedDescriptions.general) : null;
 

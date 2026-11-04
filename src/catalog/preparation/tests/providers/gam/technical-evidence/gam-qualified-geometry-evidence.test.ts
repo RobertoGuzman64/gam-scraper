@@ -3,7 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../normalization/normalize-specs.js";
-import { recoverGamVerifiedResidualGeometrySpecs } from "../../../../evidence/providers/gam/measurements-and-capacities/verified-residual-geometry-evidence.js";
+import { recoverGamVerifiedUnitGeometrySpecs } from "../../../../evidence/providers/gam/measurements-and-capacities/verified-unit-geometry-specs.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
@@ -23,7 +23,7 @@ test("solo las veinte referencias acreditadas reciben nuevas especificaciones", 
   const changed: string[] = [];
   for (const source of catalog.products) {
     const original = structuredClone(source);
-    const after = recoverGamVerifiedResidualGeometrySpecs(source);
+    const after = recoverGamVerifiedUnitGeometrySpecs(source);
     const added = Object.keys(after).filter((key) => !Object.hasOwn(source.specs ?? {}, key));
     assert.deepEqual(source, original, String(source.reference));
     for (const [key, value] of Object.entries(source.specs ?? {})) {
@@ -41,7 +41,7 @@ test("solo las veinte referencias acreditadas reciben nuevas especificaciones", 
 test("normalización preserva los valores y diferencia pendiente con y sin carga", () => {
   for (const reference of references) {
     const source = record(reference);
-    const evidence = recoverGamVerifiedResidualGeometrySpecs(source);
+    const evidence = recoverGamVerifiedUnitGeometrySpecs(source);
     const prepared = prepareSourceProduct(source);
     assert.equal(prepared.status, "ready", reference);
     const normalized = normalizeSpecsObject(prepared.product.spec);
@@ -72,19 +72,19 @@ test("rechaza referencias, proveedores, modelos, variantes y texto fuente incomp
       { ...source, url: `${source.url}?variante=distinta` },
       { ...source, condition: "Segunda mano" },
       { ...source, categoryKey: "otra-categoria" },
-      { ...source, longDescription: `${source.longDescription ?? ""} Especificación cambiada.`, specs: { ...source.specs, ...recoverGamVerifiedResidualGeometrySpecs(source) } }
+      { ...source, longDescription: `${source.longDescription ?? ""} Especificación cambiada.`, specs: { ...source.specs, ...recoverGamVerifiedUnitGeometrySpecs(source) } }
     ];
-    const added = Object.keys(recoverGamVerifiedResidualGeometrySpecs(source)).find((key) => !Object.hasOwn(source.specs ?? {}, key));
+    const added = Object.keys(recoverGamVerifiedUnitGeometrySpecs(source)).find((key) => !Object.hasOwn(source.specs ?? {}, key));
     assert.ok(added, reference);
     for (const variant of altered) {
       if (variant.specs?.[added] !== undefined) {
-        assert.deepEqual(recoverGamVerifiedResidualGeometrySpecs(variant), variant.specs ?? {}, `${reference}: evita sobrescribir`);
+        assert.deepEqual(recoverGamVerifiedUnitGeometrySpecs(variant), variant.specs ?? {}, `${reference}: evita sobrescribir`);
       } else {
-        assert.deepEqual(recoverGamVerifiedResidualGeometrySpecs(variant), variant.specs ?? {}, `${reference}: identidad`);
+        assert.deepEqual(recoverGamVerifiedUnitGeometrySpecs(variant), variant.specs ?? {}, `${reference}: identidad`);
       }
     }
   }
   const source = record("4623");
   const modified = { ...source, longDescription: (source.longDescription ?? "").replace("10 % sin carga", "20 % sin carga") };
-  assert.deepEqual(recoverGamVerifiedResidualGeometrySpecs(modified), source.specs ?? {});
+  assert.deepEqual(recoverGamVerifiedUnitGeometrySpecs(modified), source.specs ?? {});
 });

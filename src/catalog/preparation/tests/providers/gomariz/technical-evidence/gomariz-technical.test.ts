@@ -5,9 +5,9 @@ import { resolveAttributeValue } from "../../../../mapping/attribute-mapping.js"
 import { prepareCached } from "../../../cross-cutting/support/prepare-cached.js";
 import { recoverGomarizSourceYearSpec } from "../../../../mapping/providers/gomariz/source-year-spec.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { recoverGomarizDocumentedResidualDensitySpecs } from "../../../../evidence/providers/gomariz/documented-density-residual.js";
+import { recoverGomarizDocumentedRenaultPremiumSpecs } from "../../../../evidence/providers/gomariz/documented-renault-premium-specs.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
-import { recoverGomarizDocumentedDensity180Specs } from "../../../../evidence/providers/gomariz/documented-density-180.js";
+import { recoverGomarizDocumentedScaniaP220Specs } from "../../../../evidence/providers/gomariz/documented-scania-p220-specs.js";
 import type { ProductRecord, SpecsMap } from "../../../../../../contracts/catalog.js";
 
 const catalog = await loadImportCatalog();
@@ -90,7 +90,7 @@ test("Gomariz: traslada el año explícito de la ficha a spec sin alterar los or
     const before = JSON.stringify(record);
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.product.spec["Año de fabricación"], record.year, record.reference ?? "");
-    assert.deepEqual(prepared.product.spec, recoverGomarizDocumentedResidualDensitySpecs(record, recoverGomarizDocumentedDensity180Specs(record, { ...record.specs, "Año de fabricación": record.year })));
+    assert.deepEqual(prepared.product.spec, recoverGomarizDocumentedRenaultPremiumSpecs(record, recoverGomarizDocumentedScaniaP220Specs(record, { ...record.specs, "Año de fabricación": record.year })));
     assert.equal(JSON.stringify(record), before);
   }
   for (const record of source.products.filter((item) => item.year === null)) {

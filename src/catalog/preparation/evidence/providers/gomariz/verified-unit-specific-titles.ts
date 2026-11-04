@@ -1,0 +1,74 @@
+export const verifiedGomarizUnitSpecificTitles = {
+  "BA1253": {
+    "sourceDigest": "d12293c9da706d510aa68846321d5ea3d012cf167ee1833407b9ad473ccaa62b",
+    "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/skyjack-brazo-articulado-articulated-boom-lift-sj63aj-2/",
+    "preparedDigest": "cf9c2274bebf8503be07f3423a90c5964bfe740e140b08b61a5798bc77aa889d",
+    "title": "Plataforma articulada diésel Skyjack SJ63AJ de 2016"
+  },
+  "BA1262": {
+    "sourceDigest": "3a46f7c7e5e1d1e546a84fa67202149ec90abd24fe19e7f05ff587db6aae6100",
+    "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/skyjack-brazo-articulado-articulated-boom-lift-sj63aj-3/",
+    "preparedDigest": "cf9c2274bebf8503be07f3423a90c5964bfe740e140b08b61a5798bc77aa889d",
+    "title": "Plataforma articulada diésel Skyjack SJ63AJ de 2015"
+  },
+  "BA1294": {
+    "sourceDigest": "f0d112a1c51ac614641429856683d89690eacde815b80ffafe07329914c32911",
+    "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/skyjack-brazo-articulado-articulated-boom-lift-sj46aj-10/",
+    "preparedDigest": "68800f453040fa0adff49d854c5ad189445925874368663493a40a46bcd6f2ee",
+    "title": "Plataforma articulada diésel Skyjack SJ46AJ de 2016"
+  },
+  "BT1461": {
+    "sourceDigest": "b5559ae5c72de7de3f35b7eac0228df404c893d8ac9c0fb19751bb4197f15b1f",
+    "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-telescopico/skyjack-sj45t-telescopic-boom-lift-brazo-telescopico-16-metros/",
+    "preparedDigest": "d3bf1ee66161bdb8c63227ce5b389235a30ec642d4ca61f00b51527172116226",
+    "title": "Plataforma telescópica diésel Skyjack SJ45T de 2017"
+  },
+  "CAE1207": {
+    "sourceDigest": "3e0283b0ee224f66c46277ac210e2711075ed81b4b5c102aa50d3d5686cc5e17",
+    "sourceUrl": "https://www.gomarizrent.com/venta/manipulacion-de-materiales/carretilla-industrial/nissan-q02l25cu-carretilla-industrial/",
+    "preparedDigest": "8dd756fa7f34b3b4e354bcc011e3e5314b3a7ee997e023d145c7c96e4c605487",
+    "title": "Carretilla industrial eléctrica Nissan Q02L25CU de 2007"
+  },
+  "GR1113": {
+    "sourceDigest": "3c57940d56b1c11234215fa14c6d98bc898fc87c22395c77c99c4e8c2d55f4c8",
+    "sourceUrl": "https://www.gomarizrent.com/venta/energia-electrica-e-iluminacion/generador/himoinsa-hfw-605t-generador-generator/",
+    "preparedDigest": "9e33b20eb90719a1b6ea3893e74ad1390cbfe9d469f2bc1c33573519e8fd2948",
+    "title": "Grupo electrógeno Himoinsa HFW-605T de 60 kVA"
+  },
+  "PV556": {
+    "sourceDigest": "e7ad3fb1d6b15b43d9287f0421521f847b56418c10be46cf29b4e8e4e67bb41f",
+    "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-mastil-vertical/genie-sla15-elevador-mastil-vertical-1/",
+    "preparedDigest": "a0584be37379dd3c04ffc6483b4da3de2f0b8d9de480bfe23bf411319b9aacb6",
+    "title": "Elevador de mástil vertical Genie SLA15 de 363 kg"
+  },
+  "RO1197": {
+    "sourceDigest": "ae5ac018eaa1e740cd684de7015b004b72372528bd39f75a5125dfe6eee68c0c",
+    "sourceUrl": "https://www.gomarizrent.com/venta/movimiento-de-tierras-demolicion-y-compactacion/rodillo/rodillo-bombag-bw80ad-movimiento-de-tierras-demolicion-compactacion/",
+    "preparedDigest": "2aa58823dd8e08085b48df376159e559a6d35315423f47d0226cb4c53097fe32",
+    "title": "Rodillo compactador diésel Bombag BW80AD-2 de 2007"
+  },
+  "TE1618": {
+    "sourceDigest": "c2cca5a22905a2687f2678a15e75614ff05888546aa1d28f4f633d3fc32b8505",
+    "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-s0812ii-brazo-articulado-10-mts/",
+    "preparedDigest": "43a5c47595d48a29322e3eb6ec012db279df1993c59578835bfff2893c25e247",
+    "title": "Plataforma de tijera eléctrica LGMG S0812II de 2024"
+  },
+  "TE1746": {
+    "sourceDigest": "491548942545918c40bb6d72a9b5c80bce908db503576319872eb26162897107",
+    "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-s0607e-13/",
+    "preparedDigest": "6f25e35bdad48d8f4acb9d944f58173a45fbb068c77d0f0f47ae8d8704751a73",
+    "title": "Plataforma de tijera eléctrica LGMG S0607E-2 de 2025"
+  },
+  "TE1858": {
+    "sourceDigest": "6e9c6e98c3aedbe20bb8c14a9e1205a3ab30bf188cac913c7d2f579e043db5f9",
+    "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-ss0507etijera-electrica-electric-scissor/",
+    "preparedDigest": "3f321427ae7f720ab03d8a0c58198e85f567d8ac67fe690bbb3d051ac73aa9bb",
+    "title": "Plataforma de tijera eléctrica LGMG SS0507E de 2022"
+  },
+  "TO1245": {
+    "sourceDigest": "9c28bc8201383a3edcb61def44aa1d91f577a984dc13ab28061b404fcffb795c",
+    "sourceUrl": "https://www.gomarizrent.com/venta/energia-electrica-e-iluminacion/torre-de-luz/generac-vt-hybrid/",
+    "preparedDigest": "9e94f38ca657fd298c37cf12766b5cf510ad72e81006c435f7b6a2dc33a42ada",
+    "title": "Torre de iluminación Generac VT-HYBRID de 2016"
+  }
+} as const;

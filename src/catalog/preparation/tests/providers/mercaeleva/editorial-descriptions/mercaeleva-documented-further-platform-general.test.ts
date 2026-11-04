@@ -1,4 +1,4 @@
-import { recoverMercaelevaDocumentedResidualLiftSpecs } from "../../../../evidence/providers/mercaeleva/documented-residual-lift-specs.js";
+import { recoverMercaelevaDocumentedLgmgAndBtLiftSpecs } from "../../../../evidence/providers/mercaeleva/documented-lgmg-and-bt-lift-specs.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -62,7 +62,7 @@ test("Mercaeleva: acredita veintidós descripciones de diez modelos con variante
     }
     assert.equal(prepared.product.reference, record.reference);
     assert.equal(prepared.product.sourceUrl, record.url);
-    assert.deepEqual(prepared.product.spec, recoverMercaelevaDocumentedResidualLiftSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, record.specs ?? {})));
+    assert.deepEqual(prepared.product.spec, recoverMercaelevaDocumentedLgmgAndBtLiftSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, record.specs ?? {})));
     assert.equal(JSON.stringify(record), original);
   }
 });

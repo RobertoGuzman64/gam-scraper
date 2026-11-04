@@ -3,11 +3,11 @@ import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../../../../contracts/catalog.js";
 import { resolveGomarizShortDescription } from "../../../../mapping/providers/gomariz/short-description.js";
 import { resolveGomarizIndividualizedGeneral } from "../../../../mapping/providers/gomariz/individualized-general.js";
-import { resolveGomarizResidualGeneral } from "../../../../mapping/providers/gomariz/residual-general.js";
+import { resolveGomarizUnitSpecificGeneral } from "../../../../mapping/providers/gomariz/unit-specific-general.js";
 import { verifiedGomarizPriorityGeneral } from "../../../../evidence/providers/gomariz/verified-priority-general.js";
 import { gomarizPriorityShortEvidence, verifiedGomarizPriorityShortDescription } from "../../../../evidence/providers/gomariz/priority-short-descriptions.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { recoverGomarizDocumentedResidualDensitySpecs } from "../../../../evidence/providers/gomariz/documented-density-residual.js";
+import { recoverGomarizDocumentedRenaultPremiumSpecs } from "../../../../evidence/providers/gomariz/documented-renault-premium-specs.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 
 const record = (family: string, specs: SpecsMap, title = "LGMG S1413EII"): ProductRecord => ({
@@ -166,7 +166,7 @@ test("Gomariz: cubre los camiones cesta, camión y retroexcavadora con datos del
     assert.ok(result.product.description, reference);
     assert.equal(result.product.reference, reference);
     assert.equal(result.product.sourceUrl, source.url);
-    assert.deepEqual(result.product.spec, recoverGomarizDocumentedResidualDensitySpecs(source, { ...source.specs, ...(source.year ? { "Año de fabricación": source.year } : {}) }));
+    assert.deepEqual(result.product.spec, recoverGomarizDocumentedRenaultPremiumSpecs(source, { ...source.specs, ...(source.year ? { "Año de fabricación": source.year } : {}) }));
     assert.equal(JSON.stringify(source), before);
   }
   const truck = original.products.find((item) => item.reference === "CC1535");
@@ -192,7 +192,7 @@ test("Gomariz: recupera las cortas pendientes con origen y medidas acreditadas, 
     const prepared = prepareSourceProduct(source);
     assert.equal(prepared.product.description, text, reference);
     assert.equal(prepared.product.description_general,
-      verifiedGomarizPriorityGeneral(source) ?? resolveGomarizIndividualizedGeneral(source) ?? resolveGomarizResidualGeneral(source) ?? source.longDescription, reference);
+      verifiedGomarizPriorityGeneral(source) ?? resolveGomarizIndividualizedGeneral(source) ?? resolveGomarizUnitSpecificGeneral(source) ?? source.longDescription, reference);
     assert.deepEqual(prepared.product.spec, { ...source.specs, ...(source.year ? { "Año de fabricación": source.year } : {}) }, reference);
     assert.equal(JSON.stringify(source), serialized, reference);
     const variants: readonly ProductRecord[] = [

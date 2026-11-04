@@ -1,4 +1,4 @@
-import { recoverMercaelevaDocumentedResidualLiftSpecs } from "../../../../evidence/providers/mercaeleva/documented-residual-lift-specs.js";
+import { recoverMercaelevaDocumentedLgmgAndBtLiftSpecs } from "../../../../evidence/providers/mercaeleva/documented-lgmg-and-bt-lift-specs.js";
 import { recoverMercaelevaDocumentedEquipmentTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-equipment-technical-specs.js";
 import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-platform-technical-specs.js";
 import { recoverMercaelevaSourceFuel } from "../../../../evidence/providers/mercaeleva/source-fuel-evidence.js";
@@ -9,14 +9,14 @@ import { readCanonicalCatalog } from "../../../../../../infrastructure/filesyste
 import { verifiedMercaelevaCriticalGeneral } from "../../../../evidence/providers/mercaeleva/critical-general-descriptions.js";
 import { verifiedPriorityPlatformGeneral } from "../../../../evidence/providers/mercaeleva/priority-platform-generals.js";
 import { verifiedMercaelevaPriorityShortDescription } from "../../../../evidence/providers/mercaeleva/priority-short-descriptions.js";
-import { verifiedMercaelevaResidualGeneral } from "../../../../evidence/providers/mercaeleva/verified-residual-generals.js";
+import { verifiedMercaelevaUnitSpecificGeneral } from "../../../../evidence/providers/mercaeleva/verified-unit-specific-generals.js";
 import { verifiedMercaelevaUnitGeneral } from "../../../../mapping/providers/mercaeleva/verified-unit-general.js";
 import { verifiedFamilyProportionEditorial } from "../../../../evidence/verified-family-proportion-editorial.js";
 import { matchesVerifiedHorometer } from "../../../../evidence/providers/mercaeleva/verified-horometer.js";
-import { recoverMercaelevaDocumentedResidualDensitySpecs } from "../../../../evidence/providers/mercaeleva/documented-density-residual.js";
+import { recoverMercaelevaDocumentedTransportAndAccessSpecs } from "../../../../evidence/providers/mercaeleva/documented-transport-and-access-specs.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { resolveMercaelevaDocumentedFurtherPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-further-platform-general.js";
-import { resolveMercaelevaLegacyPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-legacy-platform-general.js";
+import { resolveMercaelevaPreviousGenerationPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-previous-generation-platform-general.js";
 import { resolveMercaelevaVerifiedSourceEditorial } from "../../../../mapping/providers/mercaeleva/verified-source-editorial.js";
 
 const source = await readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json");
@@ -43,7 +43,7 @@ test("Mercaeleva: los originales canónicos activan las evidencias editoriales v
     assert.ok(short, reference);
     const prepared = prepareSourceProduct(record).product;
     assert.equal(prepared.description, short);
-    assert.deepEqual(prepared.spec, recoverMercaelevaDocumentedResidualLiftSpecs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, recoverMercaelevaSourceFuel(record, record.specs ?? {})))));
+    assert.deepEqual(prepared.spec, recoverMercaelevaDocumentedLgmgAndBtLiftSpecs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, recoverMercaelevaSourceFuel(record, record.specs ?? {})))));
     assert.equal(JSON.stringify(record), snapshot);
   }
   for (const reference of generalReferences) {
@@ -54,14 +54,14 @@ test("Mercaeleva: los originales canónicos activan las evidencias editoriales v
   }
   for (const reference of residualReferences) {
     const record = sourceRecord(reference);
-    const general = verifiedMercaelevaResidualGeneral(record);
+    const general = verifiedMercaelevaUnitSpecificGeneral(record);
     assert.ok(general, reference);
     const prepared = prepareSourceProduct(record).product;
     const previous = resolveMercaelevaDocumentedFurtherPlatformGeneral(record) ?? general;
     assert.ok(prepared.description_general === (resolveMercaelevaVerifiedSourceEditorial(record, previous) ?? previous) ||
-      prepared.description_general === resolveMercaelevaLegacyPlatformGeneral(record) ||
+      prepared.description_general === resolveMercaelevaPreviousGenerationPlatformGeneral(record) ||
       (reference === "M294-4678" && prepared.description_general === verifiedFamilyProportionEditorial["mercaeleva:M294-4678"].general), reference);
-    assert.deepEqual(prepared.spec, recoverMercaelevaDocumentedResidualDensitySpecs(record, recoverMercaelevaDocumentedResidualLiftSpecs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, recoverMercaelevaSourceFuel(record, record.specs ?? {}))))), reference);
+    assert.deepEqual(prepared.spec, recoverMercaelevaDocumentedTransportAndAccessSpecs(record, recoverMercaelevaDocumentedLgmgAndBtLiftSpecs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, recoverMercaelevaSourceFuel(record, record.specs ?? {}))))), reference);
     assert.notEqual(general, record.longDescription, reference);
   }
 });
@@ -77,7 +77,7 @@ test("Mercaeleva: la evidencia residual no se traslada a fichas alteradas", () =
       { ...record, specs: { ...record.specs, "Título adicional": "OTRO" } },
       { ...record, condition: record.condition === "Nuevo" ? "Segunda mano" : "Nuevo" }
     ] satisfies readonly ProductRecord[]) {
-      assert.equal(verifiedMercaelevaResidualGeneral(altered), null, reference);
+      assert.equal(verifiedMercaelevaUnitSpecificGeneral(altered), null, reference);
     }
   }
   for (const reference of shortReferences) {
@@ -106,7 +106,7 @@ test("Mercaeleva: los anuncios de unidades se individualizan únicamente con evi
     const prepared = prepareSourceProduct(record);
     const previous = resolveMercaelevaDocumentedFurtherPlatformGeneral(record) ?? general;
     assert.equal(prepared.product.description_general, resolveMercaelevaVerifiedSourceEditorial(record, previous) ?? previous, reference);
-    assert.deepEqual(prepared.product.spec, recoverMercaelevaDocumentedResidualLiftSpecs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, recoverMercaelevaSourceFuel(record, record.specs ?? {})))), reference);
+    assert.deepEqual(prepared.product.spec, recoverMercaelevaDocumentedLgmgAndBtLiftSpecs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, recoverMercaelevaSourceFuel(record, record.specs ?? {})))), reference);
     assert.equal(JSON.stringify(record), original, reference);
     for (const variant of [
       { ...record, reference: "M000-0000" },
