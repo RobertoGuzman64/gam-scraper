@@ -1,9 +1,11 @@
+import { recoverMercaelevaDocumentedResidualLiftSpecs } from "../../../../evidence/providers/mercaeleva/documented-residual-lift-specs.js";
 import { readMercaelevaSource } from "../../../../../../testing/builders/mercaeleva-source-fixture.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { verifiedPriorityPlatformGeneral, priorityPlatformManufacturerSources } from "../../../../evidence/providers/mercaeleva/priority-platform-generals.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-platform-technical-specs.js";
 
 const sources = await readMercaelevaSource();
 const targets = ["M178-6194", "M205-2951", "M572-8190", "M030-7485", "M005-4474"] as const;
@@ -30,7 +32,7 @@ test("Mercaeleva: las generales de plataformas prioritarias se enriquecen solo c
     const output = prepareSourceProduct(record);
     assert.equal(output.product.description_general, general);
     assert.equal(output.product.reference, record.reference);
-    assert.deepEqual(output.product.spec, record.specs);
+    assert.deepEqual(output.product.spec, recoverMercaelevaDocumentedResidualLiftSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, record.specs ?? {})));
     assert.equal(JSON.stringify(record), before);
   }
   assert.equal(new Set(targets.slice(0, 3).map((ref) => verifiedPriorityPlatformGeneral(find(ref)))).size, 3);

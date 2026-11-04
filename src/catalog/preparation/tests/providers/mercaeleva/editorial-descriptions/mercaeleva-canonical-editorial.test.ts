@@ -1,3 +1,6 @@
+import { recoverMercaelevaDocumentedResidualLiftSpecs } from "../../../../evidence/providers/mercaeleva/documented-residual-lift-specs.js";
+import { recoverMercaelevaDocumentedEquipmentTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-equipment-technical-specs.js";
+import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-platform-technical-specs.js";
 import { recoverMercaelevaSourceFuel } from "../../../../evidence/providers/mercaeleva/source-fuel-evidence.js";
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -10,6 +13,7 @@ import { verifiedMercaelevaResidualGeneral } from "../../../../evidence/provider
 import { verifiedMercaelevaUnitGeneral } from "../../../../mapping/providers/mercaeleva/verified-unit-general.js";
 import { verifiedFamilyProportionEditorial } from "../../../../evidence/verified-family-proportion-editorial.js";
 import { matchesVerifiedHorometer } from "../../../../evidence/providers/mercaeleva/verified-horometer.js";
+import { recoverMercaelevaDocumentedResidualDensitySpecs } from "../../../../evidence/providers/mercaeleva/documented-density-residual.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { resolveMercaelevaDocumentedFurtherPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-further-platform-general.js";
 import { resolveMercaelevaLegacyPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-legacy-platform-general.js";
@@ -39,7 +43,7 @@ test("Mercaeleva: los originales canónicos activan las evidencias editoriales v
     assert.ok(short, reference);
     const prepared = prepareSourceProduct(record).product;
     assert.equal(prepared.description, short);
-    assert.deepEqual(prepared.spec, recoverMercaelevaSourceFuel(record, record.specs ?? {}));
+    assert.deepEqual(prepared.spec, recoverMercaelevaDocumentedResidualLiftSpecs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, recoverMercaelevaSourceFuel(record, record.specs ?? {})))));
     assert.equal(JSON.stringify(record), snapshot);
   }
   for (const reference of generalReferences) {
@@ -57,7 +61,7 @@ test("Mercaeleva: los originales canónicos activan las evidencias editoriales v
     assert.ok(prepared.description_general === (resolveMercaelevaVerifiedSourceEditorial(record, previous) ?? previous) ||
       prepared.description_general === resolveMercaelevaLegacyPlatformGeneral(record) ||
       (reference === "M294-4678" && prepared.description_general === verifiedFamilyProportionEditorial["mercaeleva:M294-4678"].general), reference);
-    assert.deepEqual(prepared.spec, recoverMercaelevaSourceFuel(record, record.specs ?? {}), reference);
+    assert.deepEqual(prepared.spec, recoverMercaelevaDocumentedResidualDensitySpecs(record, recoverMercaelevaDocumentedResidualLiftSpecs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, recoverMercaelevaSourceFuel(record, record.specs ?? {}))))), reference);
     assert.notEqual(general, record.longDescription, reference);
   }
 });
@@ -102,7 +106,7 @@ test("Mercaeleva: los anuncios de unidades se individualizan únicamente con evi
     const prepared = prepareSourceProduct(record);
     const previous = resolveMercaelevaDocumentedFurtherPlatformGeneral(record) ?? general;
     assert.equal(prepared.product.description_general, resolveMercaelevaVerifiedSourceEditorial(record, previous) ?? previous, reference);
-    assert.deepEqual(prepared.product.spec, recoverMercaelevaSourceFuel(record, record.specs ?? {}), reference);
+    assert.deepEqual(prepared.product.spec, recoverMercaelevaDocumentedResidualLiftSpecs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, recoverMercaelevaSourceFuel(record, record.specs ?? {})))), reference);
     assert.equal(JSON.stringify(record), original, reference);
     for (const variant of [
       { ...record, reference: "M000-0000" },

@@ -6,6 +6,7 @@ import { resolveGamGeneralDescription } from "../../../../mapping/providers/gam/
 import { resolveGamVerifiedBriefGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/brief-technical-general.js";
 import { resolveGamShortDescription } from "../../../../mapping/providers/gam/editorial-descriptions/short-description.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { recoverGamDocumentedTechnicalDensitySpecs } from "../../../../evidence/providers/gam/verified-models/documented-technical-density-units.js";
 import { verifiedGamUnitSourceGenerals } from "../../../../evidence/providers/gam/general-evidence/verified-unit-source-generals.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
@@ -38,7 +39,7 @@ test("GAM: mejora únicamente las 18 generales con evidencia propia", () => {
     assert.equal(JSON.stringify(record), before);
     assert.equal(prepared.product.reference, record.reference);
     assert.equal(prepared.product.sourceUrl, record.url);
-    if (improved) assert.deepEqual(prepared.product.spec, { ...record.specs, ...(record.reference === "4774" ? { "Motorización": "Eléctrico" } : {}) });
+    if (improved) assert.deepEqual(prepared.product.spec, recoverGamDocumentedTechnicalDensitySpecs(record, { ...record.specs, ...(record.reference === "4774" ? { "Motorización": "Eléctrico" } : {}) }));
   }
   assert.equal(catalog.products.length, 983);
   assert.deepEqual(new Set(changed), expected);

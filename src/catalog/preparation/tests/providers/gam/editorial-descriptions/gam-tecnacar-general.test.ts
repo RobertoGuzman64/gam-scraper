@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamTecnacarGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/tecnacar-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { recoverGamDocumentedDensity178Specs } from "../../../../evidence/providers/gam/verified-models/documented-density-178.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const find = (reference: string): ProductRecord => {
@@ -33,7 +34,7 @@ test("GAM: diferencia 18 fichas Tecnacar con hechos atribuibles sin alterar sus 
       assert.equal(preparation.reference, record.reference);
       assert.equal(preparation.description_general?.includes(record.model ?? ""), true);
       const { "Control de tracción TCS": tractionControl, "Sistema antivuelco ACS": rolloverControl, ...unchangedSpecs } = preparation.spec;
-      assert.deepEqual(unchangedSpecs, record.specs);
+      assert.deepEqual(unchangedSpecs, recoverGamDocumentedDensity178Specs(record, record.specs ?? {}));
       const hasDeclaredControls = /sistema de control de tracci[oó]n TCS/iu.test(record.longDescription) &&
         /sistema antivuelco ACS/iu.test(record.longDescription);
       assert.equal(tractionControl, hasDeclaredControls ? true : undefined);

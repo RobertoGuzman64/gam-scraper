@@ -1,8 +1,11 @@
+import { recoverMercaelevaDocumentedEquipmentTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-equipment-technical-specs.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readMercaelevaSource } from "../../../../../../testing/builders/mercaeleva-source-fixture.js";
+import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-platform-technical-specs.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { recoverMercaelevaDocumentedDensity180Specs } from "../../../../evidence/providers/mercaeleva/documented-density-180.js";
 import { mercaelevaPriorityShortEvidence, verifiedMercaelevaPriorityShortDescription } from "../../../../evidence/providers/mercaeleva/priority-short-descriptions.js";
 
 const records = await readMercaelevaSource();
@@ -24,7 +27,7 @@ test("recupera las cortas prioritarias sin alterar los originales ni sus contrad
     assert.equal(record.shortDescription, null, reference);
     assert.ok(prepared.product.description, reference);
     assert.ok(prepared.product.description_general, reference);
-    assert.deepEqual(prepared.product.spec, record.specs, reference);
+    assert.deepEqual(prepared.product.spec, recoverMercaelevaDocumentedDensity180Specs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, record.specs ?? {}))), reference);
     assert.equal(JSON.stringify(record), before, reference);
     const evidence = Object.values(mercaelevaPriorityShortEvidence).find((item) => item.reference === reference);
     assert.ok(evidence);

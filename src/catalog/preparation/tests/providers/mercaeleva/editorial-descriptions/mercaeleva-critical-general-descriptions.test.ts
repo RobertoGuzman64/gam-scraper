@@ -1,8 +1,10 @@
+import { recoverMercaelevaDocumentedEquipmentTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-equipment-technical-specs.js";
 import { readMercaelevaSource } from "../../../../../../testing/builders/mercaeleva-source-fixture.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { verifiedMercaelevaCriticalGeneral } from "../../../../evidence/providers/mercaeleva/critical-general-descriptions.js";
+import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-platform-technical-specs.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 
 const sources = await readMercaelevaSource();
@@ -30,7 +32,7 @@ test("Mercaeleva: resuelve siete generales prioritarias breves con evidencia del
     assert.equal(prepared.product.description_general, improved);
     assert.equal(prepared.product.sourceUrl, record.url);
     assert.equal(prepared.product.reference, record.reference);
-    assert.deepEqual(prepared.product.spec, record.specs);
+    assert.deepEqual(prepared.product.spec, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, record.specs ?? {})));
     assert.equal(JSON.stringify(record), original);
   }
 });

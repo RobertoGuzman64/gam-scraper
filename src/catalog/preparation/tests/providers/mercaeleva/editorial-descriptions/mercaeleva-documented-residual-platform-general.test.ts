@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readMercaelevaSource } from "../../../../../../testing/builders/mercaeleva-source-fixture.js";
 import { verifiedResidualPlatformModelDocumentation } from "../../../../evidence/providers/mercaeleva/residual-platform-model-documentation.js";
 import { resolveMercaelevaDocumentedResidualPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-residual-platform-general.js";
+import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-platform-technical-specs.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 
 const records = await readMercaelevaSource();
@@ -55,7 +56,7 @@ test("Mercaeleva: mejora veinte plataformas coherentes de ocho modelos documenta
     else assert.doesNotMatch(description, /\d+ h declaradas/u);
     assert.equal(prepared.product.reference, record.reference);
     assert.equal(prepared.product.sourceUrl, record.url);
-    assert.deepEqual(prepared.product.spec, record.specs);
+    assert.deepEqual(prepared.product.spec, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, record.specs ?? {}));
     assert.equal(JSON.stringify(record), original);
   }
 });

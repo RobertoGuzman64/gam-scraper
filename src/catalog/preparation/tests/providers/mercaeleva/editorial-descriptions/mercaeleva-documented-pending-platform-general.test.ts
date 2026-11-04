@@ -1,9 +1,12 @@
+import { recoverMercaelevaDocumentedResidualLiftSpecs } from "../../../../evidence/providers/mercaeleva/documented-residual-lift-specs.js";
+import { recoverMercaelevaDocumentedEquipmentTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-equipment-technical-specs.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readMercaelevaSource } from "../../../../../../testing/builders/mercaeleva-source-fixture.js";
 import { verifiedPendingPlatformModelDocumentation } from "../../../../evidence/providers/mercaeleva/pending-platform-model-documentation.js";
 import { resolveMercaelevaDocumentedPendingPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-pending-platform-general.js";
+import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-platform-technical-specs.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 
 const records = await readMercaelevaSource();
@@ -44,7 +47,7 @@ test("Mercaeleva: acredita veinte descripciones pendientes con datos del modelo 
     assert.equal(prepared.product.description_general, description);
     assert.equal(prepared.product.reference, record.reference);
     assert.equal(prepared.product.sourceUrl, record.url);
-    assert.deepEqual(prepared.product.spec, record.specs);
+    assert.deepEqual(prepared.product.spec, recoverMercaelevaDocumentedResidualLiftSpecs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, record.specs ?? {}))));
     assert.equal(JSON.stringify(record), before);
     if (record.horometer !== null) assert.ok(description.includes(`${record.horometer} h`));
     if (record.condition === "Nuevo") {

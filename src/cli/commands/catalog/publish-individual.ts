@@ -9,6 +9,8 @@ import { findDesktopDirectory } from "../../../infrastructure/filesystem/desktop
 import { publishIndividualCatalogs } from "../../../pipeline/publication/individual-finish.js";
 import type { IndividualFinishResult } from "../../../pipeline/publication/individual-finish.js";
 import { runCatalogContentGaps } from "./catalog-content-gaps.js";
+import { deliverPublishedWorkReport } from "../../reporting/published-work-archive.js";
+import { formatPublishedWorkTerminal } from "../../reporting/published-work.js";
 
 export const publishIndividualHelp = `Uso:
   npm run catalogo:publicar
@@ -18,7 +20,7 @@ export const publishIndividualHelp = `Uso:
 
 Paso 2/2: FINISH. Reutiliza automáticamente exclusiones históricas idénticas y acredita antes de publicar.
 Verifica los ZIP y recibos antes de activar; activa proveedores individuales con diario de recuperación,
-comprueba integridad, ejecuta retención y auditor de huecos. --simular no escribe ni activa.
+comprueba integridad, ejecuta retención, auditor e informe de trabajo original → publicado. --simular no escribe ni activa.
 Repetir el comando recupera un conjunto parcial sin sobrescribir entregas.
 No sustituye una campaña global de cuatro proveedores.`;
 
@@ -70,6 +72,7 @@ export const runPublishIndividual = async (
     readonly desktopDirectory?: string;
     readonly retention?: () => void | Promise<void>;
     readonly auditor?: () => Promise<void>;
+    readonly reporter?: typeof deliverPublishedWorkReport;
   } = {}
 ): Promise<IndividualFinishResult | null> => {
   if (args.length === 1 && args[0] === "--help") {
@@ -87,9 +90,10 @@ export const runPublishIndividual = async (
     printStatus("PASS", `PREFLIGHT | ${preflight.providers.length} proveedores con exclusiones acreditadas y diferencias aceptadas`);
     describeResult(preflight);
   }
+  const desktopDirectory = parsed.dryRun ? null : hooks.desktopDirectory ?? await findDesktopDirectory();
   const result = await publishIndividualCatalogs({
     workspace: root, providers: parsed.providerIds, dryRun: parsed.dryRun,
-    desktopDirectory: parsed.dryRun ? null : hooks.desktopDirectory ?? await findDesktopDirectory()
+    desktopDirectory
   });
   describeResult(result);
   if (parsed.dryRun) {
@@ -105,8 +109,17 @@ export const runPublishIndividual = async (
     throw new Error(`AUDITOR PENDIENTE | Publicaciones activadas y archivado completo. ` +
       `Repite catalogo:publicar para comprobar el auditor sin volver a publicar: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
   }
+  try {
+    if (!desktopDirectory) throw new Error("No se ha resuelto el Escritorio del informe");
+    const delivery = await (hooks.reporter ?? deliverPublishedWorkReport)(root, desktopDirectory, result);
+    for (const line of formatPublishedWorkTerminal(delivery.report)) printReportLine(line);
+    printStatus("PASS", `INFORME | ZIP verificado | ${delivery.zipFile}`);
+  } catch (error) {
+    throw new Error(`INFORME PENDIENTE | Publicaciones vigentes, retención y auditor completos. ` +
+      `Repite catalogo:publicar para generar o comprobar el informe sin republicar: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+  }
   printStatus("PASS", result.providers.every((item) => item.status === "YA VIGENTE")
-    ? "FINISH COMPLETO | YA VIGENTE, sin crear nuevas publicaciones ni ZIP"
+    ? "FINISH COMPLETO | YA VIGENTE, sin nuevas publicaciones ni ZIP comerciales"
     : "FINISH COMPLETO | Publicaciones activadas, verificadas y archivadas");
   return result;
 };

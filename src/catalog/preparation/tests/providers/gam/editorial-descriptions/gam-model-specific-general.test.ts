@@ -4,6 +4,8 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamModelSpecificGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/model-specific-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { recoverGamDocumentedLogitransHandlingSpecs } from "../../../../evidence/providers/gam/verified-models/documented-logitrans-handling-specs.js";
+import { recoverGamDocumentedDensity178Specs } from "../../../../evidence/providers/gam/verified-models/documented-density-178.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const find = (reference: string): ProductRecord => {
@@ -38,7 +40,7 @@ test("GAM: aporta identidad y carga propias a las generales de familia repetidas
       assert.equal(prepared.product.description, record.shortDescription?.trim() ?? null);
       assert.equal(prepared.product.reference, record.reference);
       assert.equal(prepared.product.sourceUrl, record.url);
-      assert.deepEqual(prepared.product.spec, record.specs);
+      assert.deepEqual(prepared.product.spec, recoverGamDocumentedDensity178Specs(record, recoverGamDocumentedLogitransHandlingSpecs(record, record.specs ?? {})));
     }
     assert.equal(JSON.stringify(record), before);
   }

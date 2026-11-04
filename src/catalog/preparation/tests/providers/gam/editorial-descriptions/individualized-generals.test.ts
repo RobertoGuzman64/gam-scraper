@@ -7,6 +7,8 @@ import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShor
 import { removeGamResidualEditorialArtifacts } from "../../../../mapping/providers/gam/editorial-descriptions/long-description.js";
 import { resolveGomarizIndividualizedGeneral } from "../../../../mapping/providers/gomariz/individualized-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { recoverGamDocumentedResidualDensitySpecs } from "../../../../evidence/providers/gam/verified-models/documented-density-residual.js";
+import { recoverGomarizDocumentedResidualDensitySpecs } from "../../../../evidence/providers/gomariz/documented-density-residual.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
@@ -45,8 +47,9 @@ test("Fase 8: diferencia 18 fichas con evidencias propias sin modificar los orig
         }
         assert.equal(prepared.sourceUrl, record.url);
         assert.equal(prepared.reference, record.reference);
-        assert.deepEqual(prepared.spec, record.providerId === "gomariz" && record.year ?
-          { ...record.specs, "Año de fabricación": record.year } : record.specs);
+        assert.deepEqual(prepared.spec, record.providerId === "gomariz" ?
+          recoverGomarizDocumentedResidualDensitySpecs(record, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) }) :
+          recoverGamDocumentedResidualDensitySpecs(record, record.specs ?? {}));
       }
       assert.equal(JSON.stringify(record), before);
     }

@@ -1,6 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
 import type { OfflinePreparation } from "../preparation/offline-document.js";
+import type { ImportCandidate } from "../legacy-export/contracts.js";
 import { buildProductIdentity } from "../identity.js";
 import { normalizeSpecsObject } from "../normalization/normalize-specs.js";
 
@@ -61,13 +62,17 @@ const compareSpecs = (before: ProductRecord["specs"], after: Readonly<Record<str
   return { added, renamed, formatted, changed };
 };
 
-export const measurePreparationWork = (
+export type IdentifiedProduct = {
+  readonly identity: string;
+  readonly product: ImportCandidate;
+};
+
+export const measureIdentifiedProductWork = (
   sourceProducts: readonly ProductRecord[],
-  preparation: Pick<OfflinePreparation, "identities" | "products">
-): PreparationWorkSummary => {
-  if (sourceProducts.length !== preparation.products.length ||
-    preparation.identities.length !== preparation.products.length) {
-    throw new Error("No se puede medir una preparación con cantidades de origen y destino distintas");
+  products: readonly IdentifiedProduct[]
+): { readonly summary: PreparationWorkSummary; readonly changedIdentities: ReadonlySet<string> } => {
+  if (products.length > sourceProducts.length) {
+    throw new Error("No se puede medir un destino con más productos que el origen");
   }
   const sourceByIdentity = new Map<string, ProductRecord>();
   for (const product of sourceProducts) {
@@ -76,7 +81,7 @@ export const measurePreparationWork = (
     sourceByIdentity.set(identity, product);
   }
   const seen = new Set<string>();
-  let transformedProducts = 0;
+  const changedIdentities = new Set<string>();
   let specificationsAdded = 0;
   let specificationsRenamed = 0;
   let specificationValuesFormatted = 0;
@@ -84,20 +89,19 @@ export const measurePreparationWork = (
   let descriptionsGenerated = 0;
   let descriptionsTransformed = 0;
   let titlesTransformed = 0;
-  for (const [index, prepared] of preparation.products.entries()) {
-    const identity = preparation.identities[index];
-    if (identity === undefined || seen.has(identity)) throw new Error("Identidad duplicada o ausente en la preparación medida");
+  for (const { identity, product } of products) {
+    if (seen.has(identity)) throw new Error("Identidad duplicada o ausente en la preparación medida");
     seen.add(identity);
     const source = sourceByIdentity.get(identity);
     if (!source) throw new Error(`Origen no resuelto para la preparación medida: ${identity}`);
     let changed = false;
-    if (meaningful(source.title) !== meaningful(prepared.product.title)) {
+    if (meaningful(source.title) !== meaningful(product.title)) {
       titlesTransformed += 1;
       changed = true;
     }
     for (const [previous, current] of [
-      [source.shortDescription, prepared.product.description],
-      [source.longDescription, prepared.product.description_general]
+      [source.shortDescription, product.description],
+      [source.longDescription, product.description_general]
     ] as const) {
       const before = meaningful(previous);
       const after = meaningful(current);
@@ -106,17 +110,34 @@ export const measurePreparationWork = (
       else descriptionsTransformed += 1;
       changed = true;
     }
-    const specs = compareSpecs(source.specs, prepared.product.spec);
+    const specs = compareSpecs(source.specs, product.spec);
     specificationsAdded += specs.added;
     specificationsRenamed += specs.renamed;
     specificationValuesFormatted += specs.formatted;
     specificationValuesChanged += specs.changed;
     if (specs.added + specs.renamed + specs.formatted + specs.changed > 0) changed = true;
-    if (changed) transformedProducts += 1;
+    if (changed) changedIdentities.add(identity);
   }
   return {
-    processedProducts: seen.size, transformedProducts,
-    specificationsAdded, specificationsRenamed, specificationValuesFormatted, specificationValuesChanged,
-    descriptionsGenerated, descriptionsTransformed, titlesTransformed
+    summary: {
+      processedProducts: seen.size, transformedProducts: changedIdentities.size,
+      specificationsAdded, specificationsRenamed, specificationValuesFormatted, specificationValuesChanged,
+      descriptionsGenerated, descriptionsTransformed, titlesTransformed
+    },
+    changedIdentities
   };
+};
+
+export const measurePreparationWork = (
+  sourceProducts: readonly ProductRecord[],
+  preparation: Pick<OfflinePreparation, "identities" | "products">
+): PreparationWorkSummary => {
+  if (sourceProducts.length !== preparation.products.length ||
+    preparation.identities.length !== preparation.products.length) {
+    throw new Error("No se puede medir una preparación con cantidades de origen y destino distintas");
+  }
+  return measureIdentifiedProductWork(sourceProducts, preparation.products.map((prepared, index) => ({
+    identity: preparation.identities[index] ?? "",
+    product: prepared.product
+  }))).summary;
 };

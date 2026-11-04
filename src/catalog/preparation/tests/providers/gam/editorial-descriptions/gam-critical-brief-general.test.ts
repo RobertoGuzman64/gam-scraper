@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamCriticalBriefGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/critical-brief-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { recoverGamDocumentedResidualDensitySpecs } from "../../../../evidence/providers/gam/verified-models/documented-density-residual.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const find = (reference: string): ProductRecord => {
@@ -29,10 +30,10 @@ test("GAM: conserva las seis generales de F10 y recupera la 6617", () => {
         ? `Año de fabricación declarado para esta unidad: 2005.\n\n${editorial}` : editorial);
       assert.equal(prepared.product.reference, record.reference);
       assert.equal(prepared.product.sourceUrl, record.url);
-      assert.deepEqual(prepared.product.spec, {
+      assert.deepEqual(prepared.product.spec, recoverGamDocumentedResidualDensitySpecs(record, {
         ...record.specs,
         ...(["6358", "6367"].includes(record.reference) ? { "Capacidad de carga (kg)": "2000 KG", "Año de fabricación": "2019" } : {})
-      });
+      }));
     }
     assert.equal(JSON.stringify(record), baseline);
   }

@@ -1,3 +1,5 @@
+import { recoverMercaelevaDocumentedEquipmentTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-equipment-technical-specs.js";
+import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-platform-technical-specs.js";
 import { readMercaelevaSource } from "../../../../../../testing/builders/mercaeleva-source-fixture.js";
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -36,7 +38,7 @@ test("Mercaeleva: convierte el anuncio telegráfico coherente en prosa y conserv
     assert.equal(result.product.description, record.shortDescription ?? mercaelevaShortDescription(record));
     assert.equal(result.product.sourceUrl, record.url);
     assert.equal(result.product.reference, record.reference);
-    assert.deepEqual(result.product.spec, record.specs);
+    assert.deepEqual(result.product.spec, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, record.specs ?? {})));
     assert.equal(JSON.stringify(record), original);
   }
 });

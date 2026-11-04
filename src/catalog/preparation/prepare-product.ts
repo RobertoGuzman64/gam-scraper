@@ -138,6 +138,23 @@ import { recoverGamMotorConfigurationSpecs, recoverGamVerifiedTwinMotorSpecs, re
 import { recoverGamPhysicalMeasures } from "./evidence/providers/gam/measurements-and-capacities/physical-measures-evidence.js";
 import { recoverGamHysterForkliftTyresSpec, recoverGamNonMarkingTyresSpec, recoverGamYaleSuperelasticTyresSpec, recoverGamVerifiedSuperelasticTyresSpec, recoverGamVerifiedTyreMaterialsSpec } from "./evidence/providers/gam/mobility/non-marking-tyres-evidence.js";
 import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "./evidence/providers/mercaeleva/verified-platform-source-specs.js";
+import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "./evidence/providers/mercaeleva/documented-platform-technical-specs.js";
+import { recoverMercaelevaDocumentedEquipmentTechnicalSpecs } from "./evidence/providers/mercaeleva/documented-equipment-technical-specs.js";
+import { recoverGamDocumentedTechnicalDensitySpecs } from "./evidence/providers/gam/verified-models/documented-technical-density-units.js";
+import { recoverGamDocumentedLogitransHandlingSpecs } from "./evidence/providers/gam/verified-models/documented-logitrans-handling-specs.js";
+import { recoverGamDocumentedDensity178Specs } from "./evidence/providers/gam/verified-models/documented-density-178.js";
+import { recoverGamDocumentedModulaStorageSpecs } from "./evidence/providers/gam/verified-models/documented-modula-storage-specs.js";
+import { recoverMercaelevaDocumentedResidualLiftSpecs } from "./evidence/providers/mercaeleva/documented-residual-lift-specs.js";
+import { recoverGamDocumentedDensity180Specs } from "./evidence/providers/gam/verified-models/documented-density-180.js";
+import { recoverMercaelevaDocumentedDensity180Specs } from "./evidence/providers/mercaeleva/documented-density-180.js";
+import { recoverGomarizDocumentedDensity180Specs } from "./evidence/providers/gomariz/documented-density-180.js";
+import { recoverGamDocumentedResidualDensitySpecs } from "./evidence/providers/gam/verified-models/documented-density-residual.js";
+import { recoverMercaelevaDocumentedResidualDensitySpecs } from "./evidence/providers/mercaeleva/documented-density-residual.js";
+import { recoverGomarizDocumentedResidualDensitySpecs } from "./evidence/providers/gomariz/documented-density-residual.js";
+import { recoverGamDocumentedPendingDensitySpecs } from "./evidence/providers/gam/verified-models/documented-pending-density.js";
+import { recoverMercaelevaDocumentedPendingDensitySpecs } from "./evidence/providers/mercaeleva/documented-pending-density.js";
+import { recoverGamDocumentedDensity183Specs } from "./evidence/providers/gam/verified-models/documented-density-183.js";
+import { recoverMercaelevaDocumentedDensity183Specs } from "./evidence/providers/mercaeleva/documented-density-183.js";
 import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation } from "./reconciliation/mercaeleva.js";
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
@@ -211,6 +228,21 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const sourceStabilizationSpecs = recoverGamSourceStabilization(sourceUnitRecord, sourceSafetySpecs);
   const sourceYearSpecs = recoverGomarizSourceYearSpec(record, sourceStabilizationSpecs);
   const sourceFuelSpecs = recoverMercaelevaSourceFuel(sourceUnitRecord, sourceYearSpecs);
+  const documentedPlatformSpecs = recoverMercaelevaDocumentedPlatformTechnicalSpecs(sourceUnitRecord, sourceFuelSpecs);
+  const documentedEquipmentSpecs = recoverMercaelevaDocumentedEquipmentTechnicalSpecs(sourceUnitRecord, documentedPlatformSpecs);
+  const documentedGamSpecs = recoverGamDocumentedDensity178Specs(sourceUnitRecord, recoverGamDocumentedLogitransHandlingSpecs(sourceUnitRecord, recoverGamDocumentedTechnicalDensitySpecs(sourceUnitRecord, documentedEquipmentSpecs)));
+  const documentedModulaSpecs = recoverGamDocumentedModulaStorageSpecs(sourceUnitRecord, documentedGamSpecs);
+  const documentedResidualLifts = recoverMercaelevaDocumentedResidualLiftSpecs(sourceUnitRecord, documentedModulaSpecs);
+  const documentedDensity180Gam = recoverGamDocumentedDensity180Specs(sourceUnitRecord, documentedResidualLifts);
+  const documentedDensity180Mercaeleva = recoverMercaelevaDocumentedDensity180Specs(sourceUnitRecord, documentedDensity180Gam);
+  const documentedDensity180Specs = recoverGomarizDocumentedDensity180Specs(sourceUnitRecord, documentedDensity180Mercaeleva);
+  const documentedDensityResidualGam = recoverGamDocumentedResidualDensitySpecs(sourceUnitRecord, documentedDensity180Specs);
+  const documentedDensityResidualMercaeleva = recoverMercaelevaDocumentedResidualDensitySpecs(sourceUnitRecord, documentedDensityResidualGam);
+  const documentedDensityResidualSpecs = recoverGomarizDocumentedResidualDensitySpecs(sourceUnitRecord, documentedDensityResidualMercaeleva);
+  const documentedPendingGam = recoverGamDocumentedPendingDensitySpecs(sourceUnitRecord, documentedDensityResidualSpecs);
+  const documentedPendingSpecs = recoverMercaelevaDocumentedPendingDensitySpecs(sourceUnitRecord, documentedPendingGam);
+  const documented183Gam = recoverGamDocumentedDensity183Specs(sourceUnitRecord, documentedPendingSpecs);
+  const documented183Specs = recoverMercaelevaDocumentedDensity183Specs(sourceUnitRecord, documented183Gam);
   record = reconcileGamForPreparation(record);
   record = reconcileMercaelevaForPreparation(record);
   const issues: string[] = [];
@@ -336,7 +368,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     description_general: verifiedResidualGeneral ?? verifiedModelGeneral ?? verifiedDescriptions.general,
     image: images[0] ?? null,
     images,
-    spec: sourceFuelSpecs,
+    spec: documented183Specs,
     attributes: attributeResult?.attributes ?? []
   };
   return {

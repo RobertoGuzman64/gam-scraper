@@ -7,6 +7,7 @@ import { resolveGomarizResidualGeneral } from "../../../../mapping/providers/gom
 import { verifiedGomarizPriorityGeneral } from "../../../../evidence/providers/gomariz/verified-priority-general.js";
 import { gomarizPriorityShortEvidence, verifiedGomarizPriorityShortDescription } from "../../../../evidence/providers/gomariz/priority-short-descriptions.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { recoverGomarizDocumentedResidualDensitySpecs } from "../../../../evidence/providers/gomariz/documented-density-residual.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 
 const record = (family: string, specs: SpecsMap, title = "LGMG S1413EII"): ProductRecord => ({
@@ -165,7 +166,7 @@ test("Gomariz: cubre los camiones cesta, camión y retroexcavadora con datos del
     assert.ok(result.product.description, reference);
     assert.equal(result.product.reference, reference);
     assert.equal(result.product.sourceUrl, source.url);
-    assert.deepEqual(result.product.spec, { ...source.specs, ...(source.year ? { "Año de fabricación": source.year } : {}) });
+    assert.deepEqual(result.product.spec, recoverGomarizDocumentedResidualDensitySpecs(source, { ...source.specs, ...(source.year ? { "Año de fabricación": source.year } : {}) }));
     assert.equal(JSON.stringify(source), before);
   }
   const truck = original.products.find((item) => item.reference === "CC1535");

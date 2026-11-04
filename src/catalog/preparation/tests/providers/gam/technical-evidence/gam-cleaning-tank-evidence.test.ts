@@ -35,7 +35,7 @@ test("GAM recupera las capacidades diferenciadas en litros de su propio texto", 
     const original = structuredClone(record);
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.product.spec[solutionKey], solution ?? undefined, reference);
-    assert.equal(prepared.product.spec[recoveryKey], recovery ?? undefined, reference);
+    assert.equal(prepared.product.spec[recoveryKey], reference === "4013" ? "225 l" : recovery ?? undefined, reference);
     const normalized = normalizeSpecsObject(prepared.product.spec);
     if (solution !== null) {
       assert.equal(normalized.normalized[solutionKey], solution, reference);

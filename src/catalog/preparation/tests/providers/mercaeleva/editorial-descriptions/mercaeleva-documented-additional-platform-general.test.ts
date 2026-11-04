@@ -1,3 +1,4 @@
+import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-platform-technical-specs.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -53,7 +54,7 @@ test("Mercaeleva: documenta exactamente veintiuna unidades de cinco modelos cont
     else assert.doesNotMatch(description, /\d+ h consignadas/u);
     assert.equal(prepared.product.reference, record.reference);
     assert.equal(prepared.product.sourceUrl, record.url);
-    assert.deepEqual(prepared.product.spec, record.specs);
+    assert.deepEqual(prepared.product.spec, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, record.specs ?? {}));
     assert.equal(JSON.stringify(record), original);
   }
 });

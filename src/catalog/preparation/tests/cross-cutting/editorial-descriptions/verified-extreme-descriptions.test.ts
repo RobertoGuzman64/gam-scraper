@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { readMercaelevaSource } from "../../../../../testing/builders/mercaeleva-source-fixture.js";
+import { recoverGamDocumentedResidualDensitySpecs } from "../../../evidence/providers/gam/verified-models/documented-density-residual.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { mbModelEditorialEvidence } from "../../../evidence/providers/mercaeleva/mb-model-description.js";
 import { braviSkydeckEditorialEvidence } from "../../../evidence/providers/gam/editorial/bravi-skydeck-editorial.js";
@@ -30,7 +31,7 @@ test("completa primero las tres fichas sin descripciones mediante fuentes de mod
     const prepared = prepareSourceProduct(original);
     assert.ok(prepared.product.description && prepared.product.description.trim().length > 50);
     assert.ok(prepared.product.description_general && prepared.product.description_general.trim().length > 200);
-    assert.deepEqual(prepared.product.spec, original.specs);
+    assert.deepEqual(prepared.product.spec, original.providerId === "gam" ? recoverGamDocumentedResidualDensitySpecs(original, original.specs ?? {}) : original.specs);
     assert.equal(JSON.stringify(original), snapshot);
     if (original.providerId === "mercaeleva") {
       assert.ok(!prepared.issues.some((issue) => issue.includes("Capacidad contradictoria")));

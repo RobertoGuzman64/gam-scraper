@@ -1,5 +1,7 @@
+import { recoverMercaelevaDocumentedEquipmentTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-equipment-technical-specs.js";
 import { readMercaelevaSource } from "../../../../../../testing/builders/mercaeleva-source-fixture.js";
 import { recoverMercaelevaSourceFuel } from "../../../../evidence/providers/mercaeleva/source-fuel-evidence.js";
+import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "../../../../evidence/providers/mercaeleva/documented-platform-technical-specs.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -44,7 +46,7 @@ test("Mercaeleva: enriquece solo resúmenes escuetos con evidencia propia", () =
     assert.ok(output.product.description_general, reference);
     assert.equal(output.product.reference, record.reference, reference);
     assert.equal(output.product.sourceUrl, record.url, reference);
-    assert.deepEqual(output.product.spec, recoverMercaelevaSourceFuel(record, record.specs ?? {}), reference);
+    assert.deepEqual(output.product.spec, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, recoverMercaelevaSourceFuel(record, record.specs ?? {}))), reference);
     assert.equal(JSON.stringify(record), original, reference);
   }
 });

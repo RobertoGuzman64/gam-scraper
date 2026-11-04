@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { verifiedGomarizPriorityGeneral } from "../../../../evidence/providers/gomariz/verified-priority-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { recoverGomarizDocumentedDensity180Specs } from "../../../../evidence/providers/gomariz/documented-density-180.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
 const references = new Set([
@@ -27,7 +28,7 @@ test("Gomariz: las 26 descripciones individualizadas se aplican sin alterar fich
         general, record.reference ?? "");
       assert.ok(general.split(/\s+/u).length >= 65, record.reference ?? "");
       assert.notEqual(general, record.longDescription, record.reference ?? "");
-      assert.deepEqual(prepared.spec, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) }, record.reference ?? "");
+      assert.deepEqual(prepared.spec, recoverGomarizDocumentedDensity180Specs(record, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) }), record.reference ?? "");
       assert.equal(prepared.sourceUrl, record.url);
       assert.ok(record.reference ?? "");
       changed.add(record.reference ?? "");
