@@ -38,12 +38,31 @@ test("huecos compara las publicaciones activas y acredita la cobertura de descri
   assert.equal(report.priorities.totals.pending, report.priorities.pending.length);
   assert.equal(report.priorities.totals.resolved, report.priorities.resolved.length);
   assert.equal(report.priorities.totals.technical, report.priorities.technical.length);
+  assert.equal(report.technicalDensity.totals.products, report.coverage.totals.products);
+  assert.equal(report.technicalDensity.totals.sparse, report.technicalDensity.cases.length);
+  assert.equal(report.technicalDensity.totals.medium, report.technicalDensity.mediumCases.length);
+  assert.equal(report.technicalDensity.totals.sparse,
+    report.technicalDensity.cases.filter((item) => item.priority === "alta").length);
+  assert.equal(report.technicalDensity.totals.medium,
+    report.technicalDensity.mediumCases.filter((item) => item.priority === "media").length);
+  assert.equal(report.technicalDensity.totals.sparse,
+    report.technicalDensity.providers.reduce((sum, provider) => sum + provider.sparse, 0));
+  assert.equal(report.technicalDensity.totals.medium,
+    report.technicalDensity.providers.reduce((sum, provider) => sum + provider.medium, 0));
+  assert.ok(report.technicalDensity.providers.every((provider) => provider.sparse + provider.medium <= provider.products));
+  assert.ok(report.technicalDensity.providers.some((provider) => provider.providerId === "mercaeleva" && provider.median <= 2));
   assert.equal(report.priorities.totals.appeared,
     report.priorities.pending.filter((item) => item.state === "aparecido").length);
   for (const stage of ["P0", "P1", "P2"] as const) {
     assert.equal(report.priorities.totals.pendingByStage[stage],
       report.priorities.pending.filter((item) => item.stage === stage).length);
   }
+  const densityText = await executeBaseline(["--comparar", "--specs", "--top", "1"]);
+  assert.match(densityText, /DENSIDAD TÉCNICA \| PRIORIDAD EDITORIAL/);
+  assert.match(densityText, /ALTA 0–2: \d+ \| MEDIA 3: \d+/);
+  assert.match(densityText, /DENSIDAD PROVEEDOR \| gam \| alta/);
+  assert.match(densityText, /DENSIDAD PROVEEDOR \| gomariz \| alta/);
+  assert.match(densityText, /DENSIDAD PROVEEDOR \| mercaeleva \| alta/);
   const text = await executeBaseline(["--comparar", "--top", "1"]);
   assert.match(text, /P0 COLA RESIDUAL \| 0 fichas, sin recorte por --top/);
   assert.match(text, /ORDEN DE TRABAJO \| P0 vacíos 0/);
@@ -64,6 +83,12 @@ type ComparisonReport = {
   readonly editorial: { readonly providers: readonly unknown[] };
   readonly editorialPrepared: { readonly providers: readonly unknown[] };
   readonly priorities: DescriptionPriorities;
+  readonly technicalDensity: {
+    readonly totals: { readonly products: number; readonly sparse: number; readonly medium: number };
+    readonly providers: readonly { readonly providerId: string; readonly products: number; readonly sparse: number; readonly medium: number; readonly median: number }[];
+    readonly cases: readonly { readonly providerId: string; readonly reference: string | null; readonly technicalCount: number; readonly priority: "alta" | "media" }[];
+    readonly mediumCases: readonly { readonly priority: "alta" | "media" }[];
+  };
   readonly coverage: DescriptionCoverage;
 };
 const isComparisonReport = (value: unknown): value is ComparisonReport => {
@@ -78,7 +103,9 @@ const isComparisonReport = (value: unknown): value is ComparisonReport => {
     "providers" in value.editorial && "providers" in value.editorialPrepared &&
     "priorities" in value && typeof value.priorities === "object" && value.priorities !== null &&
     "totals" in value.priorities && "pending" in value.priorities && "resolved" in value.priorities &&
-    "technical" in value.priorities;
+    "technical" in value.priorities && "technicalDensity" in value && typeof value.technicalDensity === "object" &&
+    value.technicalDensity !== null && "totals" in value.technicalDensity && "providers" in value.technicalDensity &&
+    "cases" in value.technicalDensity;
 };
 
 type SpecificationComparisonReport = ComparisonReport & {

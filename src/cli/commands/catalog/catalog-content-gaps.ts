@@ -22,6 +22,8 @@ import type { DescriptionCoverageInput } from "../../../catalog/diagnostics/desc
 import { reconstructMercaelevaSource } from "../../../catalog/diagnostics/description-source.js";
 import { analyzeDescriptionPriorities } from "../../../catalog/diagnostics/description-priorities.js";
 import type { DescriptionPriorities } from "../../../catalog/diagnostics/description-priorities.js";
+import { analyzeTechnicalDensity } from "../../../catalog/diagnostics/technical-density.js";
+import { formatTechnicalDensityReport } from "./technical-density-report.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
@@ -119,11 +121,13 @@ const reportPublications = async (paths: readonly string[], options: CommandOpti
     productCount: publication.products.length, contentSha256: publication.sha256
   })) };
   const editorial = analyzePublishedEditorialQuality(products);
+  const technicalDensity = analyzeTechnicalDensity(products);
   if (options.json) {
-    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, editorial }, null, 2));
+    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, editorial, technicalDensity }, null, 2));
   } else {
     printReportLine(`HUECOS | publicaciones acreditadas (${publications.map((item) => item.providerId).join(", ")}) | finales ${products.length} | diagnóstico exclusivamente editorial`);
     printEditorial(editorial, options.limit);
+    for (const line of formatTechnicalDensityReport(technicalDensity, options.limit)) printReportLine(line);
   }
 };
 
@@ -220,19 +224,21 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
   const products = publications.flatMap((item) => item.products);
   const editorial = analyzePublishedEditorialQuality(products);
   const editorialPrepared = analyzeEditorialQuality(inputs);
+  const technicalDensity = analyzeTechnicalDensity(products);
   const priorities = analyzeDescriptionPriorities(inputs, editorial, editorialPrepared);
   const technicalSpecs = options.specs ? analyzeSpecificationCoverage(inputs) : null;
   const { fingerprints } = await loadPreparationInputs();
   const provenance = { source: "comparacion_publicaciones_y_preparacion", publications: sourceProvenance,
     rulesSha256: fingerprints.rulesSha256, preparation: "Recalculada; Mercaeleva reconstruida únicamente desde campos de su publicación, no desde un original canónico" };
   if (options.json) {
-    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, coverage, editorial, editorialPrepared, priorities, ...(technicalSpecs ? { technicalSpecs } : {}) }, null, 2));
+    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, coverage, editorial, editorialPrepared, priorities, technicalDensity, ...(technicalSpecs ? { technicalSpecs } : {}) }, null, 2));
   } else {
     printReportLine(`HUECOS | publicaciones finales ${coverage.totals.products} | comparación frente a preparación actual; sin modificar publicaciones`);
     printDescriptionCoverage(coverage);
     printDescriptionPriorities(priorities, options.limit);
     printReportLine("CALIDAD EDITORIAL | vista derivada tras preparación; señales orientativas independientes de P0");
     printEditorial(editorialPrepared, options.limit);
+    for (const line of formatTechnicalDensityReport(technicalDensity, options.limit)) printReportLine(line);
     if (technicalSpecs) {
       for (const line of formatSpecificationCoverageReport(technicalSpecs, options.limit)) printReportLine(line);
       for (const line of formatCatalogAuditClosureReport(coverage, priorities, technicalSpecs)) printReportLine(line);
@@ -307,9 +313,10 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
   const analysis = analyzeSourceContentGaps(inputs, { groupBy: options.groupBy });
   const ranked = prioritizeCatalogGaps(analysis, options.minGroup, options.minMissing);
   const editorial = analyzeEditorialQuality(inputs);
+  const technicalDensity = analyzeTechnicalDensity(inputs.map((item) => item.prepared.product));
   if (options.json) {
     console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance,
-      ...analysis, editorial, prioritized: ranked.slice(0, options.limit).map(({ group, observation, tier }) => ({
+      ...analysis, editorial, technicalDensity, prioritized: ranked.slice(0, options.limit).map(({ group, observation, tier }) => ({
         providerId: group.providerId, categorySellID: group.categorySellID, sourceCategoryKey: group.sourceCategoryKey,
         brand: group.brand, model: group.model, field: observation.field, missing: observation.missing, tier
       })) }, null, 2));
@@ -327,6 +334,7 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
     printReportLine(`  Casos: ${observation.missingIdentities.join(", ")}`);
   }
   printEditorial(editorial, options.limit);
+  for (const line of formatTechnicalDensityReport(technicalDensity, options.limit)) printReportLine(line);
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

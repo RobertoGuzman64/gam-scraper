@@ -17,11 +17,15 @@ test("huecos audita las publicaciones finales acreditadas sin atribuirles origin
   assert.equal(report.editorial.providers.length, 3);
   assert.ok(report.editorial.providers.every((item) => item.total > 0));
   assert.ok(report.editorial.longestGeneral.length > 0);
+  assert.equal(report.technicalDensity.totals.products,
+    report.technicalDensity.providers.reduce((total, provider) => total + provider.products, 0));
+  assert.equal(report.technicalDensity.totals.sparse, report.technicalDensity.cases.length);
   assert.ok(report.editorial.longestGeneral.every((item, index, items) =>
     index === 0 || (items[index - 1]?.words ?? 0) >= item.words));
   const text = await execute(["--publicacion", publications[2] ?? "", "--top", "1"]);
   assert.match(text, /finales [1-9]\d*/);
   assert.match(text, /DESCRIPCIONES GENERALES MÁS LARGAS/);
+  assert.match(text, /DENSIDAD TÉCNICA \| PRIORIDAD EDITORIAL/);
   await assert.rejects(execute(["--catalogo", gam, "--publicacion", publications[0] ?? ""]), /modos alternativos/);
   await assert.rejects(execute(["--publicacion", publications[0] ?? "", "--publicacion", publications[0] ?? ""]), /Proveedor duplicado/);
 });
@@ -98,6 +102,11 @@ test("huecos identifica el motivo y la ficha exacta si falla la validación de G
 
 type EditorialReport = {
   readonly provenance: { readonly source: string };
+  readonly technicalDensity: {
+    readonly totals: { readonly products: number; readonly sparse: number };
+    readonly providers: readonly { readonly products: number }[];
+    readonly cases: readonly unknown[];
+  };
   readonly editorial: {
     readonly providers: readonly { readonly total: number }[];
     readonly patterns: readonly { readonly code: string; readonly providerId: string }[];
@@ -109,7 +118,10 @@ const isEditorialReport = (value: unknown): value is EditorialReport => {
     typeof value.editorial !== "object" || value.editorial === null ||
     !('provenance' in value) || typeof value.provenance !== "object" || value.provenance === null) return false;
   const editorial = value.editorial;
-  return 'providers' in editorial && Array.isArray(editorial.providers) &&
+  return 'technicalDensity' in value && typeof value.technicalDensity === 'object' &&
+    value.technicalDensity !== null && 'totals' in value.technicalDensity &&
+    'providers' in value.technicalDensity && 'cases' in value.technicalDensity &&
+    'providers' in editorial && Array.isArray(editorial.providers) &&
     'patterns' in editorial && Array.isArray(editorial.patterns) &&
     'longestGeneral' in editorial && Array.isArray(editorial.longestGeneral) &&
     'source' in value.provenance && typeof value.provenance.source === "string";
