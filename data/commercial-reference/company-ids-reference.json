@@ -1,0 +1,22 @@
+{
+  "gam": {
+    "develop": 208,
+    "production": 208
+  },
+  "mercaeleva": {
+    "develop": 970,
+    "production": 970
+  },
+  "gomariz": {
+    "develop": 370,
+    "production": 370
+  },
+  "europa_prefabri": {
+    "develop": 184,
+    "production": 964
+  },
+  "manain": {
+    "develop": 984,
+    "production": 984
+  }
+}

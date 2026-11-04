@@ -1,0 +1,67 @@
+{
+  "origin": "Marketplace-Back-develop.zip (copia subida por el usuario; fuente de seed, no BD viva)",
+  "originArchiveSha256": "08918bfe85545e9eafbc1fa89c56e0906e2daa2902bbeb14c9f065e498f96075",
+  "scraperComparedArchiveSha256": "8a17e5500ad92941efef18d57b1f15952baed526fd0548a16bfc15b08b0cd240",
+  "extractionMethod": "AST TypeScript de literales seed, con enums Prisma serializados a su miembro string; sin ejecutar el código seed ni acceder a BD",
+  "backendSeedSources": {
+    "categories": {
+      "path": "prisma/seedData/seedDataCategorySell.ts",
+      "sha256": "cd6e03c99982cb338c0694af2169e7ca3e24b92fab45ec377cd4ea54ea4a8ac5"
+    },
+    "attributes": {
+      "path": "prisma/seedData/seedDataAttributeCategorySell.ts",
+      "sha256": "fc0e25d78888f1303769f17050c6d67b0c42336fceecf30814fe7bf98a4aa478"
+    },
+    "relations": {
+      "path": "prisma/seedData/seedDataRelationAttribute_CategorySell.ts",
+      "sha256": "da49ca2fc400fb81772be1b43a9ef8a88f10bae298b1902964fc84bd5d436e15"
+    },
+    "logos": {
+      "path": "prisma/seedData/seedDataLogo_product.ts",
+      "sha256": "e312379de22de151e67450beb786c0f3ac58ee6c9af8714fa88515447a969729"
+    },
+    "gam": {
+      "path": "prisma/seedData/seedDataGAM.ts",
+      "sha256": "aa14cc0f2de5bbfb2487334499af07e586e092f97110667fcfff048c6a178121"
+    },
+    "gomariz": {
+      "path": "prisma/seedData/seedDataGomariz.ts",
+      "sha256": "e6559293c35668b0141a809b1da75d0426e0eb2850ade4493652e930af66824c"
+    },
+    "mercaeleva": {
+      "path": "prisma/seedData/seedDataMercaEleva.ts",
+      "sha256": "693345d8327213f72bba9819e4d21c4ffe4913061f8d81aae7cc99eebbcc43be"
+    }
+  },
+  "inventory": {
+    "categories": 116,
+    "attributes": 123,
+    "relations": 1837,
+    "brandLogos": 20,
+    "legacyProducts": {
+      "gam": 927,
+      "gomariz": 140,
+      "mercaeleva": 214
+    },
+    "legacyTotal": 1281,
+    "existingScraperCategories": 110,
+    "additionalBackendCategoryIDs": [
+      117,
+      118,
+      119,
+      120,
+      115,
+      116
+    ]
+  },
+  "companyIdsSource": "Fernando Ojeda, mensaje del 30/10/2026; sin confirmación de BD viva",
+  "snapshotStatus": "Referencia histórica de código, no contrato aprobado ni datos de producción",
+  "generatedFilesSha256": {
+    "data/commercial-reference/README.md": "0ee3bbafb548836e6e551e62301e5de013007d677883c142f73f6aefd59b7eea",
+    "data/commercial-reference/backend-taxonomy-reference.json": "314b08cb5606099083ed6d1c805e32aa068dd13b3a3100dda911c9d9dfcc8fd6",
+    "data/commercial-reference/company-ids-reference.json": "12ca0c36219d796bd19c5fd886e249c68e1e59c98ae5176bd15911ae930dfd38",
+    "data/commercial-reference/legacy-products/gam.json": "33759232d83babd22ca3a5d53044e45c64f0209dd75f43701a104864dc81c2e1",
+    "data/commercial-reference/legacy-products/gomariz.json": "fcff9d428511abde7e44cd150e26145708969ada145d16f47cd7256546d787b9",
+    "data/commercial-reference/legacy-products/mercaeleva.json": "472ee0955be85f05e391ef07a0fb366b98722f6a88e1a0e93c5675445ec1d608"
+  }
+}
