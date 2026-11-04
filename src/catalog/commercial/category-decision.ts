@@ -1,0 +1,30 @@
+import type { ProductRecord } from "../../contracts/catalog.js";
+
+export type CommercialCategoryDecision =
+  | { readonly status: "excluded"; readonly reason: "lote" | "herramienta"; readonly categorySellID: null }
+  | { readonly status: "pending"; readonly reason: "sin-categoria"; readonly categorySellID: null }
+  | { readonly status: "proposed"; readonly reason: null; readonly categorySellID: number };
+
+export const decideCommercialCategory = (
+  source: ProductRecord, categorySellID: number | null
+): CommercialCategoryDecision => {
+  let segments: string[] = [];
+  try {
+    segments = new URL(source.url).pathname.toLocaleLowerCase("es").split("/").filter(Boolean);
+  } catch {
+    segments = [];
+  }
+  const sourceCategory = source.categoryKey.toLocaleLowerCase("es").trim();
+  const title = (source.title ?? "").toLocaleLowerCase("es").trim();
+  if (segments.includes("lotes") || sourceCategory === "lotes" ||
+    (/^lote\s+\d+\b/.test(title) && sourceCategory === "maquinaria")) {
+    return { status: "excluded", reason: "lote", categorySellID: null };
+  }
+  if (segments.some((segment) => segment === "herramientas" || segment === "tools") ||
+    sourceCategory === "herramientas" || sourceCategory === "tools") {
+    return { status: "excluded", reason: "herramienta", categorySellID: null };
+  }
+  return categorySellID === null
+    ? { status: "pending", reason: "sin-categoria", categorySellID: null }
+    : { status: "proposed", reason: null, categorySellID };
+};

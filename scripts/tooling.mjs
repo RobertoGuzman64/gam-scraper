@@ -8,6 +8,8 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const definitions = {
   iniciar: { entry: "cli/commands/maintenance/start.js", usage: "iniciar", description: "Comprobar entorno y descubrir campaña sin extraer" },
+  "exportar:comercial": { entry: "cli/commands/catalog/commercial-export.js", usage: "exportar:comercial -- --salida <directorio-nuevo> [--entorno develop|production] [--simular]", description: "Generar JSON comerciales independientes con trazabilidad, excepciones y manifiesto SHA256" },
+  "auditar:comercial": { entry: "cli/commands/catalog/commercial-audit.js", usage: "auditar:comercial [-- --json]", description: "Auditar sin escrituras las propuestas de categoría, atributos y cobertura comercial de publicaciones acreditadas" },
   huecos: { entry: "cli/commands/catalog/catalog-content-gaps.js", usage: "huecos [-- --finales | --catalogo ruta/-catalog.json | --publicacion ruta/-publishable.json] [--agrupar categoria|marca|modelo] [--min-grupo 8] [--min-ausentes 3] [--top 20] [--json]", description: "Consultar huecos canónicos o calidad editorial de publicaciones acreditadas; solo lectura" },
   estado: { entry: "cli/commands/campaign/campaign-status.js", usage: "estado", description: "Consultar sin escrituras la fase de campaña, entrega, referencia y próximos comandos" },
   extraer: { entry: "cli/commands/campaign/campaign-extract.js", usage: "extraer [-- --nueva]", description: "Extraer los cuatro proveedores y preparar/revisar el lote aislado" },
@@ -56,6 +58,7 @@ const options = {
   "--proveedores": "--providers",
   "--origen": "--source",
   "--salida": "--out",
+  "--entorno": "--environment",
   "--directorio-salida": "--outDir",
   "--comparar": "--compare",
   "--anterior": "--baseline",

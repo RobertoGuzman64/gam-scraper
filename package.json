@@ -10,6 +10,8 @@
     "iniciar": "node scripts/tooling.mjs iniciar",
     "estado": "node scripts/tooling.mjs estado",
     "huecos": "node scripts/tooling.mjs huecos",
+    "exportar:comercial": "node scripts/tooling.mjs exportar:comercial",
+    "auditar:comercial": "node scripts/tooling.mjs auditar:comercial",
     "extraer": "node scripts/tooling.mjs extraer",
     "revisar": "node scripts/tooling.mjs revisar",
     "intervenir": "node scripts/tooling.mjs intervenir",
