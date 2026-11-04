@@ -21,8 +21,9 @@ src/
   catalog/
     coverage/, diagnostics/, editorial/, interventions/
     normalization/, preparation/, reference/, legacy-export/
-    preparation/evidence/providers/<id>/
-    preparation/mapping/providers/<id>/
+    preparation/{source,reconciliation,recovery}/
+    preparation/evidence/{documented-technical-evidence.ts,providers/<id>/}
+    preparation/mapping/{source-editorial-evidence.ts,prepared-editorial.ts,verified-editorial-finalization.ts,providers/<id>/}
     preparation/tests/{providers,cross-cutting}/
   pipeline/
     batch/, campaign/, extraction/, preparation/, publication/, validation/, legacy-export/
@@ -80,13 +81,28 @@ Dirección preferente: `cli → pipeline → scraping/catalog/infrastructure`. L
 
 **Retención y consultas:** `src/pipeline/campaign/portable-inventory.ts` y `portable-migration.ts` verifican o consolidan datos portátiles sin modificar acreditaciones por una mera consulta. La retención conserva como máximo dos campañas acreditadas; los originales individuales tienen ciclo de vida independiente. Los controles sobre archivos antiguos y respaldos se implementan en `src/infrastructure/filesystem/catalog/` y los componentes de almacenamiento y retención.
 
-**Preparación offline:** `src/cli/commands/catalog/prepare.ts` utiliza `src/pipeline/preparation/` y `src/catalog/preparation/` para comprobar origen, normalizar, resolver evidencias y emitir `ready/review` con huellas `rulesVersion: 2`. La preparación nueva mantiene `categorySellID: null`, `attributes: []` y especificaciones crudas. `src/catalog/preparation/evidence/providers/` y `mapping/providers/` separan reglas por proveedor, mientras `tests/providers/` y `tests/cross-cutting/` agrupan sus regresiones.
+**Preparación offline:** `src/cli/commands/catalog/prepare.ts` utiliza `src/pipeline/preparation/` y `src/catalog/preparation/` para comprobar origen, normalizar, resolver evidencias y emitir `ready/review` con huellas `rulesVersion: 2`. `prepareSourceProduct` y `prepareWithCatalog` siguen siendo las entradas de `src/catalog/preparation/prepare-product.ts`. La preparación canónica mantiene `categorySellID: null`, `attributes: []` y la información técnica en `spec`; el modo con catálogo comercial es distinto. La recuperación técnica, la composición editorial y las validaciones están separadas como se detalla a continuación.
 
 **Cobertura, selección e intervenciones:** `src/catalog/coverage/` y `src/catalog/editorial/` aplican los controles productivos; `src/cli/commands/catalog/select-publishable.ts` expone la selección. Los scripts permanentes están en `interventions/`, los contratos en `src/catalog/interventions/contracts.ts` y su carga y validación en `src/infrastructure/filesystem/intervention-scripts/`. La composición y aprobación de intervenciones no autoriza sobrescribir originales ni publicaciones acreditadas.
 
 **Auditor de huecos de contenido:** `src/cli/commands/catalog/catalog-content-gaps.ts` conserva el diagnóstico de fuentes canónicas (`findCampaignBaseline` o `readCanonicalCatalog` → `prepareSourceProduct` → `src/catalog/diagnostics/content-gaps-source.ts`). También usa el descubrimiento de **publicaciones acreditadas vigentes** para `--finales` y `--comparar`: lee los JSON inmutables, empareja identidades con canónicos disponibles, prepara en memoria y analiza cobertura (`description-coverage.ts`), calidad (`editorial-quality.ts`), prioridades (`description-priorities.ts`) y, con `--comparar --specs`, presencia de claves técnicas (`specification-coverage.ts`). Mercaeleva se etiqueta como reconstrucción de publicación cuando no existe canónico independiente. Los diagnósticos son observacionales y **no** publican, aprueban ni modifican campañas, originales o versiones. Ver [Auditor de huecos](CATALOG_CONTENT_GAPS.md).
 
 **Compatibilidad comercial heredada:** `src/catalog/legacy-export/`, `src/pipeline/legacy-export/` y `src/infrastructure/spreadsheet/` conservan exportación de altas XLSX/JSON para preparaciones comerciales históricas verificables. **Una preparación canónica nueva se bloquea expresamente** en ese exportador, al carecer de asignaciones comerciales. No forma parte de la cadena de entrega, y ningún proceso realiza importaciones HTTP. La categorización y adaptación comercial actuales son responsabilidad del proceso receptor; ver [Integración](EQUIPZILLA_INTEGRATION.md).
+
+## Flujo interno de preparación y límites de cambio
+
+`prepare-product.ts` coordina un único recorrido sobre cada `ProductRecord` y construye el `PreparedProduct`, pero no debe alojar los algoritmos de cada proveedor. La secuencia efectiva es:
+
+1. Capturar evidencia editorial de la fuente (`mapping/source-editorial-evidence.ts`), comprobar semántica y conflictos de publicación, y aplicar reconciliaciones de origen de GAM y Mercaeleva (`reconciliation/`, evidencia de specs de plataforma).
+2. Recuperar specs de base (`recovery/gam-technical-recovery.ts`) y después specs documentadas (`recovery/documented-technical-recovery.ts`) mediante resolutores por proveedor en `evidence/providers/`. El orden de aplicación es parte del comportamiento: los resultados de una recuperación alimentan la siguiente. `evidence/documented-technical-evidence.ts` concentra comprobaciones compartidas; las evidencias verificadas permanecen identificadas por modelo, familia o procedencia, **no por número de fase**.
+3. Reconciliar identidad y campos antes de componer las descripciones en `mapping/prepared-editorial.ts`, que delega en los mapeadores por proveedor. Las descripciones condensadas acreditadas de GAM viven en `evidence/providers/gam/editorial/condensed/`, con un resolutor común en `mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.ts`.
+4. Calcular incidencias de fuente, condición, referencia, precio, campos técnicos y conflictos editoriales; solo si no hay incidencias permitir enriquecimientos finales en `mapping/verified-editorial-finalization.ts`. Construir `ImportCandidate`, mantener las comprobaciones de importación exclusivamente para `prepareWithCatalog`, y devolver `ready` o `review` sin publicar.
+
+**Regla para ampliar evidencias:** situar el dato acreditado en la familia/proveedor de `evidence/`; encapsular la transformación reutilizable en su resolutor o en `mapping/`; incorporar un nuevo paso de recuperación únicamente en el orquestador correspondiente y con pruebas de aplicabilidad, variantes negativas y no sobrescritura. No copiar specs entre máquinas por similitud de modelo, introducir ramas cronológicas (`phase`, `pending`, `residual`) ni convertir la CLI en un motor de recuperación. Si se cambia el orden o cualquier archivo compilado incluido en las reglas, revisar la huella `rulesSha256` y la compatibilidad de preparaciones antes de activar nuevos finales.
+
+**Auditor de gaps:** `src/cli/commands/catalog/catalog-content-gaps.ts` coordina los modos; `catalog-content-gaps-options.ts` valida opciones, `src/infrastructure/filesystem/catalog/original-catalog-sources.ts` resuelve originales canónicos y `src/cli/reporting/catalog-content-gaps-output.ts` presenta los diagnósticos. El análisis de descripción, prioridades, densidad técnica y specs permanece en `src/catalog/diagnostics/`. Ningún resultado del auditor modifica una ficha ni autoriza una publicación. Ver [Auditor de huecos](CATALOG_CONTENT_GAPS.md).
+
+**Publicación e informe de trabajo:** `src/pipeline/publication/individual-finish.ts` realiza preflight, entrega, activación y recuperación; la aceptación de diferencias está aislada en `publication-acceptance.ts` y sus tipos en `publication-contracts.ts`. La medición del trabajo original → publicado reside en `src/catalog/diagnostics/{preparation-work,published-work}.ts`, la recopilación verificada en `src/pipeline/publication/individual-work-report.ts` y la presentación/ZIP en `src/cli/reporting/{published-work,published-work-archive}.ts`. El informe refleja transformaciones del conjunto acreditado, **no** crea una versión de catálogo ni sustituye auditoría, aprobación o publicación. Ver [Publicación individual](INDIVIDUAL_PUBLICATION.md).
 
 ## Naming, pruebas y huellas
 
@@ -101,6 +117,7 @@ La organización de carpetas técnicas usa **inglés** y agrupa por dominio y re
 - Conservar APIs, contratos y formatos de archivo existentes; advertir antes de cambios incompatibles.
 - Evitar mezcla de UI/CLI, red, filesystem y reglas de negocio.
 - No duplicar reglas entre proveedores; tampoco generalizar comportamientos que solo estén acreditados para uno.
+- Nombrar módulos por equipo, familia, evidencia o responsabilidad estable. Los números de campañas y etiquetas `pending`/`residual` solo son apropiados en artefactos históricos cuyo significado dependa realmente de ellos; no usarlos para bautizar nueva lógica productiva.
 - Mantener la persistencia atómica o de creación exclusiva, la integridad de manifests y la preservación de la última publicación válida. No incorporar un segundo almacén definitivo ni hacer que Git decida la validez del catálogo.
 - Preservar la separación entre `storage/` operativo y `catalogs/` definitivo: no promocionar pruebas, parciales o preparaciones sin aprobación; no reescribir una instantánea acreditada para corregir fichas.
 - Tras una operación que cambie datos consolidados, comprobar integridad con `estado` y revisar explícitamente los cambios de Git; el programa no hace commits ni valida el índice.

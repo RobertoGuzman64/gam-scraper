@@ -122,7 +122,7 @@ npm run estado
 
 Si una ficha necesita una corrección puntual acreditada, consulta los scripts existentes con `npm run intervenir -- gam --listar` y simula uno seleccionado con `npm run intervenir -- gam --script interventions/gam/6002.ts`. Tras revisar las diferencias, autoriza expresamente `--aplicar` para ese script. Cada intervención nueva se guarda en `interventions/<proveedor>/` y se versiona en Git; no se registra en `storage/`. No hay cambios ni aprobaciones editoriales automáticas. Ver [Protocolo completo](docs/CAMPAIGNS.md), [Intervenciones](docs/CAMPAIGN_INTERVENTIONS.md) y [Acreditación](docs/CAMPAIGN_ACCREDITATION.md).
 
-### Tooling simplificado — Tres comandos para publicar
+### Publicación individual simplificada — Preparar y FINISH
 
 `npm run catalogo:preparar` ya prepara **GAM, Gomariz y Mercaeleva** en una sola operación desde los originales completos verificados de `catalogs/providers/<proveedor>/original/`. No pide rutas ni selecciona ficheros por fecha. Reutiliza una preparación vigente con idéntico SHA de origen y reglas, o genera otra versión offline con manifest y diagnósticos, sin tocar la anterior ni las publicaciones acreditadas. El modo `--simular` no escribe archivos:
 
@@ -132,17 +132,19 @@ npm run catalogo:preparar -- --proveedor gam
 npm run catalogo:preparar -- --simular
 ```
 
-El resumen incluye `ready`, `review`, incidencias, referencias y diferencias **provisionales** respecto a la publicación vigente. Las ausencias observadas no autorizan exclusiones ni bajas. Si los originales son ambiguos, faltan evidencias, hay un manifest corrupto o dos preparaciones coincidentes, el proveedor queda bloqueado con diagnóstico; no se elige un fichero «más reciente» ni se sobrescribe nada. Manain y las campañas globales de cuatro conservan sus circuitos. **El ciclo individual ya está integrado en tres comandos:** preparar, acreditar y publicar. La sesión editorial del segundo exige confirmación humana. Ver [Preparación](docs/TOOLING_FASE2_PREPARACION.md), [Acreditación](docs/TOOLING_FASE3_ACREDITACION.md) y [FINISH](docs/TOOLING_FASE4_FINISH.md).
+El resumen incluye `ready`, `review`, incidencias, referencias y diferencias **provisionales** respecto a la publicación vigente. Las ausencias observadas no autorizan exclusiones ni bajas. Si los originales son ambiguos, faltan evidencias, hay un manifest corrupto o dos preparaciones coincidentes, el proveedor queda bloqueado con diagnóstico; no se elige un fichero «más reciente» ni se sobrescribe nada. Manain y las campañas globales de cuatro conservan sus circuitos. **El ciclo individual ordinario tiene dos pasos:** preparar y publicar. `catalogo:publicar` realiza el preflight y reutiliza automáticamente solo exclusiones históricas idénticas con evidencia acreditada; un caso nuevo o distinto queda bloqueado, sin aprobación inventada. `catalogo:acreditar` es una operación opcional y no interactiva. Ver [Flujo de publicación individual](docs/INDIVIDUAL_PUBLICATION.md).
+
+**Operación opcional — acreditación automática por separado:**
 
 ```powershell
+npm run catalogo:acreditar -- --simular
 npm run catalogo:acreditar
 npm run catalogo:acreditar -- --proveedor gam
-npm run catalogo:acreditar -- --simular
 ```
 
-La sesión exige terminal interactivo para decisiones y aprobación; `--simular` no escribe. Permite consultar, confirmar propuestas fundadas, excluir con evidencia/motivo, rechazar o aplazar y reanudar sin aprobar implícitamente. Las intervenciones técnicas sobre derivados siguen bloqueadas por su contrato actual.
+No abre una sesión interactiva: valida las preparaciones y únicamente puede reutilizar exclusiones históricas cuya referencia, fuente, estado e incidencias coincidan con los antecedentes acreditados. `--simular` no escribe. Si aparece una incidencia nueva, una exclusión distinta o una incompatibilidad, se bloquea; las decisiones nuevas requieren el procedimiento editorial explícito de `acreditar:proveedor`, no una aceptación automática. Ejecutar este comando no es obligatorio antes de FINISH.
 
-**Paso 3 — FINISH**, tras la aprobación individual de los tres proveedores:
+**Paso 2 — FINISH**, con las preparaciones verificadas:
 
 ```powershell
 npm run catalogo:publicar
@@ -150,11 +152,11 @@ npm run catalogo:publicar -- --proveedor gam
 npm run catalogo:publicar -- --simular
 ```
 
-FINISH realiza el preflight del conjunto, contrasta diferencias y pérdidas, crea y verifica las candidatas comerciales con ZIP y recibos, y solo después activa y comprueba las publicaciones individuales. Un diario en `storage/publication/individual-finish/` permite recuperar activaciones parciales repitiendo el mismo comando. Retención y auditor (`huecos --comparar --specs`) se ejecutan internamente: un fallo de archivado o auditor se informa por separado, sin fingir un FINISH completo. Cuando las mismas acreditaciones ya están vigentes, no genera publicaciones ni ZIP nuevos. Se mantienen el color y los comandos avanzados existentes, así como las campañas globales de cuatro proveedores. Si hay bloqueo, se preservan las publicaciones anteriores. Ver [Guía de FINISH](docs/TOOLING_FASE4_FINISH.md).
+FINISH realiza el preflight del conjunto, contrasta diferencias y pérdidas, crea y verifica las candidatas comerciales con ZIP y recibos, y solo después activa y comprueba las publicaciones individuales. Un diario en `storage/publication/individual-finish/` permite recuperar activaciones parciales repitiendo el mismo comando. Después de activar, FINISH ejecuta retención, auditor (`huecos --comparar --specs`) y genera en el Escritorio un `equipzilla-informe-<huella>.zip` verificable, con un único `INFORME.md` que resume el trabajo sobre los originales hasta las publicaciones vigentes. Un fallo posterior a la activación se informa por separado: repetir FINISH completa los pasos pendientes sin republicar las mismas acreditaciones. Cuando ya están vigentes no genera nuevas publicaciones ni ZIP comerciales; el informe se vuelve a comprobar o crear si corresponde. Siguen existiendo las campañas globales de cuatro proveedores. Si hay bloqueo previo a la activación, se preservan las publicaciones anteriores. Ver [Flujo de publicación individual](docs/INDIVIDUAL_PUBLICATION.md).
 
-### Acreditación editorial individual (sin campaña global)
+### Acreditación editorial individual explícita (casos que no se pueden reutilizar)
 
-La preparación completa de un proveedor puede verificarse y acreditarse por separado mediante `seleccionar:proveedor` y `acreditar:proveedor`. Debe aportarse el catálogo original y la preparación offline correspondiente; ambos se validan contra sus huellas actuales. Este recorrido no acepta catálogos intervenidos ni promueve extracciones parciales a una entrega.
+Cuando una incidencia es nueva o ha cambiado, el flujo automático no puede acreditarla por analogía. La preparación completa de un proveedor puede verificarse y acreditarse por separado mediante `seleccionar:proveedor` y `acreditar:proveedor`. Debe aportarse el catálogo original y la preparación offline correspondiente; ambos se validan contra sus huellas actuales. Este recorrido no acepta catálogos intervenidos ni promueve extracciones parciales a una entrega.
 
 ```powershell
 $gam = ".\catalogs\providers\gam\original\scrape-gam-catalog.json"
@@ -260,7 +262,8 @@ El contrato de cuatro proveedores describe el software, **no acredita por sí so
 ## Documentación
 
 - [Objetivos y alcance](docs/SCRAPER_OBJECTIVES.md): prioridades y criterios de aceptación.
-- [Arquitectura](docs/ARCHITECTURE.md): módulos, responsabilidades y extensibilidad.
+- [Arquitectura](docs/ARCHITECTURE.md): módulos, responsabilidades, preparación y extensibilidad.
+- [Publicación individual](docs/INDIVIDUAL_PUBLICATION.md): preparación, acreditación automática limitada, FINISH, informes y recuperación.
 - [Auditor de huecos de contenido](docs/CATALOG_CONTENT_GAPS.md): comparación editorial, diagnóstico técnico de specs, procedencia, prioridades y límites.
 - [Reglas de datos](docs/SCRAPER_DATA_RULES.md): contratos, origen, preservación y revisión editorial.
 - [Protocolo de campañas completas](docs/CAMPAIGNS.md): extracción global obligatoria, validación de todos los proveedores, intervenciones excepcionales y entrega acreditada.

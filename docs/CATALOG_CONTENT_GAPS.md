@@ -17,8 +17,8 @@ El auditor es **de solo lectura** respecto a originales, preparaciones guardadas
 | `npm run huecos`       | Campaña íntegra conservada o referencia histórica verificable; si faltan, comparación de publicaciones acreditadas con la preparación actual | La fuente elegida determina la población: consultar `provenance` antes de comparar cifras             |
 | `--comparar`           | Publicaciones acreditadas seleccionadas frente a preparación recalculada para sus mismas identidades                                         | Muestra vacíos recuperados, pendientes, pérdidas y prioridades editoriales; **no** publica resultados |
 | `--comparar --specs`   | La misma comparación, con diagnóstico separado de **claves técnicas** del origen, la preparación y el final                                  | No compara valores semánticos ni acredita por sí mismo atributos obligatorios o datos recuperados     |
-| `--finales`            | Solo descripciones **publicadas** de los JSON acreditados seleccionados                                                                      | No calcula recuperaciones de la preparación; salida editorial                                         |
-| `--publicacion <ruta>` | Descripciones de uno o varios `-publishable.json` acreditados indicados explícitamente                                                       | No mezclar proveedores repetidos ni confundir una publicación histórica con la vigente                |
+| `--finales`            | Calidad de textos **publicados** y densidad técnica observada de los JSON acreditados seleccionados                                          | No calcula recuperaciones de la preparación ni specs comparativas                                     |
+| `--publicacion <ruta>` | Calidad editorial y densidad técnica de uno o varios `-publishable.json` acreditados explícitos                                              | No mezclar proveedores repetidos ni confundir una publicación histórica con la vigente                |
 | `--catalogo <ruta>`    | Originales canónicos completos aportados explícitamente; aplica en memoria las reglas actuales                                               | Requiere canónico verificable; admite varias rutas, no CSV parciales                                  |
 
 La selección de `--comparar` y `--finales` usa `discoverAccreditedPublications` y el mecanismo de **publicación vigente**, no el último directorio SHA por su fecha. El versionado, la activación y la reversión se gestionan por el flujo de publicaciones, **fuera de `huecos`**. Para comparar con una versión histórica, utilizar el modo de publicación explícita o el selector correspondiente, sin modificar el índice para una simple consulta.
@@ -27,12 +27,13 @@ La comparación vincula por **identidad de producto**, no por posición en un ar
 
 ## Prioridades de las descripciones
 
-Las secciones `coverage`, `editorial`, `editorialPrepared` y `priorities` de `--comparar --json` tienen responsabilidades distintas:
+Las secciones `coverage`, `editorial`, `editorialPrepared`, `priorities` y `technicalDensity` de `--comparar --json` tienen responsabilidades distintas:
 
 - `coverage`: por campo `description` y `description_general`, cuenta vacíos publicados, recuperados por preparación, pendientes y **pérdidas**; presenta proveedor, familia y referencias. La cola P0 no se recorta con `--top`.
 - `editorial`: mide únicamente los textos finales publicados: coberturas, medianas, percentil 90, patrones, fichas y listado de generales más extensas.
 - `editorialPrepared`: aplica esas métricas a la preparación actual, **sin publicar** sus cambios.
 - `priorities`: ordena por gravedad la cola pendiente, las señales resueltas por preparación y las señales aparecidas; aporta referencia, origen, familia, palabras antes/después, mediana y tamaño de muestra. Los problemas técnicos de preparación se muestran **aparte** en `technical`.
+- `technicalDensity`: analiza densidad y observaciones de specs de los **productos publicados**, no recuperaciones acreditadas ni una exigencia técnica universal. También aparece en el JSON de `--finales` y `--publicacion`. `technicalSpecs` solo aparece al añadir `--specs` a `--comparar`.
 
 **Orden de intervención:** P0 = descripciones vacías; P1 = insuficiencias y extremos evidentes; P2 = desequilibrios respecto a familias comparables. Dentro de cada cohorte se revisa primero el caso más grave y con evidencia aprovechable. No se selecciona una máquina porque resulte sencillo añadirle texto; tampoco se exige eliminar todos los avisos para cerrar una intervención.
 
@@ -66,7 +67,7 @@ npm run huecos -- --comparar --specs
 npm run huecos -- --comparar --specs --json
 npm run huecos -- --finales
 npm run huecos -- --comparar --top 20
-npm run huecos -- --catalogo catalogs/providers/gam/original/scrape-gam-marzo-2026-catalog.json --agrupar marca --top 20
+npm run huecos -- --catalogo catalogs/providers/gam/original/scrape-gam-catalog.json --agrupar marca --top 20
 npm run huecos -- --publicacion <ruta-a-publicacion-acreditada> --json
 npm run huecos -- --help
 ```
@@ -97,11 +98,12 @@ La mejora de descripciones busca cortas diferenciadoras y generales útiles y pr
 
 ## Seguridad y componentes
 
-- CLI: `src/cli/commands/catalog/catalog-content-gaps.ts`.
+- Coordinación CLI: `src/cli/commands/catalog/catalog-content-gaps.ts`; lectura de opciones: `src/cli/commands/catalog/catalog-content-gaps-options.ts`; presentación: `src/cli/reporting/catalog-content-gaps-output.ts`.
+- Lectura de originales para comparaciones: `src/infrastructure/filesystem/catalog/original-catalog-sources.ts`.
 - Auditor de originales: `src/catalog/diagnostics/content-gaps-source.ts` y contratos `content-gaps-types.ts`.
 - Comparación editorial: `description-coverage.ts`, `editorial-quality.ts` y `description-priorities.ts`.
 - Comparación técnica: `specification-coverage.ts`.
-- Preparación: `src/catalog/preparation/prepare-product.ts`, usando las reglas productivas existentes.
+- Preparación recalculada: `src/catalog/preparation/prepare-product.ts`, que delega recuperación de specs en `recovery/` y composición editorial en `mapping/`. El auditor no duplica esas reglas.
 - Publicaciones: `src/infrastructure/filesystem/catalog/accredited-publication.ts` y el selector vigente.
 
 No alterar originales, JSON acreditados, manifiestos ni aprobaciones para disminuir los indicadores. No atribuir al backend obligaciones de `spec` sin revisar su contrato real. No duplicar motores de reglas, auditores o sistemas de versiones. Ver [Objetivos](SCRAPER_OBJECTIVES.md), [Arquitectura](ARCHITECTURE.md), [Reglas de datos](SCRAPER_DATA_RULES.md) y [Validación](VALIDATION.md).
