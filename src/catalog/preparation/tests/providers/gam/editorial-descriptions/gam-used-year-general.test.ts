@@ -32,8 +32,10 @@ test("GAM: año de fabricación propio ausente de ambos textos, sin alterar otro
       assert.equal(record.condition, "Segunda mano");
       assert.ok(record.yearSource === "ficha" || record.yearSource === "url");
       const underlying = previousGeneral.slice(extracted[0].length);
-      assert.equal(resolveGamUsedYearGeneral(record, prepared.product.description, underlying), previousGeneral);
-      assert.ok(!prepared.product.description?.includes(` ${record.year} `));
+      const previousShort = record.reference === "5254" ? record.shortDescription : prepared.product.description;
+      assert.equal(resolveGamUsedYearGeneral(record, previousShort, underlying), previousGeneral);
+      if (record.reference === "5254") assert.ok(prepared.product.description?.includes(` ${record.year} `));
+      else assert.ok(!prepared.product.description?.includes(` ${record.year} `));
       recovered.add(record.reference);
     }
     assert.equal(JSON.stringify(record), original);

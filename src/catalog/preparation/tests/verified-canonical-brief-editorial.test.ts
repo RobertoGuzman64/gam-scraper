@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { verifiedCanonicalBriefEditorial } from "../evidence/verified-canonical-brief-editorial.js";
 import { resolveVerifiedCanonicalBriefEditorial } from "../mapping/verified-canonical-brief-editorial.js";
+import { resolveGomarizVerifiedModelGeneral } from "../mapping/providers/gomariz/verified-model-general.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalogs = await Promise.all([
@@ -36,7 +37,7 @@ test("Las veinte ampliaciones generales acreditadas conservan identidad y otros 
     const entries: Readonly<Record<string, { readonly general: string; readonly sourceUrl: string }>> = verifiedCanonicalBriefEditorial;
     const evidence = entries[identity];
     assert.ok(evidence, identity);
-    assert.equal(prepared.product.description_general, evidence.general, identity);
+    assert.equal(prepared.product.description_general, resolveGomarizVerifiedModelGeneral(record, evidence.general) ?? evidence.general, identity);
     assert.equal(prepared.product.sourceUrl, evidence.sourceUrl, identity);
     assert.ok(evidence.general.trim().split(/\s+/u).length >= 60, identity);
   }

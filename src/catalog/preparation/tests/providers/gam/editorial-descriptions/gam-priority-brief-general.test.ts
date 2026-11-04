@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamPriorityBriefGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/priority-brief-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { verifiedUnitSummaryEditorial } from "../../../../evidence/verified-unit-summary-editorial.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const find = (reference: string): ProductRecord => {
@@ -25,7 +26,8 @@ test("GAM: las generales editoriales atacan tres insuficiencias prioritarias y n
       assert.ok(words(result) >= 60, record.reference);
       const prepared = prepareSourceProduct(record);
       assert.equal(prepared.product.description_general, result, record.reference);
-      assert.equal(prepared.product.description, record.shortDescription?.trim() ?? null, record.reference);
+      assert.equal(prepared.product.description, record.reference === "6217"
+        ? verifiedUnitSummaryEditorial["gam:6217"].short : record.shortDescription?.trim() ?? null, record.reference);
       assert.deepEqual(prepared.product.spec, record.specs);
       assert.equal(prepared.product.reference, record.reference);
       assert.equal(prepared.product.sourceUrl, record.url);

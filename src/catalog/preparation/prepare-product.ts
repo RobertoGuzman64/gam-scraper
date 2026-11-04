@@ -22,6 +22,11 @@ import { resolveMercaelevaVerifiedSourceEditorial } from "./mapping/providers/me
 import { resolveGamVerifiedUnitSourceGeneral } from "./mapping/providers/gam/editorial-descriptions/verified-unit-source-general.js";
 import { resolveVerifiedCanonicalBriefEditorial } from "./mapping/verified-canonical-brief-editorial.js";
 import { applyVerifiedEditorialComposition } from "./mapping/verified-editorial-composition.js";
+import { resolveVerifiedUnitSummaryEditorial } from "./mapping/verified-unit-summary-editorial.js";
+import { resolveGomarizVerifiedModelGeneral } from "./mapping/providers/gomariz/verified-model-general.js";
+import { resolveGomarizVerifiedResidualTitle } from "./mapping/providers/gomariz/verified-residual-title.js";
+import { resolveGamVerifiedResidualTitle } from "./mapping/providers/gam/editorial-descriptions/verified-residual-title.js";
+import { resolveGamVerifiedResidualGeneral } from "./mapping/providers/gam/editorial-descriptions/verified-residual-general.js";
 import { verifiedMercaelevaCriticalGeneral } from "./evidence/providers/mercaeleva/critical-general-descriptions.js";
 import { verifiedPriorityPlatformGeneral } from "./evidence/providers/mercaeleva/priority-platform-generals.js";
 import { verifiedMercaelevaResidualGeneral } from "./evidence/providers/mercaeleva/verified-residual-generals.js";
@@ -214,7 +219,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const images = imageUrls(record);
   const price = normalizePrice(record.price);
   const reference = record.reference?.trim() || null;
-  const title = (resolveGomarizEditorialTitle(record) ?? resolveGamConciseTitle(record) ?? record.title?.trim()) || null;
+  const mappedTitle = (resolveGomarizEditorialTitle(record) ?? resolveGamConciseTitle(record) ?? record.title?.trim()) || null;
+  const title = resolveGomarizVerifiedResidualTitle(sourceUnitRecord, mappedTitle) ?? resolveGamVerifiedResidualTitle(sourceUnitRecord, mappedTitle) ?? mappedTitle;
   const descriptionEvidence = resolveMercaelevaShortDescription(record);
   const conciseMercaelevaShort = resolveMercaelevaConciseDescription(record);
   const missingDescriptions = mercaelevaMissingDescriptions(record);
@@ -308,6 +314,13 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     sourceUnitRecord, preparedShort, canonicalBriefGeneral, issues.length === 0
   );
 
+  const verifiedModelGeneral = issues.length === 0
+    ? resolveGomarizVerifiedModelGeneral(sourceUnitRecord, verifiedDescriptions.general) : null;
+  const verifiedResidualGeneral = issues.length === 0
+    ? resolveGamVerifiedResidualGeneral(sourceUnitRecord, verifiedModelGeneral ?? verifiedDescriptions.general) : null;
+  const verifiedUnitSummary = issues.length === 0
+    ? resolveVerifiedUnitSummaryEditorial(sourceUnitRecord, verifiedDescriptions.short, verifiedDescriptions.general) : null;
+
   const product: ImportCandidate = {
     providerId: record.providerId,
     sourceUrl: record.url,
@@ -319,8 +332,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     condition,
     price,
     description_title: title,
-    description: verifiedDescriptions.short,
-    description_general: verifiedDescriptions.general,
+    description: verifiedUnitSummary ?? verifiedDescriptions.short,
+    description_general: verifiedResidualGeneral ?? verifiedModelGeneral ?? verifiedDescriptions.general,
     image: images[0] ?? null,
     images,
     spec: sourceFuelSpecs,

@@ -5,6 +5,7 @@ import { readCanonicalCatalog } from "../../../../../../infrastructure/filesyste
 import { verifiedGomarizPriorityGeneral } from "../../../../evidence/providers/gomariz/verified-priority-general.js";
 import { verifiedCanonicalBriefEditorial } from "../../../../evidence/verified-canonical-brief-editorial.js";
 import { resolveGomarizResidualGeneral } from "../../../../mapping/providers/gomariz/residual-general.js";
+import { resolveGomarizVerifiedModelGeneral } from "../../../../mapping/providers/gomariz/verified-model-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 
 const signedGenerals: Readonly<Record<string, { readonly general: string }>> = verifiedCanonicalBriefEditorial;
@@ -29,7 +30,8 @@ test("Gomariz personaliza generales genéricas con medidas de su propia ficha", 
       const suffix = record.year ? ` Año de fabricación de esta unidad: ${record.year}.` : "";
       const underlying = suffix && general.endsWith(suffix) ? general.slice(0, -suffix.length) : general;
       const verified = signedGenerals[`gomariz:${record.reference}`];
-      assert.equal(underlying, verified?.general ?? verifiedGomarizPriorityGeneral(record) ?? replacement, record.reference);
+      const expected = verified?.general ?? verifiedGomarizPriorityGeneral(record) ?? replacement;
+      assert.equal(underlying, resolveGomarizVerifiedModelGeneral(record, expected) ?? expected, record.reference);
       if (verified) {
         const modelEvidence = record.reference === "PV556" ? "SLA15" : "20D SPEED";
         assert.ok(general.includes(modelEvidence), record.reference);

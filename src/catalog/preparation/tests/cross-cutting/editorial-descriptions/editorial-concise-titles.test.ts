@@ -4,6 +4,8 @@ import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamConciseTitle } from "../../../mapping/providers/gam/editorial-descriptions/concise-titles.js";
 import { resolveGomarizEditorialTitle } from "../../../mapping/providers/gomariz/editorial-title.js";
+import { verifiedGomarizResidualTitles } from "../../../evidence/providers/gomariz/verified-residual-titles.js";
+import { verifiedGamResidualTitles } from "../../../evidence/providers/gam/editorial/verified-residual-titles.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
@@ -43,7 +45,8 @@ test("Gomariz: títulos ya completos, fuentes ambiguas y referencias no acredita
   for (const reference of ["TE1618", "TE1746", "GR1113", "PV556", "BA1294", "BT1461"]) {
     const record = find(gomariz.products, reference);
     assert.equal(resolveGomarizEditorialTitle(record), null, reference);
-    assert.equal(prepareSourceProduct(record).product.title, record.title, reference);
+    const replacement: Readonly<Record<string, { readonly title: string }>> = verifiedGomarizResidualTitles;
+    assert.equal(prepareSourceProduct(record).product.title, replacement[reference]?.title ?? record.title, reference);
   }
   const record = find(gomariz.products, "TE1620");
   const bad: readonly ProductRecord[] = [
@@ -69,7 +72,7 @@ test("Gomariz: títulos ya completos, fuentes ambiguas y referencias no acredita
   }
 });
 
-test("GAM: tipos de vehículos confirmados sin tocar lotes ni fichas incompletas", () => {
+test("GAM: vehículos confirmados y títulos de lotes individualizados", () => {
   const expected = new Map([
     ["6218", "Ciclomotor eléctrico LVNENG LX05"],
     ["6477", "Ciclomotor eléctrico LVNENG LX05"],
@@ -93,10 +96,13 @@ test("GAM: tipos de vehículos confirmados sin tocar lotes ni fichas incompletas
     for (const [key, value] of Object.entries(expectedSpecs)) assert.deepEqual(prepared.product.spec[key], value, `${record.reference}: ${key}`);
     assert.equal(JSON.stringify(record), original);
   }
+  const residualTitles: Readonly<Record<string, { readonly title: string }>> = verifiedGamResidualTitles;
   for (const reference of ["6805", "6971", "6987", "6988", "6989", "6993", "6994", "6995", "2364"]) {
     const record = find(gam.products, reference);
     assert.equal(resolveGamConciseTitle(record), null, reference);
-    assert.equal(prepareSourceProduct(record).product.title, record.title, reference);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.product.title, residualTitles[reference]?.title, reference);
+    assert.equal(prepared.product.description_title, prepared.product.title, reference);
   }
 });
 

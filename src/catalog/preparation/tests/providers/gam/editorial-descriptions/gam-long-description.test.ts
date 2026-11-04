@@ -9,6 +9,7 @@ import { resolveGamHysterCondensedGeneral, resolveGamHysterCondensedShort } from
 import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-additional.js";
 import { resolveGamVerifiedConciseGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/verified-concise-long.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { verifiedUnitSummaryEditorial } from "../../../../evidence/verified-unit-summary-editorial.js";
 import { includeGamSourceBatteryVoltageInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-battery-voltage-general.js";
 import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
 import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
@@ -74,8 +75,8 @@ test("GAM: las generales extensas se organizan sin perder cifras, frases técnic
             includeGamSourceForkliftMeasuresInGeneral(record,
               includeGamSourceSafetyControlsInGeneral(record, previousEditorialGeneral, prepared.product.spec), prepared.product.spec),
             prepared.product.spec));
-        assert.equal(prepared.product.description,
-          resolveGamAdditionalCondensedShort(record) ?? resolveGamHysterCondensedShort(record) ?? resolveGamResidualConciseShort(record, general) ?? record.shortDescription?.trim() ?? null);
+        const previousShort = resolveGamAdditionalCondensedShort(record) ?? resolveGamHysterCondensedShort(record) ?? resolveGamResidualConciseShort(record, general) ?? record.shortDescription?.trim() ?? null;
+        assert.equal(prepared.product.description, record.reference === "6990" ? verifiedUnitSummaryEditorial["gam:6990"].short : previousShort);
       }
       assert.deepEqual(numbers(finalGeneral), numbers(general), record.reference);
       const addedSpecs = record.reference === "6963"

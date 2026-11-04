@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamHysterCondensedGeneral, resolveGamHysterCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-hyster.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { resolveVerifiedUnitSummaryEditorial } from "../../../../mapping/verified-unit-summary-editorial.js";
 import { includeGamSourceBatteryVoltageInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-battery-voltage-general.js";
 import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
 import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
@@ -47,7 +48,8 @@ test("GAM: condensa las generales y cortas de veinte referencias Hyster acredita
         assert.match(prepared.product.description_general ?? "", /freno electromagnético/u, record.reference);
         assert.match(prepared.product.description_general ?? "", /2\.000 (?:a|y) 3\.500 mm/u, record.reference);
       }
-      assert.equal(prepared.product.description, short, record.reference);
+      assert.equal(prepared.product.description,
+        resolveVerifiedUnitSummaryEditorial(record, short, prepared.product.description_general) ?? short, record.reference);
       assert.deepEqual(prepared.product.spec, prepareSourceProduct(original).product.spec, record.reference);
       found.add(record.reference);
     } else {

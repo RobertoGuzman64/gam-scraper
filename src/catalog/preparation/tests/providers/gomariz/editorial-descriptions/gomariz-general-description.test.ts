@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGomarizCriticalBriefGeneral } from "../../../../mapping/providers/gomariz/critical-brief-general.js";
 import { resolveGomarizGeneralDescription } from "../../../../mapping/providers/gomariz/general-description.js";
+import { resolveGomarizVerifiedModelGeneral } from "../../../../mapping/providers/gomariz/verified-model-general.js";
 import { verifiedGomarizPriorityGeneral } from "../../../../evidence/providers/gomariz/verified-priority-general.js";
 import { verifiedCanonicalBriefEditorial } from "../../../../evidence/verified-canonical-brief-editorial.js";
 import { resolveGomarizIndividualizedGeneral } from "../../../../mapping/providers/gomariz/individualized-general.js";
@@ -70,7 +71,8 @@ test("Gomariz: contradicciones o descripción propia acreditada no se reescriben
     const suffix = record.year ? ` Año de fabricación de esta unidad: ${record.year}.` : "";
     const underlying = suffix && prepared?.endsWith(suffix) ? prepared.slice(0, -suffix.length) : prepared;
     const verified = signedGenerals[`gomariz:${reference}`];
-    assert.equal(underlying, verified?.general ?? verifiedGomarizPriorityGeneral(record) ?? resolveGomarizResidualGeneral(record) ?? record.longDescription, reference);
+    const expected = verified?.general ?? verifiedGomarizPriorityGeneral(record) ?? resolveGomarizResidualGeneral(record) ?? record.longDescription;
+    assert.equal(underlying, resolveGomarizVerifiedModelGeneral(record, expected) ?? expected, reference);
   }
 });
 
@@ -114,7 +116,8 @@ test("Gomariz: el piloto se aplica solo a la cohorte segura y preserva todas las
     const suffix = record.year ? ` Año de fabricación de esta unidad: ${record.year}.` : "";
     const underlying = suffix && general?.endsWith(suffix) ? general.slice(0, -suffix.length) : general;
     const verified = signedGenerals[`gomariz:${reference}`];
-    assert.equal(underlying, verified?.general ?? removeGomarizConversationalLead(record, base) ?? base);
+    const expected = verified?.general ?? removeGomarizConversationalLead(record, base) ?? base;
+    assert.equal(underlying, resolveGomarizVerifiedModelGeneral(record, expected) ?? expected);
     assert.deepEqual(prepared.product.spec, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) });
   }
 });
