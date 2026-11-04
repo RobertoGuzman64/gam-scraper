@@ -6,7 +6,7 @@ import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/ca
 import { readActiveCatalogIndex } from "../../infrastructure/filesystem/catalog/active-selection.js";
 import { readPortableCampaign } from "../../infrastructure/filesystem/catalog/portable-campaign.js";
 import { readPortableOriginal, readPortableOriginalArtifacts } from "../../infrastructure/filesystem/catalog/portable-original.js";
-import type { InventoryItem } from "./operations-inventory.js";
+import type { InventoryItem } from "./inventory-contracts.js";
 
 export type PortableProviderInventory = {
   readonly providerId: string;

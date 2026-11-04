@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { applyDocumentedTechnicalEvidence } from "../../documented-technical-evidence.js";
 import type { ProductRecord, SpecsMap } from "../../../../../contracts/catalog.js";
 import { validMercaelevaTechnicalSource } from "../../../mapping/providers/mercaeleva/technical.js";
 
@@ -60,13 +60,5 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
   }
 };
 
-export const recoverMercaelevaDocumentedResidualDensitySpecs = (record: ProductRecord, specs: SpecsMap): SpecsMap => {
-  if (record.providerId !== "mercaeleva" ||
-    !record.reference || !record.specs || !validMercaelevaTechnicalSource(record)) return specs;
-  const unit = documentedUnits[record.reference];
-  if (!unit || record.brand !== unit.brand || record.model !== unit.model ||
-    record.categoryKey !== unit.categoryKey ||
-    createHash("sha256").update(JSON.stringify(record)).digest("hex") !== unit.fingerprint ||
-    Object.keys(unit.specifications).some((key) => key in specs)) return specs;
-  return { ...specs, ...unit.specifications };
-};
+export const recoverMercaelevaDocumentedResidualDensitySpecs = (record: ProductRecord, specs: SpecsMap): SpecsMap =>
+  applyDocumentedTechnicalEvidence(record, specs, documentedUnits, { providerId: "mercaeleva", isEligible: (value) => validMercaelevaTechnicalSource(value) });

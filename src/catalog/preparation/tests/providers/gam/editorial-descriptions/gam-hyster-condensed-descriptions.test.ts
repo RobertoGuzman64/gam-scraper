@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { resolveGamHysterCondensedGeneral, resolveGamHysterCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-hyster.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { resolveVerifiedUnitSummaryEditorial } from "../../../../mapping/verified-unit-summary-editorial.js";
 import { includeGamSourceBatteryVoltageInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-battery-voltage-general.js";
@@ -10,6 +9,10 @@ import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/pro
 import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
 import { resolveGamVerifiedSourceCondensedGeneral } from "../../../../evidence/providers/gam/editorial/verified-source-condensed-generals.js";
 import { includeGamSourceForkliftMeasuresInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-forklift-measures-general.js";
+import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";
+import { hysterEvidence } from "../../../../evidence/providers/gam/editorial/condensed/hyster.js";
+
+const { general: resolveGamHysterCondensedGeneral, short: resolveGamHysterCondensedShort } = createGamCondensedEditorialResolver(hysterEvidence, true);
 
 const expected = new Set([
   "4622", "4626", "6480", "2100", "2099", "4623", "2098", "2101", "2151", "2140",

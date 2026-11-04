@@ -1,7 +1,6 @@
-import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { verifyGamEditorialEvidence, type EditorialEvidence } from "./verified-condensed-general.js";
+import type { EditorialEvidence } from "./contracts.js";
 
-const evidence: Readonly<Record<string, EditorialEvidence>> = {
+export const forkliftsEvidence: Readonly<Record<string, EditorialEvidence>> = {
   "2368": {
     "url": "https://online.gamrentals.com/es/carretillas-elevadora-diesel-yale/2368-carretilla-elevadora-diesel-yale-gp80vx-9",
     "title": "Carretilla elevadora diesel Yale GP80VX-9",
@@ -497,14 +496,4 @@ const evidence: Readonly<Record<string, EditorialEvidence>> = {
     "general": "La Yale GC70VX es una carretilla frontal para manutención de cargas de hasta 7.000 kg, con centro de carga de 600 mm según la ficha. La configuración diésel anunciada se vincula a motor Kubota de 3,8 litros, mientras que el cuadro técnico contempla también una alternativa de motorización; conviene verificar el combustible de la unidad concreta. La altura de elevación publicada es de 5.600 mm y el peso, de 9.531 kg. La transmisión Electronic Powershift de dos velocidades se ofrece con variantes de cambio de sentido suave. Para organizar pasillos industriales se indica un radio de giro de 2.585 mm. La capacidad a diferentes alturas debe comprobarse con la tabla del mástil instalado.",
     "revisedShort": "Carretilla frontal Yale GC70VX de 7.000 kg, con elevación de 5.600 mm según ficha."
   }
-};
-
-export const resolveGamForkliftCondensedGeneral = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.general : null;
-};
-
-export const resolveGamForkliftCondensedShort = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.revisedShort ?? null : null;
 };

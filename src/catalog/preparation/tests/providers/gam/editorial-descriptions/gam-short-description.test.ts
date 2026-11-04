@@ -3,12 +3,18 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamResidualConciseShort, resolveGamShortDescription } from "../../../../mapping/providers/gam/editorial-descriptions/short-description.js";
-import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-additional.js";
-import { resolveGamCleaningCondensedGeneral, resolveGamCleaningCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-cleaning.js";
 import { resolveGamResidualCleaningShort } from "../../../../mapping/providers/gam/editorial-descriptions/residual-cleaning-editorial.js";
-import { resolveGamTennantCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-tennant.js";
-import { resolveGamForkliftCondensedGeneral, resolveGamForkliftCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-forklifts.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";
+import { multiSectorSecondaryEvidence } from "../../../../evidence/providers/gam/editorial/condensed/multi-sector-secondary.js";
+import { cleaningEvidence } from "../../../../evidence/providers/gam/editorial/condensed/cleaning.js";
+import { tennantEvidence } from "../../../../evidence/providers/gam/editorial/condensed/tennant.js";
+import { forkliftsEvidence } from "../../../../evidence/providers/gam/editorial/condensed/forklifts.js";
+
+const { general: resolveGamAdditionalCondensedGeneral, short: resolveGamAdditionalCondensedShort } = createGamCondensedEditorialResolver(multiSectorSecondaryEvidence);
+const { general: resolveGamCleaningCondensedGeneral, short: resolveGamCleaningCondensedShort } = createGamCondensedEditorialResolver(cleaningEvidence, true);
+const { short: resolveGamTennantCondensedShort } = createGamCondensedEditorialResolver(tennantEvidence, true);
+const { general: resolveGamForkliftCondensedGeneral, short: resolveGamForkliftCondensedShort } = createGamCondensedEditorialResolver(forkliftsEvidence, true);
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const find = (reference: string): ProductRecord => {

@@ -2,11 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { resolveGamCondensedGeneral, resolveGamCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
 import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
 import { includeGamSourceForkliftMeasuresInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-forklift-measures-general.js";
+import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";
+import { multiSectorPrimaryEvidence } from "../../../../evidence/providers/gam/editorial/condensed/multi-sector-primary.js";
+
+const { general: resolveGamCondensedGeneral, short: resolveGamCondensedShort } = createGamCondensedEditorialResolver(multiSectorPrimaryEvidence);
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const targeted = new Set([

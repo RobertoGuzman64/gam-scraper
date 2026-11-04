@@ -1,3 +1,4 @@
+import { documentedPlatformUnitDetails } from "./documented-platform-unit-details.js";
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { verifiedResidualPlatformModelDocumentation } from "../../../evidence/providers/mercaeleva/residual-platform-model-documentation.js";
 import { resolveMercaelevaGeneralDescription } from "./general-description.js";
@@ -17,12 +18,9 @@ export const resolveMercaelevaDocumentedResidualPlatformGeneral = (record: Produ
     technical["Año de fabricación"] !== record.year ||
     !resolveMercaelevaGeneralDescription(record)) return null;
 
-  const hours = technical["Horas laborales"];
-  const publishedHours = typeof hours === "string" && /^(?:0|[1-9]\d*) h$/.test(hours) ? hours : null;
-  if ((hours !== undefined && !publishedHours) ||
-    record.horometer !== (publishedHours ? publishedHours.slice(0, -2) : null)) return null;
-  const article = technical["Artículo No."];
-  if (typeof article !== "string" || !/^[\p{L}\d/-]+$/u.test(article)) return null;
+  const verifiedUnit = documentedPlatformUnitDetails(record, technical);
+  if (!verifiedUnit) return null;
+  const { publishedHours, article } = verifiedUnit;
 
   const family = documentation.kind === "articulated" ? "articulada" : "de tijera";
   const use = documentation.kind === "articulated"

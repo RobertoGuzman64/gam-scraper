@@ -1,7 +1,6 @@
-import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { verifyGamEditorialEvidence, type EditorialEvidence } from "./verified-condensed-general.js";
+import type { EditorialEvidence } from "./contracts.js";
 
-const evidence: Readonly<Record<string, EditorialEvidence>> = {
+export const handlingEvidence: Readonly<Record<string, EditorialEvidence>> = {
   "2194": {
     "url": "https://online.gamrentals.com/es/apiladores-yale/2194-aplicador-electrico-a-pie-yale-ms10e",
     "title": "Apilador eléctrico 1000Kg Yale MS10E",
@@ -434,14 +433,4 @@ const evidence: Readonly<Record<string, EditorialEvidence>> = {
     "general": "La Yale ERP18UXT es una carretilla elevadora eléctrica para la manipulación y el apilado de palés en instalaciones industriales. Su capacidad nominal publicada es de 1.800 kg a 500 mm de centro de carga y la elevación declarada alcanza 6.000 mm. Registra un peso de 3.190 kg y un radio de giro de 1.601 mm, útiles para evaluar el acceso y la maniobra. La ficha indica alimentación a 48 V y batería de 460 Ah. La altura máxima y la capacidad residual dependen de la configuración del mástil, que debe comprobarse junto con los implementos y las condiciones de carga.",
     "revisedShort": "Carretilla eléctrica Yale ERP18UXT de 1.800 kg y elevación de 6.000 mm."
   }
-};
-
-export const resolveGamHandlingCondensedGeneral = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.general : null;
-};
-
-export const resolveGamHandlingCondensedShort = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.revisedShort ?? null : null;
 };

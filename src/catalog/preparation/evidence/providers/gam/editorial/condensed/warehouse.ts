@@ -1,7 +1,6 @@
-import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { verifyGamEditorialEvidence, type EditorialEvidence } from "./verified-condensed-general.js";
+import type { EditorialEvidence } from "./contracts.js";
 
-const evidence: Readonly<Record<string, EditorialEvidence>> = {
+export const warehouseEvidence: Readonly<Record<string, EditorialEvidence>> = {
   "2243": {
     "url": "https://online.gamrentals.com/es/transpaletas-yale/2243-transpaleta-electrica-a-pie-yale-mp18",
     "title": "Transpaleta eléctrica a pie Yale MP18",
@@ -449,14 +448,4 @@ const evidence: Readonly<Record<string, EditorialEvidence>> = {
     "general": "La carretilla elevadora diésel Yale GP50UX está destinada al movimiento de cargas paletizadas pesadas en patios y operaciones industriales. La ficha indica 5.000 kg de capacidad nominal a un centro de carga de 500 mm. La ficha técnica recoge 5.000 kg de capacidad nominal, 4.345 mm de longitud, 1.924 mm de anchura y 2.250 mm de altura. El equipo requiere condiciones de ventilación adecuadas por su motorización de combustión. Antes de apilar deben verificarse altura útil, capacidad del mástil, firme y dimensiones de circulación.",
     "revisedShort": "Carretilla diésel Yale GP50UX, 5.000 kg y elevación de 4,2 m."
   }
-};
-
-export const resolveGamWarehouseCondensedGeneral = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.general : null;
-};
-
-export const resolveGamWarehouseCondensedShort = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.revisedShort ?? null : null;
 };

@@ -10,7 +10,7 @@ import type { CanonicalCatalog } from "../../../catalog/canonical-catalog.js";
 import type { BatchReport, ProviderRun } from "../../../contracts/batch-report.js";
 
 import { isRecord, isCampaignProvider } from "./report.js";
-import type { ProviderDiscovery, Artifact, Preparation } from "./search.js";
+import type { ProviderDiscovery, Artifact, Preparation } from "./contracts.js";
 
 export const directories = async (path: string): Promise<readonly string[]> => {
   try {

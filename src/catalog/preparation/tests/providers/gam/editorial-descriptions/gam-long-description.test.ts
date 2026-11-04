@@ -4,9 +4,6 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { removeGamDetachedAffirmatives, removeGamOrphanAffirmative, removeGamResidualEditorialArtifacts, resolveGamLongDescription } from "../../../../mapping/providers/gam/editorial-descriptions/long-description.js";
 import { resolveGamResidualConciseShort } from "../../../../mapping/providers/gam/editorial-descriptions/short-description.js";
-import { resolveGamCondensedGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-general.js";
-import { resolveGamHysterCondensedGeneral, resolveGamHysterCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-hyster.js";
-import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-additional.js";
 import { resolveGamVerifiedConciseGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/verified-concise-long.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { verifiedUnitSummaryEditorial } from "../../../../evidence/verified-unit-summary-editorial.js";
@@ -15,6 +12,14 @@ import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/prov
 import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
 import { resolveGamVerifiedSourceCondensedGeneral } from "../../../../evidence/providers/gam/editorial/verified-source-condensed-generals.js";
 import { includeGamSourceForkliftMeasuresInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-forklift-measures-general.js";
+import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";
+import { multiSectorPrimaryEvidence } from "../../../../evidence/providers/gam/editorial/condensed/multi-sector-primary.js";
+import { hysterEvidence } from "../../../../evidence/providers/gam/editorial/condensed/hyster.js";
+import { multiSectorSecondaryEvidence } from "../../../../evidence/providers/gam/editorial/condensed/multi-sector-secondary.js";
+
+const { general: resolveGamCondensedGeneral } = createGamCondensedEditorialResolver(multiSectorPrimaryEvidence);
+const { general: resolveGamHysterCondensedGeneral, short: resolveGamHysterCondensedShort } = createGamCondensedEditorialResolver(hysterEvidence, true);
+const { general: resolveGamAdditionalCondensedGeneral, short: resolveGamAdditionalCondensedShort } = createGamCondensedEditorialResolver(multiSectorSecondaryEvidence);
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const find = (reference: string): ProductRecord => {

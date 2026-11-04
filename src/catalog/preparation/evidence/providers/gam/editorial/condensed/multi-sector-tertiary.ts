@@ -1,7 +1,6 @@
-import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { verifyGamEditorialEvidence, type EditorialEvidence } from "./verified-condensed-general.js";
+import type { EditorialEvidence } from "./contracts.js";
 
-const evidence: Readonly<Record<string, EditorialEvidence>> = {
+export const multiSectorTertiaryEvidence: Readonly<Record<string, EditorialEvidence>> = {
   "2178": {
     "url": "https://online.gamrentals.com/es/apiladores-hyster/2178-hyster-s16il",
     "title": "Apilador eléctrico 1600Kg Hyster S1.6IL",
@@ -426,14 +425,4 @@ const evidence: Readonly<Record<string, EditorialEvidence>> = {
     "originalShort": "➨ YALE ERP30UX L ➨ Venta de Carretilla Elevadora Eléctrica 5,5 metros nueva ⭐Capacidad de carga de 3000 kg",
     "revisedShort": "Carretilla eléctrica Yale ERP30UX L de 3.000 kg con elevación publicada de 3.990 mm."
   },
-};
-
-export const resolveGamExtendedCondensedGeneral = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.general : null;
-};
-
-export const resolveGamExtendedCondensedShort = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort && record.shortDescription === entry.originalShort ? entry.revisedShort ?? null : null;
 };

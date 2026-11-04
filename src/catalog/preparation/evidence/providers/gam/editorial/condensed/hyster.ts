@@ -1,7 +1,6 @@
-import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { verifyGamEditorialEvidence, type EditorialEvidence } from "./verified-condensed-general.js";
+import type { EditorialEvidence } from "./contracts.js";
 
-const evidence: Readonly<Record<string, EditorialEvidence>> = {
+export const hysterEvidence: Readonly<Record<string, EditorialEvidence>> = {
   "4622": {
     "url": "https://online.gamrentals.com/es/transpaleta-electrica-conductor-acompanante-1600-kg/4622-transpaleta-electrica-a-pie-hyster-p16ut-",
     "title": "Transpaleta elevadora eléctrica Hyster P1.6UT",
@@ -432,14 +431,4 @@ const evidence: Readonly<Record<string, EditorialEvidence>> = {
     "general": "La transpaleta eléctrica Hyster PC2.0 permite levantar ligeramente los palés y trasladarlos entre áreas de almacén, recepción y expedición. Su timón y dimensiones reducidas están diseñados para desplazamientos horizontales con operario a pie. La capacidad nominal indicada es de 2.000 kg, con 1.622 mm de longitud y 685 mm de anchura. El proveedor ofrece distintas longitudes y anchuras de horquilla y baterías de 48 V de 10 o 15 Ah; estas opciones no se presentan como una configuración única. El equipo no sustituye a un apilador para almacenamiento en altura.",
     "revisedShort": "Transpaleta eléctrica a pie Hyster PC2.0 de 2.000 kg."
   }
-};
-
-export const resolveGamHysterCondensedGeneral = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.general : null;
-};
-
-export const resolveGamHysterCondensedShort = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.revisedShort ?? null : null;
 };

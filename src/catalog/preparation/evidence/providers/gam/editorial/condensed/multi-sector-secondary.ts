@@ -1,7 +1,6 @@
-import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { verifyGamEditorialEvidence, type EditorialEvidence } from "./verified-condensed-general.js";
+import type { EditorialEvidence } from "./contracts.js";
 
-const evidence: Readonly<Record<string, EditorialEvidence>> = {
+export const multiSectorSecondaryEvidence: Readonly<Record<string, EditorialEvidence>> = {
   "1210": {
     "url": "https://online.gamrentals.com/es/grupos-electrogenos-nuevos/1210-gsw65p",
     "title": "Grupo electrógeno PRAMAC GSW65P 65 kVA",
@@ -418,12 +417,4 @@ const evidence: Readonly<Record<string, EditorialEvidence>> = {
     },
     "general": "La transpaleta eléctrica Hyster P3.0 se utiliza para el movimiento horizontal de palés y operaciones de carga y descarga en almacenes e instalaciones logísticas. Según la ficha técnica, su capacidad nominal es de 3.000 kg y la elevación publicada equivale a 120 mm, adecuada para separar la carga del pavimento durante el transporte. El peso declarado es de 633 kg. La propulsión eléctrica y los mandos de conducción permiten realizar maniobras habituales de traslado en zonas de almacenaje, siempre de acuerdo con la carga admisible y el estado del suelo. El texto comercial es principalmente promocional y no identifica una autonomía o un voltaje verificable de esta unidad. Antes de su selección deben comprobarse dimensiones de horquilla, tipo de palé, pendientes y espacio disponible."
   },
-};
-
-export const resolveGamAdditionalCondensedGeneral = (record: ProductRecord): string | null =>
-  verifyGamEditorialEvidence(record, evidence)?.general ?? null;
-
-export const resolveGamAdditionalCondensedShort = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort && record.shortDescription === entry.originalShort ? entry.revisedShort ?? null : null;
 };

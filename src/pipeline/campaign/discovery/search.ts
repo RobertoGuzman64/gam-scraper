@@ -10,16 +10,8 @@ import type { OfflinePreparation } from "../../../catalog/preparation/offline-do
 import type { CanonicalCatalog } from "../../../catalog/canonical-catalog.js";
 import type { BatchReport, ProviderRun } from "../../../contracts/batch-report.js";
 
-export type Artifact = { readonly path: string; readonly sha256: string };
-export type Preparation = Artifact & { readonly preparedAt: string; readonly intervened: boolean };
-
-export type ProviderDiscovery = {
-  readonly providerId: string;
-  readonly state: "not-started" | "failed" | "invalid" | "catalog" | "prepared";
-  readonly catalog?: Artifact;
-  readonly preparation?: Preparation;
-  readonly message?: string;
-};
+import type { Artifact, Preparation, ProviderDiscovery } from "./contracts.js";
+export type { Artifact, Preparation, ProviderDiscovery } from "./contracts.js";
 
 export type CampaignDiscovery = {
   readonly requestedProviders: readonly string[];

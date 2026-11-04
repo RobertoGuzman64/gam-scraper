@@ -1,4 +1,4 @@
-import type { PublicationDifference } from "./active-publication.js";
+import type { PublicationDifference } from "./publication-contracts.js";
 
 export type PublicationAcceptance = {
   readonly accepted: boolean;

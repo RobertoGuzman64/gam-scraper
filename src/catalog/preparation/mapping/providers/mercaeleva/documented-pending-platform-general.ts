@@ -1,3 +1,4 @@
+import { documentedPlatformUnitDetails } from "./documented-platform-unit-details.js";
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { verifiedPendingPlatformModelDocumentation } from "../../../evidence/providers/mercaeleva/pending-platform-model-documentation.js";
 import { resolveMercaelevaGeneralDescription } from "./general-description.js";
@@ -16,12 +17,9 @@ export const resolveMercaelevaDocumentedPendingPlatformGeneral = (record: Produc
     technical["Tipo de motor"] !== documentation.motor || !record.year || !/^(?:19|20)\d{2}$/.test(record.year) ||
     technical["Año de fabricación"] !== record.year) return null;
 
-  const article = technical["Artículo No."];
-  const hours = technical["Horas laborales"];
-  const publishedHours = typeof hours === "string" && /^(?:0|[1-9]\d*) h$/.test(hours) ? hours : null;
-  if (typeof article !== "string" || !/^[\p{L}\d/-]+$/u.test(article) ||
-    (hours !== undefined && !publishedHours) ||
-    record.horometer !== (publishedHours ? publishedHours.slice(0, -2) : null)) return null;
+  const verifiedUnit = documentedPlatformUnitDetails(record, technical);
+  if (!verifiedUnit) return null;
+  const { publishedHours, article } = verifiedUnit;
 
   const platform = documentation.kind === "articulated" ? "articulada" :
     documentation.kind === "telescopic" ? "telescópica" : "de tijera";

@@ -14,12 +14,8 @@ import type { CampaignOperationsStatus } from "./operations-status.js";
 import { inspectPortableInventory } from "./portable-inventory.js";
 import type { PortableCampaignInventory } from "./portable-inventory.js";
 
-export type InventoryState = "correcto" | "parcial" | "ausente" | "error";
-
-export type InventoryItem = {
-  readonly state: InventoryState;
-  readonly detail: string;
-};
+import type { InventoryItem } from "./inventory-contracts.js";
+export type { InventoryState, InventoryItem } from "./inventory-contracts.js";
 
 export type ProviderInventory = {
   readonly providerId: string;

@@ -1,7 +1,6 @@
-import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { verifyGamEditorialEvidence, type EditorialEvidence } from "./verified-condensed-general.js";
+import type { EditorialEvidence } from "./contracts.js";
 
-const evidence: Readonly<Record<string, EditorialEvidence>> = {
+export const tennantEvidence: Readonly<Record<string, EditorialEvidence>> = {
   "4011": {
     "url": "https://online.gamrentals.com/es/tennant/4011-fcs-t12-c80",
     "title": "Fregadora TENNANT FCS T12 C80",
@@ -340,14 +339,4 @@ const evidence: Readonly<Record<string, EditorialEvidence>> = {
     "general": "El modelo Tennant FCS T681 D70 es una fregadora de conductor sentado para limpieza de superficies comerciales e industriales con necesidades de maniobra. La descripción de origen indica 700 mm de anchura de fregado, presión de cepillo regulable hasta 50 kg, depósitos de 100 litros de solución y 110 litros de recuperación y baterías de 24 V. La autonomía publicada alcanza hasta 3,5 horas según condiciones. Su ficha recoge 1.500 mm de longitud, 760 mm de anchura, 1.200 mm de altura, peso de 340 kg y 200 rpm de cepillo.",
     "revisedShort": "Fregadora Tennant FCS T681 D70 de conductor sentado y depósitos de 100/110 litros."
   }
-};
-
-export const resolveGamTennantCondensedGeneral = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.general : null;
-};
-
-export const resolveGamTennantCondensedShort = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.revisedShort ?? null : null;
 };

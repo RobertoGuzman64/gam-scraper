@@ -1,7 +1,6 @@
-import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { verifyGamEditorialEvidence, type EditorialEvidence } from "./verified-condensed-general.js";
+import type { EditorialEvidence } from "./contracts.js";
 
-const evidence: Readonly<Record<string, EditorialEvidence>> = {
+export const platformsEvidence: Readonly<Record<string, EditorialEvidence>> = {
   "4733": {
     "url": "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/4733-xcmg-xg0807ac",
     "title": "Plataforma elevadora de tijera eléctrica 8M XCMG XG0807AC",
@@ -492,14 +491,4 @@ const evidence: Readonly<Record<string, EditorialEvidence>> = {
     "general": "La XCMG XGS70K es una plataforma telescópica diésel para mantenimiento de grandes infraestructuras y montajes industriales que requieren acceso a alturas excepcionales. Su brazo telescópico y el alcance horizontal mencionado en la fuente permiten aproximar la cesta a estructuras distantes del chasis. La tabla técnica recoge 70 metros de elevación y 460 kg de capacidad máxima, 23.150 mm de longitud, 2.490 mm de anchura y 3.070 mm de altura, con un peso de 35.400 kg. La documentación comercial diferencia una carga habitual de 230 kg y una capacidad máxima restringida de 460 kg. También declara un alcance horizontal de 30,3 m y tracción 4x4. El peso y las dimensiones de transporte resultan determinantes para planificar los accesos y la implantación. El trabajo debe planificarse con el diagrama de cargas, la resistencia del terreno y el itinerario autorizado.",
     "revisedShort": "Telescópica diésel XCMG XGS70K, 70 m y hasta 460 kg con restricción de alcance."
   }
-};
-
-export const resolveGamPlatformCondensedGeneral = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.general : null;
-};
-
-export const resolveGamPlatformCondensedShort = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.revisedShort ?? null : null;
 };

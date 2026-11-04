@@ -4,9 +4,13 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamResidualCleaningGeneral, resolveGamResidualCleaningShort } from "../../../../mapping/providers/gam/editorial-descriptions/residual-cleaning-editorial.js";
 import { rebalanceGamTechnicalShort } from "../../../../mapping/providers/gam/editorial-descriptions/rebalance-technical-short.js";
-import { resolveGamCleaningCondensedGeneral, resolveGamCleaningCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-cleaning.js";
-import { resolveGamTennantCondensedGeneral, resolveGamTennantCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-tennant.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";
+import { cleaningEvidence } from "../../../../evidence/providers/gam/editorial/condensed/cleaning.js";
+import { tennantEvidence } from "../../../../evidence/providers/gam/editorial/condensed/tennant.js";
+
+const { general: resolveGamCleaningCondensedGeneral, short: resolveGamCleaningCondensedShort } = createGamCondensedEditorialResolver(cleaningEvidence, true);
+const { general: resolveGamTennantCondensedGeneral, short: resolveGamTennantCondensedShort } = createGamCondensedEditorialResolver(tennantEvidence, true);
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");

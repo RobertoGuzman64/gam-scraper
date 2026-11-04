@@ -4,9 +4,12 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { removeGamResidualEditorialArtifacts } from "../../../../mapping/providers/gam/editorial-descriptions/long-description.js";
 import { removeGomarizConversationalLead } from "../../../../mapping/providers/gomariz/residual-general.js";
-import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-additional.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { verifiedCanonicalBriefEditorial } from "../../../../evidence/verified-canonical-brief-editorial.js";
+import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";
+import { multiSectorSecondaryEvidence } from "../../../../evidence/providers/gam/editorial/condensed/multi-sector-secondary.js";
+
+const { general: resolveGamAdditionalCondensedGeneral, short: resolveGamAdditionalCondensedShort } = createGamCondensedEditorialResolver(multiSectorSecondaryEvidence);
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");

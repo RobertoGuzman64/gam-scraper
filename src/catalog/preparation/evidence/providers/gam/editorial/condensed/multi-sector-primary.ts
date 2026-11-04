@@ -1,20 +1,6 @@
-import { createHash } from "node:crypto";
-import type { ProductRecord } from "../../../../../../contracts/catalog.js";
+import type { EditorialEvidence } from "./contracts.js";
 
-export type EditorialEvidence = {
-  readonly url: string;
-  readonly title: string;
-  readonly categoryKey: string;
-  readonly brand: string;
-  readonly model: string;
-  readonly sourceHash: string;
-  readonly sourceSpecs: Readonly<Record<string, string>>;
-  readonly general: string;
-  readonly originalShort?: string;
-  readonly revisedShort?: string;
-};
-
-const evidence: Readonly<Record<string, EditorialEvidence>> = {
+export const multiSectorPrimaryEvidence: Readonly<Record<string, EditorialEvidence>> = {
   "4991": {
     "url": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/4991-carretilla-elevadora-electrica-hyster-j35xtlg",
     "title": "CARRETILLA ELEVADORA ELÉCTRICA 3500KG HYSTER J3.5XTLG",
@@ -219,26 +205,4 @@ const evidence: Readonly<Record<string, EditorialEvidence>> = {
     "sourceSpecs": { "Marca": "YALE", "Modelo": "ERP7.0MXLG6", "Longitud": "4830 mm", "Anchura": "2020 mm", "Altura": "2625 mm", "Peso": "9800 KG", "Tipo motor": "Eléctrico", "Capacidad de carga (kg)": "7000 KG", "Centro de carga": "600 mm", "Radio de giro": "3360", "Altura de elevación (mm)": "3000 mm" },
     "general": "La Yale ERP7.0MXLG6 es una carretilla elevadora eléctrica destinada a manipular cargas pesadas en almacenes, industrias y patios logísticos. Su capacidad nominal declarada es de 7.000 kg con centro de carga de 600 mm. Según el texto comercial, equipa batería de ion de litio LFP de 80,8 kWh, con tensión nominal de 354,2 V y capacidad de 228 Ah; los motores de tracción y elevación anunciados son de 40 kW. La ficha recoge 3.000 mm de altura de elevación, 4.830 mm de longitud, 2.020 mm de anchura, 2.625 mm de altura y 9.800 kg de peso. Su diseño y neumáticos industriales favorecen el trabajo en pavimentos firmes con irregularidades moderadas. La estabilidad, la capacidad residual y la geometría del mástil deben comprobarse según la aplicación. El radio de giro anunciado es de 3.360 mm y la velocidad puede alcanzar 19 km/h con carga. Se indican 230 mm de despeje entre ejes y 200 mm bajo mástil. El mástil estándar eleva 3 metros y hay opciones hasta 6.500 mm, con capacidad nominal descrita hasta 5.000 mm. La batería tiene rango térmico declarado de -25 °C a +45 °C, aunque su rendimiento puede bajar por debajo de -10 °C."
   },
-};
-
-export const verifyGamEditorialEvidence = (record: ProductRecord, evidenceSet: Readonly<Record<string, EditorialEvidence>>): EditorialEvidence | null => {
-  if (record.providerId !== "gam" || record.condition !== "Nuevo" || !record.reference ||
-    !record.longDescription || !record.title || !record.brand || !record.model) return null;
-  const entry = evidenceSet[record.reference];
-  if (!entry || record.url !== entry.url || record.title !== entry.title ||
-    record.categoryKey !== entry.categoryKey || record.brand !== entry.brand ||
-    record.model !== entry.model || record.externalReference !== entry.model ||
-    Object.keys(record.specs ?? {}).length !== Object.keys(entry.sourceSpecs).length ||
-    Object.entries(entry.sourceSpecs).some(([key, value]) => record.specs?.[key] !== value)) return null;
-  const fingerprint = createHash("sha256").update(record.longDescription.trim()).digest("hex");
-  return fingerprint === entry.sourceHash ? entry : null;
-};
-
-export const resolveGamCondensedGeneral = (record: ProductRecord): string | null =>
-  verifyGamEditorialEvidence(record, evidence)?.general ?? null;
-
-export const resolveGamCondensedShort = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort && record.shortDescription === entry.originalShort ?
-    entry.revisedShort ?? null : null;
 };

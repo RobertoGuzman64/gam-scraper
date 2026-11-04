@@ -1,7 +1,6 @@
-import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { verifyGamEditorialEvidence, type EditorialEvidence } from "./verified-condensed-general.js";
+import type { EditorialEvidence } from "./contracts.js";
 
-const evidence: Readonly<Record<string, EditorialEvidence>> = {
+export const cleaningEvidence: Readonly<Record<string, EditorialEvidence>> = {
   "4032": {
     "url": "https://online.gamrentals.com/es/barredoras-industriales-nuevas/4032-bcs-s20-diesellpg",
     "title": "Barredora TENNANT BCS S20 Diesel/LPG",
@@ -338,14 +337,4 @@ const evidence: Readonly<Record<string, EditorialEvidence>> = {
     "general": "La Tennant FCA T391 70 es una fregadora de conductor acompañante para suelos duros en instalaciones comerciales e industriales. La ficha indica 0,7 m de anchura de trabajo, 200 rpm de cepillo y 187 kg de peso. Según el texto del proveedor incorpora depósitos de solución y recuperación de 70 litros, con un cabezal de disco y presión de trabajo ajustable. La productividad teórica anunciada alcanza 3.142 m²/h, cifra sujeta a obstáculos, velocidad y condiciones del pavimento. La configuración de batería, el tiempo de recarga y la elección del cepillo deben comprobarse antes de organizar las rutas de limpieza.",
     "revisedShort": "Fregadora Tennant FCA T391 70 de 0,7 m de trabajo y depósitos anunciados de 70 litros."
   }
-};
-
-export const resolveGamCleaningCondensedGeneral = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.general : null;
-};
-
-export const resolveGamCleaningCondensedShort = (record: ProductRecord): string | null => {
-  const entry = verifyGamEditorialEvidence(record, evidence);
-  return entry?.originalShort === record.shortDescription ? entry.revisedShort ?? null : null;
 };

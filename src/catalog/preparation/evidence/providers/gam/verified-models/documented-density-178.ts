@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { applyDocumentedTechnicalEvidence } from "../../../documented-technical-evidence.js";
 import type { ProductRecord, SpecsMap } from "../../../../../../contracts/catalog.js";
 
 type DocumentedGamUnit = {
@@ -250,12 +250,5 @@ const documentedUnits: Readonly<Record<string, DocumentedGamUnit>> = {
   }
 };
 
-export const recoverGamDocumentedDensity178Specs = (record: ProductRecord, specs: SpecsMap): SpecsMap => {
-  if (record.providerId !== "gam" || record.condition !== "Nuevo" || !record.reference ||
-    !record.url.startsWith("https://online.gamrentals.com/") || !record.specs) return specs;
-  const unit = documentedUnits[record.reference];
-  if (!unit || record.categoryKey !== unit.categoryKey || record.brand !== unit.brand ||
-    record.model !== unit.model || createHash("sha256").update(JSON.stringify(record)).digest("hex") !== unit.fingerprint ||
-    Object.keys(unit.specifications).some((key) => key in specs)) return specs;
-  return { ...specs, ...unit.specifications };
-};
+export const recoverGamDocumentedDensity178Specs = (record: ProductRecord, specs: SpecsMap): SpecsMap =>
+  applyDocumentedTechnicalEvidence(record, specs, documentedUnits, { providerId: "gam", isEligible: (value) => value.url.startsWith("https://online.gamrentals.com/"), requiredCondition: "Nuevo" });

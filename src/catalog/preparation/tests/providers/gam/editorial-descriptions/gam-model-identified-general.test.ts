@@ -3,8 +3,11 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamExactVariantGeneral, resolveGamModelIdentifiedGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/model-identified-general.js";
-import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-additional.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";
+import { multiSectorSecondaryEvidence } from "../../../../evidence/providers/gam/editorial/condensed/multi-sector-secondary.js";
+
+const { general: resolveGamAdditionalCondensedGeneral, short: resolveGamAdditionalCondensedShort } = createGamCondensedEditorialResolver(multiSectorSecondaryEvidence);
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const improved = new Set(["4765", "6185", "6188", "217", "215", "216", "211", "212", "213", "4031", "234", "239", "237", "243", "235"]);

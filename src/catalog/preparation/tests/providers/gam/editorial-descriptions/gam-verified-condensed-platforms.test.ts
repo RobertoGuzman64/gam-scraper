@@ -2,9 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { resolveGamPlatformCondensedGeneral, resolveGamPlatformCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-platforms.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { includeGamSourceBatteryVoltageInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-battery-voltage-general.js";
+import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";
+import { platformsEvidence } from "../../../../evidence/providers/gam/editorial/condensed/platforms.js";
+
+const { general: resolveGamPlatformCondensedGeneral, short: resolveGamPlatformCondensedShort } = createGamCondensedEditorialResolver(platformsEvidence, true);
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");

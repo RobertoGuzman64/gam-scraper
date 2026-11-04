@@ -2,9 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { resolveGamTennantCondensedGeneral, resolveGamTennantCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-tennant.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { resolveGamVerifiedSourceCondensedGeneral } from "../../../../evidence/providers/gam/editorial/verified-source-condensed-generals.js";
+import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";
+import { tennantEvidence } from "../../../../evidence/providers/gam/editorial/condensed/tennant.js";
+
+const { general: resolveGamTennantCondensedGeneral, short: resolveGamTennantCondensedShort } = createGamCondensedEditorialResolver(tennantEvidence, true);
 
 const expected = new Set([
   "4011", "4010", "4024", "4002", "4001", "4003", "4004", "4022", "4012", "3996",

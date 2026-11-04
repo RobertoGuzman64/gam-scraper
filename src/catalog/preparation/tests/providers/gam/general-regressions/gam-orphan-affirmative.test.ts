@@ -3,8 +3,11 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { removeGamOrphanAffirmative, removeGamResidualEditorialArtifacts } from "../../../../mapping/providers/gam/editorial-descriptions/long-description.js";
-import { resolveGamHysterCondensedGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-hyster.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";
+import { hysterEvidence } from "../../../../evidence/providers/gam/editorial/condensed/hyster.js";
+
+const { general: resolveGamHysterCondensedGeneral } = createGamCondensedEditorialResolver(hysterEvidence, true);
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");

@@ -3,12 +3,15 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamIndividualizedGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/individualized-general.js";
-import { resolveGamAdditionalCondensedGeneral, resolveGamAdditionalCondensedShort } from "../../../../mapping/providers/gam/editorial-descriptions/verified-condensed-additional.js";
 import { removeGamResidualEditorialArtifacts } from "../../../../mapping/providers/gam/editorial-descriptions/long-description.js";
 import { resolveGomarizIndividualizedGeneral } from "../../../../mapping/providers/gomariz/individualized-general.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { recoverGamDocumentedResidualDensitySpecs } from "../../../../evidence/providers/gam/verified-models/documented-density-residual.js";
 import { recoverGomarizDocumentedResidualDensitySpecs } from "../../../../evidence/providers/gomariz/documented-density-residual.js";
+import { createGamCondensedEditorialResolver } from "../../../../mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.js";
+import { multiSectorSecondaryEvidence } from "../../../../evidence/providers/gam/editorial/condensed/multi-sector-secondary.js";
+
+const { general: resolveGamAdditionalCondensedGeneral, short: resolveGamAdditionalCondensedShort } = createGamCondensedEditorialResolver(multiSectorSecondaryEvidence);
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
