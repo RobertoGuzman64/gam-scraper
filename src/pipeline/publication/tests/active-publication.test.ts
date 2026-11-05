@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { discoverAccreditedPublications, resolveAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { selectActivePublication } from "../active-publication.js";
+import type { ImportCandidate } from "../../../catalog/legacy-export/contracts.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const providerId = "gomariz";
@@ -164,7 +165,7 @@ test("valores técnicos vaciados o procedencias cambiadas bloquean la selección
 });
 
 
-test("GAM activa cinco exclusiones editoriales nuevas y treinta horómetros no cuantitativos sin admitir pérdidas ajenas", async () => {
+test("GAM simula cinco exclusiones aprobadas y treinta horómetros no cuantitativos sin admitir pérdidas ajenas", async () => {
   const temp = await mkdtemp(join(tmpdir(), "finish-gam-compatibilidad-"));
   try {
     const provider = "gam";
@@ -175,18 +176,27 @@ test("GAM activa cinco exclusiones editoriales nuevas y treinta horómetros no c
     const oldDir = join(publications, historicalSha);
     await cp(historical, oldDir, { recursive: true });
     const publishedFile = `${provider}-publishable.json`;
-    const rawOriginal = await readFile(join(oldDir, publishedFile), "utf8");
-    const parsed: unknown = JSON.parse(rawOriginal);
+    const rawAccredited = await readFile(join(oldDir, publishedFile), "utf8");
+    const parsed: unknown = JSON.parse(rawAccredited);
     assert.ok(Array.isArray(parsed) && parsed.every(isCandidate));
-    const original = parsed;
-    const references = new Set(["6642", "6669", "6666", "5258", "2328"]);
-    const hourReferences = new Set([
-      "6228", "6206", "6130", "6116", "6236", "6626", "6683", "5213", "5714", "6951",
-      "6510", "6436", "6634", "6123", "5228", "6652", "6834", "6559", "6560", "6608",
-      "6606", "6775", "6367", "6814", "6815", "5710", "6623", "6688", "6689", "6690"
-    ]);
-    const revised = original.filter((product) => !references.has(product.reference ?? "")).map((product) => {
-      if (!hourReferences.has(product.reference ?? "")) return product;
+    const accredited: readonly ImportCandidate[] = parsed;
+    const candidates = accredited.filter((product) => product.reference && product.sourceUrl.startsWith("https://"));
+    assert.ok(candidates.length >= 35);
+    const references = new Set(candidates.slice(0, 5).map((product) => product.reference));
+    const hourReferences = new Set(candidates.slice(5, 35).map((product) => product.reference));
+    const original = accredited.map((product) => hourReferences.has(product.reference)
+      ? { ...product, spec: { ...product.spec, "Horómetro": "NA horas" } }
+      : product);
+    const rawOriginal = JSON.stringify(original, null, 2);
+    const baselineManifestPath = join(oldDir, "manifest.json");
+    const baselineManifest: unknown = JSON.parse(await readFile(baselineManifestPath, "utf8"));
+    assert.ok(isRecord(baselineManifest) && isRecord(baselineManifest.files));
+    await writeFile(join(oldDir, publishedFile), rawOriginal);
+    await writeFile(baselineManifestPath, JSON.stringify({
+      ...baselineManifest, files: { ...baselineManifest.files, [publishedFile]: hash(rawOriginal) }
+    }, null, 2));
+    const revised = original.filter((product) => !references.has(product.reference)).map((product) => {
+      if (!hourReferences.has(product.reference)) return product;
       const { ["Horómetro"]: reading, ...spec } = product.spec;
       assert.ok(typeof reading === "string" && /^na(?:\s+[a-z]\d{8,20})?\s+horas$/iu.test(reading));
       return { ...product, spec };
@@ -195,10 +205,10 @@ test("GAM activa cinco exclusiones editoriales nuevas y treinta horómetros no c
     const rawApproval = await readFile(join(oldDir, "accreditation.json"), "utf8");
     const approval: unknown = JSON.parse(rawApproval);
     assert.ok(isRecord(approval) && Array.isArray(approval.exclusions));
-    const newlyExcluded = original.filter((product) => references.has(product.reference ?? "")).map((product) => ({
+    const newlyExcluded = original.filter((product) => references.has(product.reference)).map((product) => ({
       providerId: provider, reference: product.reference, sourceUrl: product.sourceUrl, status: "review",
-      issues: ["Incidencia técnica pendiente de acreditación"], decision: "excluir",
-      reason: "Exclusión editorial aprobada por contradicción documentada",
+      issues: ["Incidencia editorial del escenario de prueba"], decision: "excluir",
+      reason: "Exclusión individual autorizada en el escenario de prueba",
       evidenceUrls: [product.sourceUrl]
     }));
     assert.equal(newlyExcluded.length, 5);

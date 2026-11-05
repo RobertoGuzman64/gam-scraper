@@ -59,10 +59,11 @@ test("huecos --comparar --titulos audita publicaciones acreditadas y presenta so
   assert.ok(titles.totals !== null && typeof titles.totals === "object" && "products" in titles.totals &&
     typeof titles.totals.products === "number" && titles.totals.products > 0);
   assert.equal(titles.providers.length, 3);
-  assert.ok(titles.cases.length > 0);
+  assert.ok("affected" in titles.totals && typeof titles.totals.affected === "number");
+  assert.equal(titles.cases.length, titles.totals.affected);
   assert.equal("editorial" in report, false);
   assert.equal("technicalSpecs" in report, false);
   const text = await execute(["--comparar", "--titulos", "--top", "1"]);
-  assert.match(text, /TÍTULOS CASOS \| TOP 1/);
+  assert.match(text, new RegExp(`TÍTULOS CASOS \\| TOP ${Math.min(1, titles.cases.length)} de ${titles.cases.length} fichas`));
   assert.doesNotMatch(text, /DESCRIPCIONES GENERALES MÁS LARGAS/);
 });

@@ -211,6 +211,8 @@ test("Mercaeleva normaliza camiones cesta cuando altura, estructura e identidad 
   ];
   for (const [reference, expected] of cases) {
     const original = source("mercaeleva", reference);
+    const originalTitle = original.title;
+    assert.ok(typeof originalTitle === "string", `${reference}: título original ausente`);
     assertTitle("mercaeleva", reference, expected);
     const invalid: readonly ProductRecord[] = [
       { ...original, url: "https://example.org/otro-anuncio" },
@@ -225,7 +227,7 @@ test("Mercaeleva normaliza camiones cesta cuando altura, estructura e identidad 
       { ...original, specs: { ...original.specs, "Altura de trabajo": "99 m" } },
       { ...original, specs: { ...original.specs, "Título adicional": "OTRO EQUIPO" } },
       { ...original, longDescription: "Sin identidad, altura ni estructura de camión cesta" },
-      { ...original, title: original.title.replace("ALUMINIO", "ACERO") }
+      { ...original, title: originalTitle.replace("ALUMINIO", "ACERO") }
     ];
     for (const candidate of invalid) {
       assert.notEqual(prepareSourceProduct(candidate).product.title, expected, `${reference}: evidencia alterada`);
