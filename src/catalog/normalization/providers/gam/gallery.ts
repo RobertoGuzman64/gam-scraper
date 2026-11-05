@@ -10,7 +10,7 @@ const gamImageName = (value: string): string | null => {
 };
 
 export const excludeGamRelatedProductImages = (images: readonly string[]): readonly string[] => {
-  if (images.length < 5) return images;
+  if (images.length < 4) return images;
   const principal = gamImageName(images[0] ?? "");
   if (!principal) return images;
   let own = 0;
@@ -20,6 +20,9 @@ export const excludeGamRelatedProductImages = (images: readonly string[]): reado
   const names = related.map(gamImageName);
   if (names.some((name) => name === null || name === principal)) return images;
   if (own >= 3) return images.slice(0, own);
+  if (related.length === 3 && new Set(names).size === 3 && new Set(related).size === 3) {
+    return images.slice(0, own);
+  }
   if (related.length === 4) {
     const counts = new Map<string, number>();
     for (const name of names) counts.set(name!, (counts.get(name!) ?? 0) + 1);

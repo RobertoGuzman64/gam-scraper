@@ -22,7 +22,7 @@ test("GAM: separa cuatro recomendaciones cuando la máquina tiene una o dos foto
   const recommended = [...related, photo(203, "2013-jlg-450aj")];
   assert.deepEqual(excludeGamRelatedProductImages([first, ...recommended]), [first]);
   assert.deepEqual(excludeGamRelatedProductImages([...own.slice(0, 2), ...recommended]), own.slice(0, 2));
-  assert.deepEqual(excludeGamRelatedProductImages([first, ...related]), [first, ...related]);
+  assert.deepEqual(excludeGamRelatedProductImages([first, ...related]), [first]);
   assert.deepEqual(excludeGamRelatedProductImages([first, ...recommended.slice(0, 2), recommended[0]!, recommended[1]!]),
     [first, ...recommended.slice(0, 2), recommended[0]!, recommended[1]!]);
 });
@@ -44,9 +44,30 @@ test("GAM: excluye cuatro recomendaciones duplicadas por pares tras una o dos fo
     [own[0]!, recommended[0]!, own[1]!, recommended[2]!, recommended[3]!]);
 });
 
+test("GAM: separa tres recomendaciones distintas tras una o dos imágenes propias", () => {
+  const first = own[0]!;
+  const next = own[1]!;
+  const gallery = [first, ...related];
+  assert.deepEqual(excludeGamRelatedProductImages(gallery), [first]);
+  assert.deepEqual(gallery, [first, ...related]);
+  assert.deepEqual(excludeGamRelatedProductImages([first, next, ...related]), [first, next]);
+  const duplicatedName = [related[0]!, photo(204, "2018-snorkel-a46jrt"), related[2]!];
+  assert.deepEqual(excludeGamRelatedProductImages([first, ...duplicatedName]), [first, ...duplicatedName]);
+  assert.deepEqual(excludeGamRelatedProductImages([first, related[0]!, related[0]!, related[2]!]),
+    [first, related[0]!, related[0]!, related[2]!]);
+  assert.deepEqual(excludeGamRelatedProductImages([first, related[0]!, next, related[2]!]),
+    [first, related[0]!, next, related[2]!]);
+  assert.deepEqual(excludeGamRelatedProductImages([first, ...related.slice(0, 2)]),
+    [first, ...related.slice(0, 2)]);
+  assert.deepEqual(excludeGamRelatedProductImages([first, ...related, photo(204, "2007-jlg-510aj"), photo(205, "2007-jlg-600aj")]),
+    [first, ...related, photo(204, "2007-jlg-510aj"), photo(205, "2007-jlg-600aj")]);
+  assert.deepEqual(excludeGamRelatedProductImages([first, related[0]!, related[1]!, "https://example.test/external.jpg"]),
+    [first, related[0]!, related[1]!, "https://example.test/external.jpg"]);
+});
+
 test("GAM: conserva variantes, fotografías adicionales y galerías sin evidencia suficiente", () => {
   const cases: readonly (readonly string[])[] = [
-    [...own.slice(0, 2), ...related],
+    [...own.slice(0, 2), related[0]!, related[1]!, related[0]!],
     [...own, ...related.slice(0, 2)],
     [...own, related[0]!, own[2]!, related[1]!, related[2]!],
     [...own, ...related, photo(204, "2007-jlg-510aj"), photo(205, "2007-jlg-600aj")],
@@ -94,6 +115,21 @@ test("GAM: la preparación conserva imágenes propias, identidad, estados y orig
     assert.ok(source, reference);
     const prepared = prepareSourceProduct(source);
     assert.deepEqual(prepared.product.images, source.images?.slice(0, 2), reference);
+  }
+  for (const [reference, ownCount] of [["4794", 1], ["4795", 2], ["4807", 1], ["4388", 1], ["1218", 1], ["2259", 1], ["3445", 1], ["295", 1], ["2737", 1]] as const) {
+    const source = indexed.get(reference);
+    assert.ok(source, reference);
+    const prepared = prepareSourceProduct(source);
+    assert.deepEqual(prepared.product.images, source.images?.slice(0, ownCount), reference);
+    assert.equal(prepared.product.image, source.image, reference);
+  }
+  for (const [reference, relatedReference] of [["4794", "4795"], ["4807", "4808"], ["4388", "4623"], ["3442", "3443"], ["295", "294"]] as const) {
+    const source = indexed.get(reference);
+    const relatedProduct = indexed.get(relatedReference);
+    assert.ok(source, reference);
+    assert.ok(relatedProduct?.image, relatedReference);
+    assert.ok(source.images?.includes(relatedProduct.image), reference);
+    assert.ok(!prepareSourceProduct(source).product.images.includes(relatedProduct.image), reference);
   }
   for (const reference of ["6607", "5855", "6139", "6846", "6150", "2621"]) {
     const source = indexed.get(reference);
