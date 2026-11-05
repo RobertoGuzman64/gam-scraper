@@ -12,6 +12,7 @@ import type { ImportCandidate, ImportCatalog } from "../legacy-export/contracts.
 import type { PreparedProduct } from "./contracts.js";
 import { reconcileGamInitialIdentity, reconcileGamForPreparation } from "./reconciliation/gam.js";
 import { verifiedGamHysterH45fts5Editorial } from "./reconciliation/gam-hyster-h45fts5.js";
+import { reconcileGamVerifiedYaleGp80vx } from "./reconciliation/gam-yale-gp80vx.js";
 import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "./evidence/providers/mercaeleva/verified-platform-source-specs.js";
 import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation, reconcileMercaelevaCorroboratedCapacity, reconcileMercaelevaVerifiedReachTruckFamily } from "./reconciliation/mercaeleva.js";
 import { reconcileGomarizVerifiedPlatformHeight, reconcileGomarizVerifiedElectricSemanticSource } from "./reconciliation/gomariz.js";
@@ -30,6 +31,7 @@ import { finalizePreparedEditorial } from "./mapping/verified-editorial-finaliza
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
   const sourceUnitRecord = record;
+  record = reconcileGamVerifiedYaleGp80vx(record);
   const sourceEditorial = captureSourceEditorialEvidence(record);
   const publicationConflict = publicationConflictForMercaeleva(record);
   const semanticIssues = sourceSemanticQualityIssues(reconcileGomarizVerifiedElectricSemanticSource(reconcileMercaelevaVerifiedReachTruckFamily(record)));

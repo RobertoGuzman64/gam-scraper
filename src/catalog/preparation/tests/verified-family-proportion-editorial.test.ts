@@ -47,7 +47,13 @@ test("La fase 162 mejora exactamente veinte fichas canónicas sin alterar datos 
         "La identidad XG1523ERT está respaldada por el título, el resumen, la descripción y la referencia original."
       )
       : evidence.general;
-    assert.equal(prepared.product.description_general, expectedGeneral, identity);
+    if (identity === "gam:2328") {
+      assert.equal(prepared.product.spec.Modelo, "GDP80VX");
+      assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "8000 KG");
+      assert.ok(!prepared.product.description_general?.includes("GP90VX"));
+    } else {
+      assert.equal(prepared.product.description_general, expectedGeneral, identity);
+    }
     const words = evidence.general.trim().split(/\s+/u).length;
     assert.ok(words >= 70 && words <= 190, identity);
   }

@@ -86,13 +86,31 @@ test("Toyota 02-7FD18 conserva altura 4700 mm y corrige solo capacidad 1800 kg",
   assert.equal(prepareSourceProduct(altered).status, "review");
 });
 
-test("Identidades y cantidades contradictorias sin evidencia siguen visibles", () => {
-  for (const [reference, diagnosis] of [
-    ["2328", "Modelo contradictorio"]
-  ] as const) {
-    const prepared = prepareSourceProduct(source("gam", reference));
-    assert.equal(prepared.status, "review", reference);
-    assert.ok(prepared.issues.some((issue) => issue.startsWith(diagnosis)), reference);
+test("Yale 2328 identifica la variante diésel de 8 toneladas sin copiar el modelo de 9 toneladas", () => {
+  const record = source("gam", "2328");
+  const original = JSON.stringify(record);
+  const prepared = prepareSourceProduct(record);
+  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.product.spec.Modelo, "GDP80VX");
+  assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "8000 KG");
+  assert.equal(prepared.product.externalReference, "GP80SVX");
+  assert.ok(prepared.product.title?.includes("GDP80VX"));
+  assert.ok(prepared.product.description?.includes("8.000 kg"));
+  assert.ok(!prepared.product.description?.includes("9.000 kg"));
+  assert.ok(!prepared.product.description_general?.includes("GP90VX"));
+  assert.equal(JSON.stringify(record), original);
+  for (const variant of [
+    { ...record, reference: "2329" },
+    { ...record, url: `${record.url}?otra=1` },
+    { ...record, model: "GP90VX" },
+    { ...record, title: "Otra máquina" },
+    { ...record, shortDescription: "Otro resumen" },
+    { ...record, longDescription: "Otra descripción" },
+    { ...record, specs: { ...record.specs, "Capacidad de carga (kg)": "9000 KG" } }
+  ]) {
+    const candidate = prepareSourceProduct(variant);
+    assert.notEqual(candidate.product.spec.Modelo, "GDP80VX");
+    assert.notEqual(candidate.product.title, prepared.product.title);
   }
 });
 

@@ -1,3 +1,1 @@
-export const gamTechnicalReviewReferences: ReadonlySet<string> = new Set([
-  "2328"
-]);
+export const gamTechnicalReviewReferences: ReadonlySet<string> = new Set<string>();
