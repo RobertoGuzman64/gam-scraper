@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { requireProductReference } from "../../../cross-cutting/support/require-product-reference.js";
@@ -56,7 +57,7 @@ test("NA, error de hoja y configuraciones alternativas no fingen horas, altura o
     const prepared = prepareProduct(record, catalog);
     assert.deepEqual(resolved(record, name), { status: "not_observed", value: null }, `${id}:${name}`);
     assert.equal(prepared.status, "ready", id);
-    assert.equal(prepared.product.spec[sourceKey], record.specs?.[sourceKey]);
+    assert.equal(prepared.product.spec[sourceKey], reconcileGamHorometer(record).specs?.[sourceKey]);
     assert.equal(prepared.product.attributes.some((item) => item.attributeID === attribute(name).id), false);
   }
 });

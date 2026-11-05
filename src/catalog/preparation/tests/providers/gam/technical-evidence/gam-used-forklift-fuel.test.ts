@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -19,7 +20,7 @@ test("recupera GLP declarado por la misma unidad sin alterar los datos de origen
     assert.equal(prepared.product.spec["Motorización"], "GLP", reference);
     assert.equal(prepared.status, "ready", reference);
     for (const [key, value] of Object.entries(source.specs ?? {})) {
-      assert.deepEqual(prepared.product.spec[key], value, `${reference}: ${key}`);
+      assert.deepEqual(prepared.product.spec[key], key === "Horómetro" ? reconcileGamHorometer(source).specs?.[key] : value, `${reference}: ${key}`);
     }
     assert.deepEqual(source, unchanged);
   }

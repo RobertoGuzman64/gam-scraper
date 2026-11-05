@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -39,7 +40,7 @@ test("GAM: mejora únicamente las 18 generales con evidencia propia", () => {
     assert.equal(JSON.stringify(record), before);
     assert.equal(prepared.product.reference, record.reference);
     assert.equal(prepared.product.sourceUrl, record.url);
-    if (improved) assert.deepEqual(prepared.product.spec, recoverGamDocumentedWarehouseCleaningAndLiftingSpecs(record, { ...record.specs, ...(record.reference === "4774" ? { "Motorización": "Eléctrico" } : {}) }));
+    if (improved) assert.deepEqual(prepared.product.spec, recoverGamDocumentedWarehouseCleaningAndLiftingSpecs(record, { ...reconcileGamHorometer(record).specs, ...(record.reference === "4774" ? { "Motorización": "Eléctrico" } : {}) }));
   }
   assert.equal(catalog.products.length, 983);
   assert.deepEqual(new Set(changed), expected);

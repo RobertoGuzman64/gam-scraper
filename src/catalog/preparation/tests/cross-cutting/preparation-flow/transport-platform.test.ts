@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
@@ -22,7 +23,7 @@ test("plataforma de transporte registrada con identidad y documentación concord
   const prepared = prepareProduct(record, catalog);
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
-  assert.deepEqual(prepared.product.spec, record.specs);
+  assert.deepEqual(prepared.product.spec, reconcileGamHorometer(record).specs);
   assert.equal(prepared.product.reference, record.reference);
   assert.equal(prepared.product.sourceUrl, record.url);
   assert.equal(prepared.product.condition, "Segunda_Mano");

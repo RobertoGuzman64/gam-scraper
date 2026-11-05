@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -36,7 +37,7 @@ test("SNORKEL S4732E reconcilia la identidad editorial con la unidad identificad
   assert.equal(prepared.product.title, corrected.title);
   assert.equal(prepared.product.description, corrected.shortDescription);
   assert.equal(prepared.product.description_general, corrected.longDescription);
-  assert.deepEqual(prepared.product.spec, original.specs);
+  assert.deepEqual(prepared.product.spec, reconcileGamHorometer(original).specs);
   assert.deepEqual(record, original);
 });
 

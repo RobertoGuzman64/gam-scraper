@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -34,7 +35,7 @@ const approved = (provider: string, codes: readonly string[]): void => {
     const prepared = prepareProduct(product, catalog);
     assert.equal(prepared.status, "ready", `${provider}:${code}: ${prepared.issues.join(", ")}`);
     assert.equal(prepared.product.reference, code);
-    assert.deepEqual(prepared.product.spec, { ...product.specs,
+    assert.deepEqual(prepared.product.spec, { ...reconcileGamHorometer(product).specs,
       ...(provider === "gam" && ["6873", "6874"].includes(code) ? { "Dimensiones Cesta": "1,4 x 0,7 x 1,1 m" } : {}),
       ...(provider === "gam" && ["4019", "4020"].includes(code) ? { "Depósito de solución": 480, "Depósito de recuperación": 346 } : {}),
       ...(provider === "gam" && code === "4021" ? { "Depósito de solución": 530, "Depósito de recuperación": 276 } : {}),

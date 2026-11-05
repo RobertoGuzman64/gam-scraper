@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -57,7 +58,7 @@ test("GAM: resume exclusivamente fichas seguras sin retirar cifras de la descrip
       }
       const explicitHeight = record.reference === "6190" ? "27 m" : record.reference === "6192" ? "23 m" : null;
       const expectedSpecs = {
-        ...record.specs,
+        ...reconcileGamHorometer(record).specs,
         ...(record.reference === "4025" ? { "Anchura (mm)": "816 mm" } : {}),
         ...(record.reference === "4027" ? { "Anchura (mm)": "905 mm" } : {}),
         ...(explicitHeight === null ? {} : { "Altura de trabajo (m)": explicitHeight }),

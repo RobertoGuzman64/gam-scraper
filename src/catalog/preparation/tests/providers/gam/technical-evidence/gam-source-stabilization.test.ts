@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -25,7 +26,8 @@ test("recupera solo los sistemas de estabilización declarados para la variante 
     assert.equal(result.product.spec["Nivelación automática"], leveling || undefined, reference);
     assert.equal(result.product.spec["Estabilizadores hidráulicos"], stabilizers || undefined, reference);
     for (const [key, value] of Object.entries(source.specs ?? {})) {
-      const expected = key === "Dimensiones Cesta" && reference === "6167" ? "1,4 x 0,7 x 1,1 m" : value;
+      const expected = key === "Horómetro" ? reconcileGamHorometer(source).specs?.[key] :
+        key === "Dimensiones Cesta" && reference === "6167" ? "1,4 x 0,7 x 1,1 m" : value;
       assert.deepEqual(result.product.spec[key], expected, `${reference}: ${key}`);
     }
     assert.deepEqual(source, original);

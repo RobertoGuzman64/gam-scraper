@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
 import { phase2ExpectedSpecValue, phase2BasketReviewReferences } from "../../../support/phase2-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -117,7 +118,7 @@ test("GAM: la condensación adicional conserva cifras y características de cada
     assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? 1 : 0, reference);
     checkPreparedGeneral(reference, prepared.product.description_general, general);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
   }
 });
@@ -138,7 +139,7 @@ test("GAM: 22 fichas de manutención conservan datos individuales al condensar t
     assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? 1 : 0, reference);
     checkPreparedGeneral(reference, prepared.product.description_general, general);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
   }
 });
@@ -162,7 +163,7 @@ test("GAM: 22 descripciones pendientes incorporan evidencia individual y conserv
     assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? 1 : 0, reference);
     assert.equal(JSON.stringify(record), before, reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
   }
 });
@@ -210,7 +211,7 @@ test("GAM: condensación acreditada preserva identificación de ocasión y prest
     assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? 1 : 0, reference);
     checkPreparedGeneral(reference, prepared.product.description_general, general);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
     assert.equal(resolveGamVerifiedSourceCondensedGeneral({ ...record, title: `${record.title} otra variante` }), null, reference);
     assert.equal(resolveGamVerifiedSourceCondensedGeneral({ ...record, specs: { ...record.specs, Modelo: "otra variante" } }), null, reference);
@@ -244,7 +245,7 @@ test("GAM: la evidencia editorial posterior conserva identidad, original y espec
     checkPreparedGeneral(reference, prepared.product.description_general, general);
     assert.equal(JSON.stringify(record), originalSnapshot, reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
     for (const altered of [
       { ...record, url: `${record.url}?other=1` },

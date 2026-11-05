@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -30,7 +31,7 @@ test("TOYOTA LWE180 utiliza capacidad técnica de 1800 kg sin alterar specs", ()
   const prepared = prepareProduct(original, catalog);
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
-  assert.deepEqual(prepared.product.spec, { ...original.specs, "Año de fabricación": "2019" });
+  assert.deepEqual(prepared.product.spec, { ...reconcileGamHorometer(original).specs, "Año de fabricación": "2019" });
   assert.equal(prepared.product.description, normalized.shortDescription);
   assert.equal(prepared.product.description_general, normalized.longDescription);
   assert.ok(prepared.product.attributes.some((item) => item.value === 1800));

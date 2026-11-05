@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -31,7 +32,7 @@ test("GAM: conserva las seis generales de F10 y recupera la 6617", () => {
       assert.equal(prepared.product.reference, record.reference);
       assert.equal(prepared.product.sourceUrl, record.url);
       assert.deepEqual(prepared.product.spec, recoverGamDocumentedMobilityAndAccessSpecs(record, {
-        ...record.specs,
+        ...reconcileGamHorometer(record).specs,
         ...(["6358", "6367"].includes(record.reference) ? { "Capacidad de carga (kg)": "2000 KG", "Año de fabricación": "2019" } : {})
       }));
     }

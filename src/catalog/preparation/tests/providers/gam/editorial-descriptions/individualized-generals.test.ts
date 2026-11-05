@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -52,7 +53,7 @@ test("Fase 8: diferencia 18 fichas con evidencias propias sin modificar los orig
         assert.equal(prepared.reference, record.reference);
         assert.deepEqual(prepared.spec, record.providerId === "gomariz" ?
           recoverGomarizDocumentedRenaultPremiumSpecs(record, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) }) :
-          recoverGamDocumentedMobilityAndAccessSpecs(record, record.specs ?? {}));
+          recoverGamDocumentedMobilityAndAccessSpecs(record, reconcileGamHorometer(record).specs ?? {}));
       }
       assert.equal(JSON.stringify(record), before);
     }

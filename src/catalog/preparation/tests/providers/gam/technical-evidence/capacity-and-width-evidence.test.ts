@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -34,7 +35,7 @@ test("reconciliar capacidades requiere identidad de modelo y evidencias converge
     assert.deepEqual(resolveAttribute(record, definition), { status: "resolved", value: expected }, reference);
     const prepared = prepareProduct(record, catalog);
     assert.equal(prepared.status, gamTechnicalReviewReferences.has(reference) ? "review" : "ready", reference);
-    const expectedSpecs = { ...record.specs, ...(reference === "6421" ? { "Velocidad de desplazamiento con/sin carga (km/h)": "15,7 / 15,7 km/h", "Potencia de tracción (kW)": "8,5 kW", "Potencia de elevación (kW)": "11 kW" } : {}) };
+    const expectedSpecs = { ...reconcileGamHorometer(record).specs, ...(reference === "6421" ? { "Velocidad de desplazamiento con/sin carga (km/h)": "15,7 / 15,7 km/h", "Potencia de tracción (kW)": "8,5 kW", "Potencia de elevación (kW)": "11 kW" } : {}) };
     for (const [key, value] of Object.entries(expectedSpecs)) {
       assert.deepEqual(prepared.product.spec[key], key === "Capacidad de carga (kg)" ? `${expected} KG` : value, `${reference}: ${key}`);
     }
@@ -51,7 +52,7 @@ test("anchuras corroboradas distinguen redondeo, configuración y medida de trab
     assert.deepEqual(resolveAttribute(record, definition), { status: "resolved", value: expected }, reference);
     const prepared = prepareProduct(record, catalog);
     assert.equal(prepared.status, gamTechnicalReviewReferences.has(reference) ? "review" : "ready", reference);
-    const expectedSpecs = { ...record.specs, ...(reference === "4005" ? { "Depósito de solución": 78.5, "Depósito de recuperación": 80 } : {}) };
+    const expectedSpecs = { ...reconcileGamHorometer(record).specs, ...(reference === "4005" ? { "Depósito de solución": 78.5, "Depósito de recuperación": 80 } : {}) };
     for (const [key, value] of Object.entries(expectedSpecs)) {
       assert.deepEqual(prepared.product.spec[key], key === "Capacidad de carga (kg)" ? `${expected} KG` : value, `${reference}: ${key}`);
     }

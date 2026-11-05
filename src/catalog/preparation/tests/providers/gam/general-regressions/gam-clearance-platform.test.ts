@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -34,7 +35,7 @@ test("las alturas libres al suelo proceden del modelo y conservan las especifica
     assert.equal(prepared.product.spec["Altura al suelo (mm)"], `${value} mm`, reference);
     assert.equal(normalizeSpecsObject(prepared.product.spec).normalized["Altura al suelo (mm)"], value, reference);
     for (const [key, existing] of Object.entries(record.specs ?? {})) {
-      assert.deepEqual(prepared.product.spec[key], existing, `${reference}:${key}`);
+      assert.deepEqual(prepared.product.spec[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : existing, `${reference}:${key}`);
     }
     assert.deepEqual(record, original);
   }
@@ -49,7 +50,7 @@ test("las alturas de plataforma acreditadas no se confunden con altura de trabaj
     assert.equal(normalizeSpecsObject(prepared.product.spec).normalized["Altura plataforma (m)"], value, reference);
     assert.equal(prepared.product.spec["Altura de elevación (m)"], record.specs?.["Altura de elevación (m)"], reference);
     for (const [key, existing] of Object.entries(record.specs ?? {})) {
-      assert.deepEqual(prepared.product.spec[key], existing, `${reference}:${key}`);
+      assert.deepEqual(prepared.product.spec[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : existing, `${reference}:${key}`);
     }
     assert.deepEqual(record, original);
   }

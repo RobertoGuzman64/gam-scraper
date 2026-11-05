@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -43,7 +44,7 @@ test("reescribe 20 descripciones de maquinaria especializada sin perder la ident
     }
     assert.equal(prepared.product.reference, record.reference);
     assert.equal(prepared.product.sourceUrl, record.url);
-    for (const [key, value] of Object.entries(record.specs ?? {})) {
+    for (const [key, value] of Object.entries(reconcileGamHorometer(record).specs ?? {})) {
       assert.equal(prepared.product.spec[key], value, `${record.reference}:${key}`);
     }
     assert.equal(JSON.stringify(record), original, record.reference);

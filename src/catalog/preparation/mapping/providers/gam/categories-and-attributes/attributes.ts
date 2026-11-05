@@ -174,6 +174,7 @@ export const isGamUnmeasuredNumeric = (attribute: Attribute, value: string | num
   if (typeof value !== "string") return false;
   const normalized = fold(value);
   if (attribute.name === "Horas de uso") return normalized === "na horas" || normalized === "horometro sustituido horas" ||
+    normalized === "horometro sustituido" ||
     /^na\s+[a-z]\d{8,20}\s+horas$/.test(normalized);
   if (attribute.name === "Elevación libre") return normalized === "si" || normalized === "no";
   return false;

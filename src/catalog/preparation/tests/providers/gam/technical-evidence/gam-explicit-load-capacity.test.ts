@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -28,7 +29,7 @@ test("GAM: incorpora solo capacidades explícitas y compatibles con cada ficha o
     assert.equal(value, `${capacity} KG`, reference);
     assert.deepEqual(normalizeSpecsObject({ "Capacidad de carga (kg)": value }).normalized["Capacidad de carga (kg)"], [capacity]);
     for (const [key, source] of Object.entries(record.specs ?? {})) {
-      assert.deepEqual(prepared.product.spec[key], source, `${reference}: ${key}`);
+      assert.deepEqual(prepared.product.spec[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : source, `${reference}: ${key}`);
     }
     assert.deepEqual(record, original);
   }

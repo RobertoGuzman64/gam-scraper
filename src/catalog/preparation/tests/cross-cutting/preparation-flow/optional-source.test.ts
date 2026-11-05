@@ -1,3 +1,4 @@
+import { reconcileGamHorometer } from "../../../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
@@ -29,7 +30,7 @@ test("diez publicaciones GAM sin estado comercial se preservan sin inferir nueva
     assert.equal(prepared.product.condition, null, reference);
     assert.equal(prepared.product.categorySellID, null, reference);
     assert.deepEqual(prepared.product.spec, {
-      ...record.specs,
+      ...reconcileGamHorometer(record).specs,
       ...(["6358", "6367"].includes(reference) ? { "Capacidad de carga (kg)": "2000 KG", "Año de fabricación": "2019" } : {})
     }, reference);
     assert.equal(sourceCategoryQualityIssue(record), null, reference);
