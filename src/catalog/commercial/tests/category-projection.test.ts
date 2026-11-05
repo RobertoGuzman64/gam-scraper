@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { prepareImportBatch } from "../../preparation/batch-identity.js";
 import { isValidCommercialCategory, projectCommercialCategory } from "../category-projection.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+import { excludeGamRelatedProductImages } from "../../normalization/providers/gam/gallery.js";
 import { loadCommercialPublicationInputs } from "../../../pipeline/legacy-export/commercial-inputs.js";
 
 const catalog = await loadImportCatalog();
@@ -60,7 +61,8 @@ test("clasifica familias documentadas sin inventar motorización ni nuevas categ
     const expectedSpec = providerId === "gam" && ["2072", "2073"].includes(reference)
       ? { ...entry.published.spec, Motorización: "GLP" } : entry.published.spec;
     assert.deepEqual(entry.mapped.product.spec, expectedSpec);
-    assert.deepEqual(entry.mapped.product.images, entry.published.images);
+    assert.deepEqual(entry.mapped.product.images, providerId === "gam"
+      ? excludeGamRelatedProductImages(entry.published.images) : entry.published.images);
     assert.ok(catalog.categories.some((item) => item.id === categoryId));
   }
 });

@@ -20,15 +20,22 @@ const preparations = originals.map((preparation) => preparation.source.providerI
 });
 const approved = createEditorialTestApproval(preparations);
 
-test("las rutas Hyster actualizadas retienen las tres identidades y no requieren hashes históricos", () => {
+test("las rutas Hyster actualizadas conservan 6002 y 6003 reconciliadas y bloquean 6004", () => {
   const result = approved.select();
   const exclusions = result.exclusions.filter((item) => changedIdentityRoutes.has(item.reference));
-  assert.equal(exclusions.length, 3);
+  assert.equal(exclusions.length, 1);
+  assert.equal(exclusions[0]?.reference, "6004");
   assert.ok(exclusions.every(({ sourceUrl, evidenceUrls, issues }) =>
     sourceUrl.includes("/es/carretillas-elevadoras-electricas-hyster/") &&
     evidenceUrls.includes(sourceUrl) &&
     issues.some((issue) => issue.startsWith("Marca contradictoria") ||
       issue.includes("marca HYSTER en anuncio y YALE en ficha técnica"))));
+  for (const reference of ["6002", "6003"]) {
+    const included = result.products.find((item) => item.providerId === "gam" && item.reference === reference);
+    assert.ok(included, reference);
+    assert.ok(included.sourceUrl.includes("/es/carretillas-elevadoras-electricas-hyster/"));
+    assert.equal(included.spec.Marca, "HYSTER");
+  }
   assert.equal(result.totals.publishable, result.totals.original - approved.approval.exclusions.length);
   assert.equal(result.products.filter((item) => item.providerId === "gomariz").length,
     originals.find((item) => item.source.providerId === "gomariz")?.products.length);
@@ -42,14 +49,14 @@ test("el selector histórico rechaza una cohorte distinta aunque las rutas sean 
 test("una ruta diferente caduca la decisión que aprobó la fuente exacta", () => {
   const changed = preparations.map((preparation) => preparation.source.providerId !== "gam"
     ? preparation
-    : { ...preparation, products: preparation.products.map((entry) => entry.product.reference === "6002"
+    : { ...preparation, products: preparation.products.map((entry) => entry.product.reference === "6004"
       ? { ...entry, product: { ...entry.product, sourceUrl: entry.product.sourceUrl.replace(
         "/carretillas-elevadoras-electricas-hyster/", "/carretillas-elevadoras-diesel-hyster/") } }
       : entry) });
   assert.throws(() => approved.select(changed), /decisión ausente|aprobación ausente/);
   const alternate = preparations.map((preparation) => preparation.source.providerId !== "gam"
     ? preparation
-    : { ...preparation, products: preparation.products.map((entry) => entry.product.reference === "6003"
+    : { ...preparation, products: preparation.products.map((entry) => entry.product.reference === "6004"
       ? { ...entry, product: { ...entry.product, sourceUrl: entry.product.sourceUrl.replace(
         "/carretillas-elevadoras-electricas-hyster/", "/hyster/") } }
       : entry) });

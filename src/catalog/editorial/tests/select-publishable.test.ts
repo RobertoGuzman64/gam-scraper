@@ -28,11 +28,16 @@ test("la acreditación editorial selecciona fichas listas sin alterar muestras n
     publishable: original - approved.approval.exclusions.length, excluded: approved.approval.exclusions.length
   });
   const historicallyExcluded = [
-    "gam:6682", "gam:6703", "gam:6764", "gam:6002", "gam:6003", "gam:6004",
+    "gam:6682", "gam:6703", "gam:6764", "gam:6004",
     "mercaeleva:M827-8304"
   ];
   assert.ok(historicallyExcluded.every((reference) => result.exclusions.some((entry) =>
     `${entry.providerId}:${entry.reference}` === reference)));
+  for (const reference of ["6002", "6003"]) {
+    const reconciled = result.products.find((item) => item.providerId === "gam" && item.reference === reference);
+    assert.ok(reconciled, reference);
+    assert.equal(reconciled.spec.Marca, "HYSTER");
+  }
   assert.equal(new Set(result.products.map(({ providerId, reference }) => `${providerId}:${reference}`)).size, result.products.length);
   assert.ok(result.products.every(({ providerId, reference }) =>
     !result.exclusions.some((entry) => entry.providerId === providerId && entry.reference === reference)));

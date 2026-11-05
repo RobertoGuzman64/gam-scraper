@@ -20,23 +20,29 @@ const replaceGam = (reference: string, transform: (entry: ReturnType<typeof get>
     products: preparation.products.map((entry) => entry.product.reference === reference ? transform(entry) : entry)
   });
 
-test("GAM 6002, 6003 y 6004 tienen inconsistencias acreditadas sin forzar HYSTER en sus specs", async () => {
-  const source = preparations.find((item) => item.source.providerId === "gam");
-  assert.ok(source);
-  for (const reference of ["6002", "6003", "6004"]) {
+test("GAM 6002 y 6003 están reconciliadas y 6004 conserva su conflicto de identidad", async () => {
+  for (const reference of ["6002", "6003"]) {
     const entry = get(reference);
-    assert.equal(entry.status, reference === "6004" ? "ready" : "review", reference);
-    if (reference !== "6004") assert.ok(entry.issues.some((issue) => issue.startsWith("Marca contradictoria")), reference);
-    assert.equal(entry.product.spec["Marca"], "YALE");
-    const issues = gamNewForkliftIdentityIssues(entry.product);
-    assert.ok(issues.some((issue) => issue.includes("marca HYSTER en anuncio y YALE en ficha técnica")), reference);
-    assert.equal(issues.some((issue) => issue.includes("modelo anunciado distinto")), reference === "6004", reference);
+    assert.equal(entry.status, "ready", reference);
+    assert.deepEqual(entry.issues, [], reference);
+    assert.equal(entry.product.spec.Marca, "HYSTER", reference);
+    assert.deepEqual(gamNewForkliftIdentityIssues(entry.product), [], reference);
   }
+  const unresolved = get("6004");
+  assert.equal(unresolved.status, "ready");
+  assert.equal(unresolved.product.spec.Marca, "YALE");
+  assert.equal(unresolved.product.spec.Modelo, "J7.0XTG6");
+  const issues = gamNewForkliftIdentityIssues(unresolved.product);
+  assert.ok(issues.some((issue) => issue.includes("marca HYSTER en anuncio y YALE en ficha técnica")));
+  assert.ok(issues.some((issue) => issue.includes("modelo anunciado distinto")));
   const original = await readCanonicalCatalog(sources.gam);
-  assert.equal(original.products.find((item) => item.reference === "6004")?.specs?.["Modelo"], "J7.0XTG6");
+  for (const reference of ["6002", "6003", "6004"]) {
+    assert.equal(original.products.find((item) => item.reference === reference)?.specs?.Marca, "YALE", reference);
+  }
+  assert.equal(original.products.find((item) => item.reference === "6004")?.specs?.Modelo, "J7.0XTG6");
 });
 
-test("mantiene GAM 6236 reconciliada y excluye 6002, 6003 y 6004 por identidad Hyster/Yale", () => {
+test("mantiene GAM 6236 reconciliada, incluye 6002 y 6003 y excluye 6004", () => {
   const result = approved.select(preparations);
   const total = preparations.reduce((sum, item) => sum + item.source.productCount, 0);
   assert.deepEqual(result.totals, { original: total,
@@ -45,29 +51,39 @@ test("mantiene GAM 6236 reconciliada y excluye 6002, 6003 y 6004 por identidad H
     publishable: total - approved.approval.exclusions.length,
     excluded: approved.approval.exclusions.length });
   const retained = result.exclusions.filter(({ reference }) => ["6002", "6003", "6004"].includes(reference));
-  assert.deepEqual(retained.map(({ reference }) => reference), ["6002", "6003", "6004"]);
+  assert.deepEqual(retained.map(({ reference }) => reference), ["6004"]);
   assert.ok(retained.every(({ issues, evidenceUrls, reason }) => issues.length > 0 && evidenceUrls.length === 1 && reason));
+  for (const reference of ["6002", "6003"]) {
+    const included = result.products.find((item) => item.providerId === "gam" && item.reference === reference);
+    assert.ok(included, reference);
+    assert.equal(included.spec.Marca, "HYSTER");
+  }
   const snorkel = result.products.find((item) => item.providerId === "gam" && item.reference === "6236");
   assert.ok(snorkel);
   assert.equal(snorkel.title, "Plataforma tijera eléctrica 12M SNORKEL S4732E");
   assert.equal(snorkel.spec["Nº de serie"], "S4732E-01-180200369");
-  assert.equal(result.products.some((item) => ["6002", "6003", "6004"].includes(item.reference ?? "")), false);
+  assert.equal(result.products.some((item) => item.providerId === "gam" && item.reference === "6004"), false);
 });
 
-test("una marca técnica corregida, un cambio de ruta o una review nueva caducan la decisión", () => {
-  const corrected = replaceGam("6002", (entry) => ({
-    ...entry, issues: ["Identidad corregida: requiere nueva acreditación"],
-    product: { ...entry.product, spec: { ...entry.product.spec, Marca: "HYSTER" } }
+test("una identidad alterada, una ruta distinta o una review nueva caducan la decisión", () => {
+  const altered = replaceGam("6004", (entry) => ({
+    ...entry, product: { ...entry.product, spec: { ...entry.product.spec, Marca: "HYSTER" } }
   }));
-  assert.throws(() => approved.select(corrected), /decisión ausente|aprobación ausente/);
-  const changedUrl = replaceGam("6003", (entry) => ({
+  assert.throws(() => approved.select(altered), /decisión ausente|aprobación ausente/);
+  const changedUrl = replaceGam("6004", (entry) => ({
     ...entry, product: { ...entry.product, sourceUrl: `${entry.product.sourceUrl}?otro=1` }
   }));
   assert.throws(() => approved.select(changedUrl), /decisión ausente|aprobación ausente/);
-  const changedStatus = replaceGam("6004", (entry) => ({
+  const changedStatus = replaceGam("6002", (entry) => ({
     ...entry, status: "review", issues: ["Identidad todavía contradictoria"]
   }));
   assert.throws(() => approved.select(changedStatus), /decisión ausente|aprobación ausente/);
+  for (const reference of ["6002", "6003"]) {
+    const contradicted = replaceGam(reference, (entry) => ({
+      ...entry, product: { ...entry.product, spec: { ...entry.product.spec, Marca: "YALE" } }
+    }));
+    assert.throws(() => approved.select(contradicted), /aprobación ausente/, reference);
+  }
 });
 
 test("una contradicción nueva y sin exclusión acreditada bloquea la selección", () => {

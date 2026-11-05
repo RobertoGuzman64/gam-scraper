@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createAccreditationDraft, selectAccreditedPublishable, sha256 } from "../campaign-accreditation.js";
 import type { AccreditedSource } from "../campaign-accreditation.js";
+import { gamNewForkliftIdentityIssues } from "../providers/gam/new-forklift-identity.js";
 import { EDITORIAL_PROVIDERS, prepareEditorialCohort } from "./editorial-cohort-fixtures.js";
 
 const preparations = await prepareEditorialCohort("-accreditation");
@@ -34,8 +35,9 @@ test("prepara borrador de selección sin aprobaciones automáticas", () => {
   assert.equal(draft.approvalReason, null);
   assert.equal(draft.exclusions.length, preparations.reduce((sum, item) => sum + item.totals.review, 0) +
     preparations.flatMap((item) => item.products).filter((item) => item.status === "ready" &&
-      ["6002", "6003", "6004"].includes(item.product.reference ?? "")).length);
-  assert.ok(draft.exclusions.length > 7);
+      gamNewForkliftIdentityIssues(item.product).length > 0).length);
+  assert.ok(draft.exclusions.some((item) => item.providerId === "gam" && item.reference === "6004"));
+  assert.ok(draft.exclusions.every((item) => item.providerId !== "gam" || !["6002", "6003"].includes(item.reference)));
   assert.ok(draft.exclusions.every((item) => item.decision === null && item.reason === null));
   assert.throws(() => selectAccreditedPublishable(preparations, sources, runId, draft, sha256(JSON.stringify(draft))), /aprobación ausente/);
 });
@@ -49,11 +51,16 @@ test("selecciona solo ready sin contradicciones acreditadas y conserva imágenes
     publishable: preparations.reduce((sum, item) => sum + item.source.productCount, 0) - draft.exclusions.length
   });
   const historicalExclusions = [
-    "gam:6682", "gam:6703", "gam:6764", "gam:6002", "gam:6003", "gam:6004",
+    "gam:6682", "gam:6703", "gam:6764", "gam:6004",
     "mercaeleva:M827-8304"
   ];
   assert.ok(historicalExclusions.every((reference) => result.exclusions.some((item) =>
     `${item.providerId}:${item.reference}` === reference)));
+  for (const reference of ["6002", "6003"]) {
+    const reconciled = result.products.find((item) => item.providerId === "gam" && item.reference === reference);
+    assert.ok(reconciled, reference);
+    assert.equal(reconciled.spec.Marca, "HYSTER");
+  }
   const original = preparations[0]?.products.find((entry) => entry.product.reference === "4988")?.product;
   const selected = result.products.find((item) => item.providerId === "gam" && item.reference === "4988");
   assert.ok(original && selected);
