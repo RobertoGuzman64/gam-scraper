@@ -24,6 +24,8 @@ import { reconstructMercaelevaSource } from "../../../catalog/diagnostics/descri
 import { analyzeDescriptionPriorities } from "../../../catalog/diagnostics/description-priorities.js";
 import { analyzeTechnicalDensity } from "../../../catalog/diagnostics/technical-density.js";
 import { formatTechnicalDensityReport } from "./technical-density-report.js";
+import { analyzeTitleQuality } from "../../../catalog/diagnostics/title-quality.js";
+import { formatTitleQualityReport } from "./title-quality-report.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 
@@ -73,6 +75,19 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
       inputs.push({ published, source, prepared: prepareSourceProduct(source), origin });
     }
   }
+  const { fingerprints } = await loadPreparationInputs();
+  const provenance = { source: "comparacion_publicaciones_y_preparacion", publications: sourceProvenance,
+    rulesSha256: fingerprints.rulesSha256, preparation: "Recalculada; Mercaeleva reconstruida únicamente desde campos de su publicación, no desde un original canónico" };
+  if (options.titles) {
+    const titles = analyzeTitleQuality(inputs);
+    if (options.json) {
+      console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, titles }, null, 2));
+    } else {
+      printReportLine(`HUECOS | auditoría de títulos técnicos | publicaciones ${titles.totals.products} | comparación frente a preparación, solo lectura`);
+      for (const line of formatTitleQualityReport(titles, options.limit)) printReportLine(line);
+    }
+    return;
+  }
   const coverage = analyzeDescriptionCoverage(inputs);
   const products = publications.flatMap((item) => item.products);
   const editorial = analyzePublishedEditorialQuality(products);
@@ -80,9 +95,6 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
   const technicalDensity = analyzeTechnicalDensity(products);
   const priorities = analyzeDescriptionPriorities(inputs, editorial, editorialPrepared);
   const technicalSpecs = options.specs ? analyzeSpecificationCoverage(inputs) : null;
-  const { fingerprints } = await loadPreparationInputs();
-  const provenance = { source: "comparacion_publicaciones_y_preparacion", publications: sourceProvenance,
-    rulesSha256: fingerprints.rulesSha256, preparation: "Recalculada; Mercaeleva reconstruida únicamente desde campos de su publicación, no desde un original canónico" };
   if (options.json) {
     console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, coverage, editorial, editorialPrepared, priorities, technicalDensity, ...(technicalSpecs ? { technicalSpecs } : {}) }, null, 2));
   } else {
@@ -101,7 +113,7 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
 
 export const runCatalogContentGaps = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    printReportLine("Uso: npm run huecos -- [--comparar | --finales | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json] [--specs]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, comparación de publicaciones acreditadas frente a preparación actual. --comparar fuerza esa comparación. --finales analiza solo las publicaciones acreditadas. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. --comparar --specs compara las claves técnicas del origen canónico, preparación y publicación; las ausencias familiares no son atributos obligatorios.");
+    printReportLine("Uso: npm run huecos -- [--comparar | --finales | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json] [--specs] [--titulos]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, comparación de publicaciones acreditadas frente a preparación actual. --comparar fuerza esa comparación. --finales analiza solo las publicaciones acreditadas. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. --comparar --specs compara las claves técnicas del origen canónico, preparación y publicación; las ausencias familiares no son atributos obligatorios. --comparar --titulos analiza señales de títulos técnicos en publicaciones y preparación actual, sin modificar fichas.");
     return;
   }
   const options = readContentGapOptions(args);

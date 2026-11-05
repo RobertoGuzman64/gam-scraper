@@ -48,7 +48,8 @@ test("clasifica familias documentadas sin inventar motorización ni nuevas categ
     ["gam", "6749", 91], ["gam", "12", 10], ["gam", "2072", 10],
     ["gam", "2073", 10], ["gam", "2163", 10], ["gam", "2164", 10],
     ["gam", "2165", 10], ["gam", "2169", 10], ["gam", "5", 10],
-    ["gam", "6", 10], ["gam", "2572", 85], ["gam", "2573", 85],
+    ["gam", "6", 10], ["gam", "8", 10], ["gam", "2134", 85],
+    ["gam", "2135", 85], ["gam", "2572", 85], ["gam", "2573", 85],
     ["gam", "2737", 85], ["gam", "2738", 85], ["gam", "297", 85],
     ["gam", "298", 85], ["gam", "299", 85], ["gomariz", "PV556", 80]
   ];
@@ -85,11 +86,56 @@ test("no traslada reglas comerciales a familias, modelos, rutas ni condiciones d
 
 test("mantiene sin asignación productos con contradicciones o sin equivalencia acreditada", () => {
   for (const [providerId, reference] of [
-    ["gam", "8"], ["gam", "2134"], ["gam", "2135"],
-    ["mercaeleva", "M958-0132"]
+    ["gam", "6653"], ["gam", "6358"], ["gam", "6367"],
+    ["gam", "6814"], ["gam", "6815"],
+    ["mercaeleva", "M958-0132"], ["mercaeleva", "M294-4678"]
   ] as readonly (readonly [string, string])[]) {
     const entry = product(providerId, reference);
     assert.equal(entry.mapped.product.categorySellID, null, `${providerId}:${reference}`);
+  }
+});
+
+test("recupera identidad acreditada de Hyster sin deducir combustible de textos contradictorios", () => {
+  const truck = product("gam", "8");
+  assert.equal(truck.source.title, "Plataformas elevadoras de segunda mano");
+  assert.equal(truck.published.title, "Carretilla elevadora HYSTER H3.5FT");
+  assert.equal(truck.mapped.product.categorySellID, 10);
+  assert.equal(isValidCommercialCategory(truck.source, 10, "Nuevo", catalog), true);
+  const noTruckCategory = { ...truck.mapped, product: {
+    ...truck.mapped.product, categorySellID: null, category: null, attributes: []
+  } };
+  for (const source of [
+    { ...truck.source, brand: "OTRA" },
+    { ...truck.source, model: "H2.5FT" },
+    { ...truck.source, categoryKey: "elevacion-nueva" },
+    { ...truck.source, specs: { ...truck.source.specs, "Tipo motor": "Eléctrico" } },
+    { ...truck.source, specs: { ...truck.source.specs, "Tipo máquina": "Plataformas" } },
+    { ...truck.source, url: "https://online.gamrentals.com/es/otras/8" }
+  ]) {
+    assert.equal(projectCommercialCategory(source, noTruckCategory, catalog).product.categorySellID, null);
+  }
+  assert.deepEqual(truck.mapped.product.spec, truck.published.spec);
+});
+
+test("clasifica los tractores Hyster por familia sin dar por acreditada la propulsión", () => {
+  for (const reference of ["2134", "2135"]) {
+    const tractor = product("gam", reference);
+    assert.equal(tractor.mapped.product.categorySellID, 85);
+    assert.equal(isValidCommercialCategory(tractor.source, 85, "Segunda_Mano", catalog), false);
+    const noCategory = { ...tractor.mapped, product: {
+      ...tractor.mapped.product, categorySellID: null, category: null, attributes: []
+    } };
+    for (const source of [
+      { ...tractor.source, brand: "OTRA" },
+      { ...tractor.source, model: "LO10.0T" },
+      { ...tractor.source, categoryKey: "carretillas-nuevas" },
+      { ...tractor.source, specs: { ...tractor.source.specs, "Capacidad de la batería": "" } },
+      { ...tractor.source, url: "https://online.gamrentals.com/es/otras/2134" }
+    ]) {
+      assert.equal(projectCommercialCategory(source, noCategory, catalog).product.categorySellID, null);
+    }
+    assert.deepEqual(tractor.mapped.product.spec, tractor.published.spec);
+    assert.deepEqual(tractor.mapped.product.images, tractor.published.images);
   }
 });
 

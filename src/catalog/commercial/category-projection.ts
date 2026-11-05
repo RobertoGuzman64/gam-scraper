@@ -65,6 +65,21 @@ const commercialSlug = (source: ProductRecord, condition: ImportCandidate["condi
       source.model && fold(source.model) === fold(String(source.specs?.["Modelo"] ?? "")) &&
       title.includes(fold(source.model)) && /\bcompactacion\b/.test(general)) return "compactador";
     if (condition === "Nuevo" && source.categoryKey === "carretillas-nuevas" &&
+      route === "carretillas-elevadoras-diesel-hyster" && verified(source, /^h3\.5ft$/, "hyster") &&
+      fold(String(source.specs?.["Tipo máquina"] ?? "")) === "carretillas elevadoras diesel" &&
+      fold(String(source.specs?.["Tipo motor"] ?? "")) === "diesel o glp" &&
+      fold(String(source.specs?.["Capacidad de carga (kg)"] ?? "")) === "3500 kg") {
+      return "carretilla-elevadora";
+    }
+    if (condition === "Nuevo" && source.categoryKey === "marcas-nuevas" &&
+      route === "tractores-arrastre-hyster" && verified(source, /^lo[57]\.0t$/, "hyster") &&
+      /^tractor de arrastre\b/.test(title) && source.model && title.includes(fold(source.model)) &&
+      fold(String(source.specs?.["Capacidad de carga (kg)"] ?? "")) ===
+        (fold(source.model) === "lo5.0t" ? "5000 kg" : "7000 kg") &&
+      /^24v\s*\//.test(fold(String(source.specs?.["Capacidad de la batería"] ?? "")))) {
+      return "manipulacion-elevacion-cargas";
+    }
+    if (condition === "Nuevo" && source.categoryKey === "carretillas-nuevas" &&
       route === "carretillas-elevadoras-diesel-hyster" && /\bcarretilla\b/.test(title) &&
       /\bhyster\b/.test(title) && source.model &&
       fold(String(source.specs?.["Modelo"] ?? "")) === fold(source.model) &&
