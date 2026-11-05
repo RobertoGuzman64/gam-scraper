@@ -81,7 +81,7 @@ test("GAM: una modificación de identidad, técnica o de fuente invalida la evid
 });
 
 test("GAM: no se aplican textos acreditados a otros proveedores o fichas excluidas", () => {
-  for (const reference of ["6002", "6003", "6004", "4802", "6169", "6171", "6421", "2313"]) {
+  for (const reference of ["6004", "4802", "6169", "6171", "6421", "2313"]) {
     assert.equal(resolveGamVerifiedSourceCondensedGeneral(findOriginal(reference)), null, reference);
   }
   assert.equal(resolveGamVerifiedSourceCondensedGeneral({ ...findOriginal("5900"), providerId: "gomariz" }), null);
@@ -312,6 +312,46 @@ test("GAM: fase 125 recupera cinco detalles técnicos editoriales individuales",
       { ...record, specs: { ...record.specs, Marca: "OTRA" } }
     ] satisfies readonly ProductRecord[]) {
       assert.equal(resolveGamVerifiedSourceCondensedGeneral(altered), null, `${reference}: variante`);
+    }
+  }
+});
+
+
+test("GAM: descripciones extensas 6002 y 6003 se sintetizan sin perder capacidades ni características", () => {
+  for (const [reference, model, capacity, length, weight, turnRadius] of [
+    ["6002", "J5.0XTLG6", "5.000 kg", "4.715", "8.510", "3.250"],
+    ["6003", "J6.0XTLG6", "6.000 kg", "4.785", "9.185", "3.300"]
+  ] as const) {
+    const record = findOriginal(reference);
+    const original = structuredClone(record);
+    const general = resolveGamVerifiedSourceCondensedGeneral(record);
+    assert.ok(general, reference);
+    assert.ok(record.longDescription);
+    assert.ok(record.longDescription.split(/\s+/u).length > 2_000, reference);
+    assert.ok(general.split(/\s+/u).length < 300, reference);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.status, "ready", reference);
+    assert.ok(prepared.product.description_general);
+    assert.ok(prepared.product.description_general.split(/\s+/u).length < 500, reference);
+    for (const value of [model, capacity, "600 mm", "3.000 mm", length, weight, turnRadius,
+      "80,8 kWh", "230 mm", "200 mm", "IPX4", "imanes permanentes", "por agua",
+      "recargas parciales", "calentamiento automático", "ruedas delanteras dobles", "sistema de presencia"]) {
+      assert.ok(prepared.product.description_general.includes(value), `${reference}: ${value}`);
+    }
+    assert.equal(prepared.product.spec.Marca, "HYSTER", reference);
+    assert.deepEqual(record, original, reference);
+    for (const altered of [
+      { ...record, providerId: "gomariz" },
+      { ...record, reference: `${reference}-otro` },
+      { ...record, url: `${record.url}?version=2` },
+      { ...record, title: `${record.title} otra variante` },
+      { ...record, model: "OTRO" },
+      { ...record, longDescription: `${record.longDescription} edición` },
+      { ...record, specs: { ...record.specs, "Capacidad de carga (kg)": "OTRA" } },
+      { ...record, brand: "HYSTER" },
+      { ...record, condition: "Segunda mano" }
+    ] satisfies readonly ProductRecord[]) {
+      assert.equal(resolveGamVerifiedSourceCondensedGeneral(altered), null, reference);
     }
   }
 });
