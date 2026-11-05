@@ -172,6 +172,36 @@ test("Mercaeleva normaliza plataformas nuevas, alturas decimales y variantes de 
   }
 });
 
+test("Mercaeleva normaliza carretillas eléctricas solo con capacidad y origen concordantes", () => {
+  const cases: readonly [string, string][] = [
+    ["M940-4770", "Carretilla elevadora eléctrica Linde E20PL de 2000 kg"],
+    ["M208-7097", "Carretilla elevadora eléctrica Jungheinrich EFG 318 de 1800 kg"],
+    ["M740-4184", "Carretilla elevadora eléctrica Caterpillar EP25K-PAC de 2500 kg"],
+    ["M827-8304", "Carretilla elevadora eléctrica Linde E48P de 4800 kg"],
+    ["M818-7811", "Carretilla elevadora eléctrica Linde E25/600-336 de 2500 kg"],
+    ["M052-5188", "Carretilla elevadora eléctrica Toyota 7FBEF15 de 1500 kg"]
+  ];
+  for (const [reference, expected] of cases) {
+    const original = source("mercaeleva", reference);
+    assertTitle("mercaeleva", reference, expected);
+    const variants: readonly ProductRecord[] = [
+      { ...original, url: "https://example.org/otra-maquina" },
+      { ...original, brand: "MARCA AJENA" },
+      { ...original, model: "MODELO AJENO" },
+      { ...original, condition: "Nuevo" },
+      { ...original, specs: { ...original.specs, Modelo: "MODELO AJENO" } },
+      { ...original, specs: { ...original.specs, Estado: "Nuevo" } },
+      { ...original, specs: { ...original.specs, "Tipo de Batería": "Sin acreditar" } },
+      { ...original, specs: { ...original.specs, "Capacidad máxima de elevación": "9000 kg" } },
+      { ...original, specs: { ...original.specs, "Título adicional": "CARRETILLA ELEVADORA DIESEL 2500 KG" } },
+      { ...original, longDescription: "Sin evidencia de modelo ni capacidad" }
+    ];
+    for (const candidate of variants) {
+      assert.equal(prepareSourceProduct(candidate).product.title, original.title, `${reference}: evidencia alterada`);
+    }
+  }
+});
+
 test("metadatos contradictorios y evidencias ambiguas no autorizan cambiar marcas o modelos", () => {
   for (const reference of ["2020", "2118", "6103", "6852", "6689", "6863"]) {
     const record = source("gam", reference);

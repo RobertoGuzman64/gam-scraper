@@ -40,6 +40,23 @@ const resolveDocumentedPlatformTitle = (record: ProductRecord, title: string, br
   return `Plataforma ${family} ${drive} ${brand} ${model} de ${match[4].replace(".", ",")} m`;
 };
 
+const resolveDocumentedElectricForkliftTitle = (record: ProductRecord, title: string, brand: string, model: string): string | null => {
+  if (record.condition !== "Segunda mano" || fold(String(record.specs?.Estado ?? "")) !== "usado" ||
+    fold(String(record.specs?.["Tipo de Batería"] ?? "")) !== "plomo-acido") return null;
+  const match = /^(.+?)\s+CARRETILLA\s+ELEVADORA\s+ELECTRICA\s+(\d{3,5})\s+KG$/iu.exec(title);
+  if (!match?.[1] || !match[2] || fold(match[1]) !== fold(`${brand} ${model}`) ||
+    fold(String(record.specs?.["Título adicional"] ?? "")) !== fold(`CARRETILLA ELEVADORA ELECTRICA ${match[2]} KG`)) return null;
+  const capacity = numberToken(match[2]);
+  const specCapacity = /^(\d[\d., ]*)\s*kg$/iu.exec(String(record.specs?.["Capacidad máxima de elevación"] ?? ""));
+  const description = fold(record.longDescription ?? "");
+  const describedCapacity = /\bcarretilla\s+elevadora\s+electrica\s+(\d[\d., ]*)\s+kg\b/u.exec(description);
+  const compact = (value: string): string => fold(value).replace(/[^\p{L}\p{N}]+/gu, "");
+  if (capacity === null || !specCapacity?.[1] || !describedCapacity?.[1] ||
+    numberToken(specCapacity[1]) !== capacity || numberToken(describedCapacity[1]) !== capacity ||
+    !compact(description).includes(compact(`${brand} ${model}`))) return null;
+  return `Carretilla elevadora eléctrica ${brand} ${model} de ${capacity.toLocaleString("es-ES")} kg`;
+};
+
 export const resolveMercaelevaEditorialTitle = (record: ProductRecord): string | null => {
   if (!verifiedSource(record)) return null;
   const title = record.title?.trim();
@@ -48,6 +65,8 @@ export const resolveMercaelevaEditorialTitle = (record: ProductRecord): string |
   if (!title || !brand || !model) return null;
   const platformTitle = resolveDocumentedPlatformTitle(record, title, brand, model);
   if (platformTitle) return platformTitle;
+  const forkliftTitle = resolveDocumentedElectricForkliftTitle(record, title, brand, model);
+  if (forkliftTitle) return forkliftTitle;
   if (record.condition === "Segunda mano" &&
     fold(title) === fold(`${brand} ${model} TRANSPALET ELECTRICO`) &&
     fold(String(record.specs?.["Título adicional"] ?? "")) === "transpalet electrico" &&
