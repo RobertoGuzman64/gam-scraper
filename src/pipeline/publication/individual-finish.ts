@@ -19,7 +19,7 @@ import { deliverIndividualArchive } from "./individual-archive.js";
 import { deliverIndividualProvider } from "./individual-delivery.js";
 import { selectActivePublication, differenceBetween } from "./active-publication.js";
 import type { PublicationDifference } from "./active-publication.js";
-import { evaluatePublicationDifference } from "./publication-acceptance.js";
+import { evaluateIndividualPublicationDifference } from "./publication-acceptance.js";
 
 export type IndividualFinishPreview = {
   readonly providerId: IndividualCatalogProvider;
@@ -99,7 +99,7 @@ const inspected = async (
     }
     const before = activeFile ? (await readAccreditedPublication(activeFile)).products : [];
     const difference = differenceBetween(currentSha256, approvalSha256, before, selection.products);
-    const acceptance = evaluatePublicationDifference(difference);
+    const acceptance = evaluateIndividualPublicationDifference(context.providerId, difference, before, selection.products, JSON.parse(raw));
     for (const blocker of acceptance.blockers) blockers.push(`${context.providerId}: ${blocker}`);
     checked.push({ providerId: context.providerId, options: context.options, approvalSha256,
       activeSha256: currentSha256, difference, publishable: selection.totals.publishable,

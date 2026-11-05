@@ -1,4 +1,5 @@
 import { accreditedPublicationDirectory, accreditedPublicationSha } from "../../../testing/builders/accredited-publication-fixture.js";
+import { isCandidate } from "../../../catalog/preparation/preparation-document.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { cp, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
@@ -13,6 +14,8 @@ const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const providerId = "gomariz";
 const existingSha = accreditedPublicationSha(root, "gomariz");
 const hash = (text: string): string => createHash("sha256").update(text).digest("hex");
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
 
 const setup = async (): Promise<{ root: string; publications: string; original: string; other: string }> => {
   const temp = await mkdtemp(join(tmpdir(), "catalogo-activo-"));
@@ -158,4 +161,71 @@ test("valores técnicos vaciados o procedencias cambiadas bloquean la selección
     assert.equal(await resolveAccreditedPublication(ctx.root, providerId),
       join(ctx.publications, existingSha, `${providerId}-publishable.json`));
   } finally { await rm(ctx.root, { recursive: true, force: true }); }
+});
+
+
+test("GAM activa cinco exclusiones editoriales nuevas y treinta horómetros no cuantitativos sin admitir pérdidas ajenas", async () => {
+  const temp = await mkdtemp(join(tmpdir(), "finish-gam-compatibilidad-"));
+  try {
+    const provider = "gam";
+    const historical = await accreditedPublicationDirectory(root, provider);
+    const historicalSha = accreditedPublicationSha(root, provider);
+    const publications = join(temp, "catalogs", "providers", provider, "publications");
+    await mkdir(publications, { recursive: true });
+    const oldDir = join(publications, historicalSha);
+    await cp(historical, oldDir, { recursive: true });
+    const publishedFile = `${provider}-publishable.json`;
+    const rawOriginal = await readFile(join(oldDir, publishedFile), "utf8");
+    const parsed: unknown = JSON.parse(rawOriginal);
+    assert.ok(Array.isArray(parsed) && parsed.every(isCandidate));
+    const original = parsed;
+    const references = new Set(["6642", "6669", "6666", "5258", "2328"]);
+    const hourReferences = new Set([
+      "6228", "6206", "6130", "6116", "6236", "6626", "6683", "5213", "5714", "6951",
+      "6510", "6436", "6634", "6123", "5228", "6652", "6834", "6559", "6560", "6608",
+      "6606", "6775", "6367", "6814", "6815", "5710", "6623", "6688", "6689", "6690"
+    ]);
+    const revised = original.filter((product) => !references.has(product.reference ?? "")).map((product) => {
+      if (!hourReferences.has(product.reference ?? "")) return product;
+      const { ["Horómetro"]: reading, ...spec } = product.spec;
+      assert.ok(typeof reading === "string" && /^na(?:\s+[a-z]\d{8,20})?\s+horas$/iu.test(reading));
+      return { ...product, spec };
+    });
+    assert.equal(original.length - revised.length, 5);
+    const rawApproval = await readFile(join(oldDir, "accreditation.json"), "utf8");
+    const approval: unknown = JSON.parse(rawApproval);
+    assert.ok(isRecord(approval) && Array.isArray(approval.exclusions));
+    const newlyExcluded = original.filter((product) => references.has(product.reference ?? "")).map((product) => ({
+      providerId: provider, reference: product.reference, sourceUrl: product.sourceUrl, status: "review",
+      issues: ["Incidencia técnica pendiente de acreditación"], decision: "excluir",
+      reason: "Exclusión editorial aprobada por contradicción documentada",
+      evidenceUrls: [product.sourceUrl]
+    }));
+    assert.equal(newlyExcluded.length, 5);
+    const approvalText = JSON.stringify({ ...approval, exclusions: [...approval.exclusions, ...newlyExcluded] }, null, 2);
+    const newSha = hash(approvalText);
+    const destination = join(publications, newSha);
+    await cp(oldDir, destination, { recursive: true });
+    const publishedText = JSON.stringify(revised, null, 2);
+    const manifest: unknown = JSON.parse(await readFile(join(oldDir, "manifest.json"), "utf8"));
+    assert.ok(isRecord(manifest) && isRecord(manifest.files) && isRecord(manifest.totals));
+    await writeFile(join(destination, publishedFile), publishedText);
+    await writeFile(join(destination, "accreditation.json"), approvalText);
+    await writeFile(join(destination, "manifest.json"), JSON.stringify({
+      ...manifest, approvalSha256: newSha,
+      totals: { ...manifest.totals, publishable: revised.length, excluded: original.length - revised.length + 5 },
+      files: { ...manifest.files, [publishedFile]: hash(publishedText), "accreditation.json": newSha }
+    }, null, 2));
+    assert.equal((await selectActivePublication(temp, provider, historicalSha, true)).status, "activated");
+    const simulation = await selectActivePublication(temp, provider, newSha);
+    assert.equal(simulation.difference.removed.length, 5);
+    assert.equal(simulation.difference.removedSpecifications.length, 30);
+    assert.deepEqual(simulation.acceptance, { accepted: true, blockers: [] });
+    const activated = await selectActivePublication(temp, provider, newSha, true);
+    assert.equal(activated.status, "activated");
+    assert.equal(await resolveAccreditedPublication(temp, provider), join(destination, publishedFile));
+    assert.equal(await readFile(join(oldDir, publishedFile), "utf8"), rawOriginal);
+  } finally {
+    await rm(temp, { recursive: true, force: true });
+  }
 });

@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "runId": "individual-gam-ffb198147f19540cd24e0e649c84548a",
+  "approved": true,
+  "approvalReason": "Exclusiones editoriales expresamente aceptadas para esta publicación, conservando los originales",
+  "sources": [
+    {
+      "providerId": "gam",
+      "catalogSha256": "855865e4a99f709cd9b10b68e77d594841b8cbd8c64b4fc9eb851cb397162483",
+      "preparationSha256": "4ee027ae9ab6b5778ff4756fee7b91d57851707b96b715ce812b5a075080f391",
+      "productCount": 983
+    }
+  ],
+  "exclusions": [
+    {
+      "providerId": "gam",
+      "reference": "6642",
+      "sourceUrl": "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-diesel-segunda-mano/6642-2022-magni-ds1523rtp",
+      "status": "review",
+      "issues": [
+        "Dimensiones Cesta no acreditables: la cifra o la unidad publicada está deformada"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión editorial por incidencias documentadas: Dimensiones Cesta no acreditables: la cifra o la unidad publicada est├í deformada",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-diesel-segunda-mano/6642-2022-magni-ds1523rtp"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "6669",
+      "sourceUrl": "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/6669-2023-berg-horticultura-star-300",
+      "status": "review",
+      "issues": [
+        "Dimensiones Cesta no acreditables: la cifra o la unidad publicada está deformada"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión editorial por incidencias documentadas: Dimensiones Cesta no acreditables: la cifra o la unidad publicada est├í deformada",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/6669-2023-berg-horticultura-star-300"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "6682",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6682-2020-hyster-h35ft",
+      "status": "review",
+      "issues": [
+        "Número de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen",
+        "Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo número de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicación"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión editorial por incidencias documentadas: N├║mero de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen; Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo n├║mero de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicaci├│n",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6682-2020-hyster-h35ft"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "6703",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6703-2020-hyster-h35ft",
+      "status": "review",
+      "issues": [
+        "Número de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen",
+        "Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo número de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicación"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión editorial por incidencias documentadas: N├║mero de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen; Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo n├║mero de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicaci├│n",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6703-2020-hyster-h35ft"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "6666",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6666-2019-hyster-h45fts5",
+      "status": "review",
+      "issues": [
+        "Modelo contradictorio: título y especificación identifican variantes diferentes"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión editorial por incidencias documentadas: Modelo contradictorio: t├¡tulo y especificaci├│n identifican variantes diferentes",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6666-2019-hyster-h45fts5"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "5258",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/5258-2019-hyster-h45fts5",
+      "status": "review",
+      "issues": [
+        "Modelo contradictorio: título y especificación identifican variantes diferentes"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión editorial por incidencias documentadas: Modelo contradictorio: t├¡tulo y especificaci├│n identifican variantes diferentes",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/5258-2019-hyster-h45fts5"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "2328",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadora-diesel-yale/2328-carretilla-frontal-diesel-yale-gp80svx",
+      "status": "review",
+      "issues": [
+        "Modelo contradictorio: título y especificación identifican variantes diferentes"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión editorial por incidencias documentadas: Modelo contradictorio: t├¡tulo y especificaci├│n identifican variantes diferentes",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadora-diesel-yale/2328-carretilla-frontal-diesel-yale-gp80svx"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "6004",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6004-carretilla-elevadora-electrica-hyster-j70xtg6",
+      "status": "identity",
+      "issues": [
+        "Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha técnica",
+        "Identidad GAM contradictoria: modelo anunciado distinto de J7.0XTG6 en ficha técnica"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión editorial por incidencias documentadas: Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha t├®cnica; Identidad GAM contradictoria: modelo anunciado distinto de J7.0XTG6 en ficha t├®cnica",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6004-carretilla-elevadora-electrica-hyster-j70xtg6"
+      ]
+    }
+  ]
+}

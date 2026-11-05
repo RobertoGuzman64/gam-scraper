@@ -6,7 +6,7 @@ import type { ImportCandidate } from "../../catalog/legacy-export/contracts.js";
 import { readActiveCatalogIndex, withActiveCatalogLock, writeActiveCatalogIndex } from "../../infrastructure/filesystem/catalog/active-selection.js";
 import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { publicationApprovalSha, resolvePublicationDirectory } from "../../infrastructure/filesystem/catalog/publication-identity.js";
-import { evaluatePublicationDifference, PublicationAcceptanceError } from "./publication-acceptance.js";
+import { evaluateIndividualPublicationDifference, PublicationAcceptanceError } from "./publication-acceptance.js";
 import type { PublicationAcceptance } from "./publication-acceptance.js";
 
 import type { PublicationDifference } from "./publication-contracts.js";
@@ -110,13 +110,19 @@ const validateVersion = async (root: string, providerId: string, sha: string): P
   return { path, products: publication.products };
 };
 
-const describe = async (root: string, providerId: string, sha: string): Promise<PublicationDifference> => {
+const describe = async (root: string, providerId: string, sha: string): Promise<{
+  readonly difference: PublicationDifference;
+  readonly acceptance: PublicationAcceptance;
+}> => {
   const candidate = await validateVersion(root, providerId, sha);
   const current = await resolveAccreditedPublication(root, providerId, true);
   const previous = current ? basename(current) === "publishable.json" ? basename(dirname(dirname(current))) :
     await publicationApprovalSha(dirname(current)) : null;
   const old = current ? (await readAccreditedPublication(current)).products : [];
-  return differenceBetween(previous, sha, old, candidate.products);
+  const difference = differenceBetween(previous, sha, old, candidate.products);
+  const approval: unknown = JSON.parse(await readFile(join(dirname(candidate.path), "accreditation.json"), "utf8"));
+  const acceptance = evaluateIndividualPublicationDifference(providerId, difference, old, candidate.products, approval);
+  return { difference, acceptance };
 };
 
 const writeAtomicSelection = async (target: string, contents: string): Promise<void> => {
@@ -151,8 +157,7 @@ export const selectActivePublication = async (
   rootDirectory: string, providerId: string, approvalSha256: string, activate = false
 ): Promise<PublicationActivation> => {
   const root = resolve(rootDirectory);
-  const difference = await describe(root, providerId, approvalSha256);
-  const acceptance = evaluatePublicationDifference(difference);
+  const { difference, acceptance } = await describe(root, providerId, approvalSha256);
   if (!activate) return { status: "simulation", providerId, difference, acceptance };
   const folder = join(root, "catalogs", "providers", providerId, "publications");
   const lockPath = join(folder, ".active.lock");
@@ -165,7 +170,7 @@ export const selectActivePublication = async (
   try {
     return await withActiveCatalogLock(root, async () => {
       const latest = await describe(root, providerId, approvalSha256);
-      if (!isDeepStrictEqual(latest, difference)) {
+      if (!isDeepStrictEqual(latest.difference, difference) || !isDeepStrictEqual(latest.acceptance, acceptance)) {
         throw new Error("La publicación vigente cambió durante la selección; vuelve a simular");
       }
       const global = await readActiveCatalogIndex(root);
@@ -174,12 +179,12 @@ export const selectActivePublication = async (
       }
       const activePath = join(folder, "active.json");
       const current = await resolveAccreditedPublication(root, providerId, true);
-      const accepted = evaluatePublicationDifference(latest);
+      const accepted = latest.acceptance;
       if (!accepted.accepted) throw new PublicationAcceptanceError(accepted.blockers);
       const candidate = await validateVersion(root, providerId, approvalSha256);
       if (current === candidate.path && (global?.providers[providerId]?.approvalSha256 === approvalSha256 ||
         (!global && await readSelectionSnapshot(activePath) !== null))) {
-        return { status: "unchanged", providerId, difference: latest, acceptance: accepted };
+        return { status: "unchanged", providerId, difference: latest.difference, acceptance: accepted };
       }
       const indexPath = global ? join(root, "catalogs", "active.json") : activePath;
       const previous = await readSelectionSnapshot(indexPath);
@@ -196,7 +201,7 @@ export const selectActivePublication = async (
         }
         const selected = await resolveAccreditedPublication(root, providerId);
         if (selected !== candidate.path) throw new Error("La publicación vigente no corresponde al índice activado");
-        return { status: "activated", providerId, difference: latest, acceptance: accepted };
+        return { status: "activated", providerId, difference: latest.difference, acceptance: accepted };
       } catch (error) {
         try {
           const currentSelection = await readSelectionSnapshot(indexPath);
