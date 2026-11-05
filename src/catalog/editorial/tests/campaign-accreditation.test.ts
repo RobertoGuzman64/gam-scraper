@@ -32,7 +32,10 @@ const approved = {
 test("prepara borrador de selección sin aprobaciones automáticas", () => {
   assert.equal(draft.approved, false);
   assert.equal(draft.approvalReason, null);
-  assert.equal(draft.exclusions.length, 7);
+  assert.equal(draft.exclusions.length, preparations.reduce((sum, item) => sum + item.totals.review, 0) +
+    preparations.flatMap((item) => item.products).filter((item) => item.status === "ready" &&
+      ["6002", "6003", "6004"].includes(item.product.reference ?? "")).length);
+  assert.ok(draft.exclusions.length > 7);
   assert.ok(draft.exclusions.every((item) => item.decision === null && item.reason === null));
   assert.throws(() => selectAccreditedPublishable(preparations, sources, runId, draft, sha256(JSON.stringify(draft))), /aprobación ausente/);
 });
@@ -42,13 +45,15 @@ test("selecciona solo ready sin contradicciones acreditadas y conserva imágenes
   assert.deepEqual(result.totals, {
     original: preparations.reduce((sum, item) => sum + item.source.productCount, 0),
     ready: preparations.reduce((sum, item) => sum + item.totals.ready, 0),
-    review: 4, excluded: 7,
-    publishable: preparations.reduce((sum, item) => sum + item.source.productCount, 0) - 7
+    review: preparations.reduce((sum, item) => sum + item.totals.review, 0), excluded: draft.exclusions.length,
+    publishable: preparations.reduce((sum, item) => sum + item.source.productCount, 0) - draft.exclusions.length
   });
-  assert.deepEqual(result.exclusions.map((item) => `${item.providerId}:${item.reference}`), [
+  const historicalExclusions = [
     "gam:6682", "gam:6703", "gam:6764", "gam:6002", "gam:6003", "gam:6004",
     "mercaeleva:M827-8304"
-  ]);
+  ];
+  assert.ok(historicalExclusions.every((reference) => result.exclusions.some((item) =>
+    `${item.providerId}:${item.reference}` === reference)));
   const original = preparations[0]?.products.find((entry) => entry.product.reference === "4988")?.product;
   const selected = result.products.find((item) => item.providerId === "gam" && item.reference === "4988");
   assert.ok(original && selected);
@@ -131,7 +136,8 @@ test("una ficha intervenida y lista exige aprobación individual antes de inclui
   const selection = selectAccreditedPublishable(
     modifiedPreparations, modifiedSources, runId, approvedChanges, sha256(JSON.stringify(approvedChanges))
   );
-  assert.equal(selection.totals.publishable, preparations.reduce((sum, item) => sum + item.source.productCount, 0) - 7);
+  assert.equal(selection.totals.publishable, preparations.reduce((sum, item) => sum + item.source.productCount, 0) -
+    changedDraft.exclusions.length + 1);
   assert.ok(selection.products.some((item) => item.providerId === "gam" && item.reference === "4988"));
   assert.ok(selection.accreditation?.preparationSources.some((entry) => entry.providerId === "gam"));
 

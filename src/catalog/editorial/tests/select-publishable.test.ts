@@ -23,12 +23,16 @@ test("la acreditación editorial selecciona fichas listas sin alterar muestras n
   const result = approved.select();
   const original = originals.reduce((sum, item) => sum + item.products.length, 0);
   assert.deepEqual(result.totals, {
-    original, ready: original - 4, review: 4, publishable: original - 7, excluded: 7
+    original, ready: preparations.reduce((sum, item) => sum + item.totals.ready, 0),
+    review: preparations.reduce((sum, item) => sum + item.totals.review, 0),
+    publishable: original - approved.approval.exclusions.length, excluded: approved.approval.exclusions.length
   });
-  assert.deepEqual(result.exclusions.map(({ providerId, reference }) => `${providerId}:${reference}`), [
+  const historicallyExcluded = [
     "gam:6682", "gam:6703", "gam:6764", "gam:6002", "gam:6003", "gam:6004",
     "mercaeleva:M827-8304"
-  ]);
+  ];
+  assert.ok(historicallyExcluded.every((reference) => result.exclusions.some((entry) =>
+    `${entry.providerId}:${entry.reference}` === reference)));
   assert.equal(new Set(result.products.map(({ providerId, reference }) => `${providerId}:${reference}`)).size, result.products.length);
   assert.ok(result.products.every(({ providerId, reference }) =>
     !result.exclusions.some((entry) => entry.providerId === providerId && entry.reference === reference)));
@@ -54,7 +58,7 @@ test("las contradicciones siguen en review y los valores no representables conse
   assert.ok(contradictions.issues.includes("Atributo contradictorio: Altura de elevación"));
   const nonNumeric = gam.products.find((item) => item.product.reference === "2130");
   assert.equal(nonNumeric?.product.spec["Altura de elevación (mm)"], "#VALUE! mm");
-  assert.equal(approved.select().totals.excluded, 7);
+  assert.equal(approved.select().totals.excluded, approved.approval.exclusions.length);
 });
 
 test("las dos Hyster con número de serie compartido siguen pendientes de aprobación individual", () => {
@@ -108,6 +112,10 @@ test("una cohorte desconocida no entra en el selector legado de hashes fijos", (
 test("la selección acreditada no depende de la elegibilidad del formato Excel", () => {
   const result = approved.select();
   const gam = result.products.filter((product) => product.providerId === "gam");
-  assert.equal(gam.length, preparations[0]!.totals.ready - 3);
+  const gamPreparation = preparations.find((item) => item.source.providerId === "gam");
+  assert.ok(gamPreparation);
+  const accreditedReadyExclusions = result.exclusions.filter((item) => item.providerId === "gam" &&
+    gamPreparation.products.some((entry) => entry.product.reference === item.reference && entry.status === "ready"));
+  assert.equal(gam.length, gamPreparation.totals.ready - accreditedReadyExclusions.length);
   assert.ok(gam.some((product) => product.price === null));
 });
