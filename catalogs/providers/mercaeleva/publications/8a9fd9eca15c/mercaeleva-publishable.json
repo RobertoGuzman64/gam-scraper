@@ -40,7 +40,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "15 m"
+      "Altura de trabajo": "15 m",
+      "Alcance horizontal": "9,2 m",
+      "Anchura de plataforma": "0,7 m"
     },
     "attributes": []
   },
@@ -80,7 +82,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "14 m"
+      "Altura de trabajo": "14 m",
+      "Altura de plataforma": "12 m",
+      "Anchura total": "1,18 m"
     },
     "attributes": []
   },
@@ -121,7 +125,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,8 m",
+      "Alcance horizontal": "7,81 m"
     },
     "attributes": []
   },
@@ -204,7 +210,11 @@
       "Artículo No.": "MER0825",
       "Estado": "Usado",
       "Condición general": "Bueno",
-      "Tipo de motor": "Eléctrico"
+      "Tipo de motor": "Eléctrico",
+      "Propulsión": "Eléctrica",
+      "Altura de elevación": "205 mm",
+      "Altura de plataforma recogida": "150 mm",
+      "Capacidad nominal": "2000 kg"
     },
     "attributes": []
   },
@@ -241,14 +251,15 @@
     "spec": {
       "Marca": "UniCarriers",
       "Modelo": "E2D2A30",
-      "Título adicional": "CARRETILLA ELEVADORA DIESEL 3000 KG",
+      "Título adicional": "CARRETILLA ELEVADORA DIESEL 2500 KG",
       "Artículo No.": "MER0987",
       "Horas laborales": "8142 h",
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Capacidad máxima de elevación": "2500 kg",
       "Tipo de mástil": "Triple",
-      "Tipo de cabina": "Guardia superior"
+      "Tipo de cabina": "Guardia superior",
+      "Combustible del motor": "Diésel"
     },
     "attributes": []
   },
@@ -286,7 +297,10 @@
       "Horas laborales": "2261 h",
       "Estado": "Usado",
       "Condición general": "Bueno",
-      "Capacidad de carga": "2000 kg"
+      "Capacidad de carga": "2000 kg",
+      "Propulsión": "Eléctrica",
+      "Altura de elevación": "205 mm",
+      "Altura de plataforma recogida": "150 mm"
     },
     "attributes": []
   },
@@ -375,7 +389,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "22 m"
+      "Altura de trabajo": "22 m",
+      "Anchura total": "1,2 m",
+      "Capacidad máxima de plataforma": "500 kg"
     },
     "attributes": []
   },
@@ -413,7 +429,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "22 m"
+      "Altura de trabajo": "22 m",
+      "Anchura total": "1,2 m",
+      "Capacidad máxima de plataforma": "500 kg"
     },
     "attributes": []
   },
@@ -452,7 +470,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "14 m"
+      "Altura de trabajo": "14 m",
+      "Altura de plataforma": "11,9 m",
+      "Anchura total": "1,79 m"
     },
     "attributes": []
   },
@@ -491,7 +511,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "6 m"
+      "Altura de trabajo": "6 m",
+      "Capacidad nominal de la plataforma estándar": "227 kg",
+      "Anchura de la máquina": "0,75 m"
     },
     "attributes": []
   },
@@ -532,7 +554,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "40 m"
+      "Altura de trabajo": "40 m",
+      "Altura de plataforma": "38,1 m",
+      "Alcance horizontal": "24,38 m"
     },
     "attributes": []
   },
@@ -572,7 +596,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,72 m",
+      "Alcance horizontal": "7,47 m"
     },
     "attributes": []
   },
@@ -612,7 +638,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "15 m"
+      "Altura de trabajo": "15 m",
+      "Alcance horizontal": "8,45 m",
+      "Capacidad máxima de plataforma": "230 kg"
     },
     "attributes": []
   },
@@ -653,7 +681,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Altura de plataforma": "8 m",
+      "Anchura total": "0,81 m"
     },
     "attributes": []
   },
@@ -694,7 +724,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "17 m"
+      "Altura de trabajo": "17 m",
+      "Altura de plataforma": "14,9 m",
+      "Alcance horizontal": "9,4 m"
     },
     "attributes": []
   },
@@ -736,7 +768,8 @@
       "Condición general": "Bueno",
       "Capacidad máxima de elevación": "2500 kg",
       "Tipo de mástil": "Triple",
-      "Altura máxima de elevación": "4300 mm"
+      "Altura máxima de elevación": "4300 mm",
+      "Velocidad máxima de desplazamiento": "20 km/h"
     },
     "attributes": []
   },
@@ -776,7 +809,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Altura de plataforma": "8 m",
+      "Anchura total": "0,81 m"
     },
     "attributes": []
   },
@@ -815,7 +850,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Altura de plataforma": "7,92 m",
+      "Anchura total": "0,81 m"
     },
     "attributes": []
   },
@@ -855,7 +892,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "10 m",
+      "Alcance horizontal": "6,5 m"
     },
     "attributes": []
   },
@@ -896,7 +935,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "9,7 m",
+      "Capacidad máxima de plataforma": "454 kg"
     },
     "attributes": []
   },
@@ -937,7 +978,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Anchura total": "0,83 m",
+      "Capacidad máxima de plataforma": "230 kg"
     },
     "attributes": []
   },
@@ -976,7 +1019,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "14 m"
+      "Altura de trabajo": "14 m",
+      "Altura de plataforma": "12 m",
+      "Anchura total": "1,18 m"
     },
     "attributes": []
   },
@@ -1016,7 +1061,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Anchura total": "0,83 m",
+      "Capacidad máxima de plataforma": "230 kg"
     },
     "attributes": []
   },
@@ -1055,7 +1102,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "18 m"
+      "Altura de trabajo": "18 m",
+      "Altura de plataforma": "15,7 m",
+      "Alcance horizontal": "9,39 m"
     },
     "attributes": []
   },
@@ -1095,7 +1144,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,72 m",
+      "Alcance horizontal": "7,47 m"
     },
     "attributes": []
   },
@@ -1136,7 +1187,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "32 m"
+      "Altura de trabajo": "32 m",
+      "Altura de plataforma": "29,8 m",
+      "Capacidad máxima de plataforma": "250 kg"
     },
     "attributes": []
   },
@@ -1224,7 +1277,11 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Capacidad de plataforma": "320 kg",
+      "Longitud de plataforma": "2,64 m",
+      "Anchura de plataforma": "1,12 m",
+      "Extensión de plataforma": "0,9 m"
     },
     "attributes": []
   },
@@ -1264,7 +1321,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "15 m"
+      "Altura de trabajo": "15 m",
+      "Altura de plataforma": "13,11 m",
+      "Capacidad máxima de plataforma": "680 kg"
     },
     "attributes": []
   },
@@ -1304,7 +1363,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "18 m"
+      "Altura de trabajo": "18 m",
+      "Alcance horizontal": "10,62 m",
+      "Capacidad máxima de plataforma": "230 kg"
     },
     "attributes": []
   },
@@ -1344,7 +1405,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "26 m"
+      "Altura de trabajo": "26 m",
+      "Alcance horizontal": "18,29 m",
+      "Capacidad máxima de plataforma": "227 kg"
     },
     "attributes": []
   },
@@ -1386,7 +1449,11 @@
       "Certificación CE": "Yes",
       "Horas laborales": "2845 h",
       "Estado": "Usado",
-      "Condición general": "Bueno"
+      "Condición general": "Bueno",
+      "Capacidad de carga": "4500 kg",
+      "Capacidad de tolva colmada": "2670 l",
+      "Tracción": "4x4",
+      "Transmisión": "Hidrostática"
     },
     "attributes": []
   },
@@ -1428,7 +1495,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "9,95 m",
+      "Capacidad máxima de plataforma": "200 kg"
     },
     "attributes": []
   },
@@ -1469,7 +1538,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "17 m"
+      "Altura de trabajo": "17 m",
+      "Altura de plataforma": "14,9 m",
+      "Alcance horizontal": "9,4 m"
     },
     "attributes": []
   },
@@ -1510,7 +1581,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "15 m"
+      "Altura de trabajo": "15 m",
+      "Alcance horizontal": "8,45 m",
+      "Capacidad máxima de plataforma": "230 kg"
     },
     "attributes": []
   },
@@ -1551,7 +1624,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "15 m"
+      "Altura de trabajo": "15 m",
+      "Alcance horizontal": "8,45 m",
+      "Capacidad máxima de plataforma": "230 kg"
     },
     "attributes": []
   },
@@ -1590,7 +1665,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Capacidad máxima de plataforma": "230 kg",
+      "Distancia entre ejes": "1,38 m"
     },
     "attributes": []
   },
@@ -1630,7 +1707,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "18 m"
+      "Altura de trabajo": "18 m",
+      "Altura de plataforma": "16,15 m",
+      "Capacidad máxima de plataforma": "680 kg"
     },
     "attributes": []
   },
@@ -1670,7 +1749,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "20 m"
+      "Altura de trabajo": "20 m",
+      "Alcance horizontal": "12 m",
+      "Capacidad máxima de plataforma": "230 kg"
     },
     "attributes": []
   },
@@ -1710,7 +1791,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Altura de plataforma": "8 m",
+      "Anchura total": "0,81 m"
     },
     "attributes": []
   },
@@ -1751,7 +1834,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "15 m"
+      "Altura de trabajo": "15 m",
+      "Alcance horizontal": "8,45 m",
+      "Capacidad máxima de plataforma": "230 kg"
     },
     "attributes": []
   },
@@ -1793,7 +1878,10 @@
       "Horas laborales": "1393 h",
       "Estado": "Usado",
       "Condición general": "Bueno",
-      "Tipo de motor": "Diesel"
+      "Tipo de motor": "Diesel",
+      "Profundidad máxima de excavación": "1800 mm",
+      "Anchura mínima del chasis": "750 mm",
+      "Altura máxima de descarga": "2215 mm"
     },
     "attributes": []
   },
@@ -1833,7 +1921,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "15 m"
+      "Altura de trabajo": "15 m",
+      "Altura de plataforma": "13,11 m",
+      "Capacidad máxima de plataforma": "680 kg"
     },
     "attributes": []
   },
@@ -1874,7 +1964,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "18 m"
+      "Altura de trabajo": "18 m",
+      "Altura de plataforma": "15,24 m",
+      "Anchura total": "2,34 m"
     },
     "attributes": []
   },
@@ -1915,7 +2007,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "9,95 m",
+      "Capacidad máxima de plataforma": "200 kg"
     },
     "attributes": []
   },
@@ -1955,7 +2049,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "14 m"
+      "Altura de trabajo": "14 m",
+      "Altura de plataforma": "11,85 m",
+      "Anchura total": "1,2 m"
     },
     "attributes": []
   },
@@ -1995,7 +2091,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "14 m"
+      "Altura de trabajo": "14 m",
+      "Altura de plataforma": "11,9 m",
+      "Anchura total": "1,79 m"
     },
     "attributes": []
   },
@@ -2035,7 +2133,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Capacidad máxima de plataforma": "227 kg",
+      "Anchura de plataforma": "0,76 m"
     },
     "attributes": []
   },
@@ -2076,7 +2176,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,72 m",
+      "Alcance horizontal": "7,47 m"
     },
     "attributes": []
   },
@@ -2117,7 +2219,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "20 m"
+      "Altura de trabajo": "20 m",
+      "Alcance horizontal": "12,42 m",
+      "Capacidad máxima de plataforma": "227 kg"
     },
     "attributes": []
   },
@@ -2157,7 +2261,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "14 m",
+      "Alcance horizontal": "8,3 m"
     },
     "attributes": []
   },
@@ -2196,7 +2302,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Capacidad máxima de plataforma": "230 kg",
+      "Distancia entre ejes": "1,38 m"
     },
     "attributes": []
   },
@@ -2235,7 +2343,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Capacidad máxima de plataforma": "230 kg",
+      "Distancia entre ejes": "1,38 m"
     },
     "attributes": []
   },
@@ -2274,7 +2384,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "14 m"
+      "Altura de trabajo": "14 m",
+      "Altura de plataforma": "11,85 m",
+      "Anchura total": "1,2 m"
     },
     "attributes": []
   },
@@ -2313,7 +2425,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "14 m"
+      "Altura de trabajo": "14 m",
+      "Altura de plataforma": "11,85 m",
+      "Anchura total": "1,2 m"
     },
     "attributes": []
   },
@@ -2353,7 +2467,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "14 m",
+      "Alcance horizontal": "8,3 m"
     },
     "attributes": []
   },
@@ -2393,7 +2509,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Capacidad máxima de plataforma": "230 kg",
+      "Distancia entre ejes": "1,38 m"
     },
     "attributes": []
   },
@@ -2433,7 +2551,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Anchura total": "1,2 m",
+      "Distancia entre ejes": "1,86 m"
     },
     "attributes": []
   },
@@ -2472,7 +2592,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Altura de plataforma": "8 m",
+      "Anchura total": "0,81 m"
     },
     "attributes": []
   },
@@ -2511,7 +2633,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Capacidad máxima de plataforma": "450 kg",
+      "Distancia entre ejes": "1,86 m"
     },
     "attributes": []
   },
@@ -2549,7 +2673,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Capacidad máxima de plataforma": "450 kg",
+      "Distancia entre ejes": "1,86 m"
     },
     "attributes": []
   },
@@ -2589,7 +2715,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,72 m",
+      "Alcance horizontal": "7,47 m"
     },
     "attributes": []
   },
@@ -2628,7 +2756,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "10,06 m",
+      "Capacidad máxima de plataforma": "450 kg"
     },
     "attributes": []
   },
@@ -2669,7 +2799,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "10 m",
+      "Alcance horizontal": "6,5 m"
     },
     "attributes": []
   },
@@ -2708,7 +2840,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Altura de plataforma": "8 m",
+      "Anchura total": "0,81 m"
     },
     "attributes": []
   },
@@ -2748,7 +2882,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Altura de plataforma": "8 m",
+      "Anchura total": "0,81 m"
     },
     "attributes": []
   },
@@ -2788,7 +2924,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "14 m",
+      "Alcance horizontal": "8,3 m"
     },
     "attributes": []
   },
@@ -2828,7 +2966,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,72 m",
+      "Alcance horizontal": "7,47 m"
     },
     "attributes": []
   },
@@ -2868,7 +3008,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,8 m",
+      "Alcance horizontal": "7,81 m"
     },
     "attributes": []
   },
@@ -2909,7 +3051,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "17 m"
+      "Altura de trabajo": "17 m",
+      "Altura de plataforma": "14,9 m",
+      "Alcance horizontal": "9,4 m"
     },
     "attributes": []
   },
@@ -2950,7 +3094,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "15 m"
+      "Altura de trabajo": "15 m",
+      "Alcance horizontal": "8,45 m",
+      "Capacidad máxima de plataforma": "230 kg"
     },
     "attributes": []
   },
@@ -2991,7 +3137,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Altura de plataforma": "5,72 m",
+      "Anchura total": "0,76 m"
     },
     "attributes": []
   },
@@ -3032,7 +3180,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Altura de plataforma": "5,72 m",
+      "Anchura total": "0,76 m"
     },
     "attributes": []
   },
@@ -3068,7 +3218,9 @@
       "Año de fabricación": "2026",
       "Estado": "Nuevo",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Capacidad de plataforma": "230 kg",
+      "Alcance horizontal máximo": "7,81 m"
     },
     "attributes": []
   },
@@ -3105,7 +3257,11 @@
       "Certificación CE": "Yes",
       "Estado": "Nuevo",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Capacidad de plataforma": "320 kg",
+      "Longitud de plataforma": "2,26 m",
+      "Anchura de plataforma": "1,12 m",
+      "Extensión de plataforma": "0,9 m"
     },
     "attributes": []
   },
@@ -3145,7 +3301,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "18 m"
+      "Altura de trabajo": "18 m",
+      "Alcance horizontal": "10,62 m",
+      "Capacidad máxima de plataforma": "230 kg"
     },
     "attributes": []
   },
@@ -3185,7 +3343,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "18 m"
+      "Altura de trabajo": "18 m",
+      "Alcance horizontal": "10,62 m",
+      "Capacidad máxima de plataforma": "230 kg"
     },
     "attributes": []
   },
@@ -3225,7 +3385,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "9,9 m",
+      "Capacidad máxima de plataforma": "230 kg"
     },
     "attributes": []
   },
@@ -3264,7 +3426,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "9,75 m",
+      "Capacidad máxima de plataforma": "454 kg"
     },
     "attributes": []
   },
@@ -3304,7 +3468,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Alcance horizontal": "6,1 m",
+      "Capacidad máxima de plataforma": "200 kg"
     },
     "attributes": []
   },
@@ -3345,7 +3511,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "10,06 m",
+      "Anchura total": "2,39 m"
     },
     "attributes": []
   },
@@ -3388,7 +3556,8 @@
       "Condición general": "Bueno",
       "Capacidad máxima de elevación": "2500 kg",
       "Tipo de mástil": "Triple",
-      "Altura máxima de elevación": "4300 mm"
+      "Altura máxima de elevación": "4300 mm",
+      "Velocidad máxima de desplazamiento": "20 km/h"
     },
     "attributes": []
   },
@@ -3522,7 +3691,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "26 m"
+      "Altura de trabajo": "26 m",
+      "Alcance horizontal": "18,29 m",
+      "Capacidad máxima de plataforma": "227 kg"
     },
     "attributes": []
   },
@@ -3562,7 +3733,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "18 m"
+      "Altura de trabajo": "18 m",
+      "Altura de plataforma": "15,59 m",
+      "Capacidad máxima de plataforma": "227 kg"
     },
     "attributes": []
   },
@@ -3604,7 +3777,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "15 m"
+      "Altura de trabajo": "15 m",
+      "Alcance horizontal": "9,2 m",
+      "Anchura de plataforma": "0,7 m"
     },
     "attributes": []
   },
@@ -3612,12 +3787,12 @@
     "providerId": "mercaeleva",
     "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Oil-Steel-SCORPION-1812-M055-1205",
     "reference": "M055-1205",
-    "title": "Oil & Steel SCORPION 1812 CAMION CESTA 18 MT TELESCOPICO ALUMINIO 18 MT",
+    "title": "Oil & Steel SCORPION 1812 CAMION CESTA 18 MT TELESCOPICO ALUMINIO",
     "categorySellID": null,
     "category": "Maquinaria en venta",
     "condition": "Segunda_Mano",
     "price": 28950,
-    "description_title": "Oil & Steel SCORPION 1812 CAMION CESTA 18 MT TELESCOPICO ALUMINIO 18 MT",
+    "description_title": "Oil & Steel SCORPION 1812 CAMION CESTA 18 MT TELESCOPICO ALUMINIO",
     "description": "CAMION CESTA 18 MT TELESCOPICO ALUMINIO ALTURA DE TRABAJO 18 MT OIL&STEEL SCORPION 1812",
     "description_general": "El camión cesta telescópico Oil & Steel SCORPION 1812 se anuncia como unidad de segunda mano del año 2016. Su ficha declara una altura de trabajo de 18 m, motorización diésel y certificación CE. El proveedor indica 4.582 horas de uso para esta máquina con cesta de aluminio. La referencia comercial 414 permite diferenciarla de las otras unidades anunciadas del mismo modelo.",
     "image": "https://files2.machineric.com/clients/mercaeleva/machines/M055-1205/public/2026-07-08T17:07:10.881572914_2026-07-08T17:07:10.881560364Z_414%20(1).jpg",
@@ -3646,7 +3821,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "18 m"
+      "Altura de trabajo": "18 m",
+      "Alcance horizontal": "12 m",
+      "Anchura de plataforma": "0,7 m"
     },
     "attributes": []
   },
@@ -3686,7 +3863,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "40 m"
+      "Altura de trabajo": "40 m",
+      "Altura de plataforma": "38,3 m",
+      "Alcance horizontal": "19,25 m"
     },
     "attributes": []
   },
@@ -3727,7 +3906,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "9,75 m",
+      "Capacidad máxima de plataforma": "454 kg"
     },
     "attributes": []
   },
@@ -3767,7 +3948,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "10,06 m",
+      "Capacidad máxima de plataforma": "450 kg"
     },
     "attributes": []
   },
@@ -3807,7 +3990,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Anchura total": "1,2 m",
+      "Distancia entre ejes": "1,86 m"
     },
     "attributes": []
   },
@@ -3847,7 +4032,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "14 m",
+      "Alcance horizontal": "8,3 m"
     },
     "attributes": []
   },
@@ -3887,7 +4074,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,72 m",
+      "Alcance horizontal": "7,47 m"
     },
     "attributes": []
   },
@@ -3927,7 +4116,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,72 m",
+      "Alcance horizontal": "7,47 m"
     },
     "attributes": []
   },
@@ -3967,7 +4158,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Alcance horizontal": "6,78 m",
+      "Capacidad máxima de plataforma": "227 kg"
     },
     "attributes": []
   },
@@ -4001,7 +4194,10 @@
       "Horas laborales": "2261 h",
       "Estado": "Usado",
       "Condición general": "Bueno",
-      "Tipo de motor": "Eléctrico"
+      "Tipo de motor": "Eléctrico",
+      "Capacidad nominal de carga": "2000 kg",
+      "Tensión del sistema de batería": "24 V",
+      "Centro de carga": "600 mm"
     },
     "attributes": []
   },
@@ -4041,7 +4237,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Anchura total": "1,2 m",
+      "Distancia entre ejes": "1,86 m"
     },
     "attributes": []
   },
@@ -4081,7 +4279,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "9,75 m",
+      "Capacidad máxima de plataforma": "454 kg"
     },
     "attributes": []
   },
@@ -4124,7 +4324,9 @@
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
       "Altura de trabajo": "20 m",
-      "Kilometraje": "73 883 km"
+      "Kilometraje": "73 883 km",
+      "Longitud de plataforma": "1,4 m",
+      "Anchura de plataforma": "0,7 m"
     },
     "attributes": []
   },
@@ -4213,7 +4415,10 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "43 m"
+      "Altura de trabajo": "43 m",
+      "Alcance horizontal máximo": "21,3 m",
+      "Capacidad máxima de plataforma": "272 kg",
+      "Altura máxima de plataforma": "41,1 m"
     },
     "attributes": []
   },
@@ -4254,7 +4459,10 @@
       "Horas laborales": "2753 h",
       "Estado": "Usado",
       "Condición general": "Bueno",
-      "Tipo de motor": "Diesel"
+      "Tipo de motor": "Diesel",
+      "Profundidad máxima de excavación": "2820 mm",
+      "Anchura total": "1500 mm",
+      "Fuerza máxima de excavación en cuchara": "21 kN"
     },
     "attributes": []
   },
@@ -4293,7 +4501,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Altura de plataforma": "5,7 m",
+      "Anchura total": "0,76 m"
     },
     "attributes": []
   },
@@ -4337,7 +4547,9 @@
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
       "Altura de trabajo": "18 m",
-      "Kilometraje": "42 922 km"
+      "Kilometraje": "42 922 km",
+      "Alcance horizontal": "9,2 m",
+      "Capacidad máxima de plataforma": "225 kg"
     },
     "attributes": []
   },
@@ -4378,7 +4590,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "11 m"
+      "Altura de trabajo": "11 m",
+      "Altura de plataforma": "9,1 m",
+      "Capacidad máxima de plataforma": "227 kg"
     },
     "attributes": []
   },
@@ -4419,7 +4633,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "10 m",
+      "Alcance horizontal": "6,5 m"
     },
     "attributes": []
   },
@@ -4460,7 +4676,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "10 m",
+      "Alcance horizontal": "6,5 m"
     },
     "attributes": []
   },
@@ -4498,7 +4716,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Altura de plataforma": "8 m",
+      "Alcance horizontal": "3 m"
     },
     "attributes": []
   },
@@ -4539,7 +4759,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "15 m"
+      "Altura de trabajo": "15 m",
+      "Alcance horizontal": "8,45 m",
+      "Capacidad máxima de plataforma": "230 kg"
     },
     "attributes": []
   },
@@ -4579,7 +4801,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "32 m"
+      "Altura de trabajo": "32 m",
+      "Altura de plataforma": "29,8 m",
+      "Capacidad máxima de plataforma": "250 kg"
     },
     "attributes": []
   },
@@ -4620,7 +4844,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "26 m"
+      "Altura de trabajo": "26 m",
+      "Alcance horizontal": "18,29 m",
+      "Capacidad máxima de plataforma": "227 kg"
     },
     "attributes": []
   },
@@ -4661,7 +4887,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "9,95 m",
+      "Capacidad máxima de plataforma": "200 kg"
     },
     "attributes": []
   },
@@ -4701,7 +4929,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,72 m",
+      "Alcance horizontal": "7,47 m"
     },
     "attributes": []
   },
@@ -4741,7 +4971,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,72 m",
+      "Alcance horizontal": "7,47 m"
     },
     "attributes": []
   },
@@ -4781,7 +5013,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "9,9 m",
+      "Capacidad máxima de plataforma": "230 kg"
     },
     "attributes": []
   },
@@ -4826,7 +5060,8 @@
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
       "Capacidad máxima de elevación": "4000 kg",
-      "Altura máxima de elevación": "14 m"
+      "Altura máxima de elevación": "14 m",
+      "Alcance horizontal": "9,2 m"
     },
     "attributes": []
   },
@@ -4867,7 +5102,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "17 m"
+      "Altura de trabajo": "17 m",
+      "Altura de plataforma": "14,9 m",
+      "Alcance horizontal": "9,4 m"
     },
     "attributes": []
   },
@@ -4908,7 +5145,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "10 m",
+      "Alcance horizontal": "6,5 m"
     },
     "attributes": []
   },
@@ -4946,7 +5185,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Capacidad máxima de plataforma": "230 kg",
+      "Distancia entre ejes": "1,38 m"
     },
     "attributes": []
   },
@@ -4971,7 +5212,11 @@
       "https://files2.machineric.com/clients/mercaeleva/machines/M294-4678/public/2026-06-01T14:03:34.156896116_2026-06-01T14:03:34.156875945Z_7000154%20(5).jpeg"
     ],
     "spec": {
-      "Título adicional": "MODULO CASETA DIAFANA CON AIRE 6m x 2,35m"
+      "Título adicional": "MODULO CASETA DIAFANA CON AIRE 6m x 2,35m",
+      "Longitud exterior anunciada": "6 m",
+      "Anchura exterior anunciada": "2,35 m",
+      "Climatización instalada según anuncio": "Aire acondicionado",
+      "Ubicación de la puerta": "Lado corto"
     },
     "attributes": []
   },
@@ -5011,7 +5256,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "18 m"
+      "Altura de trabajo": "18 m",
+      "Altura de plataforma": "15,7 m",
+      "Alcance horizontal": "9,39 m"
     },
     "attributes": []
   },
@@ -5051,7 +5298,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,72 m",
+      "Alcance horizontal": "7,47 m"
     },
     "attributes": []
   },
@@ -5169,7 +5418,11 @@
       "Modelo": "SWE 160",
       "Título adicional": "APILADOR ELECTRICO 1600 KG",
       "Artículo No.": "MER0603",
-      "Año de fabricación": "2004"
+      "Año de fabricación": "2004",
+      "Capacidad nominal de carga": "1600 kg",
+      "Centro de carga": "600 mm",
+      "Anchura total": "790 mm",
+      "Radio de giro": "1504 mm"
     },
     "attributes": []
   },
@@ -5202,7 +5455,10 @@
       "Horas laborales": "4707 h",
       "Estado": "Usado",
       "Condición general": "Bueno",
-      "Tipo de motor": "Eléctrico"
+      "Tipo de motor": "Eléctrico",
+      "Capacidad nominal de carga": "1800 kg",
+      "Centro de carga": "600 mm",
+      "Elevación de horquillas": "125 mm"
     },
     "attributes": []
   },
@@ -5242,7 +5498,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Altura de plataforma": "7,92 m",
+      "Anchura total": "0,81 m"
     },
     "attributes": []
   },
@@ -5281,7 +5539,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "9,75 m",
+      "Anchura total": "1,17 m"
     },
     "attributes": []
   },
@@ -5330,7 +5590,10 @@
       "Año del modelo": "2019",
       "Estado": "Usado",
       "Condición general": "Bueno",
-      "Tipo de motor": "Diesel"
+      "Tipo de motor": "Diesel",
+      "Configuración de ejes declarada": "4x2",
+      "Masa máxima autorizada declarada": "12.000 kg",
+      "Arquitectura del motor declarada": "6 cilindros en línea"
     },
     "attributes": []
   },
@@ -5371,7 +5634,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Altura de plataforma": "5,72 m",
+      "Anchura total": "0,76 m"
     },
     "attributes": []
   },
@@ -5410,7 +5675,11 @@
       "Estado": "Nuevo",
       "Condición general": "Realmente bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Capacidad de plataforma": "230 kg",
+      "Extensión máxima de plataforma": "0,9 m",
+      "Longitud de plataforma": "1,64 m",
+      "Anchura de plataforma": "0,76 m"
     },
     "attributes": []
   },
@@ -5448,7 +5717,11 @@
       "Artículo No.": "S0808EII",
       "Estado": "Nuevo",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Capacidad de plataforma": "230 kg",
+      "Longitud de plataforma": "2,26 m",
+      "Anchura de plataforma": "0,79 m",
+      "Extensión de plataforma": "0,9 m"
     },
     "attributes": []
   },
@@ -5487,7 +5760,11 @@
       "Horas laborales": "0 h",
       "Estado": "Nuevo",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "6 m"
+      "Altura de trabajo": "6 m",
+      "Capacidad de plataforma": "240 kg",
+      "Longitud de plataforma": "1,27 m",
+      "Anchura de plataforma": "0,70 m",
+      "Extensión de plataforma": "0,6 m"
     },
     "attributes": []
   },
@@ -5878,7 +6155,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "14 m"
+      "Altura de trabajo": "14 m",
+      "Altura de plataforma": "11,9 m",
+      "Anchura total": "1,79 m"
     },
     "attributes": []
   },
@@ -5918,7 +6197,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "17 m"
+      "Altura de trabajo": "17 m",
+      "Altura de plataforma": "14,9 m",
+      "Alcance horizontal": "9,4 m"
     },
     "attributes": []
   },
@@ -5958,7 +6239,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "18 m"
+      "Altura de trabajo": "18 m",
+      "Altura de plataforma": "15,7 m",
+      "Alcance horizontal": "9,39 m"
     },
     "attributes": []
   },
@@ -6001,7 +6284,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,8 m",
+      "Alcance horizontal": "7,81 m"
     },
     "attributes": []
   },
@@ -6042,7 +6327,11 @@
       "Horas laborales": "0 h",
       "Estado": "Nuevo",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Capacidad de plataforma": "320 kg",
+      "Longitud de plataforma": "2,26 m",
+      "Anchura de plataforma": "1,12 m",
+      "Extensión de plataforma": "0,9 m"
     },
     "attributes": []
   },
@@ -6082,7 +6371,11 @@
       "Artículo No.": "S0808EII",
       "Estado": "Nuevo",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Capacidad de plataforma": "230 kg",
+      "Longitud de plataforma": "2,26 m",
+      "Anchura de plataforma": "0,79 m",
+      "Extensión de plataforma": "0,9 m"
     },
     "attributes": []
   },
@@ -6123,7 +6416,11 @@
       "Horas laborales": "0 h",
       "Estado": "Nuevo",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "6 m"
+      "Altura de trabajo": "6 m",
+      "Capacidad de plataforma": "240 kg",
+      "Longitud de plataforma": "1,27 m",
+      "Anchura de plataforma": "0,70 m",
+      "Extensión de plataforma": "0,6 m"
     },
     "attributes": []
   },
@@ -6164,7 +6461,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "14 m",
+      "Anchura total": "1,98 m"
     },
     "attributes": []
   },
@@ -6202,8 +6501,11 @@
       "Artículo No.": "MER1118",
       "Estado": "Usado",
       "Condición general": "Bueno",
-      "Capacidad máxima de elevación": "4700 kg",
-      "Tipo de cabina": "Guardia superior"
+      "Capacidad máxima de elevación": "1800 kg",
+      "Tipo de cabina": "Guardia superior",
+      "Capacidad nominal según texto comercial": "1.800 kg",
+      "Altura de elevación según texto comercial": "4.700 mm",
+      "Combustible anunciado": "Diésel"
     },
     "attributes": []
   },
@@ -6565,7 +6867,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "22 m"
+      "Altura de trabajo": "22 m",
+      "Altura de plataforma": "20,31 m",
+      "Alcance horizontal": "17,3 m"
     },
     "attributes": []
   },
@@ -6873,7 +7177,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Altura de plataforma": "8 m",
+      "Alcance horizontal": "3 m"
     },
     "attributes": []
   },
@@ -6914,7 +7220,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Altura de plataforma": "8 m",
+      "Alcance horizontal": "3 m"
     },
     "attributes": []
   },
@@ -6955,7 +7263,12 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "22 m"
+      "Altura de trabajo": "22 m",
+      "Altura de plataforma según catálogo técnico": "20,30 m",
+      "Capacidad de carga de plataforma según catálogo técnico": "750 kg",
+      "Longitud según catálogo técnico": "4,80 m",
+      "Anchura según catálogo técnico": "2,40 m",
+      "Dimensiones de plataforma según catálogo técnico": "4,35 x 2,30 m"
     },
     "attributes": []
   },
@@ -6996,7 +7309,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "18 m"
+      "Altura de trabajo": "18 m",
+      "Altura de plataforma": "16,15 m",
+      "Capacidad máxima de plataforma": "680 kg"
     },
     "attributes": []
   },
@@ -7036,7 +7351,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "15 m"
+      "Altura de trabajo": "15 m",
+      "Altura de plataforma": "13,11 m",
+      "Capacidad máxima de plataforma": "680 kg"
     },
     "attributes": []
   },
@@ -7075,7 +7392,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "21 m"
+      "Altura de trabajo": "21 m",
+      "Altura de plataforma": "18,8 m",
+      "Capacidad máxima de plataforma": "225 kg"
     },
     "attributes": []
   },
@@ -7114,7 +7433,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "18,5 m"
+      "Altura de trabajo": "18,5 m",
+      "Altura de plataforma": "16,5 m",
+      "Capacidad máxima de plataforma": "500 kg"
     },
     "attributes": []
   },
@@ -7154,7 +7475,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "17 m"
+      "Altura de trabajo": "17 m",
+      "Altura de plataforma": "15,3 m",
+      "Capacidad máxima de plataforma": "500 kg"
     },
     "attributes": []
   },
@@ -7193,7 +7516,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "14 m"
+      "Altura de trabajo": "14 m",
+      "Altura de plataforma": "12 m",
+      "Anchura total": "1,18 m"
     },
     "attributes": []
   },
@@ -7233,7 +7558,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Anchura total": "1,2 m",
+      "Distancia entre ejes": "1,86 m"
     },
     "attributes": []
   },
@@ -7271,7 +7598,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Altura de plataforma": "7,9 m",
+      "Anchura total": "1,17 m"
     },
     "attributes": []
   },
@@ -7312,7 +7641,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "10 m"
+      "Altura de trabajo": "10 m",
+      "Altura de plataforma": "7,77 m",
+      "Anchura total": "0,76 m"
     },
     "attributes": []
   },
@@ -7350,7 +7681,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Capacidad máxima de plataforma": "230 kg",
+      "Distancia entre ejes": "1,38 m"
     },
     "attributes": []
   },
@@ -7391,7 +7724,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Altura de plataforma": "5,72 m",
+      "Anchura total": "0,76 m"
     },
     "attributes": []
   },
@@ -7431,7 +7766,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Altura de plataforma": "5,72 m",
+      "Anchura total": "0,76 m"
     },
     "attributes": []
   },
@@ -7472,7 +7809,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Altura de plataforma": "5,72 m",
+      "Anchura total": "0,76 m"
     },
     "attributes": []
   },
@@ -7511,7 +7850,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Altura de plataforma": "5,72 m",
+      "Anchura total": "0,76 m"
     },
     "attributes": []
   },
@@ -7552,7 +7893,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Altura de plataforma": "5,72 m",
+      "Anchura total": "0,76 m"
     },
     "attributes": []
   },
@@ -7593,7 +7936,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Altura de plataforma": "5,72 m",
+      "Anchura total": "0,76 m"
     },
     "attributes": []
   },
@@ -7634,7 +7979,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Altura de plataforma": "5,72 m",
+      "Anchura total": "0,76 m"
     },
     "attributes": []
   },
@@ -7674,7 +8021,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "43 m"
+      "Altura de trabajo": "43 m",
+      "Altura de plataforma": "41,2 m",
+      "Alcance horizontal máximo sin restricción de carga": "24,4 m"
     },
     "attributes": []
   },
@@ -7715,7 +8064,10 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "28 m"
+      "Altura de trabajo": "28 m",
+      "Alcance horizontal máximo": "23,4 m",
+      "Capacidad máxima de plataforma": "227 kg",
+      "Anchura de máquina": "2,43 m"
     },
     "attributes": []
   },
@@ -7757,7 +8109,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "28 m"
+      "Altura de trabajo": "28 m",
+      "Altura de plataforma": "26,21 m",
+      "Alcance horizontal": "22,86 m"
     },
     "attributes": []
   },
@@ -7798,7 +8152,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "22 m"
+      "Altura de trabajo": "22 m",
+      "Altura de plataforma": "19,8 m",
+      "Capacidad máxima de plataforma": "227 kg"
     },
     "attributes": []
   },
@@ -7838,7 +8194,10 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "22 m"
+      "Altura de trabajo": "22 m",
+      "Alcance horizontal máximo": "17,1 m",
+      "Capacidad máxima de plataforma": "227 kg",
+      "Altura máxima de plataforma": "19,8 m"
     },
     "attributes": []
   },
@@ -7879,7 +8238,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "14 m",
+      "Anchura total": "1,98 m"
     },
     "attributes": []
   },
@@ -7926,7 +8287,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "20 m"
+      "Altura de trabajo": "20 m",
+      "Alcance horizontal": "13,54 m",
+      "Capacidad máxima de plataforma": "227 kg"
     },
     "attributes": []
   },
@@ -7963,7 +8326,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "17 m"
+      "Altura de trabajo": "17 m",
+      "Altura de plataforma": "14,9 m",
+      "Alcance horizontal": "9,4 m"
     },
     "attributes": []
   },
@@ -8003,7 +8368,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "17 m"
+      "Altura de trabajo": "17 m",
+      "Altura de plataforma": "14,9 m",
+      "Alcance horizontal": "9,4 m"
     },
     "attributes": []
   },
@@ -8043,7 +8410,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "17 m"
+      "Altura de trabajo": "17 m",
+      "Altura de plataforma": "14,9 m",
+      "Alcance horizontal": "9,4 m"
     },
     "attributes": []
   },
@@ -8084,7 +8453,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "15 m"
+      "Altura de trabajo": "15 m",
+      "Alcance horizontal": "7,6 m",
+      "Capacidad máxima de plataforma": "200 kg"
     },
     "attributes": []
   },
@@ -8125,7 +8496,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "10 m",
+      "Alcance horizontal": "6,5 m"
     },
     "attributes": []
   },
@@ -8166,7 +8539,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "10,5 m",
+      "Capacidad máxima de plataforma": "227 kg"
     },
     "attributes": []
   },
@@ -8207,7 +8582,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "10,5 m",
+      "Capacidad máxima de plataforma": "227 kg"
     },
     "attributes": []
   },
@@ -8295,7 +8672,8 @@
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
       "Capacidad máxima de elevación": "4000 kg",
-      "Altura máxima de elevación": "14 m"
+      "Altura máxima de elevación": "14 m",
+      "Tracción": "4x4"
     },
     "attributes": []
   },
@@ -8337,7 +8715,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "11 m"
+      "Altura de trabajo": "11 m",
+      "Altura de plataforma": "9,14 m",
+      "Anchura total": "1,22 m"
     },
     "attributes": []
   },
@@ -8378,7 +8758,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "11 m"
+      "Altura de trabajo": "11 m",
+      "Altura de plataforma": "9,14 m",
+      "Anchura total": "1,22 m"
     },
     "attributes": []
   },
@@ -8419,7 +8801,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "11 m"
+      "Altura de trabajo": "11 m",
+      "Altura de plataforma": "9,14 m",
+      "Anchura total": "1,22 m"
     },
     "attributes": []
   },
@@ -8459,7 +8843,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "11 m"
+      "Altura de trabajo": "11 m",
+      "Altura de plataforma": "8,89 m",
+      "Alcance horizontal": "6,25 m"
     },
     "attributes": []
   },
@@ -8500,7 +8886,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "20 m"
+      "Altura de trabajo": "20 m",
+      "Alcance horizontal": "12,42 m",
+      "Capacidad máxima de plataforma": "227 kg"
     },
     "attributes": []
   },
@@ -8540,7 +8928,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "26 m"
+      "Altura de trabajo": "26 m",
+      "Altura de plataforma": "24,38 m",
+      "Alcance horizontal": "15,8 m"
     },
     "attributes": []
   },
@@ -8580,7 +8970,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "26 m"
+      "Altura de trabajo": "26 m",
+      "Altura de plataforma": "23,6 m",
+      "Alcance horizontal": "16,2 m"
     },
     "attributes": []
   },
@@ -8620,7 +9012,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "26 m"
+      "Altura de trabajo": "26 m",
+      "Altura de plataforma": "23,6 m",
+      "Alcance horizontal": "16,2 m"
     },
     "attributes": []
   },
@@ -8657,7 +9051,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Capacidad máxima de plataforma": "230 kg",
+      "Anchura de plataforma": "0,8 m"
     },
     "attributes": []
   },
@@ -8697,7 +9093,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,72 m",
+      "Alcance horizontal": "7,47 m"
     },
     "attributes": []
   },
@@ -8738,7 +9136,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "12 m"
+      "Altura de trabajo": "12 m",
+      "Altura de plataforma": "10 m",
+      "Alcance horizontal": "6,5 m"
     },
     "attributes": []
   },
@@ -8779,7 +9179,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
-      "Altura de trabajo": "8 m"
+      "Altura de trabajo": "8 m",
+      "Altura de plataforma": "5,7 m",
+      "Anchura total": "0,76 m"
     },
     "attributes": []
   },
@@ -8819,7 +9221,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "20 m"
+      "Altura de trabajo": "20 m",
+      "Altura de plataforma": "18,65 m",
+      "Alcance horizontal": "13,5 m"
     },
     "attributes": []
   }
