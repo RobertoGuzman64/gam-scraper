@@ -28,14 +28,14 @@ export type CommercialAuditProvider = {
 };
 
 export type CommercialAudit = {
-  readonly version: 1;
+  readonly version: 2;
   readonly providers: readonly CommercialAuditProvider[];
 };
 
 export const auditCommercialCatalog = async (rootDirectory: string): Promise<CommercialAudit> => {
   const [catalog, references] = await Promise.all([loadImportCatalog(), loadCommercialReference()]);
   const inputs = await loadCommercialPublicationInputs(rootDirectory, catalog);
-  return { version: 1, providers: inputs.map(({ providerId, publicationSha256, originalProducts, entries }) => {
+  return { version: 2, providers: inputs.map(({ providerId, publicationSha256, originalProducts, entries }) => {
     const projected = planCommercialExport(entries, providerId, publicationSha256, catalog,
       references.brandLogos, null, null);
     const reasons = new Map<string, number>();

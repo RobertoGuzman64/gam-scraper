@@ -124,7 +124,7 @@ test("audita cobertura, títulos depurados, SEO y preservación sin tocar public
   assert.equal(report.changedShort, 0);
   assert.equal(report.changedGeneral, 0);
   assert.equal(report.decisions.filter((item) => item.status === "excluded").length, 1);
-  assert.ok(report.signals.some((item) => item.reason === "titulo-sin-modelo-literal"));
+  assert.deepEqual(report.signals, []);
   assert.deepEqual(analyzeCommercialPresentation(items), report);
   assert.equal(technical.title, "Compra GENIE Z45/25J Plataforma articulada | GAM Online");
 });
@@ -164,4 +164,13 @@ test("no inventa títulos, descripciones o identificadores a partir de metadata"
   const report = analyzeCommercialPresentation([{ ...entry(record, null), published: input }]);
   assert.equal(report.withTitle, 0);
   assert.ok(report.signals.some((item) => item.reason === "titulo-vacio"));
+});
+
+test("el auditor no abre tareas por comparaciones literales o longitud editorial", () => {
+  const record = { ...source("112"), brand: "OTRA", model: "XYZ9" };
+  const input = entry(record, 29);
+  const report = analyzeCommercialPresentation([{ ...input, published: {
+    ...input.published, description: "Descripción válida ".repeat(25)
+  } }]);
+  assert.deepEqual(report.signals, []);
 });

@@ -31,7 +31,6 @@ export type CommercialBaseline = {
     readonly attributes: number;
     readonly withAttributes: number;
     readonly withPrice: number;
-    readonly locallyCompatible: number;
   };
   readonly commercialReferenceCollisions: readonly {
     readonly reference: string;
@@ -43,7 +42,6 @@ export type CommercialBaseline = {
     readonly examples: readonly { readonly reference: string | null; readonly sourceUrl: string }[];
   }[];
   readonly attributeCoverage: readonly { readonly attributeID: number; readonly assigned: number }[];
-  readonly receiverRequirements: readonly { readonly message: string; readonly affected: number }[];
   readonly routeSignals: { readonly lot: number; readonly tool: number };
 };
 
@@ -62,11 +60,9 @@ export const analyzeCommercialBaseline = (entries: readonly CommercialBaselineIn
     examples: { reference: string | null; sourceUrl: string }[];
   }>();
   const attributeCounts = new Map<number, number>();
-  const requirementCounts = new Map<string, number>();
   let withCategory = 0;
   let withAttributes = 0;
   let withPrice = 0;
-  let locallyCompatible = 0;
   let mappedAttributes = 0;
   let lot = 0;
   let tool = 0;
@@ -104,10 +100,6 @@ export const analyzeCommercialBaseline = (entries: readonly CommercialBaselineIn
     if (assigned.length > 0) withAttributes += 1;
     for (const attr of assigned) attributeCounts.set(attr.attributeID, (attributeCounts.get(attr.attributeID) ?? 0) + 1);
     if (mapped.product.price !== null) withPrice += 1;
-    if (mapped.importIssues?.createMany.length === 0) locallyCompatible += 1;
-    for (const issue of new Set(mapped.importIssues?.createMany ?? [])) {
-      requirementCounts.set(issue, (requirementCounts.get(issue) ?? 0) + 1);
-    }
   }
 
   const publications = entries.map(({ published }) => published);
@@ -127,7 +119,7 @@ export const analyzeCommercialBaseline = (entries: readonly CommercialBaselineIn
     },
     mapping: {
       withCategory, withoutCategory: entries.length - withCategory, attributes: mappedAttributes,
-      withAttributes, withPrice, locallyCompatible
+      withAttributes, withPrice
     },
     commercialReferenceCollisions: [...collisionGroups.values()]
       .filter((group) => group.identities.length > 1)
@@ -137,8 +129,6 @@ export const analyzeCommercialBaseline = (entries: readonly CommercialBaselineIn
       .sort((a, b) => b.affected - a.affected || a.sourceCategory.localeCompare(b.sourceCategory, "es")),
     attributeCoverage: [...attributeCounts].map(([attributeID, assigned]) => ({ attributeID, assigned }))
       .sort((a, b) => b.assigned - a.assigned || a.attributeID - b.attributeID),
-    receiverRequirements: [...requirementCounts].map(([message, affected]) => ({ message, affected }))
-      .sort((a, b) => b.affected - a.affected || a.message.localeCompare(b.message, "es")),
     routeSignals: { lot, tool }
   };
 };

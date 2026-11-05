@@ -35,6 +35,7 @@ export type CommercialExportPlan = {
     readonly pendingCategory: number;
     readonly excludedLots: number;
     readonly excludedTools: number;
+    readonly excludedAccessories: number;
     readonly attributes: number;
     readonly withLogo: number;
     readonly withPrice: number;
@@ -73,6 +74,7 @@ export const planCommercialExport = (
   let pendingCategory = 0;
   let excludedLots = 0;
   let excludedTools = 0;
+  let excludedAccessories = 0;
   let withLogo = 0;
   let withPrice = 0;
   let attributes = 0;
@@ -91,7 +93,8 @@ export const planCommercialExport = (
     if (decision.status === "excluded") {
       excluded.push(issue(decision.reason));
       if (decision.reason === "lote") excludedLots += 1;
-      else excludedTools += 1;
+      else if (decision.reason === "herramienta") excludedTools += 1;
+      else excludedAccessories += 1;
       continue;
     }
     const category = decision.categorySellID === null ? null : categories.get(decision.categorySellID);
@@ -110,10 +113,8 @@ export const planCommercialExport = (
     for (const invalid of accepted.issues) exceptions.push(issue(`atributo-${invalid.attributeID}:${invalid.reason}`));
     const presentation = projectCommercialPresentation(source, published, category?.name ?? null);
     const logoID = resolveLogo(source, published, logos);
-    if (logoID === null) exceptions.push(issue("logo-sin-correspondencia-acreditada"));
-    else withLogo += 1;
-    if (published.price === null) exceptions.push(issue("precio-no-acreditado"));
-    else withPrice += 1;
+    if (logoID !== null) withLogo += 1;
+    if (published.price !== null) withPrice += 1;
     if (!presentation.title) exceptions.push(issue("titulo-ausente"));
     if (!presentation.description?.trim()) exceptions.push(issue("resumen-ausente"));
     if (!presentation.description_general?.trim()) exceptions.push(issue("descripcion-general-ausente"));
@@ -130,6 +131,6 @@ export const planCommercialExport = (
     categorized + pendingCategory !== products.length) throw new Error("La derivación comercial ha perdido identidades");
   return { version: 1, providerId, publicationSha256, environment, total: inputs.length, products,
     excluded, exceptions, summary: { exported: products.length, categorized, pendingCategory,
-      excludedLots, excludedTools, attributes, withLogo, withPrice,
+      excludedLots, excludedTools, excludedAccessories, attributes, withLogo, withPrice,
       withCompany: companyID === null ? 0 : products.length } };
 };

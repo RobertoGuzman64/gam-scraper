@@ -87,11 +87,6 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
       printReportLine(`${baseline.providerId.toUpperCase()} | elegibles ${audit.eligible} | excluidos ${audit.excluded} | títulos ${audit.withTitle} | cortos ${audit.withShort} | generales ${audit.withGeneral} | imágenes ${audit.withImage} | metadata ${audit.withMetadata}`);
       printReportLine(`  Metadatos: categoría ${audit.metadataWithCategory} | marca acreditada ${audit.metadataWithBrand} | modelo acreditado ${audit.metadataWithModel} | títulos depurados ${audit.titlesNormalized} | subtítulos depurados ${audit.descriptionTitlesNormalized}`);
       printReportLine(`  Preservación: resumen modificado ${audit.changedShort} | general modificada ${audit.changedGeneral} | imágenes perdidas ${audit.lostImages} | specs perdidas ${audit.lostSpecifications}`);
-      printReportLine(`  Calidad editorial heredada: ${audit.editorial.casesForReview} fichas con señales orientativas`);
-      for (const finding of audit.editorial.findings.slice(0, 10)) {
-        printReportLine(`    EDITORIAL ${finding.code}: ${finding.affected}`);
-        if (args[0] === "--contenido-revision") for (const url of finding.examples) printReportLine(`      ${url}`);
-      }
       for (const signal of audit.signals) {
         printReportLine(`    CONTENIDO ${signal.reason}: ${signal.affected}`);
         if (args[0] === "--contenido-revision") for (const url of signal.examples) printReportLine(`      ${url}`);
@@ -106,12 +101,12 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
       const stats = audit.coverage.find((item) => item.attributeID === id);
       if (!stats) continue;
       known = true;
-      printReportLine(`${baseline.providerId.toUpperCase()} | ${id} ${stats.name} | relacionadas ${stats.relatedProducts} | aceptadas ${stats.accepted} | no observadas ${stats.notObserved} | contradicciones ${stats.contradiction} | inválidas ${stats.invalid} | rechazadas ${stats.rejected}`);
+      printReportLine(`${baseline.providerId.toUpperCase()} | ${id} ${stats.name} | relacionadas ${stats.relatedProducts} | aceptadas ${stats.accepted}`);
       for (const decision of audit.decisions) {
         const issue = decision.unresolved.find((item) => item.attributeID === id);
         const recovered = decision.recovered.find((item) => item.attributeID === id);
         if (recovered) printReportLine(`  RECUPERADO ${recovered.value} | ${decision.reference ?? decision.sourceUrl} | ${decision.sourceCategory} | ${decision.sourceUrl}`);
-        if (issue) printReportLine(`  ${issue.status} | ${decision.reference ?? decision.sourceUrl} | ${decision.sourceCategory} | ${decision.sourceUrl}`);
+        if (issue) printReportLine(`  INTERVENIR ${issue.status} | ${decision.reference ?? decision.sourceUrl} | ${decision.sourceCategory} | ${decision.sourceUrl}`);
       }
     }
     if (!known) printReportLine(`No hay categorías elegibles relacionadas con el atributo ${id}`);
@@ -119,16 +114,9 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
   }
   if (args[0] === "--atributos" || args[0] === "--atributos-revision") {
     for (const { baseline, attributeAudit: audit } of report.providers) {
-      printReportLine(`${baseline.providerId.toUpperCase()} | elegibles ${audit.eligible} | categorizadas ${audit.categorized} | asignaciones ${audit.acceptedAssignments}/${audit.mappedAssignments + audit.recoveredAssignments} | recuperadas ${audit.recoveredAssignments} | sin resolver según required histórico ${audit.requiredMissingInSnapshot}`);
-      for (const stats of audit.coverage.filter((item) => args[0] === "--atributos-revision"
-        ? item.contradiction + item.invalid + item.rejected > 0
-        : item.requiredInSnapshot && item.relatedProducts > item.accepted).slice(0, 30)) {
-        printReportLine(`  ${stats.attributeID} ${stats.name} | asignadas ${stats.accepted}/${stats.relatedProducts} | sin observación ${stats.notObserved} | contradicción ${stats.contradiction} | inválidas ${stats.invalid} | rechazadas ${stats.rejected} | required histórico ${stats.requiredInSnapshot}`);
-        if (args[0] === "--atributos-revision") {
-          for (const sample of stats.examples) printReportLine(`    ${sample.status} | ${sample.reference ?? sample.sourceUrl} | ${sample.sourceUrl}`);
-        }
+      printReportLine(`${baseline.providerId.toUpperCase()} | elegibles ${audit.eligible} | categorizadas ${audit.categorized} | asignaciones ${audit.acceptedAssignments}/${audit.mappedAssignments + audit.recoveredAssignments} | recuperadas ${audit.recoveredAssignments} | incidencias de validación ${audit.validationIssues.reduce((sum, issue) => sum + issue.affected, 0)}`);
+      if (args[0] === "--atributos-revision") {
       }
-      if (audit.originPreparationDifferences.affected > 0) printReportLine(`  DIFERENCIA ORIGEN/PREPARACIÓN ${audit.originPreparationDifferences.affected} (evidencia reconciliada, no error automático)`);
       for (const issue of audit.validationIssues) {
         printReportLine(`  VALIDACIÓN ${issue.reason}: ${issue.affected}`);
         if (args[0] === "--atributos-revision") {
@@ -140,8 +128,8 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
   }
   if (args[0] === "--pendientes") {
     for (const { baseline } of report.providers) {
-      printReportLine(`${baseline.providerId.toUpperCase()} | ${baseline.categoryAudit.pending} pendientes | ${baseline.categoryAudit.excludedLots} lotes | ${baseline.categoryAudit.excludedTools} herramientas excluidas`);
-      for (const item of baseline.categoryAudit.decisions.filter((decision) => decision.status !== "proposed")) {
+      printReportLine(`${baseline.providerId.toUpperCase()} | ${baseline.categoryAudit.pending} pendientes | ${baseline.categoryAudit.excludedLots} lotes | ${baseline.categoryAudit.excludedTools} herramientas excluidas | ${baseline.categoryAudit.excludedAccessories} accesorios excluidos`);
+      for (const item of baseline.categoryAudit.decisions.filter((decision) => decision.status === "pending")) {
         printReportLine(`  ${item.status.toUpperCase()} | ${item.reference ?? item.sourceUrl} | ${item.sourceCategory} | ${item.sourceUrl}`);
       }
     }
@@ -161,9 +149,10 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
   }
   if (args[0] === "--revision") {
     for (const { baseline } of report.providers) {
-      printReportLine(`${baseline.providerId.toUpperCase()} | ${baseline.categoryAudit.precisionSignals.length} señales de revisión del título original`);
-      for (const signal of baseline.categoryAudit.precisionSignals) {
-        printReportLine(`  ${signal.reference ?? signal.sourceUrl} | ${signal.sourceTitle} | propuesta: ${signal.mappedCategory} | ${signal.sourceUrl}`);
+      printReportLine(`${baseline.providerId.toUpperCase()} | ${baseline.categoryAudit.pending} categorías por resolver`);
+      for (const group of baseline.pendingCategoryFamilies) {
+        printReportLine(`  ${group.sourceCategory}: ${group.affected}`);
+        for (const sample of group.examples) printReportLine(`    ${sample.reference ?? sample.sourceUrl} | ${sample.sourceUrl}`);
       }
     }
     return;
@@ -172,17 +161,14 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
   printReportLine(`AUDITORÍA COMERCIAL | ${total} fichas técnicas acreditadas | propuestas, no decisiones aprobadas`);
   for (const { baseline: value, originalProducts, publicationSha256 } of report.providers) {
     printReportLine(`${value.providerId.toUpperCase()} | publicadas ${value.products} | originales ${originalProducts} | SHA ${publicationSha256}`);
-    printReportLine(`  Mapeador previo: categorías ${value.mapping.withCategory} | sin categoría ${value.mapping.withoutCategory} (incluye excluidos) | atributos ${value.mapping.attributes} | compatibles create/many ${value.mapping.locallyCompatible} (diagnóstico histórico)`);
+    printReportLine(`  Mapeador previo: categorías ${value.mapping.withCategory} | sin categoría ${value.mapping.withoutCategory} (incluye excluidos) | atributos ${value.mapping.attributes}`);
     printReportLine(`  Publicación técnica: títulos ${value.publication.withTitle} | textos breves ${value.publication.withDescription} | generales ${value.publication.withGeneralDescription} | imágenes ${value.publication.withImage} | specs ${value.publication.specifications} | precios ${value.publication.withPrice}`);
-    printReportLine(`  Categorización comercial: elegibles ${value.categoryAudit.eligible} | propuestas ${value.categoryAudit.proposed} | pendientes ${value.categoryAudit.pending} | lotes excluidos ${value.categoryAudit.excludedLots} | herramientas excluidas ${value.categoryAudit.excludedTools}`);
+    printReportLine(`  Categorización comercial: elegibles ${value.categoryAudit.eligible} | propuestas ${value.categoryAudit.proposed} | pendientes ${value.categoryAudit.pending} | lotes excluidos ${value.categoryAudit.excludedLots} | herramientas excluidas ${value.categoryAudit.excludedTools} | accesorios excluidos ${value.categoryAudit.excludedAccessories}`);
     const attributeAudit = report.providers.find((item) => item.baseline.providerId === value.providerId)?.attributeAudit;
-    if (attributeAudit) printReportLine(`  Auditoría atributos: aceptados ${attributeAudit.acceptedAssignments}/${attributeAudit.mappedAssignments + attributeAudit.recoveredAssignments} | recuperados ${attributeAudit.recoveredAssignments} | incidencias de validación ${attributeAudit.validationIssues.reduce((sum, item) => sum + item.affected, 0)} | ausencias required histórico ${attributeAudit.requiredMissingInSnapshot} | diferencias origen/preparación ${attributeAudit.originPreparationDifferences.affected}`);
-    printReportLine(`  Referencias visibles duplicadas ${value.commercialReferenceCollisions.length} | categorías propuestas distintas ${value.categoryAudit.categories.length} | señales para revisar ${value.categoryAudit.precisionSignals.length}`);
+    if (attributeAudit) printReportLine(`  Auditoría atributos: aceptados ${attributeAudit.acceptedAssignments}/${attributeAudit.mappedAssignments + attributeAudit.recoveredAssignments} | recuperados ${attributeAudit.recoveredAssignments} | incidencias de validación ${attributeAudit.validationIssues.reduce((sum, item) => sum + item.affected, 0)}`);
+    printReportLine(`  Referencias visibles duplicadas ${value.commercialReferenceCollisions.length} | categorías propuestas distintas ${value.categoryAudit.categories.length}`);
     const presentationAudit = report.providers.find((item) => item.baseline.providerId === value.providerId)?.presentationAudit;
-    if (presentationAudit) printReportLine(`  Presentación comercial F3: títulos ${presentationAudit.withTitle} | resúmenes ${presentationAudit.withShort} | generales ${presentationAudit.withGeneral} | metadata ${presentationAudit.withMetadata} | títulos depurados ${presentationAudit.titlesNormalized} | imágenes/specs perdidas ${presentationAudit.lostImages}/${presentationAudit.lostSpecifications}`);
-    for (const issue of value.receiverRequirements.slice(0, 5)) {
-      printReportLine(`    CONTRATO HISTÓRICO ${issue.message}: ${issue.affected}`);
-    }
+    if (presentationAudit) printReportLine(`  Presentación comercial: títulos ${presentationAudit.withTitle} | resúmenes ${presentationAudit.withShort} | generales ${presentationAudit.withGeneral} | metadata ${presentationAudit.withMetadata} | títulos depurados ${presentationAudit.titlesNormalized} | imágenes/specs perdidas ${presentationAudit.lostImages}/${presentationAudit.lostSpecifications}`);
     for (const group of value.pendingCategoryFamilies.slice(0, 5)) {
       printReportLine(`    PENDIENTE ${group.sourceCategory}: ${group.affected} | ${group.examples.map((item) => item.reference ?? item.sourceUrl).join(", ")}`);
     }

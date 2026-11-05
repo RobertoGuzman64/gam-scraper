@@ -71,7 +71,7 @@ test("deriva contenido y metadata F3, categoría y atributos F1–F2 sin alterar
   assert.deepEqual(output.products[0]?.spec, input.published.spec);
   assert.deepEqual(output.products[0]?.images, input.published.images);
   assert.equal(output.products[0]?.companyID, undefined);
-  assert.equal(output.exceptions[0]?.reason, "precio-no-acreditado");
+  assert.deepEqual(output.exceptions, []);
   assert.equal(JSON.stringify(input), snapshot);
   assert.deepEqual(plan([input]), output);
 });
@@ -122,8 +122,9 @@ test("no asigna logo Otras Marcas ni marca no acreditada, y no inventa precio", 
   const output = plan([{ ...sample, published }]);
   assert.equal(output.products[0]?.logoID, null);
   assert.equal(output.products[0]?.price, null);
-  assert.ok(output.exceptions.some((item) => item.reason === "logo-sin-correspondencia-acreditada"));
-  assert.ok(output.exceptions.some((item) => item.reason === "precio-no-acreditado"));
+  assert.deepEqual(output.exceptions, []);
+  assert.equal(output.summary.withLogo, 0);
+  assert.equal(output.summary.withPrice, 0);
 });
 
 test("atribuye solo valores compatibles y registra rechazos sin borrar fichas", () => {
@@ -220,4 +221,49 @@ test("F5 distingue exclusiones reales de pérdidas de producto", () => {
   assert.equal(accreditCommercialPlan([excluded], commercial, catalog, logos, null).summary.blocking, 0);
   const audit = accreditCommercialPlan([excluded], { ...commercial, excluded: [] }, catalog, logos, null);
   assert.ok(audit.blocking.some((item) => item.reason === "exclusion-no-corresponde"));
+});
+
+test("ausencia de precio o logo no crea intervenciones comerciales", () => {
+  const sample = entry("308");
+  const input = { ...sample, published: {
+    ...sample.published, title: "Equipo sin marca", spec: { Modelo: "AB123" }
+  } };
+  const commercial = plan([input]);
+  assert.equal(commercial.products[0]?.price, null);
+  assert.equal(commercial.products[0]?.logoID, null);
+  assert.deepEqual(commercial.exceptions, []);
+  const audit = accreditCommercialPlan([input], commercial, catalog, logos, null);
+  assert.equal(audit.summary.pending, 0);
+  assert.equal(audit.summary.blocking, 0);
+});
+
+test("si existe valor resoluble y no se proyecta, el auditor sí solicita intervención", () => {
+  const sample = entry("309");
+  const input = { ...sample, mapped: { ...sample.mapped, product: {
+    ...sample.mapped.product, attributes: []
+  } } };
+  const commercial = plan([input]);
+  const audit = accreditCommercialPlan([input], commercial, catalog, logos, null);
+  assert.deepEqual(audit.pending.map((item) => item.reason), ["atributos-resueltos-no-asignados"]);
+  assert.equal(audit.summary.blocking, 0);
+});
+
+test("exporta solo maquinaria y acredita exclusión de accesorio con evidencia explícita", () => {
+  const sample = entry("2373", null);
+  const url = "https://online.gamrentals.com/es/plataformas-elevadoras-bravi/2373-kit-sobre-elevacion-small-e-bravi";
+  const source = { ...sample.source, url, categoryKey: "marcas-nuevas", title: "KIT DE ELEVACIÓN BRAVI SMALL-E",
+    shortDescription: "Accesorio para la plataforma Bravi Leonardo HD" };
+  const input: CommercialBaselineInput = {
+    source: { ...source, brand: "BRAVI" },
+    published: { ...sample.published, sourceUrl: url },
+    mapped: { ...sample.mapped, product: { ...sample.mapped.product, sourceUrl: url } }
+  };
+  const output = plan([input]);
+  assert.equal(output.summary.exported, 0);
+  assert.equal(output.summary.excludedAccessories, 1);
+  assert.equal(output.summary.excludedTools, 0);
+  assert.deepEqual(output.excluded.map((item) => item.reason), ["accesorio"]);
+  const accreditation = accreditCommercialPlan([input], output, catalog, logos, null);
+  assert.equal(accreditation.summary.blocking, 0);
+  assert.equal(accreditation.summary.pending, 0);
 });

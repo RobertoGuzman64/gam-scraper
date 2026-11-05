@@ -93,14 +93,12 @@ test("auditoría distingue exclusiones, ausencias, contradicciones y validación
   assert.deepEqual([report.eligible, report.categorized, report.pendingCategory, report.excluded], [3, 2, 1, 1]);
   assert.equal(report.invalidAssignments, 1);
   assert.equal(report.validationIssues.find((issue) => issue.reason === "opcion-invalida")?.affected, 1);
-  assert.ok(report.coverage.find((item) => item.attributeID === 115)?.contradiction === 1);
-  assert.ok(report.coverage.find((item) => item.attributeID === 1)?.notObserved === 1);
-  assert.ok(report.requiredMissingInSnapshot >= 2);
+  assert.equal(report.coverage.find((item) => item.attributeID === 115)?.accepted, 1);
+  assert.equal(report.coverage.find((item) => item.attributeID === 1)?.accepted, 1);
   assert.equal(report.decisions.length, 4);
   assert.equal(report.decisions.find((item) => item.reference === "3")?.status, "excluded");
   assert.equal(report.decisions.find((item) => item.reference === "1")?.attributes.length, 2);
-  assert.ok(report.decisions.find((item) => item.reference === "2")?.unresolved.some((item) =>
-    item.attributeID === 115 && item.status === "contradiction" && item.requiredInSnapshot));
+  assert.deepEqual(report.decisions.find((item) => item.reference === "2")?.unresolved, []);
 });
 
 test("recupera neumáticos GAM de evidencia literal publicada sin alterar la ficha técnica", () => {
@@ -145,4 +143,33 @@ test("la auditoría cuenta la recuperación comercial sin contaminar los campos 
   assert.ok(report.decisions[0]?.attributes.some((item) => item.attributeID === 24 && item.value === "Superelásticos"));
   assert.deepEqual(report.decisions[0]?.recovered, [{ attributeID: 24, value: "Superelásticos" }]);
   assert.equal(example.mapped.product.attributes.length, 1);
+});
+
+test("required histórico no origina tareas por ausencia y mantiene comprobaciones de contrato", () => {
+  const missing = entry("7", [], {});
+  const flagged = analyzeCommercialAttributes([missing], catalog);
+  const relaxed = analyzeCommercialAttributes([missing], {
+    ...catalog, attributes: catalog.attributes.map((attribute) => ({ ...attribute, required: false }))
+  });
+  assert.deepEqual(flagged, relaxed);
+  assert.deepEqual(flagged.decisions[0]?.unresolved, [{ attributeID: 115, status: "resuelto-no-asignado" }]);
+  assert.equal(flagged.validationIssues[0]?.reason, "resuelto-no-asignado");
+  assert.equal(flagged.acceptedAssignments, 0);
+});
+
+test("rechazos protectores por identidad contradictoria no crean una intervención sin valor recuperable", () => {
+  const conflicting = {
+    ...source("6622", { Marca: "GENIE", Modelo: "GS-5390", "Altura de elevación (m)": "18 metros" }),
+    title: "JLG 1930ES | Plataforma Tijera Diésel 8M | GAM Online",
+    model: "GS-5390", brand: "GENIE",
+    categoryKey: "elevacion", url: "https://online.gamrentals.com/es/plataformas-tijera-diesel-segunda-mano/6622"
+  };
+  const item: CommercialBaselineInput = {
+    source: conflicting, published: candidate(conflicting, [], null),
+    mapped: { status: "ready", issues: [], product: candidate(conflicting, [], 29) }
+  };
+  const report = analyzeCommercialAttributes([item], catalog);
+  assert.ok(report.validationIssues.every((issue) => issue.reason === "resuelto-no-asignado"));
+  assert.ok(report.decisions[0]?.unresolved.every((item) => item.attributeID !== 1));
+  assert.equal(report.coverage.find((value) => value.attributeID === 1)?.accepted, 0);
 });

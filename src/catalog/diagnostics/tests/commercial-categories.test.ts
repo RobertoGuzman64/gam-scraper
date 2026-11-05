@@ -61,7 +61,7 @@ test("censo comercial cuenta exclusiones fuera del denominador y ofrece decision
 });
 
 
-test("diferencias de motorización original se señalan para revisión sin recategorizar automáticamente", () => {
+test("el título bruto no crea avisos sobre una categoría comercial", () => {
   const record = source("https://proveedor.example/es/carretillas/2312", "Carretilla elevadora eléctrica");
   const mapped: PreparedProduct = {
     ...prepared(record, 16),
@@ -69,10 +69,32 @@ test("diferencias de motorización original se señalan para revisión sin recat
   };
   const audit = analyzeCommercialCategories([{ source: record, mapped }]);
   assert.equal(audit.proposed, 1);
-  assert.deepEqual(audit.precisionSignals, [{ reference: record.reference, sourceUrl: record.url,
-    sourceTitle: record.title, mappedCategory: "Carretillas Elevadoras GLP",
-    reason: "motorizacion-contradictoria-en-titulo-original" }]);
-  assert.deepEqual(analyzeCommercialCategories([{ source: record,
-    mapped: { ...mapped, product: { ...mapped.product, category: "Carretillas Elevadoras Eléctricas" } }
-  }]).precisionSignals, []);
+  assert.equal(audit.decisions[0]?.status, "proposed");
+});
+
+test("excluye accesorios dependientes acreditados sin eliminar maquinaria por títulos genéricos", () => {
+  const kit = {
+    ...source("https://online.gamrentals.com/es/plataformas-elevadoras-bravi/2373-kit-sobre-elevacion-small-e-bravi",
+      "KIT DE ELEVACIÓN BRAVI SMALL-E", "marcas-nuevas"),
+    providerId: "gam", brand: "BRAVI", shortDescription: "Accesorio compatible con la plataforma Leonardo HD",
+    longDescription: "Este accesorio se monta en el equipo principal"
+  };
+  assert.deepEqual(decideCommercialCategory(kit, null), {
+    status: "excluded", reason: "accesorio", categorySellID: null
+  });
+  assert.equal(decideCommercialCategory({ ...kit, shortDescription: "", longDescription: "" }, null).status, "pending");
+  assert.equal(decideCommercialCategory({ ...kit, title: "Plataforma eléctrica BRAVI" }, 29).status, "proposed");
+  assert.equal(decideCommercialCategory({ ...kit, url: "https://online.gamrentals.com/es/otras-marcas/2373" }, null).status, "pending");
+  const report = analyzeCommercialCategories([{ source: kit, mapped: prepared(kit, null) }]);
+  assert.equal(report.eligible, 0);
+  assert.equal(report.pending, 0);
+  assert.equal(report.excludedAccessories, 1);
+  assert.equal(report.excludedTools, 0);
+  assert.equal(report.decisions[0]?.reason, "accesorio");
+  const skyDeck = {
+    ...kit, title: "SKY DECK", model: "SKY DECK", specs: { Marca: "BRAVI", Modelo: "SKY DECK" },
+    shortDescription: "", longDescription: ""
+  };
+  assert.equal(decideCommercialCategory(skyDeck, null).reason, "accesorio");
+  assert.equal(decideCommercialCategory({ ...skyDeck, specs: {} }, null).status, "pending");
 });

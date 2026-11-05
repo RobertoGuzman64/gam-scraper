@@ -2,7 +2,6 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 import type { PreparedProduct } from "../preparation/contracts.js";
 import { decideCommercialCategory } from "../commercial/category-decision.js";
 import type { CommercialCategoryDecision } from "../commercial/category-decision.js";
-import { fold } from "../preparation/mapping/category-utils.js";
 
 export type CommercialCategoryAudit = {
   readonly eligible: number;
@@ -10,13 +9,7 @@ export type CommercialCategoryAudit = {
   readonly pending: number;
   readonly excludedLots: number;
   readonly excludedTools: number;
-  readonly precisionSignals: readonly {
-    readonly reference: string | null;
-    readonly sourceUrl: string;
-    readonly sourceTitle: string;
-    readonly mappedCategory: string;
-    readonly reason: "motorizacion-contradictoria-en-titulo-original";
-  }[];
+  readonly excludedAccessories: number;
   readonly categories: readonly {
     readonly categorySellID: number;
     readonly name: string;
@@ -41,21 +34,12 @@ export type CommercialCategoryAudit = {
 type CategoryInput = { readonly source: ProductRecord; readonly mapped: PreparedProduct };
 type CategorySample = CommercialCategoryAudit["categories"][number]["samples"][number];
 
-const fuel = (value: string): ReadonlySet<string> => {
-  const text = fold(value);
-  const result = new Set<string>();
-  if (/\bdiesel\b/.test(text)) result.add("diesel");
-  if (/\belectric[oa]s?\b/.test(text)) result.add("electrico");
-  if (/\b(?:glp|lpg)\b/.test(text)) result.add("glp");
-  return result;
-};
-
 export const analyzeCommercialCategories = (entries: readonly CategoryInput[]): CommercialCategoryAudit => {
   const categories = new Map<number, { name: string; samples: CategorySample[] }>();
   const decisions: CommercialCategoryAudit["decisions"][number][] = [];
-  const precisionSignals: CommercialCategoryAudit["precisionSignals"][number][] = [];
   let excludedLots = 0;
   let excludedTools = 0;
+  let excludedAccessories = 0;
   let pending = 0;
   let proposed = 0;
   for (const { source, mapped } of entries) {
@@ -66,18 +50,11 @@ export const analyzeCommercialCategories = (entries: readonly CategoryInput[]): 
     });
     if (decision.status === "excluded") {
       if (decision.reason === "lote") excludedLots += 1;
-      else excludedTools += 1;
+      else if (decision.reason === "herramienta") excludedTools += 1;
+      else excludedAccessories += 1;
     } else if (decision.status === "pending") pending += 1;
     else {
       proposed += 1;
-      const sourceFuels = fuel(source.title ?? "");
-      const targetFuels = fuel(mapped.product.category ?? "");
-      if (sourceFuels.size > 0 && targetFuels.size === 1 &&
-        [...sourceFuels].some((item) => !targetFuels.has(item))) {
-        precisionSignals.push({ reference: source.reference, sourceUrl: source.url,
-          sourceTitle: source.title ?? "", mappedCategory: mapped.product.category ?? "",
-          reason: "motorizacion-contradictoria-en-titulo-original" });
-      }
       const group = categories.get(decision.categorySellID) ?? { name: mapped.product.category ?? "", samples: [] };
       group.samples.push({ reference: source.reference, sourceUrl: source.url, title: source.title,
         sourceCategory: source.categoryKey });
@@ -85,8 +62,7 @@ export const analyzeCommercialCategories = (entries: readonly CategoryInput[]): 
     }
   }
   return {
-    eligible: proposed + pending, proposed, pending, excludedLots, excludedTools,
-    precisionSignals: precisionSignals.sort((a, b) => a.sourceUrl.localeCompare(b.sourceUrl, "es")),
+    eligible: proposed + pending, proposed, pending, excludedLots, excludedTools, excludedAccessories,
     categories: [...categories].map(([categorySellID, group]) => {
       const ordered = [...group.samples].sort((a, b) => a.sourceUrl.localeCompare(b.sourceUrl, "es"));
       const indices = new Set([0, Math.floor((ordered.length - 1) / 2), ordered.length - 1]);

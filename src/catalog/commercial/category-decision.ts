@@ -1,7 +1,8 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
+import { fold } from "../preparation/mapping/category-utils.js";
 
 export type CommercialCategoryDecision =
-  | { readonly status: "excluded"; readonly reason: "lote" | "herramienta"; readonly categorySellID: null }
+  | { readonly status: "excluded"; readonly reason: "lote" | "herramienta" | "accesorio"; readonly categorySellID: null }
   | { readonly status: "pending"; readonly reason: "sin-categoria"; readonly categorySellID: null }
   | { readonly status: "proposed"; readonly reason: null; readonly categorySellID: number };
 
@@ -24,6 +25,15 @@ export const decideCommercialCategory = (
     sourceCategory === "herramientas" || sourceCategory === "tools") {
     return { status: "excluded", reason: "herramienta", categorySellID: null };
   }
+  const isBraviComponent = source.providerId === "gam" && source.categoryKey === "marcas-nuevas" &&
+    segments.includes("plataformas-elevadoras-bravi") && fold(source.brand ?? "") === "bravi";
+  const isAccessory = isBraviComponent && (
+    /^kit de elevacion\b/.test(fold(source.title ?? "")) &&
+      /\baccesorio\b/.test(fold(`${source.shortDescription ?? ""} ${source.longDescription ?? ""}`)) ||
+    fold(source.title ?? "") === "sky deck" && fold(source.model ?? "") === "sky deck" &&
+      fold(String(source.specs?.["Modelo"] ?? "")) === "sky deck"
+  );
+  if (isAccessory) return { status: "excluded", reason: "accesorio", categorySellID: null };
   return categorySellID === null
     ? { status: "pending", reason: "sin-categoria", categorySellID: null }
     : { status: "proposed", reason: null, categorySellID };

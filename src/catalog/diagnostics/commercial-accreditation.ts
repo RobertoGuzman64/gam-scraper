@@ -8,6 +8,7 @@ import { decideCommercialCategory } from "../commercial/category-decision.js";
 import { projectCommercialAttributes } from "../commercial/attribute-projection.js";
 import { commercialToken, projectCommercialPresentation } from "../commercial/presentation-projection.js";
 import { decideCommercialAttributes } from "../commercial/attribute-decision.js";
+import { observeCommercialAttributes } from "../commercial/attribute-observation.js";
 
 export type CommercialAccreditationDifference = {
   readonly field: string;
@@ -128,6 +129,10 @@ const verifyProduct = (
   }, catalog);
   if (!isDeepStrictEqual(product.attributes, expectedAttributes.accepted)) blocking.push("atributos-distintos-de-proyeccion");
   if (expectedAttributes.issues.length) pending.push("atributos-rechazados-por-contrato");
+  if (decision.categorySellID !== null) {
+    const observations = observeCommercialAttributes(source, decision.categorySellID, expectedAttributes.accepted, catalog);
+    if (observations.some((item) => item.status === "resuelto-no-asignado")) pending.push("atributos-resueltos-no-asignados");
+  }
   const expected = projectCommercialPresentation(source, published, category?.name ?? null);
   for (const field of ["title", "description_title"] as const) {
     if (!isDeepStrictEqual(product[field], expected[field])) blocking.push(`presentacion-${field}-incompatible`);
@@ -142,8 +147,7 @@ const verifyProduct = (
   if (!product.description_general?.trim()) pending.push("descripcion-general-ausente");
   if (!product.image || product.images.length === 0) pending.push("imagen-ausente");
   if (product.image && !product.images.includes(product.image)) blocking.push("portada-fuera-de-galeria");
-  if (product.price === null) pending.push("precio-sin-acreditar");
-  else if (!Number.isFinite(product.price) || product.price < 0) blocking.push("precio-invalido");
+  if (product.price !== null && (!Number.isFinite(product.price) || product.price < 0)) blocking.push("precio-invalido");
   if (!isDeepStrictEqual(product.metadata, expected.metadata) || product.metadata.featured !== false) {
     blocking.push("metadata-no-determinista");
   }
@@ -160,7 +164,7 @@ const verifyProduct = (
       commercialToken(matches[0]?.brand ?? "") !== commercialToken(source.brand ?? "")) {
       blocking.push("logoID-sin-correspondencia");
     }
-  } else pending.push("logo-sin-acreditar");
+  }
 };
 
 export const accreditCommercialPlan = (
@@ -215,7 +219,7 @@ export const accreditCommercialPlan = (
   if (plan.total !== inputs.length || plan.products.length + plan.excluded.length !== inputs.length ||
     plan.summary.exported !== plan.products.length ||
     plan.summary.categorized + plan.summary.pendingCategory !== plan.products.length ||
-    plan.summary.excludedLots + plan.summary.excludedTools !== plan.excluded.length ||
+    plan.summary.excludedLots + plan.summary.excludedTools + plan.summary.excludedAccessories !== plan.excluded.length ||
     plan.summary.attributes !== plan.products.reduce((count, product) => count + product.attributes.length, 0) ||
     plan.summary.withLogo !== plan.products.filter((product) => product.logoID !== null).length ||
     plan.summary.withPrice !== plan.products.filter((product) => product.price !== null).length ||

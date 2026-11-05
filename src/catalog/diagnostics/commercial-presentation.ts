@@ -1,13 +1,11 @@
 import type { ImportCandidate } from "../legacy-export/contracts.js";
 import { decideCommercialCategory } from "../commercial/category-decision.js";
-import { commercialIdentityInTitle, commercialToken, projectCommercialPresentation } from "../commercial/presentation-projection.js";
+import { commercialToken, projectCommercialPresentation } from "../commercial/presentation-projection.js";
 import type { CommercialMetadata } from "../commercial/presentation-projection.js";
 import type { CommercialBaselineInput } from "./commercial-baseline.js";
-import { analyzePublishedEditorialQuality } from "./editorial-quality.js";
 
 type ContentSignal =
-  "titulo-sin-marca-literal" | "titulo-sin-modelo-literal" | "resumen-extenso" |
-  "imagen-principal-fuera-de-galeria" | "titulo-vacio" | "categoria-pendiente";
+  "imagen-principal-fuera-de-galeria" | "titulo-vacio";
 
 type PresentationDecision = {
   readonly reference: string | null;
@@ -45,10 +43,6 @@ export type CommercialPresentationAudit = {
   readonly lostImages: number;
   readonly lostSpecifications: number;
   readonly signals: readonly { readonly reason: ContentSignal; readonly affected: number; readonly examples: readonly string[] }[];
-  readonly editorial: {
-    readonly casesForReview: number;
-    readonly findings: readonly { readonly code: string; readonly affected: number; readonly examples: readonly string[] }[];
-  };
   readonly decisions: readonly PresentationDecision[];
 };
 
@@ -62,7 +56,6 @@ const distinctContent = (published: ImportCandidate, projected: Pick<ImportCandi
 
 export const analyzeCommercialPresentation = (entries: readonly CommercialBaselineInput[]): CommercialPresentationAudit => {
   const decisions: PresentationDecision[] = [];
-  const projectedCandidates: ImportCandidate[] = [];
   const signals = new Map<ContentSignal, { affected: number; examples: string[] }>();
   let excluded = 0;
   let categorized = 0;
@@ -101,13 +94,7 @@ export const analyzeCommercialPresentation = (entries: readonly CommercialBaseli
     const presentation = projectCommercialPresentation(source, published, categoryName);
     const ownSignals: ContentSignal[] = [];
     const mark = (reason: ContentSignal): void => { ownSignals.push(reason); addSignal(reason, published.sourceUrl); };
-    if (decision.status === "pending") mark("categoria-pendiente");
     if (!presentation.title) mark("titulo-vacio");
-    if (source.brand?.trim() && presentation.title &&
-      !commercialIdentityInTitle(presentation.title, source.brand)) mark("titulo-sin-marca-literal");
-    if (source.model?.trim() && presentation.title &&
-      !commercialIdentityInTitle(presentation.title, source.model)) mark("titulo-sin-modelo-literal");
-    if ((presentation.description?.length ?? 0) > 300) mark("resumen-extenso");
     if (presentation.image && !presentation.images.includes(presentation.image)) mark("imagen-principal-fuera-de-galeria");
     if (presentation.title) withTitle += 1;
     if (presentation.description?.trim()) withShort += 1;
@@ -125,24 +112,12 @@ export const analyzeCommercialPresentation = (entries: readonly CommercialBaseli
     const lost = distinctContent(published, presentation);
     lostImages += lost.images;
     lostSpecifications += lost.specifications;
-    projectedCandidates.push({ ...published, ...presentation, category: categoryName,
-      categorySellID: decision.categorySellID });
     decisions.push({ reference: published.reference, sourceUrl: published.sourceUrl,
       categorySellID: decision.categorySellID, status: decision.status,
       title: presentation.title, shortPreview: preview(presentation.description),
       generalPreview: preview(presentation.description_general), images: presentation.images.length,
       specifications: Object.keys(presentation.spec).length, metadata: presentation.metadata,
       titleChanged, descriptionTitleChanged, signals: ownSignals });
-  }
-  const editorial = analyzePublishedEditorialQuality(projectedCandidates);
-  const byCode = new Map<string, { affected: number; examples: string[] }>();
-  for (const item of editorial.cases) {
-    for (const issue of item.issues) {
-      const group = byCode.get(issue.code) ?? { affected: 0, examples: [] };
-      group.affected += 1;
-      if (group.examples.length < 5) group.examples.push(item.url);
-      byCode.set(issue.code, group);
-    }
   }
   return {
     eligible: categorized + pendingCategory, excluded, categorized, pendingCategory,
@@ -151,9 +126,6 @@ export const analyzeCommercialPresentation = (entries: readonly CommercialBaseli
     titlesNormalized, descriptionTitlesNormalized, changedShort, changedGeneral, lostImages, lostSpecifications,
     signals: [...signals].map(([reason, stats]) => ({ reason, ...stats }))
       .sort((a, b) => b.affected - a.affected || a.reason.localeCompare(b.reason, "es")),
-    editorial: { casesForReview: editorial.cases.length,
-      findings: [...byCode].map(([code, stats]) => ({ code, ...stats }))
-        .sort((a, b) => b.affected - a.affected || a.code.localeCompare(b.code, "es")) },
     decisions: decisions.sort((a, b) => a.sourceUrl.localeCompare(b.sourceUrl, "es"))
   };
 };
