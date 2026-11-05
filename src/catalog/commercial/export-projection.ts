@@ -4,6 +4,7 @@ import type { CommercialBaselineInput } from "../diagnostics/commercial-baseline
 import type { BrandLogoReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { buildProductIdentity } from "../identity.js";
 import { decideCommercialCategory } from "./category-decision.js";
+import { isValidCommercialCategory } from "./category-projection.js";
 import { projectCommercialAttributes } from "./attribute-projection.js";
 import { commercialIdentityInTitle, commercialToken, projectCommercialPresentation } from "./presentation-projection.js";
 
@@ -65,7 +66,6 @@ export const planCommercialExport = (
     throw new Error("El companyID exige un perfil de entorno explícito y válido");
   }
   const categories = new Map(catalog.categories.map((item) => [item.id, item]));
-  const parentIds = new Set(catalog.categories.map((item) => item.parentId).filter((id) => id !== null));
   const seen = new Set<string>();
   const products: CommercialExportProduct[] = [];
   const excluded: CommercialExportIssue[] = [];
@@ -98,7 +98,7 @@ export const planCommercialExport = (
       continue;
     }
     const category = decision.categorySellID === null ? null : categories.get(decision.categorySellID);
-    if (decision.status === "proposed" && (!category || category.active === false || parentIds.has(category.id))) {
+    if (decision.status === "proposed" && !isValidCommercialCategory(source, decision.categorySellID, mapped.product.condition, catalog)) {
       throw new Error(`Categoría comercial no válida para ${identity}: ${decision.categorySellID}`);
     }
     if (decision.status === "pending") {

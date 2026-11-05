@@ -9,7 +9,7 @@ import { accreditCommercialPlan } from "../../diagnostics/commercial-accreditati
 
 const catalog: ImportCatalog = {
   categories: [
-    { id: 20, parentId: null, name: "Elevación", slug: "elevacion" },
+    { id: 20, parentId: null, name: "Maquinaria de Ocasión", slug: "ocasion" },
     { id: 29, parentId: 20, name: "Articuladas", slug: "articuladas" }
   ],
   attributes: [

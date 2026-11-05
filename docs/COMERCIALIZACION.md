@@ -5,7 +5,7 @@ El catálogo comercial de EQUIPZILLA **se deriva de las publicaciones técnicas 
 ## Fuente y contratos
 
 - Fuente: publicación técnica vigente de cada proveedor, junto con su original canónico para contrastar la identidad y aplicar los mapeadores existentes.
-- Categorías y `categorySellID`: `data/category/categorySell-flat.json`, respetando jerarquía, condición y categoría hoja.
+- Categorías y `categorySellID`: `data/category/categorySell-flat.json`, respetando jerarquía y condición. Priorizar categorías hoja; admitir una categoría general existente solo con correspondencia semántica acreditada y una regla comercial explícita. Una categoría sin relaciones de atributos no autoriza a inventarlas: conservar las especificaciones técnicas sin cambios.
 - Atributos: `data/import/attributeCatalog.json`; usar solo `attributeID` y valores válidos para el tipo, las opciones y la relación con la categoría.
 - Logos y empresas por entorno: `data/commercial-reference/`; `logoID` solo con correspondencia inequívoca y `companyID` únicamente con entorno explícito.
 - Mantener `providerId`, `reference`, `externalReference` y `sourceUrl`. La referencia comercial visible no identifica por sí sola una máquina.

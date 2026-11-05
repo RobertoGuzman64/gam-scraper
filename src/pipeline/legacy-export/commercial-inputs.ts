@@ -3,6 +3,7 @@ import { buildProductIdentity } from "../../catalog/identity.js";
 import type { ImportCatalog } from "../../catalog/legacy-export/contracts.js";
 import type { CommercialBaselineInput } from "../../catalog/diagnostics/commercial-baseline.js";
 import { prepareImportBatch } from "../../catalog/preparation/batch-identity.js";
+import { projectCommercialCategory } from "../../catalog/commercial/category-projection.js";
 import { originalSources } from "../../infrastructure/filesystem/catalog/original-catalog-sources.js";
 import { discoverAccreditedPublications, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 
@@ -36,7 +37,7 @@ export const loadCommercialPublicationInputs = async (
       const source = selected[index];
       const proposed = mapped.products[index];
       if (!source || !proposed) throw new Error(`No se pudo preparar la identidad ${published.reference}`);
-      return { source, published, mapped: proposed };
+      return { source, published, mapped: projectCommercialCategory(source, proposed, catalog) };
     });
     providers.push({ providerId: publication.providerId, publicationSha256: publication.sha256,
       originalProducts: sources.size, entries });

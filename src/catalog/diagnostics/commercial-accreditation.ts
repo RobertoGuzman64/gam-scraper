@@ -5,6 +5,7 @@ import type { CommercialExportPlan, CommercialExportProduct } from "../commercia
 import type { BrandLogoReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { buildProductIdentity } from "../identity.js";
 import { decideCommercialCategory } from "../commercial/category-decision.js";
+import { isValidCommercialCategory } from "../commercial/category-projection.js";
 import { projectCommercialAttributes } from "../commercial/attribute-projection.js";
 import { commercialToken, projectCommercialPresentation } from "../commercial/presentation-projection.js";
 import { decideCommercialAttributes } from "../commercial/attribute-decision.js";
@@ -116,8 +117,8 @@ const verifyProduct = (
   if (product.categorySellID === null) {
     if (product.category !== null) blocking.push("nombre-categoria-sin-id");
     pending.push("categoria-pendiente");
-  } else if (!category || category.active === false ||
-    catalog.categories.some((entry) => entry.parentId === product.categorySellID) || category.name !== product.category) {
+  } else if (!category || category.name !== product.category ||
+    !isValidCommercialCategory(source, product.categorySellID, mapped.product.condition, catalog)) {
     blocking.push("categoria-invalida");
   }
   const validated = decideCommercialAttributes(product, catalog);
