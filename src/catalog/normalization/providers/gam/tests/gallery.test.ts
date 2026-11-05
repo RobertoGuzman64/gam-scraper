@@ -27,6 +27,23 @@ test("GAM: separa cuatro recomendaciones cuando la máquina tiene una o dos foto
     [first, ...recommended.slice(0, 2), recommended[0]!, recommended[1]!]);
 });
 
+test("GAM: excluye cuatro recomendaciones duplicadas por pares tras una o dos fotos propias", () => {
+  const recommended = [
+    photo(200, "cte-traccess-135"),
+    photo(201, "cte-traccess-135"),
+    photo(202, "plataforma-sobre-orugas-cte-traccess-170"),
+    photo(203, "plataforma-sobre-orugas-cte-traccess-170")
+  ];
+  assert.deepEqual(excludeGamRelatedProductImages([own[0]!, ...recommended]), [own[0]!]);
+  assert.deepEqual(excludeGamRelatedProductImages([...own.slice(0, 2), ...recommended]), own.slice(0, 2));
+  assert.deepEqual(excludeGamRelatedProductImages([own[0]!, ...recommended.slice(0, 3)]),
+    [own[0]!, ...recommended.slice(0, 3)]);
+  const ambiguous = [recommended[0]!, recommended[0]!, recommended[2]!, recommended[2]!];
+  assert.deepEqual(excludeGamRelatedProductImages([own[0]!, ...ambiguous]), [own[0]!, ...ambiguous]);
+  assert.deepEqual(excludeGamRelatedProductImages([own[0]!, recommended[0]!, own[1]!, recommended[2]!, recommended[3]!]),
+    [own[0]!, recommended[0]!, own[1]!, recommended[2]!, recommended[3]!]);
+});
+
 test("GAM: conserva variantes, fotografías adicionales y galerías sin evidencia suficiente", () => {
   const cases: readonly (readonly string[])[] = [
     [...own.slice(0, 2), ...related],
@@ -64,6 +81,19 @@ test("GAM: la preparación conserva imágenes propias, identidad, estados y orig
     const prepared = prepareSourceProduct(source);
     assert.deepEqual(prepared.product.images, source.images?.slice(0, ownCount), reference);
     assert.equal(prepared.product.image, source.image, reference);
+  }
+  for (const reference of ["4657", "6169", "6170", "6171", "6172", "6547", "6874", "6873", "6953", "6954"]) {
+    const source = indexed.get(reference);
+    assert.ok(source, reference);
+    const prepared = prepareSourceProduct(source);
+    assert.deepEqual(prepared.product.images, source.images?.slice(0, 1), reference);
+    assert.equal(prepared.product.image, source.image, reference);
+  }
+  for (const reference of ["4661"]) {
+    const source = indexed.get(reference);
+    assert.ok(source, reference);
+    const prepared = prepareSourceProduct(source);
+    assert.deepEqual(prepared.product.images, source.images?.slice(0, 2), reference);
   }
   for (const reference of ["6607", "5855", "6139", "6846", "6150", "2621"]) {
     const source = indexed.get(reference);
