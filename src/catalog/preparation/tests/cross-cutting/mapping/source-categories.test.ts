@@ -65,14 +65,14 @@ test("los cuatro tipos de Gomariz acreditados en su taxonomía", () => {
   approved("gomariz", ["5051BDX", "1011JFB", "RE454", "PV556"]);
 });
 
-test("Mercaeleva acredita su camión sin deducir las condiciones ausentes", () => {
+test("Mercaeleva acredita su camión y las condiciones individuales de ocasión", () => {
   approved("mercaeleva", ["M928-9933"]);
   for (const code of ["M294-4678", "M958-0132"]) {
     const product = record("mercaeleva", code);
     assert.equal(sourceCategoryQualityIssue(product), null);
     const prepared = prepareProduct(product, catalog);
     assert.equal(prepared.status, "ready");
-    assert.equal(prepared.product.condition, null);
+    assert.equal(prepared.product.condition, "Segunda_Mano");
     assert.ok(!prepared.issues.includes(SOURCE_CATEGORY_ISSUE));
   }
 });

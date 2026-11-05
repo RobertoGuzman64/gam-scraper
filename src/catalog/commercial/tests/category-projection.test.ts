@@ -6,6 +6,7 @@ import { isValidCommercialCategory, projectCommercialCategory } from "../categor
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { excludeGamRelatedProductImages } from "../../normalization/providers/gam/gallery.js";
 import { loadCommercialPublicationInputs } from "../../../pipeline/legacy-export/commercial-inputs.js";
+import { resolveCommercialCondition } from "../../preparation/condition.js";
 
 const catalog = await loadImportCatalog();
 const providers = await loadCommercialPublicationInputs(process.cwd(), catalog);
@@ -88,15 +89,97 @@ test("no traslada reglas comerciales a familias, modelos, rutas ni condiciones d
   assert.equal(isValidCommercialCategory(hyster.source, 10, "Segunda_Mano", catalog), false);
 });
 
-test("mantiene sin asignación productos con contradicciones o sin equivalencia acreditada", () => {
-  for (const [providerId, reference] of [
-    ["gam", "6653"], ["gam", "6358"], ["gam", "6367"],
-    ["gam", "6814"], ["gam", "6815"],
-    ["mercaeleva", "M958-0132"], ["mercaeleva", "M294-4678"]
-  ] as readonly (readonly [string, string])[]) {
+test("resuelve únicamente las categorías respaldadas de la campaña GAM y Mercaeleva", () => {
+  const cases: readonly [string, string, number][] = [
+    ["gam", "6653", 67], ["gam", "6358", 80], ["gam", "6367", 80],
+    ["gam", "6814", 115], ["gam", "6815", 115],
+    ["mercaeleva", "M958-0132", 47], ["mercaeleva", "M294-4678", 115]
+  ];
+  for (const [providerId, reference, categoryId] of cases) {
     const entry = product(providerId, reference);
-    assert.equal(entry.mapped.product.categorySellID, null, `${providerId}:${reference}`);
+    assert.equal(entry.mapped.product.condition, "Segunda_Mano", `${providerId}:${reference}`);
+    assert.equal(entry.mapped.product.categorySellID, categoryId, `${providerId}:${reference}`);
+    assert.equal(isValidCommercialCategory(entry.source, categoryId, "Segunda_Mano", catalog), true);
+    assert.equal(isValidCommercialCategory(entry.source, categoryId, "Nuevo", catalog), false);
+    const empty = { ...entry.mapped, product: {
+      ...entry.mapped.product, categorySellID: null, category: null, attributes: []
+    } };
+    assert.equal(projectCommercialCategory({ ...entry.source, categoryKey: "maquinaria" }, empty, catalog).product.categorySellID, null);
+    assert.equal(projectCommercialCategory({ ...entry.source, title: "OTRO EQUIPO" }, empty, catalog).product.categorySellID, null);
+    assert.equal(projectCommercialCategory({ ...entry.source, url: "https://example.com/equipo" }, empty, catalog).product.categorySellID, null);
   }
+});
+
+test("la barredora EUREKA usada usa la categoría general existente y no contamina otros equipos", () => {
+  const sweeper = product("gam", "6653");
+  assert.equal(sweeper.mapped.product.condition, "Segunda_Mano");
+  assert.equal(sweeper.mapped.product.categorySellID, 67);
+  assert.equal(isValidCommercialCategory(sweeper.source, 67, "Segunda_Mano", catalog), true);
+  assert.equal(isValidCommercialCategory(sweeper.source, 67, "Nuevo", catalog), false);
+  const empty = { ...sweeper.mapped, product: {
+    ...sweeper.mapped.product, categorySellID: null, category: null, attributes: []
+  } };
+  for (const source of [
+    { ...sweeper.source, reference: "6654" },
+    { ...sweeper.source, externalReference: "EG-00033" },
+    { ...sweeper.source, providerId: "gomariz" },
+    { ...sweeper.source, brand: "OTRA" },
+    { ...sweeper.source, model: "MAGNUM ECO" },
+    { ...sweeper.source, title: "Fregadora EUREKA MAGNUM" },
+    { ...sweeper.source, shortDescription: "Barredora nueva" },
+    { ...sweeper.source, specs: { ...sweeper.source.specs, "Nº de serie": "OTRA" } },
+    { ...sweeper.source, url: "https://online.gamrentals.com/es/fregadoras/6653-eureka-magnum" }
+  ]) {
+    assert.equal(projectCommercialCategory(source, empty, catalog).product.categorySellID, null);
+  }
+  assert.equal(projectCommercialCategory(sweeper.source, empty, catalog).product.categorySellID, 67);
+});
+
+test("la caseta de ocasión solo se proyecta para la unidad CBOX identificada", () => {
+  const cabin = product("mercaeleva", "M294-4678");
+  assert.equal(cabin.source.condition, null);
+  assert.equal(cabin.published.condition, null);
+  assert.equal(cabin.mapped.product.condition, "Segunda_Mano");
+  assert.equal(cabin.mapped.product.categorySellID, 115);
+  assert.equal(isValidCommercialCategory(cabin.source, 115, "Segunda_Mano", catalog), true);
+  assert.equal(isValidCommercialCategory(cabin.source, 118, "Segunda_Mano", catalog), false);
+  const empty = { ...cabin.mapped, product: {
+    ...cabin.mapped.product, categorySellID: null, category: null, attributes: []
+  } };
+  for (const source of [
+    { ...cabin.source, reference: "M294-4679" },
+    { ...cabin.source, providerId: "gam" },
+    { ...cabin.source, url: "https://example.com/es/for-sale/machine/M294-4678" },
+    { ...cabin.source, title: "MODULO CASETA NUEVA" },
+    { ...cabin.source, longDescription: "MODULO CASETA DIAFANA NUEVA" },
+    { ...cabin.source, specs: { ...cabin.source.specs, "Título adicional": "OTRA CASETA" } },
+    { ...cabin.source, image: "https://example.com/otra-caseta.jpg" }
+  ]) {
+    assert.equal(resolveCommercialCondition(source).condition, null);
+    assert.equal(projectCommercialCategory(source, empty, catalog).product.categorySellID, null);
+  }
+  const contradictory = resolveCommercialCondition({ ...cabin.source, condition: "Nuevo" });
+  assert.equal(contradictory.condition, null);
+  assert.equal(contradictory.contradictory, true);
+  assert.equal(projectCommercialCategory(cabin.source, empty, catalog).product.categorySellID, 115);
+});
+
+test("la condición acreditada del BT no se traslada a otra unidad ni a otra fuente", () => {
+  const source = product("mercaeleva", "M958-0132").source;
+  assert.equal(resolveCommercialCondition(source).condition, "Segunda_Mano");
+  for (const alternative of [
+    { ...source, reference: "M958-0133" },
+    { ...source, url: "https://example.com/BT-SWE-160-M958-0132" },
+    { ...source, brand: "OTRA" },
+    { ...source, model: "SWE 180" },
+    { ...source, title: "OTRO APILADOR ELECTRICO" },
+    { ...source, specs: { ...source.specs, "Artículo No.": "MER0604" } }
+  ]) {
+    assert.equal(resolveCommercialCondition(alternative).condition, null);
+  }
+  const contradictory = resolveCommercialCondition({ ...source, condition: "Nuevo" });
+  assert.equal(contradictory.condition, null);
+  assert.equal(contradictory.contradictory, true);
 });
 
 test("recupera identidad acreditada de Hyster sin deducir combustible de textos contradictorios", () => {
@@ -198,9 +281,9 @@ test("la acreditación comercial no acepta otra categoría hoja cuando la famili
   }
 });
 
-test("las categorías acreditadas siguen siendo válidas y las pendientes no reciben una asignación ficticia", () => {
+test("las 1324 fichas elegibles quedan categorizadas con IDs válidos", () => {
   const proposed = entries.filter((entry) => entry.mapped.product.categorySellID !== null);
-  assert.equal(proposed.length, 1320);
+  assert.equal(proposed.length, 1324);
   for (const entry of proposed) {
     const categoryId = entry.mapped.product.categorySellID;
     assert.notEqual(categoryId, null);
@@ -208,12 +291,6 @@ test("las categorías acreditadas siguen siendo válidas y las pendientes no rec
     assert.equal(isValidCommercialCategory(entry.source, categoryId, entry.mapped.product.condition, catalog), true,
       `${entry.source.providerId}:${entry.source.reference}`);
   }
-  for (const [providerId, reference] of [
-    ["gam", "6653"], ["gam", "6358"], ["gam", "6367"],
-    ["gam", "6814"], ["gam", "6815"],
-    ["mercaeleva", "M958-0132"], ["mercaeleva", "M294-4678"]
-  ] as readonly (readonly [string, string])[]) {
-    const entry = product(providerId, reference);
-    assert.equal(entry.mapped.product.categorySellID, null, `${providerId}:${reference}`);
-  }
+  assert.equal(entries.length, 1334);
+  assert.equal(entries.length - proposed.length, 10);
 });

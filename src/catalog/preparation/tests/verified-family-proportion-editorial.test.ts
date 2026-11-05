@@ -1,4 +1,3 @@
-import { phase2BasketReviewReferences } from "./support/phase2-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
@@ -39,8 +38,8 @@ test("La fase 162 mejora exactamente veinte fichas canónicas sin alterar datos 
     const unchangedRecord = JSON.stringify(record);
     const prepared = prepareSourceProduct(record);
     assert.equal(JSON.stringify(record), unchangedRecord, identity);
-    assert.equal(prepared.status, identity.startsWith("gam:") && (gamTechnicalReviewReferences.has(identity.slice(4)) || phase2BasketReviewReferences.has(identity.slice(4))) ? "review" : "ready", identity);
-    assert.equal(prepared.issues.length > 0, identity.startsWith("gam:") && (gamTechnicalReviewReferences.has(identity.slice(4)) || phase2BasketReviewReferences.has(identity.slice(4))), identity);
+    assert.equal(prepared.status, identity.startsWith("gam:") && (gamTechnicalReviewReferences.has(identity.slice(4))) ? "review" : "ready", identity);
+    assert.equal(prepared.issues.length > 0, identity.startsWith("gam:") && (gamTechnicalReviewReferences.has(identity.slice(4))), identity);
     assert.equal(prepared.product.sourceUrl, evidence.sourceUrl, identity);
     const expectedGeneral = identity === "gam:4802"
       ? evidence.general.replace(

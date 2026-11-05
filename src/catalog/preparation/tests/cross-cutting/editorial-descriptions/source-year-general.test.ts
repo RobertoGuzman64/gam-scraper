@@ -60,6 +60,6 @@ test("no incorpora años ambiguos, variantes, fechas de modelo ni fichas en revi
   assert.equal(includeSourceYearInGeneral(changedCanonicalYear, originalGeneral, gomariz.shortDescription, gomariz.specs ?? {}), originalGeneral);
   const reviewed = find("gomariz", "BA1465");
   const result = prepareSourceProduct(reviewed);
-  assert.equal(result.status, "review");
-  assert.ok(!result.product.description_general?.includes("Año de fabricación de esta unidad:"));
+  assert.equal(result.status, "ready");
+  assert.ok(result.product.description_general?.includes("Año de fabricación de esta unidad: 2022."));
 });

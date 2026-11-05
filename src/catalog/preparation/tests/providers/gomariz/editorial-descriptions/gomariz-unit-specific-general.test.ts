@@ -40,7 +40,7 @@ test("Gomariz personaliza generales genéricas con medidas de su propia ficha", 
         assert.ok(general.includes(record.title ?? ""), record.reference);
       }
       assert.ok(general.includes("longitud") && general.includes("anchura") && (general.includes("peso") || general.includes("masa")), record.reference);
-      assert.equal(prepared.status, record.reference === "BA1465" ? "review" : "ready", record.reference);
+      assert.equal(prepared.status, "ready", record.reference);
       improved.add(record.reference);
     }
     assert.equal(JSON.stringify(record), original);

@@ -96,7 +96,11 @@ test("reconcilia 19 textos de unidades usadas con evidencia técnica propia y si
     const prepared = prepareSourceProduct(record);
     const general = prepared.product.description_general;
     assert.ok(record.longDescription && general, reference);
-    if (["6863", "6852", "6103"].includes(reference)) {
+    if (["5258", "6666"].includes(reference)) {
+      assert.equal(prepared.status, "ready", reference);
+      assert.match(general, /H4\.5FTS5/u, reference);
+      assert.doesNotMatch(general, /H4\.5FTS6|H4\.5FT6/u, reference);
+    } else if (["6863", "6852", "6103"].includes(reference)) {
       assert.equal(prepared.status, "ready", reference);
       const model = prepared.product.spec.Modelo;
       const brand = prepared.product.spec.Marca;
@@ -120,7 +124,8 @@ test("reconcilia 19 textos de unidades usadas con evidencia técnica propia y si
 
 test("evita publicar el año, la marca, la motorización o el mástil de otra variante", () => {
   const general = (reference: string): string => prepareSourceProduct(find(reference)).product.description_general ?? "";
-  assert.match(general("6666"), /H4\.5FTS5.*H4\.5FTS6.*H4\.5FT6/su);
+  assert.match(general("6666"), /H4\.5FTS5.*2019.*4\.800 mm.*4\.263 horas/su);
+  assert.doesNotMatch(general("6666"), /H4\.5FTS6|H4\.5FT6/u);
   assert.match(general("6665"), /GLP.*2022.*6\.000 mm.*d[uú]plex/su);
   assert.match(general("6863"), /ERP16VT MWB/su);
   assert.doesNotMatch(general("6863"), /ERP16VF \(MWB\)/su);

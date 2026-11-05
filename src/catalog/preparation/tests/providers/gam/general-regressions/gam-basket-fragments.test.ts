@@ -54,12 +54,15 @@ test("ninguna cifra se reconstruye con trozos sueltos, unidades supuestas o ruid
   }
 });
 
-test("conserva las dimensiones irrecuperables y exige revisión sin inventar medidas", () => {
-  for (const code of ["6642", "6669"]) {
+test("conserva el origen corrupto y recupera las dos medidas solo con evidencia de modelo", () => {
+  for (const [code, expected] of [["6642", "3,98 x 1,83 m"], ["6669", "1,84 x 0,42 m"]] as const) {
     const record = reference(code);
     assert.deepEqual(resolve(record), { status: "not_observed", value: null }, code);
-    assert.equal(prepareProduct(record, catalog).status, "review", code);
-    assert.ok(prepareProduct(record, catalog).issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")), code);
+    const prepared = prepareProduct(record, catalog);
+    assert.equal(prepared.status, "ready", code);
+    assert.equal(prepared.product.spec["Dimensiones Cesta"], expected, code);
+    const invalid = { ...record, specs: { ...record.specs, Modelo: "OTRO" } };
+    assert.equal(prepareProduct(invalid, catalog).status, "review", code);
   }
   const base = reference("6139");
   assert.deepEqual(resolve({ ...base, specs: { ...base.specs, "Dimensiones de la cesta": "2 x 1 m" } }),

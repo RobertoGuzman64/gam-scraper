@@ -1,4 +1,4 @@
-import { phase2BasketCorrections, phase2BasketReviewReferences } from "../../../support/phase2-basket-dimensions.js";
+import { phase2BasketCorrections, phase4VerifiedBasketCorrections } from "../../../support/phase2-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -26,13 +26,13 @@ test("fase 2: prepara 24 medidas verificables de forma idéntica a su evidencia 
   }
 });
 
-test("las dimensiones todavía indeterminadas conservan literal y exigen revisión", () => {
-  for (const reference of phase2BasketReviewReferences) {
+test("las dos dimensiones adicionales acreditadas se recuperan sin modificar el original", () => {
+  for (const [reference, dimensions] of phase4VerifiedBasketCorrections) {
     const record = original(reference);
     const result = prepareSourceProduct(record);
-    assert.equal(result.product.spec["Dimensiones Cesta"], record.specs?.["Dimensiones Cesta"], reference);
-    assert.equal(result.status, "review", reference);
-    assert.ok(result.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")), reference);
+    assert.equal(result.product.spec["Dimensiones Cesta"], dimensions, reference);
+    assert.equal(result.status, "ready", reference);
+    assert.notEqual(result.product.spec["Dimensiones Cesta"], record.specs?.["Dimensiones Cesta"], reference);
   }
 });
 

@@ -56,7 +56,7 @@ test("GAM: categorías residuales solo bloquean cuando falta evidencia de origen
   }
 });
 
-test("GAM: las diez condiciones sin confirmación continúan sin asignarse", () => {
+test("GAM: las seis condiciones sin confirmación continúan sin asignarse", () => {
   for (const code of unconfirmedConditionCodes) {
     const prepared = prepareCached(reference(code), catalog);
     assert.equal(prepared.product.condition, null, code);

@@ -12,7 +12,8 @@ const generalCategorySlugs = new Set([
   "manipulacion-elevacion-cargas",
   "manipulacion-elevacion-cargas-segunda-mano",
   "maquinaria-construccion-segunda-mano",
-  "vehiculos-segunda-mano"
+  "vehiculos-segunda-mano",
+  "casetas-contenedores-vallas-segunda-mano"
 ]);
 
 const sourceRoute = (source: ProductRecord): string | null => {
@@ -151,6 +152,28 @@ const commercialSlug = (source: ProductRecord, condition: ImportCandidate["condi
     if (condition === "Segunda_Mano" && source.categoryKey === "maquinaria" &&
       route === "furgonetas-electricas-de-ocasion" &&
       /\bcuatriciclo electrico\b/.test(`${short} ${general}`)) return "vehiculos-segunda-mano";
+    if (condition === "Segunda_Mano" && source.categoryKey === "manutencion" && route === "barredoras" &&
+      source.reference === "6653" && source.externalReference === "EG-00032" &&
+      verified(source, /^magnum$/, "eureka") && title === "barredora eureka magnum" &&
+      /\beureka magnum de segunda mano\b/.test(short) && /\bventa barredora\b/.test(short) &&
+      fold(String(source.specs?.["Nº de serie"] ?? "")) === "90000126/a1006z") {
+      return "maquinaria-construccion-segunda-mano";
+    }
+    if (condition === "Segunda_Mano" && source.categoryKey === "otros" &&
+      route === "carro-de-equipaje" && /^carro de arrastre 2000kg knott krv20$/.test(title) &&
+      fold(source.brand ?? "") === "knott" && fold(source.model ?? "") === "krv20" &&
+      fold(String(source.specs?.["Marca"] ?? "")) === "knott" &&
+      fold(String(source.specs?.["Modelo"] ?? "")) === "krv20" &&
+      /^carro de arrastre knott krv20\b/.test(short) &&
+      typeof source.specs?.["Nº de serie"] === "string") {
+      return "manipulacion-elevacion-cargas-segunda-mano";
+    }
+    if (condition === "Segunda_Mano" && source.categoryKey === "otros" &&
+      route === "estructuras" && /^modulo bano (?:unitario|doble wc)$/.test(title) &&
+      fold(source.shortDescription ?? "") === title &&
+      fold(source.longDescription ?? "") === title) {
+      return "casetas-contenedores-vallas-segunda-mano";
+    }
   }
   if (source.providerId === "gomariz" && condition === "Segunda_Mano") {
     if (route === "camion/camion-porta-maquinaria" &&
@@ -168,10 +191,18 @@ const commercialSlug = (source: ProductRecord, condition: ImportCandidate["condi
       return "manipulacion-elevacion-cargas-segunda-mano";
     }
   }
-  if (source.providerId === "mercaeleva" && condition === "Segunda_Mano" &&
-    route === "for-sale/machine" && /\bcamion porta-vehiculos\b/.test(title) &&
-    /\bcamion porta-vehiculos\b/.test(general) &&
-    fold(source.brand ?? "") === "iveco") return "vehiculos-segunda-mano";
+  if (source.providerId === "mercaeleva" && condition === "Segunda_Mano" && route === "for-sale/machine") {
+    if (/\bcamion porta-vehiculos\b/.test(title) &&
+      /\bcamion porta-vehiculos\b/.test(general) &&
+      fold(source.brand ?? "") === "iveco") return "vehiculos-segunda-mano";
+    if (source.reference === "M294-4678" && source.categoryKey === "venta" &&
+      title === "modulo caseta diafana con aire 6m x 2,35m" &&
+      /\bpuerta en lateral \(lado corto\) cbox - caseta6$/.test(general) &&
+      fold(String(source.specs?.["Título adicional"] ?? "")) === title &&
+      source.image?.startsWith("https://files2.machineric.com/clients/mercaeleva/machines/M294-4678/public/") === true) {
+      return "casetas-contenedores-vallas-segunda-mano";
+    }
+  }
   return null;
 };
 

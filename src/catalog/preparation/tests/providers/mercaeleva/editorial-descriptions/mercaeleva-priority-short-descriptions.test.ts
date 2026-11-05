@@ -69,7 +69,7 @@ test("las reglas prioritarias no afectan a otras fichas de Mercaeleva", () => {
 
 
 test("las discrepancias de familia y versión siguen notificadas sin contaminar las cortas", () => {
-  for (const reference of ["M838-0666", "M969-4655", "M547-2372"]) {
+  for (const reference of ["M838-0666", "M969-4655"]) {
     const source = find(reference);
     const prepared = prepareSourceProduct(source);
     assert.equal(prepared.status, "review", reference);
@@ -78,5 +78,8 @@ test("las discrepancias de familia y versión siguen notificadas sin contaminar 
     assert.deepEqual(prepared.product.spec, source.specs, reference);
     assert.doesNotMatch(prepared.product.description ?? "", /SII|SIII|transpalet/iu, reference);
   }
-  assert.match(prepareSourceProduct(find("M547-2372")).product.description ?? "", /carretilla retr[aá]ctil el[eé]ctrica/iu);
+  const reach = prepareSourceProduct(find("M547-2372"));
+  assert.equal(reach.status, "ready");
+  assert.match(reach.product.description ?? "", /carretilla retr[aá]ctil el[eé]ctrica/iu);
+  assert.doesNotMatch(reach.product.description_general ?? "", /transpalet/iu);
 });

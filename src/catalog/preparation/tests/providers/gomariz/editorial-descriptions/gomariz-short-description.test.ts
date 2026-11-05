@@ -181,7 +181,7 @@ test("Gomariz: cubre los camiones cesta, camión y retroexcavadora con datos del
 });
 
 
-test("Gomariz: recupera las cortas pendientes con origen y medidas acreditadas, sin suprimir contradicciones", async () => {
+test("Gomariz: recupera cortas y reconcilia la motorización A14JE con evidencia individual", async () => {
   const original = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
   const references = Object.keys(gomarizPriorityShortEvidence);
   for (const reference of references) {
@@ -192,8 +192,9 @@ test("Gomariz: recupera las cortas pendientes con origen y medidas acreditadas, 
     assert.ok(text, reference);
     const prepared = prepareSourceProduct(source);
     assert.equal(prepared.product.description, text, reference);
+    const expectedGeneral = verifiedGomarizPriorityGeneral(source) ?? resolveGomarizIndividualizedGeneral(source) ?? resolveGomarizUnitSpecificGeneral(source) ?? source.longDescription;
     assert.equal(prepared.product.description_general,
-      verifiedGomarizPriorityGeneral(source) ?? resolveGomarizIndividualizedGeneral(source) ?? resolveGomarizUnitSpecificGeneral(source) ?? source.longDescription, reference);
+      reference === "BA1465" ? `${expectedGeneral} Año de fabricación de esta unidad: ${source.year}.` : expectedGeneral, reference);
     assert.deepEqual(prepared.product.spec, { ...source.specs, ...(source.year ? { "Año de fabricación": source.year } : {}), ...reconcileGomarizVerifiedPlatformHeight(source).specs }, reference);
     assert.equal(JSON.stringify(source), serialized, reference);
     const variants: readonly ProductRecord[] = [
@@ -216,6 +217,6 @@ test("Gomariz: recupera las cortas pendientes con origen y medidas acreditadas, 
   assert.deepEqual(affected.map((source) => source.reference).sort(), [...references].sort());
   const contradictory = original.products.find((product) => product.reference === "BA1465");
   assert.ok(contradictory);
-  assert.equal(prepareSourceProduct(contradictory).status, "review");
-  assert.match(prepareSourceProduct(contradictory).issues.join(" "), /Motorizaci[oó]n contradictoria/iu);
+  assert.equal(prepareSourceProduct(contradictory).status, "ready");
+  assert.equal(prepareSourceProduct(contradictory).issues.length, 0);
 });

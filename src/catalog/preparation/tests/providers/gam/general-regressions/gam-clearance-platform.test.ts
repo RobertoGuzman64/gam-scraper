@@ -50,7 +50,7 @@ test("las alturas de plataforma acreditadas no se confunden con altura de trabaj
     assert.equal(normalizeSpecsObject(prepared.product.spec).normalized["Altura plataforma (m)"], value, reference);
     assert.equal(prepared.product.spec["Altura de elevación (m)"], record.specs?.["Altura de elevación (m)"], reference);
     for (const [key, existing] of Object.entries(record.specs ?? {})) {
-      assert.deepEqual(prepared.product.spec[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : existing, `${reference}:${key}`);
+      assert.deepEqual(prepared.product.spec[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : key === "Dimensiones Cesta" && reference === "6669" ? "1,84 x 0,42 m" : existing, `${reference}:${key}`);
     }
     assert.deepEqual(record, original);
   }

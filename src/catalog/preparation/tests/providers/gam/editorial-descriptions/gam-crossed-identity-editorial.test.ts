@@ -1,3 +1,4 @@
+import { verifiedGamHysterH45fts5Editorial, reconcileGamVerifiedHysterH45fts5Title } from "../../../../reconciliation/gam-hyster-h45fts5.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -29,7 +30,8 @@ test("corrige descripciones cruzadas usando identidad y datos del anuncio acredi
     const evidence = resolveGamCrossedIdentityEditorial(record);
     assert.ok(evidence, reference);
     const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.product.description, evidence.short, reference);
+    assert.equal(prepared.product.description, ["6666", "5258"].includes(reference)
+      ? verifiedGamHysterH45fts5Editorial(record, reconcileGamVerifiedHysterH45fts5Title(record))?.short : evidence.short, reference);
     assert.notEqual(prepared.product.description, record.shortDescription, reference);
     const model = reference === "4029" ? "BCS S16H" : record.model;
     assert.ok(model && normalize(evidence.short).includes(normalize(model)), reference);
@@ -95,7 +97,8 @@ test("corrige resúmenes de unidades usadas sin inventar identidad ni variante",
     const evidence = resolveGamCrossedIdentityEditorial(record);
     assert.ok(evidence, reference);
     const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.product.description, evidence.short, reference);
+    assert.equal(prepared.product.description, ["6666", "5258"].includes(reference)
+      ? verifiedGamHysterH45fts5Editorial(record, reconcileGamVerifiedHysterH45fts5Title(record))?.short : evidence.short, reference);
     assert.notEqual(prepared.product.description, record.shortDescription, reference);
     assert.equal(evidence.general, null, reference);
     assert.equal(resolveGamCrossedIdentityEditorial({ ...record, providerId: "gomariz" }), null, reference);

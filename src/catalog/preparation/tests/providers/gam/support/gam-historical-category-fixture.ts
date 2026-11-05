@@ -18,5 +18,5 @@ export const categorySlug = (record: ProductRecord): string | null => {
 };
 
 export const unconfirmedConditionCodes = [
-  "6358", "6367", "6814", "6815", "6969", "6970", "6971", "6987", "6988", "6989"
+  "6969", "6970", "6971", "6987", "6988", "6989"
 ] as const;

@@ -81,6 +81,6 @@ test("Mercaeleva conserva el conflicto de M827 y resuelve el mástil MER0624", (
   for (const id of ["M294-4678", "M958-0132"]) {
     const prepared = prepareCached(reference(mercaelevaByReference, id), catalog);
     assert.equal(prepared.status, "ready");
-    assert.equal(prepared.product.condition, null);
+    assert.equal(prepared.product.condition, "Segunda_Mano");
   }
 });

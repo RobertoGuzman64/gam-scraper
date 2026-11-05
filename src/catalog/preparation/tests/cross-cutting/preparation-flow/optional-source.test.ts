@@ -19,15 +19,17 @@ const source = (provider: "gam" | "mercaeleva", reference: string): ProductRecor
 const radius = catalog.attributes.find((item) => item.name === "Radio de giro" && item.unit_option === "mm");
 assert.ok(radius);
 
-const unknownGam = ["6358", "6367", "6814", "6815", "6969", "6970", "6971", "6987", "6988", "6989"] as const;
+const documentedUsedGam = ["6358", "6367", "6814", "6815"] as const;
+const unknownGam = ["6969", "6970", "6971", "6987", "6988", "6989"] as const;
 
-test("diez publicaciones GAM sin estado comercial se preservan sin inferir nueva u ocasión", () => {
-  for (const reference of unknownGam) {
+test("diez publicaciones GAM conservan el original y cuatro acreditan ocasión por su origen", () => {
+  for (const reference of [...documentedUsedGam, ...unknownGam]) {
     const record = source("gam", reference);
     const prepared = prepareProduct(record, catalog);
     assert.equal(record.condition, null, reference);
     assert.equal(prepared.status, "ready", reference);
-    assert.equal(prepared.product.condition, null, reference);
+    assert.equal(prepared.product.condition,
+      documentedUsedGam.some((item) => item === reference) ? "Segunda_Mano" : null, reference);
     assert.equal(prepared.product.categorySellID, null, reference);
     assert.deepEqual(prepared.product.spec, {
       ...reconcileGamHorometer(record).specs,
@@ -37,13 +39,13 @@ test("diez publicaciones GAM sin estado comercial se preservan sin inferir nueva
   }
 });
 
-test("dos publicaciones Mercaeleva sin estado se conservan sin alterar especificaciones", () => {
+test("dos publicaciones Mercaeleva conservan especificaciones y reciben ocasión acreditada", () => {
   for (const reference of ["M294-4678", "M958-0132"]) {
     const record = source("mercaeleva", reference);
     const prepared = prepareProduct(record, catalog);
     assert.equal(record.condition, null, reference);
     assert.equal(prepared.status, "ready", reference);
-    assert.equal(prepared.product.condition, null, reference);
+    assert.equal(prepared.product.condition, "Segunda_Mano", reference);
     assert.deepEqual(prepared.product.spec, { ...record.specs,
       ...(reference === "M958-0132" ? { "Año de fabricación": "2004" } : {})
     }, reference);

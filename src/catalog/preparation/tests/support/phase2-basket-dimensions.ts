@@ -38,11 +38,11 @@ export const campaign2VerifiedBasketCorrections: ReadonlyMap<string, string> = n
   ["6171", "1,4 x 0,7 x 1,1 m"]
 ]);
 
-export const phase2BasketReviewReferences: ReadonlySet<string> = new Set([
-  "6642", "6669"
+export const phase4VerifiedBasketCorrections: ReadonlyMap<string, string> = new Map([
+  ["6642", "3,98 x 1,83 m"], ["6669", "1,84 x 0,42 m"]
 ]);
 
 export const phase2ExpectedSpecValue = (reference: string | null, key: string, original: unknown): unknown =>
   key === "Dimensiones Cesta" && reference !== null
-    ? campaign2VerifiedBasketCorrections.get(reference) ?? campaign1VerifiedBasketCorrections.get(reference) ?? phase2BasketCorrections.get(reference) ?? original
+    ? phase4VerifiedBasketCorrections.get(reference) ?? campaign2VerifiedBasketCorrections.get(reference) ?? campaign1VerifiedBasketCorrections.get(reference) ?? phase2BasketCorrections.get(reference) ?? original
     : key === "Capacidad de carga (kg)" && reference === "6625" ? "680 KG" : original;

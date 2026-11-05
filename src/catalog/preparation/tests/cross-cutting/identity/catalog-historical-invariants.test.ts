@@ -1,4 +1,4 @@
-import { phase2BasketReviewReferences } from "../../support/phase2-basket-dimensions.js";
+import { phase4VerifiedBasketCorrections } from "../../support/phase2-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -19,7 +19,7 @@ test("Las muestras de los tres proveedores preservan las reconciliaciones y bloq
   const batches = sources.map(({ products }) => prepareImportBatch(products, catalog));
 
   assert.deepEqual(batches.map(({ totals }) => totals), [
-    { ready: sources[0]!.products.length - 4, review: 4 },
+    { ready: sources[0]!.products.length - 2, review: 2 },
     { ready: sources[1]!.products.length, review: 0 },
     { ready: sources[2]!.products.length - 1, review: 1 }
   ]);
@@ -27,7 +27,7 @@ test("Las muestras de los tres proveedores preservan las reconciliaciones y bloq
   const all = batches.flatMap(({ products }) => products);
   assert.equal(all.length, sources.reduce((sum, source) => sum + source.productCount, 0));
   assert.equal(new Set(all.map(({ product }) => `${product.providerId}:${product.reference}`)).size, all.length);
-  assert.equal(all.filter(({ status }) => status === "ready").length, all.length - 5);
+  assert.equal(all.filter(({ status }) => status === "ready").length, all.length - 3);
   assert.ok(all.filter(({ status }) => status === "ready").every(({ issues }) => issues.length === 0));
 
   const get = (providerId: string, reference: string) => {
@@ -49,10 +49,10 @@ test("Las muestras de los tres proveedores preservan las reconciliaciones y bloq
   ]) {
     assert.equal(get("gam", reference).status, "ready", reference);
   }
-  for (const reference of phase2BasketReviewReferences) {
+  for (const [reference, dimensions] of phase4VerifiedBasketCorrections) {
     const result = get("gam", reference);
-    assert.equal(result.status, "review", reference);
-    assert.ok(result.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")), reference);
+    assert.equal(result.status, "ready", reference);
+    assert.equal(result.product.spec["Dimensiones Cesta"], dimensions, reference);
   }
   for (const reference of ["M062-8951", "M119-9334", "M582-1882"]) {
     assert.equal(get("mercaeleva", reference).status, "ready", reference);

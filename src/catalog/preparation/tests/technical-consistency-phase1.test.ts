@@ -88,7 +88,6 @@ test("Toyota 02-7FD18 conserva altura 4700 mm y corrige solo capacidad 1800 kg",
 
 test("Identidades y cantidades contradictorias sin evidencia siguen visibles", () => {
   for (const [reference, diagnosis] of [
-    ["6666", "Modelo contradictorio"], ["5258", "Modelo contradictorio"],
     ["2328", "Modelo contradictorio"]
   ] as const) {
     const prepared = prepareSourceProduct(source("gam", reference));

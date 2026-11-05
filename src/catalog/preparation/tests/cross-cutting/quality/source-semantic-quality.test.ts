@@ -4,6 +4,8 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { sourceSemanticQualityIssues } from "../../../source/semantic-quality.js";
+import { reconcileGomarizVerifiedElectricSemanticSource } from "../../../reconciliation/gomariz.js";
+import { reconcileMercaelevaVerifiedReachTruckFamily } from "../../../reconciliation/mercaeleva.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
 const gomariz = (await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json")).products;
@@ -20,20 +22,36 @@ const conflicts = ["BA1465", "M547-2372", "M838-0666", "M969-4655"] as const;
 const recordOf = (reference: string): ProductRecord =>
   find(reference.startsWith("M") ? mercaeleva : gomariz, reference);
 
-test("Las contradicciones reales se documentan por campo y fuerzan revisión sin reescribir la fuente", () => {
+test("Las contradicciones originales se conservan; solo dos se concilian con evidencia individual", () => {
   for (const reference of conflicts) {
     const record = recordOf(reference);
     const before = JSON.stringify(record);
     const findings = sourceSemanticQualityIssues(record);
     assert.equal(findings.length, 1, reference);
     const result = prepareSourceProduct(record);
-    assert.equal(result.status, "review", reference);
-    assert.ok(result.issues.includes(findings[0] ?? ""), reference);
+    const reconciled = reference === "BA1465" || reference === "M547-2372";
+    assert.equal(result.status, reconciled ? "ready" : "review", reference);
+    if (reconciled) {
+      assert.equal(result.issues.length, 0, reference);
+    } else {
+      assert.ok(result.issues.includes(findings[0] ?? ""), reference);
+    }
     assert.equal(result.product.reference, record.reference, reference);
     assert.equal(result.product.sourceUrl, record.url, reference);
     assert.deepEqual(result.product.spec, { ...record.specs, ...(record.providerId === "gomariz" && record.year ? { "Año de fabricación": record.year } : {}) }, reference);
     assert.equal(JSON.stringify(record), before, reference);
   }
+});
+
+test("las dos conciliaciones semánticas requieren la fuente íntegra y la variante exacta", () => {
+  const electric = recordOf("BA1465");
+  const reach = recordOf("M547-2372");
+  assert.notStrictEqual(reconcileGomarizVerifiedElectricSemanticSource(electric), electric);
+  assert.notStrictEqual(reconcileMercaelevaVerifiedReachTruckFamily(reach), reach);
+  const alteredElectric = { ...electric, specs: { ...electric.specs, Motor: "Diésel" } };
+  assert.strictEqual(reconcileGomarizVerifiedElectricSemanticSource(alteredElectric), alteredElectric);
+  const alteredReach = { ...reach, url: `${reach.url}?variant=2` };
+  assert.strictEqual(reconcileMercaelevaVerifiedReachTruckFamily(alteredReach), alteredReach);
 });
 
 test("Las alturas SS0507E ya resueltas por evidencia siguen aptas", () => {

@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { reconcileGamSourceIdentity } from "./gam-source-identity.js";
+import { reconcileGamVerifiedHysterH45fts5Title } from "./gam-hyster-h45fts5.js";
 import { gamElevationSourceIdentityConflict } from "../evidence/providers/gam/identity/elevation-identity.js";
 import { reconcileGamElevationEditorialIdentity } from "../evidence/providers/gam/editorial/elevation-editorial.js";
 import { reconcileGamOutdatedSourceTitle } from "../mapping/providers/gam/editorial-descriptions/editorial-titles.js";
@@ -29,6 +30,7 @@ import { reconcileGamVerifiedZeroSerial } from "../evidence/providers/gam/identi
 export const reconcileGamInitialIdentity = (record: ProductRecord): ProductRecord => reconcileGamVerifiedZeroSerial(record);
 
 export const reconcileGamForPreparation = (record: ProductRecord): ProductRecord => {
+  record = reconcileGamVerifiedHysterH45fts5Title(record);
 record = reconcileGamVerifiedGenie5390Editorial(reconcileGamOrderPickerEditorial(reconcileGamHandlingHeightEditorial(reconcileGamForkliftFuelEditorial(reconcileGamBtsEditorialSummary(reconcileGamElevationEditorialIdentity(reconcileGamOutdatedSourceTitle(record)))))));
   record = reconcileGamVerifiedXcmg12kDiesel(reconcileGamVerifiedXcmg0807acwLithium(reconcileGamVerifiedXcmg0810Crawler(reconcileGamVerifiedXcmg1823Model(reconcileGamVerifiedXcmg1523Model(reconcileGamUsedLiftEditorial(reconcileGamVerifiedHandlingEditorial(reconcileGamHandlingCapacityEditorial(reconcileGamVerifiedXga43kEditorial(record)))))))));
   record = reconcileGamVerifiedHysterSGlp(record);

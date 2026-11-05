@@ -17,3 +17,14 @@ export const reconcileMercaelevaCorroboratedCapacity = (record: ProductRecord): 
   const capacity = mercaelevaCorroboratedCapacity(record);
   return capacity === null ? record : { ...record, specs: { ...record.specs, "Capacidad máxima de elevación": `${capacity} kg` } };
 };
+
+export const reconcileMercaelevaVerifiedReachTruckFamily = (record: ProductRecord): ProductRecord => {
+  if (record.providerId !== "mercaeleva" || record.reference !== "M547-2372" ||
+    record.url !== "https://sales.mercaeleva.com/es/for-sale/machine/Toyota-6FBRE14-M547-2372" ||
+    record.brand !== "Toyota" || record.model !== "6FBRE14" ||
+    record.title !== "Toyota 6FBRE14 CARRETILLA ELEVADORA RETRACTIL 1350 KG" ||
+    record.specs?.Marca !== "Toyota" || record.specs.Modelo !== "6FBRE14" ||
+    record.specs["Artículo No."] !== "MER1123" || record.specs["Título adicional"] !== "CARRETILLA ELEVADORA RETRACTIL 1350 KG" ||
+    record.longDescription !== "Ref. MER1123 TRANSPALET ELECTRICO 1350 KG ALTURA DE TRABAJO 6.500 mm TOYOTA 6FBRE14 HOURAS 14696 AÑO DE FABRICACCION 2000") return record;
+  return { ...record, longDescription: "Ref. MER1123 CARRETILLA RETRACTIL ELECTRICA 1350 KG ALTURA DE ELEVACION 6.500 mm TOYOTA 6FBRE14 HORAS 14696 AÑO DE FABRICACION 2000" };
+};

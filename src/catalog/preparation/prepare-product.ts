@@ -11,9 +11,10 @@ import { resolveCommercialCondition } from "./condition.js";
 import type { ImportCandidate, ImportCatalog } from "../legacy-export/contracts.js";
 import type { PreparedProduct } from "./contracts.js";
 import { reconcileGamInitialIdentity, reconcileGamForPreparation } from "./reconciliation/gam.js";
+import { verifiedGamHysterH45fts5Editorial } from "./reconciliation/gam-hyster-h45fts5.js";
 import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "./evidence/providers/mercaeleva/verified-platform-source-specs.js";
-import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation, reconcileMercaelevaCorroboratedCapacity } from "./reconciliation/mercaeleva.js";
-import { reconcileGomarizVerifiedPlatformHeight } from "./reconciliation/gomariz.js";
+import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation, reconcileMercaelevaCorroboratedCapacity, reconcileMercaelevaVerifiedReachTruckFamily } from "./reconciliation/mercaeleva.js";
+import { reconcileGomarizVerifiedPlatformHeight, reconcileGomarizVerifiedElectricSemanticSource } from "./reconciliation/gomariz.js";
 import { reconcileGamCorroboratedLoadCapacity } from "./reconciliation/gam-capacity.js";
 import { applyReconciledTechnicalSpecs } from "./reconciliation/technical-specifications.js";
 import { reconcileGamBasketDimensions } from "./reconciliation/gam-basket-dimensions.js";
@@ -31,7 +32,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const sourceUnitRecord = record;
   const sourceEditorial = captureSourceEditorialEvidence(record);
   const publicationConflict = publicationConflictForMercaeleva(record);
-  const semanticIssues = sourceSemanticQualityIssues(record);
+  const semanticIssues = sourceSemanticQualityIssues(reconcileGomarizVerifiedElectricSemanticSource(reconcileMercaelevaVerifiedReachTruckFamily(record)));
+  record = reconcileMercaelevaVerifiedReachTruckFamily(record);
   record = reconcileGamInitialIdentity(record);
   record = reconcileGamVerifiedListingIdentity(record);
   record = reconcileGamVerifiedModelIdentity(record);
@@ -77,6 +79,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     sourceFuelSpecs, issues.length === 0
   );
   issues.push(...preparedTechnicalConsistencyIssues(record, reconciledSpecs));
+  const hysterEditorial = verifiedGamHysterH45fts5Editorial(sourceUnitRecord, record);
   const product: ImportCandidate = {
     providerId: record.providerId,
     sourceUrl: record.url,
@@ -88,8 +91,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     condition,
     price,
     description_title: editorial.title,
-    description: preparedGamSourceCapacityShort(editorialRecord, record, descriptions.short),
-    description_general: reconcileGamVerifiedEditorialCoherence(record, descriptions.general),
+    description: hysterEditorial?.short ?? preparedGamSourceCapacityShort(editorialRecord, record, descriptions.short),
+    description_general: hysterEditorial?.general ?? reconcileGamVerifiedEditorialCoherence(record, descriptions.general),
     image: images[0] ?? null,
     images,
     spec: reconciledSpecs,

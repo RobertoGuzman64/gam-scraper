@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 import { reconcileGamSourceIdentity } from "../reconciliation/gam-source-identity.js";
+import { reconcileGamVerifiedHysterH45fts5Title } from "../reconciliation/gam-hyster-h45fts5.js";
 import { reconcileGamSourceCapacitySummary } from "../reconciliation/gam-source-capacity-summary.js";
 import { reconcileGamVerifiedBasketSizes } from "../reconciliation/gam-verified-basket-sizes.js";
 
@@ -68,13 +69,14 @@ test("Dos capacidades publicadas se corrigen preservando la descripción larga a
   }
 });
 
-test("Los casos de identidad divergente permanecen en revisión cuando el texto largo contradice la hipótesis", () => {
+test("Las dos identidades Hyster se concilian por unidad sin modificar los originales", () => {
   for (const reference of ["6666", "5258"]) {
     const record = source(reference);
     const original = JSON.stringify(record);
     const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.status, "review", reference);
-    assert.ok(prepared.issues.some((issue) => issue.startsWith("Modelo contradictorio")), reference);
+    assert.equal(prepared.status, "ready", reference);
+    assert.equal(prepared.product.spec.Modelo, "H4.5FTS5", reference);
+    assert.ok(prepared.product.title?.includes("H4.5FTS5"), reference);
     assert.equal(JSON.stringify(record), original, reference);
   }
 });
@@ -85,6 +87,15 @@ test("Los reconciliadores rechazan fuentes o identidades manipuladas", () => {
   assert.strictEqual(reconcileGamVerifiedBasketSizes(alteredUrl), alteredUrl);
   const alteredModel = { ...basket, specs: { ...basket.specs, Modelo: "VARIANTE DIFERENTE" } };
   assert.strictEqual(reconcileGamVerifiedBasketSizes(alteredModel), alteredModel);
+
+  for (const reference of ["5258", "6666"]) {
+    const record = source(reference);
+    const wrongUrl = { ...record, url: `${record.url}?version=2` };
+    assert.strictEqual(reconcileGamVerifiedHysterH45fts5Title(wrongUrl), wrongUrl);
+    assert.equal(prepareSourceProduct(wrongUrl).status, "review", reference);
+    const wrongSerial = { ...record, specs: { ...record.specs, "Nº de serie": "OTRA SERIE" } };
+    assert.strictEqual(reconcileGamVerifiedHysterH45fts5Title(wrongSerial), wrongSerial);
+  }
 
   const identity = source("3132");
   const alteredIdentity = { ...identity, shortDescription: "Resumen genérico" };

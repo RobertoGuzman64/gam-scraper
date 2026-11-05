@@ -1,5 +1,5 @@
 import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
-import { campaign1VerifiedBasketCorrections, campaign2VerifiedBasketCorrections } from "../../../support/phase2-basket-dimensions.js";
+import { campaign1VerifiedBasketCorrections, campaign2VerifiedBasketCorrections, phase4VerifiedBasketCorrections } from "../../../support/phase2-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { requireProductReference } from "../../../cross-cutting/support/require-product-reference.js";
@@ -21,12 +21,12 @@ const resolved = (record: ProductRecord, name: string) => resolveAttribute(recor
 
 const baskets = ["6607", "6630", "6632", "6631", "6614", "6616", "6615", "6642", "6625", "6669", "6617", "6626"] as const;
 
-test("fragmentos de cesta irrecuperables no se convierten en dimensiones inventadas", () => {
+test("las cestas corruptas solo se recuperan con evidencias acreditadas", () => {
   for (const id of baskets) {
     const record = reference(id);
     const prepared = prepareProduct(record, catalog);
     assert.deepEqual(resolved(record, "Dimensiones de la cesta"), { status: "not_observed", value: null }, id);
-    const verified = campaign2VerifiedBasketCorrections.get(id) ?? campaign1VerifiedBasketCorrections.get(id);
+    const verified = phase4VerifiedBasketCorrections.get(id) ?? campaign2VerifiedBasketCorrections.get(id) ?? campaign1VerifiedBasketCorrections.get(id);
     assert.equal(prepared.status, verified ? "ready" : "review", id);
     if (!verified) assert.ok(prepared.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")), id);
     assert.equal(prepared.product.spec["Dimensiones Cesta"], verified ?? record.specs?.["Dimensiones Cesta"], id);

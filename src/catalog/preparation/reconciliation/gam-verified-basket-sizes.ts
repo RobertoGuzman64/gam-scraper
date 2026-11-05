@@ -2,6 +2,10 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { fold } from "../mapping/attribute-utils.js";
 
 const verified = [
+  { references: ["6642"], brand: "MAGNI", model: "DS1523RTP", original: "4 81 88x1 metros", dimensions: "3,98 x 1,83 m",
+    source: "https://online.gamrentals.com/en/scissor-lift-diesel/6886-2023-magni-ds1523rtp" },
+  { references: ["6669"], brand: "BERG HORTICULTURA", model: "STAR 300", original: "1 42 91X0 metros", dimensions: "1,84 x 0,42 m",
+    source: "https://pdf.agriexpo.online/es/pdf-en/berg-hortimotive/berg-hortimotive-benomic-star/180902-19591.html" },
   { references: ["6607"], brand: "GENIE", model: "Z45/25J", original: "1 76 83X0 metros", dimensions: "1,83 x 0,76 m",
     source: "https://www.genielift.com/docs/default-source/product-specifications/articulated-boom-lift/es-mx/especificaciones-tecnicas-z-45-25j-rt.pdf" },
   { references: ["6630", "6632"], brand: "HAULOTTE", model: "HA20PX", original: "1 8 8 x 0 metros", dimensions: "1,8 x 0,8 m",

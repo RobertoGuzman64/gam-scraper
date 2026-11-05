@@ -81,7 +81,7 @@ test("conserva contradicciones técnicas y confirma los tipos documentados", () 
     const record = mercaeleva.find((item) => item.reference === id);
     assert.ok(record);
     assert.equal(prepareCached(record, catalog).status, "ready");
-    assert.equal(prepareCached(record, catalog).product.condition, null);
+    assert.equal(prepareCached(record, catalog).product.condition, "Segunda_Mano");
   }
   const height = mercaeleva.find((record) => record.reference === "M486-0114");
   assert.ok(height);

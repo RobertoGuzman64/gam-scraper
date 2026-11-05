@@ -15,10 +15,15 @@ export const gamConditionEvidence = (record: ProductRecord): { readonly isNew: b
   const normalizedModel = typeof model === "string" ? fold(model) : "";
   const contradictoryUsedTitle = record.providerId === "gam" && record.condition === "Nuevo" &&
     /\b(?:de )?segunda mano\b/.test(fold(record.title ?? ""));
-  const documentedUsed = record.providerId === "gam" && gamCategory === "manutencion" && gamPath === "barredoras" &&
+  const documentedUsedSweeper = record.providerId === "gam" && gamCategory === "manutencion" && gamPath === "barredoras" &&
     /\bbarredora\b/.test(fold(record.title ?? "")) && normalizedModel.length >= 4 &&
     fold(record.title ?? "").includes(normalizedModel) && short.includes(normalizedModel) &&
     /\bde segunda mano\b.*\bventa\b/.test(short) &&
     !/\b(?:nuev[oa]s?|sin estrenar)\b/.test(short);
-  return { isNew: gamNewSection, isUsed: gamUsedSection || documentedUsed || contradictoryUsedTitle, documentedUsed };
+  const documentedUsedOther = record.providerId === "gam" && gamCategory === "otros" &&
+    ((gamPath === "carro-de-equipaje" && /^carro de arrastre\b/.test(fold(record.title ?? ""))) ||
+      (gamPath === "estructuras" && /^modulo bano\b/.test(fold(record.title ?? ""))));
+  const documentedUsed = documentedUsedSweeper || documentedUsedOther;
+  return { isNew: gamNewSection,
+    isUsed: gamUsedSection || documentedUsed || contradictoryUsedTitle, documentedUsed };
 };
