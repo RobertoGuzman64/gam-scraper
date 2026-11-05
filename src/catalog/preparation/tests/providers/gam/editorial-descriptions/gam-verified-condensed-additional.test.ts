@@ -45,7 +45,9 @@ test("aplica síntesis editorial contrastada únicamente a veinte fichas GAM", (
       assert.equal(prepared.reference, record.reference);
       assert.equal(prepared.sourceUrl, record.url);
       for (const [key, value] of Object.entries(record.specs ?? {})) {
-        assert.equal(prepared.spec[key], value, `${record.reference}: ${key}`);
+        const expectedValue: unknown = key === "Dimensiones Cesta" && ["6874", "6185", "6188", "6168"].includes(record.reference ?? "")
+          ? "1,4 x 0,7 x 1,1 m" : value;
+        assert.equal(prepared.spec[key], expectedValue, `${record.reference}: ${key}`);
       }
     }
     assert.equal(JSON.stringify(record), source, record.reference ?? "");

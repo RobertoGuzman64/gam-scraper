@@ -1,3 +1,4 @@
+import { phase2BasketReviewReferences } from "../../support/phase2-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -18,7 +19,7 @@ test("Las muestras de los tres proveedores preservan las reconciliaciones y bloq
   const batches = sources.map(({ products }) => prepareImportBatch(products, catalog));
 
   assert.deepEqual(batches.map(({ totals }) => totals), [
-    { ready: sources[0]!.products.length - 10, review: 10 },
+    { ready: sources[0]!.products.length - 25, review: 25 },
     { ready: sources[1]!.products.length, review: 0 },
     { ready: sources[2]!.products.length - 1, review: 1 }
   ]);
@@ -26,7 +27,7 @@ test("Las muestras de los tres proveedores preservan las reconciliaciones y bloq
   const all = batches.flatMap(({ products }) => products);
   assert.equal(all.length, sources.reduce((sum, source) => sum + source.productCount, 0));
   assert.equal(new Set(all.map(({ product }) => `${product.providerId}:${product.reference}`)).size, all.length);
-  assert.equal(all.filter(({ status }) => status === "ready").length, all.length - 11);
+  assert.equal(all.filter(({ status }) => status === "ready").length, all.length - 26);
   assert.ok(all.filter(({ status }) => status === "ready").every(({ issues }) => issues.length === 0));
 
   const get = (providerId: string, reference: string) => {
@@ -43,10 +44,15 @@ test("Las muestras de los tres proveedores preservan las reconciliaciones y bloq
 
   for (const reference of [
     "5710", "2737", "2738", "3130", "3131", "2071", "3134", "2240", "6723", "2211",
-    "6702", "6272", "2237", "6834", "6887", "4004", "6622", "4750", "4802", "4751",
+    "6702", "6272", "2237", "6834", "6887", "4004", "4750", "4802", "4751",
     "4737", "4736", "4752", "2072", "2073", "6236", "2314", "2313", "2312"
   ]) {
     assert.equal(get("gam", reference).status, "ready", reference);
+  }
+  for (const reference of phase2BasketReviewReferences) {
+    const result = get("gam", reference);
+    assert.equal(result.status, "review", reference);
+    assert.ok(result.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")), reference);
   }
   for (const reference of ["M062-8951", "M119-9334", "M582-1882"]) {
     assert.equal(get("mercaeleva", reference).status, "ready", reference);

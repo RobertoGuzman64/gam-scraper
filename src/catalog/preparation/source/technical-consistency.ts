@@ -1,5 +1,6 @@
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 import { fold, numberToken } from "../mapping/attribute-utils.js";
+import { gamUnreconciledBasketIssue } from "../reconciliation/gam-basket-dimensions.js";
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 const modelToken = (value: string): string => fold(value).replace(/[^a-z0-9]/gu, "");
@@ -98,7 +99,8 @@ export const preparedTechnicalConsistencyIssues = (record: ProductRecord, specs:
     gamMotorIssue(specs),
     gamBrandIssue(record, specs),
     gamModelIssue(record, specs),
-    gamCapacityIssue(record, specs)
+    gamCapacityIssue(record, specs),
+    gamUnreconciledBasketIssue(record, specs)
   ];
   return issues.filter((issue): issue is string => issue !== null);
 };

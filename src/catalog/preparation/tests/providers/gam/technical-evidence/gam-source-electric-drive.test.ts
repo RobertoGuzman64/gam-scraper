@@ -19,7 +19,8 @@ test("recupera la motorización eléctrica afirmada por una fuente inequívoca s
     assert.equal(prepared.product.spec["Motorización"], "Eléctrico", reference);
     assert.equal(prepared.status, "ready", reference);
     for (const [key, value] of Object.entries(source.specs ?? {})) {
-      assert.deepEqual(prepared.product.spec[key], value, `${reference}: ${key}`);
+      const expected = key === "Dimensiones Cesta" && reference === "4738" ? "2,27 x 1,12 m" : value;
+      assert.deepEqual(prepared.product.spec[key], expected, `${reference}: ${key}`);
     }
     assert.deepEqual(source, original);
   }

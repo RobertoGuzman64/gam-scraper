@@ -30,7 +30,9 @@ test("recupera seis alcances laterales CTE como alcance horizontal normalizado",
     assert.equal(normalized.normalized["Alcance horizontal (m)"], value, reference);
     assert.ok(!normalized.unknownKeys.includes("Alcance horizontal (m)"));
     for (const [key, previousValue] of Object.entries(record.specs ?? {})) {
-      assert.deepEqual(prepared.product.spec[key], previousValue, `${reference}: ${key}`);
+      const expected = key === "Dimensiones Cesta" && ["4740", "4741", "4742", "4743", "4745"].includes(reference)
+        ? "2,27 x 1,12 m" : previousValue;
+      assert.deepEqual(prepared.product.spec[key], expected, `${reference}: ${key}`);
     }
     assert.deepEqual(record, original, reference);
   }
@@ -46,7 +48,9 @@ test("recupera neumáticos no marcantes XCMG acreditados", () => {
     assert.equal(normalized.normalized["Neumáticos"], "No marcantes", reference);
     assert.ok(!normalized.unknownKeys.includes("Neumáticos"));
     for (const [key, previousValue] of Object.entries(record.specs ?? {})) {
-      assert.deepEqual(prepared.product.spec[key], previousValue, `${reference}: ${key}`);
+      const expected = key === "Dimensiones Cesta" && ["4740", "4741", "4742", "4743", "4745"].includes(reference)
+        ? "2,27 x 1,12 m" : previousValue;
+      assert.deepEqual(prepared.product.spec[key], expected, `${reference}: ${key}`);
     }
     assert.deepEqual(record, original, reference);
   }

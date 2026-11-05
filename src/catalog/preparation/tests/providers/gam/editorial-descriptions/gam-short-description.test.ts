@@ -68,7 +68,11 @@ test("GAM: resume exclusivamente fichas seguras sin retirar cifras de la descrip
         ...(record.reference === "4012" ? { "Depósito de solución": 218, "Depósito de recuperación": 237 } : {}),
         ...(record.reference === "2370" ? { "Voltaje batería (V)": "24 V", "Capacidad de la batería (Ah)": "150 Ah" } : {})
       };
-      for (const [key, value] of Object.entries(expectedSpecs)) assert.deepEqual(prepared.product.spec[key], value, `${record.reference}: ${key}`);
+      for (const [key, value] of Object.entries(expectedSpecs)) {
+        const expectedValue: unknown = key === "Dimensiones Cesta" && ["6873", "6874"].includes(record.reference ?? "")
+          ? "1,4 x 0,7 x 1,1 m" : value;
+        assert.deepEqual(prepared.product.spec[key], expectedValue, `${record.reference}: ${key}`);
+      }
       assert.equal(prepared.product.reference, record.reference);
       assert.equal(prepared.product.sourceUrl, record.url);
     }

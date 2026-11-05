@@ -25,7 +25,8 @@ test("recupera solo los sistemas de estabilización declarados para la variante 
     assert.equal(result.product.spec["Nivelación automática"], leveling || undefined, reference);
     assert.equal(result.product.spec["Estabilizadores hidráulicos"], stabilizers || undefined, reference);
     for (const [key, value] of Object.entries(source.specs ?? {})) {
-      assert.deepEqual(result.product.spec[key], value, `${reference}: ${key}`);
+      const expected = key === "Dimensiones Cesta" && reference === "6167" ? "1,4 x 0,7 x 1,1 m" : value;
+      assert.deepEqual(result.product.spec[key], expected, `${reference}: ${key}`);
     }
     assert.deepEqual(source, original);
   }

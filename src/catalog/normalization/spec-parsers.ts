@@ -106,14 +106,21 @@ export type DimensionRect = {
 };
 
 export const parseDimensionRect = (v: unknown): DimensionRect | null => {
-  if (v === null || v === undefined || v === "") return null;
-  const nums = String(v)
-    .toLowerCase()
-    .replace(/[^\dx]/g, "")
-    .split("x")
-    .map((n) => parseNumber(n));
-  if (nums.length < 2) return null;
-  return { ancho: nums[0] ?? null, largo: nums[1] ?? null };
+  if (typeof v !== "string") return null;
+  const matched = v.trim().match(/^(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*(mm|cm|m|metros?)(?:\s+metros?)?$/iu);
+  if (!matched?.[1] || !matched[2] || !matched[3]) return null;
+  const unit = matched[3].toLowerCase();
+  const factor = unit === "mm" ? 1 : unit === "cm" ? 10 : 1000;
+  const parsePart = (part: string): number | null => {
+    const numeric = factor === 1 && /^\d{1,3}\.\d{3}$/.test(part)
+      ? Number(part.replace(".", "")) : Number(part.replace(",", "."));
+    const converted = numeric * factor;
+    return Number.isFinite(converted) && converted > 0 && converted <= 20000
+      ? Math.round(converted * 1000) / 1000 : null;
+  };
+  const ancho = parsePart(matched[1]);
+  const largo = parsePart(matched[2]);
+  return ancho !== null && largo !== null ? { ancho, largo } : null;
 };
 
 export type Battery = {

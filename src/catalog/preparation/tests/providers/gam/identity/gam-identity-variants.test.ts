@@ -93,8 +93,8 @@ test("GAM: bloquea la identidad cruzada de 6622 aunque el modelo de ficha tenga 
   assert.equal(gamElevationIdentityConflict(product), true);
   assert.deepEqual(resolvedModel(product), { status: "rejected", value: null });
   const prepared = prepareProduct(product, catalog);
-  assert.equal(prepared.status, "ready");
-  assert.deepEqual(prepared.issues, []);
+  assert.equal(prepared.status, "review");
+  assert.ok(prepared.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")));
   assert.ok(model);
   assert.equal(prepared.product.attributes.some((attribute) => attribute.attributeID === model.id), true);
   assert.equal(prepared.product.reference, "6622");

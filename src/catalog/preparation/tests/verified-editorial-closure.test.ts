@@ -37,8 +37,12 @@ test("La fase 163 acredita veintisiete mejoras de referencias canónicas diferen
     const original = JSON.stringify(record);
     const prepared = prepareSourceProduct(record);
     assert.equal(JSON.stringify(record), original, identity);
-    assert.equal(prepared.status, "ready", identity);
-    assert.deepEqual(prepared.issues, [], identity);
+    assert.equal(prepared.status, identity === "gam:6631" ? "review" : "ready", identity);
+    if (identity === "gam:6631") {
+      assert.ok(prepared.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")));
+    } else {
+      assert.deepEqual(prepared.issues, [], identity);
+    }
     assert.equal(prepared.product.sourceUrl, verified.sourceUrl, identity);
     assert.equal(prepared.product.description_general, verified.general, identity);
     assert.ok(verified.verificationUrl.startsWith("https://"), identity);

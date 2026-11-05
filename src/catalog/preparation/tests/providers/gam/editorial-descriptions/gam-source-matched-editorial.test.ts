@@ -1,3 +1,4 @@
+import { phase2ExpectedSpecValue } from "../../../support/phase2-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -33,7 +34,9 @@ test("las redacciones verificadas preservan el original y las especificaciones d
     assert.ok(record.longDescription && result.description_general.length < record.longDescription.length / 2, reference);
     assert.equal(JSON.stringify(record), initial, reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      const expected = reference === "2016" && key === "Capacidad de carga (kg)" ? "1800 KG" : value;
+      const expected = reference === "2016" && key === "Capacidad de carga (kg)"
+        ? "1800 KG"
+        : phase2ExpectedSpecValue(reference, key, value);
       assert.equal(result.spec[key], expected, `${reference}: ${key}`);
     }
   }
@@ -69,7 +72,9 @@ test("las fichas adicionales conservan identidad, especificaciones y contenido i
     assert.notEqual(result.description_general, record.longDescription, reference);
     assert.equal(JSON.stringify(record), original, reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      const expected = reference === "2016" && key === "Capacidad de carga (kg)" ? "1800 KG" : value;
+      const expected = reference === "2016" && key === "Capacidad de carga (kg)"
+        ? "1800 KG"
+        : phase2ExpectedSpecValue(reference, key, value);
       assert.equal(result.spec[key], expected, `${reference}: ${key}`);
     }
     if (revisedShorts.has(reference)) assert.ok(result.description && !result.description.includes("➨"), reference);

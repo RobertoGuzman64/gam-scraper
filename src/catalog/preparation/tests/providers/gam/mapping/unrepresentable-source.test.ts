@@ -24,7 +24,8 @@ test("fragmentos de cesta irrecuperables no se convierten en dimensiones inventa
     const record = reference(id);
     const prepared = prepareProduct(record, catalog);
     assert.deepEqual(resolved(record, "Dimensiones de la cesta"), { status: "not_observed", value: null }, id);
-    assert.equal(prepared.status, "ready", id);
+    assert.equal(prepared.status, "review", id);
+    assert.ok(prepared.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")), id);
     assert.equal(prepared.product.spec["Dimensiones Cesta"], record.specs?.["Dimensiones Cesta"], id);
     assert.equal(prepared.product.attributes.some((item) => item.attributeID === attribute("Dimensiones de la cesta").id), false, id);
   }
@@ -36,7 +37,8 @@ test("las ternas con unidad incorrecta y el giro direccional quedan en su fuente
     const prepared = prepareProduct(record, catalog);
     assert.deepEqual(resolved(record, "Dimensiones de la cesta"), { status: "not_observed", value: null }, id);
     assert.deepEqual(resolved(record, "Rotación de torreta"), { status: "not_observed", value: null }, id);
-    assert.equal(prepared.status, "ready", id);
+    assert.equal(prepared.status, "review", id);
+    assert.ok(prepared.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")), id);
     assert.equal(prepared.product.spec["Dimensiones Cesta"], "1400x700x1100 metros");
     assert.equal(prepared.product.spec["Rotación de torreta"], "190º+190º");
   }

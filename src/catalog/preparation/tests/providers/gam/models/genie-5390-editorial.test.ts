@@ -29,8 +29,8 @@ test("la unidad GS-5390 se identifica por ficha, serie, referencia y publicació
   assert.strictEqual(reconcileGamVerifiedGenie5390Editorial(corrected), corrected);
   assert.equal(JSON.stringify(original), snapshot);
   const prepared = prepareProduct(original, catalog);
-  assert.equal(prepared.status, "ready");
-  assert.deepEqual(prepared.issues, []);
+  assert.equal(prepared.status, "review");
+  assert.deepEqual(prepared.issues, ["Dimensiones Cesta no acreditables: la cifra o la unidad publicada está deformada"]);
   assert.deepEqual(prepared.product.spec, original.specs);
   assert.equal(prepared.product.title, corrected.title);
   assert.equal(prepared.product.description, corrected.shortDescription);

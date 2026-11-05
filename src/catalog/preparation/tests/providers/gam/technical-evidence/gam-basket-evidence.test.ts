@@ -33,7 +33,9 @@ test("no inventa milímetros implícitos en dos fichas CTE sin evidencia secunda
     const record = reference(id);
     assert.deepEqual(resolve(record), { status: "not_observed", value: null }, id);
     assert.deepEqual(resolveAttribute(record, rotation), { status: "not_observed", value: null }, id);
-    assert.equal(prepareProduct(record, catalog).status, "ready", id);
+    const prepared = prepareProduct(record, catalog);
+    assert.equal(prepared.status, "review", id);
+    assert.ok(prepared.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")), id);
   }
 });
 

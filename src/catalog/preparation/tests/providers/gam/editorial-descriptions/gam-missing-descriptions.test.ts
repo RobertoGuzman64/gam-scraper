@@ -1,3 +1,4 @@
+import { phase2BasketReviewReferences } from "../../../support/phase2-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -101,7 +102,7 @@ test("GAM: no altera el resto del catálogo ni los estados en preparación compl
 
   const batch = prepareImportBatch(source.products, catalog);
   assert.equal(batch.products.length, source.products.length);
-  assert.deepEqual(batch.products.filter((item) => item.status === "review").map((item) => item.product.reference).sort(), [...gamTechnicalReviewReferences, "6682", "6703"].sort());
+  assert.deepEqual(batch.products.filter((item) => item.status === "review").map((item) => item.product.reference).sort(), [...gamTechnicalReviewReferences, ...phase2BasketReviewReferences, "6682", "6703"].sort());
   const generated = batch.products.filter((item) => item.product.description &&
     ["4683", "4691", "2364"].includes(item.product.reference ?? ""));
   assert.equal(generated.length, 3);

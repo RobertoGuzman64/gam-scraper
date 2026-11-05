@@ -29,7 +29,9 @@ test("recupera únicamente pares completos cuyo ruido repite exactamente las cif
   for (const [code, expected] of cases) {
     const record = reference(code);
     assert.deepEqual(resolve(record), { status: "resolved", value: expected }, code);
-    assert.equal(prepareProduct(record, catalog).status, "ready", code);
+    const prepared = prepareProduct(record, catalog);
+    assert.equal(prepared.status, "ready", code);
+    assert.equal(prepared.product.spec["Dimensiones Cesta"], expected, code);
   }
 });
 
@@ -52,11 +54,12 @@ test("ninguna cifra se reconstruye con trozos sueltos, unidades supuestas o ruid
   }
 });
 
-test("conserva las contradicciones y los fragmentos irrecuperables sin normalizar", () => {
+test("conserva las dimensiones irrecuperables y exige revisión sin inventar medidas", () => {
   for (const code of ["6607", "6630", "6632", "6631", "6614", "6616", "6615", "6642", "6625", "6669", "6617", "6626", "6169", "6171"]) {
     const record = reference(code);
     assert.deepEqual(resolve(record), { status: "not_observed", value: null }, code);
-    assert.equal(prepareProduct(record, catalog).status, "ready", code);
+    assert.equal(prepareProduct(record, catalog).status, "review", code);
+    assert.ok(prepareProduct(record, catalog).issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")), code);
   }
   const base = reference("6139");
   assert.deepEqual(resolve({ ...base, specs: { ...base.specs, "Dimensiones de la cesta": "2 x 1 m" } }),

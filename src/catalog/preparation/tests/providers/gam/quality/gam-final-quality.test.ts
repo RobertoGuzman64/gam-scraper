@@ -1,3 +1,4 @@
+import { phase2BasketReviewReferences } from "../../../support/phase2-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -53,5 +54,5 @@ test("GAM reconoce capacidades separadas BRAVI y potencia publicada con separado
 test("GAM termina con exactamente dos reviews de identidad que siguen excluidas", () => {
   const reviewed = prepareImportBatch(source.products, catalog).products.filter((product) => product.status === "review")
     .map((product) => product.product.reference).sort();
-  assert.deepEqual(reviewed, [...gamTechnicalReviewReferences, "6682", "6703"].sort());
+  assert.deepEqual(reviewed, [...gamTechnicalReviewReferences, ...phase2BasketReviewReferences, "6682", "6703"].sort());
 });

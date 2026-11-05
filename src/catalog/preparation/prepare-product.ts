@@ -15,6 +15,7 @@ import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation, re
 import { reconcileGomarizVerifiedPlatformHeight } from "./reconciliation/gomariz.js";
 import { reconcileGamCorroboratedLoadCapacity } from "./reconciliation/gam-capacity.js";
 import { applyReconciledTechnicalSpecs } from "./reconciliation/technical-specifications.js";
+import { reconcileGamBasketDimensions } from "./reconciliation/gam-basket-dimensions.js";
 import { captureSourceEditorialEvidence } from "./mapping/source-editorial-evidence.js";
 import { recoverBaseTechnicalSpecs } from "./recovery/gam-technical-recovery.js";
 import { recoverDocumentedTechnicalSpecs } from "./recovery/documented-technical-recovery.js";
@@ -37,6 +38,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   record = reconcileGamCorroboratedLoadCapacity(record);
   record = reconcileGomarizVerifiedPlatformHeight(record);
   record = reconcileMercaelevaCorroboratedCapacity(record);
+  record = reconcileGamBasketDimensions(record);
   const reconciledSpecs = applyReconciledTechnicalSpecs(beforeReconciliation, record, documentedSpecs);
   const issues: string[] = [];
   const { condition, contradictory: contradictoryCondition } = resolveCommercialCondition(record);

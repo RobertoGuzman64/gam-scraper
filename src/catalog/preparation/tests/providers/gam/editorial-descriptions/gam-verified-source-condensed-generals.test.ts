@@ -1,3 +1,4 @@
+import { phase2ExpectedSpecValue, phase2BasketReviewReferences } from "../../../support/phase2-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -52,8 +53,8 @@ test("GAM: se condensan 21 generales con identidad exacta y sin alterar otros ca
     assert.ok(general.length < (record.longDescription?.length ?? 0) / 2, reference);
     const prepared = prepareSourceProduct(record);
     checkPreparedGeneral(reference, prepared.product.description_general, general);
-    assert.equal(prepared.status, gamTechnicalReviewReferences.has(reference) ? "review" : "ready", reference);
-    assert.equal(prepared.issues.length, gamTechnicalReviewReferences.has(reference) ? 1 : 0, reference);
+    assert.equal(prepared.status, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? "review" : "ready", reference);
+    assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? 1 : 0, reference);
     assert.equal(JSON.stringify(record), snapshot, reference);
   }
 });
@@ -97,7 +98,7 @@ test("GAM: las descripciones verificadas de ocasión preservan identidad y lectu
     if (hour === "NA horas") assert.ok(general.includes("no acredita"), reference);
     const prepared = prepareSourceProduct(record);
     checkPreparedGeneral(reference, prepared.product.description_general, general);
-    assert.equal(prepared.issues.length, gamTechnicalReviewReferences.has(reference) ? 1 : 0, reference);
+    assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? 1 : 0, reference);
   }
 });
 
@@ -112,11 +113,11 @@ test("GAM: la condensación adicional conserva cifras y características de cada
     assert.ok(typeof serial === "string" && general.includes(serial), reference);
     assert.ok(general.includes(record.year ?? ""), reference);
     const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.status, gamTechnicalReviewReferences.has(reference) ? "review" : "ready", reference);
-    assert.equal(prepared.issues.length, gamTechnicalReviewReferences.has(reference) ? 1 : 0, reference);
+    assert.equal(prepared.status, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? "review" : "ready", reference);
+    assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? 1 : 0, reference);
     checkPreparedGeneral(reference, prepared.product.description_general, general);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], value, `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
   }
 });
@@ -133,11 +134,11 @@ test("GAM: 22 fichas de manutención conservan datos individuales al condensar t
     assert.ok(typeof serial === "string" && general.includes(serial), reference);
     assert.ok(typeof record.year === "string" && general.includes(record.year), reference);
     const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.status, gamTechnicalReviewReferences.has(reference) ? "review" : "ready", reference);
-    assert.equal(prepared.issues.length, gamTechnicalReviewReferences.has(reference) ? 1 : 0, reference);
+    assert.equal(prepared.status, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? "review" : "ready", reference);
+    assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? 1 : 0, reference);
     checkPreparedGeneral(reference, prepared.product.description_general, general);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], value, `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
   }
 });
@@ -157,11 +158,11 @@ test("GAM: 22 descripciones pendientes incorporan evidencia individual y conserv
     assert.ok(general.includes(record.serialNumber ?? ""), reference);
     assert.ok(general.includes(record.year ?? ""), reference);
     checkPreparedGeneral(reference, prepared.product.description_general, general);
-    assert.equal(prepared.status, gamTechnicalReviewReferences.has(reference) ? "review" : "ready", reference);
-    assert.equal(prepared.issues.length, gamTechnicalReviewReferences.has(reference) ? 1 : 0, reference);
+    assert.equal(prepared.status, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? "review" : "ready", reference);
+    assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? 1 : 0, reference);
     assert.equal(JSON.stringify(record), before, reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], value, `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
   }
 });
@@ -205,11 +206,11 @@ test("GAM: condensación acreditada preserva identificación de ocasión y prest
       assert.ok(general.includes(String(capacity)), reference);
     }
     const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.status, gamTechnicalReviewReferences.has(reference) ? "review" : "ready", reference);
-    assert.equal(prepared.issues.length, gamTechnicalReviewReferences.has(reference) ? 1 : 0, reference);
+    assert.equal(prepared.status, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? "review" : "ready", reference);
+    assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? 1 : 0, reference);
     checkPreparedGeneral(reference, prepared.product.description_general, general);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], value, `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
     assert.equal(resolveGamVerifiedSourceCondensedGeneral({ ...record, title: `${record.title} otra variante` }), null, reference);
     assert.equal(resolveGamVerifiedSourceCondensedGeneral({ ...record, specs: { ...record.specs, Modelo: "otra variante" } }), null, reference);
@@ -238,12 +239,12 @@ test("GAM: la evidencia editorial posterior conserva identidad, original y espec
       assert.ok(general.includes(record.serialNumber ?? ""), reference);
     }
     const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.status, gamTechnicalReviewReferences.has(reference) ? "review" : "ready", reference);
-    assert.equal(prepared.issues.length, gamTechnicalReviewReferences.has(reference) ? 1 : 0, reference);
+    assert.equal(prepared.status, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? "review" : "ready", reference);
+    assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? 1 : 0, reference);
     checkPreparedGeneral(reference, prepared.product.description_general, general);
     assert.equal(JSON.stringify(record), originalSnapshot, reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], value, `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
     for (const altered of [
       { ...record, url: `${record.url}?other=1` },
@@ -291,7 +292,7 @@ test("GAM: fase 125 recupera cinco detalles técnicos editoriales individuales",
     const general = resolveGamVerifiedSourceCondensedGeneral(record);
     assert.ok(general?.includes(marker), reference);
     const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.status, gamTechnicalReviewReferences.has(reference) ? "review" : "ready", reference);
+    assert.equal(prepared.status, (gamTechnicalReviewReferences.has(reference) || phase2BasketReviewReferences.has(reference)) ? "review" : "ready", reference);
     assert.ok(prepared.product.description_general?.includes(marker), reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
       assert.equal(prepared.product.spec[key], value, `${reference}: ${key}`);
