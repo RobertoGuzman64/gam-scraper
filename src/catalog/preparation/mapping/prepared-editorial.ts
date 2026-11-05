@@ -52,6 +52,7 @@ import { resolveGomarizCriticalBriefGeneral } from "./providers/gomariz/critical
 import { resolveGomarizGeneralDescription } from "./providers/gomariz/general-description.js";
 import { removeGomarizConversationalLead, resolveGomarizUnitSpecificGeneral } from "./providers/gomariz/unit-specific-general.js";
 import { gamElevationSourceIdentityConflict } from "../evidence/providers/gam/identity/elevation-identity.js";
+import { refineTechnicalTitle } from "./technical-title-refinement.js";
 
 export const resolvePreparedEditorial = (
   record: ProductRecord,
@@ -60,7 +61,7 @@ export const resolvePreparedEditorial = (
 ) => {
   const { crossedIdentity, verifiedGamCondensedGeneral, conciseGamShort, verifiedGamFamilyGeneral } = sourceEditorial;
   const mappedTitle = (resolveGomarizEditorialTitle(record) ?? resolveGamConciseTitle(record) ?? record.title?.trim()) || null;
-  const title = resolveGomarizVerifiedUnitSpecificTitle(sourceUnitRecord, mappedTitle) ?? resolveGamVerifiedSourceMatchedTitle(sourceUnitRecord, mappedTitle) ?? mappedTitle;
+  const title = refineTechnicalTitle(sourceUnitRecord, resolveGomarizVerifiedUnitSpecificTitle(sourceUnitRecord, mappedTitle) ?? resolveGamVerifiedSourceMatchedTitle(sourceUnitRecord, mappedTitle) ?? mappedTitle);
   const descriptionEvidence = resolveMercaelevaShortDescription(record);
   const conciseMercaelevaShort = resolveMercaelevaConciseDescription(record);
   const missingDescriptions = mercaelevaMissingDescriptions(record);

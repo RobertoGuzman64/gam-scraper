@@ -1,10 +1,11 @@
 import { buildProductIdentity } from "../identity.js";
+import { findBrandTypo } from "../normalization/technical-title-identity.js";
 import type { DescriptionCoverageInput } from "./description-coverage.js";
 
 type TitlePriority = "P0" | "P1" | "P2";
 type TitleStage = "pendiente" | "resuelto_preparacion" | "aparecido_preparacion";
 type TitleSignal = "titulo_ausente" | "tipo_maquina_no_identificado" | "marca_no_identificada" |
-  "modelo_no_identificado" | "redaccion_incoherente" | "residuo_portal" | "magnitud_repetida";
+  "modelo_no_identificado" | "redaccion_incoherente" | "residuo_portal" | "magnitud_repetida" | "terminos_unidos";
 
 type TitleFinding = {
   readonly code: TitleSignal;
@@ -89,17 +90,24 @@ const diagnose = (title: string | null, input: DescriptionCoverageInput): readon
   const brandTerms = normalize(brand ?? "").split(" ").filter((word) => word.length > 1);
   if (brand && compact(brand).length >= 3 && !compact(value).includes(compact(brand)) &&
     !brandTerms.every((word) => folded.split(" ").includes(word)) &&
-    input.origin === "original_canonico") {
+    input.origin === "original_canonico" &&
+    (containsOriginal(input.source.shortDescription, brand) && containsOriginal(input.source.longDescription, brand) ||
+      (typeof input.source.specs?.Marca === "string" && compact(input.source.specs.Marca) === compact(brand) &&
+        findBrandTypo(value, brand) !== null))) {
     result.push({ code: "marca_no_identificada", priority: "P1", evidence: `Marca en original: ${brand}` });
   }
   const model = input.source.model?.trim();
   const normalizedModel = compact(model ?? "");
   if (model && input.origin === "original_canonico" && normalizedModel.length >= 4 && /\d/u.test(normalizedModel) &&
-    !compact(value).includes(normalizedModel) && !hasModelVariant(value, model)) {
+    !compact(value).includes(normalizedModel) && !hasModelVariant(value, model) &&
+    containsOriginal(input.source.shortDescription, model) && containsOriginal(input.source.longDescription, model)) {
     result.push({ code: "modelo_no_identificado", priority: "P1", evidence: `Modelo en original: ${model}` });
   }
-  if (/\bplataformas\s+articulada\b/u.test(folded)) result.push({ code: "redaccion_incoherente", priority: "P1",
-    evidence: "Discordancia gramatical: «Plataformas articulada»" });
+  if (/\b(?:plataformas\s+articulada|platafora)\b/u.test(folded)) result.push({ code: "redaccion_incoherente", priority: "P1",
+    evidence: "Redacción defectuosa: «Plataformas articulada» o «Platafora»" });
+  if (/(?:tijera|el[eé]ctrica)\d+\s*(?:m|mt)\b/iu.test(value)) result.push({
+    code: "terminos_unidos", priority: "P2", evidence: "Familia o motorización unida a la magnitud sin separación"
+  });
   if (/\|\s*gam\s+online\s*$/iu.test(value)) result.push({ code: "residuo_portal", priority: "P2",
     evidence: "Sufijo de origen «GAM Online»" });
   const magnitudes = [...folded.matchAll(/\b(\d+(?:[.,]\d+)?)\s*(m|mt|kg)\b/gu)]
@@ -117,6 +125,9 @@ const hasModelVariant = (title: string, model: string): boolean => {
   const base = compact(model);
   return base.length >= 5 && /\d/u.test(base) && compact(title).includes(base.slice(0, -1));
 };
+
+const containsOriginal = (text: string | null, value: string): boolean =>
+  !!text && compact(value).length >= 3 && compact(text).includes(compact(value));
 
 const stageOrder: Readonly<Record<TitleStage, number>> = {
   pendiente: 0, aparecido_preparacion: 1, resuelto_preparacion: 2

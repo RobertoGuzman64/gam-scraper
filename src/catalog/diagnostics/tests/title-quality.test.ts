@@ -85,6 +85,26 @@ test("no presume que cualquier descripción o identidad reconstruida acredita un
     { brand: "LGMG", model: "SS0507E" })]).totals.affected, 0);
 });
 
+test("evita falsos positivos cuando el campo modelo o marca contradice el título y las descripciones", () => {
+  const unreliableModel = record("2020", "Carretilla elevadora Hyster E2.0XN", "Carretilla elevadora Hyster E2.0XN",
+    "Carretilla elevadora Hyster E2.0XN", { brand: "Hyster", model: "E2.2XN",
+      short: "Carretilla Hyster E2.0XN", long: "La Hyster E2.0XN se utiliza en almacén" });
+  assert.deepEqual(signals(unreliableModel), []);
+  const unreliableBrand = record("6852", "Apilador YALE S1.2", "Apilador YALE S1.2", "Apilador YALE S1.2", {
+    brand: "HYSTER", model: "S1.2", short: "YALE S1.2 apilador eléctrico", long: "El YALE S1.2 es un apilador" });
+  assert.deepEqual(signals(unreliableBrand), []);
+});
+
+test("mantiene alertas de modelos o marcas respaldados por las dos descripciones originales", () => {
+  const wrongModel = record("6274", "Hyster H12XD-12", "Hyster H12XD-12", "Hyster H14XD-12", {
+    brand: "Hyster", model: "H14XD-12", short: "Hyster H14XD-12", long: "Carretilla Hyster H14XD-12" });
+  assert.deepEqual(signals(wrongModel), ["modelo_no_identificado:resuelto_preparacion"]);
+  const missingBrand = record("2252", "Transpaleta eléctrica MP25HD", "Transpaleta eléctrica MP25HD",
+    "Transpaleta eléctrica YALE MP25HD", { brand: "YALE", model: "MP25HD",
+      short: "Yale MP25HD transpaleta", long: "La Yale MP25HD es una transpaleta" });
+  assert.deepEqual(signals(missingBrand), ["marca_no_identificada:resuelto_preparacion"]);
+});
+
 test("reconoce títulos vacíos, aparición de nuevas señales y protege la identidad", () => {
   const input = record("vacío", "Plataforma articulada GENIE", null, "Plataforma articulada GENIE", { brand: "GENIE" });
   assert.deepEqual(signals(input), ["titulo_ausente:resuelto_preparacion"]);
