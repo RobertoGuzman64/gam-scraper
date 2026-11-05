@@ -1,5 +1,6 @@
 import type * as cheerio from "cheerio";
 import { collectProductImages } from "../../parsing/image-gallery.js";
+import { excludeGamRelatedProductImages } from "../../../catalog/normalization/providers/gam/gallery.js";
 
 type ValueMap = Record<string, unknown>;
 
@@ -145,5 +146,5 @@ export const extractGamGallery = ($: cheerio.CheerioAPI, pageUrl: string): reado
       collected.add(preferGamLargeImage(url.toString()));
     } catch { continue; }
   }
-  return [...collected];
+  return excludeGamRelatedProductImages([...collected]);
 };

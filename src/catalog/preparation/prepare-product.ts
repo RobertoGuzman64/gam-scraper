@@ -2,6 +2,7 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 import { validateCreateManyCandidate, validateImportCandidate } from "../legacy-export/import-validation.js";
 import { resolveCategory } from "./mapping/category-mapping.js";
 import { imageUrls, normalizePrice } from "./product-fields.js";
+import { excludeGamRelatedProductImages } from "../normalization/providers/gam/gallery.js";
 import { productAttributes } from "./product-attributes.js";
 import { sourceAttributeQualityIssues, sourceTechnicalQualityIssues } from "./source/attribute-quality.js";
 import { sourceSemanticQualityIssues } from "./source/semantic-quality.js";
@@ -54,7 +55,9 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const issues: string[] = [];
   const { condition, contradictory: contradictoryCondition } = resolveCommercialCondition(record);
   const category = catalog ? resolveCategory(record, catalog.categories, condition) : null;
-  const images = imageUrls(record);
+  const sourceImages = imageUrls(record);
+  const images = record.providerId === "gam" && record.image === sourceImages[0]
+    ? excludeGamRelatedProductImages(sourceImages) : sourceImages;
   const price = normalizePrice(record.price);
   const reference = record.reference?.trim() || null;
   const editorial = resolvePreparedEditorial(editorialRecord, sourceUnitRecord, sourceEditorial);
