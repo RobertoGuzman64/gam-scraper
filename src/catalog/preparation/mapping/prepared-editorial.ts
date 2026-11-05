@@ -23,6 +23,7 @@ import { rebalanceGamOverlongShort, resolveGamResidualConciseShort } from "./pro
 import { resolveGamConciseTitle } from "./providers/gam/editorial-descriptions/concise-titles.js";
 import { rebalanceGamTechnicalShort } from "./providers/gam/editorial-descriptions/rebalance-technical-short.js";
 import { resolveGomarizEditorialTitle } from "./providers/gomariz/editorial-title.js";
+import { resolveMercaelevaEditorialTitle } from "./providers/mercaeleva/editorial-title.js";
 import { resolveGamGeneralDescription } from "./providers/gam/editorial-descriptions/general-description.js";
 import { resolveGamVerifiedCommercialShort } from "./providers/gam/editorial-descriptions/verified-commercial-short.js";
 import { resolveGamVerifiedConciseGeneral } from "./providers/gam/editorial-descriptions/verified-concise-long.js";
@@ -60,7 +61,7 @@ export const resolvePreparedEditorial = (
   sourceEditorial: SourceEditorialEvidence
 ) => {
   const { crossedIdentity, verifiedGamCondensedGeneral, conciseGamShort, verifiedGamFamilyGeneral } = sourceEditorial;
-  const mappedTitle = (resolveGomarizEditorialTitle(record) ?? resolveGamConciseTitle(record) ?? record.title?.trim()) || null;
+  const mappedTitle = (resolveGomarizEditorialTitle(record) ?? resolveGamConciseTitle(record) ?? resolveMercaelevaEditorialTitle(record) ?? record.title?.trim()) || null;
   const title = refineTechnicalTitle(sourceUnitRecord, resolveGomarizVerifiedUnitSpecificTitle(sourceUnitRecord, mappedTitle) ?? resolveGamVerifiedSourceMatchedTitle(sourceUnitRecord, mappedTitle) ?? mappedTitle);
   const descriptionEvidence = resolveMercaelevaShortDescription(record);
   const conciseMercaelevaShort = resolveMercaelevaConciseDescription(record);

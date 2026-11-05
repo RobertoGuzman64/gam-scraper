@@ -58,6 +58,43 @@ test("ruido del portal, concordancia, espacios y magnitudes repetidas se elimina
   assertTitle("mercaeleva", "M055-1205", "Oil & Steel SCORPION 1812 CAMION CESTA 18 MT TELESCOPICO ALUMINIO");
 });
 
+test("Mercaeleva corrige seis títulos con evidencia de familia, identidad y condición", () => {
+  const cases: readonly [string, string][] = [
+    ["M239-6301", "Transpaleta eléctrica BT LPE200/8"],
+    ["M011-3720", "Transpaleta eléctrica BT LPE200/8"],
+    ["M879-4639", "Transpaleta eléctrica Stöcklin EDP-2000"],
+    ["M570-8735", "Transpaleta eléctrica Linde T18"],
+    ["M840-6795", "Plataforma articulada eléctrica LGMG A14JE de 16 m"],
+    ["M318-0509", "Plataforma de tijera eléctrica LGMG S1012E-2 de 12 m"]
+  ];
+  for (const [reference, expected] of cases) {
+    const original = source("mercaeleva", reference);
+    assertTitle("mercaeleva", reference, expected);
+    assert.equal(prepareSourceProduct(original).status, "ready", reference);
+    assert.equal(prepareSourceProduct({ ...original, title: "Equipo sin modelo ni familia" }).product.title,
+      "Equipo sin modelo ni familia", reference);
+    assert.equal(prepareSourceProduct({ ...original, brand: "MARCA AJENA" }).product.title,
+      original.title, reference);
+    assert.equal(prepareSourceProduct({ ...original, url: "https://example.org/venta" }).product.title,
+      original.title, reference);
+    assert.equal(prepareSourceProduct({ ...original, specs: { ...original.specs, Modelo: "MODELO AJENO" } }).product.title,
+      original.title, reference);
+  }
+  for (const reference of ["M239-6301", "M011-3720", "M879-4639", "M570-8735"]) {
+    const original = source("mercaeleva", reference);
+    assert.equal(prepareSourceProduct({ ...original, condition: "Nuevo" }).product.title, original.title, reference);
+    assert.equal(prepareSourceProduct({ ...original, longDescription: "Sin evidencia de transpaleta" }).product.title,
+      original.title, reference);
+  }
+  for (const reference of ["M840-6795", "M318-0509"]) {
+    const original = source("mercaeleva", reference);
+    assert.equal(prepareSourceProduct({ ...original, condition: "Segunda mano" }).product.title,
+      original.title, reference);
+    assert.equal(prepareSourceProduct({ ...original, specs: { ...original.specs, "Altura de trabajo": "11 m" } }).product.title,
+      original.title, reference);
+  }
+});
+
 test("metadatos contradictorios y evidencias ambiguas no autorizan cambiar marcas o modelos", () => {
   for (const reference of ["2020", "2118", "6103", "6852", "6689", "6863"]) {
     const record = source("gam", reference);

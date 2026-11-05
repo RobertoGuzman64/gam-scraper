@@ -27,7 +27,8 @@ test("recupera las cortas prioritarias sin alterar los originales ni sus contrad
     assert.equal(record.shortDescription, null, reference);
     assert.ok(prepared.product.description, reference);
     assert.ok(prepared.product.description_general, reference);
-    assert.deepEqual(prepared.product.spec, recoverMercaelevaDocumentedLiftingAndWarehouseSpecs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, record.specs ?? {}))), reference);
+    const technicalSpecs = recoverMercaelevaDocumentedLiftingAndWarehouseSpecs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, record.specs ?? {})));
+    assert.deepEqual(prepared.product.spec, reference === "M838-0666" || reference === "M969-4655" ? { ...technicalSpecs, Modelo: "450 AJ" } : technicalSpecs, reference);
     assert.equal(JSON.stringify(record), before, reference);
     const evidence = Object.values(mercaelevaPriorityShortEvidence).find((item) => item.reference === reference);
     assert.ok(evidence);
@@ -68,15 +69,16 @@ test("las reglas prioritarias no afectan a otras fichas de Mercaeleva", () => {
 });
 
 
-test("las discrepancias de familia y versión siguen notificadas sin contaminar las cortas", () => {
+test("las dos JLG conservan sus datos individuales sin publicar una serie no demostrada", () => {
   for (const reference of ["M838-0666", "M969-4655"]) {
     const source = find(reference);
     const prepared = prepareSourceProduct(source);
-    assert.equal(prepared.status, "review", reference);
-    assert.ok(prepared.issues.some((issue) => /contradictori/iu.test(issue)), reference);
-    assert.equal(prepared.product.description_general, source.longDescription, reference);
-    assert.deepEqual(prepared.product.spec, source.specs, reference);
-    assert.doesNotMatch(prepared.product.description ?? "", /SII|SIII|transpalet/iu, reference);
+    assert.equal(prepared.status, "ready", reference);
+    assert.deepEqual(prepared.issues, [], reference);
+    assert.equal(prepared.product.spec?.Modelo, "450 AJ", reference);
+    assert.equal(prepared.product.description, verifiedMercaelevaPriorityShortDescription(source), reference);
+    assert.doesNotMatch(`${prepared.product.title} ${prepared.product.description} ${prepared.product.description_general} ${JSON.stringify(prepared.product.spec)}`, /\bSII\b|\bSIII\b/iu, reference);
+    assert.match(prepared.product.description_general ?? "", /no acreditan la configuraci[oó]n ni las prestaciones de esta unidad/iu, reference);
   }
   const reach = prepareSourceProduct(find("M547-2372"));
   assert.equal(reach.status, "ready");

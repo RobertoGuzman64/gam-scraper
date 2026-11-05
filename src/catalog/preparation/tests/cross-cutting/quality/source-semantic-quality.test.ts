@@ -22,23 +22,21 @@ const conflicts = ["BA1465", "M547-2372", "M838-0666", "M969-4655"] as const;
 const recordOf = (reference: string): ProductRecord =>
   find(reference.startsWith("M") ? mercaeleva : gomariz, reference);
 
-test("Las contradicciones originales se conservan; solo dos se concilian con evidencia individual", () => {
+test("Las contradicciones originales se conservan y las dos JLG se preparan sin afirmar una serie no acreditada", () => {
   for (const reference of conflicts) {
     const record = recordOf(reference);
     const before = JSON.stringify(record);
     const findings = sourceSemanticQualityIssues(record);
     assert.equal(findings.length, 1, reference);
     const result = prepareSourceProduct(record);
-    const reconciled = reference === "BA1465" || reference === "M547-2372";
-    assert.equal(result.status, reconciled ? "ready" : "review", reference);
-    if (reconciled) {
-      assert.equal(result.issues.length, 0, reference);
-    } else {
-      assert.ok(result.issues.includes(findings[0] ?? ""), reference);
-    }
+    assert.equal(result.status, "ready", reference);
+    assert.equal(result.issues.length, 0, reference);
     assert.equal(result.product.reference, record.reference, reference);
     assert.equal(result.product.sourceUrl, record.url, reference);
-    assert.deepEqual(result.product.spec, { ...record.specs, ...(record.providerId === "gomariz" && record.year ? { "Año de fabricación": record.year } : {}) }, reference);
+    const expectedSpecs = reference === "M838-0666" || reference === "M969-4655"
+      ? { ...record.specs, Modelo: "450 AJ" }
+      : { ...record.specs, ...(record.providerId === "gomariz" && record.year ? { "Año de fabricación": record.year } : {}) };
+    assert.deepEqual(result.product.spec, expectedSpecs, reference);
     assert.equal(JSON.stringify(record), before, reference);
   }
 });
@@ -103,7 +101,7 @@ test("Miles expresados como 3000 y 3.000 kg son la misma capacidad", () => {
   assert.ok(sourceSemanticQualityIssues(incompatible).some((issue) => issue.includes("Capacidad contradictoria")));
 });
 
-test("Corte completo: solo cuatro conflictos no resueltos y sin contaminación de GAM", () => {
+test("Corte completo: cuatro contradicciones en origen y sin contaminación de GAM", () => {
   assert.equal(gomariz.length, 143);
   assert.equal(gam.length, 983);
   assert.equal(mercaeleva.length, 221);
