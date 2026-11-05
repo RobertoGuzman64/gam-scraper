@@ -2,7 +2,7 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate, ImportCatalog } from "../legacy-export/contracts.js";
 import type { PreparedProduct } from "../preparation/contracts.js";
 import { fold } from "../preparation/mapping/category-utils.js";
-import { isLeafCategoryForCondition } from "../preparation/mapping/category-mapping.js";
+import { isLeafCategoryForCondition, resolveCategory } from "../preparation/mapping/category-mapping.js";
 import { productAttributes } from "../preparation/product-attributes.js";
 
 const generalCategorySlugs = new Set([
@@ -196,10 +196,20 @@ export const isValidCommercialCategory = (
   if (!condition) return false;
   const categories = catalog.categories.filter((item) => item.id === categoryId && item.active !== false);
   if (categories.length !== 1 || !belongsToCondition(categoryId, catalog.categories, condition)) return false;
-  if (isLeafCategoryForCondition(categoryId, catalog.categories, condition)) return true;
   const category = categories[0];
-  return !!category && generalCategorySlugs.has(category.slug) &&
-    commercialSlug(source, condition) === category.slug;
+  if (!category) return false;
+  if (isLeafCategoryForCondition(categoryId, catalog.categories, condition)) {
+    const sourceCategory = resolveCategory(source, catalog.categories, condition);
+    if (sourceCategory) return sourceCategory.id === categoryId;
+    const documentedSlug = commercialSlug(source, condition);
+    if (documentedSlug === null) return true;
+    const documentedCategories = catalog.categories.filter((entry) =>
+      entry.slug === documentedSlug && entry.active !== false);
+    const documented = documentedCategories.length === 1 ? documentedCategories[0] : undefined;
+    return !documented || !isLeafCategoryForCondition(documented.id, catalog.categories, condition) ||
+      documented.id === categoryId;
+  }
+  return generalCategorySlugs.has(category.slug) && commercialSlug(source, condition) === category.slug;
 };
 
 export const projectCommercialCategory = (

@@ -57,7 +57,9 @@ test("clasifica familias documentadas sin inventar motorización ni nuevas categ
     const entry = product(providerId, reference);
     assert.equal(entry.mapped.product.categorySellID, categoryId, `${providerId}:${reference}`);
     assert.equal(isValidCommercialCategory(entry.source, categoryId, entry.mapped.product.condition, catalog), true);
-    assert.deepEqual(entry.mapped.product.spec, entry.published.spec);
+    const expectedSpec = providerId === "gam" && ["2072", "2073"].includes(reference)
+      ? { ...entry.published.spec, Motorización: "GLP" } : entry.published.spec;
+    assert.deepEqual(entry.mapped.product.spec, expectedSpec);
     assert.deepEqual(entry.mapped.product.images, entry.published.images);
     assert.ok(catalog.categories.some((item) => item.id === categoryId));
   }
@@ -179,4 +181,37 @@ test("la proyección comercial no cambia las categorías previamente asignadas p
   }
   assert.ok(mapped > 1000);
   assert.ok(recovered > 0);
+});
+
+test("la acreditación comercial no acepta otra categoría hoja cuando la familia ya está identificada", () => {
+  for (const [providerId, reference, expected, incompatible] of [
+    ["gam", "6607", 29, 30],
+    ["gam", "6901", 29, 30],
+    ["gam", "6873", 114, 29]
+  ] as readonly (readonly [string, string, number, number])[]) {
+    const entry = product(providerId, reference);
+    assert.equal(entry.mapped.product.categorySellID, expected, `${providerId}:${reference}`);
+    assert.equal(isValidCommercialCategory(entry.source, expected, entry.mapped.product.condition, catalog), true);
+    assert.equal(isValidCommercialCategory(entry.source, incompatible, entry.mapped.product.condition, catalog), false);
+  }
+});
+
+test("las categorías acreditadas siguen siendo válidas y las pendientes no reciben una asignación ficticia", () => {
+  const proposed = entries.filter((entry) => entry.mapped.product.categorySellID !== null);
+  assert.equal(proposed.length, 1320);
+  for (const entry of proposed) {
+    const categoryId = entry.mapped.product.categorySellID;
+    assert.notEqual(categoryId, null);
+    if (categoryId === null) continue;
+    assert.equal(isValidCommercialCategory(entry.source, categoryId, entry.mapped.product.condition, catalog), true,
+      `${entry.source.providerId}:${entry.source.reference}`);
+  }
+  for (const [providerId, reference] of [
+    ["gam", "6653"], ["gam", "6358"], ["gam", "6367"],
+    ["gam", "6814"], ["gam", "6815"],
+    ["mercaeleva", "M958-0132"], ["mercaeleva", "M294-4678"]
+  ] as readonly (readonly [string, string])[]) {
+    const entry = product(providerId, reference);
+    assert.equal(entry.mapped.product.categorySellID, null, `${providerId}:${reference}`);
+  }
 });
