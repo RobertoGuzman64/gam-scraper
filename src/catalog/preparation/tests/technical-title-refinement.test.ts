@@ -95,6 +95,41 @@ test("Mercaeleva corrige seis títulos con evidencia de familia, identidad y con
   }
 });
 
+test("Mercaeleva normaliza títulos de plataformas con identidad, motor y altura concordantes", () => {
+  const cases: readonly [string, string][] = [
+    ["M563-8693", "Plataforma de tijera eléctrica LGMG AS1212E de 14 m"],
+    ["M057-0589", "Plataforma de tijera diésel LGMG SR1218D de 14 m"],
+    ["M998-5889", "Plataforma articulada diésel JLG 450 AJ de 16 m"],
+    ["M921-0545", "Plataforma articulada eléctrica Haulotte HA15IP de 15 m"],
+    ["M044-4093", "Plataforma articulada diésel JLG 450 AJ SII de 16 m"],
+    ["M451-2844", "Plataforma de tijera eléctrica JLG 2630ES de 10 m"],
+    ["M749-9513", "Plataforma telescópica diésel JLG 460SJ de 16 m"],
+    ["M624-7785", "Plataforma telescópica diésel JLG 1350 SJP de 43 m"]
+  ];
+  for (const [reference, expected] of cases) {
+    assertTitle("mercaeleva", reference, expected);
+    const original = source("mercaeleva", reference);
+    assert.equal(prepareSourceProduct(original).status, "ready", reference);
+    const variants: readonly ProductRecord[] = [
+      { ...original, url: "https://example.org/otro-anuncio" },
+      { ...original, brand: "MARCA AJENA" },
+      { ...original, model: "MODELO AJENO" },
+      { ...original, condition: "Nuevo" },
+      { ...original, specs: { ...original.specs, Modelo: "MODELO AJENO" } },
+      { ...original, specs: { ...original.specs, "Tipo de motor": "Gasolina" } },
+      { ...original, specs: { ...original.specs, "Altura de trabajo": "99 m" } },
+      { ...original, longDescription: "Sin evidencia acreditable de modelo, familia ni altura" }
+    ];
+    for (const variant of variants) {
+      assert.equal(prepareSourceProduct(variant).product.title, original.title, `${reference}: evidencia alterada`);
+    }
+  }
+  for (const reference of ["M887-9469", "M486-0114", "M030-7485", "M971-8124"]) {
+    const original = source("mercaeleva", reference);
+    assert.equal(prepareSourceProduct(original).product.title, original.title, `${reference}: evidencia insuficiente`);
+  }
+});
+
 test("metadatos contradictorios y evidencias ambiguas no autorizan cambiar marcas o modelos", () => {
   for (const reference of ["2020", "2118", "6103", "6852", "6689", "6863"]) {
     const record = source("gam", reference);

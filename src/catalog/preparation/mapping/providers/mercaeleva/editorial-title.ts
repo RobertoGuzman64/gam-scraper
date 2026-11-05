@@ -16,12 +16,31 @@ const verifiedSource = (record: ProductRecord): boolean => {
   }
 };
 
+const resolveDocumentedPlatformTitle = (record: ProductRecord, title: string, brand: string, model: string): string | null => {
+  if (record.condition !== "Segunda mano" || fold(String(record.specs?.Estado ?? "")) !== "usado") return null;
+  const match = /^(.+?)\s+PLATAFORMA\s+(ARTICULADA|TIJERA|DE TIJERA|TELESCOPICA)\s+(ELECTRICA|DIESEL)\s+(\d+)\s+MT$/iu.exec(title);
+  if (!match?.[1] || !match[2] || !match[3] || !match[4] ||
+    fold(match[1]) !== fold(`${brand} ${model}`) ||
+    fold(String(record.specs?.["Título adicional"] ?? "")) !== fold(`PLATAFORMA ${match[2]} ${match[3]} ${match[4]} MT`) ||
+    fold(String(record.specs?.["Tipo de motor"] ?? "")) !== (fold(match[3]) === "electrica" ? "electrico" : "diesel") ||
+    fold(String(record.specs?.["Altura de trabajo"] ?? "")) !== `${match[4]} m`) return null;
+  const description = fold(record.longDescription ?? "");
+  if (!description.includes(fold(`${brand} ${model}`)) ||
+    !description.includes(fold(`PLATAFORMA ${match[2]} ${match[3]}`)) ||
+    !description.includes(`altura de trabajo ${match[4]} mt`)) return null;
+  const family = fold(match[2]) === "articulada" ? "articulada" : fold(match[2]) === "telescopica" ? "telescópica" : "de tijera";
+  const drive = fold(match[3]) === "electrica" ? "eléctrica" : "diésel";
+  return `Plataforma ${family} ${drive} ${brand} ${model} de ${match[4]} m`;
+};
+
 export const resolveMercaelevaEditorialTitle = (record: ProductRecord): string | null => {
   if (!verifiedSource(record)) return null;
   const title = record.title?.trim();
   const brand = record.brand?.trim();
   const model = record.model?.trim();
   if (!title || !brand || !model) return null;
+  const platformTitle = resolveDocumentedPlatformTitle(record, title, brand, model);
+  if (platformTitle) return platformTitle;
   if (record.condition === "Segunda mano" &&
     fold(title) === fold(`${brand} ${model} TRANSPALET ELECTRICO`) &&
     fold(String(record.specs?.["Título adicional"] ?? "")) === "transpalet electrico" &&
