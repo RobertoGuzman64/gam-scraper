@@ -124,9 +124,51 @@ test("Mercaeleva normaliza títulos de plataformas con identidad, motor y altura
       assert.equal(prepareSourceProduct(variant).product.title, original.title, `${reference}: evidencia alterada`);
     }
   }
-  for (const reference of ["M887-9469", "M486-0114", "M030-7485", "M971-8124"]) {
+  for (const reference of ["M887-9469", "M486-0114", "M030-7485"]) {
     const original = source("mercaeleva", reference);
     assert.equal(prepareSourceProduct(original).product.title, original.title, `${reference}: evidencia insuficiente`);
+  }
+});
+
+test("Mercaeleva normaliza plataformas nuevas, alturas decimales y variantes de escritura documentadas", () => {
+  const cases: readonly [string, string][] = [
+    ["M140-0406", "Plataforma de tijera eléctrica Hollandlift HL-220 E12 de 22 m"],
+    ["M082-6111", "Plataforma de tijera eléctrica Hollandlift HL-220 E12 de 22 m"],
+    ["M971-8124", "Plataforma telescópica diésel Genie S-125 de 40 m"],
+    ["M572-8190", "Plataforma articulada diésel Manitou 180ATJ de 18 m"],
+    ["M205-2951", "Plataforma articulada diésel Manitou 180ATJ de 18 m"],
+    ["M178-6194", "Plataforma articulada diésel Manitou 180ATJ de 18 m"],
+    ["M177-1398", "Plataforma de tijera eléctrica SINOBOOM 0608ME de 8 m"],
+    ["M005-4474", "Plataforma de tijera eléctrica LGMG S0808EII de 10 m"],
+    ["M346-8211", "Plataforma de tijera eléctrica LGMG SS0407ER de 6 m"],
+    ["M726-5166", "Plataforma de tijera eléctrica LGMG S1012EII de 12 m"],
+    ["M159-0669", "Plataforma de tijera eléctrica LGMG S0808EII de 10 m"],
+    ["M606-3993", "Plataforma de tijera eléctrica LGMG SS0407ER de 6 m"],
+    ["M239-8327", "Plataforma de tijera eléctrica Hollandlift N-165EL12 de 18,5 m"]
+  ];
+  for (const [reference, expected] of cases) {
+    assertTitle("mercaeleva", reference, expected);
+    const original = source("mercaeleva", reference);
+    const invalid: readonly ProductRecord[] = [
+      { ...original, url: "https://example.org/otra-maquina" },
+      { ...original, model: "OTRO MODELO" },
+      { ...original, specs: { ...original.specs, Marca: "OTRA MARCA" } },
+      { ...original, specs: { ...original.specs, "Altura de trabajo": "99 m" } },
+      { ...original, specs: { ...original.specs, "Título adicional": "OTRA FAMILIA" } },
+      { ...original, specs: { ...original.specs, "Tipo de motor": "Gasolina" } },
+      { ...original, longDescription: "Sin identidad, altura ni familia documentadas" }
+    ];
+    for (const candidate of invalid) {
+      assert.equal(prepareSourceProduct(candidate).product.title, original.title, `${reference}: dato alterado`);
+    }
+    const otherCondition: ProductRecord = original.condition === "Nuevo"
+      ? { ...original, condition: "Segunda mano" }
+      : { ...original, condition: "Nuevo" };
+    assert.equal(prepareSourceProduct(otherCondition).product.title, original.title, `${reference}: condición alterada`);
+  }
+  for (const reference of ["M887-9469", "M486-0114", "M030-7485"]) {
+    const original = source("mercaeleva", reference);
+    assert.equal(prepareSourceProduct(original).product.title, original.title, `${reference}: falta coherencia`);
   }
 });
 
