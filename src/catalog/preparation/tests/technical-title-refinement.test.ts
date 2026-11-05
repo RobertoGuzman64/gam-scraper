@@ -234,6 +234,46 @@ test("Mercaeleva normaliza camiones cesta cuando altura, estructura e identidad 
   }
 });
 
+
+test("Mercaeleva normaliza familias auxiliares y de manipulación con evidencia concordante", () => {
+  const cases: readonly [string, string][] = [
+    ["M582-1882", "Carretilla elevadora diésel UniCarriers E2D2A30 de 2500 kg"],
+    ["M028-8481", "Plataforma vertical autopropulsada eléctrica Genie GR-15 de 6 m"],
+    ["M855-6850", "Carretilla todoterreno 4x4 Ausa C250HX4 de 2500 kg"],
+    ["M736-5615", "Dúmper giratorio Ausa D450AHG de 4500 kg"],
+    ["M640-1938", "Carretilla todoterreno 4x4 Ausa C250HX4 de 2500 kg"],
+    ["M840-8278", "Plataforma de tijera eléctrica JLG 1930ES de 8 m"],
+    ["M095-5362", "Plataforma vertical autopropulsada eléctrica Haulotte STAR-10 de 10 m"],
+    ["M200-9533", "Manipulador telescópico JLG 4014PS de 14 m"],
+    ["M722-8895", "Carretilla elevadora diésel OM PIMESPO - XD40 de 4000 kg"],
+    ["M171-6370", "Plataforma vertical autopropulsada eléctrica Haulotte STAR-10 de 10 m"],
+    ["M144-5512", "Plataforma vertical autopropulsada eléctrica Haulotte STAR-10 de 10 m"],
+    ["M005-5167", "Manipulador telescópico Manitou MT1440 SLT de 14 m"],
+    ["M995-8408", "Plataforma de tijera eléctrica JLG 1930ES de 8 m"]
+  ];
+  for (const [reference, expected] of cases) {
+    const original = source("mercaeleva", reference);
+    assertTitle("mercaeleva", reference, expected);
+    assert.equal(prepareSourceProduct(original).status, "ready", reference);
+    const invalid: readonly ProductRecord[] = [
+      { ...original, url: "https://example.org/otra-maquina" },
+      { ...original, reference: "REFERENCIA-AJENA" },
+      { ...original, brand: "MARCA AJENA" },
+      { ...original, model: "MODELO AJENO" },
+      { ...original, condition: "Nuevo" },
+      { ...original, specs: { ...original.specs, Marca: "MARCA AJENA" } },
+      { ...original, specs: { ...original.specs, Modelo: "MODELO AJENO" } },
+      { ...original, specs: { ...original.specs, Estado: "Nuevo" } },
+      { ...original, specs: { ...original.specs, "Título adicional": "OTRO TIPO DE MÁQUINA" } },
+      { ...original, longDescription: "Sin evidencia de modelo, familia ni magnitudes" },
+      { ...original, title: "Anuncio sin identificación" }
+    ];
+    for (const candidate of invalid) {
+      assert.notEqual(prepareSourceProduct(candidate).product.title, expected, `${reference}: origen alterado`);
+    }
+  }
+});
+
 test("metadatos contradictorios y evidencias ambiguas no autorizan cambiar marcas o modelos", () => {
   for (const reference of ["2020", "2118", "6103", "6852", "6689", "6863"]) {
     const record = source("gam", reference);

@@ -24,7 +24,7 @@ test("capacidad de unidad UniCarriers documentada y original intacto", () => {
   const result = prepareProduct(record, catalog);
   assert.equal(result.status, "ready");
   assert.deepEqual(result.issues, []);
-  assert.equal(result.product.title, preparedRecord.title);
+  assert.equal(result.product.title, "Carretilla elevadora diésel UniCarriers E2D2A30 de 2500 kg");
   assert.equal(result.product.description_general, verifiedCanonicalBriefEditorial["mercaeleva:M582-1882"].general);
   assert.match(result.product.description_general ?? "", /reconciliación individual acreditada/);
   assert.deepEqual(result.product.spec, preparedRecord.specs);

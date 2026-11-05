@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { fold, numberToken } from "../../attribute-utils.js";
+import { resolveDocumentedMachineryTitle } from "./documented-machinery-title.js";
 
 const verifiedSource = (record: ProductRecord): boolean => {
   if (record.providerId !== "mercaeleva" || !record.reference?.trim() ||
@@ -91,6 +92,8 @@ export const resolveMercaelevaEditorialTitle = (record: ProductRecord): string |
   if (forkliftTitle) return forkliftTitle;
   const truckBasketTitle = resolveDocumentedTruckBasketTitle(record, title, brand, model);
   if (truckBasketTitle) return truckBasketTitle;
+  const machineryTitle = resolveDocumentedMachineryTitle(record, title, brand, model);
+  if (machineryTitle) return machineryTitle;
   if (record.condition === "Segunda mano" &&
     fold(title) === fold(`${brand} ${model} TRANSPALET ELECTRICO`) &&
     fold(String(record.specs?.["Título adicional"] ?? "")) === "transpalet electrico" &&
