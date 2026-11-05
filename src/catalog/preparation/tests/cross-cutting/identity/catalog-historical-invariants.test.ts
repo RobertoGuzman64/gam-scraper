@@ -19,7 +19,7 @@ test("Las muestras de los tres proveedores preservan las reconciliaciones y bloq
   const batches = sources.map(({ products }) => prepareImportBatch(products, catalog));
 
   assert.deepEqual(batches.map(({ totals }) => totals), [
-    { ready: sources[0]!.products.length - 25, review: 25 },
+    { ready: sources[0]!.products.length - 9, review: 9 },
     { ready: sources[1]!.products.length, review: 0 },
     { ready: sources[2]!.products.length - 1, review: 1 }
   ]);
@@ -27,7 +27,7 @@ test("Las muestras de los tres proveedores preservan las reconciliaciones y bloq
   const all = batches.flatMap(({ products }) => products);
   assert.equal(all.length, sources.reduce((sum, source) => sum + source.productCount, 0));
   assert.equal(new Set(all.map(({ product }) => `${product.providerId}:${product.reference}`)).size, all.length);
-  assert.equal(all.filter(({ status }) => status === "ready").length, all.length - 26);
+  assert.equal(all.filter(({ status }) => status === "ready").length, all.length - 10);
   assert.ok(all.filter(({ status }) => status === "ready").every(({ issues }) => issues.length === 0));
 
   const get = (providerId: string, reference: string) => {

@@ -56,7 +56,7 @@ test("se comprueban 30 referencias únicas y once capacidades recuperadas", () =
       gamNonUnivocalPower.some((value) => value === reference);
     const recoveredMercaeleva = ["M062-8951", "M119-9334", "M582-1882"].includes(reference);
     assert.equal(prepareProduct(record(provider, reference), catalog).status,
-      (provider === "gam" && recoveredGam && !["2089", "50", "6574"].includes(reference)) || (provider === "mercaeleva" && recoveredMercaeleva)
+      (provider === "gam" && recoveredGam) || (provider === "mercaeleva" && recoveredMercaeleva)
         ? "ready" : "review", id);
   }
 });

@@ -16,6 +16,8 @@ import { reconcileGomarizVerifiedPlatformHeight } from "./reconciliation/gomariz
 import { reconcileGamCorroboratedLoadCapacity } from "./reconciliation/gam-capacity.js";
 import { applyReconciledTechnicalSpecs } from "./reconciliation/technical-specifications.js";
 import { reconcileGamBasketDimensions } from "./reconciliation/gam-basket-dimensions.js";
+import { reconcileGamVerifiedBasketSizes } from "./reconciliation/gam-verified-basket-sizes.js";
+import { reconcileGamSourceCapacitySummary, preparedGamSourceCapacityShort } from "./reconciliation/gam-source-capacity-summary.js";
 import { reconcileGamHorometer } from "./reconciliation/gam-horometer.js";
 import { captureSourceEditorialEvidence } from "./mapping/source-editorial-evidence.js";
 import { recoverBaseTechnicalSpecs } from "./recovery/gam-technical-recovery.js";
@@ -36,10 +38,12 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   record = reconcileGamForPreparation(record);
   record = reconcileMercaelevaForPreparation(record);
   const editorialRecord = record;
+  record = reconcileGamSourceCapacitySummary(record);
   record = reconcileGamCorroboratedLoadCapacity(record);
   record = reconcileGomarizVerifiedPlatformHeight(record);
   record = reconcileMercaelevaCorroboratedCapacity(record);
   record = reconcileGamBasketDimensions(record);
+  record = reconcileGamVerifiedBasketSizes(record);
   record = reconcileGamHorometer(record);
   const reconciledSpecs = applyReconciledTechnicalSpecs(beforeReconciliation, record, documentedSpecs);
   const issues: string[] = [];
@@ -76,7 +80,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     condition,
     price,
     description_title: editorial.title,
-    description: descriptions.short,
+    description: preparedGamSourceCapacityShort(editorialRecord, record, descriptions.short),
     description_general: descriptions.general,
     image: images[0] ?? null,
     images,

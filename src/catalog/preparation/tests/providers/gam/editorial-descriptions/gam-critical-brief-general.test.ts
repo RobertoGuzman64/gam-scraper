@@ -33,7 +33,8 @@ test("GAM: conserva las seis generales de F10 y recupera la 6617", () => {
       assert.equal(prepared.product.sourceUrl, record.url);
       assert.deepEqual(prepared.product.spec, recoverGamDocumentedMobilityAndAccessSpecs(record, {
         ...reconcileGamHorometer(record).specs,
-        ...(["6358", "6367"].includes(record.reference) ? { "Capacidad de carga (kg)": "2000 KG", "Año de fabricación": "2019" } : {})
+        ...(["6358", "6367"].includes(record.reference) ? { "Capacidad de carga (kg)": "2000 KG", "Año de fabricación": "2019" } : {}),
+        ...(record.reference === "6617" ? { "Dimensiones Cesta": "1,83 x 0,76 m" } : {})
       }));
     }
     assert.equal(JSON.stringify(record), baseline);

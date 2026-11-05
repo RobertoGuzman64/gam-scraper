@@ -1,4 +1,5 @@
 import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
+import { campaign1VerifiedBasketCorrections } from "../../../support/phase2-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { requireProductReference } from "../../../cross-cutting/support/require-product-reference.js";
@@ -25,10 +26,12 @@ test("fragmentos de cesta irrecuperables no se convierten en dimensiones inventa
     const record = reference(id);
     const prepared = prepareProduct(record, catalog);
     assert.deepEqual(resolved(record, "Dimensiones de la cesta"), { status: "not_observed", value: null }, id);
-    assert.equal(prepared.status, "review", id);
-    assert.ok(prepared.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")), id);
-    assert.equal(prepared.product.spec["Dimensiones Cesta"], record.specs?.["Dimensiones Cesta"], id);
-    assert.equal(prepared.product.attributes.some((item) => item.attributeID === attribute("Dimensiones de la cesta").id), false, id);
+    const verified = campaign1VerifiedBasketCorrections.get(id);
+    assert.equal(prepared.status, verified ? "ready" : "review", id);
+    if (!verified) assert.ok(prepared.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")), id);
+    assert.equal(prepared.product.spec["Dimensiones Cesta"], verified ?? record.specs?.["Dimensiones Cesta"], id);
+    assert.deepEqual(prepared.product.attributes.filter((item) => item.attributeID === attribute("Dimensiones de la cesta").id)
+      .map((item) => item.value), verified ? [verified] : [], id);
   }
 });
 

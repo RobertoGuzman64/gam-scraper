@@ -1,4 +1,5 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
+import { reconcileGamSourceIdentity } from "./gam-source-identity.js";
 import { gamElevationSourceIdentityConflict } from "../evidence/providers/gam/identity/elevation-identity.js";
 import { reconcileGamElevationEditorialIdentity } from "../evidence/providers/gam/editorial/elevation-editorial.js";
 import { reconcileGamOutdatedSourceTitle } from "../mapping/providers/gam/editorial-descriptions/editorial-titles.js";
@@ -37,5 +38,5 @@ record = reconcileGamVerifiedGenie5390Editorial(reconcileGamOrderPickerEditorial
   record = reconcileGamVerifiedYaleGc55vxGlp(record);
   record = reconcileGamVerifiedYaleGc40vxLpg(record);
   record = reconcileGamVerifiedYaleGc45vxLpg(record);
-    return record;
+  return reconcileGamSourceIdentity(record);
 };

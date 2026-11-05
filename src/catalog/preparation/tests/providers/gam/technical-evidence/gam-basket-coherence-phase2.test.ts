@@ -26,7 +26,7 @@ test("fase 2: prepara 24 medidas verificables de forma idéntica a su evidencia 
   }
 });
 
-test("fase 2: 15 dimensiones indeterminadas conservan literal y exigen revisión", () => {
+test("las dimensiones todavía indeterminadas conservan literal y exigen revisión", () => {
   for (const reference of phase2BasketReviewReferences) {
     const record = original(reference);
     const result = prepareSourceProduct(record);

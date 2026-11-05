@@ -30,7 +30,7 @@ test("GAM: acredita veinte descripciones generales propias sin modificar otros c
     const evidenceEntries: Readonly<Record<string, { readonly general: string }>> = verifiedGamUnitSourceGenerals;
     const evidence = evidenceEntries[record.reference];
     assert.ok(evidence);
-    assert.equal(result.status, record.reference === "6915" ? "review" : "ready", record.reference);
+    assert.equal(result.status, "ready", record.reference);
     assert.equal(result.product.description_general, evidence.general, record.reference);
     assert.ok(result.product.description_general);
     assert.ok(result.product.description_general.split(/\s+/u).length >= 80, record.reference);

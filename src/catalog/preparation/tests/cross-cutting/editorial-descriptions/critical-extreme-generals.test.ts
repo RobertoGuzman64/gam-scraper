@@ -18,7 +18,8 @@ test("recupera dos generales extremas sin asignar datos técnicos a otras identi
     const description = result.product.description_general ?? "";
     assert.ok(description.trim().split(/\s+/u).length >= 60);
     for (const detail of details) assert.ok(description.toLocaleLowerCase("es").includes(detail.toLocaleLowerCase("es")));
-    assert.deepEqual(result.product.spec, { ...source.specs, ...(source.providerId === "gomariz" && source.year ? { "Año de fabricación": source.year } : {}) });
+    assert.deepEqual(result.product.spec, { ...source.specs, ...(source.providerId === "gomariz" && source.year ? { "Año de fabricación": source.year } : {}),
+      ...(source.providerId === "gam" && source.reference === "6617" ? { "Dimensiones Cesta": "1,83 x 0,76 m" } : {}) });
     assert.equal(JSON.stringify(source), before);
     assert.notEqual(prepareSourceProduct({ ...source, reference: "otra" }).product.description_general, description);
     assert.notEqual(prepareSourceProduct({ ...source, specs: { ...source.specs, Capacidad: "999 kg",

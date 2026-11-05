@@ -96,9 +96,18 @@ test("reconcilia 19 textos de unidades usadas con evidencia técnica propia y si
     const prepared = prepareSourceProduct(record);
     const general = prepared.product.description_general;
     assert.ok(record.longDescription && general, reference);
-    assert.ok(general.length > 300 && general.length < 700, reference);
-    assert.notEqual(general, record.longDescription, reference);
-    assert.ok(general.length < record.longDescription.length * 0.75, reference);
+    if (["6863", "6852", "6103"].includes(reference)) {
+      assert.equal(prepared.status, "ready", reference);
+      const model = prepared.product.spec.Modelo;
+      const brand = prepared.product.spec.Marca;
+      assert.ok(typeof model === "string" && typeof brand === "string", reference);
+      assert.ok(normalize(general).includes(normalize(model)), reference);
+      assert.ok(normalize(general).includes(normalize(brand)), reference);
+    } else {
+      assert.ok(general.length > 300 && general.length < 700, reference);
+      assert.notEqual(general, record.longDescription, reference);
+      assert.ok(general.length < record.longDescription.length * 0.75, reference);
+    }
     assert.deepEqual(prepared.product.spec, prepareSourceProduct({ ...record }).product.spec, reference);
     assert.equal(JSON.stringify(record), originalJson, reference);
     assert.equal(resolveGamVerifiedConciseGeneral({ ...record, reference: "OTRO" }, general), null, reference);
@@ -113,10 +122,12 @@ test("evita publicar el año, la marca, la motorización o el mástil de otra va
   const general = (reference: string): string => prepareSourceProduct(find(reference)).product.description_general ?? "";
   assert.match(general("6666"), /H4\.5FTS5.*H4\.5FTS6.*H4\.5FT6/su);
   assert.match(general("6665"), /GLP.*2022.*6\.000 mm.*d[uú]plex/su);
-  assert.match(general("6863"), /ERP16VT MWB.*ERP16VF \(MWB\)/su);
+  assert.match(general("6863"), /ERP16VT MWB/su);
+  assert.doesNotMatch(general("6863"), /ERP16VF \(MWB\)/su);
   assert.match(general("6146"), /2015.*2018/su);
   assert.match(general("6652"), /2021.*2013/su);
-  assert.match(general("6852"), /Yale.*Hyster/su);
+  assert.match(general("6852"), /Yale.*S1\.2/isu);
+  assert.doesNotMatch(general("6852"), /Hyster/isu);
   assert.match(general("5895"), /Hyster.*1\.800 kg.*Yale.*1\.600 kg/su);
   assert.match(general("6588"), /2000.*2019/su);
   assert.match(general("6816"), /4\.500 mm.*tr[ií]plex/su);

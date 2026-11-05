@@ -25,11 +25,18 @@ export const phase2BasketCorrections: ReadonlyMap<string, string> = new Map([
   ["6167", "1,4 x 0,7 x 1,1 m"]
 ]);
 
+export const campaign1VerifiedBasketCorrections: ReadonlyMap<string, string> = new Map([
+  ["6607", "1,83 x 0,76 m"],
+  ["6630", "1,8 x 0,8 m"], ["6632", "1,8 x 0,8 m"],
+  ["6614", "3,81 x 2,18 m"], ["6615", "3,81 x 2,18 m"], ["6616", "3,81 x 2,18 m"],
+  ["6617", "1,83 x 0,76 m"], ["6631", "1,2 x 0,96 m"]
+]);
+
 export const phase2BasketReviewReferences: ReadonlySet<string> = new Set([
-  "6607", "6630", "6632", "6631", "6614", "6616", "6615", "6642", "6622", "6625", "6669", "6617", "6626", "6169", "6171"
+  "6642", "6622", "6625", "6669", "6626", "6169", "6171"
 ]);
 
 export const phase2ExpectedSpecValue = (reference: string | null, key: string, original: unknown): unknown =>
   key === "Dimensiones Cesta" && reference !== null
-    ? phase2BasketCorrections.get(reference) ?? original
+    ? campaign1VerifiedBasketCorrections.get(reference) ?? phase2BasketCorrections.get(reference) ?? original
     : original;

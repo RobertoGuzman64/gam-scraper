@@ -55,7 +55,7 @@ test("ninguna cifra se reconstruye con trozos sueltos, unidades supuestas o ruid
 });
 
 test("conserva las dimensiones irrecuperables y exige revisión sin inventar medidas", () => {
-  for (const code of ["6607", "6630", "6632", "6631", "6614", "6616", "6615", "6642", "6625", "6669", "6617", "6626", "6169", "6171"]) {
+  for (const code of ["6642", "6625", "6669", "6626", "6169", "6171"]) {
     const record = reference(code);
     assert.deepEqual(resolve(record), { status: "not_observed", value: null }, code);
     assert.equal(prepareProduct(record, catalog).status, "review", code);
