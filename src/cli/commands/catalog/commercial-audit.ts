@@ -8,19 +8,21 @@ import { buildCommercialExportFiles } from "../../../pipeline/legacy-export/comm
 import { verifyCommercialExportDirectory } from "../../../pipeline/legacy-export/commercial-export-verification.js";
 import type { CommercialEnvironment } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { printCommandError } from "../../reporting/errors.js";
+import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+import { renderCommercialCategoryTree } from "../../../catalog/diagnostics/commercial-category-tree.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 
 export const runCommercialAudit = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    printReportLine("Uso: npm run auditar:comercial -- [--json|--pendientes|--revision|--muestras|--atributos|--atributos-revision|--atributo=ID|--contenido|--contenido-revision|--exportacion|--acreditacion|--acreditacion-json|--verificar=RUTA|--ficha=REFERENCIA]\nAudita propuestas y acredita la integridad comercial contra publicaciones técnicas; --verificar compara archivos ya exportados con el corte vigente, sin modificar datos.");
+    printReportLine("Uso: npm run auditar:comercial -- [--json|--arbol|--pendientes|--revision|--muestras|--atributos|--atributos-revision|--atributo=ID|--contenido|--contenido-revision|--exportacion|--acreditacion|--acreditacion-json|--verificar=RUTA|--ficha=REFERENCIA]\nAudita propuestas y acredita la integridad comercial contra publicaciones técnicas; --verificar compara archivos ya exportados con el corte vigente, sin modificar datos.");
     return;
   }
   const verifyPath = args[0]?.match(/^--verificar=(.+)$/u)?.[1];
   const attributeId = args[0]?.match(/^--atributo=([1-9]\d*)$/)?.[1];
   const productReference = args[0]?.match(/^--ficha=(.+)$/u)?.[1];
   if (args.length > 1 || (args.length === 1 &&
-    !["--json", "--pendientes", "--revision", "--muestras", "--atributos", "--atributos-revision", "--contenido", "--contenido-revision", "--exportacion", "--acreditacion", "--acreditacion-json"].includes(args[0] ?? "") &&
+    !["--json", "--arbol", "--pendientes", "--revision", "--muestras", "--atributos", "--atributos-revision", "--contenido", "--contenido-revision", "--exportacion", "--acreditacion", "--acreditacion-json"].includes(args[0] ?? "") &&
     (attributeId === undefined || !Number.isSafeInteger(Number(attributeId))) && !productReference && !verifyPath)) {
     throw new Error("Opciones inválidas. Consultar --help para las opciones de auditoría comercial");
   }
@@ -38,6 +40,14 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
     return;
   }
   const report = await auditCommercialCatalog(root);
+  if (args[0] === "--arbol") {
+    const catalog = await loadImportCatalog();
+    const lines = renderCommercialCategoryTree(catalog.categories, report.providers.map(({ baseline, presentationAudit }) => ({
+      providerId: baseline.providerId, decisions: presentationAudit.decisions
+    })));
+    for (const line of lines) printReportLine(line);
+    return;
+  }
   if (args[0] === "--acreditacion-json") {
     console.log(JSON.stringify({ version: 1, providers: report.providers.map((item) => item.accreditation) }, null, 2));
     return;

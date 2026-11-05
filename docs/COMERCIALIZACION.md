@@ -46,12 +46,15 @@ Desde la raíz del repositorio:
 
 ```powershell
 npm run auditar:comercial
+npm run auditar:comercial -- --arbol
 npm run auditar:comercial -- --pendientes
 npm run auditar:comercial -- --atributos-revision
 npm run auditar:comercial -- --acreditacion
 npm run auditar:comercial -- --json
 npm run exportar:comercial -- --help
 ```
+
+La opción `--arbol` es una vista de inspección: presenta la jerarquía real con IDs, conteos y una línea por producto (proveedor, referencia y título), además de las fichas pendientes. No añade incidencias ni modifica las decisiones del auditor. Para guardarla en un fichero: `npm run --silent auditar:comercial -- --arbol > categorias-comerciales.txt`.
 
 El diagnóstico y el derivado comercial son independientes de las publicaciones técnicas. Las categorías, opciones y relaciones se validan contra los recursos locales vigentes; una exportación con categorías pendientes no equivale a una importación autorizada.
 
