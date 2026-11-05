@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import type { SpecsMap } from "../../../contracts/catalog.js";
 import { collectProductImages } from "../../parsing/image-gallery.js";
 import { extractGamGallery } from "./gallery.js";
+import { unrelatedDetails } from "./selectors.js";
 import { distinguishDescriptions } from "../../../catalog/normalization/descriptions.js";
 import { extractGamPrice } from "./price.js";
 import { extractLongDescription, extractShortDescription } from "./descriptions.js";
@@ -56,7 +57,7 @@ export const parseProductPage = (html: string, pageUrl: string): {
   const images = extractGamGallery($, pageUrl);
   const fallbackImages = images.length ? images : collectProductImages($, pageUrl, [
     "img[itemprop='image']", "main img", "#content img", "body img"
-  ], "gam");
+  ], "gam", unrelatedDetails);
   return {
     title,
     shortDescription: descriptions.short,

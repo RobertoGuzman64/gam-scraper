@@ -1,8 +1,8 @@
 import type { ImportCandidate, ImportCatalog } from "./contracts.js";
-import { commercialCandidate } from "./commercial-reference.js";
+import { commercialCandidate, commercialReferenceKey } from "./commercial-reference.js";
 import type { PreparationDocument } from "../preparation/preparation-document.js";
 import { validateCreateManyCandidate, validateImportCandidate } from "./import-validation.js";
-import { validText, referenceKey } from "./reference-inventory.js";
+import { validText } from "./reference-inventory.js";
 import type { ReferenceInventory } from "./reference-inventory.js";
 
 export type ImportIssue = { readonly reference: string | null; readonly sourceUrl: string; readonly reason: string };
@@ -29,6 +29,8 @@ export const selectImportCandidates = (
   document: PreparationDocument, providerId: string, inventory: ReferenceInventory,
   catalog: ImportCatalog, receiver: "excel" | "createMany"
 ): CandidateSelection => {
+  const referenceKey = (value: string): string => commercialReferenceKey(providerId, value);
+  const inventoryReferences = new Set([...inventory.references].map(referenceKey));
   const counts = new Map<string, number>();
   const sourceCounts = new Map<string, number>();
   for (const entry of document.products) {
@@ -74,7 +76,7 @@ export const selectImportCandidates = (
       review.push({ ...issue, reason: reasons.join("; ") || "Requiere revisión" });
       continue;
     }
-    if (reference && inventory.references.has(referenceKey(reference))) {
+    if (reference && inventoryReferences.has(referenceKey(reference))) {
       existing.push({ ...issue, reason: "La referencia ya está en el inventario de la empresa; no se actualiza" });
       continue;
     }

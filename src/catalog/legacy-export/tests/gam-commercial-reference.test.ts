@@ -6,6 +6,9 @@ import { parsePreparation } from "../../preparation/preparation-document.js";
 import { prepareProduct } from "../prepare-product.js";
 import { planProductImport, readReferenceInventory } from "../export-plan.js";
 import { planCreateMany } from "../create-many-plan.js";
+import { commercialReferenceKey } from "../commercial-reference.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readAccreditedPublication, resolveAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
 
 const source: ProductRecord = {
   providerId: "gam", categoryKey: "elevacion-nueva", categoryName: "Plataformas elevadoras nuevas",
@@ -95,4 +98,83 @@ test("preparación GAM rechaza tipos de referencia comercial alterados", () => {
   assert.throws(() => parsePreparation({ ...document, products: [{ ...entry, product: {
     ...entry.product, externalReference: 6607
   } }] }, "gam"), /productos inválidos/);
+});
+
+
+test("GAM impide dos altas del mismo stock aunque cambie el separador", async () => {
+  const original = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const yale = original.products.filter((item) => item.reference === "6835" || item.reference === "6858");
+  assert.equal(yale.length, 2);
+  assert.deepEqual(yale.map((item) => item.externalReference), ["GAM 27262", "GAM-27262"]);
+  assert.equal(yale[0]?.serialNumber, yale[1]?.serialNumber);
+  const document = documentFor(yale);
+  assert.deepEqual(document.products.map((item) => item.status), ["ready", "ready"]);
+  for (const plan of [
+    planProductImport(document, "gam", emptyInventory, catalog),
+    planCreateMany(document, "gam", emptyInventory, catalog)
+  ]) {
+    assert.equal(plan.report.newProducts, 0);
+    assert.equal(plan.report.duplicateReferences, 2);
+    assert.deepEqual(plan.report.duplicates.map((item) => item.reference), ["GAM 27262", "GAM-27262"]);
+  }
+  assert.deepEqual(document.products.map((item) => item.product.reference), ["6835", "6858"]);
+});
+
+test("GAM reconoce stock importado con separador alternativo, sin cambiar el resto de referencias", () => {
+  const document = documentFor([{ ...source, externalReference: "GAM 27262" }]);
+  const inventory = readReferenceInventory("companyID,reference\n45,GAM-27262\n", 45);
+  for (const plan of [
+    planProductImport(document, "gam", inventory, catalog),
+    planCreateMany(document, "gam", inventory, catalog)
+  ]) {
+    assert.equal(plan.report.newProducts, 0);
+    assert.equal(plan.report.existingProducts, 1);
+    assert.equal(plan.report.duplicateReferences, 0);
+  }
+  assert.equal(commercialReferenceKey("gam", " gam 27262 "), "GAM-27262");
+  assert.equal(commercialReferenceKey("gam", "GAM-27263"), "GAM-27263");
+  assert.equal(commercialReferenceKey("gam", "PV 41592"), "PV 41592");
+  assert.equal(commercialReferenceKey("gomariz", "GAM 27262"), "GAM 27262");
+});
+
+
+test("las colisiones comerciales reales de la publicación GAM no producen altas duplicadas", async () => {
+  const publicationFile = await resolveAccreditedPublication(process.cwd(), "gam");
+  assert.ok(publicationFile);
+  const publication = await readAccreditedPublication(publicationFile);
+  const groups = new Map<string, typeof publication.products[number][]>();
+  for (const product of publication.products) {
+    if (!product.externalReference?.trim()) continue;
+    const key = commercialReferenceKey("gam", product.externalReference);
+    const group = groups.get(key) ?? [];
+    group.push(product);
+    groups.set(key, group);
+  }
+  const collided = [...groups.values()].filter((group) => group.length > 1).flat();
+  const original = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const byReference = new Map(original.products.map((product) => [product.reference, product]));
+  const records = collided.map((product) => {
+    const sourceRecord = byReference.get(product.reference);
+    assert.ok(sourceRecord);
+    assert.equal(sourceRecord.externalReference, product.externalReference);
+    return sourceRecord;
+  });
+  const document = documentFor(records);
+  const previous = document.products.map((item) => ({
+    reference: item.product.reference, status: item.status, issues: item.issues
+  }));
+  for (const plan of [
+    planProductImport(document, "gam", emptyInventory, catalog),
+    planCreateMany(document, "gam", emptyInventory, catalog)
+  ]) {
+    assert.equal(plan.report.total, collided.length);
+    assert.equal(plan.report.duplicateReferences, collided.length);
+    assert.equal(plan.report.newProducts, 0);
+    assert.equal(plan.report.reviewProducts, 0);
+    assert.equal(plan.report.existingProducts, 0);
+    assert.deepEqual(plan.report.duplicates.map((item) => item.sourceUrl), records.map((record) => record.url));
+  }
+  assert.deepEqual(document.products.map((item) => ({
+    reference: item.product.reference, status: item.status, issues: item.issues
+  })), previous);
 });

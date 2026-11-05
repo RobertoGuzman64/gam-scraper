@@ -16,6 +16,250 @@ test("GAM: interpreta precios europeos y numéricos sin convertir textos de cons
   assert.equal(unavailable.price, null);
 });
 
+test("GAM: el respaldo de galería corta no incorpora portadas de otros productos", () => {
+  const url = "https://online.gamrentals.com/es/yale/6746-preparapedidos-yale-mo10e";
+  const own = "https://online.gamrentals.com/58026-product_main_2x/preparapedidos-yale-mo10e.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const html = fixture(`<div id="product"><img itemprop="image" src="${own}"/>
+    <section class="related-products"><div class="product-miniature"><img src="${foreign}"/></div></section>
+  </div>`);
+  const parsed = parseProductPage(html, url);
+  assert.deepEqual(parsed.images, [own]);
+  assert.equal(parsed.image, own);
+  const withoutOwn = parseProductPage(fixture(`<div id="product">
+    <section class="related-products"><div class="product-miniature"><img src="${foreign}"/></div></section>
+  </div>`), url);
+  assert.deepEqual(withoutOwn.images, []);
+  assert.equal(withoutOwn.image, null);
+});
+
+test("GAM: evita repetir fotografías de CDN cuando una fuente añade parámetros de consulta", () => {
+  const first = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const second = "https://online.gamrentals.com/60452-product_main_2x/2007-jlg-e300ajp.jpg";
+  const html = fixture(`<div class="product-cover"><img src="${first}" data-image-large-src="${first}?v=2"/></div>
+    <div class="product-cover"><img src="${second}"/></div>`);
+  assert.deepEqual(parseProductPage(html, base).images, [first, second]);
+  assert.deepEqual(parseProductPage(fixture(`<div class="product-cover"><img src="${first}?v=2"/></div>`), base).images, [`${first}?v=2`]);
+});
+
+test("GAM: conserva variantes de consulta de imágenes de dominios externos", () => {
+  const first = "https://imagenes.example.com/foto.jpg?imagen=1";
+  const second = "https://imagenes.example.com/foto.jpg?imagen=2";
+  const html = fixture(`<div class="product-cover"><img src="${first}" data-image-large-src="${second}"/></div>`);
+  assert.deepEqual(parseProductPage(html, base).images, [first, second]);
+});
+
+test("GAM: los datos JSON-LD no mezclan imágenes de productos relacionados identificados", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const relatedUrl = "https://online.gamrentals.com/es/yale/6746-preparapedidos-yale-mo10e";
+  const html = `<html><head><script type="application/ld+json">${JSON.stringify({
+    "@graph": [
+      { "@type": "Product", url: base, image: own },
+      { "@type": "Product", url: relatedUrl, image: foreign }
+    ]
+  })}</script></head><body><main><h1>JLG E300AJP</h1></main></body></html>`;
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+
+  const separateScripts = `<html><head>
+    <script type="application/ld+json">${JSON.stringify({ "@type": "Product", "@id": `${base}#product`, image: own })}</script>
+    <script type="application/ld+json">${JSON.stringify({ "@type": "Product", url: relatedUrl, image: foreign })}</script>
+  </head><body><h1>JLG E300AJP</h1></body></html>`;
+  assert.deepEqual(parseProductPage(separateScripts, base).images, [own]);
+});
+
+test("GAM: reconoce Product cuando @graph contiene un solo objeto", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const structured = {
+    "@context": "https://schema.org",
+    "@graph": { "@type": "Product", url: base, image: { contentUrl: own } }
+  };
+  const html = `<html><head><script type="application/ld+json">${JSON.stringify(structured)}</script></head>
+    <body><h1>JLG E300AJP</h1></body></html>`;
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+});
+
+test("GAM: el @graph con objeto único conserva el aislamiento de otras fichas", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const relatedUrl = "https://online.gamrentals.com/es/yale/6746-preparapedidos-yale-mo10e";
+  const ownProduct = { "@graph": { "@type": "Product", url: base, image: own } };
+  const relatedProduct = { "@graph": { "@type": "Product", url: relatedUrl, image: foreign } };
+  const makeScript = (value: unknown): string => `<script type="application/ld+json">${JSON.stringify(value)}</script>`;
+  const html = `<html><head>${makeScript(ownProduct)}${makeScript(relatedProduct)}</head>
+    <body><h1>JLG E300AJP</h1></body></html>`;
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+  assert.deepEqual(parseProductPage(`<html><head>${makeScript(relatedProduct)}</head><body><h1>JLG E300AJP</h1></body></html>`, base).images, []);
+});
+
+test("GAM: descarta portadas de otros IDs GAM cuando el JSON-LD no incluye coincidencia exacta", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const relatedUrl = "https://online.gamrentals.com/es/yale/6746-preparapedidos-yale-mo10e";
+  const foreignOnly = `<html><head><script type="application/ld+json">${JSON.stringify({
+    "@type": "Product", url: relatedUrl, image: foreign
+  })}</script></head><body><h1>JLG E300AJP</h1></body></html>`;
+  assert.deepEqual(parseProductPage(foreignOnly, base).images, []);
+  const mixed = `<html><head><script type="application/ld+json">${JSON.stringify({
+    "@graph": [
+      { "@type": "Product", image: own },
+      { "@type": "Product", "@id": `${relatedUrl}#product`, image: foreign }
+    ]
+  })}</script></head><body><h1>JLG E300AJP</h1></body></html>`;
+  assert.deepEqual(parseProductPage(mixed, base).images, [own]);
+});
+
+test("GAM: conserva URL alternativas del mismo ID y productos sin identidad comparable", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const unknown = "https://online.gamrentals.com/60452-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const canonical = "https://online.gamrentals.com/es/otro-catalogo/6934-jlg-e300ajp";
+  const related = "https://online.gamrentals.com/es/yale/6746-preparapedidos-yale-mo10e";
+  const html = `<html><head><script type="application/ld+json">${JSON.stringify({
+    "@graph": [
+      { "@type": "Product", url: canonical, image: own },
+      { "@type": "Product", url: "https://otro-dominio.example/catalogo", image: unknown },
+      { "@type": "Product", url: related, image: foreign }
+    ]
+  })}</script></head><body><h1>JLG E300AJP</h1></body></html>`;
+  assert.deepEqual(parseProductPage(html, base).images, [own, unknown]);
+});
+
+test("GAM: conserva la galería JSON-LD sin identidad de página inequívoca", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const html = `<html><head><script type="application/ld+json">${JSON.stringify({
+    "@type": "Product", image: [own]
+  })}</script></head><body><h1>JLG E300AJP</h1></body></html>`;
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+});
+
+test("GAM: reconoce tipos Product de Schema.org con URI completa y excluye productos ajenos", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const relatedUrl = "https://online.gamrentals.com/es/yale/6746-preparapedidos-yale-mo10e";
+  const html = `<html><head><script type="application/ld+json">${JSON.stringify({
+    "@graph": [
+      { "@type": "https://schema.org/Product", url: base, image: { "@type": "ImageObject", contentUrl: own } },
+      { "@type": "http://schema.org/Product", url: relatedUrl, image: foreign }
+    ]
+  })}</script></head><body><h1>JLG E300AJP</h1></body></html>`;
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+});
+
+test("GAM: reconoce tipos mixtos con URI de Product pero no acepta tipos de dominios ajenos", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const html = `<html><head><script type="application/ld+json">${JSON.stringify({
+    "@graph": [
+      { "@type": ["Vehicle", "https://schema.org/Product"], url: base, image: own },
+      { "@type": "https://unrelated.example/Product", image: foreign }
+    ]
+  })}</script></head><body><h1>JLG E300AJP</h1></body></html>`;
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+});
+
+test("GAM: usa URL alternativa de ImageObject cuando contentUrl está vacío", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const second = "https://online.gamrentals.com/60452-product_main_2x/2007-jlg-e300ajp.jpg";
+  const third = "https://online.gamrentals.com/60453-product_main_2x/2007-jlg-e300ajp.jpg";
+  const html = fixture(`<script type="application/ld+json">${JSON.stringify({
+    "@type": "Product", url: base, image: [
+      { "@type": "ImageObject", contentUrl: "", url: own },
+      { "@type": "ImageObject", contentUrl: " \t ", url: second },
+      { "@type": "ImageObject", contentUrl: null, url: "", src: third }
+    ]
+  })}</script>`);
+  assert.deepEqual(parseProductPage(html, base).images, [own, second, third]);
+});
+
+test("GAM: conserva prioridad de contentUrl cuando aporta una URL válida", () => {
+  const preferred = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const alternative = "https://online.gamrentals.com/60452-product_main_2x/2007-jlg-e300ajp.jpg";
+  const html = fixture(`<script type="application/ld+json">${JSON.stringify({
+    "@type": "Product", url: base,
+    image: { "@type": "ImageObject", contentUrl: preferred, url: alternative }
+  })}</script>`);
+  assert.deepEqual(parseProductPage(html, base).images, [preferred]);
+});
+
+test("GAM: recupera imágenes JSON-LD ImageObject declaradas mediante contentUrl", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const next = "https://online.gamrentals.com/60452-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const relatedUrl = "https://online.gamrentals.com/es/yale/6746-preparapedidos-yale-mo10e";
+  const html = `<html><head><script type="application/ld+json">${JSON.stringify({
+    "@graph": [
+      { "@type": "Product", url: base, image: [
+        { "@type": "ImageObject", contentUrl: own },
+        { "@type": "ImageObject", contentUrl: next }
+      ] },
+      { "@type": "Product", url: relatedUrl, image: { "@type": "ImageObject", contentUrl: foreign } }
+    ]
+  })}</script></head><body><h1>JLG E300AJP</h1></body></html>`;
+  assert.deepEqual(parseProductPage(html, base).images, [own, next]);
+});
+
+test("GAM: prioriza contentUrl de ImageObject sobre la URL de su página de detalle", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const html = `<html><head><script type="application/ld+json">${JSON.stringify({
+    "@type": "Product", url: base, image: {
+      "@type": "ImageObject", url: "https://online.gamrentals.com/es/galeria/imagen", contentUrl: own
+    }
+  })}</script></head><body><h1>JLG E300AJP</h1></body></html>`;
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+});
+
+test("GAM: comprueba URL y @id antes de admitir imágenes JSON-LD de otra ficha", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const related = "https://online.gamrentals.com/es/yale/6746-preparapedidos-yale-mo10e";
+  const html = fixture(`<script type="application/ld+json">${JSON.stringify({
+    "@graph": [
+      { "@type": "Product", url: "https://fabricante.example/producto", "@id": `${related}#product`, image: foreign },
+      { "@type": "Product", url: base, image: own }
+    ]
+  })}</script>`);
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+  const withoutOwn = fixture(`<script type="application/ld+json">${JSON.stringify({
+    "@type": "Product", url: "https://fabricante.example/producto", "@id": `${related}#product`, image: foreign
+  })}</script>`);
+  assert.deepEqual(parseProductPage(withoutOwn, base).images, []);
+});
+
+test("GAM: conserva productos JSON-LD si uno de sus IDs GAM identifica la propia ficha", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const related = "https://online.gamrentals.com/es/yale/6746-preparapedidos-yale-mo10e";
+  const html = fixture(`<script type="application/ld+json">${JSON.stringify({
+    "@type": "Product", url: related, "@id": `${base}#product`, image: own
+  })}</script>`);
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+});
+
+test("GAM: identifica la ficha por @id aunque su URL comercial sea distinta", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const html = fixture(`<script type="application/ld+json">${JSON.stringify({
+    "@graph": [
+      { "@type": "Product", url: "https://fabricante.example/jlg-e300ajp", "@id": `${base}#product`, image: own },
+      { "@type": "Product", url: "https://fabricante.example/yale-gp80vx", image: foreign }
+    ]
+  })}</script>`);
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+});
+
+test("GAM: mantiene la foto propia cuando @id coincide pero url apunta a otra ficha", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const related = "https://online.gamrentals.com/es/yale/6746-preparapedidos-yale-mo10e";
+  const html = fixture(`<script type="application/ld+json">${JSON.stringify({
+    "@graph": [
+      { "@type": "Product", url: related, "@id": `${base}#product`, image: own },
+      { "@type": "Product", url: "https://fabricante.example/producto", image: foreign }
+    ]
+  })}</script>`);
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+});
+
 test("GAM: recupera un precio publicado en los datos estructurados del producto", () => {
   const html = `<html><head><script type="application/ld+json">${JSON.stringify({
     "@type": "Product", name: "JLG E300AJP", offers: { "@type": "Offer", price: "21.000,00", priceCurrency: "EUR" }
@@ -36,6 +280,63 @@ test("GAM: conserva todas las fotografías distintas del carrusel en tamaño pro
     `https://online.gamrentals.com/${id}-product_main_2x/2007-jlg-e300ajp.jpg`
   ));
   assert.equal(parsed.image, parsed.images[0]);
+});
+
+test("GAM: recupera imágenes de nodos anidados con data-src-large y data-lazy-src", () => {
+  const html = fixture(`<div class="product-gallery">
+    <span data-src-large="/60451-large_default/2007-jlg-e300ajp.jpg"></span>
+    <div data-lazy-src="/60452-medium_default/2007-jlg-e300ajp.jpg"></div>
+  </div>`);
+  assert.deepEqual(parseProductPage(html, base).images, [60451, 60452].map((id) =>
+    `https://online.gamrentals.com/${id}-product_main_2x/2007-jlg-e300ajp.jpg`
+  ));
+});
+
+test("GAM: no recupera imágenes data-src-large o data-lazy-src de recomendaciones anidadas", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const html = fixture(`<div class="product-gallery">
+    <span data-src-large="${own}"></span>
+    <section class="related-products">
+      <span data-src-large="/14287-large_default/carretilla-elevadora-diesel-yale-gp80vx-9.jpg"></span>
+      <div data-lazy-src="/14288-medium_default/carretilla-elevadora-diesel-yale-gp80vx-9.jpg"></div>
+    </section>
+  </div>`);
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+});
+
+test("GAM: excluye carruseles recomendados anidados dentro del producto aunque compartan modelo", () => {
+  const own = [60451, 60452, 60453].map((id) =>
+    `https://online.gamrentals.com/${id}-product_main_2x/2016-genie-z-3020n.jpg`);
+  const recommendations = [
+    "/60454-product_main_2x/2007-jlg-e300ajp.jpg",
+    "/60455-product_main_2x/2016-genie-z-3020n.jpg",
+    "/60456-product_main_2x/2016-genie-z-3020n.jpg",
+    "/60457-product_main_2x/2016-genie-z-3020n-.jpg"
+  ];
+  const html = fixture(`<div id="product"><div class="images-container">
+    ${own.map((image) => `<img src="${image}"/>`).join("")}
+    <section class="related-products">
+      <div class="product-gallery">
+        ${recommendations.map((image) => `<div class="swiper-slide"><a data-fancybox="gallery" href="${image}"><img data-image-large-src="${image}" src="${image}"/></a></div>`).join("")}
+      </div>
+    </section>
+  </div></div>`);
+  const parsed = parseProductPage(html, base);
+  assert.deepEqual(parsed.images, own);
+  assert.equal(parsed.image, own[0]);
+});
+
+test("GAM: excluye miniaturas relacionadas sin descartar imágenes propias dentro del mismo contenedor", () => {
+  const original = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const related = "https://online.gamrentals.com/60452-product_main_2x/2016-genie-z-3020n.jpg";
+  const html = fixture(`<div id="product"><div class="product-gallery">
+    <a data-fancybox="gallery" href="${original}"><img src="${original}"/></a>
+    <div class="featured-products"><div class="product-miniature">
+      <a data-fancybox="gallery" href="${related}"><img data-original="${related}" src="${related}"/></a>
+    </div></div>
+  </div></div>`);
+  const parsed = parseProductPage(html, base);
+  assert.deepEqual(parsed.images, [original]);
 });
 
 test("GAM: lee galerías presentes en el contrato JSON del producto sin incluir relacionados", () => {
@@ -232,4 +533,132 @@ test("GAM: no decide entre medidas explícitas contradictorias ni sustituye valo
   const parsed = parseProductPage(structured, base);
   assert.equal(parsed.specs["Dimensiones Cesta"], "1 76 83X0 metros");
   assert.equal(parsed.specs["Rotación de torreta"], "190º+190º");
+});
+
+test("GAM: ignora imágenes data-product de productos relacionados sin perder las propias", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const ownData = JSON.stringify({ images: [own] });
+  const foreignData = JSON.stringify({ images: [foreign] });
+  const html = fixture(`<div id="product">
+    <div id="product-details" data-product='${ownData}'></div>
+    <section class="related-products"><div data-product='${foreignData}'></div></section>
+  </div>`);
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+  assert.deepEqual(parseProductPage(fixture(`<div id="product">
+    <section class="related-products"><div data-product='${foreignData}'></div></section>
+  </div>`), base).images, []);
+});
+
+test("GAM: ignora imágenes data-images de recomendaciones y conserva las de la ficha", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const ownImages = JSON.stringify([own]);
+  const foreignImages = JSON.stringify([foreign]);
+  const html = fixture(`<div id="product">
+    <div class="product-gallery" data-images='${ownImages}'></div>
+    <div class="crossselling"><div data-images='${foreignImages}'></div></div>
+  </div>`);
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+  assert.deepEqual(parseProductPage(fixture(`<div id="product">
+    <div class="crossselling"><div data-images='${foreignImages}'></div></div>
+  </div>`), base).images, []);
+});
+
+test("GAM: recupera el tamaño disponible cuando bySize.product_main_2x está vacío", () => {
+  const image = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const product = { images: [{ bySize: {
+    product_main_2x: { url: "" },
+    large_default: { url: "/60451-large_default/2007-jlg-e300ajp.jpg" }
+  } }] };
+  const html = fixture(`<div id="product"><div id="product-details" data-product='${JSON.stringify(product)}'></div></div>`);
+  assert.deepEqual(parseProductPage(html, base).images, [image]);
+});
+
+test("GAM: busca tamaños alternativos en orden y conserva el mayor disponible", () => {
+  const first = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const second = "https://online.gamrentals.com/60452-product_main_2x/2007-jlg-e300ajp.jpg";
+  const third = "https://online.gamrentals.com/60453-product_main_2x/2007-jlg-e300ajp.jpg";
+  const images = [
+    { bySize: { product_main_2x: { url: first }, large_default: { url: second } } },
+    { bySize: { product_main_2x: { url: "  " }, large_default: {}, medium_default: { url: "/60452-medium_default/2007-jlg-e300ajp.jpg" } } },
+    { bySize: { product_main_2x: null, large_default: { url: null }, product_main: { url: "/60453-product_main/2007-jlg-e300ajp.jpg" } } }
+  ];
+  const related = { images: ["https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg"] };
+  const html = fixture(`<div id="product"><div id="product-details" data-product='${JSON.stringify({ images })}'></div>
+    <div class="related-products"><div data-product='${JSON.stringify(related)}'></div></div></div>`);
+  assert.deepEqual(parseProductPage(html, base).images, [first, second, third]);
+});
+
+test("GAM: recupera las resoluciones secundarias cuando son las únicas disponibles", () => {
+  const sizes = ["thickbox_default", "home_default", "small_default", "cart_default"];
+  const images = sizes.map((size, index) => ({
+    bySize: { [size]: { url: `/${60601 + index}-${size}/2007-jlg-e300ajp.jpg` } }
+  }));
+  const expected = sizes.map((_, index) =>
+    `https://online.gamrentals.com/${60601 + index}-product_main_2x/2007-jlg-e300ajp.jpg`
+  );
+  const html = fixture(`<div id="product"><div id="product-details" data-product='${JSON.stringify({ images })}'></div></div>`);
+  assert.deepEqual(parseProductPage(html, base).images, expected);
+});
+
+test("GAM: prioriza los tamaños principales y no recupera imágenes de recomendaciones", () => {
+  const preferred = "https://online.gamrentals.com/60611-product_main_2x/2007-jlg-e300ajp.jpg";
+  const fallback = "https://online.gamrentals.com/60612-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const images = [
+    { bySize: { product_main_2x: { url: preferred }, thickbox_default: { url: "/60610-thickbox_default/2007-jlg-e300ajp.jpg" } } },
+    { bySize: { product_main_2x: { url: " " }, medium_default: { url: "/60612-medium_default/2007-jlg-e300ajp.jpg" }, home_default: { url: "/60613-home_default/2007-jlg-e300ajp.jpg" } } },
+    { bySize: { thickbox_default: { url: "/60614-thickbox_default/2007-jlg-e300ajp.jpg" }, home_default: { url: "/60615-home_default/2007-jlg-e300ajp.jpg" } } }
+  ];
+  const html = fixture(`<div id="product"><div id="product-details" data-product='${JSON.stringify({ images })}'></div>
+    <div class="related-products"><div data-product='${JSON.stringify({ images: [{ bySize: { home_default: { url: foreign } } }] })}'></div></div></div>`);
+  assert.deepEqual(parseProductPage(html, base).images, [preferred, fallback, "https://online.gamrentals.com/60614-product_main_2x/2007-jlg-e300ajp.jpg"]);
+});
+
+test("GAM: ignora JSON-LD de productos relacionados sin identidad comprobable", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const data = JSON.stringify({ images: [own] });
+  const related = JSON.stringify({ "@type": "Product", image: foreign });
+  const html = fixture(`<div id="product"><div id="product-details" data-product='${data}'></div>
+    <section class="related-products"><script type="application/ld+json">${related}</script></section>
+  </div>`);
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+});
+
+test("GAM: ignora scripts PrestaShop dentro de recomendaciones sin perder los de la ficha", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const main = JSON.stringify({ product: { images: [own] } });
+  const related = JSON.stringify({ product: { images: [foreign] } });
+  const html = fixture(`<div id="product"><script>const prestashop = ${main};</script>
+    <section class="related-products"><script>const prestashop = ${related};</script></section>
+  </div>`);
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+});
+
+test("GAM: descarta imágenes PrestaShop si el producto identifica otra referencia", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const relatedUrl = "https://online.gamrentals.com/es/yale/6746-preparapedidos-yale-mo10e";
+  const other = { product: { url: relatedUrl, images: [foreign] } };
+  const ownProduct = { product: { url: base, images: [own] } };
+  const html = fixture(`<script>var prestashop = ${JSON.stringify(other)};</script>
+    <script>var prestashop = ${JSON.stringify(ownProduct)};</script>`);
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+  assert.deepEqual(parseProductPage(fixture(`<script>var prestashop = ${JSON.stringify(other)};</script>`), base).images, []);
+});
+
+test("GAM: respeta identidades alternativas y protege data-product con ID ajeno", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
+  const relatedUrl = "https://online.gamrentals.com/es/yale/6746-preparapedidos-yale-mo10e";
+  const same = { url: relatedUrl, "@id": `${base}#product`, images: [own] };
+  const foreignProduct = { url: relatedUrl, images: [foreign] };
+  const html = fixture(`<div id="product"><div id="product-details" data-product='${JSON.stringify(foreignProduct)}'></div>
+    <script>prestashop.product = ${JSON.stringify(same)};</script></div>`);
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+  const onlyData = fixture(`<div id="product"><div id="product-details" data-product='${JSON.stringify(foreignProduct)}'></div></div>`);
+  assert.deepEqual(parseProductPage(onlyData, base).images, []);
 });

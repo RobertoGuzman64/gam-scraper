@@ -57,7 +57,8 @@ export const collectProductImages = (
   $: cheerio.CheerioAPI,
   pageUrl: string,
   selectors: readonly string[],
-  mode?: "gam" | "mercaeleva" | "gomariz"
+  mode?: "gam" | "mercaeleva" | "gomariz",
+  excludedSelectors?: string
 ): readonly string[] => {
   const images = new Map<string, { readonly url: string; readonly rank: number; readonly position: number }>();
   let position = 0;
@@ -74,8 +75,10 @@ export const collectProductImages = (
   for (const selector of selectors) {
     $(selector).each((_, element) => {
       const node = $(element);
+      if (excludedSelectors && node.closest(excludedSelectors).length > 0) return;
       const candidates = [node, ...node.find("a[href], img, source, [data-image]").toArray().map((child) => $(child))];
       for (const candidate of candidates) {
+        if (excludedSelectors && candidate.closest(excludedSelectors).length > 0) continue;
         for (const name of ["data-large_image", "data-zoom-image", "data-full", "data-image", "data-src", "data-lazy", "href", "src"]) {
           push(candidate.attr(name), name);
         }
