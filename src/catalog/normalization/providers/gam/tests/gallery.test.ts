@@ -17,6 +17,16 @@ test("GAM: descarta solo recomendaciones separadas tras una galería propia iden
   assert.deepEqual(excludeGamRelatedProductImages([...own, ...related, photo(203, "2013-jlg-450aj")]), own);
 });
 
+test("GAM: separa cuatro recomendaciones cuando la máquina tiene una o dos fotos propias", () => {
+  const first = own[0]!;
+  const recommended = [...related, photo(203, "2013-jlg-450aj")];
+  assert.deepEqual(excludeGamRelatedProductImages([first, ...recommended]), [first]);
+  assert.deepEqual(excludeGamRelatedProductImages([...own.slice(0, 2), ...recommended]), own.slice(0, 2));
+  assert.deepEqual(excludeGamRelatedProductImages([first, ...related]), [first, ...related]);
+  assert.deepEqual(excludeGamRelatedProductImages([first, ...recommended.slice(0, 2), recommended[0]!, recommended[1]!]),
+    [first, ...recommended.slice(0, 2), recommended[0]!, recommended[1]!]);
+});
+
 test("GAM: conserva variantes, fotografías adicionales y galerías sin evidencia suficiente", () => {
   const cases: readonly (readonly string[])[] = [
     [...own.slice(0, 2), ...related],
@@ -43,11 +53,18 @@ test("GAM: la preparación conserva imágenes propias, identidad, estados y orig
       curated += 1;
       assert.deepEqual(prepared.product.images, selected, source.reference ?? "sin referencia");
       assert.equal(prepared.product.image, source.image, source.reference ?? "sin referencia");
-      assert.ok(prepared.product.images.length >= 3, source.reference ?? "sin referencia");
+      assert.ok(prepared.product.images.length >= 1, source.reference ?? "sin referencia");
     }
     assert.equal(JSON.stringify(source), original, source.reference ?? "sin referencia");
   }
-  assert.ok(curated >= 20);
+  assert.ok(curated >= 300);
+  for (const [reference, ownCount] of [["4731", 1], ["4730", 1], ["4768", 2], ["4754", 1], ["4782", 1], ["4683", 1]] as const) {
+    const source = indexed.get(reference);
+    assert.ok(source, reference);
+    const prepared = prepareSourceProduct(source);
+    assert.deepEqual(prepared.product.images, source.images?.slice(0, ownCount), reference);
+    assert.equal(prepared.product.image, source.image, reference);
+  }
   for (const reference of ["6607", "5855", "6139", "6846", "6150", "2621"]) {
     const source = indexed.get(reference);
     assert.ok(source, reference);
