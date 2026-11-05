@@ -33,7 +33,13 @@ export const decideCommercialCategory = (
     fold(source.title ?? "") === "sky deck" && fold(source.model ?? "") === "sky deck" &&
       fold(String(source.specs?.["Modelo"] ?? "")) === "sky deck"
   );
-  if (isAccessory) return { status: "excluded", reason: "accesorio", categorySellID: null };
+  const isSoloGyps = source.providerId === "gam" && source.categoryKey === "marcas-nuevas" &&
+    segments.includes("bravi") && fold(source.brand ?? "") === "bravi" &&
+    fold(source.model ?? "") === "solo gyps" &&
+    fold(String(source.specs?.["Marca"] ?? "")) === "bravi" &&
+    fold(String(source.specs?.["Modelo"] ?? "")) === "solo gyps" &&
+    /\bsolo gyps\b/.test(fold(source.title ?? ""));
+  if (isAccessory || isSoloGyps) return { status: "excluded", reason: "accesorio", categorySellID: null };
   return categorySellID === null
     ? { status: "pending", reason: "sin-categoria", categorySellID: null }
     : { status: "proposed", reason: null, categorySellID };

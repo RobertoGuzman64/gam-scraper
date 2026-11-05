@@ -7,6 +7,8 @@ import { productAttributes } from "../preparation/product-attributes.js";
 
 const generalCategorySlugs = new Set([
   "plataforma-articulada",
+  "plataforma-elevadora",
+  "carretilla-elevadora",
   "manipulacion-elevacion-cargas",
   "manipulacion-elevacion-cargas-segunda-mano",
   "maquinaria-construccion-segunda-mano",
@@ -47,6 +49,40 @@ const commercialSlug = (source: ProductRecord, condition: ImportCandidate["condi
   const short = fold(source.shortDescription ?? "");
   const general = fold(source.longDescription ?? "");
   if (source.providerId === "gam") {
+    if (condition === "Nuevo" && source.categoryKey === "elevacion-nueva" &&
+      route === "plataformas-elevadoras-bravi" && verified(source, /^lui 460$/, "bravi") &&
+      /^plataforma elevadora\b/.test(title) && title.includes("bravi lui 460") &&
+      fold(String(source.specs?.["Tipo motor"] ?? "")) === "electrico") return "plataforma-elevadora";
+    if (condition === "Nuevo" && source.categoryKey === "apiladores-nuevos" &&
+      route === "apiladores-logitrans" && verified(source, /^ehsi$/, "logitrans") &&
+      /^apilador manual de acero inoxidable\b/.test(title) &&
+      /\b1000\s?kg\b/.test(title) &&
+      /\b1000\s?kg\b/i.test(String(source.specs?.["Capacidad de carga (kg)"] ?? ""))) {
+      return "apilador-electrico";
+    }
+    if (condition === "Nuevo" && ["marcas-nuevas", "otros-nuevos"].includes(source.categoryKey) && route === "packmat" &&
+      /^compactador(?:a)?\b/.test(title) && verified(source, /^pk\d+(?:rc|c)?$/, "packmat") &&
+      source.model && fold(source.model) === fold(String(source.specs?.["Modelo"] ?? "")) &&
+      title.includes(fold(source.model)) && /\bcompactacion\b/.test(general)) return "compactador";
+    if (condition === "Nuevo" && source.categoryKey === "carretillas-nuevas" &&
+      route === "carretillas-elevadoras-diesel-hyster" && /\bcarretilla\b/.test(title) &&
+      /\bhyster\b/.test(title) && source.model &&
+      fold(String(source.specs?.["Modelo"] ?? "")) === fold(source.model) &&
+      title.includes(fold(source.model)) &&
+      /\b(?:diesel|glp|lpg)\b/.test(fold(String(source.specs?.["Tipo motor"] ?? "") + " " +
+        String(source.specs?.["Motorización"] ?? ""))) &&
+      !/\belectric[oa]\b/.test(`${title} ${short}`)) return "carretilla-elevadora";
+    if (condition === "Nuevo" && source.categoryKey === "marcas-nuevas" && route === "bts" &&
+      /^arrastrador a pie trailercaddy\b/.test(title) && source.model &&
+      title.includes(fold(source.model)) &&
+      fold(String(source.specs?.["Modelo"] ?? "")) === fold(source.model)) {
+      return "manipulacion-elevacion-cargas";
+    }
+    if (condition === "Nuevo" && source.categoryKey === "marcas-nuevas" &&
+      route === "trenes-logisticos-tecnacar" && /^tren logistico tecnacar\b/.test(title) &&
+      verified(source, /^(?:e-frame simple|e-frame doble|r-portal)$/, "tecna")) {
+      return "manipulacion-elevacion-cargas";
+    }
     if (condition === "Nuevo" && source.categoryKey === "apiladores-nuevos" && route === "apiladores-logitrans" &&
       verified(source, /^logiflex se(?:-articuladas)?$/, "logitrans") &&
       /^apilador semi electrico\b/.test(title) && /\blogitrans\b/.test(title) &&
@@ -111,7 +147,9 @@ const commercialSlug = (source: ProductRecord, condition: ImportCandidate["condi
       return "maquinaria-construccion-segunda-mano";
     }
     if (route === "elevacion-y-trabajos-en-altura/elevador-mastil-vertical" &&
-      /\bgenie sla15\b/.test(title) && /\bmaterial(?:es)?\b/.test(general)) {
+      /\bgenie sla15\b/.test(title) && fold(source.model ?? "") === "sla15" &&
+      (/\bmaterial(?:es)?\b/.test(general) || /\balmacenaje\b/.test(general)) &&
+      /\b363\s?kg\b/i.test(String(source.specs?.["Capacidad"] ?? ""))) {
       return "manipulacion-elevacion-cargas-segunda-mano";
     }
   }

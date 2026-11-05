@@ -40,10 +40,52 @@ test("recupera familias comerciales reales respetando las categorías existentes
   }
 });
 
+test("clasifica familias documentadas sin inventar motorización ni nuevas categorías", () => {
+  const cases: readonly [string, string, number][] = [
+    ["gam", "227", 22], ["gam", "2159", 4],
+    ["gam", "3311", 91], ["gam", "3312", 91], ["gam", "3313", 91],
+    ["gam", "3314", 91], ["gam", "3315", 91], ["gam", "6182", 91],
+    ["gam", "6749", 91], ["gam", "12", 10], ["gam", "2072", 10],
+    ["gam", "2073", 10], ["gam", "2163", 10], ["gam", "2164", 10],
+    ["gam", "2165", 10], ["gam", "2169", 10], ["gam", "5", 10],
+    ["gam", "6", 10], ["gam", "2572", 85], ["gam", "2573", 85],
+    ["gam", "2737", 85], ["gam", "2738", 85], ["gam", "297", 85],
+    ["gam", "298", 85], ["gam", "299", 85], ["gomariz", "PV556", 80]
+  ];
+  for (const [providerId, reference, categoryId] of cases) {
+    const entry = product(providerId, reference);
+    assert.equal(entry.mapped.product.categorySellID, categoryId, `${providerId}:${reference}`);
+    assert.equal(isValidCommercialCategory(entry.source, categoryId, entry.mapped.product.condition, catalog), true);
+    assert.deepEqual(entry.mapped.product.spec, entry.published.spec);
+    assert.deepEqual(entry.mapped.product.images, entry.published.images);
+    assert.ok(catalog.categories.some((item) => item.id === categoryId));
+  }
+});
+
+test("no traslada reglas comerciales a familias, modelos, rutas ni condiciones distintas", () => {
+  const packmat = product("gam", "3311");
+  const unmapped = { ...packmat.mapped, product: {
+    ...packmat.mapped.product, categorySellID: null, category: null, attributes: []
+  } };
+  assert.equal(projectCommercialCategory({ ...packmat.source, brand: "OTRA" }, unmapped, catalog).product.categorySellID, null);
+  assert.equal(projectCommercialCategory({ ...packmat.source, categoryKey: "carretillas-nuevas" }, unmapped, catalog).product.categorySellID, null);
+  assert.equal(projectCommercialCategory({ ...packmat.source, model: "PK999" }, unmapped, catalog).product.categorySellID, null);
+  assert.equal(projectCommercialCategory({ ...packmat.source, condition: "Segunda mano" }, {
+    ...unmapped, product: { ...unmapped.product, condition: "Segunda_Mano" }
+  }, catalog).product.categorySellID, null);
+
+  const hyster = product("gam", "2072");
+  const noCategory = { ...hyster.mapped, product: {
+    ...hyster.mapped.product, categorySellID: null, category: null, attributes: []
+  } };
+  assert.equal(projectCommercialCategory({ ...hyster.source, title: "Plataformas elevadoras de segunda mano" }, noCategory, catalog).product.categorySellID, null);
+  assert.equal(projectCommercialCategory({ ...hyster.source, model: "OTRO" }, noCategory, catalog).product.categorySellID, null);
+  assert.equal(isValidCommercialCategory(hyster.source, 10, "Segunda_Mano", catalog), false);
+});
+
 test("mantiene sin asignación productos con contradicciones o sin equivalencia acreditada", () => {
   for (const [providerId, reference] of [
-    ["gam", "12"], ["gam", "2134"], ["gam", "2159"],
-    ["gam", "2572"], ["gam", "3311"], ["gam", "227"],
+    ["gam", "8"], ["gam", "2134"], ["gam", "2135"],
     ["mercaeleva", "M958-0132"]
   ] as readonly (readonly [string, string])[]) {
     const entry = product(providerId, reference);

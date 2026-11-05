@@ -98,3 +98,16 @@ test("excluye accesorios dependientes acreditados sin eliminar maquinaria por tÃ
   assert.equal(decideCommercialCategory(skyDeck, null).reason, "accesorio");
   assert.equal(decideCommercialCategory({ ...skyDeck, specs: {} }, null).status, "pending");
 });
+
+test("excluye Solo-Gyps por identidad acreditada sin excluir otras plataformas Bravi", () => {
+  const solo: ProductRecord = {
+    ...source("https://online.gamrentals.com/es/bravi/2365-solo-gyps", "Bravi SOLO GYPS", "marcas-nuevas"),
+    brand: "BRAVI", model: "SOLO GYPS", specs: { Marca: "BRAVI", Modelo: "SOLO GYPS" }
+  };
+  assert.deepEqual(decideCommercialCategory(solo, null), {
+    status: "excluded", reason: "accesorio", categorySellID: null
+  });
+  assert.equal(decideCommercialCategory({ ...solo, model: "Lui 460" }, null).status, "pending");
+  assert.equal(decideCommercialCategory({ ...solo, url: "https://online.gamrentals.com/es/otros/2365" }, null).status, "pending");
+  assert.equal(decideCommercialCategory({ ...solo, specs: { Marca: "BRAVI" } }, null).status, "pending");
+});
