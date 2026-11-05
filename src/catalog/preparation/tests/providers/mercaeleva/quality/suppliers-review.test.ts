@@ -20,7 +20,7 @@ if (!toyota) throw new Error("Falta M433-5206");
 const capacity = catalog.attributes.find((attribute) => attribute.name === "Capacidad de carga");
 if (!capacity) throw new Error("Falta Capacidad de carga");
 
-test("Toyota recupera capacidad respaldada por tres textos y conserva la especificación original", () => {
+test("Toyota recupera capacidad respaldada por tres textos y corrige la especificación preparada", () => {
   assert.equal(mercaelevaMislabelledCapacity(toyota), true);
   assert.equal(toyota.specs?.["Capacidad máxima de elevación"], "4700 kg");
   assert.equal(resolveAttribute(toyota, capacity).status, "resolved");
@@ -30,7 +30,7 @@ test("Toyota recupera capacidad respaldada por tres textos y conserva la especif
   assert.deepEqual(prepared.issues, []);
   assert.ok(prepared.product.attributes.some((attribute) =>
     attribute.attributeID === capacity.id && attribute.value === 1800));
-  assert.equal(prepared.product.spec["Capacidad máxima de elevación"], "4700 kg");
+  assert.equal(prepared.product.spec["Capacidad máxima de elevación"], "1800 kg");
 });
 
 test("descarta el reconocimiento ante unidades, capacidades, alturas, identidad o origen incompatibles", () => {

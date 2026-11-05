@@ -27,7 +27,7 @@ test("capacidad de unidad UniCarriers documentada y original intacto", () => {
   assert.equal(result.product.title, preparedRecord.title);
   assert.equal(result.product.description_general, verifiedCanonicalBriefEditorial["mercaeleva:M582-1882"].general);
   assert.match(result.product.description_general ?? "", /reconciliación individual acreditada/);
-  assert.deepEqual(result.product.spec, original.specs);
+  assert.deepEqual(result.product.spec, preparedRecord.specs);
   assert.deepEqual(record, original);
 });
 

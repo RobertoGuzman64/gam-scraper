@@ -44,7 +44,8 @@ test("tipo de origen corroborado sin categoría del receptor no es motivo de rev
 test("las motorizaciones incompatibles fuera de evidencia conservan revisión", () => {
   const h18xd = reference("2071");
   const preparedH18xd = prepareProduct({ ...h18xd, longDescription: `${h18xd.longDescription} distinta evidencia` }, catalog);
-  assert.equal(preparedH18xd.status, "ready");
+  assert.equal(preparedH18xd.status, "review");
+  assert.ok(preparedH18xd.issues.some((issue) => issue.startsWith("Motorización contradictoria:")));
   assert.ok(!preparedH18xd.issues.includes(SOURCE_CATEGORY_ISSUE));
   assert.equal(preparedH18xd.product.categorySellID, null);
   const mismatch = reference("6653");

@@ -5,6 +5,7 @@ import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../../mapping/attribute-mapping.js";
+import { gamHandlingReconciledCapacity } from "../../../evidence/providers/gam/measurements-and-capacities/capacity-evidence.js";
 import { prepareProduct } from "../../../../legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -54,7 +55,7 @@ test("se comprueban 30 referencias únicas y once capacidades recuperadas", () =
       gamNonUnivocalPower.some((value) => value === reference);
     const recoveredMercaeleva = ["M062-8951", "M119-9334", "M582-1882"].includes(reference);
     assert.equal(prepareProduct(record(provider, reference), catalog).status,
-      (provider === "gam" && recoveredGam) || (provider === "mercaeleva" && recoveredMercaeleva)
+      (provider === "gam" && recoveredGam && !["2089", "50", "6574"].includes(reference)) || (provider === "mercaeleva" && recoveredMercaeleva)
         ? "ready" : "review", id);
   }
 });
@@ -68,7 +69,12 @@ test("las 16 capacidades conservan conflictos auténticos y distinguen valores c
     assert.equal(resolution.status, confirmed.has(reference) ? "resolved" : "contradiction", reference);
     const prepared = prepareProduct(product, catalog);
     assert.equal(prepared.issues.includes("Atributo contradictorio: Capacidad de carga"), !confirmed.has(reference) && !["2237", "2240", "6723", "2211", "6272"].includes(reference), reference);
-    const expectedSpecs = { ...product.specs, ...(reference === "6421" ? { "Velocidad de desplazamiento con/sin carga (km/h)": "15,7 / 15,7 km/h", "Potencia de tracción (kW)": "8,5 kW", "Potencia de elevación (kW)": "11 kW" } : {}) };
+    const corroboratedCapacity = gamHandlingReconciledCapacity(product);
+    const expectedSpecs = {
+      ...product.specs,
+      ...(corroboratedCapacity === null ? {} : { "Capacidad de carga (kg)": `${corroboratedCapacity} KG` }),
+      ...(reference === "6421" ? { "Velocidad de desplazamiento con/sin carga (km/h)": "15,7 / 15,7 km/h", "Potencia de tracción (kW)": "8,5 kW", "Potencia de elevación (kW)": "11 kW" } : {})
+    };
     for (const [key, value] of Object.entries(expectedSpecs)) assert.deepEqual(prepared.product.spec[key], value, `${reference}: ${key}`);
   }
 });
@@ -95,7 +101,9 @@ test("las cuatro capacidades conservan el origen tras reconciliar dos modelos MB
     const prepared = prepareProduct(product, catalog);
     assert.equal(prepared.issues.includes("Atributo contradictorio: Capacidad de carga"), expected === null && reference !== "M582-1882", reference);
     assert.equal(JSON.stringify(product.specs), originalSpecs, reference);
-    assert.equal(JSON.stringify(prepared.product.spec), originalSpecs, reference);
+    assert.deepEqual(prepared.product.spec, reference === "M582-1882"
+      ? { ...product.specs, "Título adicional": "CARRETILLA ELEVADORA DIESEL 2500 KG" }
+      : product.specs, reference);
   }
   assert.ok(prepareProduct(record("mercaeleva", "M827-8304"), catalog).issues.includes("Atributo contradictorio: Tipo de mástil"));
   assert.ok(!prepareProduct(record("mercaeleva", "M119-9334"), catalog).issues.includes("Atributo no normalizable: Horas de uso"));

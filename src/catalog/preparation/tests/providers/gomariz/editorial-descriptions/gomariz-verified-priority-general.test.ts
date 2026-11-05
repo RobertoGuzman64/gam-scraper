@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { verifiedGomarizPriorityGeneral } from "../../../../evidence/providers/gomariz/verified-priority-general.js";
+import { reconcileGomarizVerifiedPlatformHeight } from "../../../../reconciliation/gomariz.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { recoverGomarizDocumentedScaniaP220Specs } from "../../../../evidence/providers/gomariz/documented-scania-p220-specs.js";
 
@@ -28,7 +29,7 @@ test("Gomariz: las 26 descripciones individualizadas se aplican sin alterar fich
         general, record.reference ?? "");
       assert.ok(general.split(/\s+/u).length >= 65, record.reference ?? "");
       assert.notEqual(general, record.longDescription, record.reference ?? "");
-      assert.deepEqual(prepared.spec, recoverGomarizDocumentedScaniaP220Specs(record, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) }), record.reference ?? "");
+      assert.deepEqual(prepared.spec, { ...recoverGomarizDocumentedScaniaP220Specs(record, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) }), ...reconcileGomarizVerifiedPlatformHeight(record).specs }, record.reference ?? "");
       assert.equal(prepared.sourceUrl, record.url);
       assert.ok(record.reference ?? "");
       changed.add(record.reference ?? "");

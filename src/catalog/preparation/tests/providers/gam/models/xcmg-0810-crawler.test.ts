@@ -20,7 +20,7 @@ test("reconcilia solo la XCMG de orugas con identidad y evidencia completas", ()
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
   assert.equal(prepared.product.reference, "4737");
-  assert.deepEqual(prepared.product.spec, record.specs);
+  assert.deepEqual(prepared.product.spec, { ...record.specs, Modelo: "XG0810C" });
   assert.equal(prepared.product.attributes.some((attribute) => attribute.value === "XG0810C"), true);
   assert.equal(prepared.product.description_general, verifiedFamilyProportionEditorial["gam:4737"].general);
   assert.match(prepared.product.description_general ?? "", /plataforma elevadora de tijera sobre orugas/);

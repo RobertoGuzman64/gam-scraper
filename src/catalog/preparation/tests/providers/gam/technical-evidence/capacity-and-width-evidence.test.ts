@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+import { gamTechnicalReviewReferences } from "../../../support/phase1-reviewed-identities.js";
 import { resolveAttribute } from "../../../../mapping/attribute-mapping.js";
 import { sourceCategoryQualityIssue } from "../../../../source/category-quality.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
@@ -32,9 +33,11 @@ test("reconciliar capacidades requiere identidad de modelo y evidencias converge
     const record = source(reference);
     assert.deepEqual(resolveAttribute(record, definition), { status: "resolved", value: expected }, reference);
     const prepared = prepareProduct(record, catalog);
-    assert.equal(prepared.status, "ready", reference);
+    assert.equal(prepared.status, gamTechnicalReviewReferences.has(reference) ? "review" : "ready", reference);
     const expectedSpecs = { ...record.specs, ...(reference === "6421" ? { "Velocidad de desplazamiento con/sin carga (km/h)": "15,7 / 15,7 km/h", "Potencia de tracción (kW)": "8,5 kW", "Potencia de elevación (kW)": "11 kW" } : {}) };
-    for (const [key, value] of Object.entries(expectedSpecs)) assert.deepEqual(prepared.product.spec[key], value, `${reference}: ${key}`);
+    for (const [key, value] of Object.entries(expectedSpecs)) {
+      assert.deepEqual(prepared.product.spec[key], key === "Capacidad de carga (kg)" ? `${expected} KG` : value, `${reference}: ${key}`);
+    }
     assert.ok(prepared.product.attributes.some((value) =>
       value.value === expected && catalog.attributes.some((candidate) =>
         candidate.id === value.attributeID && candidate.name === definition.name)), reference);
@@ -47,9 +50,11 @@ test("anchuras corroboradas distinguen redondeo, configuración y medida de trab
     const record = source(reference);
     assert.deepEqual(resolveAttribute(record, definition), { status: "resolved", value: expected }, reference);
     const prepared = prepareProduct(record, catalog);
-    assert.equal(prepared.status, "ready", reference);
+    assert.equal(prepared.status, gamTechnicalReviewReferences.has(reference) ? "review" : "ready", reference);
     const expectedSpecs = { ...record.specs, ...(reference === "4005" ? { "Depósito de solución": 78.5, "Depósito de recuperación": 80 } : {}) };
-    for (const [key, value] of Object.entries(expectedSpecs)) assert.deepEqual(prepared.product.spec[key], value, `${reference}: ${key}`);
+    for (const [key, value] of Object.entries(expectedSpecs)) {
+      assert.deepEqual(prepared.product.spec[key], key === "Capacidad de carga (kg)" ? `${expected} KG` : value, `${reference}: ${key}`);
+    }
   }
 });
 

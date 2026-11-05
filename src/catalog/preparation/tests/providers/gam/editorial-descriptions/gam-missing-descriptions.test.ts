@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+import { gamTechnicalReviewReferences } from "../../../support/phase1-reviewed-identities.js";
 import { prepareImportBatch } from "../../../../batch-identity.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { recoverGamDocumentedIndustrialEquipmentSpecs } from "../../../../evidence/providers/gam/verified-models/documented-industrial-equipment-specs.js";
@@ -100,7 +101,7 @@ test("GAM: no altera el resto del catálogo ni los estados en preparación compl
 
   const batch = prepareImportBatch(source.products, catalog);
   assert.equal(batch.products.length, source.products.length);
-  assert.deepEqual(batch.products.filter((item) => item.status === "review").map((item) => item.product.reference).sort(), ["6682", "6703"]);
+  assert.deepEqual(batch.products.filter((item) => item.status === "review").map((item) => item.product.reference).sort(), [...gamTechnicalReviewReferences, "6682", "6703"].sort());
   const generated = batch.products.filter((item) => item.product.description &&
     ["4683", "4691", "2364"].includes(item.product.reference ?? ""));
   assert.equal(generated.length, 3);

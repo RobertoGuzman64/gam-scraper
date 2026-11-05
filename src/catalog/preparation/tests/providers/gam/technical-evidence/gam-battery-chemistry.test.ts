@@ -30,7 +30,7 @@ test("recupera veinte baterías de litio acreditadas sin modificar la fuente", (
     assert.equal(normalized.normalized["Tipo de batería"], "Litio", reference);
     assert.ok(!normalized.unknownKeys.includes("Tipo de batería"), reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.deepEqual(result.product.spec[key], value, `${reference}: ${key}`);
+      assert.deepEqual(result.product.spec[key], reference === "6421" && key === "Capacidad de carga (kg)" ? "2000 KG" : value, `${reference}: ${key}`);
     }
     assert.deepEqual(record, original, reference);
   }

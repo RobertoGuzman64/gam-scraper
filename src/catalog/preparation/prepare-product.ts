@@ -5,12 +5,16 @@ import { imageUrls, normalizePrice } from "./product-fields.js";
 import { productAttributes } from "./product-attributes.js";
 import { sourceAttributeQualityIssues, sourceTechnicalQualityIssues } from "./source/attribute-quality.js";
 import { sourceSemanticQualityIssues } from "./source/semantic-quality.js";
+import { preparedTechnicalConsistencyIssues } from "./source/technical-consistency.js";
 import { resolveCommercialCondition } from "./condition.js";
 import type { ImportCandidate, ImportCatalog } from "../legacy-export/contracts.js";
 import type { PreparedProduct } from "./contracts.js";
 import { reconcileGamInitialIdentity, reconcileGamForPreparation } from "./reconciliation/gam.js";
 import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "./evidence/providers/mercaeleva/verified-platform-source-specs.js";
-import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation } from "./reconciliation/mercaeleva.js";
+import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation, reconcileMercaelevaCorroboratedCapacity } from "./reconciliation/mercaeleva.js";
+import { reconcileGomarizVerifiedPlatformHeight } from "./reconciliation/gomariz.js";
+import { reconcileGamCorroboratedLoadCapacity } from "./reconciliation/gam-capacity.js";
+import { applyReconciledTechnicalSpecs } from "./reconciliation/technical-specifications.js";
 import { captureSourceEditorialEvidence } from "./mapping/source-editorial-evidence.js";
 import { recoverBaseTechnicalSpecs } from "./recovery/gam-technical-recovery.js";
 import { recoverDocumentedTechnicalSpecs } from "./recovery/documented-technical-recovery.js";
@@ -26,15 +30,21 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   record = reconcileMercaelevaVerifiedPlatformSourceSpecs(record);
   const sourceYearSpecs = recoverBaseTechnicalSpecs(record, sourceUnitRecord);
   const { sourceFuelSpecs, documentedSpecs } = recoverDocumentedTechnicalSpecs(sourceUnitRecord, sourceYearSpecs);
+  const beforeReconciliation = record;
   record = reconcileGamForPreparation(record);
   record = reconcileMercaelevaForPreparation(record);
+  const editorialRecord = record;
+  record = reconcileGamCorroboratedLoadCapacity(record);
+  record = reconcileGomarizVerifiedPlatformHeight(record);
+  record = reconcileMercaelevaCorroboratedCapacity(record);
+  const reconciledSpecs = applyReconciledTechnicalSpecs(beforeReconciliation, record, documentedSpecs);
   const issues: string[] = [];
   const { condition, contradictory: contradictoryCondition } = resolveCommercialCondition(record);
   const category = catalog ? resolveCategory(record, catalog.categories, condition) : null;
   const images = imageUrls(record);
   const price = normalizePrice(record.price);
   const reference = record.reference?.trim() || null;
-  const editorial = resolvePreparedEditorial(record, sourceUnitRecord, sourceEditorial);
+  const editorial = resolvePreparedEditorial(editorialRecord, sourceUnitRecord, sourceEditorial);
   const attributeResult = catalog ? productAttributes(record, category, catalog) : null;
   if (editorial.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
   if (editorial.sourceIdentityConflict) issues.push("Identidad GAM contradictoria entre título, resumen y ficha técnica");
@@ -47,9 +57,10 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     category ? attributeResult!.qualityIssues : sourceAttributeQualityIssues(record, catalog)));
 
   const descriptions = finalizePreparedEditorial(
-    record, sourceUnitRecord, editorial.preparedShort, editorial.preparedLong,
+    editorialRecord, sourceUnitRecord, editorial.preparedShort, editorial.preparedLong,
     sourceFuelSpecs, issues.length === 0
   );
+  issues.push(...preparedTechnicalConsistencyIssues(record, reconciledSpecs));
   const product: ImportCandidate = {
     providerId: record.providerId,
     sourceUrl: record.url,
@@ -65,7 +76,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     description_general: descriptions.general,
     image: images[0] ?? null,
     images,
-    spec: documentedSpecs,
+    spec: reconciledSpecs,
     attributes: attributeResult?.attributes ?? []
   };
   return {

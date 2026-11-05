@@ -34,7 +34,7 @@ test("GC40VX concuerda con la ficha Yale 4t GLP y conserva las lecturas GAM de o
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
   assert.equal(prepared.product.category, "Carretillas Elevadoras GLP");
-  assert.deepEqual(prepared.product.spec, original.specs);
+  assert.deepEqual(prepared.product.spec, corrected.specs);
   assert.ok(prepared.product.attributes.some((item) => item.value === 4000));
   assert.deepEqual(record, original);
 });

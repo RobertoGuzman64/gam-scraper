@@ -3,6 +3,7 @@ import test from "node:test";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
+import { gamTechnicalReviewReferences } from "../../../support/phase1-reviewed-identities.js";
 import { prepareImportBatch } from "../../../../batch-identity.js";
 import { resolveAttribute } from "../../../../mapping/attribute-mapping.js";
 import { SOURCE_TECHNICAL_FIELDS } from "../../../../source/technical-fields.js";
@@ -52,5 +53,5 @@ test("GAM reconoce capacidades separadas BRAVI y potencia publicada con separado
 test("GAM termina con exactamente dos reviews de identidad que siguen excluidas", () => {
   const reviewed = prepareImportBatch(source.products, catalog).products.filter((product) => product.status === "review")
     .map((product) => product.product.reference).sort();
-  assert.deepEqual(reviewed, ["6682", "6703"]);
+  assert.deepEqual(reviewed, [...gamTechnicalReviewReferences, "6682", "6703"].sort());
 });

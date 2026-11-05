@@ -36,7 +36,7 @@ test("Yale GC55VX confirma GLP sin alterar specs ni JSON canónicos", () => {
   assert.match(prepared.product.description_general ?? "", /5\.500 kg de capacidad y centro de carga de 500 mm/);
   assert.match(prepared.product.description_general ?? "", /motorizaci[oó]n requiere una verificaci[oó]n espec[ií]fica/i);
   assert.match(prepared.product.description_general ?? "", /Motorizaci[oó]n» indica el[eé]ctrico/);
-  assert.deepEqual(prepared.product.spec, original.specs);
+  assert.deepEqual(prepared.product.spec, corrected.specs);
   assert.deepEqual(record, original);
 });
 

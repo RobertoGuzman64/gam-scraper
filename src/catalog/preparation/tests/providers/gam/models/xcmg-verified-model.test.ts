@@ -31,13 +31,14 @@ for (const record of records) {
     const output = prepareProduct(record, catalog);
     assert.equal(output.status, "ready");
     assert.deepEqual(output.issues, []);
-    assert.deepEqual(output.product.spec, record.specs);
-    assert.equal(output.product.spec["Modelo"], record.specs?.["Modelo"]);
+    assert.deepEqual(output.product.spec, reconciled.specs);
+    assert.equal(output.product.spec["Modelo"], model);
     assert.ok(output.product.attributes.some((attribute) => attribute.attributeID === 116 && attribute.value === model));
     assert.equal(output.product.description_general, record.reference === "4802"
       ? verifiedFamilyProportionEditorial["gam:4802"].general : record.longDescription);
     assert.equal(output.product.description, record.shortDescription);
-    assert.equal(output.product.title, record.title);
+    assert.equal(output.product.title, record.reference === "4802"
+      ? "Plataforma de tijera eléctrica 15M 4x4 XCMG XG1523ERT" : record.title);
   });
 
   test(`GAM: ${record.reference} exige coincidencia estricta de identidad y datos técnicos`, () => {

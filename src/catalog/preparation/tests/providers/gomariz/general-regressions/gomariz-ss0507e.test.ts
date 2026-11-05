@@ -74,7 +74,7 @@ test("SS0507E: las tres cortas ausentes reutilizan la altura acreditada sin adop
     assert.equal(result.status, "ready", record.reference ?? "");
     assert.match(result.product.description ?? "", /LGMG SS0507E.*6,3 m.*230 kg/u);
     assert.doesNotMatch(result.product.description ?? "", /14,30 m/u);
-    assert.deepEqual(result.product.spec, record.specs);
+    assert.deepEqual(result.product.spec, { ...record.specs, "Altura plataforma": "4,3 m" });
     assert.equal(JSON.stringify(record), snapshot);
     for (const variant of [
       { ...record, model: "SS0607E" },

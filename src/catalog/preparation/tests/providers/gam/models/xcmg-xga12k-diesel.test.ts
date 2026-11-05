@@ -33,7 +33,7 @@ test("reconcilia XGA12K diésel con valores contrastados y preserva la fuente", 
   const prepared = prepareProduct(record, catalog);
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
-  assert.deepEqual(prepared.product.spec, record.specs);
+  assert.deepEqual(prepared.product.spec, preparedRecord.specs);
   assert.ok(prepared.product.attributes.some((attribute) => attribute.value === "XGA12K"));
   assert.ok(prepared.product.attributes.some((attribute) => attribute.value === "1,4 x 0,7 m"));
   assert.equal(prepared.product.attributes.some((attribute) => attribute.value === "XGA12ACK"), false);

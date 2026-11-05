@@ -35,7 +35,7 @@ test("Yale GC45VX reconcilia motorización, capacidad, peso y medidas acreditada
   assert.deepEqual(prepared.issues, []);
   assert.equal(prepared.product.category, "Carretillas Elevadoras GLP");
   assert.ok(prepared.product.attributes.some((attribute) => attribute.value === 4500));
-  assert.deepEqual(prepared.product.spec, original.specs);
+  assert.deepEqual(prepared.product.spec, corrected.specs);
   assert.deepEqual(record, original);
 });
 

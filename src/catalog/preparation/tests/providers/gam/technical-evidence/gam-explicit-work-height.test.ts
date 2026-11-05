@@ -17,7 +17,7 @@ test("recupera altura de trabajo explícita sin sustituir la altura de elevació
     const result = prepareSourceProduct(record);
     assert.equal(result.product.spec["Altura de trabajo (m)"], expected, reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.deepEqual(result.product.spec[key], value, `${reference}:${key}`);
+      assert.deepEqual(result.product.spec[key], reference === "4751" && key === "Modelo" ? "XG1823RT" : value, `${reference}:${key}`);
     }
     assert.equal(record.specs?.["Altura de trabajo (m)"], undefined);
   }

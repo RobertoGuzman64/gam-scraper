@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { verifiedUnitContextEditorial } from "../evidence/verified-unit-context-editorial.js";
 import { resolveVerifiedUnitContextEditorial } from "../mapping/verified-unit-context-editorial.js";
+import { gamTechnicalReviewReferences } from "./support/phase1-reviewed-identities.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalogs = await Promise.all([
@@ -43,8 +44,8 @@ test("La fase editorial conserva los originales y mejora exactamente veinte refe
     const original = JSON.stringify(record);
     const result = prepareSourceProduct(record);
     assert.equal(JSON.stringify(record), original, identity);
-    assert.equal(result.status, "ready", identity);
-    assert.deepEqual(result.issues, [], identity);
+    assert.equal(result.status, identity.startsWith("gam:") && gamTechnicalReviewReferences.has(identity.slice(4)) ? "review" : "ready", identity);
+    assert.equal(result.issues.length > 0, identity.startsWith("gam:") && gamTechnicalReviewReferences.has(identity.slice(4)), identity);
     assert.equal(result.product.sourceUrl, evidence.sourceUrl, identity);
     if (evidence.short !== undefined) {
       assert.equal(result.product.description, evidence.short, identity);

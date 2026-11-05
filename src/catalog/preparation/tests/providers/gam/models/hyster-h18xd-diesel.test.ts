@@ -28,7 +28,7 @@ test("H18XD-9 conserva la ficha de origen y reconcilia el motor y el peso nomina
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
   assert.equal(prepared.product.category, "Carretillas Elevadoras Diésel");
-  assert.deepEqual(prepared.product.spec, original.specs);
+  assert.deepEqual(prepared.product.spec, corrected.specs);
   assert.deepEqual(record, original);
 });
 

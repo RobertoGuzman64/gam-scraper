@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { gamTechnicalReviewReferences } from "./support/phase1-reviewed-identities.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 import { analyzeTechnicalDensity } from "../../diagnostics/technical-density.js";
 import { recoverGamDocumentedMobilityAndAccessSpecs } from "../evidence/providers/gam/verified-models/documented-mobility-and-access-specs.js";
@@ -145,7 +146,7 @@ test("evidencia cruzada entre proveedores: incorporar solo las prestaciones docu
       }
       assert.deepEqual(actual, { ...original, ...selected }, `${providerId}:${record.reference}`);
       const prepared = prepareSourceProduct(record);
-      assert.equal(prepared.status, "ready", `${providerId}:${record.reference}`);
+      assert.equal(prepared.status, providerId === "gam" && gamTechnicalReviewReferences.has(record.reference ?? "") ? "review" : "ready", `${providerId}:${record.reference}`);
       for (const [key, value] of Object.entries(selected)) {
         assert.ok(!(key in original), `${providerId}:${record.reference}:${key}`);
         assert.equal(prepared.product.spec[key], value, `${providerId}:${record.reference}:${key}`);
@@ -196,7 +197,7 @@ test("evidencia cruzada entre proveedores: las 20 fichas salen de alta y media s
       const selected = record.reference ? expected[providerId]?.[record.reference] : undefined;
       if (!selected) continue;
       const result = prepareSourceProduct(record);
-      assert.equal(result.status, "ready");
+      assert.equal(result.status, providerId === "gam" && gamTechnicalReviewReferences.has(record.reference ?? "") ? "review" : "ready");
       const product = result.product;
       before.push({ ...product, spec: Object.fromEntries(Object.entries(product.spec).filter(([key]) => !(key in selected))) });
       after.push(product);

@@ -8,6 +8,7 @@ import { findSerialNumberCollisions } from "../../../../../identity-conflicts.js
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../../../mapping/attribute-mapping.js";
+import { reconcileGamForPreparation } from "../../../../reconciliation/gam.js";
 import { gamElevationBrandConflict, gamElevationIdentityConflict } from "../../../../evidence/providers/gam/identity/elevation-identity.js";
 import { prepareImportBatch } from "../../../../batch-identity.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
@@ -37,7 +38,8 @@ test("GAM: las nueve identidades incompatibles no publican Modelo del origen", (
     assert.equal(prepared.issues.includes("Atributo rechazado por seguridad: Modelo"), !editorial, reference);
     assert.ok(model);
     assert.equal(prepared.product.attributes.some((attribute) => attribute.attributeID === model.id), editorial, reference);
-    assert.deepEqual(prepared.product.spec, reference === "4751" ? { ...product.specs, "Altura de trabajo (m)": "18,1 m" } : product.specs);
+    const reconciled = reconcileGamForPreparation(product);
+    assert.deepEqual(prepared.product.spec, { ...product.specs, ...reconciled.specs, ...(reference === "4751" ? { "Altura de trabajo (m)": "18,1 m" } : {}) });
     assert.equal(prepared.product.reference, reference);
   }
 });

@@ -38,7 +38,7 @@ for (const [record, model, capacity] of [
     assert.equal(prepared.status, "ready");
     assert.deepEqual(prepared.issues, []);
     assert.deepEqual(prepared.product.spec, {
-      ...originalSpec,
+      ...preparedRecord.specs,
       ...(record.reference === "2072"
         ? { "Distancia entre ejes (mm)": "1570 mm", "Transmisión": "DuraMatch (una o dos velocidades; según configuración)" }
         : { "Transmisión": "DuraMatch (dos velocidades)" })

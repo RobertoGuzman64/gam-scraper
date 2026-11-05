@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { verifiedFamilyProportionEditorial } from "../evidence/verified-family-proportion-editorial.js";
 import { resolveVerifiedFamilyProportionEditorial } from "../mapping/verified-family-proportion-editorial.js";
+import { gamTechnicalReviewReferences } from "./support/phase1-reviewed-identities.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalogs = await Promise.all([
@@ -37,8 +38,8 @@ test("La fase 162 mejora exactamente veinte fichas canónicas sin alterar datos 
     const unchangedRecord = JSON.stringify(record);
     const prepared = prepareSourceProduct(record);
     assert.equal(JSON.stringify(record), unchangedRecord, identity);
-    assert.equal(prepared.status, "ready", identity);
-    assert.deepEqual(prepared.issues, [], identity);
+    assert.equal(prepared.status, identity.startsWith("gam:") && gamTechnicalReviewReferences.has(identity.slice(4)) ? "review" : "ready", identity);
+    assert.equal(prepared.issues.length > 0, identity.startsWith("gam:") && gamTechnicalReviewReferences.has(identity.slice(4)), identity);
     assert.equal(prepared.product.sourceUrl, evidence.sourceUrl, identity);
     assert.equal(prepared.product.description_general, evidence.general, identity);
     const words = evidence.general.trim().split(/\s+/u).length;

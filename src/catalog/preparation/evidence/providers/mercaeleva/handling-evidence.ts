@@ -105,6 +105,9 @@ export const mercaelevaMislabelledCapacity = (record: ProductRecord): boolean =>
   return true;
 };
 
+export const mercaelevaCorroboratedCapacity = (record: ProductRecord): number | null =>
+  mercaelevaMislabelledCapacity(record) ? singleKilogramAmount(record.title ?? "") : null;
+
 export const mercaelevaUnspecifiedMast = (record: ProductRecord): boolean => {
   if (!validMercaelevaTechnicalSource(record) || !record.model || !record.brand) return false;
   const title = fold(record.title ?? "");

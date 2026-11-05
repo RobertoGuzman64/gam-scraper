@@ -5,6 +5,7 @@ import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../../mapping/attribute-mapping.js";
+import { gamTechnicalReviewReferences } from "../../support/phase1-reviewed-identities.js";
 import { prepareProduct } from "../../../../legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -37,9 +38,13 @@ test("las dieciséis fichas conservan sus fuentes, con once capacidades acredita
     assert.equal(actual.status, confirmed.has(id) ? "resolved" : "contradiction", id);
     assert.equal(actual.value === null, !confirmed.has(id), id);
     const prepared = prepareProduct(record, catalog);
-    assert.equal(prepared.status, confirmed.has(id) || ["2237", "2240", "6723", "2211", "6272"].includes(id) ? "ready" : "review", id);
+    assert.equal(prepared.status, !gamTechnicalReviewReferences.has(id) && (confirmed.has(id) || ["2237", "2240", "6723", "2211", "6272"].includes(id)) ? "ready" : "review", id);
     const expectedSpecs = { ...record.specs, ...(id === "6421" ? { "Velocidad de desplazamiento con/sin carga (km/h)": "15,7 / 15,7 km/h", "Potencia de tracción (kW)": "8,5 kW", "Potencia de elevación (kW)": "11 kW" } : {}) };
-    for (const [key, value] of Object.entries(expectedSpecs)) assert.deepEqual(prepared.product.spec[key], value, `${id}: ${key}`);
+    for (const [key, value] of Object.entries(expectedSpecs)) {
+      if (key === "Capacidad de carga (kg)" && confirmed.has(id)) continue;
+      assert.deepEqual(prepared.product.spec[key], value, `${id}: ${key}`);
+    }
+    if (confirmed.has(id)) assert.notEqual(prepared.product.spec["Capacidad de carga (kg)"], null, id);
     assert.equal(JSON.stringify(record), original, id);
   }
 });

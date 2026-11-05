@@ -8,6 +8,7 @@ import { verifiedGomarizPriorityGeneral } from "../../../../evidence/providers/g
 import { gomarizPriorityShortEvidence, verifiedGomarizPriorityShortDescription } from "../../../../evidence/providers/gomariz/priority-short-descriptions.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { recoverGomarizDocumentedRenaultPremiumSpecs } from "../../../../evidence/providers/gomariz/documented-renault-premium-specs.js";
+import { reconcileGomarizVerifiedPlatformHeight } from "../../../../reconciliation/gomariz.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 
 const record = (family: string, specs: SpecsMap, title = "LGMG S1413EII"): ProductRecord => ({
@@ -166,7 +167,7 @@ test("Gomariz: cubre los camiones cesta, camión y retroexcavadora con datos del
     assert.ok(result.product.description, reference);
     assert.equal(result.product.reference, reference);
     assert.equal(result.product.sourceUrl, source.url);
-    assert.deepEqual(result.product.spec, recoverGomarizDocumentedRenaultPremiumSpecs(source, { ...source.specs, ...(source.year ? { "Año de fabricación": source.year } : {}) }));
+    assert.deepEqual(result.product.spec, { ...recoverGomarizDocumentedRenaultPremiumSpecs(source, { ...source.specs, ...(source.year ? { "Año de fabricación": source.year } : {}) }), ...reconcileGomarizVerifiedPlatformHeight(source).specs });
     assert.equal(JSON.stringify(source), before);
   }
   const truck = original.products.find((item) => item.reference === "CC1535");
@@ -193,7 +194,7 @@ test("Gomariz: recupera las cortas pendientes con origen y medidas acreditadas, 
     assert.equal(prepared.product.description, text, reference);
     assert.equal(prepared.product.description_general,
       verifiedGomarizPriorityGeneral(source) ?? resolveGomarizIndividualizedGeneral(source) ?? resolveGomarizUnitSpecificGeneral(source) ?? source.longDescription, reference);
-    assert.deepEqual(prepared.product.spec, { ...source.specs, ...(source.year ? { "Año de fabricación": source.year } : {}) }, reference);
+    assert.deepEqual(prepared.product.spec, { ...source.specs, ...(source.year ? { "Año de fabricación": source.year } : {}), ...reconcileGomarizVerifiedPlatformHeight(source).specs }, reference);
     assert.equal(JSON.stringify(source), serialized, reference);
     const variants: readonly ProductRecord[] = [
       { ...source, providerId: "gam" },

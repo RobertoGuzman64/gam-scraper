@@ -32,7 +32,10 @@ test("las redacciones verificadas preservan el original y las especificaciones d
     }
     assert.ok(record.longDescription && result.description_general.length < record.longDescription.length / 2, reference);
     assert.equal(JSON.stringify(record), initial, reference);
-    for (const [key, value] of Object.entries(record.specs ?? {})) assert.equal(result.spec[key], value, `${reference}: ${key}`);
+    for (const [key, value] of Object.entries(record.specs ?? {})) {
+      const expected = reference === "2016" && key === "Capacidad de carga (kg)" ? "1800 KG" : value;
+      assert.equal(result.spec[key], expected, `${reference}: ${key}`);
+    }
   }
   assert.doesNotMatch(prepareSourceProduct(find("2148")).product.description_general ?? "", /Hyster RP2\.5N/);
   assert.doesNotMatch(prepareSourceProduct(find("5899")).product.description_general ?? "", /CTE ZED 14/);
@@ -65,7 +68,10 @@ test("las fichas adicionales conservan identidad, especificaciones y contenido i
     assert.ok(record.longDescription && result.description_general.length < record.longDescription.length, reference);
     assert.notEqual(result.description_general, record.longDescription, reference);
     assert.equal(JSON.stringify(record), original, reference);
-    for (const [key, value] of Object.entries(record.specs ?? {})) assert.equal(result.spec[key], value, `${reference}: ${key}`);
+    for (const [key, value] of Object.entries(record.specs ?? {})) {
+      const expected = reference === "2016" && key === "Capacidad de carga (kg)" ? "1800 KG" : value;
+      assert.equal(result.spec[key], expected, `${reference}: ${key}`);
+    }
     if (revisedShorts.has(reference)) assert.ok(result.description && !result.description.includes("➨"), reference);
   }
 });

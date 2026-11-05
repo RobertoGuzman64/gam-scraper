@@ -31,7 +31,7 @@ test("reconcilia XG0807ACW-LI y dimensiones verificadas sin alterar origen", () 
   const prepared = prepareProduct(record, catalog);
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
-  assert.deepEqual(prepared.product.spec, record.specs);
+  assert.deepEqual(prepared.product.spec, reconciled.specs);
   assert.equal(prepared.product.attributes.some((attribute) => attribute.value === "XG0807ACW-LI"), true);
   assert.equal(prepared.product.attributes.some((attribute) => attribute.value === "1,67 x 0,74 m"), true);
   assert.equal(prepared.product.attributes.some((attribute) => attribute.value === "XG0807AC-LI"), false);

@@ -35,7 +35,9 @@ for (const { reference, technicalModel, commercialModel, context } of commercial
     assert.ok(record.url.includes(`/${reference}-`), reference);
 
     const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.status, "ready", reference);
+    const expectedReview = ["2020", "2170", "2171", "3132"].includes(reference);
+    assert.equal(prepared.status, expectedReview ? "review" : "ready", reference);
+    if (expectedReview) assert.ok(prepared.issues.some((issue) => issue.startsWith("Modelo contradictorio:")), reference);
     assert.equal(prepared.product.reference, reference);
     assert.equal(prepared.product.sourceUrl, record.url);
     const general = prepared.product.description_general?.toLocaleLowerCase("es") ?? "";
