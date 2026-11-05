@@ -55,7 +55,6 @@ test("ruido del portal, concordancia, espacios y magnitudes repetidas se elimina
   assertTitle("gam", "4742", "Plataforma elevadora de tijera 12M XCMG XG1212AC con batería de plomo");
   assertTitle("gam", "4802", "Plataforma de tijera eléctrica 15M 4x4 XCMG XG1523ERT");
   assertTitle("gam", "6607", "GENIE Z45/25 | Plataforma Articulada Diésel 16M");
-  assertTitle("mercaeleva", "M055-1205", "Oil & Steel SCORPION 1812 CAMION CESTA 18 MT TELESCOPICO ALUMINIO");
 });
 
 test("Mercaeleva corrige seis títulos con evidencia de familia, identidad y condición", () => {
@@ -199,6 +198,39 @@ test("Mercaeleva normaliza carretillas eléctricas solo con capacidad y origen c
     for (const candidate of variants) {
       assert.equal(prepareSourceProduct(candidate).product.title, original.title, `${reference}: evidencia alterada`);
     }
+  }
+});
+
+test("Mercaeleva normaliza camiones cesta cuando altura, estructura e identidad están acreditadas", () => {
+  const cases: readonly [string, string][] = [
+    ["M264-2806", "Camión cesta telescópico de aluminio Oil & Steel SCORPION 1490 de 15 m"],
+    ["M082-5310", "Camión cesta telescópico de aluminio Oil & Steel SCORPION 1490 de 15 m"],
+    ["M055-1205", "Camión cesta telescópico de aluminio Oil & Steel SCORPION 1812 de 18 m"],
+    ["M329-6156", "Camión cesta articulado de aluminio Oil & Steel SNAKE 2010 PLUS de 20 m"],
+    ["M502-4867", "Camión cesta articulado de aluminio Oil & Steel SNAKE 189 de 18 m"]
+  ];
+  for (const [reference, expected] of cases) {
+    const original = source("mercaeleva", reference);
+    assertTitle("mercaeleva", reference, expected);
+    const invalid: readonly ProductRecord[] = [
+      { ...original, url: "https://example.org/otro-anuncio" },
+      { ...original, reference: "REFERENCIA-AJENA" },
+      { ...original, brand: "MARCA AJENA" },
+      { ...original, model: "MODELO AJENO" },
+      { ...original, condition: "Nuevo" },
+      { ...original, specs: { ...original.specs, Marca: "MARCA AJENA" } },
+      { ...original, specs: { ...original.specs, Modelo: "MODELO AJENO" } },
+      { ...original, specs: { ...original.specs, Estado: "Nuevo" } },
+      { ...original, specs: { ...original.specs, "Tipo de motor": "Eléctrico" } },
+      { ...original, specs: { ...original.specs, "Altura de trabajo": "99 m" } },
+      { ...original, specs: { ...original.specs, "Título adicional": "OTRO EQUIPO" } },
+      { ...original, longDescription: "Sin identidad, altura ni estructura de camión cesta" },
+      { ...original, title: original.title.replace("ALUMINIO", "ACERO") }
+    ];
+    for (const candidate of invalid) {
+      assert.notEqual(prepareSourceProduct(candidate).product.title, expected, `${reference}: evidencia alterada`);
+    }
+    assert.equal(prepareSourceProduct(original).status, "ready", reference);
   }
 });
 

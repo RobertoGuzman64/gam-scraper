@@ -57,6 +57,28 @@ const resolveDocumentedElectricForkliftTitle = (record: ProductRecord, title: st
   return `Carretilla elevadora eléctrica ${brand} ${model} de ${capacity.toLocaleString("es-ES")} kg`;
 };
 
+const resolveDocumentedTruckBasketTitle = (record: ProductRecord, title: string, brand: string, model: string): string | null => {
+  if (record.condition !== "Segunda mano" || fold(String(record.specs?.Estado ?? "")) !== "usado" ||
+    fold(String(record.specs?.["Tipo de motor"] ?? "")) !== "diesel") return null;
+  const match = /^(.+?)\s+CAMION CESTA(?:\s+(\d+(?:[.,]\d+)?)\s+MT)?\s+(TELESCOPICO|ARTICULADO)\s+ALUMINIO\s+(\d+(?:[.,]\d+)?)\s+MT$/iu.exec(title);
+  if (!match?.[1] || !match[3] || !match[4] ||
+    fold(match[1]) !== fold(`${brand} ${model}`) ||
+    fold(String(record.specs?.["Título adicional"] ?? "")) !== fold(title.slice(match[1].length).trim())) return null;
+  const height = numberToken(match[4]);
+  const specHeight = /^(\d+(?:[.,]\d+)?)\s+m$/iu.exec(String(record.specs?.["Altura de trabajo"] ?? ""));
+  const description = fold(record.longDescription ?? "");
+  const described = /\bcamion cesta(?:\s+(\d+(?:[.,]\d+)?)\s+mt)?\s+(telescopico|articulado)\s+aluminio\s+altura de trabajo\s+(\d+(?:[.,]\d+)?)\s+mt\b/u.exec(description);
+  const compact = (value: string): string => fold(value).replace(/[^\p{L}\p{N}]+/gu, "");
+  if (height === null || !specHeight?.[1] || !described?.[2] || !described[3] ||
+    numberToken(specHeight[1]) !== height || numberToken(described[3]) !== height ||
+    (match[2] !== undefined && numberToken(match[2]) !== height) ||
+    (described[1] !== undefined && numberToken(described[1]) !== height) ||
+    fold(described[2]) !== fold(match[3]) ||
+    !compact(description).includes(compact(`${brand} ${model}`))) return null;
+  const family = fold(match[3]) === "telescopico" ? "telescópico" : "articulado";
+  return `Camión cesta ${family} de aluminio ${brand} ${model} de ${match[4].replace(".", ",")} m`;
+};
+
 export const resolveMercaelevaEditorialTitle = (record: ProductRecord): string | null => {
   if (!verifiedSource(record)) return null;
   const title = record.title?.trim();
@@ -67,6 +89,8 @@ export const resolveMercaelevaEditorialTitle = (record: ProductRecord): string |
   if (platformTitle) return platformTitle;
   const forkliftTitle = resolveDocumentedElectricForkliftTitle(record, title, brand, model);
   if (forkliftTitle) return forkliftTitle;
+  const truckBasketTitle = resolveDocumentedTruckBasketTitle(record, title, brand, model);
+  if (truckBasketTitle) return truckBasketTitle;
   if (record.condition === "Segunda mano" &&
     fold(title) === fold(`${brand} ${model} TRANSPALET ELECTRICO`) &&
     fold(String(record.specs?.["Título adicional"] ?? "")) === "transpalet electrico" &&
