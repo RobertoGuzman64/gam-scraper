@@ -54,7 +54,7 @@ test("se comprueban 30 referencias únicas y once capacidades recuperadas", () =
     const recoveredGam = confirmed.has(reference) || ["2237", "2240", "6723", "2211", "6272"].includes(reference) ||
       gamVariableCapacity.some((value) => value === reference) ||
       gamNonUnivocalPower.some((value) => value === reference);
-    const recoveredMercaeleva = ["M062-8951", "M119-9334", "M582-1882"].includes(reference);
+    const recoveredMercaeleva = ["M062-8951", "M119-9334", "M582-1882", "M827-8304"].includes(reference);
     assert.equal(prepareProduct(record(provider, reference), catalog).status,
       (provider === "gam" && recoveredGam) || (provider === "mercaeleva" && recoveredMercaeleva)
         ? "ready" : "review", id);
@@ -100,13 +100,17 @@ test("las cuatro capacidades conservan el origen tras reconciliar dos modelos MB
       ? { status: "contradiction", value: null }
       : { status: "resolved", value: expected }, reference);
     const prepared = prepareProduct(product, catalog);
-    assert.equal(prepared.issues.includes("Atributo contradictorio: Capacidad de carga"), expected === null && reference !== "M582-1882", reference);
+    assert.equal(prepared.issues.includes("Atributo contradictorio: Capacidad de carga"), expected === null && !["M582-1882", "M827-8304"].includes(reference), reference);
     assert.equal(JSON.stringify(product.specs), originalSpecs, reference);
     assert.deepEqual(prepared.product.spec, reference === "M582-1882"
       ? { ...product.specs, "Título adicional": "CARRETILLA ELEVADORA DIESEL 2500 KG" }
-      : product.specs, reference);
+      : reference === "M827-8304"
+        ? { ...product.specs, "Capacidad máxima de elevación": "4800 kg", "Tipo de mástil": "Dúplex/estándar" }
+        : product.specs, reference);
   }
-  assert.ok(prepareProduct(record("mercaeleva", "M827-8304"), catalog).issues.includes("Atributo contradictorio: Tipo de mástil"));
+  const linde = prepareProduct(record("mercaeleva", "M827-8304"), catalog);
+  assert.deepEqual(linde.issues, []);
+  assert.equal(linde.product.spec["Tipo de mástil"], "Dúplex/estándar");
   assert.ok(!prepareProduct(record("mercaeleva", "M119-9334"), catalog).issues.includes("Atributo no normalizable: Horas de uso"));
 });
 

@@ -69,12 +69,13 @@ test("JLG 340AJ usa evidencia diésel del proveedor sin deducir alimentación pa
   }
 });
 
-test("Mercaeleva conserva el conflicto de M827 y resuelve el mástil MER0624", () => {
-  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 1);
-  for (const id of ["M827-8304"]) {
-    assert.ok(prepareCached(reference(mercaelevaByReference, id), catalog).issues.includes("Atributo contradictorio: Capacidad de carga"));
-  }
-  assert.ok(prepareCached(reference(mercaelevaByReference, "M827-8304"), catalog).issues.includes("Atributo contradictorio: Tipo de mástil"));
+test("Mercaeleva resuelve M827 por catálogo Linde y el mástil MER0624", () => {
+  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 0);
+  const linde = prepareCached(reference(mercaelevaByReference, "M827-8304"), catalog);
+  assert.equal(linde.status, "ready");
+  assert.deepEqual(linde.issues, []);
+  assert.equal(linde.product.spec["Capacidad máxima de elevación"], "4800 kg");
+  assert.equal(linde.product.spec["Tipo de mástil"], "Dúplex/estándar");
   assert.equal(prepareCached(reference(mercaelevaByReference, "M104-0836"), catalog).status, "ready");
   assert.equal(prepareCached(reference(mercaelevaByReference, "M486-0114"), catalog).status, "ready");
   assert.equal(prepareCached(reference(mercaelevaByReference, "M818-7811"), catalog).status, "ready");

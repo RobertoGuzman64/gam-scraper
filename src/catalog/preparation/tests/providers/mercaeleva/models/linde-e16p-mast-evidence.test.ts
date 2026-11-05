@@ -67,20 +67,21 @@ test("alteraciones del anuncio MER0624 no se reconcilian y mantienen el conflict
   }
 });
 
-test("una única ficha Mercaeleva recuperada; M827 conserva ambos bloqueos", () => {
+test("las dos Linde con evidencia documentada recuperan sus mástiles", () => {
   for (const item of source.products) {
     if (item.reference === "M104-0836") continue;
     assert.strictEqual(reconcileMercaelevaVerifiedLindeE16pMast(item), item, item.reference ?? "");
   }
   const batch = prepareImportBatch(source.products, catalog);
-  assert.deepEqual(batch.totals, { ready: source.products.length - 1, review: 1 });
+  assert.deepEqual(batch.totals, { ready: source.products.length, review: 0 });
   assert.equal(batch.products.length, source.products.length);
   assert.equal(new Set(batch.products.map((item) => item.product.reference)).size, source.products.length);
   assert.equal(batch.products.find((item) => item.product.reference === "M104-0836")?.status, "ready");
   const remaining = batch.products.find((item) => item.product.reference === "M827-8304");
   assert.ok(remaining);
-  assert.equal(remaining.status, "review");
-  assert.ok(remaining.issues.includes("Atributo contradictorio: Capacidad de carga"));
-  assert.ok(remaining.issues.includes("Atributo contradictorio: Tipo de mástil"));
+  assert.equal(remaining.status, "ready");
+  assert.deepEqual(remaining.issues, []);
+  assert.equal(remaining.product.spec["Capacidad máxima de elevación"], "4800 kg");
+  assert.equal(remaining.product.spec["Tipo de mástil"], "Dúplex/estándar");
   assert.deepEqual(resolveAttribute(unresolved, mast), { status: "contradiction", value: null });
 });

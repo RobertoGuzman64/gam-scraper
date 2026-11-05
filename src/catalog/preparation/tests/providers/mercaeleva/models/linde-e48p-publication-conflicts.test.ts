@@ -4,7 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../../../mapping/attribute-mapping.js";
-import { describeMercaelevaE48pPublicationConflict } from "../../../../evidence/providers/mercaeleva/linde-e48p-publication-evidence.js";
+import { describeMercaelevaE48pPublicationConflict, reconcileMercaelevaVerifiedLindeE48p } from "../../../../evidence/providers/mercaeleva/linde-e48p-publication-evidence.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -16,18 +16,24 @@ const mast = catalog.attributes.find((attribute) => attribute.name === "Tipo de 
 assert.ok(load);
 assert.ok(mast);
 
-test("el conflicto MER0798 del vendedor queda identificado sin aprobar capacidad o mástil", () => {
+test("MER0798 se reconcilia por capacidad nominal y mástiles del catálogo Linde 337", () => {
   const snapshot = structuredClone(original);
   const issue = describeMercaelevaE48pPublicationConflict(original);
   assert.match(issue ?? "", /MER0798.*4\.800 kg.*dúplex.*3\.000 kg.*tríplex.*Machineryline/);
   assert.deepEqual(resolveAttribute(original, load), { status: "contradiction", value: null });
   assert.deepEqual(resolveAttribute(original, mast), { status: "contradiction", value: null });
   const result = prepareProduct(original, catalog);
-  assert.equal(result.status, "review");
-  assert.ok(result.issues.includes(issue ?? ""));
-  assert.ok(result.issues.includes("Atributo contradictorio: Capacidad de carga"));
-  assert.ok(result.issues.includes("Atributo contradictorio: Tipo de mástil"));
-  assert.deepEqual(result.product.spec, snapshot.specs);
+  assert.equal(result.status, "ready");
+  assert.deepEqual(result.issues, []);
+  assert.deepEqual(result.product.spec, {
+    ...snapshot.specs,
+    "Capacidad máxima de elevación": "4800 kg",
+    "Tipo de mástil": "Dúplex/estándar"
+  });
+  const reconciled = reconcileMercaelevaVerifiedLindeE48p(original);
+  assert.equal(reconciled.specs?.["Capacidad máxima de elevación"], "4800 kg");
+  assert.equal(reconciled.specs?.["Tipo de mástil"], "Dúplex/estándar");
+  assert.strictEqual(reconcileMercaelevaVerifiedLindeE48p(reconciled), reconciled);
   assert.deepEqual(original, snapshot);
 });
 
@@ -50,6 +56,7 @@ test("cambios en el anuncio no heredan la evidencia específica", () => {
   ];
   for (const [index, item] of variations.entries()) {
     assert.equal(describeMercaelevaE48pPublicationConflict(item), null, String(index));
+    assert.strictEqual(reconcileMercaelevaVerifiedLindeE48p(item), item, String(index));
     assert.ok(prepareProduct(item, catalog).issues.every((issue) => !issue.startsWith("MER0798:")), String(index));
   }
 });

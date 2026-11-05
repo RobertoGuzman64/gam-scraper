@@ -28,8 +28,7 @@ test("la acreditación editorial selecciona fichas listas sin alterar muestras n
     publishable: original - approved.approval.exclusions.length, excluded: approved.approval.exclusions.length
   });
   const historicallyExcluded = [
-    "gam:6682", "gam:6703", "gam:6764", "gam:6004",
-    "mercaeleva:M827-8304"
+    "gam:6682", "gam:6703", "gam:6764", "gam:6004"
   ];
   assert.ok(historicallyExcluded.every((reference) => result.exclusions.some((entry) =>
     `${entry.providerId}:${entry.reference}` === reference)));
@@ -87,7 +86,7 @@ test("una contradicción modificada invalida la decisión editorial anterior", (
 });
 
 test("la URL o el estado de una ficha excluida no heredan aprobaciones", () => {
-  const changedUrl = replaceEntry("mercaeleva", "M827-8304", (entry) => ({
+  const changedUrl = replaceEntry("gam", "6682", (entry) => ({
     ...entry, product: { ...entry.product, sourceUrl: `${entry.product.sourceUrl}?revision=2` }
   }));
   assert.throws(() => approved.select(changedUrl), /decisión ausente/);

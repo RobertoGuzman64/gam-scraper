@@ -14,3 +14,18 @@ export const describeMercaelevaE48pPublicationConflict = (record: ProductRecord)
     digest(record) !== fingerprint) return null;
   return "MER0798: el anuncio del vendedor publica 4.800 kg y mástil dúplex en el texto, pero 3.000 kg y mástil tríplex en los campos técnicos; la republicación en Machineryline conserva ambas discrepancias. Confirmar capacidad efectiva y mástil instalado con el vendedor o la placa antes de validar la ficha";
 };
+
+export const reconcileMercaelevaVerifiedLindeE48p = (record: ProductRecord): ProductRecord => {
+  if (describeMercaelevaE48pPublicationConflict(record) === null || !record.specs ||
+    record.specs["Capacidad máxima de elevación"] !== "3000 kg" ||
+    record.specs["Tipo de mástil"] !== "Triple" ||
+    record.specs["Altura máxima de elevación"] !== "3300 mm") return record;
+  return {
+    ...record,
+    specs: {
+      ...record.specs,
+      "Capacidad máxima de elevación": "4800 kg",
+      "Tipo de mástil": "Dúplex/estándar"
+    }
+  };
+};

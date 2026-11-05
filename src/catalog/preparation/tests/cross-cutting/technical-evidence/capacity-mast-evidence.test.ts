@@ -73,21 +73,23 @@ test("múltiples valores son distintos de miles, decimales y una única capacida
   }
 });
 
-test("la capacidad Mercaeleva pendiente sigue sin corroboración técnica", () => {
+test("la capacidad E48P acreditada conserva la contradicción del original y corrige el derivado", () => {
   for (const id of differentMercaeleva) {
     const record = byReference("mercaeleva", id);
     const original = JSON.stringify(record);
     assert.deepEqual(resolveAttribute(record, load), { status: "contradiction", value: null }, id);
-    assert.ok(prepareProduct(record, catalog).issues.includes("Atributo contradictorio: Capacidad de carga"), id);
+    const prepared = prepareProduct(record, catalog);
+    assert.deepEqual(prepared.issues, [], id);
+    assert.ok(prepared.product.attributes.some((entry) => entry.attributeID === load.id && entry.value === 4800));
     assert.equal(JSON.stringify(record), original, id);
   }
 });
 
-test("tres discrepancias de mástil Mercaeleva no se borran por alias equivalentes", () => {
+test("el original conserva sus discrepancias de mástil; el derivado reconcilia las acreditadas", () => {
   for (const id of incompatibleMasts) {
     const record = byReference("mercaeleva", id);
     assert.deepEqual(resolveAttribute(record, mast), { status: id === "M818-7811" ? "not_observed" : "contradiction", value: null }, id);
-    assert.equal(prepareProduct(record, catalog).status, id === "M827-8304" ? "review" : "ready", id);
+    assert.equal(prepareProduct(record, catalog).status, "ready", id);
   }
   const original = byReference("mercaeleva", "M827-8304");
   const consistent = { ...original, longDescription: original.longDescription?.replace("MASTIL DUPLEX", "MASTIL TRIPLEX") ?? null };

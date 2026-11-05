@@ -59,21 +59,20 @@ test("descarta el reconocimiento ante unidades, capacidades, alturas, identidad 
 
 test("conserva contradicciones técnicas y confirma los tipos documentados", () => {
   assert.equal(gomariz.filter((record) => prepareCached(record, catalog).status === "review").length, 0);
-  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 1);
+  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 0);
   for (const id of ["5051BDX", "1011JFB", "RE454", "PV556"]) {
     const record = gomariz.find((item) => item.reference === id);
     assert.ok(record);
     assert.equal(prepareCached(record, catalog).status, "ready");
     assert.ok(!prepareCached(record, catalog).issues.includes("Tipo de máquina de origen sin confirmar"));
   }
-  for (const id of ["M827-8304"]) {
-    const record = mercaeleva.find((item) => item.reference === id);
-    assert.ok(record);
-    assert.ok(prepareCached(record, catalog).issues.includes("Atributo contradictorio: Capacidad de carga"));
-  }
-  const conflicting = mercaeleva.find((item) => item.reference === "M827-8304");
-  assert.ok(conflicting);
-  assert.ok(prepareCached(conflicting, catalog).issues.includes("Atributo contradictorio: Tipo de mástil"));
+  const linde = mercaeleva.find((item) => item.reference === "M827-8304");
+  assert.ok(linde);
+  const preparedLinde = prepareCached(linde, catalog);
+  assert.equal(preparedLinde.status, "ready");
+  assert.deepEqual(preparedLinde.issues, []);
+  assert.equal(preparedLinde.product.spec["Capacidad máxima de elevación"], "4800 kg");
+  assert.equal(preparedLinde.product.spec["Tipo de mástil"], "Dúplex/estándar");
   const corroborated = mercaeleva.find((item) => item.reference === "M104-0836");
   assert.ok(corroborated);
   assert.equal(prepareCached(corroborated, catalog).status, "ready");

@@ -21,13 +21,13 @@ test("Las muestras de los tres proveedores preservan las reconciliaciones y bloq
   assert.deepEqual(batches.map(({ totals }) => totals), [
     { ready: sources[0]!.products.length - 2, review: 2 },
     { ready: sources[1]!.products.length, review: 0 },
-    { ready: sources[2]!.products.length - 1, review: 1 }
+    { ready: sources[2]!.products.length, review: 0 }
   ]);
 
   const all = batches.flatMap(({ products }) => products);
   assert.equal(all.length, sources.reduce((sum, source) => sum + source.productCount, 0));
   assert.equal(new Set(all.map(({ product }) => `${product.providerId}:${product.reference}`)).size, all.length);
-  assert.equal(all.filter(({ status }) => status === "ready").length, all.length - 3);
+  assert.equal(all.filter(({ status }) => status === "ready").length, all.length - 2);
   assert.ok(all.filter(({ status }) => status === "ready").every(({ issues }) => issues.length === 0));
 
   const get = (providerId: string, reference: string) => {
@@ -66,10 +66,8 @@ test("Las muestras de los tres proveedores preservan las reconciliaciones y bloq
   }
 
   const linde = get("mercaeleva", "M827-8304");
-  assert.equal(linde.status, "review");
-  assert.deepEqual([...linde.issues].sort(), [
-    "Atributo contradictorio: Capacidad de carga",
-    "Atributo contradictorio: Tipo de mástil",
-    "MER0798: el anuncio del vendedor publica 4.800 kg y mástil dúplex en el texto, pero 3.000 kg y mástil tríplex en los campos técnicos; la republicación en Machineryline conserva ambas discrepancias. Confirmar capacidad efectiva y mástil instalado con el vendedor o la placa antes de validar la ficha"
-  ].sort());
+  assert.equal(linde.status, "ready");
+  assert.deepEqual(linde.issues, []);
+  assert.equal(linde.product.spec["Capacidad máxima de elevación"], "4800 kg");
+  assert.equal(linde.product.spec["Tipo de mástil"], "Dúplex/estándar");
 });

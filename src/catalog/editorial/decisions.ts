@@ -28,16 +28,6 @@ export const exclusions: readonly EditorialExclusion[] = [
       "https://www.machineryzone.es/usado/carretilla-elevadora-gas/47102020/hyster-h3-5ft.html"
     ],
     requiredIssues: ["Número de serie P177B10585U compartido", "Stock GAM diferenciado"]
-  },
-  {
-    providerId: "mercaeleva", reference: "M827-8304",
-    sourceUrl: "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E48P-M827-8304",
-    reason: "No publicable: la publicación MER0798 contradice la capacidad de carga (4800/3000 kg) y el mástil (dúplex/tríplex); requiere confirmación del equipo físico",
-    evidenceUrls: [
-      "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E48P-M827-8304",
-      "https://machineryline.info/-/sale/electric-forklifts/Linde/E48P-CARRETILLA-ELEVADORA-ELECTRICA-4800-KG--26071017125032650600"
-    ],
-    requiredIssues: ["Atributo contradictorio: Capacidad de carga", "Atributo contradictorio: Tipo de mástil", "MER0798:"]
   }
 ];
 

@@ -59,7 +59,7 @@ test("mástil opcional Mercaeleva no elige Dúplex ni Tríplex", () => {
   assert.equal(prepared.product.attributes.some((item) => item.attributeID === mast.id), false);
   for (const reference of ["M827-8304", "M104-0836"]) {
     assert.equal(resolveAttribute(find("mercaeleva", reference), mast).status, "contradiction");
-    assert.equal(prepareProduct(find("mercaeleva", reference), catalog).status, reference === "M827-8304" ? "review" : "ready");
+    assert.equal(prepareProduct(find("mercaeleva", reference), catalog).status, "ready");
   }
 });
 

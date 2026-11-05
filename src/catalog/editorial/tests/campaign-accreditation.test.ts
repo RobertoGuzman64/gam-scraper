@@ -51,8 +51,7 @@ test("selecciona solo ready sin contradicciones acreditadas y conserva imágenes
     publishable: preparations.reduce((sum, item) => sum + item.source.productCount, 0) - draft.exclusions.length
   });
   const historicalExclusions = [
-    "gam:6682", "gam:6703", "gam:6764", "gam:6004",
-    "mercaeleva:M827-8304"
+    "gam:6682", "gam:6703", "gam:6764", "gam:6004"
   ];
   assert.ok(historicalExclusions.every((reference) => result.exclusions.some((item) =>
     `${item.providerId}:${item.reference}` === reference)));
