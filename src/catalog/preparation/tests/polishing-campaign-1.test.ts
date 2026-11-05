@@ -69,7 +69,7 @@ test("Dos capacidades publicadas se corrigen preservando la descripción larga a
 });
 
 test("Los casos de identidad divergente permanecen en revisión cuando el texto largo contradice la hipótesis", () => {
-  for (const reference of ["6666", "5258", "5879"]) {
+  for (const reference of ["6666", "5258"]) {
     const record = source(reference);
     const original = JSON.stringify(record);
     const prepared = prepareSourceProduct(record);

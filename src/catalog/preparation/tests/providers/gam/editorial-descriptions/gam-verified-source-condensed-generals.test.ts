@@ -17,8 +17,11 @@ const checkPreparedGeneral = (reference: string, actual: string | null, previous
   const revised: Readonly<Record<string, { readonly general: string }>> = verifiedCanonicalBriefEditorial;
   const proportionEvidence: Readonly<Record<string, { readonly general: string }>> = verifiedFamilyProportionEditorial;
   const editorial = proportionEvidence[`gam:${reference}`] ?? revised[`gam:${reference}`] ?? verifiedUnitSourceEntries[reference];
-  if (editorial) assert.equal(actual, editorial.general, reference);
-  else assert.ok(actual?.includes(previous), reference);
+  const corrected = reference === "6625"
+    ? (editorial?.general ?? previous).replace("1.400 kg de capacidad de carga", "680 kg de capacidad de carga")
+    : editorial?.general ?? previous;
+  if (editorial) assert.equal(actual, corrected, reference);
+  else assert.ok(actual?.includes(corrected), reference);
 };
 
 const source = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
@@ -265,7 +268,7 @@ test("GAM: las mejoras de contexto técnico verificadas conservan la identidad o
     const general = resolveGamVerifiedSourceCondensedGeneral(record);
     assert.ok(general, reference);
     const prepared = prepareSourceProduct(record).product;
-    assert.equal(prepared.description_general, general, reference);
+    checkPreparedGeneral(reference, prepared.description_general, general);
     assert.equal(JSON.stringify(record), snapshot, reference);
     for (const altered of [
       { ...record, url: `${record.url}?revision=1` },

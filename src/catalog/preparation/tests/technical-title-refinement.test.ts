@@ -59,7 +59,7 @@ test("ruido del portal, concordancia, espacios y magnitudes repetidas se elimina
 });
 
 test("metadatos contradictorios y evidencias ambiguas no autorizan cambiar marcas o modelos", () => {
-  for (const reference of ["2020", "2118", "5879", "6103", "6852", "6689", "6863"]) {
+  for (const reference of ["2020", "2118", "6103", "6852", "6689", "6863"]) {
     const record = source("gam", reference);
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.product.title, record.title, reference);

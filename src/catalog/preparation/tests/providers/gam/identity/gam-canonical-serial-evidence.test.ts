@@ -73,6 +73,5 @@ test("GAM: la preparación integral conserva el catálogo y solo mantiene confli
   assert.equal(prepared.products.length, source.products.length);
   assert.equal(new Set(prepared.products.map((product) => product.product.reference)).size, source.products.length);
   const reviewed = prepared.products.filter(({ status }) => status === "review");
-  assert.deepEqual(reviewed.map(({ product }) => product.reference).sort(), [...gamTechnicalReviewReferences, "6682", "6703",
-    "6169", "6171", "6622", "6625", "6626", "6642", "6669"].sort());
+  assert.deepEqual(reviewed.map(({ product }) => product.reference).sort(), [...gamTechnicalReviewReferences, "6682", "6703", "6642", "6669"].sort());
 });

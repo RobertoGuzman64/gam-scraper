@@ -39,7 +39,8 @@ test("GAM: las nueve identidades incompatibles no publican Modelo del origen", (
     assert.ok(model);
     assert.equal(prepared.product.attributes.some((attribute) => attribute.attributeID === model.id), editorial, reference);
     const reconciled = reconcileGamForPreparation(product);
-    assert.deepEqual(prepared.product.spec, { ...product.specs, ...reconciled.specs, ...(reference === "4751" ? { "Altura de trabajo (m)": "18,1 m" } : {}) });
+    assert.deepEqual(prepared.product.spec, { ...product.specs, ...reconciled.specs, ...(reference === "4751" ? { "Altura de trabajo (m)": "18,1 m" } : {}),
+      ...(reference === "4802" ? { "Altura plataforma (m)": "13 m" } : {}) });
     assert.equal(prepared.product.reference, reference);
   }
 });
@@ -93,8 +94,9 @@ test("GAM: bloquea la identidad cruzada de 6622 aunque el modelo de ficha tenga 
   assert.equal(gamElevationIdentityConflict(product), true);
   assert.deepEqual(resolvedModel(product), { status: "rejected", value: null });
   const prepared = prepareProduct(product, catalog);
-  assert.equal(prepared.status, "review");
-  assert.ok(prepared.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")));
+  assert.equal(prepared.status, "ready");
+  assert.deepEqual(prepared.issues, []);
+  assert.equal(prepared.product.spec["Dimensiones Cesta"], "3,98 x 1,83 m");
   assert.ok(model);
   assert.equal(prepared.product.attributes.some((attribute) => attribute.attributeID === model.id), true);
   assert.equal(prepared.product.reference, "6622");

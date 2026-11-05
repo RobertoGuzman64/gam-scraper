@@ -31,11 +31,16 @@ for (const record of records) {
     const output = prepareProduct(record, catalog);
     assert.equal(output.status, "ready");
     assert.deepEqual(output.issues, []);
-    assert.deepEqual(output.product.spec, reconciled.specs);
+    assert.deepEqual(output.product.spec, record.reference === "4802"
+      ? { ...reconciled.specs, "Altura plataforma (m)": "13 m" } : reconciled.specs);
     assert.equal(output.product.spec["Modelo"], model);
     assert.ok(output.product.attributes.some((attribute) => attribute.attributeID === 116 && attribute.value === model));
+    const general = verifiedFamilyProportionEditorial["gam:4802"].general;
     assert.equal(output.product.description_general, record.reference === "4802"
-      ? verifiedFamilyProportionEditorial["gam:4802"].general : record.longDescription);
+      ? general.replace(
+        "La ficha estructurada, sin embargo, identifica el modelo XG1418ERT; esa divergencia debe verificarse antes de atribuir prestaciones a una variante.",
+        "La identidad XG1523ERT está respaldada por el título, el resumen, la descripción y la referencia original."
+      ) : record.longDescription);
     assert.equal(output.product.description, record.shortDescription);
     assert.equal(output.product.title, record.reference === "4802"
       ? "Plataforma de tijera eléctrica 15M 4x4 XCMG XG1523ERT" : record.title);

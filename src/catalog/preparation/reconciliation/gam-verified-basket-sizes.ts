@@ -11,23 +11,35 @@ const verified = [
   { references: ["6631"], brand: "MANITOU", model: "150 AETJC", original: "1 2x0 96 metros", dimensions: "1,2 x 0,96 m",
     source: "https://www.alpesur.com/images/pdf-maquinaria/150aetc.pdf" },
   { references: ["6617"], brand: "GENIE", model: "S-65", original: "1 76 83 x 0 metros", dimensions: "1,83 x 0,76 m",
-    source: "https://manuals.genielift.com/Operators/english/43648.pdf" }
+    source: "https://manuals.genielift.com/Operators/english/43648.pdf" },
+  { references: ["6622", "6625"], brand: "GENIE", model: "GS-5390", original: "4 83 88x1 metros", dimensions: "3,98 x 1,83 m",
+    source: "https://www.genielift.com/docs/default-source/product-specifications/rough-terrain-scissor-lifts/en-gb/gsspec_gs-3390-4390-5390_en-%28gen0965%29-lr-3.pdf" },
+  { references: ["6626"], brand: "JLG", model: "860SJ", original: "1 83X0 91 metros", dimensions: "1,83 x 0,91 m",
+    source: "https://podnosnikipolska.pl/wp-content/uploads/2016/08/860SJ_EN-pdf.pdf" },
+  { references: ["6169"], brand: "CTE", model: "TRCS 180", original: "1400x700x1100 metros", dimensions: "1,4 x 0,7 x 1,1 m",
+    source: "https://ctelift.com/es/plataforma-arana-trcs180/" },
+  { references: ["6171"], brand: "CTE", model: "TRCS 210E", original: "1400x700x1100 metros", dimensions: "1,4 x 0,7 x 1,1 m",
+    source: "https://ctelift.com/es/plataforma-arana-trcs210e/" }
 ] as const;
 
 const compact = (value: string): string => fold(value).replace(/[^a-z0-9]/gu, "");
 
 export const reconcileGamVerifiedBasketSizes = (record: ProductRecord): ProductRecord => {
-  if (record.providerId !== "gam" || record.categoryKey !== "elevacion" ||
-    record.condition !== "Segunda mano" || !record.reference || !record.brand || !record.model) return record;
+  if (record.providerId !== "gam" || (record.categoryKey !== "elevacion" && record.categoryKey !== "elevacion-nueva") ||
+    !record.reference || !record.brand || !record.model) return record;
   const source = verified.find((item) => item.references.some((reference) => reference === record.reference));
-  if (!source || compact(record.brand) !== compact(source.brand) || compact(record.model) !== compact(source.model) ||
+  if (!source || (record.condition !== "Segunda mano" && record.condition !== "Nuevo") ||
+    ((record.condition === "Nuevo") !== (record.categoryKey === "elevacion-nueva")) ||
+    compact(record.brand) !== compact(source.brand) || compact(record.model) !== compact(source.model) ||
     compact(String(record.specs?.Marca ?? "")) !== compact(source.brand) ||
     compact(String(record.specs?.Modelo ?? "")) !== compact(source.model) ||
     record.specs?.["Dimensiones Cesta"] !== source.original ||
     !(compact(record.shortDescription ?? "").includes(compact(`${source.brand} ${source.model}`)) ||
       (source.model.endsWith("J") && compact(record.shortDescription ?? "").includes(
         compact(`${source.brand} ${source.model.slice(0, -1)}`)) &&
-        compact(record.longDescription ?? "").includes(compact(`${source.brand} ${source.model}`))))) return record;
+        compact(record.longDescription ?? "").includes(compact(`${source.brand} ${source.model}`))) ||
+      (record.reference === "6169" && compact(record.title ?? "").includes("trcs180")) ||
+      (record.reference === "6171" && compact(record.title ?? "").includes("traccess210e")))) return record;
   try {
     const url = new URL(record.url);
     const parts = url.pathname.split("/").filter(Boolean);

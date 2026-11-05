@@ -18,6 +18,7 @@ import { applyReconciledTechnicalSpecs } from "./reconciliation/technical-specif
 import { reconcileGamBasketDimensions } from "./reconciliation/gam-basket-dimensions.js";
 import { reconcileGamVerifiedBasketSizes } from "./reconciliation/gam-verified-basket-sizes.js";
 import { reconcileGamSourceCapacitySummary, preparedGamSourceCapacityShort } from "./reconciliation/gam-source-capacity-summary.js";
+import { reconcileGamVerifiedCapacityCoherence, reconcileGamVerifiedModelIdentity, reconcileGamVerifiedBasketLoad, reconcileGamVerifiedListingIdentity, reconcileGamVerifiedEditorialCoherence } from "./reconciliation/gam-verified-capacity-coherence.js";
 import { reconcileGamHorometer } from "./reconciliation/gam-horometer.js";
 import { captureSourceEditorialEvidence } from "./mapping/source-editorial-evidence.js";
 import { recoverBaseTechnicalSpecs } from "./recovery/gam-technical-recovery.js";
@@ -31,6 +32,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const publicationConflict = publicationConflictForMercaeleva(record);
   const semanticIssues = sourceSemanticQualityIssues(record);
   record = reconcileGamInitialIdentity(record);
+  record = reconcileGamVerifiedListingIdentity(record);
+  record = reconcileGamVerifiedModelIdentity(record);
   record = reconcileMercaelevaVerifiedPlatformSourceSpecs(record);
   const sourceYearSpecs = recoverBaseTechnicalSpecs(record, sourceUnitRecord);
   const { sourceFuelSpecs, documentedSpecs } = recoverDocumentedTechnicalSpecs(sourceUnitRecord, sourceYearSpecs);
@@ -39,6 +42,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   record = reconcileMercaelevaForPreparation(record);
   const editorialRecord = record;
   record = reconcileGamSourceCapacitySummary(record);
+  record = reconcileGamVerifiedCapacityCoherence(record);
+  record = reconcileGamVerifiedBasketLoad(record);
   record = reconcileGamCorroboratedLoadCapacity(record);
   record = reconcileGomarizVerifiedPlatformHeight(record);
   record = reconcileMercaelevaCorroboratedCapacity(record);
@@ -81,7 +86,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     price,
     description_title: editorial.title,
     description: preparedGamSourceCapacityShort(editorialRecord, record, descriptions.short),
-    description_general: descriptions.general,
+    description_general: reconcileGamVerifiedEditorialCoherence(record, descriptions.general),
     image: images[0] ?? null,
     images,
     spec: reconciledSpecs,

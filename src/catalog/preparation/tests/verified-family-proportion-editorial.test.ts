@@ -42,7 +42,13 @@ test("La fase 162 mejora exactamente veinte fichas canónicas sin alterar datos 
     assert.equal(prepared.status, identity.startsWith("gam:") && (gamTechnicalReviewReferences.has(identity.slice(4)) || phase2BasketReviewReferences.has(identity.slice(4))) ? "review" : "ready", identity);
     assert.equal(prepared.issues.length > 0, identity.startsWith("gam:") && (gamTechnicalReviewReferences.has(identity.slice(4)) || phase2BasketReviewReferences.has(identity.slice(4))), identity);
     assert.equal(prepared.product.sourceUrl, evidence.sourceUrl, identity);
-    assert.equal(prepared.product.description_general, evidence.general, identity);
+    const expectedGeneral = identity === "gam:4802"
+      ? evidence.general.replace(
+        "La ficha estructurada, sin embargo, identifica el modelo XG1418ERT; esa divergencia debe verificarse antes de atribuir prestaciones a una variante.",
+        "La identidad XG1523ERT está respaldada por el título, el resumen, la descripción y la referencia original."
+      )
+      : evidence.general;
+    assert.equal(prepared.product.description_general, expectedGeneral, identity);
     const words = evidence.general.trim().split(/\s+/u).length;
     assert.ok(words >= 70 && words <= 190, identity);
   }

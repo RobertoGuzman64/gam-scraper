@@ -1,5 +1,5 @@
 import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
-import { campaign1VerifiedBasketCorrections } from "../../../support/phase2-basket-dimensions.js";
+import { campaign1VerifiedBasketCorrections, campaign2VerifiedBasketCorrections } from "../../../support/phase2-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { requireProductReference } from "../../../cross-cutting/support/require-product-reference.js";
@@ -26,7 +26,7 @@ test("fragmentos de cesta irrecuperables no se convierten en dimensiones inventa
     const record = reference(id);
     const prepared = prepareProduct(record, catalog);
     assert.deepEqual(resolved(record, "Dimensiones de la cesta"), { status: "not_observed", value: null }, id);
-    const verified = campaign1VerifiedBasketCorrections.get(id);
+    const verified = campaign2VerifiedBasketCorrections.get(id) ?? campaign1VerifiedBasketCorrections.get(id);
     assert.equal(prepared.status, verified ? "ready" : "review", id);
     if (!verified) assert.ok(prepared.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")), id);
     assert.equal(prepared.product.spec["Dimensiones Cesta"], verified ?? record.specs?.["Dimensiones Cesta"], id);
@@ -35,15 +35,14 @@ test("fragmentos de cesta irrecuperables no se convierten en dimensiones inventa
   }
 });
 
-test("las ternas con unidad incorrecta y el giro direccional quedan en su fuente original", () => {
+test("las ternas CTE contrastadas se expresan en metros sin alterar la rotación", () => {
   for (const id of ["6169", "6171"]) {
     const record = reference(id);
     const prepared = prepareProduct(record, catalog);
     assert.deepEqual(resolved(record, "Dimensiones de la cesta"), { status: "not_observed", value: null }, id);
     assert.deepEqual(resolved(record, "Rotación de torreta"), { status: "not_observed", value: null }, id);
-    assert.equal(prepared.status, "review", id);
-    assert.ok(prepared.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")), id);
-    assert.equal(prepared.product.spec["Dimensiones Cesta"], "1400x700x1100 metros");
+    assert.equal(prepared.status, "ready", id);
+    assert.equal(prepared.product.spec["Dimensiones Cesta"], "1,4 x 0,7 x 1,1 m");
     assert.equal(prepared.product.spec["Rotación de torreta"], "190º+190º");
   }
 });
