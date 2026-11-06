@@ -1,5 +1,5 @@
 import { getProvider, listProviders } from "../../scraping/registry.js";
-import type { BatchOptions } from "../../pipeline/batch/types.js";
+import type { BatchOptions } from "../../scraping/batch/types.js";
 
 export const batchHelp = `Uso:
   npm run extraer:todos

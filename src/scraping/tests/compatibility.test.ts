@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { resolveCliSelection } from "../../cli/options/scrape.js";
-import { writeOutputs } from "../../pipeline/publication/publish.js";
+import { writeOutputs } from "../output/publish.js";
 import { getProvider, listProviders } from "../registry.js";
 import { scrapeCategory } from "../engine/scrape-category.js";
 import type { ScraperProvider } from "../provider.js";

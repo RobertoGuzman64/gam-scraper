@@ -1,4 +1,4 @@
-import type { BatchReport } from "../../pipeline/batch/report.js";
+import type { BatchReport } from "../../scraping/batch/report.js";
 import { formatStatus } from "./terminal.js";
 import type { TerminalStatus } from "./terminal.js";
 

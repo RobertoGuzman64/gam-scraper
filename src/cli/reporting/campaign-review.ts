@@ -1,4 +1,4 @@
-import type { CampaignReview } from "../../pipeline/campaign/review.js";
+import type { CampaignReview } from "../../campaign/review.js";
 import { formatStatus, printStatus, printReportLine } from "./terminal.js";
 import { formatPreparationWork } from "./preparation-work.js";
 

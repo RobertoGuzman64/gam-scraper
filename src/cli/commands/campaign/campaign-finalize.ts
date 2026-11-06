@@ -1,10 +1,10 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { finalizeActiveCampaign } from "../../../pipeline/campaign/finalization.js";
+import { finalizeActiveCampaign } from "../../../campaign/finalization.js";
 import {
   approveActiveCampaignEditorial, decideActiveCampaignEditorial, inspectActiveCampaignEditorial
-} from "../../../pipeline/campaign/editorial.js";
-import type { EditorialDecisionRequest, EditorialReview } from "../../../pipeline/campaign/editorial.js";
+} from "../../../campaign/editorial.js";
+import type { EditorialDecisionRequest, EditorialReview } from "../../../campaign/editorial.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { formatHeader, printStatus, printReportLine } from "../../reporting/terminal.js";
 

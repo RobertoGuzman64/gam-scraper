@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { analyzeTechnicalDensity } from "../technical-density.js";
-import type { ImportCandidate } from "../../legacy-export/contracts.js";
+import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 
 const candidate = (reference: string, spec: ImportCandidate["spec"], providerId = "proveedor"): ImportCandidate => ({
   providerId, sourceUrl: `https://example.com/${reference}`, reference, title: `Máquina ${reference}`,

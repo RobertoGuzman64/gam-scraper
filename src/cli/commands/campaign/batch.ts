@@ -2,7 +2,7 @@ import { printReportLine } from "../../reporting/terminal.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
-import { describeBatch, runBatch } from "../../../pipeline/batch/run.js";
+import { describeBatch, runBatch } from "../../../scraping/batch/run.js";
 import { batchHelp, parseBatchOptions } from "../../options/batch.js";
 import { BatchConsole } from "../../reporting/batch-progress.js";
 import { formatBatchSummary } from "../../reporting/batch-summary.js";

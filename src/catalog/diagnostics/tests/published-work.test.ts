@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import type { ImportCandidate } from "../../legacy-export/contracts.js";
+import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 import { measurePublishedWork } from "../published-work.js";
 
 const original = (reference: string): ProductRecord => ({

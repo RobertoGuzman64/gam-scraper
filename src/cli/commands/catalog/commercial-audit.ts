@@ -1,18 +1,18 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { auditCommercialCatalog } from "../../../pipeline/legacy-export/commercial-audit.js";
+import { auditCommercialCatalog } from "../../../commercial/export/commercial-audit.js";
 import { printReportLine } from "../../reporting/terminal.js";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { buildCommercialExportFiles } from "../../../pipeline/legacy-export/commercial-export.js";
-import { verifyCommercialExportDirectory, verifyCommercialExportSources } from "../../../pipeline/legacy-export/commercial-export-verification.js";
+import { buildCommercialExportFiles } from "../../../commercial/export/commercial-export.js";
+import { verifyCommercialExportDirectory, verifyCommercialExportSources } from "../../../commercial/export/commercial-export-verification.js";
 import type { CommercialEnvironment } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
-import { renderCommercialCategoryTree } from "../../../catalog/diagnostics/commercial-category-tree.js";
-import { analyzePresentationConsistency } from "../../../catalog/diagnostics/presentation-consistency.js";
+import { renderCommercialCategoryTree } from "../../../commercial/diagnostics/commercial-category-tree.js";
+import { analyzePresentationConsistency } from "../../../commercial/diagnostics/presentation-consistency.js";
 import { originalSources } from "../../../infrastructure/filesystem/catalog/original-catalog-sources.js";
-import { prepareImportBatch } from "../../../catalog/preparation/batch-identity.js";
+import { prepareImportBatch } from "../../../preparation/batch-identity.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 

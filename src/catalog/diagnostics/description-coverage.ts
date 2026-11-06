@@ -1,7 +1,7 @@
 import { buildProductIdentity } from "../identity.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
-import type { ImportCandidate } from "../legacy-export/contracts.js";
-import type { PreparedProduct } from "../preparation/contracts.js";
+import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
+import type { PreparedProduct } from "../../preparation/contracts.js";
 
 export type DescriptionSourceOrigin = "original_canonico" | "reconstruccion_publicada";
 export type DescriptionCoverageInput = {

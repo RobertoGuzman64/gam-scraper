@@ -10,7 +10,7 @@ const state = (overrides = {}) => ({
   progress: {
     total: 416, reused: 285, started: 120, reported: 399, without_report: 6,
     not_started: 11, remaining: 17,
-    oldest_without_report: [{ file: "/repositorio/dist/pipeline/publication/tests/individual-finish.test.js", elapsed_ms: 31000 }]
+    oldest_without_report: [{ file: "/repositorio/dist/publication/tests/individual-finish.test.js", elapsed_ms: 31000 }]
   },
   counts: { passed: 1715, failed: 0, skipped: 1, todo: 0 },
   lanes: [
@@ -87,7 +87,7 @@ test("el resumen final persistente identifica resultado, caché y tiempos de col
   });
   for (const width of [45, 80, 110, 160]) {
     const lines = formatRunnerCompletion({ ...finished, success: true,
-      slowest: { file: "dist/pipeline/campaign/tests/finalization-interventions.test.js", milliseconds: 22061 }
+      slowest: { file: "dist/campaign/tests/finalization-and-delivery/finalization-interventions.test.js", milliseconds: 22061 }
     }, width, true);
     assert.match(plain(lines.join("\n")), /CORRECTO/);
     assert.match(plain(lines.join("\n")), /Caché: 285 suites \/ 1\.153 tests/);
@@ -101,7 +101,7 @@ test("el resumen final persistente identifica resultado, caché y tiempos de col
 });
 
 test("los avisos de rendimiento son legibles sin perder las cifras ni envolver líneas", () => {
-  const path = "dist/pipeline/campaign/tests/finalization-and-delivery/finalization-interventions.test.js";
+  const path = "dist/campaign/tests/finalization-and-delivery/finalization-interventions.test.js";
   const output = formatRunnerRegression({ file: path, before: 10397, after: 22061 }, 73);
   assert.ok(output.trimEnd().length < 73);
   assert.match(output, /finalization-interventions\.test\.js/);

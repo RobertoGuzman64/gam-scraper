@@ -7,7 +7,7 @@ import test from "node:test";
 import { compareCampaignReferences } from "../../../../catalog/reference/compare.js";
 import { CAMPAIGN_PROVIDERS } from "../../../../contracts/campaign-providers.js";
 import { readCampaignReference } from "../store.js";
-import { writeCampaignReference } from "../../../../pipeline/campaign/reference/maintenance.js";
+import { writeCampaignReference } from "../../../../campaign/reference/maintenance.js";
 import type { CanonicalCatalog } from "../../../../catalog/canonical-catalog.js";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { ReferenceCatalogSource } from "../store.js";

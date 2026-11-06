@@ -1,8 +1,8 @@
 import { mkdir, realpath, rm, writeFile } from "node:fs/promises";
 import { resolve, relative, isAbsolute, join, dirname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildCommercialExportFiles } from "../../../pipeline/legacy-export/commercial-export.js";
-import { verifyCommercialExportDirectory, verifyCommercialExportSources } from "../../../pipeline/legacy-export/commercial-export-verification.js";
+import { buildCommercialExportFiles } from "../../../commercial/export/commercial-export.js";
+import { verifyCommercialExportDirectory, verifyCommercialExportSources } from "../../../commercial/export/commercial-export-verification.js";
 import type { CommercialEnvironment } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { printReportLine } from "../../reporting/terminal.js";
 import { printCommandError } from "../../reporting/errors.js";

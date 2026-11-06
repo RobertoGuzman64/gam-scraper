@@ -1,8 +1,8 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { extractCampaign } from "../../../pipeline/campaign/extraction.js";
-import { inspectBeforeExtraction } from "../../../pipeline/campaign/preflight.js";
-import { reviewActiveCampaign } from "../../../pipeline/campaign/review.js";
+import { extractCampaign } from "../../../campaign/extraction.js";
+import { inspectBeforeExtraction } from "../../../campaign/preflight.js";
+import { reviewActiveCampaign } from "../../../campaign/review.js";
 import { BatchConsole } from "../../reporting/batch-progress.js";
 import { formatBatchSummary } from "../../reporting/batch-summary.js";
 import { printCommandError } from "../../reporting/errors.js";

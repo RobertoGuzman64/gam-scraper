@@ -2,7 +2,7 @@ import { printReportLine } from "../../../reporting/terminal.js";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { prepareSourceProduct } from "../../../../catalog/preparation/prepare-product.js";
+import { prepareSourceProduct } from "../../../../preparation/prepare-product.js";
 import { scrapeProductPages } from "../../../../scraping/engine/scrape-products.js";
 import { manainProvider } from "../../../../scraping/providers/manain/adapter.js";
 import { discoverManainSaleCatalog } from "../../../../scraping/providers/manain/browser.js";

@@ -1,15 +1,15 @@
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
-import { analyzeCatalogContentGaps } from "../../legacy-export/content-gaps-commercial.js";
+import { analyzeCatalogContentGaps } from "../../../commercial/legacy-export/content-gaps-commercial.js";
 import { prioritizeCatalogGaps } from "../content-gaps-source.js";
 import type { GapInput } from "../content-gaps-types.js";
-import type { ImportCandidate, ImportCatalog } from "../../legacy-export/contracts.js";
-import type { PreparedProduct } from "../../preparation/contracts.js";
+import type { ImportCandidate, ImportCatalog } from "../../../commercial/legacy-export/contracts.js";
+import type { PreparedProduct } from "../../../preparation/contracts.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
-import { prepareProduct } from "../../legacy-export/prepare-product.js";
+import { prepareProduct } from "../../../commercial/legacy-export/prepare-product.js";
 
 const catalog: ImportCatalog = {
   categories: [{ id: 10, parentId: null, name: "Carretillas", slug: "carretillas" },

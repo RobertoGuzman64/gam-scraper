@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { PreparationFingerprints } from "../../../catalog/preparation/offline-document.js";
+import type { PreparationFingerprints } from "../../../preparation/offline-document.js";
 
 const sha = (value: string): string => createHash("sha256").update(value).digest("hex");
 
@@ -19,21 +19,17 @@ const readRuleFiles = async (directory: string): Promise<readonly { name: string
 };
 
 export const loadPreparationInputs = async (): Promise<{ fingerprints: PreparationFingerprints }> => {
-  const rulesRoot = fileURLToPath(new URL("../../../catalog/", import.meta.url));
+  const root = fileURLToPath(new URL("../../../", import.meta.url));
   const [preparation, legacy, normalization, identity, conflicts] = await Promise.all([
-    readRuleFiles(join(rulesRoot, "preparation")),
-    readRuleFiles(join(rulesRoot, "legacy-export")),
-    readRuleFiles(join(rulesRoot, "normalization")),
-    readFile(join(rulesRoot, "identity.js"), "utf8"),
-    readFile(join(rulesRoot, "identity-conflicts.js"), "utf8")
+    readRuleFiles(join(root, "preparation")),
+    readRuleFiles(join(root, "commercial", "legacy-export")),
+    readRuleFiles(join(root, "catalog", "normalization")),
+    readFile(join(root, "catalog", "identity.js"), "utf8"),
+    readFile(join(root, "catalog", "identity-conflicts.js"), "utf8")
   ]);
-  const movedMapping = (name: string): boolean =>
-    name.startsWith("mapping/") || name.startsWith("evidence/") || name.startsWith("source/");
   const files = [
-    ...preparation.filter((file) => movedMapping(file.name) && file.name !== "mapping/category-mapping.js")
-      .map((file) => ({ name: `mapping/${file.name}`, content: file.content })),
-    ...preparation.filter((file) => !movedMapping(file.name) &&
-      !["product-attributes.js", "import-validation.js", "import-diagnostics.js"].includes(file.name))
+    ...preparation.filter((file) => !file.name.startsWith("workflow/") &&
+      !["product-attributes.js", "shared/classification/mapping/category-mapping.js"].includes(file.name))
       .map((file) => ({ name: `preparation/${file.name}`, content: file.content })),
     ...legacy.filter((file) => file.name === "contracts.js" || file.name === "prepare-product.js")
       .map((file) => ({ name: `preparation/legacy-export/${file.name}`, content: file.content })),

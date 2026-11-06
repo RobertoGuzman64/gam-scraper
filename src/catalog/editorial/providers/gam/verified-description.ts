@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { ImportCandidate } from "../../../legacy-export/contracts.js";
+import type { ImportCandidate } from "../../../../commercial/legacy-export/contracts.js";
 
 const shortDescriptionCase = {
   reference: "5996",

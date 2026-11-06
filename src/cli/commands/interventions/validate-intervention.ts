@@ -1,7 +1,7 @@
 import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { validateOfflinePreparation } from "../../../pipeline/validation/offline.js";
+import { validateOfflinePreparation } from "../../../preparation/workflow/validation/offline.js";
 import { interventionPreparationHelp, parseInterventionValidationOptions } from "../../options/intervention-preparation.js";
 import { printCommandError } from "../../reporting/errors.js";
 

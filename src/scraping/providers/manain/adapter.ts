@@ -7,7 +7,7 @@ import { MANAIN_CATEGORIES, MANAIN_OPTIONS } from "./config.js";
 import { extractManainSaleProductLinks } from "./listing.js";
 import type { ManainListingResult } from "./listing.js";
 import { parseManainProduct } from "./product.js";
-import { discardedManainProductUrls } from "../../../catalog/preparation/evidence/providers/manain/discarded-urls.js";
+import { discardedManainProductUrls } from "../../../preparation/manain/identity/evidence/discarded-urls.js";
 
 const discardedManainUrls = new Set(discardedManainProductUrls);
 

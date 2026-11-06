@@ -1,9 +1,9 @@
 import { resolve } from "node:path";
 import { readInterventionCatalog } from "../../../catalog/interventions/catalog.js";
 import { fileURLToPath } from "node:url";
-import { interveneActiveCampaign } from "../../../pipeline/campaign/intervention.js";
-import { discoverCampaign } from "../../../pipeline/campaign/discovery/search.js";
-import { discoverCampaignCatalogHistory } from "../../../pipeline/campaign/discovery/history.js";
+import { interveneActiveCampaign } from "../../../campaign/intervention.js";
+import { discoverCampaign } from "../../../campaign/discovery/search.js";
+import { discoverCampaignCatalogHistory } from "../../../campaign/discovery/history.js";
 import { assessInterventionMaintenance } from "../../../catalog/interventions/maintenance.js";
 import { formatInterventionSimulation } from "../interventions/intervene.js";
 import { formatInterventionComparison } from "../../reporting/intervention-comparison.js";

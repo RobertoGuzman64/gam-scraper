@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { assessNewGamCoverage } from "../../../catalog/coverage/providers/gam/review-gate.js";
 import { isNewEditorialCohort, selectPublishableCatalog } from "../../../catalog/editorial/select-publishable.js";
 import { createAccreditationDraft, selectAccreditedPublishable, sha256 as accreditationSha } from "../../../catalog/editorial/campaign-accreditation.js";
-import { readCampaignAccreditationSources } from "../../../pipeline/campaign/accreditation-sources.js";
+import { readCampaignAccreditationSources } from "../../../campaign/accreditation-sources.js";
 import type { PublishableSelection } from "../../../catalog/editorial/select-publishable.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";

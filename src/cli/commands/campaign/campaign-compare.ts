@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { compareActiveCampaignReference } from "../../../pipeline/campaign/reference/compare.js";
+import { compareActiveCampaignReference } from "../../../campaign/reference/compare.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { formatHeader, printStatus, printReportLine } from "../../reporting/terminal.js";
 import type { ReferenceFieldValue, ReferenceIdentity } from "../../../catalog/reference/compare.js";

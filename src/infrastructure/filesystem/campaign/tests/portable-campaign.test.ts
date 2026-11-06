@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test, { after } from "node:test";
-import { finalizeActiveCampaign } from "../../../../pipeline/campaign/finalization.js";
-import { approveDraft, createFixture } from "../../../../pipeline/campaign/tests/finalization-fixture.js";
-import { reuseCampaignTestFixture } from "../../../../pipeline/campaign/tests/campaign-catalog-fixture.js";
+import { finalizeActiveCampaign } from "../../../../campaign/finalization.js";
+import { approveDraft, createFixture } from "../../../../campaign/tests/finalization-fixture.js";
+import { reuseCampaignTestFixture } from "../../../../campaign/tests/campaign-catalog-fixture.js";
 import { readPortableCampaign } from "../../catalog/portable-campaign.js";
 
 const fixtures = reuseCampaignTestFixture(createFixture);
@@ -52,8 +52,8 @@ test("la campaña portátil detecta alteración de JSON final y no conserva dire
 test("las correcciones acreditadas preservan original, derivado y expediente sin storage", async () => {
   const data = await fixtures.fixture();
   try {
-    const { campaignScript } = await import("../../../../pipeline/campaign/tests/finalization-fixture.js");
-    const { interveneActiveCampaign } = await import("../../../../pipeline/campaign/intervention.js");
+    const { campaignScript } = await import("../../../../campaign/tests/finalization-fixture.js");
+    const { interveneActiveCampaign } = await import("../../../../campaign/intervention.js");
     const script = await campaignScript(data.root, data.runId);
     const applied = await interveneActiveCampaign(data.root, "gam", [script], true);
     assert.equal(applied.applied, true);

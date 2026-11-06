@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { inspectCampaignReference } from "../../../infrastructure/filesystem/reference/store.js";
 import { findDesktopDirectory } from "../../../infrastructure/filesystem/desktop-directory.js";
-import { cleanDeliveredCampaign } from "../../../pipeline/campaign/cleanup.js";
+import { cleanDeliveredCampaign } from "../../../campaign/cleanup.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { formatHeader, printStatus, printReportLine } from "../../reporting/terminal.js";
 

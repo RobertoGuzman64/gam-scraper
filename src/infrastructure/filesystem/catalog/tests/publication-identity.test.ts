@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { readAccreditedPublication, resolveAccreditedPublication } from "../accredited-publication.js";
 import { publicationApprovalSha, publicationDirectoryForApproval, resolvePublicationDirectory } from "../publication-identity.js";
-import { selectActivePublication } from "../../../../pipeline/publication/active-publication.js";
+import { selectActivePublication } from "../../../../publication/active-publication.js";
 
 const repository = fileURLToPath(new URL("../../../../../", import.meta.url));
 const providerId = "gomariz";

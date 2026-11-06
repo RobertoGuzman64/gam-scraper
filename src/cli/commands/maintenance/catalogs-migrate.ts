@@ -1,7 +1,7 @@
 import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { applyPortableMigration, planPortableMigration } from "../../../pipeline/campaign/portable-migration.js";
+import { applyPortableMigration, planPortableMigration } from "../../../campaign/portable-migration.js";
 import { printCommandError } from "../../reporting/errors.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));

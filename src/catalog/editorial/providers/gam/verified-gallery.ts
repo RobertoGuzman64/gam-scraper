@@ -1,4 +1,4 @@
-import type { ImportCandidate } from "../../../legacy-export/contracts.js";
+import type { ImportCandidate } from "../../../../commercial/legacy-export/contracts.js";
 
 const contaminatedImages = [
   "https://online.gamrentals.com/53434-product_main_2x/carretilla-elevadora-electrica-hyster-a13xnt.jpg",

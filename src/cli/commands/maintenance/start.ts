@@ -1,8 +1,8 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initializeWorkspace, workspaceDirectories } from "../../../infrastructure/filesystem/workspace.js";
-import { discoverCampaign } from "../../../pipeline/campaign/discovery/search.js";
-import { inspectCampaignOperations } from "../../../pipeline/campaign/operations-status.js";
+import { discoverCampaign } from "../../../campaign/discovery/search.js";
+import { inspectCampaignOperations } from "../../../campaign/operations-status.js";
 import { printCampaignOperations } from "../../reporting/campaign-operations.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { formatHeader, printStatus, printReportLine } from "../../reporting/terminal.js";

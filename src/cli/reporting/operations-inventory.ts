@@ -1,5 +1,5 @@
-import type { CampaignOperationsStatus } from "../../pipeline/campaign/operations-status.js";
-import type { InventoryItem, OperationsInventory } from "../../pipeline/campaign/operations-inventory.js";
+import type { CampaignOperationsStatus } from "../../campaign/operations-status.js";
+import type { InventoryItem, OperationsInventory } from "../../campaign/operations-inventory.js";
 import { formatHeader, printStatus, printReportLine } from "./terminal.js";
 
 const printItem = (label: string, item: InventoryItem): void => {

@@ -1,8 +1,8 @@
 import { isDeepStrictEqual } from "node:util";
 import type { ProductRecord } from "../../contracts/catalog.js";
-import type { ImportCandidate } from "../legacy-export/contracts.js";
+import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 import { buildProductIdentity } from "../identity.js";
-import { imageUrls, normalizePrice } from "../preparation/product-fields.js";
+import { imageUrls, normalizePrice } from "../../preparation/product-fields.js";
 import { measureIdentifiedProductWork } from "./preparation-work.js";
 import type { PreparationWorkSummary } from "./preparation-work.js";
 

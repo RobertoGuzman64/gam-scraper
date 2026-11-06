@@ -1,5 +1,5 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
-import type { PreparedProduct } from "../preparation/contracts.js";
+import type { PreparedProduct } from "../../preparation/contracts.js";
 
 export type GapGroupBy = "categoria" | "marca" | "modelo";
 export type GapEvidence = "directa_del_campo" | "texto_relacionado" | "especificaciones_sin_vinculo_acreditado" | "sin_evidencia_observable" | "desconocida";

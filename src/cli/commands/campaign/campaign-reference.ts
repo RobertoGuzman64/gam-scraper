@@ -1,9 +1,9 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { exportCampaignReference, importCampaignReference, recoverCampaignReference } from "../../../pipeline/campaign/reference/maintenance.js";
+import { exportCampaignReference, importCampaignReference, recoverCampaignReference } from "../../../campaign/reference/maintenance.js";
 import { inspectCampaignReference } from "../../../infrastructure/filesystem/reference/store.js";
 import { findDesktopDirectory } from "../../../infrastructure/filesystem/desktop-directory.js";
-import { updateActiveCampaignReference } from "../../../pipeline/campaign/reference/update-legacy.js";
+import { updateActiveCampaignReference } from "../../../campaign/reference/update-legacy.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { formatHeader, printStatus, printReportLine } from "../../reporting/terminal.js";
 

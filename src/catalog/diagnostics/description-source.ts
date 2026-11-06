@@ -1,5 +1,5 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
-import type { ImportCandidate } from "../legacy-export/contracts.js";
+import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 
 const specString = (candidate: ImportCandidate, key: string): string | null => {
   const value = candidate.spec[key];

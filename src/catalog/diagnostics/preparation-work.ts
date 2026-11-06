@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
-import type { OfflinePreparation } from "../preparation/offline-document.js";
-import type { ImportCandidate } from "../legacy-export/contracts.js";
+import type { OfflinePreparation } from "../../preparation/offline-document.js";
+import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 import { buildProductIdentity } from "../identity.js";
 import { normalizeSpecsObject } from "../normalization/normalize-specs.js";
 

@@ -21,19 +21,15 @@ const readSequentially = async (directory: string): Promise<readonly { name: str
 };
 
 test("la lectura paralela conserva las mismas huellas que la lectura secuencial original", async () => {
-  const root = fileURLToPath(new URL("../../../../catalog/", import.meta.url));
+  const root = fileURLToPath(new URL("../../../../", import.meta.url));
   const [preparation, legacy, normalization, identity, conflicts] = await Promise.all([
-    readSequentially(join(root, "preparation")), readSequentially(join(root, "legacy-export")),
-    readSequentially(join(root, "normalization")), readFile(join(root, "identity.js"), "utf8"),
-    readFile(join(root, "identity-conflicts.js"), "utf8")
+    readSequentially(join(root, "preparation")), readSequentially(join(root, "commercial", "legacy-export")),
+    readSequentially(join(root, "catalog", "normalization")), readFile(join(root, "catalog", "identity.js"), "utf8"),
+    readFile(join(root, "catalog", "identity-conflicts.js"), "utf8")
   ]);
-  const moved = (name: string): boolean =>
-    name.startsWith("mapping/") || name.startsWith("evidence/") || name.startsWith("source/");
   const files = [
-    ...preparation.filter((file) => moved(file.name) && file.name !== "mapping/category-mapping.js")
-      .map((file) => ({ name: `mapping/${file.name}`, content: file.content })),
-    ...preparation.filter((file) => !moved(file.name) &&
-      !["product-attributes.js", "import-validation.js", "import-diagnostics.js"].includes(file.name))
+    ...preparation.filter((file) => !file.name.startsWith("workflow/") &&
+      !["product-attributes.js", "shared/classification/mapping/category-mapping.js"].includes(file.name))
       .map((file) => ({ name: `preparation/${file.name}`, content: file.content })),
     ...legacy.filter((file) => file.name === "contracts.js" || file.name === "prepare-product.js")
       .map((file) => ({ name: `preparation/legacy-export/${file.name}`, content: file.content })),

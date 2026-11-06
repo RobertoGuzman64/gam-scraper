@@ -1,6 +1,6 @@
-import { fold } from "../preparation/mapping/category-utils.js";
+import { fold } from "../../preparation/shared/classification/mapping/category-utils.js";
 import { normalizedSpecKey, specHasValue } from "./content-gaps-source.js";
-import type { ImportCandidate } from "../legacy-export/contracts.js";
+import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 
 export const TECHNICAL_DENSITY_CRITERIA = { sparseMaximum: 2, mediumMaximum: 3 } as const;
 

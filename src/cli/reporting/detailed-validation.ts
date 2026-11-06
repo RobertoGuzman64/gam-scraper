@@ -1,6 +1,6 @@
-import { issueCode } from "../../catalog/preparation/offline-diagnostics.js";
-import { classifyImportIssue, importIssueCode } from "../../catalog/legacy-export/import-diagnostics.js";
-import type { PreparedProduct } from "../../catalog/preparation/contracts.js";
+import { issueCode } from "../../preparation/offline-diagnostics.js";
+import { classifyImportIssue, importIssueCode } from "../../commercial/legacy-export/import-diagnostics.js";
+import type { PreparedProduct } from "../../preparation/contracts.js";
 
 const issueSignature = (issues: readonly string[]): string =>
   [...new Set(issues.map(issueCode))].sort((a, b) => a.localeCompare(b, "es")).join(" + ");

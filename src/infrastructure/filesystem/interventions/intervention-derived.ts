@@ -4,7 +4,7 @@ import { isDeepStrictEqual } from "node:util";
 import { basename, dirname, join, resolve } from "node:path";
 import { parseCanonicalCatalog } from "../../../catalog/canonical-catalog.js";
 import type { CanonicalCatalog } from "../../../catalog/canonical-catalog.js";
-import type { InterventionProvenance } from "../../../catalog/preparation/offline-document.js";
+import type { InterventionProvenance } from "../../../preparation/offline-document.js";
 import { applyInterventionToCatalog } from "../../../catalog/interventions/application.js";
 import type { ManualInterventionProposal } from "../../../catalog/interventions/contracts.js";
 import { parseAppliedInterventionRecord } from "../../../catalog/interventions/record.js";

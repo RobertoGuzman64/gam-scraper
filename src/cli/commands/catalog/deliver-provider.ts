@@ -2,8 +2,8 @@ import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { findDesktopDirectory } from "../../../infrastructure/filesystem/desktop-directory.js";
-import { completeIndividualDelivery } from "../../../pipeline/publication/complete-individual-delivery.js";
-import type { IndividualClosureMode } from "../../../pipeline/publication/complete-individual-delivery.js";
+import { completeIndividualDelivery } from "../../../publication/complete-individual-delivery.js";
+import type { IndividualClosureMode } from "../../../publication/complete-individual-delivery.js";
 import { printCommandError } from "../../reporting/errors.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));

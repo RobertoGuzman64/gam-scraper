@@ -4,7 +4,7 @@ import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { buildProductIdentity } from "../../../catalog/identity.js";
 import { readAppliedIntervention } from "../interventions/intervention-derived.js";
 import type { AccreditedSource } from "../../../catalog/editorial/campaign-accreditation.js";
-import type { OfflinePreparation } from "../../../catalog/preparation/offline-document.js";
+import type { OfflinePreparation } from "../../../preparation/offline-document.js";
 
 
 export const interventionForPreparation = async (

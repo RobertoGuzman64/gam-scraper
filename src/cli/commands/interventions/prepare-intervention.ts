@@ -1,7 +1,7 @@
 import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
+import { prepareSavedCatalog } from "../../../preparation/workflow/prepare.js";
 import { interventionPreparationHelp, parseInterventionPreparationOptions } from "../../options/intervention-preparation.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { formatPreparationWork } from "../../reporting/preparation-work.js";

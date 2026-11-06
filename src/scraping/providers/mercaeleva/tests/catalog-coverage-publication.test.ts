@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { writeOutputs } from "../../../../pipeline/publication/publish.js";
+import { writeOutputs } from "../../../output/publish.js";
 import { assessCatalogQuality } from "../../../../catalog/quality.js";
 import { scrapeCategory } from "../../../engine/scrape-category.js";
 import type { ScraperProvider } from "../../../provider.js";

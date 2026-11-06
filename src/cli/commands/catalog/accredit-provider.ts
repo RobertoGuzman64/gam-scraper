@@ -4,8 +4,8 @@ import { fileURLToPath } from "node:url";
 import {
   approveIndividualEditorial, decideIndividualEditorial, inspectIndividualEditorial,
   prepareIndividualEditorialProposals, startIndividualEditorial
-} from "../../../pipeline/publication/individual-editorial.js";
-import type { IndividualEditorialOptions, IndividualEditorialReview } from "../../../pipeline/publication/individual-editorial.js";
+} from "../../../publication/individual-editorial.js";
+import type { IndividualEditorialOptions, IndividualEditorialReview } from "../../../publication/individual-editorial.js";
 import { printCommandError } from "../../reporting/errors.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));

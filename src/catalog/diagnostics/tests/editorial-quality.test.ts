@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import type { PreparedProduct } from "../../preparation/contracts.js";
+import type { PreparedProduct } from "../../../preparation/contracts.js";
 import { analyzeEditorialQuality, analyzePublishedEditorialQuality, EDITORIAL_CRITERIA } from "../editorial-quality.js";
 import type { GapInput } from "../content-gaps-types.js";
 

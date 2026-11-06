@@ -24,11 +24,11 @@ const PURE_ROOT_FILES = new Set([
 ]);
 const EXTERNAL_DATA_ACCESS = /\b(?:node:fs(?:\/promises)?|fs\/promises|process\.(?:binding|loadEnvFile))\b/u;
 const AUDITED_FAMILIES = [
-  "src/catalog/preparation/tests/",
+  "src/preparation/",
   "src/catalog/coverage/tests/",
   "src/catalog/editorial/tests/",
   "src/catalog/diagnostics/tests/",
-  "src/catalog/legacy-export/tests/",
+  "src/commercial/legacy-export/tests/",
   "src/catalog/tests/",
   "src/scraping/providers/",
   "src/scraping/tests/",
@@ -212,10 +212,10 @@ export const fingerprintTestInputs = (files) => {
 };
 
 const LEGACY_AUDITED_SUITES = new Set([
-  "dist/pipeline/publication/tests/individual-finish.test.js",
-  "dist/pipeline/publication/tests/individual-finish-cycle.test.js",
-  "dist/pipeline/publication/tests/individual-finish-editorial.test.js",
-  "dist/pipeline/publication/tests/individual-accreditation-session.test.js"
+  "dist/publication/tests/individual-finish.test.js",
+  "dist/publication/tests/individual-finish-cycle.test.js",
+  "dist/publication/tests/individual-finish-editorial.test.js",
+  "dist/publication/tests/individual-accreditation-session.test.js"
 ]);
 
 const validCounts = (value) => value !== null && typeof value === "object" &&

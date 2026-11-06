@@ -6,8 +6,8 @@ import { isPublicationDirectoryName, publicationApprovalSha, resolvePublicationD
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { readActiveCatalogIndex } from "./active-selection.js";
 import { readPortableCampaign } from "./portable-campaign.js";
-import { candidateValidationIssue, isCandidate } from "../../../catalog/preparation/preparation-document.js";
-import type { ImportCandidate } from "../../../catalog/legacy-export/contracts.js";
+import { candidateValidationIssue, isCandidate } from "../../../preparation/preparation-document.js";
+import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);

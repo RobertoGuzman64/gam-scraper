@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseIndividualCatalogProviders } from "../../options/individual-catalog.js";
-import { prepareIndividualCatalogs } from "../../../pipeline/preparation/individual-prepare.js";
+import { prepareIndividualCatalogs } from "../../../preparation/workflow/individual-prepare.js";
 import { checkHistoricalReferenceIntegrity } from "../../../infrastructure/filesystem/legacy-export/historical-reference-integrity.js";
 import { formatHeader, printReportLine, printStatus } from "../../reporting/terminal.js";
 import { printCommandError } from "../../reporting/errors.js";

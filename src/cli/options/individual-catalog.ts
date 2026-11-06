@@ -1,5 +1,5 @@
 import { LEGACY_CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
-import type { IndividualCatalogProvider } from "../../pipeline/preparation/individual-context.js";
+import type { IndividualCatalogProvider } from "../../preparation/workflow/individual-context.js";
 
 export const parseIndividualCatalogProviders = (args: readonly string[]): {
   readonly providerIds: readonly IndividualCatalogProvider[];

@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import test from "node:test";
 import { selectPublishableCatalog } from "../../editorial/select-publishable.js";
-import { parseOfflinePreparation } from "../../preparation/offline-document.js";
+import { parseOfflinePreparation } from "../../../preparation/offline-document.js";
 import { buildProductIdentity } from "../../identity.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -14,8 +14,8 @@ import { persistAppliedIntervention } from "../../../infrastructure/filesystem/i
 import { readAppliedIntervention } from "../../../infrastructure/filesystem/interventions/intervention-derived.js";
 import { readInterventionSource } from "../../../infrastructure/filesystem/interventions/intervention-source.js";
 import { readOfflinePreparation, offlinePreparationManifest, offlinePreparationManifestPath } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
-import { prepareSavedCatalog } from "../../../pipeline/preparation/prepare.js";
-import { validateOfflinePreparation } from "../../../pipeline/validation/offline.js";
+import { prepareSavedCatalog } from "../../../preparation/workflow/prepare.js";
+import { validateOfflinePreparation } from "../../../preparation/workflow/validation/offline.js";
 import type { ManualInterventionProposal } from "../contracts.js";
 import { simulateIntervention } from "../simulation.js";
 

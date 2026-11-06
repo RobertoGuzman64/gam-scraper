@@ -1,7 +1,7 @@
 import { createIndividualWorkspaceFixture } from "./individual-workspace-fixture.js";
-import { preflightIndividualAccreditations } from "../../pipeline/publication/individual-accreditation.js";
-import { startIndividualEditorial, decideIndividualEditorial, approveIndividualEditorial } from "../../pipeline/publication/individual-editorial.js";
-import { publishIndividualCatalogs } from "../../pipeline/publication/individual-finish.js";
+import { preflightIndividualAccreditations } from "../../publication/individual-accreditation.js";
+import { startIndividualEditorial, decideIndividualEditorial, approveIndividualEditorial } from "../../publication/individual-editorial.js";
+import { publishIndividualCatalogs } from "../../publication/individual-finish.js";
 
 export const finishProviders = ["gam", "gomariz", "mercaeleva"] as const;
 const reason = "Contraste editorial realizado con evidencia de origen";

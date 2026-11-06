@@ -1,4 +1,4 @@
-import type { ImportCandidate } from "../../../legacy-export/contracts.js";
+import type { ImportCandidate } from "../../../../commercial/legacy-export/contracts.js";
 
 const normalize = (value: string): string => value.trim().toLocaleUpperCase("es");
 const compact = (value: string): string => normalize(value).replace(/[^A-Z0-9]/g, "");

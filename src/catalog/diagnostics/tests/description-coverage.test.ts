@@ -3,7 +3,7 @@ import test from "node:test";
 import { analyzeDescriptionCoverage } from "../description-coverage.js";
 import type { DescriptionCoverageInput } from "../description-coverage.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import type { ImportCandidate } from "../../legacy-export/contracts.js";
+import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 
 const source = (reference: string): ProductRecord => ({
   providerId: "gomariz", categoryKey: "venta", categoryName: "Maquinaria de ocasión",

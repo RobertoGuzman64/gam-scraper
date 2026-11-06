@@ -1,6 +1,6 @@
 import type * as cheerio from "cheerio";
 import { collectProductImages } from "../../parsing/image-gallery.js";
-import { excludeGamRelatedProductImages } from "../../../catalog/normalization/providers/gam/gallery.js";
+import { excludeGamRelatedProductImages } from "../../../catalog/normalization/gam/gallery.js";
 import { unrelatedDetails } from "./selectors.js";
 
 type ValueMap = Record<string, unknown>;

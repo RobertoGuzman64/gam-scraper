@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { prepareSourceProduct } from "../../preparation/prepare-product.js";
+import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 import type { DescriptionCoverageInput } from "../description-coverage.js";
 import { analyzeSpecificationCoverage } from "../specification-coverage.js";
 

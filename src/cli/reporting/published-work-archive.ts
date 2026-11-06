@@ -4,8 +4,8 @@ import { copyFile, lstat, readFile, rm, stat, writeFile } from "node:fs/promises
 import { join, resolve } from "node:path";
 import { sha256 } from "../../catalog/editorial/campaign-accreditation.js";
 import { createZipArchive, readZipArchive } from "../../infrastructure/archive/zip.js";
-import { collectPublishedWork } from "../../pipeline/publication/individual-work-report.js";
-import type { IndividualFinishResult } from "../../pipeline/publication/individual-finish.js";
+import { collectPublishedWork } from "../../publication/individual-work-report.js";
+import type { IndividualFinishResult } from "../../publication/individual-finish.js";
 import type { PublishedWorkReport } from "../../catalog/diagnostics/published-work.js";
 import { renderPublishedWorkMarkdown } from "./published-work.js";
 

@@ -1,4 +1,4 @@
-import type { PreparedProduct } from "../../catalog/preparation/contracts.js";
+import type { PreparedProduct } from "../../preparation/contracts.js";
 
 const MAX_EXAMPLES = 3;
 

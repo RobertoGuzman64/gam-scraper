@@ -6,7 +6,7 @@ import { join, resolve } from "node:path";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../../contracts/scraping.js";
-import { writeOutputs } from "../../../../pipeline/publication/publish.js";
+import { writeOutputs } from "../../../../scraping/output/publish.js";
 import { readCanonicalCatalog } from "../canonical-catalog.js";
 import { readPortableOriginal } from "../portable-original.js";
 

@@ -1,7 +1,7 @@
 import type { ProductRecord, SpecValue, SpecsMap } from "../../contracts/catalog.js";
-import { reconcileGamVerifiedZeroSerial } from "../preparation/evidence/providers/gam/identity/musoshi-serial-evidence.js";
-import { recoverGamMislabelledBatterySpec } from "../preparation/evidence/providers/gam/energy-and-powertrain/source-battery-label-evidence.js";
-import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "../preparation/evidence/providers/mercaeleva/verified-platform-source-specs.js";
+import { reconcileGamVerifiedZeroSerial } from "../../preparation/gam/identity/evidence/musoshi-serial-evidence.js";
+import { recoverGamMislabelledBatterySpec } from "../../preparation/gam/technical/evidence/energy-and-powertrain/source-battery-label-evidence.js";
+import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "../../preparation/mercaeleva/technical/evidence/verified-platform-source-specs.js";
 import { normalizedSpecKey, specHasValue } from "./content-gaps-source.js";
 import type { DescriptionCoverageInput } from "./description-coverage.js";
 

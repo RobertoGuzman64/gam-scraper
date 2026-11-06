@@ -4,7 +4,7 @@ import { analyzeSpecificationCoverage, classifySpecificationWork } from "../spec
 import type { DescriptionCoverageInput } from "../description-coverage.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { SpecValue } from "../../../contracts/catalog.js";
-import type { ImportCandidate } from "../../legacy-export/contracts.js";
+import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 
 const input = (reference: string, sourceSpecs: Readonly<Record<string, SpecValue>>,
   preparedSpecs: Readonly<Record<string, SpecValue>>, publishedSpecs: Readonly<Record<string, SpecValue>>,

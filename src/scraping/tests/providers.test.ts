@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { resolveCliSelection } from "../../cli/options/scrape.js";
-import { writeOutputs } from "../../pipeline/publication/publish.js";
+import { writeOutputs } from "../output/publish.js";
 import type { ScraperProvider } from "../provider.js";
 import { buildGomarizPageUrl, isGomarizProductUrl } from "../providers/gomariz/parsers.js";
 import { buildMercaelevaPageUrl, extractMercaelevaReference, isMercaelevaProductUrl } from "../providers/mercaeleva/parsers.js";

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { describeBatch } from "../../../pipeline/batch/run.js";
+import { describeBatch } from "../../../scraping/batch/run.js";
 import { parseBatchOptions } from "../batch.js";
 import { listProviders } from "../../../scraping/registry.js";
 

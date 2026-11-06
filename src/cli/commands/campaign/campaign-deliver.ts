@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { findDesktopDirectory } from "../../../infrastructure/filesystem/desktop-directory.js";
-import { deliverActiveCampaign } from "../../../pipeline/campaign/delivery/execute.js";
+import { deliverActiveCampaign } from "../../../campaign/delivery/execute.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { formatHeader, printStatus, printReportLine } from "../../reporting/terminal.js";
 

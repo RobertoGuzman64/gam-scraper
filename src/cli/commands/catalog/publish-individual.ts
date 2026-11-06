@@ -6,8 +6,8 @@ import { formatHeader, printReportLine, printStatus } from "../../reporting/term
 import { LiveStatus } from "../../reporting/live-status.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { findDesktopDirectory } from "../../../infrastructure/filesystem/desktop-directory.js";
-import { publishIndividualCatalogs } from "../../../pipeline/publication/individual-finish.js";
-import type { IndividualFinishResult } from "../../../pipeline/publication/individual-finish.js";
+import { publishIndividualCatalogs } from "../../../publication/individual-finish.js";
+import type { IndividualFinishResult } from "../../../publication/individual-finish.js";
 import { runCatalogContentGaps } from "./catalog-content-gaps.js";
 import { deliverPublishedWorkReport } from "../../reporting/published-work-archive.js";
 import { formatPublishedWorkTerminal } from "../../reporting/published-work.js";

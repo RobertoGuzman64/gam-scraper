@@ -21,8 +21,8 @@ test("la concurrencia conserva el límite superior para equipos grandes", () => 
 
 test("la planificación mantiene el límite global y separa las suites intensivas", () => {
   const heavy = [
-    "pipeline/publication/tests/individual-finish.test.js",
-    "pipeline/publication/tests/individual-accreditation-session.test.js"
+    "publication/tests/individual-finish.test.js",
+    "publication/tests/individual-accreditation-session.test.js"
   ];
   const files = [...heavy.map((file) => `dist/${file}`), ...Array.from({ length: 24 }, (_, index) => `dist/test-${index}.test.js`)];
   const lanes = planTestLanes(files, 12, null, heavy);
@@ -46,21 +46,21 @@ test("las medidas reales determinan la cola y descartan prioridades históricas 
 });
 
 test("los shards críticos nuevos se planifican antes que suites históricas ya medidas", () => {
-  const files = ["dist/ligera.test.js", "dist/pipeline/publication/tests/individual-finish-cycle.test.js",
-    "dist/pipeline/publication/tests/individual-finish.test.js",
-    "dist/pipeline/publication/tests/individual-finish-editorial.test.js"];
+  const files = ["dist/ligera.test.js", "dist/publication/tests/individual-finish-cycle.test.js",
+    "dist/publication/tests/individual-finish.test.js",
+    "dist/publication/tests/individual-finish-editorial.test.js"];
   const measured = new Map([["dist/ligera.test.js", 1000],
-    ["dist/pipeline/publication/tests/individual-finish.test.js", 107940]]);
+    ["dist/publication/tests/individual-finish.test.js", 107940]]);
   const priority = new Map([
-    ["pipeline/publication/tests/individual-finish.test.js", 0],
-    ["pipeline/publication/tests/individual-finish-cycle.test.js", 1],
-    ["pipeline/publication/tests/individual-finish-editorial.test.js", 2]
+    ["publication/tests/individual-finish.test.js", 0],
+    ["publication/tests/individual-finish-cycle.test.js", 1],
+    ["publication/tests/individual-finish-editorial.test.js", 2]
   ]);
   orderTestsByDuration(files, measured, priority);
   assert.deepEqual(files, [
-    "dist/pipeline/publication/tests/individual-finish-cycle.test.js",
-    "dist/pipeline/publication/tests/individual-finish-editorial.test.js",
-    "dist/pipeline/publication/tests/individual-finish.test.js",
+    "dist/publication/tests/individual-finish-cycle.test.js",
+    "dist/publication/tests/individual-finish-editorial.test.js",
+    "dist/publication/tests/individual-finish.test.js",
     "dist/ligera.test.js"
   ]);
 });

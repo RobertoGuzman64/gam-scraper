@@ -1,5 +1,5 @@
 import { buildProductIdentity } from "../identity.js";
-import type { ImportCandidate } from "../legacy-export/contracts.js";
+import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 import type { GapInput } from "./content-gaps-types.js";
 
 export const EDITORIAL_CRITERIA = {

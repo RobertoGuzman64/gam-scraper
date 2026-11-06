@@ -1,8 +1,8 @@
 import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { prepareSavedCatalogWithRetention } from "../../../pipeline/preparation/retained-prepare.js";
-import { prepareManainRecord } from "../../../pipeline/preparation/manain-record.js";
+import { prepareSavedCatalogWithRetention } from "../../../preparation/workflow/retained-prepare.js";
+import { prepareManainRecord } from "../../../preparation/workflow/manain-record.js";
 import { parseManainRecordOptions, parsePrepareOptions, prepareHelp } from "../../options/prepare.js";
 import { formatPriceAvailability } from "../../reporting/review-diagnostics.js";
 import { formatImportDiagnostics } from "../../reporting/import-diagnostics.js";

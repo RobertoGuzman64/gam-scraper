@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import type { ImportCatalog } from "../../../catalog/legacy-export/contracts.js";
+import type { ImportCatalog } from "../../../commercial/legacy-export/contracts.js";
 
 type Category = ImportCatalog["categories"][number];
 type Attribute = ImportCatalog["attributes"][number];

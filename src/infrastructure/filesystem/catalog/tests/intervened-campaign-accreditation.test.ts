@@ -10,10 +10,10 @@ import { CAMPAIGN_PROVIDERS } from "../../../../contracts/campaign-providers.js"
 import { persistAppliedIntervention } from "../../interventions/intervention-application.js";
 import { writeCanonicalCatalog } from "../canonical-catalog.js";
 import { readInterventionSource } from "../../interventions/intervention-source.js";
-import { readCampaignAccreditationSources } from "../../../../pipeline/campaign/accreditation-sources.js";
+import { readCampaignAccreditationSources } from "../../../../campaign/accreditation-sources.js";
 import { readOfflinePreparation } from "../../preparation/offline-preparation.js";
 import { simulateIntervention } from "../../../../catalog/interventions/simulation.js";
-import { prepareSavedCatalog } from "../../../../pipeline/preparation/prepare.js";
+import { prepareSavedCatalog } from "../../../../preparation/workflow/prepare.js";
 
 const providers = CAMPAIGN_PROVIDERS;
 const makeProduct = (providerId: string): ProductRecord => ({

@@ -3,11 +3,11 @@ import { fileURLToPath } from "node:url";
 import { parseIndividualCatalogProviders } from "../../options/individual-catalog.js";
 import { formatHeader, printReportLine, printStatus } from "../../reporting/terminal.js";
 import { printCommandError } from "../../reporting/errors.js";
-import { preflightIndividualAccreditations } from "../../../pipeline/publication/individual-accreditation.js";
+import { preflightIndividualAccreditations } from "../../../publication/individual-accreditation.js";
 import {
   ensureAutomaticIndividualAccreditations, planAutomaticIndividualAccreditation
-} from "../../../pipeline/publication/automatic-individual-accreditation.js";
-import { readIndividualSelection, selectIndividualPublishable } from "../../../pipeline/publication/individual-selection.js";
+} from "../../../publication/automatic-individual-accreditation.js";
+import { readIndividualSelection, selectIndividualPublishable } from "../../../publication/individual-selection.js";
 
 export const accreditIndividualHelp = `Uso opcional:
   npm run catalogo:acreditar

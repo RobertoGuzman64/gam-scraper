@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { abandonFailedCampaign, inspectRecoverableCampaign, recoverCompletedCampaign, resumePendingCampaignRemoval } from "../../../pipeline/campaign/retention/recovery.js";
-import { withCampaignAdmissionLock } from "../../../pipeline/campaign/retention/admission.js";
+import { abandonFailedCampaign, inspectRecoverableCampaign, recoverCompletedCampaign, resumePendingCampaignRemoval } from "../../../campaign/retention/recovery.js";
+import { withCampaignAdmissionLock } from "../../../campaign/retention/admission.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { formatHeader, printStatus, printReportLine } from "../../reporting/terminal.js";
 

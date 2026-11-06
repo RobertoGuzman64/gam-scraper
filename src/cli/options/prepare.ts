@@ -1,6 +1,6 @@
 import { basename, dirname, join, resolve } from "node:path";
-import type { PrepareOptions } from "../../pipeline/preparation/prepare.js";
-import type { ManainRecordOptions } from "../../pipeline/preparation/manain-record.js";
+import type { PrepareOptions } from "../../preparation/workflow/prepare.js";
+import type { ManainRecordOptions } from "../../preparation/workflow/manain-record.js";
 
 export const prepareHelp = `Uso:
   npm run preparar -- gam --source storage/scraped/gam/scrape-gam-catalog.json

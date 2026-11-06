@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 import { parseArgs, resolveCliSelection, scrapeHelp } from "../../options/scrape.js";
 import { ScrapeConsole } from "../../reporting/scrape-progress.js";
-import { runScrape } from "../../../pipeline/extraction/run.js";
+import { runScrape } from "../../../scraping/workflow/run.js";
 
 export const runSingleScrape = async (args: readonly string[]): Promise<void> => {
   if (args.includes("--help") || args.includes("-h")) {

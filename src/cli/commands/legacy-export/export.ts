@@ -7,7 +7,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { exportHelp, parseExportOptions } from "../../options/export.js";
 import { createProductsXlsx } from "../../../infrastructure/spreadsheet/xlsx.js";
-import { prepareCreateManyExport, prepareExport } from "../../../pipeline/legacy-export/prepare-export.js";
+import { prepareCreateManyExport, prepareExport } from "../../../commercial/export/prepare-export.js";
 
 export const runExport = async (args: readonly string[]): Promise<void> => {
   const options = parseExportOptions(args);

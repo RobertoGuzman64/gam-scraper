@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { selectActiveCampaign } from "../../../pipeline/publication/active-campaign.js";
-import { selectActivePublication } from "../../../pipeline/publication/active-publication.js";
+import { selectActiveCampaign } from "../../../publication/active-campaign.js";
+import { selectActivePublication } from "../../../publication/active-publication.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { printReportLine } from "../../reporting/terminal.js";
 

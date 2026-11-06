@@ -1,7 +1,7 @@
 import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { readIndividualSelection } from "../../../pipeline/publication/individual-selection.js";
+import { readIndividualSelection } from "../../../publication/individual-selection.js";
 import { printCommandError } from "../../reporting/errors.js";
 
 const help = `Uso:

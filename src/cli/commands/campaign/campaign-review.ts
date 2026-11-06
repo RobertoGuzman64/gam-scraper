@@ -1,7 +1,7 @@
 import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { reviewActiveCampaign } from "../../../pipeline/campaign/review.js";
+import { reviewActiveCampaign } from "../../../campaign/review.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { printCampaignReview } from "../../reporting/campaign-review.js";
 

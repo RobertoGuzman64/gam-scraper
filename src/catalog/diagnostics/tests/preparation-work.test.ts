@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { buildProductIdentity } from "../../identity.js";
-import { prepareImportBatch } from "../../preparation/batch-identity.js";
-import type { OfflinePreparation } from "../../preparation/offline-document.js";
+import { prepareImportBatch } from "../../../preparation/batch-identity.js";
+import type { OfflinePreparation } from "../../../preparation/offline-document.js";
 import { measurePreparationWork } from "../preparation-work.js";
 
 const record = (reference: string): ProductRecord => ({

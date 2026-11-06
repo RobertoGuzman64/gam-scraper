@@ -1,8 +1,8 @@
 import { gamNewForkliftIdentityIssues } from "./providers/gam/new-forklift-identity.js";
 import { curateGamGallery } from "./providers/gam/verified-gallery.js";
 import { curateGamDescription } from "./providers/gam/verified-description.js";
-import type { ImportCandidate } from "../legacy-export/contracts.js";
-import type { OfflinePreparation, PreparationSource } from "../preparation/offline-document.js";
+import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
+import type { OfflinePreparation, PreparationSource } from "../../preparation/offline-document.js";
 import { cohorts } from "./cohorts.js";
 import { exclusions, identityHolds } from "./decisions.js";
 import type { EditorialExclusion, EditorialHold } from "./decisions.js";

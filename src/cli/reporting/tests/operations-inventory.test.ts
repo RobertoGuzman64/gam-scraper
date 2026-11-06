@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { mock, test } from "node:test";
-import type { CampaignOperationsStatus } from "../../../pipeline/campaign/operations-status.js";
-import type { InventoryItem, OperationsInventory, ProviderInventory } from "../../../pipeline/campaign/operations-inventory.js";
+import type { CampaignOperationsStatus } from "../../../campaign/operations-status.js";
+import type { InventoryItem, OperationsInventory, ProviderInventory } from "../../../campaign/operations-inventory.js";
 import { printOperationsInventory } from "../operations-inventory.js";
 
 const valid: InventoryItem = { state: "correcto", detail: "Verificado" };

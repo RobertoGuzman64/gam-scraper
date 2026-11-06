@@ -1,8 +1,8 @@
 import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { inspectCampaignOperations } from "../../../pipeline/campaign/operations-status.js";
-import { inspectOperationsInventory } from "../../../pipeline/campaign/operations-inventory.js";
+import { inspectCampaignOperations } from "../../../campaign/operations-status.js";
+import { inspectOperationsInventory } from "../../../campaign/operations-inventory.js";
 import { printOperationsInventory } from "../../reporting/operations-inventory.js";
 import { printCommandError } from "../../reporting/errors.js";
 

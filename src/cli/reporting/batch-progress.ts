@@ -1,6 +1,6 @@
 import type { ScrapeEvent } from "../../contracts/progress.js";
-import type { ProviderRun } from "../../pipeline/batch/report.js";
-import type { BatchObserver } from "../../pipeline/batch/run.js";
+import type { ProviderRun } from "../../scraping/batch/report.js";
+import type { BatchObserver } from "../../scraping/batch/run.js";
 import { formatCategoryProgress } from "./scrape-progress.js";
 import { LiveStatus, formatDuration } from "./live-status.js";
 import { formatProgressBar, formatStatus, printStatus, printReportLine } from "./terminal.js";

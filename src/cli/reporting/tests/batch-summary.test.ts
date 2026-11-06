@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { formatBatchSummary } from "../batch-summary.js";
-import type { BatchReport, ProviderRun } from "../../../pipeline/batch/report.js";
+import type { BatchReport, ProviderRun } from "../../../scraping/batch/report.js";
 
 const provider = (providerId: string, status: ProviderRun["status"]): ProviderRun => ({
   providerId, status, startedAt: "2026-10-20T10:00:00.000Z", endedAt: "2026-10-20T10:00:30.000Z",

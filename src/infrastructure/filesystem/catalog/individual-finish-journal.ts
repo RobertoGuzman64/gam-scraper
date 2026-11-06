@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { lstat, mkdir, open, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import type { IndividualCatalogProvider } from "../../../pipeline/preparation/individual-context.js";
+import type { IndividualCatalogProvider } from "../../../preparation/workflow/individual-context.js";
 
 export type IndividualFinishTarget = {
   readonly providerId: IndividualCatalogProvider;

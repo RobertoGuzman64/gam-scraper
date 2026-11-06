@@ -81,8 +81,8 @@ test("el runner distribuye las pruebas intensivas sin perder resultados ni super
   withRunner((root) => {
     const heavy = ["individual-finish", "individual-accreditation-session"];
     for (const name of heavy) {
-      const source = join(root, "src", "pipeline", "publication", "tests", `${name}.test.ts`);
-      const compiled = join(root, "dist", "pipeline", "publication", "tests", `${name}.test.js`);
+      const source = join(root, "src", "publication", "tests", `${name}.test.ts`);
+      const compiled = join(root, "dist", "publication", "tests", `${name}.test.js`);
       mkdirSync(dirname(source), { recursive: true });
       mkdirSync(dirname(compiled), { recursive: true });
       writeFileSync(source, "export {};\n");
@@ -112,7 +112,7 @@ test("el runner distribuye las pruebas intensivas sin perder resultados ni super
     assert.equal(report.distribucion.reduce((total, lane) => total + lane.concurrencia, 0), 12);
     assert.equal(report.distribucion.reduce((total, lane) => total + lane.archivos, 0), 22);
     rmSync(join(root, "dist", ".test-runner-durations.json"), { force: true });
-    writeFileSync(join(root, "dist", "pipeline", "publication", "tests", "individual-finish.test.js"),
+    writeFileSync(join(root, "dist", "publication", "tests", "individual-finish.test.js"),
       'import test from "node:test"; test("fallo de cola intensiva", () => { throw new Error("fallo controlado"); });\n');
     const failed = spawnRunner(root, ["--concurrencia=12", "--medicion", reportFile]);
     assert.equal(failed.status, 1, `${failed.stdout}${failed.stderr}`);
@@ -165,9 +165,9 @@ test("el runner usa la concurrencia adaptativa predeterminada", () => {
 
 test("el runner adelanta las pruebas costosas y no confunde recepción con finalización", () => {
   withRunner((root) => {
-    const relativeFile = join("pipeline", "publication", "tests", "individual-editorial.test.js");
+    const relativeFile = join("publication", "tests", "individual-editorial.test.js");
     const compiledFile = join(root, "dist", relativeFile);
-    const sourceFile = join(root, "src", "pipeline", "publication", "tests", "individual-editorial.test.ts");
+    const sourceFile = join(root, "src", "publication", "tests", "individual-editorial.test.ts");
     mkdirSync(dirname(compiledFile), { recursive: true });
     mkdirSync(dirname(sourceFile), { recursive: true });
     writeFileSync(sourceFile, "export {};\n");
@@ -255,8 +255,8 @@ test("perfiles dañados no impiden los tests ni se sobrescribe un perfil tras un
 test("sin perfil previo adelanta FINISH y acreditación antes que las suites ligeras", () => {
   withRunner((root) => {
     const files = [
-      "pipeline/publication/tests/individual-finish.test",
-      "pipeline/publication/tests/individual-accreditation-session.test"
+      "publication/tests/individual-finish.test",
+      "publication/tests/individual-accreditation-session.test"
     ];
     for (const path of files) {
       const source = join(root, "src", `${path}.ts`);
@@ -290,8 +290,8 @@ test("sin perfil previo adelanta FINISH y acreditación antes que las suites lig
 
 const addCacheableSuites = (root: string): void => {
   for (const name of ["individual-finish", "individual-accreditation-session"]) {
-    const source = join(root, "src", "pipeline", "publication", "tests", `${name}.test.ts`);
-    const compiled = join(root, "dist", "pipeline", "publication", "tests", `${name}.test.js`);
+    const source = join(root, "src", "publication", "tests", `${name}.test.ts`);
+    const compiled = join(root, "dist", "publication", "tests", `${name}.test.js`);
     mkdirSync(dirname(source), { recursive: true });
     mkdirSync(dirname(compiled), { recursive: true });
     writeFileSync(source, 'export {};\n');
@@ -385,8 +385,8 @@ test("caché corrupta y resultados fallidos nunca acreditan tests", () => {
 
 const addAuditedCatalogSuites = (root: string): void => {
   for (const name of ["alpha", "beta"]) {
-    const sourceDir = join(root, "src", "catalog", "preparation", "tests", "cache");
-    const compiledDir = join(root, "dist", "catalog", "preparation", "tests", "cache");
+    const sourceDir = join(root, "src", "preparation", "tests", "cache");
+    const compiledDir = join(root, "dist", "preparation", "tests", "cache");
     mkdirSync(sourceDir, { recursive: true });
     mkdirSync(compiledDir, { recursive: true });
     writeFileSync(join(sourceDir, `${name}-helper.ts`), "export const value = 1;\n");
@@ -415,15 +415,15 @@ test("el cambio de una dependencia invalida solo su suite, no las demás", () =>
     addAuditedCatalogSuites(root);
     assert.equal(spawnRunner(root, []).status, 0);
     assert.equal(spawnRunner(root, []).status, 0);
-    const source = join(root, "src", "catalog", "preparation", "tests", "cache", "alpha-helper.ts");
-    const compiled = join(root, "dist", "catalog", "preparation", "tests", "cache", "alpha-helper.js");
+    const source = join(root, "src", "preparation", "tests", "cache", "alpha-helper.ts");
+    const compiled = join(root, "dist", "preparation", "tests", "cache", "alpha-helper.js");
     writeFileSync(source, "export const value =  1;\n");
     writeFileSync(compiled, "export const value =  1;\n");
     const changed = spawnRunner(root, []);
     assert.equal(changed.status, 0, `${changed.stdout}${changed.stderr}`);
     assert.match(changed.stdout, /CACHÉ \| 1 suites y 1 tests reutilizados \| 3 suites ejecutadas/);
     assert.equal(spawnRunner(root, []).status, 0);
-    const unrelated = join(root, "src", "catalog", "unrelated.ts");
+    const unrelated = join(root, "src", "unrelated.ts");
     writeFileSync(unrelated, "export const unaffected = true;\n");
     const independent = spawnRunner(root, []);
     assert.equal(independent.status, 0, `${independent.stdout}${independent.stderr}`);
@@ -434,8 +434,8 @@ test("el cambio de una dependencia invalida solo su suite, no las demás", () =>
 test("los datos externos solo invalidan suites que dependen de ellos", () => {
   withRunner((root) => {
     addAuditedCatalogSuites(root);
-    const sourceDir = join(root, "src", "catalog", "preparation", "tests", "cache");
-    const compiledDir = join(root, "dist", "catalog", "preparation", "tests", "cache");
+    const sourceDir = join(root, "src", "preparation", "tests", "cache");
+    const compiledDir = join(root, "dist", "preparation", "tests", "cache");
     writeFileSync(join(sourceDir, "unsafe.test.ts"),
       'import { writeFileSync } from "node:fs";\nexport { writeFileSync };\n');
     writeFileSync(join(compiledDir, "unsafe.test.js"),
@@ -470,8 +470,8 @@ test("los datos externos solo invalidan suites que dependen de ellos", () => {
 test("importaciones dinámicas y módulos externos quedan fuera de la caché", () => {
   withRunner((root) => {
     addAuditedCatalogSuites(root);
-    const sourceDir = join(root, "src", "catalog", "preparation", "tests", "cache");
-    const compiledDir = join(root, "dist", "catalog", "preparation", "tests", "cache");
+    const sourceDir = join(root, "src", "preparation", "tests", "cache");
+    const compiledDir = join(root, "dist", "preparation", "tests", "cache");
     writeFileSync(join(sourceDir, "dynamic.test.ts"), "export {};\n");
     writeFileSync(join(compiledDir, "dynamic.test.js"),
       'import test from "node:test"; test("dynamic", async () => { await import("./alpha-helper.js"); });\n');

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
-import type { InterventionProvenance } from "../preparation/offline-document.js";
-import type { OfflinePreparation } from "../preparation/offline-document.js";
+import type { InterventionProvenance } from "../../preparation/offline-document.js";
+import type { OfflinePreparation } from "../../preparation/offline-document.js";
 import { gamNewForkliftIdentityIssues } from "./providers/gam/new-forklift-identity.js";
 import type { PublishableSelection } from "./select-publishable.js";
 

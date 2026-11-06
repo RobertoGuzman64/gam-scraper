@@ -1,4 +1,4 @@
-import type { CampaignOperationsStatus } from "../../pipeline/campaign/operations-status.js";
+import type { CampaignOperationsStatus } from "../../campaign/operations-status.js";
 import { formatHeader, formatStatus, printStatus, printReportLine } from "./terminal.js";
 
 export const printCampaignOperations = (status: CampaignOperationsStatus): void => {
