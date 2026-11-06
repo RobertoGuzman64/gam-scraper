@@ -12,7 +12,7 @@ El **catálogo canónico** conserva todas las máquinas identificadas, incluidas
 
 **Dirección permanente de calidad:** si aparecen reviews, el trabajo de desarrollo consiste en **corregir el código productivo reutilizable que origina los problemas**, no terminar en informes, comandos o revisión manual ficha a ficha. La meta para declarar el catálogo completo de un proveedor `ready` es **0 reviews verificadas sobre todas sus fichas**, conservando los originales y sin inventar valores ni relajar validaciones. Los diagnósticos son herramientas internas del desarrollador; las contradicciones de origen realmente irresolubles permanecen identificadas y requieren una decisión editorial distinta. Ver [Objetivos](docs/SCRAPER_OBJECTIVES.md) y [Validación](docs/VALIDATION.md).
 
-Este repositorio no ofrece una API HTTP, no realiza altas en el backend y no automatiza importaciones. Los JSON canónicos y las selecciones acreditadas **no son solicitudes de creación de productos del backend**: la asignación de categorías e IDs comerciales corresponde a la integración receptora. El exportador Excel/JSON comercial que permanece en el código es **compatibilidad heredada**, no un paso del flujo actual; las nuevas preparaciones canónicas se rechazan en ese exportador.
+Este repositorio no ofrece una API HTTP, no realiza altas en el backend y no automatiza importaciones. Los JSON canónicos y las selecciones acreditadas **no son solicitudes de creación de productos del backend**. Existe, por separado, una **proyección comercial propia** que asigna categorías y atributos conforme a los snapshots locales y entrega JSON comerciales auditables. La persistencia, permisos e importación siguen en el backend. `npm run exportar` (Excel/JSON histórico) es compatibilidad heredada, mientras `npm run exportar:comercial` es el circuito comercial actual. Ver [Comercialización](docs/COMERCIALIZACION.md).
 
 Para los criterios funcionales, consultar [Objetivos](docs/SCRAPER_OBJECTIVES.md).
 
@@ -54,10 +54,12 @@ npm run ayuda
 
 La estructura de `src/` agrupa responsabilidades, no fases históricas del desarrollo:
 
-- `src/scraping/`: extracción, parsing y adaptadores por proveedor.
-- `src/catalog/`: identidad, normalización, preparación técnica, evidencias, mapeos, cobertura, editorial, intervenciones y exportación heredada.
-- `src/pipeline/`: orquestación de extracciones, lotes, campañas, preparaciones, publicaciones y validaciones.
-- `src/infrastructure/`: filesystem, HTTP, navegador, bloqueo local y salida heredada.
+- `src/catalog/`: identidad, calidad, normalización, cobertura, diagnósticos, editorial e intervenciones.
+- `src/preparation/`: preparación técnica, evidencias, reconciliaciones y mapeadores por proveedor, con orquestación offline en `workflow/`.
+- `src/scraping/`: extracción, lotes, salida CSV/JSON y ciclo de publicación de origen; `workflow/`, `batch/` y `output/`.
+- `src/campaign/` y `src/publication/`: campaña global, acreditación y retención; publicaciones individuales y FINISH.
+- `src/commercial/`: proyección y exportación comercial actual, auditorías y compatibilidad de exportación legada.
+- `src/infrastructure/`: filesystem, HTTP, navegador, locks, almacenamiento, referencias y XLSX.
 - `src/cli/`: comandos y presentación; `src/contracts/` y `src/shared/`: contratos y utilidades transversales.
 - `src/testing/`: fixtures y builders compartidos; los tests de cada dominio permanecen junto a su módulo, en carpetas `tests/` separadas por proveedor o responsabilidad.
 - `scripts/`: entradas de ejecución y compilación en la raíz; `scripts/inspection/`, `scripts/maintenance/` y `scripts/operations/` para las herramientas especializadas.
@@ -65,6 +67,8 @@ La estructura de `src/` agrupa responsabilidades, no fases históricas del desar
 Los nombres **internos** de archivos, directorios y módulos técnicos se mantienen en inglés; los comandos npm y la salida operativa conservan sus nombres en español. No se traducen IDs de proveedores, rutas persistidas, campos de contratos ni formatos acreditados por una cuestión estética. Ver [Arquitectura](docs/ARCHITECTURE.md).
 
 `npm test` compila antes de ejecutar `scripts/run-tests.mjs`. El runner descubre recursivamente `src/**/*.test.ts`, ejecuta sus equivalentes compilados en `dist/` e incluye además `scripts/**/*.test.mjs`. No se debe deducir la cantidad de tests por la cantidad de carpetas ni fijar un número constante de archivos. Para diagnosticar la ejecución se puede ejecutar `node scripts/run-tests.mjs --concurrencia 2` después del build o generar una medición JSON con `--medicion <ruta.json>`; el archivo de medición es un artefacto temporal, no un dato acreditado.
+
+**Protección de los módulos de salida:** `src/scraping/output/publish.ts` y `csv-serializer.ts` deben mantenerse versionados. `.gitignore` excluye directorios genéricos `output/`, pero contiene la excepción `!src/scraping/output/`; no eliminarla al limpiar archivos generados. Ver [Mantenimiento](docs/MAINTENANCE.md).
 
 **Precaución con los renombrados:** la huella `rulesSha256` de la preparación incluye nombres relativos y contenidos de módulos JavaScript compilados. Cambiar rutas puede invalidar la compatibilidad de una preparación previa sin modificar la lógica. No modificar huellas, documentos de aprobación ni JSON publicados para forzar una coincidencia. Ver [Validación](docs/VALIDATION.md) y [Reglas de datos](docs/SCRAPER_DATA_RULES.md).
 
@@ -237,7 +241,7 @@ Las operaciones GAM con rutas preconfiguradas son **herramientas de compatibilid
 - `storage/interventions/<id-lote>/scripts/`: solo compatibilidad con scripts antiguos; se protegen si aún existen.
 - `data/reference/`: almacén legado opcional de inventario con manifiesto y diferencias, incluida lectura compatible de referencias históricas de tres proveedores; no se actualiza como paso ordinario de campaña.
 - **Escritorio del usuario:** `equipzilla-AAAA-MM-DD-<runId>.zip` con los cuatro JSON publicables, sin artefactos internos; su ausencia posterior no invalida por sí sola la acreditación local.
-- `data/category/` y `data/import/`: snapshots de compatibilidad para mapeos comerciales heredados; **no son dependencias de la preparación canónica actual**.
+- `data/category/` y `data/import/`: snapshots usados por la proyección comercial actual y por compatibilidad histórica; **no son dependencias de la preparación canónica técnica**.
 
 Los nombres individuales de catálogo pueden variar por proveedor: `run.json`, la procedencia y los manifests determinan qué datos pertenecen a una campaña. `storage/` está excluido de Git y conserva los datos operativos sujetos a la retención segura de campañas; no debe vaciarse manualmente. `catalogs/` es la copia portátil de los datos **ya consolidados**, no una autorización para editar manualmente originales ni selecciones. Los originales completos individuales y las instantáneas por `runId` tienen ciclos de vida distintos. No borrar originales para corregir decisiones editoriales.
 
@@ -254,7 +258,11 @@ Portales → adaptadores → motor de extracción → ProductRecord
                                                  ↓
                           selección editorial de publicables
                                                  ↓
-                salida JSON para entregar (sin importar al backend)
+                salida JSON técnico acreditado (sin importar al backend)
+                                                 ↓
+                     proyección comercial local separada
+                                                 ↓
+                  JSON comerciales + manifest verificable
 ```
 
 El contrato de cuatro proveedores describe el software, **no acredita por sí solo la cobertura externa de Manain**; las páginas inaccesibles o con errores se investigan o se descartan con evidencia, sin declarar completitud ficticia. La validación local confirma integridad y coherencia, **no** que un portal haya mostrado todas sus máquinas. Las ausencias y contradicciones requieren contrastar el origen antes de aprobarlas.
@@ -272,5 +280,7 @@ El contrato de cuatro proveedores describe el software, **no acredita por sí so
 - [Acreditación editorial de campañas](docs/CAMPAIGN_ACCREDITATION.md): procedimiento de aprobación y entrega de JSON.
 - [Validación](docs/VALIDATION.md): verificaciones, códigos de salida y evidencias.
 - [Operación y despliegue](docs/AUTOMATED_DEPLOYMENT.md): ejecución manual o programada y seguridad operacional.
-- [Integración con Equipzilla](docs/EQUIPZILLA_INTEGRATION.md): frontera entre el scraper y la transformación comercial del backend.
+- [Comercialización](docs/COMERCIALIZACION.md): proyección local, evidencia, atributos, metadata, auditoría y exportación verificable.
+- [Integración con Equipzilla](docs/EQUIPZILLA_INTEGRATION.md): diferencias entre catálogo técnico, exportación comercial y persistencia del backend.
+- [Mantenimiento y continuidad](docs/MAINTENANCE.md): módulos consolidados, garantías de retención, comprobaciones, huellas y prevención de archivos omitidos.
 - [Referencia operativa](docs/OPERATIONAL_REFERENCE.md): lectura, traslado y compatibilidad de inventarios de referencia.

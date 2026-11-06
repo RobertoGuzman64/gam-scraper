@@ -63,7 +63,7 @@ La **retención global** de hasta dos campañas se aplica por `runId` y mediante
 
 Para preparaciones con `rulesVersion: 2`, `rulesSha256` se calcula en `src/infrastructure/filesystem/preparation/preparation-inputs.ts` leyendo los módulos JavaScript compilados de preparación, normalización, identidad y componentes heredados incluidos explícitamente. El hash depende **tanto de sus nombres relativos como de su contenido**; por eso un renombrado de carpetas, un import recompilado o una redistribución del código puede modificar la huella sin cambiar los datos originales.
 
-La huella se usa para detectar incompatibilidades entre la preparación almacenada y las reglas vigentes. No normalizar, sustituir ni recalcular a mano hashes de preparaciones, aprobaciones o publicaciones para adaptar un refactor. Los originales y finales acreditados permanecen inmutables; la validez de cualquier nueva preparación o decisión debe comprobarse mediante los comandos y controles previstos. Ver [Validación](VALIDATION.md).
+La huella se usa para detectar incompatibilidades entre la preparación almacenada y las reglas vigentes. Las extracciones editoriales y el mapeo GAM de las fases 9 y 12 afectaron esa huella aunque mantuvieran las salidas de sus pruebas de equivalencia. Un cambio de `rulesSha256` no prueba por sí solo una alteración editorial, pero tampoco habilita la reutilización automática de acreditaciones antiguas. No normalizar, sustituir ni recalcular a mano hashes de preparaciones, aprobaciones o publicaciones para adaptar un refactor. Los originales y finales acreditados permanecen inmutables; la validez de cualquier nueva preparación o decisión debe comprobarse mediante los comandos y controles previstos. Ver [Validación](VALIDATION.md).
 
 ## Identidad y cobertura
 
@@ -99,9 +99,9 @@ Para la responsabilidad de cada frente, la evidencia de aceptación y la diferen
 
 ## Frontera con la importación comercial
 
-La campaña entrega JSON acreditados para **traspasar datos fiables**, no para efectuar una operación de importación. La asignación de `categorySellID`, los IDs de atributos y la transformación a contratos del backend son responsabilidades del proceso receptor. **No añadir requisitos comerciales a `ready/review` ni convertir `specs` originales en atributos comerciales sin un contrato externo explícito.**
+La campaña entrega JSON acreditados para **traspasar datos fiables**, no para efectuar una operación de importación. La **preparación técnica canónica** no asigna `categorySellID` ni IDs de atributos. Una **proyección comercial local independiente** (`src/commercial/projection/` y `src/commercial/export/`) puede asignarlos a partir de snapshots verificados, producir JSON y un manifiesto auditable, **sin modificar originales o publicaciones técnicas**. La importación, permisos y persistencia final de productos son responsabilidades del backend. **No añadir requisitos comerciales a `ready/review` ni convertir `specs` de origen en atributos comerciales sin una regla y evidencia del mapeador.**
 
-El exportador comercial XLSX/JSON (`npm run exportar`) permanece únicamente como compatibilidad heredada. Mantiene sus controles de seguridad para preparaciones antiguas con asignación comercial; **rechaza preparaciones canónicas nuevas**. No se utiliza como paso normal tras `entregar`, y el scraper nunca realiza peticiones HTTP de importación.
+El exportador XLSX/JSON **heredado** (`npm run exportar`) mantiene controles para preparaciones históricas con asignación comercial y rechaza las nuevas preparaciones técnicas sin ella. Es distinto de `npm run exportar:comercial`, que construye el derivado comercial actual desde publicaciones verificadas. Ninguno ejecuta peticiones HTTP de importación al backend.
 
 Consultar [Límites de integración](EQUIPZILLA_INTEGRATION.md) para la separación de responsabilidades.
 

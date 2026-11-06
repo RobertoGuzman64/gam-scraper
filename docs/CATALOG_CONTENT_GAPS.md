@@ -103,7 +103,7 @@ La mejora de descripciones busca cortas diferenciadoras y generales útiles y pr
 - Auditor de originales: `src/catalog/diagnostics/content-gaps-source.ts` y contratos `content-gaps-types.ts`.
 - Comparación editorial: `description-coverage.ts`, `editorial-quality.ts` y `description-priorities.ts`.
 - Comparación técnica: `specification-coverage.ts`.
-- Preparación recalculada: `src/catalog/preparation/prepare-product.ts`, que delega recuperación de specs en `recovery/` y composición editorial en `mapping/`. El auditor no duplica esas reglas.
+- Preparación recalculada: `src/preparation/prepare-product.ts`, que organiza las reglas de `src/preparation/` y la composición editorial en `src/preparation/shared/editorial/mapping/`. El auditor no duplica esas reglas.
 - Publicaciones: `src/infrastructure/filesystem/catalog/accredited-publication.ts` y el selector vigente.
 
 No alterar originales, JSON acreditados, manifiestos ni aprobaciones para disminuir los indicadores. No atribuir al backend obligaciones de `spec` sin revisar su contrato real. No duplicar motores de reglas, auditores o sistemas de versiones. Ver [Objetivos](SCRAPER_OBJECTIVES.md), [Arquitectura](ARCHITECTURE.md), [Reglas de datos](SCRAPER_DATA_RULES.md) y [Validación](VALIDATION.md).

@@ -8,7 +8,7 @@
 
 El repositorio implementa una **CLI que termina tras ejecutar una operación**. No incorpora servidor HTTP, Dockerfile, despliegue cloud, CI/CD ni importación automática al backend. Es posible planificar ejecuciones externas, pero deben conservarse íntegros los resultados y vigilarse sus fallos.
 
-Requisitos operativos: Node.js `>=18.18.0`, npm, dependencias instaladas, acceso HTTPS, espacio en disco y permisos sobre `storage/`. Mercaeleva y Manain utilizan Chrome/Chromium o un Edge compatible (`CHROME_PATH` o `CHROMIUM_PATH` permiten indicar el ejecutable). Mercaeleva usa modo headless; Manain inicia un navegador visible y puede requerir verificación humana, por lo que no debe presumirse apto para una ejecución desatendida. Las preparaciones canónicas actuales utilizan reglas técnicas versionadas, no los snapshots comerciales de `data/category/` y `data/import/`. Estos permanecen solo para funciones heredadas que los requieran.
+Requisitos operativos: Node.js `>=18.18.0`, npm, dependencias instaladas, acceso HTTPS, espacio en disco y permisos sobre `storage/`. Mercaeleva y Manain utilizan Chrome/Chromium o un Edge compatible (`CHROME_PATH` o `CHROMIUM_PATH` permiten indicar el ejecutable). Mercaeleva usa modo headless; Manain inicia un navegador visible y puede requerir verificación humana, por lo que no debe presumirse apto para una ejecución desatendida. Las preparaciones canónicas actuales utilizan reglas técnicas versionadas, no los snapshots comerciales de `data/category/` y `data/import/`. Estos snapshots también alimentan la **proyección comercial actual**, que es un circuito separado y no modifica la preparación técnica ni importa al backend.
 
 ## Finalidad de automatizar
 

@@ -52,7 +52,11 @@ npm run auditar:comercial -- --atributos-revision
 npm run auditar:comercial -- --acreditacion
 npm run auditar:comercial -- --json
 npm run exportar:comercial -- --help
+npm run exportar:comercial -- --salida <directorio-nuevo> --simular
+npm run auditar:comercial -- --verificar=<directorio-existente>
 ```
+
+La CLI separa la **coordinación** en `src/cli/commands/catalog/commercial-audit.ts` de la **presentación** en `src/cli/reporting/commercial-audit.ts`. La política está en `src/commercial/projection/category-projection.ts` y las evidencias de procedencia en `source-category-evidence.ts` y `gam-category-evidence.ts`; la exportación y verificación están en `src/commercial/export/`. `--verificar=RUTA` compara el manifiesto comercial y los archivos exportados con el corte vigente, sin reescribirlos.
 
 La opción `--arbol` es una vista de inspección: presenta la jerarquía real con IDs, conteos y una línea por producto (proveedor, referencia y título), además de las fichas pendientes. No añade incidencias ni modifica las decisiones del auditor. Para guardarla en un fichero: `npm run --silent auditar:comercial -- --arbol > categorias-comerciales.txt`.
 
@@ -65,4 +69,4 @@ El diagnóstico y el derivado comercial son independientes de las publicaciones 
 - Persistir `metadata.tags` y `metadata.keywords` del scraper; en actualizaciones preservar `metadata.featured` existente salvo una acción operativa explícita.
 - Resolver el alta/actualización mediante identidad técnica estable, sin fusionar unidades por `externalReference`.
 
-Estos puntos describen **cambios acordados y todavía no aplicados al backend**. Hasta entonces no debe asumirse compatibilidad definitiva de importación. Los documentos generales del repositorio que describen la transformación comercial como tarea del receptor requieren una actualización coordinada; no se modifican automáticamente desde este módulo.
+Estos puntos describen **cambios acordados y todavía no aplicados al backend**. Hasta entonces no debe asumirse compatibilidad definitiva de importación. La distinción entre preparación técnica, proyección comercial local e importación externa se mantiene en [Integración](EQUIPZILLA_INTEGRATION.md) y [Arquitectura](ARCHITECTURE.md).

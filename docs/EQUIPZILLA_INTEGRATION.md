@@ -1,54 +1,58 @@
-# Integración con Equipzilla: límites y contratos
+# Integración con Equipzilla: contratos técnicos y comerciales
 
 ## AI GUARD
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
-## Frontera entre el scraper y el backend
+## Dos productos de datos y una frontera de sistema
 
-La **responsabilidad del scraper** es obtener catálogos canónicos fiables, conservar la evidencia del proveedor, verificar identidad y contenido, comparar campañas y entregar una selección editorial acreditada. **La responsabilidad del proceso receptor** es interpretar esos datos para el modelo comercial de Equipzilla: decidir `categorySellID`, IDs de atributos, reglas de importación, permisos, inventario en base de datos y publicación.
-
-Esta separación es deliberada. Los mapeos comerciales que el scraper llegó a incorporar eran una capacidad técnica auxiliar, **no un requisito de calidad del dato ni una obligación pendiente de completar**.
+El scraper produce y conserva **datos técnicos acreditados**. También dispone de una **proyección comercial local**, separada, que interpreta publicaciones técnicas vigentes conforme a la taxonomía y los atributos conocidos. **Ni la entrega técnica ni la exportación comercial importan productos al backend**: autorización, altas, actualizaciones, persistencia y reglas operativas del receptor siguen fuera de este repositorio.
 
 ```text
-Portales de proveedores
-        ↓
-ProductRecord y catálogos canónicos íntegros
-        ↓
-Preparación técnica y controles de calidad
-        ↓
-Selección editorial y cuatro JSON acreditados (campaña actual)
-        ↓
-Adaptación comercial e importación — proceso receptor / backend
+Proveedores → extracción → originales canónicos → preparación técnica (ready/review)
+                                                 ↓
+                            selección editorial y JSON acreditados
+                                                 ↓
+          proyección comercial del scraper (categorías, atributos, metadata)
+                                                 ↓
+                     JSON comerciales + manifiesto verificable
+                                                 ↓
+            integración e importación externas al scraper (backend)
 ```
 
-## Qué significa resolver una incidencia en esta frontera
+La campaña global tiene un contrato de cuatro proveedores (GAM, Gomariz, Mercaeleva, Manain). Las publicaciones individuales acreditadas utilizadas por la exportación comercial actual corresponden a **GAM, Gomariz y Mercaeleva**; eso no convierte a Manain en una publicación completa ni sustituye la campaña global.
 
-Si el scraper **pierde o altera datos comerciales de origen**, incluida la referencia comercial publicada, se corrige **su extractor o contrato de salida** y se comprueba todo el catálogo. Si el backend no puede importar legítimamente una selección acreditada por un requisito suyo de categorías, atributos o unicidad, se analiza **el contrato receptor**: no se inventan referencias, no se fusionan unidades y no se introduce ese requisito en `ready/review` técnico del canónico por conveniencia. Los avisos de importación deben exponerse y tratarse en su frontera real.
+## Contrato técnico
 
-El éxito es un **catálogo original fiable y un JSON acreditado que cumple el contrato del scraper**, no la cantidad de comandos de exportación ni la presunción de que el backend ha importado. Ver [Objetivos](SCRAPER_OBJECTIVES.md).
+- `ProductRecord` conserva origen, categorías de proveedor, referencias, imágenes, descripciones, condición y `specs`.
+- La preparación técnica actual (`rulesVersion: 2`) conserva `categorySellID: null`, `attributes: []` y las especificaciones en `spec`: la falta de asignación comercial **no es una review técnica**.
+- `ready/review` identifica controles técnicos y de evidencia. Las exclusiones editoriales preservan los originales, no equivalen a altas ni convierten `review` en `ready`.
+- Los JSON acreditados y sus manifests demuestran selección y procedencia dentro de su contrato, no una importación consumada ni cobertura de un portal.
 
+## Contrato de la proyección comercial local
 
-## Contratos que entrega el scraper
+- `src/commercial/projection/` decide la correspondencia con el snapshot de categorías y atributos; los IDs solo proceden de `data/category/categorySell-flat.json` y `data/import/attributeCatalog.json`.
+- `src/commercial/projection/category-projection.ts` mantiene la política; `source-category-evidence.ts` y `gam-category-evidence.ts` aíslan las comprobaciones de procedencia. La extracción de evidencia no cambia las reglas comerciales.
+- `src/commercial/export/` produce los JSON derivados y su `commercial-manifest.json`, con hashes de archivos, snapshot y referencias relevantes. La exportación consulta las publicaciones técnicas y sus originales sin modificarlos.
+- `src/cli/commands/catalog/commercial-audit.ts` coordina la auditoría y `src/cli/reporting/commercial-audit.ts` presenta informes. `--verificar=RUTA` contrasta una exportación existente con las fuentes vigentes.
+- `data/commercial-reference/` contiene logos y correspondencias de empresas; `companyID` solo se incluye con entorno explícito. Las categorías, opciones, valores, condición, identidad y metadata se validan, no se inventan.
 
-- `ProductRecord` conserva `categoryKey` y `categoryName` originales, referencias, descripciones, imágenes, condición acreditada y `specs` sin equivalencias comerciales inventadas.
-- La preparación offline actual utiliza reglas técnicas versionadas (`rulesVersion: 2`). En sus candidatos, `categorySellID: null` y `attributes: []` indican **ausencia intencionada de asignación comercial**; las especificaciones siguen en `spec`.
-- `ready/review` describe incidencias técnicas del origen; no garantiza que el backend pueda crear un producto sin transformación adicional.
-- La campaña actual entrega cuatro JSON seleccionados y acreditados. **No son requests HTTP** ni prueban que ya existan categorías comerciales asignadas.
-- Ninguna entrega crea, actualiza o da de baja productos de Equipzilla.
+```powershell
+npm run auditar:comercial
+npm run auditar:comercial -- --acreditacion
+npm run exportar:comercial -- --salida <directorio-nuevo> --simular
+npm run exportar:comercial -- --salida <directorio-nuevo> --entorno production
+npm run auditar:comercial -- --verificar=<directorio-existente>
+```
 
-Los identificadores propios del proveedor, si existen, se conservan como datos de origen; **no** deben ponerse a `null` para simular una ausencia de IDs comerciales. La correspondencia entre categorías del proveedor y categorías de venta es una decisión de la integración receptora.
+Los comandos de exportación definitiva crean un directorio nuevo y archivos verificables; **no envían solicitudes HTTP al backend**. La exportación comercial no modifica la selección editorial ni los originales. Una incompatibilidad en la proyección debe resolverse en el mapeador o contrato comercial, no degradando `ready/review` de la preparación canónica.
 
-## Compatibilidad comercial heredada
+## Compatibilidad heredada y responsabilidades del receptor
 
-El repositorio todavía contiene `npm run exportar`, `src/catalog/legacy-export/` y `src/pipeline/legacy-export/`, infraestructura de XLSX y snapshots `data/category/` y `data/import/`. Son piezas **heredadas**, separadas del flujo canónico vigente. El exportador puede procesar preparaciones comerciales históricas conforme a sus validaciones, pero **rechaza expresamente las preparaciones canónicas actuales sin asignación comercial**.
+`npm run exportar` es un mecanismo **legado** de Excel/JSON en `src/commercial/legacy-export/` y `src/cli/commands/legacy-export/`, con infraestructura de XLSX y referencias comerciales heredadas. Su preparación con catálogo corresponde a un contrato histórico; no es la continuación automática de `entregar` y rechaza una preparación técnica nueva que no tenga asignaciones comerciales compatibles.
 
-No utilizar estos módulos como continuación automática de `npm run entregar`, ni interpretar un Excel o un JSON para `create/many` como artefacto de campaña. Cualquier uso excepcional requiere validar el contrato real del backend con sus responsables; los snapshots locales no acreditan el estado de la base de datos desplegada. No convertir el trabajo de compatibilidad en una dependencia del scraper.
+El backend debe decidir identidad de sus registros, altas/actualizaciones, permisos e inventario, preservar en su caso `metadata.featured` previamente gestionado y procesar los JSON sin recrear por IA categorías o atributos que el derivado comercial ya acredita. Estas obligaciones **no quedan implementadas ni verificadas** por ejecutar los comandos de este repositorio; ver los pendientes de integración de [Comercialización](COMERCIALIZACION.md).
 
-La operación comercial, incluyendo inventario vivo, autorización y comprobación de errores de importación por fila, pertenece al proceso receptor. Para conocer el estado del comando heredado se puede consultar `npm run ayuda -- exportar`, **sin asumir que sea aplicable a preparaciones nuevas**.
+Ante un fallo, distinguir: defectos del dato técnico se reparan en scraping/preparación; errores de categoría, atributo o metadata emitida se reparan en proyección comercial; restricciones y errores del importador se investigan en el receptor. No introducir IDs o equivalencias por conveniencia ni considerar un JSON exportado prueba de alta en la base de datos.
 
-## Responsabilidades y cambios futuros
-
-Si el backend cambia su catálogo de categorías, atributos, endpoints o políticas comerciales, **el scraper no debe necesitar cambios mientras conserve su contrato canónico**. Una petición de integración nueva debe acordarse como contrato entre proyectos, no introducirse silenciosamente en las reglas de calidad.
-
-Las salidas conservan su integridad, procedencia, acreditación y límites editoriales. Para más detalle consultar [Objetivos](SCRAPER_OBJECTIVES.md), [Reglas de datos](SCRAPER_DATA_RULES.md) y [Campañas](CAMPAIGNS.md).
+Ver [Arquitectura](ARCHITECTURE.md), [Reglas de datos](SCRAPER_DATA_RULES.md), [Comercialización](COMERCIALIZACION.md) y [Validación](VALIDATION.md).

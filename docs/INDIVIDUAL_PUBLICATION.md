@@ -24,7 +24,7 @@ npm run estado
 
 Para operar solo un proveedor, añadir `-- --proveedor gam` (o `gomariz` o `mercaeleva`) a los comandos `catalogo:*`. `--simular` consulta y calcula sin efectuar escrituras ni activar publicaciones. El flujo por defecto incluye los tres proveedores; ninguno se elige por la fecha del fichero.
 
-**Preparar.** `src/cli/commands/catalog/prepare-individual.ts` delega en `src/pipeline/preparation/individual-prepare.ts`. Comprueba el original portátil y las huellas de origen/reglas; reutiliza una preparación compatible o produce otra versión con diagnósticos, preservando las anteriores. El resumen distingue `ready`, `review` y diferencias provisionales con la publicación vigente. Ausencias, revisiones o diferencias *no* son decisiones editoriales automáticas.
+**Preparar.** `src/cli/commands/catalog/prepare-individual.ts` delega en `src/preparation/workflow/individual-prepare.ts`. Comprueba el original portátil y las huellas de origen/reglas; reutiliza una preparación compatible o produce otra versión con diagnósticos, preservando las anteriores. El resumen distingue `ready`, `review` y diferencias provisionales con la publicación vigente. Ausencias, revisiones o diferencias *no* son decisiones editoriales automáticas.
 
 **Acreditar (opcional).** Si se desea comprobar por separado la reutilización de antecedentes, ejecutar:
 
@@ -33,9 +33,9 @@ npm run catalogo:acreditar -- --simular
 npm run catalogo:acreditar
 ```
 
-No abre una sesión de decisiones humanas. `src/pipeline/publication/automatic-individual-accreditation.ts` solo reutiliza exclusiones históricas acreditadas si coinciden **referencia, URL de origen, estado e incidencias**, con razones y evidencias válidas; no acredita por similitud ni inventa una decisión para una incidencia nueva. Una discrepancia detiene el proceso. La misma verificación se realiza automáticamente durante FINISH: este comando intermedio **no es obligatorio**.
+No abre una sesión de decisiones humanas. `src/publication/automatic-individual-accreditation.ts` solo reutiliza exclusiones históricas acreditadas si coinciden **referencia, URL de origen, estado e incidencias**, con razones y evidencias válidas; no acredita por similitud ni inventa una decisión para una incidencia nueva. Una discrepancia detiene el proceso. La misma verificación se realiza automáticamente durante FINISH: este comando intermedio **no es obligatorio**.
 
-**Publicar.** `src/cli/commands/catalog/publish-individual.ts` coordina `src/pipeline/publication/individual-finish.ts`. FINISH hace un preflight completo: comprueba originales/preparaciones, exclusiones y aceptación de diferencias; bloquea bajas, pérdidas de descripciones, especificaciones o valores técnicos sin equivalencia acreditada, y cambios de identidad de origen. Tras superar esas comprobaciones, crea/verifica la candidata, su ZIP comercial y el recibo **antes** de seleccionar y verificar las publicaciones vigentes. No modifica el JSON anterior acreditado para forzar el éxito.
+**Publicar.** `src/cli/commands/catalog/publish-individual.ts` coordina `src/publication/individual-finish.ts`. FINISH hace un preflight completo: comprueba originales/preparaciones, exclusiones y aceptación de diferencias; bloquea bajas, pérdidas de descripciones, especificaciones o valores técnicos sin equivalencia acreditada, y cambios de identidad de origen. Tras superar esas comprobaciones, crea/verifica la candidata, su ZIP comercial y el recibo **antes** de seleccionar y verificar las publicaciones vigentes. No modifica el JSON anterior acreditado para forzar el éxito.
 
 Si existe un caso nuevo o una exclusión distinta, resolverlo mediante el procedimiento editorial explícito `acreditar:proveedor` descrito en el [README](../README.md); ese procedimiento exige decisiones humanas y evidencia. La automatización no proporciona una aprobación genérica alternativa.
 

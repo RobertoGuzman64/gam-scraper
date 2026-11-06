@@ -4,124 +4,95 @@
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
-## Visión general
+## Visión general y estructura vigente
 
-Aplicación CLI de Node.js y TypeScript con módulos ESM. El scraper se ejecuta como proceso local o programado; **no tiene servidor HTTP ni persistencia en el backend de Equipzilla**.
+EQUIPZILLA es una CLI local en Node.js, TypeScript estricto y ESM. No ofrece API HTTP ni realiza importaciones o escrituras en el backend. La arquitectura organiza las responsabilidades por dominio, **sin `src/pipeline/` ni `src/catalog/preparation/`**:
 
 ```text
-scripts/
-  run-build.mjs, run-tests.mjs, tooling.mjs, terminal.mjs
-  inspection/, maintenance/, operations/
-interventions/                Scripts permanentes de intervención
+scripts/                    Entradas, runner, tooling, inspección, mantenimiento y operaciones
 src/
-  cli/                       Comandos, opciones y presentación
-    commands/{campaign,catalog,extraction,interventions,legacy-export,maintenance,providers}/
-  contracts/                 Contratos compartidos
-  scraping/                  Motor, parsing y adaptadores por proveedor
-  catalog/
-    coverage/, diagnostics/, editorial/, interventions/
-    normalization/, preparation/, reference/, legacy-export/
-    preparation/{source,reconciliation,recovery}/
-    preparation/evidence/{documented-technical-evidence.ts,providers/<id>/}
-    preparation/mapping/{source-editorial-evidence.ts,prepared-editorial.ts,verified-editorial-finalization.ts,providers/<id>/}
-    preparation/tests/{providers,cross-cutting}/
-  pipeline/
-    batch/, campaign/, extraction/, preparation/, publication/, validation/, legacy-export/
-    campaign/{discovery,delivery,reference,retention}/
-    campaign/tests/{discovery-flow,finalization-and-delivery,operations,portability-and-retention,reference}/
-  infrastructure/            HTTP, navegador, filesystem, locks, salida heredada
-  testing/{builders,fixtures}/  Soporte de pruebas reutilizable
-  shared/                    Utilidades transversales
-  tools/{catalog,gam}/       Auditoría y herramientas auxiliares
-storage/                     Estado operativo local, no versionado
-catalogs/providers/<id>/original/   Original completo portátil
-catalogs/campaigns/<runId>/        Campaña acreditada portátil
+  campaign/                Orquestación global, entrega, referencia y retención
+  catalog/                 Identidad, calidad, normalización, cobertura, editorial y diagnósticos
+  cli/                     Comandos, opciones y presentación de informes
+  commercial/              Proyección comercial, validación, exportación y compatibilidad legada
+  contracts/               Contratos compartidos de datos y proveedores
+  infrastructure/          Filesystem, integridad, locks, HTTP, navegador y XLSX
+  preparation/             Preparación técnica, reconciliaciones y reglas por proveedor
+  publication/             Publicaciones individuales, acreditación y FINISH
+  scraping/                Motor, batch, proveedores y salida de extracción
+  shared/                  Utilidades transversales
+  testing/                 Fixtures y builders de pruebas
+  tools/                   Herramientas internas de catálogo y semillas GAM
+interventions/             Scripts de intervención acreditables
+catalogs/providers/        Originales completos y publicaciones individuales portátiles
+catalogs/campaigns/        Instantáneas acreditadas de campañas globales
+storage/                   Trabajo y recuperación locales, excluidos de Git
+dist/                      Compilados regenerables, excluidos de Git
 ```
 
-El registro de proveedores vive en `src/scraping/registry.ts`; el conjunto de campaña actual (GAM, Gomariz, Mercaeleva y Manain) se declara en `src/contracts/campaign-providers.ts`. El contrato admite además lectura de referencias históricas de tres proveedores; esto no convierte esos lotes en campañas actuales completas. Los contratos de datos se definen en `src/contracts/`. Los tests de TypeScript están junto a sus responsabilidades, agrupados en `tests/` por proveedor o función; los helpers reutilizables están en `src/testing/`. Las pruebas MJS de scripts están en `scripts/inspection/tests/` y `scripts/maintenance/tests/`. El resultado compilado se escribe en `dist/`, que no se versiona.
+El registro de proveedores está en `src/scraping/registry.ts` y el contrato de campaña de cuatro proveedores (GAM, Gomariz, Mercaeleva y Manain) en `src/contracts/campaign-providers.ts`. Las publicaciones individuales vigentes pueden operar para GAM, Gomariz y Mercaeleva; Manain mantiene su flujo propio y no debe darse por completo sin acreditación. La lectura de históricos de tres proveedores no cambia el contrato de campaña actual.
 
-## Calidad como responsabilidad del código productivo
+## Fronteras y dirección de dependencias
 
-Cuando `prepareSourceProduct` o sus validadores producen reviews, su diagnóstico es una **entrada de desarrollo**. La corrección reusable corresponde al módulo que pueda demostrar la causa: `scraping/` para lectura y asociación de campos; `catalog/` para normalización, reglas de calidad e identidad; `pipeline/` para orquestar y comprobar resultados; `cli/` solo para exponer el estado. No reparar silenciosamente el dato con una decisión en CLI, una mutación del original ni una excepción por referencia.
+| Área                                          | Responsabilidad                                                               | Límite que se debe proteger                                                  |
+| --------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `cli/`, `scripts/`                            | Opciones, ejecución y presentación                                            | No interpretar HTML ni introducir reglas técnicas o comerciales en la UI     |
+| `scraping/`                                   | Descubrimiento, extracción, deduplicación y salida de origen                  | No atribuir decisiones editoriales ni importar al backend                    |
+| `catalog/`                                    | Identidad, calidad, normalización, selección y diagnósticos                   | No mezclar inspección con mutación de publicaciones                          |
+| `preparation/`                                | Construcción y validación de candidatos técnicos, evidencias y `ready/review` | No exigir IDs comerciales para declarar calidad del origen                   |
+| `commercial/`                                 | Proyectar categorías y atributos, acreditar y generar JSON comerciales        | No cambiar originales, finales técnicos ni reglas de importación del backend |
+| `campaign/`, `publication/`                   | Orquestar campañas y publicaciones, acreditación y recuperación               | No saltarse preflight ni inventar decisiones humanas                         |
+| `infrastructure/`                             | Persistencia, hashes, manifiestos, retención y seguridad de rutas             | No decidir identidad comercial o calidad editorial                           |
+| `contracts/`, `shared/`, `testing/`, `tools/` | Contratos y herramientas auxiliares                                           | No trasladar reglas específicas a capas genéricas                            |
 
-El flujo de ingeniería normal es reproducir en el catálogo completo → corregir el motor → probar el comportamiento y sus contraejemplos → volver a preparar/validar el conjunto hasta acreditar `0 review`. Una review que exige evidencia externa se mantiene visible sin falsear el `ready`. Los diagnósticos y auditores sirven a este ciclo, no son un objetivo de producto independiente. Ver [Objetivos](SCRAPER_OBJECTIVES.md) y [Validación](VALIDATION.md).
+No hay una capa `pipeline` física. Los orquestadores viven junto al dominio que coordinan: `src/scraping/workflow/`, `src/scraping/batch/`, `src/preparation/workflow/`, `src/campaign/` y `src/publication/`. Tener numerosas dependencias no es por sí solo un defecto de diseño. No reorganizar carpetas, introducir capas vacías o mover reglas por estética.
 
-## Regla de reparación según el componente
+## Flujos y puntos de entrada
 
-Un defecto de **descubrimiento/cobertura** se resuelve en el adaptador y motor de scraping; uno de **campo cruzado o magnitud mal interpretada**, en extracción semántica o normalización; uno de **identidad o duplicados**, en contratos y reglas de catálogo; uno de **reviews injustificadas**, en calidad/contratos con contraejemplos, sin apagar el control; uno de **artefactos, recuperaciones o comandos encadenados**, en pipeline e infraestructura; uno de **presentación del estado**, en CLI. La corrección se ubica donde evitará repetir el defecto en otras fichas y campañas, sin duplicar la regla en un script de diagnóstico, un CLI o un editor manual.
+### Extracción y salida
 
-Modificar código productivo no autoriza cambios indiscriminados de arquitectura: reutilizar el motor existente, mantener TypeScript estricto, comprobar consumidores, exigir pruebas proporcionales al riesgo y verificar el efecto sobre el universo completo. Los contratos de aceptación por frente se enumeran en [Objetivos](SCRAPER_OBJECTIVES.md).
+`src/cli/commands/extraction/scrape.ts` entra en `src/scraping/workflow/run.ts`, con adaptadores registrados en `src/scraping/registry.ts`. La extracción por lote se implementa en `src/scraping/batch/`. La escritura, los CSV y la salida estructural se concentran en `src/scraping/output/publish.ts` y `csv-serializer.ts`. La salida publicada no debe reemplazarse por un parcial o por un intento incompleto. La promoción portátil de un original individual elegible corresponde a `src/infrastructure/filesystem/catalog/portable-original.ts`.
 
+Mercaeleva tiene separado el ciclo de navegador en `src/scraping/providers/mercaeleva/browser.ts` y las comprobaciones de paginación en `browser-pagination.ts`; Manain dispone de un circuito de navegador/censo propio. Los binarios de navegador necesarios son una dependencia del entorno, no una garantía de cobertura.
 
-## Criterio transversal de cambio productivo
+### Preparación técnica y revisión
 
-La ubicación de una corrección depende de **dónde se origina el comportamiento defectuoso**, no del comando que lo muestra. No añadir parches de presentación a `cli/` para silenciar síntomas del motor; no alterar `ProductRecord` o el original portátil para remediar una preparación; no incorporar excepciones por producto cuando la causa pertenece al parser, al normalizador o a las reglas de calidad. Un cambio de contrato exige rastrear consumidores y preservar garantías de persistencia e identidad. El comportamiento de actuación y cierre está en [Objetivos](SCRAPER_OBJECTIVES.md#contrato-anti-deriva-comportamiento-obligatorio-del-asistente).
+La entrada de producto es `src/preparation/prepare-product.ts`, que expone `prepareSourceProduct` y `prepareWithCatalog`. La orquestación offline reside en `src/preparation/workflow/` y el cálculo/validación de huellas en `src/infrastructure/filesystem/preparation/`. El motor separa identidad y reconciliaciones por proveedor, evidencias técnicas y composición editorial. `src/preparation/shared/editorial/mapping/prepared-editorial.ts` orquesta título, fuente, modelo y completado mediante `prepared-editorial-{title,source,model,completion}.ts`, sin alterar sus prioridades por el mero hecho de estar separados.
 
+Las reglas y evidencias específicas permanecen junto a cada proveedor, por ejemplo en `src/preparation/gam/`. La transformación de valores de atributos GAM está en `src/preparation/gam/classification/mapping/attribute-values.ts`, mientras `attributes.ts` conserva alias y decisiones relacionadas. Los parsers escalares de las semillas GAM comparten la utilidad interna `src/tools/gam/seed/internal/scalar.ts`. Estas utilidades **no autorizan** nuevas categorías, atributos, IDs ni valores sin evidencia.
 
-## Responsabilidades
+Una preparación técnica canónica puede producir `categorySellID: null` y `attributes: []`, conservando `spec`. Las incidencias `ready/review` no se resuelven falsificando estos campos ni excluyendo productos de la muestra.
 
-| Capa                   | Debe hacer                                                                    | No debe hacer                                              |
-| ---------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `cli` y `scripts`      | Interpretar órdenes, preparar parámetros, mostrar ayuda, errores y resúmenes. | Decidir identidades o parsear HTML.                        |
-| `scraping`             | Descubrir listados, obtener fichas y devolver registros de origen.            | Importar al backend o aplicar políticas de Excel.          |
-| `catalog`              | Normalizar, deduplicar, contrastar evidencia y resolver reglas editoriales.   | Ejecutar peticiones de scraping o presentar UI de consola. |
-| `pipeline`             | Coordinar flujos y mantener integridad de las publicaciones.                  | Repetir reglas de proveedor.                               |
-| `infrastructure`       | I/O, HTTP, navegador, locks y escritura segura.                               | Inventar reglas de producto.                               |
-| `contracts` y `shared` | Tipos y utilidades reutilizables.                                             | Acoplarse a CLI o a un portal particular.                  |
+### Campañas, portabilidad, retención y limpieza
 
-Dirección preferente: `cli → pipeline → scraping/catalog/infrastructure`. Los adaptadores implementan el contrato `ScraperProvider`; las excepciones de un proveedor deben permanecer en su propio módulo. No introducir capas vacías, duplicar mappers ni mover contratos públicos sin revisar consumidores.
+`src/cli/commands/campaign/` delega la campaña global en `src/campaign/`, incluidas sus carpetas `discovery/`, `delivery/`, `reference/` y `retention/{admission,inventory,journal,lock,recovery}.ts`. `src/campaign/finalization.ts` coordina la consolidación acreditada; `src/campaign/portable-inventory.ts` y `portable-migration.ts` inspeccionan o migran conforme a sus modos explícitos.
 
-## Procesos principales
+`src/infrastructure/filesystem/catalog/portable-campaign.ts` coordina consolidación y retirada; `portable-campaign-inspection.ts` inspecciona manifiestos, archivos y rutas. En la retención individual, `catalog-retention-cleanup.ts` utiliza `catalog-retention-references.ts` para proteger archivos aún referenciados. `src/infrastructure/filesystem/campaign/campaign-cleanup.ts` conserva el inventario y la ejecución de limpiezas; `campaign-cleanup-validation.ts` valida rutas, históricos y artefactos. Las rutas y los symlinks sospechosos deben bloquear las operaciones sensibles. La retención global se aplica por `runId`, con máximo de dos campañas protegidas según el contrato; los originales individuales tienen un ciclo de vida separado.
 
-**Extracción individual:** `src/cli/commands/extraction/scrape.ts` y el registro `src/scraping/registry.ts` coordinan adaptadores y motor mediante `src/pipeline/extraction/`. La publicación, los CSV y la aceptación se realizan en `src/pipeline/publication/`. El adaptador de Mercaeleva puede necesitar Chrome/Chromium externo.
+No ejecutar retiradas ni consolidaciones reales como parte de una auditoría documental. `npm run estado` inspecciona, y `npm run migrar:catalogos` simula por defecto. Ninguno de esos comandos equivale a aprobar una nueva publicación.
 
-**Lotes y campaña global:** `src/cli/commands/campaign/batch.ts` utiliza `src/pipeline/batch/` para ejecutar proveedores en secuencia y registrar evidencias en `storage/runs/`. `src/cli/commands/campaign/campaign-extract.ts` orquesta la campaña con `src/pipeline/campaign/`, comparte el `runId` y aísla fuentes en `storage/scraped/campaigns/`. La retención y recuperación están repartidas entre `src/pipeline/campaign/retention/{admission,inventory,journal,lock,recovery}.ts`, con exclusión mutua local y rotación recuperable; no es un lock distribuido ni bloquea necesariamente toda extracción individual.
+### Publicaciones individuales y acreditación
 
-**Persistencia portátil:** `src/pipeline/extraction/run.ts` solo promociona una extracción individual elegible (categorías, opciones y salida predeterminadas). `src/infrastructure/filesystem/catalog/portable-original.ts` comprueba el trío canónico y lo sustituye de manera recuperable. `src/pipeline/campaign/finalization.ts` consolida la instantánea de `catalogs/campaigns/<runId>/` al aprobar y finalizar; `src/infrastructure/filesystem/catalog/portable-campaign.ts` conserva originales, finales y acreditación, incluyendo derivados de intervención cuando proceda.
+`src/cli/commands/catalog/prepare-individual.ts` delega en `src/preparation/workflow/individual-prepare.ts`; la acreditación automática limitada reside en `src/publication/automatic-individual-accreditation.ts` y FINISH en `src/publication/individual-finish.ts`. Los contratos de publicación y aceptación de diferencias se conservan en `publication-contracts.ts` y `publication-acceptance.ts`. La evidencia del trabajo original → publicado se ensambla en `src/publication/individual-work-report.ts` y se presenta mediante `src/cli/reporting/`.
 
-**Retención y consultas:** `src/pipeline/campaign/portable-inventory.ts` y `portable-migration.ts` verifican o consolidan datos portátiles sin modificar acreditaciones por una mera consulta. La retención conserva como máximo dos campañas acreditadas; los originales individuales tienen ciclo de vida independiente. Los controles sobre archivos antiguos y respaldos se implementan en `src/infrastructure/filesystem/catalog/` y los componentes de almacenamiento y retención.
+Los finales y aprobaciones acreditados no se reescriben para acomodar refactors o diferencias de huella. Las exclusiones editoriales no convierten fichas `review` en `ready`. Ver [Publicación individual](INDIVIDUAL_PUBLICATION.md) y [Campañas](CAMPAIGNS.md).
 
-**Preparación offline:** `src/cli/commands/catalog/prepare.ts` utiliza `src/pipeline/preparation/` y `src/catalog/preparation/` para comprobar origen, normalizar, resolver evidencias y emitir `ready/review` con huellas `rulesVersion: 2`. `prepareSourceProduct` y `prepareWithCatalog` siguen siendo las entradas de `src/catalog/preparation/prepare-product.ts`. La preparación canónica mantiene `categorySellID: null`, `attributes: []` y la información técnica en `spec`; el modo con catálogo comercial es distinto. La recuperación técnica, la composición editorial y las validaciones están separadas como se detalla a continuación.
+### Proyección comercial y exportación legada
 
-**Cobertura, selección e intervenciones:** `src/catalog/coverage/` y `src/catalog/editorial/` aplican los controles productivos; `src/cli/commands/catalog/select-publishable.ts` expone la selección. Los scripts permanentes están en `interventions/`, los contratos en `src/catalog/interventions/contracts.ts` y su carga y validación en `src/infrastructure/filesystem/intervention-scripts/`. La composición y aprobación de intervenciones no autoriza sobrescribir originales ni publicaciones acreditadas.
+**El catálogo técnico acreditado y su derivado comercial son contratos distintos.** La proyección comercial actual vive en `src/commercial/projection/`, con la política en `category-projection.ts` y evidencia de origen en `source-category-evidence.ts` y `gam-category-evidence.ts`. `src/commercial/export/` prepara, acredita y verifica salidas comerciales procedentes de publicaciones técnicas y snapshots locales; `src/cli/commands/catalog/commercial-audit.ts` realiza la coordinación y `src/cli/reporting/commercial-audit.ts` presenta los informes. El comando `exportar:comercial` no importa datos al backend.
 
-**Auditor de huecos de contenido:** `src/cli/commands/catalog/catalog-content-gaps.ts` conserva el diagnóstico de fuentes canónicas (`findCampaignBaseline` o `readCanonicalCatalog` → `prepareSourceProduct` → `src/catalog/diagnostics/content-gaps-source.ts`). También usa el descubrimiento de **publicaciones acreditadas vigentes** para `--finales` y `--comparar`: lee los JSON inmutables, empareja identidades con canónicos disponibles, prepara en memoria y analiza cobertura (`description-coverage.ts`), calidad (`editorial-quality.ts`), prioridades (`description-priorities.ts`) y, con `--comparar --specs`, presencia de claves técnicas (`specification-coverage.ts`). Mercaeleva se etiqueta como reconstrucción de publicación cuando no existe canónico independiente. Los diagnósticos son observacionales y **no** publican, aprueban ni modifican campañas, originales o versiones. Ver [Auditor de huecos](CATALOG_CONTENT_GAPS.md).
+Por separado, `npm run exportar` es un exportador **heredado** para preparaciones comerciales compatibles: `src/commercial/legacy-export/`, `src/cli/commands/legacy-export/` y `src/infrastructure/filesystem/legacy-export/`. No debe aplicarse a nuevas preparaciones técnicas sin asignaciones. La importación HTTP, la persistencia de productos y los permisos operativos pertenecen al backend. Ver [Comercialización](COMERCIALIZACION.md) e [Integración](EQUIPZILLA_INTEGRATION.md).
 
-**Compatibilidad comercial heredada:** `src/catalog/legacy-export/`, `src/pipeline/legacy-export/` y `src/infrastructure/spreadsheet/` conservan exportación de altas XLSX/JSON para preparaciones comerciales históricas verificables. **Una preparación canónica nueva se bloquea expresamente** en ese exportador, al carecer de asignaciones comerciales. No forma parte de la cadena de entrega, y ningún proceso realiza importaciones HTTP. La categorización y adaptación comercial actuales son responsabilidad del proceso receptor; ver [Integración](EQUIPZILLA_INTEGRATION.md).
+### Auditoría de contenido
 
-## Flujo interno de preparación y límites de cambio
+`src/cli/commands/catalog/catalog-content-gaps.ts` y `src/cli/reporting/catalog-content-gaps-output.ts` presentan datos obtenidos en `src/catalog/diagnostics/`, con originales canónicos resueltos mediante `src/infrastructure/filesystem/catalog/original-catalog-sources.ts`. La preparación recalculada usa `src/preparation/prepare-product.ts`. Las comprobaciones de contenido y `--comparar --specs` no escriben originales ni crean publicaciones. Ver [Huecos de contenido](CATALOG_CONTENT_GAPS.md).
 
-`prepare-product.ts` coordina un único recorrido sobre cada `ProductRecord` y construye el `PreparedProduct`, pero no debe alojar los algoritmos de cada proveedor. La secuencia efectiva es:
+## Calidad, pruebas y protección de artefactos
 
-1. Capturar evidencia editorial de la fuente (`mapping/source-editorial-evidence.ts`), comprobar semántica y conflictos de publicación, y aplicar reconciliaciones de origen de GAM y Mercaeleva (`reconciliation/`, evidencia de specs de plataforma).
-2. Recuperar specs de base (`recovery/gam-technical-recovery.ts`) y después specs documentadas (`recovery/documented-technical-recovery.ts`) mediante resolutores por proveedor en `evidence/providers/`. El orden de aplicación es parte del comportamiento: los resultados de una recuperación alimentan la siguiente. `evidence/documented-technical-evidence.ts` concentra comprobaciones compartidas; las evidencias verificadas permanecen identificadas por modelo, familia o procedencia, **no por número de fase**.
-3. Reconciliar identidad y campos antes de componer las descripciones en `mapping/prepared-editorial.ts`, que delega en los mapeadores por proveedor. Las descripciones condensadas acreditadas de GAM viven en `evidence/providers/gam/editorial/condensed/`, con un resolutor común en `mapping/providers/gam/editorial-descriptions/condensed-editorial-resolver.ts`.
-4. Calcular incidencias de fuente, condición, referencia, precio, campos técnicos y conflictos editoriales; solo si no hay incidencias permitir enriquecimientos finales en `mapping/verified-editorial-finalization.ts`. Construir `ImportCandidate`, mantener las comprobaciones de importación exclusivamente para `prepareWithCatalog`, y devolver `ready` o `review` sin publicar.
+`npm run build` ejecuta `scripts/run-build.mjs`. `npm test` compila cuando es necesario y ejecuta `scripts/run-tests.mjs`, que descubre las suites TypeScript de `src/` y `.test.mjs` de `scripts/`. Las pruebas pueden usar caché; para una acreditación sin reutilización usar `EQUIPZILLA_TEST_CACHE=0`. Los tests deben verificar contratos reales y conservar los casos límite.
 
-**Regla para ampliar evidencias:** situar el dato acreditado en la familia/proveedor de `evidence/`; encapsular la transformación reutilizable en su resolutor o en `mapping/`; incorporar un nuevo paso de recuperación únicamente en el orquestador correspondiente y con pruebas de aplicabilidad, variantes negativas y no sobrescritura. No copiar specs entre máquinas por similitud de modelo, introducir ramas cronológicas (`phase`, `pending`, `residual`) ni convertir la CLI en un motor de recuperación. Si se cambia el orden o cualquier archivo compilado incluido en las reglas, revisar la huella `rulesSha256` y la compatibilidad de preparaciones antes de activar nuevos finales.
+`rulesSha256` en `src/infrastructure/filesystem/preparation/preparation-inputs.ts` incorpora nombres y contenidos de módulos JS compilados. La reorganización editorial y el mapeo GAM de las fases 9/12 hicieron que la huella dejara de ser idéntica a la base anterior: **equivalencia funcional y compatibilidad de acreditación son comprobaciones diferentes**. No alterar hashes o preparaciones existentes para hacer coincidir la huella. Ver [Validación](VALIDATION.md) y [Mantenimiento](MAINTENANCE.md).
 
-**Auditor de gaps:** `src/cli/commands/catalog/catalog-content-gaps.ts` coordina los modos; `catalog-content-gaps-options.ts` valida opciones, `src/infrastructure/filesystem/catalog/original-catalog-sources.ts` resuelve originales canónicos y `src/cli/reporting/catalog-content-gaps-output.ts` presenta los diagnósticos. El análisis de descripción, prioridades, densidad técnica y specs permanece en `src/catalog/diagnostics/`. Ningún resultado del auditor modifica una ficha ni autoriza una publicación. Ver [Auditor de huecos](CATALOG_CONTENT_GAPS.md).
+La regla general `output/` de `.gitignore` necesita mantener la excepción `!src/scraping/output/`: sin ella pueden desaparecer del paquete los módulos de salida aunque sus consumidores sigan compilando contra imports ESM. El código de esos módulos permanece en el árbol fuente; no se regenera desde `dist/`.
 
-**Publicación e informe de trabajo:** `src/pipeline/publication/individual-finish.ts` realiza preflight, entrega, activación y recuperación; la aceptación de diferencias está aislada en `publication-acceptance.ts` y sus tipos en `publication-contracts.ts`. La medición del trabajo original → publicado reside en `src/catalog/diagnostics/{preparation-work,published-work}.ts`, la recopilación verificada en `src/pipeline/publication/individual-work-report.ts` y la presentación/ZIP en `src/cli/reporting/{published-work,published-work-archive}.ts`. El informe refleja transformaciones del conjunto acreditado, **no** crea una versión de catálogo ni sustituye auditoría, aprobación o publicación. Ver [Publicación individual](INDIVIDUAL_PUBLICATION.md).
-
-## Naming, pruebas y huellas
-
-La organización de carpetas técnicas usa **inglés** y agrupa por dominio y responsabilidad. Se conservan en español los comandos operativos (`npm run estado`, `npm run revisar`, etc.) y los textos de salida. Los IDs, el contenido persistido, los contratos públicos y los scripts de intervención ya acreditados no se renombran sin analizar expresamente su compatibilidad.
-
-`npm test` ejecuta primero la compilación (`scripts/run-build.mjs --quiet`) y después `scripts/run-tests.mjs`. El runner descubre archivos `.test.ts` bajo `src/`, lanza los `.test.js` de `dist/` e incorpora las suites `.test.mjs` de `scripts/`. La prioridad de determinadas suites se define mediante rutas compiladas en `scripts/run-tests.mjs`; mover tests requiere actualizar esa lista y comprobar fixtures construidas con `import.meta.url`. Los scripts de prueba que generan código TypeScript deben mantener las rutas de importación **desde la ubicación del archivo generado**, no desde la ubicación del test que contiene la cadena.
-
-`src/infrastructure/filesystem/preparation/preparation-inputs.ts` calcula `rulesSha256` a partir del conjunto ordenado de nombres relativos y contenidos de reglas **JavaScript compiladas**. Un movimiento de carpetas o un cambio en imports compilados puede cambiar esa huella aunque el comportamiento productivo sea equivalente. La nueva huella no autoriza editar manualmente preparaciones anteriores, aprobaciones ni finales; deben verificarse procedencia, compatibilidad y acreditación con el procedimiento vigente. La comparación de `npm run estado`, el build y los tests protege aspectos distintos y no certifica por sí sola una re-acreditación.
-
-## Reglas de mantenimiento
-
-- Conservar APIs, contratos y formatos de archivo existentes; advertir antes de cambios incompatibles.
-- Evitar mezcla de UI/CLI, red, filesystem y reglas de negocio.
-- No duplicar reglas entre proveedores; tampoco generalizar comportamientos que solo estén acreditados para uno.
-- Nombrar módulos por equipo, familia, evidencia o responsabilidad estable. Los números de campañas y etiquetas `pending`/`residual` solo son apropiados en artefactos históricos cuyo significado dependa realmente de ellos; no usarlos para bautizar nueva lógica productiva.
-- Mantener la persistencia atómica o de creación exclusiva, la integridad de manifests y la preservación de la última publicación válida. No incorporar un segundo almacén definitivo ni hacer que Git decida la validez del catálogo.
-- Preservar la separación entre `storage/` operativo y `catalogs/` definitivo: no promocionar pruebas, parciales o preparaciones sin aprobación; no reescribir una instantánea acreditada para corregir fichas.
-- Tras una operación que cambie datos consolidados, comprobar integridad con `estado` y revisar explícitamente los cambios de Git; el programa no hace commits ni valida el índice.
-- Comparar resultados reales antes y después de alterar parsers, mappers, deduplicación o selección.
-- Añadir un proveedor mediante `ScraperProvider`, `registry.ts` y su configuración, con pruebas específicas de paginación, identidad y calidad.
-
-Consulta [Reglas de datos](SCRAPER_DATA_RULES.md) para los formatos y [Validación](VALIDATION.md) para los controles operativos.
+Cuando se detecta un defecto, repararlo donde se origina: extracción/HTML en scraping, identidad y calidad en catálogo o preparación, integridad en filesystem, responsabilidades comerciales en proyección, presentación en CLI. No introducir excepciones ficticias por ficha ni restaurar imágenes o specs sin evidencia del origen. La aceptación final distingue compilación, pruebas, calidad del catálogo, integridad de artefactos y acreditación editorial.
