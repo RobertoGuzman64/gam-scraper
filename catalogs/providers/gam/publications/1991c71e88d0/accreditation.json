@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "runId": "individual-gam-80fe285cdcb15191a8aeb20385afd725",
+  "approved": true,
+  "approvalReason": "Acreditación automática de exclusiones históricas coincidentes, con evidencia y preparación verificadas",
+  "sources": [
+    {
+      "providerId": "gam",
+      "catalogSha256": "855865e4a99f709cd9b10b68e77d594841b8cbd8c64b4fc9eb851cb397162483",
+      "preparationSha256": "130d609ac2c3bb82ddb9672eef622cb333e8c6db084c18eb9c239e030383b4af",
+      "productCount": 983
+    }
+  ],
+  "exclusions": [
+    {
+      "providerId": "gam",
+      "reference": "6682",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6682-2020-hyster-h35ft",
+      "status": "review",
+      "issues": [
+        "Número de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen",
+        "Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo número de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicación"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión editorial por incidencias documentadas: N├║mero de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen; Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo n├║mero de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicaci├│n",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6682-2020-hyster-h35ft"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "6703",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6703-2020-hyster-h35ft",
+      "status": "review",
+      "issues": [
+        "Número de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen",
+        "Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo número de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicación"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión editorial por incidencias documentadas: N├║mero de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen; Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo n├║mero de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicaci├│n",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6703-2020-hyster-h35ft"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "6004",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6004-carretilla-elevadora-electrica-hyster-j70xtg6",
+      "status": "identity",
+      "issues": [
+        "Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha técnica",
+        "Identidad GAM contradictoria: modelo anunciado distinto de J7.0XTG6 en ficha técnica"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión editorial por incidencias documentadas: Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha t├®cnica; Identidad GAM contradictoria: modelo anunciado distinto de J7.0XTG6 en ficha t├®cnica",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6004-carretilla-elevadora-electrica-hyster-j70xtg6"
+      ]
+    }
+  ]
+}
