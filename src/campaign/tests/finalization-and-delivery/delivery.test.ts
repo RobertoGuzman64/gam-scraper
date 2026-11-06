@@ -15,6 +15,7 @@ import { createDeliveryFixtures, approve, date, prefixes } from "./delivery-fixt
 const fixtureCache = createDeliveryFixtures();
 const fixture = fixtureCache.fixture;
 const approvedFixture = fixtureCache.approvedFixture;
+const deliveredFixture = fixtureCache.deliveredFixture;
 after(fixtureCache.close);
 
 const isArray = (value: unknown): value is readonly unknown[] => Array.isArray(value);
@@ -58,21 +59,21 @@ test("sin aprobación editorial no entrega ni reemplaza un ZIP anterior", async 
 });
 
 test("una entrega repetida del mismo lote se rechaza sin sobrescribir el ZIP acreditado", async () => {
-  const data = await approvedFixture();
+  const data = await deliveredFixture();
   try {
-    const first = await deliverActiveCampaign(data.root, data.desktop, date);
-    const original = await readFile(first.zipFile);
+    const firstZip = join(data.desktop, `equipzilla-2026-10-26-${data.runId}.zip`);
+    const original = await readFile(firstZip);
     await assert.rejects(deliverActiveCampaign(data.root, data.desktop, date), /ya tiene una entrega/);
-    assert.deepEqual(await readFile(first.zipFile), original);
+    assert.deepEqual(await readFile(firstZip), original);
     assert.deepEqual(await readdir(data.desktop), [`equipzilla-2026-10-26-${data.runId}.zip`]);
   } finally { await data.cleanup(); }
 });
 
 test("una intervención posterior no reescribe la entrega acreditada del lote", async () => {
-  const data = await approvedFixture();
+  const data = await deliveredFixture();
   try {
-    const first = await deliverActiveCampaign(data.root, data.desktop, date);
-    const previous = await readFile(first.zipFile);
+    const firstZip = join(data.desktop, `equipzilla-2026-10-26-${data.runId}.zip`);
+    const previous = await readFile(firstZip);
     const receiptFile = join(data.root, "storage", "campaigns", data.runId, "delivery.json");
     const receipt = await readFile(receiptFile);
     const portable = await readPortableCampaign(data.root, data.runId);
@@ -94,10 +95,10 @@ test("una intervención posterior no reescribe la entrega acreditada del lote", 
     const intervention = await interveneActiveCampaign(data.root, "gam", [script], true);
     assert.equal(intervention.applied, true);
     await assert.rejects(deliverActiveCampaign(data.root, data.desktop, date), /acreditación aprobada/);
-    assert.deepEqual(await readFile(first.zipFile), previous);
+    assert.deepEqual(await readFile(firstZip), previous);
     await approve(data.root);
     await assert.rejects(deliverActiveCampaign(data.root, data.desktop, date), /ya tiene una entrega/);
-    assert.deepEqual(await readFile(first.zipFile), previous);
+    assert.deepEqual(await readFile(firstZip), previous);
     assert.deepEqual(await readFile(receiptFile), receipt);
     assert.deepEqual(await readPortableCampaign(data.root, data.runId), portable);
     assert.deepEqual(await readdir(data.desktop), [`equipzilla-2026-10-26-${data.runId}.zip`]);
@@ -108,15 +109,15 @@ test("una intervención posterior no reescribe la entrega acreditada del lote", 
 });
 
 test("si se altera una selección, la entrega válida anterior permanece intacta", async () => {
-  const data = await approvedFixture();
+  const data = await deliveredFixture();
   try {
-    const delivered = await deliverActiveCampaign(data.root, data.desktop, date);
-    const previous = await readFile(delivered.zipFile);
+    const deliveredZip = join(data.desktop, `equipzilla-2026-10-26-${data.runId}.zip`);
+    const previous = await readFile(deliveredZip);
     const selection = await finalizeActiveCampaign(data.root, false);
     assert.ok(selection.selectionDir);
     await writeFile(join(selection.selectionDir, "gam-publishable.json"), "[]");
     await assert.rejects(deliverActiveCampaign(data.root, data.desktop, date), /archivos han cambiado/);
-    assert.deepEqual(await readFile(delivered.zipFile), previous);
+    assert.deepEqual(await readFile(deliveredZip), previous);
     assert.deepEqual(await readdir(data.desktop), [`equipzilla-2026-10-26-${data.runId}.zip`]);
   } finally { await data.cleanup(); }
 });

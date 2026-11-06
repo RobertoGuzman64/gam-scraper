@@ -5,6 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { reviewActiveCampaign } from "../../review.js";
 import { finalizeActiveCampaign } from "../../finalization.js";
+import { deliverActiveCampaign } from "../../delivery/execute.js";
 import { CAMPAIGN_PROVIDERS } from "../../discovery/report.js";
 import { copyCampaignTestCatalog, reuseCampaignTestFixture } from "../campaign-catalog-fixture.js";
 import type { BatchReport, ProviderRun } from "../../../contracts/batch-report.js";
@@ -78,9 +79,33 @@ export const approve = async (root: string): Promise<void> => {
 
 export const createDeliveryFixtures = () => {
   const fixtureCache = reuseCampaignTestFixture(createFixture);
+  let approvedPrepared = false;
+  let deliveredPrepared = false;
+  const approvedFixture = async () => {
+    const data = await fixtureCache.prepared("approved", async (current) => approve(current.root));
+    approvedPrepared = true;
+    return data;
+  };
+  const deliveredFixture = async () => {
+    if (!approvedPrepared) await approvedFixture();
+    const data = await fixtureCache.prepared("delivered", async (current) => {
+      await deliverActiveCampaign(current.root, current.desktop, date);
+    }, "approved");
+    deliveredPrepared = true;
+    return data;
+  };
+  const successiveDeliveryFixture = async () => {
+    if (!deliveredPrepared) await deliveredFixture();
+    return fixtureCache.prepared("successive-delivery", async (data) => {
+      await createSecondCampaign(data.root);
+      await deliverActiveCampaign(data.root, data.desktop, date);
+    }, "delivered");
+  };
   return {
     fixture: fixtureCache.fixture,
-    approvedFixture: () => fixtureCache.prepared("approved", async (data) => approve(data.root)),
+    approvedFixture,
+    deliveredFixture,
+    successiveDeliveryFixture,
     close: fixtureCache.close
   };
 };

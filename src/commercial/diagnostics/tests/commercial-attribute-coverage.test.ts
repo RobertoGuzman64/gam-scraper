@@ -4,12 +4,12 @@ import { fileURLToPath } from "node:url";
 import { analyzeCommercialAttributes } from "../commercial-attributes.js";
 import type { CommercialAttributeAudit } from "../commercial-attributes.js";
 import { planCommercialExport } from "../../projection/export-projection.js";
-import { loadCommercialPublicationInputs } from "../../export/commercial-inputs.js";
+import { selectAccreditedCommercialInputs } from "../../../testing/builders/commercial-publication-selection.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 
-const previouslyUnrelated: Readonly<Record<string, readonly string[]>> = {
+const previouslyUnrelated = {
   gam: [
     "2159", "12", "2163", "2164", "2165", "2169", "5", "6", "8", "6653",
     "5254", "5710", "5918", "6217", "6623", "6688", "6689", "6690", "6806", "6358", "6367",
@@ -19,13 +19,17 @@ const previouslyUnrelated: Readonly<Record<string, readonly string[]>> = {
   ],
   gomariz: ["RE454", "1011JFB", "5051BDX", "PV556"],
   mercaeleva: ["M928-9933", "M294-4678"]
+} satisfies Readonly<Record<string, readonly string[]>>;
+
+const previouslyUnrelatedWithHyster = {
+  ...previouslyUnrelated, gam: [...previouslyUnrelated.gam, "2072", "2073"]
 };
 
 test("las 59 referencias auditadas conservan clasificación fiel y límites reales de atributos", async () => {
   const catalog = await loadImportCatalog();
-  const providers = await loadCommercialPublicationInputs(root, catalog);
-  const byProvider = new Map(providers.map(({ providerId, entries }) => [
-    providerId, analyzeCommercialAttributes(entries, catalog)
+  const providers = await selectAccreditedCommercialInputs(root, catalog, previouslyUnrelatedWithHyster);
+  const byProvider = new Map([...providers].map(([providerId, input]) => [
+    providerId, analyzeCommercialAttributes(input.entries, catalog)
   ]));
   const allReferences = Object.values(previouslyUnrelated).reduce((total, references) => total + references.length, 0);
   assert.equal(allReferences, 57);
@@ -35,11 +39,11 @@ test("las 59 referencias auditadas conservan clasificación fiel y límites real
     const decisionByReference = new Map<string | null, CommercialAttributeAudit["decisions"][number]>(
       report.decisions.map((item) => [item.reference, item])
     );
-    const inputs = providers.find((item) => item.providerId === provider);
-    assert.ok(inputs);
-    const exported = planCommercialExport(inputs.entries, provider, inputs.publicationSha256, catalog, [], null, null);
+    const input = providers.get(provider);
+    assert.ok(input);
+    const exported = planCommercialExport(input.entries, provider, input.publicationSha256, catalog, [], null, null);
     const byReference = new Map(exported.products.map((item) => [item.reference, item]));
-    const originalByReference = new Map(inputs.entries.map((item) => [item.source.reference, item]));
+    const originalByReference = new Map(input.entries.map((item) => [item.source.reference, item]));
     for (const reference of references) {
       const item = decisionByReference.get(reference);
       assert.ok(item, `${provider}:${reference}`);
@@ -71,4 +75,15 @@ test("las 59 referencias auditadas conservan clasificación fiel y límites real
     assert.equal(item.attributes.length, 6);
     assert.ok(item.relatedAttributes >= item.attributes.length);
   }
+});
+
+
+test("la selección de publicaciones exige referencias reales sin duplicados", async () => {
+  const catalog = await loadImportCatalog();
+  await assert.rejects(
+    selectAccreditedCommercialInputs(root, catalog, { gam: ["2072", "2072"] }), /Referencias repetidas/
+  );
+  await assert.rejects(
+    selectAccreditedCommercialInputs(root, catalog, { gam: ["REFERENCIA-INEXISTENTE"] }), /incompleta o duplicada/
+  );
 });

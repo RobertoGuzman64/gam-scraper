@@ -5,7 +5,7 @@ import { cleanupBaseline, execute, executeBaseline, gam } from "./catalog-conten
 test.after(cleanupBaseline);
 
 test("huecos puede descubrir y auditar las publicaciones finales sin listar rutas", async () => {
-  const output = await executeBaseline(["--finales", "--top", "2"]);
+  const output = await executeBaseline(["--finales", "--top", "2", "--detalle"]);
   assert.match(output, /finales [1-9]\d*/);
   assert.match(output, /DESCRIPCIONES GENERALES MÁS LARGAS/);
   const automatic = await executeBaseline(["--top", "1"]);

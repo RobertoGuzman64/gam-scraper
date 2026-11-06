@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { constants } from "node:fs";
 import { cp, copyFile, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -46,18 +47,20 @@ const createOriginals = async (root: string, serialNumber: string): Promise<void
   }
 };
 
-type FixtureState = "original" | "prepared" | "approved";
+type FixtureState = "original" | "prepared" | "approved" | "published";
 
-type FixtureOptions = {
+type FixtureOptions<Published> = {
   readonly prefix: string;
   readonly serialNumber: string;
   readonly defaultState: FixtureState;
   readonly approve?: (root: string) => Promise<void>;
+  readonly publish?: (root: string, desktop: string) => Promise<Published>;
 };
 
-export const createIndividualWorkspaceFixture = (options: FixtureOptions) => {
+export const createIndividualWorkspaceFixture = <Published = never>(options: FixtureOptions<Published>) => {
   const seeds = new Map<FixtureState, Promise<string>>();
   const roots = new Set<string>();
+  let published: Published | null = null;
 
   const seed = (state: FixtureState): Promise<string> => {
     const existing = seeds.get(state);
@@ -69,11 +72,17 @@ export const createIndividualWorkspaceFixture = (options: FixtureOptions) => {
         if (state === "original") {
           await createOriginals(root, options.serialNumber);
         } else {
-          await cp(await seed(state === "prepared" ? "original" : "prepared"), root, { recursive: true });
+          const previous: FixtureState = state === "prepared" ? "original" : state === "approved" ? "prepared" : "approved";
+          await cp(await seed(previous), root, { recursive: true, mode: constants.COPYFILE_FICLONE });
           if (state === "prepared") await prepareIndividualTestWorkspace(root);
-          else {
+          else if (state === "approved") {
             if (!options.approve) throw new Error("La fixture no tiene aprobación editorial configurada");
             await options.approve(root);
+          } else {
+            if (!options.publish) throw new Error("La fixture no tiene publicación configurada");
+            const desktop = join(root, "Escritorio con espacios");
+            await mkdir(desktop, { recursive: true });
+            published = await options.publish(root, desktop);
           }
         }
         return root;
@@ -92,16 +101,16 @@ export const createIndividualWorkspaceFixture = (options: FixtureOptions) => {
   });
 
   return async (
-    action: (root: string, desktop: string) => Promise<void>,
+    action: (root: string, desktop: string, published: Published | null) => Promise<void>,
     state: FixtureState = options.defaultState
   ): Promise<void> => {
     const original = await seed(state);
     const root = await mkdtemp(join(tmpdir(), options.prefix));
     try {
-      await cp(original, root, { recursive: true });
+      await cp(original, root, { recursive: true, mode: constants.COPYFILE_FICLONE });
       const desktop = join(root, "Escritorio con espacios");
-      await mkdir(desktop);
-      await action(root, desktop);
+      await mkdir(desktop, { recursive: true });
+      await action(root, desktop, state === "published" ? published : null);
     } finally {
       await rm(root, { recursive: true, force: true, maxRetries: 3 });
     }

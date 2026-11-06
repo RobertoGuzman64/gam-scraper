@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { copyFile, cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import test from "node:test";
+import test, { after } from "node:test";
 import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
 import { readPortableCampaign } from "../../../infrastructure/filesystem/catalog/portable-campaign.js";
 import { inspectPortableInventory } from "../../portable-inventory.js";
@@ -11,10 +11,24 @@ import { finalizeActiveCampaign } from "../../finalization.js";
 import { deliverActiveCampaign } from "../../delivery/execute.js";
 import { applyPortableMigration, planPortableMigration } from "../../portable-migration.js";
 import { approveDraft, createFixture } from "../finalization-fixture.js";
+import { reuseCampaignTestFixture } from "../campaign-catalog-fixture.js";
 
 const prefix = "scrape-gomariz";
 const fixture = resolve("src/testing/fixtures/gomariz");
 const originalFiles = [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`] as const;
+
+const campaignFixtures = reuseCampaignTestFixture(createFixture);
+after(campaignFixtures.close);
+let campaignDraftFile: string | undefined;
+const approvedCampaign = async () => {
+  const data = await campaignFixtures.prepared("approved", async (current) => {
+    const draft = await finalizeActiveCampaign(current.root, false, current.runId);
+    campaignDraftFile = draft.draftFile;
+    await approveDraft(draft.draftFile);
+  });
+  if (!campaignDraftFile) throw new Error("Falta la acreditación de la campaña de prueba");
+  return { data, draftFile: campaignDraftFile };
+};
 
 const withOriginal = async (callback: (root: string, source: string) => Promise<void>): Promise<void> => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-migration-"));
@@ -141,22 +155,20 @@ test("un almacén portátil corrupto o con entradas extrañas bloquea sin sobres
 });
 
 test("campaña ya entregada se puede importar sin nueva aprobación ni nuevos JSON de prueba", async () => {
-  const data = await createFixture();
+  const { data, draftFile } = await approvedCampaign();
   try {
-    const draft = await finalizeActiveCampaign(data.root, false, data.runId);
-    await approveDraft(draft.draftFile);
     const desktop = join(data.root, "Escritorio");
     await mkdir(desktop);
     const delivery = await deliverActiveCampaign(data.root, desktop, new Date(2026, 9, 26, 12));
     assert.equal(delivery.runId, data.runId);
     // Reproduce el estado legado: entrega y recibo válidos, pero falta la copia portátil.
     await rm(join(data.root, "catalogs", "campaigns", data.runId), { recursive: true });
-    const before = await readFile(draft.draftFile, "utf8");
+    const before = await readFile(draftFile, "utf8");
     const plan = await planPortableMigration(data.root);
     assert.equal(plan.campaigns.find((p) => p.runId === data.runId)?.status, "consolidar");
     const applied = await applyPortableMigration(data.root);
     assert.equal(applied.campaigns.find((p) => p.runId === data.runId)?.status, "actualizado");
-    assert.equal(await readFile(draft.draftFile, "utf8"), before);
+    assert.equal(await readFile(draftFile, "utf8"), before);
     assert.equal((await readPortableCampaign(data.root, data.runId)).runId, data.runId);
     const clean = join(data.root, "portable-only");
     await mkdir(clean);
@@ -167,10 +179,8 @@ test("campaña ya entregada se puede importar sin nueva aprobación ni nuevos JS
 });
 
 test("una campaña sin entrega no se transforma en campaña acreditada por la migración", async () => {
-  const data = await createFixture();
+  const { data } = await approvedCampaign();
   try {
-    const draft = await finalizeActiveCampaign(data.root, false, data.runId);
-    await approveDraft(draft.draftFile);
     const plan = await planPortableMigration(data.root);
     assert.equal(plan.campaigns.length, 0); // Aprobar un borrador no equivale a entregar el lote.
     await applyPortableMigration(data.root);

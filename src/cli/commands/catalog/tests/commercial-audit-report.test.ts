@@ -35,8 +35,9 @@ test("la auditoría comercial conserva informes, opciones y selección por ficha
     version: 1, providers: report.providers.map((provider) => provider.accreditation)
   });
   const defaultOutput = render();
-  assert.match(defaultOutput[0] ?? "", new RegExp(`AUDITORÍA COMERCIAL \\| ${report.providers.reduce((sum, item) => sum + item.baseline.products, 0)} fichas`));
-  assert.equal(render("--acreditacion").length, report.providers.length + 1);
+  assert.ok(defaultOutput.some((line) => line.includes(`${report.providers.reduce((sum, item) => sum + item.baseline.products, 0)} fichas técnicas acreditadas`)));
+  assert.ok(defaultOutput.length < render("--detalle").length);
+  assert.ok(render("--acreditacion").some((line) => line.includes("Validación semántica e integración en BD: NO VERIFICADAS")));
   assert.equal(render("--exportacion").length >= report.providers.length, true);
   assert.equal(render("--contenido").length >= report.providers.length * 3, true);
   assert.equal(render("--contenido-revision").length >= render("--contenido").length, true);

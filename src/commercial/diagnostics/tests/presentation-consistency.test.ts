@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
+import { createPreparedSourceFixture } from "../../../testing/builders/prepared-source-fixture.js";
 import { analyzePresentationConsistency } from "../presentation-consistency.js";
 
 const [gam, gomariz, mercaeleva] = await Promise.all([
@@ -10,10 +10,12 @@ const [gam, gomariz, mercaeleva] = await Promise.all([
   readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json")
 ]);
 
+const prepareOriginal = createPreparedSourceFixture();
+
 const gamProduct = (reference: string) => {
   const source = gam.products.find((item) => item.reference === reference);
   assert.ok(source, reference);
-  return prepareSourceProduct(source).product;
+  return prepareOriginal(source).product;
 };
 
 const codes = (result: ReturnType<typeof analyzePresentationConsistency>): readonly string[] =>
@@ -22,7 +24,7 @@ const codes = (result: ReturnType<typeof analyzePresentationConsistency>): reado
 test("identifica incidencias aún ambiguas sin publicar correcciones especulativas", () => {
   const originals = [...gam.products, ...gomariz.products, ...mercaeleva.products];
   const snapshot = JSON.stringify(originals);
-  const products = originals.map((item) => prepareSourceProduct(item).product);
+  const products = originals.map((item) => prepareOriginal(item).product);
   const result = analyzePresentationConsistency(products);
   assert.equal(result.products, 1347);
   assert.equal(result.defects, 0);
@@ -72,7 +74,7 @@ test("detecta unidades de resúmenes y conflictos de variante sin inferir modelo
   const cte = gamProduct("4650");
   const ausaSource = mercaeleva.products.find((item) => item.reference === "M855-6850");
   assert.ok(ausaSource);
-  const ausa = prepareSourceProduct(ausaSource).product;
+  const ausa = prepareOriginal(ausaSource).product;
   const altered = { ...ausa, description: "Altura de elevación 4.30mm" };
   const result = analyzePresentationConsistency([cte, altered]);
   assert.deepEqual(codes(result), [

@@ -4,7 +4,10 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { analyzeTitleQuality } from "../../catalog/diagnostics/title-quality.js";
 import { prepareSourceProduct } from "../prepare-product.js";
+import { createPreparedSourceFixture } from "../../testing/builders/prepared-source-fixture.js";
 import { refineTechnicalTitle } from "../shared/editorial/mapping/technical-title-refinement.js";
+
+const prepareOriginal = createPreparedSourceFixture();
 
 const originals = await Promise.all(["gam", "gomariz", "mercaeleva"].map((provider) =>
   readCanonicalCatalog(`catalogs/providers/${provider}/original/scrape-${provider}-catalog.json`)));
@@ -18,7 +21,7 @@ const source = (provider: string, reference: string): ProductRecord => {
 const assertTitle = (provider: string, reference: string, expected: string): void => {
   const record = source(provider, reference);
   const original = JSON.stringify(record);
-  const prepared = prepareSourceProduct(record);
+  const prepared = prepareOriginal(record);
   assert.equal(prepared.product.title, expected, reference);
   assert.equal(prepared.product.description_title, expected, reference);
   assert.equal(prepared.product.reference, record.reference);
@@ -69,7 +72,7 @@ test("Mercaeleva corrige seis títulos con evidencia de familia, identidad y con
   for (const [reference, expected] of cases) {
     const original = source("mercaeleva", reference);
     assertTitle("mercaeleva", reference, expected);
-    assert.equal(prepareSourceProduct(original).status, "ready", reference);
+    assert.equal(prepareOriginal(original).status, "ready", reference);
     assert.equal(prepareSourceProduct({ ...original, title: "Equipo sin modelo ni familia" }).product.title,
       "Equipo sin modelo ni familia", reference);
     assert.equal(prepareSourceProduct({ ...original, brand: "MARCA AJENA" }).product.title,
@@ -108,7 +111,7 @@ test("Mercaeleva normaliza títulos de plataformas con identidad, motor y altura
   for (const [reference, expected] of cases) {
     assertTitle("mercaeleva", reference, expected);
     const original = source("mercaeleva", reference);
-    assert.equal(prepareSourceProduct(original).status, "ready", reference);
+    assert.equal(prepareOriginal(original).status, "ready", reference);
     const variants: readonly ProductRecord[] = [
       { ...original, url: "https://example.org/otro-anuncio" },
       { ...original, brand: "MARCA AJENA" },
@@ -125,7 +128,7 @@ test("Mercaeleva normaliza títulos de plataformas con identidad, motor y altura
   }
   for (const reference of ["M887-9469", "M486-0114", "M030-7485"]) {
     const original = source("mercaeleva", reference);
-    assert.equal(prepareSourceProduct(original).product.title, original.title, `${reference}: evidencia insuficiente`);
+    assert.equal(prepareOriginal(original).product.title, original.title, `${reference}: evidencia insuficiente`);
   }
 });
 
@@ -167,7 +170,7 @@ test("Mercaeleva normaliza plataformas nuevas, alturas decimales y variantes de 
   }
   for (const reference of ["M887-9469", "M486-0114", "M030-7485"]) {
     const original = source("mercaeleva", reference);
-    assert.equal(prepareSourceProduct(original).product.title, original.title, `${reference}: falta coherencia`);
+    assert.equal(prepareOriginal(original).product.title, original.title, `${reference}: falta coherencia`);
   }
 });
 
@@ -232,7 +235,7 @@ test("Mercaeleva normaliza camiones cesta cuando altura, estructura e identidad 
     for (const candidate of invalid) {
       assert.notEqual(prepareSourceProduct(candidate).product.title, expected, `${reference}: evidencia alterada`);
     }
-    assert.equal(prepareSourceProduct(original).status, "ready", reference);
+    assert.equal(prepareOriginal(original).status, "ready", reference);
   }
 });
 
@@ -256,7 +259,7 @@ test("Mercaeleva normaliza familias auxiliares y de manipulación con evidencia 
   for (const [reference, expected] of cases) {
     const original = source("mercaeleva", reference);
     assertTitle("mercaeleva", reference, expected);
-    assert.equal(prepareSourceProduct(original).status, "ready", reference);
+    assert.equal(prepareOriginal(original).status, "ready", reference);
     const invalid: readonly ProductRecord[] = [
       { ...original, url: "https://example.org/otra-maquina" },
       { ...original, reference: "REFERENCIA-AJENA" },
@@ -279,7 +282,7 @@ test("Mercaeleva normaliza familias auxiliares y de manipulación con evidencia 
 test("metadatos contradictorios y evidencias ambiguas no autorizan cambiar marcas o modelos", () => {
   for (const reference of ["2020", "2118", "6103", "6852", "6689", "6863"]) {
     const record = source("gam", reference);
-    const prepared = prepareSourceProduct(record);
+    const prepared = prepareOriginal(record);
     assert.equal(prepared.product.title, record.title, reference);
     const report = analyzeTitleQuality([{
       source: record, published: { ...prepared.product, title: record.title }, prepared,
@@ -303,7 +306,7 @@ test("el motor conserva todas las identidades y mantiene título y descripción_
   let changed = 0;
   for (const catalog of originals) {
     for (const record of catalog.products) {
-      const prepared = prepareSourceProduct(record);
+      const prepared = prepareOriginal(record);
       total++;
       if (prepared.product.title !== record.title) changed++;
       assert.equal(prepared.product.description_title, prepared.product.title, `${record.providerId}:${record.reference}`);

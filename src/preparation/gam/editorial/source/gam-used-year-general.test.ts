@@ -3,7 +3,9 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamUsedYearGeneral } from "./used-year-general.js";
-import { prepareSourceProduct } from "../../../prepare-product.js";
+import { createPreparedSourceFixture } from "../../../../testing/builders/prepared-source-fixture.js";
+
+const prepareOriginal = createPreparedSourceFixture();
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
@@ -22,7 +24,7 @@ test("GAM: año de fabricación propio ausente de ambos textos, sin alterar otro
   const recovered = new Set<string>();
   for (const record of gam.products) {
     const original = JSON.stringify(record);
-    const prepared = prepareSourceProduct(record);
+    const prepared = prepareOriginal(record);
     const previousGeneral = prepared.product.description_general;
     const extracted = previousGeneral?.match(/^Año de fabricación declarado para esta unidad: (\d{4})\.\n\n/u);
     if (extracted) {
@@ -42,13 +44,13 @@ test("GAM: año de fabricación propio ausente de ambos textos, sin alterar otro
   }
   for (const reference of expected) {
     const record = find(reference);
-    const general = prepareSourceProduct(record).product.description_general;
+    const general = prepareOriginal(record).product.description_general;
     assert.ok(general?.includes(record.year ?? "INVALID"), reference);
   }
   assert.equal(recovered.size, 9);
   assert.ok(!recovered.has("6623"));
   const editorialRecord = find("6623");
-  const editorial = prepareSourceProduct(editorialRecord).product.description_general;
+  const editorial = prepareOriginal(editorialRecord).product.description_general;
   assert.ok(editorial);
   assert.ok(editorial.includes("2007"));
   assert.ok(editorial.includes("2024"));
@@ -57,7 +59,7 @@ test("GAM: año de fabricación propio ausente de ambos textos, sin alterar otro
 
 test("GAM: rechaza identidad, año o fuente discrepantes sin enriquecer", () => {
   const base = find("6218");
-  const prepared = prepareSourceProduct(base);
+  const prepared = prepareOriginal(base);
   const currentGeneral = prepared.product.description_general;
   assert.ok(currentGeneral);
   const previousGeneral = currentGeneral.replace(/^Año de fabricación declarado para esta unidad: 2022\.\n\n/u, "");
@@ -87,7 +89,7 @@ test("GAM: rechaza identidad, año o fuente discrepantes sin enriquecer", () => 
 
 test("Gomariz: no añade fechas en otra procedencia", () => {
   for (const record of gomariz.products) {
-    const prepared = prepareSourceProduct(record);
+    const prepared = prepareOriginal(record);
     assert.equal(resolveGamUsedYearGeneral(record, prepared.product.description, prepared.product.description_general), null);
   }
 });

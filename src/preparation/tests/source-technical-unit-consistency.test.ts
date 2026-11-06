@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { prepareSourceProduct } from "../prepare-product.js";
+import { createPreparedSourceFixture } from "../../testing/builders/prepared-source-fixture.js";
 import { reconcileGamSourceTechnicalUnits } from "../gam/technical/reconciliation/gam-source-technical-units.js";
 import { normalizeMercaelevaAusaHeightText } from "../mercaeleva/technical/reconciliation/mercaeleva-ausa-height.js";
+
+const prepareOriginal = createPreparedSourceFixture();
 
 const [gam, mercaeleva, gomariz] = await Promise.all([
   readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json"),
@@ -36,13 +38,13 @@ test("normaliza alturas publicadas con unidades duplicadas sin convertir las mag
   for (const [reference, height] of heights) {
     const original = recordOf(gam.products, reference);
     const snapshot = structuredClone(original);
-    const prepared = prepareSourceProduct(original);
+    const prepared = prepareOriginal(original);
     assert.equal(prepared.product.spec["Altura Plataforma"], height, reference);
     assert.deepEqual(original, snapshot, reference);
   }
   for (const reference of ["6873", "6874"]) {
     const original = recordOf(gam.products, reference);
-    assert.equal(prepareSourceProduct(original).product.spec["Alcance Lateral"], "8,5 m", reference);
+    assert.equal(prepareOriginal(original).product.spec["Alcance Lateral"], "8,5 m", reference);
   }
 });
 
@@ -51,7 +53,7 @@ test("conserva únicamente el voltaje acreditado cuando la capacidad se expresa 
     const original = recordOf(gam.products, reference);
     assert.equal(original.specs?.["Capacidad de la batería"], "24V / 240h(V/Ah)", reference);
     const before = structuredClone(original);
-    const prepared = prepareSourceProduct(original);
+    const prepared = prepareOriginal(original);
     assert.equal(prepared.product.spec["Capacidad de la batería"], undefined, reference);
     assert.equal(prepared.product.spec["Capacidad de la batería (Ah)"], undefined, reference);
     assert.equal(prepared.product.spec["Voltaje batería (V)"], "24 V", reference);
@@ -62,7 +64,7 @@ test("conserva únicamente el voltaje acreditado cuando la capacidad se expresa 
 test("traslada datos eléctricos tipados fuera del campo de anchura sin alterar dimensiones", () => {
   const original = recordOf(gam.products, "2218");
   const before = structuredClone(original);
-  const prepared = prepareSourceProduct(original);
+  const prepared = prepareOriginal(original);
   assert.equal(prepared.product.spec["Ancho promedio"], undefined);
   assert.equal(prepared.product.spec["Voltaje batería (V)"], "24 V");
   assert.equal(prepared.product.spec["Capacidad de la batería (Ah)"], "735-875 Ah");
@@ -89,7 +91,7 @@ test("sanea dos resúmenes de Ausa solo con altura de elevación acreditada", ()
   for (const reference of ["M855-6850", "M640-1938"]) {
     const original = recordOf(mercaeleva.products, reference);
     const before = structuredClone(original);
-    const prepared = prepareSourceProduct(original);
+    const prepared = prepareOriginal(original);
     assert.match(prepared.product.description ?? "", /ALTURA DE ELEVACION 4\.300 mm/u, reference);
     assert.doesNotMatch(prepared.product.description_general ?? "", /4\.30mm/u, reference);
     assert.doesNotMatch(`${prepared.product.description} ${prepared.product.description_general}`, /4\.30mm|ALTURA DE TRABAJO 4\.300 mm/u, reference);
@@ -105,7 +107,7 @@ test("sanea dos resúmenes de Ausa solo con altura de elevación acreditada", ()
 test("omite alturas de plataforma que no se pueden acreditar sin convertir unidades", () => {
   const original = recordOf(gam.products, "1714");
   const before = structuredClone(original);
-  const prepared = prepareSourceProduct(original);
+  const prepared = prepareOriginal(original);
   assert.equal(prepared.product.spec["Altura Plataforma"], undefined);
   assert.equal(prepared.status, "ready");
   assert.equal(reconcileGamSourceTechnicalUnits({ ...original, model: "MS20X" }).specs?.["Altura Plataforma"],
@@ -118,7 +120,7 @@ test("normaliza la altura de plataforma acreditada de tres recogepedidos Yale", 
     const original = recordOf(gam.products, reference);
     const before = structuredClone(original);
     assert.equal(original.specs?.["Altura Plataforma"], "-/980 metros", reference);
-    const prepared = prepareSourceProduct(original);
+    const prepared = prepareOriginal(original);
     assert.equal(prepared.product.spec["Altura Plataforma"], "- / 980 mm", reference);
     assert.equal(reconcileGamSourceTechnicalUnits({ ...original, model: "Otro" }).specs?.["Altura Plataforma"],
       "-/980 metros", reference);
@@ -137,7 +139,7 @@ test("elimina etiquetas duplicadas de batería sin perder voltaje ni amperios-ho
     const original = recordOf(gam.products, reference);
     const before = structuredClone(original);
     assert.equal(original.specs?.["Capacidad de la batería"], `${battery}(V/Ah)`, reference);
-    const prepared = prepareSourceProduct(original);
+    const prepared = prepareOriginal(original);
     assert.equal(prepared.product.spec["Capacidad de la batería"], battery, reference);
     assert.deepEqual(original, before, reference);
   }
@@ -146,7 +148,7 @@ test("elimina etiquetas duplicadas de batería sin perder voltaje ni amperios-ho
 test("la salida técnica de los tres proveedores no reintroduce unidades duplicadas", () => {
   for (const products of [gam.products, gomariz.products, mercaeleva.products]) {
     for (const original of products) {
-      const prepared = prepareSourceProduct(original).product;
+      const prepared = prepareOriginal(original).product;
       for (const [key, value] of Object.entries(prepared.spec)) {
         if (typeof value !== "string") continue;
         assert.doesNotMatch(value, /\bmm\s+metros?\b|\bm\s+metros?\b|\(V\/Ah\)\s*\(V\/Ah\)/iu,
@@ -164,7 +166,7 @@ test("no publica tensiones de batería como potencia de motor en arrastradores",
     const original = recordOf(gam.products, reference);
     const snapshot = structuredClone(original);
     assert.equal(original.specs?.[key], value, reference);
-    const prepared = prepareSourceProduct(original);
+    const prepared = prepareOriginal(original);
     assert.equal(prepared.product.spec[key], undefined, reference);
     assert.equal(prepared.product.spec.Baterías, original.specs?.Baterías, reference);
     assert.equal(prepared.product.spec["Capacidad de arrastre"], original.specs?.["Capacidad de arrastre"], reference);
@@ -180,7 +182,7 @@ test("no publica tensiones de batería como potencia de motor en arrastradores",
   }
   for (const reference of ["2572", "2738"]) {
     const original = recordOf(gam.products, reference);
-    const prepared = prepareSourceProduct(original);
+    const prepared = prepareOriginal(original);
     assert.equal(prepared.product.spec["Potencia Motor (CV)"], original.specs?.["Potencia Motor (CV)"], reference);
     assert.equal(prepared.product.spec["Potencia Motor (KW)"], original.specs?.["Potencia Motor (KW)"], reference);
   }

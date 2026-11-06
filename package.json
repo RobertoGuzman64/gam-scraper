@@ -53,8 +53,9 @@
     "consola": "node scripts/tooling.mjs consola",
     "medir:ejecucion": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/operations/measure-execution.ps1",
     "build": "node scripts/run-build.mjs",
-    "test": "node scripts/run-build.mjs --quiet --if-needed && node scripts/run-tests.mjs",
-    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+    "test": "node tests-performance-guard.mjs && node scripts/run-build.mjs --quiet --if-needed && node scripts/run-tests.mjs",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "test:guard": "node tests-performance-guard.mjs"
   },
   "dependencies": {
     "cheerio": "^1.0.0",

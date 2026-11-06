@@ -1,4 +1,4 @@
-import { printReportLine } from "../../reporting/terminal.js";
+import { printCommandHeader, printCommandSection, printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import type { GapInput } from "../../../catalog/diagnostics/content-gaps-types.js";
 import { readContentGapOptions, type CommandOptions } from "./catalog-content-gaps-options.js";
@@ -47,8 +47,8 @@ const reportPublications = async (paths: readonly string[], options: CommandOpti
     console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, editorial, technicalDensity }, null, 2));
   } else {
     printReportLine(`HUECOS | publicaciones acreditadas (${publications.map((item) => item.providerId).join(", ")}) | finales ${products.length} | diagnóstico exclusivamente editorial`);
-    printEditorial(editorial, options.limit);
-    for (const line of formatTechnicalDensityReport(technicalDensity, options.limit)) printReportLine(line);
+    printEditorial(editorial, options.limit, options.detailed);
+    for (const line of formatTechnicalDensityReport(technicalDensity, options.limit, options.detailed)) printReportLine(line);
   }
 };
 
@@ -98,14 +98,16 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
   if (options.json) {
     console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, coverage, editorial, editorialPrepared, priorities, technicalDensity, ...(technicalSpecs ? { technicalSpecs } : {}) }, null, 2));
   } else {
-    printReportLine(`HUECOS | publicaciones finales ${coverage.totals.products} | comparación frente a preparación actual; sin modificar publicaciones`);
-    printDescriptionCoverage(coverage);
-    printDescriptionPriorities(priorities, options.limit);
-    printReportLine("CALIDAD EDITORIAL | vista derivada tras preparación; señales orientativas independientes de P0");
-    printEditorial(editorialPrepared, options.limit);
-    for (const line of formatTechnicalDensityReport(technicalDensity, options.limit)) printReportLine(line);
+    printReportLine(`HUECOS | publicaciones finales ${coverage.totals.products} · comparación con preparación actual · solo lectura`);
+    printCommandSection("DESCRIPCIONES · P0");
+    printDescriptionCoverage(coverage, options.detailed);
+    printDescriptionPriorities(priorities, options.limit, options.detailed);
+    if (options.detailed) printReportLine("CALIDAD EDITORIAL | vista derivada tras preparación; señales orientativas independientes de P0");
+    if (options.detailed) printEditorial(editorialPrepared, options.limit, true);
+    for (const line of formatTechnicalDensityReport(technicalDensity, options.limit, options.detailed)) printReportLine(line);
     if (technicalSpecs) {
-      for (const line of formatSpecificationCoverageReport(technicalSpecs, options.limit)) printReportLine(line);
+      printCommandSection("ESPECIFICACIONES Y CIERRE AUDITOR");
+      for (const line of formatSpecificationCoverageReport(technicalSpecs, options.limit, options.detailed)) printReportLine(line);
       for (const line of formatCatalogAuditClosureReport(coverage, priorities, technicalSpecs)) printReportLine(line);
     }
   }
@@ -113,10 +115,11 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
 
 export const runCatalogContentGaps = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    printReportLine("Uso: npm run huecos -- [--comparar | --finales | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--json] [--specs] [--titulos]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, comparación de publicaciones acreditadas frente a preparación actual. --comparar fuerza esa comparación. --finales analiza solo las publicaciones acreditadas. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. --comparar --specs compara las claves técnicas del origen canónico, preparación y publicación; las ausencias familiares no son atributos obligatorios. --comparar --titulos analiza señales de títulos técnicos en publicaciones y preparación actual, sin modificar fichas.");
+    printReportLine("Uso: npm run huecos -- [--comparar | --finales | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--detalle] [--json] [--specs] [--titulos]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, comparación de publicaciones acreditadas frente a preparación actual. --comparar fuerza esa comparación. --finales analiza solo las publicaciones acreditadas. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. --comparar --specs compara las claves técnicas del origen canónico, preparación y publicación; las ausencias familiares no son atributos obligatorios. --comparar --titulos analiza señales de títulos técnicos en publicaciones y preparación actual, sin modificar fichas.");
     return;
   }
   const options = readContentGapOptions(args);
+  if (!options.json) printCommandHeader("HUECOS · AUDITORÍA TÉCNICA");
   if (options.compareSources) {
     const paths = await discoverAccreditedPublications(root);
     if (paths.length === 0) throw new Error("No hay publicaciones acreditadas en catalogs/providers/*/publications");
@@ -188,18 +191,18 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
     return;
   }
   printReportLine(`HUECOS | ${sourceLabel} | originales ${analysis.universe.total} | ready ${analysis.universe.ready} | review ${analysis.universe.review} | sin categoría ${analysis.universe.withoutCategory}`);
-  printReportLine(analysis.universe.note);
-  printReportLine(`PROVEEDORES | ${analysis.universe.providers.map((item) => `${item.providerId}:${item.originals}`).join(" | ")}`);
-  printReportLine(`PATRONES | ${ranked.length} con grupo >= ${options.minGroup} y ausencias >= ${options.minMissing} | TOP ${Math.min(options.limit, ranked.length)}`);
-  for (const { group, observation } of ranked.slice(0, options.limit)) {
+  if (options.detailed) printReportLine(analysis.universe.note);
+  printReportLine(`PROVEEDORES | ${analysis.universe.providers.map((item) => `${item.providerId}:${item.originals}`).join(" · ")}`);
+  printReportLine(`PATRONES | ${ranked.length} grupos con cobertura incompleta; observaciones, no contratos obligatorios`);
+  if (options.detailed) for (const { group, observation } of ranked.slice(0, options.limit)) {
     const field = observation.field.name;
     const label = group.category ?? `sin categoría (${group.sourceCategoryKey})`;
     const refinement = [group.brand, group.model].filter((value) => value !== null).join(" / ");
     printReportLine(`${group.providerId} | ${label}${refinement ? ` | ${refinement}` : ""} | ${field} | ${observation.present}/${observation.applicable} (${observation.coveragePercent}%) | ausentes ${observation.missing} | ${observation.coverage} | evidencias directas ${observation.directEvidence}, texto relacionado ${observation.relatedText}`);
     printReportLine(`  Casos: ${observation.missingIdentities.join(", ")}`);
   }
-  printEditorial(editorial, options.limit);
-  for (const line of formatTechnicalDensityReport(technicalDensity, options.limit)) printReportLine(line);
+  printEditorial(editorial, options.limit, options.detailed);
+  for (const line of formatTechnicalDensityReport(technicalDensity, options.limit, options.detailed)) printReportLine(line);
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

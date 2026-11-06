@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import type { GapGroupBy } from "../../../catalog/diagnostics/content-gaps-types.js";
 
-export type CommandOptions = { readonly json: boolean; readonly specs: boolean; readonly titles: boolean; readonly finalPublications: boolean; readonly compareSources: boolean; readonly groupBy: GapGroupBy; readonly minGroup: number;
+export type CommandOptions = { readonly json: boolean; readonly detailed: boolean; readonly specs: boolean; readonly titles: boolean; readonly finalPublications: boolean; readonly compareSources: boolean; readonly groupBy: GapGroupBy; readonly minGroup: number;
   readonly minMissing: number; readonly limit: number; readonly catalogs: readonly string[];
   readonly publications: readonly string[] };
 
@@ -14,6 +14,7 @@ const parsePositive = (value: string | undefined, flag: string): number => {
 
 export const readContentGapOptions = (args: readonly string[]): CommandOptions => {
   let json = false;
+  let detailed = false;
   let specs = false;
   let titles = false;
   let finalPublications = false;
@@ -27,6 +28,7 @@ export const readContentGapOptions = (args: readonly string[]): CommandOptions =
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === "--json") json = true;
+    else if (arg === "--detalle") detailed = true;
     else if (arg === "--specs") specs = true;
     else if (arg === "--titulos") titles = true;
     else if (arg === "--finales") finalPublications = true;
@@ -62,6 +64,6 @@ export const readContentGapOptions = (args: readonly string[]): CommandOptions =
   if (titles && specs) throw new Error("--titulos y --specs son diagnósticos alternativos; ejecutarlos por separado");
   if (titles && !compareSources) throw new Error("--titulos requiere --comparar para contrastar publicación y preparación");
   if (specs && !compareSources) throw new Error("--specs requiere --comparar; las publicaciones solas no acreditan especificaciones de origen");
-  return { json, specs, titles, finalPublications, compareSources, groupBy, minGroup, minMissing, limit, catalogs, publications };
+  return { json, detailed, specs, titles, finalPublications, compareSources, groupBy, minGroup, minMissing, limit, catalogs, publications };
 };
 

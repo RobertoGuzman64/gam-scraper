@@ -1,3 +1,6 @@
+import assert from "node:assert/strict";
+import { basename, join } from "node:path";
+import type { IndividualFinishResult } from "../../publication/individual-finish.js";
 import { createIndividualWorkspaceFixture } from "./individual-workspace-fixture.js";
 import { preflightIndividualAccreditations } from "../../publication/individual-accreditation.js";
 import { startIndividualEditorial, decideIndividualEditorial, approveIndividualEditorial } from "../../publication/individual-editorial.js";
@@ -20,10 +23,34 @@ const approve = async (root: string): Promise<void> => {
   }
 };
 
-export const createIndividualFinishWorkspace = () => createIndividualWorkspaceFixture({
+const finishFixtureOptions = {
   prefix: "equipzilla-finish con espacios ", serialNumber: "SERIAL-REPETIDO",
-  defaultState: "approved", approve
-});
+  defaultState: "approved" as const, approve
+};
+
+export const createIndividualFinishWorkspace = () => createIndividualWorkspaceFixture(finishFixtureOptions);
+
+export const createPublishedIndividualFinishWorkspace = () => {
+  const withWorkspace = createIndividualWorkspaceFixture({
+    ...finishFixtureOptions,
+    defaultState: "published" as const,
+    publish: publishIndividualTestWorkspace
+  });
+  return async (action: (root: string, desktop: string, result: IndividualFinishResult) => Promise<void>): Promise<void> => {
+    await withWorkspace(async (root, desktop, published) => {
+      assert.ok(published);
+      const snapshot = structuredClone(published);
+      const result: IndividualFinishResult = {
+        ...snapshot,
+        providers: snapshot.providers.map((item) => ({
+          ...item,
+          zipFile: item.zipFile ? join(desktop, basename(item.zipFile)) : null
+        }))
+      };
+      await action(root, desktop, result);
+    });
+  };
+};
 
 export const publishIndividualTestWorkspace = (root: string, desktop: string) => publishIndividualCatalogs({
   workspace: root, providers: finishProviders, dryRun: false, desktopDirectory: desktop

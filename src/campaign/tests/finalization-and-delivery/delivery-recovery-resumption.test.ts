@@ -3,26 +3,25 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { lstat, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { deliverActiveCampaign } from "../../delivery/execute.js";
 import { verifyDeliveredCampaign } from "../../delivery/verification.js";
 import { prepareCampaignAdmission } from "../../retention/admission.js";
 import { abandonFailedCampaign, inspectRecoverableCampaign } from "../../retention/recovery.js";
 import { createBatchRunId } from "../../../scraping/batch/run.js";
 import { listCampaignRuns } from "../../discovery/search.js";
 import { CAMPAIGN_PROVIDERS } from "../../discovery/report.js";
-import { createDeliveryFixtures, date, prefixes, createSecondCampaign, writeInterruptedRotation } from "./delivery-fixtures.js";
+import { createDeliveryFixtures, prefixes, writeInterruptedRotation } from "./delivery-fixtures.js";
 
 const fixtureCache = createDeliveryFixtures();
 const fixture = fixtureCache.fixture;
-const approvedFixture = fixtureCache.approvedFixture;
+const deliveredFixture = fixtureCache.deliveredFixture;
+const successiveDeliveryFixture = fixtureCache.successiveDeliveryFixture;
 after(fixtureCache.close);
 
 test("rotación con temporal previo crea un registro comprometido y concluye sin residuos", async () => {
-  const data = await approvedFixture();
+  const data = await successiveDeliveryFixture();
   try {
-    await deliverActiveCampaign(data.root, data.desktop, date);
-    const successorId = await createSecondCampaign(data.root);
-    await deliverActiveCampaign(data.root, data.desktop, date);
+    const successorId = (await listCampaignRuns(data.root))[0]?.report.runId;
+    assert.ok(successorId && successorId !== data.runId);
     const folder = join(data.root, "storage", "scraped", "campaigns");
     const stage = join(folder, ".rotation.json.tmp");
     await writeFile(stage, '{"version":');
@@ -35,9 +34,8 @@ test("rotación con temporal previo crea un registro comprometido y concluye sin
 });
 
 test("abandono de primer proveedor con bloqueo antiguo y temporal de run.json conserva la entrega", async () => {
-  const data = await approvedFixture();
+  const data = await deliveredFixture();
   try {
-    await deliverActiveCampaign(data.root, data.desktop, date);
     const failedId = createBatchRunId();
     const scraped = join(data.root, "storage", "scraped", "campaigns", failedId);
     const gamDir = join(scraped, "gam");
@@ -93,9 +91,9 @@ test("un bloqueo activo o de otra ejecución impide abandonar sin borrar sus arc
 });
 
 test("se puede abandonar expresamente un directorio ligado al runId aunque falte el primer run.json", async () => {
-  const data = await approvedFixture();
+  const data = await deliveredFixture();
   try {
-    const delivered = await deliverActiveCampaign(data.root, data.desktop, date);
+    const delivered = join(data.desktop, `equipzilla-2026-10-26-${data.runId}.zip`);
     const failedId = createBatchRunId();
     const folder = join(data.root, "storage", "scraped", "campaigns", failedId);
     const first = join(folder, "gam");
@@ -112,7 +110,7 @@ test("se puede abandonar expresamente un directorio ligado al runId aunque falte
     await abandonFailedCampaign(data.root, failedId);
     await assert.rejects(lstat(folder), /ENOENT/);
     await assert.rejects(lstat(runDir), /ENOENT/);
-    assert.ok((await readFile(delivered.zipFile)).length > 0);
+    assert.ok((await readFile(delivered)).length > 0);
     assert.equal((await verifyDeliveredCampaign(data.root, data.desktop, data.runId)).zipStatus, "verified");
   } finally { await data.cleanup(); }
 });
@@ -140,9 +138,8 @@ test("un huérfano sin run.json no permite borrar temporales ajenos ni un bloque
 });
 
 test("un directorio aislado creado antes de run.json se puede abandonar sin afectar originales independientes", async () => {
-  const data = await approvedFixture();
+  const data = await deliveredFixture();
   try {
-    await deliverActiveCampaign(data.root, data.desktop, date);
     const failedId = createBatchRunId();
     const folder = join(data.root, "storage", "scraped", "campaigns", failedId);
     const unrelated = join(data.root, "storage", "scraped", "manain", "censo.csv");
@@ -157,11 +154,10 @@ test("un directorio aislado creado antes de run.json se puede abandonar sin afec
 });
 
 test("la reanudación de rotación no retira una carpeta bloqueada por un proceso activo", async () => {
-  const data = await approvedFixture();
+  const data = await successiveDeliveryFixture();
   try {
-    await deliverActiveCampaign(data.root, data.desktop, date);
-    const successorId = await createSecondCampaign(data.root);
-    await deliverActiveCampaign(data.root, data.desktop, date);
+    const successorId = (await listCampaignRuns(data.root))[0]?.report.runId;
+    assert.ok(successorId && successorId !== data.runId);
     await writeInterruptedRotation(data.root, data.runId, successorId);
     const folder = join(data.root, "storage", "scraped", "campaigns", data.runId);
     const lock = join(folder, ".batch.lock");

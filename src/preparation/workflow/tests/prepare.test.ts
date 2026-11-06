@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, copyFile, cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import test from "node:test";
+import test, { after } from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/scraping.js";
 import { writeOutputs } from "../../../scraping/output/publish.js";
@@ -29,19 +30,40 @@ const machine = (n: number, price: string | null = null): ProductRecord => ({
   specs: { "Capacidad de carga": n === 1 ? "500 kg" : "" }
 });
 
-const withFixture = async (run: (fixture: { root: string; source: string; out: string }) => Promise<void>): Promise<void> => {
-  const root = await mkdtemp(join(tmpdir(), "equipzilla-preparation-"));
-  const source = join(root, "scraped", "inventario-catalog.json");
-  const out = join(root, "prepared", "inventario-preparation.json");
+type PreparationTestFixture = { readonly root: string; readonly source: string; readonly out: string };
+let originalFixture: Promise<string> | undefined;
+const createOriginalFixture = async (): Promise<string> => {
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-preparation-base-"));
   try {
     const products = Array.from({ length: 12 }, (_, i) => machine(i + 1));
     const result: CategoryScrapeResult = {
       category, discoveredProductUrls: products.length, products, failures: []
     };
     await writeOutputs(join(root, "scraped"), "inventario", [result], when, when);
+    return root;
+  } catch (error) {
+    await rm(root, { recursive: true, force: true });
+    throw error;
+  }
+};
+
+const withFixture = async (run: (fixture: PreparationTestFixture) => Promise<void>): Promise<void> => {
+  originalFixture ??= createOriginalFixture();
+  const sourceRoot = await originalFixture;
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-preparation-"));
+  const source = join(root, "scraped", "inventario-catalog.json");
+  const out = join(root, "prepared", "inventario-preparation.json");
+  try {
+    await cp(sourceRoot, root, { recursive: true, mode: constants.COPYFILE_FICLONE });
     await run({ root, source, out });
   } finally { await rm(root, { recursive: true, force: true }); }
 };
+
+after(async () => {
+  if (!originalFixture) return;
+  const root = await originalFixture;
+  await rm(root, { recursive: true, force: true });
+});
 
 const options = (source: string, out: string, dryRun = false, compare: string | null = null) => ({
   providerId: "gam", source, out, dryRun, compare

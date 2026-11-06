@@ -1,5 +1,5 @@
 import type { CommercialAudit } from "../../commercial/export/commercial-audit.js";
-import { printReportLine } from "./terminal.js";
+import { printCommandHeader, printCommandProvider, printCommandSection, printCommandResult, printCommandWarning, printReportLine } from "./terminal.js";
 
 export const printCommercialAuditReport = (
   report: CommercialAudit, mode: string | undefined, attributeId: string | undefined, productReference: string | undefined
@@ -9,14 +9,22 @@ export const printCommercialAuditReport = (
     return;
   }
   if (mode === "--acreditacion") {
+    printCommandHeader("ACREDITACIÓN COMERCIAL");
     let blocking = 0;
+    let exported = 0;
+    let attributes = 0;
     for (const { accreditation: audit } of report.providers) {
       blocking += audit.summary.blocking;
-      printReportLine(`${audit.providerId.toUpperCase()} | acreditadas por contrato ${audit.summary.exported} | excluidas ${audit.summary.excluded} | categoría ${audit.summary.categorized} | pendientes ${audit.summary.pendingCategory} | atributos ${audit.summary.attributes} | títulos normalizados ${audit.summary.normalizedTitles} | campos perdidos ${audit.summary.lostFields} | alterados ${audit.summary.changedFields} | infracciones ${audit.summary.blocking}`);
+      exported += audit.summary.exported;
+      attributes += audit.summary.attributes;
+      printCommandProvider(audit.providerId, `${audit.summary.exported} elegibles · ${audit.summary.categorized} categorizadas · ${audit.summary.attributes} atributos · ${audit.summary.blocking} infracciones`);
       for (const finding of audit.blocking) printReportLine(`  BLOQUEANTE ${finding.reason}: ${finding.affected}`);
-      for (const finding of audit.pending) printReportLine(`  PENDIENTE ${finding.reason}: ${finding.affected}`);
+      for (const finding of audit.pending) printCommandWarning(`${audit.providerId.toUpperCase()} | ${finding.reason}: ${finding.affected}`);
     }
-    printReportLine(`ACREDITACIÓN TÉCNICA DEL DERIVADO | ${blocking === 0 ? "SIN INFRACCIONES" : `${blocking} INFRACCIONES`} | validación semántica y BD todavía pendientes`);
+    printCommandSection("TOTAL ACREDITADO");
+    printReportLine(`${exported} productos · ${attributes} atributos · ${blocking} infracciones`);
+    printReportLine("Validación semántica e integración en BD: NO VERIFICADAS");
+    printCommandResult(blocking === 0 ? "SIN INFRACCIONES DEL CONTRATO COMERCIAL" : `${blocking} INFRACCIONES DEL CONTRATO COMERCIAL`, blocking === 0 ? "PASS" : "FAIL");
     if (blocking > 0) process.exitCode = 1;
     return;
   }
@@ -138,21 +146,39 @@ export const printCommercialAuditReport = (
     }
     return;
   }
+  const detailed = mode === "--detalle";
   const total = report.providers.reduce((sum, entry) => sum + entry.baseline.products, 0);
-  printReportLine(`AUDITORÍA COMERCIAL | ${total} fichas técnicas acreditadas | propuestas, no decisiones aprobadas`);
-  for (const { baseline: value, originalProducts, publicationSha256 } of report.providers) {
-    printReportLine(`${value.providerId.toUpperCase()} | publicadas ${value.products} | originales ${originalProducts} | SHA ${publicationSha256}`);
-    printReportLine(`  Mapeador previo: categorías ${value.mapping.withCategory} | sin categoría ${value.mapping.withoutCategory} (incluye excluidos) | atributos ${value.mapping.attributes}`);
-    printReportLine(`  Publicación técnica: títulos ${value.publication.withTitle} | textos breves ${value.publication.withDescription} | generales ${value.publication.withGeneralDescription} | imágenes ${value.publication.withImage} | specs ${value.publication.specifications} | precios ${value.publication.withPrice}`);
-    printReportLine(`  Categorización comercial: elegibles ${value.categoryAudit.eligible} | propuestas ${value.categoryAudit.proposed} | pendientes ${value.categoryAudit.pending} | lotes excluidos ${value.categoryAudit.excludedLots} | herramientas excluidas ${value.categoryAudit.excludedTools} | accesorios excluidos ${value.categoryAudit.excludedAccessories}`);
-    const attributeAudit = report.providers.find((item) => item.baseline.providerId === value.providerId)?.attributeAudit;
-    if (attributeAudit) printReportLine(`  Auditoría atributos: aceptados ${attributeAudit.acceptedAssignments}/${attributeAudit.mappedAssignments + attributeAudit.recoveredAssignments} | recuperados ${attributeAudit.recoveredAssignments} | incidencias de validación ${attributeAudit.validationIssues.reduce((sum, item) => sum + item.affected, 0)}`);
-    printReportLine(`  Referencias visibles duplicadas ${value.commercialReferenceCollisions.length} | categorías propuestas distintas ${value.categoryAudit.categories.length}`);
-    const presentationAudit = report.providers.find((item) => item.baseline.providerId === value.providerId)?.presentationAudit;
-    if (presentationAudit) printReportLine(`  Presentación comercial: títulos ${presentationAudit.withTitle} | resúmenes ${presentationAudit.withShort} | generales ${presentationAudit.withGeneral} | metadata ${presentationAudit.withMetadata} | títulos depurados ${presentationAudit.titlesNormalized} | imágenes/specs perdidas ${presentationAudit.lostImages}/${presentationAudit.lostSpecifications}`);
-    for (const group of value.pendingCategoryFamilies.slice(0, 5)) {
-      printReportLine(`    PENDIENTE ${group.sourceCategory}: ${group.affected} | ${group.examples.map((item) => item.reference ?? item.sourceUrl).join(", ")}`);
+  printCommandHeader("AUDITORÍA COMERCIAL");
+  printReportLine(`${total} fichas técnicas acreditadas · propuestas comerciales, no importación validada`);
+  let eligible = 0;
+  let attributes = 0;
+  let pending = 0;
+  let blocking = 0;
+  for (const { baseline: value, originalProducts, publicationSha256, attributeAudit, presentationAudit, accreditation } of report.providers) {
+    eligible += value.categoryAudit.eligible;
+    pending += value.categoryAudit.pending;
+    attributes += accreditation.summary.attributes;
+    blocking += accreditation.summary.blocking;
+    printCommandProvider(value.providerId, `${value.categoryAudit.eligible} elegibles · ${value.categoryAudit.proposed} propuestas · ${value.categoryAudit.pending} pendientes · ${accreditation.summary.attributes} atributos`);
+    if (value.commercialReferenceCollisions.length > 0) printCommandWarning(`${value.providerId.toUpperCase()} | ${value.commercialReferenceCollisions.length} referencias visibles duplicadas`);
+    for (const issue of accreditation.blocking) printReportLine(`  BLOQUEANTE ${issue.reason}: ${issue.affected}`);
+    for (const issue of accreditation.pending) printCommandWarning(`${value.providerId.toUpperCase()} | ${issue.reason}: ${issue.affected}`);
+    if (detailed) {
+      printReportLine(`    Originales ${originalProducts} · publicadas ${value.products} · SHA-256 ${publicationSha256}`);
+      printReportLine(`    Mapeador: categoría ${value.mapping.withCategory} · sin categoría ${value.mapping.withoutCategory} · atributos ${value.mapping.attributes}`);
+      printReportLine(`    Publicación: títulos ${value.publication.withTitle} · cortos ${value.publication.withDescription} · generales ${value.publication.withGeneralDescription} · imágenes ${value.publication.withImage} · specs ${value.publication.specifications} · precios ${value.publication.withPrice}`);
+      printReportLine(`    Excluidos: lotes ${value.categoryAudit.excludedLots} · herramientas ${value.categoryAudit.excludedTools} · accesorios ${value.categoryAudit.excludedAccessories}`);
+      printReportLine(`    Atributos aceptados ${attributeAudit.acceptedAssignments}/${attributeAudit.mappedAssignments + attributeAudit.recoveredAssignments} · recuperados ${attributeAudit.recoveredAssignments} · incidencias de validación ${attributeAudit.validationIssues.reduce((sum, issue) => sum + issue.affected, 0)}`);
+      printReportLine(`    Presentación: títulos ${presentationAudit.withTitle} · cortos ${presentationAudit.withShort} · generales ${presentationAudit.withGeneral} · metadata ${presentationAudit.withMetadata} · títulos depurados ${presentationAudit.titlesNormalized} · imágenes/specs perdidas ${presentationAudit.lostImages}/${presentationAudit.lostSpecifications}`);
+      for (const group of value.pendingCategoryFamilies) {
+        printReportLine(`    PENDIENTE ${group.sourceCategory}: ${group.affected} · ${group.examples.map((item) => item.reference ?? item.sourceUrl).join(", ")}`);
+      }
     }
   }
-  printReportLine("Las exclusiones solo afectan a la selección comercial. Las propuestas no acreditan precisión ni importabilidad, y los históricos reducidos no permiten comparación completa.");
+  printCommandSection("TOTAL COMERCIAL");
+  printReportLine(`${eligible} elegibles · ${attributes} atributos · ${pending} categorías pendientes · ${blocking} infracciones`);
+  printReportLine("La auditoría acredita contratos derivados; no verifica precisión semántica ni aceptación en BD.");
+  printCommandResult(blocking > 0 ? `${blocking} infracciones comerciales detectadas` :
+    pending > 0 ? "Auditoría realizada · existen categorías pendientes de revisión" : "Auditoría realizada · sin infracciones de contrato",
+  blocking > 0 || pending > 0 ? "WARN" : "PASS");
 };

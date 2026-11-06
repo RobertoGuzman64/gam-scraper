@@ -11,6 +11,16 @@ import { consolidatePortableCampaign, readPortableCampaign } from "../../catalog
 const fixtures = reuseCampaignTestFixture(createFixture);
 after(fixtures.close);
 
+const publishedFixture = async () => {
+  await fixtures.prepared("approved", async (data) => {
+    const draft = await finalizeActiveCampaign(data.root, false);
+    await approveDraft(draft.draftFile);
+  });
+  return fixtures.prepared("published", async (data) => {
+    assert.equal((await finalizeActiveCampaign(data.root, false)).status, "selected");
+  }, "approved");
+};
+
 test("solo una acreditación aprobada crea una campaña íntegra y portable, sin storage", async () => {
   const data = await fixtures.fixture();
   try {
@@ -34,11 +44,8 @@ test("solo una acreditación aprobada crea una campaña íntegra y portable, sin
 });
 
 test("la campaña portátil detecta alteración de JSON final y no conserva directorios históricos internos", async () => {
-  const data = await fixtures.fixture();
+  const data = await publishedFixture();
   try {
-    const draft = await finalizeActiveCampaign(data.root, false);
-    await approveDraft(draft.draftFile);
-    await finalizeActiveCampaign(data.root, false);
     const base = join(data.root, "catalogs", "campaigns", data.runId);
     assert.deepEqual((await readdir(join(data.root, "catalogs", "campaigns"))).sort(), [data.runId]);
     const file = join(base, "gam", "publishable.json");
@@ -73,11 +80,8 @@ test("las correcciones acreditadas preservan original, derivado y expediente sin
 });
 
 test("la inspección rechaza directorios simbólicos sin alterar el manifiesto", async () => {
-  const data = await fixtures.fixture();
+  const data = await publishedFixture();
   try {
-    const draft = await finalizeActiveCampaign(data.root, false);
-    await approveDraft(draft.draftFile);
-    await finalizeActiveCampaign(data.root, false);
     const root = join(data.root, "catalogs", "campaigns", data.runId);
     const manifest = join(root, "manifest.json");
     const original = await readFile(manifest, "utf8");
@@ -90,11 +94,8 @@ test("la inspección rechaza directorios simbólicos sin alterar el manifiesto",
 });
 
 test("rechaza symlink de manifiesto aun cuando apunta a bytes acreditados", async () => {
-  const data = await fixtures.fixture();
+  const data = await publishedFixture();
   try {
-    const draft = await finalizeActiveCampaign(data.root, false);
-    await approveDraft(draft.draftFile);
-    await finalizeActiveCampaign(data.root, false);
     const root = join(data.root, "catalogs", "campaigns", data.runId);
     const manifest = join(root, "manifest.json");
     const outside = join(data.root, "storage", "original-manifest.json");
@@ -106,11 +107,8 @@ test("rechaza symlink de manifiesto aun cuando apunta a bytes acreditados", asyn
 });
 
 test("rechaza rutas fuera de la campaña presentes en un manifiesto manipulado", async () => {
-  const data = await fixtures.fixture();
+  const data = await publishedFixture();
   try {
-    const draft = await finalizeActiveCampaign(data.root, false);
-    await approveDraft(draft.draftFile);
-    await finalizeActiveCampaign(data.root, false);
     const root = join(data.root, "catalogs", "campaigns", data.runId);
     const manifest = await readPortableCampaign(data.root, data.runId);
     const { ["selection.json"]: selectionHash, ...files } = manifest.files;

@@ -135,7 +135,7 @@ export const formatRunnerRegression = ({ file, before, after }, columns = 100) =
   return `  ${shorten(normalize(file), available)}${suffix}\n`;
 };
 
-export const createRunnerDisplay = (stream, { interactive, getState, now, intervalMs = 10000 }) => {
+export const createRunnerDisplay = (stream, { interactive, getState, now, intervalMs = 15000 }) => {
   let linesShown = 0;
   let lastLog = 0;
   let lastFrame = "";

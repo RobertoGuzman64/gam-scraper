@@ -17,7 +17,7 @@ const report: SpecificationCoverage = {
 };
 
 test("las observaciones estadísticas no generan una cola operativa ni desaparecen del JSON", () => {
-  const lines = formatSpecificationCoverageReport(report, 20);
+  const lines = formatSpecificationCoverageReport(report, 20, true);
   assert.match(lines[0] ?? "", /revisar 0.*observaciones familiares no obligatorias 1/);
   assert.ok(lines.some((line) => line.includes("SIN INCIDENCIAS TÉCNICAS")));
   assert.ok(lines.some((line) => line.includes("1 casos en JSON")));
@@ -33,9 +33,18 @@ test("una diferencia comprobable sí sale en la cola, sin convertir ausencias fa
       url: "https://example.com/1", family: "maquinaria", origin: "original_canonico",
       key: "Peso (kg)", stage: "diferencia_origen_preparacion" }]
   };
-  const lines = formatSpecificationCoverageReport(changed, 1);
+  const lines = formatSpecificationCoverageReport(changed, 1, true);
   assert.match(lines[0] ?? "", /revisar 1/);
   assert.ok(lines.some((line) => line.includes("REVISAR | diferencia_origen_preparacion")));
   assert.ok(lines.every((line) => !line.includes(" | 4 | Peso (kg)")));
   assert.ok(lines.every((line) => !line.includes("SIN INCIDENCIAS TÉCNICAS")));
+});
+
+test("la vista breve no imprime casos ni observaciones familiares como obligaciones", () => {
+  const lines = formatSpecificationCoverageReport({ ...report, totals: { ...report.totals, sourceNotPreserved: 1 },
+    cases: [...report.cases, { ...report.cases[0]!, identity: "gam:5", stage: "diferencia_origen_preparacion" }] }, 20);
+  assert.ok(lines.some((line) => line.includes("revisar 1")));
+  assert.ok(lines.some((line) => line.includes("consultar --detalle o --json")));
+  assert.ok(lines.every((line) => !line.includes("gam:5")));
+  assert.ok(lines.every((line) => !line.includes("observaciones familiares no obligatorias | 1")));
 });

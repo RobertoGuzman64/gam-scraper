@@ -9,54 +9,52 @@ import { createIndividualFinishWorkspace, finishProviders, publishIndividualTest
 
 const withWorkspace = createIndividualFinishWorkspace();
 
-test("FINISH reacredita sin interacción las exclusiones idénticas de la publicación vigente", async () => {
+test("FINISH reutiliza una publicación para comprobar cierre y reacreditación", async (context) => {
   await withWorkspace(async (root, desktop) => {
-    await publishIndividualTestWorkspace(root, desktop);
-    const contexts = await preflightIndividualAccreditations(root, finishProviders);
-    const gam = contexts[0];
-    assert.ok(gam?.existing);
-    await rm(gam.existing.draftFile);
-    const preview = await publishIndividualCatalogs({
-      workspace: root, providers: finishProviders, dryRun: true, desktopDirectory: null
+    await context.test("CLI FINISH conserva selección, retención, auditor e informe idempotente", async () => {
+      let retentionCount = 0;
+      let auditorCount = 0;
+      const dry = await runPublishIndividual(["--proveedor", "gomariz", "--simular"], root, {
+        retention: () => { retentionCount++; }, auditor: async () => { auditorCount++; }
+      });
+      assert.equal(dry?.mode, "simulation");
+      assert.equal(retentionCount, 0);
+      assert.equal((await readdir(desktop)).filter((name) => name.startsWith("equipzilla-informe-")).length, 0);
+      const finished = await runPublishIndividual([], root, {
+        desktopDirectory: desktop, retention: () => { retentionCount++; }, auditor: async () => { auditorCount++; }
+      });
+      assert.equal(finished?.mode, "complete");
+      assert.equal(retentionCount, 1);
+      assert.equal(auditorCount, 1);
+      assert.equal((await readdir(desktop)).filter((name) => name.startsWith("equipzilla-informe-")).length, 1);
+      const second = await runPublishIndividual([], root, {
+        desktopDirectory: desktop, retention: () => { retentionCount++; }, auditor: async () => { auditorCount++; }
+      });
+      assert.ok(second?.providers.every((item) => item.status === "YA VIGENTE"));
+      assert.equal(retentionCount, 2);
+      assert.equal(auditorCount, 2);
+      assert.equal((await readdir(desktop)).filter((name) => name.startsWith("equipzilla-informe-")).length, 1);
     });
-    assert.equal(preview.providers[0]?.excluded, 2);
-    await assert.rejects(lstat(gam.existing.draftFile), { code: "ENOENT" });
-    const result = await publishIndividualTestWorkspace(root, desktop);
-    assert.equal(result.providers[0]?.excluded, 2);
-    const updated = await preflightIndividualAccreditations(root, ["gam"]);
-    assert.equal(updated[0]?.existing?.inspection.approved, true);
-    assert.equal(updated[0]?.existing?.inspection.completed, 2);
-    assert.ok(updated[0]?.existing?.accreditation.approvalReason?.includes("automática"));
+
+    await context.test("FINISH reacredita sin interacción las exclusiones idénticas de la publicación vigente", async () => {
+      const contexts = await preflightIndividualAccreditations(root, finishProviders);
+      const gam = contexts[0];
+      assert.ok(gam?.existing);
+      await rm(gam.existing.draftFile);
+      const preview = await publishIndividualCatalogs({
+        workspace: root, providers: finishProviders, dryRun: true, desktopDirectory: null
+      });
+      assert.equal(preview.providers[0]?.excluded, 2);
+      await assert.rejects(lstat(gam.existing.draftFile), { code: "ENOENT" });
+      const renewed = await publishIndividualTestWorkspace(root, desktop);
+      assert.equal(renewed.providers[0]?.excluded, 2);
+      const updated = await preflightIndividualAccreditations(root, ["gam"]);
+      assert.equal(updated[0]?.existing?.inspection.approved, true);
+      assert.equal(updated[0]?.existing?.inspection.completed, 2);
+      assert.ok(updated[0]?.existing?.accreditation.approvalReason?.includes("automática"));
+    });
   });
 });
-
-test("CLI FINISH conserva colores de reporting, admite selección y ejecuta retención y auditor al cerrar", async () => {
-  await withWorkspace(async (root, desktop) => {
-    let retentionCount = 0;
-    let auditorCount = 0;
-    const dry = await runPublishIndividual(["--proveedor", "gomariz", "--simular"], root, {
-      retention: () => { retentionCount++; }, auditor: async () => { auditorCount++; }
-    });
-    assert.equal(dry?.mode, "simulation");
-    assert.equal(retentionCount, 0);
-    assert.equal((await readdir(desktop)).filter((name) => name.startsWith("equipzilla-informe-")).length, 0);
-    const finished = await runPublishIndividual([], root, {
-      desktopDirectory: desktop, retention: () => { retentionCount++; }, auditor: async () => { auditorCount++; }
-    });
-    assert.equal(finished?.mode, "complete");
-    assert.equal(retentionCount, 1);
-    assert.equal(auditorCount, 1);
-    assert.equal((await readdir(desktop)).filter((name) => name.startsWith("equipzilla-informe-")).length, 1);
-    const second = await runPublishIndividual([], root, {
-      desktopDirectory: desktop, retention: () => { retentionCount++; }, auditor: async () => { auditorCount++; }
-    });
-    assert.ok(second?.providers.every((item) => item.status === "YA VIGENTE"));
-    assert.equal(retentionCount, 2);
-    assert.equal(auditorCount, 2);
-    assert.equal((await readdir(desktop)).filter((name) => name.startsWith("equipzilla-informe-")).length, 1);
-  });
-});
-
 
 test("FINISH muestra actividad mientras espera la poda y conserva su código de error", async () => {
   await withWorkspace(async (root) => {

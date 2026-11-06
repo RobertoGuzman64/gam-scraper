@@ -2,9 +2,12 @@ import { mkdir, realpath, rm, writeFile } from "node:fs/promises";
 import { resolve, relative, isAbsolute, join, dirname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildCommercialExportFiles } from "../../../commercial/export/commercial-export.js";
+import { findDesktopDirectory } from "../../../infrastructure/filesystem/desktop-directory.js";
+import { deliverCommercialPackages } from "../../reporting/commercial-package-delivery.js";
+import { inspectCommercialPackage } from "../../../commercial/export/commercial-package-snapshot.js";
 import { verifyCommercialExportDirectory, verifyCommercialExportSources } from "../../../commercial/export/commercial-export-verification.js";
 import type { CommercialEnvironment } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
-import { printReportLine } from "../../reporting/terminal.js";
+import { printCommandHeader, printCommandSection, printCommandResult, printCommandDeliverable, printCommandProvider, printReportLine } from "../../reporting/terminal.js";
 import { printCommandError } from "../../reporting/errors.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
@@ -39,7 +42,6 @@ export const parseCommercialExportOptions = (args: readonly string[]): Commercia
     }
     throw new Error(`Opción de exportación comercial inválida: ${arg}`);
   }
-  if (!dryRun && !out) throw new Error("La exportación exige --out con un directorio nuevo");
   if (out) {
     const path = resolve(out);
     const nested = relative(root, path);
@@ -53,19 +55,36 @@ export const parseCommercialExportOptions = (args: readonly string[]): Commercia
 export const runCommercialExport = async (args: readonly string[]): Promise<void> => {
   const options = parseCommercialExportOptions(args);
   if (options === "help") {
-    printReportLine("Uso: npm run exportar:comercial -- --salida <directorio-nuevo> [--entorno develop|production] [--simular]\nTambién admite --out, --environment y --dry-run. Sin entorno no se incluye companyID. Crea JSON separados y manifiesto SHA256 fuera del repositorio; no modifica publicaciones ni importa en backend.");
+    printReportLine("Uso: npm run exportar:comercial -- [--entorno develop|production] [--simular] [--salida <directorio-nuevo>]\nPor defecto genera dos ZIP verificados en el Escritorio: comercial (tres JSON y manifiesto) e informe de integración. --salida conserva los cuatro archivos sueltos en un directorio nuevo. También admite --out, --environment y --dry-run; sin entorno no se incluye companyID. No publica ni importa en backend.");
     return;
   }
   const files = await buildCommercialExportFiles(root, options.environment);
   const manifest = files.find((item) => item.name === "commercial-manifest.json");
   if (!manifest) throw new Error("Falta el manifiesto comercial");
-  await verifyCommercialExportSources(root, files);
   if (options.dryRun) {
-    printReportLine(`EXPORTACIÓN COMERCIAL | SIMULACIÓN | entorno ${options.environment ?? "sin companyID"}`);
-    for (const entry of files) printReportLine(`  ${entry.name} | ${entry.bytes} bytes | SHA256 ${entry.sha256}`);
+    await verifyCommercialExportSources(root, files);
+    printCommandHeader("EXPORTACIÓN COMERCIAL", true);
+    printReportLine(`Entorno: ${options.environment ?? "sin companyID"} · ${files.length - 1} proveedores · un manifiesto`);
+    for (const entry of files) printReportLine(`  ${entry.name} · ${entry.bytes} bytes · calculado, no escrito`);
+    printCommandResult("SIMULACIÓN COMPLETA · SIN ESCRITURAS");
     return;
   }
-  const destination = resolve(options.out ?? "");
+  if (options.out === null) {
+    const delivered = await deliverCommercialPackages(root, await findDesktopDirectory(), files);
+    printCommandHeader("EXPORTACIÓN COMERCIAL");
+    for (const provider of inspectCommercialPackage(files).providers) {
+      printCommandProvider(provider.providerId, `${provider.summary.exported} productos · ${provider.summary.attributes} atributos`);
+    }
+    printCommandSection("TOTAL ACREDITADO");
+    printReportLine(`${delivered.exported} productos · ${delivered.attributes} atributos · entorno ${delivered.environment}`);
+    printCommandSection("ENTREGABLES");
+    printCommandDeliverable("COMERCIAL", delivered.commercial);
+    printCommandDeliverable("INFORME", delivered.report);
+    printCommandResult("Dos ZIP comprobados; integración en BD NO VERIFICADA");
+    return;
+  }
+  await verifyCommercialExportSources(root, files);
+  const destination = resolve(options.out);
   const physicalRoot = await realpath(root);
   const physicalParent = await realpath(dirname(destination));
   const physicalRelative = relative(physicalRoot, physicalParent);
@@ -82,8 +101,12 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
     await rm(destination, { recursive: true, force: true });
     throw error;
   }
-  printReportLine(`EXPORTACIÓN COMERCIAL | ${destination} | ${files.length - 1} proveedores | entorno ${options.environment ?? "sin companyID"}`);
-  for (const entry of files) printReportLine(`  ${entry.name} | SHA256 ${entry.sha256}`);
+  printCommandHeader("EXPORTACIÓN COMERCIAL");
+  printReportLine(`${files.length - 1} proveedores · entorno ${options.environment ?? "sin companyID"}`);
+  printCommandSection("ARCHIVOS VERIFICADOS");
+  for (const entry of files) printReportLine(`  ${entry.name} · ${entry.bytes} bytes`);
+  printCommandDeliverable("DIRECTORIO COMERCIAL", destination);
+  printCommandResult("Cuatro archivos comprobados; publicaciones y backend sin modificar");
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

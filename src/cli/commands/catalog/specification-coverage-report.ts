@@ -3,7 +3,7 @@ import { classifySpecificationWork, type SpecificationCoverage, type Specificati
 const formatCase = (item: SpecificationCase, label: string): string =>
   `  ${label} | ${item.stage} | ${item.providerId} | ${item.family} | ${item.reference ?? item.identity} | ${item.key} | ${item.origin}`;
 
-export const formatSpecificationCoverageReport = (coverage: SpecificationCoverage, limit: number): readonly string[] => {
+export const formatSpecificationCoverageReport = (coverage: SpecificationCoverage, limit: number, detailed = false): readonly string[] => {
   const totals = coverage.totals;
   const { requiresReview, pendingActivation } = classifySpecificationWork(coverage);
   const lines = [
@@ -12,13 +12,14 @@ export const formatSpecificationCoverageReport = (coverage: SpecificationCoverag
   ];
   if (requiresReview.length === 0 && pendingActivation.length === 0) {
     lines.push("SPECS | SIN INCIDENCIAS TÉCNICAS PENDIENTES DE REVISIÓN NI ACTIVACIÓN en esta comparación");
-  } else {
+  } else if (detailed) {
     for (const item of requiresReview.slice(0, limit)) lines.push(formatCase(item, "REVISAR"));
     for (const item of pendingActivation.slice(0, Math.max(0, limit - requiresReview.length))) {
       lines.push(formatCase(item, "ACTIVACIÓN"));
     }
   }
-  lines.push(`SPECS | ${coverage.patterns.length} patrones comparativos no vinculantes | ${coverage.cases.length} casos en JSON, incluidos los ${totals.observationalMissing} sin evidencia directa`);
-  lines.push("SPECS | Una ausencia inferida de otras máquinas no obliga a completar la ficha; sin evidencia de la misma máquina no se abre una tarea.");
+  if (detailed) lines.push(`SPECS | ${coverage.patterns.length} patrones comparativos no vinculantes | ${coverage.cases.length} casos en JSON, incluidos los ${totals.observationalMissing} sin evidencia directa`);
+  if (detailed) lines.push("SPECS | Una ausencia inferida de otras máquinas no obliga a completar la ficha; sin evidencia de la misma máquina no se abre una tarea.");
+  if (!detailed && (requiresReview.length > 0 || pendingActivation.length > 0)) lines.push("SPECS | Diferencias y activaciones pendientes: consultar --detalle o --json");
   return lines;
 };

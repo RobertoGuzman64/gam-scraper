@@ -3,9 +3,11 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamExactVariantGeneral, resolveGamModelIdentifiedGeneral } from "./model-identified-general.js";
-import { prepareSourceProduct } from "../../../prepare-product.js";
+import { createPreparedSourceFixture } from "../../../../testing/builders/prepared-source-fixture.js";
 import { createGamCondensedEditorialResolver } from "../condensed-editorial-resolver.js";
 import { multiSectorSecondaryEvidence } from "../evidence/multi-sector-secondary.js";
+
+const prepareOriginal = createPreparedSourceFixture();
 
 const { general: resolveGamAdditionalCondensedGeneral, short: resolveGamAdditionalCondensedShort } = createGamCondensedEditorialResolver(multiSectorSecondaryEvidence);
 
@@ -22,7 +24,7 @@ test("Fase 19: identifica 15 modelos acreditados sin modificar los originales", 
   const changed = new Set<string>();
   for (const record of catalog.products) {
     const previous = JSON.stringify(record);
-    const prepared = prepareSourceProduct(record).product;
+    const prepared = prepareOriginal(record).product;
     if (record.reference === "4031") {
       assert.ok(resolveGamModelIdentifiedGeneral(record, record.longDescription));
       assert.match(prepared.description_general ?? "", /Tennant BCS S20 Batería/u);
@@ -115,7 +117,7 @@ test("conserva el relato original e identifica solo 15 variantes inequívocas en
       assert.ok(record.model);
       assert.ok(result.toLocaleLowerCase("es").includes(`${record.brand} ${record.model}`.toLocaleLowerCase("es")));
       assert.ok(!record.longDescription?.includes(`${record.brand} ${record.model}`));
-      const prepared = prepareSourceProduct(record);
+      const prepared = prepareOriginal(record);
       if (prepared.product.description_general !== result) {
         if (record.reference === "2294") {
           assert.match(prepared.product.description_general ?? "", /ERP35VL.*LWB/u);

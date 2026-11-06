@@ -36,7 +36,10 @@ const machine = (reference: string, serialNumber: string | null): ProductRecord 
   specs: { "Altura de trabajo": "8 m" }
 });
 
+const reason = "Identidad de origen sin garantías suficientes para publicar";
+
 let baseWorkspace: Promise<string> | undefined;
+let baseApprovedWorkspace: Promise<string> | undefined;
 const createBaseWorkspace = async (): Promise<string> => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-editorial-seed-"));
   const now = new Date().toISOString();
@@ -55,27 +58,56 @@ const createBaseWorkspace = async (): Promise<string> => {
   }
 };
 
-const fixture = async (run: (options: IndividualEditorialOptions) => Promise<void>): Promise<void> => {
+const optionsFor = (root: string): IndividualEditorialOptions => ({
+  rootDirectory: root, providerId: "gam",
+  catalogFile: join(root, "original", "catalogo-ejemplo-catalog.json"),
+  preparationFile: join(root, "prepared", "catalogo-ejemplo-preparation.json")
+});
+
+const createApprovedWorkspace = async (): Promise<string> => {
   baseWorkspace ??= createBaseWorkspace();
   const source = await baseWorkspace;
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-editorial-approved-seed-"));
+  try {
+    await cp(source, root, { recursive: true });
+    const options = optionsFor(root);
+    const started = await startIndividualEditorial(options);
+    for (const item of started.accreditation.exclusions) {
+      await decideIndividualEditorial(options, {
+        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
+      });
+    }
+    await approveIndividualEditorial(options, "Selección individual contrastada y aprobada expresamente");
+    return root;
+  } catch (error) {
+    await rm(root, { recursive: true, force: true });
+    throw error;
+  }
+};
+
+const fixture = async (
+  run: (options: IndividualEditorialOptions) => Promise<void>,
+  state: "prepared" | "approved" = "prepared"
+): Promise<void> => {
+  const seed = state === "approved"
+    ? (baseApprovedWorkspace ??= createApprovedWorkspace())
+    : (baseWorkspace ??= createBaseWorkspace());
+  const source = await seed;
   const root = await mkdtemp(join(tmpdir(), "equipzilla-editorial-individual-"));
   try {
     await cp(source, root, { recursive: true });
-    await run({
-      rootDirectory: root, providerId: "gam",
-      catalogFile: join(root, "original", "catalogo-ejemplo-catalog.json"),
-      preparationFile: join(root, "prepared", "catalogo-ejemplo-preparation.json")
-    });
+    await run(optionsFor(root));
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 };
 
 after(async () => {
-  if (baseWorkspace) await rm(await baseWorkspace, { recursive: true, force: true });
+  const seeds = [baseApprovedWorkspace, baseWorkspace].filter((value): value is Promise<string> => value !== undefined);
+  const results = await Promise.allSettled(seeds);
+  await Promise.all(results.flatMap((result) => result.status === "fulfilled"
+    ? [rm(result.value, { recursive: true, force: true })] : []));
 });
-
-const reason = "Identidad de origen sin garantías suficientes para publicar";
 
 test("acreditación individual exige decisiones reales y aprobación humana sin publicar", async () => {
   await fixture(async (options) => {
@@ -155,13 +187,7 @@ test("entrega individual bloquea borradores y validaciones sin aprobación", asy
 
 test("entrega individual guarda JSON exacto, acreditación y manifiesto sin sobrescribir", async () => {
   await fixture(async (options) => {
-    const started = await startIndividualEditorial(options);
-    for (const item of started.accreditation.exclusions) {
-      await decideIndividualEditorial(options, {
-        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
-      });
-    }
-    const approved = await approveIndividualEditorial(options, "Selección individual contrastada y aprobada expresamente");
+    const approved = await inspectIndividualEditorial(options);
     const simulated = await deliverIndividualProvider(options, "simulation");
     assert.equal(simulated.status, "simulation");
     await assert.rejects(readdir(simulated.publicationDirectory), /ENOENT/);
@@ -192,18 +218,11 @@ test("entrega individual guarda JSON exacto, acreditación y manifiesto sin sobr
     await assert.rejects(deliverIndividualProvider(options, "verify"), /archivo alterado/);
     await assert.rejects(deliverIndividualProvider(options), /archivo alterado/);
     assert.equal(await readFile(delivered.productFile, "utf8"), "[]");
-  });
+  }, "approved");
 });
 
 test("entrega individual rechaza aprobación obsoleta y artefactos adicionales", async () => {
   await fixture(async (options) => {
-    const draft = await startIndividualEditorial(options);
-    for (const item of draft.accreditation.exclusions) {
-      await decideIndividualEditorial(options, {
-        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
-      });
-    }
-    await approveIndividualEditorial(options, "Conjunto de equipos validado editorialmente");
     const publication = await deliverIndividualProvider(options);
     await writeFile(join(publication.publicationDirectory, "extra.json"), "{}");
     await assert.rejects(deliverIndividualProvider(options, "verify"), /archivos adicionales/);
@@ -211,19 +230,12 @@ test("entrega individual rechaza aprobación obsoleta y artefactos adicionales",
     await writeFile(options.preparationFile,
       (await readFile(options.preparationFile, "utf8")).replace("11111", "99999"));
     await assert.rejects(deliverIndividualProvider(options), /Manifest|preparación/);
-  });
+  }, "approved");
 });
 
 
 test("la entrega individual empaqueta el JSON aprobado y verifica el ZIP sin duplicarlo", async () => {
   await fixture(async (options) => {
-    const draft = await startIndividualEditorial(options);
-    for (const item of draft.accreditation.exclusions) {
-      await decideIndividualEditorial(options, {
-        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
-      });
-    }
-    await approveIndividualEditorial(options, "Exclusiones revisadas y aprobadas editorialmente");
     const desktop = join(options.rootDirectory, "Escritorio");
     await mkdir(desktop);
     const date = new Date("2026-10-29T10:00:00Z");
@@ -251,18 +263,12 @@ test("la entrega individual empaqueta el JSON aprobado y verifica el ZIP sin dup
     await assert.rejects(deliverIndividualArchive(options, desktop, "verify", date), /ZIP individual alterado/);
     await assert.rejects(deliverIndividualArchive(options, desktop, "publish", date), /ZIP individual alterado/);
     assert.equal(await readFile(published.zipFile ?? "", "utf8"), "ZIP alterado");
-  });
+  }, "approved");
 });
 
 test("la generación posterior reutiliza publicaciones legadas de SHA completo sin duplicar", async () => {
   await fixture(async (options) => {
-    const draft = await startIndividualEditorial(options);
-    for (const item of draft.accreditation.exclusions) {
-      await decideIndividualEditorial(options, {
-        reference: item.reference, decision: "excluir", reason: "Exclusión validada manualmente", evidenceUrls: [item.sourceUrl]
-      });
-    }
-    const approved = await approveIndividualEditorial(options, "Aprobación humana confirmada");
+    const approved = await inspectIndividualEditorial(options);
     const delivered = await deliverIndividualProvider(options);
     const fullSha = sha256(await readFile(approved.draftFile, "utf8"));
     const legacyDirectory = join(dirname(delivered.publicationDirectory), fullSha);
@@ -271,18 +277,12 @@ test("la generación posterior reutiliza publicaciones legadas de SHA completo s
     assert.equal(verified.status, "verified");
     assert.equal(verified.publicationDirectory, legacyDirectory);
     assert.deepEqual((await readdir(dirname(legacyDirectory))).sort(), [fullSha]);
-  });
+  }, "approved");
 });
 
 test("un recibo y ZIP de nomenclatura anterior siguen verificándose íntegros", async () => {
   await fixture(async (options) => {
-    const draft = await startIndividualEditorial(options);
-    for (const item of draft.accreditation.exclusions) {
-      await decideIndividualEditorial(options, {
-        reference: item.reference, decision: "excluir", reason: "Exclusión acreditada manualmente", evidenceUrls: [item.sourceUrl]
-      });
-    }
-    const approved = await approveIndividualEditorial(options, "Decisiones revisadas y aprobadas");
+    const approved = await inspectIndividualEditorial(options);
     const desktop = join(options.rootDirectory, "Escritorio");
     await mkdir(desktop);
     const date = new Date("2026-10-29T10:00:00Z");
@@ -298,18 +298,12 @@ test("un recibo y ZIP de nomenclatura anterior siguen verificándose íntegros",
     assert.equal(verified.status, "verified");
     assert.equal(verified.zipFile, legacyZip);
     assert.equal((await readdir(desktop)).length, 1);
-  });
+  }, "approved");
 });
 
 test("la entrega individual no sobrescribe ZIP ajenos con el mismo nombre", async () => {
   await fixture(async (options) => {
-    const draft = await startIndividualEditorial(options);
-    for (const item of draft.accreditation.exclusions) {
-      await decideIndividualEditorial(options, {
-        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
-      });
-    }
-    const approved = await approveIndividualEditorial(options, "Exclusiones verificadas y aprobadas expresamente");
+    const approved = await inspectIndividualEditorial(options);
     const desktop = join(options.rootDirectory, "Escritorio");
     await mkdir(desktop);
     const date = new Date("2026-10-29T10:00:00Z");
@@ -318,7 +312,7 @@ test("la entrega individual no sobrescribe ZIP ajenos con el mismo nombre", asyn
     await writeFile(zipFile, "Archivo externo que debe conservarse");
     await assert.rejects(deliverIndividualArchive(options, desktop, "publish", date), /no se sobrescribe/);
     assert.equal(await readFile(zipFile, "utf8"), "Archivo externo que debe conservarse");
-  });
+  }, "approved");
 });
 
 
@@ -384,13 +378,6 @@ test("propuestas no descartan errores técnicos, intervenciones ni inventan evid
 
 test("el cierre JSON respeta simulación, candidata y verificación, y activa al entregar definitivamente", async () => {
   await fixture(async (options) => {
-    const draft = await startIndividualEditorial(options);
-    for (const item of draft.accreditation.exclusions) {
-      await decideIndividualEditorial(options, {
-        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
-      });
-    }
-    await approveIndividualEditorial(options, "Publicación individual aceptada editorialmente");
     const preview = await completeIndividualDelivery(options, null, "simulation");
     assert.equal(preview.activation, "not_requested");
     await assert.rejects(readdir(join(options.rootDirectory, "catalogs")), /ENOENT/);
@@ -410,18 +397,11 @@ test("el cierre JSON respeta simulación, candidata y verificación, y activa al
     const again = await completeIndividualDelivery(options, null, "publish");
     assert.equal(again.activation, "unchanged");
     assert.equal(await readFile(selector, "utf8"), selectorBefore);
-  });
+  }, "approved");
 });
 
 test("el cierre ZIP exige recibo íntegro antes de activar y permite reanudar una candidata", async () => {
   await fixture(async (options) => {
-    const draft = await startIndividualEditorial(options);
-    for (const item of draft.accreditation.exclusions) {
-      await decideIndividualEditorial(options, {
-        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
-      });
-    }
-    await approveIndividualEditorial(options, "Cierre con ZIP aprobado editorialmente");
     const desktop = join(options.rootDirectory, "Escritorio");
     await mkdir(desktop);
     const candidate = await completeIndividualDelivery(options, desktop, "candidate");
@@ -434,18 +414,11 @@ test("el cierre ZIP exige recibo íntegro antes de activar y permite reanudar un
     await assert.rejects(completeIndividualDelivery(options, desktop, "publish"), /ZIP individual alterado/);
     await assert.rejects(readFile(selector), /ENOENT/);
     await assert.rejects(completeIndividualDelivery(options, desktop, "verify"), /ZIP individual alterado/);
-  });
+  }, "approved");
 });
 
 test("el cierre ZIP nuevo completa entrega y activación sin un segundo comando", async () => {
   await fixture(async (options) => {
-    const draft = await startIndividualEditorial(options);
-    for (const item of draft.accreditation.exclusions) {
-      await decideIndividualEditorial(options, {
-        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
-      });
-    }
-    await approveIndividualEditorial(options, "Entrega ZIP definitiva aprobada");
     const desktop = join(options.rootDirectory, "Escritorio");
     await mkdir(desktop);
     const closed = await completeIndividualDelivery(options, desktop);
@@ -453,19 +426,12 @@ test("el cierre ZIP nuevo completa entrega y activación sin un segundo comando"
     assert.ok(closed.delivery.zipFile);
     assert.equal(await resolveAccreditedPublication(options.rootDirectory, "gam"), closed.delivery.productFile);
     assert.equal((await completeIndividualDelivery(options, desktop)).activation, "unchanged");
-  });
+  }, "approved");
 });
 
 
 test("el cierre definitivo no elige una publicación entre históricos sin selección inequívoca", async () => {
   await fixture(async (options) => {
-    const draft = await startIndividualEditorial(options);
-    for (const item of draft.accreditation.exclusions) {
-      await decideIndividualEditorial(options, {
-        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
-      });
-    }
-    await approveIndividualEditorial(options, "Aprobación individual del cierre");
     const candidate = await completeIndividualDelivery(options, null, "candidate");
     const directory = candidate.delivery.publicationDirectory;
     const accreditation = JSON.parse(await readFile(join(directory, "accreditation.json"), "utf8")) as Record<string, unknown>;
@@ -483,5 +449,5 @@ test("el cierre definitivo no elige una publicación entre históricos sin selec
     assert.equal(result.activation, "blocked");
     assert.match(result.blockers[0] ?? "", /selección inicial inequívoca/);
     await assert.rejects(readFile(join(dirname(directory), "active.json")), /ENOENT/);
-  });
+  }, "approved");
 });

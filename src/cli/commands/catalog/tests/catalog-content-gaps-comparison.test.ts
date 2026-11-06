@@ -7,6 +7,9 @@ import type { TechnicalDensity } from "../../../../catalog/diagnostics/technical
 import { cleanupBaseline, execute, executeBaseline } from "./catalog-content-gaps-fixtures.js";
 import { hasCompleteCatalogAuditEvidence, hasUnresolvedCatalogAuditContracts } from "../../../../catalog/diagnostics/audit-closure.js";
 import { formatCatalogAuditClosureReport } from "../catalog-audit-closure-report.js";
+import { formatTechnicalDensityReport } from "../technical-density-report.js";
+import { formatSpecificationCoverageReport } from "../specification-coverage-report.js";
+import { readContentGapOptions } from "../catalog-content-gaps-options.js";
 
 test.after(cleanupBaseline);
 
@@ -14,6 +17,11 @@ let baselineComparison: Promise<unknown> | undefined;
 const readBaselineComparison = (): Promise<unknown> => {
   baselineComparison ??= executeBaseline(["--comparar", "--specs", "--json", "--top", "1"]).then((raw): unknown => JSON.parse(raw));
   return baselineComparison;
+};
+let baselineDetailedComparison: Promise<string> | undefined;
+const readBaselineDetailedComparison = (): Promise<string> => {
+  baselineDetailedComparison ??= executeBaseline(["--comparar", "--specs", "--top", "1", "--detalle"]);
+  return baselineDetailedComparison;
 };
 
 test("huecos compara las publicaciones activas y acredita la cobertura de descripciones", async () => {
@@ -63,13 +71,15 @@ test("huecos compara las publicaciones activas y acredita la cobertura de descri
     assert.equal(report.priorities.totals.pendingByStage[stage],
       report.priorities.pending.filter((item) => item.stage === stage).length);
   }
-  const densityText = await executeBaseline(["--comparar", "--specs", "--top", "1"]);
+  const densityText = await readBaselineDetailedComparison();
+  for (const line of formatTechnicalDensityReport(report.technicalDensity, 1, true)) assert.ok(densityText.includes(line));
   assert.match(densityText, /DENSIDAD TÉCNICA \| PRIORIDAD EDITORIAL/);
   assert.match(densityText, /ALTA 0–2: \d+ \| MEDIA 3: \d+/);
   assert.match(densityText, /DENSIDAD PROVEEDOR \| gam \| alta/);
   assert.match(densityText, /DENSIDAD PROVEEDOR \| gomariz \| alta/);
   assert.match(densityText, /DENSIDAD PROVEEDOR \| mercaeleva \| alta/);
   const text = await executeBaseline(["--comparar", "--top", "1"]);
+  assert.equal(readContentGapOptions(["--comparar", "--top", "1"]).specs, false);
   assert.match(text, /P0 COLA RESIDUAL \| 0 fichas, sin recorte por --top/);
   assert.match(text, /ORDEN DE TRABAJO \| P0 vacíos 0/);
   assert.match(text, /INCIDENCIAS TÉCNICAS/);
@@ -197,7 +207,9 @@ test("el cierre operativo exige evidencia, distingue trabajo real y no bloquea p
   const technicalPreparation = { ...cleanPriorities, totals: { ...cleanPriorities.totals, technical: 1 } };
   assert.equal(hasUnresolvedCatalogAuditContracts(coverage, technicalPreparation, completeSpecifications), true);
 
-  const text = await executeBaseline(["--comparar", "--specs", "--top", "1"]);
+  const text = await readBaselineDetailedComparison();
+  for (const line of formatCatalogAuditClosureReport(coverage, priorities, technicalSpecs)) assert.ok(text.includes(line));
+  for (const line of formatSpecificationCoverageReport(technicalSpecs, 1, true)) assert.ok(text.includes(line));
   const expected = hasUnresolvedCatalogAuditContracts(coverage, priorities, technicalSpecs) ?
     "REQUIERE INTERVENCIÓN" : hasCompleteCatalogAuditEvidence(coverage, technicalSpecs) ?
       "CONFORME EN ALCANCE COMPARADO" : "ALCANCE LIMITADO";

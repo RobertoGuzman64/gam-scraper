@@ -1,13 +1,17 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtemp, rm, writeFile, symlink } from "node:fs/promises";
+import { access, mkdtemp, readFile, readdir, rm, writeFile, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { buildCommercialExportFiles, type CommercialExportFile } from "../commercial-export.js";
 import type { CommercialExportPlan } from "../../projection/export-projection.js";
-import { validateCommercialExportFiles, verifyCommercialExportDirectory, verifyCommercialExportSources } from "../commercial-export-verification.js";
+import { validateCommercialExportFiles, verifyCommercialExportArchive, verifyCommercialExportDirectory, verifyCommercialExportSources, verifyCommercialExportZip } from "../commercial-export-verification.js";
+import { createZipArchive, readZipArchive } from "../../../infrastructure/archive/zip.js";
+import { assertCommercialPackageProviders, inspectCommercialPackage } from "../commercial-package-snapshot.js";
+import { renderCommercialIntegrationReport } from "../../../cli/reporting/commercial-integration-report.js";
+import { deliverCommercialPackages, publishCommercialArchivePair, verifyCommercialIntegrationArchive, verifyCommercialPackagePair } from "../../../cli/reporting/commercial-package-delivery.js";
 
 const createFile = (name: string, content: string): CommercialExportFile => ({
   name, content, sha256: createHash("sha256").update(content).digest("hex"), bytes: Buffer.byteLength(content)
@@ -109,9 +113,8 @@ const withManifest = (files: readonly CommercialExportFile[], change: (manifest:
 
 test("impide exportaciones con fuentes comerciales cambiadas o selección de publicaciones obsoleta", async () => {
   const root = fileURLToPath(new URL("../../../../", import.meta.url));
-  const files = await buildCommercialExportFiles(root, null);
+  const files = await currentCommercialFiles();
   assert.equal(files.length, 4);
-  await verifyCommercialExportSources(root, files);
 
   const alteredReferences = withManifest(files, (manifest) => {
     manifest.taxonomySha256 = "0".repeat(64);
@@ -210,4 +213,133 @@ test("rechaza exclusiones incoherentes, aunque los totales del manifiesto coinci
   assert.throws(() => validateCommercialExportFiles(filesForProvider({
     ...valid, excluded: [{ ...valid.excluded[0]!, reason: "sin-clasificar" }]
   })), /Totales o procedencia/);
+});
+
+let latestFilesPromise: Promise<readonly CommercialExportFile[]> | undefined;
+const currentCommercialFiles = (): Promise<readonly CommercialExportFile[]> =>
+  latestFilesPromise ??= buildCommercialExportFiles(fileURLToPath(new URL("../../../../", import.meta.url)), null);
+
+const packCommercial = (files: readonly CommercialExportFile[]): Buffer => createZipArchive(files.map((file) => ({
+  name: file.name, data: file.content
+})));
+
+test("el ZIP mantiene los bytes exactos y rechaza corrupción, entradas extra y ausentes", () => {
+  const files = filesForProvider(planWithProduct());
+  const zip = packCommercial(files);
+  assert.deepEqual(verifyCommercialExportArchive(zip, files), {
+    files: files.length, bytes: files.reduce((sum, file) => sum + file.bytes, 0)
+  });
+  assert.deepEqual(readZipArchive(zip).map((entry) => entry.name), files.map((file) => file.name));
+  assert.throws(() => verifyCommercialExportArchive(zip.subarray(0, zip.length - 5), files), /ZIP:/);
+  assert.throws(() => verifyCommercialExportArchive(createZipArchive([
+    ...files.map((file) => ({ name: file.name, data: file.content })),
+    { name: "extra.json", data: "{}" }
+  ]), files), /ausentes o ajenos/);
+  assert.throws(() => verifyCommercialExportArchive(createZipArchive([
+    { name: files[0]!.name, data: files[0]!.content }
+  ]), files), /ausentes o ajenos/);
+  assert.throws(() => createZipArchive([
+    { name: files[0]!.name, data: files[0]!.content },
+    { name: files[0]!.name, data: files[0]!.content }
+  ]), /duplicadas/);
+  assert.throws(() => verifyCommercialExportArchive(createZipArchive(files.map((file) => ({
+    name: file.name, data: file.name === "gam-commercial.json" ? `${file.content} ` : file.content
+  }))), files), /no coincide/);
+  const corrupted = Buffer.from(zip);
+  const offset = 30 + Buffer.byteLength(files[0]!.name) + 3;
+  corrupted.writeUInt8(corrupted.readUInt8(offset) ^ 0xff, offset);
+  assert.throws(() => verifyCommercialExportArchive(corrupted, files), /ZIP:/);
+});
+
+test("el informe identifica fuentes, excepciones, límites de integración y detecta manipulación", () => {
+  const files = filesForProvider(planWithProduct());
+  const snapshot = inspectCommercialPackage(files);
+  assert.throws(() => assertCommercialPackageProviders(snapshot), /tres proveedores/);
+  const markdown = renderCommercialIntegrationReport(snapshot, "2026-11-06");
+  assert.match(markdown, /NO VERIFICADO EN BD/);
+  assert.match(markdown, /gam-commercial\.json/);
+  assert.match(markdown, new RegExp(files[0]!.sha256));
+  const zip = createZipArchive([{ name: "INFORME.md", data: markdown }]);
+  assert.equal(verifyCommercialIntegrationArchive(zip, files), "2026-11-06");
+  assert.throws(() => verifyCommercialIntegrationArchive(createZipArchive([{ name: "INFORME.md",
+    data: markdown.replace("NO VERIFICADO EN BD", "VERIFICADO EN BD") }]), files), /no corresponde/);
+  assert.throws(() => verifyCommercialIntegrationArchive(createZipArchive([{ name: "INFORME.md", data: "sin corte" }]), files), /fecha/);
+  assert.throws(() => verifyCommercialIntegrationArchive(createZipArchive([
+    { name: "INFORME.md", data: markdown }, { name: "extra.json", data: "{}" }
+  ]), files), /entradas incorrectas/);
+});
+
+test("las referencias comerciales visibles reutilizan la regla del auditor, sin confundirlas con identidad técnica", () => {
+  const base = planWithProduct();
+  const product = base.products[0]!;
+  const changed: CommercialExportPlan = {
+    ...base, total: 2,
+    products: [
+      { ...product, externalReference: "VISIBLE-A" },
+      { ...product, reference: "other-reference", sourceUrl: "https://example.com/other", externalReference: "visible-a" }
+    ],
+    summary: { ...base.summary, exported: 2, categorized: 2, attributes: 2,
+      withLogo: 2, withPrice: 2 }
+  };
+  assert.equal(inspectCommercialPackage(filesForProvider(changed)).providers[0]?.repeatedReferences, 1);
+});
+
+test("entrega dos ZIP acreditados con los cuatro contenidos comerciales intactos", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "equipzilla-pair-"));
+  const root = fileURLToPath(new URL("../../../../", import.meta.url));
+  const files = await currentCommercialFiles();
+  const date = new Date("2026-11-06T11:00:00.000Z");
+  try {
+    const delivered = await deliverCommercialPackages(root, directory, files, date);
+    assert.equal(delivered.providers, 3);
+    assert.equal(delivered.environment, "sin companyID");
+    assert.equal((await readdir(directory)).length, 2);
+    const commercialZip = readZipArchive(await readFile(delivered.commercial));
+    assert.deepEqual(commercialZip.map((entry) => entry.name), files.map((file) => file.name));
+    for (const entry of commercialZip) {
+      assert.ok(entry.data.equals(Buffer.from(files.find((file) => file.name === entry.name)!.content, "utf8")));
+    }
+    assert.deepEqual((await readdir(directory)).length, 2);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("el almacenamiento de ZIP es idempotente y protege las entregas anteriores ante colisiones", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "equipzilla-storage-"));
+  const commercialArchive = createZipArchive([{ name: "commercial-manifest.json", data: "{}" }]);
+  const reportArchive = createZipArchive([{ name: "INFORME.md", data: "Corte de prueba" }]);
+  try {
+    const first = await publishCommercialArchivePair(directory, "comercial.zip", commercialArchive, "informe.zip", reportArchive);
+    assert.deepEqual(first.created, [first.commercial, first.report]);
+    const repeated = await publishCommercialArchivePair(directory, "comercial.zip", commercialArchive, "informe.zip", reportArchive);
+    assert.deepEqual(repeated.created, []);
+    await writeFile(first.report, "contenido previo diferente");
+    await assert.rejects(publishCommercialArchivePair(directory, "comercial.zip", commercialArchive,
+      "informe.zip", reportArchive), /Colisión/);
+    assert.equal(await readFile(first.report, "utf8"), "contenido previo diferente");
+    assert.deepEqual((await readdir(directory)).sort(), ["comercial.zip", "informe.zip"]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("una colisión del segundo ZIP revierte solo los archivos creados por el intento", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "equipzilla-storage-rollback-"));
+  const commercialArchive = createZipArchive([{ name: "commercial-manifest.json", data: "{}" }]);
+  const reportArchive = createZipArchive([{ name: "INFORME.md", data: "Corte de prueba" }]);
+  const commercial = join(directory, "comercial.zip");
+  const report = join(directory, "informe.zip");
+  try {
+    await writeFile(report, "histórico no coincidente");
+    await assert.rejects(publishCommercialArchivePair(directory, "comercial.zip", commercialArchive,
+      "informe.zip", reportArchive), /Colisión/);
+    await assert.rejects(access(commercial), /ENOENT/);
+    assert.equal(await readFile(report, "utf8"), "histórico no coincidente");
+    assert.deepEqual(await readdir(directory), ["informe.zip"]);
+    await assert.rejects(publishCommercialArchivePair(directory, "../fuera.zip", commercialArchive,
+      "informe.zip", reportArchive), /inválidos/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });

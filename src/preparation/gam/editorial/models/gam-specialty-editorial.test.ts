@@ -4,7 +4,9 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamSpecialtyEditorial } from "./specialty-editorial.js";
-import { prepareSourceProduct } from "../../../prepare-product.js";
+import { createPreparedSourceFixture } from "../../../../testing/builders/prepared-source-fixture.js";
+
+const prepareOriginal = createPreparedSourceFixture();
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
@@ -27,7 +29,7 @@ test("reescribe 20 descripciones de maquinaria especializada sin perder la ident
   let changed = 0;
   for (const record of gam.products) {
     const original = JSON.stringify(record);
-    const prepared = prepareSourceProduct(record);
+    const prepared = prepareOriginal(record);
     if (!record.reference || !references.has(record.reference)) {
       assert.equal(resolveGamSpecialtyEditorial(record, record.shortDescription, record.longDescription), null);
       continue;
@@ -83,7 +85,7 @@ test("bloquea la ediciÃ³n cuando cambia la referencia, la fuente o la preparaciÃ
 });
 
 test("diferencia motores de dos minidumpers y corrige los pesos comerciales sin confundir carga", () => {
-  const general = (reference: string): string => prepareSourceProduct(find(reference)).product.description_general ?? "";
+  const general = (reference: string): string => prepareOriginal(find(reference)).product.description_general ?? "";
   assert.match(general("6559"), /Briggs & Stratton/);
   assert.doesNotMatch(general("6559"), /Rato/i);
   assert.match(general("6560"), /Rato/);

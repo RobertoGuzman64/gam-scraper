@@ -1,53 +1,20 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { link, lstat, mkdir, mkdtemp, open, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { link, lstat, mkdir, open, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import test from "node:test";
-import type { ProductRecord } from "../../../../contracts/catalog.js";
-import type { CategoryConfig, CategoryScrapeResult } from "../../../../contracts/scraping.js";
-import { writeOutputs } from "../../../../scraping/output/publish.js";
-import { prepareSavedCatalog } from "../../../../preparation/workflow/prepare.js";
-import { offlinePreparationManifest } from "../offline-preparation.js";
+import test, { after } from "node:test";
+import { createPreparedRetentionFixture } from "./prepared-retention-fixture.js";
 import { simulatePreparedRetention } from "../preparation-retention.js";
 import { executePreparedRetention, type PreparedRetentionApproval } from "../prepared-retention-execution.js";
 import { formatRetentionExecution } from "../../../../cli/reporting/retention-execution.js";
 
-const category: CategoryConfig = { key: "maquinas", name: "Maquinaria", url: "https://example.test/maquinas" };
-const product = (id: number): ProductRecord => ({
-  providerId: "gam", categoryKey: category.key, categoryName: category.name,
-  url: `https://example.test/maquina/${id}`, title: `Máquina ${id}`,
-  shortDescription: null, longDescription: null, price: null, reference: `GAM-${id}`,
-  brand: null, model: null, year: null, location: null, country: null,
-  horometer: null, serialNumber: null, image: null, condition: null, images: [], specs: {}
-});
+const fixtures = createPreparedRetentionFixture();
+const { withWorkspace, saveVersion } = fixtures;
+after(fixtures.close);
 
 const approval: PreparedRetentionApproval = {
   phase3Closed: true, externalReferencesVerified: true,
   writersCoordinated: true, familyApproved: true
-};
-
-const withWorkspace = async (run: (root: string, source: string) => Promise<void>): Promise<void> => {
-  const root = await mkdtemp(join(tmpdir(), "equipzilla-retention-f4-"));
-  try {
-    const source = join(root, "storage", "scraped", "gam", "lote-catalog.json");
-    const products = Array.from({ length: 12 }, (_, index) => product(index + 1));
-    const result: CategoryScrapeResult = { category, discoveredProductUrls: products.length, products, failures: [] };
-    await writeOutputs(join(root, "storage", "scraped", "gam"), "lote", [result], "2026-10-21T12:00:00Z", "2026-10-21T12:00:00Z");
-    await run(root, source);
-  } finally { await rm(root, { recursive: true, force: true }); }
-};
-
-const saveVersion = async (root: string, source: string, index: number): Promise<string> => {
-  const path = join(root, "storage", "prepared", "gam", `lote-v${index}-preparation.json`);
-  const result = await prepareSavedCatalog({ providerId: "gam", source, out: path, dryRun: false, compare: null });
-  const parsed: unknown = JSON.parse(await readFile(path, "utf8"));
-  if (typeof parsed !== "object" || parsed === null || !("preparedAt" in parsed)) throw new Error("Fixture inválido");
-  const current = { ...parsed, preparedAt: `2026-10-${String(index).padStart(2, "0")}T12:00:00Z` };
-  const raw = JSON.stringify(current, null, 2);
-  await writeFile(path, raw);
-  await writeFile(result.manifestFile, offlinePreparationManifest(raw, result.preparation));
-  return path;
 };
 
 test("deniega mutaciones si no están aprobadas todas las puertas", async () => {

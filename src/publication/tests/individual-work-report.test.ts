@@ -5,13 +5,12 @@ import { basename } from "node:path";
 import { readZipArchive } from "../../infrastructure/archive/zip.js";
 import { collectPublishedWork } from "../individual-work-report.js";
 import { deliverPublishedWorkReport } from "../../cli/reporting/published-work-archive.js";
-import { createIndividualFinishWorkspace, publishIndividualTestWorkspace } from "../../testing/builders/individual-finish-fixture.js";
+import { createPublishedIndividualFinishWorkspace } from "../../testing/builders/individual-finish-fixture.js";
 
-const withWorkspace = createIndividualFinishWorkspace();
+const withWorkspace = createPublishedIndividualFinishWorkspace();
 
 test("exporta un solo Markdown ZIP verificable e idéntico en reejecuciones", async () => {
-  await withWorkspace(async (root, desktop) => {
-    const result = await publishIndividualTestWorkspace(root, desktop);
+  await withWorkspace(async (root, desktop, result) => {
     const delivery = await deliverPublishedWorkReport(root, desktop, result);
     assert.equal(delivery.report.total.publishedProducts, result.providers.reduce((count, p) => count + p.publishable, 0));
     const archive = await readFile(delivery.zipFile);
@@ -28,8 +27,7 @@ test("exporta un solo Markdown ZIP verificable e idéntico en reejecuciones", as
 });
 
 test("no sobrescribe ZIP de informe manipulado; admite recuperación por reintento", async () => {
-  await withWorkspace(async (root, desktop) => {
-    const result = await publishIndividualTestWorkspace(root, desktop);
+  await withWorkspace(async (root, desktop, result) => {
     const delivery = await deliverPublishedWorkReport(root, desktop, result);
     await writeFile(delivery.zipFile, "alterado");
     await assert.rejects(deliverPublishedWorkReport(root, desktop, result), /no coincide/);
@@ -41,8 +39,7 @@ test("no sobrescribe ZIP de informe manipulado; admite recuperación por reinten
 });
 
 test("rechaza simulaciones y aprobaciones distintas de la publicación vigente", async () => {
-  await withWorkspace(async (root, desktop) => {
-    const result = await publishIndividualTestWorkspace(root, desktop);
+  await withWorkspace(async (root, desktop, result) => {
     await assert.rejects(collectPublishedWork(root, { ...result, mode: "simulation" }), /solo para publicaciones/);
     const first = result.providers[0];
     assert.ok(first);

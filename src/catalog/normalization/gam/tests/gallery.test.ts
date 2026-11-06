@@ -1,23 +1,29 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { prepareSourceProduct } from "../../../../preparation/prepare-product.js";
+import { createPreparedSourceFixture } from "../../../../testing/builders/prepared-source-fixture.js";
 import { excludeGamRelatedProductImages } from "../gallery.js";
+
+const prepareOriginal = createPreparedSourceFixture();
 
 const photo = (id: number, name: string): string =>
   `https://online.gamrentals.com/${id}-product_main_2x/${name}.jpg`;
+
+let gamCatalogPromise: ReturnType<typeof readCanonicalCatalog> | undefined;
+const readGamCatalog = (): ReturnType<typeof readCanonicalCatalog> =>
+  gamCatalogPromise ??= readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 
 const own = [photo(100, "2012-genie-z45-25-j"), photo(101, "2012-genie-z45-25-j"), photo(102, "2012-genie-z45-25-j")];
 const related = [photo(200, "2018-snorkel-a46jrt"), photo(201, "2018-genie-z45-25j"), photo(202, "2014-manitou-160-atj")];
 
 test("GAM: elimina portadas reconocidas de otros modelos sin descartar variantes del propio modelo", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const indexed = new Map(products.map((product) => [product.reference, product]));
   for (const reference of ["4656", "4723", "2332", "2262", "2261"]) {
     const source = indexed.get(reference);
     assert.ok(source, reference);
     const originals = source.images ?? [];
-    const prepared = prepareSourceProduct(source);
+    const prepared = prepareOriginal(source);
     const expected = reference === "4656" || reference === "4723"
       ? [originals[0], originals[3]]
       : originals.slice(0, 1);
@@ -28,7 +34,7 @@ test("GAM: elimina portadas reconocidas de otros modelos sin descartar variantes
 });
 
 test("GAM: conserva galerías con procedencia o identificación de modelo insuficiente", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const indexed = new Map(products.map((product) => [product.reference, product]));
   const source = indexed.get("2262");
   assert.ok(source);
@@ -46,7 +52,7 @@ test("GAM: conserva galerías con procedencia o identificación de modelo insufi
     const ambiguous = indexed.get(reference);
     assert.ok(ambiguous, reference);
     assert.deepEqual(excludeGamRelatedProductImages(ambiguous.images ?? [], ambiguous),
-      prepareSourceProduct(ambiguous).product.images, reference);
+      prepareOriginal(ambiguous).product.images, reference);
   }
 });
 
@@ -138,7 +144,7 @@ test("GAM: descarta cuatro recomendaciones con dos portadas del mismo modelo sol
 });
 
 test("GAM: las recomendaciones con dos portadas del modelo principal son ajenas en tres fichas", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const byCover = new Map<string, Set<string>>();
   for (const product of products) {
@@ -155,8 +161,8 @@ test("GAM: las recomendaciones con dos portadas del modelo principal son ajenas 
     assert.ok(originals.length >= 12, reference);
     assert.ok(foreign.every((url) => [...(byCover.get(url) ?? [])].some((owner) => owner !== reference)), reference);
     assert.deepEqual(excludeGamRelatedProductImages(originals), originals.slice(0, -4), reference);
-    assert.deepEqual(prepareSourceProduct(source).product.images, originals.slice(0, -4), reference);
-    assert.equal(prepareSourceProduct(source).product.image, source.image, reference);
+    assert.deepEqual(prepareOriginal(source).product.images, originals.slice(0, -4), reference);
+    assert.equal(prepareOriginal(source).product.image, source.image, reference);
   }
 });
 
@@ -175,7 +181,7 @@ test("GAM: separa una recomendación aislada solo tras al menos ocho imágenes p
 });
 
 test("GAM: las cinco portadas finales aisladas pertenecen a otras referencias", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const byCover = new Map<string, Set<string>>();
   for (const product of products) {
@@ -193,8 +199,8 @@ test("GAM: las cinco portadas finales aisladas pertenecen a otras referencias", 
     assert.ok(last, reference);
     assert.ok([...(byCover.get(last) ?? [])].some((owner) => owner !== reference), reference);
     assert.deepEqual(excludeGamRelatedProductImages(original), original.slice(0, -1), reference);
-    assert.deepEqual(prepareSourceProduct(source).product.images, original.slice(0, -1), reference);
-    assert.equal(prepareSourceProduct(source).product.image, source.image, reference);
+    assert.deepEqual(prepareOriginal(source).product.images, original.slice(0, -1), reference);
+    assert.equal(prepareOriginal(source).product.image, source.image, reference);
   }
 });
 
@@ -228,7 +234,7 @@ test("GAM: las dos recomendaciones finales de otras marcas no requieren ocho fot
 });
 
 test("GAM: las parejas de LX08 pertenecen a otras referencias del catálogo", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   for (const reference of ["6478", "6479", "6813"]) {
     const source = byReference.get(reference);
@@ -237,13 +243,13 @@ test("GAM: las parejas de LX08 pertenecen a otras referencias del catálogo", as
     assert.equal(originals.length, 8, reference);
     assert.deepEqual(originals.slice(-2), [byReference.get("6811")?.image, byReference.get("6807")?.image], reference);
     assert.deepEqual(excludeGamRelatedProductImages(originals), originals.slice(0, -2), reference);
-    assert.deepEqual(prepareSourceProduct(source).product.images, originals.slice(0, -2), reference);
-    assert.equal(prepareSourceProduct(source).product.image, source.image, reference);
+    assert.deepEqual(prepareOriginal(source).product.images, originals.slice(0, -2), reference);
+    assert.equal(prepareOriginal(source).product.image, source.image, reference);
   }
 });
 
 test("GAM: las parejas separadas son portadas ajenas en las doce referencias acreditadas", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const byCover = new Map<string, Set<string>>();
   for (const product of products) {
@@ -262,13 +268,13 @@ test("GAM: las parejas separadas son portadas ajenas en las doce referencias acr
     assert.deepEqual(excludeGamRelatedProductImages(images), expected, reference);
     assert.ok(images.slice(-2).every((image) =>
       [...(byCover.get(image) ?? [])].some((owner) => owner !== reference)), reference);
-    assert.deepEqual(prepareSourceProduct(source).product.images, expected, reference);
-    assert.equal(prepareSourceProduct(source).product.image, source.image, reference);
+    assert.deepEqual(prepareOriginal(source).product.images, expected, reference);
+    assert.equal(prepareOriginal(source).product.image, source.image, reference);
   }
 });
 
 test("GAM: contrasta recomendaciones con la imagen principal de otras unidades del catálogo", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const primaryOwners = new Map<string, Set<string>>();
   for (const product of products) {
@@ -288,7 +294,7 @@ test("GAM: contrasta recomendaciones con la imagen principal de otras unidades d
     const crossReferences = originals.slice(-4).filter((image) =>
       [...(primaryOwners.get(image) ?? [])].some((owner) => owner !== reference));
     assert.ok(crossReferences.length >= 3, reference);
-    assert.deepEqual(prepareSourceProduct(source).product.images, selected, reference);
+    assert.deepEqual(prepareOriginal(source).product.images, selected, reference);
   }
 });
 
@@ -307,12 +313,12 @@ test("GAM: conserva variantes, fotografías adicionales y galerías sin evidenci
 });
 
 test("GAM: la preparación conserva imágenes propias, identidad, estados y originales", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const indexed = new Map(products.map((product) => [product.reference, product]));
   let curated = 0;
   for (const source of products) {
     const original = JSON.stringify(source);
-    const prepared = prepareSourceProduct(source);
+    const prepared = prepareOriginal(source);
     const selected = excludeGamRelatedProductImages(source.images ?? []);
     if (selected.length !== (source.images ?? []).length && source.image === source.images?.[0]) {
       curated += 1;
@@ -326,27 +332,27 @@ test("GAM: la preparación conserva imágenes propias, identidad, estados y orig
   for (const [reference, ownCount] of [["4731", 1], ["4730", 1], ["4768", 2], ["4754", 1], ["4782", 1], ["4683", 1]] as const) {
     const source = indexed.get(reference);
     assert.ok(source, reference);
-    const prepared = prepareSourceProduct(source);
+    const prepared = prepareOriginal(source);
     assert.deepEqual(prepared.product.images, source.images?.slice(0, ownCount), reference);
     assert.equal(prepared.product.image, source.image, reference);
   }
   for (const reference of ["4657", "6169", "6170", "6171", "6172", "6547", "6874", "6873", "6953", "6954"]) {
     const source = indexed.get(reference);
     assert.ok(source, reference);
-    const prepared = prepareSourceProduct(source);
+    const prepared = prepareOriginal(source);
     assert.deepEqual(prepared.product.images, source.images?.slice(0, 1), reference);
     assert.equal(prepared.product.image, source.image, reference);
   }
   for (const reference of ["4661"]) {
     const source = indexed.get(reference);
     assert.ok(source, reference);
-    const prepared = prepareSourceProduct(source);
+    const prepared = prepareOriginal(source);
     assert.deepEqual(prepared.product.images, source.images?.slice(0, 2), reference);
   }
   for (const [reference, ownCount] of [["4794", 1], ["4795", 2], ["4807", 1], ["4388", 1], ["1218", 1], ["2259", 1], ["3445", 1], ["295", 1], ["2737", 1]] as const) {
     const source = indexed.get(reference);
     assert.ok(source, reference);
-    const prepared = prepareSourceProduct(source);
+    const prepared = prepareOriginal(source);
     assert.deepEqual(prepared.product.images, source.images?.slice(0, ownCount), reference);
     assert.equal(prepared.product.image, source.image, reference);
   }
@@ -356,12 +362,12 @@ test("GAM: la preparación conserva imágenes propias, identidad, estados y orig
     assert.ok(source, reference);
     assert.ok(relatedProduct?.image, relatedReference);
     assert.ok(source.images?.includes(relatedProduct.image), reference);
-    assert.ok(!prepareSourceProduct(source).product.images.includes(relatedProduct.image), reference);
+    assert.ok(!prepareOriginal(source).product.images.includes(relatedProduct.image), reference);
   }
   for (const reference of ["6607", "5855", "6139", "6846", "6150", "2621"]) {
     const source = indexed.get(reference);
     assert.ok(source, reference);
-    const prepared = prepareSourceProduct(source);
+    const prepared = prepareOriginal(source);
     assert.ok(prepared.product.images.length < (source.images?.length ?? 0), reference);
   }
 });
@@ -384,7 +390,7 @@ test("GAM: separa cuatro portadas relacionadas tras cuatro imágenes originales 
 });
 
 test("GAM: acredita tres secuencias separadas de cuatro portadas de otras referencias", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const byCover = new Map<string, Set<string>>();
   for (const product of products) {
@@ -400,8 +406,8 @@ test("GAM: acredita tres secuencias separadas de cuatro portadas de otras refere
     assert.equal(originals.length, 8, reference);
     assert.ok(originals.slice(4).every((url) => [...(byCover.get(url) ?? [])].some((owner) => owner !== reference)), reference);
     assert.deepEqual(excludeGamRelatedProductImages(originals), originals.slice(0, 4), reference);
-    assert.deepEqual(prepareSourceProduct(source).product.images, originals.slice(0, 4), reference);
-    assert.equal(prepareSourceProduct(source).product.image, source.image, reference);
+    assert.deepEqual(prepareOriginal(source).product.images, originals.slice(0, 4), reference);
+    assert.equal(prepareOriginal(source).product.image, source.image, reference);
   }
 });
 
@@ -428,7 +434,7 @@ test("GAM: separa portadas agrupadas aunque una tenga identificador consecutivo 
 });
 
 test("GAM: las portadas recomendadas de 6635 y 6636 son de otras referencias", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const byCover = new Map<string, Set<string>>();
   for (const product of products) {
@@ -445,8 +451,8 @@ test("GAM: las portadas recomendadas de 6635 y 6636 son de otras referencias", a
     assert.ok(originals.slice(4).every((url) =>
       [...(byCover.get(url) ?? [])].some((owner) => owner !== reference)), reference);
     assert.deepEqual(excludeGamRelatedProductImages(originals), originals.slice(0, 4), reference);
-    assert.deepEqual(prepareSourceProduct(source).product.images, originals.slice(0, 4), reference);
-    assert.equal(prepareSourceProduct(source).product.image, source.image, reference);
+    assert.deepEqual(prepareOriginal(source).product.images, originals.slice(0, 4), reference);
+    assert.equal(prepareOriginal(source).product.image, source.image, reference);
   }
   const uncertain = byReference.get("6746");
   const related = byReference.get("2368");
@@ -474,7 +480,7 @@ test("GAM: separa una portada aislada solo tras cinco fotografías con identific
 });
 
 test("GAM: elimina portadas ajenas acreditadas sin perder las propias", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const source = byReference.get("6806");
   const related = byReference.get("5918");
@@ -483,8 +489,8 @@ test("GAM: elimina portadas ajenas acreditadas sin perder las propias", async ()
   assert.equal(originals.length, 6);
   assert.equal(originals.at(-1), related.image);
   assert.deepEqual(excludeGamRelatedProductImages(originals), originals.slice(0, 5));
-  assert.deepEqual(prepareSourceProduct(source).product.images, originals.slice(0, 5));
-  assert.equal(prepareSourceProduct(source).product.image, source.image);
+  assert.deepEqual(prepareOriginal(source).product.images, originals.slice(0, 5));
+  assert.equal(prepareOriginal(source).product.image, source.image);
   const pending = byReference.get("6746");
   assert.ok(pending);
   assert.deepEqual(excludeGamRelatedProductImages(pending.images ?? []), [pending.image]);
@@ -494,13 +500,13 @@ test("Gomariz y Mercaeleva: sus galerías continúan intactas", async () => {
   for (const provider of ["gomariz", "mercaeleva"] as const) {
     const { products } = await readCanonicalCatalog(`catalogs/providers/${provider}/original/scrape-${provider}-catalog.json`);
     for (const source of products) {
-      assert.deepEqual(prepareSourceProduct(source).product.images, source.images, `${provider}:${source.reference}`);
+      assert.deepEqual(prepareOriginal(source).product.images, source.images, `${provider}:${source.reference}`);
     }
   }
 });
 
 test("GAM: las 31 galerías señaladas mantienen su portada sin cruces de fabricantes después de normalizar", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const brandsByCover = new Map<string, Set<string>>();
   for (const product of products) {
@@ -526,7 +532,7 @@ test("GAM: las 31 galerías señaladas mantienen su portada sin cruces de fabric
 });
 
 test("GAM: elimina la portada ajena de Yale GP80VX-9 sin tocar las imágenes propias", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const owner = products.find((product) => product.reference === "2368");
   assert.ok(owner?.image);
   const ownerCover: string = owner.image;
@@ -538,15 +544,15 @@ test("GAM: elimina la portada ajena de Yale GP80VX-9 sin tocar las imágenes pro
     assert.notEqual(product.image, ownerCover, product.reference ?? "sin referencia");
     const expected: readonly string[] = product.images.filter((image) => image !== ownerCover);
     assert.deepEqual(excludeGamRelatedProductImages(product.images), expected, product.reference ?? "sin referencia");
-    assert.deepEqual(prepareSourceProduct(product).product.images, expected, product.reference ?? "sin referencia");
-    assert.equal(prepareSourceProduct(product).product.image, product.image, product.reference ?? "sin referencia");
+    assert.deepEqual(prepareOriginal(product).product.images, expected, product.reference ?? "sin referencia");
+    assert.equal(prepareOriginal(product).product.image, product.image, product.reference ?? "sin referencia");
   }
   assert.equal(affected, 58);
 });
 
 
 test("GAM: conserva las vistas del baño unitario y excluye la portada del módulo doble", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const unit = products.find((product) => product.reference === "6814");
   const double = products.find((product) => product.reference === "6815");
   assert.ok(unit?.image && double?.image);
@@ -555,7 +561,7 @@ test("GAM: conserva las vistas del baño unitario y excluye la portada del módu
   assert.equal(original.at(-1), double.image);
   const selected = excludeGamRelatedProductImages(original);
   assert.deepEqual(selected, original.slice(0, -1));
-  const prepared = prepareSourceProduct(unit);
+  const prepared = prepareOriginal(unit);
   assert.deepEqual(prepared.product.images, selected);
   assert.equal(prepared.product.image, unit.image);
   assert.ok(prepared.product.images.every((url) => url.includes("modulo-bano-unitario")));
@@ -564,7 +570,7 @@ test("GAM: conserva las vistas del baño unitario y excluye la portada del módu
 });
 
 test("GAM: separa portadas ajenas con modelo y marca acreditados en galerías de variantes", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const coverOwners = new Map<string, Set<string>>();
   for (const product of products) {
@@ -588,7 +594,7 @@ test("GAM: separa portadas ajenas con modelo y marca acreditados en galerías de
     const selected = excludeGamRelatedProductImages(images, source);
     assert.equal(selected.length, expected, reference);
     assert.equal(selected[0], source.image, reference);
-    assert.deepEqual(prepareSourceProduct(source).product.images, selected, reference);
+    assert.deepEqual(prepareOriginal(source).product.images, selected, reference);
     assert.deepEqual(images, original, reference);
     const removed = images.filter((image) => !selected.includes(image));
     assert.ok(removed.length > 0, reference);
@@ -599,7 +605,7 @@ test("GAM: separa portadas ajenas con modelo y marca acreditados en galerías de
 });
 
 test("GAM: exige concordancia de modelo y marca para separar recomendaciones de variantes", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const source = products.find((product) => product.reference === "4778");
   assert.ok(source);
   const gallery = source.images ?? [];
@@ -620,7 +626,7 @@ test("GAM: exige concordancia de modelo y marca para separar recomendaciones de 
 });
 
 test("GAM: distingue fotografías TRACCESS 170 de la variante eléctrica 170E", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const indexed = new Map(products.map((product) => [product.reference, product]));
   const electric = indexed.get("4657");
   assert.ok(electric);
@@ -632,8 +638,8 @@ test("GAM: distingue fotografías TRACCESS 170 de la variante eléctrica 170E", 
     assert.equal(originals[4], electric.image);
     const expected = [originals[0]!, originals[3]!];
     assert.deepEqual(excludeGamRelatedProductImages(originals, source), expected);
-    assert.deepEqual(prepareSourceProduct(source).product.images, expected);
-    assert.equal(prepareSourceProduct(source).product.image, originals[0]);
+    assert.deepEqual(prepareOriginal(source).product.images, expected);
+    assert.equal(prepareOriginal(source).product.image, originals[0]);
   }
   assert.deepEqual(excludeGamRelatedProductImages(electric.images ?? [], electric), [electric.image]);
   const combustion = indexed.get("4656");
@@ -654,7 +660,7 @@ test("GAM: distingue fotografías TRACCESS 170 de la variante eléctrica 170E", 
 });
 
 test("GAM: conserva solo imágenes propias en las tres transpaletas Yale con portadas cruzadas", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const indexed = new Map(products.map((product) => [product.reference, product]));
   const ownImageNames = new Map(products.filter((product) => product.image && product.reference).map((product) => [
     product.reference, new Set((product.images ?? []).filter((url) =>
@@ -671,7 +677,7 @@ test("GAM: conserva solo imágenes propias en las tres transpaletas Yale con por
       owner !== reference && urls.has(url)
     )), reference);
     assert.deepEqual(excludeGamRelatedProductImages(original, source), original.slice(0, ownCount), reference);
-    const prepared = prepareSourceProduct(source).product;
+    const prepared = prepareOriginal(source).product;
     assert.deepEqual(prepared.images, original.slice(0, ownCount), reference);
     assert.equal(prepared.image, source.image, reference);
     assert.equal(original.length, ownCount + 2, reference);
@@ -679,7 +685,7 @@ test("GAM: conserva solo imágenes propias en las tres transpaletas Yale con por
 });
 
 test("GAM: no recorta fotografías Yale sin acreditar marca, modelo, portada o procedencia", async () => {
-  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const { products } = await readGamCatalog();
   const indexed = new Map(products.map((product) => [product.reference, product]));
   for (const reference of ["915", "2796", "912"]) {
     const source = indexed.get(reference);

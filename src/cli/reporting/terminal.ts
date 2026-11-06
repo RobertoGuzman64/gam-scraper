@@ -138,3 +138,30 @@ export const formatReportLine = (message: string, enabled = supportsTerminalColo
 export const printReportLine = (message: string): void => {
   console.log(formatReportLine(message));
 };
+
+export const printCommandHeader = (section: string, simulation = false): void => {
+  printReportLine(formatHeader(`${section}${simulation ? " · SIMULACIÓN · SIN ESCRITURAS" : ""}`));
+  printReportLine("");
+};
+
+export const printCommandSection = (section: string): void => {
+  printReportLine("");
+  printReportLine(section);
+};
+
+export const printCommandProvider = (providerId: string, summary: string): void => {
+  printReportLine(`  ${providerId.toUpperCase().padEnd(11)} ${summary}`);
+};
+
+export const printCommandWarning = (message: string): void => {
+  printStatus("WARN", message);
+};
+
+export const printCommandDeliverable = (label: string, path: string): void => {
+  printReportLine(`${label}: ${path}`);
+};
+
+export const printCommandResult = (message: string, status: TerminalStatus = "PASS"): void => {
+  printCommandSection("RESULTADO");
+  printStatus(status, message);
+};

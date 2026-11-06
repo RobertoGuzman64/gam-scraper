@@ -3,46 +3,15 @@ import { createHash } from "node:crypto";
 import { lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import test from "node:test";
-import type { ProductRecord } from "../../../../contracts/catalog.js";
-import type { CategoryConfig, CategoryScrapeResult } from "../../../../contracts/scraping.js";
-import { writeOutputs } from "../../../../scraping/output/publish.js";
-import { prepareSavedCatalog } from "../../../../preparation/workflow/prepare.js";
-import { offlinePreparationManifest } from "../offline-preparation.js";
+import test, { after } from "node:test";
+import { createPreparedRetentionFixture } from "./prepared-retention-fixture.js";
+import { readOfflinePreparation } from "../offline-preparation.js";
 import { simulatePreparedRetention } from "../preparation-retention.js";
 import { formatRetentionSimulation } from "../../../../cli/reporting/retention-simulation.js";
 
-const category: CategoryConfig = { key: "maquinas", name: "Maquinaria", url: "https://example.test/maquinas" };
-const product = (id: number): ProductRecord => ({
-  providerId: "gam", categoryKey: category.key, categoryName: category.name,
-  url: `https://example.test/maquina/${id}`, title: `Máquina ${id}`,
-  shortDescription: null, longDescription: null, price: null, reference: `GAM-${id}`,
-  brand: null, model: null, year: null, location: null, country: null,
-  horometer: null, serialNumber: null, image: null, condition: null, images: [], specs: {}
-});
-
-const withWorkspace = async (run: (root: string, source: string) => Promise<void>): Promise<void> => {
-  const root = await mkdtemp(join(tmpdir(), "equipzilla-retention-f3-"));
-  try {
-    const source = join(root, "storage", "scraped", "gam", "lote-catalog.json");
-    const products = Array.from({ length: 12 }, (_, index) => product(index + 1));
-    const result: CategoryScrapeResult = { category, discoveredProductUrls: products.length, products, failures: [] };
-    await writeOutputs(join(root, "storage", "scraped", "gam"), "lote", [result], "2026-10-21T12:00:00Z", "2026-10-21T12:00:00Z");
-    await run(root, source);
-  } finally { await rm(root, { recursive: true, force: true }); }
-};
-
-const saveVersion = async (root: string, source: string, index: number): Promise<string> => {
-  const path = join(root, "storage", "prepared", "gam", `lote-v${index}-preparation.json`);
-  const result = await prepareSavedCatalog({ providerId: "gam", source, out: path, dryRun: false, compare: null });
-  const parsed: unknown = JSON.parse(await readFile(path, "utf8"));
-  if (typeof parsed !== "object" || parsed === null || !("preparedAt" in parsed)) throw new Error("Fixture de preparación inválido");
-  const current = { ...parsed, preparedAt: `2026-10-${String(index).padStart(2, "0")}T12:00:00Z` };
-  const text = JSON.stringify(current, null, 2);
-  await writeFile(path, text);
-  await writeFile(result.manifestFile, offlinePreparationManifest(text, result.preparation));
-  return path;
-};
+const fixtures = createPreparedRetentionFixture();
+const { withWorkspace, saveVersion } = fixtures;
+after(fixtures.close);
 
 test("simula la retención de tres versiones completas sin borrar ningún archivo", async () => {
   await withWorkspace(async (root, source) => {
@@ -174,4 +143,27 @@ test("un directorio inexistente devuelve cero sin crear estructuras", async () =
     assert.equal(result.candidates, 0);
     assert.equal(result.actualDeletions, 0);
   } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+
+test("las versiones reutilizan preparaciones acreditadas sin contaminar los workspaces", async () => {
+  let originalHash: string | undefined;
+  await withWorkspace(async (root, source) => {
+    const first = await saveVersion(root, source, 1);
+    const second = await saveVersion(root, source, 2);
+    const firstPreparation = await readOfflinePreparation(first, "gam");
+    const secondPreparation = await readOfflinePreparation(second, "gam");
+    assert.equal(firstPreparation.preparedAt, "2026-10-01T12:00:00Z");
+    assert.equal(secondPreparation.preparedAt, "2026-10-02T12:00:00Z");
+    assert.deepEqual(firstPreparation.source, secondPreparation.source);
+    assert.deepEqual(firstPreparation.products, secondPreparation.products);
+    originalHash = createHash("sha256").update(await readFile(first)).digest("hex");
+    assert.notEqual(originalHash, createHash("sha256").update(await readFile(second)).digest("hex"));
+    await writeFile(first.replace(/-preparation\.json$/, "-diagnostics.json"), "{}");
+  });
+  await withWorkspace(async (root, source) => {
+    const first = await saveVersion(root, source, 1);
+    assert.equal(createHash("sha256").update(await readFile(first)).digest("hex"), originalHash);
+    assert.equal((await simulatePreparedRetention(root, "gam")).kept, 1);
+  });
 });

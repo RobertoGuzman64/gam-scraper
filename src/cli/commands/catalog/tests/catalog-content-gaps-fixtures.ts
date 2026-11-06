@@ -1,3 +1,4 @@
+import { constants } from "node:fs";
 import { execFile } from "node:child_process";
 import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { basename, join } from "node:path";
@@ -23,20 +24,31 @@ const createBaselineRoot = async (): Promise<string> => {
   await mkdir(temporary, { recursive: true });
   const destination = await mkdtemp(join(temporary, "huecos-baseline-"));
   try {
-    await cp(join(root, "dist"), join(destination, "dist"), {
-      recursive: true,
-      filter: (path) => !path.split(/[\\/]/u).includes("tests")
-    });
-    await cp(join(root, "scripts", "shared"), join(destination, "scripts", "shared"), { recursive: true });
-    for (const providerId of ["gam", "gomariz", "mercaeleva"] as const) {
-      const source = join(root, "catalogs", "providers", providerId);
-      const target = join(destination, "catalogs", "providers", providerId);
-      const published = await accreditedPublicationDirectory(root, providerId);
-      await cp(published, join(target, "publications", basename(published)), { recursive: true });
-      if (providerId !== "mercaeleva") {
-        await cp(join(source, "original"), join(target, "original"), { recursive: true });
-      }
-    }
+    const copies = [
+      cp(join(root, "dist"), join(destination, "dist"), {
+        recursive: true, mode: constants.COPYFILE_FICLONE,
+        filter: (path) => !path.split(/[\\/]/u).includes("tests")
+      }),
+      cp(join(root, "scripts", "shared"), join(destination, "scripts", "shared"), {
+        recursive: true, mode: constants.COPYFILE_FICLONE
+      }),
+      ...(["gam", "gomariz", "mercaeleva"] as const).map(async (providerId) => {
+        const source = join(root, "catalogs", "providers", providerId);
+        const target = join(destination, "catalogs", "providers", providerId);
+        const published = await accreditedPublicationDirectory(root, providerId);
+        await cp(published, join(target, "publications", basename(published)), {
+          recursive: true, mode: constants.COPYFILE_FICLONE
+        });
+        if (providerId !== "mercaeleva") {
+          await cp(join(source, "original"), join(target, "original"), {
+            recursive: true, mode: constants.COPYFILE_FICLONE
+          });
+        }
+      })
+    ];
+    const completed = await Promise.allSettled(copies);
+    const failure = completed.find((result) => result.status === "rejected");
+    if (failure?.status === "rejected") throw failure.reason;
     return destination;
   } catch (error) {
     await rm(destination, { recursive: true, force: true });

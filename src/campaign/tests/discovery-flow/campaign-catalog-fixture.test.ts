@@ -97,3 +97,64 @@ test("no crea snapshots para nombres inválidos y elimina el workspace al cerrar
   await assert.rejects(readValue(current.root, "base.json"), { code: "ENOENT" });
   await cache.close();
 });
+
+test("una variante derivada conserva el trabajo acreditado y restaura el aislamiento", async () => {
+  const instance = createFixtureCache();
+  const { cache } = instance;
+  let baseSetups = 0;
+  let derivedSetups = 0;
+  const createBase = async (data: { readonly root: string }) => {
+    baseSetups += 1;
+    await writeFile(join(data.root, "approved.json"), "aprobado");
+  };
+  const createDerived = async (data: { readonly root: string }) => {
+    derivedSetups += 1;
+    assert.equal(await readValue(data.root, "approved.json"), "aprobado");
+    await writeFile(join(data.root, "delivery.json"), "entregado");
+  };
+  try {
+    await assert.rejects(cache.prepared("delivery", createDerived, "approved"), /no está preparada/);
+    const base = await cache.prepared("approved", createBase);
+    await writeFile(join(base.root, "approved.json"), "manipulado");
+    const delivered = await cache.prepared("delivery", createDerived, "approved");
+    await writeFile(join(delivered.root, "approved.json"), "contaminado");
+    await writeFile(join(delivered.root, "delivery.json"), "dañado");
+    const restored = await cache.prepared("delivery", createDerived, "approved");
+    assert.equal(await readValue(restored.root, "approved.json"), "aprobado");
+    assert.equal(await readValue(restored.root, "delivery.json"), "entregado");
+    const original = await cache.fixture();
+    await assert.rejects(readValue(original.root, "approved.json"), { code: "ENOENT" });
+    await assert.rejects(readValue(original.root, "delivery.json"), { code: "ENOENT" });
+    assert.equal(baseSetups, 1);
+    assert.equal(derivedSetups, 1);
+    assert.equal(instance.initializations, 1);
+  } finally {
+    await cache.close();
+  }
+});
+
+test("una variante derivada fallida conserva intacta su preparación de origen", async () => {
+  const { cache } = createFixtureCache();
+  try {
+    await cache.prepared("approved", async (data) => {
+      await writeFile(join(data.root, "approved.json"), "aprobado");
+    });
+    await assert.rejects(cache.prepared("delivered", async (data) => {
+      await writeFile(join(data.root, "incompleto.json"), "parcial");
+      throw new Error("Entrega interrumpida");
+    }, "approved"), /Entrega interrumpida/);
+    const recovered = await cache.prepared("delivered", async (data) => {
+      assert.equal(await readValue(data.root, "approved.json"), "aprobado");
+      await assert.rejects(readValue(data.root, "incompleto.json"), { code: "ENOENT" });
+      await writeFile(join(data.root, "delivery.json"), "entregado");
+    }, "approved");
+    assert.equal(await readValue(recovered.root, "delivery.json"), "entregado");
+    const base = await cache.prepared("approved", async () => {
+      throw new Error("No se debe reconstruir la aprobación");
+    });
+    await assert.rejects(readValue(base.root, "delivery.json"), { code: "ENOENT" });
+    await assert.rejects(readValue(base.root, "incompleto.json"), { code: "ENOENT" });
+  } finally {
+    await cache.close();
+  }
+});

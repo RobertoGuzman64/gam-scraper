@@ -22,7 +22,7 @@ test("huecos audita las publicaciones finales acreditadas sin atribuirles origin
   assert.equal(report.technicalDensity.totals.sparse, report.technicalDensity.cases.length);
   assert.ok(report.editorial.longestGeneral.every((item, index, items) =>
     index === 0 || (items[index - 1]?.words ?? 0) >= item.words));
-  const text = await execute(["--publicacion", publications[2] ?? "", "--top", "1"]);
+  const text = await execute(["--publicacion", publications[2] ?? "", "--top", "1", "--detalle"]);
   assert.match(text, /finales [1-9]\d*/);
   assert.match(text, /DESCRIPCIONES GENERALES MÁS LARGAS/);
   assert.match(text, /DENSIDAD TÉCNICA \| PRIORIDAD EDITORIAL/);

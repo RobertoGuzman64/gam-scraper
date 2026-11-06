@@ -361,7 +361,7 @@ const finalCounts = {
   skipped: executedCounts.skipped,
   todo: executedCounts.todo
 };
-if (automaticCache) {
+if (automaticCache && cachedFiles.length > 0) {
   process.stdout.write(`${formatScriptStatus(success ? "PASS" : "WARN", `CACHÉ | ${cachedFiles.length} suites y ${cachedCounts.passed} tests reutilizados | ${executableFiles.length} suites ejecutadas`)}\n`);
 }
 if (success && inputFingerprints) {
@@ -378,7 +378,7 @@ if (success && inputFingerprints) {
 if (success && cachedFiles.length === 0 && durations.length === files.length && durations.length > 0) {
   const regressions = durationRegressions(durations, previousDurations);
   if (regressions.length > 0) {
-    process.stdout.write(`${formatScriptStatus("WARN", `RENDIMIENTO | ${regressions.length} archivos duplicaron su duración y aumentaron al menos 10 s`)}\n`);
+    process.stdout.write(`${formatScriptStatus("RUN", `RENDIMIENTO OBSERVADO | ${regressions.length} suites duplicaron duración y aumentaron al menos 10 s; no implica fallos`)}\n`);
     for (const item of regressions.slice(0, 5)) {
       const previous = previousDurations?.get(relative(process.cwd(), item.file).replaceAll("\\", "/"));
       process.stdout.write(formatRunnerRegression({
@@ -393,10 +393,10 @@ if (success && cachedFiles.length === 0 && durations.length === files.length && 
   }
 }
 const finishedLanes = timelineMetrics.lanes.map((lane) => `${lane.name} ${lane.reported}/${lane.files} informes (${formatRunnerTime(lane.finished_ms ?? duration)})`).join(" · ");
-if (finishedLanes) process.stdout.write(`COLAS | ${finishedLanes}\n`);
-if (executableFiles.length === 0) {
+if (finishedLanes && (profile || !success)) process.stdout.write(`COLAS | ${finishedLanes}\n`);
+if ((profile || !success) && executableFiles.length === 0) {
   process.stdout.write(`TIEMPOS | Sin ejecución (caché completa) | Total ${formatRunnerTime(duration)}\n`);
-} else {
+} else if (profile || !success) {
   const lastReportTime = timelineMetrics.last_report_ms;
   process.stdout.write(`TIEMPOS | Último informe ${lastReportTime === null ? "no recibido" : formatRunnerTime(lastReportTime)} | Fin del runner ${formatRunnerTime(duration)} | Intervalo posterior ${lastReportTime === null ? "no calculable" : formatRunnerTime(Math.max(0, duration - lastReportTime))}\n`);
 }

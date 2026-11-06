@@ -3,16 +3,16 @@ import type { PublishedWorkReport, PublishedWorkSummary } from "../../catalog/di
 const textChanges = (work: PublishedWorkSummary): number =>
   work.descriptionsGenerated + work.descriptionsTransformed;
 
-export const formatPublishedWorkTerminal = (report: PublishedWorkReport): readonly string[] => [
-  "◆ EQUIPZILLA / TRABAJO PUBLICADO · ORIGINAL → FINAL",
+export const formatPublishedWorkTerminal = (report: PublishedWorkReport, detailed = false): readonly string[] => [
+  "TRABAJO PUBLICADO · ORIGINAL → FINAL",
   ...report.providers.map(({ providerId, work }) =>
-    `  ${providerId.toUpperCase()} | ${work.publishedProducts} publicadas / ${work.originalProducts} originales` +
-    ` | transformadas ${work.transformedProducts} | specs +${work.specificationsAdded}` +
-    ` | valores ${work.specificationValuesChanged} | textos ${textChanges(work)} | títulos ${work.titlesTransformed}`),
-  `  TOTAL | ${report.total.publishedProducts} publicadas | ${report.total.excludedProducts} excluidas` +
-  ` | transformadas ${report.total.transformedProducts} | specs +${report.total.specificationsAdded}` +
-  ` | valores ${report.total.specificationValuesChanged} | textos ${textChanges(report.total)}` +
-  ` | títulos ${report.total.titlesTransformed}`
+    `  ${providerId.toUpperCase()} · ${work.originalProducts} originales → ${work.publishedProducts} publicadas` +
+    ` · transformadas ${work.transformedProducts} · specs +${work.specificationsAdded}` +
+    ` · textos ${textChanges(work)}` + (detailed ? ` · valores ${work.specificationValuesChanged} · títulos ${work.titlesTransformed}` : "")),
+  `  TOTAL · ${report.total.publishedProducts} publicadas · ${report.total.excludedProducts} excluidas` +
+  ` · transformadas ${report.total.transformedProducts} · specs +${report.total.specificationsAdded}` +
+  ` · textos ${textChanges(report.total)}` + (detailed ?
+    ` · valores ${report.total.specificationValuesChanged} · títulos ${report.total.titlesTransformed}` : "")
 ];
 
 const totalsRow = (name: string, work: PublishedWorkSummary): string =>

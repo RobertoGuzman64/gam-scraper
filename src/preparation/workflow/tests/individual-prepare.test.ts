@@ -3,26 +3,42 @@ import { createHash } from "node:crypto";
 import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
-import test from "node:test";
+import test, { after } from "node:test";
 import { writeCanonicalCatalog, readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { consolidatePortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
 import { requireIndividualPreparationContext } from "../individual-context.js";
 import { parseIndividualCatalogProviders } from "../../../cli/options/individual-catalog.js";
 import { prepareIndividualCatalogs } from "../individual-prepare.js";
+import { reuseWorkspaceTestFixture } from "../../../testing/builders/reusable-workspace-fixture.js";
 
 const files = ["scrape-gomariz-catalog.json", "scrape-gomariz-catalog.manifest.json", "scrape-gomariz-summary.json"] as const;
 const fixtures = join(process.cwd(), "src", "testing", "fixtures", "gomariz");
 
-const withWorkspace = async (run: (root: string, source: string) => Promise<void>): Promise<void> => {
+const fixtureCache = reuseWorkspaceTestFixture(async () => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-catalogo preparar "));
   const source = join(root, "fixture");
   try {
     await mkdir(source);
     for (const name of files) await copyFile(join(fixtures, name), join(source, name));
     await consolidatePortableOriginal(root, join(source, files[0]));
-    await run(root, source);
-  } finally { await rm(root, { recursive: true, force: true }); }
+    return { root, source, cleanup: () => rm(root, { recursive: true, force: true }) };
+  } catch (error) {
+    await rm(root, { recursive: true, force: true });
+    throw error;
+  }
+});
+
+const withWorkspace = async (
+  run: (root: string, source: string) => Promise<void>, state: "original" | "prepared" = "original"
+): Promise<void> => {
+  const current = state === "prepared"
+    ? await fixtureCache.prepared("prepared-gomariz", async ({ root }) => { await firstPreparation(root); })
+    : await fixtureCache.fixture();
+  try { await run(current.root, current.source); }
+  finally { await current.cleanup(); }
 };
+
+after(fixtureCache.close);
 
 const runGomariz = (root: string, dryRun = false) => prepareIndividualCatalogs({
   workspace: root, providers: ["gomariz"], dryRun
@@ -35,6 +51,13 @@ const firstPreparation = async (root: string): Promise<string> => {
   assert.equal(result.summary.sourceCount, 14);
   assert.ok(result.summary.preparationFile);
   return result.summary.preparationFile;
+};
+
+const preparedFile = async (root: string): Promise<string> => {
+  const folder = join(root, "storage", "prepared", "gomariz");
+  const prepared = (await readdir(folder)).filter((name) => name.endsWith("-preparation.json"));
+  assert.equal(prepared.length, 1);
+  return join(folder, prepared[0]!);
 };
 
 const changeOriginal = async (source: string, root: string): Promise<void> => {
@@ -88,19 +111,19 @@ test("simulación offline no crea carpetas, archivos ni cambia el original", asy
 
 test("corrupción del manifest bloquea sin sobrescribir ni elegir otra versión", async () => {
   await withWorkspace(async (root) => {
-    const file = await firstPreparation(root);
+    const file = await preparedFile(root);
     const manifest = file.replace(/-preparation\.json$/, "-preparation.manifest.json");
     await writeFile(manifest, "{}");
     const repeated = await runGomariz(root);
     assert.equal(repeated[0]?.summary, null);
     assert.match(repeated[0]?.error ?? "", /Manifest de preparación/);
     assert.equal(await readFile(manifest, "utf8"), "{}");
-  });
+  }, "prepared");
 });
 
 test("original modificado legítimamente produce versión distinta y conserva la anterior", async () => {
   await withWorkspace(async (root, source) => {
-    const first = await firstPreparation(root);
+    const first = await preparedFile(root);
     const bytes = await readFile(first);
     await changeOriginal(source, root);
     const second = await firstPreparation(root);
@@ -108,12 +131,12 @@ test("original modificado legítimamente produce versión distinta y conserva la
     assert.deepEqual(await readFile(first), bytes);
     assert.equal((await readdir(join(root, "storage", "prepared", "gomariz"))).length, 6);
     assert.equal((await runGomariz(root))[0]?.summary?.status, "reutilizada");
-  });
+  }, "prepared");
 });
 
 test("dos preparaciones válidas para la misma fuente bloquean selección ambigua", async () => {
   await withWorkspace(async (root) => {
-    const first = await firstPreparation(root);
+    const first = await preparedFile(root);
     const originalPrefix = first.slice(0, -"-preparation.json".length);
     const secondPrefix = join(root, "storage", "prepared", "gomariz", "scrape-gomariz-copia");
     for (const suffix of ["-preparation.json", "-preparation.manifest.json", "-diagnostics.json"]) {
@@ -122,18 +145,18 @@ test("dos preparaciones válidas para la misma fuente bloquean selección ambigu
     const result = await runGomariz(root);
     assert.equal(result[0]?.summary, null);
     assert.match(result[0]?.error ?? "", /Preparaciones ambiguas/);
-  });
+  }, "prepared");
 });
 
 test("un archivo de preparación enlazado detiene el preflight", async () => {
   await withWorkspace(async (root) => {
-    const file = await firstPreparation(root);
+    const file = await preparedFile(root);
     const linked = join(root, "storage", "prepared", "gomariz", "scrape-gomariz-enlace-preparation.json");
     await symlink(file, linked);
     const result = await runGomariz(root);
     assert.equal(result[0]?.summary, null);
     assert.match(result[0]?.error ?? "", /no reconocido o no regular/);
-  });
+  }, "prepared");
 });
 
 test("no mezcla un original operativo discordante con el portátil", async () => {
@@ -152,7 +175,7 @@ test("no mezcla un original operativo discordante con el portátil", async () =>
 
 test("diagnóstico alterado en incidencias o procedencia bloquea reutilización", async () => {
   await withWorkspace(async (root) => {
-    const file = await firstPreparation(root);
+    const file = await preparedFile(root);
     const diagnosis = file.replace(/-preparation\.json$/, "-diagnostics.json");
     const original = await readFile(diagnosis, "utf8");
     const originalPreparation = await readFile(file, "utf8");
@@ -170,12 +193,12 @@ test("diagnóstico alterado en incidencias o procedencia bloquea reutilización"
     }
     await writeFile(diagnosis, original);
     assert.equal((await runGomariz(root))[0]?.summary?.status, "reutilizada");
-  });
+  }, "prepared");
 });
 
 test("preparación obsoleta por reglas deja su versión intacta y genera una actual", async () => {
   await withWorkspace(async (root) => {
-    const first = await firstPreparation(root);
+    const first = await preparedFile(root);
     const originalPrefix = first.slice(0, -"-preparation.json".length);
     const oldPrefix = join(root, "storage", "prepared", "gomariz", "scrape-gomariz-anterior");
     for (const suffix of ["-preparation.json", "-preparation.manifest.json", "-diagnostics.json"]) {
@@ -201,7 +224,7 @@ test("preparación obsoleta por reglas deja su versión intacta y genera una act
     assert.notEqual(second, oldFile);
     assert.deepEqual(await readFile(oldFile, "utf8"), older);
     assert.equal((await runGomariz(root))[0]?.summary?.status, "reutilizada");
-  });
+  }, "prepared");
 });
 
 test("bloqueo de retención impide consultar un estado parcial", async () => {

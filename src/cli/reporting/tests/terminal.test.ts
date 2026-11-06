@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import { mock } from "node:test";
 import test from "node:test";
-import { formatHeader, formatProgressBar, formatReportLine, formatStatus, supportsTerminalColor, supportsAnimation } from "../terminal.js";
+import { formatHeader, formatProgressBar, formatReportLine, formatStatus, supportsTerminalColor, supportsAnimation, printCommandHeader, printCommandProvider, printCommandResult, printCommandSection } from "../terminal.js";
 
 test("estados semánticos mantienen texto legible en salidas sin color", () => {
   assert.equal(formatStatus("PASS", "Entrega verificada", false), "PASS | Entrega verificada");
@@ -101,4 +102,25 @@ test("distingue activación, candidata verificada y archivado pendiente en color
   assert.match(formatReportLine("PUBLICACIÓN | GAM | CANDIDATA VERIFICADA", true), /\u001b\[32mCANDIDATA VERIFICADA\u001b\[0m/);
   assert.match(formatReportLine("PUBLICACIÓN | GAM | ARCHIVADO PENDIENTE", true), /\u001b\[33mARCHIVADO PENDIENTE\u001b\[0m/);
   assert.equal(formatReportLine("PUBLICACIÓN | GAM | ARCHIVADO PENDIENTE", false), "PUBLICACIÓN | GAM | ARCHIVADO PENDIENTE");
+});
+
+test("los bloques terminales son legibles sin TTY ni color y conservan cierre explícito", () => {
+  const lines: string[] = [];
+  const log = mock.method(console, "log", (message: string) => { lines.push(message); });
+  const write = mock.method(process.stdout, "write", (message: string | Uint8Array) => {
+    lines.push(typeof message === "string" ? message.trimEnd() : message.toString().trimEnd());
+    return true;
+  });
+  try {
+    printCommandHeader("PUBLICACIÓN", true);
+    printCommandProvider("mercaeleva", "221 publicadas");
+    printCommandSection("AUDITORÍA POSTERIOR");
+    printCommandResult("Revisión técnica pendiente", "WARN");
+  } finally {
+    write.mock.restore();
+    log.mock.restore();
+  }
+  const output = lines.join("\n").replace(/\u001b\[[0-9;]*m/g, "");
+  assert.match(output, /SIMULACIÓN · SIN ESCRITURAS/);
+  assert.match(output, /\n\n  MERCAELEVA  221 publicadas\n\nAUDITORÍA POSTERIOR\n\nRESULTADO\nWARN \| Revisión técnica pendiente/);
 });

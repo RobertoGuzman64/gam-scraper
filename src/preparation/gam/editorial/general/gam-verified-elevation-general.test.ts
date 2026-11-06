@@ -4,7 +4,9 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamVerifiedElevationGeneral } from "./verified-elevation-general.js";
-import { prepareSourceProduct } from "../../../prepare-product.js";
+import { createPreparedSourceFixture } from "../../../../testing/builders/prepared-source-fixture.js";
+
+const prepareOriginal = createPreparedSourceFixture();
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
@@ -25,7 +27,7 @@ const normalize = (value: string): string => value.normalize("NFD")
 test("condensa 20 generales de elevación con identidad y medidas de su propio anuncio", () => {
   let improved = 0;
   for (const record of gam.products) {
-    const prepared = prepareSourceProduct(record);
+    const prepared = prepareOriginal(record);
     const summary = prepared.product.description_general;
     if (!record.reference || !references.has(record.reference)) {
       assert.equal(resolveGamVerifiedElevationGeneral(record, summary), null);
@@ -80,9 +82,9 @@ test("no aplica un texto de elevación cuando se altera la fuente, variante o pr
 });
 
 test("separa el tipo de plataforma y la batería de cada variante documentada", () => {
-  const scissor = prepareSourceProduct(byReference("4803")).product.description_general;
-  const articulated = prepareSourceProduct(byReference("4779")).product.description_general;
-  const telescopic = prepareSourceProduct(byReference("4785")).product.description_general;
+  const scissor = prepareOriginal(byReference("4803")).product.description_general;
+  const articulated = prepareOriginal(byReference("4779")).product.description_general;
+  const telescopic = prepareOriginal(byReference("4785")).product.description_general;
   assert.match(scissor ?? "", /tijera el[eé]ctrica.*XG1523ERT-LI.*680 kg/s);
   assert.match(scissor ?? "", /bater[ií]a de litio/);
   assert.match(articulated ?? "", /articulada h[ií]brida.*XGA18H.*320 kg/s);

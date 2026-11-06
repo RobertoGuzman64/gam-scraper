@@ -47,7 +47,7 @@ export type CommercialBaseline = {
 
 const hasText = (value: string | null): boolean => value !== null && value.trim().length > 0;
 
-const commercialReference = (product: ImportCandidate): string | null =>
+export const commercialReference = (product: Pick<ImportCandidate, "providerId" | "reference" | "externalReference">): string | null =>
   product.providerId === "gam" ? product.externalReference?.trim() || null : product.reference?.trim() || null;
 
 export const analyzeCommercialBaseline = (entries: readonly CommercialBaselineInput[]): CommercialBaseline => {

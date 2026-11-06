@@ -20,14 +20,14 @@ import { createDeliveryFixtures, date, prefixes, createSecondCampaign, createFai
 
 const fixtureCache = createDeliveryFixtures();
 const fixture = fixtureCache.fixture;
-const approvedFixture = fixtureCache.approvedFixture;
+const deliveredFixture = fixtureCache.deliveredFixture;
 after(fixtureCache.close);
 
 test("una entrega local sigue acreditable sin ZIP físico y la retirada bloquea archivos desconocidos", async () => {
-  const data = await approvedFixture();
+  const data = await deliveredFixture();
   try {
-    const first = await deliverActiveCampaign(data.root, data.desktop, date);
-    await rm(first.zipFile);
+    const first = join(data.desktop, `equipzilla-2026-10-26-${data.runId}.zip`);
+    await rm(first);
     const historical = await verifyDeliveredCampaign(data.root, undefined, data.runId);
     assert.equal(historical.zipStatus, "absent");
     await createSecondCampaign(data.root);
@@ -130,9 +130,9 @@ test("una entrega histórica de tres proveedores se verifica por runId y sirve d
 });
 
 test("abandona expresamente un run fallido sin proveedores, sin afectar la última entrega", async () => {
-  const data = await approvedFixture();
+  const data = await deliveredFixture();
   try {
-    const delivery = await deliverActiveCampaign(data.root, data.desktop, date);
+    const delivery = join(data.desktop, `equipzilla-2026-10-26-${data.runId}.zip`);
     const failedId = `lote-${randomUUID()}`;
     const file = join(data.root, "storage", "runs", failedId, "run.json");
     const report: BatchReport = {
@@ -147,7 +147,7 @@ test("abandona expresamente un run fallido sin proveedores, sin afectar la últi
     await abandonFailedCampaign(data.root, failedId);
     assert.deepEqual((await listCampaignRuns(data.root)).map(({ report }) => report.runId), [data.runId]);
     assert.equal((await verifyDeliveredCampaign(data.root, data.desktop, data.runId)).zipStatus, "verified");
-    assert.ok((await readFile(delivery.zipFile)).length > 0);
+    assert.ok((await readFile(delivery)).length > 0);
   } finally { await data.cleanup(); }
 });
 

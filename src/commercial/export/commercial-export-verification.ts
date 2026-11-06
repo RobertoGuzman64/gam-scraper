@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { readZipArchive } from "../../infrastructure/archive/zip.js";
 import { loadImportCatalogSnapshot } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { discoverAccreditedPublications, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
@@ -215,4 +216,30 @@ export const verifyCommercialExportDirectory = async (
     bytes += info.size;
   }
   return { files: expected.length, bytes };
+};
+
+export const verifyCommercialExportArchive = (
+  archive: Buffer, expected: readonly CommercialExportFile[]
+): CommercialExportVerification => {
+  validateCommercialExportFiles(expected);
+  const entries = readZipArchive(archive);
+  const files = new Map(expected.map((file) => [file.name, file]));
+  if (entries.length !== files.size) throw new Error("ZIP comercial con archivos ausentes o ajenos");
+  let bytes = 0;
+  for (const entry of entries) {
+    const file = files.get(entry.name);
+    if (!file || !Buffer.from(file.content, "utf8").equals(entry.data) || entry.data.length !== file.bytes) {
+      throw new Error(`ZIP comercial no coincide con el corte acreditado: ${entry.name}`);
+    }
+    bytes += entry.data.length;
+  }
+  return { files: entries.length, bytes };
+};
+
+export const verifyCommercialExportZip = async (
+  path: string, expected: readonly CommercialExportFile[]
+): Promise<CommercialExportVerification> => {
+  const info = await lstat(resolve(path));
+  if (!info.isFile() || info.isSymbolicLink()) throw new Error("ZIP comercial debe ser un archivo regular");
+  return verifyCommercialExportArchive(await readFile(resolve(path)), expected);
 };

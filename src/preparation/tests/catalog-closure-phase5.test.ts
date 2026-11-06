@@ -7,7 +7,6 @@ import { projectCommercialCategory } from "../../commercial/projection/category-
 import { planCommercialExport } from "../../commercial/projection/export-projection.js";
 import { accreditCommercialPlan } from "../../commercial/diagnostics/commercial-accreditation.js";
 import { prepareImportBatch } from "../batch-identity.js";
-import { prepareSourceProduct } from "../prepare-product.js";
 
 const root = process.cwd();
 const catalog = await loadImportCatalog();
@@ -26,16 +25,19 @@ const datasets = await Promise.all(publications.map(async (published) => {
     assert.equal(source.url, product.sourceUrl, `${published.providerId}:${product.reference} sin trazabilidad`);
     return source;
   });
-  return { published, original, selected };
+  const before = JSON.stringify(selected);
+  const technical = prepareImportBatch(selected);
+  assert.equal(JSON.stringify(selected), before, published.providerId);
+  return { published, original, selected, technical };
 }));
 
 test("el catálogo acreditado tiene identidad completa y la preparación no altera los originales", () => {
   assert.ok(datasets.length > 0);
   const identities = new Set<string>();
-  for (const { published, original, selected } of datasets) {
+  for (const { published, original, selected, technical } of datasets) {
     assert.ok(original.products.length >= selected.length, published.providerId);
     const previous = JSON.stringify(selected);
-    const prepared = prepareImportBatch(selected);
+    const prepared = technical;
     assert.equal(prepared.products.length, published.products.length, published.providerId);
     assert.equal(prepared.totals.ready + prepared.totals.review, selected.length, published.providerId);
     assert.equal(JSON.stringify(selected), previous, published.providerId);
@@ -59,17 +61,18 @@ test("el catálogo acreditado tiene identidad completa y la preparación no alte
 });
 
 test("la futura proyección comercial conserva los datos técnicos recalculados y no introduce bloqueos", () => {
-  for (const { published, selected } of datasets) {
+  for (const { published, selected, technical } of datasets) {
     const before = JSON.stringify(selected);
     const mapped = prepareImportBatch(selected, catalog);
     const entries = selected.map((source, index) => {
-      const technical = prepareSourceProduct(source);
+      const prepared = technical.products[index];
       const commercial = mapped.products[index];
+      assert.ok(prepared);
       assert.ok(commercial);
       for (const field of ["title", "description_title", "description", "description_general", "spec", "image", "images"] as const) {
-        assert.deepEqual(commercial.product[field], technical.product[field], `${source.providerId}:${source.reference}:${field}`);
+        assert.deepEqual(commercial.product[field], prepared.product[field], `${source.providerId}:${source.reference}:${field}`);
       }
-      return { source, published: technical.product, mapped: projectCommercialCategory(source, commercial, catalog) };
+      return { source, published: prepared.product, mapped: projectCommercialCategory(source, commercial, catalog) };
     });
     const plan = planCommercialExport(entries, published.providerId, published.sha256, catalog, [], null, null);
     const accreditation = accreditCommercialPlan(entries, plan, catalog, [], null);

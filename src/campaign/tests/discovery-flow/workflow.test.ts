@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import { copyFile, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import test from "node:test";
+import test, { after } from "node:test";
 import { inspectBeforeExtraction } from "../../preflight.js";
 import { reviewActiveCampaign } from "../../review.js";
 import { CAMPAIGN_PROVIDERS } from "../../discovery/report.js";
 import type { BatchReport, ProviderRun } from "../../../contracts/batch-report.js";
-import { copyCampaignTestCatalog } from "../campaign-catalog-fixture.js";
+import { copyCampaignTestCatalog, reuseCampaignTestFixture } from "../campaign-catalog-fixture.js";
 
 const sourceRoot = resolve("src/testing/fixtures");
 
@@ -49,6 +49,19 @@ const writeRun = async (root: string, status: BatchReport["status"], providers: 
   await writeFile(file, JSON.stringify(report));
 };
 
+const campaignFixtures = reuseCampaignTestFixture(async () => {
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-review-run-"));
+  try {
+    const providers = await Promise.all(CAMPAIGN_PROVIDERS.map((id) => populate(root, id)));
+    await writeRun(root, "complete", providers);
+    return { root, cleanup: () => rm(root, { recursive: true, force: true }) };
+  } catch (error) {
+    await rm(root, { recursive: true, force: true });
+    throw error;
+  }
+});
+after(campaignFixtures.close);
+
 test("instalación sin históricos no intenta generar una preparación", async () => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-review-clean-"));
   try {
@@ -75,11 +88,13 @@ test("un lote incompleto exige reconocerlo antes de empezar otro y no se prepara
 });
 
 test("prepara y valida los tres catálogos del mismo run sin cambiar los Review; reutiliza preparaciones válidas", async () => {
-  const root = await mkdtemp(join(tmpdir(), "equipzilla-review-run-"));
+  let first: Awaited<ReturnType<typeof reviewActiveCampaign>> | undefined;
+  const data = await campaignFixtures.prepared("reviewed", async ({ root }) => {
+    first = await reviewActiveCampaign(root);
+  });
+  const root = data.root;
   try {
-    const providers = await Promise.all(CAMPAIGN_PROVIDERS.map((id) => populate(root, id)));
-    await writeRun(root, "complete", providers);
-    const first = await reviewActiveCampaign(root);
+    assert.ok(first);
     assert.equal(first.complete, true, JSON.stringify(first.providers.filter((p) => p.state !== "validated")));
     assert.deepEqual(first.providers.map((p) => p.state), ["validated", "validated", "validated", "validated"]);
     for (const p of first.providers) {
@@ -97,14 +112,15 @@ test("prepara y valida los tres catálogos del mismo run sin cambiar los Review;
     assert.equal(second.complete, true, JSON.stringify(second.providers.filter((p) => p.state !== "validated")));
     assert.deepEqual(second.providers.map((p) => p.preparationFile), first.providers.map((p) => p.preparationFile));
     assert.ok(second.providers.every((provider) => provider.workSummary === undefined));
-  } finally { await rm(root, { recursive: true, force: true }); }
+  } finally { await data.cleanup(); }
 });
 
 test("una preparación alterada bloquea la revisión y no se reemplaza silenciosamente", async () => {
-  const root = await mkdtemp(join(tmpdir(), "equipzilla-review-invalid-"));
+  const data = await campaignFixtures.prepared("reviewed", async ({ root }) => {
+    assert.equal((await reviewActiveCampaign(root)).complete, true);
+  });
+  const root = data.root;
   try {
-    const providers = await Promise.all(CAMPAIGN_PROVIDERS.map((id) => populate(root, id)));
-    await writeRun(root, "complete", providers);
     const first = await reviewActiveCampaign(root);
     assert.equal(first.complete, true);
     const preparationFile = first.providers[0]?.preparationFile;
@@ -114,5 +130,5 @@ test("una preparación alterada bloquea la revisión y no se reemplaza silencios
     assert.equal(second.complete, false);
     assert.ok(second.campaign.issues.some((issue) => issue.includes("Preparación no verificable")));
     assert.equal(await readFile(preparationFile, "utf8"), "{}");
-  } finally { await rm(root, { recursive: true, force: true }); }
+  } finally { await data.cleanup(); }
 });
