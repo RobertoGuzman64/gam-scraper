@@ -15,6 +15,7 @@ import { verifiedFamilyProportionEditorial } from "../../../../evidence/verified
 import { matchesVerifiedHorometer } from "../../../../evidence/providers/mercaeleva/verified-horometer.js";
 import { recoverMercaelevaDocumentedTransportAndAccessSpecs } from "../../../../evidence/providers/mercaeleva/documented-transport-and-access-specs.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { normalizeMercaelevaAusaHeightText } from "../../../../reconciliation/mercaeleva-ausa-height.js";
 import { resolveMercaelevaDocumentedFurtherPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-further-platform-general.js";
 import { resolveMercaelevaPreviousGenerationPlatformGeneral } from "../../../../mapping/providers/mercaeleva/documented-previous-generation-platform-general.js";
 import { resolveMercaelevaVerifiedSourceEditorial } from "../../../../mapping/providers/mercaeleva/verified-source-editorial.js";
@@ -105,7 +106,7 @@ test("Mercaeleva: los anuncios de unidades se individualizan únicamente con evi
     assert.notEqual(general, record.longDescription, reference);
     const prepared = prepareSourceProduct(record);
     const previous = resolveMercaelevaDocumentedFurtherPlatformGeneral(record) ?? general;
-    assert.equal(prepared.product.description_general, resolveMercaelevaVerifiedSourceEditorial(record, previous) ?? previous, reference);
+    assert.equal(prepared.product.description_general, normalizeMercaelevaAusaHeightText(record, resolveMercaelevaVerifiedSourceEditorial(record, previous) ?? previous), reference);
     assert.deepEqual(prepared.product.spec, recoverMercaelevaDocumentedLgmgAndBtLiftSpecs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, recoverMercaelevaSourceFuel(record, record.specs ?? {})))), reference);
     assert.equal(JSON.stringify(record), original, reference);
     for (const variant of [

@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../../reconciliation/gam-source-technical-units.js";
 import { verifiedUnitContextEditorial } from "../../../../evidence/verified-unit-context-editorial.js";
 import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
 import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
@@ -44,7 +45,7 @@ test("aplica síntesis editorial contrastada únicamente a veinte fichas GAM", (
       assert.equal(prepared.description, unitContextEvidence[`gam:${record.reference}`]?.short ?? resolveGamAdditionalCondensedShort(record) ?? record.shortDescription?.trim(), record.reference);
       assert.equal(prepared.reference, record.reference);
       assert.equal(prepared.sourceUrl, record.url);
-      for (const [key, value] of Object.entries(record.specs ?? {})) {
+      for (const [key, value] of Object.entries(reconcileGamSourceTechnicalUnits(record).specs ?? {})) {
         const expectedValue: unknown = key === "Dimensiones Cesta" && ["6874", "6185", "6188", "6168"].includes(record.reference ?? "")
           ? "1,4 x 0,7 x 1,1 m" : value;
         assert.equal(prepared.spec[key], expectedValue, `${record.reference}: ${key}`);

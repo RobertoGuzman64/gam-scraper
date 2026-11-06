@@ -150,6 +150,29 @@ test("no mezcla un original operativo discordante con el portátil", async () =>
 });
 
 
+test("diagnóstico alterado en incidencias o procedencia bloquea reutilización", async () => {
+  await withWorkspace(async (root) => {
+    const file = await firstPreparation(root);
+    const diagnosis = file.replace(/-preparation\.json$/, "-diagnostics.json");
+    const original = await readFile(diagnosis, "utf8");
+    const originalPreparation = await readFile(file, "utf8");
+    const parsed: unknown = JSON.parse(original);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Diagnóstico inválido");
+    for (const change of [
+      { issues: [{ code: "incidencia-inventada" }] },
+      { sourceTriage: [{ issueCode: "evidencia-inventada" }] }
+    ]) {
+      await writeFile(diagnosis, JSON.stringify({ ...parsed, ...change }, null, 2));
+      const result = await runGomariz(root);
+      assert.equal(result[0]?.summary, null);
+      assert.match(result[0]?.error ?? "", /Diagnóstico incoherente con las incidencias/);
+      assert.equal(await readFile(file, "utf8"), originalPreparation);
+    }
+    await writeFile(diagnosis, original);
+    assert.equal((await runGomariz(root))[0]?.summary?.status, "reutilizada");
+  });
+});
+
 test("preparación obsoleta por reglas deja su versión intacta y genera una actual", async () => {
   await withWorkspace(async (root) => {
     const first = await firstPreparation(root);

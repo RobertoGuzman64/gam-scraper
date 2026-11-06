@@ -6,6 +6,7 @@ import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/l
 import { reconcileGamOrderPickerEditorial } from "../../../../evidence/providers/gam/editorial/orderpicker-editorial.js";
 import { prepareProduct } from "../../../../../legacy-export/prepare-product.js";
 import { verifiedUnitContextEditorial } from "../../../../evidence/verified-unit-context-editorial.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../../reconciliation/gam-source-technical-units.js";
 
 const catalog = await loadImportCatalog();
 const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
@@ -31,7 +32,7 @@ test("Yale MO10L corrige 2000 a 1000 kg con ficha técnica y resumen coincidente
   assert.match(prepared.product.description_general ?? "", /1\.000 kg con centro de carga de 600 mm/);
   assert.match(prepared.product.description_general ?? "", /2\.000 kg, pero esa cifra contradice/);
   assert.match(prepared.product.description_general ?? "", /unidad mal formada y requiere verificaci[oó]n/);
-  assert.deepEqual(prepared.product.spec, { ...base.specs, "Dirección asistida": true });
+  assert.deepEqual(prepared.product.spec, reconcileGamSourceTechnicalUnits({ ...base, specs: { ...base.specs, "Dirección asistida": true } }).specs);
   assert.equal(JSON.stringify(base), original);
   assert.strictEqual(reconcileGamOrderPickerEditorial(corrected), corrected);
 });

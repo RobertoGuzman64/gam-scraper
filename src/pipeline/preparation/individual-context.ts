@@ -3,7 +3,10 @@ import { lstat, mkdir, readFile, readdir } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import type { OfflinePreparation, PreparationFingerprints } from "../../catalog/preparation/offline-document.js";
+import { buildOfflineDiagnostics } from "../../catalog/preparation/offline-diagnostics.js";
 import type { OfflineDiagnostics } from "../../catalog/preparation/offline-diagnostics.js";
+import { buildSourceTriage } from "../../catalog/diagnostics/source-triage.js";
+import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate } from "../../catalog/legacy-export/contracts.js";
 import { LEGACY_CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { resolveAccreditedPublication, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
@@ -54,7 +57,7 @@ const verifyPreparedDirectory = async (workspace: string, providerId: Individual
 const readExistingPreparations = async (
   directory: string, providerId: IndividualCatalogProvider,
   source: { readonly prefix: string; readonly scope: string; readonly sha: string; readonly count: number },
-  fingerprints: PreparationFingerprints, sourceFile: string
+  fingerprints: PreparationFingerprints, sourceFile: string, sourceProducts: readonly ProductRecord[]
 ): Promise<{ readonly file: string; readonly preparation: OfflinePreparation } | null> => {
   let entries;
   try { entries = await readdir(directory, { withFileTypes: true }); }
@@ -96,6 +99,12 @@ const readExistingPreparations = async (
     if (preparation.source.prefix === source.prefix && preparation.source.scope === source.scope &&
       preparation.source.catalogSha256 === source.sha && preparation.source.productCount === source.count &&
       preparation.source.intervention === undefined && isDeepStrictEqual(preparation.fingerprints, fingerprints)) {
+      const expectedDiagnostics = {
+        ...buildOfflineDiagnostics(preparation), sourceTriage: buildSourceTriage(preparation, sourceProducts)
+      };
+      if (!isDeepStrictEqual(diagnostics, expectedDiagnostics)) {
+        throw new Error(`Diagnóstico incoherente con las incidencias de preparación: ${key}`);
+      }
       matches.push({ file: path, preparation });
     }
   }
@@ -139,7 +148,7 @@ export const resolveIndividualPreparationContext = async (
   const preparedDirectory = await verifyPreparedDirectory(root, providerId);
   const existing = await readExistingPreparations(preparedDirectory, providerId, {
     prefix: catalog.prefix, scope: catalog.scope, sha: catalogSha256, count: catalog.productCount
-  }, fingerprints, sourceFile);
+  }, fingerprints, sourceFile, catalog.products);
   const generation = digest(JSON.stringify({ providerId, catalogSha256, fingerprints }));
   const outputFile = join(preparedDirectory, `scrape-${providerId}-${generation.slice(0, 24)}-preparation.json`);
   const activeFile = await resolveAccreditedPublication(root, providerId);
@@ -196,6 +205,7 @@ export type IndividualPreparationSummary = {
   readonly possibleRemovals: number;
   readonly possibleChanges: number;
   readonly possibleSpecificationLosses: number;
+  readonly reconciledSpecificationChanges: number;
   readonly preparationFile: string | null;
   readonly diagnostics: OfflineDiagnostics;
 };

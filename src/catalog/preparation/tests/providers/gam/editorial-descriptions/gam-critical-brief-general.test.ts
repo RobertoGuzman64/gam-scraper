@@ -1,4 +1,5 @@
 import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../../reconciliation/gam-source-technical-units.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -16,7 +17,7 @@ const find = (reference: string): ProductRecord => {
 const count = (value: string): number => value.split(/\s+/u).filter(Boolean).length;
 const references = ["5710", "6358", "6367", "920", "2263", "2111", "6617"] as const;
 
-test("GAM: conserva las seis generales de F10 y recupera la 6617", () => {
+test("GAM: conserva las generales acreditadas y recupera la descripción de 6617", () => {
   const modified: string[] = [];
   for (const record of catalog.products) {
     const baseline = JSON.stringify(record);
@@ -31,11 +32,12 @@ test("GAM: conserva las seis generales de F10 y recupera la 6617", () => {
         ? `Año de fabricación declarado para esta unidad: 2005.\n\n${editorial}` : editorial);
       assert.equal(prepared.product.reference, record.reference);
       assert.equal(prepared.product.sourceUrl, record.url);
-      assert.deepEqual(prepared.product.spec, recoverGamDocumentedMobilityAndAccessSpecs(record, {
+      const expectedSpecs = recoverGamDocumentedMobilityAndAccessSpecs(record, {
         ...reconcileGamHorometer(record).specs,
         ...(["6358", "6367"].includes(record.reference) ? { "Capacidad de carga (kg)": "2000 KG", "Año de fabricación": "2019" } : {}),
         ...(record.reference === "6617" ? { "Dimensiones Cesta": "1,83 x 0,76 m" } : {})
-      }));
+      });
+      assert.deepEqual(prepared.product.spec, reconcileGamSourceTechnicalUnits({ ...record, specs: expectedSpecs }).specs);
     }
     assert.equal(JSON.stringify(record), baseline);
   }
@@ -43,7 +45,7 @@ test("GAM: conserva las seis generales de F10 y recupera la 6617", () => {
   assert.equal(catalog.products.length, 983);
 });
 
-test("GAM F10: conserva los datos técnicos y diferencia unidades de un mismo modelo", () => {
+test("GAM conserva datos técnicos y diferencia unidades de un mismo modelo", () => {
   const outputs = new Map(references.map((ref) => [ref, resolveGamCriticalBriefGeneral(find(ref))]));
   assert.ok(outputs.get("5710")?.includes("21.400 kg"));
   assert.ok(outputs.get("5710")?.includes("mayo de 2026"));

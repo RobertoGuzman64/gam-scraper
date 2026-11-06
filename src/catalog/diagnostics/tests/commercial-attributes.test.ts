@@ -6,6 +6,7 @@ import type { CommercialBaselineInput } from "../commercial-baseline.js";
 import { decideCommercialAttributes, validateCommercialAttributeValue } from "../../commercial/attribute-decision.js";
 import { analyzeCommercialAttributes } from "../commercial-attributes.js";
 import { projectCommercialAttributes } from "../../commercial/attribute-projection.js";
+import { observeCommercialAttributes } from "../../commercial/attribute-observation.js";
 
 const catalog: ImportCatalog = {
   categories: [{ id: 29, parentId: null, name: "Máquinas", slug: "maquinas" }],
@@ -172,4 +173,106 @@ test("rechazos protectores por identidad contradictoria no crean una intervenci�
   assert.ok(report.validationIssues.every((issue) => issue.reason === "resuelto-no-asignado"));
   assert.ok(report.decisions[0]?.unresolved.every((item) => item.attributeID !== 1));
   assert.equal(report.coverage.find((value) => value.attributeID === 1)?.accepted, 0);
+});
+
+
+test("no exige atributos fuera de opciones válidas ni proyecta relaciones inexistentes", () => {
+  const select = { ...catalog.attributes[0]!, type: "SELECT" as const, unit_option: "GENIE / CAT" };
+  const contract: ImportCatalog = { ...catalog, attributes: [select], relations: [
+    { categoryID: 29, attributeID: select.id },
+    { categoryID: 29, attributeID: select.id }
+  ] };
+  const original = source("observacion", { Marca: "GENIE" });
+  assert.deepEqual(observeCommercialAttributes(original, 29, [], contract), [
+    { attributeID: select.id, status: "resuelto-no-asignado" }
+  ]);
+  const invalid = { ...original, brand: "JLG", specs: { Marca: "JLG" } };
+  assert.deepEqual(observeCommercialAttributes(invalid, 29, [], contract), [
+    { attributeID: select.id, status: "sin-intervencion" }
+  ]);
+  assert.deepEqual(observeCommercialAttributes(original, 29, [], { ...contract, relations: [] }), []);
+  const record = entry("sin-relaciones", [{ attributeID: 115, value: "GENIE" }]);
+  const report = analyzeCommercialAttributes([record], { ...catalog, relations: [] });
+  assert.equal(report.acceptedAssignments, 0);
+  assert.equal(report.invalidAssignments, 1);
+  assert.deepEqual(report.decisions[0]?.attributes, []);
+  assert.ok(report.validationIssues.some((issue) => issue.reason === "relacion-invalida"));
+  assert.equal(report.validationIssues.some((issue) => issue.reason === "resuelto-no-asignado"), false);
+});
+
+test("distingue ausencia de relaciones directas de ausencia de valores admitidos", () => {
+  const withoutRelations = entry("sin-relacion", [], { Marca: "GENIE" }, 67);
+  const withoutValues = entry("sin-valor", [], {}, 29);
+  const accepted = entry("con-atributos", [{ attributeID: 115, value: "GENIE" }]);
+  const disabled: ImportCatalog = {
+    ...catalog,
+    relations: [...catalog.relations, { categoryID: 67, attributeID: 115, actived: false }]
+  };
+  const report = analyzeCommercialAttributes([withoutRelations, withoutValues, accepted], disabled);
+  assert.deepEqual(report.decisions.map((item) => [item.reference, item.relatedAttributes, item.attributes.length]), [
+    ["con-atributos", 4, 1], ["sin-relacion", 0, 0], ["sin-valor", 4, 0]
+  ]);
+  assert.equal(report.invalidAssignments, 0);
+  assert.equal(report.validationIssues.find((issue) => issue.reason === "resuelto-no-asignado")?.affected, 1);
+  assert.equal(report.productsWithAccepted, 1);
+  assert.deepEqual(report.decisions.find((item) => item.reference === "sin-relacion")?.unresolved, []);
+});
+
+test("cuenta relaciones directas únicas y no confunde categorías excluidas o pendientes", () => {
+  const duplicated: ImportCatalog = {
+    ...catalog,
+    relations: [...catalog.relations, { categoryID: 29, attributeID: 115 }]
+  };
+  const pending = entry("pendiente", [], {}, null);
+  const excluded = entry("excluido", [], {}, null);
+  const report = analyzeCommercialAttributes([
+    pending,
+    { ...excluded, source: { ...excluded.source, url: "https://online.gamrentals.com/es/lotes/excluido" } },
+    entry("validado", [])
+  ], duplicated);
+  assert.equal(report.decisions.find((item) => item.reference === "validado")?.relatedAttributes, 4);
+  assert.equal(report.decisions.find((item) => item.reference === "pendiente")?.relatedAttributes, 0);
+  assert.equal(report.decisions.find((item) => item.reference === "excluido")?.relatedAttributes, 0);
+});
+
+test("conserva la primera asignación válida aunque llegue detrás de un duplicado inválido", () => {
+  const selected = decideCommercialAttributes({ categorySellID: 29, attributes: [
+    { attributeID: 12, value: "De bandaje" },
+    { attributeID: 12, value: "Macizos" },
+    { attributeID: 12, value: "No marcantes" },
+    { attributeID: 115, value: "" },
+    { attributeID: 115, value: "GENIE" },
+    { attributeID: 1, value: -1 },
+    { attributeID: 1, value: 12 }
+  ] }, catalog);
+  assert.deepEqual(selected.accepted, [
+    { attributeID: 12, value: "Macizos" },
+    { attributeID: 115, value: "GENIE" },
+    { attributeID: 1, value: 12 }
+  ]);
+  assert.deepEqual(selected.issues.map((issue) => issue.reason), [
+    "opcion-invalida", "atributo-duplicado", "tipo-invalido", "tipo-invalido"
+  ]);
+  assert.deepEqual(decideCommercialAttributes({ categorySellID: 29, attributes: [
+    { attributeID: 12, value: "Macizos" },
+    { attributeID: 12, value: "No marcantes" }
+  ] }, catalog).issues.map((issue) => issue.reason), ["atributo-duplicado"]);
+});
+
+test("la recuperación de neumáticos exige identidad técnica completa", () => {
+  const original = source("unidad-propia", { Ruedas: "MACIZAS" });
+  const published = { ...candidate(original, [], null), spec: { Ruedas: "MACIZAS" } };
+  const proposed = candidate(original, []);
+  assert.deepEqual(projectCommercialAttributes(published, proposed, catalog).recovered,
+    [{ attributeID: 24, value: "Macizos" }]);
+  for (const foreign of [
+    { ...proposed, reference: "otra-unidad" },
+    { ...proposed, sourceUrl: "https://online.gamrentals.com/es/maquinaria/otra-unidad" },
+    { ...proposed, providerId: "gomariz" }
+  ]) {
+    const projection = projectCommercialAttributes(published, foreign, catalog);
+    assert.deepEqual(projection.recovered, []);
+    assert.deepEqual(projection.accepted, []);
+  }
+  assert.deepEqual(published.spec, { Ruedas: "MACIZAS" });
 });

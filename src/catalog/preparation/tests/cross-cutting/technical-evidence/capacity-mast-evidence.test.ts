@@ -1,4 +1,5 @@
 import { reconcileGamHorometer } from "../../../reconciliation/gam-horometer.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../reconciliation/gam-source-technical-units.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { gamCapacityDisputedReferences, gamCapacityVerifiedReferences } from "../../providers/gam/support/gam-technical-cohorts.js";
@@ -41,7 +42,8 @@ test("las dieciséis fichas conservan sus fuentes, con once capacidades acredita
     const prepared = prepareProduct(record, catalog);
     assert.equal(prepared.status, !gamTechnicalReviewReferences.has(id) && (confirmed.has(id) || ["2237", "2240", "6723", "2211", "6272"].includes(id)) ? "ready" : "review", id);
     const expectedSpecs = { ...reconcileGamHorometer(record).specs, ...(id === "6421" ? { "Velocidad de desplazamiento con/sin carga (km/h)": "15,7 / 15,7 km/h", "Potencia de tracción (kW)": "8,5 kW", "Potencia de elevación (kW)": "11 kW" } : {}) };
-    for (const [key, value] of Object.entries(expectedSpecs)) {
+    const normalizedExpected = reconcileGamSourceTechnicalUnits({ ...record, specs: expectedSpecs }).specs ?? expectedSpecs;
+    for (const [key, value] of Object.entries(normalizedExpected)) {
       if (key === "Capacidad de carga (kg)" && confirmed.has(id)) continue;
       assert.deepEqual(prepared.product.spec[key], value, `${id}: ${key}`);
     }

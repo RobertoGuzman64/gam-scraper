@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import { buildProductIdentity } from "../../catalog/identity.js";
+import type { CanonicalCatalog } from "../../catalog/canonical-catalog.js";
 import { prepareImportBatch } from "../../catalog/preparation/prepare.js";
 import { buildOfflineDiagnostics, compareOfflinePreparations } from "../../catalog/preparation/offline-diagnostics.js";
 import { buildSourceTriage } from "../../catalog/diagnostics/source-triage.js";
@@ -10,7 +12,7 @@ import type { PreparationWorkSummary } from "../../catalog/diagnostics/preparati
 import type { SourceTriageGroup } from "../../catalog/diagnostics/source-triage.js";
 import type { OfflineDiagnostics, PreparationComparison } from "../../catalog/preparation/offline-diagnostics.js";
 import { parseOfflinePreparation } from "../../catalog/preparation/offline-document.js";
-import type { OfflinePreparation } from "../../catalog/preparation/offline-document.js";
+import type { OfflinePreparation, PreparationFingerprints } from "../../catalog/preparation/offline-document.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { readAppliedIntervention } from "../../infrastructure/filesystem/interventions/intervention-derived.js";
 import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation/preparation-inputs.js";
@@ -49,6 +51,28 @@ const writeExclusive = async (files: readonly { path: string; content: string }[
   } catch (error) {
     for (const path of created) await rm(path, { force: true });
     throw error;
+  }
+};
+
+export const assertPreparationInputsCurrent = async (
+  options: Pick<PrepareOptions, "source" | "originalSource">,
+  expected: {
+    readonly catalog: CanonicalCatalog;
+    readonly catalogSha256: string;
+    readonly fingerprints: PreparationFingerprints;
+  }
+): Promise<void> => {
+  const source = resolve(options.source);
+  const derived = options.originalSource === undefined
+    ? null : await readAppliedIntervention(source, options.originalSource);
+  const catalog = derived?.catalog ?? await readCanonicalCatalog(source);
+  const catalogSha256 = derived?.catalogSha256 ?? sha(await readFile(source, "utf8"));
+  if (catalogSha256 !== expected.catalogSha256 || !isDeepStrictEqual(catalog, expected.catalog)) {
+    throw new Error("El catálogo de origen cambió durante la preparación; no se guarda una derivación obsoleta");
+  }
+  const { fingerprints } = await loadPreparationInputs();
+  if (!isDeepStrictEqual(fingerprints, expected.fingerprints)) {
+    throw new Error("Las reglas de preparación cambiaron durante la ejecución; no se guarda una derivación obsoleta");
   }
 };
 
@@ -101,10 +125,7 @@ export const prepareSavedCatalog = async (options: PrepareOptions): Promise<Prep
   const comparisonFile = comparison ? out.slice(0, -"-preparation.json".length) + "-comparison.json" : null;
   const workspace = preparedWorkspaceForOutput(out, options.providerId);
   if (!options.dryRun) {
-    if (derived !== null && options.originalSource !== undefined) {
-      const current = await readAppliedIntervention(source, options.originalSource);
-      if (current.catalogSha256 !== sourceHash) throw new Error("El origen derivado cambió durante la preparación");
-    }
+    await assertPreparationInputsCurrent(options, { catalog, catalogSha256: sourceHash, fingerprints });
     await mkdir(dirname(out), { recursive: true });
     const rawPreparation = JSON.stringify(preparation, null, 2);
     const files = [

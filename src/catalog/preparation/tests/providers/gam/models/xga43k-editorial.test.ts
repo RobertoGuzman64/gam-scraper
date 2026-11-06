@@ -35,6 +35,7 @@ test("XGA43K distingue capacidades limitadas y reconcilia las cifras técnicas e
   assert.deepEqual(prepared.product.spec, original.specs);
   assert.equal(prepared.product.description, corrected.shortDescription);
   assert.equal(prepared.product.description_general, corrected.longDescription);
+  assert.match(prepared.product.description_general ?? "", /300 kg sin limitación y 460 kg con limitación/u);
   assert.equal(prepared.product.attributes.some((value) => value.attributeID === 116 && value.value === "XGA43K"), true);
 });
 
@@ -69,4 +70,17 @@ test("el corrector XGA43K no modifica otras referencias", () => {
   for (const item of source.products) {
     if (item.reference !== "5902") assert.strictEqual(reconcileGamVerifiedXga43kEditorial(item), item, item.reference ?? "");
   }
+});
+
+
+test("XGA43K conserva las condiciones de carga en la descripción condensada del original", async () => {
+  const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const actual = products.find((item) => item.reference === "5902");
+  assert.ok(actual);
+  const prepared = prepareProduct(actual, catalog);
+  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "460 KG");
+  assert.match(prepared.product.description ?? "", /300 kg sin limitación \/ 460 kg con limitación/u);
+  assert.match(prepared.product.description_general ?? "", /300 kg de capacidad de cesta sin limitación y hasta 460 kg con limitación/u);
+  assert.doesNotMatch(prepared.product.description_general ?? "", /43 m de altura, 460 kg de capacidad de cesta/u);
 });

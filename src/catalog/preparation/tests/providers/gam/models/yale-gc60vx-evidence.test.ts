@@ -32,8 +32,8 @@ test("Yale GC60VX reconcilia la motorización declarada sin modificar el spec or
   assert.equal(prepared.product.description, corrected.shortDescription);
   assert.equal(prepared.product.description_general, verifiedFamilyProportionEditorial["gam:2314"].general);
   assert.match(prepared.product.description_general ?? "", /6\.000 kg a centro de carga de 600 mm/);
-  assert.match(prepared.product.description_general ?? "", /contradicci[oó]n t[eé]cnica en el combustible/i);
-  assert.match(prepared.product.description_general ?? "", /No se acredita una variante concreta/i);
+  assert.match(prepared.product.description_general ?? "", /«Motorización» concuerda con esa declaración/u);
+  assert.doesNotMatch(prepared.product.description_general ?? "", /«Motorización» dice eléctrico/u);
   assert.deepEqual(prepared.product.spec, corrected.specs);
   assert.deepEqual(record, original);
 });

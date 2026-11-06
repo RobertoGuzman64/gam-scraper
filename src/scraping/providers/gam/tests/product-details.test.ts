@@ -662,3 +662,28 @@ test("GAM: respeta identidades alternativas y protege data-product con ID ajeno"
   const onlyData = fixture(`<div id="product"><div id="product-details" data-product='${JSON.stringify(foreignProduct)}'></div></div>`);
   assert.deepEqual(parseProductPage(onlyData, base).images, []);
 });
+
+test("GAM: prioriza la ficha identificada por referencia aunque JSON-LD utilice otra ruta de idioma", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/60500-product_main_2x/otra-plataforma-jlg.jpg";
+  const translated = "https://online.gamrentals.com/en/electric-articulated-booms/6934-2007-jlg-e300ajp";
+  const html = fixture(`<script type="application/ld+json">${JSON.stringify({
+    "@graph": [
+      { "@type": "Product", url: translated, image: own },
+      { "@type": "Product", image: foreign }
+    ]
+  })}</script>`);
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
+});
+
+test("GAM: lee imágenes declaradas directamente en el producto principal", () => {
+  const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
+  const second = "https://online.gamrentals.com/60452-product_main_2x/2007-jlg-e300ajp.jpg";
+  const foreign = "https://online.gamrentals.com/60500-product_main_2x/otra-plataforma-jlg.jpg";
+  const data = JSON.stringify({ url: base, images: [own] });
+  const additional = JSON.stringify([second]);
+  const html = fixture(`<div id="product" data-product='${data}' data-images='${additional}'>
+    <div class="related-products"><div data-product='${JSON.stringify({ images: [foreign] })}'></div></div>
+  </div>`);
+  assert.deepEqual(parseProductPage(html, base).images, [own, second]);
+});

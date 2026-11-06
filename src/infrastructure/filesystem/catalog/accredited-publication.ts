@@ -151,7 +151,7 @@ export const readAccreditedPublication = async (file: string): Promise<{
   const manifestPath = join(directory, "manifest.json");
   const accreditationPath = join(directory, "accreditation.json");
   const [raw, rawManifest, rawAccreditation] = await Promise.all([
-    readPublicationFile(path), readPublicationFile(manifestPath), readPublicationFile(accreditationPath)
+    verifiedFile(path), verifiedFile(manifestPath), verifiedFile(accreditationPath)
   ]);
   const manifest = parsePublicationJson(rawManifest, manifestPath);
   const accreditation = parsePublicationJson(rawAccreditation, accreditationPath);

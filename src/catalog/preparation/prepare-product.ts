@@ -11,7 +11,11 @@ import { resolveCommercialCondition } from "./condition.js";
 import type { ImportCandidate, ImportCatalog } from "../legacy-export/contracts.js";
 import type { PreparedProduct } from "./contracts.js";
 import { reconcileGamInitialIdentity, reconcileGamForPreparation } from "./reconciliation/gam.js";
+import { reconcileGamSourceTechnicalUnits } from "./reconciliation/gam-source-technical-units.js";
+import { normalizeMercaelevaAusaHeightText } from "./reconciliation/mercaeleva-ausa-height.js";
 import { verifiedGamHysterH45fts5Editorial } from "./reconciliation/gam-hyster-h45fts5.js";
+import { reconcileGamElectricTowTractorEditorial } from "./evidence/providers/gam/editorial/hyster-tow-tractor-editorial.js";
+import { reconcileGamModulaStorageSummary } from "./evidence/providers/gam/editorial/modula-storage-editorial.js";
 import { reconcileGamVerifiedYaleGp80vx } from "./reconciliation/gam-yale-gp80vx.js";
 import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "./evidence/providers/mercaeleva/verified-platform-source-specs.js";
 import { reconcileMercaelevaVerifiedLindeE48p } from "./evidence/providers/mercaeleva/linde-e48p-publication-evidence.js";
@@ -65,7 +69,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const category = catalog ? resolveCategory(record, catalog.categories, condition) : null;
   const sourceImages = imageUrls(record);
   const images = record.providerId === "gam" && record.image === sourceImages[0]
-    ? excludeGamRelatedProductImages(sourceImages) : sourceImages;
+    ? excludeGamRelatedProductImages(sourceImages, record) : sourceImages;
   const price = normalizePrice(record.price);
   const reference = record.reference?.trim() || null;
   const editorial = resolvePreparedEditorial(editorialRecord, sourceUnitRecord, sourceEditorial);
@@ -85,7 +89,9 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     sourceFuelSpecs, issues.length === 0
   );
   issues.push(...preparedTechnicalConsistencyIssues(record, reconciledSpecs));
+  const normalizedSpecs = reconcileGamSourceTechnicalUnits({ ...record, specs: reconciledSpecs }).specs ?? reconciledSpecs;
   const hysterEditorial = verifiedGamHysterH45fts5Editorial(sourceUnitRecord, record);
+  const tractorEditorial = reconcileGamElectricTowTractorEditorial(sourceUnitRecord, descriptions, normalizedSpecs);
   const product: ImportCandidate = {
     providerId: record.providerId,
     sourceUrl: record.url,
@@ -97,11 +103,16 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     condition,
     price,
     description_title: editorial.title,
-    description: hysterEditorial?.short ?? preparedGamSourceCapacityShort(editorialRecord, record, descriptions.short),
-    description_general: hysterEditorial?.general ?? reconcileGamVerifiedEditorialCoherence(record, descriptions.general),
+    description: normalizeMercaelevaAusaHeightText(
+      sourceUnitRecord, reconcileGamModulaStorageSummary(sourceUnitRecord,
+        hysterEditorial?.short ?? preparedGamSourceCapacityShort(editorialRecord, record, tractorEditorial.short), tractorEditorial.spec)
+    ),
+    description_general: normalizeMercaelevaAusaHeightText(
+      sourceUnitRecord, hysterEditorial?.general ?? reconcileGamVerifiedEditorialCoherence(record, tractorEditorial.general)
+    ),
     image: images[0] ?? null,
     images,
-    spec: reconciledSpecs,
+    spec: tractorEditorial.spec,
     attributes: attributeResult?.attributes ?? []
   };
   return {

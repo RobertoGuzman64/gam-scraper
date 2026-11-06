@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { reconcileGamSourceIdentity } from "./gam-source-identity.js";
+import { reconcileGamVerifiedClassicVehicleIdentity } from "../evidence/providers/gam/identity/used-classic-vehicle-identity.js";
 import { reconcileGamVerifiedHysterH45fts5Title } from "./gam-hyster-h45fts5.js";
 import { gamElevationSourceIdentityConflict } from "../evidence/providers/gam/identity/elevation-identity.js";
 import { reconcileGamElevationEditorialIdentity } from "../evidence/providers/gam/editorial/elevation-editorial.js";
@@ -40,5 +41,5 @@ record = reconcileGamVerifiedGenie5390Editorial(reconcileGamOrderPickerEditorial
   record = reconcileGamVerifiedYaleGc55vxGlp(record);
   record = reconcileGamVerifiedYaleGc40vxLpg(record);
   record = reconcileGamVerifiedYaleGc45vxLpg(record);
-  return reconcileGamSourceIdentity(record);
+  return reconcileGamVerifiedClassicVehicleIdentity(reconcileGamSourceIdentity(record));
 };

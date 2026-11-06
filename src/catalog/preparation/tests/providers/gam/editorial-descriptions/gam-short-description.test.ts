@@ -1,4 +1,5 @@
 import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../../reconciliation/gam-source-technical-units.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -69,7 +70,8 @@ test("GAM: resume exclusivamente fichas seguras sin retirar cifras de la descrip
         ...(record.reference === "4012" ? { "Depósito de solución": 218, "Depósito de recuperación": 237 } : {}),
         ...(record.reference === "2370" ? { "Voltaje batería (V)": "24 V", "Capacidad de la batería (Ah)": "150 Ah" } : {})
       };
-      for (const [key, value] of Object.entries(expectedSpecs)) {
+      const normalizedExpected = reconcileGamSourceTechnicalUnits({ ...record, specs: expectedSpecs }).specs ?? expectedSpecs;
+      for (const [key, value] of Object.entries(normalizedExpected)) {
         const expectedValue: unknown = key === "Dimensiones Cesta" && ["6873", "6874"].includes(record.reference ?? "")
           ? "1,4 x 0,7 x 1,1 m" : value;
         assert.deepEqual(prepared.product.spec[key], expectedValue, `${record.reference}: ${key}`);

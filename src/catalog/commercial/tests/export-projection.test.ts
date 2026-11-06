@@ -5,6 +5,7 @@ import type { ImportCandidate, ImportCatalog } from "../../legacy-export/contrac
 import type { CommercialBaselineInput } from "../../diagnostics/commercial-baseline.js";
 import type { BrandLogoReference } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { planCommercialExport } from "../export-projection.js";
+import { projectCommercialPresentation } from "../presentation-projection.js";
 import { accreditCommercialPlan } from "../../diagnostics/commercial-accreditation.js";
 
 const catalog: ImportCatalog = {
@@ -23,7 +24,7 @@ const logos: readonly BrandLogoReference[] = [
   { id: 18, brand: "Otras Marcas", slug: "otras-marcas", logo: "https://example.org/otras.png" }
 ];
 const source = (ref: string): ProductRecord => ({
-  providerId: "gam", categoryKey: "maquinaria", categoryName: "Maquinaria",
+  providerId: "gam", categoryKey: "articuladas", categoryName: "Articuladas",
   url: `https://example.org/venta/${ref}`, reference: ref, externalReference: "VISIBLE-1",
   title: "Compra JCB AB123 | GAM Online", shortDescription: "Resumen acreditado",
   longDescription: "Descripción acreditada", price: null, condition: "Segunda mano",
@@ -50,7 +51,7 @@ const entry = (reference: string, categorySellID: number | null = 29): Commercia
 const plan = (items: readonly CommercialBaselineInput[], environment: "develop" | "production" | null = null,
   companyID: number | null = null) => planCommercialExport(items, "gam", "a".repeat(64), catalog, logos, environment, companyID);
 
-test("deriva contenido y metadata F3, categoría y atributos F1–F2 sin alterar publicación", () => {
+test("deriva contenido, metadata, categoría y atributos sin alterar la publicación técnica", () => {
   const input = entry("100");
   const snapshot = JSON.stringify(input);
   const output = plan([input]);
@@ -146,7 +147,7 @@ test("rechaza identidades cambiadas, duplicadas o categorías no hoja", () => {
   assert.throws(() => plan([wrong]), /Categoría comercial no válida/);
 });
 
-test("F5 acredita conservación íntegra, metadata y referencias visibles compartidas sin mezclarlas", () => {
+test("acredita conservación de datos, metadata y referencias visibles compartidas sin mezclarlas", () => {
   const input = [entry("301"), entry("302")];
   const commercial = plan(input);
   const audit = accreditCommercialPlan(input, commercial, catalog, logos, null);
@@ -160,7 +161,7 @@ test("F5 acredita conservación íntegra, metadata y referencias visibles compar
   assert.equal(audit.samples[0]?.count, 2);
 });
 
-test("F5 detecta pérdidas, recategorizaciones ajenas, metadata y empresa alteradas", () => {
+test("detecta pérdidas, recategorizaciones indebidas, metadata y empresa alteradas", () => {
   const input = entry("303");
   const commercial = plan([input], "production", 208);
   const actual = commercial.products[0];
@@ -180,7 +181,7 @@ test("F5 detecta pérdidas, recategorizaciones ajenas, metadata y empresa altera
   assert.ok(issues.includes("metadata-no-determinista"));
 });
 
-test("F5 detecta atributos ilegales, identidades omitidas y totales inconsistentes", () => {
+test("detecta atributos incompatibles, identidades omitidas y totales inconsistentes", () => {
   const input = [entry("304"), entry("305")];
   const commercial = plan(input);
   const first = commercial.products[0];
@@ -195,7 +196,7 @@ test("F5 detecta atributos ilegales, identidades omitidas y totales inconsistent
   assert.ok(issues.includes("totales-incoherentes"));
 });
 
-test("F5 no requiere referencia visible única ni reference cuando la identidad tiene serial", () => {
+test("admite referencia comercial compartida e identidad basada en número de serie", () => {
   const first = entry("306");
   const withoutRef: CommercialBaselineInput = {
     ...first,
@@ -209,7 +210,7 @@ test("F5 no requiere referencia visible única ni reference cuando la identidad 
   assert.equal(audit.decisions[0]?.status, "categorized");
 });
 
-test("F5 distingue exclusiones reales de pérdidas de producto", () => {
+test("distingue exclusiones acreditadas de pérdidas de producto", () => {
   const lot = entry("307");
   const excluded = {
     ...lot,
@@ -266,4 +267,65 @@ test("exporta solo maquinaria y acredita exclusión de accesorio con evidencia e
   const accreditation = accreditCommercialPlan([input], output, catalog, logos, null);
   assert.equal(accreditation.summary.blocking, 0);
   assert.equal(accreditation.summary.pending, 0);
+});
+
+test("no crea keywords de una variante que contradice el título publicado", () => {
+  const original = source("400");
+  const conflicting: ProductRecord = {
+    ...original, brand: "CTE", model: "B-LIFT 18HV", title: "Plataforma CTE B-LIFT 18HD",
+    specs: { Marca: "CTE", Modelo: "B-LIFT 18HV" }
+  };
+  const projected = projectCommercialPresentation(conflicting, published(conflicting), "Plataformas sobre camión");
+  assert.deepEqual(projected.metadata.keywords, [
+    "plataformas-sobre-camion", "cte", "plataforma-cte-b-lift-18hd"
+  ]);
+  const consistent = { ...conflicting, title: "Plataforma CTE B-LIFT 18HV" };
+  assert.ok(projectCommercialPresentation(consistent, published(consistent), "Plataformas sobre camión")
+    .metadata.keywords.includes("b-lift-18hv"));
+  const unambiguous = { ...conflicting, title: "Plataforma CTE sobre camión" };
+  assert.ok(projectCommercialPresentation(unambiguous, published(unambiguous), "Plataformas sobre camión")
+    .metadata.keywords.includes("b-lift-18hv"));
+  assert.deepEqual(projected.spec, conflicting.specs);
+  assert.equal(projected.title, conflicting.title);
+});
+
+test("descarta keywords de códigos de variante contradictorios sin inventar una identidad", () => {
+  const original = source("400");
+  const conflicting: ProductRecord = {
+    ...original, brand: "JLG", model: "E300AJ", title: "Plataforma JLG E300AJP",
+    specs: { Marca: "JLG", Modelo: "E300AJ" }
+  };
+  const projected = projectCommercialPresentation(conflicting, published(conflicting), "Articuladas eléctricas");
+  assert.deepEqual(projected.metadata.keywords, [
+    "articuladas-electricas", "jlg", "plataforma-jlg-e300ajp"
+  ]);
+  assert.equal(projected.spec.Modelo, "E300AJ");
+  for (const title of ["Plataforma JLG E300AJ", "Plataforma JLG articulada eléctrica"]) {
+    const candidate = { ...conflicting, title };
+    assert.ok(projectCommercialPresentation(candidate, published(candidate), "Articuladas eléctricas")
+      .metadata.keywords.includes("e300aj"));
+  }
+});
+
+test("la exportación conserva atributos válidos posteriores a rechazos del mismo ID", () => {
+  const input = entry("asignacion-valida");
+  const updated: CommercialBaselineInput = { ...input, mapped: {
+    ...input.mapped, product: { ...input.mapped.product, attributes: [
+      { attributeID: 24, value: "De bandaje" },
+      { attributeID: 24, value: "Macizos" },
+      { attributeID: 115, value: "" },
+      { attributeID: 115, value: "JCB" },
+      { attributeID: 24, value: "Superelásticos" }
+    ] }
+  } };
+  const output = plan([updated]);
+  assert.deepEqual(output.products[0]?.attributes, [
+    { attributeID: 24, value: "Macizos" },
+    { attributeID: 115, value: "JCB" }
+  ]);
+  assert.equal(output.summary.attributes, 2);
+  assert.deepEqual(output.exceptions.map((item) => item.reason), [
+    "atributo-24:opcion-invalida", "atributo-115:tipo-invalido", "atributo-24:atributo-duplicado"
+  ]);
+  assert.equal(accreditCommercialPlan([updated], output, catalog, logos, null).summary.blocking, 0);
 });

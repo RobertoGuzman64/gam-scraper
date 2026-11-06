@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamWarehouseTechnicalEditorial } from "../../../../mapping/providers/gam/editorial-descriptions/warehouse-technical-editorial.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../../reconciliation/gam-source-technical-units.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
@@ -32,7 +33,7 @@ test("publica las descripciones técnicas de 20 referencias sin mezclar modelos 
     assert.ok(record.longDescription && product.description_general.length < record.longDescription.length / 2, record.reference);
     assert.doesNotMatch(product.description_general, /experimente la excelencia|soluci[oó]n definitiva|m[aá]xima productividad/i, record.reference);
     assert.equal(JSON.stringify(record), original, record.reference);
-    for (const [key, value] of Object.entries(record.specs ?? {})) {
+    for (const [key, value] of Object.entries(reconcileGamSourceTechnicalUnits(record).specs ?? {})) {
       assert.equal(product.spec[key], value, `${record.reference}: ${key}`);
     }
     changed++;

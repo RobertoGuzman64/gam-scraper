@@ -3,6 +3,7 @@ import { buildOfflineDiagnostics } from "../../catalog/preparation/offline-diagn
 import type { OfflinePreparation } from "../../catalog/preparation/offline-document.js";
 import { prepareSavedCatalog } from "./prepare.js";
 import { differenceBetween } from "../publication/active-publication.js";
+import { reconcileRemovedSpecifications } from "../publication/specification-reconciliations.js";
 import {
   ensureIndividualPreparationDirectory, resolveIndividualPreparationContext,
   type IndividualCatalogProvider, type IndividualPreparationContext, type IndividualPreparationSummary
@@ -28,8 +29,10 @@ const summarize = (
     .map((item) => item.product.reference ?? item.product.sourceUrl);
   const historicalExclusions = context.activeFile ? [...all].filter((id) => !active.has(id)) : [];
   const diagnostics = buildOfflineDiagnostics(preparation);
+  const readyProducts = preparation.products.filter((item) => item.status === "ready").map((item) => item.product);
   const difference = context.activeFile ? differenceBetween(context.activeFile, "preparación sin acreditar",
-    context.activeProducts, preparation.products.filter((item) => item.status === "ready").map((item) => item.product)) : null;
+    context.activeProducts, readyProducts) : null;
+  const specificationReconciliation = difference ? reconcileRemovedSpecifications(context.providerId, difference, context.activeProducts, readyProducts) : null;
   return {
     providerId: context.providerId, status, sourceCount: context.sourceProducts,
     ready: preparation.totals.ready, review: preparation.totals.review,
@@ -38,7 +41,8 @@ const summarize = (
     possibleAdds: [...ready].filter((id) => !active.has(id)).length,
     possibleRemovals: [...active].filter((id) => !ready.has(id)).length,
     possibleChanges: difference?.modified.length ?? 0,
-    possibleSpecificationLosses: (difference?.removedSpecifications.length ?? 0) + (difference?.lostSpecificationValues.length ?? 0),
+    possibleSpecificationLosses: (specificationReconciliation?.unresolved.length ?? 0) + (difference?.lostSpecificationValues.length ?? 0),
+    reconciledSpecificationChanges: specificationReconciliation?.resolved.length ?? 0,
     preparationFile, diagnostics
   };
 };

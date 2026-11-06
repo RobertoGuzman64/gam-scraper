@@ -2,6 +2,7 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCatalog, ImportCandidate } from "../legacy-export/contracts.js";
 import { resolveAttribute } from "./mapping/attribute-mapping.js";
 import type { AttributeResolution } from "./mapping/attribute-types.js";
+import { validateCommercialAttributeValue } from "./mapping/attribute-value-validation.js";
 
 export const productAttributes = (record: ProductRecord, category: ImportCatalog["categories"][number] | null, catalog: ImportCatalog): {
   readonly attributes: ImportCandidate["attributes"];
@@ -28,6 +29,15 @@ export const productAttributes = (record: ProductRecord, category: ImportCatalog
       if (attribute.required) {
         missing.push(attribute.name);
         missingDetails.push({ attributeID: attribute.id, name: attribute.name, status: resolution.status });
+      }
+      continue;
+    }
+    const invalid = validateCommercialAttributeValue(attribute, resolution.value);
+    if (invalid !== null) {
+      qualityIssues.push(`Atributo no compatible con su contrato: ${attribute.name} (${invalid})`);
+      if (attribute.required) {
+        missing.push(attribute.name);
+        missingDetails.push({ attributeID: attribute.id, name: attribute.name, status: "invalid" });
       }
       continue;
     }

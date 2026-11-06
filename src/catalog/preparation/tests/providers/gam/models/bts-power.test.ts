@@ -35,7 +35,13 @@ test("conserva los originales y elimina solo cabeceras comerciales contradichas 
     const prepared = prepareProduct(record, catalog);
     assert.equal(prepared.status, "ready", reference);
     assert.deepEqual(prepared.issues, [], reference);
-    assert.deepEqual(prepared.product.spec, record.specs, reference);
+    const unverifiedPower = reference === "2573" ? "Potencia Motor (CV)" :
+      reference === "2737" ? "Potencia Motor (KW)" : null;
+    if (unverifiedPower) {
+      const expected = { ...record.specs };
+      delete expected[unverifiedPower];
+      assert.deepEqual(prepared.product.spec, expected, reference);
+    } else assert.deepEqual(prepared.product.spec, record.specs, reference);
     assert.equal(prepared.product.description, corrected.shortDescription, reference);
     assert.equal(JSON.stringify(record), original, reference);
   }

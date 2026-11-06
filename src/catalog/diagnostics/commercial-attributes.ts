@@ -37,6 +37,7 @@ export type CommercialAttributeAudit = {
     readonly sourceCategory: string;
     readonly categorySellID: number | null;
     readonly status: "excluded" | "pending" | "proposed";
+    readonly relatedAttributes: number;
     readonly attributes: ImportCandidate["attributes"];
     readonly recovered: ImportCandidate["attributes"];
     readonly unresolved: readonly {
@@ -76,6 +77,13 @@ export const analyzeCommercialAttributes = (
 ): CommercialAttributeAudit => {
   const attributes = new Map(catalog.attributes.map((attribute) => [attribute.id, attribute]));
   const coverage = new Map<number, MutableCoverage>();
+  const relatedByCategory = new Map<number, Set<number>>();
+  for (const relation of catalog.relations) {
+    if (relation.actived === false || !attributes.has(relation.attributeID)) continue;
+    const related = relatedByCategory.get(relation.categoryID) ?? new Set<number>();
+    related.add(relation.attributeID);
+    relatedByCategory.set(relation.categoryID, related);
+  }
   const decisions: CommercialAttributeAudit["decisions"][number][] = [];
   const validationIssues = new Map<MutableIssue["reason"], MutableIssue>();
   let excluded = 0;
@@ -96,7 +104,7 @@ export const analyzeCommercialAttributes = (
     if (decision.status !== "proposed") {
       decisions.push({ reference: item.source.reference, sourceUrl: item.source.url,
         sourceCategory: item.source.categoryKey, categorySellID: null, status: decision.status,
-        attributes: [], recovered: [], unresolved: [] });
+        relatedAttributes: 0, attributes: [], recovered: [], unresolved: [] });
       if (decision.status === "excluded") excluded += 1;
       else pendingCategory += 1;
       continue;
@@ -129,7 +137,8 @@ export const analyzeCommercialAttributes = (
     }
     decisions.push({ reference: item.source.reference, sourceUrl: item.source.url,
       sourceCategory: item.source.categoryKey, categorySellID: decision.categorySellID,
-      status: "proposed", attributes: checked.accepted, recovered: checked.recovered, unresolved });
+      status: "proposed", relatedAttributes: relatedByCategory.get(decision.categorySellID)?.size ?? 0,
+      attributes: checked.accepted, recovered: checked.recovered, unresolved });
   }
   return {
     eligible: categorized + pendingCategory, categorized, pendingCategory, excluded,

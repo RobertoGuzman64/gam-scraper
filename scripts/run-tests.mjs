@@ -4,6 +4,7 @@ import { join, relative, resolve } from "node:path";
 import { formatScriptStatus } from "./terminal.mjs";
 import { createRunnerTimeline } from "./test-runner-observability.mjs";
 import { executeTestLanes } from "./test-runner-execution.mjs";
+import { isTestRunAccreditable } from "./test-runner-completion.mjs";
 import { createRunnerDisplay, formatRunnerCompletion, formatRunnerOmission, formatRunnerRegression, formatRunnerTime, supportsInteractiveRunner } from "./test-runner-ui.mjs";
 import { durationRegressions, loadTestDurations, orderTestsByDuration, planTestLanes, recommendedTestConcurrency, saveTestDurations } from "./test-performance.mjs";
 import { discardTestResultsCache, fingerprintTestInputs, loadTestResultsCache, relativeCacheFile, saveTestResultsCache } from "./test-result-cache.mjs";
@@ -283,7 +284,7 @@ if (inputFingerprints !== null) {
   } catch { stableInputs = false; }
 }
 const completeReports = timeline.progress().remaining === 0;
-const success = summary.success && stableInputs && completeReports;
+const success = isTestRunAccreditable(summaries, executableFiles.length, stableInputs, completeReports);
 if (!completeReports) {
   process.stdout.write(`${formatScriptStatus("FAIL", `RUNNER | ${timeline.progress().remaining} archivos terminaron sin informe recibido`)}\n`);
 }

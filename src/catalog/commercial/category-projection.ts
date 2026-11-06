@@ -4,6 +4,8 @@ import type { PreparedProduct } from "../preparation/contracts.js";
 import { fold } from "../preparation/mapping/category-utils.js";
 import { isLeafCategoryForCondition, resolveCategory } from "../preparation/mapping/category-mapping.js";
 import { productAttributes } from "../preparation/product-attributes.js";
+import { isGamVerifiedHysterSGlp, reconcileGamVerifiedHysterSGlp } from "../preparation/evidence/providers/gam/energy-and-powertrain/hyster-s-glp-evidence.js";
+import { reconcileGamForPreparation } from "../preparation/reconciliation/gam.js";
 
 const generalCategorySlugs = new Set([
   "plataforma-articulada",
@@ -44,12 +46,17 @@ const verified = (source: ProductRecord, model: RegExp, brand: string): boolean 
 
 const commercialSlug = (source: ProductRecord, condition: ImportCandidate["condition"]): string | null => {
   if (!condition) return null;
+  source = reconcileGamVerifiedHysterSGlp(source);
   const route = sourceRoute(source);
   if (!route) return null;
   const title = fold(source.title ?? "");
   const short = fold(source.shortDescription ?? "");
   const general = fold(source.longDescription ?? "");
   if (source.providerId === "gam") {
+    if (condition === "Nuevo" && source.categoryKey === "carretillas-nuevas" &&
+      route === "carretillas-elevadoras-diesel-hyster" && isGamVerifiedHysterSGlp(source)) {
+      return "carretilla-elevadora-glp";
+    }
     if (condition === "Nuevo" && source.categoryKey === "elevacion-nueva" &&
       route === "plataformas-elevadoras-bravi" && verified(source, /^lui 460$/, "bravi") &&
       /^plataforma elevadora\b/.test(title) && title.includes("bravi lui 460") &&
@@ -229,16 +236,27 @@ export const isValidCommercialCategory = (
   if (categories.length !== 1 || !belongsToCondition(categoryId, catalog.categories, condition)) return false;
   const category = categories[0];
   if (!category) return false;
+  if (category.slug === "plataforma-unipersonal-electrica" &&
+    commercialSlug(source, condition) === "plataforma-elevadora") return false;
+  const categorySource = reconcileGamVerifiedHysterSGlp(source);
   if (isLeafCategoryForCondition(categoryId, catalog.categories, condition)) {
-    const sourceCategory = resolveCategory(source, catalog.categories, condition);
+    const sourceCategory = resolveCategory(categorySource, catalog.categories, condition);
+    if (category.slug === "carretilla-elevadora-glp" && source.providerId === "gam" &&
+      source.categoryKey === "carretillas-nuevas" && sourceRoute(source) === "carretillas-elevadoras-diesel-hyster" &&
+      !isGamVerifiedHysterSGlp(categorySource) &&
+      fold(String(categorySource.specs?.["Tipo motor"] ?? "")) !== "glp" && sourceCategory?.id !== categoryId) return false;
     if (sourceCategory) return sourceCategory.id === categoryId;
+    if (source.providerId === "gam") {
+      const reconciledCategory = resolveCategory(reconcileGamForPreparation(source), catalog.categories, condition);
+      if (reconciledCategory) return reconciledCategory.id === categoryId;
+    }
     const documentedSlug = commercialSlug(source, condition);
-    if (documentedSlug === null) return true;
+    if (documentedSlug === null) return false;
     const documentedCategories = catalog.categories.filter((entry) =>
       entry.slug === documentedSlug && entry.active !== false);
     const documented = documentedCategories.length === 1 ? documentedCategories[0] : undefined;
-    return !documented || !isLeafCategoryForCondition(documented.id, catalog.categories, condition) ||
-      documented.id === categoryId;
+    return documented !== undefined && documented.id === categoryId &&
+      isLeafCategoryForCondition(documented.id, catalog.categories, condition);
   }
   return generalCategorySlugs.has(category.slug) && commercialSlug(source, condition) === category.slug;
 };
@@ -252,10 +270,10 @@ export const projectCommercialCategory = (
   const candidates = catalog.categories.filter((item) => item.slug === slug && item.active !== false);
   const category = candidates.length === 1 ? candidates[0] : undefined;
   if (!category || !isValidCommercialCategory(source, category.id, mapped.product.condition, catalog)) return mapped;
-  const resolved = productAttributes(source, category, catalog);
+  const resolved = productAttributes(reconcileGamVerifiedHysterSGlp(source), category, catalog);
   const product: ImportCandidate = {
     ...mapped.product, categorySellID: category.id, category: category.name,
-    attributes: resolved.attributes.length ? resolved.attributes : mapped.product.attributes
+    attributes: resolved.attributes
   };
   return { ...mapped, product };
 };

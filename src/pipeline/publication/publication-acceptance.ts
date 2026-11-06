@@ -1,5 +1,6 @@
 import type { ImportCandidate } from "../../catalog/legacy-export/contracts.js";
 import type { PublicationDifference } from "./publication-contracts.js";
+import { reconcileRemovedSpecifications } from "./specification-reconciliations.js";
 
 export type PublicationAcceptance = {
   readonly accepted: boolean;
@@ -94,7 +95,8 @@ export const evaluateIndividualPublicationDifference = (
     if (reference) next.set(`ref:${reference}`, product);
   }
   const removed = difference.removed.filter((identity) => !exclusions.has(identity));
-  const removedSpecifications = difference.removedSpecifications.filter((item) => {
+  const remainingSpecifications = reconcileRemovedSpecifications(providerId, difference, previousProducts, nextProducts).unresolved;
+  const removedSpecifications = remainingSpecifications.filter((item) => {
     if (!isApprovedGamIndividual(providerId, approval)) return true;
     const separator = item.lastIndexOf(":");
     if (separator < 0 || item.slice(separator + 1) !== "Horómetro") return true;

@@ -22,6 +22,7 @@ export const classifyQualityIssue = (issue: string): { code: string; classificat
   }
   if (issue === "Identidad GAM contradictoria entre título, resumen y ficha técnica") return { code: "identity.gam_source_conflict", classification: "identidad" };
   if (issue.startsWith("Número de serie ")) return { code: "identity.serial_collision", classification: "identidad" };
+  if (issue.startsWith("Stock GAM diferenciado: ")) return { code: "identity.stock_serial_verification", classification: "identidad" };
   if (issue.startsWith("Referencia duplicada ")) return { code: "identity.duplicate_reference", classification: "identidad" };
   if (issue === "Descripción comercial contradictoria: altura de trabajo") return { code: "description.height_conflict", classification: "contradiccion" };
   if (issue.startsWith("Condición comercial contradictoria")) return { code: "condition.contradictory", classification: "contradiccion" };

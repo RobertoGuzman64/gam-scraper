@@ -1,11 +1,11 @@
 import { accreditedPublicationDirectory, accreditedPublicationSha } from "../../../../testing/builders/accredited-publication-fixture.js";
 import assert from "node:assert/strict";
-import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
-import { resolveAccreditedPublication } from "../accredited-publication.js";
+import { readAccreditedPublication, resolveAccreditedPublication } from "../accredited-publication.js";
 import { publicationApprovalSha, publicationDirectoryForApproval, resolvePublicationDirectory } from "../publication-identity.js";
 import { selectActivePublication } from "../../../../pipeline/publication/active-publication.js";
 
@@ -100,5 +100,25 @@ test("los alias individuales vigentes de los tres proveedores son verificables s
     const directory = await resolvePublicationDirectory(folder, full);
     assert.ok(directory);
     assert.equal(await publicationApprovalSha(directory), full);
+    const publishable = await resolveAccreditedPublication(repository, currentProvider);
+    assert.ok(publishable);
+    const accredited = await readAccreditedPublication(publishable);
+    assert.equal(accredited.providerId, currentProvider);
+    assert.ok(accredited.products.length > 0);
+  }
+});
+
+test("una publicación no acepta enlaces a archivos externos aunque su contenido conserve el SHA", async () => {
+  for (const name of [`${providerId}-publishable.json`, "manifest.json", "accreditation.json"]) {
+    await withPublishedVersion(async (root, directory) => {
+      const original = join(directory, name);
+      const external = join(root, name);
+      await cp(original, external);
+      await rm(original);
+      await symlink(external, original);
+      const publishable = join(directory, `${providerId}-publishable.json`);
+      await assert.rejects(readAccreditedPublication(publishable), /archivo regular/);
+      await assert.rejects(resolveAccreditedPublication(root, providerId), /regular/);
+    });
   }
 });

@@ -141,3 +141,24 @@ test("GAM: la batería recuperada solo se publica en categorías compatibles sin
   assert.equal(incompatible.status, "ready");
   assert.ok(!incompatible.product.attributes.some((item) => batteryIds.has(item.attributeID)));
 });
+
+
+test("preparación: no emite opciones incompatibles ni oculta atributos obligatorios inválidos", () => {
+  const category = catalog.categories[0];
+  const brand = attribute("Marca");
+  assert.ok(category);
+  const restricted = { ...brand, type: "SELECT" as const, required: true, unit_option: "GENIE / CAT" };
+  const contract = { categories: [category], attributes: [restricted], relations: [
+    { categoryID: category.id, attributeID: restricted.id }
+  ] };
+  const invalid = productAttributes(gamRecord(), category, contract);
+  assert.deepEqual(invalid.attributes, []);
+  assert.deepEqual(invalid.missingRequiredDetails, [
+    { attributeID: brand.id, name: "Marca", status: "invalid" }
+  ]);
+  assert.ok(invalid.qualityIssues.some((item) => item.includes("opcion-invalida")));
+  assert.deepEqual(productAttributes({ ...gamRecord(), brand: "GENIE" }, category, contract).attributes,
+    [{ attributeID: brand.id, value: "GENIE" }]);
+  assert.deepEqual(productAttributes(gamRecord(), category, { ...contract, relations: [] }).attributes, []);
+  assert.deepEqual(productAttributes(gamRecord(), category, { ...contract, relations: [] }).missingRequiredDetails, []);
+});

@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
-import { discoverAccreditedPublications, resolveAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { discoverAccreditedPublications, readAccreditedPublication, resolveAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { selectActivePublication } from "../active-publication.js";
 import type { ImportCandidate } from "../../../catalog/legacy-export/contracts.js";
 
@@ -53,7 +53,7 @@ test("selección explícita, simulación, idempotencia y cambio sin pérdidas", 
     const simulation = await selectActivePublication(ctx.root, providerId, ctx.other);
     assert.equal(simulation.status, "simulation");
     assert.equal(simulation.difference.previous, null);
-    assert.equal(simulation.difference.candidateProducts, 142);
+    assert.equal(simulation.difference.candidateProducts, (await readAccreditedPublication(join(ctx.publications, ctx.other, `${providerId}-publishable.json`))).products.length);
     await assert.rejects(lstat(join(ctx.publications, "active.json")), /ENOENT/);
     const activated = await selectActivePublication(ctx.root, providerId, ctx.other, true);
     assert.equal(activated.status, "activated");

@@ -7,6 +7,8 @@ import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-exp
 import { excludeGamRelatedProductImages } from "../../normalization/providers/gam/gallery.js";
 import { loadCommercialPublicationInputs } from "../../../pipeline/legacy-export/commercial-inputs.js";
 import { resolveCommercialCondition } from "../../preparation/condition.js";
+import { productAttributes } from "../../preparation/product-attributes.js";
+import { reconcileGamVerifiedHysterSGlp } from "../../preparation/evidence/providers/gam/energy-and-powertrain/hyster-s-glp-evidence.js";
 
 const catalog = await loadImportCatalog();
 const providers = await loadCommercialPublicationInputs(process.cwd(), catalog);
@@ -47,8 +49,8 @@ test("clasifica familias documentadas sin inventar motorización ni nuevas categ
     ["gam", "227", 22], ["gam", "2159", 4],
     ["gam", "3311", 91], ["gam", "3312", 91], ["gam", "3313", 91],
     ["gam", "3314", 91], ["gam", "3315", 91], ["gam", "6182", 91],
-    ["gam", "6749", 91], ["gam", "12", 10], ["gam", "2072", 10],
-    ["gam", "2073", 10], ["gam", "2163", 10], ["gam", "2164", 10],
+    ["gam", "6749", 91], ["gam", "12", 10], ["gam", "2072", 16],
+    ["gam", "2073", 16], ["gam", "2163", 10], ["gam", "2164", 10],
     ["gam", "2165", 10], ["gam", "2169", 10], ["gam", "5", 10],
     ["gam", "6", 10], ["gam", "8", 10], ["gam", "2134", 85],
     ["gam", "2135", 85], ["gam", "2572", 85], ["gam", "2573", 85],
@@ -60,10 +62,17 @@ test("clasifica familias documentadas sin inventar motorización ni nuevas categ
     assert.equal(entry.mapped.product.categorySellID, categoryId, `${providerId}:${reference}`);
     assert.equal(isValidCommercialCategory(entry.source, categoryId, entry.mapped.product.condition, catalog), true);
     const expectedSpec = providerId === "gam" && ["2072", "2073"].includes(reference)
-      ? { ...entry.published.spec, Motorización: "GLP" } : entry.published.spec;
+      ? { ...entry.published.spec, Motorización: "GLP" }
+      : providerId === "gam" && ["2134", "2135"].includes(reference)
+        ? { ...Object.fromEntries(Object.entries(entry.published.spec).filter(([key]) =>
+          key !== "Capacidad de carga (kg)")), "Capacidad de arrastre": reference === "2134" ? "5000 KG" : "7000 KG" }
+        : providerId === "gam" && ["2573", "2737"].includes(reference)
+          ? Object.fromEntries(Object.entries(entry.published.spec).filter(([key]) =>
+            key !== (reference === "2573" ? "Potencia Motor (CV)" : "Potencia Motor (KW)")))
+          : entry.published.spec;
     assert.deepEqual(entry.mapped.product.spec, expectedSpec);
     assert.deepEqual(entry.mapped.product.images, providerId === "gam"
-      ? excludeGamRelatedProductImages(entry.published.images) : entry.published.images);
+      ? excludeGamRelatedProductImages(entry.published.images, entry.source) : entry.published.images);
     assert.ok(catalog.categories.some((item) => item.id === categoryId));
   }
 });
@@ -87,6 +96,69 @@ test("no traslada reglas comerciales a familias, modelos, rutas ni condiciones d
   assert.equal(projectCommercialCategory({ ...hyster.source, title: "Plataformas elevadoras de segunda mano" }, noCategory, catalog).product.categorySellID, null);
   assert.equal(projectCommercialCategory({ ...hyster.source, model: "OTRO" }, noCategory, catalog).product.categorySellID, null);
   assert.equal(isValidCommercialCategory(hyster.source, 10, "Segunda_Mano", catalog), false);
+});
+
+test("la proyección elimina asignaciones obsoletas al elegir una categoría sin relaciones", () => {
+  const input = product("gam", "3427");
+  const unknown = { ...input.mapped, product: {
+    ...input.mapped.product, categorySellID: null, category: null,
+    attributes: [{ attributeID: 13, value: 1000 }]
+  } };
+  const projected = projectCommercialCategory(input.source, unknown, catalog);
+  assert.equal(projected.product.categorySellID, 85);
+  assert.deepEqual(projected.product.attributes, []);
+  assert.deepEqual(unknown.product.attributes, [{ attributeID: 13, value: 1000 }]);
+});
+
+test("solo las dos Hyster S con GLP acreditado se reclasifican a la hoja existente", () => {
+  const glp = catalog.categories.find((entry) => entry.id === 16);
+  assert.ok(glp);
+  assert.equal(glp.slug, "carretilla-elevadora-glp");
+  for (const reference of ["2072", "2073"]) {
+    const entry = product("gam", reference);
+    assert.equal(entry.mapped.product.condition, "Nuevo");
+    assert.equal(entry.mapped.product.categorySellID, 16);
+    assert.equal(entry.mapped.product.category, glp.name);
+    assert.equal(isValidCommercialCategory(entry.source, 16, "Nuevo", catalog), true);
+    assert.equal(isValidCommercialCategory(entry.source, 10, "Nuevo", catalog), false);
+    assert.equal(entry.mapped.product.attributes.some((item) => item.attributeID === 16), false);
+    const resolution = productAttributes(reconcileGamVerifiedHysterSGlp(entry.source), glp, catalog);
+    assert.deepEqual(resolution.missingRequiredDetails, [
+      { attributeID: 16, name: "Tipo de mástil", status: "not_observed" }
+    ]);
+    const empty = { ...entry.mapped, product: {
+      ...entry.mapped.product, categorySellID: null, category: null, attributes: []
+    } };
+    assert.equal(projectCommercialCategory(entry.source, empty, catalog).product.categorySellID, 16);
+    for (const alternative of [
+      { ...entry.source, providerId: "gomariz" },
+      { ...entry.source, reference: "9999" },
+      { ...entry.source, brand: "OTRA" },
+      { ...entry.source, model: "S5.0FT" },
+      { ...entry.source, categoryKey: "otros-nuevos" },
+      { ...entry.source, specs: { ...entry.source.specs, "Tipo motor": "Kubota 3.8L Diesel" } },
+      { ...entry.source, specs: { ...entry.source.specs, "Capacidad de carga (kg)": "5000 KG" } },
+      { ...entry.source, url: "https://online.gamrentals.com/es/otras/2072" }
+    ]) {
+      assert.notEqual(projectCommercialCategory(alternative, empty, catalog).product.categorySellID, 16);
+    }
+  }
+  for (const reference of ["12", "2163", "2164", "2165", "2169", "5", "6", "8"]) {
+    const entry = product("gam", reference);
+    assert.equal(entry.mapped.product.categorySellID, 10, reference);
+    assert.equal(isValidCommercialCategory(entry.source, 16, "Nuevo", catalog), false, reference);
+  }
+  for (const reference of ["3121", "3130"]) {
+    const existingGlp = product("gam", reference);
+    assert.equal(existingGlp.mapped.product.categorySellID, 16);
+    assert.equal(isValidCommercialCategory(existingGlp.source, 16, "Nuevo", catalog), true);
+  }
+  const bravi = product("gam", "2159");
+  assert.equal(bravi.mapped.product.categorySellID, 4);
+  assert.equal(isValidCommercialCategory(bravi.source, 102, "Nuevo", catalog), false);
+  for (const reference of ["2134", "2135"]) {
+    assert.equal(product("gam", reference).mapped.product.categorySellID, 85);
+  }
 });
 
 test("resuelve únicamente las categorías respaldadas de la campaña GAM y Mercaeleva", () => {
@@ -138,7 +210,7 @@ test("la barredora EUREKA usada usa la categoría general existente y no contami
 test("la caseta de ocasión solo se proyecta para la unidad CBOX identificada", () => {
   const cabin = product("mercaeleva", "M294-4678");
   assert.equal(cabin.source.condition, null);
-  assert.equal(cabin.published.condition, null);
+  assert.equal(cabin.published.condition, "Segunda_Mano");
   assert.equal(cabin.mapped.product.condition, "Segunda_Mano");
   assert.equal(cabin.mapped.product.categorySellID, 115);
   assert.equal(isValidCommercialCategory(cabin.source, 115, "Segunda_Mano", catalog), true);
@@ -204,7 +276,7 @@ test("recupera identidad acreditada de Hyster sin deducir combustible de textos 
   assert.deepEqual(truck.mapped.product.spec, truck.published.spec);
 });
 
-test("clasifica los tractores Hyster por familia sin dar por acreditada la propulsión", () => {
+test("clasifica los tractores Hyster por familia sin forzar una hoja de vehículos", () => {
   for (const reference of ["2134", "2135"]) {
     const tractor = product("gam", reference);
     assert.equal(tractor.mapped.product.categorySellID, 85);
@@ -221,8 +293,12 @@ test("clasifica los tractores Hyster por familia sin dar por acreditada la propu
     ]) {
       assert.equal(projectCommercialCategory(source, noCategory, catalog).product.categorySellID, null);
     }
-    assert.deepEqual(tractor.mapped.product.spec, tractor.published.spec);
-    assert.deepEqual(tractor.mapped.product.images, tractor.published.images);
+    assert.deepEqual(tractor.mapped.product.spec, {
+      ...Object.fromEntries(Object.entries(tractor.published.spec).filter(([key]) =>
+        key !== "Capacidad de carga (kg)")),
+      "Capacidad de arrastre": reference === "2134" ? "5000 KG" : "7000 KG"
+    });
+    assert.deepEqual(tractor.mapped.product.images, excludeGamRelatedProductImages(tractor.published.images, tractor.source));
   }
 });
 
@@ -281,9 +357,9 @@ test("la acreditación comercial no acepta otra categoría hoja cuando la famili
   }
 });
 
-test("las 1324 fichas elegibles quedan categorizadas con IDs válidos", () => {
+test("las 1334 fichas elegibles quedan categorizadas con IDs válidos", () => {
   const proposed = entries.filter((entry) => entry.mapped.product.categorySellID !== null);
-  assert.equal(proposed.length, 1324);
+  assert.equal(proposed.length, 1334);
   for (const entry of proposed) {
     const categoryId = entry.mapped.product.categorySellID;
     assert.notEqual(categoryId, null);
@@ -291,6 +367,33 @@ test("las 1324 fichas elegibles quedan categorizadas con IDs válidos", () => {
     assert.equal(isValidCommercialCategory(entry.source, categoryId, entry.mapped.product.condition, catalog), true,
       `${entry.source.providerId}:${entry.source.reference}`);
   }
-  assert.equal(entries.length, 1334);
+  assert.equal(entries.length, 1344);
   assert.equal(entries.length - proposed.length, 10);
+});
+
+test("rechaza categorías hoja sin evidencia aunque existan y respeten la condición", () => {
+  for (const reference of ["12", "2163", "2164", "2165", "2169", "5", "6", "8"]) {
+    const input = product("gam", reference);
+    assert.equal(input.mapped.product.categorySellID, 10);
+    for (const id of [11, 16]) {
+      assert.equal(isValidCommercialCategory(input.source, id, "Nuevo", catalog), false, `${reference}:${id}`);
+    }
+  }
+  const general = product("gam", "3427");
+  assert.equal(general.mapped.product.categorySellID, 85);
+  for (const id of [11, 16, 19, 22, 91]) {
+    assert.equal(isValidCommercialCategory(general.source, id, "Nuevo", catalog), false, `${id}`);
+  }
+  for (const [reference, id] of [
+    ["2071", 11], ["2312", 16], ["2311", 16], ["2313", 16],
+    ["2314", 11], ["3131", 11], ["3130", 16], ["171", 19]
+  ] as const) {
+    const input = product("gam", reference);
+    assert.equal(input.mapped.product.categorySellID, id);
+    assert.equal(isValidCommercialCategory(input.source, id, "Nuevo", catalog), true, reference);
+    for (const otherId of [11, 16, 19].filter((categoryId) => categoryId !== id)) {
+      assert.equal(isValidCommercialCategory(input.source, otherId, "Nuevo", catalog), false,
+        `${reference}:${otherId}`);
+    }
+  }
 });

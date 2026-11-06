@@ -10,8 +10,9 @@ type CommercialAttributeProjection = CommercialAttributeDecision & {
 };
 
 const eligibleTyre = (published: ImportCandidate, proposed: ImportCandidate, catalog: ImportCatalog): Assignment | null => {
-  if (published.providerId !== "gam" || proposed.categorySellID === null ||
-    proposed.attributes.some((entry) => entry.attributeID === 24) ||
+  if (published.providerId !== "gam" || proposed.providerId !== published.providerId ||
+    proposed.sourceUrl !== published.sourceUrl || proposed.reference !== published.reference ||
+    proposed.categorySellID === null || proposed.attributes.some((entry) => entry.attributeID === 24) ||
     published.spec["Neumáticos"] !== undefined) return null;
   const attribute = catalog.attributes.find((entry) => entry.id === 24 && entry.name === "Neumáticos" && entry.type === "SELECT");
   if (!attribute || !catalog.relations.some((relation) => relation.categoryID === proposed.categorySellID &&

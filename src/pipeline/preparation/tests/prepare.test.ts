@@ -7,13 +7,14 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/scraping.js";
 import { writeOutputs } from "../../publication/publish.js";
-import { prepareSavedCatalog } from "../prepare.js";
+import { assertPreparationInputsCurrent, prepareSavedCatalog } from "../prepare.js";
 import { runPrepare } from "../../../cli/commands/catalog/prepare.js";
 import { compareOfflinePreparations } from "../../../catalog/preparation/offline-diagnostics.js";
 import { buildSourceTriage } from "../../../catalog/diagnostics/source-triage.js";
 import { measurePreparationWork } from "../../../catalog/diagnostics/preparation-work.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { loadPreparationInputs } from "../../../infrastructure/filesystem/preparation/preparation-inputs.js";
 
 const category: CategoryConfig = { key: "maquinas", name: "Maquinaria de ocasión", url: "https://example.test/maquinas" };
 const when = "2026-10-21T12:00:00Z";
@@ -94,6 +95,32 @@ test("preparación acepta alias portable sin alterar prefijo ni huella del origi
     assert.equal(result.preparation.source.catalogSha256, createHash("sha256").update(await readFile(portableSource, "utf8")).digest("hex"));
     assert.equal(result.preparation.products.length, 12);
     assert.equal((await readOfflinePreparation(portableOut, "gam")).products.length, 12);
+  });
+});
+
+test("la comprobación final acepta un origen estable y bloquea reglas modificadas", async () => {
+  await withFixture(async ({ source }) => {
+    const catalog = await readCanonicalCatalog(source);
+    const catalogSha256 = createHash("sha256").update(await readFile(source, "utf8")).digest("hex");
+    const { fingerprints } = await loadPreparationInputs();
+    await assert.doesNotReject(assertPreparationInputsCurrent({ source }, { catalog, catalogSha256, fingerprints }));
+    await assert.rejects(assertPreparationInputsCurrent({ source }, {
+      catalog, catalogSha256, fingerprints: { rulesVersion: 2, rulesSha256: "0".repeat(64) }
+    }), /reglas de preparación cambiaron/);
+  });
+});
+
+test("la comprobación final rechaza cambios del catálogo aunque el nuevo original sea válido", async () => {
+  await withFixture(async ({ source, root }) => {
+    const catalog = await readCanonicalCatalog(source);
+    const catalogSha256 = createHash("sha256").update(await readFile(source, "utf8")).digest("hex");
+    const { fingerprints } = await loadPreparationInputs();
+    const modified = Array.from({ length: 12 }, (_, index) => machine(index + 1, "150 €"));
+    await writeOutputs(join(root, "scraped"), "inventario", [{
+      category, discoveredProductUrls: modified.length, products: modified, failures: []
+    }], "2026-10-22T12:00:00Z", "2026-10-22T12:00:00Z");
+    await assert.rejects(assertPreparationInputsCurrent({ source }, { catalog, catalogSha256, fingerprints }),
+      /catálogo de origen cambió/);
   });
 });
 

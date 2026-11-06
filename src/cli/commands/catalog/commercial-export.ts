@@ -2,7 +2,7 @@ import { mkdir, realpath, rm, writeFile } from "node:fs/promises";
 import { resolve, relative, isAbsolute, join, dirname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildCommercialExportFiles } from "../../../pipeline/legacy-export/commercial-export.js";
-import { verifyCommercialExportDirectory } from "../../../pipeline/legacy-export/commercial-export-verification.js";
+import { verifyCommercialExportDirectory, verifyCommercialExportSources } from "../../../pipeline/legacy-export/commercial-export-verification.js";
 import type { CommercialEnvironment } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { printReportLine } from "../../reporting/terminal.js";
 import { printCommandError } from "../../reporting/errors.js";
@@ -21,7 +21,9 @@ export const parseCommercialExportOptions = (args: readonly string[]): Commercia
   let environment: CommercialEnvironment | null = null;
   let dryRun = false;
   for (let i = 0; i < args.length; i += 1) {
-    const arg = args[i];
+    const original = args[i];
+    const arg = original === "--salida" ? "--out" : original === "--entorno" ? "--environment" :
+      original === "--simular" ? "--dry-run" : original;
     if (arg === "--dry-run" && !dryRun) { dryRun = true; continue; }
     if (arg === "--out" && out === null) {
       const value = args[++i];
@@ -51,12 +53,13 @@ export const parseCommercialExportOptions = (args: readonly string[]): Commercia
 export const runCommercialExport = async (args: readonly string[]): Promise<void> => {
   const options = parseCommercialExportOptions(args);
   if (options === "help") {
-    printReportLine("Uso: npm run exportar:comercial -- --salida <directorio-nuevo> [--entorno develop|production] [--simular]\nSin --entorno no se incluye companyID. Crea JSON separados y manifiesto SHA256 fuera del repositorio; no modifica publicaciones ni importa en backend.");
+    printReportLine("Uso: npm run exportar:comercial -- --salida <directorio-nuevo> [--entorno develop|production] [--simular]\nTambién admite --out, --environment y --dry-run. Sin entorno no se incluye companyID. Crea JSON separados y manifiesto SHA256 fuera del repositorio; no modifica publicaciones ni importa en backend.");
     return;
   }
   const files = await buildCommercialExportFiles(root, options.environment);
   const manifest = files.find((item) => item.name === "commercial-manifest.json");
   if (!manifest) throw new Error("Falta el manifiesto comercial");
+  await verifyCommercialExportSources(root, files);
   if (options.dryRun) {
     printReportLine(`EXPORTACIÓN COMERCIAL | SIMULACIÓN | entorno ${options.environment ?? "sin companyID"}`);
     for (const entry of files) printReportLine(`  ${entry.name} | ${entry.bytes} bytes | SHA256 ${entry.sha256}`);
@@ -74,6 +77,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
   try {
     for (const entry of files) await writeFile(join(destination, entry.name), entry.content, { flag: "wx" });
     await verifyCommercialExportDirectory(destination, files);
+    await verifyCommercialExportSources(root, files);
   } catch (error) {
     await rm(destination, { recursive: true, force: true });
     throw error;

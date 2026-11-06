@@ -31,6 +31,26 @@ const confirmedSpecIdentity = (candidate: string | null, spec: unknown): string 
   return expected && expected === commercialToken(spec) ? expected : null;
 };
 
+const conflictingModelVariant = (title: string | null, model: string | null): boolean => {
+  if (!title || !model || commercialIdentityInTitle(title, model)) return false;
+  const tokens = commercialToken(model).split("-");
+  const suffix = /^(\d{2,})([a-z]+)$/u.exec(tokens.at(-1) ?? "");
+  if (!suffix) {
+    const modelToken = commercialToken(model).replace(/-/gu, "");
+    const variant = /^([a-z]+\d{2,})([a-z]{2,})$/u.exec(modelToken);
+    if (!variant) return false;
+    return commercialToken(title).split("-").some((part) =>
+      part.startsWith(modelToken) && part.length > modelToken.length &&
+      /^([a-z]+\d{2,})([a-z]{3,})$/u.test(part)
+    );
+  }
+  if (tokens.length < 2) return false;
+  const stem = tokens.slice(0, -1).join("-");
+  const titleToken = commercialToken(title);
+  const sibling = new RegExp(`(?:^|-)${stem}-${suffix[1]}[a-z]+(?:-|$)`, "u");
+  return sibling.test(titleToken);
+};
+
 const commercialTitle = (value: string | null, providerId: string): string | null => {
   const initial = value?.replace(/\s+/gu, " ").trim();
   if (!initial) return null;
@@ -51,7 +71,8 @@ export const projectCommercialPresentation = (
   const title = commercialTitle(published.title, published.providerId);
   const brand = commercialIdentityInTitle(title, source.brand) ??
     confirmedSpecIdentity(source.brand, published.spec["Marca"]);
-  const model = commercialIdentityInTitle(title, source.model) ??
+  const model = conflictingModelVariant(title, source.model) ? null :
+    commercialIdentityInTitle(title, source.model) ??
     confirmedSpecIdentity(source.model, published.spec["Modelo"]);
   const category = categoryName ? commercialToken(categoryName) : null;
   const condition = published.condition ? commercialToken(published.condition) : null;

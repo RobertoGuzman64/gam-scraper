@@ -5,24 +5,27 @@ import { printReportLine } from "../../reporting/terminal.js";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { buildCommercialExportFiles } from "../../../pipeline/legacy-export/commercial-export.js";
-import { verifyCommercialExportDirectory } from "../../../pipeline/legacy-export/commercial-export-verification.js";
+import { verifyCommercialExportDirectory, verifyCommercialExportSources } from "../../../pipeline/legacy-export/commercial-export-verification.js";
 import type { CommercialEnvironment } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { renderCommercialCategoryTree } from "../../../catalog/diagnostics/commercial-category-tree.js";
+import { analyzePresentationConsistency } from "../../../catalog/diagnostics/presentation-consistency.js";
+import { originalSources } from "../../../infrastructure/filesystem/catalog/original-catalog-sources.js";
+import { prepareImportBatch } from "../../../catalog/preparation/batch-identity.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 
 export const runCommercialAudit = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    printReportLine("Uso: npm run auditar:comercial -- [--json|--arbol|--pendientes|--revision|--muestras|--atributos|--atributos-revision|--atributo=ID|--contenido|--contenido-revision|--exportacion|--acreditacion|--acreditacion-json|--verificar=RUTA|--ficha=REFERENCIA]\nAudita propuestas y acredita la integridad comercial contra publicaciones técnicas; --verificar compara archivos ya exportados con el corte vigente, sin modificar datos.");
+    printReportLine("Uso: npm run auditar:comercial -- [--json|--arbol|--pendientes|--revision|--muestras|--atributos|--atributos-revision|--atributos-vacios|--atributo=ID|--contenido|--contenido-revision|--coherencia|--exportacion|--acreditacion|--acreditacion-json|--verificar=RUTA|--ficha=REFERENCIA]\nAudita propuestas y acredita la integridad comercial contra publicaciones técnicas; --verificar compara archivos ya exportados con el corte vigente, sin modificar datos.");
     return;
   }
   const verifyPath = args[0]?.match(/^--verificar=(.+)$/u)?.[1];
   const attributeId = args[0]?.match(/^--atributo=([1-9]\d*)$/)?.[1];
   const productReference = args[0]?.match(/^--ficha=(.+)$/u)?.[1];
   if (args.length > 1 || (args.length === 1 &&
-    !["--json", "--arbol", "--pendientes", "--revision", "--muestras", "--atributos", "--atributos-revision", "--contenido", "--contenido-revision", "--exportacion", "--acreditacion", "--acreditacion-json"].includes(args[0] ?? "") &&
+    !["--json", "--arbol", "--pendientes", "--revision", "--muestras", "--atributos", "--atributos-revision", "--atributos-vacios", "--contenido", "--contenido-revision", "--coherencia", "--exportacion", "--acreditacion", "--acreditacion-json"].includes(args[0] ?? "") &&
     (attributeId === undefined || !Number.isSafeInteger(Number(attributeId))) && !productReference && !verifyPath)) {
     throw new Error("Opciones inválidas. Consultar --help para las opciones de auditoría comercial");
   }
@@ -36,7 +39,24 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
     const environment: CommercialEnvironment | null = manifest.environment;
     const files = await buildCommercialExportFiles(root, environment);
     const result = await verifyCommercialExportDirectory(verifyPath, files);
+    await verifyCommercialExportSources(root, files);
     printReportLine(`EXPORTACIÓN COMERCIAL ACREDITADA | ${result.files} archivos | ${result.bytes} bytes | entorno ${environment ?? "sin companyID"}`);
+    return;
+  }
+  if (args[0] === "--coherencia") {
+    const catalog = await loadImportCatalog();
+    const products = [];
+    for (const providerId of ["gam", "gomariz", "mercaeleva"]) {
+      const sources = await originalSources(root, providerId);
+      if (!sources) throw new Error(`Catálogo original no disponible: ${providerId}`);
+      products.push(...prepareImportBatch([...sources.values()], catalog).products.map((item) => item.product));
+    }
+    const result = analyzePresentationConsistency(products);
+    printReportLine(`COHERENCIA DE PREPARACIÓN | ${result.products} fichas | ${result.defects} defectos | ${result.reviews} casos para revisar`);
+    for (const finding of result.findings) {
+      printReportLine(`  ${finding.status.toUpperCase()} ${finding.providerId}:${finding.reference ?? finding.sourceUrl} | ${finding.field} | ${finding.code}`);
+    }
+    if (result.defects > 0) process.exitCode = 1;
     return;
   }
   const report = await auditCommercialCatalog(root);
@@ -78,7 +98,7 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
   }
   if (productReference !== undefined) {
     let found = 0;
-    for (const { baseline, presentationAudit } of report.providers) {
+    for (const { baseline, presentationAudit, attributeAudit } of report.providers) {
       for (const item of presentationAudit.decisions.filter((decision) => decision.reference === productReference)) {
         found += 1;
         printReportLine(`${baseline.providerId.toUpperCase()} | ${item.reference} | ${item.status} | categorySellID ${item.categorySellID ?? "pendiente"} | ${item.sourceUrl}`);
@@ -86,6 +106,10 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
         printReportLine(`  Resumen: ${item.shortPreview ?? "ausente"}`);
         printReportLine(`  Descripción general: ${item.generalPreview ?? "ausente"}`);
         printReportLine(`  Imágenes ${item.images} | specs ${item.specifications} | metadata ${JSON.stringify(item.metadata)}`);
+        const attributes = attributeAudit.decisions.find((decision) => decision.sourceUrl === item.sourceUrl);
+        if (attributes?.status === "proposed") {
+          printReportLine(`  Atributos aceptados ${attributes.attributes.length} | relaciones directas ${attributes.relatedAttributes} | recuperados ${attributes.recovered.length} | valores resueltos no asignados ${attributes.unresolved.length}`);
+        }
         for (const signal of item.signals) printReportLine(`  REVISAR ${signal}`);
       }
     }
@@ -122,11 +146,22 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
     if (!known) printReportLine(`No hay categorías elegibles relacionadas con el atributo ${id}`);
     return;
   }
+  if (args[0] === "--atributos-vacios") {
+    for (const { baseline, attributeAudit: audit } of report.providers) {
+      const empty = audit.decisions.filter((item) => item.status === "proposed" && item.attributes.length === 0);
+      const withoutRelations = empty.filter((item) => item.relatedAttributes === 0);
+      printReportLine(`${baseline.providerId.toUpperCase()} | sin atributos ${empty.length} | sin relaciones directas ${withoutRelations.length} | con relaciones sin valor aceptado ${empty.length - withoutRelations.length}`);
+      for (const item of empty) {
+        const reason = item.relatedAttributes === 0 ? "SIN RELACIONES DIRECTAS" :
+          item.unresolved.length > 0 ? "VALOR RESUELTO NO ASIGNADO" : "SIN ATRIBUTOS VÁLIDOS";
+        printReportLine(`  ${reason} | categoría ${item.categorySellID} | ${item.reference ?? item.sourceUrl} | ${item.sourceUrl}`);
+      }
+    }
+    return;
+  }
   if (args[0] === "--atributos" || args[0] === "--atributos-revision") {
     for (const { baseline, attributeAudit: audit } of report.providers) {
-      printReportLine(`${baseline.providerId.toUpperCase()} | elegibles ${audit.eligible} | categorizadas ${audit.categorized} | asignaciones ${audit.acceptedAssignments}/${audit.mappedAssignments + audit.recoveredAssignments} | recuperadas ${audit.recoveredAssignments} | incidencias de validación ${audit.validationIssues.reduce((sum, issue) => sum + issue.affected, 0)}`);
-      if (args[0] === "--atributos-revision") {
-      }
+      printReportLine(`${baseline.providerId.toUpperCase()} | elegibles ${audit.eligible} | categorizadas ${audit.categorized} | asignaciones ${audit.acceptedAssignments}/${audit.mappedAssignments + audit.recoveredAssignments} | recuperadas ${audit.recoveredAssignments} | incidencias de validación ${audit.validationIssues.reduce((sum, issue) => sum + issue.affected, 0)} | sin atributos ${audit.decisions.filter((item) => item.status === "proposed" && item.attributes.length === 0).length}`);
       for (const issue of audit.validationIssues) {
         printReportLine(`  VALIDACIÓN ${issue.reason}: ${issue.affected}`);
         if (args[0] === "--atributos-revision") {

@@ -4,6 +4,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../../reconciliation/gam-source-technical-units.js";
 import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
 import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
 import { includeGamSourceForkliftMeasuresInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-forklift-measures-general.js";
@@ -49,7 +50,7 @@ test("GAM: sintetiza solo veinte descripciones acreditadas sin alterar el origin
           assert.ok(numbers.has(number), `${record.reference}: ${number}`);
         }
       }
-      for (const [key, value] of Object.entries(record.specs ?? {})) {
+      for (const [key, value] of Object.entries(reconcileGamSourceTechnicalUnits(record).specs ?? {})) {
         assert.equal(prepared.spec[key], phase2ExpectedSpecValue(record.reference, key, value), `${record.reference}: ${key}`);
       }
       assert.equal(prepared.reference, record.reference);

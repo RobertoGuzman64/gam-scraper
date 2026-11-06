@@ -1,4 +1,5 @@
 import { reconcileGamHorometer } from "../../../reconciliation/gam-horometer.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../reconciliation/gam-source-technical-units.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { gamCapacityDisputedReferences, gamCapacityVerifiedReferences } from "../../providers/gam/support/gam-technical-cohorts.js";
@@ -76,7 +77,8 @@ test("las 16 capacidades conservan conflictos auténticos y distinguen valores c
       ...(corroboratedCapacity === null ? {} : { "Capacidad de carga (kg)": `${corroboratedCapacity} KG` }),
       ...(reference === "6421" ? { "Velocidad de desplazamiento con/sin carga (km/h)": "15,7 / 15,7 km/h", "Potencia de tracción (kW)": "8,5 kW", "Potencia de elevación (kW)": "11 kW" } : {})
     };
-    for (const [key, value] of Object.entries(expectedSpecs)) assert.deepEqual(prepared.product.spec[key], value, `${reference}: ${key}`);
+    const normalizedExpected = reconcileGamSourceTechnicalUnits({ ...product, specs: expectedSpecs }).specs ?? expectedSpecs;
+    for (const [key, value] of Object.entries(normalizedExpected)) assert.deepEqual(prepared.product.spec[key], value, `${reference}: ${key}`);
   }
 });
 

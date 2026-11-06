@@ -1,4 +1,5 @@
 import { reconcileGamHorometer } from "../../../reconciliation/gam-horometer.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../reconciliation/gam-source-technical-units.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -35,7 +36,7 @@ const approved = (provider: string, codes: readonly string[]): void => {
     const prepared = prepareProduct(product, catalog);
     assert.equal(prepared.status, "ready", `${provider}:${code}: ${prepared.issues.join(", ")}`);
     assert.equal(prepared.product.reference, code);
-    assert.deepEqual(prepared.product.spec, { ...reconcileGamHorometer(product).specs,
+    const expectedSpecs = { ...reconcileGamHorometer(product).specs,
       ...(provider === "gam" && ["6873", "6874"].includes(code) ? { "Dimensiones Cesta": "1,4 x 0,7 x 1,1 m" } : {}),
       ...(provider === "gam" && ["4019", "4020"].includes(code) ? { "Depósito de solución": 480, "Depósito de recuperación": 346 } : {}),
       ...(provider === "gam" && code === "4021" ? { "Depósito de solución": 530, "Depósito de recuperación": 276 } : {}),
@@ -47,7 +48,8 @@ const approved = (provider: string, codes: readonly string[]): void => {
       ...(provider === "gam" && code === "5079" ? { "Voltaje batería (V)": "96 V", "Capacidad de la batería (Ah)": "1395 Ah", "Autonomía aproximada (h)": "8 h", "Ruedas": "Delanteras gemelas cushion; traseras superelásticas", "Motorización": "Eléctrico" } : {}),
       ...(provider === "gam" && code === "1888" ? { "Autonomía aproximada (h)": "8 h" } : {}),
       ...(provider === "gam" && code === "2365" ? { "Frenado automático": true } : {}),
-      ...(provider === "gam" && ["4019", "4020"].includes(code) ? { "Nivel sonoro": "75 dBA", "Velocidad de desplazamiento (km/h)": "9 km/h", "Anchura del cepillo principal (mm)": 915 } : {}) });
+      ...(provider === "gam" && ["4019", "4020"].includes(code) ? { "Nivel sonoro": "75 dBA", "Velocidad de desplazamiento (km/h)": "9 km/h", "Anchura del cepillo principal (mm)": 915 } : {}) };
+    assert.deepEqual(prepared.product.spec, reconcileGamSourceTechnicalUnits({ ...product, specs: expectedSpecs }).specs);
   }
 };
 

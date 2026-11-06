@@ -212,8 +212,35 @@ const unrepresentableYalePlatform = (record: ProductRecord): boolean =>
   record.specs?.["Altura plataforma (mm)"] === undefined &&
   record.specs?.["Altura plataforma (m)"] === undefined;
 
+const unrepresentableBasketLoad = (record: ProductRecord): boolean => {
+  const capacity = singleSpec(record, ["capacidad de carga (kg)"]);
+  const model = fold(record.model ?? "");
+  if (!capacity || !model || fold(record.brand ?? "") !== fold(String(record.specs?.Marca ?? "")) ||
+    model !== fold(String(record.specs?.Modelo ?? ""))) return false;
+  try {
+    const url = new URL(record.url);
+    const segments = url.pathname.split("/").filter(Boolean);
+    if (url.hostname !== "online.gamrentals.com" || segments[0] !== "es" ||
+      !segments.at(-1)?.startsWith(`${record.reference}-`)) return false;
+  } catch { return false; }
+  if (record.reference === "4792" && model === "xgs58e1" && capacity === "450 KG") {
+    return /230 kg estándar y 450 kg restringido/iu.test(record.longDescription ?? "");
+  }
+  if (record.reference === "4807" && model === "xgr08" && capacity === "159 KG") {
+    return /soportando una carga de hasta 200 kg/iu.test(record.longDescription ?? "");
+  }
+  if (record.reference === "6934" && model === "e300aj" && capacity === "220 KG" &&
+    record.title?.includes("E300AJP")) {
+    return /capacidad de carga de 230 kg/iu.test(record.longDescription ?? "") &&
+      /capacidad de carga de 220 kg/iu.test(record.longDescription ?? "");
+  }
+  return false;
+};
+
 export const gamConfirmedAbsentScalar = (record: ProductRecord, attribute: Attribute): boolean => {
   if (record.providerId !== "gam") return false;
+  if (attribute.name === "Capacidad de la cesta" && attribute.type === "NUMBER" &&
+    attribute.unit_option === "kg" && unrepresentableBasketLoad(record)) return true;
   if (unrepresentableOrderPickerVariant(record, attribute)) return true;
   if (attribute.name === "Capacidad de carga" && attribute.type === "NUMBER" && attribute.unit_option === "kg" &&
     unrepresentableTecnacarLoad(record)) return true;

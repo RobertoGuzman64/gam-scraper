@@ -5,6 +5,7 @@ import { readCanonicalCatalog } from "../../../../../../infrastructure/filesyste
 import { verifiedMercaelevaSourceEditorial } from "../../../../evidence/providers/mercaeleva/verified-source-editorial.js";
 import { resolveMercaelevaVerifiedSourceEditorial } from "../../../../mapping/providers/mercaeleva/verified-source-editorial.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { normalizeMercaelevaAusaHeightText } from "../../../../reconciliation/mercaeleva-ausa-height.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json");
 const expected = new Set([
@@ -33,7 +34,7 @@ test("Mercaeleva: veinte generales propios quedan vinculados al original canóni
     const evidence = entries[record.reference];
     assert.ok(evidence);
     assert.equal(prepared.status, "ready", record.reference);
-    assert.equal(prepared.product.description_general, evidence.general, record.reference);
+    assert.equal(prepared.product.description_general, normalizeMercaelevaAusaHeightText(record, evidence.general), record.reference);
     assert.ok(prepared.product.description_general);
     assert.ok(prepared.product.description_general.trim().split(/\s+/u).length >= 65);
     assert.equal(prepared.product.sourceUrl, evidence.sourceUrl);

@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseIndividualCatalogProviders } from "../../options/individual-catalog.js";
 import { prepareIndividualCatalogs } from "../../../pipeline/preparation/individual-prepare.js";
+import { checkHistoricalReferenceIntegrity } from "../../../infrastructure/filesystem/legacy-export/historical-reference-integrity.js";
 import { formatHeader, printReportLine, printStatus } from "../../reporting/terminal.js";
 import { printCommandError } from "../../reporting/errors.js";
 
@@ -44,7 +45,8 @@ export const runPrepareIndividual = async (args: readonly string[], workspace: s
     printReportLine(`  ${summary.preparationFile ? "Preparación verificada" : "Previsualización"} | Sin aprobación ni activación`);
     if (summary.activeAvailable) {
       printReportLine(`  Frente a vigente (provisional): altas ready ${summary.possibleAdds} | ausencias ready ${summary.possibleRemovals} | cambios ${summary.possibleChanges}`);
-      if (summary.possibleSpecificationLosses) printReportLine(`  AVISO | Posibles pérdidas técnicas antes de exclusiones acreditadas: ${summary.possibleSpecificationLosses}`);
+      if (summary.reconciledSpecificationChanges) printReportLine(`  Transformaciones técnicas contrastadas: ${summary.reconciledSpecificationChanges}`);
+      if (summary.possibleSpecificationLosses) printReportLine(`  AVISO | Pérdidas técnicas sin reconciliar: ${summary.possibleSpecificationLosses}`);
       printReportLine(`  Ausencias respecto al vigente (antecedentes, NO exclusiones aprobadas): ${summary.historicalExclusions.length}`);
     } else printReportLine(`  Sin publicación individual vigente | ready candidatos: ${summary.ready}`);
     if (summary.reviewReferences.length) {
@@ -56,6 +58,11 @@ export const runPrepareIndividual = async (args: readonly string[], workspace: s
     }
     if (summary.preparationFile) printReportLine(`  Preparación: ${summary.preparationFile}`);
     else printReportLine("  SIMULACIÓN | Sin archivos escritos");
+  }
+  const referenceMismatches = await checkHistoricalReferenceIntegrity(workspace);
+  if (referenceMismatches?.length) {
+    printReportLine(`  AVISO | ${referenceMismatches.length} archivos difieren del manifiesto histórico de referencias comerciales; no se modifican`);
+    for (const item of referenceMismatches) printReportLine(`  REFERENCIA | ${item.path} | ${item.actualSha256 ?? "archivo ausente o no regular"}`);
   }
   printReportLine(`RESUMEN | proveedores: ${results.length - blocked}/${results.length} | fichas: ${total} | ready: ${ready} | review: ${review} | bloqueados: ${blocked}`);
   if (blocked) {

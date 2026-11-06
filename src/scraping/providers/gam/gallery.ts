@@ -121,7 +121,14 @@ const productMatchesPage = (value: ValueMap, pageUrl: string): boolean =>
     }
   });
 
-const structuredProductImages = (values: readonly unknown[], pageUrl: string): readonly string[] => {
+const productHasPageIdentifier = (value: ValueMap, pageUrl: string): boolean => {
+  const pageId = gamProductId(pageUrl, pageUrl);
+  return pageId !== null && [value.url, value["@id"]].some((identifier) =>
+    typeof identifier === "string" && gamProductId(identifier, pageUrl) === pageId
+  );
+};
+
+export const structuredProductImages = (values: readonly unknown[], pageUrl: string): readonly string[] => {
   const products: ValueMap[] = [];
   for (const value of values) {
     const nodes = Array.isArray(value) ? value : [value];
@@ -137,8 +144,11 @@ const structuredProductImages = (values: readonly unknown[], pageUrl: string): r
     }
   }
   const matched = products.filter((product) => productMatchesPage(product, pageUrl));
+  const matchedByIdentifier = matched.length === 0
+    ? products.filter((product) => productHasPageIdentifier(product, pageUrl)) : [];
   const images: string[] = [];
-  const eligible = matched.length > 0 ? matched : products.filter((product) => !identifiesOtherGamProduct(product, pageUrl));
+  const eligible = matched.length > 0 ? matched : matchedByIdentifier.length > 0
+    ? matchedByIdentifier : products.filter((product) => !identifiesOtherGamProduct(product, pageUrl));
   for (const product of eligible) {
     const values = Array.isArray(product.image) ? product.image : [product.image];
     for (const item of values) {
@@ -175,13 +185,13 @@ export const extractGamGallery = ($: cheerio.CheerioAPI, pageUrl: string): reado
     });
   }
 
-  $("#product-details[data-product], #product [data-product]").each((_, node) => {
+  $("#product[data-product], #product-details[data-product], #product [data-product]").each((_, node) => {
     const element = $(node);
     if (element.closest(unrelatedDetails).length > 0) return;
     const value = element.attr("data-product");
     if (value) push(productImagesFrom(parseJson(value), pageUrl));
   });
-  $("#product [data-images]").each((_, node) => {
+  $("#product[data-images], #product [data-images]").each((_, node) => {
     const element = $(node);
     if (element.closest(unrelatedDetails).length > 0) return;
     const value = element.attr("data-images");

@@ -6,6 +6,7 @@ import { normalizeSpecsObject } from "../../../../../normalization/normalize-spe
 import { recoverGamSweeperHopperCapacity } from "../../../../evidence/providers/gam/operations-and-safety/cleaning-tank-evidence.js";
 import { recoverGamHysterForkliftTyresSpec, recoverGamNonMarkingTyresSpec, recoverGamVerifiedSuperelasticTyresSpec, recoverGamVerifiedTyreMaterialsSpec, recoverGamYaleSuperelasticTyresSpec } from "../../../../evidence/providers/gam/mobility/non-marking-tyres-evidence.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../../reconciliation/gam-source-technical-units.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
@@ -40,7 +41,7 @@ test("recupera neumáticos y material rodante declarados sin alterar atributos o
     assert.equal(recovered.Neumáticos, material, reference);
     assert.equal(prepared.spec.Neumáticos, material, reference);
     assert.equal(normalizeSpecsObject(prepared.spec).normalized.Neumáticos, material, reference);
-    for (const [key, value] of Object.entries(record.specs ?? {})) {
+    for (const [key, value] of Object.entries(reconcileGamSourceTechnicalUnits(record).specs ?? {})) {
       assert.deepEqual(prepared.spec[key], value, `${reference}: ${key}`);
     }
     assert.deepEqual(record, original);

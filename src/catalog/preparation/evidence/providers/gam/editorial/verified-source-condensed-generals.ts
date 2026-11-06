@@ -122,7 +122,7 @@ const evidence: Readonly<Record<string, VerifiedGeneral>> = {
   },
   "5902": {
     "fingerprint": "8677c8672ea02d488e404170a46802041921fd09331294fa15047a662a9433a2",
-    "general": "La XCMG XGA43K es una plataforma articulada diésel para elevación de gran altura. El registro técnico indica 43 m de altura, 460 kg de capacidad de cesta y una pendiente superable del 40 % según las condiciones de trabajo de la ficha. Declara unas dimensiones generales de 12.928 mm de longitud y 2.490 mm de anchura, un peso de 24.500 kg y cesta de 2,44 × 0,90 m."
+    "general": "La XCMG XGA43K es una plataforma articulada diésel para elevación de gran altura. El registro técnico indica 43 m de altura, 300 kg de capacidad de cesta sin limitación y hasta 460 kg con limitación; la pendiente superable declarada es del 40 % según las condiciones de trabajo de la ficha. Declara unas dimensiones generales de 12.928 mm de longitud y 2.490 mm de anchura, un peso de 24.500 kg y cesta de 2,44 × 0,90 m."
   },
   "5937": {
     "fingerprint": "77d8fca1b319a655fa939e5bda5bf3847970e0fdf7e530763d161219fdb78c91",

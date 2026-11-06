@@ -27,13 +27,18 @@ test("tipo de origen corroborado sin categoría del receptor no es motivo de rev
     assert.equal(prepared.product.category, null, code);
     const explicitHeight = code === "4778" ? "16,3 m" : code === "4779" ? "18,01 m" : null;
     assert.deepEqual(prepared.product.spec, {
-      ...record.specs,
+      ...(["2134", "2135"].includes(code)
+        ? Object.fromEntries(Object.entries(record.specs ?? {}).filter(([key]) => key !== "Capacidad de carga (kg)"))
+        : record.specs),
       ...(explicitHeight === null ? {} : { "Altura de trabajo (m)": explicitHeight }),
       ...(code === "4778" ? { "Alcance horizontal (m)": "8,22 m", "Tracción 4x4": true } : {}),
       ...(code === "4779" ? { "Alcance horizontal (m)": "10,26 m", "Potencia (kW)": "36,8 kW", "Tracción 4x4": true } : {}),
       ...(code === "4780" ? { "Voltaje batería (V)": "51,2 V", "Capacidad de la batería (Ah)": "346 Ah", "Tipo de batería": "Litio", "Tracción 4x4": true } : {}),
       ...(code === "2159" ? { "Sensor de inclinación": true } : {}),
-      ...(["2134", "2135"].includes(code) ? { "Frenado automático": true } : {})
+      ...(["2134", "2135"].includes(code) ? {
+        "Frenado automático": true,
+        "Capacidad de arrastre": code === "2134" ? "5000 KG" : "7000 KG"
+      } : {})
     }, code);
     assert.deepEqual(prepared.product.attributes, [], code);
     assert.ok(prepared.importIssues?.excel.some((issue) => issue.startsWith("Categoría no ")), code);

@@ -27,7 +27,7 @@ const evidenceEntries: Readonly<Record<string, {
   readonly sourceUrl: string;
 }>> = verifiedFamilyProportionEditorial;
 
-test("La fase 162 mejora exactamente veinte fichas canónicas sin alterar datos técnicos", () => {
+test("Los textos editoriales verificados conservan veinte identidades canónicas sin alterar datos técnicos", () => {
   assert.equal(records.length, 1347);
   assert.deepEqual(new Set(Object.keys(verifiedFamilyProportionEditorial)), expected);
   for (const identity of expected) {
@@ -87,11 +87,11 @@ test("La depuración conserva las discrepancias y no adjudica capacidades contra
     ["gam:6745", ["MO30X", "MO20X", "3.000 kg"]],
     ["gam:6274", ["H14XD-12", "H12XD-12", "1.200 mm"]],
     ["gam:6193", ["300 kg", "250 kg"]],
-    ["gam:6421", ["2.000 kg", "3.000 kg"]],
+    ["gam:6421", ["2.000 kg", "500 mm", "placa"]],
     ["gam:2328", ["GP80SVX", "GP90VX", "8.000 kg", "9.000 kg"]],
     ["gam:2313", ["GLP", "diésel", "eléctrico"]],
     ["gam:6169", ["TRCS 180", "TRACCESS 180", "230 kg", "200 kg"]],
-    ["gam:6171", ["20,46 m", "21 m", "200 kg", "230 kg"]],
+    ["gam:6171", ["20,46 m", "21 m", "230 kg", "11,30 m"]],
     ["gam:4650", ["18HD", "18HV", "360 kg", "300 kg"]],
     ["gam:4737", ["XG0810C", "XG0807ACW-LI"]],
     ["gam:6669", ["3 m", "5 m", "NA"]]
@@ -100,4 +100,19 @@ test("La depuración conserva las discrepancias y no adjudica capacidades contra
     assert.ok(evidence, identity);
     for (const fragment of fragments) assert.ok(evidence.general.includes(fragment), `${identity}: ${fragment}`);
   }
+});
+
+
+test("Las notas técnicas ya normalizadas no mantienen contradicciones históricas", () => {
+  const yale = byIdentity.get("gam:2314");
+  const hyster = byIdentity.get("gam:6421");
+  assert.ok(yale && hyster);
+  const yalePrepared = prepareSourceProduct(yale);
+  const hysterPrepared = prepareSourceProduct(hyster);
+  assert.equal(yalePrepared.product.spec.Motorización, "Diésel");
+  assert.match(yalePrepared.product.description_general ?? "", /«Motorización» concuerda/u);
+  assert.doesNotMatch(yalePrepared.product.description_general ?? "", /dice eléctrico/u);
+  assert.equal(hysterPrepared.product.spec["Capacidad de carga (kg)"], "2000 KG");
+  assert.match(hysterPrepared.product.description_general ?? "", /coinciden en 2\.000 kg/u);
+  assert.doesNotMatch(hysterPrepared.product.description_general ?? "", /declara 3\.000 kg/u);
 });
