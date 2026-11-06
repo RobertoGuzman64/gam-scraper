@@ -8,7 +8,7 @@ import { excludeGamRelatedProductImages } from "../../../catalog/normalization/g
 import { loadCommercialPublicationInputs } from "../../export/commercial-inputs.js";
 import { resolveCommercialCondition } from "../../../preparation/condition.js";
 import { productAttributes } from "../../../preparation/product-attributes.js";
-import { reconcileGamVerifiedHysterSGlp } from "../../../preparation/gam/technical/evidence/energy-and-powertrain/hyster-s-glp-evidence.js";
+import { reconcileGamVerifiedHysterSGlp } from "../../../preparation/gam/technical/models/hyster-s-glp-evidence.js";
 
 const catalog = await loadImportCatalog();
 const providers = await loadCommercialPublicationInputs(process.cwd(), catalog);

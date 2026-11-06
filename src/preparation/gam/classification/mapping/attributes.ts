@@ -2,18 +2,18 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { SPEC_KEY_NORMALIZATION } from "../../../../catalog/normalization/spec-rules.js";
 import type { AliasOutcome, Attribute, Candidate } from "../../../shared/classification/mapping/attribute-types.js";
 import { fold, basketDimensions, numberToken, scalar } from "../../../shared/classification/mapping/attribute-utils.js";
-import { gamWorkingHeightFromDescription } from "../../technical/mapping/working-height.js";
-import { gamBasketDimensionsFromDescription, gamBasketDimensionsFromRepeatedFragments } from "../../technical/mapping/basket.js";
+import { gamWorkingHeightFromDescription } from "../../technical/measurements/working-height.js";
+import { gamBasketDimensionsFromDescription, gamBasketDimensionsFromRepeatedFragments } from "../../technical/measurements/basket.js";
 import { gamElevationIdentityConflict } from "../../identity/evidence/elevation-identity.js";
 import { gamCleaningCandidate, gamCleaningCorrectedWidth, gamCleaningWidthConflicts } from "./cleaning.js";
 import { gamHandlingCandidate, normalizeGamMast } from "./handling.js";
-import { gamHandlingAmbiguousCapacity, gamHandlingAttributeConflicts } from "../../technical/evidence/operations-and-safety/handling-integrity.js";
-import { gamHandlingReconciledCapacity } from "../../technical/evidence/measurements-and-capacities/capacity-evidence.js";
-import { gamElevationCandidate, gamElevationHeightConflicts } from "../../technical/mapping/elevation.js";
+import { gamHandlingAmbiguousCapacity, gamHandlingAttributeConflicts } from "../../technical/measurements/handling-integrity.js";
+import { gamHandlingReconciledCapacity } from "../../technical/measurements/capacity-evidence.js";
+import { gamElevationCandidate, gamElevationHeightConflicts } from "../../technical/measurements/elevation.js";
 import { gamSpecializedCandidate } from "./specialized.js";
-import { gamGeneratorCandidate, isGamGenerator } from "../../technical/mapping/generator.js";
-import { gamCompoundMeasure } from "../../technical/mapping/compound-measures.js";
-import { applyGamCrossedSpecifications } from "../../technical/mapping/crossed-specifications.js";
+import { gamGeneratorCandidate, isGamGenerator } from "../../technical/energy/generator.js";
+import { gamCompoundMeasure } from "../../technical/measurements/compound-measures.js";
+import { applyGamCrossedSpecifications } from "../../technical/crossed-specifications.js";
 
 export const gamUnspecifiedTurningRadius = (record: ProductRecord): boolean => {
   if (record.categoryKey !== "carretillas-nuevas" || record.condition !== "Nuevo" ||

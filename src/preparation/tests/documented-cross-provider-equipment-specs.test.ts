@@ -5,7 +5,7 @@ import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/ca
 import { gamTechnicalReviewReferences } from "../testing/phase1-reviewed-identities.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 import { analyzeTechnicalDensity } from "../../catalog/diagnostics/technical-density.js";
-import { recoverGamDocumentedMobilityAndAccessSpecs } from "../gam/technical/evidence/verified-models/documented-mobility-and-access-specs.js";
+import { recoverGamDocumentedMobilityAndAccessSpecs } from "../gam/technical/models/documented-mobility-and-access-specs.js";
 import { recoverMercaelevaDocumentedTransportAndAccessSpecs } from "../mercaeleva/technical/evidence/documented-transport-and-access-specs.js";
 import { recoverGomarizDocumentedRenaultPremiumSpecs } from "../gomariz/technical/evidence/documented-renault-premium-specs.js";
 

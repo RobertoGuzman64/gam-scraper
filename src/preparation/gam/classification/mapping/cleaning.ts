@@ -1,10 +1,10 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { Attribute, Candidate } from "../../../shared/classification/mapping/attribute-types.js";
 import { gamHandlingModelEvidence } from "./handling.js";
-import { cleaningFamily, energy, batteryFromConfirmedDescription, driver } from "../../technical/evidence/operations-and-safety/cleaning-evidence.js";
-import { workWidth } from "../../technical/mapping/cleaning-width.js";
+import { cleaningFamily, energy, batteryFromConfirmedDescription, driver } from "../../technical/operations/cleaning-evidence.js";
+import { workWidth } from "../../technical/operations/cleaning-width.js";
 
-export { gamCleaningCorrectedWidth, gamCleaningWidthConflicts } from "../../technical/mapping/cleaning-width.js";
+export { gamCleaningCorrectedWidth, gamCleaningWidthConflicts } from "../../technical/operations/cleaning-width.js";
 
 export const gamCleaningCandidate = (record: ProductRecord, attribute: Attribute): Candidate | null => {
   if (!cleaningFamily(record)) return null;

@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { readMercaelevaSource } from "../../../../testing/builders/mercaeleva-source-fixture.js";
-import { recoverGamDocumentedMobilityAndAccessSpecs } from "../../../gam/technical/evidence/verified-models/documented-mobility-and-access-specs.js";
+import { recoverGamDocumentedMobilityAndAccessSpecs } from "../../../gam/technical/models/documented-mobility-and-access-specs.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { mbModelEditorialEvidence } from "../../../mercaeleva/editorial/evidence/mb-model-description.js";
-import { braviSkydeckEditorialEvidence } from "../../../gam/editorial/evidence/bravi-skydeck-editorial.js";
+import { braviSkydeckEditorialEvidence } from "../../../gam/editorial/models/bravi-skydeck-editorial.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const mercaeleva = await readMercaelevaSource();

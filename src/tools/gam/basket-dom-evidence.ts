@@ -1,7 +1,7 @@
 import * as cheerio from "cheerio";
 import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
 import { basketDimensions, fold } from "../../preparation/shared/classification/mapping/attribute-utils.js";
-import { gamBasketDimensionsFromDescription, gamBasketDimensionsFromRepeatedFragments } from "../../preparation/gam/technical/mapping/basket.js";
+import { gamBasketDimensionsFromDescription, gamBasketDimensionsFromRepeatedFragments } from "../../preparation/gam/technical/measurements/basket.js";
 import { extractSpecs } from "../../scraping/providers/gam/specifications.js";
 import { normalizeSpace } from "../../scraping/providers/gam/text.js";
 import { unrelatedDetails } from "../../scraping/providers/gam/selectors.js";

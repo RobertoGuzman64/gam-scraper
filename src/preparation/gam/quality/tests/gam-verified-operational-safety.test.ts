@@ -3,7 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
-import { recoverGamVerifiedOperationalSafety } from "../../technical/evidence/operations-and-safety/verified-operational-safety-evidence.js";
+import { recoverGamVerifiedOperationalSafety } from "../../technical/safety/verified-operational-safety-evidence.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");

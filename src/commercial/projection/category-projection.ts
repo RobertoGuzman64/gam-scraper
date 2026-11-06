@@ -4,7 +4,7 @@ import type { PreparedProduct } from "../../preparation/contracts.js";
 import { fold } from "../../preparation/shared/classification/mapping/category-utils.js";
 import { isLeafCategoryForCondition, resolveCategory } from "../../preparation/shared/classification/mapping/category-mapping.js";
 import { productAttributes } from "../../preparation/product-attributes.js";
-import { isGamVerifiedHysterSGlp, reconcileGamVerifiedHysterSGlp } from "../../preparation/gam/technical/evidence/energy-and-powertrain/hyster-s-glp-evidence.js";
+import { isGamVerifiedHysterSGlp, reconcileGamVerifiedHysterSGlp } from "../../preparation/gam/technical/models/hyster-s-glp-evidence.js";
 import { reconcileGamForPreparation } from "../../preparation/gam/technical/reconciliation/gam.js";
 
 const generalCategorySlugs = new Set([

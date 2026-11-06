@@ -1,7 +1,7 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { Attribute } from "../../../shared/classification/mapping/attribute-types.js";
 import { fold, scalar } from "../../../shared/classification/mapping/attribute-utils.js";
-import { gamBasketDimensionsFromDescription, gamBasketDimensionsFromRepeatedFragments } from "../../technical/mapping/basket.js";
+import { gamBasketDimensionsFromDescription, gamBasketDimensionsFromRepeatedFragments } from "../../technical/measurements/basket.js";
 import { gamElevationIdentityConflict } from "../../identity/evidence/elevation-identity.js";
 import { gamHandlingModelEvidence, relevantGamHandlingRecord } from "./handling.js";
 

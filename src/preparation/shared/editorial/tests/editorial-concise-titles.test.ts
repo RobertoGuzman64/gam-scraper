@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { resolveGamConciseTitle } from "../../../gam/editorial/mapping/concise-titles.js";
+import { resolveGamConciseTitle } from "../../../gam/editorial/titles/concise-titles.js";
 import { resolveGomarizEditorialTitle } from "../../../gomariz/editorial/mapping/editorial-title.js";
 import { verifiedGomarizUnitSpecificTitles } from "../../../gomariz/editorial/evidence/verified-unit-specific-titles.js";
-import { verifiedGamSourceMatchedTitles } from "../../../gam/editorial/evidence/verified-source-matched-titles.js";
+import { verifiedGamSourceMatchedTitles } from "../../../gam/editorial/titles/verified-source-matched-titles.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");

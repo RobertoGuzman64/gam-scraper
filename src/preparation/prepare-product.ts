@@ -14,8 +14,8 @@ import { reconcileGamInitialIdentity, reconcileGamForPreparation } from "./gam/t
 import { reconcileGamSourceTechnicalUnits } from "./gam/technical/reconciliation/gam-source-technical-units.js";
 import { normalizeMercaelevaAusaHeightText } from "./mercaeleva/technical/reconciliation/mercaeleva-ausa-height.js";
 import { verifiedGamHysterH45fts5Editorial } from "./gam/technical/reconciliation/gam-hyster-h45fts5.js";
-import { reconcileGamElectricTowTractorEditorial } from "./gam/editorial/evidence/hyster-tow-tractor-editorial.js";
-import { reconcileGamModulaStorageSummary } from "./gam/editorial/evidence/modula-storage-editorial.js";
+import { reconcileGamElectricTowTractorEditorial } from "./gam/editorial/models/hyster-tow-tractor-editorial.js";
+import { reconcileGamModulaStorageSummary } from "./gam/editorial/models/modula-storage-editorial.js";
 import { reconcileGamVerifiedYaleGp80vx } from "./gam/technical/reconciliation/gam-yale-gp80vx.js";
 import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "./mercaeleva/technical/evidence/verified-platform-source-specs.js";
 import { reconcileMercaelevaVerifiedLindeE48p } from "./mercaeleva/technical/evidence/linde-e48p-publication-evidence.js";
@@ -30,7 +30,7 @@ import { reconcileGamSourceCapacitySummary, preparedGamSourceCapacityShort } fro
 import { reconcileGamVerifiedCapacityCoherence, reconcileGamVerifiedModelIdentity, reconcileGamVerifiedBasketLoad, reconcileGamVerifiedListingIdentity, reconcileGamVerifiedEditorialCoherence } from "./gam/technical/reconciliation/gam-verified-capacity-coherence.js";
 import { reconcileGamHorometer } from "./gam/technical/reconciliation/gam-horometer.js";
 import { captureSourceEditorialEvidence } from "./shared/editorial/mapping/source-editorial-evidence.js";
-import { recoverBaseTechnicalSpecs } from "./gam/technical/recovery/gam-technical-recovery.js";
+import { recoverBaseTechnicalSpecs } from "./gam/technical/gam-technical-recovery.js";
 import { recoverDocumentedTechnicalSpecs } from "./shared/technical/recovery/documented-technical-recovery.js";
 import { resolvePreparedEditorial } from "./shared/editorial/mapping/prepared-editorial.js";
 import { finalizePreparedEditorial } from "./shared/editorial/mapping/verified-editorial-finalization.js";

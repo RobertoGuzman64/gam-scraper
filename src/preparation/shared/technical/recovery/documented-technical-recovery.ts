@@ -2,20 +2,20 @@ import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import { recoverMercaelevaSourceFuel } from "../../../mercaeleva/technical/evidence/source-fuel-evidence.js";
 import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "../../../mercaeleva/technical/evidence/documented-platform-technical-specs.js";
 import { recoverMercaelevaDocumentedEquipmentTechnicalSpecs } from "../../../mercaeleva/technical/evidence/documented-equipment-technical-specs.js";
-import { recoverGamDocumentedWarehouseCleaningAndLiftingSpecs } from "../../../gam/technical/evidence/verified-models/documented-warehouse-cleaning-and-lifting-specs.js";
-import { recoverGamDocumentedLogitransHandlingSpecs } from "../../../gam/technical/evidence/verified-models/documented-logitrans-handling-specs.js";
-import { recoverGamDocumentedHandlingAndIndustrialSpecs } from "../../../gam/technical/evidence/verified-models/documented-handling-and-industrial-specs.js";
-import { recoverGamDocumentedModulaStorageSpecs } from "../../../gam/technical/evidence/verified-models/documented-modula-storage-specs.js";
+import { recoverGamDocumentedWarehouseCleaningAndLiftingSpecs } from "../../../gam/technical/models/documented-warehouse-cleaning-and-lifting-specs.js";
+import { recoverGamDocumentedLogitransHandlingSpecs } from "../../../gam/technical/models/documented-logitrans-handling-specs.js";
+import { recoverGamDocumentedHandlingAndIndustrialSpecs } from "../../../gam/technical/models/documented-handling-and-industrial-specs.js";
+import { recoverGamDocumentedModulaStorageSpecs } from "../../../gam/technical/models/documented-modula-storage-specs.js";
 import { recoverMercaelevaDocumentedLgmgAndBtLiftSpecs } from "../../../mercaeleva/technical/evidence/documented-lgmg-and-bt-lift-specs.js";
-import { recoverGamDocumentedIndustrialEquipmentSpecs } from "../../../gam/technical/evidence/verified-models/documented-industrial-equipment-specs.js";
+import { recoverGamDocumentedIndustrialEquipmentSpecs } from "../../../gam/technical/models/documented-industrial-equipment-specs.js";
 import { recoverMercaelevaDocumentedLiftingAndWarehouseSpecs } from "../../../mercaeleva/technical/evidence/documented-lifting-and-warehouse-specs.js";
 import { recoverGomarizDocumentedScaniaP220Specs } from "../../../gomariz/technical/evidence/documented-scania-p220-specs.js";
-import { recoverGamDocumentedMobilityAndAccessSpecs } from "../../../gam/technical/evidence/verified-models/documented-mobility-and-access-specs.js";
+import { recoverGamDocumentedMobilityAndAccessSpecs } from "../../../gam/technical/models/documented-mobility-and-access-specs.js";
 import { recoverMercaelevaDocumentedTransportAndAccessSpecs } from "../../../mercaeleva/technical/evidence/documented-transport-and-access-specs.js";
 import { recoverGomarizDocumentedRenaultPremiumSpecs } from "../../../gomariz/technical/evidence/documented-renault-premium-specs.js";
-import { recoverGamDocumentedElectricMobilityAndTruckAccessSpecs } from "../../../gam/technical/evidence/verified-models/documented-electric-mobility-and-truck-access-specs.js";
+import { recoverGamDocumentedElectricMobilityAndTruckAccessSpecs } from "../../../gam/technical/models/documented-electric-mobility-and-truck-access-specs.js";
 import { recoverMercaelevaDocumentedToyotaForkliftSpecs } from "../../../mercaeleva/technical/evidence/documented-toyota-forklift-specs.js";
-import { recoverGamDocumentedMultiUnitLotSpecs } from "../../../gam/technical/evidence/verified-models/documented-multi-unit-lot-specs.js";
+import { recoverGamDocumentedMultiUnitLotSpecs } from "../../../gam/technical/models/documented-multi-unit-lot-specs.js";
 import { recoverMercaelevaDocumentedJlgSl203204Specs } from "../../../mercaeleva/technical/evidence/documented-jlg-sl203-204-specs.js";
 
 export const recoverDocumentedTechnicalSpecs = (sourceUnitRecord: ProductRecord, sourceYearSpecs: SpecsMap): { sourceFuelSpecs: SpecsMap; documentedSpecs: SpecsMap } => {

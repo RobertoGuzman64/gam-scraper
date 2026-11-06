@@ -9,7 +9,7 @@ import { normalizeMercaelevaCandidate } from "../../../mercaeleva/technical/mapp
 import { mercaelevaUnspecifiedMast } from "../../../mercaeleva/technical/evidence/handling-evidence.js";
 import { mercaelevaUnpublishedHours } from "../../../mercaeleva/technical/evidence/hours-evidence.js";
 import { gamConfirmedAbsentScalar } from "../../../gam/classification/mapping/unrepresentable.js";
-import { gamMislabelledSpecKey } from "../../../gam/technical/mapping/crossed-specifications.js";
+import { gamMislabelledSpecKey } from "../../../gam/technical/crossed-specifications.js";
 import { applyManainAliases, convertManainCandidate, isManainUnmeasuredNumeric } from "../../../manain/classification/mapping/attributes.js";
 
 const notPublished = (value: SpecScalar): boolean =>

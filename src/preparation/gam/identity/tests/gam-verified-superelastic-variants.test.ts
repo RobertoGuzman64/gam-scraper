@@ -3,8 +3,8 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
-import { recoverGamVerifiedSuperelasticTyresSpec } from "../../technical/evidence/mobility/non-marking-tyres-evidence.js";
-import { recoverGamPhysicalMeasures } from "../../technical/evidence/measurements-and-capacities/physical-measures-evidence.js";
+import { recoverGamVerifiedSuperelasticTyresSpec } from "../../technical/mobility/non-marking-tyres-evidence.js";
+import { recoverGamPhysicalMeasures } from "../../technical/measurements/physical-measures-evidence.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");

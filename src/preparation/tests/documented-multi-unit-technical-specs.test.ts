@@ -4,7 +4,7 @@ import type { ProductRecord, SpecsMap } from "../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { analyzeTechnicalDensity } from "../../catalog/diagnostics/technical-density.js";
 import { prepareSourceProduct } from "../prepare-product.js";
-import { recoverGamDocumentedMultiUnitLotSpecs } from "../gam/technical/evidence/verified-models/documented-multi-unit-lot-specs.js";
+import { recoverGamDocumentedMultiUnitLotSpecs } from "../gam/technical/models/documented-multi-unit-lot-specs.js";
 import { recoverMercaelevaDocumentedJlgSl203204Specs } from "../mercaeleva/technical/evidence/documented-jlg-sl203-204-specs.js";
 
 const expected: Readonly<Record<string, Readonly<Record<string, SpecsMap>>>> = {

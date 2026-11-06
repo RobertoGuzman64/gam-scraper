@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
-import { recoverGamBatteryMeasures } from "../../technical/evidence/energy-and-powertrain/battery-measures-evidence.js";
-import { recoverGamLithiumBatteryType } from "../../technical/evidence/energy-and-powertrain/battery-chemistry-evidence.js";
+import { recoverGamBatteryMeasures } from "../../technical/energy/battery-measures-evidence.js";
+import { recoverGamLithiumBatteryType } from "../../technical/energy/battery-chemistry-evidence.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");

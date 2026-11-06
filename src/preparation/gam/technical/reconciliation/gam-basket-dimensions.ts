@@ -3,7 +3,7 @@ import { basketDimensions } from "../../../shared/classification/mapping/attribu
 import {
   gamBasketDimensionsFromDescription,
   gamBasketDimensionsFromRepeatedFragments
-} from "../mapping/basket.js";
+} from "../measurements/basket.js";
 
 const basketValue = (specs: SpecsMap | undefined): string | null => {
   const value = specs?.["Dimensiones Cesta"];

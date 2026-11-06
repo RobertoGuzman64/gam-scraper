@@ -1,5 +1,5 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { gamHandlingReconciledCapacity } from "../evidence/measurements-and-capacities/capacity-evidence.js";
+import { gamHandlingReconciledCapacity } from "../measurements/capacity-evidence.js";
 
 export const reconcileGamCorroboratedLoadCapacity = (record: ProductRecord): ProductRecord => {
   const capacity = gamHandlingReconciledCapacity(record);
