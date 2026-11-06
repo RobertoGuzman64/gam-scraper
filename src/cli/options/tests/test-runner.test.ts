@@ -299,12 +299,17 @@ const addCacheableSuites = (root: string): void => {
   }
 };
 
+const assertNoCacheReuse = (output: string): void => {
+  assert.match(output, /PASS \| 4\/4 archivos \| 4 correctos \| 0 fallidos \| 0 omitidos/);
+  assert.doesNotMatch(output, /CACHÉ \| [1-9]\d* suites y [1-9]\d* tests reutilizados/);
+};
+
 test("npm test reutiliza automáticamente solo suites seguras cuando no cambia ninguna entrada", () => {
   withRunner((root) => {
     addCacheableSuites(root);
     const initial = spawnRunner(root, []);
     assert.equal(initial.status, 0, `${initial.stdout}${initial.stderr}`);
-    assert.match(initial.stdout, /CACHÉ \| 0 suites/);
+    assertNoCacheReuse(initial.stdout);
     const first = readFileSync(join(root, "ejecuciones-cache.txt"), "utf8");
     assert.equal(first.trim().split("\n").length, 2);
     const next = spawnRunner(root, []);
@@ -323,17 +328,17 @@ test("las suites legadas conservan invalidación global por código, datos y ent
     writeFileSync(join(root, "src", "prueba.test.ts"), "export const version = 2;\n");
     const sourceChanged = spawnRunner(root, []);
     assert.equal(sourceChanged.status, 0, `${sourceChanged.stdout}${sourceChanged.stderr}`);
-    assert.match(sourceChanged.stdout, /CACHÉ \| 0 suites/);
+    assertNoCacheReuse(sourceChanged.stdout);
     assert.equal(spawnRunner(root, []).status, 0);
     mkdirSync(join(root, "catalogs"));
     writeFileSync(join(root, "catalogs", "fixture.json"), '{"valor":1}');
     const fixtureChanged = spawnRunner(root, []);
     assert.equal(fixtureChanged.status, 0, `${fixtureChanged.stdout}${fixtureChanged.stderr}`);
-    assert.match(fixtureChanged.stdout, /CACHÉ \| 0 suites/);
+    assertNoCacheReuse(fixtureChanged.stdout);
     assert.equal(spawnRunner(root, []).status, 0);
     const environmentChanged = spawnRunner(root, [], { EQUIPZILLA_TEST_CONTEXT: "otro" });
     assert.equal(environmentChanged.status, 0, `${environmentChanged.stdout}${environmentChanged.stderr}`);
-    assert.match(environmentChanged.stdout, /CACHÉ \| 0 suites/);
+    assertNoCacheReuse(environmentChanged.stdout);
   });
 });
 
@@ -370,7 +375,7 @@ test("caché corrupta y resultados fallidos nunca acreditan tests", () => {
     writeFileSync(join(root, "dist", ".test-results-cache.json"), "not valid JSON");
     const corrupted = spawnRunner(root, []);
     assert.equal(corrupted.status, 0, `${corrupted.stdout}${corrupted.stderr}`);
-    assert.match(corrupted.stdout, /CACHÉ \| 0 suites/);
+    assertNoCacheReuse(corrupted.stdout);
     const script = join(root, "scripts", "inspection", "tests", "prueba.test.mjs");
     writeFileSync(script, 'import test from "node:test"; test("falla", () => { throw new Error("fallo"); });\n');
     const failed = spawnRunner(root, []);
@@ -379,7 +384,7 @@ test("caché corrupta y resultados fallidos nunca acreditan tests", () => {
     writeFileSync(script, 'import test from "node:test"; test("prueba MJS", () => {});\n');
     const following = spawnRunner(root, []);
     assert.equal(following.status, 0, `${following.stdout}${following.stderr}`);
-    assert.match(following.stdout, /CACHÉ \| 0 suites/);
+    assertNoCacheReuse(following.stdout);
   });
 });
 
@@ -402,7 +407,7 @@ test("la caché automática abarca suites de preparación auditadas sin nuevos c
     addAuditedCatalogSuites(root);
     const first = spawnRunner(root, []);
     assert.equal(first.status, 0, `${first.stdout}${first.stderr}`);
-    assert.match(first.stdout, /CACHÉ \| 0 suites/);
+    assertNoCacheReuse(first.stdout);
     const second = spawnRunner(root, []);
     assert.equal(second.status, 0, `${second.stdout}${second.stderr}`);
     assert.match(second.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 2 suites ejecutadas/);
@@ -550,7 +555,7 @@ test("cambiar el ejecutor del runner invalida las suites cacheadas", () => {
     writeFileSync(module, `${readFileSync(module, "utf8")}\n`);
     const invalidated = spawnRunner(root, []);
     assert.equal(invalidated.status, 0, `${invalidated.stdout}${invalidated.stderr}`);
-    assert.match(invalidated.stdout, /CACHÉ \| 0 suites y 0 tests reutilizados/);
+    assertNoCacheReuse(invalidated.stdout);
     const warmedAgain = spawnRunner(root, []);
     assert.equal(warmedAgain.status, 0, `${warmedAgain.stdout}${warmedAgain.stderr}`);
     assert.match(warmedAgain.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados/);
@@ -558,7 +563,7 @@ test("cambiar el ejecutor del runner invalida las suites cacheadas", () => {
     writeFileSync(workerModule, `${readFileSync(workerModule, "utf8")}\n`);
     const workerChanged = spawnRunner(root, []);
     assert.equal(workerChanged.status, 0, `${workerChanged.stdout}${workerChanged.stderr}`);
-    assert.match(workerChanged.stdout, /CACHÉ \| 0 suites y 0 tests reutilizados/);
+    assertNoCacheReuse(workerChanged.stdout);
   });
 });
 
