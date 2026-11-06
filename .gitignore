@@ -11,6 +11,7 @@ dist/
 *.zip
 
 output/
+!src/scraping/output/
 out/
 *.report.json
 
