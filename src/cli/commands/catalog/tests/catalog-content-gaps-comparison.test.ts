@@ -3,6 +3,7 @@ import test from "node:test";
 import type { DescriptionCoverage } from "../../../../catalog/diagnostics/description-coverage.js";
 import type { DescriptionPriorities } from "../../../../catalog/diagnostics/description-priorities.js";
 import type { SpecificationCoverage } from "../../../../catalog/diagnostics/specification-coverage.js";
+import type { TechnicalDensity } from "../../../../catalog/diagnostics/technical-density.js";
 import { cleanupBaseline, execute, executeBaseline } from "./catalog-content-gaps-fixtures.js";
 import { hasCompleteCatalogAuditEvidence, hasUnresolvedCatalogAuditContracts } from "../../../../catalog/diagnostics/audit-closure.js";
 import { formatCatalogAuditClosureReport } from "../catalog-audit-closure-report.js";
@@ -53,7 +54,9 @@ test("huecos compara las publicaciones activas y acredita la cobertura de descri
   assert.equal(report.technicalDensity.totals.sparse, 3);
   assert.deepEqual(report.technicalDensity.cases.map((item) => `${item.providerId}:${item.reference}`),
     ["mercaeleva:M547-2372", "mercaeleva:M838-0666", "mercaeleva:M969-4655"]);
-  assert.equal(report.technicalDensity.totals.medium, 0);
+  assert.equal(report.technicalDensity.totals.medium, 2);
+  assert.deepEqual(report.technicalDensity.mediumCases.map((item) => `${item.providerId}:${item.reference}`),
+    ["gam:2737", "gam:6688"]);
   assert.equal(report.priorities.totals.appeared,
     report.priorities.pending.filter((item) => item.state === "aparecido").length);
   for (const stage of ["P0", "P1", "P2"] as const) {
@@ -86,12 +89,7 @@ type ComparisonReport = {
   readonly editorial: { readonly providers: readonly unknown[] };
   readonly editorialPrepared: { readonly providers: readonly unknown[] };
   readonly priorities: DescriptionPriorities;
-  readonly technicalDensity: {
-    readonly totals: { readonly products: number; readonly sparse: number; readonly medium: number };
-    readonly providers: readonly { readonly providerId: string; readonly products: number; readonly sparse: number; readonly medium: number; readonly median: number }[];
-    readonly cases: readonly { readonly providerId: string; readonly reference: string | null; readonly technicalCount: number; readonly priority: "alta" | "media" }[];
-    readonly mediumCases: readonly { readonly priority: "alta" | "media" }[];
-  };
+  readonly technicalDensity: TechnicalDensity;
   readonly coverage: DescriptionCoverage;
 };
 const isComparisonReport = (value: unknown): value is ComparisonReport => {

@@ -2,21 +2,28 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { resolve } from "node:path";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { resolveAccreditedPublication, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { prepareImportBatch } from "../../preparation/prepare.js";
 import { differenceBetween } from "../active-publication.js";
 import { evaluateIndividualPublicationDifference } from "../publication-acceptance.js";
 import { reconcileRemovedSpecifications } from "../specification-reconciliations.js";
 import { classifyQualityIssue } from "../../preparation/offline-diagnostics.js";
+import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
+import { accreditedReconciliationCases } from "../../testing/fixtures/gam/specification-reconciliations.js";
 
 const root = resolve(process.cwd());
 const source = await readCanonicalCatalog(resolve(root, "catalogs/providers/gam/original/scrape-gam-catalog.json"));
-const activeFile = await resolveAccreditedPublication(root, "gam");
-assert.ok(activeFile);
-const previous = (await readAccreditedPublication(activeFile)).products;
 const prepared = prepareImportBatch(source.products);
-const next = prepared.products.filter((item) => item.status === "ready").map((item) => item.product);
-const difference = differenceBetween(activeFile, "preparación sin acreditar", previous, next);
+const reconciliationProduct = (
+  item: (typeof accreditedReconciliationCases)[number], spec: ImportCandidate["spec"]
+): ImportCandidate => ({
+  providerId: "gam", sourceUrl: item.sourceUrl, reference: item.reference,
+  title: null, categorySellID: null, category: null, condition: null, price: null,
+  description_title: null, description: null, description_general: null,
+  image: null, images: [], spec, attributes: []
+});
+const previous = accreditedReconciliationCases.map((item) => reconciliationProduct(item, item.previousSpec));
+const next = accreditedReconciliationCases.map((item) => reconciliationProduct(item, item.nextSpec));
+const difference = differenceBetween("GAM anterior", "GAM corregida", previous, next);
 
 const migrationKeys = [
   "ref:6688:ALFA ROMEO", "ref:6689:AUDI", "ref:6690:PEUGEOUT", "ref:2218:Ancho promedio",
