@@ -4,6 +4,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../../reconciliation/gam-source-technical-units.js";
 import { includeGamRegenerativeBrakingInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-regenerative-braking-general.js";
 import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
 
@@ -37,7 +38,7 @@ const find = (reference: string): ProductRecord => {
   return record;
 };
 
-test("fase 92: 20 fichas GAM con descripciones individuales respaldadas por el origen", () => {
+test("20 fichas GAM con descripciones individuales respaldadas por el origen", () => {
   assert.equal(expected.size, 20);
   for (const [reference, hash] of expected) {
     const record = find(reference);
@@ -58,13 +59,13 @@ test("fase 92: 20 fichas GAM con descripciones individuales respaldadas por el o
     assert.ok(product.description_general.split(/\s+/u).length >= 65, reference);
     assert.ok(record.longDescription && product.description_general.length < record.longDescription.length, reference);
     assert.equal(JSON.stringify(record), original, reference);
-    for (const [key, value] of Object.entries(record.specs ?? {})) {
+    for (const [key, value] of Object.entries(reconcileGamSourceTechnicalUnits(record).specs ?? {})) {
       assert.equal(product.spec[key], value, `${reference}: ${key}`);
     }
   }
 });
 
-test("fase 92: impide reutilizar redacciones de otra identidad o fuente", () => {
+test("impide reutilizar redacciones de otra identidad o fuente", () => {
   for (const [reference, hash] of expected) {
     const record = find(reference);
     const variants: readonly ProductRecord[] = [

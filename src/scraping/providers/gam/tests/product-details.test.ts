@@ -109,7 +109,7 @@ test("GAM: descarta portadas de otros IDs GAM cuando el JSON-LD no incluye coinc
   assert.deepEqual(parseProductPage(mixed, base).images, [own]);
 });
 
-test("GAM: conserva URL alternativas del mismo ID y productos sin identidad comparable", () => {
+test("GAM: prioriza imágenes de la referencia propia frente a productos externos sin identidad comparable", () => {
   const own = "https://online.gamrentals.com/60451-product_main_2x/2007-jlg-e300ajp.jpg";
   const unknown = "https://online.gamrentals.com/60452-product_main_2x/2007-jlg-e300ajp.jpg";
   const foreign = "https://online.gamrentals.com/14287-product_main_2x/carretilla-elevadora-diesel-yale-gp80vx-9.jpg";
@@ -122,7 +122,7 @@ test("GAM: conserva URL alternativas del mismo ID y productos sin identidad comp
       { "@type": "Product", url: related, image: foreign }
     ]
   })}</script></head><body><h1>JLG E300AJP</h1></body></html>`;
-  assert.deepEqual(parseProductPage(html, base).images, [own, unknown]);
+  assert.deepEqual(parseProductPage(html, base).images, [own]);
 });
 
 test("GAM: conserva la galería JSON-LD sin identidad de página inequívoca", () => {

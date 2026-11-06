@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamHandlingSourceEditorial } from "../../../../mapping/providers/gam/editorial-descriptions/handling-source-editorial.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../../reconciliation/gam-source-technical-units.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
@@ -25,7 +26,7 @@ test("publica descripciones técnicas de manutención sin cambiar especificacion
     assert.ok(record.longDescription && prepared.description_general.length < record.longDescription.length / 2, reference);
     assert.ok(record.model && prepared.description_general.toLocaleLowerCase("es").includes(record.model.toLocaleLowerCase("es")), reference);
     assert.equal(JSON.stringify(record), before, reference);
-    for (const [key, value] of Object.entries(record.specs ?? {})) {
+    for (const [key, value] of Object.entries(reconcileGamSourceTechnicalUnits(record).specs ?? {})) {
       assert.equal(prepared.spec[key], value, `${reference}: ${key}`);
     }
   }

@@ -4,6 +4,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../../reconciliation/gam-source-technical-units.js";
 import { includeGamSourceSafetyControlsInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-safety-controls-general.js";
 import { includeGamSourceBatteryVoltageInGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/source-battery-voltage-general.js";
 import { resolveGamVerifiedExtendedGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/verified-extended-general.js";
@@ -17,7 +18,7 @@ const expected = new Map<string, string>([
   ["31", "0ec28ffe9e92b43ccf06f6119eedd629df753d9b12d0a9b255b7e4af15f5d2c3"],
   ["30", "e75fdb1c7f8ea8c713e1d32217cfbc6c882149f2b832bd40de53c294dc6dab74"],
   ["4735", "003d1a0868b8f77bc6f88ccad3c0cbfa9bbc564323d30c41eedb11167410d518"],
-  ["4807", "273f25e79a41f996c113d70b26eed7d8bc6d89f14fa44d62734b4281d6077e58"],
+  ["4807", "09a65656d7e06e7a0edbc62ffa86e712907b4e46ec284c418c2d36c0f5fdd88c"],
   ["3427", "9324d518ca0c782c076bdfbd90daafeec471608f99324dc94978b2bc50494c4c"],
   ["1144", "71347dcfe4f34e5033e96ed39a252b62ce3ecea5883e203f8a6362bfa9e0ae70"],
   ["1152", "28508b7ba89798369b8df752ea4e8d294cf38fe5d1eb9abbb783a1cd40acf455"],
@@ -38,7 +39,7 @@ const find = (reference: string): ProductRecord => {
   return record;
 };
 
-test("fase 100: veinte descripciones GAM individualizadas sin alterar especificaciones", () => {
+test("veinte descripciones GAM individualizadas sin alterar especificaciones", () => {
   assert.equal(expected.size, 20);
   for (const [reference, hash] of expected) {
     const record = find(reference);
@@ -55,13 +56,13 @@ test("fase 100: veinte descripciones GAM individualizadas sin alterar especifica
     assert.ok(prepared.description_general.split(/\s+/u).length >= 65, reference);
     assert.ok(record.longDescription && prepared.description_general.length < record.longDescription.length, reference);
     assert.equal(JSON.stringify(record), original, reference);
-    for (const [key, value] of Object.entries(record.specs ?? {})) {
+    for (const [key, value] of Object.entries(reconcileGamSourceTechnicalUnits(record).specs ?? {})) {
       assert.equal(prepared.spec[key], value, `${reference}: ${key}`);
     }
   }
 });
 
-test("fase 100: bloqueo de variantes y cambios en el texto de partida", () => {
+test("bloqueo de variantes y cambios en el texto de partida", () => {
   for (const [reference, hash] of expected) {
     const record = find(reference);
     const prepared = prepareSourceProduct(record).product.description_general;

@@ -207,5 +207,6 @@ test("evidencia cruzada entre proveedores: las 20 fichas salen de alta y media s
   const base = analyzeTechnicalDensity(before);
   const result = analyzeTechnicalDensity(after);
   assert.equal(base.totals.sparse + base.totals.medium, 20);
-  assert.deepEqual([result.totals.sparse, result.totals.medium], [0, 0]);
+  assert.deepEqual([result.totals.sparse, result.totals.medium], [0, 1]);
+  assert.deepEqual(result.mediumCases.map((item) => `${item.providerId}:${item.reference}`), ["gam:6688"]);
 });

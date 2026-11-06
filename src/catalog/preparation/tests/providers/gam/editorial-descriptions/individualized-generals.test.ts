@@ -1,4 +1,6 @@
 import { reconcileGamHorometer } from "../../../../reconciliation/gam-horometer.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../../reconciliation/gam-source-technical-units.js";
+import { reconcileGamVerifiedClassicVehicleIdentity } from "../../../../evidence/providers/gam/identity/used-classic-vehicle-identity.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
@@ -25,7 +27,7 @@ const find = (records: readonly ProductRecord[], reference: string): ProductReco
   return record;
 };
 
-test("Fase 8: diferencia 18 fichas con evidencias propias sin modificar los originales", () => {
+test("diferencia 18 fichas con evidencias propias sin modificar los originales", () => {
   const changed = new Set<string>();
   for (const [catalog, resolve] of [
     [gam, resolveGamIndividualizedGeneral],
@@ -53,7 +55,7 @@ test("Fase 8: diferencia 18 fichas con evidencias propias sin modificar los orig
         assert.equal(prepared.reference, record.reference);
         assert.deepEqual(prepared.spec, record.providerId === "gomariz" ?
           recoverGomarizDocumentedRenaultPremiumSpecs(record, { ...record.specs, ...(record.year ? { "Año de fabricación": record.year } : {}) }) :
-          recoverGamDocumentedMobilityAndAccessSpecs(record, reconcileGamHorometer(record).specs ?? {}));
+          recoverGamDocumentedMobilityAndAccessSpecs(record, reconcileGamVerifiedClassicVehicleIdentity(reconcileGamSourceTechnicalUnits(reconcileGamHorometer(record))).specs ?? {}));
       }
       assert.equal(JSON.stringify(record), before);
     }

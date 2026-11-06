@@ -4,6 +4,7 @@ import { readCanonicalCatalog } from "../../../../../../infrastructure/filesyste
 import { normalizeSpecsObject } from "../../../../../normalization/normalize-specs.js";
 import { recoverGamSourceRegenerativeBraking } from "../../../../evidence/providers/gam/mobility/source-regenerative-braking.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../../reconciliation/gam-source-technical-units.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const sourceOf = (reference: string) => {
@@ -19,7 +20,7 @@ test("recupera frenado regenerativo explícito de modelos identificados sin alte
     const prepared = prepareSourceProduct(source);
     assert.equal(prepared.product.spec["Frenado regenerativo"], true, reference);
     assert.equal(normalizeSpecsObject(prepared.product.spec).normalized["Frenado regenerativo"], true, reference);
-    for (const [key, value] of Object.entries(source.specs ?? {})) {
+    for (const [key, value] of Object.entries(reconcileGamSourceTechnicalUnits(source).specs ?? {})) {
       assert.deepEqual(prepared.product.spec[key], value, `${reference}: ${key}`);
     }
     assert.deepEqual(source, snapshot);

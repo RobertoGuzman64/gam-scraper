@@ -136,13 +136,11 @@ test("rechaza acreditación modificada y nombre de publicación irregular", asyn
   });
 });
 
-test("rechaza enlaces simbólicos a publicaciones antes de proponer el archivado", {
-  skip: process.platform === "win32" ? "Windows: la creación de enlaces simbólicos puede requerir privilegios especiales" : false
-}, async () => {
+test("rechaza enlaces simbólicos a publicaciones antes de proponer el archivado", async () => {
   await workspace(async ({ root }) => {
     const { publicationIds } = await rootFiles(root, 3);
     const folder = join(root, "catalogs/providers/gam/publications");
-    await symlink(join(folder, publicationIds[2]), join(folder, "f".repeat(12)), "dir");
+    await symlink(join(folder, publicationIds[2]), join(folder, "f".repeat(12)), process.platform === "win32" ? "junction" : "dir");
     await assert.rejects(planConsolidation(root), /Publicación sin clasificar/);
   });
 });

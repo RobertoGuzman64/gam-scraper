@@ -26,6 +26,7 @@ const withRunner = (action: (root: string) => void): void => {
     copyFileSync(join(projectRoot, "scripts", "test-performance.mjs"), join(root, "scripts", "test-performance.mjs"));
     copyFileSync(join(projectRoot, "scripts", "test-runner-observability.mjs"), join(root, "scripts", "test-runner-observability.mjs"));
     copyFileSync(join(projectRoot, "scripts", "test-runner-execution.mjs"), join(root, "scripts", "test-runner-execution.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "test-runner-completion.mjs"), join(root, "scripts", "test-runner-completion.mjs"));
     copyFileSync(join(projectRoot, "scripts", "test-runner-worker.mjs"), join(root, "scripts", "test-runner-worker.mjs"));
     copyFileSync(join(projectRoot, "scripts", "test-runner-ui.mjs"), join(root, "scripts", "test-runner-ui.mjs"));
     copyFileSync(join(projectRoot, "scripts", "test-result-cache.mjs"), join(root, "scripts", "test-result-cache.mjs"));
@@ -143,11 +144,11 @@ test("la consola conserva el motivo de omisión y termina en un resultado inequ�
     writeFileSync(join(root, "scripts", "inspection", "tests", "prueba.test.mjs"),
       'import test from "node:test"; test("omisión deliberada", { skip: "condición acreditada" }, () => {});\n');
     const result = spawnRunner(root, ["--concurrencia=2"]);
-    assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+    assert.equal(result.status, 1, `${result.stdout}${result.stderr}`);
     assert.match(result.stdout, /OMITIDOS \| 1/);
     assert.match(result.stdout, /omisión deliberada.*condición acreditada/);
     assert.match(result.stdout, /TIEMPOS \| Último informe.*Fin del runner.*Intervalo posterior/);
-    assert.match(result.stdout.trim().split("\n").at(-1) ?? "", /^PASS \| 2\/2 archivos \| 1 correctos \| 0 fallidos \| 1 omitidos/);
+    assert.match(result.stdout.trim().split("\n").at(-1) ?? "", /^FAIL \| 2\/2 archivos \| 1 correctos \| 0 fallidos \| 1 omitidos/);
   });
 });
 

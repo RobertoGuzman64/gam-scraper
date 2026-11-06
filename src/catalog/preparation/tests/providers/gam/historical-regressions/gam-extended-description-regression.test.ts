@@ -4,6 +4,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../../reconciliation/gam-source-technical-units.js";
 import { resolveGamVerifiedExtendedGeneral } from "../../../../mapping/providers/gam/editorial-descriptions/verified-extended-general.js";
 
 const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
@@ -36,7 +37,7 @@ const find = (reference: string): ProductRecord => {
   return record;
 };
 
-test("fase 98: veinte fichas GAM con redacción individual y sin pérdida de especificaciones", () => {
+test("veinte fichas GAM con redacción individual y sin pérdida de especificaciones", () => {
   assert.equal(expected.size, 20);
   for (const [reference, hash] of expected) {
     const record = find(reference);
@@ -47,13 +48,13 @@ test("fase 98: veinte fichas GAM con redacción individual y sin pérdida de esp
     assert.ok(prepared.description_general.split(/\s+/u).length >= 65, reference);
     assert.ok(record.longDescription && prepared.description_general.length < record.longDescription.length, reference);
     assert.equal(JSON.stringify(record), original, reference);
-    for (const [key, value] of Object.entries(record.specs ?? {})) {
+    for (const [key, value] of Object.entries(reconcileGamSourceTechnicalUnits(record).specs ?? {})) {
       assert.equal(prepared.spec[key], value, `${reference}: ${key}`);
     }
   }
 });
 
-test("fase 98: protección de identidad y procedencia de los veinte textos", () => {
+test("protección de identidad y procedencia de los veinte textos", () => {
   for (const [reference, hash] of expected) {
     const record = find(reference);
     const previous = prepareSourceProduct(record).product.description_general;
