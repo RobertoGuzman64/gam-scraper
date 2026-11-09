@@ -48,3 +48,26 @@ test("la vista breve no imprime casos ni observaciones familiares como obligacio
   assert.ok(lines.every((line) => !line.includes("gam:5")));
   assert.ok(lines.every((line) => !line.includes("observaciones familiares no obligatorias | 1")));
 });
+
+
+test("el resumen separa origen no utilizable, transformación acreditada y revisión real", () => {
+  const cases: SpecificationCoverage["cases"] = [
+    ...report.cases,
+    { identity: "gam:1", providerId: "gam", reference: "1", url: "https://example.com/1",
+      family: "maquinaria", origin: "original_canonico", key: "Horas (h)", stage: "reconciliacion_acreditada",
+      reconciliation: { originalValue: "NA horas", destinationKeys: [], classification: "origen_no_utilizable" } },
+    { identity: "gam:2", providerId: "gam", reference: "2", url: "https://example.com/2",
+      family: "maquinaria", origin: "original_canonico", key: "Capacidad de carga (kg)", stage: "reconciliacion_acreditada",
+      reconciliation: { originalValue: "5000 KG", destinationKeys: ["Capacidad de arrastre (kg)"],
+        classification: "transformacion_acreditada" } },
+    { identity: "gam:3", providerId: "gam", reference: "3", url: "https://example.com/3",
+      family: "maquinaria", origin: "original_canonico", key: "Altura (mm)", stage: "diferencia_origen_preparacion" }
+  ];
+  const changed: SpecificationCoverage = { ...report, cases,
+    totals: { ...report.totals, sourceNotPreserved: 1, accreditedReconciliations: 2 } };
+  const lines = formatSpecificationCoverageReport(changed, 20, true);
+  assert.match(lines[0] ?? "", /revisar 1.*reconciliaciones acreditadas 2.*origen no utilizable 1, transformación acreditada 1/);
+  assert.ok(lines.some((line) => line.includes("REVISAR | diferencia_origen_preparacion")));
+  assert.ok(lines.every((line) => !line.includes(" | 1 | Horas (h)")));
+  assert.ok(lines.every((line) => !line.includes(" | 2 | Capacidad de carga (kg)")));
+});

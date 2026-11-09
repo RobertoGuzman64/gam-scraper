@@ -6,8 +6,11 @@ const formatCase = (item: SpecificationCase, label: string): string =>
 export const formatSpecificationCoverageReport = (coverage: SpecificationCoverage, limit: number, detailed = false): readonly string[] => {
   const totals = coverage.totals;
   const { requiresReview, pendingActivation } = classifySpecificationWork(coverage);
+  const unusableSources = coverage.cases.filter((item) => item.stage === "reconciliacion_acreditada" &&
+    item.reconciliation?.classification === "origen_no_utilizable").length;
+  const verifiedTransformations = totals.accreditedReconciliations - unusableSources;
   const lines = [
-    `SPECS | revisar ${requiresReview.length} | pendientes de activar ${pendingActivation.length} | reconciliaciones acreditadas ${totals.accreditedReconciliations} | observaciones familiares no obligatorias ${totals.observationalMissing}`,
+    `SPECS | revisar ${requiresReview.length} | pendientes de activar ${pendingActivation.length} | reconciliaciones acreditadas ${totals.accreditedReconciliations} (origen no utilizable ${unusableSources}, transformación acreditada ${verifiedTransformations}) | observaciones familiares no obligatorias ${totals.observationalMissing}`,
     `SPECS | originales canónicos ${totals.canonicalOriginals} | fuentes reconstruidas ${totals.reconstructedSources} | diferencias origen/preparación ${totals.sourceNotPreserved} | pérdidas frente al final ${totals.lostAfterPublication} | normalizaciones ambiguas ${totals.ambiguousNormalization}`
   ];
   if (requiresReview.length === 0 && pendingActivation.length === 0) {

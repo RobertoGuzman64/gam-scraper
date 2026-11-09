@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { reconcileGamHorometer } from "../../../preparation/gam/technical/reconciliation/gam-horometer.js";
 import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 import type { DescriptionCoverageInput } from "../description-coverage.js";
 import { analyzeSpecificationCoverage } from "../specification-coverage.js";
@@ -86,4 +87,74 @@ test("las pérdidas y diferencias sin acreditación siguen apareciendo como ante
   assert.equal(report.totals.accreditedReconciliations, 0);
   assert.ok(report.cases.some((item) => item.stage === "diferencia_origen_preparacion" && item.key === "Clave no acreditada"));
   assert.ok(report.cases.some((item) => item.stage === "diferencia_origen_preparacion" && item.key === "Nº de serie"));
+});
+
+
+test("los 32 horómetros sin lectura útil se acreditan sin atribuirles otros destinos", () => {
+  const sources = gam.products.filter((source) => source.specs?.["Horómetro"] !== undefined &&
+    reconcileGamHorometer(source).specs?.["Horómetro"] === undefined);
+  assert.equal(sources.length, 32);
+  for (const source of sources) {
+    const before = JSON.stringify(source);
+    const report = audit(input(source));
+    const resolved = report.cases.find((item) => item.key === "Horas (h)" &&
+      item.stage === "reconciliacion_acreditada");
+    assert.ok(resolved, source.reference ?? "");
+    assert.deepEqual(resolved.reconciliation, {
+      originalValue: source.specs?.["Horómetro"], destinationKeys: [], classification: "origen_no_utilizable"
+    });
+    assert.equal(report.totals.sourceNotPreserved, 0, source.reference ?? "");
+    assert.equal(JSON.stringify(source), before);
+  }
+  const original = sourceRecord("6652");
+  const altered = { ...original, horometer: "450 horas" };
+  const invalidated = audit({ ...input(original), source: altered });
+  assert.equal(invalidated.totals.accreditedReconciliations, 0);
+  assert.equal(invalidated.totals.sourceNotPreserved, 1);
+});
+
+test("el arrastre y las claves de marcas se acreditan solo con la transformación verificada", () => {
+  const verified = [
+    ["2134", "Capacidad de carga (kg)", "5000 KG", ["Capacidad de arrastre (kg)"]],
+    ["2135", "Capacidad de carga (kg)", "7000 KG", ["Capacidad de arrastre (kg)"]],
+    ["6688", "ALFA ROMEO", "ALFA ROMEO", ["Marca", "Modelo"]],
+    ["6689", "AUDI", "AUDI", ["Marca", "Modelo"]],
+    ["6690", "PEUGEOUT", "PEUGEOUT", ["Marca"]]
+  ] as const;
+  for (const [reference, key, originalValue, destinationKeys] of verified) {
+    const source = sourceRecord(reference);
+    const before = JSON.stringify(source);
+    const report = audit(input(source));
+    const item = report.cases.find((candidate) => candidate.key === key &&
+      candidate.stage === "reconciliacion_acreditada");
+    assert.ok(item, reference);
+    assert.deepEqual(item.reconciliation, {
+      originalValue, destinationKeys, classification: "transformacion_acreditada"
+    }, reference);
+    assert.equal(JSON.stringify(source), before, reference);
+  }
+  const tractor = sourceRecord("2134");
+  const alteredTractor = { ...tractor, brand: "OTRA" };
+  assert.equal(audit({ ...input(tractor), source: alteredTractor }).cases.find((item) => item.key === "Capacidad de carga (kg)")?.stage,
+    "diferencia_origen_preparacion");
+  const vehicle = sourceRecord("6688");
+  const alteredVehicle = { ...vehicle, model: "IDENTIDAD DESCONOCIDA" };
+  assert.equal(audit({ ...input(vehicle), source: alteredVehicle }).cases.find((item) => item.key === "ALFA ROMEO")?.stage,
+    "diferencia_origen_preparacion");
+});
+
+test("las siete diferencias GAM sin evidencia suficiente permanecen pendientes", () => {
+  const remaining = [
+    ["2108", "Capacidad de la batería (Ah)"],
+    ["2109", "Capacidad de la batería (Ah)"],
+    ["1714", "Altura plataforma (mm)"],
+    ["920", "Capacidad de la batería (Ah)"],
+    ["2737", "Potencia (kW)"],
+    ["2573", "Potencia Motor (CV)"],
+    ["2218", "Ancho promedio (mm)"]
+  ] as const;
+  for (const [reference, key] of remaining) {
+    const report = audit(input(sourceRecord(reference)));
+    assert.equal(report.cases.find((item) => item.key === key)?.stage, "diferencia_origen_preparacion", reference);
+  }
 });

@@ -47,7 +47,9 @@ test("la auditoría comercial conserva informes, opciones y selección por ficha
   assert.ok(render("--contenido-revision").some((line) => line.includes("modelo-variante-titulo-contradictorio")));
   const coverage = report.providers.flatMap((provider) => provider.crossCoverageAudit.findings);
   assert.ok(coverage.some((item) => item.area === "imagenes" && item.reason === "imagen-de-otro-modelo"));
-  assert.ok(coverage.some((item) => item.area === "editorial" && item.reason === "general_repetida_entre_modelos"));
+  assert.ok(!coverage.some((item) => item.area === "editorial" &&
+    item.reason === "general_repetida_entre_modelos" &&
+    ["GR1679", "GR1680", "GR1681"].includes(item.reference ?? "")));
   assert.ok(render("--contenido-revision").some((line) => line.includes("Cobertura transversal:")));
   assert.ok(render("--contenido-revision").some((line) => line.includes("imagen-de-otro-modelo")));
   assert.ok(render("--revision").some((line) => line.includes("PRIORIDADES GAM")));

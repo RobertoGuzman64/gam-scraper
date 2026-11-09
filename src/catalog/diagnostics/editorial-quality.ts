@@ -104,6 +104,11 @@ const compare = (a: string, b: string): number => a < b ? -1 : a > b ? 1 : 0;
 const normalizeText = (text: string): string => text.normalize("NFKC").toLocaleLowerCase("es")
   .replace(/[^\p{L}\p{N}]+/gu, " ").trim().replace(/\s+/g, " ");
 const compact = (text: string): string => normalizeText(text).replace(/\s/g, "");
+const modelIdentity = (item: Entry): string => {
+  const title = item.title.text;
+  const suffix = item.reference ? ` · Ref. ${item.reference}` : "";
+  return normalizeText(item.model ?? (suffix && title.endsWith(suffix) ? title.slice(0, -suffix.length) : title));
+};
 const measure = (value: string | null | undefined): Measured => {
   const text = (value ?? "").replace(/\s+/g, " ").trim();
   return { text, words: text ? text.split(" ").length : 0, characters: [...text].length };
@@ -176,7 +181,7 @@ const analyze = (source: readonly Entry[]): EditorialAnalysis => {
     const key = JSON.stringify([item.providerId, item.categoryKey, normalizeText(item.long.text)]);
     const cluster = repeated.get(key) ?? { identities: [], models: new Set<string>() };
     cluster.identities.push(item.identity);
-    cluster.models.add(normalizeText(item.model ?? item.title.text));
+    cluster.models.add(modelIdentity(item));
     repeated.set(key, cluster);
   }
   const reused = new Set<string>();

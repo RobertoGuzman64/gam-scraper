@@ -83,6 +83,31 @@ test("marca textos generales repetidos solo si cruzan modelos distintos de un mi
   assert.ok(oneModel.patterns.every((item) => item.code !== "general_repetida_entre_modelos"));
 });
 
+test("no separa unidades del mismo modelo por el sufijo de referencia comercial", () => {
+  const shared = words(80);
+  const products = ["GR1679", "GR1680", "GR1681"].map((reference) => ({
+    ...entry(reference, { title: `Grupo electrógeno PRAMAC GPW45P · Ref. ${reference}`, long: shared }).prepared.product,
+    spec: {}
+  }));
+  const before = JSON.stringify(products);
+  const report = analyzePublishedEditorialQuality(products);
+  assert.equal(report.patterns.some((item) => item.code === "general_repetida_entre_modelos"), false);
+  assert.ok(products.every((product) => !codes(report, product.reference ?? "").includes("general_repetida_entre_modelos")));
+  assert.equal(JSON.stringify(products), before);
+});
+
+test("detecta generales repetidas entre títulos de modelos distintos aunque incluyan referencia", () => {
+  const shared = words(80);
+  const products = ["GPW45P", "GPW60P", "GPW90P"].map((model, index) => {
+    const reference = `GR${index + 1000}`;
+    return { ...entry(reference, { title: `Grupo electrógeno PRAMAC ${model} · Ref. ${reference}`, long: shared }).prepared.product,
+      spec: {} };
+  });
+  const report = analyzePublishedEditorialQuality(products);
+  assert.equal(report.patterns.find((item) => item.code === "general_repetida_entre_modelos")?.affected, 3);
+  assert.ok(products.every((product) => codes(report, product.reference ?? "").includes("general_repetida_entre_modelos")));
+});
+
 test("mantiene orden estable, trazabilidad y no altera originales ni preparaciones", () => {
   const first = entry("2", { short: words(8), long: words(810) });
   const records = [first, entry("1", { short: words(47), long: words(9) })];

@@ -157,7 +157,7 @@ export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverag
     compare(a.providerId, b.providerId) || compare(a.family, b.family) || compare(a.key, b.key));
   const count = (stage: Stage): number => cases.filter((item) => item.stage === stage).length;
   return {
-    note: "Cobertura observada, no atributos obligatorios. Las reconciliaciones acreditadas conservan la clave y el valor original en los casos, con las claves de destino verificadas mediante las reglas productivas; no se contabilizan como pérdidas. Las fuentes reconstruidas de publicaciones no acreditan recuperación desde un original independiente. Las claves equivalentes se agrupan sin transferir valores entre fichas.",
+    note: "Cobertura observada, no atributos obligatorios. Las reconciliaciones acreditadas distinguen valores originales no utilizables de transformaciones verificadas; conservan la clave y el valor original, y contrastan las claves de destino con la preparación. No se contabilizan como pérdidas. Las fuentes reconstruidas no acreditan recuperación desde un original independiente. Las claves equivalentes se agrupan sin transferir valores entre fichas.",
     criteria: { minimumFamily: MIN_FAMILY, minimumObserved: MIN_OBSERVED, minimumCoveragePercent: MIN_PERCENT },
     totals: { products: inputs.length, canonicalOriginals, reconstructedSources,
       pendingPublication: count("pendiente_publicacion"), sourceNotPreserved: count("diferencia_origen_preparacion"),

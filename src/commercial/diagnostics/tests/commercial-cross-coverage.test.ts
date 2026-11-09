@@ -77,6 +77,23 @@ test("no confunde cambios de categoría con regresiones editoriales", () => {
     "heredada");
 });
 
+test("no atribuye a la proyección repeticiones entre modelos causadas por referencias de unidad", () => {
+  const published = ["GR1679", "GR1680", "GR1681"].map((reference) => ({
+    ...product(reference), providerId: "gomariz", title: "Grupo electrógeno PRAMAC GPW45P",
+    description_title: "Grupo electrógeno PRAMAC GPW45P",
+    description_general: `Grupo electrógeno PRAMAC GPW45P con potencia estable y construcción industrial. ${Array.from({ length: 70 }, (_, index) => `dato${index}`).join(" ")} KG.`,
+    spec: {}
+  }));
+  const commercial = published.map((item) => ({ ...item,
+    title: `${item.title} · Ref. ${item.reference}`,
+    description_general: item.description_general?.replace(" KG.", " kg.") ?? null
+  }));
+  const snapshot = JSON.stringify({ published, commercial });
+  const report = analyzeCommercialCrossCoverage(published, commercial);
+  assert.equal(report.findings.some((item) => item.reason === "general_repetida_entre_modelos"), false);
+  assert.equal(JSON.stringify({ published, commercial }), snapshot);
+});
+
 test("requiere correspondencia técnica inequívoca y mantiene límite de muestras", () => {
   const original = product("50");
   assert.throws(() => analyzeCommercialCrossCoverage([original], [{ ...original, reference: "51" }]),
