@@ -35,7 +35,9 @@ for (const [reference, expected, original] of [
         definition.name === "Capacidad de carga"));
     assert.deepEqual(loadAttributes.map((item) => item.value), [expected]);
     assert.equal(prepared.product.spec["Capacidad máxima de elevación"], original);
-    assert.deepEqual(prepared.product.spec, record.specs);
+    const expectedSpecs = { ...record.specs };
+    delete expectedSpecs[reference === "M062-8951" ? "Distancia del centro de gravedad" : "Horas laborales"];
+    assert.deepEqual(prepared.product.spec, expectedSpecs);
     assert.equal(JSON.stringify(record), before);
   });
 

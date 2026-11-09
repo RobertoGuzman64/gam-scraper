@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { reconcileGamHorometer } from "../../../preparation/gam/technical/reconciliation/gam-horometer.js";
+import { reconcileGamSourceTechnicalUnits } from "../../../preparation/gam/technical/reconciliation/gam-source-technical-units.js";
 import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 import type { DescriptionCoverageInput } from "../description-coverage.js";
 import { analyzeSpecificationCoverage } from "../specification-coverage.js";
@@ -143,18 +144,192 @@ test("el arrastre y las claves de marcas se acreditan solo con la transformació
     "diferencia_origen_preparacion");
 });
 
-test("las siete diferencias GAM sin evidencia suficiente permanecen pendientes", () => {
-  const remaining = [
-    ["2108", "Capacidad de la batería (Ah)"],
-    ["2109", "Capacidad de la batería (Ah)"],
-    ["1714", "Altura plataforma (mm)"],
-    ["920", "Capacidad de la batería (Ah)"],
-    ["2737", "Potencia (kW)"],
-    ["2573", "Potencia Motor (CV)"],
-    ["2218", "Ancho promedio (mm)"]
+test("las siete diferencias GAM se acreditan con causa, valor original y destino real", () => {
+  const resolved = [
+    ["2108", "Capacidad de la batería (Ah)", "24V / 240h(V/Ah)", ["Voltaje batería (V)"]],
+    ["2109", "Capacidad de la batería (Ah)", "24V / 240h(V/Ah)", ["Voltaje batería (V)"]],
+    ["1714", "Altura plataforma (mm)", "4.8mm metros", []],
+    ["920", "Capacidad de la batería (Ah)", "24V / 240h(V/Ah)", ["Voltaje batería (V)"]],
+    ["2737", "Potencia (kW)", "36", []],
+    ["2573", "Potencia Motor (CV)", "48", []],
+    ["2218", "Ancho promedio (mm)", "24V / 735-875Ah(V/Ah)", ["Capacidad de la batería (Ah)", "Voltaje batería (V)"]]
   ] as const;
-  for (const [reference, key] of remaining) {
-    const report = audit(input(sourceRecord(reference)));
-    assert.equal(report.cases.find((item) => item.key === key)?.stage, "diferencia_origen_preparacion", reference);
+  for (const [reference, key, value, destinations] of resolved) {
+    const source = sourceRecord(reference);
+    const snapshot = structuredClone(source);
+    const result = audit(input(source));
+    const item = result.cases.find((candidate) => candidate.key === key);
+    assert.equal(item?.stage, "reconciliacion_acreditada", reference);
+    assert.deepEqual(item.reconciliation, {
+      originalValue: value, destinationKeys: [...destinations],
+      classification: destinations.length === 0 ? "origen_no_utilizable" : "transformacion_acreditada"
+    }, reference);
+    assert.equal(result.totals.sourceNotPreserved, 0, reference);
+    assert.equal(result.totals.lostAfterPublication, 0, reference);
+    assert.deepEqual(source, snapshot, reference);
   }
+});
+
+test("las siete acreditaciones no disimulan cambios del origen ni diferencias de publicación", () => {
+  const cases = [
+    ["2108", "Capacidad de la batería", "Capacidad de la batería (Ah)"],
+    ["2109", "Capacidad de la batería", "Capacidad de la batería (Ah)"],
+    ["1714", "Altura Plataforma", "Altura plataforma (mm)"],
+    ["920", "Capacidad de la batería", "Capacidad de la batería (Ah)"],
+    ["2737", "Potencia Motor (KW)", "Potencia (kW)"],
+    ["2573", "Potencia Motor (CV)", "Potencia Motor (CV)"],
+    ["2218", "Ancho promedio", "Ancho promedio (mm)"]
+  ] as const;
+  for (const [reference, sourceKey, auditedKey] of cases) {
+    const original = input(sourceRecord(reference));
+    const modifiedSource = { ...original.source, specs: { ...original.source.specs, [sourceKey]: "valor no acreditado" } };
+    const changed = audit({ ...original, source: modifiedSource });
+    assert.equal(changed.cases.find((item) => item.key === auditedKey)?.stage,
+      "diferencia_origen_preparacion", reference);
+    assert.equal(changed.totals.accreditedReconciliations, 0, reference);
+    assert.equal(audit({ ...original, origin: "reconstruccion_publicada" }).totals.accreditedReconciliations, 0, reference);
+  }
+  for (const reference of ["2108", "2109", "920", "2218"]) {
+    const original = input(sourceRecord(reference));
+    const changed = audit({ ...original, prepared: { ...original.prepared, product: {
+      ...original.prepared.product, spec: { ...original.prepared.product.spec, "Voltaje batería (V)": "999 V" }
+    } } });
+    assert.equal(changed.totals.accreditedReconciliations, 0, reference);
+    assert.ok(changed.totals.sourceNotPreserved > 0, reference);
+  }
+  for (const reference of ["1714", "2737", "2573", "2218"]) {
+    const original = input(sourceRecord(reference));
+    const changed = audit({ ...original, source: { ...original.source, title: "Identidad distinta" } });
+    assert.equal(changed.totals.accreditedReconciliations, 0, reference);
+    assert.ok(changed.totals.sourceNotPreserved > 0, reference);
+  }
+});
+
+test("los campos Yale cruzados quedan reconciliados con origen y destinos acreditados", () => {
+  const cases = [
+    ...["2242", "2243", "2244", "2245", "2246", "2247"].map((reference) => ({
+      reference, keys: ["Altura plataforma (mm)", "Capacidad de la batería (Ah)"],
+      destinations: ["Batería (V / Ah)"]
+    })),
+    ...["2300", "2301"].map((reference) => ({
+      reference, keys: ["Capacidad de la batería (Ah)", "Centro de carga (mm)", "Radio de giro (mm)"],
+      destinations: ["Altura de elevación (mm)", "Batería (V / Ah)", "Peso (kg)"]
+    }))
+  ];
+  for (const { reference, keys, destinations } of cases) {
+    const original = sourceRecord(reference);
+    const sourceSnapshot = structuredClone(original);
+    const report = audit(input(original));
+    assert.equal(report.totals.accreditedReconciliations, keys.length, reference);
+    assert.equal(report.totals.sourceNotPreserved, 0, reference);
+    assert.equal(report.totals.lostAfterPublication, 0, reference);
+    for (const key of keys) {
+      const item = report.cases.find((candidate) => candidate.key === key);
+      assert.equal(item?.stage, "reconciliacion_acreditada", `${reference}: ${key}`);
+      assert.deepEqual(item.reconciliation?.destinationKeys, destinations, `${reference}: ${key}`);
+      assert.equal(item.reconciliation?.classification, "transformacion_acreditada", reference);
+    }
+    assert.deepEqual(original, sourceSnapshot, reference);
+  }
+});
+
+test("las reconciliaciones Yale rechazan fuentes y preparaciones modificadas", () => {
+  for (const reference of ["2242", "2246", "2300", "2301"]) {
+    const original = input(sourceRecord(reference));
+    const invalidSources: ProductRecord[] = [
+      { ...original.source, reference: "9999" },
+      { ...original.source, model: "MODELO NO ACREDITADO" },
+      { ...original.source, specs: { ...original.source.specs, "Capacidad de la batería": "9999" } }
+    ];
+    for (const source of invalidSources) {
+      const changed = audit({ ...original, source, prepared: { ...original.prepared, product: {
+        ...original.prepared.product, reference: source.reference
+      } }, published: { ...original.published, reference: source.reference } });
+      assert.equal(changed.totals.accreditedReconciliations, 0, reference);
+      assert.ok(changed.totals.sourceNotPreserved > 0, reference);
+    }
+    const prepared = { ...original.prepared, product: { ...original.prepared.product, spec: {
+      ...original.prepared.product.spec, "Batería (V / Ah)": "otra configuración"
+    } } };
+    const changed = audit({ ...original, prepared });
+    assert.equal(changed.totals.accreditedReconciliations, 0, reference);
+    assert.ok(changed.totals.sourceNotPreserved > 0, reference);
+  }
+});
+
+test("acredita el descarte de errores de hoja de cálculo sin ocultar discrepancias distintas", () => {
+  const original = sourceRecord("2130");
+  const snapshot = structuredClone(original);
+  const initial = input(original);
+  const report = audit(initial);
+  assert.equal(report.totals.sourceNotPreserved, 0);
+  assert.equal(report.totals.accreditedReconciliations, 1);
+  const resolved = report.cases.find((item) => item.stage === "reconciliacion_acreditada" &&
+    item.key === "Altura de elevación (mm)");
+  assert.deepEqual(resolved?.reconciliation, {
+    originalValue: "#VALUE! mm", destinationKeys: [], classification: "origen_no_utilizable"
+  });
+  const altered = { ...original, specs: { ...original.specs, "Altura de elevación (mm)": "#REF! mm" } };
+  const invalidated = audit({ ...initial, source: altered });
+  assert.equal(invalidated.totals.accreditedReconciliations, 0);
+  assert.equal(invalidated.totals.sourceNotPreserved, 1);
+  const reconstructed = audit({ ...initial, origin: "reconstruccion_publicada" });
+  assert.equal(reconstructed.totals.accreditedReconciliations, 0);
+  assert.deepEqual(original, snapshot);
+});
+
+
+test("los centinelas Mercaeleva se acreditan como origen no utilizable sin ocultar pérdidas", () => {
+  for (const [reference, key, originalValue] of [
+    ["M062-8951", "Distancia del centro de gravedad", "−1 mm"],
+    ["M119-9334", "Horas laborales", "−1 h"]
+  ] as const) {
+    const source = sourceRecord(reference);
+    const snapshot = structuredClone(source);
+    const initial = input(source);
+    const report = audit(initial);
+    const resolved = report.cases.find((item) => item.key === key);
+    assert.equal(report.totals.accreditedReconciliations, 1, reference);
+    assert.equal(report.totals.sourceNotPreserved, 0, reference);
+    assert.equal(report.totals.lostAfterPublication, 0, reference);
+    assert.equal(resolved?.stage, "reconciliacion_acreditada", reference);
+    assert.deepEqual(resolved?.reconciliation, {
+      originalValue, destinationKeys: [], classification: "origen_no_utilizable"
+    });
+    const changed = { ...source, specs: { ...source.specs, [key]: "12 mm" } };
+    const invalidated = audit({ ...initial, source: changed });
+    assert.equal(invalidated.totals.accreditedReconciliations, 0, reference);
+    assert.equal(invalidated.totals.sourceNotPreserved, 1, reference);
+    const reconstructed = audit({ ...initial, origin: "reconstruccion_publicada" });
+    assert.equal(reconstructed.totals.accreditedReconciliations, 0, reference);
+    assert.deepEqual(source, snapshot);
+  }
+});
+
+
+test("la batería desplazada exige identidad eléctrica para poder reconciliarse", () => {
+  for (const reference of ["2218", "2219"]) {
+    const original = sourceRecord(reference);
+    const snapshot = structuredClone(original);
+    const normalized = reconcileGamSourceTechnicalUnits(original);
+    assert.equal(normalized.specs?.["Ancho promedio"], undefined, reference);
+    assert.equal(normalized.specs?.["Voltaje batería (V)"], "24 V", reference);
+    const changedIdentity = { ...original, title: "Máquina distinta" };
+    assert.equal(reconcileGamSourceTechnicalUnits(changedIdentity), changedIdentity, reference);
+    const changedUrl = { ...original, url: `${original.url}?otra=1` };
+    assert.equal(reconcileGamSourceTechnicalUnits(changedUrl), changedUrl, reference);
+    assert.deepEqual(original, snapshot, reference);
+  }
+});
+
+
+test("la acreditación previa de Yale ERP15VC conserva su requisito de batería corroborada", () => {
+  const original = input(sourceRecord("2219"));
+  const altered = { ...original.source, longDescription: (original.source.longDescription ?? "")
+    .replace(/bater[ií]a de 24\s*V/iu, "batería sin voltaje confirmado") };
+  assert.notEqual(altered.longDescription, original.source.longDescription);
+  const report = audit({ ...original, source: altered });
+  assert.equal(report.totals.accreditedReconciliations, 0);
+  assert.equal(report.cases.find((item) => item.key === "Ancho promedio (mm)")?.stage,
+    "diferencia_origen_preparacion");
 });

@@ -77,6 +77,13 @@ const imageVariantDisagreements = (product: ImportCandidate): readonly Presentat
   return issues;
 };
 
+const ownerModelIsUnresolved = (owner: ImportCandidate, product: ImportCandidate): boolean => {
+  const model = product.spec.Modelo;
+  return typeof model === "string" &&
+    imageVariantDisagreements(owner).includes("modelo-titulo-spec-discordante") &&
+    modelTokens(owner.title ?? "").some((token) => normalized(token) === normalized(model));
+};
+
 const lacksCapacityContext = (product: ImportCandidate): boolean => {
   const capacity = String(product.spec["Capacidad de carga (kg)"] ?? "");
   const description = `${product.description ?? ""} ${product.description_general ?? ""}`;
@@ -120,7 +127,8 @@ export const analyzePresentationConsistency = (
         owner.sourceUrl !== product.sourceUrl && owner.spec.Marca !== undefined &&
         normalized(String(owner.spec.Marca)) === normalized(String(product.spec.Marca ?? "")) &&
         owner.spec.Modelo !== undefined && product.spec.Modelo !== undefined &&
-        normalized(String(owner.spec.Modelo)) !== normalized(String(product.spec.Modelo)))) continue;
+        normalized(String(owner.spec.Modelo)) !== normalized(String(product.spec.Modelo)) &&
+        !ownerModelIsUnresolved(owner, product))) continue;
       add(product, "images", "imagen-de-otro-modelo", "revisar");
       break;
     }

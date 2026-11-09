@@ -3,6 +3,8 @@ import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 import { resolveAttribute } from "../../shared/classification/mapping/attribute-mapping.js";
 import { SOURCE_TECHNICAL_FIELDS } from "../../shared/technical/source/technical-fields.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { recoverGamCrossedTechnicalSpecs } from "./crossed-specifications.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 
 const attribute = (name: string) => {
@@ -84,5 +86,69 @@ test("GAM: los valores incompatibles o las rutas ajenas no se omiten por aparien
   ];
   for (const product of cases) {
     assert.deepEqual(resolveAttribute(product, attribute("Altura de plataforma")), { status: "invalid", value: null });
+  }
+});
+
+const canonicalGam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const canonicalRecord = (reference: string): ProductRecord => {
+  const source = canonicalGam.products.find((item) => item.reference === reference);
+  assert.ok(source, reference);
+  return source;
+};
+
+test("GAM: las transpaletas Yale acreditadas recuperan batería sin duplicar el peso ni inventar altura", () => {
+  for (const reference of ["2242", "2243", "2244", "2245", "2246", "2247"]) {
+    const source = canonicalRecord(reference);
+    const original = structuredClone(source);
+    const recovered = recoverGamCrossedTechnicalSpecs(source);
+    const prepared = prepareSourceProduct(source).product.spec;
+    assert.equal(prepared["Batería (V / Ah)"], recovered["Batería (V / Ah)"], reference);
+    assert.equal(prepared["Peso"], source.specs?.["Peso"], reference);
+    assert.equal(prepared["Altura Plataforma"], undefined, reference);
+    assert.equal(prepared["Capacidad de la batería"], undefined, reference);
+    assert.equal(prepared["Capacidad de carga (kg)"], source.specs?.["Capacidad de carga (kg)"], reference);
+    assert.deepEqual(recoverGamCrossedTechnicalSpecs({ ...source, specs: recovered }), recovered, reference);
+    assert.deepEqual(source, original, reference);
+  }
+  assert.equal(prepareSourceProduct(canonicalRecord("2246")).product.spec["Batería (V / Ah)"], "24 V / 465 Ah");
+  assert.equal(prepareSourceProduct(canonicalRecord("2242")).product.spec["Batería (V / Ah)"],
+    "24V / 150-375Ah | Li-ion 24V / 50-100Ah(V/Ah)");
+});
+
+test("GAM: los apiladores Yale acreditados recuperan únicamente las tres magnitudes trasladadas", () => {
+  for (const [reference, weight] of [["2300", "2280"], ["2301", "2360"]] as const) {
+    const source = canonicalRecord(reference);
+    const original = structuredClone(source);
+    const recovered = recoverGamCrossedTechnicalSpecs(source);
+    const prepared = prepareSourceProduct(source).product.spec;
+    assert.equal(prepared["Altura de elevación (mm)"], "5076 mm", reference);
+    assert.equal(prepared["Peso"], `${weight} kg`, reference);
+    assert.equal(prepared["Batería (V / Ah)"], "24 V / 400 Ah", reference);
+    for (const key of ["Centro de carga", "Radio de giro", "Capacidad de la batería"]) {
+      assert.equal(prepared[key], undefined, `${reference}: ${key}`);
+    }
+    assert.equal(prepared["Capacidad de carga (kg)"], source.specs?.["Capacidad de carga (kg)"], reference);
+    assert.deepEqual(recoverGamCrossedTechnicalSpecs({ ...source, specs: recovered }), recovered, reference);
+    assert.deepEqual(source, original, reference);
+  }
+});
+
+test("GAM: no se altera un cruce sin identificación y correspondencia de valores suficiente", () => {
+  const stacker = canonicalRecord("2300");
+  const pallet = canonicalRecord("2246");
+  const unrelated = ["2241", "2248", "2249", "2250", "72", "73"];
+  const altered: ProductRecord[] = [
+    { ...stacker, reference: "2302" },
+    { ...stacker, url: `${stacker.url}?variante=otra` },
+    { ...stacker, model: "MC10 (pedestrian)" },
+    { ...stacker, specs: { ...stacker.specs, "Centro de carga": "6000 mm" } },
+    { ...stacker, specs: { ...stacker.specs, "Batería (V / Ah)": "24 V / 500 Ah" } },
+    { ...pallet, reference: "2245" },
+    { ...pallet, model: "MP25T" },
+    { ...pallet, specs: { ...pallet.specs, "Peso": "999 KG" } },
+    { ...pallet, specs: { ...pallet.specs, "Batería (V / Ah)": "24 V / 465 Ah" } }
+  ];
+  for (const candidate of [...unrelated.map(canonicalRecord), ...altered]) {
+    assert.deepEqual(recoverGamCrossedTechnicalSpecs(candidate), candidate.specs ?? {}, candidate.reference ?? "sin referencia");
   }
 });

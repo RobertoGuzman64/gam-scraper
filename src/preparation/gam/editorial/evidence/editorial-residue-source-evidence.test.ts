@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { removeGamResidualEditorialArtifacts } from "../general/long-description.js";
+import { removeGamResidualEditorialArtifacts, removeGamVehicleListingMarkers } from "../general/long-description.js";
 import { removeGomarizConversationalLead } from "../../../gomariz/editorial/mapping/unit-specific-general.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { verifiedCanonicalBriefEditorial } from "../../../shared/editorial/evidence/verified-canonical-brief-editorial.js";
@@ -116,5 +116,50 @@ test("conserva respuestas válidas asociadas a preguntas explícitas", () => {
       assert.match(general, /(?:48V \/ 625Ah|48 V y 625 Ah)/u);
       assert.doesNotMatch(general, /\?\s+(?:Sí|No)\./u);
     }
+  }
+});
+
+const vehicleReferences = ["5254", "6688", "6690"] as const;
+
+test("GAM: normaliza los separadores de anuncios de vehículos conservando su contenido", () => {
+  for (const reference of vehicleReferences) {
+    const record = find(gam.products, reference);
+    const original = JSON.stringify(record);
+    const normalized = removeGamVehicleListingMarkers(record, record.longDescription);
+    assert.ok(normalized, reference);
+    assert.doesNotMatch(normalized, /✔️|\? Vehículo en|Rodar \? Ponemos/u, reference);
+    assert.match(normalized, /Mantenimiento al día\. Revisión recién pasada\. Estado impecable de motor, interiores y carrocería\./u, reference);
+    assert.match(normalized, /Ideal para quien busca un vehículo fiable/u, reference);
+    assert.match(normalized, /¡Ven a verlo y pruébalo sin compromiso!/u, reference);
+    const prepared = prepareSourceProduct(record).product;
+    assert.ok(prepared.description_general);
+    assert.ok(prepared.description_general.includes(normalized), reference);
+    assert.deepEqual(prepared.spec, prepareSourceProduct({ ...record }).product.spec, reference);
+    assert.equal(JSON.stringify(record), original, reference);
+    assert.equal(removeGamVehicleListingMarkers(record, normalized), null, reference);
+  }
+});
+
+test("GAM: rechaza cambios de identidad y fuente al limpiar anuncios de vehículos", () => {
+  const record = find(gam.products, "6688");
+  const original = record.longDescription;
+  assert.ok(original);
+  const variants: readonly ProductRecord[] = [
+    { ...record, providerId: "mercaeleva" },
+    { ...record, categoryKey: "carretillas-nuevas" },
+    { ...record, condition: "Nuevo" },
+    { ...record, reference: "OTRO" },
+    { ...record, url: record.url.replace("6688-", "6689-") },
+    { ...record, url: `${record.url}?variant=other` },
+    { ...record, url: `${record.url}#gallery` },
+    { ...record, url: record.url.replace("online.gamrentals.com", "example.com") },
+    { ...record, longDescription: original.replace("Ponemos a la venta este coche", "Ponemos a la venta una máquina") },
+    { ...record, longDescription: original.replace("✔️ Revisión recién pasada", "Revisión recién pasada") }
+  ];
+  for (const candidate of variants) {
+    assert.equal(removeGamVehicleListingMarkers(candidate, original), null);
+  }
+  for (const item of gomariz.products) {
+    assert.equal(removeGamVehicleListingMarkers(item, item.longDescription), null, item.reference ?? "sin referencia");
   }
 });

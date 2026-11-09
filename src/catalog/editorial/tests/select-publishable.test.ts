@@ -61,7 +61,7 @@ test("las contradicciones siguen en review y los valores no representables conse
   assert.ok(contradictions);
   assert.ok(contradictions.issues.includes("Atributo contradictorio: Altura de elevación"));
   const nonNumeric = gam.products.find((item) => item.product.reference === "2130");
-  assert.equal(nonNumeric?.product.spec["Altura de elevación (mm)"], "#VALUE! mm");
+  assert.equal(nonNumeric?.product.spec["Altura de elevación (mm)"], undefined);
   assert.equal(approved.select().totals.excluded, approved.approval.exclusions.length);
 });
 

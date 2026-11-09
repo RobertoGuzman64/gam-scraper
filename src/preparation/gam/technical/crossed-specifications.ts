@@ -1,4 +1,4 @@
-import type { ProductRecord } from "../../../contracts/catalog.js";
+import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 import type { Attribute, Candidate } from "../../shared/classification/mapping/attribute-types.js";
 import { fold } from "../../shared/classification/mapping/attribute-utils.js";
 
@@ -62,6 +62,38 @@ export const gamPalletBatteryForCrossedSpecs = (record: ProductRecord): string |
   const duplicatedWeight = typeof capacity === "string" && typeof weight === "string" &&
     /^[1-9]\d{2,4}$/.test(capacity) && weight.toUpperCase() === `${capacity} KG`;
   return capacity === undefined || duplicatedWeight ? battery : null;
+};
+
+const matchesSourceReference = (record: ProductRecord): boolean => {
+  if (!record.reference) return false;
+  try {
+    const url = new URL(record.url);
+    const parts = url.pathname.split("/").filter(Boolean);
+    return url.hostname === "online.gamrentals.com" && !url.search && !url.hash &&
+      parts.length === 3 && parts[0] === "es" && parts[2]?.startsWith(`${record.reference}-`) === true;
+  } catch {
+    return false;
+  }
+};
+
+export const recoverGamCrossedTechnicalSpecs = (record: ProductRecord): SpecsMap => {
+  const source = record.specs ?? {};
+  if (!matchesSourceReference(record)) return source;
+  const stacker = gamMislabelledStacker(record);
+  if (stacker !== null) {
+    const { "Centro de carga": _center, "Radio de giro": _turning, "Capacidad de la batería": _capacity, ...remaining } = source;
+    return {
+      ...remaining,
+      "Altura de elevación (mm)": `${stacker.height} mm`,
+      Peso: `${stacker.weight} kg`,
+      "Batería (V / Ah)": stacker.battery
+    };
+  }
+  if (source["Batería (V / Ah)"] !== undefined) return source;
+  const battery = gamPalletBatteryForCrossedSpecs(record);
+  if (battery === null) return source;
+  const { "Altura Plataforma": _height, "Capacidad de la batería": _capacity, ...remaining } = source;
+  return { ...remaining, "Batería (V / Ah)": gamCrossedBatteryValue(battery) ?? battery };
 };
 
 export const applyGamCrossedSpecifications = (

@@ -58,7 +58,9 @@ test("Mercaeleva: distingue los modelos investigados y usa capacidades ya verifi
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.product.description, generated.short);
     assert.ok(!prepared.issues.some((issue) => issue.includes("Capacidad contradictoria")));
-    assert.deepEqual(prepared.product.spec, recoverMercaelevaSourceFuel(record, record.specs ?? {}));
+    const expected = { ...recoverMercaelevaSourceFuel(record, record.specs ?? {}) };
+    delete expected[reference === "M062-8951" ? "Distancia del centro de gravedad" : "Horas laborales"];
+    assert.deepEqual(prepared.product.spec, expected);
   }
 });
 

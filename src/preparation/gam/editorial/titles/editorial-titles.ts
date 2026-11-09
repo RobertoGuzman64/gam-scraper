@@ -57,3 +57,34 @@ export const reconcileGamOutdatedSourceTitle = (record: ProductRecord): ProductR
   const corrected = fromScrubber(record, section) ?? fromForklift(record, section);
   return corrected ? { ...record, title: corrected } : record;
 };
+
+
+export const reconcileGamVerifiedCapacityTitle = (
+  source: ProductRecord, preparedTitle: string | null
+): string | null => {
+  if (source.providerId !== "gam" || !source.reference || !source.brand || !source.model ||
+    !source.title || preparedTitle !== source.title ||
+    source.specs?.Marca !== source.brand || source.specs?.Modelo !== source.model) return preparedTitle;
+
+  if (source.reference === "1145" && source.categoryKey === "marcas-nuevas" &&
+    source.condition === "Nuevo" && source.brand === "YALE" && source.model === "MPC14" &&
+    source.url === "https://online.gamrentals.com/es/transpaletas-yale/1145-transporte-facil-de-cargas-de-hasta-14-toneladas-yale-mpc14" &&
+    source.title === "Transpaleta YALE MPC14 2000Kg" &&
+    source.shortDescription?.includes("Transporte fácil de cargas de hasta 1,4 toneladas") &&
+    source.specs?.["Capacidad de carga (kg)"] === "1400 KG") {
+    return "Transpaleta YALE MPC14 1400Kg";
+  }
+
+  if (source.reference === "6514" && source.categoryKey === "manutencion" &&
+    source.condition === "Segunda mano" && source.brand === "HYSTER" && source.model === "H1.8FT" &&
+    source.url === "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6514-2018-hyster-h18ft" &&
+    source.title === "Carretilla elevadora GLP 1600 Kg HYSTER H1.8FT" &&
+    source.specs?.["Nº de serie"] === "G001B03076S" &&
+    source.specs?.["Capacidad de carga (kg)"] === "1800 KG" &&
+    source.shortDescription?.includes("carretilla frontal GLP de 1800 kg") &&
+    source.longDescription?.includes("capacidad de carga de 1800 kg")) {
+    return "Carretilla elevadora GLP 1800 Kg HYSTER H1.8FT";
+  }
+
+  return preparedTitle;
+};

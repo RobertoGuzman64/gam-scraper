@@ -13,6 +13,7 @@ import { recoverGamVerifiedTowingSpecs } from "./mobility/towing-evidence.js";
 import { recoverGamStatedTwinTractionPower } from "./energy/motor-configuration-evidence.js";
 import { recoverGamVerifiedMobilityBatteryType } from "./energy/battery-chemistry-evidence.js";
 import { recoverGamMislabelledBatterySpec } from "./energy/source-battery-label-evidence.js";
+import { recoverGamCrossedTechnicalSpecs } from "./crossed-specifications.js";
 import { recoverGamVerifiedVariantAcoustics } from "../identity/evidence/variant-acoustics-evidence.js";
 import { recoverGamVerifiedTyreDimensions } from "./mobility/verified-tyre-dimensions-evidence.js";
 import { recoverGamVerifiedConditionalAcoustics } from "./safety/verified-conditional-acoustics-evidence.js";
@@ -108,5 +109,5 @@ export const recoverBaseTechnicalSpecs = (record: ProductRecord, sourceUnitRecor
   const sourceSafetySpecs = recoverGamSourceSafetyControls(sourceUnitRecord, sourceDieselSpecs);
   const sourceStabilizationSpecs = recoverGamSourceStabilization(sourceUnitRecord, sourceSafetySpecs);
   const sourceYearSpecs = recoverGomarizSourceYearSpec(record, sourceStabilizationSpecs);
-  return sourceYearSpecs;
+  return recoverGamCrossedTechnicalSpecs({ ...record, specs: sourceYearSpecs });
 };

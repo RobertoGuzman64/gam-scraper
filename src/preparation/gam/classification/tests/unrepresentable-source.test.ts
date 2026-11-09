@@ -59,7 +59,8 @@ test("NA, error de hoja y configuraciones alternativas no fingen horas, altura o
     const prepared = prepareProduct(record, catalog);
     assert.deepEqual(resolved(record, name), { status: "not_observed", value: null }, `${id}:${name}`);
     assert.equal(prepared.status, "ready", id);
-    assert.equal(prepared.product.spec[sourceKey], reconcileGamHorometer(record).specs?.[sourceKey]);
+    assert.equal(prepared.product.spec[sourceKey], id === "2130" ? undefined : reconcileGamHorometer(record).specs?.[sourceKey]);
+    if (id === "2130") assert.equal(record.specs?.[sourceKey], "#VALUE! mm");
     assert.equal(prepared.product.attributes.some((item) => item.attributeID === attribute(name).id), false);
   }
 });

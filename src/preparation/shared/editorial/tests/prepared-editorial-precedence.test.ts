@@ -24,7 +24,7 @@ const find = (provider: typeof providers[number], reference: string): ProductRec
 
 test("conserva exactamente las cinco salidas editoriales de los 1.347 originales", () => {
   const expected = {
-    gam: { count: 983, sha: "d638e579af604036e72b19f88fa505f5b0a35cd075718b1d460564cb89fe1779" },
+    gam: { count: 983, sha: "9d9429c7b3dd9aa6256edb3b270fa7eb2acaf7c5b441afa4df85836125cb925a" },
     gomariz: { count: 143, sha: "fa10b439a506f6a27af3043c1162f108f167efc9551359b44d156c80569d722c" },
     mercaeleva: { count: 221, sha: "656e2d22e0deb8af302da8e7ac3bf55335c0c3197f7e444ba0e3b72492dda698" }
   };
@@ -51,7 +51,7 @@ test("conserva estados, incidencias, identidad, textos, condición y campos de p
   const expected = {
     gam: "2e4903a054cadc3429bb04de9f1b25b8dbbb0203f6905ee5a55c87f65dc661b0",
     gomariz: "295b6b4e51882a49a37c097b6a2e09220ae6b8a6e9b6a6727498b0a368112696",
-    mercaeleva: "17ddd66426835578a4235f16452a893eecc342297e62d1e9afbf334d3df98b18"
+    mercaeleva: "925729ccfeba203db7bcc2875e0c4482157727d2e964d8c557f21b23cf64062d"
   };
   for (const provider of providers) {
     const records = references[provider].map((reference) => find(provider, reference));

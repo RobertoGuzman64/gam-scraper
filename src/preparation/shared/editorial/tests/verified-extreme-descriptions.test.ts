@@ -5,6 +5,7 @@ import { readMercaelevaSource } from "../../../../testing/builders/mercaeleva-so
 import { recoverGamDocumentedMobilityAndAccessSpecs } from "../../../gam/technical/models/documented-mobility-and-access-specs.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { mbModelEditorialEvidence } from "../../../mercaeleva/editorial/evidence/mb-model-description.js";
+import { reconcileMercaelevaNonUsableSentinels } from "../../../mercaeleva/technical/reconciliation/mercaeleva.js";
 import { braviSkydeckEditorialEvidence } from "../../../gam/editorial/models/bravi-skydeck-editorial.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
@@ -31,9 +32,16 @@ test("completa primero las tres fichas sin descripciones mediante fuentes de mod
     const prepared = prepareSourceProduct(original);
     assert.ok(prepared.product.description && prepared.product.description.trim().length > 50);
     assert.ok(prepared.product.description_general && prepared.product.description_general.trim().length > 200);
-    assert.deepEqual(prepared.product.spec, original.providerId === "gam" ? recoverGamDocumentedMobilityAndAccessSpecs(original, original.specs ?? {}) : original.specs);
+    assert.deepEqual(prepared.product.spec, original.providerId === "gam"
+      ? recoverGamDocumentedMobilityAndAccessSpecs(original, original.specs ?? {})
+      : reconcileMercaelevaNonUsableSentinels(original).specs);
     assert.equal(JSON.stringify(original), snapshot);
     if (original.providerId === "mercaeleva") {
+      const sentinelKey = original.reference === "M062-8951" ? "Distancia del centro de gravedad" : "Horas laborales";
+      const sentinel = original.specs?.[sentinelKey];
+      assert.ok(typeof sentinel === "string");
+      assert.match(sentinel, /^−1 /u);
+      assert.equal(prepared.product.spec[sentinelKey], undefined);
       assert.ok(!prepared.issues.some((issue) => issue.includes("Capacidad contradictoria")));
       assert.match(`${prepared.product.description} ${prepared.product.description_general}`, /(?:1\.800|3\.000)\s*kg/iu);
       assert.doesNotMatch(`${prepared.product.description} ${prepared.product.description_general}`, /(?:1\.500|2\.500)\s*kg/iu);

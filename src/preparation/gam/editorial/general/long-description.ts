@@ -251,6 +251,32 @@ export const removeGamDetachedAffirmatives = (record: ProductRecord, preparedGen
 };
 
 
+const vehicleListingChecklist = "✔️ Mantenimiento al día✔️ Revisión recién pasada✔️ Estado impecable de motor, interiores y carrocería";
+const vehicleListingHeader = "Vehículo en Perfecto Estado – Recién Revisado y Listo para Rodar";
+
+export const removeGamVehicleListingMarkers = (record: ProductRecord, preparedGeneral: string | null): string | null => {
+  if (record.providerId !== "gam" || record.categoryKey !== "movilidad" || record.condition !== "Segunda mano" ||
+    !record.reference || !/^\d+$/u.test(record.reference) || !record.longDescription || !preparedGeneral ||
+    !record.longDescription.includes(vehicleListingHeader) ||
+    !record.longDescription.includes(vehicleListingChecklist) ||
+    !record.longDescription.includes("Ponemos a la venta este coche") ||
+    !preparedGeneral.includes(record.longDescription)) return null;
+  try {
+    const url = new URL(record.url);
+    if (url.protocol !== "https:" || url.hostname !== "online.gamrentals.com" ||
+      url.search || url.hash || !url.pathname.startsWith(`/es/vehiculos-segunda-mano/${record.reference}-`)) return null;
+  } catch {
+    return null;
+  }
+  const revised = preparedGeneral
+    .replace(/^\? (?=Vehículo en Perfecto Estado)/u, "")
+    .replace("Listo para Rodar ? Ponemos a la venta", "Listo para Rodar. Ponemos a la venta")
+    .replace("Listo para Rodar Ponemos a la venta", "Listo para Rodar. Ponemos a la venta")
+    .replace(vehicleListingChecklist,
+      "Mantenimiento al día. Revisión recién pasada. Estado impecable de motor, interiores y carrocería.");
+  return revised === preparedGeneral ? null : revised;
+};
+
 const residualResponseModels: Readonly<Record<string, number>> = {
   "HYSTER:H20FT": 1,
   "HYSTER:H25A6": 1,

@@ -187,3 +187,76 @@ test("no publica tensiones de batería como potencia de motor en arrastradores",
     assert.equal(prepared.product.spec["Potencia Motor (KW)"], original.specs?.["Potencia Motor (KW)"], reference);
   }
 });
+
+test("normaliza medidas Yale de origen solo con modelo, valor y procedencia corroborados", () => {
+  const cases = [
+    ["6114", "Radio de giro (exterior)", "1601 metros", "1601 mm"],
+    ["6115", "Radio de giro (exterior)", "1716 metros", "1716 mm"],
+    ["2263", "Altura Plataforma", "6085 metros", "6085 mm"],
+    ["2265", "Altura Plataforma", "9225 metros", "9225 mm"],
+    ["2267", "Altura Plataforma", "16890 metros", "16890 mm"],
+    ["2302", "Altura Plataforma", "4920 metros", "4920 mm"]
+  ] as const;
+  for (const [reference, key, source, expected] of cases) {
+    const original = recordOf(gam.products, reference);
+    const before = structuredClone(original);
+    assert.equal(original.specs?.[key], source, reference);
+    const reconciled = reconcileGamSourceTechnicalUnits(original);
+    assert.equal(reconciled.specs?.[key], expected, reference);
+    assert.equal(prepareOriginal(original).product.spec[key], expected, reference);
+    assert.deepEqual(reconcileGamSourceTechnicalUnits(reconciled), reconciled, reference);
+    for (const changed of [
+      { ...original, model: "OTRO" },
+      { ...original, url: original.url.replace("online.gamrentals.com", "no-acreditado.example") },
+      { ...original, specs: { ...original.specs, [key]: source.replace(" metros", " m") } },
+      { ...original, title: "Máquina no identificada" },
+      { ...original, providerId: "gomariz" }
+    ]) assert.equal(reconcileGamSourceTechnicalUnits(changed).specs?.[key], changed.specs?.[key], reference);
+    assert.deepEqual(original, before, reference);
+  }
+  const conflicting = recordOf(gam.products, "2305");
+  assert.equal(conflicting.specs?.["Altura Plataforma"], "9225 metros");
+  assert.equal(prepareOriginal(conflicting).product.spec["Altura Plataforma"], "9225 metros");
+});
+
+test("elimina únicamente duplicaciones sintácticas de unidad en centro de carga", () => {
+  const values = [
+    ["1714", "600mm mm", "600 mm"],
+    ["2220", "500mm mm", "500 mm"],
+    ["2238", "1200mm mm", "1200 mm"],
+    ["2244", "130mm mm", "130 mm"],
+    ["2285", "500mm mm", "500 mm"],
+    ["2287", "500mm mm", "500 mm"]
+  ] as const;
+  for (const [reference, source, expected] of values) {
+    const original = recordOf(gam.products, reference);
+    const before = structuredClone(original);
+    assert.equal(original.specs?.["Centro de carga"], source);
+    const reconciled = reconcileGamSourceTechnicalUnits(original);
+    assert.equal(reconciled.specs?.["Centro de carga"], expected);
+    assert.equal(prepareOriginal(original).product.spec["Centro de carga"], expected);
+    assert.deepEqual(reconcileGamSourceTechnicalUnits(reconciled), reconciled);
+    assert.deepEqual(original, before);
+    for (const value of ["500 mm cm", "500 mm mm adicionales", "500/600mm mm", "500 kg mm"]) {
+      const modified: ProductRecord = { ...original, specs: { ...original.specs, "Centro de carga": value } };
+      assert.equal(reconcileGamSourceTechnicalUnits(modified).specs?.["Centro de carga"], value);
+    }
+  }
+});
+
+test("descarta el error de hoja de cálculo sin sustituirlo por una altura inventada", () => {
+  const original = recordOf(gam.products, "2130");
+  const before = structuredClone(original);
+  assert.equal(original.specs?.["Altura de elevación (mm)"], "#VALUE! mm");
+  const reconciled = reconcileGamSourceTechnicalUnits(original);
+  assert.equal(reconciled.specs?.["Altura de elevación (mm)"], undefined);
+  assert.equal(prepareOriginal(original).product.spec["Altura de elevación (mm)"], undefined);
+  assert.deepEqual(reconcileGamSourceTechnicalUnits(reconciled), reconciled);
+  for (const changed of [
+    { ...original, specs: { ...original.specs, "Altura de elevación (mm)": "#VALUE! mm adicionales" } },
+    { ...original, specs: { ...original.specs, "Altura de elevación (mm)": "1200 mm" } },
+    { ...original, providerId: "gomariz" }
+  ]) assert.equal(reconcileGamSourceTechnicalUnits(changed).specs?.["Altura de elevación (mm)"],
+    changed.specs?.["Altura de elevación (mm)"]);
+  assert.deepEqual(original, before);
+});

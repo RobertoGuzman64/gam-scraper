@@ -11,6 +11,11 @@ import { verifiedCanonicalBriefEditorial } from "../../../shared/editorial/evide
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const additional = new Set(["6206", "6817", "6585", "6545", "6707", "4776", "2159", "2061", "2049", "2172", "2241", "2649", "1022", "2138", "2167", "2168", "2173", "2162", "2183", "2074", "2016", "2028"]);
 const revisedShorts = new Set(["6585", "2159", "2049", "2168", "2162", "2016"]);
+const normalizedSpecValues: Readonly<Record<string, Readonly<Record<string, string | undefined>>>> = {
+  "2300": { "Centro de carga": undefined, "Radio de giro": undefined, "Capacidad de la batería": undefined },
+  "2301": { "Centro de carga": undefined, "Radio de giro": undefined, "Capacidad de la batería": undefined },
+  "2302": { "Altura Plataforma": "4920 mm" }
+};
 const selected = new Set(["2148", "6190", "6192", "6191", "6163", "2300", "5899", "2292", "2211", "6542", "2301", "2232", "4725", "2050", "3134", "2302", "2365", "52", "53", "5081"]);
 
 const find = (reference: string): ProductRecord => {
@@ -35,12 +40,20 @@ test("las redacciones verificadas preservan el original y las especificaciones d
     assert.ok(record.longDescription && result.description_general.length < record.longDescription.length / 2, reference);
     assert.equal(JSON.stringify(record), initial, reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      const expected = key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] :
+      const normalized = normalizedSpecValues[reference];
+      const expected = normalized && Object.prototype.hasOwnProperty.call(normalized, key) ? normalized[key] :
+        key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] :
         reference === "2016" && key === "Capacidad de carga (kg)"
         ? "1800 KG"
         : phase2ExpectedSpecValue(reference, key, value);
       assert.equal(result.spec[key], expected, `${reference}: ${key}`);
     }
+  }
+  for (const [reference, weight] of [["2300", "2280 kg"], ["2301", "2360 kg"]] as const) {
+    const prepared = prepareSourceProduct(find(reference)).product;
+    assert.equal(prepared.spec["Altura de elevación (mm)"], "5076 mm");
+    assert.equal(prepared.spec.Peso, weight);
+    assert.equal(prepared.spec["Batería (V / Ah)"], "24 V / 400 Ah");
   }
   assert.doesNotMatch(prepareSourceProduct(find("2148")).product.description_general ?? "", /Hyster RP2\.5N/);
   assert.doesNotMatch(prepareSourceProduct(find("5899")).product.description_general ?? "", /CTE ZED 14/);
@@ -74,7 +87,9 @@ test("las fichas adicionales conservan identidad, especificaciones y contenido i
     assert.notEqual(result.description_general, record.longDescription, reference);
     assert.equal(JSON.stringify(record), original, reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      const expected = key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] :
+      const normalized = normalizedSpecValues[reference];
+      const expected = normalized && Object.prototype.hasOwnProperty.call(normalized, key) ? normalized[key] :
+        key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] :
         reference === "2016" && key === "Capacidad de carga (kg)"
         ? "1800 KG"
         : phase2ExpectedSpecValue(reference, key, value);

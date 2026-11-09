@@ -1,4 +1,5 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
+import { inspectTechnicalCoherence } from "../../../../catalog/validation/technical-specifications.js";
 import { mercaelevaCorroboratedCapacity } from "../evidence/handling-evidence.js";
 import { resolveMercaelevaShortDescription } from "../../editorial/mapping/descriptions.js";
 import { reconcileMercaelevaVerifiedUnicarriersCapacity } from "../evidence/unicarriers-used-capacity-evidence.js";
@@ -6,6 +7,16 @@ import { reconcileMercaelevaVerifiedLindeE16pMast } from "../evidence/linde-e16p
 import { describeMercaelevaE48pPublicationConflict } from "../evidence/linde-e48p-publication-evidence.js";
 
 export const publicationConflictForMercaeleva = (record: ProductRecord): string | null => describeMercaelevaE48pPublicationConflict(record);
+
+export const reconcileMercaelevaNonUsableSentinels = (record: ProductRecord): ProductRecord => {
+  if (record.providerId !== "mercaeleva" || !record.specs) return record;
+  const issues = inspectTechnicalCoherence(record.specs).filter((issue) =>
+    issue.code === "valor-centinela-no-utilizable" && typeof record.specs?.[issue.key] === "string");
+  if (issues.length === 0) return record;
+  const specs = { ...record.specs };
+  for (const issue of issues) delete specs[issue.key];
+  return { ...record, specs };
+};
 
 export const reconcileMercaelevaForPreparation = (record: ProductRecord): ProductRecord => {
   record = reconcileMercaelevaVerifiedUnicarriersCapacity(record);

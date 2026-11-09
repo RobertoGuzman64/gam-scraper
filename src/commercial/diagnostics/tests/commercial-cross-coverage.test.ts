@@ -117,6 +117,32 @@ test("identifica la ficha causante de una contradicción de modelo y conserva el
     ["6934:identidad:modelo-titulo-spec-discordante:introducida"]);
 });
 
+test("atribuye la herencia JLG al modelo origen sin imputar falsamente las galerías derivadas", () => {
+  const owner = { ...product("6934", "E300AJ"),
+    title: "Plataforma JLG E300AJP",
+    image: "https://example.org/2007-jlg-e300ajp.jpg",
+    images: ["https://example.org/2007-jlg-e300ajp.jpg"],
+    spec: { Marca: "JLG", Modelo: "E300AJ" }
+  };
+  const child = { ...product("5730", "E300AJP"),
+    image: "https://example.org/5730.jpg",
+    images: ["https://example.org/5730.jpg", owner.image],
+    spec: { Marca: "JLG", Modelo: "E300AJP" }
+  };
+  const sources = [owner, child];
+  const snapshot = JSON.stringify(sources);
+  assert.deepEqual(summary(analyzeCommercialCrossCoverage(sources, sources)), [
+    "6934:identidad:modelo-titulo-spec-discordante:heredada"
+  ]);
+  const unrelated = { ...child, spec: { ...child.spec, Modelo: "E400AJP" } };
+  assert.deepEqual([...summary(analyzeCommercialCrossCoverage([owner, unrelated], [owner, unrelated]))
+    .filter((entry) => !entry.includes(":editorial:"))].sort(), [
+    "5730:imagenes:imagen-de-otro-modelo:heredada",
+    "6934:identidad:modelo-titulo-spec-discordante:heredada"
+  ].sort());
+  assert.equal(JSON.stringify(sources), snapshot);
+});
+
 test("clasifica las referencias fotográficas por su naturaleza sin modificar galerías", () => {
   const source = { ...product("CC1666", "FORSTE20D"), providerId: "gomariz",
     image: "https://example.org/CC1535-SOCAGE-IVECO.jpg",

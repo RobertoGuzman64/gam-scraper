@@ -27,17 +27,15 @@ test("identifica incidencias aún ambiguas sin publicar correcciones especulativ
   const products = originals.map((item) => prepareOriginal(item).product);
   const result = analyzePresentationConsistency(products);
   assert.equal(result.products, 1347);
-  assert.equal(result.defects, 21);
-  assert.equal(result.reviews, 15);
-  assert.equal(result.findings.length, 36);
+  assert.equal(result.defects, 6);
+  assert.equal(result.reviews, 11);
+  assert.equal(result.findings.length, 17);
   const baseline = [
     "gam:4650:modelo-de-variante-contradictorio",
-    "gam:5730:imagen-de-otro-modelo",
-    "gam:5902:capacidad-no-cualificada-en-campo",
-    "gam:6998:imagen-de-otro-modelo"
+    "gam:5902:capacidad-no-cualificada-en-campo"
   ];
   assert.deepEqual(codes(result).filter((code) => baseline.includes(code)).sort(), baseline.sort());
-  assert.equal(result.findings.filter((finding) => finding.code === "capacidad-titulo-spec-discordante").length, 5);
+  assert.equal(result.findings.filter((finding) => finding.code === "capacidad-titulo-spec-discordante").length, 3);
   assert.equal(JSON.stringify(originals), snapshot);
 });
 
@@ -111,12 +109,22 @@ test("atribuye al registro GAM origen la discrepancia E300AJ/E300AJP sin culpar 
   assert.deepEqual(codes(analyzePresentationConsistency(others)), []);
   const report = analyzePresentationConsistency([source, ...others]);
   assert.deepEqual([...codes(report)].sort(), [
+    "gam:6934:modelo-titulo-spec-discordante"
+  ].sort());
+  assert.equal(report.defects, 0);
+  assert.equal(report.reviews, 1);
+  const otherVariant = { ...others[0]!, spec: { ...others[0]!.spec, Modelo: "E400AJP" } };
+  assert.deepEqual([...codes(analyzePresentationConsistency([source, otherVariant]))].sort(), [
     "gam:6934:modelo-titulo-spec-discordante",
+    "gam:5730:imagen-de-otro-modelo"
+  ].sort());
+  const resolved = { ...source, spec: { ...source.spec, Modelo: "E300AJP" } };
+  assert.deepEqual(codes(analyzePresentationConsistency([resolved, ...others])), []);
+  const otherCover = { ...source, title: "Plataforma articulada eléctrica JLG E300AJ" };
+  assert.deepEqual([...codes(analyzePresentationConsistency([otherCover, ...others]))].sort(), [
     "gam:5730:imagen-de-otro-modelo",
     "gam:6998:imagen-de-otro-modelo"
   ].sort());
-  assert.equal(report.defects, 0);
-  assert.equal(report.reviews, 3);
 });
 
 test("distingue portada ajena, prefijos heredados y variante fotográfica en Gomariz", () => {

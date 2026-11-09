@@ -46,12 +46,16 @@ test("la auditoría comercial conserva informes, opciones y selección por ficha
     item.reference === "4650"));
   assert.ok(render("--contenido-revision").some((line) => line.includes("modelo-variante-titulo-contradictorio")));
   const coverage = report.providers.flatMap((provider) => provider.crossCoverageAudit.findings);
-  assert.ok(coverage.some((item) => item.area === "imagenes" && item.reason === "imagen-de-otro-modelo"));
+  assert.ok(coverage.some((item) => item.area === "identidad" &&
+    item.reason === "modelo-titulo-spec-discordante" && item.reference === "6934"));
+  assert.ok(coverage.some((item) => item.area === "imagenes" &&
+    item.reason === "portada-referencia-ajena" && item.reference === "CC1666"));
+  assert.equal(coverage.some((item) => item.reason === "imagen-de-otro-modelo"), false);
   assert.ok(!coverage.some((item) => item.area === "editorial" &&
     item.reason === "general_repetida_entre_modelos" &&
     ["GR1679", "GR1680", "GR1681"].includes(item.reference ?? "")));
   assert.ok(render("--contenido-revision").some((line) => line.includes("Cobertura transversal:")));
-  assert.ok(render("--contenido-revision").some((line) => line.includes("imagen-de-otro-modelo")));
+  assert.ok(render("--contenido-revision").some((line) => line.includes("portada-referencia-ajena")));
   assert.ok(render("--revision").some((line) => line.includes("PRIORIDADES GAM")));
   assert.ok(render("--revision").some((line) => line.includes("CONTROLADA | especificaciones-incompatibles-filtradas")));
   assert.ok(render("--revision").some((line) => line.includes("Evidencia: 4650 | title |")));
