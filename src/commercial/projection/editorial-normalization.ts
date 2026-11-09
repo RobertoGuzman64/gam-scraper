@@ -29,7 +29,7 @@ const titleCaseStart = (word: string): string => word.charAt(0).toLocaleUpperCas
 const normalizeUppercaseDescriptions = (value: string): string => {
   const letters = [...value].filter((letter) => /\p{L}/u.test(letter));
   if (letters.length < 5 || letters.filter((letter) => letter === letter.toLocaleUpperCase("es")).length / letters.length < 0.8 ||
-    !/(?<![\p{L}\p{N}])(?:PLATAFORMA|CARRETILLA|APILADOR|CAMION|CAMIÓN|MODULO|MÓDULO|RODILLO|ELEVADORA|ELEVADOR|MINIEXCAVADORA|MANIPULADOR|FREGADORA|CASETA|MASTIL|MÁSTIL|ALTURA DE TRABAJO)(?![\p{L}\p{N}])/u.test(value)) {
+    !/(?<![\p{L}\p{N}])(?:PLATAFORMA|CARRETILLA|APILADOR|CAMION|CAMIÓN|COMPACTADOR|MODULO|MÓDULO|RODILLO|ELEVADORA|ELEVADOR|MINIEXCAVADORA|MANIPULADOR|FREGADORA|CASETA|MASTIL|MÁSTIL|ALTURA DE TRABAJO)(?![\p{L}\p{N}])/u.test(value)) {
     return value;
   }
   let firstWord = true;
@@ -44,11 +44,11 @@ const normalizeUppercaseDescriptions = (value: string): string => {
 
 const normalizeUnits = (value: string): string => {
   const meterContext = /\b(?:altura|elevaci[oó]n|alcance|trabajo|plataforma|tijera|articulada|cesta|telesc[oó]pic[oa])\b/iu.test(value);
-  return value.replace(/(?<![\p{L}\p{N}/._-])(\d+(?:[.,]\d+)?)[ \t]*(kg|kgs|mts|mt|m)(?![\p{L}\p{N}])/giu,
+  return value.replace(/(?<![\p{L}\p{N}/._-])(\d+(?:[.,]\d+)?)[ \t]*(kg|kgs|mm|mts|mt|m)(?![\p{L}\p{N}])/giu,
     (original, quantity: string, unit: string) => {
       const type = unit.toLocaleLowerCase("es");
       if ((type === "mt" || type === "mts") && !meterContext) return original;
-      return `${quantity} ${type === "kg" || type === "kgs" ? "kg" : "m"}`;
+      return `${quantity} ${type === "kg" || type === "kgs" ? "kg" : type === "mm" ? "mm" : "m"}`;
     });
 };
 
@@ -80,9 +80,17 @@ export const normalizeCommercialTitle = (
   return editorialText(removeBranding(trimmed, providerId), model) || trimmed;
 };
 
-export const normalizeCommercialSummary = (value: string | null, model: string | null): string | null => {
+export const normalizeCommercialSummary = (
+  value: string | null, model: string | null, providerId: string | null = null
+): string | null => {
   if (value === null) return null;
-  const withoutPromotions = value.replace(/\s*[➨⭐★☆]+\s*/gu, ". ")
+  const neutral = providerId === "gam"
+    ? value.replace(/\s+en GAM Online\.\s+Somos distribuidores oficiales de [^.]+ en España\.\s*$/iu, ".")
+    : value;
+  const withoutPromotions = neutral.replace(/\s*[➨⭐★☆]+\s*/gu, ". ")
     .replace(/^(?:\.\s*)+/gu, "").replace(/(?:\.\s*){2,}/gu, ". ");
-  return editorialText(withoutPromotions, model);
+  return editorialText(withoutPromotions, model).replace(/\b(tríplex|dúplex)\s+\1\b/giu, "$1");
 };
+
+export const normalizeCommercialGeneral = (value: string | null, model: string | null): string | null =>
+  value === null ? null : outsideModel(value, model, normalizeUnits).trim();

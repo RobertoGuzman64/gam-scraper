@@ -5,9 +5,10 @@ import { commercialToken, projectCommercialPresentation } from "../projection/pr
 import type { CommercialMetadata } from "../projection/presentation-projection.js";
 import type { CommercialBaselineInput } from "./commercial-baseline.js";
 import { commercialUnitTitleSuffixes } from "../projection/unit-disambiguation.js";
+import { inspectCommercialEditorialQuality, type CommercialEditorialSignal } from "../validation/editorial-quality.js";
 
 type ContentSignal =
-  "imagen-principal-fuera-de-galeria" | "titulo-vacio";
+  "imagen-principal-fuera-de-galeria" | "titulo-vacio" | CommercialEditorialSignal;
 
 type PresentationDecision = {
   readonly reference: string | null;
@@ -103,6 +104,7 @@ export const analyzeCommercialPresentation = (entries: readonly CommercialBaseli
     const mark = (reason: ContentSignal): void => { ownSignals.push(reason); addSignal(reason, published.sourceUrl); };
     if (!presentation.title) mark("titulo-vacio");
     if (presentation.image && !presentation.images.includes(presentation.image)) mark("imagen-principal-fuera-de-galeria");
+    for (const issue of inspectCommercialEditorialQuality(presentation)) mark(issue.reason);
     if (presentation.title) withTitle += 1;
     if (presentation.description?.trim()) withShort += 1;
     if (presentation.description_general?.trim()) withGeneral += 1;

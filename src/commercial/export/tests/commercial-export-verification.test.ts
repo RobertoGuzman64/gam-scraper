@@ -215,6 +215,24 @@ test("el preflight del paquete rechaza especificaciones peligrosas aunque el man
   }
 });
 
+test("rechaza una normalización editorial omitida con manifiesto y hashes reconstruidos", () => {
+  const base = planWithProduct();
+  const original = base.products[0];
+  assert.ok(original);
+  for (const change of [
+    { description: "Carretilla tríplex tríplex de 4.500 mm" },
+    { description: "Carretilla Hyster en GAM Online. Somos distribuidores oficiales de Hyster en España." },
+    { description: "Carretilla con altura 4.500mm" },
+    { description_general: "Máquina con elevación de 2.449mm y carga de 2.000 kg." }
+  ]) {
+    const altered: CommercialExportPlan = { ...base, products: [{ ...original, ...change }] };
+    assert.throws(() => validateCommercialExportFiles(filesForProvider(altered)), /Presentación editorial no normalizada/);
+  }
+  assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider({
+    ...base, products: [{ ...original, description: "Carretilla con altura 4.500 mm" }]
+  })));
+});
+
 test("rechaza contratos comerciales adulterados aunque los hashes y contadores coincidan", () => {
   const base = planWithProduct();
   const original = base.products[0];

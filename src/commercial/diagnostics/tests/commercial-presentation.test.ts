@@ -215,3 +215,20 @@ test("la auditoría utiliza la misma diferenciación por unidad que la exportaci
   assert.equal(report.descriptionTitlesNormalized, 2);
   assert.equal(report.lostSpecifications, 0);
 });
+
+test("el auditor comercial clasifica señales editoriales sin convertirlas en alteraciones técnicas", () => {
+  const record = source("990");
+  const original = entry(record, 29);
+  const modified = { ...original, published: { ...original.published,
+    description: "Grupo electrógeno 3213 kWA",
+    description_general: "El grupo electrógeno se entrega con documentación de origen. La publicación técnica anuncia prestaciones para distintas configuraciones. El último apartado termina de forma"
+  } };
+  const report = analyzeCommercialPresentation([modified]);
+  assert.deepEqual(report.signals.map(({ reason, affected }) => ({ reason, affected })), [
+    { reason: "descripcion-general-posiblemente-truncada", affected: 1 },
+    { reason: "unidad-potencia-no-estandar", affected: 1 }
+  ]);
+  assert.equal(report.lostImages, 0);
+  assert.equal(report.lostSpecifications, 0);
+  assert.equal(report.changedShort, 0);
+});

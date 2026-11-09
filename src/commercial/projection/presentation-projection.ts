@@ -1,7 +1,7 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate } from "../legacy-export/contracts.js";
 import { projectPresentableSpecifications } from "./spec-projection.js";
-import { normalizeCommercialSummary, normalizeCommercialTitle } from "./editorial-normalization.js";
+import { normalizeCommercialGeneral, normalizeCommercialSummary, normalizeCommercialTitle } from "./editorial-normalization.js";
 import { presentCommercialMotorization } from "./motorization-presentation.js";
 import { assessCommercialHeight } from "../validation/height-consistency.js";
 import { normalizeCommercialYearDescription } from "../validation/year-consistency.js";
@@ -78,7 +78,7 @@ export const projectCommercialPresentation = (
     normalizeCommercialTitle(published.title, published.providerId, source.model), published
   );
   const height = assessCommercialHeight({ ...published, title: baseTitle,
-    description: normalizeCommercialSummary(published.description, source.model) });
+    description: normalizeCommercialSummary(published.description, source.model, published.providerId) });
   const capacity = normalizeVerifiedCommercialCapacity(source, published, height.title,
     normalizeCommercialYearDescription(source, published.description_general));
   const title = capacity.title ? `${capacity.title}${titleSuffix}` : null;
@@ -99,7 +99,7 @@ export const projectCommercialPresentation = (
     description_title: published.description_title?.trim() === published.title?.trim() || !published.description_title?.trim()
       ? title : normalizeCommercialTitle(published.description_title, published.providerId, source.model),
     description: height.description,
-    description_general: capacity.description_general,
+    description_general: normalizeCommercialGeneral(capacity.description_general, source.model),
     image: published.image,
     images: [...published.images],
     spec: projectPresentableSpecifications(published.spec),

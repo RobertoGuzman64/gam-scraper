@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { normalizeCommercialSummary, normalizeCommercialTitle } from "../editorial-normalization.js";
+import { normalizeCommercialGeneral, normalizeCommercialSummary, normalizeCommercialTitle } from "../editorial-normalization.js";
 
 const title = (value: string, model: string | null = null, provider = "gam"): string | null =>
   normalizeCommercialTitle(value, provider, model);
@@ -63,4 +63,44 @@ test("respeta la limpieza anterior de Compra y del vendedor, y es idempotente", 
   const output = "Plataforma articulada diésel 20 m HAULOTTE HA20 RTJ";
   assert.equal(title(before, "HA20 RTJ"), output);
   assert.equal(title(output, "HA20 RTJ"), output);
+});
+
+test("normaliza milímetros separados del número y conserva códigos de modelo", () => {
+  assert.equal(short("Altura de trabajo 6.000mm TOYOTA 6FBRE14", "6FBRE14"),
+    "Altura de trabajo 6.000 mm TOYOTA 6FBRE14");
+  assert.equal(short("ALTURA ELEVACION 4.700MM TOYOTA 7FBEF15", "7FBEF15"),
+    "ALTURA ELEVACION 4.700 mm TOYOTA 7FBEF15");
+  assert.equal(short("Modelo AB200mm con elevación 4.500mm", "AB200mm"),
+    "Modelo AB200mm con elevación 4.500 mm");
+  assert.equal(short("Altura de trabajo 6.000 mm TOYOTA 6FBRE14", "6FBRE14"),
+    "Altura de trabajo 6.000 mm TOYOTA 6FBRE14");
+});
+
+test("retira descriptores repetidos de mástil y no toca denominaciones de modelo", () => {
+  const original = "Carretilla eléctrica 2000 kg tríplex tríplex NISSAN Q02L20CU Altura 6.000mm";
+  const normalized = "Carretilla eléctrica 2000 kg tríplex NISSAN Q02L20CU Altura 6.000 mm";
+  assert.equal(short(original, "Q02L20CU"), normalized);
+  assert.equal(short(normalized, "Q02L20CU"), normalized);
+  assert.equal(short("Modelo RANGE ROVER ROVER SPORT"), "Modelo RANGE ROVER ROVER SPORT");
+});
+
+test("elimina únicamente el aviso promocional acreditado de GAM", () => {
+  const source = "Venta de carretilla diésel Hyster H2.0FT en GAM Online. Somos distribuidores oficiales de Hyster en España.";
+  const clean = "Venta de carretilla diésel Hyster H2.0FT.";
+  assert.equal(normalizeCommercialSummary(source, "H2.0FT", "gam"), clean);
+  assert.equal(normalizeCommercialSummary(clean, "H2.0FT", "gam"), clean);
+  assert.equal(normalizeCommercialSummary(source, "H2.0FT", "gomariz"), source);
+});
+
+test("normaliza unidades de descripción general sin reescribir la evidencia del modelo", () => {
+  const original = "Equipo PRAMAC GSW1270M de 20M de altura. Ficha 2.449mm.\n\nPotencia 2000KG. ";
+  const normalized = "Equipo PRAMAC GSW1270M de 20 m de altura. Ficha 2.449 mm.\n\nPotencia 2000 kg.";
+  assert.equal(normalizeCommercialGeneral(original, "GSW1270M"), normalized);
+  assert.equal(normalizeCommercialGeneral(normalized, "GSW1270M"), normalized);
+  assert.equal(normalizeCommercialGeneral(null, null), null);
+});
+
+test("normaliza un descriptor completamente en mayúsculas sin alterar la marca o el modelo", () => {
+  assert.equal(title("COMPACTADOR RESIDUOS MOVIL DIESEL PACKMAT PK402", "PK402"),
+    "Compactador residuos móvil diésel PACKMAT PK402");
 });

@@ -11,6 +11,7 @@ import { inspectCommercialIdentityPresentation } from "../validation/commercial-
 import { assessCommercialHeight } from "../validation/height-consistency.js";
 import { assessCommercialYear } from "../validation/year-consistency.js";
 import { isPresentableSpecifications, hasLoadCapacityDisagreement } from "../validation/technical-specifications.js";
+import { inspectCommercialEditorialQuality } from "../validation/editorial-quality.js";
 
 export type CommercialExportVerification = {
   readonly files: number;
@@ -137,6 +138,15 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
       }
       productUrls.add(product.sourceUrl);
       productsByUrl.set(product.sourceUrl, product);
+      const editorialIssues = inspectCommercialEditorialQuality({
+        title: typeof product.title === "string" ? product.title : null,
+        description: typeof product.description === "string" ? product.description : null,
+        description_general: typeof product.description_general === "string" ? product.description_general : null
+      });
+      const blockingEditorial = editorialIssues.find((issue) => issue.severity === "blocking");
+      if (blockingEditorial) {
+        throw new Error(`Presentación editorial no normalizada para ${provider.providerId}:${product.sourceUrl}: ${blockingEditorial.reason}`);
+      }
       if (isPresentableSpecifications(product.spec) && typeof product.title === "string" &&
         hasLoadCapacityDisagreement({ title: product.title, spec: product.spec })) {
         requiredCapacityExceptions.add(product.sourceUrl);
