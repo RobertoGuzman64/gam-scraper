@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "runId": "individual-gam-ca2b9474002fa53f2f133b84a844ee96",
+  "runId": "individual-gam-74e2f055521be0dc874afe8679e279ee",
   "approved": true,
   "approvalReason": "Acreditación automática de exclusiones históricas coincidentes, con evidencia y preparación verificadas",
   "sources": [
     {
       "providerId": "gam",
       "catalogSha256": "855865e4a99f709cd9b10b68e77d594841b8cbd8c64b4fc9eb851cb397162483",
-      "preparationSha256": "77f6bc123657ca332f53c9a7f7b6fec30b283b1a5c038587afa368d471daac12",
+      "preparationSha256": "6092fc2da3eac8b3c8d88b17740c9243d2921dee9e9294e994922814b4704a88",
       "productCount": 983
     }
   ],

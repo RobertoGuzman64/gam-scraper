@@ -1,7 +1,7 @@
 {
   "version": 1,
   "providerId": "gomariz",
-  "runId": "individual-gomariz-93426a12835b28e4c431a8c3a9332c85",
+  "runId": "individual-gomariz-3a1530d1f94dfc2b57830f9cbca6afe0",
   "source": {
     "providerId": "gomariz",
     "prefix": "scrape-gomariz",
@@ -9,8 +9,8 @@
     "catalogSha256": "52cd6523ac4150f4059ca8c50147ad3ecddf6c7f69daebe5dd2b79f113f594e6",
     "productCount": 143
   },
-  "preparationSha256": "285e815f74fdcd95ea1e556699c3b3ea12fff9e44be447321a399d61b7f308c2",
-  "approvalSha256": "9889bce6e5e545aa5123f8275c5c815378153e2280f6b09742b6b5a932de882d",
+  "preparationSha256": "b5df5f1b5831a84b9e9091e46dd45213ddbaf74fb316563c224c6851035ab6ce",
+  "approvalSha256": "7ae93581bfe4604f74640a5f24f8f61ea03244f5730676e6d640c1c7ed70c87f",
   "totals": {
     "original": 143,
     "ready": 143,
@@ -20,6 +20,6 @@
   },
   "files": {
     "gomariz-publishable.json": "07a0a8fbfbbcc0524132a271acafbddf65cf11b95d4e4c150e7a747d92e09854",
-    "accreditation.json": "9889bce6e5e545aa5123f8275c5c815378153e2280f6b09742b6b5a932de882d"
+    "accreditation.json": "7ae93581bfe4604f74640a5f24f8f61ea03244f5730676e6d640c1c7ed70c87f"
   }
 }
