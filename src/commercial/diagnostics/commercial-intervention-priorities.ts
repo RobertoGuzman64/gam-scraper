@@ -43,6 +43,18 @@ const outputAction = (reason: CommercialOutputConsistencyReason): string => {
 };
 
 const crossAction = (signal: CommercialCrossCoverageAudit["signals"][number]): string => {
+  if (signal.reason === "portada-prefijo-distinto") {
+    return "Nomenclatura de archivo con prefijo distinto y misma numeración; conservar la galería salvo evidencia adicional.";
+  }
+  if (signal.reason === "portada-referencia-ajena") {
+    return "Contrastar la portada compartida y la referencia de archivo con la unidad propietaria; no sustituir fotografías sin evidencia.";
+  }
+  if (signal.reason === "modelo-portada-variante-discordante") {
+    return "Contrastar la variante del nombre de la imagen con el modelo técnico y la unidad; no inferir identidad por el archivo.";
+  }
+  if (signal.reason === "modelo-titulo-spec-discordante") {
+    return "Contrastar modelo técnico, título y portada de la unidad origen; corregir únicamente tras acreditar la variante.";
+  }
   if (signal.area === "imagenes") {
     return "Contrastar la propiedad de la imagen con la unidad y el modelo originales; no eliminar galerías por coincidencias de URL.";
   }
@@ -100,7 +112,8 @@ export const prioritizeCommercialInterventions = (input: Inputs): CommercialInte
   }
   for (const signal of input.crossCoverageAudit.signals) {
     const introduced = signal.origin === "introducida";
-    interventions.push({ priority: introduced ? "alta" : signal.area === "editorial" ? "baja" : "media",
+    const controlled = !introduced && signal.reason === "portada-prefijo-distinto";
+    interventions.push({ priority: introduced ? "alta" : controlled ? "controlada" : signal.area === "editorial" ? "baja" : "media",
       source: "transversal", reason: `${signal.area}:${signal.reason}:${signal.origin}`, affected: signal.affected,
       responsible: introduced ? "proyección comercial (contrastar con publicación)" : "fuente técnica / proveedor",
       action: crossAction(signal), examples: signal.examples, evidence: [] });

@@ -28,8 +28,8 @@ test("identifica incidencias aún ambiguas sin publicar correcciones especulativ
   const result = analyzePresentationConsistency(products);
   assert.equal(result.products, 1347);
   assert.equal(result.defects, 21);
-  assert.equal(result.reviews, 9);
-  assert.equal(result.findings.length, 30);
+  assert.equal(result.reviews, 15);
+  assert.equal(result.findings.length, 36);
   const baseline = [
     "gam:4650:modelo-de-variante-contradictorio",
     "gam:5730:imagen-de-otro-modelo",
@@ -102,4 +102,50 @@ test("preserva capacidades condicionadas y fotografías compartidas con evidenci
   assert.deepEqual(analyzePresentationConsistency([matched]).findings, []);
   const unknownVariant = { ...model, title: "Plataforma CTE B-LIFT 18" };
   assert.deepEqual(analyzePresentationConsistency([unknownVariant]).findings, []);
+});
+
+test("atribuye al registro GAM origen la discrepancia E300AJ/E300AJP sin culpar a las unidades correctas", () => {
+  const source = gamProduct("6934");
+  const others = [gamProduct("5730"), gamProduct("6998")];
+  assert.deepEqual(codes(analyzePresentationConsistency([source])), ["gam:6934:modelo-titulo-spec-discordante"]);
+  assert.deepEqual(codes(analyzePresentationConsistency(others)), []);
+  const report = analyzePresentationConsistency([source, ...others]);
+  assert.deepEqual([...codes(report)].sort(), [
+    "gam:6934:modelo-titulo-spec-discordante",
+    "gam:5730:imagen-de-otro-modelo",
+    "gam:6998:imagen-de-otro-modelo"
+  ].sort());
+  assert.equal(report.defects, 0);
+  assert.equal(report.reviews, 3);
+});
+
+test("distingue portada ajena, prefijos heredados y variante fotográfica en Gomariz", () => {
+  const references = ["CC1666", "CC1535", "TE1591", "TE1754", "TE1756", "TE1772"];
+  const products = references.map((reference) => {
+    const source = gomariz.products.find((item) => item.reference === reference);
+    assert.ok(source, reference);
+    return prepareOriginal(source).product;
+  });
+  const snapshot = JSON.stringify(products);
+  assert.deepEqual([...codes(analyzePresentationConsistency(products))].sort(), [
+    "gomariz:CC1666:portada-referencia-ajena",
+    "gomariz:TE1754:portada-prefijo-distinto",
+    "gomariz:TE1756:portada-prefijo-distinto",
+    "gomariz:TE1772:portada-prefijo-distinto",
+    "gomariz:TE1772:modelo-portada-variante-discordante"
+  ].sort());
+  assert.equal(JSON.stringify(products), snapshot);
+});
+
+test("no atribuye variante contradictoria a abreviaturas de archivo o galerías del mismo modelo", () => {
+  const unaffected = [gamProduct("5848"), gamProduct("4814"), gamProduct("4817")];
+  const source = mercaeleva.products.find((item) => item.reference === "M168-3277");
+  assert.ok(source);
+  unaffected.push(prepareOriginal(source).product);
+  assert.deepEqual(analyzePresentationConsistency(unaffected).findings, []);
+  const sameModel = gamProduct("2336");
+  const otherUnit = { ...sameModel, reference: "2337", sourceUrl: "https://example.org/2337" };
+  assert.deepEqual(analyzePresentationConsistency([
+    sameModel, { ...otherUnit, images: [...otherUnit.images, sameModel.image!] }
+  ]).findings, []);
 });

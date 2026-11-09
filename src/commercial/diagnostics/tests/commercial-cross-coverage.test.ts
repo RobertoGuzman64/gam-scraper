@@ -105,3 +105,37 @@ test("requiere correspondencia técnica inequívoca y mantiene límite de muestr
   assert.equal(report.signals[0]?.affected, 7);
   assert.equal(report.signals[0]?.examples.length, 5);
 });
+
+test("identifica la ficha causante de una contradicción de modelo y conserva el origen heredado", () => {
+  const suspect = { ...product("6934", "E300AJ"), title: "Plataforma JLG E300AJP",
+    image: "https://example.org/2007-jlg-e300ajp.jpg",
+    images: ["https://example.org/2007-jlg-e300ajp.jpg"] };
+  const report = analyzeCommercialCrossCoverage([suspect], [suspect]);
+  assert.deepEqual(summary(report), ["6934:identidad:modelo-titulo-spec-discordante:heredada"]);
+  const fixedOriginal = { ...suspect, spec: { Marca: "JLG", Modelo: "E300AJP" } };
+  assert.deepEqual(summary(analyzeCommercialCrossCoverage([fixedOriginal], [suspect])),
+    ["6934:identidad:modelo-titulo-spec-discordante:introducida"]);
+});
+
+test("clasifica las referencias fotográficas por su naturaleza sin modificar galerías", () => {
+  const source = { ...product("CC1666", "FORSTE20D"), providerId: "gomariz",
+    image: "https://example.org/CC1535-SOCAGE-IVECO.jpg",
+    images: ["https://example.org/CC1535-SOCAGE-IVECO.jpg"] };
+  const prefix = { ...product("TE1756", "AS1012E"), providerId: "gomariz",
+    image: "https://example.org/TD1756-LGMG-AS1012E-22.jpg",
+    images: ["https://example.org/TD1756-LGMG-AS1012E-22.jpg"] };
+  const model = { ...product("TE1772", "AS0607WE"), providerId: "gomariz",
+    image: "https://example.org/TD1772-LGMG-AS0607WF-22.jpg",
+    images: ["https://example.org/TD1772-LGMG-AS0607WF-22.jpg"] };
+  const published = [source, prefix, model];
+  assert.deepEqual([...summary(analyzeCommercialCrossCoverage(published, published))].sort(), [
+    "CC1666:imagenes:portada-referencia-ajena:heredada",
+    "TE1756:imagenes:portada-prefijo-distinto:heredada",
+    "TE1772:imagenes:portada-prefijo-distinto:heredada",
+    "TE1772:imagenes:modelo-portada-variante-discordante:heredada"
+  ].sort());
+  const original = { ...source, image: "https://example.org/CC1666-SOCAGE-IVECO.jpg",
+    images: ["https://example.org/CC1666-SOCAGE-IVECO.jpg"] };
+  assert.deepEqual(summary(analyzeCommercialCrossCoverage([original], [source])),
+    ["CC1666:imagenes:portada-referencia-ajena:introducida"]);
+});

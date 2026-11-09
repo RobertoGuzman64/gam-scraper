@@ -71,3 +71,37 @@ test("prioriza infracciones contractuales y atributos rechazados sin crear un au
   ]);
   assert.deepEqual(report.pending[1]?.examples, ["https://example.org/21"]);
 });
+
+test("separa diferencias de prefijo controladas de portadas ajenas y variantes sin acreditar", () => {
+  const input = fixture();
+  const report = prioritizeCommercialInterventions({
+    ...input,
+    outputConsistencyAudit: { signals: [], findings: [] },
+    presentationAudit: { signals: [] },
+    accreditation: { blocking: [], pending: [] },
+    crossCoverageAudit: { signals: [
+      { area: "imagenes", reason: "portada-prefijo-distinto", origin: "heredada", affected: 3,
+        examples: ["https://example.org/TE1756"] },
+      { area: "imagenes", reason: "portada-referencia-ajena", origin: "heredada", affected: 1,
+        examples: ["https://example.org/CC1666"] },
+      { area: "identidad", reason: "modelo-titulo-spec-discordante", origin: "heredada", affected: 1,
+        examples: ["https://example.org/6934"] }
+    ] }
+  });
+  assert.deepEqual(report.pending.map((item) => [item.priority, item.reason]), [
+    ["media", "identidad:modelo-titulo-spec-discordante:heredada"],
+    ["media", "imagenes:portada-referencia-ajena:heredada"]
+  ]);
+  assert.deepEqual(report.controlled.map((item) => [item.affected, item.reason]), [
+    [3, "imagenes:portada-prefijo-distinto:heredada"]
+  ]);
+  assert.match(report.pending[0]?.action ?? "", /unidad origen/);
+  assert.match(report.pending[1]?.action ?? "", /portada compartida/);
+  const introduced = prioritizeCommercialInterventions({
+    ...input, outputConsistencyAudit: { signals: [], findings: [] }, presentationAudit: { signals: [] },
+    accreditation: { blocking: [], pending: [] },
+    crossCoverageAudit: { signals: [{ area: "imagenes", reason: "portada-prefijo-distinto",
+      origin: "introducida", affected: 1, examples: [] }] }
+  });
+  assert.equal(introduced.pending[0]?.priority, "alta");
+});

@@ -1,5 +1,5 @@
 import { buildProductIdentity } from "../identity.js";
-import { hasTechnicalLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../validation/technical-specifications.js";
+import { hasTechnicalLoadCapacityDisagreement, inspectTechnicalCoherence, inspectTechnicalSpecifications } from "../validation/technical-specifications.js";
 import { preparedTechnicalConsistencyIssues } from "../../preparation/shared/technical/source/technical-consistency.js";
 import { sourceSemanticQualityIssues } from "../../preparation/shared/quality/source/semantic-quality.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
@@ -35,7 +35,13 @@ export type PublishedTechnicalQuality = {
 
 const compare = (a: string, b: string): number => a < b ? -1 : a > b ? 1 : 0;
 
-const actionFor = (code: string): string => code.startsWith("spec:")
+const actionFor = (code: string): string => code === "spec:centro-carga-supera-longitud"
+  ? "Contrastar centro de carga y longitud con evidencia del modelo; comprobar si la magnitud pertenece a otro campo."
+  : code === "spec:capacidad-bateria-coincide-peso" || code === "spec:capacidad-bateria-sin-unidad-con-alternativa"
+    ? "Contrastar peso, batería y medidas contiguas con el origen; no inferir unidades ni sustituir valores."
+    : code === "spec:unidad-tecnica-duplicada" || code === "spec:valor-centinela-no-utilizable"
+      ? "Comprobar la unidad o el valor centinela de origen antes de normalizar; no reemplazar por cifras supuestas."
+      : code.startsWith("spec:")
   ? "Verificar la magnitud y su unidad en la fuente técnica; revisar el normalizador solo si el patrón se repite."
   : code === "capacidad-titulo-spec-discordante" || code === "relacion-capacidad"
     ? "Contrastar capacidad nominal, configuración de la unidad y evidencia de fabricante antes de corregir."
@@ -46,7 +52,9 @@ const actionFor = (code: string): string => code.startsWith("spec:")
         : "Revisar la discrepancia entre afirmaciones de la ficha y especificaciones acreditadas.";
 
 const priorityFor = (code: string): PublishedTechnicalPattern["priority"] =>
-  code === "relacion-identidad" || code === "relacion-motorizacion" ? "alta" : "media";
+  code === "relacion-identidad" || code === "relacion-motorizacion" ||
+  code === "spec:centro-carga-supera-longitud" || code === "spec:capacidad-bateria-coincide-peso"
+    ? "alta" : "media";
 
 const responsibleFor = (code: string): string => code.startsWith("spec:")
   ? "evidencia de origen / normalización técnica (por determinar)"
@@ -103,6 +111,12 @@ export const analyzePublishedTechnicalQuality = (products: readonly ImportCandid
     };
     for (const issue of inspectTechnicalSpecifications(product.spec)) {
       add(`spec:${issue.code}`, `Valor técnico incompatible en «${issue.key}»: ${JSON.stringify(product.spec[issue.key])}`, issue.key);
+    }
+    for (const issue of inspectTechnicalCoherence(product.spec)) {
+      const related = issue.relatedKeys.map((key) => `«${key}»: ${JSON.stringify(product.spec[key])}`);
+      add(`spec:${issue.code}`,
+        `Coherencia técnica a revisar: «${issue.key}»: ${JSON.stringify(product.spec[issue.key])}${related.length ? ` frente a ${related.join(", ")}` : ""}`,
+        issue.key);
     }
     if (hasTechnicalLoadCapacityDisagreement(product.title, product.spec)) {
       const key = typeof product.spec["Capacidad de carga (kg)"] === "string"

@@ -3,6 +3,7 @@ import type { EditorialIssueCode } from "../../catalog/diagnostics/editorial-qua
 import type { ImportCandidate } from "../legacy-export/contracts.js";
 import { commercialReference } from "./commercial-baseline.js";
 import { analyzePresentationConsistency } from "./presentation-consistency.js";
+import type { PresentationConsistencyFinding } from "./presentation-consistency.js";
 
 export type CommercialCrossCoverageFinding = {
   readonly reference: string | null;
@@ -28,6 +29,14 @@ const editorialCodes = new Set<EditorialIssueCode>([
   "corta_igual_titulo", "descripciones_iguales", "general_no_supera_corta",
   "general_repetida_entre_modelos", "general_sin_modelo", "general_telegrafica",
   "general_repeticion_interna"
+]);
+
+const identityImageCodes = new Map<PresentationConsistencyFinding["code"], CommercialCrossCoverageFinding["area"]>([
+  ["imagen-de-otro-modelo", "imagenes"],
+  ["portada-referencia-ajena", "imagenes"],
+  ["portada-prefijo-distinto", "imagenes"],
+  ["modelo-portada-variante-discordante", "imagenes"],
+  ["modelo-titulo-spec-discordante", "identidad"]
 ]);
 
 const normalizedVisibleReference = (value: string): string | null => {
@@ -82,14 +91,15 @@ export const analyzeCommercialCrossCoverage = (
     }
   }
 
-  const originalImages = new Set(analyzePresentationConsistency(covered).findings
-    .filter((finding) => finding.code === "imagen-de-otro-modelo")
-    .map((finding) => finding.sourceUrl));
+  const originalConsistency = new Set(analyzePresentationConsistency(covered).findings
+    .filter((finding) => identityImageCodes.has(finding.code))
+    .map((finding) => `${finding.sourceUrl}\u0000${finding.code}`));
   for (const item of analyzePresentationConsistency(commercial).findings) {
-    if (item.code !== "imagen-de-otro-modelo") continue;
+    const area = identityImageCodes.get(item.code);
+    if (!area) continue;
     const product = commercialByUrl.get(item.sourceUrl);
-    if (product) add(product, "imagenes", item.code,
-      originalImages.has(item.sourceUrl) ? "heredada" : "introducida");
+    if (product) add(product, area, item.code,
+      originalConsistency.has(`${item.sourceUrl}\u0000${item.code}`) ? "heredada" : "introducida");
   }
 
   const references = new Map<string, { variants: Set<string>; products: ImportCandidate[] }>();

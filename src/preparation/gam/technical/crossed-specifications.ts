@@ -21,12 +21,12 @@ const confirmedModel = (record: ProductRecord): boolean => {
   return [record.title, record.longDescription].every((value) => typeof value === "string" && boundary.test(fold(value)));
 };
 
-const batteryValue = (value: string): string | null => {
+export const gamCrossedBatteryValue = (value: string): string | null => {
   const match = value.trim().match(/^([1-9]\d*)\s*V\s*\/\s*([1-9]\d*)\s*Ah\s*\(\s*V\s*\/\s*Ah\s*\)$/i);
   return match?.[1] && match[2] ? `${match[1]} V / ${match[2]} Ah` : null;
 };
 
-const mislabelledStacker = (record: ProductRecord): { readonly height: number; readonly weight: number; readonly battery: string } | null => {
+export const gamMislabelledStacker = (record: ProductRecord): { readonly height: number; readonly weight: number; readonly battery: string } | null => {
   if (sourceFamily(record) !== "apiladores-yale" || !confirmedModel(record) ||
     !/^Apilador el[eé]ctrico a pie Yale MC(?:12|15)$/i.test(record.title ?? "")) return null;
   const specs = record.specs ?? {};
@@ -34,7 +34,7 @@ const mislabelledStacker = (record: ProductRecord): { readonly height: number; r
   if (model !== "mc12 (pedestrian)" && model !== "mc15 (pedestrian)") return null;
   const height = typeof specs["Centro de carga"] === "string" ? specs["Centro de carga"].match(/^([1-9]\d{3})\s*mm$/i) : null;
   const weight = typeof specs["Capacidad de la batería"] === "string" ? specs["Capacidad de la batería"].match(/^([1-9]\d{3})$/) : null;
-  const battery = typeof specs["Radio de giro"] === "string" ? batteryValue(specs["Radio de giro"]) : null;
+  const battery = typeof specs["Radio de giro"] === "string" ? gamCrossedBatteryValue(specs["Radio de giro"]) : null;
   const load = typeof specs["Capacidad de carga (kg)"] === "string" ? specs["Capacidad de carga (kg)"].match(/^([1-9]\d{3})\s*kg$/i) : null;
   if (!height?.[1] || !weight?.[1] || !battery || !load?.[1] ||
     specs["Peso"] !== undefined || specs["Peso (kg)"] !== undefined ||
@@ -54,10 +54,20 @@ const mislabelledPalletBattery = (record: ProductRecord): string | null => {
   return raw.replace(/\s+metros?$/i, "");
 };
 
+export const gamPalletBatteryForCrossedSpecs = (record: ProductRecord): string | null => {
+  const battery = mislabelledPalletBattery(record);
+  if (battery === null) return null;
+  const capacity = record.specs?.["Capacidad de la batería"];
+  const weight = record.specs?.["Peso"];
+  const duplicatedWeight = typeof capacity === "string" && typeof weight === "string" &&
+    /^[1-9]\d{2,4}$/.test(capacity) && weight.toUpperCase() === `${capacity} KG`;
+  return capacity === undefined || duplicatedWeight ? battery : null;
+};
+
 export const applyGamCrossedSpecifications = (
   record: ProductRecord, attribute: Attribute, candidates: Candidate[]
 ): void => {
-  const stacker = mislabelledStacker(record);
+  const stacker = gamMislabelledStacker(record);
   if (stacker) {
     if (attribute.name === "Altura de elevación" && attribute.unit_option === "mm" &&
       record.specs?.["Altura de elevación (mm)"] === undefined) {
@@ -72,21 +82,17 @@ export const applyGamCrossedSpecifications = (
       candidates.push({ key: attribute.name, value: stacker.battery });
     }
   }
-  const palletBattery = mislabelledPalletBattery(record);
+  const palletBattery = gamPalletBatteryForCrossedSpecs(record);
   if (!palletBattery) return;
-  const capacity = record.specs?.["Capacidad de la batería"];
-  const weight = record.specs?.["Peso"];
-  const duplicatedWeight = typeof capacity === "string" && typeof weight === "string" &&
-    /^[1-9]\d{2,4}$/.test(capacity) && weight.toUpperCase() === `${capacity} KG`;
   if (attribute.name === "Batería (V / Ah)" && attribute.type === "TEXT" && attribute.unit_option === "V / Ah" &&
-    record.specs?.["Batería (V / Ah)"] === undefined && (capacity === undefined || duplicatedWeight)) {
-    const value = batteryValue(palletBattery);
+    record.specs?.["Batería (V / Ah)"] === undefined) {
+    const value = gamCrossedBatteryValue(palletBattery);
     if (value !== null) candidates.push({ key: attribute.name, value });
   }
 };
 
 export const gamMislabelledSpecKey = (record: ProductRecord, attribute: Attribute, rawKey: string): boolean => {
-  if (mislabelledStacker(record)) {
+  if (gamMislabelledStacker(record)) {
     if (attribute.name === "Centro de carga" && attribute.unit_option === "mm" && rawKey === "Centro de carga") return true;
     if (attribute.name === "Radio de giro" && attribute.unit_option === "mm" && rawKey === "Radio de giro") return true;
   }

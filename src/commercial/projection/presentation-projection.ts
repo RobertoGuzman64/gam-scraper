@@ -102,7 +102,7 @@ export const projectCommercialPresentation = (
     description_general: normalizeCommercialGeneral(capacity.description_general, source.model),
     image: published.image,
     images: [...published.images],
-    spec: projectPresentableSpecifications(published.spec),
+    spec: projectPresentableSpecifications(published.spec, source),
     metadata
   };
 };

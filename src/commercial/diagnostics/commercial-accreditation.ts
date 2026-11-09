@@ -106,7 +106,7 @@ const verifyProduct = (
   blocking: string[], pending: string[], differences: CommercialAccreditationDifference[], titleSuffix: string
 ): void => {
   const { source, published, mapped } = input;
-  const presentable = projectPresentableSpecifications(published.spec);
+  const presentable = projectPresentableSpecifications(published.spec, source);
   if (!isDeepStrictEqual(product.spec, presentable)) {
     differences.push({ field: "spec", status: "changed" });
     blocking.push("campo-spec-changed");
