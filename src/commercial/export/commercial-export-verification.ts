@@ -7,6 +7,10 @@ import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-
 import { discoverAccreditedPublications, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { buildCommercialExportFiles, type CommercialExportFile } from "./commercial-export.js";
 import { isCommercialReceiverProduct } from "../validation/commercial-receiver-product.js";
+import { inspectCommercialIdentityPresentation } from "../validation/commercial-identity-presentation.js";
+import { assessCommercialHeight } from "../validation/height-consistency.js";
+import { assessCommercialYear } from "../validation/year-consistency.js";
+import { isPresentableSpecifications, hasLoadCapacityDisagreement } from "../validation/technical-specifications.js";
 
 export type CommercialExportVerification = {
   readonly files: number;
@@ -71,6 +75,10 @@ const parseJson = (entry: CommercialExportFile): unknown => {
   }
 };
 
+const isYearAttribute = (entry: unknown): entry is { readonly attributeID: number; readonly value: string | number | boolean } =>
+  isRecord(entry) && typeof entry.attributeID === "number" &&
+  (typeof entry.value === "number" || typeof entry.value === "string" || typeof entry.value === "boolean");
+
 export const validateCommercialExportFiles = (expected: readonly CommercialExportFile[]): void => {
   const files = new Map<string, CommercialExportFile>();
   for (const entry of expected) {
@@ -119,11 +127,50 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
       throw new Error(`Totales o procedencia incoherentes para el proveedor ${provider.providerId}`);
     }
     const productUrls = new Set<string>();
+    const productsByUrl = new Map<string, Record<string, unknown>>();
+    const requiredHeightExceptions = new Map<string, string>();
+    const requiredYearExceptions = new Map<string, string>();
+    const requiredCapacityExceptions = new Set<string>();
     for (const product of plan.products) {
       if (!isRecord(product) || typeof product.sourceUrl !== "string" || productUrls.has(product.sourceUrl)) {
         throw new Error(`Identidades comerciales duplicadas o inválidas para el proveedor ${provider.providerId}`);
       }
       productUrls.add(product.sourceUrl);
+      productsByUrl.set(product.sourceUrl, product);
+      if (isPresentableSpecifications(product.spec) && typeof product.title === "string" &&
+        hasLoadCapacityDisagreement({ title: product.title, spec: product.spec })) {
+        requiredCapacityExceptions.add(product.sourceUrl);
+      }
+      if (Array.isArray(product.attributes)) {
+        const year = assessCommercialYear({
+          providerId: provider.providerId,
+          sourceUrl: product.sourceUrl,
+          reference: typeof product.reference === "string" ? product.reference : null,
+          description_general: typeof product.description_general === "string" ? product.description_general : null,
+          attributes: product.attributes.filter(isYearAttribute)
+        });
+        if (year.inconsistentClaims.length > 0) {
+          throw new Error(`Año de fabricación contradictorio para ${provider.providerId}:${product.sourceUrl}`);
+        }
+        if (year.urlAttributeDisagreement) {
+          requiredYearExceptions.set(product.sourceUrl, "ano-url-atributo-discordante");
+        }
+      }
+      if (isPresentableSpecifications(product.spec)) {
+        const height = assessCommercialHeight({
+          title: typeof product.title === "string" ? product.title : null,
+          description: typeof product.description === "string" ? product.description : null,
+          description_general: typeof product.description_general === "string" ? product.description_general : null,
+          spec: product.spec
+        });
+        if (height.status === "title-normalized" || height.status === "summary-normalized") {
+          throw new Error(`Altura comercial sin normalizar para ${provider.providerId}:${product.sourceUrl}`);
+        }
+        if (height.status === "possible-distinct-heights" || height.status === "unresolved") {
+          requiredHeightExceptions.set(product.sourceUrl, height.status === "possible-distinct-heights"
+            ? "alturas-concepto-distinto-por-acreditar" : "altura-titulo-resumen-discordante");
+        }
+      }
     }
     const exclusionUrls = new Set<string>();
     for (const exclusion of plan.excluded) {
@@ -143,6 +190,54 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
         throw new Error(`Excepción comercial sin producto válido para el proveedor ${provider.providerId}`);
       }
     }
+    for (const sourceUrl of requiredCapacityExceptions) {
+      if (!plan.exceptions.some((exception) => isRecord(exception) && exception.sourceUrl === sourceUrl &&
+        exception.reason === "capacidad-titulo-spec-discordante")) {
+        throw new Error(`Discrepancia de capacidad no declarada para ${provider.providerId}:${sourceUrl}`);
+      }
+    }
+    for (const exception of plan.exceptions) {
+      if (!isRecord(exception) || typeof exception.sourceUrl !== "string" ||
+        typeof exception.reason !== "string") continue;
+      if (exception.reason === "capacidad-titulo-spec-discordante" &&
+        !requiredCapacityExceptions.has(exception.sourceUrl)) {
+        throw new Error(`Excepción de capacidad no justificada para ${provider.providerId}:${exception.sourceUrl}`);
+      }
+      if (!exception.reason.startsWith("spec-")) continue;
+      const found = /^spec-(?:unidad-tecnica-malformada|magnitud-en-campo-incompatible|residuo-hoja-calculo|longitud-fisicamente-implausible):(.+)$/u.exec(exception.reason);
+      const product = productsByUrl.get(exception.sourceUrl);
+      if (!found?.[1] || !isRecord(product) || !isRecord(product.spec) ||
+        Object.hasOwn(product.spec, found[1])) {
+        throw new Error(`Excepción técnica no justificada para ${provider.providerId}:${exception.sourceUrl}`);
+      }
+    }
+    for (const [sourceUrl, reason] of requiredYearExceptions) {
+      if (!plan.exceptions.some((exception) => isRecord(exception) && exception.sourceUrl === sourceUrl &&
+        exception.reason === reason)) {
+        throw new Error(`Discrepancia de año no declarada para ${provider.providerId}:${sourceUrl}`);
+      }
+    }
+    for (const exception of plan.exceptions) {
+      if (isRecord(exception) && typeof exception.sourceUrl === "string" &&
+        exception.reason === "ano-url-atributo-discordante" &&
+        requiredYearExceptions.get(exception.sourceUrl) !== exception.reason) {
+        throw new Error(`Excepción de año no justificada para ${provider.providerId}:${exception.sourceUrl}`);
+      }
+    }
+    for (const [sourceUrl, reason] of requiredHeightExceptions) {
+      if (!plan.exceptions.some((exception) => isRecord(exception) && exception.sourceUrl === sourceUrl &&
+        exception.reason === reason)) {
+        throw new Error(`Discordancia de altura no declarada para ${provider.providerId}:${sourceUrl}`);
+      }
+    }
+    for (const exception of plan.exceptions) {
+      if (isRecord(exception) && typeof exception.sourceUrl === "string" &&
+        (exception.reason === "alturas-concepto-distinto-por-acreditar" ||
+          exception.reason === "altura-titulo-resumen-discordante") &&
+        requiredHeightExceptions.get(exception.sourceUrl) !== exception.reason) {
+        throw new Error(`Excepción de altura no justificada para ${provider.providerId}:${exception.sourceUrl}`);
+      }
+    }
     const summary = plan.summary;
     const productTotals = inspectProductTotals(plan.products, provider.providerId, plan.environment);
     const exclusionTotals = inspectExclusionTotals(plan.excluded);
@@ -150,6 +245,10 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
       summaryFields.some((field) => summary[field] !== provider[field]) ||
       Object.entries({ ...productTotals, ...exclusionTotals }).some(([field, value]) => summary[field] !== value)) {
       throw new Error(`Totales o procedencia incoherentes para el proveedor ${provider.providerId}`);
+    }
+    const presentationIssues = inspectCommercialIdentityPresentation(plan.products, plan.exceptions, provider.providerId);
+    if (Object.values(presentationIssues).some((count) => count > 0)) {
+      throw new Error(`Presentación de identidad comercial incoherente para ${provider.providerId}: ${JSON.stringify(presentationIssues)}`);
     }
   }
 };

@@ -12,6 +12,9 @@ import { decideCommercialAttributes } from "../projection/attribute-decision.js"
 import { observeCommercialAttributes } from "../projection/attribute-observation.js";
 import { hasLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../validation/technical-specifications.js";
 import { projectPresentableSpecifications } from "../projection/spec-projection.js";
+import { commercialUnitTitleSuffixes, unresolvedCommercialTitleCollisions } from "../projection/unit-disambiguation.js";
+import { assessCommercialHeight } from "../validation/height-consistency.js";
+import { assessCommercialYear } from "../validation/year-consistency.js";
 
 export type CommercialAccreditationDifference = {
   readonly field: string;
@@ -95,12 +98,12 @@ const sampleCategories = (decisions: readonly CommercialAccreditationDecision[])
 };
 
 const preservedFields = ["providerId", "sourceUrl", "reference", "externalReference", "condition", "price",
-  "description_general", "image", "images"] as const;
+  "image", "images"] as const;
 
 const verifyProduct = (
   input: CommercialBaselineInput, product: CommercialExportProduct, catalog: ImportCatalog,
   logos: readonly BrandLogoReference[], environment: CommercialExportPlan["environment"], companyID: number | null,
-  blocking: string[], pending: string[], differences: CommercialAccreditationDifference[]
+  blocking: string[], pending: string[], differences: CommercialAccreditationDifference[], titleSuffix: string
 ): void => {
   const { source, published, mapped } = input;
   const presentable = projectPresentableSpecifications(published.spec);
@@ -112,7 +115,13 @@ const verifyProduct = (
     pending.push("especificaciones-incompatibles-filtradas");
   }
   if (inspectTechnicalSpecifications(product.spec).length > 0) blocking.push("especificaciones-incompatibles-expuestas");
-  if (hasLoadCapacityDisagreement(published)) pending.push("capacidad-titulo-spec-discordante");
+  if (hasLoadCapacityDisagreement(product)) pending.push("capacidad-titulo-spec-discordante");
+  const height = assessCommercialHeight(product);
+  if (height.status === "possible-distinct-heights") pending.push("alturas-concepto-distinto-por-acreditar");
+  if (height.status === "unresolved") pending.push("altura-titulo-resumen-discordante");
+  const year = assessCommercialYear(product);
+  if (year.inconsistentClaims.length > 0) blocking.push("ano-descripcion-atributo-discordante");
+  if (year.urlAttributeDisagreement) pending.push("ano-url-atributo-discordante");
   for (const field of preservedFields) {
     if (isDeepStrictEqual(product[field], published[field])) continue;
     const status = product[field] === null || product[field] === undefined ? "lost" : "changed";
@@ -146,8 +155,8 @@ const verifyProduct = (
     const observations = observeCommercialAttributes(source, decision.categorySellID, expectedAttributes.accepted, catalog);
     if (observations.some((item) => item.status === "resuelto-no-asignado")) pending.push("atributos-resueltos-no-asignados");
   }
-  const expected = projectCommercialPresentation(source, published, category?.name ?? null);
-  for (const field of ["title", "description_title", "description"] as const) {
+  const expected = projectCommercialPresentation(source, published, category?.name ?? null, titleSuffix);
+  for (const field of ["title", "description_title", "description", "description_general"] as const) {
     if (!isDeepStrictEqual(product[field], expected[field])) blocking.push(`presentacion-${field}-incompatible`);
     if (!isDeepStrictEqual(product[field], published[field])) {
       const status = product[field]?.trim() ? "normalized" : "lost";
@@ -195,6 +204,8 @@ export const accreditCommercialPlan = (
     productByIdentity.set(key, product);
   }
   const seen = new Set<string>();
+  const titleSuffixes = commercialUnitTitleSuffixes(inputs);
+  const unresolvedTitles = unresolvedCommercialTitleCollisions(plan.products);
   const decisions: CommercialAccreditationDecision[] = [];
   for (const input of inputs) {
     const { source, published } = input;
@@ -215,7 +226,9 @@ export const accreditCommercialPlan = (
     } else if (!product || excluded) {
       blocking.push("producto-elegible-ausente-o-excluido");
     } else {
-      verifyProduct(input, product, catalog, logos, plan.environment, companyID, blocking, pending, differences);
+      verifyProduct(input, product, catalog, logos, plan.environment, companyID, blocking, pending, differences,
+        titleSuffixes.get(published.sourceUrl) ?? "");
+      if (unresolvedTitles.has(product.sourceUrl)) pending.push("titulo-unidad-no-diferenciada");
     }
     if (duplicates.has(key)) blocking.push("identidad-exportada-duplicada");
     decisions.push({ identity, reference: published.reference, sourceUrl: published.sourceUrl,

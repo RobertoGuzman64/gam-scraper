@@ -4,6 +4,7 @@ import { inspectTechnicalSpecifications } from "../validation/technical-specific
 import { commercialToken, projectCommercialPresentation } from "../projection/presentation-projection.js";
 import type { CommercialMetadata } from "../projection/presentation-projection.js";
 import type { CommercialBaselineInput } from "./commercial-baseline.js";
+import { commercialUnitTitleSuffixes } from "../projection/unit-disambiguation.js";
 
 type ContentSignal =
   "imagen-principal-fuera-de-galeria" | "titulo-vacio";
@@ -60,6 +61,7 @@ const distinctContent = (published: ImportCandidate, projected: Pick<ImportCandi
 
 export const analyzeCommercialPresentation = (entries: readonly CommercialBaselineInput[]): CommercialPresentationAudit => {
   const decisions: PresentationDecision[] = [];
+  const titleSuffixes = commercialUnitTitleSuffixes(entries);
   const signals = new Map<ContentSignal, { affected: number; examples: string[] }>();
   let excluded = 0;
   let categorized = 0;
@@ -95,7 +97,8 @@ export const analyzeCommercialPresentation = (entries: readonly CommercialBaseli
     if (decision.status === "proposed") categorized += 1;
     else pendingCategory += 1;
     const categoryName = decision.status === "proposed" ? mapped.product.category : null;
-    const presentation = projectCommercialPresentation(source, published, categoryName);
+    const presentation = projectCommercialPresentation(source, published, categoryName,
+      titleSuffixes.get(published.sourceUrl) ?? "");
     const ownSignals: ContentSignal[] = [];
     const mark = (reason: ContentSignal): void => { ownSignals.push(reason); addSignal(reason, published.sourceUrl); };
     if (!presentation.title) mark("titulo-vacio");

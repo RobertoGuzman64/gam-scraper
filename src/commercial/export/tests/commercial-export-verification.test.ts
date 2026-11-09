@@ -26,11 +26,11 @@ const emptyPlan = (): CommercialExportPlan => ({
 });
 
 const filesForProvider = (plan: CommercialExportPlan = emptyPlan()): CommercialExportFile[] => {
-  const product = createFile("gam-commercial.json", `${JSON.stringify(plan)}\n`);
+  const product = createFile(`${plan.providerId}-commercial.json`, `${JSON.stringify(plan)}\n`);
   const manifest = {
     version: 1, environment: null, taxonomySha256: "b".repeat(64), attributesSha256: "c".repeat(64),
     logosSha256: "d".repeat(64), companiesSha256: "e".repeat(64),
-    providers: [{ providerId: "gam", publicationSha256: plan.publicationSha256, originalCount: plan.total,
+    providers: [{ providerId: plan.providerId, publicationSha256: plan.publicationSha256, originalCount: plan.total,
       ...plan.summary, excluded: plan.excluded.length, exceptions: plan.exceptions.length,
       file: product.name, sha256: product.sha256, bytes: product.bytes }]
   };
@@ -376,7 +376,7 @@ test("las referencias comerciales visibles reutilizan la regla del auditor, sin 
     ...base, total: 2,
     products: [
       { ...product, externalReference: "VISIBLE-A" },
-      { ...product, reference: "other-reference", sourceUrl: "https://example.com/other", externalReference: "visible-a" }
+      { ...product, title: "Producto de prueba · Ref. other-reference", reference: "other-reference", sourceUrl: "https://example.com/other", externalReference: "visible-a" }
     ],
     summary: { ...base.summary, exported: 2, categorized: 2, attributes: 2,
       withLogo: 2, withPrice: 2 }
@@ -442,4 +442,126 @@ test("una colisión del segundo ZIP revierte solo los archivos creados por el in
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+
+test("bloquea títulos de unidad repetidos sin excepción y motorizaciones ausentes en el JSON final", () => {
+  const base = planWithProduct();
+  const original = base.products[0];
+  assert.ok(original);
+  const repeated = {
+    ...original, sourceUrl: "https://example.com/another-unit", reference: "product-2"
+  };
+  const duplicatePlan: CommercialExportPlan = {
+    ...base, total: 2, products: [original, repeated],
+    summary: { ...base.summary, exported: 2, categorized: 2, attributes: 2, withLogo: 2, withPrice: 2 }
+  };
+  assert.throws(() => validateCommercialExportFiles(filesForProvider(duplicatePlan)), /Presentación de identidad comercial incoherente/);
+  const justified: CommercialExportPlan = {
+    ...duplicatePlan,
+    exceptions: [original, repeated].map((product) => ({
+      identity: `gam:${product.reference}`, reference: product.reference,
+      sourceUrl: product.sourceUrl, reason: "titulo-unidad-no-diferenciada"
+    }))
+  };
+  assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider(justified)));
+  assert.throws(() => validateCommercialExportFiles(filesForProvider({
+    ...base, exceptions: justified.exceptions
+  })), /Excepción comercial sin producto válido|Presentación de identidad comercial incoherente/);
+
+  const gomProduct = {
+    ...original, providerId: "gomariz", title: "Plataforma de tijera LGMG AS0812",
+    description_title: "Plataforma de tijera LGMG AS0812", spec: { Motor: "Eléctrico" }
+  };
+  const gomPlan: CommercialExportPlan = {
+    ...base, providerId: "gomariz", products: [gomProduct]
+  };
+  assert.throws(() => validateCommercialExportFiles(filesForProvider(gomPlan)), /Presentación de identidad comercial incoherente/);
+  assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider({
+    ...gomPlan, products: [{ ...gomProduct, title: "Plataforma de tijera eléctrica LGMG AS0812" }]
+  })));
+  assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider({
+    ...gomPlan, products: [{ ...gomProduct, title: "Camión cesta LGMG AS0812" }]
+  })));
+});
+
+test("rechaza alturas adulteradas aunque el manifiesto y los hashes se hayan recalculado", () => {
+  const base = planWithProduct();
+  const existing = base.products[0];
+  assert.ok(existing);
+  const valid = { ...existing,
+    title: "Plataforma sobre camión 25 m CTE ZED 25 HV FIB",
+    description_title: "Plataforma sobre camión 25 m CTE ZED 25 HV FIB",
+    description: "Plataforma de 25 metros de altura",
+    spec: { "Altura de trabajo (m)": "25 m" }
+  };
+  const source: CommercialExportPlan = { ...base, products: [valid] };
+  assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider(source)));
+  const changed = { ...valid, title: "Plataforma sobre camión 20 m CTE ZED 25 HV FIB" };
+  assert.throws(() => validateCommercialExportFiles(filesForProvider({ ...source, products: [changed] })),
+    /Altura comercial sin normalizar/);
+  const unresolved = { ...valid,
+    title: "Plataforma sobre camión 32 m CTE ZED 25 HV FIB",
+    spec: { "Altura de elevación (m)": "25 m" }
+  };
+  assert.throws(() => validateCommercialExportFiles(filesForProvider({ ...source, products: [unresolved] })),
+    /Discordancia de altura no declarada/);
+  const documented: CommercialExportPlan = {
+    ...source, products: [unresolved], exceptions: [{ identity: "gam:documented", reference: unresolved.reference,
+      sourceUrl: unresolved.sourceUrl, reason: "altura-titulo-resumen-discordante" }]
+  };
+  assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider(documented)));
+});
+
+
+test("bloquea años de fabricación contradictorios y exige justificar discrepancias frente a URL", () => {
+  const base = planWithProduct();
+  const original = base.products[0];
+  assert.ok(original);
+  const url = "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/6869-2008-genie-gs-3246";
+  const product = { ...original, reference: "6869", sourceUrl: url,
+    attributes: [{ attributeID: 117, value: 2016 }],
+    description_general: "Fabricada en el año 2008, esta plataforma es fiable." };
+  const plan: CommercialExportPlan = { ...base, products: [product] };
+  assert.throws(() => validateCommercialExportFiles(filesForProvider(plan)), /Año de fabricación contradictorio/);
+  const cleaned = { ...product, description_general: "Esta plataforma es fiable." };
+  const cleanedPlan: CommercialExportPlan = { ...plan, products: [cleaned] };
+  assert.throws(() => validateCommercialExportFiles(filesForProvider(cleanedPlan)), /Discrepancia de año no declarada/);
+  const issue = { identity: "gam:6869", reference: "6869", sourceUrl: url,
+    reason: "ano-url-atributo-discordante" };
+  const recognized: CommercialExportPlan = { ...cleanedPlan, exceptions: [issue] };
+  assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider(recognized)));
+  const corrected = { ...cleaned, attributes: [{ attributeID: 117, value: 2008 }] };
+  const unjustified: CommercialExportPlan = { ...recognized, products: [corrected] };
+  assert.throws(() => validateCommercialExportFiles(filesForProvider(unjustified)), /Excepción de año no justificada/);
+});
+
+
+test("rechaza excepciones de capacidad ausentes o inventadas aunque las huellas sean coherentes", () => {
+  const base = planWithProduct();
+  const product = base.products[0]!;
+  const contradictory = { ...product,
+    title: "Carretilla elevadora 3000 kg", spec: { "Capacidad de carga (kg)": "2500 kg" } };
+  assert.throws(() => validateCommercialExportFiles(filesForProvider({ ...base,
+    products: [contradictory] })), /Discrepancia de capacidad no declarada/);
+  const issue = { identity: "gam:ref:product-1", reference: product.reference,
+    sourceUrl: product.sourceUrl, reason: "capacidad-titulo-spec-discordante" };
+  const accepted = { ...base, products: [contradictory], exceptions: [issue] };
+  assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider(accepted)));
+  assert.throws(() => validateCommercialExportFiles(filesForProvider({ ...accepted,
+    products: [product] })), /Excepción de capacidad no justificada/);
+});
+
+test("rechaza excepciones de especificaciones expuestas o sin un código reconocido", () => {
+  const base = planWithProduct();
+  const product = base.products[0]!;
+  const issue = { identity: "gam:ref:product-1", reference: product.reference,
+    sourceUrl: product.sourceUrl, reason: "spec-residuo-hoja-calculo:Altura" };
+  assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider({ ...base, exceptions: [issue] })));
+  assert.throws(() => validateCommercialExportFiles(filesForProvider({ ...base,
+    exceptions: [issue], products: [{ ...product, spec: { Altura: "2 m" } }]
+  })), /Excepción técnica no justificada/);
+  assert.throws(() => validateCommercialExportFiles(filesForProvider({ ...base,
+    exceptions: [{ ...issue, reason: "spec-inventado:Altura" }]
+  })), /Excepción técnica no justificada/);
 });

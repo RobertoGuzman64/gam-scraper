@@ -7,6 +7,7 @@ import type { BrandLogoReference } from "../../../infrastructure/filesystem/lega
 import { planCommercialExport } from "../export-projection.js";
 import { projectCommercialPresentation } from "../presentation-projection.js";
 import { accreditCommercialPlan } from "../../diagnostics/commercial-accreditation.js";
+import { hasLoadCapacityDisagreement } from "../../validation/technical-specifications.js";
 
 const catalog: ImportCatalog = {
   categories: [
@@ -386,4 +387,163 @@ test("acredita resumen normalizado y detecta cualquier alteración comercial no 
   const broken = { ...product, description: "Capacidad 999 kg" };
   assert.ok(accreditCommercialPlan([entryWithSummary], { ...result, products: [broken] }, catalog, logos, null)
     .blocking.some((item) => item.reason === "presentacion-description-incompatible"));
+});
+
+
+test("anota la motorización acreditada de Gomariz sin inferirla de códigos o de camiones", () => {
+  const original: ProductRecord = {
+    ...source("MOT-1"), providerId: "gomariz", brand: "LGMG", model: "S0607E-2",
+    title: "Plataforma de tijera LGMG S0607E-2"
+  };
+  const withMotor: ImportCandidate = {
+    ...published(original), spec: { Motor: "Eléctrico" }
+  };
+  assert.equal(projectCommercialPresentation(original, withMotor, null).title,
+    "Plataforma de tijera eléctrica LGMG S0607E-2");
+  assert.equal(projectCommercialPresentation(original, withMotor, null).description_title,
+    "Plataforma de tijera eléctrica LGMG S0607E-2");
+  assert.deepEqual(projectCommercialPresentation(original, withMotor, null).spec, { Motor: "Eléctrico" });
+  assert.equal(projectCommercialPresentation(original, { ...withMotor, spec: { Motor: "Eléctrico, Gasolina" } }, null).title,
+    original.title);
+  const otherProvider: ProductRecord = { ...original, providerId: "gam" };
+  assert.equal(projectCommercialPresentation(otherProvider, { ...withMotor, providerId: "gam" }, null).title,
+    original.title);
+  const truck: ProductRecord = { ...original, title: "Camión cesta SOCAGE IVECO 35S14" };
+  assert.equal(projectCommercialPresentation(truck, { ...withMotor, title: truck.title }, null).title, truck.title);
+  const diesel: ProductRecord = { ...original, title: "Manipulador telescópico JCB 540-140", model: "540-140" };
+  assert.equal(projectCommercialPresentation(diesel, { ...withMotor, title: diesel.title, spec: { Motor: "Diésel" } }, null).title,
+    "Manipulador telescópico diésel JCB 540-140");
+  const existing = { ...original, title: "Plataforma de tijera eléctrica LGMG S0607E-2" };
+  assert.equal(projectCommercialPresentation(existing, { ...withMotor, title: existing.title }, null).title, existing.title);
+});
+
+test("reconoce la marca compuesta de Gomariz solo cuando ambas partes constan en el título", () => {
+  const original: ProductRecord = {
+    ...source("MOT-2"), providerId: "gomariz", brand: "Iveco Socage", model: "35S14",
+    title: "Camión cesta SOCAGE IVECO 35S14"
+  };
+  const item = projectCommercialPresentation(original, published(original), null);
+  assert.ok(item.metadata.tags.includes("iveco-socage"));
+  assert.ok(item.metadata.keywords.includes("35s14"));
+  assert.ok(!projectCommercialPresentation({ ...original, title: "Camión cesta SOCAGE 35S14" },
+    { ...published(original), title: "Camión cesta SOCAGE 35S14" }, null).metadata.tags.includes("iveco-socage"));
+});
+
+test("distingue unidades por año verificable y recurre a la referencia cuando el año coincide", () => {
+  const first = entry("U1");
+  const second = entry("U2");
+  const third = entry("U3");
+  const withYears: CommercialBaselineInput[] = [
+    { ...first, source: { ...first.source, year: "2020" } },
+    { ...second, source: { ...second.source, year: "2021" } },
+    { ...third, source: { ...third.source, year: "2021" } }
+  ];
+  const before = JSON.stringify(withYears);
+  const output = plan(withYears);
+  assert.deepEqual(output.products.map((item) => item.title), [
+    "JCB AB123 · Año 2020", "JCB AB123 · Año 2021 · Ref. U2", "JCB AB123 · Año 2021 · Ref. U3"
+  ]);
+  assert.deepEqual(output.products.map((item) => item.description_title), output.products.map((item) => item.title));
+  assert.equal(JSON.stringify(withYears), before);
+  assert.equal(accreditCommercialPlan(withYears, output, catalog, logos, null).summary.blocking, 0);
+  const reversed = plan([...withYears].reverse());
+  assert.deepEqual(new Map(reversed.products.map((item) => [item.reference, item.title])),
+    new Map(output.products.map((item) => [item.reference, item.title])));
+  const sameYear = withYears.map((item) => ({ ...item, source: { ...item.source, year: "2020" } }));
+  assert.deepEqual(plan(sameYear).products.map((item) => item.title), [
+    "JCB AB123 · Ref. U1", "JCB AB123 · Ref. U2", "JCB AB123 · Ref. U3"
+  ]);
+});
+
+test("la acreditación rechaza sufijos de unidad alterados y no admite títulos coincidentes reintroducidos", () => {
+  const inputs = [entry("R1"), entry("R2")];
+  const output = plan(inputs);
+  const first = output.products[0];
+  const second = output.products[1];
+  if (!first || !second) throw new Error("Falta una unidad de prueba");
+  assert.equal(output.summary.exported, 2);
+  const altered = { ...first, title: "JCB AB123 · Ref. R2" };
+  const audit = accreditCommercialPlan(inputs, { ...output, products: [altered, second] }, catalog, logos, null);
+  assert.ok(audit.blocking.some((item) => item.reason === "presentacion-title-incompatible"));
+  assert.ok(audit.pending.some((item) => item.reason === "titulo-unidad-no-diferenciada"));
+  assert.equal(accreditCommercialPlan(inputs, output, catalog, logos, null).summary.blocking, 0);
+});
+
+
+test("no atribuye motorización ausente ni cambia una que contradice el dato técnico", () => {
+  const original: ProductRecord = {
+    ...source("MOT-3"), providerId: "gomariz", model: "AR14J",
+    title: "Plataforma articulada diésel LGMG AR14J"
+  };
+  const technical = published(original);
+  assert.equal(projectCommercialPresentation(original, { ...technical, spec: { Motor: "Eléctrico" } }, null).title,
+    original.title);
+  assert.equal(projectCommercialPresentation(original, { ...technical, spec: {} }, null).title, original.title);
+});
+
+
+test("solo normaliza las dos capacidades comerciales respaldadas por modelo, spec y origen exactos", () => {
+  const evidence = [
+    {
+      reference: "1145", model: "MPC14", url: "https://online.gamrentals.com/es/transpaletas-yale/1145-transporte-facil-de-cargas-de-hasta-14-toneladas-yale-mpc14",
+      original: "Transpaleta YALE MPC14 2000Kg", nominal: "1400 KG", expected: "Transpaleta YALE MPC14 1400 kg",
+      general: "Descripción técnica sin capacidad discordante."
+    },
+    {
+      reference: "6837", model: "ERP25VL", url: "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-segunda-mano/6837-2015-yale-erp25vl",
+      original: "Carretilla elevadora eléctrica 3500 Kg YALE ERP25VL", nominal: "2500 KG",
+      expected: "Carretilla elevadora eléctrica 2500 kg YALE ERP25VL",
+      general: "La unidad cuenta con una capacidad de carga indicada de 3500 kg para labores de manutención."
+    }
+  ] as const;
+  for (const item of evidence) {
+    const original: ProductRecord = { ...source(item.reference), url: item.url,
+      brand: "YALE", model: item.model, title: item.original,
+      longDescription: item.general, specs: { Marca: "YALE", Modelo: item.model,
+        "Capacidad de carga (kg)": item.nominal } };
+    const technical = published(original);
+    const initial = projectCommercialPresentation(original, technical, "Carretillas");
+    assert.equal(initial.title, item.expected);
+    assert.equal(initial.description_title, item.expected);
+    assert.ok(!hasLoadCapacityDisagreement({ title: initial.title, spec: initial.spec }));
+    assert.equal(initial.spec["Capacidad de carga (kg)"], item.nominal);
+    if (item.reference === "6837") {
+      assert.match(initial.description_general ?? "", /capacidad de carga nominal de 2500 kg/u);
+      assert.doesNotMatch(initial.description_general ?? "", /3500 kg/u);
+    } else assert.equal(initial.description_general, item.general);
+    assert.deepEqual(projectCommercialPresentation(original, technical, "Carretillas"), initial);
+
+    const altered = { ...original, model: "OTRO" };
+    const unexpected = projectCommercialPresentation(altered, technical, "Carretillas");
+    assert.notEqual(unexpected.title, item.expected);
+    assert.ok(hasLoadCapacityDisagreement({ title: unexpected.title, spec: unexpected.spec }));
+    assert.equal(JSON.stringify(technical), JSON.stringify(published(original)));
+  }
+});
+
+
+test("la diferenciación parte del título corregido y no crea duplicados de capacidad", () => {
+  const original = source("6837");
+  const correctable: ProductRecord = { ...original, brand: "YALE", model: "ERP25VL", year: "2015",
+    reference: "6837", url: "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-segunda-mano/6837-2015-yale-erp25vl",
+    title: "Carretilla elevadora eléctrica 3500 Kg YALE ERP25VL",
+    longDescription: "Una carretilla con una capacidad de carga indicada de 3500 kg para manutención.",
+    specs: { Marca: "YALE", Modelo: "ERP25VL", "Capacidad de carga (kg)": "2500 KG" } };
+  const other: ProductRecord = { ...correctable, reference: "9998", year: "2018",
+    url: "https://example.org/venta/9998",
+    title: "Carretilla elevadora eléctrica 2500 kg YALE ERP25VL",
+    longDescription: "Modelo de capacidad nominal 2500 kg." };
+  const wrap = (record: ProductRecord): CommercialBaselineInput => {
+    const technical = published(record);
+    return { source: record, published: technical, mapped: { status: "ready", issues: [],
+      product: { ...technical, categorySellID: null, category: null, attributes: [] } } };
+  };
+  const output = plan([wrap(correctable), wrap(other)]);
+  assert.equal(output.products.length, 2);
+  assert.deepEqual(output.products.map((product) => product.title), [
+    "Carretilla elevadora eléctrica 2500 kg YALE ERP25VL · Año 2015",
+    "Carretilla elevadora eléctrica 2500 kg YALE ERP25VL · Año 2018"
+  ]);
+  assert.equal(output.exceptions.filter((issue) => issue.reason === "titulo-unidad-no-diferenciada").length, 0);
+  assert.equal(output.exceptions.filter((issue) => issue.reason === "capacidad-titulo-spec-discordante").length, 0);
 });

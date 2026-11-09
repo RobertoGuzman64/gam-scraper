@@ -6,8 +6,11 @@ import { buildProductIdentity } from "../../catalog/identity.js";
 import { decideCommercialCategory } from "./category-decision.js";
 import { isValidCommercialCategory } from "./category-projection.js";
 import { projectCommercialAttributes } from "./attribute-projection.js";
-import { commercialIdentityInTitle, commercialToken, projectCommercialPresentation } from "./presentation-projection.js";
+import { commercialBrandInTitle, commercialToken, projectCommercialPresentation } from "./presentation-projection.js";
+import { commercialUnitTitleSuffixes, unresolvedCommercialTitleCollisions } from "./unit-disambiguation.js";
 import { hasLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../validation/technical-specifications.js";
+import { assessCommercialHeight } from "../validation/height-consistency.js";
+import { assessCommercialYear } from "../validation/year-consistency.js";
 
 export type CommercialExportProduct = ImportCandidate & {
   readonly logoID: number | null;
@@ -50,7 +53,7 @@ const resolveLogo = (
   logos: readonly BrandLogoReference[]
 ): number | null => {
   const brand = source.brand?.trim();
-  if (!brand || (!commercialIdentityInTitle(published.title, brand) &&
+  if (!brand || (!commercialBrandInTitle(published.title, brand) &&
     (typeof published.spec["Marca"] !== "string" || commercialToken(published.spec["Marca"]) !== commercialToken(brand)))) {
     return null;
   }
@@ -67,6 +70,8 @@ export const planCommercialExport = (
     throw new Error("El companyID exige un perfil de entorno explícito y válido");
   }
   const categories = new Map(catalog.categories.map((item) => [item.id, item]));
+  const titleSuffixes = commercialUnitTitleSuffixes(inputs);
+  const identitiesByUrl = new Map<string, string>();
   const seen = new Set<string>();
   const products: CommercialExportProduct[] = [];
   const excluded: CommercialExportIssue[] = [];
@@ -88,6 +93,7 @@ export const planCommercialExport = (
     const identity = buildProductIdentity(source).key;
     if (seen.has(identity)) throw new Error(`Identidad comercial duplicada: ${identity}`);
     seen.add(identity);
+    identitiesByUrl.set(source.url, identity);
     const issue = (reason: string): CommercialExportIssue => ({ identity, reference: published.reference,
       sourceUrl: published.sourceUrl, reason });
     const decision = decideCommercialCategory(source, mapped.product.categorySellID);
@@ -112,11 +118,18 @@ export const planCommercialExport = (
       ...mapped.product, categorySellID: decision.categorySellID
     }, catalog);
     for (const invalid of accepted.issues) exceptions.push(issue(`atributo-${invalid.attributeID}:${invalid.reason}`));
-    const presentation = projectCommercialPresentation(source, published, category?.name ?? null);
+    const presentation = projectCommercialPresentation(source, published, category?.name ?? null,
+      titleSuffixes.get(published.sourceUrl) ?? "");
     for (const invalid of inspectTechnicalSpecifications(published.spec)) {
       exceptions.push(issue(`spec-${invalid.code}:${invalid.key}`));
     }
-    if (hasLoadCapacityDisagreement(published)) exceptions.push(issue("capacidad-titulo-spec-discordante"));
+    if (hasLoadCapacityDisagreement(presentation)) exceptions.push(issue("capacidad-titulo-spec-discordante"));
+    const height = assessCommercialHeight(presentation);
+    if (height.status === "possible-distinct-heights") exceptions.push(issue("alturas-concepto-distinto-por-acreditar"));
+    if (height.status === "unresolved") exceptions.push(issue("altura-titulo-resumen-discordante"));
+    const year = assessCommercialYear({ ...published, ...presentation, attributes: accepted.accepted });
+    if (year.inconsistentClaims.length > 0) exceptions.push(issue("ano-descripcion-atributo-discordante"));
+    if (year.urlAttributeDisagreement) exceptions.push(issue("ano-url-atributo-discordante"));
     const logoID = resolveLogo(source, published, logos);
     if (logoID !== null) withLogo += 1;
     if (published.price !== null) withPrice += 1;
@@ -131,6 +144,13 @@ export const planCommercialExport = (
     products.push({ ...published, ...presentation, categorySellID: decision.categorySellID,
       category: category?.name ?? null, attributes: accepted.accepted, logoID,
       ...(companyID === null ? {} : { companyID }) });
+  }
+  const unresolvedTitles = unresolvedCommercialTitleCollisions(products);
+  for (const product of products) {
+    if (unresolvedTitles.has(product.sourceUrl)) {
+      exceptions.push({ identity: identitiesByUrl.get(product.sourceUrl) ?? product.sourceUrl,
+        reference: product.reference, sourceUrl: product.sourceUrl, reason: "titulo-unidad-no-diferenciada" });
+    }
   }
   if (seen.size !== inputs.length || products.length + excluded.length !== inputs.length ||
     categorized + pendingCategory !== products.length) throw new Error("La derivación comercial ha perdido identidades");

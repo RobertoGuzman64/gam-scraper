@@ -200,3 +200,18 @@ test("audita por separado los resúmenes homogeneizados y conserva la descripci�
   assert.ok(audit.decisions.some((item) => item.shortPreview?.includes("16 m LGMG A14JE")));
   assert.equal(JSON.stringify(items), originals);
 });
+
+
+test("la auditoría utiliza la misma diferenciación por unidad que la exportación comercial", () => {
+  const first = source("UNIT-1");
+  const second = source("UNIT-2");
+  const items = [entry({ ...first, year: "2020" }, 29), entry({ ...second, year: "2021" }, 29)];
+  const report = analyzeCommercialPresentation(items);
+  assert.deepEqual(report.decisions.map((item) => item.title), [
+    "GENIE Z45/25J Plataforma articulada · Año 2020",
+    "GENIE Z45/25J Plataforma articulada · Año 2021"
+  ]);
+  assert.equal(report.titlesNormalized, 2);
+  assert.equal(report.descriptionTitlesNormalized, 2);
+  assert.equal(report.lostSpecifications, 0);
+});
