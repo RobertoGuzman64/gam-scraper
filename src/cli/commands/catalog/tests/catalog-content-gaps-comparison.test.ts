@@ -3,6 +3,7 @@ import test from "node:test";
 import type { DescriptionCoverage } from "../../../../catalog/diagnostics/description-coverage.js";
 import type { DescriptionPriorities } from "../../../../catalog/diagnostics/description-priorities.js";
 import type { SpecificationCoverage } from "../../../../catalog/diagnostics/specification-coverage.js";
+import type { PublishedTechnicalQuality } from "../../../../catalog/diagnostics/published-technical-quality.js";
 import type { TechnicalDensity } from "../../../../catalog/diagnostics/technical-density.js";
 import { cleanupBaseline, execute, executeBaseline } from "./catalog-content-gaps-fixtures.js";
 import { hasCompleteCatalogAuditEvidence, hasUnresolvedCatalogAuditContracts } from "../../../../catalog/diagnostics/audit-closure.js";
@@ -121,16 +122,21 @@ const isComparisonReport = (value: unknown): value is ComparisonReport => {
 
 type SpecificationComparisonReport = ComparisonReport & {
   readonly technicalSpecs: SpecificationCoverage;
+  readonly technicalSemantics: PublishedTechnicalQuality;
 };
 const isSpecificationComparisonReport = (value: unknown): value is SpecificationComparisonReport =>
   isComparisonReport(value) && "technicalSpecs" in value && typeof value.technicalSpecs === "object" &&
   value.technicalSpecs !== null && "totals" in value.technicalSpecs && "cases" in value.technicalSpecs &&
-  Array.isArray(value.technicalSpecs.cases);
+  Array.isArray(value.technicalSpecs.cases) && "technicalSemantics" in value &&
+  typeof value.technicalSemantics === "object" && value.technicalSemantics !== null &&
+  "totals" in value.technicalSemantics && "cases" in value.technicalSemantics;
 
 test("huecos --comparar --specs diferencia cobertura técnica sin alterar el informe editorial", async () => {
   const comparison = await readBaselineComparison();
   assert.ok(isSpecificationComparisonReport(comparison));
   assert.equal(comparison.coverage.totals.products, comparison.technicalSpecs.totals.products);
+  assert.equal(comparison.technicalSemantics.totals.products, comparison.technicalSpecs.totals.products);
+  assert.equal(comparison.technicalSemantics.totals.findings, comparison.technicalSemantics.cases.length);
   assert.deepEqual(comparison.coverage.totals.pending, { description: 0, description_general: 0 });
   assert.equal(comparison.priorities.totals.pending, comparison.priorities.pending.length);
   assert.equal(comparison.priorities.totals.pendingByStage.P0, 0);

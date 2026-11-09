@@ -32,7 +32,7 @@ const readCommercialManifestInZip = async (path: string): Promise<string> => {
 
 export const runCommercialAudit = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    printReportLine("Uso: npm run auditar:comercial -- [--json|--arbol|--pendientes|--revision|--muestras|--atributos|--atributos-revision|--atributos-vacios|--atributo=ID|--contenido|--contenido-revision|--coherencia|--exportacion|--acreditacion|--acreditacion-json|--detalle|--verificar=RUTA [--informe=ZIP]|--ficha=REFERENCIA]\nAudita propuestas y acredita la integridad comercial contra publicaciones técnicas; --verificar compara archivos ya exportados con el corte vigente, sin modificar datos.");
+    printReportLine("Uso: npm run auditar:comercial -- [--json|--arbol|--pendientes|--revision|--muestras|--atributos|--atributos-revision|--atributos-vacios|--atributo=ID|--contenido|--contenido-revision|--coherencia|--exportacion|--acreditacion|--acreditacion-json|--detalle|--verificar=RUTA [--informe=ZIP]|--ficha=REFERENCIA]\nAudita propuestas y acredita la integridad comercial contra publicaciones técnicas; --revision prioriza hallazgos y sugiere verificaciones sin cambiar productos; --verificar compara archivos ya exportados con el corte vigente, sin modificar datos.");
     return;
   }
   const verifyPath = args.find((arg) => arg.startsWith("--verificar="))?.match(/^--verificar=(.+)$/u)?.[1];

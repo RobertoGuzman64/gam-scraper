@@ -41,6 +41,21 @@ test("la auditoría comercial conserva informes, opciones y selección por ficha
   assert.equal(render("--exportacion").length >= report.providers.length, true);
   assert.equal(render("--contenido").length >= report.providers.length * 3, true);
   assert.equal(render("--contenido-revision").length >= render("--contenido").length, true);
+  const outputFindings = report.providers.flatMap((provider) => provider.outputConsistencyAudit.findings);
+  assert.ok(outputFindings.some((item) => item.reason === "modelo-variante-titulo-contradictorio" &&
+    item.reference === "4650"));
+  assert.ok(render("--contenido-revision").some((line) => line.includes("modelo-variante-titulo-contradictorio")));
+  const coverage = report.providers.flatMap((provider) => provider.crossCoverageAudit.findings);
+  assert.ok(coverage.some((item) => item.area === "imagenes" && item.reason === "imagen-de-otro-modelo"));
+  assert.ok(coverage.some((item) => item.area === "editorial" && item.reason === "general_repetida_entre_modelos"));
+  assert.ok(render("--contenido-revision").some((line) => line.includes("Cobertura transversal:")));
+  assert.ok(render("--contenido-revision").some((line) => line.includes("imagen-de-otro-modelo")));
+  assert.ok(render("--revision").some((line) => line.includes("PRIORIDADES GAM")));
+  assert.ok(render("--revision").some((line) => line.includes("CONTROLADA | especificaciones-incompatibles-filtradas")));
+  assert.ok(render("--revision").some((line) => line.includes("Evidencia: 4650 | title |")));
+  assert.ok(render("--contenido-revision").some((line) => line.includes("protecciones controladas")));
+  assert.ok(report.providers.some((provider) => provider.interventionPriorities.pending.some((priority) =>
+    priority.source === "salida" && priority.reason === "modelo-variante-titulo-contradictorio")));
   assert.equal(render("--atributos").length >= report.providers.length, true);
   assert.equal(render("--atributos-revision").length >= render("--atributos").length, true);
   assert.equal(render("--atributos-vacios").length >= report.providers.length, true);
@@ -71,6 +86,7 @@ test("el comando conserva ayuda y rechazo de opciones inválidas", async () => {
     console.log = previous;
   }
   assert.match(output.join("\n"), /--acreditacion-json/);
+  assert.match(output.join("\n"), /--revision prioriza hallazgos/);
   await assert.rejects(() => runCommercialAudit(["--desconocida"]), /Opciones inválidas/);
   await assert.rejects(() => runCommercialAudit(["--json", "--pendientes"]), /Opciones inválidas/);
   await assert.rejects(() => runCommercialAudit(["--atributo=9007199254740992"]), /Opciones inválidas/);

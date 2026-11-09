@@ -2,6 +2,12 @@ import { analyzeCommercialBaseline } from "../diagnostics/commercial-baseline.js
 import type { CommercialBaseline } from "../diagnostics/commercial-baseline.js";
 import { analyzeCommercialAttributes } from "../diagnostics/commercial-attributes.js";
 import { analyzeCommercialPresentation } from "../diagnostics/commercial-presentation.js";
+import { analyzeCommercialOutputConsistency } from "../diagnostics/commercial-output-consistency.js";
+import { analyzeCommercialCrossCoverage } from "../diagnostics/commercial-cross-coverage.js";
+import { prioritizeCommercialInterventions } from "../diagnostics/commercial-intervention-priorities.js";
+import type { CommercialInterventionPriorities } from "../diagnostics/commercial-intervention-priorities.js";
+import type { CommercialCrossCoverageAudit } from "../diagnostics/commercial-cross-coverage.js";
+import type { CommercialOutputConsistencyAudit } from "../diagnostics/commercial-output-consistency.js";
 import type { CommercialAttributeAudit } from "../diagnostics/commercial-attributes.js";
 import type { CommercialPresentationAudit } from "../diagnostics/commercial-presentation.js";
 import { loadImportCatalog } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
@@ -18,6 +24,9 @@ export type CommercialAuditProvider = {
   readonly baseline: CommercialBaseline;
   readonly attributeAudit: CommercialAttributeAudit;
   readonly presentationAudit: CommercialPresentationAudit;
+  readonly outputConsistencyAudit: CommercialOutputConsistencyAudit;
+  readonly crossCoverageAudit: CommercialCrossCoverageAudit;
+  readonly interventionPriorities: CommercialInterventionPriorities;
   readonly accreditation: CommercialAccreditation;
   readonly exportAudit: {
     readonly summary: CommercialExportPlan["summary"];
@@ -40,11 +49,17 @@ export const auditCommercialCatalog = async (rootDirectory: string): Promise<Com
       references.brandLogos, null, null);
     const reasons = new Map<string, number>();
     for (const item of projected.exceptions) reasons.set(item.reason, (reasons.get(item.reason) ?? 0) + 1);
+    const baseline = analyzeCommercialBaseline(entries);
+    const attributeAudit = analyzeCommercialAttributes(entries, catalog);
+    const presentationAudit = analyzeCommercialPresentation(entries);
+    const outputConsistencyAudit = analyzeCommercialOutputConsistency(projected.products);
+    const crossCoverageAudit = analyzeCommercialCrossCoverage(entries.map(({ published }) => published), projected.products);
+    const accreditation = accreditCommercialPlan(entries, projected, catalog, references.brandLogos, null);
     return {
-      publicationSha256, originalProducts, baseline: analyzeCommercialBaseline(entries),
-      attributeAudit: analyzeCommercialAttributes(entries, catalog),
-      presentationAudit: analyzeCommercialPresentation(entries),
-      accreditation: accreditCommercialPlan(entries, projected, catalog, references.brandLogos, null),
+      publicationSha256, originalProducts, baseline, attributeAudit, presentationAudit,
+      outputConsistencyAudit, crossCoverageAudit, accreditation,
+      interventionPriorities: prioritizeCommercialInterventions({ accreditation, attributeAudit, presentationAudit,
+        outputConsistencyAudit, crossCoverageAudit }),
       exportAudit: { summary: projected.summary, excluded: projected.excluded.length,
         exceptions: projected.exceptions.length, reasons: [...reasons].map(([reason, affected]) => ({ reason, affected }))
           .sort((a, b) => b.affected - a.affected || a.reason.localeCompare(b.reason, "es")) }

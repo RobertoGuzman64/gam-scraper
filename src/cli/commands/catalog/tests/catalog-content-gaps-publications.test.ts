@@ -20,12 +20,17 @@ test("huecos audita las publicaciones finales acreditadas sin atribuirles origin
   assert.equal(report.technicalDensity.totals.products,
     report.technicalDensity.providers.reduce((total, provider) => total + provider.products, 0));
   assert.equal(report.technicalDensity.totals.sparse, report.technicalDensity.cases.length);
+  assert.equal(report.technicalSemantics.totals.products, report.technicalDensity.totals.products);
+  assert.equal(report.technicalSemantics.totals.findings, report.technicalSemantics.cases.length);
+  assert.equal(report.technicalSemantics.totals.affectedProducts,
+    new Set(report.technicalSemantics.cases.map((issue) => issue.identity)).size);
   assert.ok(report.editorial.longestGeneral.every((item, index, items) =>
     index === 0 || (items[index - 1]?.words ?? 0) >= item.words));
   const text = await execute(["--publicacion", publications[2] ?? "", "--top", "1", "--detalle"]);
   assert.match(text, /finales [1-9]\d*/);
   assert.match(text, /DESCRIPCIONES GENERALES MÁS LARGAS/);
   assert.match(text, /DENSIDAD TÉCNICA \| PRIORIDAD EDITORIAL/);
+  assert.match(text, /VALORES TÉCNICOS \| fichas/);
   await assert.rejects(execute(["--catalogo", gam, "--publicacion", publications[0] ?? ""]), /modos alternativos/);
   await assert.rejects(execute(["--publicacion", publications[0] ?? "", "--publicacion", publications[0] ?? ""]), /Proveedor duplicado/);
 });
@@ -107,6 +112,10 @@ type EditorialReport = {
     readonly providers: readonly { readonly products: number }[];
     readonly cases: readonly unknown[];
   };
+  readonly technicalSemantics: {
+    readonly totals: { readonly products: number; readonly affectedProducts: number; readonly findings: number };
+    readonly cases: readonly { readonly identity: string }[];
+  };
   readonly editorial: {
     readonly providers: readonly { readonly total: number }[];
     readonly patterns: readonly { readonly code: string; readonly providerId: string }[];
@@ -118,7 +127,10 @@ const isEditorialReport = (value: unknown): value is EditorialReport => {
     typeof value.editorial !== "object" || value.editorial === null ||
     !('provenance' in value) || typeof value.provenance !== "object" || value.provenance === null) return false;
   const editorial = value.editorial;
-  return 'technicalDensity' in value && typeof value.technicalDensity === 'object' &&
+  return 'technicalSemantics' in value && typeof value.technicalSemantics === 'object' &&
+    value.technicalSemantics !== null && 'totals' in value.technicalSemantics &&
+    'cases' in value.technicalSemantics &&
+    'technicalDensity' in value && typeof value.technicalDensity === 'object' &&
     value.technicalDensity !== null && 'totals' in value.technicalDensity &&
     'providers' in value.technicalDensity && 'cases' in value.technicalDensity &&
     'providers' in editorial && Array.isArray(editorial.providers) &&

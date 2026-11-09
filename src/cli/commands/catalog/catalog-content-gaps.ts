@@ -26,6 +26,8 @@ import { analyzeTechnicalDensity } from "../../../catalog/diagnostics/technical-
 import { formatTechnicalDensityReport } from "./technical-density-report.js";
 import { analyzeTitleQuality } from "../../../catalog/diagnostics/title-quality.js";
 import { formatTitleQualityReport } from "./title-quality-report.js";
+import { analyzePublishedTechnicalQuality } from "../../../catalog/diagnostics/published-technical-quality.js";
+import { formatPublishedTechnicalQualityReport } from "./published-technical-quality-report.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 
@@ -43,12 +45,14 @@ const reportPublications = async (paths: readonly string[], options: CommandOpti
   })) };
   const editorial = analyzePublishedEditorialQuality(products);
   const technicalDensity = analyzeTechnicalDensity(products);
+  const technicalSemantics = analyzePublishedTechnicalQuality(products);
   if (options.json) {
-    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, editorial, technicalDensity }, null, 2));
+    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, editorial, technicalDensity, technicalSemantics }, null, 2));
   } else {
-    printReportLine(`HUECOS | publicaciones acreditadas (${publications.map((item) => item.providerId).join(", ")}) | finales ${products.length} | diagnóstico exclusivamente editorial`);
+    printReportLine(`HUECOS | publicaciones acreditadas (${publications.map((item) => item.providerId).join(", ")}) | finales ${products.length} | diagnóstico editorial y semántico técnico`);
     printEditorial(editorial, options.limit, options.detailed);
     for (const line of formatTechnicalDensityReport(technicalDensity, options.limit, options.detailed)) printReportLine(line);
+    for (const line of formatPublishedTechnicalQualityReport(technicalSemantics, options.limit, options.detailed)) printReportLine(line);
   }
 };
 
@@ -95,8 +99,9 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
   const technicalDensity = analyzeTechnicalDensity(products);
   const priorities = analyzeDescriptionPriorities(inputs, editorial, editorialPrepared);
   const technicalSpecs = options.specs ? analyzeSpecificationCoverage(inputs) : null;
+  const technicalSemantics = options.specs ? analyzePublishedTechnicalQuality(products) : null;
   if (options.json) {
-    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, coverage, editorial, editorialPrepared, priorities, technicalDensity, ...(technicalSpecs ? { technicalSpecs } : {}) }, null, 2));
+    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, coverage, editorial, editorialPrepared, priorities, technicalDensity, ...(technicalSpecs ? { technicalSpecs, technicalSemantics } : {}) }, null, 2));
   } else {
     printReportLine(`HUECOS | publicaciones finales ${coverage.totals.products} · comparación con preparación actual · solo lectura`);
     printCommandSection("DESCRIPCIONES · P0");
@@ -108,6 +113,7 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
     if (technicalSpecs) {
       printCommandSection("ESPECIFICACIONES Y CIERRE AUDITOR");
       for (const line of formatSpecificationCoverageReport(technicalSpecs, options.limit, options.detailed)) printReportLine(line);
+      if (technicalSemantics) for (const line of formatPublishedTechnicalQualityReport(technicalSemantics, options.limit, options.detailed)) printReportLine(line);
       for (const line of formatCatalogAuditClosureReport(coverage, priorities, technicalSpecs)) printReportLine(line);
     }
   }
@@ -115,7 +121,7 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
 
 export const runCatalogContentGaps = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    printReportLine("Uso: npm run huecos -- [--comparar | --finales | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--detalle] [--json] [--specs] [--titulos]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, comparación de publicaciones acreditadas frente a preparación actual. --comparar fuerza esa comparación. --finales analiza solo las publicaciones acreditadas. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. --comparar --specs compara las claves técnicas del origen canónico, preparación y publicación; las ausencias familiares no son atributos obligatorios. --comparar --titulos analiza señales de títulos técnicos en publicaciones y preparación actual, sin modificar fichas.");
+    printReportLine("Uso: npm run huecos -- [--comparar | --finales | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--detalle] [--json] [--specs] [--titulos]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, comparación de publicaciones acreditadas frente a preparación actual. --comparar fuerza esa comparación. --finales analiza solo las publicaciones acreditadas. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. --finales incluye la auditoría semántica de valores técnicos publicados; --comparar --specs compara las claves técnicas del origen canónico, preparación y publicación, además de auditar los valores finales; las ausencias familiares no son atributos obligatorios. --comparar --titulos analiza señales de títulos técnicos en publicaciones y preparación actual, sin modificar fichas.");
     return;
   }
   const options = readContentGapOptions(args);

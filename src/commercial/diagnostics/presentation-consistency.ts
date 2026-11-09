@@ -27,7 +27,7 @@ const variant = (value: string): readonly [string, string] | null => {
   return match ? [match[1] ?? "", match[2]?.toUpperCase() ?? ""] : null;
 };
 
-const conflictingModel = (product: ImportCandidate): boolean => {
+export const hasConflictingModelVariant = (product: Pick<ImportCandidate, "providerId" | "title" | "spec">): boolean => {
   if (product.providerId !== "gam" || !product.title) return false;
   const title = variant(product.title);
   const spec = variant(String(product.spec.Modelo ?? ""));
@@ -75,7 +75,7 @@ export const analyzePresentationConsistency = (
     if (/\b4[.,]30\s*mm\b/iu.test(`${product.description ?? ""} ${product.description_general ?? ""}`)) {
       add(product, "description", "altura-editorial-malformada", "defecto");
     }
-    if (conflictingModel(product)) add(product, "title", "modelo-de-variante-contradictorio", "revisar");
+    if (hasConflictingModelVariant(product)) add(product, "title", "modelo-de-variante-contradictorio", "revisar");
     if (lacksCapacityContext(product)) add(product, "spec", "capacidad-no-cualificada-en-campo", "revisar");
   }
   return { products: products.length,

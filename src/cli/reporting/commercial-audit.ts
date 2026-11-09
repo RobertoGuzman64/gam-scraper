@@ -1,5 +1,25 @@
 import type { CommercialAudit } from "../../commercial/export/commercial-audit.js";
+import type { CommercialInterventionPriorities } from "../../commercial/diagnostics/commercial-intervention-priorities.js";
 import { printCommandHeader, printCommandProvider, printCommandSection, printCommandResult, printCommandWarning, printReportLine } from "./terminal.js";
+
+const printInterventionPriorities = (
+  providerId: string, report: CommercialInterventionPriorities, detailed: boolean
+): void => {
+  printReportLine(`  PRIORIDADES ${providerId.toUpperCase()} | grupos pendientes ${report.pending.length} | protecciones controladas ${report.controlled.length}`);
+  for (const item of report.pending) {
+    printReportLine(`    ${item.priority.toUpperCase()} | ${item.source} | ${item.reason} | señales ${item.affected}`);
+    printReportLine(`      Revisar: ${item.responsible}`);
+    printReportLine(`      Acción: ${item.action}`);
+    if (detailed) {
+      for (const url of item.examples) printReportLine(`      Caso: ${url}`);
+      for (const evidence of item.evidence) printReportLine(`      Evidencia: ${evidence}`);
+    }
+  }
+  for (const item of report.controlled) {
+    printReportLine(`    CONTROLADA | ${item.reason} | señales ${item.affected} | ${item.action}`);
+    if (detailed) for (const url of item.examples) printReportLine(`      Caso: ${url}`);
+  }
+};
 
 export const printCommercialAuditReport = (
   report: CommercialAudit, mode: string | undefined, attributeId: string | undefined, productReference: string | undefined
@@ -61,13 +81,26 @@ export const printCommercialAuditReport = (
     return;
   }
   if (mode === "--contenido" || mode === "--contenido-revision") {
-    for (const { baseline, presentationAudit: audit } of report.providers) {
+    for (const { baseline, presentationAudit: audit, outputConsistencyAudit, crossCoverageAudit, interventionPriorities } of report.providers) {
       printReportLine(`${baseline.providerId.toUpperCase()} | elegibles ${audit.eligible} | excluidos ${audit.excluded} | títulos ${audit.withTitle} | cortos ${audit.withShort} | generales ${audit.withGeneral} | imágenes ${audit.withImage} | metadata ${audit.withMetadata}`);
       printReportLine(`  Metadatos: categoría ${audit.metadataWithCategory} | marca acreditada ${audit.metadataWithBrand} | modelo acreditado ${audit.metadataWithModel} | títulos depurados ${audit.titlesNormalized} | subtítulos depurados ${audit.descriptionTitlesNormalized}`);
       printReportLine(`  Preservación: resumen modificado ${audit.changedShort} | general modificada ${audit.changedGeneral} | imágenes perdidas ${audit.lostImages} | specs perdidas ${audit.lostSpecifications}`);
       for (const signal of audit.signals) {
         printReportLine(`    CONTENIDO ${signal.reason}: ${signal.affected}`);
         if (mode === "--contenido-revision") for (const url of signal.examples) printReportLine(`      ${url}`);
+      }
+      if (mode === "--contenido-revision") {
+        printReportLine(`  Coherencia independiente de salida: ${outputConsistencyAudit.products} productos · ${outputConsistencyAudit.findings.length} señales para revisar`);
+        for (const signal of outputConsistencyAudit.signals) {
+          printReportLine(`    REVISAR ${signal.reason}: ${signal.affected}`);
+          for (const url of signal.examples) printReportLine(`      ${url}`);
+        }
+        printReportLine(`  Cobertura transversal: ${crossCoverageAudit.products} productos · ${crossCoverageAudit.findings.length} señales editoriales, de identidad e imágenes`);
+        for (const signal of crossCoverageAudit.signals) {
+          printReportLine(`    REVISAR ${signal.area} | ${signal.reason} | ${signal.origin}: ${signal.affected}`);
+          for (const url of signal.examples) printReportLine(`      ${url}`);
+        }
+        printInterventionPriorities(baseline.providerId, interventionPriorities, true);
       }
     }
     return;
@@ -137,12 +170,13 @@ export const printCommercialAuditReport = (
     return;
   }
   if (mode === "--revision") {
-    for (const { baseline } of report.providers) {
+    for (const { baseline, interventionPriorities } of report.providers) {
       printReportLine(`${baseline.providerId.toUpperCase()} | ${baseline.categoryAudit.pending} categorías por resolver`);
       for (const group of baseline.pendingCategoryFamilies) {
         printReportLine(`  ${group.sourceCategory}: ${group.affected}`);
         for (const sample of group.examples) printReportLine(`    ${sample.reference ?? sample.sourceUrl} | ${sample.sourceUrl}`);
       }
+      printInterventionPriorities(baseline.providerId, interventionPriorities, true);
     }
     return;
   }
