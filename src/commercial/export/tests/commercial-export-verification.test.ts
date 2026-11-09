@@ -199,6 +199,106 @@ test("comprueba que los recuentos se derivan del contenido aunque las huellas se
   })), /Totales o procedencia/);
 });
 
+test("el preflight del paquete rechaza especificaciones peligrosas aunque el manifiesto tenga hashes correctos", () => {
+  const plan = planWithProduct();
+  const product = plan.products[0];
+  assert.ok(product);
+  assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider(plan)));
+  for (const invalid of [
+    { "Altura Plataforma": "6085 metros" },
+    { "Altura Plataforma": "24 V / 400 Ah" },
+    { "Capacidad de la batería": "1000mm" },
+    { "Altura de elevación (mm)": "#VALUE! mm" }
+  ]) {
+    const altered = { ...plan, products: [{ ...product, spec: invalid }] };
+    assert.throws(() => validateCommercialExportFiles(filesForProvider(altered)), /Totales o procedencia/);
+  }
+});
+
+test("rechaza contratos comerciales adulterados aunque los hashes y contadores coincidan", () => {
+  const base = planWithProduct();
+  const original = base.products[0];
+  assert.ok(original);
+  const tampered: readonly Record<string, unknown>[] = [
+    { title: 42 },
+    { sourceUrl: "not-a-url" },
+    { condition: "Usado" },
+    { category: null },
+    { metadata: { ...original.metadata, featured: true } },
+    { metadata: { ...original.metadata, tags: ["maquinaria", "maquinaria"] } },
+    { metadata: { ...original.metadata, keywords: ["Oferta Especial"] } },
+    { metadata: { ...original.metadata, unexpected: true } },
+    { attributes: [{ attributeID: 1, value: 42 }, { attributeID: 1, value: 50 }] },
+    { attributes: [{ attributeID: 1, value: "" }] },
+    { images: ["file:///etc/passwd"] },
+    { image: "https://example.com/other.png" },
+    { spec: { Invalida: { value: 50 } } },
+    { extraField: "not-allowed" }
+  ];
+  for (const change of tampered) {
+    const product = Object.assign({}, original, change);
+    const candidate = { ...base, products: [product] };
+    assert.throws(() => validateCommercialExportFiles(filesForProvider(candidate)),
+      /Totales o procedencia/, JSON.stringify(change));
+  }
+});
+
+test("rechaza identidades repetidas y excepciones ajenas aunque coincidan los totales", () => {
+  const base = planWithProduct();
+  const first = base.products[0];
+  assert.ok(first);
+  const repeated: CommercialExportPlan = {
+    ...base, total: 2, products: [first, first],
+    summary: { ...base.summary, exported: 2, categorized: 2, attributes: 2, withLogo: 2, withPrice: 2 }
+  };
+  assert.throws(() => validateCommercialExportFiles(filesForProvider(repeated)), /Identidades comerciales duplicadas/);
+
+  const original = emptyPlan();
+  const excluded: CommercialExportPlan = {
+    ...original, total: 2,
+    excluded: [
+      { identity: "gam:lot-1", reference: "lot", sourceUrl: "https://example.com/lot", reason: "lote" },
+      { identity: "gam:lot-2", reference: "lot", sourceUrl: "https://example.com/lot", reason: "lote" }
+    ],
+    summary: { ...original.summary, excludedLots: 2 }
+  };
+  assert.throws(() => validateCommercialExportFiles(filesForProvider(excluded)), /Identidades excluidas duplicadas/);
+
+  const sameProductExcluded: CommercialExportPlan = {
+    ...base, total: 2, excluded: [{ identity: "gam:excluded", reference: first.reference,
+      sourceUrl: first.sourceUrl, reason: "lote" }],
+    summary: { ...base.summary, excludedLots: 1 }
+  };
+  assert.throws(() => validateCommercialExportFiles(filesForProvider(sameProductExcluded)), /Identidades excluidas duplicadas/);
+
+  const orphanException: CommercialExportPlan = {
+    ...base, exceptions: [{ identity: "gam:unknown", reference: "unknown",
+      sourceUrl: "https://example.com/unknown", reason: "spec-residuo-hoja-calculo:Altura" }]
+  };
+  assert.throws(() => validateCommercialExportFiles(filesForProvider(orphanException)), /Excepción comercial sin producto válido/);
+});
+
+test("acredita el contrato real de los tres proveedores y la identidad de cada unidad", async () => {
+  const files = await currentCommercialFiles();
+  validateCommercialExportFiles(files);
+  const actual = files.filter((entry) => entry.name !== "commercial-manifest.json");
+  assert.deepEqual(actual.map((entry) => entry.name).sort(), [
+    "gam-commercial.json", "gomariz-commercial.json", "mercaeleva-commercial.json"
+  ]);
+  for (const file of actual) {
+    const plan: unknown = JSON.parse(file.content);
+    assert.ok(isRecord(plan) && Array.isArray(plan.products) && Array.isArray(plan.excluded));
+    assert.ok(plan.products.length > 0);
+    assert.equal(plan.products.length + plan.excluded.length, plan.total);
+    const sourceUrls = plan.products.map((product: unknown) => {
+      assert.ok(isRecord(product) && typeof product.sourceUrl === "string" && typeof product.title === "string");
+      assert.ok(product.title.trim());
+      return product.sourceUrl;
+    });
+    assert.equal(new Set(sourceUrls).size, sourceUrls.length);
+  }
+});
+
 test("rechaza exclusiones incoherentes, aunque los totales del manifiesto coincidan", () => {
   const original = emptyPlan();
   const valid: CommercialExportPlan = {

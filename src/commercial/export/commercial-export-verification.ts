@@ -6,6 +6,7 @@ import { loadImportCatalogSnapshot } from "../../infrastructure/filesystem/legac
 import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { discoverAccreditedPublications, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { buildCommercialExportFiles, type CommercialExportFile } from "./commercial-export.js";
+import { isCommercialReceiverProduct } from "../validation/commercial-receiver-product.js";
 
 export type CommercialExportVerification = {
   readonly files: number;
@@ -33,18 +34,9 @@ const inspectProductTotals = (
   let withPrice = 0;
   let withCompany = 0;
   for (const product of products) {
-    if (!isRecord(product) || product.providerId !== providerId ||
-      typeof product.sourceUrl !== "string" ||
-      (typeof product.reference !== "string" && product.reference !== null) ||
-      (product.categorySellID !== null && !validIdentifier(product.categorySellID)) ||
-      (product.logoID !== null && !validIdentifier(product.logoID)) ||
-      (product.price !== null && (typeof product.price !== "number" ||
-        !Number.isFinite(product.price) || product.price < 0)) ||
-      (environment === null ? product.companyID !== undefined : !validIdentifier(product.companyID)) ||
-      !Array.isArray(product.attributes) || product.attributes.some((attribute: unknown) =>
-        !isRecord(attribute) || !validIdentifier(attribute.attributeID) ||
-        !(typeof attribute.value === "string" || typeof attribute.value === "boolean" ||
-          (typeof attribute.value === "number" && Number.isFinite(attribute.value))))) return null;
+    if (!isCommercialReceiverProduct(product, providerId,
+      environment === "develop" || environment === "production" ? environment : null) ||
+      !isRecord(product) || !Array.isArray(product.attributes)) return null;
     if (product.categorySellID === null) pendingCategory += 1;
     else categorized += 1;
     if (product.logoID !== null) withLogo += 1;
@@ -125,6 +117,31 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
       plan.products.length !== provider.exported || plan.excluded.length !== provider.excluded ||
       plan.exceptions.length !== provider.exceptions) {
       throw new Error(`Totales o procedencia incoherentes para el proveedor ${provider.providerId}`);
+    }
+    const productUrls = new Set<string>();
+    for (const product of plan.products) {
+      if (!isRecord(product) || typeof product.sourceUrl !== "string" || productUrls.has(product.sourceUrl)) {
+        throw new Error(`Identidades comerciales duplicadas o inválidas para el proveedor ${provider.providerId}`);
+      }
+      productUrls.add(product.sourceUrl);
+    }
+    const exclusionUrls = new Set<string>();
+    for (const exclusion of plan.excluded) {
+      if (!isRecord(exclusion) || typeof exclusion.identity !== "string" || !exclusion.identity.trim() ||
+        typeof exclusion.sourceUrl !== "string" || !exclusion.sourceUrl.trim() ||
+        (exclusion.reference !== null && typeof exclusion.reference !== "string") ||
+        productUrls.has(exclusion.sourceUrl) || exclusionUrls.has(exclusion.sourceUrl)) {
+        throw new Error(`Identidades excluidas duplicadas o inválidas para el proveedor ${provider.providerId}`);
+      }
+      exclusionUrls.add(exclusion.sourceUrl);
+    }
+    for (const exception of plan.exceptions) {
+      if (!isRecord(exception) || typeof exception.identity !== "string" || !exception.identity.trim() ||
+        typeof exception.reason !== "string" || !exception.reason.trim() ||
+        typeof exception.sourceUrl !== "string" || !productUrls.has(exception.sourceUrl) ||
+        (exception.reference !== null && typeof exception.reference !== "string")) {
+        throw new Error(`Excepción comercial sin producto válido para el proveedor ${provider.providerId}`);
+      }
     }
     const summary = plan.summary;
     const productTotals = inspectProductTotals(plan.products, provider.providerId, plan.environment);

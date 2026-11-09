@@ -10,6 +10,8 @@ import { projectCommercialAttributes } from "../projection/attribute-projection.
 import { commercialToken, projectCommercialPresentation } from "../projection/presentation-projection.js";
 import { decideCommercialAttributes } from "../projection/attribute-decision.js";
 import { observeCommercialAttributes } from "../projection/attribute-observation.js";
+import { hasLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../validation/technical-specifications.js";
+import { projectPresentableSpecifications } from "../projection/spec-projection.js";
 
 export type CommercialAccreditationDifference = {
   readonly field: string;
@@ -93,7 +95,7 @@ const sampleCategories = (decisions: readonly CommercialAccreditationDecision[])
 };
 
 const preservedFields = ["providerId", "sourceUrl", "reference", "externalReference", "condition", "price",
-  "description", "description_general", "image", "images", "spec"] as const;
+  "description_general", "image", "images"] as const;
 
 const verifyProduct = (
   input: CommercialBaselineInput, product: CommercialExportProduct, catalog: ImportCatalog,
@@ -101,6 +103,16 @@ const verifyProduct = (
   blocking: string[], pending: string[], differences: CommercialAccreditationDifference[]
 ): void => {
   const { source, published, mapped } = input;
+  const presentable = projectPresentableSpecifications(published.spec);
+  if (!isDeepStrictEqual(product.spec, presentable)) {
+    differences.push({ field: "spec", status: "changed" });
+    blocking.push("campo-spec-changed");
+  } else if (!isDeepStrictEqual(published.spec, presentable)) {
+    differences.push({ field: "spec", status: "normalized" });
+    pending.push("especificaciones-incompatibles-filtradas");
+  }
+  if (inspectTechnicalSpecifications(product.spec).length > 0) blocking.push("especificaciones-incompatibles-expuestas");
+  if (hasLoadCapacityDisagreement(published)) pending.push("capacidad-titulo-spec-discordante");
   for (const field of preservedFields) {
     if (isDeepStrictEqual(product[field], published[field])) continue;
     const status = product[field] === null || product[field] === undefined ? "lost" : "changed";
@@ -135,7 +147,7 @@ const verifyProduct = (
     if (observations.some((item) => item.status === "resuelto-no-asignado")) pending.push("atributos-resueltos-no-asignados");
   }
   const expected = projectCommercialPresentation(source, published, category?.name ?? null);
-  for (const field of ["title", "description_title"] as const) {
+  for (const field of ["title", "description_title", "description"] as const) {
     if (!isDeepStrictEqual(product[field], expected[field])) blocking.push(`presentacion-${field}-incompatible`);
     if (!isDeepStrictEqual(product[field], published[field])) {
       const status = product[field]?.trim() ? "normalized" : "lost";

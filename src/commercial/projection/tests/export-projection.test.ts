@@ -329,3 +329,61 @@ test("la exportación conserva atributos válidos posteriores a rechazos del mis
   ]);
   assert.equal(accreditCommercialPlan([updated], output, catalog, logos, null).summary.blocking, 0);
 });
+
+test("filtra magnitudes incompatibles, declara las revisiones y acredita la conservación deliberada", () => {
+  const input = entry("308");
+  const contaminated: CommercialBaselineInput = {
+    ...input,
+    published: { ...input.published,
+      title: "Carretilla JCB AB123 1600 kg",
+      spec: { ...input.published.spec, "Capacidad de carga (kg)": "1800 KG",
+        "Altura Plataforma": "6085 metros", "Altura de elevación (mm)": "#VALUE! mm" }
+    }
+  };
+  const before = JSON.stringify(contaminated);
+  const result = plan([contaminated]);
+  const product = result.products[0];
+  assert.ok(product);
+  assert.equal(product.spec["Altura Plataforma"], undefined);
+  assert.equal(product.spec["Altura de elevación (mm)"], undefined);
+  assert.equal(product.spec["Capacidad de carga (kg)"], "1800 KG");
+  assert.deepEqual(result.exceptions.map(({ reason }) => reason).sort(), [
+    "spec-longitud-fisicamente-implausible:Altura Plataforma",
+    "spec-residuo-hoja-calculo:Altura de elevación (mm)",
+    "capacidad-titulo-spec-discordante"
+  ].sort());
+  const audit = accreditCommercialPlan([contaminated], result, catalog, logos, null);
+  assert.equal(audit.summary.blocking, 0);
+  assert.equal(audit.summary.pending, 2);
+  assert.ok(audit.decisions[0]?.differences.some((difference) => difference.field === "spec" && difference.status === "normalized"));
+  const illegal = { ...product, spec: { ...product.spec, "Altura Plataforma": "6085 metros" } };
+  const rejected = accreditCommercialPlan([contaminated], { ...result, products: [illegal] }, catalog, logos, null);
+  assert.ok(rejected.blocking.some(({ reason }) => reason === "especificaciones-incompatibles-expuestas"));
+  assert.equal(JSON.stringify(contaminated), before);
+});
+
+test("acredita resumen normalizado y detecta cualquier alteración comercial no prevista", () => {
+  const input = entry("409");
+  const published = { ...input.published,
+    title: "Plataforma articulada 16M JCB AB123",
+    description_title: "Plataforma articulada 16M JCB AB123",
+    description: "➨ JCB AB123 de ocasión ➨ Venta de plataforma articulada de 16 metros ⭐Capacidad 227 kg" };
+  const source = { ...input.source, title: published.title, shortDescription: published.description };
+  const mapped = { ...input.mapped, product: { ...input.mapped.product, title: published.title, description: published.description } };
+  const entryWithSummary: CommercialBaselineInput = { ...input, source, published, mapped };
+  const before = JSON.stringify(entryWithSummary);
+  const result = planCommercialExport([entryWithSummary], "gam", "a".repeat(64), catalog, logos, null, null);
+  assert.equal(result.products[0]?.title, "Plataforma articulada 16 m JCB AB123");
+  assert.equal(result.products[0]?.description,
+    "JCB AB123 de ocasión. Venta de plataforma articulada de 16 metros. Capacidad 227 kg");
+  const audit = accreditCommercialPlan([entryWithSummary], result, catalog, logos, null);
+  assert.equal(audit.summary.blocking, 0);
+  assert.equal(audit.summary.changedFields, 0);
+  assert.ok(audit.decisions[0]?.differences.some((item) => item.field === "description" && item.status === "normalized"));
+  assert.equal(JSON.stringify(entryWithSummary), before);
+  const product = result.products[0];
+  assert.ok(product);
+  const broken = { ...product, description: "Capacidad 999 kg" };
+  assert.ok(accreditCommercialPlan([entryWithSummary], { ...result, products: [broken] }, catalog, logos, null)
+    .blocking.some((item) => item.reason === "presentacion-description-incompatible"));
+});

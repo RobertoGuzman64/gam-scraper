@@ -1,5 +1,6 @@
 import type { ImportCandidate } from "../legacy-export/contracts.js";
 import { decideCommercialCategory } from "../projection/category-decision.js";
+import { inspectTechnicalSpecifications } from "../validation/technical-specifications.js";
 import { commercialToken, projectCommercialPresentation } from "../projection/presentation-projection.js";
 import type { CommercialMetadata } from "../projection/presentation-projection.js";
 import type { CommercialBaselineInput } from "./commercial-baseline.js";
@@ -49,10 +50,13 @@ export type CommercialPresentationAudit = {
 const preview = (value: string | null): string | null => value === null ? null : value.slice(0, 180);
 const distinctContent = (published: ImportCandidate, projected: Pick<ImportCandidate, "images" | "spec">): {
   readonly images: number; readonly specifications: number;
-} => ({
+} => {
+  const invalidKeys = new Set(inspectTechnicalSpecifications(published.spec).map(({ key }) => key));
+  return {
   images: published.images.filter((value) => !projected.images.includes(value)).length,
-  specifications: Object.keys(published.spec).filter((key) => !(key in projected.spec)).length
-});
+  specifications: Object.keys(published.spec).filter((key) => !(key in projected.spec) && !invalidKeys.has(key)).length
+  };
+};
 
 export const analyzeCommercialPresentation = (entries: readonly CommercialBaselineInput[]): CommercialPresentationAudit => {
   const decisions: PresentationDecision[] = [];

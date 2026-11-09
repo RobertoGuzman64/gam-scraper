@@ -1,5 +1,7 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate } from "../legacy-export/contracts.js";
+import { projectPresentableSpecifications } from "./spec-projection.js";
+import { normalizeCommercialSummary, normalizeCommercialTitle } from "./editorial-normalization.js";
 
 export type CommercialMetadata = {
   readonly tags: readonly string[];
@@ -51,15 +53,6 @@ const conflictingModelVariant = (title: string | null, model: string | null): bo
   return sibling.test(titleToken);
 };
 
-const commercialTitle = (value: string | null, providerId: string): string | null => {
-  const initial = value?.replace(/\s+/gu, " ").trim();
-  if (!initial) return null;
-  const withoutPrefix = initial.replace(/^(?:compra\s+)+/iu, "");
-  const withoutSeller = providerId === "gam"
-    ? withoutPrefix.replace(/\s*\|\s*GAM Online$/iu, "").trim()
-    : withoutPrefix;
-  return withoutSeller || initial;
-};
 
 export const projectCommercialPresentation = (
   source: ProductRecord, published: ImportCandidate, categoryName: string | null
@@ -68,7 +61,7 @@ export const projectCommercialPresentation = (
     source.reference !== published.reference) {
     throw new Error(`Origen y publicación discordantes: ${published.providerId}:${published.reference ?? published.sourceUrl}`);
   }
-  const title = commercialTitle(published.title, published.providerId);
+  const title = normalizeCommercialTitle(published.title, published.providerId, source.model);
   const brand = commercialIdentityInTitle(title, source.brand) ??
     confirmedSpecIdentity(source.brand, published.spec["Marca"]);
   const model = conflictingModelVariant(title, source.model) ? null :
@@ -84,12 +77,12 @@ export const projectCommercialPresentation = (
   return {
     title,
     description_title: published.description_title?.trim() === published.title?.trim() || !published.description_title?.trim()
-      ? title : commercialTitle(published.description_title, published.providerId),
-    description: published.description,
+      ? title : normalizeCommercialTitle(published.description_title, published.providerId, source.model),
+    description: normalizeCommercialSummary(published.description, source.model),
     description_general: published.description_general,
     image: published.image,
     images: [...published.images],
-    spec: { ...published.spec },
+    spec: projectPresentableSpecifications(published.spec),
     metadata
   };
 };

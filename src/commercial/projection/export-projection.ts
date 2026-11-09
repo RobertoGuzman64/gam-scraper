@@ -7,6 +7,7 @@ import { decideCommercialCategory } from "./category-decision.js";
 import { isValidCommercialCategory } from "./category-projection.js";
 import { projectCommercialAttributes } from "./attribute-projection.js";
 import { commercialIdentityInTitle, commercialToken, projectCommercialPresentation } from "./presentation-projection.js";
+import { hasLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../validation/technical-specifications.js";
 
 export type CommercialExportProduct = ImportCandidate & {
   readonly logoID: number | null;
@@ -112,6 +113,10 @@ export const planCommercialExport = (
     }, catalog);
     for (const invalid of accepted.issues) exceptions.push(issue(`atributo-${invalid.attributeID}:${invalid.reason}`));
     const presentation = projectCommercialPresentation(source, published, category?.name ?? null);
+    for (const invalid of inspectTechnicalSpecifications(published.spec)) {
+      exceptions.push(issue(`spec-${invalid.code}:${invalid.key}`));
+    }
+    if (hasLoadCapacityDisagreement(published)) exceptions.push(issue("capacidad-titulo-spec-discordante"));
     const logoID = resolveLogo(source, published, logos);
     if (logoID !== null) withLogo += 1;
     if (published.price !== null) withPrice += 1;

@@ -27,14 +27,17 @@ test("identifica incidencias aún ambiguas sin publicar correcciones especulativ
   const products = originals.map((item) => prepareOriginal(item).product);
   const result = analyzePresentationConsistency(products);
   assert.equal(result.products, 1347);
-  assert.equal(result.defects, 0);
-  assert.deepEqual([...codes(result)].sort(), [
+  assert.equal(result.defects, 21);
+  assert.equal(result.reviews, 9);
+  assert.equal(result.findings.length, 30);
+  const baseline = [
     "gam:4650:modelo-de-variante-contradictorio",
     "gam:5730:imagen-de-otro-modelo",
     "gam:5902:capacidad-no-cualificada-en-campo",
     "gam:6998:imagen-de-otro-modelo"
-  ].sort());
-  assert.equal(result.reviews, 4);
+  ];
+  assert.deepEqual(codes(result).filter((code) => baseline.includes(code)).sort(), baseline.sort());
+  assert.equal(result.findings.filter((finding) => finding.code === "capacidad-titulo-spec-discordante").length, 5);
   assert.equal(JSON.stringify(originals), snapshot);
 });
 

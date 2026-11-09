@@ -174,3 +174,29 @@ test("el auditor no abre tareas por comparaciones literales o longitud editorial
   } }]);
   assert.deepEqual(report.signals, []);
 });
+
+test("audita por separado los resúmenes homogeneizados y conserva la descripción larga acreditada", () => {
+  const gam = entry(source("412"), 29);
+  const styled = { ...gam.published,
+    title: "Plataforma articulada diésel 16M GENIE Z45/25J",
+    description_title: "Plataforma articulada diésel 16M GENIE Z45/25J",
+    description: "➨ GENIE Z45/25J de ocasión ➨ Plataforma articulada 16 metros ⭐Carga 227 kg" };
+  const mercaSource = { ...source("413"), providerId: "mercaeleva",
+    title: "LGMG A14JE PLATAFORMA ARTICULADA ELECTRICA 15 MT", brand: "LGMG", model: "A14JE" };
+  const merca = entry(mercaSource, 29);
+  const second = { ...merca.published,
+    description: "PLATAFORMA ARTICULADA ELECTRICA ALTURA DE TRABAJO 16 MT LGMG A14JE" };
+  const items = [{ ...gam, published: styled }, { ...merca, published: second }];
+  const originals = JSON.stringify(items);
+  const audit = analyzeCommercialPresentation(items);
+  assert.equal(audit.titlesNormalized, 2);
+  assert.equal(audit.descriptionTitlesNormalized, 2);
+  assert.equal(audit.changedShort, 2);
+  assert.equal(audit.changedGeneral, 0);
+  assert.equal(audit.lostImages, 0);
+  assert.equal(audit.lostSpecifications, 0);
+  assert.ok(audit.decisions.some((item) => item.shortPreview?.includes("Capacidad") === false &&
+    item.shortPreview?.includes("Carga 227 kg")));
+  assert.ok(audit.decisions.some((item) => item.shortPreview?.includes("16 m LGMG A14JE")));
+  assert.equal(JSON.stringify(items), originals);
+});

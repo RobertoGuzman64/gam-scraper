@@ -1,4 +1,5 @@
 import type { ImportCandidate } from "../legacy-export/contracts.js";
+import { hasLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../validation/technical-specifications.js";
 
 export type PresentationConsistencyFinding = {
   readonly providerId: string;
@@ -6,7 +7,8 @@ export type PresentationConsistencyFinding = {
   readonly sourceUrl: string;
   readonly field: "images" | "spec" | "description" | "title";
   readonly code: "imagen-de-otro-modelo" | "unidad-tecnica-malformada" | "magnitud-en-campo-incompatible" |
-    "altura-editorial-malformada" | "modelo-de-variante-contradictorio" | "capacidad-no-cualificada-en-campo";
+    "altura-editorial-malformada" | "modelo-de-variante-contradictorio" | "capacidad-no-cualificada-en-campo" |
+    "residuo-hoja-calculo" | "longitud-fisicamente-implausible" | "capacidad-titulo-spec-discordante";
   readonly status: "defecto" | "revisar";
 };
 
@@ -31,12 +33,6 @@ const conflictingModel = (product: ImportCandidate): boolean => {
   const spec = variant(String(product.spec.Modelo ?? ""));
   return title !== null && spec !== null && title[0] === spec[0] && title[1] !== spec[1];
 };
-
-const malformedTechnicalValue = (value: string): boolean =>
-  /(?:mm|m)\s+metros?\b|\b\d+(?:[.,]\d+)?\s*mmmm\b|\(V\/Ah\)\s*\(V\/Ah\)|\b\d+\s*h\s*\(V\/Ah\)/iu.test(value);
-
-const incompatibleField = (key: string, value: string): boolean =>
-  /\b(?:ancho|anchura)\b/iu.test(key) && /\b\d+\s*V\s*\/\s*\d+(?:\s*-\s*\d+)?\s*Ah\b/iu.test(value);
 
 const lacksCapacityContext = (product: ImportCandidate): boolean => {
   const capacity = String(product.spec["Capacidad de carga (kg)"] ?? "");
@@ -72,15 +68,10 @@ export const analyzePresentationConsistency = (
       add(product, "images", "imagen-de-otro-modelo", "revisar");
       break;
     }
-    let malformed = false;
-    let incompatible = false;
-    for (const [key, value] of Object.entries(product.spec)) {
-      if (typeof value !== "string") continue;
-      if (malformedTechnicalValue(value)) malformed = true;
-      if (incompatibleField(key, value)) incompatible = true;
+    for (const code of new Set(inspectTechnicalSpecifications(product.spec).map((issue) => issue.code))) {
+      add(product, "spec", code, "defecto");
     }
-    if (malformed) add(product, "spec", "unidad-tecnica-malformada", "defecto");
-    if (incompatible) add(product, "spec", "magnitud-en-campo-incompatible", "defecto");
+    if (hasLoadCapacityDisagreement(product)) add(product, "spec", "capacidad-titulo-spec-discordante", "revisar");
     if (/\b4[.,]30\s*mm\b/iu.test(`${product.description ?? ""} ${product.description_general ?? ""}`)) {
       add(product, "description", "altura-editorial-malformada", "defecto");
     }
