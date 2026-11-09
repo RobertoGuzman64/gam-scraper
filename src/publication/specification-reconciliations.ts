@@ -28,7 +28,31 @@ const verifiedCorrections: Readonly<Record<string, {
   "ref:2135:Capacidad de carga (kg)": { model: "LO7.0T", previous: "7000 KG", replacement: { "Capacidad de arrastre": "7000 KG" } },
   "ref:1714:Altura Plataforma": { model: "MS20XD", previous: "4.8mm metros", replacement: { "Altura": "1346 mm" } },
   "ref:2737:Potencia Motor (KW)": { model: "6K 36V BR", previous: "36", replacement: { "Modelo": "6K 36V BR" } },
-  "ref:2573:Potencia Motor (CV)": { model: "15k 48v BR", previous: "48", replacement: { "Modelo": "15k 48v BR" } }
+  "ref:2573:Potencia Motor (CV)": { model: "15k 48v BR", previous: "48", replacement: { "Modelo": "15k 48v BR" } },
+  "ref:2130:Altura de elevación (mm)": { model: "LO1.0F", previous: "#VALUE! mm", replacement: {} },
+  "ref:2300:Centro de carga": { model: "MC12 (pedestrian)", previous: "5076 mm", replacement: { "Altura de elevación (mm)": "5076 mm", "Peso": "2280 kg", "Batería (V / Ah)": "24 V / 400 Ah" } },
+  "ref:2300:Radio de giro": { model: "MC12 (pedestrian)", previous: "24V / 400Ah(V/Ah)", replacement: { "Altura de elevación (mm)": "5076 mm", "Peso": "2280 kg", "Batería (V / Ah)": "24 V / 400 Ah" } },
+  "ref:2300:Capacidad de la batería": { model: "MC12 (pedestrian)", previous: "2280", replacement: { "Altura de elevación (mm)": "5076 mm", "Peso": "2280 kg", "Batería (V / Ah)": "24 V / 400 Ah" } },
+  "ref:2301:Centro de carga": { model: "MC15 (pedestrian)", previous: "5076 mm", replacement: { "Altura de elevación (mm)": "5076 mm", "Peso": "2360 kg", "Batería (V / Ah)": "24 V / 400 Ah" } },
+  "ref:2301:Radio de giro": { model: "MC15 (pedestrian)", previous: "24V / 400Ah(V/Ah)", replacement: { "Altura de elevación (mm)": "5076 mm", "Peso": "2360 kg", "Batería (V / Ah)": "24 V / 400 Ah" } },
+  "ref:2301:Capacidad de la batería": { model: "MC15 (pedestrian)", previous: "2360", replacement: { "Altura de elevación (mm)": "5076 mm", "Peso": "2360 kg", "Batería (V / Ah)": "24 V / 400 Ah" } },
+  "ref:2242:Capacidad de la batería": { model: "MP16", previous: "545", replacement: { "Peso": "545 KG", "Batería (V / Ah)": "24V / 150-375Ah | Li-ion 24V / 50-100Ah(V/Ah)" } },
+  "ref:2242:Altura Plataforma": { model: "MP16", previous: "24V / 150-375Ah | Li-ion 24V / 50-100Ah(V/Ah) metros", replacement: { "Peso": "545 KG", "Batería (V / Ah)": "24V / 150-375Ah | Li-ion 24V / 50-100Ah(V/Ah)" } },
+  "ref:2243:Capacidad de la batería": { model: "MP18", previous: "545", replacement: { "Peso": "545 KG", "Batería (V / Ah)": "24V / 150-375Ah | Li-ion 24V / 50-100Ah(V/Ah)" } },
+  "ref:2243:Altura Plataforma": { model: "MP18", previous: "24V / 150-375Ah | Li-ion 24V / 50-100Ah(V/Ah) metros", replacement: { "Peso": "545 KG", "Batería (V / Ah)": "24V / 150-375Ah | Li-ion 24V / 50-100Ah(V/Ah)" } },
+  "ref:2244:Capacidad de la batería": { model: "MP20", previous: "632", replacement: { "Peso": "632 KG", "Batería (V / Ah)": "24V / 150-375Ah | Li-ion 24V / 50-100Ah(V/Ah)" } },
+  "ref:2244:Altura Plataforma": { model: "MP20", previous: "24V / 150-375Ah | Li-ion 24V / 50-100Ah(V/Ah) metros", replacement: { "Peso": "632 KG", "Batería (V / Ah)": "24V / 150-375Ah | Li-ion 24V / 50-100Ah(V/Ah)" } },
+  "ref:2245:Capacidad de la batería": { model: "MP22", previous: "632", replacement: { "Peso": "632 KG", "Batería (V / Ah)": "24V / 150-375Ah (V/Ah)" } },
+  "ref:2245:Altura Plataforma": { model: "MP22", previous: "24V / 150-375Ah (V/Ah) metros", replacement: { "Peso": "632 KG", "Batería (V / Ah)": "24V / 150-375Ah (V/Ah)" } },
+  "ref:2246:Capacidad de la batería": { model: "MP20T", previous: "1010", replacement: { "Peso": "1010 KG", "Batería (V / Ah)": "24 V / 465 Ah" } },
+  "ref:2246:Altura Plataforma": { model: "MP20T", previous: "24V / 465Ah(V/Ah) metros", replacement: { "Peso": "1010 KG", "Batería (V / Ah)": "24 V / 465 Ah" } },
+  "ref:2247:Capacidad de la batería": { model: "MP25T", previous: "1010", replacement: { "Peso": "1010 KG", "Batería (V / Ah)": "24 V / 465 Ah" } },
+  "ref:2247:Altura Plataforma": { model: "MP25T", previous: "24V / 465Ah(V/Ah) metros", replacement: { "Peso": "1010 KG", "Batería (V / Ah)": "24 V / 465 Ah" } }
+};
+
+const verifiedMercaelevaRemovals: typeof verifiedCorrections = {
+  "ref:m062-8951:Distancia del centro de gravedad": { model: "EFL303", previous: "−1 mm", replacement: {} },
+  "ref:m119-9334:Horas laborales": { model: "EPL185", previous: "−1 h", replacement: {} }
 };
 
 export const reconcileRemovedSpecifications = (
@@ -42,7 +66,8 @@ export const reconcileRemovedSpecifications = (
   const resolved: string[] = [];
   const unresolved: string[] = [];
   for (const key of difference.removedSpecifications) {
-    const rule = providerId === "gam" ? verifiedCorrections[key] : undefined;
+    const rule = providerId === "gam" ? verifiedCorrections[key] :
+      providerId === "mercaeleva" ? verifiedMercaelevaRemovals[key] : undefined;
     const separator = key.indexOf(":", key.indexOf(":") + 1);
     const identity = separator < 0 ? "" : key.slice(0, separator);
     const removedKey = separator < 0 ? "" : key.slice(separator + 1);

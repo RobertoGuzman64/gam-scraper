@@ -68,6 +68,58 @@ test("un cambio del valor previo, del destino o de la procedencia invalida cada 
   }
 });
 
+test("FINISH acredita las veintiuna retiradas técnicas contrastadas sin relajar el bloqueo de pérdidas nuevas", async () => {
+  const cases = [
+    { providerId: "gam", references: ["2130", "2300", "2301", "2242", "2243", "2244", "2245", "2246", "2247"], count: 19 },
+    { providerId: "mercaeleva", references: ["M062-8951", "M119-9334"], count: 2 }
+  ] as const;
+  for (const scenario of cases) {
+    const catalog = scenario.providerId === "gam" ? source :
+      await readCanonicalCatalog(resolve(root, "catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json"));
+    const output = scenario.providerId === "gam" ? prepared : prepareImportBatch(catalog.products);
+    const candidateProducts = output.products.filter((item) => item.status === "ready" &&
+      scenario.references.some((reference) => item.product.reference === reference)).map((item) => item.product);
+    const originalSpecs = new Map(catalog.products.map((item) => [item.reference, item.specs]));
+    const publishedProducts = candidateProducts.map((item) => {
+      const spec = originalSpecs.get(item.reference);
+      assert.ok(spec);
+      return { ...item, spec };
+    });
+    assert.equal(candidateProducts.length, scenario.references.length);
+    const changes = differenceBetween("origen", "preparación", publishedProducts, candidateProducts);
+    assert.equal(changes.removedSpecifications.length, scenario.count);
+    assert.deepEqual(changes.lostSpecificationValues, []);
+    const accepted = reconcileRemovedSpecifications(scenario.providerId, changes, publishedProducts, candidateProducts);
+    assert.equal(accepted.resolved.length, scenario.count);
+    assert.deepEqual(accepted.unresolved, []);
+    assert.equal(evaluateIndividualPublicationDifference(scenario.providerId, changes, publishedProducts, candidateProducts, null).accepted, true);
+    const otherProvider = scenario.providerId === "gam" ? "mercaeleva" : "gam";
+    assert.equal(reconcileRemovedSpecifications(otherProvider, changes, publishedProducts, candidateProducts).resolved.length, 0);
+
+    for (const removal of changes.removedSpecifications) {
+      const separator = removal.indexOf(":", removal.indexOf(":") + 1);
+      const reference = removal.slice("ref:".length, separator);
+      const field = removal.slice(separator + 1);
+      const incorrectSource = publishedProducts.map((item) => item.reference?.toLowerCase() === reference ?
+        { ...item, spec: { ...item.spec, [field]: "valor sin evidencia" } } : item);
+      const incorrectOrigin = candidateProducts.map((item) => item.reference?.toLowerCase() === reference ?
+        { ...item, sourceUrl: "https://example.com/otra-unidad" } : item);
+      for (const [before, after] of [[incorrectSource, candidateProducts], [publishedProducts, incorrectOrigin]] as const) {
+        const check = reconcileRemovedSpecifications(scenario.providerId, changes, before, after);
+        assert.ok(check.unresolved.includes(removal), removal);
+        assert.equal(evaluateIndividualPublicationDifference(scenario.providerId, changes, before, after, null).accepted, false);
+      }
+      const destination = reference === "2130" || scenario.providerId === "mercaeleva" ? null :
+        reference === "2300" || reference === "2301" ? "Altura de elevación (mm)" : "Batería (V / Ah)";
+      if (destination !== null) {
+        const incorrectDestination = candidateProducts.map((item) => item.reference?.toLowerCase() === reference ?
+          { ...item, spec: { ...item.spec, [destination]: "valor sin evidencia" } } : item);
+        assert.ok(reconcileRemovedSpecifications(scenario.providerId, changes, publishedProducts, incorrectDestination).unresolved.includes(removal));
+      }
+    }
+  }
+});
+
 test("dos unidades de stock distintas con número de serie compartido continúan bloqueadas", () => {
   const collisions = prepared.products.filter((item) => ["6682", "6703"].includes(item.product.reference ?? ""));
   assert.equal(collisions.length, 2);
