@@ -42,12 +42,13 @@ test("la auditoría comercial conserva informes, opciones y selección por ficha
   assert.equal(render("--contenido").length >= report.providers.length * 3, true);
   assert.equal(render("--contenido-revision").length >= render("--contenido").length, true);
   const outputFindings = report.providers.flatMap((provider) => provider.outputConsistencyAudit.findings);
-  assert.ok(outputFindings.some((item) => item.reason === "modelo-variante-titulo-contradictorio" &&
-    item.reference === "4650"));
-  assert.ok(render("--contenido-revision").some((line) => line.includes("modelo-variante-titulo-contradictorio")));
+  assert.deepEqual(outputFindings, []);
+  assert.equal(render("--contenido-revision").some((line) =>
+    line.includes("modelo-variante-titulo-contradictorio")), false);
   const coverage = report.providers.flatMap((provider) => provider.crossCoverageAudit.findings);
-  assert.ok(coverage.some((item) => item.area === "identidad" &&
-    item.reason === "modelo-titulo-spec-discordante" && item.reference === "6934"));
+  const modelReview = coverage.find((item) => item.area === "identidad" &&
+    item.reason === "modelo-titulo-spec-discordante" && item.reference === "6934");
+  assert.ok(modelReview);
   assert.equal(coverage.some((item) => item.area === "imagenes" && item.reference === "CC1666"), false);
   assert.ok(coverage.some((item) => item.area === "imagenes" &&
     item.reason === "modelo-portada-variante-discordante" && item.reference === "TE1772"));
@@ -62,10 +63,10 @@ test("la auditoría comercial conserva informes, opciones y selección por ficha
   assert.equal(report.providers.some((provider) => provider.interventionPriorities.controlled.some((item) =>
     item.reason === "especificaciones-incompatibles-filtradas")), false);
   assert.equal(render("--revision").some((line) => line.includes("CONTROLADA | especificaciones-incompatibles-filtradas")), false);
-  assert.ok(render("--revision").some((line) => line.includes("Evidencia: 4650 | title |")));
+  assert.ok(render("--revision").some((line) => line.includes(modelReview.sourceUrl)));
   assert.ok(render("--contenido-revision").some((line) => line.includes("protecciones controladas")));
-  assert.ok(report.providers.some((provider) => provider.interventionPriorities.pending.some((priority) =>
-    priority.source === "salida" && priority.reason === "modelo-variante-titulo-contradictorio")));
+  assert.equal(report.providers.some((provider) => provider.interventionPriorities.pending.some((priority) =>
+    priority.source === "salida")), false);
   assert.equal(render("--atributos").length >= report.providers.length, true);
   assert.equal(render("--atributos-revision").length >= render("--atributos").length, true);
   assert.equal(render("--atributos-vacios").length >= report.providers.length, true);
