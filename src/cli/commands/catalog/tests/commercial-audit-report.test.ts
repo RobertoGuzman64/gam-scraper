@@ -48,16 +48,20 @@ test("la auditoría comercial conserva informes, opciones y selección por ficha
   const coverage = report.providers.flatMap((provider) => provider.crossCoverageAudit.findings);
   assert.ok(coverage.some((item) => item.area === "identidad" &&
     item.reason === "modelo-titulo-spec-discordante" && item.reference === "6934"));
+  assert.equal(coverage.some((item) => item.area === "imagenes" && item.reference === "CC1666"), false);
   assert.ok(coverage.some((item) => item.area === "imagenes" &&
-    item.reason === "portada-referencia-ajena" && item.reference === "CC1666"));
+    item.reason === "modelo-portada-variante-discordante" && item.reference === "TE1772"));
   assert.equal(coverage.some((item) => item.reason === "imagen-de-otro-modelo"), false);
   assert.ok(!coverage.some((item) => item.area === "editorial" &&
     item.reason === "general_repetida_entre_modelos" &&
     ["GR1679", "GR1680", "GR1681"].includes(item.reference ?? "")));
   assert.ok(render("--contenido-revision").some((line) => line.includes("Cobertura transversal:")));
-  assert.ok(render("--contenido-revision").some((line) => line.includes("portada-referencia-ajena")));
+  assert.ok(render("--contenido-revision").some((line) => line.includes("modelo-portada-variante-discordante")));
+  assert.equal(render("--contenido-revision").some((line) => line.includes("portada-referencia-ajena")), false);
   assert.ok(render("--revision").some((line) => line.includes("PRIORIDADES GAM")));
-  assert.ok(render("--revision").some((line) => line.includes("CONTROLADA | especificaciones-incompatibles-filtradas")));
+  assert.equal(report.providers.some((provider) => provider.interventionPriorities.controlled.some((item) =>
+    item.reason === "especificaciones-incompatibles-filtradas")), false);
+  assert.equal(render("--revision").some((line) => line.includes("CONTROLADA | especificaciones-incompatibles-filtradas")), false);
   assert.ok(render("--revision").some((line) => line.includes("Evidencia: 4650 | title |")));
   assert.ok(render("--contenido-revision").some((line) => line.includes("protecciones controladas")));
   assert.ok(report.providers.some((provider) => provider.interventionPriorities.pending.some((priority) =>
