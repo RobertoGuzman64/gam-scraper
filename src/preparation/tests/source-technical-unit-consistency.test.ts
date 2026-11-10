@@ -216,7 +216,60 @@ test("normaliza medidas Yale de origen solo con modelo, valor y procedencia corr
   }
   const conflicting = recordOf(gam.products, "2305");
   assert.equal(conflicting.specs?.["Altura Plataforma"], "9225 metros");
-  assert.equal(prepareOriginal(conflicting).product.spec["Altura Plataforma"], "9225 metros");
+  assert.equal(prepareOriginal(conflicting).product.spec["Altura Plataforma"], undefined);
+});
+
+
+test("no traslada a la preparación magnitudes Hyster incompatibles de fuente", () => {
+  for (const [reference, key, raw] of [
+    ["72", "Capacidad de la batería", "1000mm"],
+    ["73", "Capacidad de la batería", "1000mm"],
+    ["2305", "Altura Plataforma", "9225 metros"]
+  ] as const) {
+    const original = recordOf(gam.products, reference);
+    const snapshot = structuredClone(original);
+    assert.equal(original.specs?.[key], raw);
+    const reconciled = reconcileGamSourceTechnicalUnits(original);
+    const prepared = prepareOriginal(original);
+    assert.equal(reconciled.specs?.[key], undefined, reference);
+    assert.equal(prepared.product.spec[key], undefined, reference);
+    assert.deepEqual(reconcileGamSourceTechnicalUnits(reconciled), reconciled, reference);
+    for (const [otherKey, value] of Object.entries(original.specs ?? {})) {
+      if (otherKey !== key) assert.equal(prepared.product.spec[otherKey], value, `${reference}:${otherKey}`);
+    }
+    assert.deepEqual(original, snapshot, reference);
+  }
+  const height = prepareOriginal(recordOf(gam.products, "2305")).product.spec;
+  assert.equal(height["Altura de elevación (mm)"], "16900 mm");
+  assert.equal(height["Capacidad de la batería"], "80V / 840Ah(V/Ah)");
+  const tow = prepareOriginal(recordOf(gam.products, "73")).product.spec;
+  assert.equal(tow.Peso, "1252 KG");
+});
+
+test("rechaza la supresión de datos Hyster cuando cambia su identidad o evidencia", () => {
+  for (const [reference, key, safeValue] of [
+    ["72", "Capacidad de la batería", "48 V / 500 Ah"],
+    ["73", "Capacidad de la batería", "80 V / 500 Ah"],
+    ["2305", "Altura Plataforma", "9,225 m"]
+  ] as const) {
+    const original = recordOf(gam.products, reference);
+    const changed: ProductRecord[] = [
+      { ...original, reference: `${reference}-otro` },
+      { ...original, url: `${original.url}?variante=otra` },
+      { ...original, url: original.url.replace("online.gamrentals.com", "otro.example") },
+      { ...original, title: "Equipo de identidad desconocida" },
+      { ...original, model: "OTRO" },
+      { ...original, specs: { ...original.specs, Modelo: "OTRO" } },
+      { ...original, condition: "Segunda mano" },
+      { ...original, providerId: "gomariz" },
+      { ...original, specs: { ...original.specs, [key]: safeValue } }
+    ];
+    if (reference === "2305") changed.push({ ...original, specs: { ...original.specs, Peso: "7000 KG" } });
+    for (const candidate of changed) {
+      assert.equal(reconcileGamSourceTechnicalUnits(candidate).specs?.[key], candidate.specs?.[key],
+        `${reference}:${candidate.model}:${candidate.url}`);
+    }
+  }
 });
 
 test("elimina únicamente duplicaciones sintácticas de unidad en centro de carga", () => {

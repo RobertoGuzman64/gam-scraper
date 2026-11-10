@@ -136,7 +136,7 @@ test("GAM: los apiladores Yale acreditados recuperan únicamente las tres magnit
 test("GAM: no se altera un cruce sin identificación y correspondencia de valores suficiente", () => {
   const stacker = canonicalRecord("2300");
   const pallet = canonicalRecord("2246");
-  const unrelated = ["2241", "2248", "2249", "2250", "72", "73"];
+  const unrelated = ["72", "73"];
   const altered: ProductRecord[] = [
     { ...stacker, reference: "2302" },
     { ...stacker, url: `${stacker.url}?variante=otra` },
@@ -150,5 +150,81 @@ test("GAM: no se altera un cruce sin identificación y correspondencia de valore
   ];
   for (const candidate of [...unrelated.map(canonicalRecord), ...altered]) {
     assert.deepEqual(recoverGamCrossedTechnicalSpecs(candidate), candidate.specs ?? {}, candidate.reference ?? "sin referencia");
+  }
+});
+
+
+test("GAM: el preparapedidos Yale MO10S recupera la elevación acreditada sin atribuirla al centro de carga", () => {
+  const source = canonicalRecord("2241");
+  const original = structuredClone(source);
+  const recovered = recoverGamCrossedTechnicalSpecs(source);
+  const prepared = prepareSourceProduct(source).product.spec;
+  assert.equal(source.specs?.["Centro de carga"], "8895 mm");
+  assert.equal(recovered["Centro de carga"], undefined);
+  assert.equal(recovered["Altura de elevación (mm)"], "8895 mm");
+  assert.equal(prepared["Centro de carga"], undefined);
+  assert.equal(prepared["Altura de elevación (mm)"], "8895 mm");
+  assert.equal(prepared["Altura Plataforma"], "14 metros");
+  assert.deepEqual(resolveAttribute(source, attribute("Centro de carga")), { status: "not_observed", value: null });
+  assert.deepEqual(resolveAttribute(source, attribute("Altura de elevación")), { status: "resolved", value: 8895 });
+  assert.deepEqual(recoverGamCrossedTechnicalSpecs({ ...source, specs: recovered }), recovered);
+  assert.deepEqual(source, original);
+});
+
+test("GAM: las transpaletas Yale MPX conservan batería válida y recuperan rangos sin inventar pesos", () => {
+  for (const [reference, expectedBattery, expectedCapacity] of [
+    ["2248", undefined, "24V / 250AH(V/Ah)"],
+    ["2249", "24V / 315-500Ah(V/Ah)", undefined],
+    ["2250", "24V / 315-500Ah(V/Ah)", undefined]
+  ] as const) {
+    const source = canonicalRecord(reference);
+    const original = structuredClone(source);
+    const recovered = recoverGamCrossedTechnicalSpecs(source);
+    const prepared = prepareSourceProduct(source).product.spec;
+    assert.equal(recovered["Altura Plataforma"], undefined, reference);
+    assert.equal(recovered["Capacidad de la batería"], expectedCapacity, reference);
+    assert.equal(recovered["Batería (V / Ah)"], expectedBattery, reference);
+    assert.equal(prepared["Altura Plataforma"], undefined, reference);
+    assert.equal(prepared["Capacidad de la batería"], expectedCapacity, reference);
+    assert.equal(prepared["Batería (V / Ah)"], expectedBattery, reference);
+    assert.equal(prepared.Peso, source.specs?.Peso, reference);
+    assert.equal(prepared["Capacidad de carga (kg)"], source.specs?.["Capacidad de carga (kg)"], reference);
+    assert.deepEqual(recoverGamCrossedTechnicalSpecs({ ...source, specs: recovered }), recovered, reference);
+    assert.deepEqual(source, original, reference);
+  }
+});
+
+test("GAM: las correcciones Yale no alcanzan variantes, identificadores ni evidencias contradictorias", () => {
+  const picker = canonicalRecord("2241");
+  const pickerVariants: ProductRecord[] = [
+    { ...picker, reference: "2240" },
+    { ...picker, url: `${picker.url}?variante=otra` },
+    { ...picker, model: "MO10" },
+    { ...picker, condition: "Segunda mano" },
+    { ...picker, title: "Yale MO10 | Preparapedidos" },
+    { ...picker, longDescription: "Ficha de Yale MO10" },
+    { ...picker, specs: { ...picker.specs, Altura: "3470 mm" } },
+    { ...picker, specs: { ...picker.specs, "Centro de carga": "600 mm" } },
+    { ...picker, specs: { ...picker.specs, "Altura de elevación (mm)": "8895 mm" } }
+  ];
+  for (const candidate of pickerVariants) {
+    assert.deepEqual(recoverGamCrossedTechnicalSpecs(candidate), candidate.specs ?? {}, candidate.reference ?? "");
+  }
+  for (const reference of ["2248", "2249", "2250"]) {
+    const source = canonicalRecord(reference);
+    const palletVariants: ProductRecord[] = [
+      { ...source, reference: "2240" },
+      { ...source, url: `${source.url}?variante=otra` },
+      { ...source, url: source.url.replace("transpaletas-yale", "apiladores-yale") },
+      { ...source, specs: { ...source.specs, Marca: "HYSTER" } },
+      { ...source, model: "MP20" },
+      { ...source, title: "Transpaleta eléctrica a pie Yale MP20" },
+      { ...source, specs: { ...source.specs, "Altura Plataforma": "120 mm" } },
+      { ...source, specs: { ...source.specs, "Capacidad de carga (kg)": "1000 KG" } },
+      { ...source, specs: { ...source.specs, "Batería (V / Ah)": "24 V / 400 Ah" } }
+    ];
+    for (const candidate of palletVariants) {
+      assert.deepEqual(recoverGamCrossedTechnicalSpecs(candidate), candidate.specs ?? {}, `${reference}:variante`);
+    }
   }
 });

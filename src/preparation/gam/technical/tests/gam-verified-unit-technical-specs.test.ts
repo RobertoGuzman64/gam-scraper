@@ -92,7 +92,7 @@ test("GAM: la evidencia no se propaga a variantes, referencias ni originales mod
 });
 
 
-test("GAM: 19 avisos medios y 4 altos desaparecen sin modificar los umbrales", () => {
+test("GAM: 17 avisos medios y 6 altos desaparecen sin modificar los umbrales", () => {
   const selected = originals.filter((record) => record.reference && references.has(record.reference));
   assert.equal(selected.length, 23);
   const prepared = selected.map((record) => prepareSourceProduct(record).product);
@@ -104,6 +104,6 @@ test("GAM: 19 avisos medios y 4 altos desaparecen sin modificar los umbrales", (
   });
   const before = analyzeTechnicalDensity(previous);
   const after = analyzeTechnicalDensity(prepared);
-  assert.deepEqual([before.totals.sparse, before.totals.medium], [4, 19]);
+  assert.deepEqual([before.totals.sparse, before.totals.medium], [6, 17]);
   assert.deepEqual([after.totals.sparse, after.totals.medium], [0, 0]);
 });

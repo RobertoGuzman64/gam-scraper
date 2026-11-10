@@ -131,3 +131,49 @@ test("dos unidades de stock distintas con número de serie compartido continúan
   assert.deepEqual(classifyQualityIssue(collisions[0]!.issues[0]!).code, "identity.serial_collision");
   assert.deepEqual(classifyQualityIssue(collisions[0]!.issues[1]!).code, "identity.stock_serial_verification");
 });
+
+test("las nueve retiradas por magnitudes incompatibles quedan conciliadas sin permitir pérdidas adicionales", () => {
+  const references = ["2305", "2241", "73", "72", "2248", "2249", "2250"];
+  const candidates = prepared.products.filter((item) => item.status === "ready" &&
+    references.includes(item.product.reference ?? "")).map((item) => item.product);
+  const originals = new Map(source.products.map((item) => [item.reference, item.specs]));
+  const published = candidates.map((item) => {
+    const spec = originals.get(item.reference);
+    assert.ok(spec);
+    return { ...item, spec };
+  });
+  assert.equal(candidates.length, references.length);
+  const changes = differenceBetween("vigente", "saneada", published, candidates);
+  assert.equal(changes.removedSpecifications.length, 9);
+  assert.deepEqual(changes.lostSpecificationValues, []);
+  const result = reconcileRemovedSpecifications("gam", changes, published, candidates);
+  assert.equal(result.resolved.length, 9);
+  assert.deepEqual(result.unresolved, []);
+  assert.equal(evaluateIndividualPublicationDifference("gam", changes, published, candidates, null).accepted, true);
+  assert.equal(reconcileRemovedSpecifications("gomariz", changes, published, candidates).resolved.length, 0);
+
+  for (const removal of changes.removedSpecifications) {
+    const separator = removal.indexOf(":", removal.indexOf(":") + 1);
+    const reference = removal.slice("ref:".length, separator);
+    const field = removal.slice(separator + 1);
+    const wrongSource = published.map((item) => item.reference?.toLowerCase() === reference ?
+      { ...item, spec: { ...item.spec, [field]: "valor no acreditado" } } : item);
+    const wrongIdentity = candidates.map((item) => item.reference?.toLowerCase() === reference ?
+      { ...item, sourceUrl: "https://example.com/otra-unidad" } : item);
+    const wrongModel = candidates.map((item) => item.reference?.toLowerCase() === reference ?
+      { ...item, spec: { ...item.spec, Modelo: "otra variante" } } : item);
+    const destination = reference === "2305" || reference === "2241" ? "Altura de elevación (mm)" :
+      reference === "72" || reference === "73" ? "Tensión nominal de batería" :
+      reference === "2248" ? "Capacidad de la batería" : "Batería (V / Ah)";
+    const wrongDestination = candidates.map((item) => item.reference?.toLowerCase() === reference ?
+      { ...item, spec: { ...item.spec, [destination]: "valor no acreditado" } } : item);
+    for (const [before, after] of [
+      [wrongSource, candidates], [published, wrongIdentity],
+      [published, wrongModel], [published, wrongDestination]
+    ] as const) {
+      const assessment = reconcileRemovedSpecifications("gam", changes, before, after);
+      assert.ok(assessment.unresolved.includes(removal), removal);
+      assert.equal(evaluateIndividualPublicationDifference("gam", changes, before, after, null).accepted, false);
+    }
+  }
+});

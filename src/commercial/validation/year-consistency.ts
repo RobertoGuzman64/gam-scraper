@@ -1,4 +1,5 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
+import { gamUrlYear } from "../../catalog/normalization/gam/year.js";
 import type { ImportCandidate } from "../legacy-export/contracts.js";
 
 type YearSource = Pick<ProductRecord,
@@ -34,17 +35,8 @@ const manufacturingClaims = (text: string | null): readonly YearClaim[] => {
 
 const yearFromGamUrl = (value: Pick<YearProduct, "providerId" | "reference" | "sourceUrl">): number | null => {
   if (value.providerId !== "gam" || !value.reference) return null;
-  try {
-    const url = new URL(value.sourceUrl);
-    if (url.protocol !== "https:" || url.hostname !== "online.gamrentals.com" ||
-      url.search || url.hash) return null;
-    const parts = url.pathname.split("/").filter(Boolean);
-    if (parts[0] !== "es" || parts.length !== 3) return null;
-    const match = /^(\d+)-((?:19|20)\d{2})-.+$/u.exec(parts[2] ?? "");
-    return match?.[1] === value.reference ? Number(match[2]) : null;
-  } catch {
-    return null;
-  }
+  const year = gamUrlYear(value.sourceUrl, value.reference);
+  return year === null ? null : Number(year);
 };
 
 export const assessCommercialYear = (product: YearProduct): CommercialYearAssessment => {

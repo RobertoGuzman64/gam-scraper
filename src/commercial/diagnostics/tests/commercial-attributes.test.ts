@@ -276,3 +276,25 @@ test("la recuperación de neumáticos exige identidad técnica completa", () => 
   }
   assert.deepEqual(published.spec, { Ruedas: "MACIZAS" });
 });
+
+
+test("no hereda relaciones comerciales del padre ni inventa atributos para categorías sin relación directa", () => {
+  const original = source("sin-atributos", { Marca: "GENIE", Ruedas: "MACIZAS" });
+  const published = candidate(original, [], null);
+  const child = { ...candidate(original, [], 67), attributes: [] };
+  const contract: ImportCatalog = { ...catalog, categories: [
+    ...catalog.categories, { id: 67, parentId: 29, name: "Subcategoría", slug: "subcategoria" }
+  ] };
+  const projected = projectCommercialAttributes(published, child, contract);
+  assert.deepEqual(projected.accepted, []);
+  assert.deepEqual(projected.recovered, []);
+  assert.deepEqual(projected.issues, []);
+  assert.deepEqual(observeCommercialAttributes(original, 67, projected.accepted, contract), []);
+  const direct: ImportCatalog = { ...contract, relations: [
+    ...contract.relations, { categoryID: 67, attributeID: 24 }
+  ] };
+  assert.deepEqual(projectCommercialAttributes(published, child, direct).recovered, [
+    { attributeID: 24, value: "Macizos" }
+  ]);
+  assert.deepEqual(published.spec, { Marca: "GENIE", Ruedas: "MACIZAS" });
+});

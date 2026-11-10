@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { analyzeTechnicalDensity } from "../technical-density.js";
+import { resolveAccreditedPublication, readAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 
 const candidate = (reference: string, spec: ImportCandidate["spec"], providerId = "proveedor"): ImportCandidate => ({
@@ -51,4 +52,27 @@ test("el criterio se aplica también a proveedores nuevos y rechaza duplicados",
   assert.equal(report.providers[0]?.medium, 1);
   assert.equal(report.providers[0]?.median, 1.5);
   assert.throws(() => analyzeTechnicalDensity([candidate("5", {}), candidate("5", {})]), /duplicada/);
+});
+
+
+test("la densidad publicada permanece observacional en las cinco referencias sin prestaciones acreditadas suficientes", async () => {
+  const products: ImportCandidate[] = [];
+  for (const providerId of ["gam", "gomariz", "mercaeleva"]) {
+    const path = await resolveAccreditedPublication(process.cwd(), providerId);
+    assert.ok(path, providerId);
+    products.push(...(await readAccreditedPublication(path)).products);
+  }
+  const before = JSON.stringify(products);
+  const report = analyzeTechnicalDensity(products);
+  assert.deepEqual(report.totals, { products: 1344, sparse: 3, medium: 2 });
+  assert.deepEqual(report.cases.map((item) => [item.providerId, item.reference, item.technicalCount]), [
+    ["mercaeleva", "M547-2372", 0],
+    ["mercaeleva", "M838-0666", 2],
+    ["mercaeleva", "M969-4655", 2]
+  ]);
+  assert.deepEqual(report.mediumCases.map((item) => [item.providerId, item.reference, item.technicalCount]), [
+    ["gam", "2737", 3], ["gam", "6688", 3]
+  ]);
+  assert.match(report.note, /Sin bloqueo de publicación/);
+  assert.equal(JSON.stringify(products), before);
 });

@@ -95,3 +95,33 @@ test("Gomariz: no deduce la marca con títulos genéricos, slug distinto o domin
   assert.equal(foreign.brand, null);
   assert.equal(foreign.model, null);
 });
+
+
+test("Gomariz: corrige una portada de otra unidad cuando la ficha ofrece su galería propia", () => {
+  const url = "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/camion-plataforma/socage-iveco-35s14-forste-20d-speed-neutra-2/";
+  const root = "https://www.gomarizrent.com/wp-content/uploads/2025/06/";
+  const foreign = `${root}CC1535-SOCAGE-IVECO-FORSTE-20D-10.jpg`;
+  const own = [10, 9].map((index) => `${root}CC1666-SOCAGE-IVECO-FORSTE-20D-SPEED-NEUTRA-${index}.jpg`);
+  const html = `<html><main><h1>SOCAGE IVECO 35S14 FORSTE 20D SPEED NEUTRA</h1>
+    <p>Referencia: CC1666 Año: 2024 Marca: Iveco Socage Ver precio</p>
+    <div class="woocommerce-product-gallery">${[foreign, ...own].map((image) => `<img src="${image}">`).join("")}</div>
+    </main></html>`;
+  const parsed = parseGomarizProduct(html, url);
+  assert.deepEqual(parsed.images, own);
+  assert.equal(parsed.image, own[0]);
+  assert.equal(parsed.reference, "CC1666");
+  const ambiguous = parseGomarizProduct(html.replace("CC1666-SOCAGE-IVECO-FORSTE-20D-SPEED-NEUTRA-9", "CC1665-SOCAGE-IVECO-FORSTE-20D-SPEED-NEUTRA-9"), url);
+  assert.deepEqual(ambiguous.images, [foreign, ...own.slice(0, 1), own[1]!.replace("CC1666-", "CC1665-")]);
+  assert.equal(ambiguous.image, foreign);
+});
+
+test("Gomariz: conserva fotos del mismo lote con prefijo TD sin renombrar la variante", () => {
+  const url = "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-as0607we-tijera-electrica-scissor-lift/";
+  const gallery = [22, 12].map((index) => `https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-${index}.jpg`);
+  const html = `<html><main><h1>LGMG AS0607WE</h1><p>Referencia: TE1772 Marca: LGMG Ver precio</p>
+    <div class="woocommerce-product-gallery">${gallery.map((image) => `<img src="${image}">`).join("")}</div></main></html>`;
+  const result = parseGomarizProduct(html, url);
+  assert.equal(result.model, "AS0607WE");
+  assert.deepEqual(result.images, gallery);
+  assert.equal(result.image, gallery[0]);
+});

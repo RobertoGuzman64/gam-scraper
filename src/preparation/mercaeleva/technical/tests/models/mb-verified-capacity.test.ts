@@ -6,6 +6,8 @@ import { loadImportCatalog } from "../../../../../infrastructure/filesystem/lega
 import { resolveAttribute } from "../../../../shared/classification/mapping/attribute-mapping.js";
 import { verifiedMercaelevaMbCapacity } from "../../mapping/verified-mb-capacity.js";
 import { prepareProduct } from "../../../../../commercial/legacy-export/prepare-product.js";
+import { analyzePresentationConsistency } from "../../../../../commercial/diagnostics/presentation-consistency.js";
+import { hasLoadCapacityDisagreement } from "../../../../../commercial/validation/technical-specifications.js";
 
 const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json");
@@ -71,6 +73,28 @@ for (const [reference, expected, original] of [
     }
   });
 }
+
+test("las dos capacidades nominales MB no borran la contradicción del campo técnico", () => {
+  const records = [find("M062-8951"), find("M119-9334")];
+  const before = JSON.stringify(records);
+  const products = records.map((record) => {
+    const prepared = prepareProduct(record, catalog);
+    assert.equal(prepared.status, "ready", record.reference ?? "");
+    assert.equal(hasLoadCapacityDisagreement(prepared.product), true, record.reference ?? "");
+    return prepared.product;
+  });
+  const report = analyzePresentationConsistency(products);
+  assert.deepEqual(report.findings.map((finding) => [finding.reference, finding.code, finding.status]), [
+    ["M062-8951", "capacidad-titulo-spec-discordante", "revisar"],
+    ["M119-9334", "capacidad-titulo-spec-discordante", "revisar"]
+  ]);
+  assert.equal(JSON.stringify(records), before);
+  for (const record of records) {
+    const capacity = record.reference === "M062-8951" ? "3000 kg" : "1800 kg";
+    const changed = { ...record, specs: { ...record.specs, "Capacidad máxima de elevación": capacity } };
+    assert.equal(verifiedMercaelevaMbCapacity(changed), null);
+  }
+});
 
 test("la capacidad MB no se infiere para otras referencias Mercaeleva", () => {
   const corrected = new Set(["M062-8951", "M119-9334"]);

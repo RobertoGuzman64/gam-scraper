@@ -14,7 +14,8 @@ const revisedShorts = new Set(["6585", "2159", "2049", "2168", "2162", "2016"]);
 const normalizedSpecValues: Readonly<Record<string, Readonly<Record<string, string | undefined>>>> = {
   "2300": { "Centro de carga": undefined, "Radio de giro": undefined, "Capacidad de la batería": undefined },
   "2301": { "Centro de carga": undefined, "Radio de giro": undefined, "Capacidad de la batería": undefined },
-  "2302": { "Altura Plataforma": "4920 mm" }
+  "2302": { "Altura Plataforma": "4920 mm" },
+  "2241": { "Centro de carga": undefined }
 };
 const selected = new Set(["2148", "6190", "6192", "6191", "6163", "2300", "5899", "2292", "2211", "6542", "2301", "2232", "4725", "2050", "3134", "2302", "2365", "52", "53", "5081"]);
 
@@ -95,6 +96,7 @@ test("las fichas adicionales conservan identidad, especificaciones y contenido i
         : phase2ExpectedSpecValue(reference, key, value);
       assert.equal(result.spec[key], expected, `${reference}: ${key}`);
     }
+    if (reference === "2241") assert.equal(result.spec["Altura de elevación (mm)"], "8895 mm");
     if (revisedShorts.has(reference)) assert.ok(result.description && !result.description.includes("➨"), reference);
   }
 });

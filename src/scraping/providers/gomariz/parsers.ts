@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import { loadReadableHtml } from "../../parsing/readable-html.js";
 import type { ParsedProduct } from "../../provider.js";
 import { collectProductImages } from "../../parsing/image-gallery.js";
+import { excludeGomarizForeignCover } from "../../../catalog/normalization/gomariz/gallery.js";
 import { brandFromTitle, modelFromTitle } from "./identity.js";
 import { collectGomarizSpecs } from "./specifications.js";
 
@@ -70,10 +71,10 @@ export const parseGomarizProduct = (html: string, pageUrl: string): ParsedProduc
   const overview = (metadataStart < 0 ? content : content.slice(metadataStart)).split(/Descripción|Dimensiones|Especificaciones técnicas/i)[0] ?? "";
   const priceMatch = overview.match(/\b(\d{1,3}(?:[. ]\d{3})*(?:,\d{2})?)\s*€/);
   const price = priceMatch?.[0] ?? null;
-  const images = collectProductImages($, pageUrl, [
+  const images = excludeGomarizForeignCover(collectProductImages($, pageUrl, [
     ".woocommerce-product-gallery", ".product-gallery", ".swiper-slide",
     ".gallery", ".product-images"
-  ], "gomariz");
+  ], "gomariz"), reference);
   const image = images[0] ?? null;
 
   return {

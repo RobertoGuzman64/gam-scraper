@@ -47,7 +47,16 @@ const verifiedCorrections: Readonly<Record<string, {
   "ref:2246:Capacidad de la batería": { model: "MP20T", previous: "1010", replacement: { "Peso": "1010 KG", "Batería (V / Ah)": "24 V / 465 Ah" } },
   "ref:2246:Altura Plataforma": { model: "MP20T", previous: "24V / 465Ah(V/Ah) metros", replacement: { "Peso": "1010 KG", "Batería (V / Ah)": "24 V / 465 Ah" } },
   "ref:2247:Capacidad de la batería": { model: "MP25T", previous: "1010", replacement: { "Peso": "1010 KG", "Batería (V / Ah)": "24 V / 465 Ah" } },
-  "ref:2247:Altura Plataforma": { model: "MP25T", previous: "24V / 465Ah(V/Ah) metros", replacement: { "Peso": "1010 KG", "Batería (V / Ah)": "24 V / 465 Ah" } }
+  "ref:2247:Altura Plataforma": { model: "MP25T", previous: "24V / 465Ah(V/Ah) metros", replacement: { "Peso": "1010 KG", "Batería (V / Ah)": "24 V / 465 Ah" } },
+  "ref:2305:Altura Plataforma": { model: "C1.5L", previous: "9225 metros", replacement: { "Altura de elevación (mm)": "16900 mm" } },
+  "ref:2241:Centro de carga": { model: "MO10S", previous: "8895 mm", replacement: { "Altura de elevación (mm)": "8895 mm" } },
+  "ref:73:Capacidad de la batería": { model: "T8.0HS4", previous: "1000mm", replacement: { "Tensión nominal de batería": "48 V" } },
+  "ref:72:Capacidad de la batería": { model: "T7.0 HS3", previous: "1000mm", replacement: { "Tensión nominal de batería": "48 V" } },
+  "ref:2248:Altura Plataforma": { model: "MP20X", previous: "24V / 210 - 500Ah(V/Ah) metros", replacement: { "Capacidad de la batería": "24V / 250AH(V/Ah)" } },
+  "ref:2249:Capacidad de la batería": { model: "MP25X", previous: "72/820V/Ah", replacement: { "Batería (V / Ah)": "24V / 315-500Ah(V/Ah)" } },
+  "ref:2249:Altura Plataforma": { model: "MP25X", previous: "24V / 315-500Ah(V/Ah) metros", replacement: { "Batería (V / Ah)": "24V / 315-500Ah(V/Ah)" } },
+  "ref:2250:Capacidad de la batería": { model: "MP30X", previous: "785", replacement: { "Batería (V / Ah)": "24V / 315-500Ah(V/Ah)" } },
+  "ref:2250:Altura Plataforma": { model: "MP30X", previous: "24V / 315-500Ah(V/Ah) metros", replacement: { "Batería (V / Ah)": "24V / 315-500Ah(V/Ah)" } }
 };
 
 const verifiedMercaelevaRemovals: typeof verifiedCorrections = {

@@ -131,6 +131,28 @@ test("señala descripciones generales genéricas sin el modelo pero admite varia
   assert.ok(!codes(result, "modelo-sin-identificador").includes("general_sin_modelo"));
 });
 
+test("reconoce los descriptores de variante acreditados sin equiparar modelos distintos", () => {
+  const descriptions = [
+    entry("lwb", { model: "ERP35VL (LWB)", long: "La Yale ERP35VL de batalla larga (LWB) se utiliza para el transporte de cargas." }),
+    entry("a-pie", { model: "MC12 (pedestrian)", long: "El Yale MC12 es un apilador de conducción a pie." }),
+    entry("peatonal", { model: "MC15 (pedestrian)", long: "El Yale MC15 es un apilador peatonal." }),
+    entry("descarga", { model: "BCS S16H Descarga alto", long: "La Tennant BCS S16H incluye descarga alta." }),
+    entry("lwb-ausente", { model: "ERP35VL (LWB)", long: "La Yale ERP35VL se destina al almacén." }),
+    entry("otra-variante", { model: "MC12 (pedestrian)", long: "La Yale MC120 es un apilador de conducción a pie." }),
+    entry("descarga-baja", { model: "BCS S16H Descarga alto", long: "La Tennant BCS S16H se ofrece con descarga baja." }),
+    entry("codigo-diferente", { model: "S1.6SSL", long: "La Hyster S1.6 SL es un apilador eléctrico." }),
+    entry("litio-diferente", { model: "XG0807AC-LI", long: "La XCMG XG0807ACW-LI cuenta con batería de litio." }),
+    entry("sufijo-diferente", { model: "XGS58E1", long: "La XCMG XGS58E ofrece trabajo en altura." })
+  ];
+  const report = analyzeEditorialQuality(descriptions);
+  for (const reference of ["lwb", "a-pie", "peatonal", "descarga"]) {
+    assert.ok(!codes(report, reference).includes("general_sin_modelo"), reference);
+  }
+  for (const reference of ["lwb-ausente", "otra-variante", "descarga-baja", "codigo-diferente", "litio-diferente", "sufijo-diferente"]) {
+    assert.ok(codes(report, reference).includes("general_sin_modelo"), reference);
+  }
+});
+
 test("distingue texto telegráfico y repetición interna no solapada de textos descriptivos", () => {
   const uppercase = "Ref. 442 CARRETILLA ELEVADORA ELÉCTRICA 2500 KG MÁSTIL TRÍPLEX MARCA GENIE MODELO GS2632 ALTURA 12 METROS HORAS 235 AÑO 2023";
   const phrase = "La máquina destaca por estabilidad durante los trabajos de movimiento de materiales industriales.";

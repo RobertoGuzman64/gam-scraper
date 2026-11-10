@@ -16,12 +16,34 @@ const platformName: Readonly<Record<string, string>> = {
   "vertical autopropulsada": "Plataforma vertical autopropulsada"
 };
 
+const reachTruckGeneral = (
+  record: ProductRecord, general: string, brand: string, model: string,
+  additional: string, article: string, year: string | null, hours: string | null
+): string | null => {
+  const reach = /^CARRETILLA ELEVADORA RETRACTIL (\d{3,5}) KG$/i.exec(additional);
+  const declaredHeight = /^Ref\.\s+[\p{L}\d-]+\s+CARRETILLA RETRACTIL ELECTRICA\s+\d{3,5} KG\s+ALTURA DE ELEVACION\s+(\d{1,2}\.\d{3}|\d{3,5}) mm\s+/iu.exec(general)?.[1];
+  const hoursValue = hours?.match(/^(\d[\d ]*)\s*h$/i)?.[1]?.replace(/\s/g, "") ?? null;
+  const capacity = record.specs?.["Capacidad máxima de elevación"];
+  const motor = source(record, "Tipo de motor");
+  if (record.reference !== "M547-2372" || !reach?.[1] || declaredHeight !== "6.500" || !year || !hoursValue ||
+    (motor !== null && fold(motor) !== "electrico") ||
+    (capacity !== undefined && identity(String(capacity)) !== identity(`${reach[1]} kg`)) ||
+    (record.horometer && record.horometer.replace(/[^\d]/g, "") !== hoursValue)) return null;
+  const expected = `Ref. ${article} CARRETILLA RETRACTIL ELECTRICA ${reach[1]} KG ` +
+    `ALTURA DE ELEVACION ${declaredHeight} mm ${brand} ${model} HORAS ${hoursValue} AÑO DE FABRICACION ${year}`;
+  if (identity(general) !== identity(expected)) return null;
+  return `Carretilla elevadora retráctil eléctrica ${brand} ${model}, anunciada con capacidad de ${Number(reach[1]).toLocaleString("es-ES")} kg. ` +
+    `El texto comercial declara ${declaredHeight} mm de altura; debe comprobarse el concepto de medida y la configuración del mástil antes de emplear esa cifra como prestación acreditada. ` +
+    `La ficha identifica el año de fabricación ${year}, ${Number(hoursValue).toLocaleString("es-ES")} horas registradas y la referencia del vendedor ${article}.`;
+};
+
 const handlingGeneral = (
   record: ProductRecord, general: string, brand: string, model: string,
   additional: string, article: string, year: string | null, hours: string | null
 ): string | null => {
   const kind = /^(?:CARRETILLA ELEVADORA (ELECTRICA|DIESEL) (\d{3,5})\s*KG|TRANSPALET ELECTRICO)$/i.exec(additional);
-  if (!kind || (!year && !hours)) return null;
+  if (!kind) return reachTruckGeneral(record, general, brand, model, additional, article, year, hours);
+  if (!year && !hours) return null;
   const motor = source(record, "Tipo de motor");
   if (motor && (!kind[1] || fold(motor) !== (fold(kind[1]) === "electrica" ? "electrico" : "diesel"))) return null;
   const capacity = source(record, "Capacidad máxima de elevación");

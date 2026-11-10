@@ -50,6 +50,38 @@ test("las reconciliaciones técnicas se mantienen visibles con el valor original
   ]);
 });
 
+
+test("las magnitudes Hyster imposibles quedan acreditadas como fuente no utilizable", () => {
+  for (const [reference, key, originalValue] of [
+    ["72", "Capacidad de la batería (Ah)", "1000mm"],
+    ["73", "Capacidad de la batería (Ah)", "1000mm"],
+    ["2305", "Altura plataforma (mm)", "9225 metros"]
+  ] as const) {
+    const source = sourceRecord(reference);
+    const snapshot = JSON.stringify(source);
+    const baseline = input(source);
+    const report = audit(baseline);
+    assert.equal(report.totals.sourceNotPreserved, 0, reference);
+    assert.equal(report.totals.accreditedReconciliations, 1, reference);
+    assert.equal(report.totals.lostAfterPublication, 0, reference);
+    const reconciliation = report.cases.find((item) => item.key === key && item.stage === "reconciliacion_acreditada");
+    assert.ok(reconciliation, reference);
+    assert.deepEqual(reconciliation.reconciliation, {
+      originalValue, destinationKeys: [], classification: "origen_no_utilizable"
+    });
+    assert.equal(JSON.stringify(source), snapshot, reference);
+    for (const tampered of [
+      { ...source, model: "OTRO" },
+      { ...source, url: `${source.url}?variante=otra` },
+      { ...source, title: "Otra máquina" }
+    ]) {
+      const changed = audit({ ...baseline, source: tampered });
+      assert.equal(changed.totals.accreditedReconciliations, 0, `${reference}:evidencia alterada`);
+      assert.ok(changed.totals.sourceNotPreserved > 0, `${reference}:evidencia alterada`);
+    }
+  }
+});
+
 test("la acreditación se invalida si cambia la evidencia canónica, la procedencia o el destino preparado", () => {
   for (const reference of references) {
     const initial = input(sourceRecord(reference));

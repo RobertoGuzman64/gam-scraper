@@ -3,6 +3,8 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../legacy-export/contracts.js";
 import { assessCommercialYear, normalizeCommercialYearDescription } from "../year-consistency.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { gamSourceYear } from "../../../catalog/normalization/gam/year.js";
 
 type Source = Pick<ProductRecord,
   "providerId" | "reference" | "url" | "year" | "yearSource" | "shortDescription" | "longDescription">;
@@ -84,4 +86,48 @@ test("el año del propio atributo solo se usa si el contrato proporciona un núm
   const input = yearProduct(record, 2016, "Fabricada en el año 2008, la plataforma es fiable.");
   assert.deepEqual(assessCommercialYear({ ...input, attributes: [] }).inconsistentClaims, []);
   assert.equal(assessCommercialYear({ ...input, attributes: [{ attributeID: 117, value: "2016" }] }).attributeYear, null);
+});
+
+
+test("los once años discordantes conservan la procedencia del origen sin imponer el slug", async () => {
+  const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const cases = [
+    ["5961", 2015, 2018, "descripcion"], ["6236", 2018, 2017, "descripcion"],
+    ["6588", 2000, 2019, "titulo"], ["6590", 2000, 2019, "titulo"],
+    ["6797", 2015, 2016, "descripcion"], ["6869", 2016, 2008, "descripcion"],
+    ["6870", 2016, 2008, "descripcion"], ["6909", 2007, 2008, "descripcion"],
+    ["6911", 2008, 2014, "descripcion"], ["6921", 2016, 2017, "descripcion"],
+    ["6930", 2008, 2014, "descripcion"]
+  ] as const;
+  for (const [reference, manufacture, url, provenance] of cases) {
+    const record = gam.products.find((item) => item.reference === reference);
+    assert.ok(record, reference);
+    assert.equal(record.year, String(manufacture), reference);
+    assert.equal(record.yearSource, provenance, reference);
+    const accepted = gamSourceYear(record);
+    assert.equal(accepted, provenance === "titulo" ? null : String(manufacture), reference);
+    const input = yearProduct(record, manufacture, "");
+    const assessment = assessCommercialYear(accepted === null ? { ...input, attributes: [] } : input);
+    assert.equal(assessment.urlYear, url, reference);
+    assert.equal(assessment.attributeYear, accepted === null ? null : manufacture, reference);
+    assert.equal(assessment.urlAttributeDisagreement, accepted !== null, reference);
+  }
+});
+
+test("los slugs de otra unidad, otros dominios y rutas no representativas no acreditan fechas", () => {
+  const base = source("6588", "2000", "2019", "", "url");
+  for (const url of [
+    base.url.replace("6588-", "6590-"),
+    base.url.replace("https://online.gamrentals.com", "https://example.com"),
+    base.url.replace("6588-2019-modelo", "6588-preparapedidos-2000-kg"),
+    `${base.url}?referencia=6588`,
+    `${base.url}#ficha`
+  ]) {
+    const result = assessCommercialYear(yearProduct({ ...base, url }, 2000, ""));
+    assert.equal(result.urlYear, null, url);
+    assert.equal(result.urlAttributeDisagreement, false, url);
+  }
+  assert.deepEqual(assessCommercialYear({ ...yearProduct(base, 2000, ""), attributes: [] }), {
+    attributeYear: null, urlYear: 2019, inconsistentClaims: [], urlAttributeDisagreement: false
+  });
 });

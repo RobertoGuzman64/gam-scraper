@@ -1,6 +1,6 @@
 import type { ProductRecord, SpecsMap, SpecValue } from "../../contracts/catalog.js";
 import { inspectTechnicalCoherence, inspectTechnicalSpecifications } from "../../catalog/validation/technical-specifications.js";
-import { gamCrossedBatteryValue, gamMislabelledStacker, gamPalletBatteryForCrossedSpecs } from "../../preparation/gam/technical/crossed-specifications.js";
+import { gamCrossedBatteryValue, gamMislabelledOrderPickerLift, gamMislabelledStacker, gamPalletBatteryForCrossedSpecs, recoverGamCrossedTechnicalSpecs } from "../../preparation/gam/technical/crossed-specifications.js";
 
 const repeatedUnit = /^\s*(\d+(?:[.,]\d+)?)\s*(mm|cm|kg)\s+\2\s*$/iu;
 
@@ -33,10 +33,19 @@ export const projectPresentableSpecifications = (spec: SpecsMap, source?: Produc
     presentable["Peso"] = `${stacker.weight} kg`;
     presentable["Batería (V / Ah)"] = stacker.battery;
   }
+  const lift = gamMislabelledOrderPickerLift(source);
+  if (lift !== null && spec["Altura de elevación (mm)"] === undefined &&
+    samePublishedValues(spec, source, ["Marca", "Modelo", "Altura", "Longitud", "Capacidad de carga (kg)", "Centro de carga"])) {
+    presentable["Altura de elevación (mm)"] = `${lift} mm`;
+  }
   const palletBattery = gamPalletBatteryForCrossedSpecs(source);
   if (palletBattery && spec["Batería (V / Ah)"] === undefined &&
-    samePublishedValues(spec, source, ["Marca", "Modelo", "Altura Plataforma", "Capacidad de la batería", "Peso"])) {
+    samePublishedValues(spec, source,
+      ["Marca", "Modelo", "Altura Plataforma", "Capacidad de la batería", "Peso", "Capacidad de carga (kg)"])) {
     presentable["Batería (V / Ah)"] = gamCrossedBatteryValue(palletBattery) ?? palletBattery;
+    if (recoverGamCrossedTechnicalSpecs(source)["Capacidad de la batería"] === undefined) {
+      delete presentable["Capacidad de la batería"];
+    }
   }
   return presentable;
 };

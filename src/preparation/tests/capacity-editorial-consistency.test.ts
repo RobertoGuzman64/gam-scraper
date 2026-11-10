@@ -6,6 +6,9 @@ import { loadImportCatalog } from "../../infrastructure/filesystem/legacy-export
 import { resolveAttribute } from "../shared/classification/mapping/attribute-mapping.js";
 import { gamConfirmedAbsentScalar } from "../gam/classification/mapping/unrepresentable.js";
 import { prepareSourceProduct, prepareWithCatalog } from "../prepare-product.js";
+import { projectCommercialPresentation } from "../../commercial/projection/presentation-projection.js";
+import { hasLoadCapacityDisagreement } from "../../commercial/validation/technical-specifications.js";
+import { analyzePresentationConsistency } from "../../commercial/diagnostics/presentation-consistency.js";
 import { reconcileGamVerifiedCapacityCoherence } from "../gam/technical/reconciliation/gam-verified-capacity-coherence.js";
 
 const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
@@ -70,6 +73,37 @@ test("Las reconciliaciones de capacidad requieren identidad y evidencia técnica
       assert.equal(reconcileGamVerifiedCapacityCoherence(altered), altered, reference);
     }
   }
+});
+
+test("ERP25VL reconcilia solo la presentación comercial y conserva la divergencia del origen", () => {
+  const source = find("6837");
+  const snapshot = JSON.stringify(source);
+  const prepared = prepareSourceProduct(source);
+  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.product.title, "Carretilla elevadora eléctrica 3500 Kg YALE ERP25VL");
+  assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "2500 KG");
+  const commercial = projectCommercialPresentation(source, prepared.product, null);
+  assert.equal(commercial.title, "Carretilla elevadora eléctrica 2500 kg YALE ERP25VL");
+  assert.match(commercial.description_general ?? "", /capacidad de carga nominal de 2500 kg/u);
+  assert.doesNotMatch(commercial.description_general ?? "", /3500 kg/u);
+  assert.equal(commercial.spec["Capacidad de carga (kg)"], "2500 KG");
+  assert.equal(hasLoadCapacityDisagreement({ title: commercial.title, spec: commercial.spec }), false);
+  assert.equal(JSON.stringify(source), snapshot);
+});
+
+test("XGA43K conserva la diferencia entre capacidad sin restricción y capacidad condicionada", () => {
+  const source = find("5902");
+  const snapshot = JSON.stringify(source);
+  const prepared = prepareSourceProduct(source);
+  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "460 KG");
+  assert.match(prepared.product.description ?? "", /300 kg sin limitación \/ 460 kg con limitación/u);
+  assert.match(prepared.product.description_general ?? "", /300 kg de capacidad de cesta sin limitación y hasta 460 kg con limitación/u);
+  const findings = analyzePresentationConsistency([prepared.product]).findings;
+  assert.deepEqual(findings.map((item) => [item.code, item.status]), [
+    ["capacidad-no-cualificada-en-campo", "revisar"]
+  ]);
+  assert.equal(JSON.stringify(source), snapshot);
 });
 
 test("La CTE 18HD conserva el conflicto de modelo sin reproducir como vigente el resumen anterior", () => {

@@ -13,6 +13,8 @@ import {
   gamElevationSourceIdentityConflict, gamElevationSourceModelConflict
 } from "../evidence/elevation-identity.js";
 import { prepareImportBatch } from "../../../batch-identity.js";
+import { reconcileGamSourceIdentity } from "../reconciliation/gam-source-identity.js";
+import { prepareSourceProduct } from "../../../prepare-product.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -66,6 +68,33 @@ test("la discrepancia requiere marca, modelo, título, resumen y ficha del mismo
     { ...sourceRecord, specs: { ...sourceRecord.specs, Marca: "JLG" } },
     { ...sourceRecord, url: "https://example.com/es/6236" }
   ]) assert.equal(gamElevationSourceModelConflict(invalid), false);
+});
+
+test("las variantes JLG y CTE contradictorias del proveedor no se reconcilian sin acreditar la unidad", async () => {
+  const current = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const currentRecord = (reference: string): ProductRecord => requireProductReference(current.products, reference);
+  for (const [reference, expectedModel, publishedModel] of [
+    ["6934", "E300AJ", "E300AJP"],
+    ["4650", "B-LIFT 18HV", "B-LIFT 18HD"]
+  ] as const) {
+    const record = currentRecord(reference);
+    const source = JSON.stringify(record);
+    const reconciled = reconcileGamSourceIdentity(record);
+    const prepared = prepareSourceProduct(record);
+    assert.strictEqual(reconciled, record, reference);
+    assert.equal(prepared.product.spec.Modelo, expectedModel, reference);
+    assert.ok(prepared.product.title?.includes(publishedModel), reference);
+    assert.equal(prepared.product.sourceUrl, record.url, reference);
+    assert.equal(prepared.product.image, record.image, reference);
+    assert.equal(JSON.stringify(record), source, reference);
+  }
+  for (const reference of ["5730", "6998", "6650"]) {
+    const record = currentRecord(reference);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.product.spec.Modelo, record.specs?.Modelo, reference);
+    assert.equal(prepared.product.title, record.title, reference);
+    assert.equal(prepared.product.sourceUrl, record.url, reference);
+  }
 });
 
 test("las tres series compartidas conservan seis referencias sin fusionarlas y tres siguen bloqueadas", () => {

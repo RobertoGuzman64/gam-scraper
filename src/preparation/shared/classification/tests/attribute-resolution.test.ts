@@ -5,6 +5,8 @@ import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-
 import { resolveAttribute, resolveAttributeValue } from "../mapping/attribute-mapping.js";
 import { productAttributes } from "../../../product-attributes.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
+import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { gamSourceYear } from "../../../../catalog/normalization/gam/year.js";
 
 const catalog = await loadImportCatalog();
 const attribute = (name: string) => {
@@ -161,4 +163,35 @@ test("preparación: no emite opciones incompatibles ni oculta atributos obligato
     [{ attributeID: brand.id, value: "GENIE" }]);
   assert.deepEqual(productAttributes(gamRecord(), category, { ...contract, relations: [] }).attributes, []);
   assert.deepEqual(productAttributes(gamRecord(), category, { ...contract, relations: [] }).missingRequiredDetails, []);
+});
+
+
+test("GAM: las ocho capacidades 2000 kg no se exportan como años de fabricación", async () => {
+  const originals = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const references = ["6588", "6590", "2237", "2239", "912", "2238", "241", "242"];
+  const year = attribute("Año de fabricación");
+  assert.equal(year.id, 117);
+  const affected = originals.products.filter((item) => item.yearSource === "titulo");
+  assert.deepEqual(affected.map((item) => item.reference).sort(), [...references].sort());
+  for (const record of affected) {
+    assert.equal(record.year, "2000", record.reference ?? "sin referencia");
+    assert.equal(gamSourceYear(record), null, record.reference ?? "sin referencia");
+    assert.deepEqual(resolveAttribute(record, year), { status: "not_observed", value: null }, record.reference ?? "sin referencia");
+    assert.equal(record.year, "2000");
+  }
+});
+
+test("GAM: preserva años acreditados en descripción y ficha y los declarados explícitamente en título", () => {
+  const year = attribute("Año de fabricación");
+  const title = { ...gamRecord(), year: "2018", yearSource: "titulo" as const,
+    title: "Carretilla de ocasión · Año 2018 · Capacidad 2000 kg" };
+  assert.equal(gamSourceYear(title), "2018");
+  assert.deepEqual(resolveAttribute(title, year), { status: "resolved", value: 2018 });
+  for (const yearSource of ["ficha", "descripcion", "url"] as const) {
+    const valid = { ...title, yearSource, title: "Carretilla de ocasión · 2000 kg" };
+    assert.equal(gamSourceYear(valid), "2018");
+    assert.deepEqual(resolveAttribute(valid, year), { status: "resolved", value: 2018 });
+  }
+  const spec = { ...title, title: "Carretilla 2000 kg", specs: { "Año de fabricación": "2018" } };
+  assert.deepEqual(resolveAttribute(spec, year), { status: "resolved", value: 2018 });
 });

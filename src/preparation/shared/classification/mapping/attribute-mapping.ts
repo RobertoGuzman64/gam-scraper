@@ -1,4 +1,5 @@
 import { SPEC_KEY_NORMALIZATION } from "../../../../catalog/normalization/spec-rules.js";
+import { gamSourceYear } from "../../../../catalog/normalization/gam/year.js";
 import type { ProductRecord, SpecScalar } from "../../../../contracts/catalog.js";
 import type { Attribute, AttributeResolution, Candidate } from "./attribute-types.js";
 import { fold, scalar, numberToken } from "./attribute-utils.js";
@@ -125,7 +126,7 @@ export const resolveAttribute = (record: ProductRecord, attribute: Attribute): A
   const extra: Readonly<Record<string, string | null>> = {
     "Marca": record.brand,
     "Modelo": record.model,
-    "Año de fabricación": record.year,
+    "Año de fabricación": gamSourceYear(record),
     "Horas de uso": record.horometer,
     "Ubicación / Delegación": record.location
   };

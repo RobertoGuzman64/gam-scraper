@@ -58,3 +58,43 @@ test("no transforma redondeos tolerables, dimensiones de transporte ni resúmene
   const geometry = product("Plataforma de 14 m", "Plataforma de 16 m de altura", { "Altura": "16 m" });
   assert.equal(assessCommercialHeight(geometry).status, "unresolved");
 });
+
+
+test("acredita altura de trabajo y plataforma de GS-3246 según manual Genie 1000060, página 36", () => {
+  const baseline = product("Plataforma tijera eléctrica 12 m GENIE GS-3246",
+    "GENIE GS-3246 Segunda Mano. Venta de plataforma de tijera eléctrica de 10 metros de altura de ocasión. Capacidad 318 kg",
+    { Marca: "GENIE", Modelo: "GS-3246", "Altura de elevación (m)": "12 metros" });
+  const original = JSON.stringify(baseline);
+  const result = assessCommercialHeight(baseline);
+  assert.equal(result.status, "compatible");
+  assert.equal(result.titleMetres, 12);
+  assert.equal(result.summaryMetres, 10);
+  assert.equal(result.technicalMetres, 12);
+  assert.equal(result.title, baseline.title);
+  assert.equal(result.description,
+    "GENIE GS-3246 Segunda Mano. Venta de plataforma de tijera eléctrica de 10 metros de altura de plataforma de ocasión. Capacidad 318 kg");
+  assert.equal(JSON.stringify(baseline), original);
+  assert.deepEqual(assessCommercialHeight({ ...baseline, description: result.description }), result);
+});
+
+test("no acredita pares de altura sin identidad, valores o significado inequívocos", () => {
+  const base = product("Plataforma tijera eléctrica 12 m GENIE GS-3246",
+    "Venta de plataforma de tijera eléctrica de 10 metros de altura",
+    { Marca: "GENIE", Modelo: "GS-3246", "Altura de elevación (m)": "12 metros" });
+  const negatives = [
+    { ...base, spec: { ...base.spec, Marca: "OTRA" } },
+    { ...base, spec: { ...base.spec, Modelo: "GS-2646" } },
+    { ...base, title: "Plataforma tijera eléctrica 12 m GENIE GS-2646" },
+    { ...base, title: "Plataforma tijera eléctrica 13 m GENIE GS-3246" },
+    { ...base, description: "Venta de plataforma de tijera eléctrica de 9 metros de altura" },
+    { ...base, description: "Venta de plataforma de tijera eléctrica de 10 metros de altura de trabajo" },
+    { ...base, spec: { ...base.spec, "Altura de elevación (m)": "10 metros" } },
+    { ...base, spec: { ...base.spec, "Altura de elevación (m)": "12 metros", "Altura de trabajo (m)": "12 metros" } },
+    { ...base, description: "Venta de plataforma de tijera eléctrica de 10 metros de altura y de 12 metros de trabajo" }
+  ];
+  for (const candidate of negatives) {
+    const assessment = assessCommercialHeight(candidate);
+    assert.notEqual(assessment.status, "compatible", JSON.stringify(candidate));
+    assert.equal(assessment.description, candidate.description);
+  }
+});

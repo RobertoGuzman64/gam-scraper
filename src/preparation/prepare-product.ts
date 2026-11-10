@@ -3,6 +3,7 @@ import { validateCreateManyCandidate, validateImportCandidate } from "../commerc
 import { resolveCategory } from "./shared/classification/mapping/category-mapping.js";
 import { imageUrls, normalizePrice } from "./product-fields.js";
 import { excludeGamRelatedProductImages } from "../catalog/normalization/gam/gallery.js";
+import { excludeGomarizForeignCover } from "../catalog/normalization/gomariz/gallery.js";
 import { productAttributes } from "./product-attributes.js";
 import { sourceAttributeQualityIssues, sourceTechnicalQualityIssues } from "./shared/quality/source/attribute-quality.js";
 import { sourceSemanticQualityIssues } from "./shared/quality/source/semantic-quality.js";
@@ -70,7 +71,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const category = catalog ? resolveCategory(record, catalog.categories, condition) : null;
   const sourceImages = imageUrls(record);
   const images = record.providerId === "gam" && record.image === sourceImages[0]
-    ? excludeGamRelatedProductImages(sourceImages, record) : sourceImages;
+    ? excludeGamRelatedProductImages(sourceImages, record) : record.providerId === "gomariz"
+      ? excludeGomarizForeignCover(sourceImages, record.reference) : sourceImages;
   const price = normalizePrice(record.price);
   const reference = record.reference?.trim() || null;
   const editorial = resolvePreparedEditorial(editorialRecord, sourceUnitRecord, sourceEditorial);

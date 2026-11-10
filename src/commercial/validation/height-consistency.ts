@@ -67,6 +67,27 @@ const replaceHeight = (text: string, match: MeasuredHeight, value: number): stri
   return `${text.slice(0, match.start)}${number} ${unit}${text.slice(match.start + match.text.length)}`;
 };
 
+const genieGs3246Heights = { workingMetres: 11.75, platformMetres: 9.8 } as const;
+
+const corroboratedPlatformSummary = (
+  product: HeightProduct, titleHeight: MeasuredHeight, summaryHeight: MeasuredHeight,
+  tech: TechnicalHeight | null
+): string | null => {
+  if (product.spec["Marca"] !== "GENIE" || product.spec["Modelo"] !== "GS-3246" ||
+    !/\bGENIE\s+GS-3246\b/iu.test(product.title ?? "") ||
+    tech?.kind !== "elevation" || !equal(tech.value, titleHeight.value) ||
+    !equal(titleHeight.value, genieGs3246Heights.workingMetres, 0.3) ||
+    !equal(summaryHeight.value, genieGs3246Heights.platformMetres, 0.3) ||
+    !product.description) return null;
+  const end = summaryHeight.start + summaryHeight.text.length;
+  const suffix = product.description.slice(end);
+  if (!/^\s+de altura\b/iu.test(suffix) || /^\s+de altura de (?:trabajo|elevaci[oó]n)\b/iu.test(suffix)) {
+    return null;
+  }
+  if (/^\s+de altura de plataforma\b/iu.test(suffix)) return product.description;
+  return product.description.slice(0, end) + suffix.replace(/^(\s+de altura)\b/iu, "$1 de plataforma");
+};
+
 export const assessCommercialHeight = (product: HeightProduct): CommercialHeightAssessment => {
   const titleHeight = measure(product.title);
   const summaryHeight = measure(product.description);
@@ -79,6 +100,10 @@ export const assessCommercialHeight = (product: HeightProduct): CommercialHeight
   }
   const difference = Math.abs(titleHeight.value - summaryHeight.value);
   if (difference <= 0.5) return { ...initial, status: "compatible" };
+  const platformSummary = corroboratedPlatformSummary(product, titleHeight, summaryHeight, tech);
+  if (platformSummary !== null) {
+    return { ...initial, description: platformSummary, status: "compatible" };
+  }
   if (tech?.kind === "work" && equal(summaryHeight.value, tech.value) &&
     !equal(titleHeight.value, tech.value, 0.5) && /\baltura\b/iu.test(product.description)) {
     return { ...initial, title: replaceHeight(product.title, titleHeight, tech.value), status: "title-normalized" };

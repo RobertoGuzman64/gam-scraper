@@ -99,6 +99,34 @@ const mislabeledTrailerCaddyVoltage = (record: ProductRecord, specs: SpecsMap): 
   return matched?.key ?? null;
 };
 
+const unusableHysterMeasurement = (record: ProductRecord, key: string, value: unknown): boolean => {
+  if (record.providerId !== "gam" || record.condition !== "Nuevo" ||
+    record.brand !== "HYSTER" || record.specs?.Marca !== "HYSTER" ||
+    typeof record.model !== "string" || record.specs.Modelo !== record.model ||
+    typeof record.reference !== "string" || !record.title?.toUpperCase().includes(`HYSTER ${record.model.replace(/\s+/gu, "").toUpperCase()}`)) return false;
+  let family: string;
+  try {
+    const url = new URL(record.url);
+    const path = url.pathname.split("/").filter(Boolean);
+    if (url.hostname !== "online.gamrentals.com" || url.search || url.hash ||
+      path.length !== 3 || path[0] !== "es" || !path[2]?.startsWith(`${record.reference}-`)) return false;
+    family = path[1] ?? "";
+  } catch {
+    return false;
+  }
+  if (key === "Capacidad de la batería" && value === "1000mm" &&
+    record.categoryKey === "marcas-nuevas") {
+    return (record.model === "T7.0 HS3" && family === "tractor-de-remolcado-conductor-sentado-7000-kg") ||
+      (record.model === "T8.0HS4" && family === "tractor-de-remolcado-conductor-sentado-8000-kg");
+  }
+  return key === "Altura Plataforma" && value === "9225 metros" &&
+    record.categoryKey === "carretillas-nuevas" && family === "carretillas-trilaterales-hyster" &&
+    record.model === "C1.5L" && record.specs.Peso === "7921 KG" &&
+    record.specs["Capacidad de carga (kg)"] === "1500 KG" &&
+    record.specs["Capacidad de la batería"] === "80V / 840Ah(V/Ah)" &&
+    record.specs["Altura de elevación (mm)"] === "16900 mm";
+};
+
 export const reconcileGamSourceTechnicalUnits = (record: ProductRecord): ProductRecord => {
   if (record.providerId !== "gam" || !record.specs) return record;
   const cleanRecord = reconcileGamSpreadsheetLiftHeight(record);
@@ -146,6 +174,15 @@ export const reconcileGamSourceTechnicalUnits = (record: ProductRecord): Product
   const reach = specs["Alcance Lateral"];
   if (typeof reach === "string" && /^\d{1,2}(?:[.,]\d{1,2})?\s+m\s+metros$/iu.test(reach)) {
     specs["Alcance Lateral"] = reach.replace(/\s+metros$/iu, "");
+    changed = true;
+  }
+
+  if (unusableHysterMeasurement(record, "Altura Plataforma", specs["Altura Plataforma"])) {
+    delete specs["Altura Plataforma"];
+    changed = true;
+  }
+  if (unusableHysterMeasurement(record, "Capacidad de la batería", specs["Capacidad de la batería"])) {
+    delete specs["Capacidad de la batería"];
     changed = true;
   }
 

@@ -1,4 +1,5 @@
 import type { CommercialBaselineInput } from "../diagnostics/commercial-baseline.js";
+import { gamSourceYear } from "../../catalog/normalization/gam/year.js";
 import { decideCommercialCategory } from "./category-decision.js";
 import { commercialToken, projectCommercialPresentation } from "./presentation-projection.js";
 
@@ -18,11 +19,11 @@ export const commercialUnitTitleSuffixes = (
   const suffixes = new Map<string, string>();
   for (const group of groups.values()) {
     if (group.length < 2) continue;
-    const years = group.map(({ input }) => input.source.year?.trim() ?? "")
+    const years = group.map(({ input }) => gamSourceYear(input.source) ?? "")
       .filter((year) => /^(?:19|20)\d{2}$/u.test(year));
     const yearDifferentiates = new Set(years).size > 1 || (years.length > 0 && years.length < group.length);
     const preliminary = group.map(({ input, title }) => {
-      const year = input.source.year?.trim();
+      const year = gamSourceYear(input.source);
       return yearDifferentiates && year && /^(?:19|20)\d{2}$/u.test(year) &&
         !/(?:^|\D)(?:19|20)\d{2}(?:\D|$)/u.test(title) ? ` · Año ${year}` : "";
     });

@@ -140,10 +140,28 @@ const addIssue = (list: EditorialIssue[], code: EditorialIssueCode, field: Edito
   list.push({ code, field, words: value.words, characters: value.characters, preview: value.text.slice(0, 180) });
 };
 
+const modelComponentPresent = (text: string, component: string): boolean => {
+  const terms = normalizeText(component).split(" ").filter(Boolean);
+  if (!terms.length) return false;
+  const expression = terms.join("\\s*");
+  return new RegExp(`(?:^|\\s)${expression}(?=$|\\s)`, "u").test(normalizeText(text));
+};
+const hasDocumentedModelDescriptor = (text: string, model: string): boolean => {
+  const parenthetical = /^(.*?)\s+\((LWB|pedestrian)\)$/iu.exec(model);
+  if (parenthetical?.[1] && parenthetical[2] && modelComponentPresent(text, parenthetical[1])) {
+    const description = normalizeText(text);
+    if (parenthetical[2].toLowerCase() === "lwb") return /\blwb\b|\bbatalla larga\b/u.test(description);
+    return /\bpedestrian\b|\bpeatonal\b|\bconducci[oó]n a pie\b|\bconductor a pie\b/u.test(description);
+  }
+  const discharge = /^(.*?)\s+descarga alto$/iu.exec(model);
+  return Boolean(discharge?.[1] && modelComponentPresent(text, discharge[1]) &&
+    /\bdescarga alt[ao]\b/iu.test(normalizeText(text)));
+};
 const lacksModel = (long: Measured, model: string | null): boolean => {
   if (!model || !long.text) return false;
   const target = compact(model);
-  return target.length >= EDITORIAL_CRITERIA.modelMinCharacters && /\d/.test(target) && !compact(long.text).includes(target);
+  return target.length >= EDITORIAL_CRITERIA.modelMinCharacters && /\d/.test(target) &&
+    !compact(long.text).includes(target) && !hasDocumentedModelDescriptor(long.text, model);
 };
 const isTelegraphic = (long: Measured): boolean => {
   if (long.words < EDITORIAL_CRITERIA.telegraphicMinWords ||

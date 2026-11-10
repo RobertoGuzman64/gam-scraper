@@ -1,4 +1,5 @@
 import type { ImportCandidate } from "../legacy-export/contracts.js";
+import { gomarizImageReference } from "../../catalog/normalization/gomariz/gallery.js";
 import { hasLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../validation/technical-specifications.js";
 
 export type PresentationConsistencyFinding = {
@@ -40,11 +41,6 @@ const filename = (image: string | null): string => {
   return path.slice(path.lastIndexOf("/") + 1);
 };
 
-const imageReference = (image: string | null): string | null => {
-  const match = /^([a-z]{1,5}\d{3,8})[-_]/iu.exec(filename(image));
-  return match?.[1]?.toUpperCase() ?? null;
-};
-
 const modelTokens = (value: string): readonly string[] =>
   (value.toUpperCase().match(/[A-Z0-9]{6,}/gu) ?? [])
     .filter((token) => /[A-Z]/u.test(token) && /\d/u.test(token));
@@ -57,6 +53,14 @@ const relatedVariants = (first: string, second: string): boolean => {
   const longer = first.length < second.length ? second : first;
   return shorter.length >= 6 && longer.length === shorter.length + 1 && longer.startsWith(shorter) &&
     /[A-Z]$/u.test(longer);
+};
+
+const jlgTitleVariantDisagreement = (product: ImportCandidate): boolean => {
+  if (product.providerId !== "gam" || normalized(String(product.spec.Marca ?? "")) !== "jlg" ||
+    typeof product.spec.Modelo !== "string" || !product.title) return false;
+  const published = /^E\d{3,4}AJP?$/iu.exec(product.spec.Modelo.trim())?.[0]?.toUpperCase();
+  const titled = /\bJLG\s+(E\d{3,4}AJP?)\b/iu.exec(product.title)?.[1]?.toUpperCase();
+  return published !== undefined && titled !== undefined && relatedVariants(published, titled);
 };
 
 const imageVariantDisagreements = (product: ImportCandidate): readonly PresentationConsistencyFinding["code"][] => {
@@ -85,10 +89,15 @@ const ownerModelIsUnresolved = (owner: ImportCandidate, product: ImportCandidate
 };
 
 const lacksCapacityContext = (product: ImportCandidate): boolean => {
-  const capacity = String(product.spec["Capacidad de carga (kg)"] ?? "");
+  const capacity = product.spec["Capacidad de carga (kg)"];
+  if (typeof capacity !== "string") return false;
+  const declared = /^(\d{1,3}(?:[.,]\d{3})+|\d{2,5})\s*kg$/iu.exec(capacity.trim());
+  if (!declared?.[1]) return false;
+  const expected = Number(declared[1].replace(/[.,]/gu, ""));
   const description = `${product.description ?? ""} ${product.description_general ?? ""}`;
-  const matches = /\b(\d{2,4})\s*kg\s+con\s+limitaci[oó]n\b/iu.exec(description);
-  return matches !== null && normalized(capacity) === normalized(`${matches[1]} kg`);
+  const qualified = /\b(\d{1,3}(?:[.,]\d{3})+|\d{2,5})\s*kg\s+(?:con\s+limitaci[oó]n|restringid[oa]s?)\b/giu;
+  return [...description.matchAll(qualified)].some((match) =>
+    match[1] !== undefined && Number(match[1].replace(/[.,]/gu, "")) === expected);
 };
 
 export const analyzePresentationConsistency = (
@@ -102,6 +111,13 @@ export const analyzePresentationConsistency = (
     imagesByOwner.set(product.image, owners);
   }
   const findings: PresentationConsistencyFinding[] = [];
+  const gomarizReferences = new Map<string, Set<string>>();
+  for (const product of products) {
+    if (product.providerId !== "gomariz" || !product.reference) continue;
+    const sources = gomarizReferences.get(product.reference.toUpperCase()) ?? new Set<string>();
+    sources.add(product.sourceUrl);
+    gomarizReferences.set(product.reference.toUpperCase(), sources);
+  }
   const add = (product: ImportCandidate, field: PresentationConsistencyFinding["field"],
     code: PresentationConsistencyFinding["code"], status: PresentationConsistencyFinding["status"]): void => {
     findings.push({ providerId: product.providerId, reference: product.reference,
@@ -109,16 +125,24 @@ export const analyzePresentationConsistency = (
   };
   for (const product of products) {
     if (product.providerId === "gomariz" && product.reference) {
-      const fileRef = imageReference(product.image);
+      const fileRef = gomarizImageReference(product.image);
       const machineRef = product.reference.toUpperCase();
       const fileMatch = fileRef?.match(/^([A-Z]{1,5})(\d{3,8})$/u);
       const machineMatch = machineRef.match(/^([A-Z]{1,5})(\d{3,8})$/u);
       if (fileMatch && machineMatch && fileRef !== machineRef) {
-        add(product, "images", fileMatch[2] === machineMatch[2] ?
-          "portada-prefijo-distinto" : "portada-referencia-ajena", "revisar");
+        const sameNumber = fileMatch[2] === machineMatch[2];
+        const hasOtherOwner = [...(gomarizReferences.get(fileRef ?? "") ?? [])]
+          .some((sourceUrl) => sourceUrl !== product.sourceUrl);
+        const consistentPrefix = product.images.length >= 2 && product.image === product.images[0] &&
+          product.images.every((image) => gomarizImageReference(image) === fileRef);
+        if (!sameNumber || !consistentPrefix || hasOtherOwner) {
+          add(product, "images", sameNumber ? "portada-prefijo-distinto" : "portada-referencia-ajena", "revisar");
+        }
       }
     }
-    for (const code of imageVariantDisagreements(product)) {
+    const variants = new Set(imageVariantDisagreements(product));
+    if (jlgTitleVariantDisagreement(product)) variants.add("modelo-titulo-spec-discordante");
+    for (const code of variants) {
       add(product, code === "modelo-titulo-spec-discordante" ? "title" : "images", code, "revisar");
     }
     for (const image of new Set(product.images.slice(1))) {

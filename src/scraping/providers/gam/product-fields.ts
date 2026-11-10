@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import type { SpecsMap } from "../../../contracts/catalog.js";
 import { normalizeSpace } from "./text.js";
 import { unrelatedDetails } from "./selectors.js";
+import { explicitGamTitleYear, gamUrlYear } from "../../../catalog/normalization/gam/year.js";
 
 export const pickDtDd = ($: cheerio.CheerioAPI, label: string): string | null => {
   let found: string | null = null;
@@ -47,11 +48,10 @@ export const extractYear = ($: cheerio.CheerioAPI, title: string | null, pageUrl
     const match = description.match(/(?:\baño\s*(?:de\s+fabricación)?\s*[:\-]?\s*|\bfabricad[oa]\s+en\s+)((?:19|20)\d{2})\b/i);
     if (match?.[1]) return { year: match[1], source: "descripcion" };
   }
-  const inTitle = validYear(title);
+  const inTitle = explicitGamTitleYear(title);
   if (inTitle) return { year: inTitle, source: "titulo" };
-  const path = decodeURIComponent(new URL(pageUrl).pathname).replace(/\/\d+-/, "/");
-  const yearFromUrl = validYear(path.replace(/[-_]/g, " "));
-  return { year: yearFromUrl, source: yearFromUrl ? "url" : null };
+  const fromUrl = gamUrlYear(pageUrl);
+  return { year: fromUrl, source: fromUrl ? "url" : null };
 };
 
 export const extractBreadcrumbs = ($: cheerio.CheerioAPI): readonly string[] => {

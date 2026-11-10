@@ -496,10 +496,18 @@ test("GAM: elimina portadas ajenas acreditadas sin perder las propias", async ()
   assert.deepEqual(excludeGamRelatedProductImages(pending.images ?? []), [pending.image]);
 });
 
-test("Gomariz y Mercaeleva: sus galerías continúan intactas", async () => {
+test("Gomariz: solo CC1666 excluye una portada ajena; Mercaeleva conserva sus galerías", async () => {
   for (const provider of ["gomariz", "mercaeleva"] as const) {
     const { products } = await readCanonicalCatalog(`catalogs/providers/${provider}/original/scrape-${provider}-catalog.json`);
     for (const source of products) {
+      if (provider === "gomariz" && source.reference === "CC1666") {
+        const originalImages = source.images ?? [];
+        assert.equal(originalImages.length, 11);
+        assert.match(originalImages[0] ?? "", /\/CC1535-/u);
+        assert.ok(originalImages.slice(1).every((image) => /\/CC1666-/u.test(image)));
+        assert.deepEqual(prepareOriginal(source).product.images, originalImages.slice(1), `${provider}:${source.reference}`);
+        continue;
+      }
       assert.deepEqual(prepareOriginal(source).product.images, source.images, `${provider}:${source.reference}`);
     }
   }

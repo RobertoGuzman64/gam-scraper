@@ -11,6 +11,7 @@ import { resolveMercaelevaPreviousGenerationPlatformGeneral } from "../mapping/d
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { verifiedUnitContextEditorial } from "../../../shared/editorial/evidence/verified-unit-context-editorial.js";
 import { mercaelevaShortDescription } from "../mapping/descriptions.js";
+import { reconcileMercaelevaVerifiedReachTruckFamily } from "../../technical/reconciliation/mercaeleva.js";
 
 const source = await readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json");
 const find = (reference: string): ProductRecord => {
@@ -41,6 +42,37 @@ test("Mercaeleva: convierte el anuncio telegráfico coherente en prosa y conserv
     assert.deepEqual(result.product.spec, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, record.specs ?? {})));
     assert.equal(JSON.stringify(record), original);
   }
+});
+
+test("Mercaeleva: transforma solo la retráctil conciliada y preserva la altura como cota no acreditada", async () => {
+  const catalog = await readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json");
+  const record = catalog.products.find((item) => item.reference === "M547-2372");
+  assert.ok(record);
+  const canonical = JSON.stringify(record);
+  assert.equal(resolveMercaelevaGeneralDescription(record), null);
+  const reconciled = reconcileMercaelevaVerifiedReachTruckFamily(record);
+  const general = resolveMercaelevaGeneralDescription(reconciled);
+  assert.ok(general);
+  for (const fragment of ["Toyota 6FBRE14", "1350 kg", "6.500 mm", "14.696 horas", "2000", "MER1123", "debe comprobarse"]) {
+    assert.ok(general.includes(fragment), fragment);
+  }
+  assert.doesNotMatch(general, /TRANSPALET ELECTRICO|ALTURA DE TRABAJO/u);
+  const prepared = prepareSourceProduct(record);
+  assert.equal(prepared.product.description_general, general);
+  assert.equal(prepared.product.reference, record.reference);
+  assert.equal(prepared.product.sourceUrl, record.url);
+  assert.equal(JSON.stringify(record), canonical);
+  for (const variant of [
+    { ...reconciled, model: "6FBRE16" },
+    { ...reconciled, title: reconciled.title?.replace("1350 KG", "1500 KG") ?? null },
+    { ...reconciled, url: `${reconciled.url}?source=other` },
+    { ...reconciled, horometer: "14900" },
+    { ...reconciled, longDescription: reconciled.longDescription?.replace("6.500 mm", "8.500 mm") ?? null },
+    { ...reconciled, longDescription: reconciled.longDescription?.replace("14696", "14960") ?? null },
+    { ...reconciled, specs: { ...reconciled.specs, "Capacidad máxima de elevación": "1500 kg" } },
+    { ...reconciled, specs: { ...reconciled.specs, "Artículo No.": "MER1124" } },
+    { ...reconciled, specs: { ...reconciled.specs, "Tipo de motor": "Diésel" } }
+  ]) assert.equal(resolveMercaelevaGeneralDescription(variant), null);
 });
 
 test("Mercaeleva: un conflicto o un detalle no estructurado impiden reescribir la general", () => {

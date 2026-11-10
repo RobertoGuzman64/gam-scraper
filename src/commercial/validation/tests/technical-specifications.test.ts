@@ -16,11 +16,10 @@ const publication = async (providerId: string): Promise<readonly ImportCandidate
   return (await readAccreditedPublication(path)).products;
 };
 
-const knownTechnicalReferences = ["2242", "2243", "2244", "2245", "2246", "2247", "2248", "2249", "2250",
-  "2300", "2301", "2263", "2265", "2267", "2302", "2305", "6114", "6115", "2130", "72", "73"];
-const knownCapacityReferences = ["gam:1145", "gam:6514", "gam:6837", "mercaeleva:M062-8951", "mercaeleva:M119-9334"];
+const knownTechnicalReferences = ["2248", "2249", "2250", "2305", "72", "73"];
+const knownCapacityReferences = ["gam:6837", "mercaeleva:M062-8951", "mercaeleva:M119-9334"];
 
-test("la proyección comercial oculta las 21 especificaciones corruptas vigentes sin alterar evidencias", async () => {
+test("la proyección comercial mantiene filtradas las seis magnitudes incompatibles de la publicación vigente", async () => {
   const products = await publication("gam");
   const snapshot = JSON.stringify(products);
   const byReference = new Map(products.map((product) => [product.reference, product]));
@@ -50,7 +49,7 @@ test("la proyección comercial oculta las 21 especificaciones corruptas vigentes
   assert.equal(JSON.stringify(products), snapshot);
 });
 
-test("las cinco discrepancias de capacidad quedan en revisión, sin fijar automáticamente la capacidad nominal", async () => {
+test("las tres discrepancias de capacidad pendientes quedan en revisión sin corrección automática", async () => {
   const products = [...await publication("gam"), ...await publication("mercaeleva")];
   const flagged = products.filter(hasLoadCapacityDisagreement).map((product) => `${product.providerId}:${product.reference}`);
   assert.deepEqual(flagged.sort(), [...knownCapacityReferences].sort());
@@ -126,9 +125,16 @@ test("corrige las especificaciones comerciales con evidencia real sin reescribir
     } else assert.match(String(spec["Batería (V / Ah)"]), /^24V \/ /u);
     if (reference === "2244") assert.equal(spec["Centro de carga"], "130 mm");
   }
-  assert.equal(presentation("2250")["Batería (V / Ah)"], undefined);
-  assert.equal(presentation("2250")["Capacidad de la batería"], undefined);
+  assert.equal(presentation("2248")["Capacidad de la batería"], "24V / 250AH(V/Ah)");
+  assert.equal(presentation("2248")["Batería (V / Ah)"], undefined);
+  for (const reference of ["2249", "2250"]) {
+    assert.equal(presentation(reference)["Batería (V / Ah)"], "24V / 315-500Ah(V/Ah)", reference);
+    assert.equal(presentation(reference)["Capacidad de la batería"], undefined, reference);
+    assert.equal(presentation(reference)["Altura Plataforma"], undefined, reference);
+    assert.equal(presentation(reference).Peso, "678 KG", reference);
+  }
   assert.equal(presentation("2241")["Centro de carga"], undefined);
+  assert.equal(presentation("2241")["Altura de elevación (mm)"], "8895 mm");
   assert.equal(presentation("2241")["Altura Plataforma"], "14 metros");
   for (const [reference, expected] of [
     ["1714", "600 mm"], ["2220", "500 mm"], ["2285", "500 mm"],
@@ -154,14 +160,74 @@ test("no aplica mapeos de Yale sin coincidencia de original, publicación y mode
   const source = originals.products.find((item) => item.reference === "2300");
   const published = publishedGam.find((item) => item.reference === "2300");
   assert.ok(source && published);
-  const alteredPublished = { ...published, spec: { ...published.spec, "Centro de carga": "500 mm" } };
-  const altered = projectPresentableSpecifications(alteredPublished.spec, source);
+  const contaminated = { ...source.specs };
+  const altered = projectPresentableSpecifications({ ...contaminated, "Centro de carga": "500 mm" }, source);
   assert.equal(altered["Altura de elevación (mm)"], undefined);
   assert.equal(altered["Peso"], undefined);
   assert.equal(altered["Batería (V / Ah)"], undefined);
   const differentModel = { ...source, model: "OTRO" };
-  const unconfirmed = projectPresentableSpecifications(published.spec, differentModel);
+  const unconfirmed = projectPresentableSpecifications(contaminated, differentModel);
   assert.equal(unconfirmed["Altura de elevación (mm)"], undefined);
   assert.equal(unconfirmed["Peso"], undefined);
   assert.equal(unconfirmed["Batería (V / Ah)"], undefined);
+  const accredited = projectPresentableSpecifications(published.spec, source);
+  assert.equal(accredited["Altura de elevación (mm)"], "5076 mm");
+  assert.equal(accredited.Peso, "2280 kg");
+  assert.equal(accredited["Batería (V / Ah)"], "24 V / 400 Ah");
+});
+
+
+test("no recupera elevación ni rangos Yale cuando la publicación diverge del original", async () => {
+  const [originals, products] = await Promise.all([
+    readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json"), publication("gam")
+  ]);
+  for (const reference of ["2241", "2248", "2249", "2250"]) {
+    const source = originals.products.find((item) => item.reference === reference);
+    const published = products.find((item) => item.reference === reference);
+    assert.ok(source && published, reference);
+    const differentModel = { ...source, model: "OTRO" };
+    const unconfirmed = projectPresentableSpecifications(published.spec, differentModel);
+    if (reference === "2241") assert.equal(unconfirmed["Altura de elevación (mm)"], undefined);
+    else assert.equal(unconfirmed["Batería (V / Ah)"], undefined);
+    const changed = { ...published.spec, "Capacidad de carga (kg)": "999 KG" };
+    const mismatched = projectPresentableSpecifications(changed, source);
+    if (reference === "2241") assert.equal(mismatched["Altura de elevación (mm)"], undefined);
+    else assert.equal(mismatched["Batería (V / Ah)"], undefined);
+  }
+});
+
+
+test("la cohorte GAM filtrada conserva toda especificación válida y solo recupera campos acreditados", async () => {
+  const [originals, published] = await Promise.all([
+    readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json"), publication("gam")
+  ]);
+  const sourceByReference = new Map(originals.products.map((product) => [product.reference, product]));
+  const publishedByReference = new Map(published.map((product) => [product.reference, product]));
+  const cases: readonly { reference: string; removed: readonly string[]; added: Readonly<Record<string, string>> }[] = [
+    { reference: "2241", removed: ["Centro de carga"], added: { "Altura de elevación (mm)": "8895 mm" } },
+    { reference: "2248", removed: ["Altura Plataforma"], added: {} },
+    { reference: "2249", removed: ["Altura Plataforma", "Capacidad de la batería"],
+      added: { "Batería (V / Ah)": "24V / 315-500Ah(V/Ah)" } },
+    { reference: "2250", removed: ["Altura Plataforma", "Capacidad de la batería"],
+      added: { "Batería (V / Ah)": "24V / 315-500Ah(V/Ah)" } },
+    { reference: "72", removed: ["Capacidad de la batería"], added: {} },
+    { reference: "73", removed: ["Capacidad de la batería"], added: {} },
+    { reference: "2305", removed: ["Altura Plataforma"], added: {} }
+  ];
+  const before = JSON.stringify([originals.products, published]);
+  for (const { reference, removed, added } of cases) {
+    const source = sourceByReference.get(reference);
+    const product = publishedByReference.get(reference);
+    assert.ok(source && product, reference);
+    const projected = projectPresentableSpecifications(product.spec, source);
+    assert.deepEqual(Object.keys(product.spec).filter((key) => !(key in projected)).sort(), [...removed].sort(), reference);
+    assert.deepEqual(Object.keys(projected).filter((key) => !(key in product.spec)).sort(), Object.keys(added).sort(), reference);
+    for (const [key, value] of Object.entries(projected)) {
+      if (key in product.spec) assert.deepEqual(value, product.spec[key], `${reference}:${key}`);
+      else assert.equal(value, added[key], `${reference}:${key}`);
+    }
+    assert.deepEqual(inspectTechnicalSpecifications(projected), [], reference);
+    assert.deepEqual(inspectTechnicalCoherence(projected), [], reference);
+  }
+  assert.equal(JSON.stringify([originals.products, published]), before);
 });
