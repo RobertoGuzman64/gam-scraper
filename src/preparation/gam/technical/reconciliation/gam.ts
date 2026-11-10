@@ -27,10 +27,12 @@ import { reconcileGamVerifiedYaleGc55vxGlp } from "../models/yale-gc55vx-glp-evi
 import { reconcileGamVerifiedYaleGc40vxLpg } from "../models/yale-gc40vx-lpg-evidence.js";
 import { reconcileGamVerifiedYaleGc45vxLpg } from "../models/yale-gc45vx-lpg-evidence.js";
 import { reconcileGamVerifiedZeroSerial } from "../../identity/evidence/musoshi-serial-evidence.js";
+import { reconcileGamVerifiedUnitYear } from "./gam-verified-unit-year.js";
 
 export const reconcileGamInitialIdentity = (record: ProductRecord): ProductRecord => reconcileGamVerifiedZeroSerial(record);
 
 export const reconcileGamForPreparation = (record: ProductRecord): ProductRecord => {
+  record = reconcileGamVerifiedUnitYear(record);
   record = reconcileGamVerifiedHysterH45fts5Title(record);
 record = reconcileGamVerifiedGenie5390Editorial(reconcileGamOrderPickerEditorial(reconcileGamHandlingHeightEditorial(reconcileGamForkliftFuelEditorial(reconcileGamBtsEditorialSummary(reconcileGamElevationEditorialIdentity(reconcileGamOutdatedSourceTitle(record)))))));
   record = reconcileGamVerifiedXcmg12kDiesel(reconcileGamVerifiedXcmg0807acwLithium(reconcileGamVerifiedXcmg0810Crawler(reconcileGamVerifiedXcmg1823Model(reconcileGamVerifiedXcmg1523Model(reconcileGamUsedLiftEditorial(reconcileGamVerifiedHandlingEditorial(reconcileGamHandlingCapacityEditorial(reconcileGamVerifiedXga43kEditorial(record)))))))));

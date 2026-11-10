@@ -6,6 +6,7 @@ import { presentCommercialMotorization } from "./motorization-presentation.js";
 import { assessCommercialHeight } from "../validation/height-consistency.js";
 import { normalizeCommercialYearDescription } from "../validation/year-consistency.js";
 import { normalizeVerifiedCommercialCapacity } from "./capacity-presentation.js";
+import { reconcileGamVerifiedUnitYear } from "../../preparation/gam/technical/reconciliation/gam-verified-unit-year.js";
 
 export type CommercialMetadata = {
   readonly tags: readonly string[];
@@ -74,13 +75,18 @@ export const projectCommercialPresentation = (
     source.reference !== published.reference) {
     throw new Error(`Origen y publicación discordantes: ${published.providerId}:${published.reference ?? published.sourceUrl}`);
   }
+  const verifiedSource = reconcileGamVerifiedUnitYear(source);
   const baseTitle = presentCommercialMotorization(
     normalizeCommercialTitle(published.title, published.providerId, source.model), published
   );
-  const height = assessCommercialHeight({ ...published, title: baseTitle,
-    description: normalizeCommercialSummary(published.description, source.model, published.providerId) });
+  const summary = normalizeCommercialSummary(published.description, source.model, published.providerId);
+  const verifiedSummary = verifiedSource !== source && source.year && verifiedSource.year && summary
+    ? summary.replace(new RegExp(`\\bAño\\s+${source.year}\\b`, "u"), `Año ${verifiedSource.year}`)
+    : summary;
+  const height = assessCommercialHeight({ ...published, title: baseTitle, description: verifiedSummary });
   const capacity = normalizeVerifiedCommercialCapacity(source, published, height.title,
-    normalizeCommercialYearDescription(source, published.description_general));
+    normalizeCommercialYearDescription({ ...verifiedSource, longDescription: source.longDescription },
+      published.description_general));
   const title = capacity.title ? `${capacity.title}${titleSuffix}` : null;
   const brand = commercialBrandInTitle(title, source.brand) ??
     confirmedSpecIdentity(source.brand, published.spec["Marca"]);

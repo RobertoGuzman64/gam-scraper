@@ -54,11 +54,11 @@ test("integra cada aviso de acreditación sin alterar el contrato JSON existente
   assert.equal(audited.findings.length, audited.report.providers.reduce((sum, provider) =>
     sum + provider.accreditation.summary.pending, 0));
   const initial = classifyCurrentAuditFindings(audited.findings, empty, "acreditacion_comercial");
-  assert.equal(initial.findings.length, 12);
+  assert.equal(initial.findings.length, 6);
   assert.ok(initial.findings.every((item) => item.status === "pending"));
   const baseline = capture(() => printCommercialAuditReport(audited.report, "--acreditacion", undefined, undefined));
   const integrated = capture(() => printCommercialAuditReport(audited.report, "--acreditacion", undefined, undefined, initial));
-  for (const expected of ["ano-url-atributo-discordante: 9", "altura-titulo-resumen-discordante: 1",
+  for (const expected of ["ano-url-atributo-discordante: 3", "altura-titulo-resumen-discordante: 1",
     "capacidad-titulo-spec-discordante: 2", "0 infracciones"]) {
     assert.ok(integrated.some((line) => line.includes(expected)));
     assert.ok(baseline.some((line) => line.includes(expected)));
@@ -79,12 +79,12 @@ test("controla una sola unidad manteniendo la otra y los grupos pendientes opera
   assert.equal(classification.findings.filter((item) => item.status === "controlled").length, 1);
   const accreditation = capture(() => printCommercialAuditReport(audited.report, "--acreditacion",
     undefined, undefined, classification));
-  assert.ok(accreditation.some((line) => line.includes("ano-url-atributo-discordante: 8")));
+  assert.ok(accreditation.some((line) => line.includes("ano-url-atributo-discordante: 2")));
   assert.ok(accreditation.some((line) => line.includes("CONTROLADA | GAM | ano-url-atributo-discordante: 1")));
-  assert.equal(accreditation.some((line) => line.includes("WARN | GAM | ano-url-atributo-discordante: 9")), false);
+  assert.equal(accreditation.some((line) => line.includes("WARN | GAM | ano-url-atributo-discordante: 3")), false);
   assert.ok(accreditation.some((line) => line.includes("0 infracciones")));
   const review = capture(() => printCommercialAuditReport(audited.report, "--revision", undefined, undefined, classification));
-  assert.ok(review.some((line) => line.includes("señales 8 pendientes · 1 controladas")));
+  assert.ok(review.some((line) => line.includes("señales 2 pendientes · 1 controladas")));
   assert.ok(review.some((line) => line.includes("CONTROLADA INDIVIDUAL | ano-url-atributo-discordante")));
   assert.ok(review.some((line) => line.includes(`CONTROLADA | ${first.reference}`)));
   assert.equal(review.some((line) => line.includes(`Caso: ${first.sourceUrl}`)), false);
@@ -117,7 +117,7 @@ test("sin pendientes reconocidos no hay WARN nuevos y las detecciones originales
     undefined, undefined, classification));
   assert.equal(classification.findings.filter((item) => item.status === "pending").length, 0);
   assert.equal(output.filter((line) => line.startsWith("WARN | ")).length, 0);
-  assert.ok(output.some((line) => line.includes("INCIDENCIAS ACREDITACIÓN | pendientes 0 | controladas 10")));
+  assert.ok(output.some((line) => line.includes("INCIDENCIAS ACREDITACIÓN | pendientes 0 | controladas 4")));
   assert.ok(output.some((line) => line.includes("INCIDENCIAS ACREDITACIÓN | pendientes 0 | controladas 2")));
   assert.ok(output.some((line) => line.includes("1334 productos · 7342 atributos · 0 infracciones")));
   const review = capture(() => printCommercialAuditReport(audited.report, "--revision",
@@ -192,11 +192,11 @@ test("una contradicción cambiada reaparece como WARN aunque todas las anteriore
     printStaleFindingRecognitions(classified.stale);
   });
   assert.ok(output.some((line) => line.includes("WARN | GAM | ano-url-atributo-discordante: 1")));
-  assert.ok(output.some((line) => line.includes("CONTROLADA | GAM | ano-url-atributo-discordante: 8")));
+  assert.ok(output.some((line) => line.includes("CONTROLADA | GAM | ano-url-atributo-discordante: 2")));
   assert.ok(output.some((line) => line.includes("RECONOCIMIENTO CADUCADO") && line.includes(original.code)));
   const review = capture(() => printCommercialAuditReport(audited.report, "--revision",
     undefined, undefined, classified));
-  assert.ok(review.some((line) => line.includes("señales 1 pendientes · 8 controladas")));
+  assert.ok(review.some((line) => line.includes("señales 1 pendientes · 2 controladas")));
   assert.ok(review.some((line) => line.includes(`Caso: ${changed.sourceUrl}`)));
 });
 
@@ -224,7 +224,7 @@ test("los reconocimientos no permiten ocultar bloqueantes ni alterar la acredita
   });
 });
 
-test("los reconocimientos de año de GAM son individuales y no ocultan las seis discordancias sin acreditar", async () => {
+test("los reconocimientos de año de GAM son individuales tras corregir las discrepancias acreditadas", async () => {
   const registry = await loadFindingRecognitionRegistry(root);
   const expected = [
     { reference: "5961", urlYear: "2018", attributeYear: "2015" },
@@ -252,11 +252,11 @@ test("los reconocimientos de año de GAM son individuales y no ocultan las seis 
     .map((item) => item.finding.reference).sort(), ["5961", "6236", "6921"]);
   assert.deepEqual(classified.findings.filter((item) => item.status === "pending" &&
     item.finding.code === "ano-url-atributo-discordante")
-    .map((item) => item.finding.reference).sort(), ["6797", "6869", "6870", "6909", "6911", "6930"]);
-  assert.equal(classified.findings.filter((item) => item.status === "pending").length, 9);
+    .map((item) => item.finding.reference).sort(), []);
+  assert.equal(classified.findings.filter((item) => item.status === "pending").length, 3);
   const output = capture(() => printCommercialAuditReport(audited.report, "--acreditacion",
     undefined, undefined, classified));
-  assert.ok(output.some((line) => line.includes("WARN | GAM | ano-url-atributo-discordante: 6")));
+  assert.equal(output.some((line) => line.includes("WARN | GAM | ano-url-atributo-discordante")), false);
   assert.ok(output.some((line) => line.includes("CONTROLADA | GAM | ano-url-atributo-discordante: 3")));
   assert.ok(output.some((line) => line.includes("WARN | GAM | altura-titulo-resumen-discordante: 1")));
   assert.ok(output.some((line) => line.includes("WARN | MERCAELEVA | capacidad-titulo-spec-discordante: 2")));
@@ -272,14 +272,14 @@ test("cada reconocimiento GAM caduca de forma aislada cuando cambia su evidencia
       ? { ...finding, evidenceSha256: "a".repeat(64) } : finding);
     const reopened = classifyCurrentAuditFindings(changed, registry, "acreditacion_comercial");
     assert.equal(reopened.findings.filter((item) => item.status === "controlled").length, 2);
-    assert.equal(reopened.findings.filter((item) => item.status === "pending").length, 10);
+    assert.equal(reopened.findings.filter((item) => item.status === "pending").length, 4);
     assert.equal(reopened.stale.length, 1);
     assert.equal(reopened.stale[0]?.finding.reference, reference);
     const output = capture(() => {
       printCommercialAuditReport(audited.report, "--acreditacion", undefined, undefined, reopened);
       printStaleFindingRecognitions(reopened.stale);
     });
-    assert.ok(output.some((line) => line.includes("WARN | GAM | ano-url-atributo-discordante: 7")));
+    assert.ok(output.some((line) => line.includes("WARN | GAM | ano-url-atributo-discordante: 1")));
     assert.ok(output.some((line) => line.includes("RECONOCIMIENTO CADUCADO") && line.includes(reference)));
   }
 });
@@ -311,7 +311,7 @@ test("la evidencia individual de altura y capacidad conserva los valores técnic
     }
   }
   assert.equal(commercial.findings.filter((item) => item.status === "controlled").length, 3);
-  assert.equal(commercial.findings.filter((item) => item.status === "pending").length, 9);
+  assert.equal(commercial.findings.filter((item) => item.status === "pending").length, 3);
   assert.equal(commercial.stale.length, 0);
 });
 
