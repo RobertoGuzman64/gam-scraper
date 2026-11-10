@@ -9,13 +9,13 @@ import { analyzeTitleQuality } from "../title-quality.js";
 const record = (reference: string, originalTitle: string | null, publishedTitle: string | null,
   preparedTitle: string | null, options: { readonly brand?: string | null; readonly model?: string | null;
     readonly short?: string | null; readonly long?: string | null;
-    readonly origin?: DescriptionCoverageInput["origin"] } = {}): DescriptionCoverageInput => {
+    readonly specs?: ProductRecord["specs"]; readonly origin?: DescriptionCoverageInput["origin"] } = {}): DescriptionCoverageInput => {
   const url = `https://example.com/${reference}`;
   const source: ProductRecord = {
     providerId: "gam", categoryKey: "maquinaria", categoryName: "Maquinaria",
     url, reference, title: originalTitle, shortDescription: options.short ?? null,
     longDescription: options.long ?? null, brand: options.brand ?? null, model: options.model ?? null,
-    price: null, year: null, location: null, country: null, horometer: null, serialNumber: null, image: null
+    ...(options.specs ? { specs: options.specs } : {}), price: null, year: null, location: null, country: null, horometer: null, serialNumber: null, image: null
   };
   const published: ImportCandidate = {
     providerId: source.providerId, sourceUrl: url, reference, title: publishedTitle,
@@ -111,4 +111,24 @@ test("reconoce títulos vacíos, aparición de nuevas señales y protege la iden
   const newIssue = record("nuevo", "Plataforma articulada GENIE", "Plataforma articulada GENIE", "", { brand: "GENIE" });
   assert.deepEqual(signals(newIssue), ["titulo_ausente:aparecido_preparacion"]);
   assert.throws(() => analyzeTitleQuality([input, input]), /Identidad duplicada/);
+});
+
+test("no atribuye al título el error de una descripción original contradicha por la ficha técnica", () => {
+  const title = "Toyota 6FBRE14 CARRETILLA ELEVADORA RETRACTIL 1350 KG";
+  const input = record("M547-2372", title, title, title, {
+    brand: "Toyota", model: "6FBRE14",
+    long: "Ref. MER1123 TRANSPALET ELECTRICO 1350 KG ALTURA DE TRABAJO 6.500 mm TOYOTA 6FBRE14",
+    specs: { "Título adicional": "CARRETILLA ELEVADORA RETRACTIL 1350 KG", Marca: "Toyota", Modelo: "6FBRE14" }
+  });
+  assert.deepEqual(signals(input), []);
+  const missing = record("otro", "Toyota 6FBRE14", "Toyota 6FBRE14", "Toyota 6FBRE14", {
+    long: "Ref. MER1123 TRANSPALET ELECTRICO 1350 KG TOYOTA 6FBRE14",
+    specs: { "Título adicional": "TRANSPALET ELECTRICO 1350 KG" }
+  });
+  assert.deepEqual(signals(missing), ["tipo_maquina_no_identificado:pendiente"]);
+  const uncertain = record("incompleto", "Toyota 6FBRE14", "Toyota 6FBRE14", "Toyota 6FBRE14", {
+    long: "Ref. MER1123 TRANSPALET ELECTRICO 1350 KG TOYOTA 6FBRE14",
+    specs: { "Título adicional": "CARRETILLA ELEVADORA RETRACTIL 1350 KG" }
+  });
+  assert.deepEqual(signals(uncertain), []);
 });

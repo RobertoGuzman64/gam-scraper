@@ -36,10 +36,18 @@ test("siete potencias nominales en kVA no se comparan con teasers sin unidad vá
     assert.equal(prepared.status, "ready", reference);
     assert.ok(prepared.product.attributes.some((attribute) => attribute.attributeID === power.id && attribute.value === nominal));
     const revisedShort = resolveGamAdditionalCondensedShort(original);
-    if (["1216", "1217"].includes(reference)) {
-      assert.match(prepared.product.description ?? "", /Grupo electrógeno Pramac/u);
+    if (["1216", "1217", "1218", "1219"].includes(reference)) {
+      if (["1216", "1217"].includes(reference)) {
+        assert.match(prepared.product.description ?? "", /Grupo electrógeno Pramac/u);
+      } else {
+        assert.match(prepared.product.description ?? "", /Grupo electrógeno nuevo PRAMAC/u);
+      }
       assert.ok(prepared.product.description?.includes(original.model ?? ""), reference);
       assert.doesNotMatch(prepared.product.description ?? "", /\bkWA\b/u);
+      if (["1218", "1219"].includes(reference)) {
+        assert.match(prepared.product.description ?? "", /título comercial anuncia/u);
+        assert.match(prepared.product.description ?? "", new RegExp(`\\b${nominal.toLocaleString("de-DE")} kVA\\b`, "u"));
+      }
     } else {
       assert.equal(prepared.product.description, revisedShort ?? original.shortDescription);
     }
@@ -83,3 +91,20 @@ test("los regímenes de emergencia y continuo legítimos permanecen diferenciado
   assert.equal(prepareProduct(source("6834"), catalog).status, "ready");
 });
 
+
+test("los resúmenes acreditados de GSW1270M y GSW3365M exigen la misma fuente íntegra", () => {
+  for (const reference of ["1218", "1219"]) {
+    const original = source(reference);
+    const accepted = prepareProduct(original, catalog).product.description;
+    assert.match(accepted ?? "", /título comercial anuncia/u);
+    for (const variation of [
+      { ...original, shortDescription: `${original.shortDescription ?? ""} Modificado` },
+      { ...original, longDescription: `${original.longDescription ?? ""} Modificado` },
+      { ...original, specs: { ...original.specs, Modelo: "OTRO" } },
+      { ...original, model: "OTRO" },
+      { ...original, url: original.url.replace("gamrentals.com", "example.com") }
+    ]) {
+      assert.notEqual(prepareProduct(variation, catalog).product.description, accepted);
+    }
+  }
+});

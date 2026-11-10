@@ -71,6 +71,11 @@ const familyEvidence = (input: DescriptionCoverageInput): { label: string; origi
   const normalized = normalize(text.slice(0, 320));
   const matches = familyPatterns.filter((item) => item.source.test(normalized));
   if (matches.length !== 1) return null;
+  const additionalTitle = input.source.specs?.["Título adicional"];
+  if (typeof additionalTitle === "string" && additionalTitle.trim()) {
+    const corroborated = familyPatterns.filter((item) => item.source.test(normalize(additionalTitle)));
+    if (corroborated.length === 1 && corroborated[0]?.label !== matches[0]?.label) return null;
+  }
   return { label: matches[0]?.label ?? "", origin: text.slice(0, 180).replace(/\s+/gu, " ").trim() };
 };
 

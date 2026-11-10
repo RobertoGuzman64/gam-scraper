@@ -7,6 +7,8 @@ type CommercialShortEvidence = {
 };
 
 const verified: Readonly<Record<string, CommercialShortEvidence>> = {
+  "1218": { sourceDigest: "d546fb2bff048a45fb6dd61a81a946c2e78d921cc3034f7b780769d4caf65358", short: "Grupo electrógeno nuevo PRAMAC GSW1270M. El título comercial anuncia 1.270 kVA; la potencia y configuración del motor deben comprobarse con la documentación técnica del equipo ofertado." },
+  "1219": { sourceDigest: "96ffdf4184c3654e1d2e74d36af151c29459b0e550e35cf505d052394e7761ec", short: "Grupo electrógeno nuevo PRAMAC GSW3365M. El título comercial anuncia 3.365 kVA; la potencia y configuración del motor deben comprobarse con la documentación técnica del equipo ofertado." },
   "1022": { sourceDigest: "8c03e406223b847df029e307a92b736c2d3e2ad8e8dc43ed5fccf0957eaaf0c6", short: "Transpaleta eléctrica a pie Hyster PC1.5 nueva, con batería de litio y capacidad de carga declarada de 1.500 kg." },
   "1884": { sourceDigest: "939f25d0c540292c92f889f64e9fb18c139b74aa53e76ecdf4db638a42340faa", short: "Grúa eléctrica Ormig 15iE nueva, con capacidad máxima declarada de 15.000 kg y tracción delantera." },
   "1885": { sourceDigest: "cfa9edac9d617f69e982379693e2cf89b04b77762faeab1f67aa78b1176dee2f", short: "Grúa eléctrica Ormig 35iE nueva, con capacidad máxima declarada de 35.000 kg y tracción delantera." },
