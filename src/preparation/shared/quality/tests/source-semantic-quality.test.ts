@@ -34,8 +34,12 @@ test("Las contradicciones originales se conservan y las dos JLG se preparan sin 
     assert.equal(result.product.reference, record.reference, reference);
     assert.equal(result.product.sourceUrl, record.url, reference);
     const expectedSpecs = reference === "M838-0666" || reference === "M969-4655"
-      ? { ...record.specs, Modelo: "450 AJ" }
-      : { ...record.specs, ...(record.providerId === "gomariz" && record.year ? { "Año de fabricación": record.year } : {}) };
+      ? { ...record.specs, Modelo: "450 AJ", "Altura de plataforma": "13,72 m", "Alcance horizontal": "7,47 m" }
+      : reference === "M547-2372" ? { ...record.specs,
+        "Capacidad nominal según texto comercial": "1.350 kg", Propulsión: "Eléctrica",
+        "Centro de carga nominal del modelo": "600 mm", "Anchura exterior del modelo": "1250 mm",
+        "Radio de giro exterior del modelo": "1570 mm" }
+        : { ...record.specs, ...(record.providerId === "gomariz" && record.year ? { "Año de fabricación": record.year } : {}) };
     assert.deepEqual(result.product.spec, expectedSpecs, reference);
     assert.equal(JSON.stringify(record), before, reference);
   }

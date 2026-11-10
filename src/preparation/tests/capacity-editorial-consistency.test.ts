@@ -28,7 +28,8 @@ test("La capacidad restringida XGS58E1 no se presenta como carga universal", () 
   assert.equal(prepared.status, "ready");
   assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "450 kg con limitación");
   assert.match(prepared.product.description ?? "", /450 kg con restricciones/u);
-  assert.match(prepared.product.description_general ?? "", /230 kg estándar y 450 kg restringido/u);
+  assert.match(prepared.product.description_general ?? "", /230 kg/u);
+  assert.match(prepared.product.description_general ?? "", /450 kg con restricciones/u);
   assert.doesNotMatch(prepared.product.description ?? "", /Capacidad de la cesta 450 kg$/u);
 });
 

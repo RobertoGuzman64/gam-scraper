@@ -85,12 +85,21 @@ test("la densidad publicada refleja la recuperación documental de las dos JLG s
   const toyota = products.find((item) => item.providerId === "mercaeleva" && item.reference === "M547-2372");
   assert.ok(toyota);
   const documentedToyota = toyota.spec["Centro de carga nominal del modelo"] === "600 mm" &&
-    toyota.spec["Radio de giro exterior del modelo"] === "1570 mm";
-  assert.ok(documentedToyota || !("Centro de carga nominal del modelo" in toyota.spec));
+    toyota.spec["Anchura exterior del modelo"] === "1250 mm" &&
+    toyota.spec["Radio de giro exterior del modelo"] === "1570 mm" &&
+    toyota.spec["Capacidad nominal según texto comercial"] === "1.350 kg" &&
+    toyota.spec.Propulsión === "Eléctrica";
+  const partiallyDocumentedToyota = toyota.spec["Capacidad nominal según texto comercial"] === "1.350 kg" &&
+    toyota.spec.Propulsión === "Eléctrica" && !("Centro de carga nominal del modelo" in toyota.spec) &&
+    !("Anchura exterior del modelo" in toyota.spec) && !("Radio de giro exterior del modelo" in toyota.spec);
+  const originalToyota = ["Capacidad nominal según texto comercial", "Propulsión",
+    "Centro de carga nominal del modelo", "Anchura exterior del modelo", "Radio de giro exterior del modelo"]
+    .every((key) => !(key in toyota.spec));
+  assert.ok(documentedToyota || partiallyDocumentedToyota || originalToyota);
   assert.deepEqual(report.totals, { products: 1344, sparse: documentedToyota ? 0 : documented ? 1 : 3,
     medium: documentedGam ? 0 : 2 });
   assert.deepEqual(report.cases.map((item) => [item.providerId, item.reference, item.technicalCount]), [
-    ...(documentedToyota ? [] : [["mercaeleva", "M547-2372", 2] as const]),
+    ...(documentedToyota ? [] : [["mercaeleva", "M547-2372", partiallyDocumentedToyota ? 2 : 0] as const]),
     ...(documented ? [] : [
       ["mercaeleva", "M838-0666", 2],
       ["mercaeleva", "M969-4655", 2]
@@ -98,9 +107,8 @@ test("la densidad publicada refleja la recuperación documental de las dos JLG s
   ]);
   assert.deepEqual(report.mediumCases.map((item) => [item.providerId, item.reference, item.technicalCount]),
     documentedGam ? [] : [["gam", "2737", 3], ["gam", "6688", 3]]);
-  if (!documentedToyota) assert.deepEqual(report.cases.find((item) => item.reference === "M547-2372")?.technicalKeys, [
-    "Capacidad nominal según texto comercial", "Propulsión"
-  ]);
+  if (!documentedToyota) assert.deepEqual(report.cases.find((item) => item.reference === "M547-2372")?.technicalKeys,
+    partiallyDocumentedToyota ? ["Capacidad nominal según texto comercial", "Propulsión"] : []);
   else assert.equal(report.cases.some((item) => item.reference === "M547-2372"), false);
   assert.match(report.note, /Sin bloqueo de publicación/);
   assert.equal(JSON.stringify(products), before);

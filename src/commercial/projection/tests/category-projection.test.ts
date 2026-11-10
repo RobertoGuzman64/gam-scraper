@@ -9,6 +9,7 @@ import { loadCommercialPublicationInputs } from "../../export/commercial-inputs.
 import { resolveCommercialCondition } from "../../../preparation/condition.js";
 import { productAttributes } from "../../../preparation/product-attributes.js";
 import { reconcileGamVerifiedHysterSGlp } from "../../../preparation/gam/technical/models/hyster-s-glp-evidence.js";
+import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 
 const catalog = await loadImportCatalog();
 const providers = await loadCommercialPublicationInputs(process.cwd(), catalog);
@@ -61,15 +62,17 @@ test("clasifica familias documentadas sin inventar motorización ni nuevas categ
     const entry = product(providerId, reference);
     assert.equal(entry.mapped.product.categorySellID, categoryId, `${providerId}:${reference}`);
     assert.equal(isValidCommercialCategory(entry.source, categoryId, entry.mapped.product.condition, catalog), true);
+    const sourceSpec = providerId === "gam" && reference === "2737"
+      ? prepareSourceProduct(entry.source).product.spec : entry.published.spec;
     const expectedSpec = providerId === "gam" && ["2072", "2073"].includes(reference)
-      ? { ...entry.published.spec, Motorización: "GLP" }
+      ? { ...sourceSpec, Motorización: "GLP" }
       : providerId === "gam" && ["2134", "2135"].includes(reference)
-        ? { ...Object.fromEntries(Object.entries(entry.published.spec).filter(([key]) =>
+        ? { ...Object.fromEntries(Object.entries(sourceSpec).filter(([key]) =>
           key !== "Capacidad de carga (kg)")), "Capacidad de arrastre": reference === "2134" ? "5000 KG" : "7000 KG" }
         : providerId === "gam" && ["2573", "2737"].includes(reference)
-          ? Object.fromEntries(Object.entries(entry.published.spec).filter(([key]) =>
+          ? Object.fromEntries(Object.entries(sourceSpec).filter(([key]) =>
             key !== (reference === "2573" ? "Potencia Motor (CV)" : "Potencia Motor (KW)")))
-          : entry.published.spec;
+          : sourceSpec;
     assert.deepEqual(entry.mapped.product.spec, expectedSpec);
     assert.deepEqual(entry.mapped.product.images, providerId === "gam"
       ? excludeGamRelatedProductImages(entry.published.images, entry.source) : entry.published.images);

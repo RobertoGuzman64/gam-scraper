@@ -20,7 +20,9 @@ for (const [reference, capacity] of [["4792", "450"], ["5902", "460"]] as const)
     assert.equal(prepared.product.spec["Capacidad de carga (kg)"], `${capacity} kg con limitación`);
     assert.deepEqual(analyzePresentationConsistency([prepared.product]).findings, []);
     const unqualified = { ...prepared.product,
-      spec: { ...prepared.product.spec, "Capacidad de carga (kg)": `${capacity} KG` } };
+      spec: { ...prepared.product.spec, "Capacidad de carga (kg)": `${capacity} KG` },
+      description_general: prepared.product.description_general?.replace(
+        `${capacity} kg con restricciones`, `${capacity} kg con limitación`) ?? null };
     assert.deepEqual(analyzePresentationConsistency([unqualified]).findings.map((item) => item.code),
       ["capacidad-no-cualificada-en-campo"]);
     const corrected = reconcileGamVerifiedCapacityCoherence(reconcileGamForPreparation(original));

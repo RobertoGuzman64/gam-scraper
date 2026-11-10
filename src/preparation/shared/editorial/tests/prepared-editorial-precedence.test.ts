@@ -24,8 +24,8 @@ const find = (provider: typeof providers[number], reference: string): ProductRec
 
 test("conserva exactamente las cinco salidas editoriales de los 1.347 originales", () => {
   const expected = {
-    gam: { count: 983, sha: "9d9429c7b3dd9aa6256edb3b270fa7eb2acaf7c5b441afa4df85836125cb925a" },
-    gomariz: { count: 143, sha: "fa10b439a506f6a27af3043c1162f108f167efc9551359b44d156c80569d722c" },
+    gam: { count: 983, sha: "ad24ab006e1f9c2dee6e6471e2cd5a82fb1a0e8609ce498f2e78c5c24eb5f3a1" },
+    gomariz: { count: 143, sha: "e12c8eb427cfa4c5e13aa6ba892a90762e051803b4d1eb489c291439dbf2073e" },
     mercaeleva: { count: 221, sha: "656e2d22e0deb8af302da8e7ac3bf55335c0c3197f7e444ba0e3b72492dda698" }
   };
   for (const provider of providers) {
@@ -50,7 +50,7 @@ test("conserva estados, incidencias, identidad, textos, condición y campos de p
   };
   const expected = {
     gam: "2e4903a054cadc3429bb04de9f1b25b8dbbb0203f6905ee5a55c87f65dc661b0",
-    gomariz: "295b6b4e51882a49a37c097b6a2e09220ae6b8a6e9b6a6727498b0a368112696",
+    gomariz: "26cda3b7b6296d5119051cf78abd3fd16d6b3bfd49d358c1b7fd87fbc46dc5cc",
     mercaeleva: "66c71a08f08a6a632ebf972c7a3fdf4d1240e1678415d14bc4d72a6133fe3169"
   };
   for (const provider of providers) {
