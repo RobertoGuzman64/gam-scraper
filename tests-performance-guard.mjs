@@ -255,6 +255,33 @@ const namesFor = (file, sources) => {
   return { modules, calls, bindings: [...imports.values()] };
 };
 
+const countMemoizedBaselineCalls = (file, content) => {
+  const source = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const moduleCaches = new Set();
+  for (const statement of source.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (ts.isIdentifier(declaration.name)) moduleCaches.add(declaration.name.text);
+    }
+  }
+  const memoized = new Set();
+  const visit = (node) => {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "executeBaseline") {
+      for (let parent = node.parent; parent; parent = parent.parent) {
+        if (ts.isBinaryExpression(parent) && parent.operatorToken.kind === ts.SyntaxKind.QuestionQuestionEqualsToken &&
+          ts.isIdentifier(parent.left) && moduleCaches.has(parent.left.text) &&
+          node.pos >= parent.right.pos && node.end <= parent.right.end) {
+          memoized.add(parent.left.text);
+          break;
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return memoized.size;
+};
+
 const testSupport = (path) => path.startsWith("src/testing/") || /(?:^|\/)tests\//u.test(path) ||
   /\.test\.[cm]?[jt]s$/u.test(path) || path.startsWith("scripts/tests/");
 const isProtectedSource = (path, discovered) => protectedSuites.includes(path) || Object.values(shared).includes(path) ||
@@ -355,6 +382,11 @@ const guard = (sources) => {
     const [file, kind] = key.split("#");
     const limit = rawLimits[file]?.[kind] ?? 0;
     if (amount > limit) errors.push(`${file} | ${kind}: ${amount} operaciones costosas, máximo acreditado ${limit}`);
+  }
+  const comparisonSuite = protectedSuites[3];
+  const comparisonSource = sources.get(comparisonSuite);
+  if (comparisonSource && countMemoizedBaselineCalls(comparisonSuite, comparisonSource) < 2) {
+    errors.push(`${comparisonSuite} | las comparaciones base deben reutilizar dos promesas de módulo; evita repetir la carga del catálogo entre tests`);
   }
   const required = [
     [protectedSuites[0], shared.finish, "createIndividualFinishWorkspace"],
