@@ -42,12 +42,12 @@ try {
 
 Las suites de recuperación y retención pueden reutilizar estados auténticos acreditados mediante `createDeliveryFixtures` y `reuseCampaignTestFixture.prepared(...)`. Los estados son distintos:
 
-| Estado | Qué representa | Límite |
-| --- | --- | --- |
-| `fixture` | Campaña base | Fallos previos a aprobación y entrega |
-| `approvedFixture` | Revisión/aprobación editorial realizadas | Casos previos a publicar o que prueban la entrega |
-| `deliveredFixture` | Campaña aprobada y entregada | Recuperación, protección y verificación de entrega |
-| `successiveDeliveryFixture` | Dos campañas sucesivas entregadas | Rotación y retención entre entregas |
+| Estado                      | Qué representa                           | Límite                                             |
+| --------------------------- | ---------------------------------------- | -------------------------------------------------- |
+| `fixture`                   | Campaña base                             | Fallos previos a aprobación y entrega              |
+| `approvedFixture`           | Revisión/aprobación editorial realizadas | Casos previos a publicar o que prueban la entrega  |
+| `deliveredFixture`          | Campaña aprobada y entregada             | Recuperación, protección y verificación de entrega |
+| `successiveDeliveryFixture` | Dos campañas sucesivas entregadas        | Rotación y retención entre entregas                |
 
 Cada caso recibe un workspace aislado; las mutaciones no deben contaminar el estado compartido. El creador de fixtures ejecuta realmente las transiciones una vez al preparar las variantes, **no fabrica artefactos ni sustituye por mocks** la aprobación o publicación que el test deba verificar. No reutilizar un estado posterior en una prueba de transición anterior.
 

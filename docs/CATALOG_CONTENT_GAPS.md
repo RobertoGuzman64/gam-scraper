@@ -12,15 +12,15 @@ El auditor es **de solo lectura** respecto a originales, preparaciones guardadas
 
 ## Fuentes y modos de consulta
 
-| Modo                   | Qué analiza                                                                                                                                  | Alcance / precaución                                                                                  |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `npm run huecos`       | Campaña íntegra conservada o referencia histórica verificable; si faltan, comparación de publicaciones acreditadas con la preparación actual | La fuente elegida determina la población: consultar `provenance` antes de comparar cifras             |
-| `--comparar`           | Publicaciones acreditadas seleccionadas frente a preparación recalculada para sus mismas identidades                                         | Muestra vacíos recuperados, pendientes, pérdidas y prioridades editoriales; **no** publica resultados |
+| Modo                   | Qué analiza                                                                                                                                  | Alcance / precaución                                                                                            |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `npm run huecos`       | Campaña íntegra conservada o referencia histórica verificable; si faltan, comparación de publicaciones acreditadas con la preparación actual | La fuente elegida determina la población: consultar `provenance` antes de comparar cifras                       |
+| `--comparar`           | Publicaciones acreditadas seleccionadas frente a preparación recalculada para sus mismas identidades                                         | Muestra vacíos recuperados, pendientes, pérdidas y prioridades editoriales; **no** publica resultados           |
 | `--comparar --specs`   | Comparación de claves técnicas y semántica técnica publicada, separada del diagnóstico editorial                                             | `technicalSpecs` y `technicalSemantics` responden a criterios diferentes; ninguno inventa atributos comerciales |
-| `--comparar --titulos` | Compara títulos de publicaciones acreditadas con originales y preparación recalculada; genera `titles`                                     | Requiere `--comparar`; no admite `--specs` simultáneamente                                             |
-| `--finales`            | Calidad editorial, densidad y **semántica técnica** de los JSON publicados seleccionados                                                   | No calcula recuperaciones de la preparación ni comparación de claves entre etapas                     |
-| `--publicacion <ruta>` | Calidad editorial y densidad técnica de uno o varios `-publishable.json` acreditados explícitos                                              | No mezclar proveedores repetidos ni confundir una publicación histórica con la vigente                |
-| `--catalogo <ruta>`    | Originales canónicos completos aportados explícitamente; aplica en memoria las reglas actuales                                               | Requiere canónico verificable; admite varias rutas, no CSV parciales                                  |
+| `--comparar --titulos` | Compara títulos de publicaciones acreditadas con originales y preparación recalculada; genera `titles`                                       | Requiere `--comparar`; no admite `--specs` simultáneamente                                                      |
+| `--finales`            | Calidad editorial, densidad y **semántica técnica** de los JSON publicados seleccionados                                                     | No calcula recuperaciones de la preparación ni comparación de claves entre etapas                               |
+| `--publicacion <ruta>` | Calidad editorial y densidad técnica de uno o varios `-publishable.json` acreditados explícitos                                              | No mezclar proveedores repetidos ni confundir una publicación histórica con la vigente                          |
+| `--catalogo <ruta>`    | Originales canónicos completos aportados explícitamente; aplica en memoria las reglas actuales                                               | Requiere canónico verificable; admite varias rutas, no CSV parciales                                            |
 
 La selección de `--comparar` y `--finales` usa `discoverAccreditedPublications` y el mecanismo de **publicación vigente**, no el último directorio SHA por su fecha. El versionado, la activación y la reversión se gestionan por el flujo de publicaciones, **fuera de `huecos`**. Para comparar con una versión histórica, utilizar el modo de publicación explícita o el selector correspondiente, sin modificar el índice para una simple consulta.
 
@@ -46,14 +46,14 @@ Una ficha **mejorada** no equivale a una **carencia resuelta**: si una general a
 
 `--comparar --specs` añade `technicalSpecs`, generado por `analyzeSpecificationCoverage` (`src/catalog/diagnostics/specification-coverage.ts`). Considera claves normalizadas de `ProductRecord.specs` del original, `spec` preparado y `spec` publicado. Los valores `0` y `false` cuentan como informados; una clave renombrada no es una prestación técnica nueva.
 
-| Estado en `technicalSpecs.cases[].stage` | Lectura correcta                                                                                                    |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `pendiente_publicacion`                  | Clave presente en preparación y ausente del final seleccionado; puede existir una mejora no activada                |
-| `diferencia_origen_preparacion`          | Clave presente en original canónico y ausente en preparación sin reconciliación acreditada para ese campo          |
-| `reconciliacion_acreditada`               | La fuente contenía una clave no trasladada que una reconciliación verificada explica; conservar procedencia y resultado de preparación |
-| `perdida_tras_publicacion`               | Clave publicada que no aparece en la preparación recalculada; revisar antes de actualizar el final                  |
-| `normalizacion_ambigua`                  | Dos entradas de la misma clave normalizada tienen representaciones diferentes; requiere contraste                   |
-| `sin_evidencia_directa`                  | Otros equipos del grupo muestran la clave, pero la máquina no la publica ni prepara; **no prueba que deba tenerla** |
+| Estado en `technicalSpecs.cases[].stage` | Lectura correcta                                                                                                                       |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `pendiente_publicacion`                  | Clave presente en preparación y ausente del final seleccionado; puede existir una mejora no activada                                   |
+| `diferencia_origen_preparacion`          | Clave presente en original canónico y ausente en preparación sin reconciliación acreditada para ese campo                              |
+| `reconciliacion_acreditada`              | La fuente contenía una clave no trasladada que una reconciliación verificada explica; conservar procedencia y resultado de preparación |
+| `perdida_tras_publicacion`               | Clave publicada que no aparece en la preparación recalculada; revisar antes de actualizar el final                                     |
+| `normalizacion_ambigua`                  | Dos entradas de la misma clave normalizada tienen representaciones diferentes; requiere contraste                                      |
+| `sin_evidencia_directa`                  | Otros equipos del grupo muestran la clave, pero la máquina no la publica ni prepara; **no prueba que deba tenerla**                    |
 
 Los patrones familiares solo se señalan con un mínimo de **5 máquinas**, **3 observaciones** y cobertura observada de al menos **60 %**. Son criterios estadísticos del auditor, no pruebas de aplicabilidad a cada unidad. El informe reconoce la procedencia `original_canonico` o `reconstruccion_publicada`; en este segundo caso no se debe atribuir una recuperación al original independiente. El informe `technicalSpecs` examina **presencia de claves** y reconocimientos de reconciliación, no certifica por sí mismo el valor de capacidades, unidades, rendimiento o variantes. El informe independiente `technicalSemantics` comprueba coherencia de valores técnicos publicados, y sus hallazgos deben contrastarse con fuente, modelo y unidad; ninguno sustituye la evidencia original.
 
@@ -75,15 +75,15 @@ npm run huecos -- --publicacion <ruta-a-publicacion-acreditada> --json
 npm run huecos -- --help
 ```
 
-| Opción                                                   | Restricción / efecto                                                                       |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `--comparar`, `--finales`, `--catalogo`, `--publicacion` | Modos alternativos; `--catalogo` y `--publicacion` admiten repetición de su propia opción  |
-| `--specs`                                                | Solo con `--comparar`; combina diagnóstico de claves y semántica técnica                    |
+| Opción                                                   | Restricción / efecto                                                                                    |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `--comparar`, `--finales`, `--catalogo`, `--publicacion` | Modos alternativos; `--catalogo` y `--publicacion` admiten repetición de su propia opción               |
+| `--specs`                                                | Solo con `--comparar`; combina diagnóstico de claves y semántica técnica                                |
 | `--titulos`                                              | Solo con `--comparar`; alternativo a `--specs`, no se mezcla con `--finales` o publicaciones explícitas |
-| `--agrupar categoria\|marca\|modelo`                     | Agrupa el diagnóstico de originales; valor inicial `categoria`                             |
-| `--min-grupo N`, `--min-ausentes N`                      | Filtros del TOP de patrones de originales; valores iniciales `8` y `3`                     |
-| `--top N`                                                | Máximo de entradas visibles de los listados priorizados; valor inicial `20`                |
-| `--json`                                                 | Informe estructurado completo, con procedencia y colecciones sin el recorte visual del TOP |
+| `--agrupar categoria\|marca\|modelo`                     | Agrupa el diagnóstico de originales; valor inicial `categoria`                                          |
+| `--min-grupo N`, `--min-ausentes N`                      | Filtros del TOP de patrones de originales; valores iniciales `8` y `3`                                  |
+| `--top N`                                                | Máximo de entradas visibles de los listados priorizados; valor inicial `20`                             |
+| `--json`                                                 | Informe estructurado completo, con procedencia y colecciones sin el recorte visual del TOP              |
 
 Los límites numéricos deben ser enteros positivos. `--top` **no** elimina las colecciones completas de casos del JSON ni recorta la cola P0 en texto. El despachador puede compilar `dist/`; una redirección de salida a archivo la realiza el operador, no el auditor, y debe quedar fuera del ZIP aplicable al repositorio.
 
