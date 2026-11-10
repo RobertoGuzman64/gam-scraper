@@ -1,17 +1,8 @@
 import { SPEC_KEY_NORMALIZATION } from "../../../../catalog/normalization/spec-rules.js";
-import { gamSourceYear } from "../../../../catalog/normalization/gam/year.js";
 import type { ProductRecord, SpecScalar } from "../../../../contracts/catalog.js";
 import type { Attribute, AttributeResolution, Candidate } from "./attribute-types.js";
 import { fold, scalar, numberToken } from "./attribute-utils.js";
-import { applyGamAliasesDetailed, convertGamCandidate, isGamUnmeasuredNumeric, gamUnspecifiedTurningRadius } from "../../../gam/classification/mapping/attributes.js";
-import { applyGomarizAliases, convertGomarizCandidate } from "../../../gomariz/classification/mapping/attributes.js";
-import { applyMercaelevaAliasesDetailed } from "../../../mercaeleva/classification/mapping/attributes.js";
-import { normalizeMercaelevaCandidate } from "../../../mercaeleva/technical/mapping/technical.js";
-import { mercaelevaUnspecifiedMast } from "../../../mercaeleva/technical/evidence/handling-evidence.js";
-import { mercaelevaUnpublishedHours } from "../../../mercaeleva/technical/evidence/hours-evidence.js";
-import { gamConfirmedAbsentScalar } from "../../../gam/classification/mapping/unrepresentable.js";
-import { gamMislabelledSpecKey } from "../../../gam/technical/crossed-specifications.js";
-import { applyManainAliases, convertManainCandidate, isManainUnmeasuredNumeric } from "../../../manain/classification/mapping/attributes.js";
+import { classificationProvider } from "./classification-provider.js";
 
 const notPublished = (value: SpecScalar): boolean =>
   typeof value === "string" && ["n/d", "n/a", "no disponible", "no informado", "sin datos", "-", "—", "a consultar"].includes(fold(value));
@@ -87,38 +78,19 @@ const convert = (value: SpecScalar, key: string, attribute: Attribute): string |
 };
 
 export const resolveAttribute = (record: ProductRecord, attribute: Attribute): AttributeResolution => {
-  if (gamConfirmedAbsentScalar(record, attribute)) return { status: "not_observed", value: null };
-  if (attribute.name === "Tipo de mástil" && attribute.type === "SELECT" &&
-    mercaelevaUnspecifiedMast(record)) return { status: "not_observed", value: null };
-  if (attribute.name === "Horas de uso" && (attribute.type === "NUMBER" || attribute.type === "DECIMAL") &&
-    mercaelevaUnpublishedHours(record)) return { status: "not_observed", value: null };
-  if (record.providerId === "gam" && attribute.name === "Radio de giro" &&
-    attribute.unit_option === "mm" && gamUnspecifiedTurningRadius(record)) {
-    return { status: "not_observed", value: null };
-  }
+  const rules = classificationProvider(record)?.attribute;
+  if (rules?.suppress(record, attribute)) return { status: "not_observed", value: null };
   const keys = new Set([attribute.name, ...(aliases[attribute.name] ?? [])].map(fold));
   const candidates: Candidate[] = [];
-  if (record.providerId === "gam") {
-    const outcome = applyGamAliasesDetailed(record, attribute, keys, candidates);
-    if (outcome !== "accepted") return { status: outcome, value: null };
-  }
-  if (record.providerId === "gomariz" && !applyGomarizAliases(record, attribute, keys, candidates)) {
-    return { status: "rejected", value: null };
-  }
-  if (record.providerId === "manain") applyManainAliases(record, attribute, keys, candidates);
-  if (record.providerId === "mercaeleva") {
-    const outcome = applyMercaelevaAliasesDetailed(record, attribute, keys, candidates);
-    if (outcome !== "accepted") return { status: outcome, value: null };
-  }
+  const outcome = rules?.addAliases(record, attribute, keys, candidates) ?? "accepted";
+  if (outcome !== "accepted") return { status: outcome, value: null };
   let ambiguousSource = false;
   for (const [rawKey, spec] of Object.entries(record.specs ?? {})) {
-    if (record.providerId === "gam" && gamMislabelledSpecKey(record, attribute, rawKey)) continue;
+    if (rules?.excludeSpec(record, attribute, rawKey)) continue;
     const canonical = SPEC_KEY_NORMALIZATION[fold(rawKey)] ?? rawKey;
     if (!keys.has(fold(rawKey)) && !keys.has(fold(canonical))) continue;
     const value = scalar(spec);
-    if (value !== null && !notPublished(value) &&
-      !(record.providerId === "gam" && isGamUnmeasuredNumeric(attribute, value)) &&
-      !isManainUnmeasuredNumeric(record, attribute, value)) {
+    if (value !== null && !notPublished(value) && !rules?.unmeasured(record, attribute, value)) {
       candidates.push({ key: rawKey, value });
     }
     else if (Array.isArray(spec) && spec.length > 1) ambiguousSource = true;
@@ -126,23 +98,18 @@ export const resolveAttribute = (record: ProductRecord, attribute: Attribute): A
   const extra: Readonly<Record<string, string | null>> = {
     "Marca": record.brand,
     "Modelo": record.model,
-    "Año de fabricación": gamSourceYear(record),
+    "Año de fabricación": rules ? rules.sourceYear(record) : record.year?.trim() ?? null,
     "Horas de uso": record.horometer,
     "Ubicación / Delegación": record.location
   };
   const direct = extra[attribute.name];
-  if (direct?.trim() &&
-    !(record.providerId === "gam" && isGamUnmeasuredNumeric(attribute, direct))) {
+  if (direct?.trim() && !rules?.unmeasured(record, attribute, direct)) {
     candidates.push({ key: attribute.name, value: direct });
   }
   if (candidates.length === 0) return { status: ambiguousSource ? "rejected" : "not_observed", value: null };
   const converted = candidates.map((candidate) => {
     const fallback = convert(candidate.value, candidate.key, attribute);
-    if (record.providerId === "gam") return convertGamCandidate(record, attribute, candidate, fallback);
-    if (record.providerId === "gomariz") return convertGomarizCandidate(record, attribute, candidate, fallback);
-    if (record.providerId === "mercaeleva") return normalizeMercaelevaCandidate(attribute, candidate, fallback);
-    if (record.providerId === "manain") return convertManainCandidate(record, attribute, candidate, fallback);
-    return fallback;
+    return rules ? rules.convert(record, attribute, candidate, fallback) : fallback;
   });
   if (converted.some((value) => value === null)) return { status: "invalid", value: null };
   const first = converted[0];

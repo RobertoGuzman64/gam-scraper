@@ -39,11 +39,15 @@ const yearFromGamUrl = (value: Pick<YearProduct, "providerId" | "reference" | "s
   return year === null ? null : Number(year);
 };
 
-export const assessCommercialYear = (product: YearProduct): CommercialYearAssessment => {
-  const years = product.attributes.filter((attribute) => attribute.attributeID === 117 &&
+export const commercialAttributeYear = (attributes: YearProduct["attributes"]): number | null => {
+  const years = attributes.flatMap((attribute) => attribute.attributeID === 117 &&
     typeof attribute.value === "number" && Number.isSafeInteger(attribute.value) &&
-    attribute.value >= 1900 && attribute.value <= 2099).map((attribute) => Number(attribute.value));
-  const attributeYear = years.length === 1 ? years[0] ?? null : null;
+    attribute.value >= 1900 && attribute.value <= 2099 ? [attribute.value] : []);
+  return years.length === 1 ? years[0] ?? null : null;
+};
+
+export const assessCommercialYear = (product: YearProduct): CommercialYearAssessment => {
+  const attributeYear = commercialAttributeYear(product.attributes);
   const urlYear = yearFromGamUrl(product);
   const inconsistentClaims = product.providerId === "gam" && attributeYear !== null
     ? [...new Set(manufacturingClaims(product.description_general)

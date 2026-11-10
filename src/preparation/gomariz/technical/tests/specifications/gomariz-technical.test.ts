@@ -4,6 +4,7 @@ import { loadImportCatalog } from "../../../../../infrastructure/filesystem/lega
 import { resolveAttributeValue } from "../../../../shared/classification/mapping/attribute-mapping.js";
 import { prepareCached } from "../../../../testing/prepare-cached.js";
 import { recoverGomarizSourceYearSpec } from "../../mapping/source-year-spec.js";
+import { recoverBaseTechnicalSpecs } from "../../../../shared/technical/recovery/base-technical-recovery.js";
 import { readCanonicalCatalog } from "../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { recoverGomarizDocumentedRenaultPremiumSpecs } from "../../evidence/documented-renault-premium-specs.js";
 import { reconcileGomarizVerifiedPlatformHeight } from "../../reconciliation/gomariz.js";
@@ -127,4 +128,25 @@ test("Gomariz: conserva años existentes y rechaza proveedores, fuentes y fechas
     assert.strictEqual(recoverGomarizSourceYearSpec(record, specs), specs);
   }
   assert.deepEqual(original, { Potencia: "125 kVA" });
+});
+
+
+test("Gomariz: la composición técnica conserva el año de ficha y sus guardas de origen", () => {
+  const record: ProductRecord = {
+    ...source(energy, "generador", { Potencia: "125 kVA" }),
+    title: "PRAMAC GPW125", reference: "GR1356", year: "2022", yearSource: "ficha", condition: "Segunda mano"
+  };
+  const original = JSON.stringify(record);
+  assert.deepEqual(recoverBaseTechnicalSpecs(record, record), { ...record.specs, "Año de fabricación": "2022" });
+  for (const invalid of [
+    { ...record, providerId: "gam" },
+    { ...record, yearSource: "url" },
+    { ...record, categoryKey: "alquiler" },
+    { ...record, url: "https://example.com/venta/energia-electrica-e-iluminacion/generador/ficha/" }
+  ] satisfies ProductRecord[]) {
+    assert.equal(recoverBaseTechnicalSpecs(invalid, invalid)["Año de fabricación"], undefined);
+  }
+  const existing = { ...record, specs: { ...record.specs, "Año de fabricación": "2019" } };
+  assert.equal(recoverBaseTechnicalSpecs(existing, existing)["Año de fabricación"], "2019");
+  assert.equal(JSON.stringify(record), original);
 });

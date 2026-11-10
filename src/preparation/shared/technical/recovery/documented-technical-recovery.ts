@@ -1,11 +1,6 @@
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
-import { recoverMercaelevaSourceFuel } from "../../../mercaeleva/technical/evidence/source-fuel-evidence.js";
-import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "../../../mercaeleva/technical/evidence/documented-platform-technical-specs.js";
-import { recoverMercaelevaDocumentedEquipmentTechnicalSpecs } from "../../../mercaeleva/technical/evidence/documented-equipment-technical-specs.js";
-import { recoverGamDocumentedWarehouseCleaningAndLiftingSpecs } from "../../../gam/technical/models/documented-warehouse-cleaning-and-lifting-specs.js";
-import { recoverGamDocumentedLogitransHandlingSpecs } from "../../../gam/technical/models/documented-logitrans-handling-specs.js";
-import { recoverGamDocumentedHandlingAndIndustrialSpecs } from "../../../gam/technical/models/documented-handling-and-industrial-specs.js";
-import { recoverGamDocumentedModulaStorageSpecs } from "../../../gam/technical/models/documented-modula-storage-specs.js";
+import { recoverMercaelevaDocumentedSourceSpecs } from "../../../mercaeleva/technical/evidence/documented-source-recovery.js";
+import { recoverGamDocumentedHandlingAndStorageSpecs } from "../../../gam/technical/models/documented-handling-recovery.js";
 import { recoverMercaelevaDocumentedLgmgAndBtLiftSpecs } from "../../../mercaeleva/technical/evidence/documented-lgmg-and-bt-lift-specs.js";
 import { recoverGamDocumentedIndustrialEquipmentSpecs } from "../../../gam/technical/models/documented-industrial-equipment-specs.js";
 import { recoverMercaelevaDocumentedLiftingAndWarehouseSpecs } from "../../../mercaeleva/technical/evidence/documented-lifting-and-warehouse-specs.js";
@@ -19,11 +14,8 @@ import { recoverGamDocumentedMultiUnitLotSpecs } from "../../../gam/technical/mo
 import { recoverMercaelevaDocumentedJlgSl203204Specs } from "../../../mercaeleva/technical/evidence/documented-jlg-sl203-204-specs.js";
 
 export const recoverDocumentedTechnicalSpecs = (sourceUnitRecord: ProductRecord, sourceYearSpecs: SpecsMap): { sourceFuelSpecs: SpecsMap; documentedSpecs: SpecsMap } => {
-  const sourceFuelSpecs = recoverMercaelevaSourceFuel(sourceUnitRecord, sourceYearSpecs);
-  const documentedPlatformSpecs = recoverMercaelevaDocumentedPlatformTechnicalSpecs(sourceUnitRecord, sourceFuelSpecs);
-  const documentedEquipmentSpecs = recoverMercaelevaDocumentedEquipmentTechnicalSpecs(sourceUnitRecord, documentedPlatformSpecs);
-  const documentedGamSpecs = recoverGamDocumentedHandlingAndIndustrialSpecs(sourceUnitRecord, recoverGamDocumentedLogitransHandlingSpecs(sourceUnitRecord, recoverGamDocumentedWarehouseCleaningAndLiftingSpecs(sourceUnitRecord, documentedEquipmentSpecs)));
-  const documentedModulaSpecs = recoverGamDocumentedModulaStorageSpecs(sourceUnitRecord, documentedGamSpecs);
+  const { sourceFuelSpecs, documentedSpecs: documentedEquipmentSpecs } = recoverMercaelevaDocumentedSourceSpecs(sourceUnitRecord, sourceYearSpecs);
+  const documentedModulaSpecs = recoverGamDocumentedHandlingAndStorageSpecs(sourceUnitRecord, documentedEquipmentSpecs);
   const documentedResidualLifts = recoverMercaelevaDocumentedLgmgAndBtLiftSpecs(sourceUnitRecord, documentedModulaSpecs);
   const documentedDensity180Gam = recoverGamDocumentedIndustrialEquipmentSpecs(sourceUnitRecord, documentedResidualLifts);
   const documentedDensity180Mercaeleva = recoverMercaelevaDocumentedLiftingAndWarehouseSpecs(sourceUnitRecord, documentedDensity180Gam);

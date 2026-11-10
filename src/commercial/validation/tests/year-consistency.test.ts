@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../legacy-export/contracts.js";
-import { assessCommercialYear, normalizeCommercialYearDescription } from "../year-consistency.js";
+import { assessCommercialYear, commercialAttributeYear, normalizeCommercialYearDescription } from "../year-consistency.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { gamSourceYear } from "../../../catalog/normalization/gam/year.js";
 
@@ -88,6 +88,29 @@ test("el año del propio atributo solo se usa si el contrato proporciona un núm
   assert.equal(assessCommercialYear({ ...input, attributes: [{ attributeID: 117, value: "2016" }] }).attributeYear, null);
 });
 
+
+test("el año de atributo requiere una única asignación válida y preserva los límites del contrato", () => {
+  const record = source("6869", "2016", "2008", "");
+  const base = yearProduct(record, 2016, "");
+  for (const year of [1900, 2099]) {
+    const attributes = [{ attributeID: 117, value: year }];
+    assert.equal(commercialAttributeYear(attributes), year);
+    assert.equal(assessCommercialYear({ ...base, attributes }).attributeYear, year);
+  }
+  for (const attributes of [
+    [],
+    [{ attributeID: 117, value: "2016" }],
+    [{ attributeID: 117, value: 1899 }],
+    [{ attributeID: 117, value: 2100 }],
+    [{ attributeID: 117, value: 2016.5 }],
+    [{ attributeID: 117, value: 2016 }, { attributeID: 117, value: 2016 }]
+  ]) {
+    assert.equal(commercialAttributeYear(attributes), null);
+    assert.equal(assessCommercialYear({ ...base, attributes }).attributeYear, null);
+  }
+  assert.equal(commercialAttributeYear([{ attributeID: 50, value: 2016 },
+    { attributeID: 117, value: 2015 }]), 2015);
+});
 
 test("los once años discordantes conservan la procedencia del origen sin imponer el slug", async () => {
   const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");

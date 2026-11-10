@@ -1,59 +1,10 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { ImportCandidate, ImportCatalog } from "../../../../commercial/legacy-export/contracts.js";
 import { fold } from "./category-utils.js";
-import { gamUsedCategorySlug, newCategorySlug } from "../../../gam/classification/mapping/categories.js";
-import { gomarizCategorySlug } from "../../../gomariz/classification/mapping/categories.js";
-import { mercaelevaCategorySlug, mercaelevaNewCategorySlug } from "../../../mercaeleva/classification/mapping/categories.js";
-import { manainCategorySlug } from "../../../manain/classification/mapping/categories.js";
+import { classificationProvider } from "./classification-provider.js";
 
 type Category = ImportCatalog["categories"][number];
 type ImportableCondition = Exclude<ImportCandidate["condition"], null>;
-
-const sourceCategorySlug = (record: ProductRecord): string | null => {
-  let path: string[];
-  let hostname: string;
-  try {
-    const url = new URL(record.url);
-    path = url.pathname.split("/").filter(Boolean);
-    hostname = url.hostname;
-  } catch {
-    return null;
-  }
-  if (record.providerId === "gam") return gamUsedCategorySlug(record, path, hostname);
-  if (record.providerId === "gomariz") return gomarizCategorySlug(record, path, hostname);
-  if (record.providerId === "mercaeleva") return mercaelevaCategorySlug(record, path, hostname);
-  return null;
-};
-
-const contradictsMappedCategory = (record: ProductRecord, slug: string): boolean => {
-  if (record.providerId !== "gam") return false;
-  if (slug === "furgonetas-electricas-segunda-mano") {
-    const description = fold(`${record.title ?? ""} ${record.shortDescription ?? ""} ${record.longDescription ?? ""}`);
-    if (/\b(?:es un cuatriciclo|cuatriciclo electrico|cuatriciclo de carga)\b/.test(description)) return true;
-  }
-  const expected = /(?:^|-)diesel(?:-|$)/.test(slug) ? "diesel" :
-    /(?:^|-)electric[ao]s?(?:-|$)/.test(slug) ? "electric" :
-      /(?:^|-)glp(?:-|$)/.test(slug) ? "glp" : null;
-  if (expected === null) return false;
-  const energies = (value: string): ReadonlySet<string> => {
-    const result = new Set<string>();
-    const folded = fold(value);
-    if (/\bdiesel\b/.test(folded)) result.add("diesel");
-    if (/\belectric[ao]s?\b/.test(folded)) result.add("electric");
-    if (/\b(?:glp|lpg)\b/.test(folded)) result.add("glp");
-    return result;
-  };
-  const titleEnergy = energies(record.title ?? "");
-  if (titleEnergy.size === 1 && !titleEnergy.has(expected)) return true;
-  if (titleEnergy.size > 1) return true;
-  for (const key of ["Tipo motor", "Motorización"]) {
-    const value = record.specs?.[key];
-    if (typeof value !== "string") continue;
-    const alternatives = energies(value);
-    if (alternatives.size === 1 && !alternatives.has(expected)) return true;
-  }
-  return false;
-};
 
 export const isLeafCategoryForCondition = (
   categoryId: number, categories: ImportCatalog["categories"], condition: ImportableCondition
@@ -97,21 +48,19 @@ export const resolveCategory = (
 ): Category | null => {
   if (condition === null) return null;
   const leaf = leafCategories(categories, condition);
-  const manainSlug = record.providerId === "manain" ? manainCategorySlug(record, condition) : null;
-  const sourceSlug = record.providerId === "manain" ? manainSlug : condition === "Nuevo"
-    ? record.providerId === "mercaeleva" ? mercaelevaNewCategorySlug(record) : newCategorySlug(record)
-    : sourceCategorySlug(record);
-  if (record.providerId === "manain" && !sourceSlug) return null;
+  const rules = classificationProvider(record)?.category;
+  const sourceSlug = rules?.slug(record, condition) ?? null;
+  if (rules?.requiresSource && !sourceSlug) return null;
   if (sourceSlug) {
     const matches = leaf.filter((category) => fold(category.slug) === fold(sourceSlug));
     const matched = matches.length === 1 ? matches[0] : undefined;
-    return matched && !contradictsMappedCategory(record, matched.slug) ? matched : null;
+    return matched && !rules?.contradicts(record, matched.slug) ? matched : null;
   }
   const direct = leaf.filter((category) => fold(category.slug) === fold(record.categoryKey));
   const directMatch = direct.length === 1 ? direct[0] : undefined;
-  if (directMatch) return contradictsMappedCategory(record, directMatch.slug) ? null : directMatch;
-  if (record.providerId !== "gam" || condition === "Nuevo") return null;
+  if (directMatch) return rules?.contradicts(record, directMatch.slug) ? null : directMatch;
+  if (!rules?.allowNameFallback || condition === "Nuevo") return null;
   const byName = leaf.filter((category) => fold(category.name) === fold(record.categoryName));
   const nameMatch = byName.length === 1 ? byName[0] : undefined;
-  return nameMatch && !contradictsMappedCategory(record, nameMatch.slug) ? nameMatch : null;
+  return nameMatch && !rules.contradicts(record, nameMatch.slug) ? nameMatch : null;
 };

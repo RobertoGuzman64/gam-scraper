@@ -1,5 +1,4 @@
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
-import { recoverGomarizSourceYearSpec } from "../../gomariz/technical/mapping/source-year-spec.js";
 import { recoverGamExplicitWorkHeightSpec } from "./measurements/work-height-evidence.js";
 import { recoverGamExplicitHorizontalReachSpec } from "./measurements/reach-evidence.js";
 import { recoverGamExplicitLoadCapacitySpec } from "./measurements/load-capacity-evidence.js";
@@ -13,7 +12,6 @@ import { recoverGamVerifiedTowingSpecs } from "./mobility/towing-evidence.js";
 import { recoverGamStatedTwinTractionPower } from "./energy/motor-configuration-evidence.js";
 import { recoverGamVerifiedMobilityBatteryType } from "./energy/battery-chemistry-evidence.js";
 import { recoverGamMislabelledBatterySpec } from "./energy/source-battery-label-evidence.js";
-import { recoverGamCrossedTechnicalSpecs } from "./crossed-specifications.js";
 import { recoverGamVerifiedVariantAcoustics } from "../identity/evidence/variant-acoustics-evidence.js";
 import { recoverGamVerifiedTyreDimensions } from "./mobility/verified-tyre-dimensions-evidence.js";
 import { recoverGamVerifiedConditionalAcoustics } from "./safety/verified-conditional-acoustics-evidence.js";
@@ -48,7 +46,7 @@ import { recoverGamMotorConfigurationSpecs, recoverGamVerifiedTwinMotorSpecs, re
 import { recoverGamPhysicalMeasures } from "./measurements/physical-measures-evidence.js";
 import { recoverGamHysterForkliftTyresSpec, recoverGamNonMarkingTyresSpec, recoverGamYaleSuperelasticTyresSpec, recoverGamVerifiedSuperelasticTyresSpec, recoverGamVerifiedTyreMaterialsSpec } from "./mobility/non-marking-tyres-evidence.js";
 
-export const recoverBaseTechnicalSpecs = (record: ProductRecord, sourceUnitRecord: ProductRecord): SpecsMap => {
+export const recoverGamStabilizedTechnicalSpecs = (record: ProductRecord, sourceUnitRecord: ProductRecord): SpecsMap => {
   const workHeightSpecs = recoverGamExplicitWorkHeightSpec(record);
   const reachSpecs = recoverGamExplicitHorizontalReachSpec({ ...record, specs: workHeightSpecs });
   const capacitySpecs = recoverGamExplicitLoadCapacitySpec({ ...record, specs: reachSpecs });
@@ -108,6 +106,5 @@ export const recoverBaseTechnicalSpecs = (record: ProductRecord, sourceUnitRecor
   const sourceDieselSpecs = recoverGamUsedDieselFuel(sourceUnitRecord, sourceElectricSpecs);
   const sourceSafetySpecs = recoverGamSourceSafetyControls(sourceUnitRecord, sourceDieselSpecs);
   const sourceStabilizationSpecs = recoverGamSourceStabilization(sourceUnitRecord, sourceSafetySpecs);
-  const sourceYearSpecs = recoverGomarizSourceYearSpec(record, sourceStabilizationSpecs);
-  return recoverGamCrossedTechnicalSpecs({ ...record, specs: sourceYearSpecs });
+  return sourceStabilizationSpecs;
 };

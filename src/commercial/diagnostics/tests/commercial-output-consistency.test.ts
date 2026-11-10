@@ -60,6 +60,27 @@ test("contrasta años explícitos sin confundir 2000 kg con el año de fabricaci
   assert.deepEqual(codes([{ ...original, attributes: [] }]), []);
 });
 
+test("audita años únicamente con una asignación válida y no los infiere de otros atributos", () => {
+  const original = { ...product("4650"), title: "Plataforma CTE B-LIFT 18HV de 2013 · Ref. 4650" };
+  for (const attributes of [
+    [],
+    [{ attributeID: 117, value: "2012" }],
+    [{ attributeID: 117, value: 1899 }],
+    [{ attributeID: 117, value: 2100 }],
+    [{ attributeID: 117, value: 2012.5 }],
+    [{ attributeID: 117, value: 2012 }, { attributeID: 117, value: 2012 }],
+    [{ attributeID: 50, value: 2012 }]
+  ]) {
+    assert.deepEqual(codes([{ ...original, attributes }]), []);
+  }
+  assert.deepEqual(codes([{ ...original, attributes: [{ attributeID: 50, value: 2012 },
+    { attributeID: 117, value: 2012 }] }]), ["ano-titulo-atributo-contradictorio"]);
+  for (const year of [1900, 2099]) {
+    assert.deepEqual(codes([{ ...original, attributes: [{ attributeID: 117, value: year }] }]),
+      ["ano-titulo-atributo-contradictorio"]);
+  }
+});
+
 test("agrupa incidencias por causa, conserva las referencias y limita ejemplos", () => {
   const original = product("4650");
   const bad = Array.from({ length: 7 }, (_, index) => ({ ...original,

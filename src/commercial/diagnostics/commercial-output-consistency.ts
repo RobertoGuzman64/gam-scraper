@@ -1,5 +1,6 @@
 import type { ImportCandidate } from "../legacy-export/contracts.js";
 import { hasConflictingModelVariant } from "./presentation-consistency.js";
+import { commercialAttributeYear } from "../validation/year-consistency.js";
 
 export type CommercialOutputConsistencyReason =
   "referencia-titulo-contradictoria" | "modelo-variante-titulo-contradictorio" |
@@ -77,13 +78,11 @@ export const analyzeCommercialOutputConsistency = (
     if (titleFuel && summaryFuel && titleFuel !== summaryFuel) {
       add(product, "description", "motorizacion-titulo-resumen-contradictoria", [titleFuel, summaryFuel]);
     }
-    const attributeYears = product.attributes.filter((attribute) => attribute.attributeID === 117 &&
-      typeof attribute.value === "number" && Number.isSafeInteger(attribute.value) &&
-      attribute.value >= 1900 && attribute.value <= 2099).map((attribute) => attribute.value);
-    if (attributeYears.length === 1) {
+    const attributeYear = commercialAttributeYear(product.attributes);
+    if (attributeYear !== null) {
       for (const year of manufactureYearsInTitle(title)) {
-        if (year !== attributeYears[0]) {
-          add(product, "title", "ano-titulo-atributo-contradictorio", [String(year), String(attributeYears[0])]);
+        if (year !== attributeYear) {
+          add(product, "title", "ano-titulo-atributo-contradictorio", [String(year), String(attributeYear)]);
           break;
         }
       }
