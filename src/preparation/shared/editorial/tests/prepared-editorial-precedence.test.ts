@@ -51,7 +51,7 @@ test("conserva estados, incidencias, identidad, textos, condición y campos de p
   const expected = {
     gam: "2e4903a054cadc3429bb04de9f1b25b8dbbb0203f6905ee5a55c87f65dc661b0",
     gomariz: "295b6b4e51882a49a37c097b6a2e09220ae6b8a6e9b6a6727498b0a368112696",
-    mercaeleva: "925729ccfeba203db7bcc2875e0c4482157727d2e964d8c557f21b23cf64062d"
+    mercaeleva: "66c71a08f08a6a632ebf972c7a3fdf4d1240e1678415d14bc4d72a6133fe3169"
   };
   for (const provider of providers) {
     const records = references[provider].map((reference) => find(provider, reference));

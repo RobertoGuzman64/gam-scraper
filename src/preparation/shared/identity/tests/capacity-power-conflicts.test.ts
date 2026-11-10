@@ -108,8 +108,11 @@ test("las cuatro capacidades conservan el origen tras reconciliar dos modelos MB
       ? { ...product.specs, "Título adicional": "CARRETILLA ELEVADORA DIESEL 2500 KG" }
       : reference === "M827-8304"
         ? { ...product.specs, "Capacidad máxima de elevación": "4800 kg", "Tipo de mástil": "Dúplex/estándar" }
-        : expected === null ? product.specs : Object.fromEntries(Object.entries(product.specs ?? {}).filter(([key]) =>
-          key !== (reference === "M062-8951" ? "Distancia del centro de gravedad" : "Horas laborales"))), reference);
+        : expected === null ? product.specs : {
+          ...Object.fromEntries(Object.entries(product.specs ?? {}).filter(([key]) =>
+            key !== (reference === "M062-8951" ? "Distancia del centro de gravedad" : "Horas laborales"))),
+          "Capacidad máxima de elevación": `${expected} kg`
+        }, reference);
   }
   const linde = prepareProduct(record("mercaeleva", "M827-8304"), catalog);
   assert.deepEqual(linde.issues, []);

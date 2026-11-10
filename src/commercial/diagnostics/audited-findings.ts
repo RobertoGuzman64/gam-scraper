@@ -18,28 +18,42 @@ const value = (input: unknown): string => JSON.stringify(input ?? null) ?? "null
 const key = (input: { readonly providerId: string; readonly reference: string | null; readonly sourceUrl: string }): string =>
   JSON.stringify([input.providerId, input.reference, input.sourceUrl]);
 
-const commercialFacts = (reason: string, product: CommercialExportProduct): AuditedFinding["facts"] => {
+const commercialFacts = (reason: string, input: CommercialBaselineInput,
+  product: CommercialExportProduct): AuditedFinding["facts"] => {
   if (reason === "ano-url-atributo-discordante") {
     const year = assessCommercialYear(product);
     return [{ name: "urlYear", value: value(year.urlYear) },
-      { name: "attributeYear", value: value(year.attributeYear) }];
+    { name: "attributeYear", value: value(year.attributeYear) }];
   }
   if (reason === "altura-titulo-resumen-discordante" || reason === "alturas-concepto-distinto-por-acreditar") {
     const height = assessCommercialHeight(product);
     return [{ name: "titleMetres", value: value(height.titleMetres) },
-      { name: "summaryMetres", value: value(height.summaryMetres) },
-      { name: "technicalMetres", value: value(height.technicalMetres) },
-      { name: "assessment", value: height.status }];
+    { name: "summaryMetres", value: value(height.summaryMetres) },
+    { name: "technicalMetres", value: value(height.technicalMetres) },
+    { name: "assessment", value: height.status },
+    { name: "sourceModel", value: value(input.source.model) },
+    { name: "sourceTitle", value: value(input.source.title) },
+    { name: "sourceShortDescription", value: value(input.source.shortDescription) },
+    { name: "sourceTechnicalHeight", value: value(input.source.specs?.["Altura de elevación (m)"]) },
+    { name: "sourceLongDescription", value: value(input.source.longDescription) }];
   }
   if (reason === "capacidad-titulo-spec-discordante") {
     return [{ name: "title", value: value(product.title) },
-      { name: "technicalCapacity", value: value(technicalLoadCapacityValue(product.spec)) },
-      { name: "summary", value: value(product.description) }];
+    { name: "technicalCapacity", value: value(technicalLoadCapacityValue(product.spec)) },
+    { name: "summary", value: value(product.description) },
+    { name: "sourceModel", value: value(input.source.model) },
+    { name: "sourceTitle", value: value(input.source.title) },
+    { name: "sourceCapacity", value: value(input.source.specs?.["Capacidad máxima de elevación"]) },
+    { name: "publishedCapacity", value: value(input.published.spec["Capacidad máxima de elevación"]) }];
   }
   return [{ name: "publishedTitle", value: value(product.title) },
-    { name: "commercialFields", value: value({ spec: product.spec, attributes: product.attributes,
+  {
+    name: "commercialFields", value: value({
+      spec: product.spec, attributes: product.attributes,
       categorySellID: product.categorySellID, description: product.description,
-      description_general: product.description_general, image: product.image, images: product.images }) }];
+      description_general: product.description_general, image: product.image, images: product.images
+    })
+  }];
 };
 
 export const observeCommercialAccreditationFindings = (
@@ -51,16 +65,20 @@ export const observeCommercialAccreditationFindings = (
   const observed: AuditedFinding[] = [];
   for (const decision of accreditation.decisions) {
     for (const reason of decision.pending) {
-      const identity = key({ providerId: accreditation.providerId, reference: decision.reference,
-        sourceUrl: decision.sourceUrl });
+      const identity = key({
+        providerId: accreditation.providerId, reference: decision.reference,
+        sourceUrl: decision.sourceUrl
+      });
       const input = bySource.get(identity);
       const product = byProduct.get(identity);
       if (!input || !product) throw new Error(`Acreditación pendiente sin evidencia individual: ${identity} | ${reason}`);
-      observed.push({ providerId: accreditation.providerId, reference: decision.reference,
+      observed.push({
+        providerId: accreditation.providerId, reference: decision.reference,
         sourceUrl: decision.sourceUrl, field: reason === "ano-url-atributo-discordante" ? "year" :
           reason.includes("altura") ? "height" : reason.includes("capacidad") ? "capacity" : "commercial",
         code: reason, audit: "acreditacion_comercial", severity: "warn",
-        evidenceSha256: signature([input.source, input.published, product]), facts: commercialFacts(reason, product) });
+        evidenceSha256: signature([input.source, input.published, product]), facts: commercialFacts(reason, input, product)
+      });
     }
   }
   if (observed.length !== accreditation.summary.pending) {
@@ -85,8 +103,8 @@ const preparationFacts = (source: ProductRecord, product: ImportCandidate,
     { name: "originalDescriptions", value: value([source.shortDescription, source.longDescription]) },
     { name: "preparedDescriptions", value: value([product.description, product.description_general]) }];
   return [{ name: "originalSpecifications", value: value(source.specs) },
-    { name: "preparedSpecifications", value: value(product.spec) },
-    { name: "preparedTitle", value: value(product.title) }];
+  { name: "preparedSpecifications", value: value(product.spec) },
+  { name: "preparedTitle", value: value(product.title) }];
 };
 
 export const observePreparationCoherenceFindings = (
@@ -98,10 +116,12 @@ export const observePreparationCoherenceFindings = (
     if (finding.status !== "revisar") continue;
     const evidence = byIdentity.get(key(finding));
     if (!evidence) throw new Error(`Revisión de coherencia sin origen: ${key(finding)}`);
-    observed.push({ providerId: finding.providerId, reference: finding.reference, sourceUrl: finding.sourceUrl,
+    observed.push({
+      providerId: finding.providerId, reference: finding.reference, sourceUrl: finding.sourceUrl,
       field: finding.field, code: finding.code, audit: "coherencia_preparacion", severity: "revisar",
       evidenceSha256: signature([evidence.source, evidence.product]),
-      facts: preparationFacts(evidence.source, evidence.product, finding.field) });
+      facts: preparationFacts(evidence.source, evidence.product, finding.field)
+    });
   }
   if (observed.length !== audit.reviews) throw new Error("Revisiones individuales distintas del diagnóstico de coherencia");
   return observed;

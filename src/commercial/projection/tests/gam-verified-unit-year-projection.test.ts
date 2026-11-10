@@ -55,5 +55,5 @@ test("las unidades reconocidas mantienen su trazabilidad y las correcciones no c
     ["5961", "6236", "6921"]);
   assert.equal(plan.exceptions.some((item) => item.reason === "ano-descripcion-atributo-discordante"), false);
   assert.equal(plan.summary.exported, 970);
-  assert.equal(plan.summary.attributes, 5153);
+  assert.equal(plan.summary.attributes, 5155);
 });

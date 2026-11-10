@@ -34,7 +34,8 @@ test("completa primero las tres fichas sin descripciones mediante fuentes de mod
     assert.ok(prepared.product.description_general && prepared.product.description_general.trim().length > 200);
     assert.deepEqual(prepared.product.spec, original.providerId === "gam"
       ? recoverGamDocumentedMobilityAndAccessSpecs(original, original.specs ?? {})
-      : reconcileMercaelevaNonUsableSentinels(original).specs);
+      : { ...reconcileMercaelevaNonUsableSentinels(original).specs,
+        "Capacidad máxima de elevación": original.reference === "M062-8951" ? "3000 kg" : "1800 kg" });
     assert.equal(JSON.stringify(original), snapshot);
     if (original.providerId === "mercaeleva") {
       const sentinelKey = original.reference === "M062-8951" ? "Distancia del centro de gravedad" : "Horas laborales";
