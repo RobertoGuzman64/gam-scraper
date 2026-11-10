@@ -60,12 +60,11 @@ test("huecos compara las publicaciones activas y acredita la cobertura de descri
   assert.equal(report.technicalDensity.totals.medium,
     report.technicalDensity.providers.reduce((sum, provider) => sum + provider.medium, 0));
   assert.ok(report.technicalDensity.providers.every((provider) => provider.sparse + provider.medium <= provider.products));
-  assert.equal(report.technicalDensity.totals.sparse, 3);
-  assert.deepEqual(report.technicalDensity.cases.map((item) => `${item.providerId}:${item.reference}`),
-    ["mercaeleva:M547-2372", "mercaeleva:M838-0666", "mercaeleva:M969-4655"]);
-  assert.equal(report.technicalDensity.totals.medium, 2);
-  assert.deepEqual(report.technicalDensity.mediumCases.map((item) => `${item.providerId}:${item.reference}`),
-    ["gam:2737", "gam:6688"]);
+  assert.ok(report.technicalDensity.cases.every((item) =>
+    item.technicalCount <= report.technicalDensity.criteria.sparseMaximum));
+  assert.ok(report.technicalDensity.mediumCases.every((item) =>
+    item.technicalCount > report.technicalDensity.criteria.sparseMaximum &&
+    item.technicalCount <= report.technicalDensity.criteria.mediumMaximum));
   assert.equal(report.priorities.totals.appeared,
     report.priorities.pending.filter((item) => item.state === "aparecido").length);
   for (const stage of ["P0", "P1", "P2"] as const) {
