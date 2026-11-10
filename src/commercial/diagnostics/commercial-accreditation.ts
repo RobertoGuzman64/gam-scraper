@@ -11,7 +11,7 @@ import { commercialToken, projectCommercialPresentation } from "../projection/pr
 import { decideCommercialAttributes } from "../projection/attribute-decision.js";
 import { observeCommercialAttributes } from "../projection/attribute-observation.js";
 import { hasLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../validation/technical-specifications.js";
-import { projectPresentableSpecifications } from "../projection/spec-projection.js";
+import { isAccreditedMercaelevaMbCapacityProjection, projectPresentableSpecifications } from "../projection/spec-projection.js";
 import { commercialUnitTitleSuffixes, unresolvedCommercialTitleCollisions } from "../projection/unit-disambiguation.js";
 import { assessCommercialHeight } from "../validation/height-consistency.js";
 import { assessCommercialYear } from "../validation/year-consistency.js";
@@ -112,7 +112,9 @@ const verifyProduct = (
     blocking.push("campo-spec-changed");
   } else if (!isDeepStrictEqual(published.spec, presentable)) {
     differences.push({ field: "spec", status: "normalized" });
-    pending.push("especificaciones-incompatibles-filtradas");
+    if (!isAccreditedMercaelevaMbCapacityProjection(source, published.spec, presentable)) {
+      pending.push("especificaciones-incompatibles-filtradas");
+    }
   }
   if (inspectTechnicalSpecifications(product.spec).length > 0) blocking.push("especificaciones-incompatibles-expuestas");
   if (hasLoadCapacityDisagreement(product)) pending.push("capacidad-titulo-spec-discordante");

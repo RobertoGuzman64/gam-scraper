@@ -118,6 +118,168 @@
           }
         ]
       }
+    },
+    {
+      "finding": {
+        "providerId": "gam",
+        "reference": "4796",
+        "sourceUrl": "https://online.gamrentals.com/es/plataforma-telescopica-electrica-xcmg/4796-plataforma-telescopica-electrica-xcmg-xgs32ack-",
+        "field": "height",
+        "code": "altura-titulo-resumen-discordante",
+        "audit": "acreditacion_comercial",
+        "severity": "warn",
+        "evidenceSha256": "8279b93a7474aec9393316370b3b5cf0bec03b815d40dee750eb2c34b2b87add",
+        "facts": [
+          {
+            "name": "titleMetres",
+            "value": "32"
+          },
+          {
+            "name": "summaryMetres",
+            "value": "40"
+          },
+          {
+            "name": "technicalMetres",
+            "value": "40"
+          },
+          {
+            "name": "assessment",
+            "value": "unresolved"
+          },
+          {
+            "name": "sourceModel",
+            "value": "\"XGS32ACKⅡ\""
+          },
+          {
+            "name": "sourceTitle",
+            "value": "\"Plataforma telescópica eléctrica 32M XCMG XGS32ACK Ⅱ\""
+          },
+          {
+            "name": "sourceShortDescription",
+            "value": "\"➨ XCMG XGS32ACK Ⅱ Nueva ➨ Venta de plataforma telescópica eléctrica de 40 metros de altura ⭐Capacidad de la cesta 300 kg\""
+          },
+          {
+            "name": "sourceTechnicalHeight",
+            "value": "\"40 metros\""
+          },
+          {
+            "name": "sourceLongDescription",
+            "value": "\"Las plataformas telescópicas eléctricas son esenciales para trabajos en altura que requieren precisión, seguridad y eficiencia. En sectores como la construcción, el mantenimiento industrial y la instalación técnica en exteriores, contar con equipos robustos y fiables marca una gran diferencia. La XCMG XGS32ACK II destaca por su diseño robusto, tracción en las cuatro ruedas y excelente maniobrabilidad en terrenos irregulares. Es ideal para entornos de trabajo que requieren desplazamientos suaves sobre diferentes tipos de suelo sin dañar las superficies. Si estás buscando una plataforma elevadora telescópica eléctrica para exteriores o zonas con suelos exigentes, este modelo es una solución versátil y eficiente. La plataforma telescópica eléctrica XCMG XGS32ACK II permite alcanzar una altura de trabajo de hasta 40 metros, soportando una capacidad de carga de 300 kg (sin restricción) y 460 kg (con restricción), lo que la hace apta para varios operarios y sus herramientas. Este modelo está especialmente diseñado para desplazarse en terrenos irregulares gracias a su sistema de tracción en las cuatro ruedas, que proporciona mayor estabilidad y tracción en superficies exigentes. Su funcionamiento eléctrico garantiza cero emisiones y bajo nivel de ruido, ideal para trabajar en exteriores como obras de construcción, mantenimiento de infraestructuras y proyectos industriales. Sus características clave incluyen: Además, integra sistemas de seguridad avanzados como alarmas de inclinación, freno automático, sistema de descenso manual y protección contra sobrecarga, garantizando un uso seguro en todo momento. Elegir la XCMG XGS32ACK II aporta importantes beneficios para cualquier operación: Gracias a su capacidad de maniobra y estabilidad, esta plataforma elevadora telescópica eléctrica maximiza la productividad en espacios exteriores complejos y exigentes. ¿La plataforma XCMG XGS32ACK II es apta para terrenos irregulares? Sí, gracias a su tracción en las cuatro ruedas y diseño robusto, es perfecta para exteriores con terrenos exigentes como obras de construcción o mantenimiento de infraestructuras. ¿Qué altura alcanza la plataforma elevadora XGS32ACK II? Permite trabajar a una altura máxima de 32,5 metros, con un alcance horizontal de 20 metros. ¿Se puede utilizar en rampas o superficies inclinadas? Puede superar pendientes de hasta un 45%, gracias al sistema de tracción en las cuatro ruedas.\""
+          }
+        ]
+      },
+      "fingerprint": "6f38117278721975cccbcd9a580152c17409d7dcaa2c72ebc0843ba69b79dc4b",
+      "decision": {
+        "reviewedBy": "Revisión documental asistida por IA (EQUIPZILLA)",
+        "reviewedAt": "2026-11-10T14:23:00Z",
+        "rationale": "Se acredita exclusivamente la contradicción documental interna del anuncio GAM 4796: la denominación identifica la gama de 32 m, el propio apartado de preguntas frecuentes atribuye 32,5 m a XGS32ACK II y la ficha indica repetidamente 40 m en resumen y dato técnico. XCMG documenta 32,6 m para XGS32ACK-Li, pero esa ficha no acredita equivalencia con la variante II. Se reconoce la discrepancia observada, no se certifica la altura física ni se modifica la especificación o publicación. Es imprescindible confirmar la placa o ficha técnica exacta antes de utilizar la altura como dato operativo.",
+        "evidence": [
+          {
+            "origin": "https://online.gamrentals.com/es/plataforma-telescopica-electrica-xcmg/4796-plataforma-telescopica-electrica-xcmg-xgs32ack-",
+            "content": "Consulta 2026-11-10: la misma ficha GAM XGS32ACK II dice 32M en el encabezado, 40 metros en el resumen y en Altura de elevación (m), y 32,5 metros en la respuesta a qué altura alcanza el modelo. La contradicción está en una misma publicación, no en una extrapolación de otro modelo."
+          },
+          {
+            "origin": "https://www.xcmg.com/product/pro-detail-136971.htm",
+            "content": "Ficha oficial XCMG XGS32ACK-Li: altura máxima de trabajo 32,6 m y carga 300/460 kg. Es evidencia de familia próxima, no una acreditación de que la variante exacta II de GAM sea la misma."
+          },
+          {
+            "origin": "catalogs/providers/gam/original/scrape-gam-catalog.json",
+            "content": "El registro de referencia 4796 identifica XGS32ACKⅡ, título 32M y especificación original Altura de elevación (m) igual a 40 metros. El reconocimiento queda vinculado a la huella exacta de este origen y a los valores comerciales observados."
+          }
+        ]
+      }
+    },
+    {
+      "finding": {
+        "providerId": "gam",
+        "reference": "6934",
+        "sourceUrl": "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-electricas-segunda-mano/6934-2007-jlg-e300ajp",
+        "field": "title",
+        "code": "modelo-titulo-spec-discordante",
+        "audit": "coherencia_preparacion",
+        "severity": "revisar",
+        "evidenceSha256": "4282b23367dd8f22ed7e857bfd29ac2673cdf3e3e4def790384929303cccac20",
+        "facts": [
+          {
+            "name": "originalTitle",
+            "value": "\"Plataforma articulada eléctrica 11M JLG E300AJP\""
+          },
+          {
+            "name": "preparedTitle",
+            "value": "\"Plataforma articulada eléctrica 11M JLG E300AJP\""
+          },
+          {
+            "name": "technicalModel",
+            "value": "\"E300AJ\""
+          }
+        ]
+      },
+      "fingerprint": "6fea4b622da5d0848d3200ec5f2313608ade69e576d9403a487b10a3406a6dfd",
+      "decision": {
+        "reviewedBy": "Revisión documental asistida por IA (EQUIPZILLA)",
+        "reviewedAt": "2026-11-10T14:20:00Z",
+        "rationale": "El proveedor GAM presenta la unidad IB-01953, serie 0300109330, con encabezado y fotografías E300AJP y con modelo técnico E300AJ. El fabricante distingue ambas variantes; el número de serie y esta documentación no permiten resolver sin la placa cuál corresponde a la unidad. Se reconoce solo la contradicción documental y se mantiene la descripción prudente sin certificar la variante.",
+        "evidence": [
+          {
+            "origin": "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-electricas-segunda-mano/6934-2007-jlg-e300ajp",
+            "content": "Ficha GAM 6934: titular Plataforma articulada eléctrica 11M JLG E300AJP, modelo en ficha técnica E300AJ, referencia IB-01953 y serie 0300109330; las imágenes del propio vendedor llevan nombre e300ajp. El campo de modelo y el anuncio no coinciden."
+          },
+          {
+            "origin": "https://www.jlg.com/es-es/equipment/boom-lifts/articulating/electric-hybrid/e300-series/e300ajp",
+            "content": "JLG publica la variante E300AJP; la documentación técnica del fabricante diferencia E300AJ y E300AJP. No identifica por sí misma la variante de la unidad GAM con serie 0300109330."
+          },
+          {
+            "origin": "catalogs/providers/gam/original/scrape-gam-catalog.json",
+            "content": "Registro original 6934: model y specs.Modelo E300AJ; title, longDescription e imágenes señalan E300AJP. No se modifican los originales ni la identidad técnica incierta."
+          }
+        ]
+      }
+    },
+    {
+      "finding": {
+        "providerId": "gomariz",
+        "reference": "TE1772",
+        "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-as0607we-tijera-electrica-scissor-lift/",
+        "field": "images",
+        "code": "modelo-portada-variante-discordante",
+        "audit": "coherencia_preparacion",
+        "severity": "revisar",
+        "evidenceSha256": "d9d5a47b29e26fadbf8403458ee89977701c8bef5e82d565c3595efcbf61737d",
+        "facts": [
+          {
+            "name": "originalImages",
+            "value": "[\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-22.jpg\",[\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-22.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-12.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-13.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-14.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-15.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-16.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-17.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-18.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-19.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-20.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-21.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-1.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-2.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-3.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-4.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-5.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-6.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-7.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-8.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-9.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-10.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-11.jpg\"]]"
+          },
+          {
+            "name": "preparedImages",
+            "value": "[\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-22.jpg\",[\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-22.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-12.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-13.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-14.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-15.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-16.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-17.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-18.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-19.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-20.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-21.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-1.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-2.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-3.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-4.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-5.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-6.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-7.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-8.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-9.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-10.jpg\",\"https://www.gomarizrent.com/wp-content/uploads/2026/08/TD1772-LGMG-AS0607WF-11.jpg\"]]"
+          },
+          {
+            "name": "model",
+            "value": "null"
+          }
+        ]
+      },
+      "fingerprint": "a254e5be1988f2e751685ceb7c510d20f5e5c30e7e2de656e427299fecb4b1ad",
+      "decision": {
+        "reviewedBy": "Revisión documental asistida por IA (EQUIPZILLA)",
+        "reviewedAt": "2026-11-10T14:20:00Z",
+        "rationale": "Gomariz identifica TE1772 como LGMG AS0607WE (2023) con dimensiones 1,86 × 0,81 m, peso 1.620 kg y capacidad 230 kg coherentes con la ficha de fabricante AS0607WE. Sin embargo, las imágenes de origen llevan nomenclatura TD1772-AS0607WF. No puede acreditarse por el nombre del archivo si la galería es de otra variante o está etiquetada incorrectamente; no se sustituye la identidad, no se borran fotografías y se controla únicamente el desacuerdo documental hasta verificar la placa.",
+        "evidence": [
+          {
+            "origin": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-as0607we-tijera-electrica-scissor-lift/",
+            "content": "Anuncio Gomariz AS0607WE; identificación de unidad TE1772. Fotografías originales alojadas como TD1772-LGMG-AS0607WF-22.jpg y secuencia WF; el nombre del archivo no equivale a una lectura de placa."
+          },
+          {
+            "origin": "https://en.lgmg.com.cn/upload/file/2020/10/12/eddc17ffd12e4f28b8d1d7d44061bcc1.pdf",
+            "content": "Ficha técnica LGMG AS0607WE: 7,8 m de altura de trabajo, 5,8 m de altura de plataforma, 230 kg, longitud 1,86 m, ancho 0,81 m, peso 1.620 kg. Coincide con los datos del vendedor pero no identifica físicamente la galería."
+          },
+          {
+            "origin": "catalogs/providers/gomariz/original/scrape-gomariz-catalog.json",
+            "content": "Registro TE1772: título/modelo AS0607WE, año 2023 y especificaciones concordantes con LGMG; imagen principal y galería con slug AS0607WF y prefijo TD1772."
+          }
+        ]
+      }
     }
   ]
 }

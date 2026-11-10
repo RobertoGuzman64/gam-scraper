@@ -1,4 +1,4 @@
-import type { ProductRecord } from "../../../../contracts/catalog.js";
+import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import { fold } from "../../../shared/classification/mapping/attribute-utils.js";
 
 type VerifiedCapacity = {
@@ -11,11 +11,14 @@ type VerifiedCapacity = {
   evidence: string;
   source: string;
   specCorrection?: string;
+  specPresentation?: string;
+  listing?: string;
   longCorrection?: { original: string; replacement: string };
 };
 
 const verified: readonly VerifiedCapacity[] = [
-  { reference: "4792", brand: "XCMG", model: "XGS58E1", previous: "Capacidad de la cesta 450 kg", replacement: "Capacidad de la cesta hasta 450 kg con restricciones", spec: "450 KG", evidence: "Soporta 230 kg estándar y 450 kg restringido", source: "https://online.gamrentals.com/es/plataforma-telescopica-diesel-xcmg/4792-plataforma-telescopica-diesel-xcmg-xgs58e1" },
+  { reference: "4792", brand: "XCMG", model: "XGS58E1", previous: "Capacidad de la cesta 450 kg", replacement: "Capacidad de la cesta hasta 450 kg con restricciones", spec: "450 KG", specPresentation: "450 kg con limitación", evidence: "Soporta 230 kg estándar y 450 kg restringido", source: "https://online.gamrentals.com/es/plataforma-telescopica-diesel-xcmg/4792-plataforma-telescopica-diesel-xcmg-xgs58e1" },
+  { reference: "5902", brand: "XCMG", model: "XGA43K", previous: "Capacidad de la cesta 300 kg sin limitación / 460 kg con limitación", replacement: "Capacidad de la cesta 300 kg sin limitación / 460 kg con limitación", spec: "460 KG", specPresentation: "460 kg con limitación", evidence: "capacidad de carga de 300 kg sin limitación y 460 kg con limitación", source: "https://xcmguk.com/product/articulated-boom-lift-xga43k/", listing: "https://online.gamrentals.com/es/xcmg/5902-plataforma-articulada-diesel-xcmg-xga36k" },
   { reference: "4807", brand: "XCMG", model: "XGR08", previous: "Capacidad de la cesta 200 kg", replacement: "Capacidad de cesta pendiente de verificar (159 kg en ficha técnica y 200 kg en anuncio)", spec: "159 KG", evidence: "soportando una carga de hasta 200 kg", source: "https://online.gamrentals.com/es/plataformas-unipersonales-xcmg/4807-plataforma-unipersonal-electrica-xcmg-xgr08" },
   { reference: "6934", brand: "JLG", model: "E300AJ", previous: "Capacidad de la cesta 230 kg", replacement: "Capacidad de cesta pendiente de verificar (220 kg en ficha técnica y 230 kg en anuncio)", spec: "220 KG", evidence: "Con una capacidad de carga de 220 kg", source: "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-electricas-segunda-mano/6934-2007-jlg-e300ajp" },
   { reference: "4730", brand: "XCMG", model: "XG0608C", previous: "Capacidad de la cesta 230 kg", replacement: "Capacidad de la cesta 200 kg", spec: "200 KG", evidence: "capacidad de carga de 200 kg", source: "https://www.xcmgglobal.com/product/crawler-scissor-lifts/xg0608c/" },
@@ -46,6 +49,24 @@ const verifiedUrl = (record: ProductRecord): boolean => {
   } catch {
     return false;
   }
+};
+
+export const presentGamVerifiedRestrictedCapacity = (record: ProductRecord, specs: SpecsMap): SpecsMap => {
+  if (record.providerId !== "gam" || record.condition !== "Nuevo" ||
+    record.categoryKey !== "elevacion-nueva" || !record.reference || !record.brand || !record.model ||
+    !record.shortDescription || !record.longDescription || !verifiedUrl(record)) return specs;
+  const evidence = verified.find((item) => item.reference === record.reference && item.specPresentation);
+  const presentation = evidence?.specPresentation;
+  if (!evidence || !presentation || record.url !== (evidence.listing ?? evidence.source) ||
+    compact(record.brand) !== compact(evidence.brand) ||
+    compact(record.model) !== compact(evidence.model) ||
+    compact(String(record.specs?.Marca ?? "")) !== compact(evidence.brand) ||
+    compact(String(record.specs?.Modelo ?? "")) !== compact(evidence.model) ||
+    record.specs?.["Capacidad de carga (kg)"] !== evidence.spec ||
+    specs["Capacidad de carga (kg)"] !== evidence.spec ||
+    !record.shortDescription.includes(evidence.replacement) ||
+    !fold(record.longDescription).includes(fold(evidence.evidence))) return specs;
+  return { ...specs, "Capacidad de carga (kg)": presentation };
 };
 
 export const reconcileGamVerifiedCapacityCoherence = (record: ProductRecord): ProductRecord => {

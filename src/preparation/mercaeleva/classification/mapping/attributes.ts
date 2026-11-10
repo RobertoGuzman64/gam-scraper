@@ -3,7 +3,7 @@ import type { AliasOutcome, Attribute, Candidate } from "../../../shared/classif
 import { fold } from "../../../shared/classification/mapping/attribute-utils.js";
 import { mercaelevaHandlingEvidence, mercaelevaMislabelledCapacity } from "../../technical/evidence/handling-evidence.js";
 import { mercaelevaTechnicalCandidate } from "../../technical/mapping/technical.js";
-import { verifiedMercaelevaMbCapacity } from "../../technical/mapping/verified-mb-capacity.js";
+import { verifiedMercaelevaMbCapacity } from "../../../../catalog/interventions/verified-mercaeleva-capacity.js";
 
 export const applyMercaelevaAliasesDetailed = (record: ProductRecord, attribute: Attribute, keys: Set<string>, candidates: Candidate[]): AliasOutcome => {
   const title = String(record.specs?.["Título adicional"] ?? record.title ?? "");

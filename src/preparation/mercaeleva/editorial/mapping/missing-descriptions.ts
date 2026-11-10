@@ -2,7 +2,7 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { fold, numberToken } from "../../../shared/classification/mapping/attribute-utils.js";
 import { validMercaelevaTechnicalSource } from "../../technical/mapping/technical.js";
 import { mbModelEditorialEvidence } from "../evidence/mb-model-description.js";
-import { verifiedMercaelevaMbCapacity } from "../../technical/mapping/verified-mb-capacity.js";
+import { verifiedMercaelevaMbCapacity } from "../../../../catalog/interventions/verified-mercaeleva-capacity.js";
 
 export type MissingMercaelevaDescriptions = {
   readonly short: string | null;

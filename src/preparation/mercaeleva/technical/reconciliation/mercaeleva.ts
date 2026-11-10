@@ -5,6 +5,8 @@ import { resolveMercaelevaShortDescription } from "../../editorial/mapping/descr
 import { reconcileMercaelevaVerifiedUnicarriersCapacity } from "../evidence/unicarriers-used-capacity-evidence.js";
 import { reconcileMercaelevaVerifiedLindeE16pMast } from "../evidence/linde-e16p-duplex-evidence.js";
 import { describeMercaelevaE48pPublicationConflict } from "../evidence/linde-e48p-publication-evidence.js";
+import { verifiedMercaelevaMbCapacityProposal } from "../../../../catalog/interventions/verified-mercaeleva-capacity.js";
+import { writeProposedField } from "../../../../catalog/interventions/values.js";
 
 export const publicationConflictForMercaeleva = (record: ProductRecord): string | null => describeMercaelevaE48pPublicationConflict(record);
 
@@ -16,6 +18,11 @@ export const reconcileMercaelevaNonUsableSentinels = (record: ProductRecord): Pr
   const specs = { ...record.specs };
   for (const issue of issues) delete specs[issue.key];
   return { ...record, specs };
+};
+
+export const reconcileMercaelevaVerifiedMbCapacity = (record: ProductRecord): ProductRecord => {
+  const proposal = verifiedMercaelevaMbCapacityProposal(record);
+  return proposal === null ? record : writeProposedField(record, proposal);
 };
 
 export const reconcileMercaelevaForPreparation = (record: ProductRecord): ProductRecord => {

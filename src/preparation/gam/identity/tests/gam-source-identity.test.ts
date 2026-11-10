@@ -70,7 +70,7 @@ test("la discrepancia requiere marca, modelo, título, resumen y ficha del mismo
   ]) assert.equal(gamElevationSourceModelConflict(invalid), false);
 });
 
-test("las variantes JLG y CTE contradictorias del proveedor no se reconcilian sin acreditar la unidad", async () => {
+test("la variante JLG sigue sin certificar y la CTE acreditada corrige únicamente el título derivado", async () => {
   const current = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
   const currentRecord = (reference: string): ProductRecord => requireProductReference(current.products, reference);
   for (const [reference, expectedModel, publishedModel] of [
@@ -83,7 +83,8 @@ test("las variantes JLG y CTE contradictorias del proveedor no se reconcilian si
     const prepared = prepareSourceProduct(record);
     assert.strictEqual(reconciled, record, reference);
     assert.equal(prepared.product.spec.Modelo, expectedModel, reference);
-    assert.ok(prepared.product.title?.includes(publishedModel), reference);
+    assert.ok(record.title?.includes(publishedModel), reference);
+    assert.ok(prepared.product.title?.includes(reference === "4650" ? expectedModel : publishedModel), reference);
     assert.equal(prepared.product.sourceUrl, record.url, reference);
     assert.equal(prepared.product.image, record.image, reference);
     assert.equal(JSON.stringify(record), source, reference);

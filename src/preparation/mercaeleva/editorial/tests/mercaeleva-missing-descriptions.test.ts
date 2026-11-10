@@ -60,6 +60,7 @@ test("Mercaeleva: distingue los modelos investigados y usa capacidades ya verifi
     assert.ok(!prepared.issues.some((issue) => issue.includes("Capacidad contradictoria")));
     const expected = { ...recoverMercaelevaSourceFuel(record, record.specs ?? {}) };
     delete expected[reference === "M062-8951" ? "Distancia del centro de gravedad" : "Horas laborales"];
+    expected["Capacidad máxima de elevación"] = reference === "M062-8951" ? "3000 kg" : "1800 kg";
     assert.deepEqual(prepared.product.spec, expected);
   }
 });

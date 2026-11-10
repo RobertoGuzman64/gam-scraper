@@ -26,7 +26,7 @@ test("La capacidad restringida XGS58E1 no se presenta como carga universal", () 
   const prepared = prepareSourceProduct(record);
   assert.equal(JSON.stringify(record), original);
   assert.equal(prepared.status, "ready");
-  assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "450 KG");
+  assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "450 kg con limitación");
   assert.match(prepared.product.description ?? "", /450 kg con restricciones/u);
   assert.match(prepared.product.description_general ?? "", /230 kg estándar y 450 kg restringido/u);
   assert.doesNotMatch(prepared.product.description ?? "", /Capacidad de la cesta 450 kg$/u);
@@ -124,19 +124,23 @@ test("XGA43K conserva la diferencia entre capacidad sin restricción y capacidad
   const snapshot = JSON.stringify(source);
   const prepared = prepareSourceProduct(source);
   assert.equal(prepared.status, "ready");
-  assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "460 KG");
+  assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "460 kg con limitación");
   assert.match(prepared.product.description ?? "", /300 kg sin limitación \/ 460 kg con limitación/u);
   assert.match(prepared.product.description_general ?? "", /300 kg de capacidad de cesta sin limitación y hasta 460 kg con limitación/u);
   const findings = analyzePresentationConsistency([prepared.product]).findings;
-  assert.deepEqual(findings.map((item) => [item.code, item.status]), [
-    ["capacidad-no-cualificada-en-campo", "revisar"]
-  ]);
+  assert.deepEqual(findings, []);
+  const unqualified = { ...prepared.product,
+    spec: { ...prepared.product.spec, "Capacidad de carga (kg)": "460 KG" } };
+  assert.deepEqual(analyzePresentationConsistency([unqualified]).findings.map((item) => item.code),
+    ["capacidad-no-cualificada-en-campo"]);
   assert.equal(JSON.stringify(source), snapshot);
 });
 
-test("La CTE 18HD conserva el conflicto de modelo sin reproducir como vigente el resumen anterior", () => {
+test("La CTE 18HV corrige el título sin borrar la discrepancia histórica de la descripción", () => {
   const prepared = prepareSourceProduct(find("4650"));
   assert.equal(prepared.status, "ready");
+  assert.equal(prepared.product.title, "Plataforma elevadora sobre camión telescópica CTE B-LIFT 18HV");
+  assert.match(prepared.product.description ?? "", /B-LIFT 18HV/u);
   assert.match(prepared.product.description ?? "", /300 kg/u);
   assert.match(prepared.product.description_general ?? "", /resumen original del anuncio indicaba 360 kg/u);
   assert.match(prepared.product.description_general ?? "", /B-LIFT 18HD.*B-LIFT 18HV/u);

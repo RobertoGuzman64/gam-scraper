@@ -21,7 +21,7 @@ import { reconcileGamVerifiedYaleGp80vx } from "./gam/technical/reconciliation/g
 import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "./mercaeleva/technical/evidence/verified-platform-source-specs.js";
 import { reconcileMercaelevaVerifiedLindeE48p } from "./mercaeleva/technical/evidence/linde-e48p-publication-evidence.js";
 import { reconcileMercaelevaVerifiedJlg450AjBaseModel } from "./mercaeleva/technical/reconciliation/mercaeleva-jlg-450aj.js";
-import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation, reconcileMercaelevaCorroboratedCapacity, reconcileMercaelevaVerifiedReachTruckFamily, reconcileMercaelevaNonUsableSentinels } from "./mercaeleva/technical/reconciliation/mercaeleva.js";
+import { publicationConflictForMercaeleva, reconcileMercaelevaForPreparation, reconcileMercaelevaVerifiedMbCapacity, reconcileMercaelevaCorroboratedCapacity, reconcileMercaelevaVerifiedReachTruckFamily, reconcileMercaelevaNonUsableSentinels } from "./mercaeleva/technical/reconciliation/mercaeleva.js";
 import { reconcileGomarizVerifiedPlatformHeight, reconcileGomarizVerifiedElectricSemanticSource } from "./gomariz/technical/reconciliation/gomariz.js";
 import { reconcileGamCorroboratedLoadCapacity } from "./gam/technical/reconciliation/gam-capacity.js";
 import { applyReconciledTechnicalSpecs } from "./shared/technical/reconciliation/technical-specifications.js";
@@ -29,7 +29,7 @@ import { reconcileGamBasketDimensions } from "./gam/technical/reconciliation/gam
 import { reconcileGamVerifiedBasketSizes } from "./gam/technical/reconciliation/gam-verified-basket-sizes.js";
 import { reconcileGamSourceCapacitySummary, preparedGamSourceCapacityShort } from "./gam/technical/reconciliation/gam-source-capacity-summary.js";
 import { removeGamVehicleListingMarkers } from "./gam/editorial/general/long-description.js";
-import { reconcileGamVerifiedCapacityCoherence, reconcileGamVerifiedModelIdentity, reconcileGamVerifiedBasketLoad, reconcileGamVerifiedListingIdentity, reconcileGamVerifiedEditorialCoherence } from "./gam/technical/reconciliation/gam-verified-capacity-coherence.js";
+import { reconcileGamVerifiedCapacityCoherence, presentGamVerifiedRestrictedCapacity, reconcileGamVerifiedModelIdentity, reconcileGamVerifiedBasketLoad, reconcileGamVerifiedListingIdentity, reconcileGamVerifiedEditorialCoherence } from "./gam/technical/reconciliation/gam-verified-capacity-coherence.js";
 import { reconcileGamHorometer } from "./gam/technical/reconciliation/gam-horometer.js";
 import { captureSourceEditorialEvidence } from "./shared/editorial/mapping/source-editorial-evidence.js";
 import { recoverBaseTechnicalSpecs } from "./gam/technical/gam-technical-recovery.js";
@@ -56,6 +56,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   record = reconcileGamForPreparation(record);
   record = reconcileMercaelevaForPreparation(record);
   const editorialRecord = record;
+  record = reconcileMercaelevaVerifiedMbCapacity(record);
   record = reconcileGamSourceCapacitySummary(record);
   record = reconcileGamVerifiedCapacityCoherence(record);
   record = reconcileGamVerifiedBasketLoad(record);
@@ -117,7 +118,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     description_general: removeGamVehicleListingMarkers(sourceUnitRecord, preparedGeneral) ?? preparedGeneral,
     image: images[0] ?? null,
     images,
-    spec: tractorEditorial.spec,
+    spec: presentGamVerifiedRestrictedCapacity(record, tractorEditorial.spec),
     attributes: attributeResult?.attributes ?? []
   };
   return {

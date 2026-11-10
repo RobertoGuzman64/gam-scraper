@@ -54,12 +54,12 @@ test("integra cada aviso de acreditación sin alterar el contrato JSON existente
   assert.equal(audited.findings.length, audited.report.providers.reduce((sum, provider) =>
     sum + provider.accreditation.summary.pending, 0));
   const initial = classifyCurrentAuditFindings(audited.findings, empty, "acreditacion_comercial");
-  assert.equal(initial.findings.length, 6);
+  assert.equal(initial.findings.length, 4);
   assert.ok(initial.findings.every((item) => item.status === "pending"));
   const baseline = capture(() => printCommercialAuditReport(audited.report, "--acreditacion", undefined, undefined));
   const integrated = capture(() => printCommercialAuditReport(audited.report, "--acreditacion", undefined, undefined, initial));
   for (const expected of ["ano-url-atributo-discordante: 3", "altura-titulo-resumen-discordante: 1",
-    "capacidad-titulo-spec-discordante: 2", "0 infracciones"]) {
+    "0 infracciones"]) {
     assert.ok(integrated.some((line) => line.includes(expected)));
     assert.ok(baseline.some((line) => line.includes(expected)));
   }
@@ -118,8 +118,8 @@ test("sin pendientes reconocidos no hay WARN nuevos y las detecciones originales
   assert.equal(classification.findings.filter((item) => item.status === "pending").length, 0);
   assert.equal(output.filter((line) => line.startsWith("WARN | ")).length, 0);
   assert.ok(output.some((line) => line.includes("INCIDENCIAS ACREDITACIÓN | pendientes 0 | controladas 4")));
-  assert.ok(output.some((line) => line.includes("INCIDENCIAS ACREDITACIÓN | pendientes 0 | controladas 2")));
-  assert.ok(output.some((line) => line.includes("1334 productos · 7342 atributos · 0 infracciones")));
+  assert.equal(output.some((line) => line.includes("capacidad-titulo-spec-discordante")), false);
+  assert.ok(output.some((line) => line.includes("1334 productos · 7344 atributos · 0 infracciones")));
   const review = capture(() => printCommercialAuditReport(audited.report, "--revision",
     undefined, undefined, classification));
   assert.ok(review.some((line) => line.includes("CONTROLADA INDIVIDUAL | ano-url-atributo-discordante")));
@@ -145,9 +145,28 @@ test("la coherencia conserva las revisiones restantes y no acepta reconocimiento
   const report = analyzePresentationConsistency(products);
   const observed = observePreparationCoherenceFindings(evidence, report);
   assert.equal(report.defects, 0);
-  assert.equal(observed.length, 7);
-  const commercial = audited.findings.find((item) => item.reference === "M062-8951");
-  const coherence = observed.find((item) => item.reference === "M062-8951");
+  assert.equal(observed.length, 2);
+  const officialRegistry = await loadFindingRecognitionRegistry(root);
+  const official = classifyCurrentAuditFindings(observed, officialRegistry, "coherencia_preparacion");
+  assert.equal(official.findings.filter((item) => item.status === "pending").length, 0);
+  assert.deepEqual(official.findings.filter((item) => item.status === "controlled")
+    .map((item) => `${item.finding.providerId}:${item.finding.reference}`).sort(),
+    ["gam:6934", "gomariz:TE1772"]);
+  assert.equal(official.stale.length, 0);
+  const officialOutput = capture(() => printPreparationCoherenceReport(report, official));
+  assert.ok(officialOutput.some((line) => line.includes("COHERENCIA INDIVIDUAL | pendientes 0 | controladas 2")));
+  for (const reference of ["6934", "TE1772"]) {
+    const original = observed.find((item) => item.reference === reference);
+    assert.ok(original);
+    const changedFinding = observed.map((item) => item === original
+      ? { ...item, evidenceSha256: "f".repeat(64) } : item);
+    const reopenedFinding = classifyCurrentAuditFindings(changedFinding, officialRegistry, "coherencia_preparacion");
+    assert.equal(reopenedFinding.findings.filter((item) => item.status === "pending").length, 1);
+    assert.equal(reopenedFinding.findings.filter((item) => item.status === "controlled").length, 1);
+    assert.equal(reopenedFinding.stale.filter((item) => item.finding.reference === reference).length, 1);
+  }
+  const commercial = audited.findings.find((item) => item.reference === "4796");
+  const coherence = observed.find((item) => item.reference === "6934");
   assert.ok(commercial && coherence);
   const registry: FindingRecognitionRegistry = { version: 1, recognitions: [recognition(commercial)] };
   const initial = classifyCurrentAuditFindings(observed, registry, "coherencia_preparacion");
@@ -156,24 +175,24 @@ test("la coherencia conserva las revisiones restantes y no acepta reconocimiento
     version: 1, recognitions: [...registry.recognitions, recognition(coherence)]
   }, "coherencia_preparacion");
   const output = capture(() => printPreparationCoherenceReport(report, acknowledged));
-  assert.ok(output.some((line) => line.includes("7 casos para revisar")));
-  assert.ok(output.some((line) => line.includes("COHERENCIA INDIVIDUAL | pendientes 6 | controladas 1")));
-  assert.ok(output.some((line) => line.includes("CONTROLADA mercaeleva:M062-8951")));
-  assert.ok(output.some((line) => line.includes("REVISAR mercaeleva:M119-9334")));
+  assert.ok(output.some((line) => line.includes("2 casos para revisar")));
+  assert.ok(output.some((line) => line.includes("COHERENCIA INDIVIDUAL | pendientes 1 | controladas 1")));
+  assert.ok(output.some((line) => line.includes("CONTROLADA gam:6934")));
+  assert.ok(output.some((line) => line.includes("REVISAR gomariz:TE1772")));
   const changed = observed.map((item) => item === coherence
     ? { ...item, evidenceSha256: "e".repeat(64) } : item);
   const reopened = classifyCurrentAuditFindings(changed, {
     version: 1, recognitions: [...registry.recognitions, recognition(coherence)]
   }, "coherencia_preparacion");
-  assert.equal(reopened.findings.filter((item) => item.status === "pending").length, 7);
+  assert.equal(reopened.findings.filter((item) => item.status === "pending").length, 2);
   assert.equal(reopened.stale.length, 1);
   const reopenedOutput = capture(() => {
     printPreparationCoherenceReport(report, reopened);
     printStaleFindingRecognitions(reopened.stale);
   });
-  assert.ok(reopenedOutput.some((line) => line.includes("COHERENCIA INDIVIDUAL | pendientes 7 | controladas 0")));
-  assert.ok(reopenedOutput.some((line) => line.includes("REVISAR mercaeleva:M062-8951")));
-  assert.ok(reopenedOutput.some((line) => line.includes("RECONOCIMIENTO CADUCADO") && line.includes("M062-8951")));
+  assert.ok(reopenedOutput.some((line) => line.includes("COHERENCIA INDIVIDUAL | pendientes 2 | controladas 0")));
+  assert.ok(reopenedOutput.some((line) => line.includes("REVISAR gam:6934")));
+  assert.ok(reopenedOutput.some((line) => line.includes("RECONOCIMIENTO CADUCADO") && line.includes("6934")));
 });
 
 test("una contradicción cambiada reaparece como WARN aunque todas las anteriores estén reconocidas", () => {
@@ -231,8 +250,9 @@ test("los reconocimientos de año de GAM son individuales tras corregir las disc
     { reference: "6236", urlYear: "2017", attributeYear: "2018" },
     { reference: "6921", urlYear: "2017", attributeYear: "2016" }
   ];
-  assert.equal(registry.recognitions.length, expected.length);
-  assert.deepEqual(registry.recognitions.map((item) => item.finding.reference), expected.map((item) => item.reference));
+  assert.equal(registry.recognitions.length, expected.length + 3);
+  assert.deepEqual(registry.recognitions.filter((item) => item.finding.code === "ano-url-atributo-discordante")
+    .map((item) => item.finding.reference), expected.map((item) => item.reference));
   for (const item of expected) {
     const record = registry.recognitions.find((recognition) => recognition.finding.reference === item.reference);
     assert.ok(record);
@@ -249,17 +269,17 @@ test("los reconocimientos de año de GAM son individuales tras corregir las disc
   const classified = classifyCurrentAuditFindings(audited.findings, registry, "acreditacion_comercial");
   assert.equal(classified.stale.length, 0);
   assert.deepEqual(classified.findings.filter((item) => item.status === "controlled")
-    .map((item) => item.finding.reference).sort(), ["5961", "6236", "6921"]);
+    .map((item) => item.finding.reference).sort(), ["4796", "5961", "6236", "6921"]);
   assert.deepEqual(classified.findings.filter((item) => item.status === "pending" &&
     item.finding.code === "ano-url-atributo-discordante")
     .map((item) => item.finding.reference).sort(), []);
-  assert.equal(classified.findings.filter((item) => item.status === "pending").length, 3);
+  assert.equal(classified.findings.filter((item) => item.status === "pending").length, 0);
   const output = capture(() => printCommercialAuditReport(audited.report, "--acreditacion",
     undefined, undefined, classified));
   assert.equal(output.some((line) => line.includes("WARN | GAM | ano-url-atributo-discordante")), false);
   assert.ok(output.some((line) => line.includes("CONTROLADA | GAM | ano-url-atributo-discordante: 3")));
-  assert.ok(output.some((line) => line.includes("WARN | GAM | altura-titulo-resumen-discordante: 1")));
-  assert.ok(output.some((line) => line.includes("WARN | MERCAELEVA | capacidad-titulo-spec-discordante: 2")));
+  assert.ok(output.some((line) => line.includes("CONTROLADA | GAM | altura-titulo-resumen-discordante: 1")));
+  assert.equal(output.some((line) => line.includes("WARN | MERCAELEVA | capacidad-titulo-spec-discordante")), false);
   assert.ok(output.some((line) => line.includes("0 infracciones")));
 });
 
@@ -271,8 +291,8 @@ test("cada reconocimiento GAM caduca de forma aislada cuando cambia su evidencia
     const changed = audited.findings.map((finding) => finding === original
       ? { ...finding, evidenceSha256: "a".repeat(64) } : finding);
     const reopened = classifyCurrentAuditFindings(changed, registry, "acreditacion_comercial");
-    assert.equal(reopened.findings.filter((item) => item.status === "controlled").length, 2);
-    assert.equal(reopened.findings.filter((item) => item.status === "pending").length, 4);
+    assert.equal(reopened.findings.filter((item) => item.status === "controlled").length, 3);
+    assert.equal(reopened.findings.filter((item) => item.status === "pending").length, 1);
     assert.equal(reopened.stale.length, 1);
     assert.equal(reopened.stale[0]?.finding.reference, reference);
     const output = capture(() => {
@@ -289,49 +309,96 @@ test("la evidencia individual de altura y capacidad conserva los valores técnic
   const commercial = classifyCurrentAuditFindings(audited.findings, registry, "acreditacion_comercial");
   const expected = [
     { providerId: "gam", reference: "4796", code: "altura-titulo-resumen-discordante", facts: {
-      titleMetres: "32", summaryMetres: "40", technicalMetres: "40", assessment: "unresolved"
-    } },
-    { providerId: "mercaeleva", reference: "M062-8951", code: "capacidad-titulo-spec-discordante", facts: {
-      title: JSON.stringify("MB EFL303 Carretilla eléctrica de 3.000 kg con batería de Litio"),
-      technicalCapacity: JSON.stringify("2500 kg")
-    } },
-    { providerId: "mercaeleva", reference: "M119-9334", code: "capacidad-titulo-spec-discordante", facts: {
-      title: JSON.stringify("MB EPL185 Transpaleta Eléctrica con batería de Litio de 1.800 kg"),
-      technicalCapacity: JSON.stringify("1500 kg")
+      titleMetres: "32", summaryMetres: "40", technicalMetres: "40", assessment: "unresolved",
+      sourceModel: JSON.stringify("XGS32ACKⅡ"),
+      sourceTitle: JSON.stringify("Plataforma telescópica eléctrica 32M XCMG XGS32ACK Ⅱ"),
+      sourceTechnicalHeight: JSON.stringify("40 metros")
     } }
   ] as const;
   for (const item of expected) {
     const finding = commercial.findings.find((entry) => entry.finding.providerId === item.providerId &&
       entry.finding.reference === item.reference);
     assert.ok(finding);
-    assert.equal(finding.status, "pending");
+    assert.equal(finding.status, "controlled");
     assert.equal(finding.finding.code, item.code);
     for (const [key, expectedValue] of Object.entries(item.facts)) {
       assert.equal(finding.finding.facts.find((fact) => fact.name === key)?.value, expectedValue);
     }
   }
-  assert.equal(commercial.findings.filter((item) => item.status === "controlled").length, 3);
-  assert.equal(commercial.findings.filter((item) => item.status === "pending").length, 3);
+  assert.equal(commercial.findings.filter((item) => item.status === "controlled").length, 4);
+  assert.equal(commercial.findings.filter((item) => item.status === "pending").length, 0);
   assert.equal(commercial.stale.length, 0);
 });
 
-test("reconocer un conflicto de capacidad no reconoce al otro ni oculta la altura de GAM", () => {
-  const first = audited.findings.find((finding) => finding.reference === "M062-8951");
-  const second = audited.findings.find((finding) => finding.reference === "M119-9334");
+test("la consola separa la contradicción documental controlada sin reabrir capacidades corregidas", async () => {
+  const registry = await loadFindingRecognitionRegistry(root);
+  const classified = classifyCurrentAuditFindings(audited.findings, registry, "acreditacion_comercial");
+  const output = capture(() => printCommercialAuditReport(audited.report, "--acreditacion",
+    undefined, undefined, classified));
+  assert.ok(output.some((line) => line.includes("CONTROLADA | GAM | altura-titulo-resumen-discordante: 1")));
+  assert.equal(output.filter((line) => line.startsWith("WARN | ")).length, 0);
+  assert.equal(output.filter((line) => line.includes("WARN | MERCAELEVA | capacidad-titulo-spec-discordante")).length, 0);
+  assert.equal(classified.findings.filter((item) => item.status === "pending").length, 0);
+});
+
+test("los hechos originales de altura y capacidad son individuales e invalidan el reconocimiento si cambian", () => {
+  const unresolved = audited.findings.filter((finding) => finding.code === "altura-titulo-resumen-discordante" ||
+    finding.code === "capacidad-titulo-spec-discordante");
+  assert.equal(unresolved.length, 1);
+  for (const finding of unresolved) {
+    const sourceFact = finding.code === "altura-titulo-resumen-discordante" ? "sourceTechnicalHeight" : "sourceCapacity";
+    const original = finding.facts.find((fact) => fact.name === sourceFact);
+    assert.ok(original);
+    const registry: FindingRecognitionRegistry = { version: 1, recognitions: [recognition(finding)] };
+    const changed = unresolved.map((candidate) => candidate === finding ? {
+      ...candidate, facts: candidate.facts.map((fact) => fact.name === sourceFact
+        ? { ...fact, value: JSON.stringify("evidencia actualizada") } : fact)
+    } : candidate);
+    const result = classifyCurrentAuditFindings(changed, registry, "acreditacion_comercial");
+    assert.equal(result.findings.filter((item) => item.status === "controlled").length, 0);
+    assert.equal(result.stale.length, 1);
+    assert.equal(result.stale[0]?.finding.reference, finding.reference);
+    assert.equal(result.findings.filter((item) => item.status === "pending").length, 1);
+  }
+});
+
+test("reconocer una discordancia de altura no reconoce un hallazgo de capacidad nuevo", () => {
   const height = audited.findings.find((finding) => finding.reference === "4796");
-  assert.ok(first && second && height);
-  const controlled = classifyCurrentAuditFindings(audited.findings, {
-    version: 1, recognitions: [recognition(first)]
+  assert.ok(height);
+  const capacity: AuditedFinding = { ...height, providerId: "mercaeleva", reference: "M062-8951",
+    sourceUrl: "https://sales.mercaeleva.com/es/for-sale/machine/MB-EFL303-M062-8951",
+    field: "capacity", code: "capacidad-titulo-spec-discordante",
+    facts: [{ name: "technicalCapacity", value: JSON.stringify("2500 kg") },
+      { name: "sourceCapacity", value: JSON.stringify("2500 kg") }] };
+  const controlled = classifyCurrentAuditFindings([...audited.findings, capacity], {
+    version: 1, recognitions: [recognition(height)]
   }, "acreditacion_comercial");
-  assert.equal(controlled.findings.find((item) => item.finding.reference === first.reference)?.status, "controlled");
-  assert.equal(controlled.findings.find((item) => item.finding.reference === second.reference)?.status, "pending");
-  assert.equal(controlled.findings.find((item) => item.finding.reference === height.reference)?.status, "pending");
-  const changed = audited.findings.map((finding) => finding === first
-    ? { ...finding, facts: finding.facts.map((fact) => fact.name === "technicalCapacity"
-      ? { ...fact, value: JSON.stringify("3000 kg") } : fact) } : finding);
-  const reopened = classifyCurrentAuditFindings(changed, {
-    version: 1, recognitions: [recognition(first)]
+  assert.equal(controlled.findings.find((item) => item.finding.reference === height.reference)?.status, "controlled");
+  assert.equal(controlled.findings.find((item) => item.finding.reference === capacity.reference)?.status, "pending");
+  const changed = { ...capacity, facts: [{ name: "technicalCapacity", value: JSON.stringify("3000 kg") },
+    { name: "sourceCapacity", value: JSON.stringify("2500 kg") }] };
+  const reopened = classifyCurrentAuditFindings([...audited.findings, changed], {
+    version: 1, recognitions: [recognition(capacity)]
   }, "acreditacion_comercial");
-  assert.equal(reopened.findings.find((item) => item.finding.reference === first.reference)?.status, "pending");
-  assert.equal(reopened.stale[0]?.finding.reference, first.reference);
+  assert.equal(reopened.findings.find((item) => item.finding.reference === capacity.reference)?.status, "pending");
+  assert.equal(reopened.stale[0]?.finding.reference, capacity.reference);
+});
+
+test("GAM 4796 registra una contradicción del proveedor sin certificar altura y reabre ante cambios", async () => {
+  const registry = await loadFindingRecognitionRegistry(root);
+  const recognition = registry.recognitions.find((item) => item.finding.reference === "4796");
+  const observed = audited.findings.find((item) => item.reference === "4796");
+  assert.ok(recognition && observed);
+  assert.equal(recognition.finding.code, "altura-titulo-resumen-discordante");
+  assert.equal(recognition.fingerprint, fingerprintAuditedFinding(observed));
+  assert.match(recognition.decision.rationale, /no se certifica la altura física/);
+  assert.ok(recognition.decision.evidence.some((item) => item.origin === observed.sourceUrl));
+  assert.ok(recognition.decision.evidence.some((item) => item.origin.includes("xcmg.com")));
+  const changed = { ...observed, facts: observed.facts.map((fact) => fact.name === "sourceTechnicalHeight"
+    ? { ...fact, value: JSON.stringify("32,5 metros") } : fact) };
+  const classified = classifyCurrentAuditFindings([changed], registry, "acreditacion_comercial");
+  assert.equal(classified.findings[0]?.status, "pending");
+  assert.equal(classified.stale.length, 4);
+  assert.equal(classified.stale.find((item) => item.finding.reference === "4796")?.fingerprint,
+    recognition.fingerprint);
 });

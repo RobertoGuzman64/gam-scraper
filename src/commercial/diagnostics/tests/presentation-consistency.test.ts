@@ -28,15 +28,14 @@ test("identifica incidencias aún ambiguas sin publicar correcciones especulativ
   const result = analyzePresentationConsistency(products);
   assert.equal(result.products, 1347);
   assert.equal(result.defects, 0);
-  assert.equal(result.reviews, 7);
-  assert.equal(result.findings.length, 7);
+  assert.equal(result.reviews, 2);
+  assert.equal(result.findings.length, 2);
   const baseline = [
-    "gam:4650:modelo-de-variante-contradictorio",
-    "gam:4792:capacidad-no-cualificada-en-campo",
-    "gam:5902:capacidad-no-cualificada-en-campo"
+    "gam:6934:modelo-titulo-spec-discordante",
+    "gomariz:TE1772:modelo-portada-variante-discordante"
   ];
   assert.deepEqual(codes(result).filter((code) => baseline.includes(code)).sort(), baseline.sort());
-  assert.equal(result.findings.filter((finding) => finding.code === "capacidad-titulo-spec-discordante").length, 2);
+  assert.equal(result.findings.filter((finding) => finding.code === "capacidad-titulo-spec-discordante").length, 0);
   assert.equal(JSON.stringify(originals), snapshot);
 });
 
@@ -73,7 +72,8 @@ test("detecta unidades técnicas y dimensiones semánticamente mal ubicadas", ()
 });
 
 test("detecta unidades de resúmenes y conflictos de variante sin inferir modelos", () => {
-  const cte = gamProduct("4650");
+  const correctedCte = gamProduct("4650");
+  const cte = { ...correctedCte, title: correctedCte.title?.replace("18HV", "18HD") ?? null };
   const ausaSource = mercaeleva.products.find((item) => item.reference === "M855-6850");
   assert.ok(ausaSource);
   const ausa = prepareOriginal(ausaSource).product;
@@ -90,15 +90,21 @@ test("detecta unidades de resúmenes y conflictos de variante sin inferir modelo
 
 test("preserva capacidades condicionadas y fotografías compartidas con evidencia incompleta", () => {
   const conditioned = gamProduct("5902");
-  assert.equal(analyzePresentationConsistency([conditioned]).reviews, 1);
+  assert.equal(analyzePresentationConsistency([conditioned]).reviews, 0);
+  const unqualified = { ...conditioned,
+    spec: { ...conditioned.spec, "Capacidad de carga (kg)": "460 KG" } };
+  assert.equal(analyzePresentationConsistency([unqualified]).reviews, 1);
   const clarified = {
-    ...conditioned,
-    spec: { ...conditioned.spec, "Capacidad de carga (kg)": "460 kg con limitación" }
+    ...unqualified,
+    spec: { ...unqualified.spec, "Capacidad de carga (kg)": "460 kg con limitación" }
   };
   assert.deepEqual(analyzePresentationConsistency([clarified]).findings, []);
   const model = gamProduct("4650");
-  const matched = { ...model, spec: { ...model.spec, Modelo: "B-LIFT 18HD" } };
-  assert.deepEqual(analyzePresentationConsistency([matched]).findings, []);
+  assert.deepEqual(analyzePresentationConsistency([model]).findings, []);
+  const mismatched = { ...model, title: model.title?.replace("18HV", "18HD") ?? null };
+  assert.deepEqual(codes(analyzePresentationConsistency([mismatched])), [
+    "gam:4650:modelo-de-variante-contradictorio"
+  ]);
   const unknownVariant = { ...model, title: "Plataforma CTE B-LIFT 18" };
   assert.deepEqual(analyzePresentationConsistency([unknownVariant]).findings, []);
 });
@@ -171,7 +177,7 @@ test("mantiene la discrepancia JLG aunque la portada no identifique la variante"
   ]) assert.deepEqual(codes(analyzePresentationConsistency([safe])), []);
   assert.deepEqual(codes(analyzePresentationConsistency([
     gamProduct("5730"), gamProduct("6998"), gamProduct("4650")
-  ])), ["gam:4650:modelo-de-variante-contradictorio"]);
+  ])), []);
 });
 
 test("distingue portada ajena, prefijos heredados y variante fotográfica en Gomariz", () => {

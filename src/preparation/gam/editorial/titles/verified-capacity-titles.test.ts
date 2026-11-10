@@ -55,7 +55,7 @@ for (const [reference, title, capacity] of [
 }
 
 test("GAM: las capacidades y variantes sin evidencia suficiente mantienen sus revisiones", () => {
-  for (const reference of ["5902", "4650", "6934"]) {
+  for (const reference of ["5902", "6934"]) {
     const original = record(reference);
     const prepared = prepareSourceProduct(original);
     assert.equal(reconcileGamVerifiedCapacityTitle(original, original.title), original.title, reference);

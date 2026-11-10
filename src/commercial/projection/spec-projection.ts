@@ -1,5 +1,7 @@
+import { isDeepStrictEqual } from "node:util";
 import type { ProductRecord, SpecsMap, SpecValue } from "../../contracts/catalog.js";
 import { inspectTechnicalCoherence, inspectTechnicalSpecifications } from "../../catalog/validation/technical-specifications.js";
+import { verifiedMercaelevaMbCapacity } from "../../catalog/interventions/verified-mercaeleva-capacity.js";
 import { gamCrossedBatteryValue, gamMislabelledOrderPickerLift, gamMislabelledStacker, gamPalletBatteryForCrossedSpecs, recoverGamCrossedTechnicalSpecs } from "../../preparation/gam/technical/crossed-specifications.js";
 
 const repeatedUnit = /^\s*(\d+(?:[.,]\d+)?)\s*(mm|cm|kg)\s+\2\s*$/iu;
@@ -23,6 +25,15 @@ export const projectPresentableSpecifications = (spec: SpecsMap, source?: Produc
     }
     const match = typeof value === "string" ? repeatedUnit.exec(value) : null;
     if (match?.[1] && match[2]) presentable[key] = `${match[1]} ${match[2]}`;
+  }
+  if (source?.providerId === "mercaeleva") {
+    const nominalCapacity = verifiedMercaelevaMbCapacity(source);
+    const capacityKey = "Capacidad máxima de elevación";
+    if (nominalCapacity !== null &&
+      presentable.Marca === source.specs?.Marca && presentable.Modelo === source.specs?.Modelo &&
+      presentable[capacityKey] === source.specs?.[capacityKey]) {
+      presentable[capacityKey] = `${nominalCapacity} kg`;
+    }
   }
   if (source?.providerId !== "gam") return presentable;
   const stacker = gamMislabelledStacker(source);
@@ -48,4 +59,16 @@ export const projectPresentableSpecifications = (spec: SpecsMap, source?: Produc
     }
   }
   return presentable;
+};
+
+export const isAccreditedMercaelevaMbCapacityProjection = (
+  source: ProductRecord, published: SpecsMap, projected: SpecsMap
+): boolean => {
+  const capacity = verifiedMercaelevaMbCapacity(source);
+  const key = "Capacidad máxima de elevación";
+  if (capacity === null || published[key] !== source.specs?.[key] ||
+    published.Marca !== source.specs?.Marca || published.Modelo !== source.specs?.Modelo) return false;
+  const normalized = projectPresentableSpecifications(published);
+  return normalized[key] === published[key] &&
+    isDeepStrictEqual(projected, { ...normalized, [key]: `${capacity} kg` });
 };

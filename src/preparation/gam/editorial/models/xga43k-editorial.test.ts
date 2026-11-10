@@ -32,7 +32,7 @@ test("XGA43K distingue capacidades limitadas y reconcilia las cifras técnicas e
   const prepared = prepareProduct(original, catalog);
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
-  assert.deepEqual(prepared.product.spec, original.specs);
+  assert.deepEqual(prepared.product.spec, { ...original.specs, "Capacidad de carga (kg)": "460 kg con limitación" });
   assert.equal(prepared.product.description, corrected.shortDescription);
   assert.equal(prepared.product.description_general, corrected.longDescription);
   assert.match(prepared.product.description_general ?? "", /300 kg sin limitación y 460 kg con limitación/u);
@@ -79,7 +79,7 @@ test("XGA43K conserva las condiciones de carga en la descripción condensada del
   assert.ok(actual);
   const prepared = prepareProduct(actual, catalog);
   assert.equal(prepared.status, "ready");
-  assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "460 KG");
+  assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "460 kg con limitación");
   assert.match(prepared.product.description ?? "", /300 kg sin limitación \/ 460 kg con limitación/u);
   assert.match(prepared.product.description_general ?? "", /300 kg de capacidad de cesta sin limitación y hasta 460 kg con limitación/u);
   assert.doesNotMatch(prepared.product.description_general ?? "", /43 m de altura, 460 kg de capacidad de cesta/u);

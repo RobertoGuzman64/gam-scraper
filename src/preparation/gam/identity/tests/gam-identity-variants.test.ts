@@ -40,7 +40,8 @@ test("GAM: las nueve identidades incompatibles no publican Modelo del origen", (
     assert.equal(prepared.product.attributes.some((attribute) => attribute.attributeID === model.id), editorial, reference);
     const reconciled = reconcileGamForPreparation(product);
     assert.deepEqual(prepared.product.spec, { ...product.specs, ...reconciled.specs, ...(reference === "4751" ? { "Altura de trabajo (m)": "18,1 m" } : {}),
-      ...(reference === "4802" ? { "Altura plataforma (m)": "13 m" } : {}) });
+      ...(reference === "4802" ? { "Altura plataforma (m)": "13 m" } : {}),
+      ...(reference === "5902" ? { "Capacidad de carga (kg)": "460 kg con limitación" } : {}) });
     assert.equal(prepared.product.reference, reference);
   }
 });
