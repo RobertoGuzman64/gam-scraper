@@ -41,14 +41,24 @@ test("las publicaciones actuales no reintroducen magnitudes incompatibles presen
   assert.equal(JSON.stringify([originals.products, products]), before);
 });
 
-test("las tres discrepancias de capacidad pendientes quedan en revisión sin corrección automática", async () => {
-  const products = [...await publication("gam"), ...await publication("mercaeleva")];
-  const flagged = products.filter(hasLoadCapacityDisagreement).map((product) => `${product.providerId}:${product.reference}`);
-  assert.deepEqual(flagged.sort(), [...knownCapacityReferences].sort());
+test("las tres capacidades acreditadas permanecen corregidas sin alterar las contradicciones del original", async () => {
+  const [originalGam, originalMercaeleva, publishedGam, publishedMercaeleva] = await Promise.all([
+    readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json"),
+    readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json"),
+    publication("gam"), publication("mercaeleva")
+  ]);
+  const originals = [...originalGam.products, ...originalMercaeleva.products];
+  const products = [...publishedGam, ...publishedMercaeleva];
+  for (const key of knownCapacityReferences) {
+    const original = originals.find((item) => `${item.providerId}:${item.reference}` === key);
+    const published = products.find((item) => `${item.providerId}:${item.reference}` === key);
+    assert.ok(original && published, key);
+    assert.equal(hasLoadCapacityDisagreement({ title: original.title, spec: original.specs ?? {} }), true, key);
+    assert.equal(hasLoadCapacityDisagreement(published), false, key);
+  }
+  assert.deepEqual(products.filter(hasLoadCapacityDisagreement), []);
   const report = analyzePresentationConsistency(products);
-  const capacity = report.findings.filter((item) => item.code === "capacidad-titulo-spec-discordante");
-  assert.equal(capacity.length, knownCapacityReferences.length);
-  assert.ok(capacity.every((item) => item.status === "revisar"));
+  assert.deepEqual(report.findings.filter((item) => item.code === "capacidad-titulo-spec-discordante"), []);
 });
 
 test("no bloquea medidas físicas válidas ni transforma implícitamente metros a milímetros", () => {

@@ -38,21 +38,24 @@ const resolveTargetId = (raw: string): string | null => {
   }
 };
 
-const extractPanelText = ($: cheerio.CheerioAPI, panel: ReturnType<cheerio.CheerioAPI>): string | null => {
-  const ps = panel
-    .find("p")
+const extractDescriptionBlocks = ($: cheerio.CheerioAPI, container: ReturnType<cheerio.CheerioAPI>): string | null => {
+  const blocks = container
+    .find("p, li")
+    .filter((_, element) => $(element).parents("li").length === 0)
     .toArray()
-    .map((el) => normalizeSpace($(el).text()))
+    .map((element) => normalizeSpace($(element).text()))
     .map(stripAfterMarkers)
-    .filter((t) => t.length > 0);
+    .filter((text) => text.length > 0);
+  const joined = stripAfterMarkers(blocks.join("\n"));
+  return joined.length > 0 ? joined : null;
+};
 
-  if (ps.length > 0) {
-    const joined = stripAfterMarkers(ps.join("\n"));
-    return joined.length > 0 ? joined : null;
-  }
+const extractPanelText = ($: cheerio.CheerioAPI, panel: ReturnType<cheerio.CheerioAPI>): string | null => {
+  const blocks = extractDescriptionBlocks($, panel);
+  if (blocks) return blocks;
 
-  const t = stripAfterMarkers(normalizeSpace(panel.text()));
-  return t.length > 0 ? t : null;
+  const text = stripAfterMarkers(normalizeSpace(panel.text()));
+  return text.length > 0 ? text : null;
 };
 
 const extractTabPanelByLabel = ($: cheerio.CheerioAPI, label: string): string | null => {
@@ -146,17 +149,8 @@ const extractLongDescriptionFromDetailsArea = ($: cheerio.CheerioAPI): string | 
   clone.find("dl").remove();
   clone.find("dt, dd").remove();
 
-  const paragraphs = clone
-    .find("p")
-    .toArray()
-    .map((el) => normalizeSpace($(el).text()))
-    .map(stripAfterMarkers)
-    .filter((t) => t.length > 0);
-
-  if (paragraphs.length > 0) {
-    const joined = stripAfterMarkers(paragraphs.join("\n"));
-    return joined.length > 0 ? joined : null;
-  }
+  const blocks = extractDescriptionBlocks($, clone);
+  if (blocks) return blocks;
 
   const t = stripAfterMarkers(normalizeSpace(clone.text()));
   return t.length > 0 ? t : null;

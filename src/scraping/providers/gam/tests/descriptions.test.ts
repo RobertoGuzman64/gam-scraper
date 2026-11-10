@@ -41,3 +41,38 @@ test("GAM: conserva metadatos SEO publicados aunque coincidan con la descripció
   assert.equal(result.shortDescription, "Máquina revisada.");
   assert.equal(result.longDescription, "Máquina revisada.");
 });
+
+test("GAM: conserva listas y párrafos de la descripción técnica en la pestaña", () => {
+  const html = `<html><body><h1>Grupo electrógeno PRAMAC GSW3365M</h1>
+    <a href="#description">Descripción</a>
+    <section id="description">
+      <p>La bancada incorpora apoyos antivibratorios.</p>
+      <p>Las características principales son:</p>
+      <ul>
+        <li>Estructura monolítica y resistente.</li>
+        <li>Alta resistencia a los agentes atmosféricos.</li>
+      </ul>
+      <p>Sistema de combustible:</p>
+      <ul><li><p>Inyección directa de combustible.</p></li></ul>
+    </section></body></html>`;
+  const result = parseProductPage(html, url);
+  assert.equal(result.longDescription,
+    "La bancada incorpora apoyos antivibratorios. Las características principales son: " +
+    "Estructura monolítica y resistente. Alta resistencia a los agentes atmosféricos. " +
+    "Sistema de combustible: Inyección directa de combustible.");
+});
+
+test("GAM: extrae listas sin párrafos de la descripción técnica", () => {
+  const result = parseProductPage(`<html><body><h1>Grupo electrógeno</h1>
+    <div id="description"><ul><li>Carrocería insonorizada.</li><li>Ventilación reforzada.</li></ul></div>
+    </body></html>`, url);
+  assert.equal(result.longDescription, "Carrocería insonorizada. Ventilación reforzada.");
+});
+
+test("GAM: conserva listas al extraer la descripción del área de detalles", () => {
+  const result = parseProductPage(`<html><body><h1>Grupo electrógeno</h1>
+    <div class="product-information"><dl><dt>Marca</dt><dd>PRAMAC</dd></dl>
+      <p>Contenedor insonorizado.</p><ul><li>Paneles anticorrosión.</li><li>Acceso lateral.</li></ul>
+    </div></body></html>`, url);
+  assert.equal(result.longDescription, "Contenedor insonorizado. Paneles anticorrosión. Acceso lateral.");
+});

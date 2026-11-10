@@ -5,6 +5,8 @@ import { loadCommercialReference } from "../../../infrastructure/filesystem/lega
 import { loadCommercialPublicationInputs } from "../../export/commercial-inputs.js";
 import { planCommercialExport } from "../export-projection.js";
 import { assessCommercialYear } from "../../validation/year-consistency.js";
+import { analyzeCommercialOutputConsistency } from "../../diagnostics/commercial-output-consistency.js";
+import { unresolvedCommercialTitleCollisions } from "../unit-disambiguation.js";
 import type { CommercialBaselineInput } from "../../diagnostics/commercial-baseline.js";
 
 const catalog = await loadImportCatalog();
@@ -41,6 +43,30 @@ test("la proyección comercial acredita seis años sin cambiar originales ni pub
     assert.equal(JSON.stringify(input.source), sourceSnapshot);
     assert.equal(JSON.stringify(input.published), publicationSnapshot);
   }
+});
+
+test("los años acreditados llegan al título y subtítulo sin perder la referencia de unidad", () => {
+  for (const [reference, year] of [["6797", 2016], ["6869", 2008], ["6870", 2008]] as const) {
+    const input: CommercialBaselineInput | undefined = gam.entries.find((entry) => entry.source.reference === reference);
+    const product = plan.products.find((item) => item.reference === reference);
+    assert.ok(input && product, reference);
+    assert.equal(product.title?.endsWith(` · Año ${year} · Ref. ${reference}`), true, reference);
+    assert.equal(product.description_title, product.title, reference);
+    assert.equal(product.title?.includes(` · Año ${input.source.year} · `), false, reference);
+    assert.deepEqual(analyzeCommercialOutputConsistency([product]).findings.filter(
+      (finding) => finding.reason === "ano-titulo-atributo-contradictorio"), [], reference);
+  }
+  for (const [reference, year] of [["5845", 2015], ["6226", 2016]] as const) {
+    const input: CommercialBaselineInput | undefined = gam.entries.find((entry) => entry.source.reference === reference);
+    const product = plan.products.find((item) => item.reference === reference);
+    assert.ok(input && product, reference);
+    assert.equal(input.source.year, String(year), reference);
+    assert.equal(product.title?.endsWith(` · Año ${year} · Ref. ${reference}`), true, reference);
+    assert.equal(product.description_title, product.title, reference);
+  }
+  assert.equal(unresolvedCommercialTitleCollisions(plan.products).size, 0);
+  assert.deepEqual(analyzeCommercialOutputConsistency(plan.products).findings.filter(
+    (finding) => finding.reason === "ano-titulo-atributo-contradictorio"), []);
 });
 
 test("las unidades reconocidas mantienen su trazabilidad y las correcciones no crean bloqueantes", () => {
