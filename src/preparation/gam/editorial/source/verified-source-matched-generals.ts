@@ -1,4 +1,28 @@
 export const verifiedGamSourceMatchedGenerals = {
+  "1219": {
+    "sourceDigest": "657abcb09de7382d3b50448af057195f592d2656fca3238b6e0f9681b4facd9d",
+    "sourceUrl": "https://online.gamrentals.com/es/grupos-electrogenos-mayores-815kvs-pramac/1219-gsw3365m",
+    "preparedDigest": "7e0166566d13adbd4df2ac0f4706cb02789e5e2a5e9e2b8768864c7e008aae5f",
+    "general": "El grupo electrógeno PRAMAC GSW3365M se anuncia como equipo nuevo y su ficha identifica un motor MTU 20V4000G84F 3D, con potencias de motor declaradas de 2.640 y 2.423 kW. Se indican 7.535 mm de longitud, 2.288 mm de anchura, 3.239 mm de altura y 21.800 kg de peso. El proveedor describe una bancada de acero sobre apoyos antivibratorios y un contenedor insonorizado de 40 pies con paneles resistentes a la intemperie, aislamiento acústico y ventilación para refrigerar el conjunto. En el apartado de combustible figuran la inyección directa y el enfriamiento del combustible; para el circuito de aceite se describen filtros, enfriador y protección por baja presión. El sistema de admisión contempla turbocompresores y filtros de aire secos. Para la refrigeración se describen termostatos, bomba de agua, protección por temperatura y radiador con enfriamiento de carga. Estas características proceden de la descripción del proveedor; la potencia nominal y la configuración exacta del grupo deben corroborarse en su documentación técnica."
+  },
+  "2180": {
+    "sourceDigest": "c45008cdc9fb19b794dbaa48cf6e611b037e7738648b41103720f67deb295958",
+    "sourceUrl": "https://online.gamrentals.com/es/apiladores-hyster/2180-hyster-s16ssl",
+    "preparedDigest": "53e0d02421e6b6b416dad920ba9b0382c7fbaf11bcb1585d9fe627e2acc28325",
+    "general": "La descripción comercial identifica una apiladora eléctrica HYSTER S1.6 SL de patas abiertas, mientras el campo técnico «Modelo» y la referencia original indican S1.6SSL. Ambas denominaciones no deben considerarse equivalentes sin confirmar la configuración ofrecida. La ficha anuncia una capacidad de carga de 1.600 kg, altura de elevación de 3,2 m y batería de 24 V con capacidad indicada de 315 a 375 Ah. El proveedor la presenta como adecuada para palés cerrados o especiales por la disposición de sus patas laterales; la geometría real y la compatibilidad con cada palé deben verificarse para la unidad suministrada."
+  },
+  "4792": {
+    "sourceDigest": "68c410e1cc0e94708363b1cdb8378147ef30dd69afbcd7f6640dea74ff04f9e6",
+    "sourceUrl": "https://online.gamrentals.com/es/plataforma-telescopica-diesel-xcmg/4792-plataforma-telescopica-diesel-xcmg-xgs58e1",
+    "preparedDigest": "d50571a7ddd2df62c91f82d077f574b958a989675834b552de27345aad1aaaf3",
+    "general": "El anuncio presenta una plataforma telescópica diésel XCMG XGS58E, mientras el campo técnico «Modelo» y la URL del proveedor identifican XGS58E1. Esa diferencia exige comprobar la variante y no permite atribuir sin más las especificaciones de una a la otra. La descripción comercial anuncia 58,6 metros de altura máxima de trabajo y 24,8 metros de alcance horizontal. Distingue una capacidad estándar de 230 kg de la carga de 450 kg con restricciones, sin convertirlas en una única capacidad nominal. También menciona un motor Cummins F3.8 de 75 kW y tracción 4x4; estas características deben contrastarse con la documentación de la configuración realmente ofertada."
+  },
+  "4736": {
+    "sourceDigest": "9c5f98405631ec45484ffc52d3f3c0266113e8532777e2b0a48b58e27d2f9fec",
+    "sourceUrl": "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/4736-xg0807acw-li",
+    "preparedDigest": "ebaa36ab3c80f1f71230aa856664c8df27399e243e914dc147af46deacba97be",
+    "general": "La plataforma de tijera eléctrica XCMG XG0807ACW se anuncia en versión con batería de litio como XG0807ACW-LI en el resumen y la referencia comercial. El campo técnico «Modelo» del origen, en cambio, consigna XG0807AC-LI. Son identificadores distintos y la variante exacta debe comprobarse antes de equiparar sus prestaciones. El anuncio comunica una altura de trabajo de hasta 7,8 m y capacidad de cesta de 230 kg; también describe una anchura de 810 mm y batería de litio. Esas magnitudes proceden de la descripción comercial y no sustituyen la comprobación de la ficha técnica y la configuración del equipo suministrado."
+  },
   "1218": {
     "sourceDigest": "a6a2095dfcc6404c0e718fb39c93a8270e24d327d8ff4869a1bf84383b05b404",
     "sourceUrl": "https://online.gamrentals.com/es/grupos-electrogenos-mayores-815kvs-pramac/1218-gsw1270m",
@@ -32,7 +56,7 @@ export const verifiedGamSourceMatchedGenerals = {
   "6909": {
     "sourceDigest": "c51b8532dad39395093341560ccb7c3d46eb15e674fec0565f44b4183240f231",
     "sourceUrl": "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/6909-2008-sky-jack-sjiii-3220m",
-    "preparedDigest": "a89d8a564faef32e25f7e89809e46346a4a7c96dbb73b361d4baa5cb29770036",
+    "preparedDigest": "dab8faa1917b743af1dbd0e1c41a30613c708a2f5fa1e5ed64a2071c96f10ed4",
     "general": "La plataforma de tijera eléctrica Skyjack anunciada como SJIII-3220 aparece identificada en el campo de modelo como SJIII-3220M. El registro corresponde a un equipo de ocasión con elevación comercial de 8 m, longitud de 2.320 mm, anchura de 840 mm y peso declarado de 1.583 kg. El resumen y la ficha técnica ofrecen capacidades diferentes, de 363 y 400 kg respectivamente; la capacidad autorizada debe verificarse en la placa y el manual de la unidad antes de utilizarla. La versión exacta, el estado de batería y el horómetro también deben comprobarse para este ejemplar."
   }
 } as const;

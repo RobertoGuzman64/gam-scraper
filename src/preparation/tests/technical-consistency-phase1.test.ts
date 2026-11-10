@@ -98,6 +98,8 @@ test("Yale 2328 identifica la variante diésel de 8 toneladas sin copiar el mode
   assert.ok(prepared.product.description?.includes("8.000 kg"));
   assert.ok(!prepared.product.description?.includes("9.000 kg"));
   assert.ok(!prepared.product.description_general?.includes("GP90VX"));
+  assert.match(prepared.product.description_general ?? "", /Kubota.*3,8 litros.*Electronic Powershift/su);
+  assert.ok((prepared.product.description_general ?? "").split(/\s+/u).length >= 60);
   assert.equal(JSON.stringify(record), original);
   for (const variant of [
     { ...record, reference: "2329" },

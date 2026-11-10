@@ -97,6 +97,16 @@ Un origen parcialmente leído exige mejorar el **descubrimiento/extractor**; un 
 Para la responsabilidad de cada frente, la evidencia de aceptación y la diferencia entre bloqueo humano y defecto reparable, consultar [Objetivos](SCRAPER_OBJECTIVES.md).
 
 
+## Elegir la reparación acreditable según la procedencia
+
+Para errores de extracción hay que reparar el parser y **recapturar el canónico íntegro**; una muestra o URL individual no se promociona como nuevo original global. Para errores de preparación se reutilizan reconciliaciones técnicas, recuperación documental o resolutores editoriales específicos del proveedor, preservando identidad, fuente, variante, orden y huella. La composición técnica está en `src/preparation/shared/technical/reconciliation/preparation-technical-stages.ts` y `shared/technical/recovery/documented-technical-recovery.ts`; la editorial en `shared/editorial/mapping/`. La clasificación común usa el registro `shared/classification/mapping/classification-provider.ts` y las adaptaciones de cada proveedor; no se crean IDs ni atributos por corregir una ficha.
+
+Las evidencias por unidad/modelo no son intercambiables: el dato de un fabricante puede describir un **modelo** sin acreditar la configuración de la **unidad**. Las correcciones de textos por procedencia pueden emplear evidencias con URL y huellas como `src/preparation/gam/editorial/source/verified-source-matched-generals.ts`, pero **no** sustituyen la recaptura del original ni una aprobación editorial cuando el contrato la exige.
+
+Una regla corregida no modifica la publicación activa por sí sola. Ejecutar `catalogo:preparar`, preflight `catalogo:publicar -- --simular --detalle`, FINISH y verificaciones de estado; las exclusiones nuevas necesitan las decisiones acreditadas que correspondan. Si un paso posterior a la activación falla, continuar la recuperación idempotente sin editar `manifest.json`, selectores o huellas. La proyección y exportación comercial son un circuito posterior e independiente.
+
+Los avisos tienen propósitos diferentes: `technicalSpecs` de huecos mide claves y reconciliaciones; la semántica técnica comprueba valores; la auditoría comercial distingue pendiente/controlada/heredada/introducida. Una señal estadística sin evidencia directa no autoriza agregar información ni silenciar el auditor. Para la matriz de reparación y ejemplos reales ver [Mejora acreditada del catálogo](CATALOG_IMPROVEMENT.md).
+
 ## Frontera con la importación comercial
 
 La campaña entrega JSON acreditados para **traspasar datos fiables**, no para efectuar una operación de importación. La **preparación técnica canónica** no asigna `categorySellID` ni IDs de atributos. Una **proyección comercial local independiente** (`src/commercial/projection/` y `src/commercial/export/`) puede asignarlos a partir de snapshots verificados, producir JSON y un manifiesto auditable, **sin modificar originales o publicaciones técnicas**. La importación, permisos y persistencia final de productos son responsabilidades del backend. **No añadir requisitos comerciales a `ready/review` ni convertir `specs` de origen en atributos comerciales sin una regla y evidencia del mapeador.**

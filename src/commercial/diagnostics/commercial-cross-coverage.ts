@@ -2,6 +2,7 @@ import { analyzePublishedEditorialQuality } from "../../catalog/diagnostics/edit
 import type { EditorialIssueCode } from "../../catalog/diagnostics/editorial-quality.js";
 import type { ImportCandidate } from "../legacy-export/contracts.js";
 import { commercialReference } from "./commercial-baseline.js";
+import { commercialReferenceKey } from "../legacy-export/commercial-reference.js";
 import { analyzePresentationConsistency } from "./presentation-consistency.js";
 import type { PresentationConsistencyFinding } from "./presentation-consistency.js";
 
@@ -116,6 +117,15 @@ export const analyzeCommercialCrossCoverage = (
   }
   for (const group of references.values()) {
     if (group.variants.size < 2) continue;
+    const first = group.products[0];
+    const baseline = first ? commercialReference(first) : null;
+    const canonical = baseline ? commercialReferenceKey("gam", baseline) : null;
+    const equivalentStockNotation = canonical !== null && group.products.every((product) => {
+      const visible = commercialReference(product);
+      return product.providerId === "gam" && visible !== null &&
+        /^GAM[\s-]+\d+$/iu.test(visible) && commercialReferenceKey("gam", visible) === canonical;
+    });
+    if (equivalentStockNotation) continue;
     for (const product of group.products) add(product, "identidad", "referencia-visible-formato-ambiguo", "heredada");
   }
 

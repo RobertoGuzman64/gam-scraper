@@ -16,8 +16,9 @@ El auditor es **de solo lectura** respecto a originales, preparaciones guardadas
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `npm run huecos`       | Campaña íntegra conservada o referencia histórica verificable; si faltan, comparación de publicaciones acreditadas con la preparación actual | La fuente elegida determina la población: consultar `provenance` antes de comparar cifras             |
 | `--comparar`           | Publicaciones acreditadas seleccionadas frente a preparación recalculada para sus mismas identidades                                         | Muestra vacíos recuperados, pendientes, pérdidas y prioridades editoriales; **no** publica resultados |
-| `--comparar --specs`   | La misma comparación, con diagnóstico separado de **claves técnicas** del origen, la preparación y el final                                  | No compara valores semánticos ni acredita por sí mismo atributos obligatorios o datos recuperados     |
-| `--finales`            | Calidad de textos **publicados** y densidad técnica observada de los JSON acreditados seleccionados                                          | No calcula recuperaciones de la preparación ni specs comparativas                                     |
+| `--comparar --specs`   | Comparación de claves técnicas y semántica técnica publicada, separada del diagnóstico editorial                                             | `technicalSpecs` y `technicalSemantics` responden a criterios diferentes; ninguno inventa atributos comerciales |
+| `--comparar --titulos` | Compara títulos de publicaciones acreditadas con originales y preparación recalculada; genera `titles`                                     | Requiere `--comparar`; no admite `--specs` simultáneamente                                             |
+| `--finales`            | Calidad editorial, densidad y **semántica técnica** de los JSON publicados seleccionados                                                   | No calcula recuperaciones de la preparación ni comparación de claves entre etapas                     |
 | `--publicacion <ruta>` | Calidad editorial y densidad técnica de uno o varios `-publishable.json` acreditados explícitos                                              | No mezclar proveedores repetidos ni confundir una publicación histórica con la vigente                |
 | `--catalogo <ruta>`    | Originales canónicos completos aportados explícitamente; aplica en memoria las reglas actuales                                               | Requiere canónico verificable; admite varias rutas, no CSV parciales                                  |
 
@@ -33,7 +34,7 @@ Las secciones `coverage`, `editorial`, `editorialPrepared`, `priorities` y `tech
 - `editorial`: mide únicamente los textos finales publicados: coberturas, medianas, percentil 90, patrones, fichas y listado de generales más extensas.
 - `editorialPrepared`: aplica esas métricas a la preparación actual, **sin publicar** sus cambios.
 - `priorities`: ordena por gravedad la cola pendiente, las señales resueltas por preparación y las señales aparecidas; aporta referencia, origen, familia, palabras antes/después, mediana y tamaño de muestra. Los problemas técnicos de preparación se muestran **aparte** en `technical`.
-- `technicalDensity`: analiza densidad y observaciones de specs de los **productos publicados**, no recuperaciones acreditadas ni una exigencia técnica universal. También aparece en el JSON de `--finales` y `--publicacion`. `technicalSpecs` solo aparece al añadir `--specs` a `--comparar`.
+- `technicalDensity`: analiza densidad y observaciones de specs de los **productos publicados**, no recuperaciones acreditadas ni una exigencia técnica universal. También aparece en el JSON de `--finales` y `--publicacion`. `technicalSpecs` y `technicalSemantics` aparecen al añadir `--specs` a `--comparar`; el diagnóstico `technicalSemantics` también se calcula para `--finales` y `--publicacion`. La comparación de **títulos** por separado usa `--comparar --titulos` y devuelve `titles`, sin sustituir `technicalSpecs`.
 
 **Orden de intervención:** P0 = descripciones vacías; P1 = insuficiencias y extremos evidentes; P2 = desequilibrios respecto a familias comparables. Dentro de cada cohorte se revisa primero el caso más grave y con evidencia aprovechable. No se selecciona una máquina porque resulte sencillo añadirle texto; tampoco se exige eliminar todos los avisos para cerrar una intervención.
 
@@ -48,12 +49,13 @@ Una ficha **mejorada** no equivale a una **carencia resuelta**: si una general a
 | Estado en `technicalSpecs.cases[].stage` | Lectura correcta                                                                                                    |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `pendiente_publicacion`                  | Clave presente en preparación y ausente del final seleccionado; puede existir una mejora no activada                |
-| `diferencia_origen_preparacion`          | Clave presente en original canónico y ausente en preparación; **no implica pérdida sin revisar reconciliaciones**   |
+| `diferencia_origen_preparacion`          | Clave presente en original canónico y ausente en preparación sin reconciliación acreditada para ese campo          |
+| `reconciliacion_acreditada`               | La fuente contenía una clave no trasladada que una reconciliación verificada explica; conservar procedencia y resultado de preparación |
 | `perdida_tras_publicacion`               | Clave publicada que no aparece en la preparación recalculada; revisar antes de actualizar el final                  |
 | `normalizacion_ambigua`                  | Dos entradas de la misma clave normalizada tienen representaciones diferentes; requiere contraste                   |
 | `sin_evidencia_directa`                  | Otros equipos del grupo muestran la clave, pero la máquina no la publica ni prepara; **no prueba que deba tenerla** |
 
-Los patrones familiares solo se señalan con un mínimo de **5 máquinas**, **3 observaciones** y cobertura observada de al menos **60 %**. Son criterios estadísticos del auditor, no pruebas de aplicabilidad a cada unidad. El informe reconoce la procedencia `original_canonico` o `reconstruccion_publicada`; en este segundo caso no se debe atribuir una recuperación al original independiente. La comparación actual examina **presencia de claves**, no certifica exactitud de capacidades, unidades, rendimiento o variantes; esas contradicciones necesitan comprobación de valores y fuentes mediante los mecanismos de calidad ya existentes.
+Los patrones familiares solo se señalan con un mínimo de **5 máquinas**, **3 observaciones** y cobertura observada de al menos **60 %**. Son criterios estadísticos del auditor, no pruebas de aplicabilidad a cada unidad. El informe reconoce la procedencia `original_canonico` o `reconstruccion_publicada`; en este segundo caso no se debe atribuir una recuperación al original independiente. El informe `technicalSpecs` examina **presencia de claves** y reconocimientos de reconciliación, no certifica por sí mismo el valor de capacidades, unidades, rendimiento o variantes. El informe independiente `technicalSemantics` comprueba coherencia de valores técnicos publicados, y sus hallazgos deben contrastarse con fuente, modelo y unidad; ninguno sustituye la evidencia original.
 
 Antes de incorporar una especificación, preferir datos de la **misma máquina** y su fuente original; después documentos de fabricante/manuales de **modelo y variante verificables**. Los equipos de una familia ayudan a identificar qué investigar, **nunca** autorizan copiar una capacidad, altura, energía, año, horas o número de serie a otra unidad. Si no hay prueba, conservar la ausencia como observación.
 
@@ -65,6 +67,7 @@ Desde la raíz del repositorio:
 npm run huecos -- --comparar
 npm run huecos -- --comparar --specs
 npm run huecos -- --comparar --specs --json
+npm run huecos -- --comparar --titulos --json
 npm run huecos -- --finales
 npm run huecos -- --comparar --top 20
 npm run huecos -- --catalogo catalogs/providers/gam/original/scrape-gam-catalog.json --agrupar marca --top 20
@@ -75,7 +78,8 @@ npm run huecos -- --help
 | Opción                                                   | Restricción / efecto                                                                       |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | `--comparar`, `--finales`, `--catalogo`, `--publicacion` | Modos alternativos; `--catalogo` y `--publicacion` admiten repetición de su propia opción  |
-| `--specs`                                                | Solo con `--comparar`; no es un auditor independiente ni una opción de `--finales`         |
+| `--specs`                                                | Solo con `--comparar`; combina diagnóstico de claves y semántica técnica                    |
+| `--titulos`                                              | Solo con `--comparar`; alternativo a `--specs`, no se mezcla con `--finales` o publicaciones explícitas |
 | `--agrupar categoria\|marca\|modelo`                     | Agrupa el diagnóstico de originales; valor inicial `categoria`                             |
 | `--min-grupo N`, `--min-ausentes N`                      | Filtros del TOP de patrones de originales; valores iniciales `8` y `3`                     |
 | `--top N`                                                | Máximo de entradas visibles de los listados priorizados; valor inicial `20`                |
@@ -85,7 +89,7 @@ Los límites numéricos deben ser enteros positivos. `--top` **no** elimina las 
 
 ## Método de mejora del catálogo
 
-El trabajo sobre descripciones y specs comparte un único ciclo técnico, **repetible por familias y proveedores**:
+El trabajo sobre descripciones y specs comparte un único ciclo técnico, **repetible por familias y proveedores**. Para la matriz completa de decisiones, evidencias, reconciliaciones, galerías, identidad y materialización, consultar el [manual de mejora acreditada](CATALOG_IMPROVEMENT.md):
 
 1. Ejecutar el auditor sobre las publicaciones seleccionadas y la preparación actual; registrar la población, procedencia y la cola priorizada del campo correspondiente.
 2. Seleccionar máquinas con carencia concreta de alto impacto, sin confundir observaciones familiares con errores técnicos acreditados.
@@ -93,6 +97,8 @@ El trabajo sobre descripciones y specs comparte un único ciclo técnico, **repe
 4. Aplicar una regla reutilizable en el productor/mapeador o una intervención editorial específica y controlada si es la opción más fiel; **no** obligar a pasar cada JSON final por una IA.
 5. Comparar preparación antes/después de la población afectada; distinguir **fichas cambiadas**, **carencias efectivamente resueltas**, nuevas señales, exclusiones y contradicciones. Proteger también otras familias y proveedores.
 6. Ejecutar pruebas proporcionadas al riesgo, `npm test` y `npm run build` cuando corresponda y estén disponibles. Preparar **no** significa aprobar, entregar o activar; esas acciones siguen sus controles específicos.
+
+El método abarca también las contradicciones de títulos y la semántica técnica publicada: elegir `--comparar --titulos`, `--comparar --specs` o `--finales` según el defecto, no comparar sus contadores como si midieran lo mismo. `reconciliacion_acreditada` es una explicación de una diferencia, no un trabajo pendiente de recuperar una clave.
 
 La mejora de descripciones busca cortas diferenciadoras y generales útiles y proporcionadas, sin relleno ni pérdida de prestaciones. La mejora de specs busca **claves y valores técnicos reales, con unidades e identidad correctas**, sin inventar atributos. Pueden alternarse ambos frentes sin duplicar el auditor ni modificar el contrato de publicación. La progresión se mide por **defectos de contenido realmente reducidos**, no por número de reglas, avisos o tests.
 

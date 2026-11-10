@@ -37,7 +37,7 @@ test("Mercaeleva: generales propios quedan vinculados al original canónico", ()
     assert.equal(prepared.product.description_general, normalizeMercaelevaAusaHeightText(record, evidence.general), record.reference);
     assert.ok(prepared.product.description_general);
     assert.ok(prepared.product.description_general.trim().split(/\s+/u).length >=
-      (record.reference === "M827-8304" ? 35 : 65));
+      (record.reference === "M827-8304" ? 60 : 65));
     assert.equal(prepared.product.sourceUrl, evidence.sourceUrl);
     assert.ok(prepared.product.spec);
   }
@@ -89,7 +89,8 @@ test("Mercaeleva: edición formal de MER0798 conserva identidad y datos original
   const edited = resolveMercaelevaVerifiedSourceEditorial(record, previous);
   assert.equal(edited, verifiedMercaelevaSourceEditorial["M827-8304"].general);
   assert.ok(edited);
-  for (const fragment of ["MER0798", "Linde E48P", "4.800 kg", "dúplex", "3.300 mm", "2.649", "2007"]) {
+  for (const fragment of ["MER0798", "Linde E48P", "4.800 kg", "dúplex", "3.300 mm", "2.649", "2007",
+    "plomo-ácido", "cuatro ruedas", "protección superior", "reconciliación acreditada"]) {
     assert.ok(edited.includes(fragment), fragment);
   }
   assert.doesNotMatch(edited, /(?:\d)mm|^Ref\.\s+\S+\s+[A-ZÁÉÍÓÚÑ]{8}/u);
@@ -112,4 +113,26 @@ test("Mercaeleva: edición formal de MER0798 conserva identidad y datos original
     assert.equal(resolveMercaelevaVerifiedSourceEditorial(variant, previous), null);
   }
   assert.equal(resolveMercaelevaVerifiedSourceEditorial(record, `${previous} `), null);
+});
+
+test("Mercaeleva M547-2372: atribuye la valoración del vendedor sin acreditar el mástil", () => {
+  const record = find("M547-2372");
+  const original = JSON.stringify(record);
+  const prepared = prepareSourceProduct(record);
+  assert.equal(prepared.status, "ready");
+  assert.ok(prepared.product.description_general);
+  assert.match(prepared.product.description_general, /Toyota 6FBRE14.*6\.500 mm.*14\.696 horas.*MER1123.*«Bueno»/u);
+  assert.match(prepared.product.description_general, /no equivale a una inspección acreditada/u);
+  assert.equal(prepared.product.spec["Capacidad máxima de elevación"], undefined);
+  assert.equal(prepared.product.spec["Altura máxima de elevación"], undefined);
+  assert.equal(JSON.stringify(record), original);
+  for (const variant of [
+    { ...record, reference: "M547-2373" },
+    { ...record, url: `${record.url}?otra=1` },
+    { ...record, longDescription: `${record.longDescription} Otro texto.` },
+    { ...record, specs: { ...record.specs, "Condición general": "Malo" } },
+    { ...record, specs: { ...record.specs, Modelo: "6FBRE15" } }
+  ] satisfies readonly ProductRecord[]) {
+    assert.notEqual(prepareSourceProduct(variant).product.description_general, prepared.product.description_general);
+  }
 });

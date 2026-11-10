@@ -107,6 +107,9 @@ test("GAM impide dos altas del mismo stock aunque cambie el separador", async ()
   assert.equal(yale.length, 2);
   assert.deepEqual(yale.map((item) => item.externalReference), ["GAM 27262", "GAM-27262"]);
   assert.equal(yale[0]?.serialNumber, yale[1]?.serialNumber);
+  assert.deepEqual(yale.map((item) => item.horometer), ["1660 horas", "1662 horas"]);
+  assert.notEqual(yale[0]?.image, yale[1]?.image);
+  assert.deepEqual(yale.map((item) => item.specs?.["Tipo Mástil"] ?? null), [null, "DUPLEX"]);
   const document = documentFor(yale);
   assert.deepEqual(document.products.map((item) => item.status), ["ready", "ready"]);
   for (const plan of [

@@ -74,6 +74,35 @@ Una salida `REVISIÓN`, `WARN`, una lista de motivos o un delta entre catálogos
 Si después de un parche quedan reviews, no repetir el diagnóstico como si fuera una fase nueva: continuar por el siguiente patrón corregible del **mismo alcance**. Confirmar que el recuento de productos y la calidad semántica no empeoran. Si el único resultado posible exige alterar una verdad del proveedor o una decisión humana, el bloqueo sigue visible y no se declara cumplimiento. Ver [contrato de actuación transversal](SCRAPER_OBJECTIVES.md#contrato-anti-deriva-comportamiento-obligatorio-del-asistente).
 
 
+## Acreditación de una mejora: del hallazgo a la publicación y exportación
+
+No basta con que un test del resolutor pase: comprobar **en qué etapa está** el dato. Seleccionar la publicación activa por el mecanismo oficial; comparar original canónico, preparación recalculada, publicación vigente y derivado comercial por proveedor, referencia y `sourceUrl`, no por orden ni por un identificador visible compartido. Para incidencias de extracción, validar la captura completa antes de promover el original; no activar un canónico construido con un subconjunto de URLs.
+
+```powershell
+npm run huecos -- --comparar --specs --json
+npm run huecos -- --comparar --titulos --json
+npm run huecos -- --finales --json
+npm run auditar:comercial -- --coherencia
+npm run auditar:comercial -- --revision
+npm run auditar:comercial -- --acreditacion
+npm run exportar:comercial -- --simular
+```
+
+Interpretar `technicalSpecs.cases[].stage`: `pendiente_publicacion` indica un cambio preparado no publicado; `perdida_tras_publicacion` exige investigar antes de activar; `diferencia_origen_preparacion` requiere una causa; `reconciliacion_acreditada` documenta una diferencia justificada; `normalizacion_ambigua` exige fuente; `sin_evidencia_directa` es orientativa. `technicalSemantics` observa el significado de valores publicados, no solo presencia de claves. Las señales comerciales **heredadas/controladas** no equivalen a las **introducidas/pendientes**.
+
+Si cambia la preparación, ejecutar los controles formales por proveedor afectado:
+
+```powershell
+npm run catalogo:preparar -- --proveedor gam
+npm run catalogo:publicar -- --proveedor gam --simular --detalle
+npm run catalogo:publicar -- --proveedor gam
+npm run estado
+```
+
+Comprobar la activación de la publicación, las exclusiones y el diario de FINISH. Una activación verificada con archivado posterior fallido **no** es un FINISH completo: conservar lo publicado y reanudar el mismo recorrido tras resolver el fallo. La exportación comercial real, su manifiesto y el contraste por identidad se ejecutan cuando corresponda; `--simular` no acredita archivos entregados. No modificar originales, huellas, manifiestos ni aprobaciones manualmente.
+
+Para cerrar, proteger un caso positivo, un negativo (variante/huella/proveedor) y las fichas no afectadas. Ejecutar tests del módulo, `npm run build`, `npm test` (incluye guard) y `npm run estado` en el entorno disponible, registrando pruebas omitidas o errores de dependencias sin falsear un PASS. Una reforma del código puede cambiar `rulesSha256` aun si el JSON es equivalente. Véase el [manual de mejora acreditada](CATALOG_IMPROVEMENT.md).
+
 ## Operaciones sin alterar datos originales
 
 ```powershell

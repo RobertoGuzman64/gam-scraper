@@ -28,13 +28,15 @@ const reachTruckGeneral = (
   if (record.reference !== "M547-2372" || !reach?.[1] || declaredHeight !== "6.500" || !year || !hoursValue ||
     (motor !== null && fold(motor) !== "electrico") ||
     (capacity !== undefined && identity(String(capacity)) !== identity(`${reach[1]} kg`)) ||
-    (record.horometer && record.horometer.replace(/[^\d]/g, "") !== hoursValue)) return null;
+    (record.horometer && record.horometer.replace(/[^\d]/g, "") !== hoursValue) ||
+    source(record, "Condición general") !== "Bueno") return null;
   const expected = `Ref. ${article} CARRETILLA RETRACTIL ELECTRICA ${reach[1]} KG ` +
     `ALTURA DE ELEVACION ${declaredHeight} mm ${brand} ${model} HORAS ${hoursValue} AÑO DE FABRICACION ${year}`;
   if (identity(general) !== identity(expected)) return null;
   return `Carretilla elevadora retráctil eléctrica ${brand} ${model}, anunciada con capacidad de ${Number(reach[1]).toLocaleString("es-ES")} kg. ` +
     `El texto comercial declara ${declaredHeight} mm de altura; debe comprobarse el concepto de medida y la configuración del mástil antes de emplear esa cifra como prestación acreditada. ` +
-    `La ficha identifica el año de fabricación ${year}, ${Number(hoursValue).toLocaleString("es-ES")} horas registradas y la referencia del vendedor ${article}.`;
+    `La ficha identifica el año de fabricación ${year}, ${Number(hoursValue).toLocaleString("es-ES")} horas registradas y la referencia del vendedor ${article}. ` +
+    `El vendedor clasifica la condición general como «${source(record, "Condición general") ?? "no indicada"}»; esta valoración comercial no equivale a una inspección acreditada.`;
 };
 
 const handlingGeneral = (

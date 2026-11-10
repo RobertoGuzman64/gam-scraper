@@ -86,8 +86,14 @@ export const resolveGomarizUnitSpecificGeneral = (record: ProductRecord): string
   if (cleaningWidth !== null) facts.push(`${format(cleaningWidth)} m de anchura de limpieza`);
   const engine = motor ? ` El motor indicado es ${motor.toLowerCase()}.` : "";
   const sourcedFeatures = sourcedGomarizScissorFeatures(record, family, original);
+  const heightContext = family === "brazo-articulado" && motor === "Eléctrico" &&
+    working !== null && platform !== null && stored !== null &&
+    platform < working && stored < platform &&
+    record.reference === "BA1465" && record.model === "A14JE" && record.year === "2022" &&
+    record.url === "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/lgmg-a14je-3/"
+    ? ` La altura de plataforma consignada es de ${format(platform)} m, distinta de los ${format(working)} m de altura de trabajo. La altura de almacenaje declarada es de ${format(stored)} m.` : "";
   return `La ficha técnica de ${title} (${category.label}) recoge ${facts.join(", ")}.` + engine +
-    (sourcedFeatures ? ` ${sourcedFeatures}` : "");
+    heightContext + (sourcedFeatures ? ` ${sourcedFeatures}` : "");
 };
 
 

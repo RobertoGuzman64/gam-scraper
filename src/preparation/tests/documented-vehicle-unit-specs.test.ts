@@ -26,6 +26,13 @@ const expected: Readonly<Record<string, Readonly<Record<string, SpecsMap>>>> = {
     }
   },
   mercaeleva: {
+    "M547-2372": {
+      "Capacidad nominal según texto comercial": "1.350 kg",
+      "Propulsión": "Eléctrica",
+      "Centro de carga nominal del modelo": "600 mm",
+      "Anchura exterior del modelo": "1250 mm",
+      "Radio de giro exterior del modelo": "1570 mm"
+    },
     "M433-5206": {
       "Capacidad nominal según texto comercial": "1.800 kg",
       "Altura de elevación según texto comercial": "4.700 mm",
@@ -50,7 +57,7 @@ const getTarget = (providerId: "gam" | "mercaeleva", reference: string): Product
   return record;
 };
 
-test("evidencia técnica de unidades identificadas: acreditar tres unidades y catorce prestaciones nuevas", () => {
+test("evidencia técnica de unidades identificadas: acreditar cuatro unidades y diecinueve prestaciones nuevas", () => {
   let count = 0;
   let additions = 0;
   const before = [];
@@ -79,9 +86,9 @@ test("evidencia técnica de unidades identificadas: acreditar tres unidades y ca
       count++;
     }
   }
-  assert.equal(count, 3);
-  assert.equal(additions, 14);
-  assert.deepEqual([analyzeTechnicalDensity(before).totals.sparse, analyzeTechnicalDensity(before).totals.medium], [3, 0]);
+  assert.equal(count, 4);
+  assert.equal(additions, 19);
+  assert.deepEqual([analyzeTechnicalDensity(before).totals.sparse, analyzeTechnicalDensity(before).totals.medium], [4, 0]);
   assert.deepEqual([analyzeTechnicalDensity(after).totals.sparse, analyzeTechnicalDensity(after).totals.medium], [0, 0]);
 });
 

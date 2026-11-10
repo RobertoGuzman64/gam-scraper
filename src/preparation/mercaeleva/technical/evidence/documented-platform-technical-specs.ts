@@ -3,6 +3,8 @@ import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import { validMercaelevaTechnicalSource } from "../mapping/technical.js";
 
 const verifiedUnits: Readonly<Record<string, string>> = {
+  "M838-0666": "0329cfb18a9d8ddcdcd5ec2430d472adfbc722881aadf83c8afdab359b0a5c33",
+  "M969-4655": "e0e010ba6976971347dbbd56478540e6f2951455f52860f2387fa2a88d478204",
   "M032-4313": "c860619ceb57b76dec2588abb61a6dc3b93ba9969695e0a006ca149575b16ab9",
   "M051-3155": "91caa1166ac227c6605d4f9c4ba9d4678564d7bbc5734d22220f0dc760fd6019",
   "M106-1389": "7fde3d13bbe00f39ebbc55e2c49ba0e788e5b4c231e48a7e178a09e32c8e0705",

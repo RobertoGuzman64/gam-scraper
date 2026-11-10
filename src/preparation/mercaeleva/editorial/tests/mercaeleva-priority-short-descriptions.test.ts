@@ -1,9 +1,9 @@
-import { recoverMercaelevaDocumentedEquipmentTechnicalSpecs } from "../../technical/evidence/documented-equipment-technical-specs.js";
+import { recoverMercaelevaDocumentedSourceSpecs } from "../../technical/evidence/documented-source-recovery.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readMercaelevaSource } from "../../../../testing/builders/mercaeleva-source-fixture.js";
-import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "../../technical/evidence/documented-platform-technical-specs.js";
+import { recoverMercaelevaDocumentedToyotaForkliftSpecs } from "../../technical/evidence/documented-toyota-forklift-specs.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { recoverMercaelevaDocumentedLiftingAndWarehouseSpecs } from "../../technical/evidence/documented-lifting-and-warehouse-specs.js";
 import { mercaelevaPriorityShortEvidence, verifiedMercaelevaPriorityShortDescription } from "../evidence/priority-short-descriptions.js";
@@ -27,7 +27,9 @@ test("recupera las cortas prioritarias sin alterar los originales ni sus contrad
     assert.equal(record.shortDescription, null, reference);
     assert.ok(prepared.product.description, reference);
     assert.ok(prepared.product.description_general, reference);
-    const technicalSpecs = recoverMercaelevaDocumentedLiftingAndWarehouseSpecs(record, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, record.specs ?? {})));
+    const { documentedSpecs } = recoverMercaelevaDocumentedSourceSpecs(record, record.specs ?? {});
+    const technicalSpecs = recoverMercaelevaDocumentedToyotaForkliftSpecs(record,
+      recoverMercaelevaDocumentedLiftingAndWarehouseSpecs(record, documentedSpecs));
     assert.deepEqual(prepared.product.spec, reference === "M838-0666" || reference === "M969-4655" ? { ...technicalSpecs, Modelo: "450 AJ" } : technicalSpecs, reference);
     assert.equal(JSON.stringify(record), before, reference);
     const evidence = Object.values(mercaelevaPriorityShortEvidence).find((item) => item.reference === reference);

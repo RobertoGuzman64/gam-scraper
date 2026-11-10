@@ -1,26 +1,62 @@
-# Rendimiento de tests: campañas, entrega y retención
+# Rendimiento de tests: guard, runner y reutilización de campañas
 
-## Fase 2 — reutilización de estados acreditados
+## Objetivo y estado actual
 
-Las suites de recuperación y retención necesitan comprobar la integridad de campañas ya entregadas, pero no necesitan repetir la aprobación editorial ni la creación del ZIP en cada escenario. La fixture `createDeliveryFixtures` prepara una única vez por archivo de test cada estado reutilizable:
+La protección del rendimiento forma parte de `npm test`; no es un benchmark separado que sustituya a las pruebas. El contrato está en `package.json`:
 
-| Estado                      | Preparación real y compartida               | Uso                                                               |
-| --------------------------- | ------------------------------------------- | ----------------------------------------------------------------- |
-| `fixture`                   | Campaña original acreditada                 | Fallos anteriores a la aprobación o la entrega                    |
-| `approvedFixture`           | Revisión y aprobación editorial             | Comprobar la entrega en sí, o casos previos a publicarla          |
-| `deliveredFixture`          | Campaña aprobada y entregada                | Recuperación, bloqueo, verificación y conservación de una entrega |
-| `successiveDeliveryFixture` | Primera entrega y segunda campaña entregada | Rotación y retención entre dos entregas                           |
+```text
+npm test = tests-performance-guard.mjs → scripts/run-build.mjs --quiet --if-needed → scripts/run-tests.mjs
+```
 
-Las variantes se derivan de la precedente mediante `reuseCampaignTestFixture.prepared(nombre, preparar, origen)`. Cada solicitud restaura una **copia aislada** en el workspace del test; las alteraciones no contaminan la semilla ni los siguientes casos. Las operaciones de aprobación, entrega y rotación se ejecutan realmente **una vez al crear la variante**; no se sustituyen por mocks ni por artefactos inventados. Las pruebas que verifican el comportamiento de la propia entrega siguen invocando el flujo real y sus comprobaciones.
+El guard detecta patrones de coste y la ejecución posterior compila cuando corresponde y lanza suites compiladas. `npm run test:guard` ejecuta **solo** el guard; **no** equivale al PASS integral. `npm run build` compila mediante `scripts/run-build.mjs` y la caché de build está en `scripts/build-cache.mjs`. Si faltan `typescript`, `cheerio`, `p-limit` o tipos de Node no se debe declarar un build correcto a partir de tests aislados.
 
-No debe reutilizarse un estado posterior para un escenario que tenga que comprobar la transición anterior. Los escenarios de extracción fallida, intervención, selección alterada y limpieza de auxiliares siguen modificando workspaces aislados con sus precondiciones específicas.
+## Runner y medición reproducible
 
-## Alcance y validación
+`scripts/run-tests.mjs` distribuye pruebas por carriles, ordena cargas por duración histórica y escoge una concurrencia apropiada para la máquina mediante `scripts/test-performance.mjs` y `test-runner-execution.mjs`. `test-runner-observability.mjs` y `test-runner-ui.mjs` presentan tiempos, omisiones y regresiones. `test-result-cache.mjs` puede reutilizar resultados en condiciones controladas; `test-runner-completion.mjs` decide si una ejecución es acreditable. No reducir la cobertura ni eliminar un test lento solo para mejorar la cifra global.
 
-- Se conservan las aserciones y los escenarios existentes de `delivery`, `delivery-recovery`, `delivery-recovery-resumption`, `delivery-retention` y `delivery-retention-historic`.
-- Se añadieron pruebas del aislamiento entre variantes derivadas y de la recuperación después de una preparación interrumpida.
-- `scripts/run-tests.mjs` y el resto del ejecutor no se modifican.
-- La medición del 6 de noviembre de 2026 es una referencia anterior a estas optimizaciones, no una medición de rendimiento posterior.
-- En el entorno de preparación se ejecutaron correctamente las 6 pruebas de la fixture; TypeScript no informó errores en los archivos modificados. La batería de integración y el build completo no pudieron validarse por la ausencia de `cheerio` y `p-limit` en ese entorno. Es necesario acreditar ambos con las dependencias instaladas.
+```powershell
+npm ci
+npm run test:guard
+npm run build
+npm test
+node scripts/run-tests.mjs --medicion <ruta-informe.json>
+```
 
-Después de integrar los cambios, ejecutar `npm ci`, `npm run build` y `npm test` sin caché. Repetir la medición `--medicion` del runner existente en el mismo equipo para poder atribuir ahorros con rigor. El objetivo es disminuir reconstrucciones del entorno, no alterar los contratos de retención, los productos acreditados ni la cobertura.
+`--medicion` genera un informe de tiempos del runner y debe ejecutarse desde la raíz, con compilados disponibles. Para comparar dos medidas, usar el **mismo equipo, entorno, concurrencia y estado de caché**; no comparar una ejecución en frío con una reutilizada. El runner también reconoce `--concurrencia N` (1–64) y `--medicion-cache <ruta-informe.json>` con las restricciones de `parseOptions` en `scripts/run-tests.mjs`. Los reportes de rendimiento operativos se guardan fuera de los datos/versiones acreditadas del catálogo.
+
+Para una batería que no reutilice resultados previos, desactivar la caché de tests **en el proceso**, sin modificar scripts ni borrar archivos de acreditación:
+
+```powershell
+$cacheAnterior = [Environment]::GetEnvironmentVariable('EQUIPZILLA_TEST_CACHE', 'Process')
+try {
+    $env:EQUIPZILLA_TEST_CACHE = '0'
+    npm test
+} finally {
+    [Environment]::SetEnvironmentVariable('EQUIPZILLA_TEST_CACHE', $cacheAnterior, 'Process')
+}
+```
+
+`npm test` no implica una comparación exhaustiva con la web ni acredita por sí solo las publicaciones actuales. Registrar resultado y duración por separado de `npm run estado`, del preflight y de la exportación comercial.
+
+## Reutilización de fixtures costosas de campañas
+
+Las suites de recuperación y retención pueden reutilizar estados auténticos acreditados mediante `createDeliveryFixtures` y `reuseCampaignTestFixture.prepared(...)`. Los estados son distintos:
+
+| Estado | Qué representa | Límite |
+| --- | --- | --- |
+| `fixture` | Campaña base | Fallos previos a aprobación y entrega |
+| `approvedFixture` | Revisión/aprobación editorial realizadas | Casos previos a publicar o que prueban la entrega |
+| `deliveredFixture` | Campaña aprobada y entregada | Recuperación, protección y verificación de entrega |
+| `successiveDeliveryFixture` | Dos campañas sucesivas entregadas | Rotación y retención entre entregas |
+
+Cada caso recibe un workspace aislado; las mutaciones no deben contaminar el estado compartido. El creador de fixtures ejecuta realmente las transiciones una vez al preparar las variantes, **no fabrica artefactos ni sustituye por mocks** la aprobación o publicación que el test deba verificar. No reutilizar un estado posterior en una prueba de transición anterior.
+
+## Cómo evitar regresiones de coste en nuevas reglas
+
+- Reutilizar fixtures de catálogo ya cargadas y agregar casos a suites específicas en vez de abrir nuevos recorridos globales para una única reconciliación.
+- Conservar un caso real acreditado, uno negativo de identidad/huella y uno de no regresión; la cobertura útil tiene prioridad sobre reducir número de aserciones.
+- Medir los 3–4 grupos más costosos antes y después de cambios que creen bucles, cargas de disco o relecturas de publicaciones. No duplicar cargas costosas en nuevos tests.
+- Ante un empeoramiento, comprobar duración por suite, carril, compilación y estado de caché antes de cambiar concurrencia o incorporar un índice compartido.
+- Las métricas históricas anteriores a la reforma no son una línea base vigente. El guard y la medición controlada son los instrumentos actuales, no un número fijo de segundos.
+
+Para los criterios de equivalencia y materialización de cambios, ver [Validación](VALIDATION.md), [Mantenimiento](MAINTENANCE.md) y [Mejora acreditada del catálogo](CATALOG_IMPROVEMENT.md).

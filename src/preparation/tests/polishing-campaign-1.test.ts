@@ -77,6 +77,17 @@ test("Las dos identidades Hyster se concilian por unidad sin modificar los origi
     assert.equal(prepared.status, "ready", reference);
     assert.equal(prepared.product.spec.Modelo, "H4.5FTS5", reference);
     assert.ok(prepared.product.title?.includes("H4.5FTS5"), reference);
+    const general = prepared.product.description_general ?? "";
+    assert.ok(general.split(/\s+/u).length >= 60, reference);
+    if (reference === "6666") {
+      for (const fact of ["3.000 mm", "3.800 mm", "1.150 mm", "7.050 kg", "elevación libre"]) {
+        assert.ok(general.includes(fact), `${reference}:${fact}`);
+      }
+    } else {
+      for (const fact of ["1.120 mm", "Minilevers", "2.150 mm", "4.400 mm", "1.420 mm"]) {
+        assert.ok(general.includes(fact), `${reference}:${fact}`);
+      }
+    }
     assert.equal(JSON.stringify(record), original, reference);
   }
 });
@@ -95,6 +106,9 @@ test("Los reconciliadores rechazan fuentes o identidades manipuladas", () => {
     assert.equal(prepareSourceProduct(wrongUrl).status, "review", reference);
     const wrongSerial = { ...record, specs: { ...record.specs, "Nº de serie": "OTRA SERIE" } };
     assert.strictEqual(reconcileGamVerifiedHysterH45fts5Title(wrongSerial), wrongSerial);
+    const key = reference === "6666" ? "Peso" : "Dimensiones Horquillas";
+    const wrongEquipment = { ...record, specs: { ...record.specs, [key]: "DATO CAMBIADO" } };
+    assert.strictEqual(reconcileGamVerifiedHysterH45fts5Title(wrongEquipment), wrongEquipment);
   }
 
   const identity = source("3132");

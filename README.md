@@ -164,13 +164,13 @@ Cuando una incidencia es nueva o ha cambiado, el flujo automático no puede acre
 
 ```powershell
 $gam = ".\catalogs\providers\gam\original\scrape-gam-catalog.json"
-$preparacion = (Get-ChildItem ".\storage\prepared\gam\*-preparation.json" | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1).FullName
+$preparacion = Read-Host "Ruta de la preparación GAM verificada para este origen y huella de reglas"
 npm run acreditar:proveedor -- gam --origen $gam --preparacion $preparacion
 npm run acreditar:proveedor -- gam --origen $gam --preparacion $preparacion --listar
 npm run acreditar:proveedor -- gam --origen $gam --preparacion $preparacion --consultar 6682
 ```
 
-Tras contrastar la ficha con su origen, se puede registrar una decisión con `--decidir 6682 excluir --motivo "..." --evidencia <URL original mostrada por --consultar>`, repitiendo `--evidencia` para pruebas adicionales. `--validar` comprueba decisiones sin escritura y `--aprobar --motivo "..."` exige una aprobación humana global y bloquea cambios posteriores. El borrador se conserva en `storage/providers/<proveedor>/editorial/` con huella de las fuentes: no se reutiliza después de cambiar la preparación. Una vez aprobadas las decisiones y la aprobación global individual, el JSON comercial de un solo proveedor puede generarse sin campaña global:
+Antes de usar `$preparacion`, comprobar su procedencia, versión del original y `rulesSha256`; **no elegirla solo por fecha de modificación**. Puede prepararse mediante `npm run catalogo:preparar -- --proveedor gam --detalle` y utilizarse la ruta verificada que comunique el circuito. El comando de acreditación vuelve a validar esas huellas. Tras contrastar la ficha con su origen, se puede registrar una decisión con `--decidir 6682 excluir --motivo "..." --evidencia <URL original mostrada por --consultar>`, repitiendo `--evidencia` para pruebas adicionales. `--validar` comprueba decisiones sin escritura y `--aprobar --motivo "..."` exige una aprobación humana global y bloquea cambios posteriores. El borrador se conserva en `storage/providers/<proveedor>/editorial/` con huella de las fuentes: no se reutiliza después de cambiar la preparación. Una vez aprobadas las decisiones y la aprobación global individual, el JSON comercial de un solo proveedor puede generarse sin campaña global:
 
 ```powershell
 npm run entregar:proveedor -- gam --source $gam --preparation $preparacion --dry-run
@@ -186,7 +186,7 @@ La entrega se guarda en `catalogs/providers/<proveedor>/publications/<alias-o-sh
 
 - `npm run ayuda` y `npm run ayuda -- <comando>`: ayuda desde la terminal; distingue lectura, preparación, escritura y autorización destructiva.
 - `npm run estado`: inventario de fuentes operativas, originales de `catalogs/`, JSON finales acreditados, integridad y discrepancias, sin escritura.
-- `npm run huecos`: auditor de descripciones y specs; `--comparar` contrasta publicaciones acreditadas con la preparación actual, `--comparar --specs` añade las ausencias técnicas observadas, `--finales` consulta solo textos publicados y `--catalogo <ruta>` analiza canónicos explícitos. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md).
+- `npm run huecos`: auditor de descripciones, títulos y specs; `--comparar` contrasta publicaciones y preparación, `--comparar --specs` añade diagnóstico de claves y semántica técnica, `--comparar --titulos` compara títulos, `--finales` consulta textos, densidad y semántica técnica publicados y `--catalogo <ruta>` analiza canónicos explícitos. Ver [Auditor de huecos](docs/CATALOG_CONTENT_GAPS.md).
 - `npm run build` y `npm test`: compilación y pruebas del repositorio.
 - `npm run extraer:proveedor`, `extraer:todos`, `intervenir:manual`, `preparar`, `validar`, `seleccionar`, `seleccionar:proveedor`, `acreditar:proveedor`, `entregar:proveedor` y `cobertura`: operaciones avanzadas con finalidades distintas del flujo principal.
 - `npm run manain:muestra` y `npm run manain:censo`: herramientas de diagnóstico específicas de Manain; no acreditan por sí solas una extracción completa.
@@ -198,11 +198,12 @@ La entrega se guarda en `catalogs/providers/<proveedor>/publications/<alias-o-sh
 
 ### Auditor de huecos de contenido
 
-`npm run huecos` permite seleccionar el trabajo editorial o técnico por **carencia real**. Con `--comparar` analiza por identidad las descripciones publicadas y la preparación recalculada, muestra vacíos recuperados, pendientes, extremos, diferencias familiares y posibles pérdidas. Con `--comparar --specs` añade un informe separado de claves técnicas del original, la preparación y el final: sus ausencias familiares son **observaciones, no datos obligatorios**. `--finales` mide únicamente descripciones publicadas. Para originales de campaña/referencia o canónicos explícitos mantiene el diagnóstico agrupado por proveedor y categoría original.
+`npm run huecos` permite seleccionar el trabajo editorial o técnico por **carencia real**. Con `--comparar` analiza por identidad las descripciones publicadas y la preparación recalculada, muestra vacíos recuperados, pendientes, extremos, diferencias familiares y posibles pérdidas. Con `--comparar --specs` añade un informe separado de claves técnicas del original, la preparación y el final: sus ausencias familiares son **observaciones, no datos obligatorios**. `--finales` mide contenido editorial, densidad y semántica técnica de las publicaciones seleccionadas. `--comparar --titulos` es un modo alternativo a `--comparar --specs`. Para originales de campaña/referencia o canónicos explícitos mantiene el diagnóstico agrupado por proveedor y categoría original.
 
 ```powershell
 npm run huecos -- --comparar
 npm run huecos -- --comparar --specs --json
+npm run huecos -- --comparar --titulos --json
 npm run huecos -- --finales
 npm run huecos -- --catalogo catalogs/providers/gam/original/scrape-gam-catalog.json --agrupar marca --top 10
 ```
@@ -272,7 +273,8 @@ El contrato de cuatro proveedores describe el software, **no acredita por sí so
 - [Objetivos y alcance](docs/SCRAPER_OBJECTIVES.md): prioridades y criterios de aceptación.
 - [Arquitectura](docs/ARCHITECTURE.md): módulos, responsabilidades, preparación y extensibilidad.
 - [Publicación individual](docs/INDIVIDUAL_PUBLICATION.md): preparación, acreditación automática limitada, FINISH, informes y recuperación.
-- [Auditor de huecos de contenido](docs/CATALOG_CONTENT_GAPS.md): comparación editorial, diagnóstico técnico de specs, procedencia, prioridades y límites.
+- [Manual de mejora acreditada del catálogo](docs/CATALOG_IMPROVEMENT.md): diagnóstico por causa, reconciliaciones, evidencias, tests, FINISH y ejemplos reales.
+- [Auditor de huecos de contenido](docs/CATALOG_CONTENT_GAPS.md): comparación editorial, títulos, especificaciones y semántica técnica, procedencia y prioridades.
 - [Reglas de datos](docs/SCRAPER_DATA_RULES.md): contratos, origen, preservación y revisión editorial.
 - [Protocolo de campañas completas](docs/CAMPAIGNS.md): extracción global obligatoria, validación de todos los proveedores, intervenciones excepcionales y entrega acreditada.
 - [Intervenciones manuales por campaña](docs/CAMPAIGN_INTERVENTIONS.md): principios y controles de la ejecución manual.

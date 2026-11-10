@@ -165,3 +165,23 @@ test("clasifica las referencias fotográficas por su naturaleza sin modificar ga
   assert.deepEqual(summary(analyzeCommercialCrossCoverage([original], [source])),
     ["CC1666:imagenes:portada-referencia-ajena:introducida"]);
 });
+
+test("GAM conserva las Yale de stock compartido sin señalar como ambigüedad los separadores ya canonizados", () => {
+  const older = { ...product("6835", "ERP35VL"), externalReference: "GAM 27262",
+    spec: { Marca: "YALE", Modelo: "ERP35VL", Horómetro: "1660 horas", "Nº de serie": "A976B08243T" },
+    image: "https://example.org/59171.jpg", images: ["https://example.org/59171.jpg"] };
+  const newer = { ...product("6858", "ERP35VL"), externalReference: "GAM-27262",
+    spec: { Marca: "YALE", Modelo: "ERP35VL", Horómetro: "1662 horas", "Nº de serie": "A976B08243T" },
+    image: "https://example.org/59538.jpg", images: ["https://example.org/59538.jpg"] };
+  const before = JSON.stringify([older, newer]);
+  assert.deepEqual(summary(analyzeCommercialCrossCoverage([older, newer], [older, newer])), []);
+  assert.equal(JSON.stringify([older, newer]), before);
+  assert.deepEqual(summary(analyzeCommercialCrossCoverage([older, { ...newer, externalReference: "GAM27262" }],
+    [older, { ...newer, externalReference: "GAM27262" }])), [
+    "6835:identidad:referencia-visible-formato-ambiguo:heredada",
+    "6858:identidad:referencia-visible-formato-ambiguo:heredada"
+  ]);
+  assert.deepEqual(summary(analyzeCommercialCrossCoverage([
+    older, { ...newer, providerId: "gomariz" }
+  ], [older, { ...newer, providerId: "gomariz" }])), []);
+});

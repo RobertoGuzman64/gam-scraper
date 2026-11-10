@@ -25,7 +25,8 @@ type Inputs = {
   readonly attributeAudit: Pick<CommercialAttributeAudit, "validationIssues">;
   readonly presentationAudit: Pick<CommercialPresentationAudit, "signals">;
   readonly outputConsistencyAudit: Pick<CommercialOutputConsistencyAudit, "signals" | "findings">;
-  readonly crossCoverageAudit: Pick<CommercialCrossCoverageAudit, "signals">;
+  readonly crossCoverageAudit: Pick<CommercialCrossCoverageAudit, "signals"> & Partial<Pick<CommercialCrossCoverageAudit, "findings">>;
+  readonly controlledCoherence?: ReadonlySet<string>;
 };
 
 const outputAction = (reason: CommercialOutputConsistencyReason): string => {
@@ -112,11 +113,26 @@ export const prioritizeCommercialInterventions = (input: Inputs): CommercialInte
   }
   for (const signal of input.crossCoverageAudit.signals) {
     const introduced = signal.origin === "introducida";
-    const controlled = !introduced && signal.reason === "portada-prefijo-distinto";
-    interventions.push({ priority: introduced ? "alta" : controlled ? "controlada" : signal.area === "editorial" ? "baja" : "media",
-      source: "transversal", reason: `${signal.area}:${signal.reason}:${signal.origin}`, affected: signal.affected,
+    const controlledByType = !introduced && signal.reason === "portada-prefijo-distinto";
+    const findings = input.crossCoverageAudit.findings?.filter((finding) =>
+      finding.area === signal.area && finding.reason === signal.reason && finding.origin === signal.origin);
+    const recognized = !introduced && !controlledByType && findings?.length === signal.affected
+      ? findings.filter((finding) => input.controlledCoherence?.has(JSON.stringify([finding.sourceUrl, finding.reason])) === true)
+      : [];
+    const remaining = signal.affected - recognized.length;
+    const common = {
+      source: "transversal" as const, reason: `${signal.area}:${signal.reason}:${signal.origin}`,
       responsible: introduced ? "proyección comercial (contrastar con publicación)" : "fuente técnica / proveedor",
-      action: crossAction(signal), examples: signal.examples, evidence: [] });
+      action: crossAction(signal), evidence: [] as string[]
+    };
+    if (remaining > 0) interventions.push({ ...common,
+      priority: introduced ? "alta" : controlledByType ? "controlada" : signal.area === "editorial" ? "baja" : "media",
+      affected: remaining, examples: recognized.length === 0 ? signal.examples : findings?.filter((finding) =>
+        !input.controlledCoherence?.has(JSON.stringify([finding.sourceUrl, finding.reason]))).slice(0, 5)
+        .map((finding) => finding.sourceUrl) ?? []
+    });
+    if (recognized.length > 0) interventions.push({ ...common, priority: "controlada",
+      affected: recognized.length, examples: recognized.slice(0, 5).map((finding) => finding.sourceUrl) });
   }
   for (const signal of input.presentationAudit.signals) {
     const strong = signal.reason === "titulo-vacio" || signal.reason === "imagen-principal-fuera-de-galeria" ||

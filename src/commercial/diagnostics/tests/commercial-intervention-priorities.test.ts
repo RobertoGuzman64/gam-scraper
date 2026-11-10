@@ -105,3 +105,25 @@ test("separa diferencias de prefijo controladas de portadas ajenas y variantes s
   });
   assert.equal(introduced.pending[0]?.priority, "alta");
 });
+
+test("las variantes reconocidas por coherencia permanecen visibles como controladas y reabren al caducar", () => {
+  const sourceUrl = "https://example.org/maquina/6934";
+  const signal = { area: "identidad" as const, reason: "modelo-titulo-spec-discordante", origin: "heredada" as const,
+    affected: 1, examples: [sourceUrl] };
+  const finding = { reference: "6934", sourceUrl, area: signal.area, reason: signal.reason, origin: signal.origin };
+  const input = { ...fixture(), outputConsistencyAudit: { signals: [], findings: [] },
+    presentationAudit: { signals: [] }, accreditation: { blocking: [], pending: [] },
+    crossCoverageAudit: { signals: [signal], findings: [finding] } };
+  const pending = prioritizeCommercialInterventions(input);
+  assert.deepEqual(pending.pending.map((item) => [item.reason, item.affected]), [
+    ["identidad:modelo-titulo-spec-discordante:heredada", 1]
+  ]);
+  const recognized = prioritizeCommercialInterventions({ ...input,
+    controlledCoherence: new Set([JSON.stringify([sourceUrl, signal.reason])]) });
+  assert.deepEqual(recognized.pending, []);
+  assert.deepEqual(recognized.controlled.map((item) => [item.reason, item.affected]), [
+    ["identidad:modelo-titulo-spec-discordante:heredada", 1]
+  ]);
+  assert.deepEqual(prioritizeCommercialInterventions({ ...input,
+    controlledCoherence: new Set([JSON.stringify([sourceUrl, "otro-modelo"])]) }).pending, pending.pending);
+});

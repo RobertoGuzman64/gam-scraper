@@ -22,7 +22,7 @@ export const reconcileGamVerifiedYaleGp80vx = (record: ProductRecord): ProductRe
     model: "GDP80VX",
     title: "Carretilla frontal diésel Yale GDP80VX de 8.000 kg",
     shortDescription: "Carretilla elevadora diésel Yale GDP80VX nueva, con capacidad de carga de 8.000 kg y centro de carga de 600 mm.",
-    longDescription: "Carretilla elevadora frontal diésel Yale GDP80VX de 8.000 kg de capacidad nominal a 600 mm de centro de carga. Su ficha técnica comercial indica 2.082 mm de anchura y 11.466 kg de peso. El fabricante identifica la familia GDP/GLP80VX y la ficha de venta especifica la configuración diésel.",
+    longDescription: "Carretilla elevadora frontal diésel Yale GDP80VX de 8.000 kg de capacidad nominal a 600 mm de centro de carga. Su ficha técnica comercial indica 2.082 mm de anchura y 11.466 kg de peso. El fabricante identifica la familia GDP/GLP80VX y la ficha de venta especifica la configuración diésel. En el campo de motores se consigna Kubota de 3,8 litros para la alternativa diésel, junto con una opción GLP distinta. La transmisión documentada es Electronic Powershift de dos velocidades, sin atribuir al modelo diésel el motor de la variante GLP.",
     specs: { ...record.specs, Modelo: "GDP80VX" }
   };
 };

@@ -47,10 +47,19 @@ const expected: Readonly<Record<string, Readonly<Record<string, SpecsMap>>>> = {
       "Sistema de frenado del KRV20": "Por inercia",
       "Freno de estacionamiento del KRV20": "Accionamiento manual"
     },
+    "2737": {
+      "Reducción de transmisión del modelo": "2:1 por cadena",
+      "Velocidad de avance y retroceso del modelo": "0-2 mph",
+      "Frenado en posición neutra del modelo": "Sí",
+      "Cargador a bordo del modelo": "Sí"
+    },
     "6688": {
       "Tipo de tracción": "Trasera",
       "Transmisión del modelo": "Manual de 5 velocidades",
-      "Distancia entre ejes del modelo": "2250 mm"
+      "Distancia entre ejes del modelo": "2250 mm",
+      "Longitud exterior del modelo": "4120 mm",
+      "Anchura exterior del modelo": "1630 mm",
+      "Altura exterior del modelo": "1290 mm"
     },
     "6689": {
       "Cilindrada del motor": "2598 cm³",
@@ -129,7 +138,7 @@ const catalogs = await Promise.all(providers.map(async (providerId) => ({
   products: (await readCanonicalCatalog(`catalogs/providers/${providerId}/original/scrape-${providerId}-catalog.json`)).products
 })));
 
-test("evidencia cruzada entre proveedores: incorporar solo las prestaciones documentadas de las 20 referencias", () => {
+test("evidencia cruzada entre proveedores: incorporar solo las prestaciones documentadas de las 21 referencias", () => {
   let count = 0;
   let additions = 0;
   for (const { providerId, products } of catalogs) {
@@ -156,8 +165,8 @@ test("evidencia cruzada entre proveedores: incorporar solo las prestaciones docu
       count++;
     }
   }
-  assert.equal(count, 20);
-  assert.equal(additions, 61);
+  assert.equal(count, 21);
+  assert.equal(additions, 68);
 });
 
 test("evidencia cruzada entre proveedores: no propagar especificaciones a originales modificados ni sobrescribir valores", () => {
@@ -189,7 +198,7 @@ test("evidencia cruzada entre proveedores: no propagar especificaciones a origin
   }
 });
 
-test("evidencia cruzada entre proveedores: las 20 fichas salen de alta y media sin alterar los umbrales", () => {
+test("evidencia cruzada entre proveedores: las 21 fichas salen de alta y media sin alterar los umbrales", () => {
   const before = [];
   const after = [];
   for (const { providerId, products } of catalogs) {
@@ -203,10 +212,10 @@ test("evidencia cruzada entre proveedores: las 20 fichas salen de alta y media s
       after.push(product);
     }
   }
-  assert.equal(before.length, 20);
+  assert.equal(before.length, 21);
   const base = analyzeTechnicalDensity(before);
   const result = analyzeTechnicalDensity(after);
-  assert.equal(base.totals.sparse + base.totals.medium, 20);
-  assert.deepEqual([result.totals.sparse, result.totals.medium], [0, 1]);
-  assert.deepEqual(result.mediumCases.map((item) => `${item.providerId}:${item.reference}`), ["gam:6688"]);
+  assert.equal(base.totals.sparse + base.totals.medium, 21);
+  assert.deepEqual([result.totals.sparse, result.totals.medium], [0, 0]);
+  assert.deepEqual(result.mediumCases, []);
 });

@@ -7,6 +7,7 @@ import { resolveAttribute } from "../../../shared/classification/mapping/attribu
 import { reconcileGamBtsEditorialSummary } from "../../editorial/models/bts-editorial.js";
 import { SOURCE_CATEGORY_ISSUE, sourceCategoryQualityIssue } from "../../../shared/quality/source/category-quality.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
+import { recoverGamDocumentedMobilityAndAccessSpecs } from "./documented-mobility-and-access-specs.js";
 
 const catalog = await loadImportCatalog();
 const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
@@ -40,8 +41,9 @@ test("conserva los originales y elimina solo cabeceras comerciales contradichas 
     if (unverifiedPower) {
       const expected = { ...record.specs };
       delete expected[unverifiedPower];
-      assert.deepEqual(prepared.product.spec, expected, reference);
-    } else assert.deepEqual(prepared.product.spec, record.specs, reference);
+      assert.deepEqual(prepared.product.spec, recoverGamDocumentedMobilityAndAccessSpecs(record, expected), reference);
+    } else assert.deepEqual(prepared.product.spec,
+      recoverGamDocumentedMobilityAndAccessSpecs(record, record.specs ?? {}), reference);
     assert.equal(prepared.product.description, corrected.shortDescription, reference);
     assert.equal(JSON.stringify(record), original, reference);
   }

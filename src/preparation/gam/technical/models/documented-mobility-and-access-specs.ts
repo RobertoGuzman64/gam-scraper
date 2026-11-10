@@ -89,6 +89,19 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
       "Freno de estacionamiento del KRV20": "Accionamiento manual"
     }
   },
+  "2737": {
+    "fingerprint": "c859bf1bd183a4acefa7de0499ed823d03ffc8b7064d430a19b6f099a907d8ef",
+    "brand": null,
+    "model": "6K 36V BR",
+    "categoryKey": "marcas-nuevas",
+    "source": "https://www.djproducts.com/product/power-trailer-mover-6k-36v/",
+    "specifications": {
+      "Reducción de transmisión del modelo": "2:1 por cadena",
+      "Velocidad de avance y retroceso del modelo": "0-2 mph",
+      "Frenado en posición neutra del modelo": "Sí",
+      "Cargador a bordo del modelo": "Sí"
+    }
+  },
   "6688": {
     "fingerprint": "9cb17123489cd9f7cef0250e6102f0187fa9ac2e616f1a91bc543effab32df49",
     "brand": null,
@@ -98,7 +111,10 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     "specifications": {
       "Tipo de tracción": "Trasera",
       "Transmisión del modelo": "Manual de 5 velocidades",
-      "Distancia entre ejes del modelo": "2250 mm"
+      "Distancia entre ejes del modelo": "2250 mm",
+      "Longitud exterior del modelo": "4120 mm",
+      "Anchura exterior del modelo": "1630 mm",
+      "Altura exterior del modelo": "1290 mm"
     }
   },
   "6689": {

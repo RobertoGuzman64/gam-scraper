@@ -55,7 +55,7 @@ test("el criterio se aplica también a proveedores nuevos y rechaza duplicados",
 });
 
 
-test("la densidad publicada permanece observacional en las cinco referencias sin prestaciones acreditadas suficientes", async () => {
+test("la densidad publicada refleja la recuperación documental de las dos JLG sin maquillar el resto", async () => {
   const products: ImportCandidate[] = [];
   for (const providerId of ["gam", "gomariz", "mercaeleva"]) {
     const path = await resolveAccreditedPublication(process.cwd(), providerId);
@@ -64,15 +64,44 @@ test("la densidad publicada permanece observacional en las cinco referencias sin
   }
   const before = JSON.stringify(products);
   const report = analyzeTechnicalDensity(products);
-  assert.deepEqual(report.totals, { products: 1344, sparse: 3, medium: 2 });
+  const jlg = products.filter((item) => item.providerId === "mercaeleva" &&
+    (item.reference === "M838-0666" || item.reference === "M969-4655"));
+  assert.equal(jlg.length, 2);
+  const documented = jlg.every((item) => item.spec["Altura de plataforma"] === "13,72 m" &&
+    item.spec["Alcance horizontal"] === "7,47 m");
+  const previouslyPublished = jlg.every((item) => !("Altura de plataforma" in item.spec) &&
+    !("Alcance horizontal" in item.spec));
+  assert.ok(documented || previouslyPublished);
+  const modelGam = products.filter((item) => item.providerId === "gam" &&
+    (item.reference === "2737" || item.reference === "6688"));
+  assert.equal(modelGam.length, 2);
+  const documentedGam = modelGam.every((item) => item.reference === "2737" ?
+    item.spec["Cargador a bordo del modelo"] === "Sí" :
+    item.spec["Longitud exterior del modelo"] === "4120 mm");
+  const previousGam = modelGam.every((item) => item.reference === "2737" ?
+    !("Cargador a bordo del modelo" in item.spec) :
+    !("Longitud exterior del modelo" in item.spec));
+  assert.ok(documentedGam || previousGam);
+  const toyota = products.find((item) => item.providerId === "mercaeleva" && item.reference === "M547-2372");
+  assert.ok(toyota);
+  const documentedToyota = toyota.spec["Centro de carga nominal del modelo"] === "600 mm" &&
+    toyota.spec["Radio de giro exterior del modelo"] === "1570 mm";
+  assert.ok(documentedToyota || !("Centro de carga nominal del modelo" in toyota.spec));
+  assert.deepEqual(report.totals, { products: 1344, sparse: documentedToyota ? 0 : documented ? 1 : 3,
+    medium: documentedGam ? 0 : 2 });
   assert.deepEqual(report.cases.map((item) => [item.providerId, item.reference, item.technicalCount]), [
-    ["mercaeleva", "M547-2372", 0],
-    ["mercaeleva", "M838-0666", 2],
-    ["mercaeleva", "M969-4655", 2]
+    ...(documentedToyota ? [] : [["mercaeleva", "M547-2372", 2] as const]),
+    ...(documented ? [] : [
+      ["mercaeleva", "M838-0666", 2],
+      ["mercaeleva", "M969-4655", 2]
+    ])
   ]);
-  assert.deepEqual(report.mediumCases.map((item) => [item.providerId, item.reference, item.technicalCount]), [
-    ["gam", "2737", 3], ["gam", "6688", 3]
+  assert.deepEqual(report.mediumCases.map((item) => [item.providerId, item.reference, item.technicalCount]),
+    documentedGam ? [] : [["gam", "2737", 3], ["gam", "6688", 3]]);
+  if (!documentedToyota) assert.deepEqual(report.cases.find((item) => item.reference === "M547-2372")?.technicalKeys, [
+    "Capacidad nominal según texto comercial", "Propulsión"
   ]);
+  else assert.equal(report.cases.some((item) => item.reference === "M547-2372"), false);
   assert.match(report.note, /Sin bloqueo de publicación/);
   assert.equal(JSON.stringify(products), before);
 });

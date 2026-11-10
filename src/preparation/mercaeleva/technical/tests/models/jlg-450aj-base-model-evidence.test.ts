@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
 import { readMercaelevaSource } from "../../../../../testing/builders/mercaeleva-source-fixture.js";
 import { reconcileMercaelevaVerifiedJlg450AjBaseModel } from "../../reconciliation/mercaeleva-jlg-450aj.js";
+import { recoverMercaelevaDocumentedSourceSpecs } from "../../evidence/documented-source-recovery.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { sourceSemanticQualityIssues } from "../../../../shared/quality/source/semantic-quality.js";
 
@@ -63,4 +64,44 @@ test("JLG 450AJ: cambio de identidad, anuncio o ficha impide la conciliación", 
 test("JLG 450AJ: no se interviene el resto de Mercaeleva", () => {
   const affected = records.filter((record) => reconcileMercaelevaVerifiedJlg450AjBaseModel(record) !== record);
   assert.deepEqual(affected.map((record) => record.reference).sort(), [...references].sort());
+});
+
+test("JLG 450AJ: las dos unidades acreditadas recuperan plataforma y alcance del modelo base", () => {
+  for (const reference of references) {
+    const source = find(reference);
+    const original = JSON.stringify(source);
+    const recovered = recoverMercaelevaDocumentedSourceSpecs(source, source.specs ?? {}).documentedSpecs;
+    assert.deepEqual(recovered, {
+      ...source.specs,
+      "Altura de plataforma": "13,72 m",
+      "Alcance horizontal": "7,47 m"
+    }, reference);
+    const prepared = prepareSourceProduct(source);
+    assert.equal(prepared.status, "ready", reference);
+    assert.equal(prepared.product.spec?.["Altura de plataforma"], "13,72 m", reference);
+    assert.equal(prepared.product.spec?.["Alcance horizontal"], "7,47 m", reference);
+    assert.equal(JSON.stringify(source), original, reference);
+  }
+});
+
+test("JLG 450AJ: no se propagan prestaciones documentadas a unidades o pruebas alteradas", () => {
+  for (const reference of references) {
+    const source = find(reference);
+    const altered: readonly ProductRecord[] = [
+      { ...source, providerId: "gam" },
+      { ...source, reference: "M000-0000" },
+      { ...source, url: `${source.url}?otra=1` },
+      { ...source, model: "450 AJ SII" },
+      { ...source, specs: { ...source.specs, "Artículo No.": "otra" } },
+      { ...source, year: "2014" },
+      { ...source, horometer: "0" },
+      { ...source, longDescription: `${source.longDescription} texto nuevo` }
+    ];
+    for (const [index, record] of altered.entries()) {
+      const specs = record.specs ?? {};
+      assert.strictEqual(recoverMercaelevaDocumentedSourceSpecs(record, specs).documentedSpecs, specs, `${reference}:${index}`);
+    }
+    const alreadyDefined = { ...source.specs, "Altura de plataforma": "12 m" };
+    assert.strictEqual(recoverMercaelevaDocumentedSourceSpecs(source, alreadyDefined).documentedSpecs, alreadyDefined, reference);
+  }
 });

@@ -10,6 +10,8 @@ El circuito simplificado usa los originales canónicos completos y verificables 
 
 Los originales, las aprobaciones y los finales son conjuntos distintos. Una ficha `review` no cambia a `ready` por ser excluida de una selección; un catálogo con publicaciones vigentes no acredita por ello todas las fichas originales como `ready`. Ningún comando aquí importa productos al backend.
 
+Si una mejora nace de un defecto de extracción, primero debe existir un **original canónico íntegro y validado**. La evidencia editorial por huella puede cambiar una preparación y después una publicación, pero no actualiza por sí sola el original. Las fichas con original, preparado y publicación distintos deben investigarse por identidad, no resolverse escribiendo el JSON final.
+
 ## Recorrido ordinario
 
 Desde PowerShell, en la raíz del repositorio:
@@ -50,6 +52,8 @@ Tras una activación comprobada, FINISH ejecuta por separado:
 El informe se denomina `equipzilla-informe-<huella>.zip` y contiene **un solo `INFORME.md`**. Resume por proveedor y en total fichas originales/publicadas/excluidas, transformaciones, textos, títulos, campos y valores de specs, precios, condiciones, categorías y galerías. Se calcula al contrastar las publicaciones acreditadas con sus originales, no mediante estimaciones de fases ni copias de una publicación anterior. Su huella identifica la combinación verificada de orígenes, aprobaciones y publicaciones. **No sustituye un JSON publicable**, un expediente de calidad, ni una validación de completitud externa.
 
 FINISH conserva un diario en `storage/publication/individual-finish/` para recuperar activaciones parciales. Si falla retención, auditor o informe **después** de activar, las publicaciones ya comprobadas se conservan: el error identifica el paso pendiente y se puede repetir `npm run catalogo:publicar` tras corregir la causa. Con las mismas aprobaciones ya vigentes, el comando no crea nuevos ZIP comerciales ni vuelve a publicar; verifica o completa las operaciones posteriores. No borrar manualmente el diario, originales, recibos o publicaciones.
+
+**Estados observables distintos:** (a) preparación correcta y preflight conforme, pero publicación aún no activa; (b) publicación activada y verificada, con un paso posactivación pendiente; (c) FINISH completo, incluidos retención, auditor e informe. Acreditar cada afirmación con su recibo, selector activo y diario. En un fallo tardío no restaurar ni sobrescribir una publicación verificada; resolver el paso pendiente y repetir FINISH de forma idempotente. Una exportación comercial posterior no reemplaza el archivado histórico. La mejora por fases de catálogo sigue el [manual de mejora](CATALOG_IMPROVEMENT.md).
 
 Una campaña global de cuatro proveedores mantiene su propio flujo y retención; no se debe confundir con este FINISH individual. Para su operación consultar [Campañas](CAMPAIGNS.md) y [Acreditación de campaña](CAMPAIGN_ACCREDITATION.md).
 

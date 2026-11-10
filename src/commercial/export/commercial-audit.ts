@@ -1,4 +1,8 @@
 import type { AuditedFinding } from "../../catalog/diagnostics/finding-recognitions.js";
+import { classifyCurrentAuditFindings } from "../../catalog/diagnostics/current-audit-findings.js";
+import { loadFindingRecognitionRegistry } from "../../infrastructure/filesystem/catalog/finding-recognition-store.js";
+import { analyzePresentationConsistency } from "../diagnostics/presentation-consistency.js";
+import { observePreparationCoherenceFindings } from "../diagnostics/audited-findings.js";
 import { observeCommercialAccreditationFindings } from "../diagnostics/audited-findings.js";
 import { analyzeCommercialBaseline } from "../diagnostics/commercial-baseline.js";
 import type { CommercialBaseline } from "../diagnostics/commercial-baseline.js";
@@ -49,7 +53,9 @@ export type CommercialAuditWithFindings = {
 };
 
 const buildCommercialAudit = async (rootDirectory: string, collectFindings: boolean): Promise<CommercialAuditWithFindings> => {
-  const [catalog, references] = await Promise.all([loadImportCatalog(), loadCommercialReference()]);
+  const [catalog, references, recognitions] = await Promise.all([
+    loadImportCatalog(), loadCommercialReference(), loadFindingRecognitionRegistry(rootDirectory)
+  ]);
   const inputs = await loadCommercialPublicationInputs(rootDirectory, catalog);
   const findings: AuditedFinding[] = [];
   const report: CommercialAudit = { version: 2, providers: inputs.map(({ providerId, publicationSha256, originalProducts, entries }) => {
@@ -62,13 +68,20 @@ const buildCommercialAudit = async (rootDirectory: string, collectFindings: bool
     const presentationAudit = analyzeCommercialPresentation(entries);
     const outputConsistencyAudit = analyzeCommercialOutputConsistency(projected.products);
     const crossCoverageAudit = analyzeCommercialCrossCoverage(entries.map(({ published }) => published), projected.products);
+    const prepared = entries.map(({ mapped }) => mapped.product);
+    const coherenceAudit = analyzePresentationConsistency(prepared);
+    const coherence = classifyCurrentAuditFindings(observePreparationCoherenceFindings(
+      entries.map(({ source, mapped }) => ({ source, product: mapped.product })), coherenceAudit
+    ), recognitions, "coherencia_preparacion");
+    const controlledCoherence = new Set(coherence.findings.filter((item) => item.status === "controlled")
+      .map((item) => JSON.stringify([item.finding.sourceUrl, item.finding.code])));
     const accreditation = accreditCommercialPlan(entries, projected, catalog, references.brandLogos, null);
     if (collectFindings) findings.push(...observeCommercialAccreditationFindings(entries, projected.products, accreditation));
     return {
       publicationSha256, originalProducts, baseline, attributeAudit, presentationAudit,
       outputConsistencyAudit, crossCoverageAudit, accreditation,
       interventionPriorities: prioritizeCommercialInterventions({ accreditation, attributeAudit, presentationAudit,
-        outputConsistencyAudit, crossCoverageAudit }),
+        outputConsistencyAudit, crossCoverageAudit, controlledCoherence }),
       exportAudit: { summary: projected.summary, excluded: projected.excluded.length,
         exceptions: projected.exceptions.length, reasons: [...reasons].map(([reason, affected]) => ({ reason, affected }))
           .sort((a, b) => b.affected - a.affected || a.reason.localeCompare(b.reason, "es")) }

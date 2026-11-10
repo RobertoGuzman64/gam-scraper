@@ -30,6 +30,16 @@ test("identifica incidencias aún ambiguas sin publicar correcciones especulativ
   assert.equal(result.defects, 0);
   assert.equal(result.reviews, 2);
   assert.equal(result.findings.length, 2);
+  const jlg = gam.products.find((item) => item.reference === "6934");
+  const lgmg = gomariz.products.find((item) => item.reference === "TE1772");
+  assert.ok(jlg);
+  assert.ok(lgmg);
+  assert.equal(jlg.model, "E300AJ");
+  assert.match(jlg.title ?? "", /E300AJP/u);
+  assert.equal(jlg.specs?.["Capacidad de carga (kg)"], "220 KG");
+  assert.match(jlg.shortDescription ?? "", /230\s*kg/iu);
+  assert.equal(lgmg.model, "AS0607WE");
+  assert.match(lgmg.image ?? "", /AS0607WF/u);
   const baseline = [
     "gam:6934:modelo-titulo-spec-discordante",
     "gomariz:TE1772:modelo-portada-variante-discordante"

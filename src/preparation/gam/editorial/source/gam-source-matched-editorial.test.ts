@@ -7,6 +7,7 @@ import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/cata
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { resolveGamVerifiedSourceMatchedEditorial } from "./verified-source-matched-editorial.js";
 import { verifiedCanonicalBriefEditorial } from "../../../shared/editorial/evidence/verified-canonical-brief-editorial.js";
+import { verifiedGamSourceMatchedGenerals } from "./verified-source-matched-generals.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const additional = new Set(["6206", "6817", "6585", "6545", "6707", "4776", "2159", "2061", "2049", "2172", "2241", "2649", "1022", "2138", "2167", "2168", "2173", "2162", "2183", "2074", "2016", "2028"]);
@@ -113,5 +114,63 @@ test("la cohorte adicional no se aplica a fuentes o especificaciones alteradas",
       { ...record, specs: { ...record.specs, "Capacidad de carga (kg)": "0 KG" } }
     ];
     for (const variant of variants) assert.notEqual(prepareSourceProduct(variant).product.description_general, current);
+  }
+});
+
+test("GAM: aclara cuatro modelos de origen sin equiparar variantes y sin alterar otras fichas", () => {
+  const cases = [
+    ["2180", ["S1.6 SL", "S1.6SSL", "1.600 kg"]],
+    ["4792", ["XGS58E", "XGS58E1", "58,6 metros", "450 kg con restricciones"]],
+    ["4736", ["XG0807ACW-LI", "XG0807AC-LI", "batería de litio"]],
+    ["6909", ["SJIII-3220", "SJIII-3220M", "363", "400 kg"]]
+  ] as const;
+  const expected = new Set(cases.map(([reference]) => reference));
+  for (const [reference, fragments] of cases) {
+    const record = find(reference);
+    const before = JSON.stringify(record);
+    const prepared = prepareSourceProduct(record);
+    const evidence = verifiedGamSourceMatchedGenerals[reference];
+    assert.equal(prepared.status, "ready", reference);
+    assert.equal(prepared.product.description_general, evidence.general, reference);
+    assert.ok(prepared.product.description_general);
+    for (const fragment of fragments) assert.ok(prepared.product.description_general.includes(fragment), `${reference}:${fragment}`);
+    assert.equal(JSON.stringify(record), before, reference);
+    assert.deepEqual(prepared.product.spec.Marca, record.specs?.Marca, reference);
+    for (const variant of [
+      { ...record, reference: "0" },
+      { ...record, url: `${record.url}?revision=otra` },
+      { ...record, model: "VARIANTE NO ACREDITADA" },
+      { ...record, longDescription: `${record.longDescription ?? ""} Otro texto.` },
+      { ...record, specs: { ...record.specs, Modelo: "VARIANTE NO ACREDITADA" } }
+    ] satisfies readonly ProductRecord[]) {
+      assert.notEqual(prepareSourceProduct(variant).product.description_general, evidence.general, reference);
+    }
+  }
+  assert.equal(expected.size, 4);
+});
+
+test("GAM 1219 recupera el equipamiento descrito por el proveedor sin extrapolar la potencia", () => {
+  const original = find("1219");
+  const before = JSON.stringify(original);
+  const prepared = prepareSourceProduct(original);
+  const general = verifiedGamSourceMatchedGenerals["1219"].general;
+  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.product.description_general, general);
+  assert.match(general, /combustible.*inyecci[oó]n directa|inyecci[oó]n directa.*combustible/iu);
+  for (const detail of ["insonorizado", "antivibratorios", "aceite", "turbocompresores", "radiador"]) {
+    assert.ok(general.includes(detail), detail);
+  }
+  assert.doesNotMatch(general, /GSW815P|3213 kWA/iu);
+  assert.ok(!general.trimEnd().endsWith(":"));
+  assert.deepEqual(prepared.product.spec["Modelo"], original.specs?.["Modelo"]);
+  assert.equal(JSON.stringify(original), before);
+  for (const variant of [
+    { ...original, reference: "1218" },
+    { ...original, url: `${original.url}?actualizado=1` },
+    { ...original, model: "GSW1270M" },
+    { ...original, longDescription: `${original.longDescription ?? ""} Otro dato.` },
+    { ...original, specs: { ...original.specs, "Marca motor": "Otro motor" } }
+  ] satisfies readonly ProductRecord[]) {
+    assert.notEqual(prepareSourceProduct(variant).product.description_general, general);
   }
 });

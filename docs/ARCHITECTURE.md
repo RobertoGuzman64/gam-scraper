@@ -59,6 +59,12 @@ Mercaeleva tiene separado el ciclo de navegador en `src/scraping/providers/merca
 
 La entrada de producto es `src/preparation/prepare-product.ts`, que expone `prepareSourceProduct` y `prepareWithCatalog`. La orquestación offline reside en `src/preparation/workflow/` y el cálculo/validación de huellas en `src/infrastructure/filesystem/preparation/`. El motor separa identidad y reconciliaciones por proveedor, evidencias técnicas y composición editorial. `src/preparation/shared/editorial/mapping/prepared-editorial.ts` orquesta título, fuente, modelo y completado mediante `prepared-editorial-{title,source,model,completion}.ts`, sin alterar sus prioridades por el mero hecho de estar separados.
 
+La composición técnica actual usa `src/preparation/shared/technical/reconciliation/preparation-technical-stages.ts`: coordina las transformaciones iniciales, la semántica de origen, la reconciliación previa/posterior a la edición y la normalización de `spec`. Las implementaciones por proveedor están en `src/preparation/{gam,mercaeleva}/technical/reconciliation/preparation-technical-stages.ts` y otros reconciliadores propios; Gomariz conserva sus reglas en `technical/reconciliation/`. La recuperación documental se coordina en `shared/technical/recovery/documented-technical-recovery.ts`, que aplica recuperadores GAM, Gomariz y Mercaeleva con **orden explícito**. Mover una regla o adelantarla puede cambiar qué evidencia prevalece: proteger precedencia, identidad y salidas antes/después.
+
+La composición editorial distingue `prepared-editorial-source.ts`, que integra entradas específicas de `gam/editorial/prepared-source.ts`, `gomariz/editorial/mapping/prepared-source.ts` y `mercaeleva/editorial/mapping/prepared-source.ts`, y `verified-editorial-finalization.ts`, que reutiliza `verified-editorial-composition.ts` y resolutores por proveedor. El coordinador de títulos conserva su precedencia propia: no separarlo por estética. Una regla nueva debe vivir donde pertenece su evidencia; el módulo compartido coordina **cuándo** se evalúa, no inventa la regla.
+
+La clasificación de atributos, categorías y condición pasa por `src/preparation/shared/classification/mapping/classification-provider.ts` y el contrato interno `classification-provider-types.ts`: el registro compone adaptaciones de `gam`, `gomariz`, `mercaeleva` y `manain`, definidas en sus respectivos `classification/mapping/provider.ts`. Los resolutores `attribute-mapping.ts`, `category-mapping.ts` y `src/preparation/condition.ts` consumen esa composición; conservan reglas comunes y validación de contratos. No eliminar registros explícitos de proveedores cuando sirven para validar el alcance del sistema.
+
 Las reglas y evidencias específicas permanecen junto a cada proveedor, por ejemplo en `src/preparation/gam/`. La transformación de valores de atributos GAM está en `src/preparation/gam/classification/mapping/attribute-values.ts`, mientras `attributes.ts` conserva alias y decisiones relacionadas. Los parsers escalares de las semillas GAM comparten la utilidad interna `src/tools/gam/seed/internal/scalar.ts`. Estas utilidades **no autorizan** nuevas categorías, atributos, IDs ni valores sin evidencia.
 
 Una preparación técnica canónica puede producir `categorySellID: null` y `attributes: []`, conservando `spec`. Las incidencias `ready/review` no se resuelven falsificando estos campos ni excluyendo productos de la muestra.
@@ -86,6 +92,14 @@ Por separado, `npm run exportar` es un exportador **heredado** para preparacione
 ### Auditoría de contenido
 
 `src/cli/commands/catalog/catalog-content-gaps.ts` y `src/cli/reporting/catalog-content-gaps-output.ts` presentan datos obtenidos en `src/catalog/diagnostics/`, con originales canónicos resueltos mediante `src/infrastructure/filesystem/catalog/original-catalog-sources.ts`. La preparación recalculada usa `src/preparation/prepare-product.ts`. Las comprobaciones de contenido y `--comparar --specs` no escriben originales ni crean publicaciones. Ver [Huecos de contenido](CATALOG_CONTENT_GAPS.md).
+
+## Cómo ampliar reglas y proveedores sin acoplar el núcleo
+
+Una mejora técnica se inicia en el reconciliador/evidencia del proveedor y se integra en los puntos de composición existentes. Una mejora editorial se ubica en los resolutores o evidencias del proveedor, sin alterar el orden común. Una adaptación comercial de nuevo proveedor se expresa en su `classification/mapping/provider.ts`; los atributos, categorías e IDs siguen perteneciendo a los contratos vigentes.
+
+`src/preparation/prepare-product.ts` es un **orquestador**, no el lugar para acumular casos de unidades nuevas. `shared/technical/recovery/documented-technical-recovery.ts` compone varias fuentes documentales; no debe crecer con reglas de negocio duplicadas de varios proveedores. El registro de clasificación es una composición explícita, no un sistema de plugins dinámicos. Las excepciones acreditadas por referencia y huella son legítimas cuando impiden extrapolar una especificación a otra unidad.
+
+Las modificaciones se validan comparando los candidatos por identidad y campo, controlando la huella `rulesSha256`, el preflight, FINISH y la proyección comercial. Consultar el [manual de mejora acreditada](CATALOG_IMPROVEMENT.md) antes de añadir reglas o extender un proveedor.
 
 ## Calidad, pruebas y protección de artefactos
 

@@ -40,6 +40,11 @@ test("Gomariz personaliza generales genéricas con medidas de su propia ficha", 
         assert.ok(general.includes(record.title ?? ""), record.reference);
       }
       assert.ok(general.includes("longitud") && general.includes("anchura") && (general.includes("peso") || general.includes("masa")), record.reference);
+      if (record.reference === "BA1465") {
+        assert.match(general, /13,8 m de altura de plataforma|altura de plataforma consignada es de 13,8 m/u);
+        assert.match(general, /1,98 m de altura de almacenaje|altura de almacenaje declarada es de 1,98 m/u);
+        assert.ok(general.split(/\s+/u).length >= 60);
+      }
       assert.equal(prepared.status, "ready", record.reference);
       improved.add(record.reference);
     }
