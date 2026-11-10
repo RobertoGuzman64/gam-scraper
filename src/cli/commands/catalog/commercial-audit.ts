@@ -1,6 +1,11 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { auditCommercialCatalog } from "../../../commercial/export/commercial-audit.js";
+import { auditCommercialCatalog, auditCommercialCatalogWithFindings } from "../../../commercial/export/commercial-audit.js";
+import { observePreparationCoherenceFindings } from "../../../commercial/diagnostics/audited-findings.js";
+import { classifyCurrentAuditFindings } from "../../../catalog/diagnostics/current-audit-findings.js";
+import { loadFindingRecognitionRegistry } from "../../../infrastructure/filesystem/catalog/finding-recognition-store.js";
+import { printStaleFindingRecognitions } from "../../reporting/finding-recognitions.js";
+import { printPreparationCoherenceReport } from "../../reporting/preparation-coherence.js";
 import { printReportLine } from "../../reporting/terminal.js";
 import { printCommercialAuditReport } from "../../reporting/commercial-audit.js";
 import { readFile } from "node:fs/promises";
@@ -82,20 +87,34 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
   if (args[0] === "--coherencia") {
     const catalog = await loadImportCatalog();
     const products = [];
+    const evidence = [];
     for (const providerId of ["gam", "gomariz", "mercaeleva"]) {
       const sources = await originalSources(root, providerId);
       if (!sources) throw new Error(`Catálogo original no disponible: ${providerId}`);
-      products.push(...prepareImportBatch([...sources.values()], catalog).products.map((item) => item.product));
+      const originals = [...sources.values()];
+      const prepared = prepareImportBatch(originals, catalog).products;
+      for (const [index, item] of prepared.entries()) {
+        const source = originals[index];
+        if (!source) throw new Error(`Preparación sin original: ${providerId}:${index}`);
+        products.push(item.product);
+        evidence.push({ source, product: item.product });
+      }
     }
     const result = analyzePresentationConsistency(products);
-    printReportLine(`COHERENCIA DE PREPARACIÓN | ${result.products} fichas | ${result.defects} defectos | ${result.reviews} casos para revisar`);
-    for (const finding of result.findings) {
-      printReportLine(`  ${finding.status.toUpperCase()} ${finding.providerId}:${finding.reference ?? finding.sourceUrl} | ${finding.field} | ${finding.code}`);
-    }
+    const registry = await loadFindingRecognitionRegistry(root);
+    const classified = classifyCurrentAuditFindings(
+      observePreparationCoherenceFindings(evidence, result), registry, "coherencia_preparacion");
+    printPreparationCoherenceReport(result, classified);
+    printStaleFindingRecognitions(classified.stale);
     if (result.defects > 0) process.exitCode = 1;
     return;
   }
-  const report = await auditCommercialCatalog(root);
+  const withFindings = args[0] === "--acreditacion" || args[0] === "--revision" ||
+    args[0] === "--contenido-revision" || args[0] === "--detalle" || args.length === 0;
+  const audited = withFindings ? await auditCommercialCatalogWithFindings(root) : null;
+  const report = audited?.report ?? await auditCommercialCatalog(root);
+  const classified = audited === null ? undefined : classifyCurrentAuditFindings(audited.findings,
+    await loadFindingRecognitionRegistry(root), "acreditacion_comercial");
   if (args[0] === "--arbol") {
     const catalog = await loadImportCatalog();
     const lines = renderCommercialCategoryTree(catalog.categories, report.providers.map(({ baseline, presentationAudit }) => ({
@@ -104,7 +123,8 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
     for (const line of lines) printReportLine(line);
     return;
   }
-  printCommercialAuditReport(report, args[0], attributeId, productReference);
+  printCommercialAuditReport(report, args[0], attributeId, productReference, classified);
+  if (classified) printStaleFindingRecognitions(classified.stale);
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

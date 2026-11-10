@@ -1,4 +1,10 @@
 export const verifiedMercaelevaSourceEditorial = {
+  "M827-8304": {
+    "sourceDigest": "b26ddd169ff2ca69f7da65191e1831223d7f433553da08879a59b1bf63593ed1",
+    "preparedDigest": "56c64ae6960c12eaf9a8359f5fd0f3de078f38de4dbb3d095da80bad17fdec5b",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E48P-M827-8304",
+    "general": "Ref. MER0798. Carretilla elevadora eléctrica Linde E48P. Capacidad indicada en la descripción de origen: 4.800 kg. Mástil indicado en la descripción de origen: dúplex. Altura de trabajo indicada en el anuncio: 3.300 mm. Horas declaradas: 2.649. Año de fabricación declarado: 2007."
+  },
   "M928-9933": {
     "sourceDigest": "462b0104deb0f3beeaef3eaffa923360e11f41884e5b10f1a768809e391fca4e",
     "preparedDigest": "a4f7786413b02b103d99eddc76bbbbcae013afb17c108181d33c28ab53c9fadd",

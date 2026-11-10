@@ -1,19 +1,45 @@
+import type { FindingRecognitionClassification, ClassifiedFinding } from "../../catalog/diagnostics/finding-recognitions.js";
+import { printClassifiedAccreditationFindings } from "./finding-recognitions.js";
 import type { CommercialAudit } from "../../commercial/export/commercial-audit.js";
 import type { CommercialInterventionPriorities } from "../../commercial/diagnostics/commercial-intervention-priorities.js";
 import { printCommandHeader, printCommandProvider, printCommandSection, printCommandResult, printCommandWarning, printReportLine } from "./terminal.js";
 
+const classifiedGroup = (
+  item: CommercialInterventionPriorities["pending"][number], findings: readonly ClassifiedFinding[]
+): { readonly pending: number; readonly controlled: number } | null => {
+  if (item.source !== "acreditacion") return null;
+  const matches = findings.filter((finding) => finding.finding.audit === "acreditacion_comercial" &&
+    finding.finding.code === item.reason);
+  if (matches.length === 0) return null;
+  if (matches.length !== item.affected) throw new Error(`Agrupación comercial sin correspondencia individual: ${item.reason}`);
+  const pending = matches.filter((finding) => finding.status === "pending").length;
+  return { pending, controlled: matches.length - pending };
+};
+
 const printInterventionPriorities = (
-  providerId: string, report: CommercialInterventionPriorities, detailed: boolean
+  providerId: string, report: CommercialInterventionPriorities, detailed: boolean,
+  classified?: FindingRecognitionClassification
 ): void => {
-  printReportLine(`  PRIORIDADES ${providerId.toUpperCase()} | grupos pendientes ${report.pending.length} | protecciones controladas ${report.controlled.length}`);
-  for (const item of report.pending) {
-    printReportLine(`    ${item.priority.toUpperCase()} | ${item.source} | ${item.reason} | señales ${item.affected}`);
+  const findings = classified?.findings.filter((item) => item.finding.providerId === providerId) ?? [];
+  const pending = report.pending.filter((item) => (classifiedGroup(item, findings)?.pending ?? item.affected) > 0);
+  const recognized = report.pending.filter((item) => (classifiedGroup(item, findings)?.controlled ?? 0) > 0);
+  printReportLine(`  PRIORIDADES ${providerId.toUpperCase()} | grupos pendientes ${pending.length} | protecciones controladas ${report.controlled.length} | grupos con incidencias reconocidas ${recognized.length}`);
+  for (const item of pending) {
+    const group = classifiedGroup(item, findings);
+    printReportLine(`    ${item.priority.toUpperCase()} | ${item.source} | ${item.reason} | señales ${group ? `${group.pending} pendientes · ${group.controlled} controladas` : item.affected}`);
     printReportLine(`      Revisar: ${item.responsible}`);
     printReportLine(`      Acción: ${item.action}`);
     if (detailed) {
-      for (const url of item.examples) printReportLine(`      Caso: ${url}`);
+      const examples = group ? findings.filter((finding) => finding.finding.audit === "acreditacion_comercial" &&
+        finding.finding.code === item.reason && finding.status === "pending")
+        .slice(0, 3).map((finding) => finding.finding.sourceUrl) : item.examples;
+      for (const url of examples) printReportLine(`      Caso: ${url}`);
       for (const evidence of item.evidence) printReportLine(`      Evidencia: ${evidence}`);
     }
+  }
+  for (const item of recognized) {
+    const group = classifiedGroup(item, findings);
+    printReportLine(`    CONTROLADA INDIVIDUAL | ${item.reason} | señales ${group?.controlled ?? 0} | ${item.action}`);
   }
   for (const item of report.controlled) {
     printReportLine(`    CONTROLADA | ${item.reason} | señales ${item.affected} | ${item.action}`);
@@ -21,8 +47,26 @@ const printInterventionPriorities = (
   }
 };
 
+const printAccreditationWarnings = (
+  providerId: string, pending: readonly { readonly reason: string; readonly affected: number }[],
+  classified?: FindingRecognitionClassification
+): void => {
+  for (const finding of pending) {
+    const matches = classified?.findings.filter((item) => item.finding.providerId === providerId &&
+      item.finding.audit === "acreditacion_comercial" && item.finding.code === finding.reason);
+    if (matches && matches.length !== finding.affected) {
+      throw new Error(`Acreditación agrupada sin correspondencia individual: ${providerId} | ${finding.reason}`);
+    }
+    const remaining = matches?.filter((item) => item.status === "pending").length ?? finding.affected;
+    const controlled = (matches?.length ?? finding.affected) - remaining;
+    if (remaining > 0) printCommandWarning(`${providerId.toUpperCase()} | ${finding.reason}: ${remaining}`);
+    if (controlled > 0) printReportLine(`  CONTROLADA | ${providerId.toUpperCase()} | ${finding.reason}: ${controlled}`);
+  }
+};
+
 export const printCommercialAuditReport = (
-  report: CommercialAudit, mode: string | undefined, attributeId: string | undefined, productReference: string | undefined
+  report: CommercialAudit, mode: string | undefined, attributeId: string | undefined, productReference: string | undefined,
+  classified?: FindingRecognitionClassification
 ): void => {
   if (mode === "--acreditacion-json") {
     console.log(JSON.stringify({ version: 1, providers: report.providers.map((item) => item.accreditation) }, null, 2));
@@ -39,7 +83,8 @@ export const printCommercialAuditReport = (
       attributes += audit.summary.attributes;
       printCommandProvider(audit.providerId, `${audit.summary.exported} elegibles · ${audit.summary.categorized} categorizadas · ${audit.summary.attributes} atributos · ${audit.summary.blocking} infracciones`);
       for (const finding of audit.blocking) printReportLine(`  BLOQUEANTE ${finding.reason}: ${finding.affected}`);
-      for (const finding of audit.pending) printCommandWarning(`${audit.providerId.toUpperCase()} | ${finding.reason}: ${finding.affected}`);
+      printAccreditationWarnings(audit.providerId, audit.pending, classified);
+      if (classified) printClassifiedAccreditationFindings(audit.providerId, classified.findings);
     }
     printCommandSection("TOTAL ACREDITADO");
     printReportLine(`${exported} productos · ${attributes} atributos · ${blocking} infracciones`);
@@ -100,7 +145,8 @@ export const printCommercialAuditReport = (
           printReportLine(`    REVISAR ${signal.area} | ${signal.reason} | ${signal.origin}: ${signal.affected}`);
           for (const url of signal.examples) printReportLine(`      ${url}`);
         }
-        printInterventionPriorities(baseline.providerId, interventionPriorities, true);
+        printInterventionPriorities(baseline.providerId, interventionPriorities, true, classified);
+        if (classified) printClassifiedAccreditationFindings(baseline.providerId, classified.findings);
       }
     }
     return;
@@ -176,7 +222,8 @@ export const printCommercialAuditReport = (
         printReportLine(`  ${group.sourceCategory}: ${group.affected}`);
         for (const sample of group.examples) printReportLine(`    ${sample.reference ?? sample.sourceUrl} | ${sample.sourceUrl}`);
       }
-      printInterventionPriorities(baseline.providerId, interventionPriorities, true);
+      printInterventionPriorities(baseline.providerId, interventionPriorities, true, classified);
+      if (classified) printClassifiedAccreditationFindings(baseline.providerId, classified.findings);
     }
     return;
   }
@@ -196,7 +243,8 @@ export const printCommercialAuditReport = (
     printCommandProvider(value.providerId, `${value.categoryAudit.eligible} elegibles · ${value.categoryAudit.proposed} propuestas · ${value.categoryAudit.pending} pendientes · ${accreditation.summary.attributes} atributos`);
     if (value.commercialReferenceCollisions.length > 0) printCommandWarning(`${value.providerId.toUpperCase()} | ${value.commercialReferenceCollisions.length} referencias visibles duplicadas`);
     for (const issue of accreditation.blocking) printReportLine(`  BLOQUEANTE ${issue.reason}: ${issue.affected}`);
-    for (const issue of accreditation.pending) printCommandWarning(`${value.providerId.toUpperCase()} | ${issue.reason}: ${issue.affected}`);
+    printAccreditationWarnings(value.providerId, accreditation.pending, classified);
+    if (classified && detailed) printClassifiedAccreditationFindings(value.providerId, classified.findings);
     if (detailed) {
       printReportLine(`    Originales ${originalProducts} · publicadas ${value.products} · SHA-256 ${publicationSha256}`);
       printReportLine(`    Mapeador: categoría ${value.mapping.withCategory} · sin categoría ${value.mapping.withoutCategory} · atributos ${value.mapping.attributes}`);

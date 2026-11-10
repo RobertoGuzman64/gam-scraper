@@ -9,7 +9,7 @@ import { normalizeMercaelevaAusaHeightText } from "../../technical/reconciliatio
 
 const catalog = await readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json");
 const expected = new Set([
-  "M928-9933", "M017-2019", "M476-1722", "M722-8895", "M402-2703",
+  "M827-8304", "M928-9933", "M017-2019", "M476-1722", "M722-8895", "M402-2703",
   "M816-3394", "M940-4770", "M288-9739", "M141-6536", "M035-8084",
   "M346-8712", "M855-6850", "M640-1938", "M121-6486", "M005-5167",
   "M011-3720", "M209-3306", "M567-8260", "M620-2142", "M106-1389"
@@ -21,7 +21,7 @@ const find = (reference: string): ProductRecord => {
   return record;
 };
 
-test("Mercaeleva: veinte generales propios quedan vinculados al original canónico", () => {
+test("Mercaeleva: generales propios quedan vinculados al original canónico", () => {
   assert.equal(catalog.products.length, 221);
   assert.deepEqual(new Set(Object.keys(verifiedMercaelevaSourceEditorial)), expected);
   const entries: Readonly<Record<string, { readonly general: string; readonly sourceUrl: string }>> = verifiedMercaelevaSourceEditorial;
@@ -36,7 +36,8 @@ test("Mercaeleva: veinte generales propios quedan vinculados al original canóni
     assert.equal(prepared.status, "ready", record.reference);
     assert.equal(prepared.product.description_general, normalizeMercaelevaAusaHeightText(record, evidence.general), record.reference);
     assert.ok(prepared.product.description_general);
-    assert.ok(prepared.product.description_general.trim().split(/\s+/u).length >= 65);
+    assert.ok(prepared.product.description_general.trim().split(/\s+/u).length >=
+      (record.reference === "M827-8304" ? 35 : 65));
     assert.equal(prepared.product.sourceUrl, evidence.sourceUrl);
     assert.ok(prepared.product.spec);
   }
@@ -78,4 +79,37 @@ test("Mercaeleva: preserva horas, referencias y variantes contradictorias", () =
     assert.ok(general);
     for (const fragment of fragments) assert.ok(general.includes(fragment), `${reference}:${fragment}`);
   }
+});
+
+test("Mercaeleva: edición formal de MER0798 conserva identidad y datos originales", () => {
+  const record = find("M827-8304");
+  const before = JSON.stringify(record);
+  const previous = record.longDescription;
+  assert.ok(previous);
+  const edited = resolveMercaelevaVerifiedSourceEditorial(record, previous);
+  assert.equal(edited, verifiedMercaelevaSourceEditorial["M827-8304"].general);
+  assert.ok(edited);
+  for (const fragment of ["MER0798", "Linde E48P", "4.800 kg", "dúplex", "3.300 mm", "2.649", "2007"]) {
+    assert.ok(edited.includes(fragment), fragment);
+  }
+  assert.doesNotMatch(edited, /(?:\d)mm|^Ref\.\s+\S+\s+[A-ZÁÉÍÓÚÑ]{8}/u);
+  const prepared = prepareSourceProduct(record);
+  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.product.description_general, edited);
+  assert.equal(prepared.product.spec["Capacidad máxima de elevación"], "4800 kg");
+  assert.equal(prepared.product.spec["Tipo de mástil"], "Dúplex/estándar");
+  assert.equal(prepared.product.spec["Altura máxima de elevación"], "3300 mm");
+  assert.equal(JSON.stringify(record), before);
+  for (const variant of [
+    { ...record, providerId: "gam" },
+    { ...record, reference: "M827-8305" },
+    { ...record, url: `${record.url}?v=2` },
+    { ...record, longDescription: `${previous} Texto adicional` },
+    { ...record, horometer: "2650" },
+    { ...record, specs: { ...record.specs, "Tipo de mástil": "Dúplex/estándar" } },
+    { ...record, specs: { ...record.specs, "Capacidad máxima de elevación": "4800 kg" } }
+  ] satisfies readonly ProductRecord[]) {
+    assert.equal(resolveMercaelevaVerifiedSourceEditorial(variant, previous), null);
+  }
+  assert.equal(resolveMercaelevaVerifiedSourceEditorial(record, `${previous} `), null);
 });

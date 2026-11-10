@@ -259,8 +259,7 @@ export const removeGamVehicleListingMarkers = (record: ProductRecord, preparedGe
     !record.reference || !/^\d+$/u.test(record.reference) || !record.longDescription || !preparedGeneral ||
     !record.longDescription.includes(vehicleListingHeader) ||
     !record.longDescription.includes(vehicleListingChecklist) ||
-    !record.longDescription.includes("Ponemos a la venta este coche") ||
-    !preparedGeneral.includes(record.longDescription)) return null;
+    !record.longDescription.includes("Ponemos a la venta este coche")) return null;
   try {
     const url = new URL(record.url);
     if (url.protocol !== "https:" || url.hostname !== "online.gamrentals.com" ||
@@ -268,12 +267,15 @@ export const removeGamVehicleListingMarkers = (record: ProductRecord, preparedGe
   } catch {
     return null;
   }
-  const revised = preparedGeneral
-    .replace(/^\? (?=Vehículo en Perfecto Estado)/u, "")
+  const normalizeSeparators = (text: string): string => text
     .replace("Listo para Rodar ? Ponemos a la venta", "Listo para Rodar. Ponemos a la venta")
     .replace("Listo para Rodar Ponemos a la venta", "Listo para Rodar. Ponemos a la venta")
     .replace(vehicleListingChecklist,
       "Mantenimiento al día. Revisión recién pasada. Estado impecable de motor, interiores y carrocería.");
+  if (!preparedGeneral.includes(record.longDescription) &&
+    !preparedGeneral.endsWith(normalizeSeparators(record.longDescription))) return null;
+  const revised = normalizeSeparators(preparedGeneral)
+    .replace(/(^|\n\n)\? (?=Vehículo en Perfecto Estado)/u, "$1");
   return revised === preparedGeneral ? null : revised;
 };
 

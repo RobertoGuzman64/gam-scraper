@@ -159,6 +159,10 @@ test("GAM: rechaza cambios de identidad y fuente al limpiar anuncios de vehícul
   for (const candidate of variants) {
     assert.equal(removeGamVehicleListingMarkers(candidate, original), null);
   }
+  const prepared = prepareSourceProduct(record).product.description_general;
+  assert.ok(prepared);
+  assert.equal(removeGamVehicleListingMarkers(record, prepared), null);
+  assert.equal(removeGamVehicleListingMarkers(record, `${prepared} Texto posterior`), null);
   for (const item of gomariz.products) {
     assert.equal(removeGamVehicleListingMarkers(item, item.longDescription), null, item.reference ?? "sin referencia");
   }

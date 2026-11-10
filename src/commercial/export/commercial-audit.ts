@@ -1,3 +1,5 @@
+import type { AuditedFinding } from "../../catalog/diagnostics/finding-recognitions.js";
+import { observeCommercialAccreditationFindings } from "../diagnostics/audited-findings.js";
 import { analyzeCommercialBaseline } from "../diagnostics/commercial-baseline.js";
 import type { CommercialBaseline } from "../diagnostics/commercial-baseline.js";
 import { analyzeCommercialAttributes } from "../diagnostics/commercial-attributes.js";
@@ -41,10 +43,16 @@ export type CommercialAudit = {
   readonly providers: readonly CommercialAuditProvider[];
 };
 
-export const auditCommercialCatalog = async (rootDirectory: string): Promise<CommercialAudit> => {
+export type CommercialAuditWithFindings = {
+  readonly report: CommercialAudit;
+  readonly findings: readonly AuditedFinding[];
+};
+
+const buildCommercialAudit = async (rootDirectory: string, collectFindings: boolean): Promise<CommercialAuditWithFindings> => {
   const [catalog, references] = await Promise.all([loadImportCatalog(), loadCommercialReference()]);
   const inputs = await loadCommercialPublicationInputs(rootDirectory, catalog);
-  return { version: 2, providers: inputs.map(({ providerId, publicationSha256, originalProducts, entries }) => {
+  const findings: AuditedFinding[] = [];
+  const report: CommercialAudit = { version: 2, providers: inputs.map(({ providerId, publicationSha256, originalProducts, entries }) => {
     const projected = planCommercialExport(entries, providerId, publicationSha256, catalog,
       references.brandLogos, null, null);
     const reasons = new Map<string, number>();
@@ -55,6 +63,7 @@ export const auditCommercialCatalog = async (rootDirectory: string): Promise<Com
     const outputConsistencyAudit = analyzeCommercialOutputConsistency(projected.products);
     const crossCoverageAudit = analyzeCommercialCrossCoverage(entries.map(({ published }) => published), projected.products);
     const accreditation = accreditCommercialPlan(entries, projected, catalog, references.brandLogos, null);
+    if (collectFindings) findings.push(...observeCommercialAccreditationFindings(entries, projected.products, accreditation));
     return {
       publicationSha256, originalProducts, baseline, attributeAudit, presentationAudit,
       outputConsistencyAudit, crossCoverageAudit, accreditation,
@@ -65,4 +74,11 @@ export const auditCommercialCatalog = async (rootDirectory: string): Promise<Com
           .sort((a, b) => b.affected - a.affected || a.reason.localeCompare(b.reason, "es")) }
     };
   }) };
+  return { report, findings };
 };
+
+export const auditCommercialCatalog = async (rootDirectory: string): Promise<CommercialAudit> =>
+  (await buildCommercialAudit(rootDirectory, false)).report;
+
+export const auditCommercialCatalogWithFindings = (rootDirectory: string): Promise<CommercialAuditWithFindings> =>
+  buildCommercialAudit(rootDirectory, true);
