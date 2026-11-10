@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "providerId": "gomariz",
+  "runId": "individual-gomariz-7d5d4ba59411ccf7b9850a118bfde365",
+  "source": {
+    "providerId": "gomariz",
+    "prefix": "scrape-gomariz",
+    "scope": "f226a9fd77182657",
+    "catalogSha256": "52cd6523ac4150f4059ca8c50147ad3ecddf6c7f69daebe5dd2b79f113f594e6",
+    "productCount": 143
+  },
+  "preparationSha256": "2ab23d720771b20a3cb7d89443731afadc45b28bdf746884c9c579ce8c3d000e",
+  "approvalSha256": "088f6189dce7dbae5daf0d8e66c268067d724bc3d36c0ef28300910259524ff4",
+  "totals": {
+    "original": 143,
+    "ready": 143,
+    "review": 0,
+    "publishable": 143,
+    "excluded": 0
+  },
+  "files": {
+    "gomariz-publishable.json": "3510756b6192c2dad4575a88ddf05cd531698f2464a1eead125db56db0fbb310",
+    "accreditation.json": "088f6189dce7dbae5daf0d8e66c268067d724bc3d36c0ef28300910259524ff4"
+  }
+}

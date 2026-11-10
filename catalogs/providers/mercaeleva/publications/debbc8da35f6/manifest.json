@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "providerId": "mercaeleva",
+  "runId": "individual-mercaeleva-7134edb1247a5f7320b14230c9338e29",
+  "source": {
+    "providerId": "mercaeleva",
+    "prefix": "mercaeleva-completa-20261029-234332",
+    "scope": "f42abbe29471bb2c",
+    "catalogSha256": "83e0265743ba1ec0b6ebb1c1bc8bbb9cd3b26eba77d208d659d35e7a62bba792",
+    "productCount": 221
+  },
+  "preparationSha256": "6c8e1ff7558f2ffc5e1955fb8eac4df46ad0c8aa88d30137b830a5e220336c87",
+  "approvalSha256": "debbc8da35f6a381dfde52488c250cd44f3152a6c04d537a4a02d36644cc8c21",
+  "totals": {
+    "original": 221,
+    "ready": 221,
+    "review": 0,
+    "publishable": 221,
+    "excluded": 0
+  },
+  "files": {
+    "mercaeleva-publishable.json": "f64ec12157ca9ee4be3d68f63046c994833fc0025129caedb5de1ec66556349b",
+    "accreditation.json": "debbc8da35f6a381dfde52488c250cd44f3152a6c04d537a4a02d36644cc8c21"
+  }
+}
