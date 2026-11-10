@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "providerId": "gam",
+  "runId": "individual-gam-1d1f12db5ad3647bcf2c0896a22ea9ab",
+  "source": {
+    "providerId": "gam",
+    "prefix": "scrape-gam-marzo-2026",
+    "scope": "10907b02e73059d7",
+    "catalogSha256": "855865e4a99f709cd9b10b68e77d594841b8cbd8c64b4fc9eb851cb397162483",
+    "productCount": 983
+  },
+  "preparationSha256": "a24c21120e8f3e447f08e057830fac96b1c5e7a08aacacd27d9844b73734ced2",
+  "approvalSha256": "32c904f8f4fe148002d07de54e0a78f67afbd5093ed260290be5265a273d3729",
+  "totals": {
+    "original": 983,
+    "ready": 981,
+    "review": 2,
+    "publishable": 980,
+    "excluded": 3
+  },
+  "files": {
+    "gam-publishable.json": "4356fbd2d8bb8d368ad115ac3689f921eb473ff2525edaf2cbd6d70191eca1d8",
+    "accreditation.json": "32c904f8f4fe148002d07de54e0a78f67afbd5093ed260290be5265a273d3729"
+  }
+}

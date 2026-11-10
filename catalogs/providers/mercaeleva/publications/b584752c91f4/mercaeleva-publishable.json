@@ -229,7 +229,7 @@
     "price": null,
     "description_title": "Toyota 6FBRE14 CARRETILLA ELEVADORA RETRACTIL 1350 KG",
     "description": "CARRETILLA RETRACTIL ELECTRICA 1350 KG ALTURA DE ELEVACION 6.500 mm TOYOTA 6FBRE14",
-    "description_general": "Carretilla elevadora retráctil eléctrica Toyota 6FBRE14, anunciada con capacidad de 1350 kg. El texto comercial declara 6.500 mm de altura; debe comprobarse el concepto de medida y la configuración del mástil antes de emplear esa cifra como prestación acreditada. La ficha identifica el año de fabricación 2000, 14.696 horas registradas y la referencia del vendedor MER1123.",
+    "description_general": "Carretilla elevadora retráctil eléctrica Toyota 6FBRE14, anunciada con capacidad de 1350 kg. El texto comercial declara 6.500 mm de altura; debe comprobarse el concepto de medida y la configuración del mástil antes de emplear esa cifra como prestación acreditada. La ficha identifica el año de fabricación 2000, 14.696 horas registradas y la referencia del vendedor MER1123. El vendedor clasifica la condición general como «Bueno»; esta valoración comercial no equivale a una inspección acreditada.",
     "image": "https://files2.machineric.com/clients/mercaeleva/machines/M547-2372/public/2026-10-05T13:24:50.837066643_2026-10-05T13:24:50.837056802Z_MER1123%20(1).jpg",
     "images": [
       "https://files2.machineric.com/clients/mercaeleva/machines/M547-2372/public/2026-10-05T13:24:50.837066643_2026-10-05T13:24:50.837056802Z_MER1123%20(1).jpg",
@@ -252,7 +252,12 @@
       "Artículo No.": "MER1123",
       "Horas laborales": "14 696 h",
       "Estado": "Usado",
-      "Condición general": "Bueno"
+      "Condición general": "Bueno",
+      "Capacidad nominal según texto comercial": "1.350 kg",
+      "Propulsión": "Eléctrica",
+      "Centro de carga nominal del modelo": "600 mm",
+      "Anchura exterior del modelo": "1250 mm",
+      "Radio de giro exterior del modelo": "1570 mm"
     },
     "attributes": []
   },
@@ -3635,7 +3640,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,72 m",
+      "Alcance horizontal": "7,47 m"
     },
     "attributes": []
   },
@@ -3744,7 +3751,7 @@
     "price": 12000,
     "description_title": "Carretilla elevadora eléctrica Linde E48P de 4800 kg",
     "description": "CARRETILLA ELEVADORA ELECTRICA 4.800 KG MASTIL DUPLEX LINDE E48P ALTURA DE TRABAJO 3.300mm",
-    "description_general": "Ref. MER0798 CARRETILLA ELEVADORA ELECTRICA 4.800 KG MASTIL DUPLEX LINDE E48P ALTURA DE TRABAJO 3.300mm HORAS 2649 AÑO DE FABRICACION 2007",
+    "description_general": "Ref. MER0798. Carretilla elevadora eléctrica Linde E48P. Capacidad indicada en la descripción de origen: 4.800 kg. Mástil indicado en la descripción de origen: dúplex. Altura de trabajo indicada en el anuncio: 3.300 mm. Horas declaradas: 2.649. Año de fabricación declarado: 2007. El registro técnico también identifica batería de plomo-ácido, cuatro ruedas y protección superior del puesto de conducción. La capacidad y el mástil de esta unidad cuentan con reconciliación acreditada frente a los campos técnicos contradictorios del origen; deben comprobarse en la placa y la configuración real antes de su uso.",
     "image": "https://files2.machineric.com/clients/mercaeleva/machines/M827-8304/public/2026-07-10T14:07:18.125875443_2026-07-10T14:07:18.125858464Z_MER0798%20(1).jpg",
     "images": [
       "https://files2.machineric.com/clients/mercaeleva/machines/M827-8304/public/2026-07-10T14:07:18.125875443_2026-07-10T14:07:18.125858464Z_MER0798%20(1).jpg",
@@ -6085,7 +6092,7 @@
       "Marca del cargador": "MB",
       "Voltaje del cargador": "80 V",
       "Corriente del cargador": "60 A",
-      "Capacidad máxima de elevación": "2500 kg",
+      "Capacidad máxima de elevación": "3000 kg",
       "Tipo de mástil": "Triple",
       "Altura máxima de elevación": "4800 mm",
       "Longitud de tenedor": "1219 mm",
@@ -6124,7 +6131,7 @@
       "Voltaje del cargador": "220 V",
       "Corriente del cargador": "9 A",
       "Posición del conductor": "Peatonal",
-      "Capacidad máxima de elevación": "1500 kg",
+      "Capacidad máxima de elevación": "1800 kg",
       "Distancia del centro de gravedad": "540 mm",
       "Longitud de tenedor": "1150 mm"
     },
@@ -9218,7 +9225,9 @@
       "Estado": "Usado",
       "Condición general": "Bueno",
       "Tipo de motor": "Diesel",
-      "Altura de trabajo": "16 m"
+      "Altura de trabajo": "16 m",
+      "Altura de plataforma": "13,72 m",
+      "Alcance horizontal": "7,47 m"
     },
     "attributes": []
   },
