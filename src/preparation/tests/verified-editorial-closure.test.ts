@@ -15,7 +15,7 @@ const records = catalogs.flatMap((catalog) => catalog.products);
 const byIdentity = new Map<string, ProductRecord>();
 for (const record of records) byIdentity.set(`${record.providerId}:${record.reference}`, record);
 const references = [
-  "5845", "5949", "6116", "6126", "6130", "6195", "6196", "6206", "6228",
+  "911", "921", "922", "2311", "2330", "5845", "5949", "6116", "6126", "6130", "6195", "6196", "6206", "6228",
   "6478", "6486", "6631", "6650", "6778", "6779", "6845", "6859", "6921",
   "6971", "6980", "6982", "6987", "6988", "6989", "6993", "6994", "6995"
 ] as const;
@@ -26,7 +26,7 @@ const evidence: Readonly<Record<string, {
   readonly verificationUrl: string;
 }>> = verifiedEditorialClosure;
 
-test("La fase 163 acredita veintisiete mejoras de referencias canónicas diferentes", () => {
+test("Las descripciones acreditadas se aplican solo a sus referencias canónicas", () => {
   assert.equal(records.length, 1347);
   assert.deepEqual(new Set(Object.keys(evidence)), expected);
   for (const identity of expected) {

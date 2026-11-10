@@ -1,4 +1,39 @@
 export const verifiedEditorialClosure = {
+  "gam:911": {
+    "sourceDigest": "c4299e8ed582962d4ea1caeb4a933e5a23ae24cae7cceee651517e194eed8f83",
+    "sourceUrl": "https://online.gamrentals.com/es/transpaletas-yale/911-transpaleta-ergonomica-de-operario-a-pie-para-reposicion",
+    "preparedGeneralDigest": "66aee71819430801fc5603c52d793bfa724956e119b086f0642d1664b74600ae",
+    "general": "La transpaleta eléctrica Yale MP20DL está destinada al traslado de palés y a labores de reposición con elevación suplementaria. La ficha del proveedor declara 2.000 kg de capacidad de carga, 1.843 mm de longitud, 700 mm de anchura y 615 kg de peso. El equipo se describe con timón ergonómico y mandos dobles para elevar y descender la carga. La fuente también menciona control electrónico de tracción MOSFET y comunicación CANbus; son características anunciadas para el modelo, no una acreditación del estado de cada componente de la máquina. Se conserva la capacidad técnica publicada y no se deducen alturas de elevación que las especificaciones disponibles no consignan.",
+    "verificationUrl": "https://online.gamrentals.com/es/transpaletas-yale/911-transpaleta-ergonomica-de-operario-a-pie-para-reposicion"
+  },
+  "gam:921": {
+    "sourceDigest": "7cd12084e2d426d45a7379d73affdfeecb3fb9687ec5608949ca18fcb2796caa",
+    "sourceUrl": "https://online.gamrentals.com/es/apiladores-yale/921-apilador-de-plataforma-simplemente-eficiente",
+    "preparedGeneralDigest": "f816a1a41c8030e76c0dcca675f109ac29f88cd232bec07b441174995a39cf06",
+    "general": "El apilador eléctrico Yale MS15XUX se anuncia para el movimiento y apilado de mercancías en almacén. La ficha técnica indica una capacidad de 1.500 kg, longitud de 2.100 mm, anchura de 850 mm y altura total de 2.235 mm. El anuncio original lo describe como equipo de operario a pie y menciona el sistema CANbus y un diseño robusto para ciclos de trabajo intensivos. Se atribuyen esas características al modelo identificado como MS15XUX; en el texto comercial ampliado aparece también la grafía M15XUX, que no se utiliza para modificar su identidad técnica. No se indica una elevación máxima porque la ficha disponible no acredita ese dato.",
+    "verificationUrl": "https://online.gamrentals.com/es/apiladores-yale/921-apilador-de-plataforma-simplemente-eficiente"
+  },
+  "gam:922": {
+    "sourceDigest": "26d171827cf4f4c0ed72a825f90d2ed8c2d23613a2d9ef7899dd359aa62497a7",
+    "sourceUrl": "https://online.gamrentals.com/es/apiladores-yale/922-apilador-de-operario-a-bordo-con-ergonomia-premium",
+    "preparedGeneralDigest": "f57fd829968a7cc408946c7038529d342ac0ee08e2f349798224e003dd736458",
+    "general": "El apilador eléctrico Yale MS16S está identificado en la ficha con 1.600 kg de capacidad de carga, 2.159 mm de longitud, 798 mm de anchura, 2.300 mm de altura y 1.643 kg de peso. El anuncio del proveedor presenta el uso en recorridos internos y operaciones de apilado y describe un mástil orientado a elevar mercancías en estanterías. Existe una discrepancia en el modo de conducción: el título lo anuncia como equipo a pie, mientras la descripción lo identifica como de operario a bordo. Esta diferencia no se resuelve por inferencia y debe verificarse en la documentación del modelo concreto antes de atribuirle una configuración de puesto de conducción.",
+    "verificationUrl": "https://online.gamrentals.com/es/apiladores-yale/922-apilador-de-operario-a-bordo-con-ergonomia-premium"
+  },
+  "gam:2311": {
+    "sourceDigest": "f6676e23c7a42135a3bdab441b4dcb6d1baa111a1e08f4a14166a2d9e3d594b1",
+    "sourceUrl": "https://online.gamrentals.com/es/yale/2311-apilador-electrico-a-pie-yale-gc40vx",
+    "preparedGeneralDigest": "e644b3e120d16553cf5197ef3a222f4837eef68b23679bfea08eae3e4aa48f84",
+    "general": "La carretilla Yale GC40VX se identifica en la ficha publicada como equipo de combustión interna de la serie Veracitor. Las especificaciones señalan 4.500 kg de capacidad, 3.630 mm de longitud, 1.270 mm de anchura y 6.977 kg de peso, con motor Kubota 3.8L LPG y centro de carga de 500 mm. El texto comercial original menciona alternativamente GLC40VX, una capacidad de 4 toneladas y la marca Hyster; esas expresiones no se adoptan como identidad o capacidad de la unidad. La motorización queda descrita como GLP conforme a la evidencia de motor que ya utiliza la preparación. Antes de cerrar su configuración deben contrastarse la placa y los equipos opcionales.",
+    "verificationUrl": "https://online.gamrentals.com/es/yale/2311-apilador-electrico-a-pie-yale-gc40vx"
+  },
+  "gam:2330": {
+    "sourceDigest": "3034e5a09e9e8c86a6eb876a2dbaba363f26bb161ed30f3ada1001d6223e3bc1",
+    "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadora-diesel-yale/2330-carretilla-frontal-diesel-yale-gp70svx9",
+    "preparedGeneralDigest": "62449ded19246a394896cd5cb5ce1a5bd7f8dadcc414dd1f2ca7a59b62bdb40f",
+    "general": "La carretilla Yale GP70SVX9 figura en el catálogo como máquina contrapesada de combustión para operaciones de carga industrial. La ficha estructurada indica 7.000 kg de capacidad, 4.770 mm de longitud, 2.082 mm de anchura, 2.712 mm de altura y 11.884 kg de peso. El anuncio la destina a trabajos intensivos y menciona distintas opciones de motor y accesorios, sin identificar una configuración opcional instalada en esta referencia. Aunque la descripción de origen utiliza la marca Hyster en un párrafo, el título y las especificaciones identifican Yale GP70SVX9. No se trasladan características de una variante diferente ni se completa automáticamente el fragmento truncado del texto extraído.",
+    "verificationUrl": "https://online.gamrentals.com/es/carretillas-elevadora-diesel-yale/2330-carretilla-frontal-diesel-yale-gp70svx9"
+  },
   "gam:5845": {
     "sourceDigest": "2000b25c3f4d2434c6fccf88f1f9236ecb39095774c822b88ecf5f1fc724a710",
     "sourceUrl": "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/5845-2015-jlg-10rs",

@@ -1,4 +1,123 @@
 {
   "version": 1,
-  "recognitions": []
+  "recognitions": [
+    {
+      "finding": {
+        "providerId": "gam",
+        "reference": "5961",
+        "sourceUrl": "https://online.gamrentals.com/es/transpaletas-elevadoras-electricas-segunda-mano/5961-2018-hyster-p20s-fbw",
+        "field": "year",
+        "code": "ano-url-atributo-discordante",
+        "audit": "acreditacion_comercial",
+        "severity": "warn",
+        "evidenceSha256": "3a46553b6f280aa7806cda92f71dc0fe7ae6e7c2770e61f023783203850df790",
+        "facts": [
+          {
+            "name": "urlYear",
+            "value": "2018"
+          },
+          {
+            "name": "attributeYear",
+            "value": "2015"
+          }
+        ]
+      },
+      "fingerprint": "0f23ea7e80b6160d005574811f3ac82e122f856f1089ae38d253ab2a5fb9039e",
+      "decision": {
+        "reviewedBy": "Revisión documental asistida por IA (EQUIPZILLA)",
+        "reviewedAt": "2026-11-10T11:41:34.041Z",
+        "rationale": "Discordancia de procedencia entre el año 2018 del slug y el año 2015 declarado de forma consistente por el proveedor en el encabezado, la ficha y la descripción vigente de la misma unidad. Se reconoce únicamente la contradicción del slug. No se altera ni se certifica físicamente el año de fabricación.",
+        "evidence": [
+          {
+            "origin": "https://online.gamrentals.com/es/transpaletas-elevadoras-electricas-segunda-mano/5961-2018-hyster-p20s-fbw",
+            "content": "Consulta documental del 2026-11-10: encabezado 2015 HYSTER P2.0S FBW; distintivo 2015; descripción Año de fabricación 2015; referencia GAM-46907; serie D439T05114N. El slug de la URL dice 5961-2018-hyster-p20s-fbw."
+          },
+          {
+            "origin": "catalogs/providers/gam/original/scrape-gam-catalog.json",
+            "content": "Registro GAM 5961: referencia GAM-46907, serie D439T05114N, year 2015, yearSource descripcion, shortDescription con Año 2015. Acreditación documental del conflicto, sin lectura física de placa."
+          }
+        ]
+      }
+    },
+    {
+      "finding": {
+        "providerId": "gam",
+        "reference": "6236",
+        "sourceUrl": "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/6236-2017-snorkel-s3219e",
+        "field": "year",
+        "code": "ano-url-atributo-discordante",
+        "audit": "acreditacion_comercial",
+        "severity": "warn",
+        "evidenceSha256": "3c2c4e067f9e92d5f29dd0991dd74d8a63297aaf6310442085506ee64da2d217",
+        "facts": [
+          {
+            "name": "urlYear",
+            "value": "2017"
+          },
+          {
+            "name": "attributeYear",
+            "value": "2018"
+          }
+        ]
+      },
+      "fingerprint": "5e0be746755d194ca11e06cb6e1c9c07498c5e4644dddb7ce6ec8ef5ef66e607",
+      "decision": {
+        "reviewedBy": "Revisión documental asistida por IA (EQUIPZILLA)",
+        "reviewedAt": "2026-11-10T11:52:28.602Z",
+        "rationale": "La unidad GAM-04167 se anuncia como 2018 SNORKEL S3219E en el encabezado, el distintivo y la descripción del vendedor, mientras su URL mantiene 2017. Se controla exclusivamente esta discordancia de año entre slug y atributo. La ficha contiene además un modelo S4732E en los detalles y un número de serie de esa variante: esa contradicción de identidad permanece abierta, sin acreditación de modelo ni del año físico de fabricación.",
+        "evidence": [
+          {
+            "origin": "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/6236-2017-snorkel-s3219e",
+            "content": "Consulta del 2026-11-10: cabecera y distintivo 2018 SNORKEL S3219E; resumen de venta con Año de fabricación 2018; referencia GAM-04167; en detalles, modelo S4732E, serie S4732E-01-180200369. URL con año 2017. La contradicción S3219E/S4732E se conserva para investigación independiente."
+          },
+          {
+            "origin": "catalogs/providers/gam/original/scrape-gam-catalog.json",
+            "content": "Registro 6236: externalReference GAM-04167, serie S4732E-01-180200369, year 2018, yearSource descripcion, shortDescription Año 2018 y longDescription fabricada en 2018. El año de URL sigue siendo 2017; modelo capturado S4732E con título S3219E."
+          }
+        ]
+      }
+    },
+    {
+      "finding": {
+        "providerId": "gam",
+        "reference": "6921",
+        "sourceUrl": "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/6921-2017-snorkel-s3219e",
+        "field": "year",
+        "code": "ano-url-atributo-discordante",
+        "audit": "acreditacion_comercial",
+        "severity": "warn",
+        "evidenceSha256": "3396314a1472a55518646057b362432a1aed6a5b5136aef0a5c264052501a92f",
+        "facts": [
+          {
+            "name": "urlYear",
+            "value": "2017"
+          },
+          {
+            "name": "attributeYear",
+            "value": "2016"
+          }
+        ]
+      },
+      "fingerprint": "151251bea63241e7e33dfb62a3d5c68bff33143d86e94eefcb27c926b0b70f1a",
+      "decision": {
+        "reviewedBy": "Revisión documental asistida por IA (EQUIPZILLA)",
+        "reviewedAt": "2026-11-10T11:52:28.602Z",
+        "rationale": "La referencia GAM-10764 y la serie S3219E-01-200243 se comercializan con distintivo de año 2016 y descripción de fabricación 2016; el título/slug de la URL muestra 2017. La ficha y otra publicación comercial del mismo proveedor con igual referencia corroboran la atribución documental a 2016. Se controla solo la discordancia del slug sin cambiar datos, sin extrapolarla a otras unidades y sin certificar el año físico de fabricación.",
+        "evidence": [
+          {
+            "origin": "https://online.gamrentals.com/pe/plataformas-elevadoras-tijera-electricas-segunda-mano/6921-2017-snorkel-s3219e",
+            "content": "Consulta del 2026-11-10: título 2017 SNORKEL S3219E frente al distintivo del producto 2016; referencia GAM-10764, serie S3219E-01-200243. La URL contiene 2017."
+          },
+          {
+            "origin": "https://online.gamrentals.com/es/lotes/7005-lote-23",
+            "content": "Consulta del 2026-11-10: producto asociado a GAM-10764, encabezado 2016 SNORKEL S3219E y descripción Año de fabricación 2016."
+          },
+          {
+            "origin": "catalogs/providers/gam/original/scrape-gam-catalog.json",
+            "content": "Registro 6921: referencia GAM-10764, serie S3219E-01-200243, year 2016, yearSource descripcion, shortDescription y longDescription con 2016; URL histórica con 2017."
+          }
+        ]
+      }
+    }
+  ]
 }

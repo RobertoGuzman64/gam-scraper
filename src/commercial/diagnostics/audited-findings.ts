@@ -8,6 +8,7 @@ import type { PresentationConsistencyAudit } from "./presentation-consistency.js
 import type { CommercialExportProduct } from "../projection/export-projection.js";
 import { assessCommercialHeight } from "../validation/height-consistency.js";
 import { assessCommercialYear } from "../validation/year-consistency.js";
+import { technicalLoadCapacityValue } from "../../catalog/validation/technical-specifications.js";
 
 const signature = (values: readonly unknown[]): string =>
   createHash("sha256").update(JSON.stringify(values)).digest("hex");
@@ -32,7 +33,7 @@ const commercialFacts = (reason: string, product: CommercialExportProduct): Audi
   }
   if (reason === "capacidad-titulo-spec-discordante") {
     return [{ name: "title", value: value(product.title) },
-      { name: "technicalCapacity", value: value(product.spec["Capacidad de carga (kg)"]) },
+      { name: "technicalCapacity", value: value(technicalLoadCapacityValue(product.spec)) },
       { name: "summary", value: value(product.description) }];
   }
   return [{ name: "publishedTitle", value: value(product.title) },

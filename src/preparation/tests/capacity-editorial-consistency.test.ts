@@ -10,6 +10,7 @@ import { projectCommercialPresentation } from "../../commercial/projection/prese
 import { hasLoadCapacityDisagreement } from "../../commercial/validation/technical-specifications.js";
 import { analyzePresentationConsistency } from "../../commercial/diagnostics/presentation-consistency.js";
 import { reconcileGamVerifiedCapacityCoherence } from "../gam/technical/reconciliation/gam-verified-capacity-coherence.js";
+import { reconcileGamHandlingCapacityEditorial } from "../gam/editorial/models/handling-capacity-editorial.js";
 
 const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 
@@ -75,20 +76,47 @@ test("Las reconciliaciones de capacidad requieren identidad y evidencia técnica
   }
 });
 
-test("ERP25VL reconcilia solo la presentación comercial y conserva la divergencia del origen", () => {
+test("ERP25VL corrige el título y descripción técnicos desde evidencia de unidad, sin tocar el original", () => {
   const source = find("6837");
   const snapshot = JSON.stringify(source);
   const prepared = prepareSourceProduct(source);
   assert.equal(prepared.status, "ready");
-  assert.equal(prepared.product.title, "Carretilla elevadora eléctrica 3500 Kg YALE ERP25VL");
+  assert.equal(prepared.product.title, "Carretilla elevadora eléctrica 2500 kg YALE ERP25VL");
+  assert.match(prepared.product.description_general ?? "", /capacidad de carga indicada de 2500 kg/u);
+  assert.doesNotMatch(prepared.product.description_general ?? "", /3500 kg/u);
   assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "2500 KG");
   const commercial = projectCommercialPresentation(source, prepared.product, null);
   assert.equal(commercial.title, "Carretilla elevadora eléctrica 2500 kg YALE ERP25VL");
-  assert.match(commercial.description_general ?? "", /capacidad de carga nominal de 2500 kg/u);
+  assert.match(commercial.description_general ?? "", /capacidad de carga indicada de 2500 kg/u);
   assert.doesNotMatch(commercial.description_general ?? "", /3500 kg/u);
   assert.equal(commercial.spec["Capacidad de carga (kg)"], "2500 KG");
   assert.equal(hasLoadCapacityDisagreement({ title: commercial.title, spec: commercial.spec }), false);
   assert.equal(JSON.stringify(source), snapshot);
+});
+
+test("ERP25VL no reconcilia unidades o evidencias que hayan cambiado", () => {
+  const original = find("6837");
+  const expected = reconcileGamHandlingCapacityEditorial(original);
+  assert.notStrictEqual(expected, original);
+  assert.equal(expected.title, "Carretilla elevadora eléctrica 2500 kg YALE ERP25VL");
+  for (const changed of [
+    { ...original, providerId: "otro" },
+    { ...original, reference: "otro" },
+    { ...original, url: `${original.url}?variante=2` },
+    { ...original, externalReference: "OTRA" },
+    { ...original, serialNumber: "OTRO" },
+    { ...original, year: "2016" },
+    { ...original, brand: "OTRA" },
+    { ...original, model: "OTRO" },
+    { ...original, title: "Otra capacidad 3500 kg" },
+    { ...original, shortDescription: "Otro resumen" },
+    { ...original, longDescription: `${original.longDescription} Datos nuevos` },
+    { ...original, specs: { ...original.specs, "Capacidad de carga (kg)": "3500 KG" } },
+    { ...original, specs: { ...original.specs, "Nº de serie": "OTRA" } }
+  ] satisfies readonly ProductRecord[]) {
+    assert.strictEqual(reconcileGamHandlingCapacityEditorial(changed), changed);
+  }
+  assert.equal(JSON.stringify(original), JSON.stringify(find("6837")));
 });
 
 test("XGA43K conserva la diferencia entre capacidad sin restricción y capacidad condicionada", () => {

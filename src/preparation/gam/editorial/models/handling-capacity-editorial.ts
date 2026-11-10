@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { fold } from "../../../shared/classification/mapping/attribute-utils.js";
 
@@ -57,7 +58,32 @@ const correctYaleForkliftLoad = (record: ProductRecord): ProductRecord => {
   };
 };
 
+const correctYaleErp25vlLoad = (record: ProductRecord): ProductRecord => {
+  if (record.providerId !== "gam" || record.reference !== "6837" ||
+    record.categoryKey !== "manutencion" || record.condition !== "Segunda mano" ||
+    record.url !== "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-segunda-mano/6837-2015-yale-erp25vl" ||
+    record.externalReference !== "GAM-19577" || record.serialNumber !== "A976B05155N" ||
+    record.year !== "2015" || record.brand !== "YALE" || record.model !== "ERP25VL" ||
+    record.title !== "Carretilla elevadora eléctrica 3500 Kg YALE ERP25VL" ||
+    record.shortDescription !== "➨ YALE ERP25VL de segunda mano ➨ Venta de Carretilla Elevadora Eléctrica 4,9 metros ⭐Capacidad de carga de 2500 kg" ||
+    record.specs?.Marca !== "YALE" || record.specs?.Modelo !== "ERP25VL" ||
+    record.specs?.["Nº de serie"] !== "A976B05155N" ||
+    record.specs?.["Capacidad de carga (kg)"] !== "2500 KG" ||
+    record.specs?.["Altura de elevación (mm)"] !== "4950 mm" ||
+    !record.longDescription ||
+    createHash("sha256").update(record.longDescription).digest("hex") !==
+      "6c9854b08ae0f5480691b4465e87b7f9f133701d2a8cbac4da249b323594c848") return record;
+  return {
+    ...record,
+    title: "Carretilla elevadora eléctrica 2500 kg YALE ERP25VL",
+    longDescription: record.longDescription.replace(
+      "capacidad de carga indicada de 3500 kg", "capacidad de carga indicada de 2500 kg"
+    )
+  };
+};
+
 export const reconcileGamHandlingCapacityEditorial = (record: ProductRecord): ProductRecord => {
   const corrected = correctToyotaPalletLoad(record);
-  return corrected === record ? correctYaleForkliftLoad(record) : corrected;
+  const yale = corrected === record ? correctYaleForkliftLoad(record) : corrected;
+  return yale === record ? correctYaleErp25vlLoad(record) : yale;
 };

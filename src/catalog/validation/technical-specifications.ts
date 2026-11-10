@@ -124,11 +124,14 @@ const capacityValue = (value: string): number | null => {
   return found?.[1] ? Number(found[1].replace(/\./gu, "")) : null;
 };
 
+export const technicalLoadCapacityValue = (spec: SpecsMap): SpecValue | undefined =>
+  spec["Capacidad de carga (kg)"] ?? spec["Capacidad máxima de elevación"];
+
 export const hasTechnicalLoadCapacityDisagreement = (title: string | null, spec: SpecsMap): boolean => {
   if (!title || !/\b(?:carretilla|transpaleta)\b/iu.test(title)) return false;
   const titleCapacity = capacityValue(title);
   if (titleCapacity === null) return false;
-  const load = spec["Capacidad de carga (kg)"] ?? spec["Capacidad máxima de elevación"];
+  const load = technicalLoadCapacityValue(spec);
   if (typeof load !== "string") return false;
   const technicalCapacity = capacityValue(load);
   return technicalCapacity !== null && titleCapacity !== technicalCapacity;
