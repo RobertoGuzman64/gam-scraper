@@ -79,7 +79,7 @@ test("GAM: la nueva cohorte eléctrica exige la huella exacta y conserva motores
 });
 
 
-test("GAM: la fase 117 acredita 26 unidades eléctricas y bloquea cualquier cambio de origen", () => {
+test("GAM: acredita 26 unidades eléctricas y bloquea cualquier cambio de origen", () => {
   const verifiedElectricDriveReferences = [
     "6631", "6967", "6778", "6845", "6130", "6284", "6063", "6064", "6065", "6109", "6204", "6389",
     "6849", "6821", "6822", "6816", "6817", "6837", "6510", "6949", "5719", "6664", "6675", "5962", "6663", "6788"

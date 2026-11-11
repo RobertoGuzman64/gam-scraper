@@ -199,3 +199,54 @@ test("Mercaeleva: la evidencia no pasa a otras unidades, configuraciones ni orig
     assert.equal(recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, previouslyDefined), previouslyDefined, reference);
   }
 });
+
+
+test("Mercaeleva: modelos repetidos preservan los datos de cada unidad y son independientes del orden", () => {
+  const groups = new Map<string, ProductRecord[]>();
+  for (const record of source) {
+    if (!record.brand || !record.model) continue;
+    const key = JSON.stringify([record.brand, record.model]);
+    const group = groups.get(key) ?? [];
+    group.push(record);
+    groups.set(key, group);
+  }
+  const repeated = [...groups.values()].filter((group) => group.length > 1);
+  assert.equal(repeated.length, 44);
+  assert.equal(repeated.reduce((total, group) => total + group.length, 0), 145);
+
+  for (const group of repeated) {
+    const forward = group.map((record) => {
+      const original = JSON.stringify(record);
+      const prepared = prepareSourceProduct(record).product;
+      assert.equal(prepared.reference, record.reference);
+      assert.equal(prepared.sourceUrl, record.url);
+      for (const key of ["Artículo No.", "Horas laborales", "Año de fabricación"] as const) {
+        assert.equal(prepared.spec[key], record.specs?.[key], `${record.reference}: ${key}`);
+      }
+      assert.equal(JSON.stringify(record), original);
+      return prepared;
+    });
+    for (const [index, record] of [...group].reverse().entries()) {
+      assert.deepEqual(prepareSourceProduct(record).product, forward[group.length - index - 1], record.reference ?? record.url);
+    }
+  }
+});
+
+test("Mercaeleva: intercambiar identidades de unidades hermanas no habilita evidencia documental", () => {
+  const first = sourceByReference("M050-6081");
+  const second = sourceByReference("M091-9536");
+  assert.equal(first.model, second.model);
+  const secondArticle = second.specs?.["Artículo No."];
+  assert.notEqual(secondArticle, undefined);
+  if (secondArticle === undefined) throw new Error("Artículo No. de la unidad hermana ausente");
+  const attempts: readonly ProductRecord[] = [
+    { ...first, reference: second.reference },
+    { ...first, reference: second.reference, url: second.url },
+    { ...first, reference: second.reference, url: second.url, horometer: second.horometer },
+    { ...first, reference: second.reference, url: second.url, specs: { ...first.specs, "Artículo No.": secondArticle } }
+  ];
+  for (const [index, attempted] of attempts.entries()) {
+    const specs = attempted.specs ?? {};
+    assert.strictEqual(recoverMercaelevaDocumentedPlatformTechnicalSpecs(attempted, specs), specs, String(index));
+  }
+});

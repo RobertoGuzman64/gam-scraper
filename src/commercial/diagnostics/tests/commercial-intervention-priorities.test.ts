@@ -127,3 +127,24 @@ test("las variantes reconocidas por coherencia permanecen visibles como controla
   assert.deepEqual(prioritizeCommercialInterventions({ ...input,
     controlledCoherence: new Set([JSON.stringify([sourceUrl, "otro-modelo"])]) }).pending, pending.pending);
 });
+
+
+test("prioriza una sola intervención si la escala errónea bloquea la acreditación", () => {
+  const reason = "medida-submetro-atributo-escala-multiplicada" as const;
+  const sourceUrl = "https://online.gamrentals.com/es/tennant/3993-fca-i-mop-lite";
+  const input = fixture();
+  const report = prioritizeCommercialInterventions({ ...input,
+    outputConsistencyAudit: {
+      signals: [{ reason, affected: 1, examples: [sourceUrl] }],
+      findings: [{ reason, reference: "3993", sourceUrl, field: "attributes",
+        evidence: ["ID 60", "Anchura trabajo: 0,368 metros", "atributo: 368000"] }]
+    },
+    crossCoverageAudit: { signals: [] }, presentationAudit: { signals: [] },
+    accreditation: { blocking: [{ reason, affected: 1, examples: [sourceUrl] }], pending: [] }
+  });
+  assert.deepEqual(report.pending.map((item) => [item.source, item.reason, item.affected]),
+    [["acreditacion", reason, 1]]);
+  assert.match(report.pending[0]?.action ?? "", /conversión de metros a milímetros/);
+  assert.match(report.pending[0]?.evidence[0] ?? "", /0,368 metros.*368000/);
+  assert.deepEqual(report.controlled, []);
+});

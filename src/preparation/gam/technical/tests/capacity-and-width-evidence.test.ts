@@ -4,7 +4,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
-import { gamTechnicalReviewReferences } from "../../../testing/phase1-reviewed-identities.js";
+import { gamTechnicalReviewReferences } from "../../../testing/gam-reviewed-identities.js";
 import { resolveAttribute } from "../../../shared/classification/mapping/attribute-mapping.js";
 import { sourceCategoryQualityIssue } from "../../../shared/quality/source/category-quality.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";

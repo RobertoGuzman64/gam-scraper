@@ -1,4 +1,4 @@
-import { phase2BasketCorrections, phase4VerifiedBasketCorrections } from "../../../testing/phase2-basket-dimensions.js";
+import { documentedBasketCorrections, additionalVerifiedBasketCorrections } from "../../../testing/gam-verified-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -14,8 +14,8 @@ const original = (reference: string) => {
   return record;
 };
 
-test("fase 2: prepara 24 medidas verificables de forma idéntica a su evidencia sin editar la fuente", () => {
-  for (const [reference, expected] of phase2BasketCorrections) {
+test("prepara 24 medidas verificables de forma idéntica a su evidencia sin editar la fuente", () => {
+  for (const [reference, expected] of documentedBasketCorrections) {
     const record = original(reference);
     const sourceBefore = JSON.stringify(record);
     const result = prepareSourceProduct(record);
@@ -27,7 +27,7 @@ test("fase 2: prepara 24 medidas verificables de forma idéntica a su evidencia 
 });
 
 test("las dos dimensiones adicionales acreditadas se recuperan sin modificar el original", () => {
-  for (const [reference, dimensions] of phase4VerifiedBasketCorrections) {
+  for (const [reference, dimensions] of additionalVerifiedBasketCorrections) {
     const record = original(reference);
     const result = prepareSourceProduct(record);
     assert.equal(result.product.spec["Dimensiones Cesta"], dimensions, reference);
@@ -36,7 +36,7 @@ test("las dos dimensiones adicionales acreditadas se recuperan sin modificar el 
   }
 });
 
-test("fase 2: no recupera medidas cuando cambia la cifra corroborada, la unidad o la identidad de proveedor", () => {
+test("no recupera medidas cuando cambia la cifra corroborada, la unidad o la identidad de proveedor", () => {
   const record = original("6162");
   const wrongDimensions = { ...record, specs: { ...record.specs, "Dimensiones Cesta": "1400x750x1100 metros" } };
   assert.equal(reconcileGamBasketDimensions(wrongDimensions), wrongDimensions);
@@ -47,7 +47,7 @@ test("fase 2: no recupera medidas cuando cambia la cifra corroborada, la unidad 
   assert.equal(reconcileGamBasketDimensions(otherProvider), otherProvider);
 });
 
-test("fase 2: el normalizador no inventa decimales ni acepta dimensiones deformadas", () => {
+test("el normalizador no inventa decimales ni acepta dimensiones deformadas", () => {
   const examples = [
     ["1,83 x 0,76 metros", { ancho: 1830, largo: 760 }],
     ["2,27 x 1,12 m metros", { ancho: 2270, largo: 1120 }],

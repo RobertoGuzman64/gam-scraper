@@ -7,7 +7,7 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../classification/mapping/attribute-mapping.js";
-import { gamTechnicalReviewReferences } from "../../../testing/phase1-reviewed-identities.js";
+import { gamTechnicalReviewReferences } from "../../../testing/gam-reviewed-identities.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();

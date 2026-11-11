@@ -11,6 +11,7 @@ import { projectCommercialAttributes } from "../projection/attribute-projection.
 import { commercialToken, projectCommercialPresentation } from "../projection/presentation-projection.js";
 import { decideCommercialAttributes } from "../projection/attribute-decision.js";
 import { observeCommercialAttributes } from "../projection/attribute-observation.js";
+import { hasMultipliedSubMetreMeasurement } from "./commercial-output-consistency.js";
 import { hasLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../validation/technical-specifications.js";
 import { isAccreditedMercaelevaMbCapacityProjection, projectPresentableSpecifications } from "../projection/spec-projection.js";
 import { commercialUnitTitleSuffixes, unresolvedCommercialTitleCollisions } from "../projection/unit-disambiguation.js";
@@ -145,6 +146,7 @@ const verifyProduct = (
     !isValidCommercialCategory(source, product.categorySellID, mapped.product.condition, catalog)) {
     blocking.push("categoria-invalida");
   }
+  if (hasMultipliedSubMetreMeasurement(product)) blocking.push("medida-submetro-atributo-escala-multiplicada");
   const validated = decideCommercialAttributes(product, catalog);
   if (validated.issues.length || validated.accepted.length !== product.attributes.length) {
     blocking.push("atributos-incompatibles");

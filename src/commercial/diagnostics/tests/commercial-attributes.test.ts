@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ImportCandidate, ImportCatalog } from "../../legacy-export/contracts.js";
 import type { CommercialBaselineInput } from "../commercial-baseline.js";
@@ -7,6 +8,10 @@ import { decideCommercialAttributes, validateCommercialAttributeValue } from "..
 import { analyzeCommercialAttributes } from "../commercial-attributes.js";
 import { projectCommercialAttributes } from "../../projection/attribute-projection.js";
 import { observeCommercialAttributes } from "../../projection/attribute-observation.js";
+import { selectAccreditedCommercialInputs } from "../../../testing/builders/commercial-publication-selection.js";
+import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+import { loadCommercialReference } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
+import { planCommercialExport } from "../../projection/export-projection.js";
 
 const catalog: ImportCatalog = {
   categories: [{ id: 29, parentId: null, name: "Máquinas", slug: "maquinas" }],
@@ -297,4 +302,61 @@ test("no hereda relaciones comerciales del padre ni inventa atributos para categ
     { attributeID: 24, value: "Macizos" }
   ]);
   assert.deepEqual(published.spec, { Marca: "GENIE", Ruedas: "MACIZAS" });
+});
+
+
+test("las cinco Yale trilaterales proyectan el 119 acreditado sin alterar publicaciones ni relaciones", async () => {
+  const realCatalog = await loadImportCatalog();
+  const { brandLogos } = await loadCommercialReference();
+  const references = ["2263", "2264", "2265", "2266", "2267"];
+  const root = fileURLToPath(new URL("../../../../", import.meta.url));
+  const selected = await selectAccreditedCommercialInputs(root, realCatalog, { gam: references });
+  const gam = selected.get("gam");
+  assert.ok(gam);
+  assert.equal(gam.entries.length, references.length);
+  const report = analyzeCommercialAttributes(gam.entries, realCatalog);
+  assert.equal(report.eligible, references.length);
+  assert.equal(report.invalidAssignments, 0);
+  assert.equal(report.coverage.find((item) => item.attributeID === 119)?.accepted, references.length);
+  const exported = planCommercialExport(gam.entries, "gam", gam.publicationSha256, realCatalog, brandLogos, null, null);
+  assert.equal(exported.products.length, references.length);
+  for (const reference of references) {
+    const selectedEntry: CommercialBaselineInput | undefined = gam.entries.find((item) => item.source.reference === reference);
+    assert.ok(selectedEntry, reference);
+    const product = exported.products.find((item) => item.reference === reference);
+    assert.ok(product, reference);
+    assert.equal(product.categorySellID, 14, reference);
+    assert.deepEqual(product.attributes.filter((item) => item.attributeID === 119),
+      [{ attributeID: 119, value: "Eléctrico" }], reference);
+    assert.equal(selectedEntry.published.spec["Motorización"], "Eléctrico", reference);
+    assert.deepEqual(product.spec, selectedEntry.published.spec, reference);
+  }
+});
+
+
+test("la auditoría comercial identifica los 119 eléctricos perdidos sin ampliar opciones", async () => {
+  const realCatalog = await loadImportCatalog();
+  const root = fileURLToPath(new URL("../../../../", import.meta.url));
+  const references = ["2263", "2264", "2265", "2266", "2267"];
+  const selected = await selectAccreditedCommercialInputs(root, realCatalog, { gam: references });
+  const gam = selected.get("gam");
+  assert.ok(gam);
+  const missing: readonly CommercialBaselineInput[] = gam.entries.map((entry) => ({
+    ...entry, mapped: { ...entry.mapped, product: {
+      ...entry.mapped.product, attributes: entry.mapped.product.attributes.filter((item) => item.attributeID !== 119)
+    } }
+  }));
+  const report = analyzeCommercialAttributes(missing, realCatalog);
+  assert.equal(report.categorized, references.length);
+  assert.equal(report.coverage.find((item) => item.attributeID === 119)?.accepted, 0);
+  assert.ok((report.validationIssues.find((item) => item.reason === "resuelto-no-asignado")?.affected ?? 0) >= references.length);
+  for (const reference of references) {
+    const decision = report.decisions.find((item) => item.reference === reference);
+    assert.ok(decision, reference);
+    assert.deepEqual(decision.unresolved.filter((item) => item.attributeID === 119),
+      [{ attributeID: 119, status: "resuelto-no-asignado" }], reference);
+  }
+  assert.equal(report.invalidAssignments, 0);
+  assert.deepEqual(gam.entries.flatMap((entry) => entry.mapped.product.attributes.filter((item) =>
+    item.attributeID === 119)).map((item) => item.value), Array(references.length).fill("Eléctrico"));
 });

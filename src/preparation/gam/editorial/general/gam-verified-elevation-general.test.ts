@@ -1,4 +1,4 @@
-import { phase2ExpectedSpecValue } from "../../../testing/phase2-basket-dimensions.js";
+import { expectedVerifiedSpecValue } from "../../../testing/gam-verified-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
@@ -45,7 +45,7 @@ test("condensa 20 generales de elevación con identidad y medidas de su propio a
     assert.equal(JSON.stringify(record), original, record.reference);
     assert.equal(prepared.product.description, record.shortDescription, record.reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.deepEqual(prepared.product.spec[key], phase2ExpectedSpecValue(record.reference, key, value), `${record.reference}:${key}`);
+      assert.deepEqual(prepared.product.spec[key], expectedVerifiedSpecValue(record.reference, key, value), `${record.reference}:${key}`);
     }
     improved++;
   }

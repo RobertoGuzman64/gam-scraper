@@ -108,3 +108,38 @@ test("los resÃºmenes acreditados de GSW1270M y GSW3365M exigen la misma fuente Ã
     }
   }
 });
+
+
+test("PRAMAC: los ocho valores coincidentes ya son de origen, sin mezclar potencias ni identidades", async () => {
+  const current = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const originals = ["1210", "1218"].map((reference) => {
+    const record = current.products.find((product) => product.reference === reference);
+    assert.ok(record, reference);
+    return record;
+  });
+  const fields = ["Longitud", "Anchura", "Altura", "Peso", "Marca motor", "Potencia Motor (KW)", "Combustible", "Marca alternador"] as const;
+  const first = originals[0];
+  const second = originals[1];
+  assert.ok(first && second);
+  for (const field of fields) {
+    assert.equal(first.specs?.[field], second.specs?.[field], field);
+  }
+  assert.notEqual(first.model, second.model);
+  const forward = originals.map((record) => {
+    const snapshot = JSON.stringify(record);
+    const prepared = prepareProduct(record, catalog);
+    assert.equal(prepared.status, "ready", record.reference ?? record.url);
+    assert.equal(prepared.product.reference, record.reference);
+    assert.equal(prepared.product.sourceUrl, record.url);
+    assert.equal(prepared.product.spec.Modelo, record.model);
+    for (const field of fields) assert.equal(prepared.product.spec[field], record.specs?.[field], field);
+    assert.deepEqual(resolveAttribute(record, power), {
+      status: "resolved", value: record.reference === "1210" ? 65 : 1270
+    });
+    assert.equal(JSON.stringify(record), snapshot);
+    return prepared.product;
+  });
+  for (const [index, record] of [...originals].reverse().entries()) {
+    assert.deepEqual(prepareProduct(record, catalog).product, forward[originals.length - index - 1]);
+  }
+});

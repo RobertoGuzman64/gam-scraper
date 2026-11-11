@@ -122,3 +122,32 @@ test("los rechazos técnicos múltiples preservan las referencias pendientes", (
   assert.ok(unverified.issues.filter((issue) => issue.startsWith("Atributo rechazado por seguridad:")).length >= 4);
   assert.equal(batch.totals.ready + batch.totals.review, source.products.length);
 });
+
+
+test("GAM: dos Z45/25J conservan dimensiones, pendiente e identidad propias de cada unidad", async () => {
+  const current = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const originals = ["6607", "6984"].map((reference) => requireProductReference(current.products, reference));
+  const expected = [
+    { reference: "6607", year: "2012", width: "2290 mm", slope: "45%", serial: "Z452512B2168" },
+    { reference: "6984", year: "2018", width: "1790 mm", slope: "25%", serial: "Z4525M-7794" }
+  ] as const;
+  const forward = originals.map((record, index) => {
+    const snapshot = JSON.stringify(record);
+    const prepared = prepareSourceProduct(record);
+    const values = expected[index];
+    assert.ok(values);
+    assert.equal(record.model, "Z45/25J");
+    assert.equal(prepared.status, "ready", record.reference ?? record.url);
+    assert.equal(prepared.product.reference, values.reference);
+    assert.equal(prepared.product.sourceUrl, record.url);
+    assert.equal(prepared.product.spec.Anchura, values.width);
+    assert.equal(prepared.product.spec["Pendiente superable"], values.slope);
+    assert.equal(prepared.product.spec["Nº de serie"], values.serial);
+    assert.equal(prepared.product.spec["Año de fabricación"], values.year);
+    assert.equal(JSON.stringify(record), snapshot);
+    return prepared.product;
+  });
+  for (const [index, record] of [...originals].reverse().entries()) {
+    assert.deepEqual(prepareSourceProduct(record).product, forward[originals.length - index - 1]);
+  }
+});

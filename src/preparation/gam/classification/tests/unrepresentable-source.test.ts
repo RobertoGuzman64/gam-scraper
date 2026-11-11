@@ -1,5 +1,5 @@
 import { reconcileGamHorometer } from "../../technical/reconciliation/gam-horometer.js";
-import { campaign1VerifiedBasketCorrections, campaign2VerifiedBasketCorrections, phase4VerifiedBasketCorrections } from "../../../testing/phase2-basket-dimensions.js";
+import { campaign1VerifiedBasketCorrections, campaign2VerifiedBasketCorrections, additionalVerifiedBasketCorrections } from "../../../testing/gam-verified-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { requireProductReference } from "../../../testing/require-product-reference.js";
@@ -26,7 +26,7 @@ test("las cestas corruptas solo se recuperan con evidencias acreditadas", () => 
     const record = reference(id);
     const prepared = prepareProduct(record, catalog);
     assert.deepEqual(resolved(record, "Dimensiones de la cesta"), { status: "not_observed", value: null }, id);
-    const verified = phase4VerifiedBasketCorrections.get(id) ?? campaign2VerifiedBasketCorrections.get(id) ?? campaign1VerifiedBasketCorrections.get(id);
+    const verified = additionalVerifiedBasketCorrections.get(id) ?? campaign2VerifiedBasketCorrections.get(id) ?? campaign1VerifiedBasketCorrections.get(id);
     assert.equal(prepared.status, verified ? "ready" : "review", id);
     if (!verified) assert.ok(prepared.issues.some((issue) => issue.startsWith("Dimensiones Cesta no acreditables")), id);
     assert.equal(prepared.product.spec["Dimensiones Cesta"], verified ?? record.specs?.["Dimensiones Cesta"], id);

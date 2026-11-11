@@ -134,11 +134,23 @@ const modelFromTitle = (record: ProductRecord): string | null => {
 
 const electricEnergy = (record: ProductRecord): string | null => {
   const title = fold(record.title ?? "");
-  if (!/\belectric[oa]\b/.test(title) || /\b(?:diesel|glp|gasolina|hibrid[oa]|manual)\b/.test(title)) return null;
   const motorSpecs = [record.specs?.["Motorización"], record.specs?.["Tipo motor"]]
     .filter((value): value is string => typeof value === "string" && Boolean(value.trim()))
     .map(fold);
-  return motorSpecs.length > 0 && motorSpecs.every((value) => value === "electrico") ? "Eléctrico" : null;
+  if (/\belectric[oa]\b/.test(title)) {
+    if (/\b(?:diesel|glp|gasolina|hibrid[oa]|manual)\b/.test(title)) return null;
+    return motorSpecs.length > 0 && motorSpecs.every((value) => value === "electrico") ? "Eléctrico" : null;
+  }
+  if (motorSpecs.length === 0 || motorSpecs.some((value) => value !== "electrico")) return null;
+  const sourceText = fold(`${title} ${record.shortDescription ?? ""} ${record.longDescription ?? ""}`);
+  if (/\b(?:diesel|glp|gasolina|hibrid[oa]|manual)\b/.test(sourceText)) return null;
+  if (record.categoryKey !== "carretillas-nuevas" || fold(record.brand ?? "") !== "yale" ||
+    fold(String(record.specs?.["Motorización"] ?? "")) !== "electrico" ||
+    record.specs?.["Tipo motor"] !== undefined ||
+    !/\bcarretilla trilateral\b/.test(title) ||
+    !gamHandlingModelEvidence(record, title) || confirmedDescriptions(record).length === 0) return null;
+  const url = new URL(record.url);
+  return url.pathname.split("/").filter(Boolean)[1] === "carretillas-trilaterales-yale" ? "Eléctrico" : null;
 };
 
 export const gamHandlingCandidate = (record: ProductRecord, attribute: Attribute): Candidate | null => {

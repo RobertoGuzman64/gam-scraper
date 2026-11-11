@@ -5,12 +5,12 @@ import { commercialAttributeYear } from "../validation/year-consistency.js";
 export type CommercialOutputConsistencyReason =
   "referencia-titulo-contradictoria" | "modelo-variante-titulo-contradictorio" |
   "modelo-variante-subtitulo-contradictorio" | "motorizacion-titulo-resumen-contradictoria" |
-  "ano-titulo-atributo-contradictorio";
+  "ano-titulo-atributo-contradictorio" | "medida-submetro-atributo-escala-multiplicada";
 
 export type CommercialOutputConsistencyFinding = {
   readonly reference: string | null;
   readonly sourceUrl: string;
-  readonly field: "title" | "description_title" | "description";
+  readonly field: "title" | "description_title" | "description" | "attributes";
   readonly reason: CommercialOutputConsistencyReason;
   readonly evidence: readonly string[];
 };
@@ -30,6 +30,30 @@ const explicitYear = /\b(?:a[nñ]o(?: de fabricaci[oó]n)?(?:\s+de|\s*:)?|fabric
 const measurementAfterYear = /^\s*(?:kg|mm|cm|m|kw|kva|w|litros?|horas?|t)\b/iu;
 
 const normalizedReference = (value: string): string => value.normalize("NFKC").trim().toUpperCase();
+
+const subMetreMillimetres = (value: unknown): number | null => {
+  if (typeof value !== "string") return null;
+  const match = /^\s*0[.,](\d{3})\s*(?:m|metros?)\s*$/iu.exec(value);
+  return match?.[1] ? Number(match[1]) : null;
+};
+
+const multipliedSubMetreMeasurements = (product: ImportCandidate): readonly string[] => {
+  const evidence: string[] = [];
+  for (const [attributeID, specKey] of [
+    [29, "Altura de elevación (m)"], [60, "Anchura trabajo"]
+  ] as const) {
+    const millimetres = subMetreMillimetres(product.spec[specKey]);
+    const attributes = product.attributes.filter((item) => item.attributeID === attributeID);
+    if (millimetres === null || millimetres === 0 || attributes.length !== 1) continue;
+    const [attribute] = attributes;
+    if (attribute?.value !== millimetres * 1000) continue;
+    evidence.push(`ID ${attributeID}`, `${specKey}: ${String(product.spec[specKey])}`, `atributo: ${attribute.value}`);
+  }
+  return evidence;
+};
+
+export const hasMultipliedSubMetreMeasurement = (product: ImportCandidate): boolean =>
+  multipliedSubMetreMeasurements(product).length > 0;
 
 const explicitFuel = (value: string | null): "diesel" | "electrico" | null => {
   if (!value || /\bh[ií]brid[ao]s?\b/iu.test(value)) return null;
@@ -77,6 +101,10 @@ export const analyzeCommercialOutputConsistency = (
     const summaryFuel = explicitFuel(product.description);
     if (titleFuel && summaryFuel && titleFuel !== summaryFuel) {
       add(product, "description", "motorizacion-titulo-resumen-contradictoria", [titleFuel, summaryFuel]);
+    }
+    const multiplied = multipliedSubMetreMeasurements(product);
+    if (multiplied.length > 0) {
+      add(product, "attributes", "medida-submetro-atributo-escala-multiplicada", multiplied);
     }
     const attributeYear = commercialAttributeYear(product.attributes);
     if (attributeYear !== null) {

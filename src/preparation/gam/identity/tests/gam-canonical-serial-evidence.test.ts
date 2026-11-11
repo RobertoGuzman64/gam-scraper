@@ -6,7 +6,7 @@ import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-
 import { findSerialNumberCollisions } from "../../../../catalog/identity-conflicts.js";
 import { describeHysterH35ftStockConflict } from "../evidence/hyster-h35ft-serial-evidence.js";
 import { verifiedYaleErp35vlCrossListing } from "../evidence/yale-erp35vl-serial-evidence.js";
-import { gamTechnicalReviewReferences } from "../../../testing/phase1-reviewed-identities.js";
+import { gamTechnicalReviewReferences } from "../../../testing/gam-reviewed-identities.js";
 import { prepareImportBatch } from "../../../batch-identity.js";
 
 const catalog = await loadImportCatalog();

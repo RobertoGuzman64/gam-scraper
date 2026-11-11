@@ -3,7 +3,9 @@ import test from "node:test";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { normalizeGamRows } from "../../../../tools/gam/normalization/normalize-rows.js";
-import { resolveAttributeValue } from "../mapping/attribute-mapping.js";
+import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
+import { resolveAttribute, resolveAttributeValue } from "../mapping/attribute-mapping.js";
+import { numberToken } from "../mapping/attribute-utils.js";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 
 const catalog = await loadImportCatalog();
@@ -32,6 +34,75 @@ const gamRecord = (specs: SpecsMap): ProductRecord => ({
   condition: "Segunda mano",
   image: null,
   specs
+});
+
+test("el parser distingue decimales inferiores a uno de los separadores de millares", () => {
+  for (const [text, expected] of [
+    ["0,368", 0.368], ["0.368", 0.368], ["0,001", 0.001], ["0.001", 0.001],
+    ["0,55", 0.55], ["0.55", 0.55], ["1.270", 1270], ["1,270", 1270],
+    ["1 270", 1270], ["1.270,50", 1270.5], ["1,270.50", 1270.5],
+    ["1 270,50", 1270.5], ["12,345", 12345], ["12.345", 12345]
+  ] as const) {
+    assert.equal(numberToken(text), expected, text);
+  }
+  for (const text of ["1 27", "-0,368", "0,368 mm", "0,368/1", "0,368 metros"]) {
+    assert.equal(numberToken(text), null, text);
+  }
+});
+
+test("GAM 3993 convierte 0,368 metros a 368 mm en el atributo comercial 60", async () => {
+  const { readCanonicalCatalog } = await import("../../../../infrastructure/filesystem/catalog/canonical-catalog.js");
+  const source = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const record = source.products.find((product) => product.reference === "3993");
+  const width = catalog.attributes.find((attribute) => attribute.id === 60);
+  assert.ok(record);
+  assert.ok(width);
+  assert.equal(width.name, "Ancho de trabajo");
+  assert.equal(width.unit_option, "mm");
+  assert.equal(record.specs?.["Anchura trabajo"], "0,368 metros");
+  assert.deepEqual(resolveAttribute(record, width), { status: "resolved", value: 368 });
+  assert.ok(prepareProduct(record, catalog).product.attributes.some((item) =>
+    item.attributeID === width.id && item.value === 368));
+  assert.deepEqual(resolveAttribute({ ...record, specs: { ...record.specs, "Anchura trabajo": "0.368 m" } }, width),
+    { status: "resolved", value: 368 });
+});
+
+test("GAM 2144 y 1144 interpretan alturas inferiores a un metro sin alterar categorías", async () => {
+  const { readCanonicalCatalog } = await import("../../../../infrastructure/filesystem/catalog/canonical-catalog.js");
+  const source = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const records = new Map(source.products.map((record) => [record.reference, record]));
+  const height = catalog.attributes.find((attribute) => attribute.id === 29);
+  assert.ok(height);
+  assert.equal(height.name, "Altura de elevación");
+  assert.equal(height.unit_option, "mm");
+  for (const [reference, raw, expected] of [
+    ["2144", "0,202 metros", 202], ["1144", "0,115 metros", 115]
+  ] as const) {
+    const record = records.get(reference);
+    assert.ok(record, reference);
+    assert.equal(record.specs?.["Altura de elevación (m)"], raw, reference);
+    assert.deepEqual(resolveAttribute(record, height), { status: "resolved", value: expected }, reference);
+    assert.ok(prepareProduct(record, catalog).product.attributes.some((item) =>
+      item.attributeID === height.id && item.value === expected), reference);
+  }
+});
+
+test("GAM conserva las anchuras acreditadas por configuración y la potencia de grupo", async () => {
+  const { readCanonicalCatalog } = await import("../../../../infrastructure/filesystem/catalog/canonical-catalog.js");
+  const source = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const records = new Map(source.products.map((record) => [record.reference, record]));
+  const width = catalog.attributes.find((attribute) => attribute.id === 60);
+  const power = catalog.attributes.find((attribute) => attribute.id === 70);
+  assert.ok(width);
+  assert.ok(power);
+  for (const [reference, expected] of [["4002", 800], ["4004", 800], ["4005", 700]] as const) {
+    const record = records.get(reference);
+    assert.ok(record, reference);
+    assert.equal(resolveAttributeValue(record, width), expected, reference);
+  }
+  const generator = records.get("1218");
+  assert.ok(generator);
+  assert.equal(resolveAttributeValue(generator, power), 1270);
 });
 
 test("normalización conserva las unidades de origen de alturas expresadas en metros", () => {

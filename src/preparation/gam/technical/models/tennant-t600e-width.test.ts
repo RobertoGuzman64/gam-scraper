@@ -32,7 +32,7 @@ test("Tennant T600e D80 distingue anchura de fregado y anchura de secado", () =>
     ...original.specs,
     "Depósito de solución": 121,
     "Depósito de recuperación": 140,
-    "Rendimiento de limpieza (m²/h)": 4415,
+    "Rendimiento de limpieza (m²/h)": 3924,
     "Presión máxima de fregado (kg)": 90,
     "Nivel sonoro": "62,2 dBA (modo Quiet-Mode)"
   });

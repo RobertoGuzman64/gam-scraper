@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ImportCandidate } from "../../legacy-export/contracts.js";
 import { analyzeCommercialOutputConsistency } from "../commercial-output-consistency.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+import { prepareProduct } from "../../legacy-export/prepare-product.js";
 
 const product = (reference: string): ImportCandidate => ({
   providerId: "gam", reference,
@@ -92,4 +95,70 @@ test("agrupa incidencias por causa, conserva las referencias y limita ejemplos",
   assert.deepEqual(report.findings.map((item) => item.reference), ["0", "1", "2", "3", "4", "5", "6"]);
   assert.equal(report.signals[0]?.affected, 7);
   assert.equal(report.signals[0]?.examples.length, 5);
+});
+
+
+test("detecta el multiplicador de mil en medidas submetro históricas sin confundir conceptos", async () => {
+  const [source, catalog] = await Promise.all([
+    readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json"), loadImportCatalog()
+  ]);
+  const cases = [
+    { reference: "3993", attributeID: 60, millimetres: 368 },
+    { reference: "2144", attributeID: 29, millimetres: 202 },
+    { reference: "1144", attributeID: 29, millimetres: 115 }
+  ] as const;
+  for (const { reference, attributeID, millimetres } of cases) {
+    const original = source.products.find((item) => item.reference === reference);
+    assert.ok(original, reference);
+    const prepared = prepareProduct(original, catalog);
+    const actual = prepared.product.attributes.find((item) => item.attributeID === attributeID);
+    assert.equal(actual?.value, millimetres, reference);
+    assert.equal(analyzeCommercialOutputConsistency([prepared.product]).findings.some((item) =>
+      item.reason === "medida-submetro-atributo-escala-multiplicada"), false, reference);
+    const broken: ImportCandidate = { ...prepared.product, attributes: prepared.product.attributes.map((item) =>
+      item.attributeID === attributeID && typeof item.value === "number"
+        ? { ...item, value: item.value * 1000 } : item) };
+    const report = analyzeCommercialOutputConsistency([broken]);
+    const findings = report.findings.filter((item) => item.reason === "medida-submetro-atributo-escala-multiplicada");
+    assert.equal(findings.length, 1, reference);
+    assert.equal(findings[0]?.field, "attributes", reference);
+    assert.deepEqual(findings[0]?.evidence, [
+      `ID ${attributeID}`,
+      `${attributeID === 60 ? "Anchura trabajo" : "Altura de elevación (m)"}: ${String(
+        prepared.product.spec[attributeID === 60 ? "Anchura trabajo" : "Altura de elevación (m)"])}`,
+      `atributo: ${millimetres * 1000}`
+    ], reference);
+    assert.equal(report.signals.find((item) => item.reason === "medida-submetro-atributo-escala-multiplicada")?.affected, 1);
+  }
+  for (const reference of ["4001", "4002", "4003", "4004", "4005", "1218"]) {
+    const original = source.products.find((item) => item.reference === reference);
+    assert.ok(original, reference);
+    const mapped = prepareProduct(original, catalog);
+    assert.equal(analyzeCommercialOutputConsistency([mapped.product]).findings.some((item) =>
+      item.reason === "medida-submetro-atributo-escala-multiplicada"), false, reference);
+  }
+});
+
+test("solo detecta una escala demostrable y no exige equivalencia entre medidas distintas", () => {
+  const original = product("4650");
+  const withWidth: ImportCandidate = { ...original, spec: { "Anchura trabajo": "0,550 metros" },
+    attributes: [{ attributeID: 60, value: 700 }] };
+  const withHeight: ImportCandidate = { ...original, spec: { "Altura de elevación (m)": "0,115 m" },
+    attributes: [{ attributeID: 29, value: 115 }] };
+  const invalid = [
+    { ...withWidth, attributes: [{ attributeID: 60, value: 550 }] },
+    { ...withWidth, attributes: [] },
+    { ...withWidth, spec: { "Anchura trabajo": "1,100 metros" },
+      attributes: [{ attributeID: 60, value: 1100000 }] },
+    { ...withWidth, spec: { "Anchura trabajo": "0,550 mm" },
+      attributes: [{ attributeID: 60, value: 550000 }] },
+    withWidth, withHeight,
+    { ...withHeight, attributes: [{ attributeID: 29, value: 115000 }, { attributeID: 29, value: 115000 }] }
+  ];
+  assert.deepEqual(invalid.flatMap((entry) => analyzeCommercialOutputConsistency([entry]).findings)
+    .filter((item) => item.reason === "medida-submetro-atributo-escala-multiplicada"), []);
+  assert.deepEqual(analyzeCommercialOutputConsistency([{ ...withHeight,
+    attributes: [{ attributeID: 29, value: 115000 }] }]).findings
+    .filter((item) => item.reason === "medida-submetro-atributo-escala-multiplicada")
+    .map((item) => item.reference), ["4650"]);
 });

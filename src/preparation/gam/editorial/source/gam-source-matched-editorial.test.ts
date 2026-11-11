@@ -1,5 +1,5 @@
 import { reconcileGamHorometer } from "../../technical/reconciliation/gam-horometer.js";
-import { phase2ExpectedSpecValue } from "../../../testing/phase2-basket-dimensions.js";
+import { expectedVerifiedSpecValue } from "../../../testing/gam-verified-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
@@ -47,7 +47,7 @@ test("las redacciones verificadas preservan el original y las especificaciones d
         key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] :
         reference === "2016" && key === "Capacidad de carga (kg)"
         ? "1800 KG"
-        : phase2ExpectedSpecValue(reference, key, value);
+        : expectedVerifiedSpecValue(reference, key, value);
       assert.equal(result.spec[key], expected, `${reference}: ${key}`);
     }
   }
@@ -94,7 +94,7 @@ test("las fichas adicionales conservan identidad, especificaciones y contenido i
         key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] :
         reference === "2016" && key === "Capacidad de carga (kg)"
         ? "1800 KG"
-        : phase2ExpectedSpecValue(reference, key, value);
+        : expectedVerifiedSpecValue(reference, key, value);
       assert.equal(result.spec[key], expected, `${reference}: ${key}`);
     }
     if (reference === "2241") assert.equal(result.spec["Altura de elevación (mm)"], "8895 mm");

@@ -4,7 +4,7 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { verifiedFamilyProportionEditorial } from "../shared/editorial/evidence/verified-family-proportion-editorial.js";
 import { resolveVerifiedFamilyProportionEditorial } from "../shared/editorial/mapping/verified-family-proportion-editorial.js";
-import { gamTechnicalReviewReferences } from "../testing/phase1-reviewed-identities.js";
+import { gamTechnicalReviewReferences } from "../testing/gam-reviewed-identities.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalogs = await Promise.all([

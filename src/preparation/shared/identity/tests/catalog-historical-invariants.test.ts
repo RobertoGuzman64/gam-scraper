@@ -1,4 +1,4 @@
-import { phase4VerifiedBasketCorrections } from "../../../testing/phase2-basket-dimensions.js";
+import { additionalVerifiedBasketCorrections } from "../../../testing/gam-verified-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -49,7 +49,7 @@ test("Las muestras de los tres proveedores preservan las reconciliaciones y bloq
   ]) {
     assert.equal(get("gam", reference).status, "ready", reference);
   }
-  for (const [reference, dimensions] of phase4VerifiedBasketCorrections) {
+  for (const [reference, dimensions] of additionalVerifiedBasketCorrections) {
     const result = get("gam", reference);
     assert.equal(result.status, "ready", reference);
     assert.equal(result.product.spec["Dimensiones Cesta"], dimensions, reference);

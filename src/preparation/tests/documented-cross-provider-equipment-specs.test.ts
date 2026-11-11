@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { gamTechnicalReviewReferences } from "../testing/phase1-reviewed-identities.js";
+import { gamTechnicalReviewReferences } from "../testing/gam-reviewed-identities.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 import { analyzeTechnicalDensity } from "../../catalog/diagnostics/technical-density.js";
 import { recoverGamDocumentedMobilityAndAccessSpecs } from "../gam/technical/models/documented-mobility-and-access-specs.js";

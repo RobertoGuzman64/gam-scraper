@@ -1,5 +1,7 @@
+import { createHash } from "node:crypto";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import { identifiedGamMachineModel } from "../measurements/measured-machine-specs.js";
+import { gamCleaningCorrectedWidth } from "./cleaning-width.js";
 
 const cleaningCategories = new Set(["limpieza-fregadoras", "limpieza-barredoras"]);
 const squareMetresPerHour = /\b(\d{1,2}(?:\.\d{3}){1,2}|\d{3,5})\s*m(?:²|2)\s*(?:\/\s*h\b|por\s+hora\b)/giu;
@@ -42,9 +44,41 @@ const measuredCoverage = (description: string): number | null => {
     values.every((value) => value === first) ? first : null;
 };
 
-export const recoverGamCleaningProductivitySpec = (record: ProductRecord): SpecsMap => {
+const verifiedT600eSourceHashes: Readonly<Record<string, string>> = {
+  "4003": "56a8170b3eec3b13cdfae2e88c5052e954a168cee63fc3fe2ad98f3b078dd914",
+  "4004": "b175733863ea3deae6416e9feca620e4a2b6bc827b5434b09c4b3bb53970aa19"
+};
+
+const t600eVariantProductivity = (record: ProductRecord, original: ProductRecord): number | null => {
+  const variant = record.reference === "4003" && record.model === "FCA T600e D70"
+    ? { width: 700, productivity: 3434 }
+    : record.reference === "4004" && record.model === "FCA T600e D80"
+      ? { width: 800, productivity: 3924 }
+      : null;
+  if (!variant || record.providerId !== "gam" || record.brand !== "Tennant" ||
+    original.reference !== record.reference || original.providerId !== record.providerId ||
+    original.url !== record.url || original.model !== record.model ||
+    original.brand !== record.brand || original.title !== record.title ||
+    original.shortDescription !== record.shortDescription ||
+    original.longDescription !== record.longDescription ||
+    original.categoryKey !== record.categoryKey || original.condition !== record.condition ||
+    measuredCoverage(original.longDescription ?? "") !== 4415 ||
+    gamCleaningCorrectedWidth(original) !== variant.width) return null;
+  const originalDigest = createHash("sha256").update(JSON.stringify([
+    original.providerId, original.reference, original.url, original.title, original.brand,
+    original.model, original.condition, original.categoryKey, original.categoryName,
+    original.shortDescription, original.longDescription, original.specs
+  ])).digest("hex");
+  return originalDigest === verifiedT600eSourceHashes[record.reference ?? ""] ? variant.productivity : null;
+};
+
+export const recoverGamCleaningProductivitySpec = (record: ProductRecord, original: ProductRecord = record): SpecsMap => {
   const source = record.specs ?? {};
   if (!hasOwnIdentity(record) || Object.keys(source).some((key) => existingCoverage.test(key))) return source;
+  if (record.reference === "4003" || record.reference === "4004") {
+    const productivity = t600eVariantProductivity(record, original);
+    return productivity === null ? source : { ...source, "Rendimiento de limpieza (m²/h)": productivity };
+  }
   const value = measuredCoverage(record.longDescription ?? "");
   return value === null ? source : { ...source, "Rendimiento de limpieza (m²/h)": value };
 };

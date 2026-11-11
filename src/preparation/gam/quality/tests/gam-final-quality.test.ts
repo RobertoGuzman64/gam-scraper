@@ -3,7 +3,7 @@ import test from "node:test";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
-import { gamTechnicalReviewReferences } from "../../../testing/phase1-reviewed-identities.js";
+import { gamTechnicalReviewReferences } from "../../../testing/gam-reviewed-identities.js";
 import { prepareImportBatch } from "../../../batch-identity.js";
 import { resolveAttribute } from "../../../shared/classification/mapping/attribute-mapping.js";
 import { SOURCE_TECHNICAL_FIELDS } from "../../../shared/technical/source/technical-fields.js";

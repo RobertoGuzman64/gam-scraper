@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { numberToken, scalar } from "../../../shared/classification/mapping/attribute-utils.js";
 import { gamHandlingModelEvidence } from "../../classification/mapping/handling.js";
@@ -166,8 +167,27 @@ const verifiedTennantT600eD80Width = (record: ProductRecord): number | null => {
   return 800;
 };
 
+const verifiedTennantD70Sources: Readonly<Record<string, string>> = {
+  "4001": "8f2914b89c2254ef3ecc6ceb2b77b7e449896eee1020ae9ad850667e646a5043",
+  "4003": "56a8170b3eec3b13cdfae2e88c5052e954a168cee63fc3fe2ad98f3b078dd914"
+};
+
+const verifiedTennantD70Width = (record: ProductRecord): number | null => {
+  const expected = record.reference ? verifiedTennantD70Sources[record.reference] : undefined;
+  if (!expected || record.providerId !== "gam" || record.brand !== "Tennant" ||
+    !["FCA T500e D70", "FCA T600e D70"].includes(record.model ?? "") ||
+    record.specs?.["Marca"] !== "Tennant" || record.specs?.["Modelo"] !== record.model) return null;
+  const digest = createHash("sha256").update(JSON.stringify([
+    record.providerId, record.reference, record.url, record.title, record.brand,
+    record.model, record.condition, record.categoryKey, record.categoryName,
+    record.shortDescription, record.longDescription, record.specs
+  ])).digest("hex");
+  return digest === expected ? 700 : null;
+};
+
 export const gamCleaningCorrectedWidth = (record: ProductRecord): number | null =>
-  configuredWorkWidth(record) ?? corroboratedCleaningWidth(record) ?? verifiedTennantT600eD80Width(record);
+  configuredWorkWidth(record) ?? corroboratedCleaningWidth(record) ??
+  verifiedTennantT600eD80Width(record) ?? verifiedTennantD70Width(record);
 
 
 export const gamCleaningWidthConflicts = (record: ProductRecord): boolean => {
@@ -179,6 +199,8 @@ export const gamCleaningWidthConflicts = (record: ProductRecord): boolean => {
   const match = String(raw).trim().match(/^(\d[\d.,]*)\s*(mm|cm|metros?|m)$/i);
   const expected = match?.[1] && match[2] ? widthMillimetres(match[1], foldText(match[2])) : null;
   if (expected === null) return true;
+  if (record.providerId === "gam" && record.reference && verifiedTennantD70Sources[record.reference] &&
+    expected !== 700) return true;
   const description = `${record.shortDescription ?? ""}. ${record.longDescription ?? ""}`;
   const found = workWidthExpressions(description);
   if (found === null) return !configuredWidthMatchesOptions(record, expected, description);

@@ -9,6 +9,7 @@ import { prepareProduct } from "../../../../commercial/legacy-export/prepare-pro
 
 const catalog = await loadImportCatalog();
 const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
+const current = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
 const reference = (id: string): ProductRecord => requireProductReference(source.products, id);
 const attribute = (name: string) => {
   const value = catalog.attributes.find((entry) => entry.name === name);
@@ -56,6 +57,32 @@ test("anchuras corroboradas se recuperan sin liberar la discrepancia de T581 55"
   }
   assert.deepEqual(width(reference("4004")), { status: "resolved", value: 800 });
   assert.equal(prepareProduct(reference("4004"), catalog).status, "ready");
+});
+
+test("Tennant D70 conserva el ancho de cabezal sin atribuir bayeta ni máximo de otra variante", () => {
+  for (const [id, spec] of [["4001", "1,1 metros"], ["4003", "0,9 metros"]] as const) {
+    const original = requireProductReference(current.products, id);
+    const before = JSON.stringify(original);
+    assert.equal(original.specs?.["Anchura trabajo"], spec);
+    assert.deepEqual(width(original), { status: "resolved", value: 700 }, id);
+    const prepared = prepareProduct(original, catalog);
+    assert.equal(prepared.status, "ready", id);
+    assert.equal(prepared.issues.length, 0, id);
+    assert.ok(prepared.product.attributes.some((item) =>
+      item.attributeID === attribute("Ancho de trabajo").id && item.value === 700), id);
+    assert.equal(JSON.stringify(original), before, id);
+    const variants: readonly ProductRecord[] = [
+      { ...original, model: "FCA T500e D80" },
+      { ...original, specs: { ...original.specs, "Anchura trabajo": "1,2 metros" } },
+      { ...original, longDescription: `${original.longDescription ?? ""} Otro cabezal de 850 mm.` },
+      { ...original, title: `${original.title} edición distinta` },
+      { ...original, condition: "Segunda mano" },
+      { ...original, url: `${original.url}?variante=otra` }
+    ];
+    for (const changed of variants) {
+      assert.equal(width(changed).status, "contradiction", id);
+    }
+  }
 });
 
 test("alturas incongruentes, medidas variables de mástil y radios con alternativas no se liberan", () => {

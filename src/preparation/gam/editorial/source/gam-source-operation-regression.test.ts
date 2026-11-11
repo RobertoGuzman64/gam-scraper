@@ -56,7 +56,7 @@ const additionalVerifiedSpecs = [
   ["6368", "Batería", "24 V / 620 Ah (alternativa de 465 Ah)"],
 ] as const;
 
-test("GAM: conserva las veinte recuperaciones originales y las cohortes posteriores hasta la fase 125", () => {
+test("GAM: conserva las recuperaciones originales y las incorporaciones posteriores", () => {
   assert.equal(new Set(expected.map(([reference]) => reference)).size, 20);
   const changed: string[] = [];
   for (const record of gam.products) {
@@ -75,7 +75,7 @@ test("GAM: conserva las veinte recuperaciones originales y las cohortes posterio
   assert.equal(changed.length, 36);
 });
 
-test("fase 85: las veinte especificaciones llegan al preparador y sobreviven al normalizador", () => {
+test("las veinte especificaciones llegan al preparador y sobreviven al normalizador", () => {
   for (const [reference, key, value] of expected) {
     const record = find(reference);
     assert.equal(Object.hasOwn(record.specs ?? {}, key), false, reference);
@@ -98,7 +98,7 @@ test("fase 85: las veinte especificaciones llegan al preparador y sobreviven al 
   assert.equal(normalizeSpecsObject(prepareSourceProduct(find("2332")).product.spec).normalized["Capacidad de arrastre (kg)"], 5000);
 });
 
-test("fase 85: no sobrescribe datos anteriores ni cruza proveedores, fuentes, referencias o modelos", () => {
+test("no sobrescribe datos anteriores ni cruza proveedores, fuentes, referencias o modelos", () => {
   for (const [reference, key] of expected) {
     const original = find(reference);
     const variants: readonly ProductRecord[] = [
@@ -120,7 +120,7 @@ test("fase 85: no sobrescribe datos anteriores ni cruza proveedores, fuentes, re
   }
 });
 
-test("fase 85: rechaza valores incompatibles y conserva las condiciones expresas", () => {
+test("rechaza valores incompatibles y conserva las condiciones expresas", () => {
   for (const [reference, prior, modified] of [
     ["6326", "hasta 15–16 km/h", "hasta 15–19 km/h"],
     ["6480", "2.217 mm a 2.290 mm", "2.217 mm a 2.390 mm"],
@@ -166,7 +166,7 @@ test("GAM: conserva radios de giro de doble dirección publicados para XCMG XGS4
   }
 });
 
-test("GAM: fase 125 incorpora quince especificaciones de fuente sin alterar el resto", () => {
+test("GAM: incorpora quince especificaciones de fuente sin alterar el resto", () => {
   assert.equal(new Set(additionalVerifiedSpecs.map(([reference]) => reference)).size, 15);
   for (const [reference, key, value] of additionalVerifiedSpecs) {
     const record = find(reference);

@@ -142,7 +142,7 @@ test("no sobrescribe valores existentes y conserva acreditaciones independientes
   }
 });
 
-test("rechaza el reemplazo de los fragmentos de fuente de la fase 129", () => {
+test("rechaza el reemplazo de los fragmentos de fuente acreditados", () => {
   const replacements = [
     ["2042", "transmisión automática ZF 5WG211", "transmisión manual ZF 5WG211", "Transmisión"],
     ["2096", "Neumáticos industriales 8.25x15 de doble banda, disponibles en versiones radiales, superelásticas o sin huella", "Neumáticos según configuración", "Neumáticos"],

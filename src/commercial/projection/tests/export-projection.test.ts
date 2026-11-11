@@ -8,6 +8,10 @@ import { planCommercialExport } from "../export-projection.js";
 import { projectCommercialPresentation } from "../presentation-projection.js";
 import { accreditCommercialPlan } from "../../diagnostics/commercial-accreditation.js";
 import { hasLoadCapacityDisagreement } from "../../validation/technical-specifications.js";
+import { selectAccreditedCommercialInputs } from "../../../testing/builders/commercial-publication-selection.js";
+import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+import { loadCommercialReference } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
+import { fileURLToPath } from "node:url";
 
 const catalog: ImportCatalog = {
   categories: [
@@ -558,4 +562,29 @@ test("la diferenciación parte del título corregido y no crea duplicados de cap
   ]);
   assert.equal(output.exceptions.filter((issue) => issue.reason === "titulo-unidad-no-diferenciada").length, 0);
   assert.equal(output.exceptions.filter((issue) => issue.reason === "capacidad-titulo-spec-discordante").length, 0);
+});
+
+
+test("la acreditación comercial bloquea un error de escala confirmado de GAM sin reescribir datos", async () => {
+  const realCatalog = await loadImportCatalog();
+  const { brandLogos } = await loadCommercialReference();
+  const root = fileURLToPath(new URL("../../../../", import.meta.url));
+  const selected = await selectAccreditedCommercialInputs(root, realCatalog, { gam: ["3993"] });
+  const gam = selected.get("gam");
+  assert.ok(gam);
+  const output = planCommercialExport(gam.entries, "gam", gam.publicationSha256, realCatalog, brandLogos, null, null);
+  const original = output.products.find((item) => item.reference === "3993");
+  assert.ok(original);
+  assert.equal(accreditCommercialPlan(gam.entries, output, realCatalog, brandLogos, null).blocking.some((item) =>
+    item.reason === "medida-submetro-atributo-escala-multiplicada"), false);
+  const invalid = { ...original, attributes: original.attributes.map((item) =>
+    item.attributeID === 60 && typeof item.value === "number"
+      ? { ...item, value: item.value * 1000 } : item) };
+  const audit = accreditCommercialPlan(gam.entries, { ...output, products: [invalid] }, realCatalog, brandLogos, null);
+  assert.ok(audit.blocking.some((item) =>
+    item.reason === "medida-submetro-atributo-escala-multiplicada" && item.affected === 1));
+  assert.ok(audit.decisions.find((item) => item.reference === "3993")?.blocking.includes(
+    "medida-submetro-atributo-escala-multiplicada"));
+  assert.deepEqual(output.products[0]?.attributes.filter((item) => item.attributeID === 60),
+    [{ attributeID: 60, value: 368 }]);
 });

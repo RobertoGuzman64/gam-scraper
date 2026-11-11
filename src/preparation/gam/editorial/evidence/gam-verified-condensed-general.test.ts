@@ -1,4 +1,4 @@
-import { phase2ExpectedSpecValue } from "../../../testing/phase2-basket-dimensions.js";
+import { expectedVerifiedSpecValue } from "../../../testing/gam-verified-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
@@ -51,7 +51,7 @@ test("GAM: sintetiza solo veinte descripciones acreditadas sin alterar el origin
         }
       }
       for (const [key, value] of Object.entries(reconcileGamSourceTechnicalUnits(record).specs ?? {})) {
-        assert.equal(prepared.spec[key], phase2ExpectedSpecValue(record.reference, key, value), `${record.reference}: ${key}`);
+        assert.equal(prepared.spec[key], expectedVerifiedSpecValue(record.reference, key, value), `${record.reference}: ${key}`);
       }
       assert.equal(prepared.reference, record.reference);
       assert.equal(prepared.sourceUrl, record.url);

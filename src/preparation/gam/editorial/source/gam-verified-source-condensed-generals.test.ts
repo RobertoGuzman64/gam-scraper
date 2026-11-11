@@ -1,12 +1,12 @@
 import { reconcileGamHorometer } from "../../technical/reconciliation/gam-horometer.js";
-import { phase2ExpectedSpecValue } from "../../../testing/phase2-basket-dimensions.js";
+import { expectedVerifiedSpecValue } from "../../../testing/gam-verified-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { resolveGamVerifiedSourceCondensedGeneral } from "./verified-source-condensed-generals.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
-import { gamTechnicalReviewReferences } from "../../../testing/phase1-reviewed-identities.js";
+import { gamTechnicalReviewReferences } from "../../../testing/gam-reviewed-identities.js";
 import { verifiedGamUnitSourceGenerals } from "./verified-unit-source-generals.js";
 import { verifiedCanonicalBriefEditorial } from "../../../shared/editorial/evidence/verified-canonical-brief-editorial.js";
 import { verifiedFamilyProportionEditorial } from "../../../shared/editorial/evidence/verified-family-proportion-editorial.js";
@@ -121,7 +121,7 @@ test("GAM: la condensación adicional conserva cifras y características de cada
     assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference)) ? 1 : 0, reference);
     checkPreparedGeneral(reference, prepared.product.description_general, general);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : expectedVerifiedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
   }
 });
@@ -142,7 +142,7 @@ test("GAM: 22 fichas de manutención conservan datos individuales al condensar t
     assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference)) ? 1 : 0, reference);
     checkPreparedGeneral(reference, prepared.product.description_general, general);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : expectedVerifiedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
   }
 });
@@ -166,7 +166,7 @@ test("GAM: 22 descripciones pendientes incorporan evidencia individual y conserv
     assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference)) ? 1 : 0, reference);
     assert.equal(JSON.stringify(record), before, reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : expectedVerifiedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
   }
 });
@@ -214,7 +214,7 @@ test("GAM: condensación acreditada preserva identificación de ocasión y prest
     assert.equal(prepared.issues.length, (gamTechnicalReviewReferences.has(reference)) ? 1 : 0, reference);
     checkPreparedGeneral(reference, prepared.product.description_general, general);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : expectedVerifiedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
     assert.equal(resolveGamVerifiedSourceCondensedGeneral({ ...record, title: `${record.title} otra variante` }), null, reference);
     assert.equal(resolveGamVerifiedSourceCondensedGeneral({ ...record, specs: { ...record.specs, Modelo: "otra variante" } }), null, reference);
@@ -248,7 +248,7 @@ test("GAM: la evidencia editorial posterior conserva identidad, original y espec
     checkPreparedGeneral(reference, prepared.product.description_general, general);
     assert.equal(JSON.stringify(record), originalSnapshot, reference);
     for (const [key, value] of Object.entries(record.specs ?? {})) {
-      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : phase2ExpectedSpecValue(reference, key, value), `${reference}: ${key}`);
+      assert.equal(prepared.product.spec?.[key], key === "Horómetro" ? reconcileGamHorometer(record).specs?.[key] : expectedVerifiedSpecValue(reference, key, value), `${reference}: ${key}`);
     }
     for (const altered of [
       { ...record, url: `${record.url}?other=1` },
@@ -288,7 +288,7 @@ const additionalVerifiedEditorial = [
   ["2066", "100 l/min de caudal hidráulico y 195 bar"],
 ] as const;
 
-test("GAM: fase 125 recupera cinco detalles técnicos editoriales individuales", () => {
+test("GAM: recupera cinco detalles técnicos editoriales individuales", () => {
   assert.equal(new Set(additionalVerifiedEditorial.map(([reference]) => reference)).size, 5);
   for (const [reference, marker] of additionalVerifiedEditorial) {
     const record = findOriginal(reference);

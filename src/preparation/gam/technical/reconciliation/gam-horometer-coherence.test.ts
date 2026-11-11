@@ -23,7 +23,7 @@ const byReference = (reference: string): ProductRecord => {
 const missing = /^na(?:\s+[a-z]\d{8,20})?\s+horas$/iu;
 const replaced = /^hor[oó]metro\s+sustituido\s+horas$/iu;
 
-test("fase 3: 57 lecturas no cuantitativas GAM se representan sin inventar horas ni alterar originales", () => {
+test("57 lecturas no cuantitativas GAM se representan sin inventar horas ni alterar originales", () => {
   const affected = gam.products.filter((record) =>
     record.horometer !== null && (missing.test(record.horometer) || replaced.test(record.horometer))
   );
@@ -48,7 +48,7 @@ test("fase 3: 57 lecturas no cuantitativas GAM se representan sin inventar horas
   }
 });
 
-test("fase 3: horas reales, proveedores ajenos y contradicciones no se modifican", () => {
+test("horas reales, proveedores ajenos y contradicciones no se modifican", () => {
   const numeric = byReference("6854");
   assert.equal(numeric.horometer, "410 horas");
   assert.equal(reconcileGamHorometer(numeric), numeric);
@@ -68,7 +68,7 @@ test("fase 3: horas reales, proveedores ajenos y contradicciones no se modifican
   assert.equal(reconcileGamHorometer(otherProvider), otherProvider);
 });
 
-test("fase 3: preparación mantiene evidencia editorial de sustitución y lectura desconocida", () => {
+test("preparación mantiene evidencia editorial de sustitución y lectura desconocida", () => {
   const original = byReference("6126");
   const prepared = prepareSourceProduct(original);
   assert.match(prepared.product.description_general ?? "", /horómetro sustituido/iu);

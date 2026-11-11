@@ -13,8 +13,8 @@ const expected = [
   ["6150", 9000], ["4025", 6300], ["4026", 7440], ["4027", 7440],
   ["4033", 20320], ["4034", 26820], ["3993", 1400], ["3994", 1800],
   ["3996", 1300], ["3997", 1631], ["3999", 2468], ["6149", 2940],
-  ["4001", 4088], ["4002", 4088], ["4008", 5073], ["4003", 4415],
-  ["4004", 4415], ["4009", 5300], ["4012", 7085]
+  ["4001", 4088], ["4002", 4088], ["4008", 5073], ["4003", 3434],
+  ["4004", 3924], ["4009", 5300], ["4012", 7085]
 ] as const;
 
 const recordOf = (reference: string) => {
@@ -36,6 +36,35 @@ test("recupera 19 rendimientos acreditados en m²/h sin alterar el origen ni las
       assert.deepEqual(result.product.spec[originalKey], originalValue, `${reference}: ${originalKey}`);
     }
     assert.deepEqual(record, snapshot, reference);
+  }
+});
+
+test("T600e D70 y D80 distinguen el máximo de gama de la variante acreditada", () => {
+  for (const [reference, productivity] of [["4003", 3434], ["4004", 3924]] as const) {
+    const record = recordOf(reference);
+    const source = record.specs ?? {};
+    assert.equal(recoverGamCleaningProductivitySpec(record)[key], productivity, reference);
+    assert.match(record.longDescription ?? "", /4415 m² por hora/);
+    const invalid = [
+      { ...record, reference: "4005" },
+      { ...record, providerId: "mercaeleva" as const },
+      { ...record, url: `${record.url}?changed=1` },
+      { ...record, model: `${record.model} SII` },
+      { ...record, brand: "Otra" },
+      { ...record, title: `${record.title} distinto` },
+      { ...record, shortDescription: `${record.shortDescription} distinta` },
+      { ...record, longDescription: `${record.longDescription} configuración distinta` },
+      { ...record, specs: { ...source, "Anchura trabajo": "0,5 metros" } },
+      { ...record, specs: { ...source, "Rendimiento de limpieza": "4415 m²/h" } },
+      { ...record, condition: "Segunda mano" as const }
+    ];
+    for (const [index, changed] of invalid.entries()) {
+      assert.equal(recoverGamCleaningProductivitySpec(changed)[key], undefined, `${reference}:${index}`);
+    }
+    const mismatch = { ...record, longDescription: `${record.longDescription} Texto no acreditado` };
+    assert.equal(recoverGamCleaningProductivitySpec(record, mismatch)[key], undefined, reference);
+    const augmented = { ...record, specs: { ...source, "Depósito de solución": 121 } };
+    assert.equal(recoverGamCleaningProductivitySpec(augmented, record)[key], productivity, reference);
   }
 });
 

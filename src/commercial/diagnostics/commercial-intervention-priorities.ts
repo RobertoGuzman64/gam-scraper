@@ -40,6 +40,8 @@ const outputAction = (reason: CommercialOutputConsistencyReason): string => {
       return "Contrastar el tipo de motor en la fuente y resolver la discrepancia entre título y resumen, sin inferir variantes mixtas.";
     case "ano-titulo-atributo-contradictorio":
       return "Acreditar el año de fabricación de la unidad antes de corregir título o atributo.";
+    case "medida-submetro-atributo-escala-multiplicada":
+      return "Comprobar la conversión de metros a milímetros y el valor publicado; corregir el parser sin alterar medidas de otras variantes.";
   }
 };
 
@@ -81,6 +83,9 @@ const editorialAction = (reason: string): string => {
 };
 
 const accreditationAction = (reason: string): string => {
+  if (reason === "medida-submetro-atributo-escala-multiplicada") {
+    return outputAction(reason);
+  }
   if (reason === "especificaciones-incompatibles-filtradas") {
     return "Protección aplicada: conservar la traza y verificar que los valores incompatibles sigan fuera de la exportación.";
   }
@@ -104,6 +109,7 @@ const rank: Readonly<Record<CommercialIntervention["priority"], number>> = {
 export const prioritizeCommercialInterventions = (input: Inputs): CommercialInterventionPriorities => {
   const interventions: CommercialIntervention[] = [];
   for (const signal of input.outputConsistencyAudit.signals) {
+    if (input.accreditation.blocking.some((finding) => finding.reason === signal.reason)) continue;
     const evidence = input.outputConsistencyAudit.findings
       .filter((finding) => finding.reason === signal.reason)
       .slice(0, 3).map((finding) => `${finding.reference ?? finding.sourceUrl} | ${finding.field} | ${finding.evidence.join(" <> ")}`);
@@ -143,9 +149,12 @@ export const prioritizeCommercialInterventions = (input: Inputs): CommercialInte
       action: editorialAction(signal.reason), examples: signal.examples, evidence: [] });
   }
   for (const finding of input.accreditation.blocking) {
+    const evidence = input.outputConsistencyAudit.findings
+      .filter((item) => item.reason === finding.reason).slice(0, 3)
+      .map((item) => `${item.reference ?? item.sourceUrl} | ${item.field} | ${item.evidence.join(" <> ")}`);
     interventions.push({ priority: "alta", source: "acreditacion", reason: finding.reason, affected: finding.affected,
       responsible: "contrato y validación comercial", action: accreditationAction(finding.reason),
-      examples: finding.examples, evidence: [] });
+      examples: finding.examples, evidence });
   }
   for (const finding of input.accreditation.pending) {
     const controlled = finding.reason === "especificaciones-incompatibles-filtradas";

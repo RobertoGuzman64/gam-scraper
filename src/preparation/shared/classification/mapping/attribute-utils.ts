@@ -27,7 +27,7 @@ export const numberToken = (raw: string): number | null => {
   if (last >= 0) {
     const rest = compact.slice(last + 1);
     const before = compact.slice(0, last);
-    if (rest.length <= 2 && rest.length > 0) compact = `${before.replace(/[.,]/g, "")}.${rest}`;
+    if ((rest.length <= 2 && rest.length > 0) || /^0[.,]\d{3}$/.test(compact)) compact = `${before.replace(/[.,]/g, "")}.${rest}`;
     else if (/^\d{1,3}(?:[.,]\d{3})+$/.test(compact)) compact = compact.replace(/[.,]/g, "");
     else return null;
   }
