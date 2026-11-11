@@ -118,15 +118,27 @@ test("companyID solo se incorpora con entorno explícito", () => {
   assert.throws(() => plan([entry("106")], "develop", null), /entorno explícito/);
 });
 
-test("no asigna logo Otras Marcas ni marca no acreditada, y no inventa precio", () => {
+test("asigna Otras Marcas si la marca no tiene logo acreditado, sin inventar precio", () => {
   const sample = entry("107");
   const published = { ...sample.published, title: "Equipo SIN MARCA", spec: { Modelo: "AB123" } };
   const output = plan([{ ...sample, published }]);
-  assert.equal(output.products[0]?.logoID, null);
+  assert.equal(output.products[0]?.logoID, 18);
   assert.equal(output.products[0]?.price, null);
   assert.deepEqual(output.exceptions, []);
-  assert.equal(output.summary.withLogo, 0);
+  assert.equal(output.summary.withLogo, 1);
   assert.equal(output.summary.withPrice, 0);
+});
+
+test("el logo genérico se aplica solo cuando no existe correspondencia acreditada", () => {
+  const generic = entry("logo-generico");
+  const unidentified = { ...generic, source: { ...generic.source, brand: "FABRICANTE SIN LOGO" },
+    published: { ...generic.published, title: "Equipo FABRICANTE SIN LOGO", spec: { Marca: "FABRICANTE SIN LOGO" } } };
+  const output = plan([unidentified]);
+  assert.equal(output.products[0]?.logoID, 18);
+  assert.equal(output.summary.withLogo, 1);
+  assert.equal(accreditCommercialPlan([unidentified], output, catalog, logos, null).summary.blocking, 0);
+  assert.throws(() => planCommercialExport([unidentified], "gam", "a".repeat(64), catalog,
+    logos.filter((logo) => logo.id !== 18), null, null), /Otras Marcas/);
 });
 
 test("atribuye solo valores compatibles y registra rechazos sin borrar fichas", () => {
@@ -225,14 +237,14 @@ test("distingue exclusiones acreditadas de pérdidas de producto", () => {
   assert.ok(audit.blocking.some((item) => item.reason === "exclusion-no-corresponde"));
 });
 
-test("ausencia de precio o logo no crea intervenciones comerciales", () => {
+test("ausencia de precio y uso del logo genérico no crean intervenciones comerciales", () => {
   const sample = entry("308");
   const input = { ...sample, published: {
     ...sample.published, title: "Equipo sin marca", spec: { Modelo: "AB123" }
   } };
   const commercial = plan([input]);
   assert.equal(commercial.products[0]?.price, null);
-  assert.equal(commercial.products[0]?.logoID, null);
+  assert.equal(commercial.products[0]?.logoID, 18);
   assert.deepEqual(commercial.exceptions, []);
   const audit = accreditCommercialPlan([input], commercial, catalog, logos, null);
   assert.equal(audit.summary.pending, 0);

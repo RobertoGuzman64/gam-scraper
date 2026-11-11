@@ -19,18 +19,16 @@ const tokenList = (value: unknown): boolean =>
   new Set(value).size === value.length;
 
 const allowedKeys = new Set([
-  "providerId", "sourceUrl", "reference", "externalReference", "title", "categorySellID", "category",
+  "reference", "title", "categorySellID", "category",
   "condition", "price", "description_title", "description", "description_general", "image", "images",
   "spec", "attributes", "logoID", "companyID", "metadata"
 ]);
 
 export const isCommercialReceiverProduct = (
-  value: unknown, providerId: string, environment: "develop" | "production" | null
+  value: unknown, environment: "develop" | "production" | null
 ): boolean => {
   if (!isRecord(value) || Object.keys(value).some((key) => !allowedKeys.has(key)) ||
-    value.providerId !== providerId || !isWebUrl(value.sourceUrl) ||
     !isNullableString(value.reference) ||
-    (value.externalReference !== undefined && !isNullableString(value.externalReference)) ||
     !isNullableString(value.title) ||
     (value.categorySellID !== null && !isPositiveInteger(value.categorySellID)) ||
     !isNullableString(value.category) ||

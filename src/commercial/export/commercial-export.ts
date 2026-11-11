@@ -3,6 +3,8 @@ import { loadImportCatalogSnapshot } from "../../infrastructure/filesystem/legac
 import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import type { CommercialEnvironment } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { planCommercialExport } from "../projection/export-projection.js";
+import type { CommercialExportPlan, CommercialExportProduct } from "../projection/export-projection.js";
+import { buildProductIdentity } from "../../catalog/identity.js";
 import { accreditCommercialPlan } from "../diagnostics/commercial-accreditation.js";
 import { loadCommercialPublicationInputs } from "./commercial-inputs.js";
 
@@ -17,6 +19,34 @@ const hash = (value: string): string => createHash("sha256").update(value).diges
 const serialized = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
 const file = (name: string, content: string): CommercialExportFile => ({
   name, content, sha256: hash(content), bytes: Buffer.byteLength(content, "utf8")
+});
+
+export type CommercialDeliveryProduct = Omit<CommercialExportProduct, "providerId" | "sourceUrl" | "externalReference">;
+
+export type CommercialDeliverySource = {
+  readonly identity: string;
+  readonly reference: string | null;
+  readonly sourceUrl: string;
+  readonly externalReference?: string | null;
+};
+
+export type CommercialDeliveryPlan = Omit<CommercialExportPlan, "version" | "products"> & {
+  readonly version: 2;
+  readonly products: readonly CommercialDeliveryProduct[];
+  readonly sources: readonly CommercialDeliverySource[];
+};
+
+export const buildCommercialDeliveryPlan = (plan: CommercialExportPlan): CommercialDeliveryPlan => ({
+  ...plan,
+  version: 2,
+  sources: plan.products.map((product) => ({
+    identity: buildProductIdentity({ providerId: plan.providerId, reference: product.reference,
+      serialNumber: null, url: product.sourceUrl }).key,
+    reference: product.reference,
+    sourceUrl: product.sourceUrl,
+    ...(product.externalReference === undefined ? {} : { externalReference: product.externalReference })
+  })),
+  products: plan.products.map(({ providerId, sourceUrl, externalReference, ...receiver }) => receiver)
 });
 
 export const buildCommercialExportFiles = async (
@@ -39,9 +69,9 @@ export const buildCommercialExportFiles = async (
     }
     return plan;
   });
-  const products = plans.map((plan) => file(`${plan.providerId}-commercial.json`, serialized(plan)));
+  const products = plans.map((plan) => file(`${plan.providerId}-commercial.json`, serialized(buildCommercialDeliveryPlan(plan))));
   const manifest = file("commercial-manifest.json", serialized({
-    version: 1,
+    version: 2,
     environment,
     taxonomySha256: hash(categoryRaw),
     attributesSha256: hash(attributeRaw),

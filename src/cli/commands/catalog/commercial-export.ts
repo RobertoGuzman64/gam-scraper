@@ -42,6 +42,9 @@ export const parseCommercialExportOptions = (args: readonly string[]): Commercia
     }
     throw new Error(`Opción de exportación comercial inválida: ${arg}`);
   }
+  if (!dryRun && environment === null) {
+    throw new Error("La exportación para importar productos requiere --entorno develop|production");
+  }
   if (out) {
     const path = resolve(out);
     const nested = relative(root, path);
@@ -55,7 +58,7 @@ export const parseCommercialExportOptions = (args: readonly string[]): Commercia
 export const runCommercialExport = async (args: readonly string[]): Promise<void> => {
   const options = parseCommercialExportOptions(args);
   if (options === "help") {
-    printReportLine("Uso: npm run exportar:comercial -- [--entorno develop|production] [--simular] [--salida <directorio-nuevo>]\nPor defecto genera dos ZIP verificados en el Escritorio: comercial (tres JSON y manifiesto) e informe de integración. --salida conserva los cuatro archivos sueltos en un directorio nuevo. También admite --out, --environment y --dry-run; sin entorno no se incluye companyID. No publica ni importa en backend.");
+    printReportLine("Uso: npm run exportar:comercial -- --entorno develop|production [--simular] [--salida <directorio-nuevo>]\nPor defecto genera dos ZIP verificados en el Escritorio: comercial (tres JSON y manifiesto) e informe de integración. --salida conserva los cuatro archivos sueltos en un directorio nuevo. --simular permite verificar sin elegir entorno. También admite --out, --environment y --dry-run. No publica ni importa en backend.");
     return;
   }
   const files = await buildCommercialExportFiles(root, options.environment);

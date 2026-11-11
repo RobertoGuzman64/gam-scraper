@@ -48,17 +48,19 @@ export type CommercialExportPlan = {
   };
 };
 
-const resolveLogo = (
+export const resolveCommercialLogo = (
   source: CommercialBaselineInput["source"], published: ImportCandidate,
   logos: readonly BrandLogoReference[]
 ): number | null => {
   const brand = source.brand?.trim();
+  const fallback = logos.find((entry) => entry.id === 18 && commercialToken(entry.brand) === "otras-marcas");
+  if (!fallback) throw new Error("Falta la referencia acreditada de Otras Marcas");
   if (!brand || (!commercialBrandInTitle(published.title, brand) &&
     (typeof published.spec["Marca"] !== "string" || commercialToken(published.spec["Marca"]) !== commercialToken(brand)))) {
-    return null;
+    return fallback.id;
   }
-  const matches = logos.filter((entry) => entry.id !== 18 && commercialToken(entry.brand) === commercialToken(brand));
-  return matches.length === 1 ? matches[0]?.id ?? null : null;
+  const matches = logos.filter((entry) => entry.id !== fallback.id && commercialToken(entry.brand) === commercialToken(brand));
+  return matches.length === 1 ? matches[0]?.id ?? fallback.id : fallback.id;
 };
 
 export const planCommercialExport = (
@@ -130,7 +132,7 @@ export const planCommercialExport = (
     const year = assessCommercialYear({ ...published, ...presentation, attributes: accepted.accepted });
     if (year.inconsistentClaims.length > 0) exceptions.push(issue("ano-descripcion-atributo-discordante"));
     if (year.urlAttributeDisagreement) exceptions.push(issue("ano-url-atributo-discordante"));
-    const logoID = resolveLogo(source, published, logos);
+    const logoID = resolveCommercialLogo(source, published, logos);
     if (logoID !== null) withLogo += 1;
     if (published.price !== null) withPrice += 1;
     if (!presentation.title) exceptions.push(issue("titulo-ausente"));

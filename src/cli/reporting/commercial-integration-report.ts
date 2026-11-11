@@ -1,18 +1,15 @@
 import type { CommercialPackageSnapshot } from "../../commercial/export/commercial-package-snapshot.js";
 
-const declaredFields = ["providerId", "reference", "externalReference", "sourceUrl", "categorySellID",
+const declaredFields = ["reference", "categorySellID",
   "attributes", "price", "companyID", "logoID", "image", "images", "metadata"] as const;
 
 const fieldNotes: Readonly<Record<(typeof declaredFields)[number], string>> = {
-  providerId: "proveedor de origen",
-  reference: "referencia técnica visible; no necesariamente única",
-  externalReference: "referencia externa si existe en el corte",
-  sourceUrl: "URL de origen y trazabilidad",
+  reference: "referencia estable de la unidad en su proveedor",
   categorySellID: "identificador de categoría comercial propuesto",
   attributes: "identificadores y valores de atributos comerciales aceptados",
   price: "precio exportado; null no equivale a cero",
   companyID: "empresa del entorno declarado, cuando está disponible",
-  logoID: "identificador de logo cuando está acreditado",
+  logoID: "identificador del logo acreditado o de Otras Marcas",
   image: "imagen principal exportada",
   images: "galería exportada",
   metadata: "metadatos comerciales del producto"
@@ -89,13 +86,14 @@ export const renderCommercialIntegrationReport = (snapshot: CommercialPackageSna
     "- NO VERIFICADO EN BD: comprobar companyID del entorno, unicidad por proveedor y origen, deduplicación de referencias visibles y política de precios null.",
     "- NO VERIFICADO EN BD: confirmar accesibilidad y persistencia de las URLs de imágenes, logos y galerías.",
     "- NO VERIFICADO EN BD: revisar categorías sin relaciones directas de atributos mediante `npm run auditar:comercial -- --atributos-vacios`.",
+    "- La procedencia técnica de cada unidad se conserva en sources, por índice, fuera del objeto Product; incluye identidad, URL y referencia externa cuando exista.",
     "- Los grupos de referencias coincidentes solo incluyen productos exportados; la auditoría del catálogo puede detectar además coincidencias en los excluidos.",
     "- Las comprobaciones acreditan integridad y proyección comercial; no garantizan aceptación semántica ni importación efectiva por el backend.",
     "",
     "## Integridad y reproducción",
     "",
     "- Los cuatro JSON exactos y sus huellas SHA256 están dentro del paquete comercial; `commercial-manifest.json` identifica las fuentes, el entorno y cada archivo.",
-    "- Exportar el corte vigente: `npm run exportar:comercial -- --entorno production` (ajustar o omitir entorno según el paquete deseado).",
+    "- Exportar el corte vigente: `npm run exportar:comercial -- --entorno develop` (o production según el destino).",
     "- Verificar el paquete: `npm run auditar:comercial -- --verificar=<ruta-zip-comercial> --informe=<ruta-zip-informe>`.",
     "- La verificación compara la exportación con las publicaciones y referencias activas; un corte antiguo no podrá acreditarse como vigente tras su modificación.",
     ""

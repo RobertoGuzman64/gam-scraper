@@ -5,6 +5,7 @@ import type { CommercialExportPlan, CommercialExportProduct } from "../projectio
 import type { BrandLogoReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { buildProductIdentity } from "../../catalog/identity.js";
 import { decideCommercialCategory } from "../projection/category-decision.js";
+import { resolveCommercialLogo } from "../projection/export-projection.js";
 import { isValidCommercialCategory } from "../projection/category-projection.js";
 import { projectCommercialAttributes } from "../projection/attribute-projection.js";
 import { commercialToken, projectCommercialPresentation } from "../projection/presentation-projection.js";
@@ -182,12 +183,8 @@ const verifyProduct = (
   if (environment === null ? product.companyID !== undefined : product.companyID !== companyID) {
     blocking.push("companyID-entorno-incoherente");
   }
-  if (product.logoID !== null) {
-    const matches = logos.filter((logo) => logo.id === product.logoID);
-    if (matches.length !== 1 || product.logoID === 18 ||
-      commercialToken(matches[0]?.brand ?? "") !== commercialToken(source.brand ?? "")) {
-      blocking.push("logoID-sin-correspondencia");
-    }
+  if (product.logoID !== resolveCommercialLogo(source, published, logos)) {
+    blocking.push("logoID-sin-correspondencia");
   }
 };
 

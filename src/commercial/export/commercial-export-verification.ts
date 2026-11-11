@@ -1,3 +1,4 @@
+import { buildProductIdentity } from "../../catalog/identity.js";
 import { createHash } from "node:crypto";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -25,11 +26,27 @@ const validHash = (value: unknown): boolean => typeof value === "string" && /^[a
 const validCount = (value: unknown): boolean => Number.isSafeInteger(value) && typeof value === "number" && value >= 0;
 const summaryFields = ["exported", "categorized", "pendingCategory", "excludedLots", "excludedTools",
   "excludedAccessories", "attributes", "withLogo", "withPrice", "withCompany"] as const;
+const isWebUrl = (value: unknown): boolean => {
+  if (typeof value !== "string" || !value.trim()) return false;
+  try { return ["http:", "https:"].includes(new URL(value).protocol); }
+  catch { return false; }
+};
 const validIdentifier = (value: unknown): value is number =>
   typeof value === "number" && Number.isSafeInteger(value) && value > 0;
+const publishedIdentity = (providerId: string, item: Record<string, unknown>): string | null => {
+  const reference = item.reference;
+  const sourceUrl = item.sourceUrl;
+  if (typeof sourceUrl !== "string" || !sourceUrl.trim() ||
+    (reference !== null && (typeof reference !== "string" || !reference.trim()))) return null;
+  try {
+    return buildProductIdentity({ providerId, reference, serialNumber: null, url: sourceUrl }).key;
+  } catch {
+    return null;
+  }
+};
 
 const inspectProductTotals = (
-  products: readonly unknown[], providerId: string, environment: unknown
+  products: readonly unknown[], environment: unknown
 ): { readonly categorized: number; readonly pendingCategory: number; readonly attributes: number;
   readonly withLogo: number; readonly withPrice: number; readonly withCompany: number } | null => {
   let categorized = 0;
@@ -39,7 +56,7 @@ const inspectProductTotals = (
   let withPrice = 0;
   let withCompany = 0;
   for (const product of products) {
-    if (!isCommercialReceiverProduct(product, providerId,
+    if (!isCommercialReceiverProduct(product,
       environment === "develop" || environment === "production" ? environment : null) ||
       !isRecord(product) || !Array.isArray(product.attributes)) return null;
     if (product.categorySellID === null) pendingCategory += 1;
@@ -94,7 +111,7 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
   const manifestFile = files.get("commercial-manifest.json");
   if (!manifestFile) throw new Error("Falta el manifiesto comercial");
   const manifest = parseJson(manifestFile);
-  if (!isRecord(manifest) || manifest.version !== 1 ||
+  if (!isRecord(manifest) || manifest.version !== 2 ||
     (manifest.environment !== null && manifest.environment !== "develop" && manifest.environment !== "production") ||
     !validHash(manifest.taxonomySha256) || !validHash(manifest.attributesSha256) ||
     !validHash(manifest.logosSha256) || !validHash(manifest.companiesSha256) ||
@@ -118,24 +135,47 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
       throw new Error(`Archivo o huella discordante para el proveedor ${provider.providerId}`);
     }
     const plan = parseJson(productFile);
-    if (!isRecord(plan) || plan.version !== 1 || plan.providerId !== provider.providerId ||
+    if (!isRecord(plan) || plan.version !== 2 || plan.providerId !== provider.providerId ||
       plan.publicationSha256 !== provider.publicationSha256 || plan.environment !== manifest.environment ||
-      plan.total !== provider.originalCount || !Array.isArray(plan.products) || !Array.isArray(plan.excluded) ||
+      plan.total !== provider.originalCount || !Array.isArray(plan.products) || !Array.isArray(plan.sources) ||
+      plan.sources.length !== plan.products.length || !Array.isArray(plan.excluded) ||
       !Array.isArray(plan.exceptions) || !isRecord(plan.summary) ||
       plan.products.length + plan.excluded.length !== plan.total ||
       plan.products.length !== provider.exported || plan.excluded.length !== provider.excluded ||
       plan.exceptions.length !== provider.exceptions) {
       throw new Error(`Totales o procedencia incoherentes para el proveedor ${provider.providerId}`);
     }
+    const verifiedProducts: Record<string, unknown>[] = [];
+    for (const [index, candidate] of plan.products.entries()) {
+      const origin: unknown = plan.sources[index];
+      if (!isRecord(origin) || !isRecord(candidate) ||
+        Object.keys(origin).some((key) => !["identity", "reference", "sourceUrl", "externalReference"].includes(key)) ||
+        !isWebUrl(origin.sourceUrl) ||
+        (origin.reference !== null && (typeof origin.reference !== "string" || !origin.reference.trim())) ||
+        (origin.externalReference !== undefined && origin.externalReference !== null &&
+          typeof origin.externalReference !== "string") ||
+        origin.reference !== candidate.reference ||
+        origin.identity !== publishedIdentity(provider.providerId, origin)) {
+        throw new Error(`Procedencia comercial inválida para el proveedor ${provider.providerId}`);
+      }
+      verifiedProducts.push({ ...candidate, providerId: provider.providerId,
+        sourceUrl: origin.sourceUrl, externalReference: origin.externalReference });
+    }
     const productUrls = new Set<string>();
+    const identities = new Set<string>();
     const productsByUrl = new Map<string, Record<string, unknown>>();
     const requiredHeightExceptions = new Map<string, string>();
     const requiredYearExceptions = new Map<string, string>();
     const requiredCapacityExceptions = new Set<string>();
-    for (const product of plan.products) {
-      if (!isRecord(product) || typeof product.sourceUrl !== "string" || productUrls.has(product.sourceUrl)) {
+    for (const product of verifiedProducts) {
+      if (typeof product.sourceUrl !== "string" || productUrls.has(product.sourceUrl)) {
         throw new Error(`Identidades comerciales duplicadas o inválidas para el proveedor ${provider.providerId}`);
       }
+      const identity = publishedIdentity(provider.providerId, product);
+      if (!identity || identities.has(identity)) {
+        throw new Error(`Referencias técnicas duplicadas o inválidas para el proveedor ${provider.providerId}`);
+      }
+      identities.add(identity);
       productUrls.add(product.sourceUrl);
       productsByUrl.set(product.sourceUrl, product);
       const editorialIssues = inspectCommercialEditorialQuality({
@@ -190,6 +230,11 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
         productUrls.has(exclusion.sourceUrl) || exclusionUrls.has(exclusion.sourceUrl)) {
         throw new Error(`Identidades excluidas duplicadas o inválidas para el proveedor ${provider.providerId}`);
       }
+      const identity = publishedIdentity(provider.providerId, exclusion);
+      if (!identity || exclusion.identity !== identity || identities.has(identity)) {
+        throw new Error(`Identidad técnica excluida incoherente para el proveedor ${provider.providerId}`);
+      }
+      identities.add(identity);
       exclusionUrls.add(exclusion.sourceUrl);
     }
     for (const exception of plan.exceptions) {
@@ -198,6 +243,11 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
         typeof exception.sourceUrl !== "string" || !productUrls.has(exception.sourceUrl) ||
         (exception.reference !== null && typeof exception.reference !== "string")) {
         throw new Error(`Excepción comercial sin producto válido para el proveedor ${provider.providerId}`);
+      }
+      const product = productsByUrl.get(exception.sourceUrl);
+      if (!product || exception.reference !== product.reference ||
+        exception.identity !== publishedIdentity(provider.providerId, product)) {
+        throw new Error(`Excepción comercial con identidad discordante para el proveedor ${provider.providerId}`);
       }
     }
     for (const sourceUrl of requiredCapacityExceptions) {
@@ -249,14 +299,14 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
       }
     }
     const summary = plan.summary;
-    const productTotals = inspectProductTotals(plan.products, provider.providerId, plan.environment);
+    const productTotals = inspectProductTotals(plan.products, plan.environment);
     const exclusionTotals = inspectExclusionTotals(plan.excluded);
     if (!productTotals || !exclusionTotals ||
       summaryFields.some((field) => summary[field] !== provider[field]) ||
       Object.entries({ ...productTotals, ...exclusionTotals }).some(([field, value]) => summary[field] !== value)) {
       throw new Error(`Totales o procedencia incoherentes para el proveedor ${provider.providerId}`);
     }
-    const presentationIssues = inspectCommercialIdentityPresentation(plan.products, plan.exceptions, provider.providerId);
+    const presentationIssues = inspectCommercialIdentityPresentation(verifiedProducts, plan.exceptions, provider.providerId);
     if (Object.values(presentationIssues).some((count) => count > 0)) {
       throw new Error(`Presentación de identidad comercial incoherente para ${provider.providerId}: ${JSON.stringify(presentationIssues)}`);
     }

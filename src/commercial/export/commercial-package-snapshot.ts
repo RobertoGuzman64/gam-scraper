@@ -63,24 +63,26 @@ export const inspectCommercialPackage = (files: readonly CommercialExportFile[])
     const productFile = byName.get(item.file);
     if (!productFile) throw new Error(`Archivo comercial ausente: ${item.file}`);
     const plan = parseRecord(productFile);
-    if (!Array.isArray(plan.products) || !Array.isArray(plan.exceptions) || !isRecord(plan.summary)) {
+    if (!Array.isArray(plan.products) || !Array.isArray(plan.sources) ||
+      plan.sources.length !== plan.products.length || !Array.isArray(plan.exceptions) || !isRecord(plan.summary)) {
       throw new Error(`Plan comercial inválido: ${item.file}`);
     }
     const counts = new Map<string, number>();
     const references = new Map<string, number>();
     const fields = new Set<string>();
-    for (const product of plan.products) {
-      if (!isRecord(product)) throw new Error(`Producto comercial inválido: ${item.file}`);
+    for (const [index, product] of plan.products.entries()) {
+      const source: unknown = plan.sources[index];
+      if (!isRecord(product) || !isRecord(source)) throw new Error(`Producto comercial inválido: ${item.file}`);
       for (const field of Object.keys(product)) fields.add(field);
       if ((product.reference !== null && typeof product.reference !== "string") ||
-        (product.externalReference !== undefined && product.externalReference !== null &&
-          typeof product.externalReference !== "string")) {
+        (source.externalReference !== undefined && source.externalReference !== null &&
+          typeof source.externalReference !== "string")) {
         throw new Error(`Referencia comercial inválida: ${item.file}`);
       }
       const visibleReference = commercialReference({
         providerId: item.providerId,
         reference: typeof product.reference === "string" ? product.reference : null,
-        externalReference: typeof product.externalReference === "string" ? product.externalReference : null
+        externalReference: typeof source.externalReference === "string" ? source.externalReference : null
       });
       if (visibleReference) {
         const key = visibleReference.toLocaleUpperCase("es");

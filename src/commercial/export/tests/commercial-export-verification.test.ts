@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
-import { buildCommercialExportFiles, type CommercialExportFile } from "../commercial-export.js";
+import { buildCommercialExportFiles, buildCommercialDeliveryPlan, type CommercialExportFile } from "../commercial-export.js";
 import type { CommercialExportPlan } from "../../projection/export-projection.js";
 import { validateCommercialExportFiles, verifyCommercialExportArchive, verifyCommercialExportDirectory, verifyCommercialExportSources, verifyCommercialExportZip } from "../commercial-export-verification.js";
 import { createZipArchive, readZipArchive } from "../../../infrastructure/archive/zip.js";
@@ -26,9 +26,9 @@ const emptyPlan = (): CommercialExportPlan => ({
 });
 
 const filesForProvider = (plan: CommercialExportPlan = emptyPlan()): CommercialExportFile[] => {
-  const product = createFile(`${plan.providerId}-commercial.json`, `${JSON.stringify(plan)}\n`);
+  const product = createFile(`${plan.providerId}-commercial.json`, `${JSON.stringify(buildCommercialDeliveryPlan(plan))}\n`);
   const manifest = {
-    version: 1, environment: null, taxonomySha256: "b".repeat(64), attributesSha256: "c".repeat(64),
+    version: 2, environment: null, taxonomySha256: "b".repeat(64), attributesSha256: "c".repeat(64),
     logosSha256: "d".repeat(64), companiesSha256: "e".repeat(64),
     providers: [{ providerId: plan.providerId, publicationSha256: plan.publicationSha256, originalCount: plan.total,
       ...plan.summary, excluded: plan.excluded.length, exceptions: plan.exceptions.length,
@@ -182,6 +182,56 @@ const planWithProduct = (): CommercialExportPlan => ({
   }
 });
 
+test("las referencias técnicas son únicas aunque las referencias externas coincidan", () => {
+  const plan = planWithProduct();
+  const first = plan.products[0];
+  assert.ok(first);
+  const second = { ...first, reference: "product-2", sourceUrl: "https://example.com/second",
+    title: "Producto de prueba · Ref. product-2", externalReference: "MODELO-COMPARTIDO" };
+  const valid: CommercialExportPlan = {
+    ...plan,
+    total: 2,
+    products: [{ ...first, externalReference: "MODELO-COMPARTIDO" }, second],
+    summary: { ...plan.summary, exported: 2, categorized: 2, attributes: 2,
+      withLogo: 2, withPrice: 2 }
+  };
+  assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider(valid)));
+  assert.throws(() => validateCommercialExportFiles(filesForProvider({
+    ...valid, products: [valid.products[0]!, { ...second, reference: " PRODUCT-1 " }]
+  })), /Referencias técnicas duplicadas/);
+});
+
+test("las máquinas excluidas no pueden reutilizar identidades de productos", () => {
+  const plan = planWithProduct();
+  const excluded = { identity: "gam:ref:excluido-1", reference: "excluido-1",
+    sourceUrl: "https://example.com/excluido", reason: "lote" };
+  const valid = { ...plan, total: 2, excluded: [excluded],
+    summary: { ...plan.summary, excludedLots: 1 } };
+  assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider(valid)));
+  assert.throws(() => validateCommercialExportFiles(filesForProvider({
+    ...valid, excluded: [{ ...excluded, reference: "product-1",
+      identity: "gam:ref:product-1" }]
+  })), /Identidad técnica excluida incoherente/);
+});
+
+test("las excepciones conservan identidad y referencia del producto publicado", () => {
+  const plan = planWithProduct();
+  const source = plan.products[0];
+  assert.ok(source);
+  const exception = { identity: "gam:ref:product-1", reference: "product-1",
+    sourceUrl: source.sourceUrl, reason: "revision-comercial-pendiente" };
+  const valid = { ...plan, exceptions: [exception] };
+  assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider(valid)));
+  for (const invalid of [
+    { ...exception, identity: "gam:ref:otra-unidad" },
+    { ...exception, reference: "otra-unidad" }
+  ]) {
+    assert.throws(() => validateCommercialExportFiles(filesForProvider({
+      ...valid, exceptions: [invalid]
+    })), /Excepción comercial con identidad discordante/);
+  }
+});
+
 test("comprueba que los recuentos se derivan del contenido aunque las huellas sean válidas", () => {
   const valid = planWithProduct();
   assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider(valid)));
@@ -257,7 +307,7 @@ test("rechaza contratos comerciales adulterados aunque los hashes y contadores c
     const product = Object.assign({}, original, change);
     const candidate = { ...base, products: [product] };
     assert.throws(() => validateCommercialExportFiles(filesForProvider(candidate)),
-      /Totales o procedencia/, JSON.stringify(change));
+      /Totales o procedencia|Procedencia comercial inválida/, JSON.stringify(change));
   }
 });
 
@@ -280,20 +330,65 @@ test("rechaza identidades repetidas y excepciones ajenas aunque coincidan los to
     ],
     summary: { ...original.summary, excludedLots: 2 }
   };
-  assert.throws(() => validateCommercialExportFiles(filesForProvider(excluded)), /Identidades excluidas duplicadas/);
+  assert.throws(() => validateCommercialExportFiles(filesForProvider(excluded)), /Identidades excluidas duplicadas|Identidad técnica excluida incoherente/);
 
   const sameProductExcluded: CommercialExportPlan = {
     ...base, total: 2, excluded: [{ identity: "gam:excluded", reference: first.reference,
       sourceUrl: first.sourceUrl, reason: "lote" }],
     summary: { ...base.summary, excludedLots: 1 }
   };
-  assert.throws(() => validateCommercialExportFiles(filesForProvider(sameProductExcluded)), /Identidades excluidas duplicadas/);
+  assert.throws(() => validateCommercialExportFiles(filesForProvider(sameProductExcluded)), /Identidades excluidas duplicadas|Identidad técnica excluida incoherente/);
 
   const orphanException: CommercialExportPlan = {
     ...base, exceptions: [{ identity: "gam:unknown", reference: "unknown",
       sourceUrl: "https://example.com/unknown", reason: "spec-residuo-hoja-calculo:Altura" }]
   };
   assert.throws(() => validateCommercialExportFiles(filesForProvider(orphanException)), /Excepción comercial sin producto válido/);
+});
+
+test("separa la procedencia del producto y bloquea cambios de identidad en el contrato versionado", () => {
+  const source = planWithProduct();
+  const files = filesForProvider(source);
+  const productFile = files[0];
+  assert.ok(productFile);
+  const plan: unknown = JSON.parse(productFile.content);
+  assert.ok(isRecord(plan) && Array.isArray(plan.products) && Array.isArray(plan.sources));
+  const product: unknown = plan.products[0];
+  const origin: unknown = plan.sources[0];
+  assert.ok(isRecord(product) && isRecord(origin));
+  assert.equal(plan.version, 2);
+  assert.ok(!Object.hasOwn(product, "providerId") && !Object.hasOwn(product, "sourceUrl") &&
+    !Object.hasOwn(product, "externalReference"));
+  assert.deepEqual(origin, {
+    identity: "gam:ref:product-1", reference: "product-1", sourceUrl: "https://example.com/product"
+  });
+  const adjusted = (update: (data: Record<string, unknown>, source: Record<string, unknown>) => void): CommercialExportFile[] => {
+    const data: unknown = JSON.parse(productFile.content);
+    assert.ok(isRecord(data) && Array.isArray(data.sources));
+    const source: unknown = data.sources[0];
+    assert.ok(isRecord(source));
+    update(data, source);
+    const changed = createFile(productFile.name, `${JSON.stringify(data)}\n`);
+    return withManifest([changed, files[1]!], (manifest) => {
+      assert.ok(Array.isArray(manifest.providers));
+      const provider: unknown = manifest.providers[0];
+      assert.ok(isRecord(provider));
+      provider.sha256 = changed.sha256;
+      provider.bytes = changed.bytes;
+    });
+  };
+  assert.throws(() => validateCommercialExportFiles(adjusted((_, origin) => {
+    origin.reference = "reference-falsa";
+  })), /Procedencia comercial inválida/);
+  assert.throws(() => validateCommercialExportFiles(adjusted((_, origin) => {
+    origin.sourceUrl = "file:///origen";
+  })), /Procedencia comercial inválida/);
+  assert.throws(() => validateCommercialExportFiles(adjusted((data) => {
+    data.version = 1;
+  })), /Totales o procedencia/);
+  assert.throws(() => validateCommercialExportFiles(withManifest(files, (manifest) => {
+    manifest.version = 1;
+  })), /Manifiesto comercial/);
 });
 
 test("acredita el contrato real de los tres proveedores y la identidad de cada unidad", async () => {
@@ -308,10 +403,17 @@ test("acredita el contrato real de los tres proveedores y la identidad de cada u
     assert.ok(isRecord(plan) && Array.isArray(plan.products) && Array.isArray(plan.excluded));
     assert.ok(plan.products.length > 0);
     assert.equal(plan.products.length + plan.excluded.length, plan.total);
-    const sourceUrls = plan.products.map((product: unknown) => {
-      assert.ok(isRecord(product) && typeof product.sourceUrl === "string" && typeof product.title === "string");
+    const sources: unknown = plan.sources;
+    assert.ok(Array.isArray(sources) && sources.length === plan.products.length);
+    const sourceUrls = plan.products.map((product: unknown, index: number) => {
+      const origin: unknown = sources[index];
+      assert.ok(isRecord(product) && typeof product.title === "string" && isRecord(origin) &&
+        typeof origin.sourceUrl === "string");
       assert.ok(product.title.trim());
-      return product.sourceUrl;
+      assert.ok(!Object.hasOwn(product, "providerId") && !Object.hasOwn(product, "sourceUrl") &&
+        !Object.hasOwn(product, "externalReference"));
+      assert.equal(origin.reference, product.reference);
+      return origin.sourceUrl;
     });
     assert.equal(new Set(sourceUrls).size, sourceUrls.length);
   }
@@ -321,7 +423,7 @@ test("rechaza exclusiones incoherentes, aunque los totales del manifiesto coinci
   const original = emptyPlan();
   const valid: CommercialExportPlan = {
     ...original, total: 1,
-    excluded: [{ identity: "gam:lot", reference: "lot", sourceUrl: "https://example.com/lot", reason: "lote" }],
+    excluded: [{ identity: "gam:ref:lot", reference: "lot", sourceUrl: "https://example.com/lot", reason: "lote" }],
     summary: { ...original.summary, excludedLots: 1 }
   };
   assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider(valid)));
@@ -478,7 +580,7 @@ test("bloquea títulos de unidad repetidos sin excepción y motorizaciones ausen
   const justified: CommercialExportPlan = {
     ...duplicatePlan,
     exceptions: [original, repeated].map((product) => ({
-      identity: `gam:${product.reference}`, reference: product.reference,
+      identity: `gam:ref:${product.reference}`, reference: product.reference,
       sourceUrl: product.sourceUrl, reason: "titulo-unidad-no-diferenciada"
     }))
   };
@@ -525,7 +627,7 @@ test("rechaza alturas adulteradas aunque el manifiesto y los hashes se hayan rec
   assert.throws(() => validateCommercialExportFiles(filesForProvider({ ...source, products: [unresolved] })),
     /Discordancia de altura no declarada/);
   const documented: CommercialExportPlan = {
-    ...source, products: [unresolved], exceptions: [{ identity: "gam:documented", reference: unresolved.reference,
+    ...source, products: [unresolved], exceptions: [{ identity: "gam:ref:product-1", reference: unresolved.reference,
       sourceUrl: unresolved.sourceUrl, reason: "altura-titulo-resumen-discordante" }]
   };
   assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider(documented)));
@@ -545,7 +647,7 @@ test("bloquea años de fabricación contradictorios y exige justificar discrepan
   const cleaned = { ...product, description_general: "Esta plataforma es fiable." };
   const cleanedPlan: CommercialExportPlan = { ...plan, products: [cleaned] };
   assert.throws(() => validateCommercialExportFiles(filesForProvider(cleanedPlan)), /Discrepancia de año no declarada/);
-  const issue = { identity: "gam:6869", reference: "6869", sourceUrl: url,
+  const issue = { identity: "gam:ref:6869", reference: "6869", sourceUrl: url,
     reason: "ano-url-atributo-discordante" };
   const recognized: CommercialExportPlan = { ...cleanedPlan, exceptions: [issue] };
   assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider(recognized)));
