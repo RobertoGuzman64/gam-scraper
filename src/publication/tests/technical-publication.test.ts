@@ -211,3 +211,145 @@ test("la CLI técnica admite las opciones normalizadas por tooling y los alias p
     assert.equal((await readActiveTechnicalPublication(root, "gomariz"))?.sha256, versions[0]);
   } finally { await rm(root, { force: true, recursive: true }); }
 });
+
+test("retención técnica conserva la vigente y la anterior tras sucesivas activaciones", async () => {
+  const { root, preparation } = await workspace();
+  try {
+    const original = (await publishTechnicalSnapshot(root, "gomariz", { preparation }, false)).snapshot;
+    const selected = original.products.findIndex((product) => product.status === "ready");
+    assert.ok(selected >= 0);
+    const altered = (detail: string) => parseTechnicalSnapshot({
+      ...original,
+      totals: { ready: original.totals.ready - 1, review: original.totals.review + 1 },
+      products: original.products.map((product, index) => index === selected
+        ? { ...product, status: "review" as const, issues: [detail] }
+        : product)
+    }, "gomariz");
+    const secondCandidate = altered("Revisión técnica segunda versión");
+    const thirdCandidate = altered("Revisión técnica tercera versión");
+    const fourthCandidate = altered("Revisión técnica cuarta versión");
+    const commercial = join(root, "catalogs", "providers", "gomariz", "publications");
+    await mkdir(commercial);
+    await writeFile(join(commercial, "evidence.txt"), "sin cambios comerciales\n");
+
+    const first = await activateTechnicalPublication(root, original);
+    const second = await activateTechnicalPublication(root, secondCandidate);
+    assert.deepEqual(await listTechnicalVersions(root, "gomariz"), [first.sha256, second.sha256].sort());
+    const third = await activateTechnicalPublication(root, thirdCandidate);
+    assert.deepEqual(await listTechnicalVersions(root, "gomariz"), [second.sha256, third.sha256].sort());
+    await assert.rejects(readTechnicalVersion(root, "gomariz", first.sha256), { code: "ENOENT" });
+    const fourth = await activateTechnicalPublication(root, fourthCandidate);
+    assert.deepEqual(await listTechnicalVersions(root, "gomariz"), [third.sha256, fourth.sha256].sort());
+    const index: unknown = JSON.parse(await readFile(join(technicalPath(root, "gomariz"), "active.json"), "utf8"));
+    assert.deepEqual(index, { version: 1, providerId: "gomariz", sha256: fourth.sha256, previousSha256: third.sha256 });
+    assert.equal((await readActiveTechnicalPublication(root, "gomariz"))?.sha256, fourth.sha256);
+    assert.equal((await compareWithTechnicalVersion(root, "gomariz", third.sha256)).changedIssues.length, 1);
+    assert.deepEqual(await readFile(join(commercial, "evidence.txt"), "utf8"), "sin cambios comerciales\n");
+
+    const unchanged = await activateTechnicalPublication(root, fourthCandidate);
+    assert.equal(unchanged.changed, false);
+    assert.deepEqual(await listTechnicalVersions(root, "gomariz"), [third.sha256, fourth.sha256].sort());
+    const inventory = await inspectPortableInventory(root, {});
+    assert.deepEqual(inventory.issues, []);
+  } finally { await rm(root, { force: true, recursive: true }); }
+});
+
+test("retención permite activar un corte anterior sin alterar versiones no vigentes por hash", async () => {
+  const { root, preparation } = await workspace();
+  try {
+    const original = (await publishTechnicalSnapshot(root, "gomariz", { preparation }, false)).snapshot;
+    const selected = original.products.findIndex((product) => product.status === "ready");
+    assert.ok(selected >= 0);
+    const next = parseTechnicalSnapshot({
+      ...original,
+      totals: { ready: original.totals.ready - 1, review: original.totals.review + 1 },
+      products: original.products.map((product, index) => index === selected
+        ? { ...product, status: "review" as const, issues: ["Nueva revisión"] }
+        : product)
+    }, "gomariz");
+    const first = await activateTechnicalPublication(root, original);
+    const second = await activateTechnicalPublication(root, next);
+    const third = await activateTechnicalPublication(root, original);
+    assert.equal(third.sha256, first.sha256);
+    assert.deepEqual(await listTechnicalVersions(root, "gomariz"), [first.sha256, second.sha256].sort());
+    const index: unknown = JSON.parse(await readFile(join(technicalPath(root, "gomariz"), "active.json"), "utf8"));
+    assert.deepEqual(index, { version: 1, providerId: "gomariz", sha256: first.sha256, previousSha256: second.sha256 });
+  } finally { await rm(root, { force: true, recursive: true }); }
+});
+
+test("retención recupera temporales reconocidos y respeta índices legados", async () => {
+  const { root, preparation } = await workspace();
+  try {
+    const original = (await publishTechnicalSnapshot(root, "gomariz", { preparation }, false)).snapshot;
+    const first = await activateTechnicalPublication(root, original);
+    const technical = technicalPath(root, "gomariz");
+    const pointer = join(technical, "active.json");
+    await writeFile(pointer, `${JSON.stringify({ version: 1, providerId: "gomariz", sha256: first.sha256 })}\n`);
+    const indexTemp = join(technical, ".active-4b8c3f29-ada3-41ab-a812-aac11dc29810.tmp");
+    const pending = join(technical, "versions", ".pending-c4a311ac-a418-4ea5-b24e-cf81c72f20a1");
+    await writeFile(indexTemp, "operación interrumpida");
+    await mkdir(pending);
+    await writeFile(join(pending, "snapshot.json"), "incompleto");
+    const simulation = await publishTechnicalSnapshot(root, "gomariz", { preparation }, false);
+    assert.equal(simulation.status, "simulated");
+    assert.equal((await readFile(indexTemp, "utf8")), "operación interrumpida");
+    const selected = original.products.findIndex((product) => product.status === "ready");
+    assert.ok(selected >= 0);
+    const next = parseTechnicalSnapshot({
+      ...original,
+      totals: { ready: original.totals.ready - 1, review: original.totals.review + 1 },
+      products: original.products.map((product, index) => index === selected
+        ? { ...product, status: "review" as const, issues: ["Revisión recuperada"] }
+        : product)
+    }, "gomariz");
+    const second = await activateTechnicalPublication(root, next);
+    await assert.rejects(lstat(indexTemp), { code: "ENOENT" });
+    await assert.rejects(lstat(pending), { code: "ENOENT" });
+    assert.deepEqual(await listTechnicalVersions(root, "gomariz"), [first.sha256, second.sha256].sort());
+    assert.equal((await readActiveTechnicalPublication(root, "gomariz"))?.sha256, second.sha256);
+  } finally { await rm(root, { force: true, recursive: true }); }
+});
+
+test("retención rechaza versiones dañadas y temporales enlazados sin cambiar la vigente", async () => {
+  const { root, preparation } = await workspace();
+  try {
+    const original = (await publishTechnicalSnapshot(root, "gomariz", { preparation }, false)).snapshot;
+    const first = await activateTechnicalPublication(root, original);
+    const versionsPath = join(technicalPath(root, "gomariz"), "versions");
+    const linked = join(versionsPath, ".pending-c4a311ac-a418-4ea5-b24e-cf81c72f20a1");
+    await symlink(join(root, "source"), linked, "dir");
+    await assert.rejects(activateTechnicalPublication(root, original), /no regular/);
+    assert.equal((await readActiveTechnicalPublication(root, "gomariz"))?.sha256, first.sha256);
+    await rm(linked);
+    const corrupted = join(versionsPath, "f".repeat(64));
+    await mkdir(corrupted);
+    await writeFile(join(corrupted, "snapshot.json"), "alterado");
+    await assert.rejects(activateTechnicalPublication(root, original), /incompleta/);
+    assert.equal((await readActiveTechnicalPublication(root, "gomariz"))?.sha256, first.sha256);
+    assert.equal((await readTechnicalVersion(root, "gomariz", first.sha256)).sha256, first.sha256);
+  } finally { await rm(root, { force: true, recursive: true }); }
+});
+
+
+test("índice legado con dos cortes no borra el histórico al reactivar sin cambios", async () => {
+  const { root, preparation } = await workspace();
+  try {
+    const original = (await publishTechnicalSnapshot(root, "gomariz", { preparation }, false)).snapshot;
+    const selected = original.products.findIndex((product) => product.status === "ready");
+    assert.ok(selected >= 0);
+    const next = parseTechnicalSnapshot({
+      ...original,
+      totals: { ready: original.totals.ready - 1, review: original.totals.review + 1 },
+      products: original.products.map((product, index) => index === selected
+        ? { ...product, status: "review" as const, issues: ["Revisión histórica"] }
+        : product)
+    }, "gomariz");
+    const first = await activateTechnicalPublication(root, original);
+    const second = await activateTechnicalPublication(root, next);
+    const pointer = join(technicalPath(root, "gomariz"), "active.json");
+    await writeFile(pointer, `${JSON.stringify({ version: 1, providerId: "gomariz", sha256: second.sha256 })}\n`);
+    assert.equal((await activateTechnicalPublication(root, next)).changed, false);
+    assert.deepEqual(await listTechnicalVersions(root, "gomariz"), [first.sha256, second.sha256].sort());
+    assert.equal((await readActiveTechnicalPublication(root, "gomariz"))?.sha256, second.sha256);
+  } finally { await rm(root, { force: true, recursive: true }); }
+});
