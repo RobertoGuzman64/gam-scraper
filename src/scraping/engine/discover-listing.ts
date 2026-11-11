@@ -23,6 +23,7 @@ export const discoverProductUrls = async (
   report("category", `start key=${category.key} pagesMax=${options.maxPages}`);
 
   let expectedProductUrls: number | undefined;
+  let lastPage: number | undefined;
 
   if (provider.discoverListing) {
     try {
@@ -57,7 +58,8 @@ export const discoverProductUrls = async (
               : await fetchHtml(url, { timeoutMs: options.timeoutMs, userAgent: options.userAgent });
             return {
               urls: provider.extractProductLinksFromListing(url, html),
-              expectedTotal: provider.extractExpectedTotalFromListing?.(html) ?? null
+              expectedTotal: provider.extractExpectedTotalFromListing?.(html) ?? null,
+              lastPage: provider.extractLastPageFromListing?.(html) ?? null
             };
           })
         )
@@ -73,6 +75,20 @@ export const discoverProductUrls = async (
           recordFailure("listado", listingUrl, failureDetail(r.reason));
           report("listing", `fail key=${category.key} url=${listingUrl} error=${String(r.reason)}`);
           continue;
+        }
+        if (provider.extractLastPageFromListing) {
+          if (!r.value.urls.length) {
+            recordFailure("listado", provider.buildPagedUrl(category.url, pages[i]!), "Página del catálogo de venta sin fichas detectadas");
+          }
+          if (r.value.lastPage !== null) {
+            if (!Number.isSafeInteger(r.value.lastPage) || r.value.lastPage < pages[i]!) {
+              recordFailure("listado", provider.buildPagedUrl(category.url, pages[i]!), `Paginación inválida: ${r.value.lastPage}`);
+            } else if (lastPage !== undefined && lastPage !== r.value.lastPage) {
+              recordFailure("listado", provider.buildPagedUrl(category.url, pages[i]!), `Total de páginas inconsistente: ${lastPage} / ${r.value.lastPage}`);
+            } else {
+              lastPage = r.value.lastPage;
+            }
+          }
         }
         if (r.value.expectedTotal !== null) {
           if (expectedProductUrls !== undefined && expectedProductUrls !== r.value.expectedTotal) {
@@ -98,7 +114,17 @@ export const discoverProductUrls = async (
       if (added === 0) stall += 1;
       else stall = 0;
 
-      if (stall >= options.stallStopAfter) {
+      if (provider.extractLastPageFromListing && added === 0) {
+        recordFailure("listado", provider.buildPagedUrl(category.url, pages[0]!), "Página de venta sin referencias nuevas");
+      }
+
+      if (lastPage !== undefined && pages.at(-1)! >= lastPage) {
+        exhausted = true;
+        report("category", `pageEnd key=${category.key} pages=${lastPage} total=${productUrls.size}`);
+        break;
+      }
+
+      if (lastPage === undefined && stall >= options.stallStopAfter) {
         exhausted = true;
         report("category", `stallStop key=${category.key} stall=${stall} total=${productUrls.size}`);
         break;
@@ -108,6 +134,9 @@ export const discoverProductUrls = async (
       if (page <= options.maxPages) await sleep(Math.max(options.delayMs, provider.defaultOptions.delayMs));
     }
 
+    if (provider.extractLastPageFromListing && lastPage === undefined) {
+      recordFailure("listado", category.url, "No se pudo acreditar el número de páginas del catálogo de venta");
+    }
     if (!exhausted && page > options.maxPages) {
       recordFailure("listado", category.url, `Límite de páginas (${options.maxPages}) alcanzado sin confirmar fin de catálogo`);
     }

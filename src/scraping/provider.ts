@@ -11,6 +11,7 @@ export interface ScraperProvider {
   buildPagedUrl(categoryUrl: string, page: number): string;
   extractProductLinksFromListing(listingUrl: string, html: string): readonly string[];
   extractExpectedTotalFromListing?(html: string): number | null;
+  extractLastPageFromListing?(html: string): number | null;
   parseProductPage(html: string, pageUrl: string): ParsedProduct;
   resolveCondition?(category: CategoryConfig, condition: ParsedProduct["condition"], providerId: string): ProductRecord["condition"];
   extractReference(url: string): string | null;

@@ -58,6 +58,16 @@ test("reutiliza las comprobaciones técnicas de motorización y alturas sin modi
   assert.match(formatPublishedTechnicalQualityReport(report, 2).join("\n"), /Revisar: evidencia de origen/);
 });
 
+test("el auditor conserva las comprobaciones semánticas de Gomariz para fichas antiguas acreditadas en venta", () => {
+  const legacy = {
+    ...product("BA1346", { Motor: "Eléctrico" }, "gomariz"),
+    sourceUrl: "https://www.gomarizrent.com/elevacion-y-trabajos-en-altura/brazo-articulado/skyjack-sj85aj/",
+    description_general: "Las articuladas diésel permiten alcanzar zonas elevadas."
+  };
+  assert.deepEqual(analyzePublishedTechnicalQuality([legacy]).cases.map((issue) => issue.code), ["relacion-motorizacion"]);
+  assert.deepEqual(analyzePublishedTechnicalQuality([{ ...legacy, condition: null }]).cases, []);
+});
+
 test("ausencia de evidencia, posibles duplicados y salida vacía son tratados de forma conservadora", () => {
   const a = product("a", { "Altura de trabajo": "12 m" });
   const report = analyzePublishedTechnicalQuality([a]);

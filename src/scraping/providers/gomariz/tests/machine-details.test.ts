@@ -125,3 +125,48 @@ test("Gomariz: conserva fotos del mismo lote con prefijo TD sin renombrar la var
   assert.deepEqual(result.images, gallery);
   assert.equal(result.image, gallery[0]);
 });
+
+
+test("Gomariz: recupera la referencia ausente solo de una galería oficial coherente con el modelo", () => {
+  const pageUrl = "https://www.gomarizrent.com/producto/iteco-it12122/";
+  const root = "https://www.gomarizrent.com/wp-content/uploads/2024/04/";
+  const images = [8, 13, 14].map((number) => `${root}TE1152-ITECO-IT12122-${number}.jpg`);
+  const html = `<html><main><h1>ITECO IT12122</h1><p>Año: 2010 Marca: Iteco Ver precio</p>
+    <div class="woocommerce-product-gallery">${images.map((image) => `<img src="${image}">`).join("")}</div>
+    </main></html>`;
+  const result = parseGomarizProduct(html, pageUrl);
+  assert.equal(result.reference, "TE1152");
+  assert.equal(result.title, "ITECO IT12122");
+  assert.equal(result.year, "2010");
+  assert.deepEqual(result.images, images);
+});
+
+test("Gomariz: una galería única, ambigua, ajena o de otro modelo no acredita una referencia", () => {
+  const pageUrl = "https://www.gomarizrent.com/producto/iteco-it12122/";
+  const root = "https://www.gomarizrent.com/wp-content/uploads/2024/04/";
+  const own = `${root}TE1152-ITECO-IT12122-8.jpg`;
+  const otherReference = `${root}TE1153-ITECO-IT12122-9.jpg`;
+  const otherModel = `${root}TE1152-ITECO-IT12123-9.jpg`;
+  const otherHost = "https://example.com/wp-content/uploads/2024/04/TE1152-ITECO-IT12122-9.jpg";
+  const make = (images: readonly string[]) => `<html><main><h1>ITECO IT12122</h1>
+    <p>Año: 2010 Marca: Iteco Ver precio</p>
+    <div class="woocommerce-product-gallery">${images.map((image) => `<img src="${image}">`).join("")}</div>
+    </main></html>`;
+  for (const images of [
+    [], [own], [own, otherReference], [own, otherModel], [own, otherHost],
+    [own, `${root}sin-referencia-iteco-9.jpg`]
+  ]) {
+    assert.throws(() => parseGomarizProduct(make(images), pageUrl), /sin título o referencia/u);
+  }
+});
+
+test("Gomariz: la referencia textual siempre tiene prioridad sobre la galería", () => {
+  const pageUrl = "https://www.gomarizrent.com/producto/iteco-it12122/";
+  const root = "https://www.gomarizrent.com/wp-content/uploads/2024/04/";
+  const html = `<html><main><h1>ITECO IT12122</h1><p>Referencia: TE1152 Año: 2010</p>
+    <div class="woocommerce-product-gallery">
+      <img src="${root}TE1153-ITECO-IT12122-8.jpg">
+      <img src="${root}TE1154-ITECO-IT12122-9.jpg">
+    </div></main></html>`;
+  assert.equal(parseGomarizProduct(html, pageUrl).reference, "TE1152");
+});

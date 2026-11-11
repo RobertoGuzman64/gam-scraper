@@ -73,7 +73,7 @@ const classify = (detail: string): string => {
 
 const asPublishedRecord = (product: ImportCandidate): ProductRecord => ({
   providerId: product.providerId,
-  categoryKey: product.providerId === "gomariz" && /^\/venta\//u.test(new URL(product.sourceUrl).pathname) ? "venta" : "",
+  categoryKey: product.providerId === "gomariz" && product.condition === "Segunda_Mano" ? "venta" : "",
   categoryName: product.category ?? "",
   url: product.sourceUrl,
   reference: product.reference,
