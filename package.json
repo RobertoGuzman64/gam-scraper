@@ -10,6 +10,7 @@
     "iniciar": "node scripts/tooling.mjs iniciar",
     "estado": "node scripts/tooling.mjs estado",
     "huecos": "node scripts/tooling.mjs huecos",
+    "contrato:comercial": "node scripts/tooling.mjs contrato:comercial",
     "exportar:comercial": "node scripts/tooling.mjs exportar:comercial",
     "auditar:comercial": "node scripts/tooling.mjs auditar:comercial",
     "extraer": "node scripts/tooling.mjs extraer",
@@ -54,7 +55,7 @@
     "consola": "node scripts/tooling.mjs consola",
     "medir:ejecucion": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/operations/measure-execution.ps1",
     "build": "node scripts/run-build.mjs",
-    "test": "node tests-performance-guard.mjs && node scripts/run-build.mjs --quiet --if-needed && node scripts/run-tests.mjs",
+    "test": "node tests-performance-guard.mjs && node tests-commercial-contract-guard.mjs && node scripts/run-build.mjs --quiet --if-needed && node scripts/run-tests.mjs",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "test:guard": "node tests-performance-guard.mjs"
   },

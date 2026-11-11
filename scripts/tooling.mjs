@@ -8,6 +8,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const definitions = {
   iniciar: { entry: "cli/commands/maintenance/start.js", usage: "iniciar", description: "Comprobar entorno y descubrir campaña sin extraer" },
+  "contrato:comercial": { entry: "tests-commercial-contract-guard.mjs", usage: "contrato:comercial", description: "Verificar el contrato comercial v2 sin compilar ni generar catálogos" },
   "exportar:comercial": { entry: "cli/commands/catalog/commercial-export.js", usage: "exportar:comercial [-- --entorno develop|production] [--simular] [--salida <directorio-nuevo>]", description: "Entregar dos ZIP comerciales en Escritorio o cuatro JSON mediante --salida, sin publicar" },
   "auditar:comercial": { entry: "cli/commands/catalog/commercial-audit.js", usage: "auditar:comercial [-- --detalle|--acreditacion|--json|--verificar=RUTA [--informe=ZIP]]", description: "Auditar sin escrituras las propuestas de categoría, atributos y cobertura comercial de publicaciones acreditadas" },
   huecos: { entry: "cli/commands/catalog/catalog-content-gaps.js", usage: "huecos [-- --finales | --tecnicas | --catalogo ruta/-catalog.json | --publicacion ruta/-publishable.json] [--agrupar categoria|marca|modelo] [--min-grupo 8] [--min-ausentes 3] [--top 20] [--detalle] [--json] [--comparar --titulos]", description: "Consultar huecos canónicos o calidad editorial de publicaciones acreditadas; solo lectura" },
@@ -112,6 +113,7 @@ const printHelp = (requested) => {
     console.log("  npm run migrar:catalogos  (audita migración sin escrituras)");
     console.log("  npm run migrar:catalogos -- --aplicar  (consolida acreditados sin limpiar)");
     console.log("  npm run limpiar:versionados  (limpia solo archivos históricos rastreados por Git)");
+    console.log("  npm run contrato:comercial  (verifica el contrato v2 antes de exportar)");
     console.log("  npm run extraer:proveedor -- gam");
     console.log("  npm run extraer:todos -- --simular");
     console.log("  npm run catalogo:preparar  (paso 1/2, original portátil y sin rutas manuales)");
@@ -182,30 +184,41 @@ if (rawCommand === "ayuda") {
   } else {
     const cleaned = command === "intervenir" || command === "intervenir:manual" || command === "recuperar" || command === "migrar:catalogos" ? normalized : normalized.filter((argument) => argument !== "--aplicar");
     if (selected.defaultSimulation && !normalized.includes("--aplicar") && !cleaned.includes("--dry-run")) cleaned.push("--dry-run");
-    const cached = isCurrentBuild(root);
-    const compile = cached ? null : spawnSync(process.execPath, [join(root, "scripts/run-build.mjs"), "--quiet", "--if-needed"], {
+    const requireContractGuard = command === "contrato:comercial" || command === "exportar:comercial";
+    const guard = requireContractGuard ? spawnSync(process.execPath, [join(root, "tests-commercial-contract-guard.mjs")], {
       cwd: root, stdio: "inherit", windowsHide: true
-    });
-    if (compile && (compile.error || compile.status !== 0)) {
-      fail(compile.error?.message ?? `No se pudo compilar (código ${compile.status ?? "desconocido"})`);
+    }) : null;
+    if (guard && (guard.error || guard.status !== 0)) {
+      fail(guard.error?.message ?? "El contrato comercial no coincide con la versión protegida", command);
+    } else if (command === "contrato:comercial") {
+      if (cleaned.length > 0) fail("Este comando no acepta opciones adicionales", command);
+      else process.exitCode = 0;
     } else {
-      const result = spawnSync(process.execPath, [join(root, "dist", selected.entry), ...(selected.prefix ?? []), ...(selected.fixed ?? []), ...cleaned], {
+      const cached = isCurrentBuild(root);
+      const compile = cached ? null : spawnSync(process.execPath, [join(root, "scripts/run-build.mjs"), "--quiet", "--if-needed"], {
         cwd: root, stdio: "inherit", windowsHide: true
       });
-      if (result.error) fail(result.error.message);
-      else if (result.signal) fail(`La operación terminó por señal ${result.signal}`);
-      else {
-        process.exitCode = result.status ?? 1;
-        const activateIndividual = command === "publicacion:vigente" && cleaned.includes("--activar") && cleaned[0] !== "--campana";
-        const deliverIndividual = command === "entregar:proveedor" &&
-          !cleaned.some((arg) => ["--dry-run", "--verificar", "--solo-candidata"].includes(arg));
-        if (process.exitCode === 0 && (activateIndividual || deliverIndividual)) {
-          const retention = spawnSync(process.execPath, [join(root, "scripts/maintenance/consolidate-local-artifacts.mjs"), "--aplicar"], {
-            cwd: root, stdio: "inherit", windowsHide: true
-          });
-          if (retention.error || retention.status !== 0) {
-            console.error(formatScriptStatus("WARN", `Publicación individual activada, pero el archivado local quedó PENDIENTE: ${retention.error?.message ?? `código ${retention.status}`}. Revisar antes de continuar`, process.stderr));
-            process.exitCode = 1;
+      if (compile && (compile.error || compile.status !== 0)) {
+        fail(compile.error?.message ?? `No se pudo compilar (código ${compile.status ?? "desconocido"})`);
+      } else {
+        const result = spawnSync(process.execPath, [join(root, "dist", selected.entry), ...(selected.prefix ?? []), ...(selected.fixed ?? []), ...cleaned], {
+          cwd: root, stdio: "inherit", windowsHide: true
+        });
+        if (result.error) fail(result.error.message);
+        else if (result.signal) fail(`La operación terminó por señal ${result.signal}`);
+        else {
+          process.exitCode = result.status ?? 1;
+          const activateIndividual = command === "publicacion:vigente" && cleaned.includes("--activar") && cleaned[0] !== "--campana";
+          const deliverIndividual = command === "entregar:proveedor" &&
+            !cleaned.some((arg) => ["--dry-run", "--verificar", "--solo-candidata"].includes(arg));
+          if (process.exitCode === 0 && (activateIndividual || deliverIndividual)) {
+            const retention = spawnSync(process.execPath, [join(root, "scripts/maintenance/consolidate-local-artifacts.mjs"), "--aplicar"], {
+              cwd: root, stdio: "inherit", windowsHide: true
+            });
+            if (retention.error || retention.status !== 0) {
+              console.error(formatScriptStatus("WARN", `Publicación individual activada, pero el archivado local quedó PENDIENTE: ${retention.error?.message ?? `código ${retention.status}`}. Revisar antes de continuar`, process.stderr));
+              process.exitCode = 1;
+            }
           }
         }
       }
