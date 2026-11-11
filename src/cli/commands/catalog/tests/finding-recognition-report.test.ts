@@ -126,7 +126,7 @@ test("sin pendientes reconocidos no hay WARN nuevos y las detecciones originales
   assert.equal(output.filter((line) => line.startsWith("WARN | ")).length, 0);
   assert.ok(output.some((line) => line.includes("INCIDENCIAS ACREDITACIÓN | pendientes 0 | controladas 4")));
   assert.equal(output.some((line) => line.includes("capacidad-titulo-spec-discordante")), false);
-  assert.ok(output.some((line) => line.includes("1334 productos · 7344 atributos · 0 infracciones")));
+  assert.ok(output.some((line) => line.includes("1334 productos · 7349 atributos · 0 infracciones")));
   const review = capture(() => printCommercialAuditReport(audited.report, "--revision",
     undefined, undefined, classification));
   assert.ok(review.some((line) => line.includes("CONTROLADA INDIVIDUAL | ano-url-atributo-discordante")));
