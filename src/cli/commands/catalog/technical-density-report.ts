@@ -6,10 +6,14 @@ export const formatTechnicalDensityReport = (density: TechnicalDensity, limit: n
     ...(detailed ? density.providers.map((item) => `DENSIDAD PROVEEDOR | ${item.providerId} | alta ${item.sparse} | media ${item.medium} | total ${item.sparse + item.medium}/${item.products} | mediana ${item.median} prestaciones`) : []),
     ...(detailed ? [`DENSIDAD MODELOS | TOP ${Math.min(limit, density.models.length)} de ${density.models.length} modelos con prioridad editorial`] : [])
   ];
+  lines.push(`OBJETIVO SPECS | mínimo exploratorio ${density.target.minimum} prestaciones técnicas | ${density.target.below}/${density.totals.products} fichas por debajo | ${density.target.missing} prestaciones adicionales para alcanzar el objetivo, no acreditadas`);
+  if (detailed) for (const provider of density.target.providers) {
+    lines.push(`OBJETIVO PROVEEDOR | ${provider.providerId} | ${provider.below} fichas | déficit orientativo ${provider.missing}`);
+  }
   if (detailed) for (const item of density.models.slice(0, limit)) {
     lines.push(`  ${item.providerId} | ${item.brand} ${item.model} | alta ${item.sparse} | media ${item.medium} | total ${item.sparse + item.medium}/${item.products} | referencias ${item.examples.join(", ")}`);
   }
   lines.push(`DENSIDAD FICHAS | alta ${density.cases.length} | media ${density.mediumCases.length} referencias en --json, con prioridad, claves y URL`);
-  if (detailed) lines.push(`DENSIDAD CRITERIO | ${density.note}`);
+  if (detailed) lines.push(`DENSIDAD CRITERIO | ${density.note} El objetivo de 6 no es un requisito de publicación ni prueba de carencia.`);
   return lines;
 };

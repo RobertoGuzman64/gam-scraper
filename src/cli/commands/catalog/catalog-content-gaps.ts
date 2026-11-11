@@ -5,6 +5,7 @@ import { readContentGapOptions, type CommandOptions } from "./catalog-content-ga
 import { printEditorial, printDescriptionCoverage, printDescriptionPriorities } from "../../reporting/catalog-content-gaps-output.js";
 import { originalSources } from "../../../infrastructure/filesystem/catalog/original-catalog-sources.js";
 import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { analyzeSourceContentGaps, prioritizeCatalogGaps } from "../../../catalog/diagnostics/content-gaps-source.js";
 import { analyzeEditorialQuality, analyzePublishedEditorialQuality } from "../../../catalog/diagnostics/editorial-quality.js";
@@ -16,6 +17,10 @@ import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { buildProductIdentity } from "../../../catalog/identity.js";
 import { analyzeSpecificationCoverage } from "../../../catalog/diagnostics/specification-coverage.js";
+import { analyzeSpecificationOpportunities } from "../../../catalog/diagnostics/specification-opportunities.js";
+import { analyzeSpecificationImprovement, parseSpecificationImprovementExceptions } from "../../../catalog/diagnostics/specification-improvement.js";
+import { formatSpecificationImprovementReport } from "./specification-improvement-report.js";
+import { formatSpecificationOpportunitiesReport } from "./specification-opportunities-report.js";
 import { formatSpecificationCoverageReport } from "./specification-coverage-report.js";
 import { formatCatalogAuditClosureReport } from "./catalog-audit-closure-report.js";
 import { analyzeDescriptionCoverage } from "../../../catalog/diagnostics/description-coverage.js";
@@ -99,9 +104,12 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
   const technicalDensity = analyzeTechnicalDensity(products);
   const priorities = analyzeDescriptionPriorities(inputs, editorial, editorialPrepared);
   const technicalSpecs = options.specs ? analyzeSpecificationCoverage(inputs) : null;
+  const technicalOpportunities = technicalSpecs ? analyzeSpecificationOpportunities(inputs, technicalDensity, technicalSpecs) : null;
   const technicalSemantics = options.specs ? analyzePublishedTechnicalQuality(products) : null;
+  const specificationImprovements = options.specs ? analyzeSpecificationImprovement(inputs,
+    parseSpecificationImprovementExceptions(JSON.parse(await readFile(resolve(root, "data/specification-improvement-exceptions.json"), "utf8"))), technicalDensity) : null;
   if (options.json) {
-    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, coverage, editorial, editorialPrepared, priorities, technicalDensity, ...(technicalSpecs ? { technicalSpecs, technicalSemantics } : {}) }, null, 2));
+    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, coverage, editorial, editorialPrepared, priorities, technicalDensity, ...(technicalSpecs ? { technicalSpecs, technicalSemantics, technicalOpportunities, specificationImprovements } : {}) }, null, 2));
   } else {
     printReportLine(`HUECOS | publicaciones finales ${coverage.totals.products} · comparación con preparación actual · solo lectura`);
     printCommandSection("DESCRIPCIONES · P0");
@@ -113,8 +121,10 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
     if (technicalSpecs) {
       printCommandSection("ESPECIFICACIONES Y CIERRE AUDITOR");
       for (const line of formatSpecificationCoverageReport(technicalSpecs, options.limit, options.detailed)) printReportLine(line);
+      if (technicalOpportunities) for (const line of formatSpecificationOpportunitiesReport(technicalOpportunities, options.limit, options.detailed)) printReportLine(line);
       if (technicalSemantics) for (const line of formatPublishedTechnicalQualityReport(technicalSemantics, options.limit, options.detailed)) printReportLine(line);
       for (const line of formatCatalogAuditClosureReport(coverage, priorities, technicalSpecs)) printReportLine(line);
+      if (specificationImprovements) for (const line of formatSpecificationImprovementReport(specificationImprovements, options.limit, options.detailed)) printReportLine(line);
     }
   }
 };

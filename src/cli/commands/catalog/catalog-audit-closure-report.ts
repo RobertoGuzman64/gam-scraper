@@ -20,6 +20,6 @@ export const formatCatalogAuditClosureReport = (
   } else {
     lines.push(`CIERRE AUDITOR | CONFORME EN ALCANCE COMPARADO: ${coverage.totals.products} fichas, sin incidencias obligatorias abiertas`);
   }
-  lines.push(`CIERRE AUDITOR | ${technical.observationalMissing} observaciones familiares no obligatorias | ${priorities.totals.pendingByStage.P1 + priorities.totals.pendingByStage.P2} prioridades P1/P2 orientativas: no abren tareas por sí solas`);
+  lines.push(`CIERRE AUDITOR | Comparativas familiares en --detalle/--json; ${priorities.totals.pendingByStage.P1 + priorities.totals.pendingByStage.P2} prioridades editoriales P1/P2 orientativas, no se contabilizan como avisos`);
   return lines;
 };

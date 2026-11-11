@@ -3,6 +3,8 @@ import test from "node:test";
 import type { DescriptionCoverage } from "../../../../catalog/diagnostics/description-coverage.js";
 import type { DescriptionPriorities } from "../../../../catalog/diagnostics/description-priorities.js";
 import type { SpecificationCoverage } from "../../../../catalog/diagnostics/specification-coverage.js";
+import type { SpecificationOpportunities } from "../../../../catalog/diagnostics/specification-opportunities.js";
+import type { SpecificationImprovementAudit } from "../../../../catalog/diagnostics/specification-improvement.js";
 import type { PublishedTechnicalQuality } from "../../../../catalog/diagnostics/published-technical-quality.js";
 import type { TechnicalDensity } from "../../../../catalog/diagnostics/technical-density.js";
 import { cleanupBaseline, execute, executeBaseline } from "./catalog-content-gaps-fixtures.js";
@@ -10,6 +12,8 @@ import { hasCompleteCatalogAuditEvidence, hasUnresolvedCatalogAuditContracts } f
 import { formatCatalogAuditClosureReport } from "../catalog-audit-closure-report.js";
 import { formatTechnicalDensityReport } from "../technical-density-report.js";
 import { formatSpecificationCoverageReport } from "../specification-coverage-report.js";
+import { formatSpecificationOpportunitiesReport } from "../specification-opportunities-report.js";
+import { formatSpecificationImprovementReport } from "../specification-improvement-report.js";
 import { readContentGapOptions } from "../catalog-content-gaps-options.js";
 
 test.after(cleanupBaseline);
@@ -72,6 +76,13 @@ test("huecos compara las publicaciones activas y acredita la cobertura de descri
       report.priorities.pending.filter((item) => item.stage === stage).length);
   }
   const densityText = await readBaselineDetailedComparison();
+  const comparisonDetailed = await readBaselineComparison();
+  assert.ok(isSpecificationComparisonReport(comparisonDetailed));
+  const auditText = await readBaselineDetailedComparison();
+  for (const line of formatSpecificationImprovementReport(comparisonDetailed.specificationImprovements, 1, true)) {
+    assert.ok(auditText.includes(line));
+  }
+
   for (const line of formatTechnicalDensityReport(report.technicalDensity, 1, true)) assert.ok(densityText.includes(line));
   assert.match(densityText, /DENSIDAD TÉCNICA \| PRIORIDAD EDITORIAL/);
   assert.match(densityText, /ALTA 0–2: \d+ \| MEDIA 3: \d+/);
@@ -122,13 +133,21 @@ const isComparisonReport = (value: unknown): value is ComparisonReport => {
 type SpecificationComparisonReport = ComparisonReport & {
   readonly technicalSpecs: SpecificationCoverage;
   readonly technicalSemantics: PublishedTechnicalQuality;
+  readonly technicalOpportunities: SpecificationOpportunities;
+  readonly specificationImprovements: SpecificationImprovementAudit;
 };
 const isSpecificationComparisonReport = (value: unknown): value is SpecificationComparisonReport =>
   isComparisonReport(value) && "technicalSpecs" in value && typeof value.technicalSpecs === "object" &&
   value.technicalSpecs !== null && "totals" in value.technicalSpecs && "cases" in value.technicalSpecs &&
   Array.isArray(value.technicalSpecs.cases) && "technicalSemantics" in value &&
   typeof value.technicalSemantics === "object" && value.technicalSemantics !== null &&
-  "totals" in value.technicalSemantics && "cases" in value.technicalSemantics;
+  "totals" in value.technicalSemantics && "cases" in value.technicalSemantics &&
+  "technicalOpportunities" in value && typeof value.technicalOpportunities === "object" &&
+  value.technicalOpportunities !== null && "totals" in value.technicalOpportunities &&
+  "cases" in value.technicalOpportunities &&
+  "specificationImprovements" in value && typeof value.specificationImprovements === "object" &&
+  value.specificationImprovements !== null && "cases" in value.specificationImprovements &&
+  "totals" in value.specificationImprovements;
 
 test("huecos --comparar --specs diferencia cobertura técnica sin alterar el informe editorial", async () => {
   const comparison = await readBaselineComparison();
@@ -136,6 +155,28 @@ test("huecos --comparar --specs diferencia cobertura técnica sin alterar el inf
   assert.equal(comparison.coverage.totals.products, comparison.technicalSpecs.totals.products);
   assert.equal(comparison.technicalSemantics.totals.products, comparison.technicalSpecs.totals.products);
   assert.equal(comparison.technicalSemantics.totals.findings, comparison.technicalSemantics.cases.length);
+  assert.equal(comparison.technicalDensity.target.minimum, 6);
+  assert.equal(comparison.specificationImprovements.criteria.minimumTechnicalSpecs, 6);
+  assert.equal(comparison.specificationImprovements.totals.coveragePending, comparison.technicalDensity.target.below);
+  assert.equal(comparison.specificationImprovements.totals.totalPending,
+    comparison.specificationImprovements.totals.coveragePending +
+    comparison.specificationImprovements.totals.differentiationPending);
+  assert.equal(comparison.specificationImprovements.totals.totalPending,
+    comparison.specificationImprovements.cases.filter((item) => item.status === "pendiente").length);
+
+  assert.equal(comparison.technicalDensity.target.below, comparison.technicalDensity.target.cases.length);
+  assert.equal(comparison.technicalDensity.target.below, comparison.technicalOpportunities.totals.belowTarget);
+  assert.equal(comparison.technicalDensity.target.missing, comparison.technicalOpportunities.totals.missingToTarget);
+  assert.equal(comparison.technicalOpportunities.cases.length, comparison.technicalOpportunities.totals.belowTarget);
+  assert.equal(comparison.technicalOpportunities.totals.belowTarget,
+    comparison.technicalOpportunities.totals.preparedEvidence + comparison.technicalOpportunities.totals.sourceEvidence +
+    comparison.technicalOpportunities.totals.sameModelEvidence + comparison.technicalOpportunities.totals.familyObservations +
+    comparison.technicalOpportunities.totals.withoutClues);
+  const details = await readBaselineDetailedComparison();
+  for (const line of formatSpecificationOpportunitiesReport(comparison.technicalOpportunities, 1, true)) {
+    assert.ok(details.includes(line));
+  }
+  assert.match(details, /OBJETIVO SPECS \| mínimo exploratorio 6 prestaciones técnicas/);
   assert.deepEqual(comparison.coverage.totals.pending, { description: 0, description_general: 0 });
   assert.equal(comparison.priorities.totals.pending, comparison.priorities.pending.length);
   assert.equal(comparison.priorities.totals.pendingByStage.P0, 0);

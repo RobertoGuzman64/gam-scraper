@@ -1,6 +1,6 @@
 import { constants } from "node:fs";
 import { execFile } from "node:child_process";
-import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
@@ -24,7 +24,10 @@ const createBaselineRoot = async (): Promise<string> => {
   await mkdir(temporary, { recursive: true });
   const destination = await mkdtemp(join(temporary, "huecos-baseline-"));
   try {
+    await mkdir(join(destination, "data"), { recursive: true });
     const copies = [
+      readFile(join(root, "data", "specification-improvement-exceptions.json"))
+        .then((content) => writeFile(join(destination, "data", "specification-improvement-exceptions.json"), content)),
       cp(join(root, "dist"), join(destination, "dist"), {
         recursive: true, mode: constants.COPYFILE_FICLONE,
         filter: (path) => !path.split(/[\\/]/u).includes("tests")

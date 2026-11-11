@@ -22,6 +22,15 @@ test("la densidad técnica separa prestaciones de metadatos y no inventa campos 
       Capacidad: "230 kg", Peso: "6.000 kg" }, "otro")
   ]);
   assert.equal(report.totals.products, 5);
+  assert.equal(report.target.minimum, 6);
+  assert.equal(report.target.below, 5);
+  assert.equal(report.target.missing, 20);
+  assert.deepEqual(report.target.cases.map((item) => [item.reference, item.technicalCount, item.missingToTarget]),
+    [["3", 0, 6], ["4", 1, 5], ["1", 2, 4], ["2", 3, 3], ["5", 4, 2]]);
+  assert.deepEqual(report.target.providers, [
+    { providerId: "otro", below: 2, missing: 7 },
+    { providerId: "proveedor", below: 3, missing: 13 }
+  ]);
   assert.equal(report.totals.sparse, 3);
   assert.equal(report.totals.medium, 1);
   assert.equal(report.cases.length, 3);
@@ -48,6 +57,8 @@ test("el criterio se aplica también a proveedores nuevos y rechaza duplicados",
     candidate("6", { "Nº de serie": "123", "Certificación CE": "Sí" }, "nuevo")
   ]);
   assert.equal(report.providers[0]?.providerId, "nuevo");
+  assert.equal(report.target.below, 2);
+  assert.equal(report.target.missing, 9);
   assert.equal(report.providers[0]?.sparse, 1);
   assert.equal(report.providers[0]?.medium, 1);
   assert.equal(report.providers[0]?.median, 1.5);
@@ -96,6 +107,9 @@ test("la densidad publicada refleja la recuperación documental de las dos JLG s
     "Centro de carga nominal del modelo", "Anchura exterior del modelo", "Radio de giro exterior del modelo"]
     .every((key) => !(key in toyota.spec));
   assert.ok(documentedToyota || partiallyDocumentedToyota || originalToyota);
+  assert.equal(report.target.below, report.target.cases.length);
+  assert.equal(report.target.missing, report.target.cases.reduce((sum, item) => sum + item.missingToTarget, 0));
+  assert.ok(report.target.cases.every((item) => item.technicalCount < report.target.minimum));
   assert.deepEqual(report.totals, { products: 1344, sparse: documentedToyota ? 0 : documented ? 1 : 3,
     medium: documentedGam ? 0 : 2 });
   assert.deepEqual(report.cases.map((item) => [item.providerId, item.reference, item.technicalCount]), [

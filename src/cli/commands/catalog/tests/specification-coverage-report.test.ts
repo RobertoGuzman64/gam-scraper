@@ -18,7 +18,8 @@ const report: SpecificationCoverage = {
 
 test("las observaciones estadísticas no generan una cola operativa ni desaparecen del JSON", () => {
   const lines = formatSpecificationCoverageReport(report, 20, true);
-  assert.match(lines[0] ?? "", /revisar 0.*observaciones familiares no obligatorias 1/);
+  assert.match(lines[0] ?? "", /revisar 0.*hipótesis familiares solo en --detalle o --json/);
+  assert.ok(lines.some((line) => line.includes("1 observaciones familiares no obligatorias")));
   assert.ok(lines.some((line) => line.includes("SIN INCIDENCIAS TÉCNICAS")));
   assert.ok(lines.some((line) => line.includes("1 casos en JSON")));
   assert.ok(lines.every((line) => !line.includes(" | 4 | Peso (kg)")));
