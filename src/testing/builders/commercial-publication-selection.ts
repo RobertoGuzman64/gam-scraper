@@ -3,7 +3,7 @@ import type { CommercialBaselineInput } from "../../commercial/diagnostics/comme
 import type { CommercialPublicationInputs } from "../../commercial/export/commercial-inputs.js";
 import { projectCommercialCategory } from "../../commercial/projection/category-projection.js";
 import type { ImportCatalog } from "../../commercial/legacy-export/contracts.js";
-import { originalSources } from "../../infrastructure/filesystem/catalog/original-catalog-sources.js";
+import { publicationOriginalSources } from "../../infrastructure/filesystem/catalog/accredited-publication-original.js";
 import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { prepareImportBatch } from "../../preparation/batch-identity.js";
 
@@ -16,9 +16,8 @@ export const selectAccreditedCommercialInputs = async (
     if (selected.size !== references.length) throw new Error(`Referencias repetidas en selección ${providerId}`);
     const path = await resolveAccreditedPublication(root, providerId);
     if (!path) throw new Error(`No existe publicación vigente de ${providerId}`);
-    const [publication, sources] = await Promise.all([
-      readAccreditedPublication(path), originalSources(root, providerId)
-    ]);
+    const publication = await readAccreditedPublication(path);
+    const sources = await publicationOriginalSources(root, path, providerId, publication.products);
     if (!sources) throw new Error(`No existe original canónico de ${providerId}`);
     const products = publication.products.filter((item) => item.reference !== null && selected.has(item.reference));
     if (products.length !== selected.size) throw new Error(`Selección de ${providerId} incompleta o duplicada`);

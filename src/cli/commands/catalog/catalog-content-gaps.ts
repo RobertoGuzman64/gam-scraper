@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import type { GapInput } from "../../../catalog/diagnostics/content-gaps-types.js";
 import { readContentGapOptions, type CommandOptions } from "./catalog-content-gaps-options.js";
 import { printEditorial, printDescriptionCoverage, printDescriptionPriorities } from "../../reporting/catalog-content-gaps-output.js";
+import { publicationOriginalSources } from "../../../infrastructure/filesystem/catalog/accredited-publication-original.js";
 import { originalSources } from "../../../infrastructure/filesystem/catalog/original-catalog-sources.js";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -101,10 +102,12 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
   const providers = new Set<string>();
   const inputs: DescriptionCoverageInput[] = [];
   const sourceProvenance: { providerId: string; origin: "original_canonico" | "reconstruccion_publicada"; originalProducts: number | null; publishedProducts: number; publicationSha256: string }[] = [];
-  for (const publication of publications) {
+  for (const [index, publication] of publications.entries()) {
     if (providers.has(publication.providerId)) throw new Error(`Proveedor duplicado en publicaciones: ${publication.providerId}`);
     providers.add(publication.providerId);
-    const sources = await originalSources(root, publication.providerId);
+    const current = await originalSources(root, publication.providerId);
+    const sources = publication.providerId === "mercaeleva" && current === null
+      ? null : await publicationOriginalSources(root, paths[index]!, publication.providerId, publication.products);
     if (sources === null && publication.providerId !== "mercaeleva") {
       throw new Error(`No existe original canónico para comparar ${publication.providerId}; no se atribuye fuente inexistente`);
     }

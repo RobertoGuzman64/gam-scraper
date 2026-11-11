@@ -6,7 +6,7 @@ import { planCommercialExport } from "../projection/export-projection.js";
 import type { CommercialExportPlan, CommercialExportProduct } from "../projection/export-projection.js";
 import { buildProductIdentity } from "../../catalog/identity.js";
 import { accreditCommercialPlan } from "../diagnostics/commercial-accreditation.js";
-import { loadCommercialPublicationInputs } from "./commercial-inputs.js";
+import { loadCommercialPublicationInputs, assertCurrentCommercialInventory } from "./commercial-inputs.js";
 import { loadFindingRecognitionRegistry } from "../../infrastructure/filesystem/catalog/finding-recognition-store.js";
 import { classifyFindingRecognitions } from "../../catalog/diagnostics/finding-recognitions.js";
 import { observeCommercialAccreditationFindings } from "../diagnostics/audited-findings.js";
@@ -80,6 +80,7 @@ export const buildCommercialExportFiles = async (
   const [inputs, registry] = await Promise.all([
     loadCommercialPublicationInputs(root, catalog), loadFindingRecognitionRegistry(root)
   ]);
+  await assertCurrentCommercialInventory(root, inputs);
   const plans = inputs.map((input) => {
     const companyID = environment === null ? null : references.companies[input.providerId]?.[environment];
     if (environment !== null && companyID === undefined) {
