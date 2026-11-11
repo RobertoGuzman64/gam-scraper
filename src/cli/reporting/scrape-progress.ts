@@ -24,10 +24,11 @@ export const formatRunSummary = (providerId: string, outDir: string, outPrefix: 
   const status = failed ? "ERROR" : summary.quality?.status === "complete" ? "COMPLETA" : "NO COMPLETA";
   const totals = summary.totals;
   const reasons = summary.quality?.reasons ?? [];
+  const excluded = totals.excludedProductUrls ?? 0;
   const lines = [
     `
 ${formatStatus(failed ? "FAIL" : summary.quality?.status === "complete" ? "PASS" : "WARN", `${providerId.toUpperCase()} | ${status} | ${seconds(summary.startedAt, summary.endedAt)}`)}`,
-    `  Categorías: ${totals.categories} | Fichas leídas: ${totals.scrapedProductsRaw} | Productos únicos: ${totals.scrapedProducts} | Fallos: ${totals.failures}`
+    `  Categorías: ${totals.categories} | Fichas leídas: ${totals.scrapedProductsRaw} | Productos únicos: ${totals.scrapedProducts}${excluded ? ` | Sin existencias: ${excluded}` : ""} | Fallos: ${totals.failures}`
   ];
   if (failed) {
     for (const reason of reasons) lines.push(`  Motivo: ${reason}`);
@@ -37,6 +38,7 @@ ${formatStatus(failed ? "FAIL" : summary.quality?.status === "complete" ? "PASS"
   }
   lines.push(`  Resumen: ${join(outDir, `${outPrefix}-summary.json`)}`);
   if (failed || totals.failures > 0) lines.push(`  Errores: ${join(outDir, `${outPrefix}-errors.json`)}`);
+  else if (excluded > 0) lines.push(`  Exclusiones: ${join(outDir, `${outPrefix}-errors.json`)}`);
   return lines;
 };
 
@@ -138,7 +140,7 @@ ${formatStatus("RUN", `${this.providerId.toUpperCase()} | ${total} categorías`)
   endCategory(result: CategoryScrapeResult): void {
     this.publish(true);
     this.status.stop();
-    this.status.log(`  ${formatStatus(result.failures.length ? "WARN" : "PASS", `[${this.position}/${this.count}] ${result.category.name} | ${result.products.length}/${result.discoveredProductUrls} fichas | ${result.failures.length} fallos | ${formatDuration(Date.now() - this.categoryStartedAt)}`)}`);
+    this.status.log(`  ${formatStatus(result.failures.length ? "WARN" : "PASS", `[${this.position}/${this.count}] ${result.category.name} | ${result.products.length}/${result.discoveredProductUrls} fichas | ${result.exclusions?.length ? `${result.exclusions.length} sin existencias | ` : ""}${result.failures.length} fallos | ${formatDuration(Date.now() - this.categoryStartedAt)}`)}`);
     for (const failure of result.failures) this.failure(result.category.name, failure.url, failure.error);
     this.category = null;
   }

@@ -8,6 +8,7 @@ import { readPortableOriginal } from "../infrastructure/filesystem/catalog/porta
 import { readAccreditedPublication, resolveAccreditedPublication } from "../infrastructure/filesystem/catalog/accredited-publication.js";
 import { readOfflinePreparation } from "../infrastructure/filesystem/preparation/offline-preparation.js";
 import { getProvider } from "../scraping/registry.js";
+import { listTechnicalVersions, readActiveTechnicalPublication } from "../infrastructure/filesystem/catalog/technical-publication.js";
 import { verifyDeliveredCampaign } from "./delivery/verification.js";
 import { listCampaignRuns } from "./discovery/search.js";
 import type { CampaignOperationsStatus } from "./operations-status.js";
@@ -24,6 +25,7 @@ export type ProviderInventory = {
   readonly consistency: InventoryItem;
   readonly preparation: InventoryItem;
   readonly final: InventoryItem;
+  readonly technical?: InventoryItem;
 };
 
 export type CampaignInventory = {
@@ -99,6 +101,18 @@ const inspectIndividualFinal = async (root: string, providerId: string): Promise
     return ok(`Publicación vigente: ${publication.products.length} fichas | ${publication.runId} | ${basename(path) === "publishable.json" ? "campaña" : `aprobación ${basename(dirname(path))}`}`);
   } catch (error) {
     return invalid(`Publicación individual no verificable: ${describe(error)}`);
+  }
+};
+
+const inspectTechnical = async (root: string, providerId: string): Promise<InventoryItem> => {
+  try {
+    const versions = await listTechnicalVersions(root, providerId);
+    const active = await readActiveTechnicalPublication(root, providerId);
+    if (!active) return versions.length ? invalid("Versiones técnicas sin selección activa") : absent("Sin publicación técnica");
+    const { snapshot } = active;
+    return ok(`Corte ${snapshot.quality}: ${snapshot.products.length} fichas (${snapshot.totals.ready} ready / ${snapshot.totals.review} review)`);
+  } catch (error) {
+    return invalid(`Publicación técnica no verificable: ${describe(error)}`);
   }
 };
 
@@ -257,6 +271,7 @@ export const inspectOperationsInventory = async (
     return {
       providerId,
       original,
+      technical: await inspectTechnical(root, providerId),
       portableOriginal: portableProvider.original,
       consistency: portableProvider.consistency,
       preparation,

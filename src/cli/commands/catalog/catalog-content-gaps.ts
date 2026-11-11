@@ -12,6 +12,8 @@ import { analyzeEditorialQuality, analyzePublishedEditorialQuality } from "../..
 import { discoverAccreditedPublications, readAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { findCampaignBaseline } from "../../../campaign/reference/compare.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readActiveTechnicalPublication } from "../../../infrastructure/filesystem/catalog/technical-publication.js";
+import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { loadPreparationInputs } from "../../../infrastructure/filesystem/preparation/preparation-inputs.js";
 import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 import { printCommandError } from "../../reporting/errors.js";
@@ -59,6 +61,39 @@ const reportPublications = async (paths: readonly string[], options: CommandOpti
     for (const line of formatTechnicalDensityReport(technicalDensity, options.limit, options.detailed)) printReportLine(line);
     for (const line of formatPublishedTechnicalQualityReport(technicalSemantics, options.limit, options.detailed)) printReportLine(line);
   }
+};
+
+const reportTechnicalPublications = async (options: CommandOptions): Promise<void> => {
+  const candidates = await Promise.all(CAMPAIGN_PROVIDERS.map(async (providerId) =>
+    readActiveTechnicalPublication(root, providerId)));
+  const publications = candidates.filter((item) => item !== null);
+  if (!publications.length) throw new Error("No hay publicaciones técnicas vigentes; consulta publicacion:tecnica");
+  const products = publications.flatMap((item) => item.snapshot.products.map((entry) => entry.product));
+  const review = publications.flatMap(({ snapshot }) => snapshot.products.flatMap((entry, index) =>
+    entry.status === "review" ? [{ providerId: snapshot.providerId, identity: snapshot.identities[index],
+      issues: entry.issues }] : []));
+  const provenance = { source: "publicaciones_tecnicas", publications: publications.map(({ sha256, snapshot }) => ({
+    providerId: snapshot.providerId, sha256, quality: snapshot.quality, source: snapshot.source,
+    totals: snapshot.totals
+  })) };
+  const editorial = analyzePublishedEditorialQuality(products);
+  const technicalDensity = analyzeTechnicalDensity(products);
+  const technicalSemantics = analyzePublishedTechnicalQuality(products);
+  if (options.json) {
+    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance,
+      review, editorial, technicalDensity, technicalSemantics }, null, 2));
+    return;
+  }
+  printReportLine(`HUECOS | publicaciones técnicas ${publications.length} proveedores · ${products.length} fichas · ${review.length} review · solo lectura`);
+  for (const { snapshot, sha256 } of publications) {
+    printReportLine(`  ${snapshot.providerId.toUpperCase()} | ${snapshot.quality} | ${snapshot.totals.ready} ready · ${snapshot.totals.review} review | ${sha256}`);
+  }
+  if (options.detailed) for (const item of review.slice(0, options.limit)) {
+    printReportLine(`  REVIEW | ${item.identity} | ${item.issues.join(" | ")}`);
+  }
+  printEditorial(editorial, options.limit, options.detailed);
+  for (const line of formatTechnicalDensityReport(technicalDensity, options.limit, options.detailed)) printReportLine(line);
+  for (const line of formatPublishedTechnicalQualityReport(technicalSemantics, options.limit, options.detailed)) printReportLine(line);
 };
 
 const reportDescriptionComparison = async (paths: readonly string[], options: CommandOptions): Promise<void> => {
@@ -131,11 +166,15 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
 
 export const runCatalogContentGaps = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    printReportLine("Uso: npm run huecos -- [--comparar | --finales | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--detalle] [--json] [--specs] [--titulos]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, comparación de publicaciones acreditadas frente a preparación actual. --comparar fuerza esa comparación. --finales analiza solo las publicaciones acreditadas. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. --finales incluye la auditoría semántica de valores técnicos publicados; --comparar --specs compara las claves técnicas del origen canónico, preparación y publicación, además de auditar los valores finales; las ausencias familiares no son atributos obligatorios. --comparar --titulos analiza señales de títulos técnicos en publicaciones y preparación actual, sin modificar fichas.");
+    printReportLine("Uso: npm run huecos -- [--comparar | --finales | --tecnicas | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--detalle] [--json] [--specs] [--titulos]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, comparación de publicaciones acreditadas frente a preparación actual. --comparar fuerza esa comparación. --finales analiza solo las publicaciones acreditadas. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. --finales incluye la auditoría semántica de valores técnicos publicados; --comparar --specs compara las claves técnicas del origen canónico, preparación y publicación, además de auditar los valores finales; las ausencias familiares no son atributos obligatorios. --comparar --titulos analiza señales de títulos técnicos en publicaciones y preparación actual, sin modificar fichas.");
     return;
   }
   const options = readContentGapOptions(args);
   if (!options.json) printCommandHeader("HUECOS · AUDITORÍA TÉCNICA");
+  if (options.technicalPublications) {
+    await reportTechnicalPublications(options);
+    return;
+  }
   if (options.compareSources) {
     const paths = await discoverAccreditedPublications(root);
     if (paths.length === 0) throw new Error("No hay publicaciones acreditadas en catalogs/providers/*/publications");

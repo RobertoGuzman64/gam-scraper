@@ -1,6 +1,10 @@
 import type { ParsedProduct } from "../provider.js";
 
-export type ProductPageCache = Map<string, Promise<ParsedProduct>>;
+export type ProductPageResult =
+  | { readonly kind: "product"; readonly value: ParsedProduct }
+  | { readonly kind: "excluded"; readonly reason: string };
+
+export type ProductPageCache = Map<string, Promise<ProductPageResult>>;
 
 export type ScrapeProgressCallbacks = {
   readonly verbose: boolean;

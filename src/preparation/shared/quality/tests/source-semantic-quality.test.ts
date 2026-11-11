@@ -8,7 +8,7 @@ import { reconcileGomarizVerifiedElectricSemanticSource } from "../../../gomariz
 import { reconcileMercaelevaVerifiedReachTruckFamily } from "../../../mercaeleva/technical/reconciliation/mercaeleva.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
-const gomariz = (await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json")).products;
+const gomariz = (await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json")).products;
 const gam = (await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json")).products;
 const mercaeleva = await readMercaelevaSource();
 const find = (records: readonly ProductRecord[], reference: string): ProductRecord => {
@@ -105,7 +105,7 @@ test("Miles expresados como 3000 y 3.000 kg son la misma capacidad", () => {
   assert.ok(sourceSemanticQualityIssues(incompatible).some((issue) => issue.includes("Capacidad contradictoria")));
 });
 
-test("Corte completo: cuatro contradicciones en origen y sin contaminación de GAM", () => {
+test("Corte histórico: cuatro contradicciones en origen y sin contaminación de GAM", () => {
   assert.equal(gomariz.length, 143);
   assert.equal(gam.length, 983);
   assert.equal(mercaeleva.length, 221);

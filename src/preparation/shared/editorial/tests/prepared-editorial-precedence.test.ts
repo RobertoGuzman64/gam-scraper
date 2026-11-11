@@ -10,7 +10,7 @@ import { captureSourceEditorialEvidence } from "../mapping/source-editorial-evid
 const providers = ["gam", "gomariz", "mercaeleva"] as const;
 const catalogs = {
   gam: await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json"),
-  gomariz: await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json"),
+  gomariz: await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json"),
   mercaeleva: await readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json")
 };
 const digest = (value: unknown): string => createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -22,7 +22,7 @@ const find = (provider: typeof providers[number], reference: string): ProductRec
   return record;
 };
 
-test("conserva exactamente las cinco salidas editoriales de los 1.347 originales", () => {
+test("conserva las cinco salidas editoriales del corte histórico acreditado de 1.347 originales", () => {
   const expected = {
     gam: { count: 983, sha: "ad24ab006e1f9c2dee6e6471e2cd5a82fb1a0e8609ce498f2e78c5c24eb5f3a1" },
     gomariz: { count: 143, sha: "e12c8eb427cfa4c5e13aa6ba892a90762e051803b4d1eb489c291439dbf2073e" },

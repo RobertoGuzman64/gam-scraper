@@ -1,7 +1,7 @@
 import type { ScraperProvider } from "../../provider.js";
 import { isGomarizOccasionSale } from "../../../catalog/normalization/gomariz/sale.js";
 import { GOMARIZ_CATEGORIES, GOMARIZ_OPTIONS } from "./config.js";
-import { buildGomarizPageUrl, extractGomarizLastPage, extractGomarizLinks, parseGomarizProduct } from "./parsers.js";
+import { buildGomarizPageUrl, extractGomarizLastPage, extractGomarizLinks, gomarizStockExclusion, parseGomarizProduct } from "./parsers.js";
 
 export const gomarizProvider: ScraperProvider = {
   id: "gomariz",
@@ -11,6 +11,7 @@ export const gomarizProvider: ScraperProvider = {
   extractProductLinksFromListing: extractGomarizLinks,
   extractLastPageFromListing: extractGomarizLastPage,
   parseProductPage: parseGomarizProduct,
+  excludeProductPage: gomarizStockExclusion,
   resolveCondition: (category, condition, providerId) => condition ??
     (providerId === "gomariz" && isGomarizOccasionSale(category.url, category.key, category.name) ? "Segunda mano" : null),
   extractReference: () => null,

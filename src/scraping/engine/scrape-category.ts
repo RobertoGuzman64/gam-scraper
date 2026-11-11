@@ -49,13 +49,14 @@ export const scrapeCategory = async (
     category, options, provider, urls, concurrentProducts, cache, failureDetail, report, progress
   );
   failures.push(...scraped.failures);
-  report("category", `end key=${category.key} ok=${scraped.products.length} fail=${failures.length}`);
+  report("category", `end key=${category.key} ok=${scraped.products.length} excluded=${scraped.exclusions.length} fail=${failures.length}`);
 
   return {
     category,
     discoveredProductUrls: urls.length,
     ...(expectedProductUrls === undefined ? {} : { expectedProductUrls }),
     products: scraped.products,
+    ...(scraped.exclusions.length ? { exclusions: scraped.exclusions } : {}),
     failures
   };
 };

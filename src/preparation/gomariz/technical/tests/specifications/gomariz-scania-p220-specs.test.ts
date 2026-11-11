@@ -6,7 +6,7 @@ import { recoverGomarizDocumentedScaniaP220Specs } from "../../evidence/document
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { analyzeTechnicalDensity } from "../../../../../catalog/diagnostics/technical-density.js";
 
-const originals = (await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json")).products;
+const originals = (await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json")).products;
 const expectedByReference: Readonly<Record<string, SpecsMap>> = {
   "5051BDX": {
     "Potencia aproximada del motor": "220 CV"

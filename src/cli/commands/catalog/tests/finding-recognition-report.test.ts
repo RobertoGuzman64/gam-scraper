@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { originalSources } from "../../../../infrastructure/filesystem/catalog/original-catalog-sources.js";
+import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { prepareImportBatch } from "../../../../preparation/batch-identity.js";
 import { analyzePresentationConsistency } from "../../../../commercial/diagnostics/presentation-consistency.js";
@@ -136,9 +138,15 @@ test("la coherencia conserva las revisiones restantes y no acepta reconocimiento
   const products = [];
   const evidence = [];
   for (const providerId of ["gam", "gomariz", "mercaeleva"]) {
-    const original = await originalSources(root, providerId);
-    assert.ok(original);
-    const sources = [...original.values()];
+    let sources: readonly ProductRecord[];
+    if (providerId === "gomariz") {
+      sources = (await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json")).products;
+    } else {
+      const original = await originalSources(root, providerId);
+      assert.ok(original);
+      sources = [...original.values()];
+    }
+    assert.ok(sources.length);
     const prepared = prepareImportBatch(sources, catalog);
     for (const [index, item] of prepared.products.entries()) {
       const source = sources[index];

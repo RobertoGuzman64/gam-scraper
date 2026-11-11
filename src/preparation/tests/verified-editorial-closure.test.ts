@@ -8,7 +8,7 @@ import { prepareSourceProduct } from "../prepare-product.js";
 
 const catalogs = await Promise.all([
   readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json"),
-  readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json"),
+  readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json"),
   readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json")
 ]);
 const records = catalogs.flatMap((catalog) => catalog.products);

@@ -3,8 +3,12 @@ import type { CategoryConfig, ScrapeOptions } from "../../contracts/scraping.js"
 import type { ProductRecord } from "../../contracts/catalog.js";
 import { fetchHtml } from "../../infrastructure/http/fetch-html.js";
 import { validateScrapedProduct } from "../../catalog/product-validation.js";
-import type { ParsedProduct, ScraperProvider } from "../provider.js";
-import type { ProductPageCache, ScrapeProgressCallbacks, ScrapeReport } from "./scrape-types.js";
+import type { ScraperProvider } from "../provider.js";
+import type { ProductPageCache, ProductPageResult, ScrapeProgressCallbacks, ScrapeReport } from "./scrape-types.js";
+
+type ProductOutcome =
+  | { readonly kind: "product"; readonly product: ProductRecord }
+  | { readonly kind: "excluded"; readonly reason: string };
 
 const nowIso = (): string => new Date().toISOString();
 
@@ -18,17 +22,22 @@ export const scrapeProductPages = async (
   failureDetail: (error: unknown) => string,
   report: ScrapeReport,
   progress?: ScrapeProgressCallbacks
-): Promise<{ products: ProductRecord[]; failures: { url: string; error: string }[] }> => {
+): Promise<{ products: ProductRecord[]; exclusions: { url: string; reason: string }[]; failures: { url: string; error: string }[] }> => {
   const productLimit = pLimit(concurrentProducts);
   let done = 0;
   let processed = 0;
-  const parsePage = async (url: string): Promise<ParsedProduct> => {
+  const parsePage = async (url: string): Promise<ProductPageResult> => {
     const html = provider.loadProductHtml
       ? await provider.loadProductHtml(url, options)
       : await fetchHtml(url, { timeoutMs: options.timeoutMs, userAgent: options.userAgent });
-    return provider.parseProductPage(html, url);
+    const reason = provider.excludeProductPage?.(html, url) ?? null;
+    if (reason !== null) {
+      if (!reason.trim()) throw new Error(`Exclusión sin motivo: ${url}`);
+      return { kind: "excluded", reason };
+    }
+    return { kind: "product", value: provider.parseProductPage(html, url) };
   };
-  const readPage = (url: string): Promise<ParsedProduct> => {
+  const readPage = (url: string): Promise<ProductPageResult> => {
     if (!cache) return parsePage(url);
     const previous = cache.get(url);
     if (previous) return previous;
@@ -42,12 +51,17 @@ export const scrapeProductPages = async (
 
   const productsSettled = await Promise.allSettled(
     urls.map((url, idx) =>
-      productLimit(async (): Promise<ProductRecord> => {
+      productLimit(async (): Promise<ProductOutcome> => {
         const n = idx + 1;
         report("product", `start key=${category.key} ${n}/${urls.length} url=${url}`);
 
         try {
-          const parsed = await readPage(url);
+          const page = await readPage(url);
+          if (page.kind === "excluded") {
+            report("product", `excluded key=${category.key} url=${url} reason=${page.reason}`);
+            return { kind: "excluded", reason: page.reason };
+          }
+          const parsed = page.value;
           const condition = provider.resolveCondition
             ? provider.resolveCondition(category, parsed.condition, provider.id) : parsed.condition;
 
@@ -91,7 +105,7 @@ export const scrapeProductPages = async (
             } longLen=${product.longDescription ? product.longDescription.length : 0}`
           );
 
-          return product;
+          return { kind: "product", product };
         } catch (error) {
           progress?.onFailure?.("ficha", url, failureDetail(error));
           throw error;
@@ -104,18 +118,20 @@ export const scrapeProductPages = async (
   );
 
   const products: ProductRecord[] = [];
+  const exclusions: { url: string; reason: string }[] = [];
   const failures: { url: string; error: string }[] = [];
 
   for (let i = 0; i < productsSettled.length; i += 1) {
     const r = productsSettled[i];
     const url = urls[i] ?? "";
     if (r?.status === "fulfilled") {
-      products.push(r.value);
+      if (r.value.kind === "product") products.push(r.value.product);
+      else exclusions.push({ url, reason: r.value.reason });
       continue;
     }
     const reason = r?.status === "rejected" ? r.reason : "unknown";
     failures.push({ url, error: failureDetail(reason) });
     report("product", `fail key=${category.key} url=${url} error=${failureDetail(reason)}`);
   }
-  return { products, failures };
+  return { products, exclusions, failures };
 };

@@ -125,9 +125,9 @@ test("GAM: los módulos permiten información general propia sin asignar marca n
   ]) assert.equal(resolveGamGeneralDescription(variant), null);
 });
 
-test("GAM: la regla no se aplica a las 143 fichas de Gomariz", async () => {
+test("GAM: la regla no se aplica a las fichas vigentes de Gomariz", async () => {
   const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
-  assert.equal(gomariz.products.length, 143);
+  assert.ok(gomariz.products.length > 0);
   for (const record of gomariz.products) assert.equal(resolveGamGeneralDescription(record), null);
 });
 

@@ -135,7 +135,9 @@ const recover = {
 };
 const catalogs = await Promise.all(providers.map(async (providerId) => ({
   providerId,
-  products: (await readCanonicalCatalog(`catalogs/providers/${providerId}/original/scrape-${providerId}-catalog.json`)).products
+  products: (await readCanonicalCatalog(providerId === "gomariz"
+    ? "src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json"
+    : `catalogs/providers/${providerId}/original/scrape-${providerId}-catalog.json`)).products
 })));
 
 test("evidencia cruzada entre proveedores: incorporar solo las prestaciones documentadas de las 21 referencias", () => {

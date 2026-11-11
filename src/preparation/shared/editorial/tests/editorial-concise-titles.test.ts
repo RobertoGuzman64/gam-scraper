@@ -9,7 +9,7 @@ import { verifiedGamSourceMatchedTitles } from "../../../gam/editorial/titles/ve
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gomariz = await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json");
 
 const find = (records: readonly ProductRecord[], reference: string): ProductRecord => {
   const record = records.find((item) => item.reference === reference);

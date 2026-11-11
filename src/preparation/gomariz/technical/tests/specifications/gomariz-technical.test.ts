@@ -84,7 +84,7 @@ test("Gomariz: conserva y rechaza especificaciones con valores múltiples incomp
 
 
 test("Gomariz: traslada el año explícito de la ficha a spec sin alterar los originales", async () => {
-  const source = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+  const source = await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json");
   const records = source.products.filter((record) => record.year !== null);
   assert.ok(records.length > 0);
   for (const record of records) {

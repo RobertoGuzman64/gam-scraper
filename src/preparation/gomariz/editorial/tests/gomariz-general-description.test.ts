@@ -16,7 +16,7 @@ import { recoverGomarizDocumentedScaniaP220Specs } from "../../technical/evidenc
 
 const signedGenerals: Readonly<Record<string, { readonly general: string }>> = verifiedCanonicalBriefEditorial;
 
-const source = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const source = await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json");
 const find = (reference: string): ProductRecord => {
   const record = source.products.find((item) => item.reference === reference);
   assert.ok(record, reference);
@@ -102,7 +102,7 @@ test("Gomariz: rechaza identidades, proveedores y magnitudes incompatibles", () 
   }
 });
 
-test("Gomariz: el piloto se aplica solo a la cohorte segura y preserva todas las identidades", () => {
+test("Gomariz: el piloto conserva la cohorte histórica segura y sus identidades", () => {
   const affected = source.products.filter((record) => resolveGomarizGeneralDescription(record) !== null);
   assert.equal(source.products.length, 143);
   assert.equal(affected.length, 116);

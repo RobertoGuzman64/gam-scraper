@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import type { GapGroupBy } from "../../../catalog/diagnostics/content-gaps-types.js";
 
-export type CommandOptions = { readonly json: boolean; readonly detailed: boolean; readonly specs: boolean; readonly titles: boolean; readonly finalPublications: boolean; readonly compareSources: boolean; readonly groupBy: GapGroupBy; readonly minGroup: number;
+export type CommandOptions = { readonly json: boolean; readonly detailed: boolean; readonly specs: boolean; readonly titles: boolean; readonly finalPublications: boolean; readonly technicalPublications: boolean; readonly compareSources: boolean; readonly groupBy: GapGroupBy; readonly minGroup: number;
   readonly minMissing: number; readonly limit: number; readonly catalogs: readonly string[];
   readonly publications: readonly string[] };
 
@@ -18,6 +18,7 @@ export const readContentGapOptions = (args: readonly string[]): CommandOptions =
   let specs = false;
   let titles = false;
   let finalPublications = false;
+  let technicalPublications = false;
   let compareSources = false;
   let groupBy: GapGroupBy = "categoria";
   let minGroup = 8;
@@ -32,6 +33,7 @@ export const readContentGapOptions = (args: readonly string[]): CommandOptions =
     else if (arg === "--specs") specs = true;
     else if (arg === "--titulos") titles = true;
     else if (arg === "--finales") finalPublications = true;
+    else if (arg === "--tecnicas") technicalPublications = true;
     else if (arg === "--comparar") compareSources = true;
     else if (arg === "--catalogo") {
       const value = args[++index];
@@ -61,9 +63,12 @@ export const readContentGapOptions = (args: readonly string[]): CommandOptions =
   if (compareSources && (finalPublications || catalogs.length > 0 || publications.length > 0)) {
     throw new Error("--comparar no se combina con --finales, --catalogo ni --publicacion");
   }
+  if (technicalPublications && (finalPublications || compareSources || catalogs.length > 0 || publications.length > 0 || titles || specs)) {
+    throw new Error("--tecnicas es una fuente independiente; no combinar con --finales, --comparar, --catalogo, --publicacion, --titulos ni --specs");
+  }
   if (titles && specs) throw new Error("--titulos y --specs son diagnósticos alternativos; ejecutarlos por separado");
   if (titles && !compareSources) throw new Error("--titulos requiere --comparar para contrastar publicación y preparación");
   if (specs && !compareSources) throw new Error("--specs requiere --comparar; las publicaciones solas no acreditan especificaciones de origen");
-  return { json, detailed, specs, titles, finalPublications, compareSources, groupBy, minGroup, minMissing, limit, catalogs, publications };
+  return { json, detailed, specs, titles, finalPublications, technicalPublications, compareSources, groupBy, minGroup, minMissing, limit, catalogs, publications };
 };
 

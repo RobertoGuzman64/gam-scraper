@@ -24,6 +24,7 @@ export type CategoryScrapeResult = {
   readonly discoveredProductUrls: number;
   readonly expectedProductUrls?: number;
   readonly products: readonly ProductRecord[];
+  readonly exclusions?: readonly { readonly url: string; readonly reason: string }[];
   readonly failures: readonly { readonly url: string; readonly error: string }[];
 };
 
@@ -42,6 +43,7 @@ export type Summary = {
     readonly scrapedProductsRaw: number;
     readonly scrapedProductsByCategorySum: number;
     readonly scrapedProducts: number;
+    readonly excludedProductUrls?: number;
     readonly failures: number;
     readonly dedupe: {
       readonly withinCategories: DedupeReport;
@@ -56,6 +58,7 @@ export type Summary = {
     readonly expectedProductUrls?: number;
     readonly scrapedProductsRaw: number;
     readonly scrapedProducts: number;
+    readonly excludedProductUrls?: number;
     readonly failures: number;
     readonly dedupe: DedupeReport;
   }[];

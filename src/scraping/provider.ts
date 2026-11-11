@@ -13,6 +13,7 @@ export interface ScraperProvider {
   extractExpectedTotalFromListing?(html: string): number | null;
   extractLastPageFromListing?(html: string): number | null;
   parseProductPage(html: string, pageUrl: string): ParsedProduct;
+  excludeProductPage?(html: string, pageUrl: string): string | null;
   resolveCondition?(category: CategoryConfig, condition: ParsedProduct["condition"], providerId: string): ProductRecord["condition"];
   extractReference(url: string): string | null;
   loadListingHtml?(url: string, options: ScrapeOptions): Promise<string>;

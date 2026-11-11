@@ -88,6 +88,19 @@ const metadataValue = (text: string, name: string): string | null => {
   return value && value.length < 120 && !/^(?:consultar|ver precio|contactar)$/i.test(value) ? value : null;
 };
 
+export const gomarizStockExclusion = (html: string, _pageUrl: string): string | null => {
+  const $ = loadReadableHtml(html);
+  const main = $("main").first();
+  const scope = main.length ? main : $("body");
+  const title = normalize(scope.find("h1").first().text());
+  if (!title) return null;
+  const content = normalize(scope.text()).split(/Máquinas similares/iu)[0] ?? "";
+  const heading = content.indexOf(title);
+  if (heading < 0) return null;
+  const introduction = (content.slice(heading + title.length).split(/(?:Año:|Marca:|Ver precio|Contactar|Descripción|Dimensiones|Especificaciones técnicas)/iu)[0] ?? "");
+  return /(?:^|\s)Sin existencias(?=\s|$)/iu.test(introduction) ? "Sin existencias" : null;
+};
+
 export const parseGomarizProduct = (html: string, pageUrl: string): ParsedProduct => {
   const $ = loadReadableHtml(html);
   const title = normalize($("h1").first().text());

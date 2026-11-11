@@ -24,3 +24,7 @@ out/
 /catalogs/providers/*/publications/.active-*.tmp
 /catalogs/.active.lock
 /catalogs/.active-*.tmp
+
+/catalogs/providers/*/technical/.active.lock
+/catalogs/providers/*/technical/.active-*.tmp
+/catalogs/providers/*/technical/versions/.pending-*

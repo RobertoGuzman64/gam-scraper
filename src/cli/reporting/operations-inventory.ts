@@ -32,6 +32,7 @@ const printDetails = (status: CampaignOperationsStatus, inventory: OperationsInv
     if (provider.consistency.state !== "ausente") printItem("  COHERENCIA", provider.consistency);
     printItem("  PREPARACIÓN", provider.preparation);
     printItem("  JSON FINAL", provider.final);
+    if (provider.technical) printItem("  PUBLICACIÓN TÉCNICA", provider.technical);
   }
   printCommandSection("CAMPAÑAS CONSERVADAS");
   printReportLine(`  ENTREGAS ACREDITADAS | ${inventory.retainedDeliveries}/2`);
@@ -57,6 +58,7 @@ export const printOperationsInventory = (
     const primary = provider.final.state === "correcto" ? "publicación verificada" :
       provider.final.state === "ausente" ? "sin publicación individual" : provider.final.state.toUpperCase();
     printCommandProvider(provider.providerId, `${primary} · preparación ${provider.preparation.state}`);
+    if (provider.technical && provider.technical.state !== "ausente") printItem("  TÉCNICA", provider.technical);
     if (["gam", "gomariz", "mercaeleva"].includes(provider.providerId)) {
       for (const [label, item] of [["ORIGINAL", provider.original], ["ORIGINAL REPOSITORIO", provider.portableOriginal],
         ["COHERENCIA", provider.consistency], ["PREPARACIÓN", provider.preparation], ["PUBLICACIÓN", provider.final]] as const) {

@@ -6,7 +6,7 @@ import { analyzePresentationConsistency } from "../presentation-consistency.js";
 
 const [gam, gomariz, mercaeleva] = await Promise.all([
   readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json"),
-  readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json"),
+  readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json"),
   readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json")
 ]);
 
@@ -21,7 +21,7 @@ const gamProduct = (reference: string) => {
 const codes = (result: ReturnType<typeof analyzePresentationConsistency>): readonly string[] =>
   result.findings.map((item) => `${item.providerId}:${item.reference}:${item.code}`);
 
-test("identifica incidencias aún ambiguas sin publicar correcciones especulativas", () => {
+test("corte histórico: identifica incidencias ambiguas sin publicar correcciones especulativas", () => {
   const originals = [...gam.products, ...gomariz.products, ...mercaeleva.products];
   const snapshot = JSON.stringify(originals);
   const products = originals.map((item) => prepareOriginal(item).product);

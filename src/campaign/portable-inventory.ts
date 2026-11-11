@@ -6,6 +6,7 @@ import { readCanonicalCatalog } from "../infrastructure/filesystem/catalog/canon
 import { readActiveCatalogIndex } from "../infrastructure/filesystem/catalog/active-selection.js";
 import { readPortableCampaign } from "../infrastructure/filesystem/catalog/portable-campaign.js";
 import { readPortableOriginal, readPortableOriginalArtifacts } from "../infrastructure/filesystem/catalog/portable-original.js";
+import { listTechnicalVersions, readActiveTechnicalPublication } from "../infrastructure/filesystem/catalog/technical-publication.js";
 import type { InventoryItem } from "./inventory-contracts.js";
 
 export type PortableProviderInventory = {
@@ -70,7 +71,7 @@ const inspectProvider = async (root: string, providerId: string): Promise<Invent
   try {
     const names = await readdir(base);
     const hasManainRecord = providerId === "manain" && names.includes("records");
-    if (names.some((name) => name !== "original" && name !== "publications" && !(hasManainRecord && name === "records"))) {
+    if (names.some((name) => name !== "original" && name !== "publications" && name !== "technical" && !(hasManainRecord && name === "records"))) {
       return invalid("Archivos inesperados o promoción pendiente en original portátil");
     }
     if (hasManainRecord) {
@@ -92,6 +93,11 @@ const inspectProvider = async (root: string, providerId: string): Promise<Invent
         !("products" in content) || !Array.isArray(content.products)) {
         return invalid("Registro Manain parcial inválido");
       }
+    }
+    if (names.includes("technical")) {
+      const versions = await listTechnicalVersions(root, providerId);
+      const current = await readActiveTechnicalPublication(root, providerId);
+      if (versions.length > 0 && current === null) return invalid("Versiones técnicas sin selección vigente");
     }
     if (!names.includes("original")) return hasManainRecord
       ? partial("Registro parcial de Manain conservado; sin original canónico")

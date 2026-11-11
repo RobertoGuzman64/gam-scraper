@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
-import { scrapeCategory } from "../../../engine/scrape-category.js";
+import { scrapeCategory, type ProductPageCache } from "../../../engine/scrape-category.js";
 import type { ScraperProvider } from "../../../provider.js";
 import { manainProvider, requireCompleteManainListing } from "../adapter.js";
 import type { ManainListingResult } from "../listing.js";
@@ -55,9 +55,9 @@ test("Manain: descarta únicamente las tres fichas sin contenido del proveedor",
 test("Manain: motor y preparación conservan unidades distintas en una extracción aislada", async () => {
   const one = manainProvider.parseProductPage(fixture("MAN1802", 2023, 3280), firstUrl);
   const two = manainProvider.parseProductPage(fixture("MAN1268", 2022, 3377), secondUrl);
-  const cache = new Map([
-    [firstUrl, Promise.resolve(one)],
-    [secondUrl, Promise.resolve(two)]
+  const cache: ProductPageCache = new Map([
+    [firstUrl, Promise.resolve({ kind: "product", value: one })],
+    [secondUrl, Promise.resolve({ kind: "product", value: two })]
   ]);
   const isolated: ScraperProvider = {
     ...manainProvider,

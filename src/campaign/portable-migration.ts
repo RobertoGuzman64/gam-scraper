@@ -112,7 +112,7 @@ const inspectProvider = async (root: string, providerId: string): Promise<Migrat
   const portable = portableArtifacts?.catalog ?? null;
   const providerRoot = join(root, "catalogs", "providers", providerId);
   const targetNames = await namesIn(providerRoot);
-  const allowed = providerId === "manain" ? ["original", "publications", "records"] : ["original", "publications"];
+  const allowed = providerId === "manain" ? ["original", "publications", "records", "technical"] : ["original", "publications", "technical"];
   if (targetNames.some((name) => !allowed.includes(name))) {
     throw new Error(`Promoción pendiente o entrada desconocida en ${providerRoot}`);
   }

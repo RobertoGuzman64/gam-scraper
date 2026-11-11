@@ -53,6 +53,7 @@ const publish = async (
   const byCategory = deduped.flatMap((item) => item.unique);
   const global = dedupeBy(byCategory, (item) => item);
   const withinCategories = deduped.reduce((total, item) => mergeDedupeReports(total, item.report), emptyDedupeReport());
+  const hasExclusions = results.some((result) => (result.exclusions?.length ?? 0) > 0);
   const identityConflicts = findIdentityConflicts(results.flatMap((result) => result.products));
   const serialWarnings = findSerialNumberCollisions(global.unique).map(describeSerialNumberCollision);
   const snapshotItems = buildCatalogItems(global.unique);
@@ -70,6 +71,7 @@ const publish = async (
       scrapedProductsRaw: results.reduce((count, result) => count + result.products.length, 0),
       scrapedProductsByCategorySum: byCategory.length,
       scrapedProducts: global.unique.length,
+      ...(hasExclusions ? { excludedProductUrls: results.reduce((count, result) => count + (result.exclusions?.length ?? 0), 0) } : {}),
       failures: results.reduce((count, result) => count + result.failures.length, 0),
       dedupe: { withinCategories, globalAll: global.report }
     },
@@ -79,6 +81,7 @@ const publish = async (
       ...(result.expectedProductUrls === undefined ? {} : { expectedProductUrls: result.expectedProductUrls }),
       scrapedProductsRaw: result.products.length,
       scrapedProducts: unique.length,
+      ...(result.exclusions?.length ? { excludedProductUrls: result.exclusions.length } : {}),
       failures: result.failures.length,
       dedupe: report
     }))
@@ -88,6 +91,9 @@ const publish = async (
     failures: results.flatMap((result) => result.failures.map((failure) => ({
       categoryKey: result.category.key, ...failure
     }))),
+    ...(hasExclusions ? { exclusions: results.flatMap((result) => (result.exclusions ?? []).map((exclusion) => ({
+      categoryKey: result.category.key, ...exclusion
+    }))) } : {}),
     identityConflicts, serialWarnings
   };
   const comparable = quality.published;
