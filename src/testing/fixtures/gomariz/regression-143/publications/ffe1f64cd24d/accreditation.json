@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "runId": "individual-gomariz-5391ac02627652a9e6f2b8252db44fd1",
+  "approved": true,
+  "approvalReason": "Acreditación automática de exclusiones históricas coincidentes, con evidencia y preparación verificadas",
+  "sources": [
+    {
+      "providerId": "gomariz",
+      "catalogSha256": "52cd6523ac4150f4059ca8c50147ad3ecddf6c7f69daebe5dd2b79f113f594e6",
+      "preparationSha256": "9aa40210594533f632a7f5deea2bca073a3cb24cba54e201180ee19dbdc40518",
+      "productCount": 143
+    }
+  ],
+  "exclusions": []
+}

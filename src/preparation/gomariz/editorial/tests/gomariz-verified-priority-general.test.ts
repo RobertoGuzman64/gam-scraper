@@ -7,7 +7,7 @@ import { reconcileGomarizVerifiedPlatformHeight } from "../../technical/reconcil
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { recoverGomarizDocumentedScaniaP220Specs } from "../../technical/evidence/documented-scania-p220-specs.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const catalog = await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json");
 const references = new Set([
   "OR1537", "FR1077", "DU473", "GR1113", "BA1358", "BA1522",
   "RO1197", "TO1241", "CC1665", "CAE1207", "CA1041", "CA1436",

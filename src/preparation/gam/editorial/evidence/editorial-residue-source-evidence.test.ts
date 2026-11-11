@@ -12,7 +12,7 @@ import { multiSectorSecondaryEvidence } from "./multi-sector-secondary.js";
 const { general: resolveGamAdditionalCondensedGeneral, short: resolveGamAdditionalCondensedShort } = createGamCondensedEditorialResolver(multiSectorSecondaryEvidence);
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gomariz = await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json");
 
 const find = (products: readonly ProductRecord[], reference: string): ProductRecord => {
   const result = products.find((record) => record.reference === reference);

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { basename, join } from "node:path";
 import { discoverAccreditedPublications, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { loadImportCatalog } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
@@ -12,14 +15,25 @@ import { prepareImportBatch } from "../batch-identity.js";
 const root = process.cwd();
 const catalog = await loadImportCatalog();
 const { brandLogos } = await loadCommercialReference();
-const publications = await Promise.all(
-  (await discoverAccreditedPublications(root)).map((file) => readAccreditedPublication(file))
-);
+const publicationFiles = (await discoverAccreditedPublications(root)).map((file) =>
+  basename(file) === "gomariz-publishable.json"
+    ? join(root, "src", "testing", "fixtures", "gomariz", "regression-143", "publications",
+      "ffe1f64cd24d", "gomariz-publishable.json")
+    : file);
+const publications = await Promise.all(publicationFiles.map(readAccreditedPublication));
 
-const datasets = await Promise.all(publications.map(async (published) => {
-  const original = await readCanonicalCatalog(
-    `catalogs/providers/${published.providerId}/original/scrape-${published.providerId}-catalog.json`
-  );
+const datasets = await Promise.all(publications.map(async (published, index) => {
+  const originalPath = published.providerId === "gomariz"
+    ? "src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json"
+    : `catalogs/providers/${published.providerId}/original/scrape-${published.providerId}-catalog.json`;
+  const original = await readCanonicalCatalog(originalPath);
+  if (published.providerId === "gomariz") {
+    const manifest: unknown = JSON.parse(await readFile(publicationFiles[index]!.replace(/gomariz-publishable\.json$/u, "manifest.json"), "utf8"));
+    assert.ok(manifest && typeof manifest === "object" && "source" in manifest);
+    const source = manifest.source;
+    assert.ok(source && typeof source === "object" && "catalogSha256" in source);
+    assert.equal(createHash("sha256").update(await readFile(originalPath)).digest("hex"), source.catalogSha256);
+  }
   const byReference = new Map(original.products.map((product) => [product.reference, product]));
   const selected = published.products.map((product) => {
     const source = byReference.get(product.reference);

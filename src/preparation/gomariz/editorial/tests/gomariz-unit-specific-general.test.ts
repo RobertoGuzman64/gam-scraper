@@ -10,7 +10,7 @@ import { prepareSourceProduct } from "../../../prepare-product.js";
 
 const signedGenerals: Readonly<Record<string, { readonly general: string }>> = verifiedCanonicalBriefEditorial;
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const catalog = await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json");
 const references = new Set(["CC1535", "CC1666", "FR1077", "BA1522", "PV556", "BA1465", "TE1814", "TE1772", "BA1358"]);
 const find = (reference: string): ProductRecord => {
   const record = catalog.products.find((item) => item.reference === reference);

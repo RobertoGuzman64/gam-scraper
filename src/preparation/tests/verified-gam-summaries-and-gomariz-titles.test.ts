@@ -8,7 +8,7 @@ import { resolveGomarizVerifiedUnitSpecificTitle } from "../gomariz/editorial/ma
 import { prepareSourceProduct } from "../prepare-product.js";
 
 const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gomariz = await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json");
 const gamByReference = new Map(gam.products.map((item) => [item.reference, item]));
 const gomarizByReference = new Map(gomariz.products.map((item) => [item.reference, item]));
 

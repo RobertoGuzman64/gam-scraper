@@ -157,7 +157,7 @@ test("Gomariz: deja ausencias ante información insuficiente, contradicción o p
 
 
 test("Gomariz: cubre los camiones cesta, camión y retroexcavadora con datos del original", async () => {
-  const original = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+  const original = await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json");
   const expected = ["CC1535", "CC1665", "CC1666", "1011JFB", "RE454"];
   for (const reference of expected) {
     const source = original.products.find((item) => item.reference === reference);
@@ -182,7 +182,7 @@ test("Gomariz: cubre los camiones cesta, camión y retroexcavadora con datos del
 
 
 test("Gomariz: recupera cortas y reconcilia la motorización A14JE con evidencia individual", async () => {
-  const original = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+  const original = await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json");
   const references = Object.keys(gomarizPriorityShortEvidence);
   for (const reference of references) {
     const source = original.products.find((product) => product.reference === reference);

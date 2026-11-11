@@ -3,8 +3,8 @@ import { createHash } from "node:crypto";
 import { access, mkdtemp, readFile, readdir, rm, writeFile, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { createHistoricalCommercialFixture, type HistoricalCommercialFixture } from "../../../testing/builders/historical-commercial-fixture.js";
 import { buildCommercialExportFiles, buildCommercialDeliveryPlan, type CommercialExportFile } from "../commercial-export.js";
 import type { CommercialExportPlan } from "../../projection/export-projection.js";
 import { validateCommercialExportFiles, verifyCommercialExportArchive, verifyCommercialExportDirectory, verifyCommercialExportSources, verifyCommercialExportZip } from "../commercial-export-verification.js";
@@ -112,7 +112,7 @@ const withManifest = (files: readonly CommercialExportFile[], change: (manifest:
   });
 
 test("impide exportaciones con fuentes comerciales cambiadas o selección de publicaciones obsoleta", async () => {
-  const root = fileURLToPath(new URL("../../../../", import.meta.url));
+  const root = await commercialFixtureRoot();
   const files = await currentCommercialFiles();
   assert.equal(files.length, 4);
 
@@ -435,9 +435,16 @@ test("rechaza exclusiones incoherentes, aunque los totales del manifiesto coinci
   })), /Totales o procedencia/);
 });
 
+let historicalFixturePromise: Promise<HistoricalCommercialFixture> | undefined;
+const historicalFixture = (): Promise<HistoricalCommercialFixture> =>
+  historicalFixturePromise ??= createHistoricalCommercialFixture();
+const commercialFixtureRoot = async (): Promise<string> => (await historicalFixture()).root;
+test.after(async () => {
+  if (historicalFixturePromise) await (await historicalFixturePromise).cleanup();
+});
 let latestFilesPromise: Promise<readonly CommercialExportFile[]> | undefined;
 const currentCommercialFiles = (): Promise<readonly CommercialExportFile[]> =>
-  latestFilesPromise ??= buildCommercialExportFiles(fileURLToPath(new URL("../../../../", import.meta.url)), null);
+  latestFilesPromise ??= commercialFixtureRoot().then((root) => buildCommercialExportFiles(root, null));
 
 const packCommercial = (files: readonly CommercialExportFile[]): Buffer => createZipArchive(files.map((file) => ({
   name: file.name, data: file.content
@@ -506,7 +513,7 @@ test("las referencias comerciales visibles reutilizan la regla del auditor, sin 
 
 test("entrega dos ZIP acreditados con los cuatro contenidos comerciales intactos", async () => {
   const directory = await mkdtemp(join(tmpdir(), "equipzilla-pair-"));
-  const root = fileURLToPath(new URL("../../../../", import.meta.url));
+  const root = await commercialFixtureRoot();
   const files = await currentCommercialFiles();
   const date = new Date("2026-11-06T11:00:00.000Z");
   try {
