@@ -1,6 +1,6 @@
 {
-  "startedAt": "2026-11-11T14:52:14.541Z",
-  "endedAt": "2026-11-11T14:56:29.282Z",
+  "startedAt": "2026-11-11T17:01:50.069Z",
+  "endedAt": "2026-11-11T17:02:43.325Z",
   "quality": {
     "status": "complete",
     "reasons": [],
@@ -9,13 +9,14 @@
   "totals": {
     "categories": 1,
     "discoveredProductUrls": 633,
-    "scrapedProductsRaw": 633,
-    "scrapedProductsByCategorySum": 633,
-    "scrapedProducts": 633,
+    "scrapedProductsRaw": 547,
+    "scrapedProductsByCategorySum": 547,
+    "scrapedProducts": 547,
+    "excludedProductUrls": 86,
     "failures": 0,
     "dedupe": {
       "withinCategories": {
-        "kept": 633,
+        "kept": 547,
         "removed": 0,
         "byReason": {
           "reference": 0,
@@ -24,7 +25,7 @@
         }
       },
       "globalAll": {
-        "kept": 633,
+        "kept": 547,
         "removed": 0,
         "byReason": {
           "reference": 0,
@@ -40,11 +41,12 @@
       "name": "Maquinaria de ocasión",
       "url": "https://www.gomarizrent.com/venta/",
       "discoveredProductUrls": 633,
-      "scrapedProductsRaw": 633,
-      "scrapedProducts": 633,
+      "scrapedProductsRaw": 547,
+      "scrapedProducts": 547,
+      "excludedProductUrls": 86,
       "failures": 0,
       "dedupe": {
-        "kept": 633,
+        "kept": 547,
         "removed": 0,
         "byReason": {
           "reference": 0,
@@ -55,8 +57,8 @@
     }
   ],
   "artifacts": {
-    "csvSha256": "f9cb2d2705864c1b92312f61fb04f67631ea0cdbee97c4651ad41605b30194f4",
-    "preparationSha256": "e8d7847f81c5078b3391505f3ad8049d047bdadc180ff071ab15c5566b71a9f7",
-    "catalogSha256": "3fed7077e639aefbc4cf41bee9202b11db4ab77e2762676e12c04469b6f439b7"
+    "csvSha256": "bf5071a07ef9302fe35cc8897e25abdb207f3592318067672ebb6c768fb56b33",
+    "preparationSha256": "9d05d1166f38aec8c64b3236270a4a83b998a3b2c11610c12e6f781135e46ff7",
+    "catalogSha256": "87e2fc58e39f9f00d7226e623ead5a154f933c3880b8503de2dc1a2375c3901b"
   }
 }

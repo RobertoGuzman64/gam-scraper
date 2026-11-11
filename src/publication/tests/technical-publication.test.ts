@@ -20,6 +20,7 @@ import { baseProductHeaders } from "../../scraping/output/csv-serializer.js";
 import { toCsv } from "../../shared/csv.js";
 import { inspectPortableInventory } from "../../campaign/portable-inventory.js";
 import { readContentGapOptions } from "../../cli/commands/catalog/catalog-content-gaps-options.js";
+import { runTechnicalPublication } from "../../cli/commands/catalog/technical-publication.js";
 
 const hash = (text: string): string => createHash("sha256").update(text).digest("hex");
 const originals = ["scrape-gomariz-catalog.json", "scrape-gomariz-catalog.manifest.json", "scrape-gomariz-summary.json"] as const;
@@ -193,4 +194,20 @@ test("la auditoría técnica es explícita y no altera los modos comerciales exi
     ["--tecnicas", "--specs"], ["--tecnicas", "--catalogo", "origen.json"]]) {
     assert.throws(() => readContentGapOptions(args), /--tecnicas/);
   }
+});
+
+
+test("la CLI técnica admite las opciones normalizadas por tooling y los alias públicos", async () => {
+  const { root, preparation } = await workspace();
+  try {
+    await runTechnicalPublication(["gomariz", "--preparation", preparation], root);
+    await runTechnicalPublication(["gomariz", "--preparacion", preparation], root);
+    await assert.rejects(lstat(technicalPath(root, "gomariz")), { code: "ENOENT" });
+    await publishTechnicalSnapshot(root, "gomariz", { preparation }, true);
+    const versions = await listTechnicalVersions(root, "gomariz");
+    assert.equal(versions.length, 1);
+    await runTechnicalPublication(["gomariz", "--compare", versions[0]!], root);
+    await runTechnicalPublication(["gomariz", "--comparar", versions[0]!], root);
+    assert.equal((await readActiveTechnicalPublication(root, "gomariz"))?.sha256, versions[0]);
+  } finally { await rm(root, { force: true, recursive: true }); }
 });

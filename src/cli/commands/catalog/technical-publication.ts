@@ -41,16 +41,16 @@ export const runTechnicalPublication = async (args: readonly string[], workspace
     const argument = rest[index];
     if (argument === "--activar" && !activate) activate = true;
     else if (argument === "--json" && !json) json = true;
-    else if ((argument === "--preparacion" || argument === "--csv" || argument === "--censo") &&
+    else if ((argument === "--preparacion" || argument === "--preparation" || argument === "--csv" || argument === "--censo") &&
       rest[index + 1] && !rest[index + 1]!.startsWith("--")) {
       const value = rest[++index]!;
-      if (argument === "--preparacion" && !preparation) preparation = value;
+      if ((argument === "--preparacion" || argument === "--preparation") && !preparation) preparation = value;
       else if (argument === "--csv" && !csv) csv = value;
       else if (argument === "--censo" && !census) census = value;
       else throw new Error(help);
     } else if ((argument === "--ver" || argument === "--listar") && mode === "publish") {
       mode = argument === "--ver" ? "view" : "list";
-    } else if (argument === "--comparar" && mode === "publish" &&
+    } else if ((argument === "--comparar" || argument === "--compare") && mode === "publish" &&
       rest[index + 1] && /^[a-f0-9]{64}$/.test(rest[index + 1]!)) {
       mode = "compare";
       other = rest[++index];
