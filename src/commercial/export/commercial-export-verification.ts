@@ -7,6 +7,7 @@ import { loadImportCatalogSnapshot } from "../../infrastructure/filesystem/legac
 import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { discoverAccreditedPublications, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { buildCommercialExportFiles, type CommercialExportFile } from "./commercial-export.js";
+import { validCommercialExceptionAccreditation } from "./commercial-exception-accreditation.js";
 import { isCommercialReceiverProduct } from "../validation/commercial-receiver-product.js";
 import { inspectCommercialIdentityPresentation } from "../validation/commercial-identity-presentation.js";
 import { assessCommercialHeight } from "../validation/height-consistency.js";
@@ -248,6 +249,18 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
       if (!product || exception.reference !== product.reference ||
         exception.identity !== publishedIdentity(provider.providerId, product)) {
         throw new Error(`Excepción comercial con identidad discordante para el proveedor ${provider.providerId}`);
+      }
+      if (Object.prototype.hasOwnProperty.call(exception, "accreditation")) {
+        const sourceIndex = verifiedProducts.findIndex((item) => item.sourceUrl === exception.sourceUrl);
+        const receiver: unknown = Array.isArray(plan.products) ? plan.products[sourceIndex] : undefined;
+        if (!isRecord(receiver) || !validCommercialExceptionAccreditation(
+          provider.providerId, {
+            identity: exception.identity, reference: exception.reference,
+            sourceUrl: exception.sourceUrl, reason: exception.reason,
+            accreditation: exception.accreditation
+          }, receiver)) {
+          throw new Error(`Acreditación comercial incoherente para ${provider.providerId}:${exception.sourceUrl}`);
+        }
       }
     }
     for (const sourceUrl of requiredCapacityExceptions) {

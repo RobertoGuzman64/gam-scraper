@@ -7,6 +7,10 @@ import type { CommercialExportPlan, CommercialExportProduct } from "../projectio
 import { buildProductIdentity } from "../../catalog/identity.js";
 import { accreditCommercialPlan } from "../diagnostics/commercial-accreditation.js";
 import { loadCommercialPublicationInputs } from "./commercial-inputs.js";
+import { loadFindingRecognitionRegistry } from "../../infrastructure/filesystem/catalog/finding-recognition-store.js";
+import { classifyFindingRecognitions } from "../../catalog/diagnostics/finding-recognitions.js";
+import { observeCommercialAccreditationFindings } from "../diagnostics/audited-findings.js";
+import { controlledCommercialField, createCommercialExceptionAccreditation } from "./commercial-exception-accreditation.js";
 
 export type CommercialExportFile = {
   readonly name: string;
@@ -36,9 +40,27 @@ export type CommercialDeliveryPlan = Omit<CommercialExportPlan, "version" | "pro
   readonly sources: readonly CommercialDeliverySource[];
 };
 
-export const buildCommercialDeliveryPlan = (plan: CommercialExportPlan): CommercialDeliveryPlan => ({
+type ReviewedException = {
+  readonly fingerprint: string;
+  readonly evidenceSha256: string;
+  readonly field: string;
+};
+
+const exceptionKey = (reference: string | null, sourceUrl: string, reason: string): string =>
+  JSON.stringify([reference, sourceUrl, reason]);
+
+export const buildCommercialDeliveryPlan = (
+  plan: CommercialExportPlan, recognitions: ReadonlyMap<string, ReviewedException> = new Map()
+): CommercialDeliveryPlan => ({
   ...plan,
   version: 2,
+  exceptions: plan.exceptions.map((issue) => {
+    const finding = recognitions.get(exceptionKey(issue.reference, issue.sourceUrl, issue.reason));
+    const product = plan.products.find((item) => item.sourceUrl === issue.sourceUrl);
+    if (!finding || !product) return issue;
+    const { providerId: _providerId, sourceUrl: _sourceUrl, externalReference: _externalReference, ...receiver } = product;
+    return { ...issue, accreditation: createCommercialExceptionAccreditation(plan.providerId, issue, receiver, finding) };
+  }),
   sources: plan.products.map((product) => ({
     identity: buildProductIdentity({ providerId: plan.providerId, reference: product.reference,
       serialNumber: null, url: product.sourceUrl }).key,
@@ -55,7 +77,9 @@ export const buildCommercialExportFiles = async (
   const [{ catalog, categoryRaw, attributeRaw }, references] = await Promise.all([
     loadImportCatalogSnapshot(), loadCommercialReference()
   ]);
-  const inputs = await loadCommercialPublicationInputs(root, catalog);
+  const [inputs, registry] = await Promise.all([
+    loadCommercialPublicationInputs(root, catalog), loadFindingRecognitionRegistry(root)
+  ]);
   const plans = inputs.map((input) => {
     const companyID = environment === null ? null : references.companies[input.providerId]?.[environment];
     if (environment !== null && companyID === undefined) {
@@ -67,9 +91,20 @@ export const buildCommercialExportFiles = async (
     if (accreditation.summary.blocking > 0) {
       throw new Error(`Exportación comercial ${plan.providerId} con ${accreditation.summary.blocking} infracciones: ${accreditation.blocking.map((item) => item.reason).join(", ")}`);
     }
-    return plan;
+    const withoutCompany = plan.products.map(({ companyID: _companyID, ...product }) => product);
+    const findings = observeCommercialAccreditationFindings(input.entries, withoutCompany, accreditation);
+    const classified = classifyFindingRecognitions(findings, registry);
+    const recognitions = new Map<string, ReviewedException>();
+    for (const item of classified.findings) {
+      if (item.status !== "controlled" || !controlledCommercialField(item.finding.code)) continue;
+      recognitions.set(exceptionKey(item.finding.reference, item.finding.sourceUrl, item.finding.code), {
+        fingerprint: item.fingerprint, evidenceSha256: item.finding.evidenceSha256, field: item.finding.field
+      });
+    }
+    return { plan, recognitions };
   });
-  const products = plans.map((plan) => file(`${plan.providerId}-commercial.json`, serialized(buildCommercialDeliveryPlan(plan))));
+  const products = plans.map(({ plan, recognitions }) => file(`${plan.providerId}-commercial.json`,
+    serialized(buildCommercialDeliveryPlan(plan, recognitions))));
   const manifest = file("commercial-manifest.json", serialized({
     version: 2,
     environment,
@@ -77,7 +112,7 @@ export const buildCommercialExportFiles = async (
     attributesSha256: hash(attributeRaw),
     logosSha256: hash(references.logoRaw),
     companiesSha256: hash(references.companyRaw),
-    providers: plans.map((plan, index) => {
+    providers: plans.map(({ plan }, index) => {
       const output = products[index];
       if (!output) throw new Error(`Falta la exportación del proveedor ${plan.providerId}`);
       return {
