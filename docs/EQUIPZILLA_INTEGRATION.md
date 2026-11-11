@@ -4,15 +4,19 @@
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
+**Regla de alcance.** No cambiar los contratos del backend ni atribuir importación automática a los JSON del scraper. Separar explícitamente snapshot técnico, publicación individual acreditada y entrega comercial v2.
+
 ## Dos productos de datos y una frontera de sistema
 
-El scraper produce y conserva **datos técnicos acreditados**. También dispone de una **proyección comercial local**, separada, que interpreta publicaciones técnicas vigentes conforme a la taxonomía y los atributos conocidos. **Ni la entrega técnica ni la exportación comercial importan productos al backend**: autorización, altas, actualizaciones, persistencia y reglas operativas del receptor siguen fuera de este repositorio.
+El scraper produce y conserva **datos técnicos acreditados**. También dispone de una **proyección comercial local**, separada, que interpreta publicaciones **individuales acreditadas**, no los snapshots técnicos independientes con `review`, conforme a la taxonomía y los atributos conocidos. **Ni la entrega técnica ni la exportación comercial importan productos al backend**: autorización, altas, actualizaciones, persistencia y reglas operativas del receptor siguen fuera de este repositorio.
 
 ```text
-Proveedores → extracción → originales canónicos → preparación técnica (ready/review)
-                                                 ↓
+Proveedores → extracción → originales / registro parcial → preparación (ready/review)
+                                               ├──→ snapshot técnico versionado
+                                               │      (incluye review; auditor huecos --tecnicas)
+                                               ↓
                             selección editorial y JSON acreditados
-                                                 ↓
+                                               ↓
           proyección comercial del scraper (categorías, atributos, metadata)
                                                  ↓
                      JSON comerciales + manifiesto verificable
@@ -21,6 +25,8 @@ Proveedores → extracción → originales canónicos → preparación técnica 
 ```
 
 La campaña global tiene un contrato de cuatro proveedores (GAM, Gomariz, Mercaeleva, Manain). Las publicaciones individuales acreditadas utilizadas por la exportación comercial actual corresponden a **GAM, Gomariz y Mercaeleva**; eso no convierte a Manain en una publicación completa ni sustituye la campaña global.
+
+El comando `publicacion:tecnica` crea un registro de consulta independiente, con `ready/review`, índice y retención propios. Gomariz usa un original canónico completo; Manain puede conservar un corte `partial` acreditado por registro, CSV y censo. Ninguno de esos snapshots altera la vigencia de las publicaciones individuales de GAM, Gomariz y Mercaeleva ni habilita la exportación comercial de Manain. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
 
 ## Contrato técnico
 
@@ -33,7 +39,7 @@ La campaña global tiene un contrato de cuatro proveedores (GAM, Gomariz, Mercae
 
 - `src/commercial/projection/` decide la correspondencia con el snapshot de categorías y atributos; los IDs solo proceden de `data/category/categorySell-flat.json` y `data/import/attributeCatalog.json`.
 - `src/commercial/projection/category-projection.ts` mantiene la política; `source-category-evidence.ts` y `gam-category-evidence.ts` aíslan las comprobaciones de procedencia. La extracción de evidencia no cambia las reglas comerciales.
-- `src/commercial/export/` produce los JSON derivados y su `commercial-manifest.json`, con hashes de archivos, snapshot y referencias relevantes. La exportación consulta las publicaciones técnicas y sus originales sin modificarlos.
+- `src/commercial/export/` produce los JSON derivados y su `commercial-manifest.json`, con hashes de archivos, snapshot y referencias relevantes. La exportación consulta las publicaciones **individuales acreditadas** y sus originales históricos sin modificarlos; contrasta el original vigente para impedir exportaciones de stock obsoleto.
 - `src/cli/commands/catalog/commercial-audit.ts` coordina la auditoría y `src/cli/reporting/commercial-audit.ts` presenta informes. `--verificar=RUTA` contrasta una exportación existente con las fuentes vigentes.
 - `data/commercial-reference/` contiene logos y correspondencias de empresas; `companyID` solo se incluye con entorno explícito. Las categorías, opciones, valores, condición, identidad y metadata se validan, no se inventan.
 

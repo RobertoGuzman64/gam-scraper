@@ -4,6 +4,8 @@
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
+**Regla de alcance.** Mantener las fronteras entre `scraping/`, `preparation/`, `publication/`, `infrastructure/` y `commercial/`. No hacer que el índice técnico seleccione, modifique ni autorice una publicación comercial.
+
 ## Visión general y estructura vigente
 
 EQUIPZILLA es una CLI local en Node.js, TypeScript estricto y ESM. No ofrece API HTTP ni realiza importaciones o escrituras en el backend. La arquitectura organiza las responsabilidades por dominio, **sin `src/pipeline/` ni `src/catalog/preparation/`**:
@@ -24,13 +26,13 @@ src/
   testing/                 Fixtures y builders de pruebas
   tools/                   Herramientas internas de catálogo y semillas GAM
 interventions/             Scripts de intervención acreditables
-catalogs/providers/        Originales completos y publicaciones individuales portátiles
+catalogs/providers/        Originales completos, publicaciones individuales y snapshots técnicos portátiles
 catalogs/campaigns/        Instantáneas acreditadas de campañas globales
 storage/                   Trabajo y recuperación locales, excluidos de Git
 dist/                      Compilados regenerables, excluidos de Git
 ```
 
-El registro de proveedores está en `src/scraping/registry.ts` y el contrato de campaña de cuatro proveedores (GAM, Gomariz, Mercaeleva y Manain) en `src/contracts/campaign-providers.ts`. Las publicaciones individuales vigentes pueden operar para GAM, Gomariz y Mercaeleva; Manain mantiene su flujo propio y no debe darse por completo sin acreditación. La lectura de históricos de tres proveedores no cambia el contrato de campaña actual.
+El registro de proveedores está en `src/scraping/registry.ts` y el contrato de campaña de cuatro proveedores (GAM, Gomariz, Mercaeleva y Manain) en `src/contracts/campaign-providers.ts`. Las publicaciones individuales comerciales vigentes pueden operar para GAM, Gomariz y Mercaeleva; Manain mantiene su flujo parcial y no debe darse por completo sin acreditación. **En paralelo**, las publicaciones técnicas independientes admiten Gomariz y Manain, entre otros proveedores, con estados `ready/review` y procedencia explícita. La lectura de históricos de tres proveedores no cambia el contrato de campaña actual.
 
 ## Fronteras y dirección de dependencias
 
@@ -76,6 +78,12 @@ Una preparación técnica canónica puede producir `categorySellID: null` y `att
 `src/infrastructure/filesystem/catalog/portable-campaign.ts` coordina consolidación y retirada; `portable-campaign-inspection.ts` inspecciona manifiestos, archivos y rutas. En la retención individual, `catalog-retention-cleanup.ts` utiliza `catalog-retention-references.ts` para proteger archivos aún referenciados. `src/infrastructure/filesystem/campaign/campaign-cleanup.ts` conserva el inventario y la ejecución de limpiezas; `campaign-cleanup-validation.ts` valida rutas, históricos y artefactos. Las rutas y los symlinks sospechosos deben bloquear las operaciones sensibles. La retención global se aplica por `runId`, con máximo de dos campañas protegidas según el contrato; los originales individuales tienen un ciclo de vida separado.
 
 No ejecutar retiradas ni consolidaciones reales como parte de una auditoría documental. `npm run estado` inspecciona, y `npm run migrar:catalogos` simula por defecto. Ninguno de esos comandos equivale a aprobar una nueva publicación.
+
+### Publicaciones técnicas independientes
+
+`src/publication/technical-snapshot.ts` define y valida el corte; `src/publication/technical-publication.ts` prepara, contrasta y simula/activa; `src/cli/commands/catalog/technical-publication.ts` expone el comando, mientras `src/infrastructure/filesystem/catalog/technical-publication.ts` conserva y verifica `technical/active.json` y `technical/versions/<sha256>/{snapshot,manifest}.json`. Los originales completos se contrastan con sus preparaciones; Manain se reconstruye y valida con registro `partial`, CSV y censo. Los `review` permanecen en el snapshot y no autorizan la publicación comercial.
+
+La versión técnica activa y la anterior son las dos protegidas en la retención. Los índices, hashes, locks y temporales son propios; el publicador técnico no toca `publications/` ni activa FINISH. `huecos --tecnicas` lee estos snapshots y es independiente del auditor comercial. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
 
 ### Publicaciones individuales y acreditación
 

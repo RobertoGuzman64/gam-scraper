@@ -1,6 +1,14 @@
 # Referencias para la salida comercial de EQUIPZILLA
 
+## AI GUARD
+
+**Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
+
+**Regla de alcance.** Los IDs, relaciones, ejemplos y hashes de referencia deben proceder de sus fuentes acreditadas. No cambiar snapshots ni manifiestos, y no deducir que una publicación técnica `review` es elegible comercialmente.
+
 Estas referencias permiten **construir en el scraper** el catálogo comercial propio. El backend aportado sirve para conocer IDs, tipos, relaciones y campos; **no** para copiar productos ni adaptar la calidad del catálogo a sus seeds. El backend y la BD no se modifican en este trabajo. El funcionamiento permanente del derivado se describe en [`../../docs/COMERCIALIZACION.md`](../../docs/COMERCIALIZACION.md).
+
+Las referencias de esta carpeta son insumos **comerciales**, no el almacén de publicaciones técnicas independientes. El guard del contrato comercial v2 comprueba los campos y estructuras protegidos, pero no reescribe estos snapshots ni su `source-manifest.json`. Si hay discrepancias de hash, investigarlas sin regenerar referencias para conseguir `PASS`. Consultar [Comercialización](../../docs/COMERCIALIZACION.md) y [Publicaciones técnicas](../../docs/TECHNICAL_PUBLICATIONS.md).
 
 ## Fuentes únicas (no duplicar catálogos)
 

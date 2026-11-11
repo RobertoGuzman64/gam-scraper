@@ -4,6 +4,8 @@
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
+**Regla de alcance.** No convertir simulaciones en activaciones automáticas, ni asumir que el registro parcial de Manain acredita cobertura completa. La retención y las recuperaciones requieren validación de integridad.
+
 ## Modelo de ejecución
 
 El repositorio implementa una **CLI que termina tras ejecutar una operación**. No incorpora servidor HTTP, Dockerfile, despliegue cloud, CI/CD ni importación automática al backend. Es posible planificar ejecuciones externas, pero deben conservarse íntegros los resultados y vigilarse sus fallos.
@@ -41,6 +43,10 @@ La tarea ejecuta `extraer:todos`, no el flujo completo de campaña. Debe usar un
 ### Linux
 
 Un planificador externo puede invocar la CLI desde la raíz del proyecto con el usuario autorizado. No hay una configuración de `cron` o `systemd` implementada en este repositorio; crearla requiere aprobación operativa y política de logs, permisos y persistencia.
+
+## Activación técnica no comercial
+
+La operación `npm run publicacion:tecnica -- <proveedor> ...` simula sin escrituras salvo `--activar`, que modifica exclusivamente la selección técnica. Antes de automatizar una activación hay que verificar huellas, origen, disponibilidad de archivos y `npm run estado`. Manain conserva el estado `partial`; no convertirlo en `complete` por conveniencia. La rotación automática protege dos versiones técnicas por proveedor. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
 
 ## Publicación y recuperación
 

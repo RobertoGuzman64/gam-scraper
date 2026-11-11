@@ -1,8 +1,16 @@
 # Acreditación manual de una campaña completa
 
+## AI GUARD
+
+**Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
+
+**Regla de alcance.** No trasladar automáticamente decisiones de una publicación técnica con `review` a una aprobación editorial de campaña. Mantener evidencia y autorización humana real en cada exclusión.
+
 ## Objetivo
 
 La acreditación editorial valida que los cuatro catálogos del contrato actual proceden del mismo lote completo y que sus preparaciones, decisiones e intervenciones son comprobables. Superar la validación técnica o tener cero incidencias `Review` **no autoriza por sí solo la publicación**. No añadir SHA fijos al código ni relajar los controles para forzar la selección.
+
+La publicación técnica independiente de un proveedor, aunque incluya máquinas `ready`, **no es la acreditación editorial de una campaña**. Un snapshot con `review` se puede analizar sin decidir todavía exclusiones; las decisiones de campaña deben seguir sus propias reglas de evidencia, aprobación y cierre. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
 
 ## Qué acredita y qué no arregla
 

@@ -4,6 +4,10 @@
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Las solicitudes de código, pruebas, auditoría o mantenimiento no autorizan cambios documentales implícitos.
 
+**Regla de alcance.** Conservar la distinción entre intervención manual aprobada, preparación técnica y observación del auditor; ninguna publicación técnica aprueba por sí sola una intervención.
+
+Las observaciones procedentes de `huecos --tecnicas` también son solo diagnósticos. Que una ficha permanezca en `review` en un snapshot técnico no constituye aprobación de una intervención ni impide investigar esa ficha en un frente separado. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
+
 ## Cuándo utilizarlas
 
 Una intervención es una corrección **puntual y acreditada**, decidida por una persona tras contrastar la ficha con la fuente vigente. No es un formateador general, no completa datos por intuición y **no se ejecuta automáticamente al extraer, revisar o finalizar**. Si el problema se repite en numerosas fichas, corregir el extractor, mapeador o formateador responsable.

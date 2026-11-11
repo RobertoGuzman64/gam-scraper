@@ -1,8 +1,16 @@
 # Referencia operativa: compatibilidad histórica, consulta y traslado
 
+## AI GUARD
+
+**Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
+
+**Regla de alcance.** La referencia legada no sustituye originales históricos acreditados, snapshots técnicos ni las fuentes de exportación comercial. No mover, sobrescribir o limpiar referencias para silenciar una auditoría.
+
 `data/reference/` es un **almacén legado opcional**, no la referencia que debe actualizarse después de cada entrega. Las comparaciones de campaña obtienen su base de los originales de la última campaña íntegra conservada, verificados por `runId`; si no existe, pueden usar la referencia legada íntegra. `npm run huecos` conserva esa vía para su diagnóstico de originales, además de `--catalogo` para canónicos explícitos. Para medir el catálogo **publicado**, `huecos --finales` consulta las publicaciones acreditadas seleccionadas; `--comparar` recalcula la preparación sobre esas mismas identidades y `--comparar --specs` añade diagnóstico de claves técnicas. **Estas consultas no actualizan la referencia legada ni activan publicaciones**.
 
 El formato legado conserva `gam.json`, `gomariz.json`, `mercaeleva.json`, opcionalmente `manain.json`, `manifest.json` y `differences.json`, con huellas verificables. Acepta referencias históricas de **tres proveedores** sin exigir Manain en sus originales. Una nueva campaña global y su ZIP, en cambio, requieren los cuatro proveedores. Las referencias heredadas no incluyen selección editorial ni forman parte del ZIP público. La rotación global no elimina `data/reference/`.
+
+La publicación técnica independiente de `catalogs/providers/<proveedor>/technical/` tampoco es una referencia legada: utiliza versiones SHA y un selector activo propios, y se consulta con `publicacion:tecnica --ver/--listar` o `huecos --tecnicas`. La lectura comercial histórica utiliza el origen vinculado a su propia acreditación; no cambiar `data/reference/` ni copiar stock obsoleto para silenciar avisos. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
 
 ## Responsabilidad frente a incidencias de referencia
 

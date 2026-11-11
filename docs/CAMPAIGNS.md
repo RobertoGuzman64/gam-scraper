@@ -4,11 +4,15 @@
 
 **Protección documental.** No modificar, eliminar ni regenerar esta guía sin autorización expresa del propietario para la intervención documental concreta. Cambios de código, auditorías o correcciones puntuales no implican autorización documental.
 
+**Regla de alcance.** La publicación técnica independiente no sustituye el requisito de campaña completa de cuatro proveedores ni su aprobación y entrega. No confundir los modos `partial` y `complete`.
+
 ## Objetivo y alcance
 
 Una campaña ordinaria bajo el contrato actual incluye **GAM, Gomariz, Mercaeleva y Manain** (`CAMPAIGN_PROVIDERS`). Las extracciones limitadas por proveedor, categoría o número de páginas son auxiliares: **nunca constituyen una campaña global publicable**. La integración de Manain en el contrato y en las pruebas no demuestra por sí sola que su cobertura en la web esté acreditada: las páginas problemáticas deben tratarse con evidencia y no pueden contarse como fichas obtenidas.
 
 La operación habitual no requiere recuperar JSON históricos, copiar SHA, adivinar rutas ni preparar los cuatro catálogos a mano. Todo se ejecuta desde la raíz del repositorio.
+
+**Circuito distinto:** `publicacion:tecnica` puede conservar `review` y un origen parcial de Manain para investigación; no entrega cuatro finales, no aprueba exclusiones, no cumple el requisito de campaña global completa y no activa productos comerciales. Consultar [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
 
 ## Resultado esperado por tramo de campaña
 

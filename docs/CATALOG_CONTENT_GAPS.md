@@ -4,6 +4,8 @@
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
+**Regla de alcance.** No convertir métricas exploratorias de descripciones o densidad en defectos confirmados, ni modificar datos para conseguir un informe verde. `--tecnicas` consulta un universo distinto de `--comparar --specs`.
+
 ## Finalidad y límites
 
 `npm run huecos` es el auditor de **descripciones y especificaciones técnicas** ya existente. Permite distinguir el contenido de las publicaciones acreditadas, el que producen las reglas de preparación actuales y las ausencias observables en sus fuentes. Sus señales ayudan a **elegir qué máquinas merecen una intervención productiva**, no constituyen por sí solas defectos verificados ni requisitos del backend.
@@ -12,12 +14,15 @@ El auditor es **de solo lectura** respecto a originales, preparaciones guardadas
 
 ## Fuentes y modos de consulta
 
+**Nuevo origen explícito:** `npm run huecos -- --tecnicas --detalle` consulta las publicaciones técnicas independientes vigentes (`technical/active.json`) e incluye `ready`, `review`, incidencias, análisis editorial y densidad/semántica. Es independiente de `--comparar`, que contrasta fuentes y preparaciones contra publicaciones individuales acreditadas. `--tecnicas` no se combina con `--comparar`, `--finales`, `--catalogo`, `--publicacion`, `--titulos` o `--specs`; `--json` permite obtener el universo completo de casos. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
+
 | Modo                   | Qué analiza                                                                                                                                  | Alcance / precaución                                                                                            |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | `npm run huecos`       | Campaña íntegra conservada o referencia histórica verificable; si faltan, comparación de publicaciones acreditadas con la preparación actual | La fuente elegida determina la población: consultar `provenance` antes de comparar cifras                       |
 | `--comparar`           | Publicaciones acreditadas seleccionadas frente a preparación recalculada para sus mismas identidades                                         | Muestra vacíos recuperados, pendientes, pérdidas y prioridades editoriales; **no** publica resultados           |
 | `--comparar --specs`   | Comparación de claves técnicas y semántica técnica publicada, separada del diagnóstico editorial                                             | `technicalSpecs` y `technicalSemantics` responden a criterios diferentes; ninguno inventa atributos comerciales |
 | `--comparar --titulos` | Compara títulos de publicaciones acreditadas con originales y preparación recalculada; genera `titles`                                       | Requiere `--comparar`; no admite `--specs` simultáneamente                                                      |
+| `--tecnicas`           | Snapshots técnicos activos, incluidas las fichas `review`, con diagnósticos, calidad editorial y densidad/semántica; no modifica su estado   | No consume `-publishable.json` ni permite las opciones de comparación de orígenes                               |
 | `--finales`            | Calidad editorial, densidad y **semántica técnica** de los JSON publicados seleccionados                                                     | No calcula recuperaciones de la preparación ni comparación de claves entre etapas                               |
 | `--publicacion <ruta>` | Calidad editorial y densidad técnica de uno o varios `-publishable.json` acreditados explícitos                                              | No mezclar proveedores repetidos ni confundir una publicación histórica con la vigente                          |
 | `--catalogo <ruta>`    | Originales canónicos completos aportados explícitamente; aplica en memoria las reglas actuales                                               | Requiere canónico verificable; admite varias rutas, no CSV parciales                                            |
@@ -64,6 +69,8 @@ Antes de incorporar una especificación, preferir datos de la **misma máquina**
 Desde la raíz del repositorio:
 
 ```powershell
+npm run huecos -- --tecnicas --detalle
+npm run huecos -- --tecnicas --json
 npm run huecos -- --comparar
 npm run huecos -- --comparar --specs
 npm run huecos -- --comparar --specs --json
@@ -75,15 +82,15 @@ npm run huecos -- --publicacion <ruta-a-publicacion-acreditada> --json
 npm run huecos -- --help
 ```
 
-| Opción                                                   | Restricción / efecto                                                                                    |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `--comparar`, `--finales`, `--catalogo`, `--publicacion` | Modos alternativos; `--catalogo` y `--publicacion` admiten repetición de su propia opción               |
-| `--specs`                                                | Solo con `--comparar`; combina diagnóstico de claves y semántica técnica                                |
-| `--titulos`                                              | Solo con `--comparar`; alternativo a `--specs`, no se mezcla con `--finales` o publicaciones explícitas |
-| `--agrupar categoria\|marca\|modelo`                     | Agrupa el diagnóstico de originales; valor inicial `categoria`                                          |
-| `--min-grupo N`, `--min-ausentes N`                      | Filtros del TOP de patrones de originales; valores iniciales `8` y `3`                                  |
-| `--top N`                                                | Máximo de entradas visibles de los listados priorizados; valor inicial `20`                             |
-| `--json`                                                 | Informe estructurado completo, con procedencia y colecciones sin el recorte visual del TOP              |
+| Opción                                                                 | Restricción / efecto                                                                                    |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `--comparar`, `--finales`, `--tecnicas`, `--catalogo`, `--publicacion` | Modos alternativos; `--catalogo` y `--publicacion` admiten repetición de su propia opción               |
+| `--specs`                                                              | Solo con `--comparar`; combina diagnóstico de claves y semántica técnica                                |
+| `--titulos`                                                            | Solo con `--comparar`; alternativo a `--specs`, no se mezcla con `--finales` o publicaciones explícitas |
+| `--agrupar categoria\|marca\|modelo`                                   | Agrupa el diagnóstico de originales; valor inicial `categoria`                                          |
+| `--min-grupo N`, `--min-ausentes N`                                    | Filtros del TOP de patrones de originales; valores iniciales `8` y `3`                                  |
+| `--top N`                                                              | Máximo de entradas visibles de los listados priorizados; valor inicial `20`                             |
+| `--json`                                                               | Informe estructurado completo, con procedencia y colecciones sin el recorte visual del TOP              |
 
 Los límites numéricos deben ser enteros positivos. `--top` **no** elimina las colecciones completas de casos del JSON ni recorta la cola P0 en texto. El despachador puede compilar `dist/`; una redirección de salida a archivo la realiza el operador, no el auditor, y debe quedar fuera del ZIP aplicable al repositorio.
 

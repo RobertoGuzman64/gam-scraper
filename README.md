@@ -4,13 +4,15 @@
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
+**Regla de alcance.** Este índice distingue originales, publicaciones técnicas explorables, publicaciones individuales acreditadas y exportaciones comerciales. No presentar `ready/review` de un corte técnico como autorización para vender ni como finalización editorial.
+
 ## Qué es
 
 Herramienta de línea de comandos, desarrollada en **Node.js, TypeScript y módulos ESM**, para extraer maquinaria **nueva y de segunda mano** de **GAM, Gomariz, Mercaeleva y Manain**, normalizar sus datos, comprobar su calidad y publicar catálogos JSON trazables.
 
-El **catálogo canónico** conserva todas las máquinas identificadas, incluidas aquellas cuya preparación tenga incidencias. La **selección editorial** es una salida separada: aparta fichas no acreditadas sin borrar el origen ni convertir artificialmente productos a `ready`.
+El **original canónico vigente** conserva las máquinas elegibles por el criterio de extracción del proveedor, incluidas las que después queden en `review`. En Gomariz, las fichas expresamente marcadas «Sin existencias» se excluyen de ese original con motivo y URL trazables; no se confunden con errores. La **selección editorial comercial** es otra salida: aparta fichas no acreditadas sin convertir artificialmente productos en `ready`.
 
-**Dirección permanente de calidad:** si aparecen reviews, el trabajo de desarrollo consiste en **corregir el código productivo reutilizable que origina los problemas**, no terminar en informes, comandos o revisión manual ficha a ficha. La meta para declarar el catálogo completo de un proveedor `ready` es **0 reviews verificadas sobre todas sus fichas**, conservando los originales y sin inventar valores ni relajar validaciones. Los diagnósticos son herramientas internas del desarrollador; las contradicciones de origen realmente irresolubles permanecen identificadas y requieren una decisión editorial distinta. Ver [Objetivos](docs/SCRAPER_OBJECTIVES.md) y [Validación](docs/VALIDATION.md).
+**Dirección permanente de calidad:** si aparecen reviews, el trabajo de desarrollo consiste en **corregir el código productivo reutilizable que origina los problemas**, no terminar en informes, comandos o revisión manual ficha a ficha. La meta para declarar todo el universo de un proveedor `ready` es **0 reviews verificadas sobre todas sus fichas**; no es condición para publicar un **snapshot técnico independiente** que conserve las revisiones, conservando los originales y sin inventar valores ni relajar validaciones. Los diagnósticos son herramientas internas del desarrollador; las contradicciones de origen realmente irresolubles permanecen identificadas y requieren una decisión editorial distinta. Ver [Objetivos](docs/SCRAPER_OBJECTIVES.md) y [Validación](docs/VALIDATION.md).
 
 Este repositorio no ofrece una API HTTP, no realiza altas en el backend y no automatiza importaciones. Los JSON canónicos y las selecciones acreditadas **no son solicitudes de creación de productos del backend**. Existe, por separado, una **proyección comercial propia** que asigna categorías y atributos conforme a los snapshots locales y entrega JSON comerciales auditables. La persistencia, permisos e importación siguen en el backend. `npm run exportar` (Excel/JSON histórico) es compatibilidad heredada, mientras `npm run exportar:comercial` es el circuito comercial actual. Ver [Comercialización](docs/COMERCIALIZACION.md).
 
@@ -57,7 +59,8 @@ La estructura de `src/` agrupa responsabilidades, no fases históricas del desar
 - `src/catalog/`: identidad, calidad, normalización, cobertura, diagnósticos, editorial e intervenciones.
 - `src/preparation/`: preparación técnica, evidencias, reconciliaciones y mapeadores por proveedor, con orquestación offline en `workflow/`.
 - `src/scraping/`: extracción, lotes, salida CSV/JSON y ciclo de publicación de origen; `workflow/`, `batch/` y `output/`.
-- `src/campaign/` y `src/publication/`: campaña global, acreditación y retención; publicaciones individuales y FINISH.
+- `src/campaign/` y `src/publication/`: campaña global, acreditación y retención; publicaciones individuales, FINISH y snapshots técnicos independientes.
+- `src/infrastructure/filesystem/catalog/technical-publication.ts`: almacenamiento, integridad, activación y retención de las versiones técnicas.
 - `src/commercial/`: proyección y exportación comercial actual, auditorías y compatibilidad de exportación legada.
 - `src/infrastructure/`: filesystem, HTTP, navegador, locks, almacenamiento, referencias y XLSX.
 - `src/cli/`: comandos y presentación; `src/contracts/` y `src/shared/`: contratos y utilidades transversales.
@@ -66,7 +69,7 @@ La estructura de `src/` agrupa responsabilidades, no fases históricas del desar
 
 Los nombres **internos** de archivos, directorios y módulos técnicos se mantienen en inglés; los comandos npm y la salida operativa conservan sus nombres en español. No se traducen IDs de proveedores, rutas persistidas, campos de contratos ni formatos acreditados por una cuestión estética. Ver [Arquitectura](docs/ARCHITECTURE.md).
 
-`npm test` compila antes de ejecutar `scripts/run-tests.mjs`. El runner descubre recursivamente `src/**/*.test.ts`, ejecuta sus equivalentes compilados en `dist/` e incluye además `scripts/**/*.test.mjs`. No se debe deducir la cantidad de tests por la cantidad de carpetas ni fijar un número constante de archivos. Para diagnosticar la ejecución se puede ejecutar `node scripts/run-tests.mjs --concurrencia 2` después del build o generar una medición JSON con `--medicion <ruta.json>`; el archivo de medición es un artefacto temporal, no un dato acreditado.
+`npm test` ejecuta primero `tests-performance-guard.mjs` y `tests-commercial-contract-guard.mjs`, compila cuando corresponde y después invoca `scripts/run-tests.mjs`. `npm run contrato:comercial` permite comprobar el contrato comercial v2 de manera explícita; este guard también protege la ruta de exportación comercial. El runner descubre recursivamente `src/**/*.test.ts`, ejecuta sus equivalentes compilados en `dist/` e incluye además `scripts/**/*.test.mjs`. No se debe deducir la cantidad de tests por la cantidad de carpetas ni fijar un número constante de archivos. Para diagnosticar la ejecución se puede ejecutar `node scripts/run-tests.mjs --concurrencia 2` después del build o generar una medición JSON con `--medicion <ruta.json>`; el archivo de medición es un artefacto temporal, no un dato acreditado.
 
 **Protección de los módulos de salida:** `src/scraping/output/publish.ts` y `csv-serializer.ts` deben mantenerse versionados. `.gitignore` excluye directorios genéricos `output/`, pero contiene la excepción `!src/scraping/output/`; no eliminarla al limpiar archivos generados. Ver [Mantenimiento](docs/MAINTENANCE.md).
 
@@ -74,6 +77,7 @@ Los nombres **internos** de archivos, directorios y módulos técnicos se mantie
 
 ## Catálogos definitivos y trabajo operativo
 
+- `catalogs/providers/<proveedor>/technical/` conserva una publicación técnica activa independiente (`active.json`) y como máximo dos versiones verificadas (`versions/<sha256>/`): la activa y la anterior. Admite `ready` y `review`, sin activar la publicación comercial. Manain utiliza su registro parcial acreditado. Ver [Publicaciones técnicas](docs/TECHNICAL_PUBLICATIONS.md).
 - `catalogs/providers/<proveedor>/original/` contiene **un solo original vigente** de extracción individual completa: `<prefijo>-catalog.json`, `<prefijo>-catalog.manifest.json` y `<prefijo>-summary.json`. La consolidación comprueba el trío; no guarda CSV ni resultados parciales como originales completos.
 - `catalogs/campaigns/<runId>/` contiene una **instantánea acreditada e inmutable** de una campaña: `manifest.json`, `accreditation.json`, `selection.json` y, por proveedor, el trío original y `publishable.json`; si hubo intervención, también `catalog-derived.json` e `intervention-record.json`. No confundir este `publishable.json` con un JSON importado en el backend.
 - `storage/` continúa siendo necesario para extraer, preparar, corregir, acreditar y entregar; incluye trabajos en curso y elementos de recuperación. **No se copia íntegramente a Git ni se elimina a mano**. Una copia limpia del repositorio puede verificar los conjuntos de `catalogs/` sin necesitar los archivos operativos originales; eso no equivale a disponer de una campaña activa para seguir editándola.
@@ -91,6 +95,12 @@ npm run estado
 `--aplicar` solo consolida originales completos y campañas con entrega verificable; reconoce parciales sin promocionarlos. **No reextrae, no borra `storage/` y no concede aprobaciones editoriales**. Si detecta corrupción, conflicto o retención excedida, bloquea la operación. Consultar [Reglas de datos](docs/SCRAPER_DATA_RULES.md) y [Validación](docs/VALIDATION.md) antes de migrar.
 
 Git registra los datos de `catalogs/` **cuando tú los añades y haces commit**. El scraper no ejecuta `git add`, `commit` ni `push`; `estado` valida archivos y discrepancias con el original operativo, **no comprueba el índice ni si el último commit contiene los cambios**. Tras consolidar, revisar `npm run estado` y `git status --short`, e incluir `catalogs/` en el commit correspondiente. Los históricos internos de Git no forman parte de la retención operativa.
+
+## Publicación técnica independiente para auditores
+
+`npm run publicacion:tecnica` habilita una **vía distinta de FINISH** para activar cortes técnicos con `ready` y `review`, sin cambiar publicaciones comerciales. Un proveedor completo se basa en original canónico y preparación validada; Manain usa su registro `partial` conciliado con CSV y censo. La simulación por defecto no escribe y `--activar` selecciona solo la versión técnica. `npm run huecos -- --tecnicas --detalle` analiza estos cortes, incluido el inventario de revisiones, sin mutar fichas. La retención mantiene la versión activa y la anterior; no acumula versiones ilimitadamente.
+
+El corte acreditado en noviembre de 2026 era Gomariz 547 (535 `ready`, 12 `review`) y Manain 384 (383 `ready`, 1 `review`); son **cifras observadas**, no expectativas fijas para los tests. Una publicación técnica puede contener pendientes editoriales y **no acredita comercialmente** sus unidades. La publicación comercial vigente de Gomariz procede de un corte anterior y requiere reconciliar bajas por falta de existencias antes de volver a exportarla. Ver [Publicaciones técnicas](docs/TECHNICAL_PUBLICATIONS.md) y [Comercialización](docs/COMERCIALIZACION.md).
 
 ## Uso habitual: de una instalación limpia al ZIP final
 
@@ -273,6 +283,7 @@ El contrato de cuatro proveedores describe el software, **no acredita por sí so
 - [Objetivos y alcance](docs/SCRAPER_OBJECTIVES.md): prioridades y criterios de aceptación.
 - [Arquitectura](docs/ARCHITECTURE.md): módulos, responsabilidades, preparación y extensibilidad.
 - [Publicación individual](docs/INDIVIDUAL_PUBLICATION.md): preparación, acreditación automática limitada, FINISH, informes y recuperación.
+- [Publicaciones técnicas independientes](docs/TECHNICAL_PUBLICATIONS.md): `ready/review`, entradas completas y parciales, activación, retención y separación comercial.
 - [Manual de mejora acreditada del catálogo](docs/CATALOG_IMPROVEMENT.md): diagnóstico por causa, reconciliaciones, evidencias, tests, FINISH y ejemplos reales.
 - [Auditor de huecos de contenido](docs/CATALOG_CONTENT_GAPS.md): comparación editorial, títulos, especificaciones y semántica técnica, procedencia y prioridades.
 - [Reglas de datos](docs/SCRAPER_DATA_RULES.md): contratos, origen, preservación y revisión editorial.
@@ -281,6 +292,7 @@ El contrato de cuatro proveedores describe el software, **no acredita por sí so
 - [Composición de intervenciones independientes](docs/INTERVENTION_COMPOSITION.md): varios scripts, campos acreditables, simulación conjunta y selección final con aprobación humana.
 - [Acreditación editorial de campañas](docs/CAMPAIGN_ACCREDITATION.md): procedimiento de aprobación y entrega de JSON.
 - [Validación](docs/VALIDATION.md): verificaciones, códigos de salida y evidencias.
+- [Rendimiento y guards de tests](docs/TESTS_RENDIMIENTO_CAMPANAS.md): runner, reutilización de fixtures, cuotas y guard del contrato comercial v2.
 - [Operación y despliegue](docs/AUTOMATED_DEPLOYMENT.md): ejecución manual o programada y seguridad operacional.
 - [Comercialización](docs/COMERCIALIZACION.md): proyección local, evidencia, atributos, metadata, auditoría y exportación verificable.
 - [Integración con Equipzilla](docs/EQUIPZILLA_INTEGRATION.md): diferencias entre catálogo técnico, exportación comercial y persistencia del backend.

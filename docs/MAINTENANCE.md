@@ -1,5 +1,11 @@
 # Mantenimiento y continuidad del repositorio
 
+## AI GUARD
+
+**Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
+
+**Regla de alcance.** Mantener retención máxima de dos versiones técnicas por proveedor, proteger la activa y la anterior, verificar antes de retirar archivos y no eliminar manualmente históricos referenciados.
+
 ## Alcance
 
 Esta guía describe **la arquitectura existente**, no propone otra reorganización. Refleja la composición técnica/editorial y la clasificación por proveedor actuales, además de los mecanismos de persistencia, publicación, runner y salida consolidados. Las referencias a campañas o fases históricas no sustituyen la revisión del código vigente. Para el mapa general, ver [Arquitectura](ARCHITECTURE.md).
@@ -39,6 +45,12 @@ Las reglas de identidad GAM se mantienen cohesionadas bajo su responsabilidad pr
 - `catalog-retention-references.ts` protege históricos que estén referenciados por huellas/acreditaciones; `campaign-cleanup-validation.ts` define qué rutas y artefactos pueden retirarse.
 - Las operaciones `--simular` o `--dry-run` no deben producir escrituras. Para reparar fallos, usar los procedimientos de recuperación existentes, no borrar a mano manifests, históricos o diarios.
 
+## Publicaciones técnicas y retención de dos versiones
+
+`catalogs/providers/<proveedor>/technical/` conserva `active.json` y versiones inmutables `versions/<sha256>/{snapshot,manifest}.json`. La retención de `src/infrastructure/filesystem/catalog/technical-publication.ts` protege **la vigente y la inmediatamente anterior**; las activaciones nuevas verifican índices y versiones antes de retirar las más antiguas. No inferir orden temporal del nombre hash, no borrar a mano y no asumir que `.gitignore` realiza limpieza física. Los temporales de activación (`.active-*.tmp`, `versions/.pending-*`) se validan y limpian en su propio flujo protegido. Una simulación no escribe. La retención de campañas y los originales históricos comerciales son **circuitos distintos**.
+
+La compatibilidad comercial requiere verificar publicaciones con sus fuentes históricas acreditadas y bloquear exportaciones de identidades ausentes del inventario vigente. El histórico de pruebas de Gomariz (143 fichas) no debe compararse como si fuera el original actual (547 fichas en el corte de noviembre de 2026). Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md) y [Comercialización](COMERCIALIZACION.md).
+
 ## El riesgo de `rulesSha256`
 
 `src/infrastructure/filesystem/preparation/preparation-inputs.ts` calcula `rulesSha256` leyendo el JS compilado y sus rutas relativas. El hash es sensible incluso a redistribuir imports. Una comparación de JSON preparados idénticos **no garantiza** que sean compatibles sus huellas ni que se puedan reutilizar acreditaciones anteriores. La Fase 12 modificó la huella al extraer la conversión GAM, sin autorización para actualizar publicaciones ya acreditadas.
@@ -67,7 +79,7 @@ npm run estado
 git status --short
 ```
 
-Conservar los códigos de salida por separado; PowerShell puede continuar aunque falle un comando. `npm test` compila cuando corresponde y ejecuta suites TypeScript compiladas y MJS, con o sin caché. No confundir un test aislado verde, un `build` correcto o `estado` íntegro con una acreditación editorial o con cobertura externa de los portales. Ante una regresión, corregir primero el fallo concreto y comprobar contratos específicos de la zona modificada.
+Conservar los códigos de salida por separado; PowerShell puede continuar aunque falle un comando. `npm test` ejecuta el guard de rendimiento, el guard del contrato comercial v2, compila cuando corresponde y ejecuta las suites TypeScript compiladas y MJS, con o sin caché. `npm run contrato:comercial` ejecuta explícitamente el guard del contrato comercial. No confundir un test aislado verde, un `build` correcto o `estado` íntegro con una acreditación editorial o con cobertura externa de los portales. Ante una regresión, corregir primero el fallo concreto y comprobar contratos específicos de la zona modificada.
 
 ## Proveedores y extensión
 

@@ -4,6 +4,8 @@
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
+**Regla de alcance.** El original vigente puede variar por disponibilidad sin invalidar un original histórico acreditado. No copiar a los JSON comerciales fichas `review` del snapshot técnico ni reintroducir unidades sin existencias.
+
 ## Fuente de verdad y contratos
 
 La fuente de verdad de extracción es el catálogo **`ProductRecord[]`** dentro de `<prefijo>-catalog.json`, definido en `src/contracts/catalog.ts`. Cada registro conserva:
@@ -64,6 +66,12 @@ La **retención global** de hasta dos campañas se aplica por `runId` y mediante
 Para preparaciones con `rulesVersion: 2`, `rulesSha256` se calcula en `src/infrastructure/filesystem/preparation/preparation-inputs.ts` leyendo los módulos JavaScript compilados de preparación, normalización, identidad y componentes heredados incluidos explícitamente. El hash depende **tanto de sus nombres relativos como de su contenido**; por eso un renombrado de carpetas, un import recompilado o una redistribución del código puede modificar la huella sin cambiar los datos originales.
 
 La huella se usa para detectar incompatibilidades entre la preparación almacenada y las reglas vigentes. Las extracciones editoriales y el mapeo GAM de las fases 9 y 12 afectaron esa huella aunque mantuvieran las salidas de sus pruebas de equivalencia. Un cambio de `rulesSha256` no prueba por sí solo una alteración editorial, pero tampoco habilita la reutilización automática de acreditaciones antiguas. No normalizar, sustituir ni recalcular a mano hashes de preparaciones, aprobaciones o publicaciones para adaptar un refactor. Los originales y finales acreditados permanecen inmutables; la validez de cualquier nueva preparación o decisión debe comprobarse mediante los comandos y controles previstos. Ver [Validación](VALIDATION.md).
+
+### Stock y publicación técnica independiente
+
+Gomariz puede descubrir una ficha desde `/venta/` y excluirla si la página declara **«Sin existencias»**. El resumen de extracción registra `excludedProductUrls` y `-errors.json` conserva las URLs excluidas con motivo; no son fallos de scraping, pero tampoco forman parte del original canónico vigente. En el corte de noviembre de 2026: 633 descubiertas, 547 elegibles y 86 excluidas. Una baja por stock frente a un histórico no autoriza a borrar ni alterar la publicación pasada.
+
+`technical/active.json` selecciona un corte técnico independiente, con `ready/review` y sus incidencias; no equivale a `publications/active.json` comercial. Se conserva un máximo de dos versiones técnicas verificadas por proveedor. Manain solo puede publicarse desde su registro parcial contrastado con evidencias; no se convierte artificialmente en original completo. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
 
 ## Identidad y cobertura
 

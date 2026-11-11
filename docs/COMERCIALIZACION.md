@@ -1,14 +1,26 @@
 # Comercialización desde el scraper
 
-El catálogo comercial de EQUIPZILLA **se deriva de las publicaciones técnicas acreditadas**, sin modificarlas. El scraper decide la elegibilidad, asigna categorías y atributos, prepara los textos y la metadata, y genera exportaciones auditables. El backend recibe los productos y gestiona su persistencia y operación comercial. La exportación **no** escribe en el backend.
+## AI GUARD
+
+**Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
+
+**Regla de alcance.** La exportación comercial solo usa publicaciones individuales acreditadas y debe bloquear inventarios obsoletos; nunca consumir directamente `technical/active.json` ni hacer elegible una ficha `review` por existir en un snapshot.
+
+El catálogo comercial de EQUIPZILLA **se deriva de las publicaciones individuales acreditadas** (`catalogs/providers/<proveedor>/publications/`), sin modificarlas. Los nuevos snapshots bajo `technical/` sirven a análisis y mejora, no son una fuente de exportación comercial. El scraper decide la elegibilidad, asigna categorías y atributos, prepara los textos y la metadata, y genera exportaciones auditables. El backend recibe los productos y gestiona su persistencia y operación comercial. La exportación **no** escribe en el backend.
 
 ## Fuente y contratos
 
-- Fuente: publicación técnica vigente de cada proveedor, junto con su original canónico para contrastar la identidad y aplicar los mapeadores existentes.
+- Fuente: publicación individual acreditada de cada proveedor comercial, contrastada con el **original históricamente acreditado** y con el inventario vigente cuando se prepara una exportación nueva. No utilizar el snapshot `technical/` como fuente de elegibilidad.
 - Categorías y `categorySellID`: `data/category/categorySell-flat.json`, respetando jerarquía y condición. Priorizar categorías hoja; admitir una categoría general existente solo con correspondencia semántica acreditada y una regla comercial explícita. Una categoría sin relaciones de atributos no autoriza a inventarlas: conservar las especificaciones técnicas sin cambios.
 - Atributos: `data/import/attributeCatalog.json`; usar solo `attributeID` y valores válidos para el tipo, las opciones y la relación con la categoría.
 - Logos y empresas por entorno: `data/commercial-reference/`; `logoID` solo con correspondencia inequívoca y `companyID` únicamente con entorno explícito.
 - Mantener `providerId`, `reference`, `externalReference` y `sourceUrl`. La referencia comercial visible no identifica por sí sola una máquina.
+
+### Versiones históricas y disponibilidad actual
+
+Un original puede evolucionar por cambios de stock. La auditoría histórica verifica cada publicación individual contra el **origen acreditado por su manifest y SHA-256**, no contra una captura posterior. Por el contrario, la exportación de un inventario actualmente obsoleto **debe bloquearse** hasta reconciliar sus bajas, aunque el histórico sea íntegro. En Gomariz, el corte del 11 de noviembre de 2026 retiró 86 fichas «Sin existencias» y dejó 11 identidades que figuraban en la publicación comercial anterior; no restaurarlas ni ignorar el bloqueo para conseguir `PASS`.
+
+El guard ejecutable `tests-commercial-contract-guard.mjs` protege el contrato comercial v2; se ejecuta con `npm test`, puede invocarse con `npm run contrato:comercial` y se comprueba en la vía de exportación. No sustituye auditoría, identidad, procedencia ni revisión de disponibilidad. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
 
 ## Qué se exporta
 
@@ -77,7 +89,7 @@ El exportador real, sin `--salida`, genera **dos ZIP verificados** (comercial e 
 
 La opción `--arbol` es una vista de inspección: presenta la jerarquía real con IDs, conteos y una línea por producto (proveedor, referencia y título), además de las fichas pendientes. No añade incidencias ni modifica las decisiones del auditor. Para guardarla en un fichero: `npm run --silent auditar:comercial -- --arbol > categorias-comerciales.txt`.
 
-El diagnóstico y el derivado comercial son independientes de las publicaciones técnicas. Las categorías, opciones y relaciones se validan contra los recursos locales vigentes; una exportación con categorías pendientes no equivale a una importación autorizada.
+El diagnóstico y el derivado comercial son independientes de los **nuevos snapshots técnicos bajo `technical/`**; siguen vinculados a las publicaciones individuales acreditadas y su procedencia histórica. Las categorías, opciones y relaciones se validan contra los recursos locales vigentes; una exportación con categorías pendientes no equivale a una importación autorizada.
 
 ## Ajustes pendientes de integración en backend
 

@@ -1,5 +1,11 @@
 # Rendimiento de tests: guard, runner y reutilización de campañas
 
+## AI GUARD
+
+**Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
+
+**Regla de alcance.** No hacer depender regresiones históricas de cantidades variables del catálogo vigente. Reutilizar fixtures reales acreditadas y respetar las cuotas de ejecución del guard de rendimiento.
+
 ## Objetivo y estado actual
 
 La protección del rendimiento forma parte de `npm test`; no es un benchmark separado que sustituya a las pruebas. El contrato está en `package.json`:
@@ -9,6 +15,10 @@ npm test = tests-performance-guard.mjs → scripts/run-build.mjs --quiet --if-ne
 ```
 
 El guard detecta patrones de coste y la ejecución posterior compila cuando corresponde y lanza suites compiladas. `npm run test:guard` ejecuta **solo** el guard; **no** equivale al PASS integral. `npm run build` compila mediante `scripts/run-build.mjs` y la caché de build está en `scripts/build-cache.mjs`. Si faltan `typescript`, `cheerio`, `p-limit` o tipos de Node no se debe declarar un build correcto a partir de tests aislados.
+
+`npm test` ejecuta en serie el guard de rendimiento (`tests-performance-guard.mjs`) y el nuevo **guard del contrato comercial v2** (`tests-commercial-contract-guard.mjs`) antes de la compilación y las suites. `npm run contrato:comercial` ejecuta el segundo por separado y la exportación también lo comprueba. El guard de contrato protege estructuras actuales; una reorganización AST legítima podría exigir revisar su huella sin cambiar el contrato externo.
+
+Los tests de regresión históricos de Gomariz deben utilizar snapshots y publicaciones **reales y congelados** (corte de 143), no comparar hashes contra el original mutable de 547 fichas del 11 de noviembre de 2026. Los tests de aislamiento entre proveedores deben trabajar con el catálogo vigente sin suponer tamaños fijos. Reutilizar los builders y fixtures existentes evita multiplicar preparaciones costosas. Este criterio se aplica a futuros crecimientos de cobertura. Ver [Mantenimiento](MAINTENANCE.md).
 
 ## Runner y medición reproducible
 

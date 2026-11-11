@@ -1,5 +1,13 @@
 # Composición manual de intervenciones y acreditación editorial
 
+## AI GUARD
+
+**Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
+
+**Regla de alcance.** No convertir una señal del auditor en una intervención aprobada. Simular y acreditar cada script con su identidad, fuente y evidencia antes de componerlo o aplicarlo.
+
+Los snapshots técnicos independientes permiten estudiar una ficha en `review` sin aprobar ni aplicar una intervención en el mismo ciclo de incorporación. Las decisiones manuales descritas aquí siguen exigiendo evidencia, identidad y aprobación explícita; ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
+
 ## Decisión previa
 
 Antes de crear scripts se debe clasificar cada incidencia usando el anuncio vigente y el diagnóstico: si falla la extracción, hay que corregir el extractor; si falla una regla reutilizable, hay que corregir el mapeador o formateador con su prueba; si el propio proveedor publica información contradictoria de una máquina concreta, se puede intervenir **solo el campo acreditado**. No se deben añadir reglas permanentes que dependan de una referencia comercial concreta. Una ficha sin evidencia suficiente permanece en revisión.

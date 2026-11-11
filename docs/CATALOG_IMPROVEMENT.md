@@ -4,6 +4,8 @@
 
 **Protección documental.** Este documento solo se modifica mediante una intervención documental expresamente autorizada. Describe mecanismos existentes; no autoriza cambios de originales, publicaciones, aprobaciones, contratos o categorías.
 
+**Regla de alcance.** Separar la incorporación de un proveedor de las campañas editoriales posteriores. Conservar la procedencia y comparar versiones antes de tocar reglas, sin obligar a resolver todos los `review` para activar un corte técnico.
+
 ## Objeto y alcance
 
 Esta guía explica **cómo mejorar una ficha desde su origen hasta la salida comercial**, utilizando los mecanismos que ya tiene EQUIPZILLA. Complementa el diagnóstico en [Auditor de huecos](CATALOG_CONTENT_GAPS.md), las reglas en [Datos y publicación](SCRAPER_DATA_RULES.md), las comprobaciones en [Validación](VALIDATION.md) y el circuito de [Publicación individual](INDIVIDUAL_PUBLICATION.md).
@@ -11,6 +13,8 @@ Esta guía explica **cómo mejorar una ficha desde su origen hasta la salida com
 La mejora no es una transformación indiscriminada de JSON finales. Hay que encontrar **la primera etapa en que se pierde, altera o interpreta incorrectamente el dato**; corregir esa causa y demostrar la equivalencia de las fichas no afectadas. Son distintos una anomalía del origen, un defecto de software, una observación estadística, un reconocimiento acreditado y una intervención editorial que exige decisión humana.
 
 La publicación técnica de GAM, Gomariz y Mercaeleva está separada de su proyección comercial. El registro de MANAIN no acredita por sí mismo una publicación individual/comercial completa. Nunca se importa a la base de datos desde este proceso.
+
+**Separación de frentes:** un snapshot técnico independiente puede incorporarse con `review` y servir para medir mejoras posteriores, sin obligar a resolverlas en el hilo de extracción. Las correcciones editoriales y la elegibilidad comercial conservan su validación propia. No utilizar las señales orientativas de `huecos --tecnicas` como acreditaciones automáticas. Consultar [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
 
 ## Ruta de decisión: síntoma, mecanismo y prueba
 

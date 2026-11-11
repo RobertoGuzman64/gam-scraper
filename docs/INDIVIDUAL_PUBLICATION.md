@@ -4,6 +4,8 @@
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
+**Regla de alcance.** FINISH y sus preflights siguen siendo distintos de `publicacion:tecnica`. No reutilizar una aprobación editorial histórica cuando hayan cambiado la preparación, las incidencias o el original.
+
 ## Alcance y condiciones previas
 
 El circuito simplificado usa los originales canónicos completos y verificables de `catalogs/providers/{gam,gomariz,mercaeleva}/original/`. **No incluye Manain**, que mantiene un registro parcial, ni reemplaza la campaña global de cuatro proveedores. `catalogo:preparar` produce preparaciones offline; `catalogo:publicar` realiza la comprobación previa, la acreditación automática estrictamente limitada y FINISH. La operación intermedia `catalogo:acreditar` es opcional y no interactiva.
@@ -11,6 +13,10 @@ El circuito simplificado usa los originales canónicos completos y verificables 
 Los originales, las aprobaciones y los finales son conjuntos distintos. Una ficha `review` no cambia a `ready` por ser excluida de una selección; un catálogo con publicaciones vigentes no acredita por ello todas las fichas originales como `ready`. Ningún comando aquí importa productos al backend.
 
 Si una mejora nace de un defecto de extracción, primero debe existir un **original canónico íntegro y validado**. La evidencia editorial por huella puede cambiar una preparación y después una publicación, pero no actualiza por sí sola el original. Las fichas con original, preparado y publicación distintos deben investigarse por identidad, no resolverse escribiendo el JSON final.
+
+### Diferencia con la publicación técnica independiente
+
+`npm run publicacion:tecnica` conserva `ready` y `review` para análisis y puede activar Gomariz o el registro parcial de Manain sin ejecutar FINISH. **No** escribe en `publications/`, no selecciona candidatos comerciales ni reutiliza aprobaciones editoriales. El `catalogo:publicar` descrito en esta guía mantiene su preflight, su acreditación y su bloqueo ante decisiones nuevas. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
 
 ## Recorrido ordinario
 

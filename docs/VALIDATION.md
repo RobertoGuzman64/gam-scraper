@@ -4,6 +4,8 @@
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
+**Regla de alcance.** Validar por separado cobertura de extracción, integridad del snapshot técnico, calidad editorial y elegibilidad comercial. Un `PASS` de una capa nunca acredita las otras.
+
 ## Qué se valida
 
 Distinguir **integridad de los archivos**, **calidad de las fichas** y **cobertura externa**. Son comprobaciones diferentes: aprobar una no implica aprobar las otras. Los tests del software protegen regresiones, pero tampoco sustituyen la comparación con los anuncios publicados por cada proveedor.
@@ -44,9 +46,15 @@ Al renombrar archivos o carpetas, comprobar además referencias dinámicas, ruta
 
 **Validación del ciclo individual:** ejecutar `npm run catalogo:preparar -- --simular`, `npm run catalogo:publicar -- --simular` y comprobar mediante `npm run estado` los índices de publicación existentes. La simulación no acredita nuevos casos ni activa finales. Una ejecución real de FINISH requiere fuentes y decisiones verificadas; su informe ZIP resume el trabajo original → publicado, no acredita cobertura web ni sustituye el preflight. Ver [Publicación individual](INDIVIDUAL_PUBLICATION.md).
 
+## Validación de publicaciones técnicas independientes
+
+`publicacion:tecnica` acepta `review` para que la incorporación del proveedor y el trabajo editorial avancen en frentes distintos. Sus garantías son **integridad, identidad, procedencia, estados/diagnósticos preservados y retención máxima de dos versiones**; no exige convertir artificialmente las incidencias en `ready`. Manain mantiene el registro `partial`, mientras Gomariz exige original `complete` y preparación vigente. Se valida con una simulación sin escrituras, activación explícita, lectura de `--ver/--listar`, `npm run estado` y `huecos --tecnicas`; ninguna de estas operaciones implica aprobación comercial.
+
+El guard del contrato comercial v2 se ejecuta con `npm run contrato:comercial`, con `npm test` y antes de la exportación. Las auditorías de publicaciones individuales históricas pueden pasar con el origen acreditado por SHA mientras la **exportación comercial del inventario obsoleto debe seguir bloqueada**. En el corte de noviembre de 2026 se constataron once bajas de Gomariz por «Sin existencias» frente a la publicación comercial anterior; requieren reconciliación, no restaurar los originales por conveniencia. Consultar [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
+
 ## Responsabilidad productiva ante reviews
 
-La validación identifica fallos; **el trabajo de calidad no termina al encontrarlos**. Ante una preparación con cualquier ficha `review`, el siguiente trabajo del desarrollador es localizar y corregir la causa **en código productivo reutilizable** (extracción, parseo, asociación semántica, normalización, calidad o identidad), siempre que haya evidencia de una transformación segura. Los informes de auditoría, las consultas por ID y las comparaciones son instrumentación interna para esa tarea, no un proceso editorial que deba dirigir el propietario.
+La validación identifica fallos; **el trabajo de calidad no termina al encontrarlos**. En una campaña de mejora editorial, ante una preparación con cualquier ficha `review`, el siguiente trabajo del desarrollador es localizar y corregir la causa **en código productivo reutilizable** (extracción, parseo, asociación semántica, normalización, calidad o identidad), siempre que haya evidencia de una transformación segura. Los informes de auditoría, las consultas por ID y las comparaciones son instrumentación interna para esa tarea, no un proceso editorial que deba dirigir el propietario.
 
 **Contrato de ejecución y cierre de una corrección:**
 

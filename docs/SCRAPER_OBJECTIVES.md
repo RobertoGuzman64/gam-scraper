@@ -4,6 +4,8 @@
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
+**Regla de alcance.** La meta editorial de `0 review` no es requisito para activar un snapshot técnico íntegro y trazable; sí exige calidad verificada para afirmar que toda una población está lista. No falsificar el estado ni forzar comercialización.
+
 ## Objetivo principal
 
 Conseguir un **catálogo JSON completo, coherente, verificable y reutilizable** de maquinaria nueva y de segunda mano de GAM, Gomariz, Mercaeleva y Manain. La incorporación de un proveedor al contrato no acredita por sí sola la cobertura de su portal. La calidad se mide por la fiabilidad de la identidad, las características, el contenido y la cobertura de las fuentes, no por la facilidad de importar los productos.
@@ -70,7 +72,7 @@ El objetivo de calidad es resolver todas las incidencias acreditables. Una contr
 
 ## Dirección permanente del trabajo de calidad
 
-**El objetivo operativo es obtener el catálogo completo de cada proveedor con `0 review` reales bajo la validación técnica oficial vigente.** Mientras existan reviews, el catálogo no está cerrado como *catálogo completamente ready*, aunque la extracción haya finalizado, todas las referencias estén informadas o la mayoría de fichas supere la preparación. La acreditación y entrega editorial siguen siendo contratos distintos, con sus propias aprobaciones.
+**El objetivo del frente de calidad editorial es obtener el catálogo completo de cada proveedor con `0 review` reales bajo la validación técnica oficial vigente.** Mientras existan reviews, el catálogo no está cerrado como *catálogo completamente ready*, aunque la extracción haya finalizado, todas las referencias estén informadas o la mayoría de fichas supere la preparación. La acreditación y entrega editorial siguen siendo contratos distintos, con sus propias aprobaciones.
 
 **Ante cualquier review, el trabajo prioritario del desarrollador/asistente es corregir el código productivo que la causa cuando la solución pueda generalizarse con evidencia.** Investigar fichas, recopilar logs, agrupar motivos, consultar diferencias y ejecutar auditores son medios internos de ingeniería, **no entregables ni sustitutos de una corrección**. Debe reutilizar o mejorar los módulos existentes —extractores, parsers, asociación de especificaciones, normalizadores, reglas de calidad e identidad— en vez de delegar en el propietario la investigación ficha por ficha.
 
@@ -81,6 +83,8 @@ El objetivo de calidad es resolver todas las incidencias acreditables. Una contr
 - La responsabilidad del asistente es realizar el análisis necesario para programar y presentar **cambios de código efectivos y su evidencia**. No terminar una intervención de calidad entregando únicamente un inventario de problemas, una orden de terminal o una propuesta de nuevas auditorías.
 
 La mejora es de **calidad de datos publicados y reglas que los interpretan**, no de cobertura arbitraria: la ausencia de un atributo no publicado sigue siendo opcional y no se generan valores por analogía. Las reglas y las aprobaciones existentes siguen siendo obligatorias; resolver reviews no autoriza a desactivarlas.
+
+**Criterios de cierre por frente:** completar la incorporación técnica de un proveedor significa acreditar procedencia, identidades y publicación técnica verificable; **no** obliga a resolver todas sus incidencias editoriales. Alcanzar `0 review` en una población completa es una meta distinta de calidad del catálogo. Exportar productos comerciales exige además su acreditación individual, compatibilidad de contrato y vigencia de inventario. No relajar controles de integridad ni declarar completo el registro parcial de Manain. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
 
 ## Qué se considera terminado
 
