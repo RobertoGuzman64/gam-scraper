@@ -3,6 +3,7 @@ import test from "node:test";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { discoverAccreditedPublications, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { loadImportCatalog } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { projectCommercialCategory } from "../../commercial/projection/category-projection.js";
 import { planCommercialExport } from "../../commercial/projection/export-projection.js";
 import { accreditCommercialPlan } from "../../commercial/diagnostics/commercial-accreditation.js";
@@ -10,6 +11,7 @@ import { prepareImportBatch } from "../batch-identity.js";
 
 const root = process.cwd();
 const catalog = await loadImportCatalog();
+const { brandLogos } = await loadCommercialReference();
 const publications = await Promise.all(
   (await discoverAccreditedPublications(root)).map((file) => readAccreditedPublication(file))
 );
@@ -74,8 +76,8 @@ test("la futura proyección comercial conserva los datos técnicos recalculados 
       }
       return { source, published: prepared.product, mapped: projectCommercialCategory(source, commercial, catalog) };
     });
-    const plan = planCommercialExport(entries, published.providerId, published.sha256, catalog, [], null, null);
-    const accreditation = accreditCommercialPlan(entries, plan, catalog, [], null);
+    const plan = planCommercialExport(entries, published.providerId, published.sha256, catalog, brandLogos, null, null);
+    const accreditation = accreditCommercialPlan(entries, plan, catalog, brandLogos, null);
     assert.equal(plan.products.length + plan.excluded.length, published.products.length);
     assert.equal(accreditation.summary.blocking, 0, published.providerId);
     assert.equal(accreditation.summary.lostFields, 0, published.providerId);

@@ -14,6 +14,11 @@ import type { AuditedFinding, FindingRecognition, FindingRecognitionRegistry } f
 import { printCommercialAuditReport } from "../../../reporting/commercial-audit.js";
 import { printStaleFindingRecognitions } from "../../../reporting/finding-recognitions.js";
 import { loadFindingRecognitionRegistry } from "../../../../infrastructure/filesystem/catalog/finding-recognition-store.js";
+import { loadCommercialReference } from "../../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
+import { loadCommercialPublicationInputs } from "../../../../commercial/export/commercial-inputs.js";
+import { planCommercialExport } from "../../../../commercial/projection/export-projection.js";
+import { accreditCommercialPlan } from "../../../../commercial/diagnostics/commercial-accreditation.js";
+import { observeCommercialAccreditationFindings } from "../../../../commercial/diagnostics/audited-findings.js";
 
 const root = fileURLToPath(new URL("../../../../../", import.meta.url));
 const empty: FindingRecognitionRegistry = { version: 1, recognitions: [] };
@@ -241,6 +246,33 @@ test("los reconocimientos no permiten ocultar bloqueantes ni alterar la acredita
   assert.deepEqual(JSON.parse(accreditation.join("\n")), {
     version: 1, providers: blockedReport.providers.map((item) => item.accreditation)
   });
+});
+
+test("el logo comercial no caduca un reconocimiento de año y un cambio de año sí lo hace", async () => {
+  const [catalog, references] = await Promise.all([loadImportCatalog(), loadCommercialReference()]);
+  const gam = (await loadCommercialPublicationInputs(root, catalog)).find((provider) => provider.providerId === "gam");
+  assert.ok(gam);
+  const projected = planCommercialExport(gam.entries, gam.providerId, gam.publicationSha256,
+    catalog, references.brandLogos, null, null);
+  const accreditation = accreditCommercialPlan(gam.entries, projected, catalog, references.brandLogos, null);
+  const observed = observeCommercialAccreditationFindings(gam.entries, projected.products, accreditation);
+  const finding = observed.find((item) => item.reference === "6236");
+  assert.ok(finding);
+  const alternativeLogo = references.brandLogos.find((logo) => logo.id !== 18);
+  assert.ok(alternativeLogo);
+  const differentLogo = projected.products.map((product) => product.reference === "6236"
+    ? { ...product, logoID: alternativeLogo.id } : product);
+  const logoFinding = observeCommercialAccreditationFindings(gam.entries, differentLogo, accreditation)
+    .find((item) => item.reference === "6236");
+  assert.ok(logoFinding);
+  assert.equal(fingerprintAuditedFinding(logoFinding), fingerprintAuditedFinding(finding));
+  const differentYear = projected.products.map((product) => product.reference === "6236"
+    ? { ...product, attributes: product.attributes.map((attribute) => attribute.attributeID === 117
+      ? { ...attribute, value: 2019 } : attribute) } : product);
+  const yearFinding = observeCommercialAccreditationFindings(gam.entries, differentYear, accreditation)
+    .find((item) => item.reference === "6236");
+  assert.ok(yearFinding);
+  assert.notEqual(fingerprintAuditedFinding(yearFinding), fingerprintAuditedFinding(finding));
 });
 
 test("los reconocimientos de año de GAM son individuales tras corregir las discrepancias acreditadas", async () => {

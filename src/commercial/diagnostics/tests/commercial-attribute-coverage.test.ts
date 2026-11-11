@@ -6,6 +6,7 @@ import type { CommercialAttributeAudit } from "../commercial-attributes.js";
 import { planCommercialExport } from "../../projection/export-projection.js";
 import { selectAccreditedCommercialInputs } from "../../../testing/builders/commercial-publication-selection.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+import { loadCommercialReference } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 
@@ -27,6 +28,7 @@ const previouslyUnrelatedWithHyster = {
 
 test("las 59 referencias auditadas conservan clasificación fiel y límites reales de atributos", async () => {
   const catalog = await loadImportCatalog();
+  const { brandLogos } = await loadCommercialReference();
   const providers = await selectAccreditedCommercialInputs(root, catalog, previouslyUnrelatedWithHyster);
   const byProvider = new Map([...providers].map(([providerId, input]) => [
     providerId, analyzeCommercialAttributes(input.entries, catalog)
@@ -41,7 +43,7 @@ test("las 59 referencias auditadas conservan clasificación fiel y límites real
     );
     const input = providers.get(provider);
     assert.ok(input);
-    const exported = planCommercialExport(input.entries, provider, input.publicationSha256, catalog, [], null, null);
+    const exported = planCommercialExport(input.entries, provider, input.publicationSha256, catalog, brandLogos, null, null);
     const byReference = new Map(exported.products.map((item) => [item.reference, item]));
     const originalByReference = new Map(input.entries.map((item) => [item.source.reference, item]));
     for (const reference of references) {

@@ -72,12 +72,15 @@ export const observeCommercialAccreditationFindings = (
       const input = bySource.get(identity);
       const product = byProduct.get(identity);
       if (!input || !product) throw new Error(`Acreditación pendiente sin evidencia individual: ${identity} | ${reason}`);
+      const { logoID: _logoID, ...withoutLogo } = product;
+      const evidenceProduct = reason.startsWith("ano-") || reason.includes("altura") || reason.includes("capacidad")
+        ? withoutLogo : product;
       observed.push({
         providerId: accreditation.providerId, reference: decision.reference,
         sourceUrl: decision.sourceUrl, field: reason === "ano-url-atributo-discordante" ? "year" :
           reason.includes("altura") ? "height" : reason.includes("capacidad") ? "capacity" : "commercial",
         code: reason, audit: "acreditacion_comercial", severity: "warn",
-        evidenceSha256: signature([input.source, input.published, product]), facts: commercialFacts(reason, input, product)
+        evidenceSha256: signature([input.source, input.published, evidenceProduct]), facts: commercialFacts(reason, input, product)
       });
     }
   }

@@ -10,7 +10,7 @@
         "code": "ano-url-atributo-discordante",
         "audit": "acreditacion_comercial",
         "severity": "warn",
-        "evidenceSha256": "3a46553b6f280aa7806cda92f71dc0fe7ae6e7c2770e61f023783203850df790",
+        "evidenceSha256": "414d84223cd71de29775d4f1c6c3d2cd94b56d5984b2c36b70929cda7ea3968b",
         "facts": [
           {
             "name": "urlYear",
@@ -22,7 +22,7 @@
           }
         ]
       },
-      "fingerprint": "0f23ea7e80b6160d005574811f3ac82e122f856f1089ae38d253ab2a5fb9039e",
+      "fingerprint": "fbb3d57ebb5ec8bc6174a20a3151f98e1453023de6776a9fbae1c65b0d13ffa3",
       "decision": {
         "reviewedBy": "Revisión documental asistida por IA (EQUIPZILLA)",
         "reviewedAt": "2026-11-10T11:41:34.041Z",
@@ -48,7 +48,7 @@
         "code": "ano-url-atributo-discordante",
         "audit": "acreditacion_comercial",
         "severity": "warn",
-        "evidenceSha256": "3c2c4e067f9e92d5f29dd0991dd74d8a63297aaf6310442085506ee64da2d217",
+        "evidenceSha256": "679628eae1c3ac23aa7e60cac160661cecff94a77217ab2f91590d33e2df39a2",
         "facts": [
           {
             "name": "urlYear",
@@ -60,7 +60,7 @@
           }
         ]
       },
-      "fingerprint": "5e0be746755d194ca11e06cb6e1c9c07498c5e4644dddb7ce6ec8ef5ef66e607",
+      "fingerprint": "c7b4a16b8d29af3f5923fa4d6056f3bb34efa09ada884eb5ad7dd9a0e18a1b78",
       "decision": {
         "reviewedBy": "Revisión documental asistida por IA (EQUIPZILLA)",
         "reviewedAt": "2026-11-10T11:52:28.602Z",
@@ -86,7 +86,7 @@
         "code": "ano-url-atributo-discordante",
         "audit": "acreditacion_comercial",
         "severity": "warn",
-        "evidenceSha256": "3396314a1472a55518646057b362432a1aed6a5b5136aef0a5c264052501a92f",
+        "evidenceSha256": "dcc11f67ee2d89340eb4ee4192931afb6da6f1bd82101535b5d0c4b42f3d0a33",
         "facts": [
           {
             "name": "urlYear",
@@ -98,7 +98,7 @@
           }
         ]
       },
-      "fingerprint": "151251bea63241e7e33dfb62a3d5c68bff33143d86e94eefcb27c926b0b70f1a",
+      "fingerprint": "cb006e9aeb8a573b74e3e0fb9366595787260d34c5826925acf1fb123c86721a",
       "decision": {
         "reviewedBy": "Revisión documental asistida por IA (EQUIPZILLA)",
         "reviewedAt": "2026-11-10T11:52:28.602Z",
@@ -128,7 +128,7 @@
         "code": "altura-titulo-resumen-discordante",
         "audit": "acreditacion_comercial",
         "severity": "warn",
-        "evidenceSha256": "8279b93a7474aec9393316370b3b5cf0bec03b815d40dee750eb2c34b2b87add",
+        "evidenceSha256": "0d41cf2c5900075c7df8f62b228e5330e98d6e645794b14678355437cc2e45a5",
         "facts": [
           {
             "name": "titleMetres",
@@ -168,7 +168,7 @@
           }
         ]
       },
-      "fingerprint": "6f38117278721975cccbcd9a580152c17409d7dcaa2c72ebc0843ba69b79dc4b",
+      "fingerprint": "f7a28b27a130ef875c6038c673bac443d9eb59263656fc9cdc223ad7d97f457d",
       "decision": {
         "reviewedBy": "Revisión documental asistida por IA (EQUIPZILLA)",
         "reviewedAt": "2026-11-10T14:23:00Z",

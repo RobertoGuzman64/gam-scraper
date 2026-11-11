@@ -4,12 +4,12 @@ import { join } from "node:path";
 import { parseCommercialExportOptions } from "../commercial-export.js";
 
 test("predetermina dos ZIP y conserva directorio fuera del repositorio y entorno explícito", () => {
-  assert.deepEqual(parseCommercialExportOptions([]), { out: null, environment: null, dryRun: false });
+  assert.throws(() => parseCommercialExportOptions([]), /requiere --entorno/);
   assert.deepEqual(parseCommercialExportOptions(["--entorno", "production"]), {
     out: null, environment: "production", dryRun: false
   });
-  assert.throws(() => parseCommercialExportOptions(["--out", "./catalogs/commercial"]), /fuera del repositorio/);
-  assert.throws(() => parseCommercialExportOptions(["--out", "./data/commercial-reference"]), /fuera del repositorio/);
+  assert.throws(() => parseCommercialExportOptions(["--out", "./catalogs/commercial", "--entorno", "develop"]), /fuera del repositorio/);
+  assert.throws(() => parseCommercialExportOptions(["--out", "./data/commercial-reference", "--entorno", "develop"]), /fuera del repositorio/);
   assert.throws(() => parseCommercialExportOptions(["--out", "/tmp/commercial", "--environment", "staging"]), /develop o production/);
   assert.deepEqual(parseCommercialExportOptions(["--out", join("/tmp", "new-commercial"), "--environment", "production"]), {
     out: join("/tmp", "new-commercial"), environment: "production", dryRun: false
