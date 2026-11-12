@@ -1,5 +1,7 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { invalidGomarizPlatformHeight, verifiedGomarizPlatformHeight } from "../../../../catalog/normalization/gomariz/technical.js";
+import { resolveGomarizEditorialFamily } from "./source-family.js";
+import { platformMeasurements } from "../../../shared/editorial/domain/platform-measurements.js";
 import { resolveGomarizAdditionalShortDescription } from "./additional-short-description.js";
 import { verifiedGomarizPriorityShortDescription } from "../evidence/priority-short-descriptions.js";
 
@@ -10,17 +12,9 @@ const familyNames: Readonly<Record<string, string>> = {
 };
 
 const sourceFamily = (record: ProductRecord): string | null => {
-  if (record.providerId !== "gomariz" || record.categoryKey !== "venta") return null;
-  try {
-    const url = new URL(record.url);
-    const segments = url.pathname.split("/").filter(Boolean);
-    if (url.protocol !== "https:" || !["www.gomarizrent.com", "gomarizrent.com"].includes(url.hostname) ||
-      segments.length !== 4 || segments[0] !== "venta" || segments[1] !== "elevacion-y-trabajos-en-altura") return null;
-    const family = segments[2];
-    return family && Object.hasOwn(familyNames, family) ? family : null;
-  } catch {
-    return null;
-  }
+  const source = resolveGomarizEditorialFamily(record);
+  return source?.section === "elevacion-y-trabajos-en-altura" &&
+    Object.hasOwn(familyNames, source.key) ? source.key : null;
 };
 
 const quantity = (value: unknown, unit: "m" | "kg"): string | null => {
@@ -66,6 +60,6 @@ export const resolveGomarizShortDescription = (record: ProductRecord): string | 
   const familyName = familyNames[family];
   if (!familyName) return null;
   const qualification = family === "oruga" ? "" : motorName;
-  const reachText = reach ? `, alcance lateral de ${reach} m` : "";
-  return `${familyName}${qualification} ${title}, año ${record.year}. Altura de trabajo de ${height} m${reachText} y capacidad de ${capacity} kg.`;
+  const measures = platformMeasurements(height, reach, capacity);
+  return `${familyName}${qualification} ${title}, año ${record.year}. ${measures[0]?.toLocaleUpperCase("es")}${measures.slice(1)}.`;
 };

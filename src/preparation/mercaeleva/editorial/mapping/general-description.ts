@@ -1,6 +1,7 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { fold } from "../../../shared/classification/mapping/category-utils.js";
 import { validMercaelevaTechnicalSource } from "../../technical/mapping/technical.js";
+import { platformMeasurements } from "../../../shared/editorial/domain/platform-measurements.js";
 
 const identity = (value: string): string => fold(value).replace(/[^a-z0-9]/g, "");
 
@@ -111,7 +112,7 @@ export const resolveMercaelevaGeneralDescription = (record: ProductRecord): stri
 
   const presentation = `${name}${energy === "electrica" ? " eléctrica" : energy === "diesel" ? " diésel" : ""}`;
   const displayHeight = kind[3].replace(".", ",");
-  return `${presentation} ${brand} ${model}, con altura de trabajo de ${displayHeight} m. ` +
+  return `${presentation} ${brand} ${model}, con ${platformMeasurements(displayHeight, null, null)}. ` +
     `Año de fabricación: ${year}.${publishedHours ? ` Horas de uso publicadas: ${publishedHours} h.` : ""} ` +
     `Referencia del vendedor: ${article}.`;
 };

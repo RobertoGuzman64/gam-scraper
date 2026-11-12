@@ -2,7 +2,7 @@ import { printCommandHeader, printCommandSection, printReportLine } from "../../
 import { resolve } from "node:path";
 import type { GapInput } from "../../../catalog/diagnostics/content-gaps-types.js";
 import { readContentGapOptions, type CommandOptions } from "./catalog-content-gaps-options.js";
-import { printEditorial, printDescriptionCoverage, printDescriptionPriorities } from "../../reporting/catalog-content-gaps-output.js";
+import { printEditorial, printDescriptionCoverage, printDescriptionPriorities, printEditorialReuse } from "../../reporting/catalog-content-gaps-output.js";
 import { publicationOriginalSources } from "../../../infrastructure/filesystem/catalog/accredited-publication-original.js";
 import { originalSources } from "../../../infrastructure/filesystem/catalog/original-catalog-sources.js";
 import { createHash } from "node:crypto";
@@ -10,6 +10,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { analyzeSourceContentGaps, prioritizeCatalogGaps } from "../../../catalog/diagnostics/content-gaps-source.js";
 import { analyzeEditorialQuality, analyzePublishedEditorialQuality } from "../../../catalog/diagnostics/editorial-quality.js";
+import { analyzeEditorialReuse } from "../../../catalog/diagnostics/editorial-reuse.js";
 import { discoverAccreditedPublications, readAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { findCampaignBaseline } from "../../../campaign/reference/compare.js";
 import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -139,6 +140,7 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
   const products = publications.flatMap((item) => item.products);
   const editorial = analyzePublishedEditorialQuality(products);
   const editorialPrepared = analyzeEditorialQuality(inputs);
+  const editorialReuse = analyzeEditorialReuse(inputs.filter((item) => item.origin === "original_canonico"));
   const technicalDensity = analyzeTechnicalDensity(products);
   const priorities = analyzeDescriptionPriorities(inputs, editorial, editorialPrepared);
   const technicalSpecs = options.specs ? analyzeSpecificationCoverage(inputs) : null;
@@ -147,7 +149,7 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
   const specificationImprovements = options.specs ? analyzeSpecificationImprovement(inputs,
     parseSpecificationImprovementExceptions(JSON.parse(await readFile(resolve(root, "data/specification-improvement-exceptions.json"), "utf8"))), technicalDensity) : null;
   if (options.json) {
-    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, coverage, editorial, editorialPrepared, priorities, technicalDensity, ...(technicalSpecs ? { technicalSpecs, technicalSemantics, technicalOpportunities, specificationImprovements } : {}) }, null, 2));
+    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, coverage, editorial, editorialPrepared, editorialReuse, priorities, technicalDensity, ...(technicalSpecs ? { technicalSpecs, technicalSemantics, technicalOpportunities, specificationImprovements } : {}) }, null, 2));
   } else {
     printReportLine(`HUECOS | publicaciones finales ${coverage.totals.products} · comparación con preparación actual · solo lectura`);
     printCommandSection("DESCRIPCIONES · P0");
@@ -155,6 +157,7 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
     printDescriptionPriorities(priorities, options.limit, options.detailed);
     if (options.detailed) printReportLine("CALIDAD EDITORIAL | vista derivada tras preparación; señales orientativas independientes de P0");
     if (options.detailed) printEditorial(editorialPrepared, options.limit, true);
+    printEditorialReuse(editorialReuse, options.limit, options.detailed);
     for (const line of formatTechnicalDensityReport(technicalDensity, options.limit, options.detailed)) printReportLine(line);
     if (technicalSpecs) {
       printCommandSection("ESPECIFICACIONES Y CIERRE AUDITOR");
@@ -239,10 +242,11 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
   const analysis = analyzeSourceContentGaps(inputs, { groupBy: options.groupBy });
   const ranked = prioritizeCatalogGaps(analysis, options.minGroup, options.minMissing);
   const editorial = analyzeEditorialQuality(inputs);
+  const editorialReuse = analyzeEditorialReuse(inputs);
   const technicalDensity = analyzeTechnicalDensity(inputs.map((item) => item.prepared.product));
   if (options.json) {
     console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance,
-      ...analysis, editorial, technicalDensity, prioritized: ranked.slice(0, options.limit).map(({ group, observation, tier }) => ({
+      ...analysis, editorial, editorialReuse, technicalDensity, prioritized: ranked.slice(0, options.limit).map(({ group, observation, tier }) => ({
         providerId: group.providerId, categorySellID: group.categorySellID, sourceCategoryKey: group.sourceCategoryKey,
         brand: group.brand, model: group.model, field: observation.field, missing: observation.missing, tier
       })) }, null, 2));
@@ -260,6 +264,7 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
     printReportLine(`  Casos: ${observation.missingIdentities.join(", ")}`);
   }
   printEditorial(editorial, options.limit, options.detailed);
+  printEditorialReuse(editorialReuse, options.limit, options.detailed);
   for (const line of formatTechnicalDensityReport(technicalDensity, options.limit, options.detailed)) printReportLine(line);
 };
 

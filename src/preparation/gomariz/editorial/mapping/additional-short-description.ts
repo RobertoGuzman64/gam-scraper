@@ -1,5 +1,8 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { fold } from "../../../shared/classification/mapping/category-utils.js";
+import { sourceEditorialMeasurement } from "../../../shared/editorial/domain/source-measurement.js";
+import { platformMeasurements } from "../../../shared/editorial/domain/platform-measurements.js";
+import { resolveGomarizEditorialFamily } from "./source-family.js";
 
 const families: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   "elevacion-y-trabajos-en-altura": {
@@ -29,30 +32,12 @@ const families: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 type SourceFamily = { readonly family: string; readonly name: string };
 
 const sourceFamily = (record: ProductRecord): SourceFamily | null => {
-  if (record.providerId !== "gomariz" || record.categoryKey !== "venta") return null;
-  try {
-    const url = new URL(record.url);
-    const path = url.pathname.split("/").filter(Boolean);
-    if (url.protocol !== "https:" || !["www.gomarizrent.com", "gomarizrent.com"].includes(url.hostname) ||
-      path.length !== 4 || path[0] !== "venta") return null;
-    const branch = path[1];
-    const family = path[2];
-    if (!branch || !family) return null;
-    const name = families[branch]?.[family];
-    return name ? { family, name } : null;
-  } catch {
-    return null;
-  }
+  const source = resolveGomarizEditorialFamily(record);
+  const name = source && families[source.section]?.[source.key];
+  return name && source ? { family: source.key, name } : null;
 };
 
-const measurement = (value: unknown, unit: "m" | "kg" | "kVA" | "V"): string | null => {
-  if (typeof value !== "string") return null;
-  const match = /^([0-9]+(?:[.,][0-9]{1,2})?)\s*(m|kg|kva|v)$/i.exec(value.trim());
-  if (!match?.[1] || match[2]?.toLowerCase() !== unit.toLowerCase()) return null;
-  const numeric = Number(match[1].replace(",", "."));
-  if (!Number.isFinite(numeric) || numeric <= 0) return null;
-  return match[1].replace(".", ",");
-};
+const measurement = sourceEditorialMeasurement;
 
 const lamps = (value: unknown): string | null => {
   if (typeof value !== "string") return null;
@@ -86,7 +71,8 @@ export const resolveGomarizAdditionalShortDescription = (record: ProductRecord):
     const capacity = measurement(record.specs?.Capacidad, "kg");
     if ((urlName === expected || /^\d+$/.test(urlName.slice(expected.length + 1)) && urlName.startsWith(`${expected}-`)) &&
       height && reach && capacity) {
-      return `Camión cesta ${title}, año ${record.year}. Altura de trabajo de ${height} m, alcance lateral de ${reach} m y capacidad de ${capacity} kg.`;
+      const measures = platformMeasurements(height, reach, capacity);
+      return `Camión cesta ${title}, año ${record.year}. ${measures[0]?.toLocaleUpperCase("es")}${measures.slice(1)}.`;
     }
   }
   const brand = record.brand?.trim();
@@ -108,15 +94,15 @@ export const resolveGomarizAdditionalShortDescription = (record: ProductRecord):
   switch (source.family) {
     case "manipulador-telescopico":
       return height && reach && capacity && engine === "diésel"
-        ? `${prefix} Altura de trabajo de ${height} m, alcance lateral de ${reach} m y capacidad de ${capacity} kg.` : null;
+        ? `${prefix} ${platformMeasurements(height, reach, capacity).replace(/^a/u, "A")}.` : null;
     case "brazo-telescopico":
     case "brazo-articulado-boom-lift":
       return height && capacity && engine === "diésel" &&
         (source.family === "brazo-telescopico" || reach)
-        ? `${prefix} Altura de trabajo de ${height} m${reach ? `, alcance lateral de ${reach} m` : ""} y capacidad de ${capacity} kg.` : null;
+        ? `${prefix} ${platformMeasurements(height, reach, capacity).replace(/^a/u, "A")}.` : null;
     case "elevador-mastil-vertical":
       return height && capacity
-        ? `${prefix} Altura de trabajo de ${height} m y capacidad de ${capacity} kg.` : null;
+        ? `${prefix} ${platformMeasurements(height, null, capacity).replace(/^a/u, "A")}.` : null;
     case "carretilla-industrial":
     case "carretilla-retractil":
       return capacity && engine

@@ -11,12 +11,15 @@ test("huecos analiza catálogos canónicos explícitos sin exigir referencia glo
     provenance: { source: string; catalogs: { providerId: string; contentSha256: string }[] };
     universe: { total: number; providers: { providerId: string }[] };
     editorial: { lengths: { description: { missing: number } }; providers: { providerId: string }[] };
+    editorialReuse: { analyzed: number; totals: { capacidad_disponible_sin_aplicar: number } };
     technicalDensity: { totals: { products: number } };
   };
   assert.equal(single.provenance.source, "catalogos_canonicos");
   assert.equal(single.universe.total, 244);
   assert.equal(single.editorial.providers[0]?.providerId, "gam");
   assert.equal(single.technicalDensity.totals.products, single.universe.total);
+  assert.equal(single.editorialReuse.analyzed, single.universe.total);
+  assert.ok(single.editorialReuse.totals.capacidad_disponible_sin_aplicar >= 0);
   assert.ok(single.editorial.lengths.description.missing >= 0);
   assert.deepEqual(single.universe.providers.map((item) => item.providerId), ["gam"]);
   assert.match(single.provenance.catalogs[0]?.contentSha256 ?? "", /^[a-f0-9]{64}$/);
@@ -25,6 +28,7 @@ test("huecos analiza catálogos canónicos explícitos sin exigir referencia glo
   assert.match(combined, /originales 276/);
   assert.match(combined, /CALIDAD EDITORIAL/);
   assert.match(combined, /SEÑALES EDITORIALES/);
+  assert.match(combined, /REUTILIZACIÓN EDITORIAL/);
   assert.match(combined, /DENSIDAD TÉCNICA \| PRIORIDAD EDITORIAL/);
   assert.equal(await readFile(gam, "utf8"), before);
 });

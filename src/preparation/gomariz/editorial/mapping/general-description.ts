@@ -1,5 +1,7 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { invalidGomarizPlatformHeight } from "../../../../catalog/normalization/gomariz/technical.js";
+import { sourceEditorialMeasurement } from "../../../shared/editorial/domain/source-measurement.js";
+import { resolveGomarizEditorialFamily } from "./source-family.js";
 
 const families: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   "elevacion-y-trabajos-en-altura": {
@@ -32,29 +34,12 @@ const genericGeneralPatterns: Readonly<Record<string, RegExp>> = {
 type SourceFamily = { readonly name: string; readonly key: string };
 
 const sourceFamily = (record: ProductRecord): SourceFamily | null => {
-  if (record.providerId !== "gomariz" || record.categoryKey !== "venta") return null;
-  try {
-    const url = new URL(record.url);
-    const path = url.pathname.split("/").filter(Boolean);
-    if (url.protocol !== "https:" || !["gomarizrent.com", "www.gomarizrent.com"].includes(url.hostname) ||
-      path.length !== 4 || path[0] !== "venta") return null;
-    const branch = path[1];
-    const key = path[2];
-    const name = branch && key ? families[branch]?.[key] : undefined;
-    return name && key ? { name, key } : null;
-  } catch {
-    return null;
-  }
+  const source = resolveGomarizEditorialFamily(record);
+  const name = source && families[source.section]?.[source.key];
+  return name && source ? { name, key: source.key } : null;
 };
 
-const measurement = (value: unknown, unit: "m" | "kg"): string | null => {
-  if (typeof value !== "string") return null;
-  const match = /^(\d+(?:[.,]\d{1,2})?)\s*(m|kg)$/i.exec(value.trim());
-  if (!match?.[1] || match[2]?.toLowerCase() !== unit) return null;
-  const numeric = Number(match[1].replace(",", "."));
-  if (!Number.isFinite(numeric) || numeric <= 0) return null;
-  return match[1].replace(".", ",");
-};
+const measurement = sourceEditorialMeasurement;
 
 const sourceIsCoherent = (record: ProductRecord, general: string, family: string): boolean => {
   const motor = record.specs?.Motor;

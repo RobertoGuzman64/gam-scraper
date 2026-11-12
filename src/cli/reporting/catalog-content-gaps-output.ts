@@ -1,5 +1,6 @@
 import { printReportLine } from "./terminal.js";
 import type { EditorialAnalysis } from "../../catalog/diagnostics/editorial-quality.js";
+import type { ReuseReport } from "../../catalog/diagnostics/editorial-reuse.js";
 import { analyzeDescriptionCoverage } from "../../catalog/diagnostics/description-coverage.js";
 import type { DescriptionPriorities } from "../../catalog/diagnostics/description-priorities.js";
 
@@ -72,3 +73,14 @@ export const printDescriptionPriorities = (report: DescriptionPriorities, limit:
   printReportLine("El JSON incluye la cola editorial completa, referencias, evidencias, muestras familiares y casos resueltos.");
 };
 
+
+export const printEditorialReuse = (report: ReuseReport, limit: number, detailed = false): void => {
+  const counts = report.totals;
+  printReportLine(`REUTILIZACIÓN EDITORIAL | originales ${report.analyzed} | campos aplicados ${counts.aplicada} | candidatas desplazadas por precedencia ${counts.precedencia_de_texto_existente} | textos existentes sin candidata ${counts.texto_existente_sin_candidata} | candidatas sin aplicar ${counts.capacidad_disponible_sin_aplicar}`);
+  if (!detailed) return;
+  printReportLine(`CAUSAS DE VACÍO | origen no validado ${counts.origen_no_validado} | familia/evidencia incompatible ${counts.familia_o_evidencia_no_compatible} | preparación en revisión ${counts.preparacion_en_revision} | sin composición ${counts.sin_composicion_de_familia}`);
+  for (const item of report.cases.filter((entry) => entry.cause === "capacidad_disponible_sin_aplicar").slice(0, limit)) {
+    printReportLine(`  REVISAR FALLBACK | ${item.providerId} | ${item.reference ?? item.identity} | ${item.field} | ${item.family ?? "sin familia"} | ${item.url}`);
+  }
+  printReportLine(report.note);
+};
