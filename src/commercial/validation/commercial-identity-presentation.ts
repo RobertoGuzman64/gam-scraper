@@ -25,7 +25,7 @@ export const inspectCommercialIdentityPresentation = (
       titles.set(token, urls);
     }
     if (providerId === "gomariz" && isRecord(product.spec) &&
-      presentCommercialMotorization(product.title, { providerId, spec: product.spec }) !== product.title) {
+      presentCommercialMotorization(product.title, { spec: product.spec }) !== product.title) {
       missingMotorization += 1;
     }
   }

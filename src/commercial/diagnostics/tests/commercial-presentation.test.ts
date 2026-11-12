@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../legacy-export/contracts.js";
 import type { PreparedProduct } from "../../../preparation/contracts.js";
 import { projectCommercialPresentation } from "../../projection/presentation-projection.js";
+import { normalizePreparedEditorialPresentation } from "../../../preparation/shared/editorial/mapping/prepared-editorial-presentation.js";
 import { analyzeCommercialPresentation } from "../commercial-presentation.js";
 
 const source = (reference: string): ProductRecord => ({
@@ -38,7 +39,8 @@ test("genera metadata determinista y retira Compra y el sufijo del vendedor sin 
   const technical = { ...published(record), title: "Compra Compra GENIE Z45/25J Plataforma articulada | GAM Online",
     description_title: "Compra Compra GENIE Z45/25J Plataforma articulada | GAM Online" };
   const before = JSON.stringify(technical);
-  const projection = projectCommercialPresentation(record, technical, "Plataformas Articuladas Diésel de Segunda Mano");
+  const editorial = normalizePreparedEditorialPresentation(record, technical);
+  const projection = projectCommercialPresentation(record, editorial, "Plataformas Articuladas Diésel de Segunda Mano");
   assert.equal(projection.title, "GENIE Z45/25J Plataforma articulada");
   assert.equal(projection.description_title, projection.title);
   assert.deepEqual(projection.metadata, {
@@ -86,7 +88,8 @@ test("mantiene el título descriptivo independiente y no altera los textos revis
 test("un subtítulo independiente conserva su contenido sin prefijo de compra duplicado", () => {
   const record = source("102B");
   const publication = { ...published(record), description_title: "Compra Compra GENIE Z45/25J en venta | GAM Online" };
-  const projection = projectCommercialPresentation(record, publication, null);
+  const editorial = normalizePreparedEditorialPresentation(record, publication);
+  const projection = projectCommercialPresentation(record, editorial, null);
   assert.equal(projection.description_title, "GENIE Z45/25J en venta");
   assert.equal(publication.description_title, "Compra Compra GENIE Z45/25J en venta | GAM Online");
   assert.notEqual(projection.images, publication.images);

@@ -1,0 +1,255 @@
+{
+  "version": 1,
+  "source": "src/preparation/gam/identity/mapping/crossed-identity-editorial.ts",
+  "sourceSha256": "7783eedc0e6e690c1494108ef42aeed8eac41513a14a4c8e85b4931004b9d5d6",
+  "exports": {
+    "verifiedCrossedIdentityEditorial": {
+      "6650": {
+        "sourceDigest": "0ab55d7537d432cc39efd0648b8d5e9bad70598d049c9b04241dc1de04fba943",
+        "sourceUrl": "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-electricas-segunda-mano/6650-2006-jlg-e300ajp",
+        "legacySourceDigest": "7510b42acc11c4c1939db36d267f9438ce56eb38f2d08f0c7850ad950b701fdc",
+        "brand": "JLG",
+        "model": "E300AJP",
+        "short": "Plataforma articulada eléctrica JLG E300AJP de segunda mano, con altura de elevación declarada de 11 metros y capacidad de cesta de 230 kg.",
+        "identityOverride": true
+      },
+      "5730": {
+        "sourceDigest": "fe3bd14e991bc70682d024adcb44884798aba1a86684fe54b7bd8a98eae22ac1",
+        "sourceUrl": "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-electricas-segunda-mano/5730-2007-jlg-e300ajp",
+        "legacySourceDigest": "4e8168b9ea6099ec977d8d5517ad9d2ce42706b0bcaa1ba6f97db8f238a00b8c",
+        "brand": "JLG",
+        "model": "E300AJP",
+        "short": "Plataforma articulada eléctrica JLG E300AJP de segunda mano, con altura de elevación declarada de 11 metros y capacidad de cesta de 230 kg.",
+        "identityOverride": true
+      },
+      "6998": {
+        "sourceDigest": "0fdf6106bd82909f6f2d3be9e1a6224ecbc1bd8083dc2e93d56c6e47276f10f2",
+        "sourceUrl": "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-electricas-segunda-mano/6998-2007-jlg-e300ajp",
+        "legacySourceDigest": "7976c0aceb003285742641672ea9273250b7008dd2641a0c528e591d97c47601",
+        "brand": "JLG",
+        "model": "E300AJP",
+        "short": "Plataforma articulada eléctrica JLG E300AJP de segunda mano, con altura de elevación declarada de 11 metros y capacidad de cesta de 230 kg.",
+        "identityOverride": true
+      },
+      "6849": {
+        "sourceDigest": "a50f07be786484330c10b2ef35ba68796375e4a09175c498862b707a81502ad9",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-segunda-mano/6849-2017-yale-erp16vt-mwb",
+        "legacySourceDigest": "a9ea32e077ee6c2d4ac8f9626c08c03608314df8dd1b0da26eb52e6d747e197d",
+        "brand": "YALE",
+        "model": "ERP16VT MWB",
+        "short": "Carretilla elevadora eléctrica Yale ERP16VT MWB de segunda mano, con capacidad de carga de 1.600 kg y altura de elevación de 5.500 mm declaradas en la ficha.",
+        "identityOverride": true
+      },
+      "6915": {
+        "sourceDigest": "d3c16b82bab7231922c2e8072c760cb57fade971ef84bdf88982101521b0f780",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-diesel-segunda-mano/6915-2009-mora-m160c",
+        "legacySourceDigest": "a3665035cbf3877851588d06e822e99d915e0747c766d4658067115c6c19f1fb",
+        "brand": "MORA",
+        "model": "M160C",
+        "short": "Carretilla elevadora diésel MORA M160C de segunda mano, con capacidad de carga de 16.000 kg y altura de elevación de 4.000 mm según la ficha de esta unidad.",
+        "identityOverride": true
+      },
+      "6857": {
+        "sourceDigest": "df0558d495841fb846869165829fe0aaeca7aba6ddf6ae296eabfca0eb42997e",
+        "sourceUrl": "https://online.gamrentals.com/es/manipuladores-frontales-segunda-mano/6857-2006-jlg-3512",
+        "legacySourceDigest": "f5893c4237c08b79e0ef6cb08eec89888f4305e1bf9ea9378d961da7b918cb49",
+        "brand": "JLG",
+        "model": "3512",
+        "short": "Manipulador telescópico JLG 3512 de segunda mano, anunciado con capacidad de carga de 3.500 kg y altura de elevación de 11,5 metros. El texto del proveedor advierte que el equipo carece de placa identificativa.",
+        "identityOverride": true
+      },
+      "6164": {
+        "sourceDigest": "9dc882adb8a7fbeafa644cee03262df32d3d7b30d290dff6154d25cbae96bf7b",
+        "sourceUrl": "https://online.gamrentals.com/es/cte/6164-plataforma-sobre-camion-telescopico-cte-b-lift-18-auto",
+        "legacySourceDigest": "4ce42a5dec47c9b83df835efd7a3dc593261cff8a79c63fba4e6fc1ac352a6e2",
+        "brand": "CTE",
+        "model": "BLIFT 18 AUTO",
+        "short": "Plataforma telescópica sobre camión CTE B-LIFT 18 AUTO, con altura de elevación declarada de 17,7 metros y capacidad de cesta de 230 kg.",
+        "identityOverride": true
+      },
+      "1894": {
+        "sourceDigest": "05ade5fefa7917f015a760d1065c9a642ec490c1076de56fd636b633aadf69e0",
+        "sourceUrl": "https://online.gamrentals.com/es/tractores-electricos-de-arrastre-tecnacar/1894-tractor-electrico-de-arrastre-tecnacar-vta-450",
+        "legacySourceDigest": "879714d63127a686de45b375f10c1bceb6b3d208a2d60dd2ee452a018a580af8",
+        "brand": "TECNA",
+        "model": "VTA 450",
+        "short": "Tractor eléctrico de arrastre Tecnacar VTA 450, con una capacidad de carga declarada de 50.000 kg y un tiro nominal a la barra de 9.000 N según la ficha.",
+        "identityOverride": true
+      },
+      "4023": {
+        "sourceDigest": "5516d4dfe50b9820145a16d11f379b1a3fb7a36e8e1a27af654953ded018a6e8",
+        "sourceUrl": "https://online.gamrentals.com/es/tennant/4023-bca-s7",
+        "legacySourceDigest": "abb5035fc045cbeb018bd377bb7b92b7ee65f56f6f227dec98fb627e2ba23f78",
+        "brand": "Tennant",
+        "model": "BCA S7",
+        "short": "Barredora a batería Tennant BCA S7, con una anchura de trabajo de 0,7 metros declarada en la ficha técnica.",
+        "identityOverride": true
+      },
+      "2242": {
+        "sourceDigest": "7ecb5082c460cfaa847849d1d4e79ae57837777151be6c9c1cd76b1a2aea4d89",
+        "sourceUrl": "https://online.gamrentals.com/es/transpaletas-yale/2242-transpaleta-electrica-a-pie-yale-mp16",
+        "legacySourceDigest": "9054585e02dd956345200b5013bbf812435bcd78b3c8efe019e73e7254eabe99",
+        "brand": "YALE",
+        "model": "MP16",
+        "short": "Transpaleta eléctrica a pie Yale MP16, con capacidad de carga de 1.600 kg y motorización eléctrica según la ficha técnica.",
+        "identityOverride": true
+      },
+      "1936": {
+        "sourceDigest": "166fb60a02a05a431ff3f4994480d3d47b921ae6118863a3011a43bcf4dd3966",
+        "sourceUrl": "https://online.gamrentals.com/es/tractores-electricos-de-carga-tecnacar/1936-tractor-electrico-de-carga-tecnacar-vca-430",
+        "legacySourceDigest": "d48cb162b5d457059ebea2288cd28640a593d42086ed66c53931f59e5a0e4340",
+        "brand": "TECNA",
+        "model": "VCA 430",
+        "short": "Tractor eléctrico de carga Tecnacar VCA 430, con capacidad de carga de 1.500 kg y tiro nominal a la barra de 4.000 N declarados en la ficha técnica.",
+        "identityOverride": true
+      },
+      "3442": {
+        "sourceDigest": "fd00fb925a912635357edff540a9e6e1225d9f93a66c1bf69bd11b8a3793d07c",
+        "sourceUrl": "https://online.gamrentals.com/es/first-green/3442-first-green-elise-700",
+        "legacySourceDigest": "2549774fbaf1c045e384b75e10a6b9266f1a0d1f7b06234901747b4b953fe18b",
+        "brand": "FIRST GREEN",
+        "model": "ELISE 700",
+        "short": "Minicargadora eléctrica First Green ELISE 700, con capacidad de carga de 700 kg, peso declarado de 2.800 kg y altura de elevación de 3,6 metros.",
+        "identityOverride": true
+      },
+      "5949": {
+        "sourceDigest": "37a925ec48436b00c33083be1712c871c384e1e5a48e50e14632e928c6716d0c",
+        "sourceUrl": "https://online.gamrentals.com/es/bicicletas-electricas-segunda-mano/5949-littium-ibiza-titanium",
+        "legacySourceDigest": "7d2b022670d4cfb68ea0bfb06a1ca3d297da982e467efb13b401ee74f352ea6f",
+        "brand": "LITTIUM",
+        "model": "Ibiza Titanium",
+        "short": "Bicicleta eléctrica Littium Ibiza Titanium de segunda mano, anunciada con 955 km y ubicación en Madrid según la ficha de esta unidad.",
+        "general": "La ficha del proveedor identifica una bicicleta eléctrica Littium Ibiza Titanium de segunda mano, ubicada en Madrid y con 955 km registrados. Las especificaciones del motor, la batería y la autonomía no se atribuyen a esta unidad porque la descripción comercial de origen no identifica de manera inequívoca esta variante.",
+        "identityOverride": true
+      },
+      "2305": {
+        "sourceDigest": "998f50c471f424104aa4c1f7ca6a7c67ddb9729fa963a75c5ecc1697a1c01b0f",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-trilaterales-hyster/2305-carretilla-para-pasillos-estrechos-hyster-c15l",
+        "legacySourceDigest": "f666b434eaa05fdf7a9354bdb00b83086585a5a6b4c37a589a0d6b6acd08bf6a",
+        "brand": "HYSTER",
+        "model": "C1.5L",
+        "short": "Carretilla para pasillos estrechos Hyster C1.5L, con capacidad de carga de 1.500 kg y altura de elevación declarada de 16.900 mm.",
+        "general": "La Hyster C1.5L es una carretilla para pasillos estrechos. Su ficha técnica declara 1.500 kg de capacidad de carga, 16.900 mm de altura de elevación, 7.921 kg de peso y batería indicada como 80 V / 840 Ah. Las dimensiones y condiciones de uso deben comprobarse según la configuración de la unidad.",
+        "identityOverride": true
+      },
+      "4029": {
+        "sourceDigest": "c79c83854392881842bd855b1b7241d7c35061a2ccb4dcd7c9d4ecfeaf95bd85",
+        "sourceUrl": "https://online.gamrentals.com/es/barredoras-industriales-nuevas/4029-bcs-s16h-descarga-alto",
+        "legacySourceDigest": "d51c84aef6bf538967f1762ec2934807f3fd2db4aed6773c36b9db786dad3a8e",
+        "brand": "Tennant",
+        "model": "BCS S16H Descarga alto",
+        "short": "Barredora Tennant BCS S16H con descarga alta, identificada por la ficha técnica y el título del proveedor.",
+        "general": "La ficha identifica una barredora Tennant BCS S16H con sistema de descarga alta. No figuran medidas ni rendimientos específicos de esta variante en las especificaciones técnicas del anuncio, por lo que es necesario confirmar esos datos en la documentación del equipo.",
+        "identityOverride": true
+      },
+      "2794": {
+        "sourceDigest": "eb38b1bfb3b38bc35c675f2ec2478d84e504d2ae26bd9d895c21ce290cf9d675",
+        "sourceUrl": "https://online.gamrentals.com/es/transpaletas-hyster/2794-transpaleta-bateria-de-litio-conductor-a-pie-hyster-pc15-doble-bateria",
+        "legacySourceDigest": "3d4d39fd8b540c760e64593776b9421d8097f6714c184b4af36fcc06e391bb42",
+        "brand": "HYSTER",
+        "model": "PC1.5 DOBLE BATERÍA",
+        "short": "Transpaleta eléctrica Hyster PC1.5 DOBLE BATERÍA, con capacidad de carga de 1.500 kg declarada en la ficha.",
+        "identityOverride": true
+      },
+      "2795": {
+        "sourceDigest": "ee9ab5a0e89e7e219c889866dd13c70e28db5d828ddf6c937ffa1f391691b27e",
+        "sourceUrl": "https://online.gamrentals.com/es/transpaletas-hyster/2795-transpaleta-bateria-de-litio-conductor-a-pie-hyster-pc15-ancho-frutero",
+        "legacySourceDigest": "2bd1f79d55e455fb3a968ec99113294402fdccf6d6baa3f1d74d560380a9cc7b",
+        "brand": "HYSTER",
+        "model": "PC1.5 ANCHO FRUTERO",
+        "short": "Transpaleta eléctrica Hyster PC1.5 ANCHO FRUTERO, con capacidad de carga de 1.500 kg y altura de elevación de 115 mm según la ficha.",
+        "identityOverride": true
+      },
+      "2796": {
+        "sourceDigest": "156d2620425b30837d548bba63feba8141e90ecb3cc0d2621a7115b8178b3f02",
+        "sourceUrl": "https://online.gamrentals.com/es/transpaletas-yale/2796-transpaleta-electrica-a-pie-yale-mpc15-doble-bateria",
+        "legacySourceDigest": "3b4dffe613fb06368981666fb1bc1dbf9e8c84eb028f8ba3722109efe49c22a9",
+        "brand": "YALE",
+        "model": "MPC15 DOBLE BATERÍA",
+        "short": "Transpaleta eléctrica a pie Yale MPC15 DOBLE BATERÍA, con capacidad de carga de 1.500 kg publicada en la ficha.",
+        "identityOverride": true
+      },
+      "2797": {
+        "sourceDigest": "0e5e8e1cf43464000eb626599cc7fb8f027bf1a066b355197cfc5a582f78bae2",
+        "sourceUrl": "https://online.gamrentals.com/es/transpaletas-yale/2797-transpaleta-electrica-a-pie-yale-mpc15-ancho-frutero",
+        "legacySourceDigest": "804e1fb558513167a31b9ef680e21d492f7d4ad4f9837fdb3d512a1240b3af20",
+        "brand": "YALE",
+        "model": "MPC15 ANCHO FRUTERO",
+        "short": "Transpaleta eléctrica a pie Yale MPC15 ANCHO FRUTERO, con capacidad de carga de 1.500 kg publicada en la ficha.",
+        "identityOverride": true
+      },
+      "1144": {
+        "sourceDigest": "115b7f0432b2dcd5f2e526e2dd0b4ecb7e27e9fd1a762d9d9199378bc7ea4883",
+        "sourceUrl": "https://online.gamrentals.com/es/transpaletas-yale/1144-transpaleta-propulsada-con-ion-de-litio-yale-mpc15",
+        "legacySourceDigest": "4b17d718ab516dd043a80361cb1529884e5ee7bf69f727677dd0824f07119d86",
+        "brand": "YALE",
+        "model": "MPC15",
+        "short": "Transpaleta compacta Yale MPC15, con capacidad de carga de 1.500 kg y altura de elevación declarada de 0,115 metros.",
+        "identityOverride": true
+      },
+      "6666": {
+        "sourceDigest": "79f6c1480b584fdf1fd5f77cf971a4e50bfd369b82a73067d76c89020471a4b2",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6666-2019-hyster-h45fts5",
+        "legacySourceDigest": "b29aee912d358c9b6c9c782603000cff79a4fb9c320087b4f4fed5bfd99e22f3",
+        "brand": "HYSTER",
+        "model": "H4.5FTS5",
+        "short": "Carretilla GLP Hyster de ocasión, 4.500 kg y 4.800 mm de elevación. Modelo discrepante entre título y ficha técnica: pendiente de confirmar.",
+        "identityOverride": true
+      },
+      "5258": {
+        "sourceDigest": "a45e107b38a358f2d387c13efebe1122604bb274ee30593266cab51370293adc",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/5258-2019-hyster-h45fts5",
+        "legacySourceDigest": "1fd68ad81cfad731b39308debcce252798ef58c140b8d5ad10812c19f672fcd8",
+        "brand": "HYSTER",
+        "model": "H4.5FTS5",
+        "short": "Carretilla GLP Hyster de ocasión, 4.500 kg, mástil tríplex y 4.145 mm de elevación. Variante del modelo pendiente de confirmar.",
+        "identityOverride": true
+      },
+      "6863": {
+        "sourceDigest": "bcf814122b4b2b56dff192c93670b6adcf83e82357926e1a14923752ea272c6d",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-segunda-mano/6863-2016-yale-erp16vt-mwb",
+        "legacySourceDigest": "57802f8c8e4f1ff4d9f87a520c853319ce444447a55a5d2918251c523aed4cfb",
+        "brand": "YALE",
+        "model": "ERP16VF (MWB)",
+        "short": "Carretilla eléctrica Yale usada, 1.600 kg y 5.500 mm de elevación. El modelo difiere entre título y ficha técnica.",
+        "identityOverride": true
+      },
+      "6865": {
+        "sourceDigest": "9fea5aa1bee332e397412a5325c7ab2bec0ae71815a68bf33172e084fe662760",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-segunda-mano/6865-2015-unicarriers-g1q2l30q",
+        "legacySourceDigest": "c72d345dc5647ba767633562227aab6b6d2ebff32084293c2fd8a6b1ad4e0192",
+        "brand": "UNICARRIERS",
+        "model": "G1Q2L30Q",
+        "short": "Carretilla eléctrica Unicarriers G1Q2L30Q de segunda mano, 3.000 kg y 4.750 mm de elevación.",
+        "identityOverride": true
+      },
+      "6852": {
+        "sourceDigest": "268710920156310a7f410a8824cc4790f50d575606a27f29c10e0d228443180c",
+        "sourceUrl": "https://online.gamrentals.com/es/apiladoras-elevadoras-electricas-segunda-mano/6852-2021-yale-s12",
+        "legacySourceDigest": "7ea3e2749f4e92baef7022bfe85d92876e3c42e9d23097359267ea625bf5ab46",
+        "brand": "HYSTER",
+        "model": "S1.2",
+        "short": "Apilador eléctrico S1.2 usado, con 1.200 kg y 3.690 mm de elevación; marca contradictoria entre título y ficha técnica.",
+        "identityOverride": true
+      },
+      "6103": {
+        "sourceDigest": "f6e6239c191a98327e961b7c126e38d2dfaafeafa988c4cf575993a26810c110",
+        "sourceUrl": "https://online.gamrentals.com/es/transpaletas-elevadoras-electricas-segunda-mano/6103-20022-hyster-p25s",
+        "legacySourceDigest": "da894d640b20ef483abb6f3fdb3d3d6dbb705fea92cf9bd41899221a61b87f3f",
+        "brand": "ISUZU",
+        "model": "P2.5S",
+        "short": "Transpaleta eléctrica P2.5S de ocasión, 2.500 kg; marca pendiente de confirmar por discrepancia entre título y ficha.",
+        "identityOverride": true
+      },
+      "6584": {
+        "sourceDigest": "a853812392102a59096c97e6ea1c7610a53c5cc2375786526e99c36dc53c1c84",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-segunda-mano/6584-2016-yale-mtc13mwb-",
+        "legacySourceDigest": "9f4aade275cd5828578db5f7ec2518955eff450464188bab42bebbae1a91d5f7",
+        "brand": "YALE",
+        "model": "MTC13MWB",
+        "short": "Carretilla trilateral eléctrica Yale MTC13MWB de ocasión, 1.300 kg de capacidad y 8.240 mm de elevación declarada.",
+        "identityOverride": true
+      }
+    }
+  }
+}

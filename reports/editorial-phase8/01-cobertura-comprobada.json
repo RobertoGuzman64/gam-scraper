@@ -1,0 +1,20 @@
+{
+  "total": 1751,
+  "original": {
+    "ready": 1706,
+    "review": 45,
+    "emptyShort": 64,
+    "emptyGeneral": 2,
+    "readyWithGaps": 53
+  },
+  "phase8": {
+    "ready": 1695,
+    "review": 56,
+    "emptyShort": 11,
+    "emptyGeneral": 2,
+    "readyWithGaps": 0
+  },
+  "errors": [],
+  "changes": 56,
+  "pending": 12
+}

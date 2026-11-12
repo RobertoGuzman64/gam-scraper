@@ -6,6 +6,7 @@ import type { CommercialBaselineInput } from "../../diagnostics/commercial-basel
 import type { BrandLogoReference } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { planCommercialExport } from "../export-projection.js";
 import { projectCommercialPresentation } from "../presentation-projection.js";
+import { normalizePreparedEditorialPresentation } from "../../../preparation/shared/editorial/mapping/prepared-editorial-presentation.js";
 import { accreditCommercialPlan } from "../../diagnostics/commercial-accreditation.js";
 import { hasLoadCapacityDisagreement } from "../../validation/technical-specifications.js";
 import { selectAccreditedCommercialInputs } from "../../../testing/builders/commercial-publication-selection.js";
@@ -406,31 +407,29 @@ test("acredita resumen normalizado y detecta cualquier alteración comercial no 
 });
 
 
-test("anota la motorización acreditada de Gomariz sin inferirla de códigos o de camiones", () => {
+test("la motorización se resuelve en preparación para cualquier proveedor con el hecho acreditado", () => {
   const original: ProductRecord = {
     ...source("MOT-1"), providerId: "gomariz", brand: "LGMG", model: "S0607E-2",
     title: "Plataforma de tijera LGMG S0607E-2"
   };
-  const withMotor: ImportCandidate = {
-    ...published(original), spec: { Motor: "Eléctrico" }
-  };
-  assert.equal(projectCommercialPresentation(original, withMotor, null).title,
-    "Plataforma de tijera eléctrica LGMG S0607E-2");
-  assert.equal(projectCommercialPresentation(original, withMotor, null).description_title,
-    "Plataforma de tijera eléctrica LGMG S0607E-2");
-  assert.deepEqual(projectCommercialPresentation(original, withMotor, null).spec, { Motor: "Eléctrico" });
-  assert.equal(projectCommercialPresentation(original, { ...withMotor, spec: { Motor: "Eléctrico, Gasolina" } }, null).title,
-    original.title);
+  const technical: ImportCandidate = { ...published(original), spec: { Motor: "Eléctrico" } };
+  const editorial = normalizePreparedEditorialPresentation(original, technical);
+  assert.equal(editorial.title, "Plataforma de tijera eléctrica LGMG S0607E-2");
+  assert.equal(projectCommercialPresentation(original, editorial, null).title, editorial.title);
+  assert.equal(projectCommercialPresentation(original, technical, null).title, original.title);
+  assert.deepEqual(editorial.spec, technical.spec);
+  assert.equal(normalizePreparedEditorialPresentation(original, editorial).title, editorial.title);
+  assert.equal(normalizePreparedEditorialPresentation(original,
+    { ...technical, spec: { Motor: "Eléctrico, Gasolina" } }).title, original.title);
   const otherProvider: ProductRecord = { ...original, providerId: "gam" };
-  assert.equal(projectCommercialPresentation(otherProvider, { ...withMotor, providerId: "gam" }, null).title,
-    original.title);
+  assert.equal(normalizePreparedEditorialPresentation(otherProvider,
+    { ...technical, providerId: "gam" }).title, editorial.title);
   const truck: ProductRecord = { ...original, title: "Camión cesta SOCAGE IVECO 35S14" };
-  assert.equal(projectCommercialPresentation(truck, { ...withMotor, title: truck.title }, null).title, truck.title);
+  assert.equal(normalizePreparedEditorialPresentation(truck, { ...technical, title: truck.title }).title, truck.title);
   const diesel: ProductRecord = { ...original, title: "Manipulador telescópico JCB 540-140", model: "540-140" };
-  assert.equal(projectCommercialPresentation(diesel, { ...withMotor, title: diesel.title, spec: { Motor: "Diésel" } }, null).title,
-    "Manipulador telescópico diésel JCB 540-140");
-  const existing = { ...original, title: "Plataforma de tijera eléctrica LGMG S0607E-2" };
-  assert.equal(projectCommercialPresentation(existing, { ...withMotor, title: existing.title }, null).title, existing.title);
+  assert.equal(normalizePreparedEditorialPresentation(diesel, {
+    ...technical, title: diesel.title, spec: { Motor: "Diésel" }
+  }).title, "Manipulador telescópico diésel JCB 540-140");
 });
 
 test("reconoce la marca compuesta de Gomariz solo cuando ambas partes constan en el título", () => {
@@ -498,51 +497,55 @@ test("no atribuye motorización ausente ni cambia una que contradice el dato té
 });
 
 
-test("solo normaliza las dos capacidades comerciales respaldadas por modelo, spec y origen exactos", () => {
-  const evidence = [
+test("la capacidad corroborada se aplica sin referencias ni excepciones por máquina", () => {
+  const cases = [
     {
-      reference: "1145", model: "MPC14", url: "https://online.gamrentals.com/es/transpaletas-yale/1145-transporte-facil-de-cargas-de-hasta-14-toneladas-yale-mpc14",
-      original: "Transpaleta YALE MPC14 2000Kg", nominal: "1400 KG", expected: "Transpaleta YALE MPC14 1400 kg",
+      reference: "1145", model: "MPC14", title: "Transpaleta YALE MPC14 2000Kg", nominal: "1400 KG",
+      summary: "Transporte fácil de cargas de hasta 1,4 toneladas.", expected: "Transpaleta YALE MPC14 1400 kg",
       general: "Descripción técnica sin capacidad discordante."
     },
     {
-      reference: "6837", model: "ERP25VL", url: "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-segunda-mano/6837-2015-yale-erp25vl",
-      original: "Carretilla elevadora eléctrica 3500 Kg YALE ERP25VL", nominal: "2500 KG",
+      reference: "6837", model: "ERP25VL", title: "Carretilla elevadora eléctrica 3500 Kg YALE ERP25VL",
+      nominal: "2500 KG", summary: "Capacidad de carga de 2500 kg.",
       expected: "Carretilla elevadora eléctrica 2500 kg YALE ERP25VL",
       general: "La unidad cuenta con una capacidad de carga indicada de 3500 kg para labores de manutención."
     }
   ] as const;
-  for (const item of evidence) {
-    const original: ProductRecord = { ...source(item.reference), url: item.url,
-      brand: "YALE", model: item.model, title: item.original,
-      longDescription: item.general, specs: { Marca: "YALE", Modelo: item.model,
-        "Capacidad de carga (kg)": item.nominal } };
-    const technical = published(original);
-    const initial = projectCommercialPresentation(original, technical, "Carretillas");
-    assert.equal(initial.title, item.expected);
-    assert.equal(initial.description_title, item.expected);
-    assert.ok(!hasLoadCapacityDisagreement({ title: initial.title, spec: initial.spec }));
-    assert.equal(initial.spec["Capacidad de carga (kg)"], item.nominal);
+  for (const item of cases) {
+    const record: ProductRecord = { ...source(item.reference), brand: "YALE", model: item.model,
+      title: item.title, shortDescription: item.summary, longDescription: item.general,
+      specs: { Marca: "YALE", Modelo: item.model, "Capacidad de carga (kg)": item.nominal } };
+    const publishedRecord = published(record);
+    const normalized = normalizePreparedEditorialPresentation(record, publishedRecord);
+    const projected = projectCommercialPresentation(record, normalized, "Carretillas");
+    assert.equal(projected.title, item.expected);
+    assert.equal(projected.description_title, item.expected);
+    assert.equal(normalized.title, item.expected);
+    assert.ok(!hasLoadCapacityDisagreement({ title: projected.title, spec: projected.spec }));
+    assert.equal(projected.spec["Capacidad de carga (kg)"], item.nominal);
     if (item.reference === "6837") {
-      assert.match(initial.description_general ?? "", /capacidad de carga nominal de 2500 kg/u);
-      assert.doesNotMatch(initial.description_general ?? "", /3500 kg/u);
-    } else assert.equal(initial.description_general, item.general);
-    assert.deepEqual(projectCommercialPresentation(original, technical, "Carretillas"), initial);
-
-    const altered = { ...original, model: "OTRO" };
-    const unexpected = projectCommercialPresentation(altered, technical, "Carretillas");
-    assert.notEqual(unexpected.title, item.expected);
-    assert.ok(hasLoadCapacityDisagreement({ title: unexpected.title, spec: unexpected.spec }));
-    assert.equal(JSON.stringify(technical), JSON.stringify(published(original)));
+      assert.match(projected.description_general ?? "", /capacidad de carga indicada de 2500 kg/u);
+      assert.doesNotMatch(projected.description_general ?? "", /3500 kg/u);
+    } else assert.equal(projected.description_general, item.general);
+    assert.equal(normalizePreparedEditorialPresentation(record, normalized).title, item.expected);
+    const newUnit: ProductRecord = { ...record, reference: `${item.reference}-nueva`,
+      url: `https://example.org/venta/${item.reference}-nueva` };
+    const newPublished = published(newUnit);
+    assert.equal(normalizePreparedEditorialPresentation(newUnit, newPublished).title, item.expected);
+    assert.equal(normalizePreparedEditorialPresentation({ ...record, model: "OTRO" }, publishedRecord).title,
+      item.title.replace(/(\d+)\s*Kg/iu, "$1 kg"));
+    assert.equal(normalizePreparedEditorialPresentation({ ...record, shortDescription: "Sin capacidad acreditada" },
+      publishedRecord).title, item.title.replace(/(\d+)\s*Kg/iu, "$1 kg"));
+    assert.equal(JSON.stringify(publishedRecord), JSON.stringify(published(record)));
   }
 });
-
 
 test("la diferenciación parte del título corregido y no crea duplicados de capacidad", () => {
   const original = source("6837");
   const correctable: ProductRecord = { ...original, brand: "YALE", model: "ERP25VL", year: "2015",
     reference: "6837", url: "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-segunda-mano/6837-2015-yale-erp25vl",
     title: "Carretilla elevadora eléctrica 3500 Kg YALE ERP25VL",
+    shortDescription: "Capacidad de carga de 2500 kg.",
     longDescription: "Una carretilla con una capacidad de carga indicada de 3500 kg para manutención.",
     specs: { Marca: "YALE", Modelo: "ERP25VL", "Capacidad de carga (kg)": "2500 KG" } };
   const other: ProductRecord = { ...correctable, reference: "9998", year: "2018",

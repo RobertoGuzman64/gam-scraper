@@ -1,0 +1,54 @@
+{
+  "fecha": "2026-11-12",
+  "base": "eqz-f5-7c928d.zip",
+  "originales": 1751,
+  "estados": {
+    "ready": 1706,
+    "review": 45
+  },
+  "excepciones_ejecucion": 0,
+  "ausencias": {
+    "short": 64,
+    "long": 2
+  },
+  "cambios_postproyeccion_f5": 293,
+  "campos_postproyeccion_f5": {
+    "title": 206,
+    "description_title": 206,
+    "description": 105,
+    "description_general": 70
+  },
+  "cambios_postproyeccion_f6": 0,
+  "diferencias_salida_final_f5_vs_f6": 1,
+  "referencias_con_diferencias": [
+    {
+      "proveedor": "gam",
+      "referencia": "6837",
+      "campos": [
+        "description_general"
+      ]
+    }
+  ],
+  "catalogos_identicos_f5": 37,
+  "pruebas_focales": {
+    "correctas": 55,
+    "fallidas": 0
+  },
+  "pruebas_nuevas": {
+    "correctas": 3,
+    "fallidas": 0
+  },
+  "regresion_comparada": {
+    "f5": {
+      "correctas": 117,
+      "fallidas": 25,
+      "total": 142
+    },
+    "f6": {
+      "correctas": 121,
+      "fallidas": 24,
+      "total": 145
+    }
+  },
+  "build_completo_acreditado": false
+}

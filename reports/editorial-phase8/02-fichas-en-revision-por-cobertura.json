@@ -1,0 +1,147 @@
+[
+  {
+    "provider": "gam",
+    "reference": "2364",
+    "sourceUrl": "https://online.gamrentals.com/es/plataformas-elevadoras-bravi/2364-sky-deck",
+    "statusBefore": "ready",
+    "statusAfter": "review",
+    "missingShort": true,
+    "missingGeneral": true,
+    "reason": [
+      "Cobertura editorial insuficiente: descripción corta",
+      "Cobertura editorial insuficiente: descripción general"
+    ]
+  },
+  {
+    "provider": "gomariz",
+    "reference": "CC1665",
+    "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/camion-plataforma/socage-iveco-forste-18t-speed/",
+    "statusBefore": "ready",
+    "statusAfter": "review",
+    "missingShort": true,
+    "missingGeneral": false,
+    "reason": [
+      "Cobertura editorial insuficiente: descripción corta"
+    ]
+  },
+  {
+    "provider": "gomariz",
+    "reference": "TE1281",
+    "sourceUrl": "https://www.gomarizrent.com/snorkel/s3010p/1/",
+    "statusBefore": "ready",
+    "statusAfter": "review",
+    "missingShort": true,
+    "missingGeneral": false,
+    "reason": [
+      "Cobertura editorial insuficiente: descripción corta"
+    ]
+  },
+  {
+    "provider": "gomariz",
+    "reference": "TO1243",
+    "sourceUrl": "https://www.gomarizrent.com/energia-electrica-e-iluminacion/torre-de-luz/generac-vt-hybrid-2/",
+    "statusBefore": "review",
+    "statusAfter": "review",
+    "missingShort": true,
+    "missingGeneral": false,
+    "reason": [
+      "Cobertura editorial insuficiente: descripción corta"
+    ]
+  },
+  {
+    "provider": "gomariz",
+    "reference": "TO1245",
+    "sourceUrl": "https://www.gomarizrent.com/venta/energia-electrica-e-iluminacion/torre-de-luz/generac-vt-hybrid/",
+    "statusBefore": "ready",
+    "statusAfter": "review",
+    "missingShort": true,
+    "missingGeneral": false,
+    "reason": [
+      "Cobertura editorial insuficiente: descripción corta"
+    ]
+  },
+  {
+    "provider": "gomariz",
+    "reference": "CC1313",
+    "sourceUrl": "https://www.gomarizrent.com/producto/socage-iveco-s35s14-forste-24d-speed-ultra/",
+    "statusBefore": "ready",
+    "statusAfter": "review",
+    "missingShort": true,
+    "missingGeneral": false,
+    "reason": [
+      "Cobertura editorial insuficiente: descripción corta"
+    ]
+  },
+  {
+    "provider": "gomariz",
+    "reference": "BA1348",
+    "sourceUrl": "https://www.gomarizrent.com/elevacion-y-trabajos-en-altura/brazo-articulado/haulotte-ha16rtj-copia/",
+    "statusBefore": "ready",
+    "statusAfter": "review",
+    "missingShort": true,
+    "missingGeneral": false,
+    "reason": [
+      "Cobertura editorial insuficiente: descripción corta"
+    ]
+  },
+  {
+    "provider": "gomariz",
+    "reference": "TE1746",
+    "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-s0607e-13/",
+    "statusBefore": "ready",
+    "statusAfter": "review",
+    "missingShort": true,
+    "missingGeneral": false,
+    "reason": [
+      "Cobertura editorial insuficiente: descripción corta"
+    ]
+  },
+  {
+    "provider": "gomariz",
+    "reference": "TE1382",
+    "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/1/",
+    "statusBefore": "ready",
+    "statusAfter": "review",
+    "missingShort": true,
+    "missingGeneral": false,
+    "reason": [
+      "Cobertura editorial insuficiente: descripción corta"
+    ]
+  },
+  {
+    "provider": "gomariz",
+    "reference": "CA1112",
+    "sourceUrl": "https://www.gomarizrent.com/manipulacion-de-materiales/carretilla-todoterreno/ausa-c-200-h-4x4/",
+    "statusBefore": "ready",
+    "statusAfter": "review",
+    "missingShort": true,
+    "missingGeneral": false,
+    "reason": [
+      "Cobertura editorial insuficiente: descripción corta"
+    ]
+  },
+  {
+    "provider": "gomariz",
+    "reference": "CA478",
+    "sourceUrl": "https://www.gomarizrent.com/manipulacion-de-materiales/carretilla-todoterreno/agriamac-30-21-4x4-2/",
+    "statusBefore": "ready",
+    "statusAfter": "review",
+    "missingShort": true,
+    "missingGeneral": false,
+    "reason": [
+      "Cobertura editorial insuficiente: descripción corta"
+    ]
+  },
+  {
+    "provider": "mercaeleva",
+    "reference": "M062-8951",
+    "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/MB-EFL303-M062-8951",
+    "statusBefore": "ready",
+    "statusAfter": "review",
+    "missingShort": false,
+    "missingGeneral": true,
+    "reason": [
+      "Cobertura editorial insuficiente: descripción general"
+    ]
+  }
+]

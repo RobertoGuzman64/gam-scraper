@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "entries": {
+    "plataforma-tijera": {
+      "application": "El trabajo de elevación depende de la altura operativa y de la superficie de apoyo.",
+      "caution": "La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta."
+    },
+    "plataforma-articulada": {
+      "application": "La articulación permite gestionar accesos donde existen obstáculos en altura.",
+      "caution": "El alcance lateral depende de carga y configuración; no se deduce de la altura de trabajo."
+    },
+    "plataforma-telescopica": {
+      "application": "El brazo telescópico facilita el acceso en altura con desplazamiento horizontal.",
+      "caution": "La altura máxima y el alcance horizontal son magnitudes distintas; confirmar el diagrama de trabajo."
+    },
+    "plataforma-mastil": {
+      "application": "El mástil vertical permite elevar una plataforma con huella de equipo contenida.",
+      "caution": "Comprobar altura de trabajo, ocupantes y carga autorizada para la versión concreta."
+    },
+    "plataforma-oruga": {
+      "application": "La base sobre orugas condiciona el acceso y la implantación del equipo.",
+      "caution": "Comprobar terreno, estabilización y diagrama de alcance antes de su utilización."
+    },
+    "camion-cesta": {
+      "application": "La plataforma va integrada sobre un vehículo portador.",
+      "caution": "La carga en cesta y el alcance dependen de los apoyos y de la configuración del vehículo."
+    },
+    "manipulador-telescopico": {
+      "application": "El manipulador realiza elevación y desplazamiento de cargas mediante brazo telescópico.",
+      "caution": "La carga nominal no garantiza la misma capacidad a todas las alturas y alcances."
+    },
+    "carretilla-elevadora": {
+      "application": "La selección de la carretilla depende del peso de la carga y del entorno de maniobra.",
+      "caution": "La capacidad nominal debe comprobarse con el centro de carga y los implementos reales."
+    },
+    "carretilla-retractil": {
+      "application": "La carretilla retráctil está destinada a operaciones de elevación y apilado en almacén.",
+      "caution": "La altura del mástil y la capacidad residual deben verificarse para cada operación."
+    },
+    "transpaleta": {
+      "application": "La transpaleta sirve para desplazar cargas paletizadas.",
+      "caution": "No debe deducirse una capacidad de apilado a partir de la capacidad de transporte."
+    },
+    "apilador": {
+      "application": "El apilador permite el posicionamiento vertical de cargas paletizadas.",
+      "caution": "La altura y capacidad de elevación varían según mástil y configuración."
+    },
+    "recogepedidos": {
+      "application": "El recogepedidos facilita operaciones de preparación de pedidos en almacén.",
+      "caution": "La capacidad de la carga no equivale a la autorización para elevar personas."
+    },
+    "tractor-arrastre": {
+      "application": "El tractor de arrastre está orientado a remolcar cargas en recorridos logísticos.",
+      "caution": "Su capacidad de arrastre no debe confundirse con una carga vertical en horquillas."
+    },
+    "dumper": {
+      "application": "El dúmper se utiliza para el transporte y descarga de materiales a granel.",
+      "caution": "La capacidad de carga y el volumen de la tolva son magnitudes distintas."
+    },
+    "excavadora": {
+      "application": "La excavadora realiza movimientos de tierra mediante su implemento de trabajo.",
+      "caution": "El alcance y la profundidad de excavación dependen de la configuración del brazo."
+    },
+    "miniexcavadora": {
+      "application": "La miniexcavadora está destinada a movimientos de tierra en espacios de acceso restringido.",
+      "caution": "La anchura y el peso operativos deben contrastarse con el implemento montado."
+    },
+    "cargadora": {
+      "application": "La cargadora se emplea para cargar y desplazar materiales.",
+      "caution": "La capacidad de carga y el volumen del cucharón deben evaluarse por separado."
+    },
+    "compactadora": {
+      "application": "La compactadora se emplea en tareas de compactación del terreno o del firme.",
+      "caution": "El rendimiento de compactación depende del material y de la configuración del equipo."
+    },
+    "grupo-electrogeno": {
+      "application": "El grupo electrógeno suministra energía mediante generación autónoma.",
+      "caution": "Distinguir potencia aparente en kVA de potencia activa en kW y confirmar el régimen de servicio."
+    },
+    "torre-iluminacion": {
+      "application": "La torre de iluminación permite alumbrar zonas de trabajo.",
+      "caution": "La cobertura lumínica depende de la altura, orientación y tipo de luminarias."
+    },
+    "compresor": {
+      "application": "El compresor aporta aire comprimido para aplicaciones técnicas.",
+      "caution": "Presión y caudal son magnitudes independientes que deben verificarse."
+    },
+    "fregadora": {
+      "application": "La fregadora realiza operaciones de lavado y recogida de agua en superficies.",
+      "caution": "La anchura de trabajo y la autonomía dependen del equipamiento y condiciones de uso."
+    },
+    "barredora": {
+      "application": "La barredora está destinada a la recogida de polvo y residuos en superficies.",
+      "caution": "La anchura de barrido y la capacidad de la tolva dependen de la configuración."
+    },
+    "maquina-limpieza": {
+      "application": "El equipo está destinado a operaciones de limpieza o mantenimiento de instalaciones.",
+      "caution": "Verificar consumibles, accesorios y capacidades presentes en la unidad anunciada."
+    },
+    "almacen-vertical": {
+      "application": "El almacén vertical automatiza el almacenamiento en bandejas o compartimentos.",
+      "caution": "La carga neta por bandeja no equivale a la capacidad total del sistema; comprobar cada configuración."
+    },
+    "elevador-materiales": {
+      "application": "El elevador de materiales se emplea para colocar cargas y equipos a distintas alturas.",
+      "caution": "No debe clasificarse como plataforma para elevar personas ni suponerse una motorización sin evidencia."
+    }
+  }
+}

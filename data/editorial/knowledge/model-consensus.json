@@ -1,0 +1,2493 @@
+{
+  "version": 1,
+  "criterion": "minimo_dos_fichas_y_ausencia_de_contradicciones_entre_las_fichas_que_declaran_la_magnitud",
+  "entries": [
+    {
+      "brand": "CESAB",
+      "model": "B318LII",
+      "family": "carretilla-elevadora",
+      "samples": 7,
+      "catalogReferences": [
+        "gam:6819",
+        "gam:6820",
+        "gam:6823",
+        "gam:6821",
+        "gam:6822",
+        "gam:6816",
+        "gam:6817"
+      ],
+      "stable": {
+        "loadCapacityKg": 1800
+      }
+    },
+    {
+      "brand": "CROWN",
+      "model": "GPC 3020 2.0",
+      "family": "recogepedidos",
+      "samples": 4,
+      "catalogReferences": [
+        "gam:6639",
+        "gam:6640",
+        "gam:6641",
+        "gam:6638"
+      ],
+      "stable": {
+        "loadCapacityKg": 2000
+      }
+    },
+    {
+      "brand": "Genie",
+      "model": "GR-15",
+      "family": "plataforma-mastil",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:PV446",
+        "mercaeleva:M028-8481"
+      ],
+      "stable": {
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Genie",
+      "model": "GS-1932",
+      "family": "plataforma-tijera",
+      "samples": 4,
+      "catalogReferences": [
+        "gomariz:TE757",
+        "gomariz:TE642",
+        "gomariz:TE981",
+        "gomariz:TE988"
+      ],
+      "stable": {
+        "workingHeightM": 7.6,
+        "platformHeightM": 5.6,
+        "loadCapacityKg": 227,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "GENIE",
+      "model": "GS-2632",
+      "family": "plataforma-tijera",
+      "samples": 3,
+      "catalogReferences": [
+        "gam:6362",
+        "gam:6284",
+        "gomariz:TE584"
+      ],
+      "stable": {
+        "liftingHeightM": 10,
+        "loadCapacityKg": 227,
+        "gradeabilityPercent": 30
+      }
+    },
+    {
+      "brand": "GENIE",
+      "model": "GS-3246",
+      "family": "plataforma-tijera",
+      "samples": 4,
+      "catalogReferences": [
+        "gam:6389",
+        "gam:6226",
+        "gam:6869",
+        "gam:6870"
+      ],
+      "stable": {
+        "liftingHeightM": 12,
+        "gradeabilityPercent": 25
+      }
+    },
+    {
+      "brand": "Genie",
+      "model": "GS-3384 RT",
+      "family": "plataforma-tijera",
+      "samples": 5,
+      "catalogReferences": [
+        "gomariz:TD1543",
+        "gomariz:TD815",
+        "gomariz:TD841",
+        "gomariz:TD760",
+        "gomariz:TD732"
+      ],
+      "stable": {
+        "workingHeightM": 12,
+        "platformHeightM": 10,
+        "loadCapacityKg": 1134,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Genie",
+      "model": "GS-3384",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:TD1265",
+        "gomariz:TD858"
+      ],
+      "stable": {
+        "workingHeightM": 12,
+        "platformHeightM": 10,
+        "loadCapacityKg": 1134,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Genie",
+      "model": "GS-4390",
+      "family": "plataforma-tijera",
+      "samples": 5,
+      "catalogReferences": [
+        "gomariz:TD1156",
+        "gomariz:TD975",
+        "gomariz:TD951",
+        "gomariz:TD799",
+        "gomariz:TD1155"
+      ],
+      "stable": {
+        "workingHeightM": 14.75,
+        "platformHeightM": 12.75,
+        "loadCapacityKg": 680,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "GENIE",
+      "model": "GS-5390",
+      "family": "plataforma-tijera",
+      "samples": 5,
+      "catalogReferences": [
+        "gam:6625",
+        "gomariz:TD1572",
+        "gomariz:TD1145",
+        "gomariz:TD1190",
+        "gomariz:TD622"
+      ],
+      "stable": {
+        "workingHeightM": 18,
+        "platformHeightM": 16,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Genie",
+      "model": "GS2632",
+      "family": "plataforma-tijera",
+      "samples": 3,
+      "catalogReferences": [
+        "gomariz:TE754",
+        "mercaeleva:M417-2082",
+        "mercaeleva:M282-6906"
+      ],
+      "stable": {
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Genie",
+      "model": "GS4390RT",
+      "family": "plataforma-tijera",
+      "samples": 4,
+      "catalogReferences": [
+        "gomariz:TD1511",
+        "gomariz:TD623",
+        "mercaeleva:M439-8484",
+        "mercaeleva:M203-6152"
+      ],
+      "stable": {
+        "platformHeightM": 12.75,
+        "loadCapacityKg": 680,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Genie",
+      "model": "GS5390RT",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M004-3667",
+        "mercaeleva:M845-8651"
+      ],
+      "stable": {
+        "workingHeightM": 18,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Genie",
+      "model": "GTH 2506",
+      "family": "manipulador-telescopico",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:MT1578",
+        "gomariz:MT1415"
+      ],
+      "stable": {
+        "loadCapacityKg": 2500,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "GENIE",
+      "model": "Z-30/20N",
+      "family": "plataforma-articulada",
+      "samples": 5,
+      "catalogReferences": [
+        "gam:6077",
+        "gam:6126",
+        "gam:6202",
+        "gam:6228",
+        "mercaeleva:M380-2365"
+      ],
+      "stable": {
+        "liftingHeightM": 11,
+        "loadCapacityKg": 227,
+        "gradeabilityPercent": 35
+      }
+    },
+    {
+      "brand": "Genie",
+      "model": "Z-34/22N",
+      "family": "plataforma-articulada",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M160-4528",
+        "mercaeleva:M110-1645"
+      ],
+      "stable": {
+        "workingHeightM": 12,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Genie",
+      "model": "Z-62/40",
+      "family": "plataforma-articulada",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M317-3748",
+        "mercaeleva:M168-7445"
+      ],
+      "stable": {
+        "workingHeightM": 20,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Genie",
+      "model": "Z-80/60",
+      "family": "plataforma-articulada",
+      "samples": 3,
+      "catalogReferences": [
+        "mercaeleva:M598-6695",
+        "mercaeleva:M107-1791",
+        "mercaeleva:M811-9996"
+      ],
+      "stable": {
+        "workingHeightM": 26,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Genie",
+      "model": "Z80/60",
+      "family": "plataforma-articulada",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:BA1092",
+        "gomariz:BA1082"
+      ],
+      "stable": {
+        "workingHeightM": 25.77,
+        "platformHeightM": 23.77,
+        "lateralReachM": 18.29,
+        "loadCapacityKg": 230,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "Compact 10",
+      "family": "plataforma-tijera",
+      "samples": 3,
+      "catalogReferences": [
+        "gomariz:TE682",
+        "gomariz:TE543",
+        "gomariz:TE960"
+      ],
+      "stable": {
+        "workingHeightM": 10.15,
+        "platformHeightM": 8.15,
+        "loadCapacityKg": 450,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "COMPACT 10DX",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:TD1564",
+        "gomariz:TD527"
+      ],
+      "stable": {
+        "platformHeightM": 8.28,
+        "loadCapacityKg": 565,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "Compact 10N",
+      "family": "plataforma-tijera",
+      "samples": 3,
+      "catalogReferences": [
+        "gomariz:TE1175",
+        "gomariz:TE766",
+        "gomariz:TE990"
+      ],
+      "stable": {
+        "workingHeightM": 10,
+        "platformHeightM": 8,
+        "loadCapacityKg": 230,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "HAULOTTE",
+      "model": "COMPACT 12",
+      "family": "plataforma-tijera",
+      "samples": 13,
+      "catalogReferences": [
+        "gam:6063",
+        "gam:6064",
+        "gam:6065",
+        "gam:6109",
+        "gam:6204",
+        "gam:6982",
+        "gomariz:TE1009",
+        "gomariz:TE945",
+        "gomariz:TE772",
+        "mercaeleva:M778-4251",
+        "mercaeleva:M201-8398",
+        "mercaeleva:M690-8650",
+        "mercaeleva:M715-6049"
+      ],
+      "stable": {
+        "workingHeightM": 12,
+        "platformHeightM": 10,
+        "liftingHeightM": 12,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "Compact 12DX",
+      "family": "plataforma-tijera",
+      "samples": 6,
+      "catalogReferences": [
+        "gomariz:TD811",
+        "gomariz:TD1565",
+        "gomariz:TD1562",
+        "gomariz:TD1561",
+        "gomariz:TD1560",
+        "gomariz:TD1068"
+      ],
+      "stable": {
+        "workingHeightM": 12,
+        "platformHeightM": 10,
+        "loadCapacityKg": 450,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "HAULOTTE",
+      "model": "COMPACT 8",
+      "family": "plataforma-tijera",
+      "samples": 4,
+      "catalogReferences": [
+        "gam:6845",
+        "gam:6130",
+        "gomariz:TE661",
+        "gomariz:TE716"
+      ],
+      "stable": {
+        "workingHeightM": 8,
+        "platformHeightM": 6,
+        "liftingHeightM": 8,
+        "gradeabilityPercent": 25,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "COMPACT-10",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M544-7437",
+        "mercaeleva:M659-0840"
+      ],
+      "stable": {
+        "workingHeightM": 10,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "COMPACT-10N",
+      "family": "plataforma-tijera",
+      "samples": 6,
+      "catalogReferences": [
+        "mercaeleva:M953-7579",
+        "mercaeleva:M825-8158",
+        "mercaeleva:M034-3284",
+        "mercaeleva:M345-0184",
+        "mercaeleva:M308-4683",
+        "mercaeleva:M987-2983"
+      ],
+      "stable": {
+        "workingHeightM": 10,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "COMPACT-12DX",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M579-7579",
+        "mercaeleva:M122-9495"
+      ],
+      "stable": {
+        "workingHeightM": 12,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "COMPACT-14",
+      "family": "plataforma-tijera",
+      "samples": 3,
+      "catalogReferences": [
+        "mercaeleva:M028-0455",
+        "mercaeleva:M621-1566",
+        "mercaeleva:M594-9948"
+      ],
+      "stable": {
+        "workingHeightM": 14,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "HAULOTTE",
+      "model": "H18SX",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "gam:6051",
+        "gam:6759"
+      ],
+      "stable": {
+        "liftingHeightM": 18,
+        "loadCapacityKg": 500,
+        "gradeabilityPercent": 40
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "HA12IP",
+      "family": "plataforma-articulada",
+      "samples": 21,
+      "catalogReferences": [
+        "gomariz:BA1410",
+        "gomariz:BA1542",
+        "gomariz:BA1411",
+        "gomariz:BA310",
+        "gomariz:BA309",
+        "gomariz:BA1161",
+        "gomariz:BA1171",
+        "gomariz:BA1234",
+        "gomariz:BA964",
+        "gomariz:BA869",
+        "gomariz:BA808",
+        "gomariz:BA777",
+        "gomariz:BA595",
+        "gomariz:BA311",
+        "mercaeleva:M869-4472",
+        "mercaeleva:M448-2901",
+        "mercaeleva:M988-6161",
+        "mercaeleva:M696-2742",
+        "mercaeleva:M577-4076",
+        "mercaeleva:M212-3717",
+        "mercaeleva:M237-2621"
+      ],
+      "stable": {
+        "workingHeightM": 12,
+        "platformHeightM": 10,
+        "lateralReachM": 6.6,
+        "loadCapacityKg": 230,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "HA12PX",
+      "family": "plataforma-articulada",
+      "samples": 5,
+      "catalogReferences": [
+        "gomariz:BA328",
+        "gomariz:BA1166",
+        "gomariz:BA1167",
+        "gomariz:BA1165",
+        "gomariz:BA1170"
+      ],
+      "stable": {
+        "workingHeightM": 12.4,
+        "platformHeightM": 10.4,
+        "lateralReachM": 6.6,
+        "loadCapacityKg": 230,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "HA15IP",
+      "family": "plataforma-articulada",
+      "samples": 20,
+      "catalogReferences": [
+        "gomariz:BA1629",
+        "gomariz:BA1509",
+        "gomariz:BA1508",
+        "gomariz:BA1507",
+        "gomariz:BA1211",
+        "gomariz:BA1312",
+        "gomariz:BA827",
+        "gomariz:BA1172",
+        "gomariz:BA1026",
+        "gomariz:BA1000",
+        "gomariz:BA987",
+        "gomariz:BA582",
+        "gomariz:BA549",
+        "gomariz:BA314",
+        "mercaeleva:M921-0545",
+        "mercaeleva:M709-8662",
+        "mercaeleva:M158-2594",
+        "mercaeleva:M274-8210",
+        "mercaeleva:M819-0909",
+        "mercaeleva:M911-4028"
+      ],
+      "stable": {
+        "workingHeightM": 15,
+        "platformHeightM": 13,
+        "lateralReachM": 8.45,
+        "loadCapacityKg": 230,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "HA15IP",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:BA1833",
+        "gomariz:BA1835"
+      ],
+      "stable": {
+        "workingHeightM": 15,
+        "platformHeightM": 13,
+        "loadCapacityKg": 230,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "HA16PXNT",
+      "family": "plataforma-articulada",
+      "samples": 5,
+      "catalogReferences": [
+        "gomariz:BA441",
+        "gomariz:BA692",
+        "gomariz:BA335",
+        "gomariz:BA334",
+        "gomariz:BA272"
+      ],
+      "stable": {
+        "workingHeightM": 16,
+        "platformHeightM": 14,
+        "lateralReachM": 9.1,
+        "loadCapacityKg": 230,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "HA16RTJ",
+      "family": "plataforma-articulada",
+      "samples": 4,
+      "catalogReferences": [
+        "mercaeleva:M369-6811",
+        "mercaeleva:M574-8807",
+        "mercaeleva:M620-2142",
+        "mercaeleva:M299-2045"
+      ],
+      "stable": {
+        "workingHeightM": 16,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "HA16SPX",
+      "family": "plataforma-articulada",
+      "samples": 3,
+      "catalogReferences": [
+        "gomariz:BA327",
+        "gomariz:BA333",
+        "gomariz:BA678"
+      ],
+      "stable": {
+        "workingHeightM": 16,
+        "platformHeightM": 14,
+        "lateralReachM": 9.1,
+        "loadCapacityKg": 230,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "HA18PXNT",
+      "family": "plataforma-articulada",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:BA440",
+        "gomariz:BA367"
+      ],
+      "stable": {
+        "workingHeightM": 17.3,
+        "platformHeightM": 15.3,
+        "lateralReachM": 10.6,
+        "loadCapacityKg": 230,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "HAULOTTE",
+      "model": "HA20PX",
+      "family": "plataforma-articulada",
+      "samples": 5,
+      "catalogReferences": [
+        "gam:6311",
+        "gam:6630",
+        "gam:6632",
+        "gomariz:BA1191",
+        "mercaeleva:M141-6600"
+      ],
+      "stable": {
+        "liftingHeightM": 20,
+        "loadCapacityKg": 230,
+        "gradeabilityPercent": 40,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "HAULOTTE",
+      "model": "HA260PX",
+      "family": "plataforma-articulada",
+      "samples": 6,
+      "catalogReferences": [
+        "gam:6572",
+        "gomariz:BA1090",
+        "gomariz:BA575",
+        "gomariz:BA481",
+        "mercaeleva:M116-2363",
+        "mercaeleva:M038-6763"
+      ],
+      "stable": {
+        "platformHeightM": 23.6,
+        "lateralReachM": 16.2,
+        "loadCapacityKg": 230,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "HAULOTTE",
+      "model": "HA32PX",
+      "family": "plataforma-articulada",
+      "samples": 9,
+      "catalogReferences": [
+        "gam:6571",
+        "gomariz:BA1169",
+        "gomariz:BA863",
+        "gomariz:BA352",
+        "gomariz:BA548",
+        "gomariz:BA396",
+        "gomariz:BA788",
+        "mercaeleva:M692-8041",
+        "mercaeleva:M932-2445"
+      ],
+      "stable": {
+        "platformHeightM": 29.8,
+        "lateralReachM": 21.3,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "HAULOTTE",
+      "model": "OPTIMUM 8",
+      "family": "plataforma-tijera",
+      "samples": 9,
+      "catalogReferences": [
+        "gam:6937",
+        "gam:6967",
+        "gomariz:TE900",
+        "mercaeleva:M131-5855",
+        "mercaeleva:M281-3486",
+        "mercaeleva:M229-0241",
+        "mercaeleva:M539-6438",
+        "mercaeleva:M687-7610",
+        "mercaeleva:M517-8202"
+      ],
+      "stable": {
+        "workingHeightM": 8,
+        "liftingHeightM": 8,
+        "loadCapacityKg": 230,
+        "gradeabilityPercent": 25,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "STAR 10",
+      "family": "plataforma-mastil",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:PV1193",
+        "gomariz:PV778"
+      ],
+      "stable": {
+        "workingHeightM": 10,
+        "platformHeightM": 8,
+        "loadCapacityKg": 200,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Haulotte",
+      "model": "STAR-10",
+      "family": "plataforma-mastil",
+      "samples": 3,
+      "catalogReferences": [
+        "mercaeleva:M095-5362",
+        "mercaeleva:M171-6370",
+        "mercaeleva:M144-5512"
+      ],
+      "stable": {
+        "workingHeightM": 10,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "HELI",
+      "model": "CPD 35",
+      "family": "carretilla-elevadora",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:CAE1526",
+        "gomariz:CAE1525"
+      ],
+      "stable": {
+        "loadCapacityKg": 3500,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "HELI",
+      "model": "CPD18",
+      "family": "carretilla-elevadora",
+      "samples": 7,
+      "catalogReferences": [
+        "gomariz:CAE1501",
+        "gomariz:CAE1425",
+        "gomariz:CAE1422",
+        "gomariz:CAE1421",
+        "gomariz:CAE1420",
+        "gomariz:CAE1419",
+        "gomariz:CAE1423"
+      ],
+      "stable": {
+        "loadCapacityKg": 1800,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Hollandlift",
+      "model": "HL-220 E12",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M140-0406",
+        "mercaeleva:M082-6111"
+      ],
+      "stable": {
+        "workingHeightM": 22,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "HYSTER",
+      "model": "H2.5FT",
+      "family": "carretilla-elevadora",
+      "samples": 12,
+      "catalogReferences": [
+        "gam:5227",
+        "gam:6694",
+        "gam:6695",
+        "gam:6696",
+        "gam:6662",
+        "gam:6884",
+        "gam:6677",
+        "gam:6678",
+        "gam:6697",
+        "gam:6657",
+        "gam:5280",
+        "gam:6885"
+      ],
+      "stable": {
+        "loadCapacityKg": 2500
+      }
+    },
+    {
+      "brand": "HYSTER",
+      "model": "H3.5FT",
+      "family": "carretilla-elevadora",
+      "samples": 6,
+      "catalogReferences": [
+        "gam:6682",
+        "gam:6683",
+        "gam:6679",
+        "gam:6703",
+        "gam:5213",
+        "gam:6702"
+      ],
+      "stable": {
+        "loadCapacityKg": 3500
+      }
+    },
+    {
+      "brand": "HYSTER",
+      "model": "H5.0FT",
+      "family": "carretilla-elevadora",
+      "samples": 2,
+      "catalogReferences": [
+        "gam:6686",
+        "gam:6684"
+      ],
+      "stable": {
+        "liftingHeightM": 3.4,
+        "loadCapacityKg": 5000
+      }
+    },
+    {
+      "brand": "HYSTER",
+      "model": "P1.6",
+      "family": "transpaleta",
+      "samples": 3,
+      "catalogReferences": [
+        "gam:6922",
+        "gam:5739",
+        "gam:6949"
+      ],
+      "stable": {
+        "loadCapacityKg": 1600
+      }
+    },
+    {
+      "brand": "HYSTER",
+      "model": "P2.0S FBW",
+      "family": "transpaleta",
+      "samples": 4,
+      "catalogReferences": [
+        "gam:5961",
+        "gam:6664",
+        "gam:6675",
+        "gam:5962"
+      ],
+      "stable": {
+        "loadCapacityKg": 2000
+      }
+    },
+    {
+      "brand": "HYSTER",
+      "model": "P2.0SD",
+      "family": "apilador",
+      "samples": 2,
+      "catalogReferences": [
+        "gam:6652",
+        "gam:5937"
+      ],
+      "stable": {
+        "loadCapacityKg": 2000
+      }
+    },
+    {
+      "brand": "HYSTER",
+      "model": "R1.6",
+      "family": "carretilla-retractil",
+      "samples": 2,
+      "catalogReferences": [
+        "gam:6950",
+        "gam:51"
+      ],
+      "stable": {
+        "loadCapacityKg": 1600
+      }
+    },
+    {
+      "brand": "HYSTER",
+      "model": "S1.2",
+      "family": "apilador",
+      "samples": 2,
+      "catalogReferences": [
+        "gam:5864",
+        "gam:2104"
+      ],
+      "stable": {
+        "loadCapacityKg": 1200
+      }
+    },
+    {
+      "brand": "Iteco",
+      "model": "IT 10090",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:TE1143",
+        "gomariz:TE1140"
+      ],
+      "stable": {
+        "workingHeightM": 12,
+        "platformHeightM": 10,
+        "loadCapacityKg": 300,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Jcb",
+      "model": "531-70",
+      "family": "manipulador-telescopico",
+      "samples": 5,
+      "catalogReferences": [
+        "gomariz:MT1663",
+        "gomariz:MT1662",
+        "gomariz:MT846",
+        "gomariz:MT844",
+        "gomariz:MT845"
+      ],
+      "stable": {
+        "loadCapacityKg": 3100,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Jcb",
+      "model": "535-125",
+      "family": "manipulador-telescopico",
+      "samples": 7,
+      "catalogReferences": [
+        "gomariz:MT1676",
+        "gomariz:MT886",
+        "gomariz:MT895",
+        "gomariz:MT894",
+        "gomariz:MT1160",
+        "gomariz:MT1159",
+        "gomariz:MT843"
+      ],
+      "stable": {
+        "loadCapacityKg": 3500,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Jcb",
+      "model": "535-140",
+      "family": "manipulador-telescopico",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:MT1315",
+        "gomariz:MT1314"
+      ],
+      "stable": {
+        "loadCapacityKg": 3500,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Jcb",
+      "model": "540-140",
+      "family": "manipulador-telescopico",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:MT1661",
+        "gomariz:MT1659"
+      ],
+      "stable": {
+        "loadCapacityKg": 4000,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Jlg Liftlux",
+      "model": "SL153-12",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:TE715",
+        "gomariz:TE389"
+      ],
+      "stable": {
+        "workingHeightM": 17.3,
+        "platformHeightM": 15.3,
+        "loadCapacityKg": 500,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Jlg Liftlux",
+      "model": "SL180-12E",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:TE442",
+        "gomariz:TE1094"
+      ],
+      "stable": {
+        "workingHeightM": 20,
+        "platformHeightM": 18,
+        "loadCapacityKg": 500,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "JLG",
+      "model": "10RS",
+      "family": "plataforma-tijera",
+      "samples": 3,
+      "catalogReferences": [
+        "gam:5845",
+        "gam:6883",
+        "gam:6797"
+      ],
+      "stable": {
+        "liftingHeightM": 12,
+        "loadCapacityKg": 320,
+        "gradeabilityPercent": 25
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "1230ES",
+      "family": "plataforma-mastil",
+      "samples": 4,
+      "catalogReferences": [
+        "gomariz:PV1257",
+        "gomariz:PV1570",
+        "gomariz:PV1546",
+        "gomariz:PV972"
+      ],
+      "stable": {
+        "workingHeightM": 5.66,
+        "platformHeightM": 3.66,
+        "loadCapacityKg": 230,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "1250AJP 4WS",
+      "family": "plataforma-articulada",
+      "samples": 3,
+      "catalogReferences": [
+        "gomariz:BA986",
+        "gomariz:BA874",
+        "gomariz:BA860"
+      ],
+      "stable": {
+        "workingHeightM": 40.3,
+        "platformHeightM": 38.3,
+        "lateralReachM": 19.25,
+        "loadCapacityKg": 450,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "1350SJP",
+      "family": "plataforma-telescopica",
+      "samples": 3,
+      "catalogReferences": [
+        "gomariz:BT1102",
+        "gomariz:BT292",
+        "gomariz:BT291"
+      ],
+      "stable": {
+        "workingHeightM": 43.15,
+        "platformHeightM": 41.15,
+        "lateralReachM": 24.38,
+        "loadCapacityKg": 454,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "JLG",
+      "model": "1930 ES",
+      "family": "plataforma-tijera",
+      "samples": 14,
+      "catalogReferences": [
+        "gam:6911",
+        "gam:6196",
+        "gam:6195",
+        "gam:6486",
+        "mercaeleva:M373-1461",
+        "mercaeleva:M352-1310",
+        "mercaeleva:M032-4313",
+        "mercaeleva:M931-4108",
+        "mercaeleva:M750-3069",
+        "mercaeleva:M775-6522",
+        "mercaeleva:M795-6850",
+        "mercaeleva:M674-6716",
+        "mercaeleva:M829-6181",
+        "mercaeleva:M726-9929"
+      ],
+      "stable": {
+        "workingHeightM": 8,
+        "liftingHeightM": 8,
+        "loadCapacityKg": 230,
+        "gradeabilityPercent": 25,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "JLG",
+      "model": "1930ES",
+      "family": "plataforma-tijera",
+      "samples": 14,
+      "catalogReferences": [
+        "gam:6930",
+        "gam:6980",
+        "gomariz:TE1222",
+        "gomariz:TE961",
+        "gomariz:TE980",
+        "gomariz:TE655",
+        "gomariz:TE871",
+        "gomariz:TE872",
+        "gomariz:TE1121",
+        "gomariz:TE855",
+        "gomariz:TE854",
+        "gomariz:TE907",
+        "mercaeleva:M840-8278",
+        "mercaeleva:M995-8408"
+      ],
+      "stable": {
+        "workingHeightM": 8,
+        "loadCapacityKg": 230,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "2030ES",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:TE791",
+        "gomariz:TE592"
+      ],
+      "stable": {
+        "workingHeightM": 8,
+        "platformHeightM": 6,
+        "loadCapacityKg": 360,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "2630ES",
+      "family": "plataforma-tijera",
+      "samples": 4,
+      "catalogReferences": [
+        "gomariz:TE1119",
+        "gomariz:TE544",
+        "gomariz:TE1007",
+        "mercaeleva:M451-2844"
+      ],
+      "stable": {
+        "workingHeightM": 10,
+        "platformHeightM": 8,
+        "loadCapacityKg": 363,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "2646ES",
+      "family": "plataforma-tijera",
+      "samples": 10,
+      "catalogReferences": [
+        "gomariz:TE625",
+        "gomariz:TE992",
+        "gomariz:TE634",
+        "gomariz:TE641",
+        "gomariz:TE616",
+        "gomariz:TE567",
+        "gomariz:TE1097",
+        "gomariz:TE1098",
+        "gomariz:TE1096",
+        "gomariz:TE1095"
+      ],
+      "stable": {
+        "workingHeightM": 9.92,
+        "platformHeightM": 7.92,
+        "loadCapacityKg": 450,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "3246ES",
+      "family": "plataforma-tijera",
+      "samples": 11,
+      "catalogReferences": [
+        "gomariz:TE903",
+        "gomariz:TE1118",
+        "gomariz:TE1012",
+        "gomariz:TE1218",
+        "gomariz:TE1237",
+        "gomariz:TE1266",
+        "gomariz:TE1100",
+        "gomariz:TE904",
+        "gomariz:TE1101",
+        "gomariz:TE635",
+        "gomariz:TE640"
+      ],
+      "stable": {
+        "workingHeightM": 11.68,
+        "platformHeightM": 9.68,
+        "loadCapacityKg": 320,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "JLG",
+      "model": "340AJ",
+      "family": "plataforma-articulada",
+      "samples": 7,
+      "catalogReferences": [
+        "gomariz:BA1522",
+        "gomariz:BA1575",
+        "gomariz:BA1320",
+        "gomariz:BA1321",
+        "gomariz:BA1322",
+        "gomariz:BA1349",
+        "gomariz:BA1358"
+      ],
+      "stable": {
+        "workingHeightM": 12.33,
+        "lateralReachM": 6.71,
+        "loadCapacityKg": 230
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "4069LE",
+      "family": "plataforma-tijera",
+      "samples": 3,
+      "catalogReferences": [
+        "gomariz:TE1088",
+        "gomariz:TE1034",
+        "gomariz:TE1070"
+      ],
+      "stable": {
+        "workingHeightM": 14.19,
+        "platformHeightM": 12.19,
+        "loadCapacityKg": 360,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "JLG",
+      "model": "4394RT",
+      "family": "plataforma-tijera",
+      "samples": 4,
+      "catalogReferences": [
+        "gam:6614",
+        "gam:6616",
+        "gam:6615",
+        "gomariz:TD578"
+      ],
+      "stable": {
+        "liftingHeightM": 15
+      }
+    },
+    {
+      "brand": "JLG",
+      "model": "450 AJ SIII",
+      "family": "plataforma-articulada",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M838-0666",
+        "mercaeleva:M969-4655"
+      ],
+      "stable": {
+        "workingHeightM": 16,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "JLG",
+      "model": "450 AJ",
+      "family": "plataforma-articulada",
+      "samples": 10,
+      "catalogReferences": [
+        "mercaeleva:M998-5889",
+        "mercaeleva:M050-6081",
+        "mercaeleva:M081-0775",
+        "mercaeleva:M571-2568",
+        "mercaeleva:M976-1043",
+        "mercaeleva:M272-6304",
+        "mercaeleva:M243-5988",
+        "mercaeleva:M380-3644",
+        "mercaeleva:M922-8615",
+        "mercaeleva:M091-9536"
+      ],
+      "stable": {
+        "workingHeightM": 16,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "450AJ Serie II",
+      "family": "plataforma-articulada",
+      "samples": 10,
+      "catalogReferences": [
+        "gomariz:BA1551",
+        "gomariz:BA1549",
+        "gomariz:BA1538",
+        "gomariz:BA1310",
+        "gomariz:BA1037",
+        "gomariz:BA776",
+        "gomariz:BA737",
+        "gomariz:BA743",
+        "gomariz:BA1158",
+        "gomariz:BA784"
+      ],
+      "stable": {
+        "workingHeightM": 15.72,
+        "platformHeightM": 13.72,
+        "lateralReachM": 7.47,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "JLG",
+      "model": "450AJ",
+      "family": "plataforma-articulada",
+      "samples": 10,
+      "catalogReferences": [
+        "gam:6139",
+        "gomariz:BA1340",
+        "gomariz:BA1036",
+        "gomariz:BA914",
+        "gomariz:BA927",
+        "gomariz:BA917",
+        "gomariz:BA321",
+        "gomariz:BA1550",
+        "gomariz:BA875",
+        "gomariz:BA746"
+      ],
+      "stable": {
+        "workingHeightM": 15.72,
+        "platformHeightM": 13.72,
+        "loadCapacityKg": 230,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "460SJ",
+      "family": "plataforma-telescopica",
+      "samples": 3,
+      "catalogReferences": [
+        "gomariz:BT734",
+        "mercaeleva:M749-9513",
+        "mercaeleva:M725-7107"
+      ],
+      "stable": {
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "JLG",
+      "model": "510AJ",
+      "family": "plataforma-articulada",
+      "samples": 7,
+      "catalogReferences": [
+        "gam:6846",
+        "gomariz:BA1300",
+        "gomariz:BA888",
+        "gomariz:BA741",
+        "gomariz:BA721",
+        "gomariz:BA1029",
+        "gomariz:BA889"
+      ],
+      "stable": {
+        "workingHeightM": 18,
+        "platformHeightM": 16,
+        "lateralReachM": 9.48,
+        "loadCapacityKg": 230,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "JLG",
+      "model": "600AJ",
+      "family": "plataforma-articulada",
+      "samples": 11,
+      "catalogReferences": [
+        "gam:6752",
+        "gomariz:BA948",
+        "gomariz:BA931",
+        "gomariz:BA950",
+        "gomariz:BA359",
+        "gomariz:BA1107",
+        "gomariz:BA1108",
+        "gomariz:BA1045",
+        "gomariz:BA924",
+        "gomariz:BA909",
+        "gomariz:BA408"
+      ],
+      "stable": {
+        "workingHeightM": 20.42,
+        "platformHeightM": 18.46,
+        "lateralReachM": 12.1,
+        "loadCapacityKg": 230,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "660SJ",
+      "family": "plataforma-telescopica",
+      "samples": 3,
+      "catalogReferences": [
+        "gomariz:BT724",
+        "gomariz:BT320",
+        "mercaeleva:M209-3306"
+      ],
+      "stable": {
+        "platformHeightM": 20.6,
+        "lateralReachM": 17.3,
+        "loadCapacityKg": 227,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "JLG",
+      "model": "800AJ",
+      "family": "plataforma-articulada",
+      "samples": 9,
+      "catalogReferences": [
+        "gam:6977",
+        "gam:6945",
+        "gomariz:BA1517",
+        "gomariz:BA497",
+        "gomariz:BA1290",
+        "gomariz:BA1238",
+        "gomariz:BA962",
+        "gomariz:BA963",
+        "mercaeleva:M091-1956"
+      ],
+      "stable": {
+        "platformHeightM": 24.38,
+        "lateralReachM": 15.8,
+        "liftingHeightM": 26,
+        "loadCapacityKg": 230,
+        "gradeabilityPercent": 45,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "JLG",
+      "model": "860SJ",
+      "family": "plataforma-telescopica",
+      "samples": 4,
+      "catalogReferences": [
+        "gam:6233",
+        "gam:6626",
+        "gomariz:BT949",
+        "mercaeleva:M829-9712"
+      ],
+      "stable": {
+        "liftingHeightM": 28,
+        "loadCapacityKg": 230,
+        "gradeabilityPercent": 45,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "JLG",
+      "model": "E300AJP",
+      "family": "plataforma-articulada",
+      "samples": 12,
+      "catalogReferences": [
+        "gam:6650",
+        "gam:5730",
+        "gam:6998",
+        "gomariz:BA1555",
+        "gomariz:BA1554",
+        "gomariz:BA611",
+        "gomariz:BA316",
+        "gomariz:BA418",
+        "gomariz:BA421",
+        "mercaeleva:M030-7485",
+        "mercaeleva:M026-2648",
+        "mercaeleva:M904-5325"
+      ],
+      "stable": {
+        "platformHeightM": 9.14,
+        "lateralReachM": 6.25,
+        "liftingHeightM": 11,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "E450AJ",
+      "family": "plataforma-articulada",
+      "samples": 5,
+      "catalogReferences": [
+        "gomariz:BA435",
+        "gomariz:BA714",
+        "gomariz:BA1180",
+        "gomariz:BA932",
+        "gomariz:BA828"
+      ],
+      "stable": {
+        "workingHeightM": 15.72,
+        "platformHeightM": 13.72,
+        "lateralReachM": 7.7,
+        "loadCapacityKg": 200,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "M600JP",
+      "family": "plataforma-telescopica",
+      "samples": 4,
+      "catalogReferences": [
+        "gomariz:BT1047",
+        "gomariz:BT1139",
+        "gomariz:BT489",
+        "gomariz:BT730"
+      ],
+      "stable": {
+        "workingHeightM": 20.39,
+        "platformHeightM": 18.39,
+        "lateralReachM": 14.19,
+        "loadCapacityKg": 230,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "R2646",
+      "family": "plataforma-tijera",
+      "samples": 4,
+      "catalogReferences": [
+        "gomariz:TE1657",
+        "gomariz:TE1656",
+        "gomariz:TE1655",
+        "gomariz:TE1654"
+      ],
+      "stable": {
+        "workingHeightM": 7.92,
+        "loadCapacityKg": 545,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "R4045",
+      "family": "plataforma-tijera",
+      "samples": 3,
+      "catalogReferences": [
+        "gomariz:TE1652",
+        "gomariz:TE1651",
+        "gomariz:TE1653"
+      ],
+      "stable": {
+        "workingHeightM": 13.96,
+        "loadCapacityKg": 350,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Jlg",
+      "model": "Toucan 10E",
+      "family": "plataforma-mastil",
+      "samples": 3,
+      "catalogReferences": [
+        "gomariz:PV1004",
+        "gomariz:PV1003",
+        "gomariz:PV911"
+      ],
+      "stable": {
+        "workingHeightM": 10.1,
+        "platformHeightM": 8.1,
+        "loadCapacityKg": 200,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "A14JE",
+      "family": "plataforma-articulada",
+      "samples": 5,
+      "catalogReferences": [
+        "gomariz:BA1582",
+        "gomariz:BA1466",
+        "mercaeleva:M384-3098",
+        "mercaeleva:M840-6795",
+        "mercaeleva:M408-7290"
+      ],
+      "stable": {
+        "platformHeightM": 13.8,
+        "lateralReachM": 7.81,
+        "loadCapacityKg": 230,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "AR14J",
+      "family": "plataforma-articulada",
+      "samples": 8,
+      "catalogReferences": [
+        "gomariz:BA1774",
+        "gomariz:BA1722",
+        "gomariz:BA1719",
+        "gomariz:BA1467",
+        "gomariz:BA1468",
+        "gomariz:BA1469",
+        "gomariz:BA1470",
+        "gomariz:BA1472"
+      ],
+      "stable": {
+        "workingHeightM": 16.09,
+        "platformHeightM": 14.09,
+        "lateralReachM": 7.67,
+        "loadCapacityKg": 230,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "AR16J",
+      "family": "plataforma-articulada",
+      "samples": 9,
+      "catalogReferences": [
+        "gomariz:BA1583",
+        "gomariz:BA1473",
+        "gomariz:BA1475",
+        "gomariz:BA1474",
+        "gomariz:BA1363",
+        "gomariz:BA1361",
+        "mercaeleva:M236-6155",
+        "mercaeleva:M037-5798",
+        "mercaeleva:M835-4459"
+      ],
+      "stable": {
+        "platformHeightM": 15.7,
+        "lateralReachM": 9.39,
+        "loadCapacityKg": 230,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "AS0607WE",
+      "family": "plataforma-tijera",
+      "samples": 12,
+      "catalogReferences": [
+        "gomariz:TE1814",
+        "gomariz:TE1772",
+        "gomariz:TE1364",
+        "gomariz:TE1369",
+        "gomariz:TE1370",
+        "gomariz:TE1371",
+        "gomariz:TE1372",
+        "gomariz:TE1373",
+        "gomariz:TE1374",
+        "gomariz:TE1375",
+        "gomariz:TE1376",
+        "gomariz:TE1377"
+      ],
+      "stable": {
+        "workingHeightM": 7.8,
+        "platformHeightM": 5.8,
+        "loadCapacityKg": 230
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "AS0808E",
+      "family": "plataforma-tijera",
+      "samples": 19,
+      "catalogReferences": [
+        "gomariz:TE1754",
+        "gomariz:TE1378",
+        "gomariz:TE1379",
+        "gomariz:TE1380",
+        "gomariz:TE1381",
+        "gomariz:TE1392",
+        "gomariz:TE1393",
+        "gomariz:TE1395",
+        "gomariz:TE1396",
+        "gomariz:TE1397",
+        "gomariz:TE1398",
+        "gomariz:TE1416",
+        "gomariz:TE1431",
+        "gomariz:TE1430",
+        "gomariz:TE1433",
+        "gomariz:TE1434",
+        "gomariz:TE1435",
+        "gomariz:TE1452",
+        "gomariz:TE1453"
+      ],
+      "stable": {
+        "workingHeightM": 10,
+        "platformHeightM": 8,
+        "loadCapacityKg": 230,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "AS0812",
+      "family": "plataforma-tijera",
+      "samples": 15,
+      "catalogReferences": [
+        "gomariz:TE1602",
+        "gomariz:TE1601",
+        "gomariz:TE1599",
+        "gomariz:TE1598",
+        "gomariz:TE1597",
+        "gomariz:TE1596",
+        "gomariz:TE1595",
+        "gomariz:TE1591",
+        "gomariz:TE1589",
+        "gomariz:TE1588",
+        "gomariz:TE1587",
+        "gomariz:TE1594",
+        "gomariz:TE1593",
+        "gomariz:TE1586",
+        "gomariz:TE1585"
+      ],
+      "stable": {
+        "workingHeightM": 10,
+        "platformHeightM": 8,
+        "loadCapacityKg": 450,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "AS1012E",
+      "family": "plataforma-tijera",
+      "samples": 16,
+      "catalogReferences": [
+        "gomariz:TE1756",
+        "gomariz:TE1603",
+        "gomariz:TE1478",
+        "gomariz:TE1479",
+        "gomariz:TE1458",
+        "gomariz:TE1457",
+        "gomariz:TE1456",
+        "gomariz:TE1455",
+        "gomariz:TE1427",
+        "gomariz:TE1426",
+        "gomariz:TE1402",
+        "gomariz:TE1401",
+        "gomariz:TE1400",
+        "gomariz:TE1384",
+        "gomariz:TE1383",
+        "gomariz:TE1385"
+      ],
+      "stable": {
+        "workingHeightM": 12,
+        "platformHeightM": 10,
+        "loadCapacityKg": 320,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "AS1212",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:TE1604",
+        "gomariz:TE1480"
+      ],
+      "stable": {
+        "workingHeightM": 14,
+        "platformHeightM": 12,
+        "loadCapacityKg": 320,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "AS1212E",
+      "family": "plataforma-tijera",
+      "samples": 7,
+      "catalogReferences": [
+        "gomariz:TE1481",
+        "gomariz:TE1407",
+        "gomariz:TE1405",
+        "gomariz:TE1403",
+        "mercaeleva:M563-8693",
+        "mercaeleva:M008-1528",
+        "mercaeleva:M000-3684"
+      ],
+      "stable": {
+        "workingHeightM": 14,
+        "platformHeightM": 12,
+        "loadCapacityKg": 320,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "S0607E-2",
+      "family": "plataforma-tijera",
+      "samples": 13,
+      "catalogReferences": [
+        "gomariz:TE1748",
+        "gomariz:TE1747",
+        "gomariz:TE1745",
+        "gomariz:TE1744",
+        "gomariz:TE1743",
+        "gomariz:TE1742",
+        "gomariz:TE1741",
+        "gomariz:TE1740",
+        "gomariz:TE1739",
+        "gomariz:TE1738",
+        "gomariz:TE1737",
+        "gomariz:TE1736",
+        "gomariz:TE1735"
+      ],
+      "stable": {
+        "workingHeightM": 7.8,
+        "loadCapacityKg": 230,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "S0607EII",
+      "family": "plataforma-tijera",
+      "samples": 20,
+      "catalogReferences": [
+        "gomariz:TE1607",
+        "gomariz:TE1605",
+        "gomariz:TE1437",
+        "gomariz:TE1438",
+        "gomariz:TE1439",
+        "gomariz:TE1440",
+        "gomariz:TE1441",
+        "gomariz:TE1442",
+        "gomariz:TE1443",
+        "gomariz:TE1444",
+        "gomariz:TE1445",
+        "gomariz:TE1446",
+        "gomariz:TE1447",
+        "gomariz:TE1448",
+        "gomariz:TE1449",
+        "gomariz:TE1484",
+        "gomariz:TE1487",
+        "gomariz:TE1486",
+        "gomariz:TE1488",
+        "gomariz:TE1489"
+      ],
+      "stable": {
+        "workingHeightM": 7.8,
+        "platformHeightM": 5.8,
+        "loadCapacityKg": 230,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "S0808EII",
+      "family": "plataforma-tijera",
+      "samples": 4,
+      "catalogReferences": [
+        "mercaeleva:M309-0364",
+        "mercaeleva:M040-2258",
+        "mercaeleva:M005-4474",
+        "mercaeleva:M159-0669"
+      ],
+      "stable": {
+        "workingHeightM": 10,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "S0812II",
+      "family": "plataforma-tijera",
+      "samples": 4,
+      "catalogReferences": [
+        "gomariz:TE1616",
+        "gomariz:TE1617",
+        "gomariz:TE1619",
+        "gomariz:TE1618"
+      ],
+      "stable": {
+        "workingHeightM": 10,
+        "loadCapacityKg": 450,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "SR1018D",
+      "family": "plataforma-tijera",
+      "samples": 5,
+      "catalogReferences": [
+        "gomariz:TD1625",
+        "gomariz:TD1624",
+        "gomariz:TD1623",
+        "gomariz:TD1389",
+        "mercaeleva:M569-9029"
+      ],
+      "stable": {
+        "platformHeightM": 9.7,
+        "loadCapacityKg": 454,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "SR1218D",
+      "family": "plataforma-tijera",
+      "samples": 5,
+      "catalogReferences": [
+        "gomariz:TD1417",
+        "gomariz:TD1626",
+        "mercaeleva:M057-0589",
+        "mercaeleva:M186-5711",
+        "mercaeleva:M416-1048"
+      ],
+      "stable": {
+        "platformHeightM": 11.9,
+        "loadCapacityKg": 365,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "SR1623D",
+      "family": "plataforma-tijera",
+      "samples": 7,
+      "catalogReferences": [
+        "gomariz:TD1799",
+        "gomariz:TD1794",
+        "gomariz:TD1792",
+        "gomariz:TD1767",
+        "gomariz:TD1726",
+        "gomariz:TD1725",
+        "gomariz:TD1495"
+      ],
+      "stable": {
+        "workingHeightM": 17.9,
+        "platformHeightM": 15.9,
+        "loadCapacityKg": 680,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "LGMG",
+      "model": "SS0407ER",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M346-8211",
+        "mercaeleva:M606-3993"
+      ],
+      "stable": {
+        "workingHeightM": 6,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "LIFTER",
+      "model": "GS/I 25S4 RA",
+      "family": "transpaleta",
+      "samples": 2,
+      "catalogReferences": [
+        "gam:5228",
+        "gam:6707"
+      ],
+      "stable": {
+        "loadCapacityKg": 2500
+      }
+    },
+    {
+      "brand": "MAGNI",
+      "model": "DS1523RTP",
+      "family": "plataforma-tijera",
+      "samples": 2,
+      "catalogReferences": [
+        "gam:6642",
+        "gam:6886"
+      ],
+      "stable": {
+        "liftingHeightM": 15,
+        "loadCapacityKg": 680
+      }
+    },
+    {
+      "brand": "Manitou",
+      "model": "120 AETJ",
+      "family": "plataforma-articulada",
+      "samples": 4,
+      "catalogReferences": [
+        "gomariz:BA967",
+        "gomariz:BA747",
+        "gomariz:BA1010",
+        "gomariz:BA918"
+      ],
+      "stable": {
+        "workingHeightM": 12,
+        "platformHeightM": 10,
+        "lateralReachM": 7,
+        "loadCapacityKg": 200,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Manitou",
+      "model": "120 AETJC",
+      "family": "plataforma-articulada",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:BA1344",
+        "gomariz:BA703"
+      ],
+      "stable": {
+        "workingHeightM": 12,
+        "platformHeightM": 10,
+        "lateralReachM": 7,
+        "loadCapacityKg": 200,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Manitou",
+      "model": "120AETJC",
+      "family": "plataforma-articulada",
+      "samples": 3,
+      "catalogReferences": [
+        "mercaeleva:M510-3631",
+        "mercaeleva:M106-2983",
+        "mercaeleva:M879-0952"
+      ],
+      "stable": {
+        "workingHeightM": 12,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "MANITOU",
+      "model": "150 AETJC",
+      "family": "plataforma-articulada",
+      "samples": 7,
+      "catalogReferences": [
+        "gam:6631",
+        "gomariz:BA1506",
+        "gomariz:BA1001",
+        "gomariz:BA944",
+        "gomariz:BA913",
+        "gomariz:BA807",
+        "gomariz:BA550"
+      ],
+      "stable": {
+        "workingHeightM": 15,
+        "platformHeightM": 13,
+        "lateralReachM": 7.6,
+        "loadCapacityKg": 200,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Manitou",
+      "model": "170AETJL",
+      "family": "plataforma-articulada",
+      "samples": 8,
+      "catalogReferences": [
+        "mercaeleva:M873-8524",
+        "mercaeleva:M106-1389",
+        "mercaeleva:M547-8652",
+        "mercaeleva:M051-3155",
+        "mercaeleva:M711-4051",
+        "mercaeleva:M417-9896",
+        "mercaeleva:M391-7199",
+        "mercaeleva:M310-8756"
+      ],
+      "stable": {
+        "workingHeightM": 17,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Manitou",
+      "model": "180ATJ",
+      "family": "plataforma-articulada",
+      "samples": 3,
+      "catalogReferences": [
+        "mercaeleva:M572-8190",
+        "mercaeleva:M205-2951",
+        "mercaeleva:M178-6194"
+      ],
+      "stable": {
+        "workingHeightM": 18,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "MANITOU",
+      "model": "200 ATJ",
+      "family": "plataforma-articulada",
+      "samples": 2,
+      "catalogReferences": [
+        "gam:6979",
+        "gam:6985"
+      ],
+      "stable": {
+        "liftingHeightM": 20,
+        "loadCapacityKg": 230,
+        "gradeabilityPercent": 40
+      }
+    },
+    {
+      "brand": "Manitou",
+      "model": "MAN GO 12",
+      "family": "plataforma-articulada",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M256-1875",
+        "mercaeleva:M099-6166"
+      ],
+      "stable": {
+        "workingHeightM": 12,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "MANITOU",
+      "model": "MI50D",
+      "family": "carretilla-elevadora",
+      "samples": 3,
+      "catalogReferences": [
+        "gam:6974",
+        "gam:6975",
+        "gam:6976"
+      ],
+      "stable": {
+        "liftingHeightM": 4,
+        "loadCapacityKg": 5000
+      }
+    },
+    {
+      "brand": "Maximal",
+      "model": "Zhejiang FD25T",
+      "family": "carretilla-elevadora",
+      "samples": 5,
+      "catalogReferences": [
+        "gomariz:CA897",
+        "gomariz:CA884",
+        "gomariz:CA883",
+        "gomariz:CA1044",
+        "gomariz:CA947"
+      ],
+      "stable": {
+        "loadCapacityKg": 2500,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Oil & Steel",
+      "model": "SCORPION 1490",
+      "family": "camion-cesta",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M264-2806",
+        "mercaeleva:M082-5310"
+      ],
+      "stable": {
+        "workingHeightM": 15,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Skyjack",
+      "model": "SJ12",
+      "family": "plataforma-mastil",
+      "samples": 3,
+      "catalogReferences": [
+        "gomariz:PV1148",
+        "gomariz:PV1147",
+        "gomariz:PV1149"
+      ],
+      "stable": {
+        "workingHeightM": 5.48,
+        "platformHeightM": 3.65,
+        "loadCapacityKg": 227,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Skyjack",
+      "model": "SJ46AJ",
+      "family": "plataforma-articulada",
+      "samples": 6,
+      "catalogReferences": [
+        "gomariz:BA1548",
+        "gomariz:BA1294",
+        "gomariz:BA1345",
+        "gomariz:BA1341",
+        "gomariz:BA1318",
+        "gomariz:BA1299"
+      ],
+      "stable": {
+        "workingHeightM": 15.24,
+        "platformHeightM": 14.15,
+        "lateralReachM": 7.63,
+        "loadCapacityKg": 227,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Skyjack",
+      "model": "SJ6832RT",
+      "family": "plataforma-tijera",
+      "samples": 3,
+      "catalogReferences": [
+        "mercaeleva:M342-3553",
+        "mercaeleva:M045-6952",
+        "mercaeleva:M763-8737"
+      ],
+      "stable": {
+        "workingHeightM": 12,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Skyjack",
+      "model": "SJ85AJ",
+      "family": "plataforma-articulada",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:BA1335",
+        "gomariz:BA1346"
+      ],
+      "stable": {
+        "workingHeightM": 27.74,
+        "platformHeightM": 25.91,
+        "lateralReachM": 17.07,
+        "loadCapacityKg": 227,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "SNORKEL",
+      "model": "A46JRT",
+      "family": "plataforma-articulada",
+      "samples": 2,
+      "catalogReferences": [
+        "gam:6901",
+        "gam:6912"
+      ],
+      "stable": {
+        "liftingHeightM": 16,
+        "loadCapacityKg": 227,
+        "gradeabilityPercent": 40
+      }
+    },
+    {
+      "brand": "SNORKEL",
+      "model": "S3219E",
+      "family": "plataforma-tijera",
+      "samples": 9,
+      "catalogReferences": [
+        "gam:6854",
+        "gam:6921",
+        "gam:6778",
+        "gam:6779",
+        "gam:6855",
+        "gam:6856",
+        "gam:6859",
+        "gam:6864",
+        "gam:5979"
+      ],
+      "stable": {
+        "liftingHeightM": 8,
+        "loadCapacityKg": 250,
+        "gradeabilityPercent": 25
+      }
+    },
+    {
+      "brand": "Snorkel",
+      "model": "S3970RT",
+      "family": "plataforma-tijera",
+      "samples": 6,
+      "catalogReferences": [
+        "gomariz:TD1296",
+        "gomariz:TD1295",
+        "gomariz:TD1339",
+        "gomariz:TD1323",
+        "gomariz:TD1337",
+        "gomariz:TD1338"
+      ],
+      "stable": {
+        "workingHeightM": 13.8,
+        "platformHeightM": 11.8,
+        "loadCapacityKg": 350,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Toyota",
+      "model": "7FBM30",
+      "family": "carretilla-elevadora",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:CAE1050",
+        "gomariz:CAE1049"
+      ],
+      "stable": {
+        "loadCapacityKg": 3000,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Toyota",
+      "model": "7FBMF20",
+      "family": "carretilla-elevadora",
+      "samples": 4,
+      "catalogReferences": [
+        "gomariz:CAE1052",
+        "gomariz:CAE938",
+        "gomariz:CAE936",
+        "gomariz:CAE937"
+      ],
+      "stable": {
+        "loadCapacityKg": 2500,
+        "energy": "eléctrica"
+      }
+    },
+    {
+      "brand": "Toyota",
+      "model": "8FD20",
+      "family": "carretilla-elevadora",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:CA1041",
+        "gomariz:CA1042"
+      ],
+      "stable": {
+        "loadCapacityKg": 2000,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "UNICARRIERS",
+      "model": "A1N1L18Q",
+      "family": "carretilla-elevadora",
+      "samples": 2,
+      "catalogReferences": [
+        "gam:6146",
+        "gam:6738"
+      ],
+      "stable": {
+        "liftingHeightM": 4.75,
+        "loadCapacityKg": 1800
+      }
+    },
+    {
+      "brand": "UNICARRIERS",
+      "model": "G1Q2L30Q",
+      "family": "carretilla-elevadora",
+      "samples": 2,
+      "catalogReferences": [
+        "gam:6649",
+        "gam:6865"
+      ],
+      "stable": {
+        "liftingHeightM": 4.75,
+        "loadCapacityKg": 3000
+      }
+    },
+    {
+      "brand": "XCMG",
+      "model": "XGA43K",
+      "family": "plataforma-articulada",
+      "samples": 2,
+      "catalogReferences": [
+        "gam:5902",
+        "gam:6542"
+      ],
+      "stable": {
+        "liftingHeightM": 43,
+        "loadCapacityKg": 460,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "YALE",
+      "model": "ERP35VL",
+      "family": "carretilla-elevadora",
+      "samples": 2,
+      "catalogReferences": [
+        "gam:6835",
+        "gam:6858"
+      ],
+      "stable": {
+        "liftingHeightM": 4.1,
+        "loadCapacityKg": 3500
+      }
+    },
+    {
+      "brand": "YALE",
+      "model": "MS15XUX",
+      "family": "apilador",
+      "samples": 2,
+      "catalogReferences": [
+        "gam:6788",
+        "gam:921"
+      ],
+      "stable": {
+        "loadCapacityKg": 1500
+      }
+    }
+  ]
+}

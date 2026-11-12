@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "brand": "Genie",
+      "model": "SLA15",
+      "family": "elevador-materiales",
+      "manufacturerSource": "https://www.genielift.com/es/aerial-lift-products/portable---manual-lifts/sla-15",
+      "evidenceSource": "data/editorial/evidence/legacy/shared/verified-canonical-brief-editorial.json"
+    }
+  ]
+}

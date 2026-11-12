@@ -1,0 +1,87 @@
+{
+  "files_editorial": 140,
+  "new_vs_matriz": 10,
+  "exported_symbols": 173,
+  "internal_symbols": 1336,
+  "conditional_lines": 1025,
+  "evidence_literal_keys": 777,
+  "boundary_with_text_markers": 212,
+  "by_provider": {
+    "gam": 74,
+    "gomariz": 16,
+    "mercaeleva": 23,
+    "shared": 27
+  },
+  "by_group": {
+    "K14": 4,
+    "K16": 10,
+    "K13": 6,
+    "K10": 24,
+    "K06": 7,
+    "K11": 5,
+    "K03": 1,
+    "K02": 8,
+    "K12": 14,
+    "K05": 6,
+    "K13+K14": 3,
+    "K07": 4,
+    "K09": 29,
+    "K04": 6,
+    "K01+K14": 1,
+    "K08": 8,
+    "K05+K06": 1,
+    "K01+K02+K03": 1,
+    "K03+K14": 1,
+    "K02+K06": 1
+  },
+  "evidence_by_file": {
+    "src/preparation/gam/editorial/evidence/cleaning.ts": 20,
+    "src/preparation/gam/editorial/evidence/forklifts.ts": 20,
+    "src/preparation/gam/editorial/evidence/handling.ts": 20,
+    "src/preparation/gam/editorial/evidence/hyster.ts": 20,
+    "src/preparation/gam/editorial/evidence/multi-sector-primary.ts": 20,
+    "src/preparation/gam/editorial/evidence/multi-sector-secondary.ts": 20,
+    "src/preparation/gam/editorial/evidence/multi-sector-tertiary.ts": 20,
+    "src/preparation/gam/editorial/evidence/platforms.ts": 20,
+    "src/preparation/gam/editorial/evidence/tennant.ts": 20,
+    "src/preparation/gam/editorial/evidence/warehouse.ts": 20,
+    "src/preparation/gam/editorial/general/handling-source-editorial.ts": 20,
+    "src/preparation/gam/editorial/general/verified-concise-long.ts": 39,
+    "src/preparation/gam/editorial/general/verified-industrial-cleaning-editorial.ts": 8,
+    "src/preparation/gam/editorial/source/verified-source-condensed-generals.ts": 172,
+    "src/preparation/gam/editorial/source/verified-source-matched-editorial.ts": 42,
+    "src/preparation/gam/editorial/source/verified-source-matched-generals.ts": 10,
+    "src/preparation/gam/editorial/source/verified-unit-source-generals.ts": 20,
+    "src/preparation/gam/editorial/titles/verified-source-matched-titles.ts": 9,
+    "src/preparation/gomariz/editorial/evidence/verified-model-general.ts": 2,
+    "src/preparation/gomariz/editorial/evidence/verified-priority-general.ts": 26,
+    "src/preparation/gomariz/editorial/evidence/verified-unit-specific-titles.ts": 12,
+    "src/preparation/mercaeleva/editorial/evidence/critical-general-descriptions.ts": 7,
+    "src/preparation/mercaeleva/editorial/evidence/priority-short-descriptions.ts": 7,
+    "src/preparation/mercaeleva/editorial/evidence/verified-source-editorial.ts": 21,
+    "src/preparation/mercaeleva/editorial/evidence/verified-unit-general-data.ts": 47,
+    "src/preparation/mercaeleva/editorial/evidence/verified-unit-specific-generals.ts": 8,
+    "src/preparation/shared/editorial/evidence/verified-canonical-brief-editorial.ts": 20,
+    "src/preparation/shared/editorial/evidence/verified-editorial-closure.ts": 32,
+    "src/preparation/shared/editorial/evidence/verified-family-proportion-editorial.ts": 20,
+    "src/preparation/shared/editorial/evidence/verified-unit-context-editorial.ts": 20,
+    "src/preparation/shared/editorial/evidence/verified-unit-summary-editorial.ts": 35
+  },
+  "originals": {
+    "gam": {
+      "sha256": "855865e4a99f709cd9b10b68e77d594841b8cbd8c64b4fc9eb851cb397162483",
+      "json_root_type": "dict",
+      "length": 9
+    },
+    "gomariz": {
+      "sha256": "87e2fc58e39f9f00d7226e623ead5a154f933c3880b8503de2dc1a2375c3901b",
+      "json_root_type": "dict",
+      "length": 9
+    },
+    "mercaeleva": {
+      "sha256": "83e0265743ba1ec0b6ebb1c1bc8bbb9cd3b26eba77d208d659d35e7a62bba792",
+      "json_root_type": "dict",
+      "length": 9
+    }
+  }
+}

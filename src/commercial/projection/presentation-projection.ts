@@ -1,12 +1,6 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate } from "../legacy-export/contracts.js";
 import { projectPresentableSpecifications } from "./spec-projection.js";
-import { normalizeCommercialGeneral, normalizeCommercialSummary, normalizeCommercialTitle } from "./editorial-normalization.js";
-import { presentCommercialMotorization } from "./motorization-presentation.js";
-import { assessCommercialHeight } from "../validation/height-consistency.js";
-import { normalizeCommercialYearDescription } from "../validation/year-consistency.js";
-import { normalizeVerifiedCommercialCapacity } from "./capacity-presentation.js";
-import { reconcileGamVerifiedUnitYear } from "../../preparation/gam/technical/reconciliation/gam-verified-unit-year.js";
 
 export type CommercialMetadata = {
   readonly tags: readonly string[];
@@ -75,19 +69,7 @@ export const projectCommercialPresentation = (
     source.reference !== published.reference) {
     throw new Error(`Origen y publicación discordantes: ${published.providerId}:${published.reference ?? published.sourceUrl}`);
   }
-  const verifiedSource = reconcileGamVerifiedUnitYear(source);
-  const baseTitle = presentCommercialMotorization(
-    normalizeCommercialTitle(published.title, published.providerId, source.model), published
-  );
-  const summary = normalizeCommercialSummary(published.description, source.model, published.providerId);
-  const verifiedSummary = verifiedSource !== source && source.year && verifiedSource.year && summary
-    ? summary.replace(new RegExp(`\\bAño\\s+${source.year}\\b`, "u"), `Año ${verifiedSource.year}`)
-    : summary;
-  const height = assessCommercialHeight({ ...published, title: baseTitle, description: verifiedSummary });
-  const capacity = normalizeVerifiedCommercialCapacity(source, published, height.title,
-    normalizeCommercialYearDescription({ ...verifiedSource, longDescription: source.longDescription },
-      published.description_general));
-  const title = capacity.title ? `${capacity.title}${titleSuffix}` : null;
+  const title = published.title ? `${published.title}${titleSuffix}` : null;
   const brand = commercialBrandInTitle(title, source.brand) ??
     confirmedSpecIdentity(source.brand, published.spec["Marca"]);
   const model = conflictingModelVariant(title, source.model) ? null :
@@ -103,9 +85,9 @@ export const projectCommercialPresentation = (
   return {
     title,
     description_title: published.description_title?.trim() === published.title?.trim() || !published.description_title?.trim()
-      ? title : normalizeCommercialTitle(published.description_title, published.providerId, source.model),
-    description: height.description,
-    description_general: normalizeCommercialGeneral(capacity.description_general, source.model),
+      ? title : published.description_title,
+    description: published.description,
+    description_general: published.description_general,
     image: published.image,
     images: [...published.images],
     spec: projectPresentableSpecifications(published.spec, source),

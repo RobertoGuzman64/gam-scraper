@@ -11,36 +11,32 @@ import { preparedTechnicalConsistencyIssues } from "./shared/technical/source/te
 import { resolveCommercialCondition } from "./condition.js";
 import type { ImportCandidate, ImportCatalog } from "../commercial/legacy-export/contracts.js";
 import type { PreparedProduct } from "./contracts.js";
-import { normalizeMercaelevaAusaHeightText } from "./mercaeleva/technical/reconciliation/mercaeleva-ausa-height.js";
-import { reconcileGamElectricTowTractorEditorial } from "./gam/editorial/models/hyster-tow-tractor-editorial.js";
-import { reconcileGamModulaStorageSummary } from "./gam/editorial/models/modula-storage-editorial.js";
 import { applyReconciledTechnicalSpecs } from "./shared/technical/reconciliation/technical-specifications.js";
-import { removeGamVehicleListingMarkers } from "./gam/editorial/general/long-description.js";
 import { captureSourceEditorialEvidence } from "./shared/editorial/mapping/source-editorial-evidence.js";
 import { reconcileInitialTechnicalEvidence, resolveSourceTechnicalSemanticRecord, reconcileTechnicalSourceForRecovery, reconcileTechnicalBeforeEditorial, reconcileTechnicalAfterEditorial, normalizePreparedTechnicalSpecs } from "./shared/technical/reconciliation/preparation-technical-stages.js";
 import { publicationConflictForMercaeleva } from "./mercaeleva/technical/reconciliation/mercaeleva.js";
-import { verifiedGamHysterH45fts5Editorial } from "./gam/technical/reconciliation/gam-hyster-h45fts5.js";
-import { preparedGamSourceCapacityShort } from "./gam/technical/reconciliation/gam-source-capacity-summary.js";
-import { presentGamVerifiedRestrictedCapacity, reconcileGamVerifiedEditorialCoherence } from "./gam/technical/reconciliation/gam-verified-capacity-coherence.js";
+import { reconcileHandlingFamilySpecs } from "./shared/technical/reconciliation/handling-family-specifications.js";
+import { presentGamVerifiedRestrictedCapacity } from "./gam/technical/reconciliation/gam-verified-capacity-coherence.js";
 import { recoverBaseTechnicalSpecs } from "./shared/technical/recovery/base-technical-recovery.js";
 import { recoverDocumentedTechnicalSpecs } from "./shared/technical/recovery/documented-technical-recovery.js";
 import { resolvePreparedEditorial } from "./shared/editorial/mapping/prepared-editorial.js";
-import { finalizePreparedEditorial } from "./shared/editorial/mapping/verified-editorial-finalization.js";
+import { normalizePreparedEditorialPresentation } from "./shared/editorial/mapping/prepared-editorial-presentation.js";
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
   const sourceUnitRecord = record;
   record = reconcileInitialTechnicalEvidence(record);
-  const sourceEditorial = captureSourceEditorialEvidence(record);
   const publicationConflict = publicationConflictForMercaeleva(record);
   const semanticIssues = sourceSemanticQualityIssues(resolveSourceTechnicalSemanticRecord(record));
   record = reconcileTechnicalSourceForRecovery(record);
   const sourceYearSpecs = recoverBaseTechnicalSpecs(record, sourceUnitRecord);
-  const { sourceFuelSpecs, documentedSpecs } = recoverDocumentedTechnicalSpecs(sourceUnitRecord, sourceYearSpecs);
+  const { documentedSpecs } = recoverDocumentedTechnicalSpecs(sourceUnitRecord, sourceYearSpecs);
   const beforeReconciliation = record;
   record = reconcileTechnicalBeforeEditorial(record);
-  const editorialRecord = record;
   record = reconcileTechnicalAfterEditorial(record);
   const reconciledSpecs = applyReconciledTechnicalSpecs(beforeReconciliation, record, documentedSpecs);
+  const editorialRecord: ProductRecord = { ...record, specs: reconciledSpecs,
+    shortDescription: sourceUnitRecord.shortDescription, longDescription: sourceUnitRecord.longDescription };
+  const sourceEditorial = captureSourceEditorialEvidence(editorialRecord);
   const issues: string[] = [];
   const { condition, contradictory: contradictoryCondition } = resolveCommercialCondition(record);
   const category = catalog ? resolveCategory(record, catalog.categories, condition) : null;
@@ -62,17 +58,9 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   issues.push(...(catalog === null ? sourceTechnicalQualityIssues(record) :
     category ? attributeResult!.qualityIssues : sourceAttributeQualityIssues(record, catalog)));
 
-  const descriptions = finalizePreparedEditorial(
-    editorialRecord, sourceUnitRecord, editorial.preparedShort, editorial.preparedLong,
-    sourceFuelSpecs, issues.length === 0
-  );
+  const descriptions = { short: editorial.preparedShort, general: editorial.preparedLong };
   issues.push(...preparedTechnicalConsistencyIssues(record, reconciledSpecs));
   const normalizedSpecs = normalizePreparedTechnicalSpecs(record, reconciledSpecs);
-  const hysterEditorial = verifiedGamHysterH45fts5Editorial(sourceUnitRecord, record);
-  const tractorEditorial = reconcileGamElectricTowTractorEditorial(sourceUnitRecord, descriptions, normalizedSpecs);
-  const preparedGeneral = normalizeMercaelevaAusaHeightText(
-    sourceUnitRecord, hysterEditorial?.general ?? reconcileGamVerifiedEditorialCoherence(record, tractorEditorial.general)
-  );
   const product: ImportCandidate = {
     providerId: record.providerId,
     sourceUrl: record.url,
@@ -84,24 +72,24 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     condition,
     price,
     description_title: editorial.title,
-    description: normalizeMercaelevaAusaHeightText(
-      sourceUnitRecord, reconcileGamModulaStorageSummary(sourceUnitRecord,
-        hysterEditorial?.short ?? preparedGamSourceCapacityShort(editorialRecord, record, tractorEditorial.short), tractorEditorial.spec)
-    ),
-    description_general: removeGamVehicleListingMarkers(sourceUnitRecord, preparedGeneral) ?? preparedGeneral,
+    description: descriptions.short,
+    description_general: descriptions.general,
     image: images[0] ?? null,
     images,
-    spec: presentGamVerifiedRestrictedCapacity(record, tractorEditorial.spec),
+    spec: reconcileHandlingFamilySpecs(editorialRecord, presentGamVerifiedRestrictedCapacity(record, normalizedSpecs)),
     attributes: attributeResult?.attributes ?? []
   };
+  const presented = normalizePreparedEditorialPresentation(sourceUnitRecord, product);
+  if (!presented.description?.trim()) issues.push("Cobertura editorial insuficiente: descripción corta");
+  if (!presented.description_general?.trim()) issues.push("Cobertura editorial insuficiente: descripción general");
   return {
     status: issues.length ? "review" : "ready",
     issues,
     ...(catalog === null ? {} : { importIssues: {
-      excel: validateImportCandidate(product, catalog),
-      createMany: validateCreateManyCandidate(product, catalog)
+      excel: validateImportCandidate(presented, catalog),
+      createMany: validateCreateManyCandidate(presented, catalog)
     } }),
-    product
+    product: presented
   };
 };
 

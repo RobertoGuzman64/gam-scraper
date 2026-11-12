@@ -10,6 +10,7 @@ type EditorialSource = {
   readonly liftingHeightUnit: "m" | "mm";
   readonly loadCapacity: SpecValue | undefined;
   readonly motor: SpecValue | undefined;
+  readonly equipmentHeight: SpecValue | undefined;
 };
 
 const normalized = (value: string): string => value.normalize("NFD")

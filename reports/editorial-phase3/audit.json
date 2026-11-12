@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "kind": "diagnostico_sin_publicacion",
+  "providers": {
+    "gam": {
+      "records": 983,
+      "ready": 953,
+      "review": 30,
+      "exceptions": 0,
+      "verifiedUnitGeneralApplied": 245,
+      "verifiedUnitShortApplied": 178,
+      "verifiedUnitTitlesApplied": 0,
+      "modelReferencesApplied": 20,
+      "familyGuidanceApplied": 417,
+      "emptyShort": 1,
+      "emptyGeneral": 1
+    },
+    "gomariz": {
+      "records": 547,
+      "ready": 535,
+      "review": 12,
+      "exceptions": 0,
+      "verifiedUnitGeneralApplied": 2,
+      "verifiedUnitShortApplied": 0,
+      "verifiedUnitTitlesApplied": 7,
+      "modelReferencesApplied": 33,
+      "familyGuidanceApplied": 478,
+      "emptyShort": 62,
+      "emptyGeneral": 0
+    },
+    "mercaeleva": {
+      "records": 221,
+      "ready": 218,
+      "review": 3,
+      "exceptions": 0,
+      "verifiedUnitGeneralApplied": 63,
+      "verifiedUnitShortApplied": 11,
+      "verifiedUnitTitlesApplied": 0,
+      "modelReferencesApplied": 54,
+      "familyGuidanceApplied": 148,
+      "emptyShort": 2,
+      "emptyGeneral": 1
+    }
+  },
+  "total": {
+    "records": 1751,
+    "ready": 1706,
+    "review": 45,
+    "exceptions": 0,
+    "verifiedUnitGeneralApplied": 310,
+    "verifiedUnitShortApplied": 189,
+    "verifiedUnitTitlesApplied": 7,
+    "modelReferencesApplied": 107,
+    "familyGuidanceApplied": 1043,
+    "emptyShort": 65,
+    "emptyGeneral": 2
+  },
+  "problems": [],
+  "evidence": {
+    "verifiedUnits": 343,
+    "consensusModels": 136,
+    "familyProfiles": 26,
+    "verifiedManufacturerRules": 1
+  }
+}

@@ -31,6 +31,7 @@ export const resolveGomarizEditorialDomainSource = (record: ProductRecord): Edit
       liftingHeight: undefined,
       liftingHeightUnit: "m",
       loadCapacity: record.specs?.Capacidad,
+      equipmentHeight: undefined,
       motor: record.specs?.Motor
     };
   } catch {

@@ -2,7 +2,6 @@ import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import { reconcileGamVerifiedYaleGp80vx } from "./gam-yale-gp80vx.js";
 import { reconcileGamInitialIdentity, reconcileGamForPreparation } from "./gam.js";
 import { reconcileGamVerifiedListingIdentity, reconcileGamVerifiedModelIdentity, reconcileGamVerifiedCapacityCoherence, reconcileGamVerifiedBasketLoad } from "./gam-verified-capacity-coherence.js";
-import { reconcileGamSourceCapacitySummary } from "./gam-source-capacity-summary.js";
 import { reconcileGamCorroboratedLoadCapacity } from "./gam-capacity.js";
 import { reconcileGamBasketDimensions } from "./gam-basket-dimensions.js";
 import { reconcileGamVerifiedBasketSizes } from "./gam-verified-basket-sizes.js";
@@ -22,7 +21,6 @@ export const reconcileGamTechnicalBeforeEditorial = (record: ProductRecord): Pro
   reconcileGamForPreparation(record);
 
 export const reconcileGamTechnicalCapacities = (record: ProductRecord): ProductRecord => {
-  record = reconcileGamSourceCapacitySummary(record);
   record = reconcileGamVerifiedCapacityCoherence(record);
   record = reconcileGamVerifiedBasketLoad(record);
   return reconcileGamCorroboratedLoadCapacity(record);

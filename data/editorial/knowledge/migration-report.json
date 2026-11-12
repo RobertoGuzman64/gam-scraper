@@ -1,0 +1,215 @@
+{
+  "version": 1,
+  "originalRecords": 1751,
+  "evidenceFiles": 25,
+  "migratedFiles": 22,
+  "sourceCoverage": [
+    {
+      "file": "data/editorial/evidence/legacy/gam/cleaning.json",
+      "matched": 20,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gam/crossed-identity.json",
+      "matched": 27,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gam/forklifts.json",
+      "matched": 20,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gam/handling.json",
+      "matched": 20,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gam/hyster.json",
+      "matched": 20,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gam/multi-sector-primary.json",
+      "matched": 20,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gam/multi-sector-secondary.json",
+      "matched": 20,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gam/multi-sector-tertiary.json",
+      "matched": 20,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gam/platforms.json",
+      "matched": 20,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gam/tennant.json",
+      "matched": 20,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gam/verified-source-matched-generals.json",
+      "matched": 10,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gam/verified-source-matched-titles.json",
+      "matched": 9,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gam/warehouse.json",
+      "matched": 20,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gomariz/priority-short-descriptions.json",
+      "matched": 0,
+      "skipped": 2
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gomariz/verified-model-general.json",
+      "matched": 2,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/gomariz/verified-unit-specific-titles.json",
+      "matched": 9,
+      "skipped": 3
+    },
+    {
+      "file": "data/editorial/evidence/legacy/mercaeleva/mb-model-description.json",
+      "matched": 0,
+      "skipped": 2
+    },
+    {
+      "file": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "matched": 0,
+      "skipped": 7
+    },
+    {
+      "file": "data/editorial/evidence/legacy/mercaeleva/verified-source-editorial.json",
+      "matched": 21,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/mercaeleva/verified-unit-general-data.json",
+      "matched": 47,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/shared/verified-canonical-brief-editorial.json",
+      "matched": 19,
+      "skipped": 1
+    },
+    {
+      "file": "data/editorial/evidence/legacy/shared/verified-editorial-closure.json",
+      "matched": 32,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/shared/verified-family-proportion-editorial.json",
+      "matched": 20,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/shared/verified-unit-context-editorial.json",
+      "matched": 20,
+      "skipped": 0
+    },
+    {
+      "file": "data/editorial/evidence/legacy/shared/verified-unit-summary-editorial.json",
+      "matched": 35,
+      "skipped": 0
+    }
+  ],
+  "verifiedEntries": 451,
+  "verifiedTextEntries": 433,
+  "verifiedTitles": 18,
+  "verifiedUnits": 391,
+  "skippedEntries": 15,
+  "skipped": [
+    {
+      "key": "gomariz:GR1113",
+      "source": "data/editorial/evidence/legacy/gomariz/priority-short-descriptions.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    },
+    {
+      "key": "gomariz:BA1465",
+      "source": "data/editorial/evidence/legacy/gomariz/priority-short-descriptions.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    },
+    {
+      "key": "gomariz:BA1262",
+      "source": "data/editorial/evidence/legacy/gomariz/verified-unit-specific-titles.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    },
+    {
+      "key": "gomariz:GR1113",
+      "source": "data/editorial/evidence/legacy/gomariz/verified-unit-specific-titles.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    },
+    {
+      "key": "gomariz:RO1197",
+      "source": "data/editorial/evidence/legacy/gomariz/verified-unit-specific-titles.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    },
+    {
+      "key": "mercaeleva:EPL185",
+      "source": "data/editorial/evidence/legacy/mercaeleva/mb-model-description.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    },
+    {
+      "key": "mercaeleva:EFL303",
+      "source": "data/editorial/evidence/legacy/mercaeleva/mb-model-description.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    },
+    {
+      "key": "mercaeleva:M106-1389",
+      "source": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    },
+    {
+      "key": "mercaeleva:M840-6795",
+      "source": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    },
+    {
+      "key": "mercaeleva:M011-3720",
+      "source": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    },
+    {
+      "key": "mercaeleva:M168-3277",
+      "source": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    },
+    {
+      "key": "mercaeleva:M838-0666",
+      "source": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    },
+    {
+      "key": "mercaeleva:M969-4655",
+      "source": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    },
+    {
+      "key": "mercaeleva:M547-2372",
+      "source": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    },
+    {
+      "key": "gomariz:1011JFB",
+      "source": "data/editorial/evidence/legacy/shared/verified-canonical-brief-editorial.json",
+      "reason": "procedencia_insuficiente_o_no_coincidente"
+    }
+  ]
+}

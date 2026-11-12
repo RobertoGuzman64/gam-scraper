@@ -2,48 +2,17 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { reconcileGamSourceIdentity } from "../../identity/reconciliation/gam-source-identity.js";
 import { reconcileGamVerifiedClassicVehicleIdentity } from "../../identity/evidence/used-classic-vehicle-identity.js";
 import { reconcileGamVerifiedHysterH45fts5Title } from "./gam-hyster-h45fts5.js";
-import { gamElevationSourceIdentityConflict } from "../../identity/evidence/elevation-identity.js";
-import { reconcileGamElevationEditorialIdentity } from "../../editorial/models/elevation-editorial.js";
-import { reconcileGamOutdatedSourceTitle } from "../../editorial/titles/editorial-titles.js";
-import { reconcileGamBtsEditorialSummary } from "../../editorial/models/bts-editorial.js";
-import { reconcileGamForkliftFuelEditorial } from "../../editorial/models/forklift-fuel-editorial.js";
-import { reconcileGamHandlingHeightEditorial } from "../../editorial/models/handling-height-editorial.js";
-import { reconcileGamHandlingCapacityEditorial } from "../../editorial/models/handling-capacity-editorial.js";
-import { reconcileGamOrderPickerEditorial } from "../../editorial/models/orderpicker-editorial.js";
-import { reconcileGamVerifiedHandlingEditorial } from "../../editorial/models/handling-verified-editorial.js";
-import { reconcileGamUsedLiftEditorial } from "../../editorial/models/used-lift-editorial.js";
-import { reconcileGamVerifiedXga43kEditorial } from "../../editorial/models/xga43k-editorial.js";
-import { reconcileGamVerifiedGenie5390Editorial } from "../../editorial/models/genie-5390-editorial.js";
-import { reconcileGamVerifiedXcmg1523Model } from "../models/xcmg-1523-model-evidence.js";
-import { reconcileGamVerifiedXcmg1823Model } from "../models/xcmg-1823-model-evidence.js";
-import { reconcileGamVerifiedXcmg0810Crawler } from "../models/xcmg-0810-crawler-evidence.js";
-import { reconcileGamVerifiedXcmg0807acwLithium } from "../models/xcmg-0807acw-lithium-evidence.js";
-import { reconcileGamVerifiedXcmg12kDiesel } from "../models/xcmg-12k-diesel-evidence.js";
-import { reconcileGamVerifiedHysterSGlp } from "../models/hyster-s-glp-evidence.js";
-import { reconcileGamVerifiedHysterH18xdDiesel } from "../models/hyster-h18xd-diesel-evidence.js";
-import { reconcileGamVerifiedSnorkelS4732e } from "../models/snorkel-s4732e-evidence.js";
-import { reconcileGamVerifiedYaleGc60vx } from "../models/yale-gc60vx-evidence.js";
-import { reconcileGamVerifiedYaleGc55vxGlp } from "../models/yale-gc55vx-glp-evidence.js";
-import { reconcileGamVerifiedYaleGc40vxLpg } from "../models/yale-gc40vx-lpg-evidence.js";
-import { reconcileGamVerifiedYaleGc45vxLpg } from "../models/yale-gc45vx-lpg-evidence.js";
-import { reconcileGamVerifiedZeroSerial } from "../../identity/evidence/musoshi-serial-evidence.js";
 import { reconcileGamVerifiedUnitYear } from "./gam-verified-unit-year.js";
-import { reconcileGamVerifiedCteBLift18HvIdentity } from "../../editorial/models/cte-b-lift-18hv-identity.js";
+import { reconcileGamVerifiedZeroSerial } from "../../identity/evidence/musoshi-serial-evidence.js";
 
-export const reconcileGamInitialIdentity = (record: ProductRecord): ProductRecord => reconcileGamVerifiedZeroSerial(record);
+export const reconcileGamInitialIdentity = (record: ProductRecord): ProductRecord =>
+  reconcileGamVerifiedZeroSerial(record);
 
-export const reconcileGamForPreparation = (record: ProductRecord): ProductRecord => {
-  record = reconcileGamVerifiedUnitYear(record);
-  record = reconcileGamVerifiedCteBLift18HvIdentity(record);
-  record = reconcileGamVerifiedHysterH45fts5Title(record);
-record = reconcileGamVerifiedGenie5390Editorial(reconcileGamOrderPickerEditorial(reconcileGamHandlingHeightEditorial(reconcileGamForkliftFuelEditorial(reconcileGamBtsEditorialSummary(reconcileGamElevationEditorialIdentity(reconcileGamOutdatedSourceTitle(record)))))));
-  record = reconcileGamVerifiedXcmg12kDiesel(reconcileGamVerifiedXcmg0807acwLithium(reconcileGamVerifiedXcmg0810Crawler(reconcileGamVerifiedXcmg1823Model(reconcileGamVerifiedXcmg1523Model(reconcileGamUsedLiftEditorial(reconcileGamVerifiedHandlingEditorial(reconcileGamHandlingCapacityEditorial(reconcileGamVerifiedXga43kEditorial(record)))))))));
-  record = reconcileGamVerifiedHysterSGlp(record);
-  record = reconcileGamVerifiedHysterH18xdDiesel(record);
-  record = reconcileGamVerifiedSnorkelS4732e(record);
-  record = reconcileGamVerifiedYaleGc60vx(record);
-  record = reconcileGamVerifiedYaleGc55vxGlp(record);
-  record = reconcileGamVerifiedYaleGc40vxLpg(record);
-  record = reconcileGamVerifiedYaleGc45vxLpg(record);
-  return reconcileGamVerifiedClassicVehicleIdentity(reconcileGamSourceIdentity(record));
-};
+export const reconcileGamForPreparation = (record: ProductRecord): ProductRecord =>
+  reconcileGamVerifiedClassicVehicleIdentity(
+    reconcileGamSourceIdentity(
+      reconcileGamVerifiedHysterH45fts5Title(
+        reconcileGamVerifiedUnitYear(record)
+      )
+    )
+  );

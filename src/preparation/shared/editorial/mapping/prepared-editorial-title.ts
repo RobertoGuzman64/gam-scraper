@@ -1,14 +1,19 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { resolveGomarizVerifiedUnitSpecificTitle } from "../../../gomariz/editorial/mapping/verified-unit-specific-title.js";
-import { resolveGamVerifiedSourceMatchedTitle } from "../../../gam/editorial/titles/verified-source-matched-title.js";
-import { resolveGamConciseTitle } from "../../../gam/editorial/titles/concise-titles.js";
-import { reconcileGamVerifiedCapacityTitle } from "../../../gam/editorial/titles/editorial-titles.js";
-import { resolveGomarizEditorialTitle } from "../../../gomariz/editorial/mapping/editorial-title.js";
-import { resolveMercaelevaEditorialTitle } from "../../../mercaeleva/editorial/mapping/editorial-title.js";
-import { refineTechnicalTitle } from "./technical-title-refinement.js";
+import { resolveEditorialFacts } from "../domain/editorial-facts.js";
+import { resolveDocumentedEditorialTitle } from "../domain/editorial-documented-title.js";
+import { editorialFamilyName } from "../domain/editorial-families.js";
+import { formatEditorialQuantity } from "../domain/editorial-measurements.js";
 
-export const resolvePreparedEditorialTitle = (record: ProductRecord, sourceUnitRecord: ProductRecord) => {
-  const mappedTitle = (resolveGomarizEditorialTitle(record) ?? resolveGamConciseTitle(record) ?? resolveMercaelevaEditorialTitle(record) ?? record.title?.trim()) || null;
-  const title = refineTechnicalTitle(sourceUnitRecord, resolveGomarizVerifiedUnitSpecificTitle(sourceUnitRecord, mappedTitle) ?? resolveGamVerifiedSourceMatchedTitle(sourceUnitRecord, mappedTitle) ?? mappedTitle);
-  return reconcileGamVerifiedCapacityTitle(sourceUnitRecord, title);
+export const resolvePreparedEditorialTitle = (record: ProductRecord, sourceUnitRecord: ProductRecord): string | null => {
+  const documented = resolveDocumentedEditorialTitle(sourceUnitRecord);
+  if (documented !== null) return documented;
+  const facts = resolveEditorialFacts(record);
+  if (!facts) return record.title?.trim() || sourceUnitRecord.title?.trim() || null;
+  const family = editorialFamilyName(facts.family);
+  const energy = facts.energy === "eléctrica" ? " eléctrica" :
+    facts.energy === "diésel" ? " diésel" :
+      facts.energy === "GLP" ? " de GLP" : facts.energy === "gasolina" ? " de gasolina" : "";
+  const height = facts.workingHeightM === null ? "" :
+    ` · ${formatEditorialQuantity(facts.workingHeightM)} m de trabajo`;
+  return `${family[0]?.toLocaleUpperCase("es") ?? ""}${family.slice(1)}${energy} ${facts.brand} ${facts.model}${height}`;
 };

@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "source": "src/preparation/shared/editorial/evidence/verified-unit-summary-editorial.ts",
+  "sourceSha256": "2e0ffbdfeb603cff487d43fff8b29b256d3d15c6bdb956d780523de3823a1809",
+  "exports": {
+    "verifiedUnitSummaryEditorial": {
+      "gam:1216": {
+        "sourceDigest": "7fcf52cb8ee1403ed3df7cdce869dc54ab937f9405f3898a3c2dc0412c919b4e",
+        "sourceUrl": "https://online.gamrentals.com/es/grupos-electrogenos-menores-815kvs-pramac/1216-gsw515p",
+        "preparedShortDigest": "5ca21d73df450d0cf428a6b95acde51e69957d51baf319cf15f4074a3ec12c64",
+        "preparedGeneralDigest": "75c3a06c81e0218208382497315a4658a2d8cbefecdc026fd52dd34c695d4cc9",
+        "short": "Grupo electrógeno Pramac GSW515P equipado con motor Perkins 2506A-E15TAG3 y alternador Mecc Alte ECO40-2S; anchura publicada de 1.560 mm."
+      },
+      "gam:1217": {
+        "sourceDigest": "a34eff4b783905b24d812a5cb8083efb175c65d06055ce7ade91be97e9ee34fe",
+        "sourceUrl": "https://online.gamrentals.com/es/grupos-electrogenos-mayores-815kvs-pramac/1217-gsw815p",
+        "preparedShortDigest": "3aca6631f17fe877b05211904895f8a2bb7c8df431920433d75d58535cf72786",
+        "preparedGeneralDigest": "a8da86feafb4037969d41e9a031279e61a4a7e39a61798887db332b9c2dd27d3",
+        "short": "Grupo electrógeno Pramac GSW815P diésel con motor Perkins 4006-23TAG2A, alternador Mecc Alte ECO43-1S y peso declarado de 8.491 kg."
+      },
+      "gam:2012": {
+        "sourceDigest": "74f0e1da3035bb87f338491de29f1b869f960dfa261d4c22fd3df654769fce04",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/2012-carretilla-elevadora-contrapesada-hyster-j16xnt",
+        "preparedShortDigest": "092c24b816f92d4beec8314407b0333747f120b67ebe8eadcf82a559174b2454",
+        "preparedGeneralDigest": "104d5227164eb9e485fa7e907da47665b5eaec0c9045e5b6339c6ddcf16e6105",
+        "short": "Carretilla elevadora eléctrica Hyster J1.6XNT de 1.600 kg a 500 mm de centro de carga; elevación máxima publicada de 5.500 mm."
+      },
+      "gam:2100": {
+        "sourceDigest": "17a3612a72e24c7a2846768a04aa6899351dfefeb12fa36572ff6a0de557dc2f",
+        "sourceUrl": "https://online.gamrentals.com/es/apiladores-hyster/2100-apilador-de-pales-hyster-s10c",
+        "preparedShortDigest": "c07a3e20ddeb52b6eeba97a5a2aa5ece48da0ac8645c61e0f972667e13091d3b",
+        "preparedGeneralDigest": "5adba53edd82630da16071b0a0c4d7018c330ed0543316ef81b37d98fb315e7f",
+        "short": "Apilador eléctrico Hyster S1.0C de 1.000 kg y 4,176 m de altura de elevación; batería especificada de 24 V y 400 Ah."
+      },
+      "gam:2140": {
+        "sourceDigest": "8b03e84cc694acbd1b91a168233a6f2288ce7cb7951b8c45256a2e8a559f143e",
+        "sourceUrl": "https://online.gamrentals.com/es/transpaletas-hyster/2140-transpaleta-hyster-p20s",
+        "preparedShortDigest": "84af476f339049c6528fee2ec307629fd0b7be88b4fb0fb4d9df6c5f22403039",
+        "preparedGeneralDigest": "8e5fa4126f0ba9688bacf41dc4fba4f0c2acc59c6a1bca871a80ec65c50141eb",
+        "short": "Transpaleta eléctrica con plataforma Hyster P2.0S de 2.000 kg para transporte de palés; elevación publicada de 0,12 m y peso de 678 kg."
+      },
+      "gam:2144": {
+        "sourceDigest": "9506525a4cc08b3056944c34279049694d40cb8f21e6bae2d4c2ab6413a3431b",
+        "sourceUrl": "https://online.gamrentals.com/es/transpaletas-hyster/2144-transpaleta-hyster-p20uts",
+        "preparedShortDigest": "ca970aca4bd2863d58e90aba63df190ae5d90e8016b780bff389c3b6811d2d98",
+        "preparedGeneralDigest": "1bb561d179c6b7e567ae28a65676b6db07fc11e98cc8d57479402cad36095da9",
+        "short": "Transpaleta eléctrica de conductor a pie Hyster P2.0UTS, capacidad de 2.000 kg y elevación publicada de 0,202 m; peso de 710 kg."
+      },
+      "gam:2228": {
+        "sourceDigest": "4a06f7a9e5bb7e6d471a24a74b262d36b443b267261509870e2efbeb01225755",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-retractiles-yale/2228-carretilla-retractil-yale-mr12e",
+        "preparedShortDigest": "f3e6088e6409275c6d70420d62cc12c8fd98d3bc2915d3d88ddbe4d8f6419ffb",
+        "preparedGeneralDigest": "11db741169c458f8e4b68fc2af756ba20a744abd381f2f85b4534d38fd8b97d0",
+        "short": "Carretilla retráctil eléctrica Yale MR12E para almacén, capacidad de 1.200 kg y anchura de 1.125 mm; batería indicada de 48 V."
+      },
+      "gam:2230": {
+        "sourceDigest": "15d42edba5a32bf40952f469d8d38b60d2165d23ce579d08fc133b5379638513",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-retractiles-yale/2230-carretilla-retractil-yale-mr14",
+        "preparedShortDigest": "6e9251d2c479ad8f6a051b9b9640f5c1c058e7f7398b89b3b2359f898348890f",
+        "preparedGeneralDigest": "efd10eeb402d1f35b9d478aa749ff9cabd4d9449c35eada76df6d78f55c17649",
+        "short": "Carretilla retráctil Yale MR14 de 1.400 kg para apilado en almacén; anchura declarada de 1.265 mm y batería especificada de 48 V."
+      },
+      "mercaeleva:M017-2019": {
+        "sourceDigest": "4cc9fc2e2972c199dd7b164df948f960fc50198bcdcff09976dae5b02646d78b",
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E16P-02-M017-2019",
+        "preparedShortDigest": "2a0b04bc8e49dee4c6256d88cf88b4d167d12635551c3ed05000b289b3d71ea9",
+        "preparedGeneralDigest": "e2af55d5d7e63d339fd73b9047eae92e1a98ed24870aaae765a4beeeee05c073",
+        "short": "Carretilla elevadora eléctrica Linde E16P-02 de ocasión, 1.600 kg de capacidad, batería de plomo-ácido y 16.939 horas registradas; fabricada en 2006."
+      },
+      "mercaeleva:M030-7485": {
+        "sourceDigest": "299f0dd92054e874a11cb7b7cfd11d2fe8387c25300ee71914db17d43324f9e7",
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/JLG-E300AJP-M030-7485",
+        "preparedShortDigest": "360ec76c9fc9903323b1a5f6fbf90770d8300560f6b052edf0cd5a4daa143847",
+        "preparedGeneralDigest": "9bcdce014797c6303dca22c1a158a38b86726a8f998d1551582f07556d61c294",
+        "short": "Plataforma articulada eléctrica JLG E300AJP de 2006, con 11 m de altura de trabajo y 2.412 horas registradas en esta unidad."
+      },
+      "mercaeleva:M200-9533": {
+        "sourceDigest": "06b55cfd34007ab5076803ea04f28ea4c2ca47e6f16db0da4d8ce56fd56c4876",
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/JLG-4014PS-M200-9533",
+        "preparedShortDigest": "619de4078ef67cd3f1120ce1166451acb85b9724f089e3b45f3191aa17748e08",
+        "preparedGeneralDigest": "940fc3f597b551c76529b9ddf853cffa054521d3d2280e7712de36b3f299cb9c",
+        "short": "Manipulador telescópico diésel JLG 4014PS de 2014: 4.000 kg de capacidad y 14 m de elevación; 5.324 horas registradas."
+      },
+      "mercaeleva:M239-6301": {
+        "sourceDigest": "5e6de6961156e966963b424138ee04be5148f7c9b4d06ac678d071e4e78af684",
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/BT-LPE200-8-M239-6301",
+        "preparedShortDigest": "68c268686a921dba5e3980d136fc02c825e4d5259c9a3cf3f7a2a72f274d31a5",
+        "preparedGeneralDigest": "8b7b093de9b0bae9620e827be6bb4dd5af498bbab4a6f0203dbfb10dd9f30d3f",
+        "short": "Transpaleta eléctrica de ocasión BT LPE200/8, fabricada en 2012 y registrada por el vendedor como MER0825 para transporte horizontal de palés."
+      },
+      "mercaeleva:M432-1479": {
+        "sourceDigest": "7d024fd9c1f70ccd1bd5dec04044de02242e5903284ae067dd8efe9ca42a0c40",
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Kubota-U10-3-M432-1479",
+        "preparedShortDigest": "203d662e50306bb627b69062a255f59588d0b2518986b1efa84497ce1eaeb54a",
+        "preparedGeneralDigest": "408a51ee059d956a0b009522e86591fe950b793825730fc34c0b1725a0b0fb6f",
+        "short": "Miniexcavadora de orugas Kubota U10.3 con motor diésel, fabricada en 2020 y con 1.393 horas registradas; referencia comercial 858."
+      },
+      "mercaeleva:M570-8735": {
+        "sourceDigest": "dfc5a6f4fbf8036fffd52a53958b1e03b91ba5c5d077604e46dd13412516674a",
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Linde-T18-M570-8735",
+        "preparedShortDigest": "f6514b6b76ed77767dfe362b5a0dfa1cb1a8036b53202d0ad5a88501bd6aaf04",
+        "preparedGeneralDigest": "19b03eea7f59c00f7d61738c3c3667d06280dad37bf920d3b225c77a9f1b2c4c",
+        "short": "Transpaleta eléctrica Linde T18 usada, con 4.707 horas registradas y referencia comercial MER0629, para traslado horizontal de palés en almacén."
+      },
+      "mercaeleva:M582-1882": {
+        "sourceDigest": "9e8eb88b6cc8e023c1f263399f764b7e11cd216747b9428d4289400f3d72e28f",
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/UniCarriers-E2D2A30-M582-1882",
+        "preparedShortDigest": "85fdbf9026729e6931f8330970cb9d6e5cdc5aebd6bbb9740cb33ac67c7c19c2",
+        "preparedGeneralDigest": "2ba08273f08bf53bb6f0c59332ca6b2038ff47eef197fdb9940fce637baeba8f",
+        "short": "Carretilla elevadora diésel UniCarriers E2D2A30 de ocasión: 2.500 kg según ficha técnica, mástil triple y 8.142 horas registradas."
+      },
+      "mercaeleva:M736-5615": {
+        "sourceDigest": "998250f52c282219255e057029061259536cfd1f8de3483bbc65d3b4618e1a9b",
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Ausa-D450AHG-M736-5615",
+        "preparedShortDigest": "b5abb6df2133495c2baa792973f89e07fffe759ef3d7db3a9e07e6444db7f7d8",
+        "preparedGeneralDigest": "fbcde8e7b316535646fdfd4ecbaefaa46e33d43cc5fdac496a2d6a8165e50bc7",
+        "short": "Dúmper giratorio Ausa D450AHG de ocasión, fabricado en 2019, con 2.845 horas registradas y carga de 4.500 kg anunciada por el vendedor."
+      },
+      "mercaeleva:M879-4639": {
+        "sourceDigest": "d056e817a99036f2317581a62963db917f184f3573a85f6ecfe9c438d447bbc9",
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Stocklin-EDP-2000-M879-4639",
+        "preparedShortDigest": "adf8827c07f5e043560562612de177c56ad0dd4eabd4aa0ae6aafe560654b214",
+        "preparedGeneralDigest": "13def1ce6a31e649882e4faea37cc4d3a9d0a2941467a859142ee4d364a1ded2",
+        "short": "Transpaleta eléctrica Stöcklin EDP-2000 de segunda mano, con 2.261 horas registradas por el vendedor y referencia de anuncio MER0515."
+      },
+      "mercaeleva:M913-0641": {
+        "sourceDigest": "d03cb408887b041008acef19a6fdfd1de99aaae8d1b5c98f0e3af87a5b85f1a1",
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Kubota-U27-4-M913-0641",
+        "preparedShortDigest": "5e6f4ca0e43be134e694151b2d42a52e07ae0aeba9a1663b1530fd1cf925e84f",
+        "preparedGeneralDigest": "999d48d0a2824855b958bfcb65c8e18a9ca942fb5525ab5b10a47c94006b4ad7",
+        "short": "Miniexcavadora de orugas Kubota U27.4 con motorización diésel, fabricada en 2019, con 2.753 horas registradas y referencia de anuncio 714."
+      },
+      "mercaeleva:M928-9933": {
+        "sourceDigest": "462b0104deb0f3beeaef3eaffa923360e11f41884e5b10f1a768809e391fca4e",
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Iveco-ML120E22-P-M928-9933",
+        "preparedShortDigest": "68a32ad229efe4a4fb2f8eea26260f48cc3c2ea3f344f80f7b4831ef02ec42b7",
+        "preparedGeneralDigest": "1f879024d40dd3346dd4d029ebb66f2ed9628b9f85fb369802df80dc4e5c26d8",
+        "short": "Camión porta-vehículos Iveco ML120E22/P, año 2019, con motor diésel de 160 CV, configuración 4×2 y clasificación N2 según el anuncio."
+      },
+      "mercaeleva:M940-4770": {
+        "sourceDigest": "87f50473b11346c4259e412c73e5d743ba9abf7247eaab7d3f7738c71fbe465b",
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Linde-E20PL-M940-4770",
+        "preparedShortDigest": "c5b164bb6e2ca6549259ff6a61d59d47d30e1e54ae01064d32e55edd560ce8a4",
+        "preparedGeneralDigest": "931ea356abb90dfd87b7a02b2f0b596d759a0060cae3839cf91e43b4f7af00e8",
+        "short": "Carretilla elevadora eléctrica Linde E20PL usada, de 2.000 kg, con batería de plomo-ácido; año 2012 y 19.617 horas registradas."
+      },
+      "gam:2231": {
+        "sourceDigest": "57ff50c35b29899e3ebf6aa507504c42a16c8bddcb07df0854a5bca8835e4708",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-retractiles-yale/2231-carretilla-retractil-yale-mr16",
+        "preparedShortDigest": "193faad5ec1f36845f770033ed6c481a608be720d002d9c2c3947db6461e8389",
+        "preparedGeneralDigest": "1fa4be1c284aecef5fc46a239f307e394272641ca401f7a43e4d335a0d189676",
+        "short": "Carretilla retráctil Yale MR16 de 1.600 kg, con alimentación a 48 V y anchura de 1.265 mm indicada para evaluar su maniobrabilidad en almacén."
+      },
+      "gam:2233": {
+        "sourceDigest": "3fced55aaf78a337a335b88272bbe2ce4d9d1fe574a52de291052afd8be07d3f",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-retractiles-yale/2233-carretilla-retractil-yale-mr16n",
+        "preparedShortDigest": "560b9de012c2e5f80506fe7a664738eeb02ca05a565adc814a1293085021c9b4",
+        "preparedGeneralDigest": "cb2275a9f137a47e6b41a6db502c0cef37eb1c318267a5992575980dc4228e42",
+        "short": "Carretilla retráctil Yale MR16N de 1.600 kg, con batería de 48 V y anchura de 1.125 mm declarada en su ficha técnica."
+      },
+      "gam:2235": {
+        "sourceDigest": "a37b0a4dcc3bc4bed9bf2be64adb1a7d2802ec002794a6f5ee146cf779d156eb",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-retractiles-yale/2235-carretilla-retractil-yale-mr20hd",
+        "preparedShortDigest": "b56f0342eec077ce8b3a15bd552159d7acca73cd237e397e7a1d3f13fce373a8",
+        "preparedGeneralDigest": "dfec26ce8787e286e58cc46df5420e00ee41c67a0c9fa7e24386f5eb06dd83a3",
+        "short": "Carretilla retráctil Yale MR20HD de 2.000 kg, con alimentación a 48 V y anchura declarada de 1.273 mm; versión HD diferenciada de la MR20."
+      },
+      "gam:2236": {
+        "sourceDigest": "12b1fd1b7209fd15e3999180a37557dc07ec5a8f1ae5fa31a47ca18cc384cfb7",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-retractiles-yale/2236-carretilla-retractil-yale-mr25",
+        "preparedShortDigest": "a55d7379633ac3303b44bca35e9c6b5c903f2f72e4c34770b12ec0a4d852ee1a",
+        "preparedGeneralDigest": "4d5de6ed936f527652d8987bdfe48fc59cc3eefa2a90fb1cc0e9c54e0a3ca42a",
+        "short": "Carretilla retráctil Yale MR25 de 2.500 kg, con batería de 48 V y anchura de 1.345 mm indicada para su uso en almacenes."
+      },
+      "gam:2264": {
+        "sourceDigest": "8f2db52500f2cab773ebce7bc7a28fb9b0971c96549974adf2d156791bd4a1a4",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-trilaterales-yale/2264-tractor-electrico-yale-mtc13-48v",
+        "preparedShortDigest": "a7d5fa08784c7a55ecbca9ca0843946e5a09afb5d8358ab9f09933f6d7a74e67",
+        "preparedGeneralDigest": "d30e72c33732107d03d0ff62fb66e20cab8291046976361a2cff4a0b5e26dacb",
+        "short": "Carretilla trilateral eléctrica Yale MTC13-48V de 1.300 kg para pasillos estrechos, con longitud de 3.698 mm y altura de 3.990 mm declaradas."
+      },
+      "gam:2265": {
+        "sourceDigest": "cfbaa27f2aef9370fc3cc8b25b6197c8ae87a4530c4a7af290c958d7b5260ebe",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-trilaterales-yale/2265-tractor-electrico-yale-mtc13-80v",
+        "preparedShortDigest": "edc3cb246b78b5639b2d838879c7da3e45cbe40d34c6884ef1482e4e0f31675d",
+        "preparedGeneralDigest": "886a86c4a81d5d3687bb3464a073d7dadfebc2d8927011edcffefe6578d5d2ef",
+        "short": "Carretilla trilateral eléctrica Yale MTC13-80V de 1.300 kg para pasillos estrechos, con batería indicada de 80 V y 420 Ah."
+      },
+      "gam:4626": {
+        "sourceDigest": "608ef82b658675fe138194aa354014225a6bace6eea172d824dc5006c7dab65e",
+        "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/4626-carretilla-elevadora-electrica-hyster-j20uttl",
+        "preparedShortDigest": "e489f366e40301aeaa9e94f0e3333acc4811c6b3a2852db7a7eb51f95dfbd8f1",
+        "preparedGeneralDigest": "8673e927317e34c4baff9d87d3523e3300c701d5db9947d02a241c78e29ddcec",
+        "short": "Carretilla elevadora eléctrica Hyster J2.0UTTL de 2.000 kg, con longitud declarada de 3.153 mm y anchura de 1.140 mm."
+      },
+      "gam:5254": {
+        "sourceDigest": "e5971592d60b86cd6003d3c34eeec73be00dbced9fd8d1f20a8a480b0829b415",
+        "sourceUrl": "https://online.gamrentals.com/es/vehiculos-segunda-mano/5254-1980-land-rover-santana",
+        "preparedShortDigest": "f001a202cd89b0dc3ba95277bea82be3eff238c07bb0b49fa63c44cf8087533f",
+        "preparedGeneralDigest": "8da1e210796c3004f3fa530590e961c30e0788d87eb201eff957eef9ec8bd50b",
+        "short": "Land Rover Santana de 1980 anunciado como vehículo restaurado, con longitud de 4.440 mm y anchura de 1.676 mm según su ficha de origen."
+      },
+      "gam:5710": {
+        "sourceDigest": "ff5710009750ca87e093fdc43365f268a07de7cfb3efaef17ab0594e938575ee",
+        "sourceUrl": "https://online.gamrentals.com/es/resto-maquinaria-segunda-mano/5710-1999-noteboom-mco",
+        "preparedShortDigest": "5d1da99ee5c550cf202abe4148bca7e562352dfa593d685f9573683a45cb5a92",
+        "preparedGeneralDigest": "97b49ec3c8e02c63dde24682ca7e225d774d01b0faa91c9816ed98fbcb63550e",
+        "short": "Plataforma de transporte de cuatro ejes MCO de segunda mano, año 1999; longitud declarada de 17,6 m y anchura de 2,72 m."
+      },
+      "gam:6217": {
+        "sourceDigest": "099e445516559c22e1dd084c0c89cceca2fd068e697850e65d5133b4f7d97754",
+        "sourceUrl": "https://online.gamrentals.com/es/vehiculos-segunda-mano/6217-2018-land-rover-range-rover-sport",
+        "preparedShortDigest": "15adb027867ad81eaca569aa459738d6328aaa9e856a8f0fdeb85e41904b6baa",
+        "preparedGeneralDigest": "3ec624573013482f65837015fea90b1298e934c534c2f95ae5607abfd9004173",
+        "short": "Todoterreno Land Rover Range Rover Sport de 2018, con 194.101 km indicados, 4,88 m de longitud y 1,98 m de anchura."
+      },
+      "gam:6623": {
+        "sourceDigest": "bb75e902d9c43ce9364a2251fae8166155c360fa1ea58c8ee009e1f791e60886",
+        "sourceUrl": "https://online.gamrentals.com/es/resto-maquinaria-segunda-mano/6623-2007-nooteboom-mc0-4803",
+        "preparedShortDigest": "f3be34a9829f0ea57e50f25b35223bcb8b5b830aef7faa507fd91b0da415769d",
+        "preparedGeneralDigest": "25c09493ca4b97254617e4fa6368ffbc83d840a8944f464491cce40fa2c174ea",
+        "short": "Semirremolque góndola Nooteboom MC0-4803 de 2007, anunciado con dos ejes traseros direccionales, primer eje elevable y piso móvil."
+      },
+      "gam:6688": {
+        "sourceDigest": "079b6e8f72d118ca597b4e7a2a45f5c84eac89b2d95d4516147360068eb9e9ff",
+        "sourceUrl": "https://online.gamrentals.com/es/vehiculos-segunda-mano/6688-1973-alfa-romeo-spider-junior",
+        "preparedShortDigest": "522c4662ed92c2a481b209c8b1d56131ab8002b9c4d73d5a1014a885a1d348ce",
+        "preparedGeneralDigest": "d50468c4603011d8d77195764c95ddd6e502b2e8de97352ef171864e5db6ae06",
+        "short": "Alfa Romeo Spider Junior clásico de 1973, con 90.807 km declarados y ubicación en Oviedo según la ficha del vehículo."
+      },
+      "gam:6689": {
+        "sourceDigest": "6c50e8d2cfdc3633bbe98a3aad8c17724d52e0a7fa606a1cb755ae4745383ad1",
+        "sourceUrl": "https://online.gamrentals.com/es/vehiculos-segunda-mano/6689-1994-audi-80-26-cabrio",
+        "preparedShortDigest": "1317c990db889712032d13271d5b8a39482732f0e94cfc5206b8dbf6575b2ea9",
+        "preparedGeneralDigest": "c9ff9b29977f7af7470fc3a2cef2cca6e85f5a9476e683412efe75a35937e5e8",
+        "short": "Audi 80 2,6 Cabrio de 1994, con 171.860 km declarados y matrícula 4909-GJP; vehículo de ocasión anunciado en Oviedo."
+      },
+      "gam:6690": {
+        "sourceDigest": "ea4cf48f9c33d52acd357108e0fde4527ce391cf2e8a7cc84b622deed473d42e",
+        "sourceUrl": "https://online.gamrentals.com/es/vehiculos-segunda-mano/6690-1972-peugeot-304-s-cabriolet",
+        "preparedShortDigest": "00c1bcc253204fcc9960306f3e047e338ee28c6de98aba23266bdde2f2b1d5c7",
+        "preparedGeneralDigest": "bfd6fc7361f4dc541527ac6a8286af51771127ecba39cc0a3974422ef86b6f45",
+        "short": "Peugeot 304 S Cabriolet de 1972, con 36.475 km declarados y matrícula H-3009-BBG; vehículo de ocasión anunciado en Oviedo."
+      },
+      "gam:6990": {
+        "sourceDigest": "cd31274e390fe71290cceb451dea6a63d9a2960d7629f6b4d21f470113d37c82",
+        "sourceUrl": "https://online.gamrentals.com/es/hyster/6990-transpaleta-electrica-hyster-pc20",
+        "preparedShortDigest": "628db51ad6739b626d7351101150ee3f267e99caf4548c3235f0532905d459da",
+        "preparedGeneralDigest": "88ec40548498aa124167f1184042f052f98e0dd376d422874f0da79c8e5efe4c",
+        "short": "Transpaleta eléctrica de conductor acompañante Hyster PC2.0 de 2.000 kg, con longitud de 1.622 mm y anchura de 685 mm indicadas por el proveedor."
+      }
+    }
+  }
+}

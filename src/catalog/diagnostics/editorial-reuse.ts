@@ -81,7 +81,7 @@ export const analyzeEditorialReuse = (inputs: readonly GapInput[]): ReuseReport 
     analyzed: ordered.length,
     totals,
     cases,
-    note: "Diagnóstico de preparación, no aviso ni autorización de publicación. Una candidata disponible con campo vacío requiere investigar su precedencia y validaciones; una fuente rechazada o familia incompatible no demuestra por sí sola bloqueo artificial. Los textos existentes conservan prioridad."
+    note: "Diagnóstico de preparación, no aviso ni autorización de publicación. Una candidata disponible con campo vacío requiere investigar su precedencia y validaciones; una fuente rechazada o familia incompatible no demuestra por sí sola bloqueo artificial. Las candidatas compartidas acreditadas prevalecen sobre texto previo de fuente; el auditor distingue composición efectiva, conservación de origen y rechazo por evidencia insuficiente."
   };
 };
 

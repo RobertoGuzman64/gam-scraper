@@ -15,6 +15,8 @@ import { hasMultipliedSubMetreMeasurement } from "./commercial-output-consistenc
 import { hasLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../validation/technical-specifications.js";
 import { isAccreditedMercaelevaMbCapacityProjection, projectPresentableSpecifications } from "../projection/spec-projection.js";
 import { commercialUnitTitleSuffixes, unresolvedCommercialTitleCollisions } from "../projection/unit-disambiguation.js";
+import { prepareCommercialEditorialInputs } from "../projection/editorial-inputs.js";
+import { normalizePreparedEditorialPresentation } from "../../preparation/shared/editorial/mapping/prepared-editorial-presentation.js";
 import { assessCommercialHeight } from "../validation/height-consistency.js";
 import { assessCommercialYear } from "../validation/year-consistency.js";
 
@@ -160,7 +162,8 @@ const verifyProduct = (
     const observations = observeCommercialAttributes(source, decision.categorySellID, expectedAttributes.accepted, catalog);
     if (observations.some((item) => item.status === "resuelto-no-asignado")) pending.push("atributos-resueltos-no-asignados");
   }
-  const expected = projectCommercialPresentation(source, published, category?.name ?? null, titleSuffix);
+  const expected = projectCommercialPresentation(source,
+    normalizePreparedEditorialPresentation(source, published), category?.name ?? null, titleSuffix);
   for (const field of ["title", "description_title", "description", "description_general"] as const) {
     if (!isDeepStrictEqual(product[field], expected[field])) blocking.push(`presentacion-${field}-incompatible`);
     if (!isDeepStrictEqual(product[field], published[field])) {
@@ -205,7 +208,7 @@ export const accreditCommercialPlan = (
     productByIdentity.set(key, product);
   }
   const seen = new Set<string>();
-  const titleSuffixes = commercialUnitTitleSuffixes(inputs);
+  const titleSuffixes = commercialUnitTitleSuffixes(prepareCommercialEditorialInputs(inputs));
   const unresolvedTitles = unresolvedCommercialTitleCollisions(plan.products);
   const decisions: CommercialAccreditationDecision[] = [];
   for (const input of inputs) {

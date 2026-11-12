@@ -3,26 +3,20 @@ import type { SourceEditorialEvidence } from "./source-editorial-evidence.js";
 import { gamElevationSourceIdentityConflict } from "../../../gam/identity/evidence/elevation-identity.js";
 import { resolvePreparedEditorialTitle } from "./prepared-editorial-title.js";
 import { resolvePreparedEditorialSource } from "./prepared-editorial-source.js";
-import { resolvePreparedEditorialModel } from "./prepared-editorial-model.js";
-import { resolvePreparedEditorialCompletion } from "./prepared-editorial-completion.js";
 
 export const resolvePreparedEditorial = (
   record: ProductRecord,
   sourceUnitRecord: ProductRecord,
   sourceEditorial: SourceEditorialEvidence
 ) => {
-  const title = resolvePreparedEditorialTitle(record, sourceUnitRecord);
-  const { descriptions, heightConflict } = resolvePreparedEditorialSource(record, sourceEditorial);
-  const { residualCleaningShort, editorialGeneral } = resolvePreparedEditorialModel(record, descriptions);
-  const { preparedShort, preparedLong } = resolvePreparedEditorialCompletion(
-    record, descriptions, residualCleaningShort, editorialGeneral
-  );
+  const { descriptions, heightConflict, verifiedTitle } = resolvePreparedEditorialSource(record, sourceEditorial, sourceUnitRecord);
+  const title = verifiedTitle ?? resolvePreparedEditorialTitle(record, sourceUnitRecord);
   return {
     title,
-    preparedShort,
-    preparedLong,
+    preparedShort: descriptions.short,
+    preparedLong: descriptions.long,
     heightConflict,
-    sourceIdentityConflict: gamElevationSourceIdentityConflict(record)
+    sourceIdentityConflict: gamElevationSourceIdentityConflict(sourceUnitRecord)
   };
 };
 

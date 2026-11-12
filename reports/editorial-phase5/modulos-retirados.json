@@ -1,0 +1,14 @@
+[
+  {
+    "path": "src/preparation/mercaeleva/editorial/mapping/documented-machinery-title.ts",
+    "sha256": "827e280521217632c65511a9476e33102af4af9cc1919ad11596ce7bc950cd1e",
+    "bytes": 3760,
+    "reason": "Reglas de título migradas a módulo compartido con validación por fuente y medición."
+  },
+  {
+    "path": "src/preparation/gam/editorial/source/verified-source-matched-general.ts",
+    "sha256": "fb631a2072cc053cdfdbd10543bb4494cafbcbdfe992531d38a32e1d777c4076",
+    "bytes": 895,
+    "reason": "El resolvedor se sustituye por índice declarativo compartido; conservada tabla origen."
+  }
+]

@@ -1,0 +1,30 @@
+{
+  "modified": [
+    "package.json",
+    "src/preparation/shared/editorial/domain/editorial-source-claims.ts",
+    "src/preparation/shared/editorial/mapping/prepared-editorial-source.ts"
+  ],
+  "added": [
+    "src/preparation/shared/editorial/domain/editorial-battery-claims.ts",
+    "src/preparation/shared/editorial/domain/editorial-source-brief.ts",
+    "src/preparation/shared/editorial/tests/editorial-phase7-residual.test.ts",
+    "scripts/operations/audit-editorial-residual.mjs",
+    "tests-module-integrity-guard.mjs"
+  ],
+  "deleted": [
+    "src/preparation/shared/editorial/mapping/verified-editorial-composition.ts"
+  ],
+  "restoredFromF5": [
+    "src/catalog/coverage/change-audit.ts",
+    "src/catalog/coverage/compare.ts",
+    "src/catalog/coverage/providers/gam/review-gate.ts",
+    "src/catalog/coverage/review.ts",
+    "src/catalog/coverage/tests/changed-audit.test.ts",
+    "src/catalog/coverage/tests/compare.test.ts",
+    "src/catalog/coverage/tests/coverage-review-verification.test.ts",
+    "src/catalog/coverage/tests/gam-coverage-fixtures.ts",
+    "src/catalog/coverage/tests/missing-decisions.test.ts",
+    "src/catalog/coverage/tests/publication-gate.test.ts"
+  ],
+  "reports": "reports/editorial-phase7/"
+}

@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "notice": "Inventario no ejecutable. Prohibido promocionar un texto de unidad a regla de modelo sin acreditar alcance.",
+  "sources": [
+    {
+      "source": "src/preparation/gam/editorial/evidence/cleaning.ts",
+      "converted": [
+        "cleaningEvidence"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/gam/editorial/evidence/contracts.ts",
+      "converted": [],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/gam/editorial/evidence/forklifts.ts",
+      "converted": [
+        "forkliftsEvidence"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/gam/editorial/evidence/handling.ts",
+      "converted": [
+        "handlingEvidence"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/gam/editorial/evidence/hyster.ts",
+      "converted": [
+        "hysterEvidence"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/gam/editorial/evidence/multi-sector-primary.ts",
+      "converted": [
+        "multiSectorPrimaryEvidence"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/gam/editorial/evidence/multi-sector-secondary.ts",
+      "converted": [
+        "multiSectorSecondaryEvidence"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/gam/editorial/evidence/multi-sector-tertiary.ts",
+      "converted": [
+        "multiSectorTertiaryEvidence"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/gam/editorial/evidence/platforms.ts",
+      "converted": [
+        "platformsEvidence"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/gam/editorial/evidence/tennant.ts",
+      "converted": [
+        "tennantEvidence"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/gam/editorial/evidence/warehouse.ts",
+      "converted": [
+        "warehouseEvidence"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/gomariz/editorial/evidence/priority-short-descriptions.ts",
+      "converted": [
+        "gomarizPriorityShortEvidence"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/gomariz/editorial/evidence/verified-model-general.ts",
+      "converted": [
+        "verifiedGomarizModelGeneral"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/gomariz/editorial/evidence/verified-priority-general.ts",
+      "converted": [],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/gomariz/editorial/evidence/verified-unit-specific-titles.ts",
+      "converted": [
+        "verifiedGomarizUnitSpecificTitles"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/mercaeleva/editorial/evidence/critical-general-descriptions.ts",
+      "converted": [],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/mercaeleva/editorial/evidence/mb-model-description.ts",
+      "converted": [
+        "mbModelEditorialEvidence"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/mercaeleva/editorial/evidence/priority-platform-generals.ts",
+      "converted": [],
+      "rejected": [
+        {
+          "symbol": "priorityPlatformManufacturerSources",
+          "reason": "unsupported expr: 80"
+        }
+      ]
+    },
+    {
+      "source": "src/preparation/mercaeleva/editorial/evidence/priority-short-descriptions.ts",
+      "converted": [
+        "mercaelevaPriorityShortEvidence"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/mercaeleva/editorial/evidence/verified-source-editorial.ts",
+      "converted": [
+        "verifiedMercaelevaSourceEditorial"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/mercaeleva/editorial/evidence/verified-unit-general-data.ts",
+      "converted": [
+        "verifiedMercaelevaUnitEvidence"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/mercaeleva/editorial/evidence/verified-unit-specific-generals.ts",
+      "converted": [],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/shared/editorial/evidence/verified-canonical-brief-editorial.ts",
+      "converted": [
+        "verifiedCanonicalBriefEditorial"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/shared/editorial/evidence/verified-editorial-closure.ts",
+      "converted": [
+        "verifiedEditorialClosure"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/shared/editorial/evidence/verified-family-proportion-editorial.ts",
+      "converted": [
+        "verifiedFamilyProportionEditorial"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/shared/editorial/evidence/verified-unit-context-editorial.ts",
+      "converted": [
+        "verifiedUnitContextEditorial"
+      ],
+      "rejected": []
+    },
+    {
+      "source": "src/preparation/shared/editorial/evidence/verified-unit-summary-editorial.ts",
+      "converted": [
+        "verifiedUnitSummaryEditorial"
+      ],
+      "rejected": []
+    }
+  ]
+}

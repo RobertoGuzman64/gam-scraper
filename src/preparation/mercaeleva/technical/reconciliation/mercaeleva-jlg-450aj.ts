@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { verifiedMercaelevaPriorityShortDescription } from "../../editorial/evidence/priority-short-descriptions.js";
 
 const verifiedUnits = {
   "M838-0666": {
@@ -34,7 +33,7 @@ export const reconcileMercaelevaVerifiedJlg450AjBaseModel = (record: ProductReco
   return {
     ...record,
     model: "450 AJ",
-    shortDescription: verifiedMercaelevaPriorityShortDescription(record),
+    shortDescription: record.shortDescription,
     title: "JLG 450 AJ PLATAFORMA ARTICULADA DIESEL 16 MT",
     longDescription: record.longDescription.replace("JLG 450 AJ SII", "JLG 450 AJ"),
     specs: { ...record.specs, Modelo: "450 AJ" }

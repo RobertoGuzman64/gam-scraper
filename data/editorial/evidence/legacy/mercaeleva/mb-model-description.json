@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "source": "src/preparation/mercaeleva/editorial/evidence/mb-model-description.ts",
+  "sourceSha256": "07b69bc1448306fc1e4e94ff66c208505f31f184cb4827d876406586313e7d5a",
+  "exports": {
+    "mbModelEditorialEvidence": {
+      "EPL185": {
+        "model": "EPL185",
+        "title": "MB EPL185 Transpaleta Eléctrica con batería de Litio de 1.800kg",
+        "nominalCapacity": 1800,
+        "batteryVoltage": "48 V",
+        "batteryCapacity": "30 Ah",
+        "forkLength": "1150 mm",
+        "manufacturerSource": "https://mb-maquinaria.com/producto/mb-forklift/transpaletas-electricas/transpaleta-conductor-acompanado/epl185-2/"
+      },
+      "EFL303": {
+        "model": "EFL303",
+        "title": "MB EFL303 Carretilla eléctrica de 3.000 kg con batería de Litio",
+        "nominalCapacity": 3000,
+        "batteryVoltage": "80 V",
+        "batteryCapacity": "205 Ah",
+        "forkLength": "1219 mm",
+        "manufacturerSource": "https://mb-maquinaria.com/producto/carretillas-elevadoras/carretillas-elevadoras-electricas/carretillas-elevadoras-electricas-de-4-ruedas/efl303/"
+      }
+    }
+  }
+}

@@ -8,6 +8,7 @@ import { isValidCommercialCategory } from "./category-projection.js";
 import { projectCommercialAttributes } from "./attribute-projection.js";
 import { commercialBrandInTitle, commercialToken, projectCommercialPresentation } from "./presentation-projection.js";
 import { commercialUnitTitleSuffixes, unresolvedCommercialTitleCollisions } from "./unit-disambiguation.js";
+import { prepareCommercialEditorialInputs } from "./editorial-inputs.js";
 import { hasLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../validation/technical-specifications.js";
 import { assessCommercialHeight } from "../validation/height-consistency.js";
 import { assessCommercialYear } from "../validation/year-consistency.js";
@@ -72,7 +73,8 @@ export const planCommercialExport = (
     throw new Error("El companyID exige un perfil de entorno explícito y válido");
   }
   const categories = new Map(catalog.categories.map((item) => [item.id, item]));
-  const titleSuffixes = commercialUnitTitleSuffixes(inputs);
+  const editorialInputs = prepareCommercialEditorialInputs(inputs);
+  const titleSuffixes = commercialUnitTitleSuffixes(editorialInputs);
   const identitiesByUrl = new Map<string, string>();
   const seen = new Set<string>();
   const products: CommercialExportProduct[] = [];
@@ -86,7 +88,7 @@ export const planCommercialExport = (
   let withLogo = 0;
   let withPrice = 0;
   let attributes = 0;
-  for (const { source, published, mapped } of inputs) {
+  for (const { source, published, mapped } of editorialInputs) {
     if (source.providerId !== providerId || published.providerId !== providerId || mapped.product.providerId !== providerId ||
       source.reference !== published.reference || source.url !== published.sourceUrl ||
       mapped.product.reference !== published.reference || mapped.product.sourceUrl !== published.sourceUrl) {

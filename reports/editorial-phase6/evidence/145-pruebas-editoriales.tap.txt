@@ -1,0 +1,1382 @@
+TAP version 13
+# Subtest: genera metadata determinista y retira Compra y el sufijo del vendedor sin pérdida técnica
+ok 1 - genera metadata determinista y retira Compra y el sufijo del vendedor sin pérdida técnica
+  ---
+  duration_ms: 10.900271
+  type: 'test'
+  ...
+# Subtest: no inventa categoría, marca ni modelo cuando el título acreditado no los sustenta
+ok 2 - no inventa categoría, marca ni modelo cuando el título acreditado no los sustenta
+  ---
+  duration_ms: 0.778277
+  type: 'test'
+  ...
+# Subtest: recupera marca y modelo desde las especificaciones acreditadas aunque el título use una variante
+ok 3 - recupera marca y modelo desde las especificaciones acreditadas aunque el título use una variante
+  ---
+  duration_ms: 0.388217
+  type: 'test'
+  ...
+# Subtest: mantiene el título descriptivo independiente y no altera los textos revisados
+ok 4 - mantiene el título descriptivo independiente y no altera los textos revisados
+  ---
+  duration_ms: 0.436379
+  type: 'test'
+  ...
+# Subtest: un subtítulo independiente conserva su contenido sin prefijo de compra duplicado
+ok 5 - un subtítulo independiente conserva su contenido sin prefijo de compra duplicado
+  ---
+  duration_ms: 1.341989
+  type: 'test'
+  ...
+# Subtest: rechaza cruces de identidad en lugar de atribuir metadata a otra unidad
+ok 6 - rechaza cruces de identidad en lugar de atribuir metadata a otra unidad
+  ---
+  duration_ms: 0.445383
+  type: 'test'
+  ...
+# Subtest: audita cobertura, títulos depurados, SEO y preservación sin tocar publicaciones
+ok 7 - audita cobertura, títulos depurados, SEO y preservación sin tocar publicaciones
+  ---
+  duration_ms: 14.179209
+  type: 'test'
+  ...
+# Subtest: dos unidades que comparten referencia comercial no se fusionan
+ok 8 - dos unidades que comparten referencia comercial no se fusionan
+  ---
+  duration_ms: 2.766353
+  type: 'test'
+  ...
+# Subtest: el auditor conserva diferencias de imagen para revisión y no las corrige artificialmente
+ok 9 - el auditor conserva diferencias de imagen para revisión y no las corrige artificialmente
+  ---
+  duration_ms: 0.944328
+  type: 'test'
+  ...
+# Subtest: no inventa títulos, descripciones o identificadores a partir de metadata
+ok 10 - no inventa títulos, descripciones o identificadores a partir de metadata
+  ---
+  duration_ms: 0.902445
+  type: 'test'
+  ...
+# Subtest: el auditor no abre tareas por comparaciones literales o longitud editorial
+ok 11 - el auditor no abre tareas por comparaciones literales o longitud editorial
+  ---
+  duration_ms: 1.000713
+  type: 'test'
+  ...
+# Subtest: audita por separado los resúmenes homogeneizados y conserva la descripción larga acreditada
+ok 12 - audita por separado los resúmenes homogeneizados y conserva la descripción larga acreditada
+  ---
+  duration_ms: 3.192307
+  type: 'test'
+  ...
+# Subtest: la auditoría utiliza la misma diferenciación por unidad que la exportación comercial
+ok 13 - la auditoría utiliza la misma diferenciación por unidad que la exportación comercial
+  ---
+  duration_ms: 0.947182
+  type: 'test'
+  ...
+# Subtest: el auditor comercial clasifica señales editoriales sin convertirlas en alteraciones técnicas
+ok 14 - el auditor comercial clasifica señales editoriales sin convertirlas en alteraciones técnicas
+  ---
+  duration_ms: 0.899379
+  type: 'test'
+  ...
+# file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/infrastructure/filesystem/catalog/accredited-publication-original.js:109
+#     throw new Error(`No se conserva el original acreditado de ${providerId} (SHA-256 ${catalogSha256}); no se sustituye por el inventario vigente`);
+#           ^
+# Error: No se conserva el original acreditado de gomariz (SHA-256 52cd6523ac4150f4059ca8c50147ad3ecddf6c7f69daebe5dd2b79f113f594e6); no se sustituye por el inventario vigente
+#     at accreditedPublicationOriginalSources (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/infrastructure/filesystem/catalog/accredited-publication-original.js:109:11)
+#     at async loadCommercialPublicationInputs (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/export/commercial-inputs.js:16:25)
+#     at async file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/projection/tests/category-projection.test.js:13:19
+# Node.js v22.16.0
+# Subtest: dist/commercial/projection/tests/category-projection.test.js
+not ok 2 - dist/commercial/projection/tests/category-projection.test.js
+  ---
+  duration_ms: 5622.958686
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/projection/tests/category-projection.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/infrastructure/filesystem/catalog/accredited-publication-original.js:109
+#     throw new Error(`No se conserva el original acreditado de ${providerId} (SHA-256 ${catalogSha256}); no se sustituye por el inventario vigente`);
+#           ^
+# Error: No se conserva el original acreditado de gomariz (SHA-256 52cd6523ac4150f4059ca8c50147ad3ecddf6c7f69daebe5dd2b79f113f594e6); no se sustituye por el inventario vigente
+#     at accreditedPublicationOriginalSources (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/infrastructure/filesystem/catalog/accredited-publication-original.js:109:11)
+#     at async loadCommercialPublicationInputs (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/export/commercial-inputs.js:16:25)
+#     at async file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/projection/tests/category-source-evidence.test.js:7:19
+# Node.js v22.16.0
+# Subtest: dist/commercial/projection/tests/category-source-evidence.test.js
+not ok 3 - dist/commercial/projection/tests/category-source-evidence.test.js
+  ---
+  duration_ms: 5754.878423
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/projection/tests/category-source-evidence.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: separa magnitudes y normaliza unidades sin cambiar las cifras acreditadas
+ok 17 - separa magnitudes y normaliza unidades sin cambiar las cifras acreditadas
+  ---
+  duration_ms: 4.136414
+  type: 'test'
+  ...
+# Subtest: los códigos de modelo y los identificadores técnicos quedan intactos
+ok 18 - los códigos de modelo y los identificadores técnicos quedan intactos
+  ---
+  duration_ms: 0.501047
+  type: 'test'
+  ...
+# Subtest: normaliza MT como metros solo si el contexto expresa altura o elevación
+ok 19 - normaliza MT como metros solo si el contexto expresa altura o elevación
+  ---
+  duration_ms: 1.475812
+  type: 'test'
+  ...
+# Subtest: mantiene marcas, modelos y siglas mientras normaliza los términos descriptivos
+ok 20 - mantiene marcas, modelos y siglas mientras normaliza los términos descriptivos
+  ---
+  duration_ms: 0.39074
+  type: 'test'
+  ...
+# Subtest: retira solo los marcadores promocionales de GAM sin borrar datos
+ok 21 - retira solo los marcadores promocionales de GAM sin borrar datos
+  ---
+  duration_ms: 1.016517
+  type: 'test'
+  ...
+# Subtest: conserva descripciones editoriales mixtas, vacíos y ausencia de datos
+ok 22 - conserva descripciones editoriales mixtas, vacíos y ausencia de datos
+  ---
+  duration_ms: 0.153082
+  type: 'test'
+  ...
+# Subtest: respeta la limpieza anterior de Compra y del vendedor, y es idempotente
+ok 23 - respeta la limpieza anterior de Compra y del vendedor, y es idempotente
+  ---
+  duration_ms: 1.768434
+  type: 'test'
+  ...
+# Subtest: normaliza milímetros separados del número y conserva códigos de modelo
+ok 24 - normaliza milímetros separados del número y conserva códigos de modelo
+  ---
+  duration_ms: 0.270088
+  type: 'test'
+  ...
+# Subtest: retira descriptores repetidos de mástil y no toca denominaciones de modelo
+ok 25 - retira descriptores repetidos de mástil y no toca denominaciones de modelo
+  ---
+  duration_ms: 0.435018
+  type: 'test'
+  ...
+# Subtest: elimina únicamente el aviso promocional acreditado de GAM
+ok 26 - elimina únicamente el aviso promocional acreditado de GAM
+  ---
+  duration_ms: 0.584013
+  type: 'test'
+  ...
+# Subtest: normaliza unidades de descripción general sin reescribir la evidencia del modelo
+ok 27 - normaliza unidades de descripción general sin reescribir la evidencia del modelo
+  ---
+  duration_ms: 0.25733
+  type: 'test'
+  ...
+# Subtest: normaliza un descriptor completamente en mayúsculas sin alterar la marca o el modelo
+ok 28 - normaliza un descriptor completamente en mayúsculas sin alterar la marca o el modelo
+  ---
+  duration_ms: 0.152991
+  type: 'test'
+  ...
+# Subtest: deriva contenido, metadata, categoría y atributos sin alterar la publicación técnica
+ok 29 - deriva contenido, metadata, categoría y atributos sin alterar la publicación técnica
+  ---
+  duration_ms: 14.102583
+  type: 'test'
+  ...
+# Subtest: conserva todas las elegibles incluso sin categoría, y registra exclusiones de lotes y herramientas
+ok 30 - conserva todas las elegibles incluso sin categoría, y registra exclusiones de lotes y herramientas
+  ---
+  duration_ms: 1.480419
+  type: 'test'
+  ...
+# Subtest: dos máquinas con la misma referencia comercial mantienen identidades propias
+ok 31 - dos máquinas con la misma referencia comercial mantienen identidades propias
+  ---
+  duration_ms: 2.365467
+  type: 'test'
+  ...
+# Subtest: companyID solo se incorpora con entorno explícito
+ok 32 - companyID solo se incorpora con entorno explícito
+  ---
+  duration_ms: 1.529533
+  type: 'test'
+  ...
+# Subtest: asigna Otras Marcas si la marca no tiene logo acreditado, sin inventar precio
+ok 33 - asigna Otras Marcas si la marca no tiene logo acreditado, sin inventar precio
+  ---
+  duration_ms: 0.896926
+  type: 'test'
+  ...
+# Subtest: el logo genérico se aplica solo cuando no existe correspondencia acreditada
+ok 34 - el logo genérico se aplica solo cuando no existe correspondencia acreditada
+  ---
+  duration_ms: 6.210891
+  type: 'test'
+  ...
+# Subtest: atribuye solo valores compatibles y registra rechazos sin borrar fichas
+ok 35 - atribuye solo valores compatibles y registra rechazos sin borrar fichas
+  ---
+  duration_ms: 0.56871
+  type: 'test'
+  ...
+# Subtest: rechaza identidades cambiadas, duplicadas o categorías no hoja
+ok 36 - rechaza identidades cambiadas, duplicadas o categorías no hoja
+  ---
+  duration_ms: 0.71456
+  type: 'test'
+  ...
+# Subtest: acredita conservación de datos, metadata y referencias visibles compartidas sin mezclarlas
+ok 37 - acredita conservación de datos, metadata y referencias visibles compartidas sin mezclarlas
+  ---
+  duration_ms: 1.875646
+  type: 'test'
+  ...
+# Subtest: detecta pérdidas, recategorizaciones indebidas, metadata y empresa alteradas
+ok 38 - detecta pérdidas, recategorizaciones indebidas, metadata y empresa alteradas
+  ---
+  duration_ms: 8.314292
+  type: 'test'
+  ...
+# Subtest: detecta atributos incompatibles, identidades omitidas y totales inconsistentes
+ok 39 - detecta atributos incompatibles, identidades omitidas y totales inconsistentes
+  ---
+  duration_ms: 1.426297
+  type: 'test'
+  ...
+# Subtest: admite referencia comercial compartida e identidad basada en número de serie
+ok 40 - admite referencia comercial compartida e identidad basada en número de serie
+  ---
+  duration_ms: 0.56867
+  type: 'test'
+  ...
+# Subtest: distingue exclusiones acreditadas de pérdidas de producto
+ok 41 - distingue exclusiones acreditadas de pérdidas de producto
+  ---
+  duration_ms: 0.566296
+  type: 'test'
+  ...
+# Subtest: ausencia de precio y uso del logo genérico no crean intervenciones comerciales
+ok 42 - ausencia de precio y uso del logo genérico no crean intervenciones comerciales
+  ---
+  duration_ms: 0.60852
+  type: 'test'
+  ...
+# Subtest: si existe valor resoluble y no se proyecta, el auditor sí solicita intervención
+ok 43 - si existe valor resoluble y no se proyecta, el auditor sí solicita intervención
+  ---
+  duration_ms: 0.983768
+  type: 'test'
+  ...
+# Subtest: exporta solo maquinaria y acredita exclusión de accesorio con evidencia explícita
+ok 44 - exporta solo maquinaria y acredita exclusión de accesorio con evidencia explícita
+  ---
+  duration_ms: 0.450712
+  type: 'test'
+  ...
+# Subtest: no crea keywords de una variante que contradice el título publicado
+ok 45 - no crea keywords de una variante que contradice el título publicado
+  ---
+  duration_ms: 0.364581
+  type: 'test'
+  ...
+# Subtest: descarta keywords de códigos de variante contradictorios sin inventar una identidad
+ok 46 - descarta keywords de códigos de variante contradictorios sin inventar una identidad
+  ---
+  duration_ms: 0.446645
+  type: 'test'
+  ...
+# Subtest: la exportación conserva atributos válidos posteriores a rechazos del mismo ID
+ok 47 - la exportación conserva atributos válidos posteriores a rechazos del mismo ID
+  ---
+  duration_ms: 0.671576
+  type: 'test'
+  ...
+# Subtest: filtra magnitudes incompatibles, declara las revisiones y acredita la conservación deliberada
+ok 48 - filtra magnitudes incompatibles, declara las revisiones y acredita la conservación deliberada
+  ---
+  duration_ms: 2.244503
+  type: 'test'
+  ...
+# Subtest: acredita resumen normalizado y detecta cualquier alteración comercial no prevista
+ok 49 - acredita resumen normalizado y detecta cualquier alteración comercial no prevista
+  ---
+  duration_ms: 2.217022
+  type: 'test'
+  ...
+# Subtest: la motorización se resuelve en preparación para cualquier proveedor con el hecho acreditado
+ok 50 - la motorización se resuelve en preparación para cualquier proveedor con el hecho acreditado
+  ---
+  duration_ms: 0.755543
+  type: 'test'
+  ...
+# Subtest: reconoce la marca compuesta de Gomariz solo cuando ambas partes constan en el título
+ok 51 - reconoce la marca compuesta de Gomariz solo cuando ambas partes constan en el título
+  ---
+  duration_ms: 0.325852
+  type: 'test'
+  ...
+# Subtest: distingue unidades por año verificable y recurre a la referencia cuando el año coincide
+ok 52 - distingue unidades por año verificable y recurre a la referencia cuando el año coincide
+  ---
+  duration_ms: 6.313126
+  type: 'test'
+  ...
+# Subtest: la acreditación rechaza sufijos de unidad alterados y no admite títulos coincidentes reintroducidos
+ok 53 - la acreditación rechaza sufijos de unidad alterados y no admite títulos coincidentes reintroducidos
+  ---
+  duration_ms: 1.180124
+  type: 'test'
+  ...
+# Subtest: no atribuye motorización ausente ni cambia una que contradice el dato técnico
+ok 54 - no atribuye motorización ausente ni cambia una que contradice el dato técnico
+  ---
+  duration_ms: 0.159651
+  type: 'test'
+  ...
+# Subtest: la capacidad corroborada se aplica sin referencias ni excepciones por máquina
+ok 55 - la capacidad corroborada se aplica sin referencias ni excepciones por máquina
+  ---
+  duration_ms: 2.38739
+  type: 'test'
+  ...
+# Subtest: la diferenciación parte del título corregido y no crea duplicados de capacidad
+ok 56 - la diferenciación parte del título corregido y no crea duplicados de capacidad
+  ---
+  duration_ms: 0.970528
+  type: 'test'
+  ...
+# Subtest: la acreditación comercial bloquea un error de escala confirmado de GAM sin reescribir datos
+ok 57 - la acreditación comercial bloquea un error de escala confirmado de GAM sin reescribir datos
+  ---
+  duration_ms: 451.287033
+  type: 'test'
+  ...
+# file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/infrastructure/filesystem/catalog/accredited-publication-original.js:109
+#     throw new Error(`No se conserva el original acreditado de ${providerId} (SHA-256 ${catalogSha256}); no se sustituye por el inventario vigente`);
+#           ^
+# Error: No se conserva el original acreditado de gomariz (SHA-256 52cd6523ac4150f4059ca8c50147ad3ecddf6c7f69daebe5dd2b79f113f594e6); no se sustituye por el inventario vigente
+#     at accreditedPublicationOriginalSources (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/infrastructure/filesystem/catalog/accredited-publication-original.js:109:11)
+#     at async loadCommercialPublicationInputs (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/export/commercial-inputs.js:16:25)
+#     at async file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/projection/tests/gam-verified-unit-year-projection.test.js:12:14
+# Node.js v22.16.0
+# Subtest: dist/commercial/projection/tests/gam-verified-unit-year-projection.test.js
+not ok 6 - dist/commercial/projection/tests/gam-verified-unit-year-projection.test.js
+  ---
+  duration_ms: 5638.310666
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/projection/tests/gam-verified-unit-year-projection.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/infrastructure/filesystem/catalog/accredited-publication-original.js:109
+#     throw new Error(`No se conserva el original acreditado de ${providerId} (SHA-256 ${catalogSha256}); no se sustituye por el inventario vigente`);
+#           ^
+# Error: No se conserva el original acreditado de gomariz (SHA-256 52cd6523ac4150f4059ca8c50147ad3ecddf6c7f69daebe5dd2b79f113f594e6); no se sustituye por el inventario vigente
+#     at accreditedPublicationOriginalSources (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/infrastructure/filesystem/catalog/accredited-publication-original.js:109:11)
+#     at async loadCommercialPublicationInputs (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/export/commercial-inputs.js:16:25)
+#     at async file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/projection/tests/handling-family-compatibility.test.js:7:22
+# Node.js v22.16.0
+# Subtest: dist/commercial/projection/tests/handling-family-compatibility.test.js
+not ok 7 - dist/commercial/projection/tests/handling-family-compatibility.test.js
+  ---
+  duration_ms: 5298.41844
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/projection/tests/handling-family-compatibility.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/infrastructure/filesystem/catalog/accredited-publication-original.js:109
+#     throw new Error(`No se conserva el original acreditado de ${providerId} (SHA-256 ${catalogSha256}); no se sustituye por el inventario vigente`);
+#           ^
+# Error: No se conserva el original acreditado de gomariz (SHA-256 52cd6523ac4150f4059ca8c50147ad3ecddf6c7f69daebe5dd2b79f113f594e6); no se sustituye por el inventario vigente
+#     at accreditedPublicationOriginalSources (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/infrastructure/filesystem/catalog/accredited-publication-original.js:109:11)
+#     at async loadCommercialPublicationInputs (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/export/commercial-inputs.js:16:25)
+#     at async file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/projection/tests/used-equipment-compatibility.test.js:8:22
+# Node.js v22.16.0
+# Subtest: dist/commercial/projection/tests/used-equipment-compatibility.test.js
+not ok 8 - dist/commercial/projection/tests/used-equipment-compatibility.test.js
+  ---
+  duration_ms: 5255.097007
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/projection/tests/used-equipment-compatibility.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: separa defectos seguros de corregir de advertencias de evidencia de origen
+ok 61 - separa defectos seguros de corregir de advertencias de evidencia de origen
+  ---
+  duration_ms: 2.965744
+  type: 'test'
+  ...
+# Subtest: mantiene visibles las anomalías del origen que requieren acreditación
+ok 62 - mantiene visibles las anomalías del origen que requieren acreditación
+  ---
+  duration_ms: 0.939861
+  type: 'test'
+  ...
+# Subtest: no interpreta fichas concisas ni magnitudes legítimas como defectos
+ok 63 - no interpreta fichas concisas ni magnitudes legítimas como defectos
+  ---
+  duration_ms: 2.648955
+  type: 'test'
+  ...
+# Subtest: detecta bloques del proveedor no normalizables sin alterar sus cifras
+ok 64 - detecta bloques del proveedor no normalizables sin alterar sus cifras
+  ---
+  duration_ms: 0.793279
+  type: 'test'
+  ...
+# Subtest: normaliza el título únicamente cuando la altura de trabajo explícita coincide con el resumen
+ok 65 - normaliza el título únicamente cuando la altura de trabajo explícita coincide con el resumen
+  ---
+  duration_ms: 2.321069
+  type: 'test'
+  ...
+# Subtest: repara una altura manifiestamente imposible con milímetros acreditados por el texto técnico
+ok 66 - repara una altura manifiestamente imposible con milímetros acreditados por el texto técnico
+  ---
+  duration_ms: 0.864297
+  type: 'test'
+  ...
+# Subtest: mantiene para revisión diferencias entre plataforma y trabajo sin atribuir una altura inventada
+ok 67 - mantiene para revisión diferencias entre plataforma y trabajo sin atribuir una altura inventada
+  ---
+  duration_ms: 0.252522
+  type: 'test'
+  ...
+# Subtest: conserva un desacuerdo grande cuando la especificación no acredita altura de trabajo
+ok 68 - conserva un desacuerdo grande cuando la especificación no acredita altura de trabajo
+  ---
+  duration_ms: 0.144909
+  type: 'test'
+  ...
+# Subtest: no transforma redondeos tolerables, dimensiones de transporte ni resúmenes con varias alturas
+ok 69 - no transforma redondeos tolerables, dimensiones de transporte ni resúmenes con varias alturas
+  ---
+  duration_ms: 0.198349
+  type: 'test'
+  ...
+# Subtest: acredita altura de trabajo y plataforma de GS-3246 según manual Genie 1000060, página 36
+ok 70 - acredita altura de trabajo y plataforma de GS-3246 según manual Genie 1000060, página 36
+  ---
+  duration_ms: 1.051119
+  type: 'test'
+  ...
+# Subtest: no acredita pares de altura sin identidad, valores o significado inequívocos
+ok 71 - no acredita pares de altura sin identidad, valores o significado inequívocos
+  ---
+  duration_ms: 0.493036
+  type: 'test'
+  ...
+# node:internal/modules/package_json_reader:256
+#   throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+#         ^
+# Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'cheerio' imported from /mnt/data/eqz-phase6/gam-scraper-develop/dist/scraping/providers/gomariz/parsers.js
+#     at Object.getPackageJSONURL (node:internal/modules/package_json_reader:256:9)
+#     at packageResolve (node:internal/modules/esm/resolve:768:81)
+#     at moduleResolve (node:internal/modules/esm/resolve:854:18)
+#     at defaultResolve (node:internal/modules/esm/resolve:984:11)
+#     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:780:12)
+#     at \#cachedDefaultResolve (node:internal/modules/esm/loader:704:25)
+#     at ModuleLoader.resolve (node:internal/modules/esm/loader:687:38)
+#     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:305:38)
+#     at ModuleJob._link (node:internal/modules/esm/module_job:137:49) {
+#   code: 'ERR_MODULE_NOT_FOUND'
+# }
+# Node.js v22.16.0
+# Subtest: dist/commercial/validation/tests/preflight.test.js
+not ok 11 - dist/commercial/validation/tests/preflight.test.js
+  ---
+  duration_ms: 167.318139
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/commercial/validation/tests/preflight.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: las publicaciones actuales no reintroducen magnitudes incompatibles presentes en los originales
+ok 73 - las publicaciones actuales no reintroducen magnitudes incompatibles presentes en los originales
+  ---
+  duration_ms: 182.121898
+  type: 'test'
+  ...
+# Subtest: las tres capacidades acreditadas permanecen corregidas sin alterar las contradicciones del original
+ok 74 - las tres capacidades acreditadas permanecen corregidas sin alterar las contradicciones del original
+  ---
+  duration_ms: 187.848706
+  type: 'test'
+  ...
+# Subtest: no bloquea medidas físicas válidas ni transforma implícitamente metros a milímetros
+ok 75 - no bloquea medidas físicas válidas ni transforma implícitamente metros a milímetros
+  ---
+  duration_ms: 0.372443
+  type: 'test'
+  ...
+# Subtest: retiene completos los campos multivalor válidos y excluye campos con residuos parciales
+ok 76 - retiene completos los campos multivalor válidos y excluye campos con residuos parciales
+  ---
+  duration_ms: 0.240534
+  type: 'test'
+  ...
+# Subtest: corrige las especificaciones comerciales con evidencia real sin reescribir originales ni publicaciones
+ok 77 - corrige las especificaciones comerciales con evidencia real sin reescribir originales ni publicaciones
+  ---
+  duration_ms: 159.942381
+  type: 'test'
+  ...
+# Subtest: no aplica mapeos de Yale sin coincidencia de original, publicación y modelo
+ok 78 - no aplica mapeos de Yale sin coincidencia de original, publicación y modelo
+  ---
+  duration_ms: 165.487546
+  type: 'test'
+  ...
+# Subtest: la recuperación Yale conserva los campos ya publicados y exige la evidencia del original
+ok 79 - la recuperación Yale conserva los campos ya publicados y exige la evidencia del original
+  ---
+  duration_ms: 112.425636
+  type: 'test'
+  ...
+# Subtest: la cohorte GAM saneada conserva las especificaciones válidas sin requerir un segundo filtrado comercial
+ok 80 - la cohorte GAM saneada conserva las especificaciones válidas sin requerir un segundo filtrado comercial
+  ---
+  duration_ms: 142.197911
+  type: 'test'
+  ...
+# Subtest: corrige afirmaciones erróneas sobre fabricación sin imponer otro año ni tocar el origen
+ok 81 - corrige afirmaciones erróneas sobre fabricación sin imponer otro año ni tocar el origen
+  ---
+  duration_ms: 6.206093
+  type: 'test'
+  ...
+# Subtest: conserva las afirmaciones compatibles, fechas de otra naturaleza y textos sin respaldo
+ok 82 - conserva las afirmaciones compatibles, fechas de otra naturaleza y textos sin respaldo
+  ---
+  duration_ms: 0.406585
+  type: 'test'
+  ...
+# Subtest: detecta contradicciones reales sin interpretar años de matriculación, referencias o modelos
+ok 83 - detecta contradicciones reales sin interpretar años de matriculación, referencias o modelos
+  ---
+  duration_ms: 0.405383
+  type: 'test'
+  ...
+# Subtest: el año del propio atributo solo se usa si el contrato proporciona un número válido
+ok 84 - el año del propio atributo solo se usa si el contrato proporciona un número válido
+  ---
+  duration_ms: 0.222307
+  type: 'test'
+  ...
+# Subtest: el año de atributo requiere una única asignación válida y preserva los límites del contrato
+ok 85 - el año de atributo requiere una única asignación válida y preserva los límites del contrato
+  ---
+  duration_ms: 0.269177
+  type: 'test'
+  ...
+# Subtest: los once años discordantes conservan la procedencia del origen sin imponer el slug
+ok 86 - los once años discordantes conservan la procedencia del origen sin imponer el slug
+  ---
+  duration_ms: 95.081372
+  type: 'test'
+  ...
+# Subtest: los slugs de otra unidad, otros dominios y rutas no representativas no acreditan fechas
+ok 87 - los slugs de otra unidad, otros dominios y rutas no representativas no acreditan fechas
+  ---
+  duration_ms: 0.354166
+  type: 'test'
+  ...
+# Subtest: recupera dos generales extremas sin asignar datos técnicos a otras identidades
+not ok 88 - recupera dos generales extremas sin asignar datos técnicos a otras identidades
+  ---
+  duration_ms: 185.876529
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/critical-extreme-generals.test.js:6:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(description.trim().split(/\s+/u).length >= 60)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/critical-extreme-generals.test.js:17:16)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: Gomariz: el encabezado incorpora solo la familia corroborada por el propio anuncio
+not ok 89 - Gomariz: el encabezado incorpora solo la familia corroborada por el propio anuncio
+  ---
+  duration_ms: 41.93863
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/editorial-concise-titles.test.js:16:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'Plataforma de tijera eléctrica LGMG S1413EII · 15,8 m de trabajo'
+    - 'Plataforma de tijera LGMG S1413EII'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'Plataforma de tijera LGMG S1413EII'
+  actual: 'Plataforma de tijera eléctrica LGMG S1413EII · 15,8 m de trabajo'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/editorial-concise-titles.test.js:31:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: Gomariz: títulos ya completos, fuentes ambiguas y referencias no acreditables permanecen intactos
+not ok 90 - Gomariz: títulos ya completos, fuentes ambiguas y referencias no acreditables permanecen intactos
+  ---
+  duration_ms: 7.624228
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/editorial-concise-titles.test.js:39:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    GR1113
+    + actual - expected
+    
+    + 'Himoinsa HFW-605T'
+    - 'Grupo electrógeno Himoinsa HFW-605T de 60 kVA'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'Grupo electrógeno Himoinsa HFW-605T de 60 kVA'
+  actual: 'Himoinsa HFW-605T'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/editorial-concise-titles.test.js:44:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: GAM: vehículos confirmados y títulos de lotes individualizados
+not ok 91 - GAM: vehículos confirmados y títulos de lotes individualizados
+  ---
+  duration_ms: 15.231409
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/editorial-concise-titles.test.js:69:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'LVNENG LX05'
+    - 'Ciclomotor eléctrico LVNENG LX05'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'Ciclomotor eléctrico LVNENG LX05'
+  actual: 'LVNENG LX05'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/editorial-concise-titles.test.js:85:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: GAM: no propaga encabezados por motor, modelo, procedencia ni textos contradictorios
+ok 92 - GAM: no propaga encabezados por motor, modelo, procedencia ni textos contradictorios
+  ---
+  duration_ms: 0.449089
+  type: 'test'
+  ...
+# Subtest: La intervención es local a los títulos y no cambia proveedor ni textos de Mercaeleva
+ok 93 - La intervención es local a los títulos y no cambia proveedor ni textos de Mercaeleva
+  ---
+  duration_ms: 6.129568
+  type: 'test'
+  ...
+# Subtest: consume la evidencia declarativa de las tres fuentes sin narradores específicos
+ok 94 - consume la evidencia declarativa de las tres fuentes sin narradores específicos
+  ---
+  duration_ms: 109.6697
+  type: 'test'
+  ...
+# Subtest: la evidencia de una unidad exige referencia, URL, identidad y huella completas
+ok 95 - la evidencia de una unidad exige referencia, URL, identidad y huella completas
+  ---
+  duration_ms: 58.135316
+  type: 'test'
+  ...
+# Subtest: una nueva unidad del mismo modelo recibe contexto, pero no hereda horas ni datos como propios
+ok 96 - una nueva unidad del mismo modelo recibe contexto, pero no hereda horas ni datos como propios
+  ---
+  duration_ms: 12.792792
+  type: 'test'
+  ...
+# Subtest: un almacén vertical redacta capacidad por bandeja, sin fingir capacidad total
+ok 97 - un almacén vertical redacta capacidad por bandeja, sin fingir capacidad total
+  ---
+  duration_ms: 33.516977
+  type: 'test'
+  ...
+# Subtest: la evidencia de fabricante distingue un elevador manual de una plataforma de personas
+ok 98 - la evidencia de fabricante distingue un elevador manual de una plataforma de personas
+  ---
+  duration_ms: 12.369734
+  type: 'test'
+  ...
+# Subtest: los títulos de unidad sólo se aplican cuando su huella de origen permanece intacta
+ok 99 - los títulos de unidad sólo se aplican cuando su huella de origen permanece intacta
+  ---
+  duration_ms: 15.014802
+  type: 'test'
+  ...
+# Subtest: la misma capacidad editorial compone telescópicas de proveedores y magnitudes distintos
+ok 100 - la misma capacidad editorial compone telescópicas de proveedores y magnitudes distintos
+  ---
+  duration_ms: 50.160192
+  type: 'test'
+  ...
+# Subtest: dos unidades del mismo modelo reutilizan reglas sin heredar horómetros
+ok 101 - dos unidades del mismo modelo reutilizan reglas sin heredar horómetros
+  ---
+  duration_ms: 30.088914
+  type: 'test'
+  ...
+# Subtest: una evidencia no atraviesa referencia, variante, proveedor ni magnitud
+ok 102 - una evidencia no atraviesa referencia, variante, proveedor ni magnitud
+  ---
+  duration_ms: 1.319855
+  type: 'test'
+  ...
+# Subtest: familias diferentes preservan el significado de altura de trabajo y elevación
+ok 103 - familias diferentes preservan el significado de altura de trabajo y elevación
+  ---
+  duration_ms: 0.652897
+  type: 'test'
+  ...
+# Subtest: centro de carga y radio de giro usan concepto y unidad; una contradicción original no se publica
+ok 104 - centro de carga y radio de giro usan concepto y unidad; una contradicción original no se publica
+  ---
+  duration_ms: 63.616246
+  type: 'test'
+  ...
+# Subtest: los tamaños de cesta y la anchura de limpieza siguen reglas familiares reutilizables
+ok 105 - los tamaños de cesta y la anchura de limpieza siguen reglas familiares reutilizables
+  ---
+  duration_ms: 45.021272
+  type: 'test'
+  ...
+# Subtest: los módulos sin marca ni modelo comparten plantilla y no heredan dimensiones de otras unidades
+ok 106 - los módulos sin marca ni modelo comparten plantilla y no heredan dimensiones de otras unidades
+  ---
+  duration_ms: 76.821543
+  type: 'test'
+  ...
+# Subtest: prestaciones de seguridad no se trasladan cuando la fuente expresa opcionalidad o negación
+ok 107 - prestaciones de seguridad no se trasladan cuando la fuente expresa opcionalidad o negación
+  ---
+  duration_ms: 29.421455
+  type: 'test'
+  ...
+# Subtest: ubicación y serie únicamente se añaden desde los campos coincidentes de la unidad original
+ok 108 - ubicación y serie únicamente se añaden desde los campos coincidentes de la unidad original
+  ---
+  duration_ms: 31.462591
+  type: 'test'
+  ...
+# Subtest: la identidad cruzada histórica recuperada se consume como evidencia firmada; otra unidad no la hereda
+ok 109 - la identidad cruzada histórica recuperada se consume como evidencia firmada; otra unidad no la hereda
+  ---
+  duration_ms: 38.557629
+  type: 'test'
+  ...
+# Subtest: las fichas contradictorias solo usan su excepción declarativa firmada
+ok 110 - las fichas contradictorias solo usan su excepción declarativa firmada
+  ---
+  duration_ms: 43.997143
+  type: 'test'
+  ...
+# Subtest: la higiene del origen elimina marcadores y afirmaciones huérfanas sin tocar textos no acreditados
+ok 111 - la higiene del origen elimina marcadores y afirmaciones huérfanas sin tocar textos no acreditados
+  ---
+  duration_ms: 25.739187
+  type: 'test'
+  ...
+# Subtest: textos firmados de unidades sin identidad completa, sin contagio
+ok 112 - textos firmados de unidades sin identidad completa, sin contagio
+  ---
+  duration_ms: 128.940938
+  type: 'test'
+  ...
+# Subtest: firma de fuente íntegra para título y descripción de unidad
+ok 113 - firma de fuente íntegra para título y descripción de unidad
+  ---
+  duration_ms: 19.587566
+  type: 'test'
+  ...
+# Subtest: títulos documentados por familia, magnitudes y fuente sin referencias cableadas
+ok 114 - títulos documentados por familia, magnitudes y fuente sin referencias cableadas
+  ---
+  duration_ms: 43.44637
+  type: 'test'
+  ...
+# Subtest: generales y títulos firmados migrados desde tablas antiguas
+ok 115 - generales y títulos firmados migrados desde tablas antiguas
+  ---
+  duration_ms: 243.658911
+  type: 'test'
+  ...
+# Subtest: la proyección no vuelve a escribir el título, corta ni general del preparador
+ok 116 - la proyección no vuelve a escribir el título, corta ni general del preparador
+  ---
+  duration_ms: 168.868974
+  type: 'test'
+  ...
+# Subtest: las publicaciones antiguas se normalizan en memoria antes de proyectarse, sin modificar la entrada
+ok 117 - las publicaciones antiguas se normalizan en memoria antes de proyectarse, sin modificar la entrada
+  ---
+  duration_ms: 30.841243
+  type: 'test'
+  ...
+# Subtest: la capacidad se valida por magnitud y procedencia, no por referencia histórica
+ok 118 - la capacidad se valida por magnitud y procedencia, no por referencia histórica
+  ---
+  duration_ms: 23.86542
+  type: 'test'
+  ...
+# Subtest: conserva las cinco salidas editoriales del corte histórico acreditado de 1.347 originales
+not ok 119 - conserva las cinco salidas editoriales del corte histórico acreditado de 1.347 originales
+  ---
+  duration_ms: 378.881759
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/prepared-editorial-precedence.test.js:21:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    gam
+    + actual - expected
+    
+    + 'bb11be0b678a26df29f422c236a52acf9bbcd6c295553267902cecd41c44e617'
+    - 'ad24ab006e1f9c2dee6e6471e2cd5a82fb1a0e8609ce498f2e78c5c24eb5f3a1'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'ad24ab006e1f9c2dee6e6471e2cd5a82fb1a0e8609ce498f2e78c5c24eb5f3a1'
+  actual: 'bb11be0b678a26df29f422c236a52acf9bbcd6c295553267902cecd41c44e617'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/prepared-editorial-precedence.test.js:36:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: conserva estados, incidencias, identidad, textos, condición y campos de preparaciones representativas
+not ok 120 - conserva estados, incidencias, identidad, textos, condición y campos de preparaciones representativas
+  ---
+  duration_ms: 122.106919
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/prepared-editorial-precedence.test.js:40:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    gam
+    + actual - expected
+    
+    + '05bcb6cc9b4d19a4b3a0dba5862d5f975b1b492a10987df1e6c0a1873707341b'
+    - '2e4903a054cadc3429bb04de9f1b25b8dbbb0203f6905ee5a55c87f65dc661b0'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '2e4903a054cadc3429bb04de9f1b25b8dbbb0203f6905ee5a55c87f65dc661b0'
+  actual: '05bcb6cc9b4d19a4b3a0dba5862d5f975b1b492a10987df1e6c0a1873707341b'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/prepared-editorial-precedence.test.js:59:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: mantiene precedencias ante cambios de identidad, fuente, variante y unidad de origen
+not ok 121 - mantiene precedencias ante cambios de identidad, fuente, variante y unidad de origen
+  ---
+  duration_ms: 4.784875
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/prepared-editorial-precedence.test.js:63:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'c296f55dde9240ce0e8ec0f48f8c8ebfa2b69ef17425fc7651457088a83c2d5d'
+    - '3ae06a086cb4caace025188a09a955249e3e152b60f69cb291e9fd5029dc95ac'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '3ae06a086cb4caace025188a09a955249e3e152b60f69cb291e9fd5029dc95ac'
+  actual: 'c296f55dde9240ce0e8ec0f48f8c8ebfa2b69ef17425fc7651457088a83c2d5d'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/prepared-editorial-precedence.test.js:94:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: tijera: composición y hechos independientes de la fuente y la ruta histórica
+ok 122 - tijera: composición y hechos independientes de la fuente y la ruta histórica
+  ---
+  duration_ms: 53.256034
+  type: 'test'
+  ...
+# Subtest: carretilla: concepto de capacidad compartido, elevación y peso diferenciados
+ok 123 - carretilla: concepto de capacidad compartido, elevación y peso diferenciados
+  ---
+  duration_ms: 2.43389
+  type: 'test'
+  ...
+# Subtest: negativos: procedencia, variante, magnitud, contradicción y semántica insuficiente
+ok 124 - negativos: procedencia, variante, magnitud, contradicción y semántica insuficiente
+  ---
+  duration_ms: 2.319477
+  type: 'test'
+  ...
+# Subtest: contrato de extensión: todo módulo nuevo de dominio se comprueba sin bifurcaciones por proveedor
+ok 125 - contrato de extensión: todo módulo nuevo de dominio se comprueba sin bifurcaciones por proveedor
+  ---
+  duration_ms: 22.754115
+  type: 'test'
+  ...
+# Subtest: contrato de extensión: cuatro familias usan su propia fuente sin extenderse a otras unidades
+ok 126 - contrato de extensión: cuatro familias usan su propia fuente sin extenderse a otras unidades
+  ---
+  duration_ms: 2.584158
+  type: 'test'
+  ...
+# Subtest: articuladas: composición desde hechos de dos proveedores, sin copiar alcance o carga inexistentes
+not ok 127 - articuladas: composición desde hechos de dos proveedores, sin copiar alcance o carga inexistentes
+  ---
+  duration_ms: 6.045641
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/reusable-editorial-consolidation.test.js:19:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /altura de trabajo de 27,74 m, alcance lateral de 17,07 m y capacidad de 227 kg/u. Input:
+    
+    'Plataforma articulada diésel Skyjack SJ85AJ, con altura de trabajo de 27,74 m, altura de plataforma de 25,91 m, alcance lateral de 17,07 m y capacidad de 227 kg.'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: 'Plataforma articulada diésel Skyjack SJ85AJ, con altura de trabajo de 27,74 m, altura de plataforma de 25,91 m, alcance lateral de 17,07 m y capacidad de 227 kg.'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/reusable-editorial-consolidation.test.js:31:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: articuladas: se rechazan conflictos y magnitudes ajenas a la fuente
+ok 128 - articuladas: se rechazan conflictos y magnitudes ajenas a la fuente
+  ---
+  duration_ms: 1.390753
+  type: 'test'
+  ...
+# Subtest: Gomariz: una única interpretación de ruta histórica, independiente de la composición
+ok 129 - Gomariz: una única interpretación de ruta histórica, independiente de la composición
+  ---
+  duration_ms: 0.21802
+  type: 'test'
+  ...
+# Subtest: magnitudes: parser único, semántica de unidad y precisión estricta
+ok 130 - magnitudes: parser único, semántica de unidad y precisión estricta
+  ---
+  duration_ms: 0.243057
+  type: 'test'
+  ...
+# Subtest: plataformas telescópicas de dos fuentes reales reutilizan familia, magnitudes y composición
+not ok 131 - plataformas telescópicas de dos fuentes reales reutilizan familia, magnitudes y composición
+  ---
+  duration_ms: 7.671439
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/reusable-editorial-cross-provider.test.js:17:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'plataforma-telescopica'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'plataforma-telescopica'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/reusable-editorial-cross-provider.test.js:29:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: los títulos y las generales de origen conservan identidad y precedencia
+not ok 132 - los títulos y las generales de origen conservan identidad y precedencia
+  ---
+  duration_ms: 80.009917
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/reusable-editorial-cross-provider.test.js:45:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected "actual" to be strictly unequal to:
+    
+    'Plataforma telescópica diésel JLG 460SJ, con altura de trabajo de 16 m.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'Plataforma telescópica diésel JLG 460SJ, con altura de trabajo de 16 m.'
+  actual: 'Plataforma telescópica diésel JLG 460SJ, con altura de trabajo de 16 m.'
+  operator: 'notStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/reusable-editorial-cross-provider.test.js:60:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: telescópicas: no confundir manipuladores, alturas de elevación ni proveedores
+not ok 133 - telescópicas: no confundir manipuladores, alturas de elevación ni proveedores
+  ---
+  duration_ms: 1.160575
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/reusable-editorial-cross-provider.test.js:63:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + {
+    +   basketLengthM: null,
+    +   basketWidthM: null,
+    +   brand: 'Jcb',
+    +   cleaningWidthM: null,
+    +   drawbarPullN: null,
+    +   energy: 'diésel',
+    +   family: 'manipulador-telescopico',
+    +   gradeabilityPercent: null,
+    +   heightM: null,
+    +   hours: null,
+    +   lateralReachM: null,
+    +   lengthM: 6.25,
+    +   liftingHeightM: null,
+    +   loadCapacityKg: 4000,
+    +   loadCenterMm: null,
+    +   mastType: null,
+    +   model: '540-140',
+    +   platformHeightM: null,
+    +   powerKva: null,
+    +   storedHeightM: null,
+    +   trayCapacityKg: null,
+    +   turningRadiusM: null,
+    +   voltageV: null,
+    +   weightKg: 11090,
+    +   widthM: 2.35,
+    +   workingHeightM: null,
+    +   year: 2018
+    + }
+    - null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual:
+    family: 'manipulador-telescopico'
+    brand: 'Jcb'
+    model: '540-140'
+    workingHeightM: ~
+    platformHeightM: ~
+    storedHeightM: ~
+    lateralReachM: ~
+    liftingHeightM: ~
+    loadCapacityKg: 4000
+    trayCapacityKg: ~
+    weightKg: 11090
+    lengthM: 6.25
+    widthM: 2.35
+    heightM: ~
+    voltageV: ~
+    powerKva: ~
+    gradeabilityPercent: ~
+    loadCenterMm: ~
+    turningRadiusM: ~
+    cleaningWidthM: ~
+    basketLengthM: ~
+    basketWidthM: ~
+    drawbarPullN: ~
+    mastType: ~
+    year: 2018
+    hours: ~
+    energy: 'diésel'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/reusable-editorial-cross-provider.test.js:67:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: las descripciones recuperan el año de fuente contrastada sin modificar los datos técnicos
+not ok 134 - las descripciones recuperan el año de fuente contrastada sin modificar los datos técnicos
+  ---
+  duration_ms: 70.526242
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/source-year-general.test.js:21:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(prepared.product.description_general?.includes(`Año de fabricación de esta unidad: ${record.year}.`))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    check (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/source-year-general.test.js:18:12)
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/source-year-general.test.js:27:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: no incorpora años ambiguos, variantes, fechas de modelo ni fichas en revisión
+not ok 135 - no incorpora años ambiguos, variantes, fechas de modelo ni fichas en revisión
+  ---
+  duration_ms: 88.056083
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/source-year-general.test.js:32:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(result.product.description_general?.includes("Año de fabricación de esta unidad: 2022."))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/source-year-general.test.js:57:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: completa primero las tres fichas sin descripciones mediante fuentes de modelo acreditadas
+not ok 136 - completa primero las tres fichas sin descripciones mediante fuentes de modelo acreditadas
+  ---
+  duration_ms: 45.575832
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/verified-extreme-descriptions.test.js:19:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(prepared.product.description && prepared.product.description.trim().length > 50)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: ~
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/shared/editorial/tests/verified-extreme-descriptions.test.js:30:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: no aplica textos del modelo a otras referencias, descripciones existentes ni fuentes alteradas
+ok 137 - no aplica textos del modelo a otras referencias, descripciones existentes ni fuentes alteradas
+  ---
+  duration_ms: 49.363319
+  type: 'test'
+  ...
+# Subtest: La capacidad restringida XGS58E1 no se presenta como carga universal
+not ok 138 - La capacidad restringida XGS58E1 no se presenta como carga universal
+  ---
+  duration_ms: 53.602649
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/tests/capacity-editorial-consistency.test.js:19:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /450 kg con restricciones/u. Input:
+    
+    'XCMG XGS58E1 Nueva. Venta de plataforma telescópica diésel de 58 metros de altura. Capacidad de la cesta 450 kg'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: 'XCMG XGS58E1 Nueva. Venta de plataforma telescópica diésel de 58 metros de altura. Capacidad de la cesta 450 kg'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/tests/capacity-editorial-consistency.test.js:26:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: Una capacidad contradictoria no adquiere certeza por aparecer en el resumen
+not ok 139 - Una capacidad contradictoria no adquiere certeza por aparecer en el resumen
+  ---
+  duration_ms: 17.232726
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/tests/capacity-editorial-consistency.test.js:31:1'
+  failureType: 'testCodeFailure'
+  error: '4807'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: 'XCMG XGR08 Nueva. Venta de plataforma unipersonal eléctrica de 8 metros de altura. Capacidad de la cesta 200 kg'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/tests/capacity-editorial-consistency.test.js:42:16)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: Las reconciliaciones de capacidad requieren identidad y evidencia técnica exactas
+ok 140 - Las reconciliaciones de capacidad requieren identidad y evidencia técnica exactas
+  ---
+  duration_ms: 0.748201
+  type: 'test'
+  ...
+# Subtest: ERP25VL corrige el título y descripción técnicos desde evidencia de unidad, sin tocar el original
+ok 141 - ERP25VL corrige el título y descripción técnicos desde evidencia de unidad, sin tocar el original
+  ---
+  duration_ms: 17.623237
+  type: 'test'
+  ...
+# Subtest: ERP25VL no reconcilia unidades o evidencias que hayan cambiado
+ok 142 - ERP25VL no reconcilia unidades o evidencias que hayan cambiado
+  ---
+  duration_ms: 0.525444
+  type: 'test'
+  ...
+# Subtest: XGA43K conserva la diferencia entre capacidad sin restricción y capacidad condicionada
+not ok 143 - XGA43K conserva la diferencia entre capacidad sin restricción y capacidad condicionada
+  ---
+  duration_ms: 10.155566
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/tests/capacity-editorial-consistency.test.js:114:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    'review' !== 'ready'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'ready'
+  actual: 'review'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/tests/capacity-editorial-consistency.test.js:118:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: La CTE 18HV corrige el título sin borrar la discrepancia histórica de la descripción
+not ok 144 - La CTE 18HV corrige el título sin borrar la discrepancia histórica de la descripción
+  ---
+  duration_ms: 5.856866
+  type: 'test'
+  location: '/mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/tests/capacity-editorial-consistency.test.js:129:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'Plataforma elevadora sobre camión telescópica CTE B-LIFT 18HD'
+    - 'Plataforma elevadora sobre camión telescópica CTE B-LIFT 18HV'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'Plataforma elevadora sobre camión telescópica CTE B-LIFT 18HV'
+  actual: 'Plataforma elevadora sobre camión telescópica CTE B-LIFT 18HD'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///mnt/data/eqz-phase6/gam-scraper-develop/dist/preparation/tests/capacity-editorial-consistency.test.js:132:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: El filtro numérico de carga no anuncia capacidades condicionadas o contradictorias
+ok 145 - El filtro numérico de carga no anuncia capacidades condicionadas o contradictorias
+  ---
+  duration_ms: 87.243104
+  type: 'test'
+  ...
+1..145
+# tests 145
+# suites 0
+# pass 121
+# fail 24
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12138.311765

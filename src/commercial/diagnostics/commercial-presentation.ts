@@ -5,6 +5,7 @@ import { commercialToken, projectCommercialPresentation } from "../projection/pr
 import type { CommercialMetadata } from "../projection/presentation-projection.js";
 import type { CommercialBaselineInput } from "./commercial-baseline.js";
 import { commercialUnitTitleSuffixes } from "../projection/unit-disambiguation.js";
+import { prepareCommercialEditorialInputs } from "../projection/editorial-inputs.js";
 import { inspectCommercialEditorialQuality, type CommercialEditorialSignal } from "../validation/editorial-quality.js";
 
 type ContentSignal =
@@ -62,7 +63,8 @@ const distinctContent = (published: ImportCandidate, projected: Pick<ImportCandi
 
 export const analyzeCommercialPresentation = (entries: readonly CommercialBaselineInput[]): CommercialPresentationAudit => {
   const decisions: PresentationDecision[] = [];
-  const titleSuffixes = commercialUnitTitleSuffixes(entries);
+  const normalized = prepareCommercialEditorialInputs(entries);
+  const titleSuffixes = commercialUnitTitleSuffixes(normalized);
   const signals = new Map<ContentSignal, { affected: number; examples: string[] }>();
   let excluded = 0;
   let categorized = 0;
@@ -86,7 +88,7 @@ export const analyzeCommercialPresentation = (entries: readonly CommercialBaseli
     if (group.examples.length < 5) group.examples.push(url);
     signals.set(reason, group);
   };
-  for (const { source, published, mapped } of entries) {
+  for (const [index, { source, published, mapped }] of entries.entries()) {
     const decision = decideCommercialCategory(source, mapped.product.categorySellID);
     if (decision.status === "excluded") {
       excluded += 1;
@@ -98,7 +100,9 @@ export const analyzeCommercialPresentation = (entries: readonly CommercialBaseli
     if (decision.status === "proposed") categorized += 1;
     else pendingCategory += 1;
     const categoryName = decision.status === "proposed" ? mapped.product.category : null;
-    const presentation = projectCommercialPresentation(source, published, categoryName,
+    const preparedPublished = normalized[index]?.published;
+    if (!preparedPublished) throw new Error(`Origen editorial no preparado: ${published.sourceUrl}`);
+    const presentation = projectCommercialPresentation(source, preparedPublished, categoryName,
       titleSuffixes.get(published.sourceUrl) ?? "");
     const ownSignals: ContentSignal[] = [];
     const mark = (reason: ContentSignal): void => { ownSignals.push(reason); addSignal(reason, published.sourceUrl); };

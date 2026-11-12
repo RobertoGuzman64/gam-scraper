@@ -1,65 +1,47 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { includeSourceYearInGeneral } from "../mapping/source-year-general.js";
-import { prepareSourceProduct } from "../../../prepare-product.js";
+import { controlledGamForklift, controlledGomarizPlatform, controlledMercaelevaForklift } from "./editorial-contract-records.js";
 
-const providers = ["gam", "gomariz", "mercaeleva"] as const;
-const sources = await Promise.all(providers.map(async (provider) =>
-  readCanonicalCatalog(`catalogs/providers/${provider}/original/scrape-${provider}-catalog.json`)));
+const general = "Información técnica contrastada de la máquina.";
+const apply = (record: ProductRecord): string | null =>
+  includeSourceYearInGeneral(record, general, record.shortDescription, record.specs ?? {});
 
-const find = (provider: typeof providers[number], reference: string): ProductRecord => {
-  const source = sources[providers.indexOf(provider)];
-  const record = source?.products.find((item) => item.reference === reference);
-  assert.ok(record, `${provider}:${reference}`);
-  return record;
-};
-
-const check = (record: ProductRecord): void => {
-  const original = JSON.stringify(record);
-  const prepared = prepareSourceProduct(record);
-  assert.equal(prepared.status, "ready");
-  assert.ok(prepared.product.description_general?.includes(`Año de fabricación de esta unidad: ${record.year}.`));
-  assert.equal(JSON.stringify(record), original);
-};
-
-test("las descripciones recuperan el año de fuente contrastada sin modificar los datos técnicos", () => {
-  for (const [provider, reference] of [
-    ["gam", "6389"], ["gam", "6806"], ["gomariz", "TE1858"],
-    ["mercaeleva", "M062-8951"]
-  ] as const) {
-    const record = find(provider, reference);
-    check(record);
-    const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.product.spec["Año de fabricación"], record.year);
+test("año declarado en ficha: se añade únicamente bajo corroboración de fuente y unidad", () => {
+  const gam = controlledGamForklift();
+  const withGamYear: ProductRecord = { ...gam, year: "2022", yearSource: "ficha",
+    specs: { ...gam.specs, "Año de fabricación": "2022" } };
+  const gomariz = controlledGomarizPlatform();
+  const withGomarizYear: ProductRecord = { ...gomariz, year: "2022",
+    url: "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/plataforma-tijera/marca-modelo10/",
+    shortDescription: "Año 2022", specs: { ...gomariz.specs, "Año de fabricación": "2022" } };
+  const mercaeleva = controlledMercaelevaForklift();
+  const withMercaYear: ProductRecord = { ...mercaeleva, year: "2022",
+    specs: { ...mercaeleva.specs, "Año de fabricación": "2022", Marca: "MARCA", Modelo: "MODELO10" } };
+  for (const source of [withGamYear, withGomarizYear, withMercaYear]) {
+    const before = JSON.stringify(source);
+    assert.equal(apply(source), `${general} Año de fabricación de esta unidad: 2022.`);
+    assert.equal(JSON.stringify(source), before);
   }
 });
 
-test("no incorpora años ambiguos, variantes, fechas de modelo ni fichas en revisión", () => {
-  const gam = find("gam", "6389");
-  const gomariz = find("gomariz", "TE1858");
-  const mercaeleva = find("mercaeleva", "M062-8951");
-  const cases: readonly ProductRecord[] = [
-    { ...gam, year: "2014" },
-    { ...gam, longDescription: `${gam.longDescription ?? ""} Fabricada en 2020.` },
-    { ...gam, url: gam.url.replace("6389-", "9999-") },
-    { ...gomariz, url: gomariz.url.replace("gomarizrent.com", "example.com") },
-    { ...mercaeleva, year: "2024" },
-    { ...mercaeleva, specs: { ...mercaeleva.specs, "Año del modelo": "2025" } },
-    { ...mercaeleva, model: "OTRO" }
+test("años ambiguos, información no corroborada y variantes no autorizadas no generan afirmaciones", () => {
+  const gam = controlledGamForklift();
+  const gomariz = controlledGomarizPlatform();
+  const mercaeleva = controlledMercaelevaForklift();
+  const invalid: readonly ProductRecord[] = [
+    { ...gam, year: "2022", yearSource: "ficha" },
+    { ...gam, year: "2022", yearSource: "ficha", specs: { ...gam.specs, "Año de fabricación": "2021" } },
+    { ...gam, year: "2022", yearSource: "ficha", url: "https://example.invalid/otra" },
+    { ...gam, year: "2022", yearSource: "titulo", specs: { ...gam.specs, "Año de fabricación": "2022" } },
+    { ...gam, year: "año incierto" },
+    { ...gomariz, year: "2022", shortDescription: "Año 2022", specs: { ...gomariz.specs, "Año de fabricación": "2022" } },
+    { ...mercaeleva, year: "2022", specs: { ...mercaeleva.specs, "Año de fabricación": "2022", "Año del modelo": "2023" } },
+    { ...mercaeleva, year: "2022", specs: { ...mercaeleva.specs, "Año de fabricación": "2022", Marca: "OTRA", Modelo: "MODELO10" } }
   ];
-  for (const record of cases) {
-    const source = prepareSourceProduct(record);
-    const general = record.longDescription ?? "Descripción de prueba.";
-    assert.equal(includeSourceYearInGeneral(record, general, record.shortDescription, record.specs ?? {}), general);
-    assert.ok(!source.product.description_general?.includes(`Año de fabricación de esta unidad: ${record.year}.`));
-  }
-  const changedCanonicalYear = { ...gomariz, year: "2021" };
-  const originalGeneral = gomariz.longDescription ?? "Descripción de prueba.";
-  assert.equal(includeSourceYearInGeneral(changedCanonicalYear, originalGeneral, gomariz.shortDescription, gomariz.specs ?? {}), originalGeneral);
-  const reviewed = find("gomariz", "BA1465");
-  const result = prepareSourceProduct(reviewed);
-  assert.equal(result.status, "ready");
-  assert.ok(result.product.description_general?.includes("Año de fabricación de esta unidad: 2022."));
+  for (const [index, source] of invalid.entries()) assert.equal(apply(source), general, String(index));
+  const verified = { ...gam, year: "2022", yearSource: "ficha" as const,
+    specs: { ...gam.specs, "Año de fabricación": "2022" } };
+  assert.equal(includeSourceYearInGeneral(verified, "Descripción del año 2022.", null, verified.specs), "Descripción del año 2022.");
 });

@@ -32,6 +32,19 @@ export const resolveMercaelevaEditorialDomainSource = (record: ProductRecord): E
     liftingHeight: record.specs?.["Altura máxima de elevación"],
     liftingHeightUnit: "m",
     loadCapacity: /\bcarretilla\b/iu.test(familyText) ? record.specs?.["Capacidad máxima de elevación"] : undefined,
+    equipmentHeight: record.specs?.["Altura"],
     motor: record.specs?.["Tipo de motor"]
   };
+};
+
+export const verifiedMercaelevaUnbrandedEditorialSource = (record: ProductRecord): boolean => {
+  if (record.providerId !== "mercaeleva" || !record.reference || record.brand || record.model || !record.title) return false;
+  try {
+    const url = new URL(record.url);
+    const path = url.pathname.split("/").filter(Boolean);
+    return url.protocol === "https:" && url.hostname === "sales.mercaeleva.com" &&
+      !url.search && !url.hash && path[2] === "machine" && path[3] === record.reference;
+  } catch {
+    return false;
+  }
 };

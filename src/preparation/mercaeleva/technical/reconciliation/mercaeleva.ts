@@ -1,7 +1,6 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { inspectTechnicalCoherence } from "../../../../catalog/validation/technical-specifications.js";
 import { mercaelevaCorroboratedCapacity } from "../evidence/handling-evidence.js";
-import { resolveMercaelevaShortDescription } from "../../editorial/mapping/descriptions.js";
 import { reconcileMercaelevaVerifiedUnicarriersCapacity } from "../evidence/unicarriers-used-capacity-evidence.js";
 import { reconcileMercaelevaVerifiedLindeE16pMast } from "../evidence/linde-e16p-duplex-evidence.js";
 import { describeMercaelevaE48pPublicationConflict } from "../evidence/linde-e48p-publication-evidence.js";
