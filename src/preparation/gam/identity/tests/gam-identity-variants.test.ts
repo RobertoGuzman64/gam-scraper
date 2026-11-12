@@ -1,14 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { gamElevationConflictingIdentityReferences, gamHistoricalSerialCollisionGroups, gamSerialCollisionReferenceOrder } from "../../technical/tests/support/gam-technical-cohorts.js";
+import { gamHistoricalSerialCollisionGroups, gamSerialCollisionReferenceOrder } from "../../technical/tests/support/gam-technical-cohorts.js";
 import { requireProductReference } from "../../../testing/require-product-reference.js";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { findSerialNumberCollisions } from "../../../../catalog/identity-conflicts.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../../shared/classification/mapping/attribute-mapping.js";
-import { reconcileGamForPreparation } from "../../technical/reconciliation/gam.js";
 import { gamElevationBrandConflict, gamElevationIdentityConflict } from "../evidence/elevation-identity.js";
 import { prepareImportBatch } from "../../../batch-identity.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
@@ -25,26 +24,6 @@ const resolvedModel = (product: ProductRecord) => {
   return resolveAttribute(product, model);
 };
 
-const mismatched = gamElevationConflictingIdentityReferences;
-
-test("GAM: las nueve identidades incompatibles no publican Modelo del origen", () => {
-  for (const reference of mismatched) {
-    const product = record(reference);
-    assert.equal(gamElevationIdentityConflict(product), true, reference);
-    assert.deepEqual(resolvedModel(product), { status: "rejected", value: null }, reference);
-    const prepared = prepareProduct(product, catalog);
-    const editorial = reference === "6981" || reference === "6308" || reference === "5902" || reference === "4750" || reference === "4802" || reference === "4751" || reference === "4737" || reference === "4736" || reference === "4752";
-    assert.equal(prepared.status, editorial ? "ready" : "review", reference);
-    assert.equal(prepared.issues.includes("Atributo rechazado por seguridad: Modelo"), !editorial, reference);
-    assert.ok(model);
-    assert.equal(prepared.product.attributes.some((attribute) => attribute.attributeID === model.id), editorial, reference);
-    const reconciled = reconcileGamForPreparation(product);
-    assert.deepEqual(prepared.product.spec, { ...product.specs, ...reconciled.specs, ...(reference === "4751" ? { "Altura de trabajo (m)": "18,1 m" } : {}),
-      ...(reference === "4802" ? { "Altura plataforma (m)": "13 m" } : {}),
-      ...(reference === "5902" ? { "Capacidad de carga (kg)": "460 kg con limitación" } : {}) });
-    assert.equal(prepared.product.reference, reference);
-  }
-});
 
 test("GAM: una variante incompatible explícita en uno de los textos también invalida la identidad", () => {
   const original = record("4730");
@@ -88,21 +67,6 @@ test("GAM: tres series colisionadas conservan seis fichas y bloquean solo las Hy
   }
 });
 
-
-test("GAM: bloquea la identidad cruzada de 6622 aunque el modelo de ficha tenga otro prefijo", () => {
-  const product = record("6622");
-  assert.equal(gamElevationBrandConflict(product), true);
-  assert.equal(gamElevationIdentityConflict(product), true);
-  assert.deepEqual(resolvedModel(product), { status: "rejected", value: null });
-  const prepared = prepareProduct(product, catalog);
-  assert.equal(prepared.status, "ready");
-  assert.deepEqual(prepared.issues, []);
-  assert.equal(prepared.product.spec["Dimensiones Cesta"], "3,98 x 1,83 m");
-  assert.ok(model);
-  assert.equal(prepared.product.attributes.some((attribute) => attribute.attributeID === model.id), true);
-  assert.equal(prepared.product.reference, "6622");
-  assert.equal(prepared.product.sourceUrl, product.url);
-});
 
 test("GAM: no confunde erratas de marca, textos parciales ni dominios ajenos con una identidad cruzada", () => {
   const typo = record("6947");

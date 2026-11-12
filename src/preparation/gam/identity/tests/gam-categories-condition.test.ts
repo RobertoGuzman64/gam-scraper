@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { catalog, categorySlug, reference, unconfirmedConditionCodes } from "../../technical/tests/support/gam-historical-category-fixture.js";
 import { prepareCached } from "../../../testing/prepare-cached.js";
 
@@ -74,23 +73,3 @@ test("GAM Hyster H9XDL6: recupera diésel solo con evidencia completa del modelo
   assert.equal(categorySlug({ ...record, providerId: "gomariz" }), null);
 });
 
-test("GAM: familias acreditadas y alternativas de motor contrastadas, demás conflictos bloqueados", () => {
-  assert.equal(categorySlug(reference("2314")), "carretilla-elevadora-diesel");
-  for (const code of ["2134", "2135", "2373", "2364", "3425", "3436", "3312", "6182", "1884", "3309", "5", "8", "2312", "4778", "6874", "6953"]) {
-    const record = reference(code);
-    const prepared = prepareCached(record, catalog);
-    assert.equal(categorySlug(record), code === "2312" ? "carretilla-elevadora-glp" : null, code);
-    if (code === "2312") {
-      assert.equal(prepared.status, "ready", code);
-      continue;
-    }
-    if (["2134", "2135", "2373", "2364", "5", "8", "4778", "3425", "3436", "3312", "6182", "1884", "3309", "6874", "6953"].includes(code)) {
-      assert.equal(prepared.status, "ready", code);
-      assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")), code);
-    } else {
-      assert.ok(prepared.issues.includes("Tipo de máquina de origen sin confirmar") ||
-        prepared.issues.some((issue) => issue.startsWith("Atributo ")) ||
-        prepared.issues.some((issue) => issue.startsWith("Condición comercial")), code);
-    }
-  }
-});

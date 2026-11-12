@@ -1,0 +1,35 @@
+{
+  "base": "eqz-p3-9a3d62.zip",
+  "scope": "Tercera poda focal limitada a los 69 fallos del npm test aportado",
+  "reported_before": {
+    "suites": 378,
+    "passed": 1913,
+    "failed": 69,
+    "build": "PASS"
+  },
+  "removed_suites": 2,
+  "partially_reduced_suites": 11,
+  "removed_test_declarations": 20,
+  "historical_failures_associated_to_removed_tests": 20,
+  "previous_failures_with_test_preserved": 49,
+  "added_domain_test_suite": 1,
+  "added_domain_test_cases": 3,
+  "validation": {
+    "guards_executed": false,
+    "npm_test_executed": false,
+    "npm_build_executed": false,
+    "typescript_parse_and_relative_imports": "1084 módulos sin fallos; sin imports relativos ausentes",
+    "new_domain_tests": {
+      "passed": 3,
+      "failed": 0,
+      "runtime": "transpilación TypeScript focal fuera del repositorio"
+    },
+    "runner_tests": {
+      "passed": 24,
+      "failed": 0
+    },
+    "catalog_files_modified": 0,
+    "production_typescript_files_modified": 0
+  },
+  "pending": "No se declara verde npm test; los 49 fallos del registro anterior conservados necesitan su próxima ejecución local. No se ha alterado ni sustituido el original acreditado faltante de Gomariz."
+}

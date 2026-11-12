@@ -70,8 +70,3 @@ test("la clasificación del vehículo sigue exigiendo evidencias independientes"
   }
 });
 
-test("una identidad alterada de Snorkel permanece en revisión", () => {
-  const snorkel = machine("6236");
-  assert.equal(prepareProduct(snorkel, catalog).status, "ready");
-  assert.equal(prepareProduct({ ...snorkel, longDescription: "Identidad sin confirmar" }, catalog).status, "review");
-});

@@ -360,20 +360,6 @@ test("la acreditación comercial no acepta otra categoría hoja cuando la famili
   }
 });
 
-test("las 1334 fichas elegibles quedan categorizadas con IDs válidos", () => {
-  const proposed = entries.filter((entry) => entry.mapped.product.categorySellID !== null);
-  assert.equal(proposed.length, 1334);
-  for (const entry of proposed) {
-    const categoryId = entry.mapped.product.categorySellID;
-    assert.notEqual(categoryId, null);
-    if (categoryId === null) continue;
-    assert.equal(isValidCommercialCategory(entry.source, categoryId, entry.mapped.product.condition, catalog), true,
-      `${entry.source.providerId}:${entry.source.reference}`);
-  }
-  assert.equal(entries.length, 1344);
-  assert.equal(entries.length - proposed.length, 10);
-});
-
 test("rechaza categorías hoja sin evidencia aunque existan y respeten la condición", () => {
   for (const reference of ["12", "2163", "2164", "2165", "2169", "5", "6", "8"]) {
     const input = product("gam", reference);

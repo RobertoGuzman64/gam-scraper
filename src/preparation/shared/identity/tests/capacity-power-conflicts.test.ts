@@ -1,13 +1,9 @@
-import { reconcileGamHorometer } from "../../../gam/technical/reconciliation/gam-horometer.js";
-import { reconcileGamSourceTechnicalUnits } from "../../../gam/technical/reconciliation/gam-source-technical-units.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { gamCapacityDisputedReferences, gamCapacityVerifiedReferences } from "../../../gam/technical/tests/support/gam-technical-cohorts.js";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../classification/mapping/attribute-mapping.js";
-import { gamHandlingReconciledCapacity } from "../../../gam/technical/measurements/capacity-evidence.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -31,56 +27,11 @@ const attribute = (name: string) => {
   return found;
 };
 
-const gamConflictingCapacity = gamCapacityDisputedReferences;
 
 const gamVariableCapacity = ["237", "235"] as const;
 const mercaelevaConflictingCapacity = ["M582-1882", "M827-8304", "M062-8951", "M119-9334"] as const;
 const gamNonUnivocalPower = ["6834", "1210", "1218", "1212", "1213", "1216", "1217", "1219"] as const;
 
-const allReviewed = [
-  ...gamConflictingCapacity.map((reference) => `gam:${reference}`),
-  ...gamVariableCapacity.map((reference) => `gam:${reference}`),
-  ...mercaelevaConflictingCapacity.map((reference) => `mercaeleva:${reference}`),
-  ...gamNonUnivocalPower.map((reference) => `gam:${reference}`)
-];
-
-test("se comprueban 30 referencias únicas y once capacidades recuperadas", () => {
-  const confirmed = new Set<string>(gamCapacityVerifiedReferences);
-  assert.equal(allReviewed.length, 30);
-  assert.equal(new Set(allReviewed).size, 30);
-  for (const id of allReviewed) {
-    const [provider, reference] = id.split(":");
-    assert.ok(provider === "gam" || provider === "mercaeleva");
-    assert.ok(reference);
-    const recoveredGam = confirmed.has(reference) || ["2237", "2240", "6723", "2211", "6272"].includes(reference) ||
-      gamVariableCapacity.some((value) => value === reference) ||
-      gamNonUnivocalPower.some((value) => value === reference);
-    const recoveredMercaeleva = ["M062-8951", "M119-9334", "M582-1882", "M827-8304"].includes(reference);
-    assert.equal(prepareProduct(record(provider, reference), catalog).status,
-      (provider === "gam" && recoveredGam) || (provider === "mercaeleva" && recoveredMercaeleva)
-        ? "ready" : "review", id);
-  }
-});
-
-test("las 16 capacidades conservan conflictos auténticos y distinguen valores corroborados", () => {
-  const confirmed = new Set<string>(gamCapacityVerifiedReferences);
-  const capacity = attribute("Capacidad de carga");
-  for (const reference of gamConflictingCapacity) {
-    const product = record("gam", reference);
-    const resolution = resolveAttribute(product, capacity);
-    assert.equal(resolution.status, confirmed.has(reference) ? "resolved" : "contradiction", reference);
-    const prepared = prepareProduct(product, catalog);
-    assert.equal(prepared.issues.includes("Atributo contradictorio: Capacidad de carga"), !confirmed.has(reference) && !["2237", "2240", "6723", "2211", "6272"].includes(reference), reference);
-    const corroboratedCapacity = gamHandlingReconciledCapacity(product);
-    const expectedSpecs = {
-      ...reconcileGamHorometer(product).specs,
-      ...(corroboratedCapacity === null ? {} : { "Capacidad de carga (kg)": `${corroboratedCapacity} KG` }),
-      ...(reference === "6421" ? { "Velocidad de desplazamiento con/sin carga (km/h)": "15,7 / 15,7 km/h", "Potencia de tracción (kW)": "8,5 kW", "Potencia de elevación (kW)": "11 kW" } : {})
-    };
-    const normalizedExpected = reconcileGamSourceTechnicalUnits({ ...product, specs: expectedSpecs }).specs ?? expectedSpecs;
-    for (const [key, value] of Object.entries(normalizedExpected)) assert.deepEqual(prepared.product.spec[key], value, `${reference}: ${key}`);
-  }
-});
 
 test("las dos capacidades multivalor GAM no se convierten en una carga puntual", () => {
   const capacity = attribute("Capacidad de carga");

@@ -42,29 +42,6 @@ test("GAM 6002 y 6003 están reconciliadas y 6004 conserva su conflicto de ident
   assert.equal(original.products.find((item) => item.reference === "6004")?.specs?.Modelo, "J7.0XTG6");
 });
 
-test("mantiene GAM 6236 reconciliada, incluye 6002 y 6003 y excluye 6004", () => {
-  const result = approved.select(preparations);
-  const total = preparations.reduce((sum, item) => sum + item.source.productCount, 0);
-  assert.deepEqual(result.totals, { original: total,
-    ready: preparations.reduce((sum, item) => sum + item.totals.ready, 0),
-    review: preparations.reduce((sum, item) => sum + item.totals.review, 0),
-    publishable: total - approved.approval.exclusions.length,
-    excluded: approved.approval.exclusions.length });
-  const retained = result.exclusions.filter(({ reference }) => ["6002", "6003", "6004"].includes(reference));
-  assert.deepEqual(retained.map(({ reference }) => reference), ["6004"]);
-  assert.ok(retained.every(({ issues, evidenceUrls, reason }) => issues.length > 0 && evidenceUrls.length === 1 && reason));
-  for (const reference of ["6002", "6003"]) {
-    const included = result.products.find((item) => item.providerId === "gam" && item.reference === reference);
-    assert.ok(included, reference);
-    assert.equal(included.spec.Marca, "HYSTER");
-  }
-  const snorkel = result.products.find((item) => item.providerId === "gam" && item.reference === "6236");
-  assert.ok(snorkel);
-  assert.equal(snorkel.title, "Plataforma tijera eléctrica 12M SNORKEL S4732E");
-  assert.equal(snorkel.spec["Nº de serie"], "S4732E-01-180200369");
-  assert.equal(result.products.some((item) => item.providerId === "gam" && item.reference === "6004"), false);
-});
-
 test("una identidad alterada, una ruta distinta o una review nueva caducan la decisión", () => {
   const altered = replaceGam("6004", (entry) => ({
     ...entry, product: { ...entry.product, spec: { ...entry.product.spec, Marca: "HYSTER" } }

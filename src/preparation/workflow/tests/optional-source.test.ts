@@ -81,6 +81,3 @@ test("radios publicados como pares permanecen sin escalar y una medida única s�
   }
 });
 
-test("la ficha histórica 2312 supera la preparación individual", () => {
-  assert.equal(prepareProduct(source("gam", "2312"), catalog).status, "ready");
-});

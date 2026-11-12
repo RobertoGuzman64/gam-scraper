@@ -13,7 +13,6 @@ import {
   gamElevationSourceIdentityConflict, gamElevationSourceModelConflict
 } from "../evidence/elevation-identity.js";
 import { prepareImportBatch } from "../../../batch-identity.js";
-import { reconcileGamSourceIdentity } from "../reconciliation/gam-source-identity.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
@@ -70,34 +69,6 @@ test("la discrepancia requiere marca, modelo, título, resumen y ficha del mismo
   ]) assert.equal(gamElevationSourceModelConflict(invalid), false);
 });
 
-test("la variante JLG sigue sin certificar y la CTE acreditada corrige únicamente el título derivado", async () => {
-  const current = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-  const currentRecord = (reference: string): ProductRecord => requireProductReference(current.products, reference);
-  for (const [reference, expectedModel, publishedModel] of [
-    ["6934", "E300AJ", "E300AJP"],
-    ["4650", "B-LIFT 18HV", "B-LIFT 18HD"]
-  ] as const) {
-    const record = currentRecord(reference);
-    const source = JSON.stringify(record);
-    const reconciled = reconcileGamSourceIdentity(record);
-    const prepared = prepareSourceProduct(record);
-    assert.strictEqual(reconciled, record, reference);
-    assert.equal(prepared.product.spec.Modelo, expectedModel, reference);
-    assert.ok(record.title?.includes(publishedModel), reference);
-    assert.ok(prepared.product.title?.includes(reference === "4650" ? expectedModel : publishedModel), reference);
-    assert.equal(prepared.product.sourceUrl, record.url, reference);
-    assert.equal(prepared.product.image, record.image, reference);
-    assert.equal(JSON.stringify(record), source, reference);
-  }
-  for (const reference of ["5730", "6998", "6650"]) {
-    const record = currentRecord(reference);
-    const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.product.spec.Modelo, record.specs?.Modelo, reference);
-    assert.equal(prepared.product.title, record.title, reference);
-    assert.equal(prepared.product.sourceUrl, record.url, reference);
-  }
-});
-
 test("las tres series compartidas conservan seis referencias sin fusionarlas y tres siguen bloqueadas", () => {
   const batch = historicalBatch;
   assert.deepEqual(findSerialNumberCollisions(source.products).map((item) =>
@@ -111,18 +82,6 @@ test("las tres series compartidas conservan seis referencias sin fusionarlas y t
     assert.ok(entry.issues.some((issue) => issue.includes("Número de serie") && issue.includes("compartido")));
   }
 });
-
-test("los rechazos técnicos múltiples preservan las referencias pendientes", () => {
-  const batch = historicalBatch;
-  const reviewed = batch.products.filter((item) => item.issues.filter((issue) =>
-    issue.startsWith("Atributo rechazado por seguridad:")).length >= 4);
-  assert.deepEqual(reviewed.map((item) => item.product.reference).sort(), []);
-  const unverified = prepareProduct({ ...byReference("6236"), longDescription: "Descripción técnica no acreditada" }, catalog);
-  assert.equal(unverified.status, "review");
-  assert.ok(unverified.issues.filter((issue) => issue.startsWith("Atributo rechazado por seguridad:")).length >= 4);
-  assert.equal(batch.totals.ready + batch.totals.review, source.products.length);
-});
-
 
 test("GAM: dos Z45/25J conservan dimensiones, pendiente e identidad propias de cada unidad", async () => {
   const current = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");

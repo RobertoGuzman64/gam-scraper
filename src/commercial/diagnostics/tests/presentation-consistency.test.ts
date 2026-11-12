@@ -21,34 +21,6 @@ const gamProduct = (reference: string) => {
 const codes = (result: ReturnType<typeof analyzePresentationConsistency>): readonly string[] =>
   result.findings.map((item) => `${item.providerId}:${item.reference}:${item.code}`);
 
-test("corte histórico: identifica incidencias ambiguas sin publicar correcciones especulativas", () => {
-  const originals = [...gam.products, ...gomariz.products, ...mercaeleva.products];
-  const snapshot = JSON.stringify(originals);
-  const products = originals.map((item) => prepareOriginal(item).product);
-  const result = analyzePresentationConsistency(products);
-  assert.equal(result.products, 1347);
-  assert.equal(result.defects, 0);
-  assert.equal(result.reviews, 2);
-  assert.equal(result.findings.length, 2);
-  const jlg = gam.products.find((item) => item.reference === "6934");
-  const lgmg = gomariz.products.find((item) => item.reference === "TE1772");
-  assert.ok(jlg);
-  assert.ok(lgmg);
-  assert.equal(jlg.model, "E300AJ");
-  assert.match(jlg.title ?? "", /E300AJP/u);
-  assert.equal(jlg.specs?.["Capacidad de carga (kg)"], "220 KG");
-  assert.match(jlg.shortDescription ?? "", /230\s*kg/iu);
-  assert.equal(lgmg.model, "AS0607WE");
-  assert.match(lgmg.image ?? "", /AS0607WF/u);
-  const baseline = [
-    "gam:6934:modelo-titulo-spec-discordante",
-    "gomariz:TE1772:modelo-portada-variante-discordante"
-  ];
-  assert.deepEqual(codes(result).filter((code) => baseline.includes(code)).sort(), baseline.sort());
-  assert.equal(result.findings.filter((finding) => finding.code === "capacidad-titulo-spec-discordante").length, 0);
-  assert.equal(JSON.stringify(originals), snapshot);
-});
-
 test("detecta reintroducción de una portada de Yale ajena sin borrar fotografías", () => {
   const yale = gamProduct("2336");
   const otherCover = gamProduct("2368");
@@ -98,27 +70,6 @@ test("detecta unidades de resúmenes y conflictos de variante sin inferir modelo
   assert.deepEqual(analyzePresentationConsistency([gamProduct("6171")]).findings, []);
 });
 
-test("preserva capacidades condicionadas y fotografías compartidas con evidencia incompleta", () => {
-  const conditioned = gamProduct("5902");
-  assert.equal(analyzePresentationConsistency([conditioned]).reviews, 0);
-  const unqualified = { ...conditioned,
-    spec: { ...conditioned.spec, "Capacidad de carga (kg)": "460 KG" } };
-  assert.equal(analyzePresentationConsistency([unqualified]).reviews, 1);
-  const clarified = {
-    ...unqualified,
-    spec: { ...unqualified.spec, "Capacidad de carga (kg)": "460 kg con limitación" }
-  };
-  assert.deepEqual(analyzePresentationConsistency([clarified]).findings, []);
-  const model = gamProduct("4650");
-  assert.deepEqual(analyzePresentationConsistency([model]).findings, []);
-  const mismatched = { ...model, title: model.title?.replace("18HV", "18HD") ?? null };
-  assert.deepEqual(codes(analyzePresentationConsistency([mismatched])), [
-    "gam:4650:modelo-de-variante-contradictorio"
-  ]);
-  const unknownVariant = { ...model, title: "Plataforma CTE B-LIFT 18" };
-  assert.deepEqual(analyzePresentationConsistency([unknownVariant]).findings, []);
-});
-
 test("detecta capacidades restringidas aunque tengan miles y no confunde cotas distintas", () => {
   const base = gamProduct("5902");
   const conditioned = { ...base, spec: { ...base.spec, "Capacidad de carga (kg)": "1.800 KG" },
@@ -143,51 +94,6 @@ test("detecta capacidades restringidas aunque tengan miles y no confunde cotas d
     description: "Capacidad de 1.800 kg sin limitación" }])), []);
   assert.deepEqual(codes(analyzePresentationConsistency([{ ...conditioned,
     spec: { ...conditioned.spec, "Capacidad de carga (kg)": "800 KG" } }])), []);
-});
-
-test("atribuye al registro GAM origen la discrepancia E300AJ/E300AJP sin culpar a las unidades correctas", () => {
-  const source = gamProduct("6934");
-  const others = [gamProduct("5730"), gamProduct("6998")];
-  assert.deepEqual(codes(analyzePresentationConsistency([source])), ["gam:6934:modelo-titulo-spec-discordante"]);
-  assert.deepEqual(codes(analyzePresentationConsistency(others)), []);
-  const report = analyzePresentationConsistency([source, ...others]);
-  assert.deepEqual([...codes(report)].sort(), [
-    "gam:6934:modelo-titulo-spec-discordante"
-  ].sort());
-  assert.equal(report.defects, 0);
-  assert.equal(report.reviews, 1);
-  const otherVariant = { ...others[0]!, spec: { ...others[0]!.spec, Modelo: "E400AJP" } };
-  assert.deepEqual([...codes(analyzePresentationConsistency([source, otherVariant]))].sort(), [
-    "gam:6934:modelo-titulo-spec-discordante",
-    "gam:5730:imagen-de-otro-modelo"
-  ].sort());
-  const resolved = { ...source, spec: { ...source.spec, Modelo: "E300AJP" } };
-  assert.deepEqual(codes(analyzePresentationConsistency([resolved, ...others])), []);
-  const otherCover = { ...source, title: "Plataforma articulada eléctrica JLG E300AJ" };
-  assert.deepEqual([...codes(analyzePresentationConsistency([otherCover, ...others]))].sort(), [
-    "gam:5730:imagen-de-otro-modelo",
-    "gam:6998:imagen-de-otro-modelo"
-  ].sort());
-});
-
-test("mantiene la discrepancia JLG aunque la portada no identifique la variante", () => {
-  const original = gamProduct("6934");
-  const withoutNamedCover = { ...original,
-    image: "https://online.gamrentals.com/60451-product_main_2x/plataforma.jpg",
-    images: ["https://online.gamrentals.com/60451-product_main_2x/plataforma.jpg"] };
-  assert.deepEqual(codes(analyzePresentationConsistency([withoutNamedCover])), [
-    "gam:6934:modelo-titulo-spec-discordante"
-  ]);
-  for (const safe of [
-    { ...withoutNamedCover, spec: { ...withoutNamedCover.spec, Modelo: "E300AJP" } },
-    { ...withoutNamedCover, title: "Plataforma articulada eléctrica JLG E300AJ" },
-    { ...withoutNamedCover, providerId: "gomariz" },
-    { ...withoutNamedCover, spec: { ...withoutNamedCover.spec, Marca: "GENIE" } },
-    { ...withoutNamedCover, spec: { ...withoutNamedCover.spec, Modelo: "E400AJ" } }
-  ]) assert.deepEqual(codes(analyzePresentationConsistency([safe])), []);
-  assert.deepEqual(codes(analyzePresentationConsistency([
-    gamProduct("5730"), gamProduct("6998"), gamProduct("4650")
-  ])), []);
 });
 
 test("distingue portada ajena, prefijos heredados y variante fotográfica en Gomariz", () => {

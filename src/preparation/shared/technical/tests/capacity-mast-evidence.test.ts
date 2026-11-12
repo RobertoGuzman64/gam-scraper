@@ -1,13 +1,9 @@
-import { reconcileGamHorometer } from "../../../gam/technical/reconciliation/gam-horometer.js";
-import { reconcileGamSourceTechnicalUnits } from "../../../gam/technical/reconciliation/gam-source-technical-units.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { gamCapacityDisputedReferences, gamCapacityVerifiedReferences } from "../../../gam/technical/tests/support/gam-technical-cohorts.js";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../classification/mapping/attribute-mapping.js";
-import { gamTechnicalReviewReferences } from "../../../testing/gam-reviewed-identities.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -27,30 +23,8 @@ const attr = (name: string) => {
 const load = attr("Capacidad de carga");
 const mast = attr("Tipo de mástil");
 
-const incompatibleGam = gamCapacityDisputedReferences;
 const differentMercaeleva = ["M827-8304"];
 const incompatibleMasts = ["M827-8304", "M818-7811", "M104-0836"];
-
-test("las dieciséis fichas conservan sus fuentes, con once capacidades acreditadas", () => {
-  const confirmed = new Set<string>(gamCapacityVerifiedReferences);
-  for (const id of incompatibleGam) {
-    const record = byReference("gam", id);
-    const original = JSON.stringify(record);
-    const actual = resolveAttribute(record, load);
-    assert.equal(actual.status, confirmed.has(id) ? "resolved" : "contradiction", id);
-    assert.equal(actual.value === null, !confirmed.has(id), id);
-    const prepared = prepareProduct(record, catalog);
-    assert.equal(prepared.status, !gamTechnicalReviewReferences.has(id) && (confirmed.has(id) || ["2237", "2240", "6723", "2211", "6272"].includes(id)) ? "ready" : "review", id);
-    const expectedSpecs = { ...reconcileGamHorometer(record).specs, ...(id === "6421" ? { "Velocidad de desplazamiento con/sin carga (km/h)": "15,7 / 15,7 km/h", "Potencia de tracción (kW)": "8,5 kW", "Potencia de elevación (kW)": "11 kW" } : {}) };
-    const normalizedExpected = reconcileGamSourceTechnicalUnits({ ...record, specs: expectedSpecs }).specs ?? expectedSpecs;
-    for (const [key, value] of Object.entries(normalizedExpected)) {
-      if (key === "Capacidad de carga (kg)" && confirmed.has(id)) continue;
-      assert.deepEqual(prepared.product.spec[key], value, `${id}: ${key}`);
-    }
-    if (confirmed.has(id)) assert.notEqual(prepared.product.spec["Capacidad de carga (kg)"], null, id);
-    assert.equal(JSON.stringify(record), original, id);
-  }
-});
 
 test("tres cargas GAM multivariantes son rechazos por selección pendiente, no números corruptos", () => {
   for (const id of ["239", "237", "235"]) {

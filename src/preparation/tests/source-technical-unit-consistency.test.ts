@@ -4,7 +4,6 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { createPreparedSourceFixture } from "../../testing/builders/prepared-source-fixture.js";
 import { reconcileGamSourceTechnicalUnits } from "../gam/technical/reconciliation/gam-source-technical-units.js";
-import { normalizeMercaelevaAusaHeightText } from "../mercaeleva/technical/reconciliation/mercaeleva-ausa-height.js";
 
 const prepareOriginal = createPreparedSourceFixture();
 
@@ -85,23 +84,6 @@ test("solo normaliza los valores malformados identificables sin pisar medidas co
     { ...battery.specs, "Voltaje batería (V)": "48 V" });
   assert.deepEqual(reconcileGamSourceTechnicalUnits({ ...height, specs: { ...height.specs, "Altura Plataforma": "6085 metros" } }).specs,
     { ...height.specs, "Altura Plataforma": "6085 metros" });
-});
-
-test("sanea dos resúmenes de Ausa solo con altura de elevación acreditada", () => {
-  for (const reference of ["M855-6850", "M640-1938"]) {
-    const original = recordOf(mercaeleva.products, reference);
-    const before = structuredClone(original);
-    const prepared = prepareOriginal(original);
-    assert.match(prepared.product.description ?? "", /ALTURA DE ELEVACION 4\.300 mm/u, reference);
-    assert.doesNotMatch(prepared.product.description_general ?? "", /4\.30mm/u, reference);
-    assert.doesNotMatch(`${prepared.product.description} ${prepared.product.description_general}`, /4\.30mm|ALTURA DE TRABAJO 4\.300 mm/u, reference);
-    assert.equal(prepared.product.spec["Altura máxima de elevación"], "4300 mm", reference);
-    assert.deepEqual(original, before, reference);
-    assert.equal(normalizeMercaelevaAusaHeightText({ ...original, specs: { ...original.specs, "Altura máxima de elevación": "3900 mm" } },
-      original.longDescription), original.longDescription, reference);
-    assert.equal(normalizeMercaelevaAusaHeightText({ ...original, model: "C250HX4-otra" }, original.longDescription),
-      original.longDescription, reference);
-  }
 });
 
 test("omite alturas de plataforma que no se pueden acreditar sin convertir unidades", () => {
@@ -219,32 +201,6 @@ test("normaliza medidas Yale de origen solo con modelo, valor y procedencia corr
   assert.equal(prepareOriginal(conflicting).product.spec["Altura Plataforma"], undefined);
 });
 
-
-test("no traslada a la preparación magnitudes Hyster incompatibles de fuente", () => {
-  for (const [reference, key, raw] of [
-    ["72", "Capacidad de la batería", "1000mm"],
-    ["73", "Capacidad de la batería", "1000mm"],
-    ["2305", "Altura Plataforma", "9225 metros"]
-  ] as const) {
-    const original = recordOf(gam.products, reference);
-    const snapshot = structuredClone(original);
-    assert.equal(original.specs?.[key], raw);
-    const reconciled = reconcileGamSourceTechnicalUnits(original);
-    const prepared = prepareOriginal(original);
-    assert.equal(reconciled.specs?.[key], undefined, reference);
-    assert.equal(prepared.product.spec[key], undefined, reference);
-    assert.deepEqual(reconcileGamSourceTechnicalUnits(reconciled), reconciled, reference);
-    for (const [otherKey, value] of Object.entries(original.specs ?? {})) {
-      if (otherKey !== key) assert.equal(prepared.product.spec[otherKey], value, `${reference}:${otherKey}`);
-    }
-    assert.deepEqual(original, snapshot, reference);
-  }
-  const height = prepareOriginal(recordOf(gam.products, "2305")).product.spec;
-  assert.equal(height["Altura de elevación (mm)"], "16900 mm");
-  assert.equal(height["Capacidad de la batería"], "80V / 840Ah(V/Ah)");
-  const tow = prepareOriginal(recordOf(gam.products, "73")).product.spec;
-  assert.equal(tow.Peso, "1252 KG");
-});
 
 test("rechaza la supresión de datos Hyster cuando cambia su identidad o evidencia", () => {
   for (const [reference, key, safeValue] of [

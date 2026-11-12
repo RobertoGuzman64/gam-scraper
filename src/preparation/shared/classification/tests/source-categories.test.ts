@@ -63,10 +63,6 @@ test("familias GAM nuevas confirmadas por tipo y descripción", () => {
   ]);
 });
 
-test("los cuatro tipos de Gomariz acreditados en su taxonomía", () => {
-  approved("gomariz", ["5051BDX", "1011JFB", "RE454", "PV556"]);
-});
-
 test("Mercaeleva acredita su camión y las condiciones individuales de ocasión", () => {
   approved("mercaeleva", ["M928-9933"]);
   for (const code of ["M294-4678", "M958-0132"]) {

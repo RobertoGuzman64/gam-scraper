@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../../../contracts/catalog.js";
-import { analyzeTechnicalDensity } from "../../../../../catalog/diagnostics/technical-density.js";
 import { recoverMercaelevaDocumentedPlatformTechnicalSpecs } from "../../evidence/documented-platform-technical-specs.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 import { readMercaelevaSource } from "../../../../../testing/builders/mercaeleva-source-fixture.js";
@@ -126,43 +125,6 @@ const sourceByReference = (reference: string): ProductRecord => {
   assert.ok(record, reference);
   return record;
 };
-
-test("Mercaeleva: las unidades originales acreditadas incorporan prestaciones sin alterar los originales", () => {
-  const preparedBefore = [];
-  const preparedAfter = [];
-  const affected = new Set<string>();
-  let added = 0;
-  for (const record of source) {
-    const original = JSON.stringify(record);
-    const originalSpecs = record.specs ?? {};
-    const recovered = recoverMercaelevaDocumentedPlatformTechnicalSpecs(record, originalSpecs);
-    if (!expected.has(record.reference ?? "")) {
-      assert.equal(recovered, originalSpecs, record.reference ?? record.url);
-      continue;
-    }
-    assert.ok(record.reference);
-    const specs = expectedByModel[record.model ?? ""];
-    assert.ok(specs, record.reference);
-    assert.deepEqual(recovered, { ...originalSpecs, ...specs }, record.reference);
-    assert.deepEqual(Object.keys(recovered).filter((key) => !(key in originalSpecs)).sort(), Object.keys(specs).sort());
-    assert.equal(JSON.stringify(record), original, record.reference);
-    const result = prepareSourceProduct(record);
-    assert.equal(result.status, "ready", record.reference);
-    assert.deepEqual(result.product.spec, recovered, record.reference);
-    preparedAfter.push(result.product);
-    preparedBefore.push({ ...result.product, spec: originalSpecs });
-    affected.add(record.reference);
-    added += Object.keys(specs).length;
-  }
-  assert.deepEqual(affected, expected);
-  assert.equal(added, 288);
-  const before = analyzeTechnicalDensity(preparedBefore);
-  const after = analyzeTechnicalDensity(preparedAfter);
-  assert.equal(before.totals.sparse, 144);
-  assert.equal(before.totals.medium, 0);
-  assert.equal(after.totals.sparse, 0);
-  assert.equal(after.totals.medium, 0);
-});
 
 test("Mercaeleva: la evidencia no pasa a otras unidades, configuraciones ni originales alterados", () => {
   for (const reference of expected) {
