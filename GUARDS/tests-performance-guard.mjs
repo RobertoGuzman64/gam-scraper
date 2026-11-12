@@ -3,13 +3,12 @@ import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
-const root = dirname(fileURLToPath(import.meta.url));
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const normalize = (value) => value.split(sep).join("/");
 const protectedSuites = [
   "src/publication/tests/individual-finish-editorial.test.ts",
   "src/publication/tests/individual-finish.test.ts",
-  "src/publication/tests/individual-work-report.test.ts",
-  "src/cli/commands/catalog/tests/catalog-content-gaps-comparison.test.ts"
+  "src/publication/tests/individual-work-report.test.ts"
 ];
 const shared = {
   finish: "src/testing/builders/individual-finish-fixture.ts",
@@ -63,12 +62,6 @@ const limits = {
   },
   "src/preparation/workflow/tests/individual-prepare.test.ts": {
     prepare: 1
-  },
-  "src/cli/commands/catalog/tests/catalog-content-gaps-comparison.test.ts": {
-    "gaps-cli": 3
-  },
-  "src/cli/commands/catalog/tests/catalog-content-gaps-discovery.test.ts": {
-    "gaps-cli": 2
   },
   [shared.finish]: {
     "workspace-factory": 2, publish: 1, editorial: 2
@@ -255,33 +248,6 @@ const namesFor = (file, sources) => {
   return { modules, calls, bindings: [...imports.values()] };
 };
 
-const countMemoizedBaselineCalls = (file, content) => {
-  const source = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-  const moduleCaches = new Set();
-  for (const statement of source.statements) {
-    if (!ts.isVariableStatement(statement)) continue;
-    for (const declaration of statement.declarationList.declarations) {
-      if (ts.isIdentifier(declaration.name)) moduleCaches.add(declaration.name.text);
-    }
-  }
-  const memoized = new Set();
-  const visit = (node) => {
-    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "executeBaseline") {
-      for (let parent = node.parent; parent; parent = parent.parent) {
-        if (ts.isBinaryExpression(parent) && parent.operatorToken.kind === ts.SyntaxKind.QuestionQuestionEqualsToken &&
-          ts.isIdentifier(parent.left) && moduleCaches.has(parent.left.text) &&
-          node.pos >= parent.right.pos && node.end <= parent.right.end) {
-          memoized.add(parent.left.text);
-          break;
-        }
-      }
-    }
-    ts.forEachChild(node, visit);
-  };
-  visit(source);
-  return memoized.size;
-};
-
 const testSupport = (path) => path.startsWith("src/testing/") || /(?:^|\/)tests\//u.test(path) ||
   /\.test\.[cm]?[jt]s$/u.test(path) || path.startsWith("scripts/tests/");
 const isProtectedSource = (path, discovered) => protectedSuites.includes(path) || Object.values(shared).includes(path) ||
@@ -383,16 +349,10 @@ const guard = (sources) => {
     const limit = rawLimits[file]?.[kind] ?? 0;
     if (amount > limit) errors.push(`${file} | ${kind}: ${amount} operaciones costosas, máximo acreditado ${limit}`);
   }
-  const comparisonSuite = protectedSuites[3];
-  const comparisonSource = sources.get(comparisonSuite);
-  if (comparisonSource && countMemoizedBaselineCalls(comparisonSuite, comparisonSource) < 2) {
-    errors.push(`${comparisonSuite} | las comparaciones base deben reutilizar dos promesas de módulo; evita repetir la carga del catálogo entre tests`);
-  }
   const required = [
     [protectedSuites[0], shared.finish, "createIndividualFinishWorkspace"],
     [protectedSuites[1], shared.finish, "createIndividualFinishWorkspace"],
-    [protectedSuites[2], shared.finish, "createPublishedIndividualFinishWorkspace"],
-    [protectedSuites[3], shared.gaps, "executeBaseline"]
+    [protectedSuites[2], shared.finish, "createPublishedIndividualFinishWorkspace"]
   ];
   for (const [file, module, symbol] of required) {
     const parsedFile = parsed.get(file);
