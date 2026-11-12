@@ -39,7 +39,7 @@ test("prepara borrador de selección sin aprobaciones automáticas", () => {
   assert.ok(draft.exclusions.some((item) => item.providerId === "gam" && item.reference === "6004"));
   assert.ok(draft.exclusions.every((item) => item.providerId !== "gam" || !["6002", "6003"].includes(item.reference)));
   assert.ok(draft.exclusions.every((item) => item.decision === null && item.reason === null));
-  assert.throws(() => selectAccreditedPublishable(preparations, sources, runId, draft, sha256(JSON.stringify(draft))), /aprobación ausente/);
+  assert.throws(() => selectAccreditedPublishable(preparations, sources, runId, draft, sha256(JSON.stringify(draft))), /aprobación ausente|decisión ausente o caducada/);
 });
 
 test("selecciona solo ready sin contradicciones acreditadas y conserva imágenes originales", () => {
@@ -90,7 +90,7 @@ test("bloquea una revisión nueva no acreditada", () => {
       ? { ...entry, status: "review" as const, issues: ["Identidad no acreditada"] }
       : entry)
   });
-  assert.throws(() => selectAccreditedPublishable(changed, sources, runId, approved, sha256(JSON.stringify(approved))), /aprobación ausente/);
+  assert.throws(() => selectAccreditedPublishable(changed, sources, runId, approved, sha256(JSON.stringify(approved))), /aprobación ausente|decisión ausente o caducada/);
 });
 
 test("una ficha intervenida y lista exige aprobación individual antes de incluirse", () => {

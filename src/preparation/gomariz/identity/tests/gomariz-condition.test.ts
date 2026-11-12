@@ -35,7 +35,8 @@ test("Gomariz: la procedencia verificada de venta de ocasión permite resolver c
   assert.ok(!prepared.issues.some((issue) => issue.includes("Tipo de máquina de origen sin confirmar")));
   assert.equal(prepared.product.price, null);
   assert.ok(!prepared.issues.some((issue) => issue.startsWith("Precio ")));
-  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.status, "review");
+  assert.ok(prepared.issues.includes("Cobertura editorial insuficiente: descripción corta"));
   assert.ok(prepared.importIssues?.excel.includes("Precio ausente o inválido"));
   assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Descripción corta ausente: ")));
 });
@@ -74,6 +75,6 @@ test("Gomariz: una familia sin motor inequívoco conserva categoría pendiente",
   }, catalog);
   assert.equal(ambiguous.product.condition, "Segunda_Mano");
   assert.equal(ambiguous.product.categorySellID, null);
-  assert.equal(ambiguous.status, "ready");
+  assert.equal(ambiguous.status, "review");
   assert.ok(ambiguous.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")));
 });

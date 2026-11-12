@@ -32,14 +32,14 @@ test("una ruta diferente caduca la decisión que aprobó la fuente exacta", () =
       ? { ...entry, product: { ...entry.product, sourceUrl: entry.product.sourceUrl.replace(
         "/carretillas-elevadoras-electricas-hyster/", "/carretillas-elevadoras-diesel-hyster/") } }
       : entry) });
-  assert.throws(() => approved.select(changed), /decisión ausente|aprobación ausente/);
+  assert.throws(() => approved.select(changed), /decisión ausente|aprobación ausente|decisión ausente o caducada/);
   const alternate = preparations.map((preparation) => preparation.source.providerId !== "gam"
     ? preparation
     : { ...preparation, products: preparation.products.map((entry) => entry.product.reference === "6004"
       ? { ...entry, product: { ...entry.product, sourceUrl: entry.product.sourceUrl.replace(
         "/carretillas-elevadoras-electricas-hyster/", "/hyster/") } }
       : entry) });
-  assert.throws(() => approved.select(alternate), /decisión ausente|aprobación ausente/);
+  assert.throws(() => approved.select(alternate), /decisión ausente|aprobación ausente|decisión ausente o caducada/);
 });
 
 test("la aprobación no permite mezclar el origen ni añadir reviews sin decisión", () => {
@@ -53,7 +53,7 @@ test("la aprobación no permite mezclar el origen ni añadir reviews sin decisi�
       ? { ...entry, status: "review" as const, issues: ["Altura no acreditada"] }
       : entry)
   });
-  assert.throws(() => approved.select(changed), /aprobación ausente/);
+  assert.throws(() => approved.select(changed), /aprobación ausente|decisión ausente o caducada/);
 });
 
 test("galerías y descripciones son parte de la huella de preparación, no evidencia reutilizable", () => {

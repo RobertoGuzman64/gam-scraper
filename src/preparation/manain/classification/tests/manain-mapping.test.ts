@@ -57,7 +57,8 @@ test("Manain: condición y motorización contradictorias se retienen sin elegir 
   const motor = prepareProduct({ ...usedScissor, specs: { ...usedScissor.specs, Motor: "Eléctrico" } }, catalog);
   assert.equal(motor.product.categorySellID, null);
   assert.ok(!motor.product.attributes.some((entry) => entry.attributeID === attribute("Altura de trabajo").id));
-  assert.equal(motor.status, "ready");
+  assert.equal(motor.status, "review");
+  assert.ok(motor.issues.includes("Cobertura editorial insuficiente: descripción general"));
 
   const absent = { ...usedScissor, specs: { "Nueva o usada": "usada" }, shortDescription: "" };
   assert.equal(prepareProduct(absent, catalog).product.categorySellID, null);
@@ -80,7 +81,8 @@ test("Manain: el generador conserva la categoría documental y normaliza solo po
   const contaminated = prepareProduct({ ...source,
     shortDescription: "Plataforma de brazo articulado diésel de 18,19m de altura de trabajo." }, catalog);
   assert.equal(contaminated.product.categorySellID, null);
-  assert.equal(contaminated.status, "ready");
+  assert.equal(contaminated.status, "review");
+  assert.ok(contaminated.issues.includes("Cobertura editorial insuficiente: descripción general"));
 });
 
 test("Manain: los atributos y los destinos no se extrapolan a proveedores ni rutas no acreditados", () => {
@@ -202,7 +204,7 @@ test("Manain: horas enteras serializadas con cuatro decimales se validan contra 
   const resolved = resolveAttribute(hours, attribute("Horas de uso"));
   assert.equal(resolved.status, "resolved");
   assert.equal(resolved.value, 3916);
-  assert.equal(prepareProduct(hours, catalog).status, "ready");
+  assert.equal(prepareProduct(hours, catalog).status, "review");
   assert.equal(resolveAttribute({ ...hours, horometer: "3915.0000" }, attribute("Horas de uso")).status, "contradiction");
   const fractional = { ...hours, horometer: "3916.0001", specs: { ...hours.specs, Horas: "3916.0001" } };
   assert.equal(resolveAttribute(fractional, attribute("Horas de uso")).status, "invalid");
@@ -214,11 +216,11 @@ test("Manain: generadores de ruta catalana y unidad kVA repetida conservan poten
   }, "");
   const prepared = prepareProduct(source, catalog);
   assert.equal(category(prepared.product.categorySellID), "grupos-electrogenos-segunda-mano");
-  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.status, "review");
   const doubled = { ...source, url: "https://manain.com/producto/venta-energia-grupo-electrogeno-inmesol-iir-165/",
     specs: { ...source.specs, Potencia: "150kva kva" } };
   assert.equal(resolveAttribute(doubled, attribute("Potencia")).value, 150);
-  assert.equal(prepareProduct(doubled, catalog).status, "ready");
+  assert.equal(prepareProduct(doubled, catalog).status, "review");
   const contradictoryUnit = { ...doubled, specs: { ...doubled.specs, Potencia: "150kva kw" } };
   assert.equal(resolveAttribute(contradictoryUnit, attribute("Potencia")).status, "invalid");
 });
@@ -231,12 +233,12 @@ test("Manain: pesos con cuatro decimales acreditados no se confunden con miles",
   assert.equal(resolveAttribute(tool, attribute("Peso operativo")).value, 5.5);
   assert.equal(resolveAttribute(tool, attribute("Peso")).value, 5.5);
   assert.ok(!prepareProduct(tool, catalog).issues.some((issue) => issue.includes("Peso")));
-  assert.equal(prepareProduct(tool, catalog).status, "ready");
+  assert.equal(prepareProduct(tool, catalog).status, "review");
   assert.equal(prepareProduct(tool, catalog).product.categorySellID, null);
   const unmeasured = { ...tool, specs: { ...tool.specs, Peso: "kg" } };
   assert.deepEqual(resolveAttribute(unmeasured, attribute("Peso")), { status: "not_observed", value: null });
   assert.deepEqual(resolveAttribute(unmeasured, attribute("Peso operativo")), { status: "not_observed", value: null });
-  assert.equal(prepareProduct(unmeasured, catalog).status, "ready");
+  assert.equal(prepareProduct(unmeasured, catalog).status, "review");
   assert.equal(prepareProduct(unmeasured, catalog).product.spec.Peso, "kg");
   assert.equal(resolveAttribute({ ...unmeasured, providerId: "gam" }, attribute("Peso")).status, "invalid");
   for (const peso of ["5.2340 kg", "5.2000 mm", "5.2000-6 kg"]) {
@@ -252,7 +254,7 @@ test("Manain: disponibilidad de elevación libre sin medida no se interpreta com
   }, "");
   assert.deepEqual(resolveAttribute(source, attribute("Elevación libre")), { status: "not_observed", value: null });
   const prepared = prepareProduct(source, catalog);
-  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.status, "review");
   assert.equal(prepared.product.spec["Elevacion libre"], "si");
   const measured = { ...source, specs: { ...source.specs, "Elevación libre (mm)": "1500 mm" } };
   assert.equal(resolveAttribute(measured, attribute("Elevación libre")).value, 1500);

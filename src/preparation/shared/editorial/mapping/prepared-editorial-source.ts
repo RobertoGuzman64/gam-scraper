@@ -15,11 +15,22 @@ import { resolveVerifiedTechnicalBrief } from "../domain/editorial-technical-bri
 const sourceHeightConflict = (record: ProductRecord): boolean => {
   const additional = record.specs?.["Título adicional"];
   const height = record.specs?.["Altura de trabajo"];
-  if (typeof additional !== "string" || typeof height !== "string") return false;
-  const titled = /\b(?:PLATAFORMA|BRAZO)\s+(?:ARTICULADA|TELESCOPICA|TIJERA)\s+(?:ELECTRICA|DIESEL)\s+(\d+(?:[.,]\d+)?)\s*MT\b/iu.exec(additional);
-  const measured = /^(\d+(?:[.,]\d+)?)\s*m$/iu.exec(height.trim());
-  return titled?.[1] !== undefined &&
-    (measured?.[1] === undefined || Number(titled[1].replace(",", ".")) !== Number(measured[1].replace(",", ".")));
+  const measured = typeof height === "string" ? /^(\d+(?:[.,]\d+)?)\s*m$/iu.exec(height.trim()) : null;
+  if (typeof additional === "string" && typeof height === "string") {
+    const titled = /\b(?:PLATAFORMA|BRAZO)\s+(?:ARTICULADA|TELESCOPICA|TIJERA)\s+(?:ELECTRICA|DIESEL)\s+(\d+(?:[.,]\d+)?)\s*MT\b/iu.exec(additional);
+    if (titled?.[1] !== undefined &&
+      (measured?.[1] === undefined || Number(titled[1].replace(",", ".")) !== Number(measured[1].replace(",", ".")))) return true;
+  }
+  const explicit = (text: string | null): number | null => {
+    const match = /\baltura\s+de\s+trabajo\s+(?:de\s+)?(\d+(?:[.,]\d+)?)\s*(?:m|mt|metros?)\b/iu.exec(text ?? "");
+    return match?.[1] === undefined ? null : Number(match[1].replace(",", "."));
+  };
+  const title = explicit(record.title);
+  const general = explicit(record.longDescription);
+  const publishedHeight = measured?.[1] === undefined ? null : Number(measured[1].replace(",", "."));
+  if (general !== null && publishedHeight !== null && general !== publishedHeight) return true;
+  return title !== null && (general !== null && title !== general ||
+    publishedHeight !== null && title !== publishedHeight);
 };
 
 export const resolvePreparedEditorialSource = (

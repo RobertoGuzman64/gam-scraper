@@ -57,10 +57,11 @@ test("las variantes de motor no acreditan una configuración particular ni admit
     assert.equal(sourceCategoryQualityIssue({ ...record, longDescription: "Equipo industrial sin identidad acreditada" }), SOURCE_CATEGORY_ISSUE, reference);
     assert.equal(sourceCategoryQualityIssue({ ...record, url: record.url.replace("/carretillas-elevadoras-diesel-hyster/", "/carretillas-elevadoras-electricas-hyster/") }), SOURCE_CATEGORY_ISSUE, reference);
   }
-  assert.equal(prepareProduct(source("2071"), catalog).status, "ready");
-  assert.equal(prepareProduct(source("2314"), catalog).status, "ready");
-  assert.equal(prepareProduct(source("2313"), catalog).status, "ready");
-  assert.equal(prepareProduct(source("2312"), catalog).status, "ready");
+  for (const reference of ["2071", "2314", "2313", "2312"]) {
+    const result = prepareProduct(source(reference), catalog);
+    assert.equal(result.status, "review", reference);
+    assert.ok(result.issues.some((issue) => issue.startsWith("Motorización contradictoria")), reference);
+  }
 });
 
 test("vehículos, cuatriciclo, accesorio y equipo combinado requieren evidencia independiente", () => {

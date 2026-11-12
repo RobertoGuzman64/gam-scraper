@@ -256,7 +256,7 @@ test("validate presenta motivos y referencias sin modificar la elegibilidad ni e
     await runPreflight(["mercaeleva", "--out", dir, "--prefix", "lote"]);
     const output = lines.join("\n");
     assert.equal(process.exitCode, 2);
-    assert.match(output, /Productos: 3 \| Calidad ready: 3 \| Calidad review: 0 \| Importables create\/many: 2 \| Bloqueados: 1 \| Posibles bajas: 0/);
+    assert.match(output, /Productos: 3 \| Calidad ready: 2 \| Calidad review: 1 \| Importables create\/many: 2 \| Bloqueados: 1 \| Posibles bajas: 0/);
     assert.doesNotMatch(output, /Precio no disponible o inválido/);
     assert.match(output, /Aviso: 1 productos no elegibles para create\/many/);
     lines.length = 0;

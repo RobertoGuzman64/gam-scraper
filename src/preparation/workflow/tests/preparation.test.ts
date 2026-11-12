@@ -43,15 +43,15 @@ test("preparación conserva la descripción corta publicada aunque falte o coinc
   const longOnly = prepareProduct({ ...base, shortDescription: null }, catalog);
   assert.equal(longOnly.product.description, null);
   assert.equal(longOnly.product.description_general, base.longDescription);
-  assert.equal(longOnly.status, "ready");
-  assert.deepEqual(longOnly.issues, []);
+  assert.equal(longOnly.status, "review");
+  assert.ok(longOnly.issues.includes("Cobertura editorial insuficiente: descripción corta"));
   assert.ok(longOnly.importIssues?.createMany.some((issue) => issue.includes("backend exige una descripción corta")));
 
   const shortOnly = prepareProduct({ ...base, longDescription: null }, catalog);
   assert.equal(shortOnly.product.description, base.shortDescription);
   assert.equal(shortOnly.product.description_general, null);
-  assert.equal(shortOnly.status, "ready");
-  assert.deepEqual(shortOnly.issues, []);
+  assert.equal(shortOnly.status, "review");
+  assert.ok(shortOnly.issues.includes("Cobertura editorial insuficiente: descripción general"));
 });
 
 test("la categoría genérica venta no se asigna arbitrariamente", async () => {
@@ -93,8 +93,9 @@ test("precio, imágenes y descripción inválidos requieren revisión; no se inv
   assert.deepEqual(record.product.images, []);
   assert.equal(record.product.description, null);
   assert.ok(!record.issues.some((issue) => issue.startsWith("Precio ")));
-  assert.equal(record.status, "ready");
-  assert.deepEqual(record.issues, []);
+  assert.equal(record.status, "review");
+  assert.ok(record.issues.includes("Cobertura editorial insuficiente: descripción corta"));
+  assert.ok(record.issues.includes("Cobertura editorial insuficiente: descripción general"));
   assert.ok(record.importIssues?.createMany.includes("URL de imagen ausente o inválida"));
   assert.ok(record.importIssues?.createMany.includes("Descripción ausente"));
 });

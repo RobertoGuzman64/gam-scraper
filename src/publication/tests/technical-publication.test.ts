@@ -11,7 +11,7 @@ import { parseTechnicalSnapshot } from "../technical-snapshot.js";
 import { prepareImportBatch } from "../../preparation/prepare.js";
 import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation/preparation-inputs.js";
 import { offlinePreparationManifest } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readCanonicalCatalog, writeCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { buildProductIdentity } from "../../catalog/identity.js";
 import type { OfflinePreparation } from "../../preparation/offline-document.js";
 import { buildManainRecord } from "../../preparation/workflow/manain-record.js";
@@ -33,6 +33,16 @@ const workspace = async (): Promise<{ root: string; preparation: string }> => {
   const source = join(root, "source");
   await mkdir(source);
   for (const name of originals) await copyFile(join(fixture, name), join(source, name));
+  const sourceCatalog = await readCanonicalCatalog(join(source, originals[0]));
+  const sourceHash = await writeCanonicalCatalog(source, sourceCatalog.prefix, sourceCatalog.scope,
+    sourceCatalog.startedAt, sourceCatalog.endedAt, sourceCatalog.products.map((product) => ({
+      ...product,
+      shortDescription: product.shortDescription?.trim() || product.title,
+      longDescription: product.longDescription?.trim() || product.title
+    })));
+  const summaryPath = join(source, originals[2]);
+  const summary: { artifacts: { catalogSha256: string } } = JSON.parse(await readFile(summaryPath, "utf8"));
+  await writeFile(summaryPath, JSON.stringify({ ...summary, artifacts: { ...summary.artifacts, catalogSha256: sourceHash } }));
   await consolidatePortableOriginal(root, join(source, originals[0]));
   const originalFile = join(root, "catalogs", "providers", "gomariz", "original", originals[0]);
   const canonical = await readCanonicalCatalog(originalFile);

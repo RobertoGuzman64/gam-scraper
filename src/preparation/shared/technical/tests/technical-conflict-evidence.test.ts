@@ -38,7 +38,7 @@ test("las contradicciones técnicas pendientes mantienen su bloqueo y su causa",
     const prepared = prepareProduct(record, catalog);
     assert.equal(resolution.status, entry.status, `${entry.provider}:${entry.reference}`);
     assert.equal(resolution.value, entry.reference === "4004" ? 800 : null, `${entry.provider}:${entry.reference}`);
-    const resolvedInPreparation = ["3134", "6702", "5275", "5864", "6887", "4004", "M104-0836"].includes(entry.reference);
+    const resolvedInPreparation = ["4004", "M104-0836"].includes(entry.reference);
     assert.equal(prepared.status, resolvedInPreparation ? "ready" : "review", `${entry.provider}:${entry.reference}`);
     assert.equal(prepared.issues.includes(entry.issue), !resolvedInPreparation, `${entry.provider}:${entry.reference}`);
   }
@@ -48,9 +48,10 @@ test("la altura comercial restante mantiene separado el valor técnico de la des
   const record = source("M486-0114", "mercaeleva");
   assert.deepEqual(resolveAttribute(record, attribute("Altura de trabajo")), { status: "resolved", value: 16 });
   const prepared = prepareProduct(record, catalog);
-  assert.equal(prepared.status, "ready");
-  assert.equal(prepared.issues.length, 0);
-  assert.match(prepared.product.description ?? "", /altura de trabajo 16 mt/i);
+  assert.equal(prepared.status, "review");
+  assert.ok(prepared.issues.includes("Descripción comercial contradictoria: altura de trabajo"));
+  assert.doesNotMatch(prepared.product.description ?? "", /16 m/i);
+  assert.equal(prepared.product.spec["Altura de trabajo"], "16 m");
 });
 
 test("una pareja de radios Yale no se convierte en medida única", () => {

@@ -30,8 +30,9 @@ const plans = (source: ProductRecord) => {
 test("ausencias de atributo, descripción e imagen no degradan calidad y sí bloquean los dos receptores", () => {
   const { prepared, excel, createMany } = plans({ ...record, shortDescription: null, longDescription: null,
     image: null, images: [], specs: { "Altura de trabajo": "N/D" } });
-  assert.equal(prepared.status, "ready");
-  assert.deepEqual(prepared.issues, []);
+  assert.equal(prepared.status, "review");
+  assert.ok(prepared.issues.includes("Cobertura editorial insuficiente: descripción corta"));
+  assert.ok(prepared.issues.includes("Cobertura editorial insuficiente: descripción general"));
   assert.equal(prepared.product.attributes.some((attr) => attr.attributeID === 1), false);
   for (const receiver of [prepared.importIssues?.excel, prepared.importIssues?.createMany]) {
     assert.ok(receiver?.includes("Atributo obligatorio ausente: Altura de trabajo"));

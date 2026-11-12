@@ -57,8 +57,9 @@ test("Mercaeleva: la ficha conserva precio, galería y técnica y recupera descr
   assert.equal(prepared.product.price, 20500);
   assert.equal(prepared.product.condition, "Segunda_Mano");
   assert.deepEqual(prepared.product.images, [original]);
-  assert.equal(prepared.product.description, "PLATAFORMA ARTICULADA DIESEL ALTURA DE TRABAJO 16 MT JLG 450 AJ SII");
-  assert.equal(prepared.product.description_general, parsed.longDescription);
+  assert.ok(prepared.product.description?.includes("JLG 450 AJ SII"));
+  assert.ok(prepared.product.description_general?.includes("JLG 450 AJ SII"));
+  assert.match(prepared.product.description_general ?? "", /altura de trabajo de 16 m/iu);
   assert.deepEqual(prepared.issues, []);
   assert.equal(prepared.product.categorySellID, 29);
   assert.deepEqual(validateImportCandidate(prepared.product, catalog), []);
@@ -73,14 +74,13 @@ test("Mercaeleva: una altura comercial contradictoria mantiene la ficha en revis
   };
   const prepared = prepareProduct(record, await loadImportCatalog());
   assert.equal(prepared.status, "review");
-  assert.equal(prepared.product.description, null);
-  assert.equal(prepared.product.description_general, record.longDescription);
-  assert.deepEqual(prepared.issues, ["Descripción comercial contradictoria: altura de trabajo"]);
-  assert.ok(prepared.importIssues?.excel.includes("Descripción corta ausente: solo hay descripción general y el backend exige una descripción corta"));
+  assert.ok(prepared.issues.includes("Descripción comercial contradictoria: altura de trabajo"));
+  assert.ok(prepared.product.description_general?.includes("20 m"));
+  assert.ok(!prepared.product.description?.includes("20 m"));
 });
 
 
-test("Mercaeleva: una descripción no recuperable sin contradicción no degrada calidad", async () => {
+test("Mercaeleva: una descripción general genérica no impide aprovechar hechos técnicos acreditados", async () => {
   const parsed = parseMercaelevaProduct(html, url);
   const record: ProductRecord = {
     ...parsed, providerId: "mercaeleva", categoryKey: "venta",
@@ -90,6 +90,6 @@ test("Mercaeleva: una descripción no recuperable sin contradicción no degrada 
   const prepared = prepareProduct(record, await loadImportCatalog());
   assert.equal(prepared.status, "ready");
   assert.deepEqual(prepared.issues, []);
-  assert.equal(prepared.product.description, null);
-  assert.ok(prepared.importIssues?.createMany.includes("Descripción corta ausente: solo hay descripción general y el backend exige una descripción corta"));
+  assert.ok(prepared.product.description?.includes("JLG 450 AJ SII"));
+  assert.ok(prepared.product.description_general?.includes("JLG 450 AJ SII"));
 });

@@ -23,16 +23,16 @@ test("GAM: los cuatriciclos no pasan a furgonetas aunque solo consten en la desc
   }
 });
 
-test("GAM: los encabezados editoriales ajenos no fuerzan segunda mano cuando existe corroboración", () => {
+test("GAM: los encabezados editoriales contradictorios no fuerzan una condición", () => {
   for (const code of ["8", "171"]) {
     const record = reference(code);
     assert.equal(record.condition, "Nuevo", code);
     const prepared = prepareCached(record, catalog);
-    assert.equal(prepared.product.condition, "Nuevo", code);
-    assert.equal(prepared.status, "ready", code);
-    assert.notEqual(prepared.product.title, record.title, code);
+    assert.equal(prepared.product.condition, null, code);
+    assert.equal(prepared.status, "review", code);
+    assert.ok(prepared.issues.includes("Condición comercial contradictoria entre la ficha y el origen"), code);
     assert.equal(prepareCached({ ...record, title: "Equipo de segunda mano" }, catalog).status, "review", code);
-    assert.equal(prepareCached({ ...record, title: "Equipo nuevo" }, catalog).product.condition, "Nuevo", code);
+    assert.notEqual(prepareCached({ ...record, title: "Equipo nuevo" }, catalog).product.condition, "Segunda_Mano", code);
   }
 });
 

@@ -94,6 +94,8 @@ test("la política no convierte contradicciones técnicas reales en atributos va
   ] as const) {
     const record = reference(id);
     assert.equal(resolved(record, name).status, expected, `${id}:${name}`);
-    assert.equal(prepareProduct(record, catalog).status, "ready", id);
+    const prepared = prepareProduct(record, catalog);
+    assert.equal(prepared.status, "review", id);
+    assert.ok(prepared.issues.some((issue) => issue.includes(expected === "rejected" ? "Identidad GAM contradictoria" : "Atributo contradictorio")), id);
   }
 });

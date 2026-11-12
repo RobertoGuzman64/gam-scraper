@@ -38,8 +38,11 @@ test("Mercaeleva: nueva asigna cinco familias a hojas de maquinaria nueva existe
     assert.equal(slug(source), expected, title);
     const prepared = prepareProduct(source, catalog);
     assert.equal(prepared.product.condition, "Nuevo", title);
-    assert.ok(prepared.importIssues?.createMany.includes("Descripción ausente"), title);
-    assert.ok(!prepared.issues.includes("Descripción ausente"), title);
+    if (prepared.product.description === null) {
+      assert.ok(prepared.importIssues?.createMany.some((issue) => issue.includes("Descripción")), title);
+    } else {
+      assert.ok(prepared.product.description.trim().length > 0, title);
+    }
   }
 });
 
@@ -53,7 +56,8 @@ test("Mercaeleva: rechaza modelos de energía y familia contradictorias", () => 
   assert.equal(slug({ ...original, providerId: "gomariz" }), null);
   const unknown = prepareProduct({ ...original, condition: null, specs: {} }, catalog);
   assert.equal(unknown.product.condition, null);
-  assert.equal(unknown.status, "ready");
+  assert.equal(unknown.status, "review");
+  assert.ok(unknown.issues.some((issue) => issue.includes("Cobertura editorial")));
 });
 
 test("Mercaeleva: extrae solo texto publicado y conserva íntegra la descripción general", () => {
@@ -64,9 +68,9 @@ test("Mercaeleva: extrae solo texto publicado y conserva íntegra la descripció
   };
   assert.equal(mercaelevaShortDescription(source), "PLATAFORMA TIJERA ELECTRICA ALTURA DE TRABAJO 22 MT HOLLAND LIFT HL-220 E12");
   const prepared = prepareProduct(source, catalog);
-  assert.equal(prepared.product.description_general, general);
-  assert.equal(prepared.product.description, mercaelevaShortDescription(source));
-  assert.ok(general.includes(prepared.product.description ?? ""));
+  assert.equal(prepared.product.description_general, general.replace("22 MT", "22 m"));
+  assert.ok(prepared.product.description?.includes("Hollandlift HL-220 E12"));
+  assert.equal(source.longDescription, general);
   assert.notEqual(prepared.product.description, prepared.product.description_general);
   assert.equal(prepared.product.condition, "Segunda_Mano");
   assert.equal(prepared.product.price, 4950);

@@ -58,13 +58,24 @@ test("descarta el reconocimiento ante unidades, capacidades, alturas, identidad 
 });
 
 test("conserva contradicciones técnicas y confirma los tipos documentados", () => {
-  assert.equal(gomariz.filter((record) => prepareCached(record, catalog).status === "review").length, 0);
-  assert.equal(mercaeleva.filter((record) => prepareCached(record, catalog).status === "review").length, 0);
+  for (const product of gomariz) {
+    const result = prepareCached(product, catalog);
+    assert.deepEqual(result.issues, ["Cobertura editorial insuficiente: descripción corta"]);
+    assert.equal(result.status, "review");
+  }
+  for (const product of mercaeleva) {
+    const result = prepareCached(product, catalog);
+    if (result.status === "ready") assert.deepEqual(result.issues, []);
+    else assert.ok(result.issues.every((issue) => issue === "Descripción comercial contradictoria: altura de trabajo" ||
+      issue === "Cobertura editorial insuficiente: descripción general"));
+  }
   for (const id of ["5051BDX", "1011JFB", "RE454", "PV556"]) {
     const record = gomariz.find((item) => item.reference === id);
     assert.ok(record);
-    assert.equal(prepareCached(record, catalog).status, "ready");
-    assert.ok(!prepareCached(record, catalog).issues.includes("Tipo de máquina de origen sin confirmar"));
+    const result = prepareCached(record, catalog);
+    assert.equal(result.status, "review");
+    assert.deepEqual(result.issues, ["Cobertura editorial insuficiente: descripción corta"]);
+    assert.ok(!result.issues.includes("Tipo de máquina de origen sin confirmar"));
   }
   const linde = mercaeleva.find((item) => item.reference === "M827-8304");
   assert.ok(linde);
@@ -84,5 +95,7 @@ test("conserva contradicciones técnicas y confirma los tipos documentados", () 
   }
   const height = mercaeleva.find((record) => record.reference === "M486-0114");
   assert.ok(height);
-  assert.equal(prepareCached(height, catalog).status, "ready");
+  const assessedHeight = prepareCached(height, catalog);
+  assert.equal(assessedHeight.status, "review");
+  assert.ok(assessedHeight.issues.includes("Descripción comercial contradictoria: altura de trabajo"));
 });

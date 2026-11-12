@@ -51,8 +51,8 @@ test("las contradicciones siguen en review y los valores no representables conse
   for (const reference of ["6764", "157", "2130", "2237", "2240"]) {
     const entry: (typeof gam.products)[number] | undefined = gam.products.find((item) => item.product.reference === reference);
     assert.ok(entry, reference);
-    assert.equal(entry.status, ["6764"].includes(reference) ? "review" : "ready", reference);
-    assert.equal(entry.issues.length > 0, ["6764"].includes(reference), reference);
+    assert.equal(entry.status, ["6764", "2237", "2240"].includes(reference) ? "review" : "ready", reference);
+    assert.equal(entry.issues.length > 0, ["6764", "2237", "2240"].includes(reference), reference);
     assert.equal(entry.product.categorySellID, null);
     assert.deepEqual(entry.product.attributes, []);
     assert.ok(Object.keys(entry.product.spec).length > 0, reference);

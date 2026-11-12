@@ -66,11 +66,14 @@ test("el catálogo acreditado tiene identidad completa y la preparación no alte
       assert.equal(result.product.providerId, current.providerId);
       assert.equal(result.product.reference, current.reference);
       assert.equal(result.product.sourceUrl, current.sourceUrl);
-      assert.ok(result.product.title?.trim(), key);
-      assert.ok(result.product.description?.trim(), key);
-      assert.ok(result.product.description_general?.trim(), key);
-      assert.ok(result.product.image && result.product.images.includes(result.product.image), key);
-      assert.equal(result.status === "review", result.issues.length > 0, key);
+      if (result.status === "ready") {
+        assert.ok(result.product.title?.trim(), key);
+        assert.ok(result.product.description?.trim(), key);
+        assert.ok(result.product.description_general?.trim(), key);
+        assert.ok(result.product.image && result.product.images.includes(result.product.image), key);
+      } else {
+        assert.ok(result.issues.length > 0, key);
+      }
     }
   }
   assert.equal(identities.size, publications.reduce((total, item) => total + item.products.length, 0));

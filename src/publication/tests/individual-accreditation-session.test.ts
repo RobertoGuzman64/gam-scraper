@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { lstat, readFile } from "node:fs/promises";
+import { lstat, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { readPortableOriginal, consolidatePortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
+import { writeOutputs } from "../../scraping/output/publish.js";
 import test from "node:test";
 import { runAccreditIndividual } from "../../cli/commands/catalog/accredit-individual.js";
 import { preflightIndividualAccreditations } from "../individual-accreditation.js";
@@ -86,20 +88,34 @@ test("un cambio de incidencias, URL, estado o referencia en el antecedente bloqu
 
 test("proveedor sin incidencias se acredita sin terminal y --simular no escribe", async () => {
   await withWorkspace(async (root) => {
-    const context = await prepared(root, "gomariz");
+    const original = await readPortableOriginal(root, "gam");
+    const first = original.products[0];
+    assert.ok(first);
+    const directory = join(root, "fuente-sin-incidencias");
+    await mkdir(directory);
+    const sourceFile = join(directory, "scrape-gam-catalog.json");
+    await writeOutputs(directory, "scrape-gam", [{
+      category: { key: first.categoryKey, name: first.categoryName, url: first.url },
+      products: original.products.map((item) => ({ ...item, serialNumber: null })),
+      discoveredProductUrls: original.products.length,
+      failures: []
+    }], original.startedAt, new Date(Date.parse(original.endedAt) + 60_000).toISOString());
+    await consolidatePortableOriginal(root, sourceFile);
+    await prepareIndividualTestWorkspace(root);
+    const context = await prepared(root, "gam");
     assert.equal(context.expected.exclusions.length, 0);
-    assert.equal(await runAccreditIndividual(["--proveedor", "gomariz", "--simular"], root), true);
+    assert.equal(await runAccreditIndividual(["--proveedor", "gam", "--simular"], root), true);
     await assert.rejects(lstat(join(root, "storage", "providers")), { code: "ENOENT" });
-    assert.equal(await runAccreditIndividual(["--proveedor", "gomariz"], root), true);
+    assert.equal(await runAccreditIndividual(["--proveedor", "gam"], root), true);
     const approved = await inspectIndividualEditorial(context.options);
     assert.equal(approved.inspection.approved, true);
     assert.equal(approved.inspection.total, 0);
     const before = createHash("sha256").update(await readFile(approved.draftFile)).digest("hex");
-    assert.equal(await runAccreditIndividual(["--proveedor", "gomariz"], root), true);
+    assert.equal(await runAccreditIndividual(["--proveedor", "gam"], root), true);
     const after = createHash("sha256").update(await readFile(approved.draftFile)).digest("hex");
     assert.equal(after, before);
-    await assert.rejects(lstat(join(root, "catalogs", "providers", "gomariz", "publications")), { code: "ENOENT" });
-  });
+    await assert.rejects(lstat(join(root, "catalogs", "providers", "gam", "publications")), { code: "ENOENT" });
+  }, "original");
 });
 
 test("un borrador sin aprobar no se interpreta como consentimiento", async () => {
@@ -117,8 +133,7 @@ test("la integridad canónica sigue siendo obligatoria antes de acreditar", asyn
     const source = join(root, "catalogs/providers/gam/original/scrape-gam-catalog.json");
     const before = createHash("sha256").update(await readFile(source)).digest("hex");
     assert.equal(before.length, 64);
-    await prepareIndividualTestWorkspace(root);
     await assert.rejects(runAccreditIndividual(["--proveedor", "gam"], root), /incidencia nueva/);
     assert.equal(createHash("sha256").update(await readFile(source)).digest("hex"), before);
-  }, "original");
+  });
 });
