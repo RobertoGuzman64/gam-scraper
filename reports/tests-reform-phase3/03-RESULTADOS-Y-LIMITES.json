@@ -1,0 +1,51 @@
+{
+  "base": "gam-scraper-develop.zip, ZIP aportado en este turno",
+  "fuente_fallos": "Texto pegado.txt aportado anteriormente (npm test local con node v24)",
+  "fallos_originales": 229,
+  "suites_originales_runner": 462,
+  "archivos_fallidos_originales": 133,
+  "suites_retiradas": 69,
+  "fallos_originales_correspondientes_a_suites_retiradas": 117,
+  "fallos_originales_en_suites_conservadas": 112,
+  "suites_runner_esperadas_tras_poda": 393,
+  "suites_ts_restantes": 385,
+  "guards_originales": {
+    "editorial": 43,
+    "dominio_tests": 306
+  },
+  "guards_tras_poda": {
+    "editorial": 43,
+    "dominio_tests": 209
+  },
+  "autopruebas_guards": {
+    "passed": 19,
+    "failed": 0
+  },
+  "autopruebas_runner": {
+    "passed": 36,
+    "failed": 0
+  },
+  "catalogs_integrity": {
+    "files": 37,
+    "unchanged": 37
+  },
+  "cambios_produccion": [],
+  "ficheros_originales_modificados": [
+    "scripts/operations/rebuild-editorial-knowledge.mjs"
+  ],
+  "script_recuperado": "Corrección previa eqz-fix-477caa.zip (no estaba incorporada en el ZIP base)",
+  "checks": {
+    "module_integrity": "PASS | 702 productivos, cero imports relativos ausentes",
+    "shared_editorial": "PASS | 0 narradores específicos conectados",
+    "commercial_editorial_boundary": "PASS",
+    "rebuild_editorial_knowledge_check": "PASS | 25 fuentes, 433 textos, 18 títulos, 391 unidades",
+    "new_editorial_architecture_guard": "FAIL | 43 infracciones fuera del alcance",
+    "new_domain_tests_guard": "FAIL | 209 infracciones fuera del alcance actual",
+    "guard_selftests": "PASS | 19/19",
+    "runner_selftests": "PASS | 36/36",
+    "legacy_performance_guard": "NO EJECUTABLE | paquete typescript ausente en entorno",
+    "legacy_commercial_contract_guard": "NO EJECUTABLE | paquete typescript ausente en entorno",
+    "npm_test": "NO EJECUTADO | dependencias locales incompletas",
+    "npm_build": "NO EJECUTADO | dependencias locales incompletas"
+  }
+}

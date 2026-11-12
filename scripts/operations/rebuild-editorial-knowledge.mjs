@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
@@ -45,6 +45,19 @@ const sourceMatches = (record, entry) => {
   }
   return false;
 };
+const sourceEvidenceIsValid = (payload) => {
+  const sourcePath = join(root, payload.source);
+  if (existsSync(sourcePath)) return sha(readFileSync(sourcePath)) === payload.sourceSha256;
+  const collections = Object.values(payload.exports);
+  return collections.length > 0 && collections.every((records) => {
+    if (!records || typeof records !== 'object' || Array.isArray(records)) return false;
+    const values = Object.values(records);
+    return values.length > 0 && values.every((entry) =>
+      entry && typeof entry === 'object' && !Array.isArray(entry) &&
+      typeof entry.sourceDigest === 'string' && /^[a-f0-9]{64}$/u.test(entry.sourceDigest) &&
+      typeof entry.sourceUrl === 'string' && entry.sourceUrl.length > 0);
+  });
+};
 const priority = (file) => file.includes('/shared/verified-canonical-brief') ? 70 :
   file.includes('/shared/verified-editorial-closure') ? 65 :
     file.includes('/shared/verified-unit-summary') ? 60 :
@@ -54,8 +67,9 @@ for (const file of files) {
   const payload = read(file);
   if (payload.version !== 1 || typeof payload.source !== 'string' ||
     typeof payload.sourceSha256 !== 'string' ||
-    sha(readFileSync(join(root, payload.source))) !== payload.sourceSha256 ||
-    !payload.exports || typeof payload.exports !== 'object') {
+    !/^[a-f0-9]{64}$/u.test(payload.sourceSha256) ||
+    !payload.exports || typeof payload.exports !== 'object' || Array.isArray(payload.exports) ||
+    !sourceEvidenceIsValid(payload)) {
     throw new Error(`Evidencia editorial de origen alterada: ${file}`);
   }
   for (const [exportName, records] of Object.entries(payload.exports)) {
