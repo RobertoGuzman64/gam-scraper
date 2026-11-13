@@ -1,65 +1,61 @@
-# EQUIPZILLA — Guards de arquitectura: garantías legítimas de tests
+# EQUIPZILLA — Guards de arquitectura vigentes
 
-## Alcance y decisión
+## Estado y alcance (fase 27, 13 de noviembre de 2026)
 
-Esta revisión afecta exclusivamente al guard de arquitectura de tests y a sus autopruebas. No modifica el motor editorial, las fixtures, los catálogos, el runner, las cuotas de rendimiento ni los tests de dominio. Su propósito es **conservar comprobaciones legítimas de evidencia sin contarlas como deuda arquitectónica**.
+Esta guía describe el guard **actual**. La calibración de la fase 7 documentada en [PLAN-GUARDS-ARQUITECTURA-V2.md](PLAN-GUARDS-ARQUITECTURA-V2.md) es histórica y no representa la deuda del repositorio vigente.
 
-Sobre el repositorio integrado hasta la fase 20, la inspección anterior registraba **188 hallazgos**: 168 accesos directos a catálogos, 12 recuentos, 7 accesos transitivos y 1 hash. Tras esta revisión se mantienen **168 infracciones directas** pendientes de migrar. Los 19 usos justificados se reconocen como excepciones exactas y el hash deja de ser un falso positivo.
+| Control ejecutado sobre el repositorio de fase 27  | Resultado                                                              |
+| -------------------------------------------------- | ---------------------------------------------------------------------- |
+| `tests-editorial-architecture-guard.mjs`           | 0 infracciones                                                         |
+| `tests-domain-tests-guard.mjs`                     | 0 infracciones                                                         |
+| Autopruebas `tests-architecture-guards.test.mjs`   | 25 correctas, 0 fallidas                                               |
+| Excepciones explícitas en tests                    | 19 usos exactos: 12 recuentos de cohortes y 7 dependencias transitivas |
+| Integraciones de catálogo directamente acreditadas | 21 lecturas, en 14 suites                                              |
 
-**Integración posterior a la macrofase 21:** el guard anterior registraba **141 hallazgos** (121 accesos directos, 12 recuentos, 7 dependencias indirectas y 1 hash). Con esta revisión y sin modificar las suites protegidas, registra **121 hallazgos directos pendientes**, **19 excepciones acreditadas** y ningún falso positivo de hash. La cifra de 168 accesos directos corresponde únicamente al corte previo a la macrofase 21.
+**Cero infracciones no significa cero lecturas legítimas de catálogos ni prueba una batería `npm test` global.** Las 19 excepciones y las 21 lecturas acreditadas no cuentan como infracciones porque protegen garantías concretas; no son una tolerancia genérica, un baseline ni advertencias ocultas.
 
-El guard sigue siendo estricto: no hay baseline, cuota global, directorios ignorados ni `WARN` autorizados. Una nueva dependencia, un nuevo recuento o una excepción que deje de corresponder con su caso exacto vuelve a generar una infracción. El conjunto de 168 accesos directos **no queda exento** por aparecer en archivos que contienen un recuento o fixture acreditados.
+## Ejecutar los guards
 
-## Doce recuentos acreditados
-
-Estas aserciones no fijan el tamaño comercial total del inventario: comprueban unidades individuales o cohortes históricas identificadas, habitualmente junto a una comparación de referencias y a casos de no propagación entre proveedores.
-
-| Prueba                                                                               | Garantía conservada                                                              | Recuento |
-| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- | -------: |
-| `src/catalog/normalization/gam/tests/gallery.test.ts`                                | Número de vistas acreditadas del módulo sanitario y descarte de una imagen ajena |        7 |
-| `src/preparation/gam/identity/tests/gam-identity-variants.test.ts`                   | Seis referencias concretas con colisiones de número de serie y bloqueo selectivo |        6 |
-| `src/preparation/gam/quality/tests/gam-verified-operational-safety.test.ts`          | Prestaciones de seguridad verificadas por unidad                                 |       20 |
-| `src/preparation/gam/technical/measurements/gam-clearance-platform.test.ts`          | Unidades con medidas de despeje o plataforma acreditadas, sin contagio a Gomariz |       30 |
-| `src/preparation/gam/technical/measurements/gam-qualified-geometry-evidence.test.ts` | Geometría acreditada solamente para unidades identificadas                       |       20 |
-| `src/preparation/gam/technical/mobility/gam-traction-braking-evidence.test.ts`       | Evidencia de tracción/frenado por unidad                                         |       21 |
-| `src/preparation/gam/technical/mobility/gam-verified-drivetrain-brakes.test.ts`      | Prestaciones de transmisión y frenos demostradas y preservadas                   |       38 |
-| `src/preparation/gam/technical/operations/gam-cleaning-tank-evidence.test.ts`        | Recuperaciones de depósitos sin trasladar evidencia a Gomariz                    |       27 |
-| `src/preparation/gam/technical/operations/gam-unit-performance-specs.test.ts`        | Unidades con prestaciones técnicas acreditadas                                   |       56 |
-| `src/preparation/gam/technical/safety/gam-acoustic-evidence.test.ts`                 | Recuperación de niveles sonoros de las unidades verificadas                      |       22 |
-| `src/preparation/gam/technical/safety/gam-verified-operator-controls.test.ts`        | Mandos y controles de presencia acreditados por unidad                           |       25 |
-| `src/preparation/gam/technical/tests/gam-verified-tyre-and-noise-details.test.ts`    | Identidades con ruedas y acústica verificadas, sin propagación a Gomariz         |       20 |
-
-Cada excepción se limita **simultáneamente** a la ruta de la prueba, el título del caso y la expresión exacta de la aserción. No excluye otras aserciones del mismo archivo. Un cambio de cohorte, de título o de expresión exige revisar y reacreditar la excepción; no permite silenciar un recuento nuevo.
-
-## Siete dependencias indirectas acreditadas
-
-| Fixture acreditada                                                               | Pruebas consumidoras | Garantía conservada                                                                                                          |
-| -------------------------------------------------------------------------------- | -------------------: | ---------------------------------------------------------------------------------------------------------------------------- |
-| `src/preparation/gam/technical/tests/support/gam-historical-category-fixture.ts` |                    3 | Clasificación, equivalencias de categorías e interpretación de la condición sobre una muestra histórica identificable de GAM |
-| `src/testing/builders/mercaeleva-source-fixture.ts`                              |                    4 | Reconciliación de modelo y especificaciones documentales, incluidas discrepancias semánticas del anuncio original            |
-
-Las tres consumidoras de GAM son `gam-verified-category-equivalences.test.ts`, `gam-categories-condition.test.ts` y `gam-source-category-and-condition.test.ts`. Las cuatro de Mercaeleva son `jlg-450aj-base-model-evidence.test.ts`, `mercaeleva-documented-equipment-technical-specs.test.ts`, `mercaeleva-documented-platform-technical-specs.test.ts` y `source-semantic-quality.test.ts`.
-
-La exención se asigna exclusivamente a esas siete **parejas de prueba y fixture**. Además se comprueba la forma acreditada de la fuente: fixture histórica identificada para GAM, o lectura del único original canónico de Mercaeleva. La excepción exige **una sola dependencia catalogal detectable en la fixture**: si se añade otra, deja de aplicarse y el guard vuelve a informar la dependencia transitiva. Importar otra fixture o ampliar la fuente no queda cubierto por estas autorizaciones. Si una macrofase sustituye la fixture por entradas mínimas equivalentes, la excepción deja de aplicarse y puede retirarse del guard.
-
-Estos accesos están autorizados por su **función de contrato**; ello no implica que sean gratuitos en tiempo de ejecución. Las cuotas del guard de rendimiento siguen siendo independientes. No se deben eliminar tests ni degradar su cobertura por reducir el contador.
-
-## Hash de procedencia: no es hash editorial
-
-En `src/preparation/tests/catalog-publication-consistency.test.ts` se contrasta el SHA-256 de los **bytes originales** con `manifest.source.catalogSha256`. Es un control de integridad de origen, no la inmovilización de una descripción.
-
-El detector `T-FROZEN-EDITORIAL-HASH` ahora exige que el hash se calcule a partir de campos de redacción editorial y se compare contra un literal congelado. La aparición de `description` en otro punto del archivo no basta para dispararlo. No se registra ninguna excepción para este hash legítimo: se ha corregido la clasificación.
-
-## Comprobaciones y continuidad
-
-Desde la raíz del repositorio:
+Desde la **raíz del repositorio**:
 
 ```powershell
+node GUARDS/tests-editorial-architecture-guard.mjs --detail
 node GUARDS/tests-domain-tests-guard.mjs --detail
 node --test GUARDS/tests-architecture-guards.test.mjs
-node GUARDS/tests-editorial-architecture-guard.mjs
 ```
 
-Para el corte auditado se esperan **19 excepciones reconocidas**, **168 infracciones directas pendientes** y **0** en las otras tres clases mencionadas. El primer comando **debe seguir devolviendo código 1 mientras queden accesos directos**; no hay un falso PASS. Las autopruebas verifican la excepción exacta, la detección de variantes y la distinción entre hash editorial y manifest de procedencia.
+Los dos guards arquitectónicos están **fuera del `npm test` definido en `package.json`**. Sus resultados y las autopruebas deben verificarse explícitamente cuando se modifica arquitectura editorial o de tests. El core de análisis es `GUARDS/guards-architecture-core.mjs` y requiere un compilador TypeScript disponible. Un guard comprueba dependencias/fronteras; no acredita por sí solo semántica editorial, publicaciones, cobertura web ni build completo.
 
-Esta revisión no equivale a validar los 188 tests como correctos ni acredita una ejecución global de `npm test`. Las macrofases deben seguir migrando los accesos directos, preservar la procedencia y demostrar equivalencia de comportamiento. Los 19 usos acreditados se conservan por su contrato, pero pueden sustituirse posteriormente por mecanismos más eficientes con pruebas equivalentes.
+## Política permanente de pruebas
+
+Las pruebas nuevas deben proteger reglas reutilizables y contratos de motor: fuente, identidad, familias, magnitudes, procedencia, redacción y proyección, con positivos y negativos. No crear una suite por máquina ni congelar la fotografía de un catálogo mutable. Las integraciones censales se preservan cuando comprueban que **ninguna unidad no acreditada** obtiene datos, o cuando verifican integridad y publicación.
+
+Usar entradas acotadas con tipos reales para las garantías del dominio. No sustituir una prueba censal por una muestra cuando ello debilite su contrato. Antes de podar un test, conservar en otro lugar cualquier comportamiento protegido. Ver [Arquitectura de tests](../docs/TEST_ARCHITECTURE.md).
+
+## Doce cohortes protegidas
+
+El mapa `cohortExceptions` de `tests-domain-tests-guard.mjs` acredita **12 aserciones** concretas en 12 suites. Sus recuentos no son una licencia para fijar tamaños arbitrarios: corresponden a garantías de unidades o cambios identificables. Cada excepción exige la coincidencia de **ruta, nombre del test y expresión exacta**. Si se añade una cohorte o cambia la aserción, el guard vuelve a señalar el caso hasta su revisión.
+
+Estos controles incluyen galerías, identidad y colisiones, recuperaciones de seguridad, geometría, movilidad, depósitos, operaciones, acústica, mandos y neumáticos. La fuente de verdad exacta es `cohortExceptions`, no una lista copiada que deba mantenerse a mano.
+
+## Siete dependencias transitivas acreditadas
+
+El mapa `transitiveExceptions` identifica tres pruebas GAM que comparten `src/preparation/gam/technical/tests/support/gam-historical-category-fixture.ts`, y cuatro pruebas que utilizan `src/testing/builders/mercaeleva-source-fixture.ts`. Se conserva su garantía de identidad, variantes, categorías, condición o especificaciones documentadas.
+
+La autorización se verifica por **pareja de test y helper** y exige la forma de lectura de origen acreditada y **una única dependencia catalogal** en la fixture. Ampliar la entrada, introducir otra lectura u otra fixture no queda exento. Una migración futura de estas pruebas requiere equivalencia de cobertura.
+
+## Veintiuna lecturas directas en catorce suites protegidas
+
+La fase 27 acreditó lecturas de origen y publicación que todavía son necesarias para una garantía censal o de integración. El mapa `accreditedCatalogIntegrations` de `tests-domain-tests-guard.mjs` identifica las **14 rutas, sus 21 lecturas y la responsabilidad de cada una**, con SHA-256 del archivo completo y número exacto de accesos.
+
+Las suites incluyen controles de imágenes GAM, identidad de variantes, recuperaciones técnicas por unidad (seguridad, geometría, movilidad, limpieza y acústica), calidad semántica de fuente y consistencia de publicaciones. La autorización no es por carpeta, proveedor o nombre genérico: modificar el contenido del test, añadir otra lectura o ampliar la entrada invalida la coincidencia y devuelve la infracción. **No modificar tests protegidos para mejorar un contador.**
+
+## Hash de manifest frente a hash editorial
+
+`src/preparation/tests/catalog-publication-consistency.test.ts` comprueba integridad de los bytes del catálogo original frente a `manifest.source.catalogSha256`. No congela una descripción. El detector `T-FROZEN-EDITORIAL-HASH` requiere una comparación literal de hash calculado a partir de redacción; no debe confundir un manifest de procedencia con contenido editorial.
+
+## Cierre y límites
+
+El estado de fase 27 se obtuvo sin modificar tests protegidos y sin introducir excepciones generales. Conservar el cero exige que cualquier nueva infracción se **resuelva o acredite contractualmente con alcance exacto**, no degradar el guard ni añadir tolerancias. Una integración necesaria no justifica convertir en dependiente del catálogo todo test de dominio.
+
+El build y `npm test` oficiales completos no quedaron acreditados en el entorno de la fase 27 por dependencias ausentes. Registrar el estado real de cada ejecución. Referencias: [Motor editorial](../docs/EDITORIAL_ENGINE.md), [Validación](../docs/VALIDATION.md) y [Rendimiento](../docs/TESTS_RENDIMIENTO_CAMPANAS.md).

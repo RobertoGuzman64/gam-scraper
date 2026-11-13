@@ -12,6 +12,16 @@ Distinguir **integridad de los archivos**, **calidad de las fichas** y **cobertu
 
 ## Verificación técnica tras cambios estructurales
 
+Para cambios del motor editorial o de la arquitectura de pruebas, comprobar adicionalmente los guards **fuera de `npm test`**:
+
+```powershell
+node GUARDS/tests-editorial-architecture-guard.mjs
+node GUARDS/tests-domain-tests-guard.mjs
+node --test GUARDS/tests-architecture-guards.test.mjs
+```
+
+Tras la fase 27 ambos guards tenían 0 infracciones, con 19 excepciones exactas y 21 lecturas legítimas acreditadas; esto no sustituye las pruebas funcionales ni prueba `npm test` global. Véanse [Arquitectura de tests](TEST_ARCHITECTURE.md) y [Motor editorial](EDITORIAL_ENGINE.md).
+
 Desde la raíz del proyecto, con dependencias instaladas, ejecutar:
 
 ```powershell

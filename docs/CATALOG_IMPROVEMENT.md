@@ -8,6 +8,8 @@
 
 ## Objeto y alcance
 
+La arquitectura editorial permanente y la forma de mejorar reglas reutilizables están documentadas en [Motor editorial compartido](EDITORIAL_ENGINE.md); la cobertura de pruebas se define en [Arquitectura de tests](TEST_ARCHITECTURE.md). Este manual trata la mejora acreditada por causa, no la restauración de narradores individuales históricos.
+
 Esta guía explica **cómo mejorar una ficha desde su origen hasta la salida comercial**, utilizando los mecanismos que ya tiene EQUIPZILLA. Complementa el diagnóstico en [Auditor de huecos](CATALOG_CONTENT_GAPS.md), las reglas en [Datos y publicación](SCRAPER_DATA_RULES.md), las comprobaciones en [Validación](VALIDATION.md) y el circuito de [Publicación individual](INDIVIDUAL_PUBLICATION.md).
 
 La mejora no es una transformación indiscriminada de JSON finales. Hay que encontrar **la primera etapa en que se pierde, altera o interpreta incorrectamente el dato**; corregir esa causa y demostrar la equivalencia de las fichas no afectadas. Son distintos una anomalía del origen, un defecto de software, una observación estadística, un reconocimiento acreditado y una intervención editorial que exige decisión humana.

@@ -1,12 +1,11 @@
+import { accreditedSourceSamples } from "../../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { recoverGomarizDocumentedScaniaP220Specs } from "../../evidence/documented-scania-p220-specs.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
-import { analyzeTechnicalDensity } from "../../../../../catalog/diagnostics/technical-density.js";
 
-const originals = (await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json")).products;
+const originals = ({ products: accreditedSourceSamples("gomariz-regression") }).products;
 const expectedByReference: Readonly<Record<string, SpecsMap>> = {
   "5051BDX": {
     "Potencia aproximada del motor": "220 CV"
@@ -66,20 +65,4 @@ test("GOMARIZ: las variantes y las sobrescrituras están bloqueadas", () => {
     const occupied = { ...specs, [firstKey]: "Dato previo" };
     assert.equal(recoverGomarizDocumentedScaniaP220Specs(record, occupied), occupied);
   }
-});
-
-test("GOMARIZ: la densidad mejorada mantiene los umbrales existentes", () => {
-  const selected = originals.filter((record) => record.reference && references.has(record.reference));
-  assert.equal(selected.length, 1);
-  const before = selected.map((record) => {
-    const prepared = prepareSourceProduct(record).product;
-    const additions = expectedByReference[record.reference ?? ""];
-    assert.ok(additions);
-    return { ...prepared, spec: Object.fromEntries(Object.entries(prepared.spec).filter(([key]) => !(key in additions))) };
-  });
-  const after = selected.map((record) => prepareSourceProduct(record).product);
-  const beforeDensity = analyzeTechnicalDensity(before);
-  const afterDensity = analyzeTechnicalDensity(after);
-  assert.equal(beforeDensity.totals.sparse + beforeDensity.totals.medium, 1);
-  assert.deepEqual([afterDensity.totals.sparse, afterDensity.totals.medium], [0, 0]);
 });

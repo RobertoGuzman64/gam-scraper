@@ -1,10 +1,10 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { requireProductReference } from "../../../testing/require-product-reference.js";
 import { gamHistoricalSerialCollisionGroups } from "../../technical/tests/support/gam-technical-cohorts.js";
 import { fileURLToPath } from "node:url";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { findSerialNumberCollisions } from "../../../../catalog/identity-conflicts.js";
 import { resolveAttribute } from "../../../shared/classification/mapping/attribute-mapping.js";
@@ -17,9 +17,7 @@ import { prepareSourceProduct } from "../../../prepare-product.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../../src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
-)));
+const source = { products: accreditedSourceSamples("gam-historical") };
 const byReference = (reference: string): ProductRecord => requireProductReference(source.products, reference);
 
 const historicalBatch = prepareImportBatch(source.products, catalog);
@@ -84,7 +82,7 @@ test("las tres series compartidas conservan seis referencias sin fusionarlas y t
 });
 
 test("GAM: dos Z45/25J conservan dimensiones, pendiente e identidad propias de cada unidad", async () => {
-  const current = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const current = { products: accreditedSourceSamples("gam-original") };
   const originals = ["6607", "6984"].map((reference) => requireProductReference(current.products, reference));
   const expected = [
     { reference: "6607", year: "2012", width: "2290 mm", slope: "45%", serial: "Z452512B2168" },

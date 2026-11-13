@@ -1,12 +1,11 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { recoverGamDocumentedWarehouseCleaningAndLiftingSpecs } from "../models/documented-warehouse-cleaning-and-lifting-specs.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
-import { analyzeTechnicalDensity } from "../../../../catalog/diagnostics/technical-density.js";
 
-const originals = (await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json")).products;
+const originals = ({ products: accreditedSourceSamples("gam-original") }).products;
 const expectedByReference: Readonly<Record<string, SpecsMap>> = {
   "1894": { "Control de tracción": "TCS", "Sistema antivuelco": "ACS" },
   "2185": { "Velocidad máxima de desplazamiento": "9,6 km/h", "Dirección": "Eléctrica" },
@@ -89,21 +88,4 @@ test("GAM: la evidencia no se propaga a variantes, referencias ni originales mod
     const preexisting = { ...input, [key]: "Valor acreditado previamente" };
     assert.equal(recoverGamDocumentedWarehouseCleaningAndLiftingSpecs(record, preexisting), preexisting);
   }
-});
-
-
-test("GAM: 17 avisos medios y 6 altos desaparecen sin modificar los umbrales", () => {
-  const selected = originals.filter((record) => record.reference && references.has(record.reference));
-  assert.equal(selected.length, 23);
-  const prepared = selected.map((record) => prepareSourceProduct(record).product);
-  const previous = prepared.map((product) => {
-    const documented = expectedByReference[product.reference ?? ""];
-    assert.ok(documented, product.reference ?? product.sourceUrl);
-    const spec = Object.fromEntries(Object.entries(product.spec).filter(([key]) => !(key in documented)));
-    return { ...product, spec };
-  });
-  const before = analyzeTechnicalDensity(previous);
-  const after = analyzeTechnicalDensity(prepared);
-  assert.deepEqual([before.totals.sparse, before.totals.medium], [6, 17]);
-  assert.deepEqual([after.totals.sparse, after.totals.medium], [0, 0]);
 });

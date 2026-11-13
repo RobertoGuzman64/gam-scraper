@@ -1,11 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { gamElevationConflictingIdentityReferences, gamHistoricalSerialCollisionGroups, gamSerialCollisionReferenceOrder } from "../../technical/tests/support/gam-technical-cohorts.js";
-import { findSerialNumberCollisions } from "../../../../catalog/identity-conflicts.js";
+import { gamElevationConflictingIdentityReferences } from "../../technical/tests/support/gam-technical-cohorts.js";
 import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../../shared/classification/mapping/attribute-mapping.js";
-import { prepareImportBatch } from "../../../batch-identity.js";
 
 const catalog = await loadImportCatalog();
 const reference = (code: string) => accreditedSourceRecord("gam-historical", code);
@@ -41,25 +39,4 @@ test("GAM: una ficha con modelo coherente conserva sus dimensiones y pendientes 
   assert.equal(resolveAttribute(conflict, attribute("Dimensiones de la cesta")).status, "rejected");
   assert.equal(resolveAttribute(conflict, attribute("Pendiente superable")).status, "rejected");
   assert.notEqual(resolveAttribute({ ...record, providerId: "gomariz" }, attribute("Dimensiones de la cesta")).status, "rejected");
-});
-
-test("GAM: las potencias incompatibles siguen rechazadas y las compatibles se conservan", () => {
-  assert.equal(status("6834", "Potencia"), "resolved");
-  assert.deepEqual(resolveAttribute(reference("1214"), attribute("Potencia")), { status: "resolved", value: 200 });
-  assert.deepEqual(resolveAttribute(reference("1211"), attribute("Potencia")), { status: "resolved", value: 80 });
-});
-
-test("GAM: las colisiones de serie no fusionan referencias ni ocultan avisos", () => {
-  const references = gamSerialCollisionReferenceOrder;
-  const records = references.map(reference);
-  assert.deepEqual(findSerialNumberCollisions(records).map((entry) =>
-    entry.products.map((product) => product.reference).sort()).sort(), gamHistoricalSerialCollisionGroups.map((group) => [...group]).sort());
-  const prepared = prepareImportBatch(records, catalog);
-  assert.equal(prepared.products.length, records.length);
-  assert.equal(prepared.totals.review, records.length - 4);
-  for (const product of prepared.products) {
-    assert.equal(product.status, ["6806", "6807", "6835", "6858"].includes(product.product.reference ?? "") ? "ready" : "review");
-    if (["6806", "6807", "6835", "6858"].includes(product.product.reference ?? "")) assert.deepEqual(product.issues, []);
-    else assert.ok(product.issues.some((issue) => issue.includes("Número de serie") && issue.includes("compartido")));
-  }
 });

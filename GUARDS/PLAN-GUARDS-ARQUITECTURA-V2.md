@@ -1,5 +1,7 @@
 # EQUIPZILLA — Guards arquitectónicos v2 (auditoría estricta, sin baseline)
 
+> **Registro histórico de calibración F7/F8.** Las cifras 79/440, la referencia a instalar guards, y la propuesta de promoción al tooling describen el diseño en aquellas fases, **no** el estado del repositorio tras la fase 27. Para comandos, casos acreditados y estado vigente consultar [GUARDS/README.md](README.md) y [Arquitectura de tests](../docs/TEST_ARCHITECTURE.md). Los guards actuales informan cero infracciones, sin baseline.
+
 **Base calibrada:** repositorio íntegro `eqz-f7-16e5af.zip` (Fase 7), contrastado con `eqz-t1-740300.zip` (auditoría de tests de Fase 8). Esta entrega **no modifica** el repositorio, los motores, los tests productivos, los JSON ni el tooling. Solo contiene las versiones v2 de los guards y sus pruebas, más este documento.
 
 ## Invariante de ejecución
@@ -67,6 +69,6 @@ La calibración F7 no sustituye una reejecución sobre el repositorio actual de 
 - No prohíbe pruebas de publicación basadas en evidencia inmutable: eso equivaldría a debilitar la acreditación. Su ciclo de vida y almacenamiento pertenecen al frente específico de datos/publicaciones.
 - `FAIL` en la Fase 7 es **el resultado esperado** de un guard sin baseline; no se corrige suavizando sus reglas ni degradando infracciones a warnings.
 
-## Criterio de promoción al tooling
+## Criterio de promoción al tooling (decisión histórica F7)
 
 **No integrarlos todavía.** Tras las reformas, comprobar sobre el repositorio final que los incumplimientos reales están a cero, que las reglas no provocan falsos positivos en extensiones legítimas y que las autopruebas siguen pasando. Solo entonces decidir su ubicación definitiva e integración operativa.

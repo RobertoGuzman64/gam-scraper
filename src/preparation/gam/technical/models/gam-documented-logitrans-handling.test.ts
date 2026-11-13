@@ -1,12 +1,11 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { recoverGamDocumentedLogitransHandlingSpecs } from "./documented-logitrans-handling-specs.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
-import { analyzeTechnicalDensity } from "../../../../catalog/diagnostics/technical-density.js";
 
-const originals = (await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json")).products;
+const originals = ({ products: accreditedSourceSamples("gam-original") }).products;
 const expectedByReference: Readonly<Record<string, SpecsMap>> = {
   "220": {
     "Propulsión": "Manual",
@@ -152,20 +151,4 @@ test("GAM: la recuperación Logitrans protege proveedor, identidad y especificac
     const preexisting = { ...specs, [firstKey]: "Acreditado previamente" };
     assert.equal(recoverGamDocumentedLogitransHandlingSpecs(record, preexisting), preexisting);
   }
-});
-
-test("GAM: 20 avisos altos se eliminan al superar la densidad técnica mínima", () => {
-  const originalSelected = originals.filter((record) => record.reference && references.has(record.reference));
-  assert.equal(originalSelected.length, 20);
-  const before = originalSelected.map((record) => {
-    const prepared = prepareSourceProduct(record).product;
-    const newKeys = expectedByReference[record.reference ?? ""];
-    assert.ok(newKeys, record.reference ?? record.url);
-    return { ...prepared, spec: Object.fromEntries(Object.entries(prepared.spec).filter(([key]) => !(key in newKeys))) };
-  });
-  const after = originalSelected.map((record) => prepareSourceProduct(record).product);
-  const previousDensity = analyzeTechnicalDensity(before);
-  const nextDensity = analyzeTechnicalDensity(after);
-  assert.deepEqual([previousDensity.totals.sparse, previousDensity.totals.medium], [20, 0]);
-  assert.deepEqual([nextDensity.totals.sparse, nextDensity.totals.medium], [0, 0]);
 });

@@ -15,7 +15,7 @@ Esta guía describe **la arquitectura existente**, no propone otra reorganizaci�
 | Zona                    | Propietario y separación                                                                                                                                                  | Contrato que se conserva                                                                                   |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Semillas GAM            | `src/tools/gam/seed/internal/scalar.ts` compartido por parsers de categoría/URL                                                                                           | Conversión escalar y exports de los consumidores existentes                                                |
-| Editorial               | `src/preparation/shared/editorial/mapping/prepared-editorial.ts`, `prepared-editorial-source.ts`, `verified-editorial-finalization.ts` y resolutores de proveedor         | Precedencia entre título, fuente, modelo, general y finalización verificada                                |
+| Editorial compartida    | `src/preparation/shared/editorial/{domain,mapping,evidence}/`, adaptadores `{gam,gomariz,mercaeleva}/editorial/` e índices `data/editorial/knowledge/`                | Única autoridad de redacción, identidad, precedencias y hechos firmados; adaptadores interpretan origen, no narran |
 | Técnica acreditada      | `src/preparation/shared/technical/reconciliation/preparation-technical-stages.ts` y `shared/technical/recovery/documented-technical-recovery.ts`, con reglas de proveedor | Orden de reconciliaciones, identidad, huellas y semántica técnica                                          |
 | Clasificación           | `src/preparation/shared/classification/mapping/classification-provider.ts` y `src/preparation/<proveedor>/classification/mapping/provider.ts`                             | Composición explícita, categorías/atributos/condición sin nuevas IDs                                       |
 | Comercial               | `src/commercial/projection/category-projection.ts` y evidencias `source-category-evidence.ts`/`gam-category-evidence.ts`                                                  | Decisiones de categoría y restricciones de procedencia                                                     |
@@ -32,10 +32,11 @@ Las reglas de identidad GAM se mantienen cohesionadas bajo su responsabilidad pr
 
 ## Extender sin duplicar reglas
 
-- Buscar primero en `technical/evidence/`, `technical/reconciliation/`, `editorial/evidence/` y `editorial/mapping/` del proveedor. Las intervenciones por unidad acreditada son válidas cuando su alcance está protegido; evitar trasladarlas a un gran `switch` central.
+- Para hechos técnicos buscar primero en reconciliación y evidencia técnica del origen. Para redacción, buscar **primero** en `src/preparation/shared/editorial/{domain,mapping,evidence}/` y los índices `data/editorial/knowledge/`; solo la interpretación/autenticidad específica pertenece al adaptador editorial del proveedor. Las evidencias por unidad firmada pueden conservarse sin crear un narrador ni un `switch` por referencia.
 - Conservar los puntos de composición compartidos, sin duplicar recuperadores en un auditor ni cambiar el orden por estética. `prepare-product.ts` orquesta; no debe convertirse en una tabla de excepciones.
 - Para condición, atributos y categorías, ampliar el adaptador de clasificación por proveedor si procede. La existencia de registros/whitelists explícitos no es deuda por sí sola.
 - Distinguir datos de una unidad, prestaciones generales de modelo y anomalías originales. Antes de hacer crecer una regla, probar la variante vecina y el origen distinto. Consultar [Mejora acreditada del catálogo](CATALOG_IMPROVEMENT.md).
+- Las pruebas nuevas verifican el **motor compartido** con condiciones positivas/negativas. Conservar las integraciones censales acreditadas de los catálogos; no añadir suites por máquina. Ver [Motor editorial](EDITORIAL_ENGINE.md) y [Arquitectura de tests](TEST_ARCHITECTURE.md).
 
 ## Persistencia, recuperación y retención
 
@@ -79,13 +80,16 @@ npm run estado
 git status --short
 ```
 
-Conservar los códigos de salida por separado; PowerShell puede continuar aunque falle un comando. `npm test` ejecuta el guard de rendimiento, el guard del contrato comercial v2, compila cuando corresponde y ejecuta las suites TypeScript compiladas y MJS, con o sin caché. `npm run contrato:comercial` ejecuta explícitamente el guard del contrato comercial. No confundir un test aislado verde, un `build` correcto o `estado` íntegro con una acreditación editorial o con cobertura externa de los portales. Ante una regresión, corregir primero el fallo concreto y comprobar contratos específicos de la zona modificada.
+Conservar los códigos de salida por separado; PowerShell puede continuar aunque falle un comando. `npm test` ejecuta primero los guards de integridad de módulos, motor editorial compartido, frontera comercial/editorial y comprobación de conocimiento; después rendimiento, contrato comercial v2, build si es necesario y suites TypeScript/MJS. Los guards arquitectónicos de narradores y de tests, y sus autopruebas, siguen fuera del comando oficial y deben comprobarse separadamente en reformas de sus ámbitos. `npm run contrato:comercial` ejecuta explícitamente el guard del contrato comercial. No confundir un test aislado verde, un `build` correcto o `estado` íntegro con una acreditación editorial o con cobertura externa de los portales. Ante una regresión, corregir primero el fallo concreto y comprobar contratos específicos de la zona modificada.
 
 ## Proveedores y extensión
 
 Para incorporar un proveedor se debe revisar `src/scraping/provider.ts`, el registro `src/scraping/registry.ts`, el contrato de campaña (`src/contracts/campaign-providers.ts`) y, cuando proceda, la preparación, calidad e identidad bajo `src/preparation/` y `src/catalog/`. Sus pruebas deben cubrir extracción, paginación, identidad, duplicados, imagen principal, calidad y formatos. **No** añadirlo a una campaña, a las referencias comerciales o a la publicación acreditada por una coincidencia de nombre. Una ampliación de contrato exige revisión explícita, no una reforma implícita de documentación.
 
 ## Referencias operativas
+
+- [Motor editorial compartido](EDITORIAL_ENGINE.md): arquitectura vigente, conocimiento y evolución funcional.
+- [Arquitectura de tests](TEST_ARCHITECTURE.md): protección de motores, excepciones estrictas y guard en cero.
 
 - [Mejora acreditada del catálogo](CATALOG_IMPROVEMENT.md): mecanismos de mejora, decisiones, evidencia y materialización.
 - [Reglas de datos](SCRAPER_DATA_RULES.md): huellas, originales, preparaciones y JSON acreditados.

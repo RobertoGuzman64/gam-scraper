@@ -1,5 +1,7 @@
 # EQUIPZILLA — Fase 3: migración de conocimiento editorial histórico
 
+> **Archivo histórico; no es un plan vigente.** Las cifras, fallos, brechas y tareas de continuación de esta página pertenecen exclusivamente al corte de la fase 3. Tras la fase 27 se retiraron los narradores históricos detectados del recorrido productivo y se consolidó una arquitectura de tests con guard en cero. Para trabajar hoy usar [Motor editorial compartido](EDITORIAL_ENGINE.md), [Arquitectura de tests](TEST_ARCHITECTURE.md) y [Arquitectura](ARCHITECTURE.md). No reutilizar los porcentajes o decisiones pendientes de este informe como estado presente.
+
 ## Alcance y resultado
 
 La Fase 3 migra **evidencia acreditable** de los 22 conjuntos históricos y habilita su consumo desde el motor editorial común implantado en la Fase 2. Esta fase **no** declara terminada la migración funcional de la matriz de 82 capacidades de la Fase 1: su cierre queda previsto para la Fase 4, sin definir todavía una fase posterior de estabilización.
@@ -37,7 +39,7 @@ Indicadores del diagnóstico de Fase 3 (`reports/editorial-phase3/audit.json`): 
 
 Controles en este entorno: guard de arquitectura editorial, guard comercial y guard de rendimiento superados; comprobación de índices y 6/6 tests focales de Fase 3 superados; tipos estrictos de las unidades compiladas focalmente, sin errores. La suite editorial histórica registra **21 pruebas correctas y 14 fallidas de 35**, principalmente por precedencias y textos heredados que dejaron de ser activos tras la demolición. La compilación total y `npm test` **no se han acreditado**, porque el entorno no pudo recuperar todas las dependencias npm (`cheerio`, `p-limit` y sus tipos), aunque el código de la migración ha sido compilado y ejecutado de forma focal.
 
-## Continuidad de Fase 4
+## Continuidad de Fase 4 (decisión histórica)
 
 `reports/editorial-phase3/82-capabilities-traceability.csv` mantiene una fila para cada una de las **82 capacidades originales**. En Fase 3 constan 11 como compartidas, 34 como compartidas con equivalencia histórica pendiente, 30 parciales y 7 pendientes. Estos estados no deben interpretarse como 82 reglas completamente migradas.
 

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { inspectEditorialArchitecture } from "./tests-editorial-architecture-guard.mjs";
 import { inspectTestArchitecture } from "./tests-domain-tests-guard.mjs";
@@ -242,4 +243,49 @@ test("un test de integración de publicación no se penaliza por usar manifiesto
   write("src/preparation/shared/editorial/tests/contract.test.ts",
     "import assert from 'node:assert/strict'; const controlled = { reference: 'prueba', height: 12 }; assert.equal(controlled.height, 12);\n");
   assert.deepEqual(inspectTestArchitecture(root).findings, []);
+});
+
+const guardedRepositoryRoot = fileURLToPath(new URL("../", import.meta.url));
+const accreditedCatalogIntegrationPaths = [
+  "src/catalog/normalization/gam/tests/gallery.test.ts",
+  "src/preparation/gam/identity/tests/gam-identity-variants.test.ts",
+  "src/preparation/gam/quality/tests/gam-verified-operational-safety.test.ts",
+  "src/preparation/gam/technical/measurements/gam-clearance-platform.test.ts",
+  "src/preparation/gam/technical/measurements/gam-qualified-geometry-evidence.test.ts",
+  "src/preparation/gam/technical/mobility/gam-traction-braking-evidence.test.ts",
+  "src/preparation/gam/technical/mobility/gam-verified-drivetrain-brakes.test.ts",
+  "src/preparation/gam/technical/operations/gam-cleaning-tank-evidence.test.ts",
+  "src/preparation/gam/technical/operations/gam-unit-performance-specs.test.ts",
+  "src/preparation/gam/technical/safety/gam-acoustic-evidence.test.ts",
+  "src/preparation/gam/technical/safety/gam-verified-operator-controls.test.ts",
+  "src/preparation/gam/technical/tests/gam-verified-tyre-and-noise-details.test.ts",
+  "src/preparation/shared/quality/tests/source-semantic-quality.test.ts",
+  "src/preparation/tests/catalog-publication-consistency.test.ts"
+];
+
+test("las 21 lecturas protegidas son contratos de integración exactos y no infracciones", (t) => {
+  const { root, write } = fixture(t);
+  for (const path of accreditedCatalogIntegrationPaths) {
+    write(path, readFileSync(join(guardedRepositoryRoot, path), "utf8"));
+  }
+  const result = inspectTestArchitecture(root);
+  assert.deepEqual(result.findings, []);
+  assert.equal(result.integrations.length, 21);
+  assert.equal(new Set(result.integrations.map((item) => item.path)).size, 14);
+});
+
+test("la acreditación exacta se revoca ante cualquier cambio y no acepta nuevas lecturas", (t) => {
+  const { root, write } = fixture(t);
+  const path = "src/preparation/gam/quality/tests/gam-verified-operational-safety.test.ts";
+  const original = readFileSync(join(guardedRepositoryRoot, path), "utf8");
+  write(path, original);
+  assert.equal(inspectTestArchitecture(root).integrations.length, 1);
+  write(path, original + "\nconst regression = 42;\n");
+  assert.equal(inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-PRODUCT-CATALOG").length, 1);
+  write(path, original + "\nconst extra = 'catalogs/providers/gomariz/original/other.json';\n");
+  assert.ok(inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-PRODUCT-CATALOG").length >= 2);
+  write(path, original);
+  write("src/preparation/shared/editorial/tests/new-catalog.test.ts", original);
+  assert.equal(inspectTestArchitecture(root).integrations.length, 1);
+  assert.ok(inspectTestArchitecture(root).findings.some((item) => item.path === "src/preparation/shared/editorial/tests/new-catalog.test.ts"));
 });

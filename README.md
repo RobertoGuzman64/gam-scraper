@@ -57,19 +57,19 @@ npm run ayuda
 La estructura de `src/` agrupa responsabilidades, no fases históricas del desarrollo:
 
 - `src/catalog/`: identidad, calidad, normalización, cobertura, diagnósticos, editorial e intervenciones.
-- `src/preparation/`: preparación técnica, evidencias, reconciliaciones y mapeadores por proveedor, con orquestación offline en `workflow/`.
+- `src/preparation/`: preparación técnica, motor editorial compartido en `shared/editorial/`, adaptación de semántica por proveedor, evidencias, reconciliaciones y orquestación offline en `workflow/`. El antiguo sistema de narradores editoriales individualizados ya no está conectado al recorrido productivo detectado por los guards.
 - `src/scraping/`: extracción, lotes, salida CSV/JSON y ciclo de publicación de origen; `workflow/`, `batch/` y `output/`.
 - `src/campaign/` y `src/publication/`: campaña global, acreditación y retención; publicaciones individuales, FINISH y snapshots técnicos independientes.
 - `src/infrastructure/filesystem/catalog/technical-publication.ts`: almacenamiento, integridad, activación y retención de las versiones técnicas.
 - `src/commercial/`: proyección y exportación comercial actual, auditorías y compatibilidad de exportación legada.
 - `src/infrastructure/`: filesystem, HTTP, navegador, locks, almacenamiento, referencias y XLSX.
 - `src/cli/`: comandos y presentación; `src/contracts/` y `src/shared/`: contratos y utilidades transversales.
-- `src/testing/`: fixtures y builders compartidos; los tests de cada dominio permanecen junto a su módulo, en carpetas `tests/` separadas por proveedor o responsabilidad.
+- `src/testing/`: fixtures y builders reutilizables; los tests protegen **motores y contratos por responsabilidad**, junto a sus módulos o en integración acreditada. No se crean suites nuevas por máquina ni se obligan a leer catálogos completos las pruebas de dominio.
 - `scripts/`: entradas de ejecución y compilación en la raíz; `scripts/inspection/`, `scripts/maintenance/` y `scripts/operations/` para las herramientas especializadas.
 
 Los nombres **internos** de archivos, directorios y módulos técnicos se mantienen en inglés; los comandos npm y la salida operativa conservan sus nombres en español. No se traducen IDs de proveedores, rutas persistidas, campos de contratos ni formatos acreditados por una cuestión estética. Ver [Arquitectura](docs/ARCHITECTURE.md).
 
-`npm test` ejecuta primero `tests-performance-guard.mjs` y `tests-commercial-contract-guard.mjs`, compila cuando corresponde y después invoca `scripts/run-tests.mjs`. `npm run contrato:comercial` permite comprobar el contrato comercial v2 de manera explícita; este guard también protege la ruta de exportación comercial. El runner descubre recursivamente `src/**/*.test.ts`, ejecuta sus equivalentes compilados en `dist/` e incluye además `scripts/**/*.test.mjs`. No se debe deducir la cantidad de tests por la cantidad de carpetas ni fijar un número constante de archivos. Para diagnosticar la ejecución se puede ejecutar `node scripts/run-tests.mjs --concurrencia 2` después del build o generar una medición JSON con `--medicion <ruta.json>`; el archivo de medición es un artefacto temporal, no un dato acreditado.
+`npm test` ejecuta, en el orden exacto de `package.json`, los guards de integridad de módulos, motor editorial compartido y frontera comercial/editorial; verifica después el conocimiento editorial, aplica los guards de rendimiento y contrato comercial v2, compila cuando corresponde y finalmente invoca `scripts/run-tests.mjs`. Los dos guards arquitectónicos adicionales (`GUARDS/tests-editorial-architecture-guard.mjs` y `GUARDS/tests-domain-tests-guard.mjs`) se ejecutan **por separado**; no forman parte de `npm test`. `npm run contrato:comercial` permite comprobar el contrato comercial v2 de manera explícita; este guard también protege la ruta de exportación comercial. El runner descubre recursivamente `src/**/*.test.ts`, ejecuta sus equivalentes compilados en `dist/` e incluye además `scripts/**/*.test.mjs`. No se debe deducir la cantidad de tests por la cantidad de carpetas ni fijar un número constante de archivos. Para diagnosticar la ejecución se puede ejecutar `node scripts/run-tests.mjs --concurrencia 2` después del build o generar una medición JSON con `--medicion <ruta.json>`; el archivo de medición es un artefacto temporal, no un dato acreditado.
 
 **Protección de los módulos de salida:** `src/scraping/output/publish.ts` y `csv-serializer.ts` deben mantenerse versionados. `.gitignore` excluye directorios genéricos `output/`, pero contiene la excepción `!src/scraping/output/`; no eliminarla al limpiar archivos generados. Ver [Mantenimiento](docs/MAINTENANCE.md).
 
@@ -280,8 +280,12 @@ El contrato de cuatro proveedores describe el software, **no acredita por sí so
 
 ## Documentación
 
+La **fuente de verdad vigente** sobre la reforma editorial y de tests está en los documentos siguientes. Los informes de migración histórica y los documentos de continuidad externa son fotografías de su fecha, no instrucciones para restaurar narradores o reabrir tests ya consolidados.
+
 - [Objetivos y alcance](docs/SCRAPER_OBJECTIVES.md): prioridades y criterios de aceptación.
 - [Arquitectura](docs/ARCHITECTURE.md): módulos, responsabilidades, preparación y extensibilidad.
+- [Motor editorial compartido](docs/EDITORIAL_ENGINE.md): propietarios reales, origen y firma de evidencias, precedencias y política de evolución funcional.
+- [Arquitectura de tests](docs/TEST_ARCHITECTURE.md): política por motor, integración censal acreditada, guards, excepciones exactas y criterios de cierre.
 - [Publicación individual](docs/INDIVIDUAL_PUBLICATION.md): preparación, acreditación automática limitada, FINISH, informes y recuperación.
 - [Publicaciones técnicas independientes](docs/TECHNICAL_PUBLICATIONS.md): `ready/review`, entradas completas y parciales, activación, retención y separación comercial.
 - [Manual de mejora acreditada del catálogo](docs/CATALOG_IMPROVEMENT.md): diagnóstico por causa, reconciliaciones, evidencias, tests, FINISH y ejemplos reales.

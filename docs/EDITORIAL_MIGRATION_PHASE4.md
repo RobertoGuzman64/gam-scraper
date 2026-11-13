@@ -1,5 +1,7 @@
 # EQUIPZILLA — Fase 4: segunda migración de reglas editoriales
 
+> **Archivo histórico; no es un plan vigente.** Los inventarios de módulos, 82 capacidades, fallos de suites, huecos y pasos de continuidad corresponden al corte de la fase 4. No describen el motor ni los tests tras la fase 27. La documentación actual es [Motor editorial compartido](EDITORIAL_ENGINE.md), [Arquitectura de tests](TEST_ARCHITECTURE.md) y [Arquitectura](ARCHITECTURE.md). Este documento se conserva para trazabilidad, no para reabrir una migración antigua.
+
 ## Naturaleza de la entrega
 
 Esta fase **continúa la migración editorial** iniciada en las fases 2 y 3. No es una fase de estabilización, publicación comercial ni cierre artificial de las regresiones. Su inventario de control sigue siendo el de **82 capacidades y 140 módulos de la Fase 1**. Se conserva el repositorio completo, el contrato comercial y las fuentes originales.
@@ -86,6 +88,6 @@ npm run editorial:auditar-fase4
 
 El auditor de esta fase es de **solo lectura del catálogo** y escribe `reports/editorial-phase4/audit.json`; requiere que exista `dist` generado por compilación. El índice declarativo se valida con el `--check` del regenerador.
 
-## Decisión de continuidad
+## Decisión de continuidad (histórica)
 
 Las fases 3 y 4 han migrado otra parte relevante del conocimiento histórico sin introducir narradores nuevos por ficha. Sin embargo, **no se puede certificar la migración absoluta de las 82 capacidades**. Persisten reglas parciales y equivalencias históricas por acreditar, así como 14 regresiones y 67 huecos de texto en el corte actual. La decisión sobre la siguiente etapa debe partir de estas evidencias y no de ocultar los tests o copiar excepciones TypeScript por máquina.

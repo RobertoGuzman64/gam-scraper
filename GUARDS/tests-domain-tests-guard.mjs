@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -33,6 +34,86 @@ const sourceEvidence = (source) => {
       other.getEnd() >= node.getEnd())) chosen.push(node);
   }
   return chosen.sort((a, b) => a.getStart(source) - b.getStart(source));
+};
+
+const accreditedCatalogIntegrations = new Map([
+  ["src/catalog/normalization/gam/tests/gallery.test.ts", {
+    sha256: "d1c1837b7ff5c8b5d51a1e0edb98c7b9e0cbc71b43d2dbd7e544c2f7f5f44568",
+    reads: 2,
+    responsibility: "Regresión real de procedencia de imágenes y exclusión de galerías ajenas"
+  }],
+  ["src/preparation/gam/identity/tests/gam-identity-variants.test.ts", {
+    sha256: "29400091418295a3aadaf8f6b922a88f1d25d6796e37674d119a1c6c19d0acf8",
+    reads: 1,
+    responsibility: "Variantes e identidad cruzada contra fixture histórica firmada"
+  }],
+  ["src/preparation/gam/quality/tests/gam-verified-operational-safety.test.ts", {
+    sha256: "8c755a49c8d3fcf67465c6497548d0ce1679be270617f7c7134358ddf29b0836",
+    reads: 1,
+    responsibility: "Censo de recuperación de seguridad por unidad y protección entre proveedores"
+  }],
+  ["src/preparation/gam/technical/measurements/gam-clearance-platform.test.ts", {
+    sha256: "1a6f3d733722df5edf02f25efb4de533833bff045b916500ae72656a62536d30",
+    reads: 2,
+    responsibility: "Censo de medidas de plataforma y altura sin propagación entre proveedores"
+  }],
+  ["src/preparation/gam/technical/measurements/gam-qualified-geometry-evidence.test.ts", {
+    sha256: "596472785bcc646539887bc6483d34e28fc46d626dbb0fff37dc8d63ff4b0985",
+    reads: 1,
+    responsibility: "Censo de geometría técnica acreditada y preservación de originales"
+  }],
+  ["src/preparation/gam/technical/mobility/gam-traction-braking-evidence.test.ts", {
+    sha256: "96911b800cbc9d375eefd8c6b70ae7062552dbffcd5529c607000c80b8b50ba9",
+    reads: 1,
+    responsibility: "Censo de tracción y frenada atribuibles a la fuente"
+  }],
+  ["src/preparation/gam/technical/mobility/gam-verified-drivetrain-brakes.test.ts", {
+    sha256: "35bb397e129a9518caf1a7ddd1f8a7b9515b2db66f09a7c19e86155dc5d38de3",
+    reads: 1,
+    responsibility: "Censo de motorización y frenada acreditadas sin contaminación"
+  }],
+  ["src/preparation/gam/technical/operations/gam-cleaning-tank-evidence.test.ts", {
+    sha256: "e1998ac6a0c41c657d44c5ea68ce17b955958b679083fbef518a1bc8c942831f",
+    reads: 2,
+    responsibility: "Censo de depósitos de limpieza con aislamiento entre proveedores"
+  }],
+  ["src/preparation/gam/technical/operations/gam-unit-performance-specs.test.ts", {
+    sha256: "6f6e302fc291b30300ae1d4bb6649a13dab6a3c93ce1e8ec24cb985497b936f7",
+    reads: 1,
+    responsibility: "Censo de prestaciones técnicas y pruebas de no propagación"
+  }],
+  ["src/preparation/gam/technical/safety/gam-acoustic-evidence.test.ts", {
+    sha256: "656769063ad54f20b376994cabda6748127d8095912d2a9274021b7a0f36a844",
+    reads: 2,
+    responsibility: "Censo de acústica acreditada y exclusión entre proveedores"
+  }],
+  ["src/preparation/gam/technical/safety/gam-verified-operator-controls.test.ts", {
+    sha256: "cd8b298d922e8fbfd0c7199e004afb8225c48f35e643f4bf66aeb76c599cc1d9",
+    reads: 1,
+    responsibility: "Censo de mandos y controles de seguridad con procedencia"
+  }],
+  ["src/preparation/gam/technical/tests/gam-verified-tyre-and-noise-details.test.ts", {
+    sha256: "d9558900d252cc1e58dc7b5cc39bded95397c46c9dcec2a1a069c57a5fc1ca20",
+    reads: 2,
+    responsibility: "Censo de neumáticos y ruido con normalización y variantes negativas"
+  }],
+  ["src/preparation/shared/quality/tests/source-semantic-quality.test.ts", {
+    sha256: "3224c3251324ad2c5a9210e0446396185ba4a2bb15261a84ff98268db2aac70f",
+    reads: 2,
+    responsibility: "Regresión histórica de contradicciones semánticas y calidad de fuente"
+  }],
+  ["src/preparation/tests/catalog-publication-consistency.test.ts", {
+    sha256: "a4312b94bad875a822a7846de2cd6f1c9d8472fece7c6c42a292d95e1d0256c9",
+    reads: 2,
+    responsibility: "Integridad, procedencia y proyección de publicaciones acreditadas"
+  }]
+]);
+
+const creditedCatalogIntegration = (path, source, direct) => {
+  const contract = accreditedCatalogIntegrations.get(path);
+  if (!contract || direct.length !== contract.reads) return null;
+  const sha256 = createHash("sha256").update(source.text).digest("hex");
+  return sha256 === contract.sha256 ? contract : null;
 };
 
 const cohortExceptions = new Map([
@@ -177,6 +258,7 @@ export const inspectTestArchitecture = (root) => {
   const project = makeProject(root);
   const issues = [];
   const exceptions = [];
+  const integrations = [];
   const push = (rule, path, node, detail, signature) => {
     const source = project.files.get(path);
     if (source) issues.push(findIssue(rule, path, source, node, detail, signature));
@@ -189,8 +271,16 @@ export const inspectTestArchitecture = (root) => {
   for (const path of suites) {
     const source = project.files.get(path);
     const direct = sourceEvidence(source);
-    for (const node of direct) push("T-PRODUCT-CATALOG", path, node,
-      "Una prueba de dominio obtiene su entrada de un catálogo productivo o fixture histórica completa");
+    const integration = creditedCatalogIntegration(path, source, direct);
+    for (const node of direct) {
+      if (integration) {
+        integrations.push({ rule: "T-PRODUCT-CATALOG", path, source: node.getText(source),
+          responsibility: integration.responsibility });
+      } else {
+        push("T-PRODUCT-CATALOG", path, node,
+          "Una prueba de dominio obtiene su entrada de un catálogo productivo o fixture histórica completa");
+      }
+    }
     const seen = new Set([path]);
     let catalogDependent = direct.length > 0;
     const pending = [...project.dependencies.get(path) ?? []];
@@ -221,7 +311,7 @@ export const inspectTestArchitecture = (root) => {
     }
   }
   return {
-    findings: uniqueFindings(issues), exceptions, suites: suites.length,
+    findings: uniqueFindings(issues), exceptions, integrations, suites: suites.length,
     supportModules: helperEvidence.size, files: project.files.size
   };
 };
@@ -232,6 +322,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const result = inspectTestArchitecture(options.root);
     console.log(`TESTS | ${result.suites} suites de dominio | ${result.supportModules} módulos auxiliares | ${result.files} archivos inspeccionados`);
     console.log(`EXCEPCIONES ACREDITADAS | ${result.exceptions.length} usos exactos conservados | sin exenciones generales`);
+    console.log(`INTEGRACIONES ACREDITADAS | ${result.integrations.length} lecturas exactas de catálogos en ${new Set(result.integrations.map((item) => item.path)).size} suites protegidas`);
     process.exitCode = present("GUARD ARQUITECTURA DE TESTS", result.findings, options).exitCode;
   } catch (error) {
     console.error(`ERROR | GUARD ARQUITECTURA DE TESTS | ${error.message}`);

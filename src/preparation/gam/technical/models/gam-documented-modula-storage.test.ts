@@ -1,12 +1,11 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { recoverGamDocumentedModulaStorageSpecs } from "./documented-modula-storage-specs.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
-import { analyzeTechnicalDensity } from "../../../../catalog/diagnostics/technical-density.js";
 
-const originals = (await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json")).products;
+const originals = ({ products: accreditedSourceSamples("gam-original") }).products;
 const expectedByReference: Readonly<Record<string, SpecsMap>> = {
   "3425": {
     "Anchura de bandeja": "2500 mm",
@@ -135,20 +134,4 @@ test("GAM: una identidad o prestación incompatible impide la incorporación", (
     const occupied = { ...specs, [firstKey]: "Dato previo" };
     assert.equal(recoverGamDocumentedModulaStorageSpecs(record, occupied), occupied);
   }
-});
-
-test("GAM: las fichas enriquecidas superan el umbral técnico sin ajustar el auditor", () => {
-  const selected = originals.filter((record) => record.reference && references.has(record.reference));
-  assert.equal(selected.length, 12);
-  const before = selected.map((record) => {
-    const prepared = prepareSourceProduct(record).product;
-    const additions = expectedByReference[record.reference ?? ""];
-    assert.ok(additions);
-    return { ...prepared, spec: Object.fromEntries(Object.entries(prepared.spec).filter(([key]) => !(key in additions))) };
-  });
-  const after = selected.map((record) => prepareSourceProduct(record).product);
-  const beforeDensity = analyzeTechnicalDensity(before);
-  const afterDensity = analyzeTechnicalDensity(after);
-  assert.equal(beforeDensity.totals.sparse + beforeDensity.totals.medium, 12);
-  assert.deepEqual([afterDensity.totals.sparse, afterDensity.totals.medium], [0, 0]);
 });

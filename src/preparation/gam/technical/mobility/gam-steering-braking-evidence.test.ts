@@ -1,12 +1,12 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamVerifiedSteeringBraking } from "./verified-steering-braking-evidence.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const catalog = { products: accreditedSourceSamples("gam-original") };
 const braking = ["5888", "5889", "5890", "5891", "3803", "2335", "2205", "2206", "2370", "2154", "2259", "2243", "2244", "2018", "2019", "2021", "2022", "2023", "2024", "2010", "6990", "2248", "2251", "2245", "2249", "2250"] as const;
 const steering = ["6322", "6325", "2237", "2302", "2241", "2240", "2238", "6113", "6114", "6323", "6115", "6326", "6327", "2129"] as const;
 const selected = new Set<string>([...braking, ...steering]);

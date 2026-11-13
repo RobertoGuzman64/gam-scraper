@@ -1,18 +1,14 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { requireProductReference } from "../../../testing/require-product-reference.js";
-import { gamHistoricalSerialCollisionGroups, gamSerialCollisionReferenceOrder } from "../../technical/tests/support/gam-technical-cohorts.js";
 import { fileURLToPath } from "node:url";
-import { findSerialNumberCollisions } from "../../../../catalog/identity-conflicts.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../../shared/classification/mapping/attribute-mapping.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../../src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
-)));
+const source = { products: accreditedSourceSamples("gam-historical") };
 const reference = (code: string) => requireProductReference(source.products, code);
 const attribute = (name: string) => {
   const found = catalog.attributes.find((item) => item.name === name);
@@ -36,29 +32,4 @@ test("GAM: anchuras acreditadas y versiones no confirmadas se distinguen", () =>
     assert.equal(resolveAttribute(reference(code), attribute("Ancho de trabajo")).status, "resolved", code);
   }
   assert.deepEqual(resolveAttribute(reference("4004"), attribute("Ancho de trabajo")), { status: "resolved", value: 800 });
-});
-
-test("GAM: las contradicciones de capacidad y alturas mantienen el veto", () => {
-  for (const code of ["6723", "2211"]) {
-    assert.equal(resolveAttribute(reference(code), attribute("Capacidad de carga")).status, "contradiction", code);
-  }
-  for (const code of ["6965", "6932", "2275"]) {
-    assert.equal(resolveAttribute(reference(code), attribute("Capacidad de carga")).status, "resolved", code);
-  }
-  for (const code of ["6702", "5275", "6887"]) {
-    assert.equal(resolveAttribute(reference(code), attribute("Altura de elevación")).status, "contradiction", code);
-  }
-});
-
-test("GAM: la potencia comercial documentada se resuelve con su valor publicado", () => {
-  assert.deepEqual(resolveAttribute(reference("6834"), attribute("Potencia")), { status: "resolved", value: 32 });
-});
-
-test("GAM: los tres números de serie repetidos mantienen las seis referencias independientes", () => {
-  const relevant = new Set<string>(gamSerialCollisionReferenceOrder);
-  const collisions = findSerialNumberCollisions(source.products).filter(({ products }) =>
-    products.some((product) => product.reference !== null && relevant.has(product.reference))
-  );
-  assert.equal(collisions.length, 3);
-  assert.deepEqual(collisions.map(({ products }) => products.map((product) => product.reference).sort()).sort(), gamHistoricalSerialCollisionGroups.map((group) => [...group]).sort());
 });

@@ -8,6 +8,8 @@
 
 ## Objetivo principal
 
+El **motor editorial compartido vigente** se describe en [Motor editorial](EDITORIAL_ENGINE.md). La migración arquitectónica de narradores detectados está cerrada en el alcance de los guards; las mejoras posteriores de redacción son evolución funcional y no justifican reabrir la arquitectura antigua ni crear tests por ficha. La protección de esas reglas se rige por [Arquitectura de tests](TEST_ARCHITECTURE.md).
+
 Conseguir un **catálogo JSON completo, coherente, verificable y reutilizable** de maquinaria nueva y de segunda mano de GAM, Gomariz, Mercaeleva y Manain. La incorporación de un proveedor al contrato no acredita por sí sola la cobertura de su portal. La calidad se mide por la fiabilidad de la identidad, las características, el contenido y la cobertura de las fuentes, no por la facilidad de importar los productos.
 
 Prioridades, por orden:

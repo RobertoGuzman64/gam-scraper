@@ -11,12 +11,12 @@
 La protección del rendimiento forma parte de `npm test`; no es un benchmark separado que sustituya a las pruebas. El contrato está en `package.json`:
 
 ```text
-npm test = tests-performance-guard.mjs → scripts/run-build.mjs --quiet --if-needed → scripts/run-tests.mjs
+npm test = integridad de módulos → motor compartido → frontera comercial/editorial → conocimiento --check → rendimiento → contrato comercial v2 → build --if-needed → runner
 ```
 
 El guard detecta patrones de coste y la ejecución posterior compila cuando corresponde y lanza suites compiladas. `npm run test:guard` ejecuta **solo** el guard; **no** equivale al PASS integral. `npm run build` compila mediante `scripts/run-build.mjs` y la caché de build está en `scripts/build-cache.mjs`. Si faltan `typescript`, `cheerio`, `p-limit` o tipos de Node no se debe declarar un build correcto a partir de tests aislados.
 
-`npm test` ejecuta en serie el guard de rendimiento (`tests-performance-guard.mjs`) y el nuevo **guard del contrato comercial v2** (`tests-commercial-contract-guard.mjs`) antes de la compilación y las suites. `npm run contrato:comercial` ejecuta el segundo por separado y la exportación también lo comprueba. El guard de contrato protege estructuras actuales; una reorganización AST legítima podría exigir revisar su huella sin cambiar el contrato externo.
+`npm test` incluye antes de rendimiento y contrato comercial v2 los guards de integridad de módulos, motor compartido, frontera comercial/editorial y verificación del conocimiento. **No** incluye `tests-editorial-architecture-guard.mjs`, `tests-domain-tests-guard.mjs` ni sus autopruebas: ejecutarlos por separado ante cambios arquitectónicos; ver [Arquitectura de tests](TEST_ARCHITECTURE.md). `npm run contrato:comercial` ejecuta el segundo por separado y la exportación también lo comprueba. El guard de contrato protege estructuras actuales; una reorganización AST legítima podría exigir revisar su huella sin cambiar el contrato externo.
 
 Los tests de regresión históricos de Gomariz deben utilizar snapshots y publicaciones **reales y congelados** (corte de 143), no comparar hashes contra el original mutable de 547 fichas del 11 de noviembre de 2026. Los tests de aislamiento entre proveedores deben trabajar con el catálogo vigente sin suponer tamaños fijos. Reutilizar los builders y fixtures existentes evita multiplicar preparaciones costosas. Este criterio se aplica a futuros crecimientos de cobertura. Ver [Mantenimiento](MAINTENANCE.md).
 
@@ -62,6 +62,8 @@ Las suites de recuperación y retención pueden reutilizar estados auténticos a
 Cada caso recibe un workspace aislado; las mutaciones no deben contaminar el estado compartido. El creador de fixtures ejecuta realmente las transiciones una vez al preparar las variantes, **no fabrica artefactos ni sustituye por mocks** la aprobación o publicación que el test deba verificar. No reutilizar un estado posterior en una prueba de transición anterior.
 
 ## Cómo evitar regresiones de coste en nuevas reglas
+
+La política tras las fases 25–27 es crear pruebas para **responsabilidades reutilizables**, no una suite por máquina. Las pruebas de integración sobre el catálogo íntegro se conservan cuando su contrato requiere cobertura censal, integridad, firma, procedencia o exclusión entre unidades/proveedores. Consultar [Arquitectura de tests](TEST_ARCHITECTURE.md) para diferenciar controles legítimos de acoplamientos indebidos.
 
 - Reutilizar fixtures de catálogo ya cargadas y agregar casos a suites específicas en vez de abrir nuevos recorridos globales para una única reconciliación.
 - Conservar un caso real acreditado, uno negativo de identidad/huella y uno de no regresión; la cobertura útil tiene prioridad sobre reducir número de aserciones.
