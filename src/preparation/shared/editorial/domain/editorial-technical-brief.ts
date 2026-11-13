@@ -1,6 +1,8 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { editorialMetricOf, editorialQuantityOf, formatEditorialQuantity } from "./editorial-measurements.js";
-import { verifiedEditorialUnitPair } from "./editorial-unit-provenance.js";
+import { resolvedEditorialUnitFamilies } from "./editorial-unit-provenance.js";
+import { verifiedEditorialIdentity } from "./editorial-source-contract.js";
+import { editorialFamilyName } from "./editorial-families.js";
 
 const corroborated = (
   source: ProductRecord,
@@ -21,7 +23,12 @@ export const resolveVerifiedTechnicalBrief = (
   source: ProductRecord,
   prepared: ProductRecord
 ): string | null => {
-  if (!verifiedEditorialUnitPair(source, prepared) || !source.brand || !source.model) return null;
+  if (!verifiedEditorialIdentity(source) || !verifiedEditorialIdentity(prepared) ||
+    !source.brand || !source.model) return null;
+  const families = resolvedEditorialUnitFamilies(source, prepared);
+  if (!families) return null;
+  const [family, preparedFamily] = families;
+  if (family && preparedFamily && family !== preparedFamily) return null;
   const measures = [
     { value: corroborated(source, prepared, ["Peso"], "kg", 10, 500000), label: "peso declarado", unit: "kg" },
     { value: corroborated(source, prepared, ["Longitud"], "m", 0.2, 50), label: "longitud", unit: "m" },
@@ -30,6 +37,8 @@ export const resolveVerifiedTechnicalBrief = (
   ].filter((item): item is { value: number; label: string; unit: string } => item.value !== null);
   if (measures.length < 2) return null;
   const details = measures.slice(0, 2).map((item) => `${item.label} de ${formatEditorialQuantity(item.value)} ${item.unit}`);
-  const condition = source.condition === "Segunda mano" ? " de ocasión" : source.condition === "Nuevo" ? " nueva" : "";
-  return `Equipo ${source.brand} ${source.model}${condition}, con ${details.join(" y ")}.`;
+  const condition = source.condition === "Segunda mano" ? " de ocasión" : source.condition === "Nuevo" ? ", unidad nueva" : "";
+  const noun = family && family === preparedFamily ? editorialFamilyName(family) : "equipo";
+  const named = `${noun[0]?.toLocaleUpperCase("es") ?? ""}${noun.slice(1)}`;
+  return `${named} ${source.brand} ${source.model}${condition}, con ${details.join(" y ")}.`;
 };

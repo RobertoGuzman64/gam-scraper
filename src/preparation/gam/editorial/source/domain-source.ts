@@ -17,7 +17,7 @@ export const resolveGamEditorialDomainSource = (record: ProductRecord): Editoria
     brand, model,
     familyClues: `${record.title ?? ""} ${url.pathname}`,
     workingHeight: undefined,
-    lateralReach: undefined,
+    lateralReach: record.specs?.["Alcance Lateral"],
     liftingHeight: record.specs?.["Altura de elevación (mm)"],
     liftingHeightUnit: "mm",
     loadCapacity: record.specs?.["Capacidad de carga (kg)"],

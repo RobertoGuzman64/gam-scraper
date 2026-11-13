@@ -3,11 +3,14 @@ import { validMercaelevaTechnicalSource } from "../../technical/mapping/technica
 import { verifiedEditorialUrl } from "../../../shared/editorial/domain/editorial-source-url.js";
 import type { EditorialSource } from "../../../shared/editorial/domain/editorial-source-contract.js";
 import { hasEditorialAdapterHeightConflict } from "../../../shared/editorial/domain/editorial-height-consistency.js";
+import { hasEditorialMillimetreUnit } from "../../../shared/editorial/domain/editorial-measurements.js";
 import { verifiedEditorialIdentity, verifiedEditorialStructuredIdentity } from "../../../shared/editorial/domain/editorial-source-contract.js";
 
 export const resolveMercaelevaEditorialDomainSource = (record: ProductRecord): EditorialSource | null => {
   if (record.providerId !== "mercaeleva" || record.categoryKey !== "venta" ||
     !validMercaelevaTechnicalSource(record) || !(verifiedEditorialIdentity(record) || verifiedEditorialStructuredIdentity(record))) return null;
+  if (record.condition === "Nuevo" && record.specs?.Estado === "Usado" ||
+    record.condition === "Segunda mano" && record.specs?.Estado === "Nuevo") return null;
   const brand = record.brand?.trim();
   const model = record.model?.trim();
   if (!brand || !model) return null;
@@ -18,13 +21,14 @@ export const resolveMercaelevaEditorialDomainSource = (record: ProductRecord): E
   const additional = record.specs?.["Título adicional"];
   const familyText = `${record.title ?? ""} ${typeof additional === "string" ? additional : ""}`;
   if (hasEditorialAdapterHeightConflict(record)) return null;
+  const liftingHeight = record.specs?.["Altura máxima de elevación"];
   return {
     brand, model,
     familyClues: familyText,
     workingHeight: record.specs?.["Altura de trabajo"],
     lateralReach: undefined,
-    liftingHeight: record.specs?.["Altura máxima de elevación"],
-    liftingHeightUnit: "m",
+    liftingHeight,
+    liftingHeightUnit: hasEditorialMillimetreUnit(liftingHeight) ? "mm" : "m",
     loadCapacity: /\bcarretilla\b/iu.test(familyText) ? record.specs?.["Capacidad máxima de elevación"] : undefined,
     equipmentHeight: record.specs?.["Altura"],
     motor: record.specs?.["Tipo de motor"]

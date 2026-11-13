@@ -2,12 +2,16 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { resolveEditorialFacts } from "../domain/editorial-facts.js";
 import { resolveDocumentedEditorialTitle, resolveDocumentedFamilyTitle } from "../domain/editorial-documented-title.js";
 import { editorialFamilyName } from "../domain/editorial-families.js";
-import { formatEditorialQuantity } from "../domain/editorial-measurements.js";
+import { formatEditorialQuantity, hasEditorialMillimetreUnit } from "../domain/editorial-measurements.js";
+import { sameEditorialUnit, verifiedEditorialIdentity } from "../domain/editorial-source-contract.js";
 
 export const resolvePreparedEditorialTitle = (record: ProductRecord, sourceUnitRecord: ProductRecord): string | null => {
   const documented = resolveDocumentedEditorialTitle(sourceUnitRecord);
   if (documented !== null) return documented;
   const facts = resolveEditorialFacts(record);
+  if (facts && sameEditorialUnit(record, sourceUnitRecord) && verifiedEditorialIdentity(sourceUnitRecord) &&
+    hasEditorialMillimetreUnit(sourceUnitRecord.specs?.["Altura máxima de elevación"]) &&
+    sourceUnitRecord.title?.trim()) return sourceUnitRecord.title.trim();
   if (!facts) return resolveDocumentedFamilyTitle(sourceUnitRecord) ??
     (record.title?.trim() || sourceUnitRecord.title?.trim() || null);
   const family = editorialFamilyName(facts.family);

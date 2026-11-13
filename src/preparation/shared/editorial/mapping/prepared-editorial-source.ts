@@ -3,6 +3,7 @@ import type { SourceEditorialEvidence } from "./source-editorial-evidence.js";
 import { distinguishDescriptions } from "../../../../catalog/normalization/descriptions.js";
 import { hasEditorialSourceWorkHeightConflict } from "../domain/editorial-height-consistency.js";
 import { resolveReusableEditorial } from "../domain/editorial-composition.js";
+import { hasEditorialMillimetreUnit } from "../domain/editorial-measurements.js";
 import { resolveSourceEditorialClaims } from "../domain/editorial-source-claims.js";
 import { resolveUnbrandedEditorial } from "../domain/editorial-unbranded-equipment.js";
 import { resolveVerifiedEditorialUnitContext } from "../domain/editorial-unit-context.js";
@@ -40,14 +41,17 @@ export const resolvePreparedEditorialSource = (
     (signedGeneral && general ? conciseVerifiedUnitGeneral(sourceUnitRecord, general) ??
       conciseSignedUnitGeneral(general) : null) ??
       (verified ? resolveVerifiedSourceEditorialExcerpt(sourceUnitRecord) : null) ??
-      resolveEditorialIdentitySummary(record, familyOverride) ??
-      (verified ? resolveVerifiedTechnicalBrief(sourceUnitRecord, record) : null) : null;
+      (verified ? resolveVerifiedTechnicalBrief(sourceUnitRecord, record) : null) ??
+      resolveEditorialIdentitySummary(record, familyOverride) : null;
   const narrative = general && !signedGeneral ? [knowledge?.familyGuidance, knowledge?.modelReference]
     .filter((part): part is string => Boolean(part)).join(" ") : "";
   const assembledGeneral = general ? `${general}${narrative ? ` ${narrative}` : ""}` : record.longDescription;
   const long = signedGeneral ? assembledGeneral : resolveVerifiedEditorialUnitContext(sourceUnitRecord, assembledGeneral, record);
+  const conservedShort = verified && signedGeneral &&
+    hasEditorialMillimetreUnit(sourceUnitRecord.specs?.["Altura máxima de elevación"]) ?
+      sourceUnitRecord.shortDescription?.trim() || recoveredShort : null;
   const sourceClean = cleanAuthenticatedSourceEditorial(sourceUnitRecord,
-    knowledge?.short ?? composed.short ?? record.shortDescription ?? recoveredShort, long);
+    knowledge?.short ?? conservedShort ?? composed.short ?? record.shortDescription ?? recoveredShort, long);
   const compact = verified && !knowledge?.short && !composed.short ?
     compressVerifiedSourceShort(sourceUnitRecord, sourceClean.short, sourceClean.general) : null;
   return {

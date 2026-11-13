@@ -3,11 +3,13 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { EditorialFamily } from "./editorial-families.js";
 import { editorialFamilyName, resolveConsistentEditorialFamily } from "./editorial-families.js";
 import { resolveEditorialSource } from "./editorial-source.js";
+import { verifiedEditorialIdentity } from "./editorial-source-contract.js";
 
 export const resolveEditorialIdentitySummary = (
   record: ProductRecord,
   familyOverride: EditorialFamily | null
 ): string | null => {
+  if (!verifiedEditorialIdentity(record)) return null;
   const source = resolveEditorialSource(record);
   if (!source) return null;
   const family = resolveConsistentEditorialFamily(source.familyClues, record.title,

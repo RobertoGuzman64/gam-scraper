@@ -22,6 +22,9 @@ export const editorialQuantity = (raw: SpecValue | undefined, unit: EditorialQua
   return parseNumber(match[1].trim());
 };
 
+export const hasEditorialMillimetreUnit = (raw: SpecValue | undefined): boolean =>
+  editorialQuantity(raw, "mm") !== null;
+
 const concordantEditorialQuantity = (
   specs: SpecsMap | undefined, keys: readonly string[], measure: (value: SpecValue, key: string) => number | null
 ): number | null => {

@@ -55,8 +55,7 @@ export const resolveReusableEditorial = (
       sameEditorialUnit(sourceUnitRecord, record) ? resolveEditorialFacts(sourceUnitRecord, familyOverride) : null;
   const corroborated = (key: "Centro de carga" | "Radio de giro"): boolean =>
     source !== null && source.family === prepared.family &&
-    sourceUnitRecord.specs?.[key] !== undefined &&
-    sourceUnitRecord.specs[key] === record.specs?.[key];
+    sourceUnitRecord.specs?.[key] !== undefined && record.specs?.[key] !== undefined;
   const facts: EditorialFacts = {
     ...prepared,
     loadCenterMm: corroborated("Centro de carga") && source?.loadCenterMm === prepared.loadCenterMm

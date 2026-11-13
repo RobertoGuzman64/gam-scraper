@@ -1,6 +1,7 @@
 import type { ProductRecord, SpecValue } from "../../../../contracts/catalog.js";
 import { verifiedEditorialIdentity } from "./editorial-source-contract.js";
-import { verifiedEditorialUnitPair } from "./editorial-unit-provenance.js";
+import { verifiedEditorialUnitPair, resolvedEditorialUnitFamilies } from "./editorial-unit-provenance.js";
+import { editorialFamilyName, editorialFamilyOf } from "./editorial-families.js";
 import type { EditorialFamily } from "./editorial-families.js";
 import { resolveEditorialFacts } from "./editorial-facts.js";
 import { formatEditorialQuantity } from "./editorial-measurements.js";
@@ -123,10 +124,48 @@ const sourceFeatures: readonly EditorialSourceFeature[] = [
     declaration: /\b(?:desplazamiento\s+lateral(?:\s+de\s+horquillas)?|side[- ]?shift)\b/giu,
     mention: /\b(?:desplazamiento\s+lateral|side[- ]?shift)\b/iu,
     label: "desplazamiento lateral"
+  },
+  {
+    families: ["carretilla-elevadora", "carretilla-retractil", "transpaleta", "apilador", "recogepedidos"],
+    declaration: /\b(?:frenos?|frenado)\s+electromagn[eé]tic[oa]s?\b/giu,
+    mention: /\b(?:frenos?|frenado)\s+electromagn[eé]tic[oa]s?\b/iu,
+    label: "freno electromagnético"
+  },
+  {
+    families: ["carretilla-elevadora", "carretilla-retractil"],
+    declaration: /\bcabina\s+cerrada\b/giu,
+    mention: /\bcabina\s+cerrada\b/iu,
+    label: "cabina cerrada"
+  },
+  {
+    families: ["carretilla-elevadora", "carretilla-retractil"],
+    declaration: /\bcintur[oó]n\s+de\s+seguridad\b/giu,
+    mention: /\bcintur[oó]n\s+de\s+seguridad\b/iu,
+    label: "cinturón de seguridad"
   }
 ];
 
 const assertedSpec = (value: SpecValue | undefined): boolean => value === true;
+
+const join = (values: readonly string[]): string => values.length === 1 ? values[0] ?? "" :
+  values.length === 2 ? `${values[0]} y ${values[1]}` :
+    `${values.slice(0, -1).join(", ")} y ${values[values.length - 1]}`;
+
+const sourceDeclaredGeneral = (source: ProductRecord, prepared: ProductRecord): string | null => {
+  if (source.longDescription?.trim() || prepared.longDescription?.trim()) return null;
+  if (!source.brand || !source.model || !verifiedEditorialIdentity(prepared)) return null;
+  const families = resolvedEditorialUnitFamilies(source, prepared);
+  if (!families) return null;
+  const [family, preparedFamily] = families;
+  if (!family || family !== preparedFamily ||
+    editorialFamilyOf(source.title ?? "") !== family ||
+    editorialFamilyOf(prepared.title ?? "") !== family) return null;
+  const declarations = claims.filter((claim) => assertedSpec(source.specs?.[claim.key]) &&
+    assertedSpec(prepared.specs?.[claim.key])).map((claim) =>
+    `${claim.key[0]?.toLocaleLowerCase("es") ?? ""}${claim.key.slice(1)}`);
+  if (declarations.length === 0) return null;
+  return `La ficha de origen de ${editorialFamilyName(family)} ${source.brand} ${source.model} declara ${join(declarations)}; su configuración debe comprobarse para esta unidad.`;
+};
 
 const sourcedFamilyFeatures = (source: ProductRecord, prepared: ProductRecord, general: string): string | null => {
   const original = resolveEditorialFacts(source);
@@ -173,7 +212,8 @@ export const resolveSourceEditorialClaims = (
   prepared: ProductRecord,
   general: string | null
 ): string | null => {
-  if (!general?.trim() || !verifiedEditorialIdentity(source) || !verifiedEditorialUnitPair(source, prepared)) return general;
+  if (!verifiedEditorialIdentity(source) || !verifiedEditorialUnitPair(source, prepared)) return general;
+  if (!general?.trim()) return sourceDeclaredGeneral(source, prepared);
   const description = source.longDescription ?? "";
   const additions = claims.filter((claim) => {
     if (claim.mention.test(general)) return false;

@@ -1,5 +1,5 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { editorialQuantityOf, formatEditorialQuantity } from "./editorial-measurements.js";
+import { editorialMetricOf, editorialQuantityOf, formatEditorialQuantity } from "./editorial-measurements.js";
 import { editorialFamilyFromSourceGeneral, editorialFamilyName, resolveConsistentEditorialFamily } from "./editorial-families.js";
 import { verifiedEditorialIdentity } from "./editorial-source-contract.js";
 import { resolveEditorialSource } from "./editorial-source.js";
@@ -14,7 +14,8 @@ const positive = (value: string): number | null => {
 };
 const matchedMetric = (record: ProductRecord, keys: readonly string[], unit: "m" | "kg", raw: string): number | null => {
   const expected = positive(raw);
-  return expected !== null && editorialQuantityOf(record.specs, keys, unit) === expected ? expected : null;
+  const observed = unit === "m" ? editorialMetricOf(record.specs, keys) : editorialQuantityOf(record.specs, keys, unit);
+  return expected !== null && observed === expected ? expected : null;
 };
 
 export const resolveDocumentedEditorialTitle = (record: ProductRecord): string | null => {
@@ -63,10 +64,12 @@ export const resolveDocumentedEditorialTitle = (record: ProductRecord): string |
   }
 
   if (fold(additional) === "plataforma de tijera electrica" &&
-    fold(String(record.specs?.["Tipo de motor"] ?? "")) === "electrico" &&
-    matchedMetric(record, ["Altura de trabajo"], "m", "8") === 8 &&
-    /plataforma tijera electrica altura de trabajo 8 mt/u.test(description)) {
-    return `Plataforma de tijera eléctrica ${brand} ${model} de 8 m`;
+    fold(String(record.specs?.["Tipo de motor"] ?? "")) === "electrico") {
+    const mentioned = /\bplataforma\s+(?:de\s+)?tijera\s+electrica\s+altura\s+de\s+trabajo\s+(\d+(?:[.,]\d{1,3})?)\s*(?:mt|m|metros?)\b/u.exec(description);
+    const height = mentioned?.[1] ? matchedMetric(record, ["Altura de trabajo"], "m", mentioned[1]) : null;
+    if (height !== null && height >= 3 && height <= 60) {
+      return `Plataforma de tijera eléctrica ${brand} ${model} de ${formatEditorialQuantity(height)} m`;
+    }
   }
 
   const forklift = /^CARRETILLA ELEVADORA DIESEL (\d{3,5}) KG$/iu.exec(additional);

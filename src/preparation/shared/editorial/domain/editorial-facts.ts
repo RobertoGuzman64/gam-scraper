@@ -102,13 +102,25 @@ const corroboratedMillimetres = (
   specs: SpecValue | undefined, description: string | null, key: "Centro de carga" | "Radio de giro",
   minimum: number, maximum: number
 ): number | null => {
-  const value = sourceMillimetres(specs, minimum, maximum);
-  if (value === null) return null;
+  const metres = key === "Radio de giro" ? editorialQuantity(specs, "m") : null;
+  const value = metres === null ? sourceMillimetres(specs, minimum, maximum) : metres * 1000;
+  if (value === null || value < minimum || value > maximum) return null;
   const term = key === "Centro de carga" ? "centro\\s+(?:de\\s+)?(?:carga|gravedad)" :
     "radio\\s+(?:(?:m[ií]nimo|exterior)\\s+)?(?:de\\s+)?(?:giro|viraje)";
-  const contextual = new RegExp(`\\b${term}\\s+(?:(?:de|es|de\\s+aproximadamente|(?:indicado|declarado)\\s+(?:es\\s+)?de)\\s+)?(\\d{3,4})\\s*mm\\b`, "giu");
-  const recorded = [...(description ?? "").matchAll(contextual)].map((item) => Number(item[1]));
-  return recorded.some((item) => item !== value) ? null : value;
+  if (metres === null) {
+    const contextual = new RegExp(`\\b${term}\\s+(?:(?:de|es|de\\s+aproximadamente|(?:indicado|declarado)\\s+(?:es\\s+)?de)\\s+)?(\\d{3,4})\\s*mm\\b`, "giu");
+    const recorded = [...(description ?? "").matchAll(contextual)].map((item) => Number(item[1]));
+    return recorded.some((item) => item !== value) ? null : value;
+  }
+  const contextual = new RegExp(`\\b${term}\\s+(?:(?:de|es|de\\s+aproximadamente|(?:indicado|declarado)\\s+(?:es\\s+)?de)\\s+)?(\\d{1,4}(?:[.,]\\d{1,3})?)\\s*(mm|m|metros?)\\b`, "giu");
+  const recorded = [...(description ?? "").matchAll(contextual)].map((item) => {
+    const raw = `${item[1] ?? ""} ${item[2] ?? ""}`;
+    const millimetres = editorialQuantity(raw, "mm");
+    if (millimetres !== null) return millimetres;
+    const measured = editorialQuantity(raw, "m");
+    return measured === null ? null : measured * 1000;
+  });
+  return recorded.some((item) => item === null || Math.abs(item - value) > 0.001) ? null : value;
 };
 
 const hasHandlingMeasurements = (family: EditorialFamily): boolean =>
@@ -161,8 +173,17 @@ export const resolveEditorialFacts = (record: ProductRecord, familyOverride: Edi
   const work = platform ? sourceMetric(source.workingHeight, "m") : null;
   const platformHeight = platform ? editorialMetricOf(record.specs, ["Altura plataforma", "Altura Plataforma"]) : null;
   const storedHeight = platform ? editorialMetricOf(record.specs, ["Altura almacenaje"]) : null;
-  const lateral = (family === "plataforma-telescopica" || family === "plataforma-articulada" || family === "camion-cesta")
-    ? sourceMetric(source.lateralReach, "m") : null;
+  const lateralFamily = family === "plataforma-telescopica" || family === "plataforma-articulada" ||
+    family === "plataforma-oruga" || family === "camion-cesta";
+  const lateralAliases = lateralFamily ? editorialMetricOf(record.specs, ["Alcance lateral", "Alcance Lateral"]) : null;
+  const lateralCandidate = lateralFamily && source.lateralReach !== undefined &&
+    sourceMetric(source.lateralReach, "m") === lateralAliases ? lateralAliases :
+    lateralFamily && source.lateralReach === undefined ? lateralAliases : null;
+  const publishedReach = record.specs?.["Alcance Lateral"] !== undefined && lateralCandidate !== null ?
+    [...(record.longDescription ?? "").matchAll(/\balcance\s+(?:lateral|horizontal)\s+(?:de\s+)?(?:hasta\s+)?(\d{1,2}(?:[.,]\d{1,3})?)\s*(?:m|metros?)\b/giu)] : [];
+  const lateralConflict = publishedReach.some((item) =>
+    editorialQuantity(`${item[1] ?? ""} m`, "m") !== lateralCandidate);
+  const lateral = lateralConflict ? null : lateralCandidate;
   const liftingAliases = editorialMetricOf(record.specs,
     ["Altura máxima de elevación", "Altura de elevación (mm)", "Altura de elevación (m)"]);
   const lifting = source.liftingHeight === undefined ? liftingAliases :
@@ -185,7 +206,7 @@ export const resolveEditorialFacts = (record: ProductRecord, familyOverride: Edi
   const cleaningWidth = ["fregadora", "barredora", "maquina-limpieza"].includes(family) ?
     editorialMetricOf(record.specs, ["Anchura trabajo", "Anchura limpieza"]) : null;
   if (platform && source.workingHeight !== undefined && work === null ||
-    (family === "plataforma-articulada" || family === "plataforma-telescopica") && source.lateralReach !== undefined && lateral === null ||
+    lateralFamily && source.lateralReach !== undefined && lateralCandidate === null ||
     source.loadCapacity !== undefined && (isHandling(family) || platform) && capacity === null ||
     (isHandling(family) && source.liftingHeight !== undefined && lifting === null)) return null;
   if (!valid(work, 3, 60) || !valid(platformHeight, 0.5, 60) || !valid(storedHeight, 0.5, 30) ||
