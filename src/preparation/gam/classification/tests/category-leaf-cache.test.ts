@@ -1,16 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { resolveCategory } from "../../../shared/classification/mapping/category-mapping.js";
 
 const catalog = await loadImportCatalog();
-const gam = await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../../src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
-)));
-const newProduct = gam.products.find((record) => resolveCategory(record, catalog.categories, "Nuevo") !== null);
-if (!newProduct) throw new Error("No hay una máquina nueva con categoría acreditada");
+const newProduct = accreditedSourceRecord("gam-historical", "4730");
 const original = resolveCategory(newProduct, catalog.categories, "Nuevo");
 if (!original) throw new Error("No se ha encontrado su categoría original");
 

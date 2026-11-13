@@ -1,15 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { sourceCategoryQualityIssue, SOURCE_CATEGORY_ISSUE } from "../../../shared/quality/source/category-quality.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
-const musoshi = gam.products.find((product) => product.reference === "6806");
-assert.ok(musoshi);
+const musoshi = accreditedSourceRecord("gam-historical", "6806");
 
 test("Musoshi 6806 documenta un cuatriciclo y no se clasifica como furgoneta", () => {
   const original = structuredClone(musoshi);

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ImportCandidate } from "../../legacy-export/contracts.js";
 import { analyzeCommercialOutputConsistency } from "../commercial-output-consistency.js";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceRecord } from "../../../testing/domain-cases/accredited-source-samples.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { prepareProduct } from "../../legacy-export/prepare-product.js";
 
@@ -99,17 +99,14 @@ test("agrupa incidencias por causa, conserva las referencias y limita ejemplos",
 
 
 test("detecta el multiplicador de mil en medidas submetro históricas sin confundir conceptos", async () => {
-  const [source, catalog] = await Promise.all([
-    readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json"), loadImportCatalog()
-  ]);
+  const catalog = await loadImportCatalog();
   const cases = [
     { reference: "3993", attributeID: 60, millimetres: 368 },
     { reference: "2144", attributeID: 29, millimetres: 202 },
     { reference: "1144", attributeID: 29, millimetres: 115 }
   ] as const;
   for (const { reference, attributeID, millimetres } of cases) {
-    const original = source.products.find((item) => item.reference === reference);
-    assert.ok(original, reference);
+    const original = accreditedSourceRecord("gam-original", reference);
     const prepared = prepareProduct(original, catalog);
     const actual = prepared.product.attributes.find((item) => item.attributeID === attributeID);
     assert.equal(actual?.value, millimetres, reference);
@@ -131,8 +128,7 @@ test("detecta el multiplicador de mil en medidas submetro históricas sin confun
     assert.equal(report.signals.find((item) => item.reason === "medida-submetro-atributo-escala-multiplicada")?.affected, 1);
   }
   for (const reference of ["4001", "4002", "4003", "4004", "4005", "1218"]) {
-    const original = source.products.find((item) => item.reference === reference);
-    assert.ok(original, reference);
+    const original = accreditedSourceRecord("gam-original", reference);
     const mapped = prepareProduct(original, catalog);
     assert.equal(analyzeCommercialOutputConsistency([mapped.product]).findings.some((item) =>
       item.reason === "medida-submetro-atributo-escala-multiplicada"), false, reference);

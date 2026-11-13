@@ -1,15 +1,15 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../classification/mapping/attribute-mapping.js";
 import { recoverMercaelevaSourceFuel } from "../../../mercaeleva/technical/evidence/source-fuel-evidence.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
-const mercaeleva = await readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json");
+const gam = { products: accreditedSourceSamples("gam-historical") };
+const mercaeleva = { products: accreditedSourceSamples("mercaeleva-historical") };
 const find = (provider: "gam" | "mercaeleva", reference: string): ProductRecord => {
   const products = provider === "gam" ? gam.products : mercaeleva.products;
   const result = products.find((product) => product.reference === reference);

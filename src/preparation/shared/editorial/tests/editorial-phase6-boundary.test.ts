@@ -1,18 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFileSync } from "node:fs";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
+import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { normalizePreparedEditorialPresentation } from "../mapping/prepared-editorial-presentation.js";
 import { prepareCommercialEditorialInputs } from "../../../../commercial/projection/editorial-inputs.js";
 import { projectCommercialPresentation } from "../../../../commercial/projection/presentation-projection.js";
 
-const original = (providerId: string, reference: string): ProductRecord => {
-  const data: { readonly products: readonly ProductRecord[] } = JSON.parse(readFileSync(
-    `catalogs/providers/${providerId}/original/scrape-${providerId}-catalog.json`, "utf8"));
-  const record = data.products.find((item) => item.reference === reference);
-  assert.ok(record, `${providerId}:${reference}`);
-  return record;
+const original = (provider: string, reference: string): ProductRecord => {
+  if (provider === "gam") return accreditedSourceRecord("gam-original", reference);
+  if (provider === "gomariz") return accreditedSourceRecord("gomariz-original", reference);
+  if (provider === "mercaeleva") return accreditedSourceRecord("mercaeleva-original", reference);
+  throw new Error(`Proveedor desconocido: ${provider}`);
 };
 
 test("la proyección no vuelve a escribir el título, corta ni general del preparador", () => {

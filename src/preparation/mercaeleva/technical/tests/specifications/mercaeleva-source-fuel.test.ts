@@ -1,12 +1,12 @@
+import { accreditedSourceSamples } from "../../../../../testing/domain-cases/accredited-source-samples.js";
 import { recoverMercaelevaDocumentedEquipmentTechnicalSpecs } from "../../evidence/documented-equipment-technical-specs.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { recoverMercaelevaSourceFuel } from "../../evidence/source-fuel-evidence.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json");
+const catalog = { products: accreditedSourceSamples("mercaeleva-original") };
 const source = (reference: string): ProductRecord => {
   const record = catalog.products.find((product) => product.reference === reference);
   assert.ok(record, reference);

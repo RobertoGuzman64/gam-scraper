@@ -2,12 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
-const records: readonly ProductRecord[] = source.products;
+const records = accreditedSourceSamples("gam-historical");
 const byReference = new Map(records.map((record) => [record.reference, record]));
 const reference = (id: string): ProductRecord => {
   const record = byReference.get(id);

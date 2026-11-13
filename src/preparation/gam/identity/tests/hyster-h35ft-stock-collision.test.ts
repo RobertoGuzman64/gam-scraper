@@ -1,14 +1,14 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { findSerialNumberCollisions } from "../../../../catalog/identity-conflicts.js";
 import { describeHysterH35ftStockConflict } from "../evidence/hyster-h35ft-serial-evidence.js";
 import { prepareImportBatch } from "../../../batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const gam = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
+const gam = { products: accreditedSourceSamples("gam-historical") };
 const get = (reference: string): ProductRecord => {
   const item = gam.products.find((product) => product.reference === reference);
   assert.ok(item, reference);

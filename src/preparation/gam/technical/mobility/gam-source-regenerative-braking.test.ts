@@ -1,12 +1,12 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamSourceRegenerativeBraking } from "./source-regenerative-braking.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { reconcileGamSourceTechnicalUnits } from "../reconciliation/gam-source-technical-units.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const catalog = { products: accreditedSourceSamples("gam-original") };
 const sourceOf = (reference: string) => {
   const source = catalog.products.find((product) => product.reference === reference);
   assert.ok(source, reference);

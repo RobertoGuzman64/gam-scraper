@@ -1,9 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { requireProductReference } from "../../../testing/require-product-reference.js";
-import { fileURLToPath } from "node:url";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { sourceSignalForIssue } from "../../../../catalog/diagnostics/source-triage.js";
 import { classifyQualityIssue } from "../../../offline-diagnostics.js";
@@ -11,11 +9,9 @@ import { prepareProduct } from "../../../../commercial/legacy-export/prepare-pro
 import { SOURCE_CATEGORY_ISSUE } from "../../../shared/quality/source/category-quality.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../../src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
-)));
+;
 
-const reference = (code: string): ProductRecord => requireProductReference(source.products, code);
+const reference = (code: string): ProductRecord => accreditedSourceRecord("gam-historical", code);
 
 test("tipo de origen corroborado sin categoría del receptor no es motivo de review", () => {
   for (const code of ["6653", "4778", "4779", "4780", "2159", "220", "221", "227", "2134", "2135"]) {

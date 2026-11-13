@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { accreditedSourceRecord, accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { normalizeGamRows } from "../../../../tools/gam/normalization/normalize-rows.js";
@@ -51,9 +52,7 @@ test("el parser distingue decimales inferiores a uno de los separadores de milla
 });
 
 test("GAM 3993 convierte 0,368 metros a 368 mm en el atributo comercial 60", async () => {
-  const { readCanonicalCatalog } = await import("../../../../infrastructure/filesystem/catalog/canonical-catalog.js");
-  const source = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-  const record = source.products.find((product) => product.reference === "3993");
+  const record = accreditedSourceRecord("gam-original", "3993");
   const width = catalog.attributes.find((attribute) => attribute.id === 60);
   assert.ok(record);
   assert.ok(width);
@@ -68,9 +67,7 @@ test("GAM 3993 convierte 0,368 metros a 368 mm en el atributo comercial 60", asy
 });
 
 test("GAM 2144 y 1144 interpretan alturas inferiores a un metro sin alterar categorías", async () => {
-  const { readCanonicalCatalog } = await import("../../../../infrastructure/filesystem/catalog/canonical-catalog.js");
-  const source = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-  const records = new Map(source.products.map((record) => [record.reference, record]));
+  const records = new Map(accreditedSourceSamples("gam-original").map((record) => [record.reference, record]));
   const height = catalog.attributes.find((attribute) => attribute.id === 29);
   assert.ok(height);
   assert.equal(height.name, "Altura de elevación");
@@ -88,9 +85,7 @@ test("GAM 2144 y 1144 interpretan alturas inferiores a un metro sin alterar cate
 });
 
 test("GAM conserva las anchuras acreditadas por configuración y la potencia de grupo", async () => {
-  const { readCanonicalCatalog } = await import("../../../../infrastructure/filesystem/catalog/canonical-catalog.js");
-  const source = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-  const records = new Map(source.products.map((record) => [record.reference, record]));
+  const records = new Map(accreditedSourceSamples("gam-original").map((record) => [record.reference, record]));
   const width = catalog.attributes.find((attribute) => attribute.id === 60);
   const power = catalog.attributes.find((attribute) => attribute.id === 70);
   assert.ok(width);
@@ -195,9 +190,7 @@ test("no convierte medidas ambiguas, contradictorias ni compuestos en números t
 });
 
 test("contrasta medidas reales de GAM sin confundir radios, alturas ni mezclas de unidades", async () => {
-  const { readCanonicalCatalog } = await import("../../../../infrastructure/filesystem/catalog/canonical-catalog.js");
-  const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-  const byReference = new Map(catalog.products.map((record) => [record.reference, record]));
+  const byReference = new Map(accreditedSourceSamples("gam-original").map((record) => [record.reference, record]));
   for (const [reference, expected] of [["6542", 6020], ["1152", 1980], ["1145", 1980], ["912", 1980]] as const) {
     const record = byReference.get(reference);
     assert.ok(record, reference);
@@ -231,9 +224,7 @@ test("la normalización de CSV GAM publica medidas en la unidad de su clave sin 
 
 
 test("el original Gomariz expresado en metros se normaliza sin perder su escala", async () => {
-  const { readCanonicalCatalog } = await import("../../../../infrastructure/filesystem/catalog/canonical-catalog.js");
-  const catalog = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
-  const source = catalog.products.find((record) => record.reference === "OR1537");
+  const source = accreditedSourceRecord("gomariz-original", "OR1537");
   assert.ok(source);
   const result = normalizeSpecsObject(source.specs);
   assert.equal(result.normalized["Altura plataforma (mm)"], 13000);

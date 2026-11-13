@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceSamples } from "../../testing/domain-cases/accredited-source-samples.js";
 import { loadImportCatalog } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../shared/classification/mapping/attribute-mapping.js";
 import { gamConfirmedAbsentScalar } from "../gam/classification/mapping/unrepresentable.js";
 import { prepareSourceProduct, prepareWithCatalog } from "../prepare-product.js";
 
-const { products } = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const products = accreditedSourceSamples("gam-original");
 
 const find = (reference: string): ProductRecord => {
   const record = products.find((candidate) => candidate.reference === reference);

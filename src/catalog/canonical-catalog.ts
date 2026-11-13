@@ -64,6 +64,13 @@ const isProductRecord = (value: unknown): value is ProductRecord => {
   return true;
 };
 
+export const parseCanonicalProductRecords = (value: unknown): readonly ProductRecord[] => {
+  if (!Array.isArray(value) || !value.every(isProductRecord)) {
+    throw new Error("Registros de producto canónicos inválidos");
+  }
+  return value;
+};
+
 const validDate = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0 && Number.isFinite(Date.parse(value));
 

@@ -158,6 +158,66 @@ test("identifica hashes literales de salidas editoriales atadas a catálogo, per
   assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FROZEN-EDITORIAL-HASH"));
 });
 
+test("los recuentos acreditados se exceptúan por ruta, prueba y afirmación exacta", (t) => {
+  const { root, write } = fixture(t);
+  const path = "src/preparation/gam/quality/tests/gam-verified-operational-safety.test.ts";
+  const original = "import assert from 'node:assert/strict'; import test from 'node:test'; const source = 'catalogs/providers/gam/original/scrape-gam-catalog.json'; test('recupera veinte prestaciones de seguridad de fuentes individuales conservando las especificaciones anteriores', () => { const changed = { length: 20 }; assert.equal(changed.length, 20); });";
+  write(path, original);
+  const accredited = inspectTestArchitecture(root);
+  assert.equal(accredited.findings.filter((finding) => finding.rule === "T-FIXED-COHORT").length, 0);
+  assert.equal(accredited.exceptions.filter((item) => item.rule === "T-FIXED-COHORT").length, 1);
+  assert.ok(rules(accredited.findings).has("T-PRODUCT-CATALOG"));
+  write(path, original.replace("assert.equal(changed.length, 20)", "assert.equal(changed.length, 21)"));
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FIXED-COHORT"));
+  write(path, original.replace("recupera veinte prestaciones de seguridad de fuentes individuales conservando las especificaciones anteriores",
+    "otro caso con el mismo recuento"));
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FIXED-COHORT"));
+});
+
+test("la excepción de fixture transitiva no cubre fuentes o consumidores nuevos", (t) => {
+  const { root, write } = fixture(t);
+  const path = "src/preparation/gam/classification/tests/gam-verified-category-equivalences.test.ts";
+  const fixturePath = "src/preparation/gam/technical/tests/support/gam-historical-category-fixture.ts";
+  const accreditedFixture = "import { readCanonicalCatalog } from '../../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; export const load = () => readCanonicalCatalog('src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json');";
+  write(fixturePath, accreditedFixture);
+  write(path,
+    "import { load } from '../../technical/tests/support/gam-historical-category-fixture.js'; export const source = load; ");
+  const accredited = inspectTestArchitecture(root);
+  assert.equal(accredited.findings.filter((finding) => finding.rule === "T-TRANSITIVE-CATALOG").length, 0);
+  assert.equal(accredited.exceptions.filter((item) => item.rule === "T-TRANSITIVE-CATALOG").length, 1);
+  write(fixturePath, accreditedFixture + " export const extra = readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json');");
+  assert.equal(inspectTestArchitecture(root).findings.filter((finding) => finding.rule === "T-TRANSITIVE-CATALOG").length, 1);
+  write(fixturePath, accreditedFixture);
+  write("src/testing/builders/alternative-catalog-fixture.ts",
+    "export const source = 'catalogs/providers/gam/original/scrape-gam-catalog.json';");
+  write(path,
+    "import { load } from '../../technical/tests/support/gam-historical-category-fixture.js'; import { source } from '../../../../testing/builders/alternative-catalog-fixture.js'; export const both = [load, source];");
+  assert.equal(inspectTestArchitecture(root).findings.filter((finding) => finding.rule === "T-TRANSITIVE-CATALOG").length, 1);
+});
+
+test("la excepción transitiva Mercaeleva se revoca si el builder incorpora otra fuente", (t) => {
+  const { root, write } = fixture(t);
+  const helper = "src/testing/builders/mercaeleva-source-fixture.ts";
+  const path = "src/preparation/mercaeleva/technical/tests/specifications/mercaeleva-documented-platform-technical-specs.test.ts";
+  const source = 'import { join } from "node:path"; import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js"; export const read = () => { const folder = join("catalogs", "providers", "mercaeleva", "original"); const entries = []; if (entries.length !== 1) throw Error(); return readCanonicalCatalog(join(folder, "catalog.json")); };';
+  write(helper, source);
+  write(path, "import { read } from '../../../../../testing/builders/mercaeleva-source-fixture.js'; export const load = read;");
+  const accredited = inspectTestArchitecture(root);
+  assert.equal(accredited.exceptions.filter((item) => item.rule === "T-TRANSITIVE-CATALOG").length, 1);
+  assert.ok(!rules(accredited.findings).has("T-TRANSITIVE-CATALOG"));
+  write(helper, source + " export const extra = readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json');");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
+});
+
+test("el hash de procedencia se conserva aunque la suite inspeccione descripciones", (t) => {
+  const { root, write } = fixture(t);
+  write("src/preparation/tests/catalog-publication-consistency.test.ts",
+    "import assert from 'node:assert/strict'; import { createHash } from 'node:crypto'; import { readFileSync } from 'node:fs'; const original = readFileSync('catalogs/providers/gam/original/scrape-gam-catalog.json'); const description_general = 'verificación editorial'; const source = { catalogSha256: 'hash registrado' }; assert.equal(createHash('sha256').update(original).digest('hex'), source.catalogSha256);");
+  const result = inspectTestArchitecture(root);
+  assert.ok(rules(result.findings).has("T-PRODUCT-CATALOG"));
+  assert.ok(!rules(result.findings).has("T-FROZEN-EDITORIAL-HASH"));
+});
+
 test("detecta reescritura editorial en una asignación posterior a preparación", (t) => {
   const { root, write } = fixture(t);
   write("src/catalog/editorial/providers/gam/rewrite.ts",

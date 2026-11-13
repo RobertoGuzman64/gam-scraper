@@ -1,21 +1,17 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { reconcileGamHorometer } from "../../../gam/technical/reconciliation/gam-horometer.js";
 import { reconcileGamSourceTechnicalUnits } from "../../../gam/technical/reconciliation/gam-source-technical-units.js";
 import { reconcileGamVerifiedClassicVehicleIdentity } from "../../../gam/identity/evidence/used-classic-vehicle-identity.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../classification/mapping/attribute-mapping.js";
 import { SOURCE_CATEGORY_ISSUE, sourceCategoryQualityIssue } from "../../quality/source/category-quality.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const [gam, gomariz, mercaeleva] = await Promise.all([
-  readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json"),
-  readCanonicalCatalog("src/testing/fixtures/gomariz/scrape-gomariz-catalog.json"),
-  readCanonicalCatalog("src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json")
-]);
+const gam = { products: accreditedSourceSamples("gam-historical") };
 const source = (reference: string): ProductRecord => {
   const record = gam.products.find((product) => product.reference === reference);
   assert.ok(record, reference);

@@ -1,17 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFileSync } from "node:fs";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
+import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { resolveSourceEditorialClaims } from "../domain/editorial-source-claims.js";
 import { compressVerifiedSourceShort } from "../domain/editorial-source-brief.js";
 
-const original = (providerId: string, reference: string): ProductRecord => {
-  const catalog: { readonly products: readonly ProductRecord[] } = JSON.parse(readFileSync(
-    `catalogs/providers/${providerId}/original/scrape-${providerId}-catalog.json`, "utf8"
-  ));
-  const record = catalog.products.find((item) => item.reference === reference);
-  if (!record) throw new Error(`${providerId}:${reference}`);
-  return record;
+const original = (provider: string, reference: string): ProductRecord => {
+  if (provider === "gam") return accreditedSourceRecord("gam-original", reference);
+  if (provider === "gomariz") return accreditedSourceRecord("gomariz-original", reference);
+  if (provider === "mercaeleva") return accreditedSourceRecord("mercaeleva-original", reference);
+  throw new Error(`Proveedor desconocido: ${provider}`);
 };
 
 test("la tensión afirmada de batería se reutiliza por fuente, no por proveedor ni referencia", () => {

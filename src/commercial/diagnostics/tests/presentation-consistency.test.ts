@@ -1,19 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceSamples } from "../../../testing/domain-cases/accredited-source-samples.js";
 import { createPreparedSourceFixture } from "../../../testing/builders/prepared-source-fixture.js";
 import { analyzePresentationConsistency } from "../presentation-consistency.js";
 
-const [gam, gomariz, mercaeleva] = await Promise.all([
-  readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json"),
-  readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json"),
-  readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json")
-]);
+const gam = accreditedSourceSamples("gam-original");
+const gomariz = accreditedSourceSamples("gomariz-regression");
+const mercaeleva = accreditedSourceSamples("mercaeleva-original");
 
 const prepareOriginal = createPreparedSourceFixture();
 
 const gamProduct = (reference: string) => {
-  const source = gam.products.find((item) => item.reference === reference);
+  const source = gam.find((item) => item.reference === reference);
   assert.ok(source, reference);
   return prepareOriginal(source).product;
 };
@@ -56,7 +54,7 @@ test("detecta unidades técnicas y dimensiones semánticamente mal ubicadas", ()
 test("detecta unidades de resúmenes y conflictos de variante sin inferir modelos", () => {
   const correctedCte = gamProduct("4650");
   const cte = { ...correctedCte, title: correctedCte.title?.replace("18HV", "18HD") ?? null };
-  const ausaSource = mercaeleva.products.find((item) => item.reference === "M855-6850");
+  const ausaSource = mercaeleva.find((item) => item.reference === "M855-6850");
   assert.ok(ausaSource);
   const ausa = prepareOriginal(ausaSource).product;
   const altered = { ...ausa, description: "Altura de elevación 4.30mm" };
@@ -99,7 +97,7 @@ test("detecta capacidades restringidas aunque tengan miles y no confunde cotas d
 test("distingue portada ajena, prefijos heredados y variante fotográfica en Gomariz", () => {
   const references = ["CC1666", "CC1535", "TE1591", "TE1754", "TE1756", "TE1772"];
   const products = references.map((reference) => {
-    const source = gomariz.products.find((item) => item.reference === reference);
+    const source = gomariz.find((item) => item.reference === reference);
     assert.ok(source, reference);
     return prepareOriginal(source).product;
   });
@@ -112,7 +110,7 @@ test("distingue portada ajena, prefijos heredados y variante fotográfica en Gom
 
 test("no atribuye variante contradictoria a abreviaturas de archivo o galerías del mismo modelo", () => {
   const unaffected = [gamProduct("5848"), gamProduct("4814"), gamProduct("4817")];
-  const source = mercaeleva.products.find((item) => item.reference === "M168-3277");
+  const source = mercaeleva.find((item) => item.reference === "M168-3277");
   assert.ok(source);
   unaffected.push(prepareOriginal(source).product);
   assert.deepEqual(analyzePresentationConsistency(unaffected).findings, []);
@@ -125,8 +123,8 @@ test("no atribuye variante contradictoria a abreviaturas de archivo o galerías 
 
 
 test("reconcilia la portada ajena de CC1666 sin alterar la fuente ni perder su galería propia", () => {
-  const source = gomariz.products.find((item) => item.reference === "CC1666");
-  const other = gomariz.products.find((item) => item.reference === "CC1535");
+  const source = gomariz.find((item) => item.reference === "CC1666");
+  const other = gomariz.find((item) => item.reference === "CC1535");
   assert.ok(source);
   assert.ok(other);
   assert.ok(source.image);
@@ -146,7 +144,7 @@ test("reconcilia la portada ajena de CC1666 sin alterar la fuente ni perder su g
 
 test("reconoce prefijos de lote coherentes y mantiene abierta la variante WE frente a WF", () => {
   const products = ["TE1754", "TE1756", "TE1772"].map((reference) => {
-    const source = gomariz.products.find((item) => item.reference === reference);
+    const source = gomariz.find((item) => item.reference === reference);
     assert.ok(source, reference);
     return prepareOriginal(source).product;
   });

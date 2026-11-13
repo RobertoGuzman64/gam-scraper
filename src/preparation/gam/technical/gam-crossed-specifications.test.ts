@@ -3,7 +3,7 @@ import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 import { resolveAttribute } from "../../shared/classification/mapping/attribute-mapping.js";
 import { SOURCE_TECHNICAL_FIELDS } from "../../shared/technical/source/technical-fields.js";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceRecord } from "../../../testing/domain-cases/accredited-source-samples.js";
 import { recoverGamCrossedTechnicalSpecs } from "./crossed-specifications.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 
@@ -89,12 +89,7 @@ test("GAM: los valores incompatibles o las rutas ajenas no se omiten por aparien
   }
 });
 
-const canonicalGam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const canonicalRecord = (reference: string): ProductRecord => {
-  const source = canonicalGam.products.find((item) => item.reference === reference);
-  assert.ok(source, reference);
-  return source;
-};
+const canonicalRecord = (reference: string): ProductRecord => accreditedSourceRecord("gam-original", reference);
 
 test("GAM: las transpaletas Yale acreditadas recuperan batería sin duplicar el peso ni inventar altura", () => {
   for (const reference of ["2242", "2243", "2244", "2245", "2246", "2247"]) {

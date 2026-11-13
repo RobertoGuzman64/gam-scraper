@@ -4,7 +4,7 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { resolveAttributeValue } from "../../../shared/classification/mapping/attribute-mapping.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { prepareProduct } from "../../../prepare.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceSamples, accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 
 const catalog = await loadImportCatalog();
 const attr = (name: string) => {
@@ -143,9 +143,8 @@ test("GAM energía: utiliza un motor eléctrico literal sin introducir conflicto
 
 
 test("GAM: recupera el motor eléctrico explícito de las cinco carretillas trilaterales Yale sin cambiar el contrato", async () => {
-  const original = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
   const references = ["2263", "2264", "2265", "2266", "2267"];
-  const selected = original.products.filter((record) => references.includes(record.reference ?? ""));
+  const selected = accreditedSourceSamples("gam-original").filter((record) => references.includes(record.reference ?? ""));
   assert.equal(selected.length, references.length);
   for (const record of selected) {
     assert.equal(record.specs?.["Motorización"], "Eléctrico", record.reference ?? "");
@@ -157,9 +156,7 @@ test("GAM: recupera el motor eléctrico explícito de las cinco carretillas tril
 });
 
 test("GAM: no promueve motorizaciones incompatibles, familias distintas ni identidades cambiadas", async () => {
-  const original = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-  const yale = original.products.find((record) => record.reference === "2265");
-  assert.ok(yale);
+  const yale = accreditedSourceRecord("gam-original", "2265");
   assert.equal(resolved(yale, "Motorización / Energía"), "Eléctrico");
   for (const altered of [
     { ...yale, providerId: "gomariz" },
@@ -178,8 +175,7 @@ test("GAM: no promueve motorizaciones incompatibles, familias distintas ni ident
     assert.equal(resolved(altered, "Motorización / Energía"), null, altered.url);
   }
   for (const reference of ["2311", "2312", "2313", "2314"]) {
-    const contradictory = original.products.find((record) => record.reference === reference);
-    assert.ok(contradictory, reference);
+    const contradictory = accreditedSourceRecord("gam-original", reference);
     assert.equal(resolved(contradictory, "Motorización / Energía"), null, reference);
     assert.ok(!prepareProduct(contradictory, catalog).product.attributes.some((item) => item.attributeID === 119), reference);
   }

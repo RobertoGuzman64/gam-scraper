@@ -1,12 +1,12 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { documentedBasketCorrections, additionalVerifiedBasketCorrections } from "../../../testing/gam-verified-basket-dimensions.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { reconcileGamBasketDimensions } from "./gam-basket-dimensions.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 
-const source = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const source = { products: accreditedSourceSamples("gam-original") };
 const records = new Map(source.products.map((record) => [record.reference, record]));
 const original = (reference: string) => {
   const record = records.get(reference);

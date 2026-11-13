@@ -5,7 +5,8 @@ import { resolveEditorialFacts } from "../domain/editorial-facts.js";
 import { resolveReusableEditorial } from "../domain/editorial-composition.js";
 import { resolvePreparedEditorial } from "../mapping/prepared-editorial.js";
 import { captureSourceEditorialEvidence } from "../mapping/source-editorial-evidence.js";
-import { controlledGomarizPlatform } from "./editorial-contract-records.js";
+import { projectCommercialPresentation } from "../../../../commercial/projection/presentation-projection.js";
+import { controlledGamForklift, controlledGomarizForklift, controlledGomarizPlatform, controlledMercaelevaForklift, controlledMercaelevaPlatform } from "./editorial-contract-records.js";
 
 test("la precedencia editorial compone desde hechos y no depende del tamaño del catálogo", () => {
   const source = controlledGomarizPlatform();
@@ -43,5 +44,50 @@ test("los conflictos de identidad, origen, energía y magnitud se rechazan", () 
   for (const [index, candidate] of invalid.entries()) {
     assert.equal(resolveEditorialFacts(candidate), null, String(index));
     assert.deepEqual(resolveReusableEditorial(candidate), { short: null, general: null }, String(index));
+  }
+});
+
+test("tres proveedores comparten la composición y la proyección respeta las tres salidas editoriales", () => {
+  const sources = [
+    controlledGamForklift(), controlledGomarizForklift(), controlledMercaelevaForklift(),
+    controlledGomarizPlatform(), controlledMercaelevaPlatform()
+  ];
+  for (const source of sources) {
+    const snapshot = JSON.stringify(source);
+    const result = prepareSourceProduct(source);
+    const reusable = resolveReusableEditorial(source);
+    const projected = projectCommercialPresentation(source, result.product, source.categoryName);
+    assert.equal(result.status, "ready", source.providerId);
+    assert.deepEqual(result.issues, [], source.providerId);
+    assert.equal(result.product.description, reusable.short, source.providerId);
+    assert.ok(result.product.description_general?.startsWith(reusable.general ?? "SIN GENERAL"));
+    for (const field of ["title", "description_title", "description", "description_general"] as const) {
+      assert.equal(projected[field], result.product[field], `${source.providerId}:${field}`);
+    }
+    assert.equal(JSON.stringify(source), snapshot);
+  }
+});
+
+test("la composición compartida no publica identidades ajenas ni variantes contradictorias", () => {
+  const sources = [
+    controlledGamForklift(), controlledGomarizForklift(), controlledMercaelevaForklift(),
+    controlledGomarizPlatform(), controlledMercaelevaPlatform()
+  ];
+  for (const source of sources) {
+    const conflicting = [
+      { ...source, providerId: "origen-desconocido" },
+      { ...source, model: "MODELO99" },
+      { ...source, url: "https://example.invalid/producto/marca-modelo10/" },
+      { ...source, specs: { ...source.specs, "Título adicional": source.title?.includes("Carretilla")
+        ? "TRANSPALETA ELÉCTRICA" : "PLATAFORMA ARTICULADA" } }
+    ];
+    for (const [index, candidate] of conflicting.entries()) {
+      assert.equal(resolveEditorialFacts(candidate), null, `${source.providerId}:${index}`);
+      assert.deepEqual(resolveReusableEditorial(candidate), { short: null, general: null });
+      const result = prepareSourceProduct(candidate);
+      assert.equal(result.status, "review", `${source.providerId}:${index}`);
+      assert.equal(result.product.description, null, `${source.providerId}:${index}`);
+      assert.equal(result.product.description_general, null, `${source.providerId}:${index}`);
+    }
   }
 });

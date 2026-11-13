@@ -3,7 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../legacy-export/contracts.js";
 import { assessCommercialYear, commercialAttributeYear, normalizeCommercialYearDescription } from "../year-consistency.js";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceRecord } from "../../../testing/domain-cases/accredited-source-samples.js";
 import { gamSourceYear } from "../../../catalog/normalization/gam/year.js";
 
 type Source = Pick<ProductRecord,
@@ -113,7 +113,6 @@ test("el año de atributo requiere una única asignación válida y preserva los
 });
 
 test("los once años discordantes conservan la procedencia del origen sin imponer el slug", async () => {
-  const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
   const cases = [
     ["5961", 2015, 2018, "descripcion"], ["6236", 2018, 2017, "descripcion"],
     ["6588", 2000, 2019, "titulo"], ["6590", 2000, 2019, "titulo"],
@@ -123,8 +122,7 @@ test("los once años discordantes conservan la procedencia del origen sin impone
     ["6930", 2008, 2014, "descripcion"]
   ] as const;
   for (const [reference, manufacture, url, provenance] of cases) {
-    const record = gam.products.find((item) => item.reference === reference);
-    assert.ok(record, reference);
+    const record = accreditedSourceRecord("gam-original", reference);
     assert.equal(record.year, String(manufacture), reference);
     assert.equal(record.yearSource, provenance, reference);
     const accepted = gamSourceYear(record);

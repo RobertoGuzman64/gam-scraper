@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFileSync } from "node:fs";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
+import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { resolveEditorialFacts } from "../domain/editorial-facts.js";
 import { resolveReusableEditorial } from "../domain/editorial-composition.js";
@@ -11,17 +11,13 @@ import { resolveUnbrandedEditorial } from "../domain/editorial-unbranded-equipme
 import { editorialSourceDigest, loadEditorialKnowledge } from "../../../../infrastructure/filesystem/editorial/knowledge.js";
 import { selectUnitKnowledge } from "../domain/editorial-knowledge.js";
 
-const catalog = (provider: string): readonly ProductRecord[] => {
-  const data: { readonly products: readonly ProductRecord[] } = JSON.parse(readFileSync(
-    `catalogs/providers/${provider}/original/scrape-${provider}-catalog.json`, "utf8"));
-  return data.products;
+const get = (provider: string, reference: string): ProductRecord => {
+  if (provider === "gam") return accreditedSourceRecord("gam-original", reference);
+  if (provider === "gomariz") return accreditedSourceRecord("gomariz-original", reference);
+  if (provider === "mercaeleva") return accreditedSourceRecord("mercaeleva-original", reference);
+  throw new Error(`Proveedor desconocido: ${provider}`);
 };
 
-const get = (provider: string, reference: string): ProductRecord => {
-  const source = catalog(provider).find((item) => item.reference === reference);
-  assert.ok(source, `${provider}:${reference}`);
-  return source;
-};
 
 test("centro de carga y radio de giro usan concepto y unidad; una contradicción original no se publica", () => {
   const contradicted = get("gam", "2096");

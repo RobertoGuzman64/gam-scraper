@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFileSync } from "node:fs";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
+import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { editorialSourceDigest, loadEditorialKnowledge } from "../../../../infrastructure/filesystem/editorial/knowledge.js";
 import { selectUnitKnowledge } from "../domain/editorial-knowledge.js";
@@ -9,11 +9,10 @@ import { resolveDocumentedEditorialTitle } from "../domain/editorial-documented-
 import { resolveKnowledgeEditorial } from "../mapping/knowledge-editorial.js";
 
 const original = (provider: string, reference: string): ProductRecord => {
-  const data: { readonly products: readonly ProductRecord[] } = JSON.parse(readFileSync(
-    `catalogs/providers/${provider}/original/scrape-${provider}-catalog.json`, "utf8"));
-  const record = data.products.find((entry) => entry.reference === reference);
-  assert.ok(record, `${provider}:${reference}`);
-  return record;
+  if (provider === "gam") return accreditedSourceRecord("gam-original", reference);
+  if (provider === "gomariz") return accreditedSourceRecord("gomariz-original", reference);
+  if (provider === "mercaeleva") return accreditedSourceRecord("mercaeleva-original", reference);
+  throw new Error(`Proveedor desconocido: ${provider}`);
 };
 
 test("textos firmados de unidades sin identidad completa, sin contagio", () => {

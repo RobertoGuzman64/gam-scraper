@@ -1,3 +1,4 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -5,7 +6,7 @@ import { normalizeSpecsObject } from "../../../../catalog/normalization/normaliz
 import { recoverGamVerifiedCombustionDriveSpecs } from "./motor-configuration-evidence.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const gam = { products: accreditedSourceSamples("gam-original") };
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
 const product = (reference: string) => {
   const record = gam.products.find((item) => item.reference === reference);

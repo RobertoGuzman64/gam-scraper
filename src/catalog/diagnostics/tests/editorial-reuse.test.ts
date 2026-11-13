@@ -1,15 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceSamples } from "../../../testing/domain-cases/accredited-source-samples.js";
 import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 import { analyzeEditorialReuse } from "../editorial-reuse.js";
 import type { GapInput } from "../content-gaps-types.js";
 
-const [gomariz, mercaeleva] = await Promise.all([
-  readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json"),
-  readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json")
-]);
+const gomariz = accreditedSourceSamples("gomariz-original");
+const mercaeleva = accreditedSourceSamples("mercaeleva-original");
 
 const get = (records: readonly ProductRecord[], reference: string): ProductRecord => {
   const record = records.find((item) => item.reference === reference);
@@ -23,7 +21,7 @@ const without = (input: GapInput, field: "description" | "description_general"):
 });
 
 test("diagnóstico: señala la capacidad disponible bloqueada solo si el campo queda vacío y la ficha está ready", () => {
-  const platform = entry(get(gomariz.products, "BT1102"));
+  const platform = entry(get(gomariz, "BT1102"));
   const missing = without(platform, "description");
   const report = analyzeEditorialReuse([missing]);
   assert.equal(report.totals.capacidad_disponible_sin_aplicar, 1);
@@ -37,8 +35,8 @@ test("diagnóstico: señala la capacidad disponible bloqueada solo si el campo q
 });
 
 test("diagnóstico: rechaza identidades repetidas y salidas de otra unidad", () => {
-  const first = entry(get(gomariz.products, "BT1102"));
-  const other = entry(get(gomariz.products, "BT1139"));
+  const first = entry(get(gomariz, "BT1102"));
+  const other = entry(get(gomariz, "BT1139"));
   assert.throws(() => analyzeEditorialReuse([first, first]), /duplicada/u);
   assert.throws(() => analyzeEditorialReuse([{ ...first, prepared: other.prepared }]), /discordante/u);
 });

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync, readdirSync } from "node:fs";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
+import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { resolveEditorialFacts } from "../domain/editorial-facts.js";
 import { editorialSourceDigest, loadEditorialKnowledge } from "../../../../infrastructure/filesystem/editorial/knowledge.js";
@@ -11,11 +12,10 @@ import { resolvePreparedEditorial } from "../mapping/prepared-editorial.js";
 import { captureSourceEditorialEvidence } from "../mapping/source-editorial-evidence.js";
 
 const get = (provider: string, reference: string): ProductRecord => {
-  const catalog: { readonly products: readonly ProductRecord[] } = JSON.parse(readFileSync(
-    `catalogs/providers/${provider}/original/scrape-${provider}-catalog.json`, "utf8"));
-  const record = catalog.products.find((item) => item.reference === reference);
-  assert.ok(record, `${provider}:${reference}`);
-  return record;
+  if (provider === "gam") return accreditedSourceRecord("gam-original", reference);
+  if (provider === "gomariz") return accreditedSourceRecord("gomariz-original", reference);
+  if (provider === "mercaeleva") return accreditedSourceRecord("mercaeleva-original", reference);
+  throw new Error(`Proveedor desconocido: ${provider}`);
 };
 
 test("consume la evidencia declarativa de las tres fuentes sin narradores específicos", () => {

@@ -1,22 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { SOURCE_CATEGORY_ISSUE, sourceCategoryQualityIssue } from "../../../shared/quality/source/category-quality.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../../src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
-)));
+;
 
-const machine = (reference: string): ProductRecord => {
-  const record = source.products.find((item) => item.reference === reference);
-  assert.ok(record, reference);
-  return record;
-};
+const machine = (reference: string): ProductRecord =>
+  accreditedSourceRecord("gam-historical", reference);
 
 const assertCalibrated = (reference: string): void => {
   const record = machine(reference);

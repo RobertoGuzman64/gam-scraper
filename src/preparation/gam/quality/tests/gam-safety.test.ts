@@ -1,19 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { requireProductReference } from "../../../testing/require-product-reference.js";
 import { gamElevationConflictingIdentityReferences, gamHistoricalSerialCollisionGroups, gamSerialCollisionReferenceOrder } from "../../technical/tests/support/gam-technical-cohorts.js";
-import { fileURLToPath } from "node:url";
 import { findSerialNumberCollisions } from "../../../../catalog/identity-conflicts.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../../shared/classification/mapping/attribute-mapping.js";
 import { prepareImportBatch } from "../../../batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const source = await readCanonicalCatalog(fileURLToPath(new URL(
-  "../../../../../src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json", import.meta.url
-)));
-const reference = (code: string) => requireProductReference(source.products, code);
+const reference = (code: string) => accreditedSourceRecord("gam-historical", code);
 const attribute = (name: string) => {
   const found = catalog.attributes.find((entry) => entry.name === name);
   assert.ok(found, name);
