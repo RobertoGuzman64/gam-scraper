@@ -3,6 +3,7 @@ import { resolveEditorialFacts } from "./editorial-facts.js";
 import { editorialFamilyName } from "./editorial-families.js";
 import { formatEditorialQuantity } from "./editorial-measurements.js";
 import type { EditorialFacts } from "./editorial-facts.js";
+import { sameEditorialUnit } from "./editorial-source-contract.js";
 import type { EditorialFamily } from "./editorial-families.js";
 
 const quantity = (value: number | null, unit: string, label: string): string | null =>
@@ -44,10 +45,25 @@ const join = (values: readonly string[]): string => values.length === 1 ? values
     `${values.slice(0, -1).join(", ")} y ${values[values.length - 1]}`;
 
 export const resolveReusableEditorial = (
-  record: ProductRecord, familyOverride: EditorialFamily | null = null
+  record: ProductRecord, familyOverride: EditorialFamily | null = null,
+  sourceUnitRecord: ProductRecord = record
 ): { readonly short: string | null; readonly general: string | null } => {
-  const facts = resolveEditorialFacts(record, familyOverride);
-  if (!facts) return { short: null, general: null };
+  const prepared = resolveEditorialFacts(record, familyOverride);
+  if (!prepared) return { short: null, general: null };
+  const source = sourceUnitRecord === record ? prepared :
+    (prepared.loadCenterMm !== null || prepared.turningRadiusM !== null) &&
+      sameEditorialUnit(sourceUnitRecord, record) ? resolveEditorialFacts(sourceUnitRecord, familyOverride) : null;
+  const corroborated = (key: "Centro de carga" | "Radio de giro"): boolean =>
+    source !== null && source.family === prepared.family &&
+    sourceUnitRecord.specs?.[key] !== undefined &&
+    sourceUnitRecord.specs[key] === record.specs?.[key];
+  const facts: EditorialFacts = {
+    ...prepared,
+    loadCenterMm: corroborated("Centro de carga") && source?.loadCenterMm === prepared.loadCenterMm
+      ? prepared.loadCenterMm : null,
+    turningRadiusM: corroborated("Radio de giro") && source?.turningRadiusM === prepared.turningRadiusM
+      ? prepared.turningRadiusM : null
+  };
   const family = editorialFamilyName(facts.family);
   const name = `${facts.brand} ${facts.model}`;
   const measures = asserted(facts);

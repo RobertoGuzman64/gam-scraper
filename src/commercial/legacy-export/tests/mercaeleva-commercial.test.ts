@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
-import { mercaelevaShortDescription } from "../../../preparation/mercaeleva/editorial/mapping/descriptions.js";
 import { prepareProduct } from "../prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -66,35 +65,13 @@ test("Mercaeleva: extrae solo texto publicado y conserva íntegra la descripció
     ...record("Hollandlift HL-220 E12 PLATAFORMA TIJERA ELECTRICA 22 MT", { Estado: "Usado" }, "Segunda mano"),
     brand: "Hollandlift", model: "HL-220 E12", longDescription: general
   };
-  assert.equal(mercaelevaShortDescription(source), "PLATAFORMA TIJERA ELECTRICA ALTURA DE TRABAJO 22 MT HOLLAND LIFT HL-220 E12");
   const prepared = prepareProduct(source, catalog);
   assert.equal(prepared.product.description_general, general.replace("22 MT", "22 m"));
-  assert.ok(prepared.product.description?.includes("Hollandlift HL-220 E12"));
+  assert.match(prepared.product.description ?? "", /HOLLAND\s+LIFT\s+HL-220 E12/iu);
   assert.equal(source.longDescription, general);
   assert.notEqual(prepared.product.description, prepared.product.description_general);
   assert.equal(prepared.product.condition, "Segunda_Mano");
   assert.equal(prepared.product.price, 4950);
-});
-
-test("Mercaeleva: no confunde otras máquinas, variantes o medidas de trabajo contradictorias", () => {
-  const original = {
-    ...record("LGMG AS1413 PLATAFORMA TIJERA ELECTRICA 14 MT", { Estado: "Usado" }, "Segunda mano"),
-    brand: "LGMG", model: "AS1413",
-    longDescription: "Ref. 1236 PLATAFORMA TIJERA ELECTRICA ALTURA DE TRABAJO 16 MT LGMG AS1413 HORAS 181 AÑO DE FABRICACION 2022"
-  };
-  assert.equal(mercaelevaShortDescription(original), null);
-  assert.equal(mercaelevaShortDescription({ ...original, longDescription: original.longDescription?.replace("TIJERA", "ARTICULADA") ?? null }), null);
-  assert.equal(mercaelevaShortDescription({ ...original, model: "AS1412" }), null);
-  assert.equal(mercaelevaShortDescription({ ...original, longDescription: "Ref. 1236 PLATAFORMA TIJERA ELECTRICA ALTURA DE TRABAJO 14 MT LGMG AS1413 MASTIL DUPLEX TRIPLEX HORAS 181 AÑO DE FABRICACION 2022" }), null);
-  const fork = {
-    ...original, title: "Toyota 6FBRE14 CARRETILLA ELEVADORA RETRACTIL 1350 KG", brand: "Toyota", model: "6FBRE14",
-    longDescription: "Ref. MER1123 TRANSPALET ELECTRICO 1350 KG ALTURA DE TRABAJO 6.500 mm TOYOTA 6FBRE14 HORAS 14696 AÑO DE FABRICACION 2000"
-  };
-  assert.equal(mercaelevaShortDescription(fork), null);
-  assert.equal(mercaelevaShortDescription({ ...original, longDescription: "PLATAFORMA TIJERA ELECTRICA ALTURA DE TRABAJO 14 MT" }), null);
-  assert.equal(mercaelevaShortDescription({ ...original, longDescription: null }), null);
-  assert.equal(mercaelevaShortDescription({ ...original, shortDescription: "Publicación oficial" }), null);
-  assert.equal(mercaelevaShortDescription({ ...original, providerId: "gam" }), null);
 });
 
 test("Mercaeleva: no inventa precios, condiciones ni textos para fichas sin origen suficiente", () => {

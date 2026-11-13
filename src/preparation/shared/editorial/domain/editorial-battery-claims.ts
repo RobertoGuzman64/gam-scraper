@@ -1,16 +1,12 @@
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
-import { editorialQuantity, formatEditorialQuantity } from "./editorial-measurements.js";
+import { editorialQuantityOf, formatEditorialQuantity } from "./editorial-measurements.js";
+import { hasUnconditionalEditorialClaim } from "./editorial-claim-evidence.js";
+import { verifiedEditorialUnitPair } from "./editorial-unit-provenance.js";
 
 const sourceVoltage = (specs: SpecsMap | undefined): number | null => {
-  const value = specs?.["Voltaje de la batería"] ?? specs?.["Voltaje batería (V)"];
-  const volts = editorialQuantity(value, "V");
+  const volts = editorialQuantityOf(specs, ["Voltaje de la batería", "Voltaje batería (V)", "Voltaje"], "V");
   return volts !== null && volts >= 6 && volts <= 1500 ? volts : null;
 };
-
-const plain = (value: string): string => value.normalize("NFD")
-  .replace(/[\u0300-\u036f]/gu, "").toLocaleLowerCase("es");
-
-const alternatives = /\b(?:opcional(?:es)?|opci[oó]n|alternativ[oa]s?|version(?:es)?|compatible\s+con|puede\s+(?:montar|incluir|incorporar|equiparse)|sin\s+bater[ií]a|no\s+(?:incluye|incorpora|monta))\b/iu;
 
 const assertedVoltage = (description: string, volts: number): boolean => {
   const numeric = String(volts).replace(".", "[.,]");
@@ -22,18 +18,18 @@ const assertedVoltage = (description: string, volts: number): boolean => {
     const position = match.index ?? 0;
     return /\bbater[ií]a(?:s)?\b/iu.test(description.slice(Math.max(0, position - 120), position + 65));
   })) return false;
-  return matches.length > 0 && matches.every((match) => {
+  return matches.length > 0 && hasUnconditionalEditorialClaim(description, pattern) && matches.every((match) => {
     const position = match.index ?? 0;
     const previous = description.slice(Math.max(0, position - 120), position).split(/[.!?;\n]/u).at(-1) ?? "";
     const next = description.slice(position + match[0].length, position + match[0].length + 65).split(/[.!?;\n]/u)[0] ?? "";
-    return /\bbater[ií]a(?:s)?\b/iu.test(`${previous} ${next}`) &&
-      !alternatives.test(plain(`${previous} ${next}`));
+    return /\bbater[ií]a(?:s)?\b/iu.test(`${previous} ${next}`);
   });
 };
 
 export const resolveAssertedBatteryVoltage = (
   source: ProductRecord, prepared: ProductRecord, general: string
 ): string | null => {
+  if (!verifiedEditorialUnitPair(source, prepared)) return null;
   const sourceValue = sourceVoltage(source.specs);
   if (sourceValue === null || sourceValue !== sourceVoltage(prepared.specs)) return null;
   const description = source.longDescription ?? "";

@@ -5,7 +5,7 @@ import { recoverGamCrossedTechnicalSpecs } from "../../preparation/gam/technical
 import { reconcileGamHorometer } from "../../preparation/gam/technical/reconciliation/gam-horometer.js";
 import { reconcileGamSourceTechnicalUnits, reconcileGamSpreadsheetLiftHeight } from "../../preparation/gam/technical/reconciliation/gam-source-technical-units.js";
 import { reconcileGamVerifiedClassicVehicleIdentity } from "../../preparation/gam/identity/evidence/used-classic-vehicle-identity.js";
-import { reconcileGamElectricTowTractorEditorial } from "../../preparation/gam/editorial/models/hyster-tow-tractor-editorial.js";
+import { reconcileHandlingFamilySpecs } from "../../preparation/shared/technical/reconciliation/handling-family-specifications.js";
 import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "../../preparation/mercaeleva/technical/evidence/verified-platform-source-specs.js";
 import { reconcileMercaelevaNonUsableSentinels } from "../../preparation/mercaeleva/technical/reconciliation/mercaeleva.js";
 import { inspectTechnicalCoherence } from "../validation/technical-specifications.js";
@@ -37,9 +37,7 @@ const reconciledSource = (source: ProductRecord, sourceUnits = true): ProductRec
   const normalizedSpecs = (sourceUnits && !legacyEvidenceRequired ?
     reconcileGamSourceTechnicalUnits({ ...reconciled, specs: batterySpecs }) :
     reconcileGamSpreadsheetLiftHeight({ ...reconciled, specs: batterySpecs })).specs ?? batterySpecs;
-  const specs = reconcileGamElectricTowTractorEditorial(source, {
-    short: source.shortDescription, general: source.longDescription
-  }, normalizedSpecs).spec;
+  const specs = reconcileHandlingFamilySpecs({ ...reconciled, specs: normalizedSpecs }, normalizedSpecs);
   return specs === reconciled.specs ? reconciled : { ...reconciled, specs };
 };
 

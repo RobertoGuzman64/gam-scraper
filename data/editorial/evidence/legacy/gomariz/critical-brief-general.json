@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "source": "src/preparation/gomariz/editorial/mapping/critical-brief-general.ts",
+  "sourceSha256": "85056bf886576d7491a8b6af87bea119bddcea308f2273847493bf6af08c1952",
+  "archivedExportsSha256": "775c921476664fa35882f798c63fecc261738e11d716261dc8b76a0d6c316206",
+  "exports": {
+    "resolveGomarizCriticalBriefGeneral": {
+      "BT1461": {
+        "source": {
+          "url": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-telescopico/skyjack-sj45t-telescopic-boom-lift-brazo-telescopico-16-metros/",
+          "title": "SKYJACK SJ45T",
+          "brand": "Skyjack",
+          "model": "SJ45T",
+          "year": "2017",
+          "horometer": null,
+          "condition": "Segunda mano",
+          "shortDescription": null,
+          "longDescription": "Dimensiones Altura: 16 metros Altura de trabajo: 15.60 m Altura almacenaje: 2.39 m Longitud: 8.79 m Anchura: 2.29 m",
+          "specs": {
+            "Altura": "16 metros",
+            "Altura de trabajo": "15.60 m",
+            "Altura almacenaje": "2.39 m",
+            "Longitud": "8.79 m",
+            "Anchura": "2.29 m",
+            "Motor": "Diésel",
+            "Capacidad": "227 kg"
+          }
+        },
+        "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-telescopico/skyjack-sj45t-telescopic-boom-lift-brazo-telescopico-16-metros/",
+        "sourceDigest": "b5559ae5c72de7de3f35b7eac0228df404c893d8ac9c0fb19751bb4197f15b1f",
+        "general": "El brazo telescópico Skyjack SJ45T, anunciado como unidad de 2017, es una plataforma diésel para realizar trabajos en altura. Según la ficha del proveedor alcanza 15,60 m de altura de trabajo y dispone de una capacidad de 227 kg. Su longitud es de 8,79 m y su anchura de 2,29 m, dimensiones importantes para comprobar accesos y espacio de maniobra. La altura de almacenaje publicada es de 2,39 m, dato útil para planificar su transporte y almacenamiento. La capacidad y los requisitos de apoyo deben verificarse para cada trabajo.",
+        "usage": "fallback"
+      }
+    }
+  }
+}

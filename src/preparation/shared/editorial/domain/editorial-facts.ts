@@ -1,5 +1,5 @@
 import type { ProductRecord, SpecValue } from "../../../../contracts/catalog.js";
-import { editorialFamilyOf } from "./editorial-families.js";
+import { resolveConsistentEditorialFamily } from "./editorial-families.js";
 import type { EditorialFamily } from "./editorial-families.js";
 import { editorialMetricOf, editorialQuantity, editorialQuantityOf } from "./editorial-measurements.js";
 import { resolveEditorialSource } from "./editorial-source.js";
@@ -83,13 +83,12 @@ const sourceMetric = (value: SpecValue | undefined, unit: "m" | "mm"): number | 
 };
 
 const sourceCapacity = (record: ProductRecord, source: EditorialSource, family: EditorialFamily): number | null => {
-  if (isHandling(family) || isPlatform(family) || family === "elevador-materiales") {
-    const sourced = editorialQuantity(source.loadCapacity, "kg");
-    if (sourced !== null) return sourced;
-    return editorialQuantityOf(record.specs,
-      ["Capacidad de carga (kg)", "Capacidad máxima de elevación", "Capacidad de carga"], "kg");
-  }
-  return null;
+  if (!isHandling(family) && !isPlatform(family) && family !== "elevador-materiales") return null;
+  const capacity = editorialQuantityOf(record.specs,
+    ["Capacidad de carga (kg)", "Capacidad máxima de elevación", "Capacidad de carga", "Capacidad"], "kg");
+  if (source.loadCapacity === undefined) return capacity;
+  const sourced = editorialQuantity(source.loadCapacity, "kg");
+  return sourced !== null && sourced === capacity ? capacity : null;
 };
 
 const sourceMillimetres = (value: SpecValue | undefined, min: number, max: number): number | null => {
@@ -105,8 +104,9 @@ const corroboratedMillimetres = (
 ): number | null => {
   const value = sourceMillimetres(specs, minimum, maximum);
   if (value === null) return null;
-  const term = key === "Centro de carga" ? "centro\\s+(?:de\\s+)?carga" : "radio\\s+(?:de\\s+)?giro";
-  const contextual = new RegExp(`\\b${term}\\s+(?:(?:de|es|de\\s+aproximadamente)\\s+)?(\\d{3,4})\\s*mm\\b`, "giu");
+  const term = key === "Centro de carga" ? "centro\\s+(?:de\\s+)?(?:carga|gravedad)" :
+    "radio\\s+(?:(?:m[ií]nimo|exterior)\\s+)?(?:de\\s+)?(?:giro|viraje)";
+  const contextual = new RegExp(`\\b${term}\\s+(?:(?:de|es|de\\s+aproximadamente|(?:indicado|declarado)\\s+(?:es\\s+)?de)\\s+)?(\\d{3,4})\\s*mm\\b`, "giu");
   const recorded = [...(description ?? "").matchAll(contextual)].map((item) => Number(item[1]));
   return recorded.some((item) => item !== value) ? null : value;
 };
@@ -151,7 +151,9 @@ const unitHours = (record: ProductRecord): number | null => {
 export const resolveEditorialFacts = (record: ProductRecord, familyOverride: EditorialFamily | null = null): EditorialFacts | null => {
   const source = resolveEditorialSource(record);
   if (!source) return null;
-  const family = familyOverride ?? editorialFamilyOf(`${source.familyClues} | ${record.subcategory ?? ""} | ${record.categoryName}`);
+  const family = resolveConsistentEditorialFamily(source.familyClues, record.title,
+    typeof record.specs?.["Título adicional"] === "string" ? record.specs["Título adicional"] : null,
+    `${record.subcategory ?? ""} | ${record.categoryName}`, familyOverride);
   if (!family) return null;
   const energy = energyOf(record, source);
   if (energy === false) return null;
@@ -161,9 +163,10 @@ export const resolveEditorialFacts = (record: ProductRecord, familyOverride: Edi
   const storedHeight = platform ? editorialMetricOf(record.specs, ["Altura almacenaje"]) : null;
   const lateral = (family === "plataforma-telescopica" || family === "plataforma-articulada" || family === "camion-cesta")
     ? sourceMetric(source.lateralReach, "m") : null;
-  const lifting = source.liftingHeight === undefined ?
-    editorialMetricOf(record.specs, ["Altura máxima de elevación", "Altura de elevación (mm)", "Altura de elevación (m)"]) :
-    sourceMetric(source.liftingHeight, source.liftingHeightUnit);
+  const liftingAliases = editorialMetricOf(record.specs,
+    ["Altura máxima de elevación", "Altura de elevación (mm)", "Altura de elevación (m)"]);
+  const lifting = source.liftingHeight === undefined ? liftingAliases :
+    sourceMetric(source.liftingHeight, source.liftingHeightUnit) === liftingAliases ? liftingAliases : null;
   const capacity = sourceCapacity(record, source, family);
   const trayCapacity = family === "almacen-vertical" ? editorialQuantityOf(record.specs, ["Carga neta por bandeja"], "kg") : null;
   const weight = editorialQuantityOf(record.specs, ["Peso"], "kg");

@@ -1,6 +1,5 @@
 import { gamNewForkliftIdentityIssues } from "./providers/gam/new-forklift-identity.js";
 import { curateGamGallery } from "./providers/gam/verified-gallery.js";
-import { curateGamDescription } from "./providers/gam/verified-description.js";
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 import type { OfflinePreparation, PreparationSource } from "../../preparation/offline-document.js";
 import { cohorts } from "./cohorts.js";
@@ -94,7 +93,7 @@ export const selectPublishableCatalog = (preparations: readonly OfflinePreparati
         } else {
           if (identityIssues.length) throw new Error(`Selección editorial: identidad GAM sin decisión acreditada (${key})`);
           publishable.push(newCohort
-            ? curateGamDescription(curateGamGallery(entry.product))
+            ? curateGamGallery(entry.product)
             : entry.product);
         }
       } else {

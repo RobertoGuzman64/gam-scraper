@@ -1,0 +1,230 @@
+{
+  "version": 1,
+  "source": "src/preparation/mercaeleva/editorial/evidence/verified-unit-specific-generals.ts",
+  "sourceSha256": "7a401165852c82798c97c70d060fc7ef41db9acbb08412a665f2d12ea6cfca15",
+  "archivedExportsSha256": "6a44f62a629ddc553bf8776cdd5c57a4c22d9bff347a7b36aa0acea7a588447e",
+  "exports": {
+    "verifiedMercaelevaUnitSpecificGeneral": {
+      "M131-5855": {
+        "source": {
+          "url": "https://sales.mercaeleva.com/es/for-sale/machine/Haulotte-Optimum-8-M131-5855",
+          "title": "Haulotte Optimum 8 PLATAFORMA TIJERA ELECTRICA 8 MT",
+          "brand": "Haulotte",
+          "model": "Optimum 8",
+          "year": "2018",
+          "horometer": "464",
+          "condition": "Segunda mano",
+          "longDescription": "Ref. 623 PLATAFORMA TIJERA ELECTRICA ALTURA DE TRABAJO 8 MT HAULOTTE OPTIMUM 8 AC HORAS 464 AÑO DE FABRICACION 2018",
+          "shortDescription": null,
+          "specs": {
+            "Marca": "Haulotte",
+            "Modelo": "Optimum 8",
+            "Título adicional": "PLATAFORMA TIJERA ELECTRICA 8 MT",
+            "Año de fabricación": "2018",
+            "Artículo No.": "623",
+            "Horas laborales": "464 h",
+            "Estado": "Usado",
+            "Condición general": "Bueno",
+            "Tipo de motor": "Eléctrico",
+            "Altura de trabajo": "8 m"
+          }
+        },
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Haulotte-Optimum-8-M131-5855",
+        "sourceDigest": "3d62d6500e1729d5cc38bd85be87fec7cc041c24e9c807921b25a4da31d1a969",
+        "general": "La Haulotte Optimum 8 es una plataforma de tijera eléctrica de segunda mano. Según el anuncio, dispone de 8 m de altura de trabajo y corresponde al año 2018. La unidad registra 464 horas y tiene la referencia comercial 623. El texto de origen identifica la variante Optimum 8 AC.",
+        "usage": "fallback"
+      },
+      "M318-0509": {
+        "source": {
+          "url": "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-S1012E-2-M318-0509",
+          "title": "LGMG S1012E-2 NUEVA!!! PLATAFORMA TIJERA ELECTRICA 12 MT",
+          "brand": "LGMG",
+          "model": "S1012E-2",
+          "year": "2026",
+          "horometer": null,
+          "condition": "Nuevo",
+          "longDescription": "NUEVA!! PLATAFORMA TIJERA ELECTRICA ALTURA DE TRABAJO 12 MT LGMG S1012E-2 AÑO DE FABRICACION 2026",
+          "shortDescription": null,
+          "specs": {
+            "Marca": "LGMG",
+            "Modelo": "S1012E-2",
+            "Año de fabricación": "2026",
+            "Certificación CE": "Yes",
+            "Estado": "Nuevo",
+            "Tipo de motor": "Eléctrico",
+            "Altura de trabajo": "12 m"
+          }
+        },
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-S1012E-2-M318-0509",
+        "sourceDigest": "e662c621dbf082f2a07ee1e0c60c6d87351ea08e70d2d605eaa4987e65fe4f32",
+        "general": "La LGMG S1012E-2 es una plataforma de tijera eléctrica anunciada como nueva. La ficha indica una altura de trabajo de 12 m y año de fabricación 2026. La motorización publicada es eléctrica y el anuncio incluye certificación CE.",
+        "usage": "fallback"
+      },
+      "M294-4678": {
+        "source": {
+          "url": "https://sales.mercaeleva.com/es/for-sale/machine/M294-4678",
+          "title": "MODULO CASETA DIAFANA CON AIRE 6m x 2,35m",
+          "brand": null,
+          "model": null,
+          "year": null,
+          "horometer": null,
+          "condition": null,
+          "longDescription": "MODULO CASETA DIAFANA CON AIRE 6m x 2,35m PUERTA EN LATERAL (LADO CORTO) CBOX - CASETA6",
+          "shortDescription": null,
+          "specs": {
+            "Título adicional": "MODULO CASETA DIAFANA CON AIRE 6m x 2,35m"
+          }
+        },
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/M294-4678",
+        "sourceDigest": "25c0c3ec2cd699d4533517f6e37b37939882fc5d056a176c3cc3520d50d0fdfa",
+        "general": "Módulo de caseta diáfana con aire acondicionado, de 6 × 2,35 m según el anuncio. El vendedor indica que la puerta de acceso está situada en un lateral corto del módulo. La denominación de origen es CBOX - CASETA6.",
+        "usage": "fallback"
+      },
+      "M159-0669": {
+        "source": {
+          "url": "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-S0808EII-M159-0669",
+          "title": "LGMG S0808EII PLATAFORMA TIJERA ELECTRICA 10 MT",
+          "brand": "LGMG",
+          "model": "S0808EII",
+          "year": "2024",
+          "horometer": null,
+          "condition": "Nuevo",
+          "longDescription": "Ref. S0808EII PLATAFORMA TIJERA ELECTRICA ALTURA DE TRABAJO 10 MT LGMG S0808EII HORAS 0 AÑO DE FABRICACION 2024",
+          "shortDescription": null,
+          "specs": {
+            "Marca": "LGMG",
+            "Modelo": "S0808EII",
+            "Título adicional": "PLATAFORMA TIJERA ELECTRICA 10 MT",
+            "Año de fabricación": "2024",
+            "Artículo No.": "S0808EII",
+            "Estado": "Nuevo",
+            "Tipo de motor": "Eléctrico",
+            "Altura de trabajo": "10 m"
+          }
+        },
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-S0808EII-M159-0669",
+        "sourceDigest": "546ad8fc34135fe18332739eed15fe5befc527b830e9559655e7fbe2b6cabcae",
+        "general": "La LGMG S0808EII es una plataforma de tijera eléctrica anunciada como nueva, con altura de trabajo de 10 m y año de fabricación 2024. La referencia comercial publicada por el vendedor es S0808EII. El texto original también anuncia cero horas, sin indicar un horómetro estructurado.",
+        "usage": "fallback"
+      },
+      "M476-1722": {
+        "source": {
+          "url": "https://sales.mercaeleva.com/es/for-sale/machine/Caterpillar-EP16NT-M476-1722",
+          "title": "Caterpillar EP16NT CARRETILLA ELEVADORA ELECTRICA 1600 KG",
+          "brand": "Caterpillar",
+          "model": "EP16NT",
+          "year": "2007",
+          "horometer": null,
+          "condition": "Segunda mano",
+          "longDescription": "Ref. MER0742 CARRETILLA ELEVADORA ELECTRICA 1600 KG TRIPLEX TRIPLEX CATERPILLAR EP16NT ALTURA DE TRABAJO 4.750mm AÑO DE FABRICACION 2007",
+          "shortDescription": null,
+          "specs": {
+            "Marca": "Caterpillar",
+            "Modelo": "EP16NT",
+            "Título adicional": "CARRETILLA ELEVADORA ELECTRICA 1600 KG",
+            "Año de fabricación": "2007",
+            "Artículo No.": "MER0742",
+            "Estado": "Usado",
+            "Condición general": "Bueno",
+            "Tipo de Batería": "Plomo-ácido",
+            "Capacidad máxima de elevación": "1600 kg",
+            "Tipo de mástil": "Triple",
+            "Altura máxima de elevación": "4750 mm",
+            "Tipo de cabina": "Guardia superior",
+            "Número de ruedas": "3.0"
+          }
+        },
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Caterpillar-EP16NT-M476-1722",
+        "sourceDigest": "a54d2d97baa8bcf736e89f18a288412b395091d432d253c3278abc1e0dda63be",
+        "general": "La Caterpillar EP16NT es una carretilla elevadora eléctrica de segunda mano con capacidad declarada de 1.600 kg y mástil tríplex. La ficha técnica indica 4.750 mm de altura máxima de elevación, batería de plomo-ácido y año de fabricación 2007. La referencia del vendedor es MER0742.",
+        "usage": "fallback"
+      },
+      "M315-5925": {
+        "source": {
+          "url": "https://sales.mercaeleva.com/es/for-sale/machine/JLG-153-12-M315-5925",
+          "title": "JLG 153-12 PLATAFORMA TIJERA ELECTRICA 17 MT",
+          "brand": "JLG",
+          "model": "153-12",
+          "year": "2006",
+          "horometer": "1347",
+          "condition": "Segunda mano",
+          "longDescription": "Ref. 228 PLATAFORMA TIJERA ELECTRICA ALTURA DE TRABAJO 17 MT JLG 153-12 AÑO DE FABRICACION 2006",
+          "shortDescription": null,
+          "specs": {
+            "Marca": "JLG",
+            "Modelo": "153-12",
+            "Título adicional": "PLATAFORMA TIJERA ELECTRICA 17 MT",
+            "Año de fabricación": "2006",
+            "Artículo No.": "228",
+            "Horas laborales": "1347 h",
+            "Estado": "Usado",
+            "Condición general": "Bueno",
+            "Tipo de motor": "Eléctrico",
+            "Altura de trabajo": "17 m"
+          }
+        },
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/JLG-153-12-M315-5925",
+        "sourceDigest": "a9a81ddd41741263c19b482c15596c3216af7e337ecec89da68ad354c845ee41",
+        "general": "La JLG 153-12 es una plataforma elevadora de tijera eléctrica de segunda mano. La ficha declara 17 m de altura de trabajo, año de fabricación 2006 y 1.347 horas registradas. El vendedor identifica esta unidad con la referencia 228.",
+        "usage": "fallback"
+      },
+      "M805-9451": {
+        "source": {
+          "url": "https://sales.mercaeleva.com/es/for-sale/machine/Genie-S-65-M805-9451",
+          "title": "Genie S-65 PLATAFORMA TELESCOPICA DIESEL 22 MT",
+          "brand": "Genie",
+          "model": "S-65",
+          "year": "2011",
+          "horometer": "421",
+          "condition": "Segunda mano",
+          "longDescription": "Ref. 534 PLATAFORMA TELESCOPICA DIESEL ALTURA DE TRABAJO 22 MT GENIE S-65 HORAS 421 AÑO DE DABRICACION 2011",
+          "shortDescription": null,
+          "specs": {
+            "Marca": "Genie",
+            "Modelo": "S-65",
+            "Título adicional": "PLATAFORMA TELESCOPICA DIESEL 22 MT",
+            "Año de fabricación": "2011",
+            "Artículo No.": "534",
+            "Horas laborales": "421 h",
+            "Estado": "Usado",
+            "Condición general": "Bueno",
+            "Tipo de motor": "Diesel",
+            "Altura de trabajo": "22 m"
+          }
+        },
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Genie-S-65-M805-9451",
+        "sourceDigest": "e212a59d37ba4f4b1989f1d3a769bb327826112c31ab59093f36a3af2d47f9c6",
+        "general": "La Genie S-65 es una plataforma telescópica diésel de segunda mano. La ficha indica 22 m de altura de trabajo, año de fabricación 2011 y 421 horas registradas. El anuncio identifica esta unidad mediante la referencia comercial 534.",
+        "usage": "fallback"
+      },
+      "M310-8756": {
+        "source": {
+          "url": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-170AETJL-M310-8756",
+          "title": "Manitou 170AETJL PLATAFORMA ARTICULADA ELECTRICA 17 MT",
+          "brand": "Manitou",
+          "model": "170AETJL",
+          "year": "2016",
+          "horometer": null,
+          "condition": "Segunda mano",
+          "longDescription": "Ref. 1795 PLATAFORMA ARTICULADA ELECTRICA ALTURA DE TRABAJO 17 MT MANITOU 170AETJL AÑO DE FABRICACION 2016 PINTADA",
+          "shortDescription": null,
+          "specs": {
+            "Marca": "Manitou",
+            "Modelo": "170AETJL",
+            "Título adicional": "PLATAFORMA ARTICULADA ELECTRICA 17 MT",
+            "Año de fabricación": "2016",
+            "Artículo No.": "1795",
+            "Estado": "Usado",
+            "Condición general": "Bueno",
+            "Tipo de motor": "Eléctrico",
+            "Altura de trabajo": "17 m"
+          }
+        },
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-170AETJL-M310-8756",
+        "sourceDigest": "f99809d4eff45074477cc187f82688bfa2dc3c792b9e3e31d68844a0d6bffc83",
+        "general": "La Manitou 170AETJL es una plataforma articulada eléctrica de segunda mano. El anuncio indica 17 m de altura de trabajo y año de fabricación 2016. El vendedor identifica la unidad mediante la referencia 1795 y declara que está pintada.",
+        "usage": "fallback"
+      }
+    }
+  }
+}

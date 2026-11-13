@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type {
   EditorialConsensusMetric, EditorialFamilyGuidance, EditorialKnowledge, EditorialModelKnowledge,
-  EditorialUnitKnowledge, EditorialVerifiedModelRule
+  EditorialUnitKnowledge, EditorialVerifiedModelRule, EditorialTechnicalModelReference
 } from "../../../preparation/shared/editorial/domain/editorial-knowledge.js";
 import type { EditorialFamily } from "../../../preparation/shared/editorial/domain/editorial-families.js";
 import { isEditorialFamily } from "../../../preparation/shared/editorial/domain/editorial-families.js";
@@ -28,12 +28,14 @@ const readUnit = (value: unknown): EditorialUnitKnowledge => {
   if (!item || !isString(item.key) || !isString(item.brand) || !isString(item.model) ||
     !isString(item.sourceUrl) || !isString(item.sourceDigest) || !/^[a-f\d]{64}$/u.test(item.sourceDigest) ||
     !nullableString(item.short) || !nullableString(item.general) || !nullableString(item.title) || !isString(item.evidenceSource) ||
-    typeof item.priority !== "number") throw new Error("Evidencia de unidad editorial inválida");
+    typeof item.priority !== "number" ||
+    item.usage !== undefined && item.usage !== "fallback") throw new Error("Evidencia de unidad editorial inválida");
   return {
     key: item.key, brand: item.brand, model: item.model, sourceUrl: item.sourceUrl,
     sourceDigest: item.sourceDigest, short: item.short, general: item.general, title: item.title,
     evidenceSource: item.evidenceSource, priority: item.priority,
-    ...(item.identityOverride === true ? { identityOverride: true } : {})
+    ...(item.identityOverride === true ? { identityOverride: true } : {}),
+    ...(item.usage === "fallback" ? { usage: "fallback" as const } : {})
   };
 };
 
@@ -67,7 +69,8 @@ export const loadEditorialKnowledge = (): EditorialKnowledge => {
   const modelRaw = readKnowledgeFile("model-consensus.json").entries;
   const familyRaw = recordOf(readKnowledgeFile("family-guidance.json").entries);
   const modelRuleRaw = readKnowledgeFile("manufacturer-models.json").entries;
-  if (!Array.isArray(unitRaw) || !Array.isArray(modelRaw) || !familyRaw || !Array.isArray(modelRuleRaw)) throw new Error("Índices editoriales incompletos");
+  const technicalReferenceRaw = readKnowledgeFile("model-technical-references.json").entries;
+  if (!Array.isArray(unitRaw) || !Array.isArray(modelRaw) || !familyRaw || !Array.isArray(modelRuleRaw) || !Array.isArray(technicalReferenceRaw)) throw new Error("Índices editoriales incompletos");
   const units = new Map<string, EditorialUnitKnowledge[]>();
   for (const raw of unitRaw) {
     const item = readUnit(raw);
@@ -103,7 +106,30 @@ export const loadEditorialKnowledge = (): EditorialKnowledge => {
       manufacturerSource: value.manufacturerSource, evidenceSource: value.evidenceSource
     });
   }
-  cached = { units, models, families, modelRules };
+  const technicalReferences = new Map<string, EditorialTechnicalModelReference[]>();
+  for (const raw of technicalReferenceRaw) {
+    const value = recordOf(raw);
+    if (!value || !isString(value.brand) || !value.brand.trim() || !isString(value.model) || !value.model.trim() ||
+      !isString(value.family) || !isEditorialFamily(value.family) ||
+      !isString(value.advertisedWorkHeight) || !isString(value.documentedWorkHeight) ||
+      !isString(value.platformHeight) || !isString(value.nominalCapacity) ||
+      !nullableString(value.characteristic) ||
+      value.energy !== null && value.energy !== "eléctrica" && value.energy !== "diésel" ||
+      !isString(value.sourceUrl) || !/^https:\/\/[^/]+/u.test(value.sourceUrl)) {
+      throw new Error("Referencia documental de modelo inválida");
+    }
+    const document: EditorialTechnicalModelReference = {
+      brand: value.brand, model: value.model, family: value.family,
+      advertisedWorkHeight: value.advertisedWorkHeight, documentedWorkHeight: value.documentedWorkHeight,
+      platformHeight: value.platformHeight, nominalCapacity: value.nominalCapacity,
+      characteristic: value.characteristic, energy: value.energy, sourceUrl: value.sourceUrl
+    };
+    const key = editorialIdentityKey(document.brand, document.model);
+    const group = technicalReferences.get(key) ?? [];
+    group.push(document);
+    technicalReferences.set(key, group);
+  }
+  cached = { units, models, families, modelRules, technicalReferences };
   return cached;
 };
 

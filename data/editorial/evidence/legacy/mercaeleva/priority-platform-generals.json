@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "source": "src/preparation/mercaeleva/editorial/evidence/priority-platform-generals.ts",
+  "sourceSha256": "df262f50bafbcaf38bcc854a3578839fa15996b19e45c86906542476e0a92cf7",
+  "archivedExportsSha256": "e8a72c80dbe677648e2c877e4fc7f20c11e6567896fdff114633d51320123748",
+  "exports": {
+    "verifiedPriorityPlatformGeneral": {
+      "M572-8190": {
+        "source": {
+          "url": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-180ATJ-M572-8190",
+          "title": "Manitou 180ATJ PLATAFORMA ARTICULADA DIESEL 18 MT",
+          "brand": "Manitou",
+          "model": "180ATJ",
+          "year": "2017",
+          "horometer": "3018",
+          "condition": "Segunda mano",
+          "shortDescription": null,
+          "longDescription": "Ref. 774 PLATAFORMA ARTICULADA DIESEL ALTURA DE TRABAJO 18 MT MANTIOU 180ATJ HORAS 3018 AÑO DE FABRICACION 2017",
+          "specs": {
+            "Marca": "Manitou",
+            "Modelo": "180ATJ",
+            "Título adicional": "PLATAFORMA ARTICULADA DIESEL 18 MT",
+            "Año de fabricación": "2017",
+            "Artículo No.": "774",
+            "Horas laborales": "3018 h",
+            "Estado": "Usado",
+            "Condición general": "Bueno",
+            "Tipo de motor": "Diesel",
+            "Altura de trabajo": "18 m"
+          }
+        },
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-180ATJ-M572-8190",
+        "sourceDigest": "21c426ce7b0f3995425a0ad489003171bb063cb599798f8d7614a3ec056cf0cf",
+        "general": "La Manitou 180ATJ es una plataforma articulada diésel para trabajos de elevación de personas en obra y mantenimiento exterior. Su brazo articulado permite acercar la cesta a posiciones elevadas y salvar obstáculos, con un alcance de trabajo documentado por el fabricante para este modelo. El anuncio de esta unidad usada indica 18 m de altura de trabajo, fabricación en 2017 y 3018 horas registradas. La referencia comercial 774 identifica esta máquina entre las unidades 180ATJ disponibles.",
+        "manufacturerSource": "https://www.manitou.com/es-ES/nuestras-maquinas/plataformas-elevadoras",
+        "usage": "fallback"
+      },
+      "M205-2951": {
+        "source": {
+          "url": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-180ATJ-M205-2951",
+          "title": "Manitou 180ATJ PLATAFORMA ARTICULADA DIESEL 18 MT",
+          "brand": "Manitou",
+          "model": "180ATJ",
+          "year": "2017",
+          "horometer": "3355",
+          "condition": "Segunda mano",
+          "shortDescription": null,
+          "longDescription": "Ref. 786 PLATAFORMA ARTICULADA DIESEL ALTURA DE TRABAJO 18 MT MANTIOU 180ATJ HORAS 3355 AÑO DE FABRICACION 2017",
+          "specs": {
+            "Marca": "Manitou",
+            "Modelo": "180ATJ",
+            "Título adicional": "PLATAFORMA ARTICULADA DIESEL 18 MT",
+            "Año de fabricación": "2017",
+            "Artículo No.": "786",
+            "Horas laborales": "3355 h",
+            "Estado": "Usado",
+            "Condición general": "Bueno",
+            "Tipo de motor": "Diesel",
+            "Altura de trabajo": "18 m"
+          }
+        },
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-180ATJ-M205-2951",
+        "sourceDigest": "87be8af3faab8e4689be5f1fb92cedfc81dd20956c5968653e74e06e6c2b3b7a",
+        "general": "La Manitou 180ATJ es una plataforma articulada diésel para trabajos de elevación de personas en obra y mantenimiento exterior. Su brazo articulado permite acercar la cesta a posiciones elevadas y salvar obstáculos, con un alcance de trabajo documentado por el fabricante para este modelo. El anuncio de esta unidad usada indica 18 m de altura de trabajo, fabricación en 2017 y 3355 horas registradas. La referencia comercial 786 identifica esta máquina entre las unidades 180ATJ disponibles.",
+        "manufacturerSource": "https://www.manitou.com/es-ES/nuestras-maquinas/plataformas-elevadoras",
+        "usage": "fallback"
+      },
+      "M178-6194": {
+        "source": {
+          "url": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-180ATJ-M178-6194",
+          "title": "Manitou 180ATJ PLATAFORMA ARTICULADA DIESEL 18 MT",
+          "brand": "Manitou",
+          "model": "180ATJ",
+          "year": "2017",
+          "horometer": "3233",
+          "condition": "Segunda mano",
+          "shortDescription": null,
+          "longDescription": "Ref. 784 PLATAFORMA ARTICULADA DIESEL ALTURA DE TRABAJO 18 MT MANTIOU 180ATJ HORAS 3233 AÑO DE FABRICACION 2017",
+          "specs": {
+            "Marca": "Manitou",
+            "Modelo": "180ATJ",
+            "Título adicional": "PLATAFORMA ARTICULADA DIESEL 18 MT",
+            "Año de fabricación": "2017",
+            "Artículo No.": "784",
+            "Horas laborales": "3233 h",
+            "Estado": "Usado",
+            "Condición general": "Bueno",
+            "Tipo de motor": "Diesel",
+            "Altura de trabajo": "18 m"
+          }
+        },
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-180ATJ-M178-6194",
+        "sourceDigest": "6f94fe6da898a4a203d866853e07ef270fb5038b18d2c5b2a0715563134e2434",
+        "general": "La Manitou 180ATJ es una plataforma articulada diésel para trabajos de elevación de personas en obra y mantenimiento exterior. Su brazo articulado permite acercar la cesta a posiciones elevadas y salvar obstáculos, con un alcance de trabajo documentado por el fabricante para este modelo. El anuncio de esta unidad usada indica 18 m de altura de trabajo, fabricación en 2017 y 3233 horas registradas. La referencia comercial 784 identifica esta máquina entre las unidades 180ATJ disponibles.",
+        "manufacturerSource": "https://www.manitou.com/es-ES/nuestras-maquinas/plataformas-elevadoras",
+        "usage": "fallback"
+      },
+      "M005-4474": {
+        "source": {
+          "url": "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-S0808EII-M005-4474",
+          "title": "LGMG S0808EII PLATAFORMA TIJERA ELECTRICA 10 MT",
+          "brand": "LGMG",
+          "model": "S0808EII",
+          "year": "2026",
+          "horometer": null,
+          "condition": "Nuevo",
+          "shortDescription": null,
+          "longDescription": "Ref. S0808EII PLATAFORMA TIJERA ELECTRICA ALTURA DE TRABAJO 10 MT LGMG S0808EII HORAS 0 AÑO DE FABRICACION 2026",
+          "specs": {
+            "Marca": "LGMG",
+            "Modelo": "S0808EII",
+            "Título adicional": "PLATAFORMA TIJERA ELECTRICA 10 MT",
+            "Año de fabricación": "2026",
+            "Artículo No.": "S0808EII",
+            "Estado": "Nuevo",
+            "Tipo de motor": "Eléctrico",
+            "Altura de trabajo": "10 m"
+          }
+        },
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-S0808EII-M005-4474",
+        "sourceDigest": "24fe304886b8ea55134b94bbe9c4b303f33e994e00e6989a660d59f32c798965",
+        "general": "La LGMG S0808EII es una plataforma de tijera eléctrica para elevar personal y herramientas en trabajos de mantenimiento, montaje e instalaciones. El sistema de elevación vertical facilita tareas sobre una misma zona de trabajo; la documentación del fabricante describe la versión S0808EII con uso previsto en interiores y exteriores, según sus límites de operación. Esta unidad se anuncia como nueva, de fabricación 2026, con altura de trabajo comercial indicada de 10 m. Su referencia de vendedor es S0808EII; no se atribuye a la unidad una batería opcional.",
+        "manufacturerSource": "https://www.lgmglifts.com/es/product/pro-detail-2066.htm",
+        "usage": "fallback"
+      },
+      "M030-7485": {
+        "source": {
+          "url": "https://sales.mercaeleva.com/es/for-sale/machine/JLG-E300AJP-M030-7485",
+          "title": "JLG E300AJP PLATAFORMA ARTICULADA ELECTRICA 11 MT",
+          "brand": "JLG",
+          "model": "E300AJP",
+          "year": "2006",
+          "horometer": "2412",
+          "condition": "Segunda mano",
+          "shortDescription": null,
+          "longDescription": "Ref.429 ELECTRIC ARTICULATED BOOM WORKING HEIGHT 11 MT JLG E300AJP HOURS 2412 YEAR OF MANUFACTURE 2006",
+          "specs": {
+            "Marca": "JLG",
+            "Modelo": "E300AJP",
+            "Título adicional": "PLATAFORMA ARTICULADA ELECTRICA 11 MT",
+            "Año de fabricación": "2006",
+            "Artículo No.": "429",
+            "Horas laborales": "2412 h",
+            "Estado": "Usado",
+            "Condición general": "Bueno",
+            "Tipo de motor": "Eléctrico",
+            "Altura de trabajo": "11 m"
+          }
+        },
+        "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/JLG-E300AJP-M030-7485",
+        "sourceDigest": "299f0dd92054e874a11cb7b7cfd11d2fe8387c25300ee71914db17d43324f9e7",
+        "general": "La JLG E300AJP es una plataforma elevadora articulada eléctrica destinada a intervenciones en altura, instalaciones y mantenimiento. El fabricante describe un brazo articulado con plumín que ayuda a acceder a zonas difíciles de alcanzar directamente desde el suelo. En esta unidad usada, el vendedor anuncia 11 m de altura de trabajo, año de fabricación 2006 y 2.412 horas registradas. La motorización eléctrica la diferencia de las plataformas articuladas diésel para trabajos de exterior. Está identificada mediante la referencia comercial 429.",
+        "manufacturerSource": "https://www.jlg.com/en/equipment/boom-lifts/articulating/electric-hybrid/e300-series/e300ajp",
+        "usage": "fallback"
+      }
+    }
+  }
+}

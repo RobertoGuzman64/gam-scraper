@@ -21,9 +21,14 @@ import { recoverBaseTechnicalSpecs } from "./shared/technical/recovery/base-tech
 import { recoverDocumentedTechnicalSpecs } from "./shared/technical/recovery/documented-technical-recovery.js";
 import { resolvePreparedEditorial } from "./shared/editorial/mapping/prepared-editorial.js";
 import { normalizePreparedEditorialPresentation } from "./shared/editorial/mapping/prepared-editorial-presentation.js";
+import { reconcileUsedHandlingSource } from "./shared/editorial/mapping/source-used-handling.js";
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
   const sourceUnitRecord = record;
+  const coherentSource = reconcileUsedHandlingSource(sourceUnitRecord);
+  if (coherentSource.year !== record.year && coherentSource.yearSource === "url") {
+    record = { ...record, year: coherentSource.year, yearSource: coherentSource.yearSource };
+  }
   record = reconcileInitialTechnicalEvidence(record);
   const publicationConflict = publicationConflictForMercaeleva(record);
   const semanticIssues = sourceSemanticQualityIssues(resolveSourceTechnicalSemanticRecord(record));
@@ -35,8 +40,10 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   record = reconcileTechnicalAfterEditorial(record);
   const reconciledSpecs = applyReconciledTechnicalSpecs(beforeReconciliation, record, documentedSpecs);
   const editorialRecord: ProductRecord = { ...record, specs: reconciledSpecs,
-    shortDescription: sourceUnitRecord.shortDescription, longDescription: sourceUnitRecord.longDescription };
+    shortDescription: sourceUnitRecord.shortDescription, longDescription: coherentSource.longDescription };
   const sourceEditorial = captureSourceEditorialEvidence(editorialRecord);
+  const qualityRecord = coherentSource === sourceUnitRecord ? record :
+    { ...record, longDescription: coherentSource.longDescription };
   const issues: string[] = [];
   const { condition, contradictory: contradictoryCondition } = resolveCommercialCondition(record);
   const category = catalog ? resolveCategory(record, catalog.categories, condition) : null;
@@ -47,7 +54,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const price = normalizePrice(record.price);
   const reference = record.reference?.trim() || null;
   const editorial = resolvePreparedEditorial(editorialRecord, sourceUnitRecord, sourceEditorial);
-  const attributeResult = catalog ? productAttributes(record, category, catalog) : null;
+  const attributeResult = catalog ? productAttributes(qualityRecord, category, catalog) : null;
   if (editorial.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
   if (editorial.sourceIdentityConflict) issues.push("Identidad GAM contradictoria entre título, resumen y ficha técnica");
   if (contradictoryCondition) issues.push("Condición comercial contradictoria entre la ficha y el origen");
@@ -55,11 +62,11 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   issues.push(...semanticIssues);
   if (!reference) issues.push("Referencia ausente");
   if (price === null && /\d/.test(record.price ?? "")) issues.push("Precio publicado inválido");
-  issues.push(...(catalog === null ? sourceTechnicalQualityIssues(record) :
-    category ? attributeResult!.qualityIssues : sourceAttributeQualityIssues(record, catalog)));
+  issues.push(...(catalog === null ? sourceTechnicalQualityIssues(qualityRecord) :
+    category ? attributeResult!.qualityIssues : sourceAttributeQualityIssues(qualityRecord, catalog)));
 
   const descriptions = { short: editorial.preparedShort, general: editorial.preparedLong };
-  issues.push(...preparedTechnicalConsistencyIssues(record, reconciledSpecs));
+  issues.push(...preparedTechnicalConsistencyIssues(qualityRecord, reconciledSpecs));
   const normalizedSpecs = normalizePreparedTechnicalSpecs(record, reconciledSpecs);
   const product: ImportCandidate = {
     providerId: record.providerId,

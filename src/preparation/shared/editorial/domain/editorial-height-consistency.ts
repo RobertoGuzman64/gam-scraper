@@ -1,3 +1,38 @@
+import type { ProductRecord } from "../../../../contracts/catalog.js";
+import { editorialMetricOf } from "./editorial-measurements.js";
+const additionalHeightConflict = (record: ProductRecord, pattern: RegExp): boolean => {
+  const additional = record.specs?.["Título adicional"];
+  const height = record.specs?.["Altura de trabajo"];
+  if (typeof additional !== "string") return false;
+  const titled = pattern.exec(additional);
+  if (titled?.[1] === undefined) return false;
+  const announced = Number(titled[1].replace(",", "."));
+  const published = height === undefined ? null : editorialMetricOf(record.specs, ["Altura de trabajo"]);
+  return published === null || published !== announced;
+};
+
+export const hasEditorialAdditionalHeightConflict = (record: ProductRecord): boolean =>
+  additionalHeightConflict(record,
+    /\b(?:PLATAFORMA|BRAZO)\s+(?:ARTICULADA|TELESCOPICA|TIJERA)\s+(?:ELECTRICA|DIESEL)\s+(\d+(?:[.,]\d+)?)\s*MT\b/iu);
+
+export const hasEditorialAdapterHeightConflict = (record: ProductRecord): boolean =>
+  additionalHeightConflict(record,
+    /^PLATAFORMA (?:ARTICULADA|TELESCOPICA) (?:ELECTRICA|DIESEL) (\d{1,2}(?:[.,]\d{1,2})?) MT$/iu);
+
+export const hasEditorialSourceWorkHeightConflict = (record: ProductRecord): boolean => {
+  if (hasEditorialAdditionalHeightConflict(record)) return true;
+  const explicit = (text: string | null): number | null => {
+    const match = /\baltura\s+de\s+trabajo\s+(?:de\s+)?(\d+(?:[.,]\d+)?)\s*(?:m|mt|metros?)\b/iu.exec(text ?? "");
+    return match?.[1] === undefined ? null : Number(match[1].replace(",", "."));
+  };
+  const title = explicit(record.title);
+  const general = explicit(record.longDescription);
+  const published = editorialMetricOf(record.specs, ["Altura de trabajo"]);
+  if (general !== null && published !== null && general !== published) return true;
+  return title !== null && (general !== null && title !== general ||
+    published !== null && title !== published);
+};
+
 type HeightProduct = {
   readonly title: string | null;
   readonly description: string | null;

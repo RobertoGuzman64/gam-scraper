@@ -4458,6 +4458,61 @@
       "priority": 45
     },
     {
+      "key": "gomariz:BA1358",
+      "brand": "JLG",
+      "model": "340AJ",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/jlg-340aj/",
+      "sourceDigest": "8a3d607907da54f96c3ed1aa0ef08ecd00c9bda0250ed98aa903f277295075d9",
+      "short": null,
+      "general": "La plataforma articulada JLG 340AJ, anunciada con año 2012, registra en la ficha 12,33 m de altura de trabajo y 6,71 m de alcance lateral. La capacidad indicada es de 230 kg. Sus dimensiones publicadas son 5,52 m de longitud, 1,93 m de anchura y 2 m de altura de almacenaje, con un peso de 4.450 kg. La descripción del proveedor menciona la familia de articuladas diésel, pero la motorización individual no consta en el campo técnico de esta unidad.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "gomariz:BA1465",
+      "brand": "LGMG",
+      "model": "A14JE",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/lgmg-a14je-3/",
+      "sourceDigest": "ae8ae39d5ea2f876eaccdaf6eade5de58d16db9978dcdfa25c428205a8545ca2",
+      "short": "Plataforma articulada eléctrica LGMG A14JE, año 2022, con altura de trabajo de 15,8 m, alcance lateral de 7,81 m y capacidad de 230 kg.",
+      "general": null,
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/priority-short-descriptions.json",
+      "exportName": "gomarizPriorityShortEvidence",
+      "priority": 30
+    },
+    {
+      "key": "gomariz:BA1522",
+      "brand": "JLG",
+      "model": "340AJ",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/jlg-340aj-brazo-articulado-articulated-boom-lift-4wd-5/",
+      "sourceDigest": "252ae2e5bbfe0cc97488ee6b28540c5605674416aeec20c0401c1288423449af",
+      "short": null,
+      "general": "La unidad JLG 340AJ con referencia BA1522 es una plataforma articulada de ocasión y año indicado 2012. Según la ficha del proveedor, alcanza 12,33 m de altura de trabajo, con 6,71 m de alcance lateral y 230 kg de capacidad. Tiene 5,52 m de longitud, 1,93 m de anchura y 4.450 kg de peso declarados. La descripción de origen habla de articuladas diésel como familia; el dato de motor no está individualizado en las especificaciones de esta referencia.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "gomariz:BA1575",
+      "brand": "JLG",
+      "model": "340AJ",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/jlg-340aj-brazo-articulado-articulated-boom-lift/",
+      "sourceDigest": "e2df00477f25f70252e7f70d7f9ddfbbe9974bdec80c97133e0f31f4583010fa",
+      "short": null,
+      "general": "La plataforma articulada JLG 340AJ de referencia BA1575 figura como unidad de ocasión con año indicado 2011. La ficha técnica consigna motorización diésel, 12,33 m de altura de trabajo y 6,71 m de alcance lateral, además de 230 kg de capacidad. Se publican 5,52 m de longitud, 1,93 m de anchura, 2 m de altura de almacenaje y 4.450 kg de peso. Estos valores permiten valorar el espacio y alcance de esta máquina concreta, frente a los rangos genéricos de la familia.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
       "key": "gomariz:BT1461",
       "brand": "Skyjack",
       "model": "SJ45T",
@@ -4471,6 +4526,62 @@
       "priority": 45
     },
     {
+      "key": "gomariz:BT1461",
+      "brand": "Skyjack",
+      "model": "SJ45T",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-telescopico/skyjack-sj45t-telescopic-boom-lift-brazo-telescopico-16-metros/",
+      "sourceDigest": "b5559ae5c72de7de3f35b7eac0228df404c893d8ac9c0fb19751bb4197f15b1f",
+      "short": null,
+      "general": "El brazo telescópico Skyjack SJ45T, anunciado como unidad de 2017, es una plataforma diésel para realizar trabajos en altura. Según la ficha del proveedor alcanza 15,60 m de altura de trabajo y dispone de una capacidad de 227 kg. Su longitud es de 8,79 m y su anchura de 2,29 m, dimensiones importantes para comprobar accesos y espacio de maniobra. La altura de almacenaje publicada es de 2,39 m, dato útil para planificar su transporte y almacenamiento. La capacidad y los requisitos de apoyo deben verificarse para cada trabajo.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/critical-brief-general.json",
+      "exportName": "resolveGomarizCriticalBriefGeneral",
+      "priority": 30,
+      "usage": "fallback"
+    },
+    {
+      "key": "gomariz:CA1041",
+      "brand": "Toyota",
+      "model": "8FD20",
+      "sourceUrl": "https://www.gomarizrent.com/venta/manipulacion-de-materiales/carretilla-industrial/toyota-8fd20-2/",
+      "sourceDigest": "fd274d3d9a5071e90977a16e10198c6608be7460d07217e52214a8725f6e5172",
+      "short": null,
+      "general": "La carretilla industrial Toyota 8FD20, anunciada como equipo de ocasión del año 2013, dispone de un motor diésel según la ficha. La capacidad declarada es de 2.000 kg y la altura consignada en el campo de trabajo es de 3,50 m. El proveedor también indica 2,56 m de longitud, 1,15 m de anchura, 2,11 m de altura de almacenaje y 3.310 kg de peso. Estos datos describen esta unidad, sin extrapolar capacidades de otras carretillas de la gama.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "gomariz:CA1436",
+      "brand": "Maximal",
+      "model": "FD40T",
+      "sourceUrl": "https://www.gomarizrent.com/venta/manipulacion-de-materiales/carretilla-industrial/maximal-fd40t/",
+      "sourceDigest": "51e0a1b9297f884b47a29e162eb978236258d8e29afaabf8955721d4da5d26bf",
+      "short": null,
+      "general": "La carretilla industrial Maximal FD40T figura como unidad de ocasión con año indicado 2015 y motorización diésel. La ficha técnica recoge 4.000 kg de capacidad y 4,30 m en el campo de altura de trabajo. También publica 2,91 m de longitud, 1,41 m de anchura y 2,18 m de altura de almacenaje. El peso consignado es de 5.100 kg. Los valores permiten evaluar dimensiones y carga declarada de este equipo, sin asumir prestaciones de otras versiones.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "gomariz:CAE1207",
+      "brand": "Nissan",
+      "model": "Q02L25CU",
+      "sourceUrl": "https://www.gomarizrent.com/venta/manipulacion-de-materiales/carretilla-industrial/nissan-q02l25cu-carretilla-industrial/",
+      "sourceDigest": "3e0283b0ee224f66c46277ac210e2711075ed81b4b5c102aa50d3d5686cc5e17",
+      "short": null,
+      "general": "La carretilla industrial Nissan Q02L25CU de ocasión figura con año indicado 2007. La ficha técnica consigna una capacidad de 2.500 kg y motorización eléctrica. Sus dimensiones publicadas son 2,37 m de longitud, 1,18 m de anchura y 2,23 m de altura de almacenaje. Son medidas concretas para verificar accesos y condiciones de uso, en lugar de atribuir a este modelo todas las características de una descripción genérica de carretillas para interiores. El peso declarado debe interpretarse según la ficha de origen.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
       "key": "gomariz:CAE1207",
       "brand": "Nissan",
       "model": "Q02L25CU",
@@ -4482,6 +4593,20 @@
       "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-unit-specific-titles.json",
       "exportName": "verifiedGomarizUnitSpecificTitles",
       "priority": 45
+    },
+    {
+      "key": "gomariz:CAE1525",
+      "brand": "HELI",
+      "model": "CPD 35",
+      "sourceUrl": "https://www.gomarizrent.com/venta/manipulacion-de-materiales/carretilla-industrial/heli-cpd-35-carretilla-elevadora/",
+      "sourceDigest": "f07515309ae4f234523d93613f1ab6341c9e8c72c7a49929a919676fe7f98655",
+      "short": null,
+      "general": "La carretilla industrial Heli CPD 35 figura como máquina de ocasión con año indicado 2024. Su ficha consigna motorización eléctrica, 3.500 kg de capacidad y 4,80 m de altura de trabajo. Las dimensiones publicadas son 3,64 m de longitud, 1,26 m de anchura y 2,18 m de altura de almacenaje, junto a 4.860 kg de peso. Se trata de magnitudes de la unidad anunciada que permiten contrastar necesidades de carga y espacio, sin recurrir a datos de otras variantes.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
     },
     {
       "key": "gomariz:CC1535",
@@ -4510,6 +4635,21 @@
       "priority": 45
     },
     {
+      "key": "gomariz:CC1665",
+      "brand": "",
+      "model": "",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/camion-plataforma/socage-iveco-forste-18t-speed/",
+      "sourceDigest": "6012ca224ea26f2c8c82086af2b06acee86e0fd8b914c2f2d0a6ff8307ec40b1",
+      "short": null,
+      "general": "El camión plataforma Socage Iveco Forste 18T Speed se anuncia con año 2024. La ficha del proveedor declara 17,7 m de altura de trabajo y 10,50 m de alcance lateral, con una capacidad de 300 kg. Se indican 7,18 m de longitud, 2,20 m de anchura, 2,94 m de altura de almacenaje y 3.500 kg de peso. La motorización consignada es diésel. Estas especificaciones permiten valorar el espacio necesario y el alcance declarado de la unidad anunciada.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback",
+      "identityOverride": true
+    },
+    {
       "key": "gomariz:CC1666",
       "brand": "Iveco Socage",
       "model": "35S14 FORSTE 20D SPEED NEUTRA",
@@ -4534,6 +4674,90 @@
       "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-model-general.json",
       "exportName": "verifiedGomarizModelGeneral",
       "priority": 45
+    },
+    {
+      "key": "gomariz:DU473",
+      "brand": "Ausa",
+      "model": "D201RS",
+      "sourceUrl": "https://www.gomarizrent.com/venta/movimiento-de-tierras-demolicion-y-compactacion/dumper/ausa-d201rs/",
+      "sourceDigest": "411739065efd6906f0c1d7ed12da44eae9cb651feab856a1cad2015d31128c74",
+      "short": null,
+      "general": "El dúmper Ausa D201RS se ofrece como unidad de ocasión con año indicado 2007. La ficha del proveedor le asigna un motor diésel y una capacidad de 2.000 kg; además, declara 3,98 m de longitud y 1.600 kg de peso. Se trata de datos de la máquina anunciada, más precisos que la descripción genérica del tipo de vehículo. Conviene comprobar las condiciones de trabajo y el espacio disponible a partir de las medidas publicadas, sin atribuirle otras configuraciones.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "gomariz:FR1077",
+      "brand": "Nilfisk",
+      "model": "BR850-S",
+      "sourceUrl": "https://www.gomarizrent.com/venta/limpieza/fregadora/nilfisk-br850-s-fregadora/",
+      "sourceDigest": "db9a977c03e5f49726fa93b9c5c7530ba2833863a40825fdd4cc9bada89de261",
+      "short": null,
+      "general": "La Nilfisk BR850-S es una fregadora industrial de segunda mano destinada a la limpieza de suelos. La ficha técnica del proveedor recoge 0,81 m de anchura de limpieza y motorización eléctrica. El equipo mide 1,55 m de longitud y 0,88 m de anchura, con un peso declarado de 705 kg. Estas medidas describen la unidad anunciada y resultan útiles para evaluar el paso por accesos y el espacio de operación; el anuncio no especifica el año.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "gomariz:MT1314",
+      "brand": "Jcb",
+      "model": "535-140",
+      "sourceUrl": "https://www.gomarizrent.com/venta/manipulacion-de-materiales/manipulador-telescopico/jcb-535-140/",
+      "sourceDigest": "71293a96465e1842bcf8991767e8383a92f33e9a9eebb290aa78254f6e93baa1",
+      "short": null,
+      "general": "El manipulador telescópico JCB 535-140 se ofrece de ocasión con año indicado 2016. La ficha recoge un motor diésel, una capacidad de 3.500 kg y 13,78 m de altura de trabajo. El alcance lateral publicado es de 9,60 m, con 2,35 m de anchura, 2,59 m de altura de almacenaje y 10.880 kg de peso. Estos valores corresponden a la unidad identificada y permiten evaluar su capacidad y dimensiones sin extrapolar los rangos genéricos anunciados para la familia.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "gomariz:MT1659",
+      "brand": "Jcb",
+      "model": "540-140",
+      "sourceUrl": "https://www.gomarizrent.com/venta/manipulacion-de-materiales/manipulador-telescopico/jcb-540-140-manipulador-telescopico-telescopic-manlift/",
+      "sourceDigest": "3c97a5b2205a5b9f09cca4e04db1424c429bcbc3c3f88146ea43d054bb045c74",
+      "short": null,
+      "general": "El manipulador telescópico JCB 540-140 figura como unidad de ocasión con año indicado 2018 y motor diésel. Según la ficha, su capacidad es de 4.000 kg y la altura de trabajo es de 13,8 m, con 9,25 m de alcance lateral. Las dimensiones publicadas son 6,25 m de longitud, 2,35 m de anchura y 2,59 m de altura de almacenaje; el peso declarado es 11.090 kg. Estos datos individualizan la referencia frente al texto genérico de manipuladores telescópicos.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "gomariz:MT1661",
+      "brand": "Jcb",
+      "model": "540-140",
+      "sourceUrl": "https://www.gomarizrent.com/venta/manipulacion-de-materiales/manipulador-telescopico/jcb-540-140-2-manipulador-telescopico-telescopic-manlift/",
+      "sourceDigest": "9c8ef3d7151ce5489854e60eb76474d3811d1cbbe23a6e0080f335941e38bfe2",
+      "short": null,
+      "general": "La unidad JCB 540-140 de referencia MT1661 aparece como manipulador telescópico de ocasión, con año indicado 2018. El proveedor consigna motor diésel, 4.000 kg de capacidad, 13,8 m de altura de trabajo y 9,25 m de alcance lateral. La ficha también recoge 6,25 m de longitud, 2,35 m de anchura, 2,59 m de altura de almacenaje y 11.090 kg de peso. Son especificaciones de esta referencia, no de todo el intervalo de máquinas que menciona la descripción de familia.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "gomariz:OR1537",
+      "brand": "Socage",
+      "model": "15S",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/oruga/socage-15s/",
+      "sourceDigest": "2d14704b1d5d68e9a1ba0d578d869668ae88b83b577fc8ac88c926fc9ad3607d",
+      "short": null,
+      "general": "La plataforma sobre orugas Socage 15S figura como equipo de ocasión del año 2023. El proveedor declara 15 m de altura de trabajo, 7 m de alcance lateral y 225 kg de capacidad. Sus dimensiones de 4,54 m de longitud y 1,39 m de anchura, junto con los 2.300 kg de peso, permiten valorar el acceso y el transporte de esta unidad. La ficha identifica una motorización combinada eléctrica y de gasolina; no se atribuye una configuración distinta.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
     },
     {
       "key": "gomariz:PV556",
@@ -4562,6 +4786,20 @@
       "priority": 45
     },
     {
+      "key": "gomariz:RE454",
+      "brand": "Jcb",
+      "model": "1CX",
+      "sourceUrl": "https://www.gomarizrent.com/venta/movimiento-de-tierras-demolicion-y-compactacion/retroexcavadora/jcb-1cx-retroexcavadora-backhoe-gomariz-1/",
+      "sourceDigest": "f4564215fdcf947eaa4db9c12c40988c3cf8288623d41d0508b9a77a651a131d",
+      "short": null,
+      "general": "La JCB 1CX está anunciada como retroexcavadora de ocasión del año 1998. El proveedor consigna 3,31 m de longitud, 1,58 m de anchura y 3.158 kg de peso, y señala 660 kg en el campo de capacidad. También registra 2,25 m de altura y 2,51 m en el campo de altura de trabajo, sin justificar su interpretación como alcance de excavación. La ficha asigna un motor eléctrico, dato que no se traslada a esta descripción por no estar corroborado frente a la identidad de la retroexcavadora.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
       "key": "gomariz:TE1618",
       "brand": "LGMG",
       "model": "S0812II",
@@ -4588,6 +4826,48 @@
       "priority": 45
     },
     {
+      "key": "gomariz:TE1621",
+      "brand": "LGMG",
+      "model": "SS0507E",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-ss0507e-tijera-electrica-scissor-lift/",
+      "sourceDigest": "bd51fd037ac05fd83754e09e83b7d3cd905bd71c6c5447b8dc131d2f3538239a",
+      "short": null,
+      "general": "La plataforma de tijera eléctrica LGMG SS0507E de ocasión está identificada en su ficha con 6,3 m de altura de trabajo y 230 kg de capacidad. Sus dimensiones publicadas son 1,53 m de longitud y 0,81 m de anchura, con un peso de 985 kg y 2,15 m de altura de almacenaje. El campo de altura de plataforma del anuncio indica 14,30 m, un valor incompatible con la altura de trabajo publicada; por prudencia no se utiliza para describir la elevación real.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "gomariz:TE1622",
+      "brand": "LGMG",
+      "model": "SS0507E",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-ss0507e-tijera-electrica-scissor-lift-2/",
+      "sourceDigest": "212ba3b7fc3c6b4ed9976107b565ba2d244bb667e4031b2fc93c65c421737307",
+      "short": null,
+      "general": "La LGMG SS0507E de segunda mano corresponde a una plataforma de tijera eléctrica con 6,3 m de altura de trabajo y capacidad declarada de 230 kg. La ficha recoge 1,53 m de largo, 0,81 m de ancho y 985 kg de peso. Figura una altura de almacenaje de 2,15 m. La altura de plataforma consignada como 14,30 m no concuerda con los 6,3 m de trabajo; por esa contradicción no se presenta como una prestación acreditada.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "gomariz:TE1746",
+      "brand": "LGMG",
+      "model": "S0607E-2",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-s0607e-13/",
+      "sourceDigest": "491548942545918c40bb6d72a9b5c80bce908db503576319872eb26162897107",
+      "short": null,
+      "general": "La plataforma de tijera LGMG S0607E-2, anunciada como unidad de ocasión del año 2025, presenta motorización eléctrica según la ficha. El proveedor indica 7,8 m de altura de trabajo y 230 kg de capacidad. Se declaran 1,64 m de longitud, 0,73 m de anchura, 2 m de altura de almacenaje y 1.550 kg de peso. Estas medidas concretan el equipo y permiten evaluar accesos y condiciones de despliegue sin suponer que el rango de altura de toda la familia se aplica a esta unidad.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
       "key": "gomariz:TE1746",
       "brand": "LGMG",
       "model": "S0607E-2",
@@ -4599,6 +4879,48 @@
       "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-unit-specific-titles.json",
       "exportName": "verifiedGomarizUnitSpecificTitles",
       "priority": 45
+    },
+    {
+      "key": "gomariz:TE1772",
+      "brand": "LGMG",
+      "model": "AS0607WE",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-as0607we-tijera-electrica-scissor-lift/",
+      "sourceDigest": "2c770227e66fd18a8a6ddff8d43b93e633dd6a82a80c0b01cf2c252fb409e5c3",
+      "short": null,
+      "general": "La plataforma de tijera LGMG AS0607WE de ocasión lleva indicado el año 2023. Su ficha registra 7,8 m de altura de trabajo, 5,8 m de altura de plataforma y 230 kg de capacidad. Las dimensiones facilitadas son 1,86 m de longitud, 0,81 m de anchura y 2,14 m de altura de almacenaje, con 1.620 kg de peso. La descripción general del vendedor alude a tijeras eléctricas, pero el tipo de motor no aparece individualizado en las especificaciones de esta referencia.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "gomariz:TE1814",
+      "brand": "LGMG",
+      "model": "AS0607WE",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-as0607we-tijera-electrica-electric-scissor-2/",
+      "sourceDigest": "c7c2dbf3f627272d9aa39399dd03419e319e5c13c9bbb7ce105d2dfa3e3403e9",
+      "short": null,
+      "general": "La unidad LGMG AS0607WE con referencia TE1814 figura como plataforma de tijera de ocasión del año 2021. La ficha técnica indica 7,8 m de altura de trabajo, 5,8 m de altura de plataforma y 230 kg de capacidad. También declara 1,86 m de longitud, 0,81 m de anchura, 2,14 m de altura de almacenaje y 1.620 kg de peso. El texto de familia menciona equipos eléctricos, pero no consta motorización individual en los campos técnicos de esta máquina.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "gomariz:TE1858",
+      "brand": "LGMG",
+      "model": "SS0507E",
+      "sourceUrl": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-ss0507etijera-electrica-electric-scissor/",
+      "sourceDigest": "6e9c6e98c3aedbe20bb8c14a9e1205a3ab30bf188cac913c7d2f579e043db5f9",
+      "short": null,
+      "general": "La plataforma de tijera eléctrica LGMG SS0507E anunciada de ocasión registra 230 kg de capacidad, 6,3 m de altura de trabajo y un peso declarado de 985 kg. Sus medidas son 1,53 m de longitud, 0,81 m de anchura y 2,15 m en posición de almacenaje, según la ficha técnica. El anuncio contiene además un valor de 14,30 m para la altura de plataforma, contradictorio con la altura de trabajo; esa cifra queda expresamente sin atribuir a la máquina.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
     },
     {
       "key": "gomariz:TE1858",
@@ -4614,6 +4936,20 @@
       "priority": 45
     },
     {
+      "key": "gomariz:TO1241",
+      "brand": "Generac",
+      "model": "VB9",
+      "sourceUrl": "https://www.gomarizrent.com/venta/energia-electrica-e-iluminacion/torre-de-luz/generac-vb9-torre-de-luz-light-tower-1/",
+      "sourceDigest": "cd759fba3548972af1e8c9081435df8bac1ed825b778325b042f6287dadc1f6d",
+      "short": null,
+      "general": "La torre de iluminación Generac VB9 se anuncia como unidad de ocasión con año indicado 2015. Su ficha técnica declara 8,50 m de altura de trabajo, un motor diésel y una potencia indicada como 4 × 120 W. El conjunto mide 2,40 m de longitud y 1,43 m de anchura, con un peso de 945 kg. La descripción original habla de distintas torres y alimentaciones posibles; los datos aquí recogidos corresponden exclusivamente a esta referencia.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/gomariz/verified-priority-general.json",
+      "exportName": "verifiedGomarizPriorityGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
       "key": "gomariz:TO1245",
       "brand": "Generac",
       "model": "",
@@ -4626,6 +4962,20 @@
       "exportName": "verifiedGomarizUnitSpecificTitles",
       "priority": 45,
       "identityOverride": true
+    },
+    {
+      "key": "mercaeleva:M005-4474",
+      "brand": "LGMG",
+      "model": "S0808EII",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-S0808EII-M005-4474",
+      "sourceDigest": "24fe304886b8ea55134b94bbe9c4b303f33e994e00e6989a660d59f32c798965",
+      "short": null,
+      "general": "La LGMG S0808EII es una plataforma de tijera eléctrica para elevar personal y herramientas en trabajos de mantenimiento, montaje e instalaciones. El sistema de elevación vertical facilita tareas sobre una misma zona de trabajo; la documentación del fabricante describe la versión S0808EII con uso previsto en interiores y exteriores, según sus límites de operación. Esta unidad se anuncia como nueva, de fabricación 2026, con altura de trabajo comercial indicada de 10 m. Su referencia de vendedor es S0808EII; no se atribuye a la unidad una batería opcional.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/priority-platform-generals.json",
+      "exportName": "verifiedPriorityPlatformGeneral",
+      "priority": 30,
+      "usage": "fallback"
     },
     {
       "key": "mercaeleva:M005-5167",
@@ -4678,6 +5028,19 @@
       "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/verified-unit-general-data.json",
       "exportName": "verifiedMercaelevaUnitEvidence",
       "priority": 45
+    },
+    {
+      "key": "mercaeleva:M011-3720",
+      "brand": "BT",
+      "model": "LPE200/8",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/BT-LPE200-8-M011-3720",
+      "sourceDigest": "e2f959ee93516a4ece48f5db075965eecc82aef02be4f4ab6dd7c6b70a7399ce",
+      "short": "Transpaleta eléctrica BT LPE200/8, año 2012, capacidad de carga de 2.000 kg y 2.261 horas registradas.",
+      "general": null,
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "exportName": "mercaelevaPriorityShortEvidence",
+      "priority": 30
     },
     {
       "key": "mercaeleva:M017-2019",
@@ -4756,6 +5119,20 @@
       "evidenceSource": "data/editorial/evidence/legacy/shared/verified-unit-summary-editorial.json",
       "exportName": "verifiedUnitSummaryEditorial",
       "priority": 60
+    },
+    {
+      "key": "mercaeleva:M030-7485",
+      "brand": "JLG",
+      "model": "E300AJP",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/JLG-E300AJP-M030-7485",
+      "sourceDigest": "299f0dd92054e874a11cb7b7cfd11d2fe8387c25300ee71914db17d43324f9e7",
+      "short": null,
+      "general": "La JLG E300AJP es una plataforma elevadora articulada eléctrica destinada a intervenciones en altura, instalaciones y mantenimiento. El fabricante describe un brazo articulado con plumín que ayuda a acceder a zonas difíciles de alcanzar directamente desde el suelo. En esta unidad usada, el vendedor anuncia 11 m de altura de trabajo, año de fabricación 2006 y 2.412 horas registradas. La motorización eléctrica la diferencia de las plataformas articuladas diésel para trabajos de exterior. Está identificada mediante la referencia comercial 429.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/priority-platform-generals.json",
+      "exportName": "verifiedPriorityPlatformGeneral",
+      "priority": 30,
+      "usage": "fallback"
     },
     {
       "key": "mercaeleva:M035-8084",
@@ -4849,6 +5226,20 @@
       "priority": 45
     },
     {
+      "key": "mercaeleva:M095-5362",
+      "brand": "Haulotte",
+      "model": "STAR-10",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Haulotte-STAR-10-M095-5362",
+      "sourceDigest": "c829f76b489d22c7623b703ccbe464174affb510256e4392b30cb2e73ae8ff0c",
+      "short": null,
+      "general": "La Haulotte STAR-10 anunciada es una plataforma vertical autopropulsada eléctrica con altura de trabajo indicada de 10 m. El mástil con plumín permite acercar la cesta a puntos de mantenimiento o instalación en zonas de acceso limitado. Haulotte describe para el modelo un alcance horizontal de hasta 3 m y un diseño que evita el voladizo trasero durante el giro. Esta unidad usada fue fabricada en 2013, registra 617 horas y corresponde a la referencia 740 del vendedor.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/critical-general-descriptions.json",
+      "exportName": "verifiedMercaelevaCriticalGeneral",
+      "priority": 30,
+      "usage": "fallback"
+    },
+    {
       "key": "mercaeleva:M104-0836",
       "brand": "Linde",
       "model": "E16P-01",
@@ -4888,6 +5279,19 @@
       "priority": 45
     },
     {
+      "key": "mercaeleva:M106-1389",
+      "brand": "Manitou",
+      "model": "170AETJL",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-170AETJL-M106-1389",
+      "sourceDigest": "6cfa80c833577b8615b4fa5b97fdae4884d3fa9285c69ff155e5c6584664c4db",
+      "short": "Plataforma articulada eléctrica Manitou 170AETJL, año 2015, con altura de trabajo anunciada de 17 m y 294 horas registradas.",
+      "general": null,
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "exportName": "mercaelevaPriorityShortEvidence",
+      "priority": 30
+    },
+    {
       "key": "mercaeleva:M121-6486",
       "brand": "Nissan",
       "model": "Q02L20CU",
@@ -4912,6 +5316,20 @@
       "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/verified-unit-general-data.json",
       "exportName": "verifiedMercaelevaUnitEvidence",
       "priority": 45
+    },
+    {
+      "key": "mercaeleva:M131-5855",
+      "brand": "Haulotte",
+      "model": "Optimum 8",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Haulotte-Optimum-8-M131-5855",
+      "sourceDigest": "3d62d6500e1729d5cc38bd85be87fec7cc041c24e9c807921b25a4da31d1a969",
+      "short": null,
+      "general": "La Haulotte Optimum 8 es una plataforma de tijera eléctrica de segunda mano. Según el anuncio, dispone de 8 m de altura de trabajo y corresponde al año 2018. La unidad registra 464 horas y tiene la referencia comercial 623. El texto de origen identifica la variante Optimum 8 AC.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/verified-unit-specific-generals.json",
+      "exportName": "verifiedMercaelevaUnitSpecificGeneral",
+      "priority": 45,
+      "usage": "fallback"
     },
     {
       "key": "mercaeleva:M141-6536",
@@ -4940,6 +5358,75 @@
       "priority": 45
     },
     {
+      "key": "mercaeleva:M144-5512",
+      "brand": "Haulotte",
+      "model": "STAR-10",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Haulotte-STAR-10-M144-5512",
+      "sourceDigest": "029f906e5b45b49645e4fdde62481da6b9162b3adb1df40f25fadf98dd21e64c",
+      "short": null,
+      "general": "La plataforma eléctrica Haulotte STAR-10 está orientada a intervenciones de mantenimiento, montaje e instalaciones en altura. El vendedor declara 10 m de altura de trabajo para esta unidad; la documentación de gama señala un mástil vertical con plumín y hasta 3 m de alcance horizontal, útil para aproximarse a puntos de difícil acceso. El anuncio la identifica como equipo usado de 2013, con 377 horas registradas y referencia comercial 448. Son los datos que distinguen esta unidad de otras STAR-10 anunciadas.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/critical-general-descriptions.json",
+      "exportName": "verifiedMercaelevaCriticalGeneral",
+      "priority": 30,
+      "usage": "fallback"
+    },
+    {
+      "key": "mercaeleva:M159-0669",
+      "brand": "LGMG",
+      "model": "S0808EII",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-S0808EII-M159-0669",
+      "sourceDigest": "546ad8fc34135fe18332739eed15fe5befc527b830e9559655e7fbe2b6cabcae",
+      "short": null,
+      "general": "La LGMG S0808EII es una plataforma de tijera eléctrica anunciada como nueva, con altura de trabajo de 10 m y año de fabricación 2024. La referencia comercial publicada por el vendedor es S0808EII. El texto original también anuncia cero horas, sin indicar un horómetro estructurado.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/verified-unit-specific-generals.json",
+      "exportName": "verifiedMercaelevaUnitSpecificGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "mercaeleva:M168-3277",
+      "brand": "MB",
+      "model": "RPL201",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/MB-RPL201-M168-3277",
+      "sourceDigest": "5381f4ed112100945db490b31a67afd958527e20331913a17c0d4564901689af",
+      "short": "Transpaleta eléctrica MB RPL201 de conductor montado, con capacidad de 2.000 kg, batería de litio de 24 V y 205 Ah y horquillas de 1.150 mm.",
+      "general": null,
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "exportName": "mercaelevaPriorityShortEvidence",
+      "priority": 30
+    },
+    {
+      "key": "mercaeleva:M171-6370",
+      "brand": "Haulotte",
+      "model": "STAR-10",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Haulotte-STAR-10-M171-6370",
+      "sourceDigest": "7c94f6e1506f8fd192b510e79393d53e32aaa4cc0d4c43b0b86d7e3253c35033",
+      "short": null,
+      "general": "Esta Haulotte STAR-10 es una plataforma vertical autopropulsada para elevar personal a puntos de trabajo en espacios limitados. Dispone de motorización eléctrica y la ficha del vendedor indica 10 m de altura de trabajo. El fabricante describe un plumín que aporta alcance horizontal al mástil, facilitando tareas sobre instalaciones u obstáculos. La unidad se publica como usada, fabricada en 2013 y con 1.126 horas de utilización registradas. Su referencia de vendedor es 454, distinta de otras máquinas del mismo modelo.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/critical-general-descriptions.json",
+      "exportName": "verifiedMercaelevaCriticalGeneral",
+      "priority": 30,
+      "usage": "fallback"
+    },
+    {
+      "key": "mercaeleva:M178-6194",
+      "brand": "Manitou",
+      "model": "180ATJ",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-180ATJ-M178-6194",
+      "sourceDigest": "6f94fe6da898a4a203d866853e07ef270fb5038b18d2c5b2a0715563134e2434",
+      "short": null,
+      "general": "La Manitou 180ATJ es una plataforma articulada diésel para trabajos de elevación de personas en obra y mantenimiento exterior. Su brazo articulado permite acercar la cesta a posiciones elevadas y salvar obstáculos, con un alcance de trabajo documentado por el fabricante para este modelo. El anuncio de esta unidad usada indica 18 m de altura de trabajo, fabricación en 2017 y 3233 horas registradas. La referencia comercial 784 identifica esta máquina entre las unidades 180ATJ disponibles.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/priority-platform-generals.json",
+      "exportName": "verifiedPriorityPlatformGeneral",
+      "priority": 30,
+      "usage": "fallback"
+    },
+    {
       "key": "mercaeleva:M198-7237",
       "brand": "JLG",
       "model": "SL203-204",
@@ -4964,6 +5451,34 @@
       "evidenceSource": "data/editorial/evidence/legacy/shared/verified-unit-summary-editorial.json",
       "exportName": "verifiedUnitSummaryEditorial",
       "priority": 60
+    },
+    {
+      "key": "mercaeleva:M200-9533",
+      "brand": "JLG",
+      "model": "4014PS",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/JLG-4014PS-M200-9533",
+      "sourceDigest": "06b55cfd34007ab5076803ea04f28ea4c2ca47e6f16db0da4d8ce56fd56c4876",
+      "short": null,
+      "general": "El manipulador telescópico diésel JLG 4014PS se utiliza para elevar y posicionar cargas en trabajos de construcción y suministro de materiales. La ficha del vendedor declara 4.000 kg de capacidad máxima y 14 m de altura máxima de elevación, valores que deben evaluarse junto con el alcance y la configuración de trabajo. Esta unidad está anunciada como usada, se fabricó en 2014 y presenta 5.324 horas registradas. La referencia comercial 721 permite diferenciarla de otras unidades del modelo.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/critical-general-descriptions.json",
+      "exportName": "verifiedMercaelevaCriticalGeneral",
+      "priority": 30,
+      "usage": "fallback"
+    },
+    {
+      "key": "mercaeleva:M205-2951",
+      "brand": "Manitou",
+      "model": "180ATJ",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-180ATJ-M205-2951",
+      "sourceDigest": "87be8af3faab8e4689be5f1fb92cedfc81dd20956c5968653e74e06e6c2b3b7a",
+      "short": null,
+      "general": "La Manitou 180ATJ es una plataforma articulada diésel para trabajos de elevación de personas en obra y mantenimiento exterior. Su brazo articulado permite acercar la cesta a posiciones elevadas y salvar obstáculos, con un alcance de trabajo documentado por el fabricante para este modelo. El anuncio de esta unidad usada indica 18 m de altura de trabajo, fabricación en 2017 y 3355 horas registradas. La referencia comercial 786 identifica esta máquina entre las unidades 180ATJ disponibles.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/priority-platform-generals.json",
+      "exportName": "verifiedPriorityPlatformGeneral",
+      "priority": 30,
+      "usage": "fallback"
     },
     {
       "key": "mercaeleva:M208-7097",
@@ -5123,6 +5638,63 @@
       "identityOverride": true
     },
     {
+      "key": "mercaeleva:M294-4678",
+      "brand": "",
+      "model": "",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/M294-4678",
+      "sourceDigest": "25c0c3ec2cd699d4533517f6e37b37939882fc5d056a176c3cc3520d50d0fdfa",
+      "short": null,
+      "general": "Módulo de caseta diáfana con aire acondicionado, de 6 × 2,35 m según el anuncio. El vendedor indica que la puerta de acceso está situada en un lateral corto del módulo. La denominación de origen es CBOX - CASETA6.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/verified-unit-specific-generals.json",
+      "exportName": "verifiedMercaelevaUnitSpecificGeneral",
+      "priority": 45,
+      "usage": "fallback",
+      "identityOverride": true
+    },
+    {
+      "key": "mercaeleva:M310-8756",
+      "brand": "Manitou",
+      "model": "170AETJL",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-170AETJL-M310-8756",
+      "sourceDigest": "f99809d4eff45074477cc187f82688bfa2dc3c792b9e3e31d68844a0d6bffc83",
+      "short": null,
+      "general": "La Manitou 170AETJL es una plataforma articulada eléctrica de segunda mano. El anuncio indica 17 m de altura de trabajo y año de fabricación 2016. El vendedor identifica la unidad mediante la referencia 1795 y declara que está pintada.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/verified-unit-specific-generals.json",
+      "exportName": "verifiedMercaelevaUnitSpecificGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "mercaeleva:M315-5925",
+      "brand": "JLG",
+      "model": "153-12",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/JLG-153-12-M315-5925",
+      "sourceDigest": "a9a81ddd41741263c19b482c15596c3216af7e337ecec89da68ad354c845ee41",
+      "short": null,
+      "general": "La JLG 153-12 es una plataforma elevadora de tijera eléctrica de segunda mano. La ficha declara 17 m de altura de trabajo, año de fabricación 2006 y 1.347 horas registradas. El vendedor identifica esta unidad con la referencia 228.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/verified-unit-specific-generals.json",
+      "exportName": "verifiedMercaelevaUnitSpecificGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
+      "key": "mercaeleva:M318-0509",
+      "brand": "LGMG",
+      "model": "S1012E-2",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-S1012E-2-M318-0509",
+      "sourceDigest": "e662c621dbf082f2a07ee1e0c60c6d87351ea08e70d2d605eaa4987e65fe4f32",
+      "short": null,
+      "general": "La LGMG S1012E-2 es una plataforma de tijera eléctrica anunciada como nueva. La ficha indica una altura de trabajo de 12 m y año de fabricación 2026. La motorización publicada es eléctrica y el anuncio incluye certificación CE.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/verified-unit-specific-generals.json",
+      "exportName": "verifiedMercaelevaUnitSpecificGeneral",
+      "priority": 45,
+      "usage": "fallback"
+    },
+    {
       "key": "mercaeleva:M329-6156",
       "brand": "Oil & Steel",
       "model": "SNAKE 2010 PLUS",
@@ -5253,6 +5825,20 @@
       "priority": 60
     },
     {
+      "key": "mercaeleva:M432-1479",
+      "brand": "Kubota",
+      "model": "U10.3",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Kubota-U10-3-M432-1479",
+      "sourceDigest": "7d024fd9c1f70ccd1bd5dec04044de02242e5903284ae067dd8efe9ca42a0c40",
+      "short": null,
+      "general": "La miniexcavadora de orugas Kubota U10.3 se anuncia como una unidad usada de 2020 con 1.393 horas registradas. El fabricante describe el modelo U10-3 con giro sin voladizo trasero y ancho de orugas variable, características orientadas al acceso y la maniobra en espacios reducidos. Es un equipo para pequeñas excavaciones, zanjas y trabajos de mantenimiento en obra. Esta unidad utiliza motor diésel y está identificada mediante la referencia comercial 858 del vendedor.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/critical-general-descriptions.json",
+      "exportName": "verifiedMercaelevaCriticalGeneral",
+      "priority": 30,
+      "usage": "fallback"
+    },
+    {
       "key": "mercaeleva:M433-5206",
       "brand": "Toyota",
       "model": "02-7FD18",
@@ -5277,6 +5863,20 @@
       "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/verified-source-editorial.json",
       "exportName": "verifiedMercaelevaSourceEditorial",
       "priority": 45
+    },
+    {
+      "key": "mercaeleva:M476-1722",
+      "brand": "Caterpillar",
+      "model": "EP16NT",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Caterpillar-EP16NT-M476-1722",
+      "sourceDigest": "a54d2d97baa8bcf736e89f18a288412b395091d432d253c3278abc1e0dda63be",
+      "short": null,
+      "general": "La Caterpillar EP16NT es una carretilla elevadora eléctrica de segunda mano con capacidad declarada de 1.600 kg y mástil tríplex. La ficha técnica indica 4.750 mm de altura máxima de elevación, batería de plomo-ácido y año de fabricación 2007. La referencia del vendedor es MER0742.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/verified-unit-specific-generals.json",
+      "exportName": "verifiedMercaelevaUnitSpecificGeneral",
+      "priority": 45,
+      "usage": "fallback"
     },
     {
       "key": "mercaeleva:M486-0114",
@@ -5370,6 +5970,19 @@
       "priority": 55
     },
     {
+      "key": "mercaeleva:M547-2372",
+      "brand": "Toyota",
+      "model": "6FBRE14",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Toyota-6FBRE14-M547-2372",
+      "sourceDigest": "c2d496c64c4da2be2ea36ec7ab8cfe8b9d60a2570fd1f2d644c130d5faa7e9f8",
+      "short": "Carretilla retráctil eléctrica Toyota 6FBRE14, año 2000, con capacidad nominal de 1.350 kg y 14.696 horas registradas.",
+      "general": null,
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "exportName": "mercaelevaPriorityShortEvidence",
+      "priority": 30
+    },
+    {
       "key": "mercaeleva:M567-8260",
       "brand": "Genie",
       "model": "GS2646",
@@ -5420,6 +6033,20 @@
       "evidenceSource": "data/editorial/evidence/legacy/shared/verified-unit-context-editorial.json",
       "exportName": "verifiedUnitContextEditorial",
       "priority": 55
+    },
+    {
+      "key": "mercaeleva:M572-8190",
+      "brand": "Manitou",
+      "model": "180ATJ",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-180ATJ-M572-8190",
+      "sourceDigest": "21c426ce7b0f3995425a0ad489003171bb063cb599798f8d7614a3ec056cf0cf",
+      "short": null,
+      "general": "La Manitou 180ATJ es una plataforma articulada diésel para trabajos de elevación de personas en obra y mantenimiento exterior. Su brazo articulado permite acercar la cesta a posiciones elevadas y salvar obstáculos, con un alcance de trabajo documentado por el fabricante para este modelo. El anuncio de esta unidad usada indica 18 m de altura de trabajo, fabricación en 2017 y 3018 horas registradas. La referencia comercial 774 identifica esta máquina entre las unidades 180ATJ disponibles.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/priority-platform-generals.json",
+      "exportName": "verifiedPriorityPlatformGeneral",
+      "priority": 30,
+      "usage": "fallback"
     },
     {
       "key": "mercaeleva:M582-1882",
@@ -5604,6 +6231,20 @@
       "priority": 60
     },
     {
+      "key": "mercaeleva:M736-5615",
+      "brand": "Ausa",
+      "model": "D450AHG",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Ausa-D450AHG-M736-5615",
+      "sourceDigest": "998250f52c282219255e057029061259536cfd1f8de3483bbc65d3b4618e1a9b",
+      "short": null,
+      "general": "El dumper giratorio AUSA D450AHG está diseñado para transportar y descargar áridos y materiales sueltos en obra. El fabricante documenta una capacidad nominal de 4.500 kg, chasis articulado y tolva con giro de hasta 180°, que permite orientar la descarga sin recolocar por completo el vehículo. Esta unidad se anuncia usada, con año de fabricación 2019 y 2.845 horas registradas. Consta como referencia 691 del vendedor y la ficha original indica certificación CE.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/critical-general-descriptions.json",
+      "exportName": "verifiedMercaelevaCriticalGeneral",
+      "priority": 30,
+      "usage": "fallback"
+    },
+    {
       "key": "mercaeleva:M740-4184",
       "brand": "Caterpillar",
       "model": "EP25K-PAC",
@@ -5615,6 +6256,20 @@
       "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/verified-unit-general-data.json",
       "exportName": "verifiedMercaelevaUnitEvidence",
       "priority": 45
+    },
+    {
+      "key": "mercaeleva:M805-9451",
+      "brand": "Genie",
+      "model": "S-65",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Genie-S-65-M805-9451",
+      "sourceDigest": "e212a59d37ba4f4b1989f1d3a769bb327826112c31ab59093f36a3af2d47f9c6",
+      "short": null,
+      "general": "La Genie S-65 es una plataforma telescópica diésel de segunda mano. La ficha indica 22 m de altura de trabajo, año de fabricación 2011 y 421 horas registradas. El anuncio identifica esta unidad mediante la referencia comercial 534.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/verified-unit-specific-generals.json",
+      "exportName": "verifiedMercaelevaUnitSpecificGeneral",
+      "priority": 45,
+      "usage": "fallback"
     },
     {
       "key": "mercaeleva:M816-3394",
@@ -5669,6 +6324,19 @@
       "priority": 45
     },
     {
+      "key": "mercaeleva:M838-0666",
+      "brand": "JLG",
+      "model": "450 AJ SIII",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/JLG-450-AJ-SIII-M838-0666",
+      "sourceDigest": "034fc0b3ed122a44a394e25d353c191d81df1e0f4dfff20b83b01df32cd1aa60",
+      "short": "Plataforma articulada diésel JLG 450AJ, año 2013, con altura de trabajo anunciada de 16 m y 4.212 horas registradas.",
+      "general": null,
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "exportName": "mercaelevaPriorityShortEvidence",
+      "priority": 30
+    },
+    {
       "key": "mercaeleva:M838-9580",
       "brand": "Nissan",
       "model": "JAG1N1L16Q",
@@ -5693,6 +6361,19 @@
       "evidenceSource": "data/editorial/evidence/legacy/shared/verified-unit-context-editorial.json",
       "exportName": "verifiedUnitContextEditorial",
       "priority": 55
+    },
+    {
+      "key": "mercaeleva:M840-6795",
+      "brand": "LGMG",
+      "model": "A14JE",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-A14JE-M840-6795",
+      "sourceDigest": "4d33bf3b02abd559469fc02b8d2c22f1b7c5a46644440d4b9ab5fea835a8c8b6",
+      "short": "Plataforma articulada eléctrica LGMG A14JE, anunciada como nueva, año 2026 y altura de trabajo indicada de 16 m.",
+      "general": null,
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "exportName": "mercaelevaPriorityShortEvidence",
+      "priority": 30
     },
     {
       "key": "mercaeleva:M840-8278",
@@ -5786,6 +6467,20 @@
       "priority": 60
     },
     {
+      "key": "mercaeleva:M913-0641",
+      "brand": "Kubota",
+      "model": "U27.4",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/Kubota-U27-4-M913-0641",
+      "sourceDigest": "d03cb408887b041008acef19a6fdfd1de99aaae8d1b5c98f0e3af87a5b85f1a1",
+      "short": null,
+      "general": "La Kubota U27.4 es una miniexcavadora de orugas destinada a trabajos de excavación y movimiento de tierras en zonas con espacio limitado. La unidad del catálogo figura como usada, fabricada en 2019 y con 2.753 horas de trabajo registradas. Kubota documenta para el modelo U27-4 giro de cola cero y una profundidad máxima de excavación de 2,82 m, prestaciones relevantes para abrir zanjas o intervenir junto a obstáculos. El anuncio identifica esta unidad diésel mediante la referencia 714.",
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/critical-general-descriptions.json",
+      "exportName": "verifiedMercaelevaCriticalGeneral",
+      "priority": 30,
+      "usage": "fallback"
+    },
+    {
       "key": "mercaeleva:M928-9933",
       "brand": "Iveco",
       "model": "ML120E22/P",
@@ -5875,6 +6570,19 @@
       "evidenceSource": "data/editorial/evidence/legacy/shared/verified-canonical-brief-editorial.json",
       "exportName": "verifiedCanonicalBriefEditorial",
       "priority": 70
+    },
+    {
+      "key": "mercaeleva:M969-4655",
+      "brand": "JLG",
+      "model": "450 AJ SIII",
+      "sourceUrl": "https://sales.mercaeleva.com/es/for-sale/machine/JLG-450-AJ-SIII-M969-4655",
+      "sourceDigest": "5fd72fa97b679b22405f1ee3d3e1cb11630495d64738c668a3d9dc105a399fa4",
+      "short": "Plataforma articulada diésel JLG 450AJ, año 2013, con altura de trabajo anunciada de 16 m y 3.912 horas registradas.",
+      "general": null,
+      "title": null,
+      "evidenceSource": "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json",
+      "exportName": "mercaelevaPriorityShortEvidence",
+      "priority": 30
     },
     {
       "key": "mercaeleva:M976-0333",

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveGomarizEditorialFamily } from "../../../gomariz/editorial/mapping/source-family.js";
+import { resolveGomarizEditorialDomainSource } from "../../../gomariz/editorial/mapping/domain-source.js";
 import { sourceEditorialMeasurement } from "../domain/source-measurement.js";
 import { resolveEditorialFacts } from "../domain/editorial-facts.js";
 import { resolveReusableEditorial } from "../domain/editorial-composition.js";
@@ -20,12 +20,12 @@ test("el compositor preserva solo magnitudes acreditadas de cada fuente", () => 
 test("la interpretación de ruta del proveedor permanece separada del compositor", () => {
   const base = controlledGomarizPlatform();
   const fromCategory = { ...base, url: "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/marca-modelo10/" };
-  assert.deepEqual(resolveGomarizEditorialFamily(fromCategory), {
-    section: "elevacion-y-trabajos-en-altura", key: "brazo-articulado"
-  });
-  assert.equal(resolveGomarizEditorialFamily(base), null);
-  assert.equal(resolveGomarizEditorialFamily({ ...fromCategory, providerId: "gam" }), null);
-  assert.equal(resolveGomarizEditorialFamily({ ...fromCategory, url: "https://example.invalid/venta/elevacion-y-trabajos-en-altura/brazo-articulado/marca-modelo10/" }), null);
+  const resolved = resolveGomarizEditorialDomainSource(fromCategory);
+  if (!resolved) throw new Error("Origen Gomariz incompatible con el contrato editorial");
+  assert.match(resolved.familyClues, /brazo-articulado/u);
+  assert.ok(resolveGomarizEditorialDomainSource(base));
+  assert.equal(resolveGomarizEditorialDomainSource({ ...fromCategory, providerId: "gam" }), null);
+  assert.equal(resolveGomarizEditorialDomainSource({ ...fromCategory, url: "https://example.invalid/venta/elevacion-y-trabajos-en-altura/brazo-articulado/marca-modelo10/" }), null);
 });
 
 test("parser único de magnitudes rechaza unidades, cifras y precisión incompatibles", () => {

@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { editorialQuantityOf, formatEditorialQuantity } from "./editorial-measurements.js";
+import { editorialFamilyFromSourceGeneral, editorialFamilyName, resolveConsistentEditorialFamily } from "./editorial-families.js";
 import { verifiedEditorialIdentity } from "./editorial-source-contract.js";
 import { resolveEditorialSource } from "./editorial-source.js";
 
@@ -75,4 +76,20 @@ export const resolveDocumentedEditorialTitle = (record: ProductRecord): string |
       ? `Carretilla elevadora diésel ${brand} ${model} de ${formatEditorialQuantity(capacity)} kg` : null;
   }
   return null;
+};
+
+export const resolveDocumentedFamilyTitle = (record: ProductRecord): string | null => {
+  const source = resolveEditorialSource(record);
+  const brand = record.brand?.trim();
+  const model = record.model?.trim();
+  const title = record.title?.trim();
+  if (!source || !verifiedEditorialIdentity(record) || !brand || !model || !title ||
+    fold(title) !== fold(`${brand} ${model}`)) return null;
+  const sourceFamily = resolveConsistentEditorialFamily(source.familyClues, record.title,
+    typeof record.specs?.["Título adicional"] === "string" ? record.specs["Título adicional"] : null,
+    `${record.subcategory ?? ""} | ${record.categoryName}`);
+  const describedFamily = editorialFamilyFromSourceGeneral(record.longDescription);
+  if (!sourceFamily || sourceFamily !== describedFamily) return null;
+  const noun = editorialFamilyName(sourceFamily);
+  return `${noun[0]?.toLocaleUpperCase("es") ?? ""}${noun.slice(1)} ${brand} ${model}`;
 };

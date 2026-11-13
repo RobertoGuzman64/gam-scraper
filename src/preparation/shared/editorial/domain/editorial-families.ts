@@ -18,7 +18,7 @@ const definitions: readonly FamilyDefinition[] = [
   { family: "almacen-vertical", noun: "almacén automático vertical", pattern: /\b(?:almacen[-\s]+automatico[-\s]+vertical|almacen[-\s]+vertical|vertical[-\s]+lift[-\s]+module)\b/u },
   { family: "elevador-materiales", noun: "elevador de materiales", pattern: /\b(?:elevador[-\s]+de[-\s]+materiales|elevador[-\s]+materiales|material[-\s]+lift)\b/u },
   { family: "camion-cesta", noun: "camión cesta", pattern: /\b(?:camion(?:es)?[-\s]+cesta|camion[-\s]+plataforma|camion[-\s]+con[-\s]+cesta)\b/u },
-  { family: "plataforma-oruga", noun: "plataforma sobre orugas", pattern: /\b(?:plataforma[^|]*oruga|oruga[^|]*plataforma|spider[-\s]+lift)\b/u },
+  { family: "plataforma-oruga", noun: "plataforma sobre orugas", pattern: /\b(?:plataforma[-\s]+sobre[-\s]+orugas?|plataforma[^|]*oruga|oruga[^|]*plataforma|spider[-\s]+lift)\b/u },
   { family: "manipulador-telescopico", noun: "manipulador telescópico", pattern: /\b(?:manipulador(?:es)?[-\s]+telescopico|telehandler|telescopic[-\s]+handler)\b/u },
   { family: "carretilla-retractil", noun: "carretilla retráctil", pattern: /\b(?:carretilla[^|]*retractil|retractil[^|]*carretilla|reach[-\s]+truck)\b/u },
   { family: "recogepedidos", noun: "recogepedidos", pattern: /\b(?:recogepedidos|recoge[-\s]+pedidos|order[-\s]+picker)\b/u },
@@ -58,6 +58,44 @@ export const editorialFamilyOf = (clues: string): EditorialFamily | null => {
   return null;
 };
 
+const compatibleEditorialFamilies = (left: EditorialFamily, right: EditorialFamily): boolean => {
+  if (left === right) return true;
+  if (left === "plataforma-oruga" || right === "plataforma-oruga") {
+    const counterpart = left === "plataforma-oruga" ? right : left;
+    return counterpart.startsWith("plataforma-");
+  }
+  return left === "carretilla-elevadora" && right === "carretilla-retractil" ||
+    right === "carretilla-elevadora" && left === "carretilla-retractil" ||
+    left === "excavadora" && right === "miniexcavadora" ||
+    right === "excavadora" && left === "miniexcavadora" ||
+    left === "maquina-limpieza" && (right === "barredora" || right === "fregadora") ||
+    right === "maquina-limpieza" && (left === "barredora" || left === "fregadora");
+};
+
+export const resolveConsistentEditorialFamily = (
+  sourceClues: string,
+  title: string | null,
+  additionalTitle: string | null,
+  fallbackClues: string,
+  override: EditorialFamily | null = null
+): EditorialFamily | null => {
+  const source = editorialFamilyOf(sourceClues);
+  const explicit = editorialFamilyOf(title ?? "");
+  const additional = editorialFamilyOf(additionalTitle ?? "");
+  const resolved = override ?? source ?? editorialFamilyOf(fallbackClues);
+  if (!resolved) return null;
+  if (!override && !additional) return resolved;
+  if (override && explicit && !compatibleEditorialFamilies(override, explicit)) return null;
+  if (override && additional && !compatibleEditorialFamilies(override, additional)) return null;
+  if (!additional) return resolved;
+  const matched = definitions.filter((candidate) => candidate.pattern.test(fold(sourceClues)))
+    .map((candidate) => candidate.family);
+  const declarations = [...matched, explicit, additional]
+    .filter((value): value is EditorialFamily => value !== null);
+  return declarations.every((family, index) => declarations.slice(index + 1)
+    .every((candidate) => compatibleEditorialFamilies(family, candidate))) ? resolved : null;
+};
+
 export const editorialFamilyName = (family: EditorialFamily): string =>
   definitions.find((item) => item.family === family)?.noun ?? "máquina";
 
@@ -65,6 +103,7 @@ export const isEditorialFamily = (value: string): value is EditorialFamily =>
   definitions.some((item) => item.family === value);
 
 const sourceHeadings: readonly { readonly family: EditorialFamily; readonly pattern: RegExp }[] = [
+  { family: "plataforma-oruga", pattern: /^(?:la?\s+)?oruga\b.{1,90}\bplataforma\b.{0,100}\borugas?\b/u },
   { family: "plataforma-tijera", pattern: /^(?:las?\s+)?tijeras?\s+(?:electricas?|diesel|de\s+elevacion)\b/u },
   { family: "plataforma-articulada", pattern: /^(?:las?\s+)?articuladas?\s+(?:electricas?|diesel)\b/u },
   { family: "plataforma-telescopica", pattern: /^(?:los?\s+)?telescopicos?\s+(?:diesel|electricos?)\b/u },

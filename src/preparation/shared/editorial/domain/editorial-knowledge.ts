@@ -14,6 +14,7 @@ export type EditorialUnitKnowledge = {
   readonly evidenceSource: string;
   readonly priority: number;
   readonly identityOverride?: boolean;
+  readonly usage?: "fallback";
 };
 
 export type EditorialConsensusMetric =
@@ -42,11 +43,25 @@ export type EditorialVerifiedModelRule = {
   readonly evidenceSource: string;
 };
 
+export type EditorialTechnicalModelReference = {
+  readonly brand: string;
+  readonly model: string;
+  readonly family: EditorialFamily;
+  readonly advertisedWorkHeight: string;
+  readonly documentedWorkHeight: string;
+  readonly platformHeight: string;
+  readonly nominalCapacity: string;
+  readonly characteristic: string | null;
+  readonly energy: "eléctrica" | "diésel" | null;
+  readonly sourceUrl: string;
+};
+
 export type EditorialKnowledge = {
   readonly units: ReadonlyMap<string, readonly EditorialUnitKnowledge[]>;
   readonly models: ReadonlyMap<string, EditorialModelKnowledge>;
   readonly families: Readonly<Partial<Record<EditorialFamily, EditorialFamilyGuidance>>>;
   readonly modelRules: ReadonlyMap<string, EditorialVerifiedModelRule>;
+  readonly technicalReferences: ReadonlyMap<string, readonly EditorialTechnicalModelReference[]>;
 };
 
 const fold = (value: string): string => value.normalize("NFD")
@@ -110,13 +125,14 @@ export const selectUnitKnowledge = (
   identity: EditorialUnitIdentity,
   knowledge: EditorialKnowledge,
   digest: string
-): { readonly short: string | null; readonly general: string | null; readonly title: string | null } => {
+): { readonly short: string | null; readonly general: string | null; readonly fallbackGeneral: string | null; readonly title: string | null } => {
   const matching = knowledge.units.get(identity.key)?.filter((entry) =>
     entry.sourceUrl === identity.sourceUrl && entry.sourceDigest === digest &&
     fold(entry.brand) === fold(identity.brand) && fold(entry.model) === fold(identity.model)) ?? [];
   return {
     short: matching.find((entry) => entry.short?.trim())?.short ?? null,
-    general: matching.find((entry) => entry.general?.trim())?.general ?? null,
+    general: matching.find((entry) => entry.usage !== "fallback" && entry.general?.trim())?.general ?? null,
+    fallbackGeneral: matching.find((entry) => entry.usage === "fallback" && entry.general?.trim())?.general ?? null,
     title: matching.find((entry) => entry.title?.trim())?.title ?? null
   };
 };

@@ -1,6 +1,7 @@
+import { containsEditorialBrandModel } from "./editorial-identity-match.js";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { EditorialFamily } from "./editorial-families.js";
-import { editorialFamilyName, editorialFamilyOf } from "./editorial-families.js";
+import { editorialFamilyName, resolveConsistentEditorialFamily } from "./editorial-families.js";
 import { resolveEditorialSource } from "./editorial-source.js";
 
 export const resolveEditorialIdentitySummary = (
@@ -9,7 +10,9 @@ export const resolveEditorialIdentitySummary = (
 ): string | null => {
   const source = resolveEditorialSource(record);
   if (!source) return null;
-  const family = familyOverride ?? editorialFamilyOf(`${source.familyClues} | ${record.subcategory ?? ""} | ${record.categoryName}`);
+  const family = resolveConsistentEditorialFamily(source.familyClues, record.title,
+    typeof record.specs?.["Título adicional"] === "string" ? record.specs["Título adicional"] : null,
+    `${record.subcategory ?? ""} | ${record.categoryName}`, familyOverride);
   if (!family) return null;
   const noun = editorialFamilyName(family);
   const condition = record.condition === "Segunda mano" ? " de ocasión" : record.condition === "Nuevo" ? " nueva" : "";
@@ -18,10 +21,8 @@ export const resolveEditorialIdentitySummary = (
 
 export const conciseVerifiedUnitGeneral = (record: ProductRecord, general: string): string | null => {
   const first = general.trim().split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ])/u)[0] ?? "";
-  const fold = (value: string): string => value.normalize("NFD").replace(/[\u0300-\u036f]/gu, "")
-    .toLocaleLowerCase("es").replace(/[^a-z0-9]/gu, "");
   if (!record.brand || !record.model || first.length < 35 || first.length > 180 ||
-    !fold(first).includes(fold(record.brand)) || !fold(first).includes(fold(record.model))) return null;
+    !containsEditorialBrandModel(first, record.brand, record.model)) return null;
   return first;
 };
 

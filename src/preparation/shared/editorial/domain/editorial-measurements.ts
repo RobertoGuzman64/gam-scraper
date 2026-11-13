@@ -22,26 +22,36 @@ export const editorialQuantity = (raw: SpecValue | undefined, unit: EditorialQua
   return parseNumber(match[1].trim());
 };
 
-export const editorialQuantityOf = (specs: SpecsMap | undefined, keys: readonly string[], unit: EditorialQuantity): number | null => {
+const concordantEditorialQuantity = (
+  specs: SpecsMap | undefined, keys: readonly string[], measure: (value: SpecValue, key: string) => number | null
+): number | null => {
+  let agreed: number | null = null;
   for (const key of keys) {
     const value = specs?.[key];
     if (value === undefined) continue;
-    return editorialQuantity(value, unit);
+    const measured = measure(value, key);
+    if (measured === null || agreed !== null && measured !== agreed) return null;
+    agreed = measured;
   }
-  return null;
+  return agreed;
 };
 
-export const editorialMetricOf = (specs: SpecsMap | undefined, keys: readonly string[]): number | null => {
-  for (const key of keys) {
-    const value = specs?.[key];
-    if (value === undefined) continue;
+export const editorialQuantityOf = (specs: SpecsMap | undefined, keys: readonly string[], unit: EditorialQuantity): number | null =>
+  concordantEditorialQuantity(specs, keys, (value) => editorialQuantity(value, unit));
+
+export const editorialMetricOf = (specs: SpecsMap | undefined, keys: readonly string[]): number | null =>
+  concordantEditorialQuantity(specs, keys, (value, key) => {
+    const declaredUnit = /\((mm|m)\)$/iu.exec(key)?.[1];
+    if (declaredUnit === "mm") {
+      const millimetres = editorialQuantity(value, "mm");
+      return millimetres === null ? null : millimetres / 1000;
+    }
+    if (declaredUnit === "m") return editorialQuantity(value, "m");
     const meters = editorialQuantity(value, "m");
     if (meters !== null) return meters;
     const millimeters = editorialQuantity(value, "mm");
     return millimeters === null ? null : millimeters / 1000;
-  }
-  return null;
-};
+  });
 
 export const formatEditorialQuantity = (value: number): string => {
   const [whole, fraction] = value.toFixed(3).split(".");

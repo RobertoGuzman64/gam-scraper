@@ -1,3 +1,4 @@
+import { containsEditorialBrandModel } from "./editorial-identity-match.js";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { verifiedEditorialIdentity } from "./editorial-source-contract.js";
 import { resolveEditorialSource } from "./editorial-source.js";
@@ -24,8 +25,7 @@ export const compressVerifiedSourceShort = (
   const sentences = original.split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÜÑ0-9])/u);
   const first = sentences[0]?.trim();
   if (!first || sentences.length < 2 || countWords(first) < 12 || countWords(first) > 45 ||
-    !source.brand || !source.model || !fold(first).includes(fold(source.brand)) ||
-    !fold(first).includes(fold(source.model))) return null;
+    !source.brand || !source.model || !containsEditorialBrandModel(first, source.brand, source.model)) return null;
 
   const remainder = original.slice(first.length);
   const retained = `${first} ${long}`;

@@ -2,7 +2,6 @@ import type { CanonicalCatalog } from "../canonical-catalog.js";
 import { compareCanonicalCoverage } from "./compare.js";
 import { auditChangedProduct, changedFieldChecks } from "./change-audit.js";
 import { hasGamGalleryCorrection } from "../editorial/providers/gam/verified-gallery.js";
-import { hasGamShortDescriptionCorrection } from "../editorial/providers/gam/verified-description.js";
 import type { ChangedFieldCheck, ChangedProductAudit } from "./change-audit.js";
 
 export type CoverageReview = {
@@ -81,6 +80,7 @@ const isSourceListingEvidence = (url: string, originalUrl: string): boolean => {
 
 const verifiedGamCatalogSha256 = "7f31ebee51f573401d6f20bbe850751c46ff1659a5a91ffcf4302e82ed11e11d";
 const excludedGamChangeReferences = new Set(["6002", "6003", "6004"]);
+const acceptedGamSourceSummaryCorrections = new Set(["5996"]);
 
 const validFieldChecks = (
   value: unknown,
@@ -98,7 +98,7 @@ const validFieldChecks = (
         entry.decision === "aceptado" ||
         (hasVerifiedGamCorrections && entry.decision === "corregido" && (
           (entry.field === "images" && hasGamGalleryCorrection(reference)) ||
-          (entry.field === "shortDescription" && hasGamShortDescriptionCorrection(reference))
+          (entry.field === "shortDescription" && acceptedGamSourceSummaryCorrections.has(reference))
         ))) ||
       typeof entry.reason !== "string" || entry.reason.trim().length < 15 ||
       !validEvidence(entry.evidenceUrls)) return false;

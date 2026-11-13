@@ -1,6 +1,6 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { resolveEditorialFacts } from "../domain/editorial-facts.js";
-import { resolveDocumentedEditorialTitle } from "../domain/editorial-documented-title.js";
+import { resolveDocumentedEditorialTitle, resolveDocumentedFamilyTitle } from "../domain/editorial-documented-title.js";
 import { editorialFamilyName } from "../domain/editorial-families.js";
 import { formatEditorialQuantity } from "../domain/editorial-measurements.js";
 
@@ -8,7 +8,8 @@ export const resolvePreparedEditorialTitle = (record: ProductRecord, sourceUnitR
   const documented = resolveDocumentedEditorialTitle(sourceUnitRecord);
   if (documented !== null) return documented;
   const facts = resolveEditorialFacts(record);
-  if (!facts) return record.title?.trim() || sourceUnitRecord.title?.trim() || null;
+  if (!facts) return resolveDocumentedFamilyTitle(sourceUnitRecord) ??
+    (record.title?.trim() || sourceUnitRecord.title?.trim() || null);
   const family = editorialFamilyName(facts.family);
   const energy = facts.energy === "eléctrica" ? " eléctrica" :
     facts.energy === "diésel" ? " diésel" :
