@@ -64,9 +64,8 @@ for (const provider of ['gam','gomariz','mercaeleva']) {
   report.providers[provider] = stats;
   for (const key of keys) report.total[key] += stats[key];
 }
-const phase = process.argv.includes('--phase5') ? 'editorial-phase5' : 'editorial-phase4';
-const folder = resolve(root, `reports/${phase}`);
+const folder = resolve(root, 'reports/editorial-coverage');
 mkdirSync(folder, { recursive: true });
 writeFileSync(resolve(folder, 'audit.json'), JSON.stringify(report, null, 2) + '\n');
-console.log(`${phase === "editorial-phase5" ? "FASE 5" : "FASE 4"} | AUDITORÍA SIN PUBLICACIÓN | ${report.total.records} originales · ${report.total.ready} preparados · ${report.total.review} revisión · ${report.total.exceptions} excepciones`);
+console.log(`AUDITORÍA EDITORIAL | COBERTURA SIN PUBLICACIÓN | ${report.total.records} originales · ${report.total.ready} preparados · ${report.total.review} revisión · ${report.total.exceptions} excepciones`);
 if (report.total.exceptions > 0) process.exitCode = 1;

@@ -40,8 +40,8 @@ for (const provider of ['gam', 'gomariz', 'mercaeleva']) {
 }
 summary.evidence = { verifiedUnits: knowledge.units.size, consensusModels: knowledge.models.size,
   familyProfiles: Object.keys(knowledge.families).length, verifiedManufacturerRules: knowledge.modelRules.size };
-const target = resolve(root, 'reports/editorial-phase3');
+const target = resolve(root, 'reports/editorial-knowledge');
 mkdirSync(target, { recursive: true });
 writeFileSync(resolve(target, 'audit.json'), JSON.stringify(summary, null, 2) + '\n');
-console.log('ACREDITACIÓN PARCIAL | MOTOR EDITORIAL F3 | ' + JSON.stringify(summary.total));
+console.log('AUDITORÍA EDITORIAL | REUTILIZACIÓN SIN PUBLICACIÓN | ' + JSON.stringify(summary.total));
 if (summary.total.exceptions) process.exitCode = 1;

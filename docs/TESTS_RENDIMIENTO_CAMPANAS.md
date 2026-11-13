@@ -63,7 +63,7 @@ Cada caso recibe un workspace aislado; las mutaciones no deben contaminar el est
 
 ## Cómo evitar regresiones de coste en nuevas reglas
 
-La política tras las fases 25–27 es crear pruebas para **responsabilidades reutilizables**, no una suite por máquina. Las pruebas de integración sobre el catálogo íntegro se conservan cuando su contrato requiere cobertura censal, integridad, firma, procedencia o exclusión entre unidades/proveedores. Consultar [Arquitectura de tests](TEST_ARCHITECTURE.md) para diferenciar controles legítimos de acoplamientos indebidos.
+La política vigente es crear pruebas para **responsabilidades reutilizables**, no una suite por máquina. Las pruebas de integración sobre el catálogo íntegro se conservan cuando su contrato requiere cobertura censal, integridad, firma, procedencia o exclusión entre unidades/proveedores. Consultar [Arquitectura de tests](TEST_ARCHITECTURE.md) para diferenciar controles legítimos de acoplamientos indebidos.
 
 - Reutilizar fixtures de catálogo ya cargadas y agregar casos a suites específicas en vez de abrir nuevos recorridos globales para una única reconciliación.
 - Conservar un caso real acreditado, uno negativo de identidad/huella y uno de no regresión; la cobertura útil tiene prioridad sobre reducir número de aserciones.

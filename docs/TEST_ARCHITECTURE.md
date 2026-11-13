@@ -8,7 +8,7 @@
 
 ## Corte y principios
 
-Referencia vigente tras la **fase 27 (13 de noviembre de 2026)**. La reforma de tests retiró redundancias, desacopló casos de dominio de catálogos completos cuando era seguro y mantuvo pruebas de integración acreditadas. Los dos guards arquitectónicos independientes informan **0 infracciones**, sin baseline ni cupos de warnings permitidos. Esto no significa que todas las pruebas del repositorio estén acreditadas como PASS global.
+Referencia operativa de la arquitectura de pruebas. La consolidación retiró redundancias, desacopló casos de dominio de catálogos completos cuando era seguro y mantuvo pruebas de integración acreditadas. Los dos guards arquitectónicos independientes informan **0 infracciones**, sin baseline ni cupos de warnings permitidos. Esto no significa que todas las pruebas del repositorio estén acreditadas como PASS global.
 
 Prioridad de cobertura:
 
@@ -52,23 +52,23 @@ Los guardias controlan fronteras, no verifican por sí solos los resultados come
 - `GUARDS/tests-domain-tests-guard.mjs` inspecciona dependencias directas/transitivas de catálogos, cohortes fijas y hashes editoriales congelados. El hash de **procedencia de manifest** no es un hash de redacción.
 - Ambos usan `GUARDS/guards-architecture-core.mjs`; las autopruebas están en `GUARDS/tests-architecture-guards.test.mjs`. Las excepciones son verificaciones exactas de contratos, **no** tolerancias globales.
 
-Último corte ejecutado sobre la fase 27: **0 infracciones editoriales, 0 de tests, 25/25 autopruebas, 19 usos acreditados como excepciones (12 cohortes y 7 accesos transitivos) y 21 lecturas directas legítimas en 14 suites protegidas**. Son categorías distintas; 19 y 21 **no son** avisos pendientes. La inspección del guard de tests recorrió 173 suites de dominio y 15 módulos auxiliares; las cifras describen su alcance estático y no la batería completa de `npm test`.
+Último corte arquitectónico comprobado: **0 infracciones editoriales, 0 de tests, 25/25 autopruebas, 19 usos acreditados como excepciones (12 cohortes y 7 accesos transitivos) y 21 lecturas directas legítimas en 14 suites protegidas**. Son categorías distintas; 19 y 21 **no son** avisos pendientes. La inspección del guard de tests recorrió 173 suites de dominio y 15 módulos auxiliares; las cifras describen su alcance estático y no la batería completa de `npm test`.
 
 Las 21 lecturas acreditadas están vinculadas al **SHA-256 completo** de cada una de las 14 suites, a una cantidad exacta de lecturas y a una responsabilidad documentada. Si cambia un archivo o aumenta su acceso, el guard lo vuelve a señalar. Los recuentos de cohortes y las dependencias indirectas también requieren coincidencia exacta de su forma autorizada. **No** añadir excepciones para hacer desaparecer una incidencia nueva: primero acreditar su contrato, o migrar el acceso si no precisa catálogo completo.
 
-La enumeración vigente y la razón de cada autorización están en [GUARDS/README.md](../GUARDS/README.md) y, para lecturas directas, en el mapa `accreditedCatalogIntegrations` del guard. Las cifras del antiguo [plan v2](../GUARDS/PLAN-GUARDS-ARQUITECTURA-V2.md) son históricas.
+La enumeración vigente y la razón de cada autorización están en [GUARDS/README.md](../GUARDS/README.md) y, para lecturas directas, en el mapa `accreditedCatalogIntegrations` del guard.
 
 ## Criterio para nuevas pruebas
 
-| Si la propiedad que se protege es… | Usar… | Evitar… |
-| --- | --- | --- |
-| Regla de dominio reutilizable | Fixtures acotadas y tipos reales, positivos/negativos parametrizados | Un test nuevo por máquina, hashes editoriales de una publicación completa |
-| Semántica de origen | Adaptador y caso de proveedor con fuente acreditada | Fingir que un dato de otra fuente o unidad es equivalente |
-| No propagación entre variantes/unidades | Casos negativos y, si se exige totalidad, integración censal acreditada | Reducir a dos ejemplos un control cuyo contrato es «ninguna otra ficha» |
-| Integridad de originales o publicaciones | Manifiestos, firmas, archivos y pruebas de integración correspondientes | Prohibir indiscriminadamente el acceso legítimo al catálogo |
-| Evolución de composición editorial | Comprobar título, corta, general, estado y especificaciones | Congelar texto masivo por hash o aceptar cualquier nueva redacción sin evidencia |
+| Si la propiedad que se protege es…       | Usar…                                                                   | Evitar…                                                                          |
+| ---------------------------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Regla de dominio reutilizable            | Fixtures acotadas y tipos reales, positivos/negativos parametrizados    | Un test nuevo por máquina, hashes editoriales de una publicación completa        |
+| Semántica de origen                      | Adaptador y caso de proveedor con fuente acreditada                     | Fingir que un dato de otra fuente o unidad es equivalente                        |
+| No propagación entre variantes/unidades  | Casos negativos y, si se exige totalidad, integración censal acreditada | Reducir a dos ejemplos un control cuyo contrato es «ninguna otra ficha»          |
+| Integridad de originales o publicaciones | Manifiestos, firmas, archivos y pruebas de integración correspondientes | Prohibir indiscriminadamente el acceso legítimo al catálogo                      |
+| Evolución de composición editorial       | Comprobar título, corta, general, estado y especificaciones             | Congelar texto masivo por hash o aceptar cualquier nueva redacción sin evidencia |
 
-Para retirar una suite histórica, conservar primero la garantía que protegía; eliminar imports, fixtures y helpers sin consumidores únicamente después de acreditar equivalencia. Los 20 tests protegidos de las fases 25–27 se mantuvieron sin modificaciones, pero esa reserva no es permiso para multiplicar pruebas por referencia.
+Para retirar una suite histórica, conservar primero la garantía que protegía; eliminar imports, fixtures y helpers sin consumidores únicamente después de acreditar equivalencia. Los 20 tests reservados se preservan como controles de integración, pero esa reserva no es permiso para multiplicar pruebas por referencia.
 
 ## Criterio de cierre de una modificación
 

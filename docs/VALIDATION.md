@@ -20,7 +20,7 @@ node GUARDS/tests-domain-tests-guard.mjs
 node --test GUARDS/tests-architecture-guards.test.mjs
 ```
 
-Tras la fase 27 ambos guards tenían 0 infracciones, con 19 excepciones exactas y 21 lecturas legítimas acreditadas; esto no sustituye las pruebas funcionales ni prueba `npm test` global. Véanse [Arquitectura de tests](TEST_ARCHITECTURE.md) y [Motor editorial](EDITORIAL_ENGINE.md).
+El último control de arquitectura acreditado registra 0 infracciones en ambos guards, con 19 excepciones exactas y 21 lecturas legítimas acreditadas; esto no sustituye las pruebas funcionales ni acredita `npm test` global. Véanse [Arquitectura de tests](TEST_ARCHITECTURE.md) y [Motor editorial](EDITORIAL_ENGINE.md).
 
 Desde la raíz del proyecto, con dependencias instaladas, ejecutar:
 
@@ -89,7 +89,7 @@ Si una revisión sigue abierta después de una corrección, repetir el ciclo pro
 
 Una salida `REVISIÓN`, `WARN`, una lista de motivos o un delta entre catálogos **no son una instrucción para que el propietario examine fichas**. Si el trabajo autorizado es resolver el problema, el siguiente paso es **editar y probar el motor que lo causa**. Las inspecciones por ID se realizan internamente solo para localizar la causa y construir pruebas de regresión reutilizables; no se convierten en una serie de tareas editoriales individuales.
 
-Si después de un parche quedan reviews, no repetir el diagnóstico como si fuera una fase nueva: continuar por el siguiente patrón corregible del **mismo alcance**. Confirmar que el recuento de productos y la calidad semántica no empeoran. Si el único resultado posible exige alterar una verdad del proveedor o una decisión humana, el bloqueo sigue visible y no se declara cumplimiento. Ver [contrato de actuación transversal](SCRAPER_OBJECTIVES.md#contrato-anti-deriva-comportamiento-obligatorio-del-asistente).
+Si después de un parche quedan reviews, no repetir el diagnóstico como si fuera una intervención independiente: continuar por el siguiente patrón corregible del **mismo alcance**. Confirmar que el recuento de productos y la calidad semántica no empeoran. Si el único resultado posible exige alterar una verdad del proveedor o una decisión humana, el bloqueo sigue visible y no se declara cumplimiento. Ver [contrato de actuación transversal](SCRAPER_OBJECTIVES.md#contrato-anti-deriva-comportamiento-obligatorio-del-asistente).
 
 
 ## Acreditación de una mejora: del hallazgo a la publicación y exportación

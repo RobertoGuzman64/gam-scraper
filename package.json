@@ -61,9 +61,7 @@
     "editorial:actualizar-conocimiento": "node scripts/run-build.mjs --quiet --if-needed && node scripts/operations/rebuild-editorial-knowledge.mjs && node scripts/operations/rebuild-editorial-models.mjs",
     "editorial:auditar-reutilizacion": "node scripts/run-build.mjs --quiet --if-needed && node scripts/operations/audit-editorial-knowledge.mjs",
     "editorial:verificar-conocimiento": "node scripts/operations/rebuild-editorial-knowledge.mjs --check && node scripts/run-build.mjs --quiet --if-needed && node scripts/operations/rebuild-editorial-models.mjs --check && node --test dist/preparation/shared/editorial/tests/editorial-knowledge.test.js",
-    "editorial:auditar-fase4": "node scripts/run-build.mjs --quiet --if-needed && node scripts/operations/audit-editorial-phase4.mjs",
-    "editorial:auditar-fase5": "node scripts/run-build.mjs --quiet --if-needed && node scripts/operations/audit-editorial-phase4.mjs --phase5",
-    "editorial:auditar-residual": "node scripts/operations/audit-editorial-residual.mjs"
+    "editorial:auditar-cobertura": "node scripts/run-build.mjs --quiet --if-needed && node scripts/operations/audit-editorial-coverage.mjs"
   },
   "dependencies": {
     "cheerio": "^1.0.0",

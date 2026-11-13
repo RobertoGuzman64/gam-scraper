@@ -19,7 +19,7 @@ const explicit = (record: ProductRecord): ProductRecord => ({
   specs: { Marca: "MARCA", Modelo: "MODELO10", "Parada de emergencia": true, "Frenado regenerativo": true }
 });
 
-test("F06 recupera general únicamente de declaraciones explícitas compatibles con identidad nueva en tres orígenes", () => {
+test("recupera general únicamente de declaraciones explícitas compatibles con identidad nueva en tres orígenes", () => {
   for (const basis of [controlledGamForklift(), controlledGomarizForklift(), controlledMercaelevaForklift()]) {
     const record = explicit(basis);
     const source = JSON.stringify(record);
@@ -33,7 +33,7 @@ test("F06 recupera general únicamente de declaraciones explícitas compatibles 
   }
 });
 
-test("F06 no compone sin una declaración afirmativa íntegra de la misma unidad", () => {
+test("no compone sin una declaración afirmativa íntegra de la misma unidad", () => {
   const original = explicit(controlledGamForklift());
   assert.equal(resolveSourceEditorialClaims({ ...original, specs: { Marca: "MARCA", Modelo: "MODELO10" } },
     { ...original, specs: { Marca: "MARCA", Modelo: "MODELO10" } }, null), null);
@@ -53,14 +53,14 @@ test("F06 no compone sin una declaración afirmativa íntegra de la misma unidad
     { ...original, title: "Fregadora MARCA MODELO10" }, null), null);
 });
 
-test("F06 preserva la narración original cuando no hay general compuesto", () => {
+test("preserva la narración original cuando no hay general compuesto", () => {
   const record = { ...explicit(controlledGamForklift()), longDescription: "Texto de origen firmado por la misma unidad." };
   assert.equal(resolveSourceEditorialClaims(record, record, null), null);
   const prepared = prepareSourceProduct(record);
   assert.match(prepared.product.description_general ?? "", /Texto de origen firmado/u);
 });
 
-test("F07 incorpora rasgos existentes de familias compatibles sin afirmar equipamiento instalado", () => {
+test("incorpora rasgos existentes de familias compatibles sin afirmar equipamiento instalado", () => {
   for (const basis of [controlledGamForklift(), controlledGomarizForklift(), controlledMercaelevaForklift()]) {
     const record: ProductRecord = {
       ...basis,
@@ -76,7 +76,7 @@ test("F07 incorpora rasgos existentes de familias compatibles sin afirmar equipa
   assert.equal(resolveSourceEditorialClaims(forklift, { ...forklift, model: "MODELO11" }, "Ficha técnica."), "Ficha técnica.");
 });
 
-test("F07 rechaza rasgos opcionales, negados o de familia incompatible", () => {
+test("rechaza rasgos opcionales, negados o de familia incompatible", () => {
   const source = controlledGamForklift();
   for (const description of [
     "La carretilla no dispone de cabina cerrada ni cinturón de seguridad.",
@@ -92,7 +92,7 @@ test("F07 rechaza rasgos opcionales, negados o de familia incompatible", () => {
   assert.match(resolveSourceEditorialClaims(electromagnetic, electromagnetic, "Ficha técnica.") ?? "", /freno electromagnético/u);
 });
 
-test("F08 conserva la familia y dos medidas de fuente corroboradas en un resumen técnico", () => {
+test("conserva la familia y dos medidas de fuente corroboradas en un resumen técnico", () => {
   const basis = controlledGomarizPlatform();
   const record = { ...basis, specs: { ...basis.specs, Peso: "980 kg", Longitud: "1,37 m" } };
   const brief = resolveVerifiedTechnicalBrief(record, record);

@@ -47,7 +47,7 @@ const documentedScissor = (height: string): ProductRecord => {
   };
 };
 
-test("F01: elevación de origen mm/m se conserva sin alterar la ficha ni necesitar referencia acreditada", () => {
+test("elevación de origen mm/m se conserva sin alterar la ficha ni necesitar referencia acreditada", () => {
   for (const raw of ["4500 mm", "4.500 mm", "4,5 m"]) {
     const source = mercaElevation(raw);
     const original = JSON.stringify(source);
@@ -67,7 +67,7 @@ test("F01: elevación de origen mm/m se conserva sin alterar la ficha ni necesit
   assert.equal(resolveEditorialFacts({ ...contradictory, condition: "Nuevo", specs: { ...contradictory.specs, Estado: "Usado" } }), null);
 });
 
-test("F03: alcance lateral solo con familia reconocida y procedencia concordante", () => {
+test("alcance lateral solo con familia reconocida y procedencia concordante", () => {
   const source = gamOruga("8,2 metros");
   assert.equal(resolveEditorialFacts(source)?.lateralReachM, 8.2);
   assert.match(resolveReusableEditorial(source).short ?? "", /alcance lateral de 8,2 m/u);
@@ -81,7 +81,7 @@ test("F03: alcance lateral solo con familia reconocida y procedencia concordante
   assert.equal(resolveEditorialFacts({ ...source, title: "Carretilla elevadora MARCA MODELO10", url: source.url?.replace("plataforma-sobre-orugas", "carretilla") ?? null })?.lateralReachM ?? null, null);
 });
 
-test("F04: radio métrico acreditado por fuente y preparado, pero no propagado entre unidades", () => {
+test("radio métrico acreditado por fuente y preparado, pero no propagado entre unidades", () => {
   const source = gamRadius("1,98 m");
   assert.equal(resolveEditorialFacts(source)?.turningRadiusM, 1.98);
   assert.match(resolveReusableEditorial(source).general ?? "", /radio de giro declarado de 1,98 m/u);
@@ -94,7 +94,7 @@ test("F04: radio métrico acreditado por fuente y preparado, pero no propagado e
   assert.equal(resolveEditorialFacts(gamRadius("19,8 m"))?.turningRadiusM, null);
 });
 
-test("F05: título técnico de tijera documentada admite alturas equivalentes sin caso fijo 8 m", () => {
+test("título técnico de tijera documentada admite alturas equivalentes sin caso fijo 8 m", () => {
   for (const height of ["8", "9", "10,5"]) {
     const source = documentedScissor(height);
     const expected = `Plataforma de tijera eléctrica MARCA MODELO10 de ${height} m`;

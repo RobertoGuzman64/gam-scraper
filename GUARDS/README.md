@@ -1,10 +1,10 @@
 # EQUIPZILLA — Guards de arquitectura vigentes
 
-## Estado y alcance (fase 27, 13 de noviembre de 2026)
+## Estado y alcance
 
-Esta guía describe el guard **actual**. La calibración de la fase 7 documentada en [PLAN-GUARDS-ARQUITECTURA-V2.md](PLAN-GUARDS-ARQUITECTURA-V2.md) es histórica y no representa la deuda del repositorio vigente.
+Esta guía describe los controles **vigentes**, sus autorizaciones exactas y sus límites. Los resultados deben comprobarse contra cada repositorio nuevo; no son una licencia para reducir cobertura.
 
-| Control ejecutado sobre el repositorio de fase 27  | Resultado                                                              |
+| Control arquitectónico comprobado                  | Resultado                                                              |
 | -------------------------------------------------- | ---------------------------------------------------------------------- |
 | `tests-editorial-architecture-guard.mjs`           | 0 infracciones                                                         |
 | `tests-domain-tests-guard.mjs`                     | 0 infracciones                                                         |
@@ -46,7 +46,7 @@ La autorización se verifica por **pareja de test y helper** y exige la forma de
 
 ## Veintiuna lecturas directas en catorce suites protegidas
 
-La fase 27 acreditó lecturas de origen y publicación que todavía son necesarias para una garantía censal o de integración. El mapa `accreditedCatalogIntegrations` de `tests-domain-tests-guard.mjs` identifica las **14 rutas, sus 21 lecturas y la responsabilidad de cada una**, con SHA-256 del archivo completo y número exacto de accesos.
+Hay lecturas de origen y publicación acreditadas que siguen siendo necesarias para garantías censales o de integración. El mapa `accreditedCatalogIntegrations` de `tests-domain-tests-guard.mjs` identifica las **14 rutas, sus 21 lecturas y la responsabilidad de cada una**, con SHA-256 del archivo completo y número exacto de accesos.
 
 Las suites incluyen controles de imágenes GAM, identidad de variantes, recuperaciones técnicas por unidad (seguridad, geometría, movilidad, limpieza y acústica), calidad semántica de fuente y consistencia de publicaciones. La autorización no es por carpeta, proveedor o nombre genérico: modificar el contenido del test, añadir otra lectura o ampliar la entrada invalida la coincidencia y devuelve la infracción. **No modificar tests protegidos para mejorar un contador.**
 
@@ -56,6 +56,6 @@ Las suites incluyen controles de imágenes GAM, identidad de variantes, recupera
 
 ## Cierre y límites
 
-El estado de fase 27 se obtuvo sin modificar tests protegidos y sin introducir excepciones generales. Conservar el cero exige que cualquier nueva infracción se **resuelva o acredite contractualmente con alcance exacto**, no degradar el guard ni añadir tolerancias. Una integración necesaria no justifica convertir en dependiente del catálogo todo test de dominio.
+El corte acreditado se obtuvo sin modificar tests protegidos y sin introducir excepciones generales. Conservar el cero exige que cualquier nueva infracción se **resuelva o acredite contractualmente con alcance exacto**, no degradar el guard ni añadir tolerancias. Una integración necesaria no justifica convertir en dependiente del catálogo todo test de dominio.
 
-El build y `npm test` oficiales completos no quedaron acreditados en el entorno de la fase 27 por dependencias ausentes. Registrar el estado real de cada ejecución. Referencias: [Motor editorial](../docs/EDITORIAL_ENGINE.md), [Validación](../docs/VALIDATION.md) y [Rendimiento](../docs/TESTS_RENDIMIENTO_CAMPANAS.md).
+El build y `npm test` oficiales completos no están acreditados en el último entorno de verificación disponible por dependencias ausentes. Registrar el estado real de cada ejecución. Referencias: [Motor editorial](../docs/EDITORIAL_ENGINE.md), [Validación](../docs/VALIDATION.md) y [Rendimiento](../docs/TESTS_RENDIMIENTO_CAMPANAS.md).

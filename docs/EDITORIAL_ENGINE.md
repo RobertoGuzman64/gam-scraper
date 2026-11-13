@@ -8,9 +8,9 @@
 
 ## Alcance y estado
 
-Esta es la referencia **vigente tras la fase 27 (13 de noviembre de 2026)** sobre el funcionamiento del motor editorial. La migración de los **narradores históricos detectados** al motor compartido está cerrada en el alcance de los guards: no quedan narradores de proveedor conectados y el guard de arquitectura editorial informa cero infracciones. Ello **no** demuestra que todas las 82 capacidades del inventario RE estén acreditadas ni que no existan oportunidades de mejora funcional.
+Esta es la referencia **vigente** sobre el funcionamiento del motor editorial. La migración de los **narradores históricos detectados** al motor compartido está cerrada en el alcance de los guards: no quedan narradores de proveedor conectados y el guard de arquitectura editorial informa cero infracciones. Ello **no** demuestra que todas las 82 capacidades del inventario RE estén acreditadas ni que no existan oportunidades de mejora funcional.
 
-Evolucionar el motor compartido es un **frente distinto** de la migración de narradores y del saneamiento de tests. Las mejoras funcionales se justifican mediante evidencia y comportamiento nuevo; no por una fase, una cuota de archivos o el número de pruebas.
+Conservar y acreditar **todo el conocimiento útil del motor anterior** es un objetivo distinto de retirar sus narradores. La equivalencia histórica completa todavía no está demostrada; antes de enriquecer capacidades nuevas debe contrastarse el conocimiento antiguo con las reglas y evidencias actuales. Las mejoras funcionales se justifican mediante evidencia y comportamiento nuevo, no por una cuota de archivos o pruebas.
 
 ## Flujo productivo actual
 
@@ -96,8 +96,20 @@ Los casos complejos —fuente contradictoria, semántica de altura ambigua, iden
 
 ## Qué se ha cerrado y qué no
 
-- **Cerrado en el alcance medido:** narradores históricos detectados fuera del recorrido productivo; autoridad editorial compartida; fronteras comerciales y arquitectónicas vigiladas; reforma de la arquitectura de tests de las fases 25–27 con cero infracciones del guard vigente.
-- **Abierto como evolución funcional:** medir y mejorar capacidades RE solo cuando tengan brechas concretas reproducibles. La matriz RE histórica no representa automáticamente el estado actual; las fases 23–24 recuperaron información y composición sin certificar las 82 capacidades como completas.
-- **No acreditado en el último corte disponible:** `npm run build` y `npm test` oficiales completos, por dependencias de scraping/tipos ausentes en el entorno de ejecución usado en las fases anteriores. Una prueba focal o guard PASS no los sustituye.
+- **Cerrado en el alcance medido:** narradores históricos detectados fuera del recorrido productivo; autoridad editorial compartida; fronteras comerciales y arquitectónicas vigiladas; guard arquitectónico de tests sin infracciones.
+- **Pendiente de acreditar:** equivalencia de todas las reglas, condiciones y evidencias útiles del motor histórico con su aprovechamiento actual. La matriz original de 82 capacidades no certifica por sí sola la transferencia completa.
+- **Posterior como evolución funcional:** ampliar o mejorar capacidades cuando existan brechas concretas reproducibles, después de preservar y acreditar el conocimiento anterior.
+- **No acreditado en el último corte disponible:** `npm run build` y `npm test` oficiales completos, por dependencias de scraping/tipos ausentes en el entorno anterior. Una prueba focal o guard PASS no los sustituye.
 
-Consultar [Arquitectura](ARCHITECTURE.md), [Tests y guards](TEST_ARCHITECTURE.md), [Mejora acreditada](CATALOG_IMPROVEMENT.md), [Reglas de datos](SCRAPER_DATA_RULES.md) y [Validación](VALIDATION.md). Los informes `EDITORIAL_MIGRATION_PHASE3.md` y `EDITORIAL_MIGRATION_PHASE4.md` documentan **cortes históricos**, no instrucciones vigentes de migración.
+## Auditorías de lectura sin publicación
+
+Los comandos siguientes miden comportamientos actuales y producen **informes**, no acreditaciones ni cambios de catálogo. Requieren build y originales disponibles:
+
+```powershell
+npm run editorial:auditar-reutilizacion
+npm run editorial:auditar-cobertura
+```
+
+El primero escribe `reports/editorial-knowledge/audit.json` y el segundo `reports/editorial-coverage/audit.json`. Ninguno sustituye una comparación funcional con el conocimiento histórico ni declara completas las 82 capacidades.
+
+Consultar [Arquitectura](ARCHITECTURE.md), [Tests y guards](TEST_ARCHITECTURE.md), [Mejora acreditada](CATALOG_IMPROVEMENT.md), [Reglas de datos](SCRAPER_DATA_RULES.md) y [Validación](VALIDATION.md).
