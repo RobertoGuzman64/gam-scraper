@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type {
   EditorialConsensusMetric, EditorialFamilyGuidance, EditorialKnowledge, EditorialModelKnowledge,
@@ -13,8 +14,10 @@ import { editorialIdentityKey, editorialModelKey } from "../../../preparation/sh
 const recordOf = (value: unknown): Record<string, unknown> | null =>
   typeof value === "object" && value !== null && !Array.isArray(value) ? Object.fromEntries(Object.entries(value)) : null;
 
+const knowledgeDirectory = fileURLToPath(new URL("../../../../data/editorial/knowledge/", import.meta.url));
+
 const readKnowledgeFile = (name: string): Record<string, unknown> => {
-  const parsed: unknown = JSON.parse(readFileSync(resolve(process.cwd(), "data/editorial/knowledge", name), "utf8"));
+  const parsed: unknown = JSON.parse(readFileSync(join(knowledgeDirectory, name), "utf8"));
   const document = recordOf(parsed);
   if (!document || document.version !== 1) throw new Error(`Contrato editorial desconocido: ${name}`);
   return document;

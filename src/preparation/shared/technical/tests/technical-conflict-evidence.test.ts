@@ -38,7 +38,7 @@ test("las contradicciones técnicas pendientes mantienen su bloqueo y su causa",
     const prepared = prepareProduct(record, catalog);
     assert.equal(resolution.status, entry.status, `${entry.provider}:${entry.reference}`);
     assert.equal(resolution.value, entry.reference === "4004" ? 800 : null, `${entry.provider}:${entry.reference}`);
-    const resolvedInPreparation = ["4004", "M104-0836"].includes(entry.reference);
+    const resolvedInPreparation = ["4004", "5864", "M104-0836"].includes(entry.reference);
     assert.equal(prepared.status, resolvedInPreparation ? "ready" : "review", `${entry.provider}:${entry.reference}`);
     assert.equal(prepared.issues.includes(entry.issue), !resolvedInPreparation, `${entry.provider}:${entry.reference}`);
   }
