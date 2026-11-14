@@ -2,6 +2,7 @@ import { containsEditorialIdentity } from "./editorial-identity-match.js";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../../../commercial/legacy-export/contracts.js";
 import { normalizeEditorialSummary } from "./editorial-normalization.js";
+import { resolveVerifiedEditorialCondition } from "./editorial-condition.js";
 
 type AdvertisedSummary = Readonly<{
   label: string;
@@ -37,7 +38,7 @@ export const normalizeCorroboratedTowingSummary = (
   source: ProductRecord, prepared: ImportCandidate, summary: string | null
 ): string | null => {
   if (!summary || !source.shortDescription || !source.longDescription || !source.title || !source.model ||
-    source.condition !== "Nuevo" || prepared.condition !== "Nuevo" ||
+    resolveVerifiedEditorialCondition(source) !== "Nuevo" || prepared.condition !== "Nuevo" ||
     source.reference !== prepared.reference ||
     source.url !== prepared.sourceUrl || !source.reference ||
     typeof source.specs?.Modelo !== "string" || compact(source.specs.Modelo) !== compact(source.model) ||

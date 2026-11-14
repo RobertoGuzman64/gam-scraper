@@ -3,6 +3,7 @@ import { editorialMetricOf, editorialQuantityOf, formatEditorialQuantity } from 
 import { resolvedEditorialUnitFamilies } from "./editorial-unit-provenance.js";
 import { verifiedEditorialIdentity } from "./editorial-source-contract.js";
 import { editorialFamilyName } from "./editorial-families.js";
+import { resolveVerifiedEditorialCondition } from "./editorial-condition.js";
 
 const corroborated = (
   source: ProductRecord,
@@ -37,7 +38,9 @@ export const resolveVerifiedTechnicalBrief = (
   ].filter((item): item is { value: number; label: string; unit: string } => item.value !== null);
   if (measures.length < 2) return null;
   const details = measures.slice(0, 2).map((item) => `${item.label} de ${formatEditorialQuantity(item.value)} ${item.unit}`);
-  const condition = source.condition === "Segunda mano" ? " de ocasión" : source.condition === "Nuevo" ? ", unidad nueva" : "";
+  const sourceCondition = resolveVerifiedEditorialCondition(source);
+  const condition = sourceCondition && sourceCondition === resolveVerifiedEditorialCondition(prepared) ?
+    sourceCondition === "Segunda mano" ? " de ocasión" : ", unidad nueva" : "";
   const noun = family && family === preparedFamily ? editorialFamilyName(family) : "equipo";
   const named = `${noun[0]?.toLocaleUpperCase("es") ?? ""}${noun.slice(1)}`;
   return `${named} ${source.brand} ${source.model}${condition}, con ${details.join(" y ")}.`;

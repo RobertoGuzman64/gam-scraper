@@ -121,18 +121,39 @@ export type EditorialUnitIdentity = {
   readonly model: string;
 };
 
+const matchingUnitKnowledge = (
+  identity: EditorialUnitIdentity,
+  knowledge: EditorialKnowledge,
+  digest: string
+): readonly EditorialUnitKnowledge[] => knowledge.units.get(identity.key)?.filter((entry) =>
+  entry.sourceUrl === identity.sourceUrl && entry.sourceDigest === digest &&
+  fold(entry.brand) === fold(identity.brand) && fold(entry.model) === fold(identity.model)) ?? [];
+
+type SelectedUnitKnowledge = {
+  readonly short: string | null;
+  readonly general: string | null;
+  readonly fallbackGeneral: string | null;
+  readonly title: string | null;
+};
+
+const selectEditorialTexts = (matching: readonly EditorialUnitKnowledge[]): SelectedUnitKnowledge => ({
+  short: matching.find((entry) => entry.short?.trim())?.short ?? null,
+  general: matching.find((entry) => entry.usage !== "fallback" && entry.general?.trim())?.general ?? null,
+  fallbackGeneral: matching.find((entry) => entry.usage === "fallback" && entry.general?.trim())?.general ?? null,
+  title: matching.find((entry) => entry.title?.trim())?.title ?? null
+});
+
 export const selectUnitKnowledge = (
   identity: EditorialUnitIdentity,
   knowledge: EditorialKnowledge,
   digest: string
-): { readonly short: string | null; readonly general: string | null; readonly fallbackGeneral: string | null; readonly title: string | null } => {
-  const matching = knowledge.units.get(identity.key)?.filter((entry) =>
-    entry.sourceUrl === identity.sourceUrl && entry.sourceDigest === digest &&
-    fold(entry.brand) === fold(identity.brand) && fold(entry.model) === fold(identity.model)) ?? [];
-  return {
-    short: matching.find((entry) => entry.short?.trim())?.short ?? null,
-    general: matching.find((entry) => entry.usage !== "fallback" && entry.general?.trim())?.general ?? null,
-    fallbackGeneral: matching.find((entry) => entry.usage === "fallback" && entry.general?.trim())?.general ?? null,
-    title: matching.find((entry) => entry.title?.trim())?.title ?? null
-  };
+): SelectedUnitKnowledge => selectEditorialTexts(matchingUnitKnowledge(identity, knowledge, digest));
+
+export const selectIdentityOverrideKnowledge = (
+  identity: EditorialUnitIdentity,
+  knowledge: EditorialKnowledge,
+  digest: string
+): SelectedUnitKnowledge | null => {
+  const matching = matchingUnitKnowledge(identity, knowledge, digest).filter((entry) => entry.identityOverride === true);
+  return matching.length > 0 ? selectEditorialTexts(matching) : null;
 };

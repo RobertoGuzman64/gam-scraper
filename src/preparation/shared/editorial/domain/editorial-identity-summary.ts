@@ -4,6 +4,7 @@ import type { EditorialFamily } from "./editorial-families.js";
 import { editorialFamilyName, resolveConsistentEditorialFamily } from "./editorial-families.js";
 import { resolveEditorialSource } from "./editorial-source.js";
 import { verifiedEditorialIdentity } from "./editorial-source-contract.js";
+import { resolveVerifiedEditorialCondition } from "./editorial-condition.js";
 
 export const resolveEditorialIdentitySummary = (
   record: ProductRecord,
@@ -17,7 +18,8 @@ export const resolveEditorialIdentitySummary = (
     `${record.subcategory ?? ""} | ${record.categoryName}`, familyOverride);
   if (!family) return null;
   const noun = editorialFamilyName(family);
-  const condition = record.condition === "Segunda mano" ? " de ocasión" : record.condition === "Nuevo" ? " nueva" : "";
+  const verifiedCondition = resolveVerifiedEditorialCondition(record);
+  const condition = verifiedCondition === "Segunda mano" ? " de ocasión" : verifiedCondition === "Nuevo" ? " nueva" : "";
   return `${noun[0]?.toLocaleUpperCase("es") ?? ""}${noun.slice(1)} ${source.brand} ${source.model}${condition}.`;
 };
 

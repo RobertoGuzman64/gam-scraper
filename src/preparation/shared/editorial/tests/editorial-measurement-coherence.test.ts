@@ -5,7 +5,8 @@ import { resolveEditorialFacts } from "../domain/editorial-facts.js";
 import { resolveReusableEditorial } from "../domain/editorial-composition.js";
 import { hasEditorialAdapterHeightConflict, hasEditorialAdditionalHeightConflict, hasEditorialSourceWorkHeightConflict } from "../domain/editorial-height-consistency.js";
 import { resolveMercaelevaEditorialDomainSource } from "../../../mercaeleva/editorial/mapping/domain-source.js";
-import { editorialMetricOf, editorialQuantityOf } from "../domain/editorial-measurements.js";
+import { editorialMetricOf, editorialQuantity, editorialQuantityOf } from "../domain/editorial-measurements.js";
+import { resolveVerifiedTechnicalBrief } from "../domain/editorial-technical-brief.js";
 import { controlledGamForklift, controlledGomarizForklift, controlledGomarizPlatform, controlledMercaelevaForklift } from "./editorial-contract-records.js";
 
 const withSpecs = (record: ProductRecord, specs: NonNullable<ProductRecord["specs"]>): ProductRecord => ({
@@ -112,4 +113,52 @@ test("una afirmación textual de altura incompatible bloquea la evidencia narrat
   assert.equal(hasEditorialSourceWorkHeightConflict({ ...valid, longDescription: "Altura de trabajo de 12 metros en la ficha." }), true);
   assert.equal(hasEditorialSourceWorkHeightConflict({ ...valid, title: "Altura de trabajo de 11 m MARCA MODELO10" }), true);
   assert.equal(hasEditorialSourceWorkHeightConflict({ ...valid, specs: { ...valid.specs, "Altura de trabajo": "10000 mm" } }), false);
+});
+
+
+test("la carga nominal reutiliza la misma regla sin propagar valores a otra unidad", () => {
+  for (const record of [controlledGamForklift(), controlledGomarizForklift(), controlledMercaelevaForklift()]) {
+    assert.equal(resolveEditorialFacts(record)?.loadCapacityKg, 2500);
+    assert.match(resolveReusableEditorial(record).short ?? "", /capacidad de carga de 2\.500 kg/u);
+    const matching = withSpecs(record, { "Capacidad de carga": "2.500 kg" });
+    assert.equal(resolveEditorialFacts(matching)?.loadCapacityKg, 2500);
+    const contradicting = withSpecs(record, { "Capacidad de carga": "2.200 kg" });
+    assert.equal(resolveEditorialFacts(contradicting)?.loadCapacityKg ?? null, null);
+    assert.doesNotMatch(resolveReusableEditorial(contradicting).general ?? "", /capacidad de carga de 2\.500 kg/u);
+    const otherUnit = { ...record, reference: `${record.reference}-OTRA`, specs: { ...record.specs, "Capacidad de carga": "1800 kg" } };
+    assert.equal(resolveVerifiedTechnicalBrief(record, otherUnit), null);
+    assert.equal(resolveEditorialFacts(record)?.loadCapacityKg, 2500);
+  }
+});
+
+test("el peso de equipo solo se afirma cuando es una magnitud y unidad explícitas de la ficha", () => {
+  for (const record of [controlledGamForklift(), controlledGomarizForklift(), controlledMercaelevaForklift()]) {
+    const source = withSpecs(record, { Peso: "3.750 kg", Longitud: "4,5 m" });
+    const before = JSON.stringify(source);
+    assert.equal(resolveEditorialFacts(source)?.weightKg, 3750);
+    assert.match(resolveReusableEditorial(source).general ?? "", /peso declarado de 3\.750 kg/u);
+    assert.match(resolveVerifiedTechnicalBrief(source, source) ?? "", /peso declarado de 3\.750 kg/u);
+    assert.equal(resolveVerifiedTechnicalBrief(source, { ...source, reference: "OTRA-UNIDAD" }), null);
+    for (const weight of ["3.750 m", "3,75 t", "3.750 kg o 4.000 kg"]) {
+      const incompatible = withSpecs(source, { Peso: weight });
+      assert.equal(resolveEditorialFacts(incompatible)?.weightKg, null);
+      assert.doesNotMatch(resolveReusableEditorial(incompatible).general ?? "", /peso declarado/u);
+      assert.equal(resolveEditorialFacts(incompatible)?.loadCapacityKg, 2500);
+    }
+    assert.equal(JSON.stringify(source), before);
+  }
+});
+
+test("las conversiones explícitas respetan magnitud y concepto sin suponer equivalencias", () => {
+  const aliases = ["Altura máxima de elevación", "Altura de elevación (mm)"];
+  assert.equal(editorialMetricOf({ "Altura máxima de elevación": "4,5 m", "Altura de elevación (mm)": "4500 mm" }, aliases), 4.5);
+  assert.equal(editorialMetricOf({ "Altura máxima de elevación": "4,5 m", "Altura de elevación (mm)": "4501 mm" }, aliases), null);
+  assert.equal(editorialMetricOf({ "Altura máxima de elevación": "4,5 m", "Altura de elevación (mm)": "4,5 m" }, aliases), null);
+  assert.equal(editorialQuantity("2.500 kg", "kg"), 2500);
+  assert.equal(editorialQuantity("2,5 t", "kg"), null);
+  assert.equal(editorialQuantity("2500 kg", "t"), null);
+  assert.equal(editorialQuantity("2500 kg", "m"), null);
+  assert.equal(editorialQuantityOf({ "Capacidad": "2500 kg", "Capacidad de carga (kg)": "2,5 t" },
+    ["Capacidad", "Capacidad de carga (kg)"], "kg"), null);
+  assert.equal(editorialMetricOf({ "Altura de trabajo": "10 m" }, ["Altura plataforma"]), null);
 });

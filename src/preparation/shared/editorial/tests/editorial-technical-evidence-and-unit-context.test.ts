@@ -103,3 +103,75 @@ test("la higiene del origen elimina marcadores y afirmaciones huérfanas sin toc
   assert.doesNotMatch(clean.general ?? "", /\. S[ií]\. /u);
   assert.equal(cleanAuthenticatedSourceEditorial({ ...source, model: "OTRO" }, short, long).short, short);
 });
+
+test("RE049: los módulos sanitarios históricos conservan clase, medidas y procedencia propias", () => {
+  for (const { reference, length, width, weight } of [
+    { reference: "6814", length: "1,3 m", width: "1,1 m", weight: "200 kg" },
+    { reference: "6815", length: "2,15 m", width: "1,3 m", weight: "300 kg" }
+  ]) {
+    const source = get("gam", reference);
+    const snapshot = JSON.stringify(source);
+    const composed = resolveUnbrandedEditorial(source);
+    assert.match(composed?.short ?? "", /Módulo sanitario/u);
+    for (const measure of [length, width, weight]) assert.ok(composed?.general?.includes(measure), measure);
+    const prepared = prepareSourceProduct(source);
+    assert.equal(prepared.status, "ready");
+    assert.equal(prepared.product.reference, reference);
+    assert.equal(prepared.product.sourceUrl, source.url);
+    assert.equal(prepared.product.description_general, composed?.general);
+    assert.equal(JSON.stringify(source), snapshot);
+  }
+});
+
+test("RE049: una unidad nueva reutiliza la regla sanitaria con dimensiones exclusivamente propias", () => {
+  const source = get("gam", "6814");
+  const reference = "8814";
+  const incoming: ProductRecord = {
+    ...source,
+    reference,
+    url: source.url?.replace("/6814-", `/${reference}-`) ?? null,
+    shortDescription: null,
+    longDescription: null,
+    specs: { ...source.specs, Longitud: "2800 mm", Anchura: "1400 mm", Peso: "250 KG" }
+  };
+  const snapshot = JSON.stringify(incoming);
+  const composed = resolveUnbrandedEditorial(incoming);
+  assert.ok(composed);
+  for (const measure of ["longitud de 2,8 m", "anchura de 1,4 m", "peso declarado de 250 kg"]) {
+    assert.ok(composed.general?.includes(measure), measure);
+  }
+  assert.doesNotMatch(composed.general ?? "", /longitud de 1,3 m|anchura de 1,1 m|peso declarado de 200 kg/u);
+  const prepared = prepareSourceProduct(incoming);
+  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.product.reference, reference);
+  assert.equal(prepared.product.sourceUrl, incoming.url);
+  assert.equal(prepared.product.description_general, composed.general);
+  assert.equal(JSON.stringify(incoming), snapshot);
+});
+
+test("RE049: un título de caseta no puede reutilizar una ruta autenticada de módulo de baño", () => {
+  for (const reference of ["6814", "6815"]) {
+    const source = get("gam", reference);
+    assert.equal(resolveUnbrandedEditorial({ ...source, title: "MÓDULO CASETA PREFABRICADO" }), null);
+    assert.equal(resolveUnbrandedEditorial({ ...source, title: "PLATAFORMA DE TIJERA" }), null);
+  }
+});
+
+test("RE049: procedencia, identidad de origen y ausencia de medidas bloquean la composición sanitaria", () => {
+  const source = get("gam", "6814");
+  for (const changed of [
+    { ...source, providerId: "otro-proveedor" },
+    { ...source, url: "https://example.invalid/es/estructuras/6814-modulo-bano-unitario" },
+    { ...source, reference: "OTRA-UNIDAD" },
+    { ...source, brand: "OTRA MARCA" },
+    { ...source, model: "OTRO MODELO" },
+    { ...source, specs: {} }
+  ]) {
+    assert.equal(resolveUnbrandedEditorial(changed), null);
+  }
+  const invalidLength = { ...source, specs: { ...source.specs, Longitud: "1300 kg" } };
+  assert.doesNotMatch(resolveUnbrandedEditorial(invalidLength)?.general ?? "", /longitud de/u);
+  assert.match(resolveUnbrandedEditorial(invalidLength)?.general ?? "", /anchura de 1,1 m/u);
+  const another = get("gam", "6815");
+  assert.doesNotMatch(resolveUnbrandedEditorial(another)?.general ?? "", /peso declarado de 200 kg/u);
+});

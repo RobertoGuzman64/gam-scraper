@@ -25,7 +25,7 @@ const definitions: readonly FamilyDefinition[] = [
   { family: "tractor-arrastre", noun: "tractor de arrastre", pattern: /\b(?:tractor(?:es)?[-\s]+de[-\s]+arrastre|tractor(?:es)?[-\s]+de[-\s]+remolque|tow[-\s]+tractor)\b/u },
   { family: "transpaleta", noun: "transpaleta", pattern: /\b(?:transpalet(?:a|as)?|transpallet|pallet[-\s]+truck)\b/u },
   { family: "apilador", noun: "apilador", pattern: /\b(?:apilador(?:a|es|as)?|stacker)\b/u },
-  { family: "plataforma-mastil", noun: "plataforma de mástil vertical", pattern: /\b(?:mastil[-\s]+vertical|plataforma[-\s]+vertical|elevador[-\s]+vertical|vertical[-\s]+mast)\b/u },
+  { family: "plataforma-mastil", noun: "equipo de mástil vertical", pattern: /\b(?:mastil[-\s]+vertical|plataforma[-\s]+vertical|elevador[-\s]+vertical|vertical[-\s]+mast)\b/u },
   { family: "plataforma-tijera", noun: "plataforma de tijera", pattern: /\b(?:tijera|tijeras|scissor[-\s]+lift|elevador[-\s]+tijera)\b/u },
   { family: "plataforma-articulada", noun: "plataforma articulada", pattern: /\b(?:plataforma(?:s)?[-\s]+articulad[ao]s?|brazo[-\s]+articulad[ao]|articulating[-\s]+boom|articulated[-\s]+boom|boom[-\s]+lift)\b/u },
   { family: "plataforma-telescopica", noun: "plataforma telescópica", pattern: /\b(?:plataforma(?:s)?[-\s]+telescopic[ao]s?|brazo[-\s]+telescopic[ao]|telescopic[-\s]+boom)\b/u },
@@ -84,6 +84,8 @@ export const resolveConsistentEditorialFamily = (
   const additional = editorialFamilyOf(additionalTitle ?? "");
   const resolved = override ?? source ?? editorialFamilyOf(fallbackClues);
   if (!resolved) return null;
+  if ((resolved === "plataforma-oruga" || resolved === "plataforma-mastil") && explicit &&
+    !compatibleEditorialFamilies(resolved, explicit)) return null;
   if (!override && !additional) return resolved;
   if (override && explicit && !compatibleEditorialFamilies(override, explicit)) return null;
   if (override && additional && !compatibleEditorialFamilies(override, additional)) return null;
@@ -98,6 +100,13 @@ export const resolveConsistentEditorialFamily = (
 
 export const editorialFamilyName = (family: EditorialFamily): string =>
   definitions.find((item) => item.family === family)?.noun ?? "máquina";
+
+const masculineFamilies: ReadonlySet<EditorialFamily> = new Set([
+  "almacen-vertical", "elevador-materiales", "camion-cesta", "manipulador-telescopico",
+  "recogepedidos", "tractor-arrastre", "apilador", "dumper", "grupo-electrogeno", "compresor", "plataforma-mastil"
+]);
+
+export const editorialFamilyIsMasculine = (family: EditorialFamily): boolean => masculineFamilies.has(family);
 
 export const isEditorialFamily = (value: string): value is EditorialFamily =>
   definitions.some((item) => item.family === value);

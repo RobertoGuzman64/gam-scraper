@@ -270,3 +270,38 @@ test("las cortas técnicas siguen siendo reutilizables para variantes nuevas sin
     assert.notEqual(prepareSourceProduct(contradicted).product.description, prepared.description);
   }
 });
+
+test("los textos y títulos firmados no atraviesan proveedor, condición ni unidad en una reconciliación", () => {
+  const originals = [get("gam", "6971"), get("gam", "6689"), get("mercaeleva", "M294-4678")];
+  for (const source of originals) {
+    const signed = resolveKnowledgeEditorial(source, source);
+    assert.equal(signed.identityOverride, true);
+    assert.ok(signed.general || signed.short || signed.title);
+    const prepared = prepareSourceProduct(source).product;
+    if (signed.general) assert.equal(prepared.description_general, signed.general);
+    if (signed.short) assert.equal(prepared.description, signed.short);
+    const reconciled = { ...source, title: `${source.title ?? ""} reconciliado` };
+    const recovered = resolveKnowledgeEditorial(reconciled, source);
+    assert.equal(recovered.identityOverride, true);
+    assert.equal(recovered.general, signed.general);
+    assert.equal(recovered.short, signed.short);
+    assert.equal(recovered.title, signed.title);
+    const changed: readonly ProductRecord[] = [
+      { ...reconciled, providerId: source.providerId === "gam" ? "gomariz" : "gam" },
+      { ...reconciled, reference: `${source.reference}-OTRA` },
+      { ...reconciled, reference: null },
+      { ...reconciled, url: `${source.url}?otra-unidad=1` },
+      { ...reconciled, condition: source.condition === "Nuevo" ? "Segunda mano" : "Nuevo" }
+    ];
+    for (const candidate of changed) {
+      const actual = resolveKnowledgeEditorial(candidate, source);
+      assert.equal(actual.identityOverride, false);
+      assert.equal(actual.short, null);
+      assert.equal(actual.general, null);
+      assert.equal(actual.fallbackGeneral, null);
+      assert.equal(actual.title, null);
+    }
+    const alteredSource = { ...source, specs: { ...source.specs, "Firma alterada": "no coincidente" } };
+    assert.equal(resolveKnowledgeEditorial(reconciled, alteredSource).identityOverride, false);
+  }
+});

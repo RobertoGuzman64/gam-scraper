@@ -1,6 +1,6 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { resolveEditorialFacts } from "./editorial-facts.js";
-import { editorialFamilyName } from "./editorial-families.js";
+import { editorialFamilyIsMasculine, editorialFamilyName } from "./editorial-families.js";
 import { formatEditorialQuantity } from "./editorial-measurements.js";
 import type { EditorialFacts } from "./editorial-facts.js";
 import { sameEditorialUnit } from "./editorial-source-contract.js";
@@ -68,7 +68,7 @@ export const resolveReusableEditorial = (
   const measures = asserted(facts);
   const extras = details(facts);
   if (measures.length === 0 && extras.length === 0) return { short: null, general: null };
-  const fuel = facts.energy === "eléctrica" ? " eléctrica" :
+  const fuel = facts.energy === "eléctrica" ? editorialFamilyIsMasculine(facts.family) ? " eléctrico" : " eléctrica" :
     facts.energy === "diésel" ? " diésel" :
       facts.energy === "GLP" ? " de GLP" : facts.energy === "gasolina" ? " de gasolina" : "";
   const identity = `${family[0]?.toLocaleUpperCase("es") ?? ""}${family.slice(1)}${fuel} ${name}`;

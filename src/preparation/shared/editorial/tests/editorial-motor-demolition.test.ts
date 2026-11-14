@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { resolveEditorialFacts } from "../domain/editorial-facts.js";
 import { resolveReusableEditorial } from "../domain/editorial-composition.js";
 import {
-  controlledGamForklift, controlledGomarizPlatform, controlledMercaelevaPlatform
+  controlledGamForklift, controlledGomarizForklift, controlledGomarizPlatform, controlledMercaelevaForklift, controlledMercaelevaPlatform
 } from "./editorial-contract-records.js";
 
 test("las máquinas con conceptos equivalentes comparten el dominio, no los textos de unidad", () => {
@@ -47,4 +48,35 @@ test("la preparación no altera identidad o datos de origen", () => {
   assert.equal(result.product.reference, source.reference);
   assert.equal(result.product.sourceUrl, source.url);
   assert.equal(JSON.stringify(source), initial);
+});
+
+
+test("año y horómetro se conservan solo en la unidad acreditada, con exclusiones comunes", () => {
+  const sources = [controlledGamForklift(), controlledGomarizForklift(), controlledMercaelevaForklift()];
+  for (const source of sources) {
+    const original = JSON.stringify(source);
+    const first = { ...source, year: "2019", horometer: "2845 horas" };
+    const second: ProductRecord = {
+      ...source,
+      reference: "CONTROL-ALT",
+      url: source.providerId === "gomariz" ?
+        source.url.replace("/producto/marca-modelo10/", "/producto/marca-modelo10-alternativa/") :
+        source.url.replace(source.reference ?? "", "CONTROL-ALT"),
+      year: "2021",
+      horometer: "610 horas"
+    };
+    const generalFirst = resolveReusableEditorial(first).general ?? "";
+    const generalSecond = resolveReusableEditorial(second).general ?? "";
+    assert.equal(resolveEditorialFacts(first)?.year, 2019, source.providerId);
+    assert.equal(resolveEditorialFacts(first)?.hours, 2845, source.providerId);
+    assert.match(generalFirst, /año de fabricación 2019 y 2\.845 horas registradas/u, source.providerId);
+    assert.match(generalSecond, /año de fabricación 2021 y 610 horas registradas/u, source.providerId);
+    assert.doesNotMatch(generalSecond, /2\.845 horas|2019/u, source.providerId);
+    assert.doesNotMatch(resolveReusableEditorial(source).general ?? "", /horas registradas|año de fabricación/u, source.providerId);
+    const unverified = { ...source, year: "2099", horometer: "200001 horas" };
+    assert.equal(resolveEditorialFacts(unverified)?.year, null, source.providerId);
+    assert.equal(resolveEditorialFacts(unverified)?.hours, null, source.providerId);
+    assert.doesNotMatch(resolveReusableEditorial(unverified).general ?? "", /2099|200001 horas/u, source.providerId);
+    assert.equal(JSON.stringify(source), original, source.providerId);
+  }
 });

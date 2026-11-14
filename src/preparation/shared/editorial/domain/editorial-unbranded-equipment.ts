@@ -11,9 +11,12 @@ const kindOf = (value: string): EquipmentKind | null => {
   return null;
 };
 
-const isAuthenticUnbrandedSource = (record: ProductRecord): boolean =>
-  !record.brand?.trim() && !record.model?.trim() && Boolean(record.title && kindOf(record.title)) &&
-  verifiedUnbrandedEditorialSource(record);
+const isAuthenticUnbrandedSource = (record: ProductRecord): boolean => {
+  const kind = kindOf(record.title ?? "");
+  if (!kind || record.brand?.trim() || record.model?.trim() || !verifiedUnbrandedEditorialSource(record)) return false;
+  const sourceKind = kindOf(new URL(record.url ?? "").pathname.replace(/[-_]/gu, " "));
+  return sourceKind === null || sourceKind === kind;
+};
 
 export const resolveUnbrandedEditorial = (
   record: ProductRecord

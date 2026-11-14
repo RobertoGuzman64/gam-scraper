@@ -123,3 +123,36 @@ test("referencia de vendedor, horas y etiquetas comerciales requieren concordanc
   const painted = { ...source, longDescription: `${source.longDescription ?? ""} PINTADA` };
   assert.match(resolveVerifiedEditorialUnitContext(painted, base) ?? "", /no acredita una revisión mecánica/u);
 });
+
+
+test("RE073 acredita la documentación de fabricante para unidades nuevas sin copiar la configuración individual", () => {
+  const originals = [documentedGomariz(), documentedMercaeleva()];
+  for (const source of originals) {
+    const incoming: ProductRecord = {
+      ...source,
+      reference: "CONTROL-RE073",
+      url: source.providerId === "gomariz" ?
+        "https://www.gomarizrent.com/producto/lgmg-as1212e-control-re073/" :
+        "https://sales.mercaeleva.com/es/for-sale/machine/lgmg-as1212e-CONTROL-RE073",
+      horometer: "145",
+      serialNumber: "SERIE-RE073"
+    };
+    const snapshot = JSON.stringify(incoming);
+    const reference = resolveKnowledgeEditorial(incoming).modelReference;
+    assert.match(reference ?? "", /La documentación técnica de referencia del modelo LGMG AS1212E/u);
+    assert.match(reference ?? "", /no acreditan la configuración ni las prestaciones de esta unidad/u);
+    const result = prepareSourceProduct(incoming);
+    assert.match(result.product.description_general ?? "", /La documentación técnica de referencia del modelo LGMG AS1212E/u);
+    assert.doesNotMatch(reference ?? "", /145 horas|SERIE-RE073/u);
+    assert.equal(JSON.stringify(incoming), snapshot);
+    for (const invalid of [
+      { ...incoming, brand: "OTRA MARCA" },
+      { ...incoming, specs: { ...incoming.specs, "Altura de trabajo": "10 m" } },
+      { ...incoming, title: "Plataforma articulada eléctrica LGMG AS1212E" },
+      { ...incoming, url: "https://example.invalid/unidad" }
+    ]) {
+      assert.doesNotMatch(resolveKnowledgeEditorial(invalid).modelReference ?? "", /La documentación técnica de referencia/u);
+      assert.doesNotMatch(prepareSourceProduct(invalid).product.description_general ?? "", /La documentación técnica de referencia del modelo LGMG AS1212E/u);
+    }
+  }
+});

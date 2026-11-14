@@ -61,11 +61,13 @@ const energyOf = (record: ProductRecord, source: EditorialSource): EditorialEner
   const energy = parsedEnergy(raw);
   if (energy === false) return false;
   if (energy === null) return null;
+  if ([source.motor, specs?.["Tipo motor"], specs?.["Tipo de motor"], specs?.Motorización]
+    .some((value) => value !== undefined && parsedEnergy(value) !== energy)) return false;
   const title = normalize(record.title ?? "");
   const declared = [...title.matchAll(/\b(diesel|electrico|electrica|glp|gasolina)\b/gu)].map((match) => match[1]);
   const declaredSet = new Set(declared.map((value) => value === "diesel" ? "diésel" :
     value === "glp" ? "GLP" : value === "gasolina" ? "gasolina" : "eléctrica"));
-  if (declaredSet.size > 0 && !declaredSet.has(energy)) return false;
+  if (declaredSet.size > 1 || declaredSet.size > 0 && !declaredSet.has(energy)) return false;
   const description = normalize(record.longDescription ?? "");
   const opposite = energy === "eléctrica" ? /\b(?:diesel|glp|gasolina)\b/u :
     energy === "diésel" ? /\b(?:electricos?|electricas?|glp|gasolina)\b/u :
@@ -144,6 +146,15 @@ const verifiedMast = (value: SpecValue | undefined): "dúplex" | "tríplex" | "s
   return null;
 };
 
+const verifiedMastOf = (record: ProductRecord): EditorialFacts["mastType"] => {
+  const primary = record.specs?.["Tipo Mástil"];
+  const secondary = record.specs?.["Tipo de mástil"];
+  if (primary === undefined) return verifiedMast(secondary);
+  const mast = verifiedMast(primary);
+  if (secondary === undefined) return mast;
+  return mast !== null && mast === verifiedMast(secondary) ? mast : null;
+};
+
 const unitYear = (record: ProductRecord): number | null => {
   const year = record.year?.trim();
   if (!year || !/^(?:19|20)\d{2}$/u.test(year)) return null;
@@ -202,7 +213,7 @@ export const resolveEditorialFacts = (record: ProductRecord, familyOverride: Edi
   const turningRadius = isHandling(family) ? corroboratedMillimetres(record.specs?.["Radio de giro"], record.longDescription, "Radio de giro", 750, 7500) : null;
   const basket = isPlatform(family) ? verifiedBasketDimensions(record.specs?.["Dimensiones Cesta"]) : null;
   const drawbar = family === "tractor-arrastre" ? editorialQuantityOf(record.specs, ["Tiro a la barra nominal"], "N") : null;
-  const mast = hasHandlingMeasurements(family) ? verifiedMast(record.specs?.["Tipo Mástil"] ?? record.specs?.["Tipo de mástil"]) : null;
+  const mast = hasHandlingMeasurements(family) ? verifiedMastOf(record) : null;
   const cleaningWidth = ["fregadora", "barredora", "maquina-limpieza"].includes(family) ?
     editorialMetricOf(record.specs, ["Anchura trabajo", "Anchura limpieza"]) : null;
   if (platform && source.workingHeight !== undefined && work === null ||

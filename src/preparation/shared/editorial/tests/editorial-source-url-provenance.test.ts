@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
+import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { resolveEditorialSource, verifiedUnbrandedEditorialSource } from "../domain/editorial-source.js";
 import { verifiedEditorialUrl } from "../domain/editorial-source-url.js";
 import {
@@ -84,5 +85,45 @@ test("las unidades sin marca conservan su procedencia estricta y no heredan otra
     assert.equal(verifiedUnbrandedEditorialSource({ ...source, reference: "REFERENCIA-DIFERENTE" }), false);
     assert.equal(verifiedUnbrandedEditorialSource({ ...source, url: `${source.url}?otra=unidad` }), false);
     assert.equal(verifiedUnbrandedEditorialSource({ ...source, url: `https://usuario@${new URL(source.url).host}${new URL(source.url).pathname}` }), false);
+  }
+});
+
+
+test("las identidades de anuncios originales y unidades nuevas compatibles conservan autenticidad por proveedor", () => {
+  const historical = [
+    accreditedSourceRecord("gam-original", "2102"),
+    accreditedSourceRecord("gomariz-original", "TE1591"),
+    accreditedSourceRecord("mercaeleva-original", "M208-7097")
+  ];
+  for (const original of historical) {
+    const initial = JSON.stringify(original);
+    assert.ok(resolveEditorialSource(original), original.providerId);
+    const nextReference = `NUEVA-${original.reference}`;
+    const nextUrl = original.providerId === "gam"
+      ? original.url.replace(`/${original.reference}-`, `/${nextReference}-`)
+      : original.providerId === "mercaeleva"
+        ? original.url.replace(`-${original.reference}`, `-${nextReference}`)
+        : original.url.replace(/\/$/u, "-unidad-nueva/");
+    const compatible: ProductRecord = { ...original, reference: nextReference, url: nextUrl };
+    assert.ok(resolveEditorialSource(compatible), original.providerId);
+    assert.equal(resolveEditorialSource({ ...compatible, brand: "OTRA MARCA" }), null, original.providerId);
+    assert.equal(resolveEditorialSource({ ...compatible, model: "OTRO MODELO" }), null, original.providerId);
+    assert.equal(resolveEditorialSource({ ...compatible, providerId: original.providerId === "gam" ? "gomariz" : "gam" }),
+      null, original.providerId);
+    assert.equal(JSON.stringify(original), initial, original.providerId);
+  }
+});
+
+test("los tres proveedores rechazan separadores de ruta codificados que el parser no normaliza", () => {
+  for (const factory of factories) {
+    const original = factory();
+    const encoded = original.providerId === "gam"
+      ? `${original.url}%2Fextra`
+      : original.providerId === "gomariz"
+        ? `${original.url.replace(/\/$/u, "")}%2Fextra/`
+        : original.url.replace(`-${original.reference}`, `%2Fextra-${original.reference}`);
+    for (const sourceUrl of [encoded, encoded.replace(/%2F/gu, "%2f"), encoded.replace(/%2F/gu, "%5C")]) {
+      assert.equal(resolveEditorialSource({ ...original, url: sourceUrl }), null, `${original.providerId} | ${sourceUrl}`);
+    }
   }
 });

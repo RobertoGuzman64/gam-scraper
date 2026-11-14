@@ -127,3 +127,25 @@ test("los tractores de arrastre publican arrastre y no capacidad de carga", () =
   const other = { ...tractor, specs: { ...tractor.specs, "Capacidad de arrastre": "1200 kg" } };
   assert.equal(prepareSourceProduct(other).product.spec["Capacidad de carga (kg)"], "2500 kg");
 });
+
+
+test("la energía reutilizable exige un único combustible en el título y corroboración de la fuente", () => {
+  for (const base of [controlledGamForklift(), controlledGomarizForklift(), controlledMercaelevaForklift()]) {
+    const corroborated: ProductRecord = {
+      ...base,
+      title: "Carretilla elevadora eléctrica MARCA MODELO10 2500 kg",
+      specs: { ...base.specs, "Tipo motor": "Eléctrico" }
+    };
+    assert.equal(resolveEditorialFacts(corroborated)?.energy, "eléctrica", base.providerId);
+    assert.match(resolveReusableEditorial(corroborated).short ?? "", /eléctrica/u, base.providerId);
+    const contradictory = {
+      ...corroborated, title: "Carretilla elevadora eléctrica diésel MARCA MODELO10 2500 kg"
+    };
+    assert.equal(resolveEditorialFacts(contradictory), null, base.providerId);
+    assert.deepEqual(resolveReusableEditorial(contradictory), { short: null, general: null }, base.providerId);
+    const opposite = {
+      ...corroborated, longDescription: "Carretilla elevadora MARCA MODELO10 con motor diésel."
+    };
+    assert.equal(resolveEditorialFacts(opposite), null, base.providerId);
+  }
+});

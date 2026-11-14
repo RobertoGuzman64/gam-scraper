@@ -8,7 +8,7 @@ export const verifiedEditorialUrl = (sourceUrl: string, hostnames: readonly stri
     const url = new URL(sourceUrl);
     return url.protocol === "https:" && hostnames.includes(url.hostname) &&
       !url.username && !url.password && !url.port && !url.search && !url.hash &&
-      !url.pathname.includes("//") ? url : null;
+      !url.pathname.includes("//") && !/%(?:2f|5c)/iu.test(url.pathname) ? url : null;
   } catch {
     return null;
   }

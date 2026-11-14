@@ -1,7 +1,7 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { resolveEditorialFacts } from "../domain/editorial-facts.js";
 import { resolveDocumentedEditorialTitle, resolveDocumentedFamilyTitle } from "../domain/editorial-documented-title.js";
-import { editorialFamilyName } from "../domain/editorial-families.js";
+import { editorialFamilyIsMasculine, editorialFamilyName } from "../domain/editorial-families.js";
 import { formatEditorialQuantity, hasEditorialMillimetreUnit } from "../domain/editorial-measurements.js";
 import { sameEditorialUnit, verifiedEditorialIdentity } from "../domain/editorial-source-contract.js";
 
@@ -15,7 +15,7 @@ export const resolvePreparedEditorialTitle = (record: ProductRecord, sourceUnitR
   if (!facts) return resolveDocumentedFamilyTitle(sourceUnitRecord) ??
     (record.title?.trim() || sourceUnitRecord.title?.trim() || null);
   const family = editorialFamilyName(facts.family);
-  const energy = facts.energy === "eléctrica" ? " eléctrica" :
+  const energy = facts.energy === "eléctrica" ? editorialFamilyIsMasculine(facts.family) ? " eléctrico" : " eléctrica" :
     facts.energy === "diésel" ? " diésel" :
       facts.energy === "GLP" ? " de GLP" : facts.energy === "gasolina" ? " de gasolina" : "";
   const height = facts.workingHeightM === null ? "" :
