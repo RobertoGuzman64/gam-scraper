@@ -42,8 +42,9 @@ const normalizeUppercaseDescriptions = (value: string): string => {
 const normalizeUnits = (value: string): string => {
   const meterContext = /\b(?:altura|elevaci[oó]n|alcance|trabajo|plataforma|tijera|articulada|cesta|telesc[oó]pic[oa])\b/iu.test(value);
   return value.replace(/(?<![\p{L}\p{N}/._-])(\d+(?:[.,]\d+)?)[ \t]*(kg|kgs|mm|mts|mt|m)(?![\p{L}\p{N}])/giu,
-    (original, quantity: string, unit: string) => {
+    (original, quantity: string, unit: string, index: number, source: string) => {
       const type = unit.toLocaleLowerCase("es");
+      if (type === "m" && unit === "M" && /^\s+[A-Z]\b/u.test(source.slice(index + original.length))) return original;
       if ((type === "mt" || type === "mts") && !meterContext) return original;
       return `${quantity} ${type === "kg" || type === "kgs" ? "kg" : type === "mm" ? "mm" : "m"}`;
     });
@@ -60,6 +61,17 @@ const outsideModel = (value: string, model: string | null, transform: (part: str
     output += transform(value.slice(index, position));
     output += match[0];
     index = position + match[0].length;
+  }
+  return output + transform(value.slice(index));
+};
+
+const outsideSourceQuotes = (value: string, transform: (part: string) => string): string => {
+  let index = 0;
+  let output = "";
+  for (const match of value.matchAll(/«[^»]*»/gu)) {
+    output += transform(value.slice(index, match.index));
+    output += match[0];
+    index = match.index + match[0].length;
   }
   return output + transform(value.slice(index));
 };
@@ -87,4 +99,4 @@ export const normalizeEditorialSummary = (
 };
 
 export const normalizeEditorialGeneral = (value: string | null, model: string | null): string | null =>
-  value === null ? null : outsideModel(value, model, normalizeUnits).trim();
+  value === null ? null : outsideSourceQuotes(value, (part) => outsideModel(part, model, normalizeUnits)).trim();

@@ -1,5 +1,5 @@
 import type { ProductRecord, SpecValue } from "../../../../contracts/catalog.js";
-import { resolveConsistentEditorialFamily } from "./editorial-families.js";
+import { editorialFamilyOf, resolveConsistentEditorialFamily } from "./editorial-families.js";
 import type { EditorialFamily } from "./editorial-families.js";
 import { editorialMetricOf, editorialQuantity, editorialQuantityOf } from "./editorial-measurements.js";
 import { resolveEditorialSource } from "./editorial-source.js";
@@ -85,8 +85,10 @@ const sourceMetric = (value: SpecValue | undefined, unit: "m" | "mm"): number | 
 };
 
 const sourceCapacity = (record: ProductRecord, source: EditorialSource, family: EditorialFamily): number | null => {
-  if (!isHandling(family) && !isPlatform(family) && family !== "elevador-materiales") return null;
-  const capacity = editorialQuantityOf(record.specs,
+  if (!isHandling(family) && !isPlatform(family) && family !== "elevador-materiales" && family !== "dumper") return null;
+  if (family === "dumper" && source.loadCapacity === undefined) return null;
+  const capacity = editorialQuantityOf(record.specs, family === "dumper" ?
+    ["Capacidad de carga (kg)", "Capacidad de carga", "Capacidad"] :
     ["Capacidad de carga (kg)", "Capacidad máxima de elevación", "Capacidad de carga", "Capacidad"], "kg");
   if (source.loadCapacity === undefined) return capacity;
   const sourced = editorialQuantity(source.loadCapacity, "kg");
@@ -177,15 +179,19 @@ export const resolveEditorialFacts = (record: ProductRecord, familyOverride: Edi
   const family = resolveConsistentEditorialFamily(source.familyClues, record.title,
     typeof record.specs?.["Título adicional"] === "string" ? record.specs["Título adicional"] : null,
     `${record.subcategory ?? ""} | ${record.categoryName}`, familyOverride);
-  if (!family) return null;
+  const titleFamily = editorialFamilyOf(record.title ?? "");
+  if (!family || family === "dumper" && titleFamily !== null && titleFamily !== family) return null;
   const energy = energyOf(record, source);
   if (energy === false) return null;
   const platform = isPlatform(family);
-  const work = platform ? sourceMetric(source.workingHeight, "m") : null;
+  const telehandler = family === "manipulador-telescopico";
+  const work = platform || telehandler ? sourceMetric(source.workingHeight, "m") : null;
   const platformHeight = platform ? editorialMetricOf(record.specs, ["Altura plataforma", "Altura Plataforma"]) : null;
-  const storedHeight = platform ? editorialMetricOf(record.specs, ["Altura almacenaje"]) : null;
+  const storedHeight = platform || telehandler || hasHandlingMeasurements(family) ||
+    family === "fregadora" || family === "barredora" || family === "maquina-limpieza" ?
+    editorialMetricOf(record.specs, ["Altura almacenaje"]) : null;
   const lateralFamily = family === "plataforma-telescopica" || family === "plataforma-articulada" ||
-    family === "plataforma-oruga" || family === "camion-cesta";
+    family === "plataforma-oruga" || family === "camion-cesta" || telehandler;
   const lateralAliases = lateralFamily ? editorialMetricOf(record.specs, ["Alcance lateral", "Alcance Lateral"]) : null;
   const lateralCandidate = lateralFamily && source.lateralReach !== undefined &&
     sourceMetric(source.lateralReach, "m") === lateralAliases ? lateralAliases :
@@ -216,9 +222,9 @@ export const resolveEditorialFacts = (record: ProductRecord, familyOverride: Edi
   const mast = hasHandlingMeasurements(family) ? verifiedMastOf(record) : null;
   const cleaningWidth = ["fregadora", "barredora", "maquina-limpieza"].includes(family) ?
     editorialMetricOf(record.specs, ["Anchura trabajo", "Anchura limpieza"]) : null;
-  if (platform && source.workingHeight !== undefined && work === null ||
-    lateralFamily && source.lateralReach !== undefined && lateralCandidate === null ||
-    source.loadCapacity !== undefined && (isHandling(family) || platform) && capacity === null ||
+  if ((platform || telehandler) && source.workingHeight !== undefined && work === null ||
+    lateralFamily && !telehandler && source.lateralReach !== undefined && lateralCandidate === null ||
+    source.loadCapacity !== undefined && (isHandling(family) || platform || family === "dumper") && capacity === null ||
     (isHandling(family) && source.liftingHeight !== undefined && lifting === null)) return null;
   if (!valid(work, 3, 60) || !valid(platformHeight, 0.5, 60) || !valid(storedHeight, 0.5, 30) ||
     !valid(lateral, 0.5, 60) || !valid(lifting, 0.5, 60) || !valid(capacity, 100, 50000) ||

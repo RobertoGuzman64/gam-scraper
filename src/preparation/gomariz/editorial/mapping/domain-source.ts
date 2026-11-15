@@ -2,6 +2,7 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { invalidGomarizPlatformHeight } from "../../../../catalog/normalization/gomariz/technical.js";
 import { verifiedEditorialUrl, containsEditorialSourceSlugModel } from "../../../shared/editorial/domain/editorial-source-url.js";
 import type { EditorialSource } from "../../../shared/editorial/domain/editorial-source-contract.js";
+import { editorialFamilyOf, resolveConsistentEditorialFamily } from "../../../shared/editorial/domain/editorial-families.js";
 import { verifiedEditorialIdentity, verifiedEditorialStructuredIdentity } from "../../../shared/editorial/domain/editorial-source-contract.js";
 
 const sourceFamilies: Readonly<Record<string, string>> = {
@@ -26,9 +27,12 @@ export const resolveGomarizEditorialDomainSource = (record: ProductRecord): Edit
   if (!validPath || !containsEditorialSourceSlugModel(path[path.length - 1] ?? "", model, record.specs?.Motor)) return null;
   const pathFamily = path.length === 4 && path[0] === "venta" ?
     sourceFamilies[`${path[1]}/${path[2]}`] ?? "" : "";
+  const sourcedFamily = editorialFamilyOf(pathFamily || url.pathname);
+  if (sourcedFamily && editorialFamilyOf(record.title ?? "") &&
+    resolveConsistentEditorialFamily(pathFamily || url.pathname, record.title, null, "", sourcedFamily) === null) return null;
   return {
     brand, model,
-    familyClues: `${pathFamily} ${record.title ?? ""} ${url.pathname}`,
+    familyClues: pathFamily ? `${pathFamily} ${url.pathname}` : `${record.title ?? ""} ${url.pathname}`,
     workingHeight: record.specs?.["Altura de trabajo"],
     lateralReach: record.specs?.["Alcance lateral"],
     liftingHeight: undefined,

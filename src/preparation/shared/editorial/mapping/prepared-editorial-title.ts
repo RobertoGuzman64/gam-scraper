@@ -8,6 +8,12 @@ import { sameEditorialUnit, verifiedEditorialIdentity } from "../domain/editoria
 export const resolvePreparedEditorialTitle = (record: ProductRecord, sourceUnitRecord: ProductRecord): string | null => {
   const documented = resolveDocumentedEditorialTitle(sourceUnitRecord);
   if (documented !== null) return documented;
+  if (sourceUnitRecord.providerId === "gam" && sourceUnitRecord.shortDescription === null &&
+    sourceUnitRecord.longDescription === null &&
+    verifiedEditorialIdentity(sourceUnitRecord) && sameEditorialUnit(record, sourceUnitRecord) &&
+    sourceUnitRecord.specs?.Marca === sourceUnitRecord.brand &&
+    sourceUnitRecord.specs?.Modelo === sourceUnitRecord.model &&
+    sourceUnitRecord.title?.trim()) return sourceUnitRecord.title.trim();
   const facts = resolveEditorialFacts(record);
   if (facts && sameEditorialUnit(record, sourceUnitRecord) && verifiedEditorialIdentity(sourceUnitRecord) &&
     hasEditorialMillimetreUnit(sourceUnitRecord.specs?.["Altura máxima de elevación"]) &&

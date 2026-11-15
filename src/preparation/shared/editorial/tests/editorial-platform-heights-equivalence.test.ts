@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
+import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { resolveEditorialFacts } from "../domain/editorial-facts.js";
 import { resolveReusableEditorial } from "../domain/editorial-composition.js";
 
@@ -155,4 +156,64 @@ test("ausencia, unidades incompatibles y valores ambiguos no se convierten en la
   assert.equal(resolveEditorialFacts(onlyWorking)?.platformHeightM, null);
   assert.equal(resolveEditorialFacts(onlyWorking)?.storedHeightM, null);
   assert.doesNotMatch(resolveReusableEditorial(onlyWorking).general ?? "", /altura (?:de plataforma|de almacenaje) de /u);
+});
+
+
+test("RE008 conserva el original de altura contradictoria sin generalizar su corrección técnica", () => {
+  const source = accreditedSourceRecord("gomariz-original", "TE1858");
+  const snapshot = JSON.stringify(source);
+  assert.equal(source.specs?.["Altura plataforma"], "14.30 m");
+  assert.equal(source.specs?.["Altura de trabajo"], "6.3 m");
+  const original = prepareSourceProduct(source);
+  assert.equal(original.status, "ready");
+  assert.equal(original.product.spec["Altura plataforma"], "4,3 m");
+  assert.match(original.product.description_general ?? "", /altura de trabajo de 6,3 m/u);
+  assert.doesNotMatch(original.product.description_general ?? "", /altura de plataforma de 14,3 m/u);
+  const unrelated: ProductRecord = {
+    ...source,
+    reference: "TE1858-OTRA",
+    url: source.url.replace(/\/$/u, "-otra-unidad/"),
+    shortDescription: null,
+    longDescription: null,
+    year: null
+  };
+  const rejected = prepareSourceProduct(unrelated);
+  assert.equal(resolveEditorialFacts(unrelated), null);
+  assert.deepEqual(resolveReusableEditorial(unrelated), { short: null, general: null });
+  assert.equal(rejected.status, "review");
+  assert.ok(rejected.issues.some((issue) => issue.includes("Alturas contradictorias")));
+  assert.notEqual(rejected.product.spec["Altura plataforma"], "4,3 m");
+  assert.equal(JSON.stringify(source), snapshot);
+});
+
+test("RE008 generaliza alturas propias sin heredar las de otra unidad ni mezclar conceptos", () => {
+  const source = accreditedSourceRecord("gomariz-original", "TE1618");
+  const compatible: ProductRecord = {
+    ...source,
+    reference: "TE1618-OTRA",
+    url: source.url.replace(/\/$/u, "-otra-unidad/"),
+    shortDescription: null,
+    longDescription: null,
+    year: null,
+    specs: { ...source.specs, "Altura plataforma": "8 m", "Altura de trabajo": "10 m" }
+  };
+  const facts = resolveEditorialFacts(compatible);
+  assert.equal(facts?.workingHeightM, 10);
+  assert.equal(facts?.platformHeightM, 8);
+  const prepared = prepareSourceProduct(compatible);
+  assert.equal(prepared.status, "ready");
+  assert.match(prepared.product.description_general ?? "", /altura de trabajo de 10 m/u);
+  assert.match(prepared.product.description_general ?? "", /altura de plataforma de 8 m/u);
+  assert.equal(prepared.product.reference, compatible.reference);
+  assert.equal(prepared.product.sourceUrl, compatible.url);
+  const missingSpecs = { ...compatible.specs };
+  delete missingSpecs["Altura plataforma"];
+  const missing: ProductRecord = { ...compatible, specs: missingSpecs };
+  assert.equal(resolveEditorialFacts(missing)?.platformHeightM, null);
+  assert.doesNotMatch(resolveReusableEditorial(missing).general ?? "", /altura de plataforma de /u);
+  for (const value of ["11 m", "8 kg", "8 m o 9 m", "8000"]) {
+    const invalid: ProductRecord = { ...compatible, specs: { ...compatible.specs, "Altura plataforma": value } };
+    assert.equal(resolveEditorialFacts(invalid)?.platformHeightM ?? null, null);
+    assert.doesNotMatch(resolveReusableEditorial(invalid).general ?? "", /altura de plataforma de /u);
+  }
 });

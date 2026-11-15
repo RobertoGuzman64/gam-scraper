@@ -4,6 +4,8 @@ import { reconcileGamVerifiedUnitYear } from "../../../gam/technical/reconciliat
 import { normalizeEditorialGeneral, normalizeEditorialSummary, normalizeEditorialTitle } from "../domain/editorial-normalization.js";
 import { presentCommercialMotorization } from "../domain/editorial-motorization.js";
 import { normalizeCorroboratedEditorialFuel } from "../domain/editorial-fuel-coherence.js";
+import { hasUncorroboratedSignedMotor } from "../domain/editorial-signed-motor-caution.js";
+import { resolveKnowledgeEditorial } from "./knowledge-editorial.js";
 import { assessCommercialHeight } from "../domain/editorial-height-consistency.js";
 import { normalizeCommercialYearDescription } from "./source-year-presentation.js";
 import { normalizeVerifiedEditorialCapacity } from "../domain/editorial-capacity-coherence.js";
@@ -18,8 +20,10 @@ export const normalizePreparedEditorialPresentation = (
     source.url !== prepared.sourceUrl) throw new Error(`Identidad editorial discordante: ${prepared.sourceUrl}`);
   const verifiedSource = reconcileGamVerifiedUnitYear(source);
   const restoredIdentity = restoreCorroboratedEditorialIdentity(source, prepared.title, prepared.description);
+  const sourceMotorConflict = hasUncorroboratedSignedMotor(resolveKnowledgeEditorial(source, source).fallbackGeneral);
+  const motorized = sourceMotorConflict ? { ...prepared, spec: { ...prepared.spec, Motor: undefined } } : prepared;
   const baseTitle = presentCommercialMotorization(
-    normalizeEditorialTitle(removeSourceTitleBranding(source, restoredIdentity?.title ?? prepared.title), source.model), prepared
+    normalizeEditorialTitle(removeSourceTitleBranding(source, restoredIdentity?.title ?? prepared.title), source.model), motorized
   );
   const summary = normalizeCorroboratedTowingSummary(source, prepared,
     normalizeEditorialSummary(removeSourceSummaryBranding(source, restoredIdentity?.short ?? prepared.description), source.model));

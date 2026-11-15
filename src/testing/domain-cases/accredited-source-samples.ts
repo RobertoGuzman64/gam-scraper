@@ -6,10 +6,12 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 export const accreditedSourceDatasets = [
   "gam-original",
   "gam-historical",
+  "gam-editorial-historical",
   "mercaeleva-original",
   "mercaeleva-historical",
   "gomariz-original",
   "gomariz-regression",
+  "gomariz-special-original",
 ] as const;
 
 export type AccreditedSourceDataset = typeof accreditedSourceDatasets[number];

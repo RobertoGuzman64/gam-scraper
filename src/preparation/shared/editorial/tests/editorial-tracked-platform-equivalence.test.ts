@@ -140,7 +140,8 @@ test("RE032: originales excepcionales conservan su tratamiento sin extrapolar te
   const sourceWithDescription = accreditedSourceRecord("gam-original", "4655");
   const sourceWithSignedGeneral = accreditedSourceRecord("gam-original", "6171");
   assert.equal(prepareSourceProduct(sourceWithDescription).status, "ready");
-  assert.equal(prepareSourceProduct(sourceWithSignedGeneral).status, "ready");
+  assert.equal(prepareSourceProduct(sourceWithSignedGeneral).status, "review");
+  assert.ok(prepareSourceProduct(sourceWithSignedGeneral).issues.includes("Identidad GAM contradictoria entre título y modelo técnico"));
   assert.equal(resolveEditorialFacts(sourceWithSignedGeneral), null);
   assert.ok(resolveKnowledgeEditorial(sourceWithSignedGeneral).general);
   const compatible = newUnit(sourceWithDescription, "84655", {});

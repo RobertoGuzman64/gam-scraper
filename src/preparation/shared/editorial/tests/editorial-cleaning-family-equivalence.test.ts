@@ -165,3 +165,53 @@ test("identidad, procedencia y contradicciones de familia impiden reutilizar hec
     }
   }
 });
+
+
+test("las medidas históricas de limpieza se conservan también en la general compartida", () => {
+  const original = originals.gomarizScrubber;
+  const snapshot = JSON.stringify(original);
+  const shared = resolveReusableEditorial(original);
+  const prepared = prepareSourceProduct(original);
+  const general = prepared.product.description_general ?? "";
+  assert.equal(prepared.status, "ready");
+  assert.ok(shared.general);
+  for (const fragment of ["peso declarado de 705 kg", "longitud de 1,55 m",
+    "anchura de 0,88 m", "anchura de trabajo de limpieza de 0,81 m"]) {
+    assert.ok(shared.general.includes(fragment), fragment);
+    assert.ok(general.includes(fragment), fragment);
+  }
+  assert.equal(JSON.stringify(original), snapshot);
+});
+
+test("una fregadora nueva publica únicamente sus propias medidas, sin heredar las de otra unidad", () => {
+  const original = originals.gomarizScrubber;
+  const next = nextUnit(original, "0.85 m");
+  const changed: ProductRecord = {
+    ...next,
+    specs: { ...next.specs, Peso: "680 kg", Longitud: "1.70 m", Anchura: "0.90 m" }
+  };
+  const snapshot = JSON.stringify([original, changed]);
+  const prepared = prepareSourceProduct(changed);
+  const general = prepared.product.description_general ?? "";
+  assert.equal(prepared.status, "ready");
+  for (const fragment of ["peso declarado de 680 kg", "longitud de 1,7 m",
+    "anchura de 0,9 m", "anchura de trabajo de limpieza de 0,85 m"]) {
+    assert.ok(general.includes(fragment), fragment);
+  }
+  for (const originalMeasure of ["705 kg", "1,55 m", "0,88 m", "0,81 m"]) {
+    assert.ok(!general.includes(originalMeasure), originalMeasure);
+  }
+  assert.equal(JSON.stringify([original, changed]), snapshot);
+});
+
+test("medidas ausentes o ambiguas no se completan con firmas históricas ajenas", () => {
+  const original = originals.gomarizScrubber;
+  const next = nextUnit(original, "0.85 m");
+  const unknown: ProductRecord = {
+    ...next,
+    specs: { ...next.specs, Peso: "sin verificar", Longitud: "sin verificar" }
+  };
+  const general = prepareSourceProduct(unknown).product.description_general ?? "";
+  assert.match(general, /anchura de trabajo de limpieza de 0,85 m/u);
+  assert.doesNotMatch(general, /peso declarado de|longitud de|705 kg|1,55 m/u);
+});

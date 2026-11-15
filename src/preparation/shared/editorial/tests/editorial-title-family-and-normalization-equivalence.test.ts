@@ -4,7 +4,8 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { resolveEditorialFacts } from "../domain/editorial-facts.js";
-import { normalizeEditorialTitle } from "../domain/editorial-normalization.js";
+import { normalizeEditorialGeneral, normalizeEditorialTitle } from "../domain/editorial-normalization.js";
+import { resolveKnowledgeEditorial } from "../mapping/knowledge-editorial.js";
 import { presentCommercialMotorization } from "../domain/editorial-motorization.js";
 import { resolvePreparedEditorialTitle } from "../mapping/prepared-editorial-title.js";
 import { normalizePreparedEditorialPresentation } from "../mapping/prepared-editorial-presentation.js";
@@ -119,4 +120,71 @@ test("RE052 aplica la normalización dentro de la presentación comercial sin ca
   assert.deepEqual(normalizePreparedEditorialPresentation(source, corrected), corrected);
   assert.throws(() => normalizePreparedEditorialPresentation({ ...source, reference: "OTRA" }, prepared),
     /Identidad editorial discordante/u);
+});
+
+test("las referencias técnicas no convierten sufijos de alternador en metros", () => {
+  const text = "Grupo Pramac GSW65P: alternador Mecc Alte ECP 32 2M B; cable de 4mm y peso de 1060KG.";
+  const normalized = normalizeEditorialGeneral(text, "GSW65P");
+  assert.equal(normalized,
+    "Grupo Pramac GSW65P: alternador Mecc Alte ECP 32 2M B; cable de 4 mm y peso de 1060 kg.");
+  assert.equal(normalizeEditorialGeneral(normalized, "GSW65P"), normalized);
+  assert.equal(normalizeEditorialTitle("GRUPO ELECTROGENO PRAMAC GSW65P ECP 32 2M B", "GSW65P"),
+    "GRUPO ELECTROGENO PRAMAC GSW65P ECP 32 2M B");
+});
+
+test("las citas literales de origen conservan grafías anómalas sin impedir normalizar magnitudes acreditadas", () => {
+  const text = "El anuncio declara «4.30mm» y la ficha técnica expresa 4300mm de elevación y 2500KG de carga.";
+  const normalized = normalizeEditorialGeneral(text, "C250HX4");
+  assert.equal(normalized,
+    "El anuncio declara «4.30mm» y la ficha técnica expresa 4300 mm de elevación y 2500 kg de carga.");
+  assert.equal(normalizeEditorialGeneral(normalized, "C250HX4"), normalized);
+  assert.equal(normalizeEditorialGeneral("Texto con 12m y cita «8M»; carga 230KG.", null),
+    "Texto con 12 m y cita «8M»; carga 230 kg.");
+});
+
+
+test("la normalización conserva títulos literales entrecomillados en firmas históricas y normaliza las medidas externas", () => {
+  for (const reference of ["6195", "6196"]) {
+    const source = accreditedSourceRecord("gam-original", reference);
+    const snapshot = JSON.stringify(source);
+    const signed = resolveKnowledgeEditorial(source, source).general;
+    assert.ok(signed, reference);
+    assert.match(signed, /«Plataforma Tijera Eléctrica 8M JLG 1930ES»/u);
+    const prepared = prepareSourceProduct(source);
+    assert.equal(prepared.status, "ready", reference);
+    assert.match(prepared.product.description_general ?? "", /«Plataforma Tijera Eléctrica 8M JLG 1930ES»/u);
+    assert.match(prepared.product.description_general ?? "", /230 kg/u);
+    assert.doesNotMatch(prepared.product.description_general ?? "", /«Plataforma Tijera Eléctrica 8 m JLG 1930ES»/u);
+    assert.equal(normalizeEditorialGeneral(prepared.product.description_general, source.model),
+      prepared.product.description_general);
+    assert.equal(JSON.stringify(source), snapshot);
+  }
+});
+
+test("las citas de origen de una unidad no se convierten en firmas transferibles a otra referencia", () => {
+  for (const reference of ["6195", "6196"]) {
+    const source = accreditedSourceRecord("gam-original", reference);
+    const signed = resolveKnowledgeEditorial(source, source).general;
+    assert.ok(signed);
+    for (const changed of [
+      { ...source, reference: `${reference}-NUEVA`, url: `${source.url}?unidad=nueva` },
+      { ...source, providerId: "otro-proveedor" },
+      { ...source, url: `${source.url}?revisada=1` },
+      { ...source, model: "1930 ES OTRA" },
+      { ...source, specs: { ...source.specs, "Información revisada": "dato no autenticado" } }
+    ]) {
+      const knowledge = resolveKnowledgeEditorial(changed, changed);
+      assert.equal(knowledge.general, null);
+      assert.equal(knowledge.short, null);
+    }
+  }
+});
+
+test("las citas técnicas literales múltiples y las medidas fuera de ellas permanecen separadas", () => {
+  const text = "Código «8M» y denominación «modelo 4.30mm»; altura de trabajo 8M, carga 230KG y longitud 1450mm.";
+  const expected = "Código «8M» y denominación «modelo 4.30mm»; altura de trabajo 8 m, carga 230 kg y longitud 1450 mm.";
+  assert.equal(normalizeEditorialGeneral(text, null), expected);
+  assert.equal(normalizeEditorialGeneral(expected, null), expected);
+  assert.equal(normalizeEditorialGeneral("Altura «8M» y texto sin cierre «12KG, masa 1000KG.", null),
+    "Altura «8M» y texto sin cierre «12 kg, masa 1000 kg.");
 });

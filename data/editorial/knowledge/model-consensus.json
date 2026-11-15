@@ -3,6 +3,20 @@
   "criterion": "minimo_dos_fichas_y_ausencia_de_contradicciones_entre_las_fichas_que_declaran_la_magnitud",
   "entries": [
     {
+      "brand": "Ausa",
+      "model": "C250HX4",
+      "family": "carretilla-elevadora",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M855-6850",
+        "mercaeleva:M640-1938"
+      ],
+      "stable": {
+        "liftingHeightM": 4.3,
+        "loadCapacityKg": 2500
+      }
+    },
+    {
       "brand": "CESAB",
       "model": "B318LII",
       "family": "carretilla-elevadora",
@@ -225,6 +239,8 @@
         "gomariz:MT1415"
       ],
       "stable": {
+        "workingHeightM": 5.79,
+        "lateralReachM": 3.35,
         "loadCapacityKg": 2500,
         "energy": "diésel"
       }
@@ -990,6 +1006,7 @@
         "gomariz:MT845"
       ],
       "stable": {
+        "workingHeightM": 7,
         "loadCapacityKg": 3100,
         "energy": "diésel"
       }
@@ -1009,6 +1026,7 @@
         "gomariz:MT843"
       ],
       "stable": {
+        "workingHeightM": 12.28,
         "loadCapacityKg": 3500,
         "energy": "diésel"
       }
@@ -1023,6 +1041,8 @@
         "gomariz:MT1314"
       ],
       "stable": {
+        "workingHeightM": 13.78,
+        "lateralReachM": 9.6,
         "loadCapacityKg": 3500,
         "energy": "diésel"
       }
@@ -1037,6 +1057,8 @@
         "gomariz:MT1659"
       ],
       "stable": {
+        "workingHeightM": 13.8,
+        "lateralReachM": 9.25,
         "loadCapacityKg": 4000,
         "energy": "diésel"
       }
@@ -2052,6 +2074,19 @@
       }
     },
     {
+      "brand": "Linde",
+      "model": "E16P-02",
+      "family": "carretilla-elevadora",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M061-2792",
+        "mercaeleva:M017-2019"
+      ],
+      "stable": {
+        "loadCapacityKg": 1600
+      }
+    },
+    {
       "brand": "MAGNI",
       "model": "DS1523RTP",
       "family": "plataforma-tijera",
@@ -2235,6 +2270,47 @@
       }
     },
     {
+      "brand": "Nissan",
+      "model": "GQ02L30CU",
+      "family": "carretilla-elevadora",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M520-1851",
+        "mercaeleva:M493-1006"
+      ],
+      "stable": {
+        "liftingHeightM": 6,
+        "loadCapacityKg": 3000
+      }
+    },
+    {
+      "brand": "Nissan",
+      "model": "Q02L20CU",
+      "family": "carretilla-elevadora",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M121-6486",
+        "mercaeleva:M547-0541"
+      ],
+      "stable": {
+        "liftingHeightM": 6,
+        "loadCapacityKg": 2000
+      }
+    },
+    {
+      "brand": "Nissan",
+      "model": "Q02L25CU",
+      "family": "carretilla-elevadora",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:CAE1207",
+        "mercaeleva:M050-0294"
+      ],
+      "stable": {
+        "loadCapacityKg": 2500
+      }
+    },
+    {
       "brand": "Oil & Steel",
       "model": "SCORPION 1490",
       "family": "camion-cesta",
@@ -2245,6 +2321,21 @@
       ],
       "stable": {
         "workingHeightM": 15,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Pramac",
+      "model": "GPW45P",
+      "family": "grupo-electrogeno",
+      "samples": 3,
+      "catalogReferences": [
+        "gomariz:GR1681",
+        "gomariz:GR1680",
+        "gomariz:GR1679"
+      ],
+      "stable": {
+        "powerKva": 45,
         "energy": "diésel"
       }
     },
@@ -2373,6 +2464,19 @@
         "platformHeightM": 11.8,
         "loadCapacityKg": 350,
         "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Toyota",
+      "model": "7FBEF15",
+      "family": "carretilla-elevadora",
+      "samples": 2,
+      "catalogReferences": [
+        "mercaeleva:M270-9140",
+        "mercaeleva:M052-5188"
+      ],
+      "stable": {
+        "loadCapacityKg": 1500
       }
     },
     {

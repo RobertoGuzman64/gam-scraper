@@ -3,6 +3,10 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { resolveSourceEditorialClaims } from "../domain/editorial-source-claims.js";
+import { resolveDocumentedBatteryConfiguration } from "../domain/editorial-battery-claims.js";
+import { resolveReusableEditorial } from "../domain/editorial-composition.js";
+import { resolveEditorialFacts } from "../domain/editorial-facts.js";
+import { prepareSourceProduct } from "../../../prepare-product.js";
 import { compressVerifiedSourceShort } from "../domain/editorial-source-brief.js";
 
 const original = (provider: string, reference: string): ProductRecord => {
@@ -48,4 +52,95 @@ test("la compresión compartida conserva los hechos omitidos en la general y rec
   assert.equal(compressVerifiedSourceShort(source, "Resumen independiente del anuncio.", general), null);
   assert.equal(compressVerifiedSourceShort({ ...source, model: "OTRO" }, source.shortDescription, general), null);
   assert.equal(compressVerifiedSourceShort({ ...source, url: "https://example.invalid/6218" }, source.shortDescription, general), null);
+});
+
+
+const relatedBatteryUnit = (source: ProductRecord): ProductRecord => ({
+  ...source,
+  reference: `${source.reference}-OTRA`,
+  url: source.url.replace(source.reference ?? "", `${source.reference}-OTRA`),
+  shortDescription: null,
+  longDescription: null,
+  year: null
+});
+
+test("RE021 preserva tecnología, tensión y capacidad de batería en unidades nuevas compatibles", () => {
+  for (const [reference, type, voltage, capacity] of [
+    ["M288-9739", "ion-litio", 24, 100],
+    ["M119-9334", "ion-litio", 48, 30]
+  ] as const) {
+    const source = original("mercaeleva", reference);
+    const snapshot = JSON.stringify(source);
+    const historical = prepareSourceProduct(source);
+    assert.equal(historical.status, "ready");
+    assert.match(historical.product.description_general ?? "", /bater[ií]a/u);
+    const compatible = relatedBatteryUnit(source);
+    const facts = resolveEditorialFacts(compatible);
+    assert.ok(facts);
+    assert.equal(facts.voltageV, voltage);
+    const battery = `batería de ${type} con capacidad declarada de ${capacity} Ah`;
+    assert.ok(resolveReusableEditorial(compatible).general?.includes(`voltaje declarado de ${voltage} V`));
+    assert.ok(resolveReusableEditorial(compatible).general?.includes(battery));
+    const prepared = prepareSourceProduct(compatible);
+    if (reference === "M288-9739") assert.equal(prepared.status, "ready");
+    else {
+      assert.equal(prepared.status, "review");
+      assert.ok(prepared.issues.some((issue) => issue.includes("Capacidad de carga")));
+    }
+    assert.ok(prepared.product.description_general?.includes(battery));
+    assert.equal(prepared.product.reference, compatible.reference);
+    assert.equal(prepared.product.sourceUrl, compatible.url);
+    assert.equal(JSON.stringify(source), snapshot);
+  }
+});
+
+test("RE021 atribuye solo la configuración declarada para la unidad nueva", () => {
+  const source = original("mercaeleva", "M288-9739");
+  const unit = relatedBatteryUnit(source);
+  const changed: ProductRecord = {
+    ...unit,
+    specs: { ...unit.specs, "Capacidad de la batería": "205 Ah" }
+  };
+  const general = prepareSourceProduct(changed).product.description_general ?? "";
+  assert.match(general, /voltaje declarado de 24 V y batería de ion-litio con capacidad declarada de 205 Ah/u);
+  assert.doesNotMatch(general, /100 Ah/u);
+  assert.equal(resolveDocumentedBatteryConfiguration(source, changed, "apilador", 24), null);
+  assert.equal(resolveDocumentedBatteryConfiguration(source, unit, "apilador", 24), null);
+  assert.equal(resolveDocumentedBatteryConfiguration(unit, unit, "apilador", 48), null);
+  assert.equal(resolveDocumentedBatteryConfiguration(unit, unit, "plataforma-tijera", 24), null);
+  const differentReference: ProductRecord = { ...unit, reference: "M288-9739-AJENA" };
+  assert.equal(resolveDocumentedBatteryConfiguration(unit, differentReference, "apilador", 24), null);
+  const differentOrigin: ProductRecord = { ...unit, providerId: "gam" };
+  assert.equal(resolveDocumentedBatteryConfiguration(unit, differentOrigin, "apilador", 24), null);
+  const differentModel: ProductRecord = { ...unit, model: "ESL123" };
+  assert.equal(resolveDocumentedBatteryConfiguration(unit, differentModel, "apilador", 24), null);
+});
+
+test("RE021 bloquea opciones, ambigüedades y unidades de magnitud incompatibles", () => {
+  const source = relatedBatteryUnit(original("mercaeleva", "M288-9739"));
+  for (const text of [
+    "La batería de 24 V es opcional según la versión.",
+    "La batería de 24 V no se incluye en esta unidad.",
+    "El equipo puede montar batería de 24 V bajo pedido."
+  ]) {
+    const conditional: ProductRecord = { ...source, longDescription: text };
+    assert.equal(resolveDocumentedBatteryConfiguration(conditional, conditional, "apilador", 24), null);
+    assert.doesNotMatch(resolveReusableEditorial(conditional).general ?? "", /batería de ion-litio/u);
+  }
+  for (const specifications of [
+    { "Voltaje de la batería": "24 A" },
+    { "Capacidad de la batería": "100 Wh" },
+    { "Capacidad de la batería": "100 Ah o 205 Ah" },
+    { "Tipo de Batería": "Opcional" }
+  ]) {
+    const invalid: ProductRecord = { ...source, specs: { ...source.specs, ...specifications } };
+    assert.doesNotMatch(resolveReusableEditorial(invalid).general ?? "", /batería de ion-litio/u);
+  }
+  const specsWithoutBattery = { ...source.specs };
+  delete specsWithoutBattery["Tipo de Batería"];
+  const withoutBattery: ProductRecord = { ...source, specs: specsWithoutBattery };
+  assert.doesNotMatch(resolveReusableEditorial(withoutBattery).general ?? "", /batería de ion-litio/u);
+  const charger: ProductRecord = { ...source, specs: { ...source.specs, "Voltaje del cargador": "220 V" } };
+  assert.match(resolveReusableEditorial(charger).general ?? "", /batería de ion-litio con capacidad declarada de 100 Ah/u);
+  assert.doesNotMatch(resolveReusableEditorial(charger).general ?? "", /voltaje declarado de 220 V/u);
 });

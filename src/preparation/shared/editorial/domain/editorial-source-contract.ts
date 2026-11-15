@@ -47,4 +47,42 @@ export const sameEditorialUnit = (source: ProductRecord, prepared: ProductRecord
   source.brand === prepared.brand && source.model === prepared.model &&
   source.condition === prepared.condition;
 
+const singleCapacity = (value: string): RegExpMatchArray | null => {
+  const matches = [...value.matchAll(/\b(\d{3,5})\s*kg\b/giu)];
+  return matches.length === 1 ? matches[0] ?? null : null;
+};
+
+const correctedCapacityText = (value: string, previous: string, next: string): string | null => {
+  const match = singleCapacity(value);
+  if (!match?.[0] || !match[1] || match.index === undefined || match[1] !== previous) return null;
+  return `${value.slice(0, match.index)}${match[0].replace(match[1], next)}${value.slice(match.index + match[0].length)}`;
+};
+
+export const hasCorroboratedEditorialCapacityReconciliation = (
+  source: ProductRecord, prepared: ProductRecord
+): boolean => {
+  if (!sameEditorialUnit(source, prepared) || !source.brand || !source.model ||
+    !verifiedEditorialIdentity(source) || source.title === prepared.title ||
+    source.shortDescription !== prepared.shortDescription ||
+    source.year !== prepared.year || source.horometer !== prepared.horometer ||
+    source.serialNumber !== prepared.serialNumber) return false;
+  const originalCapacity = singleCapacity(source.title ?? "")?.[1];
+  const technicalCapacity = /^(\d{3,5})\s*kg$/iu.exec(
+    String(source.specs?.["Capacidad máxima de elevación"] ?? "").trim()
+  )?.[1];
+  if (!originalCapacity || !technicalCapacity || originalCapacity === technicalCapacity ||
+    source.specs?.Marca !== prepared.specs?.Marca ||
+    source.specs?.Modelo !== prepared.specs?.Modelo ||
+    source.specs?.["Capacidad máxima de elevación"] !== prepared.specs?.["Capacidad máxima de elevación"]) return false;
+  const originalAdditional = source.specs?.["Título adicional"];
+  const preparedAdditional = prepared.specs?.["Título adicional"];
+  if (typeof originalAdditional !== "string" || typeof preparedAdditional !== "string" ||
+    correctedCapacityText(originalAdditional, originalCapacity, technicalCapacity) !== preparedAdditional) return false;
+  const originalGeneral = source.longDescription;
+  return typeof originalGeneral === "string" && typeof prepared.longDescription === "string" &&
+    correctedCapacityText(source.title ?? "", originalCapacity, technicalCapacity) === prepared.title &&
+    (prepared.longDescription === originalGeneral ||
+      correctedCapacityText(originalGeneral, originalCapacity, technicalCapacity) === prepared.longDescription);
+};
+
 export type { EditorialSource };

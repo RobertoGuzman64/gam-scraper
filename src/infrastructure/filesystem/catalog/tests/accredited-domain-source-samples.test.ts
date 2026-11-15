@@ -7,10 +7,12 @@ import type { AccreditedSourceDataset } from "../../../../testing/domain-cases/a
 const sourcePaths: Readonly<Record<AccreditedSourceDataset, string>> = {
   "gam-original": "catalogs/providers/gam/original/scrape-gam-catalog.json",
   "gam-historical": "src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json",
+  "gam-editorial-historical": "catalogs/providers/gam/original/scrape-gam-catalog.json",
   "mercaeleva-original": "catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json",
   "mercaeleva-historical": "src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json",
   "gomariz-original": "catalogs/providers/gomariz/original/scrape-gomariz-catalog.json",
   "gomariz-regression": "src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json",
+  "gomariz-special-original": "catalogs/providers/gomariz/original/scrape-gomariz-catalog.json",
 };
 
 for (const dataset of accreditedSourceDatasets) {

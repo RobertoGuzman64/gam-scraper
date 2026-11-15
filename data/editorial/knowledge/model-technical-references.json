@@ -339,6 +339,18 @@
     },
     {
       "brand": "Haulotte",
+      "model": "STAR-10",
+      "family": "plataforma-mastil",
+      "advertisedWorkHeight": "10 m",
+      "documentedWorkHeight": "10 m",
+      "platformHeight": "8 m",
+      "nominalCapacity": "200 kg",
+      "characteristic": "3 m de alcance horizontal con plumín en la documentación del fabricante",
+      "energy": "eléctrica",
+      "sourceUrl": "https://www.haulotte.com.es/es_ES/productos/star-10"
+    },
+    {
+      "brand": "Haulotte",
       "model": "Optimum 8",
       "family": "plataforma-tijera",
       "advertisedWorkHeight": "8 m",

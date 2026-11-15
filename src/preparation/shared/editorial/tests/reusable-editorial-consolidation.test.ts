@@ -19,11 +19,15 @@ test("el compositor preserva solo magnitudes acreditadas de cada fuente", () => 
 
 test("la interpretación de ruta del proveedor permanece separada del compositor", () => {
   const base = controlledGomarizPlatform();
-  const fromCategory = { ...base, url: "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/marca-modelo10/" };
+  const fromCategory = {
+    ...base, title: "Plataforma articulada MARCA MODELO10",
+    url: "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/marca-modelo10/"
+  };
   const resolved = resolveGomarizEditorialDomainSource(fromCategory);
   if (!resolved) throw new Error("Origen Gomariz incompatible con el contrato editorial");
   assert.match(resolved.familyClues, /brazo-articulado/u);
   assert.ok(resolveGomarizEditorialDomainSource(base));
+  assert.equal(resolveGomarizEditorialDomainSource({ ...fromCategory, title: base.title }), null);
   assert.equal(resolveGomarizEditorialDomainSource({ ...fromCategory, providerId: "gam" }), null);
   assert.equal(resolveGomarizEditorialDomainSource({ ...fromCategory, url: "https://example.invalid/venta/elevacion-y-trabajos-en-altura/brazo-articulado/marca-modelo10/" }), null);
 });

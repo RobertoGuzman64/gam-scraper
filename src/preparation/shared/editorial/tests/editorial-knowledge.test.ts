@@ -6,7 +6,7 @@ import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredi
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { resolveEditorialFacts } from "../domain/editorial-facts.js";
 import { editorialSourceDigest, loadEditorialKnowledge } from "../../../../infrastructure/filesystem/editorial/knowledge.js";
-import { selectUnitKnowledge } from "../domain/editorial-knowledge.js";
+import { editorialModelKey, resolveModelReference, selectUnitKnowledge } from "../domain/editorial-knowledge.js";
 import { resolveKnowledgeEditorial } from "../mapping/knowledge-editorial.js";
 import { resolvePreparedEditorial } from "../mapping/prepared-editorial.js";
 import { captureSourceEditorialEvidence } from "../mapping/source-editorial-evidence.js";
@@ -56,6 +56,66 @@ test("la evidencia de una unidad exige referencia, URL, identidad y huella compl
     assert.notEqual(prepareSourceProduct(changed).product.description_general, original.general);
   }
   assert.equal(JSON.stringify(source), initial);
+});
+
+test("los consensos reconciliados distinguen magnitudes estables y configuraciones particulares", () => {
+  const models = loadEditorialKnowledge().models;
+  const reconciled = [
+    { brand: "Ausa", model: "C250HX4", family: "carretilla-elevadora", stable: { liftingHeightM: 4.3, loadCapacityKg: 2500 }, samples: 2 },
+    { brand: "Linde", model: "E16P-02", family: "carretilla-elevadora", stable: { loadCapacityKg: 1600 }, samples: 2 },
+    { brand: "Nissan", model: "GQ02L30CU", family: "carretilla-elevadora", stable: { liftingHeightM: 6, loadCapacityKg: 3000 }, samples: 2 },
+    { brand: "Nissan", model: "Q02L20CU", family: "carretilla-elevadora", stable: { liftingHeightM: 6, loadCapacityKg: 2000 }, samples: 2 },
+    { brand: "Nissan", model: "Q02L25CU", family: "carretilla-elevadora", stable: { loadCapacityKg: 2500 }, samples: 2 },
+    { brand: "Pramac", model: "GPW45P", family: "grupo-electrogeno", stable: { powerKva: 45, energy: "diésel" }, samples: 3 },
+    { brand: "Toyota", model: "7FBEF15", family: "carretilla-elevadora", stable: { loadCapacityKg: 1500 }, samples: 2 }
+  ] as const;
+  for (const item of reconciled) {
+    const entry = models.get(editorialModelKey(item.brand, item.model, item.family));
+    assert.ok(entry);
+    assert.equal(entry.samples, item.samples);
+    assert.equal(new Set(entry.catalogReferences).size, item.samples);
+    assert.deepEqual(entry.stable, item.stable);
+  }
+  const nissan = models.get(editorialModelKey("Nissan", "Q02L25CU", "carretilla-elevadora"));
+  assert.ok(nissan);
+  assert.deepEqual(nissan.catalogReferences, ["gomariz:CAE1207", "mercaeleva:M050-0294"]);
+  const toyota = models.get(editorialModelKey("Toyota", "7FBEF15", "carretilla-elevadora"));
+  assert.ok(toyota);
+  assert.equal(toyota.stable.liftingHeightM, undefined);
+});
+
+test("la referencia de un modelo nuevo no atribuye medidas ausentes a otra unidad ni a otra variante", () => {
+  const source = get("mercaeleva", "M855-6850");
+  const snapshot = JSON.stringify(source);
+  const next: ProductRecord = {
+    ...source,
+    reference: "M855-6850-ENTRANTE",
+    url: source.url.replace("M855-6850", "M855-6850-ENTRANTE"),
+    shortDescription: null,
+    longDescription: null,
+    year: null,
+    horometer: null,
+    serialNumber: null,
+    specs: Object.fromEntries(Object.entries(source.specs ?? {}).filter(([key]) =>
+      !["Altura máxima de elevación", "Año de fabricación", "Horas laborales", "Artículo No."].includes(key)))
+  };
+  const facts = resolveEditorialFacts(next);
+  assert.ok(facts);
+  assert.equal(facts.liftingHeightM, null);
+  assert.equal(facts.loadCapacityKg, 2500);
+  const models = loadEditorialKnowledge();
+  const reference = resolveModelReference(facts, models);
+  assert.match(reference ?? "", /otras fichas del catálogo del modelo Ausa C250HX4 publican altura de elevación de 4,3 m/u);
+  assert.match(reference ?? "", /no acreditan por sí solos la configuración de esta unidad/u);
+  assert.equal(resolveModelReference({ ...facts, model: "C250HX4-V" }, models), null);
+  assert.equal(resolveModelReference({ ...facts, brand: "Linde" }, models), null);
+  assert.equal(resolveModelReference({ ...facts, family: "grupo-electrogeno" }, models), null);
+  assert.equal(resolveModelReference(resolveEditorialFacts(source) ?? facts, models), null);
+  const result = prepareSourceProduct(next);
+  assert.match(result.product.description_general ?? "", /Como referencia, otras fichas del catálogo del modelo Ausa C250HX4/u);
+  assert.match(result.product.description_general ?? "", /no acreditan por sí solos la configuración de esta unidad/u);
+  assert.doesNotMatch(result.product.description_general ?? "", /4\.257|4257|2017/u);
+  assert.equal(JSON.stringify(source), snapshot);
 });
 
 test("una nueva unidad del mismo modelo recibe contexto, pero no hereda horas ni datos como propios", () => {

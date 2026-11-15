@@ -29,7 +29,7 @@ const definitions: readonly FamilyDefinition[] = [
   { family: "plataforma-tijera", noun: "plataforma de tijera", pattern: /\b(?:tijera|tijeras|scissor[-\s]+lift|elevador[-\s]+tijera)\b/u },
   { family: "plataforma-articulada", noun: "plataforma articulada", pattern: /\b(?:plataforma(?:s)?[-\s]+articulad[ao]s?|brazo[-\s]+articulad[ao]|articulating[-\s]+boom|articulated[-\s]+boom|boom[-\s]+lift)\b/u },
   { family: "plataforma-telescopica", noun: "plataforma telescópica", pattern: /\b(?:plataforma(?:s)?[-\s]+telescopic[ao]s?|brazo[-\s]+telescopic[ao]|telescopic[-\s]+boom)\b/u },
-  { family: "carretilla-elevadora", noun: "carretilla elevadora", pattern: /\b(?:carretilla(?:s)?[-\s]+(?:elevadora|industrial)|carretilla|forklift|montacargas)\b/u },
+  { family: "carretilla-elevadora", noun: "carretilla elevadora", pattern: /\b(?:carretilla(?:s)?[-\s]+(?:elevadora|industrial)|carretilla|grua[-\s]+horquilla|forklift|montacargas)\b/u },
   { family: "miniexcavadora", noun: "miniexcavadora", pattern: /\b(?:miniexcavadora|mini[-\s]+excavadora|mini[-\s]+excavator)\b/u },
   { family: "excavadora", noun: "excavadora", pattern: /\b(?:excavadora|excavator|retroexcavadora)\b/u },
   { family: "dumper", noun: "dúmper", pattern: /\b(?:dumper|dumperes|dumpero|volquete)\b/u },
@@ -46,14 +46,21 @@ const definitions: readonly FamilyDefinition[] = [
 const fold = (value: string): string => value.normalize("NFD")
   .replace(/[\u0300-\u036f]/gu, "").toLocaleLowerCase("es");
 
+const articulatedBoom = /\b(?:plataforma(?:s)?[-\s]+articulad[ao]s?|brazo[-\s]+articulad[ao]|articulating[-\s]+boom|articulated[-\s]+boom)\b/u;
+const telescopicBoom = /\b(?:plataforma(?:s)?[-\s]+telescopic[ao]s?|brazo[-\s]+telescopic[ao]|telescopic[-\s]+boom)\b/u;
+
 export const editorialFamilyOf = (clues: string): EditorialFamily | null => {
   const normalized = fold(clues);
   for (const { family, pattern } of definitions) {
-    if (pattern.test(normalized)) {
-      if (family === "plataforma-articulada" && /\b(?:telescopic[ao]|manipulador|oruga)\b/u.test(normalized)) return null;
-      if (family === "plataforma-telescopica" && /\b(?:manipulador|oruga)\b/u.test(normalized)) return null;
-      return family;
+    if (!pattern.test(normalized)) continue;
+    if (family === "plataforma-articulada") {
+      if (/\b(?:manipulador|oruga)\b/u.test(normalized) ||
+        articulatedBoom.test(normalized) && telescopicBoom.test(normalized)) return null;
+      if (telescopicBoom.test(normalized)) continue;
+      if (!articulatedBoom.test(normalized)) return null;
     }
+    if (family === "plataforma-telescopica" && /\b(?:manipulador|oruga)\b/u.test(normalized)) return null;
+    return family;
   }
   return null;
 };
@@ -84,6 +91,8 @@ export const resolveConsistentEditorialFamily = (
   const additional = editorialFamilyOf(additionalTitle ?? "");
   const resolved = override ?? source ?? editorialFamilyOf(fallbackClues);
   if (!resolved) return null;
+  if (resolved.startsWith("plataforma-") && explicit?.startsWith("plataforma-") &&
+    !compatibleEditorialFamilies(resolved, explicit)) return null;
   if ((resolved === "plataforma-oruga" || resolved === "plataforma-mastil") && explicit &&
     !compatibleEditorialFamilies(resolved, explicit)) return null;
   if (!override && !additional) return resolved;

@@ -1,8 +1,9 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { loadEditorialKnowledge, editorialSourceDigest } from "../../../../infrastructure/filesystem/editorial/knowledge.js";
+import { reconcileInitialTechnicalEvidence } from "../../technical/reconciliation/preparation-technical-stages.js";
 import { resolveEditorialFacts } from "../domain/editorial-facts.js";
 import { resolveTechnicalModelReference } from "../domain/editorial-model-technical-reference.js";
-import { sameEditorialUnit, verifiedEditorialIdentity } from "../domain/editorial-source-contract.js";
+import { hasCorroboratedEditorialCapacityReconciliation, sameEditorialUnit, verifiedEditorialIdentity } from "../domain/editorial-source-contract.js";
 import { editorialFamilyOf } from "../domain/editorial-families.js";
 import { editorialIdentityKey, resolveFamilyGuidance, resolveModelReference, selectUnitKnowledge, selectIdentityOverrideKnowledge } from "../domain/editorial-knowledge.js";
 
@@ -11,13 +12,32 @@ const sameEditorialOrigin = (source: ProductRecord, prepared: ProductRecord): bo
   source.reference === prepared.reference && source.url === prepared.url &&
   source.condition === prepared.condition;
 
+const hasCorroboratedEditorialModelReconciliation = (
+  source: ProductRecord, prepared: ProductRecord
+): boolean => {
+  if (!sameEditorialOrigin(source, prepared) || !verifiedEditorialIdentity(source) ||
+    source.model === prepared.model || source.brand !== prepared.brand ||
+    source.year !== prepared.year || source.horometer !== prepared.horometer ||
+    source.serialNumber !== prepared.serialNumber) return false;
+  const reconciled = reconcileInitialTechnicalEvidence(source);
+  return reconciled !== source && sameEditorialUnit(reconciled, prepared) &&
+    reconciled.title === prepared.title &&
+    reconciled.shortDescription === prepared.shortDescription &&
+    (reconciled.longDescription === prepared.longDescription ||
+      source.longDescription === prepared.longDescription) &&
+    reconciled.specs?.Marca === prepared.specs?.Marca &&
+    reconciled.specs?.Modelo === prepared.specs?.Modelo;
+};
+
 export const resolveKnowledgeEditorial = (record: ProductRecord, sourceUnitRecord: ProductRecord = record) => {
   const knowledge = loadEditorialKnowledge();
   const rule = record.brand && record.model ? knowledge.modelRules.get(editorialIdentityKey(record.brand, record.model)) : null;
   const facts = resolveEditorialFacts(record, rule?.family ?? null);
   const sameIdentity = sameEditorialOrigin(sourceUnitRecord, record) &&
-    sameEditorialUnit(sourceUnitRecord, record) &&
-    record.title === sourceUnitRecord.title;
+    (sameEditorialUnit(sourceUnitRecord, record) &&
+      (record.title === sourceUnitRecord.title ||
+        hasCorroboratedEditorialCapacityReconciliation(sourceUnitRecord, record)) ||
+      hasCorroboratedEditorialModelReconciliation(sourceUnitRecord, record));
   const matchingIdentity = sourceUnitRecord.reference?.trim() ? {
     key: `${sourceUnitRecord.providerId}:${sourceUnitRecord.reference}`,
     sourceUrl: sourceUnitRecord.url, brand: sourceUnitRecord.brand ?? "", model: sourceUnitRecord.model ?? ""

@@ -15,6 +15,11 @@ import { editorialFamilyFromSourceGeneral } from "../domain/editorial-families.j
 import { resolveVerifiedTechnicalBrief } from "../domain/editorial-technical-brief.js";
 import { resolveVerifiedSourceEditorialExcerpt } from "../domain/editorial-source-excerpt.js";
 import { resolveMissingTechnicalEditorialGeneral } from "../domain/editorial-missing-technical-general.js";
+import { withoutContradictoryFamilyGeneral } from "../domain/editorial-source-family-general.js";
+import { resolveDocumentedModelDimensions } from "../domain/editorial-model-dimensions.js";
+import { hasUncorroboratedSignedMotor, withoutUncorroboratedMotorClaim } from "../domain/editorial-signed-motor-caution.js";
+import { hasCrossedGamEditorialIdentity, hasGamModelTitleDisagreement } from "../../../gam/identity/evidence/gam-crossed-editorial-identity.js";
+import { isGamDocumentedYaleDimensionsSource } from "../../../gam/identity/evidence/model-dimensions-source.js";
 
 export const resolvePreparedEditorialSource = (
   record: ProductRecord,
@@ -22,19 +27,39 @@ export const resolvePreparedEditorialSource = (
   sourceUnitRecord: ProductRecord = record
 ) => {
   const heightConflict = hasEditorialSourceWorkHeightConflict(record);
+  const editorialRecord = withoutContradictoryFamilyGeneral(record);
+  const editorialSourceUnit = withoutContradictoryFamilyGeneral(sourceUnitRecord);
   const verified = evidence.sourceVerified && evidence.identityVerified && !heightConflict;
-  const resolvedKnowledge = resolveKnowledgeEditorial(record, sourceUnitRecord);
+  const crossedIdentity = sourceUnitRecord.providerId === record.providerId &&
+    sourceUnitRecord.reference === record.reference && sourceUnitRecord.url === record.url &&
+    sourceUnitRecord.condition === record.condition &&
+    hasCrossedGamEditorialIdentity(sourceUnitRecord);
+  const authenticatedOrigin = sourceUnitRecord.providerId === record.providerId &&
+    sourceUnitRecord.reference === record.reference && sourceUnitRecord.url === record.url &&
+    sourceUnitRecord.condition === record.condition;
+  const originalKnowledge = authenticatedOrigin && (crossedIdentity || hasGamModelTitleDisagreement(sourceUnitRecord))
+    ? resolveKnowledgeEditorial(sourceUnitRecord, sourceUnitRecord) : null;
+  const sourceModelConflict = hasGamModelTitleDisagreement(sourceUnitRecord) && Boolean(originalKnowledge?.general);
+  const resolvedKnowledge = (crossedIdentity || sourceModelConflict) && originalKnowledge?.general ? originalKnowledge :
+    resolveKnowledgeEditorial(record, sourceUnitRecord);
   const knowledge = verified || resolvedKnowledge.identityOverride ||
     Boolean(resolvedKnowledge.short || resolvedKnowledge.general || resolvedKnowledge.fallbackGeneral ||
       resolvedKnowledge.title) ? resolvedKnowledge : null;
+  const sourceMotorConflict = authenticatedOrigin && hasUncorroboratedSignedMotor(knowledge?.fallbackGeneral ?? null);
   const sourceFamily = verified && !sourceUnitRecord.shortDescription?.trim() ?
     editorialFamilyFromSourceGeneral(sourceUnitRecord.longDescription) : null;
   const familyOverride = knowledge?.familyOverride ?? sourceFamily;
-  const composed = verified ? resolveUnbrandedEditorial(record) ?? resolveReusableEditorial(record, familyOverride, sourceUnitRecord) : { short: null, general: null };
-  const general = knowledge?.general ??
-    (verified ? resolveSourceEditorialClaims(sourceUnitRecord, record, composed.general) : null) ??
+  const composingRecord = withoutUncorroboratedMotorClaim(editorialRecord, sourceMotorConflict);
+  const composingSource = withoutUncorroboratedMotorClaim(editorialSourceUnit, sourceMotorConflict);
+  const composed = verified ? resolveUnbrandedEditorial(composingRecord) ?? resolveReusableEditorial(composingRecord, familyOverride, composingSource) : { short: null, general: null };
+  const technicalListing = /^(?:dimensiones\s+)?(?:altura|capacidad|longitud|anchura)\s*:/iu
+    .test(sourceUnitRecord.longDescription?.trim() ?? "");
+  const general = crossedIdentity && !originalKnowledge?.general ? null : knowledge?.general ??
+    (sourceMotorConflict ? knowledge?.fallbackGeneral : null) ??
+    (verified && technicalListing ? knowledge?.fallbackGeneral : null) ??
+    (verified ? resolveSourceEditorialClaims(editorialSourceUnit, editorialRecord, composed.general) : null) ??
     knowledge?.fallbackGeneral ??
-    (verified ? resolveMissingTechnicalEditorialGeneral(sourceUnitRecord, record) : null) ?? null;
+    (verified ? resolveMissingTechnicalEditorialGeneral(editorialSourceUnit, editorialRecord) : null) ?? null;
   const signedGeneral = Boolean(general &&
     (general === knowledge?.general || general === knowledge?.fallbackGeneral));
   const recoveredShort = !record.shortDescription?.trim() ?
@@ -45,18 +70,28 @@ export const resolvePreparedEditorialSource = (
       resolveEditorialIdentitySummary(record, familyOverride) : null;
   const narrative = general && !signedGeneral ? [knowledge?.familyGuidance, knowledge?.modelReference]
     .filter((part): part is string => Boolean(part)).join(" ") : "";
-  const assembledGeneral = general ? `${general}${narrative ? ` ${narrative}` : ""}` : record.longDescription;
-  const long = signedGeneral ? assembledGeneral : resolveVerifiedEditorialUnitContext(sourceUnitRecord, assembledGeneral, record);
+  const assembledGeneral = general ? `${general}${narrative ? ` ${narrative}` : ""}` : editorialRecord.longDescription;
+  const modelDimensions = verified && !signedGeneral && isGamDocumentedYaleDimensionsSource(editorialSourceUnit) ?
+    resolveDocumentedModelDimensions(editorialSourceUnit, editorialRecord, assembledGeneral) : null;
+  const completedGeneral = modelDimensions ? `${modelDimensions}${assembledGeneral ? `\n\n${assembledGeneral}` : ""}` : assembledGeneral;
+  const long = signedGeneral ? assembledGeneral : resolveVerifiedEditorialUnitContext(editorialSourceUnit, completedGeneral, editorialRecord);
   const conservedShort = verified && signedGeneral &&
-    hasEditorialMillimetreUnit(sourceUnitRecord.specs?.["Altura máxima de elevación"]) ?
+    (hasEditorialMillimetreUnit(sourceUnitRecord.specs?.["Altura máxima de elevación"]) || technicalListing) ?
       sourceUnitRecord.shortDescription?.trim() || recoveredShort : null;
   const sourceClean = cleanAuthenticatedSourceEditorial(sourceUnitRecord,
-    knowledge?.short ?? conservedShort ?? composed.short ?? record.shortDescription ?? recoveredShort, long);
+    crossedIdentity ? signedGeneral && general ? conciseSignedUnitGeneral(general) : null :
+      knowledge?.short ?? conservedShort ??
+      (signedGeneral && sourceUnitRecord.providerId === "gam" &&
+        !sourceUnitRecord.shortDescription?.trim() && !sourceUnitRecord.longDescription?.trim() ?
+        recoveredShort : null) ?? composed.short ?? record.shortDescription ?? recoveredShort,
+    crossedIdentity && !signedGeneral ? null : long);
   const compact = verified && !knowledge?.short && !composed.short ?
     compressVerifiedSourceShort(sourceUnitRecord, sourceClean.short, sourceClean.general) : null;
   return {
     verifiedTitle: knowledge?.title ?? null,
     descriptions: distinguishDescriptions(compact ?? sourceClean.short, sourceClean.general),
+    sourceModelConflict,
+    sourceMotorConflict,
     heightConflict
   };
 };

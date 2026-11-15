@@ -1,6 +1,7 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { sameEditorialUnit, verifiedEditorialIdentity, verifiedEditorialStructuredIdentity } from "./editorial-source-contract.js";
 import { verifiedEditorialUnitPair } from "./editorial-unit-provenance.js";
+import { hasUnconditionalEditorialClaim } from "./editorial-claim-evidence.js";
 
 const plain = (value: string): string => value.normalize("NFD")
   .replace(/[\u0300-\u036f]/gu, "").trim().toLocaleLowerCase("es");
@@ -54,15 +55,37 @@ const corroboratedSourceDetails = (
   return additions;
 };
 
+const declaredSourceModelVariant = (source: ProductRecord, prepared: ProductRecord, general: string): string | null => {
+  const brand = source.brand?.trim();
+  const model = source.model?.trim();
+  if (!brand || !model || source.specs?.Marca !== brand || source.specs.Modelo !== model ||
+    prepared.specs?.Marca !== brand || prepared.specs.Modelo !== model || !source.longDescription) return null;
+  const literal = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&").replace(/\s+/gu, "\\s+");
+  const denomination = `${brand} ${model} AC`;
+  const pattern = new RegExp(`\\b${literal(brand)}\\s+${literal(model)}\\s+AC\\b`, "giu");
+  if (!hasUnconditionalEditorialClaim(source.longDescription, pattern) ||
+    new RegExp(pattern.source, "iu").test(general)) return null;
+  return `El anuncio denomina esta unidad «${denomination}»; esa denominación no acredita por sí sola equipamiento ni prestaciones diferentes.`;
+};
+
 const corroboratedSellerDetails = (
   source: ProductRecord, prepared: ProductRecord, general: string
 ): readonly string[] => {
   if (!sameEditorialUnit(source, prepared) || conflictingSourceYears(source)) return [];
   const additions: string[] = [];
+  const announcedVariant = declaredSourceModelVariant(source, prepared, general);
+  if (announcedVariant !== null) additions.push(announcedVariant);
   const article = source.specs?.["Artículo No."];
   if (typeof article === "string" && /^[\p{L}\d/-]+$/u.test(article) &&
     prepared.specs?.["Artículo No."] === article && !general.includes(article)) {
     additions.push(`Referencia comercial declarada por el vendedor: ${article}.`);
+  }
+  const certification = source.specs?.["Certificación CE"];
+  const contradictoryCertification = /\b(?:sin|no\s+(?:dispone\s+de|tiene|cuenta\s+con)|pendiente\s+de)\s+(?:la\s+)?(?:certificaci[oó]n|marcado)\s*CE\b|\bno\s+certificad[ao]\s+CE\b/iu;
+  if (certification === "Yes" && prepared.specs?.["Certificación CE"] === certification &&
+    !contradictoryCertification.test(`${source.title ?? ""} ${source.longDescription ?? ""}`) &&
+    !/\b(?:certificaci[oó]n|marcado|conformidad)\s+CE\b/iu.test(general)) {
+    additions.push("La ficha del proveedor declara certificación CE para esta unidad; el certificado no se ha verificado documentalmente.");
   }
   const hours = source.specs?.["Horas laborales"];
   if (typeof hours === "string" && /^(?:0|[1-9]\d*) h$/u.test(hours) &&
@@ -73,6 +96,13 @@ const corroboratedSellerDetails = (
     additions.push(announced && announced !== source.horometer
       ? `El anuncio de origen indica ${announced} horas y la ficha técnica ${hours}; las lecturas no se consideran equivalentes.`
       : `La ficha del proveedor declara ${hours} de uso para esta unidad.`);
+  }
+  const unstructuredZeroHours = /\b(?:HORAS?|HOURS?)\s*:?\s*0\b/giu;
+  if (source.horometer === null && prepared.horometer === null &&
+    source.specs?.["Horas laborales"] === undefined && prepared.specs?.["Horas laborales"] === undefined &&
+    source.longDescription && hasUnconditionalEditorialClaim(source.longDescription, unstructuredZeroHours) &&
+    !/\b(?:hor[oó]metro|horas?|hours?)\s*(?:(?:de\s+)?(?:uso|trabajo)\s*)?(?:de\s*)?0\b|\b0\s*(?:horas?|h)\b/iu.test(general)) {
+    additions.push("El anuncio de origen declara «0 horas», sin una lectura de horómetro estructurada para esta unidad.");
   }
   const label = /\b(SECOND LIFE|PINTADA)\s*$/iu.exec(source.longDescription?.trim() ?? "")?.[1]?.toUpperCase();
   if (label === "SECOND LIFE" && !general.includes("SECOND LIFE")) {

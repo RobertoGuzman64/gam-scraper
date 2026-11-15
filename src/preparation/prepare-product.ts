@@ -56,7 +56,10 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const editorial = resolvePreparedEditorial(editorialRecord, sourceUnitRecord, sourceEditorial);
   const attributeResult = catalog ? productAttributes(qualityRecord, category, catalog) : null;
   if (editorial.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
+  if (editorial.sourceMotorConflict) issues.push("Motorización de origen no corroborada por evidencia histórica firmada");
   if (editorial.sourceIdentityConflict) issues.push("Identidad GAM contradictoria entre título, resumen y ficha técnica");
+  if (editorial.sourceModelConflict && !editorial.sourceIdentityConflict)
+    issues.push("Identidad GAM contradictoria entre título y modelo técnico");
   if (contradictoryCondition) issues.push("Condición comercial contradictoria entre la ficha y el origen");
   if (publicationConflict !== null) issues.push(publicationConflict);
   issues.push(...semanticIssues);

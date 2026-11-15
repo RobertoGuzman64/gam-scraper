@@ -10,13 +10,15 @@ const knowledge = loadEditorialKnowledge();
 const summary = { version: 1, kind: 'diagnostico_sin_publicacion', providers: {}, total: {
   records: 0, ready: 0, review: 0, exceptions: 0, verifiedUnitGeneralApplied: 0,
   verifiedUnitShortApplied: 0, verifiedUnitTitlesApplied: 0, modelReferencesApplied: 0, familyGuidanceApplied: 0,
-  emptyShort: 0, emptyGeneral: 0
-}, problems: [] };
+  emptyShort: 0, emptyGeneral: 0, signedUnits: 0, signedUnitsWithoutExactMatch: 0,
+  signedFields: 0, signedFieldsWithoutExactMatch: 0
+}, problems: [], signedDifferences: [] };
 for (const provider of ['gam', 'gomariz', 'mercaeleva']) {
   const products = read(`catalogs/providers/${provider}/original/scrape-${provider}-catalog.json`).products;
   const counters = { records: products.length, ready: 0, review: 0, exceptions: 0,
     verifiedUnitGeneralApplied: 0, verifiedUnitShortApplied: 0, verifiedUnitTitlesApplied: 0, modelReferencesApplied: 0,
-    familyGuidanceApplied: 0, emptyShort: 0, emptyGeneral: 0 };
+    familyGuidanceApplied: 0, emptyShort: 0, emptyGeneral: 0, signedUnits: 0,
+    signedUnitsWithoutExactMatch: 0, signedFields: 0, signedFieldsWithoutExactMatch: 0 };
   for (const record of products) {
     try {
       const result = prepareSourceProduct(record);
@@ -28,6 +30,24 @@ for (const provider of ['gam', 'gomariz', 'mercaeleva']) {
       if (reference.title && result.product.title === reference.title) counters.verifiedUnitTitlesApplied++;
       if (reference.modelReference && result.product.description_general?.includes(reference.modelReference)) counters.modelReferencesApplied++;
       if (reference.familyGuidance && result.product.description_general?.includes(reference.familyGuidance)) counters.familyGuidanceApplied++;
+      const signedFields = [
+        ['short', reference.short, result.product.description],
+        ['general', reference.general, result.product.description_general],
+        ['fallbackGeneral', reference.fallbackGeneral, result.product.description_general],
+        ['title', reference.title, result.product.title]
+      ].filter(([, value]) => typeof value === 'string' && value.trim());
+      if (signedFields.length > 0) {
+        counters.signedUnits++;
+        counters.signedFields += signedFields.length;
+        const unmatched = signedFields.filter(([, signed, actual]) => signed !== actual);
+        counters.signedFieldsWithoutExactMatch += unmatched.length;
+        if (unmatched.length === signedFields.length) counters.signedUnitsWithoutExactMatch++;
+        for (const [field, signed, actual] of unmatched) {
+          summary.signedDifferences.push({ provider, reference: record.reference, field,
+            status: result.status, signed, prepared: actual,
+            sources: (knowledge.units.get(`${provider}:${record.reference}`) ?? []).map((entry) => entry.evidenceSource) });
+        }
+      }
       if (!result.product.description?.trim()) counters.emptyShort++;
       if (!result.product.description_general?.trim()) counters.emptyGeneral++;
     } catch (error) {
