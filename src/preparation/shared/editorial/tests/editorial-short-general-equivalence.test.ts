@@ -10,7 +10,7 @@ import { captureSourceEditorialEvidence } from "../mapping/source-editorial-evid
 import { controlledGamForklift, controlledGomarizPlatform, controlledMercaelevaPlatform } from "./editorial-contract-records.js";
 
 const originals = [
-  accreditedSourceRecord("gam-original", "6934"),
+  accreditedSourceRecord("gam-original", "4731"),
   accreditedSourceRecord("gomariz-original", "TE1591"),
   accreditedSourceRecord("mercaeleva-original", "M318-0509")
 ] as const;

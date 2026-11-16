@@ -1,3 +1,5 @@
+import type { SpecValue } from "./types.js";
+
 export type ProductCondition = "Segunda_Mano" | "Nuevo" | "Alquiler";
 
 export type SeedProduct = {
@@ -11,7 +13,7 @@ export type SeedProduct = {
     image: string;
     reference: string;
     description_general: string;
-    spec: Record<string, string | number | boolean>;
+    spec: Record<string, SpecValue>;
     metadata: {
         featured: boolean;
         keywords: string[];

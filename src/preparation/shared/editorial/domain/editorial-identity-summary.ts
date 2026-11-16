@@ -36,3 +36,9 @@ export const conciseSignedUnitGeneral = (general: string): string | null => {
     /^(?:contamos|tenemos|ofrecemos|disponemos)\b/iu.test(first)) return null;
   return first;
 };
+
+export const unresolvedEditorialModelVariantShort =
+  "La variante de esta unidad no coincide entre el anuncio y la ficha técnica; su identidad está pendiente de verificar.";
+
+export const unresolvedEditorialModelVariantGeneral =
+  "El título y la URL del anuncio identifican una variante diferente del modelo registrado en la ficha técnica. La identidad de esta unidad debe comprobarse antes de atribuir prestaciones a cualquiera de las variantes.";

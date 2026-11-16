@@ -9,8 +9,9 @@ import { resolveUnbrandedEditorial } from "../domain/editorial-unbranded-equipme
 import { resolveVerifiedEditorialUnitContext } from "../domain/editorial-unit-context.js";
 import { cleanAuthenticatedSourceEditorial } from "../domain/editorial-text-hygiene.js";
 import { resolveKnowledgeEditorial } from "./knowledge-editorial.js";
-import { conciseVerifiedUnitGeneral, conciseSignedUnitGeneral, resolveEditorialIdentitySummary } from "../domain/editorial-identity-summary.js";
+import { conciseVerifiedUnitGeneral, conciseSignedUnitGeneral, resolveEditorialIdentitySummary, unresolvedEditorialModelVariantShort, unresolvedEditorialModelVariantGeneral } from "../domain/editorial-identity-summary.js";
 import { compressVerifiedSourceShort } from "../domain/editorial-source-brief.js";
+import { corroboratedSourceUnitBrief } from "../domain/editorial-source-unit-brief.js";
 import { editorialFamilyFromSourceGeneral } from "../domain/editorial-families.js";
 import { resolveVerifiedTechnicalBrief } from "../domain/editorial-technical-brief.js";
 import { resolveVerifiedSourceEditorialExcerpt } from "../domain/editorial-source-excerpt.js";
@@ -18,7 +19,7 @@ import { resolveMissingTechnicalEditorialGeneral } from "../domain/editorial-mis
 import { withoutContradictoryFamilyGeneral } from "../domain/editorial-source-family-general.js";
 import { resolveDocumentedModelDimensions } from "../domain/editorial-model-dimensions.js";
 import { hasUncorroboratedSignedMotor, withoutUncorroboratedMotorClaim } from "../domain/editorial-signed-motor-caution.js";
-import { hasCrossedGamEditorialIdentity, hasGamModelTitleDisagreement } from "../../../gam/identity/evidence/gam-crossed-editorial-identity.js";
+import { hasCrossedGamEditorialIdentity, hasGamCorroboratedModelVariantConflict, hasGamModelTitleDisagreement } from "../../../gam/identity/evidence/gam-crossed-editorial-identity.js";
 import { isGamDocumentedYaleDimensionsSource } from "../../../gam/identity/evidence/model-dimensions-source.js";
 
 export const resolvePreparedEditorialSource = (
@@ -39,7 +40,16 @@ export const resolvePreparedEditorialSource = (
     sourceUnitRecord.condition === record.condition;
   const originalKnowledge = authenticatedOrigin && (crossedIdentity || hasGamModelTitleDisagreement(sourceUnitRecord))
     ? resolveKnowledgeEditorial(sourceUnitRecord, sourceUnitRecord) : null;
-  const sourceModelConflict = hasGamModelTitleDisagreement(sourceUnitRecord) && Boolean(originalKnowledge?.general);
+  const variantConflict = authenticatedOrigin && hasGamCorroboratedModelVariantConflict(sourceUnitRecord);
+  const sourceModelConflict = hasGamModelTitleDisagreement(sourceUnitRecord) &&
+    Boolean(originalKnowledge?.general || variantConflict);
+  if (variantConflict && !originalKnowledge?.general) return {
+    verifiedTitle: null,
+    descriptions: distinguishDescriptions(unresolvedEditorialModelVariantShort, unresolvedEditorialModelVariantGeneral),
+    sourceModelConflict,
+    sourceMotorConflict: false,
+    heightConflict
+  };
   const resolvedKnowledge = (crossedIdentity || sourceModelConflict) && originalKnowledge?.general ? originalKnowledge :
     resolveKnowledgeEditorial(record, sourceUnitRecord);
   const knowledge = verified || resolvedKnowledge.identityOverride ||
@@ -78,12 +88,14 @@ export const resolvePreparedEditorialSource = (
   const conservedShort = verified && signedGeneral &&
     (hasEditorialMillimetreUnit(sourceUnitRecord.specs?.["Altura máxima de elevación"]) || technicalListing) ?
       sourceUnitRecord.shortDescription?.trim() || recoveredShort : null;
+  const contextualShort = verified && !crossedIdentity && !sourceModelConflict && !knowledge?.short &&
+    !conservedShort && composed.short ? corroboratedSourceUnitBrief(sourceUnitRecord, record, composed.short) : null;
   const sourceClean = cleanAuthenticatedSourceEditorial(sourceUnitRecord,
     crossedIdentity ? signedGeneral && general ? conciseSignedUnitGeneral(general) : null :
       knowledge?.short ?? conservedShort ??
       (signedGeneral && sourceUnitRecord.providerId === "gam" &&
         !sourceUnitRecord.shortDescription?.trim() && !sourceUnitRecord.longDescription?.trim() ?
-        recoveredShort : null) ?? composed.short ?? record.shortDescription ?? recoveredShort,
+        recoveredShort : null) ?? contextualShort ?? composed.short ?? record.shortDescription ?? recoveredShort,
     crossedIdentity && !signedGeneral ? null : long);
   const compact = verified && !knowledge?.short && !composed.short ?
     compressVerifiedSourceShort(sourceUnitRecord, sourceClean.short, sourceClean.general) : null;

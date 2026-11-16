@@ -320,7 +320,7 @@ test("un baseline antiguo no autoriza ninguna infracción aunque siga en la raí
   write("src/preparation/gomariz/editorial/mapping/legacy.ts", "export const resolveIndividualGeneral = () => 'legado';\n");
   const findings = inspectEditorialArchitecture(root).findings;
   assert.equal(findings.length, 1);
-  write("guards-architecture-baseline-f7.json", JSON.stringify({ version: 1, editorial: [{ id: findings[0].id }], tests: [] }));
+  write("guards-architecture-baseline-legacy.json", JSON.stringify({ version: 1, editorial: [{ id: findings[0].id }], tests: [] }));
   const { optionsFrom, present } = await import("./guards-architecture-core.mjs");
   const output = [];
   t.mock.method(console, "log", (message) => output.push(message));

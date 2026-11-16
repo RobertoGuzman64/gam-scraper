@@ -107,7 +107,7 @@ test("los tres conversores seed utilizan medidas coherentes y bloquean colisione
       longDescription: "Descripción general",
       reference: "GAM-X",
       url: "https://online.gamrentals.com/es/elevacion/modelo",
-      specJson: JSON.stringify({ "Longitud (m)": "4,5 m", "Anchura": "81 cm", "Dato propio": "Sin dato comprobado" })
+      specJson: JSON.stringify({ "Longitud (m)": "4,5 m", "Anchura": "81 cm", "Velocidad de desplazamiento con/sin carga (km/h)": "14.8/15.7 km/h", "Dimensiones cesta (mm)": "100 x 200 mm", "Nº de serie": "000023", "Dato propio": "Sin dato comprobado" })
     };
     const headers = ["categoryKey", "title", "shortDescription", "longDescription", "reference", "url", "specJson"];
     const options = {
@@ -127,9 +127,14 @@ test("los tres conversores seed utilizan medidas coherentes y bloquean colisione
     const [full, category, url] = await run();
     assert.match(full ?? "", /"Longitud \(mm\)": 4500/);
     assert.match(full ?? "", /"Anchura \(mm\)": 810/);
+    assert.match(full ?? "", /"Nº de serie": (?:"000023"|`000023`)/);
     for (const rendered of [category, url]) {
-      assert.match(rendered ?? "", /"Longitud \(m\)": 4500/);
-      assert.match(rendered ?? "", /"Anchura": 810/);
+      assert.match(rendered ?? "", /"Longitud \(mm\)": 4500/);
+      assert.match(rendered ?? "", /"Anchura \(mm\)": 810/);
+      assert.doesNotMatch(rendered ?? "", /"Longitud \(m\)": 4500/);
+      assert.match(rendered ?? "", /"Nº de serie": (?:"000023"|`000023`)/);
+      assert.match(rendered ?? "", /"Velocidad de desplazamiento con\/sin carga \(km\/h\)": \[\s*14\.8,\s*15\.7\s*\]/);
+      assert.match(rendered ?? "", /"Dimensiones cesta \(mm\)": \[\s*100,\s*200\s*\]/);
     }
     for (const variant of [convertFull, convertByCategory, convertByUrl]) {
       await writeFile(input, toCsv([{ ...base, specJson: JSON.stringify({ peso: "1500", "Peso (kg)": "1200" }) }], headers), "utf8");
@@ -164,4 +169,65 @@ test("el CLI hace visible la colisión aunque se permitan claves desconocidas", 
   } finally {
     await rm(folder, { recursive: true, force: true });
   }
+});
+
+test("el CSV normalizado conserva parejas, unidades y ejes a través de tres pasadas", async () => {
+  const rows = [{
+    reference: "GAM-6901-278",
+    specJson: JSON.stringify({
+      "Dimensiones Cesta": "1,83X1 metros",
+      "Velocidad de desplazamiento con/sin carga": "8/13 km/h",
+      "Dimensiones Horquillas": "100 x 200 mm",
+      "Nº de serie": "000023"
+    })
+  }];
+  const headers = ["reference", "specJson"];
+  await normalizeGamRows(rows, headers, { expandSpecColumns: false, maxValuesPerKey: 10 }, async () => {});
+  const first = rows[0]?.specJson;
+  assert.ok(first);
+  const expected = {
+    "Dimensiones cesta (mm)": "1830 x 1000 mm",
+    "Velocidad de desplazamiento con/sin carga (km/h)": "8 | 13",
+    "Dimensiones horquillas (mm)": "100 x 200 mm",
+    "Nº de serie": "000023"
+  };
+  assert.deepEqual(JSON.parse(first), expected);
+  assert.deepEqual(normalizeSpecsObject(expected).normalized, {
+    "Dimensiones cesta (mm)": { ancho: 1830, largo: 1000 },
+    "Velocidad de desplazamiento con/sin carga (km/h)": [8, 13],
+    "Dimensiones horquillas (mm)": { largo: 100, ancho: 200, grosor: null },
+    "Nº de serie": "000023"
+  });
+  for (let iteration = 0; iteration < 2; iteration += 1) {
+    const stats = await normalizeGamRows(rows, headers, { expandSpecColumns: false, maxValuesPerKey: 10 }, async () => {});
+    assert.equal(stats.rowsTransformed, 0);
+    assert.equal(rows[0]?.specJson, first);
+  }
+  const flipped = normalizeSpecsObject({ "Dimensiones cesta (mm)": "100 x 200 mm" });
+  assert.deepEqual(flipped.normalized["Dimensiones cesta (mm)"], { ancho: 100, largo: 200 });
+  const threeAxes = normalizeSpecsObject({ "Dimensiones Horquillas": "1,2 x 0,1 x 0,04 m" });
+  assert.deepEqual(threeAxes.normalized["Dimensiones horquillas (mm)"], { largo: 1200, ancho: 100, grosor: 40 });
+  const thirdAxisRows = [{ reference: "GAM-3D", specJson: JSON.stringify({ "Dimensiones Horquillas": "1,2 x 0,1 x 0,04 m" }) }];
+  const thirdAxisHeaders = ["reference", "specJson"];
+  await normalizeGamRows(thirdAxisRows, thirdAxisHeaders, { expandSpecColumns: false, maxValuesPerKey: 10 }, async () => {});
+  const triple = thirdAxisRows[0]?.specJson;
+  assert.ok(triple);
+  assert.deepEqual(JSON.parse(triple), { "Dimensiones horquillas (mm)": "1200 x 100 x 40 mm" });
+  const thirdAgain = await normalizeGamRows(thirdAxisRows, thirdAxisHeaders, { expandSpecColumns: false, maxValuesPerKey: 10 }, async () => {});
+  assert.equal(thirdAgain.rowsTransformed, 0);
+  for (const invalid of ["100 x 200", "1,2 x 0,5", "100 x 200 kg"]) {
+    assert.equal(normalizeSpecsObject({ "Dimensiones cesta (mm)": invalid }).normalized["Dimensiones cesta (mm)"], undefined);
+  }
+});
+
+test("las listas canónicas no reinterpretan valores sueltos ni alternativas prohibidas", () => {
+  const key = "Velocidad de desplazamiento con/sin carga (km/h)";
+  assert.deepEqual(normalizeSpecsObject({ [key]: "14.8 / 15.7 km/h" }).normalized[key], [14.8, 15.7]);
+  assert.deepEqual(normalizeSpecsObject({ [key]: "14.8 | 15.7" }).normalized[key], [14.8, 15.7]);
+  assert.deepEqual(normalizeSpecsObject({ [key]: "14.8 km/h" }).normalized[key], [14.8]);
+  assert.equal(normalizeSpecsObject({ "Potencia (kW)": "14.8 / 15.7 kW" }).normalized["Potencia (kW)"], undefined);
+  assert.equal(normalizeSpecsObject({ [key]: "14.8 | falso" }).normalized[key], undefined);
+  assert.equal(normalizeSpecsObject({ [key]: "14.8 || 15.7" }).normalized[key], undefined);
+  assert.equal(normalizeSpecsObject({ "Peso (kg)": "1.5 t" }).normalized["Peso (kg)"], undefined);
+  assert.equal(normalizeSpecsObject({ "Peso (kg)": "1.5 kg" }).normalized["Peso (kg)"], 1.5);
 });

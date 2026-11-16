@@ -17,40 +17,42 @@ const cases: readonly { name: string; values: readonly { input: unknown; expecte
     ]
   },
   {
-    name: "números y separadores históricos",
+    name: "identificadores y separadores sin contexto de magnitud",
     values: [
       { input: 0, expected: 0 },
       { input: -8.5, expected: -8.5 },
       { input: Number.NaN, expected: Number.NaN },
       { input: Number.POSITIVE_INFINITY, expected: Number.POSITIVE_INFINITY },
-      { input: "000023", expected: 23 },
-      { input: "1.200", expected: 1200 },
-      { input: "1,5", expected: 1.5 },
-      { input: "1.234,50", expected: 1234.5 },
-      { input: "23.75", expected: 2375 },
-      { input: "0.5", expected: 5 },
+      { input: "000023", expected: "000023" },
+      { input: "1.200", expected: "1.200" },
+      { input: "1,5", expected: "1,5" },
+      { input: "1.234,50", expected: "1.234,50" },
+      { input: "23.75", expected: "23.75" },
+      { input: "0.5", expected: "0.5" },
+      { input: "1.5 m", expected: "1.5 m" },
+      { input: "14.8 km/h", expected: "14.8 km/h" },
       { input: "-1", expected: "-1" },
       { input: "+1", expected: "+1" },
       { input: "1e3", expected: "1e3" }
     ]
   },
   {
-    name: "unidades reconocidas y valores no reconocidos",
+    name: "unidades que requieren reglas técnicas explícitas",
     values: [
-      { input: "1.200 kg", expected: 1200 },
-      { input: "1,5 m", expected: 1.5 },
-      { input: "12 mm", expected: 12 },
-      { input: "15 cm", expected: 15 },
-      { input: "25 kW", expected: 25 },
-      { input: "9 W", expected: 9 },
-      { input: "20 %", expected: 20 },
-      { input: "9 h", expected: 9 },
-      { input: "8 horas", expected: 8 },
-      { input: "1.234,50 mm", expected: 1234.5 },
-      { input: "12 kg extra", expected: 12 },
+      { input: "1.200 kg", expected: "1.200 kg" },
+      { input: "1,5 m", expected: "1,5 m" },
+      { input: "12 mm", expected: "12 mm" },
+      { input: "15 cm", expected: "15 cm" },
+      { input: "25 kW", expected: "25 kW" },
+      { input: "9 W", expected: "9 W" },
+      { input: "20 %", expected: "20 %" },
+      { input: "9 h", expected: "9 h" },
+      { input: "8 horas", expected: "8 horas" },
+      { input: "1.234,50 mm", expected: "1.234,50 mm" },
+      { input: "12 kg extra", expected: "12 kg extra" },
       { input: "3 kW extra", expected: "3 kW extra" },
       { input: "80 V", expected: "80 V" },
-      { input: "80 rpm", expected: 80 },
+      { input: "80 rpm", expected: "80 rpm" },
       { input: "-1 kg", expected: "-1 kg" }
     ]
   },
@@ -64,7 +66,7 @@ const cases: readonly { name: string; values: readonly { input: unknown; expecte
       { input: "", expected: "" },
       { input: "   \t  ", expected: "" },
       { input: "  motor   eléctrico  ", expected: "motor eléctrico" },
-      { input: "\t 12 \n kg ", expected: 12 }
+      { input: "\t 12 \n kg ", expected: "12 kg" }
     ]
   }
 ];

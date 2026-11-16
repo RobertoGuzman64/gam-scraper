@@ -112,6 +112,12 @@ export const parseNumberArray = (
       return first === null || second === null ? null : [first, second];
     }
   }
+  if (value.includes("|")) {
+    const tokens = value.split(/\s*\|\s*/u);
+    if (tokens.length < 2 || tokens.some((token) => !token)) return null;
+    const numbers = tokens.map((token) => parseNumber(token, expectedUnit));
+    return numbers.every((number): number is number => number !== null) ? numbers : null;
+  }
   const single = parseNumber(value, expectedUnit);
   return single === null ? null : [single];
 };
@@ -172,13 +178,27 @@ export type Battery = {
   readonly raw: string;
 };
 
+const batteryMeasurements = (text: string, unit: "V" | "Ah"): readonly number[] | null => {
+  const pattern = unit === "V"
+    ? /(?<![\p{L}\p{N}.,])(\d[\d.,]*)\s*(?:v|voltios?)\b/giu
+    : /(?<![\p{L}\p{N}.,])(\d[\d.,]*)\s*ah\b/giu;
+  const values: number[] = [];
+  for (const match of text.matchAll(pattern)) {
+    const prefix = text.slice(0, match.index);
+    if (/\d[\d.,]*\s*(?:\/|[-–]|[x×])\s*$/iu.test(prefix)) return null;
+    const value = parseNumber(match[0], unit);
+    if (value === null || value < 0) return null;
+    values.push(value);
+  }
+  return values.length > 0 ? values : null;
+};
+
 export const parseBattery = (v: unknown): Battery | null => {
   if (v === null || v === undefined || v === "") return null;
   const txt = String(v);
-  const m = txt.match(/(\d+)\s*v/i);
-  const volt = m?.[1] ? parseNumber(m[1]) : null;
-  const ahMatches = txt.match(/(\d+)\s*ah/gi) ?? null;
-  const ah = ahMatches ? ahMatches.map((x) => parseNumber(x)).filter((n): n is number => n !== null) : null;
+  const voltages = batteryMeasurements(txt, "V");
+  const volt = voltages?.length === 1 ? voltages[0] : null;
+  const ah = batteryMeasurements(txt, "Ah");
 
   let tecnologia: Battery["tecnologia"] = null;
   if (/litio|li-ion|liion/i.test(txt)) tecnologia = "Li-ion";
@@ -187,7 +207,7 @@ export const parseBattery = (v: unknown): Battery | null => {
 
   return {
     voltaje: volt ?? null,
-    capacidadAh: ah && ah.length > 0 ? ah : null,
+    capacidadAh: ah,
     tecnologia,
     raw: txt
   };

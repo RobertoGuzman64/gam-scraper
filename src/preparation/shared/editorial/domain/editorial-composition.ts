@@ -1,11 +1,13 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { resolveEditorialFacts } from "./editorial-facts.js";
-import { editorialFamilyIsMasculine, editorialFamilyName, editorialFamilyOf } from "./editorial-families.js";
+import { editorialFamilyFromSourceGeneral, editorialFamilyIsMasculine, editorialFamilyName, editorialFamilyOf } from "./editorial-families.js";
 import { editorialQuantity, formatEditorialQuantity } from "./editorial-measurements.js";
 import { hasUnconditionalEditorialClaim } from "./editorial-claim-evidence.js";
 import type { EditorialFacts } from "./editorial-facts.js";
 import { sameEditorialUnit } from "./editorial-source-contract.js";
+import { containsEditorialBrandModel } from "./editorial-identity-match.js";
 import { resolveDocumentedBatteryConfiguration } from "./editorial-battery-claims.js";
+import { corroboratedAnnouncedUnitSummary } from "./editorial-source-announced-unit.js";
 import type { EditorialFamily } from "./editorial-families.js";
 
 const quantity = (value: number | null, unit: string, label: string): string | null =>
@@ -78,6 +80,21 @@ const join = (values: readonly string[]): string => values.length === 1 ? values
   values.length === 2 ? `${values[0]} y ${values[1]}` :
     `${values.slice(0, -1).join(", ")} y ${values[values.length - 1]}`;
 
+const differentiatedSourceYear = (
+  record: ProductRecord, source: ProductRecord, facts: EditorialFacts
+): string | null => {
+  const general = source.longDescription?.trim();
+  const year = facts.year;
+  if (year === null || !general || source.shortDescription?.trim() ||
+    source.year?.trim() !== String(year) || record.year?.trim() !== source.year?.trim() ||
+    !sameEditorialUnit(source, record) ||
+    editorialFamilyFromSourceGeneral(general) !== facts.family ||
+    containsEditorialBrandModel(general, facts.brand, facts.model)) return null;
+  const otherYears = [...general.matchAll(/\b(?:19|20)\d{2}\b/gu)]
+    .some(([value]) => value !== String(year));
+  return otherYears ? null : `año de fabricación ${year}`;
+};
+
 export const resolveReusableEditorial = (
   record: ProductRecord, familyOverride: EditorialFamily | null = null,
   sourceUnitRecord: ProductRecord = record
@@ -120,8 +137,10 @@ export const resolveReusableEditorial = (
   const cleaningFamily = facts.family === "fregadora" || facts.family === "barredora" || facts.family === "maquina-limpieza";
   const generalClauses = [...measures, ...(cleaningFamily ? extras : extra)];
   const generalDetails = generalClauses.length ? join(generalClauses) : main;
+  const sourceYear = differentiatedSourceYear(record, sourceUnitRecord, facts);
+  const unitSummary = corroboratedAnnouncedUnitSummary(record, sourceUnitRecord, facts);
   return {
-    short: `${identity}, con ${main}.`,
+    short: `${identity}, con ${main}${unitSummary || sourceYear ? `; ${unitSummary ?? sourceYear}` : ""}.`,
     general: `La ficha técnica de ${family}${fuel} ${name} indica ${generalDetails}${unit.length ? `; esta unidad consta con ${join(unit)}` : ""}.`
   };
 };

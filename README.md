@@ -54,7 +54,7 @@ npm run ayuda
 
 ## Estructura técnica y pruebas
 
-La estructura de `src/` agrupa responsabilidades, no fases históricas del desarrollo:
+La estructura de `src/` agrupa responsabilidades y no hitos temporales del desarrollo:
 
 - `src/catalog/`: identidad, calidad, normalización, cobertura, diagnósticos, editorial e intervenciones.
 - `src/preparation/`: preparación técnica, motor editorial compartido en `shared/editorial/`, adaptación de semántica por proveedor, evidencias, reconciliaciones y orquestación offline en `workflow/`. El antiguo sistema de narradores editoriales individualizados ya no está conectado al recorrido productivo detectado por los guards.

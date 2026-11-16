@@ -4,7 +4,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseCsv } from "./internal/csv.js";
-import { assertUnambiguousSpecs, parseSeedScalarByRule } from "./internal/spec.js";
+import { normalizeSeedSpecs } from "./internal/spec.js";
 import { ensureString, parseSeedSpecJson } from "./internal/json.js";
 import { normalizeSpace } from "./internal/string.js";
 import { buildDefaultMetadata } from "./internal/metadata.js";
@@ -65,11 +65,7 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions, onProgress?
 
         const specObj = parseSeedSpecJson(specJsonRaw, referenceRaw || `fila ${r + 1}`);
 
-        assertUnambiguousSpecs(specObj, referenceRaw || `fila ${r + 1}`);
-        const spec: Record<string, string | number | boolean> = {};
-        for (const [k, v] of Object.entries(specObj)) {
-            spec[normalizeSpace(k)] = parseSeedScalarByRule(k, v);
-        }
+        const spec = normalizeSeedSpecs(specObj, referenceRaw || `fila ${r + 1}`);
 
         const metadataFromMap = options.metadataByCategoryKey?.[categoryKey];
         const metadata = metadataFromMap ?? buildDefaultMetadata(categoryKey);

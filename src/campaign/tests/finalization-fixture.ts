@@ -19,7 +19,7 @@ export const prefixes = {
 } as const;
 
 export const createFixture = async () => {
-  const root = await mkdtemp(join(tmpdir(), "equipzilla-f4-"));
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-finalization-"));
   const runId = `lote-${randomUUID()}`;
   const providers: ProviderRun[] = [];
   for (const id of CAMPAIGN_PROVIDERS) {

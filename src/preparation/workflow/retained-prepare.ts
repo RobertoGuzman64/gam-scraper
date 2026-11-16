@@ -18,7 +18,7 @@ export const prepareSavedCatalogWithRetention = async (options: PrepareOptions):
     const referencedPaths = options.compare ? [options.compare] : [];
     const planned = await simulatePreparedRetention(workspace, options.providerId, undefined, referencedPaths);
     retention = await executePreparedRetention(workspace, options.providerId, planned, {
-      phase3Closed: true,
+      preparationValidated: true,
       externalReferencesVerified: true,
       writersCoordinated: true,
       familyApproved: true

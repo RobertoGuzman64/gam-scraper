@@ -1,12 +1,36 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
+import { parseCanonicalProductRecords } from "../../../../catalog/canonical-catalog.js";
 import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { resolveEditorialFacts } from "../domain/editorial-facts.js";
+import { resolveConsistentEditorialFamily } from "../domain/editorial-families.js";
+import { resolveEditorialSource } from "../domain/editorial-source.js";
 import { withoutContradictoryFamilyGeneral } from "../domain/editorial-source-family-general.js";
 import { resolveReusableEditorial } from "../domain/editorial-composition.js";
 import { resolveKnowledgeEditorial } from "../mapping/knowledge-editorial.js";
+
+const familyEnergyCases: unknown = JSON.parse(readFileSync(
+  "src/testing/domain-cases/data/gomariz-family-energy-original.json", "utf8"
+));
+const familyEnergyRecords = parseCanonicalProductRecords(familyEnergyCases);
+const yearSourceCases: unknown = JSON.parse(readFileSync(
+  "src/testing/domain-cases/data/editorial-family-year-original.json", "utf8"
+));
+const yearSourceRecords = parseCanonicalProductRecords(yearSourceCases);
+const yearSourceRecord = (reference: string): ProductRecord => {
+  const record = yearSourceRecords.find((item) => item.reference === reference);
+  assert.ok(record);
+  return record;
+};
+
+const familyEnergyRecord = (reference: string): ProductRecord => {
+  const record = familyEnergyRecords.find((item) => item.reference === reference);
+  assert.ok(record);
+  return record;
+};
 
 const gomarizElectric = accreditedSourceRecord("gomariz-original", "BA1465");
 const gomarizDiesel = accreditedSourceRecord("gomariz-original", "BA1253");
@@ -60,6 +84,122 @@ test("plantilla genérica diésel no contradice la motorización eléctrica acre
   assert.doesNotMatch(result.product.description_general ?? "", /Articuladas Diésel/u);
   assert.equal(JSON.stringify(gomarizElectric), unchanged);
   assert.equal(withoutContradictoryFamilyGeneral(gomarizDiesel), gomarizDiesel);
+});
+
+test("una general diésel genérica no se conserva si la URL no acredita la familia y el motor es eléctrico", () => {
+  const source = familyEnergyRecord("BA1291");
+  const snapshot = JSON.stringify(source);
+  const domainSource = resolveEditorialSource(source);
+  assert.ok(domainSource);
+  assert.equal(resolveConsistentEditorialFamily(domainSource.familyClues, source.title, null, source.categoryName), null);
+  assert.equal(source.specs?.Motor, "Eléctrico");
+  assert.match(source.longDescription ?? "", /^Las Articuladas Diésel/u);
+  assert.equal(withoutContradictoryFamilyGeneral(source).longDescription, null);
+  const prepared = prepareSourceProduct(source);
+  assert.equal(prepared.status, "ready");
+  assert.deepEqual(prepared.issues, []);
+  assert.equal(prepared.product.spec.Motor, "Eléctrico");
+  assert.match(prepared.product.description ?? "", /plataforma articulada eléctrica Snorkel A46JE/iu);
+  assert.match(prepared.product.description_general ?? "", /altura de trabajo de 16,1 m/u);
+  assert.match(prepared.product.description_general ?? "", /capacidad de 227 kg/u);
+  assert.doesNotMatch(prepared.product.description_general ?? "", /Articuladas Diésel|12 m a 43 m/iu);
+  assert.equal(JSON.stringify(source), snapshot);
+});
+
+test("cortas con texto familiar distinguen unidades de años acreditados en varias familias", () => {
+  for (const [firstRef, secondRef, firstYear, secondYear] of [
+    ["TE1756", "TE1603", "2021", "2022"],
+    ["BA1629", "BA1509", "2014", "2011"],
+    ["TD1799", "TD1726", "2022", "2020"]
+  ] as const) {
+    const first = yearSourceRecord(firstRef);
+    const second = yearSourceRecord(secondRef);
+    const originals = [JSON.stringify(first), JSON.stringify(second)];
+    assert.equal(first.brand, second.brand);
+    assert.equal(first.model, second.model);
+    assert.equal(first.year, firstYear);
+    assert.equal(second.year, secondYear);
+    const firstShort = resolveReusableEditorial(first).short ?? "";
+    const secondShort = resolveReusableEditorial(second).short ?? "";
+    assert.match(firstShort, new RegExp(`año de fabricación ${firstYear}`));
+    assert.match(secondShort, new RegExp(`año de fabricación ${secondYear}`));
+    assert.doesNotMatch(firstShort, new RegExp(`año de fabricación ${secondYear}`));
+    assert.notEqual(firstShort, secondShort);
+    for (const [source, year] of [[first, firstYear], [second, secondYear]] as const) {
+      const prepared = prepareSourceProduct(source);
+      assert.equal(prepared.status, "ready");
+      assert.match(prepared.product.description ?? "", new RegExp(`año de fabricación ${year}`));
+      assert.equal(prepared.product.spec.Motor, source.specs?.Motor);
+    }
+    assert.equal(JSON.stringify(first), originals[0]);
+    assert.equal(JSON.stringify(second), originals[1]);
+  }
+});
+
+test("la misma diferenciación se transfiere a otro proveedor sin trasladar especificaciones", () => {
+  const source = yearSourceRecord("M572-8190");
+  const snapshot = JSON.stringify(source);
+  const reusable = resolveReusableEditorial(source);
+  const prepared = prepareSourceProduct(source);
+  assert.equal(source.providerId, "mercaeleva");
+  assert.equal(source.shortDescription, null);
+  assert.match(reusable.short ?? "", /año de fabricación 2017/u);
+  assert.match(prepared.product.description ?? "", /año de fabricación 2017/u);
+  assert.equal(prepared.product.reference, source.reference);
+  assert.equal(prepared.product.sourceUrl, source.url);
+  assert.equal(prepared.product.spec["Altura de trabajo"], source.specs?.["Altura de trabajo"]);
+  assert.equal(JSON.stringify(source), snapshot);
+});
+
+test("el año solo se diferencia con evidencia individual y general familiar compatible", () => {
+  const source = yearSourceRecord("BA1629");
+  const short = resolveReusableEditorial(source).short ?? "";
+  assert.match(short, /año de fabricación 2014/u);
+  const incompatible: ProductRecord[] = [
+    { ...source, year: "2099" },
+    { ...source, shortDescription: "Descripción individual acreditada" },
+    { ...source, longDescription: `La ${source.brand} ${source.model} se ofrece como equipo de ocasión.` },
+    { ...source, longDescription: `${source.longDescription} Referencia de modelo de 2013.` }
+  ];
+  for (const record of incompatible) {
+    assert.doesNotMatch(resolveReusableEditorial(record).short ?? "", /año de fabricación 2014/u);
+  }
+  assert.doesNotMatch(resolveReusableEditorial(source, null, { ...source, year: "2011" }).short ?? "", /año de fabricación 2014/u);
+  assert.doesNotMatch(resolveReusableEditorial(source, null, yearSourceRecord("BA1509")).short ?? "", /año de fabricación 2014/u);
+  assert.doesNotMatch(resolveReusableEditorial({ ...source, year: null }).short ?? "", /año de fabricación/u);
+  const sameModel = yearSourceRecord("TE1756");
+  assert.doesNotMatch(resolveReusableEditorial({ ...sameModel, longDescription: null }).short ?? "", /año de fabricación/u);
+  assert.doesNotMatch(resolveReusableEditorial(yearSourceRecord("BA1833")).short ?? "", /año de fabricación/u);
+});
+
+test("textos familiares compatibles conservan su fuente y la contradicción ya cubierta sigue protegida", () => {
+  for (const [reference, motor] of [["BA1344", "Eléctrico"], ["BA1252", "Diésel"]] as const) {
+    const record = familyEnergyRecord(reference);
+    const snapshot = JSON.stringify(record);
+    assert.equal(record.specs?.Motor, motor);
+    assert.equal(withoutContradictoryFamilyGeneral(record), record);
+    const result = prepareSourceProduct(record);
+    assert.equal(result.status, "ready");
+    assert.equal(result.product.spec.Motor, motor);
+    assert.equal(JSON.stringify(record), snapshot);
+  }
+  assert.equal(withoutContradictoryFamilyGeneral(gomarizElectric).longDescription, null);
+});
+
+test("no se descarta un texto por procedencia inválida, energía ambigua o mención personalizada", () => {
+  const source = familyEnergyRecord("BA1291");
+  const cases: ProductRecord[] = [
+    { ...source, providerId: "gam" },
+    { ...source, url: "https://example.invalid/producto/snorkel-a46je/" },
+    { ...source, brand: "OTRA" },
+    { ...source, model: "OTRA-VARIANTE" },
+    { ...source, specs: { ...source.specs, Motor: "Eléctrico / Diésel" } },
+    { ...source, specs: { ...source.specs, "Tipo motor": "Diésel" } },
+    { ...source, specs: { ...source.specs, Motor: "Diésel" } },
+    { ...source, longDescription: "La articulada diésel Snorkel A46JE tiene motor diésel." },
+    { ...source, longDescription: "Las Articuladas Eléctricas destacan por su maniobrabilidad." }
+  ];
+  for (const record of cases) assert.equal(withoutContradictoryFamilyGeneral(record), record);
 });
 
 test("unidades nuevas de articulada consumen exclusivamente su ficha técnica", () => {

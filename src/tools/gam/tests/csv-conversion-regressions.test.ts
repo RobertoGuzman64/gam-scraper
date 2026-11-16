@@ -41,10 +41,10 @@ test("conversión GAM por categoría mantiene resolución jerárquica y escalare
     const resolveCategory = await loadCategoryResolver(file);
     assert.equal(resolveCategory("maquinaria/elevacion"), 2);
     assert.equal(resolveCategory("maquinaria/desconocido"), null);
-    assert.equal(parseScalar("1.200 kg"), 1200);
-    assert.equal(parseScalar("1,5 m"), 1.5);
+    assert.equal(parseScalar("1.200 kg"), "1.200 kg");
+    assert.equal(parseScalar("1,5 m"), "1,5 m");
     assert.equal(parseScalar("true"), true);
-    assert.equal(parseScalar("000023"), 23);
+    assert.equal(parseScalar("000023"), "000023");
     assert.equal(parseScalar("80 V"), "80 V");
   } finally {
     await rm(folder, { recursive: true, force: true });

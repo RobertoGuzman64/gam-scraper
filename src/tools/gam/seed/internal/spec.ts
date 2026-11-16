@@ -1,7 +1,6 @@
 import { normalizeSpecKey, normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { SPEC_RULES } from "../../../../catalog/normalization/spec-rules.js";
 import { normalizeSpace } from "./string.js";
-import { parseSeedScalar } from "./scalar.js";
 import type { SpecValue } from "./types.js";
 
 export { normalizeSpecKey };
@@ -43,10 +42,14 @@ export const assertUnambiguousSpecs = (spec: Readonly<Record<string, unknown>>, 
     }
 };
 
-export const parseSeedScalarByRule = (rawKey: string, value: unknown): string | number | boolean => {
-    if (!Object.hasOwn(SPEC_RULES, normalizeSpecKey(rawKey))) return parseSeedScalar(value);
-    const parsed = parseSpecByRule(rawKey, value);
-    if (typeof parsed === "string" || typeof parsed === "number" || typeof parsed === "boolean") return parsed;
-    if (Array.isArray(parsed) && parsed.length === 1 && typeof parsed[0] === "number") return parsed[0];
-    return typeof value === "string" ? value : JSON.stringify(value) ?? String(value);
+export const normalizeSeedSpecs = (spec: Readonly<Record<string, unknown>>, reference: string): Record<string, SpecValue> => {
+    assertUnambiguousSpecs(spec, reference);
+    const normalized: Record<string, SpecValue> = {};
+    for (const [rawKey, value] of Object.entries(spec)) {
+        const key = normalizeSpecKey(normalizeSpace(rawKey));
+        if (!key) continue;
+        const parsed = parseSpecByRule(rawKey, value);
+        if (parsed !== null) normalized[key] = parsed;
+    }
+    return normalized;
 };

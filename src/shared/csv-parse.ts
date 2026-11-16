@@ -3,101 +3,91 @@ export type ParsedCsv = {
   readonly rows: readonly Record<string, string>[];
 };
 
-const parseRow = (line: string): string[] => {
-  const out: string[] = [];
-  let cur = "";
-  let i = 0;
-  let inQuotes = false;
-
-  while (i < line.length) {
-    const ch = line[i] ?? "";
-    if (inQuotes) {
-      if (ch === '"') {
-        const next = line[i + 1];
-        if (next === '"') {
-          cur += '"';
-          i += 2;
-          continue;
-        }
-        inQuotes = false;
-        i += 1;
-        continue;
-      }
-      cur += ch;
-      i += 1;
-      continue;
-    }
-
-    if (ch === ',') {
-      out.push(cur);
-      cur = "";
-      i += 1;
-      continue;
-    }
-    if (ch === '"') {
-      inQuotes = true;
-      i += 1;
-      continue;
-    }
-
-    cur += ch;
-    i += 1;
-  }
-
-  out.push(cur);
-  return out;
+export type ParsedCsvRows = {
+  readonly headers: readonly string[];
+  readonly rows: readonly (readonly string[])[];
 };
 
-const splitLines = (csv: string): string[] => {
-  const lines: string[] = [];
-  let cur = "";
-  let inQuotes = false;
+const scanCsv = (csv: string, strict: boolean): readonly (readonly string[])[] => {
+  const rows: string[][] = [];
+  let cells: string[] = [];
+  let field = "";
+  let quoted = false;
+  let afterQuote = false;
+  let rowStarted = false;
 
-  for (let i = 0; i < csv.length; i += 1) {
-    const ch = csv[i] ?? "";
-    if (ch === '"') {
-      const next = csv[i + 1];
-      if (inQuotes && next === '"') {
-        cur += '""';
-        i += 1;
-        continue;
+  const finishField = (): void => {
+    cells.push(field);
+    field = "";
+    afterQuote = false;
+  };
+  const finishRow = (): void => {
+    if (rowStarted || cells.length > 0 || field.length > 0) {
+      finishField();
+      rows.push(cells);
+    }
+    cells = [];
+    rowStarted = false;
+  };
+
+  for (let index = 0; index < csv.length; index += 1) {
+    const character = csv[index] ?? "";
+    if (quoted) {
+      if (character === '"') {
+        if (csv[index + 1] === '"') {
+          field += '"';
+          index += 1;
+        } else {
+          quoted = false;
+          afterQuote = true;
+        }
+      } else {
+        field += character;
       }
-      inQuotes = !inQuotes;
-      cur += ch;
       continue;
     }
-    if (!inQuotes && (ch === "\n" || ch === "\r")) {
-      if (ch === "\r" && csv[i + 1] === "\n") i += 1;
-      lines.push(cur);
-      cur = "";
+    if (character === '"') {
+      if (strict && (field.length > 0 || afterQuote)) throw new Error(`CSV inválido: comillas en posición incorrecta (${index})`);
+      quoted = true;
+      rowStarted = true;
       continue;
     }
-    cur += ch;
+    if (character === ",") {
+      finishField();
+      rowStarted = true;
+      continue;
+    }
+    if (character === "\n" || character === "\r") {
+      if (character === "\r" && csv[index + 1] === "\n") index += 1;
+      finishRow();
+      continue;
+    }
+    if (strict && afterQuote) throw new Error(`CSV inválido: texto después de comillas (${index})`);
+    field += character;
+    rowStarted = true;
   }
 
-  if (cur.length > 0) lines.push(cur);
-  return lines.filter((l) => l.length > 0);
+  if (quoted && strict) throw new Error("CSV inválido: comillas sin cerrar");
+  finishRow();
+  return rows;
+};
+
+export const parseCsvRowsStrict = (csv: string): ParsedCsvRows => {
+  const [headers = [], ...rows] = scanCsv(csv, true);
+  for (const [index, row] of rows.entries()) {
+    if (row.length !== headers.length) {
+      throw new Error(`CSV inválido: fila ${index + 2} con ${row.length} columnas; esperadas ${headers.length}`);
+    }
+  }
+  return { headers, rows };
 };
 
 export const parseCsv = (csv: string): ParsedCsv => {
-  const lines = splitLines(csv);
-  const headerLine = lines[0];
-  if (!headerLine) return { headers: [], rows: [] };
-
-  const headers = parseRow(headerLine);
-  const rows: Record<string, string>[] = [];
-
-  for (let li = 1; li < lines.length; li += 1) {
-    const line = lines[li];
-    if (!line) continue;
-    const cells = parseRow(line);
-    const r: Record<string, string> = {};
-    for (let hi = 0; hi < headers.length; hi += 1) {
-      const h = headers[hi] ?? "";
-      r[h] = cells[hi] ?? "";
-    }
-    rows.push(r);
-  }
-
+  const [headers = [], ...matrix] = scanCsv(csv, false);
+  const rows = matrix.map((cells) => {
+    const row: Record<string, string> = {};
+    for (const [index, header] of headers.entries()) row[header] = cells[index] ?? "";
+    return row;
+  });
   return { headers, rows };
 };

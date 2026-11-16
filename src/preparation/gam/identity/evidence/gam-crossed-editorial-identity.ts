@@ -41,8 +41,20 @@ export const hasGamModelTitleDisagreement = (source: ProductRecord): boolean => 
   if (source.providerId !== "gam" || !source.reference?.trim() || !brand || !model || !title ||
     compact(String(source.specs?.Marca ?? "")) !== compact(brand) ||
     compact(String(source.specs?.Modelo ?? "")) !== compact(model) ||
-    !compact(title).includes(compact(brand)) || compact(title).includes(compact(model))) return false;
+    !compact(title).includes(compact(brand)) || containsEditorialBrandModel(title, brand, model)) return false;
   const url = verifiedEditorialUrl(source.url, ["online.gamrentals.com"]);
   const path = url?.pathname.split("/").filter(Boolean);
   return Boolean(path?.length === 3 && path[0] === "es" && path[2]?.startsWith(`${source.reference}-`));
+};
+
+export const hasGamCorroboratedModelVariantConflict = (source: ProductRecord): boolean => {
+  if (!hasGamModelTitleDisagreement(source)) return false;
+  const url = verifiedEditorialUrl(source.url, ["online.gamrentals.com"]);
+  const slug = url?.pathname.split("/").filter(Boolean).at(-1) ?? "";
+  const brand = source.brand?.trim() ?? "";
+  const model = source.model?.trim() ?? "";
+  const title = source.title ?? "";
+  return Boolean(slug && brand && model && containsEditorialIdentity(slug, brand) &&
+    compact(slug).includes(compact(model)) && !containsEditorialIdentity(slug, model) &&
+    compact(title).includes(compact(model)) && !containsEditorialBrandModel(title, brand, model));
 };

@@ -5,7 +5,7 @@ import type { RetentionDecision, RetentionSimulation } from "../retention/simula
 import { simulatePreparedRetention } from "./preparation-retention.js";
 
 export type PreparedRetentionApproval = {
-  readonly phase3Closed: boolean;
+  readonly preparationValidated: boolean;
   readonly externalReferencesVerified: boolean;
   readonly writersCoordinated: boolean;
   readonly familyApproved: boolean;
@@ -84,9 +84,9 @@ export const executePreparedRetention = async (
   approval: PreparedRetentionApproval,
   referencedPaths: readonly string[] = []
 ): Promise<PreparedRetentionExecution> => {
-  if (!approval.phase3Closed || !approval.externalReferencesVerified ||
+  if (!approval.preparationValidated || !approval.externalReferencesVerified ||
     !approval.writersCoordinated || !approval.familyApproved) {
-    return blocked(planned, "Fase 4 bloqueada: faltan aprobaciones de integridad, referencias externas o concurrencia");
+    return blocked(planned, "Retención bloqueada: faltan aprobaciones de integridad, referencias externas o concurrencia");
   }
   if (planned.candidates === 0) {
     return { status: planned.protected > 0 ? "sin_borrado_por_proteccion" : "completada",

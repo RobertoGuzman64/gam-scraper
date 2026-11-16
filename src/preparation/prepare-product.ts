@@ -22,6 +22,7 @@ import { recoverDocumentedTechnicalSpecs } from "./shared/technical/recovery/doc
 import { resolvePreparedEditorial } from "./shared/editorial/mapping/prepared-editorial.js";
 import { normalizePreparedEditorialPresentation } from "./shared/editorial/mapping/prepared-editorial-presentation.js";
 import { reconcileUsedHandlingSource } from "./shared/editorial/mapping/source-used-handling.js";
+import { hasVerifiedPublishedEditorialLoadConflict } from "./shared/editorial/mapping/prepared-editorial-load-consistency.js";
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
   const sourceUnitRecord = record;
@@ -90,6 +91,10 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     attributes: attributeResult?.attributes ?? []
   };
   const presented = normalizePreparedEditorialPresentation(sourceUnitRecord, product);
+  if (hasVerifiedPublishedEditorialLoadConflict(sourceUnitRecord, presented) &&
+    !issues.some((issue) => /(?:atributo contradictorio: capacidad de carga|capacidad contradictoria:)/iu.test(issue))) {
+    issues.push("Descripción comercial contradictoria: capacidad de carga");
+  }
   if (!presented.description?.trim()) issues.push("Cobertura editorial insuficiente: descripción corta");
   if (!presented.description_general?.trim()) issues.push("Cobertura editorial insuficiente: descripción general");
   return {

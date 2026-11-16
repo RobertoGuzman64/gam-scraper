@@ -4,7 +4,8 @@ import { accreditedSourceSamples } from "../../../testing/domain-cases/accredite
 import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 import { normalizeGamRows } from "../../../tools/gam/normalization/normalize-rows.js";
 import { normalizeSpecsObject } from "../normalize-specs.js";
-import { parseMeasuredLength, parseNumber, parseNumberArray } from "../spec-parsers.js";
+import { SPEC_RULES } from "../spec-rules.js";
+import { parseBattery, parseMeasuredLength, parseNumber, parseNumberArray } from "../spec-parsers.js";
 
 const gam = { products: accreditedSourceSamples("gam-original") };
 const productOf = (reference: string) => {
@@ -101,4 +102,26 @@ test("la preparación conserva el origen real y el consumidor no publica magnitu
   assert.equal(parseMeasuredLength("4,5 m", "Longitud (m)", "mm"), 4500);
   assert.equal(parseMeasuredLength("81 cm", "Anchura", "mm"), 810);
   assert.equal(parseMeasuredLength("500 kg", "Longitud (mm)", "mm"), null);
+});
+
+test("la batería no atribuye voltajes únicos a alternativas ni pierde decimales", () => {
+  for (const [raw, voltage, capacity] of [
+    ["Li-ion 48,5 V 500,5 Ah", 48.5, [500.5]],
+    ["48 V / 500 Ah", 48, [500]],
+    ["24/48 V", null, null],
+    ["24 / 48 V", null, null],
+    ["48 V / 24 V", null, null],
+    ["2 x 48 V", null, null],
+    ["500/600 Ah", null, null],
+    ["Sin dato verificable", null, null]
+  ] as const) {
+    const result = parseBattery(raw);
+    assert.ok(result);
+    assert.equal(result.voltaje, voltage, raw);
+    assert.deepEqual(result.capacidadAh, capacity, raw);
+    assert.equal(result.raw, raw);
+  }
+  assert.equal(parseBattery(null), null);
+  assert.equal(Object.values(SPEC_RULES).includes("battery"), false);
+  assert.equal(normalizeSpecsObject({ Batería: "24/48 V" }).normalized.Batería, "24/48 V");
 });

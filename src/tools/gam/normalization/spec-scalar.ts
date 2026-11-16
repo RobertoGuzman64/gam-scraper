@@ -23,17 +23,7 @@ const readNumKey = (obj: Record<string, unknown>, key: string): number | null =>
 
 const formatDimParts = (parts: readonly (number | null)[]): string | null => {
   const cleaned = parts.filter((n): n is number => typeof n === "number" && Number.isFinite(n));
-  if (cleaned.length === 0) return null;
-
-  if (cleaned.length === 2) {
-    const a = cleaned[0] ?? 0;
-    const b = cleaned[1] ?? 0;
-    const hi = Math.max(a, b);
-    const lo = Math.min(a, b);
-    return `${hi}x${lo}`;
-  }
-
-  return cleaned.join("x");
+  return cleaned.length > 0 ? `${cleaned.join(" x ")} mm` : null;
 };
 
 export const normalizedValueToScalar = (v: NormalizedSpecValue): string | number | boolean | null => {
@@ -68,14 +58,13 @@ export const normalizedValueToScalar = (v: NormalizedSpecValue): string | number
     const ancho = readNumKey(v, "ancho");
     const grosor = readNumKey(v, "grosor");
 
-    const dim3 = formatDimParts([largo, ancho, grosor]);
-    if (dim3) return dim3;
-
-    const dim2 = formatDimParts([largo, ancho]);
-    if (dim2) return dim2;
-
-    const dim1 = formatDimParts([largo]);
-    if (dim1) return dim1;
+    if (Object.hasOwn(v, "grosor")) {
+      const dimension = formatDimParts([largo, ancho, grosor]);
+      if (dimension) return dimension;
+    } else if (Object.hasOwn(v, "ancho") && Object.hasOwn(v, "largo")) {
+      const rectangle = formatDimParts([ancho, largo]);
+      if (rectangle) return rectangle;
+    }
 
     const s = JSON.stringify(v);
     const t = normalizeSpace(s);

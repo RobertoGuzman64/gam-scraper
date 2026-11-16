@@ -13,7 +13,7 @@ const { withWorkspace, saveVersion } = fixtures;
 after(fixtures.close);
 
 const approval: PreparedRetentionApproval = {
-  phase3Closed: true, externalReferencesVerified: true,
+  preparationValidated: true, externalReferencesVerified: true,
   writersCoordinated: true, familyApproved: true
 };
 
