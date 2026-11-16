@@ -44,13 +44,14 @@ test("las contradicciones técnicas pendientes mantienen su bloqueo y su causa",
   }
 });
 
-test("la altura comercial restante mantiene separado el valor técnico de la descripción", () => {
+test("la altura de trabajo corroborada conserva el valor técnico y la descripción sin confundir la altura nominal", () => {
   const record = source("M486-0114", "mercaeleva");
   assert.deepEqual(resolveAttribute(record, attribute("Altura de trabajo")), { status: "resolved", value: 16 });
   const prepared = prepareProduct(record, catalog);
-  assert.equal(prepared.status, "review");
-  assert.ok(prepared.issues.includes("Descripción comercial contradictoria: altura de trabajo"));
-  assert.doesNotMatch(prepared.product.description ?? "", /16 m/i);
+  assert.equal(prepared.status, "ready");
+  assert.deepEqual(prepared.issues, []);
+  assert.match(prepared.product.description ?? "", /16 m/i);
+  assert.match(prepared.product.description_general ?? "", /«14 MT»/u);
   assert.equal(prepared.product.spec["Altura de trabajo"], "16 m");
 });
 

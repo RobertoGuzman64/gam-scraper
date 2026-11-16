@@ -146,8 +146,9 @@ test("no convierten una firma histórica en aprobación de contradicciones", () 
   const mercaSigned = resolveKnowledgeEditorial(mercaeleva, mercaeleva);
   const mercaPrepared = prepareSourceProduct(mercaeleva);
   assert.ok(mercaSigned.general);
-  assert.equal(mercaPrepared.status, "review");
-  assert.ok(mercaPrepared.issues.some((issue) => issue.includes("altura de trabajo")));
+  assert.equal(mercaPrepared.status, "ready");
+  assert.deepEqual(mercaPrepared.issues, []);
+  assert.equal(mercaPrepared.product.description_general, mercaSigned.general);
 });
 
 test("una cautela histórica auténtica impide atribuir motorización no corroborada a una retroexcavadora", () => {
@@ -345,15 +346,15 @@ test("las firmas históricas conservan identificadores técnicos y citas literal
 });
 
 
-test("una advertencia firmada conserva la denominación literal que fundamenta la discrepancia de alturas", () => {
+test("una firma de alturas diferenciadas conserva la denominación literal del original", () => {
   const source = original("mercaeleva", "M486-0114");
   const snapshot = JSON.stringify(source);
   const signed = resolveKnowledgeEditorial(source, source).general;
   assert.ok(signed);
   assert.match(signed, /«14 MT»/u);
   const prepared = prepareSourceProduct(source);
-  assert.equal(prepared.status, "review");
-  assert.ok(prepared.issues.some((issue) => issue.includes("altura de trabajo")));
+  assert.equal(prepared.status, "ready");
+  assert.deepEqual(prepared.issues, []);
   assert.equal(prepared.product.description_general, signed);
   assert.match(prepared.product.description_general ?? "", /16 m de altura de trabajo.*«14 MT»/u);
   assert.equal(JSON.stringify(source), snapshot);

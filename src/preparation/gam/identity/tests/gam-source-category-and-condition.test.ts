@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { catalog, categorySlug, reference, unconfirmedConditionCodes } from "../../technical/tests/support/gam-source-category-fixture.js";
 import { prepareCached } from "../../../testing/prepare-cached.js";
 import { reconcileGamForeignCategoryTitle } from "../reconciliation/gam-foreign-category-title.js";
+import { isValidCommercialCategory } from "../../../../commercial/projection/category-projection.js";
 
 test("GAM: los cuatriciclos no pasan a furgonetas aunque solo consten en la descripción larga", () => {
   for (const code of ["5918", "6806"]) {
@@ -36,6 +37,10 @@ test("GAM: un encabezado de otra familia no invalida la condición corroborada p
     assert.deepEqual(prepared.issues, [], code);
     assert.equal(prepared.product.condition, "Nuevo", code);
     assert.equal(prepared.product.title, title, code);
+    if (code === "171") {
+      assert.equal(prepared.product.categorySellID, 19);
+      assert.equal(isValidCommercialCategory(record, 19, prepared.product.condition, catalog), true);
+    }
     assert.equal(prepared.product.reference, code);
     assert.equal(prepared.product.sourceUrl, record.url);
     assert.equal(JSON.stringify(record), before);

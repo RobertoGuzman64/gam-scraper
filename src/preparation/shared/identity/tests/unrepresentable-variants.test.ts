@@ -78,8 +78,9 @@ test("no ocultar mástiles contradictorios o identidad alterada", () => {
 test("14 m de altura nominal y 16 m de trabajo son magnitudes compatibles con fuente explícita", () => {
   const source = find("mercaeleva", "M486-0114");
   const prepared = prepareProduct(source, catalog);
-  assert.equal(prepared.status, "review");
-  assert.ok(prepared.issues.includes("Descripción comercial contradictoria: altura de trabajo"));
+  assert.equal(prepared.status, "ready");
+  assert.deepEqual(prepared.issues, []);
+  assert.equal(prepared.product.spec["Altura de trabajo"], "16 m");
   for (const changed of [
     { ...source, title: source.title?.replace("14 MT", "ALTURA DE TRABAJO 14 MT") ?? null },
     { ...source, specs: { ...source.specs, "Altura de trabajo": "14 m" } },

@@ -96,6 +96,8 @@ test("conserva contradicciones técnicas y confirma los tipos documentados", () 
   const height = mercaeleva.find((record) => record.reference === "M486-0114");
   assert.ok(height);
   const assessedHeight = prepareCached(height, catalog);
-  assert.equal(assessedHeight.status, "review");
-  assert.ok(assessedHeight.issues.includes("Descripción comercial contradictoria: altura de trabajo"));
+  assert.equal(assessedHeight.status, "ready");
+  assert.deepEqual(assessedHeight.issues, []);
+  assert.match(assessedHeight.product.description_general ?? "", /«14 MT»/u);
+  assert.equal(assessedHeight.product.spec["Altura de trabajo"], "16 m");
 });
