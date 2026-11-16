@@ -1,12 +1,12 @@
-# Intervenciones manuales por campaña
+# Intervenciones acreditadas — scripts, simulación y aplicación
 
 ## AI GUARD
 
-**Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Las solicitudes de código, pruebas, auditoría o mantenimiento no autorizan cambios documentales implícitos.
+**Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
-**Regla de alcance.** Conservar la distinción entre intervención manual aprobada, preparación técnica y observación del auditor; ninguna publicación técnica aprueba por sí sola una intervención.
+**Regla de alcance.** Una observación de `huecos` o una ficha `review` no autoriza una intervención. La simulación no aprueba el script; no se modifica el original ni se suplanta la decisión humana. Conservar identidad, fuente, huella y campos permitidos en cada propuesta.
 
-Las observaciones procedentes de `huecos --tecnicas` también son solo diagnósticos. Que una ficha permanezca en `review` en un snapshot técnico no constituye aprobación de una intervención ni impide investigar esa ficha en un frente separado. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
+**Propietario:** correcciones manuales sobre derivados de campañas, catálogo de scripts, propuestas, composición, simulación, aplicación y aprobación explícita. Antes de intervenir, clasificar si el fallo requiere corregir el motor compartido: [Calidad](CATALOG_QUALITY.md).
 
 ## Cuándo utilizarlas
 
@@ -23,10 +23,9 @@ No se admiten imágenes, identidad, referencia, serie, categoría ni precios. Un
 
 El sistema de intervenciones está reservado para correcciones **aisladas, excepcionales y acreditadas** que no se pueden expresar con seguridad como una regla común. Si varias fichas comparten un defecto del parser, las unidades, la deduplicación, las descripciones o la validación, **se corrige antes el código productivo**; no se crean decenas de scripts por referencia para conseguir `0 review`. Los scripts existentes tampoco se ejecutan automáticamente en campañas nuevas ni se convierten en un segundo normalizador permanente.
 
-También existen **reconciliaciones específicas productivas** y evidencias editoriales por identidad y huella en `src/preparation/<proveedor>/`, distintas de las intervenciones manuales de campaña: pueden ejecutarse durante la preparación por las guardas y el orden del motor, sin exigir aplicar un script de `interventions/`. Deben probarse con la unidad real, variante vecina y fuente distinta; tampoco autorizan aprobar manualmente una review. Para escoger entre reparar extracción, añadir una evidencia verificable o solicitar una decisión humana, consultar el [manual de mejora acreditada](CATALOG_IMPROVEMENT.md).
+También existen **reconciliaciones específicas productivas** y evidencias editoriales por identidad y huella en `src/preparation/<proveedor>/`, distintas de las intervenciones manuales de campaña: pueden ejecutarse durante la preparación por las guardas y el orden del motor, sin exigir aplicar un script de `interventions/`. Deben probarse con la unidad real, variante vecina y fuente distinta; tampoco autorizan aprobar manualmente una review. Para escoger entre reparar extracción, añadir una evidencia verificable o solicitar una decisión humana, consultar el [manual de mejora acreditada](CATALOG_QUALITY.md).
 
 La decisión humana no se reemplaza por una excepción automática. Si el proveedor publica una contradicción genuina sin evidencia concluyente, se conserva el bloqueo y la revisión editorial; **no se proclama un catálogo completo `ready` por excluirla**. Ver [Objetivos](CATALOG_OPERATIONS.md) y [Validación](VALIDATION.md).
-
 
 ## Consultar y mantener el catálogo versionado
 
@@ -91,4 +90,60 @@ Si antes existía un borrador aprobado, la preparación intervenida genera **otr
 
 La rotación automática conserva los resultados y derivados mientras la campaña siga retenida; cuando la más antigua ya puede retirarse, solo admite rutas y archivos reconocidos tras verificar las entregas por `runId`. Los scripts históricos situados en `storage/interventions/<id-lote>/scripts/` quedan protegidos por compatibilidad. Los scripts permanentes de `interventions/` están versionados en Git y nunca se retiran con una campaña. No existe un paso de limpieza manual ordinaria tras entregar.
 
-Referencias: [Campañas](CAMPAIGNS.md), [Acreditación](CAMPAIGN_ACCREDITATION.md), [Composición de intervenciones](INTERVENTION_COMPOSITION.md), [Validación](VALIDATION.md).
+Referencias: [Campañas](CAMPAIGNS.md), [Acreditación](CAMPAIGNS.md), [Composición de intervenciones](INTERVENTIONS.md), [Validación](VALIDATION.md).
+
+## Contrato de composición manual
+
+Las rutas avanzadas y el esquema de propuestas no sustituyen el circuito ordinario de campañas. Son útiles cuando existen varias correcciones de unidad acreditadas que deben aplicarse juntas.
+
+### Scripts independientes y composición
+
+Los scripts reutilizables viven bajo `interventions/<proveedor>/<archivo>.ts` y se versionan en Git, idealmente uno por máquina o incidencia que pueda retirarse individualmente. Cada script declara `metadata` con identificador y resumen estáticos, y `proposals` con las correcciones acreditadas. **No** deben copiarse ni registrarse para cada campaña.
+
+Cada `ManualInterventionProposal` contiene `providerId`, `identity`, `field`, `expected`, `next`, `reason` y `evidence`. La identidad sale de `buildProductIdentity` y el valor esperado debe coincidir con **el catálogo vigente**. Se admiten título, descripciones, marca, modelo y atributos técnicos **existentes** mediante `field: "spec:<nombre exacto del atributo>"`. Los atributos admiten valores originales del tipo `SpecValue`, sin borrar atributos ni añadir nombres nuevos. Los cambios de texto usan `string | null`. Se rechazan fotografías, números de serie, referencias, URL, categorías y otros identificadores. El hecho de que una marca o un modelo existan en otra publicación no demuestra que correspondan a la unidad concreta.
+
+Varios scripts pueden componerse en una misma simulación o aplicación; dos propuestas para el mismo campo de la misma máquina dan conflicto, aunque propongan el mismo valor. El orden no cambia el SHA del plan. El catálogo `--listar` y la consulta `--consultar` inspeccionan código estático sin ejecutarlo; el motor de aplicación carga únicamente los scripts **seleccionados**.
+
+Las rutas antiguas `storage/interventions/<campana>/scripts/` siguen admitidas para recuperación de expedientes existentes. No crear allí scripts nuevos: el registro por campaña está retirado.
+
+### Simular, aplicar y verificar
+
+Desde la raíz del proyecto, sustituyendo los marcadores por rutas existentes:
+
+```powershell
+npm run intervenir:manual -- gam --script interventions/gam/6002.ts --script interventions/gam/6003.ts --origen <catalogo-catalog.json> --detalle
+```
+
+El resultado muestra el SHA del plan y el antes/después, sin modificar catálogos. Tras comprobar cada cambio y aprobarlo manualmente:
+
+```powershell
+npm run intervenir:manual -- gam --script interventions/gam/6002.ts --script interventions/gam/6003.ts --origen <catalogo-catalog.json> --campana <campana> --aplicar --plan <sha256-completo>
+```
+
+La salida es **un único** `storage/interventions/<campana>/results/<sha>/catalog-derived.json` y su `intervention-record.json`, con registro de los scripts seleccionados y cambios. El catálogo canónico y su manifest permanecen intactos. No editar manualmente el resultado.
+
+```powershell
+npm run intervenir:preparar -- gam --derivado <catalog-derived.json> --origen <catalogo-catalog.json> --simular
+npm run intervenir:preparar -- gam --derivado <catalog-derived.json> --origen <catalogo-catalog.json>
+npm run intervenir:validar -- gam --derivado <catalog-derived.json> --origen <catalogo-catalog.json> --preparacion <intervention-preparation.json>
+```
+
+El mismo procedimiento se realiza por separado en los proveedores que tengan intervenciones. Para los demás se utilizan las preparaciones canónicas originales. No se inventan intervenciones vacías para proveedores sin incidencias.
+
+### Selección editorial de una campaña global
+
+La preparación intervenida no se publica por el mero hecho de estar validada. El selector avanzado también admite un conjunto histórico de tres proveedores sin `--manain` para compatibilidad, pero eso **no es una campaña global completa bajo el contrato vigente**. Se puede aportar en `--gam`, `--gomariz`, `--mercaeleva` o `--manain` junto con preparaciones normales de los otros proveedores y el **mismo** `run.json` global completo, de acuerdo con `docs/CAMPAIGNS.md`.
+
+```powershell
+npm run seleccionar -- --gam <gam-preparation.json> --gomariz <gomariz-preparation.json> --mercaeleva <mercaeleva-preparation.json> --manain <manain-preparation.json> --lote <run.json> --borrador <borrador.json>
+```
+
+El selector reconstruye el derivado desde los cambios acreditados y el catálogo canónico de ese lote, vuelve a validar la preparación y comprueba sus hashes. El borrador incluye cada ficha intervenida que haya quedado lista con `status: "intervention"`. **Solo tras revisión humana** admite `decision: "incluir"`, `reason` justificativa y `evidenceUrls` HTTPS que incluya la ficha vigente. También se puede excluir con una decisión documentada. Una ficha que siga en `review` o con contradicción de identidad **no puede incluirse** por este procedimiento. Las demás exclusiones siguen exigiendo `decision: "excluir"` y evidencia. Establecer `approved: true` y `approvalReason` solo después de decidir todas las entradas.
+
+Después simular la selección con `--lote <run.json> --acreditacion <aprobada.json> --simular`; si es correcta, repetir con `--directorio-salida <directorio-nuevo>` para obtener los cuatro JSON del conjunto actual de proveedores y `selection.json`. La aprobación está vinculada a las huellas exactas de la campaña, las preparaciones y los planes intervenidos: no vale para otra ejecución.
+
+No se recuperan imágenes de campañas anteriores. La galería siempre procede de la extracción actual y permanece inalterada durante cualquier intervención.
+
+### Alcance actual
+
+El sistema no infiere valores verdaderos, no verifica placas ni documentos externos y no reemplaza el contraste humano exigible **únicamente para decisiones editoriales genuinas**. Esa excepción no traslada al propietario el diagnóstico técnico de patrones ni convierte una intervención por ficha en sustituto de reparar código productivo. Si una máquina sigue publicando datos contradictorios sin fuentes concluyentes, debe permanecer pendiente; no se creará un script provisional para hacerla pasar los controles. Los documentos maestros de continuidad se mantienen conforme a su propio protocolo; esta guía operativa no los sustituye.

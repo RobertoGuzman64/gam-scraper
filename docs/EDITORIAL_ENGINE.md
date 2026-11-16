@@ -1,10 +1,12 @@
-# Motor editorial compartido — arquitectura y evolución
+# Motor editorial compartido — composición, evidencia y reglas
 
 ## AI GUARD
 
-**Protección documental.** No crear, cambiar ni retirar este documento salvo autorización explícita del propietario para actualizar documentación. Toda descripción debe contrastarse con el código productivo vigente; los planes de trabajo no sustituyen esta referencia.
+**Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
-**Frontera obligatoria.** No crear narradores por proveedor, modelo o referencia, ni atribuir a otra unidad prestaciones no acreditadas. Las reglas de redacción viven en el dominio y los mappers editoriales compartidos; los adaptadores interpretan el origen. Un guard en verde no demuestra cobertura funcional universal.
+**Regla de alcance.** No crear narradores por proveedor, modelo o referencia, ni atribuir prestaciones de otra unidad. Los adaptadores interpretan el origen; las reglas de redacción viven en el motor y los mappers compartidos. Un guard verde no acredita cobertura funcional universal.
+
+**Propietario:** arquitectura y evolución de la composición editorial, conocimiento acreditado, precedencias y garantías del motor. La campaña de reducción de `review` se organiza en [Calidad del catálogo](CATALOG_QUALITY.md), sin mezclar reglas editoriales con normalización.
 
 ## Alcance y estado
 
@@ -115,4 +117,4 @@ npm run editorial:auditar-cobertura
 
 El primero escribe `reports/editorial-knowledge/audit.json` y el segundo `reports/editorial-coverage/audit.json`. Son herramientas de observación del motor actual, no procedimientos de migración ni mecanismos de publicación.
 
-Consultar [Arquitectura](ARCHITECTURE.md), [Tests y guards](TEST_ARCHITECTURE.md), [Mejora acreditada](CATALOG_IMPROVEMENT.md), [Reglas de datos](SCRAPER_DATA_RULES.md) y [Validación](VALIDATION.md).
+Consultar [Arquitectura](ARCHITECTURE.md), [Tests y guards](TESTING.md), [Mejora acreditada](CATALOG_QUALITY.md), [Reglas de datos](DATA_CONTRACTS.md) y [Validación](VALIDATION.md).

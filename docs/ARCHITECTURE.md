@@ -1,10 +1,12 @@
-# Arquitectura
+# Arquitectura del scraper y fronteras de responsabilidades
 
 ## AI GUARD
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
-**Regla de alcance.** Mantener las fronteras entre `scraping/`, `preparation/`, `publication/`, `infrastructure/` y `commercial/`. No hacer que el índice técnico seleccione, modifique ni autorice una publicación comercial.
+**Regla de alcance.** Mantener las fronteras entre `scraping/`, `preparation/`, `publication/`, `infrastructure/` y `commercial/`. Un índice técnico no selecciona, modifica ni autoriza una publicación comercial.
+
+Este documento define las capas del repositorio, sus dependencias y los puntos de integración. La ejecución de campañas, los contratos de datos y los procedimientos de publicación tienen sus guías propias.
 
 ## Visión general y estructura vigente
 
@@ -83,23 +85,23 @@ No ejecutar retiradas ni consolidaciones reales como parte de una auditoría doc
 
 `src/publication/technical-snapshot.ts` define y valida el corte; `src/publication/technical-publication.ts` prepara, contrasta y simula/activa; `src/cli/commands/catalog/technical-publication.ts` expone el comando, mientras `src/infrastructure/filesystem/catalog/technical-publication.ts` conserva y verifica `technical/active.json` y `technical/versions/<sha256>/{snapshot,manifest}.json`. Los originales completos se contrastan con sus preparaciones; Manain se reconstruye y valida con registro `partial`, CSV y censo. Los `review` permanecen en el snapshot y no autorizan la publicación comercial.
 
-La versión técnica activa y la anterior son las dos protegidas en la retención. Los índices, hashes, locks y temporales son propios; el publicador técnico no toca `publications/` ni activa FINISH. `huecos --tecnicas` lee estos snapshots y es independiente del auditor comercial. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
+La versión técnica activa y la anterior son las dos protegidas en la retención. Los índices, hashes, locks y temporales son propios; el publicador técnico no toca `publications/` ni activa FINISH. `huecos --tecnicas` lee estos snapshots y es independiente del auditor comercial. Ver [Publicaciones técnicas](PUBLICATIONS.md).
 
 ### Publicaciones individuales y acreditación
 
 `src/cli/commands/catalog/prepare-individual.ts` delega en `src/preparation/workflow/individual-prepare.ts`; la acreditación automática limitada reside en `src/publication/automatic-individual-accreditation.ts` y FINISH en `src/publication/individual-finish.ts`. Los contratos de publicación y aceptación de diferencias se conservan en `publication-contracts.ts` y `publication-acceptance.ts`. La evidencia del trabajo original → publicado se ensambla en `src/publication/individual-work-report.ts` y se presenta mediante `src/cli/reporting/`.
 
-Los finales y aprobaciones acreditados no se reescriben para acomodar refactors o diferencias de huella. Las exclusiones editoriales no convierten fichas `review` en `ready`. Ver [Publicación individual](INDIVIDUAL_PUBLICATION.md) y [Campañas](CAMPAIGNS.md).
+Los finales y aprobaciones acreditados no se reescriben para acomodar refactors o diferencias de huella. Las exclusiones editoriales no convierten fichas `review` en `ready`. Ver [Publicación individual](PUBLICATIONS.md) y [Campañas](CAMPAIGNS.md).
 
 ### Proyección comercial y exportación legada
 
 **El catálogo técnico acreditado y su derivado comercial son contratos distintos.** La proyección comercial actual vive en `src/commercial/projection/`, con la política en `category-projection.ts` y evidencia de origen en `source-category-evidence.ts` y `gam-category-evidence.ts`. `src/commercial/export/` prepara, acredita y verifica salidas comerciales procedentes de publicaciones técnicas y snapshots locales; `src/cli/commands/catalog/commercial-audit.ts` realiza la coordinación y `src/cli/reporting/commercial-audit.ts` presenta los informes. El comando `exportar:comercial` no importa datos al backend.
 
-Por separado, `npm run exportar` es un exportador **heredado** para preparaciones comerciales compatibles: `src/commercial/legacy-export/`, `src/cli/commands/legacy-export/` y `src/infrastructure/filesystem/legacy-export/`. No debe aplicarse a nuevas preparaciones técnicas sin asignaciones. La importación HTTP, la persistencia de productos y los permisos operativos pertenecen al backend. Ver [Comercialización](COMERCIALIZACION.md) e [Integración](EQUIPZILLA_INTEGRATION.md).
+Por separado, `npm run exportar` es un exportador **heredado** para preparaciones comerciales compatibles: `src/commercial/legacy-export/`, `src/cli/commands/legacy-export/` y `src/infrastructure/filesystem/legacy-export/`. No debe aplicarse a nuevas preparaciones técnicas sin asignaciones. La importación HTTP, la persistencia de productos y los permisos operativos pertenecen al backend. Ver [Comercialización](COMMERCIAL_EXPORT.md) e [Integración](COMMERCIAL_EXPORT.md).
 
 ### Auditoría de contenido
 
-`src/cli/commands/catalog/catalog-content-gaps.ts` y `src/cli/reporting/catalog-content-gaps-output.ts` presentan datos obtenidos en `src/catalog/diagnostics/`, con originales canónicos resueltos mediante `src/infrastructure/filesystem/catalog/original-catalog-sources.ts`. La preparación recalculada usa `src/preparation/prepare-product.ts`. Las comprobaciones de contenido y `--comparar --specs` no escriben originales ni crean publicaciones. Ver [Huecos de contenido](CATALOG_CONTENT_GAPS.md).
+`src/cli/commands/catalog/catalog-content-gaps.ts` y `src/cli/reporting/catalog-content-gaps-output.ts` presentan datos obtenidos en `src/catalog/diagnostics/`, con originales canónicos resueltos mediante `src/infrastructure/filesystem/catalog/original-catalog-sources.ts`. La preparación recalculada usa `src/preparation/prepare-product.ts`. Las comprobaciones de contenido y `--comparar --specs` no escriben originales ni crean publicaciones. Ver [Huecos de contenido](CATALOG_QUALITY.md).
 
 ## Cómo ampliar reglas y proveedores sin acoplar el núcleo
 
@@ -107,14 +109,53 @@ Una mejora técnica se inicia en la interpretación/reconciliación del origen y
 
 `src/preparation/prepare-product.ts` es un **orquestador**, no el lugar para acumular casos de unidades nuevas. `shared/technical/recovery/documented-technical-recovery.ts` compone varias fuentes documentales; no debe crecer con reglas de negocio duplicadas de varios proveedores. El registro de clasificación es una composición explícita, no un sistema de plugins dinámicos. Las excepciones acreditadas por referencia y huella son legítimas cuando impiden extrapolar una especificación a otra unidad.
 
-Las modificaciones se validan comparando los candidatos por identidad y campo, controlando la huella `rulesSha256`, el preflight, FINISH y la proyección comercial. Consultar el [manual de mejora acreditada](CATALOG_IMPROVEMENT.md) antes de añadir reglas o extender un proveedor.
+Las modificaciones se validan comparando los candidatos por identidad y campo, controlando la huella `rulesSha256`, el preflight, FINISH y la proyección comercial. Consultar el [manual de mejora acreditada](CATALOG_QUALITY.md) antes de añadir reglas o extender un proveedor.
 
 ## Calidad, pruebas y protección de artefactos
 
-`npm run build` ejecuta `scripts/run-build.mjs`. `npm test` ejecuta los guards oficiales definidos en `package.json`, compila cuando es necesario, comprueba el consenso de modelos y después ejecuta `scripts/run-tests.mjs`, que descubre las suites TypeScript de `src/` y `.test.mjs` de `scripts/`. Las pruebas pueden usar caché; para una acreditación sin reutilización usar `EQUIPZILLA_TEST_CACHE=0`. Los tests deben verificar contratos reales y conservar los casos límite. Los guards arquitectónicos editorial y de tests, y sus autopruebas, se ejecutan dentro de `npm test` antes del build; después del build también se comprueba el consenso de modelos. Su política y las integraciones censales autorizadas se describen en [Arquitectura de tests](TEST_ARCHITECTURE.md).
+`npm run build` ejecuta `scripts/run-build.mjs`. `npm test` ejecuta los guards oficiales definidos en `package.json`, compila cuando es necesario, comprueba el consenso de modelos y después ejecuta `scripts/run-tests.mjs`, que descubre las suites TypeScript de `src/` y `.test.mjs` de `scripts/`. Las pruebas pueden usar caché; para una acreditación sin reutilización usar `EQUIPZILLA_TEST_CACHE=0`. Los tests deben verificar contratos reales y conservar los casos límite. Los guards arquitectónicos editorial y de tests, y sus autopruebas, se ejecutan dentro de `npm test` antes del build; después del build también se comprueba el consenso de modelos. Su política y las integraciones censales autorizadas se describen en [Arquitectura de tests](TESTING.md).
 
-`rulesSha256` en `src/infrastructure/filesystem/preparation/preparation-inputs.ts` incorpora nombres y contenidos de módulos JS compilados. Cambiar la distribución de módulos editoriales o el mapeo GAM puede alterar la huella aunque la salida sea funcionalmente equivalente: **equivalencia funcional y compatibilidad de acreditación son comprobaciones diferentes**. No alterar hashes o preparaciones existentes para hacer coincidir la huella. Ver [Validación](VALIDATION.md) y [Mantenimiento](MAINTENANCE.md).
+`rulesSha256` en `src/infrastructure/filesystem/preparation/preparation-inputs.ts` incorpora nombres y contenidos de módulos JS compilados. Cambiar la distribución de módulos editoriales o el mapeo GAM puede alterar la huella aunque la salida sea funcionalmente equivalente: **equivalencia funcional y compatibilidad de acreditación son comprobaciones diferentes**. No alterar hashes o preparaciones existentes para hacer coincidir la huella. Ver [Validación](VALIDATION.md) y [Mantenimiento](OPERATIONS_AND_MAINTENANCE.md).
 
 La regla general `output/` de `.gitignore` necesita mantener la excepción `!src/scraping/output/`: sin ella pueden desaparecer del paquete los módulos de salida aunque sus consumidores sigan compilando contra imports ESM. El código de esos módulos permanece en el árbol fuente; no se regenera desde `dist/`.
 
 Cuando se detecta un defecto, repararlo donde se origina: extracción/HTML en scraping, identidad y calidad en catálogo o preparación, integridad en filesystem, responsabilidades comerciales en proyección, presentación en CLI. No introducir excepciones ficticias por ficha ni restaurar imágenes o specs sin evidencia del origen. La aceptación final distingue compilación, pruebas, calidad del catálogo, integridad de artefactos y acreditación editorial.
+
+## Mapa de responsabilidades estabilizadas
+
+| Zona                    | Propietario y separación                                                                                                                                                  | Contrato que se conserva                                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Normalización GAM       | `src/catalog/normalization/` y `src/tools/gam/normalization/`, con CLI en `src/tools/gam/normalize-csv.ts`                                                                | Unidades y alias seguros, claves de origen conservadas y salidas transaccionales                                   |
+| Semillas GAM            | `src/tools/gam/seed/internal/scalar.ts` compartido por parsers de categoría/URL                                                                                           | Conversión escalar y exports de los consumidores existentes; rechazo de JSON corrupto                              |
+| Editorial compartida    | `src/preparation/shared/editorial/{domain,mapping,evidence}/`, adaptadores `{gam,gomariz,mercaeleva}/editorial/` e índices `data/editorial/knowledge/`                    | Única autoridad de redacción, identidad, precedencias y hechos firmados; adaptadores interpretan origen, no narran |
+| Técnica acreditada      | `src/preparation/shared/technical/reconciliation/preparation-technical-stages.ts` y `shared/technical/recovery/documented-technical-recovery.ts`, con reglas de proveedor | Orden de reconciliaciones, identidad, huellas y semántica técnica                                                  |
+| Clasificación           | `src/preparation/shared/classification/mapping/classification-provider.ts` y `src/preparation/<proveedor>/classification/mapping/provider.ts`                             | Composición explícita, categorías/atributos/condición sin nuevas IDs                                               |
+| Comercial               | `src/commercial/projection/category-projection.ts` y evidencias `source-category-evidence.ts`/`gam-category-evidence.ts`                                                  | Decisiones de categoría y restricciones de procedencia                                                             |
+| Persistencia portátil   | `src/infrastructure/filesystem/catalog/portable-campaign.ts` e `portable-campaign-inspection.ts`                                                                          | Manifiestos, integridad, consolidación y retirada segura                                                           |
+| Retención individual    | `src/infrastructure/filesystem/catalog/catalog-retention-cleanup.ts` e `catalog-retention-references.ts`                                                                  | Protección de históricos referenciados y archivos activos                                                          |
+| Limpieza global         | `src/infrastructure/filesystem/campaign/campaign-cleanup.ts` y `campaign-cleanup-validation.ts`                                                                           | Inventario, validación de rutas, simulación y eliminación segura                                                   |
+| CLI comercial           | `src/cli/commands/catalog/commercial-audit.ts` y `src/cli/reporting/commercial-audit.ts`                                                                                  | Modos, informes y códigos de salida                                                                                |
+| Navegador Mercaeleva    | `src/scraping/providers/mercaeleva/browser.ts` y `browser-pagination.ts`                                                                                                  | Ciclo de navegador, paginación y detección de duplicados                                                           |
+| Atributos GAM           | `src/preparation/gam/classification/mapping/attributes.ts` y `attribute-values.ts`                                                                                        | Alias, conversión validada y catálogo comercial sin cambios de IDs                                                 |
+| Identidad GAM           | Reglas cohesionadas en `src/preparation/gam/identity/`                                                                                                                    | No fragmentar sin una responsabilidad real                                                                         |
+| Publicación estructural | `src/scraping/output/publish.ts` y `csv-serializer.ts`                                                                                                                    | Escritura, preparación de compatibilidad, orden de columnas CSV y preservación del último resultado válido         |
+
+Las reglas de identidad GAM se mantienen cohesionadas bajo su responsabilidad propia. Un módulo extenso no necesita refactor si su responsabilidad es clara. No restaurar carpetas históricas `src/pipeline/` o `src/catalog/preparation/`, ni inventar abstracciones compartidas sin consumidores reales.
+
+## Extender sin duplicar reglas
+
+- Para hechos técnicos buscar primero en reconciliación y evidencia técnica del origen. Para redacción, buscar **primero** en `src/preparation/shared/editorial/{domain,mapping,evidence}/` y los índices `data/editorial/knowledge/`; solo la interpretación/autenticidad específica pertenece al adaptador editorial del proveedor. Las evidencias por unidad firmada pueden conservarse sin crear un narrador ni un `switch` por referencia.
+- Conservar los puntos de composición compartidos, sin duplicar recuperadores en un auditor ni cambiar el orden por estética. `prepare-product.ts` orquesta; no debe convertirse en una tabla de excepciones.
+- Para condición, atributos y categorías, ampliar el adaptador de clasificación por proveedor si procede. La existencia de registros/whitelists explícitos no es deuda por sí sola.
+- Distinguir datos de una unidad, prestaciones generales de modelo y anomalías originales. Antes de hacer crecer una regla, probar la variante vecina y el origen distinto. Consultar [Mejora acreditada del catálogo](CATALOG_QUALITY.md).
+- Las pruebas nuevas verifican el **motor compartido** con condiciones positivas/negativas. Conservar las integraciones censales acreditadas de los catálogos; no añadir suites por máquina. Ver [Motor editorial](EDITORIAL_ENGINE.md) y [Arquitectura de tests](TESTING.md).
+
+## Protección de la salida del scraper
+
+`src/scraping/output/publish.ts` y `csv-serializer.ts` son fuentes imprescindibles para scraping, preparación, publicación y tests. `.gitignore` contiene una regla general `output/` y la excepción **`!src/scraping/output/`**; conservar ambas sin excluir esos módulos en futuras limpiezas. Las funciones `writeOutputs`, `writeGroupedOutputs` y `writeCategoriesCsv` tienen consumidores que dependen de los contratos existentes. El formato CSV exige encabezados concretos (productos que comienzan por `categoryKey,categoryName,title`, categorías con `categoryUrl`). La preparación legada de `publish.ts` incorpora el catálogo comercial que esperan los consumidores de compatibilidad.
+
+Una pérdida de esos módulos puede causar múltiples errores `TS2307` aparentemente no relacionados. Si la compilación falla, comprobar primero que el árbol fuente contiene los archivos antes de cambiar imports o contratos.
+
+## Proveedores y extensión
+
+Para incorporar un proveedor se debe revisar `src/scraping/provider.ts`, el registro `src/scraping/registry.ts`, el contrato de campaña (`src/contracts/campaign-providers.ts`) y, cuando proceda, la preparación, calidad e identidad bajo `src/preparation/` y `src/catalog/`. Sus pruebas deben cubrir extracción, paginación, identidad, duplicados, imagen principal, calidad y formatos. **No** añadirlo a una campaña, a las referencias comerciales o a la publicación acreditada por una coincidencia de nombre. Una ampliación de contrato exige revisión explícita, no una reforma implícita de documentación.

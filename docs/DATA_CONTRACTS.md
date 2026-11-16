@@ -1,10 +1,12 @@
-# Reglas de datos y publicación
+# Contratos de datos — origen, identidad y normalización
 
 ## AI GUARD
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
-**Regla de alcance.** El original vigente puede variar por disponibilidad sin invalidar un original histórico acreditado. No copiar a los JSON comerciales fichas `review` del snapshot técnico ni reintroducir unidades sin existencias.
+**Regla de alcance.** El original vigente puede variar por disponibilidad sin invalidar el original histórico acreditado. Ningún parser debe inventar valores, cambiar unidades implícitamente, atribuir propiedades de otra unidad o mutar publicaciones para hacerlas pasar controles.
+
+**Propietario:** esquema de datos y procedencia, identidad de producto, captura y persistencia de originales, `rulesSha256`, normalización y rechazo conservador. La resolución de `review` vive en [Calidad del catálogo](CATALOG_QUALITY.md), la aceptación en [Validación](VALIDATION.md) y la exportación en [Comercial](COMMERCIAL_EXPORT.md).
 
 ## Fuente de verdad y contratos
 
@@ -71,7 +73,7 @@ La huella se usa para detectar incompatibilidades entre la preparación almacena
 
 Gomariz puede descubrir una ficha desde `/venta/` y excluirla si la página declara **«Sin existencias»**. El resumen de extracción registra `excludedProductUrls` y `-errors.json` conserva las URLs excluidas con motivo; no son fallos de scraping, pero tampoco forman parte del original canónico vigente. En el corte de noviembre de 2026: 633 descubiertas, 547 elegibles y 86 excluidas. Una baja por stock frente a un histórico no autoriza a borrar ni alterar la publicación pasada.
 
-`technical/active.json` selecciona un corte técnico independiente, con `ready/review` y sus incidencias; no equivale a `publications/active.json` comercial. Se conserva un máximo de dos versiones técnicas verificadas por proveedor. Manain solo puede publicarse desde su registro parcial contrastado con evidencias; no se convierte artificialmente en original completo. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
+`technical/active.json` selecciona un corte técnico independiente, con `ready/review` y sus incidencias; no equivale a `publications/active.json` comercial. Se conserva un máximo de dos versiones técnicas verificadas por proveedor. Manain solo puede publicarse desde su registro parcial contrastado con evidencias; no se convierte artificialmente en original completo. Ver [Publicaciones técnicas](PUBLICATIONS.md).
 
 ## Identidad y cobertura
 
@@ -81,14 +83,6 @@ Gomariz puede descubrir una ficha desde `/venta/` y excluirla si la página decl
 - Una diferencia de URL, imágenes, textos o especificaciones puede requerir revisión editorial aunque no cambie el número de productos.
 - Preservar la imagen principal propia de cada ficha; evitar fotografías de productos relacionados como si fueran parte de su galería.
 - **Fidelidad de imágenes a la fuente vigente:** si el proveedor deja de exponer una URL, no restaurarla desde históricos aunque aún funcione. No exigir recuentos constantes de fotos entre campañas. Si la fuente actual sí expone una imagen que el scraper omite, comprobar el adaptador; no inventar ni conservar URL externas por conveniencia.
-
-## Calidad y decisiones editoriales
-
-`ready` y `review` son estados locales de preparación. En preparaciones nuevas, `review` señala incidencias **técnicas y de evidencia del origen**, no la falta de `categorySellID` o de atributos comerciales. Las preparaciones heredadas pueden contener diagnósticos comerciales y no se reinterpretan como si tuvieran las reglas actuales. No eliminar atributos fiables ni rellenar los ausentes por conveniencia.
-
-La revisión de cobertura genera un expediente con **huellas de los dos catálogos**, referencias ausentes y cambios por campo. Las decisiones empiezan pendientes. Para cerrar incidencias hacen falta motivos específicos y evidencias, especialmente en ausencias, imágenes y descripciones. Una retirada exige prueba; una ausencia acreditada de listado no equivale a una baja comercial; `no_acreditado` mantiene el bloqueo. Las decisiones deben verificarse contra los mismos archivos a los que se refieren.
-
-La selección editorial crea productos publicables y un resumen de exclusiones **sin reescribir el catálogo original**. Las exclusiones pueden ser necesarias para proteger la calidad, pero no convierten fichas dudosas en `ready`. La salida por proveedor es un conjunto de candidatos ya definidos por el proyecto, no un request HTTP de importación.
 
 ## Normalización de especificaciones y herramientas GAM
 
@@ -101,39 +95,8 @@ La normalización estructural se implementa en `src/catalog/normalization/normal
 
 Las suites de seguridad de números, modelos, alias, CLI y seed viven bajo `src/catalog/normalization/tests/` y `src/tools/gam/**/tests/`. Ante una modificación, comprobar casos positivos, negativos y un censo real antes/después; los cambios de valores normalizados **no** equivalen por sí mismos a cambios de preparaciones ni a permisos de publicación. Ver [Validación](VALIDATION.md).
 
-## Corrección del motor y procedencia de las reviews
+## El riesgo de `rulesSha256`
 
-Las reviews de preparación se resuelven prioritariamente mediante cambios reutilizables en **código productivo** —extractor, parser, correspondencia entre etiqueta y magnitud, normalizador, calidad e identidad—, no alterando el canónico para conseguir un contador favorable. Los comandos de diagnóstico son herramientas auxiliares del desarrollador, no una sustitución de ese trabajo ni una obligación de inspección producto por producto del propietario. El criterio para declarar el **catálogo completo `ready`** exige `0 review` verificadas sobre todos los productos originales evaluados.
+`src/infrastructure/filesystem/preparation/preparation-inputs.ts` calcula `rulesSha256` leyendo el JS compilado y sus rutas relativas. El hash es sensible incluso a redistribuir imports. Una comparación de JSON preparados idénticos **no garantiza** que sean compatibles sus huellas ni que se puedan reutilizar acreditaciones anteriores. Las redistribuciones del mapeo GAM pueden modificar esa huella sin autorizar cambios en publicaciones ya acreditadas.
 
-Distinguir valor técnico válido y representable, valor publicado compuesto o no escalar, unidad inconsistente, campo posiblemente cruzado y contradicción de identidad. La solución debe conservar la especificación cruda y aplicar únicamente transformaciones que se puedan justificar con evidencia. Un formato no representable por el tipo actual exige revisar el contrato o la regla de calidad, no inventar un número. La ausencia de atributos no publicados no es un fallo. Una contradicción real sin evidencia sigue como `review` y requiere tratamiento editorial separado; la exclusión nunca simula un `ready`.
-
-Cada corrección del motor exige pruebas según el riesgo, validación del catálogo completo y comprobación de que no se pierden fichas, identidades ni garantías de trazabilidad. Las decisiones manuales, los derivados y las entregas acreditadas conservan su independencia de los originales inmutables.
-
-## Tratamiento productivo por clase de defecto
-
-Un origen parcialmente leído exige mejorar el **descubrimiento/extractor**; un texto o especificación transformados erróneamente exige corregir la **asociación, el parser o el normalizador**; una identidad colisionada exige corregir el **modelo de identidad/deduplicación** sin fusionar productos; una preparación técnica que genera reviews repetibles exige corregir sus **reglas de calidad**; un conjunto incoherente exige reparar la **publicación y la verificación de integridad**. `huecos`, `estado`, `comparar` y los expedientes permiten observar esos defectos, **no resolverlos**. Las correcciones se prueban contra el universo real relevante y no sobrescriben originales publicados.
-
-Para la responsabilidad de cada frente, la evidencia de aceptación y la diferencia entre bloqueo humano y defecto reparable, consultar [Objetivos](CATALOG_OPERATIONS.md).
-
-
-## Elegir la reparación acreditable según la procedencia
-
-Para errores de extracción hay que reparar el parser y **recapturar el canónico íntegro**; una muestra o URL individual no se promociona como nuevo original global. Para errores de preparación se reutilizan reconciliaciones técnicas, recuperación documental y el motor editorial **compartido**; los adaptadores de proveedor interpretan el origen sin narradores propios. Se preservan identidad, fuente, variante, orden y huella. La composición técnica está en `src/preparation/shared/technical/reconciliation/preparation-technical-stages.ts` y `shared/technical/recovery/documented-technical-recovery.ts`; la editorial en `shared/editorial/mapping/`. La clasificación común usa el registro `shared/classification/mapping/classification-provider.ts` y las adaptaciones de cada proveedor; no se crean IDs ni atributos por corregir una ficha.
-
-Las evidencias por unidad/modelo no son intercambiables: el dato de un fabricante puede describir un **modelo** sin acreditar la configuración de la **unidad**. Las correcciones de textos por procedencia pueden apoyarse en evidencia firmada de `data/editorial/knowledge/` y en `src/preparation/shared/editorial/mapping/knowledge-editorial.ts`, pero **no** sustituyen la recaptura del original ni una aprobación editorial cuando el contrato la exige. Ver [Motor editorial](EDITORIAL_ENGINE.md).
-
-Una regla corregida no modifica la publicación activa por sí sola. Ejecutar `catalogo:preparar`, preflight `catalogo:publicar -- --simular --detalle`, FINISH y verificaciones de estado; las exclusiones nuevas necesitan las decisiones acreditadas que correspondan. Si un paso posterior a la activación falla, continuar la recuperación idempotente sin editar `manifest.json`, selectores o huellas. La proyección y exportación comercial son un circuito posterior e independiente.
-
-Los avisos tienen propósitos diferentes: `technicalSpecs` de huecos mide claves y reconciliaciones; la semántica técnica comprueba valores; la auditoría comercial distingue pendiente/controlada/heredada/introducida. Una señal estadística sin evidencia directa no autoriza agregar información ni silenciar el auditor. Para la matriz de reparación y ejemplos reales ver [Mejora acreditada del catálogo](CATALOG_IMPROVEMENT.md).
-
-## Frontera con la importación comercial
-
-La campaña entrega JSON acreditados para **traspasar datos fiables**, no para efectuar una operación de importación. La **preparación técnica canónica** no asigna `categorySellID` ni IDs de atributos. Una **proyección comercial local independiente** (`src/commercial/projection/` y `src/commercial/export/`) puede asignarlos a partir de snapshots verificados, producir JSON y un manifiesto auditable, **sin modificar originales o publicaciones técnicas**. La importación, permisos y persistencia final de productos son responsabilidades del backend. **No añadir requisitos comerciales a `ready/review` ni convertir `specs` de origen en atributos comerciales sin una regla y evidencia del mapeador.**
-
-El exportador XLSX/JSON **heredado** (`npm run exportar`) mantiene controles para preparaciones históricas con asignación comercial y rechaza las nuevas preparaciones técnicas sin ella. Es distinto de `npm run exportar:comercial`, que construye el derivado comercial actual desde publicaciones verificadas. Ninguno ejecuta peticiones HTTP de importación al backend.
-
-Consultar [Límites de integración](EQUIPZILLA_INTEGRATION.md) para la separación de responsabilidades.
-
-Las correcciones textuales puntuales se gestionan, cuando proceda, mediante [intervenciones manuales por campaña](CAMPAIGN_INTERVENTIONS.md), con origen intacto y sin promoción editorial automática.
-
-Para el flujo ordinario de **todos los proveedores registrados** consultar [Campañas completas](CAMPAIGNS.md); para los criterios de aceptación ver [Validación](VALIDATION.md) y [Objetivos](CATALOG_OPERATIONS.md).
+Ante cualquier cambio de reglas: capturar la línea base, comparar salidas, calcular la huella antes/después, ejecutar pruebas y `estado`, y gestionar cualquier nueva preparación/acreditación por los procedimientos formales. Nunca reescribir huellas ni aprobar de forma automática.

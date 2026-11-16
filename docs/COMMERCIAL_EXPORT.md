@@ -1,12 +1,34 @@
-# Comercialización desde el scraper
+# Exportación comercial — contrato y frontera con el backend
 
 ## AI GUARD
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
-**Regla de alcance.** La exportación comercial solo usa publicaciones individuales acreditadas y debe bloquear inventarios obsoletos; nunca consumir directamente `technical/active.json` ni hacer elegible una ficha `review` por existir en un snapshot.
+**Regla de alcance.** Solo se exporta desde publicaciones individuales acreditadas y actuales; nunca desde `technical/active.json` ni desde `review` por hallarse en un snapshot. El scraper no importa, persiste ni actualiza productos en el backend.
 
-El catálogo comercial de EQUIPZILLA **se deriva de las publicaciones individuales acreditadas** (`catalogs/providers/<proveedor>/publications/`), sin modificarlas. Los nuevos snapshots bajo `technical/` sirven a análisis y mejora, no son una fuente de exportación comercial. El scraper decide la elegibilidad, asigna categorías y atributos, prepara los textos y la metadata, y genera exportaciones auditables. El backend recibe los productos y gestiona su persistencia y operación comercial. La exportación **no** escribe en el backend.
+**Propietario:** proyección comercial local, auditor de coherencia, exportación JSON/manifiesto y contratos que debe recibir el backend. Los procedimientos de preparación/acreditación están en [Publicaciones](PUBLICATIONS.md).
+
+## Dos productos de datos y una frontera de sistema
+
+El scraper produce y conserva **datos técnicos acreditados**. También dispone de una **proyección comercial local**, separada, que interpreta publicaciones **individuales acreditadas**, no los snapshots técnicos independientes con `review`, conforme a la taxonomía y los atributos conocidos. **Ni la entrega técnica ni la exportación comercial importan productos al backend**: autorización, altas, actualizaciones, persistencia y reglas operativas del receptor siguen fuera de este repositorio.
+
+```text
+Proveedores → extracción → originales / registro parcial → preparación (ready/review)
+                                               ├──→ snapshot técnico versionado
+                                               │      (incluye review; auditor huecos --tecnicas)
+                                               ↓
+                            selección editorial y JSON acreditados
+                                               ↓
+          proyección comercial del scraper (categorías, atributos, metadata)
+                                                 ↓
+                     JSON comerciales + manifiesto verificable
+                                                 ↓
+            integración e importación externas al scraper (backend)
+```
+
+La campaña global tiene un contrato de cuatro proveedores (GAM, Gomariz, Mercaeleva, Manain). Las publicaciones individuales acreditadas utilizadas por la exportación comercial actual corresponden a **GAM, Gomariz y Mercaeleva**; eso no convierte a Manain en una publicación completa ni sustituye la campaña global.
+
+El comando `publicacion:tecnica` crea un registro de consulta independiente, con `ready/review`, índice y retención propios. Gomariz usa un original canónico completo; Manain puede conservar un corte `partial` acreditado por registro, CSV y censo. Ninguno de esos snapshots altera la vigencia de las publicaciones individuales de GAM, Gomariz y Mercaeleva ni habilita la exportación comercial de Manain. Ver [Publicaciones técnicas](PUBLICATIONS.md).
 
 ## Fuente y contratos
 
@@ -20,7 +42,7 @@ El catálogo comercial de EQUIPZILLA **se deriva de las publicaciones individual
 
 Un original puede evolucionar por cambios de stock. La auditoría histórica verifica cada publicación individual contra el **origen acreditado por su manifest y SHA-256**, no contra una captura posterior. Por el contrario, la exportación de un inventario actualmente obsoleto **debe bloquearse** hasta reconciliar sus bajas, aunque el histórico sea íntegro. En Gomariz, el corte del 11 de noviembre de 2026 retiró 86 fichas «Sin existencias» y dejó 11 identidades que figuraban en la publicación comercial anterior; no restaurarlas ni ignorar el bloqueo para conseguir `PASS`.
 
-El guard ejecutable `tests-commercial-contract-guard.mjs` protege el contrato comercial v2; se ejecuta con `npm test`, puede invocarse con `npm run contrato:comercial` y se comprueba en la vía de exportación. No sustituye auditoría, identidad, procedencia ni revisión de disponibilidad. Ver [Publicaciones técnicas](TECHNICAL_PUBLICATIONS.md).
+El guard ejecutable `tests-commercial-contract-guard.mjs` protege el contrato comercial v2; se ejecuta con `npm test`, puede invocarse con `npm run contrato:comercial` y se comprueba en la vía de exportación. No sustituye auditoría, identidad, procedencia ni revisión de disponibilidad. Ver [Publicaciones técnicas](PUBLICATIONS.md).
 
 ## Qué se exporta
 
@@ -60,7 +82,7 @@ Las correcciones de datos se realizan en mapeadores y reglas reutilizables, con 
 
 `src/commercial/diagnostics/commercial-intervention-priorities.ts` separa `pending` y `controlled`. La clasificación individual y la vigencia de huellas están en `src/commercial/diagnostics/audited-findings.ts` y `data/audit-finding-recognitions.json`: no modificar el registro para reducir avisos ni asumir que un reconocimiento histórico vale ante un origen cambiado. Las discrepancias técnicas reconocidas, como variantes de modelo o portada, pueden continuar visibles como **controladas**, sin ser incidencias pendientes de reparación. Los defectos introducidos y los reconocimientos caducados se revisan de nuevo.
 
-Las decisiones de semántica (año, altura, capacidad, unidad, atributos) se implementan en preparación/dominio o proyección según la **primera capa defectuosa**; los auditores detectan y describen, no sustituyen la regla productiva. Ver [Mejora acreditada del catálogo](CATALOG_IMPROVEMENT.md).
+Las decisiones de semántica (año, altura, capacidad, unidad, atributos) se implementan en preparación/dominio o proyección según la **primera capa defectuosa**; los auditores detectan y describen, no sustituyen la regla productiva. Ver [Mejora acreditada del catálogo](CATALOG_QUALITY.md).
 
 ## Operación
 
@@ -91,6 +113,41 @@ La opción `--arbol` es una vista de inspección: presenta la jerarquía real co
 
 El diagnóstico y el derivado comercial son independientes de los **nuevos snapshots técnicos bajo `technical/`**; siguen vinculados a las publicaciones individuales acreditadas y su procedencia histórica. Las categorías, opciones y relaciones se validan contra los recursos locales vigentes; una exportación con categorías pendientes no equivale a una importación autorizada.
 
+## Contrato técnico
+
+- `ProductRecord` conserva origen, categorías de proveedor, referencias, imágenes, descripciones, condición y `specs`.
+- La preparación técnica actual (`rulesVersion: 2`) conserva `categorySellID: null`, `attributes: []` y las especificaciones en `spec`: la falta de asignación comercial **no es una review técnica**.
+- `ready/review` identifica controles técnicos y de evidencia. Las exclusiones editoriales preservan los originales, no equivalen a altas ni convierten `review` en `ready`.
+- Los JSON acreditados y sus manifests demuestran selección y procedencia dentro de su contrato, no una importación consumada ni cobertura de un portal.
+
+## Contrato de la proyección comercial local
+
+- `src/commercial/projection/` decide la correspondencia con el snapshot de categorías y atributos; los IDs solo proceden de `data/category/categorySell-flat.json` y `data/import/attributeCatalog.json`.
+- `src/commercial/projection/category-projection.ts` mantiene la política; `source-category-evidence.ts` y `gam-category-evidence.ts` aíslan las comprobaciones de procedencia. La extracción de evidencia no cambia las reglas comerciales.
+- `src/commercial/export/` produce los JSON derivados y su `commercial-manifest.json`, con hashes de archivos, snapshot y referencias relevantes. La exportación consulta las publicaciones **individuales acreditadas** y sus originales históricos sin modificarlos; contrasta el original vigente para impedir exportaciones de stock obsoleto.
+- `src/cli/commands/catalog/commercial-audit.ts` coordina la auditoría y `src/cli/reporting/commercial-audit.ts` presenta informes. `--verificar=RUTA` contrasta una exportación existente con las fuentes vigentes.
+- `data/commercial-reference/` contiene logos y correspondencias de empresas; `companyID` solo se incluye con entorno explícito. Las categorías, opciones, valores, condición, identidad y metadata se validan, no se inventan.
+
+```powershell
+npm run auditar:comercial
+npm run auditar:comercial -- --acreditacion
+npm run exportar:comercial -- --salida <directorio-nuevo> --simular
+npm run exportar:comercial -- --salida <directorio-nuevo> --entorno production
+npm run auditar:comercial -- --verificar=<directorio-existente>
+```
+
+Los comandos de exportación definitiva crean un directorio nuevo y archivos verificables; **no envían solicitudes HTTP al backend**. La exportación comercial no modifica la selección editorial ni los originales. Una incompatibilidad en la proyección debe resolverse en el mapeador o contrato comercial, no degradando `ready/review` de la preparación canónica.
+
+## Compatibilidad heredada y responsabilidades del receptor
+
+`npm run exportar` es un mecanismo **legado** de Excel/JSON en `src/commercial/legacy-export/` y `src/cli/commands/legacy-export/`, con infraestructura de XLSX y referencias comerciales heredadas. Su preparación con catálogo corresponde a un contrato histórico; no es la continuación automática de `entregar` y rechaza una preparación técnica nueva que no tenga asignaciones comerciales compatibles.
+
+El backend debe decidir identidad de sus registros, altas/actualizaciones, permisos e inventario, preservar en su caso `metadata.featured` previamente gestionado y procesar los JSON sin recrear por IA categorías o atributos que el derivado comercial ya acredita. Estas obligaciones **no quedan implementadas ni verificadas** por ejecutar los comandos de este repositorio; ver los pendientes de integración de [Comercialización](COMMERCIAL_EXPORT.md).
+
+Ante un fallo, distinguir: defectos del dato técnico se reparan en scraping/preparación; errores de categoría, atributo o metadata emitida se reparan en proyección comercial; restricciones y errores del importador se investigan en el receptor. No introducir IDs o equivalencias por conveniencia ni considerar un JSON exportado prueba de alta en la base de datos.
+
+Ver [Arquitectura](ARCHITECTURE.md), [Reglas de datos](DATA_CONTRACTS.md), [Comercialización](COMMERCIAL_EXPORT.md) y [Validación](VALIDATION.md).
+
 ## Ajustes pendientes de integración en backend
 
 - Cambiar a `required: false` los atributos comerciales actualmente obligatorios, sin eliminar atributos ni relaciones. El snapshot local puede conservar valores anteriores hasta su sincronización; el auditor comercial no los convierte en tareas.
@@ -98,4 +155,4 @@ El diagnóstico y el derivado comercial son independientes de los **nuevos snaps
 - Persistir `metadata.tags` y `metadata.keywords` del scraper; en actualizaciones preservar `metadata.featured` existente salvo una acción operativa explícita.
 - Resolver el alta/actualización mediante identidad técnica estable, sin fusionar unidades por `externalReference`.
 
-Estos puntos describen **cambios acordados y todavía no aplicados al backend**. Hasta entonces no debe asumirse compatibilidad definitiva de importación. La distinción entre preparación técnica, proyección comercial local e importación externa se mantiene en [Integración](EQUIPZILLA_INTEGRATION.md) y [Arquitectura](ARCHITECTURE.md).
+Estos puntos describen **cambios acordados y todavía no aplicados al backend**. Hasta entonces no debe asumirse compatibilidad definitiva de importación. La distinción entre preparación técnica, proyección comercial local e importación externa se mantiene en [Integración](COMMERCIAL_EXPORT.md) y [Arquitectura](ARCHITECTURE.md).
