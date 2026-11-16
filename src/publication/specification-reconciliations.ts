@@ -51,6 +51,8 @@ const verifiedCorrections: Readonly<Record<string, {
   "ref:2305:Altura Plataforma": { model: "C1.5L", previous: "9225 metros", replacement: { "Altura de elevación (mm)": "16900 mm" } },
   "ref:2241:Centro de carga": { model: "MO10S", previous: "8895 mm", replacement: { "Altura de elevación (mm)": "8895 mm" } },
   "ref:73:Capacidad de la batería": { model: "T8.0HS4", previous: "1000mm", replacement: { "Tensión nominal de batería": "48 V" } },
+  "ref:73:Capacidad de carga (kg)": { model: "T8.0HS4", previous: "8000 KG", replacement: { "Capacidad de arrastre": "8000 KG" } },
+  "ref:72:Capacidad de carga (kg)": { model: "T7.0 HS3", previous: "8000 KG", replacement: { "Capacidad de arrastre": "7000 KG" } },
   "ref:72:Capacidad de la batería": { model: "T7.0 HS3", previous: "1000mm", replacement: { "Tensión nominal de batería": "48 V" } },
   "ref:2248:Altura Plataforma": { model: "MP20X", previous: "24V / 210 - 500Ah(V/Ah) metros", replacement: { "Capacidad de la batería": "24V / 250AH(V/Ah)" } },
   "ref:2249:Capacidad de la batería": { model: "MP25X", previous: "72/820V/Ah", replacement: { "Batería (V / Ah)": "24V / 315-500Ah(V/Ah)" } },

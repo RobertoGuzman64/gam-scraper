@@ -4,6 +4,7 @@ import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import { recoverGamDocumentedWarehouseCleaningAndLiftingSpecs } from "../models/documented-warehouse-cleaning-and-lifting-specs.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
+import { reconcileGamForeignCategoryTitle } from "../../identity/reconciliation/gam-foreign-category-title.js";
 
 const originals = ({ products: accreditedSourceSamples("gam-original") }).products;
 const expectedByReference: Readonly<Record<string, SpecsMap>> = {
@@ -24,8 +25,8 @@ const expectedByReference: Readonly<Record<string, SpecsMap>> = {
   "6423": { "Tecnología de batería": "Iones de litio" },
   "6953": { "Masa máxima autorizada del vehículo": "3500 kg" },
   "6954": { "Masa máxima autorizada del vehículo": "3500 kg", "Material de cesta": "Fibra" },
-  "72": { "Configuración de ruedas": "3 ruedas", "Tensión nominal de batería": "48 V" },
-  "73": { "Configuración de ruedas": "4 ruedas", "Tensión nominal de batería": "48 V" },
+  "72": { "Configuración de ruedas": "3 ruedas", "Tensión nominal de batería": "48 V", "Capacidad de arrastre": "7000 KG" },
+  "73": { "Configuración de ruedas": "4 ruedas", "Tensión nominal de batería": "48 V", "Capacidad de arrastre": "8000 KG" },
   "214": { "Diámetro admitido de bobina": "120–1270 mm", "Apertura máxima de brazos": "1300 mm", "Superficie de agarre": "Goma" },
   "215": { "Diámetro admitido de bobina": "120–1270 mm", "Apertura máxima de brazos": "1300 mm", "Superficie de agarre": "Goma" },
   "216": { "Diámetro máximo de bobina": "1270 mm", "Anchura máxima de bobina": "520 mm", "Recorrido de elevación": "800 mm" },
@@ -34,19 +35,24 @@ const expectedByReference: Readonly<Record<string, SpecsMap>> = {
 
 const references = new Set(Object.keys(expectedByReference));
 
-test("GAM: la evidencia por unidad acredita 23 máquinas distintas y 42 prestaciones sin alterar originales", () => {
+test("GAM: la evidencia por unidad acredita 23 máquinas y conserva la semántica del arrastre", () => {
   const improved = new Set<string>();
   let added = 0;
   for (const record of originals) {
     const snapshot = JSON.stringify(record);
+    const unit = reconcileGamForeignCategoryTitle(record);
     const originalSpecs = record.specs ?? {};
-    const recovered = recoverGamDocumentedWarehouseCleaningAndLiftingSpecs(record, originalSpecs);
+    const recovered = recoverGamDocumentedWarehouseCleaningAndLiftingSpecs(unit, originalSpecs);
     const expected = record.reference ? expectedByReference[record.reference] : undefined;
     if (!expected) {
       assert.equal(recovered, originalSpecs, record.reference ?? record.url);
       continue;
     }
-    assert.deepEqual(recovered, { ...originalSpecs, ...expected }, record.reference ?? record.url);
+    const { ["Capacidad de carga (kg)"]: _originalLoad, ...withoutMislabelledLoad } = originalSpecs;
+    assert.deepEqual(recovered, {
+      ...(record.reference === "72" || record.reference === "73" ? withoutMislabelledLoad : originalSpecs),
+      ...expected
+    }, record.reference ?? record.url);
     assert.deepEqual(Object.keys(recovered).filter((key) => !(key in originalSpecs)).sort(), Object.keys(expected).sort());
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.status, "ready", record.reference ?? record.url);
@@ -58,34 +64,35 @@ test("GAM: la evidencia por unidad acredita 23 máquinas distintas y 42 prestaci
     added += Object.keys(expected).length;
   }
   assert.deepEqual(improved, references);
-  assert.equal(added, 42);
+  assert.equal(added, 44);
 });
 
 test("GAM: la evidencia no se propaga a variantes, referencias ni originales modificados", () => {
   for (const record of originals) {
     if (!record.reference || !references.has(record.reference)) continue;
+    const unit = reconcileGamForeignCategoryTitle(record);
     const input = record.specs ?? {};
     const key = Object.keys(expectedByReference[record.reference] ?? {})[0];
     assert.ok(key, record.reference);
     const variants: readonly ProductRecord[] = [
-      { ...record, providerId: "mercaeleva" },
-      { ...record, categoryKey: "otra-categoria" },
-      { ...record, reference: `${record.reference}-otra` },
-      { ...record, url: `${record.url}?variante=1` },
-      { ...record, title: `${record.title} distinta` },
-      { ...record, brand: "Otra marca" },
-      { ...record, model: "Otro modelo" },
-      { ...record, condition: "Segunda mano" },
-      { ...record, year: "2000" },
-      { ...record, shortDescription: "Otra descripción" },
-      { ...record, longDescription: `${record.longDescription} variante` },
-      { ...record, specs: { ...input, "Año de fabricación": "2001" } },
-      { ...record, specs: { ...input, [key]: "Valor preexistente" } }
+      { ...unit, providerId: "mercaeleva" },
+      { ...unit, categoryKey: "otra-categoria" },
+      { ...unit, reference: `${record.reference}-otra` },
+      { ...unit, url: `${record.url}?variante=1` },
+      { ...unit, title: `${unit.title} distinta` },
+      { ...unit, brand: "Otra marca" },
+      { ...unit, model: "Otro modelo" },
+      { ...unit, condition: "Segunda mano" },
+      { ...unit, year: "2000" },
+      { ...unit, shortDescription: "Otra descripción" },
+      { ...unit, longDescription: `${record.longDescription} variante` },
+      { ...unit, specs: { ...input, "Año de fabricación": "2001" } },
+      { ...unit, specs: { ...input, [key]: "Valor preexistente" } }
     ];
     for (const [index, variant] of variants.entries()) {
       assert.equal(recoverGamDocumentedWarehouseCleaningAndLiftingSpecs(variant, variant.specs ?? {}), variant.specs ?? {}, `${record.reference}:${index}`);
     }
     const preexisting = { ...input, [key]: "Valor acreditado previamente" };
-    assert.equal(recoverGamDocumentedWarehouseCleaningAndLiftingSpecs(record, preexisting), preexisting);
+    assert.equal(recoverGamDocumentedWarehouseCleaningAndLiftingSpecs(unit, preexisting), preexisting);
   }
 });

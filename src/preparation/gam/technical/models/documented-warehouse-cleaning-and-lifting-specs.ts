@@ -53,6 +53,18 @@ const documentedUnits: Readonly<Record<string, DocumentedGamUnit>> = {
       "Alimentación": "Batería"
     }
   },
+  "171": {
+    "fingerprint": "b45d5ea281220d5ff88e903884edf0fcf88ad73751329403a29b2a241c17c745",
+    "brand": null,
+    "model": "T16",
+    "categoryKey": "limpieza-fregadoras",
+    "source": "https://www.tennantco.com/en_eu/1/machines/scrubbers/product.m-t16.html",
+    "specifications": {
+      "Depósito de agua limpia estándar": "190 L",
+      "Depósito de recuperación": "225 L",
+      "Anchura de la boquilla de aspiración": "1065 mm"
+    }
+  },
   "4013": {
     "fingerprint": "aec5f616a4b7d0ac6958b6d3c9d79c26c128b0a4259f60614bf7c34016cd95b9",
     "brand": "Tennant",
@@ -198,7 +210,8 @@ const documentedUnits: Readonly<Record<string, DocumentedGamUnit>> = {
     "source": "https://www.hyster.com/globalassets/coms/hyster/emea/documents/trucks-literature/tow-tractors/t7.0-8.0hs/t7.0-8.0-hs-a489-ss-02-2018-rev00-es.pdf",
     "specifications": {
       "Configuración de ruedas": "3 ruedas",
-      "Tensión nominal de batería": "48 V"
+      "Tensión nominal de batería": "48 V",
+      "Capacidad de arrastre": "7000 KG"
     }
   },
   "73": {
@@ -209,7 +222,8 @@ const documentedUnits: Readonly<Record<string, DocumentedGamUnit>> = {
     "source": "https://www.hyster.com/globalassets/coms/hyster/emea/documents/trucks-literature/tow-tractors/t7.0-8.0hs/t7.0-8.0-hs-a489-ss-02-2018-rev00-es.pdf",
     "specifications": {
       "Configuración de ruedas": "4 ruedas",
-      "Tensión nominal de batería": "48 V"
+      "Tensión nominal de batería": "48 V",
+      "Capacidad de arrastre": "8000 KG"
     }
   },
   "214": {
@@ -269,5 +283,10 @@ export const recoverGamDocumentedWarehouseCleaningAndLiftingSpecs = (record: Pro
   if (!unit || record.categoryKey !== unit.categoryKey || record.brand !== unit.brand ||
     record.model !== unit.model || createHash("sha256").update(JSON.stringify(record)).digest("hex") !== unit.fingerprint ||
     Object.keys(unit.specifications).some((key) => key in specs)) return specs;
+  if ("Capacidad de arrastre" in unit.specifications &&
+    "Capacidad de carga (kg)" in specs && /\btractor de arrastre\b/iu.test(record.title ?? "")) {
+    const { ["Capacidad de carga (kg)"]: _mislabelledLoad, ...remaining } = specs;
+    return { ...remaining, ...unit.specifications };
+  }
   return { ...specs, ...unit.specifications };
 };

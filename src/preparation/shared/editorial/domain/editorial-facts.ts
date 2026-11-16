@@ -87,6 +87,15 @@ const sourceMetric = (value: SpecValue | undefined, unit: "m" | "mm"): number | 
 const sourceCapacity = (record: ProductRecord, source: EditorialSource, family: EditorialFamily): number | null => {
   if (!isHandling(family) && !isPlatform(family) && family !== "elevador-materiales" && family !== "dumper") return null;
   if (family === "dumper" && source.loadCapacity === undefined) return null;
+  if (family === "tractor-arrastre" &&
+    (record.specs?.["Capacidad de arrastre (kg)"] !== undefined ||
+      record.specs?.["Capacidad de arrastre"] !== undefined)) {
+    const towing = editorialQuantityOf(record.specs, ["Capacidad de arrastre (kg)", "Capacidad de arrastre"], "kg");
+    const announced = [...(record.title ?? "").matchAll(/\b(\d{1,3}(?:[.,]\d{3})+|\d{4,5})\s*kg\b/giu)];
+    if (announced.length > 1 || announced.length === 1 &&
+      editorialQuantity(`${announced[0]?.[1] ?? ""} kg`, "kg") !== towing) return null;
+    return towing;
+  }
   const capacity = editorialQuantityOf(record.specs, family === "dumper" ?
     ["Capacidad de carga (kg)", "Capacidad de carga", "Capacidad"] :
     ["Capacidad de carga (kg)", "Capacidad máxima de elevación", "Capacidad de carga", "Capacidad"], "kg");
