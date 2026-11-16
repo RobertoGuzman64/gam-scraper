@@ -8,9 +8,9 @@
 
 ## Alcance y estado
 
-Esta es la referencia **vigente** sobre el funcionamiento del motor editorial. La migración de los **narradores históricos detectados** al motor compartido está cerrada en el alcance de los guards: no quedan narradores de proveedor conectados y el guard de arquitectura editorial informa cero infracciones. Ello **no** demuestra que todas las 82 capacidades del inventario RE estén acreditadas ni que no existan oportunidades de mejora funcional.
+Esta es la referencia **vigente** sobre el funcionamiento del motor editorial. La migración de los **narradores históricos detectados** al motor compartido está cerrada en el alcance de los guards: no quedan narradores de proveedor conectados y el guard de arquitectura editorial informa cero infracciones. La conciliación histórica posterior acredita **82/82 capacidades RE** y reproduce **689 reglas K** (635 específicas, 53 exclusiones justificadas y 1 bloqueo de evidencia). **No** debe confundirse esa acreditación de inventario y trazabilidad con demostrar equivalencia ejecutable absoluta del motor antiguo: para CH-03 falta la fuente histórica ejecutable.
 
-Conservar y acreditar **todo el conocimiento útil del motor anterior** es un objetivo distinto de retirar sus narradores. La equivalencia histórica completa todavía no está demostrada; antes de enriquecer capacidades nuevas debe contrastarse el conocimiento antiguo con las reglas y evidencias actuales. Las mejoras funcionales se justifican mediante evidencia y comportamiento nuevo, no por una cuota de archivos o pruebas.
+La reutilización semántica se protege mediante el motor compartido, los guards obligatorios y sus pruebas negativas. Las mejoras funcionales siguen requiriendo evidencia, aplicación legítima a datos nuevos y rechazo de variantes incompatibles; no se justifican por cuotas de módulos ni tests.
 
 ## Flujo productivo actual
 
@@ -75,11 +75,15 @@ Los índices vigentes residen en `data/editorial/knowledge/`:
 - `family-guidance.json`: indicaciones documentadas de familia.
 - `manufacturer-models.json`: coincidencias de fabricante y modelo.
 
-El mecanismo existente de verificación es:
+Los mecanismos existentes de verificación son:
 
 ```powershell
 node scripts/operations/rebuild-editorial-knowledge.mjs --check
+npm run build
+node scripts/operations/rebuild-editorial-models.mjs --check
 ```
+
+Ambas comprobaciones `--check` forman parte de `npm test` (la segunda después del build). Ninguna autoriza recalcular índices automáticamente en una ejecución de solo verificación.
 
 Para actualizar conocimiento debe utilizarse el proceso ya implementado (`npm run editorial:actualizar-conocimiento`) **solo cuando esté autorizada** esa intervención y se satisfagan sus dependencias. No editar índices ni firmar evidencia inventada para convertir `review` en `ready`. Los originales, manifest, identidad y huellas constituyen la prueba de procedencia; las publicaciones previamente acreditadas son inmutables.
 
@@ -97,9 +101,9 @@ Los casos complejos —fuente contradictoria, semántica de altura ambigua, iden
 ## Qué se ha cerrado y qué no
 
 - **Cerrado en el alcance medido:** narradores históricos detectados fuera del recorrido productivo; autoridad editorial compartida; fronteras comerciales y arquitectónicas vigiladas; guard arquitectónico de tests sin infracciones.
-- **Pendiente de acreditar:** equivalencia de todas las reglas, condiciones y evidencias útiles del motor histórico con su aprovechamiento actual. La matriz original de 82 capacidades no certifica por sí sola la transferencia completa.
-- **Posterior como evolución funcional:** ampliar o mejorar capacidades cuando existan brechas concretas reproducibles, después de preservar y acreditar el conocimiento anterior.
-- **No acreditado en el último corte disponible:** `npm run build` y `npm test` oficiales completos, por dependencias de scraping/tipos ausentes en el entorno anterior. Una prueba focal o guard PASS no los sustituye.
+- **Acreditado en el inventario histórico:** las 82 RE, con las 689 K conciliadas, cero pendientes de traslado y equivalencia en la matriz. La única regla bloqueada por evidencia (CH-03) permanece identificada; no se afirma equivalencia ejecutable de una fuente que no está disponible.
+- **Evolución funcional:** mejorar capacidades cuando haya brechas concretas reproducibles, preservando evidencia, precedencias y no propagación entre unidades.
+- **No acreditado en el último corte disponible:** `npm run build` y `npm test` oficiales completos, por dependencias ausentes en el entorno de cierre. La validación P7 requiere una instalación limpia; una prueba focal o un guard PASS no la sustituye.
 
 ## Auditorías de lectura sin publicación
 
@@ -110,6 +114,6 @@ npm run editorial:auditar-reutilizacion
 npm run editorial:auditar-cobertura
 ```
 
-El primero escribe `reports/editorial-knowledge/audit.json` y el segundo `reports/editorial-coverage/audit.json`. Ninguno sustituye una comparación funcional con el conocimiento histórico ni declara completas las 82 capacidades.
+El primero escribe `reports/editorial-knowledge/audit.json` y el segundo `reports/editorial-coverage/audit.json`. Son herramientas de observación actual; ni sustituyen el control de trazabilidad de las 82 RE ya documentadas ni resuelven por sí solas el bloqueo probatorio CH-03.
 
 Consultar [Arquitectura](ARCHITECTURE.md), [Tests y guards](TEST_ARCHITECTURE.md), [Mejora acreditada](CATALOG_IMPROVEMENT.md), [Reglas de datos](SCRAPER_DATA_RULES.md) y [Validación](VALIDATION.md).

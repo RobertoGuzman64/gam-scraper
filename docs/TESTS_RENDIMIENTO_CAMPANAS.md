@@ -11,12 +11,12 @@
 La protección del rendimiento forma parte de `npm test`; no es un benchmark separado que sustituya a las pruebas. El contrato está en `package.json`:
 
 ```text
-npm test = integridad de módulos → motor compartido → frontera comercial/editorial → conocimiento --check → rendimiento → contrato comercial v2 → build --if-needed → runner
+npm test = integridad de módulos → motor compartido → frontera comercial/editorial → guard editorial → guard de tests → autopruebas de guards → conocimiento --check → rendimiento → contrato comercial v2 → build --if-needed → consenso de modelos --check → runner
 ```
 
 El guard detecta patrones de coste y la ejecución posterior compila cuando corresponde y lanza suites compiladas. `npm run test:guard` ejecuta **solo** el guard; **no** equivale al PASS integral. `npm run build` compila mediante `scripts/run-build.mjs` y la caché de build está en `scripts/build-cache.mjs`. Si faltan `typescript`, `cheerio`, `p-limit` o tipos de Node no se debe declarar un build correcto a partir de tests aislados.
 
-`npm test` incluye antes de rendimiento y contrato comercial v2 los guards de integridad de módulos, motor compartido, frontera comercial/editorial y verificación del conocimiento. **No** incluye `tests-editorial-architecture-guard.mjs`, `tests-domain-tests-guard.mjs` ni sus autopruebas: ejecutarlos por separado ante cambios arquitectónicos; ver [Arquitectura de tests](TEST_ARCHITECTURE.md). `npm run contrato:comercial` ejecuta el segundo por separado y la exportación también lo comprueba. El guard de contrato protege estructuras actuales; una reorganización AST legítima podría exigir revisar su huella sin cambiar el contrato externo.
+`npm test` incluye ahora `tests-editorial-architecture-guard.mjs`, `tests-domain-tests-guard.mjs` y `tests-architecture-guards.test.mjs` **antes del build**; comprueba además el consenso de modelos después de compilar. Estos controles requieren TypeScript instalado en el proyecto. Su ejecución aislada aporta diagnóstico, pero no sustituye el comando oficial. `npm run contrato:comercial` ejecuta el guard de contrato por separado y la exportación también lo comprueba. Una reorganización AST legítima podría exigir revisar la huella del guard comercial sin alterar el contrato externo; ver [Arquitectura de tests](TEST_ARCHITECTURE.md).
 
 Los tests de regresión históricos de Gomariz deben utilizar snapshots y publicaciones **reales y congelados** (corte de 143), no comparar hashes contra el original mutable de 547 fichas del 11 de noviembre de 2026. Los tests de aislamiento entre proveedores deben trabajar con el catálogo vigente sin suponer tamaños fijos. Reutilizar los builders y fixtures existentes evita multiplicar preparaciones costosas. Este criterio se aplica a futuros crecimientos de cobertura. Ver [Mantenimiento](MAINTENANCE.md).
 

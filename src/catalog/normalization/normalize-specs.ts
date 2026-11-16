@@ -7,7 +7,8 @@ import {
   parseDimensionRect,
   parseMeasuredLength,
   parseNumber,
-  parseNumberArray
+  parseNumberArray,
+  parseYear
 } from "./spec-parsers.js";
 
 export type NormalizedSpecValue =
@@ -20,11 +21,22 @@ export type NormalizedSpecValue =
   | ReturnType<typeof parseBattery>
   | null;
 
+export type DiscardReason = "null_like" | "invalid_value" | "unit_mismatch" | "conditional_value" | "alias_conflict";
+
+export type DiscardedSpec = {
+  readonly rawKey: string;
+  readonly key: string;
+  readonly value: unknown;
+  readonly reason: DiscardReason;
+};
+
 export type NormalizeResult = {
   readonly normalized: Readonly<Record<string, NormalizedSpecValue>>;
   readonly unknownKeys: ReadonlyArray<string>;
   readonly renamedKeys: ReadonlyArray<{ readonly from: string; readonly to: string }>;
   readonly droppedNullLikeKeys: ReadonlyArray<string>;
+  readonly conflictingKeys: ReadonlyArray<{ readonly key: string; readonly sources: readonly string[] }>;
+  readonly discardedSpecs: ReadonlyArray<DiscardedSpec>;
 };
 
 const cleanKeyBase = (str: string): string =>
@@ -34,9 +46,9 @@ const cleanKeyBase = (str: string): string =>
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
 
-const normalizeKey = (key: string): string => {
+export const normalizeSpecKey = (key: string): string => {
   const base = cleanKeyBase(key);
-  return SPEC_KEY_NORMALIZATION[base] ?? key.trim();
+  return Object.hasOwn(SPEC_KEY_NORMALIZATION, base) ? (SPEC_KEY_NORMALIZATION[base] ?? key.trim()) : key.trim();
 };
 
 const isNullLike = (v: unknown): boolean => {
@@ -52,25 +64,42 @@ const isNullLike = (v: unknown): boolean => {
 };
 
 const isInvalidStringValue = (v: string): boolean => {
-  const t = v.toLowerCase();
-  if (t.includes("(mm)") || t.includes("(kg)") || t.includes("(m)") || t.includes("(%)")) return true;
-  if (t.includes("altura") || t.includes("carga") || t.includes("peso")) return true;
-  for (const key of Object.keys(SPEC_RULES)) {
-    if (t === key.toLowerCase()) return true;
+  const key = normalizeSpecKey(v);
+  if (Object.hasOwn(SPEC_RULES, key)) return true;
+  const text = cleanKeyBase(v);
+  return Object.keys(SPEC_RULES).some((candidate) => cleanKeyBase(candidate) === text);
+};
+
+const rejectionReason = (value: unknown, key: string, rule: SpecRuleType): DiscardReason => {
+  if (typeof value !== "string") return "invalid_value";
+  const text = value.trim();
+  if (/^[+-]?\d[\d.,]*\s*(?:[x×/]|[-–])\s*[+-]?\d/u.test(text)) return "conditional_value";
+  const expectedUnit = key.match(/\(([^)]+)\)$/)?.[1];
+  if (expectedUnit && (rule === "number" || rule === "number_array")) {
+    const match = text.match(/^[+-]?\d[\d.,]*\s+([a-zA-Záéíóú²%/]+)$/iu);
+    if (match?.[1] && parseNumber(text, expectedUnit) === null && parseMeasuredLength(text, key, expectedUnit === "m" ? "m" : "mm") === null) {
+      return "unit_mismatch";
+    }
   }
-  return false;
+  return "invalid_value";
 };
 
 const applyRule = (type: SpecRuleType, value: unknown, rawKey: string, normalizedKey: string): NormalizedSpecValue => {
   if (isNullLike(value)) return null;
   switch (type) {
     case "number": {
+      if (normalizedKey === "Año") return parseYear(value);
       const measure = normalizedKey.match(/\((mm|m)\)$/)?.[1];
       if (measure === "mm" || measure === "m") return parseMeasuredLength(value, rawKey, measure);
-      return parseNumber(value);
+      const unit = normalizedKey.match(/\(([^)]+)\)$/)?.[1];
+      const number = parseNumber(value, unit);
+      return number !== null && number >= 0 ? number : null;
     }
-    case "number_array":
-      return parseNumberArray(value);
+    case "number_array": {
+      const unit = normalizedKey.match(/\(([^)]+)\)$/)?.[1];
+      const numbers = parseNumberArray(value, unit, normalizedKey === "Velocidad de desplazamiento con/sin carga (km/h)");
+      return numbers?.every((number) => number >= 0) ? numbers : null;
+    }
     case "dimension":
       return parseDimension(value);
     case "dimension_rect":
@@ -91,7 +120,7 @@ const applyRule = (type: SpecRuleType, value: unknown, rawKey: string, normalize
 
 export const normalizeSpecsObject = (spec: unknown): NormalizeResult => {
   if (!spec || typeof spec !== "object" || Array.isArray(spec)) {
-    return { normalized: {}, unknownKeys: [], renamedKeys: [], droppedNullLikeKeys: [] };
+    return { normalized: {}, unknownKeys: [], renamedKeys: [], droppedNullLikeKeys: [], conflictingKeys: [], discardedSpecs: [] };
   }
 
   const input = spec as Record<string, unknown>;
@@ -99,29 +128,39 @@ export const normalizeSpecsObject = (spec: unknown): NormalizeResult => {
   const unknownKeys: string[] = [];
   const renamedKeys: { from: string; to: string }[] = [];
   const droppedNullLikeKeys: string[] = [];
+  const discardedSpecs: DiscardedSpec[] = [];
+  const sources = new Map<string, string[]>();
+  const seen = new Map<string, NormalizedSpecValue>();
+  const conflicts = new Set<string>();
 
   for (const [rawKey, rawValue] of Object.entries(input)) {
-    const normKey = normalizeKey(rawKey);
+    const normKey = normalizeSpecKey(rawKey);
     if (rawKey.trim() !== normKey) renamedKeys.push({ from: rawKey, to: normKey });
 
-    const rule = SPEC_RULES[normKey];
-    if (!rule) {
+    if (!Object.hasOwn(SPEC_RULES, normKey)) {
       unknownKeys.push(normKey);
       continue;
     }
+    const rule = SPEC_RULES[normKey];
+    if (!rule) continue;
 
     if (isNullLike(rawValue)) {
       droppedNullLikeKeys.push(normKey);
+      discardedSpecs.push({ rawKey, key: normKey, value: rawValue, reason: "null_like" });
       continue;
     }
 
-    if (rule === "string" && typeof rawValue === "string" && isInvalidStringValue(rawValue)) continue;
+    if (rule === "string" && typeof rawValue === "string" && isInvalidStringValue(rawValue)) {
+      discardedSpecs.push({ rawKey, key: normKey, value: rawValue, reason: "invalid_value" });
+      continue;
+    }
 
     let value: unknown = rawValue;
     if (normKey === "Nº de serie") {
       const s = String(rawValue).trim();
       if (!s || isNullLike(s)) {
         droppedNullLikeKeys.push(normKey);
+        discardedSpecs.push({ rawKey, key: normKey, value: rawValue, reason: "null_like" });
         continue;
       }
       value = s;
@@ -132,18 +171,37 @@ export const normalizeSpecsObject = (spec: unknown): NormalizeResult => {
         .filter((v) => !isInvalidStringValue(v))
         .join(" ")
         .trim();
-      if (!s) continue;
+      if (!s) {
+        discardedSpecs.push({ rawKey, key: normKey, value: rawValue, reason: "invalid_value" });
+        continue;
+      }
       value = s;
     }
 
     const parsed = applyRule(rule, value, rawKey, normKey);
     if (parsed === null) {
       droppedNullLikeKeys.push(normKey);
-      continue;
+      discardedSpecs.push({ rawKey, key: normKey, value: rawValue, reason: rejectionReason(value, normKey, rule) });
     }
-    normalized[normKey] = parsed;
+    const keys = sources.get(normKey) ?? [];
+    keys.push(rawKey);
+    sources.set(normKey, keys);
+    if (seen.has(normKey) && JSON.stringify(seen.get(normKey)) !== JSON.stringify(parsed)) {
+      conflicts.add(normKey);
+    } else if (!seen.has(normKey)) {
+      seen.set(normKey, parsed);
+    }
+    if (conflicts.has(normKey)) delete normalized[normKey];
+    else if (parsed !== null) normalized[normKey] = parsed;
+  }
+
+  for (const [rawKey, value] of Object.entries(input)) {
+    const key = normalizeSpecKey(rawKey);
+    if (conflicts.has(key)) discardedSpecs.push({ rawKey, key, value, reason: "alias_conflict" });
   }
 
   const unknownUnique = Array.from(new Set(unknownKeys)).sort((a, b) => a.localeCompare(b, "es"));
-  return { normalized, unknownKeys: unknownUnique, renamedKeys, droppedNullLikeKeys };
+  const conflictingKeys = Array.from(conflicts).sort((a, b) => a.localeCompare(b, "es"))
+    .map((key) => ({ key, sources: [...(sources.get(key) ?? [])].sort((a, b) => a.localeCompare(b, "es")) }));
+  return { normalized, unknownKeys: unknownUnique, renamedKeys, droppedNullLikeKeys, conflictingKeys, discardedSpecs };
 };

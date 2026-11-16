@@ -24,17 +24,21 @@ Una prueba que usa un dato real **no** se considera obsoleta por ello. La difere
 El orden oficial **real** de `npm test` se define en `package.json`:
 
 ```text
-GUARDS/tests-module-integrity-guard.mjs
-GUARDS/tests-shared-editorial-guard.mjs
-GUARDS/tests-commercial-editorial-boundary-guard.mjs
-scripts/operations/rebuild-editorial-knowledge.mjs --check
-GUARDS/tests-performance-guard.mjs
-GUARDS/tests-commercial-contract-guard.mjs
-scripts/run-build.mjs --quiet --if-needed
-scripts/run-tests.mjs
+node GUARDS/tests-module-integrity-guard.mjs
+node GUARDS/tests-shared-editorial-guard.mjs
+node GUARDS/tests-commercial-editorial-boundary-guard.mjs
+node GUARDS/tests-editorial-architecture-guard.mjs
+node GUARDS/tests-domain-tests-guard.mjs
+node --test GUARDS/tests-architecture-guards.test.mjs
+node scripts/operations/rebuild-editorial-knowledge.mjs --check
+node GUARDS/tests-performance-guard.mjs
+node GUARDS/tests-commercial-contract-guard.mjs
+node scripts/run-build.mjs --quiet --if-needed
+node scripts/operations/rebuild-editorial-models.mjs --check
+node scripts/run-tests.mjs
 ```
 
-Además se ejecutan **por separado** los dos guards arquitectónicos y sus autopruebas:
+Los dos guards arquitectónicos y sus autopruebas **ya forman parte de `npm test`**, antes del build. Para investigar una infracción concreta, pueden ejecutarse individualmente con detalle:
 
 ```powershell
 node GUARDS/tests-editorial-architecture-guard.mjs --detail
@@ -42,7 +46,7 @@ node GUARDS/tests-domain-tests-guard.mjs --detail
 node --test GUARDS/tests-architecture-guards.test.mjs
 ```
 
-Están **fuera** de `npm test` por diseño actual: no afirmar que forman parte del runner oficial. `node scripts/run-tests.mjs` aislado no verifica build ni guards. `npm run build` utiliza `scripts/run-build.mjs`. Las suites `src/**/*.test.ts` son descubiertas y ejecutadas por el runner a partir de sus equivalentes compilados, junto a los tests de `scripts/` que éste admita.
+El core necesita `node_modules/typescript` local y no utiliza el TypeScript global como respaldo. `node scripts/run-tests.mjs` aislado no comprueba los guards, el consenso de modelos ni el build. `npm run build` utiliza `scripts/run-build.mjs`. Las suites `src/**/*.test.ts` son descubiertas por el runner desde sus equivalentes compilados, junto a los tests de `scripts/` que éste admita.
 
 Los guardias controlan fronteras, no verifican por sí solos los resultados comerciales ni los contratos de cada RE. El guard de rendimiento y el de contrato comercial también son independientes del guard de arquitectura de tests.
 
@@ -52,7 +56,7 @@ Los guardias controlan fronteras, no verifican por sí solos los resultados come
 - `GUARDS/tests-domain-tests-guard.mjs` inspecciona dependencias directas/transitivas de catálogos, cohortes fijas y hashes editoriales congelados. El hash de **procedencia de manifest** no es un hash de redacción.
 - Ambos usan `GUARDS/guards-architecture-core.mjs`; las autopruebas están en `GUARDS/tests-architecture-guards.test.mjs`. Las excepciones son verificaciones exactas de contratos, **no** tolerancias globales.
 
-Último corte arquitectónico comprobado: **0 infracciones editoriales, 0 de tests, 25/25 autopruebas, 19 usos acreditados como excepciones (12 cohortes y 7 accesos transitivos) y 21 lecturas directas legítimas en 14 suites protegidas**. Son categorías distintas; 19 y 21 **no son** avisos pendientes. La inspección del guard de tests recorrió 173 suites de dominio y 15 módulos auxiliares; las cifras describen su alcance estático y no la batería completa de `npm test`.
+Último corte arquitectónico focal comprobado: **0 infracciones editoriales, 0 de tests, 30/30 autopruebas, 19 usos acreditados como excepciones (12 cohortes y 7 accesos transitivos) y 21 lecturas directas legítimas en 14 suites protegidas**. Son categorías distintas; 19 y 21 **no son** avisos pendientes. El número de suites y módulos inspeccionados depende del árbol actual; los resultados estáticos de estos guards no acreditan la batería completa de `npm test`.
 
 Las 21 lecturas acreditadas están vinculadas al **SHA-256 completo** de cada una de las 14 suites, a una cantidad exacta de lecturas y a una responsabilidad documentada. Si cambia un archivo o aumenta su acceso, el guard lo vuelve a señalar. Los recuentos de cohortes y las dependencias indirectas también requieren coincidencia exacta de su forma autorizada. **No** añadir excepciones para hacer desaparecer una incidencia nueva: primero acreditar su contrato, o migrar el acceso si no precisa catálogo completo.
 

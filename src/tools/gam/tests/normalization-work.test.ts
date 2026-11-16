@@ -69,7 +69,7 @@ test("CLI conserva el informe JSON y emite un solo resumen sin modificar el orig
     assert.ok(saved && typeof saved === "object" && !Array.isArray(saved));
     assert.deepEqual(Object.keys(saved).sort(), [
       "inputCsv", "outputCsv", "reportPath", "totalRows", "rowsWithSpecJson",
-      "rowsWithInvalidSpecJson", "unknownKeys", "renamedKeysTop", "specsSummary"
+      "rowsWithInvalidSpecJson", "unknownKeys", "aliasConflicts", "issueCounts", "issueExamples", "renamedKeysTop", "specsSummary"
     ].sort());
     assert.match(await readFile(output, "utf8"), /Marca/);
   } finally {

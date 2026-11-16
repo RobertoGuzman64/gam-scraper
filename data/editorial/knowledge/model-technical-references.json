@@ -345,7 +345,7 @@
       "documentedWorkHeight": "10 m",
       "platformHeight": "8 m",
       "nominalCapacity": "200 kg",
-      "characteristic": "3 m de alcance horizontal con plumín en la documentación del fabricante",
+      "characteristic": "3 m de alcance horizontal con plumín y diseño sin voladizo trasero según la documentación del fabricante",
       "energy": "eléctrica",
       "sourceUrl": "https://www.haulotte.com.es/es_ES/productos/star-10"
     },
@@ -549,7 +549,7 @@
       "documentedWorkHeight": "10,97 m",
       "platformHeight": "8,97 m",
       "nominalCapacity": "230 kg",
-      "characteristic": "6,12 m de alcance horizontal",
+      "characteristic": "6,12 m de alcance horizontal y plumín opcional descrito en la documentación del fabricante",
       "energy": "eléctrica",
       "sourceUrl": "https://jlg.ru/upload/iblock/455/4553b4c82a42f5acb598bdded07318e7.pdf"
     },
@@ -606,22 +606,10 @@
       "model": "S0808EII",
       "family": "plataforma-tijera",
       "advertisedWorkHeight": "10 m",
-      "documentedWorkHeight": "9,8 m en interior",
-      "platformHeight": "7,8 m en interior",
-      "nominalCapacity": "230 kg",
-      "characteristic": "8 m de altura de trabajo en exterior y una extensión de plataforma de 0,9 m",
-      "energy": "eléctrica",
-      "sourceUrl": "https://www.lgmglifts.com/product/pro-detail-2026.htm"
-    },
-    {
-      "brand": "LGMG",
-      "model": "S0808EII",
-      "family": "plataforma-tijera",
-      "advertisedWorkHeight": "10 m",
       "documentedWorkHeight": "9,8 m en interiores y 8 m en exteriores",
       "platformHeight": "7,8 m en interiores y 6 m en exteriores",
       "nominalCapacity": "230 kg",
-      "characteristic": "0,83 m de anchura y límites diferentes para uso interior y exterior",
+      "characteristic": "uso previsto en interiores y exteriores según los límites de operación y batería de litio opcional para la gama",
       "energy": "eléctrica",
       "sourceUrl": "https://www.lgmglifts.com/product/pro-detail-2026.htm"
     },
@@ -744,6 +732,18 @@
       "characteristic": "9,43 m de alcance horizontal en la variante documentada",
       "energy": "eléctrica",
       "sourceUrl": "https://manitoucenter.com.my/wp-content/uploads/2024/05/170-AETJ-L.pdf"
+    },
+    {
+      "brand": "Manitou",
+      "model": "180ATJ",
+      "family": "plataforma-articulada",
+      "advertisedWorkHeight": "18 m",
+      "documentedWorkHeight": "18,15 m",
+      "platformHeight": "16,15 m",
+      "nominalCapacity": "230 kg",
+      "characteristic": "10,62 m de alcance horizontal documentado por el fabricante",
+      "energy": "diésel",
+      "sourceUrl": "https://www.colle.eu/media/6020/180atj_eng.pdf"
     },
     {
       "brand": "Manitou",

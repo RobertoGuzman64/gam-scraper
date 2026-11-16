@@ -90,6 +90,17 @@ La revisión de cobertura genera un expediente con **huellas de los dos catálog
 
 La selección editorial crea productos publicables y un resumen de exclusiones **sin reescribir el catálogo original**. Las exclusiones pueden ser necesarias para proteger la calidad, pero no convierten fichas dudosas en `ready`. La salida por proveedor es un conjunto de candidatos ya definidos por el proyecto, no un request HTTP de importación.
 
+## Normalización de especificaciones y herramientas GAM
+
+La normalización estructural se implementa en `src/catalog/normalization/normalize-specs.ts` y `spec-parsers.ts`; el procesamiento del CSV GAM en `src/tools/gam/normalization/normalize-rows.ts` y la CLI en `src/tools/gam/normalize-csv.ts`. Los conversores seed residen en `src/tools/gam/seed/`. **No mezclar** esta transformación de datos con el motor de redacción editorial compartido: los textos, el estado de una preparación y las publicaciones acreditadas tienen contratos propios.
+
+- Los números y medidas se aceptan únicamente con sintaxis y unidades compatibles. Se rechazan multiplicadores, alternativas no representables, valores condicionales, signos o dimensiones ambiguas y años incompletos; la excepción expresa de pares «con/sin carga» solo se aplica al campo que la admite. No inferir un valor para forzar la normalización.
+- Los alias reconocidos se normalizan bajo un destino único; si varias fuentes colisionan con valores incompatibles, se registra `alias_conflict` y no se elige una arbitrariamente. Los atributos originales no reconocidos se conservan en `specJson` sin promocionarlos a columnas técnicas canónicas.
+- El informe de CSV contiene filas y referencias afectadas, razones de descarte (`null_like`, `invalid_value`, `unit_mismatch`, `conditional_value`, `alias_conflict`), claves desconocidas e `invalid_spec_json`. `--allow-unknown` únicamente permite conservar claves desconocidas; **no** elude JSON inválido o conflictos de alias.
+- El comando bloquea JSON inválido, conflictos de alias y claves desconocidas no autorizadas antes de escribir; conserva el CSV e informe anteriores. Sus escrituras de salida se preparan y se publican con restauración ante error. Las tres variantes de conversión seed rechazan JSON corrupto sin emitir un producto semilla válido. No editar el origen ni reemplazar manualmente los descartes por cero.
+
+Las suites de seguridad de números, modelos, alias, CLI y seed viven bajo `src/catalog/normalization/tests/` y `src/tools/gam/**/tests/`. Ante una modificación, comprobar casos positivos, negativos y un censo real antes/después; los cambios de valores normalizados **no** equivalen por sí mismos a cambios de preparaciones ni a permisos de publicación. Ver [Validación](VALIDATION.md).
+
 ## Corrección del motor y procedencia de las reviews
 
 Las reviews de preparación se resuelven prioritariamente mediante cambios reutilizables en **código productivo** —extractor, parser, correspondencia entre etiqueta y magnitud, normalizador, calidad e identidad—, no alterando el canónico para conseguir un contador favorable. Los comandos de diagnóstico son herramientas auxiliares del desarrollador, no una sustitución de ese trabajo ni una obligación de inspección producto por producto del propietario. El criterio para declarar el **catálogo completo `ready`** exige `0 review` verificadas sobre todos los productos originales evaluados.

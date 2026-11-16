@@ -184,12 +184,6 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "peso": "Peso (kg)",
     "peso kg": "Peso (kg)",
     "peso (kg)": "Peso (kg)",
-    "peso operativo": "Peso (kg)",
-    "peso total": "Peso (kg)",
-    "peso en vacío": "Peso (kg)",
-    "peso vacio": "Peso (kg)",
-    "peso operacional": "Peso (kg)",
-    "peso vehículo": "Peso (kg)",
 
     "bateria": "Batería",
     "batería": "Batería",

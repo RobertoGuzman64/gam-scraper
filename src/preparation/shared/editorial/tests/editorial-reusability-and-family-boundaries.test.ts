@@ -29,3 +29,33 @@ test("una ficha sin evidencia técnica no se declara preparada por rellenar text
   assert.equal(result.status, "review");
   assert.ok(result.issues.some((issue) => issue.includes("Cobertura editorial insuficiente")));
 });
+
+test("la reutilización aplica magnitudes propias y no promociona fichas sin evidencia", () => {
+  const original = controlledGomarizPlatform();
+  const compatible = {
+    ...original,
+    reference: "CONTROL-SEGUNDA",
+    url: "https://www.gomarizrent.com/producto/otra-marca-modelo10/",
+    specs: { ...original.specs }
+  };
+  const changed = {
+    ...compatible,
+    specs: { ...compatible.specs, "Altura de trabajo": "12 m", Capacidad: "350 kg" }
+  };
+  const insufficient = { ...compatible, brand: null, model: null, specs: {} };
+  const before = JSON.stringify([original, compatible, changed, insufficient]);
+  const originalPrepared = prepareSourceProduct(original);
+  const compatiblePrepared = prepareSourceProduct(compatible);
+  assert.equal(originalPrepared.status, "ready");
+  assert.equal(compatiblePrepared.status, "ready");
+  assert.equal(compatiblePrepared.product.description, originalPrepared.product.description);
+  assert.equal(compatiblePrepared.product.description_general, originalPrepared.product.description_general);
+  assert.match(compatiblePrepared.product.description ?? "", /10 m.*450 kg/u);
+  const changedPrepared = prepareSourceProduct(changed);
+  assert.equal(changedPrepared.status, "ready");
+  assert.match(changedPrepared.product.description ?? "", /12 m.*350 kg/u);
+  assert.doesNotMatch(changedPrepared.product.description ?? "", /10 m|450 kg/u);
+  assert.equal(prepareSourceProduct(insufficient).status, "review");
+  assert.equal(prepareSourceProduct(insufficient).product.description_general, null);
+  assert.equal(JSON.stringify([original, compatible, changed, insufficient]), before);
+});

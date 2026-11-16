@@ -1,71 +1,52 @@
-import { SPEC_KEY_NORMALIZATION, SPEC_RULES, type SpecRuleType } from "../../../../catalog/normalization/spec-rules.js";
-import { parseBoolean, parseDimension, parseDimensionRect, parseNumber, parseNumberArray } from "../../../../catalog/normalization/spec-parsers.js";
+import { normalizeSpecKey, normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
+import { SPEC_RULES } from "../../../../catalog/normalization/spec-rules.js";
 import { normalizeSpace } from "./string.js";
+import { parseSeedScalar } from "./scalar.js";
 import type { SpecValue } from "./types.js";
 
-export const isNullLike = (v: unknown): boolean => {
-    if (v === null || v === undefined) return true;
-    if (typeof v === "string") {
-        const t = normalizeSpace(v).toLowerCase();
-        if (!t) return true;
-        if (t === "null" || t === "undefined") return true;
-        if (t === "n/a" || t === "na" || t === "no aplica") return true;
-        if (t === "-" || t === "—") return true;
-    }
-    return false;
+export { normalizeSpecKey };
+
+export const isNullLike = (value: unknown): boolean => {
+    if (value === null || value === undefined) return true;
+    if (typeof value !== "string") return false;
+    const text = normalizeSpace(value).toLowerCase();
+    return !text || ["null", "undefined", "n/a", "na", "no aplica", "-", "—"].includes(text);
 };
 
-export const normalizeSpecKey = (rawKey: string): string => {
-    const k0 = normalizeSpace(rawKey);
-    if (!k0) return "";
-    return SPEC_KEY_NORMALIZATION[k0.toLowerCase()] ?? k0;
+export const parseSpecByRule = (rawKey: string, value: unknown): SpecValue | null => {
+    if (!rawKey || isNullLike(value)) return null;
+    const key = normalizeSpecKey(rawKey);
+    if (!Object.hasOwn(SPEC_RULES, key)) {
+        if (typeof value === "number") return Number.isFinite(value) ? String(value) : null;
+        if (typeof value === "boolean") return String(value);
+        return typeof value === "string" ? normalizeSpace(value) : JSON.stringify(value) ?? null;
+    }
+
+    const parsed = normalizeSpecsObject({ [rawKey]: value }).normalized[key];
+    if (parsed === undefined || parsed === null) return null;
+    if (typeof parsed === "string" || typeof parsed === "number" || typeof parsed === "boolean") return parsed;
+    if (Array.isArray(parsed)) return parsed;
+    if (typeof parsed === "object" && "largo" in parsed && "ancho" in parsed) {
+        const parts = SPEC_RULES[key] === "dimension_rect"
+            ? [parsed.ancho, parsed.largo]
+            : [parsed.largo, parsed.ancho, "grosor" in parsed ? parsed.grosor : null];
+        const numbers = parts.filter((part): part is number => typeof part === "number");
+        return numbers.length >= 2 ? numbers : null;
+    }
+    return null;
 };
 
-export const parseSpecByRule = (key: string, value: unknown): SpecValue | null => {
-    if (!key) return null;
-    if (isNullLike(value)) return null;
-
-    const rule: SpecRuleType = SPEC_RULES[key] ?? "string";
-
-    if (rule === "number") {
-        const n = parseNumber(value);
-        return n === null ? null : n;
+export const assertUnambiguousSpecs = (spec: Readonly<Record<string, unknown>>, reference: string): void => {
+    const conflicts = normalizeSpecsObject(spec).conflictingKeys;
+    if (conflicts.length > 0) {
+        throw new Error(`Especificaciones incompatibles en ${reference}: ${conflicts.map(({ key }) => key).join(", ")}`);
     }
+};
 
-    if (rule === "number_array") {
-        const arr = parseNumberArray(value);
-        return arr === null ? null : arr;
-    }
-
-    if (rule === "bool") {
-        const b = parseBoolean(value);
-        return b === null ? null : b;
-    }
-
-    if (rule === "dimension") {
-        const d = parseDimension(value);
-        if (!d) return null;
-        const out: number[] = [];
-        if (d.largo !== null) out.push(d.largo);
-        if (d.ancho !== null) out.push(d.ancho);
-        if (d.grosor !== null) out.push(d.grosor);
-        return out.length >= 2 ? out : null;
-    }
-
-    if (rule === "dimension_rect") {
-        const d = parseDimensionRect(value);
-        if (!d) return null;
-        if (d.ancho === null || d.largo === null) return null;
-        return [d.ancho, d.largo];
-    }
-
-    const s = normalizeSpace(typeof value === "string" ? value : String(value));
-    if (!s) return null;
-
-    const lower = s.toLowerCase();
-    if (lower === "null" || lower === "undefined" || lower === "n/a" || lower === "na" || lower === "no aplica") return null;
-
-    if (key === "Nº de serie") return s;
-
-    return s;
+export const parseSeedScalarByRule = (rawKey: string, value: unknown): string | number | boolean => {
+    if (!Object.hasOwn(SPEC_RULES, normalizeSpecKey(rawKey))) return parseSeedScalar(value);
+    const parsed = parseSpecByRule(rawKey, value);
+    if (typeof parsed === "string" || typeof parsed === "number" || typeof parsed === "boolean") return parsed;
+    if (Array.isArray(parsed) && parsed.length === 1 && typeof parsed[0] === "number") return parsed[0];
+    return typeof value === "string" ? value : JSON.stringify(value) ?? String(value);
 };

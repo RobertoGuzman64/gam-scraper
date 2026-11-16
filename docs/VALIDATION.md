@@ -12,7 +12,7 @@ Distinguir **integridad de los archivos**, **calidad de las fichas** y **cobertu
 
 ## Verificación técnica tras cambios estructurales
 
-Para cambios del motor editorial o de la arquitectura de pruebas, comprobar adicionalmente los guards **fuera de `npm test`**:
+`npm test` ejecuta los guards arquitectónicos editorial y de tests, más sus autopruebas, **antes del build**. En cambios de arquitectura, se pueden ejecutar también por separado para obtener un diagnóstico más detallado:
 
 ```powershell
 node GUARDS/tests-editorial-architecture-guard.mjs
@@ -20,7 +20,7 @@ node GUARDS/tests-domain-tests-guard.mjs
 node --test GUARDS/tests-architecture-guards.test.mjs
 ```
 
-El último control de arquitectura acreditado registra 0 infracciones en ambos guards, con 19 excepciones exactas y 21 lecturas legítimas acreditadas; esto no sustituye las pruebas funcionales ni acredita `npm test` global. Véanse [Arquitectura de tests](TEST_ARCHITECTURE.md) y [Motor editorial](EDITORIAL_ENGINE.md).
+El último corte focal registra 0 infracciones y 30 autopruebas correctas, con 19 excepciones exactas y 21 lecturas legítimas acreditadas; esto no sustituye las pruebas funcionales ni acredita `npm test` global. La validación exige dependencias locales completas (`npm ci`), no TypeScript global ni una compilación auxiliar. Véanse [Arquitectura de tests](TEST_ARCHITECTURE.md) y [Motor editorial](EDITORIAL_ENGINE.md).
 
 Desde la raíz del proyecto, con dependencias instaladas, ejecutar:
 
@@ -44,7 +44,7 @@ npm run estado
 
 `EQUIPZILLA_TEST_CACHE=0` desactiva la reutilización de resultados; la ejecución ordinaria puede informar suites y tests cacheados. Comprobar `0 fallidos` y el número de suites efectivamente ejecutadas, no solo el total. En Windows puede omitirse la prueba de enlaces simbólicos si el usuario no tiene privilegios para crearlos: es una omisión explícita, no un test aprobado ni un fallo de compilación. Ante cualquier fallo en `npm test`, limpiar la variable de entorno antes de continuar.
 
-`npm test` **ya ejecuta la compilación** antes de lanzar `scripts/run-tests.mjs`: descubre los `.test.ts` de `src/` (que se ejecutan compilados desde `dist/`) y las suites `.test.mjs` de `scripts/`. `npm run build` por separado confirma la compilación explícita. La cantidad de pruebas puede variar al añadir o mover suites; para diagnosticar resultados, ejecutar después del build `node scripts/run-tests.mjs --concurrencia 2` o `node scripts/run-tests.mjs --medicion <informe.json>`. La medición es un informe local generado, no un archivo de catálogo.
+`npm test` ejecuta los guards, valida el conocimiento editorial, **compila cuando corresponde, comprueba el consenso de modelos** y después lanza `scripts/run-tests.mjs`: descubre los `.test.ts` de `src/` (que se ejecutan compilados desde `dist/`) y las suites `.test.mjs` de `scripts/`. `npm run build` por separado confirma la compilación explícita. La cantidad de pruebas puede variar al añadir o mover suites; para diagnosticar resultados, ejecutar después del build `node scripts/run-tests.mjs --concurrencia 2` o `node scripts/run-tests.mjs --medicion <informe.json>`. La medición es un informe local generado, no un archivo de catálogo.
 
 Al renombrar archivos o carpetas, comprobar además referencias dinámicas, rutas relativas desde `import.meta.url`, scripts programados, imports dentro de **cadenas que generan TypeScript temporal** y las rutas de prioridad del runner. Un `PASS` de TypeScript no garantiza que esas rutas apunten a los fixtures esperados; las suites de integración deben ejecutarse realmente. En Git, movimientos físicos pueden aparecer como eliminaciones y archivos no rastreados hasta incorporarlos al índice, por lo que se debe inspeccionar el diff antes del commit.
 
@@ -55,6 +55,12 @@ Al renombrar archivos o carpetas, comprobar además referencias dinámicas, ruta
 **Huellas de preparación:** `rulesSha256` se obtiene del contenido compilado y de los nombres relativos de módulos del catálogo. Tras cambios estructurales puede variar aunque los datos publicados no hayan cambiado. Verificar la compatibilidad de preparaciones y aprobaciones existentes sin reescribir sus hashes, sin regenerar de forma encubierta `catalogs/` y sin considerar `npm run estado` una acreditación de reglas nuevas. `PASS` de tests, `PASS` de build, integridad de `catalogs/` y aceptación editorial son comprobaciones diferentes.
 
 **Validación del ciclo individual:** ejecutar `npm run catalogo:preparar -- --simular`, `npm run catalogo:publicar -- --simular` y comprobar mediante `npm run estado` los índices de publicación existentes. La simulación no acredita nuevos casos ni activa finales. Una ejecución real de FINISH requiere fuentes y decisiones verificadas; su informe ZIP resume el trabajo original → publicado, no acredita cobertura web ni sustituye el preflight. Ver [Publicación individual](INDIVIDUAL_PUBLICATION.md).
+
+## Validación de cambios en normalización GAM
+
+La normalización tiene puertas independientes de las publicaciones. Ejecutar sus suites del dominio, CSV y seed con las dependencias del proyecto; verificar tanto formatos válidos como casos de rechazo. Para probar el CLI usar **archivos temporales**, comparar las salidas previas después de un fallo y confirmar el código de salida no cero. `--allow-unknown` solo permite claves desconocidas: **no** corrige `specJson` inválido ni autoriza colisiones entre alias. El informe debe conservar motivo, fila y referencia, sin promocionar un atributo desconocido ni interpretar alternativas/multiplicadores como cantidades.
+
+En cambios productivos comparar todas las máquinas originales relevantes y las preparaciones antes/después, separando deltas de `specJson` de deltas en `PreparedProduct`. Conservar catálogos, manifests, publicaciones y huellas acreditadas; un censo estable tampoco acredita `npm test` global. Véanse [Reglas de datos](SCRAPER_DATA_RULES.md) y [Arquitectura de tests](TEST_ARCHITECTURE.md).
 
 ## Validación de publicaciones técnicas independientes
 

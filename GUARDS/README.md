@@ -8,7 +8,7 @@ Esta guía describe los controles **vigentes**, sus autorizaciones exactas y sus
 | -------------------------------------------------- | ---------------------------------------------------------------------- |
 | `tests-editorial-architecture-guard.mjs`           | 0 infracciones                                                         |
 | `tests-domain-tests-guard.mjs`                     | 0 infracciones                                                         |
-| Autopruebas `tests-architecture-guards.test.mjs`   | 25 correctas, 0 fallidas                                               |
+| Autopruebas `tests-architecture-guards.test.mjs`   | 30 correctas, 0 fallidas en el último corte focal                      |
 | Excepciones explícitas en tests                    | 19 usos exactos: 12 recuentos de cohortes y 7 dependencias transitivas |
 | Integraciones de catálogo directamente acreditadas | 21 lecturas, en 14 suites                                              |
 
@@ -24,7 +24,7 @@ node GUARDS/tests-domain-tests-guard.mjs --detail
 node --test GUARDS/tests-architecture-guards.test.mjs
 ```
 
-Los dos guards arquitectónicos están **fuera del `npm test` definido en `package.json`**. Sus resultados y las autopruebas deben verificarse explícitamente cuando se modifica arquitectura editorial o de tests. El core de análisis es `GUARDS/guards-architecture-core.mjs` y requiere un compilador TypeScript disponible. Un guard comprueba dependencias/fronteras; no acredita por sí solo semántica editorial, publicaciones, cobertura web ni build completo.
+Los dos guards arquitectónicos y sus autopruebas están **incluidos y son obligatorios en `npm test`**, antes de los controles de conocimiento, rendimiento y build. Los comandos anteriores siguen siendo útiles para diagnósticos puntuales, pero no sustituyen la batería completa. El core de análisis `GUARDS/guards-architecture-core.mjs` carga exclusivamente `node_modules/typescript` desde el repositorio: ejecutar `npm ci` para instalar la dependencia declarada, sin recurrir a una instalación global implícita. Un guard comprueba dependencias y fronteras; no acredita por sí solo semántica editorial, publicaciones, cobertura web ni build completo.
 
 ## Política permanente de pruebas
 

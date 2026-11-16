@@ -1,7 +1,8 @@
+import { randomUUID } from "node:crypto";
 import { setImmediate as yieldToTerminal } from "node:timers/promises";
 import { runToolTask } from "../../cli/reporting/tool-task.js";
 import type { LiveStatus } from "../../cli/reporting/live-status.js";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { parseCsv } from "../../shared/csv-parse.js";
 import { toCsv } from "../../shared/csv.js";
@@ -68,6 +69,58 @@ const ensureOutputDir = async (path: string): Promise<void> => {
   await mkdir(dirname(path), { recursive: true });
 };
 
+type StagedOutput = {
+  readonly path: string;
+  readonly stage: string;
+  readonly backup: string;
+  existed: boolean;
+  committed: boolean;
+};
+
+const outputExists = async (path: string): Promise<boolean> =>
+  stat(path).then(() => true, (error: unknown) => {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") return false;
+    throw error;
+  });
+
+const writeOutputs = async (files: readonly { readonly path: string; readonly contents: string }[]): Promise<void> => {
+  const staged: StagedOutput[] = [];
+  try {
+    for (const file of files) {
+      await ensureOutputDir(file.path);
+      const entry: StagedOutput = {
+        path: file.path,
+        stage: `${file.path}.${randomUUID()}.tmp`,
+        backup: `${file.path}.${randomUUID()}.bak`,
+        existed: false,
+        committed: false
+      };
+      staged.push(entry);
+      await writeFile(entry.stage, file.contents, "utf8");
+      if (await outputExists(entry.path)) {
+        await copyFile(entry.path, entry.backup);
+        entry.existed = true;
+      }
+    }
+    for (const entry of staged) {
+      await rename(entry.stage, entry.path);
+      entry.committed = true;
+    }
+  } catch (error) {
+    for (const entry of [...staged].reverse()) {
+      if (!entry.committed) continue;
+      if (entry.existed) await rename(entry.backup, entry.path);
+      else await rm(entry.path, { force: true });
+    }
+    throw error;
+  } finally {
+    for (const entry of staged) {
+      await rm(entry.stage, { force: true });
+      await rm(entry.backup, { force: true });
+    }
+  }
+};
+
 const main = async (status: LiveStatus): Promise<string> => {
   const args = parseArgs(process.argv.slice(2));
   status.update(`NORMALIZACIÓN GAM | leyendo ${args.input}`);
@@ -75,6 +128,10 @@ const main = async (status: LiveStatus): Promise<string> => {
   const inputPath = resolve(args.input);
   const outputPath = resolve(args.output);
   const reportPath = resolve(args.report);
+
+  if (inputPath === outputPath || inputPath === reportPath || outputPath === reportPath) {
+    throw new Error("Las rutas de entrada, CSV normalizado e informe deben ser distintas");
+  }
 
   const raw = await readFile(inputPath, "utf8");
   const parsed = parseCsv(raw);
@@ -88,13 +145,18 @@ const main = async (status: LiveStatus): Promise<string> => {
     await yieldToTerminal();
   });
 
-  status.update(`NORMALIZACIÓN GAM | guardando CSV | ${outputPath}`);
-  await ensureOutputDir(outputPath);
-  const csvOut = toCsv(rows, headers);
-  await writeFile(outputPath, csvOut, "utf8");
+  const unknownTotal = Object.values(stats.unknownKeys).reduce((acc, v) => acc + v, 0);
+  const conflictTotal = Object.values(stats.aliasConflicts).reduce((acc, count) => acc + count, 0);
+  const invalidTotal = stats.rowsWithInvalidSpecJson;
+  if (invalidTotal > 0 || conflictTotal > 0 || (!args.allowUnknown && unknownTotal > 0)) {
+    process.exitCode = 1;
+    const examples = stats.issueExamples
+      .filter((issue) => issue.reason === "invalid_spec_json" || issue.reason === "alias_conflict" || (!args.allowUnknown && issue.reason === "unknown_key"))
+      .slice(0, 8)
+      .map((issue) => `  Fila ${issue.row} | ${issue.reference ?? "sin referencia"} | ${issue.reason} | ${issue.sourceKey}: ${issue.originalValue ?? "null"}`);
+    return [...formatNormalizationWork(stats), `${rows.length} filas | JSON inválidos: ${invalidTotal} | Claves desconocidas: ${unknownTotal} | Conflictos de alias: ${conflictTotal}`, ...examples, "  Normalización rechazada: sin CSV ni informe nuevos"].join("\n");
+  }
 
-  status.update(`NORMALIZACIÓN GAM | guardando informe | ${reportPath}`);
-  await ensureOutputDir(reportPath);
   const report: Report = {
     inputCsv: args.input,
     outputCsv: args.output,
@@ -103,16 +165,18 @@ const main = async (status: LiveStatus): Promise<string> => {
     rowsWithSpecJson: stats.rowsWithSpecJson,
     rowsWithInvalidSpecJson: stats.rowsWithInvalidSpecJson,
     unknownKeys: stats.unknownKeys,
+    aliasConflicts: stats.aliasConflicts,
+    issueCounts: stats.issueCounts,
+    issueExamples: stats.issueExamples,
     renamedKeysTop: stats.renamedKeysTop,
     specsSummary: stats.specsSummary
   };
-  await writeFile(reportPath, JSON.stringify(report, null, 2), "utf8");
-
-  const unknownTotal = Object.values(stats.unknownKeys).reduce((acc, v) => acc + v, 0);
-  if (!args.allowUnknown && (unknownTotal > 0 || stats.rowsWithInvalidSpecJson > 0)) {
-    process.exitCode = 1;
-  }
-  return [...formatNormalizationWork(stats), `${rows.length} filas | JSON inválidos: ${stats.rowsWithInvalidSpecJson} | Claves desconocidas: ${unknownTotal}`, `  CSV: ${outputPath}`, `  Informe: ${reportPath}`].join("\n");
+  status.update(`NORMALIZACIÓN GAM | guardando CSV e informe`);
+  await writeOutputs([
+    { path: reportPath, contents: JSON.stringify(report, null, 2) },
+    { path: outputPath, contents: toCsv(rows, headers) }
+  ]);
+  return [...formatNormalizationWork(stats), `${rows.length} filas | JSON inválidos: ${invalidTotal} | Claves desconocidas: ${unknownTotal} | Conflictos de alias: ${conflictTotal}`, `  CSV: ${outputPath}`, `  Informe: ${reportPath}`].join("\n");
 };
 
 await runToolTask("NORMALIZACIÓN GAM", main);

@@ -7,11 +7,11 @@ import { parseCsv } from "./internal/csv.js";
 import { loadCategoryIndex } from "./internal/category-index.js";
 import { resolveCategorySellIdAuto } from "./internal/category-resolve.js";
 import { extractUrlCategorySlug } from "./internal/slug.js";
-import { ensureString, safeJsonParse } from "./internal/json.js";
+import { ensureString, parseSeedSpecJson } from "./internal/json.js";
 import { buildDefaultMetadata } from "./internal/metadata.js";
 import { refWithPrefix } from "./internal/reference.js";
 import { normalizeSpace } from "./internal/string.js";
-import { normalizeSpecKey, parseSpecByRule } from "./internal/spec.js";
+import { assertUnambiguousSpecs, normalizeSpecKey, parseSpecByRule } from "./internal/spec.js";
 import { renderSeedTs } from "./internal/seed-printer.js";
 import type { ConvertOptions, Report, SeedProduct, SpecValue } from "./internal/types.js";
 
@@ -82,16 +82,16 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions, onProgress?
             continue;
         }
 
-        const specParsed = safeJsonParse(specJsonRaw);
-        const specObj = (specParsed && typeof specParsed === "object" && !Array.isArray(specParsed) ? specParsed : {}) as Record<string, unknown>;
+        const specObj = parseSeedSpecJson(specJsonRaw, referenceRaw || `fila ${r + 1}`);
 
+        assertUnambiguousSpecs(specObj, referenceRaw || `fila ${r + 1}`);
         const spec: Record<string, SpecValue> = {};
         for (const [kRaw, v] of Object.entries(specObj)) {
             const k0 = normalizeSpace(kRaw);
             if (!k0) continue;
 
             const normKey = normalizeSpecKey(k0);
-            const parsedSpec = parseSpecByRule(normKey, v);
+            const parsedSpec = parseSpecByRule(k0, v);
             if (parsedSpec === null) continue;
 
             spec[normKey] = parsedSpec;

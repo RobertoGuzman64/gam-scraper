@@ -57,7 +57,7 @@ test("los conversores GAM por categoría y URL proyectan los mismos escalares", 
     const urlTs = await readFile(urlOutputPath, "utf8");
     assert.equal(categoryTs, urlTs);
     assert.match(categoryTs, /"Peso": 1200/);
-    assert.match(categoryTs, /"Altura": 1\.5/);
+    assert.match(categoryTs, /"Altura": 1500/);
     assert.match(categoryTs, /"Serie": 23/);
     assert.match(categoryTs, /"Velocidad": 80/);
     assert.match(categoryTs, /"Tensión": "80 V"/);

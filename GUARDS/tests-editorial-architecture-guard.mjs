@@ -5,17 +5,93 @@ import {
   findIssue, uniqueFindings, optionsFrom, present, digest
 } from "./guards-architecture-core.mjs";
 
-const providerEditorial = /^src\/preparation\/(?:gam|gomariz|mercaeleva)\/editorial\//u;
+const providerEditorial = /^src\/preparation\/(?!shared\/)[^/]+\/editorial\//u;
 const sharedEditorial = /^src\/preparation\/shared\/editorial\//u;
 const sharedDomain = /^src\/preparation\/shared\/editorial\/domain\//u;
-const trustedSourceAdapters = new Set([
-  "src/preparation/gam/editorial/source/domain-source.ts",
-  "src/preparation/gomariz/editorial/mapping/domain-source.ts",
-  "src/preparation/mercaeleva/editorial/mapping/domain-source.ts"
-]);
+const sharedMapping = /^src\/preparation\/shared\/editorial\/mapping\//u;
+const trustedSourceAdapter = /^src\/preparation\/[^/]+\/editorial\/(?:source|mapping)\/domain-source\.ts$/u;
 const dispatch = "src/preparation/shared/editorial/domain/editorial-source.ts";
 const textualFields = new Set(["description", "description_general", "short", "general"]);
 const narrativeNames = /(?:description|general|short|summary|title|editorial)/iu;
+const editorialFields = new Set(["description", "description_general", "shortDescription", "longDescription", "title"]);
+const matchesMember = (node, name) =>
+  ts.isPropertyAccessExpression(node) && node.name.text === name ||
+  ts.isElementAccessExpression(node) && ts.isStringLiteralLike(node.argumentExpression) &&
+    node.argumentExpression.text === name;
+const hasReference = (node) => matchesMember(node, "reference");
+const providerCondition = (condition, aliases) => {
+  let matched = false;
+  const check = (node) => {
+    if (ts.isBinaryExpression(node) && [ts.SyntaxKind.EqualsEqualsToken, ts.SyntaxKind.EqualsEqualsEqualsToken,
+      ts.SyntaxKind.ExclamationEqualsToken, ts.SyntaxKind.ExclamationEqualsEqualsToken].includes(node.operatorToken.kind) &&
+      ((ts.isStringLiteralLike(node.left) && (matchesMember(node.right, "providerId") ||
+        ts.isIdentifier(node.right) && aliases.has(node.right.text))) ||
+        (ts.isStringLiteralLike(node.right) && (matchesMember(node.left, "providerId") ||
+          ts.isIdentifier(node.left) && aliases.has(node.left.text))))) matched = true;
+    ts.forEachChild(node, check);
+  };
+  check(condition);
+  return matched;
+};
+const narrativeLiteral = (node) => {
+  if (ts.isStringLiteralLike(node)) return node.text.trim().length >= 10 &&
+    /\p{L}[^\p{L}]+\p{L}/u.test(node.text) && !/^https?:\/\//iu.test(node.text);
+  if (ts.isTemplateExpression(node)) return node.head.text.trim().length >= 10 &&
+    /\s/u.test(node.head.text);
+  if (ts.isParenthesizedExpression(node)) return narrativeLiteral(node.expression);
+  if (ts.isReturnStatement(node)) return Boolean(node.expression && narrativeLiteral(node.expression));
+  if (ts.isBlock(node)) return node.statements.some((statement) => narrativeLiteral(statement));
+  if (ts.isIfStatement(node)) return narrativeLiteral(node.thenStatement) ||
+    Boolean(node.elseStatement && narrativeLiteral(node.elseStatement));
+  if (ts.isVariableStatement(node)) return node.declarationList.declarations.some((declaration) =>
+    ts.isIdentifier(declaration.name) && narrativeNames.test(declaration.name.text) &&
+    Boolean(declaration.initializer && narrativeLiteral(declaration.initializer)));
+  if (ts.isObjectLiteralExpression(node)) return node.properties.some((property) =>
+    ts.isPropertyAssignment(property) && editorialFields.has(nameOf(property.name)) && narrativeLiteral(property.initializer));
+  return false;
+};
+const referenceAliases = (source) => {
+  const aliases = new Set();
+  const collections = new Set();
+  const declarations = [];
+  visitNodes(source, (node) => {
+    if (ts.isVariableDeclaration(node) && node.initializer) declarations.push(node);
+  });
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const declaration of declarations) {
+      const { name, initializer } = declaration;
+      if (ts.isObjectBindingPattern(name)) {
+        if (name.elements.some((element) => nameOf(element.propertyName ?? element.name) === "reference" &&
+          ts.isIdentifier(element.name) && !aliases.has(element.name.text))) {
+          for (const element of name.elements) {
+            if (nameOf(element.propertyName ?? element.name) === "reference" && ts.isIdentifier(element.name)) {
+              aliases.add(element.name.text);
+              changed = true;
+            }
+          }
+        }
+      } else if (ts.isIdentifier(name) && !aliases.has(name.text) &&
+        (hasReference(initializer) || ts.isIdentifier(initializer) && aliases.has(initializer.text))) {
+        aliases.add(name.text);
+        changed = true;
+      }
+      if (ts.isIdentifier(name) && !collections.has(name.text) &&
+        (ts.isArrayLiteralExpression(initializer) && initializer.elements.some(ts.isStringLiteralLike) ||
+          ts.isNewExpression(initializer) && initializer.expression.getText(source) === "Set" &&
+          initializer.arguments?.some((argument) => ts.isArrayLiteralExpression(argument) &&
+            argument.elements.some(ts.isStringLiteralLike)))) {
+        collections.add(name.text);
+        changed = true;
+      }
+    }
+  }
+  return { aliases, collections };
+};
+const referenceExpression = (node, aliases) => hasReference(node) || ts.isIdentifier(node) && aliases.has(node.text);
+const memberTransfer = (node, name) => matchesMember(node, name) &&
+  (ts.isIdentifier(node.expression) || ts.isPropertyAccessExpression(node.expression));
 
 export const inspectEditorialArchitecture = (root) => {
   const project = makeProject(root);
@@ -41,7 +117,7 @@ export const inspectEditorialArchitecture = (root) => {
   for (const [path, source] of project.files) {
     if (isTest(path) || !path.startsWith("src/")) continue;
     const connected = active.has(path);
-    if (connected && providerEditorial.test(path) && !trustedSourceAdapters.has(path)) {
+    if (connected && providerEditorial.test(path) && !trustedSourceAdapter.test(path)) {
       push("E-ACTIVE-PROVIDER-NARRATOR", path, undefined,
         "Módulo editorial específico alcanzable desde preparación/exportación; revisar propiedad de redacción");
     }
@@ -61,6 +137,12 @@ export const inspectEditorialArchitecture = (root) => {
       if (vendorImports.length > 0) push("E-DOMAIN-DEPENDENCY", path, undefined,
         `El dominio general depende de adaptadores editoriales: ${vendorImports.join(", ")}`);
     }
+    const { aliases, collections } = referenceAliases(source);
+    const providerAliases = new Set();
+    visitNodes(source, (node) => {
+      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer &&
+        matchesMember(node.initializer, "providerId")) providerAliases.add(node.name.text);
+    });
     visitNodes(source, (node) => {
       if (sharedDomain.test(path) && path !== dispatch && ts.isPropertyAccessExpression(node) &&
         node.name.text === "providerId" && node.parent && ts.isBinaryExpression(node.parent) &&
@@ -69,19 +151,54 @@ export const inspectEditorialArchitecture = (root) => {
         push("E-DOMAIN-PROVIDER-BRANCH", path, node.parent,
           "El dominio común selecciona comportamiento según proveedor; debe justificarse en un adaptador");
       }
-      if (sharedEditorial.test(path) && !path.includes("/evidence/") && ts.isBinaryExpression(node) &&
-        [ts.SyntaxKind.EqualsEqualsEqualsToken, ts.SyntaxKind.EqualsEqualsToken].includes(node.operatorToken.kind) &&
-        ((ts.isPropertyAccessExpression(node.left) && node.left.name.text === "reference" && ts.isStringLiteralLike(node.right)) ||
-          (ts.isPropertyAccessExpression(node.right) && node.right.name.text === "reference" && ts.isStringLiteralLike(node.left)))) {
+      if (sharedMapping.test(path) &&
+        ((ts.isConditionalExpression(node) && providerCondition(node.condition, providerAliases) &&
+          (narrativeLiteral(node.whenTrue) || narrativeLiteral(node.whenFalse))) ||
+          (ts.isIfStatement(node) && providerCondition(node.expression, providerAliases) &&
+            (narrativeLiteral(node.thenStatement) || node.elseStatement && narrativeLiteral(node.elseStatement))))) {
+        push("E-MAPPING-PROVIDER-NARRATIVE", path, node,
+          "La selección por proveedor introduce texto narrativo en el mapping común");
+      }
+      if (sharedEditorial.test(path) && !path.includes("/evidence/") &&
+        ((ts.isBinaryExpression(node) &&
+          [ts.SyntaxKind.EqualsEqualsEqualsToken, ts.SyntaxKind.EqualsEqualsToken].includes(node.operatorToken.kind) &&
+          ((ts.isStringLiteralLike(node.left) && referenceExpression(node.right, aliases)) ||
+            (ts.isStringLiteralLike(node.right) && referenceExpression(node.left, aliases)))) ||
+          (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) &&
+            ["includes", "has"].includes(node.expression.name.text) &&
+            node.arguments.some((argument) => referenceExpression(argument, aliases)) &&
+            (ts.isArrayLiteralExpression(node.expression.expression) &&
+              node.expression.expression.elements.some(ts.isStringLiteralLike) ||
+              ts.isIdentifier(node.expression.expression) && collections.has(node.expression.expression.text) ||
+              ts.isNewExpression(node.expression.expression) &&
+              node.expression.expression.arguments?.some((argument) => ts.isArrayLiteralExpression(argument) &&
+                argument.elements.some(ts.isStringLiteralLike)))))) {
         push("E-HARDCODED-REFERENCE", path, node,
-          "Comparación con referencia literal en el compositor/mapping compartido");
+          "La lógica editorial identifica una unidad mediante referencia literal, directa o indirecta");
       }
       if (connected && providerEditorial.test(path) && ts.isPropertyAssignment(node) &&
         textualFields.has(nameOf(node.name)) &&
-        (ts.isTemplateExpression(node.initializer) || ts.isBinaryExpression(node.initializer) ||
+        (ts.isStringLiteralLike(node.initializer) || ts.isTemplateExpression(node.initializer) ||
+          ts.isBinaryExpression(node.initializer) ||
           (ts.isCallExpression(node.initializer) && narrativeNames.test(node.initializer.expression.getText(source))))) {
         push("E-PROVIDER-COMPOSITION", path, node,
           "El adaptador conectado compone texto editorial en vez de aportar hechos acreditados");
+      }
+      if (connected && trustedSourceAdapter.test(path) && ts.isReturnStatement(node) &&
+        node.expression && narrativeLiteral(node.expression)) {
+        push("E-SOURCE-ADAPTER-NARRATIVE", path, node,
+          "Un adaptador de origen produce texto narrativo en vez de hechos técnicos");
+      }
+      if (path.startsWith("src/publication/") && ts.isPropertyAssignment(node) &&
+        editorialFields.has(nameOf(node.name)) && !memberTransfer(node.initializer, nameOf(node.name))) {
+        push("E-PUBLICATION-REWRITE", path, node,
+          "La publicación debe transferir campos editoriales preparados sin recomponerlos");
+      }
+      if (path.startsWith("src/publication/") && ts.isBinaryExpression(node) &&
+        [ts.SyntaxKind.EqualsToken, ts.SyntaxKind.PlusEqualsToken].includes(node.operatorToken.kind) &&
+        [...editorialFields].some((name) => matchesMember(node.left, name))) {
+        push("E-PUBLICATION-MUTATION", path, node,
+          "La publicación modifica el texto preparado");
       }
       if (path.startsWith("src/catalog/editorial/") && !isTest(path) && ts.isPropertyAssignment(node) &&
         ["description", "description_general", "description_title", "title"].includes(nameOf(node.name)) &&

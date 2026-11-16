@@ -1,4 +1,5 @@
-import { normalizeSpecsObject } from "../../../catalog/normalization/normalize-specs.js";
+import { normalizeSpecKey, normalizeSpecsObject, type DiscardReason } from "../../../catalog/normalization/normalize-specs.js";
+import { SPEC_RULES } from "../../../catalog/normalization/spec-rules.js";
 import { isSpecColumn, normalizeSpace, normalizedValueToScalar, toScalarString } from "./spec-scalar.js";
 
 export type SpecSummary = {
@@ -6,6 +7,17 @@ export type SpecSummary = {
   readonly typeCounts: Readonly<Record<"string" | "number" | "boolean", number>>;
   readonly valueCountsTop: ReadonlyArray<{ readonly value: string; readonly count: number }>;
   readonly badValueExamples: ReadonlyArray<{ readonly value: string; readonly reference?: string }>;
+};
+
+export type NormalizationIssueReason = DiscardReason | "unknown_key" | "invalid_spec_json";
+
+export type NormalizationIssue = {
+  readonly row: number;
+  readonly reference: string | null;
+  readonly key: string;
+  readonly sourceKey: string;
+  readonly reason: NormalizationIssueReason;
+  readonly originalValue: string | null;
 };
 
 export type Report = {
@@ -16,6 +28,9 @@ export type Report = {
   readonly rowsWithSpecJson: number;
   readonly rowsWithInvalidSpecJson: number;
   readonly unknownKeys: Readonly<Record<string, number>>;
+  readonly aliasConflicts: Readonly<Record<string, number>>;
+  readonly issueCounts: Readonly<Record<NormalizationIssueReason, number>>;
+  readonly issueExamples: ReadonlyArray<NormalizationIssue>;
   readonly renamedKeysTop: ReadonlyArray<{ readonly from: string; readonly to: string; readonly count: number }>;
   readonly specsSummary: Readonly<Record<string, SpecSummary>>;
 };
@@ -68,7 +83,7 @@ type NormalizeOptions = {
   readonly maxValuesPerKey: number;
 };
 
-export type NormalizationStatistics = Pick<Report, "rowsWithSpecJson" | "rowsWithInvalidSpecJson" | "unknownKeys" | "renamedKeysTop" | "specsSummary"> & {
+export type NormalizationStatistics = Pick<Report, "rowsWithSpecJson" | "rowsWithInvalidSpecJson" | "unknownKeys" | "aliasConflicts" | "issueCounts" | "issueExamples" | "renamedKeysTop" | "specsSummary"> & {
   readonly rowsProcessed: number;
   readonly rowsTransformed: number;
   readonly renamedKeysTotal: number;
@@ -77,6 +92,12 @@ export type NormalizationStatistics = Pick<Report, "rowsWithSpecJson" | "rowsWit
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+const reportValue = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  const text = typeof value === "string" ? value : JSON.stringify(value);
+  return typeof text === "string" ? normalizeSpace(text).slice(0, 160) : null;
+};
 
 const rowChanged = (before: Readonly<Record<string, string>>, after: Readonly<Record<string, string>>): boolean =>
   Object.keys(before).length !== Object.keys(after).length ||
@@ -124,10 +145,21 @@ export const normalizeGamRows = async (
   let technicalValuesTransformed = 0;
 
   const unknownCounts = new Map<string, number>();
+  const conflictCounts = new Map<string, number>();
   const renamedCounts = new Map<string, { readonly from: string; readonly to: string; count: number }>();
 
   const allNormalizedSpecKeys = new Set<string>();
   const summaryMap: Record<string, SummaryWorking> = {};
+  const issueCounts: Record<NormalizationIssueReason, number> = {
+    null_like: 0,
+    invalid_value: 0,
+    unit_mismatch: 0,
+    conditional_value: 0,
+    alias_conflict: 0,
+    unknown_key: 0,
+    invalid_spec_json: 0
+  };
+  const issueExamples: NormalizationIssue[] = [];
 
   let processed = 0;
   for (const row of rows) {
@@ -136,27 +168,50 @@ export const normalizeGamRows = async (
     if (processed % 250 === 0) {
       await onProgress(processed, rows.length);
     }
+    const refMaybe = typeof row["reference"] === "string" ? normalizeSpace(row["reference"]) : "";
+    const reference = refMaybe || null;
+    const recordIssue = (key: string, sourceKey: string, reason: NormalizationIssueReason, value: unknown): void => {
+      issueCounts[reason] += 1;
+      if (issueExamples.length < 80) {
+        issueExamples.push({ row: processed, reference, key, sourceKey, reason, originalValue: reportValue(value) });
+      }
+    };
     const specJson = row["specJson"] ?? "";
     if (specJson.trim()) rowsWithSpecJson += 1;
 
     const parsedSpec = safeJsonParse(specJson);
-    if (!parsedSpec.ok) {
+    if (!parsedSpec.ok || !isObject(parsedSpec.value)) {
       rowsWithInvalidSpecJson += 1;
+      recordIssue("specJson", "specJson", "invalid_spec_json", specJson);
       continue;
     }
 
     const norm = normalizeSpecsObject(parsedSpec.value);
 
     for (const k of norm.unknownKeys) unknownCounts.set(k, (unknownCounts.get(k) ?? 0) + 1);
+    for (const [sourceKey, originalValue] of Object.entries(parsedSpec.value)) {
+      const key = normalizeSpecKey(sourceKey);
+      if (!Object.hasOwn(SPEC_RULES, key)) recordIssue(key, sourceKey, "unknown_key", originalValue);
+    }
+    for (const discarded of norm.discardedSpecs) {
+      recordIssue(discarded.key, discarded.rawKey, discarded.reason, discarded.value);
+      if (discarded.reason !== "null_like") {
+        const summary = ensureSummary(summaryMap, discarded.key);
+        const badValue = reportValue(discarded.value);
+        if (badValue && summary.badValueExamples.length < 10) {
+          summary.badValueExamples.push(reference ? { value: badValue, reference } : { value: badValue });
+        }
+      }
+    }
+    for (const conflict of norm.conflictingKeys) {
+      conflictCounts.set(conflict.key, (conflictCounts.get(conflict.key) ?? 0) + 1);
+    }
 
     for (const r of norm.renamedKeys) {
       const key = `${r.from}→${r.to}`;
       const existing = renamedCounts.get(key) ?? { from: r.from, to: r.to, count: 0 };
       renamedCounts.set(key, { from: existing.from, to: existing.to, count: existing.count + 1 });
     }
-
-    const refMaybe = typeof row["reference"] === "string" ? normalizeSpace(row["reference"]) : "";
-    const reference = refMaybe ? refMaybe : undefined;
 
     const scalarSpec: Record<string, string | number | boolean> = {};
 
@@ -197,7 +252,14 @@ export const normalizeGamRows = async (
     const changes = countTechnicalChanges(parsedSpec.value, norm.renamedKeys, scalarSpec);
     renamedKeysTotal += changes.renamed;
     technicalValuesTransformed += changes.values;
-    row["specJson"] = JSON.stringify(scalarSpec);
+    const conflictKeys = new Set(norm.conflictingKeys.map(({ key }) => key));
+    const preserved = isObject(parsedSpec.value)
+      ? Object.fromEntries(Object.entries(parsedSpec.value).filter(([rawKey]) => {
+        const key = normalizeSpecKey(rawKey);
+        return !Object.hasOwn(SPEC_RULES, key) || conflictKeys.has(key);
+      }))
+      : {};
+    row["specJson"] = JSON.stringify({ ...preserved, ...scalarSpec });
 
     if (options.expandSpecColumns) {
       for (const [k, v] of Object.entries(scalarSpec)) {
@@ -216,6 +278,11 @@ export const normalizeGamRows = async (
   const unknownKeysObj: Record<string, number> = {};
   for (const [k, n] of Array.from(unknownCounts.entries()).sort((a, b) => a[0].localeCompare(b[0], "es"))) {
     unknownKeysObj[k] = n;
+  }
+
+  const aliasConflicts: Record<string, number> = {};
+  for (const [key, count] of Array.from(conflictCounts.entries()).sort((a, b) => a[0].localeCompare(b[0], "es"))) {
+    aliasConflicts[key] = count;
   }
 
   const renamedTop = Array.from(renamedCounts.values())
@@ -260,6 +327,9 @@ export const normalizeGamRows = async (
     rowsWithSpecJson,
     rowsWithInvalidSpecJson,
     unknownKeys: unknownKeysObj,
+    aliasConflicts,
+    issueCounts,
+    issueExamples,
     renamedKeysTop: renamedTop,
     specsSummary: specsSummaryOut
   };

@@ -31,55 +31,89 @@ export const parseMeasuredLength = (value: unknown, sourceKey: string, target: "
   const inMillimeters = from === "cm" ? numeric * 10 : from === "m" ? numeric * 1000 : numeric;
   return target === "mm" ? inMillimeters : inMillimeters / 1000;
 };
-const normalizeNumericString = (input: string): string => {
-  const s = input.trim();
-  if (!s) return "";
-
-  const hasDot = s.includes(".");
-  const hasComma = s.includes(",");
-
-  if (hasDot && hasComma) {
-    return s.replace(/\./g, "").replace(/,/g, ".");
-  }
-
-  if (hasComma && !hasDot) {
-    return s.replace(/,/g, ".");
-  }
-
-  if (hasDot && !hasComma) {
-    const dots = (s.match(/\./g) ?? []).length;
-    if (dots >= 2) return s.replace(/\./g, "");
-    if (/^\d{1,3}\.\d{3}$/.test(s)) return s.replace(/\./g, "");
-  }
-
-  return s;
+const unitAlternatives: Readonly<Record<string, readonly string[]>> = {
+  kg: ["kg", "kilogramo", "kilogramos"],
+  kw: ["kw"],
+  cv: ["cv"],
+  v: ["v", "voltio", "voltios"],
+  ah: ["ah"],
+  kwh: ["kwh"],
+  "km/h": ["km/h"],
+  km: ["km", "kms", "kilometro", "kilometros", "kilómetro", "kilómetros"],
+  h: ["h", "hora", "horas"],
+  nm: ["nm"],
+  n: ["n"],
+  "%": ["%"],
+  rpm: ["rpm"],
+  "m²/h": ["m²/h", "m2/h"],
+  mm: ["mm"],
+  m: ["m", "metro", "metros"],
+  l: ["l", "litro", "litros"]
 };
 
-export const parseNumber = (v: unknown): number | null => {
-  if (v === null || v === undefined) return null;
+const parseNumericLiteral = (literal: string): number | null => {
+  const grouped = /^[+-]?\d{1,3}(?:\.\d{3})+(?:,\d+)?$/.test(literal);
+  const plain = /^[+-]?\d+(?:[.,]\d+)?$/.test(literal);
+  if (!grouped && !plain) return null;
+  const numeric = grouped && !/^[+-]?0\.\d{3}$/.test(literal)
+    ? literal.replace(/\./g, "").replace(",", ".")
+    : literal.replace(",", ".");
+  const value = Number(numeric);
+  return Number.isFinite(value) ? value : null;
+};
+
+export const parseNumber = (v: unknown, expectedUnit?: string): number | null => {
+  if (v === null || v === undefined || typeof v === "boolean") return null;
   if (typeof v === "number") return Number.isFinite(v) ? v : null;
-
-  const raw = String(v);
-  const cleaned = normalizeNumericString(raw).replace(/[^\d.-]/g, "");
-  if (!cleaned) return null;
-  const n = parseFloat(cleaned);
-  return Number.isNaN(n) ? null : n;
+  if (typeof v !== "string") return null;
+  const matched = v.trim().match(/^([+-]?\d[\d.,]*)(?:\s*(.*))?$/u);
+  if (!matched?.[1]) return null;
+  const value = parseNumericLiteral(matched[1]);
+  if (value === null) return null;
+  const suffix = (matched[2] ?? "").trim().toLowerCase();
+  if (!suffix) return value;
+  if (expectedUnit) {
+    const compatible = unitAlternatives[expectedUnit.toLowerCase()];
+    return compatible?.includes(suffix) ? value : null;
+  }
+  return Object.values(unitAlternatives).some((units) => units.includes(suffix)) ? value : null;
 };
 
-export const parseNumberArray = (v: unknown): readonly number[] | null => {
+export const parseYear = (value: unknown): number | null => {
+  if (typeof value !== "string" && typeof value !== "number") return null;
+  const text = String(value).trim();
+  if (!/^(?:19|20)\d{2}$/.test(text)) return null;
+  const year = Number(text);
+  return year <= new Date().getUTCFullYear() ? year : null;
+};
+
+export const parseNumberArray = (
+  v: unknown,
+  expectedUnit?: string,
+  allowPaired = false
+): readonly number[] | null => {
   if (v === null || v === undefined || v === "") return null;
-  const txt = Array.isArray(v) ? v.join(" ") : String(v);
-  const tokens = txt
-    .replace(/[^\d.,\s/-]/g, " ")
-    .split(/[\s/-]+/)
-    .map((t) => t.trim())
-    .filter((t) => t.length > 0);
-
-  const nums = tokens
-    .map((t) => parseNumber(normalizeNumericString(t)))
-    .filter((n): n is number => n !== null && Number.isFinite(n));
-
-  return nums.length === 0 ? null : nums;
+  if (Array.isArray(v)) {
+    if (!v.length) return null;
+    const parsed = v.map((item: unknown) => parseNumber(item, expectedUnit));
+    return parsed.every((number): number is number => number !== null) ? parsed : null;
+  }
+  if (typeof v === "number") {
+    const number = parseNumber(v, expectedUnit);
+    return number === null ? null : [number];
+  }
+  if (typeof v !== "string") return null;
+  const value = v.trim();
+  if (allowPaired) {
+    const paired = value.match(/^([+-]?\d[\d.,]*)\s*\/\s*([+-]?\d[\d.,]*)(?:\s+(.+))?$/u);
+    if (paired?.[1] && paired[2]) {
+      const first = parseNumber(paired[1], expectedUnit);
+      const second = parseNumber(`${paired[2]}${paired[3] ? ` ${paired[3]}` : ""}`, expectedUnit);
+      return first === null || second === null ? null : [first, second];
+    }
+  }
+  const single = parseNumber(value, expectedUnit);
+  return single === null ? null : [single];
 };
 
 export type Dimension = {
@@ -88,16 +122,34 @@ export type Dimension = {
   readonly grosor: number | null;
 };
 
+const dimensionPart = /^(\d+(?:[.,]\d+)?)\s*(mm|cm|m|metros?)?$/iu;
+
+const parseDimensionAxes = (value: string, minAxes: number, maxAxes: number): readonly number[] | null => {
+  const tokens = value.trim().split(/\s*[x×]\s*/iu);
+  if (tokens.length < minAxes || tokens.length > maxAxes) return null;
+  const parts = tokens.map((token) => token.match(dimensionPart));
+  if (parts.some((part) => !part?.[1])) return null;
+  const explicitUnits = parts.map((part) => part?.[2] ?? null);
+  const lastUnit = explicitUnits[explicitUnits.length - 1];
+  const onlyFinalUnit = explicitUnits.slice(0, -1).every((unit) => unit === null);
+  const everyAxisHasUnit = explicitUnits.every((unit) => unit !== null);
+  if (!onlyFinalUnit && !everyAxisHasUnit) return null;
+  const values: number[] = [];
+  for (const part of parts) {
+    if (!part?.[1]) return null;
+    const unit = part[2] ?? (onlyFinalUnit ? lastUnit : null);
+    const numeric = parseMeasuredLength(`${part[1]}${unit ? ` ${unit}` : ""}`, "", "mm");
+    if (numeric === null || numeric <= 0 || numeric > 20000) return null;
+    values.push(Math.round(numeric * 1000) / 1000);
+  }
+  return values;
+};
+
 export const parseDimension = (v: unknown): Dimension | null => {
-  if (v === null || v === undefined || v === "") return null;
-  const txt = String(v).toLowerCase();
-  const nums = txt.match(/\d+/g);
-  if (!nums) return null;
-  const parsed = nums.map((n) => Number(n));
-  const largo = parsed[0] ?? null;
-  const ancho = parsed[1] ?? null;
-  const grosor = parsed[2] ?? null;
-  return { largo, ancho, grosor };
+  if (typeof v !== "string" && typeof v !== "number") return null;
+  const axes = parseDimensionAxes(String(v), 1, 3);
+  if (!axes) return null;
+  return { largo: axes[0] ?? null, ancho: axes[1] ?? null, grosor: axes[2] ?? null };
 };
 
 export type DimensionRect = {
@@ -107,20 +159,10 @@ export type DimensionRect = {
 
 export const parseDimensionRect = (v: unknown): DimensionRect | null => {
   if (typeof v !== "string") return null;
-  const matched = v.trim().match(/^(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*(mm|cm|m|metros?)(?:\s+metros?)?$/iu);
-  if (!matched?.[1] || !matched[2] || !matched[3]) return null;
-  const unit = matched[3].toLowerCase();
-  const factor = unit === "mm" ? 1 : unit === "cm" ? 10 : 1000;
-  const parsePart = (part: string): number | null => {
-    const numeric = factor === 1 && /^\d{1,3}\.\d{3}$/.test(part)
-      ? Number(part.replace(".", "")) : Number(part.replace(",", "."));
-    const converted = numeric * factor;
-    return Number.isFinite(converted) && converted > 0 && converted <= 20000
-      ? Math.round(converted * 1000) / 1000 : null;
-  };
-  const ancho = parsePart(matched[1]);
-  const largo = parsePart(matched[2]);
-  return ancho !== null && largo !== null ? { ancho, largo } : null;
+  const text = v.trim().replace(/(mm|cm|m)\s+metros?$/iu, "$1");
+  const axes = parseDimensionAxes(text, 2, 2);
+  if (!axes || !/\b(?:mm|cm|m|metros?)$/iu.test(text)) return null;
+  return { ancho: axes[0] ?? null, largo: axes[1] ?? null };
 };
 
 export type Battery = {

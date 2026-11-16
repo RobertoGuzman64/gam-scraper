@@ -30,6 +30,26 @@ const fixture = (t) => {
 
 const rules = (findings) => new Set(findings.map((entry) => entry.rule));
 
+test("npm test ejecuta los guards arquitectónicos y sus autopruebas antes del build", () => {
+  const { scripts } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  const steps = scripts.test.split(" && ");
+  const required = [
+    "node GUARDS/tests-editorial-architecture-guard.mjs",
+    "node GUARDS/tests-domain-tests-guard.mjs",
+    "node --test GUARDS/tests-architecture-guards.test.mjs"
+  ];
+  const build = steps.indexOf("node scripts/run-build.mjs --quiet --if-needed");
+  assert.ok(build > -1);
+  const models = "node scripts/operations/rebuild-editorial-models.mjs --check";
+  assert.equal(steps.filter((step) => step === models).length, 1);
+  assert.ok(steps.indexOf(models) > build);
+  assert.ok(steps.indexOf(models) < steps.indexOf("node scripts/run-tests.mjs"));
+  for (const command of required) {
+    assert.equal(steps.filter((step) => step === command).length, 1, command);
+    assert.ok(steps.indexOf(command) < build, command);
+  }
+});
+
 test("casos legítimos: el compositor compartido y los contratos controlados no producen infracciones", (t) => {
   const { root } = fixture(t);
   assert.deepEqual(inspectEditorialArchitecture(root).findings, []);
@@ -57,6 +77,69 @@ test("bloquea bifurcación por proveedor, referencia y composición posterior a 
   for (const rule of ["E-DOMAIN-PROVIDER-BRANCH", "E-HARDCODED-REFERENCE", "E-PROJECTION-REWRITE", "E-POST-PREP-EDITORIAL"]) {
     assert.ok(found.has(rule), rule);
   }
+});
+
+test("el mapping no selecciona narraciones específicas por proveedor", (t) => {
+  const { root, write } = fixture(t);
+  write("src/preparation/shared/editorial/mapping/proveedor.ts",
+    "export const compose = (record: { providerId: string }) => record.providerId === 'gam' ? 'Descripción inventada para GAM' : 'Descripción inventada para otros';\n");
+  assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-MAPPING-PROVIDER-NARRATIVE"));
+  write("src/preparation/shared/editorial/mapping/proveedor.ts",
+    "export const compose = (record: { providerId: string }) => { if (record.providerId === 'gam') return 'Descripción creada exclusivamente para GAM'; return 'Descripción creada para otro proveedor'; };\n");
+  assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-MAPPING-PROVIDER-NARRATIVE"));
+  write("src/preparation/shared/editorial/mapping/proveedor.ts",
+    "export const choose = (record: { providerId: string; title: string }) => record.providerId === 'gam' ? record.title : record.title.trim();\n");
+  assert.deepEqual(inspectEditorialArchitecture(root).findings, []);
+});
+
+test("las referencias literales indirectas tampoco determinan narración", (t) => {
+  const { root, write } = fixture(t);
+  const path = "src/preparation/shared/editorial/mapping/especial.ts";
+  for (const content of [
+    "const reference = record.reference; return reference === 'GAM-123' ? 'especial' : null;",
+    "const { reference: id } = record; return ['GAM-123'].includes(id) ? 'especial' : null;",
+    "const key = record.reference; const reference = key; const refs = new Set(['GAM-123']); return refs.has(reference) ? 'especial' : null;"
+  ]) {
+    write(path, `export const special = (record: { reference: string }) => { ${content} };\n`);
+    assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-HARDCODED-REFERENCE"), content);
+  }
+  write(path,
+    "export const same = (source: { reference: string }, prepared: { reference: string }) => source.reference === prepared.reference;\n");
+  assert.deepEqual(inspectEditorialArchitecture(root).findings, []);
+});
+
+test("la publicación inaccesible desde preparación tampoco puede reescribir editoriales", (t) => {
+  const { root, write } = fixture(t);
+  const path = "src/publication/unreachable.ts";
+  write(path,
+    "export const publish = (product: { description: string; description_general: string }) => ({ ...product, description: product.description.trim() });\n");
+  assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-PUBLICATION-REWRITE"));
+  write(path,
+    "export const publish = (product: { description: string }) => { product['description'] = 'Texto cambiado'; return product; };\n");
+  assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-PUBLICATION-MUTATION"));
+  write(path,
+    "export const publish = (product: { description: string; description_general: string }) => ({ description: product.description, description_general: product.description_general });\n");
+  assert.deepEqual(inspectEditorialArchitecture(root).findings, []);
+});
+
+test("el guard detecta narradores de proveedores nuevos, pero admite adaptadores de hechos", (t) => {
+  const { root, write } = fixture(t);
+  const adaptor = "src/preparation/nuevo/editorial/source/domain-source.ts";
+  write(adaptor,
+    "export const readSource = (record: { height: string }) => ({ workingHeight: record.height });\n");
+  write("src/preparation/prepare-product.ts",
+    "import { resolvePreparedEditorial } from './shared/editorial/mapping/prepared-editorial.js'; import { readSource } from './nuevo/editorial/source/domain-source.js'; export const prepare = () => [resolvePreparedEditorial(), readSource];\n");
+  assert.deepEqual(inspectEditorialArchitecture(root).findings, []);
+  write("src/preparation/nuevo/editorial/general/new-general.ts",
+    "export const generalForNuevo = () => 'Un texto exclusivo del proveedor nuevo';\n");
+  write("src/preparation/prepare-product.ts",
+    "import { resolvePreparedEditorial } from './shared/editorial/mapping/prepared-editorial.js'; import { generalForNuevo } from './nuevo/editorial/general/new-general.js'; export const prepare = () => [resolvePreparedEditorial(), generalForNuevo()];\n");
+  assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-ACTIVE-PROVIDER-NARRATOR"));
+  write("src/preparation/prepare-product.ts",
+    "import { resolvePreparedEditorial } from './shared/editorial/mapping/prepared-editorial.js'; import { readSource } from './nuevo/editorial/source/domain-source.js'; export const prepare = () => [resolvePreparedEditorial(), readSource()];\n");
+  write(adaptor,
+    "export const readSource = () => ({ description: 'Descripción inventada para el proveedor nuevo' });\n");
+  assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-PROVIDER-COMPOSITION"));
 });
 
 test("identifica un narrador histórico no conectado sin confundirlo con el compositor operativo", (t) => {

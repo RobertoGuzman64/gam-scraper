@@ -1,21 +1,11 @@
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
-import { existsSync, readFileSync, readdirSync, realpathSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 
 const require = createRequire(import.meta.url);
 
-const loadCompiler = () => {
-  try {
-    return require("typescript");
-  } catch {
-    const globalCompiler = resolve(dirname(realpathSync(process.execPath)), "../lib/node_modules/typescript/lib/typescript.js");
-    if (existsSync(globalCompiler)) return require(globalCompiler);
-    throw new Error("Se necesita TypeScript (dependencia de desarrollo existente); no se instala ni se intenta compilar nada.");
-  }
-};
-
-export const ts = loadCompiler();
+export const ts = require("../node_modules/typescript");
 export const slash = (value) => value.split(sep).join("/");
 export const digest = (value) => createHash("sha256").update(value).digest("hex");
 

@@ -6,7 +6,7 @@ import { prepareSourceProduct } from "../../../prepare-product.js";
 import { resolveKnowledgeEditorial } from "../mapping/knowledge-editorial.js";
 
 const byReference = (reference: string): ProductRecord => accreditedSourceRecord("mercaeleva-original", reference);
-const documentation = /La documentación técnica de referencia del modelo Haulotte STAR-10 recoge altura de trabajo de 10 m, altura de plataforma de 8 m, capacidad nominal de 200 kg, 3 m de alcance horizontal con plumín en la documentación del fabricante\./u;
+const documentation = /La documentación técnica de referencia del modelo Haulotte STAR-10 recoge altura de trabajo de 10 m, altura de plataforma de 8 m, capacidad nominal de 200 kg, 3 m de alcance horizontal con plumín y diseño sin voladizo trasero según la documentación del fabricante\./u;
 const condition = /Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad\./u;
 
 const newCompatibleSource = (): ProductRecord => {

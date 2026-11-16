@@ -4,13 +4,13 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseCsv } from "./internal/csv.js";
-import { safeJsonParse, ensureString } from "./internal/json.js";
+import { assertUnambiguousSpecs, parseSeedScalarByRule } from "./internal/spec.js";
+import { parseSeedSpecJson, ensureString } from "./internal/json.js";
 import { buildDefaultMetadata } from "./internal/metadata.js";
 import { refWithPrefix } from "./internal/reference.js";
 import { extractUrlCategorySlug } from "./internal/slug.js";
 import { normalizeSpace } from "./internal/string.js";
 import { loadUrlCategoryIndex, resolveUrlCategorySellId } from "./internal/url-category.js";
-import { parseUrlSpecScalar } from "./internal/url-spec-scalar.js";
 import type { ConvertOptions, Report, SeedProduct } from "./internal/types.js";
 
 type UrlConvertOptions = ConvertOptions & { failOnUnresolved?: boolean };
@@ -74,15 +74,12 @@ export const convertGamCsvToSeedTsAuto = async (options: UrlConvertOptions, onPr
             continue;
         }
 
-        const specParsed = safeJsonParse(specJsonRaw);
-        const specObj = (specParsed && typeof specParsed === "object" && !Array.isArray(specParsed) ? specParsed : {}) as Record<
-            string,
-            unknown
-        >;
+        const specObj = parseSeedSpecJson(specJsonRaw, referenceRaw || `fila ${r + 1}`);
 
+        assertUnambiguousSpecs(specObj, referenceRaw || `fila ${r + 1}`);
         const spec: Record<string, string | number | boolean> = {};
         for (const [k, v] of Object.entries(specObj)) {
-            spec[normalizeSpace(k)] = parseUrlSpecScalar(v);
+            spec[normalizeSpace(k)] = parseSeedScalarByRule(k, v);
         }
 
         const metadata = buildDefaultMetadata(categoryKey);
