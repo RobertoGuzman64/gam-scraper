@@ -88,14 +88,14 @@ El sentido de una validación es **dirigir una reparación productiva**, no mult
 
 **No confundir señales:** `0 fallos` de extracción no significa cobertura web acreditada; `0 review` técnica no significa selección/editorial aprobada; `PASS` de tests no significa calidad de datos demostrada; una exclusión editorial no convierte una review en `ready`; un error real del portal no demuestra una regresión de parser. Cada afirmación de cierre debe indicar **universo evaluado, criterio vigente y resultado efectivo**.
 
-Si una revisión sigue abierta después de una corrección, repetir el ciclo productivo con las causas restantes. Un bloqueo no reparable con la evidencia disponible debe quedar visible, delimitado y trazable, **no maquillado ni transferido como una investigación general al propietario**. Ver [matriz de objetivos por frente](SCRAPER_OBJECTIVES.md#propósito-de-cada-frente-resultado-primero-herramientas-después).
+Si una revisión sigue abierta después de una corrección, repetir el ciclo productivo con las causas restantes. Un bloqueo no reparable con la evidencia disponible debe quedar visible, delimitado y trazable, **no maquillado ni transferido como una investigación general al propietario**. Ver [matriz de objetivos por frente](CATALOG_OPERATIONS.md#propósito-de-cada-frente-resultado-primero-herramientas-después).
 
 
 ## Qué debe hacer el desarrollador con un resultado de validación
 
 Una salida `REVISIÓN`, `WARN`, una lista de motivos o un delta entre catálogos **no son una instrucción para que el propietario examine fichas**. Si el trabajo autorizado es resolver el problema, el siguiente paso es **editar y probar el motor que lo causa**. Las inspecciones por ID se realizan internamente solo para localizar la causa y construir pruebas de regresión reutilizables; no se convierten en una serie de tareas editoriales individuales.
 
-Si después de un parche quedan reviews, no repetir el diagnóstico como si fuera una intervención independiente: continuar por el siguiente patrón corregible del **mismo alcance**. Confirmar que el recuento de productos y la calidad semántica no empeoran. Si el único resultado posible exige alterar una verdad del proveedor o una decisión humana, el bloqueo sigue visible y no se declara cumplimiento. Ver [contrato de actuación transversal](SCRAPER_OBJECTIVES.md#contrato-anti-deriva-comportamiento-obligatorio-del-asistente).
+Si después de un parche quedan reviews, no repetir el diagnóstico como si fuera una intervención independiente: continuar por el siguiente patrón corregible del **mismo alcance**. Confirmar que el recuento de productos y la calidad semántica no empeoran. Si el único resultado posible exige alterar una verdad del proveedor o una decisión humana, el bloqueo sigue visible y no se declara cumplimiento. Ver [contrato de actuación transversal](CATALOG_OPERATIONS.md#contrato-anti-deriva-comportamiento-obligatorio-del-asistente).
 
 
 ## Acreditación de una mejora: del hallazgo a la publicación y exportación

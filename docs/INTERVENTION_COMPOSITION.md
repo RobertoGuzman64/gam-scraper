@@ -16,7 +16,7 @@ Las campañas ordinarias extraen **todos los proveedores habilitados**. Las inte
 
 ## Prioridad de desarrollo sobre la composición manual
 
-Componer scripts resuelve **casos singulares acreditados**, no patrones de producción. Si la simulación revela un defecto común de lectura, formato, asociación de atributos o validación, hay que **arreglar ese módulo en el scraper y verificar de nuevo el catálogo completo**. No sustituir la mejora del motor por un archivo `.ts` por máquina ni tratar una simulación o un derivado como prueba de que el original está completamente `ready`. La intervención editorial permanece estrictamente humana y sobre derivados, con los límites de campos del contrato. Ver [Objetivos](SCRAPER_OBJECTIVES.md).
+Componer scripts resuelve **casos singulares acreditados**, no patrones de producción. Si la simulación revela un defecto común de lectura, formato, asociación de atributos o validación, hay que **arreglar ese módulo en el scraper y verificar de nuevo el catálogo completo**. No sustituir la mejora del motor por un archivo `.ts` por máquina ni tratar una simulación o un derivado como prueba de que el original está completamente `ready`. La intervención editorial permanece estrictamente humana y sobre derivados, con los límites de campos del contrato. Ver [Objetivos](CATALOG_OPERATIONS.md).
 
 
 ## Scripts independientes y composición

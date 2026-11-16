@@ -14,7 +14,7 @@ La publicación técnica independiente de `catalogs/providers/<proveedor>/techni
 
 ## Responsabilidad frente a incidencias de referencia
 
-El almacén heredado y los comandos de traslado sirven a **compatibilidad, recuperación y comparación**, no constituyen la solución a problemas de calidad del scraper. Una referencia desactualizada, una transacción incompleta o una huella inconsistente exige comprobar y, si hay defecto repetible, **reparar el mecanismo productivo** preservando la última copia válida; no sustituir a mano hashes o archivos para que la consulta muestre `PASS`. Para el ciclo vigente se usa la referencia acreditada de campaña, no se crea trabajo periódico de actualización del legado. Ver [Objetivos](SCRAPER_OBJECTIVES.md).
+El almacén heredado y los comandos de traslado sirven a **compatibilidad, recuperación y comparación**, no constituyen la solución a problemas de calidad del scraper. Una referencia desactualizada, una transacción incompleta o una huella inconsistente exige comprobar y, si hay defecto repetible, **reparar el mecanismo productivo** preservando la última copia válida; no sustituir a mano hashes o archivos para que la consulta muestre `PASS`. Para el ciclo vigente se usa la referencia acreditada de campaña, no se crea trabajo periódico de actualización del legado. Ver [Objetivos](CATALOG_OPERATIONS.md).
 
 
 ## Comandos de compatibilidad

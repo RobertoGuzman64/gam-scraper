@@ -16,7 +16,7 @@ Requisitos operativos: Node.js `>=18.18.0`, npm, dependencias instaladas, acceso
 
 El objetivo de la automatización es **hacer fiable el flujo productivo completo**, no programar más diagnósticos. Debe reducir pasos manuales, conservar los controles actuales y distinguir un fallo transitorio recuperable, una fuente indisponible, una pérdida de cobertura, un error del motor y un bloqueo editorial. Un lote programado que termina con `PASS` sin comprobar su contenido, su cobertura o la integridad del original no equivale a un catálogo aceptado. Cualquier mejora de automatización debe proteger datos válidos y no asumir aprobación humana; se valida en escenarios de éxito, error y recuperación.
 
-La instrumentación y los informes operativos son medios para reparar el comportamiento de la CLI, los adaptadores o la publicación, no sustitutos de la corrección. Ver [Objetivos](SCRAPER_OBJECTIVES.md) y [Validación](VALIDATION.md).
+La instrumentación y los informes operativos son medios para reparar el comportamiento de la CLI, los adaptadores o la publicación, no sustitutos de la corrección. Ver [Objetivos](CATALOG_OPERATIONS.md) y [Validación](VALIDATION.md).
 
 
 ## Ejecución controlada

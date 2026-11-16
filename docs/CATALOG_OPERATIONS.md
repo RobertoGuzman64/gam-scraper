@@ -1,4 +1,4 @@
-# Objetivos y criterios de aceptación
+# Operativa de catálogos — Objetivos, producción y criterios de cierre
 
 ## AI GUARD
 
@@ -19,6 +19,21 @@ Prioridades, por orden:
 3. **Mantener la trazabilidad**: conservar originales, hashes, diagnósticos, evidencias y decisiones que justifiquen cada cambio editorial.
 4. **Entregar salidas fiables**: catálogos íntegros y, cuando estén acreditadas las decisiones, una selección editorial separada de publicables.
 5. **Facilitar el mantenimiento**: ejecución reproducible, responsabilidades separadas, pruebas útiles, comandos claros y documentación mínima.
+
+## Producción de catálogos: recorrido prioritario cuando se solicita una entrega
+
+**Activación.** Si el encargo es «sacar», «actualizar», «preparar para el backend» o «avanzar con» el catálogo de un proveedor, la prioridad es **entregar el máximo de fichas correctas, acreditadas y comercializables de ese corte**, sin convertirlo en una campaña general de evolución del repositorio. Si el propietario pide mejorar normalización, arquitectura, editorial u otra parte del código, **se atiende ese encargo**: este recorrido no lo bloquea ni decide cambiar el frente por su cuenta.
+
+**Secuencia de producción** (respetando las rutas y decisiones propias de cada modalidad):
+
+1. **Origen y cobertura.** Precisar proveedor y corte; comprobar extracción, originales, referencias, URLs, stock, procedencia y diferencias contra el último corte acreditado. Capturar lo necesario sin perder máquinas ni sustituir una fuente válida por una extracción parcial. Una campaña completa de cuatro proveedores usa el circuito de [Campañas](CAMPAIGNS.md); una extracción de proveedor no se presenta como campaña global.
+2. **Normalización y preparación.** Verificar que no se pierden especificaciones ni se inventan unidades, atributos o identidades. Preparar el universo completo disponible, medir `ready`/`review` y comparar los motivos por referencia y fuente. GAM, Gomariz y Mercaeleva disponen del circuito [individual](INDIVIDUAL_PUBLICATION.md) desde originales canónicos completos. Manain mantiene sus límites de origen parcial y publicación técnica, salvo que se acredite otro circuito real.
+3. **Resolver calidad antes de publicar.** Atacar primero las `review` técnicamente resolubles, las pérdidas y las contradicciones que afectan a fichas entregables; buscar patrones comunes y corregir su propietario productivo, no cada JSON ni cada referencia individual. Repetir preparación y comparación hasta agotar los casos resolubles con evidencia. Las `review` genuinamente bloqueadas se conservan con causa y decisión pendiente: no se fuerzan a `ready` ni se retrasa indefinidamente el catálogo publicable por evidencias inexistentes.
+4. **Acreditar y activar publicación.** Contrastar origen, preparación, exclusiones, inventario y cambios frente a la publicación activa. Para publicaciones individuales, ejecutar el preflight y FINISH de [Publicación individual](INDIVIDUAL_PUBLICATION.md); para campañas completas, seguir [Campañas](CAMPAIGNS.md) y su aprobación humana. Una publicación técnica con `review` **no** reemplaza la publicación individual acreditada ni da acceso a la exportación comercial. Nunca editar manualmente originales, aprobaciones, manifests o JSON finales para desbloquear el paso.
+5. **Proyectar y entregar el comercial.** Auditar la coherencia, las categorías, los atributos, los metadatos, la procedencia y la vigencia de stock; simular la exportación y generar/verificar los **JSON comerciales y su manifiesto** mediante [Comercialización](COMERCIALIZACION.md). La exportación actual usa publicaciones individuales acreditadas de GAM, Gomariz y Mercaeleva: una entrega de campaña de cuatro o un snapshot técnico no son automáticamente su entrada. Los productos con conflictos comerciales pendientes no se presentan como importables.
+6. **Acreditar el cierre por etapas.** Informar del mismo corte: originales y cobertura contrastada, `ready`, `review` resolubles o bloqueadas, exclusiones y publicables acreditados, publicación activa, exportación comercial verificada y pendientes exactos. Confirmar pruebas, guards e integridad según [Validación](VALIDATION.md). Un resultado preparado no acredita su publicación; un JSON comercial correcto **no** acredita su importación efectiva en el backend, cuya responsabilidad se delimita en [Integración](EQUIPZILLA_INTEGRATION.md).
+
+**Regla de prioridad operativa.** En una solicitud de producción, las mejoras técnicas son un medio para conseguir **fichas entregables y salidas comerciales verificadas**. No posponer la entrega por refactors u optimizaciones ajenas; tampoco cerrar el encargo solo con scraping, informes, tests verdes o una selección sin publicación. Si una aprobación humana, la fuente o el receptor impiden avanzar, entregar el último estado realmente acreditado y concretar el bloqueo sin declarar completado el escalón pendiente.
 
 ## Propósito de cada frente: resultado primero, herramientas después
 

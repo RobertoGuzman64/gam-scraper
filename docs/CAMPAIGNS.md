@@ -20,12 +20,12 @@ El propósito de `iniciar`/`estado` es preservar la continuidad; de `extraer`, c
 
 Cuando la campaña detecte fallos repetibles, el desarrollo debe **reparar el código productivo que los origina y volver a comprobar el conjunto afectado**. No convertir la operación ordinaria en una secuencia manual de inspecciones por ficha. No reextraer proveedores completos solo para arreglar una normalización reproducible offline; reextraer únicamente cuando sea necesario para demostrar el comportamiento modificado del extractor, con evidencia y sin perder el original vigente. Las aprobaciones editoriales no pueden automatizarse por el hecho de haber eliminado fallos técnicos.
 
-Para otros tipos de incidencias (identidad, cobertura, gaps, tests, mantenimiento, integración), rige la [matriz de resultados y criterios de cierre](SCRAPER_OBJECTIVES.md#propósito-de-cada-frente-resultado-primero-herramientas-después).
+Para otros tipos de incidencias (identidad, cobertura, gaps, tests, mantenimiento, integración), rige la [matriz de resultados y criterios de cierre](CATALOG_OPERATIONS.md#propósito-de-cada-frente-resultado-primero-herramientas-después).
 
 
 ## Operación sin trasladar la investigación al propietario
 
-`revisar`, `comparar`, `cobertura` y `estado` **no son destinos finales de una intervención productiva**. Ante un resultado adverso en una campaña, el asistente debe localizar internamente la capa responsable, corregir el código si está bajo su control y acreditar que el flujo afectado vuelve a producir los artefactos correctos. No solicitar una nueva extracción global por rutina cuando el fallo pueda reproducirse y corregirse offline. Una nueva campaña, la aprobación editorial y cualquier operación con efectos destructivos siguen requiriendo sus autorizaciones y salvaguardas particulares. Ver [contrato anti-deriva](SCRAPER_OBJECTIVES.md#contrato-anti-deriva-comportamiento-obligatorio-del-asistente).
+`revisar`, `comparar`, `cobertura` y `estado` **no son destinos finales de una intervención productiva**. Ante un resultado adverso en una campaña, el asistente debe localizar internamente la capa responsable, corregir el código si está bajo su control y acreditar que el flujo afectado vuelve a producir los artefactos correctos. No solicitar una nueva extracción global por rutina cuando el fallo pueda reproducirse y corregirse offline. Una nueva campaña, la aprobación editorial y cualquier operación con efectos destructivos siguen requiriendo sus autorizaciones y salvaguardas particulares. Ver [contrato anti-deriva](CATALOG_OPERATIONS.md#contrato-anti-deriva-comportamiento-obligatorio-del-asistente).
 
 
 ## Instalación inicial
@@ -64,7 +64,7 @@ La comparación no equivale a selección editorial: una ficha excluida pero extr
 
 La meta para declarar un **catálogo de proveedor completamente `ready`** es `0 review` verificadas sobre todo su catálogo canónico con las reglas técnicas vigentes. El desarrollador debe iterar correcciones productivas y pruebas de regresión sobre el conjunto completo mientras queden defectos solucionables del motor. **No asignar al propietario un recorrido por IDs ni declarar resuelta la calidad al producir informes.** La selección editorial con exclusiones y aprobación humana sigue disponible cuando el dato de origen es verdaderamente irresoluble; una exclusión no modifica la review de origen ni acredita un catálogo íntegramente `ready`.
 
-Esta obligación de desarrollo **no autoriza** a mutar originales, inventar datos, bajar el umbral de calidad, saltarse aprobaciones o convertir intervenciones manuales en reglas permanentes. Ver [Objetivos](SCRAPER_OBJECTIVES.md) y [Validación](VALIDATION.md).
+Esta obligación de desarrollo **no autoriza** a mutar originales, inventar datos, bajar el umbral de calidad, saltarse aprobaciones o convertir intervenciones manuales en reglas permanentes. Ver [Objetivos](CATALOG_OPERATIONS.md) y [Validación](VALIDATION.md).
 
 `extraer` prepara y revisa tras extraer los cuatro proveedores. Si existe una campaña incompleta, hay que consultar su `runId` y decidir explícitamente cómo tratarla. `npm run extraer -- --nueva` permite solicitar otro lote según el estado, pero **no autoriza a borrar la campaña fallida ni trabajos pendientes**. Un historial ambiguo o con rutas no reconocidas bloquea la admisión.
 

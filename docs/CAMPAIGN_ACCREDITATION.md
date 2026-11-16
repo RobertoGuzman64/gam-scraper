@@ -16,7 +16,7 @@ La publicación técnica independiente de un proveedor, aunque incluya máquinas
 
 La acreditación **no corrige** fallos generalizables de extracción, normalización, identidad o cobertura. Antes de llegar a ella, el código productivo debe haber resuelto las incidencias técnicamente corregibles y acreditado la calidad del conjunto. La decisión humana queda para **exclusiones e inclusiones editoriales genuinas**, con evidencia y su propia autorización: ni ejecutar `acreditar` ni excluir una ficha convierte sus datos técnicos en `ready`, ni permite afirmar que el catálogo de origen tiene `0 review` si no los tiene.
 
-Si la causa de un bloqueo está en el software, se vuelve a su módulo responsable y se rehace la preparación derivada conforme a las huellas vigentes; no se fuerza una aprobación para evitar reparar el motor. Ver [Objetivos](SCRAPER_OBJECTIVES.md) y [Validación](VALIDATION.md).
+Si la causa de un bloqueo está en el software, se vuelve a su módulo responsable y se rehace la preparación derivada conforme a las huellas vigentes; no se fuerza una aprobación para evitar reparar el motor. Ver [Objetivos](CATALOG_OPERATIONS.md) y [Validación](VALIDATION.md).
 
 
 ## Recorrido ordinario sin rutas ni SHA manuales

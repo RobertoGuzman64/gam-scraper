@@ -25,7 +25,7 @@ El sistema de intervenciones está reservado para correcciones **aisladas, excep
 
 También existen **reconciliaciones específicas productivas** y evidencias editoriales por identidad y huella en `src/preparation/<proveedor>/`, distintas de las intervenciones manuales de campaña: pueden ejecutarse durante la preparación por las guardas y el orden del motor, sin exigir aplicar un script de `interventions/`. Deben probarse con la unidad real, variante vecina y fuente distinta; tampoco autorizan aprobar manualmente una review. Para escoger entre reparar extracción, añadir una evidencia verificable o solicitar una decisión humana, consultar el [manual de mejora acreditada](CATALOG_IMPROVEMENT.md).
 
-La decisión humana no se reemplaza por una excepción automática. Si el proveedor publica una contradicción genuina sin evidencia concluyente, se conserva el bloqueo y la revisión editorial; **no se proclama un catálogo completo `ready` por excluirla**. Ver [Objetivos](SCRAPER_OBJECTIVES.md) y [Validación](VALIDATION.md).
+La decisión humana no se reemplaza por una excepción automática. Si el proveedor publica una contradicción genuina sin evidencia concluyente, se conserva el bloqueo y la revisión editorial; **no se proclama un catálogo completo `ready` por excluirla**. Ver [Objetivos](CATALOG_OPERATIONS.md) y [Validación](VALIDATION.md).
 
 
 ## Consultar y mantener el catálogo versionado

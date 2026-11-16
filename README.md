@@ -12,22 +12,24 @@ Herramienta de línea de comandos, desarrollada en **Node.js, TypeScript y módu
 
 El **original canónico vigente** conserva las máquinas elegibles por el criterio de extracción del proveedor, incluidas las que después queden en `review`. En Gomariz, las fichas expresamente marcadas «Sin existencias» se excluyen de ese original con motivo y URL trazables; no se confunden con errores. La **selección editorial comercial** es otra salida: aparta fichas no acreditadas sin convertir artificialmente productos en `ready`.
 
-**Dirección permanente de calidad:** si aparecen reviews, el trabajo de desarrollo consiste en **corregir el código productivo reutilizable que origina los problemas**, no terminar en informes, comandos o revisión manual ficha a ficha. La meta para declarar todo el universo de un proveedor `ready` es **0 reviews verificadas sobre todas sus fichas**; no es condición para publicar un **snapshot técnico independiente** que conserve las revisiones, conservando los originales y sin inventar valores ni relajar validaciones. Los diagnósticos son herramientas internas del desarrollador; las contradicciones de origen realmente irresolubles permanecen identificadas y requieren una decisión editorial distinta. Ver [Objetivos](docs/SCRAPER_OBJECTIVES.md) y [Validación](docs/VALIDATION.md).
+**Dirección permanente de calidad:** si aparecen reviews, el trabajo de desarrollo consiste en **corregir el código productivo reutilizable que origina los problemas**, no terminar en informes, comandos o revisión manual ficha a ficha. La meta para declarar todo el universo de un proveedor `ready` es **0 reviews verificadas sobre todas sus fichas**; no es condición para publicar un **snapshot técnico independiente** que conserve las revisiones, conservando los originales y sin inventar valores ni relajar validaciones. Los diagnósticos son herramientas internas del desarrollador; las contradicciones de origen realmente irresolubles permanecen identificadas y requieren una decisión editorial distinta. Ver [Operativa de catálogos](docs/CATALOG_OPERATIONS.md) y [Validación](docs/VALIDATION.md).
 
 Este repositorio no ofrece una API HTTP, no realiza altas en el backend y no automatiza importaciones. Los JSON canónicos y las selecciones acreditadas **no son solicitudes de creación de productos del backend**. Existe, por separado, una **proyección comercial propia** que asigna categorías y atributos conforme a los snapshots locales y entrega JSON comerciales auditables. La persistencia, permisos e importación siguen en el backend. `npm run exportar` (Excel/JSON histórico) es compatibilidad heredada, mientras `npm run exportar:comercial` es el circuito comercial actual. Ver [Comercialización](docs/COMERCIALIZACION.md).
 
-Para los criterios funcionales, consultar [Objetivos](docs/SCRAPER_OBJECTIVES.md).
+**Para sacar o actualizar el catálogo de un proveedor**, basta con pedirlo en lenguaje natural (por ejemplo: «Saca el nuevo catálogo de GAM»). Se aplica el recorrido de [Operativa de catálogos](docs/CATALOG_OPERATIONS.md), desde el origen hasta los JSON comerciales verificables. Este recorrido no desplaza una petición expresa de mejora del código.
+
+Para los criterios funcionales y de cierre, consultar [Operativa de catálogos](docs/CATALOG_OPERATIONS.md).
 
 ## Regla de ejecución y cierre
 
 El trabajo técnico se orienta al **resultado productivo**: extracción completa, fichas correctas, cobertura comprobada, catálogo íntegro `ready`, campaña acreditable y entrega verificable, según el frente que corresponda. `estado`, `revisar`, `huecos`, `validar` y los diagnósticos no son metas por sí mismos: sus resultados alimentan correcciones en los motores existentes. Cuando el error es reproducible y generalizable, se modifica el código y se verifica contra el conjunto afectado; el trabajo no se da por terminado con un listado de incidencias o con comandos para analizarlas manualmente.
 
-Los criterios **según el tipo de problema**, las protecciones de seguridad y los límites entre catálogo técnico, selección e importación están definidos en [Objetivos](docs/SCRAPER_OBJECTIVES.md). Ninguna automatización evita las aprobaciones editoriales reales, ni un `PASS` de extracción garantiza por sí solo cobertura completa o `0 review`.
+Los criterios **según el tipo de problema**, las protecciones de seguridad y los límites entre catálogo técnico, selección e importación están definidos en [Objetivos](docs/CATALOG_OPERATIONS.md). Ninguna automatización evita las aprobaciones editoriales reales, ni un `PASS` de extracción garantiza por sí solo cobertura completa o `0 review`.
 
 
 ## Regla de actuación para cualquier incidencia
 
-El criterio transversal no cambia según el comando que haya fallado: **identificar el objetivo vigente → investigar internamente → corregir el componente productivo responsable → verificar el conjunto real → continuar hasta cumplir el criterio de cierre**. No desviar una incidencia de calidad hacia listas de fichas, diagnósticos sucesivos, nuevas herramientas observacionales o una entrega prematura; tampoco iniciar refactors ajenos al encargo. El contrato de comportamiento y los límites de autorización están en [Objetivos, contrato anti-deriva](docs/SCRAPER_OBJECTIVES.md#contrato-anti-deriva-comportamiento-obligatorio-del-asistente).
+El criterio transversal no cambia según el comando que haya fallado: **identificar el objetivo vigente → investigar internamente → corregir el componente productivo responsable → verificar el conjunto real → continuar hasta cumplir el criterio de cierre**. No desviar una incidencia de calidad hacia listas de fichas, diagnósticos sucesivos, nuevas herramientas observacionales o una entrega prematura; tampoco iniciar refactors ajenos al encargo. El contrato de comportamiento y los límites de autorización están en [Objetivos, contrato anti-deriva](docs/CATALOG_OPERATIONS.md#contrato-anti-deriva-comportamiento-obligatorio-del-asistente).
 
 Una consulta o un plan no equivalen a permiso para editar; una intervención productiva acordada tampoco requiere que el propietario apruebe cada comprobación interna. Las decisiones editoriales, destructivas o de cambio de contrato siguen siendo exclusivamente humanas. No se puede afirmar `0 review` ni una entrega completa sin verificar la totalidad del catálogo y todas las garantías pertinentes.
 
@@ -284,7 +286,7 @@ El contrato de cuatro proveedores describe el software, **no acredita por sí so
 
 La **fuente de verdad vigente** sobre la reforma editorial y de tests está en los documentos siguientes. Las guías operativas vigentes describen los propietarios definitivos; los guiones y las fuentes temporales de conciliación no forman parte del funcionamiento ordinario.
 
-- [Objetivos y alcance](docs/SCRAPER_OBJECTIVES.md): prioridades y criterios de aceptación.
+- [Operativa de catálogos](docs/CATALOG_OPERATIONS.md): objetivos, producción desde scraping hasta JSON comerciales y criterios de cierre.
 - [Arquitectura](docs/ARCHITECTURE.md): módulos, responsabilidades, preparación y extensibilidad.
 - [Motor editorial compartido](docs/EDITORIAL_ENGINE.md): propietarios reales, origen y firma de evidencias, precedencias y política de evolución funcional.
 - [Arquitectura de tests](docs/TEST_ARCHITECTURE.md): política por motor, integración censal acreditada, guards, excepciones exactas y criterios de cierre.
