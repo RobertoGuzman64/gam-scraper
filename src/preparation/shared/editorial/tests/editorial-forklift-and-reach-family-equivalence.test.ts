@@ -151,5 +151,6 @@ test("las unidades incompatibles y la ficha retráctil contradictoria quedan exc
   }
   assert.equal(resolveEditorialFacts(contradictoryReach), null);
   assert.deepEqual(resolveReusableEditorial(contradictoryReach), { short: null, general: null });
-  assert.equal(prepareSourceProduct(contradictoryReach).status, "review");
+  assert.ok(prepareSourceProduct(contradictoryReach).product.description_general?.includes("CARRETILLA RETRACTIL ELECTRICA"));
+  assert.equal(prepareSourceProduct(contradictoryReach).status, "ready");
 });

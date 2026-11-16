@@ -22,7 +22,9 @@ import { planCommercialExport } from "../projection/export-projection.js";
 import { accreditCommercialPlan } from "../diagnostics/commercial-accreditation.js";
 import type { CommercialAccreditation } from "../diagnostics/commercial-accreditation.js";
 import type { CommercialExportPlan } from "../projection/export-projection.js";
-import { loadCommercialPublicationInputs } from "./commercial-inputs.js";
+import { loadCommercialPublicationInputs, inspectCommercialPublicationInputs } from "./commercial-inputs.js";
+import type { CommercialPublicationInputs } from "./commercial-inputs.js";
+import { auditProviderCoverage } from "../../shared/audit-provider-results.js";
 
 export type CommercialAuditProvider = {
   readonly publicationSha256: string;
@@ -52,13 +54,14 @@ export type CommercialAuditWithFindings = {
   readonly findings: readonly AuditedFinding[];
 };
 
-const buildCommercialAudit = async (rootDirectory: string, collectFindings: boolean): Promise<CommercialAuditWithFindings> => {
+const buildCommercialAudit = async (rootDirectory: string, collectFindings: boolean, allowPartial = false) => {
   const [catalog, references, recognitions] = await Promise.all([
     loadImportCatalog(), loadCommercialReference(), loadFindingRecognitionRegistry(rootDirectory)
   ]);
-  const inputs = await loadCommercialPublicationInputs(rootDirectory, catalog);
+  const inspected = allowPartial ? await inspectCommercialPublicationInputs(rootDirectory, catalog) : null;
+  const inputs = inspected?.evaluated ?? await loadCommercialPublicationInputs(rootDirectory, catalog);
   const findings: AuditedFinding[] = [];
-  const report: CommercialAudit = { version: 2, providers: inputs.map(({ providerId, publicationSha256, originalProducts, entries }) => {
+  const analyzeProvider = ({ providerId, publicationSha256, originalProducts, entries }: CommercialPublicationInputs): CommercialAuditProvider => {
     const projected = planCommercialExport(entries, providerId, publicationSha256, catalog,
       references.brandLogos, null, null);
     const reasons = new Map<string, number>();
@@ -86,12 +89,31 @@ const buildCommercialAudit = async (rootDirectory: string, collectFindings: bool
         exceptions: projected.exceptions.length, reasons: [...reasons].map(([reason, affected]) => ({ reason, affected }))
           .sort((a, b) => b.affected - a.affected || a.reason.localeCompare(b.reason, "es")) }
     };
-  }) };
-  return { report, findings };
+  };
+  const providers: CommercialAuditProvider[] = [];
+  const failures = [...(inspected?.failures ?? [])];
+  for (const input of inputs) {
+    const previousFindings = findings.length;
+    try {
+      providers.push(analyzeProvider(input));
+    } catch (error) {
+      findings.length = previousFindings;
+      if (!allowPartial) throw error;
+      failures.push({ source: `auditoria:${input.providerId}`, providerId: input.providerId,
+        category: "ERROR", detail: error instanceof Error ? error.message : String(error) });
+    }
+  }
+  const report: CommercialAudit = { version: 2, providers };
+  return { report, findings, auditCoverage: inspected === null ? null : auditProviderCoverage({ ...inspected, evaluated: providers, failures }) };
 };
 
 export const auditCommercialCatalog = async (rootDirectory: string): Promise<CommercialAudit> =>
   (await buildCommercialAudit(rootDirectory, false)).report;
 
-export const auditCommercialCatalogWithFindings = (rootDirectory: string): Promise<CommercialAuditWithFindings> =>
-  buildCommercialAudit(rootDirectory, true);
+export const auditCommercialCatalogWithFindings = async (rootDirectory: string): Promise<CommercialAuditWithFindings> => {
+  const { report, findings } = await buildCommercialAudit(rootDirectory, true);
+  return { report, findings };
+};
+
+export const auditCommercialCatalogWithCoverage = (rootDirectory: string, collectFindings: boolean) =>
+  buildCommercialAudit(rootDirectory, collectFindings, true);

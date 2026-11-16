@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { lstat, mkdir, open, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import type { IndividualCatalogProvider } from "../../../preparation/workflow/individual-context.js";
 
 export type IndividualFinishTarget = {
@@ -9,11 +9,20 @@ export type IndividualFinishTarget = {
   readonly previousSha256: string | null;
 };
 
+export type IndividualFinishClosurePhase = "activated" | "retained" | "audited" | "reported";
+
+export type IndividualFinishReportReceipt = { readonly path: string; readonly sha256: string };
+
 export type IndividualFinishJournal = {
   readonly version: 1;
   readonly targets: readonly IndividualFinishTarget[];
   readonly completed: readonly IndividualCatalogProvider[];
   readonly status: "pending" | "complete";
+  readonly candidatesVerified?: boolean;
+  readonly closure?: {
+    readonly phase: IndividualFinishClosurePhase;
+    readonly report: IndividualFinishReportReceipt | null;
+  };
 };
 
 const hash = (value: string): string => createHash("sha256").update(value).digest("hex");
@@ -22,6 +31,21 @@ const missing = (error: unknown): boolean => error instanceof Error && "code" in
 
 const journalName = (targets: readonly IndividualFinishTarget[]): string =>
   `${hash(JSON.stringify(targets.map(({ providerId, approvalSha256 }) => ({ providerId, approvalSha256 }))))}.json`;
+
+const phases: readonly IndividualFinishClosurePhase[] = ["activated", "retained", "audited", "reported"];
+
+export const individualFinishClosurePhase = (journal: IndividualFinishJournal): IndividualFinishClosurePhase =>
+  journal.closure?.phase ?? "activated";
+
+const validClosure = (value: unknown): boolean => {
+  if (!value || typeof value !== "object" || Array.isArray(value) ||
+    !("phase" in value) || !phases.some((phase) => phase === value.phase) || !("report" in value)) return false;
+  if (value.phase !== "reported") return value.report === null;
+  const report = value.report;
+  return report !== null && typeof report === "object" && !Array.isArray(report) &&
+    "path" in report && typeof report.path === "string" && isAbsolute(report.path) &&
+    "sha256" in report && isHash(report.sha256);
+};
 
 const isJournal = (value: unknown): value is IndividualFinishJournal => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
@@ -41,7 +65,9 @@ const isJournal = (value: unknown): value is IndividualFinishJournal => {
   return providers.every((item) => item !== null) && new Set(providers).size === providers.length &&
     completed.every((item) => typeof item === "string" && providers.some((providerId) => providerId === item)) &&
     new Set(completed).size === completed.length &&
-    (value.status !== "complete" || completed.length === targets.length);
+    (value.status !== "complete" || completed.length === targets.length) &&
+    (!("closure" in value) || (value.status === "complete" && validClosure(value.closure))) &&
+    (!("candidatesVerified" in value) || typeof value.candidatesVerified === "boolean");
 };
 
 const readJournal = async (path: string): Promise<IndividualFinishJournal> => {
@@ -100,20 +126,36 @@ export const withIndividualFinishLock = async <T>(workspace: string, action: () 
   }
 };
 
+export const listIndividualFinishJournals = async (
+  workspace: string
+): Promise<readonly { readonly path: string; readonly journal: IndividualFinishJournal }[]> => {
+  const folder = journalFolder(workspace);
+  let metadata;
+  try { metadata = await lstat(folder); }
+  catch (error) { if (missing(error)) return []; throw error; }
+  if (!metadata.isDirectory() || metadata.isSymbolicLink()) throw new Error(`Directorio FINISH no regular: ${folder}`);
+  const result: { path: string; journal: IndividualFinishJournal }[] = [];
+  for (const entry of await readdir(folder, { withFileTypes: true })) {
+    if (entry.name === ".finish.lock") continue;
+    if (!entry.isFile() || entry.isSymbolicLink() || !/^[a-f0-9]{64}\.json$/.test(entry.name)) {
+      throw new Error(`Entrada inesperada en diarios FINISH: ${entry.name}`);
+    }
+    const path = join(folder, entry.name);
+    result.push({ path, journal: await readJournal(path) });
+  }
+  return result;
+};
+
 export const openIndividualFinishJournal = async (
   workspace: string, targets: readonly IndividualFinishTarget[]
 ): Promise<{ readonly path: string; readonly journal: IndividualFinishJournal }> => {
   const folder = await ensureFolders(workspace);
   const name = journalName(targets);
   const path = join(folder, name);
-  for (const entry of await readdir(folder, { withFileTypes: true })) {
-    if (entry.name === ".finish.lock") continue;
-    if (!entry.isFile() || entry.isSymbolicLink() || !/^[a-f0-9]{64}\.json$/.test(entry.name)) {
-      throw new Error(`Entrada inesperada en diarios FINISH: ${entry.name}`);
-    }
-    const existing = await readJournal(join(folder, entry.name));
-    if (entry.name !== name && existing.status === "pending") {
-      throw new Error(`Existe FINISH parcial de otro conjunto (${entry.name}); recupera primero ese conjunto`);
+  for (const entry of await listIndividualFinishJournals(workspace)) {
+    if (entry.path === path) continue;
+    if (entry.journal.status === "pending" || individualFinishClosurePhase(entry.journal) !== "reported") {
+      throw new Error(`Existe FINISH sin cerrar de otro conjunto (${entry.path}); recupera primero ese conjunto`);
     }
   }
   try {
@@ -144,5 +186,36 @@ export const updateIndividualFinishJournal = async (
     ...journal, completed: [...completed], status: completed.length === journal.targets.length ? "complete" : "pending"
   };
   if (JSON.stringify(next) !== JSON.stringify(journal)) await writeAtomic(path, next);
+  return next;
+};
+
+export const advanceIndividualFinishClosure = async (
+  path: string, journal: IndividualFinishJournal, phase: IndividualFinishClosurePhase,
+  report: IndividualFinishReportReceipt | null = null
+): Promise<IndividualFinishJournal> => {
+  const current = await readJournal(path);
+  if (JSON.stringify(current) !== JSON.stringify(journal)) throw new Error("El diario FINISH cambió durante el cierre");
+  if (journal.status !== "complete" || journal.completed.length !== journal.targets.length) {
+    throw new Error("FINISH no tiene todas sus activaciones confirmadas");
+  }
+  if (phases.indexOf(phase) !== phases.indexOf(individualFinishClosurePhase(journal)) + 1 ||
+    (phase === "reported") !== (report !== null) ||
+    (report !== null && (!isAbsolute(report.path) || !isHash(report.sha256)))) {
+    throw new Error("Transición o recibo de cierre FINISH inválidos");
+  }
+  const next: IndividualFinishJournal = { ...journal, closure: { phase, report } };
+  await writeAtomic(path, next);
+  return next;
+};
+
+export const markIndividualFinishCandidates = async (
+  path: string, journal: IndividualFinishJournal
+): Promise<IndividualFinishJournal> => {
+  const current = await readJournal(path);
+  if (JSON.stringify(current) !== JSON.stringify(journal)) throw new Error("El diario FINISH cambió durante las candidaturas");
+  if (journal.status !== "pending") throw new Error("FINISH: no se pueden modificar candidaturas tras la activación completa");
+  if (journal.candidatesVerified) return journal;
+  const next: IndividualFinishJournal = { ...journal, candidatesVerified: true };
+  await writeAtomic(path, next);
   return next;
 };

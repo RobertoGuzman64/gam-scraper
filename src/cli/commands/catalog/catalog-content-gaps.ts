@@ -1,5 +1,5 @@
 import { printCommandHeader, printCommandSection, printReportLine } from "../../reporting/terminal.js";
-import { resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 import type { GapInput } from "../../../catalog/diagnostics/content-gaps-types.js";
 import { readContentGapOptions, type CommandOptions } from "./catalog-content-gaps-options.js";
 import { printEditorial, printDescriptionCoverage, printDescriptionPriorities, printEditorialReuse } from "../../reporting/catalog-content-gaps-output.js";
@@ -18,7 +18,8 @@ import { readActiveTechnicalPublication } from "../../../infrastructure/filesyst
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { loadPreparationInputs } from "../../../infrastructure/filesystem/preparation/preparation-inputs.js";
 import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
-import { printCommandError } from "../../reporting/errors.js";
+import { printCommandError, errorDetail } from "../../reporting/errors.js";
+import { collectAuditProviderResults, auditProviderCoverage, markAuditProviderFailures } from "../../../shared/audit-provider-results.js";
 import { buildProductIdentity } from "../../../catalog/identity.js";
 import { analyzeSpecificationCoverage } from "../../../catalog/diagnostics/specification-coverage.js";
 import { analyzeSpecificationOpportunities } from "../../../catalog/diagnostics/specification-opportunities.js";
@@ -99,22 +100,16 @@ const reportTechnicalPublications = async (options: CommandOptions): Promise<voi
 };
 
 const reportDescriptionComparison = async (paths: readonly string[], options: CommandOptions): Promise<void> => {
-  const publications = await Promise.all(paths.map(readAccreditedPublication));
-  const providers = new Set<string>();
-  const inputs: DescriptionCoverageInput[] = [];
-  const sourceProvenance: { providerId: string; origin: "original_canonico" | "reconstruccion_publicada"; originalProducts: number | null; publishedProducts: number; publicationSha256: string }[] = [];
-  for (const [index, publication] of publications.entries()) {
-    if (providers.has(publication.providerId)) throw new Error(`Proveedor duplicado en publicaciones: ${publication.providerId}`);
-    providers.add(publication.providerId);
+  const inspected = await collectAuditProviderResults(paths, async (path) => {
+    const publication = await readAccreditedPublication(path);
     const current = await originalSources(root, publication.providerId);
     const sources = publication.providerId === "mercaeleva" && current === null
-      ? null : await publicationOriginalSources(root, paths[index]!, publication.providerId, publication.products);
+      ? null : await publicationOriginalSources(root, path, publication.providerId, publication.products);
     if (sources === null && publication.providerId !== "mercaeleva") {
       throw new Error(`No existe original canónico para comparar ${publication.providerId}; no se atribuye fuente inexistente`);
     }
     const origin = sources === null ? "reconstruccion_publicada" : "original_canonico";
-    sourceProvenance.push({ providerId: publication.providerId, origin, originalProducts: sources?.size ?? null,
-      publishedProducts: publication.products.length, publicationSha256: publication.sha256 });
+    const inputs: DescriptionCoverageInput[] = [];
     for (const published of publication.products) {
       const identity = buildProductIdentity({ providerId: published.providerId, reference: published.reference,
         serialNumber: null, url: published.sourceUrl }).key;
@@ -122,14 +117,33 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
       if (!source) throw new Error(`Publicación sin origen canónico emparejado: ${identity}`);
       inputs.push({ published, source, prepared: prepareSourceProduct(source), origin });
     }
+    return { providerId: publication.providerId, value: { publication, inputs,
+      provenance: { providerId: publication.providerId, origin, originalProducts: sources?.size ?? null,
+        publishedProducts: publication.products.length, publicationSha256: publication.sha256 } } };
+  }, (path) => basename(path) === "publishable.json" ? basename(dirname(path)) : basename(path).replace(/-publishable\.json$/u, ""));
+  const providers = new Set<string>();
+  for (const item of inspected.evaluated) {
+    if (providers.has(item.publication.providerId)) throw new Error(`Proveedor duplicado en publicaciones: ${item.publication.providerId}`);
+    providers.add(item.publication.providerId);
   }
+  const publications = inspected.evaluated.map((item) => item.publication);
+  const inputs = inspected.evaluated.flatMap((item) => item.inputs);
+  const sourceProvenance = inspected.evaluated.map((item) => item.provenance);
+  const sourceCoverage = auditProviderCoverage(inspected);
+  markAuditProviderFailures(inspected.failures);
   const { fingerprints } = await loadPreparationInputs();
   const provenance = { source: "comparacion_publicaciones_y_preparacion", publications: sourceProvenance,
     rulesSha256: fingerprints.rulesSha256, preparation: "Recalculada; Mercaeleva reconstruida únicamente desde campos de su publicación, no desde un original canónico" };
+  if (publications.length === 0) {
+    if (options.json) console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, auditCoverage: sourceCoverage }, null, 2));
+    else printReportLine(`HUECOS | comparación no evaluable · ${sourceCoverage.incompleteSource} fuentes ausentes · ${sourceCoverage.errors} errores`);
+    return;
+  }
+  if (!options.json && inspected.failures.length) printReportLine(`COBERTURA PARCIAL | ${sourceCoverage.evaluated}/${sourceCoverage.requested} proveedores evaluados`);
   if (options.titles) {
     const titles = analyzeTitleQuality(inputs);
     if (options.json) {
-      console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, titles }, null, 2));
+      console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, ...(inspected.failures.length ? { auditCoverage: sourceCoverage } : {}), titles }, null, 2));
     } else {
       printReportLine(`HUECOS | auditoría de títulos técnicos | publicaciones ${titles.totals.products} | comparación frente a preparación, solo lectura`);
       for (const line of formatTitleQualityReport(titles, options.limit)) printReportLine(line);
@@ -149,7 +163,7 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
   const specificationImprovements = options.specs ? analyzeSpecificationImprovement(inputs,
     parseSpecificationImprovementExceptions(JSON.parse(await readFile(resolve(root, "data/specification-improvement-exceptions.json"), "utf8"))), technicalDensity) : null;
   if (options.json) {
-    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, coverage, editorial, editorialPrepared, editorialReuse, priorities, technicalDensity, ...(technicalSpecs ? { technicalSpecs, technicalSemantics, technicalOpportunities, specificationImprovements } : {}) }, null, 2));
+    console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, ...(inspected.failures.length ? { auditCoverage: sourceCoverage } : {}), coverage, editorial, editorialPrepared, editorialReuse, priorities, technicalDensity, ...(technicalSpecs ? { technicalSpecs, technicalSemantics, technicalOpportunities, specificationImprovements } : {}) }, null, 2));
   } else {
     printReportLine(`HUECOS | publicaciones finales ${coverage.totals.products} · comparación con preparación actual · solo lectura`);
     printCommandSection("DESCRIPCIONES · P0");
@@ -270,6 +284,7 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   runCatalogContentGaps(process.argv.slice(2)).catch((error: unknown) => {
+    if (process.argv.includes("--json")) console.log(JSON.stringify({ error: errorDetail(error), status: "ERROR" }));
     printCommandError("huecos", error);
     process.exitCode = 1;
   });

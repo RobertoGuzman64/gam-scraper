@@ -10,8 +10,8 @@ import { verifiedEditorialIdentity, verifiedEditorialStructuredIdentity } from "
 
 const historical = (reference: string): ProductRecord => accreditedSourceRecord("gam-original", reference);
 
-test("las dos variantes GAM discrepantes no se validan mediante una coincidencia por prefijo", () => {
-  for (const reference of ["6934", "241"]) {
+test("una variante GAM no acreditada no se valida mediante una coincidencia por prefijo", () => {
+  for (const reference of ["6934"]) {
     const source = historical(reference);
     const snapshot = JSON.stringify(source);
     assert.equal(verifiedEditorialIdentity(source), false, reference);

@@ -1,6 +1,6 @@
-import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { prepareSourceProduct } from '../../dist/preparation/prepare-product.js';
+import { editorialAuditFingerprints, loadEditorialAuditPopulation } from './editorial-audit-population.mjs';
 import { resolveEditorialFacts } from '../../dist/preparation/shared/editorial/domain/editorial-facts.js';
 import { resolveReusableEditorial } from '../../dist/preparation/shared/editorial/domain/editorial-composition.js';
 import { resolveSourceEditorialClaims } from '../../dist/preparation/shared/editorial/domain/editorial-source-claims.js';
@@ -10,7 +10,6 @@ import { loadEditorialKnowledge } from '../../dist/infrastructure/filesystem/edi
 
 const root = process.cwd();
 const knowledge = loadEditorialKnowledge();
-const read = (path) => JSON.parse(readFileSync(resolve(root, path), 'utf8'));
 const keys = ['records','ready','review','exceptions','facts','loadCenters','turningRadii',
   'cleaningWidths','baskets','drawbarPulls','verifiedUnbranded','sourceClaimEligible',
   'sourceClaimApplied','signedShortApplied','signedGeneralApplied','signedTitlesApplied',
@@ -18,16 +17,27 @@ const keys = ['records','ready','review','exceptions','facts','loadCenters','tur
   'emptyShort','emptyGeneral'];
 const counters = () => Object.fromEntries(keys.map((key) => [key, 0]));
 const report = { version: 1, mode: 'lectura_sin_publicacion', providers: {}, total: counters(), errors: [],
+  provenance: { stage: 'preparacion_offline', universe: 'originales_canonicos', analyzedAt: new Date().toISOString(),
+    sources: {}, complete: true },
   evidence: { signedUnits: knowledge.units.size, modelConsensus: knowledge.models.size,
     familyProfiles: Object.keys(knowledge.families).length,
     declaredManufacturerModels: knowledge.modelRules.size } };
+const fingerprints = await editorialAuditFingerprints();
 for (const provider of ['gam','gomariz','mercaeleva']) {
-  const rows = read(`catalogs/providers/${provider}/original/scrape-${provider}-catalog.json`).products;
+  let population;
+  try {
+    population = await loadEditorialAuditPopulation(root, provider, fingerprints);
+  } catch (error) {
+    report.errors.push({ provider, reference: null, message: error instanceof Error ? error.message : String(error) });
+    continue;
+  }
+  const { records, prepared, provenance } = population;
+  report.provenance.sources[provider] = provenance;
   const stats = counters();
-  for (const record of rows) {
+  for (const [index, record] of records.entries()) {
     stats.records++;
     try {
-      const result = prepareSourceProduct(record);
+      const result = prepared[index];
       if (result.status === 'ready') stats.ready++;
       else stats.review++;
       const facts = resolveEditorialFacts(record);
@@ -64,8 +74,12 @@ for (const provider of ['gam','gomariz','mercaeleva']) {
   report.providers[provider] = stats;
   for (const key of keys) report.total[key] += stats[key];
 }
+report.provenance.complete = report.errors.length === 0;
 const folder = resolve(root, 'reports/editorial-coverage');
 mkdirSync(folder, { recursive: true });
 writeFileSync(resolve(folder, 'audit.json'), JSON.stringify(report, null, 2) + '\n');
-console.log(`AUDITORÍA EDITORIAL | COBERTURA SIN PUBLICACIÓN | ${report.total.records} originales · ${report.total.ready} preparados · ${report.total.review} revisión · ${report.total.exceptions} excepciones`);
-if (report.total.exceptions > 0) process.exitCode = 1;
+console.log(`AUDITORÍA EDITORIAL | COBERTURA SIN PUBLICACIÓN | originales canónicos ${report.total.records} · ${report.total.ready} ready por lote · ${report.total.review} revisión · ${report.total.exceptions} excepciones`);
+if (report.errors.length > 0) {
+  console.error(`AUDITORÍA EDITORIAL INCOMPLETA | ${report.errors.map((item) => `${item.provider}: ${item.message}`).join('; ')}`);
+  process.exitCode = 1;
+}

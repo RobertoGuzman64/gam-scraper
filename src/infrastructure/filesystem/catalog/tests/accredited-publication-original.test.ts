@@ -124,3 +124,45 @@ test("once bajas de Gomariz no invalidan la auditoría histórica ni pueden expo
     });
   } finally { await rm(root, { recursive: true, force: true }); }
 });
+
+test("el lector acreditado admite el alias portátil cuando el prefijo canónico difiere del nombre de archivo", async () => {
+  const root = await mkdtemp(join(tmpdir(), "eqz-commercial-alias-"));
+  try {
+    const base = join(root, "catalogs", "providers", "gam");
+    const original = join(base, "original");
+    const publications = join(base, "publications", "candidato");
+    await mkdir(original, { recursive: true });
+    await mkdir(publications, { recursive: true });
+    const fixtureGam = join(process.cwd(), "src", "testing", "fixtures", "gam");
+    const catalogPrefix = "scrape-gam-marzo-2026";
+    for (const suffix of ["catalog.json", "catalog.manifest.json", "summary.json"]) {
+      await copyFile(join(fixtureGam, `${catalogPrefix}-${suffix}`), join(original, `scrape-gam-${suffix}`));
+    }
+    const source = JSON.parse(await readFile(join(fixtureGam, `${catalogPrefix}-catalog.manifest.json`), "utf8")) as {
+      providerId: string; prefix: string; scope: string; catalogSha256: string; productCount: number;
+    };
+    await writeFile(join(publications, "manifest.json"), JSON.stringify({
+      version: 1, providerId: "gam", source
+    }));
+    const recovered = await accreditedPublicationOriginalSources(root, join(publications, "gam-publishable.json"), "gam");
+    assert.equal(recovered.size, source.productCount);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test("un manifiesto o resumen histórico incompatible impide la lectura acreditada", async () => {
+  const { root, publicationFile, archived } = await workspace();
+  try {
+    const manifestPath = join(archived, `${prefix}-catalog.manifest.json`);
+    const rawManifest = await readFile(manifestPath, "utf8");
+    const manifest = JSON.parse(rawManifest) as { catalogSha256: string };
+    await writeFile(manifestPath, JSON.stringify({ ...manifest, catalogSha256: "b".repeat(64) }));
+    await assert.rejects(accreditedPublicationOriginalSources(root, publicationFile, "gomariz"),
+      /catálogo y su manifest pertenecen a ejecuciones distintas/);
+    await writeFile(manifestPath, rawManifest);
+    const summaryPath = join(archived, `${prefix}-summary.json`);
+    const summary = JSON.parse(await readFile(summaryPath, "utf8")) as { totals: { scrapedProducts: number } };
+    await writeFile(summaryPath, JSON.stringify({ ...summary, totals: { ...summary.totals, scrapedProducts: 142 } }));
+    await assert.rejects(accreditedPublicationOriginalSources(root, publicationFile, "gomariz"),
+      /catálogo no coincide con la publicación completa acreditada/);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});

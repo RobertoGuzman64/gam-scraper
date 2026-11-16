@@ -55,7 +55,7 @@ test("las firmas indexadas de los tres proveedores seleccionan por campo y unida
       assert.equal(mapped.title, selected.title, `${provider}:${record.reference}:title`);
     }
   }
-  assert.equal(scanned, 784);
+  assert.equal(scanned, 785);
   assert.ok(totals.gam > 0);
   assert.ok(totals.gomariz > 0);
   assert.ok(totals.mercaeleva > 0);

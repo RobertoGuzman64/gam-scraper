@@ -31,7 +31,7 @@ test("respeta CI, NO_COLOR y terminal no interactiva", () => {
     assert.equal(supportsTerminalColor({ isTTY: true }), true);
     process.env.NO_COLOR = "1";
     assert.equal(supportsTerminalColor({ isTTY: true }), false);
-    assert.equal(supportsAnimation({ isTTY: true }), true);
+    assert.equal(supportsAnimation({ isTTY: true }), false);
     delete process.env.NO_COLOR;
     process.env.CI = "true";
     assert.equal(supportsTerminalColor({ isTTY: true }), false);
@@ -123,4 +123,18 @@ test("los bloques terminales son legibles sin TTY ni color y conservan cierre ex
   const output = lines.join("\n").replace(/\u001b\[[0-9;]*m/g, "");
   assert.match(output, /SIMULACIÓN · SIN ESCRITURAS/);
   assert.match(output, /\n\n  MERCAELEVA  221 publicadas\n\nAUDITORÍA POSTERIOR\n\nRESULTADO\nWARN \| Revisión técnica pendiente/);
+});
+
+
+test("Windows clásico, terminal moderna y captura no interactiva distinguen color y animación", () => {
+  const env: NodeJS.ProcessEnv = { TERM: "xterm-256color" };
+  assert.equal(supportsAnimation({ isTTY: true }, "win32", env), false);
+  assert.equal(supportsTerminalColor({ isTTY: true }, "win32", env), false);
+  assert.equal(supportsAnimation({ isTTY: true }, "win32", { ...env, WT_SESSION: "terminal" }), true);
+  assert.equal(supportsAnimation({ isTTY: true }, "win32", { ...env, TERM_PROGRAM: "vscode" }), true);
+  assert.equal(supportsAnimation({ isTTY: true }, "win32", { ...env, ConEmuANSI: "ON" }), true);
+  assert.equal(supportsAnimation({ isTTY: true }, "linux", env), true);
+  assert.equal(supportsAnimation({ isTTY: false }, "win32", { ...env, WT_SESSION: "terminal" }), false);
+  assert.equal(supportsTerminalColor({ isTTY: true }, "linux", { ...env, NO_COLOR: "1" }), false);
+  assert.equal(supportsAnimation({ isTTY: true }, "linux", { ...env, FORCE_COLOR: "0" }), false);
 });

@@ -80,18 +80,28 @@ test("distingue Bravi recogepedidos y XGA eléctrico sin trasvasar categorías",
   }
 });
 
-test("detecta XGA con modelo de título o resumen incompatible sin resolverlo por conjetura", () => {
-  for (const reference of ["4752", "5902"]) {
-    const source = original(reference);
-    assert.equal(gamElevationIdentityConflict(source), true);
-    const result = prepareSourceProduct(source);
-    assert.equal(result.status, "review");
-    assert.ok(result.issues.includes("Identidad GAM contradictoria entre título, resumen y ficha técnica"));
-    assert.match(result.product.title ?? "", /XGA(?:12K|43K)/u);
-    assert.notEqual(result.product.title, `Plataforma articulada diésel XCMG ${source.model === "XGA12ACK" ? "XGA12ACK" : "XGA36K"}`);
-    assert.equal(result.product.reference, source.reference);
-    assert.equal(result.product.sourceUrl, source.url);
-  }
+test("resuelve la identidad XGA corroborada y retiene la variante sin concordancia", () => {
+  const source = original("4752");
+  assert.equal(gamElevationIdentityConflict(source), true);
+  const verified = prepareSourceProduct(source);
+  assert.equal(verified.status, "ready");
+  assert.deepEqual(verified.issues, []);
+  assert.equal(verified.product.spec.Modelo, "XGA12K");
+  assert.match(verified.product.title ?? "", /XGA12K/u);
+  assert.equal(verified.product.reference, source.reference);
+  assert.equal(verified.product.sourceUrl, source.url);
+  const conflicted = original("5902");
+  assert.equal(gamElevationIdentityConflict(conflicted), true);
+  const reconciled = prepareSourceProduct(conflicted);
+  assert.equal(reconciled.status, "ready");
+  assert.deepEqual(reconciled.issues, []);
+  assert.match(reconciled.product.title ?? "", /XGA43K/u);
+  assert.equal(reconciled.product.spec.Modelo, "XGA43K");
+  for (const altered of [
+    { ...source, url: `${source.url}?otra-version=1` },
+    { ...source, shortDescription: "Identidad comercial no corroborada" }
+  ]) assert.equal(prepareSourceProduct(altered).status, "review");
+
   const compatible = another(original("4762"));
   assert.equal(gamElevationIdentityConflict(compatible), false);
   assert.equal(prepareSourceProduct(compatible).status, "ready");

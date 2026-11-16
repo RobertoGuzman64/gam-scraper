@@ -2334,5 +2334,52 @@
       "Tipo de motor": "Eléctrico",
       "Altura de trabajo": "11 m"
     }
+  },
+  {
+    "providerId": "mercaeleva",
+    "categoryKey": "venta",
+    "categoryName": "Maquinaria en venta",
+    "url": "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-A14JE-M887-9469",
+    "title": "LGMG A14JE PLATAFORMA ARTICULADA ELECTRICA 15 MT",
+    "shortDescription": null,
+    "longDescription": "Ref.1332 PLATAFORMA ARTICULADA ELECTRICA ALTURA DE TRABAJO 16 MT LGMG A14JE HORAS 298 AÑO DE FABRICACION 2023",
+    "price": "32500",
+    "condition": "Segunda mano",
+    "scrapedAt": "2026-10-29T22:43:56.642Z",
+    "reference": "M887-9469",
+    "brand": "LGMG",
+    "model": "A14JE",
+    "year": "2023",
+    "location": null,
+    "country": null,
+    "horometer": "298",
+    "serialNumber": null,
+    "image": "https://files2.machineric.com/clients/mercaeleva/machines/M887-9469/public/2026-10-29T08:58:11.840876997_2026-10-29T08:58:11.840857717Z_1332%20(2).jpg",
+    "images": [
+      "https://files2.machineric.com/clients/mercaeleva/machines/M887-9469/public/2026-10-29T08:58:11.840876997_2026-10-29T08:58:11.840857717Z_1332%20(2).jpg",
+      "https://files2.machineric.com/clients/mercaeleva/machines/M887-9469/public/2026-10-29T08:58:10.739917157_2026-10-29T08:58:10.739899057Z_1332%20(1).jpg",
+      "https://files2.machineric.com/clients/mercaeleva/machines/M887-9469/public/2026-10-29T08:58:15.642800051_2026-10-29T08:58:15.642782491Z_1332%20(6).jpg",
+      "https://files2.machineric.com/clients/mercaeleva/machines/M887-9469/public/2026-10-29T08:58:17.685868483_2026-10-29T08:58:17.685848503Z_1332%20(8).jpg",
+      "https://files2.machineric.com/clients/mercaeleva/machines/M887-9469/public/2026-10-29T08:58:16.636829667_2026-10-29T08:58:16.636811467Z_1332%20(7).jpg",
+      "https://files2.machineric.com/clients/mercaeleva/machines/M887-9469/public/2026-10-29T08:58:18.858097775_2026-10-29T08:58:18.858079595Z_1332%20(9).jpg",
+      "https://files2.machineric.com/clients/mercaeleva/machines/M887-9469/public/2026-10-29T08:58:19.734042290_2026-10-29T08:58:19.734029030Z_1332%20(10).jpg",
+      "https://files2.machineric.com/clients/mercaeleva/machines/M887-9469/public/2026-10-29T08:58:20.770282540_2026-10-29T08:58:20.770209759Z_1332%20(13).jpg",
+      "https://files2.machineric.com/clients/mercaeleva/machines/M887-9469/public/2026-10-29T08:58:14.621924623_2026-10-29T08:58:14.621906262Z_1332%20(5).jpg",
+      "https://files2.machineric.com/clients/mercaeleva/machines/M887-9469/public/2026-10-29T08:58:12.643805090_2026-10-29T08:58:12.643789320Z_1332%20(3).jpg",
+      "https://files2.machineric.com/clients/mercaeleva/machines/M887-9469/public/2026-10-29T08:58:13.997603460_2026-10-29T08:58:13.997585629Z_1332%20(4).jpg",
+      "https://files2.machineric.com/clients/mercaeleva/machines/M887-9469/public/2026-10-29T08:58:21.866507425_2026-10-29T08:58:21.866489244Z_1332%20(14).jpg"
+    ],
+    "specs": {
+      "Marca": "LGMG",
+      "Modelo": "A14JE",
+      "Título adicional": "PLATAFORMA ARTICULADA ELECTRICA 15 MT",
+      "Año de fabricación": "2023",
+      "Artículo No.": "1332",
+      "Horas laborales": "298 h",
+      "Estado": "Usado",
+      "Condición general": "Bueno",
+      "Tipo de motor": "Eléctrico",
+      "Altura de trabajo": "16 m"
+    }
   }
 ]

@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { fold } from "../../../shared/classification/mapping/attribute-utils.js";
+import { containsEditorialIdentity } from "../../../shared/editorial/domain/editorial-identity-match.js";
 
 const compact = (value: string): string => fold(value).replace(/[^a-z0-9]/gu, "");
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
@@ -20,7 +21,7 @@ const sourcePath = (record: ProductRecord): string | null => {
 
 const sourceModel = (record: ProductRecord, brand: string): string | null => {
   const title = record.title ?? "";
-  const match = new RegExp(`\\b${escapeRegex(brand)}\\s+([\\p{L}\\d./()-]+(?:\\s+(?:MWB))?)\\s*$`, "iu").exec(title);
+  const match = new RegExp(`\\b${escapeRegex(brand)}\\s+([\\p{L}\\d./()-]+(?:\\s+(?:MWB|RT))?)\\s*$`, "iu").exec(title);
   return match?.[1]?.trim() ?? null;
 };
 
@@ -29,7 +30,10 @@ const summaryIdentifies = (record: ProductRecord, brand: string, model: string):
   const baseModel = model.split(/\s/u)[0] ?? "";
   if (!baseModel || baseModel.length < 3) return false;
   const prefix = new RegExp(`^➨\\s*${escapeRegex(brand)}\\s+${escapeRegex(baseModel)}(?=\\s|\\b)`, "iu");
-  return prefix.test(short);
+  if (prefix.test(short)) return true;
+  if (!/RT$/iu.test(model)) return false;
+  const heading = /^➨\s*([^➨]+?)\s*➨/u.exec(short)?.[1];
+  return Boolean(heading && containsEditorialIdentity(heading, brand) && containsEditorialIdentity(heading, model));
 };
 
 const titleWithVerifiedModel = (record: ProductRecord, path: string): ProductRecord => {

@@ -5,6 +5,8 @@ import { buildCommercialExportFiles } from "../../../commercial/export/commercia
 import { findDesktopDirectory } from "../../../infrastructure/filesystem/desktop-directory.js";
 import { deliverCommercialPackages } from "../../reporting/commercial-package-delivery.js";
 import { inspectCommercialPackage } from "../../../commercial/export/commercial-package-snapshot.js";
+import { inspectCommercialExportPreflight } from "../../../commercial/export/commercial-export-preflight.js";
+import { renderCommercialExportPreflight } from "../../reporting/commercial-export-preflight.js";
 import { verifyCommercialExportDirectory, verifyCommercialExportSources } from "../../../commercial/export/commercial-export-verification.js";
 import type { CommercialEnvironment } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { printCommandHeader, printCommandSection, printCommandResult, printCommandDeliverable, printCommandProvider, printReportLine } from "../../reporting/terminal.js";
@@ -61,6 +63,11 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
     printReportLine("Uso: npm run exportar:comercial -- --entorno develop|production [--simular] [--salida <directorio-nuevo>]\nPor defecto genera dos ZIP verificados en el Escritorio: comercial (tres JSON y manifiesto) e informe de integración. --salida conserva los cuatro archivos sueltos en un directorio nuevo. --simular permite verificar sin elegir entorno. También admite --out, --environment y --dry-run. No publica ni importa en backend.");
     return;
   }
+  const preflight = await inspectCommercialExportPreflight(root, options.environment);
+  for (const line of renderCommercialExportPreflight(preflight, options.environment)) printReportLine(line);
+  if (preflight.failures.length || preflight.globalFailures.length || preflight.publications.length !== 3) {
+    throw new Error(`Preflight comercial no conforme: ${preflight.failures.length} incidencias por proveedor y ${preflight.globalFailures.length} globales. No se exportó ningún archivo`);
+  }
   const files = await buildCommercialExportFiles(root, options.environment);
   const manifest = files.find((item) => item.name === "commercial-manifest.json");
   if (!manifest) throw new Error("Falta el manifiesto comercial");
@@ -69,7 +76,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
     printCommandHeader("EXPORTACIÓN COMERCIAL", true);
     printReportLine(`Entorno: ${options.environment ?? "sin companyID"} · ${files.length - 1} proveedores · un manifiesto`);
     for (const entry of files) printReportLine(`  ${entry.name} · ${entry.bytes} bytes · calculado, no escrito`);
-    printCommandResult("SIMULACIÓN COMPLETA · SIN ESCRITURAS");
+    printCommandResult("SIMULACIÓN COMPLETA · SIN ESCRITURAS · NO SE CREA NUEVA PUBLICACIÓN");
     return;
   }
   if (options.out === null) {
@@ -83,7 +90,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
     printCommandSection("ENTREGABLES");
     printCommandDeliverable("COMERCIAL", delivered.commercial);
     printCommandDeliverable("INFORME", delivered.report);
-    printCommandResult("Dos ZIP comprobados; integración en BD NO VERIFICADA");
+    printCommandResult("Dos ZIP comprobados desde publicaciones vigentes; integración en BD NO VERIFICADA");
     return;
   }
   await verifyCommercialExportSources(root, files);
@@ -109,7 +116,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
   printCommandSection("ARCHIVOS VERIFICADOS");
   for (const entry of files) printReportLine(`  ${entry.name} · ${entry.bytes} bytes`);
   printCommandDeliverable("DIRECTORIO COMERCIAL", destination);
-  printCommandResult("Cuatro archivos comprobados; publicaciones y backend sin modificar");
+  printCommandResult("Cuatro archivos nuevos desde publicaciones vigentes; publicaciones y backend sin modificar");
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

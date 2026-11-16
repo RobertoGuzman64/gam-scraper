@@ -67,13 +67,21 @@ test("títulos documentados por familia, magnitudes y fuente sin referencias cab
 });
 
 test("generales y títulos firmados migrados desde tablas antiguas", () => {
-  for (const reference of ["1218", "1219", "2180", "4792", "6909"]) {
+  for (const reference of ["1218", "1219", "6909"]) {
     const source = original("gam", reference);
     const editorial = resolveKnowledgeEditorial(source, source);
     assert.ok(editorial.general, reference);
     assert.equal(prepareSourceProduct(source).product.description_general, editorial.general, reference);
     const modified = { ...source, shortDescription: "Cambiado" };
     assert.equal(resolveKnowledgeEditorial(modified, modified).general, null);
+  }
+  for (const reference of ["2180", "4792"]) {
+    const source = original("gam", reference);
+    const signed = resolveKnowledgeEditorial(source, source);
+    assert.ok(signed.general);
+    const prepared = prepareSourceProduct(source);
+    assert.equal(prepared.status, "ready");
+    assert.notEqual(prepared.product.description_general, signed.general);
   }
   for (const reference of ["2364", "6805", "6971", "6987"]) {
     const source = original("gam", reference);

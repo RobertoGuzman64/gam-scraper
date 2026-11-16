@@ -13,8 +13,9 @@ import type { ImportCandidate, ImportCatalog } from "../commercial/legacy-export
 import type { PreparedProduct } from "./contracts.js";
 import { applyReconciledTechnicalSpecs } from "./shared/technical/reconciliation/technical-specifications.js";
 import { captureSourceEditorialEvidence } from "./shared/editorial/mapping/source-editorial-evidence.js";
-import { reconcileSourceCategoryTitle, reconcileInitialTechnicalEvidence, resolveSourceTechnicalSemanticRecord, reconcileTechnicalSourceForRecovery, reconcileTechnicalBeforeEditorial, reconcileTechnicalAfterEditorial, normalizePreparedTechnicalSpecs } from "./shared/technical/reconciliation/preparation-technical-stages.js";
+import { reconcileSourceCategoryTitle, reconcileVerifiedSourceReviewClaims, reconcileVerifiedSourceFamily, reconcileVerifiedSourceFuel, reconcileVerifiedSourceIdentity, reconcileVerifiedManufacturerSourceLoad, reconcileInitialTechnicalEvidence, resolveSourceTechnicalSemanticRecord, reconcileTechnicalSourceForRecovery, reconcileTechnicalBeforeEditorial, reconcileTechnicalAfterEditorial, normalizePreparedTechnicalSpecs } from "./shared/technical/reconciliation/preparation-technical-stages.js";
 import { publicationConflictForMercaeleva } from "./mercaeleva/technical/reconciliation/mercaeleva.js";
+import { hasDocumentedGomarizPriceOnRequest } from "./gomariz/quality/price-on-request.js";
 import { reconcileHandlingFamilySpecs } from "./shared/technical/reconciliation/handling-family-specifications.js";
 import { presentGamVerifiedRestrictedCapacity } from "./gam/technical/reconciliation/gam-verified-capacity-coherence.js";
 import { recoverBaseTechnicalSpecs } from "./shared/technical/recovery/base-technical-recovery.js";
@@ -25,7 +26,13 @@ import { reconcileUsedHandlingSource } from "./shared/editorial/mapping/source-u
 import { hasVerifiedPublishedEditorialLoadConflict } from "./shared/editorial/mapping/prepared-editorial-load-consistency.js";
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
-  record = reconcileSourceCategoryTitle(record);
+  const originalRecord = record;
+  const categorizedSource = reconcileSourceCategoryTitle(record);
+  const verifiedClaims = reconcileVerifiedSourceReviewClaims(categorizedSource);
+  const technicalSource = reconcileVerifiedManufacturerSourceLoad(
+    reconcileVerifiedSourceIdentity(reconcileVerifiedSourceFuel(verifiedClaims)));
+  record = reconcileVerifiedSourceFamily(technicalSource);
+  const restoredFamily = record !== technicalSource;
   const sourceUnitRecord = record;
   const coherentSource = reconcileUsedHandlingSource(sourceUnitRecord);
   if (coherentSource.year !== record.year && coherentSource.yearSource === "url") {
@@ -36,7 +43,9 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const semanticIssues = sourceSemanticQualityIssues(resolveSourceTechnicalSemanticRecord(record));
   record = reconcileTechnicalSourceForRecovery(record);
   const sourceYearSpecs = recoverBaseTechnicalSpecs(record, sourceUnitRecord);
-  const { documentedSpecs } = recoverDocumentedTechnicalSpecs(sourceUnitRecord, sourceYearSpecs);
+  const documentedOriginal = verifiedClaims !== categorizedSource ? categorizedSource :
+    restoredFamily ? originalRecord : sourceUnitRecord;
+  const { documentedSpecs } = recoverDocumentedTechnicalSpecs(documentedOriginal, sourceYearSpecs);
   const beforeReconciliation = record;
   record = reconcileTechnicalBeforeEditorial(record);
   record = reconcileTechnicalAfterEditorial(record);
@@ -55,7 +64,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
       ? excludeGomarizForeignCover(sourceImages, record.reference) : sourceImages;
   const price = normalizePrice(record.price);
   const reference = record.reference?.trim() || null;
-  const editorial = resolvePreparedEditorial(editorialRecord, sourceUnitRecord, sourceEditorial);
+  const editorial = resolvePreparedEditorial(editorialRecord, restoredFamily ? originalRecord : sourceUnitRecord, sourceEditorial, originalRecord);
   const attributeResult = catalog ? productAttributes(qualityRecord, category, catalog) : null;
   if (editorial.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
   if (editorial.sourceMotorConflict) issues.push("Motorización de origen no corroborada por evidencia histórica firmada");
@@ -66,7 +75,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   if (publicationConflict !== null) issues.push(publicationConflict);
   issues.push(...semanticIssues);
   if (!reference) issues.push("Referencia ausente");
-  if (price === null && /\d/.test(record.price ?? "")) issues.push("Precio publicado inválido");
+  if (price === null && /\d/.test(record.price ?? "") &&
+    !hasDocumentedGomarizPriceOnRequest(originalRecord)) issues.push("Precio publicado inválido");
   issues.push(...(catalog === null ? sourceTechnicalQualityIssues(qualityRecord) :
     category ? attributeResult!.qualityIssues : sourceAttributeQualityIssues(qualityRecord, catalog)));
 

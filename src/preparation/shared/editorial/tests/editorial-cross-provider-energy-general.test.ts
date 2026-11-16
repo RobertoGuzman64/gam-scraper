@@ -72,7 +72,8 @@ test("la descripción compatible, la ausencia de energía y una variante en revi
   assert.equal(withoutContradictoryFamilyGeneral(compatible), compatible);
   const unsupported = { ...source, specs: { ...source.specs, "Tipo motor": "" } };
   assert.equal(withoutContradictoryFamilyGeneral(unsupported), unsupported);
-  const reviewed = accreditedSourceRecord("gam-original", "2312");
+  const sourceRecord = accreditedSourceRecord("gam-original", "2312");
+  const reviewed = { ...sourceRecord, longDescription: `${sourceRecord.longDescription} Variante sin corroborar.` };
   const snapshot = JSON.stringify(reviewed);
   const prepared = prepareSourceProduct(reviewed);
   assert.equal(prepared.status, "review");

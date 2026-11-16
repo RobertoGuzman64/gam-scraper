@@ -19,12 +19,16 @@ const statusColors: Readonly<Record<TerminalStatus, TerminalColor>> = {
   RUN: "cyan"
 };
 
-export const supportsTerminalColor = (stream: OutputStream = process.stdout): boolean =>
-  stream.isTTY === true && process.env.NO_COLOR === undefined &&
-  process.env.CI !== "true" && process.env.TERM !== "dumb";
+export const supportsAnimation = (
+  stream: OutputStream = process.stdout, platform = process.platform, env: NodeJS.ProcessEnv = process.env
+): boolean =>
+  stream.isTTY === true && env.NO_COLOR === undefined && env.FORCE_COLOR !== "0" &&
+  env.CI !== "true" && env.TERM !== "dumb" &&
+  (platform !== "win32" || Boolean(env.WT_SESSION) || env.TERM_PROGRAM === "vscode" || env.ConEmuANSI === "ON");
 
-export const supportsAnimation = (stream: OutputStream = process.stdout): boolean =>
-  stream.isTTY === true && process.env.CI !== "true" && process.env.TERM !== "dumb";
+export const supportsTerminalColor = (
+  stream: OutputStream = process.stdout, platform = process.platform, env: NodeJS.ProcessEnv = process.env
+): boolean => supportsAnimation(stream, platform, env);
 
 export const tint = (text: string, color: TerminalColor, enabled = supportsTerminalColor()): string =>
   enabled ? `${colors[color]}${text}\u001b[0m` : text;

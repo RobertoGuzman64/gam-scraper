@@ -87,13 +87,28 @@ test("bloquea resúmenes sin identidad y procedencia corroboradas o con familia 
   }
 });
 
-test("deja en revisión la ficha original sin general verificable aunque pueda resumir su identidad", () => {
+test("el original MB EFL303 recupera el detalle por capacidad nominal acreditada", () => {
   const source = accreditedSourceRecord("mercaeleva-original", "M062-8951");
+  const snapshot = JSON.stringify(source);
   const result = prepareSourceProduct(source);
   assert.equal(result.product.description, "Carretilla elevadora MB EFL303 nueva.");
-  assert.equal(result.product.description_general, null);
-  assert.equal(result.status, "review");
-  assert.ok(result.issues.includes("Cobertura editorial insuficiente: descripción general"));
+  assert.equal(result.status, "ready");
+  assert.deepEqual(result.issues, []);
+  assert.match(result.product.description_general ?? "", /3\.000 kg/u);
+  assert.match(result.product.description_general ?? "", /80 V y 205 Ah/u);
+  assert.equal(result.product.spec["Capacidad máxima de elevación"], "3000 kg");
+  assert.equal(JSON.stringify(source), snapshot);
+  for (const variant of [
+    { ...source, url: `${source.url}?variante=2` },
+    { ...source, reference: "M062-8951-OTRA" },
+    { ...source, model: "EFL302" },
+    { ...source, specs: { ...source.specs, "Voltaje de la batería": "48 V" } },
+    { ...source, specs: { ...source.specs, "Capacidad máxima de elevación": "2600 kg" } },
+    { ...source, providerId: "gam" }
+  ]) {
+    const prepared = prepareSourceProduct(variant);
+    assert.notEqual(prepared.product.description_general, result.product.description_general);
+  }
 });
 
 test("mantiene un resumen breve y el detalle adicional en las generales de originales acreditados", () => {

@@ -53,8 +53,20 @@ test("las variantes de motor no acreditan una configuración particular ni admit
     assert.equal(sourceCategoryQualityIssue({ ...record, longDescription: "Equipo industrial sin identidad acreditada" }), SOURCE_CATEGORY_ISSUE, reference);
     assert.equal(sourceCategoryQualityIssue({ ...record, url: record.url.replace("/carretillas-elevadoras-diesel-hyster/", "/carretillas-elevadoras-electricas-hyster/") }), SOURCE_CATEGORY_ISSUE, reference);
   }
-  for (const reference of ["2071", "2314", "2313", "2312"]) {
+  for (const reference of ["2071", "2314"]) {
     const result = prepareProduct(source(reference), catalog);
+    assert.equal(result.status, "ready", reference);
+    assert.deepEqual(result.issues, [], reference);
+    assert.equal(result.product.spec.Motorización, "Diésel", reference);
+    const altered = { ...source(reference), longDescription: `${source(reference).longDescription} Edición distinta.` };
+    const unresolved = prepareProduct(altered, catalog);
+    assert.equal(unresolved.status, "review", reference);
+    assert.ok(unresolved.issues.some((issue) => issue.startsWith("Motorización contradictoria")), reference);
+  }
+  for (const reference of ["2312", "2313"]) {
+    const record = source(reference);
+    const changed = { ...record, longDescription: `${record.longDescription} Variante sin corroborar.` };
+    const result = prepareProduct(changed, catalog);
     assert.equal(result.status, "review", reference);
     assert.ok(result.issues.some((issue) => issue.startsWith("Motorización contradictoria")), reference);
   }

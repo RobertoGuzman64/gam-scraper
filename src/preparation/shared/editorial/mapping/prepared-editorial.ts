@@ -5,19 +5,30 @@ import { gamElevationIdentityConflict, gamElevationSourceIdentityConflict } from
 import { resolvePreparedEditorialTitle } from "./prepared-editorial-title.js";
 import { resolvePreparedEditorialSource } from "./prepared-editorial-source.js";
 import { withoutUncorroboratedMotorClaim } from "../domain/editorial-signed-motor-caution.js";
+import { resolveKnowledgeEditorial } from "./knowledge-editorial.js";
 
 export const resolvePreparedEditorial = (
   record: ProductRecord,
   sourceUnitRecord: ProductRecord,
-  sourceEditorial: SourceEditorialEvidence
+  sourceEditorial: SourceEditorialEvidence,
+  originalSource: ProductRecord = sourceUnitRecord
 ) => {
   const { descriptions, heightConflict, verifiedTitle, sourceModelConflict, sourceMotorConflict } = resolvePreparedEditorialSource(record, sourceEditorial, sourceUnitRecord);
+  const matchingOriginal = originalSource !== sourceUnitRecord &&
+    originalSource.providerId === sourceUnitRecord.providerId &&
+    originalSource.reference === sourceUnitRecord.reference && originalSource.url === sourceUnitRecord.url &&
+    originalSource.brand === sourceUnitRecord.brand && originalSource.model === sourceUnitRecord.model &&
+    originalSource.specs?.["Capacidad de carga (kg)"] === sourceUnitRecord.specs?.["Capacidad de carga (kg)"] &&
+    originalSource.shortDescription !== sourceUnitRecord.shortDescription;
+  const signedOriginal = matchingOriginal ? resolveKnowledgeEditorial(originalSource, originalSource).general : null;
+  const cautionGeneral = signedOriginal && /\b(?:debe\s+(?:comprobarse|verificarse)|requiere\s+verificaci[oó]n)\b/iu.test(signedOriginal)
+    ? signedOriginal : null;
   const titleRecord = withoutUncorroboratedMotorClaim(record, sourceMotorConflict);
   const title = verifiedTitle ?? resolvePreparedEditorialTitle(titleRecord, sourceUnitRecord);
   return {
     title,
     preparedShort: descriptions.short,
-    preparedLong: descriptions.long,
+    preparedLong: cautionGeneral ?? descriptions.long,
     heightConflict,
     sourceModelConflict,
     sourceMotorConflict,

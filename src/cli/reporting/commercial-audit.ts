@@ -66,7 +66,7 @@ const printAccreditationWarnings = (
 
 export const printCommercialAuditReport = (
   report: CommercialAudit, mode: string | undefined, attributeId: string | undefined, productReference: string | undefined,
-  classified?: FindingRecognitionClassification
+  classified?: FindingRecognitionClassification, incomplete = false
 ): void => {
   if (mode === "--acreditacion-json") {
     console.log(JSON.stringify({ version: 1, providers: report.providers.map((item) => item.accreditation) }, null, 2));
@@ -89,7 +89,9 @@ export const printCommercialAuditReport = (
     printCommandSection("TOTAL ACREDITADO");
     printReportLine(`${exported} productos · ${attributes} atributos · ${blocking} infracciones`);
     printReportLine("Validación semántica e integración en BD: NO VERIFICADAS");
-    printCommandResult(blocking === 0 ? "SIN INFRACCIONES DEL CONTRATO COMERCIAL" : `${blocking} INFRACCIONES DEL CONTRATO COMERCIAL`, blocking === 0 ? "PASS" : "FAIL");
+    printCommandResult(incomplete ? "AUDITORÍA INCOMPLETA · hay proveedores no evaluados" :
+      blocking === 0 ? "SIN INFRACCIONES DEL CONTRATO COMERCIAL" : `${blocking} INFRACCIONES DEL CONTRATO COMERCIAL`,
+    incomplete || blocking > 0 ? "FAIL" : "PASS");
     if (blocking > 0) process.exitCode = 1;
     return;
   }
@@ -260,7 +262,8 @@ export const printCommercialAuditReport = (
   printCommandSection("TOTAL COMERCIAL");
   printReportLine(`${eligible} elegibles · ${attributes} atributos · ${pending} categorías pendientes · ${blocking} infracciones`);
   printReportLine("La auditoría acredita contratos derivados; no verifica precisión semántica ni aceptación en BD.");
-  printCommandResult(blocking > 0 ? `${blocking} infracciones comerciales detectadas` :
+  printCommandResult(incomplete ? "Auditoría incompleta · hay proveedores no evaluados" :
+    blocking > 0 ? `${blocking} infracciones comerciales detectadas` :
     pending > 0 ? "Auditoría realizada · existen categorías pendientes de revisión" : "Auditoría realizada · sin infracciones de contrato",
-  blocking > 0 || pending > 0 ? "WARN" : "PASS");
+  incomplete ? "FAIL" : blocking > 0 || pending > 0 ? "WARN" : "PASS");
 };

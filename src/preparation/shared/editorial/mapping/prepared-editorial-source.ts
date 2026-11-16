@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { SourceEditorialEvidence } from "./source-editorial-evidence.js";
+import { verifiedMercaelevaMbCapacityProposal } from "../../../../catalog/interventions/verified-mercaeleva-capacity.js";
 import { distinguishDescriptions } from "../../../../catalog/normalization/descriptions.js";
 import { hasEditorialSourceWorkHeightConflict } from "../domain/editorial-height-consistency.js";
 import { hasCorroboratedEditorialDistinctWorkHeights } from "../domain/editorial-source.js";
@@ -17,6 +18,7 @@ import { editorialFamilyFromSourceGeneral } from "../domain/editorial-families.j
 import { resolveVerifiedTechnicalBrief } from "../domain/editorial-technical-brief.js";
 import { resolveVerifiedSourceEditorialExcerpt } from "../domain/editorial-source-excerpt.js";
 import { resolveMissingTechnicalEditorialGeneral } from "../domain/editorial-missing-technical-general.js";
+import { resolveDocumentedAccessoryEditorial } from "./documented-accessory.js";
 import { withoutContradictoryFamilyGeneral } from "../domain/editorial-source-family-general.js";
 import { resolveDocumentedModelDimensions } from "../domain/editorial-model-dimensions.js";
 import { hasUncorroboratedSignedMotor, withoutUncorroboratedMotorClaim } from "../domain/editorial-signed-motor-caution.js";
@@ -60,21 +62,26 @@ export const resolvePreparedEditorialSource = (
   const sourceFamily = verified && !sourceUnitRecord.shortDescription?.trim() ?
     editorialFamilyFromSourceGeneral(sourceUnitRecord.longDescription) : null;
   const familyOverride = knowledge?.familyOverride ?? sourceFamily;
+  const documentedAccessory = resolveDocumentedAccessoryEditorial(sourceUnitRecord, editorialRecord);
+  const signedCapacity = verifiedMercaelevaMbCapacityProposal(editorialSourceUnit);
+  const verifiedCapacityCorrection = Boolean(signedCapacity &&
+    signedCapacity.expected === editorialSourceUnit.specs?.["Capacidad máxima de elevación"] &&
+    signedCapacity.next === editorialRecord.specs?.["Capacidad máxima de elevación"]);
   const composingRecord = withoutUncorroboratedMotorClaim(editorialRecord, sourceMotorConflict);
   const composingSource = withoutUncorroboratedMotorClaim(editorialSourceUnit, sourceMotorConflict);
   const composed = verified ? resolveUnbrandedEditorial(composingRecord) ?? resolveReusableEditorial(composingRecord, familyOverride, composingSource) : { short: null, general: null };
   const technicalListing = /^(?:dimensiones\s+)?(?:altura|capacidad|longitud|anchura)\s*:/iu
     .test(sourceUnitRecord.longDescription?.trim() ?? "");
-  const general = crossedIdentity && !originalKnowledge?.general ? null : knowledge?.general ??
+  const general = crossedIdentity && !originalKnowledge?.general ? null : knowledge?.general ?? documentedAccessory?.general ??
     (sourceMotorConflict ? knowledge?.fallbackGeneral : null) ??
     (verified && technicalListing ? knowledge?.fallbackGeneral : null) ??
     (verified ? resolveSourceEditorialClaims(editorialSourceUnit, editorialRecord, composed.general) : null) ??
     knowledge?.fallbackGeneral ??
-    (verified ? resolveMissingTechnicalEditorialGeneral(editorialSourceUnit, editorialRecord) : null) ?? null;
+    (verified ? resolveMissingTechnicalEditorialGeneral(editorialSourceUnit, editorialRecord, verifiedCapacityCorrection) : null) ?? null;
   const signedGeneral = Boolean(general &&
-    (general === knowledge?.general || general === knowledge?.fallbackGeneral));
+    (general === knowledge?.general || general === knowledge?.fallbackGeneral || general === documentedAccessory?.general));
   const recoveredShort = !record.shortDescription?.trim() ?
-    (signedGeneral && general ? conciseVerifiedUnitGeneral(sourceUnitRecord, general) ??
+    documentedAccessory?.short ?? (signedGeneral && general ? conciseVerifiedUnitGeneral(sourceUnitRecord, general) ??
       conciseSignedUnitGeneral(general) : null) ??
       (verified ? resolveVerifiedSourceEditorialExcerpt(sourceUnitRecord) : null) ??
       (verified ? resolveVerifiedTechnicalBrief(sourceUnitRecord, record) : null) ??

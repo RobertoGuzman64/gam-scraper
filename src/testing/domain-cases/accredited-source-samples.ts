@@ -7,6 +7,7 @@ export const accreditedSourceDatasets = [
   "gam-original",
   "gam-source-cases",
   "gam-editorial-cases",
+  "gam-verified-fuel-cases",
   "editorial-load-original",
   "mercaeleva-original",
   "mercaeleva-source-cases",

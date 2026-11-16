@@ -138,23 +138,22 @@ test("una familia incompatible, una magnitud inconsistente y una fuente ajena im
     assert.equal(result.status, "review");
     assert.equal(result.product.description_general, null);
   }
-  const insufficient = accreditedSourceRecord("gam-original", "2364");
-  const unresolved = prepareSourceProduct(insufficient);
-  assert.equal(unresolved.status, "review");
-  assert.equal(unresolved.product.description, null);
-  assert.equal(unresolved.product.description_general, null);
+  const accessory = accreditedSourceRecord("gam-original", "2364");
+  const preparedAccessory = prepareSourceProduct(accessory);
+  assert.equal(preparedAccessory.status, "ready");
+  assert.match(preparedAccessory.product.description ?? "", /BRAVI SKY DECK/u);
+  assert.match(preparedAccessory.product.description_general ?? "", /4,2 kg/u);
 });
 
-const documentedModelDisagreements = ["6909", "4736", "4737", "4802", "4792", "6171",
-  "4650", "6274", "6422", "2118", "6745", "2145", "2180", "2160"] as const;
+const documentedModelDisagreements = ["4736"] as const;
 
-test("la advertencia histórica firmada prevalece ante identidades GAM divergentes", () => {
+const corroboratedModelDisagreements = ["4737", "4802", "4751", "4752", "6274", "6422", "6745"] as const;
+
+test("el aviso firmado prevalece cuando la identidad GAM sigue sin corroboración suficiente", () => {
   const available = [...accreditedSourceSamples("gam-original"), ...accreditedSourceSamples("gam-source-cases")];
-  const covered = new Set<string>();
   for (const reference of documentedModelDisagreements) {
     const source = available.find((record) => record.reference === reference);
-    if (!source) continue;
-    covered.add(reference);
+    assert.ok(source, reference);
     const before = JSON.stringify(source);
     const signed = resolveKnowledgeEditorial(source, source);
     const prepared = prepareSourceProduct(source);
@@ -165,7 +164,33 @@ test("la advertencia histórica firmada prevalece ante identidades GAM divergent
     assert.equal(prepared.product.description_general, signed.general, reference);
     assert.equal(JSON.stringify(source), before);
   }
-  assert.ok(covered.size >= 10);
+});
+
+test("reconcilia antes de componer únicamente las identidades corroboradas en el origen", () => {
+  const available = [...accreditedSourceSamples("gam-original"), ...accreditedSourceSamples("gam-source-cases"),
+    ...accreditedSourceSamples("gam-editorial-cases")];
+  for (const reference of corroboratedModelDisagreements) {
+    const source = available.find((record) => record.reference === reference);
+    assert.ok(source, reference);
+    const before = JSON.stringify(source);
+    const prepared = prepareSourceProduct(source);
+    assert.equal(hasGamModelTitleDisagreement(source), true, reference);
+    assert.equal(prepared.status, "ready", reference);
+    assert.deepEqual(prepared.issues, [], reference);
+    assert.equal(prepared.product.spec.Modelo, prepared.product.title?.includes("XCMG")
+      ? source.title?.match(/XCMG\s+([\w-]+)/u)?.[1] : source.model, reference);
+    assert.equal(prepared.product.reference, reference);
+    assert.equal(prepared.product.sourceUrl, source.url);
+    assert.equal(JSON.stringify(source), before);
+    for (const altered of [
+      { ...source, url: `${source.url}?variante=distinta` },
+      { ...source, url: source.url.replace("online.gamrentals.com", "example.com") },
+      { ...source, longDescription: "Identidad de modelo no acreditada" }
+    ]) {
+      const blocked = prepareSourceProduct(altered);
+      assert.equal(blocked.status, "review", `${reference}:variante`);
+    }
+  }
 });
 
 test("la firma de un modelo GAM ambiguo no pasa a otra unidad ni a una variante reconciliada", () => {
@@ -173,8 +198,10 @@ test("la firma de un modelo GAM ambiguo no pasa a otra unidad ni a una variante 
   const signed = resolveKnowledgeEditorial(source, source).general;
   assert.ok(signed);
   const original = prepareSourceProduct(source);
-  assert.equal(original.status, "review");
-  assert.equal(original.product.description_general, signed);
+  assert.equal(original.status, "ready");
+  assert.deepEqual(original.issues, []);
+  assert.notEqual(original.product.description_general, signed);
+  assert.equal(original.product.spec.Modelo, source.model);
   const changed = [
     { ...source, reference: "6274-OTRA", url: source.url.replace("/6274-", "/6274-OTRA-") },
     { ...source, model: "H12XD-12", specs: { ...source.specs, Modelo: "H12XD-12" } },

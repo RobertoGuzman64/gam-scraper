@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import test from "node:test";
-import { formatScriptStatus, supportsScriptColor } from "../terminal.mjs";
+import { formatScriptStatus, supportsScriptAnimation, supportsScriptColor } from "../terminal.mjs";
 import compactGuardTestReporter, {
   createRunnerDisplay, formatRunnerCompletion, formatRunnerFailure, formatRunnerLog, formatRunnerOmission, supportsInteractiveRunner,
   formatRunnerProgress, formatRunnerRegression, formatRunnerTime
@@ -288,4 +288,19 @@ test("npm test oculta el encabezado largo sin silenciar errores ni estados de sa
   assert.equal(failed.status, 1, `${failed.stdout}${failed.stderr}${failed.error ?? ""}`);
   assert.match(`${failed.stdout}${failed.stderr}`, /FAIL \| control/);
   assert.doesNotMatch(`${failed.stdout}${failed.stderr}`, /^> terminal-verification/m);
+});
+
+
+test("build y herramientas no animan en consola clásica de Windows ni en pipes", () => {
+  const env = { TERM: "xterm-256color" };
+  assert.equal(supportsScriptAnimation({ isTTY: true }, "win32", env), false);
+  assert.equal(supportsScriptColor({ isTTY: true }, env, "win32"), false);
+  assert.equal(supportsScriptColor({ isTTY: true }, { ...env, FORCE_COLOR: "1" }, "win32"), true);
+  assert.equal(supportsScriptAnimation({ isTTY: true }, "win32", { ...env, WT_SESSION: "terminal" }), true);
+  assert.equal(supportsScriptAnimation({ isTTY: true }, "win32", { ...env, TERM_PROGRAM: "vscode" }), true);
+  assert.equal(supportsScriptAnimation({ isTTY: true }, "win32", { ...env, ConEmuANSI: "ON" }), true);
+  assert.equal(supportsScriptAnimation({ isTTY: false }, "win32", { ...env, WT_SESSION: "terminal" }), false);
+  assert.equal(supportsScriptAnimation({ isTTY: true }, "linux", { ...env, NO_COLOR: "1" }), false);
+  assert.equal(supportsScriptAnimation({ isTTY: true }, "linux", { ...env, CI: "true" }), false);
+  assert.equal(supportsScriptAnimation({ isTTY: true }, "linux", { ...env, TERM: "dumb" }), false);
 });

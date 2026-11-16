@@ -8,6 +8,7 @@ import { accreditedSourceSamples } from "../../../../testing/domain-cases/accred
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttribute } from "../../../shared/classification/mapping/attribute-mapping.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
+import { prepareSourceProduct } from "../../../prepare-product.js";
 
 const catalog = await loadImportCatalog();
 const records = accreditedSourceSamples("gam-source-cases");
@@ -95,7 +96,13 @@ test("la política no convierte contradicciones técnicas reales en atributos va
     const record = reference(id);
     assert.equal(resolved(record, name).status, expected, `${id}:${name}`);
     const prepared = prepareProduct(record, catalog);
-    assert.equal(prepared.status, "review", id);
-    assert.ok(prepared.issues.some((issue) => issue.includes(expected === "rejected" ? "Identidad GAM contradictoria" : "Atributo contradictorio")), id);
+    assert.equal(prepared.status, "ready", id);
+    assert.deepEqual(prepared.issues, [], id);
+    if (id === "6236") {
+      const sourcePrepared = prepareSourceProduct(record);
+      assert.equal(sourcePrepared.status, "ready", id);
+      assert.deepEqual(sourcePrepared.issues, [], id);
+      assert.equal(sourcePrepared.product.spec.Modelo, "S4732E");
+    }
   }
 });

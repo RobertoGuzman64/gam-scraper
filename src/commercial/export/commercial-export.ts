@@ -1,12 +1,15 @@
 import { createHash } from "node:crypto";
 import { loadImportCatalogSnapshot } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
+import type { CommercialReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
+import type { ImportCatalog } from "../legacy-export/contracts.js";
 import type { CommercialEnvironment } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { planCommercialExport } from "../projection/export-projection.js";
 import type { CommercialExportPlan, CommercialExportProduct } from "../projection/export-projection.js";
 import { buildProductIdentity } from "../../catalog/identity.js";
 import { accreditCommercialPlan } from "../diagnostics/commercial-accreditation.js";
 import { loadCommercialPublicationInputs, assertCurrentCommercialInventory } from "./commercial-inputs.js";
+import type { CommercialPublicationInputs } from "./commercial-inputs.js";
 import { loadFindingRecognitionRegistry } from "../../infrastructure/filesystem/catalog/finding-recognition-store.js";
 import { classifyFindingRecognitions } from "../../catalog/diagnostics/finding-recognitions.js";
 import { observeCommercialAccreditationFindings } from "../diagnostics/audited-findings.js";
@@ -71,6 +74,34 @@ export const buildCommercialDeliveryPlan = (
   products: plan.products.map(({ providerId, sourceUrl, externalReference, ...receiver }) => receiver)
 });
 
+export const prepareCommercialExportProvider = (
+  input: CommercialPublicationInputs, catalog: ImportCatalog, references: CommercialReference,
+  registry: Awaited<ReturnType<typeof loadFindingRecognitionRegistry>>,
+  environment: CommercialEnvironment | null
+): { readonly plan: CommercialExportPlan; readonly recognitions: ReadonlyMap<string, ReviewedException> } => {
+  const companyID = environment === null ? null : references.companies[input.providerId]?.[environment];
+  if (environment !== null && companyID === undefined) {
+    throw new Error(`No existe companyID del proveedor ${input.providerId} para ${environment}`);
+  }
+  const plan = planCommercialExport(input.entries, input.providerId, input.publicationSha256,
+    catalog, references.brandLogos, environment, companyID ?? null);
+  const accreditation = accreditCommercialPlan(input.entries, plan, catalog, references.brandLogos, companyID ?? null);
+  if (accreditation.summary.blocking > 0) {
+    throw new Error(`Exportación comercial ${plan.providerId} con ${accreditation.summary.blocking} infracciones: ${accreditation.blocking.map((item) => item.reason).join(", ")}`);
+  }
+  const withoutCompany = plan.products.map(({ companyID: _companyID, ...product }) => product);
+  const findings = observeCommercialAccreditationFindings(input.entries, withoutCompany, accreditation);
+  const classified = classifyFindingRecognitions(findings, registry);
+  const recognitions = new Map<string, ReviewedException>();
+  for (const item of classified.findings) {
+    if (item.status !== "controlled" || !controlledCommercialField(item.finding.code)) continue;
+    recognitions.set(exceptionKey(item.finding.reference, item.finding.sourceUrl, item.finding.code), {
+      fingerprint: item.fingerprint, evidenceSha256: item.finding.evidenceSha256, field: item.finding.field
+    });
+  }
+  return { plan, recognitions };
+};
+
 export const buildCommercialExportFiles = async (
   root: string, environment: CommercialEnvironment | null
 ): Promise<readonly CommercialExportFile[]> => {
@@ -81,29 +112,7 @@ export const buildCommercialExportFiles = async (
     loadCommercialPublicationInputs(root, catalog), loadFindingRecognitionRegistry(root)
   ]);
   await assertCurrentCommercialInventory(root, inputs);
-  const plans = inputs.map((input) => {
-    const companyID = environment === null ? null : references.companies[input.providerId]?.[environment];
-    if (environment !== null && companyID === undefined) {
-      throw new Error(`No existe companyID del proveedor ${input.providerId} para ${environment}`);
-    }
-    const plan = planCommercialExport(input.entries, input.providerId, input.publicationSha256,
-      catalog, references.brandLogos, environment, companyID ?? null);
-    const accreditation = accreditCommercialPlan(input.entries, plan, catalog, references.brandLogos, companyID ?? null);
-    if (accreditation.summary.blocking > 0) {
-      throw new Error(`Exportación comercial ${plan.providerId} con ${accreditation.summary.blocking} infracciones: ${accreditation.blocking.map((item) => item.reason).join(", ")}`);
-    }
-    const withoutCompany = plan.products.map(({ companyID: _companyID, ...product }) => product);
-    const findings = observeCommercialAccreditationFindings(input.entries, withoutCompany, accreditation);
-    const classified = classifyFindingRecognitions(findings, registry);
-    const recognitions = new Map<string, ReviewedException>();
-    for (const item of classified.findings) {
-      if (item.status !== "controlled" || !controlledCommercialField(item.finding.code)) continue;
-      recognitions.set(exceptionKey(item.finding.reference, item.finding.sourceUrl, item.finding.code), {
-        fingerprint: item.fingerprint, evidenceSha256: item.finding.evidenceSha256, field: item.finding.field
-      });
-    }
-    return { plan, recognitions };
-  });
+  const plans = inputs.map((input) => prepareCommercialExportProvider(input, catalog, references, registry, environment));
   const products = plans.map(({ plan, recognitions }) => file(`${plan.providerId}-commercial.json`,
     serialized(buildCommercialDeliveryPlan(plan, recognitions))));
   const manifest = file("commercial-manifest.json", serialized({

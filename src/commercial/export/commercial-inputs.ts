@@ -1,4 +1,5 @@
-import { resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
+import { collectAuditProviderResults } from "../../shared/audit-provider-results.js";
 import { buildProductIdentity } from "../../catalog/identity.js";
 import type { ImportCatalog } from "../legacy-export/contracts.js";
 import type { CommercialBaselineInput } from "../diagnostics/commercial-baseline.js";
@@ -15,6 +16,30 @@ export type CommercialPublicationInputs = {
   readonly entries: readonly CommercialBaselineInput[];
 };
 
+export const readCommercialPublicationInput = async (
+  root: string, path: string, catalog: ImportCatalog
+): Promise<CommercialPublicationInputs> => {
+  const publication = await readAccreditedPublication(path);
+  const sources = await publicationOriginalSources(root, path, publication.providerId, publication.products);
+  if (!sources) throw new Error(`Falta el original canónico para ${publication.providerId}`);
+  const selected = publication.products.map((product) => {
+    const identity = buildProductIdentity({ providerId: product.providerId, reference: product.reference,
+      serialNumber: null, url: product.sourceUrl }).key;
+    const source = sources.get(identity);
+    if (!source) throw new Error(`Publicación sin original acreditado: ${identity}`);
+    return source;
+  });
+  const mapped = prepareImportBatch(selected, catalog);
+  const entries = publication.products.map((published, index): CommercialBaselineInput => {
+    const source = selected[index];
+    const proposed = mapped.products[index];
+    if (!source || !proposed) throw new Error(`No se pudo preparar la identidad ${published.reference}`);
+    return { source, published, mapped: projectCommercialCategory(source, proposed, catalog) };
+  });
+  return { providerId: publication.providerId, publicationSha256: publication.sha256,
+    originalProducts: sources.size, entries };
+};
+
 export const loadCommercialPublicationInputs = async (
   rootDirectory: string, catalog: ImportCatalog
 ): Promise<readonly CommercialPublicationInputs[]> => {
@@ -22,28 +47,20 @@ export const loadCommercialPublicationInputs = async (
   const paths = await discoverAccreditedPublications(root);
   if (paths.length === 0) throw new Error("No hay publicaciones técnicas acreditadas para preparar");
   const providers: CommercialPublicationInputs[] = [];
-  for (const path of paths) {
-    const publication = await readAccreditedPublication(path);
-    const sources = await publicationOriginalSources(root, path, publication.providerId, publication.products);
-    if (!sources) throw new Error(`Falta el original canónico para ${publication.providerId}`);
-    const selected = publication.products.map((product) => {
-      const identity = buildProductIdentity({ providerId: product.providerId, reference: product.reference,
-        serialNumber: null, url: product.sourceUrl }).key;
-      const source = sources.get(identity);
-      if (!source) throw new Error(`Publicación sin original acreditado: ${identity}`);
-      return source;
-    });
-    const mapped = prepareImportBatch(selected, catalog);
-    const entries = publication.products.map((published, index): CommercialBaselineInput => {
-      const source = selected[index];
-      const proposed = mapped.products[index];
-      if (!source || !proposed) throw new Error(`No se pudo preparar la identidad ${published.reference}`);
-      return { source, published, mapped: projectCommercialCategory(source, proposed, catalog) };
-    });
-    providers.push({ providerId: publication.providerId, publicationSha256: publication.sha256,
-      originalProducts: sources.size, entries });
-  }
+  for (const path of paths) providers.push(await readCommercialPublicationInput(root, path, catalog));
   return providers;
+};
+
+export const inspectCommercialPublicationInputs = async (
+  rootDirectory: string, catalog: ImportCatalog
+) => {
+  const root = resolve(rootDirectory);
+  const paths = await discoverAccreditedPublications(root);
+  if (paths.length === 0) throw new Error("No hay publicaciones técnicas acreditadas para preparar");
+  return collectAuditProviderResults(paths, async (path) => {
+    const input = await readCommercialPublicationInput(root, path, catalog);
+    return { providerId: input.providerId, value: input };
+  }, (path) => basename(path) === "publishable.json" ? basename(dirname(path)) : basename(path).replace(/-publishable\.json$/u, ""));
 };
 
 export const assertCurrentCommercialInventory = async (

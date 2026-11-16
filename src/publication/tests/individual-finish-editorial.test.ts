@@ -31,8 +31,8 @@ test("FINISH reutiliza una publicación para comprobar cierre y reacreditación"
         desktopDirectory: desktop, retention: () => { retentionCount++; }, auditor: async () => { auditorCount++; }
       });
       assert.ok(second?.providers.every((item) => item.status === "YA VIGENTE"));
-      assert.equal(retentionCount, 2);
-      assert.equal(auditorCount, 2);
+      assert.equal(retentionCount, 1);
+      assert.equal(auditorCount, 1);
       assert.equal((await readdir(desktop)).filter((name) => name.startsWith("equipzilla-informe-")).length, 1);
     });
 

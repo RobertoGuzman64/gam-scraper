@@ -24,8 +24,8 @@ test("El filtro numérico de carga no anuncia capacidades condicionadas o contra
     const technical = prepareSourceProduct(record);
     const commercial = prepareWithCatalog(record, catalog);
     assert.deepEqual(resolveAttribute(record, capacity), { status: "not_observed", value: null }, reference);
-    assert.equal(commercial.status, reference === "4807" ? "ready" : "review", reference);
-    if (reference === "4792" || reference === "6934") {
+    assert.equal(commercial.status, reference === "6934" ? "review" : "ready", reference);
+    if (reference === "6934") {
       assert.ok(commercial.issues.includes("Identidad GAM contradictoria entre título y modelo técnico"), reference);
     }
     assert.equal(commercial.product.spec["Capacidad de carga (kg)"], technical.product.spec["Capacidad de carga (kg)"], reference);

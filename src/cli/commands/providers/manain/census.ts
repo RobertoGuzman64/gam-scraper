@@ -1,4 +1,4 @@
-import { printReportLine } from "../../../reporting/terminal.js";
+import { printReportLine, supportsAnimation } from "../../../reporting/terminal.js";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -10,7 +10,7 @@ const run = async (): Promise<void> => {
   if (process.argv.length !== 2) throw new Error("El censo de Manain no admite argumentos");
   const category = manainProvider.categories[0];
   if (!category) throw new Error("Manain: falta la categoría de venta");
-  const interactive = process.stdout.isTTY === true && process.env.CI !== "true" && process.env.TERM !== "dumb";
+  const interactive = supportsAnimation();
   const frames = ["|", "/", "-", "\\"];
   let frame = 0;
   let pages = 0;

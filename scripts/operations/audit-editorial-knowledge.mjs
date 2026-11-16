@@ -1,27 +1,37 @@
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { prepareSourceProduct } from '../../dist/preparation/prepare-product.js';
+import { editorialAuditFingerprints, loadEditorialAuditPopulation } from './editorial-audit-population.mjs';
 import { resolveKnowledgeEditorial } from '../../dist/preparation/shared/editorial/mapping/knowledge-editorial.js';
 import { loadEditorialKnowledge } from '../../dist/infrastructure/filesystem/editorial/knowledge.js';
 
 const root = process.cwd();
-const read = (path) => JSON.parse(readFileSync(resolve(root, path), 'utf8'));
 const knowledge = loadEditorialKnowledge();
 const summary = { version: 1, kind: 'diagnostico_sin_publicacion', providers: {}, total: {
   records: 0, ready: 0, review: 0, exceptions: 0, verifiedUnitGeneralApplied: 0,
   verifiedUnitShortApplied: 0, verifiedUnitTitlesApplied: 0, modelReferencesApplied: 0, familyGuidanceApplied: 0,
   emptyShort: 0, emptyGeneral: 0, signedUnits: 0, signedUnitsWithoutExactMatch: 0,
   signedFields: 0, signedFieldsWithoutExactMatch: 0
-}, problems: [], signedDifferences: [] };
+}, problems: [], signedDifferences: [],
+  provenance: { stage: 'preparacion_offline', universe: 'originales_canonicos', analyzedAt: new Date().toISOString(),
+    sources: {}, complete: true } };
+const fingerprints = await editorialAuditFingerprints();
 for (const provider of ['gam', 'gomariz', 'mercaeleva']) {
-  const products = read(`catalogs/providers/${provider}/original/scrape-${provider}-catalog.json`).products;
+  let population;
+  try {
+    population = await loadEditorialAuditPopulation(root, provider, fingerprints);
+  } catch (error) {
+    summary.problems.push({ provider, reference: null, error: error instanceof Error ? error.message : String(error) });
+    continue;
+  }
+  const { records: products, prepared, provenance } = population;
+  summary.provenance.sources[provider] = provenance;
   const counters = { records: products.length, ready: 0, review: 0, exceptions: 0,
     verifiedUnitGeneralApplied: 0, verifiedUnitShortApplied: 0, verifiedUnitTitlesApplied: 0, modelReferencesApplied: 0,
     familyGuidanceApplied: 0, emptyShort: 0, emptyGeneral: 0, signedUnits: 0,
     signedUnitsWithoutExactMatch: 0, signedFields: 0, signedFieldsWithoutExactMatch: 0 };
-  for (const record of products) {
+  for (const [index, record] of products.entries()) {
     try {
-      const result = prepareSourceProduct(record);
+      const result = prepared[index];
       const reference = resolveKnowledgeEditorial(record, record);
       if (result.status === 'ready') counters.ready++;
       else counters.review++;
@@ -59,10 +69,14 @@ for (const provider of ['gam', 'gomariz', 'mercaeleva']) {
   summary.providers[provider] = counters;
   for (const [key, value] of Object.entries(counters)) summary.total[key] += value;
 }
+summary.provenance.complete = summary.problems.length === 0;
 summary.evidence = { verifiedUnits: knowledge.units.size, consensusModels: knowledge.models.size,
   familyProfiles: Object.keys(knowledge.families).length, verifiedManufacturerRules: knowledge.modelRules.size };
 const target = resolve(root, 'reports/editorial-knowledge');
 mkdirSync(target, { recursive: true });
 writeFileSync(resolve(target, 'audit.json'), JSON.stringify(summary, null, 2) + '\n');
 console.log('AUDITORÍA EDITORIAL | REUTILIZACIÓN SIN PUBLICACIÓN | ' + JSON.stringify(summary.total));
-if (summary.total.exceptions) process.exitCode = 1;
+if (summary.problems.length) {
+  console.error(`AUDITORÍA EDITORIAL INCOMPLETA | ${summary.problems.map((item) => `${item.provider}: ${item.error}`).join('; ')}`);
+  process.exitCode = 1;
+}

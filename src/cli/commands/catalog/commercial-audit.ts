@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { auditCommercialCatalog, auditCommercialCatalogWithFindings } from "../../../commercial/export/commercial-audit.js";
+import { auditCommercialCatalogWithCoverage } from "../../../commercial/export/commercial-audit.js";
 import { observePreparationCoherenceFindings } from "../../../commercial/diagnostics/audited-findings.js";
 import { classifyCurrentAuditFindings } from "../../../catalog/diagnostics/current-audit-findings.js";
 import { loadFindingRecognitionRegistry } from "../../../infrastructure/filesystem/catalog/finding-recognition-store.js";
@@ -16,7 +16,8 @@ import { verifyCommercialPackagePair } from "../../reporting/commercial-package-
 import { lstat } from "node:fs/promises";
 import { readZipArchive } from "../../../infrastructure/archive/zip.js";
 import type { CommercialEnvironment } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
-import { printCommandError } from "../../reporting/errors.js";
+import { printCommandError, errorDetail } from "../../reporting/errors.js";
+import { collectAuditProviderResults, auditProviderCoverage, markAuditProviderFailures } from "../../../shared/audit-provider-results.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { renderCommercialCategoryTree } from "../../../commercial/diagnostics/commercial-category-tree.js";
 import { analyzePresentationConsistency } from "../../../commercial/diagnostics/presentation-consistency.js";
@@ -86,24 +87,35 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
   }
   if (args[0] === "--coherencia") {
     const catalog = await loadImportCatalog();
-    const products = [];
-    const evidence = [];
-    for (const providerId of ["gam", "gomariz", "mercaeleva"]) {
+    const inspected = await collectAuditProviderResults(["gam", "gomariz", "mercaeleva"], async (providerId) => {
       const sources = await originalSources(root, providerId);
-      if (!sources) throw new Error(`Catálogo original no disponible: ${providerId}`);
+      if (!sources) throw new Error(`Falta el original canónico para ${providerId}`);
       const originals = [...sources.values()];
       const prepared = prepareImportBatch(originals, catalog).products;
-      for (const [index, item] of prepared.entries()) {
+      const evidence = prepared.map((item, index) => {
         const source = originals[index];
         if (!source) throw new Error(`Preparación sin original: ${providerId}:${index}`);
-        products.push(item.product);
-        evidence.push({ source, product: item.product });
-      }
+        return { source, product: item.product };
+      });
+      return { providerId, value: evidence };
+    }, (providerId) => providerId);
+    const sourceCoverage = auditProviderCoverage(inspected);
+    markAuditProviderFailures(inspected.failures);
+    if (!inspected.evaluated.length) {
+      printReportLine(`COHERENCIA NO EVALUABLE | ${sourceCoverage.incompleteSource} fuentes ausentes · ${sourceCoverage.errors} errores`);
+      return;
     }
+    const evidence = inspected.evaluated.flat();
+    const products = evidence.map((item) => item.product);
     const result = analyzePresentationConsistency(products);
     const registry = await loadFindingRecognitionRegistry(root);
+    const evaluatedProviders = new Set(evidence.map((item) => item.source.providerId));
     const classified = classifyCurrentAuditFindings(
-      observePreparationCoherenceFindings(evidence, result), registry, "coherencia_preparacion");
+      observePreparationCoherenceFindings(evidence, result), {
+        ...registry, recognitions: registry.recognitions.filter((recognition) =>
+          evaluatedProviders.has(recognition.finding.providerId))
+      }, "coherencia_preparacion");
+    if (inspected.failures.length) printReportLine(`COHERENCIA PARCIAL | ${sourceCoverage.evaluated}/${sourceCoverage.requested} proveedores evaluados`);
     printPreparationCoherenceReport(result, classified);
     printStaleFindingRecognitions(classified.stale);
     if (result.defects > 0) process.exitCode = 1;
@@ -111,10 +123,25 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
   }
   const withFindings = args[0] === "--acreditacion" || args[0] === "--revision" ||
     args[0] === "--contenido-revision" || args[0] === "--detalle" || args.length === 0;
-  const audited = withFindings ? await auditCommercialCatalogWithFindings(root) : null;
-  const report = audited?.report ?? await auditCommercialCatalog(root);
-  const classified = audited === null ? undefined : classifyCurrentAuditFindings(audited.findings,
-    await loadFindingRecognitionRegistry(root), "acreditacion_comercial");
+  const audited = await auditCommercialCatalogWithCoverage(root, withFindings);
+  const report = audited.report;
+  const sourceCoverage = audited.auditCoverage;
+  if (sourceCoverage) markAuditProviderFailures(sourceCoverage.failures);
+  const registry = withFindings ? await loadFindingRecognitionRegistry(root) : null;
+  const evaluatedProviders = new Set(report.providers.map((item) => item.baseline.providerId));
+  const classified = registry === null ? undefined : classifyCurrentAuditFindings(audited.findings,
+    { ...registry, recognitions: registry.recognitions.filter((recognition) =>
+      evaluatedProviders.has(recognition.finding.providerId)) }, "acreditacion_comercial");
+  if (sourceCoverage && sourceCoverage.failures.length > 0 && !report.providers.length) {
+    if (args[0] === "--json" || args[0] === "--acreditacion-json") {
+      console.log(JSON.stringify({ version: args[0] === "--json" ? 2 : 1, providers: [], auditCoverage: sourceCoverage }, null, 2));
+    } else printReportLine(`AUDITORÍA NO EVALUABLE | ${sourceCoverage.incompleteSource} fuentes ausentes · ${sourceCoverage.errors} errores`);
+    return;
+  }
+  if (sourceCoverage && sourceCoverage.failures.length > 0 &&
+    args[0] !== "--json" && args[0] !== "--acreditacion-json") {
+    printReportLine(`COBERTURA PARCIAL | ${sourceCoverage.evaluated}/${sourceCoverage.requested} proveedores evaluados`);
+  }
   if (args[0] === "--arbol") {
     const catalog = await loadImportCatalog();
     const lines = renderCommercialCategoryTree(catalog.categories, report.providers.map(({ baseline, presentationAudit }) => ({
@@ -123,12 +150,24 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
     for (const line of lines) printReportLine(line);
     return;
   }
-  printCommercialAuditReport(report, args[0], attributeId, productReference, classified);
+  if (sourceCoverage && sourceCoverage.failures.length > 0 &&
+    (args[0] === "--json" || args[0] === "--acreditacion-json")) {
+    const payload = args[0] === "--json" ? report : {
+      version: 1, providers: report.providers.map((item) => item.accreditation)
+    };
+    console.log(JSON.stringify({ ...payload, auditCoverage: sourceCoverage }, null, 2));
+  } else {
+    printCommercialAuditReport(report, args[0], attributeId, productReference, classified,
+      (sourceCoverage?.failures.length ?? 0) > 0);
+  }
   if (classified) printStaleFindingRecognitions(classified.stale);
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   runCommercialAudit(process.argv.slice(2)).catch((error: unknown) => {
+    if (process.argv.includes("--json") || process.argv.includes("--acreditacion-json")) {
+      console.log(JSON.stringify({ status: "ERROR", error: errorDetail(error) }));
+    }
     printCommandError("auditar:comercial", error);
     process.exitCode = 1;
   });

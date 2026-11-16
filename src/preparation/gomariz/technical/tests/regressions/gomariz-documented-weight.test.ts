@@ -30,11 +30,11 @@ test("Gomariz: solo reconcilia pesos cuya cifra, identidad y documentación acre
   }
 });
 
-test("Gomariz: los pesos sin evidencia, precios inválidos y motorizaciones cuestionadas siguen en revisión", () => {
+test("Gomariz: el peso no acreditado sigue en revisión y las otras resoluciones son independientes", () => {
   for (const reference of ["CA1459", "TE1152", "RE454"]) {
     const record = original(reference);
     assert.strictEqual(reconcileGomarizDocumentedWeight(record), record, reference);
-    assert.equal(prepareSourceProduct(record).status, "review", reference);
+    assert.equal(prepareSourceProduct(record).status, reference === "CA1459" ? "review" : "ready", reference);
   }
 });
 

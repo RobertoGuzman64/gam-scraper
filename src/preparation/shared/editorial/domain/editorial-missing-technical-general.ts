@@ -21,7 +21,7 @@ const quantity = (value: number): string => {
 };
 
 export const resolveMissingTechnicalEditorialGeneral = (
-  source: ProductRecord, prepared: ProductRecord
+  source: ProductRecord, prepared: ProductRecord, verifiedCapacityCorrection = false
 ): string | null => {
   if (!verifiedEditorialUnitPair(source, prepared) || source.condition !== "Nuevo" ||
     source.longDescription?.trim() || prepared.longDescription?.trim() ||
@@ -36,11 +36,14 @@ export const resolveMissingTechnicalEditorialGeneral = (
   const advertised = numberToken(amounts[0][1]);
   const sourceKg = parse(read(source, "Capacidad máxima de elevación"), "kg");
   const preparedKg = parse(read(prepared, "Capacidad máxima de elevación"), "kg");
+  const provenCorrection = verifiedCapacityCorrection && sourceKg !== null && advertised !== sourceKg &&
+    preparedKg === advertised;
   if (advertised === null || advertised < 50 || advertised > 50000 ||
-    advertised !== sourceKg || advertised !== preparedKg) return null;
+    (advertised !== sourceKg && !provenCorrection) || advertised !== preparedKg) return null;
   const technicalKeys = ["Estado", "Marca", "Modelo", "Capacidad máxima de elevación", "Tipo de motor", "Tipo de Batería",
     "Voltaje de la batería", "Capacidad de la batería", "Altura máxima de elevación", "Tipo de mástil", "Título adicional"];
-  if (technicalKeys.some((key) => read(source, key) !== read(prepared, key))) return null;
+  if (technicalKeys.some((key) => key !== "Capacidad máxima de elevación" &&
+    read(source, key) !== read(prepared, key))) return null;
   const additional = read(source, "Título adicional");
   if (additional && !(source.title ?? "").normalize("NFD").replace(/[\u0300-\u036f]/gu, "").replace(/[^a-z0-9]/giu, "").toLowerCase()
     .includes(additional.normalize("NFD").replace(/[\u0300-\u036f]/gu, "").replace(/[^a-z0-9]/giu, "").toLowerCase())) return null;

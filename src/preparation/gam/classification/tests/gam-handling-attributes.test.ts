@@ -174,9 +174,17 @@ test("GAM: no promueve motorizaciones incompatibles, familias distintas ni ident
   ]) {
     assert.equal(resolved(altered, "Motorización / Energía"), null, altered.url);
   }
-  for (const reference of ["2311", "2312", "2313", "2314"]) {
+  for (const reference of ["2311", "2312", "2313"]) {
     const contradictory = accreditedSourceRecord("gam-original", reference);
     assert.equal(resolved(contradictory, "Motorización / Energía"), null, reference);
-    assert.ok(!prepareProduct(contradictory, catalog).product.attributes.some((item) => item.attributeID === 119), reference);
+    const prepared = prepareProduct(contradictory, catalog);
+    assert.equal(prepared.status, "ready", reference);
+    assert.equal(prepared.product.spec["Motorización"], "GLP", reference);
+    assert.ok(!prepared.product.attributes.some((item) => item.attributeID === 119), reference);
   }
+  const unresolved = accreditedSourceRecord("gam-original", "2314");
+  assert.equal(resolved(unresolved, "Motorización / Energía"), null);
+  assert.equal(prepareProduct(unresolved, catalog).status, "ready");
+  const altered = { ...unresolved, specs: { ...unresolved.specs, "Capacidad de carga (kg)": "6500 KG" } };
+  assert.equal(prepareProduct(altered, catalog).status, "review");
 });

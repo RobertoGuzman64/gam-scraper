@@ -29,8 +29,9 @@ const matchingCatalog = async (
   try { raw = await regularFile(path); }
   catch (error) { if (isMissing(error)) return null; throw error; }
   if (sha256(raw) !== expectedSha) return null;
+  const artifactPrefix = basename(path).slice(0, -"-catalog.json".length);
   for (const suffix of ["-catalog.manifest.json", "-summary.json"]) {
-    await regularFile(join(dirname(path), `${prefix}${suffix}`));
+    await regularFile(join(dirname(path), `${artifactPrefix}${suffix}`));
   }
   const catalog = await readCanonicalCatalog(path);
   if (catalog.providerId !== providerId || catalog.prefix !== prefix || (scope !== null && catalog.scope !== scope) ||
@@ -84,7 +85,9 @@ export const accreditedPublicationOriginalSources = async (
   if (prefix !== currentArtifacts.catalog.prefix) {
     throw new Error(`Prefijo canónico de ${providerId} distinto del acreditado`);
   }
-  const current = join(root, "catalogs", "providers", providerId, "original", `${prefix}-catalog.json`);
+  const activeName = currentArtifacts.files.find((file) => file.name.endsWith("-catalog.json"))?.name;
+  if (!activeName) throw new Error(`Original portátil sin catálogo canónico de ${providerId}`);
+  const current = join(root, "catalogs", "providers", providerId, "original", activeName);
   const active = await matchingCatalog(current, providerId, catalogSha256, prefix, scope, productCount);
   if (active) return mapCatalog(active);
   const archiveRoot = join(root, "storage", "scraped", providerId, ".history", prefix);
@@ -100,7 +103,7 @@ export const accreditedPublicationOriginalSources = async (
       providerId, catalogSha256, prefix, scope, productCount);
     if (candidate) return mapCatalog(candidate);
   }
-  throw new Error(`No se conserva el original acreditado de ${providerId} (SHA-256 ${catalogSha256}); no se sustituye por el inventario vigente`);
+  throw new Error(`No se conserva el original acreditado de ${providerId} (SHA-256 ${catalogSha256}, ${productCount} productos, prefijo ${prefix}, scope ${scope ?? "no declarado"}). Original vigente distinto: ${current}. Histórico buscado en: ${archiveRoot}. No se sustituye por el inventario vigente ni se presume una comparación sin hallazgos`);
 };
 
 export const publicationOriginalSources = async (

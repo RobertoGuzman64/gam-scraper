@@ -5,7 +5,7 @@ import { readActiveCatalogIndex } from "../infrastructure/filesystem/catalog/act
 import { readAccreditedPublication, resolveAccreditedPublication } from "../infrastructure/filesystem/catalog/accredited-publication.js";
 import { isPublicationDirectoryName, publicationApprovalSha } from "../infrastructure/filesystem/catalog/publication-identity.js";
 import {
-  openIndividualFinishJournal, updateIndividualFinishJournal, withIndividualFinishLock
+  markIndividualFinishCandidates, openIndividualFinishJournal, updateIndividualFinishJournal, withIndividualFinishLock
 } from "../infrastructure/filesystem/catalog/individual-finish-journal.js";
 import type { IndividualFinishTarget, IndividualFinishJournal } from "../infrastructure/filesystem/catalog/individual-finish-journal.js";
 import type { IndividualCatalogProvider } from "../preparation/workflow/individual-context.js";
@@ -40,7 +40,7 @@ type Checked = IndividualFinishPreview & { readonly options: IndividualEditorial
 
 const missing = (error: unknown): boolean => error instanceof Error && "code" in error && error.code === "ENOENT";
 
-const activeSha = async (root: string, providerId: IndividualCatalogProvider, expected?: string): Promise<string | null> => {
+export const readIndividualActiveSha = async (root: string, providerId: IndividualCatalogProvider, expected?: string): Promise<string | null> => {
   const global = await readActiveCatalogIndex(root);
   const globalRecord = global?.providers[providerId];
   if (globalRecord?.runId) {
@@ -91,7 +91,7 @@ const inspected = async (
       : JSON.stringify(planned, null, 2);
     const selection = selectIndividualPublishable(selectionContext, raw);
     const approvalSha256 = sha256(raw);
-    const currentSha256 = await activeSha(root, context.providerId, approvalSha256);
+    const currentSha256 = await readIndividualActiveSha(root, context.providerId, approvalSha256);
     const activeFile = currentSha256 ? await resolveAccreditedPublication(root, context.providerId) : null;
     if (currentSha256 && !activeFile) throw new Error(`${context.providerId}: índice activo sin publicación acreditada`);
     if (activeFile && await publicationApprovalSha(dirname(activeFile)) !== currentSha256) {
@@ -121,7 +121,7 @@ const reconcile = async (
 ): Promise<readonly IndividualCatalogProvider[]> => {
   const completed: IndividualCatalogProvider[] = [];
   for (const item of journal.targets) {
-    const current = await activeSha(root, item.providerId, item.approvalSha256);
+    const current = await readIndividualActiveSha(root, item.providerId, item.approvalSha256);
     if (current === item.approvalSha256) {
       const path = await resolveAccreditedPublication(root, item.providerId);
       if (!path || await publicationApprovalSha(dirname(path)) !== item.approvalSha256) {
@@ -175,11 +175,14 @@ export const publishIndividualCatalogs = async (options: {
         const result = await selectActivePublication(root, item.providerId, item.approvalSha256, false);
         if (!result.acceptance.accepted) throw new Error(`${item.providerId}: diferencias no aceptadas: ${result.acceptance.blockers.join("; ")}`);
       }
+      if (completed.length !== checked.length) {
+        journal = await markIndividualFinishCandidates(journalPath, journal);
+      }
       for (const item of checked) {
         if (completed.includes(item.providerId)) continue;
         const activated = await (options.activate ?? selectActivePublication)(root, item.providerId, item.approvalSha256, true);
         if (!activated.acceptance.accepted) throw new Error(`${item.providerId}: activación no autorizada`);
-        if (await activeSha(root, item.providerId, item.approvalSha256) !== item.approvalSha256) {
+        if (await readIndividualActiveSha(root, item.providerId, item.approvalSha256) !== item.approvalSha256) {
           throw new Error(`${item.providerId}: no se pudo verificar el índice tras la activación`);
         }
         const path = await resolveAccreditedPublication(root, item.providerId);

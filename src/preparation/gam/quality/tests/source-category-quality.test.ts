@@ -17,10 +17,8 @@ test("tipo de origen corroborado sin categoría del receptor no es motivo de rev
   for (const code of ["6653", "4778", "4779", "4780", "2159", "220", "221", "227", "2134", "2135"]) {
     const record = reference(code);
     const prepared = prepareProduct(record, catalog);
-    const expectedIssues = ["4778", "2159"].includes(code)
-      ? ["Descripción comercial contradictoria: capacidad de carga"] : [];
-    assert.equal(prepared.status, expectedIssues.length ? "review" : "ready", code);
-    assert.deepEqual(prepared.issues, expectedIssues, code);
+    assert.equal(prepared.status, "ready", code);
+    assert.deepEqual(prepared.issues, [], code);
     assert.equal(prepared.product.categorySellID, null, code);
     assert.equal(prepared.product.category, null, code);
     const explicitHeight = code === "4778" ? "16,3 m" : code === "4779" ? "18,01 m" : null;

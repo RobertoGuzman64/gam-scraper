@@ -134,12 +134,14 @@ test("reutilizan reglas en nuevas unidades sin copiar evidencias particulares", 
 });
 
 test("no convierten una firma histórica en aprobación de contradicciones", () => {
-  const gam = original("gam", "4737");
+  const gam = original("gam", "6909");
   const gamSigned = resolveKnowledgeEditorial(gam, gam);
   const gamPrepared = prepareSourceProduct(gam);
   assert.ok(gamSigned.general);
-  assert.equal(gamPrepared.status, "review");
-  assert.ok(gamPrepared.issues.some((issue) => issue.includes("Identidad GAM contradictoria")));
+  assert.equal(gamPrepared.status, "ready");
+  assert.deepEqual(gamPrepared.issues, []);
+  assert.match(gamPrepared.product.description ?? "", /SJIII-3220M/u);
+  assert.match(gamPrepared.product.description ?? "", /2008/u);
   assert.equal(gamPrepared.product.description_general, gamSigned.general);
 
   const mercaeleva = original("mercaeleva", "M486-0114");
@@ -151,18 +153,20 @@ test("no convierten una firma histórica en aprobación de contradicciones", () 
   assert.equal(mercaPrepared.product.description_general, mercaSigned.general);
 });
 
-test("una cautela histórica auténtica impide atribuir motorización no corroborada a una retroexcavadora", () => {
+test("la motorización documentada sustituye la cautela histórica sin modificar el conocimiento firmado", () => {
   const source = original("gomariz", "RE454");
   const snapshot = JSON.stringify(source);
   const signed = resolveKnowledgeEditorial(source, source);
   const prepared = prepareSourceProduct(source);
   assert.match(signed.fallbackGeneral ?? "", /motor eléctrico.*no se traslada.*no estar corroborado/su);
-  assert.equal(prepared.status, "review");
-  assert.ok(prepared.issues.includes("Motorización de origen no corroborada por evidencia histórica firmada"));
-  assert.equal(prepared.product.description_general, signed.fallbackGeneral);
-  assert.match(prepared.product.title ?? "", /^Excavadora Jcb 1CX$/u);
-  assert.doesNotMatch(prepared.product.description ?? "", /eléctric|diésel/iu);
-  assert.equal(prepared.product.spec.Motor, "Eléctrico");
+  assert.equal(prepared.status, "ready");
+  assert.deepEqual(prepared.issues, []);
+  assert.notEqual(prepared.product.description_general, signed.fallbackGeneral);
+  assert.match(prepared.product.title ?? "", /Excavadora diésel Jcb 1CX/u);
+  assert.match(prepared.product.description ?? "", /diésel/u);
+  assert.doesNotMatch(`${prepared.product.description} ${prepared.product.description_general}`, /motor eléctrico/iu);
+  assert.equal(prepared.product.spec.Motor, "Diésel");
+  assert.equal(source.specs?.Motor, "Eléctrico");
   assert.equal(JSON.stringify(source), snapshot);
 });
 

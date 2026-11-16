@@ -84,7 +84,7 @@ test("GAM: no se borra un resumen cruzado si el otro modelo también figura en e
 });
 
 test("GAM: las capacidades e identidades realmente contradictorias permanecen en review", () => {
-  for (const reference of ["50", "2240", "2237", "6723", "6274", "6422", "6745", "6934", "241", "4739", "4778", "2159"]) {
+  for (const reference of ["6934", "4739"]) {
     const record = source(reference);
     assert.equal(reconcileGamCorroboratedSummaryCapacity(record), record, reference);
     assert.equal(prepareSourceProduct(record).status, "review", reference);

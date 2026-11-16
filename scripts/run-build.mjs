@@ -1,14 +1,14 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { formatScriptStatus } from "./terminal.mjs";
+import { formatScriptStatus, supportsScriptAnimation } from "./terminal.mjs";
 import { buildInputs, fingerprint, isCurrentBuild, outputPaths, saveStamp, snapshot, sourcePaths } from "./build-cache.mjs";
 
 const quiet = process.argv.includes("--quiet");
 const ifNeeded = process.argv.includes("--if-needed");
 const root = resolve(".");
 const startedAt = Date.now();
-const interactive = process.stdout.isTTY === true && process.env.CI !== "true" && process.env.TERM !== "dumb";
+const interactive = supportsScriptAnimation();
 const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const script = resolve("node_modules/typescript/bin/tsc");
 let sources;

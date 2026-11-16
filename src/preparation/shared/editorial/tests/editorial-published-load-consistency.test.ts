@@ -11,11 +11,7 @@ const original = (reference: string): ProductRecord => accreditedSourceRecord("g
 const issue = "Descripción comercial contradictoria: capacidad de carga";
 
 test("las descripciones de origen con capacidad nominal incompatible no llegan a ready", () => {
-  for (const [reference, field] of [
-    ["4739", "description_general"],
-    ["4778", "description_general"],
-    ["2159", "description"]
-  ] as const) {
+  for (const [reference, field] of [["4739", "description_general"]] as const) {
     const source = original(reference);
     const snapshot = JSON.stringify(source);
     const prepared = prepareSourceProduct(source);
@@ -28,6 +24,16 @@ test("las descripciones de origen con capacidad nominal incompatible no llegan a
   }
 });
 
+test("una capacidad XCMG documentada corrige la descripción sin rebajar el guard editorial", () => {
+  const source = original("4778");
+  const prepared = prepareSourceProduct(source);
+  assert.equal(prepared.status, "ready");
+  assert.deepEqual(prepared.issues, []);
+  assert.equal(prepared.product.spec["Capacidad de carga (kg)"], "320 KG");
+  assert.match(prepared.product.description_general ?? "", /320 kg/u);
+  assert.equal(hasVerifiedPublishedEditorialLoadConflict(source, prepared.product), false);
+});
+
 test("los valores sometidos a restricciones no se tratan como capacidades nominales simples", () => {
   const source = original("4779");
   const prepared = prepareSourceProduct(source);
@@ -37,7 +43,8 @@ test("los valores sometidos a restricciones no se tratan como capacidades nomina
 });
 
 test("un conflicto ya acreditado no acumula avisos redundantes", () => {
-  const source = original("2312");
+  const originalSource = original("2312");
+  const source = { ...originalSource, longDescription: `${originalSource.longDescription} Variante sin corroborar.` };
   const prepared = prepareSourceProduct(source);
   assert.equal(prepared.status, "review");
   assert.ok(prepared.issues.includes("Atributo contradictorio: Capacidad de carga"));
@@ -85,13 +92,15 @@ test("no equipara capacidades de carga con cifras de otras magnitudes", () => {
 });
 
 
-test("los manipuladores de contenedores del catálogo original quedan retenidos por carga incompatibles", () => {
-  for (const reference of ["2190", "3189"]) {
+test("los contenedores con carga acreditada quedan preparados y conservan la capacidad correcta", () => {
+  for (const [reference, capacity] of [["2190", "26400"], ["3189", "41000"]] as const) {
     const source = accreditedSourceRecord("editorial-load-original", reference);
     const prepared = prepareSourceProduct(source);
-    assert.equal(prepared.status, "review", reference);
-    assert.deepEqual(prepared.issues, [issue], reference);
-    assert.equal(hasVerifiedPublishedEditorialLoadConflict(source, prepared.product), true, reference);
+    assert.equal(prepared.status, "ready", reference);
+    assert.deepEqual(prepared.issues, [], reference);
+    assert.equal(hasVerifiedPublishedEditorialLoadConflict(source, prepared.product), false, reference);
+    assert.equal(prepared.product.spec["Capacidad de carga (kg)"], `${capacity} KG`);
+    assert.match(prepared.product.description ?? "", new RegExp(`${capacity} kg`, "u"));
   }
 });
 
