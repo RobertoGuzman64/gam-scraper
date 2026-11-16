@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { catalog, categorySlug, reference, unconfirmedConditionCodes } from "../../technical/tests/support/gam-source-category-fixture.js";
 import { prepareCached } from "../../../testing/prepare-cached.js";
+import { reconcileGamForeignCategoryTitle } from "../reconciliation/gam-foreign-category-title.js";
 
 test("GAM: los cuatriciclos no pasan a furgonetas aunque solo consten en la descripción larga", () => {
   for (const code of ["5918", "6806"]) {
@@ -23,15 +24,47 @@ test("GAM: los cuatriciclos no pasan a furgonetas aunque solo consten en la desc
   }
 });
 
-test("GAM: los encabezados editoriales contradictorios no fuerzan una condición", () => {
+test("GAM: un encabezado de otra familia no invalida la condición corroborada por la unidad", () => {
+  for (const [code, title] of [["8", "Carretilla elevadora HYSTER H3.5FT"],
+    ["171", "Fregadora Tennant T16"]] as const) {
+    const record = reference(code);
+    const before = JSON.stringify(record);
+    assert.equal(record.condition, "Nuevo", code);
+    assert.equal(reconcileGamForeignCategoryTitle(record).title, title, code);
+    const prepared = prepareCached(record, catalog);
+    assert.equal(prepared.status, "ready", code);
+    assert.deepEqual(prepared.issues, [], code);
+    assert.equal(prepared.product.condition, "Nuevo", code);
+    assert.equal(prepared.product.title, title, code);
+    assert.equal(prepared.product.reference, code);
+    assert.equal(prepared.product.sourceUrl, record.url);
+    assert.equal(JSON.stringify(record), before);
+  }
+});
+
+test("GAM: no reconcilia una condición con identidad, texto, familia o procedencia incompatibles", () => {
   for (const code of ["8", "171"]) {
     const record = reference(code);
-    assert.equal(record.condition, "Nuevo", code);
-    const prepared = prepareCached(record, catalog);
-    assert.equal(prepared.product.condition, null, code);
-    assert.equal(prepared.status, "review", code);
-    assert.ok(prepared.issues.includes("Condición comercial contradictoria entre la ficha y el origen"), code);
-    assert.equal(prepareCached({ ...record, title: "Equipo de segunda mano" }, catalog).status, "review", code);
+    const variants = [
+      { ...record, providerId: "gomariz" },
+      { ...record, title: "Equipo de segunda mano" },
+      { ...record, title: `Carretilla ${record.model} de segunda mano` },
+      { ...record, url: record.url.replace("online.gamrentals.com", "example.invalid") },
+      { ...record, url: `${record.url}?otra=1` },
+      { ...record, reference: `${record.reference}-OTRO` },
+      { ...record, model: "OTRA-VARIANTE" },
+      { ...record, specs: { ...record.specs, Modelo: "OTRA-VARIANTE" } },
+      { ...record, shortDescription: null },
+      { ...record, longDescription: null },
+      { ...record, longDescription: "Plataforma de tijera de segunda mano" },
+      { ...record, shortDescription: "Equipo usado de segunda mano" },
+      { ...record, condition: "Segunda mano" as const }
+    ];
+    for (const variant of variants) {
+      assert.equal(reconcileGamForeignCategoryTitle(variant), variant, code);
+      if (variant.providerId === "gam" && variant.condition === "Nuevo")
+        assert.equal(prepareCached(variant, catalog).status, "review", code);
+    }
     assert.notEqual(prepareCached({ ...record, title: "Equipo nuevo" }, catalog).product.condition, "Segunda_Mano", code);
   }
 });

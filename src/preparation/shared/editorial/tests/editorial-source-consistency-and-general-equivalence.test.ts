@@ -5,6 +5,7 @@ import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredi
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { resolveReusableEditorial } from "../domain/editorial-composition.js";
 import { hasEditorialSourceWorkHeightConflict } from "../domain/editorial-height-consistency.js";
+import { hasCorroboratedEditorialDistinctWorkHeights } from "../domain/editorial-source.js";
 import { resolveKnowledgeEditorial } from "../mapping/knowledge-editorial.js";
 import { captureSourceEditorialEvidence } from "../mapping/source-editorial-evidence.js";
 import {
@@ -60,15 +61,17 @@ test("rechaza cargas incompatibles en el resumen técnico de los tres proveedore
   }
 });
 
-test("conserva el rechazo de una discrepancia histórica incluso con conocimiento firmado", () => {
+test("distingue altura nominal y de trabajo de origen sin invalidar el conocimiento firmado", () => {
   const source = original("mercaeleva", "M486-0114");
   const signed = resolveKnowledgeEditorial(source, source);
   const snapshot = JSON.stringify(source);
   assert.ok(signed.general);
   assert.equal(hasEditorialSourceWorkHeightConflict(source), true);
+  assert.equal(hasCorroboratedEditorialDistinctWorkHeights(source), true);
+  assert.equal(hasEditorialSourceWorkHeightConflict(source, hasCorroboratedEditorialDistinctWorkHeights(source)), false);
   const prepared = prepareSourceProduct(source);
-  assert.equal(prepared.status, "review");
-  assert.ok(prepared.issues.includes("Descripción comercial contradictoria: altura de trabajo"));
+  assert.equal(prepared.status, "ready");
+  assert.deepEqual(prepared.issues, []);
   assert.equal(JSON.stringify(source), snapshot);
 });
 

@@ -13,7 +13,7 @@ import type { ImportCandidate, ImportCatalog } from "../commercial/legacy-export
 import type { PreparedProduct } from "./contracts.js";
 import { applyReconciledTechnicalSpecs } from "./shared/technical/reconciliation/technical-specifications.js";
 import { captureSourceEditorialEvidence } from "./shared/editorial/mapping/source-editorial-evidence.js";
-import { reconcileInitialTechnicalEvidence, resolveSourceTechnicalSemanticRecord, reconcileTechnicalSourceForRecovery, reconcileTechnicalBeforeEditorial, reconcileTechnicalAfterEditorial, normalizePreparedTechnicalSpecs } from "./shared/technical/reconciliation/preparation-technical-stages.js";
+import { reconcileSourceCategoryTitle, reconcileInitialTechnicalEvidence, resolveSourceTechnicalSemanticRecord, reconcileTechnicalSourceForRecovery, reconcileTechnicalBeforeEditorial, reconcileTechnicalAfterEditorial, normalizePreparedTechnicalSpecs } from "./shared/technical/reconciliation/preparation-technical-stages.js";
 import { publicationConflictForMercaeleva } from "./mercaeleva/technical/reconciliation/mercaeleva.js";
 import { reconcileHandlingFamilySpecs } from "./shared/technical/reconciliation/handling-family-specifications.js";
 import { presentGamVerifiedRestrictedCapacity } from "./gam/technical/reconciliation/gam-verified-capacity-coherence.js";
@@ -25,6 +25,7 @@ import { reconcileUsedHandlingSource } from "./shared/editorial/mapping/source-u
 import { hasVerifiedPublishedEditorialLoadConflict } from "./shared/editorial/mapping/prepared-editorial-load-consistency.js";
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
+  record = reconcileSourceCategoryTitle(record);
   const sourceUnitRecord = record;
   const coherentSource = reconcileUsedHandlingSource(sourceUnitRecord);
   if (coherentSource.year !== record.year && coherentSource.yearSource === "url") {

@@ -1,7 +1,11 @@
+import { reconcileGamForeignCategoryTitle } from "../../../gam/identity/reconciliation/gam-foreign-category-title.js";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import { reconcileGamInitialTechnicalEvidence, reconcileGamTechnicalIdentity, reconcileGamTechnicalBeforeEditorial, reconcileGamTechnicalCapacities, reconcileGamTechnicalMeasurements, normalizeGamTechnicalSpecs } from "../../../gam/technical/reconciliation/preparation-technical-stages.js";
 import { reconcileMercaelevaInitialTechnicalEvidence, reconcileMercaelevaSourceFamily, reconcileMercaelevaSourceTechnicalSpecs, reconcileMercaelevaTechnicalBeforeEditorial, reconcileMercaelevaTechnicalCapacity, reconcileMercaelevaTechnicalCorroboratedCapacity, sanitizeMercaelevaTechnicalSpecs } from "../../../mercaeleva/technical/reconciliation/preparation-technical-stages.js";
-import { reconcileGomarizVerifiedElectricSemanticSource, reconcileGomarizVerifiedPlatformHeight } from "../../../gomariz/technical/reconciliation/gomariz.js";
+import { reconcileGomarizVerifiedElectricSemanticSource, reconcileGomarizVerifiedPlatformHeight, reconcileGomarizVerifiedTowerModel, reconcileGomarizVerifiedCompositeBrand } from "../../../gomariz/technical/reconciliation/gomariz.js";
+
+export const reconcileSourceCategoryTitle = (record: ProductRecord): ProductRecord =>
+  reconcileGamForeignCategoryTitle(record);
 
 export const reconcileInitialTechnicalEvidence = (record: ProductRecord): ProductRecord =>
   reconcileMercaelevaInitialTechnicalEvidence(reconcileGamInitialTechnicalEvidence(record));
@@ -12,7 +16,8 @@ export const resolveSourceTechnicalSemanticRecord = (record: ProductRecord): Pro
 export const reconcileTechnicalSourceForRecovery = (record: ProductRecord): ProductRecord => {
   record = reconcileMercaelevaSourceFamily(record);
   record = reconcileGamTechnicalIdentity(record);
-  return reconcileMercaelevaSourceTechnicalSpecs(record);
+  return reconcileGomarizVerifiedCompositeBrand(reconcileGomarizVerifiedTowerModel(
+    reconcileMercaelevaSourceTechnicalSpecs(record)));
 };
 
 export const reconcileTechnicalBeforeEditorial = (record: ProductRecord): ProductRecord =>

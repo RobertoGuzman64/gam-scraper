@@ -98,3 +98,32 @@ test("Gomariz: preparación comercial sin rellenos ni reclasificaciones", () => 
   assert.equal(classifiedTower.product.attributes.find((entry) => entry.attributeID === 70)?.value, 0.48);
   assert.equal(classifiedTower.product.attributes.find((entry) => entry.attributeID === 86)?.value, "4 focos (tipo no publicado)");
 });
+
+test("Gomariz: la potencia kVA proviene solo de generadores identificables y de la especificación", () => {
+  const generator = source("generador", energy, { Potencia: "22,5 kVA" });
+  assert.equal(value(generator, "Potencia"), 22.5);
+  const product = { ...generator,
+    url: "https://www.gomarizrent.com/producto/pramac-generador/",
+    longDescription: "Contamos con grupos electrógenos para diferentes trabajos." };
+  assert.equal(value(product, "Potencia"), 22.5);
+  for (const incompatible of [
+    { ...generator, url: generator.url.replace("generador", "torre-de-luz") },
+    { ...generator, url: generator.url.replace("gomarizrent.com", "example.org") },
+    { ...generator, url: `${generator.url}?otra=unidad` },
+    { ...generator, providerId: "gam" },
+    { ...product, longDescription: "Torre de luz con iluminación autónoma" },
+    { ...generator, specs: { Potencia: "4 x 120 W" } }
+  ]) assert.equal(value(incompatible, "Potencia"), null, incompatible.url);
+});
+
+test("Gomariz: las torres bajo URL pública mantienen la potencia acreditada por cada foco", () => {
+  const original = source("torre-de-luz", energy, { Potencia: "4x120 W" });
+  const publicUrl = original.url.replace("/venta/", "/");
+  assert.equal(value({ ...original, url: publicUrl }, "Potencia"), 0.48);
+  for (const invalidUrl of [
+    `${publicUrl}?utm_source=terceros`,
+    publicUrl.replace("https:", "http:"),
+    publicUrl.replace("www.gomarizrent.com", "usuario@www.gomarizrent.com"),
+    publicUrl.replace("www.gomarizrent.com", "www.gomarizrent.com:8443")
+  ]) assert.equal(value({ ...original, url: invalidUrl }, "Potencia"), null, invalidUrl);
+});

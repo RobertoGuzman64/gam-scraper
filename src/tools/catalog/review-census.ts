@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseCanonicalCatalog, parseCanonicalManifest } from "../../catalog/canonical-catalog.js";
+import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { buildReviewCensus } from "../../catalog/diagnostics/review-census.js";
 import type { ReviewCensusEntry } from "../../catalog/diagnostics/review-census.js";
 import { printCommandError } from "../../cli/reporting/errors.js";
@@ -35,21 +35,10 @@ export const runReviewCensus = async (args: readonly string[]): Promise<void> =>
   for (let index = 1; index < args.length; index += 2) {
     const catalogPath = resolve(args[index] ?? "");
     const preparationPath = resolve(args[index + 1] ?? "");
-    const filename = basename(catalogPath);
-    if (!filename.endsWith("-catalog.json")) throw new Error("Se requiere un archivo -catalog.json");
-    const prefix = filename.slice(0, -"-catalog.json".length);
+    if (!basename(catalogPath).endsWith("-catalog.json")) throw new Error("Se requiere un archivo -catalog.json");
     const catalogText = await readFile(catalogPath, "utf8");
-    const manifestText = await readFile(join(dirname(catalogPath), `${prefix}-catalog.manifest.json`), "utf8");
-    const catalogInput: unknown = JSON.parse(catalogText);
-    const manifestInput: unknown = JSON.parse(manifestText);
-    const catalog = parseCanonicalCatalog(catalogInput);
-    const manifest = parseCanonicalManifest(manifestInput);
+    const catalog = await readCanonicalCatalog(catalogPath);
     const hash = sha256(catalogText);
-    if (catalog.prefix !== prefix || manifest.prefix !== prefix || manifest.providerId !== catalog.providerId ||
-      manifest.scope !== catalog.scope || manifest.productCount !== catalog.productCount ||
-      manifest.startedAt !== catalog.startedAt || manifest.endedAt !== catalog.endedAt || manifest.catalogSha256 !== hash) {
-      throw new Error("Censo: manifest de catálogo no corresponde al origen seleccionado");
-    }
     if (providers.has(catalog.providerId)) throw new Error(`Censo: proveedor duplicado: ${catalog.providerId}`);
     const preparation = await readOfflinePreparation(preparationPath, catalog.providerId);
     if (preparation.source.catalogSha256 !== hash) {

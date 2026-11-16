@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../../../commercial/legacy-export/contracts.js";
+import { reconcileGamCorroboratedSummaryModel } from "../../../gam/identity/reconciliation/gam-corroborated-summary-model.js";
 import { reconcileGamVerifiedUnitYear } from "../../../gam/technical/reconciliation/gam-verified-unit-year.js";
 import { normalizeEditorialGeneral, normalizeEditorialSummary, normalizeEditorialTitle } from "../domain/editorial-normalization.js";
 import { presentCommercialMotorization } from "../domain/editorial-motorization.js";
@@ -27,9 +28,12 @@ export const normalizePreparedEditorialPresentation = (
   );
   const summary = normalizeCorroboratedTowingSummary(source, prepared,
     normalizeEditorialSummary(removeSourceSummaryBranding(source, restoredIdentity?.short ?? prepared.description), source.model));
-  const yearSummary = verifiedSource !== source && source.year && verifiedSource.year && summary
-    ? summary.replace(new RegExp(`\\bAño\\s+${source.year}\\b`, "u"), `Año ${verifiedSource.year}`)
-    : summary;
+  const coherentSummary = reconcileGamCorroboratedSummaryModel(source);
+  const correctedSummary = coherentSummary !== source && summary === normalizeEditorialSummary(source.shortDescription, source.model)
+    ? normalizeEditorialSummary(coherentSummary.shortDescription, source.model) : summary;
+  const yearSummary = verifiedSource !== source && source.year && verifiedSource.year && correctedSummary
+    ? correctedSummary.replace(new RegExp(`\\bAño\\s+${source.year}\\b`, "u"), `Año ${verifiedSource.year}`)
+    : correctedSummary;
   const height = assessCommercialHeight({ ...prepared, title: baseTitle, description: yearSummary });
   const fuel = normalizeCorroboratedEditorialFuel(source, {
     ...prepared,

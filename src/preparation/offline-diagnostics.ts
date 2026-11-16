@@ -21,6 +21,17 @@ export const classifyQualityIssue = (issue: string): { code: string; classificat
     return { code: `excel.required_attribute:${issue.slice("Atributo obligatorio ausente: ".length)}`, classification: "origen_por_contrastar" };
   }
   if (issue === "Identidad GAM contradictoria entre título, resumen y ficha técnica") return { code: "identity.gam_source_conflict", classification: "identidad" };
+  if (issue === "Identidad GAM contradictoria entre título y modelo técnico") return { code: "identity.gam_model_conflict", classification: "identidad" };
+  if (issue === "Modelo contradictorio: título y especificación identifican variantes diferentes") return { code: "identity.model_variant_conflict", classification: "identidad" };
+  if (issue === "Motorización contradictoria: tipo de motor y motorización estructurada incompatibles") return { code: "technical.motor_conflict", classification: "contradiccion" };
+  if (issue === "Motorización de origen no corroborada por evidencia histórica firmada") return { code: "technical.motor_unverified", classification: "origen_por_contrastar" };
+  if (issue === "Capacidad contradictoria: título y ficha técnica discrepan del resumen de carga nominal") return { code: "technical.capacity_conflict", classification: "contradiccion" };
+  if (issue === "Dimensiones Cesta no acreditables: la cifra o la unidad publicada está deformada") return { code: "technical.basket_dimensions_invalid", classification: "rechazo_seguridad" };
+  if (issue === "Familia contradictoria: el título indica carretilla retráctil y la descripción transpaleta") return { code: "identity.machine_family_conflict", classification: "contradiccion" };
+  if (issue === "Descripción comercial contradictoria: capacidad de carga") return { code: "description.capacity_conflict", classification: "contradiccion" };
+  if (issue === "Cobertura editorial insuficiente: descripción corta") return { code: "editorial.short_missing", classification: "origen_por_contrastar" };
+  if (issue === "Cobertura editorial insuficiente: descripción general") return { code: "editorial.general_missing", classification: "origen_por_contrastar" };
+  if (issue.startsWith("Atributo no compatible con su contrato: ")) return { code: `quality.attribute_contract:${issue.slice("Atributo no compatible con su contrato: ".length)}`, classification: "no_normalizable" };
   if (issue.startsWith("Número de serie ")) return { code: "identity.serial_collision", classification: "identidad" };
   if (issue.startsWith("Stock GAM diferenciado: ")) return { code: "identity.stock_serial_verification", classification: "identidad" };
   if (issue.startsWith("Referencia duplicada ")) return { code: "identity.duplicate_reference", classification: "identidad" };

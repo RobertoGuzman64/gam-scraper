@@ -2,6 +2,8 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { Attribute, Candidate } from "../../../shared/classification/mapping/attribute-types.js";
 import { fold, scalar, numberToken } from "../../../shared/classification/mapping/attribute-utils.js";
 import { invalidGomarizPlatformHeight, verifiedGomarizPlatformHeight } from "../../../../catalog/normalization/gomariz/technical.js";
+import { editorialFamilyFromSourceGeneral } from "../../../shared/editorial/domain/editorial-families.js";
+import { verifiedEditorialUrl } from "../../../shared/editorial/domain/editorial-source-url.js";
 import { gomarizElevationCandidate } from "../../technical/mapping/elevation.js";
 import { gomarizIndustrialCandidate, gomarizTowerPower } from "../../technical/mapping/industrial.js";
 
@@ -53,6 +55,18 @@ export const applyGomarizAliases = (record: ProductRecord, attribute: Attribute,
   return true;
 };
 
+const generatorPowerSource = (record: ProductRecord): boolean => {
+  if (record.providerId !== "gomariz" || record.categoryKey !== "venta") return false;
+  const url = verifiedEditorialUrl(record.url, ["www.gomarizrent.com", "gomarizrent.com"]);
+  if (!url) return false;
+  const path = url.pathname.split("/").filter(Boolean);
+  return path.length === 4 && path[0] === "venta" &&
+    path[1] === "energia-electrica-e-iluminacion" && path[2] === "generador" ||
+    path.length === 3 && path[0] === "energia-electrica-e-iluminacion" && path[1] === "generador" ||
+    path.length === 2 && path[0] === "producto" &&
+    editorialFamilyFromSourceGeneral(record.longDescription) === "grupo-electrogeno";
+};
+
 export const convertGomarizCandidate = (
   record: ProductRecord, attribute: Attribute, candidate: Candidate, fallback: string | number | boolean | null
 ): string | number | boolean | null => {
@@ -67,10 +81,13 @@ export const convertGomarizCandidate = (
     return value !== null && value > 0 ? value : null;
   }
   if (attribute.name === "Potencia" && attribute.type === "NUMBER" &&
-    /\/venta\/energia-electrica-e-iluminacion\/generador\//.test(record.url) &&
-    /kVA/i.test(attribute.unit_option) && typeof candidate.value === "string" &&
-    /^\d+(?:[.,]\d+)?\s*kVA$/i.test(candidate.value.trim())) {
-    return Number(candidate.value.trim().replace(/\s*kVA$/i, "").replace(",", "."));
+    /kVA/i.test(attribute.unit_option) && candidate.key === "Potencia" &&
+    candidate.value === record.specs?.Potencia && typeof candidate.value === "string" && generatorPowerSource(record)) {
+    const match = /^(\d+(?:[.,]\d+)?)\s*kVA$/iu.exec(candidate.value.trim());
+    if (match?.[1]) {
+      const value = Number(match[1].replace(",", "."));
+      if (Number.isFinite(value) && value > 0) return value;
+    }
   }
   return gomarizTowerPower(record, attribute, candidate) ?? fallback;
 };

@@ -1,4 +1,5 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
+import { verifiedGomarizGallerySource } from "../../identity/evidence/gomariz-gallery-identity.js";
 import { invalidGomarizPlatformHeight } from "../../../../catalog/normalization/gomariz/technical.js";
 import { verifiedEditorialUrl, containsEditorialSourceSlugModel } from "../../../shared/editorial/domain/editorial-source-url.js";
 import type { EditorialSource } from "../../../shared/editorial/domain/editorial-source-contract.js";
@@ -24,7 +25,10 @@ export const resolveGomarizEditorialDomainSource = (record: ProductRecord): Edit
   const validPath = path[0] === "producto" && path.length === 2 ||
       path[0] === "venta" && path.length === 4 ||
       path[0] !== "venta" && path.length === 3;
-  if (!validPath || !containsEditorialSourceSlugModel(path[path.length - 1] ?? "", model, record.specs?.Motor)) return null;
+  const finalSlug = path[path.length - 1] ?? "";
+  const sourceSlug = path.length === 3 && /^\d+$/u.test(finalSlug) ? path[1] ?? "" : finalSlug;
+  if (!validPath || !(containsEditorialSourceSlugModel(sourceSlug, model, record.specs?.Motor) ||
+    verifiedGomarizGallerySource(record, path))) return null;
   const pathFamily = path.length === 4 && path[0] === "venta" ?
     sourceFamilies[`${path[1]}/${path[2]}`] ?? "" : "";
   const sourcedFamily = editorialFamilyOf(pathFamily || url.pathname);

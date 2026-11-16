@@ -2,6 +2,7 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { SourceEditorialEvidence } from "./source-editorial-evidence.js";
 import { distinguishDescriptions } from "../../../../catalog/normalization/descriptions.js";
 import { hasEditorialSourceWorkHeightConflict } from "../domain/editorial-height-consistency.js";
+import { hasCorroboratedEditorialDistinctWorkHeights } from "../domain/editorial-source.js";
 import { resolveReusableEditorial } from "../domain/editorial-composition.js";
 import { hasEditorialMillimetreUnit } from "../domain/editorial-measurements.js";
 import { resolveSourceEditorialClaims } from "../domain/editorial-source-claims.js";
@@ -27,7 +28,7 @@ export const resolvePreparedEditorialSource = (
   evidence: SourceEditorialEvidence,
   sourceUnitRecord: ProductRecord = record
 ) => {
-  const heightConflict = hasEditorialSourceWorkHeightConflict(record);
+  const heightConflict = hasEditorialSourceWorkHeightConflict(record, hasCorroboratedEditorialDistinctWorkHeights(record));
   const editorialRecord = withoutContradictoryFamilyGeneral(record);
   const editorialSourceUnit = withoutContradictoryFamilyGeneral(sourceUnitRecord);
   const verified = evidence.sourceVerified && evidence.identityVerified && !heightConflict;

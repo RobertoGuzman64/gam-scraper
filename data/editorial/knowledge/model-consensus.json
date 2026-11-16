@@ -643,6 +643,23 @@
     },
     {
       "brand": "Haulotte",
+      "model": "HA16RTJ PRO",
+      "family": "plataforma-articulada",
+      "samples": 2,
+      "catalogReferences": [
+        "gomariz:BA1628",
+        "gomariz:BA1348"
+      ],
+      "stable": {
+        "workingHeightM": 16,
+        "platformHeightM": 14,
+        "lateralReachM": 8.3,
+        "loadCapacityKg": 230,
+        "energy": "diésel"
+      }
+    },
+    {
+      "brand": "Haulotte",
       "model": "HA16RTJ",
       "family": "plataforma-articulada",
       "samples": 4,
@@ -1833,7 +1850,7 @@
       "brand": "LGMG",
       "model": "AS1012E",
       "family": "plataforma-tijera",
-      "samples": 16,
+      "samples": 17,
       "catalogReferences": [
         "gomariz:TE1756",
         "gomariz:TE1603",
@@ -1850,6 +1867,7 @@
         "gomariz:TE1400",
         "gomariz:TE1384",
         "gomariz:TE1383",
+        "gomariz:TE1382",
         "gomariz:TE1385"
       ],
       "stable": {

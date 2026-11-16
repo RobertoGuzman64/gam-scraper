@@ -1,7 +1,8 @@
 import type { SpecValue } from "../../../../contracts/catalog.js";
 
 const folded = (value: string): string => value.normalize("NFD")
-  .replace(/[\u0300-\u036f]/gu, "").toLocaleLowerCase("es");
+  .replace(/[\u0300-\u036f]/gu, "").toLocaleLowerCase("es")
+  .replace(/(?<=\d)×(?=\d)/gu, "x");
 
 export const verifiedEditorialUrl = (sourceUrl: string, hostnames: readonly string[]): URL | null => {
   try {

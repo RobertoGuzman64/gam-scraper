@@ -29,9 +29,11 @@ const towerFamily = (record: ProductRecord): boolean => {
   try {
     const url = new URL(record.url);
     const path = url.pathname.split("/").filter(Boolean);
-    return ["gomarizrent.com", "www.gomarizrent.com"].includes(url.hostname) &&
-      path.length === 4 && path[0] === "venta" &&
-      path[1] === "energia-electrica-e-iluminacion" && path[2] === "torre-de-luz";
+    return url.protocol === "https:" && ["gomarizrent.com", "www.gomarizrent.com"].includes(url.hostname) &&
+      !url.username && !url.password && !url.port && !url.search && !url.hash && (
+        path.length === 4 && path[0] === "venta" && path[1] === "energia-electrica-e-iluminacion" && path[2] === "torre-de-luz" ||
+        path.length === 3 && path[0] === "energia-electrica-e-iluminacion" && path[1] === "torre-de-luz"
+      );
   } catch {
     return false;
   }
