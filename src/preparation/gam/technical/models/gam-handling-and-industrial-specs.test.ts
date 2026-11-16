@@ -121,7 +121,9 @@ test("GAM: 20 fichas de maquinaria documentada incorporan 57 prestaciones acredi
     }
     assert.deepEqual(documented, { ...originalSpecs, ...expected }, record.reference ?? record.url);
     const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.status, "ready", record.reference ?? record.url);
+    const expectedIssues = record.reference === "241" ? ["Identidad GAM contradictoria entre título y modelo técnico"] : [];
+    assert.equal(prepared.status, expectedIssues.length ? "review" : "ready", record.reference ?? record.url);
+    assert.deepEqual(prepared.issues, expectedIssues, record.reference ?? record.url);
     for (const [key, value] of Object.entries(expected)) {
       assert.equal(prepared.product.spec[key], value, `${record.reference}:${key}`);
       assert.ok(!(key in originalSpecs), `${record.reference}:${key}`);

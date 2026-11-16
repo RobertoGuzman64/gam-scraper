@@ -20,7 +20,9 @@ test("prepara 24 medidas verificables de forma idéntica a su evidencia sin edit
     const sourceBefore = JSON.stringify(record);
     const result = prepareSourceProduct(record);
     assert.equal(result.product.spec["Dimensiones Cesta"], expected, reference);
-    assert.equal(result.status, "ready", reference);
+    const expectedIssues = reference === "4739" ? ["Descripción comercial contradictoria: capacidad de carga"] : [];
+    assert.equal(result.status, expectedIssues.length ? "review" : "ready", reference);
+    assert.deepEqual(result.issues, expectedIssues, reference);
     assert.equal(JSON.stringify(record), sourceBefore, reference);
     assert.equal(reconcileGamBasketDimensions(reconcileGamBasketDimensions(record)).specs?.["Dimensiones Cesta"], expected);
   }
