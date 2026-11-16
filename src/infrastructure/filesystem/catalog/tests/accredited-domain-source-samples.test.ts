@@ -13,6 +13,7 @@ const sourcePaths: Readonly<Record<AccreditedSourceDataset, string>> = {
   "mercaeleva-source-cases": "src/testing/fixtures/mercaeleva/scrape-mercaeleva-catalog.json",
   "gomariz-original": "catalogs/providers/gomariz/original/scrape-gomariz-catalog.json",
   "gomariz-regression": "src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json",
+  "gomariz-documented-weight": "catalogs/providers/gomariz/original/scrape-gomariz-catalog.json",
   "gomariz-special-original": "catalogs/providers/gomariz/original/scrape-gomariz-catalog.json",
 };
 

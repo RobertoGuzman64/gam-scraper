@@ -2,6 +2,7 @@ import { reconcileGamForeignCategoryTitle } from "../../../gam/identity/reconcil
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import { reconcileGamInitialTechnicalEvidence, reconcileGamTechnicalIdentity, reconcileGamTechnicalBeforeEditorial, reconcileGamTechnicalCapacities, reconcileGamTechnicalMeasurements, normalizeGamTechnicalSpecs } from "../../../gam/technical/reconciliation/preparation-technical-stages.js";
 import { reconcileMercaelevaInitialTechnicalEvidence, reconcileMercaelevaSourceFamily, reconcileMercaelevaSourceTechnicalSpecs, reconcileMercaelevaTechnicalBeforeEditorial, reconcileMercaelevaTechnicalCapacity, reconcileMercaelevaTechnicalCorroboratedCapacity, sanitizeMercaelevaTechnicalSpecs } from "../../../mercaeleva/technical/reconciliation/preparation-technical-stages.js";
+import { reconcileGomarizDocumentedWeight } from "../../../gomariz/technical/evidence/documented-weight.js";
 import { reconcileGomarizVerifiedElectricSemanticSource, reconcileGomarizVerifiedPlatformHeight, reconcileGomarizVerifiedTowerModel, reconcileGomarizVerifiedCompositeBrand } from "../../../gomariz/technical/reconciliation/gomariz.js";
 
 export const reconcileSourceCategoryTitle = (record: ProductRecord): ProductRecord =>
@@ -16,8 +17,8 @@ export const resolveSourceTechnicalSemanticRecord = (record: ProductRecord): Pro
 export const reconcileTechnicalSourceForRecovery = (record: ProductRecord): ProductRecord => {
   record = reconcileMercaelevaSourceFamily(record);
   record = reconcileGamTechnicalIdentity(record);
-  return reconcileGomarizVerifiedCompositeBrand(reconcileGomarizVerifiedTowerModel(
-    reconcileMercaelevaSourceTechnicalSpecs(record)));
+  return reconcileGomarizDocumentedWeight(reconcileGomarizVerifiedCompositeBrand(reconcileGomarizVerifiedTowerModel(
+    reconcileMercaelevaSourceTechnicalSpecs(record))));
 };
 
 export const reconcileTechnicalBeforeEditorial = (record: ProductRecord): ProductRecord =>

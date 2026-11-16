@@ -12,6 +12,7 @@ export const accreditedSourceDatasets = [
   "mercaeleva-source-cases",
   "gomariz-original",
   "gomariz-regression",
+  "gomariz-documented-weight",
   "gomariz-special-original",
 ] as const;
 
