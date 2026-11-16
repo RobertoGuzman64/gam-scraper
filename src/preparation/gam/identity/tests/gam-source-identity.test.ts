@@ -17,7 +17,7 @@ import { prepareSourceProduct } from "../../../prepare-product.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = { products: accreditedSourceSamples("gam-historical") };
+const source = { products: accreditedSourceSamples("gam-source-cases") };
 const byReference = (reference: string): ProductRecord => requireProductReference(source.products, reference);
 
 const historicalBatch = prepareImportBatch(source.products, catalog);

@@ -10,7 +10,7 @@ import { resolveAttribute } from "../../../shared/classification/mapping/attribu
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const records = accreditedSourceSamples("gam-historical");
+const records = accreditedSourceSamples("gam-source-cases");
 const reference = (id: string): ProductRecord => requireProductReference(records, id);
 const attribute = (name: string) => {
   const result = catalog.attributes.find((value) => value.name === name);

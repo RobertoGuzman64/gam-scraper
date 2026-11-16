@@ -8,7 +8,7 @@ import { prepareProduct } from "../../../../commercial/legacy-export/prepare-pro
 import { projectCommercialCategory } from "../../../../commercial/projection/category-projection.js";
 
 const catalog = await loadImportCatalog();
-const original = { products: accreditedSourceSamples("gam-historical") };
+const original = { products: accreditedSourceSamples("gam-source-cases") };
 const source = (reference: string): ProductRecord => {
   const record = original.products.find((item) => item.reference === reference);
   assert.ok(record, reference);

@@ -104,7 +104,7 @@ test("la higiene del origen elimina marcadores y afirmaciones huérfanas sin toc
   assert.equal(cleanAuthenticatedSourceEditorial({ ...source, model: "OTRO" }, short, long).short, short);
 });
 
-test("RE049: los módulos sanitarios históricos conservan clase, medidas y procedencia propias", () => {
+test("los módulos sanitarios históricos conservan clase, medidas y procedencia propias", () => {
   for (const { reference, length, width, weight } of [
     { reference: "6814", length: "1,3 m", width: "1,1 m", weight: "200 kg" },
     { reference: "6815", length: "2,15 m", width: "1,3 m", weight: "300 kg" }
@@ -123,7 +123,7 @@ test("RE049: los módulos sanitarios históricos conservan clase, medidas y proc
   }
 });
 
-test("RE049: una unidad nueva reutiliza la regla sanitaria con dimensiones exclusivamente propias", () => {
+test("una unidad nueva reutiliza la regla sanitaria con dimensiones exclusivamente propias", () => {
   const source = get("gam", "6814");
   const reference = "8814";
   const incoming: ProductRecord = {
@@ -149,7 +149,7 @@ test("RE049: una unidad nueva reutiliza la regla sanitaria con dimensiones exclu
   assert.equal(JSON.stringify(incoming), snapshot);
 });
 
-test("RE049: un título de caseta no puede reutilizar una ruta autenticada de módulo de baño", () => {
+test("un título de caseta no puede reutilizar una ruta autenticada de módulo de baño", () => {
   for (const reference of ["6814", "6815"]) {
     const source = get("gam", reference);
     assert.equal(resolveUnbrandedEditorial({ ...source, title: "MÓDULO CASETA PREFABRICADO" }), null);
@@ -157,7 +157,7 @@ test("RE049: un título de caseta no puede reutilizar una ruta autenticada de m�
   }
 });
 
-test("RE049: procedencia, identidad de origen y ausencia de medidas bloquean la composición sanitaria", () => {
+test("procedencia, identidad de origen y ausencia de medidas bloquean la composición sanitaria", () => {
   const source = get("gam", "6814");
   for (const changed of [
     { ...source, providerId: "otro-proveedor" },

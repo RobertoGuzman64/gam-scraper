@@ -8,7 +8,7 @@ import { describeHysterH35ftStockConflict } from "../evidence/hyster-h35ft-seria
 import { prepareImportBatch } from "../../../batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const gam = { products: accreditedSourceSamples("gam-historical") };
+const gam = { products: accreditedSourceSamples("gam-source-cases") };
 const get = (reference: string): ProductRecord => {
   const item = gam.products.find((product) => product.reference === reference);
   assert.ok(item, reference);

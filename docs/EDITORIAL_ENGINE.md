@@ -2,13 +2,13 @@
 
 ## AI GUARD
 
-**Protección documental.** No crear, cambiar ni retirar este documento salvo autorización explícita del propietario para actualizar documentación. Toda descripción debe contrastarse con el código productivo vigente; un informe de continuidad o una fase histórica no sustituye esta referencia.
+**Protección documental.** No crear, cambiar ni retirar este documento salvo autorización explícita del propietario para actualizar documentación. Toda descripción debe contrastarse con el código productivo vigente; los planes de trabajo no sustituyen esta referencia.
 
 **Frontera obligatoria.** No crear narradores por proveedor, modelo o referencia, ni atribuir a otra unidad prestaciones no acreditadas. Las reglas de redacción viven en el dominio y los mappers editoriales compartidos; los adaptadores interpretan el origen. Un guard en verde no demuestra cobertura funcional universal.
 
 ## Alcance y estado
 
-Esta es la referencia **vigente** sobre el funcionamiento del motor editorial. La migración de los **narradores históricos detectados** al motor compartido está cerrada en el alcance de los guards: no quedan narradores de proveedor conectados y el guard de arquitectura editorial informa cero infracciones. La conciliación histórica posterior acredita **82/82 capacidades RE** y reproduce **689 reglas K** (635 específicas, 53 exclusiones justificadas y 1 bloqueo de evidencia). **No** debe confundirse esa acreditación de inventario y trazabilidad con demostrar equivalencia ejecutable absoluta del motor antiguo: para CH-03 falta la fuente histórica ejecutable.
+Esta es la referencia **vigente** sobre el funcionamiento del motor editorial. El motor editorial compartido es el único propietario de la composición. Los guards mantienen la prohibición de narradores específicos conectados, sin excepciones arquitectónicas.
 
 La reutilización semántica se protege mediante el motor compartido, los guards obligatorios y sus pruebas negativas. Las mejoras funcionales siguen requiriendo evidencia, aplicación legítima a datos nuevos y rechazo de variantes incompatibles; no se justifican por cuotas de módulos ni tests.
 
@@ -46,8 +46,7 @@ La composición y la presentación posterior pertenecen al circuito compartido d
 | `shared/editorial/mapping/`                    | Captura y composición de evidencia, conocimiento, precedencias de títulos, corta y general, presentación final | Duplicar reglas ya existentes en un proveedor o inventar fuentes            |
 | `shared/editorial/evidence/`                   | Aplicación de evidencia editorial acreditada y verificaciones asociadas                                        | Sustituir por código narrativo una fuente o autorización                    |
 | `{gam,gomariz,mercaeleva}/editorial/`          | Interpretación y autenticidad de señales propias de cada origen; evidencia legítimamente particular            | Decidir la redacción final mediante narradores independientes               |
-| `data/editorial/knowledge/`                    | Índices declarativos de conocimiento firmado y documentado                                                     | Transformar hechos particulares en hechos de todas las unidades del modelo  |
-| `data/editorial/evidence/`                     | Evidencias de procedencia e históricos preservados                                                             | Actuar como código de reglas por referencia                                 |
+| `data/editorial/knowledge/`                    | Procedencia por unidad, huellas, textos y fuentes documentales integradas                                      | Actuar como código de reglas por referencia                                 |
 | `shared/technical/` y adaptadores `technical/` | Reconstrucción y reconciliación de hechos técnicos, con prioridades explícitas                                 | Usar texto comercial para acreditar características no corroboradas         |
 | `commercial/projection/`                       | Transferencia, proyección y metadatos compatibles con el contrato comercial                                    | Redactar de nuevo título, descripción corta o general                       |
 
@@ -70,7 +69,7 @@ Distinguir siempre:
 
 Los índices vigentes residen en `data/editorial/knowledge/`:
 
-- `verified-units.json`: evidencia editorial por unidad identificada.
+- `verified-units.json`: textos por unidad identificada con huella del original, precedencia y enlaces de documentación pertinente.
 - `model-consensus.json` y `model-technical-references.json`: conocimiento de modelo condicionado.
 - `family-guidance.json`: indicaciones documentadas de familia.
 - `manufacturer-models.json`: coincidencias de fabricante y modelo.
@@ -85,7 +84,7 @@ node scripts/operations/rebuild-editorial-models.mjs --check
 
 Ambas comprobaciones `--check` forman parte de `npm test` (la segunda después del build). Ninguna autoriza recalcular índices automáticamente en una ejecución de solo verificación.
 
-Para actualizar conocimiento debe utilizarse el proceso ya implementado (`npm run editorial:actualizar-conocimiento`) **solo cuando esté autorizada** esa intervención y se satisfagan sus dependencias. No editar índices ni firmar evidencia inventada para convertir `review` en `ready`. Los originales, manifest, identidad y huellas constituyen la prueba de procedencia; las publicaciones previamente acreditadas son inmutables.
+La verificación de `verified-units.json` utiliza el propio índice como fuente vigente, ya que sus entradas están consolidadas. `npm run editorial:actualizar-conocimiento` normaliza ese índice validado y regenera los consensos; **no descubre ni importa textos nuevos automáticamente**. Una incorporación de conocimiento requiere evidencia autorizada, incorporación explícita al índice y paso satisfactorio del verificador. No editar índices para convertir `review` en `ready`. Los originales, manifiestos, identidad, huellas y enlaces documentales constituyen la prueba de procedencia; las publicaciones previamente acreditadas son inmutables.
 
 ## Cómo mejorar el motor a partir de ahora
 
@@ -98,12 +97,12 @@ Para actualizar conocimiento debe utilizarse el proceso ya implementado (`npm ru
 
 Los casos complejos —fuente contradictoria, semántica de altura ambigua, identidad cruzada o equipamiento que no puede acreditarse— se investigan por evidencia. No son por defecto deuda arquitectónica ni una invitación a completar textos mediante analogías.
 
-## Qué se ha cerrado y qué no
+## Garantías actuales y límites de validación
 
-- **Cerrado en el alcance medido:** narradores históricos detectados fuera del recorrido productivo; autoridad editorial compartida; fronteras comerciales y arquitectónicas vigiladas; guard arquitectónico de tests sin infracciones.
-- **Acreditado en el inventario histórico:** las 82 RE, con las 689 K conciliadas, cero pendientes de traslado y equivalencia en la matriz. La única regla bloqueada por evidencia (CH-03) permanece identificada; no se afirma equivalencia ejecutable de una fuente que no está disponible.
+- **Protegido por guards:** narradores de proveedor fuera del recorrido productivo; autoridad editorial compartida; fronteras comerciales y arquitectónicas vigiladas; guard arquitectónico de tests sin infracciones.
+- **Conocimiento operativo consolidado:** 502 entradas documentadas por 428 unidades; se verifican contra sus originales mediante referencia, URL, marca, modelo y huella.
 - **Evolución funcional:** mejorar capacidades cuando haya brechas concretas reproducibles, preservando evidencia, precedencias y no propagación entre unidades.
-- **No acreditado en el último corte disponible:** `npm run build` y `npm test` oficiales completos, por dependencias ausentes en el entorno de cierre. La validación P7 requiere una instalación limpia; una prueba focal o un guard PASS no la sustituye.
+- **Validación de cada entrega:** ejecutar `npm run build` y `npm test` en una instalación limpia. Las pruebas focales y guards no sustituyen la regresión completa.
 
 ## Auditorías de lectura sin publicación
 
@@ -114,6 +113,6 @@ npm run editorial:auditar-reutilizacion
 npm run editorial:auditar-cobertura
 ```
 
-El primero escribe `reports/editorial-knowledge/audit.json` y el segundo `reports/editorial-coverage/audit.json`. Son herramientas de observación actual; ni sustituyen el control de trazabilidad de las 82 RE ya documentadas ni resuelven por sí solas el bloqueo probatorio CH-03.
+El primero escribe `reports/editorial-knowledge/audit.json` y el segundo `reports/editorial-coverage/audit.json`. Son herramientas de observación del motor actual, no procedimientos de migración ni mecanismos de publicación.
 
 Consultar [Arquitectura](ARCHITECTURE.md), [Tests y guards](TEST_ARCHITECTURE.md), [Mejora acreditada](CATALOG_IMPROVEMENT.md), [Reglas de datos](SCRAPER_DATA_RULES.md) y [Validación](VALIDATION.md).

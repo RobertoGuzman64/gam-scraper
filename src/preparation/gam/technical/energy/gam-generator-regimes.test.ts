@@ -8,7 +8,7 @@ import { verifiedUnitContextEditorial } from "../../../shared/editorial/evidence
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = { products: accreditedSourceSamples("gam-historical") };
+const source = { products: accreditedSourceSamples("gam-source-cases") };
 const power = catalog.attributes.find((attribute) => attribute.name === "Potencia");
 assert.ok(power);
 const generator = source.products.find((product) => product.reference === "1211");

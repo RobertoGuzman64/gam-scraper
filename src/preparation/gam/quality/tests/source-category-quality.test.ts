@@ -11,7 +11,7 @@ import { SOURCE_CATEGORY_ISSUE } from "../../../shared/quality/source/category-q
 const catalog = await loadImportCatalog();
 ;
 
-const reference = (code: string): ProductRecord => accreditedSourceRecord("gam-historical", code);
+const reference = (code: string): ProductRecord => accreditedSourceRecord("gam-source-cases", code);
 
 test("tipo de origen corroborado sin categoría del receptor no es motivo de review", () => {
   for (const code of ["6653", "4778", "4779", "4780", "2159", "220", "221", "227", "2134", "2135"]) {

@@ -10,7 +10,7 @@ const catalog = await loadImportCatalog();
 ;
 
 const machine = (reference: string): ProductRecord =>
-  accreditedSourceRecord("gam-historical", reference);
+  accreditedSourceRecord("gam-source-cases", reference);
 
 const assertCalibrated = (reference: string): void => {
   const record = machine(reference);

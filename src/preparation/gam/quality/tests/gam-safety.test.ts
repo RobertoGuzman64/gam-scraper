@@ -6,7 +6,7 @@ import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-
 import { resolveAttribute } from "../../../shared/classification/mapping/attribute-mapping.js";
 
 const catalog = await loadImportCatalog();
-const reference = (code: string) => accreditedSourceRecord("gam-historical", code);
+const reference = (code: string) => accreditedSourceRecord("gam-source-cases", code);
 const attribute = (name: string) => {
   const found = catalog.attributes.find((entry) => entry.name === name);
   assert.ok(found, name);

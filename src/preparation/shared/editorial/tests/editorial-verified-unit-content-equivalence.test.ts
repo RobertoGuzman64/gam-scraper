@@ -14,7 +14,7 @@ type Provider = "gam" | "gomariz" | "mercaeleva";
 const original = (provider: Provider, reference: string): ProductRecord =>
   accreditedSourceRecord(`${provider}-original`, reference);
 
-test("RE070 conserva textos de unidad GAM firmados y compuestos por campo", () => {
+test("conserva textos de unidad GAM firmados y compuestos por campo", () => {
   for (const reference of ["6650", "6689"]) {
     const source = original("gam", reference);
     const snapshot = JSON.stringify(source);
@@ -30,7 +30,7 @@ test("RE070 conserva textos de unidad GAM firmados y compuestos por campo", () =
   }
 });
 
-test("RE070 acepta la limpieza de una firma GAM sin convertirla en pérdida de procedencia", () => {
+test("acepta la limpieza de una firma GAM sin convertirla en pérdida de procedencia", () => {
   const source = original("gam", "6196");
   const signed = resolveKnowledgeEditorial(source, source);
   const prepared = prepareSourceProduct(source);
@@ -43,7 +43,7 @@ test("RE070 acepta la limpieza de una firma GAM sin convertirla en pérdida de p
   assert.match(prepared.product.description_general, /B200021461/u);
 });
 
-test("RE071 conserva el título, la general y la corta cuando Gomariz acredita cada campo", () => {
+test("conserva el título, la general y la corta cuando Gomariz acredita cada campo", () => {
   for (const [reference, field] of [
     ["TE1618", "general"], ["BA1465", "short"], ["BA1253", "title"]
   ] as const) {
@@ -60,7 +60,7 @@ test("RE071 conserva el título, la general y la corta cuando Gomariz acredita c
   }
 });
 
-test("RE071 respeta que una general de reserva Gomariz ceda a hechos técnicos más sólidos", () => {
+test("respeta que una general de reserva Gomariz ceda a hechos técnicos más sólidos", () => {
   const source = original("gomariz", "TE1772");
   const knowledge = resolveKnowledgeEditorial(source, source);
   const shared = resolveReusableEditorial(source);
@@ -73,7 +73,7 @@ test("RE071 respeta que una general de reserva Gomariz ceda a hechos técnicos m
   assert.match(prepared.product.description_general ?? "", /7,8 m/u);
 });
 
-test("RE072 conserva cortas, generales y reserva validada por unidad Mercaeleva", () => {
+test("conserva cortas, generales y reserva validada por unidad Mercaeleva", () => {
   for (const [reference, field] of [
     ["M940-4770", "general"], ["M239-6301", "short"],
     ["M208-7097", "general"], ["M736-5615", "fallbackGeneral"]
@@ -89,7 +89,7 @@ test("RE072 conserva cortas, generales y reserva validada por unidad Mercaeleva"
   }
 });
 
-test("RE070-RE072 no reatribuyen evidencias firmadas al variar unidad, proveedor o fuente", () => {
+test("no reatribuyen evidencias firmadas al variar unidad, proveedor o fuente", () => {
   for (const [provider, reference] of [
     ["gam", "6689"], ["gomariz", "TE1618"], ["mercaeleva", "M940-4770"]
   ] as const) {
@@ -113,7 +113,7 @@ test("RE070-RE072 no reatribuyen evidencias firmadas al variar unidad, proveedor
   }
 });
 
-test("RE070-RE072 reutilizan reglas en nuevas unidades sin copiar evidencias particulares", () => {
+test("reutilizan reglas en nuevas unidades sin copiar evidencias particulares", () => {
   for (const create of [controlledGamForklift, controlledGomarizPlatform, controlledMercaelevaForklift]) {
     const source = create();
     const snapshot = JSON.stringify(source);
@@ -133,7 +133,7 @@ test("RE070-RE072 reutilizan reglas en nuevas unidades sin copiar evidencias par
   }
 });
 
-test("RE070-RE072 no convierten una firma histórica en aprobación de contradicciones", () => {
+test("no convierten una firma histórica en aprobación de contradicciones", () => {
   const gam = original("gam", "4737");
   const gamSigned = resolveKnowledgeEditorial(gam, gam);
   const gamPrepared = prepareSourceProduct(gam);

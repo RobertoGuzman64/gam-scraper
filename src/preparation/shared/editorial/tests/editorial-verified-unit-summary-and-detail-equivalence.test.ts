@@ -31,7 +31,7 @@ const nextSummaryUnit = (source: ProductRecord): ProductRecord => ({
   specs: { Marca: "MARCA", Modelo: "MODELO11" }
 });
 
-test("RE080 conserva el resumen de identidad de una carretilla histórica sin trasladar su detalle general a la corta", () => {
+test("conserva el resumen de identidad de una carretilla histórica sin trasladar su detalle general a la corta", () => {
   const source = accreditedSourceRecord("mercaeleva-original", "M827-8304");
   const before = JSON.stringify(source);
   const summary = resolveEditorialIdentitySummary(source, null);
@@ -47,7 +47,7 @@ test("RE080 conserva el resumen de identidad de una carretilla histórica sin tr
   assert.equal(JSON.stringify(source), before);
 });
 
-test("RE080 recupera el resumen de nuevas unidades compatibles de los tres proveedores sin heredar su identidad", () => {
+test("recupera el resumen de nuevas unidades compatibles de los tres proveedores sin heredar su identidad", () => {
   for (const create of [controlledGamForklift, controlledGomarizForklift, controlledMercaelevaForklift]) {
     const source = summaryCandidate(create());
     const next = nextSummaryUnit(source);
@@ -68,7 +68,7 @@ test("RE080 recupera el resumen de nuevas unidades compatibles de los tres prove
   }
 });
 
-test("RE080 bloquea resúmenes sin identidad y procedencia corroboradas o con familia incompatible", () => {
+test("bloquea resúmenes sin identidad y procedencia corroboradas o con familia incompatible", () => {
   for (const create of [controlledGamForklift, controlledGomarizForklift, controlledMercaelevaForklift]) {
     const source = summaryCandidate(create());
     for (const invalid of [
@@ -87,7 +87,7 @@ test("RE080 bloquea resúmenes sin identidad y procedencia corroboradas o con fa
   }
 });
 
-test("RE080 deja en revisión la ficha original sin general verificable aunque pueda resumir su identidad", () => {
+test("deja en revisión la ficha original sin general verificable aunque pueda resumir su identidad", () => {
   const source = accreditedSourceRecord("mercaeleva-original", "M062-8951");
   const result = prepareSourceProduct(source);
   assert.equal(result.product.description, "Carretilla elevadora MB EFL303 nueva.");
@@ -96,7 +96,7 @@ test("RE080 deja en revisión la ficha original sin general verificable aunque p
   assert.ok(result.issues.includes("Cobertura editorial insuficiente: descripción general"));
 });
 
-test("RE063 mantiene un resumen breve y el detalle adicional en las generales de originales acreditados", () => {
+test("mantiene un resumen breve y el detalle adicional en las generales de originales acreditados", () => {
   for (const [dataset, reference, detail] of [
     ["gam-original", "6901", "7.550 kg"],
     ["gomariz-original", "TE1591", "2.360 kg"],
@@ -116,7 +116,7 @@ test("RE063 mantiene un resumen breve y el detalle adicional en las generales de
   }
 });
 
-test("RE063 reutiliza resúmenes y detalles técnicos de unidades nuevas sin duplicar hechos ni inventar medidas", () => {
+test("reutiliza resúmenes y detalles técnicos de unidades nuevas sin duplicar hechos ni inventar medidas", () => {
   for (const create of [controlledGamForklift, controlledGomarizPlatform, controlledMercaelevaPlatform]) {
     const source = create();
     const record: ProductRecord = {

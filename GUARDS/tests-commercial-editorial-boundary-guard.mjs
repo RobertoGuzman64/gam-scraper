@@ -38,4 +38,4 @@ assert.match(plan, /prepareCommercialEditorialInputs\(inputs\)/u);
 assert.match(accreditation, /prepareCommercialEditorialInputs\(inputs\)/u);
 assert.match(audit, /prepareCommercialEditorialInputs\(entries\)/u);
 
-console.log(formatScriptStatus("PASS", "AUTORIDAD EDITORIAL | preparación y adaptación histórica usan el mismo motor; exportación sin reescritura de textos"));
+console.log(formatScriptStatus("PASS", "AUTORIDAD EDITORIAL | preparación y adaptación de origen usan el mismo motor; exportación sin reescritura de textos"));

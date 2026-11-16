@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseIndividualCatalogProviders } from "../../options/individual-catalog.js";
 import { prepareIndividualCatalogs } from "../../../preparation/workflow/individual-prepare.js";
-import { checkHistoricalReferenceIntegrity } from "../../../infrastructure/filesystem/legacy-export/historical-reference-integrity.js";
+import { checkHistoricalReferenceIntegrity } from "../../../infrastructure/filesystem/legacy-export/reference-integrity.js";
 import { printCommandHeader, printCommandProvider, printCommandSection, printCommandResult, printCommandWarning, printCommandDeliverable, printReportLine, printStatus } from "../../reporting/terminal.js";
 import { printCommandError } from "../../reporting/errors.js";
 

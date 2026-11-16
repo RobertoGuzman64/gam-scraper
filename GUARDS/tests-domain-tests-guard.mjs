@@ -169,11 +169,11 @@ const cohortExceptions = new Map([
 
 const transitiveExceptions = new Map([
   ["src/preparation/gam/classification/tests/gam-verified-category-equivalences.test.ts",
-    "src/preparation/gam/technical/tests/support/gam-historical-category-fixture.ts"],
+    "src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts"],
   ["src/preparation/gam/identity/tests/gam-categories-condition.test.ts",
-    "src/preparation/gam/technical/tests/support/gam-historical-category-fixture.ts"],
+    "src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts"],
   ["src/preparation/gam/identity/tests/gam-source-category-and-condition.test.ts",
-    "src/preparation/gam/technical/tests/support/gam-historical-category-fixture.ts"],
+    "src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts"],
   ["src/preparation/mercaeleva/technical/tests/models/jlg-450aj-base-model-evidence.test.ts",
     "src/testing/builders/mercaeleva-source-fixture.ts"],
   ["src/preparation/mercaeleva/technical/tests/specifications/mercaeleva-documented-equipment-technical-specs.test.ts",
@@ -203,7 +203,7 @@ const isAccreditedCohort = (path, source, node) => {
 const isAccreditedTransitive = (path, helper, project, helperEvidence) => {
   if (transitiveExceptions.get(path) !== helper || (helperEvidence.get(helper) ?? []).length !== 1) return false;
   const source = project.files.get(helper)?.text ?? "";
-  if (helper.includes("gam-historical-category-fixture")) {
+  if (helper.includes("gam-source-category-fixture")) {
     return source.includes("scrape-gam-marzo-2026-catalog.json") && source.includes("readCanonicalCatalog");
   }
   return helper === "src/testing/builders/mercaeleva-source-fixture.ts" &&

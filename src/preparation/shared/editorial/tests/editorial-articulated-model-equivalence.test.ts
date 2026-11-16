@@ -24,7 +24,7 @@ const newUnit = (source: ProductRecord, reference: string, specs: NonNullable<Pr
   specs: { ...source.specs, ...specs }
 });
 
-test("RE030: articuladas originales de tres proveedores preservan identidad, magnitudes y fuente", () => {
+test("articuladas originales de tres proveedores preservan identidad, magnitudes y fuente", () => {
   for (const [source, energy, working] of [
     [gomarizDiesel, "diésel", 21.38],
     [mercaElectric, "eléctrica", 17],
@@ -46,7 +46,7 @@ test("RE030: articuladas originales de tres proveedores preservan identidad, mag
   assert.equal(resolveEditorialFacts(gamArticulated)?.liftingHeightM, 16);
 });
 
-test("RE030: plantilla genérica diésel no contradice la motorización eléctrica acreditada", () => {
+test("plantilla genérica diésel no contradice la motorización eléctrica acreditada", () => {
   const unchanged = JSON.stringify(gomarizElectric);
   assert.match(gomarizElectric.longDescription ?? "", /Articuladas Diésel/u);
   assert.equal(gomarizElectric.specs?.Motor, "Eléctrico");
@@ -62,7 +62,7 @@ test("RE030: plantilla genérica diésel no contradice la motorización eléctri
   assert.equal(withoutContradictoryFamilyGeneral(gomarizDiesel), gomarizDiesel);
 });
 
-test("RE030: unidades nuevas de articulada consumen exclusivamente su ficha técnica", () => {
+test("unidades nuevas de articulada consumen exclusivamente su ficha técnica", () => {
   const electric = newUnit(gomarizElectric, "BA2465", {
     "Altura plataforma": "12.8 m", "Altura de trabajo": "14.8 m", "Alcance lateral": "7.4 m", Capacidad: "200 kg"
   });
@@ -91,7 +91,7 @@ test("RE030: unidades nuevas de articulada consumen exclusivamente su ficha téc
   }
 });
 
-test("RE030: solo se omite la descripción genérica contradictoria; las objeciones de unidad permanecen", () => {
+test("solo se omite la descripción genérica contradictoria; las objeciones de unidad permanecen", () => {
   const personalized = { ...gomarizElectric, longDescription: `La plataforma articulada diésel ${gomarizElectric.brand} ${gomarizElectric.model} tiene motor diésel.` };
   assert.equal(withoutContradictoryFamilyGeneral(personalized), personalized);
   assert.equal(resolveEditorialFacts(personalized), null);
@@ -114,7 +114,7 @@ test("RE030: solo se omite la descripción genérica contradictoria; las objecio
   assert.equal(resolveEditorialFacts(withoutContradictoryFamilyGeneral(invalidHeight)), null);
 });
 
-test("RE034: documentación técnica histórica se consume como referencia y no como dato de unidad", () => {
+test("documentación técnica histórica se consume como referencia y no como dato de unidad", () => {
   for (const source of [mercaElectric, mercaDiesel]) {
     const snapshot = JSON.stringify(source);
     const reference = resolveKnowledgeEditorial(source).modelReference ?? "";
@@ -131,7 +131,7 @@ test("RE034: documentación técnica histórica se consume como referencia y no 
   }
 });
 
-test("RE034: referencia reutilizable con unidad nueva compatible, sin trasladar condiciones particulares", () => {
+test("referencia reutilizable con unidad nueva compatible, sin trasladar condiciones particulares", () => {
   const incoming = newUnit(mercaDiesel, "M940-3557", { "Altura de trabajo": "43 m", "Título adicional": "PLATAFORMA ARTICULADA DIESEL 43 MT" });
   const snapshot = JSON.stringify(incoming);
   const knowledge = resolveKnowledgeEditorial(incoming);
@@ -146,7 +146,7 @@ test("RE034: referencia reutilizable con unidad nueva compatible, sin trasladar 
   assert.equal(JSON.stringify(incoming), snapshot);
 });
 
-test("RE034: modelo próximo, variante, magnitud, energía y procedencia impiden referencias falsas", () => {
+test("modelo próximo, variante, magnitud, energía y procedencia impiden referencias falsas", () => {
   const source = newUnit(mercaDiesel, "M940-3557", { "Altura de trabajo": "43 m" });
   const invalid: ProductRecord[] = [
     { ...source, brand: "OTRA MARCA" },

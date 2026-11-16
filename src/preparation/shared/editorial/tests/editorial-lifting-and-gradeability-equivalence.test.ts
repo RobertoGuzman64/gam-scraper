@@ -22,7 +22,7 @@ const anotherUnit = (source: ProductRecord, specs: NonNullable<ProductRecord["sp
   };
 };
 
-test("RE011 conserva la elevación y el mástil acreditados sin confundir altura del equipo", () => {
+test("conserva la elevación y el mástil acreditados sin confundir altura del equipo", () => {
   for (const [source, height, mast] of [
     [gamHeavyForklift, 7, null],
     [gamForklift, 4.7, "tríplex"],
@@ -46,7 +46,7 @@ test("RE011 conserva la elevación y el mástil acreditados sin confundir altura
     resolveEditorialFacts(gamHeavyForklift)?.heightM);
 });
 
-test("RE011 una nueva carretilla usa su elevación y mástil sin heredar los de la unidad anterior", () => {
+test("una nueva carretilla usa su elevación y mástil sin heredar los de la unidad anterior", () => {
   for (const [source, specs, claim, mast] of [
     [gamForklift, { "Altura de elevación (mm)": "5200 mm", "Tipo Mástil": "DUPLEX" }, "5,2 m", "dúplex"],
     [mercaelevaForklift, { "Altura máxima de elevación": "6100 mm", "Tipo de mástil": "DÚPLEX" }, "6,1 m", "dúplex"]
@@ -67,7 +67,7 @@ test("RE011 una nueva carretilla usa su elevación y mástil sin heredar los de 
   }
 });
 
-test("RE011 rechaza elevaciones ambiguas, unidades erróneas y mástiles incompatibles", () => {
+test("rechaza elevaciones ambiguas, unidades erróneas y mástiles incompatibles", () => {
   for (const invalidHeight of ["5200 kg", "5200 mm o 6100 mm", "5200", "65000 mm"]) {
     const invalid = { ...gamForklift, specs: { ...gamForklift.specs, "Altura de elevación (mm)": invalidHeight } };
     assert.equal(resolveEditorialFacts(invalid)?.liftingHeightM ?? null, null);
@@ -94,7 +94,7 @@ test("RE011 rechaza elevaciones ambiguas, unidades erróneas y mástiles incompa
   ]) assert.equal(resolveEditorialFacts(invalid), null);
 });
 
-test("RE024 acredita pendiente superable histórica de unidades GAM en preparación", () => {
+test("acredita pendiente superable histórica de unidades GAM en preparación", () => {
   for (const [source, value] of [
     [gamArticulated, 25],
     [gamScissor, 25],
@@ -110,7 +110,7 @@ test("RE024 acredita pendiente superable histórica de unidades GAM en preparaci
   }
 });
 
-test("RE024 otra unidad compatible reutiliza su porcentaje sin heredar el del modelo", () => {
+test("otra unidad compatible reutiliza su porcentaje sin heredar el del modelo", () => {
   const unit = anotherUnit(gamArticulated, { "Pendiente superable": "30%" });
   assert.equal(resolveEditorialFacts(unit)?.gradeabilityPercent, 30);
   assert.match(resolveReusableEditorial(unit).general ?? "", /pendiente superable declarada de 30 %/u);
@@ -124,7 +124,7 @@ test("RE024 otra unidad compatible reutiliza su porcentaje sin heredar el del mo
   assert.doesNotMatch(resolveReusableEditorial(withoutSlope).general ?? "", /pendiente superable declarada/u);
 });
 
-test("RE024 no acepta porcentajes contradictorios, fuera de rango ni procedencias ajenas", () => {
+test("no acepta porcentajes contradictorios, fuera de rango ni procedencias ajenas", () => {
   for (const value of ["30 kg", "25% o 40%", "150%", "30", "25 grados"]) {
     const invalid = { ...gamArticulated, specs: { ...gamArticulated.specs, "Pendiente superable": value } };
     assert.equal(resolveEditorialFacts(invalid)?.gradeabilityPercent ?? null, null);

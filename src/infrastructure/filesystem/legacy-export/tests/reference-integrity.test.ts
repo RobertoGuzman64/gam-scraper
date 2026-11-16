@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promis
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { checkHistoricalReferenceIntegrity } from "../historical-reference-integrity.js";
+import { checkHistoricalReferenceIntegrity } from "../reference-integrity.js";
 
 const digest = (value: string): string => createHash("sha256").update(value).digest("hex");
 

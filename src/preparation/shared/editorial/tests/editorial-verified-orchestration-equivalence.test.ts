@@ -17,7 +17,7 @@ const sources = [controlledGamForklift, controlledGomarizPlatform, controlledMer
 const original = (provider: "gam" | "gomariz" | "mercaeleva", reference: string): ProductRecord =>
   accreditedSourceRecord(`${provider}-original`, reference);
 
-test("RE078 habilita la composición verificada de fuente en unidades nuevas de los tres proveedores", () => {
+test("habilita la composición verificada de fuente en unidades nuevas de los tres proveedores", () => {
   for (const create of sources) {
     const source = create();
     const snapshot = JSON.stringify(source);
@@ -37,7 +37,7 @@ test("RE078 habilita la composición verificada de fuente en unidades nuevas de 
   }
 });
 
-test("RE078 no confunde autenticidad de fuente con autorización de enriquecimiento", () => {
+test("no confunde autenticidad de fuente con autorización de enriquecimiento", () => {
   for (const create of sources) {
     const source = create();
     const denied = resolvePreparedEditorial(source, source,
@@ -62,7 +62,7 @@ test("RE078 no confunde autenticidad de fuente con autorización de enriquecimie
   }
 });
 
-test("RE078 conserva una evidencia histórica firmada sin convertirla en regla para unidades ajenas", () => {
+test("conserva una evidencia histórica firmada sin convertirla en regla para unidades ajenas", () => {
   const source = original("gam", "5996");
   const signed = resolveKnowledgeEditorial(source, source);
   assert.ok(signed.short);
@@ -81,7 +81,7 @@ test("RE078 conserva una evidencia histórica firmada sin convertirla en regla p
   assert.notEqual(withoutVerification.preparedLong, signed.general);
 });
 
-test("RE081 aplica la presentación final una sola vez y conserva los campos preparados en originales", () => {
+test("aplica la presentación final una sola vez y conserva los campos preparados en originales", () => {
   for (const [provider, reference] of [
     ["gam", "6901"], ["gomariz", "TE1618"], ["mercaeleva", "M840-6795"]
   ] as const) {
@@ -99,7 +99,7 @@ test("RE081 aplica la presentación final una sola vez y conserva los campos pre
   }
 });
 
-test("RE081 presenta medidas propias de una unidad nueva y mantiene el contrato de identidad", () => {
+test("presenta medidas propias de una unidad nueva y mantiene el contrato de identidad", () => {
   const source: ProductRecord = {
     ...controlledGamForklift(),
     reference: "CONTROL-81",

@@ -1,10 +1,10 @@
 import { cleanupBaseline, readCommercialBaselineRoot } from "../../cli/commands/catalog/tests/catalog-content-gaps-fixtures.js";
 
-export type HistoricalCommercialFixture = {
+export type CommercialReferenceFixture = {
   readonly root: string;
   readonly cleanup: () => Promise<void>;
 };
 
-export const createHistoricalCommercialFixture = async (): Promise<HistoricalCommercialFixture> => ({
+export const createCommercialReferenceFixture = async (): Promise<CommercialReferenceFixture> => ({
   root: await readCommercialBaselineRoot(), cleanup: cleanupBaseline
 });

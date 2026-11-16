@@ -24,7 +24,7 @@ const anotherUnit = (source: ProductRecord, specs: NonNullable<ProductRecord["sp
   };
 };
 
-test("RE015 conserva dimensiones físicas acreditadas de GAM y Gomariz sin confundir conceptos de altura", () => {
+test("conserva dimensiones físicas acreditadas de GAM y Gomariz sin confundir conceptos de altura", () => {
   for (const [source, expected] of [
     [gamPlatform, { length: 5.7, width: 2.1, height: 2.16 }],
     [gomarizPlatform, { length: 2.42, width: 1.18, height: null }],
@@ -49,7 +49,7 @@ test("RE015 conserva dimensiones físicas acreditadas de GAM y Gomariz sin confu
   assert.notEqual(resolveEditorialFacts(gamForklift)?.liftingHeightM, resolveEditorialFacts(gamForklift)?.heightM);
 });
 
-test("RE015 una unidad compatible reutiliza conversiones sin arrastrar las dimensiones del original", () => {
+test("una unidad compatible reutiliza conversiones sin arrastrar las dimensiones del original", () => {
   for (const [source, specs, expected, old] of [
     [gamPlatform, { Longitud: "6.2 m", Anchura: "2.3 m", Altura: "2.4 m" },
       ["longitud de 6,2 m", "anchura de 2,3 m", "altura del equipo de 2,4 m"],
@@ -75,7 +75,7 @@ test("RE015 una unidad compatible reutiliza conversiones sin arrastrar las dimen
   }
 });
 
-test("RE015 no interpreta dimensiones ausentes, contradictorias, sin unidad o fuera de concepto", () => {
+test("no interpreta dimensiones ausentes, contradictorias, sin unidad o fuera de concepto", () => {
   const source = gamPlatform;
   for (const [spec, value, property, claim] of [
     ["Longitud", "6200 kg", "lengthM", /longitud de /u],
@@ -98,7 +98,7 @@ test("RE015 no interpreta dimensiones ausentes, contradictorias, sin unidad o fu
   ]) assert.equal(resolveEditorialFacts(invalid), null);
 });
 
-test("RE016 centro de carga, radio de giro y mástil histórico tienen concepto y unidad propios", () => {
+test("centro de carga, radio de giro y mástil histórico tienen concepto y unidad propios", () => {
   const facts = resolveEditorialFacts(gamForklift);
   assert.equal(facts?.loadCenterMm, 1200);
   assert.equal(facts?.turningRadiusM, 4.637);
@@ -113,7 +113,7 @@ test("RE016 centro de carga, radio de giro y mástil histórico tienen concepto 
   }
 });
 
-test("RE016 la unidad nueva usa sus medidas propias y no hereda las originales", () => {
+test("la unidad nueva usa sus medidas propias y no hereda las originales", () => {
   const next = anotherUnit(gamForklift, { "Centro de carga": "1400 mm", "Radio de giro": "4.9 m" });
   const facts = resolveEditorialFacts(next);
   assert.equal(facts?.loadCenterMm, 1400);
@@ -133,7 +133,7 @@ test("RE016 la unidad nueva usa sus medidas propias y no hereda las originales",
   assert.doesNotMatch(resolveReusableEditorial(mast).general ?? "", /mástil tríplex/u);
 });
 
-test("RE016 rechaza magnitudes incompatibles, mástiles no acreditados y unidades ajenas", () => {
+test("rechaza magnitudes incompatibles, mástiles no acreditados y unidades ajenas", () => {
   for (const [spec, value, property, claim] of [
     ["Centro de carga", "1200 kg", "loadCenterMm", /centro de carga declarado/u],
     ["Centro de carga", "1200 mm o 1400 mm", "loadCenterMm", /centro de carga declarado/u],

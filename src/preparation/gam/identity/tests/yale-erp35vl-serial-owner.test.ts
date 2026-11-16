@@ -9,7 +9,7 @@ import { verifiedYaleErp35vlSerialOwner } from "../evidence/yale-erp35vl-serial-
 import { prepareImportBatch } from "../../../batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const gam = { products: accreditedSourceSamples("gam-historical") };
+const gam = { products: accreditedSourceSamples("gam-source-cases") };
 const byReference = (reference: string): ProductRecord => requireProductReference(gam.products, reference);
 const older = byReference("6835");
 const accredited = byReference("6858");

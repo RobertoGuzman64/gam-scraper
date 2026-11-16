@@ -11,8 +11,11 @@ export type EditorialUnitKnowledge = {
   readonly short: string | null;
   readonly general: string | null;
   readonly title: string | null;
-  readonly evidenceSource: string;
   readonly priority: number;
+  readonly verificationUrl?: string;
+  readonly manufacturerUrl?: string;
+  readonly manufacturerSource?: string;
+  readonly supplierSource?: string;
   readonly identityOverride?: boolean;
   readonly usage?: "fallback";
 };
@@ -40,7 +43,6 @@ export type EditorialVerifiedModelRule = {
   readonly model: string;
   readonly family: EditorialFamily;
   readonly manufacturerSource: string;
-  readonly evidenceSource: string;
 };
 
 export type EditorialTechnicalModelReference = {

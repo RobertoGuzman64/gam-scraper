@@ -1,6 +1,6 @@
 import { formatScriptStatus } from "../scripts/terminal.mjs";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { dirname, resolve, relative, sep } from "node:path";
 
 const root = process.cwd();
@@ -17,6 +17,20 @@ for (const file of central) {
   assert.doesNotMatch(content, /from\s+["'][^"']*(?:gam|gomariz|mercaeleva)\/editorial\//u, file);
   assert.doesNotMatch(content, /\brecord\.reference\s*===?\s*["'][\w-]+["']/u, file);
 }
+for (const residue of [
+  "data/editorial/evidence/legacy",
+  "data/editorial/legacy-evidence-extraction.json",
+  "data/editorial/knowledge/migration-report.json"
+]) assert.equal(existsSync(residue), false, `Infraestructura de conciliación retirada: ${residue}`);
+const modelRules = JSON.parse(source("data/editorial/knowledge/manufacturer-models.json"));
+assert.ok(Array.isArray(modelRules.entries) && modelRules.entries.every((entry) =>
+  typeof entry.manufacturerSource === "string" && /^https:\/\/[^/]+/u.test(entry.manufacturerSource) &&
+  !Object.hasOwn(entry, "evidenceSource")), "Las reglas de fabricante no dependen de archivos de migración");
+const operations = readdirSync("scripts/operations", { withFileTypes: true });
+assert.deepEqual(operations.filter((entry) => entry.isFile() &&
+  (/^editorial-history-/u.test(entry.name) || entry.name === "audit-editorial-history.mjs"))
+  .map((entry) => entry.name), [], "Scripts de conciliación obsoletos");
+
 const preparation = source("src/preparation/prepare-product.ts");
 assert.match(preparation, /description:\s*descriptions\.short/u);
 assert.match(preparation, /description_general:\s*descriptions\.general/u);

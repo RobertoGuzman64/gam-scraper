@@ -30,13 +30,19 @@ const readUnit = (value: unknown): EditorialUnitKnowledge => {
   const item = recordOf(value);
   if (!item || !isString(item.key) || !isString(item.brand) || !isString(item.model) ||
     !isString(item.sourceUrl) || !isString(item.sourceDigest) || !/^[a-f\d]{64}$/u.test(item.sourceDigest) ||
-    !nullableString(item.short) || !nullableString(item.general) || !nullableString(item.title) || !isString(item.evidenceSource) ||
+    !nullableString(item.short) || !nullableString(item.general) || !nullableString(item.title) ||
     typeof item.priority !== "number" ||
+    ["verificationUrl", "manufacturerUrl", "manufacturerSource", "supplierSource"].some((name) =>
+      item[name] !== undefined && (!isString(item[name]) || !/^https:\/\/[^/]+/u.test(item[name]))) ||
     item.usage !== undefined && item.usage !== "fallback") throw new Error("Evidencia de unidad editorial inválida");
   return {
     key: item.key, brand: item.brand, model: item.model, sourceUrl: item.sourceUrl,
     sourceDigest: item.sourceDigest, short: item.short, general: item.general, title: item.title,
-    evidenceSource: item.evidenceSource, priority: item.priority,
+    priority: item.priority,
+    ...(isString(item.verificationUrl) ? { verificationUrl: item.verificationUrl } : {}),
+    ...(isString(item.manufacturerUrl) ? { manufacturerUrl: item.manufacturerUrl } : {}),
+    ...(isString(item.manufacturerSource) ? { manufacturerSource: item.manufacturerSource } : {}),
+    ...(isString(item.supplierSource) ? { supplierSource: item.supplierSource } : {}),
     ...(item.identityOverride === true ? { identityOverride: true } : {}),
     ...(item.usage === "fallback" ? { usage: "fallback" as const } : {})
   };
@@ -81,7 +87,7 @@ export const loadEditorialKnowledge = (): EditorialKnowledge => {
     group.push(item);
     units.set(item.key, group);
   }
-  for (const entries of units.values()) entries.sort((a, b) => b.priority - a.priority || a.evidenceSource.localeCompare(b.evidenceSource));
+  for (const entries of units.values()) entries.sort((a, b) => b.priority - a.priority);
   const models = new Map<string, EditorialModelKnowledge>();
   for (const raw of modelRaw) {
     const item = readModel(raw);
@@ -101,12 +107,12 @@ export const loadEditorialKnowledge = (): EditorialKnowledge => {
     const value = recordOf(raw);
     if (!isString(value?.brand) || !isString(value.model) || !isString(value.family) ||
       !isEditorialFamily(value.family) || !isString(value.manufacturerSource) ||
-      !isString(value.evidenceSource)) throw new Error("Regla editorial de fabricante inválida");
+      !/^https:\/\/[^/]+/u.test(value.manufacturerSource)) throw new Error("Regla editorial de fabricante inválida");
     const key = editorialIdentityKey(value.brand, value.model);
     if (modelRules.has(key)) throw new Error(`Colisión de regla de fabricante: ${key}`);
     modelRules.set(key, {
       brand: value.brand, model: value.model, family: value.family,
-      manufacturerSource: value.manufacturerSource, evidenceSource: value.evidenceSource
+      manufacturerSource: value.manufacturerSource
     });
   }
   const technicalReferences = new Map<string, EditorialTechnicalModelReference[]>();

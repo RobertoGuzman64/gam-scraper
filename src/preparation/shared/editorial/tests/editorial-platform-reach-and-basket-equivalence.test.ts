@@ -21,7 +21,7 @@ const newUnit = (source: ProductRecord, specs: NonNullable<ProductRecord["specs"
   };
 };
 
-test("RE012 acredita alcance lateral de articuladas y telescópicas históricas sin confundir altura", () => {
+test("acredita alcance lateral de articuladas y telescópicas históricas sin confundir altura", () => {
   for (const [source, reach] of [[articulated, 12.19], [telescopic, 24.38]] as const) {
     const snapshot = JSON.stringify(source);
     const facts = resolveEditorialFacts(source);
@@ -37,7 +37,7 @@ test("RE012 acredita alcance lateral de articuladas y telescópicas históricas 
   }
 });
 
-test("RE012 reutiliza la medida propia en otras unidades sin heredar el alcance anterior", () => {
+test("reutiliza la medida propia en otras unidades sin heredar el alcance anterior", () => {
   for (const [source, reach, previous] of [
     [articulated, "13.4 m", "12,19"],
     [telescopic, "23.5 m", "24,38"]
@@ -58,7 +58,7 @@ test("RE012 reutiliza la medida propia en otras unidades sin heredar el alcance 
   }
 });
 
-test("RE012 descarta alcance ambiguo, unidades incompatibles y procedencia o familia ajenas", () => {
+test("descarta alcance ambiguo, unidades incompatibles y procedencia o familia ajenas", () => {
   for (const value of ["12.19 kg", "12,19 m o 13 m", "12000", "90 m"]) {
     const invalid = { ...articulated, specs: { ...articulated.specs, "Alcance lateral": value } };
     assert.equal(resolveEditorialFacts(invalid)?.lateralReachM ?? null, null);
@@ -78,7 +78,7 @@ test("RE012 descarta alcance ambiguo, unidades incompatibles y procedencia o fam
   assert.equal(resolveEditorialFacts(wrongFamily)?.lateralReachM ?? null, null);
 });
 
-test("RE035 conserva dimensiones reales de cesta de unidades GAM distintas", () => {
+test("conserva dimensiones reales de cesta de unidades GAM distintas", () => {
   for (const [source, length, width, claim] of [
     [firstBasket, 1.83, 1, "cesta de 1,83 × 1 m"],
     [secondBasket, 1.8, 0.76, "cesta de 1,8 × 0,76 m"]
@@ -96,7 +96,7 @@ test("RE035 conserva dimensiones reales de cesta de unidades GAM distintas", () 
   }
 });
 
-test("RE035 reutiliza dimensiones de cesta propias y descarta formatos no corroborables", () => {
+test("reutiliza dimensiones de cesta propias y descarta formatos no corroborables", () => {
   const unit = newUnit(firstBasket, { "Dimensiones Cesta": "2,1 x 1,1 metros" });
   const prepared = prepareSourceProduct(unit);
   assert.deepEqual([resolveEditorialFacts(unit)?.basketLengthM, resolveEditorialFacts(unit)?.basketWidthM], [2.1, 1.1]);

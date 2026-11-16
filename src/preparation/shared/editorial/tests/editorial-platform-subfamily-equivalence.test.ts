@@ -31,7 +31,7 @@ const newUnit = (
   };
 };
 
-test("RE029: tijeras eléctricas y diésel de tres proveedores conservan familia y magnitudes propias", () => {
+test("tijeras eléctricas y diésel de tres proveedores conservan familia y magnitudes propias", () => {
   for (const [source, expectedEnergy] of [
     [electricScissor, "eléctrica"], [dieselScissor, "diésel"],
     [gamElectric, null], [gamDiesel, null]
@@ -53,7 +53,7 @@ test("RE029: tijeras eléctricas y diésel de tres proveedores conservan familia
   assert.equal(resolveEditorialFacts(gamElectric)?.liftingHeightM, 8);
 });
 
-test("RE029: nuevas tijeras compatibles reutilizan composición sin copiar atributos ni textos firmados", () => {
+test("nuevas tijeras compatibles reutilizan composición sin copiar atributos ni textos firmados", () => {
   const electric = newUnit(electricScissor, "TE2591", { Capacidad: "400 kg" });
   const diesel = newUnit(dieselScissor, "M198-7238", {
     "Altura de trabajo": "20 m", "Título adicional": "PLATAFORMA TIJERA DIESEL 20 MT"
@@ -79,7 +79,7 @@ test("RE029: nuevas tijeras compatibles reutilizan composición sin copiar atrib
   }
 });
 
-test("RE031: fuentes telescópicas históricas se reconocen sin confundir boom lift con articulada", () => {
+test("fuentes telescópicas históricas se reconocen sin confundir boom lift con articulada", () => {
   assert.equal(editorialFamilyOf("telescopic boom lift"), "plataforma-telescopica");
   assert.equal(editorialFamilyOf("brazo telescópico telescopic boom lift"), "plataforma-telescopica");
   assert.equal(editorialFamilyOf("articulated boom lift"), "plataforma-articulada");
@@ -107,7 +107,7 @@ test("RE031: fuentes telescópicas históricas se reconocen sin confundir boom l
   assert.equal(resolveEditorialFacts(gamTelescopic)?.liftingHeightM, 16);
 });
 
-test("RE031: otra telescópica consume solo sus magnitudes, sin heredar la firma del original", () => {
+test("otra telescópica consume solo sus magnitudes, sin heredar la firma del original", () => {
   const source = newUnit(telescopic, "BT1462", {
     Altura: "15 metros", "Altura de trabajo": "14.50 m", Capacidad: "215 kg"
   });
@@ -130,7 +130,7 @@ test("RE031: otra telescópica consume solo sus magnitudes, sin heredar la firma
   assert.equal(JSON.stringify(source), snapshot);
 });
 
-test("RE029 y RE031: identidad, proveedor, familia, negaciones técnicas y unidades incompatibles se excluyen", () => {
+test("identidad, proveedor, familia, negaciones técnicas y unidades incompatibles se excluyen", () => {
   for (const source of [electricScissor, telescopic]) {
     for (const invalid of [
       { ...source, providerId: "otro-proveedor" },

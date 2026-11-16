@@ -34,7 +34,7 @@ const anotherUnit = (source: ProductRecord): ProductRecord => {
   };
 };
 
-test("los cinco originales de plataformas conservan el conocimiento histórico como respaldo subordinado a sus datos", () => {
+test("los cinco originales de plataformas conservan el conocimiento firmado como respaldo subordinado a sus datos", () => {
   for (const source of originals) {
     const snapshot = JSON.stringify(source);
     const selected = resolveKnowledgeEditorial(source, source);
@@ -54,7 +54,7 @@ test("los cinco originales de plataformas conservan el conocimiento histórico c
   }
 });
 
-test("las nuevas unidades compatibles reutilizan reglas técnicas pero no textos ni datos de unidades históricas", () => {
+test("las nuevas unidades compatibles reutilizan reglas técnicas pero no textos ni datos de otras unidades", () => {
   for (const source of originals) {
     const next = anotherUnit(source);
     const snapshot = JSON.stringify([source, next]);

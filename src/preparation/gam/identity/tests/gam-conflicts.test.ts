@@ -6,7 +6,7 @@ import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-
 import { resolveAttribute } from "../../../shared/classification/mapping/attribute-mapping.js";
 
 const catalog = await loadImportCatalog();
-const source = { products: accreditedSourceSamples("gam-historical") };
+const source = { products: accreditedSourceSamples("gam-source-cases") };
 const reference = (code: string) => requireProductReference(source.products, code);
 const attribute = (name: string) => {
   const found = catalog.attributes.find((item) => item.name === name);

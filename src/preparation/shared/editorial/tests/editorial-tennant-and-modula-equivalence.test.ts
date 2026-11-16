@@ -27,7 +27,7 @@ const anotherUnit = (source: ProductRecord, reference: string, retainGeneral = f
   serialNumber: null
 });
 
-test("RE045: los originales Tennant específicos conservan únicamente su evidencia histórica firmada", () => {
+test("los originales Tennant específicos conservan únicamente su evidencia histórica firmada", () => {
   for (const source of [tennantHybrid, tennantSweeper, tennantMeasured]) {
     const snapshot = JSON.stringify(source);
     const knowledge = resolveKnowledgeEditorial(source);
@@ -41,7 +41,7 @@ test("RE045: los originales Tennant específicos conservan únicamente su eviden
   }
 });
 
-test("RE045: la barredora y la fregadora con medidas verificadas reutilizan hechos técnicos", () => {
+test("la barredora y la fregadora con medidas verificadas reutilizan hechos técnicos", () => {
   for (const { source, family } of [
     { source: tennantMeasured, family: "barredora" },
     { source: tennantScrubber, family: "fregadora" }
@@ -56,7 +56,7 @@ test("RE045: la barredora y la fregadora con medidas verificadas reutilizan hech
   }
 });
 
-test("RE045: las fichas especiales no transfieren afirmaciones firmadas a una unidad sin evidencia", () => {
+test("las fichas especiales no transfieren afirmaciones firmadas a una unidad sin evidencia", () => {
   for (const source of [tennantHybrid, tennantSweeper]) {
     const incoming = anotherUnit(source, source === tennantHybrid ? "7019" : "7025");
     assert.equal(resolveKnowledgeEditorial(incoming).general, null);
@@ -72,7 +72,7 @@ test("RE045: las fichas especiales no transfieren afirmaciones firmadas a una un
   }
 });
 
-test("RE045: una identidad o procedencia alterada no desbloquea conocimiento histórico Tennant", () => {
+test("una identidad o procedencia alterada no desbloquea conocimiento histórico Tennant", () => {
   for (const source of [tennantHybrid, tennantSweeper, tennantMeasured]) {
     for (const changed of [
       { ...source, reference: "UNIDAD-DISTINTA" },
@@ -89,7 +89,7 @@ test("RE045: una identidad o procedencia alterada no desbloquea conocimiento his
   }
 });
 
-test("RE046: el almacén vertical Modula se compone con alturas propias de cada modelo", () => {
+test("el almacén vertical Modula se compone con alturas propias de cada modelo", () => {
   for (const { source, height } of [
     { source: modula250, height: 2.5 },
     { source: modula500, height: 2.5 },
@@ -112,7 +112,7 @@ test("RE046: el almacén vertical Modula se compone con alturas propias de cada 
   }
 });
 
-test("RE046: la carga declarada por bandeja no se confunde entre modelos ni se hereda de unidades firmadas", () => {
+test("la carga declarada por bandeja no se confunde entre modelos ni se hereda de unidades firmadas", () => {
   const original250 = prepareSourceProduct(modula250).product;
   const original500 = prepareSourceProduct(modula500).product;
   assert.match(original250.description_general ?? "", /bandeja de 250 kg/u);
@@ -135,7 +135,7 @@ test("RE046: la carga declarada por bandeja no se confunde entre modelos ni se h
   assert.equal(JSON.stringify(changed), snapshot);
 });
 
-test("RE046: identidad, procedencia y familia incompatibles no acreditan datos de almacén vertical", () => {
+test("identidad, procedencia y familia incompatibles no acreditan datos de almacén vertical", () => {
   for (const source of [modula250, modula500, modula3100]) {
     for (const variant of [
       { ...source, providerId: "proveedor-no-acreditado" },
@@ -152,7 +152,7 @@ test("RE046: identidad, procedencia y familia incompatibles no acreditan datos d
 });
 
 
-test("RE045: el conjunto histórico Tennant conserva todas las fichas sin universalizar firmas individuales", () => {
+test("el conjunto histórico Tennant conserva todas las fichas sin universalizar firmas individuales", () => {
   const originals = accreditedSourceSamples("gam-original")
     .filter((item) => /tennant/iu.test(`${item.brand ?? ""} ${item.title ?? ""}`));
   assert.equal(originals.length, 51);
@@ -167,7 +167,7 @@ test("RE045: el conjunto histórico Tennant conserva todas las fichas sin univer
   assert.equal(signed, 45);
 });
 
-test("RE046: el conjunto histórico Modula y un título antiguo excepcional respetan la separación entre firma y familia compartida", () => {
+test("el conjunto histórico Modula y un título antiguo excepcional respetan la separación entre firma y familia compartida", () => {
   const originals = accreditedSourceSamples("gam-original")
     .filter((item) => item.brand?.toUpperCase() === "MODULA");
   assert.equal(originals.length, 12);

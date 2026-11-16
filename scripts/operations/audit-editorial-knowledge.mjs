@@ -45,7 +45,8 @@ for (const provider of ['gam', 'gomariz', 'mercaeleva']) {
         for (const [field, signed, actual] of unmatched) {
           summary.signedDifferences.push({ provider, reference: record.reference, field,
             status: result.status, signed, prepared: actual,
-            sources: (knowledge.units.get(`${provider}:${record.reference}`) ?? []).map((entry) => entry.evidenceSource) });
+            sources: (knowledge.units.get(`${provider}:${record.reference}`) ?? []).map((entry) =>
+              entry.manufacturerSource ?? entry.manufacturerUrl ?? entry.verificationUrl ?? entry.sourceUrl) });
         }
       }
       if (!result.product.description?.trim()) counters.emptyShort++;

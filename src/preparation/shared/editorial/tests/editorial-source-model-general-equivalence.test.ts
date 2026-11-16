@@ -23,7 +23,7 @@ const documentedNewUnit = (original: ProductRecord): ProductRecord => {
   };
 };
 
-test("RE059 compone una general extensa con hechos de origen y referencia documental separada", () => {
+test("compone una general extensa con hechos de origen y referencia documental separada", () => {
   for (const reference of ["M318-0509", "M940-3556"]) {
     const original = accreditedSourceRecord("mercaeleva-original", reference);
     const snapshot = JSON.stringify(original);
@@ -40,7 +40,7 @@ test("RE059 compone una general extensa con hechos de origen y referencia docume
   }
 });
 
-test("RE059 reutiliza la general en una unidad nueva sin copiar los datos individuales de la histórica", () => {
+test("reutiliza la general en una unidad nueva sin copiar los datos individuales de la histórica", () => {
   const original = accreditedSourceRecord("mercaeleva-original", "M940-3556");
   const incoming = documentedNewUnit(original);
   const prepared = prepareSourceProduct(incoming);
@@ -53,15 +53,15 @@ test("RE059 reutiliza la general en una unidad nueva sin copiar los datos indivi
   assert.notEqual(prepared.product.description_general, prepareSourceProduct(original).product.description_general);
 });
 
-test("RE059 mantiene la general firmada en su unidad sin aplicarla a otra referencia del modelo", () => {
+test("mantiene la general firmada en su unidad sin aplicarla a otra referencia del modelo", () => {
   const original = accreditedSourceRecord("gam-original", "6650");
   const knowledge = resolveKnowledgeEditorial(original, original);
   assert.ok(knowledge.general);
   assert.equal(prepareSourceProduct(original).product.description_general, knowledge.general);
   const incoming: ProductRecord = {
     ...original,
-    reference: "CONTROL-RE059",
-    url: "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-electricas-segunda-mano/CONTROL-RE059-jlg-e300ajp",
+    reference: "CONTROL-SEMANTICO-059",
+    url: "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-electricas-segunda-mano/CONTROL-SEMANTICO-059-jlg-e300ajp",
     year: null,
     horometer: null,
     serialNumber: null,
@@ -73,7 +73,7 @@ test("RE059 mantiene la general firmada en su unidad sin aplicarla a otra refere
   assert.notEqual(prepareSourceProduct(incoming).product.description_general, knowledge.general);
 });
 
-test("RE060 añade referencias de modelos documentados a originales y a otra unidad compatible", () => {
+test("añade referencias de modelos documentados a originales y a otra unidad compatible", () => {
   for (const reference of ["M318-0509", "M940-3556"]) {
     const original = accreditedSourceRecord("mercaeleva-original", reference);
     const incoming = documentedNewUnit(original);
@@ -87,7 +87,7 @@ test("RE060 añade referencias de modelos documentados a originales y a otra uni
   }
 });
 
-test("RE060 no atribuye documentación a otra identidad, familia, energía, altura o procedencia", () => {
+test("no atribuye documentación a otra identidad, familia, energía, altura o procedencia", () => {
   const original = accreditedSourceRecord("mercaeleva-original", "M318-0509");
   const incoming = documentedNewUnit(original);
   const incompatible: ProductRecord[] = [

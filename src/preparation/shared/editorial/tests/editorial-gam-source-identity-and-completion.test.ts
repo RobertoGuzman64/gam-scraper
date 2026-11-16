@@ -8,7 +8,7 @@ import { editorialFamilyOf } from "../domain/editorial-families.js";
 import { resolveReusableEditorial } from "../domain/editorial-composition.js";
 import { resolveKnowledgeEditorial } from "../mapping/knowledge-editorial.js";
 
-const original = (reference: string): ProductRecord => accreditedSourceRecord("gam-editorial-historical", reference);
+const original = (reference: string): ProductRecord => accreditedSourceRecord("gam-editorial-cases", reference);
 const newUnit = (source: ProductRecord, reference: string): ProductRecord => ({
   ...source,
   reference,
@@ -149,7 +149,7 @@ const documentedModelDisagreements = ["6909", "4736", "4737", "4802", "4792", "6
   "4650", "6274", "6422", "2118", "6745", "2145", "2180", "2160"] as const;
 
 test("la advertencia histórica firmada prevalece ante identidades GAM divergentes", () => {
-  const available = [...accreditedSourceSamples("gam-original"), ...accreditedSourceSamples("gam-historical")];
+  const available = [...accreditedSourceSamples("gam-original"), ...accreditedSourceSamples("gam-source-cases")];
   const covered = new Set<string>();
   for (const reference of documentedModelDisagreements) {
     const source = available.find((record) => record.reference === reference);

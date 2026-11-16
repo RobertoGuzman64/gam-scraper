@@ -40,7 +40,7 @@ Estos controles incluyen galerías, identidad y colisiones, recuperaciones de se
 
 ## Siete dependencias transitivas acreditadas
 
-El mapa `transitiveExceptions` identifica tres pruebas GAM que comparten `src/preparation/gam/technical/tests/support/gam-historical-category-fixture.ts`, y cuatro pruebas que utilizan `src/testing/builders/mercaeleva-source-fixture.ts`. Se conserva su garantía de identidad, variantes, categorías, condición o especificaciones documentadas.
+El mapa `transitiveExceptions` identifica tres pruebas GAM que comparten `src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts`, y cuatro pruebas que utilizan `src/testing/builders/mercaeleva-source-fixture.ts`. Se conserva su garantía de identidad, variantes, categorías, condición o especificaciones documentadas.
 
 La autorización se verifica por **pareja de test y helper** y exige la forma de lectura de origen acreditada y **una única dependencia catalogal** en la fixture. Ampliar la entrada, introducir otra lectura u otra fixture no queda exento. Una migración futura de estas pruebas requiere equivalencia de cobertura.
 

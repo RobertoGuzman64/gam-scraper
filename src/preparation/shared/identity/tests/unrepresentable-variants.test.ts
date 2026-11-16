@@ -8,8 +8,8 @@ import { recoverMercaelevaSourceFuel } from "../../../mercaeleva/technical/evide
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const gam = { products: accreditedSourceSamples("gam-historical") };
-const mercaeleva = { products: accreditedSourceSamples("mercaeleva-historical") };
+const gam = { products: accreditedSourceSamples("gam-source-cases") };
+const mercaeleva = { products: accreditedSourceSamples("mercaeleva-source-cases") };
 const find = (provider: "gam" | "mercaeleva", reference: string): ProductRecord => {
   const products = provider === "gam" ? gam.products : mercaeleva.products;
   const result = products.find((product) => product.reference === reference);

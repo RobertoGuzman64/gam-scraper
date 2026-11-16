@@ -26,7 +26,7 @@ const withConditionEvidence = (record: ProductRecord, condition: "Nuevo" | "Segu
   }
 });
 
-test("RE027 conserva la condición acreditada de originales de los tres proveedores", () => {
+test("conserva la condición acreditada de originales de los tres proveedores", () => {
   const cases = [
     ["gam-original", "6682", "Segunda mano", /de ocasión/u],
     ["gam-original", "2057", "Nuevo", /nueva/u],
@@ -44,7 +44,7 @@ test("RE027 conserva la condición acreditada de originales de los tres proveedo
   }
 });
 
-test("RE027 reutiliza la condición en nuevas unidades y descarta estados técnicos incompatibles", () => {
+test("reutiliza la condición en nuevas unidades y descarta estados técnicos incompatibles", () => {
   for (const create of [controlledGamForklift, controlledGomarizForklift, controlledMercaelevaForklift]) {
     const conditions: readonly ("Nuevo" | "Segunda mano")[] = create === controlledGomarizForklift ?
       ["Segunda mano"] : ["Nuevo", "Segunda mano"];
@@ -67,7 +67,7 @@ test("RE027 reutiliza la condición en nuevas unidades y descarta estados técni
   }
 });
 
-test("RE027 un resumen comercial de arrastrador no normaliza un Nuevo contradicho por Estado Usado", () => {
+test("un resumen comercial de arrastrador no normaliza un Nuevo contradicho por Estado Usado", () => {
   const source = accreditedSourceRecord("gam-original", "2738");
   const prepared = prepareSourceProduct(source).product;
   const raw = normalizeEditorialSummary(source.shortDescription, source.model);
@@ -76,7 +76,7 @@ test("RE027 un resumen comercial de arrastrador no normaliza un Nuevo contradich
   assert.equal(normalizeCorroboratedTowingSummary(conflicting, prepared, raw), raw);
 });
 
-test("RE028 recupera ubicación, serie y referencia únicamente de originales corroborados", () => {
+test("recupera ubicación, serie y referencia únicamente de originales corroborados", () => {
   const gam = accreditedSourceRecord("gam-original", "6682");
   const historical = prepareSourceProduct(gam).product.description_general ?? "";
   assert.match(historical, /Ubicación declarada para esta unidad: TARRAGONA/u);
@@ -88,7 +88,7 @@ test("RE028 recupera ubicación, serie y referencia únicamente de originales co
     { ...mercaeleva, specs: { ...mercaeleva.specs, "Artículo No.": "OTRO" } }), general);
 });
 
-test("RE028 permite unidades compatibles nuevas y bloquea datos propios de otra unidad", () => {
+test("permite unidades compatibles nuevas y bloquea datos propios de otra unidad", () => {
   const factories = [controlledGamForklift, controlledGomarizForklift, controlledMercaelevaForklift];
   for (const create of factories) {
     const base = create();
@@ -122,7 +122,7 @@ test("RE028 permite unidades compatibles nuevas y bloquea datos propios de otra 
   }
 });
 
-test("RE028 el contexto de una unidad GAM nueva llega a la preparación sin copiar la anterior", () => {
+test("el contexto de una unidad GAM nueva llega a la preparación sin copiar la anterior", () => {
   const original = accreditedSourceRecord("gam-original", "6682");
   const next: ProductRecord = {
     ...original,

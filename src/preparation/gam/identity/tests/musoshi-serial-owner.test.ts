@@ -8,7 +8,7 @@ import { verifiedMusoshiSerialOwner } from "../evidence/musoshi-serial-evidence.
 import { prepareImportBatch } from "../../../batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const gam = { products: accreditedSourceSamples("gam-historical") };
+const gam = { products: accreditedSourceSamples("gam-source-cases") };
 const target = (reference: string): ProductRecord => {
   const product = gam.products.find((record) => record.reference === reference);
   assert.ok(product, reference);

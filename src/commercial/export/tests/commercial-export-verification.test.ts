@@ -4,7 +4,7 @@ import { access, mkdtemp, readFile, readdir, rm, writeFile, symlink } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { createHistoricalCommercialFixture, type HistoricalCommercialFixture } from "../../../testing/builders/historical-commercial-fixture.js";
+import { createCommercialReferenceFixture, type CommercialReferenceFixture } from "../../../testing/builders/commercial-reference-fixture.js";
 import { buildCommercialExportFiles, buildCommercialDeliveryPlan, type CommercialExportFile } from "../commercial-export.js";
 import type { CommercialExportPlan } from "../../projection/export-projection.js";
 import { validateCommercialExportFiles, verifyCommercialExportArchive, verifyCommercialExportDirectory, verifyCommercialExportSources, verifyCommercialExportZip } from "../commercial-export-verification.js";
@@ -435,9 +435,9 @@ test("rechaza exclusiones incoherentes, aunque los totales del manifiesto coinci
   })), /Totales o procedencia/);
 });
 
-let historicalFixturePromise: Promise<HistoricalCommercialFixture> | undefined;
-const historicalFixture = (): Promise<HistoricalCommercialFixture> =>
-  historicalFixturePromise ??= createHistoricalCommercialFixture();
+let historicalFixturePromise: Promise<CommercialReferenceFixture> | undefined;
+const historicalFixture = (): Promise<CommercialReferenceFixture> =>
+  historicalFixturePromise ??= createCommercialReferenceFixture();
 const commercialFixtureRoot = async (): Promise<string> => (await historicalFixture()).root;
 test.after(async () => {
   if (historicalFixturePromise) await (await historicalFixturePromise).cleanup();

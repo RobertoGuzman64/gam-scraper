@@ -159,7 +159,7 @@ test("ausencia, unidades incompatibles y valores ambiguos no se convierten en la
 });
 
 
-test("RE008 conserva el original de altura contradictoria sin generalizar su corrección técnica", () => {
+test("conserva el original de altura contradictoria sin generalizar su corrección técnica", () => {
   const source = accreditedSourceRecord("gomariz-original", "TE1858");
   const snapshot = JSON.stringify(source);
   assert.equal(source.specs?.["Altura plataforma"], "14.30 m");
@@ -186,7 +186,7 @@ test("RE008 conserva el original de altura contradictoria sin generalizar su cor
   assert.equal(JSON.stringify(source), snapshot);
 });
 
-test("RE008 generaliza alturas propias sin heredar las de otra unidad ni mezclar conceptos", () => {
+test("generaliza alturas propias sin heredar las de otra unidad ni mezclar conceptos", () => {
   const source = accreditedSourceRecord("gomariz-original", "TE1618");
   const compatible: ProductRecord = {
     ...source,

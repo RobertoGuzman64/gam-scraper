@@ -33,7 +33,7 @@ const claimGeneral = "La ficha técnica identifica las prestaciones documentadas
 
 const forkliftFactories = [controlledGamForklift, controlledGomarizForklift, controlledMercaelevaForklift];
 
-test("RE053: títulos documentados de fuentes históricas llegan a preparación sin mutaciones", () => {
+test("títulos documentados de fuentes históricas llegan a preparación sin mutaciones", () => {
   for (const { reference, expected } of documented) {
     const source = accreditedSourceRecord("mercaeleva-original", reference);
     const unchanged = JSON.stringify(source);
@@ -45,7 +45,7 @@ test("RE053: títulos documentados de fuentes históricas llegan a preparación 
   }
 });
 
-test("RE053: nuevas referencias conservan la regla pero no los atributos de la unidad anterior", () => {
+test("nuevas referencias conservan la regla pero no los atributos de la unidad anterior", () => {
   for (const { reference, expected } of documented) {
     const source = accreditedSourceRecord("mercaeleva-original", reference);
     const incoming = newUnit(source);
@@ -59,7 +59,7 @@ test("RE053: nuevas referencias conservan la regla pero no los atributos de la u
   }
 });
 
-test("RE053: no se transfiere un título documentado a identidad, procedencia o datos técnicos contradictorios", () => {
+test("no se transfiere un título documentado a identidad, procedencia o datos técnicos contradictorios", () => {
   for (const { reference } of documented) {
     const source = accreditedSourceRecord("mercaeleva-original", reference);
     const incoming = newUnit(source);
@@ -84,7 +84,7 @@ test("RE053: no se transfiere un título documentado a identidad, procedencia o 
   } }), null);
 });
 
-test("RE064: afirmaciones independientes se conservan, negadas y opcionales no se añaden", () => {
+test("afirmaciones independientes se conservan, negadas y opcionales no se añaden", () => {
   for (const factory of forkliftFactories) {
     const source = factory();
     const stated: ProductRecord = { ...source,
@@ -101,7 +101,7 @@ test("RE064: afirmaciones independientes se conservan, negadas y opcionales no s
   }
 });
 
-test("RE064: ninguna afirmación de origen se asocia a otra unidad o identidad", () => {
+test("ninguna afirmación de origen se asocia a otra unidad o identidad", () => {
   for (const factory of forkliftFactories) {
     const source: ProductRecord = {
       ...factory(), longDescription: "La carretilla incorpora frenado regenerativo y dirección asistida." };
@@ -117,7 +117,7 @@ test("RE064: ninguna afirmación de origen se asocia a otra unidad o identidad",
   }
 });
 
-test("RE064: el cierre limpia afirmaciones aisladas solo cuando texto y fuente coinciden", () => {
+test("el cierre limpia afirmaciones aisladas solo cuando texto y fuente coinciden", () => {
   for (const factory of forkliftFactories) {
     const record = factory();
     const text = "La ficha MARCA MODELO10 declara información comprobada. Sí. La configuración de esta unidad requiere verificación.";
@@ -130,7 +130,7 @@ test("RE064: el cierre limpia afirmaciones aisladas solo cuando texto y fuente c
   }
 });
 
-test("RE064: la preparación no asciende un anuncio sin procedencia y deja intactos los originales", () => {
+test("la preparación no asciende un anuncio sin procedencia y deja intactos los originales", () => {
   for (const factory of forkliftFactories) {
     const source: ProductRecord = {
       ...factory(), title: "Máquina sin identidad", brand: null, model: null,
@@ -145,7 +145,7 @@ test("RE064: la preparación no asciende un anuncio sin procedencia y deja intac
   }
 });
 
-test("RE064: el flujo completo solo incorpora prestaciones declaradas en los tres proveedores", () => {
+test("el flujo completo solo incorpora prestaciones declaradas en los tres proveedores", () => {
   for (const factory of forkliftFactories) {
     const source = factory();
     for (const [declaration, accepted] of [
@@ -163,7 +163,7 @@ test("RE064: el flujo completo solo incorpora prestaciones declaradas en los tre
   }
 });
 
-test("RE064: la afirmación documentada de un original no se copia a una unidad nueva sin esa evidencia", () => {
+test("la afirmación documentada de un original no se copia a una unidad nueva sin esa evidencia", () => {
   const historical = accreditedSourceRecord("gam-original", "6901");
   const originalGeneral = prepareSourceProduct(historical).product.description_general ?? "";
   assert.match(originalGeneral, /La descripción de origen declara mandos proporcionales/u);

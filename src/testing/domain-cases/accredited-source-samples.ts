@@ -5,10 +5,10 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 
 export const accreditedSourceDatasets = [
   "gam-original",
-  "gam-historical",
-  "gam-editorial-historical",
+  "gam-source-cases",
+  "gam-editorial-cases",
   "mercaeleva-original",
-  "mercaeleva-historical",
+  "mercaeleva-source-cases",
   "gomariz-original",
   "gomariz-regression",
   "gomariz-special-original",

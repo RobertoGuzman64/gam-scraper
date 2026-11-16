@@ -29,7 +29,7 @@ node GUARDS/tests-shared-editorial-guard.mjs
 node GUARDS/tests-commercial-editorial-boundary-guard.mjs
 node GUARDS/tests-editorial-architecture-guard.mjs
 node GUARDS/tests-domain-tests-guard.mjs
-node --test GUARDS/tests-architecture-guards.test.mjs
+node --test --test-reporter=./scripts/test-runner-ui.mjs GUARDS/tests-architecture-guards.test.mjs
 node scripts/operations/rebuild-editorial-knowledge.mjs --check
 node GUARDS/tests-performance-guard.mjs
 node GUARDS/tests-commercial-contract-guard.mjs
@@ -43,12 +43,12 @@ Los dos guards arquitectónicos y sus autopruebas **ya forman parte de `npm test
 ```powershell
 node GUARDS/tests-editorial-architecture-guard.mjs --detail
 node GUARDS/tests-domain-tests-guard.mjs --detail
-node --test GUARDS/tests-architecture-guards.test.mjs
+node --test --test-reporter=./scripts/test-runner-ui.mjs GUARDS/tests-architecture-guards.test.mjs
 ```
 
 El core necesita `node_modules/typescript` local y no utiliza el TypeScript global como respaldo. `node scripts/run-tests.mjs` aislado no comprueba los guards, el consenso de modelos ni el build. `npm run build` utiliza `scripts/run-build.mjs`. Las suites `src/**/*.test.ts` son descubiertas por el runner desde sus equivalentes compilados, junto a los tests de `scripts/` que éste admita.
 
-Los guardias controlan fronteras, no verifican por sí solos los resultados comerciales ni los contratos de cada RE. El guard de rendimiento y el de contrato comercial también son independientes del guard de arquitectura de tests.
+Los guards controlan fronteras, no verifican por sí solos los resultados comerciales ni cada contrato funcional. El guard de rendimiento y el de contrato comercial también son independientes del guard de arquitectura de tests.
 
 ## Guard editorial y guard de tests
 
@@ -72,10 +72,14 @@ La enumeración vigente y la razón de cada autorización están en [GUARDS/READ
 | Integridad de originales o publicaciones | Manifiestos, firmas, archivos y pruebas de integración correspondientes | Prohibir indiscriminadamente el acceso legítimo al catálogo                      |
 | Evolución de composición editorial       | Comprobar título, corta, general, estado y especificaciones             | Congelar texto masivo por hash o aceptar cualquier nueva redacción sin evidencia |
 
-Para retirar una suite histórica, conservar primero la garantía que protegía; eliminar imports, fixtures y helpers sin consumidores únicamente después de acreditar equivalencia. Los 20 tests reservados se preservan como controles de integración, pero esa reserva no es permiso para multiplicar pruebas por referencia.
+Para retirar una suite redundante, conservar primero la garantía que protegía; eliminar imports, fixtures y helpers sin consumidores únicamente después de acreditar equivalencia. Los 20 tests reservados se preservan como controles de integración, pero esa reserva no es permiso para multiplicar pruebas por referencia.
 
 ## Criterio de cierre de una modificación
 
 Ejecutar suites relevantes, guards arquitectónicos y oficiales disponibles, comprobar prestaciones/negaciones y diferencias de catálogo cuando haya cambios productivos. Registrar separadamente PASS, FAIL real y **no ejecutado** por dependencias del entorno. No recalcular ni sobreescribir `rulesSha256`, manifests, aprobaciones o originales para acomodar cambios.
 
-Los últimos cortes editoriales y del guard son positivos en sus alcances, pero **el build y `npm test` oficiales completos no estaban acreditados** por dependencias ausentes en el entorno anterior; esta documentación no afirma lo contrario. Ver [Validación](VALIDATION.md), [Rendimiento](TESTS_RENDIMIENTO_CAMPANAS.md) y [Motor editorial](EDITORIAL_ENGINE.md).
+Los cortes parciales de los guards no sustituyen un `npm test` oficial completo. Cada entrega debe acreditar por separado compilación y regresión, registrando los límites de entorno si impiden ejecutarlas. Ver [Validación](VALIDATION.md), [Rendimiento](TESTS_RENDIMIENTO_CAMPANAS.md) y [Motor editorial](EDITORIAL_ENGINE.md).
+
+## Integridad del conocimiento integrado
+
+`npm test` comprueba `data/editorial/knowledge/verified-units.json` contra los originales canónicos: identidad completa, URL, marca, modelo y SHA-256 de contenido. La integridad se comprueba contra las fuentes vigentes, sin depender de archivos temporales retirados. El guard editorial impide restaurar el árbol de fuentes archivadas o scripts de conciliación retirados.

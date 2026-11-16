@@ -9,7 +9,7 @@ import { gamElevationIdentityConflict } from "../../../gam/identity/evidence/ele
 import { resolveEditorialSource } from "../domain/editorial-source.js";
 import { resolveKnowledgeEditorial } from "../mapping/knowledge-editorial.js";
 
-const original = (reference: string): ProductRecord => accreditedSourceRecord("gam-editorial-historical", reference);
+const original = (reference: string): ProductRecord => accreditedSourceRecord("gam-editorial-cases", reference);
 const category = createCategorySlugResolver(await loadImportCatalog());
 const another = (source: ProductRecord): ProductRecord => {
   const reference = `${source.reference}-OTRA`;
@@ -17,7 +17,7 @@ const another = (source: ProductRecord): ProductRecord => {
     year: null, horometer: null, serialNumber: null };
 };
 
-test("RE050 conserva los cuatro grupos históricos y sus semánticas industriales", () => {
+test("conserva los cuatro grupos históricos y sus semánticas industriales", () => {
   for (const [reference, expected] of [
     ["2738", /Capacidad de arrastre 45300 kg/u],
     ["2625", /4,5 metros/u],
@@ -40,7 +40,7 @@ test("RE050 conserva los cuatro grupos históricos y sus semánticas industriale
   assert.equal(category(original("4762")), "plataforma-articulada-electrica");
 });
 
-test("RE050 reutiliza BTS y Orion sin mezclar magnitudes, variante ni firma entre unidades", () => {
+test("reutiliza BTS y Orion sin mezclar magnitudes, variante ni firma entre unidades", () => {
   const towingSource = original("2738");
   const towing = another(towingSource);
   const resourced: ProductRecord = {
@@ -64,7 +64,7 @@ test("RE050 reutiliza BTS y Orion sin mezclar magnitudes, variante ni firma entr
   }
 });
 
-test("RE050 distingue Bravi recogepedidos y XGA eléctrico sin trasvasar categorías", () => {
+test("distingue Bravi recogepedidos y XGA eléctrico sin trasvasar categorías", () => {
   const picker = another(original("159"));
   const residential = another(original("5903"));
   const articulating = another(original("4762"));
@@ -80,7 +80,7 @@ test("RE050 distingue Bravi recogepedidos y XGA eléctrico sin trasvasar categor
   }
 });
 
-test("RE050 detecta XGA con modelo de título o resumen incompatible sin resolverlo por conjetura", () => {
+test("detecta XGA con modelo de título o resumen incompatible sin resolverlo por conjetura", () => {
   for (const reference of ["4752", "5902"]) {
     const source = original(reference);
     assert.equal(gamElevationIdentityConflict(source), true);

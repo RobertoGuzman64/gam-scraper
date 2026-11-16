@@ -7,7 +7,7 @@ import { sourceCategoryQualityIssue, SOURCE_CATEGORY_ISSUE } from "../../../shar
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const musoshi = accreditedSourceRecord("gam-historical", "6806");
+const musoshi = accreditedSourceRecord("gam-source-cases", "6806");
 
 test("Musoshi 6806 documenta un cuatriciclo y no se clasifica como furgoneta", () => {
   const original = structuredClone(musoshi);

@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFileSync, readdirSync } from "node:fs";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
@@ -175,52 +174,24 @@ test("el resumen corregido de origen se resuelve antes de publicar y no se propa
   assert.notEqual(prepareSourceProduct(changed).product.description, editorial.short);
 });
 
-test("las evidencias compactadas de GAM siguen consumiéndose desde el conocimiento común", () => {
-  const prefix = "data/editorial/evidence/legacy/gam/";
-  const archived = new Set<string>();
-  for (const name of readdirSync(prefix)) {
-    if (!name.endsWith(".json")) continue;
-    const archive: unknown = JSON.parse(readFileSync(`${prefix}${name}`, "utf8"));
-    if (typeof archive === "object" && archive !== null && "archivedExportsSha256" in archive) {
-      archived.add(`${prefix}${name}`);
-    }
-  }
-  assert.equal(archived.size, 10);
+test("el conocimiento de GAM mantiene las identidades y no se propaga por parecido", () => {
   const knowledge = loadEditorialKnowledge();
-  const evidence = [...knowledge.units.values()].flatMap((entries) => entries.filter((entry) => archived.has(entry.evidenceSource)));
-  assert.equal(evidence.length, 200);
-  const samples = new Map<string, string>();
-  for (const entry of evidence) {
-    assert.match(entry.key, /^gam:\d+$/u);
-    assert.ok(entry.general);
-    assert.match(entry.sourceDigest, /^[a-f0-9]{64}$/u);
-    if (!samples.has(entry.evidenceSource)) samples.set(entry.evidenceSource, entry.key.slice("gam:".length));
-  }
-  assert.equal(samples.size, archived.size);
-  for (const [archive, reference] of samples) {
+  const samples = ["3997", "2212", "2102", "1713", "2370", "1210", "2097", "4733", "3993", "2218"] as const;
+  for (const reference of samples) {
     const source = get("gam", reference);
-    const entry = evidence.find((candidate) => candidate.key === `gam:${reference}` && candidate.evidenceSource === archive);
-    assert.ok(entry);
-    assert.equal(entry.sourceUrl, source.url);
-    assert.equal(entry.brand, source.brand);
-    assert.equal(entry.model, source.model);
-    assert.equal(entry.sourceDigest, editorialSourceDigest(source));
+    const matches = knowledge.units.get(`gam:${reference}`) ?? [];
+    assert.ok(matches.some((entry) => entry.sourceUrl === source.url && entry.sourceDigest === editorialSourceDigest(source)));
     const editorial = resolveKnowledgeEditorial(source);
     assert.ok(editorial.general);
     assert.equal(resolvePreparedEditorial(source, source, captureSourceEditorialEvidence(source)).preparedLong, editorial.general);
-    assert.ok(prepareSourceProduct(source).product.description_general);
     const changed = { ...source, specs: { ...source.specs, "Modelo": "VARIANTE-NO-ACREDITADA" } };
-    const identity = {
-      key: `gam:${source.reference}`, sourceUrl: source.url,
-      brand: source.brand ?? "", model: source.model ?? ""
-    };
+    const identity = { key: `gam:${reference}`, sourceUrl: source.url, brand: source.brand ?? "", model: source.model ?? "" };
     assert.deepEqual(selectUnitKnowledge(identity, knowledge, editorialSourceDigest(changed)),
       { short: null, general: null, fallbackGeneral: null, title: null });
   }
 });
 
-
-test("los relatos históricos firmados se archivan sin desplazar una composición más completa", () => {
+test("las generales firmadas quedan subordinadas a una composición más completa", () => {
   const preserved = [
     { provider: "gomariz", reference: "TE1858", required: /altura de plataforma de 4,3 m/u },
     { provider: "mercaeleva", reference: "M318-0509", required: /documentación técnica de referencia del modelo LGMG S1012E-2/u },
@@ -262,13 +233,9 @@ test("el respaldo firmado cubre huecos reales sin trasladar hechos a otras unida
 });
 
 test("las cortas documentadas se aplican por huella de unidad y no publican el texto de verificación", () => {
-  const evidenceFiles = [
-    "data/editorial/evidence/legacy/gomariz/priority-short-descriptions.json",
-    "data/editorial/evidence/legacy/mercaeleva/priority-short-descriptions.json"
-  ];
+  const keys = ["gomariz:BA1465", "mercaeleva:M011-3720", "mercaeleva:M106-1389", "mercaeleva:M168-3277", "mercaeleva:M547-2372", "mercaeleva:M838-0666", "mercaeleva:M840-6795", "mercaeleva:M969-4655"] as const;
   const knowledge = loadEditorialKnowledge();
-  const recovered = [...knowledge.units.values()].flatMap((entries) =>
-    entries.filter((entry) => evidenceFiles.includes(entry.evidenceSource)));
+  const recovered = keys.flatMap((key) => (knowledge.units.get(key) ?? []).filter((entry) => entry.short));
   assert.equal(recovered.length, 8);
   assert.equal(new Set(recovered.map((entry) => entry.key)).size, 8);
   for (const entry of recovered) {

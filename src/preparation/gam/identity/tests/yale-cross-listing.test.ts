@@ -8,7 +8,7 @@ import { verifiedYaleErp35vlCrossListing } from "../evidence/yale-erp35vl-serial
 import { prepareImportBatch } from "../../../batch-identity.js";
 
 const catalog = await loadImportCatalog();
-const gam = { products: accreditedSourceSamples("gam-historical") };
+const gam = { products: accreditedSourceSamples("gam-source-cases") };
 const get = (reference: string): ProductRecord => {
   const record = gam.products.find((item) => item.reference === reference);
   assert.ok(record, reference);

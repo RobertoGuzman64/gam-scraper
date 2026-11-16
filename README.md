@@ -282,7 +282,7 @@ El contrato de cuatro proveedores describe el software, **no acredita por sí so
 
 ## Documentación
 
-La **fuente de verdad vigente** sobre la reforma editorial y de tests está en los documentos siguientes. Los informes de migración histórica y los documentos de continuidad externa son fotografías de su fecha, no instrucciones para restaurar narradores o reabrir tests ya consolidados.
+La **fuente de verdad vigente** sobre la reforma editorial y de tests está en los documentos siguientes. Las guías operativas vigentes describen los propietarios definitivos; los guiones y las fuentes temporales de conciliación no forman parte del funcionamiento ordinario.
 
 - [Objetivos y alcance](docs/SCRAPER_OBJECTIVES.md): prioridades y criterios de aceptación.
 - [Arquitectura](docs/ARCHITECTURE.md): módulos, responsabilidades, preparación y extensibilidad.

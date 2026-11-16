@@ -24,7 +24,7 @@ const newUnit = (source: ProductRecord, reference: string, specs: NonNullable<Pr
   specs: { ...source.specs, ...specs }
 });
 
-test("RE032: originales CTE sobre orugas utilizan el motor compartido y conservan sus hechos", () => {
+test("originales CTE sobre orugas utilizan el motor compartido y conservan sus hechos", () => {
   for (const { source, height, load } of [
     { source: originalCompact, height: 17, load: 200 },
     { source: originalElectric, height: 18, load: 230 },
@@ -45,7 +45,7 @@ test("RE032: originales CTE sobre orugas utilizan el motor compartido y conserva
   }
 });
 
-test("RE032: otra unidad compatible aprovecha la misma regla sin heredar dimensiones ni carga", () => {
+test("otra unidad compatible aprovecha la misma regla sin heredar dimensiones ni carga", () => {
   for (const { source, reference, specs, expected, previous } of [
     { source: originalElectric, reference: "8170", specs: { "Longitud": "5300 mm", "Capacidad de carga (kg)": "215 KG" },
       expected: ["capacidad de 215 kg", "longitud de 5,3 m"], previous: ["capacidad de 230 kg", "longitud de 5,2 m"] },
@@ -73,7 +73,7 @@ test("RE032: otra unidad compatible aprovecha la misma regla sin heredar dimensi
   }
 });
 
-test("RE032: una familia incompatible declarada en el título no se acepta por su ruta de orugas", () => {
+test("una familia incompatible declarada en el título no se acepta por su ruta de orugas", () => {
   for (const source of [originalCompact, originalElectric, originalExtended]) {
     const contradicted: ProductRecord = {
       ...source,
@@ -84,7 +84,7 @@ test("RE032: una familia incompatible declarada en el título no se acepta por s
   }
 });
 
-test("RE032: procedencia, identidad y declaración de familia incompatible bloquean composición", () => {
+test("procedencia, identidad y declaración de familia incompatible bloquean composición", () => {
   const source = newUnit(originalElectric, "8170", { "Longitud": "5300 mm" });
   for (const candidate of [
     { ...source, providerId: "proveedor-no-acreditado" },
@@ -99,7 +99,7 @@ test("RE032: procedencia, identidad y declaración de familia incompatible bloqu
   }
 });
 
-test("RE032: unidades y magnitudes incompatibles no se convierten en prestaciones", () => {
+test("unidades y magnitudes incompatibles no se convierten en prestaciones", () => {
   const source = newUnit(originalElectric, "8170", { "Longitud": "5300 mm" });
   const wrongCapacity = { ...source, specs: { ...source.specs, "Capacidad de carga (kg)": "215 m" } };
   assert.equal(resolveEditorialFacts(wrongCapacity), null);
@@ -112,7 +112,7 @@ test("RE032: unidades y magnitudes incompatibles no se convierten en prestacione
   assert.doesNotMatch(resolveReusableEditorial(wrongDimension).general ?? "", /longitud de/u);
 });
 
-test("RE032: una tijera con orugas sigue siendo tijera y no recibe hechos de las CTE", () => {
+test("una tijera con orugas sigue siendo tijera y no recibe hechos de las CTE", () => {
   const original = originalTrackedScissor;
   assert.equal(resolveEditorialFacts(original)?.family, "plataforma-tijera");
   assert.match(resolveReusableEditorial(original).short ?? "", /Plataforma de tijera/u);
@@ -123,7 +123,7 @@ test("RE032: una tijera con orugas sigue siendo tijera y no recibe hechos de las
   assert.doesNotMatch(prepareSourceProduct(incoming).product.description_general ?? "", /CTE TRACCESS/u);
 });
 
-test("RE032: las orugas CTE acreditables del censo no trasladan conocimiento firmado entre unidades", () => {
+test("las orugas CTE acreditables del censo no trasladan conocimiento firmado entre unidades", () => {
   const originals = accreditedSourceSamples("gam-original")
     .filter((source) => source.brand === "CTE" && resolveEditorialFacts(source)?.family === "plataforma-oruga");
   assert.ok(originals.length >= 6);
@@ -136,7 +136,7 @@ test("RE032: las orugas CTE acreditables del censo no trasladan conocimiento fir
   }
 });
 
-test("RE032: originales excepcionales conservan su tratamiento sin extrapolar textos de unidad", () => {
+test("originales excepcionales conservan su tratamiento sin extrapolar textos de unidad", () => {
   const sourceWithDescription = accreditedSourceRecord("gam-original", "4655");
   const sourceWithSignedGeneral = accreditedSourceRecord("gam-original", "6171");
   assert.equal(prepareSourceProduct(sourceWithDescription).status, "ready");

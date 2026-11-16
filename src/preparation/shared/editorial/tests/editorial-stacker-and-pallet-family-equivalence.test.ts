@@ -25,7 +25,7 @@ const nextUnit = (source: ProductRecord, reference: string, specs: NonNullable<P
   specs: { ...source.specs, ...specs }
 });
 
-test("RE038: apiladores GAM y Mercaeleva componen elevación y carga con una familia compartida", () => {
+test("apiladores GAM y Mercaeleva componen elevación y carga con una familia compartida", () => {
   for (const [source, elevation, capacity, preparedHeight] of [
     [stackerGam, 2.95, 1400, "altura de elevación de 2,95 m"],
     [stackerMercaeleva, 3.6, 1200, "3.600 mm de elevación"]
@@ -50,7 +50,7 @@ test("RE038: apiladores GAM y Mercaeleva componen elevación y carga con una fam
   assert.doesNotMatch(gamPrepared, /Apilador eléctrica /u);
 });
 
-test("RE039: transpaletas GAM y Mercaeleva reutilizan su carga sin atribuir elevación de apilador", () => {
+test("transpaletas GAM y Mercaeleva reutilizan su carga sin atribuir elevación de apilador", () => {
   for (const [source, load] of [[palletGam, 1400], [palletMercaeleva, 2000]] as const) {
     const snapshot = JSON.stringify(source);
     const facts = resolveEditorialFacts(source);
@@ -68,7 +68,7 @@ test("RE039: transpaletas GAM y Mercaeleva reutilizan su carga sin atribuir elev
   }
 });
 
-test("RE038–RE039: nuevas unidades compatibles reciben solo sus medidas propias", () => {
+test("nuevas unidades compatibles reciben solo sus medidas propias", () => {
   const cases = [
     { source: stackerGam, reference: "7663", specs: { "Altura de elevación (mm)": "3550 mm" },
       claim: "altura de elevación de 3,55 m", previous: "altura de elevación de 2,95 m" },
@@ -94,7 +94,7 @@ test("RE038–RE039: nuevas unidades compatibles reciben solo sus medidas propia
   }
 });
 
-test("RE038–RE039: identidades, fuentes y familias ajenas no reciben hechos compartidos", () => {
+test("identidades, fuentes y familias ajenas no reciben hechos compartidos", () => {
   for (const source of [stackerGam, stackerMercaeleva, palletGam, palletMercaeleva]) {
     for (const invalid of [
       { ...source, providerId: "desconocido" },
@@ -111,7 +111,7 @@ test("RE038–RE039: identidades, fuentes y familias ajenas no reciben hechos co
   }
 });
 
-test("RE038–RE039: medidas incompatibles y ausencia de prestaciones no se convierten en afirmaciones", () => {
+test("medidas incompatibles y ausencia de prestaciones no se convierten en afirmaciones", () => {
   const invalidStacker = { ...stackerGam, specs: { ...stackerGam.specs, "Altura de elevación (mm)": "3550 kg" } };
   assert.equal(resolveEditorialFacts(invalidStacker)?.liftingHeightM ?? null, null);
   assert.doesNotMatch(resolveReusableEditorial(invalidStacker).general ?? "", /altura de elevación/u);

@@ -18,7 +18,7 @@ const originals = [
 const preparedEditorial = (record: ProductRecord) =>
   resolvePreparedEditorial(record, record, captureSourceEditorialEvidence(record));
 
-test("RE054 compone cortas históricas mediante hechos técnicos compartidos en los tres orígenes", () => {
+test("compone cortas históricas mediante hechos técnicos compartidos en los tres orígenes", () => {
   for (const source of originals) {
     const snapshot = JSON.stringify(source);
     const shared = resolveReusableEditorial(source);
@@ -34,7 +34,7 @@ test("RE054 compone cortas históricas mediante hechos técnicos compartidos en 
   }
 });
 
-test("RE054 aplica hechos de cada nueva unidad compatible sin reutilizar las cifras de otra", () => {
+test("aplica hechos de cada nueva unidad compatible sin reutilizar las cifras de otra", () => {
   for (const [source, newLoad, expected, forbidden] of [
     [controlledGamForklift(), "3000 kg", "3.000 kg", "2.500 kg"],
     [controlledGomarizPlatform(), "12 m", "12 m", "10 m"],
@@ -70,7 +70,7 @@ test("RE054 aplica hechos de cada nueva unidad compatible sin reutilizar las cif
   }
 });
 
-test("RE054 no compone hechos desde identidad, procedencia o magnitud inválida", () => {
+test("no compone hechos desde identidad, procedencia o magnitud inválida", () => {
   for (const source of [controlledGamForklift(), controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
     for (const invalid of [
       { ...source, model: "MODELO11" },
@@ -89,7 +89,7 @@ test("RE054 no compone hechos desde identidad, procedencia o magnitud inválida"
   }
 });
 
-test("RE055 comprime anuncios largos originales conservando hechos en la general", () => {
+test("comprime anuncios largos originales conservando hechos en la general", () => {
   for (const reference of ["6262", "6807", "6873"]) {
     const source = accreditedSourceRecord("gam-original", reference);
     const before = JSON.stringify(source);
@@ -105,7 +105,7 @@ test("RE055 comprime anuncios largos originales conservando hechos en la general
   }
 });
 
-test("RE055 reutiliza la compresión únicamente con evidencia auténtica y sin pérdida de datos", () => {
+test("reutiliza la compresión únicamente con evidencia auténtica y sin pérdida de datos", () => {
   const source = accreditedSourceRecord("gam-original", "6262");
   const newUnit: ProductRecord = {
     ...source,
@@ -126,7 +126,7 @@ test("RE055 reutiliza la compresión únicamente con evidencia auténtica y sin 
   }
 });
 
-test("RE056 mantiene corta y general diferenciadas sin intercambiar sus procedencias", () => {
+test("mantiene corta y general diferenciadas sin intercambiar sus procedencias", () => {
   const sources = [
     accreditedSourceRecord("gam-original", "6262"),
     accreditedSourceRecord("gomariz-original", "TE1591"),

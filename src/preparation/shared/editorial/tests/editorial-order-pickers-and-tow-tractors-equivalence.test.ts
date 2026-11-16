@@ -27,7 +27,7 @@ const newUnit = (
   specs: { ...source.specs, ...specs }
 });
 
-test("RE040: recogepedidos históricos componen carga y solo la elevación técnicamente acreditada", () => {
+test("recogepedidos históricos componen carga y solo la elevación técnicamente acreditada", () => {
   for (const [source, load] of [[pickerWithLift, 1000], [pickerWithDimensions, 2500]] as const) {
     const snapshot = JSON.stringify(source);
     const facts = resolveEditorialFacts(source);
@@ -50,7 +50,7 @@ test("RE040: recogepedidos históricos componen carga y solo la elevación técn
   assert.doesNotMatch(resolveReusableEditorial(pickerWithDimensions).general ?? "", /altura de elevación/u);
 });
 
-test("RE041: tractores originales expresan capacidad de arrastre sin convertirla en carga vertical", () => {
+test("tractores originales expresan capacidad de arrastre sin convertirla en carga vertical", () => {
   for (const [source, load] of [[towTractorFive, 5000], [towTractorSeven, 7000]] as const) {
     const snapshot = JSON.stringify(source);
     const facts = resolveEditorialFacts(source);
@@ -69,7 +69,7 @@ test("RE041: tractores originales expresan capacidad de arrastre sin convertirla
   }
 });
 
-test("RE040–RE041: unidades nuevas compatibles usan su propia elevación, longitud y radio de giro", () => {
+test("unidades nuevas compatibles usan su propia elevación, longitud y radio de giro", () => {
   const cases = [
     { source: pickerWithLift, reference: "8128", specs: { "Altura de elevación (mm)": "5127 mm" },
       expected: "altura de elevación de 5,127 m", former: "altura de elevación de 4,627 m" },
@@ -95,7 +95,7 @@ test("RE040–RE041: unidades nuevas compatibles usan su propia elevación, long
   }
 });
 
-test("RE040–RE041: identidades, fuentes y familias incompatibles no generan hechos reutilizables", () => {
+test("identidades, fuentes y familias incompatibles no generan hechos reutilizables", () => {
   for (const source of [pickerWithLift, pickerWithDimensions, towTractorFive, towTractorSeven]) {
     for (const invalid of [
       { ...source, providerId: "desconocido" },
@@ -112,7 +112,7 @@ test("RE040–RE041: identidades, fuentes y familias incompatibles no generan he
   }
 });
 
-test("RE040–RE041: magnitudes de unidad incorrectas no generan afirmaciones", () => {
+test("magnitudes de unidad incorrectas no generan afirmaciones", () => {
   const invalidLift = { ...pickerWithLift, specs: { ...pickerWithLift.specs, "Altura de elevación (mm)": "5127 kg" } };
   assert.equal(resolveEditorialFacts(invalidLift), null);
   assert.deepEqual(resolveReusableEditorial(invalidLift), { short: null, general: null });

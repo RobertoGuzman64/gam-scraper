@@ -31,7 +31,7 @@ const newUnit = (
   specs: { ...source.specs, ...specs }
 });
 
-test("RE036: carretillas frontales GAM diésel, eléctrica y GLP conservan familia, carga y elevación", () => {
+test("carretillas frontales GAM diésel, eléctrica y GLP conservan familia, carga y elevación", () => {
   const cases = [
     { source: dieselGam, load: 2000, lift: 4, motor: /diésel/u },
     { source: electricGam, load: 1600, lift: 4.6, motor: /eléctrica/u },
@@ -55,7 +55,7 @@ test("RE036: carretillas frontales GAM diésel, eléctrica y GLP conservan famil
   }
 });
 
-test("RE036: una carretilla Mercaeleva válida reutiliza hechos propios sin desplazar su evidencia firmada", () => {
+test("una carretilla Mercaeleva válida reutiliza hechos propios sin desplazar su evidencia firmada", () => {
   const snapshot = JSON.stringify(electricMercaeleva);
   const facts = resolveEditorialFacts(electricMercaeleva);
   assert.equal(facts?.family, "carretilla-elevadora");
@@ -69,7 +69,7 @@ test("RE036: una carretilla Mercaeleva válida reutiliza hechos propios sin desp
   assert.equal(JSON.stringify(electricMercaeleva), snapshot);
 });
 
-test("RE037: retráctiles GAM mantienen su familia específica y sus medidas independientes", () => {
+test("retráctiles GAM mantienen su familia específica y sus medidas independientes", () => {
   for (const { source, load, lift } of [
     { source: reachGam, load: 1600, lift: 7.4 },
     { source: reachOtherGam, load: 1600, lift: 11.4 }
@@ -90,7 +90,7 @@ test("RE037: retráctiles GAM mantienen su familia específica y sus medidas ind
   }
 });
 
-test("RE036–RE037: nuevas unidades compatibles reutilizan el motor con alturas propias", () => {
+test("nuevas unidades compatibles reutilizan el motor con alturas propias", () => {
   const cases = [
     { source: dieselGam, reference: "8024", height: "4400 mm", claim: "altura de elevación de 4,4 m", previous: "altura de elevación de 4 m" },
     { source: electricGam, reference: "7878", height: "5100 mm", claim: "altura de elevación de 5,1 m", previous: "altura de elevación de 4,6 m" },
@@ -122,7 +122,7 @@ test("RE036–RE037: nuevas unidades compatibles reutilizan el motor con alturas
   assert.doesNotMatch(prepared.product.description_general ?? "", /13\.858 horas/u);
 });
 
-test("RE036–RE037: identidad, procedencia y familia contradictorias no producen afirmaciones", () => {
+test("identidad, procedencia y familia contradictorias no producen afirmaciones", () => {
   for (const source of [dieselGam, electricGam, glpGam, reachGam, reachOtherGam, electricMercaeleva]) {
     for (const incoming of [
       { ...source, providerId: "desconocido" },
@@ -138,7 +138,7 @@ test("RE036–RE037: identidad, procedencia y familia contradictorias no produce
   }
 });
 
-test("RE036–RE037: las unidades incompatibles y la ficha retráctil contradictoria quedan excluidas", () => {
+test("las unidades incompatibles y la ficha retráctil contradictoria quedan excluidas", () => {
   for (const source of [dieselGam, reachGam]) {
     for (const [key, value] of [
       ["Altura de elevación (mm)", "8000 kg"],

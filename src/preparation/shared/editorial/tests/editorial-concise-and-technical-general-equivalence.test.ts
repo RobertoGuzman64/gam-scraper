@@ -18,7 +18,7 @@ const newUnit = (source: ProductRecord, reference: string): ProductRecord => ({
   specs: { ...source.specs }
 });
 
-test("RE057 recupera cortas concisas en originales Mercaeleva sin sustituir generales acreditadas", () => {
+test("recupera cortas concisas en originales Mercaeleva sin sustituir generales acreditadas", () => {
   for (const reference of ["M318-0509", "M838-0666", "M840-6795"]) {
     const source = accreditedSourceRecord("mercaeleva-original", reference);
     const snapshot = JSON.stringify(source);
@@ -36,7 +36,7 @@ test("RE057 recupera cortas concisas en originales Mercaeleva sin sustituir gene
   }
 });
 
-test("RE057 reutiliza la corta en una unidad nueva sin heredar textos firmados de la anterior", () => {
+test("reutiliza la corta en una unidad nueva sin heredar textos firmados de la anterior", () => {
   const original = accreditedSourceRecord("mercaeleva-original", "M840-6795");
   const moved = newUnit(original, "M840-6795-OTRA");
   const signed = resolveKnowledgeEditorial(original, original);
@@ -66,7 +66,7 @@ test("RE057 reutiliza la corta en una unidad nueva sin heredar textos firmados d
   assert.equal(next.product.description, resolveReusableEditorial(another).short);
 });
 
-test("RE057 no recupera una corta técnica para identidad o procedencia ajenas", () => {
+test("no recupera una corta técnica para identidad o procedencia ajenas", () => {
   const source = controlledMercaelevaPlatform();
   for (const changed of [
     { ...source, model: "MODELO11" },
@@ -80,7 +80,7 @@ test("RE057 no recupera una corta técnica para identidad o procedencia ajenas",
   assert.equal(prepareSourceProduct({ ...source, specs: {} }).product.description_general, null);
 });
 
-test("RE058 compone generales modulares por familia y hechos en los tres proveedores", () => {
+test("compone generales modulares por familia y hechos en los tres proveedores", () => {
   for (const source of [controlledGamForklift(), controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
     const original = JSON.stringify(source);
     const shared = resolveReusableEditorial(source);
@@ -99,7 +99,7 @@ test("RE058 compone generales modulares por familia y hechos en los tres proveed
   assert.doesNotMatch(platform ?? "", /carretilla elevadora/u);
 });
 
-test("RE058 excluye composiciones de familias incompatibles o datos técnicos ausentes", () => {
+test("excluye composiciones de familias incompatibles o datos técnicos ausentes", () => {
   for (const source of [controlledGamForklift(), controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
     for (const changed of [
       { ...source, model: "MODELO11" },
@@ -113,7 +113,7 @@ test("RE058 excluye composiciones de familias incompatibles o datos técnicos au
   }
 });
 
-test("RE062 conserva generales técnicos corroborados de GAM y no el texto promocional del origen", () => {
+test("conserva generales técnicos corroborados de GAM y no el texto promocional del origen", () => {
   for (const [reference, elevation, load] of [
     ["6901", "16 m", "227 kg"],
     ["6139", "16 m", "230 kg"],
@@ -133,7 +133,7 @@ test("RE062 conserva generales técnicos corroborados de GAM y no el texto promo
   }
 });
 
-test("RE062 recalcula medidas de otra unidad GAM y rechaza título o identidad contradictorios", () => {
+test("recalcula medidas de otra unidad GAM y rechaza título o identidad contradictorios", () => {
   const source = controlledGamForklift();
   const changed: ProductRecord = {
     ...newUnit(source, "CONTROL-62"),

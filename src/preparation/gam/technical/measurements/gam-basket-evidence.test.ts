@@ -8,7 +8,7 @@ import { resolveAttribute } from "../../../shared/classification/mapping/attribu
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = { products: accreditedSourceSamples("gam-historical") };
+const source = { products: accreditedSourceSamples("gam-source-cases") };
 const dimension = catalog.attributes.find((item) => item.name === "Dimensiones de la cesta");
 const rotation = catalog.attributes.find((item) => item.name === "Rotación de torreta");
 assert.ok(dimension);

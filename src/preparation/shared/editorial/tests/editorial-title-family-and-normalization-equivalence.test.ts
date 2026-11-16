@@ -17,7 +17,7 @@ const historical = [
   [accreditedSourceRecord("mercaeleva-original", "M940-4770"), "Carretilla elevadora eléctrica Linde E20PL"]
 ] as const;
 
-test("RE051 y RE052 conservan títulos técnicos documentados en originales de los tres proveedores", () => {
+test("conservan títulos técnicos documentados en originales de los tres proveedores", () => {
   for (const [record, expected] of historical) {
     const snapshot = JSON.stringify(record);
     const prepared = prepareSourceProduct(record);
@@ -29,7 +29,7 @@ test("RE051 y RE052 conservan títulos técnicos documentados en originales de l
   }
 });
 
-test("RE051 compone familia, identidad, motorización y altura con datos de una unidad nueva compatible", () => {
+test("compone familia, identidad, motorización y altura con datos de una unidad nueva compatible", () => {
   const old = controlledGomarizPlatform();
   const next: ProductRecord = {
     ...old,
@@ -49,7 +49,7 @@ test("RE051 compone familia, identidad, motorización y altura con datos de una 
   assert.equal(resolvePreparedEditorialTitle(mismatched, mismatched), mismatched.title);
 });
 
-test("RE051 reutiliza títulos de manutención en otros proveedores sin retener el peso de una unidad", () => {
+test("reutiliza títulos de manutención en otros proveedores sin retener el peso de una unidad", () => {
   for (const original of [controlledGamForklift(), controlledMercaelevaForklift()]) {
     const next: ProductRecord = {
       ...original,
@@ -67,7 +67,7 @@ test("RE051 reutiliza títulos de manutención en otros proveedores sin retener 
   }
 });
 
-test("RE051 no introduce atributos por identidad, fuente, familia o magnitudes no corroboradas", () => {
+test("no introduce atributos por identidad, fuente, familia o magnitudes no corroboradas", () => {
   const original = controlledGomarizPlatform();
   for (const invalid of [
     { ...original, providerId: "gam" },
@@ -82,7 +82,7 @@ test("RE051 no introduce atributos por identidad, fuente, familia o magnitudes n
   }
 });
 
-test("RE052 normaliza prefijos, familia y unidades, preservando el modelo y el concepto de magnitud", () => {
+test("normaliza prefijos, familia y unidades, preservando el modelo y el concepto de magnitud", () => {
   assert.equal(normalizeEditorialTitle("Compra PLATAFORMA DE TIJERA ELECTRICA 10MT MARCA MODELO10", "MODELO10"),
     "Plataforma de tijera eléctrica 10 m MARCA MODELO10");
   assert.equal(normalizeEditorialTitle("Compra CARRETILLA ELEVADORA DIESEL 2500KG MARCA MODELO10", "MODELO10"),
@@ -92,7 +92,7 @@ test("RE052 normaliza prefijos, familia y unidades, preservando el modelo y el c
   assert.equal(normalizeEditorialTitle("PLATAFORMA ELECTRICA 10MT MARCA MODELO10", "MODELO10")?.endsWith("MODELO10"), true);
 });
 
-test("RE052 incorpora motorización de ficha solo con valor permitido, sin duplicarla", () => {
+test("incorpora motorización de ficha solo con valor permitido, sin duplicarla", () => {
   const title = "Plataforma articulada MARCA MODELO10";
   assert.equal(presentCommercialMotorization(title, { spec: { Motor: "Eléctrico" } }),
     "Plataforma articulada eléctrica MARCA MODELO10");
@@ -104,7 +104,7 @@ test("RE052 incorpora motorización de ficha solo con valor permitido, sin dupli
 });
 
 
-test("RE052 aplica la normalización dentro de la presentación comercial sin cambiar la unidad ni sus datos", () => {
+test("aplica la normalización dentro de la presentación comercial sin cambiar la unidad ni sus datos", () => {
   const source = controlledGomarizPlatform();
   const prepared = prepareSourceProduct(source).product;
   const rawTitle = "Compra PLATAFORMA DE TIJERA ELECTRICA 10MT MARCA MODELO10";

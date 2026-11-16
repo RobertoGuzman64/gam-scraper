@@ -29,7 +29,7 @@ const onlySourceGeneral = (record: ProductRecord, reference: string, general: st
   specs: { Marca: "MARCA", Modelo: "MODELO10" }
 });
 
-test("RE068 detecta una contradicción de altura textual sin validar el anuncio de plataforma", () => {
+test("detecta una contradicción de altura textual sin validar el anuncio de plataforma", () => {
   for (const make of platforms) {
     const source = make();
     const compatible = { ...source, longDescription: "La plataforma MARCA MODELO10 tiene altura de trabajo de 10 metros." };
@@ -45,7 +45,7 @@ test("RE068 detecta una contradicción de altura textual sin validar el anuncio 
   }
 });
 
-test("RE068 rechaza cargas incompatibles en el resumen técnico de los tres proveedores", () => {
+test("rechaza cargas incompatibles en el resumen técnico de los tres proveedores", () => {
   for (const make of forklifts) {
     const source = make();
     const incompatible = { ...source, specs: { ...source.specs, "Capacidad de carga": "3200 kg" } };
@@ -60,7 +60,7 @@ test("RE068 rechaza cargas incompatibles en el resumen técnico de los tres prov
   }
 });
 
-test("RE068 conserva el rechazo de una discrepancia histórica incluso con conocimiento firmado", () => {
+test("conserva el rechazo de una discrepancia histórica incluso con conocimiento firmado", () => {
   const source = original("mercaeleva", "M486-0114");
   const signed = resolveKnowledgeEditorial(source, source);
   const snapshot = JSON.stringify(source);
@@ -72,7 +72,7 @@ test("RE068 conserva el rechazo de una discrepancia histórica incluso con conoc
   assert.equal(JSON.stringify(source), snapshot);
 });
 
-test("RE074 conserva sin cambios la descripción original GAM si no existe texto de mayor precedencia", () => {
+test("conserva sin cambios la descripción original GAM si no existe texto de mayor precedencia", () => {
   const source = original("gam", "6607");
   const snapshot = JSON.stringify(source);
   assert.ok(source.longDescription);
@@ -83,7 +83,7 @@ test("RE074 conserva sin cambios la descripción original GAM si no existe texto
   assert.equal(JSON.stringify(source), snapshot);
 });
 
-test("RE074 reutiliza la conservación del origen en unidades nuevas sin copiar generales ajenas", () => {
+test("reutiliza la conservación del origen en unidades nuevas sin copiar generales ajenas", () => {
   for (const make of [controlledGamForklift, controlledGomarizPlatform, controlledMercaelevaForklift]) {
     const first = onlySourceGeneral(make(), "CONTROL-74-A", plainGeneral);
     const secondGeneral = "La máquina MARCA MODELO10 pertenece a otra unidad, cuya configuración propia debe confirmarse antes de su utilización.";
@@ -103,7 +103,7 @@ test("RE074 reutiliza la conservación del origen en unidades nuevas sin copiar 
   }
 });
 
-test("RE074 no inventa una general ausente ni la hereda de otra unidad", () => {
+test("no inventa una general ausente ni la hereda de otra unidad", () => {
   for (const make of [controlledGamForklift, controlledGomarizPlatform, controlledMercaelevaForklift]) {
     const source = onlySourceGeneral(make(), "CONTROL-74-SIN", plainGeneral);
     const missing = { ...source, longDescription: null };

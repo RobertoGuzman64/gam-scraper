@@ -29,7 +29,7 @@ const anotherUnit = (
   specs: { ...source.specs, ...specs }
 });
 
-test("RE020: la variante GLP histórica conserva su texto sin convertir el título en prueba técnica del motor", () => {
+test("la variante GLP histórica conserva su texto sin convertir el título en prueba técnica del motor", () => {
   const snapshot = JSON.stringify(glpGam);
   const facts = resolveEditorialFacts(glpGam);
   assert.equal(facts?.family, "carretilla-elevadora");
@@ -42,7 +42,7 @@ test("RE020: la variante GLP histórica conserva su texto sin convertir el títu
   assert.equal(JSON.stringify(glpGam), snapshot);
 });
 
-test("RE020: una unidad nueva con GLP corroborado reutiliza combustible, carga y elevación propios", () => {
+test("una unidad nueva con GLP corroborado reutiliza combustible, carga y elevación propios", () => {
   const incoming = anotherUnit(glpGam, "7682", {
     "Tipo motor": "GLP",
     "Altura de elevación (mm)": "3500 mm"
@@ -64,7 +64,7 @@ test("RE020: una unidad nueva con GLP corroborado reutiliza combustible, carga y
   assert.equal(JSON.stringify(incoming), snapshot);
 });
 
-test("RE020: GLP ambiguo o discordante no autoriza afirmaciones compartidas", () => {
+test("GLP ambiguo o discordante no autoriza afirmaciones compartidas", () => {
   const incoming = anotherUnit(glpGam, "7682", { "Tipo motor": "GLP" });
   for (const variant of [
     { ...incoming, specs: { ...incoming.specs, "Tipo motor": "Diésel" } },
@@ -85,7 +85,7 @@ test("RE020: GLP ambiguo o discordante no autoriza afirmaciones compartidas", ()
   assert.equal(glpVerifiedGam.specs?.["Tipo motor"], "GLP");
 });
 
-test("RE042: manipuladores de GAM y Mercaeleva conservan familia y magnitudes de sus originales", () => {
+test("manipuladores de GAM y Mercaeleva conservan familia y magnitudes de sus originales", () => {
   for (const { source, load, lifting } of [
     { source: manipulatorGam, load: 4000, lifting: 13 },
     { source: manipulatorXcmg, load: 4000, lifting: 14 },
@@ -108,7 +108,7 @@ test("RE042: manipuladores de GAM y Mercaeleva conservan familia y magnitudes de
   }
 });
 
-test("RE042: las nuevas referencias reutilizan el motor sin heredar alturas ni horas históricas", () => {
+test("las nuevas referencias reutilizan el motor sin heredar alturas ni horas históricas", () => {
   for (const { source, reference, height, key, expected, previous } of [
     { source: manipulatorGam, reference: "7391", height: "15 metros", key: "Altura de elevación (m)", expected: "15 m", previous: "13 m" },
     { source: manipulatorXcmg, reference: "5817", height: "16 metros", key: "Altura de elevación (m)", expected: "16 m", previous: "14 m" },
@@ -134,7 +134,7 @@ test("RE042: las nuevas referencias reutilizan el motor sin heredar alturas ni h
   }
 });
 
-test("RE042: fuentes, identidades y conceptos incompatibles no generan hechos del manipulador", () => {
+test("fuentes, identidades y conceptos incompatibles no generan hechos del manipulador", () => {
   for (const source of [manipulatorGam, manipulatorXcmg, manipulatorMercaeleva]) {
     for (const variant of [
       { ...source, providerId: "desconocido" },

@@ -9,7 +9,7 @@ import { gamBasketDimensionsFromRepeatedFragments } from "./basket.js";
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const source = { products: accreditedSourceSamples("gam-historical") };
+const source = { products: accreditedSourceSamples("gam-source-cases") };
 const dimension = catalog.attributes.find((entry) => entry.name === "Dimensiones de la cesta");
 assert.ok(dimension);
 const reference = (code: string): ProductRecord => requireProductReference(source.products, code);

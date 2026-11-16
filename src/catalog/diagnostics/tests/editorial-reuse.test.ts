@@ -43,7 +43,7 @@ test("diagnóstico: rechaza identidades repetidas y salidas de otra unidad", () 
 });
 
 
-test("RE082 audita la reutilización real y sus precedencias en originales de los tres proveedores", () => {
+test("audita la reutilización real y sus precedencias en originales de los tres proveedores", () => {
   const inputs = [
     entry(get(gam, "6901")),
     entry(get(gomariz, "BT1102")),
@@ -59,11 +59,11 @@ test("RE082 audita la reutilización real y sus precedencias en originales de lo
   assert.equal(JSON.stringify(inputs), original);
 });
 
-test("RE082 distingue un nuevo anuncio compatible de una pérdida y de una revisión justificada", () => {
+test("distingue un nuevo anuncio compatible de una pérdida y de una revisión justificada", () => {
   const historical = get(gomariz, "BT1102");
   const incoming: ProductRecord = {
     ...historical,
-    reference: "CONTROL-RE082",
+    reference: "CONTROL-SEMANTICO-082",
     url: historical.url?.replace(/\/$/u, "-control-re082/") ?? historical.url
   };
   const candidate = entry(incoming);

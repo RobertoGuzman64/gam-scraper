@@ -18,7 +18,7 @@ const newUnit = (record: ProductRecord, slug: string, reference: string): Produc
   specs: { ...record.specs }
 });
 
-test("RE047 recupera altura y luminarias de la torre histórica sin adoptar configuraciones de familia", () => {
+test("recupera altura y luminarias de la torre histórica sin adoptar configuraciones de familia", () => {
   const original = historicalTower();
   const snapshot = JSON.stringify(original);
   const history = resolveKnowledgeEditorial(original, original);
@@ -34,7 +34,7 @@ test("RE047 recupera altura y luminarias de la torre histórica sin adoptar conf
   assert.equal(JSON.stringify(original), snapshot);
 });
 
-test("RE047 acredita otra torre original y una unidad nueva con valores propios", () => {
+test("acredita otra torre original y una unidad nueva con valores propios", () => {
   const second = accreditedSourceRecord("gomariz-special-original", "TO1242");
   const preparedSecond = prepareSourceProduct(second);
   assert.equal(preparedSecond.status, "ready");
@@ -56,7 +56,7 @@ test("RE047 acredita otra torre original y una unidad nueva con valores propios"
   assert.equal(resolveKnowledgeEditorial(next, next).fallbackGeneral, null);
 });
 
-test("RE047 excluye potencia con unidad distinta, identidad ajena y evidencia cruzada", () => {
+test("excluye potencia con unidad distinta, identidad ajena y evidencia cruzada", () => {
   const base = newUnit(historicalTower(), "generac-vb9-otra-unidad", "CONTROL-OTRA-TORRE");
   const invalidW = { ...base, specs: { ...base.specs, Potencia: "4 x 120 kW" } };
   assert.doesNotMatch(resolveReusableEditorial(invalidW).general ?? "", /120 W|120 kW/u);
@@ -83,7 +83,7 @@ test("RE047 excluye potencia con unidad distinta, identidad ajena y evidencia cr
   }
 });
 
-test("RE048 conserva capacidad y peso diferentes del dúmper histórico, sin confundirlos", () => {
+test("conserva capacidad y peso diferentes del dúmper histórico, sin confundirlos", () => {
   const original = historicalDumper();
   const snapshot = JSON.stringify(original);
   assert.match(resolveKnowledgeEditorial(original, original).fallbackGeneral ?? "", /2\.000 kg.*1\.600 kg/su);
@@ -99,7 +99,7 @@ test("RE048 conserva capacidad y peso diferentes del dúmper histórico, sin con
   assert.equal(JSON.stringify(original), snapshot);
 });
 
-test("RE048 reutiliza capacidad de origen en otra unidad sin copiar peso, año ni prueba firmada", () => {
+test("reutiliza capacidad de origen en otra unidad sin copiar peso, año ni prueba firmada", () => {
   const next: ProductRecord = {
     ...newUnit(historicalDumper(), "ausa-d201rs-nueva-unidad", "CONTROL-DUMPER"),
     year: "2018",
@@ -117,7 +117,7 @@ test("RE048 reutiliza capacidad de origen en otra unidad sin copiar peso, año n
   assert.equal(prepared.product.sourceUrl, next.url);
 });
 
-test("RE048 rechaza capacidad en volumen, cifras contradictorias y proveedores o familias ajenos", () => {
+test("rechaza capacidad en volumen, cifras contradictorias y proveedores o familias ajenos", () => {
   const base = newUnit(historicalDumper(), "ausa-d201rs-control-invalido", "CONTROL-DUMPER-NEG");
   for (const invalid of [
     { ...base, specs: { ...base.specs, Capacidad: "2000 l" } },
@@ -134,7 +134,7 @@ test("RE048 rechaza capacidad en volumen, cifras contradictorias y proveedores o
   assert.doesNotMatch(prepareSourceProduct(noCapacity).product.description_general ?? "", /capacidad de carga de 750 kg/u);
 });
 
-test("RE048 protege originales GAM y la evidencia firmada de Mercaeleva", () => {
+test("protege originales GAM y la evidencia firmada de Mercaeleva", () => {
   const gam = accreditedSourceRecord("gam-original", "6207");
   const preparedGam = prepareSourceProduct(gam);
   assert.equal(resolveEditorialFacts(gam)?.loadCapacityKg, null);

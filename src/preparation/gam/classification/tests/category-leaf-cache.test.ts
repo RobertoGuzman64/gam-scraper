@@ -5,7 +5,7 @@ import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredi
 import { resolveCategory } from "../../../shared/classification/mapping/category-mapping.js";
 
 const catalog = await loadImportCatalog();
-const newProduct = accreditedSourceRecord("gam-historical", "4730");
+const newProduct = accreditedSourceRecord("gam-source-cases", "4730");
 const original = resolveCategory(newProduct, catalog.categories, "Nuevo");
 if (!original) throw new Error("No se ha encontrado su categoría original");
 

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { catalog, categorySlug, reference, unconfirmedConditionCodes } from "../../technical/tests/support/gam-historical-category-fixture.js";
+import { catalog, categorySlug, reference, unconfirmedConditionCodes } from "../../technical/tests/support/gam-source-category-fixture.js";
 import { prepareCached } from "../../../testing/prepare-cached.js";
 
 test("Bravi Leonardo HD: identifica plataforma unipersonal con evidencia del mismo modelo", () => {

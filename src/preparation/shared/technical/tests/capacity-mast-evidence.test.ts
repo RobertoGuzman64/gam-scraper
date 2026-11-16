@@ -7,8 +7,8 @@ import { resolveAttribute } from "../../classification/mapping/attribute-mapping
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const sourceGam = { products: accreditedSourceSamples("gam-historical") };
-const sourceMercaeleva = { products: accreditedSourceSamples("mercaeleva-historical") };
+const sourceGam = { products: accreditedSourceSamples("gam-source-cases") };
+const sourceMercaeleva = { products: accreditedSourceSamples("mercaeleva-source-cases") };
 const byReference = (provider: "gam" | "mercaeleva", reference: string): ProductRecord => {
   const source = provider === "gam" ? sourceGam : sourceMercaeleva;
   const record = source.products.find((product) => product.reference === reference);

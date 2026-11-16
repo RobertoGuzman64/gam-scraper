@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { catalog, categorySlug, reference } from "../../technical/tests/support/gam-historical-category-fixture.js";
+import { catalog, categorySlug, reference } from "../../technical/tests/support/gam-source-category-fixture.js";
 import { prepareCached } from "../../../testing/prepare-cached.js";
 
 test("GAM: Logitrans manual acreditada en LogiQ y WSP, no por batería de balanza", () => {

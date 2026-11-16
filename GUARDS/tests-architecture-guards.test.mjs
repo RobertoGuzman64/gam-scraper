@@ -266,11 +266,11 @@ test("los recuentos acreditados se exceptúan por ruta, prueba y afirmación exa
 test("la excepción de fixture transitiva no cubre fuentes o consumidores nuevos", (t) => {
   const { root, write } = fixture(t);
   const path = "src/preparation/gam/classification/tests/gam-verified-category-equivalences.test.ts";
-  const fixturePath = "src/preparation/gam/technical/tests/support/gam-historical-category-fixture.ts";
+  const fixturePath = "src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts";
   const accreditedFixture = "import { readCanonicalCatalog } from '../../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; export const load = () => readCanonicalCatalog('src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json');";
   write(fixturePath, accreditedFixture);
   write(path,
-    "import { load } from '../../technical/tests/support/gam-historical-category-fixture.js'; export const source = load; ");
+    "import { load } from '../../technical/tests/support/gam-source-category-fixture.js'; export const source = load; ");
   const accredited = inspectTestArchitecture(root);
   assert.equal(accredited.findings.filter((finding) => finding.rule === "T-TRANSITIVE-CATALOG").length, 0);
   assert.equal(accredited.exceptions.filter((item) => item.rule === "T-TRANSITIVE-CATALOG").length, 1);
@@ -280,7 +280,7 @@ test("la excepción de fixture transitiva no cubre fuentes o consumidores nuevos
   write("src/testing/builders/alternative-catalog-fixture.ts",
     "export const source = 'catalogs/providers/gam/original/scrape-gam-catalog.json';");
   write(path,
-    "import { load } from '../../technical/tests/support/gam-historical-category-fixture.js'; import { source } from '../../../../testing/builders/alternative-catalog-fixture.js'; export const both = [load, source];");
+    "import { load } from '../../technical/tests/support/gam-source-category-fixture.js'; import { source } from '../../../../testing/builders/alternative-catalog-fixture.js'; export const both = [load, source];");
   assert.equal(inspectTestArchitecture(root).findings.filter((finding) => finding.rule === "T-TRANSITIVE-CATALOG").length, 1);
 });
 

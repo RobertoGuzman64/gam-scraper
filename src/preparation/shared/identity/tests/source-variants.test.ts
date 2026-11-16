@@ -11,7 +11,7 @@ import { SOURCE_CATEGORY_ISSUE, sourceCategoryQualityIssue } from "../../quality
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const gam = { products: accreditedSourceSamples("gam-historical") };
+const gam = { products: accreditedSourceSamples("gam-source-cases") };
 const source = (reference: string): ProductRecord => {
   const record = gam.products.find((product) => product.reference === reference);
   assert.ok(record, reference);

@@ -6,7 +6,7 @@ import { accreditedSourceSamples } from "../../../../testing/domain-cases/accred
 import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
-const records = accreditedSourceSamples("gam-historical");
+const records = accreditedSourceSamples("gam-source-cases");
 const byReference = new Map(records.map((record) => [record.reference, record]));
 const reference = (id: string): ProductRecord => {
   const record = byReference.get(id);

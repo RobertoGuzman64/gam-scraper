@@ -40,7 +40,7 @@ const familyOfSource = (record: ProductRecord): string | null => {
     `${record.subcategory ?? ""} | ${record.categoryName}`) : null;
 };
 
-test("RE005: el reconocimiento histórico de familias usa señales acreditadas y se consume en la preparación", () => {
+test("el reconocimiento histórico de familias usa señales acreditadas y se consume en la preparación", () => {
   for (const [source, family] of [
     [scissor, "plataforma-tijera"],
     [articulated, "plataforma-articulada"],
@@ -60,7 +60,7 @@ test("RE005: el reconocimiento histórico de familias usa señales acreditadas y
 });
 
 
-test("RE005: las señales compartidas conservan familia en GAM y Mercaeleva sin confundir su procedencia", () => {
+test("las señales compartidas conservan familia en GAM y Mercaeleva sin confundir su procedencia", () => {
   for (const source of [gamForklift, mercaForklift]) {
     const snapshot = JSON.stringify(source);
     assert.equal(resolveEditorialFacts(source)?.family, "carretilla-elevadora");
@@ -71,7 +71,7 @@ test("RE005: las señales compartidas conservan familia en GAM y Mercaeleva sin 
   }
 });
 
-test("RE005: una unidad compatible obtiene su familia y sus atributos propios sin heredar el conocimiento firmado", () => {
+test("una unidad compatible obtiene su familia y sus atributos propios sin heredar el conocimiento firmado", () => {
   for (const [original, reference, family] of [
     [scissor, "TE2591", "plataforma-tijera"],
     [generator, "GR2356", "grupo-electrogeno"],
@@ -91,7 +91,7 @@ test("RE005: una unidad compatible obtiene su familia y sus atributos propios si
   }
 });
 
-test("RE006: la procedencia Gomariz no universal reconoce sus rutas especiales sin inventar familias", () => {
+test("la procedencia Gomariz no universal reconoce sus rutas especiales sin inventar familias", () => {
   for (const [record, family, title] of [
     [tracks, "plataforma-oruga", "Plataforma sobre orugas Socage 15S"],
     [generator, "grupo-electrogeno", "Grupo electrógeno Pramac GPW200P-FN"],
@@ -111,7 +111,7 @@ test("RE006: la procedencia Gomariz no universal reconoce sus rutas especiales s
   assert.equal(resolveDocumentedFamilyTitle(noCategory), null);
 });
 
-test("RE006: las rutas documentadas rechazan títulos incompatibles sin dejarse dominar por el orden de patrones", () => {
+test("las rutas documentadas rechazan títulos incompatibles sin dejarse dominar por el orden de patrones", () => {
   for (const source of [scissor, generator, tower, tracks]) {
     const inconsistent = { ...source, title: `Carretilla elevadora ${source.brand} ${source.model}` };
     assert.equal(familyOfSource(inconsistent), null, source.reference ?? "");
@@ -121,7 +121,7 @@ test("RE006: las rutas documentadas rechazan títulos incompatibles sin dejarse 
   }
 });
 
-test("RE005 y RE006: identidad, proveedor, ruta y familia adicional discordantes bloquean la atribución", () => {
+test("identidad, proveedor, ruta y familia adicional discordantes bloquean la atribución", () => {
   for (const source of [scissor, generator, tower]) {
     for (const invalid of [
       { ...source, providerId: "gam" },

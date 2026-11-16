@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { catalog, categorySlug, reference, unconfirmedConditionCodes } from "../../technical/tests/support/gam-historical-category-fixture.js";
+import { catalog, categorySlug, reference, unconfirmedConditionCodes } from "../../technical/tests/support/gam-source-category-fixture.js";
 import { prepareCached } from "../../../testing/prepare-cached.js";
 
 test("GAM: los cuatriciclos no pasan a furgonetas aunque solo consten en la descripción larga", () => {

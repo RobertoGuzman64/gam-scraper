@@ -7,7 +7,7 @@ import { resolveDocumentedModelDimensions } from "../domain/editorial-model-dime
 import { isGamDocumentedYaleDimensionsSource } from "../../../gam/identity/evidence/model-dimensions-source.js";
 import { resolveKnowledgeEditorial } from "../mapping/knowledge-editorial.js";
 
-const original = (reference: string): ProductRecord => accreditedSourceRecord("gam-editorial-historical", reference);
+const original = (reference: string): ProductRecord => accreditedSourceRecord("gam-editorial-cases", reference);
 
 const another = (source: ProductRecord): ProductRecord => {
   const reference = `${source.reference}-OTRA`;
@@ -18,7 +18,7 @@ const another = (source: ProductRecord): ProductRecord => {
   };
 };
 
-test("RE061 traslada dimensiones del modelo históricamente documentado al recorrido compartido", () => {
+test("traslada dimensiones del modelo históricamente documentado al recorrido compartido", () => {
   for (const reference of ["2318", "2319", "2320", "2208", "2209", "2210"]) {
     const source = original(reference);
     const snapshot = JSON.stringify(source);
@@ -33,7 +33,7 @@ test("RE061 traslada dimensiones del modelo históricamente documentado al recor
   }
 });
 
-test("RE061 usa exclusivamente las medidas de una entrada nueva compatible", () => {
+test("usa exclusivamente las medidas de una entrada nueva compatible", () => {
   const source = original("2318");
   const candidate = another(source);
   const expected = /3,9 m de longitud, 1,4 m de anchura, 2,5 m de altura del equipo y 5\.200 kg de peso/u;
@@ -47,7 +47,7 @@ test("RE061 usa exclusivamente las medidas de una entrada nueva compatible", () 
   assert.equal(prepared.product.reference, candidate.reference);
 });
 
-test("RE061 no usa valores sin identidad, procedencia, unidades o dimensiones corroboradas", () => {
+test("no usa valores sin identidad, procedencia, unidades o dimensiones corroboradas", () => {
   const source = another(original("2318"));
   const invalid: readonly ProductRecord[] = [
     { ...source, providerId: "gomariz" },
@@ -72,7 +72,7 @@ test("RE061 no usa valores sin identidad, procedencia, unidades o dimensiones co
   assert.equal(resolveDocumentedModelDimensions(source, { ...source, specs: { ...source.specs, Altura: "2600 mm" } }, null), null);
 });
 
-test("RE061 no desplaza descripciones firmadas ni duplica dimensiones ya presentes", () => {
+test("no desplaza descripciones firmadas ni duplica dimensiones ya presentes", () => {
   const historical = original("2316");
   const prepared = prepareSourceProduct(historical);
   assert.ok(resolveKnowledgeEditorial(historical, historical).general);

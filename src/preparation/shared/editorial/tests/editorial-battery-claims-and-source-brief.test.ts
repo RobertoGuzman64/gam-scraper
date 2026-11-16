@@ -64,7 +64,7 @@ const relatedBatteryUnit = (source: ProductRecord): ProductRecord => ({
   year: null
 });
 
-test("RE021 preserva tecnología, tensión y capacidad de batería en unidades nuevas compatibles", () => {
+test("preserva tecnología, tensión y capacidad de batería en unidades nuevas compatibles", () => {
   for (const [reference, type, voltage, capacity] of [
     ["M288-9739", "ion-litio", 24, 100],
     ["M119-9334", "ion-litio", 48, 30]
@@ -94,7 +94,7 @@ test("RE021 preserva tecnología, tensión y capacidad de batería en unidades n
   }
 });
 
-test("RE021 atribuye solo la configuración declarada para la unidad nueva", () => {
+test("atribuye solo la configuración declarada para la unidad nueva", () => {
   const source = original("mercaeleva", "M288-9739");
   const unit = relatedBatteryUnit(source);
   const changed: ProductRecord = {
@@ -116,7 +116,7 @@ test("RE021 atribuye solo la configuración declarada para la unidad nueva", () 
   assert.equal(resolveDocumentedBatteryConfiguration(unit, differentModel, "apilador", 24), null);
 });
 
-test("RE021 bloquea opciones, ambigüedades y unidades de magnitud incompatibles", () => {
+test("bloquea opciones, ambigüedades y unidades de magnitud incompatibles", () => {
   const source = relatedBatteryUnit(original("mercaeleva", "M288-9739"));
   for (const text of [
     "La batería de 24 V es opcional según la versión.",
