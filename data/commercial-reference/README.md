@@ -6,9 +6,9 @@
 
 **Regla de alcance.** Los IDs, relaciones, ejemplos y hashes de referencia deben proceder de sus fuentes acreditadas. No cambiar snapshots ni manifiestos, y no deducir que una publicación técnica `review` es elegible comercialmente.
 
-Estas referencias permiten **construir en el scraper** el catálogo comercial propio. El backend aportado sirve para conocer IDs, tipos, relaciones y campos; **no** para copiar productos ni adaptar la calidad del catálogo a sus seeds. El backend y la BD no se modifican en este trabajo. El funcionamiento permanente del derivado se describe en [`../../docs/COMERCIALIZACION.md`](../../docs/COMERCIALIZACION.md).
+Estas referencias permiten **construir en el scraper** el catálogo comercial propio. El backend aportado sirve para conocer IDs, tipos, relaciones y campos; **no** para copiar productos ni adaptar la calidad del catálogo a sus seeds. El backend y la BD no se modifican en este trabajo. El funcionamiento permanente del derivado se describe en [`../../docs/COMMERCIAL_EXPORT.md`](../../docs/COMMERCIAL_EXPORT.md).
 
-Las referencias de esta carpeta son insumos **comerciales**, no el almacén de publicaciones técnicas independientes. El guard del contrato comercial v2 comprueba los campos y estructuras protegidos, pero no reescribe estos snapshots ni su `source-manifest.json`. Si hay discrepancias de hash, investigarlas sin regenerar referencias para conseguir `PASS`. Consultar [Comercialización](../../docs/COMERCIALIZACION.md) y [Publicaciones técnicas](../../docs/TECHNICAL_PUBLICATIONS.md).
+Las referencias de esta carpeta son insumos **comerciales**, no el almacén de publicaciones técnicas independientes. El guard del contrato comercial v2 comprueba los campos y estructuras protegidos, pero no reescribe estos snapshots ni su `source-manifest.json`. Si hay discrepancias de hash, investigarlas sin regenerar referencias para conseguir `PASS`. Consultar [Exportación comercial](../../docs/COMMERCIAL_EXPORT.md) y [Publicaciones](../../docs/PUBLICATIONS.md).
 
 ## Fuentes únicas (no duplicar catálogos)
 

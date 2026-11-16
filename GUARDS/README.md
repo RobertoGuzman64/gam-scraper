@@ -30,7 +30,7 @@ Los dos guards arquitectónicos y sus autopruebas están **incluidos y son oblig
 
 Las pruebas nuevas deben proteger reglas reutilizables y contratos de motor: fuente, identidad, familias, magnitudes, procedencia, redacción y proyección, con positivos y negativos. No crear una suite por máquina ni congelar la fotografía de un catálogo mutable. Las integraciones censales se preservan cuando comprueban que **ninguna unidad no acreditada** obtiene datos, o cuando verifican integridad y publicación.
 
-Usar entradas acotadas con tipos reales para las garantías del dominio. No sustituir una prueba censal por una muestra cuando ello debilite su contrato. Antes de podar un test, conservar en otro lugar cualquier comportamiento protegido. Ver [Arquitectura de tests](../docs/TEST_ARCHITECTURE.md).
+Usar entradas acotadas con tipos reales para las garantías del dominio. No sustituir una prueba censal por una muestra cuando ello debilite su contrato. Antes de podar un test, conservar en otro lugar cualquier comportamiento protegido. Ver [Pruebas y guards](../docs/TESTING.md).
 
 ## Doce cohortes protegidas
 
@@ -58,4 +58,4 @@ Las suites incluyen controles de imágenes GAM, identidad de variantes, recupera
 
 El corte acreditado se obtuvo sin modificar tests protegidos y sin introducir excepciones generales. Conservar el cero exige que cualquier nueva infracción se **resuelva o acredite contractualmente con alcance exacto**, no degradar el guard ni añadir tolerancias. Una integración necesaria no justifica convertir en dependiente del catálogo todo test de dominio.
 
-El build y `npm test` oficiales completos no están acreditados en el último entorno de verificación disponible por dependencias ausentes. Registrar el estado real de cada ejecución. Referencias: [Motor editorial](../docs/EDITORIAL_ENGINE.md), [Validación](../docs/VALIDATION.md) y [Rendimiento](../docs/TESTS_RENDIMIENTO_CAMPANAS.md).
+El build y `npm test` oficiales completos no están acreditados en el último entorno de verificación disponible por dependencias ausentes. Registrar el estado real de cada ejecución. Referencias: [Motor editorial](../docs/EDITORIAL_ENGINE.md), [Validación](../docs/VALIDATION.md) y [Pruebas y rendimiento](../docs/TESTING.md).

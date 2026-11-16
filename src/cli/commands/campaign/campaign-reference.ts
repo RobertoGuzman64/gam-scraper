@@ -21,7 +21,7 @@ Sin argumentos comprueba los catálogos, el manifiesto y las diferencias y sus S
 --recuperar repara explícitamente una transacción interrumpida si existe un respaldo íntegro.
 --actualizar es un procedimiento legado opcional que exige entrega acreditada. --exportar copia una referencia íntegra a una carpeta nueva.
 --importar valida la referencia y no reemplaza la actual salvo autorización --sustituir.
-Política Git y traslado: docs/OPERATIONAL_REFERENCE.md`);
+Política Git y traslado: docs/OPERATIONS_AND_MAINTENANCE.md`);
     return;
   }
   if (args.length === 0) {
