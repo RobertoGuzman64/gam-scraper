@@ -1,4 +1,6 @@
 import { relative } from "node:path";
+import { inspect } from "node:util";
+import { formatScriptStatus } from "./terminal.mjs";
 import { clearLine, clearScreenDown, cursorTo, moveCursor } from "node:readline";
 
 const tone = (value, code, enabled) => enabled ? `\u001b[${code}m${value}\u001b[0m` : value;
@@ -79,39 +81,62 @@ export const formatRunnerProgress = ({ progress, counts, lanes, elapsed_ms, cach
   });
 };
 
-export const formatRunnerCompletion = ({ success, progress, counts, lanes, cachedTests, elapsed_ms, slowest }, columns = 100, color = false) => {
-  const width = lineWidth(columns);
-  const executed = progress.total - progress.reused;
-  const state = success ? "CORRECTO" : "FALLIDO";
-  const slowestName = slowest ? normalize(slowest.file).split("/").at(-1) : "sin ejecución";
-  const slowestDuration = slowest ? ` · ${formatRunnerTime(slowest.milliseconds)}` : "";
-  const rows = [
-    `${state}   ${progress.reported}/${progress.total} suites con informe   ·   ${formatRunnerTime(elapsed_ms)}`,
-    `${compact(counts.passed)} correctos   ·   ${counts.failed} fallidos   ·   ${counts.skipped} omitidos   ·   ${counts.todo} TODO`,
-    `Caché: ${progress.reused} suites / ${compact(cachedTests)} tests   ·   Ejecutadas: ${executed} suites`,
-    lanes.length ? lanes.map(laneStatus).join("   ·   ") : "Sin ejecución: resultados reutilizados de caché",
-    `Suite más lenta: ${slowestName}${slowestDuration}`
+export const formatRunnerCompletion = ({ success, progress, counts, cachedTests, elapsed_ms }, columns = 100, color = false) => {
+  const metrics = [
+    `${progress.reported}/${progress.total} suites`,
+    `${compact(counts.passed)} correctos`,
+    `${counts.failed} fallidos`,
+    `${counts.skipped} omitidos`,
+    `${counts.todo} TODO`,
+    `caché ${progress.reused} suites / ${compact(cachedTests)} tests`,
+    formatRunnerTime(elapsed_ms)
   ];
-  if (width < 70) return [
-    tone(`EQUIPZILLA  /  ${state}`, success ? "1;32" : "1;31", color),
-    `${progress.reported}/${progress.total} suites con informe  ·  ${formatRunnerTime(elapsed_ms)}`,
-    `${compact(counts.passed)} OK  ·  ${counts.failed} KO  ·  ${counts.skipped} OMIT  ·  ${counts.todo} TODO`,
-    `Caché: ${progress.reused} suites / ${compact(cachedTests)} tests`,
-    `Ejecutadas: ${executed} suites`,
-    ...(lanes.length ? lanes.map((lane) => laneStatus(lane)) : ["Sin ejecución; resultados de caché"]),
-    `Suite más lenta: ${slowest ? formatRunnerTime(slowest.milliseconds) : "sin ejecución"}`,
-    ...(slowest ? [slowestName] : [])
-  ].map((line) => shorten(line, width));
-  const boxWidth = Math.min(width, 104);
-  const border = (left, right) => `${left}${"─".repeat(boxWidth - 2)}${right}`;
-  const innerWidth = boxWidth - 4;
-  const content = rows.map((line, index) => {
-    const text = shorten(index === 0 ? `EQUIPZILLA / TESTS   ${line}` : line, innerWidth);
-    const padded = `│ ${text.padEnd(innerWidth)} │`;
-    return index === 0 ? tone(padded, success ? "1;32" : "1;31", color) : padded;
-  });
-  return [tone(border("╭", "╮"), "2;37", color), ...content, tone(border("╰", "╯"), "2;37", color)];
+  const prefix = `${success ? "PASS" : "FAIL"} | TESTS | `;
+  const width = lineWidth(columns);
+  const lines = [];
+  let current = prefix;
+  for (const metric of metrics) {
+    const separator = current === prefix || current === "  " ? "" : " · ";
+    const candidate = `${current}${separator}${metric}`;
+    if (candidate.length > width && current !== prefix && current !== "  ") {
+      lines.push(current);
+      current = `  ${metric}`;
+    } else {
+      current = candidate;
+    }
+  }
+  lines.push(current);
+  return lines.map((line, index) => index === 0 ? tone(line, success ? "1;32" : "1;31", color) : line);
 };
+
+export const describeTestError = (error) => {
+  if (error === undefined || error === null) return "";
+  if (typeof error === "string") return error;
+  return inspect(error, { colors: false, depth: 8, maxArrayLength: null, maxStringLength: null });
+};
+
+export const formatRunnerFailure = ({ name, file, line, error, stderr = "", stdout = "" }) => {
+  const location = file ? ` (${file}${line ? `:${line}` : ""})` : "";
+  const diagnostics = [describeTestError(error), stderr.trim(), stdout.trim()].filter(Boolean);
+  return `${formatScriptStatus("FAIL", `${name}${location}`)}\n${diagnostics.join("\n") || "Node no proporcionó detalles adicionales para este fallo"}\n`;
+};
+
+export default async function* compactGuardTestReporter(events) {
+  for await (const event of events) {
+    const { type, data } = event;
+    if (type === "test:fail") {
+      yield formatRunnerFailure({ name: data.name, file: data.file, line: data.line, error: data.details?.error });
+    } else if (type === "test:stderr" || type === "test:stdout") {
+      yield data.message;
+    } else if (type === "test:diagnostic" && !/^(?:tests|suites|pass|fail|cancelled|skipped|todo|duration_ms) /u.test(data.message)) {
+      yield `${data.message}\n`;
+    } else if (type === "test:summary" && !data.file) {
+      const counts = data.counts;
+      const success = data.success && counts.failed === 0 && counts.cancelled === 0;
+      yield `${formatScriptStatus(success ? "PASS" : "FAIL", `GUARDS | ${counts.passed} correctos | ${counts.failed} fallidos | ${counts.cancelled} cancelados | ${counts.skipped} omitidos | ${formatRunnerTime(data.duration_ms)}`)}\n`;
+    }
+  }
+}
 
 export const formatRunnerLog = ({ progress, counts, lanes, elapsed_ms }) => {
   const closing = progress.remaining === 0 && lanes.some((lane) => lane.finished_ms === null);
@@ -135,9 +160,10 @@ export const formatRunnerRegression = ({ file, before, after }, columns = 100) =
   return `  ${shorten(normalize(file), available)}${suffix}\n`;
 };
 
-export const createRunnerDisplay = (stream, { interactive, getState, now, intervalMs = 15000 }) => {
+export const createRunnerDisplay = (stream, { interactive, getState, now, intervalMs = 60000 }) => {
   let linesShown = 0;
   let lastLog = 0;
+  let lastFailed = 0;
   let lastFrame = "";
   const color = interactive && process.env.NO_COLOR === undefined;
 
@@ -163,9 +189,11 @@ export const createRunnerDisplay = (stream, { interactive, getState, now, interv
       return;
     }
     const elapsed = now();
-    if (elapsed - lastLog < intervalMs) return;
+    const state = getState();
+    if (elapsed - lastLog < intervalMs && state.counts.failed <= lastFailed) return;
     lastLog = elapsed;
-    stream.write(`${formatRunnerLog(getState())}\n`);
+    lastFailed = state.counts.failed;
+    stream.write(`${formatRunnerLog(state)}\n`);
   };
 
   const finish = () => {

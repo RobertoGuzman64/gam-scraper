@@ -1,11 +1,11 @@
 import { existsSync, readdirSync, writeFileSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { join, relative, resolve } from "node:path";
-import { formatScriptStatus } from "./terminal.mjs";
+import { formatScriptStatus, supportsScriptColor } from "./terminal.mjs";
 import { createRunnerTimeline } from "./test-runner-observability.mjs";
 import { executeTestLanes } from "./test-runner-execution.mjs";
 import { isTestRunAccreditable } from "./test-runner-completion.mjs";
-import { createRunnerDisplay, formatRunnerCompletion, formatRunnerOmission, formatRunnerRegression, formatRunnerTime, supportsInteractiveRunner } from "./test-runner-ui.mjs";
+import { createRunnerDisplay, formatRunnerCompletion, formatRunnerFailure, formatRunnerOmission, formatRunnerRegression, formatRunnerTime, supportsInteractiveRunner } from "./test-runner-ui.mjs";
 import { durationRegressions, loadTestDurations, orderTestsByDuration, planTestLanes, recommendedTestConcurrency, saveTestDurations } from "./test-performance.mjs";
 import { discardTestResultsCache, fingerprintTestInputs, loadTestResultsCache, relativeCacheFile, saveTestResultsCache } from "./test-result-cache.mjs";
 
@@ -143,15 +143,14 @@ for (const file of cachedFiles) {
   const value = cachedResults.get(relativeCacheFile(file));
   cachedCounts.passed += value.passed;
 }
-const filePaths = new Set(executableFiles.map((file) => resolve(file)));
 const interactive = supportsInteractiveRunner(process.stdout, process.platform, process.env);
 const startedAt = performance.now();
 const timeline = createRunnerTimeline(files, cachedFiles, lanes, () => performance.now() - startedAt);
-const completedFiles = timeline.reported;
 const errors = [];
 const skippedTests = [];
 const todoTests = [];
 const standardErrors = new Map();
+const standardOutputs = new Map();
 const counts = { ...cachedCounts };
 const resultsForCache = new Map(cachedResults);
 const reportPath = options.report ?? options.cacheReport;
@@ -169,13 +168,6 @@ const display = createRunnerDisplay(process.stdout, {
     laneFinished: timeline.metrics().lanes.every((lane) => lane.finished_ms !== null)
   })
 });
-
-const describeError = (error) => {
-  if (typeof error === "string") return error === "test failed" ? "" : error;
-  if (error && typeof error.stack === "string") return error.stack;
-  if (error && typeof error.message === "string") return error.message;
-  return "";
-};
 
 const summaries = [];
 display.show();
@@ -220,10 +212,11 @@ const consumeEvent = (event, laneName) => {
     });
   }
 
-  if (event.type === "test:stderr") {
+  if (event.type === "test:stderr" || event.type === "test:stdout") {
     if (event.data.file) {
       const file = resolve(event.data.file);
-      standardErrors.set(file, `${standardErrors.get(file) ?? ""}${event.data.message}`);
+      const output = event.type === "test:stderr" ? standardErrors : standardOutputs;
+      output.set(file, `${output.get(file) ?? ""}${event.data.message}`);
     }
   }
 
@@ -246,9 +239,8 @@ const consumeEvent = (event, laneName) => {
       counts.todo += 1;
       todoTests.push({ name, file, line, reason: todo });
     } else {
-      const fileFailure = filePaths.has(resolve(name));
       counts.failed += 1;
-      errors.push({ name, file, line, fileFailure, error: details?.error?.cause ?? details?.error });
+      errors.push({ name, file, line, error: details?.error });
     }
   }
 
@@ -338,10 +330,10 @@ if (profile) {
 }
 
 for (const failure of errors) {
-  const location = failure.file ? ` (${failure.file}${failure.line ? `:${failure.line}` : ""})` : "";
-  const output = failure.fileFailure ? standardErrors.get(resolve(failure.file))?.trim() : "";
-  const reason = output || describeError(failure.error) || "La prueba falló sin diagnóstico adicional";
-  process.stdout.write(`${formatScriptStatus("FAIL", `${failure.name}${location}`)}\n${reason}\n`);
+  const file = resolve(failure.file ?? failure.name);
+  const stderr = standardErrors.get(file) ?? "";
+  const stdout = standardOutputs.get(file) ?? "";
+  process.stdout.write(formatRunnerFailure({ ...failure, stderr, stdout }));
 }
 
 if (skippedTests.length > 0) {
@@ -361,9 +353,6 @@ const finalCounts = {
   skipped: executedCounts.skipped,
   todo: executedCounts.todo
 };
-if (automaticCache && cachedFiles.length > 0) {
-  process.stdout.write(`${formatScriptStatus(success ? "PASS" : "WARN", `CACHÉ | ${cachedFiles.length} suites y ${cachedCounts.passed} tests reutilizados | ${executableFiles.length} suites ejecutadas`)}\n`);
-}
 if (success && inputFingerprints) {
   try {
     saveTestResultsCache(inputFingerprints, resultsForCache);
@@ -400,14 +389,10 @@ if ((profile || !success) && executableFiles.length === 0) {
   const lastReportTime = timelineMetrics.last_report_ms;
   process.stdout.write(`TIEMPOS | Último informe ${lastReportTime === null ? "no recibido" : formatRunnerTime(lastReportTime)} | Fin del runner ${formatRunnerTime(duration)} | Intervalo posterior ${lastReportTime === null ? "no calculable" : formatRunnerTime(Math.max(0, duration - lastReportTime))}\n`);
 }
-if (process.stdout.isTTY === true) {
-  for (const line of formatRunnerCompletion({
-    success, progress: timelineMetrics.final_progress, counts: finalCounts,
-    lanes: timelineMetrics.lanes, cachedTests: cachedCounts.passed, elapsed_ms: duration,
-    slowest: durations.reduce((highest, current) => !highest || current.milliseconds > highest.milliseconds ? current : highest, null)
-  }, process.stdout.columns || 100, interactive && process.env.NO_COLOR === undefined)) {
-    process.stdout.write(`${line}\n`);
-  }
+for (const line of formatRunnerCompletion({
+  success, progress: timelineMetrics.final_progress, counts: finalCounts,
+  cachedTests: cachedCounts.passed, elapsed_ms: duration
+}, process.stdout.isTTY === true ? process.stdout.columns || 100 : 100, supportsScriptColor(process.stdout))) {
+  process.stdout.write(`${line}\n`);
 }
-process.stdout.write(`${formatScriptStatus(success ? "PASS" : "FAIL", `${completedFiles.size}/${files.length} archivos | ${finalCounts.passed} correctos${cachedFiles.length ? ` (${cachedCounts.passed} reutilizados)` : ""} | ${finalCounts.failed} fallidos | ${finalCounts.skipped} omitidos | ${Math.round(duration)} ms`)}\n`);
 if (!success) process.exitCode = 1;

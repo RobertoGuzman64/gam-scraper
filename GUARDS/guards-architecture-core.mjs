@@ -1,3 +1,4 @@
+import { formatScriptStatus } from "../scripts/terminal.mjs";
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
@@ -134,7 +135,7 @@ export const optionsFrom = (argv) => {
 export const present = (label, findings, options) => {
   const failed = findings.length > 0;
   const status = failed ? "FAIL" : "PASS";
-  console.log(`${status} | ${label} | ${findings.length} infracciones | sin baseline ni deuda aceptada`);
+  console.log(formatScriptStatus(status, `${label} | ${findings.length} infracciones | sin baseline ni deuda aceptada`));
   const shown = options.detail || options.audit ? findings : findings.slice(0, 35);
   for (const item of shown) {
     console.log(`  ERROR | ${item.rule} | ${item.path}:${item.line} | ${item.detail}`);

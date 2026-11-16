@@ -1,3 +1,4 @@
+import { formatScriptStatus } from "../scripts/terminal.mjs";
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -366,9 +367,9 @@ const guard = (sources) => {
 const sources = loadSources();
 const result = guard(sources);
 if (result.errors.length) {
-  console.error(`FAIL | PROTECCIÓN DE TESTS | ${result.errors.length} incumplimientos`);
+  console.error(formatScriptStatus("FAIL", `PROTECCIÓN DE TESTS | ${result.errors.length} incumplimientos`, process.stderr));
   for (const problem of result.errors) console.error(`  ${problem}`);
   process.exitCode = 1;
 } else {
-  console.log(`PASS | PROTECCIÓN DE TESTS | ${protectedSuites.length} suites | ${result.files} módulos | ${result.contracts} cuotas de ejecución | ${result.raw} cuotas de infraestructura`);
+  console.log(formatScriptStatus("PASS", `PROTECCIÓN DE TESTS | ${protectedSuites.length} suites | ${result.files} módulos | ${result.contracts} cuotas de ejecución | ${result.raw} cuotas de infraestructura`));
 }

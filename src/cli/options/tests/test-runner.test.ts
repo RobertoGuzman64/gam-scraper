@@ -148,7 +148,7 @@ test("la consola conserva el motivo de omisión y termina en un resultado inequ�
     assert.match(result.stdout, /OMITIDOS \| 1/);
     assert.match(result.stdout, /omisión deliberada.*condición acreditada/);
     assert.match(result.stdout, /TIEMPOS \| Último informe.*Fin del runner.*Intervalo posterior/);
-    assert.match(result.stdout.trim().split("\n").at(-1) ?? "", /^FAIL \| 2\/2 archivos \| 1 correctos \| 0 fallidos \| 1 omitidos/);
+    assert.match(result.stdout, /FAIL \| TESTS \| 2\/2 suites · 1 correctos · 0 fallidos · 1 omitidos/);
   });
 });
 
@@ -300,8 +300,14 @@ const addCacheableSuites = (root: string): void => {
 };
 
 const assertNoCacheReuse = (output: string): void => {
-  assert.match(output, /PASS \| 4\/4 archivos \| 4 correctos \| 0 fallidos \| 0 omitidos/);
-  assert.doesNotMatch(output, /CACHÉ \| [1-9]\d* suites y [1-9]\d* tests reutilizados/);
+  assert.match(output, /PASS \| TESTS \| 4\/4 suites · 4 correctos · 0 fallidos · 0 omitidos/);
+  assert.match(output, /caché 0 suites \/ 0 tests/);
+};
+
+const assertCacheReuse = (output: string, reused: number, executed: number): void => {
+  const total = reused + executed;
+  assert.ok(output.includes(`PASS | TESTS | ${total}/${total} suites`));
+  assert.match(output, new RegExp(`caché ${reused} suites / ${reused} tests`));
 };
 
 test("npm test reutiliza automáticamente solo suites seguras cuando no cambia ninguna entrada", () => {
@@ -314,8 +320,8 @@ test("npm test reutiliza automáticamente solo suites seguras cuando no cambia n
     assert.equal(first.trim().split("\n").length, 2);
     const next = spawnRunner(root, []);
     assert.equal(next.status, 0, `${next.stdout}${next.stderr}`);
-    assert.match(next.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 2 suites ejecutadas/);
-    assert.match(next.stdout, /4 correctos \(2 reutilizados\)/);
+    assertCacheReuse(next.stdout, 2, 2);
+    assert.match(next.stdout, /4 correctos/);
     assert.equal(readFileSync(join(root, "ejecuciones-cache.txt"), "utf8"), first);
   });
 });
@@ -347,7 +353,7 @@ test("mediciones, concurrencia personalizada y CI ejecutan toda la batería", ()
     addCacheableSuites(root);
     assert.equal(spawnRunner(root, []).status, 0);
     const cached = spawnRunner(root, []);
-    assert.match(cached.stdout, /CACHÉ \| 2 suites/);
+    assertCacheReuse(cached.stdout, 2, 2);
     const reportPath = join(root, "medicion.json");
     const measured = spawnRunner(root, ["--medicion", reportPath]);
     assert.equal(measured.status, 0, `${measured.stdout}${measured.stderr}`);
@@ -357,13 +363,13 @@ test("mediciones, concurrencia personalizada y CI ejecutan toda la batería", ()
     assert.deepEqual(report.resumen.cache, { reutilizados: 0, ejecutados: 4, tests_reutilizados: 0 });
     const manual = spawnRunner(root, ["--concurrencia", "2"]);
     assert.equal(manual.status, 0, `${manual.stdout}${manual.stderr}`);
-    assert.doesNotMatch(manual.stdout, /CACHÉ \| 2 suites/);
+    assert.match(manual.stdout, /caché 0 suites \/ 0 tests/);
     const ci = spawnRunner(root, [], { CI: "true" });
     assert.equal(ci.status, 0, `${ci.stdout}${ci.stderr}`);
-    assert.doesNotMatch(ci.stdout, /CACHÉ \| 2 suites/);
+    assert.match(ci.stdout, /caché 0 suites \/ 0 tests/);
     const forced = spawnRunner(root, [], { EQUIPZILLA_TEST_CACHE: "0" });
     assert.equal(forced.status, 0, `${forced.stdout}${forced.stderr}`);
-    assert.doesNotMatch(forced.stdout, /CACHÉ \| 2 suites/);
+    assert.match(forced.stdout, /caché 0 suites \/ 0 tests/);
     assert.equal(readFileSync(join(root, "ejecuciones-cache.txt"), "utf8").trim().split("\n").length, 10);
   });
 });
@@ -410,8 +416,8 @@ test("la caché automática abarca suites de preparación auditadas sin nuevos c
     assertNoCacheReuse(first.stdout);
     const second = spawnRunner(root, []);
     assert.equal(second.status, 0, `${second.stdout}${second.stderr}`);
-    assert.match(second.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 2 suites ejecutadas/);
-    assert.match(second.stdout, /4 correctos \(2 reutilizados\)/);
+    assertCacheReuse(second.stdout, 2, 2);
+    assert.match(second.stdout, /4 correctos/);
   });
 });
 
@@ -426,13 +432,13 @@ test("el cambio de una dependencia invalida solo su suite, no las demás", () =>
     writeFileSync(compiled, "export const value =  1;\n");
     const changed = spawnRunner(root, []);
     assert.equal(changed.status, 0, `${changed.stdout}${changed.stderr}`);
-    assert.match(changed.stdout, /CACHÉ \| 1 suites y 1 tests reutilizados \| 3 suites ejecutadas/);
+    assertCacheReuse(changed.stdout, 1, 3);
     assert.equal(spawnRunner(root, []).status, 0);
     const unrelated = join(root, "src", "unrelated.ts");
     writeFileSync(unrelated, "export const unaffected = true;\n");
     const independent = spawnRunner(root, []);
     assert.equal(independent.status, 0, `${independent.stdout}${independent.stderr}`);
-    assert.match(independent.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 2 suites ejecutadas/);
+    assertCacheReuse(independent.stdout, 2, 2);
   });
 });
 
@@ -458,17 +464,17 @@ test("los datos externos solo invalidan suites que dependen de ellos", () => {
     assert.equal(spawnRunner(root, []).status, 0);
     const second = spawnRunner(root, []);
     assert.equal(second.status, 0, `${second.stdout}${second.stderr}`);
-    assert.match(second.stdout, /CACHÉ \| 3 suites y 3 tests reutilizados \| 3 suites ejecutadas/);
+    assertCacheReuse(second.stdout, 3, 3);
     writeFileSync(join(root, "catalogs", "nuevo.json"), '{"revision":2}');
     const changed = spawnRunner(root, []);
     assert.equal(changed.status, 0, `${changed.stdout}${changed.stderr}`);
-    assert.match(changed.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 4 suites ejecutadas/);
+    assertCacheReuse(changed.stdout, 2, 4);
     const unrelated = join(root, "docs");
     mkdirSync(unrelated);
     writeFileSync(join(unrelated, "notes.md"), "Actualización editorial");
     const docsChanged = spawnRunner(root, []);
     assert.equal(docsChanged.status, 0, `${docsChanged.stdout}${docsChanged.stderr}`);
-    assert.match(docsChanged.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 4 suites ejecutadas/);
+    assertCacheReuse(docsChanged.stdout, 2, 4);
   });
 });
 
@@ -490,7 +496,7 @@ test("importaciones dinámicas y módulos externos quedan fuera de la caché", (
     assert.equal(spawnRunner(root, []).status, 0);
     const again = spawnRunner(root, []);
     assert.equal(again.status, 0, `${again.stdout}${again.stderr}`);
-    assert.match(again.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 4 suites ejecutadas/);
+    assertCacheReuse(again.stdout, 2, 4);
   });
 });
 
@@ -502,7 +508,7 @@ test("el perfil caliente conserva la reutilización real y mide solo las suites 
     const reportPath = join(root, "perfil-caliente.json");
     const warm = spawnRunner(root, ["--medicion-cache", reportPath]);
     assert.equal(warm.status, 0, `${warm.stdout}${warm.stderr}`);
-    assert.match(warm.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados \| 2 suites ejecutadas/);
+    assertCacheReuse(warm.stdout, 2, 2);
     const report: unknown = JSON.parse(readFileSync(reportPath, "utf8"));
     assert.ok(report && typeof report === "object" && "resumen" in report && report.resumen &&
       typeof report.resumen === "object" && "cache" in report.resumen && "correctos" in report.resumen &&
@@ -550,7 +556,7 @@ test("cambiar el ejecutor del runner invalida las suites cacheadas", () => {
     assert.equal(initial.status, 0, `${initial.stdout}${initial.stderr}`);
     const warm = spawnRunner(root, []);
     assert.equal(warm.status, 0, `${warm.stdout}${warm.stderr}`);
-    assert.match(warm.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados/);
+    assertCacheReuse(warm.stdout, 2, 2);
     const module = join(root, "scripts", "test-runner-execution.mjs");
     writeFileSync(module, `${readFileSync(module, "utf8")}\n`);
     const invalidated = spawnRunner(root, []);
@@ -558,7 +564,7 @@ test("cambiar el ejecutor del runner invalida las suites cacheadas", () => {
     assertNoCacheReuse(invalidated.stdout);
     const warmedAgain = spawnRunner(root, []);
     assert.equal(warmedAgain.status, 0, `${warmedAgain.stdout}${warmedAgain.stderr}`);
-    assert.match(warmedAgain.stdout, /CACHÉ \| 2 suites y 2 tests reutilizados/);
+    assertCacheReuse(warmedAgain.stdout, 2, 2);
     const workerModule = join(root, "scripts", "test-runner-worker.mjs");
     writeFileSync(workerModule, `${readFileSync(workerModule, "utf8")}\n`);
     const workerChanged = spawnRunner(root, []);
@@ -572,7 +578,7 @@ test("un error de carga informa el archivo fallido y no simula una suite bloquea
     writeFileSync(join(root, "dist", "prueba.test.js"), 'import "./no-existe.js";\n');
     const result = spawnRunner(root, ["--concurrencia=2"]);
     assert.equal(result.status, 1, `${result.stdout}${result.stderr}`);
-    assert.match(result.stdout, /FAIL \| 2\/2 archivos/);
+    assert.match(result.stdout, /FAIL \| TESTS \| 2\/2 suites/);
     assert.match(result.stdout, /1 fallidos/);
     assert.doesNotMatch(result.stdout, /archivos terminaron sin informe recibido/);
   });

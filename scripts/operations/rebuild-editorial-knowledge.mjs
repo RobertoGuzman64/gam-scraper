@@ -1,3 +1,4 @@
+import { formatScriptStatus } from "../terminal.mjs";
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -165,5 +166,5 @@ const emit = (name, content) => {
 };
 emit('verified-units.json', unitData);
 emit('migration-report.json', report);
-if (process.argv.includes('--check')) console.log(`PASS | CONOCIMIENTO EDITORIAL | ${files.length} fuentes · ${report.verifiedTextEntries} textos · ${report.verifiedTitles} títulos coincidentes · ${report.verifiedUnits} unidades`);
+if (process.argv.includes('--check')) console.log(formatScriptStatus("PASS", `CONOCIMIENTO EDITORIAL | ${files.length} fuentes · ${report.verifiedTextEntries} textos · ${report.verifiedTitles} títulos coincidentes · ${report.verifiedUnits} unidades`));
 else console.log(`GENERADO | CONOCIMIENTO EDITORIAL | ${files.length} fuentes · ${report.verifiedTextEntries} textos · ${report.verifiedTitles} títulos coincidentes · ${report.verifiedUnits} unidades`);

@@ -1,3 +1,4 @@
+import { formatScriptStatus } from "../scripts/terminal.mjs";
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -258,8 +259,8 @@ match("Campos admitidos por la validación comercial", allowed, [
 ].sort());
 
 if (errors.length > 0) {
-  for (const item of errors) console.error(`FAIL | Contrato comercial v2 alterado: ${item}`);
+  for (const item of errors) console.error(formatScriptStatus("FAIL", `Contrato comercial v2 alterado: ${item}`, process.stderr));
   process.exitCode = 1;
 } else {
-  console.log("PASS | Contrato comercial v2 intacto (campos, tipos y procedencias)");
+  console.log(formatScriptStatus("PASS", "Contrato comercial v2 intacto (campos, tipos y procedencias)"));
 }

@@ -1386,7 +1386,9 @@ test('la conciliación productiva revoca una sustitución si el dato histórico 
   assert.deepEqual(item?.consumption.unmatchedNumericMarkers, []);
   assert.equal(result.totals.runtime.supersededWithVerifiedWinner, 38);
   assert.equal(result.totals.runtime.supersededPending, 1);
-  assert.equal(result.totals.states.PENDIENTE_EQUIVALENCIA, 2);
+  assert.equal(result.totals.states.PENDIENTE_EQUIVALENCIA, 1);
+  assert.equal(result.totals.states.PENDIENTE_EQUIVALENCIA,
+    result.entries.filter((entry) => entry.status === 'PENDIENTE_EQUIVALENCIA').length);
 });
 
 

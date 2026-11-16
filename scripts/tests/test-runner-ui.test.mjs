@@ -1,8 +1,14 @@
 import assert from "node:assert/strict";
 import { PassThrough } from "node:stream";
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
-import {
-  createRunnerDisplay, formatRunnerCompletion, formatRunnerLog, formatRunnerOmission, supportsInteractiveRunner,
+import { formatScriptStatus, supportsScriptColor } from "../terminal.mjs";
+import compactGuardTestReporter, {
+  createRunnerDisplay, formatRunnerCompletion, formatRunnerFailure, formatRunnerLog, formatRunnerOmission, supportsInteractiveRunner,
   formatRunnerProgress, formatRunnerRegression, formatRunnerTime
 } from "../test-runner-ui.mjs";
 
@@ -77,7 +83,7 @@ test("el panel se repinta sobre el mismo bloque y libera la región antes del re
   assert.ok(written.length < 4000);
 });
 
-test("el resumen final persistente identifica resultado, caché y tiempos de colas", () => {
+test("el resumen final es compacto, único y conserva todos los contadores en cada anchura", () => {
   const finished = state({
     progress: { ...state().progress, reported: 416, remaining: 0, without_report: 0, not_started: 0, oldest_without_report: [] },
     lanes: [
@@ -86,17 +92,16 @@ test("el resumen final persistente identifica resultado, caché y tiempos de col
     ]
   });
   for (const width of [45, 80, 110, 160]) {
-    const lines = formatRunnerCompletion({ ...finished, success: true,
-      slowest: { file: "dist/campaign/tests/finalization-and-delivery/finalization-interventions.test.js", milliseconds: 22061 }
-    }, width, true);
-    assert.match(plain(lines.join("\n")), /CORRECTO/);
-    assert.match(plain(lines.join("\n")), /Caché: 285 suites \/ 1\.153 tests/);
-    assert.match(plain(lines.join("\n")), /INTENSIVA 16\/16[\s\S]*GENERAL 115\/115/);
-    assert.match(plain(lines.join("\n")), /Suite más lenta:[\s\S]*finalization-interventions\.test\.js/);
-    assert.match(plain(lines.join("\n")), /00:22/);
-    assert.ok(lines.every((line) => plain(line).length < width));
+    const lines = formatRunnerCompletion({ ...finished, success: true }, width, true);
+    const output = plain(lines.join("\n"));
+    for (const expected of ["PASS | TESTS", "416/416 suites", "1.715 correctos", "0 fallidos", "1 omitidos", "0 TODO", "caché 285 suites / 1.153 tests", "01:21"]) {
+      assert.ok(output.includes(expected), expected);
+    }
+    assert.equal(output.match(/PASS \| TESTS/g)?.length, 1);
+    assert.ok(lines.every((line) => plain(line).length < width), width);
+    assert.ok(lines.length <= 4);
   }
-  assert.match(formatRunnerCompletion({ ...finished, success: false }, 100).join("\n"), /FALLIDO/);
+  assert.match(formatRunnerCompletion({ ...finished, success: false }, 100).join("\n"), /^FAIL \| TESTS/);
   assert.doesNotMatch(formatRunnerCompletion({ ...finished, success: true }, 100).join("\n"), /\u001b\[/);
 });
 
@@ -134,6 +139,80 @@ test("los logs de CI no contienen control de terminal y mantienen una cadencia m
 });
 
 
+test("la salida no interactiva registra los cambios de fallo al instante y limita el progreso rutinario", () => {
+  const stream = new PassThrough();
+  let written = "";
+  stream.on("data", (chunk) => { written += chunk.toString(); });
+  let elapsed = 0;
+  let current = state();
+  const display = createRunnerDisplay(stream, { interactive: false, getState: () => current, now: () => elapsed });
+  elapsed = 59000;
+  display.tick();
+  assert.equal(written, "");
+  elapsed = 60001;
+  display.tick();
+  assert.equal(written.split("\n").filter(Boolean).length, 1);
+  elapsed = 61000;
+  current = state({ counts: { passed: 1715, failed: 1, skipped: 1, todo: 0 } });
+  display.tick();
+  assert.match(written, /1 fallidos/);
+  assert.equal(written.split("\n").filter(Boolean).length, 2);
+  elapsed = 63000;
+  display.tick();
+  assert.equal(written.split("\n").filter(Boolean).length, 2);
+});
+
+test("el formateador preserva el error completo y stderr sin degradar diagnósticos", () => {
+  const failure = formatRunnerFailure({
+    name: "conciliación histórica", file: "scripts/operations/tests/historia.test.mjs", line: 42,
+    error: new Error("diferencia de concepto"), stderr: "ERROR: código semántico\n", stdout: "DIAGNÓSTICO: datos originales\n"
+  });
+  assert.match(failure, /FAIL \| conciliación histórica/);
+  assert.match(failure, /historia\.test\.mjs:42/);
+  assert.match(failure, /Error: diferencia de concepto/);
+  assert.match(failure, /scripts\/tests\/test-runner-ui\.test\.mjs/);
+  assert.match(failure, /ERROR: código semántico/);
+  assert.match(failure, /DIAGNÓSTICO: datos originales/);
+  assert.match(formatRunnerFailure({ name: "sin dato" }), /Node no proporcionó detalles adicionales/);
+});
+
+test("el reporter de guards resume éxitos y muestra nombre, error, stack y stderr ante fallo", async () => {
+  const events = async function* () {
+    yield { type: "test:pass", data: { name: "pasa", details: { type: "test" } } };
+    yield { type: "test:fail", data: { name: "falla", file: "ruta.mjs", line: 12, details: { error: new Error("fallo trazado") } } };
+    yield { type: "test:stderr", data: { message: "diagnóstico stderr\n" } };
+    yield { type: "test:diagnostic", data: { message: "hallazgo relevante" } };
+    yield { type: "test:diagnostic", data: { message: "pass 1" } };
+    yield { type: "test:summary", data: { success: false, counts: { passed: 1, failed: 1, cancelled: 0, skipped: 0 }, duration_ms: 1000 } };
+  };
+  const output = [];
+  for await (const part of compactGuardTestReporter(events())) output.push(part);
+  const result = output.join("");
+  assert.doesNotMatch(result, /PASS \| pasa/);
+  assert.match(result, /FAIL \| falla \(ruta\.mjs:12\)/);
+  assert.match(result, /fallo trazado/);
+  assert.match(result, /diagnóstico stderr/);
+  assert.match(result, /hallazgo relevante/);
+  assert.match(result, /FAIL \| GUARDS \| 1 correctos \| 1 fallidos/);
+});
+
+test("el reporter real conserva el código de salida y la aserción fallida", (t) => {
+  const root = mkdtempSync(join(tmpdir(), "eqz-reporter-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const source = join(root, "guard-failure.test.mjs");
+  writeFileSync(source, "import test from 'node:test'; import assert from 'node:assert/strict'; test('debe fallar', () => assert.equal(1, 2));\n");
+  const reporter = fileURLToPath(new URL("../test-runner-ui.mjs", import.meta.url));
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  const result = spawnSync(process.execPath, ["--test", `--test-reporter=${reporter}`, source], { encoding: "utf8", env });
+  assert.equal(result.error, undefined);
+  assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
+  assert.match(result.stdout, /FAIL \| debe fallar/);
+  assert.match(result.stdout, /1 !== 2/);
+  assert.match(result.stdout, /guard-failure\.test\.mjs:1/);
+  assert.match(result.stdout, /FAIL \| GUARDS/);
+});
+
 test("la consola clásica de Windows usa progreso por líneas sin controlar el cursor", () => {
   const stream = { isTTY: true };
   assert.equal(supportsInteractiveRunner(stream, "win32", { CI: "false" }), false);
@@ -157,4 +236,42 @@ test("no repinta un estado idéntico y no acumula escrituras de cursor", () => {
   display.tick();
   assert.equal(written.length, before);
   display.finish();
+});
+
+test("los estados reutilizados muestran PASS verde y FAIL rojo, con exclusiones explícitas", () => {
+  const tty = { isTTY: true };
+  const enabled = { CI: "false", TERM: "xterm-256color" };
+  assert.equal(supportsScriptColor(tty, enabled), true);
+  assert.equal(supportsScriptColor(tty, { ...enabled, NO_COLOR: "1" }), false);
+  assert.equal(supportsScriptColor(tty, { ...enabled, CI: "true" }), false);
+  assert.equal(supportsScriptColor({ isTTY: false }, { ...enabled, FORCE_COLOR: "1" }), true);
+  assert.equal(supportsScriptColor({ isTTY: false }, { ...enabled, TERM: "dumb", FORCE_COLOR: "1" }), true);
+  assert.equal(supportsScriptColor({ isTTY: false }, { ...enabled, FORCE_COLOR: "0" }), false);
+  assert.equal(supportsScriptColor(tty, { ...enabled, FORCE_COLOR: "0" }), false);
+  if (process.env.NO_COLOR === undefined && process.env.TERM !== "dumb" && process.env.CI !== "true") {
+    assert.match(formatScriptStatus("PASS", "correcto", tty), /\u001b\[32mPASS\u001b\[0m \| correcto/);
+    assert.match(formatScriptStatus("FAIL", "fallo", tty), /\u001b\[31mFAIL\u001b\[0m \| fallo/);
+  }
+});
+
+test("npm test oculta el encabezado largo sin silenciar errores ni estados de salida", (t) => {
+  const root = mkdtempSync(join(tmpdir(), "eqz-npm-console-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const config = readFileSync(new URL("../../.npmrc", import.meta.url), "utf8");
+  writeFileSync(join(root, ".npmrc"), config);
+  const packageFile = join(root, "package.json");
+  const execute = (script) => {
+    writeFileSync(packageFile, JSON.stringify({ name: "terminal-verification", version: "1.0.0", scripts: { test: script } }));
+    return spawnSync(process.platform === "win32" ? "npm.cmd" : "npm", ["test"], {
+      cwd: root, encoding: "utf8", shell: process.platform === "win32"
+    });
+  };
+  const passed = execute(`${JSON.stringify(process.execPath)} -e "console.log('PASS | control')"`);
+  assert.equal(passed.status, 0, `${passed.stdout}${passed.stderr}`);
+  assert.match(passed.stdout, /PASS \| control/);
+  assert.doesNotMatch(passed.stdout, /^> terminal-verification/m);
+  const failed = execute(`${JSON.stringify(process.execPath)} -e "console.error('FAIL | control'); process.exitCode=1"`);
+  assert.notEqual(failed.status, 0, `${failed.stdout}${failed.stderr}`);
+  assert.match(`${failed.stdout}${failed.stderr}`, /FAIL \| control/);
+  assert.doesNotMatch(`${failed.stdout}${failed.stderr}`, /^> terminal-verification/m);
 });

@@ -1,3 +1,4 @@
+import { formatScriptStatus } from "../scripts/terminal.mjs";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, resolve, relative, sep } from "node:path";
@@ -43,4 +44,4 @@ const permitted = new Set([
 const obsolete = [...imported].map((file) => relative(root, file).split(sep).join("/"))
   .filter((file) => /src\/preparation\/(?:gam|gomariz|mercaeleva)\/editorial\//u.test(file) && !permitted.has(file));
 assert.deepEqual(obsolete, [], `Módulos narradores de proveedor aún conectados: ${obsolete.join(", ")}`);
-console.log(`PASS | MOTOR EDITORIAL COMPARTIDO | 0 narradores de proveedor conectados; ${imported.size} módulos productivos alcanzables`);
+console.log(formatScriptStatus("PASS", `MOTOR EDITORIAL COMPARTIDO | 0 narradores de proveedor conectados; ${imported.size} módulos productivos alcanzables`));

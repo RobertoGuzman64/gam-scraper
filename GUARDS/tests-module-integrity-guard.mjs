@@ -1,3 +1,4 @@
+import { formatScriptStatus } from "../scripts/terminal.mjs";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve, relative } from "node:path";
 
@@ -27,4 +28,4 @@ while (pending.length > 0) {
 if (problems.length > 0) {
   throw new Error(`Imports locales de producción ausentes:\n${problems.join("\n")}`);
 }
-console.log(`PASS | INTEGRIDAD DEL REPOSITORIO | ${inspected} módulos TS productivos; 0 imports relativos ausentes`);
+console.log(formatScriptStatus("PASS", `INTEGRIDAD DEL REPOSITORIO | ${inspected} módulos TS productivos; 0 imports relativos ausentes`));

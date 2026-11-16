@@ -36,7 +36,7 @@ test("npm test ejecuta los guards arquitectónicos y sus autopruebas antes del b
   const required = [
     "node GUARDS/tests-editorial-architecture-guard.mjs",
     "node GUARDS/tests-domain-tests-guard.mjs",
-    "node --test GUARDS/tests-architecture-guards.test.mjs"
+    "node --test --test-reporter=./scripts/test-runner-ui.mjs GUARDS/tests-architecture-guards.test.mjs"
   ];
   const build = steps.indexOf("node scripts/run-build.mjs --quiet --if-needed");
   assert.ok(build > -1);
@@ -202,9 +202,14 @@ test("sin baseline: una infracción existente sigue fallando aunque se use --aud
   const { optionsFrom, present } = await import("./guards-architecture-core.mjs");
   const findings = inspectEditorialArchitecture(root).findings;
   assert.ok(findings.length > 0);
+  const output = [];
+  t.mock.method(console, "log", (message) => output.push(message));
   assert.equal(present("PRUEBA", findings, optionsFrom(["--root", root, "--audit"])).exitCode, 1);
   assert.equal(present("PRUEBA", findings, optionsFrom(["--root", root, "--strict"])).exitCode, 1);
   assert.equal(present("PRUEBA", [], optionsFrom(["--root", root])).exitCode, 0);
+  assert.equal(output.filter((message) => message.startsWith("FAIL | PRUEBA")).length, 2);
+  assert.ok(output.some((message) => message.includes("E-LEGACY-NARRATOR")));
+  assert.ok(output.some((message) => message.startsWith("PASS | PRUEBA")));
 });
 
 test("la identidad comercial no se clasifica como recomposición editorial", (t) => {
@@ -316,7 +321,10 @@ test("un baseline antiguo no autoriza ninguna infracción aunque siga en la raí
   assert.equal(findings.length, 1);
   write("guards-architecture-baseline-f7.json", JSON.stringify({ version: 1, editorial: [{ id: findings[0].id }], tests: [] }));
   const { optionsFrom, present } = await import("./guards-architecture-core.mjs");
+  const output = [];
+  t.mock.method(console, "log", (message) => output.push(message));
   assert.equal(present("PRUEBA", findings, optionsFrom(["--root", root])).exitCode, 1);
+  assert.ok(output.some((message) => message.includes("E-LEGACY-NARRATOR")));
 });
 
 test("un test de integración de publicación no se penaliza por usar manifiestos inmutables", (t) => {

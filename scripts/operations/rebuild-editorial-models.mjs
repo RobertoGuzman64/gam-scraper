@@ -1,3 +1,4 @@
+import { formatScriptStatus } from "../terminal.mjs";
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,4 +40,4 @@ const path = join(root, 'data/editorial/knowledge/model-consensus.json');
 if (process.argv.includes('--check')) {
   if (readFileSync(path, 'utf8') !== output) throw Error('Consensos editoriales de modelo desactualizados');
 } else writeFileSync(path, output);
-console.log(`PASS | CONSENSO MODELOS | ${entries.length} modelos · ${entries.reduce((sum, item) => sum + Object.keys(item.stable).length, 0)} magnitudes corroboradas`);
+console.log(formatScriptStatus("PASS", `CONSENSO MODELOS | ${entries.length} modelos · ${entries.reduce((sum, item) => sum + Object.keys(item.stable).length, 0)} magnitudes corroboradas`));
