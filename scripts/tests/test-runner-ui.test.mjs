@@ -1,10 +1,9 @@
 import assert from "node:assert/strict";
 import { PassThrough } from "node:stream";
-import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
+import { dirname, join } from "node:path";
+import { spawn, spawnSync } from "node:child_process";
 import test from "node:test";
 import { formatScriptStatus, supportsScriptColor } from "../terminal.mjs";
 import compactGuardTestReporter, {
@@ -163,10 +162,10 @@ test("la salida no interactiva registra los cambios de fallo al instante y limit
 });
 
 test("el formateador preserva el error completo y stderr sin degradar diagnósticos", () => {
-  const failure = formatRunnerFailure({
+  const failure = plain(formatRunnerFailure({
     name: "conciliación histórica", file: "scripts/operations/tests/historia.test.mjs", line: 42,
     error: new Error("diferencia de concepto"), stderr: "ERROR: código semántico\n", stdout: "DIAGNÓSTICO: datos originales\n"
-  });
+  }));
   assert.match(failure, /FAIL \| conciliación histórica/);
   assert.match(failure, /historia\.test\.mjs:42/);
   assert.match(failure, /Error: diferencia de concepto/);
@@ -187,7 +186,7 @@ test("el reporter de guards resume éxitos y muestra nombre, error, stack y stde
   };
   const output = [];
   for await (const part of compactGuardTestReporter(events())) output.push(part);
-  const result = output.join("");
+  const result = plain(output.join(""));
   assert.doesNotMatch(result, /PASS \| pasa/);
   assert.match(result, /FAIL \| falla \(ruta\.mjs:12\)/);
   assert.match(result, /fallo trazado/);
@@ -196,21 +195,29 @@ test("el reporter de guards resume éxitos y muestra nombre, error, stack y stde
   assert.match(result, /FAIL \| GUARDS \| 1 correctos \| 1 fallidos/);
 });
 
-test("el reporter real conserva el código de salida y la aserción fallida", (t) => {
+test("el reporter real conserva el código de salida y la aserción fallida", async (t) => {
   const root = mkdtempSync(join(tmpdir(), "eqz-reporter-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const source = join(root, "guard-failure.test.mjs");
   writeFileSync(source, "import test from 'node:test'; import assert from 'node:assert/strict'; test('debe fallar', () => assert.equal(1, 2));\n");
-  const reporter = fileURLToPath(new URL("../test-runner-ui.mjs", import.meta.url));
+  const reporter = new URL("../test-runner-ui.mjs", import.meta.url).href;
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
-  const result = spawnSync(process.execPath, ["--test", `--test-reporter=${reporter}`, source], { encoding: "utf8", env });
-  assert.equal(result.error, undefined);
-  assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
-  assert.match(result.stdout, /FAIL \| debe fallar/);
-  assert.match(result.stdout, /1 !== 2/);
-  assert.match(result.stdout, /guard-failure\.test\.mjs:1/);
-  assert.match(result.stdout, /FAIL \| GUARDS/);
+  const result = await new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, ["--test", `--test-reporter=${reporter}`, source], { env, windowsHide: true });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.setEncoding("utf8").on("data", (chunk) => { stdout += chunk; });
+    child.stderr.setEncoding("utf8").on("data", (chunk) => { stderr += chunk; });
+    child.on("error", reject);
+    child.on("close", (status) => resolve({ status, stdout, stderr }));
+  });
+  const output = plain(`${result.stdout}${result.stderr}`);
+  assert.equal(result.status, 1, output);
+  assert.match(output, /FAIL \| debe fallar/);
+  assert.match(output, /1 !== 2/);
+  assert.match(output, /guard-failure\.test\.mjs:1/);
+  assert.match(output, /FAIL \| GUARDS/);
 });
 
 test("la consola clásica de Windows usa progreso por líneas sin controlar el cursor", () => {
@@ -260,18 +267,25 @@ test("npm test oculta el encabezado largo sin silenciar errores ni estados de sa
   const config = readFileSync(new URL("../../.npmrc", import.meta.url), "utf8");
   writeFileSync(join(root, ".npmrc"), config);
   const packageFile = join(root, "package.json");
+  const nodeDirectory = dirname(process.execPath);
+  const npmCli = [
+    process.env.npm_execpath,
+    join(nodeDirectory, "node_modules", "npm", "bin", "npm-cli.js"),
+    join(nodeDirectory, "..", "lib", "node_modules", "npm", "bin", "npm-cli.js")
+  ].find((candidate) => candidate?.endsWith("npm-cli.js") && existsSync(candidate));
+  assert.ok(npmCli, "No se ha encontrado el CLI de npm para verificar la salida");
   const execute = (script) => {
     writeFileSync(packageFile, JSON.stringify({ name: "terminal-verification", version: "1.0.0", scripts: { test: script } }));
-    return spawnSync(process.platform === "win32" ? "npm.cmd" : "npm", ["test"], {
-      cwd: root, encoding: "utf8", shell: process.platform === "win32"
+    return spawnSync(process.execPath, [npmCli, "test"], {
+      cwd: root, encoding: "utf8", windowsHide: true
     });
   };
-  const passed = execute(`${JSON.stringify(process.execPath)} -e "console.log('PASS | control')"`);
-  assert.equal(passed.status, 0, `${passed.stdout}${passed.stderr}`);
+  const passed = execute('node -e "console.log(\'PASS | control\')"');
+  assert.equal(passed.status, 0, `${passed.stdout}${passed.stderr}${passed.error ?? ""}`);
   assert.match(passed.stdout, /PASS \| control/);
   assert.doesNotMatch(passed.stdout, /^> terminal-verification/m);
-  const failed = execute(`${JSON.stringify(process.execPath)} -e "console.error('FAIL | control'); process.exitCode=1"`);
-  assert.notEqual(failed.status, 0, `${failed.stdout}${failed.stderr}`);
+  const failed = execute('node -e "console.error(\'FAIL | control\'); process.exitCode=1"');
+  assert.equal(failed.status, 1, `${failed.stdout}${failed.stderr}${failed.error ?? ""}`);
   assert.match(`${failed.stdout}${failed.stderr}`, /FAIL \| control/);
   assert.doesNotMatch(`${failed.stdout}${failed.stderr}`, /^> terminal-verification/m);
 });

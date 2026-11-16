@@ -1,1 +1,2 @@
 catalogs/**/*.json text eol=lf
+data/editorial/knowledge/verified-units.json text eol=lf

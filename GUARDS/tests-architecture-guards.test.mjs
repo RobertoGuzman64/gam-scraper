@@ -207,9 +207,10 @@ test("sin baseline: una infracción existente sigue fallando aunque se use --aud
   assert.equal(present("PRUEBA", findings, optionsFrom(["--root", root, "--audit"])).exitCode, 1);
   assert.equal(present("PRUEBA", findings, optionsFrom(["--root", root, "--strict"])).exitCode, 1);
   assert.equal(present("PRUEBA", [], optionsFrom(["--root", root])).exitCode, 0);
-  assert.equal(output.filter((message) => message.startsWith("FAIL | PRUEBA")).length, 2);
+  const statuses = output.map((message) => message.replace(/\u001b\[[0-9;]*m/gu, ""));
+  assert.equal(statuses.filter((message) => message.startsWith("FAIL | PRUEBA")).length, 2);
   assert.ok(output.some((message) => message.includes("E-LEGACY-NARRATOR")));
-  assert.ok(output.some((message) => message.startsWith("PASS | PRUEBA")));
+  assert.ok(statuses.some((message) => message.startsWith("PASS | PRUEBA")));
 });
 
 test("la identidad comercial no se clasifica como recomposición editorial", (t) => {

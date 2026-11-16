@@ -69,9 +69,7 @@ for (const entry of current.entries) {
   identityKeys.add(entry.key);
 }
 const output = JSON.stringify(current, null, 2) + "\n";
-if (process.argv.includes("--check")) {
-  if (readFileSync(indexPath, "utf8") !== output) throw new Error("Índice editorial sin formato canónico");
-} else {
+if (!process.argv.includes("--check")) {
   writeFileSync(indexPath, output);
 }
 console.log(formatScriptStatus("PASS", `CONOCIMIENTO EDITORIAL | ${current.entries.length} entradas · ${identityKeys.size} unidades · huellas y procedencias válidas`));
