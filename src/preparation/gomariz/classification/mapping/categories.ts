@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { fold, energy } from "../../../shared/classification/mapping/category-utils.js";
+import { gomarizDocumentedElectricScissor, gomarizProductFamily } from "../evidence/product-family.js";
 
 const currentRouteFamilies: Readonly<Record<string, readonly string[]>> = {
   "elevacion-y-trabajos-en-altura": [
@@ -12,7 +13,8 @@ const currentRouteFamilies: Readonly<Record<string, readonly string[]>> = {
   limpieza: ["fregadora"]
 };
 
-const sourceFamily = (path: readonly string[]): string | null => {
+const sourceFamily = (record: ProductRecord, path: readonly string[]): string | null => {
+  if (path[0] === "producto") return gomarizProductFamily(record, path);
   if (path[0] === "venta" && path.length >= 4) return path[2] ?? null;
   if (path.length !== 3) return null;
   const [section, family] = path;
@@ -20,7 +22,7 @@ const sourceFamily = (path: readonly string[]): string | null => {
 };
 
 export const gomarizCategorySlug = (record: ProductRecord, path: readonly string[], hostname: string): string | null => {
-  const family = sourceFamily(path);
+  const family = sourceFamily(record, path);
   if (record.providerId === "gomariz" && ["gomarizrent.com", "www.gomarizrent.com"].includes(hostname) && family) {
     const motor = fold(String(record.specs?.Motor ?? ""));
     const advertisedPower = energy(`${record.title ?? ""} ${path.at(-1) ?? ""}`);
@@ -31,8 +33,12 @@ export const gomarizCategorySlug = (record: ProductRecord, path: readonly string
       fold(record.title ?? "") === "jlg 340aj" &&
       /\blas articuladas diesel\b/.test(fold(record.longDescription ?? ""));
     // https://www.gomarizrent.com/wp-content/uploads/2024/04/FICHA-TECNICA-340AJ.pdf
-    const power = motor ? (advertisedPower && advertisedPower !== motorPower ? null : motorPower) :
-      advertisedPower ?? (documentedDiesel ? "diesel" : null);
+    const documentedScissor = family === "elevador-tijera" && gomarizDocumentedElectricScissor(record, path);
+    const documentedConflict = documentedScissor && (motorPower === "diesel" || advertisedPower === "diesel");
+    const power = documentedConflict ? null : path[0] === "producto" ?
+      (motor && motorPower && (!advertisedPower || advertisedPower === motorPower) ? motorPower : null) :
+      motor ? (advertisedPower && advertisedPower !== motorPower ? null : motorPower) :
+        advertisedPower ?? (documentedScissor ? "electric" : documentedDiesel ? "diesel" : null);
     if (family === "elevador-tijera" && power) return power === "electric"
       ? "plataformas-tijera-electricas-segunda-mano" : "plataformas-tijera-diesel-segunda-mano";
     if (["brazo-articulado", "brazo-articulado-boom-lift"].includes(family) && power) return power === "electric"

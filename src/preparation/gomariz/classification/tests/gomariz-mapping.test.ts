@@ -68,3 +68,69 @@ test("Gomariz: las rutas actuales no permiten clasificar unidades sin evidencia 
   assert.equal(categorySlug(source("gomariz", "https://www.gomarizrent.com/elevacion-y-trabajos-en-altura/elevador-mastil-vertical/genie-sla15/", "GENIE SLA15", {}, null)), undefined);
   assert.equal(categorySlug(source("gomariz", gomUrl("brazo-articulado", "ba1335"), "Skyjack SJ85AJ", { Motor: "Diésel" }, null)), "plataformas-articuladas-diesel-segunda-mano");
 });
+
+test("Gomariz: rutas producto acreditadas por identidad, familia documentada y Motor", () => {
+  const cases = [
+    ["producto/lgmg-as0812-tijera-electrica-scissor-lift", "LGMG", "AS0812", "Las Tijeras Eléctricas están diseñadas para trabajar en interior.", "Eléctrico", "plataformas-tijera-electricas-segunda-mano"],
+    ["producto/lgmg-sr1023d", "LGMG", "SR1023D", "Las Tijeras Diésel destacan por tener una cesta de gran dimensión.", "Diésel", "plataformas-tijera-diesel-segunda-mano"],
+    ["producto/lgmg-a14je", "LGMG", "A14JE", "Las Articuladas Eléctricas destacan por su gran maniobrabilidad.", "Eléctrico", "plataformas-articuladas-electricas-segunda-mano"],
+    ["producto/snorkel-a46je", "Snorkel", "A46JE", "Las Articuladas Diésel son muy útiles para trabajos en exterior.", "Eléctrico", "plataformas-articuladas-electricas-segunda-mano"],
+    ["producto/haulotte-ht23rtj-pro", "Haulotte", "HT23RTJ PRO", "Los Telescópicos Diesel dan solución tanto en altura como en alcance lateral.", "Diésel", "plataformas-elevadoras-telescopicas-segunda-mano"],
+    ["producto/skyjack-sj16", "Skyjack", "SJ16", "Los Mástiles Verticales son ideales para trabajar en espacios reducidos.", "Eléctrico", "plataformas-unipersonales-segunda-mano"],
+    ["producto/jcb-525-60-hi-viz", "JCB", "525-60 HI VIZ", "Manipuladores. Unifica las características de una carretilla elevadora.", "", "manipulador-teñescopico-segunda-mano"],
+    ["producto/pramac-gpw100i_fs2", "Pramac", "GPW100I_FS2", "Contamos con grupos electrógenos desde 8 a 200 kvas.", "Diésel", "grupos-electrogenos-segunda-mano"],
+    ["producto/skyjack-sj6832rt", "Skyjack", "SJ6832RT", "Las Tijeras Diésel destacan por tener una cesta extensible.", "Diésel", "plataformas-tijera-diesel-segunda-mano"]
+  ] as const;
+  for (const [path, brand, model, longDescription, motor, expected] of cases) {
+    const record = {
+      ...source("gomariz", `https://www.gomarizrent.com/${path}/`, `${brand} ${model}`, motor ? { Motor: motor } : {}, null),
+      brand, model, longDescription
+    };
+    assert.equal(categorySlug(record), expected, path);
+  }
+});
+
+test("Gomariz: producto sin identidad, Motor inequívoco o familia corroborada sigue pendiente", () => {
+  const url = "https://www.gomarizrent.com/producto/lgmg-as0812-tijera-electrica-scissor-lift/";
+  const record = {
+    ...source("gomariz", url, "LGMG AS0812", { Motor: "Eléctrico" }, null),
+    brand: "LGMG", model: "AS0812", longDescription: "Las Tijeras Eléctricas están diseñadas para trabajar en interior."
+  };
+  assert.equal(categorySlug({ ...record, longDescription: "Máquina de ocasión" }), undefined);
+  assert.equal(categorySlug({ ...record, brand: "Genie" }), undefined);
+  assert.equal(categorySlug({ ...record, model: "AS1413E" }), undefined);
+  assert.equal(categorySlug({ ...record, title: "LGMG S1413E" }), undefined);
+  assert.equal(categorySlug({ ...record, specs: {} }), undefined);
+  assert.equal(categorySlug({ ...record, specs: { Motor: "Diésel" } }), undefined);
+  assert.equal(categorySlug({ ...record, specs: { Motor: "Eléctrico, Gasolina" } }), undefined);
+  assert.equal(categorySlug({ ...record, url: url.replace("gomarizrent.com", "example.com") }), undefined);
+  assert.equal(categorySlug({ ...record, url: url.replace("producto", "alquiler") }), undefined);
+  assert.equal(categorySlug({ ...record, providerId: "gam" }), undefined);
+  const genericForklift = {
+    ...record, url: "https://www.gomarizrent.com/producto/heli-cpcd25/", brand: "HELI", model: "CPCD25",
+    title: "HELI CPCD25", specs: { Motor: "Diésel" },
+    longDescription: "Máquinas destinadas al trabajo en cualquier condición, existen modelos con propulsión 4×4."
+  };
+  assert.equal(categorySlug(genericForklift), undefined);
+  const truck = {
+    ...record, url: "https://www.gomarizrent.com/producto/socage-iveco-s35s14-forste-24d-speed-ultra/",
+    brand: "Iveco Socage", model: "S35S14 FORSTE 24D SPEED ULTRA",
+    title: "SOCAGE IVECO S35S14 FORSTE 24D SPEED ULTRA", specs: { Motor: "Diésel" },
+    longDescription: "Los Camiones Cesta es la solución perfecta para trabajos de exterior."
+  };
+  assert.equal(categorySlug(truck), undefined);
+});
+
+test("Gomariz: tijeras sin Motor solo con identidad, ruta y declaración eléctrica convergentes", () => {
+  const url = "https://www.gomarizrent.com/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-as0607we-1/";
+  const record = {
+    ...source("gomariz", url, "LGMG AS0607WE", {}, null),
+    brand: "LGMG", model: "AS0607WE", longDescription: "Las Tijeras Eléctricas están diseñadas para trabajar en interior."
+  };
+  assert.equal(categorySlug(record), "plataformas-tijera-electricas-segunda-mano");
+  assert.equal(categorySlug({ ...record, longDescription: null }), undefined);
+  assert.equal(categorySlug({ ...record, title: "LGMG AS0607WE diésel" }), undefined);
+  assert.equal(categorySlug({ ...record, specs: { Motor: "Diésel" } }), undefined);
+  assert.equal(categorySlug({ ...record, specs: { Motor: "Eléctrico, Gasolina" } }), undefined);
+  assert.equal(categorySlug({ ...record, url: url.replace("as0607we", "as0812") }), undefined);
+});
