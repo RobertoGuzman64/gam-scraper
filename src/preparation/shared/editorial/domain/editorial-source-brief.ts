@@ -1,6 +1,7 @@
 import { containsEditorialBrandModel } from "./editorial-identity-match.js";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { verifiedEditorialIdentity } from "./editorial-source-contract.js";
+import { normalizeEditorialSummary } from "./editorial-normalization.js";
 import { resolveEditorialSource } from "./editorial-source.js";
 import { editorialFamilyOf } from "./editorial-families.js";
 import { hasUnconditionalEditorialClaim } from "./editorial-claim-evidence.js";
@@ -59,4 +60,19 @@ export const expandVerifiedSourceShort = (source: ProductRecord, short: string |
     }
   }
   return null;
+};
+
+export const removeSourcedSaleWording = (source: ProductRecord, proposedShort: string | null): string | null => {
+  const current = proposedShort?.trim();
+  const original = source.shortDescription?.trim();
+  if (!current || !original || !source.model ||
+    countWords(current) <= 20 || countWords(current) > 45 ||
+    current !== normalizeEditorialSummary(original, source.model) ||
+    !verifiedEditorialIdentity(source) || !resolveEditorialSource(source)) return null;
+  const stripped = current.replace(/(?<=\.\s)Venta de ([\p{L}])/iu, (_match, first: string) => first.toLocaleUpperCase("es"))
+    .replace(/\b(plataforma)\s+\1\b/giu, "$1");
+  if (stripped === current || countWords(stripped) < 10 ||
+    [...numbers(current)].some((number) => !numbers(stripped).has(number)) ||
+    [...current.matchAll(protectedWords)].some((match) => !fold(stripped).includes(fold(match[0])))) return null;
+  return stripped;
 };

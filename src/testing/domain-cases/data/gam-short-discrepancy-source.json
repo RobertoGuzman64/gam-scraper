@@ -1,0 +1,48 @@
+[
+  {
+    "providerId": "gam",
+    "categoryKey": "marcas-nuevas",
+    "categoryName": "Maquinaria nueva por marcas",
+    "url": "https://online.gamrentals.com/es/manipuladores-de-contenedores-hyster/2168-hyster-h8xd-ec6",
+    "title": "Manipulador de contenedores Hyster H8XD-EC6",
+    "shortDescription": "La Hyster H8XD-EC6 es una carretilla elevadora de contenedores diseñada para manejar cargas pesadas de hasta 48 toneladas con facilidad. Con su motor diésel Cummins QSL9 Tier 4F y su sistema hidráulico de alta presión, esta máquina ofrece una potencia y eficiencia excepcionales para el manejo de contenedores.",
+    "longDescription": "Lo que hace especial a la Hyster H8XD-EC6 es su eficiencia energética, gracias a su sistema hidráulico de detección de carga y su sistema de recuperación de energía en el frenado. Esto significa que la máquina utiliza menos combustible y produce menos emisiones, lo que la convierte en una opción más ecológica. Además, la Hyster H8XD-EC6 cuenta con características avanzadas de seguridad y comodidad, como la cabina con aire acondicionado, el sistema de gestión de la estabilidad (VSM) y el sistema de frenado ABS. Su diseño ergonómico y su excelente visibilidad también contribuyen a un ambiente de trabajo seguro y cómodo para el operador. Si necesitas una carretilla elevadora de contenedores potente, eficiente y ecológica, la Hyster H8XD-EC6 es una excelente opción.",
+    "price": null,
+    "priceText": null,
+    "condition": "Nuevo",
+    "breadcrumbs": [],
+    "subcategory": null,
+    "externalReference": "H8XD-EC6",
+    "shortDescriptionHtml": null,
+    "longDescriptionHtml": null,
+    "technicalSheetUrl": null,
+    "yearSource": null,
+    "scrapedAt": "2026-10-29T17:30:20.742Z",
+    "reference": "2168",
+    "brand": "HYSTER",
+    "model": "H8XD-EC6",
+    "year": null,
+    "location": null,
+    "country": null,
+    "horometer": null,
+    "serialNumber": null,
+    "image": "https://online.gamrentals.com/13717-product_main_2x/hyster-h8xd-ec6.jpg",
+    "images": [
+      "https://online.gamrentals.com/13717-product_main_2x/hyster-h8xd-ec6.jpg"
+    ],
+    "specs": {
+      "Marca": "HYSTER",
+      "Modelo": "H8XD-EC6",
+      "Longitud": "9262 mm",
+      "Anchura": "6824 mm",
+      "Altura": "9495 mm",
+      "Peso": "35508 KG",
+      "Tipo motor": "MTU 7.7L Diesel",
+      "Altura de elevación (m)": "16,16 metros",
+      "Capacidad de carga (kg)": "8000 KG",
+      "Centro de carga": "1220 mm",
+      "Radio de giro": "6327",
+      "Transmisión": "ZF - 5WG211"
+    }
+  }
+]

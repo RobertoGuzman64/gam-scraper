@@ -7,6 +7,7 @@ import { resolveEditorialFacts } from "./editorial-facts.js";
 import { formatEditorialQuantity } from "./editorial-measurements.js";
 import { resolveAssertedBatteryVoltage } from "./editorial-battery-claims.js";
 import { hasUnconditionalEditorialClaim } from "./editorial-claim-evidence.js";
+import { resolveSourcedApplications } from "./editorial-sourced-applications.js";
 
 type EditorialSourceClaim = Readonly<{
   key: string;
@@ -81,8 +82,44 @@ type EditorialSourceFeature = Readonly<{
 
 const platformFamilies: readonly EditorialFamily[] = ["plataforma-tijera", "plataforma-oruga"];
 const cleaningFamilies: readonly EditorialFamily[] = ["barredora", "fregadora", "maquina-limpieza"];
+const elevatedPlatforms: readonly EditorialFamily[] = [
+  "plataforma-tijera", "plataforma-articulada", "plataforma-telescopica", "plataforma-oruga"
+];
+const allTerrainLifting: readonly EditorialFamily[] = [
+  "plataforma-tijera", "plataforma-articulada", "plataforma-telescopica", "manipulador-telescopico"
+];
 
 const sourceFeatures: readonly EditorialSourceFeature[] = [
+  {
+    families: allTerrainLifting,
+    declaration: /\btracci[oó]n\s+(?:(?:total|integral)\s+)?(?:(?:en|a)\s+las\s+)?(?:cuatro\s+ruedas|4\s*[x×]\s*4)\b/giu,
+    mention: /\b(?:tracci[oó]n\s+(?:(?:total|integral)\s+)?(?:(?:en|a)\s+las\s+)?(?:cuatro\s+ruedas|4\s*[x×]\s*4)|tracci[oó]n\s+integral)\b/iu,
+    label: "tracción a las cuatro ruedas"
+  },
+  {
+    families: elevatedPlatforms,
+    declaration: /\bnivelaci[oó]n\s+autom[aá]tica\b/giu,
+    mention: /\bnivelaci[oó]n\s+autom[aá]tica\b/iu,
+    label: "nivelación automática"
+  },
+  {
+    families: elevatedPlatforms,
+    declaration: /\bdescenso\s+manual\b(?!\s+de\s+emergencia)/giu,
+    mention: /\bdescenso\s+manual\b/iu,
+    label: "descenso manual"
+  },
+  {
+    families: elevatedPlatforms,
+    declaration: /\bdescenso\s+(?:manual\s+de\s+emergencia|de\s+emergencia)\b/giu,
+    mention: /\bdescenso\s+(?:manual\s+de\s+emergencia|de\s+emergencia)\b/iu,
+    label: "descenso de emergencia"
+  },
+  {
+    families: elevatedPlatforms,
+    declaration: /\bprotecci[oó]n\s+contra\s+(?:la\s+)?sobrecarga\b/giu,
+    mention: /\bprotecci[oó]n\s+contra\s+(?:la\s+)?sobrecarga\b/iu,
+    label: "protección contra sobrecarga"
+  },
   {
     families: platformFamilies,
     declaration: /\b(?:plataforma(?:s)?\s+(?:de\s+trabajo\s+)?(?:extensible|ampliable)|extensi[oó]n\s+de\s+(?:la\s+)?plataforma)\b/giu,
@@ -207,6 +244,74 @@ const sourcedForkliftMeasures = (
   return additions;
 };
 
+const compactWorkFamilies: readonly EditorialFamily[] = [
+  "apilador", "transpaleta", "carretilla-elevadora", "carretilla-retractil", "recogepedidos", "tractor-arrastre",
+  "plataforma-oruga", "cargadora", "barredora"
+];
+
+type SourcedHandlingApplication = Readonly<{
+  declaration: RegExp;
+  mention: RegExp;
+  statement: string;
+}>;
+
+const handlingApplications: readonly SourcedHandlingApplication[] = [
+  {
+    declaration: /\b(?:higiene\s+(?:rigurosa|especial|estricta)|m[aá]xima\s+higiene|industria\s+alimentaria|manipulaci[oó]n\s+de\s+(?:carne|pescado|medicamentos))\b/giu,
+    mention: /\b(?:higiene|industria\s+alimentaria)\b/iu,
+    statement: "La fuente recomienda usos en actividades con exigencias de higiene, como la manipulación de productos alimentarios o sensibles; corresponde verificar la adecuación del equipo al entorno concreto."
+  },
+  {
+    declaration: /\b(?:tim[oó]n\s+ergon[oó]mico|dise[nñ]o\s+(?:c[oó]modo\s+y\s+)?ergon[oó]mico|ergonom[ií]a\s+y\s+seguridad)\b/giu,
+    mention: /\b(?:ergonom[ií]a|ergon[oó]mic[oa])\b/iu,
+    statement: "La descripción del fabricante se refiere a la ergonomía en el manejo del equipo y a las condiciones de trabajo del operario; deben contrastarse los mandos y su configuración real."
+  },
+  {
+    declaration: /\b(?:pesaje\s+en\s+[aá]reas|c[eé]lulas?\s+de\s+peso|funciones?\s+de\s+pesado)\b/giu,
+    mention: /\b(?:pesaje|c[eé]lulas?\s+de\s+peso)\b/iu,
+    statement: "El proveedor describe su aplicación en el pesaje de mercancías durante las operaciones de almacén o recepción, con elementos de lectura cuyo alcance debe contrastarse en la unidad anunciada."
+  },
+  {
+    declaration: /\b(?:inclinaci[oó]n\s+de\s+hasta\s+90\s*[º°]|horquillas\s+se\s+pueden\s+inclinar\s+90\s*[º°])/giu,
+    mention: /\b(?:inclinaci[oó]n\s+de\s+hasta\s+90|inclinar\s+90)\b/iu,
+    statement: "El anuncio documenta una función de inclinación de hasta 90° para facilitar la manipulación de cajas o contenedores; debe comprobarse su operación en la configuración ofrecida."
+  },
+  {
+    declaration: /\bbater[ií]as?\s+de\s+litio\b/giu,
+    mention: /\bbater[ií]as?\s+de\s+litio\b/iu,
+    statement: "El texto del fabricante describe una solución con batería de litio y sus operaciones de recarga; los tiempos de autonomía y la batería concreta requieren comprobación por unidad."
+  },
+  {
+    declaration: /\breducci[oó]n\s+de\s+ruido\b/giu,
+    mention: /\b(?:reducci[oó]n\s+de\s+ruido|funcionamiento\s+silencioso)\b/iu,
+    statement: "El proveedor destaca la reducción de ruido para desplazamientos en tiendas y espacios compartidos; su idoneidad acústica debe comprobarse en las condiciones reales de utilización."
+  },
+  {
+    declaration: /\bcentralizaci[oó]n\s+de\s+todos\s+los\s+mandos\b/giu,
+    mention: /\b(?:centralizaci[oó]n\s+de\s+(?:todos\s+los\s+)?mandos|mandos\s+centralizados)\b/iu,
+    statement: "La descripción cita la centralización de mandos como recurso de operación y seguridad; no se presupone que otras variantes dispongan de idéntico diseño de controles."
+  },
+  {
+    declaration: /\balmacenes,?\s+talleres\b/giu,
+    mention: /\b(?:almacenes\s+y\s+talleres|entornos\s+de\s+almac[eé]n\s+y\s+taller)\b/iu,
+    statement: "El proveedor identifica almacenes y talleres entre los ámbitos de utilización de la transpaleta, sin que esa aplicación sustituya la comprobación de su capacidad y dimensiones."
+  }
+];
+
+const documentedHandlingApplications = (
+  source: ProductRecord, prepared: ProductRecord, general: string
+): string | null => {
+  const original = resolveEditorialFacts(source);
+  const reconciled = resolveEditorialFacts(prepared);
+  if (original?.family !== "transpaleta" || reconciled?.family !== original.family) return null;
+  const description = source.longDescription ?? "";
+  const additions = handlingApplications.filter((application) =>
+    !application.mention.test(general) &&
+    hasUnconditionalEditorialClaim(description, application.declaration)
+  ).map((application) => application.statement);
+  return additions.length ? additions.join(" ") : null;
+};
+
 const documentedFamilyContext = (
   source: ProductRecord, prepared: ProductRecord, general: string
 ): string | null => {
@@ -216,6 +321,13 @@ const documentedFamilyContext = (
     return null;
   }
   const description = source.longDescription ?? "";
+  if (compactWorkFamilies.includes(original.family) &&
+    !/\bno\b[^.!?;\n]{0,130}\b(?:espacios?|lugares)\b/iu.test(description) &&
+    !/\b(?:espacios?\s+(?:(?:de\s+)?trabajo\s+)?(?:reducidos?|estrechos?|limitados?)|lugares\s+de\s+trabajo\s+ajustados)\b/iu.test(general) &&
+    hasUnconditionalEditorialClaim(description,
+      /\b(?:espacios?\s+(?:(?:de\s+)?trabajo\s+)?(?:reducidos?|estrechos?|limitados?)|lugares\s+de\s+trabajo\s+ajustados)\b/giu)) {
+    return "El proveedor menciona el trabajo en espacios reducidos como ámbito de aplicación; corresponde contrastar las dimensiones y maniobras con la configuración concreta de la unidad.";
+  }
   if (original.family === "compactadora" &&
     hasUnconditionalEditorialClaim(description, /\bcompactaci[oó]n\s+(?:eficiente\s+|efectiva\s+|de\s+)?(?:de\s+)?contenedores\b/giu)) {
     return "El anuncio identifica la compactación de contenedores como aplicación; las condiciones de trabajo deben contrastarse con el equipo concreto.";
@@ -258,6 +370,10 @@ export const resolveSourceEditorialClaims = (
   if (features !== null) additions.push(features);
   const contextual = documentedFamilyContext(source, prepared, general);
   if (contextual !== null) additions.push(contextual);
+  const applications = documentedHandlingApplications(source, prepared, general);
+  if (applications !== null) additions.push(applications);
+  const sourcedApplications = resolveSourcedApplications(source, prepared, general);
+  if (sourcedApplications !== null) additions.push(sourcedApplications);
   if (additions.length === 0) return general;
   const text = general.trim();
   return `${text}${/[.!?]$/u.test(text) ? "" : "."} ${additions.join(" ")}`;

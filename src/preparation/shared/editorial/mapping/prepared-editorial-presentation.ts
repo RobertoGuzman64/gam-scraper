@@ -13,6 +13,8 @@ import { normalizeVerifiedEditorialCapacity } from "../domain/editorial-capacity
 import { removeSourceTitleBranding, removeSourceSummaryBranding } from "./source-editorial-branding.js";
 import { restoreCorroboratedEditorialIdentity } from "../domain/editorial-crossed-identity.js";
 import { normalizeCorroboratedTowingSummary } from "../domain/editorial-towing-summary.js";
+import { removeSourcedSaleWording } from "../domain/editorial-source-brief.js";
+import { resolveSourcedShortDiscrepancy } from "../domain/editorial-sourced-short-discrepancy.js";
 
 export const normalizePreparedEditorialPresentation = (
   source: ProductRecord, prepared: ImportCandidate
@@ -49,6 +51,12 @@ export const normalizePreparedEditorialPresentation = (
     )
   });
   const title = capacity.title;
+  const currentShort = capacity.description ?? height.description;
+  const sourceShort = source.shortDescription?.trim();
+  const incompleteSummary = sourceShort?.length === 512 && !/[.!?]$/u.test(sourceShort) &&
+    currentShort === normalizeEditorialSummary(sourceShort, source.model) ?
+      resolveSourcedShortDiscrepancy(source, source, sourceShort, true) : null;
+  const sourcedSaleSummary = removeSourcedSaleWording(source, currentShort);
   const descriptionTitle = prepared.description_title?.trim() === prepared.title?.trim() ||
     !prepared.description_title?.trim() ? title :
       normalizeEditorialTitle(removeSourceTitleBranding(source, prepared.description_title), source.model);
@@ -56,7 +64,7 @@ export const normalizePreparedEditorialPresentation = (
     ...prepared,
     title,
     description_title: descriptionTitle,
-    description: capacity.description ?? height.description,
+    description: incompleteSummary ?? sourcedSaleSummary ?? currentShort,
     description_general: normalizeEditorialGeneral(capacity.description_general, source.model)
   };
 };

@@ -8,6 +8,7 @@ const sourcePaths: Readonly<Record<AccreditedSourceDataset, string>> = {
   "gam-original": "catalogs/providers/gam/original/scrape-gam-catalog.json",
   "gam-source-cases": "src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json",
   "gam-editorial-cases": "catalogs/providers/gam/original/scrape-gam-catalog.json",
+  "gam-short-discrepancy-source": "catalogs/providers/gam/original/scrape-gam-catalog.json",
   "gam-verified-fuel-cases": "catalogs/providers/gam/original/scrape-gam-catalog.json",
   "editorial-load-original": "catalogs/providers/gam/original/scrape-gam-catalog.json",
   "mercaeleva-original": "catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json",
