@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, relative } from "node:path";
+import { dirname, join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { inspectEditorialArchitecture } from "./tests-editorial-architecture-guard.mjs";
@@ -384,7 +384,7 @@ test("la acreditación exacta se revoca ante cualquier cambio y no acepta nuevas
 });
 
 const linkModules = (write, from, to) => {
-  const location = relative(dirname(from), to).replace(/\.ts$/u, ".js");
+  const location = posix.relative(posix.dirname(from), to).replace(/\.ts$/u, ".js");
   const specifier = location.startsWith(".") ? location : `./${location}`;
   write(to, "export const value = 1;\n");
   write(from, `import { value } from '${specifier}'; export const result = value;\n`);
