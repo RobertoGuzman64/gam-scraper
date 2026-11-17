@@ -26,6 +26,8 @@ Una prueba que usa un dato real **no** se considera obsoleta por ello. La difere
 El orden oficial **real** de `npm test` se define en `package.json`:
 
 ```text
+node GUARDS/tests-repository-governance-guard.mjs
+node --test GUARDS/tests-repository-governance-guard.test.mjs
 node GUARDS/tests-module-integrity-guard.mjs
 node GUARDS/tests-shared-editorial-guard.mjs
 node GUARDS/tests-commercial-editorial-boundary-guard.mjs
@@ -40,9 +42,10 @@ node scripts/operations/rebuild-editorial-models.mjs --check
 node scripts/run-tests.mjs
 ```
 
-Los dos guards arquitectónicos y sus autopruebas **ya forman parte de `npm test`**, antes del build. Para investigar una infracción concreta, pueden ejecutarse individualmente con detalle:
+Los guards de gobernanza, integridad productiva, editorial y de tests, con sus autopruebas correspondientes, **forman parte de `npm test`**, antes del build. Para investigar una infracción concreta, pueden ejecutarse individualmente con detalle:
 
 ```powershell
+node GUARDS/tests-module-integrity-guard.mjs
 node GUARDS/tests-editorial-architecture-guard.mjs --detail
 node GUARDS/tests-domain-tests-guard.mjs --detail
 node --test --test-reporter=./scripts/test-runner-ui.mjs GUARDS/tests-architecture-guards.test.mjs
@@ -52,13 +55,22 @@ El core necesita `node_modules/typescript` local y no utiliza el TypeScript glob
 
 Los guards controlan fronteras, no verifican por sí solos los resultados comerciales ni cada contrato funcional. El guard de rendimiento y el de contrato comercial también son independientes del guard de arquitectura de tests.
 
+## Ubicación de suites, fixtures y helpers
+
+- Colocar las suites del dominio en el directorio `tests/` junto al módulo que validan; se conserva la excepción técnica GAM existente, cuyas suites viven junto a sus módulos técnicos. El runner solo descubre suites `*.test.ts` en `src/`: otros sufijos o extensiones de suite quedan fuera y el guard los rechaza.
+- Las integraciones compartidas viven en `src/testing/integration/{catalog,commercial,preparation}/` y solo contienen suites `*.test.ts`. Los builders y sus tests viven en `src/testing/builders/` y `src/testing/builders/tests/`; los datos de prueba en `src/testing/fixtures/` y `src/testing/domain-cases/`.
+- Los helpers locales se quedan en los `tests/` de su módulo o se comparten mediante `src/testing/builders/`. Los seis helpers históricos admitidos bajo `src/preparation/testing/` tienen rutas cerradas; no ampliarlos formando otra infraestructura paralela. No importar una suite de test como si fuera un helper.
+- El runner, reporter, trabajadores y medición pertenecen a `scripts/`; **no** montar runners ni orquestación de procesos en `src/testing/`. La gobernanza del inventario de scripts se decide en [Gobernanza](REPOSITORY_GOVERNANCE.md), no en el guard de pruebas.
+
+Estas reglas son verificadas por `GUARDS/tests-domain-tests-guard.mjs` y las fronteras de producción por `tests-module-integrity-guard.mjs`. Mantener las integraciones censales acreditadas y sus fixtures cuando se requieren por el contrato; no moverlas por estética.
+
 ## Guard editorial y guard de tests
 
 - `GUARDS/tests-editorial-architecture-guard.mjs` protege el compositor compartido, detecta narradores aislados/conectados, reescrituras fuera del propietario, ramificaciones por referencia y dependencias impropias del dominio.
 - `GUARDS/tests-domain-tests-guard.mjs` inspecciona dependencias directas/transitivas de catálogos, cohortes fijas y hashes editoriales congelados. El hash de **procedencia de manifest** no es un hash de redacción.
 - Ambos usan `GUARDS/guards-architecture-core.mjs`; las autopruebas están en `GUARDS/tests-architecture-guards.test.mjs`. Las excepciones son verificaciones exactas de contratos, **no** tolerancias globales.
 
-Último corte arquitectónico focal comprobado: **0 infracciones editoriales, 0 de tests, 30/30 autopruebas, 19 usos acreditados como excepciones (12 cohortes y 7 accesos transitivos) y 21 lecturas directas legítimas en 14 suites protegidas**. Son categorías distintas; 19 y 21 **no son** avisos pendientes. El número de suites y módulos inspeccionados depende del árbol actual; los resultados estáticos de estos guards no acreditan la batería completa de `npm test`.
+Último corte arquitectónico focal confirmado en Windows: **0 infracciones productivas, editoriales y de tests; 45/45 autopruebas arquitectónicas; 19 usos acreditados como excepciones (12 cohortes y 7 accesos transitivos), y 21 lecturas directas legítimas en 14 suites protegidas**. Son categorías distintas; 19 y 21 **no son** avisos pendientes. El número de suites y módulos inspeccionados depende del árbol actual; los resultados estáticos de estos guards no acreditan la batería completa de `npm test`.
 
 Las 21 lecturas acreditadas están vinculadas al **SHA-256 completo** de cada una de las 14 suites, a una cantidad exacta de lecturas y a una responsabilidad documentada. Si cambia un archivo o aumenta su acceso, el guard lo vuelve a señalar. Los recuentos de cohortes y las dependencias indirectas también requieren coincidencia exacta de su forma autorizada. **No** añadir excepciones para hacer desaparecer una incidencia nueva: primero acreditar su contrato, o migrar el acceso si no precisa catálogo completo.
 
@@ -93,7 +105,7 @@ Los cortes parciales de los guards no sustituyen un `npm test` oficial completo.
 La protección del rendimiento forma parte de `npm test`; no es un benchmark separado que sustituya a las pruebas. El contrato está en `package.json`:
 
 ```text
-npm test = integridad de módulos → motor compartido → frontera comercial/editorial → guard editorial → guard de tests → autopruebas de guards → conocimiento --check → rendimiento → contrato comercial v2 → build --if-needed → consenso de modelos --check → runner
+npm test = gobernanza y autopruebas → integridad productiva → motor compartido → frontera comercial/editorial → guard editorial → guard de tests → autopruebas arquitectónicas → conocimiento --check → rendimiento → contrato comercial v2 → build --if-needed → consenso de modelos --check → runner
 ```
 
 El guard detecta patrones de coste y la ejecución posterior compila cuando corresponde y lanza suites compiladas. `npm run test:guard` ejecuta **solo** el guard; **no** equivale al PASS integral. `npm run build` compila mediante `scripts/run-build.mjs` y la caché de build está en `scripts/build-cache.mjs`. Si faltan `typescript`, `cheerio`, `p-limit` o tipos de Node no se debe declarar un build correcto a partir de tests aislados.
@@ -114,7 +126,7 @@ npm test
 node scripts/run-tests.mjs --medicion <ruta-informe.json>
 ```
 
-`--medicion` genera un informe de tiempos del runner y debe ejecutarse desde la raíz, con compilados disponibles. Para comparar dos medidas, usar el **mismo equipo, entorno, concurrencia y estado de caché**; no comparar una ejecución en frío con una reutilizada. El runner también reconoce `--concurrencia N` (1–64) y `--medicion-cache <ruta-informe.json>` con las restricciones de `parseOptions` en `scripts/run-tests.mjs`. Los reportes de rendimiento operativos se guardan fuera de los datos/versiones acreditadas del catálogo.
+`--medicion` genera un informe de tiempos del runner y debe ejecutarse desde la raíz, con compilados disponibles. Para comparar dos medidas, usar el **mismo equipo, entorno, concurrencia y estado de caché**; no comparar una ejecución en frío con una reutilizada. El runner también reconoce `--concurrencia N` (1–64) y `--medicion-cache <ruta-informe.json>` con las restricciones de `parseOptions` en `scripts/run-tests.mjs`. En modo de salida no interactiva, `scripts/test-runner-ui.mjs` muestra un recuento acumulado cada **15 segundos** y comunica los fallos nuevos inmediatamente; el resumen `PASS | TESTS` o `FAIL | TESTS` se emite al terminar. En terminal interactiva mantiene su presentación dinámica. Los reportes de rendimiento operativos se guardan fuera de los datos/versiones acreditadas del catálogo.
 
 Para una batería que no reutilice resultados previos, desactivar la caché de tests **en el proceso**, sin modificar scripts ni borrar archivos de acreditación:
 
@@ -157,7 +169,7 @@ Para los criterios de equivalencia y materialización de cambios, ver [Validaci�
 
 ## Verificación técnica tras cambios estructurales
 
-`npm test` ejecuta los guards arquitectónicos editorial y de tests, más sus autopruebas, **antes del build**. En cambios de arquitectura, se pueden ejecutar también por separado para obtener un diagnóstico más detallado:
+`npm test` ejecuta gobernanza e integridad productiva, además de los guards arquitectónicos editorial y de tests y sus autopruebas, **antes del build**. En cambios de arquitectura, se pueden ejecutar también por separado para obtener un diagnóstico más detallado:
 
 ```powershell
 node GUARDS/tests-editorial-architecture-guard.mjs
@@ -165,7 +177,7 @@ node GUARDS/tests-domain-tests-guard.mjs
 node --test GUARDS/tests-architecture-guards.test.mjs
 ```
 
-El último corte focal registra 0 infracciones y 30 autopruebas correctas, con 19 excepciones exactas y 21 lecturas legítimas acreditadas; esto no sustituye las pruebas funcionales ni acredita `npm test` global. La validación exige dependencias locales completas (`npm ci`), no TypeScript global ni una compilación auxiliar. Véanse [Arquitectura de tests](TESTING.md) y [Motor editorial](EDITORIAL_ENGINE.md).
+El último corte focal registra 0 infracciones y 45 autopruebas arquitectónicas correctas, con 19 excepciones exactas y 21 lecturas legítimas acreditadas; esto no sustituye las pruebas funcionales ni acredita `npm test` global. La validación exige dependencias locales completas (`npm ci`), no TypeScript global ni una compilación auxiliar. Véanse [Arquitectura de tests](TESTING.md) y [Motor editorial](EDITORIAL_ENGINE.md).
 
 Desde la raíz del proyecto, con dependencias instaladas, ejecutar:
 
@@ -217,4 +229,4 @@ npm run estado
 git status --short
 ```
 
-Conservar los códigos de salida por separado; PowerShell puede continuar aunque falle un comando. `npm test` ejecuta primero los guards de integridad, motor compartido, frontera comercial/editorial, arquitectura editorial, arquitectura de tests y sus autopruebas; después verifica conocimiento, rendimiento y contrato comercial v2, compila si es necesario, comprueba consenso de modelos y lanza las suites TypeScript/MJS. Los guards arquitectónicos **ya están integrados** en el comando oficial y requieren TypeScript local; pueden invocarse individualmente solo para diagnóstico. `npm run contrato:comercial` ejecuta explícitamente el guard del contrato comercial. No confundir un test aislado verde, un `build` correcto o `estado` íntegro con una acreditación editorial o con cobertura externa de los portales. Ante una regresión, corregir primero el fallo concreto y comprobar contratos específicos de la zona modificada.
+Conservar los códigos de salida por separado; PowerShell puede continuar aunque falle un comando. `npm test` ejecuta primero gobernanza y sus autopruebas, después los guards de integridad, motor compartido, frontera comercial/editorial, arquitectura editorial, arquitectura de tests y sus autopruebas; después verifica conocimiento, rendimiento y contrato comercial v2, compila si es necesario, comprueba consenso de modelos y lanza las suites TypeScript/MJS. Los guards arquitectónicos **ya están integrados** en el comando oficial y requieren TypeScript local; pueden invocarse individualmente solo para diagnóstico. `npm run contrato:comercial` ejecuta explícitamente el guard del contrato comercial. No confundir un test aislado verde, un `build` correcto o `estado` íntegro con una acreditación editorial o con cobertura externa de los portales. Ante una regresión, corregir primero el fallo concreto y comprobar contratos específicos de la zona modificada.

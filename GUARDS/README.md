@@ -12,25 +12,33 @@ Esta guía describe los controles **vigentes**, sus autorizaciones exactas y sus
 | -------------------------------------------------- | ---------------------------------------------------------------------- |
 | `tests-editorial-architecture-guard.mjs`           | 0 infracciones                                                         |
 | `tests-domain-tests-guard.mjs`                     | 0 infracciones                                                         |
-| Autopruebas `tests-architecture-guards.test.mjs`   | 30 correctas, 0 fallidas en el último corte focal                      |
+| Autopruebas `tests-architecture-guards.test.mjs`   | 45 correctas, 0 fallidas en el corte confirmado en Windows             |
 | Excepciones explícitas en tests                    | 19 usos exactos: 12 recuentos de cohortes y 7 dependencias transitivas |
 | Integraciones de catálogo directamente acreditadas | 21 lecturas, en 14 suites                                              |
 
 **Cero infracciones no significa cero lecturas legítimas de catálogos ni prueba una batería `npm test` global.** Las 19 excepciones y las 21 lecturas acreditadas no cuentan como infracciones porque protegen garantías concretas; no son una tolerancia genérica, un baseline ni advertencias ocultas.
 
-El guard de inventario de repositorio (`tests-repository-governance-guard.mjs`) se ejecuta primero en `npm test`, junto a sus pruebas negativas. Rechaza cambios no autorizados en scripts, Markdown y comandos. Su baseline pertenece a `repository-governance.json` y solo puede actualizarse tras aprobación del propietario.
+El guard de inventario (`tests-repository-governance-guard.mjs`) se ejecuta primero en `npm test`, junto a sus pruebas negativas. `repository-governance.json` registra **16 rutas Markdown, 57 rutas de scripts y 57 comandos npm**: bloquea rutas nuevas fuera de inventario, exceso de cuota y cambios en los comandos o en `bin`. **No usa hashes de contenido ni impide editar o eliminar un Markdown/script existente**; esas acciones siguen exigiendo autorización humana, aunque el guard no pueda verificarla. También comprueba nombres de fases y temporales, tipos de archivos en carpetas protegidas y seguimiento Git de `reports/` raíz.
 
 ## Ejecutar los guards
 
 Desde la **raíz del repositorio**:
 
 ```powershell
+node GUARDS/tests-repository-governance-guard.mjs
+node GUARDS/tests-module-integrity-guard.mjs
 node GUARDS/tests-editorial-architecture-guard.mjs --detail
 node GUARDS/tests-domain-tests-guard.mjs --detail
-node --test GUARDS/tests-architecture-guards.test.mjs
+node --test --test-reporter=./scripts/test-runner-ui.mjs GUARDS/tests-architecture-guards.test.mjs
 ```
 
-Los dos guards arquitectónicos y sus autopruebas están **incluidos y son obligatorios en `npm test`**, antes de los controles de conocimiento, rendimiento y build. Los comandos anteriores siguen siendo útiles para diagnósticos puntuales, pero no sustituyen la batería completa. El core de análisis `GUARDS/guards-architecture-core.mjs` carga exclusivamente `node_modules/typescript` desde el repositorio: ejecutar `npm ci` para instalar la dependencia declarada, sin recurrir a una instalación global implícita. Un guard comprueba dependencias y fronteras; no acredita por sí solo semántica editorial, publicaciones, cobertura web ni build completo.
+Los guards de gobernanza, integridad productiva, arquitectura editorial y arquitectura de tests, junto con sus autopruebas, están **incluidos y son obligatorios en `npm test`**, antes de los controles de conocimiento, rendimiento y build. Los comandos anteriores siguen siendo útiles para diagnósticos puntuales, pero no sustituyen la batería completa. El core de análisis `GUARDS/guards-architecture-core.mjs` carga exclusivamente `node_modules/typescript` desde el repositorio: ejecutar `npm ci` para instalar la dependencia declarada, sin recurrir a una instalación global implícita. Un guard comprueba dependencias y fronteras; no acredita por sí solo semántica editorial, publicaciones, cobertura web ni build completo.
+
+## Fronteras adicionales ya protegidas
+
+`tests-module-integrity-guard.mjs` comprueba los imports relativos de los módulos productivos; no permite dependencias hacia `src/cli/`, `src/tools/`, `src/testing/` o suites de test, ni imports entre implementaciones de proveedores de preparación o entre adaptadores de scraping. Mantiene el motor técnico compartido independiente de `src/commercial/`, la proyección comercial independiente de `src/scraping/` y extracción sin dependencia comercial. Detecta también rutas retiradas `src/pipeline/` y `src/catalog/preparation/`.
+
+`tests-domain-tests-guard.mjs` protege además las ubicaciones de tests: suites de dominio en `tests/` local (con excepción técnica GAM existente), integración en `src/testing/integration/{catalog,commercial,preparation}/`, builders y fixtures en sus zonas, prohibición de imports de suites como helpers y de runners paralelos en `src/testing/`. Rechaza suites que el runner no descubriría por no usar `*.test.ts` y nuevos árboles `testing/` paralelos, conservando seis helpers históricos expresamente autorizados. Un guard arquitectónico no acredita que el trabajo de calidad haya mejorado una ficha.
 
 ## Política permanente de pruebas
 
@@ -64,4 +72,4 @@ Las suites incluyen controles de imágenes GAM, identidad de variantes, recupera
 
 El corte acreditado se obtuvo sin modificar tests protegidos y sin introducir excepciones generales. Conservar el cero exige que cualquier nueva infracción se **resuelva o acredite contractualmente con alcance exacto**, no degradar el guard ni añadir tolerancias. Una integración necesaria no justifica convertir en dependiente del catálogo todo test de dominio.
 
-El build y `npm test` oficiales completos no están acreditados en el último entorno de verificación disponible por dependencias ausentes. Registrar el estado real de cada ejecución. Referencias: [Motor editorial](../docs/EDITORIAL_ENGINE.md), [Validación](../docs/VALIDATION.md) y [Pruebas y rendimiento](../docs/TESTING.md).
+El propietario ha comunicado un resultado completo en Windows de `npm test`: **479 suites, 2.530 tests correctos, 0 fallidos**, con reutilización de caché en parte de las suites, y `npm run build` correcto. Es un corte acreditado en ese entorno, no una garantía permanente para futuras modificaciones. Registrar siempre el resultado real de cada nueva ejecución. Referencias: [Motor editorial](../docs/EDITORIAL_ENGINE.md), [Validación](../docs/VALIDATION.md) y [Pruebas y rendimiento](../docs/TESTING.md).

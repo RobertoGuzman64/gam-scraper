@@ -26,10 +26,11 @@ src/
   publication/             Publicaciones individuales, acreditación y FINISH
   scraping/                Motor, batch, proveedores y salida de extracción
   shared/                  Utilidades transversales
-  testing/                 Fixtures y builders de pruebas
+  testing/                 Builders, casos y fixtures compartidos; pruebas de integración acreditadas
   tools/                   Herramientas internas de catálogo y semillas GAM
 catalogs/providers/        Originales completos, publicaciones individuales y snapshots técnicos portátiles
 catalogs/campaigns/        Instantáneas acreditadas de campañas globales
+catalogs/reports/          Salida actual de auditores; persistencia histórica definitiva pendiente
 storage/                   Trabajo y recuperación locales, excluidos de Git
 dist/                      Compilados regenerables, excluidos de Git
 ```
@@ -48,6 +49,8 @@ El registro de proveedores está en `src/scraping/registry.ts` y el contrato de 
 | `campaign/`, `publication/`                   | Orquestar campañas y publicaciones, acreditación y recuperación               | No saltarse preflight ni inventar decisiones humanas                         |
 | `infrastructure/`                             | Persistencia, hashes, manifiestos, retención y seguridad de rutas             | No decidir identidad comercial o calidad editorial                           |
 | `contracts/`, `shared/`, `testing/`, `tools/` | Contratos y herramientas auxiliares                                           | No trasladar reglas específicas a capas genéricas                            |
+
+El guard `GUARDS/tests-module-integrity-guard.mjs` revisa imports relativos ausentes en módulos productivos e impide dependencias de producción hacia `src/cli/`, `src/testing/` o `src/tools/`, importar suites como módulos de producción, cruces directos entre adaptadores de proveedores en preparación/scraping y dependencias comerciales indebidas en scraping, motor técnico compartido y proyección. Estas son las **fronteras que comprueba realmente**; no interpreta toda la semántica del proyecto ni impide editar otros archivos de `src/`. Las fronteras editoriales y la topología de tests tienen guards propios.
 
 No hay una capa `pipeline` física. Los orquestadores viven junto al dominio que coordinan: `src/scraping/workflow/`, `src/scraping/batch/`, `src/preparation/workflow/`, `src/campaign/` y `src/publication/`. Tener numerosas dependencias no es por sí solo un defecto de diseño. No reorganizar carpetas, introducir capas vacías o mover reglas por estética.
 
@@ -103,6 +106,21 @@ Por separado, `npm run exportar` es un exportador **heredado** para preparacione
 
 `src/cli/commands/catalog/catalog-content-gaps.ts` y `src/cli/reporting/catalog-content-gaps-output.ts` presentan datos obtenidos en `src/catalog/diagnostics/`, con originales canónicos resueltos mediante `src/infrastructure/filesystem/catalog/original-catalog-sources.ts`. La preparación recalculada usa `src/preparation/prepare-product.ts`. Las comprobaciones de contenido y `--comparar --specs` no escriben originales ni crean publicaciones. Ver [Huecos de contenido](CATALOG_QUALITY.md).
 
+## Dónde intervenir sin desplazar responsabilidades
+
+| Trabajo                            | Código propietario                                                                                                                      | Límites                                                                            |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Descripciones, títulos y redacción | `src/preparation/shared/editorial/{domain,mapping,evidence}/`, con interpretación de fuente en `src/preparation/<proveedor>/editorial/` | No introducir narradores por proveedor ni reescritura comercial                    |
+| Especificaciones y prestaciones    | `src/preparation/shared/technical/{reconciliation,recovery,evidence,source}/` y reglas técnicas específicas de proveedor                | Respetar reconciliaciones, procedencia, variante, unidades y precedencia           |
+| Categorías, atributos y condición  | `src/preparation/shared/classification/` y `src/preparation/<proveedor>/classification/`                                                | No añadir IDs ni trasvasar reglas al exportador                                    |
+| Huecos, calidad y diagnóstico      | `src/catalog/diagnostics/`, calidad/identidad en `src/catalog/` y punto de origen del defecto                                           | El auditor informa; no corrige ni publica por su cuenta                            |
+| Datos de catálogo y manifiestos    | `src/infrastructure/filesystem/` y contratos de `src/contracts/`                                                                        | No editar originales ni firmas para producir un PASS                               |
+| Proyección comercial               | `src/commercial/`, con interfaces y pruebas existentes                                                                                  | No alterar el contrato comercial v2 sin decisión expresa                           |
+| Intervenciones excepcionales       | `src/catalog/interventions/records/<proveedor>/`                                                                                        | Solo casos permanentes acreditados y autorizados; no scripts de campaña temporales |
+| Presentación y CLI                 | `src/cli/`, tooling existente en `scripts/`                                                                                             | No mover aquí reglas de negocio                                                    |
+
+Para elegir la reparación de una ficha, seguir [Calidad del catálogo](CATALOG_QUALITY.md); para el motor de texto, [Motor editorial](EDITORIAL_ENGINE.md); para ubicación de suites y fixtures, [Pruebas](TESTING.md). Estas rutas son **propietarios funcionales**, no permiso para crear módulos, carpetas o contratos adicionales sin autorización.
+
 ## Cómo ampliar reglas y proveedores sin acoplar el núcleo
 
 Una mejora técnica se inicia en la interpretación/reconciliación del origen y se integra en los puntos comunes existentes. Una mejora **editorial generalizable** pertenece a `shared/editorial/domain/` o `shared/editorial/mapping/`; los adaptadores de proveedor solo interpretan señales específicas y autenticidad de la fuente, y las evidencias firmadas permanecen acotadas a su origen. No introducir narradores por proveedor, referencia ni modelo. Una adaptación comercial de nuevo proveedor se expresa en su `classification/mapping/provider.ts`; los atributos, categorías e IDs siguen perteneciendo a los contratos vigentes.
@@ -113,7 +131,7 @@ Las modificaciones se validan comparando los candidatos por identidad y campo, c
 
 ## Calidad, pruebas y protección de artefactos
 
-`npm run build` ejecuta `scripts/run-build.mjs`. `npm test` ejecuta los guards oficiales definidos en `package.json`, compila cuando es necesario, comprueba el consenso de modelos y después ejecuta `scripts/run-tests.mjs`, que descubre las suites TypeScript de `src/` y `.test.mjs` de `scripts/`. Las pruebas pueden usar caché; para una acreditación sin reutilización usar `EQUIPZILLA_TEST_CACHE=0`. Los tests deben verificar contratos reales y conservar los casos límite. Los guards arquitectónicos editorial y de tests, y sus autopruebas, se ejecutan dentro de `npm test` antes del build; después del build también se comprueba el consenso de modelos. Su política y las integraciones censales autorizadas se describen en [Arquitectura de tests](TESTING.md).
+`npm run build` ejecuta `scripts/run-build.mjs`. `npm test` ejecuta los guards oficiales definidos en `package.json`, compila cuando es necesario, comprueba el consenso de modelos y después ejecuta `scripts/run-tests.mjs`, que descubre las suites TypeScript de `src/` y `.test.mjs` de `scripts/`. Las pruebas pueden usar caché; para una acreditación sin reutilización usar `EQUIPZILLA_TEST_CACHE=0`. Los tests deben verificar contratos reales y conservar los casos límite. Los guards de gobernanza, integridad productiva, arquitectura editorial y de tests, y sus autopruebas, se ejecutan dentro de `npm test` antes del build; después del build también se comprueba el consenso de modelos. Su política y las integraciones censales autorizadas se describen en [Arquitectura de tests](TESTING.md).
 
 `rulesSha256` en `src/infrastructure/filesystem/preparation/preparation-inputs.ts` incorpora nombres y contenidos de módulos JS compilados. Cambiar la distribución de módulos editoriales o el mapeo GAM puede alterar la huella aunque la salida sea funcionalmente equivalente: **equivalencia funcional y compatibilidad de acreditación son comprobaciones diferentes**. No alterar hashes o preparaciones existentes para hacer coincidir la huella. Ver [Validación](VALIDATION.md) y [Mantenimiento](OPERATIONS_AND_MAINTENANCE.md).
 
