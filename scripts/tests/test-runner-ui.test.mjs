@@ -251,6 +251,8 @@ test("los estados reutilizados muestran PASS verde y FAIL rojo, con exclusiones 
   assert.equal(supportsScriptColor(tty, enabled, "linux"), true);
   assert.equal(supportsScriptColor(tty, { ...enabled, NO_COLOR: "1" }, "linux"), false);
   assert.equal(supportsScriptColor(tty, { ...enabled, CI: "true" }, "linux"), false);
+  assert.equal(supportsScriptColor(tty, enabled, "win32"), true);
+  assert.equal(supportsScriptAnimation(tty, "win32", enabled), false);
   assert.equal(supportsScriptColor({ isTTY: false }, { ...enabled, FORCE_COLOR: "1" }, "linux"), true);
   assert.equal(supportsScriptColor({ isTTY: false }, { ...enabled, TERM: "dumb", FORCE_COLOR: "1" }, "linux"), true);
   assert.equal(supportsScriptColor({ isTTY: false }, { ...enabled, FORCE_COLOR: "0" }, "linux"), false);
@@ -294,7 +296,7 @@ test("npm test oculta el encabezado largo sin silenciar errores ni estados de sa
 test("build y herramientas no animan en consola clásica de Windows ni en pipes", () => {
   const env = { TERM: "xterm-256color" };
   assert.equal(supportsScriptAnimation({ isTTY: true }, "win32", env), false);
-  assert.equal(supportsScriptColor({ isTTY: true }, env, "win32"), false);
+  assert.equal(supportsScriptColor({ isTTY: true }, env, "win32"), true);
   assert.equal(supportsScriptColor({ isTTY: true }, { ...env, FORCE_COLOR: "1" }, "win32"), true);
   assert.equal(supportsScriptAnimation({ isTTY: true }, "win32", { ...env, WT_SESSION: "terminal" }), true);
   assert.equal(supportsScriptAnimation({ isTTY: true }, "win32", { ...env, TERM_PROGRAM: "vscode" }), true);

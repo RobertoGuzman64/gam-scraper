@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { formatScriptStatus } from "../scripts/terminal.mjs";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const excludedDirectories = new Set([".git", "node_modules", "dist", "storage", "output", "out", "reports", "coverage"]);
@@ -96,12 +97,12 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   try {
     const policy = JSON.parse(readFileSync(join(repositoryRoot, "GUARDS/repository-governance.json"), "utf8"));
     const result = inspectRepositoryGovernance(repositoryRoot, policy);
-    for (const finding of result.findings) console.error(`FAIL | GOBERNANZA | ${finding}`);
+    for (const finding of result.findings) console.error(formatScriptStatus("FAIL", `GOBERNANZA | ${finding}`, process.stderr));
     const status = result.findings.length ? "FAIL" : "PASS";
-    console.log(`${status} | GOBERNANZA | ${result.counts.markdown} Markdown | ${result.counts.scripts} scripts | ${result.counts.npmScripts} comandos npm | ${result.findings.length} infracciones`);
+    console.log(formatScriptStatus(status, `GOBERNANZA | ${result.counts.markdown} Markdown | ${result.counts.scripts} scripts | ${result.counts.npmScripts} comandos npm | ${result.findings.length} infracciones`));
     if (result.findings.length) process.exitCode = 1;
   } catch (error) {
-    console.error(`FAIL | GOBERNANZA | ${error instanceof Error ? error.message : String(error)}`);
+    console.error(formatScriptStatus("FAIL", `GOBERNANZA | ${error instanceof Error ? error.message : String(error)}`, process.stderr));
     process.exitCode = 1;
   }
 }

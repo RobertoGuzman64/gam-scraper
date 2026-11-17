@@ -28,7 +28,10 @@ export const supportsAnimation = (
 
 export const supportsTerminalColor = (
   stream: OutputStream = process.stdout, platform = process.platform, env: NodeJS.ProcessEnv = process.env
-): boolean => supportsAnimation(stream, platform, env);
+): boolean =>
+  env.NO_COLOR === undefined && env.FORCE_COLOR !== "0" &&
+  (env.FORCE_COLOR !== undefined || supportsAnimation(stream, platform, env) ||
+    (stream.isTTY === true && env.CI !== "true" && env.TERM !== "dumb"));
 
 export const tint = (text: string, color: TerminalColor, enabled = supportsTerminalColor()): string =>
   enabled ? `${colors[color]}${text}\u001b[0m` : text;

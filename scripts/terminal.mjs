@@ -2,7 +2,8 @@ const colors = { PASS: "\u001b[32m", WARN: "\u001b[33m", FAIL: "\u001b[31m", RUN
 
 export const supportsScriptColor = (stream = process.stdout, env = process.env, platform = process.platform) =>
   env.NO_COLOR === undefined && env.FORCE_COLOR !== "0" &&
-  (env.FORCE_COLOR !== undefined || supportsScriptAnimation(stream, platform, env));
+  (env.FORCE_COLOR !== undefined || supportsScriptAnimation(stream, platform, env) ||
+    (stream.isTTY === true && env.CI !== "true" && env.TERM !== "dumb"));
 
 export const formatScriptStatus = (status, message, stream = process.stdout) => {
   const label = supportsScriptColor(stream) && colors[status]

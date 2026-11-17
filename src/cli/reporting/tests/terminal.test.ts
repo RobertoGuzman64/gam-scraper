@@ -110,7 +110,10 @@ test("los bloques terminales son legibles sin TTY ni color y conservan cierre ex
 test("Windows clásico, terminal moderna y captura no interactiva distinguen color y animación", () => {
   const env: NodeJS.ProcessEnv = { TERM: "xterm-256color" };
   assert.equal(supportsAnimation({ isTTY: true }, "win32", env), false);
-  assert.equal(supportsTerminalColor({ isTTY: true }, "win32", env), false);
+  assert.equal(supportsTerminalColor({ isTTY: true }, "win32", env), true);
+  assert.equal(supportsTerminalColor({ isTTY: true }, "win32", { ...env, NO_COLOR: "1" }), false);
+  assert.equal(supportsTerminalColor({ isTTY: true }, "win32", { ...env, FORCE_COLOR: "0" }), false);
+  assert.match(formatStatus("PASS", "correcto", supportsTerminalColor({ isTTY: true }, "win32", env)), /\u001b\[32mPASS\u001b\[0m/);
   assert.equal(supportsAnimation({ isTTY: true }, "win32", { ...env, WT_SESSION: "terminal" }), true);
   assert.equal(supportsAnimation({ isTTY: true }, "win32", { ...env, TERM_PROGRAM: "vscode" }), true);
   assert.equal(supportsAnimation({ isTTY: true }, "win32", { ...env, ConEmuANSI: "ON" }), true);
