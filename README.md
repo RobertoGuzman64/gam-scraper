@@ -290,6 +290,7 @@ Cada procedimiento y contrato tiene un documento propietario. Para producir un c
 - [Campañas](docs/CAMPAIGNS.md): campañas globales, acreditación y entrega.
 - [Operativa de catálogos](docs/CATALOG_OPERATIONS.md): producción desde scraping hasta JSON comerciales.
 - [Calidad del catálogo](docs/CATALOG_QUALITY.md): `review`, auditor de huecos, evidencia y mejora por causas.
+- [Gobernanza del repositorio](docs/REPOSITORY_GOVERNANCE.md): autorización e inventario de scripts, Markdown y comandos; reglas de continuidad.
 - [Exportación comercial](docs/COMMERCIAL_EXPORT.md): proyección, auditoría, contratos y frontera del backend.
 - [Contratos de datos](docs/DATA_CONTRACTS.md): originales, normalización, identidades y procedencias.
 - [Motor editorial](docs/EDITORIAL_ENGINE.md): composición y conocimiento compartido.

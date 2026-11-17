@@ -50,6 +50,23 @@ Esta sección traduce la matriz de objetivos a **decisiones de ejecución**, tam
 
 **Prueba rápida antes de responder o entregar:** «¿Qué resultado pidió? ¿Qué causa productiva he corregido? ¿Cómo acredité el resultado en todo el universo? ¿Qué garantía preservé? ¿Qué impide cerrarlo, si algo?» Si la respuesta solo contiene comandos, causas, listados o una propuesta de auditoría, **no es una intervención productiva terminada**.
 
+## Orden de trabajo al continuar el catálogo
+
+Cuando el propietario diga «lee la documentación y seguimos» sin definir otro frente, continuar la **mejora de fichas**. Leer primero las reglas de [Gobernanza](REPOSITORY_GOVERNANCE.md); después consultar los indicadores actuales mediante los comandos existentes de `revisar`, `huecos` y, cuando proceda, `auditar:comercial`. No abrir un nuevo frente de infraestructura, normalización, publicación o tooling porque aparezca una oportunidad secundaria.
+
+**Elección de la siguiente intervención, en este orden:**
+
+1. **Seguridad e integridad de las fichas:** regresiones demostradas, pérdida real de máquinas, conflicto de identidad, dato técnico incorrecto o publicación divergente. Una incidencia que impida evaluar una fuente debe quedar identificada como bloqueo, no convertirse en una review ficticia de otra población.
+2. **Reviews reproducibles y corregibles:** agrupar por causa común y preferir la corrección de motor que resuelva más fichas con evidencia verificable. Una contradicción genuina de la fuente permanece pendiente de decisión humana.
+3. **Gaps con evidencia directa de pérdida o recuperación:** fuente con dato disponible que no llega a preparación o publicación, o reconciliación defectuosa. Priorizar impacto compartido y gravedad semántica, no simplemente el número de avisos.
+4. **Cobertura editorial y técnica mejorable:** títulos, descripciones, imágenes o atributos legítimamente disponibles aún no aprovechados. Las observaciones familiares sin evidencia individual son oportunidades de investigación, no defectos acreditados.
+
+Dentro del mismo nivel, ordenar por **riesgo de dato incorrecto, número de fichas realmente afectadas, reutilización del arreglo y coste de regresión**. Los avisos controlados, históricos o pendientes por ausencia legítima no compiten como defectos nuevos. Nunca priorizar por facilidad para reducir un contador. No sumar avisos de distintos auditores como si fueran máquinas diferentes.
+
+**Ciclo obligatorio:** fijar población, versión y huellas antes de intervenir → agrupar referencias y localizar la primera etapa defectuosa → corregir la responsabilidad productiva existente → ejecutar pruebas de caso/contraejemplo y los auditores correspondientes con la misma población → acreditar el delta de fichas y avisos, sin pérdida de datos ni nuevas reviews. Si las fuentes cambian, separar el efecto del código del cambio de inventario. No modificar los auditores, umbrales, reconocimientos ni publicaciones para obtener un resultado favorable.
+
+**Criterio de parada:** cuando no quede un defecto corregible del frente acreditado, o falte evidencia/permiso imprescindible, comunicar la causa precisa y lo efectivamente verificado. No inventar una nueva fase ni crear scripts, documentos o informes para seguir ocupado. Los resultados no ejecutados se marcan expresamente como no verificados.
+
 ## Dirección permanente del trabajo de calidad
 
 **El objetivo del frente de calidad editorial es obtener el catálogo completo de cada proveedor con `0 review` reales bajo la validación técnica oficial vigente.** Mientras existan reviews, el catálogo no está cerrado como *catálogo completamente ready*, aunque la extracción haya finalizado, todas las referencias estén informadas o la mayoría de fichas supere la preparación. La acreditación y entrega editorial siguen siendo contratos distintos, con sus propias aprobaciones.

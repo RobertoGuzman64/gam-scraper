@@ -1,5 +1,9 @@
 # EQUIPZILLA — Guards de arquitectura vigentes
 
+## AI GUARD
+
+Ninguna IA puede crear, modificar, mover ni eliminar esta guía sin autorización explícita del propietario para el cambio documental concreto. La protección transversal de scripts, Markdown y comandos está definida en [Gobernanza del repositorio](../docs/REPOSITORY_GOVERNANCE.md).
+
 ## Estado y alcance
 
 Esta guía describe los controles **vigentes**, sus autorizaciones exactas y sus límites. Los resultados deben comprobarse contra cada repositorio nuevo; no son una licencia para reducir cobertura.
@@ -13,6 +17,8 @@ Esta guía describe los controles **vigentes**, sus autorizaciones exactas y sus
 | Integraciones de catálogo directamente acreditadas | 21 lecturas, en 14 suites                                              |
 
 **Cero infracciones no significa cero lecturas legítimas de catálogos ni prueba una batería `npm test` global.** Las 19 excepciones y las 21 lecturas acreditadas no cuentan como infracciones porque protegen garantías concretas; no son una tolerancia genérica, un baseline ni advertencias ocultas.
+
+El guard de inventario de repositorio (`tests-repository-governance-guard.mjs`) se ejecuta primero en `npm test`, junto a sus pruebas negativas. Rechaza cambios no autorizados en scripts, Markdown y comandos. Su baseline pertenece a `repository-governance.json` y solo puede actualizarse tras aprobación del propietario.
 
 ## Ejecutar los guards
 

@@ -28,3 +28,4 @@ out/
 /catalogs/providers/*/technical/.active.lock
 /catalogs/providers/*/technical/.active-*.tmp
 /catalogs/providers/*/technical/versions/.pending-*
+/reports/
