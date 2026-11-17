@@ -117,7 +117,7 @@ const inspectProvider = async (
         selected = result.products;
         candidate = { approvalSha256: sha256(raw), count: result.totals.publishable };
         difference = differenceBetween(published?.approvalSha256 ?? null, candidate.approvalSha256, previous, result.products);
-        const acceptance = evaluateIndividualPublicationDifference(providerId, difference, previous, result.products, approval);
+        const acceptance = evaluateIndividualPublicationDifference(providerId, difference, previous, result.products, approval, originalProducts ?? undefined);
         for (const message of acceptance.blockers) block("aceptacion", message);
         try {
           const active = await readIndividualActiveSha(workspace, providerId, candidate.approvalSha256);

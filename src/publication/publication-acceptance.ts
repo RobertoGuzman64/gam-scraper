@@ -1,4 +1,5 @@
 import type { ImportCandidate } from "../commercial/legacy-export/contracts.js";
+import type { ProductRecord } from "../contracts/catalog.js";
 import type { PublicationDifference } from "./publication-contracts.js";
 import { reconcileRemovedSpecifications } from "./specification-reconciliations.js";
 
@@ -76,12 +77,45 @@ export const evaluatePublicationDifference = (difference: PublicationDifference)
   return { accepted: blockers.length === 0, blockers };
 };
 
+const verifiedGomarizHistoricalAbsences: Readonly<Record<string, string>> = {
+  "ref:mt1579": "https://www.gomarizrent.com/venta/manipulacion-de-materiales/manipulador-telescopico/genie-gth-2506-5/",
+  "ref:te61": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/haulotte-compact-8-elevador-tijera-articulated-scissor-lift-20/",
+  "ref:ba1347": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/skyjack-sj63aj-brazo-articulado-articulated-boom-lift-2/",
+  "ref:5051bdx": "https://www.gomarizrent.com/venta/camion/camion-porta-maquinaria/scania-p220-camion-truck-porta-maquinaria/",
+  "ref:1011jfb": "https://www.gomarizrent.com/venta/camion/camion-porta-maquinaria/renault-premium-320-26-camion-portamaquinaria/",
+  "ref:gr1113": "https://www.gomarizrent.com/venta/energia-electrica-e-iluminacion/generador/himoinsa-hfw-605t-generador-generator/",
+  "ref:ba1262": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/skyjack-brazo-articulado-articulated-boom-lift-sj63aj-3/",
+  "ref:cae1054": "https://www.gomarizrent.com/venta/manipulacion-de-materiales/carretilla-retractil/toyota-8fbre16-carretilla-retractil-sistema-de-elevacion-gomariz/",
+  "ref:ro1197": "https://www.gomarizrent.com/venta/movimiento-de-tierras-demolicion-y-compactacion/rodillo/rodillo-bombag-bw80ad-movimiento-de-tierras-demolicion-compactacion/",
+  "ref:ro457": "https://www.gomarizrent.com/venta/movimiento-de-tierras-demolicion-y-compactacion/rodillo/dynapac-cc142-2/",
+  "ref:te1606": "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-s0607eii-22-tijera-electrica-scissor-lift/"
+};
+
+const reconcileHistoricalGomarizAbsences = (
+  removed: readonly string[],
+  previous: ReadonlyMap<string, ImportCandidate>,
+  originals: readonly ProductRecord[] | undefined
+): readonly string[] => {
+  if (!originals || originals.length < previous.size ||
+    originals.some((product) => product.providerId !== "gomariz")) return removed;
+  const references = new Set(originals.flatMap((product) =>
+    product.reference?.trim() ? [product.reference.trim().toLowerCase()] : []));
+  const sourceUrls = new Set(originals.map((product) => product.url));
+  return removed.filter((identity) => {
+    const sourceUrl = verifiedGomarizHistoricalAbsences[identity];
+    if (!sourceUrl || previous.get(identity)?.sourceUrl !== sourceUrl) return true;
+    const reference = identity.slice("ref:".length);
+    return references.has(reference) || sourceUrls.has(sourceUrl);
+  });
+};
+
 export const evaluateIndividualPublicationDifference = (
   providerId: string,
   difference: PublicationDifference,
   previousProducts: readonly ImportCandidate[],
   nextProducts: readonly ImportCandidate[],
-  approval: unknown
+  approval: unknown,
+  originalProducts?: readonly ProductRecord[]
 ): PublicationAcceptance => {
   const exclusions = approvedIndividualExclusions(providerId, approval, previousProducts);
   const published = new Map<string, ImportCandidate>();
@@ -94,7 +128,9 @@ export const evaluateIndividualPublicationDifference = (
     const reference = product.reference?.trim().toLowerCase();
     if (reference) next.set(`ref:${reference}`, product);
   }
-  const removed = difference.removed.filter((identity) => !exclusions.has(identity));
+  const excluded = difference.removed.filter((identity) => !exclusions.has(identity));
+  const removed = providerId === "gomariz"
+    ? reconcileHistoricalGomarizAbsences(excluded, published, originalProducts) : excluded;
   const remainingSpecifications = reconcileRemovedSpecifications(providerId, difference, previousProducts, nextProducts).unresolved;
   const removedSpecifications = remainingSpecifications.filter((item) => {
     if (!isApprovedGamIndividual(providerId, approval)) return true;

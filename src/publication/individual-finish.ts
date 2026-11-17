@@ -1,4 +1,5 @@
 import { readFile, lstat, readdir } from "node:fs/promises";
+import { readPortableOriginal } from "../infrastructure/filesystem/catalog/portable-original.js";
 import { dirname, join, resolve } from "node:path";
 import { sha256 } from "../catalog/editorial/campaign-accreditation.js";
 import { readActiveCatalogIndex } from "../infrastructure/filesystem/catalog/active-selection.js";
@@ -99,7 +100,9 @@ const inspected = async (
     }
     const before = activeFile ? (await readAccreditedPublication(activeFile)).products : [];
     const difference = differenceBetween(currentSha256, approvalSha256, before, selection.products);
-    const acceptance = evaluateIndividualPublicationDifference(context.providerId, difference, before, selection.products, JSON.parse(raw));
+    const originalProducts = context.providerId === "gomariz"
+      ? (await readPortableOriginal(root, context.providerId)).products : undefined;
+    const acceptance = evaluateIndividualPublicationDifference(context.providerId, difference, before, selection.products, JSON.parse(raw), originalProducts);
     for (const blocker of acceptance.blockers) blockers.push(`${context.providerId}: ${blocker}`);
     checked.push({ providerId: context.providerId, options: context.options, approvalSha256,
       activeSha256: currentSha256, difference, publishable: selection.totals.publishable,

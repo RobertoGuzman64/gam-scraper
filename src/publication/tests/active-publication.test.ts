@@ -89,6 +89,29 @@ test("índice y acreditaciones corruptos no permiten seleccionar una publicació
   } finally { await rm(ctx.root, { recursive: true, force: true }); }
 });
 
+test("Gomariz exige su original verificado cuando una selección retira fichas", async () => {
+  const ctx = await setup();
+  try {
+    await selectActivePublication(ctx.root, providerId, existingSha, true);
+    const publishable = join(ctx.publications, ctx.other, `${providerId}-publishable.json`);
+    const products = JSON.parse(await readFile(publishable, "utf8")) as Record<string, unknown>[];
+    assert.ok(products.length > 1);
+    const reduced = JSON.stringify(products.slice(1), null, 2);
+    const manifestPath = join(ctx.publications, ctx.other, "manifest.json");
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as Record<string, unknown>;
+    const files = manifest.files as Record<string, string>;
+    const totals = manifest.totals as Record<string, unknown>;
+    await writeFile(publishable, reduced);
+    await writeFile(manifestPath, JSON.stringify({
+      ...manifest, totals: { ...totals, publishable: products.length - 1 },
+      files: { ...files, [`${providerId}-publishable.json`]: hash(reduced) }
+    }, null, 2));
+    await assert.rejects(selectActivePublication(ctx.root, providerId, ctx.other), /Falta original portátil: gomariz/);
+    assert.equal(await resolveAccreditedPublication(ctx.root, providerId),
+      join(ctx.original, `${providerId}-publishable.json`));
+  } finally { await rm(ctx.root, { recursive: true, force: true }); }
+});
+
 test("una publicación legada mantiene compatibilidad y puede fijarse sin mutar su JSON", async () => {
   const ctx = await setup();
   try {

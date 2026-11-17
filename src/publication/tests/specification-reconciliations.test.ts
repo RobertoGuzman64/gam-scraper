@@ -157,3 +157,23 @@ test("la Tennant T16 recupera tres prestaciones documentadas con identidad y hue
     assert.equal(recoverGamDocumentedWarehouseCleaningAndLiftingSpecs(changed, changed.specs ?? {}), changed.specs ?? {});
   }
 });
+
+test("GAM 2145 retira solo el centro de carga atribuido al modelo no acreditado", () => {
+  const unit = prepared.products.find((item) => item.product.reference === "2145");
+  assert.ok(unit && unit.status === "ready");
+  const current = unit.product;
+  assert.equal(current.spec["Modelo"], "P2.5");
+  assert.equal(Object.hasOwn(current.spec, "Centro de carga del modelo"), false);
+  const former = { ...current, spec: { ...current.spec, "Centro de carga del modelo": "600 mm" } };
+  const changes = differenceBetween("vigente", "nuevo", [former], [current]);
+  assert.deepEqual(changes.removedSpecifications, ["ref:2145:Centro de carga del modelo"]);
+  assert.deepEqual(reconcileRemovedSpecifications("gam", changes, [former], [current]).unresolved, []);
+  assert.equal(evaluateIndividualPublicationDifference("gam", changes, [former], [current], null).accepted, true);
+  for (const [before, after] of [
+    [{ ...former, spec: { ...former.spec, "Centro de carga del modelo": "500 mm" } }, current],
+    [former, { ...current, sourceUrl: "https://example.com/otra-unidad" }],
+    [former, { ...current, spec: { ...current.spec, "Modelo": "P2.0UTS" } }]
+  ] as const) {
+    assert.equal(evaluateIndividualPublicationDifference("gam", changes, [before], [after], null).accepted, false);
+  }
+});

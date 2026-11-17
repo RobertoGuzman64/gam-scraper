@@ -17,6 +17,7 @@ const verifiedCorrections: Readonly<Record<string, {
   readonly previous: string;
   readonly replacement: Readonly<Record<string, string>>;
 }>> = {
+  "ref:2145:Centro de carga del modelo": { model: "P2.5", previous: "600 mm", replacement: {} },
   "ref:6688:ALFA ROMEO": { model: "SPIDE JUNIOR", previous: "ALFA ROMEO", replacement: { "Marca": "ALFA ROMEO", "Modelo": "SPIDER JUNIOR" } },
   "ref:6689:AUDI": { model: "6 CABRIO 80 2", previous: "AUDI", replacement: { "Marca": "AUDI", "Modelo": "80 2,6 CABRIO" } },
   "ref:6690:PEUGEOUT": { model: "304 S CABRIOLET", previous: "PEUGEOUT", replacement: { "Marca": "PEUGEOT" } },
