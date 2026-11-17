@@ -20,34 +20,15 @@ test("aplica verde amarillo rojo y cian únicamente cuando está permitido", () 
 });
 
 test("respeta CI, NO_COLOR y terminal no interactiva", () => {
-  const previousCI = process.env.CI;
-  const previousNoColor = process.env.NO_COLOR;
-  const previousTerm = process.env.TERM;
-  try {
-    delete process.env.CI;
-    delete process.env.NO_COLOR;
-    process.env.TERM = "xterm-256color";
-    assert.equal(supportsTerminalColor({ isTTY: false }), false);
-    assert.equal(supportsTerminalColor({ isTTY: true }), true);
-    process.env.NO_COLOR = "1";
-    assert.equal(supportsTerminalColor({ isTTY: true }), false);
-    assert.equal(supportsAnimation({ isTTY: true }), false);
-    delete process.env.NO_COLOR;
-    process.env.CI = "true";
-    assert.equal(supportsTerminalColor({ isTTY: true }), false);
-    assert.equal(supportsAnimation({ isTTY: true }), false);
-    delete process.env.CI;
-    process.env.TERM = "dumb";
-    assert.equal(supportsTerminalColor({ isTTY: true }), false);
-    assert.equal(supportsAnimation({ isTTY: true }), false);
-  } finally {
-    if (previousCI === undefined) delete process.env.CI;
-    else process.env.CI = previousCI;
-    if (previousNoColor === undefined) delete process.env.NO_COLOR;
-    else process.env.NO_COLOR = previousNoColor;
-    if (previousTerm === undefined) delete process.env.TERM;
-    else process.env.TERM = previousTerm;
-  }
+  const env: NodeJS.ProcessEnv = { TERM: "xterm-256color" };
+  assert.equal(supportsTerminalColor({ isTTY: false }, "linux", env), false);
+  assert.equal(supportsTerminalColor({ isTTY: true }, "linux", env), true);
+  assert.equal(supportsTerminalColor({ isTTY: true }, "linux", { ...env, NO_COLOR: "1" }), false);
+  assert.equal(supportsAnimation({ isTTY: true }, "linux", { ...env, NO_COLOR: "1" }), false);
+  assert.equal(supportsTerminalColor({ isTTY: true }, "linux", { ...env, CI: "true" }), false);
+  assert.equal(supportsAnimation({ isTTY: true }, "linux", { ...env, CI: "true" }), false);
+  assert.equal(supportsTerminalColor({ isTTY: true }, "linux", { ...env, TERM: "dumb" }), false);
+  assert.equal(supportsAnimation({ isTTY: true }, "linux", { ...env, TERM: "dumb" }), false);
 });
 
 test("solo muestra progreso con denominador real y límites válidos", () => {

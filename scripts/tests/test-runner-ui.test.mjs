@@ -248,14 +248,14 @@ test("no repinta un estado idéntico y no acumula escrituras de cursor", () => {
 test("los estados reutilizados muestran PASS verde y FAIL rojo, con exclusiones explícitas", () => {
   const tty = { isTTY: true };
   const enabled = { CI: "false", TERM: "xterm-256color" };
-  assert.equal(supportsScriptColor(tty, enabled), true);
-  assert.equal(supportsScriptColor(tty, { ...enabled, NO_COLOR: "1" }), false);
-  assert.equal(supportsScriptColor(tty, { ...enabled, CI: "true" }), false);
-  assert.equal(supportsScriptColor({ isTTY: false }, { ...enabled, FORCE_COLOR: "1" }), true);
-  assert.equal(supportsScriptColor({ isTTY: false }, { ...enabled, TERM: "dumb", FORCE_COLOR: "1" }), true);
-  assert.equal(supportsScriptColor({ isTTY: false }, { ...enabled, FORCE_COLOR: "0" }), false);
-  assert.equal(supportsScriptColor(tty, { ...enabled, FORCE_COLOR: "0" }), false);
-  if (process.env.NO_COLOR === undefined && process.env.TERM !== "dumb" && process.env.CI !== "true") {
+  assert.equal(supportsScriptColor(tty, enabled, "linux"), true);
+  assert.equal(supportsScriptColor(tty, { ...enabled, NO_COLOR: "1" }, "linux"), false);
+  assert.equal(supportsScriptColor(tty, { ...enabled, CI: "true" }, "linux"), false);
+  assert.equal(supportsScriptColor({ isTTY: false }, { ...enabled, FORCE_COLOR: "1" }, "linux"), true);
+  assert.equal(supportsScriptColor({ isTTY: false }, { ...enabled, TERM: "dumb", FORCE_COLOR: "1" }, "linux"), true);
+  assert.equal(supportsScriptColor({ isTTY: false }, { ...enabled, FORCE_COLOR: "0" }, "linux"), false);
+  assert.equal(supportsScriptColor(tty, { ...enabled, FORCE_COLOR: "0" }, "linux"), false);
+  if (supportsScriptColor(tty)) {
     assert.match(formatScriptStatus("PASS", "correcto", tty), /\u001b\[32mPASS\u001b\[0m \| correcto/);
     assert.match(formatScriptStatus("FAIL", "fallo", tty), /\u001b\[31mFAIL\u001b\[0m \| fallo/);
   }

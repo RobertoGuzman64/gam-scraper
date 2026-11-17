@@ -41,7 +41,7 @@ test("GAM: Lui 460 y CTE carecen de equivalencia, sin bloquear un tipo acreditad
     assert.equal(categorySlug(record), null, code);
     const prepared = prepareCached(record, catalog);
     assert.equal(prepared.status, "ready", code);
-    assert.deepEqual(prepared.issues, [], code);
+    assert.equal(prepared.issues.length, 0, code);
     assert.ok(prepared.importIssues?.createMany.some((issue) => issue.startsWith("Categoría no ")), code);
     assert.ok(!prepared.issues.includes("Tipo de máquina de origen sin confirmar"), code);
   }

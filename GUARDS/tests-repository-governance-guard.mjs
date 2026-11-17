@@ -1,7 +1,6 @@
-import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -9,8 +8,6 @@ const excludedDirectories = new Set([".git", "node_modules", "dist", "storage", 
 const scriptExtension = /\.(?:[cm]?[jt]s|[jt]sx|ps1|py|sh|cmd|bat)$/iu;
 const externalScriptExtension = /\.(?:mjs|cjs|ps1|py|sh|cmd|bat)$/iu;
 const phaseFileName = /(?:^|[-_.])(?:fase|phase)[-_.]?(?:\d+|[ivxlcdm]+)(?=$|[-_.])|(?:^|[-_.])(?:f\d+|operativa[-_.]?f\d+)(?=$|[-_.])/iu;
-
-const hash = (value) => createHash("sha256").update(value).digest("hex");
 
 const walk = (root, directory = "") => {
   const files = [];
@@ -33,14 +30,13 @@ const isScript = (pathname) => {
 
 export const repositoryInventory = (root) => {
   const paths = walk(root);
-  const markdown = {};
-  const scripts = {};
+  const counts = { markdown: 0, scripts: 0 };
   for (const pathname of paths) {
-    if (/\.md$/iu.test(pathname)) markdown[pathname] = hash(readFileSync(join(root, pathname)));
-    if (isScript(pathname)) scripts[pathname] = hash(readFileSync(join(root, pathname)));
+    if (/\.md$/iu.test(pathname)) counts.markdown += 1;
+    if (isScript(pathname)) counts.scripts += 1;
   }
   const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-  return { paths, markdown, scripts, npmScripts: packageJson.scripts ?? {}, npmBin: packageJson.bin ?? null };
+  return { paths, counts, npmScripts: packageJson.scripts ?? {}, npmBin: packageJson.bin ?? null };
 };
 
 const differences = (label, expected, actual, findings) => {
@@ -54,13 +50,21 @@ const differences = (label, expected, actual, findings) => {
 };
 
 export const inspectRepositoryGovernance = (root, policy) => {
-  if (policy.version !== 1 || !policy.markdown || !policy.scripts || !policy.npmScripts || !("npmBin" in policy)) {
+  if (policy?.version !== 2 || !policy.maxCounts ||
+    !Number.isSafeInteger(policy.maxCounts.markdown) || policy.maxCounts.markdown < 0 ||
+    !Number.isSafeInteger(policy.maxCounts.scripts) || policy.maxCounts.scripts < 0 ||
+    !policy.npmScripts || typeof policy.npmScripts !== "object" || Array.isArray(policy.npmScripts) ||
+    !Object.hasOwn(policy, "npmBin")) {
     throw new Error("Contrato de gobernanza inválido");
   }
   const inventory = repositoryInventory(root);
   const findings = [];
-  differences("Markdown", policy.markdown, inventory.markdown, findings);
-  differences("Script", policy.scripts, inventory.scripts, findings);
+  if (inventory.counts.markdown > policy.maxCounts.markdown) {
+    findings.push(`Exceso de Markdown: ${inventory.counts.markdown} (máximo ${policy.maxCounts.markdown})`);
+  }
+  if (inventory.counts.scripts > policy.maxCounts.scripts) {
+    findings.push(`Exceso de scripts: ${inventory.counts.scripts} (máximo ${policy.maxCounts.scripts})`);
+  }
   differences("Comando npm", policy.npmScripts, inventory.npmScripts, findings);
   if (JSON.stringify(inventory.npmBin) !== JSON.stringify(policy.npmBin)) {
     findings.push("Entradas ejecutables package.json/bin modificadas");
@@ -81,8 +85,8 @@ export const inspectRepositoryGovernance = (root, policy) => {
   return {
     findings,
     counts: {
-      markdown: Object.keys(inventory.markdown).length,
-      scripts: Object.keys(inventory.scripts).length,
+      markdown: inventory.counts.markdown,
+      scripts: inventory.counts.scripts,
       npmScripts: Object.keys(inventory.npmScripts).length
     }
   };

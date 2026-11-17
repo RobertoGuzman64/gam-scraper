@@ -42,17 +42,17 @@ test("GAM: veinte fichas acreditadas incorporan prestaciones declaradas en su fu
       assert.strictEqual(recovered, specs, record.reference ?? record.url);
       continue;
     }
-    assert.ok((record.longDescription ?? "").toLowerCase().includes(expected.sourceFragment.toLowerCase()), record.reference);
-    assert.deepEqual(recovered, { ...specs, ...expected.specification }, record.reference);
+    assert.ok((record.longDescription ?? "").toLowerCase().includes(expected.sourceFragment.toLowerCase()), record.reference ?? record.url);
+    assert.deepEqual(recovered, { ...specs, ...expected.specification }, record.reference ?? record.url);
     const originalSnapshot = JSON.stringify(record);
     const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.status, "ready", record.reference);
+    assert.equal(prepared.status, "ready", record.reference ?? record.url);
     for (const [key, value] of Object.entries(expected.specification)) {
       assert.ok(!(key in specs), `${record.reference}:${key}`);
       assert.equal(prepared.product.spec[key], value, `${record.reference}:${key}`);
       additions++;
     }
-    assert.equal(JSON.stringify(record), originalSnapshot, record.reference);
+    assert.equal(JSON.stringify(record), originalSnapshot, record.reference ?? record.url);
     improved++;
   }
   assert.equal(improved, 20);

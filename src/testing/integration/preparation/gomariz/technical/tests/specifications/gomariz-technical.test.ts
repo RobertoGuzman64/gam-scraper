@@ -4,6 +4,7 @@ import { loadImportCatalog } from "../../../../../../../infrastructure/filesyste
 import { resolveAttributeValue } from "../../../../../../../preparation/shared/classification/mapping/attribute-mapping.js";
 import { prepareCached } from "../../../../../../../preparation/testing/prepare-cached.js";
 import { recoverGomarizSourceYearSpec } from "../../../../../../../preparation/gomariz/technical/mapping/source-year-spec.js";
+import { reconcileGomarizDocumented1cxFuel } from "../../../../../../../preparation/gomariz/technical/evidence/verified-1cx-fuel.js";
 import { recoverBaseTechnicalSpecs } from "../../../../../../../preparation/shared/technical/recovery/base-technical-recovery.js";
 import { readCanonicalCatalog } from "../../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { recoverGomarizDocumentedRenaultPremiumSpecs } from "../../../../../../../preparation/gomariz/technical/evidence/documented-renault-premium-specs.js";
@@ -91,8 +92,9 @@ test("Gomariz: traslada el año explícito de la ficha a spec sin alterar los or
     assert.ok(record.year);
     const before = JSON.stringify(record);
     const prepared = prepareSourceProduct(record);
+    const verified = reconcileGomarizDocumented1cxFuel(record);
     assert.equal(prepared.product.spec["Año de fabricación"], record.year, record.reference ?? "");
-    assert.deepEqual(prepared.product.spec, { ...recoverGomarizDocumentedRenaultPremiumSpecs(record, recoverGomarizDocumentedScaniaP220Specs(record, { ...record.specs, "Año de fabricación": record.year })), ...reconcileGomarizVerifiedPlatformHeight(record).specs });
+    assert.deepEqual(prepared.product.spec, { ...recoverGomarizDocumentedRenaultPremiumSpecs(record, recoverGomarizDocumentedScaniaP220Specs(record, { ...verified.specs, "Año de fabricación": record.year })), ...reconcileGomarizVerifiedPlatformHeight(verified).specs });
     assert.equal(JSON.stringify(record), before);
   }
   for (const record of source.products.filter((item) => item.year === null)) {

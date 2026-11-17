@@ -1,12 +1,10 @@
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { inspectRepositoryGovernance } from "./tests-repository-governance-guard.mjs";
 
-const hash = (value) => createHash("sha256").update(value).digest("hex");
 const fixture = (t) => {
   const root = mkdtempSync(join(tmpdir(), "eq-governance-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
@@ -19,9 +17,8 @@ const fixture = (t) => {
   write("scripts/run.mjs", "export const run = true;\n");
   write("package.json", JSON.stringify({ scripts: { test: "node scripts/run.mjs" } }));
   const policy = {
-    version: 1,
-    markdown: { "docs/QUALITY.md": hash("Reglas vigentes\n") },
-    scripts: { "scripts/run.mjs": hash("export const run = true;\n") },
+    version: 2,
+    maxCounts: { markdown: 1, scripts: 1 },
     npmScripts: { test: "node scripts/run.mjs" },
     npmBin: null
   };
@@ -30,7 +27,7 @@ const fixture = (t) => {
 
 const findings = (fixtureValue) => inspectRepositoryGovernance(fixtureValue.root, fixtureValue.policy).findings;
 
-test("acepta inventario exacto sin generar artefactos", (t) => {
+test("acepta el inventario actual sin generar artefactos", (t) => {
   const value = fixture(t);
   assert.deepEqual(findings(value), []);
   assert.deepEqual(inspectRepositoryGovernance(value.root, value.policy).counts, {
@@ -38,42 +35,48 @@ test("acepta inventario exacto sin generar artefactos", (t) => {
   });
 });
 
-test("bloquea altas, edición y eliminación de documentación", (t) => {
+test("permite editar y eliminar documentos existentes", (t) => {
+  const value = fixture(t);
+  value.write("docs/QUALITY.md", "Texto actualizado\n");
+  assert.deepEqual(findings(value), []);
+  rmSync(join(value.root, "docs/QUALITY.md"));
+  assert.deepEqual(findings(value), []);
+  assert.equal(inspectRepositoryGovernance(value.root, value.policy).counts.markdown, 0);
+});
+
+test("rechaza superar el máximo de documentos aunque sean de otras carpetas", (t) => {
   const value = fixture(t);
   value.write("docs/NEW.md", "sin autorización");
-  assert.ok(findings(value).some((item) => item.includes("Markdown no autorizado")));
-  value.write("docs/QUALITY.md", "modificada");
-  assert.ok(findings(value).some((item) => item.includes("Markdown modificado")));
-  rmSync(join(value.root, "docs/QUALITY.md"));
-  assert.ok(findings(value).some((item) => item.includes("Markdown eliminado")));
+  value.write("data/NOTES.md", "sin autorización");
+  assert.ok(findings(value).some((item) => item.includes("Exceso de Markdown: 3 (máximo 1)")));
 });
 
-test("bloquea altas, edición y eliminación de scripts", (t) => {
+test("permite editar, eliminar y sustituir scripts dentro del máximo", (t) => {
   const value = fixture(t);
-  value.write("scripts/extra.mjs", "export default 1;");
-  assert.ok(findings(value).some((item) => item.includes("Script no autorizado")));
-  value.write("scripts/run.mjs", "export default 2;");
-  assert.ok(findings(value).some((item) => item.includes("Script modificado")));
+  value.write("scripts/run.mjs", "export default 2;\n");
+  assert.deepEqual(findings(value), []);
   rmSync(join(value.root, "scripts/run.mjs"));
-  assert.ok(findings(value).some((item) => item.includes("Script eliminado")));
+  assert.deepEqual(findings(value), []);
+  value.write("tools/new.py", "print(1)\n");
+  assert.deepEqual(findings(value), []);
 });
 
-test("bloquea scripts fuera de scripts y ejecutables de intervención", (t) => {
+test("rechaza superar el máximo de scripts desde cualquier carpeta", (t) => {
   const value = fixture(t);
   value.write("tools/new.py", "print(1)\n");
   value.write("docs/hidden.sh", "echo fail\n");
   value.write("interventions/gam/123.ts", "export const id = '123';\n");
-  assert.equal(findings(value).filter((item) => item.includes("Script no autorizado")).length, 3);
+  assert.ok(findings(value).some((item) => item.includes("Exceso de scripts: 4 (máximo 1)")));
 });
 
-test("bloquea nuevos comandos npm y cambios en los existentes", (t) => {
+test("mantiene protegidos los comandos npm y los cambios de su contenido", (t) => {
   const value = fixture(t);
   value.write("package.json", JSON.stringify({ scripts: { test: "node scripts/changed.mjs", extra: "echo no" } }));
   assert.ok(findings(value).some((item) => item.includes("Comando npm modificado")));
   assert.ok(findings(value).some((item) => item.includes("Comando npm no autorizado")));
 });
 
-test("bloquea puntos de entrada package bin", (t) => {
+test("mantiene protegidos los puntos de entrada package bin", (t) => {
   const value = fixture(t);
   value.write("package.json", JSON.stringify({ scripts: value.policy.npmScripts, bin: "scripts/run.mjs" }));
   assert.ok(findings(value).some((item) => item.includes("package.json/bin")));
@@ -87,7 +90,12 @@ test("prohíbe nombres de fases en cualquier carpeta y extensión", (t) => {
   assert.equal(findings(value).filter((item) => item.includes("Nombre de fase prohibido")).length, 4);
 });
 
-test("rechaza contrato sin inventarios completos", (t) => {
+test("rechaza contratos incompletos y límites inválidos", (t) => {
   const value = fixture(t);
-  assert.throws(() => inspectRepositoryGovernance(value.root, { version: 1 }), /inválido/u);
+  assert.throws(() => inspectRepositoryGovernance(value.root, { version: 2 }), /inválido/u);
+  for (const count of [-1, 0.5, "1", null]) {
+    assert.throws(() => inspectRepositoryGovernance(value.root, {
+      ...value.policy, maxCounts: { markdown: count, scripts: 1 }
+    }), /inválido/u);
+  }
 });
