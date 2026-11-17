@@ -33,6 +33,9 @@ test("el explorador refleja exactamente las tres poblaciones verificadas por pro
       if (item.stage === "commercial") {
         assert.ok(item.published);
         assert.ok(item.commercial);
+        assert.equal(item.commercialTechnicalChanges.length,
+          new Set([...Object.keys(item.published.specs), ...Object.keys(item.commercial.specs)]).size);
+        assert.ok(item.commercialTechnicalChanges.every((difference) => difference.group === "commercial"));
       }
       if (item.stage === "editorial-excluded") {
         assert.equal(item.published, null);

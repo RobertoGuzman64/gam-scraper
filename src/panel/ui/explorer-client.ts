@@ -91,31 +91,20 @@ const imagePreview = (record: PanelProductView): HTMLElement | null => {
   append(figure, image, create("span", "", `${formatNumber.format(record.images.length)} imágenes declaradas`));
   return figure;
 };
-const excerpt = (label: string, body: string | null): HTMLElement => {
-  const block = create("div", "record-excerpt");
-  append(block, create("span", "record-label", label));
-  if (!body) {
-    append(block, create("p", "muted-copy", "No consta"));
-  } else if (body.length > 300) {
-    const details = create("details");
-    append(details, create("summary", "", body.slice(0, 300).trimEnd() + "… Mostrar completo"), create("p", "record-long-copy", body));
-    append(block, details);
-  } else append(block, create("p", "", body));
-  return block;
-};
 const recordCard = (label: string, record: PanelProductView | PanelCommercialView | null, extra?: PanelCommercialView): HTMLElement => {
   const card = create("article", "record-card");
   append(card, create("span", "section-kicker", label));
   if (!record) {
-    append(card, create("div", "record-missing", "Evidencia no disponible o etapa no alcanzada"));
+    append(card, create("div", "record-missing", label.includes("ORIGINAL") ?
+      "Evidencia original no disponible" : "Etapa no alcanzada"));
     return card;
   }
   const preview = imagePreview(record);
   if (preview) append(card, preview);
-  append(card, create("h3", "record-title", text(record.title)), excerpt("Descripción corta", record.shortDescription),
-    excerpt("Descripción general", record.generalDescription));
+  append(card, create("h3", "record-title", text(record.title)));
   const facts = create("dl", "record-facts");
-  for (const [title, value] of [["Categoría", text(record.category)], ["Precio declarado", text(record.price)]] as const) {
+  for (const [title, value] of [["Categoría", text(record.category)], ["Precio declarado", text(record.price)],
+    ["Prestaciones", formatNumber.format(Object.keys(record.specs).length)]] as const) {
     append(facts, create("dt", "", title), create("dd", "", value));
   }
   if (extra) {
@@ -124,26 +113,130 @@ const recordCard = (label: string, record: PanelProductView | PanelCommercialVie
       create("dt", "", "Atributos comerciales aceptados"), create("dd", "", String(extra.attributes.length)));
   }
   append(card, facts);
-  const specs = Object.entries(record.specs);
-  if (specs.length) {
-    const section = create("details", "record-specs");
-    append(section, create("summary", "", `${formatNumber.format(specs.length)} prestaciones técnicas · Ver todas`));
-    const list = create("dl", "record-spec-list");
-    for (const [key, value] of specs) {
-      append(list, create("dt", "", key), create("dd", "", Array.isArray(value) ? value.join(" · ") : String(value)));
-    }
-    append(section, list, card);
-  }
-  if (extra?.attributes.length) {
-    const attrs = create("details", "record-specs");
-    append(attrs, create("summary", "", `${extra.attributes.length} atributos comerciales · Ver IDs y valores`));
-    const list = create("dl", "record-spec-list");
-    for (const attr of extra.attributes) {
-      append(list, create("dt", "", `ID ${attr.attributeID}`), create("dd", "", String(attr.value)));
-    }
-    append(attrs, list, card);
-  }
   return card;
+};
+
+const descriptionPanel = (label: string, description: string | null, unavailable: string): HTMLElement => {
+  const panel = create("article", "description-panel");
+  append(panel, create("h4", "", label), create("div", "description-body", description === null || description === "" ? unavailable : description));
+  return panel;
+};
+const renderDescriptions = (item: PanelExplorerProduct): HTMLElement => {
+  const section = create("section", "detail-section description-section");
+  append(section, create("span", "section-kicker", "CONTENIDO COMPLETO"), create("h3", "", "Descripciones, sin recortes"),
+    create("p", "minor-note", "Se muestran los textos íntegros tal como constan en cada etapa; las diferencias no demuestran por sí solas una regla aplicada."));
+  for (const [title, field] of [["Descripción corta", "shortDescription"], ["Descripción general", "generalDescription"]] as const) {
+    const group = create("div", "description-group");
+    append(group, create("h4", "description-group-title", title));
+    const columns = create("div", "description-columns");
+    append(columns, descriptionPanel("01 · Original", item.original?.[field] ?? null,
+      item.original ? "No consta" : "Evidencia original no disponible"),
+      descriptionPanel("02 · FINISH", item.published?.[field] ?? null,
+        item.published ? "No consta" : "Etapa no alcanzada"));
+    if (item.commercial) {
+      const commercial = descriptionPanel("03 · Comercial", item.commercial[field], "No consta");
+      commercial.classList.add("description-commercial");
+      append(columns, commercial);
+    }
+    append(group, columns);
+    append(section, group);
+  }
+  return section;
+};
+const renderSpecifications = (item: PanelExplorerProduct): HTMLElement => {
+  const section = create("section", "detail-section technical-section");
+  append(section, create("span", "section-kicker", "PRESTACIONES TÉCNICAS"), create("h3", "", "Especificaciones alineadas por campo"),
+    create("p", "minor-note", "Correspondencia mediante la normalización técnica del proyecto. Los valores conservan sus unidades y los nombres ambiguos no se fuerzan a coincidir."));
+  const technical = item.changes.filter((difference) => difference.group === "technical");
+  const source = item.published ? technical : Object.entries(item.original?.specs ?? {}).map(([field, value]): PanelFieldDifference => ({
+    field, group: "technical", change: "unchanged", before: Array.isArray(value) ? value.join(" · ") : String(value), after: null
+  }));
+  const originalToFinish = new Map(source.map((difference) => [difference.field, difference]));
+  const finishToCommercial = new Map(item.commercialTechnicalChanges.map((difference) => [difference.field, difference]));
+  const fields = [...new Set([...originalToFinish.keys(), ...finishToCommercial.keys()])].sort((a, b) => a.localeCompare(b, "es"));
+  if (!fields.length) {
+    append(section, create("p", "muted-copy", "No constan prestaciones técnicas en este expediente."));
+    return section;
+  }
+  const region = create("div", "scroll-table technical-table-wrap");
+  const table = create("table", "data-table technical-table");
+  const header = create("thead");
+  const headingRow = create("tr");
+  for (const name of ["PRESTACIÓN", "ORIGINAL", "FINISH", "COMERCIAL", "ESTADO OBSERVADO"]) append(headingRow, create("th", "", name));
+  append(header, headingRow);
+  append(table, header);
+  const body = create("tbody");
+  for (const field of fields) {
+    const edit = originalToFinish.get(field);
+    const projection = finishToCommercial.get(field);
+    const result = create("tr");
+    const before = item.original ? text(edit?.before ?? null) : "Evidencia no disponible";
+    const after = item.published ? text(edit?.after ?? projection?.before ?? null) : "No aplica";
+    const commercial = item.commercial ? text(projection?.after ?? null) : "No aplica";
+    const classification = !item.original || !item.published ? "Sin comparación editorial" :
+      edit ? changes[edit.change] : "No consta en original/FINISH";
+    const commercialStatus = projection && projection.change !== "unchanged" ? ` · Comercial: ${changes[projection.change]}` : "";
+    append(result, create("th", "technical-field", field), create("td", "technical-value", before),
+      create("td", "technical-value", after), create("td", "technical-value", commercial),
+      create("td", `technical-status ${edit && item.original && item.published ? `diff-${edit.change}` : ""}`,
+        classification + commercialStatus));
+    append(body, result);
+  }
+  append(table, body);
+  append(region, table);
+  append(section, region);
+  append(section, create("p", "minor-note", `${formatNumber.format(fields.length)} campos técnicos presentados; los atributos comerciales son una población diferente.`));
+  return section;
+};
+const renderCommercialAttributes = (item: PanelExplorerProduct): HTMLElement => {
+  const section = create("section", "detail-section attributes-section");
+  append(section, create("span", "section-kicker", "PROYECCIÓN COMERCIAL"), create("h3", "", "Atributos comerciales aceptados"));
+  if (!item.commercial) {
+    append(section, create("p", "muted-copy", "No aplica: no se generó producto comercial para esta ficha."));
+    return section;
+  }
+  if (!item.commercial.attributes.length) {
+    append(section, create("p", "muted-copy", "Este producto no presenta atributos comerciales aceptados."));
+    return section;
+  }
+  const region = create("div", "scroll-table");
+  const table = create("table", "data-table attributes-table");
+  const head = create("thead");
+  const row = create("tr");
+  append(row, create("th", "", "IDENTIFICADOR DE ATRIBUTO"), create("th", "", "VALOR COMERCIAL"));
+  append(head, row);
+  append(table, head);
+  const body = create("tbody");
+  for (const attribute of item.commercial.attributes) {
+    const entry = create("tr");
+    append(entry, create("th", "", String(attribute.attributeID)), create("td", "", String(attribute.value)));
+    append(body, entry);
+  }
+  append(table, body);
+  append(region, table);
+  append(section, region);
+  return section;
+};
+const renderDecision = (item: PanelExplorerProduct): HTMLElement => {
+  const section = create("section", "detail-decision");
+  append(section, create("span", "section-kicker", "RESULTADO Y TOMA DE DECISIÓN"),
+    create("h3", "", "Resultado acreditado del expediente"));
+  if (item.decision?.stage === "editorial") {
+    append(section, create("strong", "decision-result", "Excluida de la publicación técnica"),
+      create("p", "", item.decision.reason));
+    for (const issue of item.decision.issues) append(section, create("p", "decision-issue", issue));
+    for (const url of item.decision.evidenceUrls) if (verifiedUrl(url)) append(section, linkTo(url, "Consultar evidencia de la exclusión ↗"));
+    append(section, create("p", "minor-note", "Motivo obtenido de la acreditación editorial vigente de este corte."));
+  } else if (item.decision?.stage === "commercial") {
+    append(section, create("strong", "decision-result", "Publicada técnicamente; excluida de la proyección comercial"),
+      create("p", "", item.decision.reason),
+      create("p", "minor-note", "Motivo declarado por la exportación comercial; no es una exclusión editorial."));
+  } else {
+    append(section, create("strong", "decision-result", "Publicada en FINISH y presente en la exportación comercial"),
+      create("p", "", "La presencia en las salidas queda acreditada por los artefactos de este corte."),
+      create("p", "minor-note", "No consta en los artefactos una motivación individual de cada transformación. El panel muestra cambios observados, no una decisión editorial inferida ni integración en base de datos."));
+  }
+  return section;
 };
 
 let scope: Scope = "todos";
@@ -269,18 +362,10 @@ const renderDetail = (): void => {
   if (verifiedUrl(item.sourceUrl)) append(heading, linkTo(item.sourceUrl, "Abrir ficha del proveedor ↗"));
   append(heading, create("p", "minor-note", "La URL externa puede haber cambiado después del corte; su contenido actual no acredita el histórico."));
   append(target, heading);
-  if (item.decision) {
-    const box = create("section", "decision-alert");
-    append(box, create("span", "section-kicker", item.decision.stage === "editorial" ? "DECISIÓN EDITORIAL ACREDITADA" : "EXCLUSIÓN DE PROYECCIÓN COMERCIAL"),
-      create("h3", "", item.decision.reason));
-    for (const issue of item.decision.issues) append(box, create("p", "", issue));
-    for (const url of item.decision.evidenceUrls) if (verifiedUrl(url)) append(box, linkTo(url, "Enlace de evidencia externa ↗"));
-    append(target, box);
-  }
   const records = create("div", "record-grid");
   append(records, recordCard("01 / ORIGINAL", item.original), recordCard("02 / FINISH", item.published),
     recordCard("03 / COMERCIAL", item.commercial, item.commercial ?? undefined));
-  append(target, records);
+  append(target, records, renderDescriptions(item), renderSpecifications(item), renderCommercialAttributes(item));
   const diffHeading = create("div", "diff-heading");
   append(diffHeading, create("div", "", "Diferencias estructuradas"),
     newButton(showUnchanged ? "Ocultar conservados" : "Mostrar campos conservados", () => {
@@ -300,7 +385,7 @@ const renderDetail = (): void => {
   }
   if (!item.evidence.original) append(provenance, create("p", "evidence-warning", "No hay original verificado para esta identidad o exclusión sin original conservado."));
   append(provenance, create("p", "minor-note", "La comparación acredita diferencias observadas de campos; no demuestra por sí sola qué regla interna causó cada cambio."));
-  append(target, provenance);
+  append(target, provenance, renderDecision(item));
 };
 const renderExplorer = (): void => { renderCases(); renderRows(); renderDetail(); };
 const chooseCase = (item: PanelPresentationCase): void => {

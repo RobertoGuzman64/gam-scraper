@@ -47,6 +47,7 @@ export type PanelExplorerProduct = {
   readonly commercial: PanelCommercialView | null;
   readonly changes: readonly PanelFieldDifference[];
   readonly commercialChanges: readonly PanelFieldDifference[];
+  readonly commercialTechnicalChanges: readonly PanelFieldDifference[];
   readonly decision: PanelProductDecision | null;
   readonly evidence: {
     readonly original: PanelArtifact | null;

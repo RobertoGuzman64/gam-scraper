@@ -34,6 +34,9 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.match(html, /data-view="explorador"/);
   assert.ok(html.includes("explorer-search"));
   assert.ok(html.includes("presentation-start"));
+  assert.ok(html.includes("Descripciones, sin recortes"));
+  assert.ok(html.includes("Especificaciones alineadas por campo"));
+  assert.ok(html.includes("RESULTADO Y TOMA DE DECISIÓN"));
   assert.ok(html.includes("Comparación de máquina"));
   assert.match(html, /<script type="module">/);
   assert.match(html, /"backendIntegration":"not-verified"/);

@@ -11,6 +11,7 @@ import { verifyCommercialExportDirectory, verifyCommercialExportSources } from "
 import type { CommercialEnvironment } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { printCommandHeader, printCommandSection, printCommandResult, printCommandDeliverable, printCommandProvider, printReportLine } from "../../reporting/terminal.js";
 import { printCommandError } from "../../reporting/errors.js";
+import { writeLocalPanel } from "../../../panel/application/write-local-panel.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 
@@ -57,6 +58,9 @@ export const parseCommercialExportOptions = (args: readonly string[]): Commercia
   return { out, environment, dryRun };
 };
 
+export const shouldRefreshLocalPanel = (options: CommercialExportOptions): boolean =>
+  options.environment === "develop" && !options.dryRun && options.out === null;
+
 export const runCommercialExport = async (args: readonly string[]): Promise<void> => {
   const options = parseCommercialExportOptions(args);
   if (options === "help") {
@@ -90,6 +94,14 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
     printCommandSection("ENTREGABLES");
     printCommandDeliverable("COMERCIAL", delivered.commercial);
     printCommandDeliverable("INFORME", delivered.report);
+    if (shouldRefreshLocalPanel(options)) {
+      try {
+        printCommandDeliverable("PANEL LOCAL", await writeLocalPanel(root));
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(`AVISO | Exportación comercial entregada; el panel local no pudo actualizarse: ${message}`);
+      }
+    }
     printCommandResult("Dos ZIP comprobados desde publicaciones vigentes; integración en BD NO VERIFICADA");
     return;
   }

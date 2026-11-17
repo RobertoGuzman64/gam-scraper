@@ -8,7 +8,7 @@ import type { CommercialDeliveryPlan, CommercialDeliveryProduct, CommercialDeliv
 import { assertCommercialLineage, readCommercialFiles } from "../evidence/commercial-evidence.js";
 import { digest, isRecord, recordFrom, regularText } from "../evidence/evidence-files.js";
 import type { PanelProviderEvidence, PanelProviderId, PanelSnapshot } from "../evidence/types.js";
-import { compareOriginalToPublished, comparePublishedToCommercial } from "./field-differences.js";
+import { compareOriginalToPublished, comparePublishedToCommercial, compareTechnicalFields } from "./field-differences.js";
 import type { PanelExplorerPayload, PanelExplorerProduct, PanelFieldDifference, PanelPresentationCase, PanelProductDecision, PanelProductView, PanelCommercialView } from "./types.js";
 
 const nullableString = (value: unknown): value is string | null => value === null || typeof value === "string";
@@ -142,6 +142,7 @@ const renderable = (
     original: before, published: after, commercial: exported,
     changes: before && after ? compareOriginalToPublished(before, after) : [],
     commercialChanges: after && exported ? comparePublishedToCommercial(after, exported) : [],
+    commercialTechnicalChanges: after && exported ? compareTechnicalFields(after.specs, exported.specs, "commercial") : [],
     decision,
     evidence: {
       original: before && evidence.original.status === "verified" ? evidence.original.artifact : null,
