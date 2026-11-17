@@ -2,6 +2,8 @@ import { containsEditorialBrandModel } from "./editorial-identity-match.js";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { verifiedEditorialIdentity } from "./editorial-source-contract.js";
 import { resolveEditorialSource } from "./editorial-source.js";
+import { editorialFamilyOf } from "./editorial-families.js";
+import { hasUnconditionalEditorialClaim } from "./editorial-claim-evidence.js";
 
 const fold = (value: string): string => value.normalize("NFD")
   .replace(/[\u0300-\u036f]/gu, "").toLocaleLowerCase("es").replace(/[^a-z0-9]/gu, "");
@@ -35,4 +37,26 @@ export const compressVerifiedSourceShort = (
   if ([...remainder.matchAll(protectedWords)].some((match) => !retainedWords.includes(fold(match[0])))) return null;
 
   return first;
+};
+
+export const expandVerifiedSourceShort = (source: ProductRecord, short: string | null): string | null => {
+  if (!short?.trim() || countWords(short) >= 10 || !verifiedEditorialIdentity(source) ||
+    !resolveEditorialSource(source) || !source.title || !source.brand || !source.model ||
+    !containsEditorialBrandModel(short, source.brand, source.model)) return null;
+  const description = source.longDescription ?? "";
+  const family = editorialFamilyOf(source.title);
+  if (family === "barredora" && /\bbater[ií]a\b/iu.test(source.title) &&
+    hasUnconditionalEditorialClaim(description, /\b(?:conductor|operari[oa])\s+sentad[oa]\b/giu)) {
+    return `${source.title}, con puesto de conducción sentado declarado en la descripción de origen.`;
+  }
+  if (family === "fregadora" &&
+    /\b(?:conductor\s+sentado|operari[oa]\s+a\s+bordo)\b/iu.test(`${short} ${description}`)) {
+    const levels = [...description.matchAll(/\b(?:funcionar?\s+a|funcionamiento\s+a)\s*(\d{2,3})\s*dB\s*A\b/giu)];
+    const level = levels.length === 1 ? Number(levels[0]?.[1]) : null;
+    if (level !== null && level >= 40 && level <= 100 &&
+      hasUnconditionalEditorialClaim(description, /\b(?:funcionar?\s+a|funcionamiento\s+a)\s*\d{2,3}\s*dB\s*A\b/giu)) {
+      return `${source.title}, de conductor sentado y nivel sonoro de ${level} dBA declarado en el anuncio.`;
+    }
+  }
+  return null;
 };

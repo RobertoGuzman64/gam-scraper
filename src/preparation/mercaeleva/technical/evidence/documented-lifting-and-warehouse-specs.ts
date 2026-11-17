@@ -57,7 +57,8 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     "specifications": {
       "Alcance horizontal máximo": "23,4 m",
       "Capacidad máxima de plataforma": "227 kg",
-      "Anchura de máquina": "2,43 m"
+      "Anchura de máquina": "2,43 m",
+      "Altura máxima de plataforma": "25,9 m"
     }
   },
   "M570-8735": {

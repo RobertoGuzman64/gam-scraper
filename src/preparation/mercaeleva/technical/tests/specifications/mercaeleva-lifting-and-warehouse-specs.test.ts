@@ -25,7 +25,8 @@ const expectedByReference: Readonly<Record<string, SpecsMap>> = {
   "M547-1056": {
     "Alcance horizontal máximo": "23,4 m",
     "Capacidad máxima de plataforma": "227 kg",
-    "Anchura de máquina": "2,43 m"
+    "Anchura de máquina": "2,43 m",
+    "Altura máxima de plataforma": "25,9 m"
   },
   "M570-8735": {
     "Capacidad nominal de carga": "1800 kg",
@@ -69,7 +70,7 @@ test("MERCAELEVA: las prestaciones se limitan a los originales acreditados", () 
     additions += Object.keys(expected).length;
   }
   assert.equal(improved, 7);
-  assert.equal(additions, 21);
+  assert.equal(additions, 22);
 });
 
 test("MERCAELEVA: las variantes y las sobrescrituras están bloqueadas", () => {

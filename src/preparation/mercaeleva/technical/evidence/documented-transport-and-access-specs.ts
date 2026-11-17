@@ -42,10 +42,12 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     "brand": "Genie",
     "model": "GR-15",
     "categoryKey": "venta",
-    "source": "https://www.genielift.com/warehouse/en/aerial-work-platforms-vertical-mast-lifts/vertical-mast-lifts/gr-15",
+    "source": "https://manuals.genielift.com/operators/german/97752GR.pdf",
     "specifications": {
       "Capacidad nominal de la plataforma estándar": "227 kg",
-      "Anchura de la máquina": "0,75 m"
+      "Anchura de la máquina": "0,75 m",
+      "Altura de plataforma": "4,62 m",
+      "Longitud replegada": "1,35 m"
     }
   },
   "M582-1882": {

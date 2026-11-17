@@ -57,7 +57,7 @@ test("GAM: ambos Hyster se bloquean en el lote sin asignar el mismo número de s
     assert.equal(result.status, "review");
     assert.ok(result.issues.some((issue) => issue.startsWith("Número de serie P177B10585U compartido")));
     assert.ok(result.issues.some((issue) => issue.startsWith("Stock GAM diferenciado:")));
-    assert.equal(result.product.reference, records[index]?.reference);
+    assert.equal(result.product.reference, records[index]?.reference ?? undefined);
     assert.equal(JSON.stringify(records[index]), snapshots[index]);
   }
 });
@@ -72,4 +72,50 @@ test("Gomariz: un peso con unidad de longitud no se convierte en kg sin acredita
   assert.ok(result.issues.includes("Atributo no normalizable: Peso operativo"));
   assert.notEqual(result.product.spec.Peso, "3956 kg");
   assert.equal(JSON.stringify(record), before);
+});
+
+
+test("el conjunto pendiente mantiene siete retenciones por lote y conserva sus originales", () => {
+  const cases = [
+    { dataset: "gam-original", reference: "6934", issue: "Identidad GAM contradictoria entre título y modelo técnico" },
+    { dataset: "gam-original", reference: "6682", issue: "Número de serie P177B10585U compartido" },
+    { dataset: "gam-original", reference: "6703", issue: "Número de serie P177B10585U compartido" },
+    { dataset: "gam-original", reference: "4736", issue: "Modelo contradictorio: título y especificación identifican variantes diferentes" },
+    { dataset: "gam-original", reference: "4739", issue: "Descripción comercial contradictoria: capacidad de carga" },
+    { dataset: "gam-editorial-cases", reference: "2328", issue: "Identidad GAM contradictoria entre título, resumen y ficha técnica" },
+    { dataset: "gomariz-documented-weight", reference: "CA1459", issue: "Atributo no normalizable: Peso" }
+  ] as const;
+  const records = cases.map(({ dataset, reference }) => accreditedSourceRecord(dataset, reference));
+  const originals = records.map((record) => JSON.stringify(record));
+  const prepared = prepareImportBatch(records);
+  assert.deepEqual(prepared.totals, { ready: 0, review: 7 });
+  assert.equal(prepared.products.length, cases.length);
+  for (const [index, { issue, reference }] of cases.entries()) {
+    const source = records[index];
+    const product = prepared.products[index];
+    assert.ok(source && product);
+    assert.equal(product.status, "review", reference);
+    assert.ok(product.issues.some((message) => message.includes(issue)), reference);
+    assert.equal(product.product.providerId, source.providerId, reference);
+    assert.equal(product.product.reference, source.reference, reference);
+    assert.equal(product.product.sourceUrl, source.url, reference);
+    assert.equal(JSON.stringify(source), originals[index], reference);
+  }
+});
+
+test("las variantes cercanas acreditadas no heredan las siete retenciones", () => {
+  const records = [
+    gam("4735"),
+    gam("4738"),
+    accreditedSourceRecord("gomariz-documented-weight", "RE454"),
+    accreditedSourceRecord("gomariz-documented-weight", "TE1152")
+  ];
+  const originals = records.map((record) => JSON.stringify(record));
+  const prepared = prepareImportBatch(records);
+  assert.deepEqual(prepared.totals, { ready: 4, review: 0 });
+  for (const [index, result] of prepared.products.entries()) {
+    assert.equal(result.status, "ready", records[index]?.reference ?? undefined);
+    assert.deepEqual(result.issues, [], records[index]?.reference ?? undefined);
+    assert.equal(JSON.stringify(records[index]), originals[index]);
+  }
 });

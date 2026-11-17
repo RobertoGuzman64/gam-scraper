@@ -1,3 +1,4 @@
+import { recoverGamDocumentedSourcePerformanceSpecs } from "../../../gam/technical/models/documented-source-performance-specs.js";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import { recoverMercaelevaDocumentedSourceSpecs } from "../../../mercaeleva/technical/evidence/documented-source-recovery.js";
 import { recoverGamDocumentedHandlingAndStorageSpecs } from "../../../gam/technical/models/documented-handling-recovery.js";
@@ -27,5 +28,6 @@ export const recoverDocumentedTechnicalSpecs = (sourceUnitRecord: ProductRecord,
   const documentedPendingSpecs = recoverMercaelevaDocumentedToyotaForkliftSpecs(sourceUnitRecord, documentedPendingGam);
   const documented183Gam = recoverGamDocumentedMultiUnitLotSpecs(sourceUnitRecord, documentedPendingSpecs);
   const documented183Specs = recoverMercaelevaDocumentedJlgSl203204Specs(sourceUnitRecord, documented183Gam);
-  return { sourceFuelSpecs, documentedSpecs: documented183Specs };
+  const documentedSourcePerformanceSpecs = recoverGamDocumentedSourcePerformanceSpecs(sourceUnitRecord, documented183Specs);
+  return { sourceFuelSpecs, documentedSpecs: documentedSourcePerformanceSpecs };
 };

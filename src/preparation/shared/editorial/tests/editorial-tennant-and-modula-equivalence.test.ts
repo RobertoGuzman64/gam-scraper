@@ -188,3 +188,29 @@ test("el conjunto histórico Modula y un título antiguo excepcional respetan la
   assert.equal(prepareSourceProduct(incoming).status, "ready");
   assert.doesNotMatch(prepareSourceProduct(incoming).product.description_general ?? "", /bandeja de 750 kg/u);
 });
+
+test("la descripción corta de barredora con cabina acreditada supera la mención comercial telegráfica", () => {
+  const source = accreditedSourceRecord("gam-original", "4031");
+  const prepared = prepareSourceProduct(source);
+  assert.equal(prepared.status, "ready");
+  assert.match(prepared.product.description ?? "", /Barredora TENNANT BCS S20 Batería.*puesto de conducción sentado/u);
+  assert.equal(prepared.product.description_general, source.longDescription);
+  const withoutConfirmation = { ...source, longDescription: "Barredora a batería sin información sobre el puesto del operador." };
+  assert.doesNotMatch(prepareSourceProduct(withoutConfirmation).product.description ?? "", /puesto de conducción sentado/u);
+  const withConditional = { ...source, longDescription: "La barredora puede incluir conductor sentado según versión." };
+  assert.doesNotMatch(prepareSourceProduct(withConditional).product.description ?? "", /puesto de conducción sentado/u);
+});
+
+test("las once máquinas Modula conservan las dimensiones propias y el contexto original", () => {
+  const originals = accreditedSourceSamples("gam-original")
+    .filter((source) => source.brand?.toUpperCase() === "MODULA" &&
+      resolveEditorialFacts(source)?.family === "almacen-vertical");
+  assert.equal(originals.length, 11);
+  for (const source of originals) {
+    const output = prepareSourceProduct(source);
+    assert.equal(output.status, "ready", source.reference ?? "");
+    assert.match(output.product.description_general ?? "", /diseño modular destinado a la gestión del inventario/u);
+    assert.match(output.product.description_general ?? "", /carga neta por bandeja/u);
+    assert.match(output.product.description_general ?? "", /altura del equipo/u);
+  }
+});

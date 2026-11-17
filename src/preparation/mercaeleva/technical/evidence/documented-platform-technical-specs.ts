@@ -156,212 +156,212 @@ const profiles = [
   {
     brand: "JLG", model: "1930 ES", workHeight: "8 m", motor: "Eléctrico",
     title: "PLATAFORMA TIJERA ELECTRICA 8 MT",
-    source: "https://jlg.ru/upload/iblock/455/4553b4c82a42f5acb598bdded07318e7.pdf",
-    specifications: { "Altura de plataforma": "5,72 m", "Anchura total": "0,76 m" }
+    source: "https://www.coalci.es/wp-content/uploads/2019/07/1930ES_ES-pdf.pdf",
+    specifications: { "Altura de plataforma": "5,72 m", "Anchura total": "0,76 m", "Capacidad máxima de plataforma": "230 kg", "Longitud total": "1,87 m" }
   },
   {
     brand: "JLG", model: "1930ES", workHeight: "8 m", motor: "Eléctrico",
     title: "PLATAFORMA DE TIJERA ELECTRICA",
-    source: "https://csapps.jlg.com/OnlineManuals/Manuals/JLG/JLG%20Scissor%20Lifts/ES%20Scissors/1930ES_2030ES_2032ES_2630ES_2632ES_2646ES_3246ES/Operation%20Manuals/Prior%20to%20SN%200200239382%2C%20B200020297%2C%20and%201200025021/Operation_3121165_05-01-13_Global_English.pdf",
-    specifications: { "Altura de plataforma": "5,7 m", "Anchura total": "0,76 m" }
+    source: "https://www.coalci.es/wp-content/uploads/2019/07/1930ES_ES-pdf.pdf",
+    specifications: { "Altura de plataforma": "5,7 m", "Anchura total": "0,76 m", "Capacidad máxima de plataforma": "230 kg", "Extensión de plataforma": "0,9 m" }
   },
   {
     brand: "Haulotte", model: "HA12IP", workHeight: "12 m", motor: "Eléctrico",
     title: "PLATAFORMA ARTICULADA ELECTRICA 12 MT",
     source: "https://used-equipement.haulotte.com/images/atts/06e712_ha12ip-uk-bd.pdf",
-    specifications: { "Altura de plataforma": "10 m", "Alcance horizontal": "6,5 m" }
+    specifications: { "Altura de plataforma": "10 m", "Alcance horizontal": "6,5 m", "Capacidad máxima de plataforma": "230 kg", "Anchura total": "1,35 m" }
   },
   {
     brand: "Manitou", model: "170AETJL", workHeight: "17 m", motor: "Eléctrico",
     title: "PLATAFORMA ARTICULADA ELECTRICA 17 MT",
-    source: "https://www.rentalift.be/fileadmin/user_upload/Technische-Fiche-Manitou-170-AETJ-L.pdf",
-    specifications: { "Altura de plataforma": "14,9 m", "Alcance horizontal": "9,4 m" }
+    source: "https://www.colle.eu/media/6015/170aetj-l_eng.pdf",
+    specifications: { "Altura de plataforma": "14,9 m", "Alcance horizontal": "9,4 m", "Capacidad máxima de plataforma": "200 kg", "Anchura total": "1,75 m" }
   },
   {
     brand: "JLG", model: "450 AJ", workHeight: "16 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 16 MT",
-    source: "https://www.rentalift.be/fileadmin/user_upload/Technische-Fiche-JLG-450AJ.pdf",
-    specifications: { "Altura de plataforma": "13,72 m", "Alcance horizontal": "7,47 m" }
+    source: "https://www.geeritsverhuur.be/sites/default/files/2025-09/1_FICHE_JLG_450AJ.pdf",
+    specifications: { "Altura de plataforma": "13,72 m", "Alcance horizontal": "7,47 m", "Capacidad máxima de plataforma": "230 kg" }
   },
   {
     brand: "Haulotte", model: "COMPACT-10N", workHeight: "10 m", motor: "Eléctrico",
     title: "PLATAFORMA TIJERA ELECTRICA 10 MT",
-    source: "https://gorentalstore.com/alquiler/plataforma-electrica-de-tijera-de-10-m/ficha-de-datos-tecnicos",
-    specifications: { "Altura de plataforma": "8 m", "Anchura total": "0,81 m" }
+    source: "https://documentacionqr.com/sat/objects/919543/HAULOTTE_COMPACT10N_FICHA_CARACTERISTICAS_TECNICAS_ES.pdf",
+    specifications: { "Altura de plataforma": "8 m", "Anchura total": "0,81 m", "Capacidad máxima de plataforma": "230 kg", "Distancia entre ejes": "1,86 m" }
   },
   {
     brand: "Haulotte", model: "HA15IP", workHeight: "15 m", motor: "Eléctrico",
     title: "PLATAFORMA ARTICULADA ELECTRICA 15 MT",
-    source: "https://www.megaltura.com/wp-content/uploads/2022/08/HAI15IP-Haulotte.pdf",
-    specifications: { "Alcance horizontal": "8,45 m", "Capacidad máxima de plataforma": "230 kg" }
+    source: "https://www.coalci.es/wp-content/uploads/2021/07/haulotte-ha15ip.pdf",
+    specifications: { "Alcance horizontal": "8,45 m", "Capacidad máxima de plataforma": "230 kg", "Altura de plataforma": "12,87 m", "Anchura total": "1,52 m" }
   },
   {
     brand: "Haulotte", model: "HA16RTJ", workHeight: "16 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 16 MT",
     source: "https://www.haulotte.com.es/es_ES/productos/ha16-rtj",
-    specifications: { "Altura de plataforma": "14 m", "Alcance horizontal": "8,3 m" }
+    specifications: { "Altura de plataforma": "14 m", "Alcance horizontal": "8,3 m", "Capacidad máxima de plataforma": "230 kg", "Anchura total": "2,3 m" }
   },
   {
     brand: "Haulotte", model: "Optimum 8", workHeight: "8 m", motor: "Eléctrico",
     title: "PLATAFORMA TIJERA ELECTRICA 8 MT",
-    source: "https://www.haulotte.com.es/es_ES/productos/optimum-8",
+    source: "https://www.plataformasnoain.com/wp-content/uploads/2022/03/Haulotte-OPTIMUM-8-AC.pdf",
     specifications: { "Capacidad máxima de plataforma": "230 kg", "Distancia entre ejes": "1,38 m" }
   },
   {
     brand: "Haulotte", model: "Compact 12", workHeight: "12 m", motor: "Eléctrico",
     title: "PLATAFORMA TIJERA ELECTRICA 12 MT",
     source: "https://www.eagleplatforms.com/wp-content/uploads/Haulotte-Compact-12-Electric-SPEC-SHEET.pdf",
-    specifications: { "Anchura total": "1,2 m", "Distancia entre ejes": "1,86 m" }
+    specifications: { "Anchura total": "1,2 m", "Distancia entre ejes": "1,86 m", "Capacidad máxima de plataforma": "300 kg", "Extensión de plataforma": "0,92 m" }
   },
   {
     brand: "Haulotte", model: "COMPACT-14", workHeight: "14 m", motor: "Eléctrico",
     title: "PLATAFORMA TIJERA ELECTRICA 14 MT",
-    source: "https://used-equipement.haulotte.com/haulotte/se/construction/scissor-lifts/haulotte-compact14/43b3bfb2-a028-4881-821d-fd1288a4be18.html",
-    specifications: { "Altura de plataforma": "11,85 m", "Anchura total": "1,2 m" }
+    source: "https://documentacionqr.com/sat/objects/955887/HAULOTTE_COMPACT14_FICHA_TECNICA.pdf",
+    specifications: { "Altura de plataforma": "11,85 m", "Anchura total": "1,2 m", "Capacidad máxima de plataforma": "350 kg", "Distancia entre ejes": "1,86 m" }
   },
   {
     brand: "Haulotte", model: "STAR-10", workHeight: "10 m", motor: "Eléctrico",
     title: "PLATAFORMA VERTICAL AUTOPROPULSADA 10 MT",
     source: "https://marconnet.nc/wp-content/uploads/2019/11/HAULOTTE-STAR-10-fiche.pdf",
-    specifications: { "Altura de plataforma": "8 m", "Alcance horizontal": "3 m" }
+    specifications: { "Altura de plataforma": "8 m", "Alcance horizontal": "3 m", "Capacidad máxima de plataforma": "200 kg", "Rotación de torreta": "345°" }
   },
   {
     brand: "LGMG", model: "S0808EII", workHeight: "10 m", motor: "Eléctrico",
     title: "PLATAFORMA TIJERA ELECTRICA 10 MT",
     source: "https://www.lgmglifts.com/es/product/pro-detail-2066.htm",
-    specifications: { "Anchura total": "0,83 m", "Capacidad máxima de plataforma": "230 kg" }
+    specifications: { "Anchura total": "0,83 m", "Capacidad máxima de plataforma": "230 kg", "Altura de plataforma": "7,8 m", "Extensión de plataforma": "0,9 m" }
   },
   {
     brand: "LGMG", model: "AS1212E", workHeight: "14 m", motor: "Eléctrico",
     title: "PLATAFORMA TIJERA ELECTRICA 14 MT",
     source: "https://en.lgmg.com.cn/product/625.htm",
-    specifications: { "Altura de plataforma": "12 m", "Anchura total": "1,18 m" }
+    specifications: { "Altura de plataforma": "12 m", "Anchura total": "1,18 m", "Capacidad máxima de plataforma": "320 kg", "Extensión de plataforma": "0,9 m" }
   },
   {
     brand: "LGMG", model: "AR16J", workHeight: "18 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 18 MT",
     source: "https://www.lgmglifts.com/product/pro-detail-617.htm",
-    specifications: { "Altura de plataforma": "15,7 m", "Alcance horizontal": "9,39 m" }
+    specifications: { "Altura de plataforma": "15,7 m", "Alcance horizontal": "9,39 m", "Capacidad máxima de plataforma": "230 kg", "Anchura total": "2,31 m" }
   },
   {
     brand: "LGMG", model: "A14JE", workHeight: "16 m", motor: "Eléctrico",
     title: "PLATAFORMA ARTICULADA ELECTRICA 15 MT",
     source: "https://www.lgmglifts.com/product/pro-detail-616.htm",
-    specifications: { "Altura de plataforma": "13,8 m", "Alcance horizontal": "7,81 m" }
+    specifications: { "Altura de plataforma": "13,8 m", "Alcance horizontal": "7,81 m", "Capacidad máxima de plataforma": "230 kg", "Anchura total": "1,8 m" }
   },
   {
     brand: "LGMG", model: "A14JE", workHeight: "16 m", motor: "Eléctrico",
     title: "PLATAFORMA ARTICULADA ELECTRICA 16 MT",
     source: "https://www.lgmglifts.com/product/pro-detail-616.htm",
-    specifications: { "Altura de plataforma": "13,8 m", "Alcance horizontal": "7,81 m" }
+    specifications: { "Altura de plataforma": "13,8 m", "Alcance horizontal": "7,81 m", "Capacidad máxima de plataforma": "230 kg", "Anchura total": "1,8 m" }
   },
   {
     brand: "Genie", model: "Z-80/60", workHeight: "26 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 26 MT",
-    source: "https://www.genielift.com/docs/default-source/product-specifications/articulated-boom-lift/es/z-80_60-especificaciones-t%C3%A9cnicas.pdf?sfvrsn=9c0eb8ce_4",
-    specifications: { "Alcance horizontal": "18,29 m", "Capacidad máxima de plataforma": "227 kg" }
+    source: "https://www.conger.com/wp-content/uploads/Boom_Lifts/Articulating/Engine_Powered/Z_80-60/J_Z-8060_SpecSheet_2015.pdf",
+    specifications: { "Altura de plataforma": "23,77 m", "Alcance horizontal": "18,29 m", "Capacidad máxima de plataforma": "227 kg", "Anchura total": "2,49 m" }
   },
   {
     brand: "JLG", model: "E300AJP", workHeight: "11 m", motor: "Eléctrico",
     title: "PLATAFORMA ARTICULADA ELECTRICA 11 MT",
     source: "https://csapps.jlg.com/OnlineManuals/Manuals/JLG/JLG%20Boom%20Lifts/E300A_E300AJ_E300AJP/Operation%20Manuals/SN%200300000100%20to%200300138357/Operation_3121214_12-10-09_Global_English.pdf",
-    specifications: { "Altura de plataforma": "9,14 m", "Anchura total": "1,22 m" }
+    specifications: { "Altura de plataforma": "9,14 m", "Anchura total": "1,22 m", "Capacidad máxima de plataforma": "227 kg", "Alcance horizontal": "6,1 m" }
   },
   {
     brand: "LGMG", model: "SR1218D", workHeight: "14 m", motor: "Diesel",
     title: "PLATAFORMA TIJERA DIESEL 14 MT",
     source: "https://www.lgmglifts.com/product/pro-detail-1028.htm",
-    specifications: { "Altura de plataforma": "11,9 m", "Anchura total": "1,79 m" }
+    specifications: { "Altura de plataforma": "11,9 m", "Anchura total": "1,79 m", "Capacidad máxima de plataforma": "365 kg", "Extensión de plataforma": "1,52 m" }
   },
   {
     brand: "Manitou", model: "120AETJC", workHeight: "12 m", motor: "Eléctrico",
     title: "PLATAFORMA ARTICULADA ELECTRICA 12 MT",
     source: "https://www.colle.eu/media/6008/120aetj-c-eng.pdf",
-    specifications: { "Altura de plataforma": "9,95 m", "Capacidad máxima de plataforma": "200 kg" }
+    specifications: { "Altura de plataforma": "9,95 m", "Capacidad máxima de plataforma": "200 kg", "Anchura total": "1,2 m", "Alcance horizontal": "7 m" }
   },
   {
     brand: "Manitou", model: "180ATJ", workHeight: "18 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 18 MT",
     source: "https://www.colle.eu/media/6020/180atj_eng.pdf",
-    specifications: { "Alcance horizontal": "10,62 m", "Capacidad máxima de plataforma": "230 kg" }
+    specifications: { "Alcance horizontal": "10,62 m", "Capacidad máxima de plataforma": "230 kg", "Anchura total": "2,3 m", "Longitud total": "7,77 m" }
   },
   {
     brand: "Skyjack", model: "SJ6832RT", workHeight: "12 m", motor: "Diesel",
     title: "PLATAFORMA TIJERA DIESEL 12 MT",
     source: "https://www.skyjack.com/sites/default/files/literature-library/KC_SJ6832_RT_TEAR_SHEET_WEB.pdf",
-    specifications: { "Altura de plataforma": "9,75 m", "Capacidad máxima de plataforma": "454 kg" }
+    specifications: { "Altura de plataforma": "9,75 m", "Capacidad máxima de plataforma": "454 kg", "Anchura total": "1,76 m", "Extensión de plataforma": "1,52 m" }
   },
   {
     brand: "Genie", model: "GS2632", workHeight: "10 m", motor: "Eléctrico",
     title: "PLATAFORMA TIJERA ELECTRICA 10 MT",
     source: "https://www.genielift.com/docs/default-source/product-specifications/slab-scissor-lifts-%28ansi%29-or-electric-and-bi-energy-lifts-%28ce%29/ja/spec-sheet-hydraulic-gs--2032_-gs-2632-_-gs-3232-%282020%E5%B9%B4%E4%BB%A5%E5%89%8D%E3%81%AE%E3%83%A2%E3%83%87%E3%83%AB%29.pdf?sfvrsn=d435f9cd_5",
-    specifications: { "Altura de plataforma": "7,92 m", "Anchura total": "0,81 m" }
+    specifications: { "Altura de plataforma": "7,92 m", "Anchura total": "0,81 m", "Capacidad máxima de plataforma": "227 kg", "Extensión de plataforma": "0,91 m" }
   },
   {
     brand: "Genie", model: "GS4390RT", workHeight: "15 m", motor: "Diesel",
     title: "PLATAFORMA TIJERA DIESEL 15 MT",
     source: "https://www.genielift.com/docs/default-source/product-specifications/rough-terrain-scissor-lifts/en/gs-3390rt_4390rt_5390rt_specsheet_2019.pdf?sfvrsn=793c8daf_6",
-    specifications: { "Altura de plataforma": "13,11 m", "Capacidad máxima de plataforma": "680 kg" }
+    specifications: { "Altura de plataforma": "13,11 m", "Capacidad máxima de plataforma": "680 kg", "Extensión de plataforma": "1,52 m", "Anchura de plataforma": "1,83 m" }
   },
   {
     brand: "Haulotte", model: "COMPACT-10", workHeight: "10 m", motor: "Eléctrico",
     title: "PLATAFORMA TIJERA ELECTRICA 10 MT",
-    source: "https://www.hirosgepber.hu/letoltesek/haulotte-compact-10-12.pdf",
-    specifications: { "Capacidad máxima de plataforma": "450 kg", "Distancia entre ejes": "1,86 m" }
+    source: "https://www.rothlehner.de/produkt/c10-29108/?lang=en",
+    specifications: { "Capacidad máxima de plataforma": "450 kg", "Distancia entre ejes": "1,86 m", "Anchura total": "1,2 m", "Longitud total": "2,45 m" }
   },
   {
     brand: "Genie", model: "GS5390RT", workHeight: "18 m", motor: "Diesel",
     title: "PLATAFORMA TIJERA DIESEL 18 MT",
-    source: "https://www.genielift.com/en/aerial-lifts/rough-terrain-scissor-lifts/gs5390rt",
-    specifications: { "Altura de plataforma": "16,15 m", "Capacidad máxima de plataforma": "680 kg" }
+    source: "https://www.genielift.com/docs/default-source/product-specifications/rough-terrain-scissor-lifts/en/gs-3390rt_4390rt_5390rt_specsheet_2019.pdf?sfvrsn=793c8daf_6",
+    specifications: { "Altura de plataforma": "16,15 m", "Capacidad máxima de plataforma": "680 kg", "Extensión de plataforma": "1,52 m", "Anchura de plataforma": "1,83 m" }
   },
   {
     brand: "Haulotte", model: "HA260PX", workHeight: "26 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 26 MT",
-    source: "https://arnouldmanutention.be/fiches-techniques/fiche-technique-nacelle-telescopique-haulotte-ha260px.pdf",
-    specifications: { "Altura de plataforma": "23,6 m", "Alcance horizontal": "16,2 m" }
+    source: "https://www.grupogalindoalquiler.es/wp-content/uploads/2017/06/haulotte-ha260px-es_0.pdf",
+    specifications: { "Altura de plataforma": "23,6 m", "Alcance horizontal": "16,2 m", "Capacidad máxima de plataforma": "230 kg", "Anchura total": "2,38 m" }
   },
   {
     brand: "Manitou", model: "MAN GO 12", workHeight: "12 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 12 MT",
-    source: "https://www.manitou.com/en-GR/our-machines/mobile-elevating-work-platforms/mango-12",
-    specifications: { "Altura de plataforma": "9,9 m", "Capacidad máxima de plataforma": "230 kg" }
+    source: "https://www.manitou.com/en-GB/our-machines/mobile-elevating-work-platforms/mango-12",
+    specifications: { "Altura de plataforma": "9,9 m", "Capacidad máxima de plataforma": "230 kg", "Alcance horizontal": "6,69 m", "Anchura total": "1,8 m" }
   },
   {
     brand: "Genie", model: "Z-34/22N", workHeight: "12 m", motor: "El\u00e9ctrico",
     title: "PLATAFORMA ARTICULADA ELECTRICA 12 MT",
-    source: "https://manuals.genielift.com/operators/english/82597.pdf",
-    specifications: { "Altura de plataforma": "10,5 m", "Capacidad máxima de plataforma": "227 kg" }
+    source: "https://www.genielift.com/docs/default-source/product-specifications/articulated-boom-lift/en-in/ce/z-34-22n-product-specifications-%28ce%29.pdf",
+    specifications: { "Altura de plataforma": "10,5 m", "Capacidad máxima de plataforma": "227 kg", "Alcance horizontal": "6,78 m", "Anchura total": "1,47 m" }
   },
   {
     brand: "Haulotte", model: "COMPACT-12DX", workHeight: "12 m", motor: "Diesel",
     title: "PLATAFORMA TIJERA DIESEL 12 MT",
     source: "https://www.haulotte.co.uk/en_GB/product/compact-12-dx",
-    specifications: { "Altura de plataforma": "10,06 m", "Capacidad máxima de plataforma": "450 kg" }
+    specifications: { "Altura de plataforma": "10,06 m", "Capacidad máxima de plataforma": "450 kg", "Anchura total": "1,78 m", "Longitud de plataforma": "2,45 m" }
   },
   {
     brand: "Genie", model: "Z-62/40", workHeight: "20 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 20 MT",
-    source: "https://www.genielift.com/en/aerial-lifts/articulated-boom-lifts/z6240",
-    specifications: { "Alcance horizontal": "12,42 m", "Capacidad máxima de plataforma": "227 kg" }
+    source: "https://www.coalci.es/wp-content/uploads/2019/07/Ficha-tecnica-GENIE-Z62-40.pdf",
+    specifications: { "Altura de plataforma": "18,87 m", "Alcance horizontal": "12,42 m", "Capacidad máxima de plataforma": "227 kg", "Anchura total": "2,49 m" }
   },
   {
     brand: "Haulotte", model: "HA32PX", workHeight: "32 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 32 MT",
-    source: "https://documentacionqr.com/sat/objects/3588/HAULOTTE_HA32PX_MANUAL_OPERARIO_ES.PDF",
-    specifications: { "Altura de plataforma": "29,8 m", "Capacidad máxima de plataforma": "250 kg" }
+    source: "https://universalplataformas.com/wp-content/uploads/2022/10/AD32-HA32PX.pdf",
+    specifications: { "Altura de plataforma": "29,8 m", "Capacidad máxima de plataforma": "250 kg", "Alcance horizontal": "21,3 m", "Anchura de plataforma": "0,8 m" }
   },
   {
     brand: "JLG", model: "460SJ", workHeight: "16 m", motor: "Diesel",
     title: "PLATAFORMA TELESCOPICA DIESEL 16 MT",
     source: "https://csapps.jlg.com/OnlineManuals/Manuals/JLG/JLG%20Boom%20Lifts/400S_460SJ/Operation%20Manuals/SN%200300000100%20to%200300203770/3121216%20400S%20460SJ%20JLG%20Operation%204-28-22%20English.pdf",
-    specifications: { "Altura de plataforma": "14 m", "Anchura total": "1,98 m" }
+    specifications: { "Altura de plataforma": "14 m", "Anchura total": "1,98 m", "Alcance horizontal máximo": "12 m", "Capacidad de plataforma sin restricciones": "230 kg" }
   },
   {
     brand: "Hollandlift", model: "HL-220 E12", workHeight: "22 m", motor: "El\u00e9ctrico",
     title: "PLATAFORMA TIJERA ELECTRICA 22 MT",
     source: "https://www.lectura-specs.es/es/modelo/plataformas-elevadoras/plataformas-de-tijera-plataformas-de-tijeras-de-ruedas-holland-lift/hl-220-e12-11704863",
-    specifications: { "Anchura total": "1,2 m", "Capacidad máxima de plataforma": "500 kg" }
+    specifications: { "Anchura total": "1,2 m", "Capacidad máxima de plataforma": "500 kg", "Longitud de plataforma": "3,38 m", "Extensión de plataforma": "1,5 m" }
   },
   {
     brand: "Oil & Steel", model: "SCORPION 1490", workHeight: "15 m", motor: "Diesel",
@@ -373,121 +373,121 @@ const profiles = [
     brand: "JLG", model: "1250AJP", workHeight: "40 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 40 MT",
     source: "https://jlg.ru/upload/iblock/a55/a55ac022eb564236eb1714d950c513c3.pdf",
-    specifications: { "Altura de plataforma": "38,3 m", "Alcance horizontal": "19,25 m" }
+    specifications: { "Altura de plataforma": "38,3 m", "Alcance horizontal": "19,25 m", "Anchura con ejes recogidos": "2,49 m", "Longitud total": "11,46 m" }
   },
   {
     brand: "JLG", model: "800AJ", workHeight: "26 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 26 MT",
     source: "https://sitecore.jlg.com/dfsmedia/e4042b10c9ce4595b4cc059f1299f079/142288-source",
-    specifications: { "Altura de plataforma": "24,38 m", "Alcance horizontal": "15,8 m" }
+    specifications: { "Altura de plataforma": "24,38 m", "Alcance horizontal": "15,8 m", "Capacidad máxima de plataforma": "230 kg", "Anchura total": "2,44 m" }
   },
   {
     brand: "JLG", model: "660SJ", workHeight: "22 m", motor: "Diesel",
     title: "PLATAFORMA TELESCOPICA DIESEL 22 MT",
     source: "https://www.accesshire.net/specifications/telescopic_boom/diesel/JLG_Telescopic_Boom_Lift_660SJ_20150904.pdf",
-    specifications: { "Altura de plataforma": "20,31 m", "Alcance horizontal": "17,3 m" }
+    specifications: { "Altura de plataforma": "20,31 m", "Alcance horizontal": "17,3 m", "Capacidad máxima de plataforma": "230 kg", "Anchura total": "2,49 m" }
   },
   {
     brand: "JLG", model: "2630ES", workHeight: "10 m", motor: "Eléctrico",
     title: "PLATAFORMA TIJERA ELECTRICA 10 MT",
     source: "https://www.megaltura.com/wp-content/uploads/2022/08/JLG-2630-ES.pdf",
-    specifications: { "Altura de plataforma": "7,77 m", "Anchura total": "0,76 m" }
+    specifications: { "Altura de plataforma": "7,77 m", "Anchura total": "0,76 m", "Extensión de plataforma": "0,9 m", "Distancia entre ejes": "1,88 m" }
   },
   {
     brand: "JLG", model: "860SJ", workHeight: "28 m", motor: "Diesel",
     title: "PLATAFORMA TELESCOPICA DIESEL 28 MT",
     source: "https://www.jlg.com/en/equipment/boom-lifts/telescopic/engine-powered/800-series/860sj",
-    specifications: { "Altura de plataforma": "26,21 m", "Alcance horizontal": "22,86 m" }
+    specifications: { "Altura de plataforma": "26,21 m", "Alcance horizontal": "22,86 m", "Anchura total": "2,49 m", "Capacidad de plataforma sin restricciones": "230 kg" }
   },
   {
     brand: "JLG", model: "3394RT", workHeight: "12 m", motor: "Diesel",
     title: "PLATAFORMA TIJERA DIESEL 12 MT",
     source: "https://www.malarlift.se/wp-content/uploads/2013/04/JLGSpecifications-Guide-Diesel-Range-EN.pdf",
-    specifications: { "Altura de plataforma": "10,06 m", "Anchura total": "2,39 m" }
+    specifications: { "Altura de plataforma": "10,06 m", "Anchura total": "2,39 m", "Longitud de plataforma": "3,81 m", "Anchura de plataforma": "2,18 m" }
   },
   {
     brand: "JLG", model: "E600JP", workHeight: "20 m", motor: "Eléctrico",
     title: "PLATAFORMA ARTICULADA ELECTRICA 20 MT",
     source: "https://sitecore.jlg.com/dfsmedia/e4042b10c9ce4595b4cc059f1299f079/140840-source",
-    specifications: { "Alcance horizontal": "13,54 m", "Capacidad máxima de plataforma": "227 kg" }
+    specifications: { "Alcance horizontal": "13,54 m", "Capacidad máxima de plataforma": "227 kg", "Altura de plataforma": "18,39 m", "Anchura total": "2,42 m" }
   },
   {
     brand: "JLG", model: "1350 SJP", workHeight: "43 m", motor: "Diesel",
     title: "PLATAFORMA TELESCOPICA DIESEL 43 MT",
     source: "https://www.manualslib.com/manual/1277304/Jlg-1350sjp.html",
-    specifications: { "Altura de plataforma": "41,2 m", "Alcance horizontal máximo sin restricción de carga": "24,4 m" }
+    specifications: { "Altura de plataforma": "41,2 m", "Alcance horizontal máximo sin restricción de carga": "24,4 m", "Capacidad de plataforma sin restricciones": "227 kg", "Anchura con ejes recogidos": "2,49 m" }
   },
   {
     brand: "Genie", model: "Z-51/30J", workHeight: "18 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 18 MT",
     source: "https://manuals.genielift.com/operators/english/219413.pdf",
-    specifications: { "Altura de plataforma": "15,59 m", "Capacidad máxima de plataforma": "227 kg" }
+    specifications: { "Altura de plataforma": "15,59 m", "Capacidad máxima de plataforma": "227 kg", "Alcance horizontal": "9,25 m", "Anchura total": "2,29 m" }
   },
   {
     brand: "Genie", model: "Z-45/25J", workHeight: "16 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 16 MT",
     source: "https://manuals.genielift.com/operators/english/114340.pdf",
-    specifications: { "Capacidad máxima de plataforma": "227 kg", "Anchura de plataforma": "0,76 m" }
+    specifications: { "Capacidad máxima de plataforma": "227 kg", "Anchura de plataforma": "0,76 m", "Altura de plataforma": "13,8 m", "Alcance horizontal": "7,7 m" }
   },
   {
     brand: "Genie", model: "Z-30/20N", workHeight: "11 m", motor: "Eléctrico",
     title: "PLATAFORMA ARTICULADA ELECTRICA 11 MT",
     source: "https://manualzilla.com/doc/6014943/from-sn-951-to-6289--z-30-20n--pn-43651-",
-    specifications: { "Altura de plataforma": "9,1 m", "Capacidad máxima de plataforma": "227 kg" }
+    specifications: { "Altura de plataforma": "9,1 m", "Capacidad máxima de plataforma": "227 kg", "Alcance horizontal": "6,4 m", "Anchura total": "1,2 m" }
   },
   {
     brand: "Genie", model: "Z-30/20NRJ", workHeight: "11 m", motor: "Eléctrico",
     title: "PLATAFORMA ARTICULADA ELECTRICA 11 MT",
     source: "https://www.mateco.es/fileadmin/user_upload/Guia-de-alquiler-2019.pdf",
-    specifications: { "Altura de plataforma": "8,89 m", "Alcance horizontal": "6,25 m" }
+    specifications: { "Altura de plataforma": "8,89 m", "Alcance horizontal": "6,25 m", "Capacidad máxima de plataforma": "227 kg", "Anchura total": "1,19 m" }
   },
   {
     brand: "Genie", model: "GS2646", workHeight: "10 m", motor: "Eléctrico",
     title: "PLATAFORMA TIJERA ELECTRICA 10 MT",
     source: "https://manuals.genielift.com/operators/english/82785.pdf",
-    specifications: { "Altura de plataforma": "7,9 m", "Anchura total": "1,17 m" }
+    specifications: { "Altura de plataforma": "7,9 m", "Anchura total": "1,17 m", "Extensión de plataforma": "0,91 m", "Distancia entre ejes": "1,85 m" }
   },
   {
     brand: "Genie", model: "GS3246", workHeight: "12 m", motor: "Eléctrico",
     title: "PLATAFORMA TIJERA ELECTRICA 12 MT",
     source: "https://manuals.genielift.com/operators/english/82785.pdf",
-    specifications: { "Altura de plataforma": "9,75 m", "Anchura total": "1,17 m" }
+    specifications: { "Altura de plataforma": "9,75 m", "Anchura total": "1,17 m", "Extensión de plataforma": "0,91 m", "Distancia entre ejes": "1,85 m" }
   },
   {
     brand: "Genie", model: "S-125", workHeight: "40 m", motor: "Diesel",
     title: "PLATAFORMA TELESCOPICA DIESEL 40 MT",
     source: "https://www.hulleman.com/en/stock/genie-s-125-40-meter-227-kg-53046243.pdf",
-    specifications: { "Altura de plataforma": "38,1 m", "Alcance horizontal": "24,38 m" }
+    specifications: { "Altura de plataforma": "38,1 m", "Alcance horizontal": "24,38 m", "Capacidad máxima de plataforma": "227 kg", "Anchura con ejes recogidos": "2,5 m" }
   },
   {
     brand: "Genie", model: "GS4390", workHeight: "15 m", motor: "Diesel",
     title: "PLATAFORMA TIJERA DIESEL 15 MT",
     source: "https://www.genielift.com/docs/default-source/product-specifications/rough-terrain-scissor-lifts/en/gs-3390rt_4390rt_5390rt_specsheet_2019.pdf?sfvrsn=793c8daf_6",
-    specifications: { "Altura de plataforma": "13,11 m", "Capacidad máxima de plataforma": "680 kg" }
+    specifications: { "Altura de plataforma": "13,11 m", "Capacidad máxima de plataforma": "680 kg", "Extensión de plataforma": "1,52 m", "Anchura de plataforma": "1,83 m" }
   },
   {
     brand: "Genie", model: "S-65", workHeight: "22 m", motor: "Diesel",
     title: "PLATAFORMA TELESCOPICA DIESEL 22 MT",
     source: "https://manuals.genielift.com/Operators/english/114305.pdf",
-    specifications: { "Altura de plataforma": "19,8 m", "Capacidad máxima de plataforma": "227 kg" }
+    specifications: { "Altura de plataforma": "19,8 m", "Capacidad máxima de plataforma": "227 kg", "Alcance horizontal": "17,1 m", "Anchura total": "2,49 m" }
   },
   {
     brand: "Haulotte", model: "HA20PX", workHeight: "20 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 20 MT",
     source: "https://www.grarasulin.com/wp-content/uploads/2023/05/ha20px_uk_bda0a.pdf",
-    specifications: { "Altura de plataforma": "18,65 m", "Alcance horizontal": "13,5 m" }
+    specifications: { "Altura de plataforma": "18,65 m", "Alcance horizontal": "13,5 m", "Capacidad máxima de plataforma": "230 kg", "Anchura total": "2,38 m" }
   },
   {
     brand: "Manitou", model: "200ATJ", workHeight: "20 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 20 MT",
     source: "https://www.lectura-specs.com/en/model/aerial-work-platform/articulating-boom-lifts-wheeled-articulating-boom-lifts-manitou/200-atj-1161009",
-    specifications: { "Alcance horizontal": "12 m", "Capacidad máxima de plataforma": "230 kg" }
+    specifications: { "Alcance horizontal": "12 m", "Capacidad máxima de plataforma": "230 kg", "Altura de plataforma": "18,28 m", "Anchura total": "2,4 m" }
   },
   {
     brand: "Manitou", model: "160ATJ", workHeight: "16 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 16 MT",
     source: "https://malarlift.se/wp-content/uploads/2013/04/160_163134140-Manitou-Diesel-Aerial-Work-Platforms-EN.pdf",
-    specifications: { "Capacidad máxima de plataforma": "230 kg", "Anchura de plataforma": "0,8 m" }
+    specifications: { "Capacidad máxima de plataforma": "230 kg", "Anchura de plataforma": "0,8 m", "Anchura total": "2,30 m", "Longitud de plataforma": "1,80 m" }
   }
 ] as const;
 
@@ -517,5 +517,13 @@ export const recoverMercaelevaDocumentedPlatformTechnicalSpecs = (record: Produc
     record.specs["Tipo de motor"] !== profile.motor || record.specs["Altura de trabajo"] !== profile.workHeight ||
     Object.keys(profile.specifications).some((key) => key in specs)) return specs;
 
-  return { ...specs, ...profile.specifications };
+  const documentedSpecs = record.model === "450 AJ" && /\/JLG-450-AJ-SIII-/u.test(record.url)
+    ? Object.fromEntries(Object.entries(profile.specifications).filter(([key]) => key !== "Capacidad máxima de plataforma"))
+    : record.model === "Optimum 8"
+      ? { ...profile.specifications, ...(record.year === "2018" && record.longDescription?.includes("OPTIMUM 8 AC")
+        ? { "Altura de plataforma": "5,77 m", "Anchura total": "0,79 m" }
+        : { "Altura de plataforma": "5,8 m", "Anchura total": "0,76 m" }) }
+      : profile.specifications;
+  if (Object.keys(documentedSpecs).some((key) => key in specs)) return specs;
+  return { ...specs, ...documentedSpecs };
 };

@@ -80,6 +80,7 @@ test("JLG 450AJ: las dos unidades acreditadas recuperan plataforma y alcance del
     assert.equal(prepared.status, "ready", reference);
     assert.equal(prepared.product.spec?.["Altura de plataforma"], "13,72 m", reference);
     assert.equal(prepared.product.spec?.["Alcance horizontal"], "7,47 m", reference);
+    assert.equal(prepared.product.spec?.["Capacidad máxima de plataforma"], undefined, reference);
     assert.equal(JSON.stringify(source), original, reference);
   }
 });

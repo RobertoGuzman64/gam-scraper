@@ -7,32 +7,32 @@ import { readMercaelevaSource } from "../../../../../testing/builders/mercaeleva
 
 const source = await readMercaelevaSource();
 const expectedByReference: Readonly<Record<string, SpecsMap>> = {
-  "M736-5615": {"Capacidad de carga": "4500 kg", "Capacidad de tolva colmada": "2670 l", "Tracción": "4x4", "Transmisión": "Hidrostática"},
-  "M432-1479": {"Profundidad máxima de excavación": "1800 mm", "Anchura mínima del chasis": "750 mm", "Altura máxima de descarga": "2215 mm"},
-  "M913-0641": {"Profundidad máxima de excavación": "2820 mm", "Anchura total": "1500 mm", "Fuerza máxima de excavación en cuchara": "21 kN"},
+  "M736-5615": {"Capacidad de carga": "4500 kg", "Capacidad de tolva colmada": "2670 l", "Tracción": "4x4", "Transmisión": "Hidrostática", "Capacidad de tolva rasa": "2055 l", "Radio de giro exterior": "4830 mm"},
+  "M432-1479": {"Profundidad máxima de excavación": "1800 mm", "Anchura mínima del chasis": "750 mm", "Altura máxima de descarga": "2215 mm", "Longitud de transporte": "2980 mm", "Anchura máxima del chasis extendido": "990 mm"},
+  "M913-0641": {"Profundidad máxima de excavación": "2820 mm", "Anchura total": "1500 mm", "Fuerza máxima de excavación en cuchara": "21 kN", "Alcance máximo de excavación": "4740 mm", "Altura máxima de descarga": "3100 mm"},
   "M044-4093": {"Altura de plataforma": "13,72 m", "Alcance horizontal": "7,47 m"},
-  "M238-0251": {"Alcance horizontal": "7,6 m", "Capacidad máxima de plataforma": "200 kg"},
+  "M238-0251": {"Alcance horizontal": "7,6 m", "Capacidad máxima de plataforma": "200 kg", "Altura de plataforma": "13 m", "Anchura total": "1,5 m"},
   "M239-8327": {"Altura de plataforma": "16,5 m", "Capacidad máxima de plataforma": "500 kg"},
   "M315-5925": {"Altura de plataforma": "15,3 m", "Capacidad máxima de plataforma": "500 kg"},
   "M401-4335": {"Alcance horizontal": "6,1 m", "Capacidad máxima de plataforma": "200 kg"},
   "M484-4055": {"Altura de plataforma": "18,8 m", "Capacidad máxima de plataforma": "225 kg"},
-  "M569-9029": {"Altura de plataforma": "9,7 m", "Capacidad máxima de plataforma": "454 kg"},
-  "M649-6453": {"Altura de plataforma": "15,24 m", "Anchura total": "2,34 m"},
-  "M690-5522": {"Alcance horizontal": "6,78 m", "Capacidad máxima de plataforma": "227 kg"},
+  "M569-9029": {"Altura de plataforma": "9,7 m", "Capacidad máxima de plataforma": "454 kg", "Anchura total": "1,79 m", "Extensión de plataforma": "1,52 m"},
+  "M649-6453": {"Altura de plataforma": "15,24 m", "Anchura total": "2,34 m", "Longitud de plataforma": "4,27 m", "Anchura de plataforma": "1,88 m"},
+  "M690-5522": {"Alcance horizontal": "6,78 m", "Capacidad máxima de plataforma": "227 kg", "Longitud de plataforma": "0,76 m", "Anchura de plataforma": "1,42 m"},
   "M055-1205": {"Alcance horizontal": "12 m", "Anchura de plataforma": "0,7 m"},
   "M502-4867": {"Alcance horizontal": "9,2 m", "Capacidad máxima de plataforma": "225 kg"},
   "M329-6156": {"Longitud de plataforma": "1,4 m", "Anchura de plataforma": "0,7 m"},
-  "M011-3720": {"Propulsión": "Eléctrica", "Altura de elevación": "205 mm", "Altura de plataforma recogida": "150 mm"},
-  "M239-6301": {"Propulsión": "Eléctrica", "Altura de elevación": "205 mm", "Altura de plataforma recogida": "150 mm", "Capacidad nominal": "2000 kg"},
+  "M011-3720": {"Propulsión": "Eléctrica", "Altura de elevación": "205 mm", "Altura de plataforma recogida": "150 mm", "Capacidad nominal": "2000 kg", "Centro de carga nominal del modelo": "600 mm"},
+  "M239-6301": {"Propulsión": "Eléctrica", "Altura de elevación": "205 mm", "Altura de plataforma recogida": "150 mm", "Capacidad nominal": "2000 kg", "Centro de carga nominal del modelo": "600 mm"},
   "M005-5167": {"Tracción": "4x4"},
-  "M200-9533": {"Alcance horizontal": "9,2 m"},
-  "M640-1938": {"Velocidad máxima de desplazamiento": "20 km/h"},
-  "M855-6850": {"Velocidad máxima de desplazamiento": "20 km/h"},
+  "M200-9533": {"Alcance horizontal": "9,2 m", "Longitud de transporte": "6,32 m", "Anchura de transporte": "2,43 m"},
+  "M640-1938": {"Velocidad máxima de desplazamiento": "20 km/h", "Centro de carga nominal del modelo": "500 mm", "Pendiente superable del modelo": "38 %"},
+  "M855-6850": {"Velocidad máxima de desplazamiento": "20 km/h", "Centro de carga nominal del modelo": "500 mm", "Pendiente superable del modelo": "38 %"},
 };
 
 const selectedReferences = new Set(Object.keys(expectedByReference));
 
-test("Mercaeleva: 21 unidades distintas aportan 45 prestaciones documentadas sin modificar los originales", () => {
+test("Mercaeleva: 21 unidades distintas aportan 68 prestaciones documentadas sin modificar los originales", () => {
   const improved = new Set<string>();
   let added = 0;
   for (const record of source) {
@@ -56,7 +56,7 @@ test("Mercaeleva: 21 unidades distintas aportan 45 prestaciones documentadas sin
     added += Object.keys(expected).length;
   }
   assert.deepEqual(improved, selectedReferences);
-  assert.equal(added, 45);
+  assert.equal(added, 68);
 });
 
 test("Mercaeleva: las prestaciones no se propagan a referencias, variantes ni fuentes alteradas", () => {

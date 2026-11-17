@@ -2,6 +2,7 @@ import { accreditedSourceSamples } from "../../../../../testing/domain-cases/acc
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
+import { recoverMercaelevaDocumentedTransportAndAccessSpecs } from "../../evidence/documented-transport-and-access-specs.js";
 import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "../../evidence/verified-platform-source-specs.js";
 import { prepareSourceProduct } from "../../../../prepare-product.js";
 
@@ -92,4 +93,29 @@ test("Mercaeleva: rechaza kilometraje cuando cambia la fuente o la unidad", () =
       assert.equal(reconcileMercaelevaVerifiedPlatformSourceSpecs(changed), changed, `${reference}: identidad`);
     }
   }
+});
+
+test("Mercaeleva: las dimensiones GR-15 están ligadas a la fuente acreditada", () => {
+  const original = sourceRecord("M028-8481");
+  const snapshot = JSON.stringify(original);
+  const specs = original.specs ?? {};
+  const expected = { "Capacidad nominal de la plataforma estándar": "227 kg", "Anchura de la máquina": "0,75 m", "Altura de plataforma": "4,62 m", "Longitud replegada": "1,35 m" };
+  assert.deepEqual(recoverMercaelevaDocumentedTransportAndAccessSpecs(original, specs), { ...specs, ...expected });
+  const prepared = prepareSourceProduct(original);
+  assert.equal(prepared.status, "ready");
+  for (const [key, value] of Object.entries(expected)) assert.equal(prepared.product.spec[key], value);
+  assert.equal(JSON.stringify(original), snapshot);
+  const variants: readonly ProductRecord[] = [
+    { ...original, reference: "M000-0000" },
+    { ...original, url: `${original.url}?variante=1` },
+    { ...original, year: "2020" },
+    { ...original, longDescription: `${original.longDescription} modificación` },
+    { ...original, specs: { ...specs, "Artículo No.": "OTRO" } }
+  ];
+  for (const variant of variants) {
+    const incoming = variant.specs ?? {};
+    assert.strictEqual(recoverMercaelevaDocumentedTransportAndAccessSpecs(variant, incoming), incoming);
+  }
+  const occupied = { ...specs, "Altura de plataforma": "otra" };
+  assert.strictEqual(recoverMercaelevaDocumentedTransportAndAccessSpecs(original, occupied), occupied);
 });

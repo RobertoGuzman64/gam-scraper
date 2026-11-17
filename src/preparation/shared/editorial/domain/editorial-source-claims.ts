@@ -207,6 +207,35 @@ const sourcedForkliftMeasures = (
   return additions;
 };
 
+const documentedFamilyContext = (
+  source: ProductRecord, prepared: ProductRecord, general: string
+): string | null => {
+  const original = resolveEditorialFacts(source);
+  const reconciled = resolveEditorialFacts(prepared);
+  if (!original || !reconciled || original.family !== reconciled.family) {
+    return null;
+  }
+  const description = source.longDescription ?? "";
+  if (original.family === "compactadora" &&
+    hasUnconditionalEditorialClaim(description, /\bcompactaci[oó]n\s+(?:eficiente\s+|efectiva\s+|de\s+)?(?:de\s+)?contenedores\b/giu)) {
+    return "El anuncio identifica la compactación de contenedores como aplicación; las condiciones de trabajo deben contrastarse con el equipo concreto.";
+  }
+  if (original.family === "almacen-vertical" &&
+    !/\bdise[nñ]o\s+modular\b/iu.test(general) &&
+    hasUnconditionalEditorialClaim(description, /\bdise[nñ]o\s+modular\b/giu) &&
+    hasUnconditionalEditorialClaim(description, /\bgesti[oó]n\s+de\s+inventario\b/giu)) {
+    return "El anuncio describe un diseño modular destinado a la gestión del inventario; la configuración específica de bandejas debe comprobarse en cada instalación.";
+  }
+  if (original.family === "manipulador-telescopico" &&
+    !/\b(?:posibles?\s+aplicaciones|aplicaciones\s+(?:posibles|opcionales)|puede\s+(?:emplearse|utilizarse)|podr[ií]a\s+(?:emplearse|utilizarse))\b/iu.test(description) &&
+    !/\bconstrucci[oó]n\b/iu.test(general) &&
+    hasUnconditionalEditorialClaim(description, /\bconstrucci[oó]n\b/giu) &&
+    hasUnconditionalEditorialClaim(description, /\bagricultura\b/giu)) {
+    return "El proveedor cita la construcción y la agricultura como ámbitos de aplicación; esto no acredita implementos instalados ni capacidades adicionales.";
+  }
+  return null;
+};
+
 export const resolveSourceEditorialClaims = (
   source: ProductRecord,
   prepared: ProductRecord,
@@ -227,6 +256,8 @@ export const resolveSourceEditorialClaims = (
   additions.push(...sourcedForkliftMeasures(source, prepared, general));
   const features = sourcedFamilyFeatures(source, prepared, general);
   if (features !== null) additions.push(features);
+  const contextual = documentedFamilyContext(source, prepared, general);
+  if (contextual !== null) additions.push(contextual);
   if (additions.length === 0) return general;
   const text = general.trim();
   return `${text}${/[.!?]$/u.test(text) ? "" : "."} ${additions.join(" ")}`;

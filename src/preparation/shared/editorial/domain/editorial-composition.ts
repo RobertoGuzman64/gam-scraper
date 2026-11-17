@@ -130,12 +130,10 @@ export const resolveReusableEditorial = (
       facts.energy === "GLP" ? " de GLP" : facts.energy === "gasolina" ? " de gasolina" : "";
   const identity = `${family[0]?.toLocaleUpperCase("es") ?? ""}${family.slice(1)}${fuel} ${name}`;
   const main = measures.length ? join(measures) : join(extras.slice(0, 2));
-  const extra = measures.length ? extras : extras.slice(2);
   const unit = [facts.year !== null ? `año de fabricación ${facts.year}` : null,
     facts.hours !== null ? `${formatEditorialQuantity(facts.hours)} horas registradas` : null]
     .filter((value): value is string => value !== null);
-  const cleaningFamily = facts.family === "fregadora" || facts.family === "barredora" || facts.family === "maquina-limpieza";
-  const generalClauses = [...measures, ...(cleaningFamily ? extras : extra)];
+  const generalClauses = [...measures, ...extras];
   const generalDetails = generalClauses.length ? join(generalClauses) : main;
   const sourceYear = differentiatedSourceYear(record, sourceUnitRecord, facts);
   const unitSummary = corroboratedAnnouncedUnitSummary(record, sourceUnitRecord, facts);

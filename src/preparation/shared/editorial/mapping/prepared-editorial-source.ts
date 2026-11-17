@@ -12,7 +12,7 @@ import { resolveVerifiedEditorialUnitContext } from "../domain/editorial-unit-co
 import { cleanAuthenticatedSourceEditorial } from "../domain/editorial-text-hygiene.js";
 import { resolveKnowledgeEditorial } from "./knowledge-editorial.js";
 import { conciseVerifiedUnitGeneral, conciseSignedUnitGeneral, resolveEditorialIdentitySummary, unresolvedEditorialModelVariantShort, unresolvedEditorialModelVariantGeneral } from "../domain/editorial-identity-summary.js";
-import { compressVerifiedSourceShort } from "../domain/editorial-source-brief.js";
+import { compressVerifiedSourceShort, expandVerifiedSourceShort } from "../domain/editorial-source-brief.js";
 import { corroboratedSourceUnitBrief } from "../domain/editorial-source-unit-brief.js";
 import { editorialFamilyFromSourceGeneral } from "../domain/editorial-families.js";
 import { resolveVerifiedTechnicalBrief } from "../domain/editorial-technical-brief.js";
@@ -86,7 +86,11 @@ export const resolvePreparedEditorialSource = (
       (verified ? resolveVerifiedSourceEditorialExcerpt(sourceUnitRecord) : null) ??
       (verified ? resolveVerifiedTechnicalBrief(sourceUnitRecord, record) : null) ??
       resolveEditorialIdentitySummary(record, familyOverride) : null;
-  const narrative = general && !signedGeneral ? [knowledge?.familyGuidance, knowledge?.modelReference]
+  const familyGuidance = general?.includes("compactación de contenedores") &&
+    knowledge?.familyGuidance?.includes("La compactadora se emplea en tareas de compactación del terreno o del firme.") ?
+    knowledge.familyGuidance.replace("La compactadora se emplea en tareas de compactación del terreno o del firme.", "").trim() :
+    knowledge?.familyGuidance;
+  const narrative = general && !signedGeneral ? [familyGuidance, knowledge?.modelReference]
     .filter((part): part is string => Boolean(part)).join(" ") : "";
   const assembledGeneral = general ? `${general}${narrative ? ` ${narrative}` : ""}` : editorialRecord.longDescription;
   const modelDimensions = verified && !signedGeneral && isGamDocumentedYaleDimensionsSource(editorialSourceUnit) ?
@@ -107,9 +111,11 @@ export const resolvePreparedEditorialSource = (
     crossedIdentity && !signedGeneral ? null : long);
   const compact = verified && !knowledge?.short && !composed.short ?
     compressVerifiedSourceShort(sourceUnitRecord, sourceClean.short, sourceClean.general) : null;
+  const expanded = verified && !knowledge?.short && !composed.short ?
+    expandVerifiedSourceShort(sourceUnitRecord, compact ?? sourceClean.short) : null;
   return {
     verifiedTitle: knowledge?.title ?? null,
-    descriptions: distinguishDescriptions(compact ?? sourceClean.short, sourceClean.general),
+    descriptions: distinguishDescriptions(expanded ?? compact ?? sourceClean.short, sourceClean.general),
     sourceModelConflict,
     sourceMotorConflict,
     heightConflict

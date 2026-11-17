@@ -23,6 +23,8 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
       "Capacidad de tolva colmada": "2670 l",
       "Tracción": "4x4",
       "Transmisión": "Hidrostática",
+      "Capacidad de tolva rasa": "2055 l",
+      "Radio de giro exterior": "4830 mm"
     }
   },
   "M432-1479": {
@@ -35,6 +37,8 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
       "Profundidad máxima de excavación": "1800 mm",
       "Anchura mínima del chasis": "750 mm",
       "Altura máxima de descarga": "2215 mm",
+      "Longitud de transporte": "2980 mm",
+      "Anchura máxima del chasis extendido": "990 mm"
     }
   },
   "M913-0641": {
@@ -47,6 +51,8 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
       "Profundidad máxima de excavación": "2820 mm",
       "Anchura total": "1500 mm",
       "Fuerza máxima de excavación en cuchara": "21 kN",
+      "Alcance máximo de excavación": "4740 mm",
+      "Altura máxima de descarga": "3100 mm"
     }
   },
   "M044-4093": {
@@ -69,6 +75,8 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     specifications: {
       "Alcance horizontal": "7,6 m",
       "Capacidad máxima de plataforma": "200 kg",
+      "Altura de plataforma": "13 m",
+      "Anchura total": "1,5 m"
     }
   },
   "M239-8327": {
@@ -124,6 +132,8 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     specifications: {
       "Altura de plataforma": "9,7 m",
       "Capacidad máxima de plataforma": "454 kg",
+      "Anchura total": "1,79 m",
+      "Extensión de plataforma": "1,52 m"
     }
   },
   "M649-6453": {
@@ -135,6 +145,8 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     specifications: {
       "Altura de plataforma": "15,24 m",
       "Anchura total": "2,34 m",
+      "Longitud de plataforma": "4,27 m",
+      "Anchura de plataforma": "1,88 m"
     }
   },
   "M690-5522": {
@@ -146,6 +158,8 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     specifications: {
       "Alcance horizontal": "6,78 m",
       "Capacidad máxima de plataforma": "227 kg",
+      "Longitud de plataforma": "0,76 m",
+      "Anchura de plataforma": "1,42 m"
     }
   },
   "M055-1205": {
@@ -191,6 +205,8 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
       "Propulsión": "Eléctrica",
       "Altura de elevación": "205 mm",
       "Altura de plataforma recogida": "150 mm",
+      "Capacidad nominal": "2000 kg",
+      "Centro de carga nominal del modelo": "600 mm"
     }
   },
   "M239-6301": {
@@ -204,6 +220,7 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
       "Altura de elevación": "205 mm",
       "Altura de plataforma recogida": "150 mm",
       "Capacidad nominal": "2000 kg",
+      "Centro de carga nominal del modelo": "600 mm"
     }
   },
   "M005-5167": {
@@ -224,6 +241,8 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     source: "https://www.lectura-specs.com/en/model/forklifts/telehandlers-jlg/4014-ps-1152518",
     specifications: {
       "Alcance horizontal": "9,2 m",
+      "Longitud de transporte": "6,32 m",
+      "Anchura de transporte": "2,43 m"
     }
   },
   "M640-1938": {
@@ -234,6 +253,8 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     source: "https://www.lectura-specs.es/es/modelo/carretillas-elevadoras/carretillas-elevadoras-todo-terreno-ausa/c-250-h-x-4-1035132",
     specifications: {
       "Velocidad máxima de desplazamiento": "20 km/h",
+      "Centro de carga nominal del modelo": "500 mm",
+      "Pendiente superable del modelo": "38 %"
     }
   },
   "M855-6850": {
@@ -244,6 +265,8 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     source: "https://www.lectura-specs.es/es/modelo/carretillas-elevadoras/carretillas-elevadoras-todo-terreno-ausa/c-250-h-x-4-1035132",
     specifications: {
       "Velocidad máxima de desplazamiento": "20 km/h",
+      "Centro de carga nominal del modelo": "500 mm",
+      "Pendiente superable del modelo": "38 %"
     }
   },
 };

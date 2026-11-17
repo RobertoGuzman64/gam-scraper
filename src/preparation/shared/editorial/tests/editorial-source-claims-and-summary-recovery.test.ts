@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
+import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { resolveSourceEditorialClaims } from "../domain/editorial-source-claims.js";
 import { resolveVerifiedTechnicalBrief } from "../domain/editorial-technical-brief.js";
 import { resolveEditorialIdentitySummary } from "../domain/editorial-identity-summary.js";
@@ -104,4 +105,44 @@ test("conserva la familia y dos medidas de fuente corroboradas en un resumen té
   assert.equal(resolveVerifiedTechnicalBrief(record, { ...record, model: "MODELO11" }), null);
   assert.equal(resolveVerifiedTechnicalBrief(record, { ...record, title: "Carretilla elevadora MARCA MODELO10" }), null);
   assert.equal(resolveEditorialIdentitySummary({ ...record, model: "MODELO11" }, null), null);
+});
+
+test("el contexto de aplicaciones declarado distingue almacenes, compactadoras y manipuladores", () => {
+  for (const { reference, expected } of [
+    { reference: "3425", expected: /diseño modular destinado a la gestión del inventario/u },
+    { reference: "3428", expected: /diseño modular destinado a la gestión del inventario/u },
+    { reference: "3312", expected: /compactación de contenedores/u },
+    { reference: "3314", expected: /compactación de contenedores/u },
+    { reference: "4814", expected: /construcción y la agricultura/u },
+    { reference: "4817", expected: /construcción y la agricultura/u }
+  ] as const) {
+    const source = accreditedSourceRecord("gam-original", reference);
+    const prepared = prepareSourceProduct(source);
+    assert.equal(prepared.status, "ready", reference);
+    assert.match(prepared.product.description_general ?? "", expected);
+    assert.equal(prepared.product.reference, source.reference);
+    if (reference.startsWith("331")) {
+      assert.doesNotMatch(prepared.product.description_general ?? "", /compactación del terreno o del firme/u);
+    }
+  }
+});
+
+test("el contexto de origen no se atribuye a una variante, unidad o declaración opcional", () => {
+  for (const reference of ["3425", "3312", "4814"]) {
+    const source = accreditedSourceRecord("gam-original", reference);
+    const initial = "Ficha técnica verificada.";
+    for (const prepared of [
+      { ...source, reference: "CONTROL-DISTINTO" },
+      { ...source, model: "MODELO-DISTINTO" },
+      { ...source, specs: { ...source.specs, Modelo: "MODELO-DISTINTO" } },
+      { ...source, condition: "Segunda mano" as const }
+    ]) {
+      assert.equal(resolveSourceEditorialClaims(source, prepared, initial), initial);
+    }
+    const withoutClaim = {
+      ...source,
+      longDescription: "El diseño modular es opcional y la compactación de contenedores depende de la versión. La construcción y la agricultura se mencionan como posibles aplicaciones."
+    };
+    assert.equal(resolveSourceEditorialClaims(withoutClaim, withoutClaim, initial), initial);
+  }
 });
