@@ -157,10 +157,27 @@ const publicationSets = async (root, provider, prepared) => {
       timestamp: Number.isFinite(stamp) ? stamp : null, prepSha: manifest.preparationSha256 });
   }
   if (!result.some((item) => item.approval === active.approvalSha256)) throw new Error(`Publicación activa ausente: ${provider}`);
-  return { result, active: active.approvalSha256 };
+  const retentionPath = join(root, "catalogs", "providers", provider, "publication-retention.json");
+  let selection = null;
+  try { selection = await readJson(retentionPath); }
+  catch (error) { if (!missing(error)) throw error; }
+  if (selection !== null && (!isRecord(selection) || selection.version !== 1 ||
+    selection.providerId !== provider || selection.approvalSha256 !== active.approvalSha256 ||
+    (selection.previousSha256 !== null && (!validSha(selection.previousSha256) ||
+      selection.previousSha256 === selection.approvalSha256 ||
+      !result.some((item) => item.approval === selection.previousSha256))) ||
+    Object.keys(selection).length !== 4)) {
+    throw new Error(`Índice de retención individual inválido: ${provider}`);
+  }
+  return { result, active: active.approvalSha256, selection };
 };
 
-const retainPublications = (publications, active) => {
+const retainPublications = (publications, active, selection = null) => {
+  if (selection !== null) {
+    const keep = publications.filter((item) => item.approval === selection.approvalSha256 ||
+      item.approval === selection.previousSha256);
+    return { keep, protectedApprovals: new Set(keep.map((item) => item.approval)) };
+  }
   const current = publications.find((item) => item.approval === active);
   if (!current) throw new Error(`Publicación activa ausente: ${active}`);
   const previous = publications.filter((item) => item.approval !== active &&
@@ -215,11 +232,17 @@ const planForProvider = async (root, provider, units) => {
     const publicationsRoot = join(root, "catalogs", "providers", provider, "publications");
     if ((await list(publicationsRoot)).length === 0) return { prepared: 0, publications: 0, keptPrepared: 0, keptPublications: 0 };
     const inspected = await publicationSets(root, provider, preparations);
+    const { protectedApprovals } = retainPublications(inspected.result, inspected.active, inspected.selection);
+    for (const publication of inspected.result) {
+      if (!protectedApprovals.has(publication.approval)) {
+        addUnit(units, [publication.directory], `publicación anterior: ${provider}`);
+      }
+    }
     return { prepared: 0, publications: inspected.result.length, keptPrepared: 0,
-      keptPublications: inspected.result.length };
+      keptPublications: protectedApprovals.size };
   }
-  const { result: publications, active } = await publicationSets(root, provider, preparations);
-  const { keep, protectedApprovals } = retainPublications(publications, active);
+  const { result: publications, active, selection } = await publicationSets(root, provider, preparations);
+  const { keep, protectedApprovals } = retainPublications(publications, active, selection);
   for (const publication of publications) {
     if (!protectedApprovals.has(publication.approval)) {
       addUnit(units, [publication.directory], `publicación anterior: ${provider}`);
@@ -431,8 +454,8 @@ const retentionIndexes = async (root) => {
   for (const provider of providers) {
     const prepared = await preparedSets(root, provider);
     if (prepared.length === 0) continue;
-    const { result: publications, active } = await publicationSets(root, provider, prepared);
-    const { keep } = retainPublications(publications, active);
+    const { result: publications, active, selection } = await publicationSets(root, provider, prepared);
+    const { keep } = retainPublications(publications, active, selection);
     if (keep[0].timestamp === null) continue;
     const path = join(root, "storage", "providers", provider, "publication-retention.json");
     let previous = null;

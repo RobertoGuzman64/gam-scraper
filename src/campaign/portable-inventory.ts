@@ -7,6 +7,7 @@ import { readActiveCatalogIndex } from "../infrastructure/filesystem/catalog/act
 import { readPortableCampaign } from "../infrastructure/filesystem/catalog/portable-campaign.js";
 import { readPortableOriginal, readPortableOriginalArtifacts } from "../infrastructure/filesystem/catalog/portable-original.js";
 import { listTechnicalVersions, readActiveTechnicalPublication } from "../infrastructure/filesystem/catalog/technical-publication.js";
+import { inspectRepositoryArtifact } from "../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
 import type { InventoryItem } from "./inventory-contracts.js";
 
 export type PortableProviderInventory = {
@@ -71,8 +72,34 @@ const inspectProvider = async (root: string, providerId: string): Promise<Invent
   try {
     const names = await readdir(base);
     const hasManainRecord = providerId === "manain" && names.includes("records");
-    if (names.some((name) => name !== "original" && name !== "publications" && name !== "technical" && !(hasManainRecord && name === "records"))) {
+    if (names.some((name) => name !== "original" && name !== "publications" && name !== "technical" &&
+      !(hasManainRecord && name === "records") &&
+      !(providerId !== "manain" && name === "publication-retention.json"))) {
       return invalid("Archivos inesperados o promoción pendiente en original portátil");
+    }
+    if (names.includes("publication-retention.json")) {
+      const retentionPath = join(base, "publication-retention.json");
+      const metadata = await lstat(retentionPath);
+      if (!metadata.isFile() || metadata.isSymbolicLink() || metadata.nlink !== 1) {
+        return invalid("Índice de retención individual no regular");
+      }
+      const retention: unknown = JSON.parse(await readFile(retentionPath, "utf8"));
+      const currentPath = join(base, "publications", "active.json");
+      const current: unknown = JSON.parse(await readFile(currentPath, "utf8"));
+      if (!retention || typeof retention !== "object" || Array.isArray(retention) ||
+        !("version" in retention) || retention.version !== 1 ||
+        !("providerId" in retention) || retention.providerId !== providerId ||
+        !("approvalSha256" in retention) || typeof retention.approvalSha256 !== "string" ||
+        !/^[a-f0-9]{64}$/.test(retention.approvalSha256) ||
+        !("previousSha256" in retention) ||
+        (retention.previousSha256 !== null && (typeof retention.previousSha256 !== "string" ||
+          !/^[a-f0-9]{64}$/.test(retention.previousSha256) ||
+          retention.previousSha256 === retention.approvalSha256)) ||
+        Object.keys(retention).length !== 4 ||
+        !current || typeof current !== "object" || !("approvalSha256" in current) ||
+        current.approvalSha256 !== retention.approvalSha256) {
+        return invalid("Índice de retención individual no acreditado");
+      }
     }
     if (hasManainRecord) {
       const recordsDirectory = join(base, "records");
@@ -156,9 +183,26 @@ export const inspectPortableInventory = async (
   try {
     rootAvailable = await directoryExists(catalogRoot);
     if (rootAvailable) {
-      await checkKnownEntries(catalogRoot, ["providers", "campaigns", "reports", "active.json"], issues);
+      await checkKnownEntries(catalogRoot, ["providers", "campaigns", "reports", "commercial", "active.json"], issues);
       await readActiveCatalogIndex(root);
       await checkKnownEntries(join(catalogRoot, "providers"), CAMPAIGN_PROVIDERS, issues);
+      await checkKnownEntries(join(catalogRoot, "commercial"), ["develop", "production"], issues);
+      await checkKnownEntries(join(catalogRoot, "reports"), ["revision", "individual-finish", "commercial"], issues);
+      await checkKnownEntries(join(catalogRoot, "reports", "commercial"), ["develop", "production"], issues);
+      for (const environment of ["develop", "production"]) {
+        const exported = join(catalogRoot, "commercial", environment);
+        const report = join(catalogRoot, "reports", "commercial", environment);
+        try {
+          await inspectRepositoryArtifact(exported, "commercial-manifest.json", [
+            "gam-commercial.json", "gomariz-commercial.json", "mercaeleva-commercial.json", "commercial-manifest.json"
+          ]);
+          await inspectRepositoryArtifact(report, "INFORME.txt", ["INFORME.txt"]);
+        } catch (error) { issues.push(describe(error)); }
+      }
+      try {
+        await inspectRepositoryArtifact(join(catalogRoot, "reports", "individual-finish"),
+          "INFORME.txt", ["INFORME.txt"]);
+      } catch (error) { issues.push(describe(error)); }
     }
   } catch (error) {
     issues.push(`Raíz de catalogs/ no verificable: ${describe(error)}`);

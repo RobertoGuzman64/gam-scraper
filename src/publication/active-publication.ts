@@ -191,6 +191,20 @@ export const selectActivePublication = async (
       }
       const indexPath = global ? join(root, "catalogs", "active.json") : activePath;
       const previous = await readSelectionSnapshot(indexPath);
+      const retentionPath = join(root, "catalogs", "providers", providerId, "publication-retention.json");
+      const previousRetention = await readSelectionSnapshot(retentionPath);
+      if (previousRetention !== null) {
+        const retained: unknown = JSON.parse(previousRetention);
+        if (!isRecord(retained) || retained.version !== 1 || retained.providerId !== providerId ||
+          retained.approvalSha256 !== latest.difference.previous ||
+          (retained.previousSha256 !== null &&
+            (typeof retained.previousSha256 !== "string" || !isHash(retained.previousSha256))) ||
+          Object.keys(retained).length !== 4) {
+          throw new Error(`Índice de retención individual incoherente: ${providerId}`);
+        }
+      }
+      const nextRetention = `${JSON.stringify({ version: 1, providerId, approvalSha256,
+        previousSha256: latest.difference.previous }, null, 2)}\n`;
       const next = global
         ? `${JSON.stringify({ version: 1, providers: { ...global.providers, [providerId]: { approvalSha256 } } }, null, 2)}\n`
         : `${JSON.stringify({ version: 1, providerId, approvalSha256 }, null, 2)}\n`;
@@ -204,9 +218,15 @@ export const selectActivePublication = async (
         }
         const selected = await resolveAccreditedPublication(root, providerId);
         if (selected !== candidate.path) throw new Error("La publicación vigente no corresponde al índice activado");
+        await writeAtomicSelection(retentionPath, nextRetention);
         return { status: "activated", providerId, difference: latest.difference, acceptance: accepted };
       } catch (error) {
         try {
+          const currentRetention = await readSelectionSnapshot(retentionPath);
+          if (currentRetention === nextRetention) await restoreSelection(retentionPath, previousRetention, nextRetention);
+          else if (currentRetention !== previousRetention) {
+            throw new Error("El índice de retención cambió durante la recuperación");
+          }
           const currentSelection = await readSelectionSnapshot(indexPath);
           if (currentSelection === next) await restoreSelection(indexPath, previous, next);
           else if (currentSelection !== previous) {

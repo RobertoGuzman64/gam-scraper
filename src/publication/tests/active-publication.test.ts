@@ -57,6 +57,10 @@ test("selección explícita, simulación, idempotencia y cambio sin pérdidas", 
     await assert.rejects(lstat(join(ctx.publications, "active.json")), /ENOENT/);
     const activated = await selectActivePublication(ctx.root, providerId, ctx.other, true);
     assert.equal(activated.status, "activated");
+    const retentionPath = join(ctx.root, "catalogs", "providers", providerId, "publication-retention.json");
+    assert.deepEqual(JSON.parse(await readFile(retentionPath, "utf8")), {
+      version: 1, providerId, approvalSha256: ctx.other, previousSha256: null
+    });
     const current = await resolveAccreditedPublication(ctx.root, providerId);
     assert.equal(current, join(ctx.publications, ctx.other, `${providerId}-publishable.json`));
     const old = await selectActivePublication(ctx.root, providerId, existingSha);
@@ -65,6 +69,9 @@ test("selección explícita, simulación, idempotencia y cambio sin pérdidas", 
     assert.equal(old.difference.removed.length, 0);
     assert.equal((await selectActivePublication(ctx.root, providerId, ctx.other, true)).status, "unchanged");
     assert.equal((await selectActivePublication(ctx.root, providerId, existingSha, true)).status, "activated");
+    assert.deepEqual(JSON.parse(await readFile(retentionPath, "utf8")), {
+      version: 1, providerId, approvalSha256: existingSha, previousSha256: ctx.other
+    });
     assert.equal(await resolveAccreditedPublication(ctx.root, providerId),
       join(ctx.original, `${providerId}-publishable.json`));
     assert.equal(await readFile(join(ctx.original, `${providerId}-publishable.json`), "utf8"), before);

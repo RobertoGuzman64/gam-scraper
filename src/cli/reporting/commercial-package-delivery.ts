@@ -7,6 +7,7 @@ import type { CommercialExportFile } from "../../commercial/export/commercial-ex
 import { verifyCommercialExportArchive, verifyCommercialExportSources, verifyCommercialExportZip } from "../../commercial/export/commercial-export-verification.js";
 import { assertCommercialPackageProviders, inspectCommercialPackage } from "../../commercial/export/commercial-package-snapshot.js";
 import { renderCommercialIntegrationReport } from "./commercial-integration-report.js";
+import { retainRepositoryArtifact } from "../../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
 
 export type CommercialPackageDelivery = {
   readonly commercial: string;
@@ -146,7 +147,8 @@ export const deliverCommercialPackages = async (
   if (!(await stat(physicalDesktop)).isDirectory()) throw new Error("El Escritorio no es un directorio");
   await verifyCommercialExportSources(root, files);
   const commercialArchive = createZipArchive(files.map((file) => ({ name: file.name, data: file.content })));
-  const reportArchive = createZipArchive([{ name: "INFORME.md", data: renderCommercialIntegrationReport(snapshot, date) }]);
+  const reportMarkdown = renderCommercialIntegrationReport(snapshot, date);
+  const reportArchive = createZipArchive([{ name: "INFORME.md", data: reportMarkdown }]);
   verifyCommercialExportArchive(commercialArchive, files);
   verifyCommercialIntegrationArchive(reportArchive, files);
   const saved = await publishCommercialArchivePair(physicalDesktop,
@@ -154,6 +156,12 @@ export const deliverCommercialPackages = async (
   try {
     await verifyCommercialPackagePair(saved.commercial, saved.report, files);
     await verifyCommercialExportSources(root, files);
+    if (snapshot.environment !== null) {
+      await retainRepositoryArtifact(join(root, "catalogs", "commercial", snapshot.environment),
+        "commercial-manifest.json", files);
+      await retainRepositoryArtifact(join(root, "catalogs", "reports", "commercial", snapshot.environment),
+        "INFORME.txt", [{ name: "INFORME.txt", content: reportMarkdown }]);
+    }
   } catch (error) {
     for (const path of [...saved.created].reverse()) await rm(path, { force: true });
     throw error;

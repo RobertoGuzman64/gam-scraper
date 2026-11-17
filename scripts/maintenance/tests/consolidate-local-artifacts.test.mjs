@@ -167,6 +167,45 @@ test("mantiene vigente, anterior y candidatas nuevas sin archivar su preparació
   });
 });
 
+test("sin preparaciones archiva la versión anterior a la anterior mediante selección persistida", async () => {
+  await workspace(async ({ root, outside }) => {
+    const { publicationIds } = await rootFiles(root, 3);
+    await rm(join(root, "storage/prepared/gam"), { recursive: true });
+    await save(root, "catalogs/providers/gam/publication-retention.json", JSON.stringify({
+      version: 1, providerId: provider, approvalSha256: publicationIds[2], previousSha256: publicationIds[1]
+    }));
+    await save(root, "scripts/tooling.mjs", 'console.log("ESTADO INTACTO");');
+    const planned = await planConsolidation(root);
+    assert.deepEqual(planned.map((item) => item.path), [
+      `catalogs/providers/gam/publications/${publicationIds[0]}`
+    ]);
+    await consolidateLocalArtifacts(root, outside);
+    const actual = (await readdir(join(root, "catalogs/providers/gam/publications")))
+      .filter((entry) => /^[a-f0-9]{64}$/.test(entry));
+    assert.deepEqual(actual.sort(), publicationIds.slice(1).sort());
+    await restoreLocalArtifacts(root, outside);
+    assert.ok((await readdir(join(root, "catalogs/providers/gam/publications"))).includes(publicationIds[0]));
+  });
+});
+
+test("una selección de retención inconsistente nunca autoriza la eliminación", async () => {
+  await workspace(async ({ root }) => {
+    const { publicationIds } = await rootFiles(root, 3);
+    await rm(join(root, "storage/prepared/gam"), { recursive: true });
+    const selection = "catalogs/providers/gam/publication-retention.json";
+    await save(root, selection, JSON.stringify({
+      version: 1, providerId: provider, approvalSha256: publicationIds[0], previousSha256: publicationIds[1]
+    }));
+    await assert.rejects(planConsolidation(root), /Índice de retención individual inválido/);
+    await save(root, selection, JSON.stringify({
+      version: 1, providerId: provider, approvalSha256: publicationIds[2], previousSha256: "a".repeat(64)
+    }));
+    await assert.rejects(planConsolidation(root), /Índice de retención individual inválido/);
+    assert.equal((await readdir(join(root, "catalogs/providers/gam/publications")))
+      .filter((entry) => /^[a-f0-9]{64}$/.test(entry)).length, 3);
+  });
+});
+
 test("sin preparaciones no archiva versiones cuyo orden no puede acreditar", async () => {
   await workspace(async ({ root }) => {
     await rootFiles(root, 3);

@@ -6,6 +6,7 @@ import test from "node:test";
 import { consolidatePortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
 import { readCanonicalCatalog, writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { inspectPortableInventory } from "../../portable-inventory.js";
+import { retainRepositoryArtifact } from "../../../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
 import { createFixture, approveDraft } from "../finalization-fixture.js";
 import { finalizeActiveCampaign } from "../../finalization.js";
 
@@ -65,6 +66,20 @@ test("admite informes en catalogs/reports sin admitir entradas desconocidas en l
     await writeFile(join(root, "catalogs", "desconocido.txt"), "entrada no acreditada");
     const invalid = await inspectPortableInventory(root, input(root));
     assert.ok(invalid.issues.some((issue) => issue.includes("desconocido.txt")));
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test("reconoce informes y entregas comerciales retenidas y denuncia alteraciones", async () => {
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-inventory-artifacts-"));
+  try {
+    const directory = join(root, "catalogs", "reports", "individual-finish");
+    await retainRepositoryArtifact(directory, "INFORME.txt", [{ name: "INFORME.txt", content: "resultado real" }]);
+    const valid = await inspectPortableInventory(root, input(root));
+    assert.deepEqual(valid.issues, []);
+    const current = JSON.parse(await readFile(join(directory, "active.json"), "utf8")) as { sha256: string };
+    await writeFile(join(directory, "versions", current.sha256, "INFORME.txt"), "alteración");
+    const invalid = await inspectPortableInventory(root, input(root));
+    assert.ok(invalid.issues.some((issue) => issue.includes("Huella del artefacto no coincide")));
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 

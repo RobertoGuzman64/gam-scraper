@@ -8,6 +8,7 @@ import { collectPublishedWork } from "../../publication/individual-work-report.j
 import type { IndividualFinishResult } from "../../publication/individual-finish.js";
 import type { PublishedWorkReport } from "../../catalog/diagnostics/published-work.js";
 import { renderPublishedWorkMarkdown } from "./published-work.js";
+import { retainRepositoryArtifact } from "../../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
 
 export type PublishedWorkDelivery = {
   readonly report: PublishedWorkReport;
@@ -58,5 +59,7 @@ export const deliverPublishedWorkReport = async (
   } finally {
     await rm(pending, { force: true });
   }
+  await retainRepositoryArtifact(join(workspace, "catalogs", "reports", "individual-finish"),
+    "INFORME.txt", [{ name: "INFORME.txt", content: markdown }]);
   return { report, zipFile };
 };
