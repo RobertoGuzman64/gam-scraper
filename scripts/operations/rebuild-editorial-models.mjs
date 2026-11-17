@@ -31,13 +31,15 @@ for (const records of grouped.values()) {
     stable[name] = found[0];
   }
   if (!Object.keys(stable).length || !first) continue;
-  entries.push({ brand: first.facts.brand, model: first.facts.model, family: first.facts.family,
-    samples: records.length, catalogReferences: records.map(({ reference }) => reference), stable });
+  entries.push({
+    brand: first.facts.brand, model: first.facts.model, family: first.facts.family,
+    samples: records.length, catalogReferences: records.map(({ reference }) => reference), stable
+  });
 }
 entries.sort((a, b) => [a.brand, a.model, a.family].join('|').localeCompare([b.brand, b.model, b.family].join('|')));
 const output = JSON.stringify({ version: 1, criterion: 'minimo_dos_fichas_y_ausencia_de_contradicciones_entre_las_fichas_que_declaran_la_magnitud', entries }, null, 2) + '\n';
 const path = join(root, 'data/editorial/knowledge/model-consensus.json');
 if (process.argv.includes('--check')) {
-  if (readFileSync(path, 'utf8') !== output) throw Error('Consensos editoriales de modelo desactualizados');
+  if (readFileSync(path, 'utf8').replace(/\r\n/gu, '\n') !== output) throw Error('Consensos editoriales de modelo desactualizados');
 } else writeFileSync(path, output);
 console.log(formatScriptStatus("PASS", `CONSENSO MODELOS | ${entries.length} modelos · ${entries.reduce((sum, item) => sum + Object.keys(item.stable).length, 0)} magnitudes corroboradas`));
