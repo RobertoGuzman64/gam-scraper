@@ -7,14 +7,15 @@ const currentRouteFamilies: Readonly<Record<string, readonly string[]>> = {
     "elevador-tijera", "brazo-articulado", "brazo-articulado-boom-lift", "brazo-telescopico",
     "elevador-mastil-vertical", "camion-plataforma", "oruga"
   ],
-  "manipulacion-de-materiales": ["carretilla-industrial", "manipulador-telescopico", "carretilla-retractil"],
+  "manipulacion-de-materiales": ["carretilla-industrial", "carretilla-todoterreno", "manipulador-telescopico", "carretilla-retractil"],
   "energia-electrica-e-iluminacion": ["generador", "torre-de-luz"],
   "movimiento-de-tierras-demolicion-y-compactacion": ["rodillo", "dumper"],
   limpieza: ["fregadora"]
 };
 
 const sourceFamily = (record: ProductRecord, path: readonly string[]): string | null => {
-  if (path[0] === "producto") return gomarizProductFamily(record, path);
+  const documentedFamily = gomarizProductFamily(record, path);
+  if (documentedFamily || path[0] === "producto") return documentedFamily;
   if (path[0] === "venta" && path.length >= 4) return path[2] ?? null;
   if (path.length !== 3) return null;
   const [section, family] = path;
@@ -46,6 +47,7 @@ export const gomarizCategorySlug = (record: ProductRecord, path: readonly string
     if (family === "carretilla-industrial" && power) return power === "electric"
       ? "carretillas-elevadoras-electricas-segunda-mano" : "carretillas-elevadoras-diesel-segunda-mano";
     if (family === "manipulador-telescopico") return "manipulador-teñescopico-segunda-mano";
+    if (family === "carretilla-todoterreno" && power) return "carretillas-todoterreno-segunda-mano";
     if (family === "rodillo" && /\brodillo compactador en tandem\b/.test(fold(record.longDescription ?? ""))) {
       return "rodillo-tandem-segunda-mano";
     }

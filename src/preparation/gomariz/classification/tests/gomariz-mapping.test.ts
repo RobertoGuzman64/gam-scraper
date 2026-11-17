@@ -64,7 +64,7 @@ test("Gomariz: las rutas actuales no permiten clasificar unidades sin evidencia 
   assert.equal(categorySlug(source("gomariz", scissor + "detalle/", "LGMG AS0607WE", { Motor: "Eléctrico" }, null)), undefined);
   assert.equal(categorySlug(source("gomariz", "https://www.gomarizrent.com/producto/lgmg-as0812-tijera-electrica/", "LGMG AS0812", { Motor: "Eléctrico" }, null)), undefined);
   assert.equal(categorySlug(source("gomariz", "https://www.gomarizrent.com/limpieza/barredora/eureka-compact-1150/", "Eureka Compact 1150", { Motor: "Eléctrico" }, null)), undefined);
-  assert.equal(categorySlug(source("gomariz", "https://www.gomarizrent.com/manipulacion-de-materiales/carretilla-todoterreno/heli-cpcd25/", "HELI CPCD25", { Motor: "Diésel" }, null)), undefined);
+  assert.equal(categorySlug(source("gomariz", "https://www.gomarizrent.com/manipulacion-de-materiales/carretilla-todoterreno/heli-cpcd25/", "HELI CPCD25", {}, null)), undefined);
   assert.equal(categorySlug(source("gomariz", "https://www.gomarizrent.com/elevacion-y-trabajos-en-altura/elevador-mastil-vertical/genie-sla15/", "GENIE SLA15", {}, null)), undefined);
   assert.equal(categorySlug(source("gomariz", gomUrl("brazo-articulado", "ba1335"), "Skyjack SJ85AJ", { Motor: "Diésel" }, null)), "plataformas-articuladas-diesel-segunda-mano");
 });
@@ -118,7 +118,7 @@ test("Gomariz: producto sin identidad, Motor inequívoco o familia corroborada s
     title: "SOCAGE IVECO S35S14 FORSTE 24D SPEED ULTRA", specs: { Motor: "Diésel" },
     longDescription: "Los Camiones Cesta es la solución perfecta para trabajos de exterior."
   };
-  assert.equal(categorySlug(truck), undefined);
+  assert.equal(categorySlug(truck), "plataformas-elevadoras-sobre-camion-segunda-mano");
 });
 
 test("Gomariz: tijeras sin Motor solo con identidad, ruta y declaración eléctrica convergentes", () => {
@@ -133,4 +133,83 @@ test("Gomariz: tijeras sin Motor solo con identidad, ruta y declaración eléctr
   assert.equal(categorySlug({ ...record, specs: { Motor: "Diésel" } }), undefined);
   assert.equal(categorySlug({ ...record, specs: { Motor: "Eléctrico, Gasolina" } }), undefined);
   assert.equal(categorySlug({ ...record, url: url.replace("as0607we", "as0812") }), undefined);
+});
+
+
+test("Gomariz: acredita carretillas todoterreno únicamente desde rutas expresas y motor coherente", () => {
+  const routes = [
+    ["heli-cpcd25-copia", "HELI CPCD25"],
+    ["ausa-c-200-h-4x4", "Ausa C 200 H 4×4"],
+    ["agriamac-30-21-4x4-2", "Agriamac 30.21 4×4"]
+  ] as const;
+  for (const [path, title] of routes) {
+    const url = `https://www.gomarizrent.com/manipulacion-de-materiales/carretilla-todoterreno/${path}/`;
+    assert.equal(categorySlug(source("gomariz", url, title, { Motor: "Diésel" }, null)), "carretillas-todoterreno-segunda-mano", title);
+    assert.equal(categorySlug(source("gomariz", url, title, {}, null)), undefined, title);
+    assert.equal(categorySlug(source("gomariz", url, title, { Motor: "Eléctrico, Gasolina" }, null)), undefined, title);
+    assert.equal(categorySlug(source("gam", url, title, { Motor: "Diésel" }, null)), undefined, title);
+  }
+});
+
+test("Gomariz: acredita una familia de producto pese al error ortográfico de marca, nunca por la descripción aislada", () => {
+  const url = "https://www.gomarizrent.com/producto/brazo-articulado-articulating-boom-lift-skayjack-sj85aj/";
+  const record = {
+    ...source("gomariz", url, "SKYJACK SJ85AJ", { Motor: "Diésel" }, null),
+    brand: "Skyjack", model: "SJ85AJ", longDescription: "Las Articuladas Diésel son muy útiles para trabajos en exterior."
+  };
+  assert.equal(categorySlug(record), "plataformas-articuladas-diesel-segunda-mano");
+  assert.equal(categorySlug({ ...record, model: "SJ46AJ" }), undefined);
+  assert.equal(categorySlug({ ...record, brand: "JLG" }), undefined);
+  assert.equal(categorySlug({ ...record, title: "HAULOTTE SJ85AJ" }), undefined);
+  assert.equal(categorySlug({ ...record, specs: {} }), undefined);
+  assert.equal(categorySlug({ ...record, specs: { Motor: "Diésel, Gasolina" } }), undefined);
+  assert.equal(categorySlug({ ...record, url: url.replace("skayjack", "skyjakk") }), undefined);
+  assert.equal(categorySlug({ ...record, longDescription: "Máquina de ocasión" }), undefined);
+});
+
+test("Gomariz: identifica camiones cesta aunque la marca compuesta figure en otro orden", () => {
+  const url = "https://www.gomarizrent.com/producto/socage-iveco-s35s14-forste-24d-speed-ultra/";
+  const record = {
+    ...source("gomariz", url, "SOCAGE IVECO S35S14 FORSTE 24D SPEED ULTRA", { Motor: "Diésel" }, null),
+    brand: "Iveco Socage", model: "S35S14 FORSTE 24D SPEED ULTRA",
+    longDescription: "Los Camiones Cesta es la solución perfecta para realizar trabajos de exterior."
+  };
+  assert.equal(categorySlug(record), "plataformas-elevadoras-sobre-camion-segunda-mano");
+  assert.equal(categorySlug({ ...record, model: "FORSTE 20D" }), undefined);
+  assert.equal(categorySlug({ ...record, brand: "Nissan Socage" }), undefined);
+  assert.equal(categorySlug({ ...record, title: "SOCAGE S35S14 FORSTE 24D SPEED ULTRA" }), undefined);
+  assert.equal(categorySlug({ ...record, longDescription: "Camión usado" }), undefined);
+  assert.equal(categorySlug({ ...record, url: url.replace("socage-iveco", "socage-ford") }), undefined);
+});
+
+test("Gomariz: reconoce ruta de fabricante y modelo solo con descripción y Motor concordantes", () => {
+  const url = "https://www.gomarizrent.com/snorkel/s3010p/1/";
+  const record = {
+    ...source("gomariz", url, "SNORKEL S3010P", { Motor: "Eléctrico" }, null),
+    brand: "Snorkel", model: "S3010P", longDescription: "Las Tijeras Eléctricas están diseñadas para trabajar en interior."
+  };
+  assert.equal(categorySlug(record), "plataformas-tijera-electricas-segunda-mano");
+  assert.equal(categorySlug({ ...record, specs: {} }), undefined);
+  assert.equal(categorySlug({ ...record, specs: { Motor: "Diésel" } }), undefined);
+  assert.equal(categorySlug({ ...record, model: "S3219E" }), undefined);
+  assert.equal(categorySlug({ ...record, url: url.replace("/snorkel/", "/genie/") }), undefined);
+  assert.equal(categorySlug({ ...record, url: url.replace("/1/", "/foto/") }), undefined);
+  assert.equal(categorySlug({ ...record, longDescription: "Ficha sin familia" }), undefined);
+});
+
+test("Gomariz: textos genéricos y familias sin categoría específica permanecen sin acreditar", () => {
+  const genericForklift = {
+    ...source("gomariz", "https://www.gomarizrent.com/producto/heli-cpcd25/", "HELI CPCD25", { Motor: "Diésel" }, null),
+    brand: "HELI", model: "CPCD25",
+    longDescription: "Máquinas destinadas al trabajo en cualquier condición, existen modelos con propulsión 4×4."
+  };
+  assert.equal(categorySlug(genericForklift), undefined);
+  const electricForklift = {
+    ...source("gomariz", "https://www.gomarizrent.com/producto/heli-cpd25/", "HELI CPD25", { Motor: "Eléctrico" }, null),
+    brand: "HELI", model: "CPD25",
+    longDescription: "Indicadas especialmente para el almacenaje y trabajos realizados en el interior de los edificios."
+  };
+  assert.equal(categorySlug(electricForklift), undefined);
+  assert.equal(categorySlug(source("gomariz", "https://www.gomarizrent.com/limpieza/barredora/eureka-compact-1150-1/", "Eureka Compact 1150", { Motor: "Eléctrico" }, null)), undefined);
+  assert.equal(categorySlug(source("gomariz", "https://www.gomarizrent.com/venta/movimiento-de-tierras-demolicion-y-compactacion/rodillo/dynapac-lp6500-2/", "Dynapac LP6500", { Motor: "Diésel" }, null)), undefined);
 });
