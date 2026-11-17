@@ -138,27 +138,36 @@ test("los logs de CI no contienen control de terminal y mantienen una cadencia m
 });
 
 
-test("la salida no interactiva registra los cambios de fallo al instante y limita el progreso rutinario", () => {
+test("la salida no interactiva informa cada 15 segundos y registra los fallos al instante", () => {
   const stream = new PassThrough();
   let written = "";
   stream.on("data", (chunk) => { written += chunk.toString(); });
   let elapsed = 0;
   let current = state();
-  const display = createRunnerDisplay(stream, { interactive: false, getState: () => current, now: () => elapsed });
-  elapsed = 59000;
-  display.tick();
-  assert.equal(written, "");
-  elapsed = 60001;
-  display.tick();
-  assert.equal(written.split("\n").filter(Boolean).length, 1);
-  elapsed = 61000;
+  const display = createRunnerDisplay(stream, { interactive: false, getState: () => ({ ...current, elapsed_ms: elapsed }), now: () => elapsed });
+  const lines = () => written.split("\n").filter(Boolean);
+  for (const time of [0, 14000, 14999]) {
+    elapsed = time;
+    display.tick();
+  }
+  assert.equal(lines().length, 0);
+  for (const time of [15000, 30000, 45000, 60000]) {
+    elapsed = time;
+    display.tick();
+    assert.equal(lines().length, time / 15000);
+    assert.match(lines().at(-1), new RegExp(`\\| ${formatRunnerTime(time)}$`));
+    elapsed = time + 1000;
+    display.tick();
+    assert.equal(lines().length, time / 15000);
+  }
+  elapsed = 62000;
   current = state({ counts: { passed: 1715, failed: 1, skipped: 1, todo: 0 } });
   display.tick();
-  assert.match(written, /1 fallidos/);
-  assert.equal(written.split("\n").filter(Boolean).length, 2);
+  assert.match(lines().at(-1), /1 fallidos/);
+  assert.equal(lines().length, 5);
   elapsed = 63000;
   display.tick();
-  assert.equal(written.split("\n").filter(Boolean).length, 2);
+  assert.equal(lines().length, 5);
 });
 
 test("el formateador preserva el error completo y stderr sin degradar diagnósticos", () => {
