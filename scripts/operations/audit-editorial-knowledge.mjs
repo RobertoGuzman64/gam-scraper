@@ -72,7 +72,7 @@ for (const provider of ['gam', 'gomariz', 'mercaeleva']) {
 summary.provenance.complete = summary.problems.length === 0;
 summary.evidence = { verifiedUnits: knowledge.units.size, consensusModels: knowledge.models.size,
   familyProfiles: Object.keys(knowledge.families).length, verifiedManufacturerRules: knowledge.modelRules.size };
-const target = resolve(root, 'reports/editorial-knowledge');
+const target = resolve(root, 'catalogs/reports/editorial-knowledge');
 mkdirSync(target, { recursive: true });
 writeFileSync(resolve(target, 'audit.json'), JSON.stringify(summary, null, 2) + '\n');
 console.log('AUDITORÍA EDITORIAL | REUTILIZACIÓN SIN PUBLICACIÓN | ' + JSON.stringify(summary.total));

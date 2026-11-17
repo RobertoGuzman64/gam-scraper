@@ -19,17 +19,18 @@ export const resolveInterventionScriptLocation = (
   const path = realpathSync(resolve(workspace, input));
   if (!statSync(path).isFile()) throw new Error("La ruta del script no es un archivo");
   const permanentParts = relative(workspace, path).split(sep);
-  if (permanentParts.length === 3 && permanentParts[0] === "interventions" &&
-    permanentParts[1] && isIdentifier(permanentParts[1]) &&
-    permanentParts[2] && isScriptName(permanentParts[2])) {
-    return { path, campaign: null, providerId: permanentParts[1] };
+  if (permanentParts.length === 6 && permanentParts[0] === "src" &&
+    permanentParts[1] === "catalog" && permanentParts[2] === "interventions" &&
+    permanentParts[3] === "records" && permanentParts[4] && isIdentifier(permanentParts[4]) &&
+    permanentParts[5] && isScriptName(permanentParts[5])) {
+    return { path, campaign: null, providerId: permanentParts[4] };
   }
   const campaignParts = relative(join(workspace, "storage", "interventions"), path).split(sep);
   if (campaignParts.length === 3 && campaignParts[0] && isIdentifier(campaignParts[0]) &&
     campaignParts[1] === "scripts" && campaignParts[2] && isScriptName(campaignParts[2])) {
     return { path, campaign: campaignParts[0], providerId: null };
   }
-  throw new Error("El script debe estar en storage/interventions/<campaña>/scripts/<archivo>.ts o interventions/<proveedor>/<archivo>.ts");
+  throw new Error("El script debe estar en storage/interventions/<campaña>/scripts/<archivo>.ts o src/catalog/interventions/records/<proveedor>/<archivo>.ts");
 };
 
 export const validateInterventionScriptSelection = (

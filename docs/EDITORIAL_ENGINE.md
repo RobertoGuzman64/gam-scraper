@@ -115,6 +115,6 @@ npm run editorial:auditar-reutilizacion
 npm run editorial:auditar-cobertura
 ```
 
-El primero escribe `reports/editorial-knowledge/audit.json` y el segundo `reports/editorial-coverage/audit.json`. Son herramientas de observación del motor actual, no procedimientos de migración ni mecanismos de publicación.
+El primero escribe `catalogs/reports/editorial-knowledge/audit.json` y el segundo `catalogs/reports/editorial-coverage/audit.json`. Son herramientas de observación del motor actual, no procedimientos de migración ni mecanismos de publicación.
 
 Consultar [Arquitectura](ARCHITECTURE.md), [Tests y guards](TESTING.md), [Mejora acreditada](CATALOG_QUALITY.md), [Reglas de datos](DATA_CONTRACTS.md) y [Validación](VALIDATION.md).

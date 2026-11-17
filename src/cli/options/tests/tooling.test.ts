@@ -152,12 +152,12 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
     assert.deepEqual(JSON.parse(migrationApply.stdout.trim()), ["--aplicar"]);
     assert.equal(migrationConflict.status, 1);
     const [campaignIntervention, manualIntervention] = await Promise.all([
-      run(fake, ["intervenir", "gam", "--script", "interventions/gam/6002.ts", "--aplicar"]),
+      run(fake, ["intervenir", "gam", "--script", "src/catalog/interventions/records/gam/6002.ts", "--aplicar"]),
       run(fake, ["intervenir:manual", "gam", "--origen", "catalogo-catalog.json", "--aplicar"])
     ]);
     assert.equal(campaignIntervention.status, 0, campaignIntervention.stderr);
     assert.deepEqual(JSON.parse(campaignIntervention.stdout.slice("CAMPAIGN ".length)),
-      ["gam", "--script", "interventions/gam/6002.ts", "--aplicar"]);
+      ["gam", "--script", "src/catalog/interventions/records/gam/6002.ts", "--aplicar"]);
     assert.equal(manualIntervention.status, 0, manualIntervention.stderr);
     assert.deepEqual(JSON.parse(manualIntervention.stdout.slice("MANUAL ".length)),
       ["gam", "--source", "catalogo-catalog.json", "--aplicar"]);

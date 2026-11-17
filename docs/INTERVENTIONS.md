@@ -23,7 +23,7 @@ No se admiten imágenes, identidad, referencia, serie, categoría ni precios. Un
 
 El sistema de intervenciones está reservado para correcciones **aisladas, excepcionales y acreditadas** que no se pueden expresar con seguridad como una regla común. Si varias fichas comparten un defecto del parser, las unidades, la deduplicación, las descripciones o la validación, **se corrige antes el código productivo**; no se crean decenas de scripts por referencia para conseguir `0 review`. Los scripts existentes tampoco se ejecutan automáticamente en campañas nuevas ni se convierten en un segundo normalizador permanente.
 
-También existen **reconciliaciones específicas productivas** y evidencias editoriales por identidad y huella en `src/preparation/<proveedor>/`, distintas de las intervenciones manuales de campaña: pueden ejecutarse durante la preparación por las guardas y el orden del motor, sin exigir aplicar un script de `interventions/`. Deben probarse con la unidad real, variante vecina y fuente distinta; tampoco autorizan aprobar manualmente una review. Para escoger entre reparar extracción, añadir una evidencia verificable o solicitar una decisión humana, consultar el [manual de mejora acreditada](CATALOG_QUALITY.md).
+También existen **reconciliaciones específicas productivas** y evidencias editoriales por identidad y huella en `src/preparation/<proveedor>/`, distintas de las intervenciones manuales de campaña: pueden ejecutarse durante la preparación por las guardas y el orden del motor, sin exigir aplicar un script de `src/catalog/interventions/records/`. Deben probarse con la unidad real, variante vecina y fuente distinta; tampoco autorizan aprobar manualmente una review. Para escoger entre reparar extracción, añadir una evidencia verificable o solicitar una decisión humana, consultar el [manual de mejora acreditada](CATALOG_QUALITY.md).
 
 La decisión humana no se reemplaza por una excepción automática. Si el proveedor publica una contradicción genuina sin evidencia concluyente, se conserva el bloqueo y la revisión editorial; **no se proclama un catálogo completo `ready` por excluirla**. Ver [Objetivos](CATALOG_OPERATIONS.md) y [Validación](VALIDATION.md).
 
@@ -43,22 +43,22 @@ La consulta obtiene metadatos, identidades, campos, motivos y evidencias mediant
 npm run intervenir -- gam --mantenimiento
 ```
 
-Este comando tampoco aplica cambios ni elimina scripts. El mantenimiento consulta el historial íntegro disponible y, bajo la retención de dos campañas globales, puede disponer de menos observaciones que en instalaciones anteriores; **no reconstruye un historial inexistente**. Una ausencia aislada no es suficiente para recomendar la retirada; cuando hay evidencia consecutiva y comparable propone una **revisión humana**, no un borrado automático. Tras comprobar la fuente y las campañas, se puede retirar **solo** el script afectado con `git rm -- interventions/gam/6002.ts` (ejemplo: ejecutar únicamente si realmente se decide retirar esa intervención).
+Este comando tampoco aplica cambios ni elimina scripts. El mantenimiento consulta el historial íntegro disponible y, bajo la retención de dos campañas globales, puede disponer de menos observaciones que en instalaciones anteriores; **no reconstruye un historial inexistente**. Una ausencia aislada no es suficiente para recomendar la retirada; cuando hay evidencia consecutiva y comparable propone una **revisión humana**, no un borrado automático. Tras comprobar la fuente y las campañas, se puede retirar **solo** el script afectado con `git rm -- src/catalog/interventions/records/gam/6002.ts` (ejemplo: ejecutar únicamente si realmente se decide retirar esa intervención).
 
 ## Crear y simular una intervención permanente
 
-Tras `npm run extraer` y `npm run revisar`, identificar el problema concreto y contrastar los valores con la ficha vigente. Añadir un archivo `.ts` independiente bajo `interventions/<proveedor>/<archivo>.ts`, bajo control de Git. Debe exportar **dos declaraciones estáticas**:
+Tras `npm run extraer` y `npm run revisar`, identificar el problema concreto y contrastar los valores con la ficha vigente. Añadir un archivo `.ts` independiente bajo `src/catalog/interventions/records/<proveedor>/<archivo>.ts`, bajo control de Git. Debe exportar **dos declaraciones estáticas**:
 
 - `metadata`: objeto con `id` estable y exclusivo (prefijo `<proveedor>-`) y `summary` descriptivo no vacío.
 - `proposals`: array no vacío de propuestas con `providerId`, `identity`, `field`, `expected`, `next`, `reason` y `evidence`.
 
 No duplicar en `metadata` datos ya deducibles de `proposals`. `identity` procede de `buildProductIdentity` sobre el catálogo original; `expected` debe coincidir con la fuente vigente y `next` exige evidencia actual. Se rechazan imports ejecutables, valores computados y propuestas de otro proveedor. No se deben utilizar scripts no revisados: la consulta es estática, pero **la aplicación sí evalúa TypeScript de confianza**.
 
-Se incluyen `interventions/gam/6002.ts`, `6003.ts` y `6004.ts` como casos reales, cada uno retirable sin los demás. Para simular uno o varios scripts seleccionados:
+Se incluyen `src/catalog/interventions/records/gam/6002.ts`, `6003.ts` y `6004.ts` como casos reales, cada uno retirable sin los demás. Para simular uno o varios scripts seleccionados:
 
 ```powershell
-npm run intervenir -- gam --script interventions/gam/6002.ts
-npm run intervenir -- gam --script interventions/gam/6002.ts --script interventions/gam/6003.ts
+npm run intervenir -- gam --script src/catalog/interventions/records/gam/6002.ts
+npm run intervenir -- gam --script src/catalog/interventions/records/gam/6002.ts --script src/catalog/interventions/records/gam/6003.ts
 ```
 
 La comparación muestra intervenciones pendientes, corregidas en origen, ausentes, parciales o divergentes. Las corregidas en origen y las ausentes **no se reaplican**; las parciales o divergentes bloquean el conjunto. Ningún script se ejecuta por existir en Git o por figurar en el catálogo.
@@ -70,7 +70,7 @@ La comparación muestra intervenciones pendientes, corregidas en origen, ausente
 Cuando la simulación sea correcta, repetir la operación indicando los mismos scripts y la autorización explícita `--aplicar`:
 
 ```powershell
-npm run intervenir -- gam --script interventions/gam/6002.ts --aplicar
+npm run intervenir -- gam --script src/catalog/interventions/records/gam/6002.ts --aplicar
 ```
 
 Este comando recalcula y valida el plan contra el origen, aplica los cambios **en un derivado**, verifica el expediente y las huellas, y prepara y valida la ficha corregida. Los catálogos originales permanecen intactos. Si el derivado de ese plan ya existe y es íntegro, puede recuperarse una preparación interrumpida sin duplicar la intervención. Una discrepancia del origen o del plan bloquea la aplicación.
@@ -88,7 +88,7 @@ Si antes existía un borrador aprobado, la preparación intervenida genera **otr
 
 `npm run intervenir:manual`, `intervenir:preparar` e `intervenir:validar` mantienen sus contratos explícitos de rutas y SHA para diagnóstico o mantenimiento. El flujo `intervenir` reduce ese trabajo manual, pero **no sustituye la decisión humana**. Un script TypeScript de intervención se ejecuta como código local de confianza al aplicarlo: verificar su procedencia y revisar la simulación; no es un sandbox frente a código malicioso.
 
-La rotación automática conserva los resultados y derivados mientras la campaña siga retenida; cuando la más antigua ya puede retirarse, solo admite rutas y archivos reconocidos tras verificar las entregas por `runId`. Los scripts históricos situados en `storage/interventions/<id-lote>/scripts/` quedan protegidos por compatibilidad. Los scripts permanentes de `interventions/` están versionados en Git y nunca se retiran con una campaña. No existe un paso de limpieza manual ordinaria tras entregar.
+La rotación automática conserva los resultados y derivados mientras la campaña siga retenida; cuando la más antigua ya puede retirarse, solo admite rutas y archivos reconocidos tras verificar las entregas por `runId`. Los scripts históricos situados en `storage/interventions/<id-lote>/scripts/` quedan protegidos por compatibilidad. Los scripts permanentes de `src/catalog/interventions/records/` están versionados en Git y nunca se retiran con una campaña. No existe un paso de limpieza manual ordinaria tras entregar.
 
 Referencias: [Campañas](CAMPAIGNS.md), [Acreditación](CAMPAIGNS.md), [Composición de intervenciones](INTERVENTIONS.md), [Validación](VALIDATION.md).
 
@@ -98,7 +98,7 @@ Las rutas avanzadas y el esquema de propuestas no sustituyen el circuito ordinar
 
 ### Scripts independientes y composición
 
-Los scripts reutilizables viven bajo `interventions/<proveedor>/<archivo>.ts` y se versionan en Git, idealmente uno por máquina o incidencia que pueda retirarse individualmente. Cada script declara `metadata` con identificador y resumen estáticos, y `proposals` con las correcciones acreditadas. **No** deben copiarse ni registrarse para cada campaña.
+Los scripts reutilizables viven bajo `src/catalog/interventions/records/<proveedor>/<archivo>.ts` y se versionan en Git, idealmente uno por máquina o incidencia que pueda retirarse individualmente. Cada script declara `metadata` con identificador y resumen estáticos, y `proposals` con las correcciones acreditadas. **No** deben copiarse ni registrarse para cada campaña.
 
 Cada `ManualInterventionProposal` contiene `providerId`, `identity`, `field`, `expected`, `next`, `reason` y `evidence`. La identidad sale de `buildProductIdentity` y el valor esperado debe coincidir con **el catálogo vigente**. Se admiten título, descripciones, marca, modelo y atributos técnicos **existentes** mediante `field: "spec:<nombre exacto del atributo>"`. Los atributos admiten valores originales del tipo `SpecValue`, sin borrar atributos ni añadir nombres nuevos. Los cambios de texto usan `string | null`. Se rechazan fotografías, números de serie, referencias, URL, categorías y otros identificadores. El hecho de que una marca o un modelo existan en otra publicación no demuestra que correspondan a la unidad concreta.
 
@@ -111,13 +111,13 @@ Las rutas antiguas `storage/interventions/<campana>/scripts/` siguen admitidas p
 Desde la raíz del proyecto, sustituyendo los marcadores por rutas existentes:
 
 ```powershell
-npm run intervenir:manual -- gam --script interventions/gam/6002.ts --script interventions/gam/6003.ts --origen <catalogo-catalog.json> --detalle
+npm run intervenir:manual -- gam --script src/catalog/interventions/records/gam/6002.ts --script src/catalog/interventions/records/gam/6003.ts --origen <catalogo-catalog.json> --detalle
 ```
 
 El resultado muestra el SHA del plan y el antes/después, sin modificar catálogos. Tras comprobar cada cambio y aprobarlo manualmente:
 
 ```powershell
-npm run intervenir:manual -- gam --script interventions/gam/6002.ts --script interventions/gam/6003.ts --origen <catalogo-catalog.json> --campana <campana> --aplicar --plan <sha256-completo>
+npm run intervenir:manual -- gam --script src/catalog/interventions/records/gam/6002.ts --script src/catalog/interventions/records/gam/6003.ts --origen <catalogo-catalog.json> --campana <campana> --aplicar --plan <sha256-completo>
 ```
 
 La salida es **un único** `storage/interventions/<campana>/results/<sha>/catalog-derived.json` y su `intervention-record.json`, con registro de los scripts seleccionados y cambios. El catálogo canónico y su manifest permanecen intactos. No editar manualmente el resultado.

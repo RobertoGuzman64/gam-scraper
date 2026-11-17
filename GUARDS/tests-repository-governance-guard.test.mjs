@@ -65,7 +65,7 @@ test("rechaza superar el máximo de scripts desde cualquier carpeta", (t) => {
   const value = fixture(t);
   value.write("tools/new.py", "print(1)\n");
   value.write("docs/hidden.sh", "echo fail\n");
-  value.write("interventions/gam/123.ts", "export const id = '123';\n");
+  value.write("scripts/123.ts", "export const id = '123';\n");
   assert.ok(findings(value).some((item) => item.includes("Exceso de scripts: 4 (máximo 1)")));
 });
 

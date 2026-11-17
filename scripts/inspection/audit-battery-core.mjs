@@ -121,7 +121,7 @@ const renderSummary = (report) => {
 export const runAuditBattery = async ({ root, outDirectory, timeoutMs = 240_000,
   execute = executeNode, prepare = null, sources = readSources } = {}) => {
   const workspace = resolve(root ?? dirname(dirname(dirname(fileURLToPath(import.meta.url)))));
-  const parent = resolve(outDirectory ?? join(workspace, "reports", "audit-battery"));
+  const parent = resolve(outDirectory ?? join(workspace, "catalogs", "reports", "audit-battery"));
   await mkdir(parent, { recursive: true });
   const output = await mkdtemp(join(parent, "corte-"));
   const startedAt = new Date().toISOString();
@@ -203,6 +203,6 @@ export const runAuditBattery = async ({ root, outDirectory, timeoutMs = 240_000,
     stages: { originales: "fuentes.json", preparado: "NO_EVALUADO", publicado: "fuentes.json",
       snapshotTecnico: "fuentes.json", auditado: `${audits.length} modos`, exportado: "NO_EVALUADO" } };
   await writeFile(join(output, "manifest.json"), JSON.stringify(report, null, 2) + "\n");
-  await writeFile(join(output, "resumen.md"), renderSummary(report));
+  await writeFile(join(output, "resumen.txt"), renderSummary(report));
   return { output, report };
 };

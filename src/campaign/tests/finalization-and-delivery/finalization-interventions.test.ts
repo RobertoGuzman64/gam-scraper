@@ -53,7 +53,7 @@ test("utiliza un script permanente directamente y mantiene el expediente del lot
   const data = await fixture();
   try {
     const temporal = await campaignScript(data.root, data.runId);
-    const folder = join(data.root, "interventions", "gam");
+    const folder = join(data.root, "src", "catalog", "interventions", "records", "gam");
     await mkdir(folder, { recursive: true });
     const permanent = join(folder, "correccion.ts");
     const source = await readFile(temporal, "utf8");
@@ -86,7 +86,7 @@ test("compone intervenciones versionadas en una campaña nueva sin duplicar las 
     const second = catalog.products.find((product) => product.title !== null &&
       buildProductIdentity(product).key !== JSON.parse(original.slice(original.indexOf("["), original.lastIndexOf("]") + 1))[0]?.identity);
     assert.ok(second?.title);
-    const folder = join(data.root, "interventions", "gam");
+    const folder = join(data.root, "src", "catalog", "interventions", "records", "gam");
     await mkdir(folder, { recursive: true });
     const scripts = ["pendiente.ts", "corregida.ts", "ausente.ts"].map((name) => join(folder, name));
     await writeFile(scripts[0]!, `export const metadata = { id: "gam-pendiente", summary: "Corrección pendiente" };\n${original}`);
@@ -118,7 +118,7 @@ test("bloquea divergencias y alteraciones de scripts permanentes antes de genera
   try {
     const temporal = await campaignScript(data.root, data.runId);
     const original = await readFile(temporal, "utf8");
-    const folder = join(data.root, "interventions", "gam");
+    const folder = join(data.root, "src", "catalog", "interventions", "records", "gam");
     await mkdir(folder, { recursive: true });
     const permanent = join(folder, "correccion.ts");
     await writeFile(permanent, `export const metadata = { id: "gam-correccion", summary: "Cambio de ficha" };\n${original}`);

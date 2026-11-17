@@ -17,6 +17,7 @@ scripts/                    Entradas, runner, tooling, inspección, mantenimient
 src/
   campaign/                Orquestación global, entrega, referencia y retención
   catalog/                 Identidad, calidad, normalización, cobertura, editorial y diagnósticos
+    interventions/records/ Intervenciones manuales permanentes y acreditadas
   cli/                     Comandos, opciones y presentación de informes
   commercial/              Proyección comercial, validación, exportación y compatibilidad legada
   contracts/               Contratos compartidos de datos y proveedores
@@ -27,7 +28,6 @@ src/
   shared/                  Utilidades transversales
   testing/                 Fixtures y builders de pruebas
   tools/                   Herramientas internas de catálogo y semillas GAM
-interventions/             Scripts de intervención acreditables
 catalogs/providers/        Originales completos, publicaciones individuales y snapshots técnicos portátiles
 catalogs/campaigns/        Instantáneas acreditadas de campañas globales
 storage/                   Trabajo y recuperación locales, excluidos de Git

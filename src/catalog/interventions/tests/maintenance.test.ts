@@ -22,7 +22,7 @@ const proposal = {
   evidence: "https://proveedor.example/6002"
 };
 const intervention: CatalogIntervention = {
-  script: "interventions/gam/6002.ts", metadata: { id: "gam-6002", summary: "Corrige marca" },
+  script: "src/catalog/interventions/records/gam/6002.ts", metadata: { id: "gam-6002", summary: "Corrige marca" },
   providerId: "gam", identities: [proposal.identity], fields: ["brand"], proposals: [proposal]
 };
 const catalog = (prefix: string, products: readonly ProductRecord[]) => parseCanonicalCatalog({

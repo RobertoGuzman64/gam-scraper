@@ -120,7 +120,7 @@ export const readCatalogIntervention = (script: string, workspaceRoot = process.
 
 export const readInterventionCatalog = (providerId: string, workspaceRoot = process.cwd()): readonly CatalogIntervention[] => {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(providerId)) throw new Error("Proveedor inválido");
-  const directory = join(workspaceRoot, "interventions", providerId);
+  const directory = join(workspaceRoot, "src", "catalog", "interventions", "records", providerId);
   if (!existsSync(directory)) return [];
   const entries = readdirSync(directory, { withFileTypes: true })
     .filter((entry) => entry.name.endsWith(".ts") && !entry.name.endsWith(".d.ts"))

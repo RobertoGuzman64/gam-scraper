@@ -75,7 +75,7 @@ for (const provider of ['gam','gomariz','mercaeleva']) {
   for (const key of keys) report.total[key] += stats[key];
 }
 report.provenance.complete = report.errors.length === 0;
-const folder = resolve(root, 'reports/editorial-coverage');
+const folder = resolve(root, 'catalogs/reports/editorial-coverage');
 mkdirSync(folder, { recursive: true });
 writeFileSync(resolve(folder, 'audit.json'), JSON.stringify(report, null, 2) + '\n');
 console.log(`AUDITORÍA EDITORIAL | COBERTURA SIN PUBLICACIÓN | originales canónicos ${report.total.records} · ${report.total.ready} ready por lote · ${report.total.review} revisión · ${report.total.exceptions} excepciones`);

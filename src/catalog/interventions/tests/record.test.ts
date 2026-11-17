@@ -14,7 +14,7 @@ const legacy = {
 };
 const versioned = {
   ...legacy, version: 2, scripts: ["6002.ts"],
-  scriptVersions: [{ id: "gam-6002", script: "interventions/gam/6002.ts", sha256: "d".repeat(64) }]
+  scriptVersions: [{ id: "gam-6002", script: "src/catalog/interventions/records/gam/6002.ts", sha256: "d".repeat(64) }]
 };
 
 test("expedientes: mantiene lectura íntegra del formato anterior", () => {
@@ -25,13 +25,15 @@ test("expedientes: mantiene lectura íntegra del formato anterior", () => {
 
 test("expedientes: versión 2 conserva identidad, ruta y SHA y rechaza procedencia alterada", () => {
   assert.deepEqual(parseAppliedInterventionRecord(versioned), versioned);
+  const historical = { ...versioned, scriptVersions: [{ ...versioned.scriptVersions[0], script: "interventions/gam/6002.ts" }] };
+  assert.deepEqual(parseAppliedInterventionRecord(historical), historical);
   const altered = [
     { ...versioned, scriptVersions: [] },
     { ...versioned, scriptVersions: [{ ...versioned.scriptVersions[0], sha256: "invalida" }] },
     { ...versioned, scriptVersions: [{ ...versioned.scriptVersions[0], id: "gomariz-6002" }] },
     { ...versioned, scriptVersions: [{ ...versioned.scriptVersions[0], script: "interventions/gomariz/6002.ts" }] },
     { ...versioned, scriptVersions: [{ ...versioned.scriptVersions[0], script: "../6002.ts" }] },
-    { ...versioned, scriptVersions: [{ ...versioned.scriptVersions[0], script: "interventions/gam/otro.ts" }] },
+    { ...versioned, scriptVersions: [{ ...versioned.scriptVersions[0], script: "src/catalog/interventions/records/gam/otro.ts" }] },
     { ...versioned, scriptVersions: [...versioned.scriptVersions, ...versioned.scriptVersions] },
     { ...legacy, scriptVersions: versioned.scriptVersions }
   ];

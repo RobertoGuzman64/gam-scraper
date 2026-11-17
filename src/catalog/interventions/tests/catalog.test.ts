@@ -17,7 +17,7 @@ const content = (metadata = { id: "gam-prueba", summary: "Corrige la marca de la
 
 const fixture = (): { root: string; script: string; cleanup: () => void } => {
   const root = mkdtempSync(join(tmpdir(), "catalogo-intervenciones-"));
-  const directory = join(root, "interventions", "gam");
+  const directory = join(root, "src", "catalog", "interventions", "records", "gam");
   mkdirSync(directory, { recursive: true });
   const script = join(directory, "maquina.ts");
   writeFileSync(script, content());
@@ -34,7 +34,7 @@ test("catálogo estático: deriva proveedor, máquinas, campos, motivos y eviden
     assert.deepEqual(found[0]?.identities, ["gam:ref:prueba"]);
     assert.deepEqual(found[0]?.fields, ["brand"]);
     assert.deepEqual(found[0]?.proposals, [base]);
-    assert.equal(found[0]?.script, "interventions/gam/maquina.ts");
+    assert.equal(found[0]?.script, "src/catalog/interventions/records/gam/maquina.ts");
     assert.deepEqual(readFileSync(script), before);
     assert.deepEqual(readInterventionCatalog("gomariz", root), []);
   } finally {
@@ -70,7 +70,7 @@ test("catálogo estático: metadatos y propuestas incompletas, incoherentes o re
     writeFileSync(script, content(undefined, [{ ...base, evidence: "" }]));
     assert.throws(() => readInterventionCatalog("gam", root), /evidence/);
     writeFileSync(script, content());
-    writeFileSync(join(root, "interventions", "gam", "duplicada.ts"), content());
+    writeFileSync(join(root, "src", "catalog", "interventions", "records", "gam", "duplicada.ts"), content());
     assert.throws(() => readInterventionCatalog("gam", root), /Identificador duplicado/);
   } finally {
     cleanup();

@@ -99,7 +99,7 @@ const printHelp = (requested) => {
     console.log("  npm run intervenir -- gam --listar");
     console.log("  npm run intervenir -- gam --consultar gam-6002");
     console.log("  npm run intervenir -- gam --mantenimiento");
-    console.log("  npm run intervenir -- gam --script interventions/gam/6002.ts");
+    console.log("  npm run intervenir -- gam --script src/catalog/interventions/records/gam/6002.ts");
     console.log("  npm run acreditar");
     console.log("  npm run acreditar -- --listar");
     console.log("  npm run acreditar -- --consultar gam 6682");

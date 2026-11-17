@@ -64,7 +64,7 @@ test("clasifica inconcluso, hallazgo real y error técnico sin convertirlos en P
 
 test("una única invocación produce 11 resultados, fuentes, JSON nativo y nada obsoleto", async () => {
   await withWorkspace(async (root) => {
-    const parent = join(root, "reports", "audit-battery");
+    const parent = join(root, "catalogs", "reports", "audit-battery");
     await mkdir(join(parent, "corte-anterior"), { recursive: true });
     await writeFile(join(parent, "corte-anterior", "manifest.json"), "ANTIGUO");
     const options = { root, outDirectory: parent, execute: fakeAudit,
@@ -91,7 +91,7 @@ test("una única invocación produce 11 resultados, fuentes, JSON nativo y nada 
     assert.equal(first.report.audits.filter((item) => item.json !== null).length, 7);
     assert.equal((await readdir(join(first.output, "resultados"))).filter((item) => item.endsWith(".json")).length, 7);
     assert.equal(await readFile(join(parent, "corte-anterior", "manifest.json"), "utf8"), "ANTIGUO");
-    assert.match(await readFile(join(first.output, "resumen.md"), "utf8"), /originales canónicos no equivalen a una preparación/u);
+    assert.match(await readFile(join(first.output, "resumen.txt"), "utf8"), /originales canónicos no equivalen a una preparación/u);
     assert.equal(first.report.audits.find((item) => item.id === "comparar")?.auditCoverage?.incompleteSource, 1);
   });
 });

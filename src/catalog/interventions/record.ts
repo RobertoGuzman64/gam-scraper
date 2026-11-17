@@ -49,7 +49,7 @@ const isScriptVersions = (value: unknown, providerId: string): value is Versione
     if (!isRecord(entry) || Object.keys(entry).length !== 3 ||
       typeof entry.id !== "string" || !new RegExp(`^${providerId}-[a-z0-9]+(?:-[a-z0-9]+)*$`).test(entry.id) ||
       typeof entry.script !== "string" ||
-      !new RegExp(`^interventions/${providerId}/[a-zA-Z0-9_-]+\\.ts$`).test(entry.script) ||
+      !new RegExp(`^(?:interventions|src/catalog/interventions/records)/${providerId}/[a-zA-Z0-9_-]+\\.ts$`).test(entry.script) ||
       !isSha(entry.sha256) || identifiers.has(entry.id) || paths.has(entry.script)) return false;
     identifiers.add(entry.id);
     paths.add(entry.script);

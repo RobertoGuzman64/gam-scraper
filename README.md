@@ -136,7 +136,7 @@ npm run estado
 
 `entregar` genera en el Escritorio `equipzilla-AAAA-MM-DD-<runId>.zip` con **exactamente cuatro JSON**: `gam-AAAA-MM-DD.json`, `gomariz-AAAA-MM-DD.json`, `mercaeleva-AAAA-MM-DD.json` y `manain-AAAA-MM-DD.json`. El `runId` diferencia entregas del mismo día: un ZIP existente no se sobrescribe y una campaña con recibo no se entrega dos veces. La entrega guarda su recibo y evidencias locales bajo la campaña, sin depender indefinidamente del ZIP del Escritorio. Los originales se conservan mientras la campaña siga retenida; **no hay que actualizar `data/reference/` ni ejecutar limpieza manual**. La retirada automática ocurre al admitir una nueva campaña y se bloquea si hay entregas sin acreditar, trabajos pendientes, rutas desconocidas o referencias heredadas sin resolver.
 
-Si una ficha necesita una corrección puntual acreditada, consulta los scripts existentes con `npm run intervenir -- gam --listar` y simula uno seleccionado con `npm run intervenir -- gam --script interventions/gam/6002.ts`. Tras revisar las diferencias, autoriza expresamente `--aplicar` para ese script. Cada intervención nueva se guarda en `interventions/<proveedor>/` y se versiona en Git; no se registra en `storage/`. No hay cambios ni aprobaciones editoriales automáticas. Ver [Campañas](docs/CAMPAIGNS.md) e [Intervenciones](docs/INTERVENTIONS.md).
+Si una ficha necesita una corrección puntual acreditada, consulta los scripts existentes con `npm run intervenir -- gam --listar` y simula uno seleccionado con `npm run intervenir -- gam --script src/catalog/interventions/records/gam/6002.ts`. Tras revisar las diferencias, autoriza expresamente `--aplicar` para ese script. Cada intervención nueva se guarda en `src/catalog/interventions/records/<proveedor>/` y se versiona en Git; no se registra en `storage/`. No hay cambios ni aprobaciones editoriales automáticas. Ver [Campañas](docs/CAMPAIGNS.md) e [Intervenciones](docs/INTERVENTIONS.md).
 
 ### Publicación individual simplificada — Preparar y FINISH
 
@@ -251,7 +251,7 @@ Las operaciones GAM con rutas preconfiguradas son **herramientas de compatibilid
 - `storage/providers/<proveedor>/editorial/`: borrador y aprobación individual ligados a la huella vigente de la preparación; aún no representan una entrega.
 - `storage/campaigns/<id-lote>/selection/`: selección interna acreditada (no se entrega completa al usuario).
 - `storage/campaigns/<runId>/delivery.json`: recibo local de entrega vinculado a la selección; no es un reemplazo del ZIP físico.
-- `interventions/<proveedor>/`: scripts permanentes con ID, resumen y propuestas, versionados en Git.
+- `src/catalog/interventions/records/<proveedor>/`: scripts permanentes con ID, resumen y propuestas, versionados en Git.
 - `storage/interventions/<id-lote>/results/`: expedientes y derivados del lote, no versionados.
 - `storage/interventions/<id-lote>/scripts/`: solo compatibilidad con scripts antiguos; se protegen si aún existen.
 - `data/reference/`: almacén legado opcional de inventario con manifiesto y diferencias, incluida lectura compatible de referencias históricas de tres proveedores; no se actualiza como paso ordinario de campaña.

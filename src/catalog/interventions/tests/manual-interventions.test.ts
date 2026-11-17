@@ -110,10 +110,10 @@ test("rechaza falta de proposals y scripts con valores dinámicos incorrectos", 
 
 test("admite scripts permanentes del proveedor sin registrar copias y rechaza rutas ajenas", async () => {
   const root = mkdtempSync(join(tmpdir(), "intervencion-versionada-"));
-  const folder = join(root, "interventions", "gam");
+  const folder = join(root, "src", "catalog", "interventions", "records", "gam");
   mkdirSync(folder, { recursive: true });
   const script = join(folder, "maquina.ts");
-  const otherProvider = join(root, "interventions", "gomariz");
+  const otherProvider = join(root, "src", "catalog", "interventions", "records", "gomariz");
   mkdirSync(otherProvider);
   const mismatched = join(otherProvider, "maquina.ts");
   const external = join(root, "fuera.ts");

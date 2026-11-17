@@ -156,7 +156,7 @@ export const inspectPortableInventory = async (
   try {
     rootAvailable = await directoryExists(catalogRoot);
     if (rootAvailable) {
-      await checkKnownEntries(catalogRoot, ["providers", "campaigns", "active.json"], issues);
+      await checkKnownEntries(catalogRoot, ["providers", "campaigns", "reports", "active.json"], issues);
       await readActiveCatalogIndex(root);
       await checkKnownEntries(join(catalogRoot, "providers"), CAMPAIGN_PROVIDERS, issues);
     }

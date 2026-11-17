@@ -54,6 +54,20 @@ test("sin catalogs ni storage inventaría ausencias sin crear directorios", asyn
   }
 });
 
+test("admite informes en catalogs/reports sin admitir entradas desconocidas en la raíz", async () => {
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-inventory-reports-"));
+  try {
+    const directory = join(root, "catalogs", "reports", "revision");
+    await mkdir(directory, { recursive: true });
+    await writeFile(join(directory, "categorias-sin-asignar.csv"), "referencia,categoria\n");
+    const valid = await inspectPortableInventory(root, input(root));
+    assert.deepEqual(valid.issues, []);
+    await writeFile(join(root, "catalogs", "desconocido.txt"), "entrada no acreditada");
+    const invalid = await inspectPortableInventory(root, input(root));
+    assert.ok(invalid.issues.some((issue) => issue.includes("desconocido.txt")));
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
 test("original local pendiente, sincronizado y portátil autónomo sin storage", async () => {
   await withOriginal(async (root) => {
     const pending = await inspectPortableInventory(root, input(root));

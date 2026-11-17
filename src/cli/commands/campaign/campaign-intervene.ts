@@ -17,8 +17,8 @@ const help = `Uso:
   npm run intervenir -- gam --consultar gam-6002
   npm run intervenir -- gam --consultar gam:ref:6002
   npm run intervenir -- gam --mantenimiento
-  npm run intervenir -- gam --script interventions/gam/6002.ts [--script <otro.ts> ...]
-  npm run intervenir -- gam --script interventions/gam/6002.ts --aplicar
+  npm run intervenir -- gam --script src/catalog/interventions/records/gam/6002.ts [--script <otro.ts> ...]
+  npm run intervenir -- gam --script src/catalog/interventions/records/gam/6002.ts --aplicar
 
 Las consultas y mantenimiento son de solo lectura, sin ejecutar scripts.
 Los scripts antiguos en storage/interventions/<lote>/scripts/ solo se admiten por compatibilidad.
@@ -109,7 +109,7 @@ export const runCampaignIntervention = async (args: readonly string[]): Promise<
     const arg = rest[index];
     if (arg === "--aplicar" && !apply) { apply = true; continue; }
     if (arg === "--registrar") {
-      throw new Error("--registrar fue retirado: guarda cada script en interventions/<proveedor>/ y selecciona --script");
+      throw new Error("--registrar fue retirado: guarda cada script en src/catalog/interventions/records/<proveedor>/ y selecciona --script");
     }
     if (arg !== "--script" || !rest[index + 1] || rest[index + 1]?.startsWith("--")) {
       throw new Error(`Opción desconocida, repetida o incompleta: ${arg ?? ""}`);

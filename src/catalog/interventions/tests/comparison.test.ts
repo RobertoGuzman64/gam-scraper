@@ -30,7 +30,7 @@ const catalog = (current: ProductRecord) => parseCanonicalCatalog({
   startedAt: "2026-10-25T10:00:00.000Z", endedAt: "2026-10-25T10:02:00.000Z",
   quality: { status: "complete", published: true }, productCount: 1, products: [current]
 });
-const selected = (changes: readonly ManualInterventionProposal[], script = "interventions/gam/6002.ts") =>
+const selected = (changes: readonly ManualInterventionProposal[], script = "src/catalog/interventions/records/gam/6002.ts") =>
   ({ script, proposals: changes });
 
 test("comparación: identifica pendiente, corregida, ausente y divergente sin alterar el origen", () => {
@@ -72,14 +72,14 @@ test("comparación: bloquea campos corregidos parcialmente en un mismo script", 
 
 test("comparación: compone solo scripts completamente pendientes y no duplica lo ya corregido", () => {
   const result = compareInterventionScripts(catalog(product), [
-    selected([brand], "interventions/gam/6002.ts"),
-    selected([proposal("model", "MODELO", "MODELO-CORREGIDO", "gam:ref:no-existe")], "interventions/gam/6003.ts")
+    selected([brand], "src/catalog/interventions/records/gam/6002.ts"),
+    selected([proposal("model", "MODELO", "MODELO-CORREGIDO", "gam:ref:no-existe")], "src/catalog/interventions/records/gam/6003.ts")
   ]);
   assert.deepEqual(result.pending, [brand]);
   assert.deepEqual(result.scripts.map((script) => script.status), ["pending", "absent"]);
   assert.equal(result.blocked, false);
   const changed = compareInterventionScripts(catalog({ ...product, brand: "HYSTER" }), [
-    selected([brand]), selected([spec], "interventions/gam/6003.ts")
+    selected([brand]), selected([spec], "src/catalog/interventions/records/gam/6003.ts")
   ]);
   assert.deepEqual(changed.pending, [spec]);
   assert.deepEqual(changed.scripts.map((script) => script.status), ["corrected", "pending"]);

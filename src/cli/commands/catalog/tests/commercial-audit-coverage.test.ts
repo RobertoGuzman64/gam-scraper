@@ -10,10 +10,8 @@ test("la auditoría comercial conserva los bloqueos reales y distingue fuentes a
   const root = await readCommercialBaselineRoot();
   try {
     const complete = await auditCommercialCatalogWithCoverage(root, false);
-    assert.deepEqual(complete.report.providers.map((provider) => provider.baseline.providerId), ["gomariz", "mercaeleva"]);
-    assert.deepEqual(complete.auditCoverage?.failures.map(({ providerId, category, detail }) => ({ providerId, category, detail })), [
-      { providerId: "gam", category: "ERROR", detail: "Categoría comercial no válida para gam:ref:2071: 11" }
-    ]);
+    assert.deepEqual(complete.report.providers.map((provider) => provider.baseline.providerId), ["gam", "gomariz", "mercaeleva"]);
+    assert.deepEqual(complete.auditCoverage?.failures, []);
     const gomarizOriginal = join(root, "catalogs", "providers", "gomariz", "original");
     await rm(gomarizOriginal, { recursive: true, force: true });
     await cp(join(process.cwd(), "catalogs", "providers", "gomariz", "original"), gomarizOriginal, { recursive: true });

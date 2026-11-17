@@ -8,6 +8,7 @@ dist/
 
 /storage/
 *.csv
+!catalogs/reports/revision/categorias-sin-asignar.csv
 *.zip
 
 output/

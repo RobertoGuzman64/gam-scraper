@@ -15,17 +15,14 @@ test("preflight comercial usa tres proveedores y acredita el corte sin fecha inv
   try {
     const result = await inspectCommercialExportPreflight(fixture.root, "develop");
     assert.deepEqual(result.publications.map((item) => item.providerId), ["gam", "gomariz", "mercaeleva"]);
-    assert.deepEqual(result.failures, [
-      { source: "gam", providerId: "gam", category: "ERROR",
-        detail: "Categoría comercial no válida para gam:ref:2071: 11" }
-    ]);
+    assert.deepEqual(result.failures, []);
     assert.deepEqual(result.globalFailures, []);
     assert.ok(result.publications.every((item) => item.products > 0 && /^[a-f0-9]{64}$/u.test(item.publicationSha256)));
     const lines = renderCommercialExportPreflight(result, "develop").join("\n");
     assert.match(lines, /Fecha de publicación: no declarada/);
-    assert.match(lines, /publicaciones inspeccionadas con bloqueos/);
-    assert.match(lines, /paquete comercial NO GENERADO/);
-    assert.match(lines, /ERROR \| gam \| Categoría comercial no válida para gam:ref:2071: 11/);
+    assert.match(lines, /publicaciones vigentes REUTILIZADAS/);
+    assert.match(lines, /paquete comercial AÚN NO GENERADO/);
+    assert.doesNotMatch(lines, /Categoría comercial no válida para gam:ref:2071: 11/);
     assert.doesNotMatch(lines, /PUBLICACIÓN VIGENTE \| manain/u);
   } finally { await fixture.cleanup(); }
 });

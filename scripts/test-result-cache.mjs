@@ -5,7 +5,7 @@ import { extname, join, relative, resolve } from "node:path";
 
 const VERSION = 4;
 const CACHE_PATH = resolve("dist", ".test-results-cache.json");
-const DATA_DIRECTORIES = ["catalogs", "data", "interventions", "docs"];
+const DATA_DIRECTORIES = ["catalogs", "data", "docs"];
 const SOURCE_DIRECTORIES = ["src", "scripts"];
 const ROOT_FILES = ["README.md", "package.json", "package-lock.json", "tsconfig.json", ".gitattributes", ".gitignore",
   ".env", ".env.local", ".env.test", ".env.test.local",
