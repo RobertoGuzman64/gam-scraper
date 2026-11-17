@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { resolve } from "node:path";
+import { existsSync, readdirSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   ts, makeProject, visitNodes, isTest, findIssue,
@@ -14,6 +15,102 @@ const catalogPath = (value) => /catalogs\s*[/\\]\s*providers\s*[/\\]/iu.test(val
   /(?:original|publications|technical|catalog\.json|publishable)/iu.test(value);
 const historicalFixture = (value) => /(?:src\/testing\/fixtures\/|testing\/fixtures\/)/iu.test(value) &&
   /(?:regression[-_/]\d+|(?:scrape|catalog)[\w-]*20\d\d|(?:catalog|publishable)\.json)/iu.test(value);
+
+const testingRoots = new Set(["builders", "domain-cases", "fixtures", "integration"]);
+const integrationRoots = new Set(["catalog", "commercial", "preparation"]);
+const establishedPreparationHelpers = new Set([
+  "src/preparation/testing/category-slug-resolver.ts",
+  "src/preparation/testing/gam-verified-basket-dimensions.ts",
+  "src/preparation/testing/mapping-fixtures.ts",
+  "src/preparation/testing/require-product-reference.ts",
+  "src/preparation/testing/preparation-fixtures.ts",
+  "src/preparation/testing/prepare-cached.ts"
+]);
+const testOrchestrator = /(?:^|[-_.])(?:runner|reporter|orchestrator|scheduler|test-executor|test-worker)(?:[-_.]|$)/iu;
+const restrictedExecutionModule = new Set(["node:child_process", "child_process", "node:worker_threads", "worker_threads"]);
+
+const testSuiteLocation = (path) => {
+  if (path.startsWith("src/testing/")) {
+    return path.startsWith("src/testing/integration/") || path.startsWith("src/testing/builders/tests/");
+  }
+  return path.includes("/tests/") || /^src\/preparation\/gam\/technical\/.+\.(?:test|spec)\.(?:ts|tsx|mts|js|mjs|cjs)$/u.test(path);
+};
+
+const checkTestLayout = (project, visit) => {
+  const testingDirectory = join(project.root, "src", "testing");
+  if (existsSync(testingDirectory)) {
+    for (const entry of readdirSync(testingDirectory, { withFileTypes: true })) {
+      if (!testingRoots.has(entry.name) || !entry.isDirectory()) {
+        visit("T-TESTING-ROOT", `src/testing/${entry.name}`,
+          "El soporte compartido de tests solo puede estar en builders, domain-cases, fixtures o integration");
+      }
+    }
+  }
+  const integrationDirectory = join(testingDirectory, "integration");
+  if (existsSync(integrationDirectory)) {
+    const pending = [{ directory: integrationDirectory, path: "src/testing/integration" }];
+    while (pending.length > 0) {
+      const current = pending.pop();
+      for (const entry of readdirSync(current.directory, { withFileTypes: true })) {
+        const path = `${current.path}/${entry.name}`;
+        if (entry.isDirectory()) {
+          pending.push({ directory: join(current.directory, entry.name), path });
+        } else if (entry.isFile()) {
+          const area = path.split("/")[3];
+          if (!integrationRoots.has(area)) {
+            visit("T-INTEGRATION-AREA", path, "La integración debe seguir un área productiva acreditada");
+          }
+          if (!path.endsWith(".test.ts")) {
+            visit("T-INTEGRATION-SUPPORT", path,
+              "Las fixtures y los helpers deben vivir fuera de integration/");
+          }
+        }
+      }
+    }
+  }
+  for (const [path, source] of project.files) {
+    if (isTest(path) && path.startsWith("src/") && !path.endsWith(".test.ts")) {
+      visit("T-TEST-DISCOVERY", path,
+        "El runner solo descubre archivos *.test.ts en src/; esta suite quedaría sin ejecutar");
+    }
+    if (isTest(path) && path.startsWith("src/") && !testSuiteLocation(path)) {
+      visit("T-TEST-LOCATION", path,
+        "Las suites deben vivir junto al módulo en tests/, en la integración compartida o en los tests técnicos GAM ya existentes");
+    }
+    if (/^src\/(?!testing\/)(?:[^/]+\/)+testing\//u.test(path) && !establishedPreparationHelpers.has(path)) {
+      visit("T-PARALLEL-TEST-SUPPORT", path,
+        "Los helpers nuevos se ubican en src/testing/builders o en el tests/ local, no en otro árbol testing/");
+    }
+    if (!path.startsWith("src/testing/") || isTest(path)) continue;
+    const filename = path.slice(path.lastIndexOf("/") + 1).replace(/\.(?:ts|tsx|mts|cts|js|mjs|cjs)$/u, "");
+    if (testOrchestrator.test(filename)) {
+      visit("T-PARALLEL-TEST-RUNNER", path,
+        "La ejecución, planificación y presentación de tests pertenecen al runner existente en scripts/");
+    }
+    visitNodes(source, (node) => {
+      const reference = ts.isImportDeclaration(node) || ts.isExportDeclaration(node)
+        ? node.moduleSpecifier
+        : ts.isCallExpression(node) && node.arguments.length > 0 &&
+          (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+            ts.isIdentifier(node.expression) && node.expression.text === "require")
+          ? node.arguments[0]
+          : null;
+      if (reference && ts.isStringLiteralLike(reference) && restrictedExecutionModule.has(reference.text)) {
+        visit("T-PARALLEL-TEST-RUNNER", path,
+          "Los helpers no deben orquestar procesos o workers de un runner paralelo", node);
+      }
+    });
+  }
+  for (const [path, dependencies] of project.dependencies) {
+    for (const dependency of dependencies) {
+      if (isTest(dependency)) {
+        visit("T-TEST-AS-HELPER", path,
+          `Una suite no puede importarse como helper desde ${dependency}; extraer el soporte reutilizable`, undefined,
+          `suite:${dependency}`);
+      }
+    }
+  }
+};
 
 const sourceEvidence = (source) => {
   const candidate = [];
@@ -261,9 +358,10 @@ export const inspectTestArchitecture = (root) => {
   const integrations = [];
   const push = (rule, path, node, detail, signature) => {
     const source = project.files.get(path);
-    if (source) issues.push(findIssue(rule, path, source, node, detail, signature));
+    if (source || !node) issues.push(findIssue(rule, path, source, node, detail, signature));
   };
   const suites = [...project.files.keys()].filter(domainTest);
+  checkTestLayout(project, (rule, path, detail, node, signature) => push(rule, path, node, detail, signature));
   const helperEvidence = new Map();
   for (const [path, source] of project.files) {
     if (supportModule(path)) helperEvidence.set(path, sourceEvidence(source));

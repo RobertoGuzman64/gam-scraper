@@ -9,6 +9,7 @@ const excludedDirectories = new Set([".git", "node_modules", "dist", "storage", 
 const scriptExtension = /\.(?:[cm]?[jt]s|[jt]sx|ps1|py|sh|cmd|bat)$/iu;
 const externalScriptExtension = /\.(?:mjs|cjs|ps1|py|sh|cmd|bat)$/iu;
 const phaseFileName = /(?:^|[-_.])(?:fase|phase)[-_.]?(?:\d+|[ivxlcdm]+)(?=$|[-_.])|(?:^|[-_.])(?:f\d+|operativa[-_.]?f\d+)(?=$|[-_.])/iu;
+const temporaryFileName = /(?:^|[-_.])(?:temp|temporary|tmp|scratch|backup)(?=$|[-_.])|(?:~|\.(?:bak|orig|rej|swp|swo|tmp))$/iu;
 
 const walk = (root, directory = "") => {
   const files = [];
@@ -31,29 +32,39 @@ const isScript = (pathname) => {
 
 export const repositoryInventory = (root) => {
   const paths = walk(root);
-  const counts = { markdown: 0, scripts: 0 };
-  for (const pathname of paths) {
-    if (/\.md$/iu.test(pathname)) counts.markdown += 1;
-    if (isScript(pathname)) counts.scripts += 1;
-  }
+  const markdownPaths = paths.filter((pathname) => /\.md$/iu.test(pathname));
+  const scriptPaths = paths.filter(isScript);
+  const counts = { markdown: markdownPaths.length, scripts: scriptPaths.length };
   const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-  return { paths, counts, npmScripts: packageJson.scripts ?? {}, npmBin: packageJson.bin ?? null };
+  return { paths, counts, markdownPaths, scriptPaths, npmScripts: packageJson.scripts ?? {}, npmBin: packageJson.bin ?? null };
 };
 
 const differences = (label, expected, actual, findings) => {
   for (const name of Object.keys(actual)) {
-    if (!(name in expected)) findings.push(`${label} no autorizado: ${name}`);
+    if (!Object.hasOwn(expected, name)) findings.push(`${label} no autorizado: ${name}`);
     else if (actual[name] !== expected[name]) findings.push(`${label} modificado sin actualizar el contrato: ${name}`);
   }
   for (const name of Object.keys(expected)) {
-    if (!(name in actual)) findings.push(`${label} eliminado o movido: ${name}`);
+    if (!Object.hasOwn(actual, name)) findings.push(`${label} eliminado o movido: ${name}`);
   }
 };
 
+const validPaths = (paths, extension) => Array.isArray(paths) &&
+  paths.every((pathname) => typeof pathname === "string" && pathname.length > 0 &&
+    !pathname.startsWith("/") && !pathname.includes("\\") &&
+    pathname.split("/").every((part) => part.length > 0 && part !== "." && part !== "..") &&
+    !excludedDirectories.has(pathname.split("/")[0]) && extension(pathname)) &&
+  new Set(paths).size === paths.length;
+
 export const inspectRepositoryGovernance = (root, policy) => {
-  if (policy?.version !== 2 || !policy.maxCounts ||
+  if (policy?.version !== 3 || !policy.maxCounts ||
     !Number.isSafeInteger(policy.maxCounts.markdown) || policy.maxCounts.markdown < 0 ||
     !Number.isSafeInteger(policy.maxCounts.scripts) || policy.maxCounts.scripts < 0 ||
+    !policy.allowedPaths ||
+    !validPaths(policy.allowedPaths.markdown, (pathname) => /\.md$/iu.test(pathname)) ||
+    !validPaths(policy.allowedPaths.scripts, isScript) ||
+    policy.allowedPaths.markdown.length !== policy.maxCounts.markdown ||
+    policy.allowedPaths.scripts.length !== policy.maxCounts.scripts ||
     !policy.npmScripts || typeof policy.npmScripts !== "object" || Array.isArray(policy.npmScripts) ||
     !Object.hasOwn(policy, "npmBin")) {
     throw new Error("Contrato de gobernanza inválido");
@@ -66,12 +77,36 @@ export const inspectRepositoryGovernance = (root, policy) => {
   if (inventory.counts.scripts > policy.maxCounts.scripts) {
     findings.push(`Exceso de scripts: ${inventory.counts.scripts} (máximo ${policy.maxCounts.scripts})`);
   }
+  for (const [label, currentPaths, authorizedPaths] of [
+    ["Markdown", inventory.markdownPaths, policy.allowedPaths.markdown],
+    ["Script", inventory.scriptPaths, policy.allowedPaths.scripts]
+  ]) {
+    const authorized = new Set(authorizedPaths);
+    for (const pathname of currentPaths) {
+      if (!authorized.has(pathname)) findings.push(`${label} no autorizado: ${pathname}`);
+    }
+  }
   differences("Comando npm", policy.npmScripts, inventory.npmScripts, findings);
   if (JSON.stringify(inventory.npmBin) !== JSON.stringify(policy.npmBin)) {
     findings.push("Entradas ejecutables package.json/bin modificadas");
   }
   for (const pathname of inventory.paths) {
-    if (phaseFileName.test(pathname.split("/").at(-1))) findings.push(`Nombre de fase prohibido: ${pathname}`);
+    if (pathname.startsWith("docs/") && !/\.md$/iu.test(pathname)) {
+      findings.push(`Archivo no autorizado en docs/: ${pathname}`);
+    }
+    if (pathname.startsWith("scripts/") && !isScript(pathname)) {
+      findings.push(`Archivo no autorizado en scripts/: ${pathname}`);
+    }
+    if (pathname.startsWith("GUARDS/") && pathname !== "GUARDS/repository-governance.json" &&
+      !/\.md$/iu.test(pathname) && !isScript(pathname)) {
+      findings.push(`Archivo no autorizado en GUARDS/: ${pathname}`);
+    }
+    const fileName = pathname.split("/").at(-1);
+    if (phaseFileName.test(fileName)) findings.push(`Nombre de fase prohibido: ${pathname}`);
+    if (temporaryFileName.test(fileName) &&
+      (/\.(?:md|txt)$/iu.test(pathname) || scriptExtension.test(pathname) || /^(?:docs|GUARDS|scripts)\//u.test(pathname))) {
+      findings.push(`Archivo temporal prohibido: ${pathname}`);
+    }
   }
   if (existsSync(join(root, ".git"))) {
     try {

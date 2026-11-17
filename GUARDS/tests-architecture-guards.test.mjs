@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { inspectEditorialArchitecture } from "./tests-editorial-architecture-guard.mjs";
 import { inspectTestArchitecture } from "./tests-domain-tests-guard.mjs";
+import { inspectModuleIntegrity } from "./tests-module-integrity-guard.mjs";
 
 const fixture = (t) => {
   const root = mkdtempSync(join(tmpdir(), "eqz-architecture-guard-"));
@@ -380,4 +381,157 @@ test("la acreditación exacta se revoca ante cualquier cambio y no acepta nuevas
   write("src/preparation/shared/editorial/tests/new-catalog.test.ts", original);
   assert.equal(inspectTestArchitecture(root).integrations.length, 1);
   assert.ok(inspectTestArchitecture(root).findings.some((item) => item.path === "src/preparation/shared/editorial/tests/new-catalog.test.ts"));
+});
+
+const linkModules = (write, from, to) => {
+  const location = relative(dirname(from), to).replace(/\.ts$/u, ".js");
+  const specifier = location.startsWith(".") ? location : `./${location}`;
+  write(to, "export const value = 1;\n");
+  write(from, `import { value } from '${specifier}'; export const result = value;\n`);
+};
+
+test("el guard productivo respeta dependencias normales e imports desde tests", (t) => {
+  const { root, write } = fixture(t);
+  linkModules(write, "src/cli/commands/catalog/entry.ts", "src/commercial/projection/read-model.ts");
+  linkModules(write, "src/preparation/gam/technical/source.ts", "src/preparation/shared/technical/domain/measurements.ts");
+  linkModules(write, "src/preparation/gam/technical/tests/support/fixture.ts", "src/testing/builders/shared-fixture.ts");
+  assert.deepEqual(inspectModuleIntegrity(root).missing, []);
+  assert.deepEqual(inspectModuleIntegrity(root).boundaries, []);
+});
+
+test("prohíbe que el dominio dependa de CLI, herramientas o fixtures de tests", (t) => {
+  const { root, write } = fixture(t);
+  linkModules(write, "src/catalog/diagnostics/gaps.ts", "src/cli/reporting/output.ts");
+  linkModules(write, "src/publication/finish.ts", "src/tools/catalog/report.ts");
+  linkModules(write, "src/preparation/shared/editorial/domain/title.ts", "src/testing/builders/fixture.ts");
+  const { boundaries } = inspectModuleIntegrity(root);
+  assert.equal(boundaries.length, 3);
+  assert.ok(boundaries.every((entry) => entry.includes("no debe depender de CLI")));
+});
+
+test("detecta importaciones de módulos de pruebas desde producción", (t) => {
+  const { root, write } = fixture(t);
+  linkModules(write, "src/catalog/diagnostics/gaps.ts", "src/catalog/diagnostics/tests/helper.ts");
+  assert.match(inspectModuleIntegrity(root).boundaries[0] ?? "", /módulos de pruebas/u);
+});
+
+test("los proveedores de preparación y scraping no pueden depender de otro proveedor", (t) => {
+  const { root, write } = fixture(t);
+  linkModules(write, "src/preparation/gam/technical/read.ts", "src/preparation/gomariz/technical/rules.ts");
+  linkModules(write, "src/scraping/providers/manain/adapter.ts", "src/scraping/providers/mercaeleva/adapter.ts");
+  const { boundaries } = inspectModuleIntegrity(root);
+  assert.equal(boundaries.length, 2);
+  assert.ok(boundaries.some((entry) => entry.includes("proveedores de preparación")));
+  assert.ok(boundaries.some((entry) => entry.includes("adaptadores de extracción")));
+});
+
+test("bloquea lógica comercial dentro del motor técnico compartido y de extracción", (t) => {
+  const { root, write } = fixture(t);
+  linkModules(write, "src/preparation/shared/technical/domain/source.ts", "src/commercial/validation/commercial-check.ts");
+  linkModules(write, "src/commercial/projection/prepare.ts", "src/scraping/registry.ts");
+  linkModules(write, "src/scraping/workflow/run.ts", "src/commercial/export/exporter.ts");
+  const { boundaries } = inspectModuleIntegrity(root);
+  assert.equal(boundaries.length, 3);
+  assert.ok(boundaries.some((entry) => entry.includes("motor técnico compartido")));
+  assert.ok(boundaries.some((entry) => entry.includes("proyección comercial")));
+  assert.ok(boundaries.some((entry) => entry.includes("La extracción")));
+});
+
+test("rechaza carpetas de arquitectura retirada y conserva la detección de imports ausentes", (t) => {
+  const { root, write } = fixture(t);
+  write("src/pipeline/run.ts", "export const run = true;\n");
+  write("src/catalog/preparation/old.ts", "export const old = true;\n");
+  write("src/catalog/normalization/broken.ts", "import { missing } from './missing.js';\n");
+  const { missing, boundaries } = inspectModuleIntegrity(root);
+  assert.equal(boundaries.length, 2);
+  assert.match(boundaries.join("\n"), /src\/pipeline/u);
+  assert.match(boundaries.join("\n"), /src\/catalog\/preparation/u);
+  assert.equal(missing.length, 1);
+  assert.match(missing[0], /missing\.js/u);
+});
+
+test("inspecciona imports dinámicos, require y archivos MTS sin confundir texto literal", (t) => {
+  const { root, write } = fixture(t);
+  write("src/cli/reporting/colour.mts", "export const value = 1;\n");
+  write("src/preparation/shared/technical/loader.mts",
+    "export const load = () => import('../../../cli/reporting/colour.mjs');\n");
+  write("src/testing/builders/samples.ts", "export const value = 1;\n");
+  write("src/catalog/normalization/clean.ts",
+    "const fixture = require('../../testing/builders/samples.js'); const text = \"import '../../cli/missing.js'\"; export { fixture, text };\n");
+  const { missing, boundaries } = inspectModuleIntegrity(root);
+  assert.deepEqual(missing, []);
+  assert.equal(boundaries.length, 2);
+  assert.ok(boundaries.some((entry) => entry.includes("loader.mts")));
+  assert.ok(boundaries.some((entry) => entry.includes("clean.ts")));
+});
+
+test("admite suites locales, integraciones acreditadas y builders sin infraestructura adicional", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/builders/source-fixture.ts", "export const source = { reference: 'fixture' };\n");
+  write("src/testing/builders/tests/source-fixture.test.ts", "import { source } from '../source-fixture.js'; export const value = source.reference;\n");
+  write("src/testing/integration/preparation/tests/source-integration.test.ts", "import { source } from '../../../builders/source-fixture.js'; export const value = source.reference;\n");
+  write("src/preparation/gam/technical/energy/gam-source.test.ts", "export const valid = true;\n");
+  write("src/preparation/testing/mapping-fixtures.ts", "export const original = 1;\n");
+  assert.deepEqual(inspectTestArchitecture(root).findings, []);
+});
+
+test("rechaza suites fuera de tests y de las ubicaciones de integración autorizadas", (t) => {
+  const { root, write } = fixture(t);
+  write("src/catalog/diagnostics/unlocated.test.ts", "export const result = true;\n");
+  write("src/testing/builders/misplaced.test.ts", "export const result = true;\n");
+  write("src/testing/fixtures/fixture.test.ts", "export const result = true;\n");
+  assert.equal(inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-TEST-LOCATION").length, 3);
+});
+
+test("protege las cuatro áreas compartidas de testing incluso frente a carpetas de datos", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/temporary/results.json", "{}\n");
+  const findings = inspectTestArchitecture(root).findings;
+  assert.ok(findings.some((item) => item.rule === "T-TESTING-ROOT" && item.path === "src/testing/temporary"));
+});
+
+test("impide helpers dentro de integration y áreas de integración ajenas a la arquitectura", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/integration/preparation/gam/helpers.ts", "export const fixture = true;\n");
+  write("src/testing/integration/temporary/tests/adhoc.test.ts", "export const valid = true;\n");
+  write("src/testing/integration/preparation/data/sample.json", "{}\n");
+  const findings = inspectTestArchitecture(root).findings;
+  assert.equal(findings.filter((item) => item.rule === "T-INTEGRATION-SUPPORT").length, 2);
+  const found = rules(findings);
+  assert.ok(found.has("T-INTEGRATION-AREA"));
+});
+
+test("no permite nuevos árboles testing paralelos ni ampliar los helpers históricos de preparación", (t) => {
+  const { root, write } = fixture(t);
+  write("src/preparation/testing/new-fixture.ts", "export const fixture = 1;\n");
+  write("src/catalog/testing/parallel-fixture.ts", "export const fixture = 2;\n");
+  const findings = inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-PARALLEL-TEST-SUPPORT");
+  assert.equal(findings.length, 2);
+});
+
+test("impide reutilizar suites como helpers aunque los imports se resuelvan con extensiones JS", (t) => {
+  const { root, write } = fixture(t);
+  write("src/preparation/shared/editorial/tests/other.test.ts", "export const sample = 1;\n");
+  write("src/preparation/shared/editorial/tests/contract.test.ts",
+    "import { sample } from './other.test.js'; export const other = sample;\n");
+  write("src/testing/builders/reused.ts",
+    "export { sample } from '../../preparation/shared/editorial/tests/other.test.js';\n");
+  const findings = inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-TEST-AS-HELPER");
+  assert.equal(findings.length, 2);
+});
+
+test("bloquea un runner duplicado y la orquestación de procesos desde builders", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/builders/test-runner.ts", "export const start = () => true;\n");
+  write("src/testing/builders/process-fixture.ts",
+    "import { spawn } from 'node:child_process'; export const start = spawn;\n");
+  const findings = inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-PARALLEL-TEST-RUNNER");
+  assert.equal(findings.length, 2);
+});
+
+test("rechaza nombres de suites que el runner no descubre en src", (t) => {
+  const { root, write } = fixture(t);
+  write("src/catalog/diagnostics/tests/not-discovered.spec.ts", "export const valid = true;\n");
+  write("src/preparation/shared/editorial/tests/not-discovered.test.mts", "export const valid = true;\n");
+  assert.equal(inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-TEST-DISCOVERY").length, 2);
 });

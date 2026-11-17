@@ -17,8 +17,9 @@ const fixture = (t) => {
   write("scripts/run.mjs", "export const run = true;\n");
   write("package.json", JSON.stringify({ scripts: { test: "node scripts/run.mjs" } }));
   const policy = {
-    version: 2,
+    version: 3,
     maxCounts: { markdown: 1, scripts: 1 },
+    allowedPaths: { markdown: ["docs/QUALITY.md"], scripts: ["scripts/run.mjs"] },
     npmScripts: { test: "node scripts/run.mjs" },
     npmBin: null
   };
@@ -27,7 +28,7 @@ const fixture = (t) => {
 
 const findings = (fixtureValue) => inspectRepositoryGovernance(fixtureValue.root, fixtureValue.policy).findings;
 
-test("acepta el inventario actual sin generar artefactos", (t) => {
+test("acepta el inventario autorizado sin generar artefactos", (t) => {
   const value = fixture(t);
   assert.deepEqual(findings(value), []);
   assert.deepEqual(inspectRepositoryGovernance(value.root, value.policy).counts, {
@@ -35,13 +36,20 @@ test("acepta el inventario actual sin generar artefactos", (t) => {
   });
 });
 
-test("permite editar y eliminar documentos existentes", (t) => {
+test("permite editar y eliminar documentos existentes sin controlar el contenido", (t) => {
   const value = fixture(t);
   value.write("docs/QUALITY.md", "Texto actualizado\n");
   assert.deepEqual(findings(value), []);
   rmSync(join(value.root, "docs/QUALITY.md"));
   assert.deepEqual(findings(value), []);
   assert.equal(inspectRepositoryGovernance(value.root, value.policy).counts.markdown, 0);
+});
+
+test("rechaza documentos nuevos aunque no se supere el máximo", (t) => {
+  const value = fixture(t);
+  rmSync(join(value.root, "docs/QUALITY.md"));
+  value.write("data/NEW.md", "sin autorización");
+  assert.deepEqual(findings(value), ["Markdown no autorizado: data/NEW.md"]);
 });
 
 test("rechaza superar el máximo de documentos aunque sean de otras carpetas", (t) => {
@@ -51,14 +59,25 @@ test("rechaza superar el máximo de documentos aunque sean de otras carpetas", (
   assert.ok(findings(value).some((item) => item.includes("Exceso de Markdown: 3 (máximo 1)")));
 });
 
-test("permite editar, eliminar y sustituir scripts dentro del máximo", (t) => {
+test("permite editar y eliminar scripts existentes sin controlar el contenido", (t) => {
   const value = fixture(t);
   value.write("scripts/run.mjs", "export default 2;\n");
   assert.deepEqual(findings(value), []);
   rmSync(join(value.root, "scripts/run.mjs"));
   assert.deepEqual(findings(value), []);
+});
+
+test("rechaza scripts añadidos o sustituidos dentro del máximo", (t) => {
+  const value = fixture(t);
+  rmSync(join(value.root, "scripts/run.mjs"));
   value.write("tools/new.py", "print(1)\n");
-  assert.deepEqual(findings(value), []);
+  assert.deepEqual(findings(value), ["Script no autorizado: tools/new.py"]);
+});
+
+test("rechaza un script añadido fuera de las carpetas habituales", (t) => {
+  const value = fixture(t);
+  value.write("src/preparation/auxiliary.mjs", "export {};\n");
+  assert.ok(findings(value).includes("Script no autorizado: src/preparation/auxiliary.mjs"));
 });
 
 test("rechaza superar el máximo de scripts desde cualquier carpeta", (t) => {
@@ -67,6 +86,28 @@ test("rechaza superar el máximo de scripts desde cualquier carpeta", (t) => {
   value.write("docs/hidden.sh", "echo fail\n");
   value.write("scripts/123.ts", "export const id = '123';\n");
   assert.ok(findings(value).some((item) => item.includes("Exceso de scripts: 4 (máximo 1)")));
+});
+
+test("rechaza scripts y documentación temporal sin depender de la extensión", (t) => {
+  const value = fixture(t);
+  value.write("docs/notes.tmp", "borrador\n");
+  value.write("scripts/scratch.txt", "prueba\n");
+  value.write("src/preparation/temp-audit.ts", "export const run = true;\n");
+  const result = findings(value);
+  assert.ok(result.includes("Archivo temporal prohibido: docs/notes.tmp"));
+  assert.ok(result.includes("Archivo temporal prohibido: scripts/scratch.txt"));
+  assert.ok(result.includes("Archivo temporal prohibido: src/preparation/temp-audit.ts"));
+});
+
+test("rechaza archivos encubiertos en las carpetas de documentación y scripts", (t) => {
+  const value = fixture(t);
+  value.write("docs/nota.txt", "texto\n");
+  value.write("scripts/nota.txt", "texto\n");
+  value.write("GUARDS/otro.json", "{}\n");
+  const result = findings(value);
+  assert.ok(result.includes("Archivo no autorizado en docs/: docs/nota.txt"));
+  assert.ok(result.includes("Archivo no autorizado en scripts/: scripts/nota.txt"));
+  assert.ok(result.includes("Archivo no autorizado en GUARDS/: GUARDS/otro.json"));
 });
 
 test("mantiene protegidos los comandos npm y los cambios de su contenido", (t) => {
@@ -90,12 +131,23 @@ test("prohíbe nombres de fases en cualquier carpeta y extensión", (t) => {
   assert.equal(findings(value).filter((item) => item.includes("Nombre de fase prohibido")).length, 4);
 });
 
-test("rechaza contratos incompletos y límites inválidos", (t) => {
+test("rechaza contratos incompletos, rutas duplicadas y límites inválidos", (t) => {
   const value = fixture(t);
-  assert.throws(() => inspectRepositoryGovernance(value.root, { version: 2 }), /inválido/u);
+  assert.throws(() => inspectRepositoryGovernance(value.root, { version: 3 }), /inválido/u);
   for (const count of [-1, 0.5, "1", null]) {
     assert.throws(() => inspectRepositoryGovernance(value.root, {
       ...value.policy, maxCounts: { markdown: count, scripts: 1 }
     }), /inválido/u);
   }
+  for (const pathname of ["../escape.md", "/docs/NEW.md", "docs\\BAD.md", "storage/hidden.md", "scripts/run.mjs"]) {
+    assert.throws(() => inspectRepositoryGovernance(value.root, {
+      ...value.policy, allowedPaths: { markdown: [pathname], scripts: ["scripts/run.mjs"] }
+    }), /inválido/u);
+  }
+  assert.throws(() => inspectRepositoryGovernance(value.root, {
+    ...value.policy, allowedPaths: { markdown: ["docs/QUALITY.md", "docs/QUALITY.md"], scripts: ["scripts/run.mjs"] }
+  }), /inválido/u);
+  assert.throws(() => inspectRepositoryGovernance(value.root, {
+    ...value.policy, maxCounts: { markdown: 2, scripts: 1 }
+  }), /inválido/u);
 });
