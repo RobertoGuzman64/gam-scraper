@@ -283,6 +283,22 @@ test("rechaza una normalización editorial omitida con manifiesto y hashes recon
   })));
 });
 
+test("verifica una cita literal del anuncio sin reescribir la presentación comercial", () => {
+  const base = planWithProduct();
+  const original = base.products[0];
+  assert.ok(original);
+  const cited = {
+    ...original,
+    description_general: "El anuncio declara «4.30mm», pero el campo técnico documenta 4.300 mm de elevación."
+  };
+  assert.doesNotThrow(() => validateCommercialExportFiles(filesForProvider({
+    ...base, products: [cited]
+  })));
+  assert.throws(() => validateCommercialExportFiles(filesForProvider({
+    ...base, products: [{ ...cited, description: "Carretilla con elevación 4.30mm" }]
+  })), /Presentación editorial no normalizada/);
+});
+
 test("rechaza contratos comerciales adulterados aunque los hashes y contadores coincidan", () => {
   const base = planWithProduct();
   const original = base.products[0];

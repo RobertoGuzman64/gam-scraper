@@ -37,3 +37,20 @@ test("detecta bloques del proveedor no normalizables sin alterar sus cifras", ()
   assert.deepEqual(inspectCommercialEditorialQuality(content("Clásico", "Vehículo", "? Vehículo en buen estado ✔️")),
     [{ reason: "marcadores-origen-residuales", severity: "review" }]);
 });
+
+test("distingue citas literales del proveedor de medidas mal formateadas en la presentación", () => {
+  const original = "El anuncio abrevia esta altura como «4.30mm», mientras que el campo técnico registra 4.300 mm.";
+  assert.deepEqual(inspectCommercialEditorialQuality(content("Ausa C250HX4", "Elevación de 4.300 mm", original)), []);
+  assert.deepEqual(inspectCommercialEditorialQuality(content("Ausa C250HX4", "Elevación de 4.300 mm",
+    "La ficha registra 4.300 mm y aclara la mención «4.30mm» del anuncio.")), []);
+  for (const invalid of [
+    content("Ausa C250HX4", "Elevación de 4.30mm", original),
+    content("Ausa C250HX4", "Elevación de 4.300 mm", "La elevación publicada es de 4.30mm."),
+    content("Ausa C250HX4", "Elevación de 4.300 mm", "La ficha declara «4.30mm» como valor técnico."),
+    content("Ausa C250HX4", "Elevación de 4.300 mm",
+      "El anuncio abrevia «4.30mm», pero la ficha presenta 4.30mm como altura final.")
+  ]) {
+    assert.deepEqual(inspectCommercialEditorialQuality(invalid),
+      [{ reason: "unidad-mm-sin-espacio", severity: "blocking" }]);
+  }
+});

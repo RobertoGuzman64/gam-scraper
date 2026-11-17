@@ -8,6 +8,7 @@ import { comparablePopulation, readEditorialPopulations } from '../editorial-pop
 import { editorialAuditFingerprints, loadEditorialAuditPopulation } from '../../operations/editorial-audit-population.mjs';
 import { prepareSourceProduct } from '../../../dist/preparation/prepare-product.js';
 import { prepareImportBatch } from '../../../dist/preparation/batch-identity.js';
+import { discoverAccreditedPublications, readAccreditedPublication } from '../../../dist/infrastructure/filesystem/catalog/accredited-publication.js';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 
@@ -43,7 +44,11 @@ test('las tres poblaciones quedan separadas por corte, fuente y proveedor', asyn
   const report = await readEditorialPopulations(root);
   assert.deepEqual(report.byStage.map((item) => item.stage),
     ['originales_canonicos', 'publicacion_final', 'publicacion_tecnica']);
-  assert.deepEqual(report.byStage.map((item) => item.products), [1751, 1344, 931]);
+  const accredited = await Promise.all((await discoverAccreditedPublications(root)).map(readAccreditedPublication));
+  const totalPublished = accredited.reduce((sum, item) => sum + item.products.length, 0);
+  assert.deepEqual(report.byStage.map((item) => item.products), [1751, totalPublished, 931]);
+  assert.deepEqual(report.byStage[1].providers.map((item) => [item.providerId, item.products]),
+    accredited.map((item) => [item.providerId, item.products.length]));
   assert.deepEqual(report.byStage.map((item) => item.providers.map((provider) => provider.providerId)),
     [['gam', 'gomariz', 'mercaeleva'], ['gam', 'gomariz', 'mercaeleva'], ['gomariz', 'manain']]);
   for (const stage of report.byStage) {

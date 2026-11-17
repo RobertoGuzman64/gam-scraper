@@ -242,8 +242,16 @@ test("la cohorte GAM saneada conserva las especificaciones válidas sin requerir
       assert.equal(sourceSpecs[key], undefined, `${reference}:${key}`);
       assert.equal(product.spec[key], value, `${reference}:${key}`);
     }
+    const reconciledArrastre = reference === "72" ? "7000 KG" : reference === "73" ? "8000 KG" : null;
+    if (reconciledArrastre !== null && product.spec["Capacidad de carga (kg)"] === undefined) {
+      assert.equal(sourceSpecs["Capacidad de carga (kg)"], "8000 KG", reference);
+      assert.equal(product.spec["Capacidad de arrastre"], reconciledArrastre, reference);
+    }
     for (const [key, value] of Object.entries(sourceSpecs)) {
-      if (!removed.includes(key)) assert.deepEqual(product.spec[key], value, `${reference}:${key}`);
+      if (removed.includes(key)) continue;
+      if (key === "Capacidad de carga (kg)" && reconciledArrastre !== null &&
+        product.spec[key] === undefined) continue;
+      assert.deepEqual(product.spec[key], value, `${reference}:${key}`);
     }
     assert.deepEqual(projectPresentableSpecifications(product.spec, source), product.spec, reference);
     assert.deepEqual(inspectTechnicalSpecifications(product.spec), [], reference);

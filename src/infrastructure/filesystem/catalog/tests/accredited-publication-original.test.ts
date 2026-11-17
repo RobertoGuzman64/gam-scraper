@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import test from "node:test";
 import { accreditedPublicationOriginalSources } from "../accredited-publication-original.js";
 import { readAccreditedPublication } from "../accredited-publication.js";
@@ -11,7 +11,7 @@ import { loadImportCatalog } from "../../legacy-export/import-catalog-loader.js"
 
 const fixture = join(process.cwd(), "src", "testing", "fixtures", "gomariz");
 const historical = join(fixture, "regression-143");
-const production = join(process.cwd(), "catalogs", "providers", "gomariz", "publications");
+const historicalPublications = join(historical, "publications");
 const prefix = "scrape-gomariz";
 const files = [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`] as const;
 const archiveName = "archive-2026-10-29T12-00-00-000Z-11111111-1111-4111-8111-111111111111";
@@ -29,14 +29,14 @@ const workspace = async (): Promise<{ root: string; publicationFile: string; arc
     await copyFile(join(fixture, name), join(current, name));
     await copyFile(join(historical, name), join(archived, name));
   }
-  const active = JSON.parse(await readFile(join(production, "active.json"), "utf8")) as { approvalSha256: string };
+  const active = JSON.parse(await readFile(join(historicalPublications, "active.json"), "utf8")) as { approvalSha256: string };
   const version = active.approvalSha256.slice(0, 12);
   const destination = join(versions, version);
   await mkdir(destination);
   for (const name of ["gomariz-publishable.json", "manifest.json", "accreditation.json"]) {
-    await copyFile(join(production, version, name), join(destination, name));
+    await copyFile(join(historicalPublications, version, name), join(destination, name));
   }
-  await copyFile(join(production, "active.json"), join(versions, "active.json"));
+  await copyFile(join(historicalPublications, "active.json"), join(versions, "active.json"));
   return { root, publicationFile: join(destination, "gomariz-publishable.json"), archived };
 };
 
@@ -62,8 +62,7 @@ test("la publicación comercial usa el original histórico acreditado tras renov
 test("la publicación individual admite manifiestos con el contrato mínimo de procedencia", async () => {
   const { root, publicationFile } = await workspace();
   try {
-    const manifestPath = join(root, "catalogs", "providers", "gomariz", "publications",
-      "ffe1f64cd24d", "manifest.json");
+    const manifestPath = join(dirname(publicationFile), "manifest.json");
     const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
       source: { prefix?: string; scope?: string }
     };

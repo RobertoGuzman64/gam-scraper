@@ -23,6 +23,14 @@ const isSourceUppercase = (value: string): boolean => {
     letters.filter((character) => character === character.toLocaleUpperCase("es")).length / letters.length >= 0.8;
 };
 
+const omitAttributedSourceMillimeters = (general: string): string =>
+  general.replace(/«\d+(?:[.,]\d+)?mm»/giu, (citation, position: number) => {
+    const preceding = general.slice(Math.max(0, position - 90), position);
+    const following = general.slice(position + citation.length, position + citation.length + 35);
+    return /\b(?:anuncio|origen|proveedor)\b/iu.test(preceding) ||
+      /\b(?:anuncio|origen|proveedor)\b/iu.test(following) ? "" : citation;
+  });
+
 export const inspectCommercialEditorialQuality = (product: EditorialContent): readonly CommercialEditorialIssue[] => {
   const title = product.title ?? "";
   const summary = product.description ?? "";
@@ -31,7 +39,7 @@ export const inspectCommercialEditorialQuality = (product: EditorialContent): re
   const add = (reason: CommercialEditorialSignal, severity: CommercialEditorialIssue["severity"]): void => {
     result.push({ reason, severity });
   };
-  if ([title, summary, general].some((value) =>
+  if ([title, summary, omitAttributedSourceMillimeters(general)].some((value) =>
     /(?<![\p{L}\p{N}])\d+(?:[.,]\d+)?mm(?![\p{L}\p{N}])/iu.test(value))) {
     add("unidad-mm-sin-espacio", "blocking");
   }
