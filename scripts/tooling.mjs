@@ -8,7 +8,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const definitions = {
   iniciar: { entry: "cli/commands/maintenance/start.js", usage: "iniciar", description: "Comprobar entorno y descubrir campaña sin extraer" },
-  "contrato:comercial": { entry: "tests-commercial-contract-guard.mjs", usage: "contrato:comercial", description: "Verificar el contrato comercial v2 sin compilar ni generar catálogos" },
+  "contrato:comercial": { entry: "GUARDS/tests-commercial-contract-guard.mjs", usage: "contrato:comercial", description: "Verificar el contrato comercial v2 sin compilar ni generar catálogos" },
   "exportar:comercial": { entry: "cli/commands/catalog/commercial-export.js", usage: "exportar:comercial [-- --entorno develop|production] [--simular] [--salida <directorio-nuevo>]", description: "Entregar dos ZIP comerciales en Escritorio o cuatro JSON mediante --salida, sin publicar" },
   "auditar:comercial": { entry: "cli/commands/catalog/commercial-audit.js", usage: "auditar:comercial [-- --detalle|--acreditacion|--json|--verificar=RUTA [--informe=ZIP]]", description: "Auditar sin escrituras las propuestas de categoría, atributos y cobertura comercial de publicaciones acreditadas" },
   huecos: { entry: "cli/commands/catalog/catalog-content-gaps.js", usage: "huecos [-- --finales | --tecnicas | --catalogo ruta/-catalog.json | --publicacion ruta/-publishable.json] [--agrupar categoria|marca|modelo] [--min-grupo 8] [--min-ausentes 3] [--top 20] [--detalle] [--json] [--comparar --titulos]", description: "Consultar huecos canónicos o calidad editorial de publicaciones acreditadas; solo lectura" },
@@ -185,7 +185,7 @@ if (rawCommand === "ayuda") {
     const cleaned = command === "intervenir" || command === "intervenir:manual" || command === "recuperar" || command === "migrar:catalogos" ? normalized : normalized.filter((argument) => argument !== "--aplicar");
     if (selected.defaultSimulation && !normalized.includes("--aplicar") && !cleaned.includes("--dry-run")) cleaned.push("--dry-run");
     const requireContractGuard = command === "contrato:comercial" || command === "exportar:comercial";
-    const guard = requireContractGuard ? spawnSync(process.execPath, [join(root, "tests-commercial-contract-guard.mjs")], {
+    const guard = requireContractGuard ? spawnSync(process.execPath, [join(root, definitions["contrato:comercial"].entry)], {
       cwd: root, stdio: "inherit", windowsHide: true
     }) : null;
     if (guard && (guard.error || guard.status !== 0)) {

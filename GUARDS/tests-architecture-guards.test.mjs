@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, posix } from "node:path";
@@ -49,6 +50,16 @@ test("npm test ejecuta los guards arquitectónicos y sus autopruebas antes del b
     assert.equal(steps.filter((step) => step === command).length, 1, command);
     assert.ok(steps.indexOf(command) < build, command);
   }
+});
+
+test("el comando comercial invoca el guard protegido desde GUARDS", () => {
+  const root = fileURLToPath(new URL("../", import.meta.url));
+  const invocation = spawnSync(process.execPath, [join(root, "scripts/tooling.mjs"), "contrato:comercial"], {
+    cwd: root, encoding: "utf8"
+  });
+  assert.equal(invocation.error, undefined);
+  assert.equal(invocation.status, 0, `${invocation.stdout}\n${invocation.stderr}`);
+  assert.match(invocation.stdout, /Contrato comercial v2 intacto/);
 });
 
 test("casos legítimos: el compositor compartido y los contratos controlados no producen infracciones", (t) => {
