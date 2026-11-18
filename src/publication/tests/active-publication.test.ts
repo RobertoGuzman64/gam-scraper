@@ -1,8 +1,9 @@
+import { createPortableTestSymlink } from "../../testing/builders/portable-symlink-fixture.js";
 import { accreditedPublicationDirectory, accreditedPublicationSha } from "../../testing/builders/accredited-publication-fixture.js";
 import { isCandidate } from "../../preparation/preparation-document.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { cp, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { cp, lstat, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -78,7 +79,7 @@ test("selección explícita, simulación, idempotencia y cambio sin pérdidas", 
   } finally { await rm(ctx.root, { recursive: true, force: true }); }
 });
 
-test("índice y acreditaciones corruptos no permiten seleccionar una publicación", async () => {
+test("índice y acreditaciones corruptos no permiten seleccionar una publicación", async (t) => {
   const ctx = await setup();
   try {
     const index = join(ctx.publications, "active.json");
@@ -87,9 +88,10 @@ test("índice y acreditaciones corruptos no permiten seleccionar una publicació
     await writeFile(index, JSON.stringify({ version: 1, providerId, approvalSha256: "f".repeat(64) }));
     await assert.rejects(discoverAccreditedPublications(ctx.root), /versión seleccionada no existe/);
     await rm(index);
-    await symlink(join(ctx.original, "manifest.json"), index);
-    await assert.rejects(discoverAccreditedPublications(ctx.root), /archivo regular/);
-    await rm(index);
+    if (await createPortableTestSymlink(t, join(ctx.original, "manifest.json"), index)) {
+      await assert.rejects(discoverAccreditedPublications(ctx.root), /archivo regular/);
+      await rm(index);
+    }
     await writeFile(join(ctx.publications, ctx.other, "accreditation.json"), "{}");
     await assert.rejects(selectActivePublication(ctx.root, providerId, ctx.other, true), /huella de la aprobación/);
     await assert.rejects(lstat(index), /ENOENT/);

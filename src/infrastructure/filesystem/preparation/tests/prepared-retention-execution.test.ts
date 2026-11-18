@@ -1,6 +1,7 @@
+import { createPortableTestSymlink } from "../../../../testing/builders/portable-symlink-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { link, lstat, mkdir, open, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { link, lstat, mkdir, open, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test, { after } from "node:test";
 import { createPreparedRetentionFixture } from "./prepared-retention-fixture.js";
@@ -94,7 +95,7 @@ test("un bloqueo exclusivo existente evita actuar sobre candidatos", async () =>
   });
 });
 
-test("el ejecutor rechaza proveedores inválidos y directorios enlazados", async () => {
+test("el ejecutor rechaza proveedores inválidos y directorios enlazados", async (t) => {
   await withWorkspace(async (root, source) => {
     const first = await saveVersion(root, source, 1);
     await saveVersion(root, source, 2);
@@ -104,7 +105,7 @@ test("el ejecutor rechaza proveedores inválidos y directorios enlazados", async
     assert.equal(invalid.deletedFiles, 0);
     const prepared = join(root, "storage", "prepared");
     await rm(prepared, { recursive: true });
-    await symlink(join(root, "storage", "scraped"), prepared, "dir");
+    if (!(await createPortableTestSymlink(t, join(root, "storage", "scraped"), prepared, "dir"))) return;
     const linked = await executePreparedRetention(root, "gam", planned, approval);
     assert.equal(linked.deletedFiles, 0);
     assert.equal(linked.status, "sin_borrado_por_proteccion");

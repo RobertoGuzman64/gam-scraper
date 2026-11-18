@@ -1,6 +1,7 @@
+import { createPortableTestSymlink } from "../../../../testing/builders/portable-symlink-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -118,7 +119,7 @@ test("rechaza importación adulterada y conserva la referencia anterior", async 
   assert.deepEqual(await readdir(join(target, "data")), ["reference"]);
 }));
 
-test("rechaza referencias con enlaces y operaciones sobre data/", async () => temporary(async (root) => {
+test("rechaza referencias con enlaces y operaciones sobre data/", async (t) => temporary(async (root) => {
   const source = join(root, "origen");
   const target = join(root, "destino");
   await fixture(source, "lote-a");
@@ -130,7 +131,7 @@ test("rechaza referencias con enlaces y operaciones sobre data/", async () => te
   const original = join(root, "original.json");
   await copyFile(gam, original);
   await rm(gam);
-  await symlink(original, gam);
+  if (!(await createPortableTestSymlink(t, original, gam))) return;
   await assert.rejects(importCampaignReference(target, transfer), /archivo regular/);
   assert.deepEqual(await inspectCampaignReference(target), { status: "absent" });
 }));

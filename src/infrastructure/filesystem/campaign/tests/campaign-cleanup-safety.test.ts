@@ -1,5 +1,6 @@
+import { createPortableTestSymlink } from "../../../../testing/builders/portable-symlink-fixture.js";
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -27,7 +28,7 @@ test("inspección de campaña computa artefactos y no modifica los ficheros", as
   });
 });
 
-test("rechazo de archivo desconocido y symlink protege rutas externas", async () => {
+test("rechazo de archivo desconocido y symlink protege rutas externas", async (t) => {
   await withRoot(async (root) => {
     const path = join(root, "storage", "runs", "run1");
     await mkdir(path, { recursive: true });
@@ -35,7 +36,7 @@ test("rechazo de archivo desconocido y symlink protege rutas externas", async ()
     await writeFile(outside, "privado");
     await writeFile(join(path, "run.json"), "{}");
     await writeFile(join(path, "desconocido.txt"), "no tocar");
-    await symlink(outside, join(path, "gam.log"));
+    if (!(await createPortableTestSymlink(t, outside, join(path, "gam.log")))) return;
     await assert.rejects(inspectCleanupArea(root, path, "run"), (error: unknown) => {
       assert.ok(error instanceof Error);
       assert.match(error.message, /desconocido\.txt/);
@@ -46,14 +47,15 @@ test("rechazo de archivo desconocido y symlink protege rutas externas", async ()
   });
 });
 
-test("ruta enlazada e inventario inexistente no se confunden", async () => {
+test("ruta enlazada e inventario inexistente no se confunden", async (t) => {
   await withRoot(async (root) => {
     const path = join(root, "storage", "runs", "run2");
     await mkdir(path, { recursive: true });
     const linked = join(root, "linked");
-    await symlink(path, linked, "dir");
-    await assert.rejects(inspectCleanupArea(root, linked, "run"), /Ruta no segura/);
     assert.equal(await inspectCleanupArea(root, join(root, "absent"), "run"), null);
+    if (await createPortableTestSymlink(t, path, linked, "dir")) {
+      await assert.rejects(inspectCleanupArea(root, linked, "run"), /Ruta no segura/);
+    }
   });
 });
 
@@ -81,7 +83,7 @@ test("persistencia de entrega no sobrescribe y retira temporal al fallar", async
   });
 });
 
-test("borrado de logs reconocidos respeta otros archivos y bloquea enlaces", async () => {
+test("borrado de logs reconocidos respeta otros archivos y bloquea enlaces", async (t) => {
   await withRoot(async (root) => {
     const path = join(root, "storage", "runs", "run5");
     await mkdir(path, { recursive: true });
@@ -92,7 +94,7 @@ test("borrado de logs reconocidos respeta otros archivos y bloquea enlaces", asy
     assert.equal(await readFile(join(path, "notas.txt"), "utf8"), "importante");
     const outside = join(root, "fuera.txt");
     await writeFile(outside, "privado");
-    await symlink(outside, join(path, "gam.log"));
+    if (!(await createPortableTestSymlink(t, outside, join(path, "gam.log")))) return;
     await assert.rejects(removeDeliveredRunLogs(root, "run5"), /Log no regular/);
     assert.equal(await readFile(outside, "utf8"), "privado");
   });
@@ -154,7 +156,7 @@ test("manifiesto de histórico incompatible y CSV corrupto impiden la inspecció
   });
 });
 
-test("prefijos inválidos y subdirectorios enlazados bloquean la limpieza", async () => {
+test("prefijos inválidos y subdirectorios enlazados bloquean la limpieza", async (t) => {
   await withRoot(async (root) => {
     const path = join(root, "storage", "scraped", "campaigns", "lote3");
     await mkdir(path, { recursive: true });
@@ -162,7 +164,7 @@ test("prefijos inválidos y subdirectorios enlazados bloquean la limpieza", asyn
     await assert.rejects(inspectCleanupArea(root, path, "scraped", new Map([["gam", "../escape"]])), /Los prefijos de extracción no son válidos/);
     const outside = join(root, "externo");
     await mkdir(outside);
-    await symlink(outside, join(path, "gam"), "dir");
+    if (!(await createPortableTestSymlink(t, outside, join(path, "gam"), "dir"))) return;
     await assert.rejects(inspectCleanupArea(root, path, "scraped", new Map([["gam", "scrape-gam"]])), /no reconocido/);
   });
 });

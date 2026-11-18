@@ -1,5 +1,6 @@
+import { createPortableTestSymlink } from "../../../../testing/builders/portable-symlink-fixture.js";
 import assert from "node:assert/strict";
-import { readFile, readdir, rename, rm, stat, symlink, writeFile } from "node:fs/promises";
+import { readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test, { after } from "node:test";
 import { finalizeActiveCampaign } from "../../../../campaign/finalization.js";
@@ -79,7 +80,7 @@ test("las correcciones acreditadas preservan original, derivado y expediente sin
   } finally { await data.cleanup(); }
 });
 
-test("la inspección rechaza directorios simbólicos sin alterar el manifiesto", async () => {
+test("la inspección rechaza directorios simbólicos sin alterar el manifiesto", async (t) => {
   const data = await publishedFixture();
   try {
     const root = join(data.root, "catalogs", "campaigns", data.runId);
@@ -87,20 +88,20 @@ test("la inspección rechaza directorios simbólicos sin alterar el manifiesto",
     const original = await readFile(manifest, "utf8");
     const outside = join(data.root, "storage", "original-gam");
     await rename(join(root, "gam"), outside);
-    await symlink(outside, join(root, "gam"), "dir");
+    if (!(await createPortableTestSymlink(t, outside, join(root, "gam"), "dir"))) return;
     await assert.rejects(readPortableCampaign(data.root, data.runId), /Directorio no regular/);
     assert.equal(await readFile(manifest, "utf8"), original);
   } finally { await data.cleanup(); }
 });
 
-test("rechaza symlink de manifiesto aun cuando apunta a bytes acreditados", async () => {
+test("rechaza symlink de manifiesto aun cuando apunta a bytes acreditados", async (t) => {
   const data = await publishedFixture();
   try {
     const root = join(data.root, "catalogs", "campaigns", data.runId);
     const manifest = join(root, "manifest.json");
     const outside = join(data.root, "storage", "original-manifest.json");
     await rename(manifest, outside);
-    await symlink(outside, manifest, "file");
+    if (!(await createPortableTestSymlink(t, outside, manifest, "file"))) return;
     await assert.rejects(readPortableCampaign(data.root, data.runId), /Archivo no regular/);
     assert.ok((await stat(outside)).isFile());
   } finally { await data.cleanup(); }

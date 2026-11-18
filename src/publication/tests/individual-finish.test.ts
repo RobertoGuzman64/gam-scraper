@@ -1,5 +1,6 @@
+import { createPortableTestSymlink } from "../../testing/builders/portable-symlink-fixture.js";
 import assert from "node:assert/strict";
-import { lstat, mkdir, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { lstat, mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
 import { resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
@@ -57,12 +58,12 @@ test("candidata preparada y recibo corrupto impiden activar incluso un solo prov
   });
 });
 
-test("diario en symlink o bloqueo existente no admite mutaciones fuera de workspace", async () => {
+test("diario en symlink o bloqueo existente no admite mutaciones fuera de workspace", async (t) => {
   await withWorkspace(async (root, desktop) => {
     const folder = join(root, "storage", "publication");
     const outside = join(root, "fuera");
     await mkdir(outside);
-    await symlink(outside, folder, "dir");
+    if (!(await createPortableTestSymlink(t, outside, folder, "dir"))) return;
     await assert.rejects(publishIndividualTestWorkspace(root, desktop), /Directorio FINISH no regular/);
     await rm(folder);
     assert.deepEqual(await readdir(outside), []);

@@ -1,6 +1,7 @@
+import { createPortableTestSymlink } from "../../testing/builders/portable-symlink-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -132,7 +133,7 @@ test("cortes técnicos comparan cambios y pérdidas sin bloquear la activación 
   } finally { await rm(root, { force: true, recursive: true }); }
 });
 
-test("fuente obsoleta, suplantación de proveedor y enlace simbólico bloquean sin activar", async () => {
+test("fuente obsoleta, suplantación de proveedor y enlace simbólico bloquean sin activar", async (t) => {
   const { root, preparation } = await workspace();
   try {
     const candidate = (await publishTechnicalSnapshot(root, "gomariz", { preparation }, false)).snapshot;
@@ -141,7 +142,7 @@ test("fuente obsoleta, suplantación de proveedor y enlace simbólico bloquean s
     await writeFile(preparation, "{}");
     await assert.rejects(publishTechnicalSnapshot(root, "gomariz", { preparation }, true));
     await assert.rejects(lstat(technicalPath(root, "gomariz")), { code: "ENOENT" });
-    await symlink(join(root, "source"), technicalPath(root, "gomariz"), "dir");
+    if (!(await createPortableTestSymlink(t, join(root, "source"), technicalPath(root, "gomariz"), "dir"))) return;
     await assert.rejects(readActiveTechnicalPublication(root, "gomariz"), /no regular/);
   } finally { await rm(root, { force: true, recursive: true }); }
 });
@@ -320,17 +321,18 @@ test("retención recupera temporales reconocidos y respeta índices legados", as
   } finally { await rm(root, { force: true, recursive: true }); }
 });
 
-test("retención rechaza versiones dañadas y temporales enlazados sin cambiar la vigente", async () => {
+test("retención rechaza versiones dañadas y temporales enlazados sin cambiar la vigente", async (t) => {
   const { root, preparation } = await workspace();
   try {
     const original = (await publishTechnicalSnapshot(root, "gomariz", { preparation }, false)).snapshot;
     const first = await activateTechnicalPublication(root, original);
     const versionsPath = join(technicalPath(root, "gomariz"), "versions");
     const linked = join(versionsPath, ".pending-c4a311ac-a418-4ea5-b24e-cf81c72f20a1");
-    await symlink(join(root, "source"), linked, "dir");
-    await assert.rejects(activateTechnicalPublication(root, original), /no regular/);
-    assert.equal((await readActiveTechnicalPublication(root, "gomariz"))?.sha256, first.sha256);
-    await rm(linked);
+    if (await createPortableTestSymlink(t, join(root, "source"), linked, "dir")) {
+      await assert.rejects(activateTechnicalPublication(root, original), /no regular/);
+      assert.equal((await readActiveTechnicalPublication(root, "gomariz"))?.sha256, first.sha256);
+      await rm(linked);
+    }
     const corrupted = join(versionsPath, "f".repeat(64));
     await mkdir(corrupted);
     await writeFile(join(corrupted, "snapshot.json"), "alterado");

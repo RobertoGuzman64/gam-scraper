@@ -1,6 +1,7 @@
+import { createPortableTestSymlink } from "../../../testing/builders/portable-symlink-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import test, { after } from "node:test";
@@ -148,11 +149,11 @@ test("dos preparaciones válidas para la misma fuente bloquean selección ambigu
   }, "prepared");
 });
 
-test("un archivo de preparación enlazado detiene el preflight", async () => {
+test("un archivo de preparación enlazado detiene el preflight", async (t) => {
   await withWorkspace(async (root) => {
     const file = await preparedFile(root);
     const linked = join(root, "storage", "prepared", "gomariz", "scrape-gomariz-enlace-preparation.json");
-    await symlink(file, linked);
+    if (!(await createPortableTestSymlink(t, file, linked))) return;
     const result = await runGomariz(root);
     assert.equal(result[0]?.summary, null);
     assert.match(result[0]?.error ?? "", /no reconocido o no regular/);

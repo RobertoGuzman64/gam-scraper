@@ -1,6 +1,7 @@
+import { createPortableTestSymlink } from "../../../../testing/builders/portable-symlink-fixture.js";
 import { accreditedPublicationDirectory, accreditedPublicationSha } from "../../../../testing/builders/accredited-publication-fixture.js";
 import assert from "node:assert/strict";
-import { cp, mkdir, mkdtemp, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -108,14 +109,14 @@ test("los alias individuales vigentes de los tres proveedores son verificables s
   }
 });
 
-test("una publicación no acepta enlaces a archivos externos aunque su contenido conserve el SHA", async () => {
+test("una publicación no acepta enlaces a archivos externos aunque su contenido conserve el SHA", async (t) => {
   for (const name of [`${providerId}-publishable.json`, "manifest.json", "accreditation.json"]) {
     await withPublishedVersion(async (root, directory) => {
       const original = join(directory, name);
       const external = join(root, name);
       await cp(original, external);
       await rm(original);
-      await symlink(external, original);
+      if (!(await createPortableTestSymlink(t, external, original))) return;
       const publishable = join(directory, `${providerId}-publishable.json`);
       await assert.rejects(readAccreditedPublication(publishable), /archivo regular/);
       await assert.rejects(resolveAccreditedPublication(root, providerId), /regular/);

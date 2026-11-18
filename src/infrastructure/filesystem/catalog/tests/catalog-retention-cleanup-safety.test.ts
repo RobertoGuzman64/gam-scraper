@@ -1,6 +1,7 @@
+import { createPortableTestSymlink } from "../../../../testing/builders/portable-symlink-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, utimes, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, readdir, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -63,7 +64,7 @@ test("una referencia por SHA protege el histórico excedente, sin alterar los do
   });
 });
 
-test("referencias simbólicas y contenido inesperado impiden eliminación incierta", async () => {
+test("referencias simbólicas y contenido inesperado impiden eliminación incierta", async (t) => {
   await withWorkspace(async (root, dir) => {
     await makeArchive(dir, 1);
     await makeArchive(dir, 2);
@@ -71,7 +72,7 @@ test("referencias simbólicas y contenido inesperado impiden eliminación incier
     await mkdir(references, { recursive: true });
     const external = join(root, "external.txt");
     await writeFile(external, "contenido privado");
-    await symlink(external, join(references, "recovery.json"));
+    if (!(await createPortableTestSymlink(t, external, join(references, "recovery.json")))) return;
     assert.deepEqual(await catalogArchiveExcess(dir, prefix), []);
     assert.equal(await readFile(external, "utf8"), "contenido privado");
   });

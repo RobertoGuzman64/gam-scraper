@@ -1,5 +1,6 @@
+import { createPortableTestSymlink } from "../../../../testing/builders/portable-symlink-fixture.js";
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -73,10 +74,10 @@ test("no admite archivos ajenos ni snapshots de otro prefijo y enumera todos los
   });
 });
 
-test("rechaza enlaces simbólicos y manifiestos históricos incompatibles", async () => {
+test("rechaza enlaces simbólicos y manifiestos históricos incompatibles", async (t) => {
   await fixture(async (root, scraped, outside) => {
     const gam = join(scraped, "gam");
-    await symlink(outside, join(gam, "scrape-gam-falso.csv"));
+    await createPortableTestSymlink(t, outside, join(gam, "scrape-gam-falso.csv"));
     const history = join(gam, ".history", "scrape-gam");
     const archiveName = (await readdir(history)).find((name) => name.startsWith("archive-"));
     assert.ok(archiveName);

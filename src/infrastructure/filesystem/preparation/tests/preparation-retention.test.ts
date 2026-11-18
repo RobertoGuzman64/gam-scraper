@@ -1,6 +1,7 @@
+import { createPortableTestSymlink } from "../../../../testing/builders/portable-symlink-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
@@ -61,7 +62,7 @@ test("preparación inválida, manifest ausente y entradas desconocidas se bloque
   });
 });
 
-test("referencias en rutas gestionadas, ilegibles o enlazadas bloquean candidatos", async () => {
+test("referencias en rutas gestionadas, ilegibles o enlazadas bloquean candidatos", async (t) => {
   await withWorkspace(async (root, source) => {
     await saveVersion(root, source, 1);
     await saveVersion(root, source, 2);
@@ -73,7 +74,7 @@ test("referencias en rutas gestionadas, ilegibles o enlazadas bloquean candidato
     assert.equal(result.protected, 3);
     assert.equal(result.candidates, 0);
     await rm(join(runs, "attachment.zip"));
-    await symlink(join(root, "storage", "prepared", "gam"), join(runs, "enlace"), "dir");
+    if (!(await createPortableTestSymlink(t, join(root, "storage", "prepared", "gam"), join(runs, "enlace"), "dir"))) return;
     const linked = await simulatePreparedRetention(root, "gam");
     assert.equal(linked.protected, 3);
     assert.equal(linked.candidates, 0);
@@ -124,13 +125,13 @@ test("referencias de preparación en TypeScript y Markdown protegen sus versione
   });
 });
 
-test("solo admite la raíz autorizada; el almacén preparado enlazado se rechaza", async () => {
+test("solo admite la raíz autorizada; el almacén preparado enlazado se rechaza", async (t) => {
   await withWorkspace(async (root, source) => {
     await saveVersion(root, source, 1);
     await assert.rejects(simulatePreparedRetention(root, "gam", join(root, "otro")), /predeterminado/);
     const path = join(root, "storage", "prepared", "gam");
     await rm(path, { recursive: true });
-    await symlink(join(root, "storage", "scraped", "gam"), path, "dir");
+    if (!(await createPortableTestSymlink(t, join(root, "storage", "scraped", "gam"), path, "dir"))) return;
     await assert.rejects(simulatePreparedRetention(root, "gam"), /enlazada/);
     assert.equal((await lstat(path)).isSymbolicLink(), true);
   });

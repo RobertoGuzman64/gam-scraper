@@ -1,3 +1,4 @@
+import { createPortableTestSymlink } from "../../../testing/builders/portable-symlink-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { access, mkdtemp, readFile, readdir, rm, writeFile, symlink } from "node:fs/promises";
@@ -50,7 +51,7 @@ test("verifica todos los archivos exportados sin modificarlos", async () => {
   }
 });
 
-test("rechaza archivos extra, archivos ausentes y enlaces simbólicos", async () => {
+test("rechaza archivos extra, archivos ausentes y enlaces simbólicos", async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "equipzilla-commercial-"));
   const files = filesForProvider();
   try {
@@ -60,7 +61,7 @@ test("rechaza archivos extra, archivos ausentes y enlaces simbólicos", async ()
     await assert.rejects(verifyCommercialExportDirectory(directory, files), /extraños/);
     await rm(join(directory, "extra.json"));
     await rm(join(directory, files[0]?.name ?? ""));
-    await symlink(join(directory, "inexistente.json"), join(directory, files[0]?.name ?? ""));
+    if (!(await createPortableTestSymlink(t, join(directory, "inexistente.json"), join(directory, files[0]?.name ?? "")))) return;
     await assert.rejects(verifyCommercialExportDirectory(directory, files), /no regular/);
   } finally {
     await rm(directory, { recursive: true, force: true });
