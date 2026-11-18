@@ -12,8 +12,7 @@ export const writeLocalPanel = async (workspace: string): Promise<string> => {
   const explorer = await readPanelExplorer(root, snapshot);
   const content = await renderPanelHtml(root, createDashboardPayload(snapshot, explorer));
   const current = await readPanelSnapshot(root);
-  if (current.commercialManifest.sha256 !== snapshot.commercialManifest.sha256 ||
-    current.providers.some((provider, index) => provider.publication.sha256 !== snapshot.providers[index]?.publication.sha256)) {
+  if (JSON.stringify(current) !== JSON.stringify(snapshot)) {
     throw new Error("El corte seleccionado cambió durante la generación del panel");
   }
   const directory = join(root, "panel");

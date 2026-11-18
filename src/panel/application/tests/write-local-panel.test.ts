@@ -30,8 +30,14 @@ test("escribe el panel de forma atómica, evita regeneración idéntica y conser
     const firstProvider = snapshot.providers[0];
     assert.ok(firstProvider);
     const commercial = join(workspace, firstProvider.commercial.path);
-    await writeFile(commercial, (await readFile(commercial, "utf8")) + "\n");
+    const originalCommercial = await readFile(commercial, "utf8");
+    await writeFile(commercial, originalCommercial + "\n");
     await assert.rejects(writeLocalPanel(workspace), /SHA256|huella|modificado|incoherente|archivo/iu);
+    assert.equal(await readFile(output, "utf8"), html);
+    await writeFile(commercial, originalCommercial);
+    const stylesheet = join(sourceUi, "dashboard.css");
+    await writeFile(stylesheet, (await readFile(stylesheet, "utf8")) + "</style>");
+    await assert.rejects(writeLocalPanel(workspace), /Recursos UI contienen un cierre HTML/);
     assert.equal(await readFile(output, "utf8"), html);
     assert.deepEqual((await readdir(join(workspace, "panel"))).sort(), ["index.html"]);
   });

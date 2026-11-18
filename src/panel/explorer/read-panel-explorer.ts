@@ -6,6 +6,9 @@ import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 import type { CommercialDeliveryPlan, CommercialDeliveryProduct, CommercialDeliverySource } from "../../commercial/export/commercial-export.js";
 import { assertCommercialLineage, readCommercialFiles } from "../evidence/commercial-evidence.js";
+import { readPanelUnitKnowledge } from "../evidence/knowledge-evidence.js";
+import type { PanelUnitKnowledgeEvidence } from "../evidence/knowledge-evidence.js";
+import { resolvePanelFieldProvenance } from "./field-provenance.js";
 import { digest, isRecord, recordFrom, regularText } from "../evidence/evidence-files.js";
 import type { PanelProviderEvidence, PanelProviderId, PanelSnapshot } from "../evidence/types.js";
 import { compareOriginalToPublished, comparePublishedToCommercial, compareTechnicalFields } from "./field-differences.js";
@@ -129,18 +132,21 @@ const verifiedCommercial = (
 const renderable = (
   providerId: PanelProviderId, reference: string | null, sourceUrl: string, original: ProductRecord | null,
   published: ImportCandidate | null, commercial: CommercialDeliveryProduct | null, decision: PanelProductDecision | null,
-  evidence: PanelProviderEvidence, accreditation: { readonly path: string; readonly sha256: string }
+  evidence: PanelProviderEvidence, accreditation: { readonly path: string; readonly sha256: string },
+  knowledge: PanelUnitKnowledgeEvidence | null
 ): PanelExplorerProduct => {
   const before = original ? fromOriginal(original) : null;
   const after = published ? fromPublication(published) : null;
   const exported = commercial ? fromCommercial(commercial) : null;
+  const changes = before && after ? compareOriginalToPublished(before, after) : [];
   return {
     identity: identity(providerId, reference, sourceUrl), providerId, reference, sourceUrl,
     stage: !published ? "editorial-excluded" : !commercial ? "commercial-excluded" : "commercial",
     category: exported?.categorySellID === null ? "Sin categoría comercial" :
       exported?.category ?? after?.category ?? before?.category ?? null,
     original: before, published: after, commercial: exported,
-    changes: before && after ? compareOriginalToPublished(before, after) : [],
+    changes,
+    provenance: resolvePanelFieldProvenance(original, after, changes, evidence, knowledge, reference, sourceUrl),
     commercialChanges: after && exported ? comparePublishedToCommercial(after, exported) : [],
     commercialTechnicalChanges: after && exported ? compareTechnicalFields(after.specs, exported.specs, "commercial") : [],
     decision,
@@ -154,7 +160,7 @@ const renderable = (
 };
 
 const forProvider = async (
-  root: string, evidence: PanelProviderEvidence, commercialRaw: string
+  root: string, evidence: PanelProviderEvidence, commercialRaw: string, knowledge: PanelUnitKnowledgeEvidence | null
 ): Promise<readonly PanelExplorerProduct[]> => {
   const publishedPath = join(root, evidence.publication.path);
   const published = await readAccreditedPublication(publishedPath);
@@ -188,7 +194,7 @@ const forProvider = async (
       stage: "commercial", reason: exclusion.reason, issues: [], evidenceUrls: []
     } : null;
     result.push(renderable(evidence.providerId, item.reference, item.sourceUrl, original, item,
-      exported.get(key) ?? null, decision, evidence, accreditation.artifact));
+      exported.get(key) ?? null, decision, evidence, accreditation.artifact, knowledge));
   }
   for (const excluded of accreditation.items) {
     const key = identity(evidence.providerId, excluded.reference, excluded.sourceUrl);
@@ -200,7 +206,7 @@ const forProvider = async (
     }
     result.push(renderable(evidence.providerId, excluded.reference, excluded.sourceUrl, original, null, null,
       { stage: "editorial", reason: excluded.reason, issues: excluded.issues, evidenceUrls: excluded.evidenceUrls },
-      evidence, accreditation.artifact));
+      evidence, accreditation.artifact, knowledge));
   }
   if (result.length !== evidence.metrics.originals || originals && found.size !== originals.size) {
     throw new Error(`Población del explorador distinta del corte: ${evidence.providerId}`);
@@ -217,12 +223,19 @@ export const selectPresentationCases = (products: readonly PanelExplorerProduct[
   ];
   for (const { providerId, focus } of focuses) {
     const ranked = products.filter((item) => item.providerId === providerId && item.stage === "commercial" && item.original !== null)
-      .map((item) => ({ item, rank: focus === "commercial" ?
-        item.commercialChanges.filter((change) => change.change === "added" || change.change === "changed").length :
-        item.changes.filter((change) => change.group === focus && change.change === "changed").length * 2 +
-        item.changes.filter((change) => change.group === focus && change.change === "added").length }))
-      .filter((item) => item.rank > 0)
-      .sort((a, b) => b.rank - a.rank || a.item.identity.localeCompare(b.item.identity));
+      .map((item) => {
+        const changed = (focus === "commercial" ? item.commercialChanges : item.changes)
+          .filter((difference) => (difference.change === "changed" || difference.change === "added") &&
+            (focus === "commercial" || difference.group === focus));
+        const compatible = item.provenance.filter((entry) => entry.status !== "observed-only" &&
+          entry.publicationSha256 === item.evidence.publication?.sha256 &&
+          (focus === "commercial" || entry.group === focus) &&
+          (focus === "commercial" || changed.some((difference) => difference.field === entry.field)));
+        const score = compatible.some((entry) => entry.status === "source-compatible") ? 2 : compatible.length ? 1 : 0;
+        return { item, count: changed.length, score };
+      })
+      .filter((entry) => entry.count > 0)
+      .sort((a, b) => b.score - a.score || b.count - a.count || a.item.identity.localeCompare(b.item.identity));
     const chosen = ranked[0];
     if (chosen) cases.push({ identity: chosen.item.identity, providerId, focus });
   }
@@ -239,13 +252,18 @@ export const readPanelExplorer = async (workspace: string, snapshot: PanelSnapsh
   if (stored.selectedSha256 !== snapshot.commercialManifest.sha256) {
     throw new Error("Corte comercial cambiado durante la lectura del panel");
   }
+  const knowledge = await readPanelUnitKnowledge(root);
   const products: PanelExplorerProduct[] = [];
   for (const provider of snapshot.providers) {
     const file = stored.files.find((item) => item.name === `${provider.providerId}-commercial.json`);
     if (!file) throw new Error(`Fichero comercial no disponible: ${provider.providerId}`);
-    products.push(...await forProvider(root, provider, file.content));
+    products.push(...await forProvider(root, provider, file.content, knowledge));
   }
   if (products.length !== snapshot.totals.originals) throw new Error("Totales del explorador incoherentes");
+  const currentKnowledge = await readPanelUnitKnowledge(root);
+  if (currentKnowledge?.artifact.sha256 !== knowledge?.artifact.sha256) {
+    throw new Error("El índice de conocimiento cambió durante la lectura del panel");
+  }
   return { products, cases: selectPresentationCases(products),
     originalComparisonsAvailable: snapshot.providers.every((provider) => provider.original.status === "verified") };
 };

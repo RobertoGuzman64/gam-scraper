@@ -54,8 +54,10 @@ const artifactLink = (artifact: PanelArtifact): HTMLAnchorElement => {
   if (!artifact.path.startsWith("catalogs/") || artifact.path.includes("..") || !/^[a-f0-9]{64}$/.test(artifact.sha256)) {
     throw new Error("Ruta de evidencia inválida");
   }
-  link.href = encodeURI(`../${artifact.path}`);
-  link.title = `Abrir evidencia local · SHA256 ${artifact.sha256}`;
+  link.classList.add("local-proof-link");
+  link.dataset.localHref = encodeURI(`../${artifact.path}`);
+  link.title = `Evidencia local (requiere repositorio) · SHA256 ${artifact.sha256}`;
+  if (document.documentElement.dataset.localEvidence === "enabled") link.href = link.dataset.localHref;
   link.target = "_blank";
   link.rel = "noopener noreferrer";
   return link;
@@ -182,17 +184,47 @@ const renderDecisions = (): void => {
   append(table, head, body);
   byId("decisions-matrix").replaceChildren(table);
 };
+const caseFor = (scope: PanelScope, focus?: "technical" | "exclusion") => payload.explorer.cases.find((candidate) =>
+  (scope === "todos" || candidate.providerId === scope) &&
+  (focus === "exclusion" ? candidate.focus === "exclusion" :
+    focus === "technical" ? candidate.focus === "technical" : candidate.focus === "technical" || candidate.focus === "content"));
+const renderExampleAction = (id: string, scope: PanelScope, focus?: "technical" | "exclusion"): void => {
+  const node = byId(id);
+  if (!(node instanceof HTMLButtonElement)) return;
+  const example = caseFor(scope, focus);
+  node.disabled = example === undefined;
+  node.title = example ? `${knownName(example.providerId)} · Caso real del corte; la causa histórica individual puede no estar demostrada` :
+    "No hay caso de esta clase seleccionado para el proveedor filtrado";
+  node.onclick = example ? () => window.dispatchEvent(new CustomEvent("panel:request-case", { detail: example.identity })) : null;
+};
+const renderExplanations = (scope: PanelScope): void => {
+  const examples = byId("normalization-examples");
+  examples.replaceChildren();
+  for (const rule of payload.normalizationExamples) {
+    const row = element("div", "normalization-pair");
+    const received = element("div");
+    append(received, element("span", "pair-label", "CLAVE RECIBIDA"), element("code", "", rule.input));
+    const canonical = element("div");
+    append(canonical, element("span", "pair-label", "CLAVE CANÓNICA"), element("strong", "", rule.canonical), element("small", "", `Tipo esperado: ${rule.ruleType}`));
+    append(row, received, element("span", "pair-arrow", "→"), canonical);
+    append(examples, row);
+  }
+  const metrics = metricsFor(scope);
+  byId("control-exclusion-editorial").textContent = format(metrics.excludedEditorial);
+  byId("control-exclusion-commercial").textContent = format(metrics.excludedCommercial);
+  renderExampleAction("source-example", scope);
+  renderExampleAction("normalization-example", scope, "technical");
+  renderExampleAction("excluded-example", scope, "exclusion");
+};
 const renderKpis = (scope: PanelScope): void => {
   const container = byId("overview-kpis");
   container.replaceChildren();
   const metrics = metricsFor(scope);
   const cards: readonly { readonly key: PanelMetricKey; readonly overline: string; readonly accent: string; readonly note: string }[] = [
     { key: "originals", overline: "01 / ENTRADA", accent: "neutral", note: "Catálogo original acreditado" },
-    { key: "published", overline: "02 / FINISH", accent: "mint", note: "Publicación individual vigente" },
+    { key: "published", overline: "02 / FINISH", accent: "mint", note: "Publicación individual del corte" },
     { key: "exported", overline: "03 / COMERCIAL", accent: "cyan", note: "Productos en el paquete develop" },
-    { key: "changedProducts", overline: "04 / TRANSFORMACIÓN", accent: "purple", note: "Fichas con cambios observados" },
-    { key: "addedTechnicalKeys", overline: "05 / ESPECIFICACIONES", accent: "blue", note: "Nuevas claves tras normalización" },
-    { key: "pendingCategory", overline: "06 / PENDIENTES", accent: "amber", note: "Sin categoría comercial" }
+    { key: "addedTechnicalKeys", overline: "04 / APORTACIÓN", accent: "blue", note: "Claves incorporadas según el informe técnico" }
   ];
   for (const card of cards) {
     const tile = element("article", `kpi-card accent-${card.accent}`);
@@ -379,6 +411,7 @@ const render = (): void => {
   byId("provider-summary").textContent = `${selectedProviders(currentScope).length} ${selectedProviders(currentScope).length === 1 ? "PROVEEDOR" : "PROVEEDORES"}`;
   byId("scope-summary").textContent = scopeLabel(currentScope);
   renderKpis(currentScope);
+  renderExplanations(currentScope);
   renderVolume(currentScope);
   renderProviderChart(currentScope);
   renderInsights(currentScope);
@@ -439,6 +472,24 @@ for (const button of document.querySelectorAll<HTMLButtonElement>("[data-go]")) 
 for (const id of ["close-definition", "close-definition-secondary"]) byId(id).addEventListener("click", () => {
   if (dialog instanceof HTMLDialogElement) dialog.close();
 });
+const localEvidenceToggle = byId("local-evidence-toggle");
+localEvidenceToggle.addEventListener("click", () => {
+  const enabled = document.documentElement.dataset.localEvidence !== "enabled";
+  document.documentElement.dataset.localEvidence = enabled ? "enabled" : "disabled";
+  for (const link of document.querySelectorAll<HTMLAnchorElement>("a.local-proof-link")) {
+    if (enabled && link.dataset.localHref) link.href = link.dataset.localHref;
+    else link.removeAttribute("href");
+  }
+  localEvidenceToggle.setAttribute("aria-pressed", String(enabled));
+  localEvidenceToggle.textContent = enabled ? "Desactivar enlaces locales" : "Activar enlaces del repositorio";
+  byId("evidence-access-status").textContent = enabled ?
+    "Enlaces locales habilitados. Solo funcionan si este HTML está en panel/ y existen los archivos correspondientes de catalogs/ y data/." :
+    "Enlaces locales desactivados para evitar rutas rotas en una copia aislada.";
+});
+const packageSha = payload.snapshot.commercialManifest.sha256;
+const cutSha = byId("cut-package-sha");
+cutSha.textContent = packageSha.slice(0, 16);
+cutSha.title = `SHA256 completo: ${packageSha}`;
 byId("header-package").textContent = `PAQUETE UTC ${payload.snapshot.packageDateUtc}`;
 byId("package-summary").textContent = `PAQUETE UTC ${payload.snapshot.packageDateUtc}`;
 renderDecisions();

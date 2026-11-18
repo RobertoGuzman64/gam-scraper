@@ -1,3 +1,4 @@
+import { SPEC_KEY_NORMALIZATION, SPEC_RULES } from "../../catalog/normalization/spec-rules.js";
 import { PANEL_METRIC_DEFINITIONS } from "../evidence/metric-definitions.js";
 import type { PanelMetricDefinition } from "../evidence/metric-definitions.js";
 import type { PanelProviderId, PanelSnapshot } from "../evidence/types.js";
@@ -19,6 +20,7 @@ export type PanelDashboardPayload = {
   readonly definitions: readonly PanelMetricDefinition[];
   readonly decisions: readonly PanelDecisionRow[];
   readonly names: Readonly<Record<PanelProviderId, string>>;
+  readonly normalizationExamples: readonly { readonly input: string; readonly canonical: string; readonly ruleType: string }[];
 };
 
 const PANEL_NAMES: Readonly<Record<PanelProviderId, string>> = {
@@ -79,5 +81,11 @@ export const createDashboardPayload = (snapshot: PanelSnapshot, explorer: PanelE
   snapshot, explorer,
   definitions: PANEL_METRIC_DEFINITIONS,
   decisions: PANEL_DECISIONS,
-  names: PANEL_NAMES
+  names: PANEL_NAMES,
+  normalizationExamples: ["ano", "peso kg", "capacidad carga"].map((input) => {
+    const canonical = SPEC_KEY_NORMALIZATION[input];
+    const ruleType = canonical === undefined ? undefined : SPEC_RULES[canonical];
+    if (canonical === undefined || ruleType === undefined) throw new Error(`Regla de normalización no disponible: ${input}`);
+    return { input, canonical, ruleType };
+  })
 });

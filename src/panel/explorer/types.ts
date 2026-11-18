@@ -28,6 +28,21 @@ export type PanelFieldDifference = {
   readonly after: string | null;
 };
 
+export type PanelFieldProvenance = {
+  readonly field: PanelFieldDifference["field"];
+  readonly group: PanelFieldDifference["group"];
+  readonly status: "source-compatible" | "mechanism-compatible" | "observed-only";
+  readonly publicationSha256: string;
+  readonly originalSha256: string | null;
+  readonly scope: "unit" | "unknown";
+  readonly sourceField: string | null;
+  readonly sourceValue: string | null;
+  readonly proof: PanelArtifact | null;
+  readonly sourceDigest: string | null;
+  readonly mechanism: string | null;
+  readonly historicalApplication: "not-demonstrated";
+};
+
 export type PanelProductDecision = {
   readonly stage: "editorial" | "commercial";
   readonly reason: string;
@@ -48,6 +63,7 @@ export type PanelExplorerProduct = {
   readonly changes: readonly PanelFieldDifference[];
   readonly commercialChanges: readonly PanelFieldDifference[];
   readonly commercialTechnicalChanges: readonly PanelFieldDifference[];
+  readonly provenance: readonly PanelFieldProvenance[];
   readonly decision: PanelProductDecision | null;
   readonly evidence: {
     readonly original: PanelArtifact | null;

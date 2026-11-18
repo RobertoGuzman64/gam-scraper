@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { readPanelSnapshot } from "../../evidence/read-panel-snapshot.js";
 import { compareOriginalToPublished, compareTechnicalFields, comparePublishedToCommercial } from "../field-differences.js";
-import { readPanelExplorer } from "../read-panel-explorer.js";
+import { readPanelExplorer, selectPresentationCases } from "../read-panel-explorer.js";
 import type { PanelProductView } from "../types.js";
 import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
 
@@ -115,4 +115,31 @@ test("rechaza alteraciones de la acreditación y del paquete tras seleccionar el
     await writeFile(commercial, content + "\n");
     await assert.rejects(readPanelExplorer(copy, snapshot), /modificado|huella|SHA256|archivo/iu);
   });
+});
+
+test("prioriza demostraciones con evidencia compatible frente a fichas con más diferencias", async () => {
+  const explorer = await readPanelExplorer(await fixture.root(), await readPanelSnapshot(await fixture.root()));
+  const gam = explorer.products.find((item) => item.providerId === "gam" && item.stage === "commercial" &&
+    item.changes.some((change) => change.group === "content" && (change.change === "changed" || change.change === "added")));
+  assert.ok(gam);
+  const field = gam.changes.find((change) => change.group === "content" && (change.change === "changed" || change.change === "added"));
+  assert.ok(field);
+  assert.ok(gam.evidence.publication);
+  assert.ok(gam.evidence.original);
+  const sourced = { ...gam, identity: `${gam.identity}:compatible`, provenance: [{
+    field: field.field, group: field.group, status: "source-compatible" as const,
+    publicationSha256: gam.evidence.publication.sha256,
+    originalSha256: gam.evidence.original.sha256, scope: "unit" as const,
+    sourceField: "title", sourceValue: field.after, proof: gam.evidence.original,
+    sourceDigest: null, mechanism: null, historicalApplication: "not-demonstrated" as const
+  }] };
+  const noisy = { ...gam, identity: `${gam.identity}:noisy`, provenance: [],
+    changes: [...gam.changes, ...gam.changes, ...gam.changes] };
+  const selected = selectPresentationCases([...explorer.products, noisy, sourced]);
+  assert.equal(selected.find((item) => item.providerId === "gam" && item.focus === "content")?.identity, sourced.identity);
+  const outdated = { ...sourced, identity: `${gam.identity}:outdated`, provenance: sourced.provenance.map((entry) => ({
+    ...entry, publicationSha256: "f".repeat(64)
+  })) };
+  const rejected = selectPresentationCases([...explorer.products, noisy, outdated]);
+  assert.notEqual(rejected.find((item) => item.providerId === "gam" && item.focus === "content")?.identity, outdated.identity);
 });
