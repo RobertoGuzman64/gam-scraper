@@ -1,16 +1,16 @@
 import assert from "node:assert/strict";
-import { resolve } from "node:path";
 import { test } from "node:test";
 import { createDashboardPayload } from "../dashboard-data.js";
 import { renderPanelHtml } from "../panel-html.js";
 import { readPanelSnapshot } from "../../evidence/read-panel-snapshot.js";
 import { readPanelExplorer } from "../../explorer/read-panel-explorer.js";
+import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
 
-const root = resolve(process.cwd());
+const fixture = createPanelEvidenceWorkspaceFixture();
 
 test("el panel deriva todos los indicadores del corte y conserva las poblaciones por etapa", async () => {
-  const snapshot = await readPanelSnapshot(root);
-  const dashboard = createDashboardPayload(snapshot, await readPanelExplorer(root, snapshot));
+  const snapshot = await readPanelSnapshot(await fixture.root());
+  const dashboard = createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot));
   assert.equal(dashboard.snapshot, snapshot);
   assert.equal(dashboard.definitions.length, 19);
   assert.equal(dashboard.decisions.length, 5);
@@ -25,8 +25,8 @@ test("el panel deriva todos los indicadores del corte y conserva las poblaciones
 });
 
 test("el HTML autónomo contiene los contratos acreditados sin valores prefijados de catálogo", async () => {
-  const snapshot = await readPanelSnapshot(root);
-  const html = await renderPanelHtml(root, createDashboardPayload(snapshot, await readPanelExplorer(root, snapshot)));
+  const snapshot = await readPanelSnapshot(await fixture.root());
+  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot)));
   assert.match(html, /<html lang="es">/);
   assert.match(html, /data-view="resumen"/);
   assert.match(html, /data-view="flujo"/);
@@ -53,22 +53,22 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
 });
 
 test("el HTML neutraliza etiquetas incrustadas en datos de procedencia", async () => {
-  const snapshot = await readPanelSnapshot(root);
-  const base = createDashboardPayload(snapshot, await readPanelExplorer(root, snapshot));
+  const snapshot = await readPanelSnapshot(await fixture.root());
+  const base = createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot));
   const poisoned = {
     ...base,
     names: { ...base.names, gam: "</script><script>alert(1)</script>" }
   };
-  const html = await renderPanelHtml(root, poisoned);
+  const html = await renderPanelHtml(process.cwd(), poisoned);
   assert.ok(html.includes("\\u003c/script\\u003e"));
   assert.ok(!html.includes("</script><script>alert(1)</script>"));
 });
 
 test("las fuentes y métricas no se alteran al crear la vista", async () => {
-  const snapshot = await readPanelSnapshot(root);
+  const snapshot = await readPanelSnapshot(await fixture.root());
   const before = JSON.stringify(snapshot);
-  const dashboard = createDashboardPayload(snapshot, await readPanelExplorer(root, snapshot));
-  await renderPanelHtml(root, dashboard);
+  const dashboard = createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot));
+  await renderPanelHtml(process.cwd(), dashboard);
   assert.equal(JSON.stringify(snapshot), before);
   assert.deepEqual(dashboard.snapshot.providers.map((provider) => provider.providerId), ["gam", "gomariz", "mercaeleva"]);
 });

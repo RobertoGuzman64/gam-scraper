@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { explicitGamTitleYear, gamUrlYear } from "../year.js";
+import { explicitGamTitleYear, gamSourceYear, gamUrlYear } from "../year.js";
 
 test("los años de fabricación declarados expresamente en un título son distinguibles de capacidades y modelos", () => {
   assert.equal(explicitGamTitleYear("Máquina de ocasión, año 2018, capacidad 2000 Kg"), "2018");
@@ -27,4 +27,25 @@ test("solo extrae un año del segmento de unidad de la URL oficial exacta", () =
   ] as const) {
     assert.equal(gamUrlYear(other[0], other[1]), null, other[0]);
   }
+});
+
+
+test("GAM: año con procedencia URL exige un segmento de año, nunca una capacidad en kilos", () => {
+  for (const [reference, suffix] of [
+    ["2240", "preparapedidos-2000-k-yale-mo25"],
+    ["2241", "preparapedidos-2000-k-yale-mo10s"],
+    ["236", "transpaleta-manual-2000-kg-logitrans-panther-silent"]
+  ] as const) {
+    const record = { providerId: "gam", reference,
+      url: `https://online.gamrentals.com/es/yale/${reference}-${suffix}`,
+      title: "Preparapedidos 2000 kg", year: "2000", yearSource: "url" as const };
+    assert.equal(gamSourceYear(record), null, reference);
+  }
+  const valid = { providerId: "gam", reference: "6588",
+    url: "https://online.gamrentals.com/es/preparapedidos-segunda-mano/6588-2019-yale-mo20p",
+    title: "Equipo de segunda mano", year: "2019", yearSource: "url" as const };
+  assert.equal(gamSourceYear(valid), "2019");
+  assert.equal(gamSourceYear({ ...valid, year: "2000" }), null);
+  assert.equal(gamSourceYear({ ...valid, url: valid.url.replace("online.gamrentals.com", "example.com") }), null);
+  assert.equal(gamSourceYear({ ...valid, providerId: "gomariz" }), "2019");
 });

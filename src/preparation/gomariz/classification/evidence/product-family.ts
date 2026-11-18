@@ -13,6 +13,22 @@ const describedFamilies: readonly { readonly prefix: string; readonly family: st
   { prefix: "contamos con grupos electrogenos", family: "generador" }
 ];
 
+const documentedForklifts: readonly {
+  readonly brand: string;
+  readonly model: string;
+  readonly family: "carretilla-industrial" | "carretilla-todoterreno";
+  readonly description: string;
+  readonly power: "electric" | "diesel";
+}[] = [
+  { brand: "baoli", model: "kb25", family: "carretilla-industrial", description: "maquinas destinadas al trabajo en cualquier condicion", power: "diesel" },
+  { brand: "baoli", model: "kb30", family: "carretilla-industrial", description: "maquinas destinadas al trabajo en cualquier condicion", power: "diesel" },
+  { brand: "caterpillar", model: "dp20kmc", family: "carretilla-industrial", description: "maquinas destinadas al trabajo en cualquier condicion", power: "diesel" },
+  { brand: "heli", model: "cpcd25", family: "carretilla-todoterreno", description: "maquinas destinadas al trabajo en cualquier condicion", power: "diesel" },
+  { brand: "heli", model: "cpd25", family: "carretilla-industrial", description: "indicadas especialmente para el almacenaje", power: "electric" },
+  { brand: "manitou", model: "me316-48v", family: "carretilla-industrial", description: "indicadas especialmente para el almacenaje", power: "electric" },
+  { brand: "toyota", model: "02-8fdf25", family: "carretilla-industrial", description: "maquinas destinadas al trabajo en cualquier condicion", power: "diesel" }
+];
+
 const slugify = (value: string): string => fold(value).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").replace(/\bskayjack\b/g, "skyjack");
 
 const identified = (record: ProductRecord, pathSlug: string): boolean => {
@@ -39,7 +55,14 @@ export const gomarizProductFamily = (record: ProductRecord, path: readonly strin
   const description = fold(record.longDescription ?? "");
   if (documentedBrandScissor(record, path)) return "elevador-tijera";
   if (path.length !== 2 || path[0] !== "producto" || !identified(record, path[1] ?? "")) return null;
-  return describedFamilies.find(({ prefix }) => description.startsWith(`${prefix} `))?.family ?? null;
+  const family = describedFamilies.find(({ prefix }) => description.startsWith(`${prefix} `))?.family;
+  if (family) return family;
+  if (record.categoryKey !== "venta" || record.categoryName !== "Maquinaria de ocasión" ||
+    record.condition !== "Segunda mano") return null;
+  const documented = documentedForklifts.find((item) =>
+    fold(record.brand ?? "") === item.brand && slugify(record.model ?? "") === item.model &&
+    description.startsWith(item.description) && energy(String(record.specs?.Motor ?? "")) === item.power);
+  return documented?.family ?? null;
 };
 
 export const gomarizDocumentedElectricScissor = (record: ProductRecord, path: readonly string[]): boolean =>

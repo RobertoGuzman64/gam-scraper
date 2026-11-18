@@ -188,7 +188,11 @@ test("GAM: preserva años acreditados en descripción y ficha y los declarados e
   assert.equal(gamSourceYear(title), "2018");
   assert.deepEqual(resolveAttribute(title, year), { status: "resolved", value: 2018 });
   for (const yearSource of ["ficha", "descripcion", "url"] as const) {
-    const valid = { ...title, yearSource, title: "Carretilla de ocasión · 2000 kg" };
+    const valid = { ...title, yearSource, title: "Carretilla de ocasión · 2000 kg",
+      ...(yearSource === "url" ? {
+        url: "https://online.gamrentals.com/es/carretillas-segunda-mano/100-2018-modelo",
+        reference: "100"
+      } : {}) };
     assert.equal(gamSourceYear(valid), "2018");
     assert.deepEqual(resolveAttribute(valid, year), { status: "resolved", value: 2018 });
   }

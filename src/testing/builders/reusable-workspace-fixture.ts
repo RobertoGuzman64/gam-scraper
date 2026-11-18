@@ -3,6 +3,12 @@ import { cp, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+export const createTemporaryTestWorkspace = (prefix: string): Promise<string> =>
+  mkdtemp(join(tmpdir(), prefix));
+
+export const copyTestWorkspace = (source: string, destination: string): Promise<void> =>
+  cp(source, destination, { recursive: true, mode: constants.COPYFILE_FICLONE });
+
 export const reuseWorkspaceTestFixture = <T extends { readonly root: string; readonly cleanup: () => Promise<void> }>(
   initialize: () => Promise<T>
 ): {
@@ -16,9 +22,9 @@ export const reuseWorkspaceTestFixture = <T extends { readonly root: string; rea
   const ensureFixture = async (): Promise<T> => {
     if (!data) {
       const initialized = await initialize();
-      const snapshotRoot = await mkdtemp(join(tmpdir(), "equipzilla-workspace-fixture-"));
+      const snapshotRoot = await createTemporaryTestWorkspace("equipzilla-workspace-fixture-");
       try {
-        await cp(initialized.root, join(snapshotRoot, "workspace"), { recursive: true, mode: constants.COPYFILE_FICLONE });
+        await copyTestWorkspace(initialized.root, join(snapshotRoot, "workspace"));
       } catch (error) {
         await rm(snapshotRoot, { recursive: true, force: true });
         await initialized.cleanup();
@@ -32,7 +38,7 @@ export const reuseWorkspaceTestFixture = <T extends { readonly root: string; rea
   };
   const restore = async (source: string, destination: string): Promise<void> => {
     await rm(destination, { recursive: true, force: true });
-    await cp(source, destination, { recursive: true, mode: constants.COPYFILE_FICLONE });
+    await copyTestWorkspace(source, destination);
   };
   const fixture = async (): Promise<T> => {
     const first = !data;
@@ -64,7 +70,7 @@ export const reuseWorkspaceTestFixture = <T extends { readonly root: string; rea
       const destination = join(snapshot, name);
       try {
         await setup(current);
-        await cp(current.root, destination, { recursive: true, mode: constants.COPYFILE_FICLONE });
+        await copyTestWorkspace(current.root, destination);
         variants.add(name);
       } catch (error) {
         await rm(destination, { recursive: true, force: true });

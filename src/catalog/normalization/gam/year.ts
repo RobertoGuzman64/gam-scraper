@@ -7,9 +7,11 @@ export const explicitGamTitleYear = (title: string | null): string | null => {
 };
 
 export const gamSourceYear = (record: Pick<ProductRecord,
-  "providerId" | "title" | "year" | "yearSource">): string | null => {
+  "providerId" | "reference" | "url" | "title" | "year" | "yearSource">): string | null => {
   const year = record.year?.trim() ?? null;
-  if (record.providerId !== "gam" || record.yearSource !== "titulo") return year;
+  if (record.providerId !== "gam") return year;
+  if (record.yearSource === "url") return gamUrlYear(record.url, record.reference) === year ? year : null;
+  if (record.yearSource !== "titulo") return year;
   return explicitGamTitleYear(record.title) === year ? year : null;
 };
 

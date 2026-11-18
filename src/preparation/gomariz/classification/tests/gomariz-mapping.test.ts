@@ -111,7 +111,9 @@ test("Gomariz: producto sin identidad, Motor inequívoco o familia corroborada s
     title: "HELI CPCD25", specs: { Motor: "Diésel" },
     longDescription: "Máquinas destinadas al trabajo en cualquier condición, existen modelos con propulsión 4×4."
   };
-  assert.equal(categorySlug(genericForklift), undefined);
+  assert.equal(categorySlug(genericForklift), "carretillas-todoterreno-segunda-mano");
+  assert.equal(categorySlug({ ...genericForklift, model: "CPCD30" }), undefined);
+  assert.equal(categorySlug({ ...genericForklift, longDescription: "Máquinas usadas para transportar cargas" }), undefined);
   const truck = {
     ...record, url: "https://www.gomarizrent.com/producto/socage-iveco-s35s14-forste-24d-speed-ultra/",
     brand: "Iveco Socage", model: "S35S14 FORSTE 24D SPEED ULTRA",
@@ -197,19 +199,55 @@ test("Gomariz: reconoce ruta de fabricante y modelo solo con descripción y Moto
   assert.equal(categorySlug({ ...record, longDescription: "Ficha sin familia" }), undefined);
 });
 
-test("Gomariz: textos genéricos y familias sin categoría específica permanecen sin acreditar", () => {
+test("Gomariz: familias documentadas no fuerzan barredoras ni rodillos sin categoría equivalente", () => {
   const genericForklift = {
     ...source("gomariz", "https://www.gomarizrent.com/producto/heli-cpcd25/", "HELI CPCD25", { Motor: "Diésel" }, null),
     brand: "HELI", model: "CPCD25",
     longDescription: "Máquinas destinadas al trabajo en cualquier condición, existen modelos con propulsión 4×4."
   };
-  assert.equal(categorySlug(genericForklift), undefined);
+  assert.equal(categorySlug(genericForklift), "carretillas-todoterreno-segunda-mano");
+  assert.equal(categorySlug({ ...genericForklift, model: "CPCD30" }), undefined);
+  assert.equal(categorySlug({ ...genericForklift, longDescription: "Máquinas usadas para transportar cargas" }), undefined);
   const electricForklift = {
     ...source("gomariz", "https://www.gomarizrent.com/producto/heli-cpd25/", "HELI CPD25", { Motor: "Eléctrico" }, null),
     brand: "HELI", model: "CPD25",
     longDescription: "Indicadas especialmente para el almacenaje y trabajos realizados en el interior de los edificios."
   };
-  assert.equal(categorySlug(electricForklift), undefined);
+  assert.equal(categorySlug(electricForklift), "carretillas-elevadoras-electricas-segunda-mano");
+  assert.equal(categorySlug(source("gomariz", "https://www.gomarizrent.com/limpieza/barredora/eureka-compact-1150-1/", "Eureka Compact 1150", { Motor: "Eléctrico" }, null)), undefined);
+  assert.equal(categorySlug(source("gomariz", "https://www.gomarizrent.com/venta/movimiento-de-tierras-demolicion-y-compactacion/rodillo/dynapac-lp6500-2/", "Dynapac LP6500", { Motor: "Diésel" }, null)), undefined);
+});
+
+
+test("Gomariz: acredita familias de carretillas por modelo documentado, identidad y motor declarado", () => {
+  const diesel = "Máquinas destinadas al trabajo en cualquier condición, existen modelos con propulsión 4×4.";
+  const electric = "Indicadas especialmente para el almacenaje y trabajos realizados en el interior de los edificios.";
+  const cases = [
+    ["BAOLI", "KB25", "Diésel", diesel, "carretillas-elevadoras-diesel-segunda-mano"],
+    ["Baoli", "KB30", "Diésel", diesel, "carretillas-elevadoras-diesel-segunda-mano"],
+    ["Caterpillar", "DP20KMC", "Diésel", diesel, "carretillas-elevadoras-diesel-segunda-mano"],
+    ["HELI", "CPCD25", "Diésel", diesel, "carretillas-todoterreno-segunda-mano"],
+    ["HELI", "CPD25", "Eléctrico", electric, "carretillas-elevadoras-electricas-segunda-mano"],
+    ["Manitou", "ME316-48V", "Eléctrico", electric, "carretillas-elevadoras-electricas-segunda-mano"],
+    ["Toyota", "02-8FDF25", "Diésel", diesel, "carretillas-elevadoras-diesel-segunda-mano"]
+  ] as const;
+  for (const [brand, model, motor, general, expected] of cases) {
+    const url = `https://www.gomarizrent.com/producto/${brand.toLowerCase()}-${model.toLowerCase()}/`;
+    const record = { ...source("gomariz", url, `${brand} ${model}`, { Motor: motor }, null),
+      brand, model, longDescription: general };
+    assert.equal(categorySlug(record), expected, model);
+    assert.equal(categorySlug({ ...record, specs: {} }), undefined, model);
+    assert.equal(categorySlug({ ...record, specs: { Motor: "Diésel, Gasolina" } }), undefined, model);
+    assert.equal(categorySlug({ ...record, title: "Máquina sin identidad" }), undefined, model);
+    assert.equal(categorySlug({ ...record, brand: "Otra" }), undefined, model);
+    assert.equal(categorySlug({ ...record, model: "INDEFINIDO" }), undefined, model);
+    assert.equal(categorySlug({ ...record, longDescription: "Carretilla de ocasión" }), undefined, model);
+    assert.equal(categorySlug({ ...record, url: url.replace("/producto/", "/alquiler/") }), undefined, model);
+    assert.equal(categorySlug({ ...record, url: url.replace("gomarizrent.com", "example.com") }), undefined, model);
+    assert.equal(categorySlug({ ...record, condition: "Nuevo" }), undefined, model);
+    assert.equal(categorySlug({ ...record, categoryKey: "alquiler" }), undefined, model);
+    assert.equal(categorySlug({ ...record, specs: { Motor: motor === "Diésel" ? "Eléctrico" : "Diésel" } }), undefined, model);
+  }
   assert.equal(categorySlug(source("gomariz", "https://www.gomarizrent.com/limpieza/barredora/eureka-compact-1150-1/", "Eureka Compact 1150", { Motor: "Eléctrico" }, null)), undefined);
   assert.equal(categorySlug(source("gomariz", "https://www.gomarizrent.com/venta/movimiento-de-tierras-demolicion-y-compactacion/rodillo/dynapac-lp6500-2/", "Dynapac LP6500", { Motor: "Diésel" }, null)), undefined);
 });

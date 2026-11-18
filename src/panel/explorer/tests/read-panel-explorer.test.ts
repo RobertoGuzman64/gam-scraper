@@ -1,25 +1,18 @@
 import assert from "node:assert/strict";
-import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { test } from "node:test";
 import { readPanelSnapshot } from "../../evidence/read-panel-snapshot.js";
 import { compareOriginalToPublished, compareTechnicalFields, comparePublishedToCommercial } from "../field-differences.js";
 import { readPanelExplorer } from "../read-panel-explorer.js";
 import type { PanelProductView } from "../types.js";
+import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
 
-const root = resolve(process.cwd());
-const withCatalogCopy = async (action: (copy: string) => Promise<void>): Promise<void> => {
-  const directory = await mkdtemp(join(tmpdir(), "eqz-explorer-"));
-  try {
-    await cp(join(root, "catalogs"), join(directory, "catalogs"), { recursive: true });
-    await action(directory);
-  } finally { await rm(directory, { recursive: true, force: true }); }
-};
+const fixture = createPanelEvidenceWorkspaceFixture();
 
 test("el explorador refleja exactamente las tres poblaciones verificadas por proveedor", async () => {
-  const snapshot = await readPanelSnapshot(root);
-  const explorer = await readPanelExplorer(root, snapshot);
+  const snapshot = await readPanelSnapshot(await fixture.root());
+  const explorer = await readPanelExplorer(await fixture.root(), snapshot);
   assert.equal(explorer.products.length, snapshot.totals.originals);
   for (const provider of snapshot.providers) {
     const rows = explorer.products.filter((item) => item.providerId === provider.providerId);
@@ -49,7 +42,7 @@ test("el explorador refleja exactamente las tres poblaciones verificadas por pro
 });
 
 test("selecciona tres casos reales con cambios y una exclusión aprobada", async () => {
-  const explorer = await readPanelExplorer(root, await readPanelSnapshot(root));
+  const explorer = await readPanelExplorer(await fixture.root(), await readPanelSnapshot(await fixture.root()));
   assert.deepEqual(explorer.cases.map((item) => item.focus), ["content", "technical", "commercial", "exclusion"]);
   for (const example of explorer.cases) {
     const item = explorer.products.find((entry) => entry.identity === example.identity);
@@ -95,12 +88,12 @@ test("preserva ausencia de precio, cero y diferencias entre salida técnica y co
 });
 
 test("sin original acreditado impide cualquier comparación editorial pero conserva FINISH", async () => {
-  const snapshot = await readPanelSnapshot(root);
+  const snapshot = await readPanelSnapshot(await fixture.root());
   const providers = snapshot.providers.map((provider) => provider.providerId === "gam" && provider.original.status === "verified" ? {
     ...provider,
     original: { status: "unavailable" as const, expectedSha256: provider.original.artifact.sha256, reason: "Original no conservado" }
   } : provider);
-  const explorer = await readPanelExplorer(root, { ...snapshot, providers });
+  const explorer = await readPanelExplorer(await fixture.root(), { ...snapshot, providers });
   const gam = explorer.products.filter((item) => item.providerId === "gam");
   assert.ok(gam.every((item) => item.original === null && item.changes.length === 0));
   assert.ok(gam.some((item) => item.published !== null));
@@ -108,7 +101,7 @@ test("sin original acreditado impide cualquier comparación editorial pero conse
 });
 
 test("rechaza alteraciones de la acreditación y del paquete tras seleccionar el corte", async () => {
-  await withCatalogCopy(async (copy) => {
+  await fixture.withCopy(async (copy) => {
     const snapshot = await readPanelSnapshot(copy);
     const gam = snapshot.providers.find((item) => item.providerId === "gam");
     assert.ok(gam);
