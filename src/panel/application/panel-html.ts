@@ -10,19 +10,23 @@ const safeJson = (value: unknown): string => JSON.stringify(value)
   .replaceAll("\u2029", "\\u2029");
 
 export const renderPanelHtml = async (workspace: string, payload: PanelDashboardPayload): Promise<string> => {
-  const [css, js, explorerJs, selectionJs] = await Promise.all([
+  const [css, js, explorerJs, selectionJs, stageCardsJs] = await Promise.all([
     readFile(join(workspace, "src", "panel", "ui", "dashboard.css"), "utf8"),
     readFile(join(workspace, "dist", "panel", "ui", "dashboard-client.js"), "utf8"),
     readFile(join(workspace, "dist", "panel", "ui", "explorer-client.js"), "utf8"),
-    readFile(join(workspace, "dist", "panel", "explorer", "explorer-selection.js"), "utf8")
+    readFile(join(workspace, "dist", "panel", "explorer", "explorer-selection.js"), "utf8"),
+    readFile(join(workspace, "dist", "panel", "ui", "explorer-stage-cards.js"), "utf8")
   ]);
   const selectionImport = '"../explorer/explorer-selection.js"';
-  if (!explorerJs.includes(selectionImport) || /(^|\n)\s*import\s/m.test(selectionJs)) {
+  const cardsImport = '"./explorer-stage-cards.js"';
+  if (!explorerJs.includes(selectionImport) || !explorerJs.includes(cardsImport) ||
+    /(^|\n)\s*import\s/m.test(selectionJs) || /(^|\n)\s*import\s/m.test(stageCardsJs)) {
     throw new Error("No se puede integrar la selección del Explorador en el HTML autónomo");
   }
   const offlineExplorerJs = explorerJs.replace(selectionImport,
-    `"data:text/javascript;base64,${Buffer.from(selectionJs, "utf8").toString("base64")}"`);
-  if (css.includes("</style") || js.includes("</script") || offlineExplorerJs.includes("</script")) {
+    `"data:text/javascript;base64,${Buffer.from(selectionJs, "utf8").toString("base64")}"`).replace(cardsImport,
+    `"data:text/javascript;base64,${Buffer.from(stageCardsJs, "utf8").toString("base64")}"`);
+  if (css.includes("</style") || js.includes("</script") || stageCardsJs.includes("</script") || offlineExplorerJs.includes("</script")) {
     throw new Error("Recursos UI contienen un cierre HTML no permitido");
   }
   return `<!doctype html>
@@ -116,16 +120,17 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
       </section>
 
       <section class="page-view" data-view="explorador" aria-labelledby="explorer-title" hidden>
-        <div class="standard-heading"><span class="eyebrow">03 / COMPARADOR DE FICHAS</span><h1 id="explorer-title">Cada máquina, <em>con su procedencia.</em></h1><p>Encuentra carencias de origen y abre el antes/después con su evidencia.</p></div>
+        <div class="standard-heading explorer-heading"><span class="eyebrow">03 / FICHAS REALES</span><h1 id="explorer-title">Original, FINISH <em>y Comercial.</em></h1></div>
         <div class="explorer-controls">
-          <label>Buscar referencia, modelo o título<input id="explorer-search" type="search" placeholder="Buscar una máquina o referencia…" autocomplete="off"></label>
-          <label>Etapa<select id="explorer-stage"><option value="todos">Todas las etapas</option><option value="commercial">Exportadas comerciales</option><option value="commercial-excluded">Excluidas comerciales</option><option value="editorial-excluded">Excluidas editoriales</option></select></label>
-          <label>Familia / categoría<select id="explorer-category"><option value="todos">Todas las categorías</option></select></label>
+          <label>Buscar máquina<input id="explorer-search" type="search" placeholder="Referencia, modelo o título…" autocomplete="off"></label>
+          <label>Categoría<select id="explorer-category"><option value="todos">Todas las categorías</option></select></label>
           <label>Ordenar por<select id="explorer-sort"><option value="most-differences">Más diferencias observadas</option><option value="fewest-original-specs">Menos especificaciones de origen</option><option value="most-technical-additions">Más especificaciones incorporadas</option><option value="most-technical-changes">Más valores técnicos modificados</option><option value="reference">Referencia · incluir excluidas</option></select></label>
         </div>
-        <fieldset class="explorer-refinements"><legend>Destacar fichas</legend><label><input type="checkbox" id="explorer-missing-description"> Alguna descripción original ausente</label><label><input type="checkbox" id="explorer-without-specs"> Sin especificaciones de origen</label><label><input type="checkbox" id="explorer-with-additions"> Con especificaciones incorporadas</label><label><input type="checkbox" id="explorer-editorial-changes"> Con descripciones cambiadas</label></fieldset>
-        <p id="explorer-order-note" class="explorer-order-note">Ordenaciones por diferencias observadas entre original y FINISH; no son puntuaciones de calidad.</p>
-        <div class="explorer-layout"><section class="surface-card explorer-results" aria-label="Resultados de búsqueda"><div class="card-heading"><h3>Fichas del corte</h3><span id="explorer-counter" class="card-side-note"></span></div><div id="explorer-cases" class="explorer-cases" aria-label="Casos de demostración"></div><div id="explorer-list" class="explorer-list"></div><div class="explorer-pages"><button type="button" id="explorer-page-prev">← Anterior</button><span id="explorer-pages-label"></span><button type="button" id="explorer-page-next">Siguiente →</button></div></section>
+        <details class="explorer-advanced"><summary>Más filtros<span id="explorer-extra-count"></span></summary><div class="explorer-advanced-content">
+          <label>Etapa<select id="explorer-stage"><option value="todos">Todas las etapas</option><option value="commercial">Exportadas comerciales</option><option value="commercial-excluded">Excluidas comerciales</option><option value="editorial-excluded">Excluidas editoriales</option></select></label>
+          <fieldset class="explorer-refinements"><legend>Carencias y cambios</legend><label><input type="checkbox" id="explorer-missing-description"> Alguna descripción original ausente</label><label><input type="checkbox" id="explorer-without-specs"> Sin especificaciones de origen</label><label><input type="checkbox" id="explorer-with-additions"> Con especificaciones incorporadas</label><label><input type="checkbox" id="explorer-editorial-changes"> Con descripciones cambiadas</label></fieldset>
+        </div></details>
+        <div class="explorer-layout"><section class="surface-card explorer-results" aria-label="Resultados de búsqueda"><div class="card-heading"><h3>Máquinas</h3><span id="explorer-counter" class="card-side-note"></span></div><div id="explorer-active-filters" class="explorer-active-filters" aria-live="polite"></div><p id="explorer-order-note" class="explorer-order-note">Ordenaciones por diferencias observadas entre original y FINISH; no son puntuaciones de calidad.</p><div id="explorer-list" class="explorer-list"></div><div class="explorer-pages"><button type="button" id="explorer-page-prev">← Anterior</button><span id="explorer-pages-label"></span><button type="button" id="explorer-page-next">Siguiente →</button></div></section>
           <section class="surface-card explorer-detail" id="explorer-detail" aria-label="Comparación de máquina"><div class="explorer-empty">Selecciona una ficha para inspeccionar el original, su publicación y el resultado comercial.</div></section></div>
       </section>
 

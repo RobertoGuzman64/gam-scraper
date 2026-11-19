@@ -1206,7 +1206,6 @@ p {
 @media(max-width:750px) {
 }
 
-.case-button:hover {background:#244958}
 .explorer-pages button {
   border-radius:7px;padding:10px 12px;border:1px solid #334a5e;
   background:#182a3b;color:#c8dfec;font-size:14px;font-weight:700;
@@ -1228,9 +1227,6 @@ p {
 .explorer-results,.explorer-detail {padding:19px;min-width:0}
 .explorer-results .card-heading {padding-bottom:15px;margin-bottom:10px;border-bottom:1px solid #293b4e}
 .explorer-results .card-heading h3 {font-size:16px}
-.explorer-cases {display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 18px}
-.case-caption {flex:0 0 100%;color:#7891a6;font-size:9px;font-weight:800;letter-spacing:.12em}
-.case-button {border:1px solid #355265;border-radius:6px;background:#182c3b;padding:7px 9px;color:#a7e3e8;font-size:10px;font-weight:680;text-align:left}
 .explorer-list {display:grid;gap:7px}
 .product-row {
   text-align:left;display:flex;flex-direction:column;gap:7px;width:100%;
@@ -1254,16 +1250,6 @@ p {
 .detail-reference {font-size:10px;color:#84a2b4;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,monospace}
 .explorer-link {display:inline-block;width:fit-content;font-weight:690;color:#76deee;font-size:11px;overflow-wrap:anywhere;line-height:1.5}
 .explorer-link:hover {color:white}
-.record-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.record-card {display:flex;flex-direction:column;gap:13px;min-width:0;padding:17px;border:1px solid #293d50;border-radius:9px;background:#0c1724}
-.record-title {font-size:15px;line-height:1.5;overflow-wrap:anywhere}
-.record-figure {position:relative;border:1px solid #26384b;background:#fff;border-radius:6px;overflow:hidden}
-.record-figure img {display:block;width:100%;height:125px;object-fit:contain}
-.record-figure span {position:absolute;right:0;bottom:0;padding:3px 6px;background:#152336e8;color:#bfd1de;font-size:9px}
-.record-facts {display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:7px;padding-top:12px;border-top:1px solid #28384b;margin:0;font-size:10px}
-.record-facts dt {color:#7993a6}
-.record-facts dd {margin:0;color:#dbe8f2;overflow-wrap:anywhere;text-align:right}
-.record-missing {display:flex;align-items:center;min-height:100px;font-size:11px;color:#91a7b9;line-height:1.6}
 .diff-heading {display:flex;justify-content:space-between;align-items:center;gap:15px;padding:25px 0 10px;font-size:20px;font-weight:730;letter-spacing:-.025em}
 .compare-region {padding:18px 0 12px;border-top:1px solid #2b4051}
 .compare-region h3 {font-size:15px}
@@ -1286,10 +1272,6 @@ p {
 .muted-copy {color:#98aabb;font-size:12px;line-height:1.6}
 @media(max-width:1260px) {
   .explorer-layout {grid-template-columns:minmax(250px,290px) minmax(0,1fr)}
-  .record-grid {grid-template-columns:1fr}
-  .record-card {display:grid;grid-template-columns:140px minmax(0,1fr);align-items:start}
-  .record-card>.section-kicker,.record-card>.record-facts {grid-column:1 / -1}
-  .record-figure img {height:115px}
 }
 @media(max-width:950px) {
   .explorer-controls {grid-template-columns:1fr 1fr}
@@ -1300,14 +1282,11 @@ p {
   .explorer-controls {grid-template-columns:1fr}
   .explorer-controls label:first-child {grid-column:auto}
   .explorer-results {max-height:560px;overflow-y:auto}
-  .record-card {display:flex}
-  .record-figure img {height:135px}
   .diff-heading {flex-direction:column;align-items:flex-start}
 }
 @media print {
   .explorer-controls,.sidebar,.explorer-results {display:none!important}
   .explorer-layout {display:block}
-  .record-grid {grid-template-columns:repeat(3,1fr)}
 }
 .snapshot-label {display:flex;align-items:center;gap:8px}
 .image-unavailable {display:grid;place-items:center;min-height:95px;background:#192735;color:#94a9bb;text-align:center;padding:16px;font-size:10px}
@@ -1345,7 +1324,6 @@ p {
 .detail-decision .decision-result {font-size:14px;color:#dcf6ff}
 .detail-decision>p {font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
 .detail-decision .decision-issue {padding-left:13px;border-left:2px solid #b58d62}
-.record-card .record-facts {margin-top:auto}
 @media(max-width:750px) {
   .description-columns {grid-template-columns:1fr}
   .description-commercial {grid-column:auto}
@@ -1355,13 +1333,8 @@ p {
   .technical-table {min-width:0}
   .description-columns {grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-.change-overview,.field-story,.commercial-summary {padding:20px 0;border-bottom:1px solid #2d4354;min-width:0}
-.change-overview h3,.field-story h3,.commercial-summary h3 {margin:7px 0 13px;font-size:18px}
-.change-summary-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:15px 0}
-.change-summary-cell {display:flex;flex-direction:column;gap:6px;padding:14px 12px;background:#101e2c;border:1px solid #294052;border-radius:8px}
-.change-summary-cell strong {color:#e9f8fc;font-size:22px;font-variant-numeric:tabular-nums}
-.change-summary-cell span {font-size:10px;color:#a1b7c8}
-.change-decision {margin-top:10px;color:#b9cfdc;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.field-story {padding:20px 0;border-bottom:1px solid #2d4354;min-width:0}
+.field-story h3 {margin:7px 0 13px;font-size:18px}
 .field-story-controls {display:grid;grid-template-columns:minmax(170px,.75fr) minmax(0,1.25fr);gap:12px;margin-top:18px;align-items:start}
 .field-story-selection {display:grid;gap:7px;min-width:0}
 .field-choice {width:100%;text-align:left;padding:11px 12px;border:1px solid #30485a;background:#0e1b29;border-radius:7px;color:#bccfdc;font-size:11px;line-height:1.55;overflow-wrap:anywhere}
@@ -1386,8 +1359,6 @@ p {
 .field-story-digest {color:#91c3d6;font-size:10px;overflow-wrap:anywhere}
 .field-value-expand summary,.field-story-more summary,.preserved-fields summary,.audit-artifacts summary,.description-group summary {cursor:pointer;color:#92d6e5;font-size:12px;line-height:1.6}
 .field-value-expand .field-value {margin-top:10px}
-.commercial-summary {padding:19px 0}
-.commercial-summary>p {font-size:12px;color:#c9dbe5;overflow-wrap:anywhere}
 .full-record {margin:18px 0;padding:0 15px 15px;border:1px solid #344c60;border-radius:10px;background:#0f1c2a;min-width:0}
 .full-record>summary {cursor:pointer;padding:20px 5px;color:#cde9f4;font-size:13px;font-weight:730;line-height:1.6}
 .full-record[open]>summary {border-bottom:1px solid #30475a;margin-bottom:16px}
@@ -1406,7 +1377,6 @@ p {
   .field-story-more {grid-column:1/-1}
 }
 @media(max-width:600px) {
-  .change-summary-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
   .field-story-selection,.field-story-values {grid-template-columns:1fr}
   .field-story-proof {padding:14px}
   .full-record {padding:0 10px 10px}
@@ -1586,8 +1556,6 @@ summary:focus-visible {outline:2px solid var(--cyan);outline-offset:3px}
 .explorer-controls label {font-size:15px}
 .explorer-controls input,.explorer-controls select {font-size:16px}
 .explorer-layout {grid-template-columns:minmax(280px,340px) minmax(0,1fr)}
-.case-caption {font-size:12px}
-.case-button {font-size:13px;padding:10px 12px}
 .product-row-top>strong,.product-title {font-size:15px}
 .product-status {font-size:12px}
 .product-row small {font-size:13px}
@@ -1595,7 +1563,6 @@ summary:focus-visible {outline:2px solid var(--cyan);outline-offset:3px}
 .detail-header p {font-size:14px}
 .detail-reference {font-size:12px}
 .explorer-link {font-size:14px}
-.change-summary-cell strong {font-size:clamp(28px,2.8vw,40px)}
 .field-story h3 {font-size:26px}
 .field-story-proof h4 {font-size:24px}
 .field-story-values {font-size:16px}
@@ -1629,10 +1596,6 @@ summary:focus-visible {outline:2px solid var(--cyan);outline-offset:3px}
 .impact-stage {color:#a4d8e6;font-size:13px;letter-spacing:.05em;font-weight:760}
 .impact-spec-count {font-size:clamp(32px,3.7vw,53px);line-height:1.15;color:#eefcff;font-variant-numeric:tabular-nums}
 .impact-spec-label {color:#b1c6d4;font-size:13px;margin-bottom:10px}
-.impact-description {width:100%;display:grid;gap:5px;padding-top:10px;border-top:1px solid #2d4757}
-.impact-description>span:first-child {font-size:12px;font-weight:730;color:#a8d2e0}
-.impact-description>span:last-child {font-size:14px;line-height:1.5;color:#dceaf1;overflow-wrap:anywhere}
-.impact-description .impact-absent {font-size:14px;color:#e3b6a2}
 .impact-comparison-result {padding:13px 15px;border-radius:8px;background:#163547;color:#c9f1ee;font-size:15px;line-height:1.5;font-weight:690;margin:15px 0 7px}
 @media(max-width:1380px) {
   .explorer-controls {grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -1646,9 +1609,6 @@ summary:focus-visible {outline:2px solid var(--cyan);outline-offset:3px}
   .product-impact span,.product-impact strong {font-size:12px}
   .explorer-results {max-height:none;overflow:visible}
 }
-.change-summary-more {margin-top:16px;border:1px solid #2c4555;border-radius:9px;padding:14px 17px;background:#101e2b}
-.change-summary-more>summary {cursor:pointer;color:#9cdee6;font-size:14px;font-weight:730}
-.change-summary-more .change-overview {border-bottom:0;padding-bottom:0}
 
 .source-map {margin-top:19px}
 .explorer-controls {margin-top:10px;gap:11px;margin-bottom:11px}
@@ -1678,10 +1638,6 @@ summary:focus-visible {outline:2px solid var(--cyan);outline-offset:3px}
 .impact-spec-count {font-size:clamp(49px,4.6vw,68px);letter-spacing:-.055em;line-height:1}
 .impact-stage {font-size:14px}
 .impact-spec-label {font-size:14px;margin-bottom:6px}
-.impact-description {padding-top:11px;gap:7px}
-.impact-description>span:first-child {font-size:13px}
-.impact-description>span:last-child {font-size:15px;line-height:1.5}
-.impact-description .impact-absent {font-size:17px}
 .impact-comparison-result {font-size:16px;padding:15px 17px}
 .field-story {padding:25px 0 21px}
 .field-story h3 {font-size:clamp(25px,2.5vw,34px);line-height:1.2}
@@ -1705,8 +1661,6 @@ summary:focus-visible {outline:2px solid var(--cyan);outline-offset:3px}
 .field-story-digest {font-size:12px}
 .field-value-expand summary,.field-story-more summary,.preserved-fields summary,.audit-artifacts summary,.description-group summary {font-size:14px}
 .field-story-more-list {gap:10px}
-.change-summary-cell span {font-size:14px}
-.change-summary-more>summary,.full-record>summary {font-size:15px}
 .detail-evidence h3 {font-size:21px}
 .detail-decision>p {font-size:14px}
 .description-body {font-size:15px;line-height:1.7}
@@ -1757,6 +1711,408 @@ input:focus-visible,summary:focus-visible {outline:2px solid var(--cyan);outline
   .hero h1,.standard-heading h1 {font-size:clamp(30px,7.5vw,40px)}
   .hero-copy>p {font-size:15px}
   .standard-heading>p {font-size:15px}
+}
+
+.explorer-controls {grid-template-columns:minmax(230px,1.6fr) repeat(2,minmax(170px,1fr));margin-bottom:10px}
+.explorer-advanced {margin-bottom:17px;border:1px solid #2d4557;border-radius:10px;background:#112331}
+.explorer-advanced>summary {padding:12px 16px;cursor:pointer;color:#b9dee8;font-size:15px;font-weight:740}
+.explorer-advanced>summary::marker {color:#70d5e5}
+.explorer-advanced[open]>summary {border-bottom:1px solid #2d4557}
+.explorer-advanced-content {padding:15px;display:grid;gap:15px}
+.explorer-advanced-content>label {display:grid;gap:8px;color:#c6dce8;font-size:14px;font-weight:700;max-width:330px}
+.explorer-advanced-content select {width:100%;min-height:44px;padding:10px 12px;border:1px solid #39576b;border-radius:8px;background:#111f2f;color:#edf6fb;font-size:15px}
+.explorer-advanced-content .explorer-refinements {margin:0}
+.explorer-active-filters {padding:0 0 13px;margin-bottom:10px;border-bottom:1px solid #2d4354}
+.explorer-filter-heading {display:flex;align-items:center;justify-content:space-between;gap:10px}
+.explorer-filter-heading strong {font-size:14px;color:#e1eff7}
+.explorer-clear-filters {border:0;background:none;color:#8edcea;padding:5px 0;font-size:13px;font-weight:730;cursor:pointer}
+.explorer-filter-chips {display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
+.explorer-filter-chip {padding:7px 10px;border:1px solid #416c7b;border-radius:7px;background:#193848;color:#c3f1f5;font-size:13px;line-height:1.3;cursor:pointer;overflow-wrap:anywhere;max-width:100%;text-align:left}
+.explorer-filter-chip:hover,.explorer-clear-filters:hover {color:#fff;border-color:#8dd9e4}
+.explorer-filter-chip:focus-visible,.explorer-clear-filters:focus-visible {outline:2px solid #a9effb;outline-offset:3px}
+.explorer-no-filters {color:#849eaf;font-size:13px;margin:8px 0}
+.explorer-sort-current {color:#b8c9d9;font-size:13px;margin-top:9px;line-height:1.45}
+.explorer-results .explorer-order-note {margin:0 0 13px;font-size:12px;line-height:1.4}
+.explorer-decision-summary {margin:-4px 0 16px;padding:11px 14px;border:1px solid #74533f;background:#332a29;border-radius:8px;color:#f6d7b5;font-size:14px;line-height:1.5}
+.explorer-detail .impact-comparison {padding-bottom:15px}
+.explorer-detail .impact-comparison>h3 {font-size:23px;margin:5px 0 12px}
+.explorer-detail .impact-comparison-card {padding:14px 17px;gap:4px}
+.explorer-detail .impact-spec-count {font-size:clamp(30px,3vw,42px);letter-spacing:-.04em}
+.explorer-detail .impact-spec-label {margin:0}
+.explorer-detail .impact-comparison-result {font-size:14px;padding:10px 13px;margin:12px 0 0}
+.explorer-detail .field-story {padding:18px 0}
+.explorer-detail .field-story h3 {font-size:24px}
+.explorer-detail .field-story-controls {grid-template-columns:minmax(150px,.6fr) minmax(0,1.4fr)}
+.explorer-decision-detail>summary {cursor:pointer;color:#acdce8;font-size:15px;font-weight:720;margin:6px 0 12px}
+@media(max-width:1260px) {
+  .explorer-detail .field-story-controls {grid-template-columns:1fr}
+}
+@media(max-width:850px) {
+  .explorer-controls {grid-template-columns:1fr 1fr}
+  .explorer-controls label:first-child {grid-column:1/-1}
+}
+@media(max-width:520px) {
+  .explorer-controls {grid-template-columns:1fr}
+  .explorer-controls label:first-child {grid-column:auto}
+  .explorer-detail .impact-comparison-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .explorer-detail .impact-comparison-card {padding:12px}
+  .explorer-detail .impact-spec-count {font-size:34px}
+}
+
+.explorer-heading {padding-bottom:15px}
+.explorer-heading h1 {margin-bottom:0}
+@media(max-width:750px) {
+  .explorer-heading {padding-top:14px;padding-bottom:10px}
+  .explorer-heading h1 {font-size:clamp(27px,7vw,36px)}
+}
+
+.stage-record-section {margin:0 0 19px;min-width:0}
+.stage-record-heading {font-size:21px;margin:0 0 15px;color:#e4f2f9;letter-spacing:-.02em}
+.stage-record-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stage-record-card {display:flex;flex-direction:column;min-width:0;gap:10px;padding:13px;border:1px solid #355166;border-radius:12px;background:#101f2e}
+.stage-record-label {color:#91d5e5;font-size:12px;font-weight:800;letter-spacing:.045em}
+.stage-record-image,.stage-record-placeholder {display:grid;place-items:center;position:relative;min-width:0;aspect-ratio:4/3;border-radius:8px;background:#fff;overflow:hidden}
+.stage-record-image img {display:block;width:100%;height:100%;object-fit:contain}
+.record-photo-empty,.stage-record-placeholder {padding:12px;color:#617384;text-align:center;font-size:13px;line-height:1.4}
+.stage-record-title {font-size:15px;line-height:1.4;font-weight:750;color:#edf6fc;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.8em}
+.stage-record-stats {display:grid;gap:7px;margin:1px 0 4px}
+.stage-record-stat {display:flex;justify-content:space-between;gap:8px;align-items:start;font-size:12px;line-height:1.35;min-width:0}
+.stage-record-stat>span {color:#a9bfd0}
+.stage-record-stat>strong {color:#edf7fb;text-align:right;overflow-wrap:anywhere}
+.stage-record-expand {margin-top:auto;min-height:40px;border:1px solid #69a6b8;border-radius:8px;background:#17374a;color:#e6f9ff;font-size:14px;font-weight:750;cursor:pointer}
+.stage-record-expand:hover {background:#204c61;border-color:#83d4e6}
+.stage-record-expand:focus-visible,.stage-viewer-close:focus-visible {outline:3px solid #8ce3f0;outline-offset:3px}
+.stage-record-absent {background:#111b27;border-style:dashed;border-color:#42546a}
+.stage-record-absent .stage-record-placeholder {background:#182735;color:#b7c9d7;flex:1}
+.stage-record-unavailable {color:#9aafc0;font-size:12px;line-height:1.5}
+.explorer-detail .impact-comparison {padding:15px 0;margin:0;border-top:1px solid #2f485c;border-bottom:0}
+.explorer-detail .impact-comparison>h3 {font-size:19px;margin:5px 0 10px}
+.impact-compact {display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.impact-compact>* {padding:7px 10px;border:1px solid #31596a;border-radius:7px;background:#143040;color:#c8e8f0;font-size:13px}
+.impact-compact strong {color:#f2fcff;font-weight:780}
+.impact-main-change {margin:10px 0 0;color:#c4d8e5;font-size:13px}
+.explorer-provenance-disclosure {margin:0 0 16px;border:1px solid #355064;border-radius:9px;background:#102232;padding:0 15px}
+.explorer-provenance-disclosure>summary {cursor:pointer;padding:15px 0;color:#a6e3ed;font-size:15px;font-weight:750}
+.explorer-provenance-disclosure[open]>summary {border-bottom:1px solid #355064}
+.explorer-provenance-disclosure .field-story {border-bottom:0}
+@media(max-width:1350px) and (min-width:1051px) {
+  .stage-record-grid {gap:8px}
+  .stage-record-card {padding:10px}
+  .stage-record-stat {font-size:11px}
+}
+@media(max-width:1050px) and (min-width:751px) {
+  .stage-record-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:750px) {
+  .stage-record-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:520px) {
+  .stage-record-grid {grid-template-columns:1fr}
+  .stage-record-card {display:grid;grid-template-columns:minmax(0,135px) minmax(0,1fr);align-items:start;gap:9px}
+  .stage-record-label {grid-column:1/-1}
+  .stage-record-image,.stage-record-placeholder {grid-row:2/5;aspect-ratio:1}
+  .stage-record-title {min-height:0}
+  .stage-record-expand {grid-column:1/-1}
+  .stage-record-unavailable {grid-column:2}
+}
+
+.stage-record-viewer.equipzilla-stage-dialog {
+  box-sizing:border-box;
+  width:min(1190px,calc(100vw - 32px));
+  max-width:1190px;
+  max-height:calc(100dvh - 28px);
+  padding:0;
+  overflow:auto;
+  overscroll-behavior:contain;
+  border:1px solid #e3dbdb;
+  border-radius:18px;
+  background:#fff;
+  color:#1e1e1e;
+  color-scheme:light;
+  box-shadow:0 28px 100px #000b;
+  font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+.equipzilla-stage-dialog::backdrop {background:rgba(3,11,22,.83)}
+.equipzilla-stage-dialog .stage-viewer-top {
+  position:sticky;
+  top:0;
+  z-index:5;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  padding:12px 28px;
+  background:#fff;
+  border-bottom:1px solid #e7e2df;
+}
+.equipzilla-stage-dialog .stage-viewer-top strong {
+  font-size:13px;
+  letter-spacing:.09em;
+  font-weight:800;
+  color:#387e7f;
+}
+.equipzilla-stage-dialog .stage-viewer-close {
+  min-height:41px;
+  padding:9px 17px;
+  background:#f3533d;
+  border:1px solid #f3533d;
+  border-radius:8px;
+  color:#fff;
+  font-size:14px;
+  font-weight:750;
+  cursor:pointer;
+}
+.equipzilla-stage-dialog .stage-viewer-close:hover {background:#e03a2b;border-color:#e03a2b}
+.equipzilla-stage-dialog button:focus-visible,
+.equipzilla-stage-dialog summary:focus-visible {outline:3px solid #f3533d;outline-offset:3px}
+.equipzilla-product-view {
+  padding:clamp(18px,3vw,36px);
+  background:#fff;
+  color:#1e1e1e;
+  font-size:16px;
+  line-height:1.55;
+  overflow-wrap:anywhere;
+}
+.equipzilla-product-view .equipzilla-product-top {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  align-items:start;
+  gap:clamp(18px,3vw,40px);
+  margin-bottom:28px;
+}
+.equipzilla-product-view .equipzilla-product-info {
+  min-width:0;
+  padding:26px;
+  border:1px solid #e7e2df;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 12px 28px rgba(29,16,15,.06);
+}
+.equipzilla-product-view .equipzilla-product-eyebrow {
+  display:inline-flex;
+  color:#a34b3d;
+  font-size:12px;
+  font-weight:750;
+  letter-spacing:.09em;
+}
+.equipzilla-product-view .equipzilla-product-title {
+  margin:12px 0;
+  color:#387e7f;
+  font-size:clamp(22px,2.6vw,33px);
+  line-height:1.24;
+  letter-spacing:.035em;
+  text-transform:uppercase;
+  font-weight:750;
+}
+.equipzilla-product-view .equipzilla-product-category {
+  margin:0 0 14px;
+  color:#6a625e;
+  font-size:15px;
+  font-weight:550;
+}
+.equipzilla-product-view .equipzilla-product-price {
+  margin:0 0 16px;
+  color:#1d100f;
+  font-size:clamp(20px,2.3vw,28px);
+  font-weight:800;
+  line-height:1.2;
+}
+.equipzilla-product-view .equipzilla-summary-text {
+  display:-webkit-box;
+  -webkit-line-clamp:5;
+  -webkit-box-orient:vertical;
+  margin:0;
+  overflow:hidden;
+  color:#4a4a4a;
+  font-size:15px;
+  line-height:1.65;
+  white-space:pre-wrap;
+}
+.equipzilla-product-view .equipzilla-summary.is-expanded .equipzilla-summary-text {display:block;overflow:visible}
+.equipzilla-product-view .equipzilla-read-more {
+  padding:7px 0;
+  border:0;
+  background:transparent;
+  color:#387e7f;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:750;
+}
+.equipzilla-product-view .equipzilla-facts {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  padding-top:18px;
+  margin-top:18px;
+  border-top:1px solid #e3dbdb;
+}
+.equipzilla-product-view .equipzilla-facts .stage-record-stat {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:2px;
+  min-width:110px;
+  max-width:100%;
+  padding:9px 12px;
+  border:1px solid #e6e6e6;
+  border-radius:9px;
+  background:#f7f7f7;
+  font-size:13px;
+}
+.equipzilla-product-view .equipzilla-facts .stage-record-stat>span {color:#6a625e}
+.equipzilla-product-view .equipzilla-facts .stage-record-stat>strong {color:#1e1e1e;text-align:left;font-size:15px}
+.equipzilla-product-view .equipzilla-gallery {min-width:0}
+.equipzilla-product-view .equipzilla-gallery-frame {
+  display:grid;
+  place-items:center;
+  width:100%;
+  aspect-ratio:670/451;
+  overflow:hidden;
+  border:1px solid #e6e6e6;
+  border-radius:10px;
+  background:#fafafa;
+}
+.equipzilla-product-view .equipzilla-gallery-main-image {display:block;width:100%;height:100%;object-fit:contain}
+.equipzilla-product-view .equipzilla-gallery-empty {
+  display:grid;
+  place-items:center;
+  min-height:100%;
+  padding:24px;
+  text-align:center;
+  color:#6a625e;
+  font-size:15px;
+}
+.equipzilla-product-view .equipzilla-gallery-controls {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  margin:12px 0;
+}
+.equipzilla-product-view .equipzilla-gallery-arrow {
+  display:grid;
+  place-items:center;
+  width:39px;
+  height:39px;
+  padding:0;
+  border:1px solid #e3dbdb;
+  border-radius:9px;
+  color:#387e7f;
+  background:#fff;
+  font-size:29px;
+  line-height:1;
+  cursor:pointer;
+}
+.equipzilla-product-view .equipzilla-gallery-arrow:hover {border-color:#f3533d;color:#e03a2b}
+.equipzilla-product-view .equipzilla-gallery-counter {color:#6a625e;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+.equipzilla-product-view .equipzilla-gallery-thumbnails {
+  display:flex;
+  gap:9px;
+  max-width:100%;
+  padding:4px 2px 9px;
+  overflow-x:auto;
+  scroll-snap-type:x proximity;
+}
+.equipzilla-product-view .equipzilla-gallery-thumbnail {
+  display:grid;
+  place-items:center;
+  flex:0 0 85px;
+  width:85px;
+  height:64px;
+  padding:3px;
+  border:2px solid #e3dbdb;
+  border-radius:8px;
+  background:#fff;
+  color:#6a625e;
+  cursor:pointer;
+  scroll-snap-align:center;
+}
+.equipzilla-product-view .equipzilla-gallery-thumbnail[aria-pressed="true"] {border-color:#f3533d}
+.equipzilla-product-view .equipzilla-gallery-thumbnail img {width:100%;height:100%;object-fit:contain}
+.equipzilla-product-view .equipzilla-technical,
+.equipzilla-product-view .equipzilla-additional {min-width:0;margin-top:26px}
+.equipzilla-product-view .equipzilla-section-title {
+  margin:0 0 15px;
+  color:#f3533d;
+  font-size:clamp(21px,2.1vw,27px);
+  line-height:1.2;
+  letter-spacing:.01em;
+  font-weight:800;
+}
+.equipzilla-product-view .equipzilla-spec-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:1px;
+  width:100%;
+  margin:0;
+  padding:1px;
+  overflow:hidden;
+  border-radius:14px;
+  background:#e6dfdb;
+}
+.equipzilla-product-view .equipzilla-spec-item {
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-width:0;
+  min-height:85px;
+  padding:15px 18px;
+  gap:6px;
+  background:#fff;
+}
+.equipzilla-product-view .equipzilla-spec-item dt {
+  margin:0;
+  color:#6a625e;
+  font-size:12px;
+  line-height:1.3;
+  letter-spacing:.035em;
+  text-transform:uppercase;
+  font-weight:750;
+}
+.equipzilla-product-view .equipzilla-spec-item dd {
+  margin:0;
+  color:#1d100f;
+  font-size:16px;
+  line-height:1.4;
+  font-weight:700;
+}
+.equipzilla-product-view .equipzilla-empty-text {color:#6a625e;font-size:15px}
+.equipzilla-product-view .equipzilla-disclosure {
+  margin-top:10px;
+  border:1px solid #e6dfdb;
+  border-radius:10px;
+  background:#fbfaf9;
+}
+.equipzilla-product-view .equipzilla-disclosure summary {
+  padding:14px 18px;
+  color:#387e7f;
+  font-size:16px;
+  font-weight:750;
+  cursor:pointer;
+}
+.equipzilla-product-view .equipzilla-disclosure>p {
+  margin:0;
+  padding:0 18px 18px;
+  color:#4a4a4a;
+  font-size:15px;
+  line-height:1.7;
+  white-space:pre-wrap;
+}
+.equipzilla-product-view .equipzilla-attributes-grid {margin:0 16px 16px;width:calc(100% - 32px)}
+@media(max-width:930px) {
+  .equipzilla-product-view .equipzilla-product-top {grid-template-columns:1fr}
+  .equipzilla-product-view .equipzilla-gallery {grid-row:1}
+  .equipzilla-product-view .equipzilla-spec-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px) {
+  .stage-record-viewer.equipzilla-stage-dialog {width:calc(100vw - 12px);max-height:calc(100dvh - 12px);border-radius:12px}
+  .equipzilla-stage-dialog .stage-viewer-top {padding:10px 14px}
+  .equipzilla-product-view {padding:14px}
+  .equipzilla-product-view .equipzilla-product-top {gap:16px}
+  .equipzilla-product-view .equipzilla-product-info {padding:18px}
+  .equipzilla-product-view .equipzilla-spec-grid {grid-template-columns:1fr}
+  .equipzilla-product-view .equipzilla-spec-item {min-height:68px;padding:12px 15px}
+  .equipzilla-product-view .equipzilla-gallery-thumbnail {flex-basis:72px;width:72px;height:57px}
 }
 </style>
 </head>
@@ -1842,16 +2198,17 @@ input:focus-visible,summary:focus-visible {outline:2px solid var(--cyan);outline
       </section>
 
       <section class="page-view" data-view="explorador" aria-labelledby="explorer-title" hidden>
-        <div class="standard-heading"><span class="eyebrow">03 / COMPARADOR DE FICHAS</span><h1 id="explorer-title">Cada máquina, <em>con su procedencia.</em></h1><p>Encuentra carencias de origen y abre el antes/después con su evidencia.</p></div>
+        <div class="standard-heading explorer-heading"><span class="eyebrow">03 / FICHAS REALES</span><h1 id="explorer-title">Original, FINISH <em>y Comercial.</em></h1></div>
         <div class="explorer-controls">
-          <label>Buscar referencia, modelo o título<input id="explorer-search" type="search" placeholder="Buscar una máquina o referencia…" autocomplete="off"></label>
-          <label>Etapa<select id="explorer-stage"><option value="todos">Todas las etapas</option><option value="commercial">Exportadas comerciales</option><option value="commercial-excluded">Excluidas comerciales</option><option value="editorial-excluded">Excluidas editoriales</option></select></label>
-          <label>Familia / categoría<select id="explorer-category"><option value="todos">Todas las categorías</option></select></label>
+          <label>Buscar máquina<input id="explorer-search" type="search" placeholder="Referencia, modelo o título…" autocomplete="off"></label>
+          <label>Categoría<select id="explorer-category"><option value="todos">Todas las categorías</option></select></label>
           <label>Ordenar por<select id="explorer-sort"><option value="most-differences">Más diferencias observadas</option><option value="fewest-original-specs">Menos especificaciones de origen</option><option value="most-technical-additions">Más especificaciones incorporadas</option><option value="most-technical-changes">Más valores técnicos modificados</option><option value="reference">Referencia · incluir excluidas</option></select></label>
         </div>
-        <fieldset class="explorer-refinements"><legend>Destacar fichas</legend><label><input type="checkbox" id="explorer-missing-description"> Alguna descripción original ausente</label><label><input type="checkbox" id="explorer-without-specs"> Sin especificaciones de origen</label><label><input type="checkbox" id="explorer-with-additions"> Con especificaciones incorporadas</label><label><input type="checkbox" id="explorer-editorial-changes"> Con descripciones cambiadas</label></fieldset>
-        <p id="explorer-order-note" class="explorer-order-note">Ordenaciones por diferencias observadas entre original y FINISH; no son puntuaciones de calidad.</p>
-        <div class="explorer-layout"><section class="surface-card explorer-results" aria-label="Resultados de búsqueda"><div class="card-heading"><h3>Fichas del corte</h3><span id="explorer-counter" class="card-side-note"></span></div><div id="explorer-cases" class="explorer-cases" aria-label="Casos de demostración"></div><div id="explorer-list" class="explorer-list"></div><div class="explorer-pages"><button type="button" id="explorer-page-prev">← Anterior</button><span id="explorer-pages-label"></span><button type="button" id="explorer-page-next">Siguiente →</button></div></section>
+        <details class="explorer-advanced"><summary>Más filtros<span id="explorer-extra-count"></span></summary><div class="explorer-advanced-content">
+          <label>Etapa<select id="explorer-stage"><option value="todos">Todas las etapas</option><option value="commercial">Exportadas comerciales</option><option value="commercial-excluded">Excluidas comerciales</option><option value="editorial-excluded">Excluidas editoriales</option></select></label>
+          <fieldset class="explorer-refinements"><legend>Carencias y cambios</legend><label><input type="checkbox" id="explorer-missing-description"> Alguna descripción original ausente</label><label><input type="checkbox" id="explorer-without-specs"> Sin especificaciones de origen</label><label><input type="checkbox" id="explorer-with-additions"> Con especificaciones incorporadas</label><label><input type="checkbox" id="explorer-editorial-changes"> Con descripciones cambiadas</label></fieldset>
+        </div></details>
+        <div class="explorer-layout"><section class="surface-card explorer-results" aria-label="Resultados de búsqueda"><div class="card-heading"><h3>Máquinas</h3><span id="explorer-counter" class="card-side-note"></span></div><div id="explorer-active-filters" class="explorer-active-filters" aria-live="polite"></div><p id="explorer-order-note" class="explorer-order-note">Ordenaciones por diferencias observadas entre original y FINISH; no son puntuaciones de calidad.</p><div id="explorer-list" class="explorer-list"></div><div class="explorer-pages"><button type="button" id="explorer-page-prev">← Anterior</button><span id="explorer-pages-label"></span><button type="button" id="explorer-page-next">Siguiente →</button></div></section>
           <section class="surface-card explorer-detail" id="explorer-detail" aria-label="Comparación de máquina"><div class="explorer-empty">Selecciona una ficha para inspeccionar el original, su publicación y el resultado comercial.</div></section></div>
       </section>
 
@@ -2361,6 +2718,7 @@ window.addEventListener("panel:request-view", (event) => {
 export {};
 </script>
 <script type="module">import { explorerProductMetrics, selectExplorerProducts } from "data:text/javascript;base64,Y29uc3QgZW1wdHkgPSAodmFsdWUpID0+IHZhbHVlID09PSBudWxsIHx8IHZhbHVlLnRyaW0oKS5sZW5ndGggPT09IDA7CmNvbnN0IG5vcm1hbGl6ZSA9ICh2YWx1ZSkgPT4gdmFsdWUudG9Mb2NhbGVMb3dlckNhc2UoImVzIikKICAgIC5ub3JtYWxpemUoIk5GRCIpLnJlcGxhY2UoL1tcdTAzMDAtXHUwMzZmXS9nLCAiIik7CmV4cG9ydCBjb25zdCBleHBsb3JlclByb2R1Y3RNZXRyaWNzID0gKGl0ZW0pID0+ICh7CiAgICBvcmlnaW5hbFNwZWNzOiBPYmplY3Qua2V5cyhpdGVtLm9yaWdpbmFsPy5zcGVjcyA/PyB7fSkubGVuZ3RoLAogICAgcHVibGlzaGVkU3BlY3M6IE9iamVjdC5rZXlzKGl0ZW0ucHVibGlzaGVkPy5zcGVjcyA/PyB7fSkubGVuZ3RoLAogICAgdGVjaG5pY2FsQWRkaXRpb25zOiBpdGVtLmNoYW5nZXMuZmlsdGVyKChkaWZmZXJlbmNlKSA9PiBkaWZmZXJlbmNlLmdyb3VwID09PSAidGVjaG5pY2FsIiAmJiBkaWZmZXJlbmNlLmNoYW5nZSA9PT0gImFkZGVkIikubGVuZ3RoLAogICAgdGVjaG5pY2FsQ2hhbmdlczogaXRlbS5jaGFuZ2VzLmZpbHRlcigoZGlmZmVyZW5jZSkgPT4gZGlmZmVyZW5jZS5ncm91cCA9PT0gInRlY2huaWNhbCIgJiYgZGlmZmVyZW5jZS5jaGFuZ2UgPT09ICJjaGFuZ2VkIikubGVuZ3RoLAogICAgb2JzZXJ2ZWREaWZmZXJlbmNlczogaXRlbS5jaGFuZ2VzLmZpbHRlcigoZGlmZmVyZW5jZSkgPT4gZGlmZmVyZW5jZS5jaGFuZ2UgPT09ICJhZGRlZCIgfHwKICAgICAgICBkaWZmZXJlbmNlLmNoYW5nZSA9PT0gImNoYW5nZWQiIHx8IGRpZmZlcmVuY2UuY2hhbmdlID09PSAicmVtb3ZlZCIpLmxlbmd0aCwKICAgIG1pc3NpbmdPcmlnaW5hbERlc2NyaXB0aW9uOiBpdGVtLm9yaWdpbmFsICE9PSBudWxsICYmCiAgICAgICAgKGVtcHR5KGl0ZW0ub3JpZ2luYWwuc2hvcnREZXNjcmlwdGlvbikgfHwgZW1wdHkoaXRlbS5vcmlnaW5hbC5nZW5lcmFsRGVzY3JpcHRpb24pKSwKICAgIGVkaXRvcmlhbENoYW5nZXM6IGl0ZW0uY2hhbmdlcy5zb21lKChkaWZmZXJlbmNlKSA9PiBkaWZmZXJlbmNlLmdyb3VwID09PSAiY29udGVudCIgJiYKICAgICAgICAoZGlmZmVyZW5jZS5maWVsZCA9PT0gIkRlc2NyaXBjacOzbiBjb3J0YSIgfHwgZGlmZmVyZW5jZS5maWVsZCA9PT0gIkRlc2NyaXBjacOzbiBnZW5lcmFsIikgJiYKICAgICAgICBkaWZmZXJlbmNlLmNoYW5nZSAhPT0gInVuY2hhbmdlZCIgJiYgZGlmZmVyZW5jZS5jaGFuZ2UgIT09ICJhbWJpZ3VvdXMiKQp9KTsKY29uc3QgcmFua2luZyA9IChlbnRyeSwgc29ydCkgPT4gewogICAgaWYgKHNvcnQgPT09ICJmZXdlc3Qtb3JpZ2luYWwtc3BlY3MiKQogICAgICAgIHJldHVybiBlbnRyeS5tZXRyaWNzLm9yaWdpbmFsU3BlY3M7CiAgICBpZiAoc29ydCA9PT0gIm1vc3QtdGVjaG5pY2FsLWFkZGl0aW9ucyIpCiAgICAgICAgcmV0dXJuIC1lbnRyeS5tZXRyaWNzLnRlY2huaWNhbEFkZGl0aW9uczsKICAgIGlmIChzb3J0ID09PSAibW9zdC10ZWNobmljYWwtY2hhbmdlcyIpCiAgICAgICAgcmV0dXJuIC1lbnRyeS5tZXRyaWNzLnRlY2huaWNhbENoYW5nZXM7CiAgICByZXR1cm4gLWVudHJ5Lm1ldHJpY3Mub2JzZXJ2ZWREaWZmZXJlbmNlczsKfTsKZXhwb3J0IGNvbnN0IHNlbGVjdEV4cGxvcmVyUHJvZHVjdHMgPSAocHJvZHVjdHMsIHNlbGVjdGlvbikgPT4gewogICAgY29uc3QgcXVlcnkgPSBub3JtYWxpemUoc2VsZWN0aW9uLnF1ZXJ5LnRyaW0oKSk7CiAgICBjb25zdCByYW5rZWQgPSBwcm9kdWN0cy5maWx0ZXIoKGl0ZW0pID0+IHsKICAgICAgICBpZiAoc2VsZWN0aW9uLnByb3ZpZGVySWQgIT09ICJ0b2RvcyIgJiYgaXRlbS5wcm92aWRlcklkICE9PSBzZWxlY3Rpb24ucHJvdmlkZXJJZCB8fAogICAgICAgICAgICBzZWxlY3Rpb24uc3RhZ2UgIT09ICJ0b2RvcyIgJiYgaXRlbS5zdGFnZSAhPT0gc2VsZWN0aW9uLnN0YWdlIHx8CiAgICAgICAgICAgIHNlbGVjdGlvbi5jYXRlZ29yeSAhPT0gInRvZG9zIiAmJiBpdGVtLmNhdGVnb3J5ICE9PSBzZWxlY3Rpb24uY2F0ZWdvcnkpCiAgICAgICAgICAgIHJldHVybiBmYWxzZTsKICAgICAgICBpZiAoc2VsZWN0aW9uLnNvcnQgIT09ICJyZWZlcmVuY2UiICYmICghaXRlbS5vcmlnaW5hbCB8fCAhaXRlbS5wdWJsaXNoZWQpKQogICAgICAgICAgICByZXR1cm4gZmFsc2U7CiAgICAgICAgaWYgKHF1ZXJ5ICYmICFub3JtYWxpemUoW2l0ZW0ucmVmZXJlbmNlLCBpdGVtLmlkZW50aXR5LCBpdGVtLnNvdXJjZVVybCwgaXRlbS5vcmlnaW5hbD8udGl0bGUsCiAgICAgICAgICAgIGl0ZW0ucHVibGlzaGVkPy50aXRsZSwgaXRlbS5jb21tZXJjaWFsPy50aXRsZV0uZmlsdGVyKCh2YWx1ZSkgPT4gdHlwZW9mIHZhbHVlID09PSAic3RyaW5nIikuam9pbigiICIpKS5pbmNsdWRlcyhxdWVyeSkpCiAgICAgICAgICAgIHJldHVybiBmYWxzZTsKICAgICAgICByZXR1cm4gdHJ1ZTsKICAgIH0pLm1hcCgoaXRlbSkgPT4gKHsgaXRlbSwgbWV0cmljczogZXhwbG9yZXJQcm9kdWN0TWV0cmljcyhpdGVtKSB9KSkKICAgICAgICAuZmlsdGVyKCh7IGl0ZW0sIG1ldHJpY3MgfSkgPT4gKCFzZWxlY3Rpb24ubWlzc2luZ09yaWdpbmFsRGVzY3JpcHRpb24gfHwgbWV0cmljcy5taXNzaW5nT3JpZ2luYWxEZXNjcmlwdGlvbikgJiYKICAgICAgICAoIXNlbGVjdGlvbi53aXRob3V0T3JpZ2luYWxTcGVjcyB8fCBpdGVtLm9yaWdpbmFsICE9PSBudWxsICYmIG1ldHJpY3Mub3JpZ2luYWxTcGVjcyA9PT0gMCkgJiYKICAgICAgICAoIXNlbGVjdGlvbi53aXRoVGVjaG5pY2FsQWRkaXRpb25zIHx8IG1ldHJpY3MudGVjaG5pY2FsQWRkaXRpb25zID4gMCkgJiYKICAgICAgICAoIXNlbGVjdGlvbi53aXRoRWRpdG9yaWFsQ2hhbmdlcyB8fCBtZXRyaWNzLmVkaXRvcmlhbENoYW5nZXMpKTsKICAgIHJhbmtlZC5zb3J0KChsZWZ0LCByaWdodCkgPT4gc2VsZWN0aW9uLnNvcnQgPT09ICJyZWZlcmVuY2UiID8KICAgICAgICAobGVmdC5pdGVtLnJlZmVyZW5jZSA/PyAiIikubG9jYWxlQ29tcGFyZShyaWdodC5pdGVtLnJlZmVyZW5jZSA/PyAiIiwgImVzIikgfHwKICAgICAgICAgICAgbGVmdC5pdGVtLnByb3ZpZGVySWQubG9jYWxlQ29tcGFyZShyaWdodC5pdGVtLnByb3ZpZGVySWQpIHx8IGxlZnQuaXRlbS5pZGVudGl0eS5sb2NhbGVDb21wYXJlKHJpZ2h0Lml0ZW0uaWRlbnRpdHkpIDoKICAgICAgICByYW5raW5nKGxlZnQsIHNlbGVjdGlvbi5zb3J0KSAtIHJhbmtpbmcocmlnaHQsIHNlbGVjdGlvbi5zb3J0KSB8fAogICAgICAgICAgICByaWdodC5tZXRyaWNzLnRlY2huaWNhbEFkZGl0aW9ucyAtIGxlZnQubWV0cmljcy50ZWNobmljYWxBZGRpdGlvbnMgfHwKICAgICAgICAgICAgbGVmdC5tZXRyaWNzLm9yaWdpbmFsU3BlY3MgLSByaWdodC5tZXRyaWNzLm9yaWdpbmFsU3BlY3MgfHwKICAgICAgICAgICAgbGVmdC5pdGVtLnByb3ZpZGVySWQubG9jYWxlQ29tcGFyZShyaWdodC5pdGVtLnByb3ZpZGVySWQpIHx8IGxlZnQuaXRlbS5pZGVudGl0eS5sb2NhbGVDb21wYXJlKHJpZ2h0Lml0ZW0uaWRlbnRpdHkpKTsKICAgIHJldHVybiByYW5rZWQubWFwKCh7IGl0ZW0gfSkgPT4gaXRlbSk7Cn07Cg==";
+import { renderStageCards } from "data:text/javascript;base64,Y29uc3Qgc3RhZ2VMYWJlbHMgPSB7CiAgICBvcmlnaW5hbDogIjAxIMK3IE9SSUdJTkFMIiwKICAgIHB1Ymxpc2hlZDogIjAyIMK3IEZJTklTSCIsCiAgICBjb21tZXJjaWFsOiAiMDMgwrcgQ09NRVJDSUFMIgp9Owpjb25zdCBlbGVtZW50ID0gKHRhZywgY2xhc3NOYW1lID0gIiIsIGxhYmVsKSA9PiB7CiAgICBjb25zdCBub2RlID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCh0YWcpOwogICAgbm9kZS5jbGFzc05hbWUgPSBjbGFzc05hbWU7CiAgICBpZiAobGFiZWwgIT09IHVuZGVmaW5lZCkKICAgICAgICBub2RlLnRleHRDb250ZW50ID0gbGFiZWw7CiAgICByZXR1cm4gbm9kZTsKfTsKY29uc3Qgc2FmZUltYWdlVXJsID0gKHZhbHVlKSA9PiB7CiAgICB0cnkgewogICAgICAgIHJldHVybiBbImh0dHBzOiIsICJodHRwOiJdLmluY2x1ZGVzKG5ldyBVUkwodmFsdWUpLnByb3RvY29sKTsKICAgIH0KICAgIGNhdGNoIHsKICAgICAgICByZXR1cm4gZmFsc2U7CiAgICB9Cn07CmNvbnN0IGRpc3BsYXkgPSAodmFsdWUpID0+IHZhbHVlID09PSBudWxsIHx8IHZhbHVlID09PSAiIiA/ICJObyBjb25zdGEiIDogU3RyaW5nKHZhbHVlKTsKY29uc3QgaW1hZ2VVcmxzID0gKHJlY29yZCkgPT4gWy4uLm5ldyBTZXQoW3JlY29yZC5pbWFnZSwgLi4ucmVjb3JkLmltYWdlc10uZmlsdGVyKCh1cmwpID0+IHR5cGVvZiB1cmwgPT09ICJzdHJpbmciICYmIHNhZmVJbWFnZVVybCh1cmwpKSldOwpjb25zdCBwaG90b2dyYXBoID0gKHJlY29yZCkgPT4gewogICAgY29uc3QgZnJhbWUgPSBlbGVtZW50KCJkaXYiLCAic3RhZ2UtcmVjb3JkLWltYWdlIik7CiAgICBjb25zdCB1cmwgPSBpbWFnZVVybHMocmVjb3JkKVswXTsKICAgIGlmICghdXJsKSB7CiAgICAgICAgZnJhbWUuYXBwZW5kKGVsZW1lbnQoInNwYW4iLCAicmVjb3JkLXBob3RvLWVtcHR5IiwgIlNpbiBmb3RvZ3JhZsOtYSBkaXNwb25pYmxlIikpOwogICAgICAgIHJldHVybiBmcmFtZTsKICAgIH0KICAgIGNvbnN0IGltYWdlID0gZWxlbWVudCgiaW1nIik7CiAgICBpbWFnZS5zcmMgPSB1cmw7CiAgICBpbWFnZS5hbHQgPSBgRm90b2dyYWbDrWEgZGVjbGFyYWRhIGRlICR7cmVjb3JkLnRpdGxlID8/ICJsYSBtw6FxdWluYSJ9YDsKICAgIGltYWdlLmxvYWRpbmcgPSAibGF6eSI7CiAgICBpbWFnZS5yZWZlcnJlclBvbGljeSA9ICJuby1yZWZlcnJlciI7CiAgICBpbWFnZS5hZGRFdmVudExpc3RlbmVyKCJlcnJvciIsICgpID0+IHsKICAgICAgICBmcmFtZS5yZXBsYWNlQ2hpbGRyZW4oZWxlbWVudCgic3BhbiIsICJyZWNvcmQtcGhvdG8tZW1wdHkiLCAiSW1hZ2VuIGV4dGVybmEgbm8gZGlzcG9uaWJsZSIpKTsKICAgIH0pOwogICAgZnJhbWUuYXBwZW5kKGltYWdlKTsKICAgIHJldHVybiBmcmFtZTsKfTsKY29uc3QgYnV0dG9uID0gKGxhYmVsLCBjbGFzc05hbWUsIG9uQ2xpY2spID0+IHsKICAgIGNvbnN0IG5vZGUgPSBlbGVtZW50KCJidXR0b24iLCBjbGFzc05hbWUsIGxhYmVsKTsKICAgIG5vZGUudHlwZSA9ICJidXR0b24iOwogICAgbm9kZS5hZGRFdmVudExpc3RlbmVyKCJjbGljayIsIG9uQ2xpY2spOwogICAgcmV0dXJuIG5vZGU7Cn07CmNvbnN0IHN0YXQgPSAobGFiZWwsIHZhbHVlKSA9PiB7CiAgICBjb25zdCByb3cgPSBlbGVtZW50KCJkaXYiLCAic3RhZ2UtcmVjb3JkLXN0YXQiKTsKICAgIHJvdy5hcHBlbmQoZWxlbWVudCgic3BhbiIsICIiLCBsYWJlbCksIGVsZW1lbnQoInN0cm9uZyIsICIiLCB2YWx1ZSkpOwogICAgcmV0dXJuIHJvdzsKfTsKY29uc3QgZ2FsbGVyeSA9IChyZWNvcmQsIHN0YWdlKSA9PiB7CiAgICBjb25zdCByb290ID0gZWxlbWVudCgic2VjdGlvbiIsICJlcXVpcHppbGxhLWdhbGxlcnkgc3RhZ2Utdmlld2VyLXNlY3Rpb24iKTsKICAgIHJvb3Quc2V0QXR0cmlidXRlKCJhcmlhLWxhYmVsIiwgYEZvdG9ncmFmw61hcyBkZSAke3N0YWdlTGFiZWxzW3N0YWdlXX1gKTsKICAgIGNvbnN0IHNvdXJjZXMgPSBpbWFnZVVybHMocmVjb3JkKTsKICAgIGNvbnN0IGZyYW1lID0gZWxlbWVudCgiZGl2IiwgImVxdWlwemlsbGEtZ2FsbGVyeS1mcmFtZSIpOwogICAgcm9vdC5hcHBlbmQoZnJhbWUpOwogICAgaWYgKCFzb3VyY2VzLmxlbmd0aCkgewogICAgICAgIGZyYW1lLmFwcGVuZChlbGVtZW50KCJkaXYiLCAiZXF1aXB6aWxsYS1nYWxsZXJ5LWVtcHR5IiwgIlNpbiBmb3RvZ3JhZsOtYXMgZGlzcG9uaWJsZXMgZW4gZXN0YSBldGFwYSIpKTsKICAgICAgICByZXR1cm4gcm9vdDsKICAgIH0KICAgIGNvbnN0IGNvdW50ZXIgPSBlbGVtZW50KCJzcGFuIiwgImVxdWlwemlsbGEtZ2FsbGVyeS1jb3VudGVyIik7CiAgICBjb25zdCB0aHVtYm5haWxzID0gZWxlbWVudCgiZGl2IiwgImVxdWlwemlsbGEtZ2FsbGVyeS10aHVtYm5haWxzIik7CiAgICBjb25zdCBzZWxlY3RvcnMgPSBbXTsKICAgIGxldCBjdXJyZW50SW5kZXggPSAwOwogICAgY29uc3Qgc2hvdyA9IChpbmRleCkgPT4gewogICAgICAgIGN1cnJlbnRJbmRleCA9IChpbmRleCArIHNvdXJjZXMubGVuZ3RoKSAlIHNvdXJjZXMubGVuZ3RoOwogICAgICAgIGNvbnN0IHBsYWNlaG9sZGVyID0gZWxlbWVudCgiZGl2IiwgImVxdWlwemlsbGEtZ2FsbGVyeS1lbXB0eSIsICJDYXJnYW5kbyBmb3RvZ3JhZsOtYSBleHRlcm5h4oCmIik7CiAgICAgICAgZnJhbWUucmVwbGFjZUNoaWxkcmVuKHBsYWNlaG9sZGVyKTsKICAgICAgICBjb25zdCBwaG90byA9IGVsZW1lbnQoImltZyIsICJlcXVpcHppbGxhLWdhbGxlcnktbWFpbi1pbWFnZSIpOwogICAgICAgIHBob3RvLmFsdCA9IGBGb3RvZ3JhZsOtYSAke2N1cnJlbnRJbmRleCArIDF9IGRlICR7c291cmNlcy5sZW5ndGh9IMK3ICR7ZGlzcGxheShyZWNvcmQudGl0bGUpfWA7CiAgICAgICAgcGhvdG8ucmVmZXJyZXJQb2xpY3kgPSAibm8tcmVmZXJyZXIiOwogICAgICAgIHBob3RvLmFkZEV2ZW50TGlzdGVuZXIoImxvYWQiLCAoKSA9PiB7CiAgICAgICAgICAgIGlmIChmcmFtZS5jb250YWlucyhwbGFjZWhvbGRlcikpCiAgICAgICAgICAgICAgICBmcmFtZS5yZXBsYWNlQ2hpbGRyZW4ocGhvdG8pOwogICAgICAgIH0pOwogICAgICAgIHBob3RvLmFkZEV2ZW50TGlzdGVuZXIoImVycm9yIiwgKCkgPT4gewogICAgICAgICAgICBpZiAoZnJhbWUuY29udGFpbnMocGxhY2Vob2xkZXIpKQogICAgICAgICAgICAgICAgcGxhY2Vob2xkZXIudGV4dENvbnRlbnQgPSAiSW1hZ2VuIGV4dGVybmEgbm8gZGlzcG9uaWJsZSI7CiAgICAgICAgfSk7CiAgICAgICAgcGhvdG8uc3JjID0gc291cmNlc1tjdXJyZW50SW5kZXhdID8/ICIiOwogICAgICAgIGNvdW50ZXIudGV4dENvbnRlbnQgPSBgJHtjdXJyZW50SW5kZXggKyAxfSAvICR7c291cmNlcy5sZW5ndGh9YDsKICAgICAgICBzZWxlY3RvcnMuZm9yRWFjaCgoc2VsZWN0b3IsIHBvc2l0aW9uKSA9PiB7CiAgICAgICAgICAgIHNlbGVjdG9yLnNldEF0dHJpYnV0ZSgiYXJpYS1wcmVzc2VkIiwgU3RyaW5nKHBvc2l0aW9uID09PSBjdXJyZW50SW5kZXgpKTsKICAgICAgICB9KTsKICAgIH07CiAgICBpZiAoc291cmNlcy5sZW5ndGggPiAxKSB7CiAgICAgICAgY29uc3QgY29udHJvbHMgPSBlbGVtZW50KCJkaXYiLCAiZXF1aXB6aWxsYS1nYWxsZXJ5LWNvbnRyb2xzIik7CiAgICAgICAgY29uc3QgcHJldmlvdXMgPSBidXR0b24oIuKAuSIsICJlcXVpcHppbGxhLWdhbGxlcnktYXJyb3ciLCAoKSA9PiBzaG93KGN1cnJlbnRJbmRleCAtIDEpKTsKICAgICAgICBjb25zdCBuZXh0ID0gYnV0dG9uKCLigLoiLCAiZXF1aXB6aWxsYS1nYWxsZXJ5LWFycm93IiwgKCkgPT4gc2hvdyhjdXJyZW50SW5kZXggKyAxKSk7CiAgICAgICAgcHJldmlvdXMuc2V0QXR0cmlidXRlKCJhcmlhLWxhYmVsIiwgIkZvdG9ncmFmw61hIGFudGVyaW9yIik7CiAgICAgICAgbmV4dC5zZXRBdHRyaWJ1dGUoImFyaWEtbGFiZWwiLCAiRm90b2dyYWbDrWEgc2lndWllbnRlIik7CiAgICAgICAgY29udHJvbHMuYXBwZW5kKHByZXZpb3VzLCBjb3VudGVyLCBuZXh0KTsKICAgICAgICByb290LmFwcGVuZChjb250cm9scyk7CiAgICAgICAgdGh1bWJuYWlscy5zZXRBdHRyaWJ1dGUoImFyaWEtbGFiZWwiLCAiU2VsZWNjaW9uYXIgZm90b2dyYWbDrWEiKTsKICAgICAgICBmb3IgKGNvbnN0IFtpbmRleCwgdXJsXSBvZiBzb3VyY2VzLmVudHJpZXMoKSkgewogICAgICAgICAgICBjb25zdCBzZWxlY3RQaG90byA9IGJ1dHRvbigiIiwgImVxdWlwemlsbGEtZ2FsbGVyeS10aHVtYm5haWwiLCAoKSA9PiBzaG93KGluZGV4KSk7CiAgICAgICAgICAgIHNlbGVjdFBob3RvLnNldEF0dHJpYnV0ZSgiYXJpYS1sYWJlbCIsIGBNb3N0cmFyIGZvdG9ncmFmw61hICR7aW5kZXggKyAxfWApOwogICAgICAgICAgICBjb25zdCBpbWFnZSA9IGVsZW1lbnQoImltZyIpOwogICAgICAgICAgICBpbWFnZS5zcmMgPSB1cmw7CiAgICAgICAgICAgIGltYWdlLmFsdCA9ICIiOwogICAgICAgICAgICBpbWFnZS5sb2FkaW5nID0gImxhenkiOwogICAgICAgICAgICBpbWFnZS5yZWZlcnJlclBvbGljeSA9ICJuby1yZWZlcnJlciI7CiAgICAgICAgICAgIGltYWdlLmFkZEV2ZW50TGlzdGVuZXIoImVycm9yIiwgKCkgPT4gewogICAgICAgICAgICAgICAgc2VsZWN0UGhvdG8ucmVwbGFjZUNoaWxkcmVuKGVsZW1lbnQoInNwYW4iLCAiIiwgU3RyaW5nKGluZGV4ICsgMSkpKTsKICAgICAgICAgICAgfSk7CiAgICAgICAgICAgIHNlbGVjdFBob3RvLmFwcGVuZChpbWFnZSk7CiAgICAgICAgICAgIHNlbGVjdG9ycy5wdXNoKHNlbGVjdFBob3RvKTsKICAgICAgICAgICAgdGh1bWJuYWlscy5hcHBlbmQoc2VsZWN0UGhvdG8pOwogICAgICAgIH0KICAgICAgICByb290LmFwcGVuZCh0aHVtYm5haWxzKTsKICAgICAgICByb290LmFkZEV2ZW50TGlzdGVuZXIoImtleWRvd24iLCAoZXZlbnQpID0+IHsKICAgICAgICAgICAgaWYgKGV2ZW50LmtleSAhPT0gIkFycm93TGVmdCIgJiYgZXZlbnQua2V5ICE9PSAiQXJyb3dSaWdodCIpCiAgICAgICAgICAgICAgICByZXR1cm47CiAgICAgICAgICAgIGV2ZW50LnByZXZlbnREZWZhdWx0KCk7CiAgICAgICAgICAgIHNob3coY3VycmVudEluZGV4ICsgKGV2ZW50LmtleSA9PT0gIkFycm93UmlnaHQiID8gMSA6IC0xKSk7CiAgICAgICAgICAgIHNlbGVjdG9yc1tjdXJyZW50SW5kZXhdPy5mb2N1cyh7IHByZXZlbnRTY3JvbGw6IHRydWUgfSk7CiAgICAgICAgfSk7CiAgICB9CiAgICBzaG93KDApOwogICAgcmV0dXJuIHJvb3Q7Cn07CmNvbnN0IGZhY3RzID0gKHJlY29yZCwgc3RhZ2UsIGl0ZW0pID0+IHsKICAgIGNvbnN0IGluZm8gPSBlbGVtZW50KCJkaXYiLCAiZXF1aXB6aWxsYS1mYWN0cyIpOwogICAgaW5mby5hcHBlbmQoc3RhdCgiRXNwZWNpZmljYWNpb25lcyIsIFN0cmluZyhPYmplY3Qua2V5cyhyZWNvcmQuc3BlY3MpLmxlbmd0aCkpKTsKICAgIGlmIChpbWFnZVVybHMocmVjb3JkKS5sZW5ndGgpCiAgICAgICAgaW5mby5hcHBlbmQoc3RhdCgiRm90b2dyYWbDrWFzIiwgU3RyaW5nKGltYWdlVXJscyhyZWNvcmQpLmxlbmd0aCkpKTsKICAgIGlmIChzdGFnZSA9PT0gImNvbW1lcmNpYWwiICYmIGl0ZW0uY29tbWVyY2lhbCkgewogICAgICAgIGlmIChpdGVtLmNvbW1lcmNpYWwuY2F0ZWdvcnlTZWxsSUQgIT09IG51bGwpCiAgICAgICAgICAgIGluZm8uYXBwZW5kKHN0YXQoIkNhdGVnb3LDrWEgY29tZXJjaWFsIChJRCkiLCBTdHJpbmcoaXRlbS5jb21tZXJjaWFsLmNhdGVnb3J5U2VsbElEKSkpOwogICAgICAgIGlmIChpdGVtLmNvbW1lcmNpYWwuYXR0cmlidXRlcy5sZW5ndGgpCiAgICAgICAgICAgIGluZm8uYXBwZW5kKHN0YXQoIkF0cmlidXRvcyBhY2VwdGFkb3MiLCBTdHJpbmcoaXRlbS5jb21tZXJjaWFsLmF0dHJpYnV0ZXMubGVuZ3RoKSkpOwogICAgfQogICAgcmV0dXJuIGluZm87Cn07CmNvbnN0IHN1bW1hcnkgPSAocmVjb3JkKSA9PiB7CiAgICBjb25zdCBkZXNjcmlwdGlvbiA9IHJlY29yZC5zaG9ydERlc2NyaXB0aW9uOwogICAgaWYgKCFkZXNjcmlwdGlvbikKICAgICAgICByZXR1cm4gbnVsbDsKICAgIGNvbnN0IGNvbnRhaW5lciA9IGVsZW1lbnQoImRpdiIsICJlcXVpcHppbGxhLXN1bW1hcnkiKTsKICAgIGNvbnN0IHBhcmFncmFwaCA9IGVsZW1lbnQoInAiLCAiZXF1aXB6aWxsYS1zdW1tYXJ5LXRleHQiLCBkZXNjcmlwdGlvbik7CiAgICBjb250YWluZXIuYXBwZW5kKHBhcmFncmFwaCk7CiAgICBpZiAoZGVzY3JpcHRpb24ubGVuZ3RoID4gMjMwKSB7CiAgICAgICAgY29uc3QgdG9nZ2xlID0gYnV0dG9uKCJMZWVyIG3DoXMiLCAiZXF1aXB6aWxsYS1yZWFkLW1vcmUiLCAoKSA9PiB7CiAgICAgICAgICAgIGNvbnN0IGV4cGFuZGVkID0gY29udGFpbmVyLmNsYXNzTGlzdC50b2dnbGUoImlzLWV4cGFuZGVkIik7CiAgICAgICAgICAgIHRvZ2dsZS50ZXh0Q29udGVudCA9IGV4cGFuZGVkID8gIkxlZXIgbWVub3MiIDogIkxlZXIgbcOhcyI7CiAgICAgICAgICAgIHRvZ2dsZS5zZXRBdHRyaWJ1dGUoImFyaWEtZXhwYW5kZWQiLCBTdHJpbmcoZXhwYW5kZWQpKTsKICAgICAgICB9KTsKICAgICAgICB0b2dnbGUuc2V0QXR0cmlidXRlKCJhcmlhLWV4cGFuZGVkIiwgImZhbHNlIik7CiAgICAgICAgY29udGFpbmVyLmFwcGVuZCh0b2dnbGUpOwogICAgfQogICAgcmV0dXJuIGNvbnRhaW5lcjsKfTsKY29uc3QgdGVjaG5pY2FsRGV0YWlscyA9IChyZWNvcmQpID0+IHsKICAgIGNvbnN0IHNlY3Rpb24gPSBlbGVtZW50KCJzZWN0aW9uIiwgImVxdWlwemlsbGEtdGVjaG5pY2FsIHN0YWdlLXZpZXdlci1zZWN0aW9uIik7CiAgICBzZWN0aW9uLmFwcGVuZChlbGVtZW50KCJoMyIsICJlcXVpcHppbGxhLXNlY3Rpb24tdGl0bGUiLCAiRmljaGEgdMOpY25pY2EiKSk7CiAgICBjb25zdCBlbnRyaWVzID0gT2JqZWN0LmVudHJpZXMocmVjb3JkLnNwZWNzKTsKICAgIGlmICghZW50cmllcy5sZW5ndGgpIHsKICAgICAgICBzZWN0aW9uLmFwcGVuZChlbGVtZW50KCJwIiwgImVxdWlwemlsbGEtZW1wdHktdGV4dCIsICJObyBjb25zdGFuIGVzcGVjaWZpY2FjaW9uZXMgdMOpY25pY2FzIGVuIGVzdGEgZXRhcGEiKSk7CiAgICAgICAgcmV0dXJuIHNlY3Rpb247CiAgICB9CiAgICBjb25zdCBsaXN0ID0gZWxlbWVudCgiZGwiLCAiZXF1aXB6aWxsYS1zcGVjLWdyaWQiKTsKICAgIGZvciAoY29uc3QgW2tleSwgdmFsdWVdIG9mIGVudHJpZXMpIHsKICAgICAgICBjb25zdCBpdGVtID0gZWxlbWVudCgiZGl2IiwgImVxdWlwemlsbGEtc3BlYy1pdGVtIik7CiAgICAgICAgaXRlbS5hcHBlbmQoZWxlbWVudCgiZHQiLCAiIiwga2V5KSwgZWxlbWVudCgiZGQiLCAiIiwgQXJyYXkuaXNBcnJheSh2YWx1ZSkgPyB2YWx1ZS5qb2luKCIgwrcgIikgOiBTdHJpbmcodmFsdWUpKSk7CiAgICAgICAgbGlzdC5hcHBlbmQoaXRlbSk7CiAgICB9CiAgICBzZWN0aW9uLmFwcGVuZChsaXN0KTsKICAgIHJldHVybiBzZWN0aW9uOwp9Owpjb25zdCBhZGRpdGlvbmFsRGV0YWlscyA9IChyZWNvcmQsIHN0YWdlLCBpdGVtKSA9PiB7CiAgICBjb25zdCBzZWN0aW9uID0gZWxlbWVudCgic2VjdGlvbiIsICJlcXVpcHppbGxhLWFkZGl0aW9uYWwgc3RhZ2Utdmlld2VyLXNlY3Rpb24iKTsKICAgIGlmIChyZWNvcmQuZ2VuZXJhbERlc2NyaXB0aW9uKSB7CiAgICAgICAgY29uc3QgZGVzY3JpcHRpb24gPSBlbGVtZW50KCJkZXRhaWxzIiwgImVxdWlwemlsbGEtZGlzY2xvc3VyZSIpOwogICAgICAgIGRlc2NyaXB0aW9uLmFwcGVuZChlbGVtZW50KCJzdW1tYXJ5IiwgIiIsICJEZXNjcmlwY2nDs24gZ2VuZXJhbCBjb21wbGV0YSIpLCBlbGVtZW50KCJwIiwgIiIsIHJlY29yZC5nZW5lcmFsRGVzY3JpcHRpb24pKTsKICAgICAgICBzZWN0aW9uLmFwcGVuZChkZXNjcmlwdGlvbik7CiAgICB9CiAgICBpZiAoc3RhZ2UgPT09ICJjb21tZXJjaWFsIiAmJiBpdGVtLmNvbW1lcmNpYWwgJiYgaXRlbS5jb21tZXJjaWFsLmF0dHJpYnV0ZXMubGVuZ3RoKSB7CiAgICAgICAgY29uc3QgYXR0cmlidXRlcyA9IGVsZW1lbnQoImRldGFpbHMiLCAiZXF1aXB6aWxsYS1kaXNjbG9zdXJlIik7CiAgICAgICAgYXR0cmlidXRlcy5hcHBlbmQoZWxlbWVudCgic3VtbWFyeSIsICIiLCBgQXRyaWJ1dG9zIGNvbWVyY2lhbGVzICgke2l0ZW0uY29tbWVyY2lhbC5hdHRyaWJ1dGVzLmxlbmd0aH0pYCkpOwogICAgICAgIGNvbnN0IGxpc3QgPSBlbGVtZW50KCJkbCIsICJlcXVpcHppbGxhLXNwZWMtZ3JpZCBlcXVpcHppbGxhLWF0dHJpYnV0ZXMtZ3JpZCIpOwogICAgICAgIGZvciAoY29uc3QgYXR0cmlidXRlIG9mIGl0ZW0uY29tbWVyY2lhbC5hdHRyaWJ1dGVzKSB7CiAgICAgICAgICAgIGNvbnN0IGVudHJ5ID0gZWxlbWVudCgiZGl2IiwgImVxdWlwemlsbGEtc3BlYy1pdGVtIik7CiAgICAgICAgICAgIGVudHJ5LmFwcGVuZChlbGVtZW50KCJkdCIsICIiLCBgSUQgZGUgYXRyaWJ1dG8gJHthdHRyaWJ1dGUuYXR0cmlidXRlSUR9YCksIGVsZW1lbnQoImRkIiwgIiIsIFN0cmluZyhhdHRyaWJ1dGUudmFsdWUpKSk7CiAgICAgICAgICAgIGxpc3QuYXBwZW5kKGVudHJ5KTsKICAgICAgICB9CiAgICAgICAgYXR0cmlidXRlcy5hcHBlbmQobGlzdCk7CiAgICAgICAgc2VjdGlvbi5hcHBlbmQoYXR0cmlidXRlcyk7CiAgICB9CiAgICBpZiAoIXNlY3Rpb24uY2hpbGRFbGVtZW50Q291bnQpCiAgICAgICAgc2VjdGlvbi5hcHBlbmQoZWxlbWVudCgicCIsICJlcXVpcHppbGxhLWVtcHR5LXRleHQiLCAiTm8gY29uc3RhbiBvdHJhcyBkZXNjcmlwY2lvbmVzIG5pIGF0cmlidXRvcyBlbiBlc3RhIGV0YXBhIikpOwogICAgcmV0dXJuIHNlY3Rpb247Cn07CmNvbnN0IHJlY29yZERldGFpbHMgPSAocmVjb3JkLCBzdGFnZSwgaXRlbSkgPT4gewogICAgY29uc3QgY29udGVudCA9IGVsZW1lbnQoImRpdiIsICJzdGFnZS12aWV3ZXItY29udGVudCBlcXVpcHppbGxhLXByb2R1Y3QtdmlldyIpOwogICAgY29uc3QgaGVhZGVyID0gZWxlbWVudCgic2VjdGlvbiIsICJlcXVpcHppbGxhLXByb2R1Y3QtaW5mbyBzdGFnZS12aWV3ZXItc2VjdGlvbiIpOwogICAgaGVhZGVyLmFwcGVuZChlbGVtZW50KCJzcGFuIiwgImVxdWlwemlsbGEtcHJvZHVjdC1leWVicm93IiwgIkZJQ0hBIERFTCBDT1JURSDCtyAiICsgc3RhZ2VMYWJlbHNbc3RhZ2VdKSk7CiAgICBoZWFkZXIuYXBwZW5kKGVsZW1lbnQoImgyIiwgImVxdWlwemlsbGEtcHJvZHVjdC10aXRsZSIsIGRpc3BsYXkocmVjb3JkLnRpdGxlKSkpOwogICAgaWYgKHJlY29yZC5jYXRlZ29yeSkKICAgICAgICBoZWFkZXIuYXBwZW5kKGVsZW1lbnQoInAiLCAiZXF1aXB6aWxsYS1wcm9kdWN0LWNhdGVnb3J5IiwgcmVjb3JkLmNhdGVnb3J5KSk7CiAgICBpZiAocmVjb3JkLnByaWNlICE9PSBudWxsKQogICAgICAgIGhlYWRlci5hcHBlbmQoZWxlbWVudCgiZGl2IiwgImVxdWlwemlsbGEtcHJvZHVjdC1wcmljZSIsIGRpc3BsYXkocmVjb3JkLnByaWNlKSkpOwogICAgY29uc3QgZGVzY3JpcHRpb24gPSBzdW1tYXJ5KHJlY29yZCk7CiAgICBpZiAoZGVzY3JpcHRpb24pCiAgICAgICAgaGVhZGVyLmFwcGVuZChkZXNjcmlwdGlvbik7CiAgICBoZWFkZXIuYXBwZW5kKGZhY3RzKHJlY29yZCwgc3RhZ2UsIGl0ZW0pKTsKICAgIGNvbnN0IG1haW4gPSBlbGVtZW50KCJkaXYiLCAiZXF1aXB6aWxsYS1wcm9kdWN0LXRvcCIpOwogICAgbWFpbi5hcHBlbmQoaGVhZGVyLCBnYWxsZXJ5KHJlY29yZCwgc3RhZ2UpKTsKICAgIGNvbnRlbnQuYXBwZW5kKG1haW4sIHRlY2huaWNhbERldGFpbHMocmVjb3JkKSwgYWRkaXRpb25hbERldGFpbHMocmVjb3JkLCBzdGFnZSwgaXRlbSkpOwogICAgcmV0dXJuIGNvbnRlbnQ7Cn07CmNvbnN0IG9wZW5TdGFnZSA9IChpdGVtLCBzdGFnZSwgdHJpZ2dlciwgaG9zdCkgPT4gewogICAgY29uc3QgcmVjb3JkID0gaXRlbVtzdGFnZV07CiAgICBpZiAoIXJlY29yZCkKICAgICAgICByZXR1cm47CiAgICBjb25zdCBkaWFsb2cgPSBlbGVtZW50KCJkaWFsb2ciLCAic3RhZ2UtcmVjb3JkLXZpZXdlciBlcXVpcHppbGxhLXN0YWdlLWRpYWxvZyIpOwogICAgZGlhbG9nLnNldEF0dHJpYnV0ZSgiYXJpYS1sYWJlbGxlZGJ5IiwgImVxdWlwemlsbGEtc3RhZ2UtaGVhZGluZyIpOwogICAgY29uc3QgaGVhZGVyID0gZWxlbWVudCgiaGVhZGVyIiwgInN0YWdlLXZpZXdlci10b3AiKTsKICAgIGNvbnN0IGhlYWRpbmcgPSBlbGVtZW50KCJzdHJvbmciLCAiIiwgc3RhZ2VMYWJlbHNbc3RhZ2VdKTsKICAgIGhlYWRpbmcuaWQgPSAiZXF1aXB6aWxsYS1zdGFnZS1oZWFkaW5nIjsKICAgIGNvbnN0IGNsb3NlID0gYnV0dG9uKCJDZXJyYXIgw5ciLCAic3RhZ2Utdmlld2VyLWNsb3NlIiwgKCkgPT4gZGlhbG9nLmNsb3NlKCkpOwogICAgaGVhZGVyLmFwcGVuZChoZWFkaW5nLCBjbG9zZSk7CiAgICBkaWFsb2cuYXBwZW5kKGhlYWRlciwgcmVjb3JkRGV0YWlscyhyZWNvcmQsIHN0YWdlLCBpdGVtKSk7CiAgICBkaWFsb2cuYWRkRXZlbnRMaXN0ZW5lcigiY2xvc2UiLCAoKSA9PiB7CiAgICAgICAgZGlhbG9nLnJlbW92ZSgpOwogICAgICAgIGlmICh0cmlnZ2VyLmlzQ29ubmVjdGVkKQogICAgICAgICAgICB0cmlnZ2VyLmZvY3VzKHsgcHJldmVudFNjcm9sbDogdHJ1ZSB9KTsKICAgIH0sIHsgb25jZTogdHJ1ZSB9KTsKICAgIGRpYWxvZy5hZGRFdmVudExpc3RlbmVyKCJjbGljayIsIChldmVudCkgPT4gewogICAgICAgIGlmIChldmVudC50YXJnZXQgPT09IGRpYWxvZykKICAgICAgICAgICAgZGlhbG9nLmNsb3NlKCk7CiAgICB9KTsKICAgIGhvc3QuYXBwZW5kKGRpYWxvZyk7CiAgICBkaWFsb2cuc2hvd01vZGFsKCk7CiAgICBjbG9zZS5mb2N1cygpOwp9OwpleHBvcnQgY29uc3QgcmVuZGVyU3RhZ2VDYXJkcyA9IChpdGVtKSA9PiB7CiAgICBjb25zdCBzZWN0aW9uID0gZWxlbWVudCgic2VjdGlvbiIsICJzdGFnZS1yZWNvcmQtc2VjdGlvbiIpOwogICAgc2VjdGlvbi5hcHBlbmQoZWxlbWVudCgiaDMiLCAic3RhZ2UtcmVjb3JkLWhlYWRpbmciLCAiVHJlcyBldGFwYXMgZGUgbGEgZmljaGEiKSk7CiAgICBjb25zdCBncmlkID0gZWxlbWVudCgiZGl2IiwgInN0YWdlLXJlY29yZC1ncmlkIik7CiAgICBmb3IgKGNvbnN0IHN0YWdlIG9mIFsib3JpZ2luYWwiLCAicHVibGlzaGVkIiwgImNvbW1lcmNpYWwiXSkgewogICAgICAgIGNvbnN0IHJlY29yZCA9IGl0ZW1bc3RhZ2VdOwogICAgICAgIGNvbnN0IGNhcmQgPSBlbGVtZW50KCJhcnRpY2xlIiwgYHN0YWdlLXJlY29yZC1jYXJkIHN0YWdlLXJlY29yZC0ke3N0YWdlfSR7cmVjb3JkID8gIiIgOiAiIHN0YWdlLXJlY29yZC1hYnNlbnQifWApOwogICAgICAgIGNhcmQuYXBwZW5kKGVsZW1lbnQoInNwYW4iLCAic3RhZ2UtcmVjb3JkLWxhYmVsIiwgc3RhZ2VMYWJlbHNbc3RhZ2VdKSk7CiAgICAgICAgaWYgKCFyZWNvcmQpIHsKICAgICAgICAgICAgY2FyZC5hcHBlbmQoZWxlbWVudCgiZGl2IiwgInN0YWdlLXJlY29yZC1wbGFjZWhvbGRlciIsIHN0YWdlID09PSAib3JpZ2luYWwiID8KICAgICAgICAgICAgICAgICJPcmlnaW5hbCBubyBkaXNwb25pYmxlIiA6IHN0YWdlID09PSAicHVibGlzaGVkIiA/ICJObyBwdWJsaWNhZGEgZW4gRklOSVNIIiA6ICJTaW4gc2FsaWRhIGNvbWVyY2lhbCIpKTsKICAgICAgICAgICAgY2FyZC5hcHBlbmQoZWxlbWVudCgicCIsICJzdGFnZS1yZWNvcmQtdW5hdmFpbGFibGUiLCAiRXRhcGEgbm8gZGlzcG9uaWJsZSBlbiBlc3RlIGV4cGVkaWVudGUiKSk7CiAgICAgICAgfQogICAgICAgIGVsc2UgewogICAgICAgICAgICBjYXJkLmFwcGVuZChwaG90b2dyYXBoKHJlY29yZCkpOwogICAgICAgICAgICBjb25zdCB0aXRsZSA9IGVsZW1lbnQoImg0IiwgInN0YWdlLXJlY29yZC10aXRsZSIsIGRpc3BsYXkocmVjb3JkLnRpdGxlKSk7CiAgICAgICAgICAgIHRpdGxlLnRpdGxlID0gZGlzcGxheShyZWNvcmQudGl0bGUpOwogICAgICAgICAgICBjYXJkLmFwcGVuZCh0aXRsZSk7CiAgICAgICAgICAgIGNvbnN0IHN0YXRzID0gZWxlbWVudCgiZGl2IiwgInN0YWdlLXJlY29yZC1zdGF0cyIpOwogICAgICAgICAgICBzdGF0cy5hcHBlbmQoc3RhdCgiRXNwZWNpZmljYWNpb25lcyIsIFN0cmluZyhPYmplY3Qua2V5cyhyZWNvcmQuc3BlY3MpLmxlbmd0aCkpKTsKICAgICAgICAgICAgaWYgKHN0YWdlID09PSAiY29tbWVyY2lhbCIgJiYgaXRlbS5jb21tZXJjaWFsKSB7CiAgICAgICAgICAgICAgICBzdGF0cy5hcHBlbmQoc3RhdCgiQXRyaWJ1dG9zIiwgU3RyaW5nKGl0ZW0uY29tbWVyY2lhbC5hdHRyaWJ1dGVzLmxlbmd0aCkpKTsKICAgICAgICAgICAgICAgIGlmIChpdGVtLmNvbW1lcmNpYWwuY2F0ZWdvcnlTZWxsSUQgIT09IG51bGwpCiAgICAgICAgICAgICAgICAgICAgc3RhdHMuYXBwZW5kKHN0YXQoIkNhdGVnb3LDrWEgY29tZXJjaWFsIiwgU3RyaW5nKGl0ZW0uY29tbWVyY2lhbC5jYXRlZ29yeVNlbGxJRCkpKTsKICAgICAgICAgICAgfQogICAgICAgICAgICBlbHNlIGlmIChyZWNvcmQucHJpY2UgIT09IG51bGwpIHsKICAgICAgICAgICAgICAgIHN0YXRzLmFwcGVuZChzdGF0KCJQcmVjaW8iLCBTdHJpbmcocmVjb3JkLnByaWNlKSkpOwogICAgICAgICAgICB9CiAgICAgICAgICAgIGVsc2UgaWYgKHJlY29yZC5jYXRlZ29yeSkgewogICAgICAgICAgICAgICAgc3RhdHMuYXBwZW5kKHN0YXQoIkNhdGVnb3LDrWEiLCByZWNvcmQuY2F0ZWdvcnkpKTsKICAgICAgICAgICAgfQogICAgICAgICAgICBzdGF0cy5hcHBlbmQoc3RhdCgiSW3DoWdlbmVzIiwgU3RyaW5nKHJlY29yZC5pbWFnZXMubGVuZ3RoKSkpOwogICAgICAgICAgICBjYXJkLmFwcGVuZChzdGF0cyk7CiAgICAgICAgICAgIGNvbnN0IGV4cGFuZCA9IGJ1dHRvbigiQW1wbGlhciBmaWNoYSIsICJzdGFnZS1yZWNvcmQtZXhwYW5kIiwgKCkgPT4gb3BlblN0YWdlKGl0ZW0sIHN0YWdlLCBleHBhbmQsIHNlY3Rpb24pKTsKICAgICAgICAgICAgZXhwYW5kLnNldEF0dHJpYnV0ZSgiYXJpYS1sYWJlbCIsIGBBbXBsaWFyICR7c3RhZ2VMYWJlbHNbc3RhZ2VdfWApOwogICAgICAgICAgICBjYXJkLmFwcGVuZChleHBhbmQpOwogICAgICAgIH0KICAgICAgICBncmlkLmFwcGVuZChjYXJkKTsKICAgIH0KICAgIHNlY3Rpb24uYXBwZW5kKGdyaWQpOwogICAgcmV0dXJuIHNlY3Rpb247Cn07Cg==";
 const find = (id) => {
     const node = document.getElementById(id);
     if (!node)
@@ -2408,14 +2766,18 @@ const data = parsed;
 const products = data.explorer.products;
 const productsById = new Map(products.map((item) => [item.identity, item]));
 const names = data.names;
-const caseLabels = {
-    content: "Texto editorial", technical: "Transformación técnica", commercial: "Proyección comercial", exclusion: "Exclusión acreditada"
-};
 const stages = {
     commercial: "Exportada", "commercial-excluded": "Excluida comercial", "editorial-excluded": "Excluida editorial"
 };
 const changes = {
     added: "Incorporado", changed: "Modificado", unchanged: "Conservado", removed: "Retirado", ambiguous: "Sin correspondencia unívoca"
+};
+const sorts = {
+    "most-differences": "Más diferencias observadas",
+    "fewest-original-specs": "Menos especificaciones de origen",
+    "most-technical-additions": "Más especificaciones incorporadas",
+    "most-technical-changes": "Más valores técnicos modificados",
+    reference: "Referencia · incluye excluidas"
 };
 const formatNumber = new Intl.NumberFormat("es-ES");
 const verifiedUrl = (value) => {
@@ -2454,45 +2816,6 @@ const newButton = (label, fn, className = "") => {
     node.type = "button";
     node.addEventListener("click", fn);
     return node;
-};
-const imagePreview = (record) => {
-    const cover = record.image ?? record.images[0];
-    if (!cover || !verifiedUrl(cover))
-        return null;
-    const figure = create("div", "record-figure");
-    const image = create("img");
-    image.src = cover;
-    image.loading = "lazy";
-    image.referrerPolicy = "no-referrer";
-    image.alt = `Imagen de origen o publicación: ${record.title ?? "máquina"}`;
-    image.addEventListener("error", () => {
-        figure.replaceChildren(create("div", "image-unavailable", "Imagen externa no disponible"));
-    });
-    append(figure, image, create("span", "", `${formatNumber.format(record.images.length)} imágenes declaradas`));
-    return figure;
-};
-const recordCard = (label, record, extra) => {
-    const card = create("article", "record-card");
-    append(card, create("span", "section-kicker", label));
-    if (!record) {
-        append(card, create("div", "record-missing", label.includes("ORIGINAL") ?
-            "Evidencia original no disponible" : "Etapa no alcanzada"));
-        return card;
-    }
-    const preview = imagePreview(record);
-    if (preview)
-        append(card, preview);
-    append(card, create("h3", "record-title", text(record.title)));
-    const facts = create("dl", "record-facts");
-    for (const [title, value] of [["Categoría", text(record.category)], ["Precio declarado", text(record.price)],
-        ["Prestaciones", formatNumber.format(Object.keys(record.specs).length)]]) {
-        append(facts, create("dt", "", title), create("dd", "", value));
-    }
-    if (extra) {
-        append(facts, create("dt", "", "Categoría comercial (ID)"), create("dd", "", extra.categorySellID === null ? "Pendiente" : String(extra.categorySellID)), create("dt", "", "Atributos comerciales aceptados"), create("dd", "", String(extra.attributes.length)));
-    }
-    append(card, facts);
-    return card;
 };
 const descriptionPanel = (label, description, unavailable) => {
     const panel = create("article", "description-panel");
@@ -2644,7 +2967,7 @@ const fieldText = (value, missing) => {
 };
 const renderFieldStory = (item) => {
     const section = create("section", "field-story");
-    append(section, create("span", "section-kicker", "E5 / LA HISTORIA DEL DATO"), create("h3", "", "¿De dónde sale este dato?"), create("p", "minor-note", "Selecciona un cambio para consultar su fuente y sus límites."));
+    append(section, create("span", "section-kicker", "E5 / LA HISTORIA DEL DATO"), create("h3", "", "Un cambio y su procedencia"));
     if (!item.original || !item.published) {
         append(section, create("p", "muted-copy", item.published ?
             "No hay un original verificable para comparar esta publicación." :
@@ -2708,15 +3031,15 @@ const renderFieldStory = (item) => {
         button.dataset.field = `${difference.group}:${difference.field}`;
         button.setAttribute("aria-pressed", "false");
         buttons.push(button);
-        if (index < 6)
+        if (index === 0)
             append(selection, button);
     });
-    if (fields.length > 6) {
+    if (fields.length > 1) {
         const more = create("details", "field-story-more");
         const moreOptions = create("div", "field-story-more-list");
-        for (const button of buttons.slice(6))
+        for (const button of buttons.slice(1))
             append(moreOptions, button);
-        append(more, create("summary", "", `Ver otros ${formatNumber.format(fields.length - 6)} cambios`), moreOptions);
+        append(more, create("summary", "", `Otros cambios (${formatNumber.format(fields.length - 1)})`), moreOptions);
         append(selection, more);
     }
     append(controls, selection, detail);
@@ -2726,70 +3049,23 @@ const renderFieldStory = (item) => {
         selectField(initial);
     return section;
 };
-const descriptionPreview = (label, value) => {
-    const line = create("div", "impact-description");
-    append(line, create("span", "", label));
-    if (value === null || !value.trim())
-        append(line, create("strong", "impact-absent", "No consta"));
-    else {
-        const excerpt = value.trim().replace(/\s+/g, " ");
-        append(line, create("span", "", excerpt.length <= 125 ? excerpt : `${excerpt.slice(0, 125)}…`));
-    }
-    return line;
-};
 const renderImpactComparison = (item) => {
     if (!item.original || !item.published)
         return null;
     const metrics = explorerProductMetrics(item);
     const section = create("section", "impact-comparison");
-    append(section, create("span", "section-kicker", "ORIGINAL → FINISH"), create("h3", "", "Antes y después, en la misma máquina"));
-    const grid = create("div", "impact-comparison-grid");
-    for (const [label, view, count] of [
-        ["ANTES · PROVEEDOR", item.original, metrics.originalSpecs],
-        ["DESPUÉS · FINISH", item.published, metrics.publishedSpecs]
-    ]) {
-        const card = create("article", "impact-comparison-card");
-        append(card, create("span", "impact-stage", label), create("strong", "impact-spec-count", formatNumber.format(count)), create("span", "impact-spec-label", "especificaciones declaradas"), descriptionPreview("Descripción corta", view.shortDescription), descriptionPreview("Descripción general", view.generalDescription));
-        append(grid, card);
-    }
-    append(section, grid, create("p", "impact-comparison-result", `${formatNumber.format(metrics.technicalAdditions)} campos técnicos incorporados · ${formatNumber.format(metrics.technicalChanges)} valores técnicos modificados · ${formatNumber.format(metrics.observedDifferences)} diferencias observadas en el comparador.`), create("p", "minor-note", "Especificaciones declaradas y diferencias observadas; no acreditan por sí solas la causa. Los textos completos están en la ficha desplegable."));
-    return section;
-};
-const renderChangeSummary = (item) => {
-    const section = create("section", "change-overview");
-    append(section, create("span", "section-kicker", "APORTACIONES Y ESTADO"), create("h3", "", "Qué cambió respecto al origen"));
-    const list = create("div", "change-summary-grid");
-    const entries = [
-        ["Incorporados", item.changes.filter((entry) => entry.change === "added").length],
-        ["Modificados", item.changes.filter((entry) => entry.change === "changed").length],
-        ["Retirados o ambiguos", item.changes.filter((entry) => entry.change === "removed" || entry.change === "ambiguous").length]
-    ];
-    for (const [label, count] of entries) {
-        if (item.original && item.published && count === 0)
-            continue;
-        const cell = create("div", "change-summary-cell");
-        append(cell, create("strong", "", item.original && item.published ? formatNumber.format(count) : "—"), create("span", "", label));
-        append(list, cell);
-    }
-    append(section, list);
-    const unchanged = item.changes.filter((entry) => entry.change === "unchanged").length;
-    if (item.original && item.published && unchanged > 0) {
-        append(section, create("p", "minor-note", `${formatNumber.format(unchanged)} campos conservados · comparador de ficha, no recuento del informe FINISH.`));
-    }
-    else if (!item.original || !item.published) {
-        append(section, create("p", "minor-note", "Sin comparación original → FINISH disponible para esta ficha."));
-    }
-    if (item.decision)
-        append(section, create("p", "change-decision", `Estado del expediente: ${stages[item.stage]}. Motivo declarado: ${item.decision.reason}`));
+    append(section, create("span", "section-kicker", "ORIGINAL → FINISH"), create("h3", "", "Antes y después · datos observados"));
+    const summary = create("div", "impact-compact");
+    append(summary, create("strong", "", `Specs ${formatNumber.format(metrics.originalSpecs)} → ${formatNumber.format(metrics.publishedSpecs)}`));
+    if (metrics.technicalAdditions)
+        append(summary, create("span", "", `+${formatNumber.format(metrics.technicalAdditions)} incorporadas`));
+    if (metrics.technicalChanges)
+        append(summary, create("span", "", `${formatNumber.format(metrics.technicalChanges)} valores modificados`));
+    const mainChange = meaningfulChanges(item)[0];
+    if (mainChange)
+        append(section, summary, create("p", "impact-main-change", `${changes[mainChange.change]} · ${mainChange.field}`));
     else
-        append(section, create("p", "change-decision", "Publicada en FINISH y exportada en el paquete comercial del corte."));
-    return section;
-};
-const renderCommercialSummary = (item) => {
-    if (!item.commercial)
-        return null;
-    const section = create("section", "commercial-summary");
-    append(section, create("span", "section-kicker", "SALIDA COMERCIAL · MISMO CORTE"), create("h3", "", "Proyección comercial"), create("p", "", `Categoría: ${text(item.commercial.category)} · ID: ${text(item.commercial.categorySellID)} · Precio: ${text(item.commercial.price)} · ${formatNumber.format(item.commercial.attributes.length)} atributos aceptados.`), create("p", "minor-note", "Los atributos comerciales no son prestaciones técnicas nuevas."));
+        append(section, summary);
     return section;
 };
 let scope = "todos";
@@ -2846,14 +3122,97 @@ const refreshCategories = () => {
     }
     menu.value = category;
 };
-const renderCases = () => {
-    const target = find("explorer-cases");
-    target.replaceChildren(create("span", "case-caption", "CASOS REALES"));
-    for (const item of data.explorer.cases) {
-        const product = productsById.get(item.identity);
-        if (!product || scope !== "todos" && item.providerId !== scope)
+const renderActiveFilters = () => {
+    const target = find("explorer-active-filters");
+    target.replaceChildren();
+    const active = [];
+    if (scope !== "todos")
+        active.push({ label: `Proveedor: ${names[scope]}`, clear: () => {
+                const provider = select("provider-filter");
+                provider.value = "todos";
+                provider.dispatchEvent(new Event("change", { bubbles: true }));
+            } });
+    if (query)
+        active.push({ label: `Búsqueda: ${query}`, clear: () => {
+                query = "";
+                input("explorer-search").value = "";
+            } });
+    if (category !== "todos")
+        active.push({ label: `Categoría: ${category}`, clear: () => {
+                category = "todos";
+                select("explorer-category").value = "todos";
+            } });
+    if (stage !== "todos")
+        active.push({ label: `Etapa: ${stages[stage]}`, clear: () => {
+                stage = "todos";
+                select("explorer-stage").value = "todos";
+            } });
+    for (const [enabled, label, control] of [
+        [missingOriginalDescription, "Descripción ausente", "explorer-missing-description"],
+        [withoutOriginalSpecs, "Sin especificaciones", "explorer-without-specs"],
+        [withTechnicalAdditions, "Con incorporaciones", "explorer-with-additions"],
+        [withEditorialChanges, "Descripciones cambiadas", "explorer-editorial-changes"]
+    ]) {
+        if (!enabled)
             continue;
-        append(target, newButton(`${names[item.providerId]} · ${caseLabels[item.focus]}`, () => chooseCase(item), "case-button"));
+        active.push({ label, clear: () => {
+                checkbox(control).checked = false;
+                if (control === "explorer-missing-description")
+                    missingOriginalDescription = false;
+                else if (control === "explorer-without-specs")
+                    withoutOriginalSpecs = false;
+                else if (control === "explorer-with-additions")
+                    withTechnicalAdditions = false;
+                else
+                    withEditorialChanges = false;
+            } });
+    }
+    const heading = create("div", "explorer-filter-heading");
+    append(heading, create("strong", "", "Filtros activos"));
+    if (active.length)
+        append(heading, newButton("Limpiar", () => {
+            query = "";
+            category = "todos";
+            stage = "todos";
+            input("explorer-search").value = "";
+            select("explorer-stage").value = "todos";
+            select("explorer-category").value = "todos";
+            resetRefinements();
+            page = 0;
+            if (scope !== "todos") {
+                const provider = select("provider-filter");
+                provider.value = "todos";
+                provider.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            else {
+                reconcileSelection(true);
+                renderExplorer();
+            }
+        }, "explorer-clear-filters"));
+    append(target, heading);
+    if (!active.length)
+        append(target, create("p", "explorer-no-filters", "Sin filtros seleccionados"));
+    else {
+        const chips = create("div", "explorer-filter-chips");
+        for (const filter of active) {
+            const chip = newButton(`${filter.label} ×`, () => {
+                filter.clear();
+                page = 0;
+                reconcileSelection();
+                renderExplorer();
+            }, "explorer-filter-chip");
+            chip.setAttribute("aria-label", `Quitar filtro ${filter.label}`);
+            append(chips, chip);
+        }
+        append(target, chips);
+    }
+    append(target, create("p", "explorer-sort-current", `Orden: ${sorts[sort]}`));
+    const more = find("explorer-extra-count");
+    const advanced = [stage !== "todos", missingOriginalDescription, withoutOriginalSpecs,
+        withTechnicalAdditions, withEditorialChanges].filter(Boolean).length;
+    more.textContent = advanced ? ` · ${advanced} activos` : "";
+    for (const option of select("explorer-sort").options) {
+        option.disabled = (stage === "commercial-excluded" || stage === "editorial-excluded") && option.value !== "reference";
     }
 };
 const renderRows = () => {
@@ -2946,30 +3305,27 @@ const renderDetail = () => {
     if (verifiedUrl(item.sourceUrl))
         append(heading, linkTo(item.sourceUrl, "Abrir ficha del proveedor"));
     append(target, heading);
+    if (item.decision)
+        append(target, create("p", "explorer-decision-summary", item.decision.reason));
+    append(target, renderStageCards(item));
     const comparison = renderImpactComparison(item);
-    if (comparison) {
-        append(target, comparison, renderFieldStory(item));
-        const more = create("details", "change-summary-more");
-        append(more, create("summary", "", "Ver desglose completo de cambios y estado"), renderChangeSummary(item));
-        append(target, more);
-    }
-    else {
-        append(target, renderChangeSummary(item), renderFieldStory(item));
-    }
-    const commercial = renderCommercialSummary(item);
-    if (commercial)
-        append(target, commercial);
+    if (comparison)
+        append(target, comparison);
+    const story = create("details", "explorer-provenance-disclosure");
+    append(story, create("summary", "", "Ver procedencia de los cambios"), renderFieldStory(item));
+    append(target, story);
     const full = create("details", "full-record");
     append(full, create("summary", "", "Abrir ficha completa · textos, especificaciones y diferencias"));
-    const records = create("div", "record-grid");
-    append(records, recordCard("01 / ORIGINAL", item.original), recordCard("02 / FINISH", item.published), recordCard("03 / COMERCIAL", item.commercial, item.commercial ?? undefined));
-    append(full, records, renderDescriptions(item), renderSpecifications(item), renderCommercialAttributes(item), create("h3", "diff-heading", "Diferencias estructuradas"));
+    append(full, renderDescriptions(item), renderSpecifications(item), renderCommercialAttributes(item), create("h3", "diff-heading", "Diferencias estructuradas"));
     if (!item.original && item.published)
         append(full, create("p", "evidence-warning", "No existe original verificable para este corte. No se muestran diferencias imaginadas."));
     append(full, renderDifferences("Origen → Publicación técnica", item.changes), renderDifferences("Publicación técnica → Comercial", item.commercialChanges));
     append(target, full);
     const provenance = create("section", "detail-evidence");
-    append(provenance, create("span", "section-kicker", "RESOLUCIÓN Y AUDITORÍA"), create("h3", "", "Decisión y evidencias del expediente"), renderDecision(item));
+    append(provenance, create("span", "section-kicker", "RESOLUCIÓN Y AUDITORÍA"));
+    const decision = create("details", "explorer-decision-detail");
+    append(decision, create("summary", "", "Ver decisión acreditada y motivos"), renderDecision(item));
+    append(provenance, decision);
     const artifacts = create("details", "audit-artifacts");
     append(artifacts, create("summary", "", "Ver artefactos íntegros y huellas SHA256"));
     for (const [label, artifact] of [["Original verificado", item.evidence.original],
@@ -2984,7 +3340,7 @@ const renderDetail = () => {
     append(provenance, artifacts);
     append(target, provenance);
 };
-const renderExplorer = () => { reconcileSelection(); renderCases(); renderRows(); renderDetail(); };
+const renderExplorer = () => { reconcileSelection(); renderActiveFilters(); renderRows(); renderDetail(); };
 const showSelectionOnMobile = () => {
     if (!window.matchMedia("(max-width: 750px)").matches)
         return;
@@ -3024,6 +3380,10 @@ input("explorer-search").addEventListener("input", () => {
 select("explorer-stage").addEventListener("change", () => {
     const selected = select("explorer-stage").value;
     stage = selected === "commercial" || selected === "commercial-excluded" || selected === "editorial-excluded" ? selected : "todos";
+    if (stage === "commercial-excluded" || stage === "editorial-excluded") {
+        sort = "reference";
+        select("explorer-sort").value = sort;
+    }
     page = 0;
     reconcileSelection();
     renderExplorer();

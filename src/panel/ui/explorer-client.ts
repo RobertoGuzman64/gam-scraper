@@ -1,7 +1,8 @@
 import type { PanelDashboardPayload } from "../application/dashboard-data.js";
 import { explorerProductMetrics, selectExplorerProducts } from "../explorer/explorer-selection.js";
 import type { ExplorerSelection, ExplorerSort } from "../explorer/explorer-selection.js";
-import type { PanelExplorerProduct, PanelPresentationCase, PanelProductView, PanelCommercialView, PanelFieldDifference, PanelFieldProvenance } from "../explorer/types.js";
+import type { PanelExplorerProduct, PanelPresentationCase, PanelFieldDifference, PanelFieldProvenance } from "../explorer/types.js";
+import { renderStageCards } from "./explorer-stage-cards.js";
 import type { PanelArtifact, PanelProviderId } from "../evidence/types.js";
 
 type Scope = PanelProviderId | "todos";
@@ -48,14 +49,18 @@ const data = parsed;
 const products = data.explorer.products;
 const productsById = new Map(products.map((item) => [item.identity, item]));
 const names = data.names;
-const caseLabels: Readonly<Record<PanelPresentationCase["focus"], string>> = {
-  content: "Texto editorial", technical: "Transformación técnica", commercial: "Proyección comercial", exclusion: "Exclusión acreditada"
-};
 const stages: Readonly<Record<PanelExplorerProduct["stage"], string>> = {
   commercial: "Exportada", "commercial-excluded": "Excluida comercial", "editorial-excluded": "Excluida editorial"
 };
 const changes: Readonly<Record<PanelFieldDifference["change"], string>> = {
   added: "Incorporado", changed: "Modificado", unchanged: "Conservado", removed: "Retirado", ambiguous: "Sin correspondencia unívoca"
+};
+const sorts: Readonly<Record<ExplorerSort, string>> = {
+  "most-differences": "Más diferencias observadas",
+  "fewest-original-specs": "Menos especificaciones de origen",
+  "most-technical-additions": "Más especificaciones incorporadas",
+  "most-technical-changes": "Más valores técnicos modificados",
+  reference: "Referencia · incluye excluidas"
 };
 const formatNumber = new Intl.NumberFormat("es-ES");
 const verifiedUrl = (value: string): boolean => {
@@ -90,46 +95,6 @@ const newButton = (label: string, fn: () => void, className = ""): HTMLButtonEle
   node.addEventListener("click", fn);
   return node;
 };
-const imagePreview = (record: PanelProductView): HTMLElement | null => {
-  const cover = record.image ?? record.images[0];
-  if (!cover || !verifiedUrl(cover)) return null;
-  const figure = create("div", "record-figure");
-  const image = create("img");
-  image.src = cover;
-  image.loading = "lazy";
-  image.referrerPolicy = "no-referrer";
-  image.alt = `Imagen de origen o publicación: ${record.title ?? "máquina"}`;
-  image.addEventListener("error", () => {
-    figure.replaceChildren(create("div", "image-unavailable", "Imagen externa no disponible"));
-  });
-  append(figure, image, create("span", "", `${formatNumber.format(record.images.length)} imágenes declaradas`));
-  return figure;
-};
-const recordCard = (label: string, record: PanelProductView | PanelCommercialView | null, extra?: PanelCommercialView): HTMLElement => {
-  const card = create("article", "record-card");
-  append(card, create("span", "section-kicker", label));
-  if (!record) {
-    append(card, create("div", "record-missing", label.includes("ORIGINAL") ?
-      "Evidencia original no disponible" : "Etapa no alcanzada"));
-    return card;
-  }
-  const preview = imagePreview(record);
-  if (preview) append(card, preview);
-  append(card, create("h3", "record-title", text(record.title)));
-  const facts = create("dl", "record-facts");
-  for (const [title, value] of [["Categoría", text(record.category)], ["Precio declarado", text(record.price)],
-    ["Prestaciones", formatNumber.format(Object.keys(record.specs).length)]] as const) {
-    append(facts, create("dt", "", title), create("dd", "", value));
-  }
-  if (extra) {
-    append(facts, create("dt", "", "Categoría comercial (ID)"),
-      create("dd", "", extra.categorySellID === null ? "Pendiente" : String(extra.categorySellID)),
-      create("dt", "", "Atributos comerciales aceptados"), create("dd", "", String(extra.attributes.length)));
-  }
-  append(card, facts);
-  return card;
-};
-
 const descriptionPanel = (label: string, description: string | null, unavailable: string): HTMLElement => {
   const panel = create("article", "description-panel");
   append(panel, create("h4", "", label), create("div", "description-body", description === null || description === "" ? unavailable : description));
@@ -289,8 +254,7 @@ const fieldText = (value: string | null, missing: string): HTMLElement => {
 const renderFieldStory = (item: PanelExplorerProduct): HTMLElement => {
   const section = create("section", "field-story");
   append(section, create("span", "section-kicker", "E5 / LA HISTORIA DEL DATO"),
-    create("h3", "", "¿De dónde sale este dato?"),
-    create("p", "minor-note", "Selecciona un cambio para consultar su fuente y sus límites."));
+    create("h3", "", "Un cambio y su procedencia"));
   if (!item.original || !item.published) {
     append(section, create("p", "muted-copy", item.published ?
       "No hay un original verificable para comparar esta publicación." :
@@ -351,13 +315,13 @@ const renderFieldStory = (item: PanelExplorerProduct): HTMLElement => {
     button.dataset.field = `${difference.group}:${difference.field}`;
     button.setAttribute("aria-pressed", "false");
     buttons.push(button);
-    if (index < 6) append(selection, button);
+    if (index === 0) append(selection, button);
   });
-  if (fields.length > 6) {
+  if (fields.length > 1) {
     const more = create("details", "field-story-more");
     const moreOptions = create("div", "field-story-more-list");
-    for (const button of buttons.slice(6)) append(moreOptions, button);
-    append(more, create("summary", "", `Ver otros ${formatNumber.format(fields.length - 6)} cambios`), moreOptions);
+    for (const button of buttons.slice(1)) append(moreOptions, button);
+    append(more, create("summary", "", `Otros cambios (${formatNumber.format(fields.length - 1)})`), moreOptions);
     append(selection, more);
   }
   append(controls, selection, detail);
@@ -366,74 +330,19 @@ const renderFieldStory = (item: PanelExplorerProduct): HTMLElement => {
   if (initial) selectField(initial);
   return section;
 };
-const descriptionPreview = (label: string, value: string | null): HTMLElement => {
-  const line = create("div", "impact-description");
-  append(line, create("span", "", label));
-  if (value === null || !value.trim()) append(line, create("strong", "impact-absent", "No consta"));
-  else {
-    const excerpt = value.trim().replace(/\s+/g, " ");
-    append(line, create("span", "", excerpt.length <= 125 ? excerpt : `${excerpt.slice(0, 125)}…`));
-  }
-  return line;
-};
 const renderImpactComparison = (item: PanelExplorerProduct): HTMLElement | null => {
   if (!item.original || !item.published) return null;
   const metrics = explorerProductMetrics(item);
   const section = create("section", "impact-comparison");
   append(section, create("span", "section-kicker", "ORIGINAL → FINISH"),
-    create("h3", "", "Antes y después, en la misma máquina"));
-  const grid = create("div", "impact-comparison-grid");
-  for (const [label, view, count] of [
-    ["ANTES · PROVEEDOR", item.original, metrics.originalSpecs],
-    ["DESPUÉS · FINISH", item.published, metrics.publishedSpecs]
-  ] as const) {
-    const card = create("article", "impact-comparison-card");
-    append(card, create("span", "impact-stage", label),
-      create("strong", "impact-spec-count", formatNumber.format(count)),
-      create("span", "impact-spec-label", "especificaciones declaradas"),
-      descriptionPreview("Descripción corta", view.shortDescription),
-      descriptionPreview("Descripción general", view.generalDescription));
-    append(grid, card);
-  }
-  append(section, grid, create("p", "impact-comparison-result",
-    `${formatNumber.format(metrics.technicalAdditions)} campos técnicos incorporados · ${formatNumber.format(metrics.technicalChanges)} valores técnicos modificados · ${formatNumber.format(metrics.observedDifferences)} diferencias observadas en el comparador.`),
-    create("p", "minor-note", "Especificaciones declaradas y diferencias observadas; no acreditan por sí solas la causa. Los textos completos están en la ficha desplegable."));
-  return section;
-};
-
-const renderChangeSummary = (item: PanelExplorerProduct): HTMLElement => {
-  const section = create("section", "change-overview");
-  append(section, create("span", "section-kicker", "APORTACIONES Y ESTADO"), create("h3", "", "Qué cambió respecto al origen"));
-  const list = create("div", "change-summary-grid");
-  const entries = [
-    ["Incorporados", item.changes.filter((entry) => entry.change === "added").length],
-    ["Modificados", item.changes.filter((entry) => entry.change === "changed").length],
-    ["Retirados o ambiguos", item.changes.filter((entry) => entry.change === "removed" || entry.change === "ambiguous").length]
-  ] as const;
-  for (const [label, count] of entries) {
-    if (item.original && item.published && count === 0) continue;
-    const cell = create("div", "change-summary-cell");
-    append(cell, create("strong", "", item.original && item.published ? formatNumber.format(count) : "—"), create("span", "", label));
-    append(list, cell);
-  }
-  append(section, list);
-  const unchanged = item.changes.filter((entry) => entry.change === "unchanged").length;
-  if (item.original && item.published && unchanged > 0) {
-    append(section, create("p", "minor-note", `${formatNumber.format(unchanged)} campos conservados · comparador de ficha, no recuento del informe FINISH.`));
-  } else if (!item.original || !item.published) {
-    append(section, create("p", "minor-note", "Sin comparación original → FINISH disponible para esta ficha."));
-  }
-  if (item.decision) append(section, create("p", "change-decision", `Estado del expediente: ${stages[item.stage]}. Motivo declarado: ${item.decision.reason}`));
-  else append(section, create("p", "change-decision", "Publicada en FINISH y exportada en el paquete comercial del corte."));
-  return section;
-};
-const renderCommercialSummary = (item: PanelExplorerProduct): HTMLElement | null => {
-  if (!item.commercial) return null;
-  const section = create("section", "commercial-summary");
-  append(section, create("span", "section-kicker", "SALIDA COMERCIAL · MISMO CORTE"),
-    create("h3", "", "Proyección comercial"),
-    create("p", "", `Categoría: ${text(item.commercial.category)} · ID: ${text(item.commercial.categorySellID)} · Precio: ${text(item.commercial.price)} · ${formatNumber.format(item.commercial.attributes.length)} atributos aceptados.`),
-    create("p", "minor-note", "Los atributos comerciales no son prestaciones técnicas nuevas."));
+    create("h3", "", "Antes y después · datos observados"));
+  const summary = create("div", "impact-compact");
+  append(summary, create("strong", "", `Specs ${formatNumber.format(metrics.originalSpecs)} → ${formatNumber.format(metrics.publishedSpecs)}`));
+  if (metrics.technicalAdditions) append(summary, create("span", "", `+${formatNumber.format(metrics.technicalAdditions)} incorporadas`));
+  if (metrics.technicalChanges) append(summary, create("span", "", `${formatNumber.format(metrics.technicalChanges)} valores modificados`));
+  const mainChange = meaningfulChanges(item)[0];
+  if (mainChange) append(section, summary, create("p", "impact-main-change", `${changes[mainChange.change]} · ${mainChange.field}`));
+  else append(section, summary);
   return section;
 };
 
@@ -489,13 +398,85 @@ const refreshCategories = (): void => {
   }
   menu.value = category;
 };
-const renderCases = (): void => {
-  const target = find("explorer-cases");
-  target.replaceChildren(create("span", "case-caption", "CASOS REALES"));
-  for (const item of data.explorer.cases) {
-    const product = productsById.get(item.identity);
-    if (!product || scope !== "todos" && item.providerId !== scope) continue;
-    append(target, newButton(`${names[item.providerId]} · ${caseLabels[item.focus]}`, () => chooseCase(item), "case-button"));
+const renderActiveFilters = (): void => {
+  const target = find("explorer-active-filters");
+  target.replaceChildren();
+  const active: { label: string; clear: () => void }[] = [];
+  if (scope !== "todos") active.push({ label: `Proveedor: ${names[scope]}`, clear: () => {
+    const provider = select("provider-filter");
+    provider.value = "todos";
+    provider.dispatchEvent(new Event("change", { bubbles: true }));
+  } });
+  if (query) active.push({ label: `Búsqueda: ${query}`, clear: () => {
+    query = "";
+    input("explorer-search").value = "";
+  } });
+  if (category !== "todos") active.push({ label: `Categoría: ${category}`, clear: () => {
+    category = "todos";
+    select("explorer-category").value = "todos";
+  } });
+  if (stage !== "todos") active.push({ label: `Etapa: ${stages[stage]}`, clear: () => {
+    stage = "todos";
+    select("explorer-stage").value = "todos";
+  } });
+  for (const [enabled, label, control] of [
+    [missingOriginalDescription, "Descripción ausente", "explorer-missing-description"],
+    [withoutOriginalSpecs, "Sin especificaciones", "explorer-without-specs"],
+    [withTechnicalAdditions, "Con incorporaciones", "explorer-with-additions"],
+    [withEditorialChanges, "Descripciones cambiadas", "explorer-editorial-changes"]
+  ] as const) {
+    if (!enabled) continue;
+    active.push({ label, clear: () => {
+      checkbox(control).checked = false;
+      if (control === "explorer-missing-description") missingOriginalDescription = false;
+      else if (control === "explorer-without-specs") withoutOriginalSpecs = false;
+      else if (control === "explorer-with-additions") withTechnicalAdditions = false;
+      else withEditorialChanges = false;
+    } });
+  }
+  const heading = create("div", "explorer-filter-heading");
+  append(heading, create("strong", "", "Filtros activos"));
+  if (active.length) append(heading, newButton("Limpiar", () => {
+    query = "";
+    category = "todos";
+    stage = "todos";
+    input("explorer-search").value = "";
+    select("explorer-stage").value = "todos";
+    select("explorer-category").value = "todos";
+    resetRefinements();
+    page = 0;
+    if (scope !== "todos") {
+      const provider = select("provider-filter");
+      provider.value = "todos";
+      provider.dispatchEvent(new Event("change", { bubbles: true }));
+    } else {
+      reconcileSelection(true);
+      renderExplorer();
+    }
+  }, "explorer-clear-filters"));
+  append(target, heading);
+  if (!active.length) append(target, create("p", "explorer-no-filters", "Sin filtros seleccionados"));
+  else {
+    const chips = create("div", "explorer-filter-chips");
+    for (const filter of active) {
+      const chip = newButton(`${filter.label} ×`, () => {
+        filter.clear();
+        page = 0;
+        reconcileSelection();
+        renderExplorer();
+      }, "explorer-filter-chip");
+      chip.setAttribute("aria-label", `Quitar filtro ${filter.label}`);
+      append(chips, chip);
+    }
+    append(target, chips);
+  }
+  append(target, create("p", "explorer-sort-current", `Orden: ${sorts[sort]}`));
+  const more = find("explorer-extra-count");
+  const advanced = [stage !== "todos", missingOriginalDescription, withoutOriginalSpecs,
+    withTechnicalAdditions, withEditorialChanges].filter(Boolean).length;
+  more.textContent = advanced ? ` · ${advanced} activos` : "";
+  for (const option of select("explorer-sort").options) {
+    option.disabled = (stage === "commercial-excluded" || stage === "editorial-excluded") && option.value !== "reference";
   }
 };
 const renderRows = (): void => {
@@ -590,30 +571,26 @@ const renderDetail = (): void => {
   if (verifiedUrl(item.sourceUrl)) append(heading, linkTo(item.sourceUrl, "Abrir ficha del proveedor"));
 
   append(target, heading);
+  if (item.decision) append(target, create("p", "explorer-decision-summary", item.decision.reason));
+  append(target, renderStageCards(item));
   const comparison = renderImpactComparison(item);
-  if (comparison) {
-    append(target, comparison, renderFieldStory(item));
-    const more = create("details", "change-summary-more");
-    append(more, create("summary", "", "Ver desglose completo de cambios y estado"), renderChangeSummary(item));
-    append(target, more);
-  } else {
-    append(target, renderChangeSummary(item), renderFieldStory(item));
-  }
-  const commercial = renderCommercialSummary(item);
-  if (commercial) append(target, commercial);
+  if (comparison) append(target, comparison);
+  const story = create("details", "explorer-provenance-disclosure");
+  append(story, create("summary", "", "Ver procedencia de los cambios"), renderFieldStory(item));
+  append(target, story);
   const full = create("details", "full-record");
   append(full, create("summary", "", "Abrir ficha completa · textos, especificaciones y diferencias"));
-  const records = create("div", "record-grid");
-  append(records, recordCard("01 / ORIGINAL", item.original), recordCard("02 / FINISH", item.published),
-    recordCard("03 / COMERCIAL", item.commercial, item.commercial ?? undefined));
-  append(full, records, renderDescriptions(item), renderSpecifications(item), renderCommercialAttributes(item),
+  append(full, renderDescriptions(item), renderSpecifications(item), renderCommercialAttributes(item),
     create("h3", "diff-heading", "Diferencias estructuradas"));
   if (!item.original && item.published) append(full, create("p", "evidence-warning", "No existe original verificable para este corte. No se muestran diferencias imaginadas."));
   append(full, renderDifferences("Origen → Publicación técnica", item.changes),
     renderDifferences("Publicación técnica → Comercial", item.commercialChanges));
   append(target, full);
   const provenance = create("section", "detail-evidence");
-  append(provenance, create("span", "section-kicker", "RESOLUCIÓN Y AUDITORÍA"), create("h3", "", "Decisión y evidencias del expediente"), renderDecision(item));
+  append(provenance, create("span", "section-kicker", "RESOLUCIÓN Y AUDITORÍA"));
+  const decision = create("details", "explorer-decision-detail");
+  append(decision, create("summary", "", "Ver decisión acreditada y motivos"), renderDecision(item));
+  append(provenance, decision);
   const artifacts = create("details", "audit-artifacts");
   append(artifacts, create("summary", "", "Ver artefactos íntegros y huellas SHA256"));
   for (const [label, artifact] of [["Original verificado", item.evidence.original],
@@ -626,7 +603,7 @@ const renderDetail = (): void => {
   append(provenance, artifacts);
   append(target, provenance);
 };
-const renderExplorer = (): void => { reconcileSelection(); renderCases(); renderRows(); renderDetail(); };
+const renderExplorer = (): void => { reconcileSelection(); renderActiveFilters(); renderRows(); renderDetail(); };
 const showSelectionOnMobile = (): void => {
   if (!window.matchMedia("(max-width: 750px)").matches) return;
   const target = find("explorer-detail");
@@ -665,6 +642,10 @@ input("explorer-search").addEventListener("input", () => {
 select("explorer-stage").addEventListener("change", () => {
   const selected = select("explorer-stage").value;
   stage = selected === "commercial" || selected === "commercial-excluded" || selected === "editorial-excluded" ? selected : "todos";
+  if (stage === "commercial-excluded" || stage === "editorial-excluded") {
+    sort = "reference";
+    select("explorer-sort").value = sort;
+  }
   page = 0;
   reconcileSelection();
   renderExplorer();

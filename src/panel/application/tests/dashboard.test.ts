@@ -35,7 +35,8 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.match(html, /data-view="explorador"/);
   assert.ok(html.includes("explorer-search"));
   for (const id of ["explorer-sort", "explorer-missing-description", "explorer-without-specs",
-    "explorer-with-additions", "explorer-editorial-changes", "explorer-order-note"]) {
+    "explorer-with-additions", "explorer-editorial-changes", "explorer-order-note", "explorer-active-filters",
+    "explorer-extra-count"]) {
     assert.ok(html.includes(`id="${id}"`), id);
   }
   assert.ok(html.includes("Más especificaciones incorporadas"));
@@ -43,7 +44,13 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.ok(html.includes("selectExplorerProducts(products, selection)"));
   assert.ok(html.includes("data:text/javascript;base64,"));
   assert.ok(!html.includes('from "../explorer/explorer-selection.js"'));
-  assert.ok(html.includes("Antes y después, en la misma máquina"));
+  assert.ok(html.includes("Antes y después"));
+  assert.ok(html.includes('<details class="explorer-advanced">'));
+  assert.ok(html.includes("Filtros activos"));
+  assert.ok(html.includes("Limpiar"));
+  assert.ok(!html.includes('id="explorer-cases"'));
+  assert.ok(!html.includes("renderCommercialSummary(item)"));
+  assert.ok(!html.includes("renderChangeSummary(item)"));
   assert.ok(!html.includes("presentation-start"));
   assert.ok(!html.includes("presentation-strip"));
   assert.ok(!html.includes("presentationSteps"));
@@ -150,7 +157,7 @@ test("el diseño de exposición prioriza diagramas y conserva auditoría, bifurc
   assert.ok(html.includes('id="control-exclusion-commercial"'));
   assert.ok(html.includes("No se atribuye o incorpora por esa ruta"));
   assert.ok(html.includes("No entra en el paquete comercial"));
-  assert.ok(html.includes("Los textos completos están en la ficha desplegable"));
+  assert.ok(html.includes("Abrir ficha completa · textos, especificaciones y diferencias"));
   assert.ok(html.includes('id="normalization-example"'));
   assert.ok(html.includes('id="excluded-example"'));
   assert.ok(html.includes('id="local-evidence-toggle"'));
@@ -178,10 +185,91 @@ test("el modo portátil conserva enlaces seguros y casos reales sin navegación 
   assert.ok(html.includes("panel:request-case"));
   assert.ok(html.includes("panel:request-view"));
   assert.ok(html.includes("const chooseCase ="));
-  assert.ok(html.includes("renderCases()"));
+  assert.ok(!html.includes("renderCases()"));
+  assert.ok(!html.includes('id="explorer-cases"'));
+  assert.ok(html.includes("renderActiveFilters()"));
   assert.ok(html.includes('id="evidence-list"'));
   assert.ok(html.includes('id="cut-package-sha"'));
   assert.ok(html.includes('class="stage-strip"'));
   assert.ok(!html.includes('"stage-value"'));
   assert.ok(!html.includes('<script type="module" src='));
+});
+
+test("el Explorador concentra filtros, conserva su selección y deja el detalle técnico a demanda", async () => {
+  const workspace = await fixture.root();
+  const snapshot = await readPanelSnapshot(workspace);
+  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  assert.ok(html.includes('id="explorer-active-filters"'));
+  assert.ok(html.includes('class="explorer-advanced"'));
+  assert.ok(html.includes('id="explorer-extra-count"'));
+  assert.ok(html.includes("Quitar filtro"));
+  assert.ok(html.includes("Limpiar"));
+  assert.ok(html.includes("Orden: "));
+  assert.ok(html.includes('sort = "reference"'));
+  assert.ok(html.includes("option.disabled ="));
+  assert.ok(html.includes('class="explorer-layout"'));
+  assert.ok(!html.includes('id="explorer-cases"'));
+  assert.ok(html.includes("const chooseCase ="));
+  assert.ok(html.includes("renderFieldStory(item)"));
+  assert.ok(html.includes("Ver decisión acreditada y motivos"));
+  assert.ok(html.includes("Abrir ficha completa · textos, especificaciones y diferencias"));
+});
+
+test("E2 presenta tres etapas compactas, con ampliación individual y sin duplicar las fichas en auditoría", async () => {
+  const workspace = await fixture.root();
+  const snapshot = await readPanelSnapshot(workspace);
+  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  assert.ok(html.includes("renderStageCards(item)"));
+  assert.ok(html.includes("const story = create(\"details\", \"explorer-provenance-disclosure\")"));
+  assert.ok(html.includes("Antes y después · datos observados"));
+  assert.ok(html.includes("Abrir ficha completa · textos, especificaciones y diferencias"));
+  assert.ok(!html.includes("recordCard(\"01 / ORIGINAL\""));
+  assert.ok(!html.includes('from "./explorer-stage-cards.js"'));
+  assert.ok(html.includes(".stage-record-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr))"));
+  const matches = [...html.matchAll(/data:text\/javascript;base64,([A-Za-z0-9+/=]+)/g)];
+  assert.equal(matches.length, 2);
+  const components = matches.map((match) => Buffer.from(match[1] ?? "", "base64").toString("utf8"));
+  const cards = components.find((value) => value.includes("renderStageCards"));
+  assert.ok(cards);
+  for (const key of ["original", "published", "commercial"]) assert.ok(cards.includes(key));
+  assert.ok(cards.includes("dialog.showModal()"));
+  assert.ok(cards.includes("dialog.remove()"));
+  assert.ok(cards.includes("Etapa no disponible en este expediente"));
+  assert.ok(cards.includes("Sin fotografía disponible"));
+  assert.ok(cards.includes("Imagen externa no disponible"));
+  assert.ok(!cards.includes("window.fetch("));
+});
+
+test("E3 replica la estética del frontend solo en la ampliación, con datos de etapa y galería accesible", async () => {
+  const workspace = await fixture.root();
+  const snapshot = await readPanelSnapshot(workspace);
+  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  const modules = [...html.matchAll(/data:text\/javascript;base64,([A-Za-z0-9+/=]+)/g)]
+    .map((match) => Buffer.from(match[1] ?? "", "base64").toString("utf8"));
+  const cards = modules.find((value) => value.includes("renderStageCards"));
+  assert.ok(cards);
+  for (const label of ["01 · ORIGINAL", "02 · FINISH", "03 · COMERCIAL"]) assert.ok(cards.includes(label));
+  assert.ok(cards.includes("item[stage]"));
+  assert.ok(cards.includes("imageUrls(record)"));
+  assert.ok(cards.includes("equipzilla-gallery-thumbnails"));
+  assert.ok(cards.includes("Fotografía anterior"));
+  assert.ok(cards.includes("Fotografía siguiente"));
+  assert.ok(cards.includes("ArrowLeft"));
+  assert.ok(cards.includes("ArrowRight"));
+  assert.ok(cards.includes("aria-pressed"));
+  assert.ok(cards.includes("stage-viewer-close"));
+  assert.ok(cards.includes("trigger.focus({ preventScroll: true })"));
+  assert.ok(cards.includes('stage === "commercial"'));
+  assert.ok(cards.includes("item.commercial.attributes"));
+  assert.ok(!cards.includes("window.fetch("));
+  assert.ok(!cards.includes("innerHTML"));
+  for (const rule of [
+    ".stage-record-viewer.equipzilla-stage-dialog",
+    ".equipzilla-product-view .equipzilla-product-top",
+    ".equipzilla-product-view .equipzilla-gallery-frame",
+    ".equipzilla-product-view .equipzilla-spec-grid",
+    ".equipzilla-product-view .equipzilla-gallery-thumbnail"
+  ]) assert.ok(html.includes(rule), rule);
+  for (const color of ["#f3533d", "#387e7f", "#fff"]) assert.ok(html.toLowerCase().includes(color));
+  assert.ok(!html.includes("https://fonts.googleapis.com"));
 });
