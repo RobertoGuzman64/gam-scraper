@@ -35,8 +35,8 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.match(html, /data-view="explorador"/);
   assert.ok(html.includes("explorer-search"));
   for (const id of ["explorer-sort", "explorer-missing-description", "explorer-without-specs",
-    "explorer-with-additions", "explorer-editorial-changes", "explorer-order-note", "explorer-active-filters",
-    "explorer-extra-count"]) {
+    "explorer-with-additions", "explorer-editorial-changes", "explorer-active-filters",
+    "explorer-extra-count", "explorer-show-selected"]) {
     assert.ok(html.includes(`id="${id}"`), id);
   }
   assert.ok(html.includes("Más especificaciones incorporadas"));
@@ -44,21 +44,27 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.ok(html.includes("selectExplorerProducts(products, selection)"));
   assert.ok(html.includes("data:text/javascript;base64,"));
   assert.ok(!html.includes('from "../explorer/explorer-selection.js"'));
-  assert.ok(html.includes("Antes y después"));
+  assert.ok(html.includes("Original → FINISH"));
   assert.ok(html.includes('<details class="explorer-advanced">'));
   assert.ok(html.includes("Filtros activos"));
   assert.ok(html.includes("Limpiar"));
+  assert.ok(html.includes("panel:enable-local-evidence"));
+  assert.ok(html.includes("panel:local-evidence-updated"));
+  assert.ok(html.includes("explorer-list {max-height:320px"));
+  assert.ok(html.includes("grid-template-columns:repeat(2,minmax(0,1fr))"));
   assert.ok(!html.includes('id="explorer-cases"'));
   assert.ok(!html.includes("renderCommercialSummary(item)"));
   assert.ok(!html.includes("renderChangeSummary(item)"));
   assert.ok(!html.includes("presentation-start"));
   assert.ok(!html.includes("presentation-strip"));
   assert.ok(!html.includes("presentationSteps"));
-  assert.ok(html.includes('id="cut-status-title"'));
-  assert.ok(html.includes("Técnico y comercial coherentes al generar"));
-  assert.ok(html.includes("abrirla o recargarla no comprueba las selecciones actuales"));
-  assert.ok(html.includes('id="cut-package-sha"'));
   assert.ok(html.includes("CORTE VERIFICADO AL GENERAR"));
+  assert.ok(!html.includes('class="cut-audit"'));
+  assert.ok(!html.includes('id="cut-package-sha"'));
+  assert.ok(!html.includes('id="current-view-label"'));
+  assert.ok(!html.includes('class="nav-index"'));
+  assert.ok(html.includes('class="evidence-access"'));
+  assert.ok(html.includes('id="evidence-access-status"'));
   assert.ok(html.includes("Publicación individual del corte"));
   assert.ok(!html.includes("Publicación individual vigente"));
   assert.ok(html.includes("Descripciones, sin recortes"));
@@ -78,7 +84,11 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.ok(!html.includes('volume-flow'));
   assert.ok(!html.includes('BD NO VERIFICADA'));
   assert.ok(!html.includes('MATRIZ E / COBERTURA POR FAMILIA'));
-  assert.ok(html.includes('Información del corte y acceso a evidencias'));
+  const embeddedCss = html.split("<style>")[1]?.split("</style>")[0];
+  assert.ok(embeddedCss);
+  assert.ok(!/font-size\s*:\s*(?:[0-9]|1[0-4])px(?=\s*[;}\n])/.test(embeddedCss));
+  assert.ok(embeddedCss.includes("--type-secondary:15px"));
+  assert.ok(embeddedCss.includes("font-size:var(--type-body)"));
   assert.ok(html.includes("Matriz"));
   assert.ok(!html.includes("https://fonts.googleapis.com"));
   assert.ok(!html.includes("<script type=\"module\" src="));
@@ -129,7 +139,8 @@ test("E1–E5 se integran en cuatro vistas y la auditoría queda plegada, sin co
   assert.ok(html.includes('id="excluded-example"'));
   assert.ok(html.includes('id="control-exclusion-editorial"'));
   assert.ok(html.includes('id="control-exclusion-commercial"'));
-  assert.ok(html.includes('<details class="audit-disclosure"><summary>Consultar matrices técnicas A–D'));
+  assert.ok(html.includes('<details class="audit-disclosure"><summary>Consultar matrices de recorrido y transformación (A y B)'));
+  assert.ok(html.includes('<details class="audit-disclosure"><summary>Consultar matrices de incidencias y decisiones (C y D)'));
   assert.ok(html.includes('<details class="audit-disclosure"><summary>Consultar evidencias'));
   assert.ok(html.includes("EJEMPLOS DE REGLA VIGENTE"));
   assert.ok(html.includes("Cuatro comprobaciones para decidir"));
@@ -144,9 +155,11 @@ test("el diseño de exposición prioriza diagramas y conserva auditoría, bifurc
   const workspace = await fixture.root();
   const snapshot = await readPanelSnapshot(workspace);
   const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
-  assert.ok(html.indexOf('id="normalization-title"') < html.indexOf('id="stage-strip"'));
-  assert.ok(html.indexOf('id="checks-title"') < html.indexOf('id="quality-highlights"'));
-  assert.ok(html.indexOf('id="controls-title"') < html.indexOf('id="quality-highlights"'));
+  assert.ok(html.indexOf('id="normalization-title"') < html.indexOf('id="pipeline-matrix"'));
+  assert.ok(html.indexOf('id="controls-title"') < html.indexOf('id="quality-matrix"'));
+  assert.ok(html.indexOf('id="quality-matrix"') < html.indexOf('id="evidence-list"'));
+  assert.ok(!html.includes('id="stage-strip"'));
+  assert.ok(!html.includes('id="quality-highlights"'));
   assert.ok(html.includes('class="normalization-diagram"'));
   assert.ok(html.includes('class="validation-diagram"'));
   assert.ok(html.includes('class="check-result-pass"'));
@@ -170,8 +183,6 @@ test("el modo portátil conserva enlaces seguros y casos reales sin navegación 
   const snapshot = await readPanelSnapshot(workspace);
   const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
   assert.ok(html.includes('id="local-evidence-toggle" aria-pressed="false"'));
-  assert.ok(html.includes("Los JSON, informes y registros originales no se incluyen"));
-  assert.ok(html.includes("Enlaces locales desactivados para evitar rutas rotas"));
   assert.ok(html.includes("data.localEvidence") || html.includes("dataset.localEvidence"));
   assert.ok(html.includes("local-proof-link"));
   for (const marker of ["presentation-start", "presentation-prev", "presentation-next", "presentation-exit",
@@ -188,9 +199,12 @@ test("el modo portátil conserva enlaces seguros y casos reales sin navegación 
   assert.ok(!html.includes("renderCases()"));
   assert.ok(!html.includes('id="explorer-cases"'));
   assert.ok(html.includes("renderActiveFilters()"));
+  assert.ok(html.includes("target.hidden = active.length === 0"));
+  assert.ok(!html.includes("explorer-sort-current"));
   assert.ok(html.includes('id="evidence-list"'));
-  assert.ok(html.includes('id="cut-package-sha"'));
-  assert.ok(html.includes('class="stage-strip"'));
+  assert.ok(!html.includes('class="stage-strip"'));
+  assert.ok(html.includes('id="quality-matrix"'));
+  assert.ok(html.includes('id="decisions-matrix"'));
   assert.ok(!html.includes('"stage-value"'));
   assert.ok(!html.includes('<script type="module" src='));
 });
@@ -203,8 +217,9 @@ test("el Explorador concentra filtros, conserva su selección y deja el detalle 
   assert.ok(html.includes('class="explorer-advanced"'));
   assert.ok(html.includes('id="explorer-extra-count"'));
   assert.ok(html.includes("Quitar filtro"));
+  assert.ok(!html.includes('id="explorer-order-note"'));
+  assert.ok(!html.includes("Tres etapas de la ficha"));
   assert.ok(html.includes("Limpiar"));
-  assert.ok(html.includes("Orden: "));
   assert.ok(html.includes('sort = "reference"'));
   assert.ok(html.includes("option.disabled ="));
   assert.ok(html.includes('class="explorer-layout"'));
@@ -221,7 +236,9 @@ test("E2 presenta tres etapas compactas, con ampliación individual y sin duplic
   const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
   assert.ok(html.includes("renderStageCards(item)"));
   assert.ok(html.includes("const story = create(\"details\", \"explorer-provenance-disclosure\")"));
-  assert.ok(html.includes("Antes y después · datos observados"));
+  assert.ok(html.includes("renderTechnicalContribution(item)"));
+  assert.ok(html.includes("explorer-contribution"));
+  assert.ok(!html.includes("renderImpactComparison(item)"));
   assert.ok(html.includes("Abrir ficha completa · textos, especificaciones y diferencias"));
   assert.ok(!html.includes("recordCard(\"01 / ORIGINAL\""));
   assert.ok(!html.includes('from "./explorer-stage-cards.js"'));
@@ -272,4 +289,27 @@ test("E3 replica la estética del frontend solo en la ampliación, con datos de 
   ]) assert.ok(html.includes(rule), rule);
   for (const color of ["#f3533d", "#387e7f", "#fff"]) assert.ok(html.toLowerCase().includes(color));
   assert.ok(!html.includes("https://fonts.googleapis.com"));
+});
+
+test("organización: cada matriz queda en su vista y no se repiten tarjetas de incidencias ni el circuito", async () => {
+  const snapshot = await readPanelSnapshot(await fixture.root());
+  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot)));
+  const flow = html.split('data-view="flujo"')[1]?.split('data-view="explorador"')[0];
+  const quality = html.split('data-view="calidad"')[1]?.split('class="definition-dialog"')[0];
+  assert.ok(flow);
+  assert.ok(quality);
+  for (const id of ["pipeline-matrix", "transform-matrix"]) assert.ok(flow.includes(`id="${id}"`));
+  for (const id of ["quality-matrix", "decisions-matrix"]) assert.ok(quality.includes(`id="${id}"`));
+  for (const id of ["quality-matrix", "decisions-matrix"]) assert.ok(!flow.includes(`id="${id}"`));
+  assert.ok(!quality.includes('id="quality-highlights"'));
+  assert.ok(!html.includes('id="stage-strip"'));
+  assert.ok(!html.includes('renderStages()'));
+  assert.ok(!html.includes('renderQualityHighlights('));
+  assert.ok(html.includes('renderSpecifications(item)'));
+  assert.ok(html.includes('renderDescriptions(item)'));
+  assert.ok(html.includes('renderFieldStory(item)'));
+  assert.ok(html.includes('renderTechnicalContribution(item)'));
+  assert.ok(!html.includes('renderImpactComparison(item)'));
+  assert.ok(html.includes('const technicalKeys = new Set('));
+  assert.ok(html.includes('const editorialDifferences = item.changes.filter('));
 });

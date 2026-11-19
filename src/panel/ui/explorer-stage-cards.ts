@@ -239,7 +239,6 @@ const openStage = (item: PanelExplorerProduct, stage: RecordStage, trigger: HTML
 
 export const renderStageCards = (item: PanelExplorerProduct): HTMLElement => {
   const section = element("section", "stage-record-section");
-  section.append(element("h3", "stage-record-heading", "Tres etapas de la ficha"));
   const grid = element("div", "stage-record-grid");
   for (const stage of ["original", "published", "commercial"] as const) {
     const record = item[stage];
@@ -264,7 +263,6 @@ export const renderStageCards = (item: PanelExplorerProduct): HTMLElement => {
       } else if (record.category) {
         stats.append(stat("Categoría", record.category));
       }
-      stats.append(stat("Imágenes", String(record.images.length)));
       card.append(stats);
       const expand = button("Ampliar ficha", "stage-record-expand", () => openStage(item, stage, expand, section));
       expand.setAttribute("aria-label", `Ampliar ${stageLabels[stage]}`);

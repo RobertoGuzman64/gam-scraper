@@ -55,13 +55,6 @@ const stages: Readonly<Record<PanelExplorerProduct["stage"], string>> = {
 const changes: Readonly<Record<PanelFieldDifference["change"], string>> = {
   added: "Incorporado", changed: "Modificado", unchanged: "Conservado", removed: "Retirado", ambiguous: "Sin correspondencia unívoca"
 };
-const sorts: Readonly<Record<ExplorerSort, string>> = {
-  "most-differences": "Más diferencias observadas",
-  "fewest-original-specs": "Menos especificaciones de origen",
-  "most-technical-additions": "Más especificaciones incorporadas",
-  "most-technical-changes": "Más valores técnicos modificados",
-  reference: "Referencia · incluye excluidas"
-};
 const formatNumber = new Intl.NumberFormat("es-ES");
 const verifiedUrl = (value: string): boolean => {
   try { return ["https:", "http:"].includes(new URL(value).protocol); }
@@ -95,6 +88,14 @@ const newButton = (label: string, fn: () => void, className = ""): HTMLButtonEle
   node.addEventListener("click", fn);
   return node;
 };
+const proofAccess = (): HTMLElement => {
+  const row = create("div", "explorer-proof-access");
+  row.dataset.localEvidenceHint = "true";
+  append(row, create("span", "", "Los archivos del corte se abren desde el repositorio."),
+    newButton("Activar enlaces locales", () => window.dispatchEvent(new Event("panel:enable-local-evidence"))));
+  row.hidden = document.documentElement.dataset.localEvidence === "enabled";
+  return row;
+};
 const descriptionPanel = (label: string, description: string | null, unavailable: string): HTMLElement => {
   const panel = create("article", "description-panel");
   append(panel, create("h4", "", label), create("div", "description-body", description === null || description === "" ? unavailable : description));
@@ -102,8 +103,7 @@ const descriptionPanel = (label: string, description: string | null, unavailable
 };
 const renderDescriptions = (item: PanelExplorerProduct): HTMLElement => {
   const section = create("section", "detail-section description-section");
-  append(section, create("span", "section-kicker", "CONTENIDO COMPLETO"), create("h3", "", "Descripciones, sin recortes"),
-    create("p", "minor-note", "Se muestran los textos íntegros tal como constan en cada etapa; las diferencias no demuestran por sí solas una regla aplicada."));
+  append(section, create("span", "section-kicker", "CONTENIDO COMPLETO"), create("h3", "", "Descripciones, sin recortes"));
   for (const [title, field] of [["Descripción corta", "shortDescription"], ["Descripción general", "generalDescription"]] as const) {
     const group = create("details", "description-group");
     append(group, create("summary", "description-group-title", title));
@@ -176,7 +176,6 @@ const renderSpecifications = (item: PanelExplorerProduct): HTMLElement => {
     append(details, create("summary", "", `${formatNumber.format(preserved.length)} prestaciones conservadas · Ver todas`), createTable(preserved));
     append(section, details);
   }
-  append(section, create("p", "minor-note", `${formatNumber.format(fields.length)} campos técnicos presentados; los atributos comerciales son una población diferente.`));
   return section;
 };
 const renderCommercialAttributes = (item: PanelExplorerProduct): HTMLElement => {
@@ -309,6 +308,7 @@ const renderFieldStory = (item: PanelExplorerProduct): HTMLElement => {
       append(detail, create("p", "field-story-limit", "Cambio contrastado entre original y FINISH; su causa individual no está acreditada."));
       if (item.evidence.original) append(detail, sourceLink(item.evidence.original, "Consultar original verificable"));
     }
+    if (detail.querySelector(".local-proof-link")) append(detail, proofAccess());
   };
   fields.forEach((difference, index) => {
     const button = newButton(`${changes[difference.change]} · ${difference.field}`, () => selectField(difference), "field-choice");
@@ -330,20 +330,14 @@ const renderFieldStory = (item: PanelExplorerProduct): HTMLElement => {
   if (initial) selectField(initial);
   return section;
 };
-const renderImpactComparison = (item: PanelExplorerProduct): HTMLElement | null => {
+const renderTechnicalContribution = (item: PanelExplorerProduct): HTMLElement | null => {
   if (!item.original || !item.published) return null;
   const metrics = explorerProductMetrics(item);
-  const section = create("section", "impact-comparison");
-  append(section, create("span", "section-kicker", "ORIGINAL → FINISH"),
-    create("h3", "", "Antes y después · datos observados"));
-  const summary = create("div", "impact-compact");
-  append(summary, create("strong", "", `Specs ${formatNumber.format(metrics.originalSpecs)} → ${formatNumber.format(metrics.publishedSpecs)}`));
-  if (metrics.technicalAdditions) append(summary, create("span", "", `+${formatNumber.format(metrics.technicalAdditions)} incorporadas`));
-  if (metrics.technicalChanges) append(summary, create("span", "", `${formatNumber.format(metrics.technicalChanges)} valores modificados`));
-  const mainChange = meaningfulChanges(item)[0];
-  if (mainChange) append(section, summary, create("p", "impact-main-change", `${changes[mainChange.change]} · ${mainChange.field}`));
-  else append(section, summary);
-  return section;
+  const changes: string[] = [];
+  if (metrics.technicalAdditions) changes.push(`${formatNumber.format(metrics.technicalAdditions)} especificaciones incorporadas`);
+  if (metrics.technicalChanges) changes.push(`${formatNumber.format(metrics.technicalChanges)} valores técnicos modificados`);
+  if (!changes.length) return null;
+  return create("p", "explorer-contribution", `Original → FINISH · ${changes.join(" · ")}`);
 };
 
 let scope: Scope = "todos";
@@ -454,9 +448,9 @@ const renderActiveFilters = (): void => {
       renderExplorer();
     }
   }, "explorer-clear-filters"));
-  append(target, heading);
-  if (!active.length) append(target, create("p", "explorer-no-filters", "Sin filtros seleccionados"));
-  else {
+  target.hidden = active.length === 0;
+  if (active.length) {
+    append(target, heading);
     const chips = create("div", "explorer-filter-chips");
     for (const filter of active) {
       const chip = newButton(`${filter.label} ×`, () => {
@@ -470,7 +464,6 @@ const renderActiveFilters = (): void => {
     }
     append(target, chips);
   }
-  append(target, create("p", "explorer-sort-current", `Orden: ${sorts[sort]}`));
   const more = find("explorer-extra-count");
   const advanced = [stage !== "todos", missingOriginalDescription, withoutOriginalSpecs,
     withTechnicalAdditions, withEditorialChanges].filter(Boolean).length;
@@ -486,14 +479,13 @@ const renderRows = (): void => {
   const lastPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
   page = Math.min(page, lastPage);
   find("explorer-counter").textContent = `${formatNumber.format(filtered.length)} de ${formatNumber.format(products.filter((item) => scope === "todos" || item.providerId === scope).length)} fichas · ${scope === "todos" ? "Todos" : names[scope]}`;
-  find("explorer-order-note").textContent = sort === "reference" ?
-    "Por referencia: incluye excluidas. Los filtros de carencias requieren original conservado." :
-    "Orden por diferencias observadas entre original y FINISH, no por calidad ni causa histórica demostrada.";
   find("explorer-pages-label").textContent = `${filtered.length ? page + 1 : 0} / ${filtered.length ? lastPage + 1 : 0}`;
   const prev = find("explorer-page-prev");
   const next = find("explorer-page-next");
   if (prev instanceof HTMLButtonElement) prev.disabled = page === 0;
   if (next instanceof HTMLButtonElement) next.disabled = page === lastPage;
+  const showSelected = find("explorer-show-selected");
+  if (showSelected instanceof HTMLButtonElement) showSelected.disabled = !selectedId;
   if (!filtered.length) {
     append(list, create("div", "explorer-empty", "No hay máquinas con estos filtros. Prueba otra referencia o categoría."));
     return;
@@ -573,18 +565,23 @@ const renderDetail = (): void => {
   append(target, heading);
   if (item.decision) append(target, create("p", "explorer-decision-summary", item.decision.reason));
   append(target, renderStageCards(item));
-  const comparison = renderImpactComparison(item);
-  if (comparison) append(target, comparison);
+  const contribution = renderTechnicalContribution(item);
+  if (contribution) append(target, contribution);
   const story = create("details", "explorer-provenance-disclosure");
   append(story, create("summary", "", "Ver procedencia de los cambios"), renderFieldStory(item));
   append(target, story);
   const full = create("details", "full-record");
   append(full, create("summary", "", "Abrir ficha completa · textos, especificaciones y diferencias"));
   append(full, renderDescriptions(item), renderSpecifications(item), renderCommercialAttributes(item),
-    create("h3", "diff-heading", "Diferencias estructuradas"));
+    create("h3", "diff-heading", "Diferencias en otros campos"));
   if (!item.original && item.published) append(full, create("p", "evidence-warning", "No existe original verificable para este corte. No se muestran diferencias imaginadas."));
-  append(full, renderDifferences("Origen → Publicación técnica", item.changes),
-    renderDifferences("Publicación técnica → Comercial", item.commercialChanges));
+  const technicalKeys = new Set(item.commercialTechnicalChanges.map((difference) => difference.field));
+  const editorialDifferences = item.changes.filter((difference) => difference.group === "content" &&
+    difference.field !== "Descripción corta" && difference.field !== "Descripción general");
+  const commercialDifferences = item.commercialChanges.filter((difference) =>
+    !technicalKeys.has(difference.field) && !difference.field.startsWith("Atributo comercial #"));
+  append(full, renderDifferences("Original → FINISH · título, categoría y precio", editorialDifferences),
+    renderDifferences("FINISH → Comercial · identificación y datos generales", commercialDifferences));
   append(target, full);
   const provenance = create("section", "detail-evidence");
   append(provenance, create("span", "section-kicker", "RESOLUCIÓN Y AUDITORÍA"));
@@ -599,7 +596,6 @@ const renderDetail = (): void => {
     if (artifact) append(artifacts, sourceLink(artifact, label));
   }
   if (!item.evidence.original) append(artifacts, create("p", "evidence-warning", "No hay original verificado para esta identidad o exclusión sin original conservado."));
-  append(artifacts, create("p", "minor-note", "Los documentos externos se pueden abrir desde el repositorio al activar sus enlaces."));
   append(provenance, artifacts);
   append(target, provenance);
 };
@@ -686,6 +682,11 @@ const changePage = (offset: number): void => {
   renderRows();
   renderDetail();
 };
+find("explorer-show-selected").addEventListener("click", showSelectionOnMobile);
+window.addEventListener("panel:local-evidence-updated", () => {
+  const enabled = document.documentElement.dataset.localEvidence === "enabled";
+  for (const hint of document.querySelectorAll<HTMLElement>("[data-local-evidence-hint]")) hint.hidden = enabled;
+});
 find("explorer-page-prev").addEventListener("click", () => changePage(-1));
 find("explorer-page-next").addEventListener("click", () => changePage(1));
 window.addEventListener("panel:scope", (event: Event) => {

@@ -43,13 +43,13 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
   <aside class="sidebar" aria-label="Navegación del panel">
     <a class="brand" href="#resumen" aria-label="EQUIPZILLA, ir a resumen">
       <span class="brand-mark" aria-hidden="true"><span>E</span><span>Z</span></span>
-      <span class="brand-text"><strong>EQUIPZILLA</strong><small>INTELLIGENCE PANEL</small></span>
+      <span class="brand-text"><strong>EQUIPZILLA</strong></span>
     </a>
     <nav class="nav-list" aria-label="Secciones">
-      <button class="nav-button active" type="button" data-nav="resumen" aria-current="page"><span class="nav-icon" aria-hidden="true">◫</span><span>Resumen</span><span class="nav-index">01</span></button>
-      <button class="nav-button" type="button" data-nav="flujo"><span class="nav-icon" aria-hidden="true">▤</span><span>Transformación</span><span class="nav-index">02</span></button>
-      <button class="nav-button" type="button" data-nav="explorador"><span class="nav-icon" aria-hidden="true">⌕</span><span>Fichas reales</span><span class="nav-index">03</span></button>
-      <button class="nav-button" type="button" data-nav="calidad"><span class="nav-icon" aria-hidden="true">◇</span><span>Calidad y controles</span><span class="nav-index">04</span></button>
+      <button class="nav-button active" type="button" data-nav="resumen" aria-current="page"><span class="nav-icon" aria-hidden="true">◫</span><span>Resumen</span></button>
+      <button class="nav-button" type="button" data-nav="flujo"><span class="nav-icon" aria-hidden="true">▤</span><span>Transformación</span></button>
+      <button class="nav-button" type="button" data-nav="explorador"><span class="nav-icon" aria-hidden="true">⌕</span><span>Fichas reales</span></button>
+      <button class="nav-button" type="button" data-nav="calidad"><span class="nav-icon" aria-hidden="true">◇</span><span>Calidad y controles</span></button>
     </nav>
     <div class="sidebar-spacer"></div>
     <div class="sidebar-bottom">
@@ -59,24 +59,12 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
 
   <main class="main-content" id="main-content">
     <header class="topbar">
-      <div class="topbar-trail"><span class="signal-mini"></span> EVIDENCIAS <span class="topbar-slash">/</span> <span id="current-view-label">RESUMEN GENERAL</span></div>
-      <div class="topbar-meta"><span class="snapshot-label"><span class="live-dot"></span> CORTE VERIFICADO AL GENERAR</span><span id="header-package">—</span></div>
+      <span class="snapshot-label">CORTE VERIFICADO AL GENERAR</span><span id="header-package">—</span>
     </header>
     <div class="page-inner">
       <div class="page-tools">
-        <div class="cut-label"><span class="cut-label-line"></span><span>FINISH + COMERCIAL <strong>DEVELOP</strong></span></div>
         <label class="filter-control"><span>Proveedor</span><select id="provider-filter" aria-label="Filtrar por proveedor"><option value="todos">Todos los proveedores</option></select></label>
       </div>
-      <details class="cut-audit"><summary>Información del corte y acceso a evidencias</summary>
-      <section class="evidence-access" aria-labelledby="evidence-access-title">
-        <div><strong id="evidence-access-title">Evidencias locales</strong><p>Las cifras, fichas y comparaciones viajan en este archivo. Los JSON, informes y registros originales no se incluyen: sus rutas y SHA se pueden consultar aquí; solo se pueden abrir desde la estructura original del repositorio.</p><span id="evidence-access-status" role="status" aria-live="polite">Enlaces locales desactivados para evitar rutas rotas en una copia aislada.</span></div>
-        <button type="button" id="local-evidence-toggle" aria-pressed="false">Activar enlaces del repositorio</button>
-      </section>
-      <section class="cut-status" aria-labelledby="cut-status-title">
-        <div class="cut-status-copy"><span class="section-kicker">VIGENCIA DEL CORTE</span><h2 id="cut-status-title">Técnico y comercial coherentes al generar</h2><p>Las publicaciones FINISH y el paquete comercial correspondían al mismo corte al construir este HTML. Es una instantánea fija: abrirla o recargarla no comprueba las selecciones actuales del repositorio.</p></div>
-        <div class="cut-status-meta"><span>PAQUETE COMERCIAL · SHA256</span><code id="cut-package-sha">—</code><button class="text-action" type="button" data-go="calidad">Ver fuentes y huellas <span aria-hidden="true">↗</span></button></div>
-      </section>
-      </details>
       <section class="page-view" data-view="resumen" aria-labelledby="overview-title">
         <div class="hero">
           <div class="hero-copy"><span class="eyebrow">01 / RESULTADOS</span><h1 id="overview-title">El catálogo, <em>con evidencia.</em></h1><p>Original, FINISH y salida comercial del mismo corte.</p></div>
@@ -111,11 +99,8 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
           <div class="explain-footer"><p>Ejemplos del contrato <code>SPEC_KEY_NORMALIZATION</code>, no cambios atribuidos a estas publicaciones.</p><button type="button" class="text-action" id="normalization-example">Ver una diferencia técnica real →</button></div>
           <details class="mechanism-detail"><summary>Ver condiciones y límites del normalizador</summary><p>Se controlan claves desconocidas, valores no interpretables, formatos inválidos, conflictos entre alias y unidades incompatibles. Fuente: <code>src/catalog/normalization/spec-rules.ts</code> y <code>normalize-specs.ts</code>. La lista expone reglas disponibles, no un registro histórico de invocaciones.</p></details>
         </section>
-        <details class="audit-disclosure"><summary>Ver las cuatro etapas del circuito</summary><div class="stage-strip" id="stage-strip"></div></details>
-        <details class="audit-disclosure"><summary>Consultar matrices técnicas A–D</summary><section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">A</span><h3>Pipeline por proveedor</h3></div><span class="card-side-note">Poblaciones por etapa</span></div><div class="scroll-table" id="pipeline-matrix"></div></section>
+        <details class="audit-disclosure"><summary>Consultar matrices de recorrido y transformación (A y B)</summary><section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">A</span><h3>Pipeline por proveedor</h3></div><span class="card-side-note">Poblaciones por etapa</span></div><div class="scroll-table" id="pipeline-matrix"></div></section>
         <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">B</span><h3>Transformaciones observadas</h3></div><span class="card-side-note">Informe técnico del corte</span></div><div class="scroll-table" id="transform-matrix"></div><p class="minor-note">Las claves técnicas incorporadas no equivalen automáticamente a datos recuperados o contrastados externamente. Una ficha transformada cuenta una vez; las descripciones cuentan por campo.</p></section>
-        <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">C</span><h3>Calidad y acreditación</h3></div><span class="card-side-note">Exclusiones y pendientes</span></div><div class="scroll-table" id="quality-matrix"></div></section>
-        <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">D</span><h3>Lógica y decisiones documentadas</h3></div><span class="card-side-note">Sin atribuciones causales inventadas</span></div><div class="scroll-table" id="decisions-matrix"></div></section>
         </details>
       </section>
 
@@ -130,7 +115,7 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
           <label>Etapa<select id="explorer-stage"><option value="todos">Todas las etapas</option><option value="commercial">Exportadas comerciales</option><option value="commercial-excluded">Excluidas comerciales</option><option value="editorial-excluded">Excluidas editoriales</option></select></label>
           <fieldset class="explorer-refinements"><legend>Carencias y cambios</legend><label><input type="checkbox" id="explorer-missing-description"> Alguna descripción original ausente</label><label><input type="checkbox" id="explorer-without-specs"> Sin especificaciones de origen</label><label><input type="checkbox" id="explorer-with-additions"> Con especificaciones incorporadas</label><label><input type="checkbox" id="explorer-editorial-changes"> Con descripciones cambiadas</label></fieldset>
         </div></details>
-        <div class="explorer-layout"><section class="surface-card explorer-results" aria-label="Resultados de búsqueda"><div class="card-heading"><h3>Máquinas</h3><span id="explorer-counter" class="card-side-note"></span></div><div id="explorer-active-filters" class="explorer-active-filters" aria-live="polite"></div><p id="explorer-order-note" class="explorer-order-note">Ordenaciones por diferencias observadas entre original y FINISH; no son puntuaciones de calidad.</p><div id="explorer-list" class="explorer-list"></div><div class="explorer-pages"><button type="button" id="explorer-page-prev">← Anterior</button><span id="explorer-pages-label"></span><button type="button" id="explorer-page-next">Siguiente →</button></div></section>
+        <div class="explorer-layout"><section class="surface-card explorer-results" aria-label="Resultados de búsqueda"><div class="card-heading"><h3>Máquinas</h3><span id="explorer-counter" class="card-side-note"></span></div><div id="explorer-active-filters" class="explorer-active-filters" aria-live="polite"></div><button id="explorer-show-selected" class="explorer-show-selected" type="button">Ver ficha seleccionada ↓</button><div id="explorer-list" class="explorer-list"></div><div class="explorer-pages"><button type="button" id="explorer-page-prev">← Anterior</button><span id="explorer-pages-label"></span><button type="button" id="explorer-page-next">Siguiente →</button></div></section>
           <section class="surface-card explorer-detail" id="explorer-detail" aria-label="Comparación de máquina"><div class="explorer-empty">Selecciona una ficha para inspeccionar el original, su publicación y el resultado comercial.</div></section></div>
       </section>
 
@@ -150,14 +135,17 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
           <div class="explain-heading"><div><span class="section-kicker">E4 / CONTROL Y EXCLUSIÓN</span><h2 id="controls-title">No todo rechazo significa lo mismo.</h2></div><span class="explain-label">ETAPAS DIFERENTES</span></div>
           <p class="explain-lede">Descartar un dato no es excluir una máquina. La decisión depende de la etapa.</p>
           <div class="control-groups" role="group" aria-label="Diferencia entre controles de datos y exclusiones de fichas">
-            <section class="control-group control-fields" aria-label="Controles de campos"><div class="control-group-heading"><span>01 / DATO</span><h3>Se decide sobre un campo</h3></div><div class="control-branches"><div><strong>Sin evidencia aplicable</strong><span>No se atribuye o incorpora por esa ruta</span><small>Control de campo</small></div><div><strong>Conflicto al normalizar</strong><span>Campo omitido según el contrato</span><small>Control técnico</small></div></div></section>
-            <section class="control-group control-records" aria-label="Exclusiones de fichas"><div class="control-group-heading"><span>02 / FICHA</span><h3>Se decide sobre una publicación</h3></div><div class="control-branches"><div><strong><span id="control-exclusion-editorial">—</span> exclusiones editoriales</strong><span>No llega a FINISH</span><small>Acreditación editorial</small></div><div><strong><span id="control-exclusion-commercial">—</span> exclusiones comerciales</strong><span>No entra en el paquete comercial</span><small>Proyección comercial</small></div></div></section>
+            <section class="control-group control-fields" aria-label="Controles de campos"><div class="control-group-heading"><span>01 / DATO</span><h3>Se decide sobre un campo</h3></div><div class="control-branches"><div><strong>Sin evidencia aplicable</strong><span>No se atribuye o incorpora por esa ruta</span></div><div><strong>Conflicto al normalizar</strong><span>Campo omitido según el contrato</span></div></div></section>
+            <section class="control-group control-records" aria-label="Exclusiones de fichas"><div class="control-group-heading"><span>02 / FICHA</span><h3>Se decide sobre una publicación</h3></div><div class="control-branches"><div><strong><span id="control-exclusion-editorial">—</span> exclusiones editoriales</strong><span>No llega a FINISH</span></div><div><strong><span id="control-exclusion-commercial">—</span> exclusiones comerciales</strong><span>No entra en el paquete comercial</span></div></div></section>
           </div>
           <div class="explain-footer"><button id="excluded-example" type="button" class="text-action">Ver una exclusión real →</button></div>
         </section>
-        <details class="audit-disclosure"><summary>Ver indicadores de incidencias del corte</summary><div class="quality-highlights" id="quality-highlights"></div></details>
+        <details class="audit-disclosure"><summary>Consultar matrices de incidencias y decisiones (C y D)</summary>
+        <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">C</span><h3>Calidad y acreditación</h3></div><span class="card-side-note">Exclusiones y pendientes</span></div><div class="scroll-table" id="quality-matrix"></div></section>
+        <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">D</span><h3>Lógica y decisiones documentadas</h3></div><span class="card-side-note">Sin atribuciones causales inventadas</span></div><div class="scroll-table" id="decisions-matrix"></div></section>
+        </details>
         <details class="audit-disclosure"><summary>Consultar evidencias, límites e informes del corte</summary><div class="evidence-layout"><section class="surface-card"><div class="card-heading"><div><span class="section-kicker">TRAZABILIDAD</span><h3>Fuentes activas</h3></div></div><div id="evidence-list"></div></section><section class="surface-card limits-panel"><div class="card-heading"><div><span class="section-kicker">SIN INFERENCIAS</span><h3>Límites declarados</h3></div></div><div id="limit-list"></div></section></div>
-        <section class="surface-card source-card"><div class="card-heading"><div><span class="section-kicker">ÍNDICES E INFORMES</span><h3>Identidad de este corte</h3></div></div><div id="source-list" class="source-list"></div></section></details>
+        <section class="surface-card source-card"><div class="card-heading"><div><span class="section-kicker">ÍNDICES E INFORMES</span><h3>Identidad de este corte</h3></div></div><div class="evidence-access"><button type="button" id="local-evidence-toggle" aria-pressed="false">Activar enlaces locales</button><span id="evidence-access-status" role="status" aria-live="polite">Enlaces locales desactivados.</span></div><div id="source-list" class="source-list"></div></section></details>
       </section>
     </div>
   </main>

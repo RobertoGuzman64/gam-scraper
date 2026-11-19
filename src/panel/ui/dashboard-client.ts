@@ -265,43 +265,10 @@ const renderProviderChart = (scope: PanelScope): void => {
     append(container, item);
   }
 };
-const renderStages = (): void => {
-  const steps = [
-    { index: "01", title: "ORIGEN", detail: "Ficha y procedencia del proveedor", type: "source" },
-    { index: "02", title: "PREPARACIÓN", detail: "Normalización y aportaciones técnicas", type: "prep" },
-    { index: "03", title: "FINISH", detail: "Publicación individual acreditada", type: "finish" },
-    { index: "04", title: "COMERCIAL", detail: "Proyección develop compatible", type: "commercial" }
-  ];
-  const container = byId("stage-strip");
-  container.replaceChildren();
-  for (const stage of steps) {
-    const card = element("article", `stage-card stage-${stage.type}`);
-    append(card, element("span", "stage-index", stage.index), element("div", "stage-title", stage.title), element("p", "stage-detail", stage.detail));
-    append(container, card);
-  }
-};
 const renderMatrices = (scope: PanelScope): void => {
   createMatrix("pipeline-matrix", pipelineColumns, scope);
   createMatrix("transform-matrix", transformationColumns, scope);
   createMatrix("quality-matrix", qualityColumns, scope);
-};
-const renderQualityHighlights = (scope: PanelScope): void => {
-  const metrics = metricsFor(scope);
-  const container = byId("quality-highlights");
-  container.replaceChildren();
-  const cards: readonly { key: PanelMetricKey; heading: string; note: string; style: string }[] = [
-    { key: "excludedEditorial", heading: "Exclusiones editoriales", note: "Antes de FINISH, acreditadas por proveedor.", style: "blue" },
-    { key: "excludedCommercial", heading: "Exclusiones comerciales", note: "Después de FINISH, durante la proyección.", style: "purple" },
-    { key: "pendingCategory", heading: "Sin categoría comercial", note: "Exportadas pero pendientes de categorización.", style: "amber" },
-    { key: "exceptions", heading: "Excepciones registradas", note: "Incidencias del contrato comercial.", style: "neutral" }
-  ];
-  const visible = cards.filter((item) => metric(metrics, item.key) > 0);
-  if (!visible.length) append(container, element("p", "quality-empty", "Sin exclusiones ni incidencias registradas para este proveedor en el corte."));
-  for (const item of visible) {
-    const card = element("article", `quality-card quality-${item.style}`);
-    append(card, element("div", "quality-number", format(metric(metrics, item.key))), metricButton(item.key, item.heading), element("p", "quality-note", item.note));
-    append(container, card);
-  }
 };
 const evidenceEntry = (title: string, artifact: PanelArtifact, status?: string): HTMLElement => {
   const row = element("div", "evidence-item");
@@ -371,9 +338,7 @@ const render = (): void => {
   renderKpis(currentScope);
   renderExplanations(currentScope);
   renderProviderChart(currentScope);
-  renderStages();
   renderMatrices(currentScope);
-  renderQualityHighlights(currentScope);
   renderEvidence(currentScope);
   renderLimits(currentScope);
   renderSources(currentScope);
@@ -394,8 +359,6 @@ const navigate = (view: PanelView): void => {
     if (active) button.setAttribute("aria-current", "page");
     else button.removeAttribute("aria-current");
   }
-  const labels: Record<PanelView, string> = { resumen: "RESUMEN GENERAL", flujo: "TRANSFORMACIÓN", explorador: "FICHAS REALES", calidad: "CONTROLES" };
-  byId("current-view-label").textContent = labels[view];
   window.scrollTo({ top: 0, behavior: "instant" });
   window.dispatchEvent(new CustomEvent("panel:view", { detail: view }));
 };
@@ -439,13 +402,13 @@ localEvidenceToggle.addEventListener("click", () => {
   localEvidenceToggle.setAttribute("aria-pressed", String(enabled));
   localEvidenceToggle.textContent = enabled ? "Desactivar enlaces locales" : "Activar enlaces del repositorio";
   byId("evidence-access-status").textContent = enabled ?
-    "Enlaces locales habilitados. Solo funcionan si este HTML está en panel/ y existen los archivos correspondientes de catalogs/ y data/." :
-    "Enlaces locales desactivados para evitar rutas rotas en una copia aislada.";
+    "Enlaces locales activados; requieren los archivos originales del repositorio." :
+    "Enlaces locales desactivados.";
+  window.dispatchEvent(new Event("panel:local-evidence-updated"));
 });
-const packageSha = payload.snapshot.commercialManifest.sha256;
-const cutSha = byId("cut-package-sha");
-cutSha.textContent = packageSha.slice(0, 16);
-cutSha.title = `SHA256 completo: ${packageSha}`;
+window.addEventListener("panel:enable-local-evidence", () => {
+  if (document.documentElement.dataset.localEvidence !== "enabled") localEvidenceToggle.click();
+});
 byId("header-package").textContent = `PAQUETE UTC ${payload.snapshot.packageDateUtc}`;
 renderDecisions();
 render();
