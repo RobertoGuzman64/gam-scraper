@@ -25,7 +25,7 @@ test("escribe el panel de forma atómica, evita regeneración idéntica y conser
     const output = await writeLocalPanel(workspace);
     const html = await readFile(output, "utf8");
     assert.ok(html.includes("Especificaciones alineadas por campo"));
-    assert.ok(html.includes("RESULTADO Y TOMA DE DECISIÓN"));
+    assert.ok(html.includes("Comparar contenido de la ficha"));
     assert.equal(output, join(workspace, "panel", "index.html"));
     const first = await stat(output);
     assert.equal(await writeLocalPanel(workspace), output);

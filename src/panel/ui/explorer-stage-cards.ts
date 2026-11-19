@@ -143,17 +143,7 @@ const summary = (record: PanelProductView): HTMLElement | null => {
   const description = record.shortDescription;
   if (!description) return null;
   const container = element("div", "equipzilla-summary");
-  const paragraph = element("p", "equipzilla-summary-text", description);
-  container.append(paragraph);
-  if (description.length > 230) {
-    const toggle = button("Leer más", "equipzilla-read-more", () => {
-      const expanded = container.classList.toggle("is-expanded");
-      toggle.textContent = expanded ? "Leer menos" : "Leer más";
-      toggle.setAttribute("aria-expanded", String(expanded));
-    });
-    toggle.setAttribute("aria-expanded", "false");
-    container.append(toggle);
-  }
+  container.append(element("h3", "", "Descripción corta"), element("p", "equipzilla-summary-text", description));
   return container;
 };
 
@@ -175,16 +165,18 @@ const technicalDetails = (record: PanelProductView): HTMLElement => {
   return section;
 };
 
-const additionalDetails = (record: PanelProductView, stage: RecordStage, item: PanelExplorerProduct): HTMLElement => {
+const additionalDetails = (record: PanelProductView, stage: RecordStage, item: PanelExplorerProduct): HTMLElement | null => {
+  if (!record.generalDescription && !(stage === "commercial" && item.commercial?.attributes.length)) return null;
   const section = element("section", "equipzilla-additional stage-viewer-section");
   if (record.generalDescription) {
-    const description = element("details", "equipzilla-disclosure");
-    description.append(element("summary", "", "Descripción general completa"), element("p", "", record.generalDescription));
+    const description = element("section", "equipzilla-general-description");
+    description.append(element("h3", "equipzilla-section-title", "Descripción general"),
+      element("p", "equipzilla-general-text", record.generalDescription));
     section.append(description);
   }
   if (stage === "commercial" && item.commercial && item.commercial.attributes.length) {
-    const attributes = element("details", "equipzilla-disclosure");
-    attributes.append(element("summary", "", `Atributos comerciales (${item.commercial.attributes.length})`));
+    const attributes = element("section", "equipzilla-commercial-attributes");
+    attributes.append(element("h3", "equipzilla-section-title", "Atributos comerciales"));
     const list = element("dl", "equipzilla-spec-grid equipzilla-attributes-grid");
     for (const attribute of item.commercial.attributes) {
       const entry = element("div", "equipzilla-spec-item");
@@ -194,7 +186,6 @@ const additionalDetails = (record: PanelProductView, stage: RecordStage, item: P
     attributes.append(list);
     section.append(attributes);
   }
-  if (!section.childElementCount) section.append(element("p", "equipzilla-empty-text", "No constan otras descripciones ni atributos en esta etapa"));
   return section;
 };
 
@@ -210,7 +201,9 @@ const recordDetails = (record: PanelProductView, stage: RecordStage, item: Panel
   header.append(facts(record, stage, item));
   const main = element("div", "equipzilla-product-top");
   main.append(header, gallery(record, stage));
-  content.append(main, technicalDetails(record), additionalDetails(record, stage, item));
+  content.append(main, technicalDetails(record));
+  const additional = additionalDetails(record, stage, item);
+  if (additional) content.append(additional);
   return content;
 };
 
@@ -234,6 +227,7 @@ const openStage = (item: PanelExplorerProduct, stage: RecordStage, trigger: HTML
   });
   host.append(dialog);
   dialog.showModal();
+  dialog.scrollTop = 0;
   close.focus();
 };
 

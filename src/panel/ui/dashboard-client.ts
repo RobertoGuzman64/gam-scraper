@@ -1,4 +1,5 @@
-import type { PanelDashboardPayload } from "../application/dashboard-data.js";
+import type { PanelDashboardPayload, PanelNormalizationEntry } from "../application/dashboard-data.js";
+import type { SpecRuleType } from "../../catalog/normalization/spec-rules.js";
 import type { PanelMetricKey } from "../evidence/metric-definitions.js";
 import type { PanelArtifact, PanelProviderEvidence, PanelProviderId, PanelProviderMetrics } from "../evidence/types.js";
 
@@ -12,7 +13,7 @@ const isPayload = (value: unknown): value is PanelDashboardPayload => {
   if (!isRecord(value) || !isRecord(value.snapshot) || !isRecord(value.names)) return false;
   return Array.isArray(value.snapshot.providers) && isRecord(value.snapshot.totals) &&
     typeof value.snapshot.packageDateUtc === "string" &&
-    Array.isArray(value.definitions) && Array.isArray(value.decisions) &&
+    Array.isArray(value.definitions) &&
     isRecord(value.explorer) && Array.isArray(value.explorer.products) && Array.isArray(value.explorer.cases);
 };
 const raw = document.getElementById("panel-data")?.textContent;
@@ -57,7 +58,6 @@ const artifactLink = (artifact: PanelArtifact): HTMLAnchorElement => {
   link.classList.add("local-proof-link");
   link.dataset.localHref = encodeURI(`../${artifact.path}`);
   link.title = "Archivo acreditado disponible junto al repositorio";
-  if (document.documentElement.dataset.localEvidence === "enabled") link.href = link.dataset.localHref;
   link.target = "_blank";
   link.rel = "noopener noreferrer";
   return link;
@@ -92,7 +92,23 @@ const openDefinition = (key: PanelMetricKey): void => {
   container.replaceChildren();
   const heading = element("div", "dialog-sources-title", `FUENTE · ${scopeLabel(currentScope)}`);
   append(container, heading);
-  for (const entry of sourceArtifacts(key, currentScope)) {
+  const sources = sourceArtifacts(key, currentScope);
+  if (sources.length > 0) {
+    const toggle = element("button", "dialog-files-toggle", "Activar enlaces locales");
+    toggle.type = "button";
+    toggle.setAttribute("aria-pressed", "false");
+    toggle.addEventListener("click", () => {
+      const enabled = toggle.getAttribute("aria-pressed") !== "true";
+      for (const link of container.querySelectorAll<HTMLAnchorElement>("a.local-proof-link")) {
+        if (enabled && link.dataset.localHref) link.href = link.dataset.localHref;
+        else link.removeAttribute("href");
+      }
+      toggle.setAttribute("aria-pressed", String(enabled));
+      toggle.textContent = enabled ? "Desactivar enlaces locales" : "Activar enlaces locales";
+    });
+    append(container, toggle, element("p", "dialog-files-note", "Los enlaces requieren los archivos del repositorio junto al panel."));
+  }
+  for (const entry of sources) {
     const row = element("div", "dialog-source-item");
     append(row, namedArtifactLink(entry));
     append(container, row);
@@ -167,32 +183,6 @@ const transformationColumns: readonly MetricColumn[] = [
   { key: "formattedTechnicalValues", label: "Valores formateados" },
   { key: "changedTechnicalValues", label: "Valores cambiados" }
 ];
-const qualityColumns: readonly MetricColumn[] = [
-  { key: "excludedEditorial", label: "Exclusiones editoriales" },
-  { key: "excludedCommercial", label: "Exclusiones comerciales" },
-  { key: "pendingCategory", label: "Categorías pendientes" },
-  { key: "exceptions", label: "Excepciones comerciales" },
-  { key: "repeatedReferences", label: "Grupos de referencias coincidentes" }
-];
-const renderDecisions = (): void => {
-  const table = element("table", "data-table decision-table");
-  const head = element("thead");
-  const tr = element("tr");
-  for (const title of ["ETAPA", "ENTRADA", "TRANSFORMACIÓN / CONTROL", "SALIDA", "MECANISMO", "EVIDENCIA", "AUTORIZACIÓN"]) {
-    append(tr, element("th", "", title));
-  }
-  append(head, tr);
-  const body = element("tbody");
-  for (const decision of payload.decisions) {
-    const row = element("tr");
-    for (const [index, value] of [decision.stage, decision.input, decision.control, decision.output, decision.decision, decision.evidence, decision.authorization].entries()) {
-      append(row, element(index === 0 ? "th" : "td", index === 0 ? "decision-title" : "decision-value", value));
-    }
-    append(body, row);
-  }
-  append(table, head, body);
-  byId("decisions-matrix").replaceChildren(table);
-};
 const caseFor = (scope: PanelScope, focus?: "technical" | "exclusion") => payload.explorer.cases.find((candidate) =>
   (scope === "todos" || candidate.providerId === scope) &&
   (focus === "exclusion" ? candidate.focus === "exclusion" :
@@ -206,18 +196,40 @@ const renderExampleAction = (id: string, scope: PanelScope, focus?: "technical" 
     "No hay caso de esta clase seleccionado para el proveedor filtrado";
   node.onclick = example ? () => window.dispatchEvent(new CustomEvent("panel:request-case", { detail: example.identity })) : null;
 };
-const renderExplanations = (scope: PanelScope): void => {
-  const examples = byId("normalization-examples");
-  examples.replaceChildren();
-  for (const rule of payload.normalizationExamples) {
-    const row = element("div", "normalization-pair");
-    const received = element("div");
-    append(received, element("span", "pair-label", "CLAVE RECIBIDA"), element("code", "", rule.input));
-    const canonical = element("div");
-    append(canonical, element("span", "pair-label", "CLAVE CANÓNICA"), element("strong", "", rule.canonical), element("small", "", `Tipo esperado: ${rule.ruleType}`));
-    append(row, received, element("span", "pair-arrow", "→"), canonical);
-    append(examples, row);
+const normalizationTypeLabels: Readonly<Record<SpecRuleType, string>> = {
+  string: "Texto",
+  number: "Número",
+  number_array: "Serie de números",
+  dimension: "Dimensiones",
+  dimension_rect: "Dimensiones rectangulares",
+  battery: "Batería",
+  bool: "Sí / no",
+  enum: "Opción",
+  location: "Ubicación"
+};
+const renderNormalizationRows = (id: string, rules: readonly PanelNormalizationEntry[]): void => {
+  const target = byId(id);
+  const rows = document.createDocumentFragment();
+  for (const rule of rules) {
+    const row = element("tr");
+    const received = element("td");
+    const normalized = element("td");
+    const type = element("td");
+    append(received, element("code", "", rule.input));
+    append(normalized, element("strong", "", rule.canonical));
+    type.textContent = rule.ruleType === null ? "No especificado" : normalizationTypeLabels[rule.ruleType];
+    if (rule.ruleType !== null) type.title = rule.ruleType;
+    append(row, received, normalized, type);
+    rows.append(row);
   }
+  target.replaceChildren(rows);
+};
+const renderNormalization = (): void => {
+  renderNormalizationRows("normalization-examples", payload.normalizationExamples);
+  renderNormalizationRows("normalization-dictionary-rows", payload.normalizationDictionary);
+  byId("normalization-dictionary-count").textContent = `(${format(payload.normalizationDictionary.length)} correspondencias)`;
+};
+const renderExplanations = (scope: PanelScope): void => {
   const metrics = metricsFor(scope);
   byId("control-exclusion-editorial").textContent = format(metrics.excludedEditorial);
   byId("control-exclusion-commercial").textContent = format(metrics.excludedCommercial);
@@ -277,48 +289,6 @@ const renderProviderChart = (scope: PanelScope): void => {
 const renderMatrices = (scope: PanelScope): void => {
   createMatrix("pipeline-matrix", pipelineColumns, scope);
   createMatrix("transform-matrix", transformationColumns, scope);
-  createMatrix("quality-matrix", qualityColumns, scope);
-};
-const renderQualityCut = (scope: PanelScope): void => {
-  const providers = selectedProviders(scope);
-  const summary = byId("quality-cut-summary");
-  const date = payload.snapshot.packageDateUtc;
-  const dateLabel = /^\d{4}-\d{2}-\d{2}$/.test(date) ?
-    new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
-      .format(new Date(`${date}T00:00:00Z`)) : date;
-  const dateItem = element("div", "quality-cut-fact");
-  append(dateItem, element("span", "", "Fecha del paquete comercial"), element("strong", "", dateLabel));
-  const providersItem = element("div", "quality-cut-fact");
-  append(providersItem, element("span", "", "Proveedores del corte"),
-    element("strong", "", providers.map((provider) => knownName(provider.providerId)).join(" · ")));
-  summary.replaceChildren(dateItem, providersItem);
-  const files = byId("quality-cut-files-list");
-  const reports = element("div", "quality-cut-file-group");
-  append(reports, element("strong", "", "Informes del corte"));
-  const reportLinks = element("div", "quality-cut-links");
-  for (const entry of [
-    { label: "Informe técnico", artifact: payload.snapshot.technicalReport },
-    { label: "Informe comercial", artifact: payload.snapshot.commercialReport },
-    { label: "Manifiesto comercial", artifact: payload.snapshot.commercialManifest }
-  ]) append(reportLinks, namedArtifactLink(entry));
-  append(reports, reportLinks);
-  files.replaceChildren(reports);
-  for (const provider of providers) {
-    const group = element("div", "quality-cut-file-group");
-    append(group, element("strong", "", knownName(provider.providerId)));
-    const links = element("div", "quality-cut-links");
-    if (provider.original.status === "verified") {
-      append(links, namedArtifactLink({ label: "Original", artifact: provider.original.artifact }));
-    } else {
-      const unavailable = element("span", "quality-cut-unavailable", `Original no disponible: ${provider.original.reason}`);
-      append(links, unavailable);
-    }
-    append(links,
-      namedArtifactLink({ label: "FINISH", artifact: provider.publication }),
-      namedArtifactLink({ label: "Comercial", artifact: provider.commercial }));
-    append(group, links);
-    append(files, group);
-  }
 };
 const render = (): void => {
   byId("scope-summary").textContent = scopeLabel(currentScope);
@@ -326,7 +296,6 @@ const render = (): void => {
   renderExplanations(currentScope);
   renderProviderChart(currentScope);
   renderMatrices(currentScope);
-  renderQualityCut(currentScope);
 };
 const updateScope = (scope: PanelScope): void => {
   currentScope = scope;
@@ -376,26 +345,8 @@ for (const button of document.querySelectorAll<HTMLButtonElement>("[data-go]")) 
 for (const id of ["close-definition", "close-definition-secondary"]) byId(id).addEventListener("click", () => {
   if (dialog instanceof HTMLDialogElement) dialog.close();
 });
-const localEvidenceToggle = byId("local-evidence-toggle");
-localEvidenceToggle.addEventListener("click", () => {
-  const enabled = document.documentElement.dataset.localEvidence !== "enabled";
-  document.documentElement.dataset.localEvidence = enabled ? "enabled" : "disabled";
-  for (const link of document.querySelectorAll<HTMLAnchorElement>("a.local-proof-link")) {
-    if (enabled && link.dataset.localHref) link.href = link.dataset.localHref;
-    else link.removeAttribute("href");
-  }
-  localEvidenceToggle.setAttribute("aria-pressed", String(enabled));
-  localEvidenceToggle.textContent = enabled ? "Desactivar enlaces locales" : "Activar enlaces del repositorio";
-  byId("evidence-access-status").textContent = enabled ?
-    "Enlaces locales activados; requieren los archivos originales del repositorio." :
-    "Enlaces locales desactivados.";
-  window.dispatchEvent(new Event("panel:local-evidence-updated"));
-});
-window.addEventListener("panel:enable-local-evidence", () => {
-  if (document.documentElement.dataset.localEvidence !== "enabled") localEvidenceToggle.click();
-});
 byId("header-package").textContent = `PAQUETE UTC ${payload.snapshot.packageDateUtc}`;
-renderDecisions();
+renderNormalization();
 render();
 const initialHash = location.hash.slice(1);
 if (initialHash === "flujo" || initialHash === "explorador" || initialHash === "calidad") navigate(initialHash);

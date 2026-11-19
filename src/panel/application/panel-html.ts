@@ -91,13 +91,13 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
           <div class="explain-heading"><div><span class="section-kicker">E2 / NORMALIZACIÓN</span><h2 id="normalization-title">Distintas claves. Un mismo significado.</h2></div><span class="explain-label">EJEMPLOS DE REGLA VIGENTE</span></div>
           <p class="explain-lede">Unifica nombres y unidades. Si un valor no es interpretable, no lo inventa.</p>
           <div class="normalization-diagram" role="group" aria-label="Mecanismo de normalización y posibles resultados">
-            <div class="explain-steps"><span>Clave recibida</span><span>Alias canónico</span><span>Tipo y unidad</span><span>Comprobación del valor</span></div>
+            <div class="explain-steps"><span>Clave recibida</span><span>Clave canónica</span><span>Tipo y unidad</span><span>Comprobación del valor</span></div>
             <div class="normalization-outcomes"><span>Valor interpretable → campo normalizado</span><span>Conflicto o valor inválido → no se inventa</span></div>
           </div>
-          <div class="normalization-rule-heading">Tres correspondencias del diccionario vigente</div>
-          <div class="normalization-examples" id="normalization-examples" aria-label="Correspondencias del diccionario real"></div>
-          <div class="explain-footer"><p>Ejemplos del contrato <code>SPEC_KEY_NORMALIZATION</code>, no cambios atribuidos a estas publicaciones.</p><button type="button" class="text-action" id="normalization-example">Ver una diferencia técnica real →</button></div>
-          <details class="mechanism-detail"><summary>Ver condiciones y límites del normalizador</summary><p>Se controlan claves desconocidas, valores no interpretables, formatos inválidos, conflictos entre alias y unidades incompatibles. Fuente: <code>src/catalog/normalization/spec-rules.ts</code> y <code>normalize-specs.ts</code>. La lista expone reglas disponibles, no un registro histórico de invocaciones.</p></details>
+          <h3 class="normalization-rule-heading">Ocho correspondencias del diccionario vigente</h3>
+          <div class="normalization-table-wrap"><table class="normalization-table"><caption class="sr-only">Ocho ejemplos de alias del contrato vigente</caption><thead><tr><th scope="col">Recibida</th><th scope="col">Normalizada</th><th scope="col">Tipo</th></tr></thead><tbody id="normalization-examples"></tbody></table></div>
+          <div class="explain-footer"><p>Correspondencias disponibles en <code>SPEC_KEY_NORMALIZATION</code> y tipos de <code>SPEC_RULES</code>; no acreditan qué regla se aplicó a una ficha concreta.</p><button type="button" class="text-action" id="normalization-example">Ver una diferencia técnica real →</button></div>
+          <details class="normalization-dictionary"><summary>Consultar diccionario completo <span id="normalization-dictionary-count"></span></summary><p>Todos los alias y claves canónicas del contrato vigente, ordenados por clave normalizada. El tipo indica el formato esperado, no la comprobación ni la transformación de un valor concreto.</p><div class="normalization-table-wrap"><table class="normalization-table"><caption class="sr-only">Diccionario completo de normalización de claves</caption><thead><tr><th scope="col">Recibida</th><th scope="col">Normalizada</th><th scope="col">Tipo</th></tr></thead><tbody id="normalization-dictionary-rows"></tbody></table></div></details>
         </section>
         <details class="audit-disclosure"><summary>Consultar matrices de recorrido y transformación (A y B)</summary><section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">A</span><h3>Pipeline por proveedor</h3></div><span class="card-side-note">Poblaciones por etapa</span></div><div class="scroll-table" id="pipeline-matrix"></div></section>
         <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">B</span><h3>Transformaciones observadas</h3></div><span class="card-side-note">Informe técnico del corte</span></div><div class="scroll-table" id="transform-matrix"></div><p class="minor-note">Las claves técnicas incorporadas no equivalen automáticamente a datos recuperados o contrastados externamente. Una ficha transformada cuenta una vez; las descripciones cuentan por campo.</p></section>
@@ -139,16 +139,6 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
             <section class="control-group control-records" aria-label="Exclusiones de fichas"><div class="control-group-heading"><span>02 / FICHA</span><h3>Se decide sobre una publicación</h3></div><div class="control-branches"><div><strong><span id="control-exclusion-editorial">—</span> exclusiones editoriales</strong><span>No llega a FINISH</span></div><div><strong><span id="control-exclusion-commercial">—</span> exclusiones comerciales</strong><span>No entra en el paquete comercial</span></div></div></section>
           </div>
           <div class="explain-footer"><button id="excluded-example" type="button" class="text-action">Ver una exclusión real →</button></div>
-        </section>
-        <details class="audit-disclosure"><summary>Consultar matrices de incidencias y decisiones (C y D)</summary>
-        <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">C</span><h3>Calidad y acreditación</h3></div><span class="card-side-note">Exclusiones y pendientes</span></div><div class="scroll-table" id="quality-matrix"></div></section>
-        <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">D</span><h3>Lógica y decisiones documentadas</h3></div><span class="card-side-note">Sin atribuciones causales inventadas</span></div><div class="scroll-table" id="decisions-matrix"></div></section>
-        </details>
-        <section class="surface-card quality-cut-card" aria-labelledby="quality-cut-title">
-          <div class="card-heading"><div><span class="section-kicker">CORTE Y EVIDENCIAS</span><h3 id="quality-cut-title">Datos del corte</h3></div><span class="quality-cut-status">Coherente al generar</span></div>
-          <div id="quality-cut-summary" class="quality-cut-summary"></div>
-          <div class="evidence-access"><button type="button" id="local-evidence-toggle" aria-pressed="false">Activar enlaces locales</button><span id="evidence-access-status" role="status" aria-live="polite">Enlaces locales desactivados.</span></div>
-          <details class="quality-cut-files"><summary>Consultar informes y archivos acreditados</summary><div id="quality-cut-files-list" class="quality-cut-files-list"></div></details>
         </section>
       </section>
     </div>
