@@ -34,20 +34,25 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.match(html, /data-view="calidad"/);
   assert.match(html, /data-view="explorador"/);
   assert.ok(html.includes("explorer-search"));
-  for (const id of ["explorer-sort", "explorer-missing-description", "explorer-without-specs",
-    "explorer-with-additions", "explorer-editorial-changes", "explorer-active-filters",
-    "explorer-extra-count", "explorer-show-selected"]) {
+  for (const id of ["explorer-sort", "explorer-missing-short", "explorer-missing-general",
+    "explorer-without-specs", "explorer-with-additions", "explorer-with-changes",
+    "explorer-with-title-changes", "explorer-editorial-changes", "explorer-active-filters",
+    "explorer-provider-slot", "explorer-category-picker", "explorer-category-search",
+    "explorer-stage-commercial-excluded", "explorer-stage-editorial-excluded", "explorer-show-selected"]) {
     assert.ok(html.includes(`id="${id}"`), id);
   }
   assert.ok(html.includes("Más especificaciones incorporadas"));
-  assert.ok(html.includes("Menos especificaciones de origen"));
-  assert.ok(html.includes("selectExplorerProducts(products, selection)"));
+  assert.ok(html.includes("Menos especificaciones originales"));
+  assert.ok(html.includes("selectExplorerProducts(products, filters.selection(), index)"));
   assert.ok(html.includes("data:text/javascript;base64,"));
   assert.ok(!html.includes('from "../explorer/explorer-selection.js"'));
   assert.ok(html.includes("Original → FINISH"));
-  assert.ok(html.includes('<details class="explorer-advanced">'));
-  assert.ok(html.includes("Filtros activos"));
-  assert.ok(html.includes("Limpiar"));
+  assert.ok(html.includes("Encontrar una máquina"));
+  assert.ok(html.includes("Qué quieres analizar"));
+  assert.ok(html.includes("Estado de la ficha"));
+  assert.ok(!html.includes('<details class="explorer-advanced">'));
+  assert.ok(html.includes('id="explorer-active-filters"'));
+  assert.ok(html.includes('id="explorer-provider-slot"'));
   assert.ok(!html.includes("panel:enable-local-evidence"));
   assert.ok(!html.includes("panel:local-evidence-updated"));
   assert.ok(html.includes("explorer-list {max-height:320px"));
@@ -94,6 +99,8 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.ok(!html.includes("<script type=\"module\" src="));
   assert.ok(html.includes("const metricsFor = (scope) =>"));
   assert.ok(html.includes("const visibleProducts = () =>"));
+  assert.ok(html.includes("const placeProvider = (view) =>"));
+  assert.ok(html.includes("explorer-filter-dashboard"));
 });
 
 test("el HTML neutraliza etiquetas incrustadas en datos de procedencia", async () => {
@@ -273,8 +280,8 @@ test("el modo portátil conserva enlaces seguros y casos reales sin navegación 
   assert.ok(html.includes("const chooseCase ="));
   assert.ok(!html.includes("renderCases()"));
   assert.ok(!html.includes('id="explorer-cases"'));
-  assert.ok(html.includes("renderActiveFilters()"));
-  assert.ok(html.includes("target.hidden = active.length === 0"));
+  assert.ok(html.includes("filters.render()"));
+  assert.ok(html.includes("renderedId === selectedId"));
   assert.ok(!html.includes("explorer-sort-current"));
   assert.ok(!html.includes('id="quality-cut-files-list"'));
   assert.ok(!html.includes('class="stage-strip"'));
@@ -289,14 +296,13 @@ test("el Explorador concentra filtros, conserva su selección y deja el detalle 
   const snapshot = await readPanelSnapshot(workspace);
   const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
   assert.ok(html.includes('id="explorer-active-filters"'));
-  assert.ok(html.includes('class="explorer-advanced"'));
-  assert.ok(html.includes('id="explorer-extra-count"'));
-  assert.ok(html.includes("Quitar filtro"));
+  assert.ok(html.includes('class="explorer-filter-dashboard"'));
+  assert.ok(html.includes('id="explorer-category-picker"'));
+  assert.ok(html.includes('id="explorer-stage-commercial-excluded"'));
   assert.ok(!html.includes('id="explorer-order-note"'));
   assert.ok(!html.includes("Tres etapas de la ficha"));
-  assert.ok(html.includes("Limpiar"));
-  assert.ok(html.includes('sort = "reference"'));
-  assert.ok(html.includes("option.disabled ="));
+  assert.ok(html.includes('<option value="reference">Referencia · todas las fichas</option>'));
+  assert.ok(html.includes("filters.resetForCase()"));
   assert.ok(html.includes('class="explorer-layout"'));
   assert.ok(!html.includes('id="explorer-cases"'));
   assert.ok(html.includes("const chooseCase ="));
@@ -335,7 +341,7 @@ test("E2 presenta tres etapas compactas, con ampliación individual y sin duplic
   assert.ok(!html.includes('from "./explorer-stage-cards.js"'));
   assert.ok(html.includes(".stage-record-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr))"));
   const matches = [...html.matchAll(/data:text\/javascript;base64,([A-Za-z0-9+/=]+)/g)];
-  assert.equal(matches.length, 2);
+  assert.equal(matches.length, 3);
   const components = matches.map((match) => Buffer.from(match[1] ?? "", "base64").toString("utf8"));
   const cards = components.find((value) => value.includes("renderStageCards"));
   assert.ok(cards);
@@ -458,4 +464,24 @@ test("F2 abre los tres visores completos en lectura lineal sin contenido plegado
   assert.ok(!html.includes('equipzilla-disclosure'));
   assert.ok(html.includes('.equipzilla-product-view .equipzilla-general-text'));
   assert.ok(html.includes('.comparison-group-title'));
+});
+
+test("F4 encapsula controles y consulta de categorías sin alterar el corte", async () => {
+  const workspace = await fixture.root();
+  const snapshot = await readPanelSnapshot(workspace);
+  const payload = createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot));
+  const html = await renderPanelHtml(process.cwd(), payload);
+  assert.ok(html.includes("Categorías disponibles"));
+  assert.ok(html.includes("Resultados del catálogo"));
+  assert.ok(html.includes("Descripciones cambiadas"));
+  assert.ok(html.includes("Carencias del original"));
+  assert.ok(html.includes("Cambios de FINISH"));
+  assert.ok(html.includes('name="explorer-stage" type="radio"'));
+  assert.ok(html.includes('id="provider-filter"'));
+  assert.ok(!html.includes('id="explorer-category"'));
+  assert.ok(!html.includes('id="explorer-stage"'));
+  assert.ok(!html.includes('id="explorer-extra-count"'));
+  assert.ok(html.includes("renderedId === selectedId"));
+  assert.ok(html.includes(`"sha256":"${snapshot.commercialManifest.sha256}"`));
+  assert.equal(payload.explorer.products.length, snapshot.totals.originals);
 });

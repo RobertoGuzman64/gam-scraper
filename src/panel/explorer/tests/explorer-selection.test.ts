@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { readPanelSnapshot } from "../../evidence/read-panel-snapshot.js";
 import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
 import { readPanelExplorer } from "../read-panel-explorer.js";
-import { explorerProductMetrics, selectExplorerProducts } from "../explorer-selection.js";
+import { createExplorerIndex, explorerCategoryCounts, explorerProductMetrics, explorerStageCounts, selectExplorerProducts } from "../explorer-selection.js";
 import type { ExplorerSelection } from "../explorer-selection.js";
 import type { PanelExplorerProduct, PanelFieldDifference } from "../types.js";
 
@@ -42,7 +42,8 @@ test("separa carencias originales, incorporaciones, valores modificados y ambig�
   assert.deepEqual(metrics, {
     originalSpecs: 0, publishedSpecs: Object.keys(item.published?.specs ?? {}).length,
     technicalAdditions: 1, technicalChanges: 1, observedDifferences: 3,
-    missingOriginalDescription: true, editorialChanges: false
+    missingOriginalDescription: true, missingOriginalShortDescription: true,
+    missingOriginalGeneralDescription: false, titleChanges: false, editorialChanges: false
   });
 });
 
@@ -65,14 +66,16 @@ test("incorporaciones y modificaciones técnicas se ordenan por su propia clase"
     .map((item) => item.identity), ["changed", "additions"]);
 });
 
-test("solo las fichas con original y FINISH compiten en rankings de transformación", async () => {
+test("las fichas no comparables siguen accesibles con cualquier ordenación", async () => {
   const base = await source();
   const item = product(base, "publicada", 1, [difference("Año", "technical", "added")]);
   const noOriginal = { ...item, identity: "sin-original", original: null };
   const excluded = { ...item, identity: "excluida", published: null, stage: "editorial-excluded" as const };
-  assert.deepEqual(selectExplorerProducts([excluded, noOriginal, item], baseSelection).map((entry) => entry.identity), ["publicada"]);
+  assert.deepEqual(selectExplorerProducts([excluded, noOriginal, item], baseSelection).map((entry) => entry.identity),
+    ["publicada", "excluida", "sin-original"]);
   assert.equal(selectExplorerProducts([excluded, noOriginal, item], { ...baseSelection, sort: "reference" }).length, 3);
-  assert.equal(selectExplorerProducts([excluded], { ...baseSelection, stage: "editorial-excluded" }).length, 0);
+  assert.deepEqual(selectExplorerProducts([excluded], { ...baseSelection, stage: "editorial-excluded" })
+    .map((entry) => entry.identity), ["excluida"]);
 });
 
 test("filtros de carencias y aportaciones son combinables y no mezclan etapas", async () => {
@@ -116,4 +119,52 @@ test("la descripción parcialmente ausente se identifica sin clasificarla como p
   assert.deepEqual(selectExplorerProducts([item], { ...baseSelection, missingOriginalDescription: true })
     .map((entry) => entry.identity), ["parcial"]);
   assert.equal(explorerProductMetrics(product(base, "completa", 1, [])).missingOriginalDescription, false);
+});
+
+test("F4 separa descripciones ausentes, cambios técnicos y títulos sin inventar causas", async () => {
+  const base = await source();
+  const useful = product(base, "útil", 1, [difference("Título", "content", "changed"),
+    difference("Peso", "technical", "changed")], null);
+  const other = product(base, "otra", 0, [difference("Peso", "technical", "added")]);
+  assert.ok(other.original);
+  const absentGeneral = { ...other, identity: "sin-general", original: {
+    ...other.original, generalDescription: "   "
+  } };
+  assert.deepEqual(selectExplorerProducts([other, useful, absentGeneral], {
+    ...baseSelection, missingOriginalShortDescription: true, withTechnicalChanges: true,
+    withTitleChanges: true
+  }).map((entry) => entry.identity), ["útil"]);
+  assert.deepEqual(selectExplorerProducts([other, useful, absentGeneral], {
+    ...baseSelection, missingOriginalGeneralDescription: true
+  }).map((entry) => entry.identity), ["sin-general"]);
+});
+
+test("F4 cuenta estados y categorías según combinaciones sin excluir etapas", async () => {
+  const base = await source();
+  const commercial = { ...product(base, "A", 1, []), category: "Carretillas" };
+  const editorial = { ...product(base, "B", 1, []), stage: "editorial-excluded" as const,
+    published: null, category: "Plataformas" };
+  const commercialExcluded = { ...product(base, "C", 1, []), stage: "commercial-excluded" as const,
+    commercial: null, category: "Carretillas" };
+  const index = createExplorerIndex([commercial, editorial, commercialExcluded]);
+  assert.deepEqual(explorerStageCounts(index, baseSelection), {
+    todos: 3, commercial: 1, "commercial-excluded": 1, "editorial-excluded": 1
+  });
+  assert.deepEqual(explorerStageCounts(index, { ...baseSelection, category: "Carretillas" }), {
+    todos: 2, commercial: 1, "commercial-excluded": 1, "editorial-excluded": 0
+  });
+  assert.deepEqual([...explorerCategoryCounts(index, { ...baseSelection, stage: "editorial-excluded" }).counts],
+    [["Plataformas", 1]]);
+  assert.equal(explorerCategoryCounts(index, { ...baseSelection, stage: "editorial-excluded" }).total, 1);
+  assert.deepEqual(selectExplorerProducts([], { ...baseSelection, stage: "editorial-excluded" }, index)
+    .map((entry) => entry.identity), ["B"]);
+});
+
+test("F4 reutiliza el índice de búsqueda sin mutar ni recalcular el catálogo", async () => {
+  const base = await source();
+  const first = { ...product(base, "X", 1, []), reference: "Máquina única" };
+  const index = createExplorerIndex([first]);
+  assert.deepEqual(selectExplorerProducts([], { ...baseSelection, query: "maquina UNICA" }, index)
+    .map((item) => item.identity), ["X"]);
+  assert.equal(index[0]?.item, first);
 });

@@ -19,7 +19,7 @@ test("escribe el panel de forma atómica, evita regeneración idéntica y conser
     await cp(join(process.cwd(), "dist", "panel", "explorer", "explorer-selection.js"),
       join(compiledExplorer, "explorer-selection.js"));
     await cp(join(process.cwd(), "src", "panel", "ui", "dashboard.css"), join(sourceUi, "dashboard.css"));
-    for (const name of ["dashboard-client.js", "explorer-client.js", "explorer-stage-cards.js"]) {
+    for (const name of ["dashboard-client.js", "explorer-client.js", "explorer-filter-controls.js", "explorer-stage-cards.js"]) {
       await cp(join(process.cwd(), "dist", "panel", "ui", name), join(compiledUi, name));
     }
     const output = await writeLocalPanel(workspace);

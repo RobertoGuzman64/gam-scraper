@@ -1,12 +1,8 @@
 import type { PanelDashboardPayload } from "../application/dashboard-data.js";
-import { explorerProductMetrics, selectExplorerProducts } from "../explorer/explorer-selection.js";
-import type { ExplorerSelection, ExplorerSort } from "../explorer/explorer-selection.js";
+import { createExplorerIndex, explorerProductMetrics, selectExplorerProducts } from "../explorer/explorer-selection.js";
+import { createExplorerFilterControls } from "./explorer-filter-controls.js";
 import type { PanelExplorerProduct, PanelPresentationCase, PanelFieldDifference } from "../explorer/types.js";
 import { renderStageCards } from "./explorer-stage-cards.js";
-import type { PanelProviderId } from "../evidence/types.js";
-
-type Scope = PanelProviderId | "todos";
-type Stage = PanelExplorerProduct["stage"] | "todos";
 
 const find = (id: string): HTMLElement => {
   const node = document.getElementById(id);
@@ -20,21 +16,6 @@ const create = <K extends keyof HTMLElementTagNameMap>(tag: K, className = "", v
   return node;
 };
 const append = (parent: HTMLElement, ...nodes: (Node | string)[]): void => parent.append(...nodes);
-const select = (id: string): HTMLSelectElement => {
-  const node = find(id);
-  if (!(node instanceof HTMLSelectElement)) throw new Error(`Selector inválido: ${id}`);
-  return node;
-};
-const input = (id: string): HTMLInputElement => {
-  const node = find(id);
-  if (!(node instanceof HTMLInputElement)) throw new Error(`Campo inválido: ${id}`);
-  return node;
-};
-const checkbox = (id: string): HTMLInputElement => {
-  const node = input(id);
-  if (node.type !== "checkbox") throw new Error(`Filtro inválido: ${id}`);
-  return node;
-};
 const text = (value: string | number | boolean | null): string => value === null || value === "" ? "No consta" : String(value);
 const payloadNode = document.getElementById("panel-data")?.textContent;
 if (!payloadNode) throw new Error("Sin datos para explorar fichas");
@@ -275,137 +256,24 @@ const renderTechnicalContribution = (item: PanelExplorerProduct): HTMLElement | 
   return create("p", "explorer-contribution", `Original → FINISH · ${changes.join(" · ")}`);
 };
 
-let scope: Scope = "todos";
-let stage: Stage = "todos";
-let query = "";
-let category = "todos";
-let sort: ExplorerSort = "most-differences";
-let missingOriginalDescription = false;
-let withoutOriginalSpecs = false;
-let withTechnicalAdditions = false;
-let withEditorialChanges = false;
+const index = createExplorerIndex(products);
 let page = 0;
 let selectedId: string | null = null;
+let renderedId: string | null = null;
 const pageSize = 18;
-const visibleProducts = (): readonly PanelExplorerProduct[] => {
-  const selection: ExplorerSelection = {
-    providerId: scope, stage, category, query, sort,
-    missingOriginalDescription, withoutOriginalSpecs, withTechnicalAdditions, withEditorialChanges
-  };
-  return selectExplorerProducts(products, selection);
-};
-const reconcileSelection = (preferFirst = false): void => {
+const filters = createExplorerFilterControls(index, names, () => {
+  page = 0;
+  reconcileSelection();
+  renderExplorer();
+});
+const visibleProducts = (): readonly PanelExplorerProduct[] =>
+  selectExplorerProducts(products, filters.selection(), index);
+const reconcileSelection = (): void => {
   const visible = visibleProducts();
-  if (preferFirst || !selectedId || !visible.some((item) => item.identity === selectedId)) {
+  if (!selectedId || !visible.some((item) => item.identity === selectedId)) {
     selectedId = visible[0]?.identity ?? null;
   }
   if (selectedId) page = Math.max(0, Math.floor(visible.findIndex((item) => item.identity === selectedId) / pageSize));
-};
-const resetRefinements = (): void => {
-  missingOriginalDescription = false;
-  withoutOriginalSpecs = false;
-  withTechnicalAdditions = false;
-  withEditorialChanges = false;
-  for (const id of ["explorer-missing-description", "explorer-without-specs", "explorer-with-additions", "explorer-editorial-changes"]) {
-    checkbox(id).checked = false;
-  }
-};
-const refreshCategories = (): void => {
-  const menu = select("explorer-category");
-  const options = [...new Set(products.filter((item) => scope === "todos" || item.providerId === scope)
-    .map((item) => item.category).filter((value): value is string => value !== null))]
-    .sort((a, b) => a.localeCompare(b, "es"));
-  if (category !== "todos" && !options.includes(category)) category = "todos";
-  menu.replaceChildren();
-  const all = create("option", "", "Todas las categorías");
-  all.value = "todos";
-  append(menu, all);
-  for (const name of options) {
-    const option = create("option", "", name);
-    option.value = name;
-    append(menu, option);
-  }
-  menu.value = category;
-};
-const renderActiveFilters = (): void => {
-  const target = find("explorer-active-filters");
-  target.replaceChildren();
-  const active: { label: string; clear: () => void }[] = [];
-  if (scope !== "todos") active.push({ label: `Proveedor: ${names[scope]}`, clear: () => {
-    const provider = select("provider-filter");
-    provider.value = "todos";
-    provider.dispatchEvent(new Event("change", { bubbles: true }));
-  } });
-  if (query) active.push({ label: `Búsqueda: ${query}`, clear: () => {
-    query = "";
-    input("explorer-search").value = "";
-  } });
-  if (category !== "todos") active.push({ label: `Categoría: ${category}`, clear: () => {
-    category = "todos";
-    select("explorer-category").value = "todos";
-  } });
-  if (stage !== "todos") active.push({ label: `Etapa: ${stages[stage]}`, clear: () => {
-    stage = "todos";
-    select("explorer-stage").value = "todos";
-  } });
-  for (const [enabled, label, control] of [
-    [missingOriginalDescription, "Descripción ausente", "explorer-missing-description"],
-    [withoutOriginalSpecs, "Sin especificaciones", "explorer-without-specs"],
-    [withTechnicalAdditions, "Con incorporaciones", "explorer-with-additions"],
-    [withEditorialChanges, "Descripciones cambiadas", "explorer-editorial-changes"]
-  ] as const) {
-    if (!enabled) continue;
-    active.push({ label, clear: () => {
-      checkbox(control).checked = false;
-      if (control === "explorer-missing-description") missingOriginalDescription = false;
-      else if (control === "explorer-without-specs") withoutOriginalSpecs = false;
-      else if (control === "explorer-with-additions") withTechnicalAdditions = false;
-      else withEditorialChanges = false;
-    } });
-  }
-  const heading = create("div", "explorer-filter-heading");
-  append(heading, create("strong", "", "Filtros activos"));
-  if (active.length) append(heading, newButton("Limpiar", () => {
-    query = "";
-    category = "todos";
-    stage = "todos";
-    input("explorer-search").value = "";
-    select("explorer-stage").value = "todos";
-    select("explorer-category").value = "todos";
-    resetRefinements();
-    page = 0;
-    if (scope !== "todos") {
-      const provider = select("provider-filter");
-      provider.value = "todos";
-      provider.dispatchEvent(new Event("change", { bubbles: true }));
-    } else {
-      reconcileSelection(true);
-      renderExplorer();
-    }
-  }, "explorer-clear-filters"));
-  target.hidden = active.length === 0;
-  if (active.length) {
-    append(target, heading);
-    const chips = create("div", "explorer-filter-chips");
-    for (const filter of active) {
-      const chip = newButton(`${filter.label} ×`, () => {
-        filter.clear();
-        page = 0;
-        reconcileSelection();
-        renderExplorer();
-      }, "explorer-filter-chip");
-      chip.setAttribute("aria-label", `Quitar filtro ${filter.label}`);
-      append(chips, chip);
-    }
-    append(target, chips);
-  }
-  const more = find("explorer-extra-count");
-  const advanced = [stage !== "todos", missingOriginalDescription, withoutOriginalSpecs,
-    withTechnicalAdditions, withEditorialChanges].filter(Boolean).length;
-  more.textContent = advanced ? ` · ${advanced} activos` : "";
-  for (const option of select("explorer-sort").options) {
-    option.disabled = (stage === "commercial-excluded" || stage === "editorial-excluded") && option.value !== "reference";
-  }
 };
 const renderRows = (): void => {
   const filtered = visibleProducts();
@@ -413,7 +281,7 @@ const renderRows = (): void => {
   list.replaceChildren();
   const lastPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
   page = Math.min(page, lastPage);
-  const totalInScope = products.filter((item) => scope === "todos" || item.providerId === scope).length;
+  const totalInScope = products.filter((item) => filters.selection().providerId === "todos" || item.providerId === filters.selection().providerId).length;
   find("explorer-counter").textContent = filtered.length === totalInScope ?
     `${formatNumber.format(filtered.length)} fichas` :
     `${formatNumber.format(filtered.length)} de ${formatNumber.format(totalInScope)} fichas`;
@@ -429,7 +297,7 @@ const renderRows = (): void => {
     return;
   }
   for (const item of filtered.slice(page * pageSize, (page + 1) * pageSize)) {
-    const button = newButton("", () => { selectedId = item.identity; renderRows(); renderDetail(); showSelectionOnMobile(); },
+    const button = newButton("", () => { selectedId = item.identity; renderRows(); ensureDetail(); showSelectionOnMobile(); },
       `product-row ${selectedId === item.identity ? "selected" : ""}`);
     button.setAttribute("aria-pressed", String(selectedId === item.identity));
     const top = create("span", "product-row-top");
@@ -508,7 +376,17 @@ const renderDetail = (): void => {
       renderCommercialData(item)));
   append(target, comparison);
 };
-const renderExplorer = (): void => { reconcileSelection(); renderActiveFilters(); renderRows(); renderDetail(); };
+const ensureDetail = (): void => {
+  if (renderedId === selectedId) return;
+  renderDetail();
+  renderedId = selectedId;
+};
+const renderExplorer = (): void => {
+  reconcileSelection();
+  filters.render();
+  renderRows();
+  ensureDetail();
+};
 const showSelectionOnMobile = (): void => {
   if (!window.matchMedia("(max-width: 750px)").matches) return;
   const target = find("explorer-detail");
@@ -519,77 +397,24 @@ const showSelectionOnMobile = (): void => {
 const chooseCase = (item: PanelPresentationCase): void => {
   const record = productsById.get(item.identity);
   if (!record) return;
-  const selectProvider = select("provider-filter");
-  selectProvider.value = item.providerId;
-  selectProvider.dispatchEvent(new Event("change", { bubbles: true }));
-  stage = "todos";
-  category = "todos";
-  query = "";
-  sort = "reference";
-  input("explorer-search").value = "";
-  select("explorer-stage").value = "todos";
-  select("explorer-sort").value = sort;
-  resetRefinements();
-  refreshCategories();
+  filters.resetForCase();
+  const provider = document.getElementById("provider-filter");
+  if (!(provider instanceof HTMLSelectElement)) throw new Error("Proveedor no disponible");
+  provider.value = item.providerId;
+  provider.dispatchEvent(new Event("change", { bubbles: true }));
   selectedId = item.identity;
   page = Math.max(0, Math.floor(visibleProducts().findIndex((entry) => entry.identity === selectedId) / pageSize));
   renderExplorer();
   window.dispatchEvent(new CustomEvent("panel:request-view", { detail: "explorador" }));
   showSelectionOnMobile();
 };
-
-input("explorer-search").addEventListener("input", () => {
-  query = input("explorer-search").value.trim();
-  page = 0;
-  reconcileSelection();
-  renderExplorer();
-});
-select("explorer-stage").addEventListener("change", () => {
-  const selected = select("explorer-stage").value;
-  stage = selected === "commercial" || selected === "commercial-excluded" || selected === "editorial-excluded" ? selected : "todos";
-  if (stage === "commercial-excluded" || stage === "editorial-excluded") {
-    sort = "reference";
-    select("explorer-sort").value = sort;
-  }
-  page = 0;
-  reconcileSelection();
-  renderExplorer();
-});
-select("explorer-category").addEventListener("change", () => {
-  category = select("explorer-category").value;
-  page = 0;
-  reconcileSelection();
-  renderExplorer();
-});
-select("explorer-sort").addEventListener("change", () => {
-  const chosen = select("explorer-sort").value;
-  if (chosen !== "most-differences" && chosen !== "fewest-original-specs" &&
-    chosen !== "most-technical-additions" && chosen !== "most-technical-changes" && chosen !== "reference") return;
-  sort = chosen;
-  page = 0;
-  reconcileSelection(true);
-  renderExplorer();
-});
-for (const [id, set] of [
-  ["explorer-missing-description", (value: boolean): void => { missingOriginalDescription = value; }],
-  ["explorer-without-specs", (value: boolean): void => { withoutOriginalSpecs = value; }],
-  ["explorer-with-additions", (value: boolean): void => { withTechnicalAdditions = value; }],
-  ["explorer-editorial-changes", (value: boolean): void => { withEditorialChanges = value; }]
-] as const) {
-  checkbox(id).addEventListener("change", () => {
-    set(checkbox(id).checked);
-    page = 0;
-    reconcileSelection(true);
-    renderExplorer();
-  });
-}
 const changePage = (offset: number): void => {
   const visible = visibleProducts();
   const lastPage = Math.max(0, Math.ceil(visible.length / pageSize) - 1);
   page = Math.max(0, Math.min(lastPage, page + offset));
   selectedId = visible[page * pageSize]?.identity ?? null;
   renderRows();
-  renderDetail();
+  ensureDetail();
 };
 find("explorer-show-selected").addEventListener("click", showSelectionOnMobile);
 find("explorer-page-prev").addEventListener("click", () => changePage(-1));
@@ -598,11 +423,7 @@ window.addEventListener("panel:scope", (event: Event) => {
   if (!(event instanceof CustomEvent)) return;
   const next: unknown = event.detail;
   if (next !== "todos" && next !== "gam" && next !== "gomariz" && next !== "mercaeleva") return;
-  scope = next;
-  page = 0;
-  refreshCategories();
-  reconcileSelection();
-  renderExplorer();
+  filters.updateScope(next);
 });
 window.addEventListener("panel:request-case", (event: Event) => {
   if (!(event instanceof CustomEvent)) return;
@@ -611,5 +432,4 @@ window.addEventListener("panel:request-case", (event: Event) => {
   const selected = data.explorer.cases.find((candidate) => candidate.identity === identity);
   if (selected) chooseCase(selected);
 });
-refreshCategories();
 renderExplorer();

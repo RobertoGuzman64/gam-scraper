@@ -304,7 +304,21 @@ const updateScope = (scope: PanelScope): void => {
   render();
   window.dispatchEvent(new CustomEvent("panel:scope", { detail: scope }));
 };
+const providerControl = document.querySelector<HTMLElement>(".page-tools > .filter-control");
+const providerTools = document.querySelector<HTMLElement>(".page-tools");
+const explorerProviderSlot = byId("explorer-provider-slot");
+const placeProvider = (view: PanelView): void => {
+  if (!providerControl || !providerTools) return;
+  if (view === "explorador") {
+    explorerProviderSlot.append(providerControl);
+    providerTools.hidden = true;
+  } else {
+    providerTools.append(providerControl);
+    providerTools.hidden = false;
+  }
+};
 const navigate = (view: PanelView): void => {
+  placeProvider(view);
   currentView = view;
   for (const target of document.querySelectorAll<HTMLElement>("[data-view]")) target.hidden = target.dataset.view !== currentView;
   for (const button of document.querySelectorAll<HTMLButtonElement>("[data-nav]")) {
