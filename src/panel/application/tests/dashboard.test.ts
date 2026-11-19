@@ -234,7 +234,11 @@ test("las etapas 1–4 aparecen en orden y Fichas reales queda al final", async 
   assert.ok(!html.includes('id="quality-cut-title"'));
   assert.ok(html.includes("EJEMPLOS DE REGLA VIGENTE"));
   assert.ok(html.includes("Cuatro comprobaciones para decidir"));
+  assert.ok(!html.includes("Ver comprobaciones y código de referencia"));
+  assert.ok(!html.includes('class="mechanism-detail"'));
   assert.ok(html.includes("No todo rechazo significa lo mismo"));
+  assert.match(html, /class="source-map-secondary"><div>Evidencia documental[\s\S]*?<div>Conocimiento editorial/);
+  assert.ok(html.includes(".source-map-secondary {justify-content:center}"));
   assert.ok(html.includes("panel:request-case"));
   assert.ok(html.includes('"normalizationExamples":['));
   assert.ok(!html.includes("regla aplicada históricamente a esta ficha"));

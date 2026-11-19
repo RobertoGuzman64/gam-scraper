@@ -1022,11 +1022,11 @@ summary:focus-visible {outline:2px solid var(--cyan);outline-offset:3px}
 .kpi-card {min-height:140px;padding:18px 19px}
 .kpi-value {margin:9px 0 3px}
 .audit-disclosure {margin-top:20px;border:1px solid #284358;border-radius:12px;background:#0f1b29;overflow:hidden}
-.audit-disclosure>summary,.mechanism-detail>summary {cursor:pointer;list-style:none;color:#b9d5e5;font-size:15px;font-weight:720;letter-spacing:.015em;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.audit-disclosure>summary::-webkit-details-marker,.mechanism-detail>summary::-webkit-details-marker {display:none}
-.audit-disclosure>summary:after,.mechanism-detail>summary:after {content:"+";font-size:20px;font-weight:450;color:var(--cyan)}
-.audit-disclosure[open]>summary:after,.mechanism-detail[open]>summary:after {content:"−"}
-.audit-disclosure>summary:hover,.mechanism-detail>summary:hover {color:#fff;background:#193043}
+.audit-disclosure>summary {cursor:pointer;list-style:none;color:#b9d5e5;font-size:15px;font-weight:720;letter-spacing:.015em;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.audit-disclosure>summary::-webkit-details-marker {display:none}
+.audit-disclosure>summary:after {content:"+";font-size:20px;font-weight:450;color:var(--cyan)}
+.audit-disclosure[open]>summary:after {content:"−"}
+.audit-disclosure>summary:hover {color:#fff;background:#193043}
 .audit-disclosure>.matrix-card {margin:14px 18px}
 .audit-disclosure>.coverage-card {margin:16px 18px}
 .explain-card {
@@ -1042,9 +1042,11 @@ summary:focus-visible {outline:2px solid var(--cyan);outline-offset:3px}
 .explain-label {font-size:var(--type-secondary);font-weight:760;letter-spacing:.065em;border:1px solid #416475;padding:8px 12px;border-radius:7px;color:#b9dbea;white-space:nowrap}
 .explain-lede {max-width:930px;margin:13px 0 22px;color:#d1e3ec;font-size:17px;line-height:1.55}
 .source-map-grid {display:grid;grid-template-columns:minmax(285px,1.5fr) 26px minmax(185px,.94fr) 26px minmax(180px,.85fr);gap:14px;align-items:center}
-.source-map-inputs {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.source-map-inputs {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;align-items:stretch}
 .source-map-inputs>span {grid-column:1/-1;color:#afcedd;font-size:var(--type-secondary);letter-spacing:.07em;font-weight:760;margin-bottom:4px}
-.source-map-inputs>div {background:#172d3e;border:1px solid #355d70;border-radius:10px;padding:14px 13px;font-weight:730;font-size:16px;color:#f0f8fc;line-height:1.35}
+.source-map-primary,.source-map-secondary {display:flex;flex-direction:column;gap:9px}
+.source-map-secondary {justify-content:center}
+.source-map-primary>div,.source-map-secondary>div {background:#172d3e;border:1px solid #355d70;border-radius:10px;padding:14px 13px;font-weight:730;font-size:16px;color:#f0f8fc;line-height:1.35}
 .source-map-inputs small {display:block;color:#a9c5d4;font-size:var(--type-secondary);font-weight:500;margin-top:6px;line-height:1.4}
 .explain-arrow {font-size:29px;text-align:center;color:#76d8e9;font-weight:700}
 .source-map-process,.source-map-output {min-height:214px;border:1px solid #4a7b8e;border-radius:12px;background:#193849;display:flex;flex-direction:column;gap:10px;justify-content:center;text-align:center;padding:18px 15px}
@@ -1067,10 +1069,6 @@ summary:focus-visible {outline:2px solid var(--cyan);outline-offset:3px}
 .normalization-outcomes {display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
 .normalization-outcomes span {padding:13px 16px;border-radius:8px;border:1px solid #376750;background:#18382f;color:#c0f0d7;font-size:15px;font-weight:700;line-height:1.45}
 .normalization-outcomes span+span {background:#382d2b;border-color:#78594c;color:#f3cbb7}
-.mechanism-detail {margin-top:16px;border-top:1px solid #35566b}
-.mechanism-detail>summary {padding:14px 0}
-.mechanism-detail>summary:hover {background:transparent}
-.mechanism-detail p {font-size:var(--type-secondary);line-height:1.75;color:#bfcedb;overflow-wrap:anywhere;padding:0 0 7px}
 .normalization-rule-heading {margin:23px 0 12px;font-size:var(--type-secondary);font-weight:790;color:#bbd6e3}
 .normalization-table-wrap {width:100%;overflow-x:auto;border:1px solid #34586c;border-radius:10px;scrollbar-width:thin;scrollbar-color:#36566d #152635}
 .normalization-table {width:100%;border-collapse:collapse;text-align:left;font-size:var(--type-body)}
@@ -1120,13 +1118,16 @@ summary:focus-visible {outline:2px solid var(--cyan);outline-offset:3px}
 @media(max-width:1350px) {
   .source-map-grid {grid-template-columns:1fr 30px 1fr 30px 1fr}
   .source-map-inputs {grid-template-columns:1fr}
-  .source-map-inputs>div {padding:10px 12px}
+  .source-map-primary,.source-map-secondary {gap:8px}
+  .source-map-secondary {justify-content:flex-start}
+  .source-map-primary>div,.source-map-secondary>div {padding:10px 12px}
   .check-sequence {grid-template-columns:repeat(2,minmax(0,1fr))}
   .check-sequence li:not(:last-child):after {content:none}
 }
 @media(max-width:1040px) {
   .source-map-grid {grid-template-columns:minmax(0,1fr);gap:10px}
   .source-map-inputs {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .source-map-secondary {justify-content:center}
   .source-map-process,.source-map-output {min-height:145px}
   .explain-arrow {transform:rotate(90deg);font-size:24px}
     .explain-steps {grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -1138,7 +1139,7 @@ summary:focus-visible {outline:2px solid var(--cyan);outline-offset:3px}
   .explain-heading {flex-direction:column;align-items:flex-start;gap:10px}
   .explain-label {white-space:normal}
   .source-map-inputs {grid-template-columns:repeat(2,minmax(0,1fr))}
-  .source-map-inputs>div {padding:13px 12px}
+  .source-map-primary>div,.source-map-secondary>div {padding:13px 12px}
   .explain-footer {align-items:flex-start;flex-direction:column;gap:12px}
   .normalization-diagram,.validation-diagram {padding:12px}
   .normalization-table th,.normalization-table td {padding:11px 12px}
@@ -1178,7 +1179,7 @@ summary:focus-visible {outline:2px solid var(--cyan);outline-offset:3px}
 
 .audit-disclosure>.coverage-card {margin:16px 18px}
 @media(max-width:750px) {
-  .source-map-inputs>div {padding:13px 12px}
+  .source-map-primary>div,.source-map-secondary>div {padding:13px 12px}
   .source-map-process,.source-map-output {min-height:95px}
 }
 
@@ -1751,7 +1752,7 @@ input:focus-visible,summary:focus-visible {outline:2px solid var(--cyan);outline
           <div class="explain-heading"><div><span class="section-kicker">ETAPA 1 / MAPA DE PROCEDENCIA</span><h2 id="source-map-title">¿De dónde pueden venir los datos?</h2></div><span class="explain-label">MECANISMO CONCEPTUAL</span></div>
           <p class="explain-lede">Datos originales, documentación y conocimiento contrastable alimentan las fichas. Cada aportación exige una evidencia compatible.</p>
           <div class="source-map-grid" aria-label="Fuentes posibles, comprobación y resultado">
-            <div class="source-map-inputs"><span>FUENTES POSIBLES · SEGÚN APLICABILIDAD</span><div>Original del proveedor <small>Unidad y origen</small></div><div>Evidencia documental <small>Unidad concreta</small></div><div>Fabricante y modelo <small>Alcance de modelo</small></div><div>Conocimiento editorial <small>Registro compatible</small></div><div>Intervención <small>Solo si está acreditada</small></div></div>
+            <div class="source-map-inputs"><span>FUENTES POSIBLES · SEGÚN APLICABILIDAD</span><div class="source-map-primary"><div>Original del proveedor <small>Unidad y origen</small></div><div>Fabricante y modelo <small>Alcance de modelo</small></div><div>Intervención <small>Solo si está acreditada</small></div></div><div class="source-map-secondary"><div>Evidencia documental <small>Unidad concreta</small></div><div>Conocimiento editorial <small>Registro compatible</small></div></div></div>
             <div class="explain-arrow" aria-hidden="true">→</div><div class="source-map-process"><strong>Comprobar y transformar</strong><span>Identidad · evidencia · reglas aplicables</span><small>No toda fuente se aplica a toda ficha</small></div><div class="explain-arrow" aria-hidden="true">→</div><div class="source-map-output"><strong>FINISH</strong><span>Publicación técnica</span><div class="source-map-commercial">↓ Proyección comercial compatible</div></div>
           </div>
           <div class="explain-footer"><p>Fuente disponible no significa aplicación demostrada.</p><button type="button" class="text-action" id="source-example">Ver un caso real →</button></div>
@@ -1789,7 +1790,6 @@ input:focus-visible,summary:focus-visible {outline:2px solid var(--cyan);outline
             <div class="validation-junction" aria-hidden="true">↓</div>
             <div class="check-result"><div class="check-result-pass"><span class="outcome-tag">CUMPLE</span><strong>Incorporación permitida</strong><span>Solo por este mecanismo y si supera todas las condiciones exigibles.</span></div><div class="check-result-stop"><span class="outcome-tag">NO CUMPLE</span><strong>No incorporar por esta ruta</strong><span>Un campo descartado no excluye la máquina.</span></div></div>
           </div>
-          <details class="mechanism-detail"><summary>Ver comprobaciones y código de referencia</summary><p><code>applyDocumentedTechnicalEvidence</code> valida <code>providerId</code>, <code>reference</code>, <code>record.specs</code>, <code>isEligible</code>, <code>requiredCondition</code> cuando existe, <code>brand</code>, <code>model</code>, <code>categoryKey</code>, <code>exactTitleAndUrl</code> cuando se solicita, <code>fingerprint</code> SHA256 de <code>JSON.stringify(record)</code> y ausencia de claves ya ocupadas. Está definida en <code>src/preparation/shared/technical/evidence/documented-technical-evidence.ts</code>; no emite un evento de aplicación histórica por campo.</p></details>
         </section>
         <section class="explain-card controls-card" aria-labelledby="controls-title">
           <div class="explain-heading"><div><span class="section-kicker">ETAPA 4 / CONTROL Y EXCLUSIÓN</span><h2 id="controls-title">No todo rechazo significa lo mismo.</h2></div><span class="explain-label">ETAPAS DIFERENTES</span></div>
