@@ -478,7 +478,10 @@ const renderRows = (): void => {
   list.replaceChildren();
   const lastPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
   page = Math.min(page, lastPage);
-  find("explorer-counter").textContent = `${formatNumber.format(filtered.length)} de ${formatNumber.format(products.filter((item) => scope === "todos" || item.providerId === scope).length)} fichas · ${scope === "todos" ? "Todos" : names[scope]}`;
+  const totalInScope = products.filter((item) => scope === "todos" || item.providerId === scope).length;
+  find("explorer-counter").textContent = filtered.length === totalInScope ?
+    `${formatNumber.format(filtered.length)} fichas` :
+    `${formatNumber.format(filtered.length)} de ${formatNumber.format(totalInScope)} fichas`;
   find("explorer-pages-label").textContent = `${filtered.length ? page + 1 : 0} / ${filtered.length ? lastPage + 1 : 0}`;
   const prev = find("explorer-page-prev");
   const next = find("explorer-page-next");
@@ -495,16 +498,20 @@ const renderRows = (): void => {
       `product-row ${selectedId === item.identity ? "selected" : ""}`);
     button.setAttribute("aria-pressed", String(selectedId === item.identity));
     const top = create("span", "product-row-top");
-    append(top, create("strong", "", item.reference ?? "Sin referencia"),
+    append(top, create("strong", "", item.reference ?? "Sin referencia"));
+    if (item.stage !== "commercial") append(top,
       create("span", `product-status product-${item.stage}`, stages[item.stage]));
     append(button, top, create("span", "product-title", item.published?.title ?? item.original?.title ?? "Sin título"),
-      create("small", "", `${names[item.providerId]} · ${item.category ?? "Categoría no disponible"}`));
+      create("small", "product-context", `${names[item.providerId]} · ${item.category ?? "Categoría no disponible"}`));
     if (item.original && item.published) {
       const metrics = explorerProductMetrics(item);
       const summary = create("span", "product-impact");
-      append(summary, create("span", "", `Specs ${formatNumber.format(metrics.originalSpecs)} → ${formatNumber.format(metrics.publishedSpecs)}`),
-        create("strong", "", `+${formatNumber.format(metrics.technicalAdditions)} incorporadas`),
-        create("span", "", `${formatNumber.format(metrics.observedDifferences)} diferencias`));
+      if (metrics.technicalAdditions > 0) append(summary,
+        create("strong", "product-impact-additions", `+${formatNumber.format(metrics.technicalAdditions)} incorporadas`));
+      if (metrics.technicalChanges > 0) append(summary,
+        create("span", "product-impact-changes", `${formatNumber.format(metrics.technicalChanges)} valores modificados`));
+      append(summary, create("span", "product-impact-differences", metrics.observedDifferences > 0 ?
+        `${formatNumber.format(metrics.observedDifferences)} diferencias` : "Sin diferencias observadas"));
       append(button, summary);
     }
     append(list, button);

@@ -56,19 +56,28 @@ const artifactLink = (artifact: PanelArtifact): HTMLAnchorElement => {
   }
   link.classList.add("local-proof-link");
   link.dataset.localHref = encodeURI(`../${artifact.path}`);
-  link.title = `Evidencia local (requiere repositorio) · SHA256 ${artifact.sha256}`;
+  link.title = "Archivo acreditado disponible junto al repositorio";
   if (document.documentElement.dataset.localEvidence === "enabled") link.href = link.dataset.localHref;
   link.target = "_blank";
   link.rel = "noopener noreferrer";
   return link;
 };
-const sourceArtifacts = (key: PanelMetricKey, scope: PanelScope): readonly PanelArtifact[] => {
+type NamedArtifact = { readonly label: string; readonly artifact: PanelArtifact };
+const sourceArtifacts = (key: PanelMetricKey, scope: PanelScope): readonly NamedArtifact[] => {
   const definition = metricDefinition(key);
   if (!definition) return [];
-  if (definition.source === "technical-report") return [payload.snapshot.technicalReport];
-  if (definition.source === "commercial-manifest") return [payload.snapshot.commercialManifest];
-  if (definition.source === "commercial-json") return selectedProviders(scope).map((item) => item.commercial);
-  return selectedProviders(scope).map((item) => item.publicationManifest);
+  if (definition.source === "technical-report") return [{ label: "Informe técnico", artifact: payload.snapshot.technicalReport }];
+  if (definition.source === "commercial-manifest") return [{ label: "Manifiesto comercial", artifact: payload.snapshot.commercialManifest }];
+  if (definition.source === "commercial-json") return selectedProviders(scope).map((item) =>
+    ({ label: `Comercial · ${knownName(item.providerId)}`, artifact: item.commercial }));
+  return selectedProviders(scope).map((item) =>
+    ({ label: `FINISH · ${knownName(item.providerId)}`, artifact: item.publicationManifest }));
+};
+const namedArtifactLink = ({ label, artifact }: NamedArtifact): HTMLAnchorElement => {
+  const link = artifactLink(artifact);
+  link.textContent = label;
+  link.setAttribute("aria-label", `${label} · archivo del repositorio`);
+  return link;
 };
 let currentScope: PanelScope = "todos";
 let currentView: PanelView = "resumen";
@@ -83,9 +92,9 @@ const openDefinition = (key: PanelMetricKey): void => {
   container.replaceChildren();
   const heading = element("div", "dialog-sources-title", `FUENTE · ${scopeLabel(currentScope)}`);
   append(container, heading);
-  for (const artifact of sourceArtifacts(key, currentScope)) {
+  for (const entry of sourceArtifacts(key, currentScope)) {
     const row = element("div", "dialog-source-item");
-    append(row, artifactLink(artifact), element("code", "mono", artifact.sha256));
+    append(row, namedArtifactLink(entry));
     append(container, row);
   }
   if (dialog instanceof HTMLDialogElement) dialog.showModal();
@@ -270,68 +279,46 @@ const renderMatrices = (scope: PanelScope): void => {
   createMatrix("transform-matrix", transformationColumns, scope);
   createMatrix("quality-matrix", qualityColumns, scope);
 };
-const evidenceEntry = (title: string, artifact: PanelArtifact, status?: string): HTMLElement => {
-  const row = element("div", "evidence-item");
-  const top = element("div", "evidence-item-head");
-  append(top, element("strong", "", title), element("span", "evidence-verified", status ?? "SHA ACREDITADO"));
-  append(row, top, artifactLink(artifact), element("div", "evidence-hash", `SHA256 ${artifact.sha256}`));
-  return row;
-};
-const renderEvidence = (scope: PanelScope): void => {
-  const container = byId("evidence-list");
-  container.replaceChildren();
-  for (const provider of selectedProviders(scope)) {
-    const group = element("div", "evidence-group");
-    append(group, element("div", "evidence-provider-title", knownName(provider.providerId)));
+const renderQualityCut = (scope: PanelScope): void => {
+  const providers = selectedProviders(scope);
+  const summary = byId("quality-cut-summary");
+  const date = payload.snapshot.packageDateUtc;
+  const dateLabel = /^\d{4}-\d{2}-\d{2}$/.test(date) ?
+    new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
+      .format(new Date(`${date}T00:00:00Z`)) : date;
+  const dateItem = element("div", "quality-cut-fact");
+  append(dateItem, element("span", "", "Fecha del paquete comercial"), element("strong", "", dateLabel));
+  const providersItem = element("div", "quality-cut-fact");
+  append(providersItem, element("span", "", "Proveedores del corte"),
+    element("strong", "", providers.map((provider) => knownName(provider.providerId)).join(" · ")));
+  summary.replaceChildren(dateItem, providersItem);
+  const files = byId("quality-cut-files-list");
+  const reports = element("div", "quality-cut-file-group");
+  append(reports, element("strong", "", "Informes del corte"));
+  const reportLinks = element("div", "quality-cut-links");
+  for (const entry of [
+    { label: "Informe técnico", artifact: payload.snapshot.technicalReport },
+    { label: "Informe comercial", artifact: payload.snapshot.commercialReport },
+    { label: "Manifiesto comercial", artifact: payload.snapshot.commercialManifest }
+  ]) append(reportLinks, namedArtifactLink(entry));
+  append(reports, reportLinks);
+  files.replaceChildren(reports);
+  for (const provider of providers) {
+    const group = element("div", "quality-cut-file-group");
+    append(group, element("strong", "", knownName(provider.providerId)));
+    const links = element("div", "quality-cut-links");
     if (provider.original.status === "verified") {
-      append(group, evidenceEntry("Original canónico", provider.original.artifact, "VERIFICADO"));
+      append(links, namedArtifactLink({ label: "Original", artifact: provider.original.artifact }));
     } else {
-      const absent = element("div", "evidence-item evidence-unavailable");
-      append(absent, element("strong", "", "Original canónico · no disponible"), element("p", "", provider.original.reason), element("code", "mono", provider.original.expectedSha256));
-      append(group, absent);
+      const unavailable = element("span", "quality-cut-unavailable", `Original no disponible: ${provider.original.reason}`);
+      append(links, unavailable);
     }
-    append(group, evidenceEntry("Publicación individual", provider.publication), evidenceEntry("Proyección comercial", provider.commercial));
-    append(container, group);
+    append(links,
+      namedArtifactLink({ label: "FINISH", artifact: provider.publication }),
+      namedArtifactLink({ label: "Comercial", artifact: provider.commercial }));
+    append(group, links);
+    append(files, group);
   }
-};
-const limitEntry = (title: string, detail: string, type = "warning"): HTMLElement => {
-  const row = element("div", `limit-item limit-${type}`);
-  append(row, element("span", "limit-symbol", type === "warning" ? "!" : "·"));
-  const copy = element("div", "limit-copy");
-  append(copy, element("strong", "", title), element("p", "", detail));
-  append(row, copy);
-  return row;
-};
-const renderLimits = (scope: PanelScope): void => {
-  const data = metricsFor(scope);
-  const container = byId("limit-list");
-  container.replaceChildren(
-    ...(data.pendingCategory > 0 ? [limitEntry(`${format(data.pendingCategory)} categorías pendientes`, "Productos exportados sin categoría comercial; requieren clasificación.")] : []),
-    limitEntry("Cambio observado ≠ regla aplicada", "Las transformaciones agregadas del informe no atribuyen automáticamente una decisión editorial a cada ficha.", "info"),
-    ...(data.repeatedReferences > 0 ? [limitEntry(`${format(data.repeatedReferences)} grupos de referencia coincidentes`, "Una referencia visible compartida no prueba duplicidad de identidad técnica.", "info")] : [])
-  );
-};
-const sourceListRow = (label: string, artifact: PanelArtifact): HTMLElement => {
-  const row = element("div", "source-list-row");
-  append(row, element("strong", "", label), artifactLink(artifact), element("code", "mono", artifact.sha256));
-  return row;
-};
-const renderSources = (scope: PanelScope): void => {
-  const container = byId("source-list");
-  container.replaceChildren(
-    sourceListRow("Manifiesto comercial develop", payload.snapshot.commercialManifest),
-    sourceListRow("Informe técnico versionado", payload.snapshot.technicalReport),
-    sourceListRow("Informe comercial versionado", payload.snapshot.commercialReport)
-  );
-  for (const item of selectedProviders(scope)) append(container, sourceListRow(`${knownName(item.providerId)} · manifiesto FINISH`, item.publicationManifest));
-  const history = element("div", "history-summary");
-  append(history, element("strong", "", "RETENCIÓN Y ALCANCE HISTÓRICO"));
-  for (const provider of selectedProviders(scope)) {
-    append(history, element("p", "", `${knownName(provider.providerId)} · aprobación anterior: ${provider.previousApprovalSha256 ?? "No consta versión anterior conservada"}`));
-  }
-  append(history, element("p", "", `Paquete comercial anterior: ${payload.snapshot.retainedPreviousSha256.commercial ?? "No conservado"}`));
-  append(history, element("p", "", "El explorador compara exclusivamente las fuentes del corte técnico y comercial enlazado. No se generan diferencias temporales sin paquetes compatibles."));
-  append(container, history);
 };
 const render = (): void => {
   byId("scope-summary").textContent = scopeLabel(currentScope);
@@ -339,9 +326,7 @@ const render = (): void => {
   renderExplanations(currentScope);
   renderProviderChart(currentScope);
   renderMatrices(currentScope);
-  renderEvidence(currentScope);
-  renderLimits(currentScope);
-  renderSources(currentScope);
+  renderQualityCut(currentScope);
 };
 const updateScope = (scope: PanelScope): void => {
   currentScope = scope;

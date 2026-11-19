@@ -46,10 +46,10 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
       <span class="brand-text"><strong>EQUIPZILLA</strong></span>
     </a>
     <nav class="nav-list" aria-label="Secciones">
-      <button class="nav-button active" type="button" data-nav="resumen" aria-current="page"><span class="nav-icon" aria-hidden="true">◫</span><span>Resumen</span></button>
-      <button class="nav-button" type="button" data-nav="flujo"><span class="nav-icon" aria-hidden="true">▤</span><span>Transformación</span></button>
-      <button class="nav-button" type="button" data-nav="explorador"><span class="nav-icon" aria-hidden="true">⌕</span><span>Fichas reales</span></button>
-      <button class="nav-button" type="button" data-nav="calidad"><span class="nav-icon" aria-hidden="true">◇</span><span>Calidad y controles</span></button>
+      <button class="nav-button active" type="button" data-nav="resumen" aria-current="page"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Resumen</span></button>
+      <button class="nav-button" type="button" data-nav="flujo"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg><span>Transformación</span></button>
+      <button class="nav-button" type="button" data-nav="explorador"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Fichas reales</span></button>
+      <button class="nav-button" type="button" data-nav="calidad"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg><span>Calidad y controles</span></button>
     </nav>
     <div class="sidebar-spacer"></div>
     <div class="sidebar-bottom">
@@ -144,8 +144,12 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
         <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">C</span><h3>Calidad y acreditación</h3></div><span class="card-side-note">Exclusiones y pendientes</span></div><div class="scroll-table" id="quality-matrix"></div></section>
         <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">D</span><h3>Lógica y decisiones documentadas</h3></div><span class="card-side-note">Sin atribuciones causales inventadas</span></div><div class="scroll-table" id="decisions-matrix"></div></section>
         </details>
-        <details class="audit-disclosure"><summary>Consultar evidencias, límites e informes del corte</summary><div class="evidence-layout"><section class="surface-card"><div class="card-heading"><div><span class="section-kicker">TRAZABILIDAD</span><h3>Fuentes activas</h3></div></div><div id="evidence-list"></div></section><section class="surface-card limits-panel"><div class="card-heading"><div><span class="section-kicker">SIN INFERENCIAS</span><h3>Límites declarados</h3></div></div><div id="limit-list"></div></section></div>
-        <section class="surface-card source-card"><div class="card-heading"><div><span class="section-kicker">ÍNDICES E INFORMES</span><h3>Identidad de este corte</h3></div></div><div class="evidence-access"><button type="button" id="local-evidence-toggle" aria-pressed="false">Activar enlaces locales</button><span id="evidence-access-status" role="status" aria-live="polite">Enlaces locales desactivados.</span></div><div id="source-list" class="source-list"></div></section></details>
+        <section class="surface-card quality-cut-card" aria-labelledby="quality-cut-title">
+          <div class="card-heading"><div><span class="section-kicker">CORTE Y EVIDENCIAS</span><h3 id="quality-cut-title">Datos del corte</h3></div><span class="quality-cut-status">Coherente al generar</span></div>
+          <div id="quality-cut-summary" class="quality-cut-summary"></div>
+          <div class="evidence-access"><button type="button" id="local-evidence-toggle" aria-pressed="false">Activar enlaces locales</button><span id="evidence-access-status" role="status" aria-live="polite">Enlaces locales desactivados.</span></div>
+          <details class="quality-cut-files"><summary>Consultar informes y archivos acreditados</summary><div id="quality-cut-files-list" class="quality-cut-files-list"></div></details>
+        </section>
       </section>
     </div>
   </main>

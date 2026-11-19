@@ -108,6 +108,26 @@ test("el HTML neutraliza etiquetas incrustadas en datos de procedencia", async (
   assert.ok(!html.includes("</script><script>alert(1)</script>"));
 });
 
+test("D2 presenta una sola síntesis del corte y mantiene evidencias sin rutas ni hashes visibles", async () => {
+  const workspace = await fixture.root();
+  const snapshot = await readPanelSnapshot(workspace);
+  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  for (const id of ["quality-cut-title", "quality-cut-summary", "quality-cut-files-list", "local-evidence-toggle"]) {
+    assert.ok(html.includes(`id="${id}"`), id);
+  }
+  for (const id of ["evidence-list", "limit-list", "source-list"]) {
+    assert.ok(!html.includes(`id="${id}"`), id);
+  }
+  assert.ok(html.includes("Fecha del paquete comercial"));
+  assert.ok(html.includes("Consultar informes y archivos acreditados"));
+  assert.ok(html.includes('id="evidence-access-status"'));
+  assert.ok(html.includes("namedArtifactLink(entry)"));
+  assert.ok(!html.includes("RETENCIÓN Y ALCANCE HISTÓRICO"));
+  assert.ok(!html.includes('element("code", "mono", artifact.sha256)'));
+  assert.ok(html.includes(`"packageDateUtc":"${snapshot.packageDateUtc}"`));
+  assert.ok(html.includes(`"sha256":"${snapshot.commercialManifest.sha256}"`));
+});
+
 test("las fuentes y métricas no se alteran al crear la vista", async () => {
   const snapshot = await readPanelSnapshot(await fixture.root());
   const before = JSON.stringify(snapshot);
@@ -141,7 +161,7 @@ test("E1–E5 se integran en cuatro vistas y la auditoría queda plegada, sin co
   assert.ok(html.includes('id="control-exclusion-commercial"'));
   assert.ok(html.includes('<details class="audit-disclosure"><summary>Consultar matrices de recorrido y transformación (A y B)'));
   assert.ok(html.includes('<details class="audit-disclosure"><summary>Consultar matrices de incidencias y decisiones (C y D)'));
-  assert.ok(html.includes('<details class="audit-disclosure"><summary>Consultar evidencias'));
+  assert.ok(html.includes('id="quality-cut-title"')); 
   assert.ok(html.includes("EJEMPLOS DE REGLA VIGENTE"));
   assert.ok(html.includes("Cuatro comprobaciones para decidir"));
   assert.ok(html.includes("No todo rechazo significa lo mismo"));
@@ -157,7 +177,7 @@ test("el diseño de exposición prioriza diagramas y conserva auditoría, bifurc
   const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
   assert.ok(html.indexOf('id="normalization-title"') < html.indexOf('id="pipeline-matrix"'));
   assert.ok(html.indexOf('id="controls-title"') < html.indexOf('id="quality-matrix"'));
-  assert.ok(html.indexOf('id="quality-matrix"') < html.indexOf('id="evidence-list"'));
+  assert.ok(html.indexOf('id="quality-matrix"') < html.indexOf('id="quality-cut-title"')); 
   assert.ok(!html.includes('id="stage-strip"'));
   assert.ok(!html.includes('id="quality-highlights"'));
   assert.ok(html.includes('class="normalization-diagram"'));
@@ -193,6 +213,9 @@ test("el modo portátil conserva enlaces seguros y casos reales sin navegación 
     assert.ok(html.includes(`id="${anchor}"`), anchor);
   }
   assert.equal((html.match(/data-nav="(?:resumen|flujo|explorador|calidad)"/g) ?? []).length, 4);
+  assert.equal((html.match(/<svg class="nav-icon" aria-hidden="true"/g) ?? []).length, 4);
+  assert.ok(!html.includes('<span class="nav-icon" aria-hidden="true">'));
+  assert.ok(html.includes('class="nav-button active" type="button" data-nav="resumen" aria-current="page"'));
   assert.ok(html.includes("panel:request-case"));
   assert.ok(html.includes("panel:request-view"));
   assert.ok(html.includes("const chooseCase ="));
@@ -201,7 +224,7 @@ test("el modo portátil conserva enlaces seguros y casos reales sin navegación 
   assert.ok(html.includes("renderActiveFilters()"));
   assert.ok(html.includes("target.hidden = active.length === 0"));
   assert.ok(!html.includes("explorer-sort-current"));
-  assert.ok(html.includes('id="evidence-list"'));
+  assert.ok(html.includes('id="quality-cut-files-list"')); 
   assert.ok(!html.includes('class="stage-strip"'));
   assert.ok(html.includes('id="quality-matrix"'));
   assert.ok(html.includes('id="decisions-matrix"'));
@@ -228,6 +251,21 @@ test("el Explorador concentra filtros, conserva su selección y deja el detalle 
   assert.ok(html.includes("renderFieldStory(item)"));
   assert.ok(html.includes("Ver decisión acreditada y motivos"));
   assert.ok(html.includes("Abrir ficha completa · textos, especificaciones y diferencias"));
+});
+
+test("D3 presenta la lista de máquinas sin métricas vacías ni estados repetidos", async () => {
+  const workspace = await fixture.root();
+  const snapshot = await readPanelSnapshot(workspace);
+  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  assert.ok(html.includes('if (item.stage !== "commercial")'));
+  assert.ok(html.includes('if (metrics.technicalAdditions > 0)'));
+  assert.ok(html.includes('if (metrics.technicalChanges > 0)'));
+  assert.ok(html.includes('product-impact-differences'));
+  assert.ok(html.includes('product-impact-additions'));
+  assert.ok(!html.includes('Specs ${formatNumber.format(metrics.originalSpecs)}'));
+  assert.ok(html.includes('max-height:min(70vh,740px)'));
+  assert.ok(html.includes('id="explorer-active-filters"'));
+  assert.ok(html.includes('id="explorer-sort"'));
 });
 
 test("E2 presenta tres etapas compactas, con ampliación individual y sin duplicar las fichas en auditoría", async () => {
