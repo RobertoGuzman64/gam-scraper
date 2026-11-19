@@ -14,7 +14,7 @@ test("el panel deriva todos los indicadores del corte y conserva las poblaciones
   const dashboard = createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot));
   assert.equal(dashboard.snapshot, snapshot);
   assert.equal(dashboard.definitions.length, 19);
-  assert.equal(dashboard.decisions.length, 5);
+  assert.equal(dashboard.decisions.length, 4);
   for (const provider of dashboard.snapshot.providers) {
     assert.equal(provider.metrics.originals, provider.metrics.published + provider.metrics.excludedEditorial);
     assert.equal(provider.metrics.published, provider.metrics.exported + provider.metrics.excludedCommercial);
@@ -53,6 +53,13 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.ok(html.includes(`"originals":${snapshot.totals.originals}`));
   assert.ok(html.includes(`"pendingCategory":${snapshot.totals.pendingCategory}`));
   assert.ok(html.includes("Lógica y decisiones documentadas"));
+  assert.ok(!html.includes('title: "BACKEND"'));
+  assert.ok(!html.includes('Integración en BD no verificada'));
+  assert.ok(!html.includes('overview-insights'));
+  assert.ok(!html.includes('volume-flow'));
+  assert.ok(!html.includes('BD NO VERIFICADA'));
+  assert.ok(!html.includes('MATRIZ E / COBERTURA POR FAMILIA'));
+  assert.ok(html.includes('Corte coherente al generar · Evidencias y uso offline'));
   assert.ok(html.includes("Matriz"));
   assert.ok(!html.includes("https://fonts.googleapis.com"));
   assert.ok(!html.includes("<script type=\"module\" src="));
@@ -106,7 +113,7 @@ test("E1–E5 se integran en cuatro vistas y la auditoría queda plegada, sin co
   assert.ok(html.includes('<details class="audit-disclosure"><summary>Consultar matrices A–D'));
   assert.ok(html.includes('<details class="audit-disclosure"><summary>Inspeccionar evidencias'));
   assert.ok(html.includes("EJEMPLOS DE REGLA VIGENTE"));
-  assert.ok(html.includes("No representa todos los recuperadores"));
+  assert.ok(html.includes("Una incorporación documental solo se admite"));
   assert.ok(html.includes("No todo rechazo significa lo mismo"));
   assert.ok(html.includes("panel:request-case"));
   assert.ok(html.includes('"normalizationExamples":['));

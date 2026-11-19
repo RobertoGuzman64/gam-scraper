@@ -253,7 +253,7 @@ const renderDecision = (item: PanelExplorerProduct): HTMLElement => {
   } else {
     append(section, create("strong", "decision-result", "Publicada en FINISH y presente en la exportación comercial"),
       create("p", "", "La presencia en las salidas queda acreditada por los artefactos de este corte."),
-      create("p", "minor-note", "No consta en los artefactos una motivación individual de cada transformación. El panel muestra cambios observados, no una decisión editorial inferida ni integración en base de datos."));
+      create("p", "minor-note", "La causa individual de una transformación solo se atribuye cuando existe evidencia suficiente."));
   }
   return section;
 };
@@ -367,19 +367,23 @@ const renderChangeSummary = (item: PanelExplorerProduct): HTMLElement => {
   const entries = [
     ["Incorporados", item.changes.filter((entry) => entry.change === "added").length],
     ["Modificados", item.changes.filter((entry) => entry.change === "changed").length],
-    ["Retirados o ambiguos", item.changes.filter((entry) => entry.change === "removed" || entry.change === "ambiguous").length],
-    ["Conservados", item.changes.filter((entry) => entry.change === "unchanged").length]
+    ["Retirados o ambiguos", item.changes.filter((entry) => entry.change === "removed" || entry.change === "ambiguous").length]
   ] as const;
   for (const [label, count] of entries) {
+    if (item.original && item.published && count === 0) continue;
     const cell = create("div", "change-summary-cell");
     append(cell, create("strong", "", item.original && item.published ? formatNumber.format(count) : "—"), create("span", "", label));
     append(list, cell);
   }
-  append(section, list, create("p", "minor-note", item.original && item.published ?
-    "Recuento de campos comparados por el Explorador; no es el total de incorporaciones del informe FINISH." :
-    "Sin comparación original → FINISH disponible para esta ficha."));
+  append(section, list);
+  const unchanged = item.changes.filter((entry) => entry.change === "unchanged").length;
+  if (item.original && item.published && unchanged > 0) {
+    append(section, create("p", "minor-note", `${formatNumber.format(unchanged)} campos conservados · comparador de ficha, no recuento del informe FINISH.`));
+  } else if (!item.original || !item.published) {
+    append(section, create("p", "minor-note", "Sin comparación original → FINISH disponible para esta ficha."));
+  }
   if (item.decision) append(section, create("p", "change-decision", `Estado del expediente: ${stages[item.stage]}. Motivo declarado: ${item.decision.reason}`));
-  else append(section, create("p", "change-decision", "Publicada en FINISH y exportada comercialmente en el paquete seleccionado; no equivale a importación en BD."));
+  else append(section, create("p", "change-decision", "Publicada en FINISH y exportada en el paquete comercial del corte."));
   return section;
 };
 const renderCommercialSummary = (item: PanelExplorerProduct): HTMLElement | null => {
@@ -388,7 +392,7 @@ const renderCommercialSummary = (item: PanelExplorerProduct): HTMLElement | null
   append(section, create("span", "section-kicker", "SALIDA COMERCIAL · MISMO CORTE"),
     create("h3", "", "Proyección comercial"),
     create("p", "", `Categoría: ${text(item.commercial.category)} · ID: ${text(item.commercial.categorySellID)} · Precio: ${text(item.commercial.price)} · ${formatNumber.format(item.commercial.attributes.length)} atributos aceptados.`),
-    create("p", "minor-note", "La proyección no acredita prestaciones técnicas adicionales ni confirma importación en el backend."));
+    create("p", "minor-note", "Los atributos comerciales no son prestaciones técnicas nuevas."));
   return section;
 };
 
@@ -518,10 +522,9 @@ const renderDetail = (): void => {
   const heading = create("div", "detail-header");
   append(heading, create("span", "section-kicker", `${names[item.providerId]} · ${stages[item.stage]}`),
     create("h2", "", item.published?.title ?? item.original?.title ?? "Máquina sin título"),
-    create("p", "detail-reference", `Identidad técnica: ${item.identity}`),
-    create("p", "", `Referencia: ${item.reference ?? "No consta"} · Paquete comercial UTC: ${data.snapshot.packageDateUtc}`));
+    create("p", "", `Referencia: ${item.reference ?? "No consta"}`));
   if (verifiedUrl(item.sourceUrl)) append(heading, linkTo(item.sourceUrl, "Abrir ficha del proveedor"));
-  append(heading, create("p", "minor-note", "La página externa puede haber cambiado después del corte y no acredita por sí sola su contenido histórico."));
+
   append(target, heading, renderChangeSummary(item), renderFieldStory(item));
   const commercial = renderCommercialSummary(item);
   if (commercial) append(target, commercial);
@@ -546,7 +549,7 @@ const renderDetail = (): void => {
     if (artifact) append(artifacts, sourceLink(artifact, label));
   }
   if (!item.evidence.original) append(artifacts, create("p", "evidence-warning", "No hay original verificado para esta identidad o exclusión sin original conservado."));
-  append(artifacts, create("p", "minor-note", "Este HTML no transporta los JSON ni informes. Para abrir las rutas desde panel/, activa los enlaces del repositorio en el encabezado."));
+  append(artifacts, create("p", "minor-note", "Los documentos externos se pueden abrir desde el repositorio al activar sus enlaces."));
   append(provenance, artifacts);
   append(target, provenance);
 };
@@ -580,7 +583,7 @@ const presentationCases = data.explorer.cases.filter((item) => item.focus !== "e
 const exclusionCase = data.explorer.cases.find((item) => item.focus === "exclusion");
 const presentationSteps: readonly PresentationStep[] = [
   { title: "01 · De dónde pueden venir los datos", description: "E1 · Las fuentes son posibilidades sujetas a identidad y aplicabilidad; conocer una referencia no prueba su uso en una ficha.", view: "resumen", focusId: "source-map-title" },
-  { title: "02 · El resultado del corte", description: "Los indicadores corresponden al mismo corte técnico-comercial, pero a poblaciones y etapas distintas. No acreditan importación en backend.", view: "resumen", focusId: "overview-kpis-title" },
+  { title: "02 · El resultado del corte", description: "Originales, publicaciones FINISH, exportación comercial y claves técnicas incorporadas.", view: "resumen", focusId: "overview-kpis-title" },
   { title: "03 · Uniformidad técnica", description: "E2 · Correspondencias de claves del diccionario vigente, no pruebas de que una regla actuara históricamente sobre una unidad concreta.", view: "flujo", focusId: "normalization-title" },
   { title: "04 · Evidencia que permite incorporar", description: "E3 · Comprobaciones documentadas de una ruta técnica, con condiciones opcionales y rechazo de una clave si no cumple el contrato.", view: "calidad", focusId: "checks-title" },
   { title: "05 · Controles y exclusiones", description: "E4 · No incorporar una especificación, excluir de FINISH y excluir del comercial son decisiones diferentes.", view: "calidad", focusId: "controls-title" },

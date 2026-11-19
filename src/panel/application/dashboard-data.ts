@@ -64,16 +64,7 @@ const PANEL_DECISIONS: readonly PanelDecisionRow[] = [
     output: "Productos elegibles y exclusiones comerciales",
     decision: "Elegibilidad y correspondencia de categorías y atributos",
     evidence: "Manifest comercial, JSON por proveedor e informe comercial",
-    authorization: "No equivale a aprobación de inserción en BD"
-  },
-  {
-    stage: "Integración en backend",
-    input: "Paquete comercial local",
-    control: "No verificado en este corte",
-    output: "No acreditado",
-    decision: "No inferir importación ni aceptación en BD",
-    evidence: "Informe comercial: NO VERIFICADO EN BD",
-    authorization: "No acreditado"
+    authorization: "No aplica a esta salida"
   }
 ];
 

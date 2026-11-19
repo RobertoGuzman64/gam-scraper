@@ -235,30 +235,6 @@ const renderKpis = (scope: PanelScope): void => {
     append(container, tile);
   }
 };
-const renderVolume = (scope: PanelScope): void => {
-  const data = metricsFor(scope);
-  const container = byId("volume-flow");
-  container.replaceChildren();
-  const maximum = Math.max(1, data.originals);
-  for (const [index, stage] of [
-    { key: "originals", name: "Origen", sub: "Fichas originales", color: "origin" },
-    { key: "published", name: "FINISH", sub: "Publicadas técnicas", color: "finish" },
-    { key: "exported", name: "Comercial", sub: "Exportadas elegibles", color: "commercial" }
-  ].entries()) {
-    const row = element("div", "volume-stage");
-    const top = element("div", "volume-top");
-    append(top, element("span", "volume-stage-name", `${String(index + 1).padStart(2, "0")}  ${stage.name}`), element("strong", "volume-value", format(metric(data, stage.key === "originals" ? "originals" : stage.key === "published" ? "published" : "exported"))));
-    const track = element("div", "volume-track");
-    const bar = element("span", `volume-fill ${stage.color}`);
-    bar.style.width = `${(metric(data, stage.key === "originals" ? "originals" : stage.key === "published" ? "published" : "exported") / maximum) * 100}%`;
-    append(track, bar);
-    append(row, top, track, element("div", "volume-sub", stage.sub));
-    append(container, row);
-  }
-  const note = element("div", "volume-losses");
-  append(note, element("div", "loss-item", `${format(data.excludedEditorial)} excluidas en revisión editorial`), element("div", "loss-item", `${format(data.excludedCommercial)} excluidas en proyección comercial`));
-  append(container, note);
-};
 const renderProviderChart = (scope: PanelScope): void => {
   const container = byId("provider-chart");
   container.replaceChildren();
@@ -289,29 +265,13 @@ const renderProviderChart = (scope: PanelScope): void => {
     append(container, item);
   }
 };
-const renderInsights = (scope: PanelScope): void => {
-  const data = metricsFor(scope);
-  const container = byId("overview-insights");
-  container.replaceChildren();
-  const insights = [
-    { code: "CONTROL 01", value: format(data.excludedEditorial), label: "Exclusiones editoriales", detail: "No forman parte de las publicaciones individuales." },
-    { code: "CONTROL 02", value: format(data.excludedCommercial), label: "Exclusiones comerciales", detail: "Se aplican a fichas ya publicadas técnicamente." },
-    { code: "CONTROL 03", value: format(data.withPrice), label: "Fichas con precio", detail: "Precio informado; un valor ausente no equivale a cero." }
-  ];
-  for (const insight of insights) {
-    const card = element("article", "insight-card");
-    append(card, element("div", "insight-code", insight.code), element("strong", "insight-value", insight.value), element("div", "insight-label", insight.label), element("p", "insight-detail", insight.detail));
-    append(container, card);
-  }
-};
 const renderStages = (scope: PanelScope): void => {
   const data = metricsFor(scope);
   const steps = [
     { index: "01", title: "ORIGEN", value: format(data.originals), detail: "Captura y manifiesto canónico", type: "source" },
     { index: "02", title: "PREPARACIÓN", value: format(data.transformations.changedProducts), detail: "Fichas con cambios observados", type: "prep" },
     { index: "03", title: "FINISH", value: format(data.published), detail: "Publicación individual acreditada", type: "finish" },
-    { index: "04", title: "COMERCIAL", value: format(data.exported), detail: "Proyección develop verificada", type: "commercial" },
-    { index: "05", title: "BACKEND", value: "—", detail: "Integración en BD no verificada", type: "unknown" }
+    { index: "04", title: "COMERCIAL", value: format(data.exported), detail: "Proyección develop verificada", type: "commercial" }
   ];
   const container = byId("stage-strip");
   container.replaceChildren();
@@ -334,9 +294,11 @@ const renderQualityHighlights = (scope: PanelScope): void => {
     { key: "excludedEditorial", heading: "Exclusiones editoriales", note: "Antes de FINISH, acreditadas por proveedor.", style: "blue" },
     { key: "excludedCommercial", heading: "Exclusiones comerciales", note: "Después de FINISH, durante la proyección.", style: "purple" },
     { key: "pendingCategory", heading: "Sin categoría comercial", note: "Exportadas pero pendientes de categorización.", style: "amber" },
-    { key: "exceptions", heading: "Excepciones registradas", note: "Incidencias comerciales del corte, no fallos de BD.", style: "neutral" }
+    { key: "exceptions", heading: "Excepciones registradas", note: "Incidencias del contrato comercial.", style: "neutral" }
   ];
-  for (const item of cards) {
+  const visible = cards.filter((item) => metric(metrics, item.key) > 0);
+  if (!visible.length) append(container, element("p", "quality-empty", "Sin exclusiones ni incidencias registradas para este proveedor en el corte."));
+  for (const item of visible) {
     const card = element("article", `quality-card quality-${item.style}`);
     append(card, element("div", "quality-number", format(metric(metrics, item.key))), metricButton(item.key, item.heading), element("p", "quality-note", item.note));
     append(container, card);
@@ -378,11 +340,9 @@ const renderLimits = (scope: PanelScope): void => {
   const data = metricsFor(scope);
   const container = byId("limit-list");
   container.replaceChildren(
-    limitEntry("Integración en BD no verificada", "La exportación comercial local no prueba inserción ni aceptación en el backend."),
-    limitEntry(`${format(data.pendingCategory)} categorías pendientes`, "Productos exportados sin categoría comercial. No se presentan como preparados para importar."),
+    ...(data.pendingCategory > 0 ? [limitEntry(`${format(data.pendingCategory)} categorías pendientes`, "Productos exportados sin categoría comercial; requieren clasificación.")] : []),
     limitEntry("Cambio observado ≠ regla aplicada", "Las transformaciones agregadas del informe no atribuyen automáticamente una decisión editorial a cada ficha.", "info"),
-    limitEntry("Sin fechas de activación inferidas", "La fecha mostrada pertenece al paquete comercial, no a cada publicación individual.", "info"),
-    limitEntry(`${format(data.repeatedReferences)} grupos de referencia coincidentes`, "Coincidir en la referencia visible no prueba que dos identidades técnicas estén duplicadas.", "info")
+    ...(data.repeatedReferences > 0 ? [limitEntry(`${format(data.repeatedReferences)} grupos de referencia coincidentes`, "Una referencia visible compartida no prueba duplicidad de identidad técnica.", "info")] : [])
   );
 };
 const sourceListRow = (label: string, artifact: PanelArtifact): HTMLElement => {
@@ -412,9 +372,7 @@ const render = (): void => {
   byId("scope-summary").textContent = scopeLabel(currentScope);
   renderKpis(currentScope);
   renderExplanations(currentScope);
-  renderVolume(currentScope);
   renderProviderChart(currentScope);
-  renderInsights(currentScope);
   renderStages(currentScope);
   renderMatrices(currentScope);
   renderQualityHighlights(currentScope);
@@ -438,7 +396,7 @@ const navigate = (view: PanelView): void => {
     if (active) button.setAttribute("aria-current", "page");
     else button.removeAttribute("aria-current");
   }
-  const labels: Record<PanelView, string> = { resumen: "RESUMEN GENERAL", flujo: "FLUJO Y MATRICES", explorador: "EXPLORADOR DE FICHAS", calidad: "CALIDAD Y EVIDENCIAS" };
+  const labels: Record<PanelView, string> = { resumen: "RESUMEN GENERAL", flujo: "TRANSFORMACIÓN", explorador: "FICHAS REALES", calidad: "CONTROLES" };
   byId("current-view-label").textContent = labels[view];
   window.scrollTo({ top: 0, behavior: "instant" });
   window.dispatchEvent(new CustomEvent("panel:view", { detail: view }));
