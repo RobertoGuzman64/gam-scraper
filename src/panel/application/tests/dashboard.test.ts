@@ -121,7 +121,7 @@ test("F3 conserva el corte acreditado sin emitir matrices C/D ni el bloque de ev
   const snapshot = await readPanelSnapshot(workspace);
   const dashboard = createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot));
   const html = await renderPanelHtml(process.cwd(), dashboard);
-  const quality = html.split('data-view="calidad"')[1]?.split('class="definition-dialog"')[0];
+  const quality = html.split('data-view="calidad"')[1]?.split('data-view="explorador"')[0];
   assert.ok(quality);
   for (const id of ["quality-cut-title", "quality-cut-summary", "quality-cut-files-list", "quality-matrix",
     "decisions-matrix", "local-evidence-toggle", "evidence-access-status"]) {
@@ -207,12 +207,22 @@ test("F1 presenta una tabla compacta y un diccionario completo en el HTML autón
   assert.ok(html.includes("no acreditan qué regla se aplicó a una ficha concreta"));
 });
 
-test("F2 conserva E1–E4 en cuatro vistas sin un E5 visual", async () => {
+test("las etapas 1–4 aparecen en orden y Fichas reales queda al final", async () => {
   const snapshot = await readPanelSnapshot(await fixture.root());
   const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot)));
   assert.equal((html.match(/<section class="page-view" data-view=/g) ?? []).length, 4);
-  for (const step of ["E1 / MAPA DE PROCEDENCIA", "E2 / NORMALIZACIÓN", "E3 / CORROBORACIÓN DOCUMENTADA",
-    "E4 / CONTROL Y EXCLUSIÓN"]) assert.ok(html.includes(step), step);
+  const labels = ["ETAPA 1 / MAPA DE PROCEDENCIA", "ETAPA 2 / NORMALIZACIÓN",
+    "ETAPA 3 / CORROBORACIÓN DOCUMENTADA", "ETAPA 4 / CONTROL Y EXCLUSIÓN"];
+  for (const step of labels) assert.equal(html.split(step).length - 1, 1, step);
+  for (let i = 1; i < labels.length; i++) {
+    assert.ok(html.indexOf(labels[i - 1]!) < html.indexOf(labels[i]!), labels[i]);
+  }
+  const views = ["resumen", "flujo", "calidad", "explorador"];
+  for (let i = 1; i < views.length; i++) {
+    assert.ok(html.indexOf(`data-nav="${views[i - 1]}"`) < html.indexOf(`data-nav="${views[i]}"`));
+    assert.ok(html.indexOf(`data-view="${views[i - 1]}"`) < html.indexOf(`data-view="${views[i]}"`));
+  }
+  assert.ok(html.includes("03 / VALIDACIÓN Y CONTROL"));
   assert.ok(!html.includes("E5 / LA HISTORIA DEL DATO"));
   assert.ok(html.includes('id="source-example"'));
   assert.ok(html.includes('id="normalization-examples"'));
@@ -389,8 +399,8 @@ test("E3 replica la estética del frontend solo en la ampliación, con datos de 
 test("organización: cada matriz queda en su vista y no se repiten tarjetas de incidencias ni el circuito", async () => {
   const snapshot = await readPanelSnapshot(await fixture.root());
   const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot)));
-  const flow = html.split('data-view="flujo"')[1]?.split('data-view="explorador"')[0];
-  const quality = html.split('data-view="calidad"')[1]?.split('class="definition-dialog"')[0];
+  const flow = html.split('data-view="flujo"')[1]?.split('data-view="calidad"')[0];
+  const quality = html.split('data-view="calidad"')[1]?.split('data-view="explorador"')[0];
   assert.ok(flow);
   assert.ok(quality);
   for (const id of ["pipeline-matrix", "transform-matrix"]) assert.ok(flow.includes(`id="${id}"`));

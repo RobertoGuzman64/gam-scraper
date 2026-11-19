@@ -53,8 +53,8 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
     <nav class="nav-list" aria-label="Secciones">
       <button class="nav-button active" type="button" data-nav="resumen" aria-current="page"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Resumen</span></button>
       <button class="nav-button" type="button" data-nav="flujo"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg><span>Transformación</span></button>
-      <button class="nav-button" type="button" data-nav="explorador"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Fichas reales</span></button>
       <button class="nav-button" type="button" data-nav="calidad"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg><span>Calidad y controles</span></button>
+      <button class="nav-button" type="button" data-nav="explorador"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Fichas reales</span></button>
     </nav>
     <div class="sidebar-spacer"></div>
     <div class="sidebar-bottom">
@@ -78,7 +78,7 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
         <div class="section-heading"><div><h2 id="overview-kpis-title">Resultados del catálogo</h2></div><span class="section-aside" id="scope-summary">Todos los proveedores</span></div>
         <div class="kpi-grid" id="overview-kpis"></div>
         <section class="explain-card source-map" aria-labelledby="source-map-title">
-          <div class="explain-heading"><div><span class="section-kicker">E1 / MAPA DE PROCEDENCIA</span><h2 id="source-map-title">¿De dónde pueden venir los datos?</h2></div><span class="explain-label">MECANISMO CONCEPTUAL</span></div>
+          <div class="explain-heading"><div><span class="section-kicker">ETAPA 1 / MAPA DE PROCEDENCIA</span><h2 id="source-map-title">¿De dónde pueden venir los datos?</h2></div><span class="explain-label">MECANISMO CONCEPTUAL</span></div>
           <p class="explain-lede">Datos originales, documentación y conocimiento contrastable alimentan las fichas. Cada aportación exige una evidencia compatible.</p>
           <div class="source-map-grid" aria-label="Fuentes posibles, comprobación y resultado">
             <div class="source-map-inputs"><span>FUENTES POSIBLES · SEGÚN APLICABILIDAD</span><div>Original del proveedor <small>Unidad y origen</small></div><div>Evidencia documental <small>Unidad concreta</small></div><div>Fabricante y modelo <small>Alcance de modelo</small></div><div>Conocimiento editorial <small>Registro compatible</small></div><div>Intervención <small>Solo si está acreditada</small></div></div>
@@ -93,7 +93,7 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
       <section class="page-view" data-view="flujo" aria-labelledby="flow-title" hidden>
         <div class="standard-heading"><span class="eyebrow">02 / ARQUITECTURA OBSERVABLE</span><h1 id="flow-title">Una cadena. <em>Responsabilidades distintas.</em></h1><p>Del original a FINISH: cómo se transforma y valida cada ficha antes de exportarla.</p></div>
         <section class="explain-card normalization-card" aria-labelledby="normalization-title">
-          <div class="explain-heading"><div><span class="section-kicker">E2 / NORMALIZACIÓN</span><h2 id="normalization-title">Distintas claves. Un mismo significado.</h2></div><span class="explain-label">EJEMPLOS DE REGLA VIGENTE</span></div>
+          <div class="explain-heading"><div><span class="section-kicker">ETAPA 2 / NORMALIZACIÓN</span><h2 id="normalization-title">Distintas claves. Un mismo significado.</h2></div><span class="explain-label">EJEMPLOS DE REGLA VIGENTE</span></div>
           <p class="explain-lede">Unifica nombres y unidades. Si un valor no es interpretable, no lo inventa.</p>
           <div class="normalization-diagram" role="group" aria-label="Mecanismo de normalización y posibles resultados">
             <div class="explain-steps"><span>Clave recibida</span><span>Clave canónica</span><span>Tipo y unidad</span><span>Comprobación del valor</span></div>
@@ -107,6 +107,29 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
         <details class="audit-disclosure"><summary>Consultar matrices de recorrido y transformación (A y B)</summary><section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">A</span><h3>Pipeline por proveedor</h3></div><span class="card-side-note">Poblaciones por etapa</span></div><div class="scroll-table" id="pipeline-matrix"></div></section>
         <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">B</span><h3>Transformaciones observadas</h3></div><span class="card-side-note">Informe técnico del corte</span></div><div class="scroll-table" id="transform-matrix"></div><p class="minor-note">Las claves técnicas incorporadas no equivalen automáticamente a datos recuperados o contrastados externamente. Una ficha transformada cuenta una vez; las descripciones cuentan por campo.</p></section>
         </details>
+      </section>
+
+      <section class="page-view" data-view="calidad" aria-labelledby="quality-title" hidden>
+        <div class="standard-heading"><span class="eyebrow">03 / VALIDACIÓN Y CONTROL</span><h1 id="quality-title">Calidad <em>demostrable.</em></h1><p>Qué comprobamos, cuándo rechazamos un dato y qué fichas se excluyen.</p></div>
+        <section class="explain-card checks-card" aria-labelledby="checks-title">
+          <div class="explain-heading"><div><span class="section-kicker">ETAPA 3 / CORROBORACIÓN DOCUMENTADA</span><h2 id="checks-title">¿Cuándo se permite incorporar una especificación?</h2></div><span class="explain-label">MECANISMO DISPONIBLE</span></div>
+          <p class="explain-lede">Cuatro comprobaciones para decidir si una fuente documental puede aportar especificaciones.</p>
+          <div class="validation-diagram" role="group" aria-label="Comprobaciones del mecanismo documental y sus dos posibles resultados">
+            <ol class="check-sequence"><li><strong>Unidad elegible</strong><span>Proveedor, referencia, specs y condición cuando se exige</span></li><li><strong>Identidad compatible</strong><span>Marca, modelo y categoría del registro</span></li><li><strong>Coincidencia opcional</strong><span>Título y URL solo cuando la fuente los exige</span></li><li><strong>Integridad y no colisión</strong><span>Huella exacta y claves no ocupadas</span></li></ol>
+            <div class="validation-junction" aria-hidden="true">↓</div>
+            <div class="check-result"><div class="check-result-pass"><span class="outcome-tag">CUMPLE</span><strong>Incorporación permitida</strong><span>Solo por este mecanismo y si supera todas las condiciones exigibles.</span></div><div class="check-result-stop"><span class="outcome-tag">NO CUMPLE</span><strong>No incorporar por esta ruta</strong><span>Un campo descartado no excluye la máquina.</span></div></div>
+          </div>
+          <details class="mechanism-detail"><summary>Ver comprobaciones y código de referencia</summary><p><code>applyDocumentedTechnicalEvidence</code> valida <code>providerId</code>, <code>reference</code>, <code>record.specs</code>, <code>isEligible</code>, <code>requiredCondition</code> cuando existe, <code>brand</code>, <code>model</code>, <code>categoryKey</code>, <code>exactTitleAndUrl</code> cuando se solicita, <code>fingerprint</code> SHA256 de <code>JSON.stringify(record)</code> y ausencia de claves ya ocupadas. Está definida en <code>src/preparation/shared/technical/evidence/documented-technical-evidence.ts</code>; no emite un evento de aplicación histórica por campo.</p></details>
+        </section>
+        <section class="explain-card controls-card" aria-labelledby="controls-title">
+          <div class="explain-heading"><div><span class="section-kicker">ETAPA 4 / CONTROL Y EXCLUSIÓN</span><h2 id="controls-title">No todo rechazo significa lo mismo.</h2></div><span class="explain-label">ETAPAS DIFERENTES</span></div>
+          <p class="explain-lede">Descartar un dato no es excluir una máquina. La decisión depende de la etapa.</p>
+          <div class="control-groups" role="group" aria-label="Diferencia entre controles de datos y exclusiones de fichas">
+            <section class="control-group control-fields" aria-label="Controles de campos"><div class="control-group-heading"><span>01 / DATO</span><h3>Se decide sobre un campo</h3></div><div class="control-branches"><div><strong>Sin evidencia aplicable</strong><span>No se atribuye o incorpora por esa ruta</span></div><div><strong>Conflicto al normalizar</strong><span>Campo omitido según el contrato</span></div></div></section>
+            <section class="control-group control-records" aria-label="Exclusiones de fichas"><div class="control-group-heading"><span>02 / FICHA</span><h3>Se decide sobre una publicación</h3></div><div class="control-branches"><div><strong><span id="control-exclusion-editorial">—</span> exclusiones editoriales</strong><span>No llega a FINISH</span></div><div><strong><span id="control-exclusion-commercial">—</span> exclusiones comerciales</strong><span>No entra en el paquete comercial</span></div></div></section>
+          </div>
+          <div class="explain-footer"><button id="excluded-example" type="button" class="text-action">Ver una exclusión real →</button></div>
+        </section>
       </section>
 
       <section class="page-view" data-view="explorador" aria-labelledby="explorer-title" hidden>
@@ -136,29 +159,6 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
           </section>
           <section class="surface-card explorer-detail" id="explorer-detail" aria-label="Comparación de máquina"><div class="explorer-empty">Selecciona una ficha para inspeccionar el original, su publicación y el resultado comercial.</div></section>
         </div>
-      </section>
-
-      <section class="page-view" data-view="calidad" aria-labelledby="quality-title" hidden>
-        <div class="standard-heading"><span class="eyebrow">04 / VALIDACIÓN Y CONTROL</span><h1 id="quality-title">Calidad <em>demostrable.</em></h1><p>Qué comprobamos, cuándo rechazamos un dato y qué fichas se excluyen.</p></div>
-        <section class="explain-card checks-card" aria-labelledby="checks-title">
-          <div class="explain-heading"><div><span class="section-kicker">E3 / CORROBORACIÓN DOCUMENTADA</span><h2 id="checks-title">¿Cuándo se permite incorporar una especificación?</h2></div><span class="explain-label">MECANISMO DISPONIBLE</span></div>
-          <p class="explain-lede">Cuatro comprobaciones para decidir si una fuente documental puede aportar especificaciones.</p>
-          <div class="validation-diagram" role="group" aria-label="Comprobaciones del mecanismo documental y sus dos posibles resultados">
-            <ol class="check-sequence"><li><strong>Unidad elegible</strong><span>Proveedor, referencia, specs y condición cuando se exige</span></li><li><strong>Identidad compatible</strong><span>Marca, modelo y categoría del registro</span></li><li><strong>Coincidencia opcional</strong><span>Título y URL solo cuando la fuente los exige</span></li><li><strong>Integridad y no colisión</strong><span>Huella exacta y claves no ocupadas</span></li></ol>
-            <div class="validation-junction" aria-hidden="true">↓</div>
-            <div class="check-result"><div class="check-result-pass"><span class="outcome-tag">CUMPLE</span><strong>Incorporación permitida</strong><span>Solo por este mecanismo y si supera todas las condiciones exigibles.</span></div><div class="check-result-stop"><span class="outcome-tag">NO CUMPLE</span><strong>No incorporar por esta ruta</strong><span>Un campo descartado no excluye la máquina.</span></div></div>
-          </div>
-          <details class="mechanism-detail"><summary>Ver comprobaciones y código de referencia</summary><p><code>applyDocumentedTechnicalEvidence</code> valida <code>providerId</code>, <code>reference</code>, <code>record.specs</code>, <code>isEligible</code>, <code>requiredCondition</code> cuando existe, <code>brand</code>, <code>model</code>, <code>categoryKey</code>, <code>exactTitleAndUrl</code> cuando se solicita, <code>fingerprint</code> SHA256 de <code>JSON.stringify(record)</code> y ausencia de claves ya ocupadas. Está definida en <code>src/preparation/shared/technical/evidence/documented-technical-evidence.ts</code>; no emite un evento de aplicación histórica por campo.</p></details>
-        </section>
-        <section class="explain-card controls-card" aria-labelledby="controls-title">
-          <div class="explain-heading"><div><span class="section-kicker">E4 / CONTROL Y EXCLUSIÓN</span><h2 id="controls-title">No todo rechazo significa lo mismo.</h2></div><span class="explain-label">ETAPAS DIFERENTES</span></div>
-          <p class="explain-lede">Descartar un dato no es excluir una máquina. La decisión depende de la etapa.</p>
-          <div class="control-groups" role="group" aria-label="Diferencia entre controles de datos y exclusiones de fichas">
-            <section class="control-group control-fields" aria-label="Controles de campos"><div class="control-group-heading"><span>01 / DATO</span><h3>Se decide sobre un campo</h3></div><div class="control-branches"><div><strong>Sin evidencia aplicable</strong><span>No se atribuye o incorpora por esa ruta</span></div><div><strong>Conflicto al normalizar</strong><span>Campo omitido según el contrato</span></div></div></section>
-            <section class="control-group control-records" aria-label="Exclusiones de fichas"><div class="control-group-heading"><span>02 / FICHA</span><h3>Se decide sobre una publicación</h3></div><div class="control-branches"><div><strong><span id="control-exclusion-editorial">—</span> exclusiones editoriales</strong><span>No llega a FINISH</span></div><div><strong><span id="control-exclusion-commercial">—</span> exclusiones comerciales</strong><span>No entra en el paquete comercial</span></div></div></section>
-          </div>
-          <div class="explain-footer"><button id="excluded-example" type="button" class="text-action">Ver una exclusión real →</button></div>
-        </section>
       </section>
     </div>
   </main>
