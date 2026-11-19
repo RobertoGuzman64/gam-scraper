@@ -260,7 +260,7 @@ const index = createExplorerIndex(products);
 let page = 0;
 let selectedId: string | null = null;
 let renderedId: string | null = null;
-const pageSize = 18;
+const pageSize = 30;
 const filters = createExplorerFilterControls(index, names, () => {
   page = 0;
   reconcileSelection();
@@ -274,6 +274,14 @@ const reconcileSelection = (): void => {
     selectedId = visible[0]?.identity ?? null;
   }
   if (selectedId) page = Math.max(0, Math.floor(visible.findIndex((item) => item.identity === selectedId) / pageSize));
+};
+const showSelectionForDesktop = (): void => {
+  if (window.matchMedia("(max-width: 1250px)").matches) return;
+  const detail = find("explorer-detail");
+  const position = detail.getBoundingClientRect();
+  if (position.top < 0 || position.top >= window.innerHeight) {
+    detail.scrollIntoView({ block: "start", behavior: "instant" });
+  }
 };
 const renderRows = (): void => {
   const filtered = visibleProducts();
@@ -297,26 +305,15 @@ const renderRows = (): void => {
     return;
   }
   for (const item of filtered.slice(page * pageSize, (page + 1) * pageSize)) {
-    const button = newButton("", () => { selectedId = item.identity; renderRows(); ensureDetail(); showSelectionOnMobile(); },
+    const button = newButton("", () => { selectedId = item.identity; renderRows(); ensureDetail(); closeCatalogOnMobile(); showSelectionOnMobile(); showSelectionForDesktop(); },
       `product-row ${selectedId === item.identity ? "selected" : ""}`);
     button.setAttribute("aria-pressed", String(selectedId === item.identity));
     const top = create("span", "product-row-top");
-    append(top, create("strong", "", item.reference ?? "Sin referencia"));
-    if (item.stage !== "commercial") append(top,
+    append(top, create("span", "product-row-provider", names[item.providerId]),
+      create("strong", "product-row-reference", item.reference ?? "Sin referencia"));
+    append(button, top, create("span", "product-title", item.published?.title ?? item.original?.title ?? "Sin título"));
+    if (item.stage !== "commercial") append(button,
       create("span", `product-status product-${item.stage}`, stages[item.stage]));
-    append(button, top, create("span", "product-title", item.published?.title ?? item.original?.title ?? "Sin título"),
-      create("small", "product-context", `${names[item.providerId]} · ${item.category ?? "Categoría no disponible"}`));
-    if (item.original && item.published) {
-      const metrics = explorerProductMetrics(item);
-      const summary = create("span", "product-impact");
-      if (metrics.technicalAdditions > 0) append(summary,
-        create("strong", "product-impact-additions", `+${formatNumber.format(metrics.technicalAdditions)} incorporadas`));
-      if (metrics.technicalChanges > 0) append(summary,
-        create("span", "product-impact-changes", `${formatNumber.format(metrics.technicalChanges)} valores modificados`));
-      append(summary, create("span", "product-impact-differences", metrics.observedDifferences > 0 ?
-        `${formatNumber.format(metrics.observedDifferences)} diferencias` : "Sin diferencias observadas"));
-      append(button, summary);
-    }
     append(list, button);
   }
 };
@@ -330,9 +327,11 @@ const renderDetail = (): void => {
   const item = productsById.get(selectedId);
   if (!item) return;
   const heading = create("div", "detail-header");
+  const metadata = create("div", "detail-metadata");
+  append(metadata, create("p", "", `Referencia: ${item.reference ?? "No consta"}`),
+    create("p", "", `Categoría: ${item.category ?? "No consta"}`));
   append(heading, create("span", "section-kicker", `${names[item.providerId]} · ${stages[item.stage]}`),
-    create("h2", "", item.published?.title ?? item.original?.title ?? "Máquina sin título"),
-    create("p", "", `Referencia: ${item.reference ?? "No consta"}`));
+    create("h2", "", item.published?.title ?? item.original?.title ?? "Máquina sin título"), metadata);
   if (verifiedUrl(item.sourceUrl)) append(heading, linkTo(item.sourceUrl, "Abrir ficha del proveedor"));
 
   append(target, heading);
@@ -387,8 +386,26 @@ const renderExplorer = (): void => {
   renderRows();
   ensureDetail();
 };
+const catalog = find("explorer-catalog");
+const catalogToggle = find("explorer-catalog-toggle");
+const closeCatalogOnMobile = (): void => {
+  if (!window.matchMedia("(max-width: 1250px)").matches) return;
+  catalog.classList.remove("is-open");
+  catalogToggle.setAttribute("aria-expanded", "false");
+  catalogToggle.textContent = "Mostrar listado";
+};
+catalogToggle.addEventListener("click", () => {
+  const opened = catalog.classList.toggle("is-open");
+  catalogToggle.setAttribute("aria-expanded", String(opened));
+  catalogToggle.textContent = opened ? "Ocultar listado" : "Mostrar listado";
+});
+catalog.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || !catalog.classList.contains("is-open")) return;
+  closeCatalogOnMobile();
+  catalogToggle.focus();
+});
 const showSelectionOnMobile = (): void => {
-  if (!window.matchMedia("(max-width: 750px)").matches) return;
+  if (!window.matchMedia("(max-width: 1250px)").matches) return;
   const target = find("explorer-detail");
   target.setAttribute("tabindex", "-1");
   target.focus({ preventScroll: true });
@@ -415,8 +432,9 @@ const changePage = (offset: number): void => {
   selectedId = visible[page * pageSize]?.identity ?? null;
   renderRows();
   ensureDetail();
+  catalog.scrollIntoView({ block: "start", behavior: "instant" });
 };
-find("explorer-show-selected").addEventListener("click", showSelectionOnMobile);
+find("explorer-show-selected").addEventListener("click", () => { closeCatalogOnMobile(); showSelectionOnMobile(); });
 find("explorer-page-prev").addEventListener("click", () => changePage(-1));
 find("explorer-page-next").addEventListener("click", () => changePage(1));
 window.addEventListener("panel:scope", (event: Event) => {

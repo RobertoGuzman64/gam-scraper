@@ -110,36 +110,32 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
       </section>
 
       <section class="page-view" data-view="explorador" aria-labelledby="explorer-title" hidden>
-        <div class="standard-heading explorer-heading"><span class="eyebrow">03 / FICHAS REALES</span><h1 id="explorer-title">Original, FINISH <em>y Comercial.</em></h1></div>
-        <div class="explorer-filter-dashboard" aria-label="Filtros del catálogo">
-          <section class="explorer-filter-section" aria-labelledby="explorer-find-title">
-            <div class="explorer-filter-section-heading"><span class="explorer-filter-index">01</span><div><h2 id="explorer-find-title">Encontrar una máquina</h2><p>Busca una referencia o título y acota el catálogo.</p></div></div>
+        <div class="standard-heading explorer-heading"><h1 id="explorer-title">Original, FINISH <em>y Comercial.</em></h1></div>
+        <div class="explorer-layout">
+          <section class="surface-card explorer-filter-dashboard" aria-label="Filtros del catálogo">
             <div class="explorer-finder">
-              <label class="explorer-search-label" for="explorer-search"><span>REFERENCIA O TÍTULO</span><input id="explorer-search" type="search" placeholder="Buscar máquina…" autocomplete="off"></label>
+              <label class="explorer-search-label" for="explorer-search"><span class="sr-only">Buscar referencia o título</span><input id="explorer-search" type="search" placeholder="Buscar referencia o título…" autocomplete="off" aria-label="Buscar referencia o título"></label>
               <div id="explorer-provider-slot" class="explorer-provider-slot"></div>
-              <div class="explorer-category-field"><span id="explorer-category-label">CATEGORÍA</span><details id="explorer-category-picker" class="explorer-category-picker"><summary id="explorer-category-summary" aria-labelledby="explorer-category-label explorer-category-current"><span id="explorer-category-current">Todas las categorías</span></summary><div class="explorer-category-panel"><label for="explorer-category-search">Buscar categoría<input id="explorer-category-search" type="search" placeholder="Filtrar categorías…" autocomplete="off"></label><div id="explorer-category-options" class="explorer-category-options" aria-label="Categorías disponibles"></div></div></details></div>
+              <div class="explorer-category-field"><span id="explorer-category-label">Categoría</span><details id="explorer-category-picker" class="explorer-category-picker"><summary id="explorer-category-summary" aria-labelledby="explorer-category-label explorer-category-current"><span id="explorer-category-current">Todas las categorías</span></summary><div class="explorer-category-panel"><label for="explorer-category-search">Buscar categoría<input id="explorer-category-search" type="search" placeholder="Filtrar categorías…" autocomplete="off"></label><div id="explorer-category-options" class="explorer-category-options" aria-label="Categorías disponibles"></div></div></details></div>
+              <label class="explorer-stage-field" for="explorer-stage"><span>Estado</span><select id="explorer-stage" title="Etapa alcanzada en este corte, no publicación web"><option value="todos" id="explorer-stage-count-todos">Todas las fichas</option><option value="commercial" id="explorer-stage-count-commercial">Salida comercial</option><option value="commercial-excluded" id="explorer-stage-count-commercial-excluded">Excluidas de comercial</option><option value="editorial-excluded" id="explorer-stage-count-editorial-excluded">Excluidas de FINISH</option></select></label>
             </div>
-          </section>
-          <section class="explorer-filter-section" aria-labelledby="explorer-status-title">
-            <div class="explorer-filter-section-heading"><span class="explorer-filter-index">02</span><div><h2 id="explorer-status-title">Estado de la ficha</h2><p>Etapa alcanzada en este corte; no equivale a publicación web.</p></div></div>
-            <fieldset class="explorer-stage-options"><legend class="sr-only">Estado de la ficha</legend>
-              <label class="explorer-stage-option"><input id="explorer-stage-todos" name="explorer-stage" type="radio" value="todos" checked><span><strong>Todas las fichas</strong><small id="explorer-stage-count-todos">—</small></span></label>
-              <label class="explorer-stage-option"><input id="explorer-stage-commercial" name="explorer-stage" type="radio" value="commercial"><span><strong>Salida comercial</strong><small id="explorer-stage-count-commercial">—</small></span></label>
-              <label class="explorer-stage-option"><input id="explorer-stage-commercial-excluded" name="explorer-stage" type="radio" value="commercial-excluded"><span><strong>Excluidas de comercial</strong><small id="explorer-stage-count-commercial-excluded">—</small></span></label>
-              <label class="explorer-stage-option"><input id="explorer-stage-editorial-excluded" name="explorer-stage" type="radio" value="editorial-excluded"><span><strong>Excluidas de FINISH</strong><small id="explorer-stage-count-editorial-excluded">—</small></span></label>
-            </fieldset>
-          </section>
-          <section class="explorer-filter-section" aria-labelledby="explorer-analyse-title">
-            <div class="explorer-filter-section-heading"><span class="explorer-filter-index">03</span><div><h2 id="explorer-analyse-title">Qué quieres analizar</h2><p>Selecciona uno o varios criterios; se combinan entre sí.</p></div></div>
             <div class="explorer-refinement-grid">
               <fieldset class="explorer-refinements"><legend>Carencias del original</legend><label><input type="checkbox" id="explorer-missing-short"> Descripción corta ausente</label><label><input type="checkbox" id="explorer-missing-general"> Descripción general ausente</label><label><input type="checkbox" id="explorer-without-specs"> Sin especificaciones originales</label></fieldset>
-              <fieldset class="explorer-refinements"><legend>Cambios de FINISH</legend><label><input type="checkbox" id="explorer-with-additions"> Especificaciones incorporadas</label><label><input type="checkbox" id="explorer-with-changes"> Valores técnicos modificados</label><label><input type="checkbox" id="explorer-with-title-changes"> Títulos modificados</label><details class="explorer-refinement-secondary"><summary>Otros cambios observables</summary><label><input type="checkbox" id="explorer-editorial-changes"> Descripciones cambiadas</label></details></fieldset>
+              <fieldset class="explorer-refinements"><legend>Cambios de FINISH</legend><label><input type="checkbox" id="explorer-with-additions"> Especificaciones incorporadas</label><label><input type="checkbox" id="explorer-with-changes"> Valores técnicos modificados</label><label><input type="checkbox" id="explorer-with-title-changes"> Títulos modificados</label><label><input type="checkbox" id="explorer-editorial-changes"> Descripciones cambiadas</label></fieldset>
+            </div>
+            <div id="explorer-active-filters" class="explorer-active-filters" aria-live="polite"></div>
+          </section>
+          <section class="surface-card explorer-results" id="explorer-catalog" aria-label="Resultados de búsqueda">
+            <div class="explorer-catalog-heading"><div><h2>Catálogo</h2><span id="explorer-counter" class="card-side-note"></span></div><button id="explorer-catalog-toggle" type="button" aria-expanded="false" aria-controls="explorer-catalog-content">Mostrar listado</button></div>
+            <div id="explorer-catalog-content" class="explorer-catalog-content">
+              <label class="explorer-sort-label" for="explorer-sort">Ordenar<select id="explorer-sort"><option value="reference">Referencia · todas las fichas</option><option value="most-differences">Más diferencias Original → FINISH</option><option value="fewest-original-specs">Menos especificaciones originales</option><option value="most-technical-additions">Más especificaciones incorporadas</option><option value="most-technical-changes">Más valores técnicos modificados</option></select></label>
+              <button id="explorer-show-selected" class="explorer-show-selected" type="button">Ver ficha seleccionada ↓</button>
+              <div id="explorer-list" class="explorer-list"></div>
+              <div class="explorer-pages"><button type="button" id="explorer-page-prev">← Anterior</button><span id="explorer-pages-label"></span><button type="button" id="explorer-page-next">Siguiente →</button></div>
             </div>
           </section>
+          <section class="surface-card explorer-detail" id="explorer-detail" aria-label="Comparación de máquina"><div class="explorer-empty">Selecciona una ficha para inspeccionar el original, su publicación y el resultado comercial.</div></section>
         </div>
-        <div class="explorer-results-toolbar"><div><span class="explorer-filter-index">04</span><h2>Resultados del catálogo</h2></div><label for="explorer-sort">Ordenar resultados<select id="explorer-sort"><option value="reference">Referencia · todas las fichas</option><option value="most-differences">Más diferencias Original → FINISH</option><option value="fewest-original-specs">Menos especificaciones originales</option><option value="most-technical-additions">Más especificaciones incorporadas</option><option value="most-technical-changes">Más valores técnicos modificados</option></select></label></div>
-        <div class="explorer-layout"><section class="surface-card explorer-results" aria-label="Resultados de búsqueda"><div class="card-heading"><h3>Máquinas</h3><span id="explorer-counter" class="card-side-note"></span></div><div id="explorer-active-filters" class="explorer-active-filters" aria-live="polite"></div><button id="explorer-show-selected" class="explorer-show-selected" type="button">Ver ficha seleccionada ↓</button><div id="explorer-list" class="explorer-list"></div><div class="explorer-pages"><button type="button" id="explorer-page-prev">← Anterior</button><span id="explorer-pages-label"></span><button type="button" id="explorer-page-next">Siguiente →</button></div></section>
-          <section class="surface-card explorer-detail" id="explorer-detail" aria-label="Comparación de máquina"><div class="explorer-empty">Selecciona una ficha para inspeccionar el original, su publicación y el resultado comercial.</div></section></div>
       </section>
 
       <section class="page-view" data-view="calidad" aria-labelledby="quality-title" hidden>

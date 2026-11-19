@@ -38,7 +38,8 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
     "explorer-without-specs", "explorer-with-additions", "explorer-with-changes",
     "explorer-with-title-changes", "explorer-editorial-changes", "explorer-active-filters",
     "explorer-provider-slot", "explorer-category-picker", "explorer-category-search",
-    "explorer-stage-commercial-excluded", "explorer-stage-editorial-excluded", "explorer-show-selected"]) {
+    "explorer-stage-count-commercial-excluded", "explorer-stage-count-editorial-excluded", "explorer-show-selected",
+    "explorer-catalog-toggle", "explorer-stage"]) {
     assert.ok(html.includes(`id="${id}"`), id);
   }
   assert.ok(html.includes("Más especificaciones incorporadas"));
@@ -47,15 +48,15 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.ok(html.includes("data:text/javascript;base64,"));
   assert.ok(!html.includes('from "../explorer/explorer-selection.js"'));
   assert.ok(html.includes("Original → FINISH"));
-  assert.ok(html.includes("Encontrar una máquina"));
-  assert.ok(html.includes("Qué quieres analizar"));
-  assert.ok(html.includes("Estado de la ficha"));
+  assert.ok(html.includes("Buscar referencia o título"));
+  assert.ok(html.includes("Carencias del original"));
+  assert.ok(html.includes("Cambios de FINISH"));
   assert.ok(!html.includes('<details class="explorer-advanced">'));
   assert.ok(html.includes('id="explorer-active-filters"'));
   assert.ok(html.includes('id="explorer-provider-slot"'));
   assert.ok(!html.includes("panel:enable-local-evidence"));
   assert.ok(!html.includes("panel:local-evidence-updated"));
-  assert.ok(html.includes("explorer-list {max-height:320px"));
+  assert.ok(html.includes(".explorer-list {max-height:none;overflow:visible}"));
   assert.ok(html.includes("grid-template-columns:repeat(2,minmax(0,1fr))"));
   assert.ok(!html.includes('id="explorer-cases"'));
   assert.ok(!html.includes("renderCommercialSummary(item)"));
@@ -296,9 +297,9 @@ test("el Explorador concentra filtros, conserva su selección y deja el detalle 
   const snapshot = await readPanelSnapshot(workspace);
   const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
   assert.ok(html.includes('id="explorer-active-filters"'));
-  assert.ok(html.includes('class="explorer-filter-dashboard"'));
+  assert.ok(html.includes('class="surface-card explorer-filter-dashboard"'));
   assert.ok(html.includes('id="explorer-category-picker"'));
-  assert.ok(html.includes('id="explorer-stage-commercial-excluded"'));
+  assert.ok(html.includes('id="explorer-stage-count-commercial-excluded"'));
   assert.ok(!html.includes('id="explorer-order-note"'));
   assert.ok(!html.includes("Tres etapas de la ficha"));
   assert.ok(html.includes('<option value="reference">Referencia · todas las fichas</option>'));
@@ -312,17 +313,14 @@ test("el Explorador concentra filtros, conserva su selección y deja el detalle 
   assert.ok(html.includes("Comparar contenido de la ficha"));
 });
 
-test("D3 presenta la lista de máquinas sin métricas vacías ni estados repetidos", async () => {
+test("F5 compacta el catálogo sin repetir métricas que pertenecen al detalle", async () => {
   const workspace = await fixture.root();
   const snapshot = await readPanelSnapshot(workspace);
   const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
   assert.ok(html.includes('if (item.stage !== "commercial")'));
-  assert.ok(html.includes('if (metrics.technicalAdditions > 0)'));
-  assert.ok(html.includes('if (metrics.technicalChanges > 0)'));
-  assert.ok(html.includes('product-impact-differences'));
-  assert.ok(html.includes('product-impact-additions'));
+  assert.ok(!html.includes('class="product-impact'));
+  assert.ok(html.includes('class="explorer-catalog-content"'));
   assert.ok(!html.includes('Specs ${formatNumber.format(metrics.originalSpecs)}'));
-  assert.ok(html.includes('max-height:min(70vh,740px)'));
   assert.ok(html.includes('id="explorer-active-filters"'));
   assert.ok(html.includes('id="explorer-sort"'));
 });
@@ -466,22 +464,71 @@ test("F2 abre los tres visores completos en lectura lineal sin contenido plegado
   assert.ok(html.includes('.comparison-group-title'));
 });
 
-test("F4 encapsula controles y consulta de categorías sin alterar el corte", async () => {
+test("F5 integra listado, filtros y visor sin alterar el corte", async () => {
   const workspace = await fixture.root();
   const snapshot = await readPanelSnapshot(workspace);
   const payload = createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot));
   const html = await renderPanelHtml(process.cwd(), payload);
   assert.ok(html.includes("Categorías disponibles"));
-  assert.ok(html.includes("Resultados del catálogo"));
+  assert.ok(html.includes("Catálogo"));
   assert.ok(html.includes("Descripciones cambiadas"));
   assert.ok(html.includes("Carencias del original"));
   assert.ok(html.includes("Cambios de FINISH"));
-  assert.ok(html.includes('name="explorer-stage" type="radio"'));
+  assert.ok(html.includes('<select id="explorer-stage"'));
   assert.ok(html.includes('id="provider-filter"'));
   assert.ok(!html.includes('id="explorer-category"'));
-  assert.ok(!html.includes('id="explorer-stage"'));
+  assert.ok(!html.includes('name="explorer-stage" type="radio"'));
+  assert.ok(!html.includes("Otros cambios observables"));
+  assert.ok(!html.includes('class="explorer-filter-index"'));
+  assert.ok(!html.includes("03 / FICHAS REALES"));
+  assert.ok(!html.includes('class="explorer-results-toolbar"'));
+  assert.ok(html.indexOf('id="explorer-sort"') > html.indexOf('id="explorer-catalog"'));
+  assert.ok(html.indexOf('id="explorer-sort"') < html.indexOf('id="explorer-list"'));
+  assert.ok(html.indexOf('id="explorer-active-filters"') < html.indexOf('id="explorer-detail"'));
+  assert.ok(html.includes('aria-expanded="false" aria-controls="explorer-catalog-content"'));
+  assert.ok(html.includes('catalog.classList.toggle("is-open")'));
+  assert.ok(html.includes('catalogToggle.setAttribute("aria-expanded", String(opened))'));
+  assert.ok(html.includes('catalogToggle.focus()'));
   assert.ok(!html.includes('id="explorer-extra-count"'));
   assert.ok(html.includes("renderedId === selectedId"));
   assert.ok(html.includes(`"sha256":"${snapshot.commercialManifest.sha256}"`));
   assert.equal(payload.explorer.products.length, snapshot.totals.originals);
+});
+
+
+test("F6 amplía las vistas y pagina el catálogo lateral de 30 en 30 sin modificar el visor", async () => {
+  const workspace = await fixture.root();
+  const snapshot = await readPanelSnapshot(workspace);
+  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  assert.ok(html.includes("max-width:1900px"));
+  assert.ok(html.includes("grid-template-columns:minmax(350px,380px) minmax(0,1fr)"));
+  assert.ok(html.includes(".explorer-list {max-height:none;overflow:visible}"));
+  assert.ok(html.includes("const pageSize = 30"));
+  assert.ok(html.includes("Math.ceil(filtered.length / pageSize) - 1"));
+  assert.ok(html.includes("filtered.slice(page * pageSize, (page + 1) * pageSize)"));
+  assert.ok(html.includes("Math.floor(visible.findIndex((item) => item.identity === selectedId) / pageSize)"));
+  assert.ok(html.includes('catalog.scrollIntoView({ block: "start", behavior: "instant" })'));
+  assert.ok(html.includes('id="explorer-page-prev"'));
+  assert.ok(html.includes('id="explorer-page-next"'));
+});
+
+
+test("F7 despliega hasta 30 filas sin scroll interno y muestra proveedor, referencia y título", async () => {
+  const workspace = await fixture.root();
+  const snapshot = await readPanelSnapshot(workspace);
+  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  assert.ok(html.includes('create("span", "product-row-provider", names[item.providerId])'));
+  assert.ok(html.includes('create("strong", "product-row-reference", item.reference ?? "Sin referencia")'));
+  assert.ok(html.includes('create("span", "product-title", item.published?.title ?? item.original?.title ?? "Sin título")'));
+  assert.ok(!html.includes('create("small", "product-context"'));
+  assert.ok(html.includes('create("div", "detail-metadata")'));
+  assert.ok(html.includes('`Categoría: ${item.category ?? "No consta"}`'));
+  assert.ok(html.includes('grid-template-columns:minmax(350px,380px) minmax(0,1fr);grid-template-rows:max-content minmax(0,1fr)'));
+  assert.ok(html.includes('.explorer-list {display:grid;gap:5px;max-height:none;overflow:visible;padding-right:0}'));
+  assert.ok(html.includes('.explorer-list {max-height:none;overflow:visible}'));
+  assert.ok(html.includes('const pageSize = 30'));
+  assert.ok(html.includes('catalog.scrollIntoView({ block: "start", behavior: "instant" })'));
+  assert.ok(html.includes('showSelectionForDesktop()'));
+  assert.ok(html.includes('detail.scrollIntoView({ block: "start", behavior: "instant" })'));
+  assert.ok(html.includes('(max-width: 1250px)'));
 });

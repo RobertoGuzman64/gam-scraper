@@ -118,9 +118,7 @@ export const createExplorerFilterControls = (
   const render = (): void => {
     const counts = explorerStageCounts(index, selection());
     for (const current of ["todos", "commercial", "commercial-excluded", "editorial-excluded"] as const) {
-      find(`explorer-stage-count-${current}`).textContent = number.format(counts[current]);
-      const radio = input(`explorer-stage-${current}`);
-      radio.checked = stage === current;
+      find(`explorer-stage-count-${current}`).textContent = `${stageNames[current]} · ${number.format(counts[current])}`;
     }
     renderCategories();
     const active: { readonly label: string; readonly clear: () => void }[] = [];
@@ -146,19 +144,6 @@ export const createExplorerFilterControls = (
     target.replaceChildren();
     target.hidden = !active.length;
     if (active.length) {
-      const header = create("div", "explorer-filter-heading");
-      const clearAll = create("button", "explorer-clear-filters", "Limpiar filtros");
-      clearAll.type = "button";
-      clearAll.addEventListener("click", () => {
-        resetFilters();
-        if (scope !== "todos") {
-          const provider = select("provider-filter");
-          provider.value = "todos";
-          provider.dispatchEvent(new Event("change", { bubbles: true }));
-        } else update();
-      });
-      header.append(create("strong", "", "Filtros activos"), clearAll);
-      target.append(header);
       const chips = create("div", "explorer-filter-chips");
       for (const filter of active) {
         const chip = create("button", "explorer-filter-chip", `${filter.label} ×`);
@@ -167,8 +152,20 @@ export const createExplorerFilterControls = (
         chip.addEventListener("click", () => { filter.clear(); update(); });
         chips.append(chip);
       }
-      target.append(chips);
+      const clearAll = create("button", "explorer-clear-filters", "Limpiar");
+      clearAll.type = "button";
+      clearAll.setAttribute("aria-label", "Limpiar todos los filtros");
+      clearAll.addEventListener("click", () => {
+        resetFilters();
+        if (scope !== "todos") {
+          const provider = select("provider-filter");
+          provider.value = "todos";
+          provider.dispatchEvent(new Event("change", { bubbles: true }));
+        } else update();
+      });
+      target.append(chips, clearAll);
     }
+    select("explorer-stage").value = stage;
     select("explorer-sort").value = sort;
   };
   const resetFilters = (): void => {
@@ -199,12 +196,13 @@ export const createExplorerFilterControls = (
       update();
     }
   });
-  for (const current of ["todos", "commercial", "commercial-excluded", "editorial-excluded"] as const) {
-    input(`explorer-stage-${current}`).addEventListener("change", () => {
-      stage = current;
+  select("explorer-stage").addEventListener("change", () => {
+    const value = select("explorer-stage").value;
+    if (value === "todos" || value === "commercial" || value === "commercial-excluded" || value === "editorial-excluded") {
+      stage = value;
       update();
-    });
-  }
+    }
+  });
   for (const refinement of refinements) {
     input(refinement.id).addEventListener("change", () => {
       enabled[refinement.key] = input(refinement.id).checked;
