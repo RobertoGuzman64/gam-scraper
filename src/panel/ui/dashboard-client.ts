@@ -265,19 +265,18 @@ const renderProviderChart = (scope: PanelScope): void => {
     append(container, item);
   }
 };
-const renderStages = (scope: PanelScope): void => {
-  const data = metricsFor(scope);
+const renderStages = (): void => {
   const steps = [
-    { index: "01", title: "ORIGEN", value: format(data.originals), detail: "Captura y manifiesto canónico", type: "source" },
-    { index: "02", title: "PREPARACIÓN", value: format(data.transformations.changedProducts), detail: "Fichas con cambios observados", type: "prep" },
-    { index: "03", title: "FINISH", value: format(data.published), detail: "Publicación individual acreditada", type: "finish" },
-    { index: "04", title: "COMERCIAL", value: format(data.exported), detail: "Proyección develop verificada", type: "commercial" }
+    { index: "01", title: "ORIGEN", detail: "Ficha y procedencia del proveedor", type: "source" },
+    { index: "02", title: "PREPARACIÓN", detail: "Normalización y aportaciones técnicas", type: "prep" },
+    { index: "03", title: "FINISH", detail: "Publicación individual acreditada", type: "finish" },
+    { index: "04", title: "COMERCIAL", detail: "Proyección develop compatible", type: "commercial" }
   ];
   const container = byId("stage-strip");
   container.replaceChildren();
   for (const stage of steps) {
     const card = element("article", `stage-card stage-${stage.type}`);
-    append(card, element("span", "stage-index", stage.index), element("div", "stage-title", stage.title), element("div", "stage-value", stage.value), element("p", "stage-detail", stage.detail));
+    append(card, element("span", "stage-index", stage.index), element("div", "stage-title", stage.title), element("p", "stage-detail", stage.detail));
     append(container, card);
   }
 };
@@ -368,12 +367,11 @@ const renderSources = (scope: PanelScope): void => {
   append(container, history);
 };
 const render = (): void => {
-  byId("provider-summary").textContent = `${selectedProviders(currentScope).length} ${selectedProviders(currentScope).length === 1 ? "PROVEEDOR" : "PROVEEDORES"}`;
   byId("scope-summary").textContent = scopeLabel(currentScope);
   renderKpis(currentScope);
   renderExplanations(currentScope);
   renderProviderChart(currentScope);
-  renderStages(currentScope);
+  renderStages();
   renderMatrices(currentScope);
   renderQualityHighlights(currentScope);
   renderEvidence(currentScope);
@@ -449,7 +447,6 @@ const cutSha = byId("cut-package-sha");
 cutSha.textContent = packageSha.slice(0, 16);
 cutSha.title = `SHA256 completo: ${packageSha}`;
 byId("header-package").textContent = `PAQUETE UTC ${payload.snapshot.packageDateUtc}`;
-byId("package-summary").textContent = `PAQUETE UTC ${payload.snapshot.packageDateUtc}`;
 renderDecisions();
 render();
 const initialHash = location.hash.slice(1);

@@ -22,7 +22,7 @@ test("el panel deriva todos los indicadores del corte y conserva las poblaciones
   }
   assert.equal(dashboard.snapshot.totals.pendingCategory,
     snapshot.providers.reduce((count, provider) => count + provider.metrics.pendingCategory, 0));
-  assert.equal(dashboard.snapshot.backendIntegration, "not-verified");
+  assert.ok(!("backendIntegration" in dashboard.snapshot));
 });
 
 test("el HTML autónomo contiene los contratos acreditados sin valores prefijados de catálogo", async () => {
@@ -34,12 +34,24 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.match(html, /data-view="calidad"/);
   assert.match(html, /data-view="explorador"/);
   assert.ok(html.includes("explorer-search"));
-  assert.ok(html.includes("presentation-start"));
+  for (const id of ["explorer-sort", "explorer-missing-description", "explorer-without-specs",
+    "explorer-with-additions", "explorer-editorial-changes", "explorer-order-note"]) {
+    assert.ok(html.includes(`id="${id}"`), id);
+  }
+  assert.ok(html.includes("Más especificaciones incorporadas"));
+  assert.ok(html.includes("Menos especificaciones de origen"));
+  assert.ok(html.includes("selectExplorerProducts(products, selection)"));
+  assert.ok(html.includes("data:text/javascript;base64,"));
+  assert.ok(!html.includes('from "../explorer/explorer-selection.js"'));
+  assert.ok(html.includes("Antes y después, en la misma máquina"));
+  assert.ok(!html.includes("presentation-start"));
+  assert.ok(!html.includes("presentation-strip"));
+  assert.ok(!html.includes("presentationSteps"));
   assert.ok(html.includes('id="cut-status-title"'));
   assert.ok(html.includes("Técnico y comercial coherentes al generar"));
   assert.ok(html.includes("abrirla o recargarla no comprueba las selecciones actuales"));
   assert.ok(html.includes('id="cut-package-sha"'));
-  assert.ok(html.includes("CORTE FIJO · VERIFICADO AL GENERAR"));
+  assert.ok(html.includes("CORTE VERIFICADO AL GENERAR"));
   assert.ok(html.includes("Publicación individual del corte"));
   assert.ok(!html.includes("Publicación individual vigente"));
   assert.ok(html.includes("Descripciones, sin recortes"));
@@ -47,7 +59,7 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.ok(html.includes("RESULTADO Y TOMA DE DECISIÓN"));
   assert.ok(html.includes("Comparación de máquina"));
   assert.match(html, /<script type="module">/);
-  assert.match(html, /"backendIntegration":"not-verified"/);
+  assert.ok(!html.includes("backendIntegration"));
   assert.ok(html.includes(`"packageDateUtc":"${snapshot.packageDateUtc}"`));
   assert.ok(html.includes(`"sha256":"${snapshot.commercialManifest.sha256}"`));
   assert.ok(html.includes(`"originals":${snapshot.totals.originals}`));
@@ -59,7 +71,7 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.ok(!html.includes('volume-flow'));
   assert.ok(!html.includes('BD NO VERIFICADA'));
   assert.ok(!html.includes('MATRIZ E / COBERTURA POR FAMILIA'));
-  assert.ok(html.includes('Corte coherente al generar · Evidencias y uso offline'));
+  assert.ok(html.includes('Información del corte y acceso a evidencias'));
   assert.ok(html.includes("Matriz"));
   assert.ok(!html.includes("https://fonts.googleapis.com"));
   assert.ok(!html.includes("<script type=\"module\" src="));
@@ -110,10 +122,10 @@ test("E1–E5 se integran en cuatro vistas y la auditoría queda plegada, sin co
   assert.ok(html.includes('id="excluded-example"'));
   assert.ok(html.includes('id="control-exclusion-editorial"'));
   assert.ok(html.includes('id="control-exclusion-commercial"'));
-  assert.ok(html.includes('<details class="audit-disclosure"><summary>Consultar matrices A–D'));
-  assert.ok(html.includes('<details class="audit-disclosure"><summary>Inspeccionar evidencias'));
+  assert.ok(html.includes('<details class="audit-disclosure"><summary>Consultar matrices técnicas A–D'));
+  assert.ok(html.includes('<details class="audit-disclosure"><summary>Consultar evidencias'));
   assert.ok(html.includes("EJEMPLOS DE REGLA VIGENTE"));
-  assert.ok(html.includes("Una incorporación documental solo se admite"));
+  assert.ok(html.includes("Cuatro comprobaciones para decidir"));
   assert.ok(html.includes("No todo rechazo significa lo mismo"));
   assert.ok(html.includes("panel:request-case"));
   assert.ok(html.includes('"normalizationExamples":['));
@@ -121,7 +133,32 @@ test("E1–E5 se integran en cuatro vistas y la auditoría queda plegada, sin co
 });
 
 
-test("el modo portátil evita enlaces locales rotos y el recorrido guiado conserva fuentes y controles", async () => {
+test("el diseño de exposición prioriza diagramas y conserva auditoría, bifurcaciones y límites", async () => {
+  const workspace = await fixture.root();
+  const snapshot = await readPanelSnapshot(workspace);
+  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  assert.ok(html.indexOf('id="normalization-title"') < html.indexOf('id="stage-strip"'));
+  assert.ok(html.indexOf('id="checks-title"') < html.indexOf('id="quality-highlights"'));
+  assert.ok(html.indexOf('id="controls-title"') < html.indexOf('id="quality-highlights"'));
+  assert.ok(html.includes('class="normalization-diagram"'));
+  assert.ok(html.includes('class="validation-diagram"'));
+  assert.ok(html.includes('class="check-result-pass"'));
+  assert.ok(html.includes('class="check-result-stop"'));
+  assert.ok(html.includes('class="control-group control-fields"'));
+  assert.ok(html.includes('class="control-group control-records"'));
+  assert.ok(html.includes('id="control-exclusion-editorial"'));
+  assert.ok(html.includes('id="control-exclusion-commercial"'));
+  assert.ok(html.includes("No se atribuye o incorpora por esa ruta"));
+  assert.ok(html.includes("No entra en el paquete comercial"));
+  assert.ok(html.includes("Los textos completos están en la ficha desplegable"));
+  assert.ok(html.includes('id="normalization-example"'));
+  assert.ok(html.includes('id="excluded-example"'));
+  assert.ok(html.includes('id="local-evidence-toggle"'));
+  assert.ok(html.includes('class="audit-disclosure"'));
+  assert.ok(!html.includes("presentacion-start"));
+});
+
+test("el modo portátil conserva enlaces seguros y casos reales sin navegación paralela", async () => {
   const workspace = await fixture.root();
   const snapshot = await readPanelSnapshot(workspace);
   const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
@@ -130,13 +167,21 @@ test("el modo portátil evita enlaces locales rotos y el recorrido guiado conser
   assert.ok(html.includes("Enlaces locales desactivados para evitar rutas rotas"));
   assert.ok(html.includes("data.localEvidence") || html.includes("dataset.localEvidence"));
   assert.ok(html.includes("local-proof-link"));
-  assert.ok(html.includes("RECORRIDO GUIADO"));
+  for (const marker of ["presentation-start", "presentation-prev", "presentation-next", "presentation-exit",
+    "presentation-strip", "presentationSteps", "RECORRIDO GUIADO", "presentation-focus"]) {
+    assert.ok(!html.includes(marker), marker);
+  }
   for (const anchor of ["source-map-title", "overview-kpis-title", "normalization-title", "checks-title", "controls-title", "explorer-detail"]) {
     assert.ok(html.includes(`id="${anchor}"`), anchor);
-    assert.ok(html.includes(`focusId: "${anchor}"`), anchor);
   }
-  assert.ok(html.includes("presentationCases = data.explorer.cases.filter"));
-  assert.ok(html.includes("exclusionCase = data.explorer.cases.find"));
-  assert.ok(html.includes("La causa histórica individual" ) || html.includes("no presupone una ejecución histórica demostrada"));
+  assert.equal((html.match(/data-nav="(?:resumen|flujo|explorador|calidad)"/g) ?? []).length, 4);
+  assert.ok(html.includes("panel:request-case"));
+  assert.ok(html.includes("panel:request-view"));
+  assert.ok(html.includes("const chooseCase ="));
+  assert.ok(html.includes("renderCases()"));
+  assert.ok(html.includes('id="evidence-list"'));
+  assert.ok(html.includes('id="cut-package-sha"'));
+  assert.ok(html.includes('class="stage-strip"'));
+  assert.ok(!html.includes('"stage-value"'));
   assert.ok(!html.includes('<script type="module" src='));
 });

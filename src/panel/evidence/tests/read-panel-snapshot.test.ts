@@ -56,7 +56,7 @@ test("rechaza informe técnico sin totales coherentes o trazabilidad completa", 
 test("corte vigente enlaza publicaciones, informes y paquete comercial sin escrituras", async () => {
   const snapshot = await readPanelSnapshot(await fixture.root());
   assert.deepEqual(snapshot.providers.map((item) => item.providerId), [...LEGACY_CAMPAIGN_PROVIDERS]);
-  assert.equal(snapshot.backendIntegration, "not-verified");
+  assert.ok(!("backendIntegration" in snapshot));
   assert.equal(snapshot.environment, "develop");
   assert.match(snapshot.packageDateUtc, /^\d{4}-\d{2}-\d{2}$/);
   assert.equal(snapshot.providers.reduce((sum, item) => sum + item.metrics.originals, 0), snapshot.totals.originals);

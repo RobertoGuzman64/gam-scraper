@@ -1,4 +1,6 @@
 import type { PanelDashboardPayload } from "../application/dashboard-data.js";
+import { explorerProductMetrics, selectExplorerProducts } from "../explorer/explorer-selection.js";
+import type { ExplorerSelection, ExplorerSort } from "../explorer/explorer-selection.js";
 import type { PanelExplorerProduct, PanelPresentationCase, PanelProductView, PanelCommercialView, PanelFieldDifference, PanelFieldProvenance } from "../explorer/types.js";
 import type { PanelArtifact, PanelProviderId } from "../evidence/types.js";
 
@@ -25,6 +27,11 @@ const select = (id: string): HTMLSelectElement => {
 const input = (id: string): HTMLInputElement => {
   const node = find(id);
   if (!(node instanceof HTMLInputElement)) throw new Error(`Campo inválido: ${id}`);
+  return node;
+};
+const checkbox = (id: string): HTMLInputElement => {
+  const node = input(id);
+  if (node.type !== "checkbox") throw new Error(`Filtro inválido: ${id}`);
   return node;
 };
 const text = (value: string | number | boolean | null): string => value === null || value === "" ? "No consta" : String(value);
@@ -283,7 +290,7 @@ const renderFieldStory = (item: PanelExplorerProduct): HTMLElement => {
   const section = create("section", "field-story");
   append(section, create("span", "section-kicker", "E5 / LA HISTORIA DEL DATO"),
     create("h3", "", "¿De dónde sale este dato?"),
-    create("p", "minor-note", "Selecciona una incorporación o modificación. La fuente compatible no equivale a una ejecución histórica acreditada."));
+    create("p", "minor-note", "Selecciona un cambio para consultar su fuente y sus límites."));
   if (!item.original || !item.published) {
     append(section, create("p", "muted-copy", item.published ?
       "No hay un original verificable para comparar esta publicación." :
@@ -333,10 +340,9 @@ const renderFieldStory = (item: PanelExplorerProduct): HTMLElement => {
       if (item.evidence.original && item.evidence.original.path !== provenance.proof.path) {
         append(detail, sourceLink(item.evidence.original, "Consultar original del proveedor"));
       }
-      append(detail, create("p", "minor-note", "El HTML autónomo conserva la ruta y el SHA de esta prueba, pero no adjunta el documento. El enlace solo se habilita desde el repositorio; una URL externa puede cambiar."));
-      append(detail, create("p", "field-story-limit", "Qué permite afirmar: hay una correspondencia verificable con la fuente indicada. Qué no: la ejecución histórica de la regla ni la causa única de este cambio."));
+      append(detail, create("p", "field-story-limit", "Fuente compatible con este dato. No consta qué regla se ejecutó históricamente ni se acredita una causa única."));
     } else {
-      append(detail, create("p", "field-story-limit", "La diferencia está contrastada entre original y FINISH, pero no existe una fuente individual aplicable que permita atribuir su causa."));
+      append(detail, create("p", "field-story-limit", "Cambio contrastado entre original y FINISH; su causa individual no está acreditada."));
       if (item.evidence.original) append(detail, sourceLink(item.evidence.original, "Consultar original verificable"));
     }
   };
@@ -360,6 +366,41 @@ const renderFieldStory = (item: PanelExplorerProduct): HTMLElement => {
   if (initial) selectField(initial);
   return section;
 };
+const descriptionPreview = (label: string, value: string | null): HTMLElement => {
+  const line = create("div", "impact-description");
+  append(line, create("span", "", label));
+  if (value === null || !value.trim()) append(line, create("strong", "impact-absent", "No consta"));
+  else {
+    const excerpt = value.trim().replace(/\s+/g, " ");
+    append(line, create("span", "", excerpt.length <= 125 ? excerpt : `${excerpt.slice(0, 125)}…`));
+  }
+  return line;
+};
+const renderImpactComparison = (item: PanelExplorerProduct): HTMLElement | null => {
+  if (!item.original || !item.published) return null;
+  const metrics = explorerProductMetrics(item);
+  const section = create("section", "impact-comparison");
+  append(section, create("span", "section-kicker", "ORIGINAL → FINISH"),
+    create("h3", "", "Antes y después, en la misma máquina"));
+  const grid = create("div", "impact-comparison-grid");
+  for (const [label, view, count] of [
+    ["ANTES · PROVEEDOR", item.original, metrics.originalSpecs],
+    ["DESPUÉS · FINISH", item.published, metrics.publishedSpecs]
+  ] as const) {
+    const card = create("article", "impact-comparison-card");
+    append(card, create("span", "impact-stage", label),
+      create("strong", "impact-spec-count", formatNumber.format(count)),
+      create("span", "impact-spec-label", "especificaciones declaradas"),
+      descriptionPreview("Descripción corta", view.shortDescription),
+      descriptionPreview("Descripción general", view.generalDescription));
+    append(grid, card);
+  }
+  append(section, grid, create("p", "impact-comparison-result",
+    `${formatNumber.format(metrics.technicalAdditions)} campos técnicos incorporados · ${formatNumber.format(metrics.technicalChanges)} valores técnicos modificados · ${formatNumber.format(metrics.observedDifferences)} diferencias observadas en el comparador.`),
+    create("p", "minor-note", "Especificaciones declaradas y diferencias observadas; no acreditan por sí solas la causa. Los textos completos están en la ficha desplegable."));
+  return section;
+};
+
 const renderChangeSummary = (item: PanelExplorerProduct): HTMLElement => {
   const section = create("section", "change-overview");
   append(section, create("span", "section-kicker", "APORTACIONES Y ESTADO"), create("h3", "", "Qué cambió respecto al origen"));
@@ -400,15 +441,37 @@ let scope: Scope = "todos";
 let stage: Stage = "todos";
 let query = "";
 let category = "todos";
+let sort: ExplorerSort = "most-differences";
+let missingOriginalDescription = false;
+let withoutOriginalSpecs = false;
+let withTechnicalAdditions = false;
+let withEditorialChanges = false;
 let page = 0;
 let selectedId: string | null = null;
 const pageSize = 18;
-const normalized = (value: string): string => value.toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-const visibleProducts = (): readonly PanelExplorerProduct[] => products.filter((item) =>
-  (scope === "todos" || item.providerId === scope) && (stage === "todos" || item.stage === stage) &&
-  (category === "todos" || item.category === category) &&
-  (!query || normalized([item.reference, item.identity, item.sourceUrl, item.original?.title,
-    item.published?.title, item.commercial?.title].filter((value) => value !== null && value !== undefined).join(" ")).includes(query)));
+const visibleProducts = (): readonly PanelExplorerProduct[] => {
+  const selection: ExplorerSelection = {
+    providerId: scope, stage, category, query, sort,
+    missingOriginalDescription, withoutOriginalSpecs, withTechnicalAdditions, withEditorialChanges
+  };
+  return selectExplorerProducts(products, selection);
+};
+const reconcileSelection = (preferFirst = false): void => {
+  const visible = visibleProducts();
+  if (preferFirst || !selectedId || !visible.some((item) => item.identity === selectedId)) {
+    selectedId = visible[0]?.identity ?? null;
+  }
+  if (selectedId) page = Math.max(0, Math.floor(visible.findIndex((item) => item.identity === selectedId) / pageSize));
+};
+const resetRefinements = (): void => {
+  missingOriginalDescription = false;
+  withoutOriginalSpecs = false;
+  withTechnicalAdditions = false;
+  withEditorialChanges = false;
+  for (const id of ["explorer-missing-description", "explorer-without-specs", "explorer-with-additions", "explorer-editorial-changes"]) {
+    checkbox(id).checked = false;
+  }
+};
 const refreshCategories = (): void => {
   const menu = select("explorer-category");
   const options = [...new Set(products.filter((item) => scope === "todos" || item.providerId === scope)
@@ -432,17 +495,7 @@ const renderCases = (): void => {
   for (const item of data.explorer.cases) {
     const product = productsById.get(item.identity);
     if (!product || scope !== "todos" && item.providerId !== scope) continue;
-    append(target, newButton(`${names[item.providerId]} · ${caseLabels[item.focus]}`, () => {
-      stage = "todos";
-      category = "todos";
-      query = "";
-      input("explorer-search").value = "";
-      select("explorer-stage").value = "todos";
-      refreshCategories();
-      selectedId = item.identity;
-      page = Math.max(0, Math.floor(visibleProducts().findIndex((entry) => entry.identity === item.identity) / pageSize));
-      renderExplorer();
-    }, "case-button"));
+    append(target, newButton(`${names[item.providerId]} · ${caseLabels[item.focus]}`, () => chooseCase(item), "case-button"));
   }
 };
 const renderRows = (): void => {
@@ -451,7 +504,10 @@ const renderRows = (): void => {
   list.replaceChildren();
   const lastPage = Math.max(0, Math.ceil(filtered.length / pageSize) - 1);
   page = Math.min(page, lastPage);
-  find("explorer-counter").textContent = `${formatNumber.format(filtered.length)} fichas · ${scope === "todos" ? "Todos" : names[scope]}`;
+  find("explorer-counter").textContent = `${formatNumber.format(filtered.length)} de ${formatNumber.format(products.filter((item) => scope === "todos" || item.providerId === scope).length)} fichas · ${scope === "todos" ? "Todos" : names[scope]}`;
+  find("explorer-order-note").textContent = sort === "reference" ?
+    "Por referencia: incluye excluidas. Los filtros de carencias requieren original conservado." :
+    "Orden por diferencias observadas entre original y FINISH, no por calidad ni causa histórica demostrada.";
   find("explorer-pages-label").textContent = `${filtered.length ? page + 1 : 0} / ${filtered.length ? lastPage + 1 : 0}`;
   const prev = find("explorer-page-prev");
   const next = find("explorer-page-next");
@@ -462,7 +518,7 @@ const renderRows = (): void => {
     return;
   }
   for (const item of filtered.slice(page * pageSize, (page + 1) * pageSize)) {
-    const button = newButton("", () => { selectedId = item.identity; renderRows(); renderDetail(); },
+    const button = newButton("", () => { selectedId = item.identity; renderRows(); renderDetail(); showSelectionOnMobile(); },
       `product-row ${selectedId === item.identity ? "selected" : ""}`);
     button.setAttribute("aria-pressed", String(selectedId === item.identity));
     const top = create("span", "product-row-top");
@@ -470,6 +526,14 @@ const renderRows = (): void => {
       create("span", `product-status product-${item.stage}`, stages[item.stage]));
     append(button, top, create("span", "product-title", item.published?.title ?? item.original?.title ?? "Sin título"),
       create("small", "", `${names[item.providerId]} · ${item.category ?? "Categoría no disponible"}`));
+    if (item.original && item.published) {
+      const metrics = explorerProductMetrics(item);
+      const summary = create("span", "product-impact");
+      append(summary, create("span", "", `Specs ${formatNumber.format(metrics.originalSpecs)} → ${formatNumber.format(metrics.publishedSpecs)}`),
+        create("strong", "", `+${formatNumber.format(metrics.technicalAdditions)} incorporadas`),
+        create("span", "", `${formatNumber.format(metrics.observedDifferences)} diferencias`));
+      append(button, summary);
+    }
     append(list, button);
   }
 };
@@ -525,7 +589,16 @@ const renderDetail = (): void => {
     create("p", "", `Referencia: ${item.reference ?? "No consta"}`));
   if (verifiedUrl(item.sourceUrl)) append(heading, linkTo(item.sourceUrl, "Abrir ficha del proveedor"));
 
-  append(target, heading, renderChangeSummary(item), renderFieldStory(item));
+  append(target, heading);
+  const comparison = renderImpactComparison(item);
+  if (comparison) {
+    append(target, comparison, renderFieldStory(item));
+    const more = create("details", "change-summary-more");
+    append(more, create("summary", "", "Ver desglose completo de cambios y estado"), renderChangeSummary(item));
+    append(target, more);
+  } else {
+    append(target, renderChangeSummary(item), renderFieldStory(item));
+  }
   const commercial = renderCommercialSummary(item);
   if (commercial) append(target, commercial);
   const full = create("details", "full-record");
@@ -553,7 +626,14 @@ const renderDetail = (): void => {
   append(provenance, artifacts);
   append(target, provenance);
 };
-const renderExplorer = (): void => { renderCases(); renderRows(); renderDetail(); };
+const renderExplorer = (): void => { reconcileSelection(); renderCases(); renderRows(); renderDetail(); };
+const showSelectionOnMobile = (): void => {
+  if (!window.matchMedia("(max-width: 750px)").matches) return;
+  const target = find("explorer-detail");
+  target.setAttribute("tabindex", "-1");
+  target.focus({ preventScroll: true });
+  target.scrollIntoView({ block: "start" });
+};
 const chooseCase = (item: PanelPresentationCase): void => {
   const record = productsById.get(item.identity);
   if (!record) return;
@@ -563,97 +643,78 @@ const chooseCase = (item: PanelPresentationCase): void => {
   stage = "todos";
   category = "todos";
   query = "";
+  sort = "reference";
   input("explorer-search").value = "";
   select("explorer-stage").value = "todos";
+  select("explorer-sort").value = sort;
+  resetRefinements();
   refreshCategories();
   selectedId = item.identity;
   page = Math.max(0, Math.floor(visibleProducts().findIndex((entry) => entry.identity === selectedId) / pageSize));
   renderExplorer();
   window.dispatchEvent(new CustomEvent("panel:request-view", { detail: "explorador" }));
-};
-
-type PresentationStep = {
-  readonly title: string;
-  readonly description: string;
-  readonly view: "resumen" | "flujo" | "explorador" | "calidad";
-  readonly focusId: string;
-  readonly example?: PanelPresentationCase;
-};
-const presentationCases = data.explorer.cases.filter((item) => item.focus !== "exclusion");
-const exclusionCase = data.explorer.cases.find((item) => item.focus === "exclusion");
-const presentationSteps: readonly PresentationStep[] = [
-  { title: "01 · De dónde pueden venir los datos", description: "E1 · Las fuentes son posibilidades sujetas a identidad y aplicabilidad; conocer una referencia no prueba su uso en una ficha.", view: "resumen", focusId: "source-map-title" },
-  { title: "02 · El resultado del corte", description: "Originales, publicaciones FINISH, exportación comercial y claves técnicas incorporadas.", view: "resumen", focusId: "overview-kpis-title" },
-  { title: "03 · Uniformidad técnica", description: "E2 · Correspondencias de claves del diccionario vigente, no pruebas de que una regla actuara históricamente sobre una unidad concreta.", view: "flujo", focusId: "normalization-title" },
-  { title: "04 · Evidencia que permite incorporar", description: "E3 · Comprobaciones documentadas de una ruta técnica, con condiciones opcionales y rechazo de una clave si no cumple el contrato.", view: "calidad", focusId: "checks-title" },
-  { title: "05 · Controles y exclusiones", description: "E4 · No incorporar una especificación, excluir de FINISH y excluir del comercial son decisiones diferentes.", view: "calidad", focusId: "controls-title" },
-  ...presentationCases.map((item): PresentationStep => ({
-    title: `${names[item.providerId]} · ${caseLabels[item.focus]}`,
-    description: "E5 · Ficha real del paquete identificado. Observa el antes y después y consulta la fuente compatible cuando exista; no presupone una ejecución histórica demostrada.",
-    view: "explorador", focusId: "explorer-detail", example: item
-  })),
-  ...(exclusionCase ? [{
-    title: `${names[exclusionCase.providerId]} · Caso adverso`,
-    description: "Exclusión real documentada en la acreditación del corte. No se confunde con un rechazo aislado de un campo ni con una exclusión comercial.",
-    view: "explorador" as const, focusId: "explorer-detail", example: exclusionCase
-  }] : []),
-  { title: "Cierre · Qué podemos demostrar", description: "Resultado agregado, limitaciones, SHA y evidencias. Un cambio observado o una fuente compatible no demuestran por sí solos su causalidad histórica.", view: "resumen", focusId: "overview-kpis-title" }
-];
-let presentation = -1;
-const renderPresentation = (): void => {
-  const strip = find("presentation-strip");
-  strip.hidden = presentation < 0;
-  document.querySelectorAll(".presentation-focus").forEach((node) => node.classList.remove("presentation-focus"));
-  if (presentation < 0) return;
-  const step = presentationSteps[presentation];
-  if (!step) return;
-  find("presentation-progress").textContent = `RECORRIDO GUIADO · ${presentation + 1} / ${presentationSteps.length}`;
-  find("presentation-heading").textContent = step.title;
-  find("presentation-description").textContent = step.description;
-  for (const [id, disabled] of [["presentation-prev", presentation === 0],
-    ["presentation-next", presentation === presentationSteps.length - 1]] as const) {
-    const node = find(id);
-    if (node instanceof HTMLButtonElement) node.disabled = disabled;
-  }
-  if (step.example) chooseCase(step.example);
-  else {
-    select("provider-filter").value = "todos";
-    select("provider-filter").dispatchEvent(new Event("change", { bubbles: true }));
-    window.dispatchEvent(new CustomEvent("panel:request-view", { detail: step.view }));
-  }
-  const focus = find(step.focusId);
-  focus.classList.add("presentation-focus");
-  focus.setAttribute("tabindex", "-1");
-  focus.focus({ preventScroll: true });
-  focus.scrollIntoView({ block: "start", behavior: "auto" });
+  showSelectionOnMobile();
 };
 
 input("explorer-search").addEventListener("input", () => {
-  query = normalized(input("explorer-search").value.trim());
+  query = input("explorer-search").value.trim();
   page = 0;
+  reconcileSelection();
   renderExplorer();
 });
 select("explorer-stage").addEventListener("change", () => {
   const selected = select("explorer-stage").value;
   stage = selected === "commercial" || selected === "commercial-excluded" || selected === "editorial-excluded" ? selected : "todos";
   page = 0;
+  reconcileSelection();
   renderExplorer();
 });
 select("explorer-category").addEventListener("change", () => {
   category = select("explorer-category").value;
   page = 0;
+  reconcileSelection();
   renderExplorer();
 });
-find("explorer-page-prev").addEventListener("click", () => { page = Math.max(0, page - 1); renderRows(); });
-find("explorer-page-next").addEventListener("click", () => { page += 1; renderRows(); });
+select("explorer-sort").addEventListener("change", () => {
+  const chosen = select("explorer-sort").value;
+  if (chosen !== "most-differences" && chosen !== "fewest-original-specs" &&
+    chosen !== "most-technical-additions" && chosen !== "most-technical-changes" && chosen !== "reference") return;
+  sort = chosen;
+  page = 0;
+  reconcileSelection(true);
+  renderExplorer();
+});
+for (const [id, set] of [
+  ["explorer-missing-description", (value: boolean): void => { missingOriginalDescription = value; }],
+  ["explorer-without-specs", (value: boolean): void => { withoutOriginalSpecs = value; }],
+  ["explorer-with-additions", (value: boolean): void => { withTechnicalAdditions = value; }],
+  ["explorer-editorial-changes", (value: boolean): void => { withEditorialChanges = value; }]
+] as const) {
+  checkbox(id).addEventListener("change", () => {
+    set(checkbox(id).checked);
+    page = 0;
+    reconcileSelection(true);
+    renderExplorer();
+  });
+}
+const changePage = (offset: number): void => {
+  const visible = visibleProducts();
+  const lastPage = Math.max(0, Math.ceil(visible.length / pageSize) - 1);
+  page = Math.max(0, Math.min(lastPage, page + offset));
+  selectedId = visible[page * pageSize]?.identity ?? null;
+  renderRows();
+  renderDetail();
+};
+find("explorer-page-prev").addEventListener("click", () => changePage(-1));
+find("explorer-page-next").addEventListener("click", () => changePage(1));
 window.addEventListener("panel:scope", (event: Event) => {
   if (!(event instanceof CustomEvent)) return;
   const next: unknown = event.detail;
   if (next !== "todos" && next !== "gam" && next !== "gomariz" && next !== "mercaeleva") return;
   scope = next;
   page = 0;
-  if (selectedId && !visibleProducts().some((item) => item.identity === selectedId)) selectedId = null;
   refreshCategories();
+  reconcileSelection();
   renderExplorer();
 });
 window.addEventListener("panel:request-case", (event: Event) => {
@@ -662,30 +723,6 @@ window.addEventListener("panel:request-case", (event: Event) => {
   if (typeof identity !== "string") return;
   const selected = data.explorer.cases.find((candidate) => candidate.identity === identity);
   if (selected) chooseCase(selected);
-});
-find("presentation-start").addEventListener("click", () => { presentation = 0; renderPresentation(); });
-find("presentation-prev").addEventListener("click", () => { if (presentation > 0) { presentation -= 1; renderPresentation(); } });
-find("presentation-next").addEventListener("click", () => {
-  if (presentation >= 0 && presentation < presentationSteps.length - 1) { presentation += 1; renderPresentation(); }
-});
-const exitPresentation = (): void => {
-  presentation = -1;
-  renderPresentation();
-  find("presentation-start").focus();
-};
-find("presentation-exit").addEventListener("click", exitPresentation);
-window.addEventListener("keydown", (event: KeyboardEvent) => {
-  if (presentation < 0) return;
-  if (event.key === "Escape") exitPresentation();
-  if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement ||
-    event.target instanceof HTMLTextAreaElement) return;
-  if (event.key === "ArrowRight" && presentation < presentationSteps.length - 1) {
-    presentation += 1;
-    renderPresentation();
-  } else if (event.key === "ArrowLeft" && presentation > 0) {
-    presentation -= 1;
-    renderPresentation();
-  }
 });
 refreshCategories();
 renderExplorer();

@@ -63,5 +63,4 @@ export type PanelSnapshot = {
   };
   readonly providers: readonly PanelProviderEvidence[];
   readonly totals: PanelProviderMetrics;
-  readonly backendIntegration: "not-verified";
 };

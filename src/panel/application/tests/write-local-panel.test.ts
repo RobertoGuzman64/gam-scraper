@@ -12,8 +12,12 @@ test("escribe el panel de forma atómica, evita regeneración idéntica y conser
   await fixture.withCopy(async (workspace) => {
     const sourceUi = join(workspace, "src", "panel", "ui");
     const compiledUi = join(workspace, "dist", "panel", "ui");
+    const compiledExplorer = join(workspace, "dist", "panel", "explorer");
     await mkdir(sourceUi, { recursive: true });
     await mkdir(compiledUi, { recursive: true });
+    await mkdir(compiledExplorer, { recursive: true });
+    await cp(join(process.cwd(), "dist", "panel", "explorer", "explorer-selection.js"),
+      join(compiledExplorer, "explorer-selection.js"));
     await cp(join(process.cwd(), "src", "panel", "ui", "dashboard.css"), join(sourceUi, "dashboard.css"));
     for (const name of ["dashboard-client.js", "explorer-client.js"]) {
       await cp(join(process.cwd(), "dist", "panel", "ui", name), join(compiledUi, name));

@@ -126,6 +126,6 @@ export const readPanelSnapshot = async (workspace: string): Promise<PanelSnapsho
       technicalReport: technicalReport.previousSha256,
       commercialReport: commercialReport.previousSha256
     },
-    providers, totals: totals(providers), backendIntegration: "not-verified"
+    providers, totals: totals(providers)
   };
 };
