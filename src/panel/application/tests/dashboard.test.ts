@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { SPEC_KEY_NORMALIZATION, SPEC_RULES } from "../../../catalog/normalization/spec-rules.js";
 import { createDashboardPayload } from "../dashboard-data.js";
+import { readPanelRuleExamples } from "../panel-rule-examples.js";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { renderPanelHtml } from "../panel-html.js";
 import { readPanelSnapshot } from "../../evidence/read-panel-snapshot.js";
 import { readPanelExplorer } from "../../explorer/read-panel-explorer.js";
@@ -143,20 +146,19 @@ test("F3 conserva el corte acreditado sin emitir matrices C/D ni el bloque de ev
   assert.ok(!html.includes('renderDecisions('));
 });
 
-test("F3 mantiene acceso local explícito a fuentes sin control fuera del diálogo", async () => {
+test("los títulos de las métricas son informativos y no abren diálogos de definición", async () => {
   const workspace = await fixture.root();
   const snapshot = await readPanelSnapshot(workspace);
   const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
-  assert.ok(html.includes('id="definition-source"'));
-  assert.ok(html.includes('"dialog-files-toggle"'));
-  assert.ok(html.includes('"aria-pressed", "false"'));
-  assert.ok(html.includes('"a.local-proof-link"'));
-  assert.ok(html.includes('link.dataset.localHref'));
-  assert.ok(html.includes('link.removeAttribute("href")'));
-  assert.ok(html.includes('sourceArtifacts(key, currentScope)'));
-  assert.ok(html.includes('Los enlaces requieren los archivos del repositorio junto al panel.'));
-  for (const removed of ["local-evidence-toggle", "evidence-access-status", "panel:enable-local-evidence",
-    "panel:local-evidence-updated", "dataset.localEvidence", "quality-cut-card"]) assert.ok(!html.includes(removed), removed);
+  assert.ok(html.includes('"kpi-metric-label"'));
+  assert.ok(html.includes('cell.textContent = column.label'));
+  assert.ok(html.includes('cell.scope = "col"'));
+  for (const removed of ["definition-dialog", "definition-title", "definition-source", "metric-button", "metric-info",
+    "close-definition", "dialog-files-toggle", "sourceArtifacts", "local-proof-link", "openDefinition",
+    "Activar enlaces locales", "DEFINICIÓN Y PROCEDENCIA"]) assert.ok(!html.includes(removed), removed);
+  assert.ok(html.includes('id="rule-dialog"'));
+  assert.ok(html.includes('id="rule-dialog-code"'));
+  for (const rule of ["source", "normalization", "exclusion"]) assert.ok(html.includes(`data-rule="${rule}"`));
 });
 
 test("las fuentes y métricas no se alteran al crear la vista", async () => {
@@ -267,7 +269,6 @@ test("el diseño de exposición prioriza diagramas y conserva auditoría, bifurc
   assert.ok(html.includes("Comparar contenido de la ficha"));
   assert.ok(html.includes('id="normalization-example"'));
   assert.ok(html.includes('id="excluded-example"'));
-  assert.ok(html.includes('"dialog-files-toggle"'));
   assert.ok(html.includes('class="audit-disclosure"'));
   assert.ok(!html.includes("presentacion-start"));
 });
@@ -276,8 +277,6 @@ test("el modo portátil conserva enlaces seguros y casos reales sin navegación 
   const workspace = await fixture.root();
   const snapshot = await readPanelSnapshot(workspace);
   const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
-  assert.ok(html.includes('"dialog-files-toggle"'));
-  assert.ok(html.includes('"local-proof-link"'));
   assert.ok(!html.includes('id="local-evidence-toggle"'));
   for (const marker of ["presentation-start", "presentation-prev", "presentation-next", "presentation-exit",
     "presentation-strip", "presentationSteps", "RECORRIDO GUIADO", "presentation-focus"]) {
@@ -545,4 +544,32 @@ test("F7 despliega hasta 30 filas sin scroll interno y muestra proveedor, refere
   assert.ok(html.includes('showSelectionForDesktop()'));
   assert.ok(html.includes('detail.scrollIntoView({ block: "start", behavior: "instant" })'));
   assert.ok(html.includes('(max-width: 1250px)'));
+});
+
+
+test("muestra reglas vigentes extraídas del código, separadas de los ejemplos observables", async () => {
+  const root = process.cwd();
+  const examples = await readPanelRuleExamples(root);
+  for (const example of Object.values(examples)) {
+    const lines = (await readFile(join(root, example.path), "utf8")).split(/\r?\n/u);
+    for (const line of example.code.split("\n")) {
+      assert.ok(lines.some((source) => source.trim() === line.trim()), `${example.path}: ${line}`);
+    }
+    assert.ok(example.code.length > 60);
+  }
+  assert.ok(examples.source.code.includes('unit.fingerprint'));
+  assert.ok(examples.normalization.code.includes('number >= 0'));
+  assert.ok(examples.exclusion.code.includes('decision.requiredIssues.every'));
+  const snapshot = await readPanelSnapshot(await fixture.root());
+  const html = await renderPanelHtml(root, createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot)));
+  for (const id of ["source", "normalization", "exclusion"]) {
+    assert.ok(html.includes(`data-rule="${id}"`));
+    assert.ok(html.includes(`"${id}":{`));
+  }
+  assert.ok(html.includes('id="panel-rule-examples"'));
+  assert.ok(html.includes('id="rule-dialog"'));
+  assert.ok(html.includes('id="rule-dialog-code"'));
+  assert.ok(html.includes('Fragmento de implementación, no prueba de que esta regla causase'));
+  assert.ok(!html.includes('Ver comprobaciones y código de referencia'));
+  assert.ok(html.indexOf('data-nav="calidad"') < html.indexOf('data-nav="explorador"'));
 });

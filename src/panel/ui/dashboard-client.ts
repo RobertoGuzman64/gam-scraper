@@ -1,7 +1,8 @@
 import type { PanelDashboardPayload, PanelNormalizationEntry } from "../application/dashboard-data.js";
+import type { PanelRuleExamples, PanelRuleId } from "../application/panel-rule-examples.js";
 import type { SpecRuleType } from "../../catalog/normalization/spec-rules.js";
 import type { PanelMetricKey } from "../evidence/metric-definitions.js";
-import type { PanelArtifact, PanelProviderEvidence, PanelProviderId, PanelProviderMetrics } from "../evidence/types.js";
+import type { PanelProviderEvidence, PanelProviderId, PanelProviderMetrics } from "../evidence/types.js";
 
 type PanelView = "resumen" | "flujo" | "explorador" | "calidad";
 type PanelScope = PanelProviderId | "todos";
@@ -21,6 +22,27 @@ if (!raw) throw new Error("Datos del panel no disponibles");
 const decoded: unknown = JSON.parse(raw);
 if (!isPayload(decoded)) throw new Error("Contrato de visualización incompatible");
 const payload = decoded;
+const ruleRaw = document.getElementById("panel-rule-examples")?.textContent;
+if (!ruleRaw) throw new Error("Reglas técnicas del panel no disponibles");
+const decodedRules: unknown = JSON.parse(ruleRaw);
+const ruleIds = ["source", "normalization", "exclusion"] as const;
+const isRuleExample = (value: unknown): value is PanelRuleExamples[PanelRuleId] => isRecord(value) &&
+  typeof value.title === "string" && typeof value.summary === "string" &&
+  typeof value.path === "string" && typeof value.code === "string";
+if (!isRecord(decodedRules) || !ruleIds.every((id) => isRuleExample(decodedRules[id]))) {
+  throw new Error("Contrato de reglas técnicas incompatible");
+}
+const sourceRule = decodedRules.source;
+const normalizationRule = decodedRules.normalization;
+const exclusionRule = decodedRules.exclusion;
+if (!isRuleExample(sourceRule) || !isRuleExample(normalizationRule) || !isRuleExample(exclusionRule)) {
+  throw new Error("Reglas técnicas no disponibles");
+}
+const ruleExamples: PanelRuleExamples = {
+  source: sourceRule,
+  normalization: normalizationRule,
+  exclusion: exclusionRule
+};
 const number = new Intl.NumberFormat("es-ES");
 const format = (value: number): string => number.format(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 const metric = (metrics: PanelProviderMetrics, key: PanelMetricKey): number => {
@@ -50,79 +72,26 @@ const metricsFor = (scope: PanelScope): PanelProviderMetrics => {
 const knownName = (id: PanelProviderId): string => payload.names[id];
 const scopeLabel = (scope: PanelScope): string => scope === "todos" ? "Todos los proveedores" : knownName(scope);
 const metricDefinition = (key: PanelMetricKey) => payload.definitions.find((item) => item.key === key);
-const artifactLink = (artifact: PanelArtifact): HTMLAnchorElement => {
-  const link = element("a", "file-link", artifact.path);
-  if (!artifact.path.startsWith("catalogs/") || artifact.path.includes("..") || !/^[a-f0-9]{64}$/.test(artifact.sha256)) {
-    throw new Error("Ruta de evidencia inválida");
-  }
-  link.classList.add("local-proof-link");
-  link.dataset.localHref = encodeURI(`../${artifact.path}`);
-  link.title = "Archivo acreditado disponible junto al repositorio";
-  link.target = "_blank";
-  link.rel = "noopener noreferrer";
-  return link;
-};
-type NamedArtifact = { readonly label: string; readonly artifact: PanelArtifact };
-const sourceArtifacts = (key: PanelMetricKey, scope: PanelScope): readonly NamedArtifact[] => {
-  const definition = metricDefinition(key);
-  if (!definition) return [];
-  if (definition.source === "technical-report") return [{ label: "Informe técnico", artifact: payload.snapshot.technicalReport }];
-  if (definition.source === "commercial-manifest") return [{ label: "Manifiesto comercial", artifact: payload.snapshot.commercialManifest }];
-  if (definition.source === "commercial-json") return selectedProviders(scope).map((item) =>
-    ({ label: `Comercial · ${knownName(item.providerId)}`, artifact: item.commercial }));
-  return selectedProviders(scope).map((item) =>
-    ({ label: `FINISH · ${knownName(item.providerId)}`, artifact: item.publicationManifest }));
-};
-const namedArtifactLink = ({ label, artifact }: NamedArtifact): HTMLAnchorElement => {
-  const link = artifactLink(artifact);
-  link.textContent = label;
-  link.setAttribute("aria-label", `${label} · archivo del repositorio`);
-  return link;
-};
 let currentScope: PanelScope = "todos";
 let currentView: PanelView = "resumen";
 
-const dialog = byId("definition-dialog");
-const openDefinition = (key: PanelMetricKey): void => {
-  const definition = metricDefinition(key);
-  if (!definition) return;
-  byId("definition-title").textContent = definition.label;
-  byId("definition-copy").textContent = definition.interpretation;
-  const container = byId("definition-source");
-  container.replaceChildren();
-  const heading = element("div", "dialog-sources-title", `FUENTE · ${scopeLabel(currentScope)}`);
-  append(container, heading);
-  const sources = sourceArtifacts(key, currentScope);
-  if (sources.length > 0) {
-    const toggle = element("button", "dialog-files-toggle", "Activar enlaces locales");
-    toggle.type = "button";
-    toggle.setAttribute("aria-pressed", "false");
-    toggle.addEventListener("click", () => {
-      const enabled = toggle.getAttribute("aria-pressed") !== "true";
-      for (const link of container.querySelectorAll<HTMLAnchorElement>("a.local-proof-link")) {
-        if (enabled && link.dataset.localHref) link.href = link.dataset.localHref;
-        else link.removeAttribute("href");
-      }
-      toggle.setAttribute("aria-pressed", String(enabled));
-      toggle.textContent = enabled ? "Desactivar enlaces locales" : "Activar enlaces locales";
-    });
-    append(container, toggle, element("p", "dialog-files-note", "Los enlaces requieren los archivos del repositorio junto al panel."));
-  }
-  for (const entry of sources) {
-    const row = element("div", "dialog-source-item");
-    append(row, namedArtifactLink(entry));
-    append(container, row);
-  }
-  if (dialog instanceof HTMLDialogElement) dialog.showModal();
-};
-const metricButton = (key: PanelMetricKey, label: string): HTMLButtonElement => {
-  const button = element("button", "metric-button", label);
-  button.type = "button";
-  button.title = `Consultar definición y procedencia: ${label}`;
-  button.addEventListener("click", () => openDefinition(key));
-  append(button, element("span", "metric-info", "ⓘ"));
-  return button;
-};
+const ruleDialog = byId("rule-dialog");
+for (const button of document.querySelectorAll<HTMLButtonElement>("[data-rule]")) {
+  button.addEventListener("click", () => {
+    const id = button.dataset.rule;
+    if (id !== "source" && id !== "normalization" && id !== "exclusion") return;
+    const example = ruleExamples[id];
+    byId("rule-dialog-title").textContent = example.title;
+    byId("rule-dialog-summary").textContent = example.summary;
+    byId("rule-dialog-code").textContent = example.code;
+    byId("rule-dialog-path").textContent = example.path;
+    if (ruleDialog instanceof HTMLDialogElement) ruleDialog.showModal();
+  });
+}
+byId("close-rule").addEventListener("click", () => {
+  if (ruleDialog instanceof HTMLDialogElement) ruleDialog.close();
+});
+
 const createMatrix = (target: string, columns: readonly MetricColumn[], scope: PanelScope): void => {
   const table = element("table", "data-table");
   const caption = element("caption", "sr-only", `Matriz del corte · ${scopeLabel(scope)}`);
@@ -131,7 +100,8 @@ const createMatrix = (target: string, columns: readonly MetricColumn[], scope: P
   append(trh, element("th", "first-col", "PROVEEDOR"));
   for (const column of columns) {
     const cell = element("th");
-    append(cell, metricButton(column.key, column.label));
+    cell.scope = "col";
+    cell.textContent = column.label;
     append(trh, cell);
   }
   append(head, trh);
@@ -251,7 +221,7 @@ const renderKpis = (scope: PanelScope): void => {
     const tile = element("article", `kpi-card accent-${card.accent}`);
     append(tile, element("div", "kpi-overline", card.overline));
     append(tile, element("div", "kpi-value", format(metric(metrics, card.key))));
-    append(tile, metricButton(card.key, metricDefinition(card.key)?.label ?? card.key));
+    append(tile, element("span", "kpi-metric-label", metricDefinition(card.key)?.label ?? card.key));
     append(tile, element("p", "kpi-note", card.note));
     append(container, tile);
   }
@@ -356,9 +326,6 @@ for (const button of document.querySelectorAll<HTMLButtonElement>("[data-go]")) 
     if (target === "resumen" || target === "flujo" || target === "explorador" || target === "calidad") navigate(target);
   });
 }
-for (const id of ["close-definition", "close-definition-secondary"]) byId(id).addEventListener("click", () => {
-  if (dialog instanceof HTMLDialogElement) dialog.close();
-});
 byId("header-package").textContent = `PAQUETE UTC ${payload.snapshot.packageDateUtc}`;
 renderNormalization();
 render();

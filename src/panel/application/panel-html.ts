@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { PanelDashboardPayload } from "./dashboard-data.js";
+import { readPanelRuleExamples } from "./panel-rule-examples.js";
 
 const safeJson = (value: unknown): string => JSON.stringify(value)
   .replaceAll("<", "\\u003c")
@@ -10,13 +11,14 @@ const safeJson = (value: unknown): string => JSON.stringify(value)
   .replaceAll("\u2029", "\\u2029");
 
 export const renderPanelHtml = async (workspace: string, payload: PanelDashboardPayload): Promise<string> => {
-  const [css, js, explorerJs, selectionJs, stageCardsJs, filtersJs] = await Promise.all([
+  const [css, js, explorerJs, selectionJs, stageCardsJs, filtersJs, ruleExamples] = await Promise.all([
     readFile(join(workspace, "src", "panel", "ui", "dashboard.css"), "utf8"),
     readFile(join(workspace, "dist", "panel", "ui", "dashboard-client.js"), "utf8"),
     readFile(join(workspace, "dist", "panel", "ui", "explorer-client.js"), "utf8"),
     readFile(join(workspace, "dist", "panel", "explorer", "explorer-selection.js"), "utf8"),
     readFile(join(workspace, "dist", "panel", "ui", "explorer-stage-cards.js"), "utf8"),
-    readFile(join(workspace, "dist", "panel", "ui", "explorer-filter-controls.js"), "utf8")
+    readFile(join(workspace, "dist", "panel", "ui", "explorer-filter-controls.js"), "utf8"),
+    readPanelRuleExamples(workspace)
   ]);
   const selectionImport = '"../explorer/explorer-selection.js"';
   const cardsImport = '"./explorer-stage-cards.js"';
@@ -84,7 +86,7 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
             <div class="source-map-inputs"><span>FUENTES POSIBLES · SEGÚN APLICABILIDAD</span><div class="source-map-primary"><div>Original del proveedor <small>Unidad y origen</small></div><div>Fabricante y modelo <small>Alcance de modelo</small></div><div>Intervención <small>Solo si está acreditada</small></div></div><div class="source-map-secondary"><div>Evidencia documental <small>Unidad concreta</small></div><div>Conocimiento editorial <small>Registro compatible</small></div></div></div>
             <div class="explain-arrow" aria-hidden="true">→</div><div class="source-map-process"><strong>Comprobar y transformar</strong><span>Identidad · evidencia · reglas aplicables</span><small>No toda fuente se aplica a toda ficha</small></div><div class="explain-arrow" aria-hidden="true">→</div><div class="source-map-output"><strong>FINISH</strong><span>Publicación técnica</span><div class="source-map-commercial">↓ Proyección comercial compatible</div></div>
           </div>
-          <div class="explain-footer"><p>Fuente disponible no significa aplicación demostrada.</p><button type="button" class="text-action" id="source-example">Ver un caso real →</button></div>
+          <div class="explain-footer"><p>Fuente disponible no significa aplicación demostrada.</p><div class="explain-actions"><button type="button" class="text-action" id="source-example">Ver ejemplo real →</button><button type="button" class="text-action rule-action" data-rule="source">Ver regla &lt;/&gt;</button></div></div>
         </section>
         <details class="audit-disclosure"><summary>Comparar volúmenes por proveedor</summary>
           <section class="surface-card coverage-card" aria-labelledby="coverage-title"><div class="card-heading"><div><span class="section-kicker">DESGLOSE ACREDITADO</span><h3 id="coverage-title">Cobertura por proveedor</h3></div></div><div id="provider-chart" class="provider-chart"></div><div class="chart-footer"><span id="chart-scale"></span><button class="text-action" type="button" data-go="flujo">Ver matrices <span aria-hidden="true">↗</span></button></div></section></details>
@@ -101,7 +103,7 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
           </div>
           <h3 class="normalization-rule-heading">Ocho correspondencias del diccionario vigente</h3>
           <div class="normalization-table-wrap"><table class="normalization-table"><caption class="sr-only">Ocho ejemplos de alias del contrato vigente</caption><thead><tr><th scope="col">Recibida</th><th scope="col">Normalizada</th><th scope="col">Tipo</th></tr></thead><tbody id="normalization-examples"></tbody></table></div>
-          <div class="explain-footer"><p>Correspondencias disponibles en <code>SPEC_KEY_NORMALIZATION</code> y tipos de <code>SPEC_RULES</code>; no acreditan qué regla se aplicó a una ficha concreta.</p><button type="button" class="text-action" id="normalization-example">Ver una diferencia técnica real →</button></div>
+          <div class="explain-footer"><p>Correspondencias disponibles en <code>SPEC_KEY_NORMALIZATION</code> y tipos de <code>SPEC_RULES</code>; no acreditan qué regla se aplicó a una ficha concreta.</p><div class="explain-actions"><button type="button" class="text-action" id="normalization-example">Ver ejemplo real →</button><button type="button" class="text-action rule-action" data-rule="normalization">Ver regla &lt;/&gt;</button></div></div>
           <details class="normalization-dictionary"><summary>Consultar diccionario completo <span id="normalization-dictionary-count"></span></summary><p>Todos los alias y claves canónicas del contrato vigente, ordenados por clave normalizada. El tipo indica el formato esperado, no la comprobación ni la transformación de un valor concreto.</p><div class="normalization-table-wrap"><table class="normalization-table"><caption class="sr-only">Diccionario completo de normalización de claves</caption><thead><tr><th scope="col">Recibida</th><th scope="col">Normalizada</th><th scope="col">Tipo</th></tr></thead><tbody id="normalization-dictionary-rows"></tbody></table></div></details>
         </section>
         <details class="audit-disclosure"><summary>Consultar matrices de recorrido y transformación (A y B)</summary><section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">A</span><h3>Pipeline por proveedor</h3></div><span class="card-side-note">Poblaciones por etapa</span></div><div class="scroll-table" id="pipeline-matrix"></div></section>
@@ -127,7 +129,7 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
             <section class="control-group control-fields" aria-label="Controles de campos"><div class="control-group-heading"><span>01 / DATO</span><h3>Se decide sobre un campo</h3></div><div class="control-branches"><div><strong>Sin evidencia aplicable</strong><span>No se atribuye o incorpora por esa ruta</span></div><div><strong>Conflicto al normalizar</strong><span>Campo omitido según el contrato</span></div></div></section>
             <section class="control-group control-records" aria-label="Exclusiones de fichas"><div class="control-group-heading"><span>02 / FICHA</span><h3>Se decide sobre una publicación</h3></div><div class="control-branches"><div><strong><span id="control-exclusion-editorial">—</span> exclusiones editoriales</strong><span>No llega a FINISH</span></div><div><strong><span id="control-exclusion-commercial">—</span> exclusiones comerciales</strong><span>No entra en el paquete comercial</span></div></div></section>
           </div>
-          <div class="explain-footer"><button id="excluded-example" type="button" class="text-action">Ver una exclusión real →</button></div>
+          <div class="explain-footer"><div class="explain-actions"><button id="excluded-example" type="button" class="text-action">Ver exclusión real →</button><button type="button" class="text-action rule-action" data-rule="exclusion">Ver regla &lt;/&gt;</button></div></div>
         </section>
       </section>
 
@@ -162,9 +164,10 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
     </div>
   </main>
 </div>
-<dialog class="definition-dialog" id="definition-dialog" aria-labelledby="definition-title"><div class="dialog-head"><span class="section-kicker">DEFINICIÓN Y PROCEDENCIA</span><button id="close-definition" type="button" class="dialog-close" aria-label="Cerrar detalle">×</button></div><h2 id="definition-title"></h2><p id="definition-copy"></p><div id="definition-source"></div><button id="close-definition-secondary" class="dialog-action" type="button">Volver al panel</button></dialog>
+<dialog class="rule-dialog" id="rule-dialog" aria-labelledby="rule-dialog-title" aria-describedby="rule-dialog-summary"><div class="rule-dialog-head"><span class="section-kicker">REGLA VIGENTE · CÓDIGO REAL</span><button id="close-rule" type="button" class="dialog-close" aria-label="Cerrar regla">×</button></div><h2 id="rule-dialog-title"></h2><p id="rule-dialog-summary"></p><pre class="rule-source-code"><code id="rule-dialog-code"></code></pre><p class="rule-source-path" id="rule-dialog-path"></p><p class="rule-source-note">Fragmento de implementación, no prueba de que esta regla causase el cambio de la ficha enlazada.</p></dialog>
 <noscript><p class="no-script">Este panel local necesita JavaScript para mostrar los datos del corte y las matrices.</p></noscript>
 <script type="application/json" id="panel-data">${safeJson(payload)}</script>
+<script type="application/json" id="panel-rule-examples">${safeJson(ruleExamples)}</script>
 <script type="module">${js}</script>
 <script type="module">${offlineExplorerJs}</script>
 </body>

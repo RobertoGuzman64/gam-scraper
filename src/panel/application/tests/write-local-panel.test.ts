@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { readPanelSnapshot } from "../../evidence/read-panel-snapshot.js";
 import { writeLocalPanel } from "../write-local-panel.js";
+import { PANEL_RULE_SOURCE_PATHS } from "../panel-rule-examples.js";
 import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
 
 const fixture = createPanelEvidenceWorkspaceFixture();
@@ -21,6 +22,11 @@ test("escribe el panel de forma atómica, evita regeneración idéntica y conser
     await cp(join(process.cwd(), "src", "panel", "ui", "dashboard.css"), join(sourceUi, "dashboard.css"));
     for (const name of ["dashboard-client.js", "explorer-client.js", "explorer-filter-controls.js", "explorer-stage-cards.js"]) {
       await cp(join(process.cwd(), "dist", "panel", "ui", name), join(compiledUi, name));
+    }
+    for (const sourcePath of PANEL_RULE_SOURCE_PATHS) {
+      const destination = join(workspace, sourcePath);
+      await mkdir(join(destination, ".."), { recursive: true });
+      await cp(join(process.cwd(), sourcePath), destination);
     }
     const output = await writeLocalPanel(workspace);
     const html = await readFile(output, "utf8");
