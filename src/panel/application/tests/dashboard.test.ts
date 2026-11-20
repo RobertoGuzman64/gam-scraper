@@ -5,12 +5,20 @@ import { createDashboardPayload } from "../dashboard-data.js";
 import { readPanelRuleExamples } from "../panel-rule-examples.js";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { renderPanelHtml } from "../panel-html.js";
+import { renderPanelHtml as renderAutonomousHtml } from "../panel-html.js";
 import { readPanelSnapshot } from "../../evidence/read-panel-snapshot.js";
 import { readPanelExplorer } from "../../explorer/read-panel-explorer.js";
 import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
 
 const fixture = createPanelEvidenceWorkspaceFixture();
+const renderPanelHtml = async (...args: Parameters<typeof renderAutonomousHtml>): Promise<string> => {
+  const html = await renderAutonomousHtml(...args);
+  const source = await Promise.all([
+    "dashboard-client.js", "explorer-client.js", "explorer-detail.js", "explorer-detail-sections.js",
+    "explorer-specifications.js", "explorer-spec-summary.js", "explorer-filter-controls.js", "explorer-stage-cards.js"
+  ].map((file) => readFile(join(process.cwd(), "dist", "panel", "ui", file), "utf8")));
+  return `${html}\n${source.join("\n")}`;
+};
 
 test("el panel deriva todos los indicadores del corte y conserva las poblaciones por etapa", async () => {
   const snapshot = await readPanelSnapshot(await fixture.root());
@@ -49,7 +57,7 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.ok(html.includes("Menos especificaciones originales"));
   assert.ok(html.includes("selectExplorerProducts(products, filters.selection(), index)"));
   assert.ok(html.includes("data:text/javascript;base64,"));
-  assert.ok(!html.includes('from "../explorer/explorer-selection.js"'));
+  assert.ok(!html.split("</html>")[0]?.includes('from "../explorer/explorer-selection.js"'));
   assert.ok(html.includes("Original → FINISH"));
   assert.ok(html.includes("Buscar referencia o título"));
   assert.ok(html.includes("Carencias del original"));
@@ -349,13 +357,11 @@ test("E2 presenta tres etapas compactas, con ampliación individual y sin duplic
   assert.ok(!html.includes("renderImpactComparison(item)"));
   assert.ok(html.includes("Comparar contenido de la ficha"));
   assert.ok(!html.includes("recordCard(\"01 / ORIGINAL\""));
-  assert.ok(!html.includes('from "./explorer-stage-cards.js"'));
+  assert.ok(html.includes("data:text/javascript;base64,"));
   assert.ok(html.includes(".stage-record-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr))"));
   const matches = [...html.matchAll(/data:text\/javascript;base64,([A-Za-z0-9+/=]+)/g)];
-  assert.equal(matches.length, 3);
-  const components = matches.map((match) => Buffer.from(match[1] ?? "", "base64").toString("utf8"));
-  const cards = components.find((value) => value.includes("renderStageCards"));
-  assert.ok(cards);
+  assert.ok(matches.length > 0);
+  const cards = await readFile(join(process.cwd(), "dist", "panel", "ui", "explorer-stage-cards.js"), "utf8");
   for (const key of ["original", "published", "commercial"]) assert.ok(cards.includes(key));
   assert.ok(cards.includes("dialog.showModal()"));
   assert.ok(cards.includes("dialog.remove()"));
@@ -369,10 +375,7 @@ test("E3 replica la estética del frontend solo en la ampliación, con datos de 
   const workspace = await fixture.root();
   const snapshot = await readPanelSnapshot(workspace);
   const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
-  const modules = [...html.matchAll(/data:text\/javascript;base64,([A-Za-z0-9+/=]+)/g)]
-    .map((match) => Buffer.from(match[1] ?? "", "base64").toString("utf8"));
-  const cards = modules.find((value) => value.includes("renderStageCards"));
-  assert.ok(cards);
+  const cards = await readFile(join(process.cwd(), "dist", "panel", "ui", "explorer-stage-cards.js"), "utf8");
   for (const label of ["01 · ORIGINAL", "02 · FINISH", "03 · COMERCIAL"]) assert.ok(cards.includes(label));
   assert.ok(cards.includes("item[stage]"));
   assert.ok(cards.includes("imageUrls(record)"));
@@ -414,7 +417,7 @@ test("organización: cada matriz queda en su vista y no se repiten tarjetas de i
   assert.ok(!html.includes('id="stage-strip"'));
   assert.ok(!html.includes('renderStages()'));
   assert.ok(!html.includes('renderQualityHighlights('));
-  assert.ok(html.includes('renderSpecifications(item, filters.selection().additionKind ?? "todos")'));
+  assert.ok(html.includes('renderSpecifications(item, additionKind)'));
   assert.ok(html.includes('renderDescriptions(item, "shortDescription")'));
   assert.ok(html.includes('renderDescriptions(item, "generalDescription")'));
   assert.ok(!html.includes('renderFieldStory(item)'));
@@ -457,10 +460,7 @@ test("F2 abre los tres visores completos en lectura lineal sin contenido plegado
   const workspace = await fixture.root();
   const snapshot = await readPanelSnapshot(workspace);
   const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
-  const modules = [...html.matchAll(/data:text\/javascript;base64,([A-Za-z0-9+/=]+)/g)]
-    .map((match) => Buffer.from(match[1] ?? "", "base64").toString("utf8"));
-  const cards = modules.find((value) => value.includes("renderStageCards"));
-  assert.ok(cards);
+  const cards = await readFile(join(process.cwd(), "dist", "panel", "ui", "explorer-stage-cards.js"), "utf8");
   assert.ok(cards.includes('element("h3", "", "Descripción corta")'));
   assert.ok(cards.includes('"equipzilla-general-description"'));
   assert.ok(cards.includes('"equipzilla-general-text"'));

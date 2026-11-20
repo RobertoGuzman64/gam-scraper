@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import type { PanelDashboardPayload } from "./dashboard-data.js";
 import { readPanelRuleExamples } from "./panel-rule-examples.js";
 
@@ -10,32 +10,70 @@ const safeJson = (value: unknown): string => JSON.stringify(value)
   .replaceAll("\u2028", "\\u2028")
   .replaceAll("\u2029", "\\u2029");
 
+const importPattern = /^(\s*import\s+(?:[^'";]*?\s+from\s+)?)(['"])([^'"\n]+)\2(\s*;?)/gm;
+
+const offlineModules = async (workspace: string, entries: readonly string[]): Promise<readonly string[]> => {
+  const root = resolve(workspace, "dist", "panel");
+  const resolved = new Map<string, string>();
+  const visiting = new Set<string>();
+  const embed = async (path: string): Promise<string> => {
+    const normalized = resolve(path);
+    const inside = relative(root, normalized);
+    if (inside === ".." || inside.startsWith(`..${sep}`) || isAbsolute(inside)) {
+      throw new Error(`Módulo UI fuera del panel: ${path}`);
+    }
+    const cached = resolved.get(normalized);
+    if (cached !== undefined) return cached;
+    if (visiting.has(normalized)) throw new Error(`Importación circular del panel: ${path}`);
+    visiting.add(normalized);
+    try {
+      const source = await readFile(normalized, "utf8");
+      const imports = [...source.matchAll(importPattern)];
+      const remaining = source.replace(importPattern, "");
+      if (/(^|\n)\s*import\b/m.test(remaining) || /\bimport\s*(?:\(|\.)/.test(remaining) ||
+        /(^|\n)\s*export\s*(?:\*\s*(?:as\s+\w+\s*)?|\{[^}]*\}\s*)from\s*['"]/m.test(remaining)) {
+        throw new Error(`Dependencia UI no compatible con HTML autónomo: ${normalized}`);
+      }
+      let text = source;
+      for (const item of imports.reverse()) {
+        const [, prefix, quote, specifier] = item;
+        if (prefix === undefined || quote === undefined || specifier === undefined || item.index === undefined ||
+          !specifier.startsWith(".") || !specifier.endsWith(".js")) {
+          throw new Error(`Importación UI no compatible con HTML autónomo: ${normalized}`);
+        }
+        const dependency = await embed(resolve(dirname(normalized), specifier));
+        const before = item[0];
+        const rewritten = before.replace(`${quote}${specifier}${quote}`, `${quote}${dependency}${quote}`);
+        text = text.slice(0, item.index) + rewritten + text.slice(item.index + before.length);
+      }
+      if (/<\/script/i.test(text)) {
+        throw new Error(`Recurso UI no integrable como módulo autónomo: ${normalized}`);
+      }
+      const url = `data:text/javascript;base64,${Buffer.from(text, "utf8").toString("base64")}`;
+      resolved.set(normalized, url);
+      return url;
+    } finally {
+      visiting.delete(normalized);
+    }
+  };
+  const results: string[] = [];
+  for (const entry of entries) {
+    const url = await embed(join(root, "ui", entry));
+    results.push(Buffer.from(url.slice("data:text/javascript;base64,".length), "base64").toString("utf8"));
+  }
+  return results;
+};
+
 export const renderPanelHtml = async (workspace: string, payload: PanelDashboardPayload): Promise<string> => {
-  const [css, js, explorerJs, selectionJs, stageCardsJs, filtersJs, ruleExamples] = await Promise.all([
-    readFile(join(workspace, "src", "panel", "ui", "dashboard.css"), "utf8"),
-    readFile(join(workspace, "dist", "panel", "ui", "dashboard-client.js"), "utf8"),
-    readFile(join(workspace, "dist", "panel", "ui", "explorer-client.js"), "utf8"),
-    readFile(join(workspace, "dist", "panel", "explorer", "explorer-selection.js"), "utf8"),
-    readFile(join(workspace, "dist", "panel", "ui", "explorer-stage-cards.js"), "utf8"),
-    readFile(join(workspace, "dist", "panel", "ui", "explorer-filter-controls.js"), "utf8"),
-    readPanelRuleExamples(workspace)
+  const [css, ruleExamples, scripts] = await Promise.all([
+    Promise.all(["dashboard.css", "explorer.css", "stage-viewer.css", "explorer-layout.css"]
+      .map((name) => readFile(join(workspace, "src", "panel", "ui", name), "utf8"))).then((parts) => parts.join("")),
+    readPanelRuleExamples(workspace),
+    offlineModules(workspace, ["dashboard-client.js", "explorer-client.js"])
   ]);
-  const selectionImport = '"../explorer/explorer-selection.js"';
-  const cardsImport = '"./explorer-stage-cards.js"';
-  const filtersImport = '"./explorer-filter-controls.js"';
-  if (!explorerJs.includes(selectionImport) || !explorerJs.includes(cardsImport) ||
-    !explorerJs.includes(filtersImport) || !filtersJs.includes(selectionImport) ||
-    /(^|\n)\s*import\s/m.test(selectionJs) || /(^|\n)\s*import\s/m.test(stageCardsJs)) {
-    throw new Error("No se puede integrar la selección del Explorador en el HTML autónomo");
-  }
-  const offlineSelectionUrl = `"data:text/javascript;base64,${Buffer.from(selectionJs, "utf8").toString("base64")}"`;
-  const offlineFiltersJs = filtersJs.replace(selectionImport, offlineSelectionUrl);
-  const offlineExplorerJs = explorerJs.replace(selectionImport, offlineSelectionUrl)
-    .replace(filtersImport, `"data:text/javascript;base64,${Buffer.from(offlineFiltersJs, "utf8").toString("base64")}"`)
-    .replace(cardsImport, `"data:text/javascript;base64,${Buffer.from(stageCardsJs, "utf8").toString("base64")}"`);
-  if (css.includes("</style") || js.includes("</script") || stageCardsJs.includes("</script") || offlineFiltersJs.includes("</script") || offlineExplorerJs.includes("</script")) {
-    throw new Error("Recursos UI contienen un cierre HTML no permitido");
-  }
+  if (/<\/style/i.test(css)) throw new Error("Recursos UI contienen un cierre HTML no permitido");
+  const [js, offlineExplorerJs] = scripts;
+  if (js === undefined || offlineExplorerJs === undefined) throw new Error("Faltan módulos del panel");
   return `<!doctype html>
 <html lang="es">
 <head>

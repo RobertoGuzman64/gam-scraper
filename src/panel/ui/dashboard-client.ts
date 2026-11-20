@@ -1,8 +1,10 @@
-import type { PanelDashboardPayload, PanelNormalizationEntry } from "../application/dashboard-data.js";
+import type { PanelNormalizationEntry } from "../application/dashboard-data.js";
 import type { PanelRuleExamples, PanelRuleId } from "../application/panel-rule-examples.js";
 import type { SpecRuleType } from "../../catalog/normalization/spec-rules.js";
 import type { PanelMetricKey } from "../evidence/metric-definitions.js";
 import type { PanelProviderEvidence, PanelProviderId, PanelProviderMetrics } from "../evidence/types.js";
+import { create as element, append, find as byId } from "./dom.js";
+import { readPanelPayload } from "./panel-payload.js";
 
 type PanelView = "resumen" | "flujo" | "explorador" | "calidad";
 type PanelScope = PanelProviderId | "todos";
@@ -10,18 +12,7 @@ type MetricColumn = { readonly key: PanelMetricKey; readonly label: string };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
-const isPayload = (value: unknown): value is PanelDashboardPayload => {
-  if (!isRecord(value) || !isRecord(value.snapshot) || !isRecord(value.names)) return false;
-  return Array.isArray(value.snapshot.providers) && isRecord(value.snapshot.totals) &&
-    typeof value.snapshot.packageDateUtc === "string" &&
-    Array.isArray(value.definitions) &&
-    isRecord(value.explorer) && Array.isArray(value.explorer.products) && Array.isArray(value.explorer.cases);
-};
-const raw = document.getElementById("panel-data")?.textContent;
-if (!raw) throw new Error("Datos del panel no disponibles");
-const decoded: unknown = JSON.parse(raw);
-if (!isPayload(decoded)) throw new Error("Contrato de visualización incompatible");
-const payload = decoded;
+const payload = readPanelPayload();
 const ruleRaw = document.getElementById("panel-rule-examples")?.textContent;
 if (!ruleRaw) throw new Error("Reglas técnicas del panel no disponibles");
 const decodedRules: unknown = JSON.parse(ruleRaw);
@@ -48,18 +39,6 @@ const format = (value: number): string => number.format(value).replace(/\B(?=(\d
 const metric = (metrics: PanelProviderMetrics, key: PanelMetricKey): number => {
   const values = { ...metrics, ...metrics.transformations };
   return values[key];
-};
-const element = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = "", content?: string): HTMLElementTagNameMap[K] => {
-  const result = document.createElement(tag);
-  if (cls) result.className = cls;
-  if (content !== undefined) result.textContent = content;
-  return result;
-};
-const append = (target: HTMLElement, ...children: (Node | string)[]): void => target.append(...children);
-const byId = (id: string): HTMLElement => {
-  const target = document.getElementById(id);
-  if (!target) throw new Error(`Falta estructura UI: ${id}`);
-  return target;
 };
 const selectedProviders = (scope: PanelScope): readonly PanelProviderEvidence[] =>
   scope === "todos" ? payload.snapshot.providers : payload.snapshot.providers.filter((item) => item.providerId === scope);

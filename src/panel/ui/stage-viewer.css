@@ -1,0 +1,306 @@
+.stage-record-section {margin:0 0 19px;min-width:0}
+.stage-record-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stage-record-card {display:flex;flex-direction:column;min-width:0;gap:10px;padding:13px;border:1px solid #355166;border-radius:12px;background:#101f2e}
+.stage-record-label {color:#91d5e5;font-size:var(--type-secondary);font-weight:800;letter-spacing:.045em}
+.stage-record-image,.stage-record-placeholder {display:grid;place-items:center;position:relative;min-width:0;aspect-ratio:4/3;border-radius:8px;background:#fff;overflow:hidden}
+.stage-record-image img {display:block;width:100%;height:100%;object-fit:contain}
+.record-photo-empty,.stage-record-placeholder {padding:12px;color:#617384;text-align:center;font-size:var(--type-secondary);line-height:1.4}
+.stage-record-title {font-size:15px;line-height:1.4;font-weight:750;color:#edf6fc;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.8em}
+.stage-record-stats {display:grid;gap:7px;margin:1px 0 4px}
+.stage-record-stat {display:flex;flex-direction:column;align-items:flex-start;gap:3px;font-size:var(--type-secondary);line-height:1.4;min-width:0}
+.stage-record-stat>span {color:#a9bfd0}
+.stage-record-stat>strong {color:#edf7fb;text-align:left;overflow-wrap:anywhere}
+.stage-record-expand {margin-top:auto;min-height:40px;border:1px solid #69a6b8;border-radius:8px;background:#17374a;color:#e6f9ff;font-size:var(--type-secondary);font-weight:750;cursor:pointer}
+.stage-record-expand:hover {background:#204c61;border-color:#83d4e6}
+.stage-record-expand:focus-visible,.stage-viewer-close:focus-visible {outline:3px solid #8ce3f0;outline-offset:3px}
+.stage-record-absent {background:#111b27;border-style:dashed;border-color:#42546a}
+.stage-record-absent .stage-record-placeholder {background:#182735;color:#b7c9d7;flex:1}
+.stage-record-unavailable {color:#9aafc0;font-size:var(--type-secondary);line-height:1.5}
+@media(max-width:1350px) and (min-width:1051px) {
+  .stage-record-grid {gap:8px}
+  .stage-record-card {padding:10px}
+
+}
+@media(max-width:1050px) and (min-width:751px) {
+  .stage-record-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:750px) {
+  .stage-record-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:520px) {
+  .stage-record-grid {grid-template-columns:1fr}
+  .stage-record-card {display:grid;grid-template-columns:minmax(0,110px) minmax(0,1fr);align-items:start;gap:10px}
+  .stage-record-label {grid-column:1/-1}
+  .stage-record-image,.stage-record-placeholder {grid-column:1;grid-row:2;aspect-ratio:1}
+  .stage-record-title {grid-column:2;grid-row:2;min-height:0}
+  .stage-record-stats {grid-column:1/-1;grid-row:3;gap:7px}
+  .stage-record-stat {flex-direction:row;justify-content:space-between;gap:12px}
+  .stage-record-stat>strong {text-align:right}
+  .stage-record-expand {grid-column:1/-1;grid-row:4}
+  .stage-record-unavailable {grid-column:2;grid-row:2}
+}
+
+.stage-record-viewer.equipzilla-stage-dialog {
+  box-sizing:border-box;
+  width:min(1190px,calc(100vw - 32px));
+  max-width:1190px;
+  max-height:calc(100dvh - 28px);
+  padding:0;
+  overflow:auto;
+  overscroll-behavior:contain;
+  border:1px solid #e3dbdb;
+  border-radius:18px;
+  background:#fff;
+  color:#1e1e1e;
+  color-scheme:light;
+  box-shadow:0 28px 100px #000b;
+  font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+.equipzilla-stage-dialog::backdrop {background:rgba(3,11,22,.83)}
+.equipzilla-stage-dialog .stage-viewer-top {
+  position:sticky;
+  top:0;
+  z-index:5;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  padding:12px 28px;
+  background:#fff;
+  border-bottom:1px solid #e7e2df;
+}
+.equipzilla-stage-dialog .stage-viewer-top strong {
+  font-size:var(--type-secondary);
+  letter-spacing:.09em;
+  font-weight:800;
+  color:#387e7f;
+}
+.equipzilla-stage-dialog .stage-viewer-close {
+  min-height:41px;
+  padding:9px 17px;
+  background:#f3533d;
+  border:1px solid #f3533d;
+  border-radius:8px;
+  color:#fff;
+  font-size:var(--type-secondary);
+  font-weight:750;
+  cursor:pointer;
+}
+.equipzilla-stage-dialog .stage-viewer-close:hover {background:#e03a2b;border-color:#e03a2b}
+.equipzilla-stage-dialog button:focus-visible,
+.equipzilla-stage-dialog summary:focus-visible {outline:3px solid #f3533d;outline-offset:3px}
+.equipzilla-product-view {
+  padding:clamp(18px,3vw,36px);
+  background:#fff;
+  color:#1e1e1e;
+  font-size:16px;
+  line-height:1.55;
+  overflow-wrap:anywhere;
+}
+.equipzilla-product-view .equipzilla-product-top {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  align-items:start;
+  gap:clamp(18px,3vw,40px);
+  margin-bottom:28px;
+}
+.equipzilla-product-view .equipzilla-product-info {
+  min-width:0;
+  padding:26px;
+  border:1px solid #e7e2df;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 12px 28px rgba(29,16,15,.06);
+}
+.equipzilla-product-view .equipzilla-product-eyebrow {
+  display:inline-flex;
+  color:#a34b3d;
+  font-size:var(--type-secondary);
+  font-weight:750;
+  letter-spacing:.09em;
+}
+.equipzilla-product-view .equipzilla-product-title {
+  margin:12px 0;
+  color:#387e7f;
+  font-size:clamp(22px,2.6vw,33px);
+  line-height:1.24;
+  letter-spacing:.035em;
+  text-transform:uppercase;
+  font-weight:750;
+}
+.equipzilla-product-view .equipzilla-product-category {
+  margin:0 0 14px;
+  color:#6a625e;
+  font-size:15px;
+  font-weight:550;
+}
+.equipzilla-product-view .equipzilla-product-price {
+  margin:0 0 16px;
+  color:#1d100f;
+  font-size:clamp(20px,2.3vw,28px);
+  font-weight:800;
+  line-height:1.2;
+}
+.equipzilla-product-view .equipzilla-summary-text {
+  margin:0;
+  color:#4a4a4a;
+  font-size:15px;
+  line-height:1.65;
+  white-space:pre-wrap;
+}
+.equipzilla-product-view .equipzilla-facts {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  padding-top:18px;
+  margin-top:18px;
+  border-top:1px solid #e3dbdb;
+}
+.equipzilla-product-view .equipzilla-facts .stage-record-stat {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:2px;
+  min-width:110px;
+  max-width:100%;
+  padding:9px 12px;
+  border:1px solid #e6e6e6;
+  border-radius:9px;
+  background:#f7f7f7;
+  font-size:var(--type-secondary);
+}
+.equipzilla-product-view .equipzilla-facts .stage-record-stat>span {color:#6a625e}
+.equipzilla-product-view .equipzilla-facts .stage-record-stat>strong {color:#1e1e1e;text-align:left;font-size:15px}
+.equipzilla-product-view .equipzilla-gallery {min-width:0}
+.equipzilla-product-view .equipzilla-gallery-frame {
+  display:grid;
+  place-items:center;
+  width:100%;
+  aspect-ratio:670/451;
+  overflow:hidden;
+  border:1px solid #e6e6e6;
+  border-radius:10px;
+  background:#fafafa;
+}
+.equipzilla-product-view .equipzilla-gallery-main-image {display:block;width:100%;height:100%;object-fit:contain}
+.equipzilla-product-view .equipzilla-gallery-empty {
+  display:grid;
+  place-items:center;
+  min-height:100%;
+  padding:24px;
+  text-align:center;
+  color:#6a625e;
+  font-size:15px;
+}
+.equipzilla-product-view .equipzilla-gallery-controls {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  margin:12px 0;
+}
+.equipzilla-product-view .equipzilla-gallery-arrow {
+  display:grid;
+  place-items:center;
+  width:39px;
+  height:39px;
+  padding:0;
+  border:1px solid #e3dbdb;
+  border-radius:9px;
+  color:#387e7f;
+  background:#fff;
+  font-size:29px;
+  line-height:1;
+  cursor:pointer;
+}
+.equipzilla-product-view .equipzilla-gallery-arrow:hover {border-color:#f3533d;color:#e03a2b}
+.equipzilla-product-view .equipzilla-gallery-counter {color:#6a625e;font-weight:700;font-size:var(--type-secondary);font-variant-numeric:tabular-nums}
+.equipzilla-product-view .equipzilla-gallery-thumbnails {
+  display:flex;
+  gap:9px;
+  max-width:100%;
+  padding:4px 2px 9px;
+  overflow-x:auto;
+  scroll-snap-type:x proximity;
+}
+.equipzilla-product-view .equipzilla-gallery-thumbnail {
+  display:grid;
+  place-items:center;
+  flex:0 0 85px;
+  width:85px;
+  height:64px;
+  padding:3px;
+  border:2px solid #e3dbdb;
+  border-radius:8px;
+  background:#fff;
+  color:#6a625e;
+  cursor:pointer;
+  scroll-snap-align:center;
+}
+.equipzilla-product-view .equipzilla-gallery-thumbnail[aria-pressed="true"] {border-color:#f3533d}
+.equipzilla-product-view .equipzilla-gallery-thumbnail img {width:100%;height:100%;object-fit:contain}
+.equipzilla-product-view .equipzilla-technical,
+.equipzilla-product-view .equipzilla-additional {min-width:0;margin-top:26px}
+.equipzilla-product-view .equipzilla-section-title {
+  margin:0 0 15px;
+  color:#f3533d;
+  font-size:clamp(21px,2.1vw,27px);
+  line-height:1.2;
+  letter-spacing:.01em;
+  font-weight:800;
+}
+.equipzilla-product-view .equipzilla-spec-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:1px;
+  width:100%;
+  margin:0;
+  padding:1px;
+  overflow:hidden;
+  border-radius:14px;
+  background:#e6dfdb;
+}
+.equipzilla-product-view .equipzilla-spec-item {
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-width:0;
+  min-height:85px;
+  padding:15px 18px;
+  gap:6px;
+  background:#fff;
+}
+.equipzilla-product-view .equipzilla-spec-item dt {
+  margin:0;
+  color:#6a625e;
+  font-size:var(--type-secondary);
+  line-height:1.3;
+  letter-spacing:.035em;
+  text-transform:uppercase;
+  font-weight:750;
+}
+.equipzilla-product-view .equipzilla-spec-item dd {
+  margin:0;
+  color:#1d100f;
+  font-size:16px;
+  line-height:1.4;
+  font-weight:700;
+}
+.equipzilla-product-view .equipzilla-empty-text {color:#6a625e;font-size:15px}
+.equipzilla-product-view .equipzilla-attributes-grid {margin:0;width:100%}
+@media(max-width:930px) {
+  .equipzilla-product-view .equipzilla-product-top {grid-template-columns:1fr}
+  .equipzilla-product-view .equipzilla-gallery {grid-row:1}
+  .equipzilla-product-view .equipzilla-spec-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px) {
+  .stage-record-viewer.equipzilla-stage-dialog {width:calc(100vw - 12px);max-height:calc(100dvh - 12px);border-radius:12px}
+  .equipzilla-stage-dialog .stage-viewer-top {padding:10px 14px}
+  .equipzilla-product-view {padding:14px}
+  .equipzilla-product-view .equipzilla-product-top {gap:16px}
+  .equipzilla-product-view .equipzilla-product-info {padding:18px}
+  .equipzilla-product-view .equipzilla-spec-grid {grid-template-columns:1fr}
+  .equipzilla-product-view .equipzilla-spec-item {min-height:68px;padding:12px 15px}
+  .equipzilla-product-view .equipzilla-gallery-thumbnail {flex-basis:72px;width:72px;height:57px}
+}
+

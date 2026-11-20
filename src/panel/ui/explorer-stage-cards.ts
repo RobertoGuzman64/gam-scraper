@@ -1,4 +1,5 @@
 import type { PanelExplorerProduct, PanelProductView } from "../explorer/types.js";
+import { create as element } from "./dom.js";
 
 type RecordStage = keyof Pick<PanelExplorerProduct, "original" | "published" | "commercial">;
 
@@ -6,13 +7,6 @@ const stageLabels: Readonly<Record<RecordStage, string>> = {
   original: "01 · ORIGINAL",
   published: "02 · FINISH",
   commercial: "03 · COMERCIAL"
-};
-
-const element = <K extends keyof HTMLElementTagNameMap>(tag: K, className = "", label?: string): HTMLElementTagNameMap[K] => {
-  const node = document.createElement(tag);
-  node.className = className;
-  if (label !== undefined) node.textContent = label;
-  return node;
 };
 
 const safeImageUrl = (value: string): boolean => {

@@ -1,3 +1,4 @@
+import { create } from "./dom.js";
 import type { PanelProviderId } from "../evidence/types.js";
 import { explorerCategoryCounts, explorerStageCounts, normalizeExplorerText } from "../explorer/explorer-selection.js";
 import type { ExplorerIndexEntry, ExplorerSelection, ExplorerSort } from "../explorer/explorer-selection.js";
@@ -37,12 +38,6 @@ const input = (id: string): HTMLInputElement => {
 const select = (id: string): HTMLSelectElement => {
   const element = find(id);
   if (!(element instanceof HTMLSelectElement)) throw new Error(`Selector no válido: ${id}`);
-  return element;
-};
-const create = <K extends keyof HTMLElementTagNameMap>(tag: K, className = "", value?: string): HTMLElementTagNameMap[K] => {
-  const element = document.createElement(tag);
-  element.className = className;
-  if (value !== undefined) element.textContent = value;
   return element;
 };
 const number = new Intl.NumberFormat("es-ES");
