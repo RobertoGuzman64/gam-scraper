@@ -1617,3 +1617,22 @@ input:focus-visible,summary:focus-visible {outline:2px solid var(--cyan);outline
   .explorer-layout {display:block}
   .explorer-results {position:static}
 }
+
+.explorer-spec-breakdown {display:flex;align-items:stretch;flex-wrap:wrap;gap:7px;padding:10px 0;border-top:1px solid #304b5b;border-bottom:1px solid #304b5b}
+.explorer-spec-breakdown-title {flex-basis:100%;font-weight:720;color:#e4f3f7;font-size:var(--type-secondary)}
+.spec-count {display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:7px;background:#172e40;border:1px solid #3a5363;font-size:var(--type-secondary);color:#d6e5ed}
+.spec-count strong {font-size:15px;font-variant-numeric:tabular-nums}
+.spec-count.spec-kind-own strong {color:#88bbff}
+.spec-count.spec-kind-reused strong {color:#ffc58a}
+.spec-count.spec-kind-pending strong {color:#c7d0da}
+.explorer-spec-kind-filter {display:grid;gap:5px;color:#b5d1dd;font-size:var(--type-secondary);font-weight:720}
+.explorer-spec-kind-filter select {width:100%;max-width:350px;min-width:0;min-height:37px;padding:8px 10px;border:1px solid #3e6173;border-radius:7px;background:#152d3f;color:#e8f7fd;font-size:var(--type-secondary)}
+.technical-table tbody tr.spec-kind-own {background:rgba(70,131,224,.12)}
+.technical-table tbody tr.spec-kind-reused {background:rgba(233,150,65,.12)}
+.technical-table tbody tr.spec-kind-pending {background:rgba(143,157,171,.10)}
+.technical-table tbody tr.spec-kind-own th:first-child {border-left:3px solid #70aaff}
+.technical-table tbody tr.spec-kind-reused th:first-child {border-left:3px solid #f4ae67}
+.technical-table tbody tr.spec-kind-pending th:first-child {border-left:3px solid #9faebb}
+.technical-table .spec-kind-label-own {color:#99c5ff}
+.technical-table .spec-kind-label-reused {color:#ffc58a}
+.technical-table .spec-kind-label-pending {color:#c4cbd5}

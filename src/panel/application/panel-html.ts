@@ -147,6 +147,8 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
               <fieldset class="explorer-refinements"><legend>Carencias del original</legend><label><input type="checkbox" id="explorer-missing-short"> Descripción corta ausente</label><label><input type="checkbox" id="explorer-missing-general"> Descripción general ausente</label><label><input type="checkbox" id="explorer-without-specs"> Sin especificaciones originales</label></fieldset>
               <fieldset class="explorer-refinements"><legend>Cambios de FINISH</legend><label><input type="checkbox" id="explorer-with-additions"> Especificaciones incorporadas</label><label><input type="checkbox" id="explorer-with-changes"> Valores técnicos modificados</label><label><input type="checkbox" id="explorer-with-title-changes"> Títulos modificados</label><label><input type="checkbox" id="explorer-editorial-changes"> Descripciones cambiadas</label></fieldset>
             </div>
+            <div class="explorer-spec-breakdown" id="explorer-spec-breakdown" aria-live="polite"></div>
+            <label class="explorer-spec-kind-filter" for="explorer-spec-kind"><span>Origen de specs incorporadas</span><select id="explorer-spec-kind"><option value="todos">Todas las incorporaciones</option><option value="own">Propia ficha</option><option value="reused">Reutilizadas</option><option value="pending">Por investigar</option></select></label>
             <div id="explorer-active-filters" class="explorer-active-filters" aria-live="polite"></div>
           </section>
           <section class="surface-card explorer-results" id="explorer-catalog" aria-label="Resultados de búsqueda">

@@ -1,7 +1,8 @@
 import type { PanelDashboardPayload } from "../application/dashboard-data.js";
 import { createExplorerIndex, explorerProductMetrics, selectExplorerProducts } from "../explorer/explorer-selection.js";
 import { createExplorerFilterControls } from "./explorer-filter-controls.js";
-import type { PanelExplorerProduct, PanelPresentationCase, PanelFieldDifference } from "../explorer/types.js";
+import type { PanelExplorerProduct, PanelPresentationCase, PanelFieldDifference, PanelSpecAddition } from "../explorer/types.js";
+import type { PanelProviderId } from "../evidence/types.js";
 import { renderStageCards } from "./explorer-stage-cards.js";
 
 const find = (id: string): HTMLElement => {
@@ -37,6 +38,9 @@ const changes: Readonly<Record<PanelFieldDifference["change"], string>> = {
   added: "Incorporado", changed: "Modificado", unchanged: "Conservado", removed: "Retirado", ambiguous: "Sin correspondencia unívoca"
 };
 const formatNumber = new Intl.NumberFormat("es-ES");
+const additionLabels: Readonly<Record<PanelSpecAddition["kind"], string>> = {
+  own: "Propia ficha", reused: "Reutilizada", pending: "Por investigar"
+};
 const verifiedUrl = (value: string): boolean => {
   try { return ["https:", "http:"].includes(new URL(value).protocol); }
   catch { return false; }
@@ -111,9 +115,9 @@ const contentDifference = (item: PanelExplorerProduct, field: string): readonly 
   item.changes.filter((entry) => entry.group === "content" && entry.field === field);
 const commercialDifference = (item: PanelExplorerProduct, field: string): readonly PanelFieldDifference[] =>
   item.commercialChanges.filter((entry) => entry.field === field);
-const renderSpecifications = (item: PanelExplorerProduct): HTMLElement => {
+const renderSpecifications = (item: PanelExplorerProduct, additionKind: PanelSpecAddition["kind"] | "todos"): HTMLElement => {
   const section = create("section", "detail-section technical-section");
-  append(section, create("p", "minor-note", "Especificaciones alineadas por campo. Claves normalizadas para comparar; los valores originales conservan sus unidades. Las correspondencias ambiguas no se fuerzan."));
+  append(section, create("p", "minor-note", "Especificaciones alineadas por campo. Solo se colorean las nuevas. Azul: compatible con información de la propia ficha; naranja: mismo perfil técnico de modelo aplicado a varias fichas; gris: mecanismo por investigar. Compartir un perfil no significa copiar datos entre unidades."));
   const technical = item.changes.filter((difference) => difference.group === "technical");
   const source = item.original && item.published ? technical :
     item.published && item.commercialTechnicalChanges.length ? item.commercialTechnicalChanges.map((difference): PanelFieldDifference => ({
@@ -124,8 +128,11 @@ const renderSpecifications = (item: PanelExplorerProduct): HTMLElement => {
       after: item.published ? Array.isArray(value) ? value.join(" · ") : String(value) : null
     }));
   const originalToFinish = new Map(source.map((difference) => [difference.field, difference]));
+  const additions = new Map(item.specAdditions.map((addition) => [addition.field, addition]));
   const finishToCommercial = new Map(item.commercialTechnicalChanges.map((difference) => [difference.field, difference]));
-  const fields = [...new Set([...originalToFinish.keys(), ...finishToCommercial.keys()])].sort((a, b) => a.localeCompare(b, "es"));
+  const fields = [...new Set([...originalToFinish.keys(), ...finishToCommercial.keys()])]
+    .filter((field) => additionKind === "todos" || additions.get(field)?.kind === additionKind)
+    .sort((a, b) => a.localeCompare(b, "es"));
   if (!fields.length) {
     append(section, create("p", "muted-copy", "No constan prestaciones técnicas en este expediente."));
     return section;
@@ -143,16 +150,18 @@ const renderSpecifications = (item: PanelExplorerProduct): HTMLElement => {
       const edit = originalToFinish.get(field);
       const projection = finishToCommercial.get(field);
       const result = create("tr");
+      const addition = edit?.change === "added" ? additions.get(field) : undefined;
+      if (addition) result.classList.add(`spec-kind-${addition.kind}`);
       const before = item.original ? text(edit?.before ?? null) : "Evidencia no disponible";
       const after = item.published ? text(edit?.after ?? projection?.before ?? null) : "No aplica";
       const commercial = item.commercial ? text(projection?.after ?? null) : "No aplica";
       const classification = !item.original || !item.published ? "Sin comparación editorial" :
         edit ? changes[edit.change] : "No consta en original/FINISH";
       const commercialStatus = projection && projection.change !== "unchanged" ? ` · Comercial: ${changes[projection.change]}` : "";
+      const status = addition ? `Añadida · ${additionLabels[addition.kind]}` : classification + commercialStatus;
       append(result, create("th", "technical-field", field), create("td", "technical-value", before),
         create("td", "technical-value", after), create("td", "technical-value", commercial),
-        create("td", `technical-status ${edit && item.original && item.published ? `diff-${edit.change}` : ""}`,
-          classification + commercialStatus));
+        create("td", `technical-status${addition ? ` spec-kind-label-${addition.kind}` : ""}`, status));
       append(body, result);
     }
     append(table, body);
@@ -257,6 +266,23 @@ const renderTechnicalContribution = (item: PanelExplorerProduct): HTMLElement | 
 };
 
 const index = createExplorerIndex(products);
+const renderSpecBreakdown = (providerId: PanelProviderId | "todos"): void => {
+  const summary = find("explorer-spec-breakdown");
+  summary.replaceChildren();
+  const included = products.filter((item) => providerId === "todos" || item.providerId === providerId);
+  const all = included.flatMap((item) => item.specAdditions);
+  const counts: Record<PanelSpecAddition["kind"], number> = { own: 0, reused: 0, pending: 0 };
+  for (const entry of all) counts[entry.kind]++;
+  const intro = create("p", "explorer-spec-breakdown-title",
+    `${formatNumber.format(all.length)} specs nuevas · ${providerId === "todos" ? "Corte completo" : names[providerId]}`);
+  append(summary, intro);
+  for (const kind of ["own", "reused", "pending"] as const) {
+    const counter = create("span", `spec-count spec-kind-${kind}`);
+    append(counter, create("strong", "", formatNumber.format(counts[kind])),
+      create("span", "", additionLabels[kind]));
+    append(summary, counter);
+  }
+};
 let page = 0;
 let selectedId: string | null = null;
 let renderedId: string | null = null;
@@ -364,7 +390,7 @@ const renderDetail = (): void => {
       renderDescriptions(item, "shortDescription")),
     compareSection("Especificaciones técnicas", comparisonState(item,
       item.changes.filter((entry) => entry.group === "technical"), item.commercialTechnicalChanges),
-      renderSpecifications(item)),
+      renderSpecifications(item, filters.selection().additionKind ?? "todos")),
     compareSection("Descripción general", comparisonState(item, contentDifference(item, "Descripción general"), []),
       renderDescriptions(item, "generalDescription")),
     compareSection("Categoría y datos comerciales", comparisonState(item,
@@ -376,13 +402,15 @@ const renderDetail = (): void => {
   append(target, comparison);
 };
 const ensureDetail = (): void => {
-  if (renderedId === selectedId) return;
+  const key = `${selectedId ?? ""}:${filters.selection().additionKind ?? "todos"}`;
+  if (renderedId === key) return;
   renderDetail();
-  renderedId = selectedId;
+  renderedId = key;
 };
 const renderExplorer = (): void => {
   reconcileSelection();
   filters.render();
+  renderSpecBreakdown(filters.selection().providerId);
   renderRows();
   ensureDetail();
 };

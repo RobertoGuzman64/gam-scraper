@@ -9,10 +9,12 @@ import { assertCommercialLineage, readCommercialFiles } from "../evidence/commer
 import { readPanelUnitKnowledge } from "../evidence/knowledge-evidence.js";
 import type { PanelUnitKnowledgeEvidence } from "../evidence/knowledge-evidence.js";
 import { resolvePanelFieldProvenance } from "./field-provenance.js";
+import { classifySpecAdditions, loadSpecAdditionAudit } from "./spec-addition-classification.js";
 import { digest, isRecord, recordFrom, regularText } from "../evidence/evidence-files.js";
 import type { PanelProviderEvidence, PanelProviderId, PanelSnapshot } from "../evidence/types.js";
 import { compareOriginalToPublished, comparePublishedToCommercial, compareTechnicalFields } from "./field-differences.js";
 import type { PanelExplorerPayload, PanelExplorerProduct, PanelFieldDifference, PanelPresentationCase, PanelProductDecision, PanelProductView, PanelCommercialView } from "./types.js";
+import type { SpecAdditionAudit } from "./spec-addition-classification.js";
 
 const nullableString = (value: unknown): value is string | null => value === null || typeof value === "string";
 const isWebUrl = (value: unknown): value is string => {
@@ -133,7 +135,7 @@ const renderable = (
   providerId: PanelProviderId, reference: string | null, sourceUrl: string, original: ProductRecord | null,
   published: ImportCandidate | null, commercial: CommercialDeliveryProduct | null, decision: PanelProductDecision | null,
   evidence: PanelProviderEvidence, accreditation: { readonly path: string; readonly sha256: string },
-  knowledge: PanelUnitKnowledgeEvidence | null
+  knowledge: PanelUnitKnowledgeEvidence | null, audit: SpecAdditionAudit | null
 ): PanelExplorerProduct => {
   const before = original ? fromOriginal(original) : null;
   const after = published ? fromPublication(published) : null;
@@ -146,6 +148,7 @@ const renderable = (
       exported?.category ?? after?.category ?? before?.category ?? null,
     original: before, published: after, commercial: exported,
     changes,
+    specAdditions: classifySpecAdditions(changes, evidence, reference, sourceUrl, audit),
     provenance: resolvePanelFieldProvenance(original, after, changes, evidence, knowledge, reference, sourceUrl),
     commercialChanges: after && exported ? comparePublishedToCommercial(after, exported) : [],
     commercialTechnicalChanges: after && exported ? compareTechnicalFields(after.specs, exported.specs, "commercial") : [],
@@ -160,7 +163,8 @@ const renderable = (
 };
 
 const forProvider = async (
-  root: string, evidence: PanelProviderEvidence, commercialRaw: string, knowledge: PanelUnitKnowledgeEvidence | null
+  root: string, evidence: PanelProviderEvidence, commercialRaw: string, knowledge: PanelUnitKnowledgeEvidence | null,
+  audit: SpecAdditionAudit | null
 ): Promise<readonly PanelExplorerProduct[]> => {
   const publishedPath = join(root, evidence.publication.path);
   const published = await readAccreditedPublication(publishedPath);
@@ -194,7 +198,7 @@ const forProvider = async (
       stage: "commercial", reason: exclusion.reason, issues: [], evidenceUrls: []
     } : null;
     result.push(renderable(evidence.providerId, item.reference, item.sourceUrl, original, item,
-      exported.get(key) ?? null, decision, evidence, accreditation.artifact, knowledge));
+      exported.get(key) ?? null, decision, evidence, accreditation.artifact, knowledge, audit));
   }
   for (const excluded of accreditation.items) {
     const key = identity(evidence.providerId, excluded.reference, excluded.sourceUrl);
@@ -206,7 +210,7 @@ const forProvider = async (
     }
     result.push(renderable(evidence.providerId, excluded.reference, excluded.sourceUrl, original, null, null,
       { stage: "editorial", reason: excluded.reason, issues: excluded.issues, evidenceUrls: excluded.evidenceUrls },
-      evidence, accreditation.artifact, knowledge));
+      evidence, accreditation.artifact, knowledge, audit));
   }
   if (result.length !== evidence.metrics.originals || originals && found.size !== originals.size) {
     throw new Error(`Población del explorador distinta del corte: ${evidence.providerId}`);
@@ -252,12 +256,12 @@ export const readPanelExplorer = async (workspace: string, snapshot: PanelSnapsh
   if (stored.selectedSha256 !== snapshot.commercialManifest.sha256) {
     throw new Error("Corte comercial cambiado durante la lectura del panel");
   }
-  const knowledge = await readPanelUnitKnowledge(root);
+  const [knowledge, audit] = await Promise.all([readPanelUnitKnowledge(root), loadSpecAdditionAudit(root)]);
   const products: PanelExplorerProduct[] = [];
   for (const provider of snapshot.providers) {
     const file = stored.files.find((item) => item.name === `${provider.providerId}-commercial.json`);
     if (!file) throw new Error(`Fichero comercial no disponible: ${provider.providerId}`);
-    products.push(...await forProvider(root, provider, file.content, knowledge));
+    products.push(...await forProvider(root, provider, file.content, knowledge, audit));
   }
   if (products.length !== snapshot.totals.originals) throw new Error("Totales del explorador incoherentes");
   const currentKnowledge = await readPanelUnitKnowledge(root);

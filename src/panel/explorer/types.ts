@@ -43,6 +43,12 @@ export type PanelFieldProvenance = {
   readonly historicalApplication: "not-demonstrated";
 };
 
+export type PanelSpecAddition = {
+  readonly field: string;
+  readonly value: string;
+  readonly kind: "own" | "reused" | "pending";
+};
+
 export type PanelProductDecision = {
   readonly stage: "editorial" | "commercial";
   readonly reason: string;
@@ -64,6 +70,7 @@ export type PanelExplorerProduct = {
   readonly commercialChanges: readonly PanelFieldDifference[];
   readonly commercialTechnicalChanges: readonly PanelFieldDifference[];
   readonly provenance: readonly PanelFieldProvenance[];
+  readonly specAdditions: readonly PanelSpecAddition[];
   readonly decision: PanelProductDecision | null;
   readonly evidence: {
     readonly original: PanelArtifact | null;

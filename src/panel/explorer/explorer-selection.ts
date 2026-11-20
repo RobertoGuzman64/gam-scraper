@@ -1,5 +1,5 @@
 import type { PanelProviderId } from "../evidence/types.js";
-import type { PanelExplorerProduct } from "./types.js";
+import type { PanelExplorerProduct, PanelSpecAddition } from "./types.js";
 
 export type ExplorerSort =
   "most-differences" | "fewest-original-specs" | "most-technical-additions" |
@@ -17,6 +17,7 @@ export type ExplorerSelection = {
   readonly withoutOriginalSpecs: boolean;
   readonly withTechnicalAdditions: boolean;
   readonly withTechnicalChanges?: boolean;
+  readonly additionKind?: PanelSpecAddition["kind"] | "todos";
   readonly withTitleChanges?: boolean;
   readonly withEditorialChanges: boolean;
 };
@@ -98,6 +99,8 @@ export const selectExplorerProducts = (
       (!selection.missingOriginalGeneralDescription || metrics.missingOriginalGeneralDescription) &&
       (!selection.withoutOriginalSpecs || item.original !== null && metrics.originalSpecs === 0) &&
       (!selection.withTechnicalAdditions || metrics.technicalAdditions > 0) &&
+      (!selection.additionKind || selection.additionKind === "todos" ||
+        item.specAdditions.some((addition) => addition.kind === selection.additionKind)) &&
       (!selection.withTechnicalChanges || metrics.technicalChanges > 0) &&
       (!selection.withTitleChanges || metrics.titleChanges) &&
       (!selection.withEditorialChanges || metrics.editorialChanges);

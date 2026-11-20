@@ -1,7 +1,7 @@
 import type { PanelProviderId } from "../evidence/types.js";
 import { explorerCategoryCounts, explorerStageCounts, normalizeExplorerText } from "../explorer/explorer-selection.js";
 import type { ExplorerIndexEntry, ExplorerSelection, ExplorerSort } from "../explorer/explorer-selection.js";
-import type { PanelExplorerProduct } from "../explorer/types.js";
+import type { PanelExplorerProduct, PanelSpecAddition } from "../explorer/types.js";
 
 type Stage = PanelExplorerProduct["stage"] | "todos";
 type Scope = PanelProviderId | "todos";
@@ -63,6 +63,7 @@ export const createExplorerFilterControls = (
   let category = "todos";
   let query = "";
   let sort: ExplorerSort = "reference";
+  let additionKind: PanelSpecAddition["kind"] | "todos" = "todos";
   const enabled: Record<Refinement, boolean> = {
     missingOriginalShortDescription: false,
     missingOriginalGeneralDescription: false,
@@ -73,7 +74,7 @@ export const createExplorerFilterControls = (
     withEditorialChanges: false
   };
   const selection = (): ExplorerSelection => ({
-    providerId: scope, stage, category, query, sort,
+    providerId: scope, stage, category, query, sort, additionKind,
     missingOriginalDescription: false,
     missingOriginalShortDescription: enabled.missingOriginalShortDescription,
     missingOriginalGeneralDescription: enabled.missingOriginalGeneralDescription,
@@ -133,6 +134,11 @@ export const createExplorerFilterControls = (
     } });
     if (category !== "todos") active.push({ label: `Categoría: ${category}`, clear: () => { category = "todos"; } });
     if (stage !== "todos") active.push({ label: stageNames[stage], clear: () => { stage = "todos"; } });
+    const additionLabels: Readonly<Record<PanelSpecAddition["kind"], string>> = {
+      own: "Propia ficha", reused: "Reutilizada", pending: "Por investigar"
+    };
+    if (additionKind !== "todos") active.push({ label: `Specs: ${additionLabels[additionKind]}`,
+      clear: () => { additionKind = "todos"; } });
     for (const refinement of refinements) {
       if (!enabled[refinement.key]) continue;
       active.push({ label: refinement.label, clear: () => {
@@ -166,12 +172,14 @@ export const createExplorerFilterControls = (
       target.append(chips, clearAll);
     }
     select("explorer-stage").value = stage;
+    select("explorer-spec-kind").value = additionKind;
     select("explorer-sort").value = sort;
   };
   const resetFilters = (): void => {
     query = "";
     category = "todos";
     stage = "todos";
+    additionKind = "todos";
     input("explorer-search").value = "";
     categorySearch.value = "";
     categoryPicker.removeAttribute("open");
@@ -193,6 +201,13 @@ export const createExplorerFilterControls = (
     if (value === "reference" || value === "most-differences" || value === "fewest-original-specs" ||
       value === "most-technical-additions" || value === "most-technical-changes") {
       sort = value;
+      update();
+    }
+  });
+  select("explorer-spec-kind").addEventListener("change", () => {
+    const value = select("explorer-spec-kind").value;
+    if (value === "todos" || value === "own" || value === "reused" || value === "pending") {
+      additionKind = value;
       update();
     }
   });

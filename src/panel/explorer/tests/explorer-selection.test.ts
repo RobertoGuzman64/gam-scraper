@@ -168,3 +168,21 @@ test("F4 reutiliza el índice de búsqueda sin mutar ni recalcular el catálogo"
     .map((item) => item.identity), ["X"]);
   assert.equal(index[0]?.item, first);
 });
+
+test("filtra por origen de incorporación sin confundir modificaciones ni crear coincidencias", async () => {
+  const base = await source();
+  const own = { ...product(base, "propia", 1, [difference("Año", "technical", "added")]),
+    specAdditions: [{ field: "Año", value: "2022", kind: "own" as const }] };
+  const reused = { ...product(base, "reutilizada", 1, [difference("Capacidad", "technical", "added")]),
+    specAdditions: [{ field: "Capacidad", value: "200 kg", kind: "reused" as const }] };
+  const pending = { ...product(base, "gris", 1, [difference("Potencia", "technical", "added")]),
+    specAdditions: [{ field: "Potencia", value: "5 kW", kind: "pending" as const }] };
+  const changed = { ...product(base, "modificada", 1, [difference("Potencia", "technical", "changed")]), specAdditions: [] };
+  for (const [kind, expected] of [["own", own.identity], ["reused", reused.identity], ["pending", pending.identity]] as const) {
+    const found = selectExplorerProducts([changed, own, pending, reused], { ...baseSelection, additionKind: kind });
+    assert.deepEqual(found.map((item) => item.identity), [expected]);
+  }
+  assert.equal(selectExplorerProducts([changed, own, pending, reused], {
+    ...baseSelection, additionKind: "reused", withTechnicalAdditions: true
+  }).length, 1);
+});

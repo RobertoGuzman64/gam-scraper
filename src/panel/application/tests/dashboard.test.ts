@@ -295,7 +295,7 @@ test("el modo portátil conserva enlaces seguros y casos reales sin navegación 
   assert.ok(!html.includes("renderCases()"));
   assert.ok(!html.includes('id="explorer-cases"'));
   assert.ok(html.includes("filters.render()"));
-  assert.ok(html.includes("renderedId === selectedId"));
+  assert.ok(html.includes("renderedId === key"));
   assert.ok(!html.includes("explorer-sort-current"));
   assert.ok(!html.includes('id="quality-cut-files-list"'));
   assert.ok(!html.includes('class="stage-strip"'));
@@ -414,7 +414,7 @@ test("organización: cada matriz queda en su vista y no se repiten tarjetas de i
   assert.ok(!html.includes('id="stage-strip"'));
   assert.ok(!html.includes('renderStages()'));
   assert.ok(!html.includes('renderQualityHighlights('));
-  assert.ok(html.includes('renderSpecifications(item)'));
+  assert.ok(html.includes('renderSpecifications(item, filters.selection().additionKind ?? "todos")'));
   assert.ok(html.includes('renderDescriptions(item, "shortDescription")'));
   assert.ok(html.includes('renderDescriptions(item, "generalDescription")'));
   assert.ok(!html.includes('renderFieldStory(item)'));
@@ -503,7 +503,7 @@ test("F5 integra listado, filtros y visor sin alterar el corte", async () => {
   assert.ok(html.includes('catalogToggle.setAttribute("aria-expanded", String(opened))'));
   assert.ok(html.includes('catalogToggle.focus()'));
   assert.ok(!html.includes('id="explorer-extra-count"'));
-  assert.ok(html.includes("renderedId === selectedId"));
+  assert.ok(html.includes("renderedId === key"));
   assert.ok(html.includes(`"sha256":"${snapshot.commercialManifest.sha256}"`));
   assert.equal(payload.explorer.products.length, snapshot.totals.originals);
 });
