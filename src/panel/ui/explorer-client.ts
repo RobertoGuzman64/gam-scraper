@@ -117,7 +117,7 @@ const commercialDifference = (item: PanelExplorerProduct, field: string): readon
   item.commercialChanges.filter((entry) => entry.field === field);
 const renderSpecifications = (item: PanelExplorerProduct, additionKind: PanelSpecAddition["kind"] | "todos"): HTMLElement => {
   const section = create("section", "detail-section technical-section");
-  append(section, create("p", "minor-note", "Especificaciones alineadas por campo. Solo se colorean las nuevas. Azul: compatible con información de la propia ficha; naranja: mismo perfil técnico de modelo aplicado a varias fichas; gris: mecanismo por investigar. Compartir un perfil no significa copiar datos entre unidades."));
+  append(section, create("p", "minor-note", "Especificaciones alineadas por campo. Solo se colorean las nuevas. Azul: compatible con información de la propia ficha; naranja: fuente o perfil técnico común aplicado a varias fichas; gris: mecanismo por investigar. Compartir información técnica no significa copiar datos entre unidades."));
   const technical = item.changes.filter((difference) => difference.group === "technical");
   const source = item.original && item.published ? technical :
     item.published && item.commercialTechnicalChanges.length ? item.commercialTechnicalChanges.map((difference): PanelFieldDifference => ({
