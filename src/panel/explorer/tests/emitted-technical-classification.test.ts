@@ -4,7 +4,7 @@ import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog
 import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 import { classifyPublishedTechnicalAdditions } from "../../../preparation/technical-spec-classification.js";
 import { readPanelSnapshot } from "../../evidence/read-panel-snapshot.js";
-import { readPanelExplorer } from "../read-panel-explorer.js";
+import { readPanelExplorer } from "../../../tools/catalog/read-panel-explorer.js";
 
 const examples = [
   { providerId: "gam", reference: "231", field: "", kind: "reused" },

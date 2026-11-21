@@ -5,7 +5,7 @@ import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js
 import { normalizeSpecKey } from "../../catalog/normalization/normalize-specs.js";
 import { readPanelSnapshot } from "../../panel/evidence/read-panel-snapshot.js";
 import { compareOriginalToPublished } from "../../panel/explorer/field-differences.js";
-import { resolvePanelFieldProvenance } from "../../panel/explorer/field-provenance.js";
+import { resolvePanelFieldProvenance } from "../../tools/catalog/panel-field-provenance.js";
 import { classifyPublishedTechnicalAdditions } from "../technical-spec-classification.js";
 import type { PanelProductView } from "../../panel/explorer/types.js";
 import type { ProductRecord } from "../../contracts/catalog.js";

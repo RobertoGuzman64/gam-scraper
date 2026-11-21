@@ -3,13 +3,13 @@ import type { ProductTechnicalProvenance } from "../../contracts/technical-prove
 import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js";
 import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
 import { normalizeSpecKey, normalizeSpecsObject } from "../../catalog/normalization/normalize-specs.js";
-import type { PanelArtifact, PanelProviderEvidence } from "../evidence/types.js";
-import { isSha } from "../evidence/evidence-files.js";
-import { matchingPanelUnitKnowledge } from "../evidence/knowledge-evidence.js";
-import type { PanelUnitKnowledgeEvidence } from "../evidence/knowledge-evidence.js";
-import type { PanelFieldDifference, PanelFieldProvenance, PanelProductView } from "./types.js";
-import { sourceYearEvidence } from "./source-year-evidence.js";
-import { sourceTechnicalEvidence } from "./source-technical-evidence.js";
+import type { PanelArtifact, PanelProviderEvidence } from "../../panel/evidence/types.js";
+import { isSha } from "../../panel/evidence/evidence-files.js";
+import { matchingPanelUnitKnowledge } from "../../panel/evidence/knowledge-evidence.js";
+import type { PanelUnitKnowledgeEvidence } from "../../panel/evidence/knowledge-evidence.js";
+import type { PanelFieldDifference, PanelFieldProvenance, PanelProductView } from "../../panel/explorer/types.js";
+import { sourceYearEvidence } from "../../preparation/technical-source-year-evidence.js";
+import { sourceTechnicalEvidence } from "../../preparation/technical-source-measures-evidence.js";
 
 const display = (value: SpecValue | undefined): string | null =>
   value === undefined ? null : typeof value === "string" ? value : JSON.stringify(value);

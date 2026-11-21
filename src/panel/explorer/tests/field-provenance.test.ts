@@ -13,8 +13,8 @@ import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/p
 import { compareOriginalToPublished } from "../field-differences.js";
 import { classifyPublishedTechnicalAdditions } from "../../../preparation/technical-spec-classification.js";
 import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
-import { queryPanelFieldProvenance, resolvePanelFieldProvenance } from "../field-provenance.js";
-import { readPanelExplorer } from "../read-panel-explorer.js";
+import { queryPanelFieldProvenance, resolvePanelFieldProvenance } from "../../../tools/catalog/panel-field-provenance.js";
+import { readPanelExplorer } from "../../../tools/catalog/read-panel-explorer.js";
 import type { PanelProductView } from "../types.js";
 
 const fixture = createPanelEvidenceWorkspaceFixture();

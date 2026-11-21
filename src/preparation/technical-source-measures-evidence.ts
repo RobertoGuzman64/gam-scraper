@@ -1,28 +1,28 @@
-import type { ProductRecord, SpecsMap } from "../../contracts/catalog.js";
-import { recoverGamExplicitWorkHeightSpec } from "../../preparation/gam/technical/measurements/work-height-evidence.js";
-import { recoverGamExplicitMachineSpecs } from "../../preparation/gam/technical/measurements/measured-machine-specs.js";
-import { recoverGamVerifiedTechnicalSpecs } from "../../preparation/gam/technical/measurements/verified-technical-measures.js";
-import { recoverGamBatteryMeasures } from "../../preparation/gam/technical/energy/battery-measures-evidence.js";
-import { recoverGamElectricMotorPowerSpecs } from "../../preparation/gam/technical/energy/electric-motor-power-evidence.js";
-import { recoverGamOperationalSpecs } from "../../preparation/gam/technical/measurements/operational-measures-evidence.js";
-import { recoverGamCleaningTankSpecs } from "../../preparation/gam/technical/operations/cleaning-tank-evidence.js";
-import { recoverGamVerifiedUnitPerformanceSpecs } from "../../preparation/gam/technical/operations/verified-unit-performance-specs.js";
-import { recoverGamPhysicalMeasures } from "../../preparation/gam/technical/measurements/physical-measures-evidence.js";
-import { recoverGamClearanceAndPlatform } from "../../preparation/gam/technical/measurements/clearance-platform-evidence.js";
-import { recoverGamAutonomySpec } from "../../preparation/gam/technical/energy/autonomy-evidence.js";
-import { recoverGamMaximumLiftHeightSpec } from "../../preparation/gam/technical/measurements/lift-height-evidence.js";
-import { recoverGamVerifiedDrivetrainBrakes } from "../../preparation/gam/technical/mobility/verified-drivetrain-brakes-evidence.js";
-import { recoverGamVerifiedSteeringBraking } from "../../preparation/gam/technical/mobility/verified-steering-braking-evidence.js";
-import { recoverGamVerifiedUnitGeometrySpecs } from "../../preparation/gam/technical/measurements/verified-unit-geometry-specs.js";
-import { recoverGamVerifiedUnitOperationSpecs } from "../../preparation/gam/technical/operations/verified-unit-operation-specs.js";
-import { recoverGamLithiumBatteryType } from "../../preparation/gam/technical/energy/battery-chemistry-evidence.js";
-import { recoverGamExplicitHorizontalReachSpec } from "../../preparation/gam/technical/measurements/reach-evidence.js";
-import { recoverGamWheelbaseSpec } from "../../preparation/gam/technical/mobility/wheelbase-evidence.js";
-import { recoverGamVerifiedTyreDimensions } from "../../preparation/gam/technical/mobility/verified-tyre-dimensions-evidence.js";
-import { recoverGamScrubbingPressureSpec } from "../../preparation/gam/technical/operations/scrubbing-pressure-evidence.js";
-import { recoverGamCleaningWorkingWidthSpec } from "../../preparation/gam/technical/operations/cleaning-productivity-evidence.js";
-import { compareTechnicalFields } from "./field-differences.js";
-import { isGamUnitUrl } from "./source-year-evidence.js";
+import type { ProductRecord, SpecsMap } from "../contracts/catalog.js";
+import { recoverGamExplicitWorkHeightSpec } from "./gam/technical/measurements/work-height-evidence.js";
+import { recoverGamExplicitMachineSpecs } from "./gam/technical/measurements/measured-machine-specs.js";
+import { recoverGamVerifiedTechnicalSpecs } from "./gam/technical/measurements/verified-technical-measures.js";
+import { recoverGamBatteryMeasures } from "./gam/technical/energy/battery-measures-evidence.js";
+import { recoverGamElectricMotorPowerSpecs } from "./gam/technical/energy/electric-motor-power-evidence.js";
+import { recoverGamOperationalSpecs } from "./gam/technical/measurements/operational-measures-evidence.js";
+import { recoverGamCleaningTankSpecs } from "./gam/technical/operations/cleaning-tank-evidence.js";
+import { recoverGamVerifiedUnitPerformanceSpecs } from "./gam/technical/operations/verified-unit-performance-specs.js";
+import { recoverGamPhysicalMeasures } from "./gam/technical/measurements/physical-measures-evidence.js";
+import { recoverGamClearanceAndPlatform } from "./gam/technical/measurements/clearance-platform-evidence.js";
+import { recoverGamAutonomySpec } from "./gam/technical/energy/autonomy-evidence.js";
+import { recoverGamMaximumLiftHeightSpec } from "./gam/technical/measurements/lift-height-evidence.js";
+import { recoverGamVerifiedDrivetrainBrakes } from "./gam/technical/mobility/verified-drivetrain-brakes-evidence.js";
+import { recoverGamVerifiedSteeringBraking } from "./gam/technical/mobility/verified-steering-braking-evidence.js";
+import { recoverGamVerifiedUnitGeometrySpecs } from "./gam/technical/measurements/verified-unit-geometry-specs.js";
+import { recoverGamVerifiedUnitOperationSpecs } from "./gam/technical/operations/verified-unit-operation-specs.js";
+import { recoverGamLithiumBatteryType } from "./gam/technical/energy/battery-chemistry-evidence.js";
+import { recoverGamExplicitHorizontalReachSpec } from "./gam/technical/measurements/reach-evidence.js";
+import { recoverGamWheelbaseSpec } from "./gam/technical/mobility/wheelbase-evidence.js";
+import { recoverGamVerifiedTyreDimensions } from "./gam/technical/mobility/verified-tyre-dimensions-evidence.js";
+import { recoverGamScrubbingPressureSpec } from "./gam/technical/operations/scrubbing-pressure-evidence.js";
+import { recoverGamCleaningWorkingWidthSpec } from "./gam/technical/operations/cleaning-productivity-evidence.js";
+import { normalizeSpecKey } from "../catalog/normalization/normalize-specs.js";
+import { isGamUnitUrl } from "./technical-source-year-evidence.js";
 
 type SourceTechnicalEvidence = {
   readonly sourceField: "longDescription";
@@ -132,10 +132,13 @@ export const sourceTechnicalEvidence = (
 ): SourceTechnicalEvidence | null => {
   if (value === null || !original.longDescription?.trim() || !isGamUnitUrl(original)) return null;
   const matchesWith = (recoveries: typeof sourceRecoveries): typeof sourceRecoveries =>
-    recoveries.filter(({ recover }) =>
-      compareTechnicalFields(original.specs ?? {}, recover(original))
-        .some((difference) => difference.group === "technical" && difference.change === "added" &&
-          difference.field === field && difference.after === value));
+    recoveries.filter(({ recover }) => {
+      if (Object.keys(original.specs ?? {}).some((key) => normalizeSpecKey(key) === field)) return false;
+      const matching = Object.entries(recover(original)).filter(([key]) => normalizeSpecKey(key) === field);
+      if (matching.length !== 1) return false;
+      const recovered = matching[0]?.[1];
+      return recovered !== undefined && (typeof recovered === "string" ? recovered : JSON.stringify(recovered)) === value;
+    });
   const previous = matchesWith(sourceRecoveries);
   const matches = previous.length === 0 ? matchesWith(additionalRecoveries) : previous;
   if (matches.length !== 1 || !matches[0]) return null;

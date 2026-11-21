@@ -7,7 +7,7 @@ import { readPortableOriginal } from "../../infrastructure/filesystem/catalog/po
 import { recoverGamStabilizedTechnicalSpecs } from "../../preparation/gam/technical/gam-technical-recovery.js";
 import { recoverDocumentedTechnicalSpecs } from "../../preparation/shared/technical/recovery/documented-technical-recovery.js";
 import { readPanelSnapshot } from "../../panel/evidence/read-panel-snapshot.js";
-import { readPanelExplorer } from "../../panel/explorer/read-panel-explorer.js";
+import { readPanelExplorer } from "./read-panel-explorer.js";
 import { compareTechnicalFields } from "../../panel/explorer/field-differences.js";
 import { productIdentity } from "../../panel/explorer/explorer-identity.js";
 import type { PanelProviderEvidence, PanelProviderId } from "../../panel/evidence/types.js";

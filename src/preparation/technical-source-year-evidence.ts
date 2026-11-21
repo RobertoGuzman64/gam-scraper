@@ -1,6 +1,6 @@
-import type { ProductRecord } from "../../contracts/catalog.js";
-import { explicitGamTitleYear, gamUrlYear } from "../../catalog/normalization/gam/year.js";
-import { normalizeSpecKey } from "../../catalog/normalization/normalize-specs.js";
+import type { ProductRecord } from "../contracts/catalog.js";
+import { explicitGamTitleYear, gamUrlYear } from "../catalog/normalization/gam/year.js";
+import { normalizeSpecKey } from "../catalog/normalization/normalize-specs.js";
 
 type SourceYearEvidence = {
   readonly sourceField: "year" | "url" | "longDescription";
@@ -8,8 +8,8 @@ type SourceYearEvidence = {
   readonly mechanism: string | null;
 };
 
-export { isGamUnitUrl } from "../../catalog/normalization/gam/unit-url.js";
-import { isGamUnitUrl } from "../../catalog/normalization/gam/unit-url.js";
+export { isGamUnitUrl } from "../catalog/normalization/gam/unit-url.js";
+import { isGamUnitUrl } from "../catalog/normalization/gam/unit-url.js";
 
 export const sourceYearEvidence = (
   original: ProductRecord, field: string, value: string | null

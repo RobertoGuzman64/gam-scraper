@@ -3,17 +3,22 @@ import { readAccreditedPublication } from "../../infrastructure/filesystem/catal
 import { readPortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { CommercialDeliveryPlan, CommercialDeliveryProduct } from "../../commercial/export/commercial-export.js";
-import { assertCommercialLineage } from "../evidence/commercial-evidence.js";
-import { digest, recordFrom, regularText } from "../evidence/evidence-files.js";
-import type { PanelUnitKnowledgeEvidence } from "../evidence/knowledge-evidence.js";
-import type { PanelProviderEvidence } from "../evidence/types.js";
-import { productIdentity } from "./explorer-identity.js";
-import { isDelivery, isEditorialExclusion } from "./explorer-data-validation.js";
-import type { EditorialExclusion } from "./explorer-data-validation.js";
-import { readPublicationTechnicalProvenance } from "../evidence/read-technical-provenance.js";
+import { assertCommercialLineage } from "../../panel/evidence/commercial-evidence.js";
+import { digest, recordFrom, regularText } from "../../panel/evidence/evidence-files.js";
+import type { PanelUnitKnowledgeEvidence } from "../../panel/evidence/knowledge-evidence.js";
+import type { PanelProviderEvidence } from "../../panel/evidence/types.js";
+import { productIdentity } from "../../panel/explorer/explorer-identity.js";
+import { isDelivery, isEditorialExclusion } from "../../panel/explorer/explorer-data-validation.js";
+import type { EditorialExclusion } from "../../panel/explorer/explorer-data-validation.js";
+import { readPublicationTechnicalProvenance } from "../../panel/evidence/read-technical-provenance.js";
 import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js";
-import { toExplorerProduct } from "./explorer-product-view.js";
-import type { PanelExplorerProduct, PanelProductDecision } from "./types.js";
+import { fromOriginal, fromPublication, toExplorerProduct } from "../../panel/explorer/explorer-product-view.js";
+import { compareOriginalToPublished } from "../../panel/explorer/field-differences.js";
+import { classifyPublishedTechnicalAdditions } from "../../preparation/technical-spec-classification.js";
+import { resolvePanelFieldProvenance } from "./panel-field-provenance.js";
+import type { ProductTechnicalProvenance } from "../../contracts/technical-provenance.js";
+import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
+import type { PanelExplorerProduct, PanelProductDecision } from "../../panel/explorer/types.js";
 
 const readExclusions = async (root: string, evidence: PanelProviderEvidence): Promise<{
   readonly items: readonly EditorialExclusion[];
@@ -66,6 +71,29 @@ const verifiedCommercial = (
   return decoded;
 };
 
+const buildExplorerProduct = (
+  provider: PanelProviderEvidence, reference: string | null, sourceUrl: string,
+  original: ProductRecord | null, published: ImportCandidate | null,
+  commercial: CommercialDeliveryProduct | null, decision: PanelProductDecision | null,
+  accreditation: { readonly path: string; readonly sha256: string },
+  knowledge: PanelUnitKnowledgeEvidence | null, emitted: ProductTechnicalProvenance | null = null
+): PanelExplorerProduct => {
+  const after = published ? fromPublication(published) : null;
+  const changes = original && after ? compareOriginalToPublished(fromOriginal(original), after) : [];
+  if (emitted && emitted.entries.some((entry) => !changes.some((difference) =>
+    difference.group === "technical" && difference.change === "added" &&
+    difference.field === entry.field && difference.after === entry.value))) {
+    throw new Error("Evidencia productiva incompatible con especificaciones publicadas");
+  }
+  const provenance = resolvePanelFieldProvenance(original, after, changes, provider, knowledge, reference, sourceUrl, emitted);
+  const specAdditions = classifyPublishedTechnicalAdditions(original, emitted, provider.providerId, reference, sourceUrl,
+    provider.original.status === "verified", changes.filter((difference) =>
+      difference.group === "technical" && difference.change === "added").map((difference) =>
+      ({ field: difference.field, value: difference.after ?? "" })));
+  return toExplorerProduct(provider.providerId, reference, sourceUrl, original, published, commercial, decision,
+    provider, accreditation, changes, provenance, specAdditions);
+};
+
 export const readProviderExplorerProducts = async (
   root: string, evidence: PanelProviderEvidence, commercialRaw: string, knowledge: PanelUnitKnowledgeEvidence | null
 ): Promise<readonly PanelExplorerProduct[]> => {
@@ -116,8 +144,8 @@ export const readProviderExplorerProducts = async (
     const decision: PanelProductDecision | null = exclusion ? {
       stage: "commercial", reason: exclusion.reason, issues: [], evidenceUrls: []
     } : null;
-    result.push(toExplorerProduct(evidence.providerId, item.reference, item.sourceUrl, original, item,
-      exported.get(key) ?? null, decision, evidence, accreditation.artifact, knowledge, trace));
+    result.push(buildExplorerProduct(evidence, item.reference, item.sourceUrl, original, item,
+      exported.get(key) ?? null, decision, accreditation.artifact, knowledge, trace));
   }
   for (const excluded of accreditation.items) {
     const key = productIdentity(evidence.providerId, excluded.reference, excluded.sourceUrl);
@@ -127,9 +155,9 @@ export const readProviderExplorerProducts = async (
     if (originals && (!original || original.url !== excluded.sourceUrl || original.reference !== excluded.reference)) {
       throw new Error(`Exclusión sin original acreditado: ${key}`);
     }
-    result.push(toExplorerProduct(evidence.providerId, excluded.reference, excluded.sourceUrl, original, null, null,
+    result.push(buildExplorerProduct(evidence, excluded.reference, excluded.sourceUrl, original, null, null,
       { stage: "editorial", reason: excluded.reason, issues: excluded.issues, evidenceUrls: excluded.evidenceUrls },
-      evidence, accreditation.artifact, knowledge));
+      accreditation.artifact, knowledge));
   }
   if (result.length !== evidence.metrics.originals || originals && found.size !== originals.size) {
     throw new Error(`Población del explorador distinta del corte: ${evidence.providerId}`);

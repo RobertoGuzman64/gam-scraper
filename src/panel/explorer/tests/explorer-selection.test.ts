@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readPanelSnapshot } from "../../evidence/read-panel-snapshot.js";
 import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
-import { readPanelExplorer } from "../read-panel-explorer.js";
+import { readPanelExplorer } from "../../../tools/catalog/read-panel-explorer.js";
 import { createExplorerIndex, explorerCategoryCounts, explorerProductMetrics, explorerStageCounts, selectExplorerProducts } from "../explorer-selection.js";
 import type { ExplorerSelection } from "../explorer-selection.js";
 import type { PanelExplorerProduct, PanelFieldDifference } from "../types.js";

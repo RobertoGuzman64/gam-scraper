@@ -7,7 +7,7 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 import { readPortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
 import { readPanelSnapshot } from "../../panel/evidence/read-panel-snapshot.js";
 import { readPublicationTechnicalProvenance } from "../../panel/evidence/read-technical-provenance.js";
-import { readPanelExplorer } from "../../panel/explorer/read-panel-explorer.js";
+import { readPanelExplorer } from "./read-panel-explorer.js";
 import { productIdentity } from "../../panel/explorer/explorer-identity.js";
 import type { PanelSpecAddition } from "../../panel/explorer/types.js";
 import { prepareSourceProduct } from "../../preparation/prepare-product.js";
