@@ -9,6 +9,7 @@ type DocumentedUnit = {
   readonly model: string;
   readonly title: string;
   readonly source: string;
+  readonly fieldSources?: Readonly<Record<string, string>>;
   readonly specifications: Readonly<SpecsMap>;
 };
 
@@ -34,6 +35,7 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     model: "U10.3",
     title: "MINIEXCAVADORA ORUGA 1000 KG",
     source: "https://kbm.kubota-eu.com/constructionmachinery/en/products/u10-3u10-3-sl/",
+    fieldSources: { "Altura máxima de descarga": "https://www.kubota.com/products/machinery/singapore/pdf/1117_U10-3_200dpi.pdf" },
     specifications: {
       "Profundidad máxima de excavación": "1800 mm",
       "Anchura mínima del chasis": "750 mm",
@@ -48,6 +50,7 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     model: "U27.4",
     title: "MINIEXCAVADORA ORUGA 2700 KG",
     source: "https://kuk.kubota-eu.com/constructionmachinery/products/u27-4/",
+    fieldSources: { "Altura máxima de descarga": "https://kubota.com.au/product/excavator-u27-4/" },
     specifications: {
       "Profundidad máxima de excavación": "2820 mm",
       "Anchura total": "1500 mm",
@@ -73,6 +76,7 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     model: "150AETJC",
     title: "PLATAFORMA ARTICULADA ELECTRICA 15 MT",
     source: "https://www.lectura-specs.es/es/modelo/plataformas-elevadoras/plataformas-elevadoras-articuladas-plataformas-articuladas-de-ruedas-manitou/150-aetj-c-1036275",
+    fieldSources: { "Altura de plataforma": "https://www.grupogalindoalquiler.es/wp-content/uploads/2017/06/manitou-150-aetjc.pdf" },
     specifications: {
       "Alcance horizontal": "7,6 m",
       "Capacidad máxima de plataforma": "200 kg",
@@ -118,7 +122,7 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     brand: "Niftylift",
     model: "HR21D 4X4",
     title: "PLATAFORMA ARTICULADA DIESEL 21 MT",
-    source: "https://www.nationwideplatforms.co.uk/NationwidePlatforms/media/NWPAssets/Resources/Literature/NWP-2021-Product-Guide-Digital.pdf",
+    source: "https://www.pgplatforms.co.uk/_webedit/uploaded-files/All%20Files/Boom%20Lifts/Diesel/NIFTYLIFT%20HR21%204%C3%974%20Spec.pdf",
     specifications: {
       "Altura de plataforma": "18,8 m",
       "Capacidad máxima de plataforma": "225 kg",
@@ -143,6 +147,7 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     model: "SJ9250",
     title: "PLATAFORMA TIJERA DIESEL 18 MT",
     source: "https://www.skyjack.com/sites/default/files/specifications/ENEU-SJ9241-50RT_0.pdf",
+    fieldSources: { "Longitud de plataforma": "https://www.skyjack.com/sites/default/files/specifications/SJ9250_RT.pdf" },
     specifications: {
       "Altura de plataforma": "15,24 m",
       "Anchura total": "2,34 m",
@@ -299,7 +304,17 @@ export const recoverMercaelevaDocumentedEquipmentTechnicalSpecs = (record: Produ
     Object.keys(unit.specifications).some((key) => key in specs)) return specs;
 
   const recovered = { ...specs, ...unit.specifications };
-  observe?.(specs, recovered, "src/preparation/mercaeleva/technical/evidence/documented-equipment-technical-specs.ts",
-    undefined, { scope: "unit-document", document: { url: unit.source, brand: unit.brand, model: unit.model } });
+  const mechanism = "src/preparation/mercaeleva/technical/evidence/documented-equipment-technical-specs.ts";
+  if (unit.fieldSources) {
+    for (const [field, value] of Object.entries(unit.specifications)) {
+      observe?.(specs, { ...specs, [field]: value }, mechanism, undefined,
+        { scope: "unit-document", document: { url: unit.fieldSources[field] ?? unit.source,
+          brand: unit.brand, model: unit.model } });
+    }
+    observe?.(specs, recovered, mechanism);
+  } else {
+    observe?.(specs, recovered, mechanism, undefined,
+      { scope: "unit-document", document: { url: unit.source, brand: unit.brand, model: unit.model } });
+  }
   return recovered;
 };

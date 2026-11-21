@@ -9,7 +9,7 @@ type ReviewedModelFact = {
 
 type ReviewedModelDocument = {
   readonly url: string;
-  readonly brand: string;
+  readonly brand: string | null;
   readonly model: string;
   readonly reviewedOn: string;
   readonly facts: readonly ReviewedModelFact[];
@@ -598,6 +598,283 @@ const documents: readonly ReviewedModelDocument[] = [
     url: "https://www.afi-rentals.co.uk/news/wilson-access-continues-fleet-investment-with-four-new-cte-zed-213-jhv-truck-mounts", brand: "CTE", model: "ZED 21.3 JHV",
     reviewedOn: "2026-11-21", facts: [
       { field: "Alcance horizontal (m)", value: "10 m", support: "CTE ZED 21.3 JHV | Horizontal outreach | 10 m" }
+    ]
+  },
+
+  {
+    url: "https://logitrans.com/fully-powered-logiflex-stacker-self-maxi/", brand: "LOGITRANS", model: "Self Maxi",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Conducción con timón vertical", value: "Permitida", support: "Logitrans SELF MAXI | Permite operar con el timón en posición vertical | https://logitrans.com/media/2344/self_maxi_es_200_v1.pdf" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/fully-powered-logiflex-stacker-with-straddle-legs-selfs-maxi/", brand: "LOGITRANS", model: "Self Maxi S",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Conducción con timón vertical", value: "Permitida", support: "Logitrans SELFS MAXI | Possible to operate with the handle upright | https://static.machinetools.com/uploads/4731764/selfs_maxi_en.pdf" }
+    ]
+  },
+  {
+    url: "https://www.howardhandling.co.uk/logitrans-reel-loader-manual-reel-lifter-and-positioner-500kg-48", brand: "LOGITRANS", model: "RL 500",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Recorrido de elevación", value: "800 mm", support: "RL500 | Lifting height h3 | 800 mm; altura inicial 250 mm, final 1050 mm | https://logitrans.com/media/2392/reel_lifter_72.pdf" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/US/panther-silent-manual-pallet-truck/", brand: "LOGITRANS", model: "Panther Silent",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Sistema de elevación", value: "Elevación rápida permanente", support: "Panther Silent | Panther Silent has permanent quick lift | https://logitrans.com/media/3595/product_spec_sheets_2022_3.pdf" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/panther-manual-pallet-truck-inox-plus-pip/", brand: "LOGITRANS", model: "Panther Inox Plus",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Timón y componentes de elevación", value: "Acero inoxidable", support: "Panther Inox Plus | Stainless handle, wheel forks, lifting arm and thrust plate | https://logitrans.com/media/3595/product_spec_sheets_2022_3.pdf" }
+    ]
+  },
+  {
+    url: "https://targoncatrade.hu/uploads/products/xt4018kh-1738823693.pdf", brand: "XCMG", model: "XT4018KH",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Tracción", value: "4×4", support: "XT4018KH | Transmission System | Drive mode | 4×4; catálogo XCMG, página 2" }
+    ]
+  },
+  {
+    url: "https://ibz-handelswelt.de/gebrauchtmaschinen/stoecklin-niederhubwagen-edp/", brand: "Stöcklin", model: "EDP-2000",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Capacidad nominal de carga", value: "2000 kg", support: "Stöcklin | Typ: EDP 2000 | Tragkraft: 2000 kg" },
+      { field: "Tensión del sistema de batería", value: "24 V", support: "Stöcklin | Typ: EDP 2000 | Batterie: 24 V" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/electric-logitilt/", brand: "LOGITRANS", model: "Logitilt LT",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Recorrido de elevación", value: "275 mm", support: "LT 1001 | Lifting height h3 | 275 mm" },
+      { field: "Altura de trabajo con caja inclinada", value: "750–950 mm", support: "LT 1001 | Height, tilted ht | 750-950 mm" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/electric-logitilt-with-straddle-legs/", brand: "LOGITRANS", model: "Logitilt LTS",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Recorrido de elevación", value: "275 mm", support: "LTS 1001 | Lifting height h3 | 275 mm" },
+      { field: "Altura de trabajo con caja inclinada", value: "750–950 mm", support: "LTS 1001 | Height, tilted ht | 750-950 mm" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/logiq-200-quarter-pallet-lifter/", brand: "LOGITRANS", model: "LogiQ 200/300",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Longitud de horquillas", value: "600 mm", support: "LQHM 200 / LQHM 300 | Gabellänge l | 600 mm" },
+      { field: "Altura mínima de horquillas", value: "85 mm", support: "LQHM 200 / LQHM 300 | Einfahrhöhe h13 | 85 mm" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/electric-logitilt-inox-lti/", brand: "LOGITRANS", model: "Logitilt LTI",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Recorrido de elevación", value: "275 mm", support: "Logitilt LTI 1001 | Lifting height h3 | 275 mm" },
+      { field: "Altura de trabajo con caja inclinada", value: "750–950 mm", support: "Logitilt LTI 1001 | Height, tilted ht | 750-950 mm" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/media/3839/lm1500_us_72_v2.pdf", brand: "LOGITRANS", model: "Mover",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Acceso del operador", value: "Mediante código PIN", support: "Logitrans Mover | The handle has integrated PIN code panel" },
+      { field: "Panel de control", value: "Pantalla LCD con estado de batería", support: "Logitrans Mover | LCD display with status indication" }
+    ]
+  },
+  {
+    url: "https://www.tennantco.com/en_eu/1/machines/scrubbers/product.m-t16.html", brand: null, model: "T16",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de la boquilla de aspiración", value: "1065 mm", support: "Squeegee Width: 42 in / 1065 mm" },
+      { field: "Depósito de agua limpia estándar", value: "190 L", support: "Solution Tank Capacity: 50 gal / 190 L (standard)" },
+      { field: "Depósito de recuperación", value: "225 L", support: "Recovery Tank Capacity: 60 gal / 225 L" }
+    ]
+  },
+  {
+    url: "https://www.djproducts.com/product/power-trailer-mover-6k-36v/", brand: null, model: "6K 36V BR",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Cargador a bordo del modelo", value: "Sí", support: "Onboard Charger" },
+      { field: "Frenado en posición neutra del modelo", value: "Sí", support: "Neutral Throttle Braking" },
+      { field: "Reducción de transmisión del modelo", value: "2:1 por cadena", support: "2:1 Gear Reduction with Chain to Drive Tires" },
+      { field: "Velocidad de avance y retroceso del modelo", value: "0-2 mph", support: "0-2 mph Forward/ Reverse" }
+    ]
+  },
+  {
+    url: "https://www.auto-data.net/es/audi-cabriolet-b3-8g-2.6-v6-150hp-4251", brand: null, model: "6 CABRIO 80 2",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Cilindrada del motor", value: "2598 cm³", support: "2598 cm³" },
+      { field: "Par motor máximo", value: "225 Nm", support: "150 CV, 225 Nm" },
+      { field: "Potencia máxima del motor", value: "150 CV", support: "150 CV, 225 Nm" },
+      { field: "Tipo de tracción", value: "Delantera", support: "Tracción delantera" }
+    ]
+  },
+  {
+    url: "https://www.carandclassic.com/car/C1956678", brand: null, model: "304 S CABRIOLET",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Caja de cambios", value: "Manual de 4 velocidades", support: "1972 Peugeot 304 S Cabriolet | Manual, 4 speed | 4-speed front synchronised gearbox" },
+      { field: "Cilindrada del motor", value: "1288 cm³", support: "1972 Peugeot 304 S Cabriolet | Displacement: 1,288 cc" },
+      { field: "Potencia máxima DIN", value: "74,5 CV", support: "1972 Peugeot 304 S Cabriolet | DIN: 74.5 hp at 6,000 rpm" },
+      { field: "Tipo de tracción", value: "Delantera", support: "1972 Peugeot 304 Cabriolet S | Front-wheel drive | https://www.oldtimerfarm.be/en/collection-cars-for-sale/6301/peugeot-304s-cabriolet-72.php" }
+    ]
+  },
+  {
+    url: "https://www.equipostrex.com/chi/producto/plataforma-elevadora-snake-2010-plus/", brand: "Oil & Steel", model: "SNAKE 2010 PLUS",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de plataforma", value: "0,7 m", support: "Snake 2010 Plus | Plataforma | 1400 x 700 x h 1100 mm" },
+      { field: "Longitud de plataforma", value: "1,4 m", support: "Snake 2010 Plus | Plataforma | 1400 x 700 x h 1100 mm" }
+    ]
+  },
+  {
+    url: "https://www.lectura-specs.com/en/model/aerial-work-platform/articulating-boom-lifts-wheeled-articulating-boom-lifts-manitou/200-atj-1161009", brand: "Manitou", model: "200ATJ",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "18,28 m", support: "Manitou 200 ATJ | Platform height | 18,28 m | https://www.colle.eu/en/rent/working-at-heights/aerial-lifts/articulating-boom-lifts/manitou-200-atj/" }
+    ]
+  },
+  {
+    url: "https://sitecore.jlg.com/dfsmedia/e4042b10c9ce4595b4cc059f1299f079/140840-source", brand: "JLG", model: "E600JP",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura (mm)", value: "2,42 m", support: "JLG E600JP | Anchura transporte | 2.42 m | https://www.lectura-specs.es/es/modelo/plataformas-elevadoras/plataformas-telescopicas-plataformas-telescopicas-de-ruedas-jlg/e600jp-998943" }
+    ]
+  },
+  {
+    url: "https://sitecore.jlg.com/dfsmedia/e4042b10c9ce4595b4cc059f1299f079/142288-source", brand: "JLG", model: "800AJ",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura (mm)", value: "2,44 m", support: "JLG 800AJ | Overall Width | 2.44 m | https://www.spiderliftasia.com/products/boom-lift-jlg-800aj/" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "JLG 800AJ | Platform Capacity - Unrestricted | 230 kg | https://www.spiderliftasia.com/products/boom-lift-jlg-800aj/" }
+    ]
+  },
+  {
+    url: "https://www.linde-mh.es/es/Productos/Transpaletas/T14-T20/",
+    brand: "Linde", model: "T18", reviewedOn: "2026-11-21", facts: [
+      { field: "Centro de carga (mm)", value: "600 mm", support: "Linde T18 | Load centre distance c (mm) | 600 | https://www.linde-mh.co.uk/media/Datasheets/EN_ds_t14_t20_1155_en_c_0624_view.pdf" }
+    ]
+  },
+  {
+    url: "https://jlg.manymanuals.it/special-machinery/450aaj-series-ii-service-manual/user-manual-38276/17",
+    brand: "JLG", model: "450 AJ SII", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "13,72 m", support: "JLG 450AJ Series II | Max. Platform Height | 45 ft. (13.72 M)" },
+      { field: "Alcance horizontal (m)", value: "7,47 m", support: "450AJ SII | Max. Horizontal Reach | 24 ft. 6 in. (7.47 M)" }
+    ]
+  },
+  {
+    url: "https://www.pgplatforms.co.uk/_webedit/uploaded-files/All%20Files/Boom%20Lifts/Diesel/NIFTYLIFT%20HR21%204%C3%974%20Spec.pdf",
+    brand: "Niftylift", model: "HR21D 4X4", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "18,8 m", support: "Niftylift HR21 4x4 | Platform height | 18.8 m" },
+      { field: "Capacidad máxima de plataforma", value: "225 kg", support: "Niftylift HR21 4x4 | Platform capacity | 225 kg" }
+    ]
+  },
+  {
+    url: "https://aftersales.paxster.no/wp-content/uploads/2023/05/User-Manual-Paxster-Gen2.2-Rev6-05-05-2023.pdf",
+    brand: "Paxster", model: "Gen 2.2", reviewedOn: "2026-11-21", facts: [
+      { field: "Número de plazas del modelo", value: "1", support: "Paxster Gen 2.2, Operating Instructions rev. 06, p. 25: Seats | 1 (center seat), en las cuatro variantes" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/panther-manual-pallet-truck/", brand: "LOGITRANS", model: "Panther Flex",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Propulsión", value: "Manual", support: "Our manual pallet truck; la misma ficha identifica expresamente Panther Flex como configuración de horquillas" },
+      { field: "Descenso de carga", value: "Controlado", support: "Gentle and controlled lowering of loads; la misma ficha identifica Panther Flex" }
+    ]
+  },
+  {
+    url: "https://www.yale.com/es-es/emea/carretillas-para-pasillos-muy-estrechos-vna/mtc10-15/",
+    brand: "YALE", model: "MTC15", reviewedOn: "2026-11-21", facts: [
+      { field: "Rotación del cabezal trilateral", value: "180°", support: "Yale MTC10-15: El cabezal trilateral gira 180 grados" }
+    ]
+  },
+  {
+    url: "https://xcmguk.com/product/xt4014kh15/", brand: "XCMG", model: "XT4014KH",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Tracción", value: "4×4", support: "El fabricante describe literalmente XT4014KH: Its four-wheel drive and four-wheel steering. No se acredita potencia ni variantes" }
+    ]
+  },
+  {
+    url: "https://kubota.com.au/product/excavator-u27-4/", brand: "Kubota", model: "U27.4",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura máxima de descarga", value: "3100 mm", support: "Kubota U27-4, Working Range: Max. Dumping Height | 3,100 mm" }
+    ]
+  },
+  {
+    url: "https://www.kubota.com/products/machinery/singapore/pdf/1117_U10-3_200dpi.pdf",
+    brand: "Kubota", model: "U10.3", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura máxima de descarga", value: "2215 mm", support: "Kubota U10-3, Specifications, Working range: Max. dumping height | 2215 mm" }
+    ]
+  },
+  {
+    url: "https://www.grupogalindoalquiler.es/wp-content/uploads/2017/06/manitou-150-aetjc.pdf",
+    brand: "Manitou", model: "150AETJC", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "13 m", support: "Manitou 150 AETJ C Compact, ficha 700344ES 01/07: Altura del suelo | 13,00 m" }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/english/228459.pdf", brand: "Genie", model: "S-125",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "38,1 m", support: "Genie S-125, manual 228459, 5.ª edición, 2.ª impresión, pág. 65: Height, platform maximum | 38.1 m" },
+      { field: "Anchura con ejes recogidos", value: "2,5 m", support: "Genie S-125, manual 228459, 5.ª edición, 2.ª impresión, pág. 65: Width, axles retracted | 2.5 m" }
+    ]
+  },
+  {
+    url: "https://www.skyjack.com/sites/default/files/specifications/SJ9250_RT.pdf", brand: "Skyjack", model: "SJ9250",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Longitud de plataforma", value: "4,27 m", support: "Skyjack SJ9250 RT, catálogo NA/ENG/03/2018, pág. 2: I Platform Length (Inside Dimension) | 168 in (4.27 m)" }
+    ]
+  },
+  {
+    url: "https://www.lvnengebike.com/LX05.html", brand: "LVNENG", model: "LX05",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Dimensiones exteriores", value: "1890 x 720 x 1110 mm", support: "MODEL LX05; Dimension(L*W*H) | 1890*720*1110mm" },
+      { field: "Tipo de frenos", value: "Disco delantero y trasero", support: "MODEL LX05; Brake | Front & Rear disc brakes" }
+    ]
+  },
+  {
+    url: "https://ctelift.com/nuovi-prodotti-cte-2021/", brand: "CTE", model: "MP 24 C",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura sobre obstáculos", value: "10,5 m", support: "CTE MP 24 C: possibilità di scavalco di m 10,5" }
+    ]
+  },
+  {
+    url: "https://doc.pegamo.es/www/machinery/doc/0AEE48CF9C424F608F99E74F6D48876A.pdf",
+    brand: "JLG", model: "660SJ", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "20,31 m", support: "JLG Industries, guía de especificaciones 2015, página 20: modelo 660SJ | Altura de plataforma | 20,31 m" }
+    ]
+  },
+  {
+    url: "https://vertikal.net/en/pdf/78085/1beac504/ca_2025_8_p24-39.pdf",
+    brand: "XCMG", model: "XT3207KH", reviewedOn: "2026-11-21", facts: [
+      { field: "Tipo de motor", value: "Diésel", support: "Anuncio técnico de XCMG UK, Cranes & Access 2025/8, pág. 24: XT3207KH | Engine model: Deutz TCD 3.6. DEUTZ confirma que TCD 3.6 L4 es motor diésel: https://www.deutz.com/americas/en/products/power-packs/tcd-36-l4/" }
+    ]
+  },
+  {
+    url: "https://www.ctelift.com/wp-content/uploads/2020/11/B-LIFT-27.2_2021-05_EN.pdf",
+    brand: "CTE", model: "B-LIFT 27.2", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "25 m",
+        support: "CTE B-LIFT 27.2, folleto oficial ed. 03/21, pág. 2: altura máxima de trabajo 27 m, altura de cesta 25 m, alcance 15,5 m, carga 250 kg. La ficha GAM 6190 identifica B-LIFT 27.2 FIB y reproduce 27 m, 15,5 m y 250 kg; se acredita únicamente la cota de plataforma del conjunto 27.2, no las propiedades específicas de la cesta FIB" }
+    ]
+  },
+  {
+    url: "https://www.automobile-catalog.com/make/alfa_romeo/spider_alfa_romeo/spider_serie_2/1973.html",
+    brand: null, model: "SPIDE JUNIOR", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura exterior del modelo", value: "1290 mm",
+        support: "Alfa Romeo Spider 1300 Junior y Spider 1600 Junior de 1973, fichas de ambas variantes: altura exterior 1290 mm; es una cota común, no una identificación de cilindrada" },
+      { field: "Anchura exterior del modelo", value: "1630 mm",
+        support: "Alfa Romeo Spider 1300 Junior y Spider 1600 Junior de 1973: anchura exterior 1630 mm en ambas fichas" },
+      { field: "Distancia entre ejes del modelo", value: "2250 mm",
+        support: "Alfa Romeo Spider 1300 Junior y Spider 1600 Junior de 1973: batalla de 2250 mm en ambas fichas" },
+      { field: "Longitud exterior del modelo", value: "4120 mm",
+        support: "Alfa Romeo Spider 1300 Junior y Spider 1600 Junior de 1973: longitud 4120 mm en ambas fichas" },
+      { field: "Tipo de tracción", value: "Trasera",
+        support: "Alfa Romeo Spider 1300 Junior y Spider 1600 Junior de 1973, fichas de ambas variantes: RWD (rear-wheel drive)" },
+      { field: "Transmisión del modelo", value: "Manual de 5 velocidades",
+        support: "Alfa Romeo Spider 1300 Junior y Spider 1600 Junior de 1973, fichas de ambas variantes: manual 5-speed (man. 5)" }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/english/133540.pdf", brand: "Genie", model: "Z-51/30J",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "9,25 m", support: "Manual oficial Genie PN 133540, quinta edición, primera impresión, página 49: Z-51/30J Horizontal reach maximum 9.25 m. El índice de manuales Genie lo asigna a la serie CE desde SN 10B-524 hasta 14B-1200, correspondiente al periodo de la ficha original de 2013; no acredita otras revisiones" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/panther-manual-pallet-truck/", brand: "LOGITRANS", model: "Panther Flex",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Elevación", value: "Hidráulica manual", support: "Logitrans identifica Panther Flex como variante de horquillas del Panther manual; su catálogo describe elevaciones mediante bombeo manual y aceite especial. El despiece de fabricante Panther 2572/2582 muestra la bomba, el cilindro, el pistón, las juntas y las válvulas: https://logitrans-stapler.de/service/Ersatzteillisten/Gabelhubwagen/Panther2572-2582-Ersatzteilliste.pdf" }
     ]
   }
 ];

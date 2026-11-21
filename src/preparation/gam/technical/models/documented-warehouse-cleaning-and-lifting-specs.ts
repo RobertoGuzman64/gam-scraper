@@ -40,7 +40,7 @@ const documentedUnits: Readonly<Record<string, DocumentedGamUnit>> = {
     "brand": "YALE",
     "model": "MTC15",
     "categoryKey": "carretillas-nuevas",
-    "source": "https://online.gamrentals.com/en/trilateral-forklifts/2266-yale-mtc15-trilateral-forklift",
+    "source": "https://www.yale.com/es-es/emea/carretillas-para-pasillos-muy-estrechos-vna/mtc10-15/",
     "specifications": {
       "Rotación del cabezal trilateral": "180°"
     }
@@ -158,7 +158,7 @@ const documentedUnits: Readonly<Record<string, DocumentedGamUnit>> = {
     "brand": null,
     "model": null,
     "categoryKey": "elevacion-nueva",
-    "source": "https://www.ctelift.com/en/2021/06/14/cte-presenta-mp-24-c-e-tornata-multipurpose-piu-compatta/",
+    "source": "https://ctelift.com/nuovi-prodotti-cte-2021/",
     "specifications": {
       "Altura sobre obstáculos": "10,5 m"
     }
@@ -168,7 +168,7 @@ const documentedUnits: Readonly<Record<string, DocumentedGamUnit>> = {
     "brand": null,
     "model": null,
     "categoryKey": "elevacion-nueva",
-    "source": "https://hoogwerkers.net/ctelift-brochure/B-LIFT-27.2-WORKING-AREA.pdf",
+    "source": "https://www.ctelift.com/wp-content/uploads/2020/11/B-LIFT-27.2_2021-05_EN.pdf",
     "specifications": {
       "Altura de plataforma": "25 m"
     }

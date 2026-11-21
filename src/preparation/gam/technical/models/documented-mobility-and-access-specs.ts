@@ -173,7 +173,7 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     "brand": "Paxster",
     "model": "Gen 2.2",
     "categoryKey": "maquinaria",
-    "source": "https://online.gamrentals.com/en/used-electric-vans/5918-paxster-gen-22",
+    "source": "https://aftersales.paxster.no/wp-content/uploads/2023/05/User-Manual-Paxster-Gen2.2-Rev6-05-05-2023.pdf",
     "specifications": {
       "Capacidad de carga anunciada, conductor incluido": "Hasta 240 kg",
       "Volumen de carga anunciado": "Hasta 1200 L",

@@ -6,6 +6,8 @@ import { originalRecordFingerprint } from "../catalog/identity-fingerprint.js";
 import type { DocumentedTechnicalSource, ProductTechnicalProvenance, TechnicalSpecEvidence } from "../contracts/technical-provenance.js";
 import type { TechnicalRecoverySourceField } from "./technical-recovery-observation.js";
 import { reviewedModelDocumentVerification } from "./shared/technical/evidence/reviewed-model-claims.js";
+import { reviewedUnitDescriptionEvidence } from "./shared/technical/evidence/reviewed-unit-description-claims.js";
+import { matchesDocumentedTechnicalIdentity } from "./shared/technical/evidence/reviewed-catalog-model-identity.js";
 export { isProductTechnicalProvenance } from "../contracts/technical-provenance.js";
 
 type RecoveryStep = { readonly before: SpecsMap; readonly after: SpecsMap; readonly mechanism: string;
@@ -80,8 +82,12 @@ export const captureTechnicalProvenance = (original: ProductRecord): {
           seen.add(field);
           const documentedSource = step.source;
           const document = documentedSource?.document;
-          if (document && document.brand === original.brand && document.model === original.model) {
-            const verification = documentedSource.scope === "model-document" || documentedSource.scope === "unit-document"
+          const originalDescriptionEvidence = reviewedUnitDescriptionEvidence(original, field, value);
+          if (originalDescriptionEvidence) {
+            entries.push({ field, value, mechanism: step.mechanism, ...originalDescriptionEvidence });
+          } else if (document && documentedSource && matchesDocumentedTechnicalIdentity(original, documentedSource)) {
+            const verification = documentedSource.scope === "model-document" || documentedSource.scope === "unit-document" ||
+              documentedSource.scope === "document-reference" && typeof document.model === "string"
               ? reviewedModelDocumentVerification(document, field, value) : null;
             const scope = verification && documentedSource.scope === "unit-document"
               ? "model-document" : documentedSource.scope;

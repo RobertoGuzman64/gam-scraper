@@ -1,4 +1,6 @@
 import { matchesTechnicalDocumentVerification } from "../../contracts/technical-provenance.js";
+import type { ProductTechnicalProvenance } from "../../contracts/technical-provenance.js";
+import { classifyPublishedTechnicalSpec } from "../../preparation/technical-spec-classification.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { PanelProviderEvidence } from "../evidence/types.js";
 import { originalRecordFingerprint } from "../evidence/spec-addition-audit.js";
@@ -12,8 +14,18 @@ export type { SpecAdditionAudit } from "../evidence/spec-addition-audit.js";
 export const classifySpecAdditions = (
   changes: readonly PanelFieldDifference[], provider: PanelProviderEvidence,
   reference: string | null, sourceUrl: string, audit: SpecAdditionAudit | null,
-  original?: ProductRecord | null, provenance: readonly PanelFieldProvenance[] = []
+  original?: ProductRecord | null, provenance: readonly PanelFieldProvenance[] = [],
+  emitted: ProductTechnicalProvenance | null = null
 ): readonly PanelSpecAddition[] => {
+  if (emitted !== null) {
+    return changes.filter((difference) => difference.group === "technical" && difference.change === "added")
+      .map((difference): PanelSpecAddition => ({ field: difference.field, value: difference.after ?? "",
+        kind: original && original.providerId === provider.providerId &&
+          original.reference === reference && original.url === sourceUrl &&
+          provider.original.status === "verified"
+          ? classifyPublishedTechnicalSpec(original, emitted, difference.field, difference.after ?? "")
+          : "pending" }));
+  }
   const found = new Map<string, AuditEntry>();
   const cut = audit?.cuts[provider.providerId];
   if (audit && cut && provider.original.status === "verified") {

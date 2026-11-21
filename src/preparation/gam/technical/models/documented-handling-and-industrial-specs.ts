@@ -90,7 +90,7 @@ const documentedUnits: Readonly<Record<string, DocumentedGamUnit>> = {
     "brand": "LOGITRANS",
     "model": "Panther Flex",
     "categoryKey": "marcas-nuevas",
-    "source": "https://online.gamrentals.com/en/pallet-trucks/237-logitrans-panther-flex-manual-pallet-jack",
+    "source": "https://logitrans.com/panther-manual-pallet-truck/",
     "specifications": {
       "Propulsión": "Manual",
       "Elevación": "Hidráulica manual",
@@ -198,7 +198,7 @@ const documentedUnits: Readonly<Record<string, DocumentedGamUnit>> = {
     "brand": "XCMG",
     "model": "XT3207KH",
     "categoryKey": "otros-nuevos",
-    "source": "https://xcmguk.com/product/xt3207kh/",
+    "source": "https://vertikal.net/en/pdf/78085/1beac504/ca_2025_8_p24-39.pdf",
     "specifications": {
       "Tracción": "4×4",
       "Tipo de motor": "Diésel"
@@ -209,7 +209,7 @@ const documentedUnits: Readonly<Record<string, DocumentedGamUnit>> = {
     "brand": "XCMG",
     "model": "XT4014KH",
     "categoryKey": "otros-nuevos",
-    "source": "https://xcmgfiles.com/equipment/models/xt4014kh/",
+    "source": "https://xcmguk.com/product/xt4014kh15/",
     "specifications": {
       "Tracción": "4×4",
       "Potencia nominal del motor": "74 kW"

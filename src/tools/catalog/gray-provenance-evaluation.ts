@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { TechnicalSpecEvidence } from "../../contracts/technical-provenance.js";
+import { matchesDocumentedTechnicalIdentity } from "../../preparation/shared/technical/evidence/reviewed-catalog-model-identity.js";
 
 export type GrayProvenanceBlocker =
   | "not-reproduced"
@@ -41,7 +42,7 @@ export const evaluateGrayProvenance = (
     return { ...base, blocker: "original-field-replay-not-published",
       documentUrl: null, sourceField: evidence.sourceField };
   }
-  if (evidence.document.brand !== original.brand || evidence.document.model !== original.model) {
+  if (!matchesDocumentedTechnicalIdentity(original, evidence)) {
     throw new Error("Evidencia documental incongruente con la identidad de la ficha");
   }
   if (evidence.scope === "document-reference") {

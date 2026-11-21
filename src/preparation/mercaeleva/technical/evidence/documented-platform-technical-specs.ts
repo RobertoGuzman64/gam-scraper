@@ -386,6 +386,9 @@ const profiles = [
     brand: "JLG", model: "660SJ", workHeight: "22 m", motor: "Diesel",
     title: "PLATAFORMA TELESCOPICA DIESEL 22 MT",
     source: "https://www.lectura-specs.es/es/modelo/plataformas-elevadoras/plataformas-telescopicas/plataformas-telescopicas-de-ruedas-jlg/660sj-1157114",
+    fieldSources: {
+      "Altura de plataforma": "https://doc.pegamo.es/www/machinery/doc/0AEE48CF9C424F608F99E74F6D48876A.pdf"
+    },
     specifications: { "Altura de plataforma": "20,31 m", "Alcance horizontal": "17,3 m", "Capacidad máxima de plataforma": "230 kg", "Anchura total": "2,49 m" }
   },
   {
@@ -422,6 +425,7 @@ const profiles = [
     brand: "Genie", model: "Z-51/30J", workHeight: "18 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 18 MT",
     source: "https://manuals.genielift.com/operators/english/219413.pdf",
+    fieldSources: { "Alcance horizontal": "https://manuals.genielift.com/operators/english/133540.pdf" },
     specifications: { "Altura de plataforma": "15,59 m", "Capacidad máxima de plataforma": "227 kg", "Alcance horizontal": "9,25 m", "Anchura total": "2,29 m" }
   },
   {
@@ -458,6 +462,10 @@ const profiles = [
     brand: "Genie", model: "S-125", workHeight: "40 m", motor: "Diesel",
     title: "PLATAFORMA TELESCOPICA DIESEL 40 MT",
     source: "https://www.gtaccess.co.uk/machine/genie-s125",
+    fieldSources: {
+      "Altura de plataforma": "https://manuals.genielift.com/operators/english/228459.pdf",
+      "Anchura con ejes recogidos": "https://manuals.genielift.com/operators/english/228459.pdf"
+    },
     specifications: { "Altura de plataforma": "38,1 m", "Alcance horizontal": "24,38 m", "Capacidad máxima de plataforma": "227 kg", "Anchura con ejes recogidos": "2,5 m" }
   },
   {
@@ -527,7 +535,18 @@ export const recoverMercaelevaDocumentedPlatformTechnicalSpecs = (record: Produc
       : profile.specifications;
   if (Object.keys(documentedSpecs).some((key) => key in specs)) return specs;
   const recovered = { ...specs, ...documentedSpecs };
-  observe?.(specs, recovered, "src/preparation/mercaeleva/technical/evidence/documented-platform-technical-specs.ts",
-    undefined, { scope: "model-document", document: { url: profile.source, brand: profile.brand, model: profile.model } });
+  const mechanism = "src/preparation/mercaeleva/technical/evidence/documented-platform-technical-specs.ts";
+  if ("fieldSources" in profile && profile.fieldSources) {
+    const fieldSources: Readonly<Record<string, string>> = profile.fieldSources;
+    for (const [field, value] of Object.entries(documentedSpecs)) {
+      observe?.(specs, { ...specs, [field]: value }, mechanism, undefined,
+        { scope: "model-document", document: { url: fieldSources[field] ?? profile.source,
+          brand: profile.brand, model: profile.model } });
+    }
+    observe?.(specs, recovered, mechanism);
+  } else {
+    observe?.(specs, recovered, mechanism, undefined,
+      { scope: "model-document", document: { url: profile.source, brand: profile.brand, model: profile.model } });
+  }
   return recovered;
 };

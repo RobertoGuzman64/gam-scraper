@@ -17,7 +17,7 @@ const expected = [
   { providerId: "mercaeleva", reference: "M971-8124", count: 2 },
   { providerId: "gam", reference: "4661", count: 1 }
 ] as const;
-const claims = reviewedModelDocumentClaims().slice(190);
+const claims = reviewedModelDocumentClaims().slice(190, 204);
 
 test("fase 32: las 14 acreditaciones del motor conservan fuente, mecanismo y valores comerciales", async () => {
   assert.equal(claims.length, 14);

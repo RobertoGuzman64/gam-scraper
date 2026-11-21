@@ -52,7 +52,7 @@ export const toExplorerProduct = (
       exported?.category ?? after?.category ?? before?.category ?? null,
     original: before, published: after, commercial: exported,
     changes,
-    specAdditions: classifySpecAdditions(changes, evidence, reference, sourceUrl, audit, original, provenance),
+    specAdditions: classifySpecAdditions(changes, evidence, reference, sourceUrl, audit, original, provenance, emitted),
     provenance,
     commercialChanges: after && exported ? comparePublishedToCommercial(after, exported) : [],
     commercialTechnicalChanges: after && exported ? compareTechnicalFields(after.specs, exported.specs, "commercial") : [],

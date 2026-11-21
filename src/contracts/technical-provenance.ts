@@ -69,7 +69,8 @@ export const matchesTechnicalDocumentVerification = (
   document: unknown, field: string, value: string,
   verification: unknown
 ): boolean => isRecord(document) && typeof document.url === "string" &&
-  typeof document.brand === "string" && typeof document.model === "string" &&
+  (document.brand === null || typeof document.brand === "string") && typeof document.model === "string" &&
+  document.model.trim().length > 0 &&
   isDocumentVerification(verification) &&
   verification.claimSha256 === technicalDocumentClaimSha256({ url: document.url, brand: document.brand, model: document.model },
     field, value, verification.reviewedOn, verification.support);
@@ -109,7 +110,8 @@ export const isProductTechnicalProvenance = (value: unknown): value is ProductTe
             (evidence.scope === "document-reference" ||
               typeof evidence.document.brand === "string" && typeof evidence.document.model === "string") &&
             (evidence.verification === undefined ||
-              evidence.scope === "model-document" && matchesTechnicalDocumentVerification(
+              (evidence.scope === "model-document" || evidence.scope === "document-reference") &&
+                matchesTechnicalDocumentVerification(
                 evidence.document, evidence.field, evidence.value, evidence.verification)));
     }) && new Set(item.entries.map((entry: unknown) => isRecord(entry) ? entry.field : null)).size === item.entries.length;
 };

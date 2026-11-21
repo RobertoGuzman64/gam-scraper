@@ -1,3 +1,4 @@
+import { matchesDocumentedTechnicalIdentity } from "../../preparation/shared/technical/evidence/reviewed-catalog-model-identity.js";
 import type { ProductTechnicalProvenance } from "../../contracts/technical-provenance.js";
 import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js";
 import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
@@ -100,7 +101,7 @@ export const resolvePanelFieldProvenance = (
         if (source && difference.change === "added" &&
           (source.scope === "model-document" || source.scope === "unit-document" ||
             source.scope === "document-reference")) {
-          if (source.document.brand !== original.brand || source.document.model !== original.model) {
+          if (!matchesDocumentedTechnicalIdentity(original, source)) {
             throw new Error("La fuente documental emitida no corresponde al modelo original");
           }
           return { ...noAttribution(difference, provider), status: "mechanism-compatible",

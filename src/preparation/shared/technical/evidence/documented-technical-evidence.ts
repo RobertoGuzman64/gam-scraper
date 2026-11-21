@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import type { DocumentedTechnicalSource as ProvenanceSource } from "../../../../contracts/technical-provenance.js";
 import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
+import { reviewedCatalogModelIdentity } from "./reviewed-catalog-model-identity.js";
 
 export type DocumentedTechnicalUnit = {
   readonly fingerprint: string;
@@ -35,6 +36,8 @@ export const documentedTechnicalReference = (record: ProductRecord, url: string 
     (record.providerId === "gam" && pathname.split("/").some((segment) => segment.startsWith(`${record.reference}-`)) ||
       record.providerId === "mercaeleva" && pathname.endsWith(`-${record.reference}`));
   if (productListing && !isOwnListing) return undefined;
+  const reviewedIdentity = reviewedCatalogModelIdentity(record, url);
+  if (reviewedIdentity) return { scope: "document-reference", document: reviewedIdentity };
   const identified = !!record.brand?.trim() && !!record.model?.trim();
   return { scope: identified ? (isOwnListing ? "unit-document" : "model-document") : "document-reference",
     document: { url, brand: record.brand, model: record.model } };

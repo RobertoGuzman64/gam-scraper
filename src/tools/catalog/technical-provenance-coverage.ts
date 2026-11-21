@@ -1,3 +1,4 @@
+import { matchesDocumentedTechnicalIdentity } from "../../preparation/shared/technical/evidence/reviewed-catalog-model-identity.js";
 import { stat } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -186,7 +187,7 @@ export const inspectTechnicalProvenanceCoverage = async (workspace: string): Pro
           unitByClassification[addition.kind] += 1;
         } else if (entry.scope === "model-document" || entry.scope === "unit-document" ||
           entry.scope === "document-reference") {
-          if (entry.document.brand !== original.brand || entry.document.model !== original.model) {
+          if (!matchesDocumentedTechnicalIdentity(original, entry)) {
             throw new Error(`Fuente documental incompatible: ${item.identity}`);
           }
           if (entry.scope === "model-document") {
