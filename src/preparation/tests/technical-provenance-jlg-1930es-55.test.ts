@@ -86,7 +86,7 @@ test("fase 55: documento, identidad, valor y hash rehecho no sustituyen la revis
     withoutVerification), field, value), "pending");
 });
 
-test("fase 55: acreditar JLG no altera los tres grises de Yale, Genie y Stöcklin", async () => {
+test("fase 55: acreditar JLG no reintroduce las tres specs retiradas de Yale, Genie y Stöcklin", async () => {
   for (const [providerId, reference, field, value] of [
     ["gam", "6994", "Yale MP16 · Ancho exterior de horquillas", "680 mm"],
     ["mercaeleva", "M690-5522", "Anchura de plataforma", "1,42 m"],

@@ -3,12 +3,11 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 import type { CommercialDeliveryProduct } from "../../commercial/export/commercial-export.js";
 import { resolvePanelFieldProvenance } from "./field-provenance.js";
-import { classifySpecAdditions } from "./spec-addition-classification.js";
+import { classifyPublishedTechnicalAdditions } from "../../preparation/technical-spec-classification.js";
 import { compareOriginalToPublished, comparePublishedToCommercial, compareTechnicalFields } from "./field-differences.js";
 import { productIdentity } from "./explorer-identity.js";
 import type { PanelProviderEvidence, PanelProviderId } from "../evidence/types.js";
 import type { PanelUnitKnowledgeEvidence } from "../evidence/knowledge-evidence.js";
-import type { SpecAdditionAudit } from "../evidence/spec-addition-audit.js";
 import type { PanelExplorerProduct, PanelProductDecision, PanelProductView, PanelCommercialView } from "./types.js";
 
 const fromOriginal = (item: ProductRecord): PanelProductView => ({
@@ -32,7 +31,7 @@ export const toExplorerProduct = (
   providerId: PanelProviderId, reference: string | null, sourceUrl: string, original: ProductRecord | null,
   published: ImportCandidate | null, commercial: CommercialDeliveryProduct | null, decision: PanelProductDecision | null,
   evidence: PanelProviderEvidence, accreditation: { readonly path: string; readonly sha256: string },
-  knowledge: PanelUnitKnowledgeEvidence | null, audit: SpecAdditionAudit | null,
+  knowledge: PanelUnitKnowledgeEvidence | null,
   emitted: ProductTechnicalProvenance | null = null
 ): PanelExplorerProduct => {
   const before = original ? fromOriginal(original) : null;
@@ -52,7 +51,10 @@ export const toExplorerProduct = (
       exported?.category ?? after?.category ?? before?.category ?? null,
     original: before, published: after, commercial: exported,
     changes,
-    specAdditions: classifySpecAdditions(changes, evidence, reference, sourceUrl, audit, original, provenance, emitted),
+    specAdditions: classifyPublishedTechnicalAdditions(original, emitted, providerId, reference, sourceUrl,
+      evidence.original.status === "verified", changes.filter((difference) =>
+        difference.group === "technical" && difference.change === "added").map((difference) =>
+        ({ field: difference.field, value: difference.after ?? "" }))),
     provenance,
     commercialChanges: after && exported ? comparePublishedToCommercial(after, exported) : [],
     commercialTechnicalChanges: after && exported ? compareTechnicalFields(after.specs, exported.specs, "commercial") : [],

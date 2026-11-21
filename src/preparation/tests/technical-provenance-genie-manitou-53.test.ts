@@ -89,7 +89,7 @@ test("fase 53: no aceptamos identidades documentales ni afirmaciones sustituidas
   }
 });
 
-test("fase 53: dimensiones opcionales y otra unidad Yale no heredan acreditaciones", async () => {
+test("fase 53: las tres specs retiradas no heredan acreditaciones", async () => {
   const [mercaeleva, gam] = await Promise.all([
     readPortableOriginal(process.cwd(), "mercaeleva"), readPortableOriginal(process.cwd(), "gam")
   ]);

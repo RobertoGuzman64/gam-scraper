@@ -83,7 +83,8 @@ test("fase 21: las fuentes múltiples conservan únicamente referencias con alca
   assert.ok(trace.entries.every((entry) => entry.scope !== "model-document" &&
     entry.scope !== "unit-document"));
   const unresolved = prepareSourceProduct(accreditedSourceRecord("gam-original", "6994"));
-  assert.ok(unresolved.technicalProvenance?.entries.some((entry) => entry.scope === "unknown"));
+  assert.ok(!unresolved.technicalProvenance?.entries.some((entry) =>
+    entry.field === "Yale MP16 · Ancho exterior de horquillas"));
   const singleReference = accreditedSourceRecord("gam-original", "6993");
   const singleTrace = prepareSourceProduct(singleReference).technicalProvenance;
   assert.equal(singleTrace?.entries.filter((entry) => entry.scope === "unit-document" &&

@@ -2,10 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { isProductTechnicalProvenance, matchesTechnicalDocumentVerification } from "../../contracts/technical-provenance.js";
 import { readPortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
-import { readPanelSnapshot } from "../../panel/evidence/read-panel-snapshot.js";
-import { readPanelExplorer } from "../../panel/explorer/read-panel-explorer.js";
-import { classifySpecAdditions } from "../../panel/explorer/spec-addition-classification.js";
-import { resolvePanelFieldProvenance } from "../../panel/explorer/field-provenance.js";
+import { classifyPublishedTechnicalAdditions } from "../technical-spec-classification.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 import { reviewedModelDocumentClaims, reviewedModelDocumentVerification } from
   "../shared/technical/evidence/reviewed-model-claims.js";
@@ -66,33 +63,27 @@ test("fase 32: variantes, valores y referencias externas diferentes no acreditan
   }
 });
 
-test("fase 32: una publicación nueva clasifica las evidencias sin consultar el histórico", async () => {
+
+test("la preparación y el motor clasifican las afirmaciones sin dependencia del panel", async () => {
   const root = process.cwd();
-  const snapshot = await readPanelSnapshot(root);
-  const explorer = await readPanelExplorer(root, snapshot);
-  for (const [providerId, reference] of [["gam", "4661"], ["mercaeleva", "M549-6792"]] as const) {
-    const provider = snapshot.providers.find((item) => item.providerId === providerId);
-    const original = (await readPortableOriginal(root, providerId)).products.find((item) => item.reference === reference);
-    const published = explorer.products.find((item) => item.providerId === providerId && item.reference === reference);
-    assert.ok(provider);
-    assert.ok(original);
-    assert.ok(published?.published);
-    const trace = prepareSourceProduct(original).technicalProvenance;
-    assert.ok(trace);
-    const additions = published.changes.filter((item) => item.group === "technical" && item.change === "added" &&
-      trace.entries.some((entry) => entry.field === item.field && entry.scope === "model-document" && entry.verification &&
-        claims.some((claim) => claim.field === entry.field && claim.document.url === entry.document?.url)));
-    assert.ok(additions.length > 0);
-    const provenance = resolvePanelFieldProvenance(original, published.published, additions,
-      provider, null, original.reference, original.url, trace);
-    assert.ok(provenance.every((entry) => entry.historicalApplication === "demonstrated" && entry.verification));
-    const classify = (items = provenance) => classifySpecAdditions(additions, provider, original.reference,
-      original.url, null, original, items);
-    assert.ok(classify().every((item) => item.kind === "reused"));
-    assert.ok(classify([]).every((item) => item.kind === "pending"));
-    const first = provenance[0];
-    assert.ok(first?.document);
-    assert.ok(classify([{ ...first, document: { ...first.document, model: "OTRA VARIANTE" } },
-      ...provenance.slice(1)])[0]?.kind === "pending");
+  for (const providerId of ["gam", "mercaeleva"] as const) {
+    const catalog = await readPortableOriginal(root, providerId);
+    for (const item of expected.filter((candidate) => candidate.providerId === providerId)) {
+      const original = catalog.products.find((candidate) => candidate.reference === item.reference);
+      assert.ok(original);
+      const trace = prepareSourceProduct(original).technicalProvenance;
+      assert.ok(trace);
+      const additions = trace.entries.filter((entry) => entry.scope === "model-document" &&
+        entry.verification && reviewedModelDocumentClaims().some((claim) => claim.field === entry.field && claim.value === entry.value &&
+          claim.document.url === entry.document?.url)).map(({ field, value }) => ({ field, value }));
+      assert.ok(additions.length >= item.count);
+      const classify = (record = original, emission: typeof trace | null = trace, reference = original.reference) =>
+        classifyPublishedTechnicalAdditions(record, emission, providerId, reference, original.url, true, additions);
+      assert.ok(classify().every((entry) => entry.kind === "reused"));
+      assert.ok(classify(original, null).every((entry) => entry.kind === "reused"));
+      assert.ok(classify(original, { ...trace, originalRecordSha256: "0".repeat(64) })
+        .every((entry) => entry.kind === "pending"));
+      assert.ok(classify(original, trace, `${original.reference}-otra`).every((entry) => entry.kind === "pending"));
+    }
   }
 });

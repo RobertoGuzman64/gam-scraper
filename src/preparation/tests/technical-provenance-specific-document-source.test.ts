@@ -43,7 +43,7 @@ test("fase 23: los lotes con modelos individualizados conservan su referencia si
 
 test("fase 23: lotes con fuentes ambiguas no reciben una referencia individual ficticia", () => {
   for (const { reference, unknown, reviewed } of [
-    { reference: "6994", unknown: 1, reviewed: 2 },
+    { reference: "6994", unknown: 0, reviewed: 2 },
     { reference: "6995", unknown: 0, reviewed: 4 }
   ] as const) {
     const original = accreditedSourceRecord("gam-original", reference);

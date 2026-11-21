@@ -167,8 +167,7 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     specifications: {
       "Alcance horizontal": "6,78 m",
       "Capacidad máxima de plataforma": "227 kg",
-      "Longitud de plataforma": "0,76 m",
-      "Anchura de plataforma": "1,42 m"
+      "Longitud de plataforma": "0,76 m"
     }
   },
   "M055-1205": {

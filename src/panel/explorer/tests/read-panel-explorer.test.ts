@@ -10,9 +10,19 @@ import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/p
 
 const fixture = createPanelEvidenceWorkspaceFixture();
 
+const prepareStaticExplorer = async () => {
+  const workspace = await fixture.root();
+  const snapshot = await readPanelSnapshot(workspace);
+  const explorer = await readPanelExplorer(workspace, snapshot);
+  return { snapshot, explorer };
+};
+
+let staticExplorer: ReturnType<typeof prepareStaticExplorer> | undefined;
+const readStaticExplorer = (): ReturnType<typeof prepareStaticExplorer> =>
+  staticExplorer ??= prepareStaticExplorer();
+
 test("el explorador refleja exactamente las tres poblaciones verificadas por proveedor", async () => {
-  const snapshot = await readPanelSnapshot(await fixture.root());
-  const explorer = await readPanelExplorer(await fixture.root(), snapshot);
+  const { snapshot, explorer } = await readStaticExplorer();
   assert.equal(explorer.products.length, snapshot.totals.originals);
   for (const provider of snapshot.providers) {
     const rows = explorer.products.filter((item) => item.providerId === provider.providerId);
@@ -42,7 +52,7 @@ test("el explorador refleja exactamente las tres poblaciones verificadas por pro
 });
 
 test("selecciona tres casos reales con cambios y una exclusión aprobada", async () => {
-  const explorer = await readPanelExplorer(await fixture.root(), await readPanelSnapshot(await fixture.root()));
+  const { explorer } = await readStaticExplorer();
   assert.deepEqual(explorer.cases.map((item) => item.focus), ["content", "technical", "commercial", "exclusion"]);
   for (const example of explorer.cases) {
     const item = explorer.products.find((entry) => entry.identity === example.identity);
@@ -118,7 +128,7 @@ test("rechaza alteraciones de la acreditación y del paquete tras seleccionar el
 });
 
 test("prioriza demostraciones con evidencia compatible frente a fichas con más diferencias", async () => {
-  const explorer = await readPanelExplorer(await fixture.root(), await readPanelSnapshot(await fixture.root()));
+  const { explorer } = await readStaticExplorer();
   const gam = explorer.products.find((item) => item.providerId === "gam" && item.stage === "commercial" &&
     item.changes.some((change) => change.group === "content" && (change.change === "changed" || change.change === "added")));
   assert.ok(gam);

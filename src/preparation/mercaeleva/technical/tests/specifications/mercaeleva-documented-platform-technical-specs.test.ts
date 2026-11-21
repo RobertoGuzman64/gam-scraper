@@ -639,7 +639,7 @@ const comparableRecovery: Readonly<Record<string, SpecsMap>> = {
   "M855-6850": { "Centro de carga nominal del modelo": "500 mm", "Pendiente superable del modelo": "38 %" },
   "M011-3720": { "Capacidad nominal": "2000 kg", "Centro de carga nominal del modelo": "600 mm" },
   "M239-6301": { "Centro de carga nominal del modelo": "600 mm" },
-  "M690-5522": { "Longitud de plataforma": "0,76 m", "Anchura de plataforma": "1,42 m" },
+  "M690-5522": { "Longitud de plataforma": "0,76 m" },
   "M028-8481": { "Altura de plataforma": "4,62 m", "Longitud replegada": "1,35 m" },
   "M061-0041": { "Altura de plataforma": "18,28 m", "Anchura total": "2,4 m" },
   "M731-0501": { "Anchura total": "2,30 m", "Longitud de plataforma": "1,80 m" },
@@ -650,7 +650,7 @@ const comparableRecovery: Readonly<Record<string, SpecsMap>> = {
   "M547-1056": { "Altura máxima de plataforma": "25,9 m" }
 };
 
-test("Mercaeleva: 20 unidades salen del aviso comercial por 38 atributos acreditados", () => {
+test("Mercaeleva: 20 unidades salen del aviso comercial por 37 atributos acreditados", () => {
   const references = Object.keys(comparableRecovery);
   assert.equal(references.length, 20);
   assert.equal(new Set(references).size, 20);
@@ -674,11 +674,11 @@ test("Mercaeleva: 20 unidades salen del aviso comercial por 38 atributos acredit
     added += Object.keys(expected).length;
     assert.equal(JSON.stringify(original), snapshot, reference);
   }
-  assert.equal(added, 38);
+  assert.equal(added, 37);
   const before = analyzeTechnicalDensity(previous);
   const after = analyzeTechnicalDensity(recovered);
   assert.equal(before.target.below, 20);
   assert.equal(before.target.missing, 38);
-  assert.equal(after.target.below, 0);
-  assert.equal(after.target.missing, 0);
+  assert.equal(after.target.below, 1);
+  assert.equal(after.target.missing, 1);
 });

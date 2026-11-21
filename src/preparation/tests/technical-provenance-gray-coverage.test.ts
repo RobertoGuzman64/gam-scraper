@@ -87,8 +87,8 @@ test("fase 34: los valores sin prueba exacta siguen pendientes incluso con fuent
     const result = prepareSourceProduct(original);
     assert.ok(result.technicalProvenance);
     const entry: TechnicalSpecEvidence | undefined = result.technicalProvenance.entries.find((candidate) => candidate.field === item.field);
-    assert.ok(entry);
-    assert.equal(entry.value, item.value);
+    assert.equal(entry, undefined);
+    assert.equal(result.product.spec[item.field], undefined);
     assert.equal(classifyPublishedTechnicalSpec(original, result.technicalProvenance, item.field, item.value), "pending");
   }
 });

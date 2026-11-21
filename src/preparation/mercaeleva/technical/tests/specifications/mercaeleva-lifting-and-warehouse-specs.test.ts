@@ -35,8 +35,7 @@ const expectedByReference: Readonly<Record<string, SpecsMap>> = {
   },
   "M879-4639": {
     "Capacidad nominal de carga": "2000 kg",
-    "Tensión del sistema de batería": "24 V",
-    "Centro de carga": "600 mm"
+    "Tensión del sistema de batería": "24 V"
   },
   "M777-6495": {
     "Alcance horizontal máximo": "17,1 m",
@@ -70,7 +69,7 @@ test("MERCAELEVA: las prestaciones se limitan a los originales acreditados", () 
     additions += Object.keys(expected).length;
   }
   assert.equal(improved, 7);
-  assert.equal(additions, 22);
+  assert.equal(additions, 21);
 });
 
 test("MERCAELEVA: las variantes y las sobrescrituras están bloqueadas", () => {

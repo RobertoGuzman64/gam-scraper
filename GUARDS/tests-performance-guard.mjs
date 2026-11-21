@@ -90,6 +90,17 @@ const rawLimits = {
   "src/cli/commands/catalog/tests/catalog-content-gaps.test.ts": { mkdtemp: 1, copyFile: 1 },
   "src/cli/commands/catalog/tests/commercial-audit-coverage.test.ts": { cp: 1, spawnSync: 1 }
 };
+const panelPreparationLimits = {
+  "src/panel/application/tests/dashboard.test.ts": [
+    ["src/panel/evidence/read-panel-snapshot.ts", "readPanelSnapshot", 2],
+    ["src/panel/explorer/read-panel-explorer.ts", "readPanelExplorer", 2],
+    ["src/panel/application/panel-html.ts", "renderPanelHtml", 1]
+  ],
+  "src/panel/explorer/tests/read-panel-explorer.test.ts": [
+    ["src/panel/evidence/read-panel-snapshot.ts", "readPanelSnapshot", 3],
+    ["src/panel/explorer/read-panel-explorer.ts", "readPanelExplorer", 4]
+  ]
+};
 const trustedProduction = new Set([
   "src/cli/commands/catalog/publish-individual.ts",
   "src/cli/commands/catalog/prepare-individual.ts",
@@ -256,6 +267,31 @@ const namesFor = (file, sources) => {
   return { modules, calls, bindings: [...imports.values()] };
 };
 
+export const inspectPanelHeavyPreparations = (sources) => {
+  const findings = [];
+  for (const [file, limits] of Object.entries(panelPreparationLimits)) {
+    const source = sources.get(file);
+    if (source === undefined) {
+      findings.push(`${file} | suite protegida ausente`);
+      continue;
+    }
+    const entry = namesFor(file, sources);
+    for (const [module, imported, limit] of limits) {
+      const calls = entry.calls.filter((call) => call.module === module && call.imported === imported);
+      const executions = calls.filter((call) => call.kind === "call");
+      if (executions.length > limit) {
+        findings.push(`${file} | ${imported}: ${executions.length} preparaciones, máximo acreditado ${limit}; reutiliza el corte estático`);
+      }
+      for (const call of calls) {
+        if (call.kind !== "call" || call.repeated) {
+          findings.push(`${file}:${call.line}:${call.column} | ${imported} requiere invocación directa fuera de iteraciones`);
+        }
+      }
+    }
+  }
+  return findings;
+};
+
 const testSupport = (path) => path.startsWith("src/testing/") || /(?:^|\/)tests\//u.test(path) ||
   /\.test\.[cm]?[jt]s$/u.test(path) || path.startsWith("scripts/tests/");
 const isProtectedSource = (path, discovered) => protectedSuites.includes(path) || Object.values(shared).includes(path) ||
@@ -291,7 +327,7 @@ const guard = (sources) => {
   const helperImports = new Set([...parsed].filter(([file]) =>
     protectedSuites.includes(file) || (testSupport(file) && discovered.has(file)))
     .flatMap(([, entry]) => [...entry.modules]));
-  const errors = [];
+  const errors = inspectPanelHeavyPreparations(sources);
   const count = new Map();
   const rawCount = new Map();
   const add = (file, call, message) => errors.push(`${file}:${call.line}:${call.column} | ${message}`);
@@ -371,12 +407,14 @@ const guard = (sources) => {
   return { errors, files: sources.size, contracts: count.size, raw: rawCount.size };
 };
 
-const sources = loadSources();
-const result = guard(sources);
-if (result.errors.length) {
-  console.error(formatScriptStatus("FAIL", `PROTECCIÓN DE TESTS | ${result.errors.length} incumplimientos`, process.stderr));
-  for (const problem of result.errors) console.error(`  ${problem}`);
-  process.exitCode = 1;
-} else {
-  console.log(formatScriptStatus("PASS", `PROTECCIÓN DE TESTS | ${protectedSuites.length} suites | ${result.files} módulos | ${result.contracts} cuotas de ejecución | ${result.raw} cuotas de infraestructura`));
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const sources = loadSources();
+  const result = guard(sources);
+  if (result.errors.length) {
+    console.error(formatScriptStatus("FAIL", `PROTECCIÓN DE TESTS | ${result.errors.length} incumplimientos`, process.stderr));
+    for (const problem of result.errors) console.error(`  ${problem}`);
+    process.exitCode = 1;
+  } else {
+    console.log(formatScriptStatus("PASS", `PROTECCIÓN DE TESTS | ${protectedSuites.length + Object.keys(panelPreparationLimits).length} suites | ${result.files} módulos | ${result.contracts} cuotas de ejecución | ${result.raw} cuotas de infraestructura`));
+  }
 }

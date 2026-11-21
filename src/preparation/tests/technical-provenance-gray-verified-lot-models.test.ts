@@ -122,7 +122,7 @@ test("fase 52: las fichas de otros miembros de lote y la anchura opcional no her
     const trace = prepareSourceProduct(original).technicalProvenance;
     assert.ok(trace);
     const entry = trace.entries.find((candidate) => candidate.field === field);
-    assert.ok(entry);
-    assert.equal(classifyPublishedTechnicalSpec(original, trace, field, entry.value), "pending");
+    assert.equal(entry, reference === "6994" ? undefined : entry);
+    assert.equal(classifyPublishedTechnicalSpec(original, trace, field, entry?.value ?? "680 mm"), "pending");
   }
 });

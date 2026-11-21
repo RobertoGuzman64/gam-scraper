@@ -6,7 +6,7 @@ import { normalizeSpecKey } from "../../catalog/normalization/normalize-specs.js
 import { readPanelSnapshot } from "../../panel/evidence/read-panel-snapshot.js";
 import { compareOriginalToPublished } from "../../panel/explorer/field-differences.js";
 import { resolvePanelFieldProvenance } from "../../panel/explorer/field-provenance.js";
-import { classifySpecAdditions } from "../../panel/explorer/spec-addition-classification.js";
+import { classifyPublishedTechnicalAdditions } from "../technical-spec-classification.js";
 import type { PanelProductView } from "../../panel/explorer/types.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import { accreditedSourceRecord } from "../../testing/domain-cases/accredited-source-samples.js";
@@ -114,8 +114,10 @@ test("fase 20: el panel conserva el enlace documental, demuestra la ejecución y
   assert.ok(documented.every((entry) => entry.status === "mechanism-compatible" &&
     entry.historicalApplication === "demonstrated" && entry.proof === null &&
     entry.document?.brand === original.brand && entry.document?.model === original.model));
-  const additions = classifySpecAdditions(differences, provider, original.reference, original.url,
-    null, original, provenance);
+  const additions = classifyPublishedTechnicalAdditions(original, null, "mercaeleva", original.reference,
+    original.url, true, differences.filter((difference) => difference.change === "added" &&
+    difference.group === "technical").map((difference) =>
+    ({ field: difference.field, value: difference.after ?? "" })));
   assert.ok(additions.length > 0);
   assert.ok(additions.every((item) => item.kind === "pending"));
   assert.throws(() => resolvePanelFieldProvenance({ ...original, model: "Modelo ajeno" },

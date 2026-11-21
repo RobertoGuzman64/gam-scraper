@@ -11,7 +11,7 @@ import type { PanelUnitKnowledgeEvidence } from "../../evidence/knowledge-eviden
 import type { PanelProviderEvidence, PanelProviderId } from "../../evidence/types.js";
 import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
 import { compareOriginalToPublished } from "../field-differences.js";
-import { classifySpecAdditions } from "../spec-addition-classification.js";
+import { classifyPublishedTechnicalAdditions } from "../../../preparation/technical-spec-classification.js";
 import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 import { queryPanelFieldProvenance, resolvePanelFieldProvenance } from "../field-provenance.js";
 import { readPanelExplorer } from "../read-panel-explorer.js";
@@ -272,8 +272,9 @@ test("fase 17: el panel consume la emisión productiva acreditada sin reconstrui
   assert.equal(year?.mechanism, "src/preparation/gomariz/technical/mapping/source-year-spec.ts");
   assert.equal(year?.historicalApplication, "demonstrated");
   assert.equal(year?.sourceField, "year");
-  assert.deepEqual(classifySpecAdditions(differences, provider, original.reference, original.url,
-    null, original, proven).filter((item) => item.kind === "own").map((item) => item.field), ["Año"]);
+  assert.deepEqual(classifyPublishedTechnicalAdditions(original, emitted, provider.providerId, original.reference, original.url,
+    true, differences.filter((item) => item.group === "technical" && item.change === "added").map((item) =>
+      ({ field: item.field, value: item.after ?? "" }))).filter((item) => item.kind === "own").map((item) => item.field), ["Año"]);
   assert.throws(() => resolve({ ...original, year: "2023" }), /no corresponde al original/);
   assert.throws(() => resolve({ ...original, reference: "TE1859" }), /no corresponde al original/);
   const corrupted = { ...emitted, entries: emitted.entries.map((entry) => entry.scope === "unit" ? { ...entry, sourceValue: "2023" } : entry) };

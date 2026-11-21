@@ -1,4 +1,5 @@
 import type { ProductRecord } from "../contracts/catalog.js";
+import { prepareSourceProduct } from "./prepare-product.js";
 import { matchesTechnicalDocumentVerification, matchesTechnicalUnitListingVerification, isProductTechnicalProvenance } from "../contracts/technical-provenance.js";
 import type { ProductTechnicalProvenance } from "../contracts/technical-provenance.js";
 import { originalRecordFingerprint } from "../catalog/identity-fingerprint.js";
@@ -36,4 +37,20 @@ export const classifyPublishedTechnicalSpec = (
     !matchesTechnicalDocumentVerification(source.document, field, value, source.verification)) return "pending";
   const reviewed = reviewedModelDocumentVerification(source.document, field, value);
   return reviewed && reviewed.claimSha256 === source.verification?.claimSha256 ? "reused" : "pending";
+};
+
+
+export const classifyPublishedTechnicalAdditions = (
+  original: ProductRecord | null, emitted: ProductTechnicalProvenance | null,
+  providerId: string, reference: string | null, sourceUrl: string, originalVerified: boolean,
+  additions: readonly { readonly field: string; readonly value: string }[]
+): readonly { readonly field: string; readonly value: string; readonly kind: "own" | "reused" | "pending" }[] => {
+  const validOriginal = originalVerified && original !== null && original.providerId === providerId &&
+    original.reference === reference && original.url === sourceUrl;
+  const trace = validOriginal && original !== null
+    ? emitted ?? prepareSourceProduct(original).technicalProvenance ?? null : null;
+  return additions.map(({ field, value }) => ({ field, value,
+    kind: validOriginal && original !== null && trace !== null
+      ? classifyPublishedTechnicalSpec(original, trace, field, value) : "pending"
+  }));
 };

@@ -93,7 +93,7 @@ test("fase 53: anchura de cesta opcional no se acredita por documento de modelo"
     assert.ok(original);
     const emitted = prepareSourceProduct(original).technicalProvenance;
     assert.ok(emitted);
-    assert.ok(emitted.entries.some((entry) => entry.field === field && entry.value === value));
+    assert.ok(!emitted.entries.some((entry) => entry.field === field && entry.value === value));
     assert.equal(classifyPublishedTechnicalSpec(original, emitted, field, value), "pending", `${reference}: ${field}`);
   }
 });

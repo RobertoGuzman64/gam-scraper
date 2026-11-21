@@ -82,8 +82,7 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     "source": "https://ibz-handelswelt.de/gebrauchtmaschinen/stoecklin-niederhubwagen-edp/",
     "specifications": {
       "Capacidad nominal de carga": "2000 kg",
-      "Tensión del sistema de batería": "24 V",
-      "Centro de carga": "600 mm"
+      "Tensión del sistema de batería": "24 V"
     }
   },
   "M777-6495": {

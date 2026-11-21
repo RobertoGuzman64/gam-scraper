@@ -86,7 +86,7 @@ test("fase 36: identidad, documentación y huellas manipuladas no acreditan el c
   }
 });
 
-test("fase 53: variantes de almacén no verificadas permanecen pendientes", async () => {
+test("fase 53: los valores retirados no emiten trazas técnicas", async () => {
   for (const item of [
     { provider: "mercaeleva", reference: "M879-4639", field: "Centro de carga (mm)" },
   ] as const) {
@@ -96,8 +96,7 @@ test("fase 53: variantes de almacén no verificadas permanecen pendientes", asyn
     const trace = prepareSourceProduct(original).technicalProvenance;
     assert.ok(trace);
     const entry = trace.entries.find((candidate) => candidate.field === item.field);
-    assert.ok(entry);
-    assert.equal("verification" in entry ? entry.verification : undefined, undefined);
-    assert.equal(classifyPublishedTechnicalSpec(original, trace, item.field, entry.value), "pending");
+    assert.equal(entry, undefined);
+    assert.equal(classifyPublishedTechnicalSpec(original, trace, item.field, "600 mm"), "pending");
   }
 });

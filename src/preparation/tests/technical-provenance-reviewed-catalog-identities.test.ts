@@ -103,10 +103,7 @@ test("los lotes y variantes no identificados no se acreditan a partir del títul
     const trace = prepareSourceProduct(original).technicalProvenance;
     assert.ok(trace);
     const entry: TechnicalSpecEvidence | undefined = trace.entries.find((candidate) => candidate.field === field);
-    assert.ok(entry);
-    assert.equal(classifyPublishedTechnicalSpec(original, trace, field, entry.value), "pending");
-    if (entry.scope !== "unit" && entry.scope !== "unknown") {
-      assert.equal(reviewedCatalogModelIdentity(original, entry.document.url), null);
-    }
+    assert.equal(entry, undefined);
+    assert.equal(classifyPublishedTechnicalSpec(original, trace, field, "680 mm"), "pending");
   }
 });

@@ -20,9 +20,20 @@ const renderPanelHtml = async (...args: Parameters<typeof renderAutonomousHtml>)
   return `${html}\n${source.join("\n")}`;
 };
 
+const prepareStaticPanel = async () => {
+  const workspace = await fixture.root();
+  const snapshot = await readPanelSnapshot(workspace);
+  const dashboard = createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot));
+  const html = await renderPanelHtml(process.cwd(), dashboard);
+  return { snapshot, dashboard, html };
+};
+
+let staticPanel: ReturnType<typeof prepareStaticPanel> | undefined;
+const readStaticPanel = (): ReturnType<typeof prepareStaticPanel> =>
+  staticPanel ??= prepareStaticPanel();
+
 test("el panel deriva todos los indicadores del corte y conserva las poblaciones por etapa", async () => {
-  const snapshot = await readPanelSnapshot(await fixture.root());
-  const dashboard = createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot));
+  const { snapshot, dashboard } = await readStaticPanel();
   assert.equal(dashboard.snapshot, snapshot);
   assert.equal(dashboard.definitions.length, 19);
   assert.ok(!("decisions" in dashboard));
@@ -37,8 +48,7 @@ test("el panel deriva todos los indicadores del corte y conserva las poblaciones
 });
 
 test("el HTML autónomo contiene los contratos acreditados sin valores prefijados de catálogo", async () => {
-  const snapshot = await readPanelSnapshot(await fixture.root());
-  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot)));
+  const { snapshot, html } = await readStaticPanel();
   assert.match(html, /<html lang="es">/);
   assert.match(html, /data-view="resumen"/);
   assert.match(html, /data-view="flujo"/);
@@ -121,8 +131,7 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
 });
 
 test("el HTML neutraliza etiquetas incrustadas en datos de procedencia", async () => {
-  const snapshot = await readPanelSnapshot(await fixture.root());
-  const base = createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot));
+  const { dashboard: base } = await readStaticPanel();
   const poisoned = {
     ...base,
     names: { ...base.names, gam: "</script><script>alert(1)</script>" }
@@ -133,10 +142,7 @@ test("el HTML neutraliza etiquetas incrustadas en datos de procedencia", async (
 });
 
 test("F3 conserva el corte acreditado sin emitir matrices C/D ni el bloque de evidencias", async () => {
-  const workspace = await fixture.root();
-  const snapshot = await readPanelSnapshot(workspace);
-  const dashboard = createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot));
-  const html = await renderPanelHtml(process.cwd(), dashboard);
+  const { snapshot, dashboard, html } = await readStaticPanel();
   const quality = html.split('data-view="calidad"')[1]?.split('data-view="explorador"')[0];
   assert.ok(quality);
   for (const id of ["quality-cut-title", "quality-cut-summary", "quality-cut-files-list", "quality-matrix",
@@ -160,9 +166,7 @@ test("F3 conserva el corte acreditado sin emitir matrices C/D ni el bloque de ev
 });
 
 test("los títulos de las métricas son informativos y no abren diálogos de definición", async () => {
-  const workspace = await fixture.root();
-  const snapshot = await readPanelSnapshot(workspace);
-  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  const { html } = await readStaticPanel();
   assert.ok(html.includes('"kpi-metric-label"'));
   assert.ok(html.includes('cell.textContent = column.label'));
   assert.ok(html.includes('cell.scope = "col"'));
@@ -185,8 +189,7 @@ test("las fuentes y métricas no se alteran al crear la vista", async () => {
 
 
 test("F1 deriva ocho ejemplos variados y todo el diccionario directamente de los contratos", async () => {
-  const snapshot = await readPanelSnapshot(await fixture.root());
-  const payload = createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot));
+  const { dashboard: payload } = await readStaticPanel();
   assert.equal(payload.normalizationExamples.length, 8);
   assert.equal(new Set(payload.normalizationExamples.map((entry) => entry.ruleType)).size, 8);
   assert.equal(new Set(payload.normalizationExamples.map((entry) => entry.canonical)).size, 8);
@@ -204,9 +207,7 @@ test("F1 deriva ocho ejemplos variados y todo el diccionario directamente de los
 });
 
 test("F1 presenta una tabla compacta y un diccionario completo en el HTML autónomo", async () => {
-  const snapshot = await readPanelSnapshot(await fixture.root());
-  const payload = createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot));
-  const html = await renderPanelHtml(process.cwd(), payload);
+  const { dashboard: payload, html } = await readStaticPanel();
   assert.ok(html.includes("Ocho correspondencias del diccionario vigente"));
   assert.ok(html.includes('<tbody id="normalization-examples"></tbody>'));
   assert.ok(html.includes('<details class="normalization-dictionary">'));
@@ -223,8 +224,7 @@ test("F1 presenta una tabla compacta y un diccionario completo en el HTML autón
 });
 
 test("las etapas 1–4 aparecen en orden y Fichas reales queda al final", async () => {
-  const snapshot = await readPanelSnapshot(await fixture.root());
-  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot)));
+  const { html } = await readStaticPanel();
   assert.equal((html.match(/<section class="page-view" data-view=/g) ?? []).length, 4);
   const labels = ["ETAPA 1 / MAPA DE PROCEDENCIA", "ETAPA 2 / NORMALIZACIÓN",
     "ETAPA 3 / CORROBORACIÓN DOCUMENTADA", "ETAPA 4 / CONTROL Y EXCLUSIÓN"];
@@ -261,9 +261,7 @@ test("las etapas 1–4 aparecen en orden y Fichas reales queda al final", async 
 
 
 test("el diseño de exposición prioriza diagramas y conserva auditoría, bifurcaciones y límites", async () => {
-  const workspace = await fixture.root();
-  const snapshot = await readPanelSnapshot(workspace);
-  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  const { html } = await readStaticPanel();
   assert.ok(html.indexOf('id="normalization-title"') < html.indexOf('id="pipeline-matrix"'));
   assert.ok(html.indexOf('id="checks-title"') < html.indexOf('id="controls-title"'));
   assert.ok(html.indexOf('id="controls-title"') < html.indexOf('id="excluded-example"'));
@@ -287,9 +285,7 @@ test("el diseño de exposición prioriza diagramas y conserva auditoría, bifurc
 });
 
 test("el modo portátil conserva enlaces seguros y casos reales sin navegación paralela", async () => {
-  const workspace = await fixture.root();
-  const snapshot = await readPanelSnapshot(workspace);
-  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  const { html } = await readStaticPanel();
   assert.ok(!html.includes('id="local-evidence-toggle"'));
   for (const marker of ["presentation-start", "presentation-prev", "presentation-next", "presentation-exit",
     "presentation-strip", "presentationSteps", "RECORRIDO GUIADO", "presentation-focus"]) {
@@ -319,9 +315,7 @@ test("el modo portátil conserva enlaces seguros y casos reales sin navegación 
 });
 
 test("el Explorador concentra filtros, conserva su selección y deja el detalle técnico a demanda", async () => {
-  const workspace = await fixture.root();
-  const snapshot = await readPanelSnapshot(workspace);
-  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  const { html } = await readStaticPanel();
   assert.ok(html.includes('id="explorer-active-filters"'));
   assert.ok(html.includes('class="surface-card explorer-filter-dashboard"'));
   assert.ok(html.includes('id="explorer-category-picker"'));
@@ -340,9 +334,7 @@ test("el Explorador concentra filtros, conserva su selección y deja el detalle 
 });
 
 test("F5 compacta el catálogo sin repetir métricas que pertenecen al detalle", async () => {
-  const workspace = await fixture.root();
-  const snapshot = await readPanelSnapshot(workspace);
-  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  const { html } = await readStaticPanel();
   assert.ok(html.includes('if (item.stage !== "commercial")'));
   assert.ok(!html.includes('class="product-impact'));
   assert.ok(html.includes('class="explorer-catalog-content"'));
@@ -352,9 +344,7 @@ test("F5 compacta el catálogo sin repetir métricas que pertenecen al detalle",
 });
 
 test("E2 presenta tres etapas compactas, con ampliación individual y sin duplicar las fichas en auditoría", async () => {
-  const workspace = await fixture.root();
-  const snapshot = await readPanelSnapshot(workspace);
-  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  const { html } = await readStaticPanel();
   assert.ok(html.includes("renderStageCards(item)"));
 
   assert.ok(html.includes("renderTechnicalContribution(item)"));
@@ -377,9 +367,7 @@ test("E2 presenta tres etapas compactas, con ampliación individual y sin duplic
 });
 
 test("E3 replica la estética del frontend solo en la ampliación, con datos de etapa y galería accesible", async () => {
-  const workspace = await fixture.root();
-  const snapshot = await readPanelSnapshot(workspace);
-  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  const { html } = await readStaticPanel();
   const cards = await readFile(join(process.cwd(), "dist", "panel", "ui", "explorer-stage-cards.js"), "utf8");
   for (const label of ["01 · ORIGINAL", "02 · FINISH", "03 · COMERCIAL"]) assert.ok(cards.includes(label));
   assert.ok(cards.includes("item[stage]"));
@@ -408,8 +396,7 @@ test("E3 replica la estética del frontend solo en la ampliación, con datos de 
 });
 
 test("organización: cada matriz queda en su vista y no se repiten tarjetas de incidencias ni el circuito", async () => {
-  const snapshot = await readPanelSnapshot(await fixture.root());
-  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot)));
+  const { html } = await readStaticPanel();
   const flow = html.split('data-view="flujo"')[1]?.split('data-view="calidad"')[0];
   const quality = html.split('data-view="calidad"')[1]?.split('data-view="explorador"')[0];
   assert.ok(flow);
@@ -434,9 +421,7 @@ test("organización: cada matriz queda en su vista y no se repiten tarjetas de i
 
 
 test("F2 ordena los cinco apartados sin tablas de duplicados ni controles de E5", async () => {
-  const workspace = await fixture.root();
-  const snapshot = await readPanelSnapshot(workspace);
-  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  const { html } = await readStaticPanel();
   const sections = [
     'compareSection("Título"', 'compareSection("Descripción corta"',
     'compareSection("Especificaciones técnicas"', 'compareSection("Descripción general"',
@@ -462,9 +447,7 @@ test("F2 ordena los cinco apartados sin tablas de duplicados ni controles de E5"
 });
 
 test("F2 abre los tres visores completos en lectura lineal sin contenido plegado", async () => {
-  const workspace = await fixture.root();
-  const snapshot = await readPanelSnapshot(workspace);
-  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  const { html } = await readStaticPanel();
   const cards = await readFile(join(process.cwd(), "dist", "panel", "ui", "explorer-stage-cards.js"), "utf8");
   assert.ok(cards.includes('element("h3", "", "Descripción corta")'));
   assert.ok(cards.includes('"equipzilla-general-description"'));
@@ -483,10 +466,7 @@ test("F2 abre los tres visores completos en lectura lineal sin contenido plegado
 });
 
 test("F5 integra listado, filtros y visor sin alterar el corte", async () => {
-  const workspace = await fixture.root();
-  const snapshot = await readPanelSnapshot(workspace);
-  const payload = createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot));
-  const html = await renderPanelHtml(process.cwd(), payload);
+  const { snapshot, dashboard: payload, html } = await readStaticPanel();
   assert.ok(html.includes("Categorías disponibles"));
   assert.ok(html.includes("Catálogo"));
   assert.ok(html.includes("Descripciones cambiadas"));
@@ -515,9 +495,7 @@ test("F5 integra listado, filtros y visor sin alterar el corte", async () => {
 
 
 test("F6 amplía las vistas y pagina el catálogo lateral de 30 en 30 sin modificar el visor", async () => {
-  const workspace = await fixture.root();
-  const snapshot = await readPanelSnapshot(workspace);
-  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  const { html } = await readStaticPanel();
   assert.ok(html.includes("max-width:1900px"));
   assert.ok(html.includes("grid-template-columns:minmax(350px,380px) minmax(0,1fr)"));
   assert.ok(html.includes(".explorer-list {max-height:none;overflow:visible}"));
@@ -532,9 +510,7 @@ test("F6 amplía las vistas y pagina el catálogo lateral de 30 en 30 sin modifi
 
 
 test("F7 despliega hasta 30 filas sin scroll interno y muestra proveedor, referencia y título", async () => {
-  const workspace = await fixture.root();
-  const snapshot = await readPanelSnapshot(workspace);
-  const html = await renderPanelHtml(process.cwd(), createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)));
+  const { html } = await readStaticPanel();
   assert.ok(html.includes('create("span", "product-row-provider", names[item.providerId])'));
   assert.ok(html.includes('create("strong", "product-row-reference", item.reference ?? "Sin referencia")'));
   assert.ok(html.includes('create("span", "product-title", item.published?.title ?? item.original?.title ?? "Sin título")'));
@@ -566,8 +542,7 @@ test("muestra reglas vigentes extraídas del código, separadas de los ejemplos 
   assert.ok(examples.source.code.includes('Object.keys(unit.specifications).some((key) => key in specs)'));
   assert.ok(examples.normalization.code.includes('number >= 0'));
   assert.ok(examples.exclusion.code.includes('decision.requiredIssues.every'));
-  const snapshot = await readPanelSnapshot(await fixture.root());
-  const html = await renderPanelHtml(root, createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot)));
+  const { html } = await readStaticPanel();
   for (const id of ["source", "normalization", "exclusion"]) {
     assert.ok(html.includes(`data-rule="${id}"`));
     assert.ok(html.includes(`"${id}":{`));

@@ -18,7 +18,7 @@ const expectedByReference: Readonly<Record<string, SpecsMap>> = {
   "M484-4055": {"Altura de plataforma": "18,8 m", "Capacidad máxima de plataforma": "225 kg"},
   "M569-9029": {"Altura de plataforma": "9,7 m", "Capacidad máxima de plataforma": "454 kg", "Anchura total": "1,79 m", "Extensión de plataforma": "1,52 m"},
   "M649-6453": {"Altura de plataforma": "15,24 m", "Anchura total": "2,34 m", "Longitud de plataforma": "4,27 m", "Anchura de plataforma": "1,88 m"},
-  "M690-5522": {"Alcance horizontal": "6,78 m", "Capacidad máxima de plataforma": "227 kg", "Longitud de plataforma": "0,76 m", "Anchura de plataforma": "1,42 m"},
+  "M690-5522": {"Alcance horizontal": "6,78 m", "Capacidad máxima de plataforma": "227 kg", "Longitud de plataforma": "0,76 m"},
   "M055-1205": {"Alcance horizontal": "12 m", "Anchura de plataforma": "0,7 m"},
   "M502-4867": {"Alcance horizontal": "9,2 m", "Capacidad máxima de plataforma": "225 kg"},
   "M329-6156": {"Longitud de plataforma": "1,4 m", "Anchura de plataforma": "0,7 m"},
@@ -32,7 +32,7 @@ const expectedByReference: Readonly<Record<string, SpecsMap>> = {
 
 const selectedReferences = new Set(Object.keys(expectedByReference));
 
-test("Mercaeleva: 21 unidades distintas aportan 68 prestaciones documentadas sin modificar los originales", () => {
+test("Mercaeleva: 21 unidades distintas aportan 67 prestaciones documentadas sin modificar los originales", () => {
   const improved = new Set<string>();
   let added = 0;
   for (const record of source) {
@@ -56,7 +56,7 @@ test("Mercaeleva: 21 unidades distintas aportan 68 prestaciones documentadas sin
     added += Object.keys(expected).length;
   }
   assert.deepEqual(improved, selectedReferences);
-  assert.equal(added, 68);
+  assert.equal(added, 67);
 });
 
 test("Mercaeleva: las prestaciones no se propagan a referencias, variantes ni fuentes alteradas", () => {

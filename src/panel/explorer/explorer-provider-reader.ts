@@ -7,7 +7,6 @@ import { assertCommercialLineage } from "../evidence/commercial-evidence.js";
 import { digest, recordFrom, regularText } from "../evidence/evidence-files.js";
 import type { PanelUnitKnowledgeEvidence } from "../evidence/knowledge-evidence.js";
 import type { PanelProviderEvidence } from "../evidence/types.js";
-import type { SpecAdditionAudit } from "../evidence/spec-addition-audit.js";
 import { productIdentity } from "./explorer-identity.js";
 import { isDelivery, isEditorialExclusion } from "./explorer-data-validation.js";
 import type { EditorialExclusion } from "./explorer-data-validation.js";
@@ -68,8 +67,7 @@ const verifiedCommercial = (
 };
 
 export const readProviderExplorerProducts = async (
-  root: string, evidence: PanelProviderEvidence, commercialRaw: string, knowledge: PanelUnitKnowledgeEvidence | null,
-  audit: SpecAdditionAudit | null
+  root: string, evidence: PanelProviderEvidence, commercialRaw: string, knowledge: PanelUnitKnowledgeEvidence | null
 ): Promise<readonly PanelExplorerProduct[]> => {
   const publishedPath = join(root, evidence.publication.path);
   const published = await readAccreditedPublication(publishedPath);
@@ -119,7 +117,7 @@ export const readProviderExplorerProducts = async (
       stage: "commercial", reason: exclusion.reason, issues: [], evidenceUrls: []
     } : null;
     result.push(toExplorerProduct(evidence.providerId, item.reference, item.sourceUrl, original, item,
-      exported.get(key) ?? null, decision, evidence, accreditation.artifact, knowledge, audit, trace));
+      exported.get(key) ?? null, decision, evidence, accreditation.artifact, knowledge, trace));
   }
   for (const excluded of accreditation.items) {
     const key = productIdentity(evidence.providerId, excluded.reference, excluded.sourceUrl);
@@ -131,7 +129,7 @@ export const readProviderExplorerProducts = async (
     }
     result.push(toExplorerProduct(evidence.providerId, excluded.reference, excluded.sourceUrl, original, null, null,
       { stage: "editorial", reason: excluded.reason, issues: excluded.issues, evidenceUrls: excluded.evidenceUrls },
-      evidence, accreditation.artifact, knowledge, audit));
+      evidence, accreditation.artifact, knowledge));
   }
   if (result.length !== evidence.metrics.originals || originals && found.size !== originals.size) {
     throw new Error(`Población del explorador distinta del corte: ${evidence.providerId}`);

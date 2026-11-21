@@ -8,6 +8,7 @@ import test from "node:test";
 import { inspectEditorialArchitecture } from "./tests-editorial-architecture-guard.mjs";
 import { inspectTestArchitecture } from "./tests-domain-tests-guard.mjs";
 import { inspectModuleIntegrity } from "./tests-module-integrity-guard.mjs";
+import { inspectPanelHeavyPreparations } from "./tests-performance-guard.mjs";
 
 const fixture = (t) => {
   const root = mkdtempSync(join(tmpdir(), "eqz-architecture-guard-"));
@@ -50,6 +51,33 @@ test("npm test ejecuta los guards arquitectónicos y sus autopruebas antes del b
     assert.equal(steps.filter((step) => step === command).length, 1, command);
     assert.ok(steps.indexOf(command) < build, command);
   }
+});
+
+test("detecta preparaciones censales repetidas en el panel sin impedir lecturas aisladas legítimas", () => {
+  const root = fileURLToPath(new URL("../", import.meta.url));
+  const paths = [
+    "src/panel/application/tests/dashboard.test.ts",
+    "src/panel/explorer/tests/read-panel-explorer.test.ts",
+    "src/panel/evidence/read-panel-snapshot.ts",
+    "src/panel/explorer/read-panel-explorer.ts",
+    "src/panel/application/panel-html.ts"
+  ];
+  const sources = new Map(paths.map((path) => [path, readFileSync(join(root, path), "utf8")]));
+  assert.deepEqual(inspectPanelHeavyPreparations(sources), []);
+  const dashboard = paths[0];
+  const original = sources.get(dashboard);
+  assert.ok(original);
+  const updated = original.replace("const { html } = await readStaticPanel();",
+    "const { html } = await readStaticPanel(); await readPanelSnapshot(await fixture.root());");
+  assert.notEqual(updated, original);
+  const repeated = new Map(sources);
+  repeated.set(dashboard, updated);
+  assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("readPanelSnapshot: 3 preparaciones")));
+  const looped = original.replace("const snapshot = await readPanelSnapshot(workspace);",
+    `for (const provider of ["gam"]) await readPanelSnapshot(workspace); const snapshot = await readPanelSnapshot(workspace);`);
+  assert.notEqual(looped, original);
+  repeated.set(dashboard, looped);
+  assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("fuera de iteraciones")));
 });
 
 test("el comando comercial invoca el guard protegido desde GUARDS", () => {

@@ -3,6 +3,7 @@ import { stat } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js";
+import type { ProductRecord } from "../../contracts/catalog.js";
 import { readPortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
 import { readPanelSnapshot } from "../../panel/evidence/read-panel-snapshot.js";
 import { readPublicationTechnicalProvenance } from "../../panel/evidence/read-technical-provenance.js";
@@ -14,6 +15,7 @@ import { classifyPublishedTechnicalSpec } from "../../preparation/technical-spec
 import type { TechnicalSpecEvidence } from "../../contracts/technical-provenance.js";
 import type { PanelProviderId } from "../../panel/evidence/types.js";
 import { evaluateGrayProvenance } from "./gray-provenance-evaluation.js";
+import { withdrawnTechnicalSpecs } from "./withdrawn-technical-specs.js";
 import type { GrayProvenanceBlocker } from "./gray-provenance-evaluation.js";
 
 type Kind = PanelSpecAddition["kind"];
@@ -107,6 +109,18 @@ export type TechnicalProvenanceCoverage = {
   readonly grayCases: readonly GrayProvenanceCase[];
   readonly grayBlockers: Readonly<Partial<Record<GrayProvenanceBlocker, number>>>;
   readonly equivalence: TechnicalClassificationEquivalence;
+  readonly withdrawn: {
+    readonly fromPreparation: number;
+    readonly stillInHistoricalPublication: number;
+    readonly cases: readonly {
+      readonly providerId: PanelProviderId;
+      readonly reference: string;
+      readonly field: string;
+      readonly value: string;
+      readonly published: boolean;
+      readonly reason: string;
+    }[];
+  };
 };
 
 const initial = (): Omit<ProviderCoverage, "providerId"> => ({
@@ -154,6 +168,7 @@ export const inspectTechnicalProvenanceCoverage = async (workspace: string): Pro
   const snapshot = await readPanelSnapshot(root);
   const explorer = await readPanelExplorer(root, snapshot);
   const totals: ProviderCoverage[] = [];
+  const recordsByProvider = new Map<PanelProviderId, ReadonlyMap<string, ProductRecord>>();
   const mechanisms = new Map<string, number>();
   const unattributedMechanisms = new Map<string, number>();
   const grayCases: GrayProvenanceCase[] = [];
@@ -167,6 +182,7 @@ export const inspectTechnicalProvenanceCoverage = async (workspace: string): Pro
     const originals = await readPortableOriginal(root, provider.providerId);
     const records = new Map(originals.products.map((item) =>
       [productIdentity(provider.providerId, item.reference, item.url), item] as const));
+    recordsByProvider.set(provider.providerId, records);
     if (records.size !== originals.products.length || records.size !== provider.metrics.originals) {
       throw new Error(`Originales inválidos para cobertura: ${provider.providerId}`);
     }
@@ -312,7 +328,30 @@ export const inspectTechnicalProvenanceCoverage = async (workspace: string): Pro
     motorProviders.reduce((sum, item) => sum + item.historicalAtRisk, 0) !== historicalAtRisk) {
     throw new Error("Equivalencia técnica inconsistente");
   }
+  const withdrawn = withdrawnTechnicalSpecs.map((item) => {
+    const original = explorer.products.find((product) => product.providerId === item.providerId &&
+      product.reference === item.reference);
+    if (!original || !original.original || !original.published) {
+      throw new Error(`Ficha retirada sin comparación original/publicada: ${item.providerId}:${item.reference}`);
+    }
+    const prepared = recordsByProvider.get(item.providerId)?.get(original.identity);
+    if (!prepared || prepared.specs?.[item.field] !== undefined) {
+      throw new Error(`La spec retirada no corresponde a enriquecimiento técnico: ${item.providerId}:${item.reference}`);
+    }
+    const fresh = prepareSourceProduct(prepared);
+    if (fresh.product.spec[item.field] !== undefined ||
+      fresh.technicalProvenance?.entries.some((entry) => entry.field === item.field)) {
+      throw new Error(`La spec retirada reaparece en preparación: ${item.providerId}:${item.reference}:${item.field}`);
+    }
+    const published = original.published.specs[item.field] === item.value;
+    if (original.published.specs[item.field] !== undefined && !published) {
+      throw new Error(`Valor distinto para una spec retirada: ${item.providerId}:${item.reference}:${item.field}`);
+    }
+    return { ...item, published };
+  });
   return { version: 1, mode: "historical-rehearsal", classificationChanged: false,
+    withdrawn: { fromPreparation: withdrawn.length,
+      stillInHistoricalPublication: withdrawn.filter((item) => item.published).length, cases: withdrawn },
     providers: totals, totals: aggregate,
     equivalence: { mode: "motor-offline-rehearsal", historical: aggregate.classification,
       motor, byHistorical, resolvedPending, unresolvedPending: byHistorical.pending.pending,
@@ -343,12 +382,13 @@ export const runTechnicalProvenanceCoverage = async (args: readonly string[]): P
   for (const provider of report.providers) {
     process.stdout.write(`  ${provider.providerId} | ${provider.replayed}/${provider.additions} reproducidas | ${provider.unitSource} propias | ${provider.modelDocument} docs modelo | ${provider.unitDocument} docs unidad | ${provider.documentReference} referencias con identidad parcial | ${provider.unknownSource} origen desconocido | ${provider.missing} sin traza | ${provider.pendingWithUnknownSource} grises sin origen acreditado\n`);
   }
-  process.stdout.write(`Clasificación histórica intacta: ${totals.classification.own} azules, ${totals.classification.reused} naranjas y ${totals.classification.pending} grises. Ensayo offline: no acredita ejecución en la publicación histórica.\n`);
+  process.stdout.write(`Clasificación calculada por el motor: ${totals.classification.own} azules, ${totals.classification.reused} naranjas y ${totals.classification.pending} grises en el corte publicado; ${totals.historicalEmitted} evidencias históricas emitidas. La reproducción no demuestra qué mecanismo se ejecutó históricamente.\n`);
+  process.stdout.write(`RETIRADAS | ${report.withdrawn.fromPreparation} specs ya ausentes de la preparación | ${report.withdrawn.stillInHistoricalPublication} todavía presentes en publicaciones históricas que requieren regeneración acreditada. No se consideran reclasificadas.\n`);
   const equivalence = report.equivalence;
-  process.stdout.write(`ENSAYO MOTOR | ${equivalence.motor.own} azules, ${equivalence.motor.reused} naranjas y ${equivalence.motor.pending} grises | ${equivalence.resolvedPending} grises históricos con decisión reproducible | ${equivalence.unresolvedPending} aún pendientes | ${equivalence.historicalAtRisk} clasificaciones históricas favorables todavía sin acreditación del motor. Sin cambios en las publicaciones.\n`);
-  process.stdout.write(`Bloqueos reales de los ${equivalence.unresolvedPending} grises históricos todavía sin acreditación: ${Object.entries(equivalence.unresolvedBlockers).map(([blocker, count]) => `${blocker}: ${count}`).join(" | ")}\n`);
+  process.stdout.write(`COMPROBACIÓN MOTOR | ${equivalence.motor.own} azules, ${equivalence.motor.reused} naranjas y ${equivalence.motor.pending} grises | ${equivalence.differences.length} discrepancias entre el explorador y el ensayo del motor. Sin cambios en las publicaciones.\n`);
+  process.stdout.write(`Bloqueos de las ${equivalence.unresolvedPending} incorporaciones pendientes en el corte publicado: ${Object.entries(equivalence.unresolvedBlockers).map(([blocker, count]) => `${blocker}: ${count}`).join(" | ")}\n`);
   for (const provider of equivalence.providers) {
-    process.stdout.write(`  ${provider.providerId} | motor ${provider.motor.own}/${provider.motor.reused}/${provider.motor.pending} | grises acreditables ${provider.resolvedPending} | grises aún bloqueados ${provider.unresolvedPending} | clasificación histórica en riesgo ${provider.historicalAtRisk}\n`);
+    process.stdout.write(`  ${provider.providerId} | motor ${provider.motor.own}/${provider.motor.reused}/${provider.motor.pending} | pendientes ${provider.unresolvedPending}\n`);
   }
   process.stdout.write(`Fuente propia acreditada: ${totals.unitByClassification.own} azules, ${totals.unitByClassification.reused} naranjas y ${totals.unitByClassification.pending} grises. Pendientes de fuente: ${totals.unknownByClassification.own} azules, ${totals.unknownByClassification.reused} naranjas y ${totals.unknownByClassification.pending} grises. Sin reproducción: ${totals.missing} incorporaciones.\n`);
   process.stdout.write(`Documentación de modelo por clasificación: ${totals.modelDocumentByClassification.own} azules, ${totals.modelDocumentByClassification.reused} naranjas y ${totals.modelDocumentByClassification.pending} grises. Documento de unidad: ${totals.unitDocumentByClassification.own} azules, ${totals.unitDocumentByClassification.reused} naranjas y ${totals.unitDocumentByClassification.pending} grises. Documentos con identidad parcial: ${totals.documentReferenceByClassification.own} azules, ${totals.documentReferenceByClassification.reused} naranjas y ${totals.documentReferenceByClassification.pending} grises. Las referencias no implican validación en línea del documento.\n`);

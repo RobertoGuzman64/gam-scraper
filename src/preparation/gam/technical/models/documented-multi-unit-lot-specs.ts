@@ -119,7 +119,6 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     "specifications": {
       "Yale ERP16VT MWB · Capacidad de carga": "1.600 kg",
       "Yale ERP16VT MWB · Altura de elevación anunciada": "5.500 mm",
-      "Yale MP16 · Ancho exterior de horquillas": "680 mm",
       "Yale MP16 · Accionamiento": "Eléctrico"
     },
     "fingerprint": "ad109b9cf172f19df91bfa8da442c0442c0b342a9a78754503383177e284342a",
