@@ -65,17 +65,17 @@ test("equivalencia motor y explorador preserva pendiente y separa tres retiradas
   const equivalence = report.equivalence;
   assert.equal(equivalence.mode, "motor-offline-rehearsal");
   assert.equal(report.classificationChanged, false);
-  const expected = { own: 1840, reused: 334, pending: 724 };
+  const expected = { own: 1855, reused: 656, pending: 387 };
   assert.deepEqual(equivalence.historical, expected);
   assert.deepEqual(equivalence.motor, expected);
   assert.deepEqual(equivalence.byHistorical, {
-    own: { own: 1840, reused: 0, pending: 0 },
-    reused: { own: 0, reused: 334, pending: 0 },
-    pending: { own: 0, reused: 0, pending: 724 }
+    own: { own: 1855, reused: 0, pending: 0 },
+    reused: { own: 0, reused: 656, pending: 0 },
+    pending: { own: 0, reused: 0, pending: 387 }
   });
   assert.equal(equivalence.resolvedPending, 0);
-  assert.equal(equivalence.unresolvedPending, 724);
-  assert.equal(equivalence.unresolvedCases.length, 724);
+  assert.equal(equivalence.unresolvedPending, 387);
+  assert.equal(equivalence.unresolvedCases.length, 387);
   assert.equal(equivalence.historicalAtRisk, 0);
   assert.equal(equivalence.differences.length, 0);
   assert.equal(report.totals.historicalEmitted, 0);

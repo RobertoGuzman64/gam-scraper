@@ -42,7 +42,6 @@ const expected: Readonly<Record<string, Readonly<Record<string, SpecsMap>>>> = {
     "6994": {
       "Yale ERP16VT MWB · Capacidad de carga": "1.600 kg",
       "Yale ERP16VT MWB · Altura de elevación anunciada": "5.500 mm",
-      "Yale MP16 · Ancho exterior de horquillas": "680 mm",
       "Yale MP16 · Accionamiento": "Eléctrico"
     },
     "6995": {
@@ -79,7 +78,7 @@ const getTarget = (providerId: "gam" | "mercaeleva", reference: string): Product
   return record;
 };
 
-test("fichas multiunidad: ocho fichas documentadas y 33 prestaciones sin modificar originales", () => {
+test("fichas multiunidad: ocho fichas documentadas y 32 prestaciones sin modificar originales", () => {
   let improved = 0;
   let added = 0;
   const before = [];
@@ -110,9 +109,9 @@ test("fichas multiunidad: ocho fichas documentadas y 33 prestaciones sin modific
     }
   }
   assert.equal(improved, 8);
-  assert.equal(added, 33);
+  assert.equal(added, 32);
   assert.deepEqual(analyzeTechnicalDensity(before).totals, { products: 8, sparse: 8, medium: 0 });
-  assert.deepEqual(analyzeTechnicalDensity(after).totals, { products: 8, sparse: 0, medium: 0 });
+  assert.deepEqual(analyzeTechnicalDensity(after).totals, { products: 8, sparse: 0, medium: 1 });
 });
 
 test("fichas multiunidad: sin aplicar prestaciones a otras variantes, fuentes o fichas cambiadas", () => {

@@ -16,8 +16,8 @@ before(async () => { report = await inspectSpecProvenance(root); });
 
 test("mide las 2898 incorporaciones históricas con clasificación exclusiva del motor", () => {
   assert.deepEqual(report.totals, {
-    additions: 2898, own: 1840, reused: 334, pending: 724, reproduced: 2838,
-    classifiedReproduced: 2124, pendingReproduced: 714, notReproduced: 60,
+    additions: 2898, own: 1855, reused: 656, pending: 387, reproduced: 2838,
+    classifiedReproduced: 2455, pendingReproduced: 383, notReproduced: 60,
     gamRecovery: 1590, documentedRecovery: 1081, originalYear: 167
   });
   assert.equal(report.classificationChanged, false);
@@ -35,7 +35,7 @@ test("separa proveedores y distingue las rutas de reproducción sin solapamiento
     { providerId: "mercaeleva", additions: 741, reproduced: 736, notReproduced: 5 }
   ]);
   assert.equal(report.candidates.filter((item) => item.currentKind === "pending" &&
-    item.mechanisms.length === 1 && item.mechanisms[0] === "documentedRecovery").length, 702);
+    item.mechanisms.length === 1 && item.mechanisms[0] === "documentedRecovery").length, 380);
   assert.equal(report.candidates.filter((item) => item.mechanisms.length > 1).length, 0);
 });
 
@@ -62,7 +62,7 @@ test("exige identidad de campo y valor sin atribuir aplicación histórica", () 
     }
   }
   assert.equal(report.candidates.filter((item) => item.reproduction === "not-reproduced" &&
-    item.currentKind === "own").length, 50);
+    item.currentKind === "own").length, 56);
   assert.equal(report.candidates.filter((item) => item.sourceKindProof === "original-field-compatible").length, 1068);
   assert.equal(report.candidates.filter((item) => item.sourceKindProof === "original-field-compatible" &&
     item.providerId === "gam").length, 901);

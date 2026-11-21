@@ -19,7 +19,7 @@ export type ExplorerTechnicalEvidenceCache = {
 };
 
 export const explorerTechnicalEvidenceCachePath = (root: string): string =>
-  join(root, "catalogs", "reports", "explorer-technical-evidence.json");
+  join(root, "catalogs", "reports", "revision", "explorer-technical-evidence.json");
 
 const record = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
