@@ -43,7 +43,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   record = reconcileInitialTechnicalEvidence(record);
   const publicationConflict = publicationConflictForMercaeleva(record);
   const semanticIssues = sourceSemanticQualityIssues(resolveSourceTechnicalSemanticRecord(record));
-  record = reconcileTechnicalSourceForRecovery(record);
+  record = reconcileTechnicalSourceForRecovery(record, technicalProvenance.observe);
   const recoverySource = record;
   const sourceYearSpecs = recoverBaseTechnicalSpecs(record, sourceUnitRecord, technicalProvenance.observe);
   const documentedOriginal = verifiedClaims !== categorizedSource ? categorizedSource :
@@ -86,6 +86,11 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const descriptions = { short: editorial.preparedShort, general: editorial.preparedLong };
   issues.push(...preparedTechnicalConsistencyIssues(qualityRecord, reconciledSpecs));
   const normalizedSpecs = normalizePreparedTechnicalSpecs(record, reconciledSpecs, technicalProvenance.observe);
+  const limitedSpecs = presentGamVerifiedRestrictedCapacity(record, normalizedSpecs);
+  const handledSpecs = reconcileHandlingFamilySpecs(editorialRecord, limitedSpecs);
+  technicalProvenance.observe(limitedSpecs, handledSpecs,
+    "src/preparation/shared/technical/reconciliation/handling-family-specifications.ts",
+    { spec: "Capacidad de carga (kg)" });
   const product: ImportCandidate = {
     providerId: record.providerId,
     sourceUrl: record.url,
@@ -101,7 +106,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     description_general: descriptions.general,
     image: images[0] ?? null,
     images,
-    spec: reconcileHandlingFamilySpecs(editorialRecord, presentGamVerifiedRestrictedCapacity(record, normalizedSpecs)),
+    spec: handledSpecs,
     attributes: attributeResult?.attributes ?? []
   };
   const presented = normalizePreparedEditorialPresentation(sourceUnitRecord, product);

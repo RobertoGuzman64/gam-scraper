@@ -12,6 +12,7 @@ import type { CommercialEnvironment } from "../../../infrastructure/filesystem/l
 import { printCommandHeader, printCommandSection, printCommandResult, printCommandDeliverable, printCommandProvider, printReportLine } from "../../reporting/terminal.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { writeLocalPanel } from "../../../panel/application/write-local-panel.js";
+import { prepareExplorerTechnicalEvidence } from "../../../tools/catalog/prepare-explorer-technical-evidence.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 
@@ -96,6 +97,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
     printCommandDeliverable("INFORME", delivered.report);
     if (shouldRefreshLocalPanel(options)) {
       try {
+        await prepareExplorerTechnicalEvidence(root);
         printCommandDeliverable("PANEL LOCAL", await writeLocalPanel(root));
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);

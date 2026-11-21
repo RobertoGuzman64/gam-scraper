@@ -3,6 +3,7 @@ import { dirname, join, resolve } from "node:path";
 import { after } from "node:test";
 import { readZipArchive } from "../../infrastructure/archive/zip.js";
 import { copyTestWorkspace, createTemporaryTestWorkspace } from "./reusable-workspace-fixture.js";
+import { prepareExplorerTechnicalEvidence } from "../../tools/catalog/prepare-explorer-technical-evidence.js";
 
 export const createPanelEvidenceWorkspaceFixture = (): {
   readonly root: () => Promise<string>;
@@ -25,6 +26,7 @@ export const createPanelEvidenceWorkspaceFixture = (): {
             await mkdir(dirname(path), { recursive: true });
             await writeFile(path, file.data, { flag: "wx" });
           }
+          await prepareExplorerTechnicalEvidence(directory);
           return directory;
         } catch (error) {
           await rm(directory, { recursive: true, force: true });

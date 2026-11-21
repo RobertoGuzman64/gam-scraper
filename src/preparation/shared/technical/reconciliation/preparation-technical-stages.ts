@@ -44,11 +44,11 @@ export const reconcileInitialTechnicalEvidence = (record: ProductRecord): Produc
 export const resolveSourceTechnicalSemanticRecord = (record: ProductRecord): ProductRecord =>
   reconcileGomarizVerifiedElectricSemanticSource(reconcileMercaelevaSourceFamily(record));
 
-export const reconcileTechnicalSourceForRecovery = (record: ProductRecord): ProductRecord => {
+export const reconcileTechnicalSourceForRecovery = (record: ProductRecord, observe?: TechnicalRecoveryObservation): ProductRecord => {
   record = reconcileMercaelevaSourceFamily(record);
   record = reconcileGamTechnicalIdentity(record);
   return reconcileGomarizDocumentedWeight(reconcileGomarizVerifiedCompositeBrand(reconcileGomarizVerifiedTowerModel(
-    reconcileMercaelevaSourceTechnicalSpecs(record))));
+    reconcileMercaelevaSourceTechnicalSpecs(record, observe))));
 };
 
 export const reconcileTechnicalBeforeEditorial = (record: ProductRecord, observe?: TechnicalRecoveryObservation): ProductRecord =>

@@ -963,6 +963,245 @@ const documents: readonly ReviewedModelDocument[] = [
       { field: "Capacidad máxima de plataforma", value: "230 kg", support: "JLG 1930ES, ficha del fabricante, página 2: Capacidad de la Plataforma | 230 kg; capacidad máxima de uso interior, distinta de la capacidad para exteriores de 120 kg" },
       { field: "Extensión de plataforma", value: "0,9 m", support: "JLG 1930ES, ficha del fabricante, páginas 1-2: extensión de plataforma desplegable de 0,90 m" }
     ]
+  },
+  {
+    url: "https://www.colle.eu/media/6015/170aetj-l_eng.pdf",
+    brand: "Manitou", model: "170AETJL", reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "9,4 m", support: "170 AETJ L, página 2: Horizontal outreach 9.40 m" },
+      { field: "Altura de plataforma", value: "14,9 m", support: "170 AETJ L, página 2: Platform height 14.90 m" },
+      { field: "Anchura (mm)", value: "1,75 m", support: "170 AETJ L, página 2: Width 1.75 m" },
+      { field: "Capacidad máxima de plataforma", value: "200 kg", support: "170 AETJ L, página 2: Platform capacity 200 kg / 2 peoples" }
+    ]
+  },
+  {
+    url: "https://www.geeritsverhuur.be/sites/default/files/2025-09/1_FICHE_JLG_450AJ.pdf",
+    brand: "JLG", model: "450 AJ", reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "7,47 m", support: "JLG 450AJ 450 Series II, página 2: Horizontal Outreach 7.47 m" },
+      { field: "Altura de plataforma", value: "13,72 m", support: "JLG 450AJ 450 Series II, página 2: Platform Height 13.72 m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "JLG 450AJ 450 Series II, página 2: Platform Capacity Unrestricted 230 kg" }
+    ]
+  },
+  {
+    url: "https://www.coalci.es/wp-content/uploads/2021/07/haulotte-ha15ip.pdf",
+    brand: "Haulotte", model: "HA15IP", reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "8,45 m", support: "HA15 IP, página 2: Alcance máximo 8.45 m" },
+      { field: "Altura de plataforma", value: "12,87 m", support: "HA15 IP, página 2: Altura plataforma 12.87 m" },
+      { field: "Anchura (mm)", value: "1,52 m", support: "HA15 IP, página 2: B Ancho 1.52 m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "HA15 IP, página 2: Capacidad máxima 230 kg" }
+    ]
+  },
+  {
+    url: "https://documentacionqr.com/sat/objects/919543/HAULOTTE_COMPACT10N_FICHA_CARACTERISTICAS_TECNICAS_ES.pdf",
+    brand: "Haulotte", model: "COMPACT-10N", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "8 m", support: "Compact 10 N, página 2, columna Compact 10 N: Altura plataforma 8 m" },
+      { field: "Anchura (mm)", value: "0,81 m", support: "Compact 10 N, página 2, columna Compact 10 N: Ancho 0,81 m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "Compact 10 N, página 2, columna Compact 10 N: Capacidad máxima 230 kg" },
+      { field: "Distancia entre ejes (mm)", value: "1,86 m", support: "Compact 10 N, página 2: E Distancia entre ejes 1,86 m" }
+    ]
+  },
+  {
+    url: "https://www.plataformasnoain.com/wp-content/uploads/2022/03/Haulotte-OPTIMUM-8-AC.pdf",
+    brand: "Haulotte", model: "Optimum 8", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "5,77 m", support: "Optimum 8, página 2: Altura de plataforma 5.77 m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "Optimum 8, página 2: Capacidad máxima interior/exterior 230 kg" },
+      { field: "Distancia entre ejes (mm)", value: "1,38 m", support: "Optimum 8, página 2: G Distancia entre ejes 1.38 m" }
+    ]
+  },
+  {
+    url: "https://www.haulotte.com.es/es_ES/productos/ha16-rtj",
+    brand: "Haulotte", model: "HA16RTJ", reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "8,3 m", support: "Haulotte HA16 RTJ, Datos Técnicos: Alcance máximo 8.3 m" },
+      { field: "Altura de plataforma", value: "14 m", support: "Haulotte HA16 RTJ, Datos Técnicos: Altura plataforma 14 m" },
+      { field: "Anchura (mm)", value: "2,3 m", support: "Haulotte HA16 RTJ, Datos Técnicos: Ancho 2.3 m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "Haulotte HA16 RTJ, Datos Técnicos: Capacidad máxima 230 kg" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-1028.htm",
+    brand: "LGMG", model: "SR1218D", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "11,9 m", support: "LGMG SR1218D, Specifications: A-Platform Height-Raised 11.9m" },
+      { field: "Anchura (mm)", value: "1,79 m", support: "LGMG SR1218D, Specifications: F-Overall Width 1.79m" },
+      { field: "Capacidad máxima de plataforma", value: "365 kg", support: "LGMG SR1218D, Specifications: Platform Capacity 365kg" },
+      { field: "Extensión de plataforma", value: "1,52 m", support: "LGMG SR1218D, Specifications: Extension Deck 1.52m" }
+    ]
+  },
+  {
+    url: "https://www.eagleplatforms.com/wp-content/uploads/Haulotte-Compact-12-Electric-SPEC-SHEET.pdf",
+    brand: "Haulotte", model: "Compact 12", reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura (mm)", value: "1,2 m", support: "Compact 12, página 2, columna COMPACT 12: F Overall width 1.2 m" },
+      { field: "Capacidad máxima de plataforma", value: "300 kg", support: "Compact 12, página 2, columna COMPACT 12: Lift capacity inside/outside 300 kg" },
+      { field: "Distancia entre ejes (mm)", value: "1,86 m", support: "Compact 12, página 2, columna COMPACT 12: H Wheelbase 1.86 m" },
+      { field: "Extensión de plataforma", value: "0,92 m", support: "Compact 12, página 2, columna COMPACT 12: Length - extension 0.92 m" }
+    ]
+  },
+  {
+    url: "https://en.lgmg.com.cn/product/625.htm",
+    brand: "LGMG", model: "AS1212E", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "12 m", support: "LGMG AS1212E, Specifications: A-Platform Height-Raised 12m" },
+      { field: "Anchura (mm)", value: "1,18 m", support: "LGMG AS1212E, Specifications: F-Overall Width 1.18m" },
+      { field: "Capacidad máxima de plataforma", value: "320 kg", support: "LGMG AS1212E, Specifications: Platform Capacity 320kg" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "LGMG AS1212E, Specifications: H-Extension Deck 0.9m" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-616.htm",
+    brand: "LGMG", model: "A14JE", reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "7,81 m", support: "LGMG A14JE, Specifications: Horizontal Outreach 7.81m" },
+      { field: "Altura de plataforma", value: "13,8 m", support: "LGMG A14JE, Specifications: Platform Height 13.8m" },
+      { field: "Anchura (mm)", value: "1,8 m", support: "LGMG A14JE, Specifications: B-Overall Width 1.8m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "LGMG A14JE, Specifications: Platform Capacity 230 kg" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-617.htm",
+    brand: "LGMG", model: "AR16J", reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "9,39 m", support: "LGMG AR16J, Specifications: Horizontal Outreach 9.39m" },
+      { field: "Altura de plataforma", value: "15,7 m", support: "LGMG AR16J, Specifications: Platform Height 15.7m" },
+      { field: "Anchura (mm)", value: "2,31 m", support: "LGMG AR16J, Specifications: B-Stowed Width 2.31m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "LGMG AR16J, Specifications: Platform Capacity 230kg" }
+    ]
+  },
+  {
+    url: "https://www.colle.eu/media/6020/180atj_eng.pdf",
+    brand: "Manitou", model: "180ATJ", reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "10,62 m", support: "Manitou 180 ATJ, página 2: Outreach 10.62 m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "Manitou 180 ATJ, página 2: Capacity 230 kg" }
+    ]
+  },
+  {
+    url: "https://www.colle.eu/media/6008/120aetj-c-eng.pdf", brand: "Manitou", model: "120AETJC", reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "7 m", support: "Manitou 120 AETJ-C, página 2: Outreach 7.00 m" },
+      { field: "Altura de plataforma", value: "9,95 m", support: "Manitou 120 AETJ-C, página 2: Platform height 9.95 m" },
+      { field: "Anchura (mm)", value: "1,2 m", support: "Manitou 120 AETJ-C, página 2: Overall width 1.20 m" },
+      { field: "Capacidad máxima de plataforma", value: "200 kg", support: "Manitou 120 AETJ-C, página 2: Capacity 200 kg" }
+    ]
+  },
+  {
+    url: "https://documentacionqr.com/sat/objects/955887/HAULOTTE_COMPACT14_FICHA_TECNICA.pdf", brand: "Haulotte", model: "COMPACT-14", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "11,85 m", support: "Haulotte COMPACT 14, página 2: Altura de plataforma 11.85 m" },
+      { field: "Anchura (mm)", value: "1,2 m", support: "Haulotte COMPACT 14, página 2: Ancho de transporte 1.2 m" },
+      { field: "Capacidad máxima de plataforma", value: "350 kg", support: "Haulotte COMPACT 14, página 2: Capacidad máxima 350 kg" },
+      { field: "Distancia entre ejes (mm)", value: "1,86 m", support: "Haulotte COMPACT 14, página 2: F Distancia entre ejes 1.86 m" }
+    ]
+  },
+  {
+    url: "https://www.skyjack.com/sites/default/files/literature-library/KC_SJ6832_RT_TEAR_SHEET_WEB.pdf", brand: "Skyjack", model: "SJ6832RT", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "9,75 m", support: "Skyjack SJ6832 RT, página 2: B Raised Platform Height 9.75 m" },
+      { field: "Anchura (mm)", value: "1,76 m", support: "Skyjack SJ6832 RT, página 2: D Overall Width 1.76 m" },
+      { field: "Capacidad máxima de plataforma", value: "454 kg", support: "Skyjack SJ6832 RT, página 2: Capacity (Overall) 454 kg" },
+      { field: "Extensión de plataforma", value: "1,52 m", support: "Skyjack SJ6832 RT, página 2: Extension Deck 1.52 m" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "MC25D", reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de bandeja", value: "2500 mm", support: "Modula LIFT, página 6, fila MC25D: Tray width 2500 mm" },
+      { field: "Anchura exterior del almacén", value: "2917 mm", support: "Modula LIFT, página 6, fila MC25D: Unit footprint INTERNAL bay, width 2917 mm" },
+      { field: "Carga neta por bandeja", value: "250 kg", support: "Modula LIFT, página 6, fila MC25D: Net tray payload 250 kg" },
+      { field: "Profundidad de bandeja", value: "857 mm", support: "Modula LIFT, página 6, fila MC25D: Tray depth 857 mm" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "MC50D", reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de bandeja", value: "2500 mm", support: "Modula LIFT, página 6, fila MC50D: Tray width 2500 mm" },
+      { field: "Anchura exterior del almacén", value: "2917 mm", support: "Modula LIFT, página 6, fila MC50D: Unit footprint INTERNAL bay, width 2917 mm" },
+      { field: "Carga neta por bandeja", value: "500 kg", support: "Modula LIFT, página 6, fila MC50D: Net tray payload 500 kg" },
+      { field: "Profundidad de bandeja", value: "857 mm", support: "Modula LIFT, página 6, fila MC50D: Tray depth 857 mm" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "MC75D", reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de bandeja", value: "2500 mm", support: "Modula LIFT, página 6, fila MC75D: Tray width 2500 mm" },
+      { field: "Anchura exterior del almacén", value: "2917 mm", support: "Modula LIFT, página 6, fila MC75D: Unit footprint INTERNAL bay, width 2917 mm" },
+      { field: "Carga neta por bandeja", value: "750 kg", support: "Modula LIFT, página 6, fila MC75D: Net tray payload 750 kg" },
+      { field: "Profundidad de bandeja", value: "857 mm", support: "Modula LIFT, página 6, fila MC75D: Tray depth 857 mm" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "MX25D", reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de bandeja", value: "3100 mm", support: "Modula LIFT, página 7, fila MX25D: Tray width 3100 mm" },
+      { field: "Anchura exterior del almacén", value: "3517 mm", support: "Modula LIFT, página 7, fila MX25D: Unit footprint INTERNAL bay, width 3517 mm" },
+      { field: "Carga neta por bandeja", value: "250 kg", support: "Modula LIFT, página 7, fila MX25D: Net tray payload 250 kg" },
+      { field: "Profundidad de bandeja", value: "857 mm", support: "Modula LIFT, página 7, fila MX25D: Tray depth 857 mm" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "MX50D", reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de bandeja", value: "3100 mm", support: "Modula LIFT, página 7, fila MX50D: Tray width 3100 mm" },
+      { field: "Anchura exterior del almacén", value: "3517 mm", support: "Modula LIFT, página 7, fila MX50D: Unit footprint INTERNAL bay, width 3517 mm" },
+      { field: "Carga neta por bandeja", value: "500 kg", support: "Modula LIFT, página 7, fila MX50D: Net tray payload 500 kg" },
+      { field: "Profundidad de bandeja", value: "857 mm", support: "Modula LIFT, página 7, fila MX50D: Tray depth 857 mm" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "MX75D", reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de bandeja", value: "3100 mm", support: "Modula LIFT, página 7, fila MX75D: Tray width 3100 mm" },
+      { field: "Anchura exterior del almacén", value: "3517 mm", support: "Modula LIFT, página 7, fila MX75D: Unit footprint INTERNAL bay, width 3517 mm" },
+      { field: "Carga neta por bandeja", value: "750 kg", support: "Modula LIFT, página 7, fila MX75D: Net tray payload 750 kg" },
+      { field: "Profundidad de bandeja", value: "857 mm", support: "Modula LIFT, página 7, fila MX75D: Tray depth 857 mm" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "ML25D", reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de bandeja", value: "4100 mm", support: "Modula LIFT, página 7, fila ML25D: Tray width 4100 mm" },
+      { field: "Anchura exterior del almacén", value: "4517 mm", support: "Modula LIFT, página 7, fila ML25D: Unit footprint INTERNAL bay, width 4517 mm" },
+      { field: "Carga neta por bandeja", value: "250 kg", support: "Modula LIFT, página 7, fila ML25D: Net tray payload 250 kg" },
+      { field: "Profundidad de bandeja", value: "857 mm", support: "Modula LIFT, página 7, fila ML25D: Tray depth 857 mm" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "ML50D", reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de bandeja", value: "4100 mm", support: "Modula LIFT, página 7, fila ML50D: Tray width 4100 mm" },
+      { field: "Anchura exterior del almacén", value: "4517 mm", support: "Modula LIFT, página 7, fila ML50D: Unit footprint INTERNAL bay, width 4517 mm" },
+      { field: "Carga neta por bandeja", value: "500 kg", support: "Modula LIFT, página 7, fila ML50D: Net tray payload 500 kg" },
+      { field: "Profundidad de bandeja", value: "857 mm", support: "Modula LIFT, página 7, fila ML50D: Tray depth 857 mm" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "ML75D", reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de bandeja", value: "4100 mm", support: "Modula LIFT, página 7, fila ML75D: Tray width 4100 mm" },
+      { field: "Anchura exterior del almacén", value: "4517 mm", support: "Modula LIFT, página 7, fila ML75D: Unit footprint INTERNAL bay, width 4517 mm" },
+      { field: "Carga neta por bandeja", value: "750 kg", support: "Modula LIFT, página 7, fila ML75D: Net tray payload 750 kg" },
+      { field: "Profundidad de bandeja", value: "857 mm", support: "Modula LIFT, página 7, fila ML75D: Tray depth 857 mm" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/es/product/pro-detail-2066.htm", brand: "LGMG", model: "S0808EII", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "7,8 m", support: "LGMG S0808EII, Especificación: A-Altura Plataforma levantada 7.8/6 m (dentro/fuera), altura interior 7.8 m" },
+      { field: "Anchura (mm)", value: "0,83 m", support: "LGMG S0808EII, Especificación: E-Anchura Total 0.83 m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "LGMG S0808EII, Especificación: Capacidad de la Plataforma 230 kg" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "LGMG S0808EII, Especificación: H-Ampliación de la cubierta 0.9 m" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-2026.htm", brand: "LGMG", model: "S0808EII", reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de plataforma", value: "0,79 m", support: "LGMG S0808EII, Specifications: C-Platform Width 0.79m" },
+      { field: "Capacidad de plataforma", value: "230 kg", support: "LGMG S0808EII, Specifications: Platform Capacity 230kg" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "LGMG S0808EII, Specifications: H-Extension Deck 0.9m" },
+      { field: "Longitud de plataforma", value: "2,26 m", support: "LGMG S0808EII, Specifications: B-Platform Length 2.26m" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-1030.htm", brand: "LGMG", model: "SS0407ER", reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de plataforma", value: "0,70 m", support: "LGMG SS0407ER, Specifications: C-Platform Width 0.7m" },
+      { field: "Capacidad de plataforma", value: "240 kg", support: "LGMG SS0407ER, Specifications: Platform Capacity 240kg" },
+      { field: "Extensión de plataforma", value: "0,6 m", support: "LGMG SS0407ER, Specifications: G-Extension Deck 0.6m" },
+      { field: "Longitud de plataforma", value: "1,27 m", support: "LGMG SS0407ER, Specifications: B-Platform Length 1.27m" }
+    ]
+  },
+  {
+    url: "https://www.haulotte.co.uk/en_GB/product/compact-12-dx", brand: "Haulotte", model: "COMPACT-12DX", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "10,06 m", support: "Haulotte Compact 12 DX, Technical data: Platform height 10.06 m" },
+      { field: "Anchura (mm)", value: "1,78 m", support: "Haulotte Compact 12 DX, Technical data: Width 1.78 m" },
+      { field: "Capacidad máxima de plataforma", value: "450 kg", support: "Haulotte Compact 12 DX, Technical data: Lift capacity 450 kg" },
+      { field: "Longitud de plataforma", value: "2,45 m", support: "Haulotte Compact 12 DX, Technical data: Platform length 2.45 m" }
+    ]
+  },
+  {
+    url: "https://www.rothlehner.de/produkt/c10-29108/?lang=en", brand: "Haulotte", model: "COMPACT-10", reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura (mm)", value: "1,2 m", support: "Rothlehner Haulotte Compact 10, Technical data: Width 1.20 m" },
+      { field: "Capacidad máxima de plataforma", value: "450 kg", support: "Rothlehner Haulotte Compact 10, Technical data: Basket load 450 kg" },
+      { field: "Longitud (mm)", value: "2,45 m", support: "Rothlehner Haulotte Compact 10, Description: Overall length 2.45 m" }
+    ]
   }
 ];
 

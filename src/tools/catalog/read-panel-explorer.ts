@@ -3,6 +3,7 @@ import { readCommercialFiles } from "../../panel/evidence/commercial-evidence.js
 import { readPanelUnitKnowledge } from "../../panel/evidence/knowledge-evidence.js";
 import type { PanelSnapshot } from "../../panel/evidence/types.js";
 import { readProviderExplorerProducts } from "./explorer-provider-reader.js";
+import { readExplorerTechnicalEvidence } from "./explorer-technical-evidence-cache.js";
 import { selectPresentationCases } from "../../panel/explorer/explorer-presentation-cases.js";
 import type { PanelExplorerPayload, PanelExplorerProduct } from "../../panel/explorer/types.js";
 export { selectPresentationCases } from "../../panel/explorer/explorer-presentation-cases.js";
@@ -14,11 +15,14 @@ export const readPanelExplorer = async (workspace: string, snapshot: PanelSnapsh
     throw new Error("Corte comercial cambiado durante la lectura del panel");
   }
   const knowledge = await readPanelUnitKnowledge(root);
+  const technicalEvidence = await readExplorerTechnicalEvidence(root, snapshot, knowledge?.artifact.sha256 ?? null);
   const products: PanelExplorerProduct[] = [];
   for (const provider of snapshot.providers) {
     const file = stored.files.find((item) => item.name === `${provider.providerId}-commercial.json`);
     if (!file) throw new Error(`Fichero comercial no disponible: ${provider.providerId}`);
-    products.push(...await readProviderExplorerProducts(root, provider, file.content, knowledge));
+    const prepared = technicalEvidence.get(provider.providerId);
+    if (!prepared) throw new Error(`Faltan evidencias técnicas precalculadas: ${provider.providerId}`);
+    products.push(...await readProviderExplorerProducts(root, provider, file.content, prepared));
   }
   if (products.length !== snapshot.totals.originals) throw new Error("Totales del explorador incoherentes");
   const currentKnowledge = await readPanelUnitKnowledge(root);
