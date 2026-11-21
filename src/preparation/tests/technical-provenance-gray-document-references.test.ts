@@ -83,11 +83,11 @@ test("fase 35: huellas, identidades, URLs, valores y acreditaciones falsificadas
   }
 });
 
-test("fase 35: otras referencias sin fuente revisada siguen pendientes", async () => {
+test("fase 52: las otras unidades de los lotes no heredan las fuentes verificadas", async () => {
   const originals = await readPortableOriginal(process.cwd(), "gam");
   for (const [reference, field] of [
-    ["6993", "JLG E300AJP · Capacidad de cesta"],
-    ["6806", "Tipo de motor anunciado"]
+    ["6971", "UniCarriers A1N1L18Q · Capacidad de carga"],
+    ["6987", "Hyster P2.0SD · Altura de elevación"]
   ] as const) {
     const original = originals.products.find((candidate) => candidate.reference === reference);
     assert.ok(original);

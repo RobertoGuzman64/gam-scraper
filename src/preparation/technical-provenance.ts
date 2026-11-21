@@ -7,6 +7,7 @@ import type { DocumentedTechnicalSource, ProductTechnicalProvenance, TechnicalSp
 import type { TechnicalRecoverySourceField } from "./technical-recovery-observation.js";
 import { reviewedModelDocumentVerification } from "./shared/technical/evidence/reviewed-model-claims.js";
 import { reviewedUnitDescriptionEvidence } from "./shared/technical/evidence/reviewed-unit-description-claims.js";
+import { reviewedUnitListingVerification } from "./shared/technical/evidence/reviewed-unit-listing-claims.js";
 import { matchesDocumentedTechnicalIdentity } from "./shared/technical/evidence/reviewed-catalog-model-identity.js";
 export { isProductTechnicalProvenance } from "../contracts/technical-provenance.js";
 
@@ -83,8 +84,16 @@ export const captureTechnicalProvenance = (original: ProductRecord): {
           const documentedSource = step.source;
           const document = documentedSource?.document;
           const originalDescriptionEvidence = reviewedUnitDescriptionEvidence(original, field, value);
+          const listingDocument = { url: original.url, brand: original.brand, model: original.model };
+          const listingVerification = (step.mechanism ===
+            "src/preparation/gam/technical/models/documented-multi-unit-lot-specs.ts" || step.mechanism ===
+            "src/preparation/gam/technical/models/documented-electric-mobility-and-truck-access-specs.ts")
+              ? reviewedUnitListingVerification(original, listingDocument, field, value) : null;
           if (originalDescriptionEvidence) {
             entries.push({ field, value, mechanism: step.mechanism, ...originalDescriptionEvidence });
+          } else if (listingVerification) {
+            entries.push({ field, value, mechanism: step.mechanism, scope: "unit-document",
+              sourceField: null, sourceValue: null, document: listingDocument, verification: listingVerification });
           } else if (document && documentedSource && matchesDocumentedTechnicalIdentity(original, documentedSource)) {
             const verification = documentedSource.scope === "model-document" || documentedSource.scope === "unit-document" ||
               documentedSource.scope === "document-reference" && typeof document.model === "string"

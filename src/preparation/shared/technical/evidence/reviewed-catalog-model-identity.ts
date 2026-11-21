@@ -8,6 +8,7 @@ type ReviewedCatalogModelIdentity = {
   readonly fingerprint: string;
   readonly title: string;
   readonly descriptionEvidence: string;
+  readonly unitReference?: string;
   readonly sourceUrl: string;
   readonly brand: string;
   readonly model: string;
@@ -34,6 +35,29 @@ const identities: readonly ReviewedCatalogModelIdentity[] = [
     descriptionEvidence: "La plataforma sobre camión telescópico CTE B-LIFT 27.2 FIB",
     sourceUrl: "https://www.ctelift.com/wp-content/uploads/2020/11/B-LIFT-27.2_2021-05_EN.pdf",
     brand: "CTE", model: "B-LIFT 27.2"
+  },
+  {
+    providerId: "gam", reference: "6971",
+    fingerprint: "5b3c6e61fc07e2819be18ed54a8c2ea971023df1995f94b7fb500fc553788091",
+    title: "Lote 11", descriptionEvidence: "Adquiere este lote completo",
+    unitReference: "GAM-01397",
+    sourceUrl: "https://machineryline.es/-/venta/carretillas-electricas/UniCarriers/1Q2L25Q--25090213332743096600",
+    brand: "UniCarriers", model: "1Q2L25Q"
+  },
+  {
+    providerId: "gam", reference: "6987",
+    fingerprint: "ef382bc316af50de1e22c8f6c45cc8a37b076fa98bea9dacfc3c38f70ad24cf8",
+    title: "Lote 12", descriptionEvidence: "Adquiere este lote completo",
+    unitReference: "GAM-19513",
+    sourceUrl: "https://online.gamrentals.com/en/electric-pallets/5827-2017-yale-mp20",
+    brand: "YALE", model: "MP20"
+  },
+  {
+    providerId: "gam", reference: "6994",
+    fingerprint: "2e95a90ba65f7758c108376b121e9ec352297ac3ed884072ed9459e886f37e8d",
+    title: "Lote 17", descriptionEvidence: "Adquiere este lote completo",
+    sourceUrl: "https://online.gamrentals.com/fichas-tecnicas/es/MP18.pdf",
+    brand: "Yale", model: "MP16"
   }
 ];
 
@@ -44,6 +68,7 @@ export const reviewedCatalogModelIdentity = (
   const matches = identities.filter((entry) => entry.providerId === record.providerId &&
     entry.reference === record.reference && entry.sourceUrl === sourceUrl &&
     entry.title === record.title && record.longDescription?.includes(entry.descriptionEvidence) &&
+    (entry.unitReference === undefined || entry.unitReference === record.externalReference) &&
     entry.fingerprint === originalRecordFingerprint(record));
   if (matches.length !== 1) return null;
   const matched = matches[0]!;

@@ -96,8 +96,7 @@ test("fichas, modelos y afirmaciones sustituidas no obtienen acreditación", asy
 test("los lotes y variantes no identificados no se acreditan a partir del título", async () => {
   const { products } = await readPortableOriginal(process.cwd(), "gam");
   for (const [reference, field] of [
-    ["6993", "Haulotte Optimum 8 · Capacidad de plataforma"],
-    ["6806", "Potencia de motor publicada para la unidad"]
+    ["6994", "Yale MP16 · Ancho exterior de horquillas"]
   ] as const) {
     const original = products.find((candidate) => candidate.reference === reference);
     assert.ok(original);

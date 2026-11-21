@@ -14,6 +14,7 @@ export type DocumentedTechnicalUnit = {
   readonly url?: string;
   readonly source?: string;
   readonly sources?: readonly string[];
+  readonly fieldSources?: Readonly<Record<string, string>>;
 };
 
 export type DocumentedTechnicalSource = {
@@ -35,9 +36,9 @@ export const documentedTechnicalReference = (record: ProductRecord, url: string 
   const isOwnListing = url === record.url || productListing && !!record.reference &&
     (record.providerId === "gam" && pathname.split("/").some((segment) => segment.startsWith(`${record.reference}-`)) ||
       record.providerId === "mercaeleva" && pathname.endsWith(`-${record.reference}`));
-  if (productListing && !isOwnListing) return undefined;
   const reviewedIdentity = reviewedCatalogModelIdentity(record, url);
   if (reviewedIdentity) return { scope: "document-reference", document: reviewedIdentity };
+  if (productListing && !isOwnListing) return undefined;
   const identified = !!record.brand?.trim() && !!record.model?.trim();
   return { scope: identified ? (isOwnListing ? "unit-document" : "model-document") : "document-reference",
     document: { url, brand: record.brand, model: record.model } };
@@ -83,7 +84,8 @@ const documentedFieldReference = (
     if (direct) return direct;
     if (record.providerId === "gam" && /^https:\/\/online\.gamrentals\.com\//u.test(url) &&
       url !== record.url) {
-      return { scope: "document-reference", document: { url, brand: record.brand, model: record.model } };
+      return { scope: "document-reference", document: reviewedCatalogModelIdentity(record, url) ??
+        { url, brand: record.brand, model: record.model } };
     }
     return undefined;
   }
@@ -113,7 +115,13 @@ export const applyDocumentedTechnicalEvidence = (
     Object.keys(unit.specifications).some((key) => key in specs)) return specs;
   const result = { ...specs, ...unit.specifications };
   if (mechanism) {
-    if (unit.sources && unit.sources.length > 1) {
+    if (unit.fieldSources) {
+      for (const [field, value] of Object.entries(unit.specifications)) {
+        observeDocumentedTechnicalAddition(record, specs, { ...specs, [field]: value },
+          unit.fieldSources[field] ?? unit.source, mechanism, observe);
+      }
+      observe?.(specs, result, mechanism);
+    } else if (unit.sources && unit.sources.length > 1) {
       for (const [field, value] of Object.entries(unit.specifications)) {
         const reference = documentedFieldReference(record, field, unit.sources);
         if (reference) observe?.(specs, { ...specs, [field]: value }, mechanism, undefined, reference);

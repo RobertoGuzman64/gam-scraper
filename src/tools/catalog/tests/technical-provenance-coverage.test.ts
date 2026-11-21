@@ -57,3 +57,49 @@ test("fase 18: cobertura offline separa traza reproducible, fuente acreditada y 
   assert.ok(Object.keys(report.mechanisms).some((key) =>
     key === "src/preparation/mercaeleva/technical/evidence/documented-platform-technical-specs.ts"));
 });
+
+
+test("fase 55: equivalencia motor e histórico cuantifica deuda de publicación y bloquea la poda", async () => {
+  const report = await inspectTechnicalProvenanceCoverage(process.cwd());
+  const equivalence = report.equivalence;
+  assert.equal(equivalence.mode, "motor-offline-rehearsal");
+  assert.equal(report.classificationChanged, false);
+  assert.deepEqual(equivalence.historical, { own: 1942, reused: 850, pending: 106 });
+  assert.deepEqual(equivalence.motor, { own: 1840, reused: 334, pending: 724 });
+  assert.deepEqual(equivalence.byHistorical, {
+    own: { own: 1821, reused: 0, pending: 121 },
+    reused: { own: 0, reused: 250, pending: 600 },
+    pending: { own: 19, reused: 84, pending: 3 }
+  });
+  assert.equal(equivalence.resolvedPending, 103);
+  assert.equal(equivalence.unresolvedPending, 3);
+  assert.equal(equivalence.unresolvedCases.length, 3);
+  assert.deepEqual(equivalence.unresolvedBlockers, {
+    "model-document-not-verified": 1,
+    "unattributed": 1,
+    "unit-document-not-verified": 1
+  });
+  assert.equal(equivalence.unresolvedCases.filter((item) => item.providerId === "gam").length, 1);
+  assert.equal(equivalence.unresolvedCases.filter((item) => item.providerId === "mercaeleva").length, 2);
+  assert.equal(equivalence.historicalAtRisk, 721);
+  assert.equal(equivalence.differences.length, 824);
+  assert.equal(report.totals.historicalEmitted, 0);
+  assert.equal(equivalence.providers.length, report.providers.length);
+  assert.equal(equivalence.providers.reduce((sum, item) => sum + item.resolvedPending, 0),
+    equivalence.resolvedPending);
+  assert.equal(equivalence.providers.reduce((sum, item) => sum + item.unresolvedPending, 0),
+    equivalence.unresolvedPending);
+  assert.equal(equivalence.providers.reduce((sum, item) => sum + item.historicalAtRisk, 0),
+    equivalence.historicalAtRisk);
+  assert.equal(equivalence.differences.filter((item) => item.historical === "pending" && item.motor !== "pending").length,
+    equivalence.resolvedPending);
+  assert.equal(equivalence.differences.filter((item) => item.historical !== "pending" && item.motor === "pending").length,
+    equivalence.historicalAtRisk);
+  assert.equal(new Set(equivalence.differences.map((item) => JSON.stringify([
+    item.providerId, item.reference, item.sourceUrl, item.field, item.value
+  ]))).size, equivalence.differences.length);
+  assert.ok(equivalence.differences.some((item) => item.providerId === "mercaeleva" &&
+    item.reference === "M690-5522" && item.field === "Longitud de plataforma" &&
+    item.historical === "pending" && item.motor === "reused" && item.reviewedFact));
+  assert.ok(equivalence.historicalAtRisk > 0);
+});

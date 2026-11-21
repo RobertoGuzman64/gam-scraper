@@ -432,6 +432,10 @@ const profiles = [
     brand: "Genie", model: "Z-45/25J", workHeight: "16 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 16 MT",
     source: "https://manuals.genielift.com/operators/english/114340.pdf",
+    fieldSources: {
+      "Altura de plataforma": "https://manuals.genielift.com/operators/english/82600.pdf",
+      "Alcance horizontal": "https://manuals.genielift.com/operators/english/82600.pdf"
+    },
     specifications: { "Capacidad máxima de plataforma": "227 kg", "Anchura de plataforma": "0,76 m", "Altura de plataforma": "13,8 m", "Alcance horizontal": "7,7 m" }
   },
   {

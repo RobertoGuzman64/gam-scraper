@@ -86,6 +86,7 @@ test("fase 21: las fuentes múltiples conservan únicamente referencias con alca
   assert.ok(unresolved.technicalProvenance?.entries.some((entry) => entry.scope === "unknown"));
   const singleReference = accreditedSourceRecord("gam-original", "6993");
   const singleTrace = prepareSourceProduct(singleReference).technicalProvenance;
-  assert.ok(singleTrace?.entries.some((entry) => entry.scope === "document-reference" &&
-    entry.document.url === singleReference.url));
+  assert.equal(singleTrace?.entries.filter((entry) => entry.scope === "unit-document" &&
+    entry.document.url === singleReference.url && entry.verification?.kind === "reviewed-unit-listing").length, 4);
+  assert.ok(singleTrace?.entries.every((entry) => entry.scope !== "model-document"));
 });

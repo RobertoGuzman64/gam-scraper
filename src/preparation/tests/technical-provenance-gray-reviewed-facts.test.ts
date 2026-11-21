@@ -55,10 +55,10 @@ test("fase 38: seis acreditaciones nuevas requieren ficha exacta y afirmación d
   assert.equal(verified, 6);
 });
 
-test("fase 38: anuncios replicados, documentos sin identidad y campos no demostrados permanecen pendientes", async () => {
+test("fase 52: las referencias de otras máquinas del lote no heredan la identidad acreditada", async () => {
   const gam = await readPortableOriginal(process.cwd(), "gam");
   const cases = [
-    { reference: "2185", fields: ["Dirección", "Velocidad máxima de desplazamiento"] }
+    { reference: "6971", fields: ["UniCarriers A1N1L18Q · Capacidad de carga", "UniCarriers A1N1L18Q · Altura de elevación"] }
   ] as const;
   for (const item of cases) {
     const original = gam.products.find((candidate) => candidate.reference === item.reference);

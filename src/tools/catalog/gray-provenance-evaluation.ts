@@ -50,6 +50,10 @@ export const evaluateGrayProvenance = (
       documentUrl: evidence.document.url, sourceField: null };
   }
   if (evidence.scope === "unit-document") {
+    if (evidence.verification?.kind === "reviewed-unit-listing") {
+      return { ...base, blocker: "original-field-replay-not-published",
+        documentUrl: evidence.document.url, sourceField: null };
+    }
     return { ...base, blocker: evidence.document.url === original.url
       ? "original-listing-without-value-proof" : "unit-document-not-verified",
       documentUrl: evidence.document.url, sourceField: null };

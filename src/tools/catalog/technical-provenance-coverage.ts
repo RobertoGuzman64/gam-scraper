@@ -10,6 +10,7 @@ import { readPanelExplorer } from "../../panel/explorer/read-panel-explorer.js";
 import { productIdentity } from "../../panel/explorer/explorer-identity.js";
 import type { PanelSpecAddition } from "../../panel/explorer/types.js";
 import { prepareSourceProduct } from "../../preparation/prepare-product.js";
+import { classifyPublishedTechnicalSpec } from "../../preparation/technical-spec-classification.js";
 import type { TechnicalSpecEvidence } from "../../contracts/technical-provenance.js";
 import type { PanelProviderId } from "../../panel/evidence/types.js";
 import { evaluateGrayProvenance } from "./gray-provenance-evaluation.js";
@@ -58,6 +59,43 @@ export type GrayProvenanceCase = {
   readonly blocker: GrayProvenanceBlocker;
 };
 
+export type TechnicalClassificationDifference = {
+  readonly providerId: PanelProviderId;
+  readonly reference: string | null;
+  readonly sourceUrl: string;
+  readonly field: string;
+  readonly value: string;
+  readonly historical: Kind;
+  readonly motor: Kind;
+  readonly mechanism: string | null;
+  readonly scope: TechnicalSpecEvidence["scope"] | null;
+  readonly documentUrl: string | null;
+  readonly reviewedFact: boolean;
+};
+
+type MotorComparison = {
+  readonly providerId: PanelProviderId;
+  readonly historical: Readonly<Counter>;
+  readonly motor: Readonly<Counter>;
+  readonly resolvedPending: number;
+  readonly unresolvedPending: number;
+  readonly historicalAtRisk: number;
+};
+
+export type TechnicalClassificationEquivalence = {
+  readonly mode: "motor-offline-rehearsal";
+  readonly historical: Readonly<Counter>;
+  readonly motor: Readonly<Counter>;
+  readonly byHistorical: Readonly<Record<Kind, Readonly<Counter>>>;
+  readonly resolvedPending: number;
+  readonly unresolvedPending: number;
+  readonly unresolvedCases: readonly GrayProvenanceCase[];
+  readonly unresolvedBlockers: Readonly<Partial<Record<GrayProvenanceBlocker, number>>>;
+  readonly historicalAtRisk: number;
+  readonly providers: readonly MotorComparison[];
+  readonly differences: readonly TechnicalClassificationDifference[];
+};
+
 export type TechnicalProvenanceCoverage = {
   readonly version: 1;
   readonly mode: "historical-rehearsal";
@@ -68,6 +106,7 @@ export type TechnicalProvenanceCoverage = {
   readonly unattributedMechanisms: Readonly<Record<string, number>>;
   readonly grayCases: readonly GrayProvenanceCase[];
   readonly grayBlockers: Readonly<Partial<Record<GrayProvenanceBlocker, number>>>;
+  readonly equivalence: TechnicalClassificationEquivalence;
 };
 
 const initial = (): Omit<ProviderCoverage, "providerId"> => ({
@@ -119,6 +158,11 @@ export const inspectTechnicalProvenanceCoverage = async (workspace: string): Pro
   const unattributedMechanisms = new Map<string, number>();
   const grayCases: GrayProvenanceCase[] = [];
   const grayBlockers = new Map<GrayProvenanceBlocker, number>();
+  const unresolvedCases: GrayProvenanceCase[] = [];
+  const unresolvedBlockers = new Map<GrayProvenanceBlocker, number>();
+  const byHistorical: Record<Kind, Counter> = { own: emptyCounter(), reused: emptyCounter(), pending: emptyCounter() };
+  const motorProviders: MotorComparison[] = [];
+  const differences: TechnicalClassificationDifference[] = [];
   for (const provider of snapshot.providers) {
     const originals = await readPortableOriginal(root, provider.providerId);
     const records = new Map(originals.products.map((item) =>
@@ -132,6 +176,9 @@ export const inspectTechnicalProvenanceCoverage = async (workspace: string): Pro
       sum + item.technicalProvenance.entries.length, 0) ?? 0;
     let additions = 0;
     const classification: Record<Kind, number> = { own: 0, reused: 0, pending: 0 };
+    const motor = emptyCounter();
+    let resolvedPending = 0;
+    let historicalAtRisk = 0;
     let replayed = 0;
     let unitSource = 0;
     let modelDocument = 0;
@@ -162,12 +209,30 @@ export const inspectTechnicalProvenanceCoverage = async (workspace: string): Pro
         additions += 1;
         classification[addition.kind] += 1;
         const entry = evidence.get(specKey(addition.field, addition.value));
+        const motorKind = classifyPublishedTechnicalSpec(original, trace, addition.field, addition.value);
+        motor[motorKind] += 1;
+        byHistorical[addition.kind][motorKind] += 1;
+        if (addition.kind === "pending" && motorKind !== "pending") resolvedPending += 1;
+        if (addition.kind !== "pending" && motorKind === "pending") historicalAtRisk += 1;
+        if (motorKind !== addition.kind) {
+          differences.push({ providerId: provider.providerId, reference: original.reference,
+            sourceUrl: original.url, field: addition.field, value: addition.value,
+            historical: addition.kind, motor: motorKind, mechanism: entry?.mechanism ?? null,
+            scope: entry?.scope ?? null,
+            documentUrl: entry && "document" in entry ? entry.document?.url ?? null : null,
+            reviewedFact: entry !== undefined && "verification" in entry && entry.verification !== undefined });
+        }
         if (addition.kind === "pending") {
           const assessment = evaluateGrayProvenance(original, addition.field, addition.value, entry);
-          grayCases.push({ providerId: provider.providerId, reference: original.reference,
+          const grayCase: GrayProvenanceCase = { providerId: provider.providerId, reference: original.reference,
             sourceUrl: original.url, originalRecordSha256: trace.originalRecordSha256,
-            field: addition.field, value: addition.value, ...assessment });
+            field: addition.field, value: addition.value, ...assessment };
+          grayCases.push(grayCase);
           grayBlockers.set(assessment.blocker, (grayBlockers.get(assessment.blocker) ?? 0) + 1);
+          if (motorKind === "pending") {
+            unresolvedCases.push(grayCase);
+            unresolvedBlockers.set(assessment.blocker, (unresolvedBlockers.get(assessment.blocker) ?? 0) + 1);
+          }
         }
         if (!entry) {
           missing += 1;
@@ -215,6 +280,11 @@ export const inspectTechnicalProvenanceCoverage = async (workspace: string): Pro
     if (additions !== replayed + missing || replayed !== unitSource + modelDocument + unitDocument + documentReference + unknownSource) {
       throw new Error(`Cobertura técnica inconsistente: ${provider.providerId}`);
     }
+    if (motor.own + motor.reused + motor.pending !== additions) {
+      throw new Error(`Ensayo de clasificación incompleto: ${provider.providerId}`);
+    }
+    motorProviders.push({ providerId: provider.providerId, historical: { ...classification },
+      motor, resolvedPending, unresolvedPending: classification.pending - resolvedPending, historicalAtRisk });
     totals.push({ providerId: provider.providerId, additions, classification, replayed,
       unitSource, modelDocument, reviewedModelFacts, unitDocument, documentReference, unknownSource, missing, historicalEmitted, pendingWithUnknownSource,
       unitByClassification, modelDocumentByClassification, reviewedModelFactsByClassification,
@@ -230,8 +300,26 @@ export const inspectTechnicalProvenanceCoverage = async (workspace: string): Pro
       throw new Error(`Mecanismo de procedencia inexistente: ${mechanism}`);
     }
   }
+  const aggregate = totals.reduce(add, initial());
+  const motor = motorProviders.reduce((result, item) => addCounter(result, item.motor), emptyCounter());
+  const resolvedPending = byHistorical.pending.own + byHistorical.pending.reused;
+  const historicalAtRisk = byHistorical.own.pending + byHistorical.reused.pending;
+  if (motor.own + motor.reused + motor.pending !== aggregate.additions ||
+    resolvedPending + byHistorical.pending.pending !== aggregate.classification.pending ||
+    unresolvedCases.length !== byHistorical.pending.pending ||
+    [...unresolvedBlockers.values()].reduce((sum, count) => sum + count, 0) !== unresolvedCases.length ||
+    historicalAtRisk + resolvedPending !== differences.length ||
+    motorProviders.reduce((sum, item) => sum + item.historicalAtRisk, 0) !== historicalAtRisk) {
+    throw new Error("Equivalencia técnica inconsistente");
+  }
   return { version: 1, mode: "historical-rehearsal", classificationChanged: false,
-    providers: totals, totals: totals.reduce(add, initial()), mechanisms: Object.fromEntries(
+    providers: totals, totals: aggregate,
+    equivalence: { mode: "motor-offline-rehearsal", historical: aggregate.classification,
+      motor, byHistorical, resolvedPending, unresolvedPending: byHistorical.pending.pending,
+      unresolvedCases, unresolvedBlockers: Object.fromEntries([...unresolvedBlockers.entries()]
+        .sort(([first], [second]) => first.localeCompare(second))),
+      historicalAtRisk, providers: motorProviders, differences },
+    mechanisms: Object.fromEntries(
       [...mechanisms.entries()].sort(([first], [second]) => first.localeCompare(second))),
     unattributedMechanisms: Object.fromEntries([...unattributedMechanisms.entries()]
       .sort(([firstName, firstCount], [secondName, secondCount]) =>
@@ -256,6 +344,12 @@ export const runTechnicalProvenanceCoverage = async (args: readonly string[]): P
     process.stdout.write(`  ${provider.providerId} | ${provider.replayed}/${provider.additions} reproducidas | ${provider.unitSource} propias | ${provider.modelDocument} docs modelo | ${provider.unitDocument} docs unidad | ${provider.documentReference} referencias con identidad parcial | ${provider.unknownSource} origen desconocido | ${provider.missing} sin traza | ${provider.pendingWithUnknownSource} grises sin origen acreditado\n`);
   }
   process.stdout.write(`Clasificación histórica intacta: ${totals.classification.own} azules, ${totals.classification.reused} naranjas y ${totals.classification.pending} grises. Ensayo offline: no acredita ejecución en la publicación histórica.\n`);
+  const equivalence = report.equivalence;
+  process.stdout.write(`ENSAYO MOTOR | ${equivalence.motor.own} azules, ${equivalence.motor.reused} naranjas y ${equivalence.motor.pending} grises | ${equivalence.resolvedPending} grises históricos con decisión reproducible | ${equivalence.unresolvedPending} aún pendientes | ${equivalence.historicalAtRisk} clasificaciones históricas favorables todavía sin acreditación del motor. Sin cambios en las publicaciones.\n`);
+  process.stdout.write(`Bloqueos reales de los ${equivalence.unresolvedPending} grises históricos todavía sin acreditación: ${Object.entries(equivalence.unresolvedBlockers).map(([blocker, count]) => `${blocker}: ${count}`).join(" | ")}\n`);
+  for (const provider of equivalence.providers) {
+    process.stdout.write(`  ${provider.providerId} | motor ${provider.motor.own}/${provider.motor.reused}/${provider.motor.pending} | grises acreditables ${provider.resolvedPending} | grises aún bloqueados ${provider.unresolvedPending} | clasificación histórica en riesgo ${provider.historicalAtRisk}\n`);
+  }
   process.stdout.write(`Fuente propia acreditada: ${totals.unitByClassification.own} azules, ${totals.unitByClassification.reused} naranjas y ${totals.unitByClassification.pending} grises. Pendientes de fuente: ${totals.unknownByClassification.own} azules, ${totals.unknownByClassification.reused} naranjas y ${totals.unknownByClassification.pending} grises. Sin reproducción: ${totals.missing} incorporaciones.\n`);
   process.stdout.write(`Documentación de modelo por clasificación: ${totals.modelDocumentByClassification.own} azules, ${totals.modelDocumentByClassification.reused} naranjas y ${totals.modelDocumentByClassification.pending} grises. Documento de unidad: ${totals.unitDocumentByClassification.own} azules, ${totals.unitDocumentByClassification.reused} naranjas y ${totals.unitDocumentByClassification.pending} grises. Documentos con identidad parcial: ${totals.documentReferenceByClassification.own} azules, ${totals.documentReferenceByClassification.reused} naranjas y ${totals.documentReferenceByClassification.pending} grises. Las referencias no implican validación en línea del documento.\n`);
   const outstanding = Object.entries(report.unattributedMechanisms).slice(0, 8);

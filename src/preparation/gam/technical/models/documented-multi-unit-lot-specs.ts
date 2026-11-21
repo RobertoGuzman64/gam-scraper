@@ -10,6 +10,7 @@ type DocumentedUnit = {
   readonly url: string;
   readonly categoryKey: string;
   readonly sources: readonly string[];
+  readonly fieldSources?: Readonly<Record<string, string>>;
   readonly specifications: Readonly<SpecsMap>;
 };
 
@@ -108,6 +109,9 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     "url": "https://online.gamrentals.com/es/lotes/6993-lote-16"
   },
   "6994": {
+    "fieldSources": {
+      "Yale MP16 · Accionamiento": "https://online.gamrentals.com/fichas-tecnicas/es/MP18.pdf"
+    },
     "sources": [
       "https://online.gamrentals.com/es/lotes/6994-lote-17",
       "https://www.yale.com/es-es/emea/carretillas-elevadoras-electricas-de-3-ruedas/erp15-20vt/"

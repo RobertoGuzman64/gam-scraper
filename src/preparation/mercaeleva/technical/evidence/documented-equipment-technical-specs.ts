@@ -161,6 +161,9 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     model: "Z-34/22",
     title: "PLATAFORMA ARTICULADA DIESEL 12 MT",
     source: "https://www.genielift.com/en/aerial-lifts/articulated-boom-lifts/z3422ic",
+    fieldSources: {
+      "Longitud de plataforma": "https://www.genielift.com/docs/default-source/product-specifications/articulated-boom-lift/en/z-3422ic_spec_2019.pdf"
+    },
     specifications: {
       "Alcance horizontal": "6,78 m",
       "Capacidad máxima de plataforma": "227 kg",
@@ -234,7 +237,7 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     brand: "Manitou",
     model: "MT1440 SLT",
     title: "MANIPULADOR TELESCOPICO 14 MT",
-    source: "https://www.mascus.se/entreprenadmaskiner/teleskoplastare/manitou-mt-1440-slt-s3-e2/oasbkcw8.html",
+    source: "https://www.truckscout24.de/tsp/ts-208-19-367",
     specifications: {
       "Tracción": "4x4",
     }

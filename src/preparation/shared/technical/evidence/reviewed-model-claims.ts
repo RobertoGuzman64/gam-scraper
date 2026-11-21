@@ -876,6 +876,93 @@ const documents: readonly ReviewedModelDocument[] = [
     reviewedOn: "2026-11-21", facts: [
       { field: "Elevación", value: "Hidráulica manual", support: "Logitrans identifica Panther Flex como variante de horquillas del Panther manual; su catálogo describe elevaciones mediante bombeo manual y aceite especial. El despiece de fabricante Panther 2572/2582 muestra la bomba, el cilindro, el pistón, las juntas y las válvulas: https://logitrans-stapler.de/service/Ersatzteillisten/Gabelhubwagen/Panther2572-2582-Ersatzteilliste.pdf" }
     ]
+  },
+  {
+    url: "https://www.genielift.com/docs/default-source/product-specifications/articulated-boom-lift/en/z-3422ic_spec_2019.pdf",
+    brand: "Genie", model: "Z-34/22", reviewedOn: "2026-11-21", facts: [
+      { field: "Longitud de plataforma", value: "0,76 m",
+        support: "Genie Z-34/22 IC, ficha técnica del fabricante de 2019, página 1: A — Platform length 0.76 m para 2WD y 4WD" }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/Spanish/133102SP.pdf", brand: "Genie", model: "GR-15",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Capacidad nominal de la plataforma estándar", value: "227 kg",
+        support: "GR-15 | Capacidad máxima, plataforma estándar | 227 kg (página 41)" }
+    ]
+  },
+  {
+    url: "https://online.gamrentals.com/ma/preparateurs-de-commandes/2185-preparateur-de-commandes-a-contrepoids-lo12c",
+    brand: "HYSTER", model: "LO1.2C", reviewedOn: "2026-11-21", facts: [
+      { field: "Dirección", value: "Eléctrica", support: "Ficha GAM en francés del mismo artículo 2185, marca HYSTER, modelo LO1.2C: système de direction électrique" },
+      { field: "Velocidad máxima de desplazamiento", value: "9,6 km/h", support: "Ficha GAM en francés del mismo artículo 2185, HYSTER LO1.2C: vitesse maximale de 9,6 km/h" }
+    ]
+  },
+  {
+    url: "https://www.automobile-catalog.com/make/santana/series_iii_land/series_iii_109_wagon/1980.html",
+    brand: "LAND ROVER", model: "SANTANA", reviewedOn: "2026-11-21", facts: [
+      { field: "Caja de cambios del modelo", value: "Manual de 4 velocidades", support: "Santana Series III 109 Techo Metálico (Wagon), gama 1980: manual 4-speed gearbox; el original GAM 5254 identifica 1980 y longitud 4440 mm, coincidente con la versión 109" },
+      { field: "Distancia entre ejes del modelo", value: "2769 mm", support: "Santana Series III 109 Techo Metálico (Wagon), gama 1980: wheelbase 2769 mm; el original GAM 5254 indica longitud 4440 mm, propia de la batalla 109 frente a la 88" },
+      { field: "Tipo de tracción", value: "4x4 conectable", support: "Santana Series III 109 Techo Metálico (Wagon), gama 1980: 4x4 part-time, rear permanent and front engaged manually; no se atribuye tracción permanente ni motorización concreta" }
+    ]
+  },
+  {
+    url: "https://machineryline.es/-/venta/carretillas-electricas/UniCarriers/1Q2L25Q--25090213332743096600",
+    brand: "UniCarriers", model: "1Q2L25Q", reviewedOn: "2026-11-21", facts: [
+      { field: "UniCarriers 1Q2L25Q · Altura de elevación", value: "4.750 mm",
+        support: "Ficha del vendedor GAM: unidad GAM-01397, UniCarriers 1Q2L25Q (2016), altura de elevación 4,75 m; catálogo GAM-01397 coincide con la referencia externa del lote 11" },
+      { field: "UniCarriers 1Q2L25Q · Capacidad de carga", value: "2.500 kg",
+        support: "Ficha del vendedor GAM: unidad GAM-01397, UniCarriers 1Q2L25Q (2016), capacidad 2500 kg; catálogo GAM-01397 coincide con la referencia externa del lote 11" }
+    ]
+  },
+  {
+    url: "https://online.gamrentals.com/en/electric-pallets/5827-2017-yale-mp20",
+    brand: "YALE", model: "MP20", reviewedOn: "2026-11-21", facts: [
+      { field: "Yale MP20 · Capacidad de carga", value: "2.000 kg",
+        support: "GAM artículo 5827: YALE MP20 (2017), referencia GAM-19513, serie A428T05299R; capacidad declarada 2000 kg; la referencia externa del lote 12 es GAM-19513" },
+      { field: "Yale MP20 · Longitud de horquillas", value: "1.156 mm",
+        support: "GAM artículo 5827: YALE MP20 (2017), referencia GAM-19513, serie A428T05299R; horquillas 1156 mm; la referencia externa del lote 12 es GAM-19513" }
+    ]
+  },
+  {
+    url: "https://online.gamrentals.com/fichas-tecnicas/es/MP18.pdf",
+    brand: "Yale", model: "MP16", reviewedOn: "2026-11-21", facts: [
+      { field: "Yale MP16 · Accionamiento", value: "Eléctrico",
+        support: "Ficha técnica GAM de Yale serie MP, tabla VDI 2198, columna MP16, sección 1.3 Propulsión = Eléctrica (batería); el catálogo GAM del lote 17 incluye expresamente 2021 YALE MP16; no acredita anchura de horquillas" }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/english/82600.pdf",
+    brand: "Genie", model: "Z-45/25J", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "13,8 m",
+        support: "Manual oficial Genie PN 82600, segunda edición, segunda impresión: Z-45/25J con plumín, modelos de base estándar y estrecha, páginas 37 y 39: altura máxima de plataforma 13,8 m en ambas bases. Manual de servicio PN 219418 Rev C (2013) documenta asimismo 13,8 m para la serie IC desde SN 13A-47001; no acredita una placa de serie individual" },
+      { field: "Alcance horizontal (m)", value: "7,7 m",
+        support: "Manual oficial Genie PN 82600, segunda edición, segunda impresión: Z-45/25J con plumín, modelos de base estándar y estrecha, páginas 37 y 39: alcance horizontal máximo 7,7 m en ambas bases. Manual de servicio PN 219418 Rev C (2013) documenta asimismo 7,7 m para la serie IC desde SN 13A-47001; no acredita una placa de serie individual" }
+    ]
+  },
+  {
+    url: "https://www.truckscout24.de/tsp/ts-208-19-367",
+    brand: "Manitou", model: "MT1440 SLT", reviewedOn: "2026-11-21", facts: [
+      { field: "Tracción", value: "4x4",
+        support: "Anuncio de MT 1440 SLT Turbo Serie III-E2 que identifica explícitamente ALLRAD (tracción integral) y 4x4x4. El original Mercaeleva M005-5167 identifica MT 1440 SLT 3E2, diésel, 14 m y 4000 kg; el anuncio acredita característica de familia Serie III-E2, no identidad de la unidad ni equipamiento opcional" }
+    ]
+  },
+  {
+    url: "https://www.coalci.es/wp-content/uploads/2019/07/1930ES_ES-pdf.pdf",
+    brand: "JLG", model: "1930 ES", reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "5,72 m", support: "JLG 1930ES, ficha del fabricante, página 2: Altura de la Plataforma - Elevada | 5,72 m" },
+      { field: "Anchura (mm)", value: "0,76 m", support: "JLG 1930ES, ficha del fabricante, página 2: F. Anchura Total | 0,76 m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "JLG 1930ES, ficha del fabricante, página 2: Capacidad de la Plataforma | 230 kg; capacidad máxima de uso interior, distinta de la capacidad para exteriores de 120 kg" },
+      { field: "Longitud (mm)", value: "1,87 m", support: "JLG 1930ES, ficha del fabricante, página 2: G. Longitud Total | 1,87 m" }
+    ]
+  },
+  {
+    url: "https://www.coalci.es/wp-content/uploads/2019/07/1930ES_ES-pdf.pdf",
+    brand: "JLG", model: "1930ES", reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura (mm)", value: "0,76 m", support: "JLG 1930ES, ficha del fabricante, página 2: F. Anchura Total | 0,76 m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "JLG 1930ES, ficha del fabricante, página 2: Capacidad de la Plataforma | 230 kg; capacidad máxima de uso interior, distinta de la capacidad para exteriores de 120 kg" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "JLG 1930ES, ficha del fabricante, páginas 1-2: extensión de plataforma desplegable de 0,90 m" }
+    ]
   }
 ];
 

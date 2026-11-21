@@ -28,8 +28,12 @@ test("fase 23: los lotes con modelos individualizados conservan su referencia si
     const { original, prepared, entry } = evidence("gam-original", reference, field);
     assert.equal(entry.scope, "document-reference", `${reference}: ${field}`);
     assert.ok(entry.document.url.includes(fragment));
-    assert.equal(entry.document.brand, null);
-    assert.equal(entry.document.model, null);
+    const reviewed = reference === "6971" && field.startsWith("UniCarriers 1Q2L25Q")
+      ? { brand: "UniCarriers", model: "1Q2L25Q" }
+      : reference === "6987" && field.startsWith("Yale MP20")
+        ? { brand: "YALE", model: "MP20" } : { brand: null, model: null };
+    assert.equal(entry.document.brand, reviewed.brand);
+    assert.equal(entry.document.model, reviewed.model);
     assert.equal(entry.mechanism, "src/preparation/gam/technical/models/documented-multi-unit-lot-specs.ts");
     assert.equal(prepared.product.spec[field], entry.value);
     assert.equal(prepared.technicalProvenance?.originalRecordSha256, originalRecordFingerprint(original));
@@ -38,11 +42,17 @@ test("fase 23: los lotes con modelos individualizados conservan su referencia si
 });
 
 test("fase 23: lotes con fuentes ambiguas no reciben una referencia individual ficticia", () => {
-  for (const reference of ["6994", "6995"]) {
+  for (const { reference, unknown, reviewed } of [
+    { reference: "6994", unknown: 1, reviewed: 2 },
+    { reference: "6995", unknown: 0, reviewed: 4 }
+  ] as const) {
     const original = accreditedSourceRecord("gam-original", reference);
     const trace = prepareSourceProduct(original).technicalProvenance;
-    assert.equal(trace?.entries.filter((entry) => entry.mechanism.endsWith("documented-multi-unit-lot-specs.ts") &&
-      entry.scope === "unknown").length, 4);
+    const entries = trace?.entries.filter((entry) =>
+      entry.mechanism.endsWith("documented-multi-unit-lot-specs.ts")) ?? [];
+    assert.equal(entries.filter((entry) => entry.scope === "unknown").length, unknown);
+    assert.equal(entries.filter((entry) => entry.scope === "unit-document" &&
+      entry.document.url === original.url && entry.verification?.kind === "reviewed-unit-listing").length, reviewed);
     const changed = prepareSourceProduct({ ...original, url: "https://online.gamrentals.com/es/lotes/otro-lote" });
     assert.ok(!changed.technicalProvenance?.entries.some((entry) =>
       entry.mechanism.endsWith("documented-multi-unit-lot-specs.ts")));

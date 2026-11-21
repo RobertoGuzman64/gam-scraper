@@ -7,7 +7,7 @@ export type TechnicalDocumentReference = {
 };
 
 export type TechnicalDocumentVerification = {
-  readonly kind: "reviewed-model-fact";
+  readonly kind: "reviewed-model-fact" | "reviewed-unit-listing";
   readonly reviewedOn: string;
   readonly support: string;
   readonly claimSha256: string;
@@ -65,18 +65,37 @@ export const technicalDocumentClaimSha256 = (
   document.url, document.brand, document.model, reviewedOn, field, value, support
 ])).digest("hex");
 
+export const technicalUnitListingClaimSha256 = (
+  document: TechnicalDocumentReference, originalRecordSha256: string, field: string, value: string,
+  reviewedOn: string, support: string
+): string => createHash("sha256").update(JSON.stringify([
+  document.url, document.brand, document.model, originalRecordSha256, reviewedOn, field, value, support
+])).digest("hex");
+
+export const matchesTechnicalUnitListingVerification = (
+  document: unknown, originalRecordSha256: string, field: string, value: string,
+  verification: unknown
+): boolean => isRecord(document) && typeof document.url === "string" &&
+  (document.brand === null || typeof document.brand === "string") &&
+  (document.model === null || typeof document.model === "string") &&
+  /^[a-f0-9]{64}$/u.test(originalRecordSha256) &&
+  isDocumentVerification(verification) && verification.kind === "reviewed-unit-listing" &&
+  verification.claimSha256 === technicalUnitListingClaimSha256({
+    url: document.url, brand: document.brand, model: document.model
+  }, originalRecordSha256, field, value, verification.reviewedOn, verification.support);
+
 export const matchesTechnicalDocumentVerification = (
   document: unknown, field: string, value: string,
   verification: unknown
 ): boolean => isRecord(document) && typeof document.url === "string" &&
   (document.brand === null || typeof document.brand === "string") && typeof document.model === "string" &&
   document.model.trim().length > 0 &&
-  isDocumentVerification(verification) &&
+  isDocumentVerification(verification) && verification.kind === "reviewed-model-fact" &&
   verification.claimSha256 === technicalDocumentClaimSha256({ url: document.url, brand: document.brand, model: document.model },
     field, value, verification.reviewedOn, verification.support);
 
 const isDocumentVerification = (value: unknown): value is TechnicalDocumentVerification =>
-  isRecord(value) && value.kind === "reviewed-model-fact" &&
+  isRecord(value) && (value.kind === "reviewed-model-fact" || value.kind === "reviewed-unit-listing") &&
   typeof value.reviewedOn === "string" && /^20\d{2}-\d{2}-\d{2}$/u.test(value.reviewedOn) &&
   typeof value.support === "string" && value.support.trim().length >= 5 &&
   typeof value.claimSha256 === "string" && /^[a-f0-9]{64}$/u.test(value.claimSha256);
@@ -87,7 +106,8 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 export const isProductTechnicalProvenance = (value: unknown): value is ProductTechnicalProvenance => {
   if (!isRecord(value)) return false;
   const item = value;
-  return typeof item.originalRecordSha256 === "string" && /^[a-f0-9]{64}$/u.test(item.originalRecordSha256) &&
+  const fingerprint = item.originalRecordSha256;
+  return typeof fingerprint === "string" && /^[a-f0-9]{64}$/u.test(fingerprint) &&
     Array.isArray(item.entries) && item.entries.every((entry: unknown) => {
       if (!isRecord(entry)) return false;
       const evidence = entry;
@@ -108,11 +128,16 @@ export const isProductTechnicalProvenance = (value: unknown): value is ProductTe
             (evidence.document.model === null || typeof evidence.document.model === "string" &&
               evidence.document.model.trim().length > 0) &&
             (evidence.scope === "document-reference" ||
-              typeof evidence.document.brand === "string" && typeof evidence.document.model === "string") &&
+              typeof evidence.document.brand === "string" && typeof evidence.document.model === "string" ||
+              evidence.scope === "unit-document" && evidence.verification !== undefined &&
+                matchesTechnicalUnitListingVerification(evidence.document, fingerprint,
+                  evidence.field, evidence.value, evidence.verification)) &&
             (evidence.verification === undefined ||
-              (evidence.scope === "model-document" || evidence.scope === "document-reference") &&
-                matchesTechnicalDocumentVerification(
-                evidence.document, evidence.field, evidence.value, evidence.verification)));
+              (evidence.scope === "unit-document"
+                ? matchesTechnicalUnitListingVerification(evidence.document, fingerprint,
+                    evidence.field, evidence.value, evidence.verification)
+                : matchesTechnicalDocumentVerification(
+                    evidence.document, evidence.field, evidence.value, evidence.verification))));
     }) && new Set(item.entries.map((entry: unknown) => isRecord(entry) ? entry.field : null)).size === item.entries.length;
 };
 

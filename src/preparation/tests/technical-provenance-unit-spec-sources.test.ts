@@ -48,7 +48,7 @@ test("fase 22: identidad alterada, negación y alternativa eléctrica no acredit
 test("fase 22: referencias sin identidad documental revisada no se convierten en documentos de modelo", () => {
   for (const [reference, field] of [
     ["6688", "Altura exterior del modelo"],
-    ["6993", "JLG E300AJP · Capacidad de cesta"]
+    ["6971", "UniCarriers A1N1L18Q · Capacidad de carga"]
   ] as const) {
     const { original, prepared, entry } = evidenceFor(reference, field);
     assert.ok(entry, reference);
@@ -70,7 +70,7 @@ test("fase 22: referencias sin identidad documental revisada no se convierten en
   assert.equal(reviewed.entry.document?.brand, "LVNENG");
   assert.equal(reviewed.entry.document?.model, "LX05");
   assert.ok(reviewed.entry.verification);
-  const multiple = evidenceFor("6971", "UniCarriers 1Q2L25Q · Capacidad de carga");
+  const multiple = evidenceFor("6971", "UniCarriers A1N1L18Q · Capacidad de carga");
   assert.equal(multiple.entry?.scope, "document-reference");
   assert.equal(multiple.entry.document?.brand, null);
   assert.equal(multiple.entry.document?.model, null);

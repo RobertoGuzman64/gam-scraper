@@ -86,10 +86,9 @@ test("fase 36: identidad, documentación y huellas manipuladas no acreditan el c
   }
 });
 
-test("fase 36: modelos ambiguos y variantes no verificadas permanecen pendientes", async () => {
+test("fase 53: variantes de almacén no verificadas permanecen pendientes", async () => {
   for (const item of [
-    { provider: "gam", reference: "5254", field: "Distancia entre ejes del modelo" },
-    { provider: "mercaeleva", reference: "M028-8481", field: "Capacidad nominal de la plataforma estándar" },
+    { provider: "mercaeleva", reference: "M879-4639", field: "Centro de carga (mm)" },
   ] as const) {
     const originals = await readPortableOriginal(process.cwd(), item.provider);
     const original = originals.products.find((product) => product.reference === item.reference);

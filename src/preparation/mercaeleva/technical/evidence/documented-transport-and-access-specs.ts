@@ -9,6 +9,7 @@ type DocumentedUnit = {
   readonly model: string | null;
   readonly categoryKey: string;
   readonly source: string;
+  readonly fieldSources?: Readonly<Record<string, string>>;
   readonly specifications: Readonly<SpecsMap>;
 };
 
@@ -44,6 +45,9 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
     "model": "GR-15",
     "categoryKey": "venta",
     "source": "https://manuals.genielift.com/operators/german/97752GR.pdf",
+    "fieldSources": {
+      "Capacidad nominal de la plataforma estándar": "https://manuals.genielift.com/operators/Spanish/133102SP.pdf"
+    },
     "specifications": {
       "Capacidad nominal de la plataforma estándar": "227 kg",
       "Anchura de la máquina": "0,75 m",

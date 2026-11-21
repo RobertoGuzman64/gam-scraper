@@ -20,7 +20,6 @@ const accredited = [
 
 const excluded = [
   { provider: "mercaeleva", reference: "M879-4639", field: "Centro de carga (mm)", value: "600 mm" },
-  { provider: "mercaeleva", reference: "M028-8481", field: "Capacidad nominal de la plataforma estándar", value: "227 kg" },
 ] as const;
 
 test("fase 34: ocho specs nuevas con modelo, documento y valor acreditados por el motor", async () => {
