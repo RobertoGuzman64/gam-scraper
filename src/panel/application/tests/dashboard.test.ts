@@ -563,6 +563,7 @@ test("muestra reglas vigentes extraídas del código, separadas de los ejemplos 
     assert.ok(example.code.length > 60);
   }
   assert.ok(examples.source.code.includes('unit.fingerprint'));
+  assert.ok(examples.source.code.includes('Object.keys(unit.specifications).some((key) => key in specs)'));
   assert.ok(examples.normalization.code.includes('number >= 0'));
   assert.ok(examples.exclusion.code.includes('decision.requiredIssues.every'));
   const snapshot = await readPanelSnapshot(await fixture.root());

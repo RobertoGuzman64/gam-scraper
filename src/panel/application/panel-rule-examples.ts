@@ -23,7 +23,7 @@ const sources: Readonly<Record<PanelRuleId, RuleSource>> = {
     summary: "El recuperador comprueba identidad, huella y posibles colisiones antes de añadir especificaciones; cuando dispone de una referencia documental, registra su origen sin verificar aquí su contenido externo.",
     path: "src/preparation/shared/technical/evidence/documented-technical-evidence.ts",
     first: "if (!unit || record.brand !== unit.brand",
-    last: "  return result;"
+    last: "Object.keys(unit.specifications).some((key) => key in specs)) return specs;"
   },
   normalization: {
     title: "Comprobación de valores numéricos",
