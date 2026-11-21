@@ -1,4 +1,5 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
+import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
 import { reconcileGamSourceIdentity } from "../../identity/reconciliation/gam-source-identity.js";
 import { reconcileGamVerifiedClassicVehicleIdentity } from "../../identity/evidence/used-classic-vehicle-identity.js";
 import { reconcileGamVerifiedHysterH45fts5Title } from "./gam-hyster-h45fts5.js";
@@ -8,11 +9,11 @@ import { reconcileGamVerifiedZeroSerial } from "../../identity/evidence/musoshi-
 export const reconcileGamInitialIdentity = (record: ProductRecord): ProductRecord =>
   reconcileGamVerifiedZeroSerial(record);
 
-export const reconcileGamForPreparation = (record: ProductRecord): ProductRecord =>
+export const reconcileGamForPreparation = (record: ProductRecord, observe?: TechnicalRecoveryObservation): ProductRecord =>
   reconcileGamVerifiedClassicVehicleIdentity(
     reconcileGamSourceIdentity(
       reconcileGamVerifiedHysterH45fts5Title(
         reconcileGamVerifiedUnitYear(record)
       )
-    )
+    ), observe
   );

@@ -1,3 +1,4 @@
+import type { ProductTechnicalProvenance } from "../contracts/technical-provenance.js";
 import type { ImportCandidate } from "../commercial/legacy-export/contracts.js";
 
 export type PreparedProduct = {
@@ -8,4 +9,5 @@ export type PreparedProduct = {
     readonly createMany: readonly string[];
   };
   readonly product: ImportCandidate;
+  readonly technicalProvenance?: ProductTechnicalProvenance;
 };

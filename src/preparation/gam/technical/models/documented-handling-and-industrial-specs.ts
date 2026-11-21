@@ -1,5 +1,6 @@
 import { applyDocumentedTechnicalEvidence } from "../../../shared/technical/evidence/documented-technical-evidence.js";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
+import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
 
 type DocumentedGamUnit = {
   readonly fingerprint: string;
@@ -250,5 +251,5 @@ const documentedUnits: Readonly<Record<string, DocumentedGamUnit>> = {
   }
 };
 
-export const recoverGamDocumentedHandlingAndIndustrialSpecs = (record: ProductRecord, specs: SpecsMap): SpecsMap =>
-  applyDocumentedTechnicalEvidence(record, specs, documentedUnits, { providerId: "gam", isEligible: (value) => value.url.startsWith("https://online.gamrentals.com/"), requiredCondition: "Nuevo" });
+export const recoverGamDocumentedHandlingAndIndustrialSpecs = (record: ProductRecord, specs: SpecsMap, observe?: TechnicalRecoveryObservation): SpecsMap =>
+  applyDocumentedTechnicalEvidence(record, specs, documentedUnits, { providerId: "gam", isEligible: (value) => value.url.startsWith("https://online.gamrentals.com/"), requiredCondition: "Nuevo" }, observe, "src/preparation/gam/technical/models/documented-handling-and-industrial-specs.ts");

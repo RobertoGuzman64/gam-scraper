@@ -11,6 +11,7 @@ import { preparedTechnicalConsistencyIssues } from "./shared/technical/source/te
 import { resolveCommercialCondition } from "./condition.js";
 import type { ImportCandidate, ImportCatalog } from "../commercial/legacy-export/contracts.js";
 import type { PreparedProduct } from "./contracts.js";
+import { captureTechnicalProvenance } from "./technical-provenance.js";
 import { applyReconciledTechnicalSpecs } from "./shared/technical/reconciliation/technical-specifications.js";
 import { captureSourceEditorialEvidence } from "./shared/editorial/mapping/source-editorial-evidence.js";
 import { reconcileSourceCategoryTitle, reconcileVerifiedSourceReviewClaims, reconcileVerifiedSourceFamily, reconcileVerifiedSourceFuel, reconcileVerifiedSourceIdentity, reconcileVerifiedManufacturerSourceLoad, reconcileInitialTechnicalEvidence, resolveSourceTechnicalSemanticRecord, reconcileTechnicalSourceForRecovery, reconcileTechnicalBeforeEditorial, reconcileTechnicalAfterEditorial, normalizePreparedTechnicalSpecs } from "./shared/technical/reconciliation/preparation-technical-stages.js";
@@ -27,6 +28,7 @@ import { hasVerifiedPublishedEditorialLoadConflict } from "./shared/editorial/ma
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
   const originalRecord = record;
+  const technicalProvenance = captureTechnicalProvenance(originalRecord);
   const categorizedSource = reconcileSourceCategoryTitle(record);
   const verifiedClaims = reconcileVerifiedSourceReviewClaims(categorizedSource);
   const technicalSource = reconcileVerifiedManufacturerSourceLoad(
@@ -42,12 +44,13 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const publicationConflict = publicationConflictForMercaeleva(record);
   const semanticIssues = sourceSemanticQualityIssues(resolveSourceTechnicalSemanticRecord(record));
   record = reconcileTechnicalSourceForRecovery(record);
-  const sourceYearSpecs = recoverBaseTechnicalSpecs(record, sourceUnitRecord);
+  const recoverySource = record;
+  const sourceYearSpecs = recoverBaseTechnicalSpecs(record, sourceUnitRecord, technicalProvenance.observe);
   const documentedOriginal = verifiedClaims !== categorizedSource ? categorizedSource :
     restoredFamily ? originalRecord : sourceUnitRecord;
-  const { documentedSpecs } = recoverDocumentedTechnicalSpecs(documentedOriginal, sourceYearSpecs);
+  const { documentedSpecs } = recoverDocumentedTechnicalSpecs(documentedOriginal, sourceYearSpecs, technicalProvenance.observe);
   const beforeReconciliation = record;
-  record = reconcileTechnicalBeforeEditorial(record);
+  record = reconcileTechnicalBeforeEditorial(record, technicalProvenance.observe);
   record = reconcileTechnicalAfterEditorial(record);
   const reconciledSpecs = applyReconciledTechnicalSpecs(beforeReconciliation, record, documentedSpecs);
   const editorialRecord: ProductRecord = { ...record, specs: reconciledSpecs,
@@ -82,7 +85,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
 
   const descriptions = { short: editorial.preparedShort, general: editorial.preparedLong };
   issues.push(...preparedTechnicalConsistencyIssues(qualityRecord, reconciledSpecs));
-  const normalizedSpecs = normalizePreparedTechnicalSpecs(record, reconciledSpecs);
+  const normalizedSpecs = normalizePreparedTechnicalSpecs(record, reconciledSpecs, technicalProvenance.observe);
   const product: ImportCandidate = {
     providerId: record.providerId,
     sourceUrl: record.url,
@@ -115,7 +118,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
       excel: validateImportCandidate(presented, catalog),
       createMany: validateCreateManyCandidate(presented, catalog)
     } }),
-    product: presented
+    product: presented,
+    technicalProvenance: technicalProvenance.finalize(presented.spec, recoverySource)
   };
 };
 

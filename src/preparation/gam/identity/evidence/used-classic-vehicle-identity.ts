@@ -1,4 +1,5 @@
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
+import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
 
 type ClassicVehicleIdentity = {
   readonly url: string;
@@ -44,7 +45,7 @@ const verifiedVehicles: Readonly<Record<string, ClassicVehicleIdentity>> = {
   }
 };
 
-export const reconcileGamVerifiedClassicVehicleIdentity = (record: ProductRecord): ProductRecord => {
+export const reconcileGamVerifiedClassicVehicleIdentity = (record: ProductRecord, observe?: TechnicalRecoveryObservation): ProductRecord => {
   const evidence = record.reference ? verifiedVehicles[record.reference] : undefined;
   if (!evidence || record.providerId !== "gam" || record.url !== evidence.url ||
     record.categoryKey !== "movilidad" || record.condition !== "Segunda mano" ||
@@ -58,10 +59,13 @@ export const reconcileGamVerifiedClassicVehicleIdentity = (record: ProductRecord
   const specs: SpecsMap = Object.fromEntries(
     Object.entries(record.specs).filter(([key]) => key !== evidence.sourceBrandKey)
   );
-  return {
+  const result: ProductRecord = {
     ...record,
     brand: evidence.brand,
     model: evidence.model,
     specs: { ...specs, Marca: evidence.brand, Modelo: evidence.model }
   };
+  observe?.(record.specs, result.specs ?? {}, "src/preparation/gam/identity/evidence/used-classic-vehicle-identity.ts",
+    { spec: evidence.sourceBrandKey });
+  return result;
 };

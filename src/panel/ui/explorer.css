@@ -79,6 +79,11 @@
 .technical-field {color:#d9f1f8}
 .technical-value {color:#c6d6e4}
 .technical-status {font-weight:720}
+.spec-provenance-details {margin-top:8px;font-weight:500;color:#b9ceda}
+.spec-provenance-details summary {cursor:pointer;font-size:var(--type-secondary);font-weight:700;color:#abdcea}
+.spec-provenance-details p {margin-top:7px;font-size:var(--type-secondary);line-height:1.5;overflow-wrap:anywhere}
+.spec-provenance-details .spec-provenance-artifact {font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#c0d9e6}
+.spec-provenance-details .spec-provenance-caution {color:#a7b9c6}
 .attributes-table {min-width:350px}
 @media(max-width:750px) {
   .description-columns {grid-template-columns:1fr}

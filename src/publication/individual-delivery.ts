@@ -4,6 +4,8 @@ import { dirname, join, resolve } from "node:path";
 import { publicationDirectoryForApproval } from "../infrastructure/filesystem/catalog/publication-identity.js";
 import { isDeepStrictEqual } from "node:util";
 import { sha256 } from "../catalog/editorial/campaign-accreditation.js";
+import { buildPublicationTechnicalProvenance } from "../preparation/publication-technical-provenance.js";
+import type { OfflinePreparation } from "../preparation/offline-document.js";
 import type { PublishableSelection } from "../catalog/editorial/select-publishable.js";
 import { readIndividualEditorialState } from "./individual-editorial.js";
 import type { IndividualEditorialOptions } from "./individual-editorial.js";
@@ -50,7 +52,8 @@ const verifyPublication = async (directory: string, files: readonly PublicationF
 };
 
 const createFiles = (
-  providerId: string, selection: PublishableSelection, accreditationText: string
+  providerId: string, selection: PublishableSelection, accreditationText: string,
+  preparation: OfflinePreparation
 ): readonly PublicationFile[] => {
   const productName = `${providerId}-publishable.json`;
   const productsText = JSON.stringify(selection.products, null, 2);
@@ -59,22 +62,30 @@ const createFiles = (
   if (selection.accreditation?.approvalSha256 !== approvalSha256) {
     throw new Error("La selección no está vinculada a la aprobación individual actual");
   }
+  const preparationSha256 = selection.accreditation.preparationSources[0]?.preparationSha256;
+  if (!preparationSha256 || !/^[a-f0-9]{64}$/u.test(preparationSha256)) {
+    throw new Error("La selección no vincula una preparación técnica válida");
+  }
+  const trace = buildPublicationTechnicalProvenance(providerId, preparationSha256, selection.products, preparation);
+  const traceText = trace === null ? null : JSON.stringify(trace, null, 2);
   const manifest = {
     version: 1,
     providerId,
     runId: selection.accreditation.runId,
     source: selection.source[0],
-    preparationSha256: selection.accreditation.preparationSources[0]?.preparationSha256,
+    preparationSha256,
     approvalSha256,
     totals: selection.totals,
     files: {
       [productName]: sha256(productsText),
-      "accreditation.json": approvalSha256
+      "accreditation.json": approvalSha256,
+      ...(traceText === null ? {} : { "technical-provenance.json": sha256(traceText) })
     }
   };
   return [
     { name: productName, content: productsText },
     { name: "accreditation.json", content: approvalText },
+    ...(traceText === null ? [] : [{ name: "technical-provenance.json", content: traceText }]),
     { name: "manifest.json", content: JSON.stringify(manifest, null, 2) }
   ];
 };
@@ -96,7 +107,7 @@ export const deliverIndividualProvider = async (
     selection.exclusions.some((item) => item.providerId !== options.providerId)) {
     throw new Error("Publicación individual: selección incoherente");
   }
-  const files = createFiles(options.providerId, selection, accreditationText);
+  const files = createFiles(options.providerId, selection, accreditationText, context.preparation);
   const parent = join(resolve(options.rootDirectory), "catalogs", "providers", options.providerId, "publications");
   const approvalSha256 = sha256(accreditationText);
   const resultFor = (directory: string, status: IndividualDeliveryResult["status"]): IndividualDeliveryResult => ({

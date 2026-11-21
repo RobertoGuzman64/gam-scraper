@@ -19,11 +19,11 @@ type RuleSource = Omit<PanelRuleExample, "code"> & {
 
 const sources: Readonly<Record<PanelRuleId, RuleSource>> = {
   source: {
-    title: "Compatibilidad de evidencia documental",
-    summary: "Esta ruta solo admite datos cuando coinciden identidad, huella y especificaciones disponibles. No representa todas las fuentes posibles.",
+    title: "Aplicación y trazabilidad documental",
+    summary: "El recuperador comprueba identidad, huella y posibles colisiones antes de añadir especificaciones; cuando dispone de una referencia documental, registra su origen sin verificar aquí su contenido externo.",
     path: "src/preparation/shared/technical/evidence/documented-technical-evidence.ts",
     first: "if (!unit || record.brand !== unit.brand",
-    last: "return { ...specs, ...unit.specifications };"
+    last: "  return result;"
   },
   normalization: {
     title: "Comprobación de valores numéricos",

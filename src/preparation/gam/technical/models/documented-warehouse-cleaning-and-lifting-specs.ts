@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
+import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
+import { observeDocumentedTechnicalAddition } from "../../../shared/technical/evidence/documented-technical-evidence.js";
 
 type DocumentedGamUnit = {
   readonly fingerprint: string;
@@ -276,7 +278,7 @@ const documentedUnits: Readonly<Record<string, DocumentedGamUnit>> = {
   },
 };
 
-export const recoverGamDocumentedWarehouseCleaningAndLiftingSpecs = (record: ProductRecord, specs: SpecsMap): SpecsMap => {
+export const recoverGamDocumentedWarehouseCleaningAndLiftingSpecs = (record: ProductRecord, specs: SpecsMap, observe?: TechnicalRecoveryObservation): SpecsMap => {
   if (record.providerId !== "gam" || record.condition !== "Nuevo" || !record.reference ||
     !record.url.startsWith("https://online.gamrentals.com/es/") || !record.specs) return specs;
   const unit = documentedUnits[record.reference];
@@ -286,7 +288,13 @@ export const recoverGamDocumentedWarehouseCleaningAndLiftingSpecs = (record: Pro
   if ("Capacidad de arrastre" in unit.specifications &&
     "Capacidad de carga (kg)" in specs && /\btractor de arrastre\b/iu.test(record.title ?? "")) {
     const { ["Capacidad de carga (kg)"]: _mislabelledLoad, ...remaining } = specs;
-    return { ...remaining, ...unit.specifications };
+    const result = { ...remaining, ...unit.specifications };
+    observeDocumentedTechnicalAddition(record, specs, result, unit.source,
+      "src/preparation/gam/technical/models/documented-warehouse-cleaning-and-lifting-specs.ts", observe);
+    return result;
   }
-  return { ...specs, ...unit.specifications };
+  const result = { ...specs, ...unit.specifications };
+  observeDocumentedTechnicalAddition(record, specs, result, unit.source,
+    "src/preparation/gam/technical/models/documented-warehouse-cleaning-and-lifting-specs.ts", observe);
+  return result;
 };

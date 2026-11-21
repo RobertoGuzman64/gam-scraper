@@ -11,6 +11,8 @@ import type { SpecAdditionAudit } from "../evidence/spec-addition-audit.js";
 import { productIdentity } from "./explorer-identity.js";
 import { isDelivery, isEditorialExclusion } from "./explorer-data-validation.js";
 import type { EditorialExclusion } from "./explorer-data-validation.js";
+import { readPublicationTechnicalProvenance } from "../evidence/read-technical-provenance.js";
+import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js";
 import { toExplorerProduct } from "./explorer-product-view.js";
 import type { PanelExplorerProduct, PanelProductDecision } from "./types.js";
 
@@ -77,6 +79,17 @@ export const readProviderExplorerProducts = async (
   const plan = verifiedCommercial(commercialRaw, evidence);
   assertCommercialLineage(evidence.providerId, published.products, plan.products, plan.sources, plan.excluded);
   const originals = await mapOriginals(root, evidence);
+  const publishedTraces = await readPublicationTechnicalProvenance(
+    root, evidence.publication.path, evidence.providerId, evidence.publication.sha256
+  );
+  if (publishedTraces && publishedTraces.products.length !== published.products.length) {
+    throw new Error("La procedencia técnica no cubre la publicación completa");
+  }
+  const traces = new Map((publishedTraces?.products ?? []).map((item) =>
+    [productIdentity(evidence.providerId, item.reference, item.sourceUrl), item.technicalProvenance] as const));
+  if (publishedTraces && traces.size !== publishedTraces.products.length) {
+    throw new Error("Procedencias de publicación duplicadas");
+  }
   const accreditation = await readExclusions(root, evidence);
   const exported = new Map<string, CommercialDeliveryProduct>();
   for (const [index, source] of plan.sources.entries()) {
@@ -95,13 +108,18 @@ export const readProviderExplorerProducts = async (
     if (originals && (!original || original.url !== item.sourceUrl || original.reference !== item.reference)) {
       throw new Error(`Original y publicado no corresponden: ${evidence.providerId}: ${key}`);
     }
+    const trace = traces.get(key) ?? null;
+    if (publishedTraces && !trace) throw new Error(`Falta traza de publicación para ${key}`);
+    if (trace && original && originalRecordFingerprint(original) !== trace.originalRecordSha256) {
+      throw new Error(`Traza técnica para otra identidad o variante: ${key}`);
+    }
     const exclusion = commercialExcluded.get(key);
     if (!exported.has(key) && !exclusion) throw new Error(`Falta destino comercial para ${key}`);
     const decision: PanelProductDecision | null = exclusion ? {
       stage: "commercial", reason: exclusion.reason, issues: [], evidenceUrls: []
     } : null;
     result.push(toExplorerProduct(evidence.providerId, item.reference, item.sourceUrl, original, item,
-      exported.get(key) ?? null, decision, evidence, accreditation.artifact, knowledge, audit));
+      exported.get(key) ?? null, decision, evidence, accreditation.artifact, knowledge, audit, trace));
   }
   for (const excluded of accreditation.items) {
     const key = productIdentity(evidence.providerId, excluded.reference, excluded.sourceUrl);

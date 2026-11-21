@@ -11,6 +11,8 @@ import type { PanelUnitKnowledgeEvidence } from "../../evidence/knowledge-eviden
 import type { PanelProviderEvidence, PanelProviderId } from "../../evidence/types.js";
 import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
 import { compareOriginalToPublished } from "../field-differences.js";
+import { classifySpecAdditions } from "../spec-addition-classification.js";
+import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 import { queryPanelFieldProvenance, resolvePanelFieldProvenance } from "../field-provenance.js";
 import { readPanelExplorer } from "../read-panel-explorer.js";
 import type { PanelProductView } from "../types.js";
@@ -86,6 +88,82 @@ test("año de Gomariz: metadato de origen compatible, sin atribuir una recuperac
 
   const invalid = { ...original, yearSource: "titulo" as const };
   assert.equal(results(invalid, output, provider).provenance.find((entry) => entry.group === "technical")?.status, "observed-only");
+});
+
+test("fase 09: el año de GAM se acredita desde una URL oficial exacta de la unidad", async () => {
+  const provider = (await evidenceProviders()).find((item) => item.providerId === "gam");
+  assert.ok(provider);
+  const original: ProductRecord = {
+    ...source("gam", "6588"), providerId: "gam", reference: "6588",
+    url: "https://online.gamrentals.com/es/preparapedidos-segunda-mano/6588-2019-yale-mo20p",
+    year: "2019", yearSource: "url"
+  };
+  const output = { ...view(original), specs: { "Año de fabricación": "2019" } };
+  const proven = results(original, output, provider).provenance.find((entry) => entry.group === "technical");
+  assert.equal(proven?.status, "source-compatible");
+  assert.equal(proven?.scope, "unit");
+  assert.equal(proven?.sourceField, "url");
+  assert.equal(proven?.sourceValue, original.url);
+  assert.equal(proven?.mechanism, "src/catalog/normalization/gam/year.ts");
+  assert.equal(proven?.proof?.sha256, provider.original.status === "verified" ? provider.original.artifact.sha256 : null);
+  assert.equal(results({ ...original, yearSource: "descripcion" }, output, provider)
+    .provenance.find((entry) => entry.group === "technical")?.status, "source-compatible");
+  for (const rejected of [
+    { ...original, yearSource: "titulo" as const },
+    { ...original, year: "2020" },
+    { ...original, url: original.url.replace("6588-2019", "6588-2018") },
+    { ...original, url: original.url.replace("6588-2019", "6599-2019") },
+    { ...original, url: original.url.replace("online.gamrentals.com", "example.com") },
+    { ...original, url: `${original.url}?unidad=6588` },
+    { ...original, url: original.url.replace("https:", "http:") },
+    { ...original, specs: { Año: "2019" } },
+    { ...original, providerId: "mercaeleva" as const }
+  ]) {
+    assert.equal(results(rejected, output, provider).provenance
+      .some((entry) => entry.group === "technical" && entry.status === "source-compatible"), false, rejected.url);
+  }
+  const withoutUrlYear = {
+    ...original, reference: "6196", year: "2015", yearSource: "descripcion" as const,
+    url: "https://online.gamrentals.com/es/plataformas/6196-jlg-1930es"
+  };
+  const withoutUrlYearOutput = { ...view(withoutUrlYear), specs: { "Año de fabricación": "2015" } };
+  assert.equal(results(withoutUrlYear, withoutUrlYearOutput, provider).provenance
+    .find((entry) => entry.group === "technical")?.status, "observed-only");
+});
+
+test("fase 10: año explícito único de la descripción GAM y rechazo de referencias ambiguas", async () => {
+  const provider = (await evidenceProviders()).find((item) => item.providerId === "gam");
+  assert.ok(provider);
+  const description = "La plataforma JLG 1930ES permite trabajar en altura. Fabricada en 2015, mantiene su rendimiento.";
+  const original: ProductRecord = {
+    ...source("gam", "6196"), providerId: "gam", reference: "6196",
+    url: "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/6196-jp-00309",
+    year: "2015", yearSource: "descripcion", longDescription: description
+  };
+  const output = { ...view(original), specs: { "Año de fabricación": "2015" } };
+  const prove = (record: ProductRecord) => results(record, output, provider).provenance
+    .find((entry) => entry.group === "technical");
+  const proof = prove(original);
+  assert.equal(proof?.status, "source-compatible");
+  assert.equal(proof?.sourceField, "longDescription");
+  assert.equal(proof?.sourceValue, description);
+  assert.equal(proof?.mechanism, "src/catalog/normalization/gam/year.ts");
+  assert.equal(proof?.historicalApplication, "not-demonstrated");
+  for (const rejected of [
+    { ...original, yearSource: "titulo" as const },
+    { ...original, yearSource: "url" as const },
+    { ...original, year: "2016" },
+    { ...original, longDescription: null },
+    { ...original, longDescription: "JLG 1930ES, modelo 2015" },
+    { ...original, longDescription: `${description} También fabricada en 2016.` },
+    { ...original, longDescription: `${description} Revisión del año 2020.` },
+    { ...original, specs: { Año: "2015" } },
+    { ...original, url: original.url.replace("6196-jp-00309", "6196-2016-jlg-1930es") },
+    { ...original, url: original.url.replace("online.gamrentals.com", "example.com") },
+    { ...original, url: original.url.replace("6196-jp-00309", "6195-jp-00309") },
+    { ...original, url: original.url + "?revision=2015" },
+    { ...original, providerId: "mercaeleva" as const }
+  ]) assert.notEqual(prove(rejected)?.status, "source-compatible");
 });
 
 test("normalización de magnitud: valor exacto y sin conflicto, solo compatibilidad de regla", async () => {
@@ -173,4 +251,31 @@ test("un índice de conocimiento ausente no se inventa y uno inválido no pasa",
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+
+test("fase 17: el panel consume la emisión productiva acreditada sin reconstruir recuperadores", async () => {
+  const provider = (await evidenceProviders()).find((item) => item.providerId === "gomariz");
+  assert.ok(provider);
+  const original = source("gomariz", "TE1858");
+  const prepared = prepareSourceProduct(original);
+  const emitted = prepared.technicalProvenance;
+  assert.ok(emitted);
+  const output: PanelProductView = { ...view(original), specs: prepared.product.spec };
+  const differences = compareOriginalToPublished(view(original), output);
+  const resolve = (record: ProductRecord, traces = emitted) =>
+    resolvePanelFieldProvenance(record, output, differences, provider, null,
+      record.reference, record.url, traces);
+  const proven = resolve(original);
+  const year = proven.find((entry) => entry.field === "Año");
+  assert.equal(year?.status, "source-compatible");
+  assert.equal(year?.mechanism, "src/preparation/gomariz/technical/mapping/source-year-spec.ts");
+  assert.equal(year?.historicalApplication, "demonstrated");
+  assert.equal(year?.sourceField, "year");
+  assert.deepEqual(classifySpecAdditions(differences, provider, original.reference, original.url,
+    null, original, proven).filter((item) => item.kind === "own").map((item) => item.field), ["Año"]);
+  assert.throws(() => resolve({ ...original, year: "2023" }), /no corresponde al original/);
+  assert.throws(() => resolve({ ...original, reference: "TE1859" }), /no corresponde al original/);
+  const corrupted = { ...emitted, entries: emitted.entries.map((entry) => entry.scope === "unit" ? { ...entry, sourceValue: "2023" } : entry) };
+  assert.throws(() => resolve(original, corrupted), /fuente de procedencia/);
 });

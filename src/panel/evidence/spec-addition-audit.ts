@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { digest, isRecord, isSha } from "./evidence-files.js";
 import type { PanelProviderId } from "./types.js";
 import type { PanelSpecAddition } from "../explorer/types.js";
 
@@ -12,32 +13,32 @@ export type AuditEntry = {
   readonly value: string;
   readonly kind: AuditKind;
 };
+export type FingerprintedAuditEntry = AuditEntry & { readonly originalRecordSha256: string };
 type AuditCut = { readonly originalSha256: string; readonly publicationSha256: string };
-export type SpecAdditionAudit = {
-  readonly version: 1;
-  readonly cuts: Readonly<Record<PanelProviderId, AuditCut>>;
-  readonly entries: readonly AuditEntry[];
-};
+type AuditCuts = Readonly<Record<PanelProviderId, AuditCut>>;
+export type SpecAdditionAudit =
+  | { readonly version: 1; readonly cuts: AuditCuts; readonly entries: readonly AuditEntry[] }
+  | { readonly version: 2; readonly cuts: AuditCuts; readonly entries: readonly FingerprintedAuditEntry[] };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === "object" && !Array.isArray(value);
-const isSha = (value: unknown): value is string => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 const providers: readonly PanelProviderId[] = ["gam", "gomariz", "mercaeleva"];
+const isEntry = (value: unknown): value is AuditEntry => isRecord(value) &&
+  (value.providerId === "gam" || value.providerId === "gomariz" || value.providerId === "mercaeleva") &&
+  (value.reference === null || typeof value.reference === "string") &&
+  typeof value.sourceUrl === "string" && typeof value.field === "string" &&
+  typeof value.value === "string" && (value.kind === "own" || value.kind === "reused");
+
 const isAudit = (value: unknown): value is SpecAdditionAudit => {
-  if (!isRecord(value) || value.version !== 1 || !isRecord(value.cuts) || !Array.isArray(value.entries)) {
-    return false;
-  }
+  if (!isRecord(value) || (value.version !== 1 && value.version !== 2) ||
+    !isRecord(value.cuts) || !Array.isArray(value.entries)) return false;
   const cuts = value.cuts;
   return providers.every((provider) => {
     const cut = cuts[provider];
     return isRecord(cut) && isSha(cut.originalSha256) && isSha(cut.publicationSha256);
-  }) && value.entries.every((entry: unknown) =>
-    isRecord(entry) && (entry.providerId === "gam" || entry.providerId === "gomariz" ||
-      entry.providerId === "mercaeleva") &&
-    (entry.reference === null || typeof entry.reference === "string") &&
-    typeof entry.sourceUrl === "string" && typeof entry.field === "string" &&
-    typeof entry.value === "string" && (entry.kind === "own" || entry.kind === "reused"));
+  }) && value.entries.every((entry: unknown) => isEntry(entry) &&
+    (value.version === 1 || ("originalRecordSha256" in entry && isSha(entry.originalRecordSha256))));
 };
+
+export { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js";
 
 const identity = (provider: PanelProviderId, reference: string | null, url: string, field: string): string =>
   JSON.stringify([provider, reference, url, field]);

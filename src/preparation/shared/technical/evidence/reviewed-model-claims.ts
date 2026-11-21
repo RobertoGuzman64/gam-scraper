@@ -1,0 +1,631 @@
+import { technicalDocumentClaimSha256 } from "../../../../contracts/technical-provenance.js";
+import type { TechnicalDocumentReference, TechnicalDocumentVerification } from "../../../../contracts/technical-provenance.js";
+
+type ReviewedModelFact = {
+  readonly field: string;
+  readonly value: string;
+  readonly support: string;
+};
+
+type ReviewedModelDocument = {
+  readonly url: string;
+  readonly brand: string;
+  readonly model: string;
+  readonly reviewedOn: string;
+  readonly facts: readonly ReviewedModelFact[];
+};
+
+const documents: readonly ReviewedModelDocument[] = [
+  {
+    url: "https://logitrans.com/rotator-with-adjustable-box-holders/", brand: "LOGITRANS", model: "ELFRA/SELFRA",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de caja admitida", value: "800–1200 mm", support: "widths between 800 mm and 1200 mm" },
+      { field: "Inclinación de cajas", value: "Hasta 180°", support: "Tilts boxes up to 180°" },
+      { field: "Velocidad de volteo", value: "Regulable", support: "rotation speed control" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/rotator-with-non-adjustable-box-holders/", brand: "LOGITRANS", model: "ELFR/SELFR",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Soportes de caja", value: "Fijos, sin regulación de anchura", support: "Rotator with non-adjustable box holders" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/electric-logiflex-stacker-inox-ehsi/", brand: "LOGITRANS", model: "EHSI",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Accionamiento de elevación", value: "Eléctrico", support: "an electric lift, and manual transport capabilities" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/panther-manual-pallet-truck/", brand: "LOGITRANS", model: "Panther",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Descenso de carga", value: "Controlado", support: "Gentle and controlled lowering of loads" },
+      { field: "Propulsión", value: "Manual", support: "Our manual pallet truck" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/US/panther-silent-manual-pallet-truck/", brand: "LOGITRANS", model: "Panther Silent",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Material de ruedas", value: "Caucho blando", support: "Soft rubber wheels" },
+      { field: "Nivel sonoro de desplazamiento", value: "Inferior a 60 dB(A)", support: "noise levels below 60 dBA" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/US/weighing-scale-pallet-truck-wsp-2200/", brand: "LOGITRANS", model: "WSP 2200",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Células de pesaje", value: "4", support: "four strong weighing cells" },
+      { field: "Precisión del sistema de pesaje", value: "99,95 %", support: "accuracy (99,95%)" },
+      { field: "Protección de las células de carga", value: "IP68", support: "IP68 load cells" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/panther-manual-pallet-truck-inox-plus-pip/", brand: "LOGITRANS", model: "Panther Inox Plus",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Chasis", value: "Resistente a ácidos", support: "Acid-resistant chassis" },
+      { field: "Construcción de horquillas", value: "Cerradas", support: "closed forks" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-2028.htm", brand: "LGMG", model: "S1012EII",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de plataforma", value: "1,12 m", support: "C-Platform Width | 1.12m" },
+      { field: "Capacidad de plataforma", value: "320 kg", support: "Platform Capacity | 320kg" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "H-Extension Deck | 0.9m" },
+      { field: "Longitud de plataforma", value: "2,26 m", support: "B-Platform Length | 2.26m" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-1027.htm", brand: "LGMG", model: "SR1018D",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "9,7 m", support: "A-Platform Height-Raised | 9.7m" },
+      { field: "Anchura (mm)", value: "1,79 m", support: "F-Overall Width | 1.79m" },
+      { field: "Capacidad máxima de plataforma", value: "454 kg", support: "Platform Capacity | 454kg" },
+      { field: "Extensión de plataforma", value: "1,52 m", support: "H-Extension Deck | 1.52m" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-616.htm", brand: "LGMG", model: "A14JE",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal máximo", value: "7,81 m", support: "Horizontal Outreach | 7.81m" },
+      { field: "Capacidad de plataforma", value: "230 kg", support: "Platform Capacity | 230 kg" }
+    ]
+  },
+  {
+    url: "https://sinoboom.com/content/details_103_125.html", brand: "SINOBOOM", model: "0608ME",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de plataforma", value: "0,76 m", support: "Platform Dimensions(L×W×H) | 1.64m×0.76m×1.1m" },
+      { field: "Longitud de plataforma", value: "1,64 m", support: "Platform Dimensions(L×W×H) | 1.64m×0.76m×1.1m" },
+      { field: "Capacidad de plataforma", value: "230 kg", support: "Platform capacity | 230 kg" },
+      { field: "Extensión máxima de plataforma", value: "0,9 m", support: "Max Horizontal Extension | 0.9m" }
+    ]
+  },
+  {
+    url: "https://kbm.kubota-eu.com/constructionmachinery/en/products/u10-3u10-3-sl/", brand: "Kubota", model: "U10.3",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura máxima del chasis extendido", value: "990 mm", support: "Overall width | 750-990 mm" },
+      { field: "Anchura mínima del chasis", value: "750 mm", support: "Overall width | 750-990 mm" },
+      { field: "Longitud de transporte", value: "2980 mm", support: "Shipping length | 2980 mm" },
+      { field: "Profundidad máxima de excavación", value: "1800 mm", support: "Digging depth | 1800 mm" }
+    ]
+  },
+  {
+    url: "https://kuk.kubota-eu.com/constructionmachinery/products/u27-4/", brand: "Kubota", model: "U27.4",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance máximo de excavación", value: "4740 mm", support: "Max Reach (mm) | 4740" },
+      { field: "Anchura (mm)", value: "1500 mm", support: "Overall width (mm) | 1500" },
+      { field: "Fuerza máxima de excavación en cuchara", value: "21 kN", support: "Max Digging Force Arm/Bucket (kN) | 12.3/21.0" },
+      { field: "Profundidad máxima de excavación", value: "2820 mm", support: "Max Dig Depth (mm) | 2820" }
+    ]
+  },
+  {
+    url: "https://www.ausa.com/es-es/dumpers/d450ahg", brand: "Ausa", model: "D450AHG",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Capacidad de tolva colmada", value: "2670 l", support: "Capacidad tolva colmada | 2670 l" },
+      { field: "Capacidad de tolva rasa", value: "2055 l", support: "Capacidad tolva rasa | 2055 l" },
+      { field: "Radio de giro exterior", value: "4830 mm", support: "Radio de giro exterior | 4830 mm" },
+      { field: "Tracción", value: "4x4", support: "Tracción | 4x4" },
+      { field: "Transmisión", value: "Hidrostática", support: "Transmisión | Hidrostática" }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/german/97752GR.pdf", brand: "Genie", model: "GR-15",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "4,62 m", support: "GR-15 Maximale Plattformhöhe 4,62 m" },
+      { field: "Anchura de la máquina", value: "0,75 m", support: "Breite 75 cm" },
+      { field: "Longitud replegada", value: "1,35 m", support: "Länge, eingefahren 1,35 m" }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/english/114340.pdf", brand: "Genie", model: "Z-45/25J",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de plataforma", value: "0,76 m", support: "Platform dimensions, 6 foot | 1.8 m x 76 cm" },
+      { field: "Capacidad máxima de plataforma", value: "227 kg", support: "Maximum load capacity | 227 kg" }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/english/219413.pdf", brand: "Genie", model: "Z-51/30J",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "15,59 m", support: "Height platform maximum | 15.59 m" },
+      { field: "Anchura (mm)", value: "2,29 m", support: "Width standard tires | 2.29 m" },
+      { field: "Capacidad máxima de plataforma", value: "227 kg", support: "Maximum load capacity | 227 kg" }
+    ]
+  },
+  {
+    url: "https://www.genielift.com/en/aerial-lifts/articulated-boom-lifts/z3422ic", brand: "Genie", model: "Z-34/22",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "6,78 m", support: "Max Horizontal Reach | 6.78 m" },
+      { field: "Capacidad máxima de plataforma", value: "227 kg", support: "Platform Capacity | 227 kg" }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/english/226486.pdf", brand: "Genie", model: "Z135",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal máximo", value: "21,3 m", support: "Horizontal reach maximum | 21.3 m" },
+      { field: "Altura máxima de plataforma", value: "41,1 m", support: "Height platform maximum | 41.1 m" },
+      { field: "Capacidad máxima de plataforma", value: "272 kg", support: "Maximum load capacity | 272 kg" }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/english/43650.pdf", brand: "Genie", model: "S85",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal máximo", value: "23,4 m", support: "S-85 Horizontal reach maximum | 23.4 m" },
+      { field: "Altura máxima de plataforma", value: "25,9 m", support: "S-85 Height platform maximum | 25.9 m" },
+      { field: "Anchura de máquina", value: "2,43 m", support: "S-85 Width | 2.43 m" },
+      { field: "Capacidad máxima de plataforma", value: "227 kg", support: "S-85 Maximum load capacity | 227 kg" }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/Operators/english/114305.pdf", brand: "Genie", model: "S-65",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "17,1 m", support: "S-65 Horizontal reach maximum | 17.1m" },
+      { field: "Altura de plataforma", value: "19,8 m", support: "S-65 Height platform maximum | 19.8m" },
+      { field: "Anchura (mm)", value: "2,49 m", support: "S-65 Width | 2.49m" },
+      { field: "Capacidad máxima de plataforma", value: "227 kg", support: "S-65 Maximum load capacity | 227kg" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/manual-logiflex-stacker-lf/", brand: "LOGITRANS", model: "Logiflex M",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Accionamiento de elevación", value: "Hidráulico manual", support: "Manual hydraulic pump ensures controlled and effortless lifting" },
+      { field: "Freno de estacionamiento", value: "Incorporado", support: "Equipped with parking brake for secure positioning" },
+      { field: "Propulsión", value: "Manual", support: "This model is equipped with manual propulsion and pumping (for lifting and lowering)" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/US/manual-logiflex-stacker-with-straddle-legs-lfs/", brand: "LOGITRANS", model: "Logiflex MS",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Accionamiento de elevación", value: "Hidráulico manual", support: "Manual hydraulic pump ensures controlled and effortless lifting" },
+      { field: "Patas envolventes", value: "Para palés cerrados", support: "this stacker can handle closed pallets as well" },
+      { field: "Propulsión", value: "Manual", support: "This model is supplied with manual propulsion and pumping (for lifting and lowering)" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/electric-logiflex-stacker-elf/", brand: "LOGITRANS", model: "Logiflex SE",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Dirección", value: "Asistida en ambas ruedas", support: "Assisted steering on both wheels" },
+      { field: "Propulsión", value: "Manual", support: "Manual propulsion" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/electric-logiflex-stacker-with-straddle-legs-elfs/", brand: "LOGITRANS", model: "Logiflex SE-ARTICULADAS",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Dirección", value: "Asistida en ambas ruedas", support: "Assisted steering on both wheels" },
+      { field: "Propulsión", value: "Manual", support: "Manual propulsion" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/manual-logiflex-stacker-inox-hsi-and-manual-logiflex-stacker-with-straddle-legs-inox-hssi/", brand: "LOGITRANS", model: "HSI HSSI",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Accionamiento de elevación", value: "Manual", support: "Manual Logiflex Stacker INOX (HSI and HSSI)" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/electric-logiflex-stacker-with-straddle-legs-inox-ehssi/", brand: "LOGITRANS", model: "EHSS",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Accionamiento de elevación", value: "Eléctrico", support: "Electric Logiflex Stacker with Straddle Legs INOX (EHSSI)" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/solutions/pallet-tansportation/panther-maxi-fully-powered-pallet-truck/", brand: "LOGITRANS", model: "Panther Maxi",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Conducción con timón vertical", value: "Permitida", support: "Upright handle operation" },
+      { field: "Controlador de tracción", value: "Curtis ACF2C", support: "ACF2C-technology (Curtis Controller)" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/stainless-steel-highlifters/", brand: "LOGITRANS", model: "HLI",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Accionamiento de elevación", value: "Manual", support: "Manual highlifter Inox (HLI), manual lifting" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/manual-highlifter-inox-plus-hlip/", brand: "LOGITRANS", model: "HLI Plus",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Accionamiento de elevación", value: "Manual", support: "Manual highlifter Inox Plus (HLIP)" }
+    ]
+  },
+  {
+    url: "https://www.tennantco.com/en_us/1/machines/sweepers/product.6100.sweeper-rider-6100.2000076.html", brand: "Tennant", model: "BCS 6100",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Capacidad volumétrica de tolva", value: "85 l", support: "Hopper Capacity: 3 ft³ / 85 L" },
+      { field: "Longitud del cepillo principal", value: "560 mm", support: "Main Brush Dimensions: 22 in / 560 mm" }
+    ]
+  },
+  {
+    url: "https://www.tennantco.com/es_es/1/machines/vacuums/product.v-wd-72.aspirador-h%C3%BAmedo-seco.1244340.html", brand: "Tennant", model: "APL V-WD-72",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Capacidad del depósito", value: "72 l", support: "Depósito grande de 72 l de capacidad" },
+      { field: "Longitud de cable de alimentación", value: "8,5 m", support: "Longitud del cable de alimentación | 8,5 m" },
+      { field: "Motores de aspiración", value: "3 independientes", support: "Tres motores independientes para un rendimiento fiable" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/upload/file/2025/04/lgmg-scissorlift-en-S1012E-2.pdf", brand: "LGMG", model: "S1012E-2",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de plataforma", value: "1,12 m", support: "Platform Width | 1.12m" },
+      { field: "Capacidad de plataforma", value: "320 kg", support: "Platform Capacity | 320kg" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "Extension Deck | 0.9m" },
+      { field: "Longitud de plataforma", value: "2,26 m", support: "Platform Length | 2.26m" }
+    ]
+  },
+  {
+    url: "https://www.megaltura.com/wp-content/uploads/2022/08/JLG-2630-ES.pdf", brand: "JLG", model: "2630ES",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "7,77 m", support: "Altura de plataforma (Elevada) | 7,77 m" },
+      { field: "Anchura (mm)", value: "0,76 m", support: "Anchura total | 0,76 m" },
+      { field: "Distancia entre ejes (mm)", value: "1,88 m", support: "Distancia entre ejes | 1,88 m" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "Lateral extensible de 0,90 m" }
+    ]
+  },
+  {
+    url: "https://www.skyjack.com/sites/default/files/specifications/ENEU-SJ9241-50RT_0.pdf", brand: "Skyjack", model: "SJ9250",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "15,24 m", support: "SJ9250 RT | Raised Platform Height | 15.24 m" },
+      { field: "Anchura (mm)", value: "2,34 m", support: "SJ9250 RT | Overall Width | 2.34 m" },
+      { field: "Anchura de plataforma", value: "1,88 m", support: "SJ9250 RT | Platform Width (Inside Dimension) | 1.88 m" }
+    ]
+  },
+  {
+    url: "https://www.grarasulin.com/wp-content/uploads/2023/05/ha20px_uk_bda0a.pdf", brand: "Haulotte", model: "HA20PX",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "13,5 m", support: "HA20 PX | Horizontal outreach | 13.5 m" },
+      { field: "Altura de plataforma", value: "18,65 m", support: "HA20 PX | Platform height | 18.65 m" },
+      { field: "Anchura (mm)", value: "2,38 m", support: "HA20 PX | Width | 2.38 m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "HA20 PX | Lift capacity | 230 kg" }
+    ]
+  },
+  {
+    url: "https://www.colle.eu/media/3955/genie-s65-en.pdf", brand: "Genie", model: "S-65",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal máximo", value: "17,1 m", support: "S-65 | Horizontal reach maximum | 17.10 m" },
+      { field: "Altura máxima de plataforma", value: "19,8 m", support: "S-65 | Platform height maximum | 19.80 m" },
+      { field: "Capacidad máxima de plataforma", value: "227 kg", support: "S-65 | Lift capacity | 227 kg" }
+    ]
+  },
+  {
+    url: "https://www.jlg.com/en/equipment/boom-lifts/telescopic/engine-powered/800-series/860sj", brand: "JLG", model: "860SJ",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "22,86 m", support: "860SJ | Horizontal Outreach | 75-ft / 22.86-m" },
+      { field: "Altura de plataforma", value: "26,21 m", support: "860SJ | Platform Height (Elevated) | 86-ft / 26.21-m" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/rotator-with-non-adjustable-box-holders/", brand: "LOGITRANS", model: "ELFR/SELFR",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Soportes necesarios para más de 500 kg", value: "Dos", support: "An extra set of box holders is necessary when rotating more than 45 degrees, with more than 500 kg" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/logiq-200-quarter-pallet-lifter/", brand: "LOGITRANS", model: "LogiQ 200/300",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Propulsión", value: "Manual", support: "The small, manual pallet lifter is easy to operate in crowded and compact areas" }
+    ]
+  },
+  {
+    url: "https://manualzilla.com/doc/6014943/from-sn-951-to-6289--z-30-20n--pn-43651-", brand: "Genie", model: "Z-30/20N",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "6,4 m", support: "Z-30/20N | Horizontal reach maximum | 21 ft / 6.4 m" },
+      { field: "Altura de plataforma", value: "9,1 m", support: "Z-30/20N | Height platform maximum | 30 ft / 9.1 m" },
+      { field: "Anchura (mm)", value: "1,2 m", support: "Z-30/20N | Width | 3 ft 11 in / 1.2 m" },
+      { field: "Capacidad máxima de plataforma", value: "227 kg", support: "Z-30/20N | Maximum load capacity | 227 kg" }
+    ]
+  },
+  {
+    url: "https://www.lectura-specs.es/es/modelo/plataformas-elevadoras/plataformas-elevadoras-articuladas-plataformas-articuladas-de-ruedas-manitou/150-aetj-c-1036275", brand: "Manitou", model: "150AETJC",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "7,6 m", support: "Manitou 150 AETJ C | Max. Alcance lateral | 7.6 m" },
+      { field: "Anchura (mm)", value: "1,5 m", support: "Manitou 150 AETJ C | Anchura transporte | 1.5 m" },
+      { field: "Capacidad máxima de plataforma", value: "200 kg", support: "Manitou 150 AETJ C | Carga útil | 200 kg" }
+    ]
+  },
+  {
+    url: "https://www.toyotamaterialhandling.com.au/media/20096/6fbre12_20.341.pdf", brand: "Toyota", model: "6FBRE14",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura exterior del modelo", value: "1250 mm", support: "6FBRE14 | Overall Width | 1250 mm" },
+      { field: "Centro de carga nominal del modelo", value: "600 mm", support: "6FBRE14 | Load Center | 600 mm" },
+      { field: "Propulsión", value: "Eléctrica", support: "Toyota Electric Reach Truck 6FBRE/6FBR Series" },
+      { field: "Radio de giro exterior del modelo", value: "1570 mm", support: "6FBRE14 | Turning Radius (Outside) | 1570 mm" }
+    ]
+  },
+  {
+    url: "https://www.mercaeleva.com/pdf/fichas/2022/merca-eleva-tijera-electrica-lgmg-as1413.pdf", brand: "LGMG", model: "AS1413",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura de plataforma", value: "1,12 m", support: "AS1413 | Anchura de la plataforma | 1,12 m" },
+      { field: "Capacidad de plataforma", value: "320 kg", support: "AS1413 | Capacidad de la plataforma | 320 kg" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "AS1413 | Cubierta de extensión | 0,9 m" },
+      { field: "Longitud de plataforma", value: "2,64 m", support: "AS1413 | Longitud de la plataforma | 2,64 m" }
+    ]
+  },
+  {
+    url: "https://toyota-material-handling.co.th/products/275", brand: "BT", model: "SWE 160",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura (mm)", value: "790 mm", support: "SWE160 | Overall Width (mm) | 790" },
+      { field: "Centro de carga (mm)", value: "600 mm", support: "SWE160 | Load center (mm) | 600" },
+      { field: "Radio de giro (mm)", value: "1504 mm", support: "SWE160 | Turning Radius (mm) | 1,504" }
+    ]
+  },
+  {
+    url: "https://www.linde-mh.es/es/Productos/Transpaletas/T14-T20/", brand: "Linde", model: "T18",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Capacidad nominal de carga", value: "1800 kg", support: "T18 | Capacidad de carga nominal | 1,8 t" },
+      { field: "Elevación de horquillas", value: "125 mm", support: "T14–T20 | Elevación de horquillas | 125 mm" }
+    ]
+  },
+  {
+    url: "https://www.tennantco.com/content/dam/tennant/tennantco/products/machines/sweeper%20riders/s16/s16-specifications-en-emea.pdf", brand: "Tennant", model: "BCS S16H Descarga alto",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura máxima de descarga de la tolva", value: "1570 mm", support: "S16 High Dump | Maximum hopper dump height | 1,570 mm" }
+    ]
+  },
+  {
+    url: "https://www.tennantco.com/content/dam/tennant/tennantco/products/machines/sweeper%20riders/S20/s20-specifications-battery-en-noam.pdf", brand: "Tennant", model: "BCS S20 Batería",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Longitud del cepillo principal", value: "910 mm", support: "S20 battery | Main brush length (tubular) | 36 in / 910 mm" }
+    ]
+  },
+  {
+    url: "https://www.lectura-specs.com/en/model/aerial-work-platform/articulating-boom-lifts-wheeled-articulating-boom-lifts-manitou/200-atj-1161009", brand: "Manitou", model: "200ATJ",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "12 m", support: "200 ATJ | Max. reach horizontal | 12 m" },
+      { field: "Anchura (mm)", value: "2,4 m", support: "200 ATJ | Transport width | 2.4 m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "200 ATJ | Net load | 230 kg" }
+    ]
+  },
+  {
+    url: "https://cdnc.heyzine.com/flip-book/pdf/3bf89898f6e750b3a716118e3b59d30cf09fe308-1.pdf", brand: "JLG", model: "SL203-204",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma según catálogo técnico", value: "20,30 m", support: "JLG SL203-204 | Altura plataforma | 20,30 m" },
+      { field: "Anchura según catálogo técnico", value: "2,40 m", support: "JLG SL203-204 | Ancho | 2,40 m" },
+      { field: "Capacidad de carga de plataforma según catálogo técnico", value: "750 kg", support: "JLG SL203-204 | Capacidad de carga | 750 kg" },
+      { field: "Dimensiones de plataforma según catálogo técnico", value: "4,35 x 2,30 m", support: "JLG SL203-204 | Medidas plataforma | 4,35 x 2,30 m" },
+      { field: "Longitud según catálogo técnico", value: "4,80 m", support: "JLG SL203-204 | Longitud | 4,80 m" }
+    ]
+  },
+  {
+    url: "https://www.mateco.es/fileadmin/user_upload/Guia-de-alquiler-2019.pdf", brand: "Genie", model: "Z-30/20NRJ",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "6,25 m", support: "GENIE Z-30/20NRJ | Alcance horizontal | 6,25 m" },
+      { field: "Altura de plataforma", value: "8,89 m", support: "GENIE Z-30/20NRJ | Altura plataforma | 8,89 m" },
+      { field: "Anchura (mm)", value: "1,19 m", support: "GENIE Z-30/20NRJ | Dimensiones transporte | Ancho 1,19 m" },
+      { field: "Capacidad máxima de plataforma", value: "227 kg", support: "GENIE Z-30/20NRJ | Capacidad plataforma | 227 kg" }
+    ]
+  },
+  {
+    url: "https://www.manualslib.com/manual/1277304/Jlg-1350sjp.html", brand: "JLG", model: "1350 SJP",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal máximo sin restricción de carga", value: "24,4 m", support: "1350SJP | Max Horizontal Reach (unrestricted) | 80 ft / 24.4 m" },
+      { field: "Altura de plataforma", value: "41,2 m", support: "1350SJP | Maximum Platform Height | 135 ft / 41.2 m" },
+      { field: "Anchura con ejes recogidos", value: "2,49 m", support: "1350SJP | Width (Axles Retracted) | 8 ft 2 in / 2.49 m" },
+      { field: "Capacidad de plataforma sin restricciones", value: "227 kg", support: "1350SJP | Platform Capacity (Unrestricted) | 500 lb / 227 kg" }
+    ]
+  },
+  {
+    url: "https://www.manualslib.com/manual/2197948/Littium-Ibiza-Titanium.html?page=20", brand: "LITTIUM", model: "Ibiza Titanium",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Carga máxima admitida", value: "120 kg", support: "PESO 20.5 KG (BATERÍA INCLUIDA) – CHASIS DE ALUMINIO. CARGA MÁXIMA 120 KG" },
+      { field: "Peso con batería", value: "20,5 kg", support: "PESO 20.5 KG (BATERÍA INCLUIDA)" },
+      { field: "Potencia del motor", value: "250 W", support: "POTENCIA 250W" },
+      { field: "Tensión nominal del motor", value: "36 V", support: "VOLTAJE 36V EFICIENCIA 80%" },
+      { field: "Velocidad máxima de asistencia", value: "25 km/h", support: "VELOCIDAD ASISTIDA HASTA 25 KM/H" }
+    ]
+  },
+  {
+    url: "https://www.bravi-platforms.com/wp-content/uploads/2022/08/PERI-SKYDECK_EN.pdf", brand: "BRAVI", model: "SKY DECK",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Dimensiones del panel admitido", value: "1500 x 750 x 120 mm", support: "Panel size 1500 x 750 x 120 mm" },
+      { field: "Montaje del soporte", value: "Sin herramientas", support: "tool-free setup" },
+      { field: "Número máximo de soportes por Leonardo HD", value: "3", support: "three panel holders can be mounted on one Leonardo HD" },
+      { field: "Peso neto del portapaneles", value: "4,2 kg", support: "total weight of only 4.2kg (9.25 lbs)" }
+    ]
+  },
+  {
+    url: "https://www.zeromotorcycle.eu/en/motorcycle/ds/", brand: "ZERO", model: "DS 14",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura del asiento", value: "843 mm", support: "Seat height 843 mm" },
+      { field: "Par motor máximo del modelo", value: "109 Nm", support: "Peak torque 109Nm" },
+      { field: "Peso en orden de marcha del modelo", value: "187 kg", support: "Curb weight 187 kg" }
+    ]
+  },
+  {
+    url: "https://sitecore.jlg.com/dfsmedia/e4042b10c9ce4595b4cc059f1299f079/140840-source", brand: "JLG", model: "E600JP",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "13,54 m", support: "E600JP/M600JP Horizontal Outreach 44 ft 5 in. 13.54 m" },
+      { field: "Altura de plataforma", value: "18,39 m", support: "E600JP/M600JP Platform Height 66 ft 4 in. 18.39 m" },
+      { field: "Capacidad máxima de plataforma", value: "227 kg", support: "Platform Capacity 500 lb 227 kg" }
+    ]
+  },
+  {
+    url: "https://sitecore.jlg.com/dfsmedia/e4042b10c9ce4595b4cc059f1299f079/142288-source", brand: "JLG", model: "800AJ",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "15,8 m", support: "800AJ Horizontal Outreach 51 ft 10 in. 15.8 m" },
+      { field: "Altura de plataforma", value: "24,38 m", support: "800AJ Platform Height 80 ft 24.38 m" }
+    ]
+  },
+  {
+    url: "https://www.jlg.com/en/equipment/boom-lifts/telescopic/engine-powered/800-series/860sj", brand: "JLG", model: "860SJ",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura (mm)", value: "2,49 m", support: "860SJ Overall Width 2.49 m" },
+      { field: "Capacidad de plataforma sin restricciones", value: "230 kg", support: "860SJ Platform Capacity - Unrestricted 230 kg" }
+    ]
+  },
+  {
+    url: "https://www.briggsstore.co.uk/uploads/Yale_EN_PLHP25_standard_spec-sheet.pdf", brand: "YALE", model: "PLHP25",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Centro de carga (mm)", value: "600 mm", support: "1.6 Load centre distance c (mm) | 600" },
+      { field: "Elevación de las horquillas", value: "195 mm", support: "4.4 Lift h3 (mm) | 195" },
+      { field: "Peso de servicio", value: "60 kg", support: "2.1 Service weight kg | 60" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/fully-powered-logiflex-stacker-self-maxi/", brand: "LOGITRANS", model: "Self Maxi",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Controlador de tracción", value: "Curtis (CA)", support: "With the Curtis Controller you can easily pre-set speed, acceleration and deceleration" }
+    ]
+  },
+  {
+    url: "https://logitrans.com/fully-powered-logiflex-stacker-with-straddle-legs-selfs-maxi/", brand: "LOGITRANS", model: "Self Maxi S",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Controlador de tracción", value: "Curtis (CA)", support: "With the Curtis Controller you can easily pre-set speed, acceleration and deceleration" }
+    ]
+  },
+  {
+    url: "https://cpslift.com/access-platforms/cte-traccess-platforms/traccess-170-e/", brand: "CTE", model: "TRACCESS 170E",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "7,5 m", support: "Max Outreach | 7.5 m" },
+      { field: "Rotación de torreta", value: "330°", support: "Turret Rotation | 330º" }
+    ]
+  },
+  {
+    url: "https://cpslift.com/access-platforms/cte-traccess-platforms/traccess-230/", brand: "CTE", model: "TRACCESS 230",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "12 m", support: "Max Outreach | 12 m" },
+      { field: "Anchura en transporte", value: "780 mm", support: "Transport Dimensions (L x W x H) | 5337 x 780 x 2010 mm" }
+    ]
+  },
+  {
+    url: "https://jlg.ru/upload/iblock/a55/a55ac022eb564236eb1714d950c513c3.pdf", brand: "JLG", model: "1250AJP",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "19,25 m", support: "1250AJP | Horizontal Outreach | 19.25 m" },
+      { field: "Altura de plataforma", value: "38,3 m", support: "1250AJP | Platform Height | 38.30 m" },
+      { field: "Anchura con ejes recogidos", value: "2,49 m", support: "1250AJP | Overall Width (Axles Retracted) | 2.49 m" },
+      { field: "Longitud (mm)", value: "11,46 m", support: "1250AJP | Stowed Length | 11.46 m (transport position)" }
+    ]
+  },
+  {
+    url: "https://www.dragon-access.co.uk/niftylift-hr12/", brand: "Niftylift", model: "HR12NDE",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "6,1 m", support: "Niftylift HR12 NDE | Max. Outreach | 6.1m" },
+      { field: "Capacidad máxima de plataforma", value: "200 kg", support: "Niftylift HR12 NDE | Basket Capacity | 200kg" }
+    ]
+  },
+  {
+    url: "https://www.colle.eu/en/rent/working-at-heights/aerial-lifts/scissor-lifts/holland-lift-n165el12/", brand: "Hollandlift", model: "N-165EL12",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "16,5 m", support: "Holland Lift N165EL12 | Platform height | 16,50 m" },
+      { field: "Capacidad máxima de plataforma", value: "500 kg", support: "Holland Lift N165EL12 | Platform capacity | 500 kg" }
+    ]
+  },
+  {
+    url: "https://www.lectura-specs.com/en/model/aerial-work-platform/articulating-boom-lifts-trailer-mounted-articulating-boom-lifts-oil-steel/snake-189-11697682", brand: "Oil & Steel", model: "SNAKE 189",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "9,2 m", support: "Snake 189 Oil & Steel | Max. Reach horizontal | 9.2 m" },
+      { field: "Capacidad máxima de plataforma", value: "225 kg", support: "Snake 189 Oil & Steel | Net load | 225 kg" }
+    ]
+  },
+  {
+    url: "https://www.lectura-specs.com/en/model/forklifts/telehandlers-jlg/4014-ps-1152518", brand: "JLG", model: "4014PS",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "9,2 m", support: "4014 PS JLG | Max. Reach horizontal | 9.2 m" },
+      { field: "Anchura de transporte", value: "2,43 m", support: "4014 PS JLG | Transport width | 2.43 m" },
+      { field: "Longitud de transporte", value: "6,32 m", support: "4014 PS JLG | Transport length | 6.32 m" }
+    ]
+  },
+  {
+    url: "https://www.manualslib.mx/manual/359967/Jlg-Liftlux-153-12.html?page=64", brand: "JLG", model: "153-12",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "15,3 m", support: "LIFTLUX 153-12 | Altura máxima de la plataforma | 15,3 m" },
+      { field: "Capacidad máxima de plataforma", value: "500 kg", support: "LIFTLUX 153-12 | Capacidad máxima de carga, plataforma principal | 500 kg" }
+    ]
+  },
+  {
+    url: "https://www.tvicranes.com/es/paginas/alquiler", brand: "Oil & Steel", model: "SCORPION 1812",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "12 m", support: "Oil & Steel Scorpion 1812 | Alcance máximo de trabajo | 12 m" },
+      { field: "Anchura de plataforma", value: "0,7 m", support: "Oil & Steel Scorpion 1812 | Dimensiones de la carga de aluminio | 1400 x 700 x h 1100 mm" }
+    ]
+  },
+  {
+    url: "https://www.manualslib.com/manual/2589077/Bravi-Platforms-Solo-Gyps.html", brand: "BRAVI", model: "SOLO GYPS",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Capacidad del elevador de paneles", value: "40 kg", support: "SOLO GYPS | LOAD RATING | 40 Kg (89 Lbs)" },
+      { field: "Tamaño máximo del panel", value: "3,65 x 1,20 m", support: "SOLO GYPS | DRYWALL PANEL SIZE CAPACITY | 365 cm x 120 cm" }
+    ]
+  },
+  {
+    url: "https://www.gregorypoolelift.com/new-equipment/aerial-lifts/3394rt/", brand: "JLG", model: "3394RT",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Altura de plataforma", value: "10,06 m", support: "JLG 3394RT | Platform Height | 10.06 m" },
+      { field: "Anchura (mm)", value: "2,39 m", support: "JLG 3394RT | Machine Width | 2.39 m" },
+      { field: "Anchura de plataforma", value: "2,18 m", support: "JLG 3394RT | Platform Width | 2.18 m" },
+      { field: "Longitud de plataforma", value: "3,81 m", support: "JLG 3394RT | Platform Length | 3.81 m" }
+    ]
+  },
+  {
+    url: "https://www.lectura-specs.es/es/modelo/plataformas-elevadoras/plataformas-elevadoras-articuladas-plataformas-articuladas-de-ruedas-manitou/160-atj-11680545", brand: "Manitou", model: "160ATJ",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Anchura (mm)", value: "2,30 m", support: "Manitou 160 ATJ | Transport width | 2.3 m" },
+      { field: "Anchura de plataforma", value: "0,8 m", support: "Manitou 160 ATJ | Platform width | 0.8 m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "Manitou 160 ATJ | Platform capacity | 230 kg" },
+      { field: "Longitud de plataforma", value: "1,80 m", support: "Manitou 160 ATJ | Platform length | 1.8 m" }
+    ]
+  },
+  {
+    url: "https://www.lectura-specs.es/es/modelo/plataformas-elevadoras/plataformas-telescopicas/plataformas-telescopicas-de-ruedas-jlg/660sj-1157114", brand: "JLG", model: "660SJ",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "17,3 m", support: "JLG 660SJ | Max. Reach horizontal | 17.3 m" },
+      { field: "Anchura (mm)", value: "2,49 m", support: "JLG 660SJ | Transport width | 2.49 m" },
+      { field: "Capacidad máxima de plataforma", value: "230 kg", support: "JLG 660SJ | Net load | 230 kg" }
+    ]
+  },
+  {
+    url: "https://www.gtaccess.co.uk/machine/genie-s125", brand: "Genie", model: "S-125",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "24,38 m", support: "Genie S-125 | Max. horizontal outreach | 24.38 m" },
+      { field: "Capacidad máxima de plataforma", value: "227 kg", support: "Genie S-125 | Safe working load | 227 kg" }
+    ]
+  },
+  {
+    url: "https://www.afi-rentals.co.uk/news/wilson-access-continues-fleet-investment-with-four-new-cte-zed-213-jhv-truck-mounts", brand: "CTE", model: "ZED 21.3 JHV",
+    reviewedOn: "2026-11-21", facts: [
+      { field: "Alcance horizontal (m)", value: "10 m", support: "CTE ZED 21.3 JHV | Horizontal outreach | 10 m" }
+    ]
+  }
+];
+
+const claimHash = (document: ReviewedModelDocument, fact: ReviewedModelFact): string =>
+  technicalDocumentClaimSha256(document, fact.field, fact.value, document.reviewedOn, fact.support);
+
+export const reviewedModelDocumentVerification = (
+  document: TechnicalDocumentReference, field: string, value: string
+): TechnicalDocumentVerification | null => {
+  const matches = documents.filter((entry) => entry.url === document.url &&
+    entry.brand === document.brand && entry.model === document.model).flatMap((entry) =>
+    entry.facts.filter((fact) => fact.field === field && fact.value === value).map((fact) => ({ entry, fact })));
+  if (matches.length > 1) throw new Error("Acreditación documental repetida");
+  const matched = matches[0];
+  if (!matched) return null;
+  return { kind: "reviewed-model-fact", reviewedOn: matched.entry.reviewedOn,
+    support: matched.fact.support, claimSha256: claimHash(matched.entry, matched.fact) };
+};
+
+export const reviewedModelDocumentClaims = (): readonly {
+  readonly document: TechnicalDocumentReference;
+  readonly field: string;
+  readonly value: string;
+  readonly verification: TechnicalDocumentVerification;
+}[] => documents.flatMap((entry) => entry.facts.map((fact) => ({
+  document: { url: entry.url, brand: entry.brand, model: entry.model },
+  field: fact.field, value: fact.value,
+  verification: { kind: "reviewed-model-fact", reviewedOn: entry.reviewedOn,
+    support: fact.support, claimSha256: claimHash(entry, fact) }
+})));

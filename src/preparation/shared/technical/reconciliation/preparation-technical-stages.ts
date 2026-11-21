@@ -9,6 +9,7 @@ import { reconcileGamVerifiedReviewClaims } from "../../../gam/technical/models/
 import { reconcileGamVerifiedListing } from "../../../gam/technical/models/gam-verified-listing-reconciliation.js";
 import { reconcileGamVerifiedSourceClaims } from "../../../gam/technical/models/gam-verified-source-claims.js";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
+import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
 import { reconcileGamInitialTechnicalEvidence, reconcileGamTechnicalIdentity, reconcileGamTechnicalBeforeEditorial, reconcileGamTechnicalCapacities, reconcileGamTechnicalMeasurements, normalizeGamTechnicalSpecs } from "../../../gam/technical/reconciliation/preparation-technical-stages.js";
 import { reconcileMercaelevaInitialTechnicalEvidence, reconcileMercaelevaSourceFamily, reconcileMercaelevaSourceTechnicalSpecs, reconcileMercaelevaTechnicalBeforeEditorial, reconcileMercaelevaTechnicalCapacity, reconcileMercaelevaTechnicalCorroboratedCapacity, sanitizeMercaelevaTechnicalSpecs } from "../../../mercaeleva/technical/reconciliation/preparation-technical-stages.js";
 import { reconcileGomarizDocumentedWeight } from "../../../gomariz/technical/evidence/documented-weight.js";
@@ -50,8 +51,8 @@ export const reconcileTechnicalSourceForRecovery = (record: ProductRecord): Prod
     reconcileMercaelevaSourceTechnicalSpecs(record))));
 };
 
-export const reconcileTechnicalBeforeEditorial = (record: ProductRecord): ProductRecord =>
-  reconcileMercaelevaTechnicalBeforeEditorial(reconcileGamTechnicalBeforeEditorial(record));
+export const reconcileTechnicalBeforeEditorial = (record: ProductRecord, observe?: TechnicalRecoveryObservation): ProductRecord =>
+  reconcileMercaelevaTechnicalBeforeEditorial(reconcileGamTechnicalBeforeEditorial(record, observe));
 
 export const reconcileTechnicalAfterEditorial = (record: ProductRecord): ProductRecord => {
   record = reconcileMercaelevaTechnicalCapacity(record);
@@ -61,5 +62,6 @@ export const reconcileTechnicalAfterEditorial = (record: ProductRecord): Product
   return reconcileGamTechnicalMeasurements(record);
 };
 
-export const normalizePreparedTechnicalSpecs = (record: ProductRecord, specs: SpecsMap): SpecsMap =>
-  normalizeGamTechnicalSpecs(record, sanitizeMercaelevaTechnicalSpecs(record, specs));
+export const normalizePreparedTechnicalSpecs = (
+  record: ProductRecord, specs: SpecsMap, observe?: TechnicalRecoveryObservation
+): SpecsMap => normalizeGamTechnicalSpecs(record, sanitizeMercaelevaTechnicalSpecs(record, specs), observe);

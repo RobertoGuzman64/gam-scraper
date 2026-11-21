@@ -1,3 +1,4 @@
+import type { ProductTechnicalProvenance } from "../../contracts/technical-provenance.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 import type { CommercialDeliveryProduct } from "../../commercial/export/commercial-export.js";
@@ -31,12 +32,19 @@ export const toExplorerProduct = (
   providerId: PanelProviderId, reference: string | null, sourceUrl: string, original: ProductRecord | null,
   published: ImportCandidate | null, commercial: CommercialDeliveryProduct | null, decision: PanelProductDecision | null,
   evidence: PanelProviderEvidence, accreditation: { readonly path: string; readonly sha256: string },
-  knowledge: PanelUnitKnowledgeEvidence | null, audit: SpecAdditionAudit | null
+  knowledge: PanelUnitKnowledgeEvidence | null, audit: SpecAdditionAudit | null,
+  emitted: ProductTechnicalProvenance | null = null
 ): PanelExplorerProduct => {
   const before = original ? fromOriginal(original) : null;
   const after = published ? fromPublication(published) : null;
   const exported = commercial ? fromCommercial(commercial) : null;
   const changes = before && after ? compareOriginalToPublished(before, after) : [];
+  if (emitted && emitted.entries.some((entry) => !changes.some((difference) =>
+    difference.group === "technical" && difference.change === "added" &&
+    difference.field === entry.field && difference.after === entry.value))) {
+    throw new Error("Evidencia productiva incompatible con especificaciones publicadas");
+  }
+  const provenance = resolvePanelFieldProvenance(original, after, changes, evidence, knowledge, reference, sourceUrl, emitted);
   return {
     identity: productIdentity(providerId, reference, sourceUrl), providerId, reference, sourceUrl,
     stage: !published ? "editorial-excluded" : !commercial ? "commercial-excluded" : "commercial",
@@ -44,8 +52,8 @@ export const toExplorerProduct = (
       exported?.category ?? after?.category ?? before?.category ?? null,
     original: before, published: after, commercial: exported,
     changes,
-    specAdditions: classifySpecAdditions(changes, evidence, reference, sourceUrl, audit),
-    provenance: resolvePanelFieldProvenance(original, after, changes, evidence, knowledge, reference, sourceUrl),
+    specAdditions: classifySpecAdditions(changes, evidence, reference, sourceUrl, audit, original, provenance),
+    provenance,
     commercialChanges: after && exported ? comparePublishedToCommercial(after, exported) : [],
     commercialTechnicalChanges: after && exported ? compareTechnicalFields(after.specs, exported.specs, "commercial") : [],
     decision,

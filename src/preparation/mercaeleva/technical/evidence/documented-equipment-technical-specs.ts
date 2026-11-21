@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
+import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
 import { validMercaelevaTechnicalSource } from "../mapping/technical.js";
 
 type DocumentedUnit = {
@@ -284,7 +285,7 @@ const sourceFingerprint = (record: ProductRecord): string => createHash("sha256"
   specs: record.specs,
 })).digest("hex");
 
-export const recoverMercaelevaDocumentedEquipmentTechnicalSpecs = (record: ProductRecord, specs: SpecsMap): SpecsMap => {
+export const recoverMercaelevaDocumentedEquipmentTechnicalSpecs = (record: ProductRecord, specs: SpecsMap, observe?: TechnicalRecoveryObservation): SpecsMap => {
   if (!validMercaelevaTechnicalSource(record) || record.categoryKey !== "venta" ||
     record.condition !== "Segunda mano" || !record.reference || !record.specs ||
     !record.year || !record.url.endsWith(`-${record.reference}`) ||
@@ -297,5 +298,8 @@ export const recoverMercaelevaDocumentedEquipmentTechnicalSpecs = (record: Produ
     record.specs["Título adicional"] !== unit.title ||
     Object.keys(unit.specifications).some((key) => key in specs)) return specs;
 
-  return { ...specs, ...unit.specifications };
+  const recovered = { ...specs, ...unit.specifications };
+  observe?.(specs, recovered, "src/preparation/mercaeleva/technical/evidence/documented-equipment-technical-specs.ts",
+    undefined, { scope: "unit-document", document: { url: unit.source, brand: unit.brand, model: unit.model } });
+  return recovered;
 };

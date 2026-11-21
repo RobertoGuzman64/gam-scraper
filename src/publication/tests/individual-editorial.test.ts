@@ -14,6 +14,8 @@ import test, { after } from "node:test";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../contracts/scraping.js";
 import { prepareSavedCatalog } from "../../preparation/workflow/prepare.js";
+import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
+import { readPublicationTechnicalProvenance } from "../../panel/evidence/read-technical-provenance.js";
 import { writeOutputs } from "../../scraping/output/publish.js";
 import { selectIndividualPublishable, readIndividualSelection } from "../individual-selection.js";
 import {
@@ -210,7 +212,7 @@ test("entrega individual guarda JSON exacto, acreditación y manifiesto sin sobr
     assert.ok(manifest && typeof manifest === "object" && "approvalSha256" in manifest);
     assert.equal(manifest.approvalSha256, sha256(approvalText));
     assert.deepEqual((await readdir(delivered.publicationDirectory)).sort(),
-      ["accreditation.json", "gam-publishable.json", "manifest.json"]);
+      ["accreditation.json", "gam-publishable.json", "manifest.json", "technical-provenance.json"]);
     assert.equal((await deliverIndividualProvider(options, "verify")).status, "verified");
     assert.equal((await deliverIndividualProvider(options)).status, "verified");
     await assert.rejects(readdir(join(options.rootDirectory, "catalogs", "campaigns")), /ENOENT/);
@@ -450,4 +452,47 @@ test("el cierre definitivo no elige una publicación entre históricos sin selec
     assert.match(result.blockers[0] ?? "", /selección inicial inequívoca/);
     await assert.rejects(readFile(join(dirname(directory), "active.json")), /ENOENT/);
   }, "approved");
+});
+
+
+test("fase 17: la publicación individual conserva las trazas del motor sin alterar el producto comercial", async () => {
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-provenance-publication-"));
+  const options = optionsFor(root);
+  const original = { ...machine("77777", null), specs: {}, longDescription: "La altura de trabajo: 12 m." };
+  const result: CategoryScrapeResult = {
+    category, discoveredProductUrls: 1, products: [original], failures: []
+  };
+  try {
+    const now = new Date().toISOString();
+    await writeOutputs(join(root, "original"), "catalogo-ejemplo", [result], now, now);
+    await prepareSavedCatalog({ providerId: "gam", source: options.catalogFile,
+      out: options.preparationFile, dryRun: false, compare: null });
+    const preparation = await readOfflinePreparation(options.preparationFile, "gam");
+    assert.equal(preparation.products.length, 1);
+    assert.equal(preparation.products[0]?.technicalProvenance?.entries.length, 1);
+    const started = await startIndividualEditorial(options);
+    assert.equal(started.accreditation.exclusions.length, 0);
+    await approveIndividualEditorial(options, "Fuente y valor individual comprobados");
+    const published = await deliverIndividualProvider(options);
+    const productRaw = await readFile(published.productFile, "utf8");
+    const product: unknown = JSON.parse(productRaw);
+    assert.ok(Array.isArray(product));
+    const first: unknown = product[0];
+    assert.ok(first && typeof first === "object" && "spec" in first && first.spec && typeof first.spec === "object");
+    assert.equal("Altura de trabajo (m)" in first.spec && first.spec["Altura de trabajo (m)"], "12 m");
+    assert.equal(productRaw.includes("technicalProvenance"), false);
+    const relative = published.productFile.slice(root.length + 1);
+    const lineage = await readPublicationTechnicalProvenance(root, relative, "gam", sha256(productRaw));
+    assert.ok(lineage);
+    assert.equal(lineage.products[0]?.technicalProvenance.entries[0]?.sourceField, "longDescription");
+    assert.equal((await deliverIndividualProvider(options, "verify")).status, "verified");
+    const evidenceFile = join(published.publicationDirectory, "technical-provenance.json");
+    const bytes = await readFile(evidenceFile, "utf8");
+    assert.equal(await readFile(evidenceFile, "utf8"), bytes);
+    await writeFile(evidenceFile, bytes.replace("12 m", "13 m"));
+    await assert.rejects(readPublicationTechnicalProvenance(root, relative, "gam", sha256(productRaw)), /modificada/);
+    await assert.rejects(deliverIndividualProvider(options, "verify"), /archivo alterado/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

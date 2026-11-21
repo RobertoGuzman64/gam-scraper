@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
+import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
 import { validMercaelevaTechnicalSource } from "../mapping/technical.js";
 
 const verifiedUnits: Readonly<Record<string, string>> = {
@@ -384,7 +385,7 @@ const profiles = [
   {
     brand: "JLG", model: "660SJ", workHeight: "22 m", motor: "Diesel",
     title: "PLATAFORMA TELESCOPICA DIESEL 22 MT",
-    source: "https://www.accesshire.net/specifications/telescopic_boom/diesel/JLG_Telescopic_Boom_Lift_660SJ_20150904.pdf",
+    source: "https://www.lectura-specs.es/es/modelo/plataformas-elevadoras/plataformas-telescopicas/plataformas-telescopicas-de-ruedas-jlg/660sj-1157114",
     specifications: { "Altura de plataforma": "20,31 m", "Alcance horizontal": "17,3 m", "Capacidad máxima de plataforma": "230 kg", "Anchura total": "2,49 m" }
   },
   {
@@ -402,7 +403,7 @@ const profiles = [
   {
     brand: "JLG", model: "3394RT", workHeight: "12 m", motor: "Diesel",
     title: "PLATAFORMA TIJERA DIESEL 12 MT",
-    source: "https://www.malarlift.se/wp-content/uploads/2013/04/JLGSpecifications-Guide-Diesel-Range-EN.pdf",
+    source: "https://www.gregorypoolelift.com/new-equipment/aerial-lifts/3394rt/",
     specifications: { "Altura de plataforma": "10,06 m", "Anchura total": "2,39 m", "Longitud de plataforma": "3,81 m", "Anchura de plataforma": "2,18 m" }
   },
   {
@@ -456,7 +457,7 @@ const profiles = [
   {
     brand: "Genie", model: "S-125", workHeight: "40 m", motor: "Diesel",
     title: "PLATAFORMA TELESCOPICA DIESEL 40 MT",
-    source: "https://www.hulleman.com/en/stock/genie-s-125-40-meter-227-kg-53046243.pdf",
+    source: "https://www.gtaccess.co.uk/machine/genie-s125",
     specifications: { "Altura de plataforma": "38,1 m", "Alcance horizontal": "24,38 m", "Capacidad máxima de plataforma": "227 kg", "Anchura con ejes recogidos": "2,5 m" }
   },
   {
@@ -486,7 +487,7 @@ const profiles = [
   {
     brand: "Manitou", model: "160ATJ", workHeight: "16 m", motor: "Diesel",
     title: "PLATAFORMA ARTICULADA DIESEL 16 MT",
-    source: "https://malarlift.se/wp-content/uploads/2013/04/160_163134140-Manitou-Diesel-Aerial-Work-Platforms-EN.pdf",
+    source: "https://www.lectura-specs.es/es/modelo/plataformas-elevadoras/plataformas-elevadoras-articuladas-plataformas-articuladas-de-ruedas-manitou/160-atj-11680545",
     specifications: { "Capacidad máxima de plataforma": "230 kg", "Anchura de plataforma": "0,8 m", "Anchura total": "2,30 m", "Longitud de plataforma": "1,80 m" }
   }
 ] as const;
@@ -504,7 +505,7 @@ const sourceFingerprint = (record: ProductRecord): string => createHash("sha256"
   specs: record.specs
 })).digest("hex");
 
-export const recoverMercaelevaDocumentedPlatformTechnicalSpecs = (record: ProductRecord, specs: SpecsMap): SpecsMap => {
+export const recoverMercaelevaDocumentedPlatformTechnicalSpecs = (record: ProductRecord, specs: SpecsMap, observe?: TechnicalRecoveryObservation): SpecsMap => {
   if (!validMercaelevaTechnicalSource(record) || record.categoryKey !== "venta" ||
     record.condition !== "Segunda mano" || !record.reference || !record.specs ||
     verifiedUnits[record.reference] !== sourceFingerprint(record) ||
@@ -525,5 +526,8 @@ export const recoverMercaelevaDocumentedPlatformTechnicalSpecs = (record: Produc
         : { "Altura de plataforma": "5,8 m", "Anchura total": "0,76 m" }) }
       : profile.specifications;
   if (Object.keys(documentedSpecs).some((key) => key in specs)) return specs;
-  return { ...specs, ...documentedSpecs };
+  const recovered = { ...specs, ...documentedSpecs };
+  observe?.(specs, recovered, "src/preparation/mercaeleva/technical/evidence/documented-platform-technical-specs.ts",
+    undefined, { scope: "model-document", document: { url: profile.source, brand: profile.brand, model: profile.model } });
+  return recovered;
 };

@@ -1,5 +1,6 @@
 import { applyDocumentedTechnicalEvidence } from "../../../shared/technical/evidence/documented-technical-evidence.js";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
+import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
 
 type DocumentedUnit = {
   readonly fingerprint: string;
@@ -42,5 +43,5 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
   }
 };
 
-export const recoverGamDocumentedElectricMobilityAndTruckAccessSpecs = (record: ProductRecord, specs: SpecsMap): SpecsMap =>
-  applyDocumentedTechnicalEvidence(record, specs, documentedUnits, { providerId: "gam", isEligible: (value) => value.url.startsWith("https://online.gamrentals.com/") });
+export const recoverGamDocumentedElectricMobilityAndTruckAccessSpecs = (record: ProductRecord, specs: SpecsMap, observe?: TechnicalRecoveryObservation): SpecsMap =>
+  applyDocumentedTechnicalEvidence(record, specs, documentedUnits, { providerId: "gam", isEligible: (value) => value.url.startsWith("https://online.gamrentals.com/") }, observe, "src/preparation/gam/technical/models/documented-electric-mobility-and-truck-access-specs.ts");

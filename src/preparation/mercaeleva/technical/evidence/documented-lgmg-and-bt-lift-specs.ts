@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
+import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
+import { observeDocumentedTechnicalAddition } from "../../../shared/technical/evidence/documented-technical-evidence.js";
 import { validMercaelevaTechnicalSource } from "../mapping/technical.js";
 
 type DocumentedUnit = {
@@ -118,7 +120,7 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
   }
 };
 
-export const recoverMercaelevaDocumentedLgmgAndBtLiftSpecs = (record: ProductRecord, specs: SpecsMap): SpecsMap => {
+export const recoverMercaelevaDocumentedLgmgAndBtLiftSpecs = (record: ProductRecord, specs: SpecsMap, observe?: TechnicalRecoveryObservation): SpecsMap => {
   if (record.providerId !== "mercaeleva" || record.categoryKey !== "venta" ||
     !record.reference || !record.specs ||
     !validMercaelevaTechnicalSource(record)) return specs;
@@ -127,5 +129,7 @@ export const recoverMercaelevaDocumentedLgmgAndBtLiftSpecs = (record: ProductRec
     record.categoryKey !== unit.categoryKey ||
     createHash("sha256").update(JSON.stringify(record)).digest("hex") !== unit.fingerprint ||
     Object.keys(unit.specifications).some((key) => key in specs)) return specs;
-  return { ...specs, ...unit.specifications };
+  const result = { ...specs, ...unit.specifications };
+  observeDocumentedTechnicalAddition(record, specs, result, unit.source, "src/preparation/mercaeleva/technical/evidence/documented-lgmg-and-bt-lift-specs.ts", observe);
+  return result;
 };

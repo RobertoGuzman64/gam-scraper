@@ -1,4 +1,5 @@
 import type { ImportCandidate } from "../commercial/legacy-export/contracts.js";
+import { isProductTechnicalProvenance } from "../contracts/technical-provenance.js";
 import type { PreparedProduct } from "./contracts.js";
 
 export type PreparationDocument = {
@@ -63,6 +64,7 @@ export const parsePreparation = (input: unknown, providerId: string): Preparatio
     if (!isRecord(entry) || !["ready", "review"].includes(String(entry.status)) ||
       !Array.isArray(entry.issues) || !entry.issues.every((issue: unknown) => typeof issue === "string") ||
       (entry.importIssues !== undefined && !isImportIssues(entry.importIssues)) ||
+      (entry.technicalProvenance !== undefined && !isProductTechnicalProvenance(entry.technicalProvenance)) ||
       !isCandidate(entry.product) || entry.product.providerId !== providerId) {
       throw new Error("El informe de preparación no coincide con el proveedor o contiene productos inválidos");
     }

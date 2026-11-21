@@ -1,5 +1,6 @@
 import { applyDocumentedTechnicalEvidence, type DocumentedTechnicalUnit } from "../../../shared/technical/evidence/documented-technical-evidence.js";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
+import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
 
 const documentedUnits: Readonly<Record<string, DocumentedTechnicalUnit>> = {
   "3993": {
@@ -184,9 +185,9 @@ const documentedUnits: Readonly<Record<string, DocumentedTechnicalUnit>> = {
   }
 };
 
-export const recoverGamDocumentedSourcePerformanceSpecs = (record: ProductRecord, specs: SpecsMap): SpecsMap =>
+export const recoverGamDocumentedSourcePerformanceSpecs = (record: ProductRecord, specs: SpecsMap, observe?: TechnicalRecoveryObservation): SpecsMap =>
   applyDocumentedTechnicalEvidence(record, specs, documentedUnits, {
     providerId: "gam",
     isEligible: (value) => value.url.startsWith("https://online.gamrentals.com/es/"),
     exactTitleAndUrl: true
-  });
+  }, observe, "src/preparation/gam/technical/models/documented-source-performance-specs.ts");

@@ -1,3 +1,4 @@
+import type { TechnicalDocumentReference, TechnicalDocumentVerification } from "../../contracts/technical-provenance.js";
 import type { SpecValue } from "../../contracts/catalog.js";
 import type { PanelArtifact, PanelProviderId } from "../evidence/types.js";
 
@@ -34,13 +35,15 @@ export type PanelFieldProvenance = {
   readonly status: "source-compatible" | "mechanism-compatible" | "observed-only";
   readonly publicationSha256: string;
   readonly originalSha256: string | null;
-  readonly scope: "unit" | "unknown";
+  readonly scope: "unit" | "unknown" | "model-document" | "unit-document" | "document-reference";
+  readonly document?: TechnicalDocumentReference;
+  readonly verification?: TechnicalDocumentVerification;
   readonly sourceField: string | null;
   readonly sourceValue: string | null;
   readonly proof: PanelArtifact | null;
   readonly sourceDigest: string | null;
   readonly mechanism: string | null;
-  readonly historicalApplication: "not-demonstrated";
+  readonly historicalApplication: "not-demonstrated" | "demonstrated";
 };
 
 export type PanelSpecAddition = {

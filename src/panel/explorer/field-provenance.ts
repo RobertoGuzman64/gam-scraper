@@ -1,3 +1,5 @@
+import type { ProductTechnicalProvenance } from "../../contracts/technical-provenance.js";
+import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js";
 import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
 import { normalizeSpecKey, normalizeSpecsObject } from "../../catalog/normalization/normalize-specs.js";
 import type { PanelArtifact, PanelProviderEvidence } from "../evidence/types.js";
@@ -5,6 +7,8 @@ import { isSha } from "../evidence/evidence-files.js";
 import { matchingPanelUnitKnowledge } from "../evidence/knowledge-evidence.js";
 import type { PanelUnitKnowledgeEvidence } from "../evidence/knowledge-evidence.js";
 import type { PanelFieldDifference, PanelFieldProvenance, PanelProductView } from "./types.js";
+import { sourceYearEvidence } from "./source-year-evidence.js";
+import { sourceTechnicalEvidence } from "./source-technical-evidence.js";
 
 const display = (value: SpecValue | undefined): string | null =>
   value === undefined ? null : typeof value === "string" ? value : JSON.stringify(value);
@@ -57,11 +61,12 @@ const findTechnical = (
     }
   }
 
-  if (difference.change === "added" && original.yearSource === "ficha" &&
-    original.year && /^(?:19|20)\d{2}$/u.test(original.year.trim()) &&
-    difference.field === normalizeSpecKey("Año de fabricación") &&
-    difference.after === original.year.trim() && sourceKeys.length === 0) {
-    return withSource(difference, "source-compatible", "year", original.year, sourceArtifact, null, null, provider);
+  const yearEvidence = difference.change === "added"
+    ? sourceYearEvidence(original, difference.field, difference.after) ??
+      sourceTechnicalEvidence(original, difference.field, difference.after) : null;
+  if (yearEvidence) {
+    return withSource(difference, "source-compatible", yearEvidence.sourceField,
+      yearEvidence.sourceValue, sourceArtifact, yearEvidence.mechanism, null, provider);
   }
   return null;
 };
@@ -69,17 +74,51 @@ const findTechnical = (
 export const resolvePanelFieldProvenance = (
   original: ProductRecord | null, published: PanelProductView | null,
   differences: readonly PanelFieldDifference[], provider: PanelProviderEvidence,
-  knowledge: PanelUnitKnowledgeEvidence | null, reference: string | null, sourceUrl: string
+  knowledge: PanelUnitKnowledgeEvidence | null, reference: string | null, sourceUrl: string,
+  emitted: ProductTechnicalProvenance | null = null
 ): readonly PanelFieldProvenance[] => {
   if (!published) return [];
   const sourceArtifact = provider.original.status === "verified" ? provider.original.artifact : null;
   const eligible = original !== null && sourceArtifact !== null &&
     original.providerId === provider.providerId && original.reference === reference &&
     original.url === sourceUrl && isSha(provider.publication.sha256) && isSha(sourceArtifact.sha256);
+  if (emitted && original && originalRecordFingerprint(original) !== emitted.originalRecordSha256) {
+    throw new Error("Procedencia productiva no corresponde al original del producto");
+  }
   return differences.filter((difference) => difference.change !== "unchanged").map((difference) => {
     if (!eligible || !original || !sourceArtifact || difference.group === "commercial" ||
       difference.change === "ambiguous") return noAttribution(difference, provider);
     if (difference.group === "technical") {
+      if (emitted) {
+        const source = emitted.entries.find((entry) => entry.field === difference.field && entry.value === difference.after);
+        if (source?.scope === "unit" && !(
+          source.sourceField === "year" && original.year === source.sourceValue ||
+          source.sourceField === "longDescription" && original.longDescription === source.sourceValue ||
+          source.sourceField !== "longDescription" && source.sourceField !== "year" &&
+            original.specs?.[source.sourceField] === source.sourceValue
+        )) throw new Error("La fuente de procedencia emitida no coincide con la ficha original");
+        if (source && difference.change === "added" &&
+          (source.scope === "model-document" || source.scope === "unit-document" ||
+            source.scope === "document-reference")) {
+          if (source.document.brand !== original.brand || source.document.model !== original.model) {
+            throw new Error("La fuente documental emitida no corresponde al modelo original");
+          }
+          return { ...noAttribution(difference, provider), status: "mechanism-compatible",
+            scope: source.scope, mechanism: source.mechanism, document: source.document,
+            ...(source.verification ? { verification: source.verification } : {}),
+            historicalApplication: "demonstrated" };
+        }
+        if (source && difference.change === "added" &&
+          (source.scope !== "unit" || source.sourceField === "year" && original.year === source.sourceValue ||
+            source.sourceField === "longDescription" && original.longDescription === source.sourceValue ||
+          source.sourceField !== "longDescription" && source.sourceField !== "year" &&
+            original.specs?.[source.sourceField] === source.sourceValue)) {
+          return { ...withSource(difference, source.scope === "unit" ? "source-compatible" : "mechanism-compatible",
+            source.sourceField ?? "", source.sourceValue ?? "", sourceArtifact,
+            source.mechanism, null, provider), scope: source.scope, historicalApplication: "demonstrated" };
+        }
+        return noAttribution(difference, provider);
+      }
       return findTechnical(original, published, difference, sourceArtifact, provider) ?? noAttribution(difference, provider);
     }
     const field = textualField[difference.field];

@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
+import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
+import { observeDocumentedTechnicalAddition } from "../../../shared/technical/evidence/documented-technical-evidence.js";
 
 type DocumentedLogitransUnit = {
   readonly fingerprint: string;
@@ -239,12 +241,14 @@ const documentedUnits: Readonly<Record<string, DocumentedLogitransUnit>> = {
   }
 };
 
-export const recoverGamDocumentedLogitransHandlingSpecs = (record: ProductRecord, specs: SpecsMap): SpecsMap => {
+export const recoverGamDocumentedLogitransHandlingSpecs = (record: ProductRecord, specs: SpecsMap, observe?: TechnicalRecoveryObservation): SpecsMap => {
   if (record.providerId !== "gam" || record.condition !== "Nuevo" || !record.reference ||
     !record.url.startsWith("https://online.gamrentals.com/es/") || !record.specs) return specs;
   const unit = documentedUnits[record.reference];
   if (!unit || record.categoryKey !== unit.categoryKey || record.brand !== unit.brand ||
     record.model !== unit.model || createHash("sha256").update(JSON.stringify(record)).digest("hex") !== unit.fingerprint ||
     Object.keys(unit.specifications).some((key) => key in specs)) return specs;
-  return { ...specs, ...unit.specifications };
+  const result = { ...specs, ...unit.specifications };
+  observeDocumentedTechnicalAddition(record, specs, result, unit.source, "src/preparation/gam/technical/models/documented-logitrans-handling-specs.ts", observe);
+  return result;
 };

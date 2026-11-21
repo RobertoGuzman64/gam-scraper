@@ -1,5 +1,6 @@
 import { applyDocumentedTechnicalEvidence } from "../../../shared/technical/evidence/documented-technical-evidence.js";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
+import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
 import { validMercaelevaTechnicalSource } from "../mapping/technical.js";
 
 type DocumentedUnit = {
@@ -35,5 +36,5 @@ const documentedUnits: Readonly<Record<string, DocumentedUnit>> = {
   }
 };
 
-export const recoverMercaelevaDocumentedJlgSl203204Specs = (record: ProductRecord, specs: SpecsMap): SpecsMap =>
-  applyDocumentedTechnicalEvidence(record, specs, documentedUnits, { providerId: "mercaeleva", isEligible: (value) => validMercaelevaTechnicalSource(value), exactTitleAndUrl: true });
+export const recoverMercaelevaDocumentedJlgSl203204Specs = (record: ProductRecord, specs: SpecsMap, observe?: TechnicalRecoveryObservation): SpecsMap =>
+  applyDocumentedTechnicalEvidence(record, specs, documentedUnits, { providerId: "mercaeleva", isEligible: (value) => validMercaelevaTechnicalSource(value), exactTitleAndUrl: true }, observe, "src/preparation/mercaeleva/technical/evidence/documented-jlg-sl203-204-specs.ts");

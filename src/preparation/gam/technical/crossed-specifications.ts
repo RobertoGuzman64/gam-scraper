@@ -1,4 +1,5 @@
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
+import type { TechnicalRecoveryObservation } from "../../technical-recovery-observation.js";
 import type { Attribute, Candidate } from "../../shared/classification/mapping/attribute-types.js";
 import { fold } from "../../shared/classification/mapping/attribute-utils.js";
 
@@ -117,12 +118,22 @@ const matchesSourceReference = (record: ProductRecord): boolean => {
   }
 };
 
-export const recoverGamCrossedTechnicalSpecs = (record: ProductRecord): SpecsMap => {
+export const recoverGamCrossedTechnicalSpecs = (record: ProductRecord, observe?: TechnicalRecoveryObservation): SpecsMap => {
   const source = record.specs ?? {};
   if (!matchesSourceReference(record)) return source;
+  const observeSourceField = (field: string, value: SpecsMap[string], originalField: string): void => {
+    const raw = source[originalField];
+    if (typeof raw === "string" && value !== undefined) {
+      observe?.(source, { ...source, [field]: value },
+        "src/preparation/gam/technical/crossed-specifications.ts", { spec: originalField });
+    }
+  };
   const stacker = gamMislabelledStacker(record);
   if (stacker !== null) {
     const { "Centro de carga": _center, "Radio de giro": _turning, "Capacidad de la batería": _capacity, ...remaining } = source;
+    observeSourceField("Altura de elevación (mm)", `${stacker.height} mm`, "Centro de carga");
+    observeSourceField("Peso", `${stacker.weight} kg`, "Capacidad de la batería");
+    observeSourceField("Batería (V / Ah)", stacker.battery, "Radio de giro");
     return {
       ...remaining,
       "Altura de elevación (mm)": `${stacker.height} mm`,
@@ -133,6 +144,7 @@ export const recoverGamCrossedTechnicalSpecs = (record: ProductRecord): SpecsMap
   const lift = gamMislabelledOrderPickerLift(record);
   if (lift !== null) {
     const { "Centro de carga": _center, ...remaining } = source;
+    observeSourceField("Altura de elevación (mm)", `${lift} mm`, "Centro de carga");
     return { ...remaining, "Altura de elevación (mm)": `${lift} mm` };
   }
   if (source["Batería (V / Ah)"] !== undefined) return source;
@@ -144,7 +156,9 @@ export const recoverGamCrossedTechnicalSpecs = (record: ProductRecord): SpecsMap
   }
   if (battery === null) return source;
   const { "Altura Plataforma": _height, "Capacidad de la batería": _capacity, ...remaining } = source;
-  return { ...remaining, "Batería (V / Ah)": gamCrossedBatteryValue(battery) ?? battery };
+  const recoveredBattery = gamCrossedBatteryValue(battery) ?? battery;
+  observeSourceField("Batería (V / Ah)", recoveredBattery, "Altura Plataforma");
+  return { ...remaining, "Batería (V / Ah)": recoveredBattery };
 };
 
 export const applyGamCrossedSpecifications = (
