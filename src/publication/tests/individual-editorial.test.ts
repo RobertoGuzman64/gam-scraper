@@ -20,6 +20,7 @@ import { writeOutputs } from "../../scraping/output/publish.js";
 import { selectIndividualPublishable, readIndividualSelection } from "../individual-selection.js";
 import {
   approveIndividualEditorial, decideIndividualEditorial, inspectIndividualEditorial,
+  inspectIndividualEditorialIfExists, readIndividualEditorialState,
   prepareIndividualEditorialProposals, startIndividualEditorial
 } from "../individual-editorial.js";
 import type { IndividualEditorialOptions } from "../individual-editorial.js";
@@ -167,6 +168,23 @@ test("acreditación individual no reutiliza borradores manipulados o preparacion
     await writeFile(options.preparationFile, (await readFile(options.preparationFile, "utf8")).replace("11111", "99999"));
     await assert.rejects(inspectIndividualEditorial(options), /Manifest/);
   });
+});
+
+test("FINISH reutiliza una selección ya validada sin omitir inspecciones editoriales", async () => {
+  await fixture(async (options) => {
+    const selection = await readIndividualSelection(options.providerId, options.catalogFile, options.preparationFile);
+    const expected = await inspectIndividualEditorialIfExists(options);
+    const reused = await inspectIndividualEditorialIfExists(options, selection);
+    assert.deepEqual(reused, expected);
+    const state = await readIndividualEditorialState(options, selection);
+    assert.equal(state.draftFile, expected?.draftFile);
+    assert.deepEqual(state.inspection, expected?.inspection);
+    assert.equal(state.accreditation.approved, true);
+    await assert.rejects(inspectIndividualEditorialIfExists(options, { ...selection, providerId: "gomariz" }),
+      /selección de otro proveedor/);
+    await writeFile(state.draftFile, state.raw.replace('"reference": "11111"', '"reference": "99999"'));
+    await assert.rejects(inspectIndividualEditorialIfExists(options, selection), /caducada/);
+  }, "approved");
 });
 
 test("la acreditación individual no crea borrador por consultas antes del inicio", async () => {

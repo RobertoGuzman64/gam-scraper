@@ -94,7 +94,7 @@ const inspected = async (
     const selectionContext = await readIndividualSelection(context.providerId, context.options.catalogFile, context.options.preparationFile);
     if (planned.runId !== selectionContext.runId) throw new Error(`${context.providerId}: preparación cambiada durante el preflight`);
     const raw = context.existing?.inspection.approved
-      ? (await readIndividualEditorialState(context.options)).raw
+      ? (await readIndividualEditorialState(context.options, selectionContext)).raw
       : JSON.stringify(planned, null, 2);
     const selection = selectIndividualPublishable(selectionContext, raw);
     const approvalSha256 = sha256(raw);

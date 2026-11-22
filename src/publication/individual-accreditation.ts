@@ -81,7 +81,7 @@ export const preflightIndividualAccreditations = async (
         catalogFile: preparation.sourceFile, preparationFile: preparation.preparationFile
       };
       const selection = await readIndividualSelection(providerId, options.catalogFile, options.preparationFile);
-      const existing = await inspectIndividualEditorialIfExists(options);
+      const existing = await inspectIndividualEditorialIfExists(options, selection);
       const antecedents = await historicalExclusions(preparation.activeFile, providerId);
       checked.push({ providerId, options, expected: selection.draft, existing,
         proposed: proposeIndividualExclusions(selection.draft), antecedents });

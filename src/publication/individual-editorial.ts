@@ -98,9 +98,12 @@ export const startIndividualEditorial = async (options: IndividualEditorialOptio
   return inspectIndividualEditorial(options);
 };
 
-export const readIndividualEditorialState = async (options: IndividualEditorialOptions) => {
+export const readIndividualEditorialState = async (
+  options: IndividualEditorialOptions, validatedSelection?: IndividualSelectionContext
+) => {
   await assertEditorialDirectory(options, false);
-  const context = await contextFor(options);
+  const context = validatedSelection ?? await contextFor(options);
+  if (context.providerId !== options.providerId) throw new Error("Acreditación individual: selección de otro proveedor");
   const draftFile = draftPath(options, context);
   let metadata;
   try { metadata = await lstat(draftFile); }
@@ -122,12 +125,16 @@ export const readIndividualEditorialState = async (options: IndividualEditorialO
 };
 
 export const inspectIndividualEditorialIfExists = async (
-  options: IndividualEditorialOptions
+  options: IndividualEditorialOptions, validatedSelection?: IndividualSelectionContext
 ): Promise<IndividualEditorialReview | null> => {
   await assertEditorialDirectory(options, false);
-  const context = await contextFor(options);
+  const context = validatedSelection ?? await contextFor(options);
+  if (context.providerId !== options.providerId) throw new Error("Acreditación individual: selección de otro proveedor");
   if (!await exists(draftPath(options, context))) return null;
-  return inspectIndividualEditorial(options);
+  if (!validatedSelection) return inspectIndividualEditorial(options);
+  const state = await readIndividualEditorialState(options, context);
+  return { runId: state.context.runId, draftFile: state.draftFile,
+    accreditation: state.accreditation, inspection: state.inspection };
 };
 
 export const inspectIndividualEditorial = async (options: IndividualEditorialOptions): Promise<IndividualEditorialReview> => {
