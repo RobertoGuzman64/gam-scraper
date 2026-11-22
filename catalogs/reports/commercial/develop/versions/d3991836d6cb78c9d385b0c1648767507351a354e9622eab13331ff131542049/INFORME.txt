@@ -1,11 +1,11 @@
 # EQUIPZILLA — Informe comercial de integración
 
-- Fecha del paquete (UTC): 2026-11-17
+- Fecha del paquete (UTC): 2026-11-22
 - Etapa de preparación: NO EJECUTADA por este comando.
 - Origen: publicaciones técnicas acreditadas seleccionadas como vigentes ANTES de la exportación; no son nuevas publicaciones generadas ahora.
 - Fecha de cada publicación de origen: NO DECLARADA por el contrato de publicación; no se deduce de la fecha del paquete.
 - Etapa de exportación: cuatro JSON generados desde esas publicaciones y sus referencias comerciales vigentes.
-- Huella comercial: 04ca6757ca3bec9d35cb76ba5b2158a848de55f954343c1f09161b3700ed7e8f
+- Huella comercial: 36ddb84ae544fb6e59e83a01102c1dd72af315dc166469d847a9cd8997a1d64a
 - Entorno: develop
 - Proveedores: GAM, GOMARIZ, MERCAELEVA
 - Integración en base de datos: NO VERIFICADO EN BD
@@ -13,20 +13,20 @@
 ## Resumen del corte
 
 - Fichas técnicas incluidas en las publicaciones: 1743; elegibles: 1733; excluidas: 10.
-- Categorizadas: 1356; pendientes de categoría: 377.
-- Atributos aceptados: 7534; con precio: 445; con logo: 1733; con companyID: 1733.
-- Excepciones registradas: 380; grupos de referencias visibles coincidentes entre productos exportados: 4.
+- Categorizadas: 1730; pendientes de categoría: 3.
+- Atributos aceptados: 9431; con precio: 445; con logo: 1733; con companyID: 1733.
+- Excepciones registradas: 6; grupos de referencias visibles coincidentes entre productos exportados: 4.
 - El recuento de origen corresponde a las fichas de la publicación técnica incluida; no acredita el total del catálogo original del proveedor.
 
 ## Archivos y trazabilidad por proveedor
 
 ### GAM — gam-commercial.json
 
-- Publicación técnica SHA256: 067879c5af7ca97f7ff84285297b72abfd6b2ca9a1f4cf9fbfc89f197cc16dfb
-- JSON SHA256: 26170020e22c7d5d108cc5e044bbc06e933cb162ddd42b86c329200137c4a4de; bytes UTF-8: 3316147.
+- Publicación técnica SHA256: e784ca065ca2fc9751e91daa85895af30a068dfbc7da1871d3b0daa1dcdc8793
+- JSON SHA256: 718ccefabc5248f875b549a1123cb5d1b5ea8049a6d39d5e9277fca4bd7a5e02; bytes UTF-8: 3294066.
 - Técnicas incluidas: 976; exportadas: 966; categorizadas: 966; pendientes: 0.
 - Exclusiones: 10 (lotes 7, herramientas 0, accesorios 3).
-- Atributos aceptados: 5130; con precio: 244; con logo: 966; con companyID: 966.
+- Atributos aceptados: 5128; con precio: 244; con logo: 966; con companyID: 966.
 - Excepciones: 3; grupos de referencias visibles coincidentes: 4.
 - Campos comerciales presentes: reference, categorySellID, attributes, price, companyID, logoID, image, images, metadata.
 
@@ -35,21 +35,21 @@ Señales y excepciones documentadas:
 
 ### GOMARIZ — gomariz-commercial.json
 
-- Publicación técnica SHA256: cdadea0ac7e2189de0789a502b51cdd8e2c364965575394d3d79d7df505ae875
-- JSON SHA256: 333ff94472a9f0b3f3c25dfcf525c6fe327b7b3900a62cba795039f54c154d61; bytes UTF-8: 2255957.
-- Técnicas incluidas: 546; exportadas: 546; categorizadas: 169; pendientes: 377.
+- Publicación técnica SHA256: c8b70bbc913368ec87cbb657a54d35864b97ee92f1ebb062c04d1a41cebf3c3b
+- JSON SHA256: 8a0f59fae6a30157c0421f3108f311e38505f245ba64c79022bff34d51848f64; bytes UTF-8: 2419027.
+- Técnicas incluidas: 546; exportadas: 546; categorizadas: 543; pendientes: 3.
 - Exclusiones: 0 (lotes 0, herramientas 0, accesorios 0).
-- Atributos aceptados: 1090; con precio: 0; con logo: 546; con companyID: 546.
-- Excepciones: 377; grupos de referencias visibles coincidentes: 0.
+- Atributos aceptados: 2989; con precio: 0; con logo: 546; con companyID: 546.
+- Excepciones: 3; grupos de referencias visibles coincidentes: 0.
 - Campos comerciales presentes: reference, categorySellID, attributes, price, companyID, logoID, image, images, metadata.
 
 Señales y excepciones documentadas:
-- sin-categoria: 377
+- sin-categoria: 3
 
 ### MERCAELEVA — mercaeleva-commercial.json
 
-- Publicación técnica SHA256: 0324792eab170bca23a60cd5ac771d93fe7caa532d0e0ffef345fab5b6e278d9
-- JSON SHA256: a6eb59e4ad01709dd9bf18f91f3a57aa50eb5fb73817bfaa1e01fa7f504ae082; bytes UTF-8: 1104741.
+- Publicación técnica SHA256: 38eae2f8ce86ce12bd6e899affaada9f351e6d35ef9391af58d6ee56daba4305
+- JSON SHA256: 509590ea3ddc970474aa2972afadae131d0e2d348d866340ba158350d054b78d; bytes UTF-8: 1104845.
 - Técnicas incluidas: 221; exportadas: 221; categorizadas: 221; pendientes: 0.
 - Exclusiones: 0 (lotes 0, herramientas 0, accesorios 0).
 - Atributos aceptados: 1314; con precio: 201; con logo: 221; con companyID: 221.

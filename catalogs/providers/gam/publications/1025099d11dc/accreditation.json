@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "runId": "individual-gam-30f4818bd3ba3a03f89c34e0bc14d0d7",
+  "runId": "individual-gam-f439b0153629e2c85628fbdd9a1f605a",
   "approved": true,
-  "approvalReason": "Se aprueban las siete exclusiones por incidencias tecnicas y editoriales documentadas no resueltas.",
+  "approvalReason": "Acreditación automática de exclusiones históricas coincidentes, con evidencia y preparación verificadas",
   "sources": [
     {
       "providerId": "gam",
       "catalogSha256": "855865e4a99f709cd9b10b68e77d594841b8cbd8c64b4fc9eb851cb397162483",
-      "preparationSha256": "3644b26b0c5161a291680b4b81995ff822fc2b3ec3585a9d2234dd56461fb0da",
+      "preparationSha256": "a887d26afbafe61ac72047e13fc3b59b4e05ebd950f3a66b6cd826b2976adbe5",
       "productCount": 983
     }
   ],

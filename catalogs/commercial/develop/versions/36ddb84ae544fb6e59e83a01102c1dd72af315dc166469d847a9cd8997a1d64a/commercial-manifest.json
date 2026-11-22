@@ -8,7 +8,7 @@
   "providers": [
     {
       "providerId": "gam",
-      "publicationSha256": "067879c5af7ca97f7ff84285297b72abfd6b2ca9a1f4cf9fbfc89f197cc16dfb",
+      "publicationSha256": "e784ca065ca2fc9751e91daa85895af30a068dfbc7da1871d3b0daa1dcdc8793",
       "originalCount": 976,
       "exported": 966,
       "categorized": 966,
@@ -16,39 +16,39 @@
       "excludedLots": 7,
       "excludedTools": 0,
       "excludedAccessories": 3,
-      "attributes": 5130,
+      "attributes": 5128,
       "withLogo": 966,
       "withPrice": 244,
       "withCompany": 966,
       "excluded": 10,
       "exceptions": 3,
       "file": "gam-commercial.json",
-      "sha256": "26170020e22c7d5d108cc5e044bbc06e933cb162ddd42b86c329200137c4a4de",
-      "bytes": 3316147
+      "sha256": "718ccefabc5248f875b549a1123cb5d1b5ea8049a6d39d5e9277fca4bd7a5e02",
+      "bytes": 3294066
     },
     {
       "providerId": "gomariz",
-      "publicationSha256": "cdadea0ac7e2189de0789a502b51cdd8e2c364965575394d3d79d7df505ae875",
+      "publicationSha256": "c8b70bbc913368ec87cbb657a54d35864b97ee92f1ebb062c04d1a41cebf3c3b",
       "originalCount": 546,
       "exported": 546,
-      "categorized": 169,
-      "pendingCategory": 377,
+      "categorized": 543,
+      "pendingCategory": 3,
       "excludedLots": 0,
       "excludedTools": 0,
       "excludedAccessories": 0,
-      "attributes": 1090,
+      "attributes": 2989,
       "withLogo": 546,
       "withPrice": 0,
       "withCompany": 546,
       "excluded": 0,
-      "exceptions": 377,
+      "exceptions": 3,
       "file": "gomariz-commercial.json",
-      "sha256": "333ff94472a9f0b3f3c25dfcf525c6fe327b7b3900a62cba795039f54c154d61",
-      "bytes": 2255957
+      "sha256": "8a0f59fae6a30157c0421f3108f311e38505f245ba64c79022bff34d51848f64",
+      "bytes": 2419027
     },
     {
       "providerId": "mercaeleva",
-      "publicationSha256": "0324792eab170bca23a60cd5ac771d93fe7caa532d0e0ffef345fab5b6e278d9",
+      "publicationSha256": "38eae2f8ce86ce12bd6e899affaada9f351e6d35ef9391af58d6ee56daba4305",
       "originalCount": 221,
       "exported": 221,
       "categorized": 221,
@@ -63,8 +63,8 @@
       "excluded": 0,
       "exceptions": 0,
       "file": "mercaeleva-commercial.json",
-      "sha256": "a6eb59e4ad01709dd9bf18f91f3a57aa50eb5fb73817bfaa1e01fa7f504ae082",
-      "bytes": 1104741
+      "sha256": "509590ea3ddc970474aa2972afadae131d0e2d348d866340ba158350d054b78d",
+      "bytes": 1104845
     }
   ]
 }

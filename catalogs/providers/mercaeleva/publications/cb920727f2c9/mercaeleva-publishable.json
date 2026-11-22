@@ -4455,8 +4455,7 @@
       "Altura de trabajo": "12 m",
       "Alcance horizontal": "6,78 m",
       "Capacidad máxima de plataforma": "227 kg",
-      "Longitud de plataforma": "0,76 m",
-      "Anchura de plataforma": "1,42 m"
+      "Longitud de plataforma": "0,76 m"
     },
     "attributes": []
   },
@@ -4492,8 +4491,7 @@
       "Condición general": "Bueno",
       "Tipo de motor": "Eléctrico",
       "Capacidad nominal de carga": "2000 kg",
-      "Tensión del sistema de batería": "24 V",
-      "Centro de carga": "600 mm"
+      "Tensión del sistema de batería": "24 V"
     },
     "attributes": []
   },
@@ -6393,7 +6391,7 @@
     "price": 8150,
     "description_title": "Transpaleta MB RPL201",
     "description": "Transpaleta eléctrica MB RPL201 de conductor montado, con capacidad de 2.000 kg, batería de litio de 24 V y 205 Ah y horquillas de 1.150 mm.",
-    "description_general": "La ficha técnica de transpaleta MB RPL201 indica capacidad de carga de 2.000 kg, voltaje declarado de 24 V y batería de ion-litio con capacidad declarada de 205 Ah; esta unidad consta con año de fabricación 2025 y 1 horas registradas. La descripción de origen declara dirección asistida. La transpaleta sirve para desplazar cargas paletizadas. No debe deducirse una capacidad de apilado a partir de la capacidad de transporte.",
+    "description_general": "La ficha técnica de transpaleta MB RPL201 indica capacidad de carga de 2.000 kg, voltaje declarado de 24 V y batería de ion-litio con capacidad declarada de 205 Ah; esta unidad consta con año de fabricación 2025 y 1 horas registradas. La descripción de origen declara dirección asistida. El texto del fabricante describe una solución con batería de litio y sus operaciones de recarga; los tiempos de autonomía y la batería concreta requieren comprobación por unidad. La transpaleta sirve para desplazar cargas paletizadas. No debe deducirse una capacidad de apilado a partir de la capacidad de transporte.",
     "image": "https://files2.machineric.com/clients/mercaeleva/machines/M168-3277/public/2026-02-07T07:57:05.216695635_2026-02-07T07:57:05.216654782Z_RPL201H.jpg",
     "images": [
       "https://files2.machineric.com/clients/mercaeleva/machines/M168-3277/public/2026-02-07T07:57:05.216695635_2026-02-07T07:57:05.216654782Z_RPL201H.jpg"

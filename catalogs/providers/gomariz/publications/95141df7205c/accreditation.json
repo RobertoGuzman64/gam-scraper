@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "runId": "individual-gomariz-0d37a531f6914b5077b4a5a06fedd880",
+  "runId": "individual-gomariz-cd308b04f3877885191c952250e24fe8",
   "approved": true,
-  "approvalReason": "Se aprueba la exclusion CA1459 por unidades de peso inconsistentes en la fuente.",
+  "approvalReason": "Acreditación automática de exclusiones históricas coincidentes, con evidencia y preparación verificadas",
   "sources": [
     {
       "providerId": "gomariz",
       "catalogSha256": "87e2fc58e39f9f00d7226e623ead5a154f933c3880b8503de2dc1a2375c3901b",
-      "preparationSha256": "8a3d79eb4dc4f383037471912c0b0437f6dfabcd770da2c716500b352a2bd923",
+      "preparationSha256": "cf2076ddd885fb74a5ab0cab4009233c86d9c8fa3c9513939e9630b3ab577580",
       "productCount": 547
     }
   ],
