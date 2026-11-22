@@ -5,8 +5,6 @@ import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js
 import { readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { readPortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
 import { readPanelSnapshot } from "../../panel/evidence/read-panel-snapshot.js";
-import { readPanelUnitKnowledge } from "../../panel/evidence/knowledge-evidence.js";
-import { resolvePanelFieldProvenance } from "./panel-field-provenance.js";
 import { readPublicationTechnicalProvenance } from "../../panel/evidence/read-technical-provenance.js";
 import { compareOriginalToPublished } from "../../panel/explorer/field-differences.js";
 import { productIdentity } from "../../panel/explorer/explorer-identity.js";
@@ -30,13 +28,11 @@ export const prepareExplorerTechnicalEvidence = async (workspace: string): Promi
     readonly providerId: string;
     readonly originalVerified: boolean;
     readonly additions: readonly { readonly field: string; readonly value: string }[];
-    readonly provenance: ExplorerTechnicalEvidenceCache["providers"][number]["products"][number]["provenance"];
   };
   type StagedProvider = Omit<ExplorerTechnicalEvidenceCache["providers"][number], "products"> & {
     readonly products: readonly StagedProduct[];
   };
   const staged: StagedProvider[] = [];
-  const knowledge = await readPanelUnitKnowledge(root);
   for (const provider of snapshot.providers) {
     const published = await readAccreditedPublication(resolve(root, provider.publication.path));
     if (published.sha256 !== provider.publication.sha256 || published.providerId !== provider.providerId) {
@@ -74,8 +70,7 @@ export const prepareExplorerTechnicalEvidence = async (workspace: string): Promi
       if (original && publishedTrace && originalRecordFingerprint(original) !== publishedTrace.originalRecordSha256) {
         throw new Error(`Traza técnica para otra variante: ${identity}`);
       }
-      const publishedView = fromPublication(item);
-      const changes = original ? compareOriginalToPublished(fromOriginal(original), publishedView) : [];
+      const changes = original ? compareOriginalToPublished(fromOriginal(original), fromPublication(item)) : [];
       const additions = changes.filter((difference) => difference.group === "technical" && difference.change === "added")
         .map((difference) => ({ field: difference.field, value: difference.after ?? "" }));
       if (publishedTrace && publishedTrace.entries.some((entry) => !additions.some((addition) =>
@@ -86,9 +81,7 @@ export const prepareExplorerTechnicalEvidence = async (workspace: string): Promi
         ? prepareSourceProduct(original).technicalProvenance ?? null : null);
       return { identity, original, trace, providerId: provider.providerId,
         reference: item.reference, sourceUrl: item.sourceUrl,
-        originalVerified: provider.original.status === "verified", additions,
-        provenance: resolvePanelFieldProvenance(original, publishedView, changes, provider, knowledge,
-          item.reference, item.sourceUrl, publishedTrace) };
+        originalVerified: provider.original.status === "verified", additions };
     });
     staged.push({ providerId: provider.providerId, publicationSha256: provider.publication.sha256,
       originalSha256: provider.original.status === "verified" ? provider.original.artifact.sha256 : null, products });
@@ -104,16 +97,12 @@ export const prepareExplorerTechnicalEvidence = async (workspace: string): Promi
     products: provider.products.map((product) => ({
       identity: product.identity,
       additions: classifyPublishedTechnicalAdditions(product.original, product.trace, product.providerId,
-        product.reference, product.sourceUrl, product.originalVerified, product.additions, cohort),
-      provenance: product.provenance
+        product.reference, product.sourceUrl, product.originalVerified, product.additions, cohort)
     }))
   }));
-  const content = JSON.stringify({ version: 1, knowledgeSha256: knowledge?.artifact.sha256 ?? null,
-    providers } satisfies ExplorerTechnicalEvidenceCache) + "\n";
+  const content = JSON.stringify({ version: 2, providers } satisfies ExplorerTechnicalEvidenceCache) + "\n";
   const current = await readPanelSnapshot(root);
-  const currentKnowledge = await readPanelUnitKnowledge(root);
-  if (JSON.stringify(current) !== JSON.stringify(snapshot) ||
-    currentKnowledge?.artifact.sha256 !== knowledge?.artifact.sha256) {
+  if (JSON.stringify(current) !== JSON.stringify(snapshot)) {
     throw new Error("El corte acreditado cambió durante la preparación de clasificaciones");
   }
   const target = explorerTechnicalEvidenceCachePath(root);

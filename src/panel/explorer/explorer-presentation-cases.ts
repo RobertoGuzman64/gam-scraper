@@ -14,15 +14,10 @@ export const selectPresentationCases = (products: readonly PanelExplorerProduct[
         const changed = (focus === "commercial" ? item.commercialChanges : item.changes)
           .filter((difference) => (difference.change === "changed" || difference.change === "added") &&
             (focus === "commercial" || difference.group === focus));
-        const compatible = item.provenance.filter((entry) => entry.status !== "observed-only" &&
-          entry.publicationSha256 === item.evidence.publication?.sha256 &&
-          (focus === "commercial" || entry.group === focus) &&
-          (focus === "commercial" || changed.some((difference) => difference.field === entry.field)));
-        const score = compatible.some((entry) => entry.status === "source-compatible") ? 2 : compatible.length ? 1 : 0;
-        return { item, count: changed.length, score };
+        return { item, count: changed.length };
       })
       .filter((entry) => entry.count > 0)
-      .sort((a, b) => b.score - a.score || b.count - a.count || a.item.identity.localeCompare(b.item.identity));
+      .sort((a, b) => b.count - a.count || a.item.identity.localeCompare(b.item.identity));
     const chosen = ranked[0];
     if (chosen) cases.push({ identity: chosen.item.identity, providerId, focus });
   }

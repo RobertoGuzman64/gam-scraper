@@ -3,9 +3,7 @@ import test from "node:test";
 import { isProductTechnicalProvenance } from "../../contracts/technical-provenance.js";
 import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js";
 import { normalizeSpecKey } from "../../catalog/normalization/normalize-specs.js";
-import { readPanelSnapshot } from "../../panel/evidence/read-panel-snapshot.js";
 import { compareOriginalToPublished } from "../../panel/explorer/field-differences.js";
-import { resolvePanelFieldProvenance } from "../../tools/catalog/panel-field-provenance.js";
 import { classifyPublishedTechnicalAdditions, classifyPublishedTechnicalSpec } from "../technical-spec-classification.js";
 import type { PanelProductView } from "../../panel/explorer/types.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
@@ -99,21 +97,11 @@ const originalView = (original: ProductRecord): PanelProductView => ({
   images: original.images ?? [], specs: original.specs ?? {}
 });
 
-test("fase 20: el panel conserva el enlace documental, demuestra la ejecución y no reclasifica sin revisión", async () => {
+test("fase 20: las incorporaciones documentadas conservan la clasificación y rechazan variantes ajenas", () => {
   const original = sourceRecord("M106-1389");
   const prepared = prepareSourceProduct(original);
   const published: PanelProductView = { ...originalView(original), specs: prepared.product.spec };
   const differences = compareOriginalToPublished(originalView(original), published);
-  const snapshot = await readPanelSnapshot(process.cwd());
-  const provider = snapshot.providers.find((item) => item.providerId === "mercaeleva");
-  assert.ok(provider);
-  const provenance = resolvePanelFieldProvenance(original, published, differences, provider, null,
-    original.reference, original.url, prepared.technicalProvenance);
-  const documented = provenance.filter((item) => item.scope === "model-document");
-  assert.ok(documented.length > 0);
-  assert.ok(documented.every((entry) => entry.status === "mechanism-compatible" &&
-    entry.historicalApplication === "demonstrated" && entry.proof === null &&
-    entry.document?.brand === original.brand && entry.document?.model === original.model));
   const trace = prepared.technicalProvenance;
   assert.ok(trace);
   const additions = classifyPublishedTechnicalAdditions(original, trace, "mercaeleva", original.reference,
@@ -126,7 +114,7 @@ test("fase 20: el panel conserva el enlace documental, demuestra la ejecución y
   const unverified = classifyPublishedTechnicalAdditions(original, trace,
     "mercaeleva", original.reference, original.url, false, additions.map(({ field, value }) => ({ field, value })));
   assert.ok(unverified.every((item) => item.kind === "pending"));
-  assert.throws(() => resolvePanelFieldProvenance({ ...original, model: "Modelo ajeno" },
-    published, differences, provider, null, original.reference, original.url, prepared.technicalProvenance),
-  /no corresponde al original/);
+  assert.ok(classifyPublishedTechnicalAdditions({ ...original, model: "Modelo ajeno" }, trace,
+    "mercaeleva", original.reference, original.url, true, additions.map(({ field, value }) => ({ field, value })))
+    .every((item) => item.kind === "pending"));
 });

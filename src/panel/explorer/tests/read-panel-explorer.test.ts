@@ -32,6 +32,7 @@ test("el explorador refleja exactamente las tres poblaciones verificadas por pro
     assert.equal(rows.filter((item) => item.stage === "editorial-excluded").length, provider.metrics.excludedEditorial);
     for (const item of rows) {
       assert.ok(item.identity.startsWith(`${provider.providerId}:`));
+      assert.ok(!("evidence" in item));
       assert.ok(item.sourceUrl.startsWith("https://") || item.sourceUrl.startsWith("http://"));
       if (item.stage === "commercial") {
         assert.ok(item.published);
@@ -61,7 +62,9 @@ test("selecciona tres casos reales con cambios y una exclusión aprobada", async
     if (example.focus === "exclusion") {
       assert.equal(item.stage, "editorial-excluded");
       assert.equal(item.decision?.stage, "editorial");
-      assert.ok(item.evidence.accreditation);
+      assert.ok(item.decision);
+      assert.ok(item.decision.evidenceUrls.length > 0);
+      assert.ok(item.decision.evidenceUrls.every((url) => url.startsWith("http://") || url.startsWith("https://")));
     } else {
       assert.ok(item.original);
       assert.ok(item.published);
@@ -127,29 +130,16 @@ test("rechaza alteraciones de la acreditación y del paquete tras seleccionar el
   });
 });
 
-test("prioriza demostraciones con evidencia compatible frente a fichas con más diferencias", async () => {
+test("elige demostraciones por cambios observados sin atribución documental", async () => {
   const { explorer } = await readStaticExplorer();
   const gam = explorer.products.find((item) => item.providerId === "gam" && item.stage === "commercial" &&
     item.changes.some((change) => change.group === "content" && (change.change === "changed" || change.change === "added")));
   assert.ok(gam);
-  const field = gam.changes.find((change) => change.group === "content" && (change.change === "changed" || change.change === "added"));
-  assert.ok(field);
-  assert.ok(gam.evidence.publication);
-  assert.ok(gam.evidence.original);
-  const sourced = { ...gam, identity: `${gam.identity}:compatible`, provenance: [{
-    field: field.field, group: field.group, status: "source-compatible" as const,
-    publicationSha256: gam.evidence.publication.sha256,
-    originalSha256: gam.evidence.original.sha256, scope: "unit" as const,
-    sourceField: "title", sourceValue: field.after, proof: gam.evidence.original,
-    sourceDigest: null, mechanism: null, historicalApplication: "not-demonstrated" as const
-  }] };
-  const noisy = { ...gam, identity: `${gam.identity}:noisy`, provenance: [],
-    changes: [...gam.changes, ...gam.changes, ...gam.changes] };
-  const selected = selectPresentationCases([...explorer.products, noisy, sourced]);
-  assert.equal(selected.find((item) => item.providerId === "gam" && item.focus === "content")?.identity, sourced.identity);
-  const outdated = { ...sourced, identity: `${gam.identity}:outdated`, provenance: sourced.provenance.map((entry) => ({
-    ...entry, publicationSha256: "f".repeat(64)
-  })) };
-  const rejected = selectPresentationCases([...explorer.products, noisy, outdated]);
-  assert.notEqual(rejected.find((item) => item.providerId === "gam" && item.focus === "content")?.identity, outdated.identity);
+  const changed = gam.changes.filter((change) => change.group === "content" &&
+    (change.change === "changed" || change.change === "added"));
+  const noisy = { ...gam, identity: `${gam.identity}:more-changes`, changes: [...gam.changes, ...changed, ...changed] };
+  const selected = selectPresentationCases([...explorer.products, noisy]);
+  const content = selected.find((item) => item.providerId === "gam" && item.focus === "content");
+  assert.equal(content?.identity, noisy.identity);
+  assert.ok(!("provenance" in gam));
 });

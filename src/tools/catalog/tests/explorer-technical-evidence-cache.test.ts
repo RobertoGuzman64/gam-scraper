@@ -22,3 +22,44 @@ test("rechaza evidencias técnicas precalculadas de otro corte y conserva las or
     assert.ok(explorer.products.some((item) => item.specAdditions.some((addition) => addition.kind === "own")));
   });
 });
+
+test("rechaza campos obsoletos o ajenos al contrato de clasificaciones", async () => {
+  await fixture.withCopy(async (workspace) => {
+    const snapshot = await readPanelSnapshot(workspace);
+    const target = explorerTechnicalEvidenceCachePath(workspace);
+    const original = await readFile(target, "utf8");
+    assert.ok(original.includes('"version":2'));
+    assert.ok(!original.includes('"knowledgeSha256"'));
+    assert.ok(!original.includes('"provenance"'));
+    for (const mutated of [
+      original.replace('"version":2', '"version":1'),
+      original.replace('"providers":', '"knowledgeSha256":null,"providers":'),
+      original.replace('"additions":', '"provenance":[],"additions":'),
+      original.replace('"providers":', '"extra":true,"providers":'),
+      original.replace('"additions":', '"extra":true,"additions":'),
+      original.replace('"publicationSha256":', '"provenance":{},"publicationSha256":'),
+      original.replace('"products":', '"extra":true,"products":'),
+      original.replace('"kind":"own"', '"kind":"own","document":{}'),
+      original.replace('"kind":"reused"', '"kind":"reused","document":{}')
+    ]) {
+      assert.notEqual(mutated, original);
+      await writeFile(target, mutated);
+      await assert.rejects(readPanelExplorer(workspace, snapshot), /precalculadas|inválidos|incompatibles/);
+    }
+    await writeFile(target, original);
+    assert.ok((await readPanelExplorer(workspace, snapshot)).products.some((item) =>
+      item.specAdditions.some((addition) => addition.kind === "reused")));
+  });
+});
+
+test("rechaza relaciones naranjas sin reciprocidad tras retirar el payload documental", async () => {
+  await fixture.withCopy(async (workspace) => {
+    const snapshot = await readPanelSnapshot(workspace);
+    const target = explorerTechnicalEvidenceCachePath(workspace);
+    const original = await readFile(target, "utf8");
+    const altered = original.replace('"linkedMachines":[', '"linkedMachines":["identidad-inexistente",');
+    assert.notEqual(altered, original);
+    await writeFile(target, altered);
+    await assert.rejects(readPanelExplorer(workspace, snapshot), /vínculo editorial recíproco/);
+  });
+});

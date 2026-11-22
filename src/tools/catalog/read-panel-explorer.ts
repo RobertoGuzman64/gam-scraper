@@ -1,6 +1,5 @@
 import { resolve } from "node:path";
 import { readCommercialFiles } from "../../panel/evidence/commercial-evidence.js";
-import { readPanelUnitKnowledge } from "../../panel/evidence/knowledge-evidence.js";
 import type { PanelSnapshot } from "../../panel/evidence/types.js";
 import { readProviderExplorerProducts } from "./explorer-provider-reader.js";
 import { readExplorerTechnicalEvidence } from "./explorer-technical-evidence-cache.js";
@@ -14,8 +13,7 @@ export const readPanelExplorer = async (workspace: string, snapshot: PanelSnapsh
   if (stored.selectedSha256 !== snapshot.commercialManifest.sha256) {
     throw new Error("Corte comercial cambiado durante la lectura del panel");
   }
-  const knowledge = await readPanelUnitKnowledge(root);
-  const technicalEvidence = await readExplorerTechnicalEvidence(root, snapshot, knowledge?.artifact.sha256 ?? null);
+  const technicalEvidence = await readExplorerTechnicalEvidence(root, snapshot);
   const products: PanelExplorerProduct[] = [];
   for (const provider of snapshot.providers) {
     const file = stored.files.find((item) => item.name === `${provider.providerId}-commercial.json`);
@@ -25,10 +23,6 @@ export const readPanelExplorer = async (workspace: string, snapshot: PanelSnapsh
     products.push(...await readProviderExplorerProducts(root, provider, file.content, prepared));
   }
   if (products.length !== snapshot.totals.originals) throw new Error("Totales del explorador incoherentes");
-  const currentKnowledge = await readPanelUnitKnowledge(root);
-  if (currentKnowledge?.artifact.sha256 !== knowledge?.artifact.sha256) {
-    throw new Error("El índice de conocimiento cambió durante la lectura del panel");
-  }
   return { products, cases: selectPresentationCases(products),
     originalComparisonsAvailable: snapshot.providers.every((provider) => provider.original.status === "verified") };
 };

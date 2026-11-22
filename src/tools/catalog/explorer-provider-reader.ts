@@ -11,14 +11,11 @@ import { isDelivery, isEditorialExclusion } from "../../panel/explorer/explorer-
 import type { EditorialExclusion } from "../../panel/explorer/explorer-data-validation.js";
 import { fromOriginal, fromPublication, toExplorerProduct } from "../../panel/explorer/explorer-product-view.js";
 import { compareOriginalToPublished } from "../../panel/explorer/field-differences.js";
-import type { PanelSpecAddition, PanelFieldProvenance } from "../../panel/explorer/types.js";
+import type { PanelSpecAddition } from "../../panel/explorer/types.js";
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 import type { PanelExplorerProduct, PanelProductDecision } from "../../panel/explorer/types.js";
 
-const readExclusions = async (root: string, evidence: PanelProviderEvidence): Promise<{
-  readonly items: readonly EditorialExclusion[];
-  readonly artifact: { readonly path: string; readonly sha256: string };
-}> => {
+const readExclusions = async (root: string, evidence: PanelProviderEvidence): Promise<readonly EditorialExclusion[]> => {
   const prefix = evidence.publication.path.slice(0, -`${evidence.providerId}-publishable.json`.length);
   const relative = `${prefix}accreditation.json`;
   const raw = await regularText(join(root, relative));
@@ -29,7 +26,7 @@ const readExclusions = async (root: string, evidence: PanelProviderEvidence): Pr
     decoded.exclusions.some((item: EditorialExclusion) => item.providerId !== evidence.providerId)) {
     throw new Error(`Exclusiones editoriales incoherentes: ${evidence.providerId}`);
   }
-  return { items: decoded.exclusions, artifact: { path: relative, sha256: digest(raw) } };
+  return decoded.exclusions;
 };
 
 const mapOriginals = async (root: string, evidence: PanelProviderEvidence): Promise<ReadonlyMap<string, ProductRecord> | null> => {
@@ -70,29 +67,22 @@ const buildExplorerProduct = (
   provider: PanelProviderEvidence, reference: string | null, sourceUrl: string,
   original: ProductRecord | null, published: ImportCandidate | null,
   commercial: CommercialDeliveryProduct | null, decision: PanelProductDecision | null,
-  accreditation: { readonly path: string; readonly sha256: string },
-  specAdditions: readonly PanelSpecAddition[], provenance: readonly PanelFieldProvenance[]
+  specAdditions: readonly PanelSpecAddition[]
 ): PanelExplorerProduct => {
   const after = published ? fromPublication(published) : null;
   const changes = original && after ? compareOriginalToPublished(fromOriginal(original), after) : [];
-  if (provenance.length !== changes.filter((difference) => difference.change !== "unchanged").length ||
-    provenance.some((entry) => entry.publicationSha256 !== provider.publication.sha256 ||
-      !changes.some((difference) => difference.group === entry.group && difference.field === entry.field &&
-        difference.change !== "unchanged"))) {
-    throw new Error("Procedencia precalculada incompatible con publicación");
-  }
   const additions = changes.filter((difference) => difference.group === "technical" && difference.change === "added");
   if (specAdditions.length !== additions.length || specAdditions.some((entry, index) =>
     entry.field !== additions[index]?.field || entry.value !== additions[index]?.after)) {
     throw new Error("Clasificaciones precalculadas incompatibles con las incorporaciones publicadas");
   }
   return toExplorerProduct(provider.providerId, reference, sourceUrl, original, published, commercial, decision,
-    provider, accreditation, changes, provenance, specAdditions);
+    changes, specAdditions);
 };
 
 export const readProviderExplorerProducts = async (
   root: string, evidence: PanelProviderEvidence, commercialRaw: string,
-  technicalEvidence: ReadonlyMap<string, { readonly additions: readonly PanelSpecAddition[]; readonly provenance: readonly PanelFieldProvenance[] }>
+  technicalEvidence: ReadonlyMap<string, readonly PanelSpecAddition[]>
 ): Promise<readonly PanelExplorerProduct[]> => {
   const publishedPath = join(root, evidence.publication.path);
   const published = await readAccreditedPublication(publishedPath);
@@ -105,7 +95,7 @@ export const readProviderExplorerProducts = async (
   const plan = verifiedCommercial(commercialRaw, evidence);
   assertCommercialLineage(evidence.providerId, published.products, plan.products, plan.sources, plan.excluded);
   const originals = await mapOriginals(root, evidence);
-  const accreditation = await readExclusions(root, evidence);
+  const exclusions = await readExclusions(root, evidence);
   const exported = new Map<string, CommercialDeliveryProduct>();
   for (const [index, source] of plan.sources.entries()) {
     const item = plan.products[index];
@@ -131,9 +121,9 @@ export const readProviderExplorerProducts = async (
     const prepared = technicalEvidence.get(key);
     if (!prepared) throw new Error(`Falta evidencia precalculada: ${key}`);
     result.push(buildExplorerProduct(evidence, item.reference, item.sourceUrl, original, item,
-      exported.get(key) ?? null, decision, accreditation.artifact, prepared.additions, prepared.provenance));
+      exported.get(key) ?? null, decision, prepared));
   }
-  for (const excluded of accreditation.items) {
+  for (const excluded of exclusions) {
     const key = productIdentity(evidence.providerId, excluded.reference, excluded.sourceUrl);
     if (found.has(key)) throw new Error(`Exclusión editorial repetida o publicada: ${key}`);
     found.add(key);
@@ -143,7 +133,7 @@ export const readProviderExplorerProducts = async (
     }
     result.push(buildExplorerProduct(evidence, excluded.reference, excluded.sourceUrl, original, null, null,
       { stage: "editorial", reason: excluded.reason, issues: excluded.issues, evidenceUrls: excluded.evidenceUrls },
-      accreditation.artifact, [], []));
+      []));
   }
   if (result.length !== evidence.metrics.originals || originals && found.size !== originals.size) {
     throw new Error(`Población del explorador distinta del corte: ${evidence.providerId}`);

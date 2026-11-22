@@ -2,41 +2,9 @@ import type { PanelExplorerProduct, PanelFieldDifference, PanelSpecAddition } fr
 import { create, append, text } from "./dom.js";
 import { changes, additionLabels, formatNumber } from "./explorer-labels.js";
 
-const renderAdditionProvenance = (item: PanelExplorerProduct, addition: PanelSpecAddition): HTMLElement => {
-  const details = create("details", "spec-provenance-details");
-  append(details, create("summary", "", "Ver trazabilidad"));
-  const origin = item.provenance.find((entry) => entry.group === "technical" && entry.field === addition.field);
-  const kindDescription = addition.kind === "pending" ? "Pertenencia editorial pendiente de resolver."
-    : addition.kind === "own" ? "Incorporación editorial exclusiva de esta máquina dentro del corte verificado."
-      : "Incorporación editorial reutilizada entre máquinas vinculadas por su regla técnica.";
-  append(details, create("p", "", kindDescription));
-  if (addition.kind === "reused" && addition.linkedMachines?.length) {
-    append(details, create("p", "", `Misma incorporación editorial compartida con: ${addition.linkedMachines.join(", ")}`));
-  }
-  if (origin?.status === "source-compatible" && origin.proof && origin.sourceField && origin.sourceValue) {
-    append(details,
-      create("p", "", `Dato original compatible: ${origin.sourceField} = ${origin.sourceValue}`),
-      create("p", "spec-provenance-artifact", `Original verificado: ${origin.proof.path} · SHA-256 ${origin.proof.sha256}`));
-  } else if (origin?.status === "mechanism-compatible" && origin.document && origin.mechanism) {
-    append(details, create("p", "", `${origin.scope === "model-document" ? "Documento asociado al modelo" :
-      origin.scope === "unit-document" ? "Documento externo asociado a la unidad" :
-        "Referencia documental registrada; identidad de marca o modelo incompleta"}: ${origin.document.url}`),
-      create("p", "", `Identidad original: ${origin.document.brand ?? "sin marca"} / ${origin.document.model ?? "sin modelo"} · Regla: ${origin.mechanism}`),
-      create("p", "", "La traza acredita qué referencia utilizó el recuperador; no verifica la vigencia del documento externo ni sustituye la auditoría de clasificación."));
-  } else if (origin?.status === "mechanism-compatible" && origin.mechanism) {
-    append(details, create("p", "", `Regla compatible: ${origin.mechanism}`));
-  } else {
-    append(details, create("p", "", "El resolver no aporta prueba individual del mecanismo. Una coincidencia documental no acredita por sí sola el tipo de fuente."));
-  }
-  append(details, create("p", "spec-provenance-caution", origin?.historicalApplication === "demonstrated"
-    ? "Regla ejecutada en la preparación registrada; la clasificación histórica se conserva."
-    : "La aplicación histórica de la regla no está demostrada por esta consulta."));
-  return details;
-};
-
 export const renderSpecifications = (item: PanelExplorerProduct, additionKind: PanelSpecAddition["kind"] | "todos"): HTMLElement => {
   const section = create("section", "detail-section technical-section");
-  append(section, create("p", "minor-note", "Especificaciones alineadas por campo. Solo se colorean las incorporaciones del motor. Azul: incorporación editorial exclusiva; naranja: la misma incorporación editorial compartida con otras máquinas; gris: pertenencia aún sin resolver. La procedencia documental se muestra por separado y no decide los colores. Compartir información técnica no significa copiar datos entre unidades."));
+  append(section, create("p", "minor-note", "Especificaciones alineadas por campo. Solo se colorean las incorporaciones del motor. Azul: incorporación editorial exclusiva; naranja: la misma incorporación editorial compartida con otras máquinas; gris: pertenencia aún sin resolver. Compartir información técnica no significa copiar datos entre unidades."));
   const technical = item.changes.filter((difference) => difference.group === "technical");
   const source = item.original && item.published ? technical :
     item.published && item.commercialTechnicalChanges.length ? item.commercialTechnicalChanges.map((difference): PanelFieldDifference => ({
@@ -79,7 +47,6 @@ export const renderSpecifications = (item: PanelExplorerProduct, additionKind: P
       const commercialStatus = projection && projection.change !== "unchanged" ? ` · Comercial: ${changes[projection.change]}` : "";
       const status = addition ? `Añadida · ${additionLabels[addition.kind]}` : classification + commercialStatus;
       const statusCell = create("td", `technical-status${addition ? ` spec-kind-label-${addition.kind}` : ""}`, status);
-      if (addition) append(statusCell, renderAdditionProvenance(item, addition));
       append(result, create("th", "technical-field", field), create("td", "technical-value", before),
         create("td", "technical-value", after), create("td", "technical-value", commercial), statusCell);
       append(body, result);

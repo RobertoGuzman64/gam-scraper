@@ -117,15 +117,6 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
         </div>
         <div class="section-heading"><div><h2 id="overview-kpis-title">Resultados del catálogo</h2></div><span class="section-aside" id="scope-summary">Todos los proveedores</span></div>
         <div class="kpi-grid" id="overview-kpis"></div>
-        <section class="explain-card source-map" aria-labelledby="source-map-title">
-          <div class="explain-heading"><div><span class="section-kicker">ETAPA 1 / MAPA DE PROCEDENCIA</span><h2 id="source-map-title">¿De dónde pueden venir los datos?</h2></div><span class="explain-label">MECANISMO CONCEPTUAL</span></div>
-          <p class="explain-lede">Datos originales, documentación y conocimiento contrastable alimentan las fichas. Cada aportación exige una evidencia compatible.</p>
-          <div class="source-map-grid" aria-label="Fuentes posibles, comprobación y resultado">
-            <div class="source-map-inputs"><span>FUENTES POSIBLES · SEGÚN APLICABILIDAD</span><div class="source-map-primary"><div>Original del proveedor <small>Unidad y origen</small></div><div>Fabricante y modelo <small>Alcance de modelo</small></div><div>Intervención <small>Solo si está acreditada</small></div></div><div class="source-map-secondary"><div>Evidencia documental <small>Unidad concreta</small></div><div>Conocimiento editorial <small>Registro compatible</small></div></div></div>
-            <div class="explain-arrow" aria-hidden="true">→</div><div class="source-map-process"><strong>Comprobar y transformar</strong><span>Identidad · evidencia · reglas aplicables</span><small>No toda fuente se aplica a toda ficha</small></div><div class="explain-arrow" aria-hidden="true">→</div><div class="source-map-output"><strong>FINISH</strong><span>Publicación técnica</span><div class="source-map-commercial">↓ Proyección comercial compatible</div></div>
-          </div>
-          <div class="explain-footer"><p>Fuente disponible no significa aplicación demostrada.</p><div class="explain-actions"><button type="button" class="text-action" id="source-example">Ver ejemplo real →</button><button type="button" class="text-action rule-action" data-rule="source">Ver regla &lt;/&gt;</button></div></div>
-        </section>
         <details class="audit-disclosure"><summary>Comparar volúmenes por proveedor</summary>
           <section class="surface-card coverage-card" aria-labelledby="coverage-title"><div class="card-heading"><div><span class="section-kicker">DESGLOSE ACREDITADO</span><h3 id="coverage-title">Cobertura por proveedor</h3></div></div><div id="provider-chart" class="provider-chart"></div><div class="chart-footer"><span id="chart-scale"></span><button class="text-action" type="button" data-go="flujo">Ver matrices <span aria-hidden="true">↗</span></button></div></section></details>
       </section>
@@ -133,7 +124,7 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
       <section class="page-view" data-view="flujo" aria-labelledby="flow-title" hidden>
         <div class="standard-heading"><span class="eyebrow">02 / ARQUITECTURA OBSERVABLE</span><h1 id="flow-title">Una cadena. <em>Responsabilidades distintas.</em></h1><p>Del original a FINISH: cómo se transforma y valida cada ficha antes de exportarla.</p></div>
         <section class="explain-card normalization-card" aria-labelledby="normalization-title">
-          <div class="explain-heading"><div><span class="section-kicker">ETAPA 2 / NORMALIZACIÓN</span><h2 id="normalization-title">Distintas claves. Un mismo significado.</h2></div><span class="explain-label">EJEMPLOS DE REGLA VIGENTE</span></div>
+          <div class="explain-heading"><div><span class="section-kicker">ETAPA 1 / NORMALIZACIÓN</span><h2 id="normalization-title">Distintas claves. Un mismo significado.</h2></div><span class="explain-label">EJEMPLOS DE REGLA VIGENTE</span></div>
           <p class="explain-lede">Unifica nombres y unidades. Si un valor no es interpretable, no lo inventa.</p>
           <div class="normalization-diagram" role="group" aria-label="Mecanismo de normalización y posibles resultados">
             <div class="explain-steps"><span>Clave recibida</span><span>Clave canónica</span><span>Tipo y unidad</span><span>Comprobación del valor</span></div>
@@ -151,17 +142,8 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
 
       <section class="page-view" data-view="calidad" aria-labelledby="quality-title" hidden>
         <div class="standard-heading"><span class="eyebrow">03 / VALIDACIÓN Y CONTROL</span><h1 id="quality-title">Calidad <em>demostrable.</em></h1><p>Qué comprobamos, cuándo rechazamos un dato y qué fichas se excluyen.</p></div>
-        <section class="explain-card checks-card" aria-labelledby="checks-title">
-          <div class="explain-heading"><div><span class="section-kicker">ETAPA 3 / CORROBORACIÓN DOCUMENTADA</span><h2 id="checks-title">¿Cuándo se permite incorporar una especificación?</h2></div><span class="explain-label">MECANISMO DISPONIBLE</span></div>
-          <p class="explain-lede">Cuatro comprobaciones para decidir si una fuente documental puede aportar especificaciones.</p>
-          <div class="validation-diagram" role="group" aria-label="Comprobaciones del mecanismo documental y sus dos posibles resultados">
-            <ol class="check-sequence"><li><strong>Unidad elegible</strong><span>Proveedor, referencia, specs y condición cuando se exige</span></li><li><strong>Identidad compatible</strong><span>Marca, modelo y categoría del registro</span></li><li><strong>Coincidencia opcional</strong><span>Título y URL solo cuando la fuente los exige</span></li><li><strong>Integridad y no colisión</strong><span>Huella exacta y claves no ocupadas</span></li></ol>
-            <div class="validation-junction" aria-hidden="true">↓</div>
-            <div class="check-result"><div class="check-result-pass"><span class="outcome-tag">CUMPLE</span><strong>Incorporación permitida</strong><span>Solo por este mecanismo y si supera todas las condiciones exigibles.</span></div><div class="check-result-stop"><span class="outcome-tag">NO CUMPLE</span><strong>No incorporar por esta ruta</strong><span>Un campo descartado no excluye la máquina.</span></div></div>
-          </div>
-        </section>
         <section class="explain-card controls-card" aria-labelledby="controls-title">
-          <div class="explain-heading"><div><span class="section-kicker">ETAPA 4 / CONTROL Y EXCLUSIÓN</span><h2 id="controls-title">No todo rechazo significa lo mismo.</h2></div><span class="explain-label">ETAPAS DIFERENTES</span></div>
+          <div class="explain-heading"><div><span class="section-kicker">ETAPA 2 / CONTROL Y EXCLUSIÓN</span><h2 id="controls-title">No todo rechazo significa lo mismo.</h2></div><span class="explain-label">ETAPAS DIFERENTES</span></div>
           <p class="explain-lede">Descartar un dato no es excluir una máquina. La decisión depende de la etapa.</p>
           <div class="control-groups" role="group" aria-label="Diferencia entre controles de datos y exclusiones de fichas">
             <section class="control-group control-fields" aria-label="Controles de campos"><div class="control-group-heading"><span>01 / DATO</span><h3>Se decide sobre un campo</h3></div><div class="control-branches"><div><strong>Sin evidencia aplicable</strong><span>No se atribuye o incorpora por esa ruta</span></div><div><strong>Conflicto al normalizar</strong><span>Campo omitido según el contrato</span></div></div></section>

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { normalizeSpecKey } from "../../../catalog/normalization/normalize-specs.js";
 import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
 import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 import { classifyPublishedTechnicalAdditions } from "../../../preparation/technical-spec-classification.js";
@@ -55,9 +56,29 @@ test("el explorador refleja exclusivamente las clasificaciones reproducibles por
   assert.equal(additions.filter((addition) => addition.kind === "pending").length, 3);
   assert.ok(additions.filter((addition) => addition.kind === "reused")
     .every((addition) => addition.linkedMachines !== undefined && addition.linkedMachines.length > 0));
+  const byIdentity = new Map(explorer.products.map((product) => [product.identity, product]));
+  assert.equal(byIdentity.size, explorer.products.length);
   for (const product of explorer.products) {
-    assert.deepEqual(product.specAdditions.map((addition) => addition.field),
+    assert.deepEqual(product.specAdditions.map(({ field, value }) => ({ field, value })),
       product.changes.filter((difference) => difference.group === "technical" &&
-        difference.change === "added").map((difference) => difference.field));
+        difference.change === "added").map((difference) => ({ field: difference.field, value: difference.after })));
+    for (const addition of product.specAdditions) {
+      assert.ok(product.original);
+      assert.ok(!Object.keys(product.original.specs).some((field) =>
+        normalizeSpecKey(field) === normalizeSpecKey(addition.field)));
+      if (addition.kind !== "reused") {
+        assert.equal(addition.linkedMachines, undefined);
+        continue;
+      }
+      assert.ok(addition.linkedMachines && addition.linkedMachines.length > 0);
+      for (const linked of addition.linkedMachines) {
+        assert.notEqual(linked, product.identity);
+        const peer = byIdentity.get(linked);
+        assert.ok(peer);
+        assert.ok(peer.specAdditions.some((candidate) => candidate.kind === "reused" &&
+          candidate.field === addition.field && candidate.value === addition.value &&
+          candidate.linkedMachines?.includes(product.identity)));
+      }
+    }
   }
 });

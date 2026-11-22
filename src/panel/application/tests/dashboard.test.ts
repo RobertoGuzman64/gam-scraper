@@ -96,11 +96,11 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.ok(!html.includes("Publicación individual vigente"));
   assert.ok(html.includes("Comparar contenido de la ficha"));
   assert.ok(html.includes("Especificaciones alineadas por campo"));
-  assert.ok(html.includes("Ver trazabilidad"));
-  assert.ok(html.includes("Incorporación editorial exclusiva de esta máquina dentro del corte verificado."));
-  assert.ok(html.includes("Incorporación editorial reutilizada entre máquinas vinculadas por su regla técnica."));
-  assert.ok(html.includes("La aplicación histórica de la regla no está demostrada"));
-  assert.ok(html.includes("Una coincidencia documental no acredita por sí sola"));
+  assert.ok(!html.includes("Ver trazabilidad"));
+  assert.ok(!html.includes("spec-provenance-details"));
+  assert.ok(html.includes('id="explorer-spec-kind"'));
+  assert.ok(html.includes("spec-kind-own"));
+  assert.ok(html.includes("spec-kind-reused"));
   assert.ok(!html.includes('value="documented"'));
   assert.ok(html.includes("Excluida de FINISH"));
   assert.ok(html.includes("Comparación de máquina"));
@@ -156,7 +156,7 @@ test("F3 conserva el corte acreditado sin emitir matrices C/D ni el bloque de ev
   assert.ok(!html.includes('"decisions":'));
   assert.ok(html.includes(`"packageDateUtc":"${snapshot.packageDateUtc}"`));
   assert.ok(html.includes(`"sha256":"${snapshot.commercialManifest.sha256}"`));
-  assert.ok(quality.includes('id="checks-title"'));
+  assert.ok(!quality.includes('id="checks-title"'));
   assert.ok(quality.includes('id="controls-title"'));
   assert.ok(quality.includes('id="excluded-example"'));
   assert.ok(html.includes('id="pipeline-matrix"'));
@@ -176,7 +176,8 @@ test("los títulos de las métricas son informativos y no abren diálogos de def
     "Activar enlaces locales", "DEFINICIÓN Y PROCEDENCIA"]) assert.ok(!html.includes(removed), removed);
   assert.ok(html.includes('id="rule-dialog"'));
   assert.ok(html.includes('id="rule-dialog-code"'));
-  for (const rule of ["source", "normalization", "exclusion"]) assert.ok(html.includes(`data-rule="${rule}"`));
+  for (const rule of ["normalization", "exclusion"]) assert.ok(html.includes(`data-rule="${rule}"`));
+  assert.ok(!html.includes('data-rule="source"'));
 });
 
 test("las fuentes y métricas no se alteran al crear la vista", async () => {
@@ -224,11 +225,10 @@ test("F1 presenta una tabla compacta y un diccionario completo en el HTML autón
   assert.ok(html.includes("no acreditan qué regla se aplicó a una ficha concreta"));
 });
 
-test("las etapas 1–4 aparecen en orden y Fichas reales queda al final", async () => {
+test("las demostraciones conservadas quedan en orden y Fichas reales al final", async () => {
   const { html } = await readStaticPanel();
   assert.equal((html.match(/<section class="page-view" data-view=/g) ?? []).length, 4);
-  const labels = ["ETAPA 1 / MAPA DE PROCEDENCIA", "ETAPA 2 / NORMALIZACIÓN",
-    "ETAPA 3 / CORROBORACIÓN DOCUMENTADA", "ETAPA 4 / CONTROL Y EXCLUSIÓN"];
+  const labels = ["ETAPA 1 / NORMALIZACIÓN", "ETAPA 2 / CONTROL Y EXCLUSIÓN"];
   for (const step of labels) assert.equal(html.split(step).length - 1, 1, step);
   for (let i = 1; i < labels.length; i++) {
     assert.ok(html.indexOf(labels[i - 1]!) < html.indexOf(labels[i]!), labels[i]);
@@ -240,7 +240,7 @@ test("las etapas 1–4 aparecen en orden y Fichas reales queda al final", async 
   }
   assert.ok(html.includes("03 / VALIDACIÓN Y CONTROL"));
   assert.ok(!html.includes("E5 / LA HISTORIA DEL DATO"));
-  assert.ok(html.includes('id="source-example"'));
+  assert.ok(!html.includes('id="source-example"'));
   assert.ok(html.includes('id="normalization-examples"'));
   assert.ok(html.includes('id="excluded-example"'));
   assert.ok(html.includes('id="control-exclusion-editorial"'));
@@ -249,12 +249,13 @@ test("las etapas 1–4 aparecen en orden y Fichas reales queda al final", async 
   assert.ok(!html.includes('Consultar matrices de incidencias y decisiones (C y D)'));
   assert.ok(!html.includes('id="quality-cut-title"'));
   assert.ok(html.includes("EJEMPLOS DE REGLA VIGENTE"));
-  assert.ok(html.includes("Cuatro comprobaciones para decidir"));
+  assert.ok(!html.includes("Cuatro comprobaciones para decidir"));
   assert.ok(!html.includes("Ver comprobaciones y código de referencia"));
   assert.ok(!html.includes('class="mechanism-detail"'));
   assert.ok(html.includes("No todo rechazo significa lo mismo"));
-  assert.match(html, /class="source-map-secondary"><div>Evidencia documental[\s\S]*?<div>Conocimiento editorial/);
-  assert.ok(html.includes(".source-map-secondary {justify-content:center}"));
+  assert.ok(!html.includes('class="source-map"'));
+  assert.ok(!html.includes("source-map-grid"));
+  assert.ok(!html.includes("CORROBORACIÓN DOCUMENTADA"));
   assert.ok(html.includes("panel:request-case"));
   assert.ok(html.includes('"normalizationExamples":['));
   assert.ok(!html.includes("regla aplicada históricamente a esta ficha"));
@@ -264,14 +265,14 @@ test("las etapas 1–4 aparecen en orden y Fichas reales queda al final", async 
 test("el diseño de exposición prioriza diagramas y conserva auditoría, bifurcaciones y límites", async () => {
   const { html } = await readStaticPanel();
   assert.ok(html.indexOf('id="normalization-title"') < html.indexOf('id="pipeline-matrix"'));
-  assert.ok(html.indexOf('id="checks-title"') < html.indexOf('id="controls-title"'));
+  assert.ok(html.indexOf('id="quality-title"') < html.indexOf('id="controls-title"'));
   assert.ok(html.indexOf('id="controls-title"') < html.indexOf('id="excluded-example"'));
   assert.ok(!html.includes('id="stage-strip"'));
   assert.ok(!html.includes('id="quality-highlights"'));
   assert.ok(html.includes('class="normalization-diagram"'));
-  assert.ok(html.includes('class="validation-diagram"'));
-  assert.ok(html.includes('class="check-result-pass"'));
-  assert.ok(html.includes('class="check-result-stop"'));
+  assert.ok(!html.includes('class="validation-diagram"'));
+  assert.ok(!html.includes('class="check-result-pass"'));
+  assert.ok(!html.includes('class="check-result-stop"'));
   assert.ok(html.includes('class="control-group control-fields"'));
   assert.ok(html.includes('class="control-group control-records"'));
   assert.ok(html.includes('id="control-exclusion-editorial"'));
@@ -292,7 +293,7 @@ test("el modo portátil conserva enlaces seguros y casos reales sin navegación 
     "presentation-strip", "presentationSteps", "RECORRIDO GUIADO", "presentation-focus"]) {
     assert.ok(!html.includes(marker), marker);
   }
-  for (const anchor of ["source-map-title", "overview-kpis-title", "normalization-title", "checks-title", "controls-title", "explorer-detail"]) {
+  for (const anchor of ["overview-kpis-title", "normalization-title", "controls-title", "explorer-detail"]) {
     assert.ok(html.includes(`id="${anchor}"`), anchor);
   }
   assert.equal((html.match(/data-nav="(?:resumen|flujo|explorador|calidad)"/g) ?? []).length, 4);
@@ -409,7 +410,7 @@ test("organización: cada matriz queda en su vista y no se repiten tarjetas de i
   assert.ok(quality);
   for (const id of ["pipeline-matrix", "transform-matrix"]) assert.ok(flow.includes(`id="${id}"`));
   for (const id of ["quality-matrix", "decisions-matrix"]) assert.ok(!html.includes(`id="${id}"`));
-  for (const id of ["checks-title", "controls-title", "control-exclusion-editorial", "control-exclusion-commercial"])
+  for (const id of ["controls-title", "control-exclusion-editorial", "control-exclusion-commercial"])
     assert.ok(quality.includes(`id="${id}"`));
   assert.ok(!quality.includes('id="quality-highlights"'));
   assert.ok(!html.includes('id="stage-strip"'));
@@ -544,12 +545,11 @@ test("muestra reglas vigentes extraídas del código, separadas de los ejemplos 
     }
     assert.ok(example.code.length > 60);
   }
-  assert.ok(examples.source.code.includes('unit.fingerprint'));
-  assert.ok(examples.source.code.includes('Object.keys(unit.specifications).some((key) => key in specs)'));
+  assert.deepEqual(Object.keys(examples).sort(), ["exclusion", "normalization"]);
   assert.ok(examples.normalization.code.includes('number >= 0'));
   assert.ok(examples.exclusion.code.includes('decision.requiredIssues.every'));
   const { html } = await readStaticPanel();
-  for (const id of ["source", "normalization", "exclusion"]) {
+  for (const id of ["normalization", "exclusion"]) {
     assert.ok(html.includes(`data-rule="${id}"`));
     assert.ok(html.includes(`"${id}":{`));
   }
@@ -559,4 +559,37 @@ test("muestra reglas vigentes extraídas del código, separadas de los ejemplos 
   assert.ok(html.includes('Fragmento de implementación, no prueba de que esta regla causase'));
   assert.ok(!html.includes('Ver comprobaciones y código de referencia'));
   assert.ok(html.indexOf('data-nav="calidad"') < html.indexOf('data-nav="explorador"'));
+});
+
+
+test("la retirada documental no deja controles ocultos en los módulos autónomos", async () => {
+  const { html } = await readStaticPanel();
+  const pending = [html];
+  const scripts: string[] = [];
+  const processed = new Set<string>();
+  while (pending.length) {
+    const source = pending.pop();
+    if (!source) continue;
+    for (const match of source.matchAll(/data:text\/javascript;base64,([A-Za-z0-9+/=]+)/g)) {
+      const encoded = match[1];
+      if (!encoded || processed.has(encoded)) continue;
+      processed.add(encoded);
+      const decoded = Buffer.from(encoded, "base64").toString("utf8");
+      scripts.push(decoded);
+      pending.push(decoded);
+    }
+  }
+  assert.ok(scripts.length > 0);
+  const all = `${html}\n${scripts.join("\n")}`;
+  for (const forbidden of ["Ver trazabilidad", "spec-provenance-details", "spec-provenance-artifact",
+    "spec-provenance-caution", "renderAdditionProvenance", "source-example", 'data-rule="source"',
+    "source-map-grid", "check-sequence", "validation-diagram", "CORROBORACIÓN DOCUMENTADA"]) {
+    assert.ok(!all.includes(forbidden), forbidden);
+  }
+  for (const preserved of ['id="explorer-spec-kind"', 'value="own"', 'value="reused"',
+    "spec-kind-own", "spec-kind-reused", "renderStageCards(item, normalizedFields)",
+    "stageSpecAddition(stage, key, value, item.specAdditions, normalizedFields)",
+    '"normalization":{', '"exclusion":{']) {
+    assert.ok(all.includes(preserved), preserved);
+  }
 });

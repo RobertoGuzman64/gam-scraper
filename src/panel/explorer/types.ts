@@ -1,6 +1,5 @@
-import type { TechnicalDocumentReference, TechnicalDocumentVerification } from "../../contracts/technical-provenance.js";
 import type { SpecValue } from "../../contracts/catalog.js";
-import type { PanelArtifact, PanelProviderId } from "../evidence/types.js";
+import type { PanelProviderId } from "../evidence/types.js";
 
 export type PanelProductStage = "commercial" | "commercial-excluded" | "editorial-excluded";
 export type PanelFieldChange = "added" | "changed" | "unchanged" | "removed" | "ambiguous";
@@ -27,23 +26,6 @@ export type PanelFieldDifference = {
   readonly change: PanelFieldChange;
   readonly before: string | null;
   readonly after: string | null;
-};
-
-export type PanelFieldProvenance = {
-  readonly field: PanelFieldDifference["field"];
-  readonly group: PanelFieldDifference["group"];
-  readonly status: "source-compatible" | "mechanism-compatible" | "observed-only";
-  readonly publicationSha256: string;
-  readonly originalSha256: string | null;
-  readonly scope: "unit" | "unknown" | "model-document" | "unit-document" | "document-reference";
-  readonly document?: TechnicalDocumentReference;
-  readonly verification?: TechnicalDocumentVerification;
-  readonly sourceField: string | null;
-  readonly sourceValue: string | null;
-  readonly proof: PanelArtifact | null;
-  readonly sourceDigest: string | null;
-  readonly mechanism: string | null;
-  readonly historicalApplication: "not-demonstrated" | "demonstrated";
 };
 
 export type PanelSpecAddition = {
@@ -73,15 +55,8 @@ export type PanelExplorerProduct = {
   readonly changes: readonly PanelFieldDifference[];
   readonly commercialChanges: readonly PanelFieldDifference[];
   readonly commercialTechnicalChanges: readonly PanelFieldDifference[];
-  readonly provenance: readonly PanelFieldProvenance[];
   readonly specAdditions: readonly PanelSpecAddition[];
   readonly decision: PanelProductDecision | null;
-  readonly evidence: {
-    readonly original: PanelArtifact | null;
-    readonly publication: PanelArtifact | null;
-    readonly commercial: PanelArtifact | null;
-    readonly accreditation: PanelArtifact | null;
-  };
 };
 
 export type PanelPresentationCase = {
