@@ -70,7 +70,7 @@ Estas reglas son verificadas por `GUARDS/tests-domain-tests-guard.mjs` y las fro
 - `GUARDS/tests-domain-tests-guard.mjs` inspecciona dependencias directas/transitivas de catálogos, cohortes fijas y hashes editoriales congelados. El hash de **procedencia de manifest** no es un hash de redacción.
 - Ambos usan `GUARDS/guards-architecture-core.mjs`; las autopruebas están en `GUARDS/tests-architecture-guards.test.mjs`. Las excepciones son verificaciones exactas de contratos, **no** tolerancias globales.
 
-Último corte arquitectónico focal confirmado en Windows: **0 infracciones productivas, editoriales y de tests; 45/45 autopruebas arquitectónicas; 19 usos acreditados como excepciones (12 cohortes y 7 accesos transitivos), y 21 lecturas directas legítimas en 14 suites protegidas**. Son categorías distintas; 19 y 21 **no son** avisos pendientes. El número de suites y módulos inspeccionados depende del árbol actual; los resultados estáticos de estos guards no acreditan la batería completa de `npm test`.
+El corte comunicado en `develop` el 22 de noviembre de 2026 registra **0 infracciones**, **47 autopruebas arquitectónicas correctas**, 19 excepciones exactas (12 cohortes y 7 dependencias transitivas) y 21 lecturas directas legítimas en 14 suites protegidas. Son categorías distintas; 19 y 21 **no son** avisos pendientes. Los recuentos pueden cambiar: prevalecen la salida vigente de `npm test` y los contratos en los propios guards.
 
 Las 21 lecturas acreditadas están vinculadas al **SHA-256 completo** de cada una de las 14 suites, a una cantidad exacta de lecturas y a una responsabilidad documentada. Si cambia un archivo o aumenta su acceso, el guard lo vuelve a señalar. Los recuentos de cohortes y las dependencias indirectas también requieren coincidencia exacta de su forma autorizada. **No** añadir excepciones para hacer desaparecer una incidencia nueva: primero acreditar su contrato, o migrar el acceso si no precisa catálogo completo.
 
@@ -86,7 +86,7 @@ La enumeración vigente y la razón de cada autorización están en [GUARDS/READ
 | Integridad de originales o publicaciones | Manifiestos, firmas, archivos y pruebas de integración correspondientes | Prohibir indiscriminadamente el acceso legítimo al catálogo                      |
 | Evolución de composición editorial       | Comprobar título, corta, general, estado y especificaciones             | Congelar texto masivo por hash o aceptar cualquier nueva redacción sin evidencia |
 
-Para retirar una suite redundante, conservar primero la garantía que protegía; eliminar imports, fixtures y helpers sin consumidores únicamente después de acreditar equivalencia. Los 20 tests reservados se preservan como controles de integración, pero esa reserva no es permiso para multiplicar pruebas por referencia.
+Para retirar una suite redundante, conservar primero la garantía que protegía; eliminar imports, fixtures y helpers sin consumidores únicamente después de acreditar equivalencia. Las suites y operaciones amparadas por `GUARDS/tests-performance-guard.mjs` conservan sus contratos de ejecución y de infraestructura; sus límites exactos se consultan en el guard, no en una cuota histórica copiada a esta guía. Esa protección no autoriza duplicar recorridos costosos.
 
 ## Criterio de cierre de una modificación
 
@@ -177,7 +177,7 @@ node GUARDS/tests-domain-tests-guard.mjs
 node --test GUARDS/tests-architecture-guards.test.mjs
 ```
 
-El último corte focal registra 0 infracciones y 45 autopruebas arquitectónicas correctas, con 19 excepciones exactas y 21 lecturas legítimas acreditadas; esto no sustituye las pruebas funcionales ni acredita `npm test` global. La validación exige dependencias locales completas (`npm ci`), no TypeScript global ni una compilación auxiliar. Véanse [Arquitectura de tests](TESTING.md) y [Motor editorial](EDITORIAL_ENGINE.md).
+La auditoría arquitectónica focal registra infracciones, excepciones exactas y lecturas de catálogo acreditadas; un resultado correcto no sustituye las pruebas funcionales ni acredita por sí solo `npm test` global. La validación exige dependencias locales completas (`npm ci`), no TypeScript global ni una compilación auxiliar. Véanse [Arquitectura de tests](TESTING.md) y [Motor editorial](EDITORIAL_ENGINE.md).
 
 Desde la raíz del proyecto, con dependencias instaladas, ejecutar:
 

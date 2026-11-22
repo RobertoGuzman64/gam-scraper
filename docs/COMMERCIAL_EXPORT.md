@@ -113,6 +113,16 @@ La opción `--arbol` es una vista de inspección: presenta la jerarquía real co
 
 El diagnóstico y el derivado comercial son independientes de los **nuevos snapshots técnicos bajo `technical/`**; siguen vinculados a las publicaciones individuales acreditadas y su procedencia histórica. Las categorías, opciones y relaciones se validan contra los recursos locales vigentes; una exportación con categorías pendientes no equivale a una importación autorizada.
 
+## Panel local de evidencias
+
+La exportación efectiva `npm run exportar:comercial -- --entorno develop`, **sin** `--salida` y **sin** `--simular`, entrega primero sus dos ZIP y después intenta actualizar el panel local. Ni `production`, ni una simulación, ni la salida a un directorio explícito actualizan el panel. Si la generación falla tras la entrega comercial, el comando lo informa como un fallo **posterior a la entrega**; no debe interpretarse como ausencia de los ZIP ya generados.
+
+`src/tools/catalog/prepare-explorer-technical-evidence.ts` prepara `catalogs/reports/revision/explorer-technical-evidence.json` desde originales, publicaciones y procedencias técnicas cotejadas; `src/panel/application/write-local-panel.ts` verifica el corte y escribe `panel/index.html`. El HTML integra su interfaz y datos para consulta local sin servidor. El panel presenta resumen, transformación, controles de calidad y explorador de fichas, con estados de selección editorial/comercial y comparación entre original, FINISH y comercial cuando hay evidencia disponible.
+
+En las **especificaciones incorporadas** por el motor se distingue `own` (azul: incorporación exclusiva acreditada de la ficha), `reused` (naranja: incorporación reutilizable acreditada, con vínculos a otras máquinas cuando constan) y `pending` (gris: pertenencia no resuelta). Las especificaciones que ya estaban en el original **no reciben esos colores**. Compartir una regla o una incorporación no permite copiar prestaciones de una unidad a otra; el clasificador exige identidad, valor y procedencia compatibles y comprueba vínculos entre reutilizaciones. El panel permite filtrar esas clases, pero **no decide la clasificación**: la regla reside en `src/preparation/technical-spec-classification.ts`. Ver [Calidad del catálogo](CATALOG_QUALITY.md#clasificación-de-incorporaciones-técnicas).
+
+El panel no ejecuta scraping, no revisa editorialmente, no cambia las publicaciones y no acredita importación en backend. Sus contadores pertenecen al corte efectivamente verificado al generarse, no son un censo vivo de portales ni un historial mutable.
+
 ## Contrato técnico
 
 - `ProductRecord` conserva origen, categorías de proveedor, referencias, imágenes, descripciones, condición y `specs`.

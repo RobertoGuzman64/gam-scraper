@@ -8,13 +8,13 @@ Ninguna IA puede crear, modificar, mover ni eliminar esta guía sin autorizació
 
 Esta guía describe los controles **vigentes**, sus autorizaciones exactas y sus límites. Los resultados deben comprobarse contra cada repositorio nuevo; no son una licencia para reducir cobertura.
 
-| Control arquitectónico comprobado                  | Resultado                                                              |
-| -------------------------------------------------- | ---------------------------------------------------------------------- |
-| `tests-editorial-architecture-guard.mjs`           | 0 infracciones                                                         |
-| `tests-domain-tests-guard.mjs`                     | 0 infracciones                                                         |
-| Autopruebas `tests-architecture-guards.test.mjs`   | 45 correctas, 0 fallidas en el corte confirmado en Windows             |
-| Excepciones explícitas en tests                    | 19 usos exactos: 12 recuentos de cohortes y 7 dependencias transitivas |
-| Integraciones de catálogo directamente acreditadas | 21 lecturas, en 14 suites                                              |
+| Control arquitectónico comprobado                  | Resultado                                                                 |
+| -------------------------------------------------- | ------------------------------------------------------------------------- |
+| `tests-editorial-architecture-guard.mjs`           | 0 infracciones                                                            |
+| `tests-domain-tests-guard.mjs`                     | 0 infracciones                                                            |
+| Autopruebas `tests-architecture-guards.test.mjs`   | 47 correctas, 0 fallidas en el corte comunicado en `develop` (22-11-2026) |
+| Excepciones explícitas en tests                    | 19 usos exactos: 12 recuentos de cohortes y 7 dependencias transitivas    |
+| Integraciones de catálogo directamente acreditadas | 21 lecturas, en 14 suites                                                 |
 
 **Cero infracciones no significa cero lecturas legítimas de catálogos ni prueba una batería `npm test` global.** Las 19 excepciones y las 21 lecturas acreditadas no cuentan como infracciones porque protegen garantías concretas; no son una tolerancia genérica, un baseline ni advertencias ocultas.
 
@@ -72,4 +72,4 @@ Las suites incluyen controles de imágenes GAM, identidad de variantes, recupera
 
 El corte acreditado se obtuvo sin modificar tests protegidos y sin introducir excepciones generales. Conservar el cero exige que cualquier nueva infracción se **resuelva o acredite contractualmente con alcance exacto**, no degradar el guard ni añadir tolerancias. Una integración necesaria no justifica convertir en dependiente del catálogo todo test de dominio.
 
-El propietario ha comunicado un resultado completo en Windows de `npm test`: **479 suites, 2.530 tests correctos, 0 fallidos**, con reutilización de caché en parte de las suites, y `npm run build` correcto. Es un corte acreditado en ese entorno, no una garantía permanente para futuras modificaciones. Registrar siempre el resultado real de cada nueva ejecución. Referencias: [Motor editorial](../docs/EDITORIAL_ENGINE.md), [Validación](../docs/VALIDATION.md) y [Pruebas y rendimiento](../docs/TESTING.md).
+El propietario ha comunicado el resultado completo de `npm test` en `develop` el 22 de noviembre de 2026: **539 suites, 2.789 tests correctos, 0 fallidos y 0 omitidos**, con reutilización de caché en parte de la batería, además de `npm run build` correcto. Es una instantánea de ejecución comunicada, no una garantía permanente; registrar el resultado real de cada nueva ejecución. Referencias: [Motor editorial](../docs/EDITORIAL_ENGINE.md), [Validación](../docs/VALIDATION.md) y [Pruebas y rendimiento](../docs/TESTING.md).

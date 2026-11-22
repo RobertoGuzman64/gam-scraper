@@ -287,6 +287,12 @@ Los patrones familiares solo se señalan con un mínimo de **5 máquinas**, **3 
 
 Antes de incorporar una especificación, preferir datos de la **misma máquina** y su fuente original; después documentos de fabricante/manuales de **modelo y variante verificables**. Los equipos de una familia ayudan a identificar qué investigar, **nunca** autorizan copiar una capacidad, altura, energía, año, horas o número de serie a otra unidad. Si no hay prueba, conservar la ausencia como observación.
 
+### Clasificación de incorporaciones técnicas
+
+El panel clasifica exclusivamente las **specs añadidas entre original y publicación individual**; no asigna un color a las specs conservadas del original. `src/preparation/technical-spec-classification.ts` aplica las condiciones de identidad, valor, huella del original y procedencia técnica acreditada; la cohorte editorial permite distinguir incorporaciones exclusivas (`own`, azul) de incorporaciones compartidas (`reused`, naranja) y exige coincidencia de regla, campo y valor cuando corresponde. La pertenencia no demostrada permanece `pending` (gris), sin forzar una decisión. Las reutilizaciones editoriales se muestran con vínculos recíprocos a otras fichas.
+
+La preparación del derivado está en `src/tools/catalog/prepare-explorer-technical-evidence.ts`; el lector del panel valida la versión, las huellas y los vínculos en `src/tools/catalog/explorer-technical-evidence-cache.ts`. El archivo `catalogs/reports/revision/explorer-technical-evidence.json` es una **caché de presentación ligada al corte**, no una nueva base de conocimiento, un origen de specs ni un segundo clasificador. No confundir este color con los estados de `technicalSpecs.cases[].stage` del auditor `huecos`, que diagnostican diferencias y posibles pérdidas de claves. Ver [Panel local](COMMERCIAL_EXPORT.md#panel-local-de-evidencias).
+
 ### Ejecución
 
 Desde la raíz del repositorio:

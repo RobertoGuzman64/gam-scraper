@@ -71,6 +71,7 @@ La estructura de `src/` agrupa responsabilidades y no hitos temporales del desar
 - `src/infrastructure/filesystem/catalog/technical-publication.ts`: almacenamiento, integridad, activación y retención de las versiones técnicas.
 - `src/commercial/`: proyección y exportación comercial actual, auditorías y compatibilidad de exportación legada.
 - `src/infrastructure/`: filesystem, HTTP, navegador, locks, almacenamiento, referencias y XLSX.
+- `src/panel/`: lectura y presentación local de evidencias de publicaciones y exportación, con explorador de fichas; `src/tools/catalog/` prepara las clasificaciones técnicas para ese explorador. El panel no decide ni modifica fichas.
 - `src/cli/`: comandos y presentación; `src/contracts/` y `src/shared/`: contratos y utilidades transversales.
 - `src/testing/`: fixtures, builders, casos de dominio e integración acreditada; las suites se ubican junto a sus módulos en `tests/` o dentro de `src/testing/integration/` según su responsabilidad. No se crean suites nuevas por máquina ni se obligan a leer catálogos completos las pruebas de dominio.
 - `scripts/`: entradas de ejecución y compilación en la raíz; `scripts/inspection/`, `scripts/maintenance/` y `scripts/operations/` para las herramientas especializadas.
@@ -263,7 +264,8 @@ Las operaciones GAM con rutas preconfiguradas son **herramientas de compatibilid
 - `data/reference/`: almacén legado opcional de inventario con manifiesto y diferencias, incluida lectura compatible de referencias históricas de tres proveedores; no se actualiza como paso ordinario de campaña.
 - **Escritorio del usuario:** `equipzilla-AAAA-MM-DD-<runId>.zip` con los cuatro JSON publicables, sin artefactos internos; su ausencia posterior no invalida por sí sola la acreditación local.
 - `data/category/` y `data/import/`: snapshots usados por la proyección comercial actual y por compatibilidad histórica; **no son dependencias de la preparación canónica técnica**.
-- `catalogs/reports/`: destino actual de auditorías editoriales y de batería. La persistencia histórica para panel y la retención de máximo dos versiones por serie de informes y JSON comerciales/públicos **todavía no están implementadas**; no confundir esta carpeta con una publicación comercial acreditada.
+- `catalogs/reports/`: resultados de auditoría y evidencias de informes versionados que consulta el panel. `catalogs/reports/revision/explorer-technical-evidence.json` contiene la clasificación técnica precalculada del corte; no es una fuente editorial independiente ni una publicación.
+- `panel/index.html`: panel local autónomo, de solo lectura, generado desde publicaciones, originales, informes y salida comercial acreditados. Se actualiza al ejecutar `npm run exportar:comercial -- --entorno develop` con entrega predeterminada; no con `--simular`, `--salida` ni `production`. Ver [Panel local](docs/COMMERCIAL_EXPORT.md#panel-local-de-evidencias).
 
 Los nombres individuales de catálogo pueden variar por proveedor: `run.json`, la procedencia y los manifests determinan qué datos pertenecen a una campaña. `storage/` está excluido de Git y conserva los datos operativos sujetos a la retención segura de campañas; no debe vaciarse manualmente. `catalogs/` es la copia portátil de los datos **ya consolidados**, no una autorización para editar manualmente originales ni selecciones. Los originales completos individuales y las instantáneas por `runId` tienen ciclos de vida distintos. No borrar originales para corregir decisiones editoriales.
 

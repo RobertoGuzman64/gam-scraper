@@ -22,6 +22,7 @@ src/
   commercial/              Proyección comercial, validación, exportación y compatibilidad legada
   contracts/               Contratos compartidos de datos y proveedores
   infrastructure/          Filesystem, integridad, locks, HTTP, navegador y XLSX
+  panel/                   Lectura y visualización local de evidencias, resumen y explorador
   preparation/             Preparación técnica, reconciliaciones y reglas por proveedor
   publication/             Publicaciones individuales, acreditación y FINISH
   scraping/                Motor, batch, proveedores y salida de extracción
@@ -30,7 +31,8 @@ src/
   tools/                   Herramientas internas de catálogo y semillas GAM
 catalogs/providers/        Originales completos, publicaciones individuales y snapshots técnicos portátiles
 catalogs/campaigns/        Instantáneas acreditadas de campañas globales
-catalogs/reports/          Salida actual de auditores; persistencia histórica definitiva pendiente
+catalogs/reports/          Informes, acreditaciones versionadas y caché del explorador técnico
+panel/index.html           Derivado HTML autónomo y de solo lectura del corte acreditado
 storage/                   Trabajo y recuperación locales, excluidos de Git
 dist/                      Compilados regenerables, excluidos de Git
 ```
@@ -39,16 +41,17 @@ El registro de proveedores está en `src/scraping/registry.ts` y el contrato de 
 
 ## Fronteras y dirección de dependencias
 
-| Área                                          | Responsabilidad                                                               | Límite que se debe proteger                                                  |
-| --------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `cli/`, `scripts/`                            | Opciones, ejecución y presentación                                            | No interpretar HTML ni introducir reglas técnicas o comerciales en la UI     |
-| `scraping/`                                   | Descubrimiento, extracción, deduplicación y salida de origen                  | No atribuir decisiones editoriales ni importar al backend                    |
-| `catalog/`                                    | Identidad, calidad, normalización, selección y diagnósticos                   | No mezclar inspección con mutación de publicaciones                          |
-| `preparation/`                                | Construcción y validación de candidatos técnicos, evidencias y `ready/review` | No exigir IDs comerciales para declarar calidad del origen                   |
-| `commercial/`                                 | Proyectar categorías y atributos, acreditar y generar JSON comerciales        | No cambiar originales, finales técnicos ni reglas de importación del backend |
-| `campaign/`, `publication/`                   | Orquestar campañas y publicaciones, acreditación y recuperación               | No saltarse preflight ni inventar decisiones humanas                         |
-| `infrastructure/`                             | Persistencia, hashes, manifiestos, retención y seguridad de rutas             | No decidir identidad comercial o calidad editorial                           |
-| `contracts/`, `shared/`, `testing/`, `tools/` | Contratos y herramientas auxiliares                                           | No trasladar reglas específicas a capas genéricas                            |
+| Área                                          | Responsabilidad                                                                 | Límite que se debe proteger                                                  |
+| --------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `cli/`, `scripts/`                            | Opciones, ejecución y presentación                                              | No interpretar HTML ni introducir reglas técnicas o comerciales en la UI     |
+| `scraping/`                                   | Descubrimiento, extracción, deduplicación y salida de origen                    | No atribuir decisiones editoriales ni importar al backend                    |
+| `catalog/`                                    | Identidad, calidad, normalización, selección y diagnósticos                     | No mezclar inspección con mutación de publicaciones                          |
+| `preparation/`                                | Construcción y validación de candidatos técnicos, evidencias y `ready/review`   | No exigir IDs comerciales para declarar calidad del origen                   |
+| `commercial/`                                 | Proyectar categorías y atributos, acreditar y generar JSON comerciales          | No cambiar originales, finales técnicos ni reglas de importación del backend |
+| `panel/`                                      | Leer y representar evidencias del corte, diferencias y clasificaciones técnicas | No duplicar reglas de preparación ni alterar originales o publicaciones      |
+| `campaign/`, `publication/`                   | Orquestar campañas y publicaciones, acreditación y recuperación                 | No saltarse preflight ni inventar decisiones humanas                         |
+| `infrastructure/`                             | Persistencia, hashes, manifiestos, retención y seguridad de rutas               | No decidir identidad comercial o calidad editorial                           |
+| `contracts/`, `shared/`, `testing/`, `tools/` | Contratos y herramientas auxiliares                                             | No trasladar reglas específicas a capas genéricas                            |
 
 El guard `GUARDS/tests-module-integrity-guard.mjs` revisa imports relativos ausentes en módulos productivos e impide dependencias de producción hacia `src/cli/`, `src/testing/` o `src/tools/`, importar suites como módulos de producción, cruces directos entre adaptadores de proveedores en preparación/scraping y dependencias comerciales indebidas en scraping, motor técnico compartido y proyección. Estas son las **fronteras que comprueba realmente**; no interpreta toda la semántica del proyecto ni impide editar otros archivos de `src/`. Las fronteras editoriales y la topología de tests tienen guards propios.
 
@@ -101,6 +104,12 @@ Los finales y aprobaciones acreditados no se reescriben para acomodar refactors 
 **El catálogo técnico acreditado y su derivado comercial son contratos distintos.** La proyección comercial actual vive en `src/commercial/projection/`, con la política en `category-projection.ts` y evidencia de origen en `source-category-evidence.ts` y `gam-category-evidence.ts`. `src/commercial/export/` prepara, acredita y verifica salidas comerciales procedentes de publicaciones técnicas y snapshots locales; `src/cli/commands/catalog/commercial-audit.ts` realiza la coordinación y `src/cli/reporting/commercial-audit.ts` presenta los informes. El comando `exportar:comercial` no importa datos al backend.
 
 Por separado, `npm run exportar` es un exportador **heredado** para preparaciones comerciales compatibles: `src/commercial/legacy-export/`, `src/cli/commands/legacy-export/` y `src/infrastructure/filesystem/legacy-export/`. No debe aplicarse a nuevas preparaciones técnicas sin asignaciones. La importación HTTP, la persistencia de productos y los permisos operativos pertenecen al backend. Ver [Comercialización](COMMERCIAL_EXPORT.md) e [Integración](COMMERCIAL_EXPORT.md).
+
+### Panel local de evidencias
+
+`src/cli/commands/catalog/commercial-export.ts` coordina la actualización del panel únicamente tras la exportación real a `develop` con entrega predeterminada. `src/tools/catalog/prepare-explorer-technical-evidence.ts` calcula un derivado de las incorporaciones técnicas verificadas mediante `src/preparation/technical-spec-classification.ts` y lo guarda en `catalogs/reports/revision/explorer-technical-evidence.json`. `src/panel/evidence/` verifica el corte, `src/panel/explorer/` prepara la lectura por ficha y `src/panel/application/` compone `panel/index.html`, con interfaz en `src/panel/ui/`.
+
+El HTML es **autónomo y de solo lectura**; no crea un segundo motor editorial. La clasificación se deriva de la procedencia técnica y de originales/publicaciones cotejados, nunca de una matriz de colores mantenida por el panel. La caché se vincula a las huellas del corte y no sustituye a las publicaciones acreditadas. Ver [Panel local](COMMERCIAL_EXPORT.md#panel-local-de-evidencias) y [Clasificación de incorporaciones](CATALOG_QUALITY.md#clasificación-de-incorporaciones-técnicas).
 
 ### Auditoría de contenido
 
