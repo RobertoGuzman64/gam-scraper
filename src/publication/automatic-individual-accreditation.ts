@@ -42,9 +42,11 @@ export const planAutomaticIndividualAccreditation = (
 };
 
 export const ensureAutomaticIndividualAccreditations = async (
-  workspace: string, providers: readonly IndividualCatalogProvider[]
+  workspace: string, providers: readonly IndividualCatalogProvider[],
+  onProgress?: (providerId: IndividualCatalogProvider, completed: number, total: number) => void
 ): Promise<readonly IndividualEditorialReview[]> => {
-  const contexts = await preflightIndividualAccreditations(workspace, providers);
+  const contexts = await preflightIndividualAccreditations(workspace, providers,
+    (providerId, _completed, total) => onProgress?.(providerId, 0, total));
   const plans = contexts.map(planAutomaticIndividualAccreditation);
   for (let index = 0; index < contexts.length; index += 1) {
     const context = contexts[index];
@@ -63,9 +65,10 @@ export const ensureAutomaticIndividualAccreditations = async (
     if (!context || !planned) throw new Error("Acreditación automática: conjunto incompleto");
     if (context.existing?.inspection.approved) {
       reviews.push(context.existing);
-      continue;
+    } else {
+      reviews.push(await approveAutomaticIndividualEditorial(context.options, planned));
     }
-    reviews.push(await approveAutomaticIndividualEditorial(context.options, planned));
+    onProgress?.(context.providerId, reviews.length, contexts.length);
   }
   return reviews;
 };

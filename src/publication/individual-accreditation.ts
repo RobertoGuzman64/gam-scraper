@@ -68,10 +68,12 @@ const historicalExclusions = async (
 };
 
 export const preflightIndividualAccreditations = async (
-  workspace: string, providers: readonly IndividualCatalogProvider[]
+  workspace: string, providers: readonly IndividualCatalogProvider[],
+  onProgress?: (providerId: IndividualCatalogProvider, completed: number, total: number) => void
 ): Promise<readonly IndividualAccreditationProvider[]> => {
   const checked: IndividualAccreditationProvider[] = [];
   for (const providerId of providers) {
+    onProgress?.(providerId, checked.length, providers.length);
     try {
       const preparation = await requireIndividualPreparationContext(workspace, providerId);
       const options: IndividualEditorialOptions = {
@@ -83,6 +85,7 @@ export const preflightIndividualAccreditations = async (
       const antecedents = await historicalExclusions(preparation.activeFile, providerId);
       checked.push({ providerId, options, expected: selection.draft, existing,
         proposed: proposeIndividualExclusions(selection.draft), antecedents });
+      onProgress?.(providerId, checked.length, providers.length);
     } catch (error) {
       throw new Error(`ACREDITACIÓN | ${providerId.toUpperCase()} | Sin aprobación ni publicación. ${error instanceof Error ? error.message : String(error)}. Corrige la causa y repite catalogo:preparar o catalogo:publicar`, { cause: error });
     }

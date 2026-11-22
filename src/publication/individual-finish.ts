@@ -38,7 +38,7 @@ export type IndividualFinishResult = {
 };
 
 export type IndividualFinishProgress = (
-  stage: "INSPECCIÓN" | "ENTREGA" | "VERIFICACIÓN" | "ACTIVACIÓN",
+  stage: "ACREDITACIÓN" | "INSPECCIÓN" | "ENTREGA" | "VERIFICACIÓN" | "ACTIVACIÓN",
   providerId: IndividualCatalogProvider, completed: number, total: number
 ) => void;
 
@@ -85,7 +85,8 @@ export const readIndividualActiveSha = async (root: string, providerId: Individu
 const inspected = async (
   root: string, providers: readonly IndividualCatalogProvider[], onProgress?: IndividualFinishProgress
 ): Promise<readonly Checked[]> => {
-  const contexts = await preflightIndividualAccreditations(root, providers);
+  const contexts = await preflightIndividualAccreditations(root, providers,
+    (providerId, completed, total) => onProgress?.("ACREDITACIÓN", providerId, completed, total));
   const checked: Checked[] = [];
   const blockers: string[] = [];
   for (const context of contexts) {
@@ -230,7 +231,8 @@ export const publishIndividualCatalogs = async (options: {
   if (options.dryRun) return execute();
   await inspected(root, options.providers, options.onProgress);
   return withIndividualFinishLock(root, async () => {
-    await ensureAutomaticIndividualAccreditations(root, options.providers);
+    await ensureAutomaticIndividualAccreditations(root, options.providers,
+      (providerId, completed, total) => options.onProgress?.("ACREDITACIÓN", providerId, completed, total));
     return execute();
   });
 };

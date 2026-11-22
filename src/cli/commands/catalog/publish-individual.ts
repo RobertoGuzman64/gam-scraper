@@ -137,8 +137,13 @@ export const runPublishIndividual = async (
   let desktopDirectory: string | null = null;
   let result: IndividualFinishResult;
   try {
-    progress.stage(parsed.dryRun ? "SIMULACIÓN" : "PREFLIGHT", `${parsed.providerIds.length} ${parsed.providerIds.length === 1 ? "proveedor" : "proveedores"}`);
-    const previewProgress: IndividualFinishProgress = (_stage, providerId, completed, total) => {
+    progress.stage(parsed.dryRun ? "ACREDITACIÓN" : "PREFLIGHT", `${parsed.providerIds.length} ${parsed.providerIds.length === 1 ? "proveedor" : "proveedores"}`);
+    let previewStage: Parameters<IndividualFinishProgress>[0] = "ACREDITACIÓN";
+    const previewProgress: IndividualFinishProgress = (stage, providerId, completed, total) => {
+      if (stage !== previewStage) {
+        progress.stage(stage, `${total} ${total === 1 ? "proveedor" : "proveedores"}`);
+        previewStage = stage;
+      }
       progress.update(providerId.toUpperCase(), completed, total);
     };
     desktopDirectory = parsed.dryRun ? null : hooks.desktopDirectory ?? await findDesktopDirectory();
@@ -151,11 +156,20 @@ export const runPublishIndividual = async (
       let activeStage = "PREFLIGHT";
       let preflightComplete = false;
       const publishingProgress: IndividualFinishProgress = (stage, providerId, completed, total) => {
-        if (stage === "INSPECCIÓN") {
-          if (completed === 1 && preflightComplete) {
-            progress.log(formatStatus("PASS", `PREFLIGHT | ${total} proveedores con exclusiones acreditadas y diferencias aceptadas`));
-            progress.stage("REVALIDACIÓN", `${total} proveedores · bajo bloqueo`);
-            activeStage = "REVALIDACIÓN";
+        if (stage === "ACREDITACIÓN") {
+          const name = preflightComplete ? "ACREDITACIÓN BAJO BLOQUEO" : "PREFLIGHT";
+          if (name !== activeStage) {
+            if (preflightComplete) {
+              progress.log(formatStatus("PASS", `PREFLIGHT | ${total} proveedores comprobados; reacreditación bajo bloqueo`));
+            }
+            progress.stage(name, `${total} proveedores`);
+            activeStage = name;
+          }
+        } else if (stage === "INSPECCIÓN") {
+          const name = preflightComplete ? "REVALIDACIÓN" : "INSPECCIÓN";
+          if (name !== activeStage) {
+            progress.stage(name, `${total} proveedores`);
+            activeStage = name;
           }
           if (completed === total && !preflightComplete) preflightComplete = true;
         } else if (stage !== activeStage) {

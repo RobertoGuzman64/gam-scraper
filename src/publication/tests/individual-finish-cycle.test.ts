@@ -15,7 +15,17 @@ test("ciclo completo: simular sin escrituras, 3 activaciones, ZIPs, SHA, y repet
   await withWorkspace(async (root, desktop) => {
     const source = join(root, "catalogs", "providers", "gam", "original", "scrape-gam-catalog.json");
     const sourceSha = await fileSha(source);
-    const dry = await publishIndividualCatalogs({ workspace: root, providers: finishProviders, dryRun: true, desktopDirectory: null });
+    const progress: string[] = [];
+    const dry = await publishIndividualCatalogs({
+      workspace: root, providers: finishProviders, dryRun: true, desktopDirectory: null,
+      onProgress: (stage, providerId, completed, total) => progress.push(`${stage} ${providerId} ${completed}/${total}`)
+    });
+    assert.deepEqual(progress, [
+      "ACREDITACIÓN gam 0/3", "ACREDITACIÓN gam 1/3",
+      "ACREDITACIÓN gomariz 1/3", "ACREDITACIÓN gomariz 2/3",
+      "ACREDITACIÓN mercaeleva 2/3", "ACREDITACIÓN mercaeleva 3/3",
+      "INSPECCIÓN gam 1/3", "INSPECCIÓN gomariz 2/3", "INSPECCIÓN mercaeleva 3/3"
+    ]);
     assert.equal(dry.mode, "simulation");
     assert.equal(dry.providers.length, 3);
     assert.ok(dry.providers.every((item) => item.activeSha256 === null));

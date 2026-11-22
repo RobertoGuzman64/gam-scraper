@@ -13,8 +13,12 @@ const withWorkspace = createIndividualFinishWorkspace();
 
 test("FINISH exige preparar y bloquea incidencias nuevas sin antecedente acreditado", async () => {
   await withWorkspace(async (root) => {
-    await assert.rejects(publishIndividualCatalogs({ workspace: root, providers: finishProviders, dryRun: true, desktopDirectory: null }),
-      /catalogo:preparar/);
+    const progress: string[] = [];
+    await assert.rejects(publishIndividualCatalogs({
+      workspace: root, providers: finishProviders, dryRun: true, desktopDirectory: null,
+      onProgress: (stage, providerId, completed, total) => progress.push(`${stage} ${providerId} ${completed}/${total}`)
+    }), /catalogo:preparar/);
+    assert.deepEqual(progress, ["ACREDITACIÓN gam 0/3"]);
     await prepareIndividualTestWorkspace(root);
     await assert.rejects(publishIndividualCatalogs({ workspace: root, providers: finishProviders, dryRun: false, desktopDirectory: root }),
       /incidencia nueva|exclusión vigente/);
@@ -36,6 +40,8 @@ test("interrupción tras primer proveedor deja diario PARCIAL y se reanuda sin o
         return selectActivePublication(workspace, providerId, sha, activate);
       }
     }), /FINISH PARCIAL\/BLOQUEADO.*gam.*fallo inyectado/s);
+    assert.ok(progress.includes(`ACREDITACIÓN gam 0/${finishProviders.length}`));
+    assert.ok(progress.includes(`ACREDITACIÓN mercaeleva ${finishProviders.length}/${finishProviders.length}`));
     assert.ok(progress.includes(`INSPECCIÓN gam 1/${finishProviders.length}`));
     assert.ok(progress.includes(`ENTREGA mercaeleva ${finishProviders.length}/${finishProviders.length}`));
     assert.ok(progress.includes(`ACTIVACIÓN gam 1/${finishProviders.length}`));
