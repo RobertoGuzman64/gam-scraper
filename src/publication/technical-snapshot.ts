@@ -7,14 +7,6 @@ import type { PreparedProduct } from "../preparation/contracts.js";
 export type TechnicalProvider = typeof CAMPAIGN_PROVIDERS[number];
 
 export type TechnicalSource = {
-  readonly kind: "stocklist";
-  readonly stocklistSha256: string;
-  readonly pdfSha256: string;
-  readonly technicalEvidenceSha256?: string;
-  readonly preparationSha256: string;
-  readonly rulesSha256: string;
-  readonly productCount: number;
-} | {
   readonly kind: "canonical";
   readonly catalogSha256: string;
   readonly preparationSha256: string;
@@ -65,18 +57,9 @@ export const parseTechnicalSnapshot = (value: unknown, providerId: string): Tech
   }
   const source = value.source;
   if (value.quality === "complete") {
-    const canonical = source.kind === "canonical" && Object.keys(source).length === 5 &&
-      sha(source.catalogSha256) && sha(source.preparationSha256) && sha(source.rulesSha256) &&
-      source.productCount === value.products.length;
-    const stocklist = providerId === "manain" && source.kind === "stocklist" &&
-      Object.keys(source).length === (source.technicalEvidenceSha256 === undefined ? 6 : 7) &&
-      (source.technicalEvidenceSha256 === undefined || sha(source.technicalEvidenceSha256)) &&
-      Object.keys(source).every((field) => ["kind", "stocklistSha256", "pdfSha256", "technicalEvidenceSha256",
-        "preparationSha256", "rulesSha256", "productCount"].includes(field)) &&
-      sha(source.stocklistSha256) && sha(source.pdfSha256) &&
-      sha(source.preparationSha256) && sha(source.rulesSha256) &&
-      source.productCount === value.products.length;
-    if (!canonical && !stocklist) throw new Error("Procedencia técnica completa inválida");
+    if (source.kind !== "canonical" || Object.keys(source).length !== 5 ||
+      !sha(source.catalogSha256) || !sha(source.preparationSha256) || !sha(source.rulesSha256) ||
+      source.productCount !== value.products.length) throw new Error("Procedencia técnica completa inválida");
   } else if (providerId !== "manain" || source.kind !== "manain-record" ||
     Object.keys(source).length !== 6 || !sha(source.recordSha256) || !sha(source.sourceCsvSha256) || !sha(source.rulesSha256) ||
     !Number.isSafeInteger(source.discoveredProductUrls) || !Array.isArray(source.discardedUrls) ||

@@ -190,28 +190,23 @@ test("una campaña sin entrega no se transforma en campaña acreditada por la mi
 });
 
 
-test("la migración conserva el stocklist documental y no lo promociona como scraping", async () => {
+test("las publicaciones vigentes y el registro Manain no bloquean la migración de originales", async () => {
   await withOriginal(async (root) => {
     const publicationDir = join(root, "catalogs", "providers", "gomariz", "publications");
-    const documentDir = join(root, "catalogs", "providers", "manain", "original");
+    const recordsDir = join(root, "catalogs", "providers", "manain", "records");
     await mkdir(publicationDir, { recursive: true });
-    await mkdir(documentDir, { recursive: true });
-    for (const name of ["manain-stocklist.json", "manain-stocklist.manifest.json"]) {
-      await copyFile(join("catalogs", "providers", "manain", "original", name), join(documentDir, name));
-    }
+    await mkdir(recordsDir, { recursive: true });
+    await writeFile(join(recordsDir, "manain-record.json"), "{}");
     await writeFile(join(root, "catalogs", "active.json"), JSON.stringify({
       version: 1, providers: { gomariz: { approvalSha256: "a".repeat(64) } }
     }));
     const plan = await planPortableMigration(root);
     assert.equal(plan.providers.find((item) => item.providerId === "gomariz")?.status, "consolidar");
-    assert.equal(plan.providers.find((item) => item.providerId === "manain")?.status, "solo-portatil");
-    assert.equal(plan.providers.find((item) => item.providerId === "manain")?.count, 1298);
+    assert.equal(plan.providers.find((item) => item.providerId === "manain")?.status, "ausente");
     await applyPortableMigration(root);
     assert.equal((await readPortableOriginal(root, "gomariz")).productCount, 14);
+    assert.equal(await readFile(join(recordsDir, "manain-record.json"), "utf8"), "{}");
     assert.deepEqual(await readdir(publicationDir), []);
-    const recordDir = join(root, "catalogs", "providers", "manain", "records");
-    await mkdir(recordDir);
-    await assert.rejects(planPortableMigration(root), /Entradas no reconocidas/);
   });
 });
 

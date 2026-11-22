@@ -3,7 +3,6 @@ import { lstat, readFile, readdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { CAMPAIGN_PROVIDERS } from "../contracts/campaign-providers.js";
 import { readCanonicalCatalog } from "../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { readManainStocklist } from "../infrastructure/filesystem/catalog/manain-stocklist.js";
 import { readActiveCatalogIndex } from "../infrastructure/filesystem/catalog/active-selection.js";
 import { consolidatePortableCampaign, readPortableCampaign } from "../infrastructure/filesystem/catalog/portable-campaign.js";
 import { consolidatePortableOriginal, readPortableOriginalArtifacts } from "../infrastructure/filesystem/catalog/portable-original.js";
@@ -103,18 +102,6 @@ const inspectCompleteSource = async (source: string): Promise<Awaited<ReturnType
 };
 
 const inspectProvider = async (root: string, providerId: string): Promise<MigrationProvider> => {
-  if (providerId === "manain") {
-    const base = join(root, "catalogs", "providers", "manain");
-    const entries = await namesIn(base);
-    if (entries.some((entry) => !["original", "publications", "technical", "evidence"].includes(entry))) {
-      throw new Error("Entradas no reconocidas en el proveedor documental Manain");
-    }
-    if (!entries.includes("original")) {
-      return { providerId, status: "ausente", source: null, count: null };
-    }
-    const { stocklist } = await readManainStocklist(join(base, "original"));
-    return { providerId, status: "solo-portatil", source: null, count: stocklist.productos.length };
-  }
   const dir = join(root, "storage", "scraped", providerId);
   const names = await namesIn(dir);
   const catalogs = names.filter((name) => name.endsWith("-catalog.json"));
@@ -125,7 +112,7 @@ const inspectProvider = async (root: string, providerId: string): Promise<Migrat
   const portable = portableArtifacts?.catalog ?? null;
   const providerRoot = join(root, "catalogs", "providers", providerId);
   const targetNames = await namesIn(providerRoot);
-  const allowed = ["original", "publications", "technical"];
+  const allowed = providerId === "manain" ? ["original", "publications", "records", "technical"] : ["original", "publications", "technical"];
   if (targetNames.some((name) => !allowed.includes(name))) {
     throw new Error(`Promoción pendiente o entrada desconocida en ${providerRoot}`);
   }

@@ -3,8 +3,6 @@ import { lstat, readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { CAMPAIGN_PROVIDERS } from "../contracts/campaign-providers.js";
 import { readCanonicalCatalog } from "../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { readManainStocklist } from "../infrastructure/filesystem/catalog/manain-stocklist.js";
-import { readManainHistoricalTechnicalEvidence } from "../infrastructure/filesystem/catalog/manain-historical-technical.js";
 import { readActiveCatalogIndex } from "../infrastructure/filesystem/catalog/active-selection.js";
 import { readPortableCampaign } from "../infrastructure/filesystem/catalog/portable-campaign.js";
 import { readPortableOriginal, readPortableOriginalArtifacts } from "../infrastructure/filesystem/catalog/portable-original.js";
@@ -73,8 +71,9 @@ const inspectProvider = async (root: string, providerId: string): Promise<Invent
   if (!await directoryExists(base)) return absent("Sin original definitivo en catalogs/");
   try {
     const names = await readdir(base);
+    const hasManainRecord = providerId === "manain" && names.includes("records");
     if (names.some((name) => name !== "original" && name !== "publications" && name !== "technical" &&
-      !(providerId === "manain" && name === "evidence") &&
+      !(hasManainRecord && name === "records") &&
       !(providerId !== "manain" && name === "publication-retention.json"))) {
       return invalid("Archivos inesperados o promoción pendiente en original portátil");
     }
@@ -102,21 +101,34 @@ const inspectProvider = async (root: string, providerId: string): Promise<Invent
         return invalid("Índice de retención individual no acreditado");
       }
     }
+    if (hasManainRecord) {
+      const recordsDirectory = join(base, "records");
+      if (!await directoryExists(recordsDirectory)) return invalid("Directorio del registro Manain no válido");
+      const entries = await readdir(recordsDirectory);
+      if (entries.length !== 1 || entries[0] !== "manain-record.json") {
+        return invalid("Registro Manain con archivos inesperados o incompleto");
+      }
+      const recordPath = join(recordsDirectory, "manain-record.json");
+      const metadata = await lstat(recordPath);
+      if (!metadata.isFile() || metadata.isSymbolicLink()) return invalid("Registro Manain no regular");
+      const content: unknown = JSON.parse(await readFile(recordPath, "utf8"));
+      if (content === null || typeof content !== "object" || Array.isArray(content) ||
+        !("providerId" in content) || content.providerId !== "manain" ||
+        !("quality" in content) || content.quality === null || typeof content.quality !== "object" ||
+        !("status" in content.quality) || content.quality.status !== "partial" ||
+        !("published" in content.quality) || content.quality.published !== false ||
+        !("products" in content) || !Array.isArray(content.products)) {
+        return invalid("Registro Manain parcial inválido");
+      }
+    }
     if (names.includes("technical")) {
       const versions = await listTechnicalVersions(root, providerId);
       const current = await readActiveTechnicalPublication(root, providerId);
-      if (versions.length > 0 && current === null && providerId !== "manain") {
-        return invalid("Versiones técnicas sin selección vigente");
-      }
+      if (versions.length > 0 && current === null) return invalid("Versiones técnicas sin selección vigente");
     }
-    if (!names.includes("original")) return absent("Sin original definitivo en catalogs/");
-    if (providerId === "manain") {
-      const { stocklist } = await readManainStocklist(join(base, "original"));
-      if (names.includes("evidence") && !await readManainHistoricalTechnicalEvidence(join(base, "evidence"))) {
-        return invalid("Evidencia histórica Manain vacía o ausente");
-      }
-      return ok(`Original documental Manain íntegro (${stocklist.productos.length} máquinas)`);
-    }
+    if (!names.includes("original")) return hasManainRecord
+      ? partial("Registro parcial de Manain conservado; sin original canónico")
+      : absent("Sin original definitivo en catalogs/");
     const catalog = await readPortableOriginal(root, providerId);
     return ok(`Original portátil íntegro (${catalog.productCount} fichas)`);
   } catch (error) {
@@ -128,9 +140,7 @@ const inspectConsistency = async (
   root: string, providerId: string, original: InventoryItem, localCatalogFile: string
 ): Promise<InventoryItem> => {
   if (original.state === "error") return invalid("No se puede comparar un original portátil inválido");
-  if (providerId === "manain" && original.state === "correcto") {
-    return ok("Original documental verificado; no depende de una extracción web local");
-  }
+  if (original.state === "parcial") return partial("Registro parcial de Manain; sin original canónico para comparar");
   if (original.state === "ausente") {
     try {
       await readCanonicalCatalog(localCatalogFile);

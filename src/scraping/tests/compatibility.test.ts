@@ -48,9 +48,8 @@ const result = (products: readonly ProductRecord[]): CategoryScrapeResult => ({
 });
 
 test("proveedor por defecto y fallo temprano para proveedores no registrados", () => {
-  assert.deepEqual(listProviders(), ["gam", "gomariz", "mercaeleva"]);
+  assert.deepEqual(listProviders(), ["gam", "gomariz", "mercaeleva", "manain"]);
   assert.equal(resolveCliSelection([]).provider.id, "gam");
-  assert.throws(() => getProvider("manain"), /Proveedor no registrado/);
   assert.equal(resolveCliSelection(["--provider", "gam"]).provider, getProvider("gam"));
   assert.throws(() => resolveCliSelection(["--provider", "inexistente"]), /Proveedor no registrado/);
 });

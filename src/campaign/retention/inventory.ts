@@ -16,9 +16,6 @@ import { getProvider } from "../../scraping/registry.js";
 import { base, missing, validName } from "./journal.js";
 import type { RemovalJournal } from "./journal.js";
 
-const historicalPrefix = (providerId: string): string =>
-  providerId === "manain" ? "manain-stocklist" : getProvider(providerId).defaultOptions.outPrefix;
-
 export type CampaignRemoval = {
   readonly runId: string;
   readonly paths: readonly string[];
@@ -56,7 +53,7 @@ export const describeOutputs = (root: string, run: CampaignRun): Pick<CampaignRe
     return {
       scrapedFolder: run.report.runId,
       prefixes: run.report.requestedProviders.map((providerId) => ({
-        providerId, outputPrefix: historicalPrefix(providerId)
+        providerId, outputPrefix: getProvider(providerId).defaultOptions.outPrefix
       }))
     };
   }
@@ -76,7 +73,7 @@ export const describeOutputs = (root: string, run: CampaignRun): Pick<CampaignRe
     scrapedFolder: location === "shared" ? null : location,
     prefixes: location !== "shared" && run.report.status !== "complete"
       ? run.report.requestedProviders.map((providerId) => ({
-        providerId, outputPrefix: registered.get(providerId) ?? historicalPrefix(providerId)
+        providerId, outputPrefix: registered.get(providerId) ?? getProvider(providerId).defaultOptions.outPrefix
       }))
       : outputs.map(({ providerId, outputPrefix }) => ({ providerId, outputPrefix }))
   };
@@ -96,7 +93,7 @@ export const planUnreportedRemoval = async (root: string, runId: string): Promis
     throw new Error(`El lote ${runId} dispone de run.json y debe verificarse por su informe`);
   } catch (error) { if (!missing(error)) throw error; }
   const prefixes = CAMPAIGN_PROVIDERS.map((providerId) => ({
-    providerId, outputPrefix: historicalPrefix(providerId)
+    providerId, outputPrefix: getProvider(providerId).defaultOptions.outPrefix
   }));
   const journal: RemovalJournal = {
     version: 1, kind: "abandon", runId, retainedRunId: null, scrapedFolder: runId, prefixes

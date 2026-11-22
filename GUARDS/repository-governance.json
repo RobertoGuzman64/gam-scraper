@@ -123,6 +123,8 @@
     "intervenir:validar": "node scripts/tooling.mjs intervenir:validar",
     "limpiar:almacen": "node scripts/tooling.mjs limpiar:almacen",
     "limpiar:versionados": "node scripts/maintenance/untrack-generated-files.mjs",
+    "manain:censo": "node scripts/tooling.mjs manain:censo",
+    "manain:muestra": "node scripts/tooling.mjs manain:muestra",
     "medir:ejecucion": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/operations/measure-execution.ps1",
     "migrar:catalogos": "node scripts/tooling.mjs migrar:catalogos",
     "normalizar:gam": "node scripts/tooling.mjs normalizar:gam",

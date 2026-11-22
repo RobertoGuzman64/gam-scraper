@@ -1,6 +1,5 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { fold } from "../../../shared/classification/mapping/category-utils.js";
-import { manainDocumentFamily } from "./document-family.js";
 
 const families = [
   "elevacion-tijera",
@@ -31,8 +30,32 @@ const families = [
 
 export type ManainFamily = (typeof families)[number];
 
-export const manainSourceFamily = (record: ProductRecord): ManainFamily | null =>
-  record.providerId === "manain" ? manainDocumentFamily(record)?.family ?? null : null;
+const aliases: readonly { readonly prefix: string; readonly family: ManainFamily }[] = [
+  { prefix: "venda-elevacio-tisores", family: "elevacion-tijera" },
+  { prefix: "venda-elevacio-bracos-articulats", family: "elevacion-brazo-articulado" },
+  { prefix: "venda-manipulacio-de-carregues-carretilles", family: "manipulacion-carretilla" },
+  { prefix: "venda-moviment-de-terres-minicargadora", family: "movimiento-tierra-minicargadora" },
+  { prefix: "venda-elevacio-camions-plataforma", family: "elevacion-camion-cesta" },
+  { prefix: "venda-elevacio-unipersonals", family: "elevacion-unipersonal" },
+  { prefix: "venda-energia-grups-electrogens", family: "energia-grupo-electrogeno" },
+  { prefix: "venda-elevacio-mastils-verticals", family: "elevacion-mastil" },
+  { prefix: "venta-manipulacion-apiladors", family: "manipulacion-apilador" }
+];
+
+export const manainSourceFamily = (record: ProductRecord): ManainFamily | null => {
+  if (record.providerId !== "manain") return null;
+  try {
+    const url = new URL(record.url);
+    if (url.protocol !== "https:" || !["manain.com", "www.manain.com"].includes(url.hostname)) return null;
+    const path = url.pathname;
+    if (!/^\/producto\/(?:venta|venda)-[^/]+\/?$/.test(path)) return null;
+    const family = families.find((item) => path.startsWith(`/producto/venta-${item}-`));
+    if (family) return family;
+    return aliases.find((alias) => path.startsWith(`/producto/${alias.prefix}-`))?.family ?? null;
+  } catch {
+    return null;
+  }
+};
 
 const describedFamily = (description: string): ManainFamily | null => {
   const text = fold(description);

@@ -46,11 +46,11 @@ test('las tres poblaciones quedan separadas por corte, fuente y proveedor', asyn
     ['originales_canonicos', 'publicacion_final', 'publicacion_tecnica']);
   const accredited = await Promise.all((await discoverAccreditedPublications(root)).map(readAccreditedPublication));
   const totalPublished = accredited.reduce((sum, item) => sum + item.products.length, 0);
-  assert.deepEqual(report.byStage.map((item) => item.products), [1751, totalPublished, 547]);
+  assert.deepEqual(report.byStage.map((item) => item.products), [1751, totalPublished, 931]);
   assert.deepEqual(report.byStage[1].providers.map((item) => [item.providerId, item.products]),
     accredited.map((item) => [item.providerId, item.products.length]));
   assert.deepEqual(report.byStage.map((item) => item.providers.map((provider) => provider.providerId)),
-    [['gam', 'gomariz', 'mercaeleva'], ['gam', 'gomariz', 'mercaeleva'], ['gomariz']]);
+    [['gam', 'gomariz', 'mercaeleva'], ['gam', 'gomariz', 'mercaeleva'], ['gomariz', 'manain']]);
   for (const stage of report.byStage) {
     assert.equal(stage.products, stage.providers.reduce((sum, item) => sum + item.products, 0));
     assert.ok(stage.providers.every((item) => item.sourceCut && item.sourceSha256));
@@ -62,7 +62,7 @@ test('las tres poblaciones quedan separadas por corte, fuente y proveedor', asyn
   assert.equal(comparablePopulation(originals[0], finals[0]), false);
   assert.equal(comparablePopulation(originals[0], { ...originals[0], rulesSha256: 'otro-corte' }), false);
   assert.equal(comparablePopulation(originals[0], { ...originals[0], sourceCut: 'otro-corte' }), false);
-  assert.equal(report.byStage[2].providers[0].complete, true);
+  assert.equal(report.byStage[2].providers.find((item) => item.providerId === 'manain').complete, false);
 });
 
 test('un original adulterado no se convierte en una población auditable', async () => {

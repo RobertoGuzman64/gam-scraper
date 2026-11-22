@@ -15,7 +15,10 @@ import { offlinePreparationManifest } from "../../infrastructure/filesystem/prep
 import { readCanonicalCatalog, writeCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { buildProductIdentity } from "../../catalog/identity.js";
 import type { OfflinePreparation } from "../../preparation/offline-document.js";
-import { prepareSavedCatalog } from "../../preparation/workflow/prepare.js";
+import { buildManainRecord } from "../../preparation/workflow/manain-record.js";
+import { discardedManainProductUrls } from "../../preparation/manain/identity/evidence/discarded-urls.js";
+import { baseProductHeaders } from "../../scraping/output/csv-serializer.js";
+import { toCsv } from "../../shared/csv.js";
 import { inspectPortableInventory } from "../../campaign/portable-inventory.js";
 import { readContentGapOptions } from "../../cli/commands/catalog/catalog-content-gaps-options.js";
 import { runTechnicalPublication } from "../../cli/commands/catalog/technical-publication.js";
@@ -144,68 +147,54 @@ test("fuente obsoleta, suplantación de proveedor y enlace simbólico bloquean s
   } finally { await rm(root, { force: true, recursive: true }); }
 });
 
-test("Manain publica técnicamente desde el original documental, sin censo ni CSV", async () => {
+test("Manain solo admite registro parcial conciliado con CSV, errores y censo", async () => {
   const root = await mkdtemp(join(tmpdir(), "eqz-technical-manain-"));
   try {
-    const original = join(root, "catalogs", "providers", "manain", "original");
-    const existing = join(process.cwd(), "catalogs", "providers", "manain", "original");
-    await mkdir(original, { recursive: true });
-    for (const file of ["manain-stocklist.json", "manain-stocklist.manifest.json"]) {
-      await copyFile(join(existing, file), join(original, file));
-    }
-    const preparation = join(root, "prepared", "manain-stocklist-preparation.json");
-    const saved = await prepareSavedCatalog({ providerId: "manain", source: join(original, "manain-stocklist.json"),
-      out: preparation, dryRun: false, compare: null });
-    assert.equal(saved.preparation.products.length, 1298);
-    const candidate = await publishTechnicalSnapshot(root, "manain", { preparation }, false);
-    assert.equal(candidate.snapshot.quality, "complete");
-    assert.equal(candidate.snapshot.source.kind, "stocklist");
-    assert.equal(candidate.snapshot.products.length, 1298);
-    assert.equal(candidate.snapshot.totals.ready + candidate.snapshot.totals.review, 1298);
+    const records = join(root, "catalogs", "providers", "manain", "records");
+    const evidence = join(root, "scraped");
+    await mkdir(records, { recursive: true });
+    await mkdir(evidence);
+    const url = "https://manain.com/producto/plataforma-elevadora-de-ocasion/";
+    const csv = toCsv([{
+      providerId: "manain", categoryKey: "venta", categoryName: "Maquinaria en venta", url,
+      reference: "MA-PRUEBA", title: "Plataforma", condition: "Segunda mano",
+      specJson: JSON.stringify({ Peso: "2100 kg" }), imagesJson: "[]", breadcrumbsJson: "[]"
+    }], baseProductHeaders);
+    const census = {
+      type: "manain-diagnostic-census", providerId: "manain", complete: true, published: false,
+      endReason: "control-exhausted", urlCount: 4, urls: [url, ...discardedManainProductUrls]
+    };
+    const summary = {
+      quality: { status: "partial", published: false },
+      totals: { scrapedProducts: 1, discoveredProductUrls: 4, failures: 3 },
+      artifacts: { csvSha256: hash(csv) }
+    };
+    const errors = {
+      quality: "partial", failures: discardedManainProductUrls.map((entry) => ({
+        categoryKey: "venta", url: entry, error: "Ficha inaccesible"
+      }))
+    };
+    const filename = join(evidence, "manain-partial-all.csv");
+    const censusPath = join(evidence, "censo.json");
+    await writeFile(filename, csv);
+    await writeFile(filename.replace(/-partial-all\.csv$/, "-summary.json"), JSON.stringify(summary));
+    await writeFile(filename.replace(/-partial-all\.csv$/, "-errors.json"), JSON.stringify(errors));
+    await writeFile(censusPath, JSON.stringify(census));
+    await writeFile(join(records, "manain-record.json"), `${JSON.stringify(buildManainRecord(csv, summary, errors, census), null, 2)}\n`);
+    const inputs = { csv: filename, census: censusPath };
+    const candidate = await publishTechnicalSnapshot(root, "manain", inputs, false);
+    assert.equal(candidate.snapshot.quality, "partial");
+    assert.equal(candidate.snapshot.products.length, 1);
+    assert.equal(candidate.snapshot.source.kind, "manain-record");
     await assert.rejects(lstat(technicalPath(root, "manain")), { code: "ENOENT" });
-    const committed = await publishTechnicalSnapshot(root, "manain", { preparation }, true);
+    const committed = await publishTechnicalSnapshot(root, "manain", inputs, true);
     assert.equal(committed.status, "activated");
-    assert.equal((await readActiveTechnicalPublication(root, "manain"))?.snapshot.source.kind, "stocklist");
-    await assert.rejects(publishTechnicalSnapshot(root, "manain", {}, true),
-      /requiere --preparacion/);
-    assert.equal((await readActiveTechnicalPublication(root, "manain"))?.sha256, committed.sha256);
-    await writeFile(preparation, "{}");
-    await assert.rejects(publishTechnicalSnapshot(root, "manain", { preparation }, true));
+    assert.equal((await readActiveTechnicalPublication(root, "manain"))?.snapshot.quality, "partial");
+    assert.equal((await readFile(join(records, "manain-record.json"), "utf8")).includes('"published": false'), true);
+    await writeFile(censusPath, JSON.stringify({ ...census, urls: census.urls.slice(1), urlCount: 3 }));
+    await assert.rejects(publishTechnicalSnapshot(root, "manain", inputs, true), /no conciliadas|incompleto|inválido/);
     assert.equal((await readActiveTechnicalPublication(root, "manain"))?.sha256, committed.sha256);
   } finally { await rm(root, { force: true, recursive: true }); }
-});
-
-test("Manain recupera su corte web retirado como histórico sin reactivarlo", async () => {
-  const root = await mkdtemp(join(tmpdir(), "eqz-technical-manain-historic-"));
-  try {
-    const provider = join(root, "catalogs", "providers", "manain");
-    const original = join(provider, "original");
-    const previous = "d316a7ebcdc7e2bbdd8024cb8c6318f4494074b231267232ce2250925d55ad72";
-    const version = join(provider, "technical", "versions", previous);
-    await mkdir(original, { recursive: true });
-    await mkdir(version, { recursive: true });
-    const stored = join(process.cwd(), "catalogs", "providers", "manain");
-    for (const name of ["manain-stocklist.json", "manain-stocklist.manifest.json"]) {
-      await copyFile(join(stored, "original", name), join(original, name));
-    }
-    for (const name of ["snapshot.json", "manifest.json"]) {
-      await copyFile(join(stored, "technical", "versions", previous, name), join(version, name));
-    }
-    assert.equal(await readActiveTechnicalPublication(root, "manain"), null);
-    assert.deepEqual(await listTechnicalVersions(root, "manain"), [previous]);
-    const preparation = join(root, "prepared", "manain-stocklist-preparation.json");
-    await prepareSavedCatalog({ providerId: "manain", source: join(original, "manain-stocklist.json"),
-      out: preparation, dryRun: false, compare: null });
-    const published = await publishTechnicalSnapshot(root, "manain", { preparation }, true);
-    assert.equal(published.status, "activated");
-    const active = await readActiveTechnicalPublication(root, "manain");
-    assert.equal(active?.snapshot.source.kind, "stocklist");
-    assert.deepEqual(await listTechnicalVersions(root, "manain"), [previous, published.sha256].sort());
-    const index = JSON.parse(await readFile(join(provider, "technical", "active.json"), "utf8")) as {
-      previousSha256: string;
-    };
-    assert.equal(index.previousSha256, previous);
-  } finally { await rm(root, { recursive: true, force: true }); }
 });
 
 test("la auditoría técnica es explícita y no altera los modos comerciales existentes", () => {

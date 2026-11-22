@@ -8,13 +8,6 @@ export type InterventionProvenance = {
   readonly derivedCatalogSha256: string;
 };
 
-export type DocumentOriginal = {
-  readonly kind: "stocklist";
-  readonly pdfSha256: string;
-  readonly pageCount: number;
-  readonly technicalEvidenceSha256?: string;
-};
-
 export type PreparationSource = {
   readonly providerId: string;
   readonly prefix: string;
@@ -22,7 +15,6 @@ export type PreparationSource = {
   readonly catalogSha256: string;
   readonly productCount: number;
   readonly intervention?: InterventionProvenance;
-  readonly document?: DocumentOriginal;
 };
 
 export type PreparationFingerprints = {
@@ -50,19 +42,6 @@ export type OfflinePreparation = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 const isSha = (value: unknown): value is string => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
-
-const parseDocumentOriginal = (value: unknown, providerId: string): DocumentOriginal => {
-  if (providerId !== "manain" || !isRecord(value) ||
-    (Object.keys(value).length !== (value.technicalEvidenceSha256 === undefined ? 3 : 4)) ||
-    value.kind !== "stocklist" || !isSha(value.pdfSha256) ||
-    typeof value.pageCount !== "number" || !Number.isSafeInteger(value.pageCount) || value.pageCount < 1 ||
-    (value.technicalEvidenceSha256 !== undefined && !isSha(value.technicalEvidenceSha256)) ||
-    Object.keys(value).some((field) => !["kind", "pdfSha256", "pageCount", "technicalEvidenceSha256"].includes(field))) {
-    throw new Error("Procedencia documental de preparación inválida");
-  }
-  return { kind: "stocklist", pdfSha256: value.pdfSha256, pageCount: value.pageCount,
-    ...(value.technicalEvidenceSha256 === undefined ? {} : { technicalEvidenceSha256: value.technicalEvidenceSha256 }) };
-};
 
 const parseInterventionProvenance = (value: unknown, catalogSha256: string): InterventionProvenance => {
   if (!isRecord(value) || Object.keys(value).length !== 4 ||
@@ -104,15 +83,12 @@ export const parseOfflinePreparation = (value: unknown, providerId: string): Off
   }
   const intervention = value.source.intervention === undefined
     ? undefined : parseInterventionProvenance(value.source.intervention, value.source.catalogSha256);
-  const document = value.source.document === undefined ? undefined : parseDocumentOriginal(value.source.document, providerId);
-  if (document && intervention) throw new Error("La intervención y el original documental son incompatibles");
   return {
     version: 1, quality: "complete", published: true, preparedAt: value.preparedAt,
     source: {
       providerId, prefix: value.source.prefix, scope: value.source.scope,
       catalogSha256: value.source.catalogSha256, productCount: value.source.productCount,
-      ...(intervention === undefined ? {} : { intervention }),
-      ...(document === undefined ? {} : { document })
+      ...(intervention === undefined ? {} : { intervention })
     },
     fingerprints: value.fingerprints.rulesVersion === 2 ? {
       rulesVersion: 2, rulesSha256: value.fingerprints.rulesSha256 as string

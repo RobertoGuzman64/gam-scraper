@@ -174,15 +174,22 @@ test("se detecta exceso de campañas sin borrar ni interpretar carpetas desconoc
 });
 
 
-test("un registro web retirado no puede coexistir con el origen documental de Manain", async () => {
+test("registro parcial Manain se distingue de un original inválido sin promocionarlo", async () => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-inventory-manain-record-"));
   try {
     const directory = join(root, "catalogs", "providers", "manain", "records");
     await mkdir(directory, { recursive: true });
-    await writeFile(join(directory, "manain-record.json"), "{}");
+    const record = JSON.stringify({ providerId: "manain", quality: { status: "partial", published: false }, products: [] });
+    await writeFile(join(directory, "manain-record.json"), record);
     const entry = (await inspectPortableInventory(root, input(root))).providers.find((provider) => provider.providerId === "manain");
-    assert.equal(entry?.original.state, "error");
-    assert.equal(entry?.consistency.state, "error");
+    assert.equal(entry?.original.state, "parcial");
+    assert.equal(entry?.consistency.state, "parcial");
+    assert.equal(entry?.final.state, "ausente");
+    assert.equal(await readFile(join(directory, "manain-record.json"), "utf8"), record);
+    await writeFile(join(directory, "manain-record.json"), "{}");
+    const invalid = (await inspectPortableInventory(root, input(root))).providers.find((provider) => provider.providerId === "manain");
+    assert.equal(invalid?.original.state, "error");
+    assert.equal(invalid?.consistency.state, "error");
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
@@ -196,27 +203,4 @@ test("otros proveedores no admiten registros Manain ni entradas desconocidas", a
     assert.equal(entry?.original.state, "error");
     assert.equal(entry?.consistency.state, "error");
   } finally { await rm(root, { recursive: true, force: true }); }
-});
-
-test("Manain: el inventario reconoce y verifica la evidencia histórica sin tratarla como otro original", async () => {
-  const root = await mkdtemp(join(tmpdir(), "equipzilla-manain-evidence-"));
-  try {
-    const provider = join(root, "catalogs", "providers", "manain");
-    const fixtureRoot = resolve("catalogs/providers/manain");
-    await mkdir(join(provider, "original"), { recursive: true });
-    await mkdir(join(provider, "evidence"));
-    for (const file of ["manain-stocklist.json", "manain-stocklist.manifest.json"]) {
-      await copyFile(join(fixtureRoot, "original", file), join(provider, "original", file));
-    }
-    for (const file of ["manain-historical-technical.json", "manain-historical-technical.manifest.json"]) {
-      await copyFile(join(fixtureRoot, "evidence", file), join(provider, "evidence", file));
-    }
-    const valid = await inspectPortableInventory(root, input(root));
-    assert.equal(valid.providers.find((entry) => entry.providerId === "manain")?.original.state, "correcto");
-    await writeFile(join(provider, "evidence", "manain-historical-technical.manifest.json"), "{}");
-    const invalid = await inspectPortableInventory(root, input(root));
-    assert.equal(invalid.providers.find((entry) => entry.providerId === "manain")?.original.state, "error");
-  } finally {
-    await rm(root, { recursive: true, force: true });
-  }
 });

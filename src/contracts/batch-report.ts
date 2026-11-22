@@ -1,13 +1,4 @@
-export type DocumentRunOrigin = {
-  readonly kind: "document";
-  readonly stocklistSha256: string;
-  readonly pdfSha256: string;
-  readonly pageCount: number;
-  readonly technicalEvidenceSha256?: string;
-};
-
 export type ProviderRun = {
-  readonly origin?: DocumentRunOrigin;
   readonly providerId: string;
   readonly status: "complete" | "failed";
   readonly startedAt: string;

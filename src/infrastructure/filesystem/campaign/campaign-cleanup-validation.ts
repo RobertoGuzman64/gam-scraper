@@ -6,7 +6,7 @@ import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 export const isRecord = (input: unknown): input is Record<string, unknown> =>
   typeof input === "object" && input !== null && !Array.isArray(input);
 const providerNames = CAMPAIGN_PROVIDERS.join("|");
-const runArtifact = new RegExp(`^(?:${providerNames})(?:\\.log|-(?:summary|changes|errors|preparation|partial-preparation|source)\\.json)$`);
+const runArtifact = new RegExp(`^(?:${providerNames})(?:\\.log|-(?:summary|changes|errors|preparation|partial-preparation)\\.json)$`);
 const publishableArtifact = new RegExp(`^(?:${providerNames})-publishable\\.json$`);
 const interventionArtifact = new RegExp(`^(?:${providerNames})-intervention-(?:preparation|preparation\\.manifest|diagnostics)\\.json$`);
 const archivePattern = /^archive-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z-[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/;
@@ -29,10 +29,6 @@ export const allowedFile = (
     (name === "run.json" || runArtifact.test(name) ||
       (allowPartial && /^run\.json\.[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.tmp$/.test(name)));
   if (area === "scraped") {
-    if (parts.length === 2 && parts[0] === "manain") {
-      if (parts[1] === "original") return name === "manain-stocklist.json" || name === "manain-stocklist.manifest.json";
-      if (parts[1] === "evidence") return name === "manain-historical-technical.json" || name === "manain-historical-technical.manifest.json";
-    }
     if (parts.length === 1) {
       const prefix = prefixes.get(parts[0] ?? "");
       if (prefix === undefined) return false;
@@ -72,8 +68,7 @@ export const allowedDir = (
   if (area === "run") return false;
   if (area === "scraped") {
     if (parts.length === 0) return prefixes.has(name);
-    if (parts.length === 1) return (parts[0] === "manain" && (name === "original" || name === "evidence")) ||
-      prefixes.has(parts[0] ?? "") && name === ".history";
+    if (parts.length === 1) return prefixes.has(parts[0] ?? "") && name === ".history";
     if (parts.length === 2 && parts[1] === ".history") {
       const prefix = prefixes.get(parts[0] ?? "");
       return prefix !== undefined && name === prefix;
