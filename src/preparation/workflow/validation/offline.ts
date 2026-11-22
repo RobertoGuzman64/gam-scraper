@@ -78,8 +78,8 @@ export const validateOfflinePreparation = async (
   if (maxAgeHours !== null) {
     if (!Number.isFinite(maxAgeHours) || maxAgeHours <= 0) throw new Error("maxAgeHours debe ser positivo");
     if (isDocument) throw new Error("La edad de un scrapeo no aplica a originales documentales");
-    const canonical = await readCanonicalCatalogWithFingerprint(path);
-    const age = Date.now() - Date.parse(canonical.catalog.endedAt);
+    const endedAt = derived?.catalog.endedAt ?? (await readCanonicalCatalogWithFingerprint(path)).catalog.endedAt;
+    const age = Date.now() - Date.parse(endedAt);
     if (!Number.isFinite(age) || age < -60_000 || age > maxAgeHours * 3_600_000) {
       throw new Error("Fecha de extracción inválida o catálogo demasiado antiguo para exportar");
     }
@@ -87,7 +87,8 @@ export const validateOfflinePreparation = async (
   return {
     catalog: {
       providerId, sourceFile: path, productCount: original.productCount,
-      endedAt: isDocument ? null : (await readCanonicalCatalogWithFingerprint(path)).catalog.endedAt, catalogSha256: sourceHash
+      endedAt: isDocument ? null : derived?.catalog.endedAt ?? (await readCanonicalCatalogWithFingerprint(path)).catalog.endedAt,
+      catalogSha256: sourceHash
     },
     preparationFile: resolve(preparationFile), ready: preparation.totals.ready,
     review: preparation.totals.review, importReady: null,
