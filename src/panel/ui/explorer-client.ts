@@ -11,6 +11,7 @@ const data = readPanelPayload();
 const products = data.explorer.products;
 const productsById = new Map(products.map((item) => [item.identity, item]));
 const names = data.names;
+const normalizedFields = new Map(data.normalizationDictionary.map((entry) => [entry.input, entry.canonical] as const));
 const index = createExplorerIndex(products);
 let page = 0;
 let selectedId: string | null = null;
@@ -75,7 +76,7 @@ const renderRows = (): void => {
 const ensureDetail = (): void => {
   const key = `${selectedId ?? ""}:${filters.selection().additionKind ?? "todos"}`;
   if (renderedId === key) return;
-  renderExplorerDetail(selectedId ? productsById.get(selectedId) ?? null : null, names, filters.selection().additionKind ?? "todos");
+  renderExplorerDetail(selectedId ? productsById.get(selectedId) ?? null : null, names, filters.selection().additionKind ?? "todos", normalizedFields);
   renderedId = key;
 };
 const renderExplorer = (): void => {

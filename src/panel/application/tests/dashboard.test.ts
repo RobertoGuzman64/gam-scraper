@@ -346,7 +346,7 @@ test("F5 compacta el catálogo sin repetir métricas que pertenecen al detalle",
 
 test("E2 presenta tres etapas compactas, con ampliación individual y sin duplicar las fichas en auditoría", async () => {
   const { html } = await readStaticPanel();
-  assert.ok(html.includes("renderStageCards(item)"));
+  assert.ok(html.includes("renderStageCards(item, normalizedFields)"));
 
   assert.ok(html.includes("renderTechnicalContribution(item)"));
   assert.ok(html.includes("explorer-contribution"));
@@ -360,6 +360,11 @@ test("E2 presenta tres etapas compactas, con ampliación individual y sin duplic
   const cards = await readFile(join(process.cwd(), "dist", "panel", "ui", "explorer-stage-cards.js"), "utf8");
   for (const key of ["original", "published", "commercial"]) assert.ok(cards.includes(key));
   assert.ok(cards.includes("dialog.showModal()"));
+  assert.ok(cards.includes("stageSpecAddition(stage, key, value, item.specAdditions, normalizedFields)"));
+  assert.ok(cards.includes("Añadida · "));
+  for (const className of ["spec-kind-own", "spec-kind-reused", "spec-kind-pending"]) {
+    assert.ok(html.includes(`.equipzilla-product-view .equipzilla-spec-item.${className}`));
+  }
   assert.ok(cards.includes("dialog.remove()"));
   assert.ok(cards.includes("Etapa no disponible en este expediente"));
   assert.ok(cards.includes("Sin fotografía disponible"));

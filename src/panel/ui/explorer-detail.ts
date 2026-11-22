@@ -6,7 +6,10 @@ import { renderStageCards } from "./explorer-stage-cards.js";
 import { renderSpecifications } from "./explorer-specifications.js";
 import { compareSection, comparisonState, contentDifference, commercialDifference, renderTitle, renderDescriptions, renderCommercialData, renderTechnicalContribution } from "./explorer-detail-sections.js";
 
-export const renderExplorerDetail = (item: PanelExplorerProduct | null, names: Readonly<Record<PanelProviderId, string>>, additionKind: PanelSpecAddition["kind"] | "todos"): void => {
+export const renderExplorerDetail = (
+  item: PanelExplorerProduct | null, names: Readonly<Record<PanelProviderId, string>>,
+  additionKind: PanelSpecAddition["kind"] | "todos", normalizedFields: ReadonlyMap<string, string>
+): void => {
   const target = find("explorer-detail");
   target.replaceChildren();
   if (!item) {
@@ -36,7 +39,7 @@ export const renderExplorerDetail = (item: PanelExplorerProduct | null, names: R
     }
     append(target, excluded);
   }
-  append(target, renderStageCards(item));
+  append(target, renderStageCards(item, normalizedFields));
   const contribution = renderTechnicalContribution(item);
   if (contribution) append(target, contribution);
   const comparison = create("section", "record-comparison");

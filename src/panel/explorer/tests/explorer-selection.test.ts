@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { stageSpecAddition } from "../stage-spec-additions.js";
 import { readPanelSnapshot } from "../../evidence/read-panel-snapshot.js";
 import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
 import { readPanelExplorer } from "../../../tools/catalog/read-panel-explorer.js";
@@ -185,4 +186,23 @@ test("filtra por origen de incorporación sin confundir modificaciones ni crear 
   assert.equal(selectExplorerProducts([changed, own, pending, reused], {
     ...baseSelection, additionKind: "reused", withTechnicalAdditions: true
   }).length, 1);
+});
+
+
+test("las fichas ampliadas solo colorean incorporaciones acreditadas de FINISH y Comercial", () => {
+  const normalizedFields = new Map([["ano de fabricacion", "Año"], ["alcance horizontal", "Alcance horizontal (m)"]]);
+  const additions = [
+    { field: "Año", value: "2022", kind: "own" as const },
+    { field: "Alcance horizontal (m)", value: "9,2 m", kind: "reused" as const, linkedMachines: ["mercaeleva:ref:m082-5310"] }
+  ];
+  assert.equal(stageSpecAddition("original", "Año de fabricación", "2022", additions, normalizedFields), null);
+  assert.equal(stageSpecAddition("published", "Año de fabricación", "2022", additions, normalizedFields)?.kind, "own");
+  assert.equal(stageSpecAddition("commercial", "Año de fabricación", "2022", additions, normalizedFields)?.kind, "own");
+  assert.equal(stageSpecAddition("published", "Alcance horizontal", "9,2 m", additions, normalizedFields)?.kind, "reused");
+  assert.equal(stageSpecAddition("commercial", "Alcance horizontal", "9,2 m", additions, normalizedFields)?.kind, "reused");
+  assert.equal(stageSpecAddition("commercial", "Alcance horizontal", "9,4 m", additions, normalizedFields), null);
+  assert.equal(stageSpecAddition("published", "Altura de trabajo", "9,2 m", additions, normalizedFields), null);
+  assert.equal(stageSpecAddition("published", "Año de fabricación", "2021", additions, normalizedFields), null);
+  assert.equal(stageSpecAddition("published", "Año", "2022", additions, normalizedFields)?.kind, "own");
+  assert.equal(stageSpecAddition("published", "Año", 2022, additions, normalizedFields)?.kind, "own");
 });

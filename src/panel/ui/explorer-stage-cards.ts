@@ -1,5 +1,7 @@
 import type { PanelExplorerProduct, PanelProductView } from "../explorer/types.js";
 import { create as element } from "./dom.js";
+import { additionLabels } from "./explorer-labels.js";
+import { stageSpecAddition } from "../explorer/stage-spec-additions.js";
 
 type RecordStage = keyof Pick<PanelExplorerProduct, "original" | "published" | "commercial">;
 
@@ -141,7 +143,10 @@ const summary = (record: PanelProductView): HTMLElement | null => {
   return container;
 };
 
-const technicalDetails = (record: PanelProductView): HTMLElement => {
+const technicalDetails = (
+  record: PanelProductView, stage: RecordStage, item: PanelExplorerProduct,
+  normalizedFields: ReadonlyMap<string, string>
+): HTMLElement => {
   const section = element("section", "equipzilla-technical stage-viewer-section");
   section.append(element("h3", "equipzilla-section-title", "Ficha técnica"));
   const entries = Object.entries(record.specs);
@@ -151,9 +156,12 @@ const technicalDetails = (record: PanelProductView): HTMLElement => {
   }
   const list = element("dl", "equipzilla-spec-grid");
   for (const [key, value] of entries) {
-    const item = element("div", "equipzilla-spec-item");
-    item.append(element("dt", "", key), element("dd", "", Array.isArray(value) ? value.join(" · ") : String(value)));
-    list.append(item);
+    const entry = element("div", "equipzilla-spec-item");
+    const addition = stageSpecAddition(stage, key, value, item.specAdditions, normalizedFields);
+    if (addition) entry.classList.add(`spec-kind-${addition.kind}`);
+    entry.append(element("dt", "", key), element("dd", "", Array.isArray(value) ? value.join(" · ") : String(value)));
+    if (addition) entry.append(element("span", "equipzilla-spec-kind", `Añadida · ${additionLabels[addition.kind]}`));
+    list.append(entry);
   }
   section.append(list);
   return section;
@@ -183,7 +191,10 @@ const additionalDetails = (record: PanelProductView, stage: RecordStage, item: P
   return section;
 };
 
-const recordDetails = (record: PanelProductView, stage: RecordStage, item: PanelExplorerProduct): HTMLElement => {
+const recordDetails = (
+  record: PanelProductView, stage: RecordStage, item: PanelExplorerProduct,
+  normalizedFields: ReadonlyMap<string, string>
+): HTMLElement => {
   const content = element("div", "stage-viewer-content equipzilla-product-view");
   const header = element("section", "equipzilla-product-info stage-viewer-section");
   header.append(element("span", "equipzilla-product-eyebrow", "FICHA DEL CORTE · " + stageLabels[stage]));
@@ -195,13 +206,16 @@ const recordDetails = (record: PanelProductView, stage: RecordStage, item: Panel
   header.append(facts(record, stage, item));
   const main = element("div", "equipzilla-product-top");
   main.append(header, gallery(record, stage));
-  content.append(main, technicalDetails(record));
+  content.append(main, technicalDetails(record, stage, item, normalizedFields));
   const additional = additionalDetails(record, stage, item);
   if (additional) content.append(additional);
   return content;
 };
 
-const openStage = (item: PanelExplorerProduct, stage: RecordStage, trigger: HTMLButtonElement, host: HTMLElement): void => {
+const openStage = (
+  item: PanelExplorerProduct, stage: RecordStage, trigger: HTMLButtonElement, host: HTMLElement,
+  normalizedFields: ReadonlyMap<string, string>
+): void => {
   const record = item[stage];
   if (!record) return;
   const dialog = element("dialog", "stage-record-viewer equipzilla-stage-dialog");
@@ -211,7 +225,7 @@ const openStage = (item: PanelExplorerProduct, stage: RecordStage, trigger: HTML
   heading.id = "equipzilla-stage-heading";
   const close = button("Cerrar ×", "stage-viewer-close", () => dialog.close());
   header.append(heading, close);
-  dialog.append(header, recordDetails(record, stage, item));
+  dialog.append(header, recordDetails(record, stage, item, normalizedFields));
   dialog.addEventListener("close", () => {
     dialog.remove();
     if (trigger.isConnected) trigger.focus({ preventScroll: true });
@@ -225,7 +239,9 @@ const openStage = (item: PanelExplorerProduct, stage: RecordStage, trigger: HTML
   close.focus();
 };
 
-export const renderStageCards = (item: PanelExplorerProduct): HTMLElement => {
+export const renderStageCards = (
+  item: PanelExplorerProduct, normalizedFields: ReadonlyMap<string, string>
+): HTMLElement => {
   const section = element("section", "stage-record-section");
   const grid = element("div", "stage-record-grid");
   for (const stage of ["original", "published", "commercial"] as const) {
@@ -252,7 +268,7 @@ export const renderStageCards = (item: PanelExplorerProduct): HTMLElement => {
         stats.append(stat("Categoría", record.category));
       }
       card.append(stats);
-      const expand = button("Ampliar ficha", "stage-record-expand", () => openStage(item, stage, expand, section));
+      const expand = button("Ampliar ficha", "stage-record-expand", () => openStage(item, stage, expand, section, normalizedFields));
       expand.setAttribute("aria-label", `Ampliar ${stageLabels[stage]}`);
       card.append(expand);
     }
