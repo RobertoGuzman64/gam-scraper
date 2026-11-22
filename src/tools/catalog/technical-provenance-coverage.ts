@@ -11,8 +11,8 @@ import { readPanelExplorer } from "./read-panel-explorer.js";
 import { productIdentity } from "../../panel/explorer/explorer-identity.js";
 import type { PanelSpecAddition } from "../../panel/explorer/types.js";
 import { prepareSourceProduct } from "../../preparation/prepare-product.js";
-import { classifyPublishedTechnicalSpec } from "../../preparation/technical-spec-classification.js";
-import type { TechnicalSpecEvidence } from "../../contracts/technical-provenance.js";
+import { buildPublishedTechnicalEditorialCohort, classifyPublishedTechnicalSpec } from "../../preparation/technical-spec-classification.js";
+import type { ProductTechnicalProvenance, TechnicalSpecEvidence } from "../../contracts/technical-provenance.js";
 import type { PanelProviderId } from "../../panel/evidence/types.js";
 import { evaluateGrayProvenance } from "./gray-provenance-evaluation.js";
 import { withdrawnTechnicalSpecs } from "./withdrawn-technical-specs.js";
@@ -169,6 +169,25 @@ export const inspectTechnicalProvenanceCoverage = async (workspace: string): Pro
   const explorer = await readPanelExplorer(root, snapshot);
   const totals: ProviderCoverage[] = [];
   const recordsByProvider = new Map<PanelProviderId, ReadonlyMap<string, ProductRecord>>();
+  for (const provider of snapshot.providers) {
+    const originals = await readPortableOriginal(root, provider.providerId);
+    const records = new Map(originals.products.map((item) =>
+      [productIdentity(provider.providerId, item.reference, item.url), item] as const));
+    if (records.size !== originals.products.length || records.size !== provider.metrics.originals) {
+      throw new Error(`Originales inválidos para cobertura: ${provider.providerId}`);
+    }
+    recordsByProvider.set(provider.providerId, records);
+  }
+  const traces = new Map<string, ProductTechnicalProvenance>();
+  const cohort = buildPublishedTechnicalEditorialCohort(explorer.products.filter((item) => item.published).map((item) => {
+    const original = recordsByProvider.get(item.providerId)?.get(item.identity) ?? null;
+    const emitted = original ? prepareSourceProduct(original).technicalProvenance ?? null : null;
+    if (emitted) traces.set(item.identity, emitted);
+    return { providerId: item.providerId, reference: item.reference, sourceUrl: item.sourceUrl,
+      original, emitted, originalVerified: original !== null && snapshot.providers.some((provider) =>
+        provider.providerId === item.providerId && provider.original.status === "verified"),
+      additions: item.specAdditions.map(({ field, value }) => ({ field, value })) };
+  }));
   const mechanisms = new Map<string, number>();
   const unattributedMechanisms = new Map<string, number>();
   const grayCases: GrayProvenanceCase[] = [];
@@ -179,13 +198,8 @@ export const inspectTechnicalProvenanceCoverage = async (workspace: string): Pro
   const motorProviders: MotorComparison[] = [];
   const differences: TechnicalClassificationDifference[] = [];
   for (const provider of snapshot.providers) {
-    const originals = await readPortableOriginal(root, provider.providerId);
-    const records = new Map(originals.products.map((item) =>
-      [productIdentity(provider.providerId, item.reference, item.url), item] as const));
-    recordsByProvider.set(provider.providerId, records);
-    if (records.size !== originals.products.length || records.size !== provider.metrics.originals) {
-      throw new Error(`Originales inválidos para cobertura: ${provider.providerId}`);
-    }
+    const records = recordsByProvider.get(provider.providerId);
+    if (!records) throw new Error(`Originales ausentes para cobertura: ${provider.providerId}`);
     const stored = await readPublicationTechnicalProvenance(
       root, provider.publication.path, provider.providerId, provider.publication.sha256);
     const historicalEmitted = stored?.products.reduce((sum, item) =>
@@ -214,8 +228,7 @@ export const inspectTechnicalProvenanceCoverage = async (workspace: string): Pro
     for (const item of explorer.products.filter((product) => product.providerId === provider.providerId && product.published)) {
       const original = records.get(item.identity);
       if (!original || !item.published) throw new Error(`Publicación sin fuente: ${item.identity}`);
-      const prepared = prepareSourceProduct(original);
-      const trace = prepared.technicalProvenance;
+      const trace = traces.get(item.identity);
       if (!trace || trace.originalRecordSha256 !== originalRecordFingerprint(original)) {
         throw new Error(`Ensayo sin identidad de procedencia: ${item.identity}`);
       }
@@ -225,7 +238,7 @@ export const inspectTechnicalProvenanceCoverage = async (workspace: string): Pro
         additions += 1;
         classification[addition.kind] += 1;
         const entry = evidence.get(specKey(addition.field, addition.value));
-        const motorKind = classifyPublishedTechnicalSpec(original, trace, addition.field, addition.value);
+        const motorKind = classifyPublishedTechnicalSpec(original, trace, addition.field, addition.value, cohort, trace);
         motor[motorKind] += 1;
         byHistorical[addition.kind][motorKind] += 1;
         if (addition.kind === "pending" && motorKind !== "pending") resolvedPending += 1;

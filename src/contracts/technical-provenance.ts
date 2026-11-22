@@ -22,6 +22,7 @@ export type TechnicalSpecEvidence = {
   readonly field: string;
   readonly value: string;
   readonly mechanism: string;
+  readonly editorialRuleId?: string;
 } & ({
   readonly scope: "unit";
   readonly sourceField: string;
@@ -114,6 +115,8 @@ export const isProductTechnicalProvenance = (value: unknown): value is ProductTe
       return typeof evidence.field === "string" && evidence.field.length > 0 &&
         typeof evidence.value === "string" && typeof evidence.mechanism === "string" &&
         evidence.mechanism.startsWith("src/preparation/") && evidence.mechanism.endsWith(".ts") &&
+        (evidence.editorialRuleId === undefined || typeof evidence.editorialRuleId === "string" &&
+          /^[a-f0-9]{64}$/u.test(evidence.editorialRuleId)) &&
         (evidence.scope === "unit" && typeof evidence.sourceField === "string" &&
           evidence.sourceField.trim().length > 0 && typeof evidence.sourceValue === "string" && evidence.sourceValue.length > 0 && evidence.document === undefined && evidence.verification === undefined ||
           evidence.scope === "unknown" && evidence.sourceField === null && evidence.sourceValue === null &&

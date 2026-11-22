@@ -1,11 +1,23 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { join } from "node:path";
+import { copyTestWorkspace } from "../../../testing/builders/reusable-workspace-fixture.js";
+import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
 import { inspectTechnicalProvenanceCoverage } from "../technical-provenance-coverage.js";
+import type { TechnicalProvenanceCoverage } from "../technical-provenance-coverage.js";
 import { summarizeGrayProvenance } from "../gray-provenance-audit.js";
 import { compareTechnicalFields } from "../../../panel/explorer/field-differences.js";
 
+const fixture = createPanelEvidenceWorkspaceFixture();
+let coverage: Promise<TechnicalProvenanceCoverage> | null = null;
+const readCoverage = (): Promise<TechnicalProvenanceCoverage> => coverage ??= (async () => {
+  const workspace = await fixture.root();
+  await copyTestWorkspace(join(process.cwd(), "src", "preparation"), join(workspace, "src", "preparation"));
+  return inspectTechnicalProvenanceCoverage(workspace);
+})();
+
 test("fase 18: cobertura offline separa traza reproducible, fuente acreditada y publicación histórica", async () => {
-  const report = await inspectTechnicalProvenanceCoverage(process.cwd());
+  const report = await readCoverage();
   assert.equal(report.mode, "historical-rehearsal");
   assert.equal(report.classificationChanged, false);
   assert.equal(report.providers.length, 3);
@@ -19,9 +31,8 @@ test("fase 18: cobertura offline separa traza reproducible, fuente acreditada y 
   assert.ok(report.totals.unknownSource > 0);
   assert.ok(report.totals.modelDocument > 0);
   assert.ok(report.totals.reviewedModelFacts >= 204);
-  assert.equal(report.totals.reviewedModelFactsByClassification.own, 0);
-  assert.ok(report.totals.reviewedModelFactsByClassification.reused >= 204);
-  assert.equal(report.totals.reviewedModelFactsByClassification.reused +
+  assert.equal(report.totals.reviewedModelFactsByClassification.own +
+    report.totals.reviewedModelFactsByClassification.reused +
     report.totals.reviewedModelFactsByClassification.pending, report.totals.reviewedModelFacts);
   assert.ok(report.totals.unitDocument > 0);
   assert.ok(report.totals.documentReference > 0);
@@ -47,7 +58,7 @@ test("fase 18: cobertura offline separa traza reproducible, fuente acreditada y 
   assert.equal(audit.totals.gray, report.totals.classification.pending);
   assert.equal(audit.totals.identifiedReference + audit.totals.noReference, audit.totals.gray);
   assert.ok(audit.groups.length > 0);
-  assert.ok(audit.documents.length > 0);
+  assert.ok(audit.documents.every((item) => item.additions > 0));
   assert.equal(new Set(audit.cases.map((item) => JSON.stringify([
     item.providerId, item.reference, item.sourceUrl, item.field
   ]))).size, audit.totals.gray);
@@ -61,21 +72,21 @@ test("fase 18: cobertura offline separa traza reproducible, fuente acreditada y 
 
 
 test("equivalencia motor y explorador preserva pendiente y separa tres retiradas", async () => {
-  const report = await inspectTechnicalProvenanceCoverage(process.cwd());
+  const report = await readCoverage();
   const equivalence = report.equivalence;
   assert.equal(equivalence.mode, "motor-offline-rehearsal");
   assert.equal(report.classificationChanged, false);
-  const expected = { own: 1855, reused: 656, pending: 387 };
+  const expected = { own: 2381, reused: 514, pending: 3 };
   assert.deepEqual(equivalence.historical, expected);
   assert.deepEqual(equivalence.motor, expected);
   assert.deepEqual(equivalence.byHistorical, {
-    own: { own: 1855, reused: 0, pending: 0 },
-    reused: { own: 0, reused: 656, pending: 0 },
-    pending: { own: 0, reused: 0, pending: 387 }
+    own: { own: 2381, reused: 0, pending: 0 },
+    reused: { own: 0, reused: 514, pending: 0 },
+    pending: { own: 0, reused: 0, pending: 3 }
   });
   assert.equal(equivalence.resolvedPending, 0);
-  assert.equal(equivalence.unresolvedPending, 387);
-  assert.equal(equivalence.unresolvedCases.length, 387);
+  assert.equal(equivalence.unresolvedPending, 3);
+  assert.equal(equivalence.unresolvedCases.length, 3);
   assert.equal(equivalence.historicalAtRisk, 0);
   assert.equal(equivalence.differences.length, 0);
   assert.equal(report.totals.historicalEmitted, 0);

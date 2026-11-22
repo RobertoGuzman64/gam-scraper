@@ -540,17 +540,17 @@ export const recoverMercaelevaDocumentedPlatformTechnicalSpecs = (record: Produc
   if (Object.keys(documentedSpecs).some((key) => key in specs)) return specs;
   const recovered = { ...specs, ...documentedSpecs };
   const mechanism = "src/preparation/mercaeleva/technical/evidence/documented-platform-technical-specs.ts";
-  if ("fieldSources" in profile && profile.fieldSources) {
-    const fieldSources: Readonly<Record<string, string>> = profile.fieldSources;
-    for (const [field, value] of Object.entries(documentedSpecs)) {
-      observe?.(specs, { ...specs, [field]: value }, mechanism, undefined,
-        { scope: "model-document", document: { url: fieldSources[field] ?? profile.source,
-          brand: profile.brand, model: profile.model } });
-    }
-    observe?.(specs, recovered, mechanism);
-  } else {
-    observe?.(specs, recovered, mechanism, undefined,
-      { scope: "model-document", document: { url: profile.source, brand: profile.brand, model: profile.model } });
+  const fieldSources: Readonly<Record<string, string>> = "fieldSources" in profile ? profile.fieldSources : {};
+  for (const [field, value] of Object.entries(documentedSpecs)) {
+    const documentUrl = fieldSources[field] ?? profile.source;
+    const editorialRuleId = createHash("sha256").update(JSON.stringify([
+      mechanism, profile.brand, profile.model, profile.workHeight, profile.motor, profile.title,
+      documentUrl, field, value
+    ])).digest("hex");
+    observe?.(specs, { ...specs, [field]: value }, mechanism, undefined,
+      { scope: "model-document", document: { url: documentUrl,
+        brand: profile.brand, model: profile.model } }, editorialRuleId);
   }
+  observe?.(specs, recovered, mechanism);
   return recovered;
 };

@@ -50,6 +50,7 @@ export type PanelSpecAddition = {
   readonly field: string;
   readonly value: string;
   readonly kind: "own" | "reused" | "pending";
+  readonly linkedMachines?: readonly string[];
 };
 
 export type PanelProductDecision = {

@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto";
+import { originalRecordFingerprint } from "../catalog/identity-fingerprint.js";
+import { reconcileGamVerifiedListing } from "./gam/technical/models/gam-verified-listing-reconciliation.js";
 import type { ProductRecord, SpecsMap } from "../contracts/catalog.js";
 import { recoverGamExplicitWorkHeightSpec } from "./gam/technical/measurements/work-height-evidence.js";
 import { recoverGamExplicitMachineSpecs } from "./gam/technical/measurements/measured-machine-specs.js";
@@ -18,6 +21,7 @@ import { recoverGamVerifiedUnitOperationSpecs } from "./gam/technical/operations
 import { recoverGamLithiumBatteryType } from "./gam/technical/energy/battery-chemistry-evidence.js";
 import { recoverGamExplicitHorizontalReachSpec } from "./gam/technical/measurements/reach-evidence.js";
 import { recoverGamWheelbaseSpec } from "./gam/technical/mobility/wheelbase-evidence.js";
+import { recoverGamVerifiedVariantAcoustics } from "./gam/identity/evidence/variant-acoustics-evidence.js";
 import { recoverGamVerifiedTyreDimensions } from "./gam/technical/mobility/verified-tyre-dimensions-evidence.js";
 import { recoverGamScrubbingPressureSpec } from "./gam/technical/operations/scrubbing-pressure-evidence.js";
 import { recoverGamCleaningWorkingWidthSpec } from "./gam/technical/operations/cleaning-productivity-evidence.js";
@@ -102,6 +106,10 @@ const additionalRecoveries: typeof sourceRecoveries = [
     recover: recoverGamVerifiedUnitOperationSpecs
   },
   {
+    path: "src/preparation/gam/identity/evidence/variant-acoustics-evidence.ts",
+    recover: recoverGamVerifiedVariantAcoustics
+  },
+  {
     path: "src/preparation/gam/technical/energy/battery-chemistry-evidence.ts",
     recover: recoverGamLithiumBatteryType
   },
@@ -146,4 +154,18 @@ export const sourceTechnicalEvidence = (
     sourceField: "longDescription", sourceValue: original.longDescription,
     mechanism: matches[0].path
   };
+};
+
+export const verifiedReconciledSourceTechnicalRule = (
+  original: ProductRecord, field: string, value: string, mechanism: string
+): string | null => {
+  const corrected = reconcileGamVerifiedListing(original);
+  if (corrected === original || corrected.longDescription === original.longDescription ||
+    sourceTechnicalEvidence(original, field, value) !== null) return null;
+  const evidence = sourceTechnicalEvidence(corrected, field, value);
+  if (evidence?.mechanism !== mechanism || evidence.sourceValue !== corrected.longDescription) return null;
+  return createHash("sha256").update(JSON.stringify([
+    "verified-listing", original.providerId, original.reference, original.url,
+    originalRecordFingerprint(original), mechanism, field, value
+  ])).digest("hex");
 };

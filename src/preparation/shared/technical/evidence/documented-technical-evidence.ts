@@ -2,7 +2,8 @@ import { createHash } from "node:crypto";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import type { DocumentedTechnicalSource as ProvenanceSource } from "../../../../contracts/technical-provenance.js";
 import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
-import { reviewedCatalogModelIdentity } from "./reviewed-catalog-model-identity.js";
+import { reviewedCatalogModelIdentity, matchesDocumentedTechnicalIdentity } from "./reviewed-catalog-model-identity.js";
+import { reviewedModelDocumentVerification } from "./reviewed-model-claims.js";
 
 export type DocumentedTechnicalUnit = {
   readonly fingerprint: string;
@@ -44,11 +45,39 @@ export const documentedTechnicalReference = (record: ProductRecord, url: string 
     document: { url, brand: record.brand, model: record.model } };
 };
 
+const editorialRuleId = (
+  record: ProductRecord, mechanism: string, field: string, value: string,
+  source: ProvenanceSource | undefined
+): string => {
+  const shared = source && source.scope !== "unit-document" &&
+    matchesDocumentedTechnicalIdentity(record, source)
+    ? reviewedModelDocumentVerification(source.document, field, value) : null;
+  const key = shared
+    ? ["model", record.providerId, record.brand, record.model, record.categoryKey,
+      mechanism, source?.document.url, field, value, shared.claimSha256]
+    : ["unit", record.providerId, record.reference, record.url, mechanism, field, value];
+  return createHash("sha256").update(JSON.stringify(key)).digest("hex");
+};
+
+const observeDocumentedTechnicalField = (
+  record: ProductRecord, before: SpecsMap, field: string, value: SpecsMap[string],
+  mechanism: string, source: ProvenanceSource | undefined, observe?: TechnicalRecoveryObservation
+): void => {
+  if (field in before) return;
+  const valueText = typeof value === "string" ? value : JSON.stringify(value);
+  observe?.(before, { ...before, [field]: value }, mechanism, undefined, source,
+    editorialRuleId(record, mechanism, field, valueText, source));
+};
+
 export const observeDocumentedTechnicalAddition = (
   record: ProductRecord, before: SpecsMap, after: SpecsMap, url: string | undefined,
   mechanism: string, observe?: TechnicalRecoveryObservation
 ): void => {
-  if (before !== after) observe?.(before, after, mechanism, undefined, documentedTechnicalReference(record, url));
+  if (before === after || !observe) return;
+  const source = documentedTechnicalReference(record, url);
+  for (const [field, value] of Object.entries(after)) {
+    observeDocumentedTechnicalField(record, before, field, value, mechanism, source, observe);
+  }
 };
 
 const comparableIdentifier = (value: string): string => value.normalize("NFD")
@@ -120,13 +149,11 @@ export const applyDocumentedTechnicalEvidence = (
         observeDocumentedTechnicalAddition(record, specs, { ...specs, [field]: value },
           unit.fieldSources[field] ?? unit.source, mechanism, observe);
       }
-      observe?.(specs, result, mechanism);
     } else if (unit.sources && unit.sources.length > 1) {
       for (const [field, value] of Object.entries(unit.specifications)) {
         const reference = documentedFieldReference(record, field, unit.sources);
-        if (reference) observe?.(specs, { ...specs, [field]: value }, mechanism, undefined, reference);
+        observeDocumentedTechnicalField(record, specs, field, value, mechanism, reference, observe);
       }
-      observe?.(specs, result, mechanism);
     } else {
       observeDocumentedTechnicalAddition(record, specs, result,
         unit.source ?? unit.sources?.[0] ?? (source.exactTitleAndUrl ? unit.url : undefined), mechanism, observe);

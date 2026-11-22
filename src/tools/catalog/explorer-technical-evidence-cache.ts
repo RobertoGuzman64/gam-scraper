@@ -26,7 +26,12 @@ const record = (value: unknown): value is Record<string, unknown> =>
 
 const isAddition = (value: unknown): value is PanelSpecAddition =>
   record(value) && typeof value.field === "string" && typeof value.value === "string" &&
-  (value.kind === "own" || value.kind === "reused" || value.kind === "pending");
+  (value.kind === "own" || value.kind === "reused" || value.kind === "pending") &&
+  (value.kind === "reused" ? Array.isArray(value.linkedMachines) &&
+    value.linkedMachines.length > 0 && value.linkedMachines.every((identity: unknown) =>
+      typeof identity === "string" && identity.length > 0) &&
+    new Set(value.linkedMachines).size === value.linkedMachines.length :
+    value.linkedMachines === undefined);
 
 const isProvenance = (value: unknown): value is PanelFieldProvenance =>
   record(value) && typeof value.field === "string" &&
@@ -66,6 +71,23 @@ export const readExplorerTechnicalEvidence = async (
       } : { additions: [], provenance: [] });
     }
     result.set(provider.providerId, products);
+  }
+  const classified = new Map<string, readonly PanelSpecAddition[]>();
+  for (const products of result.values()) {
+    for (const [identity, product] of products) {
+      if (classified.has(identity)) throw new Error(`Identidad técnica repetida entre proveedores: ${identity}`);
+      classified.set(identity, product.additions);
+    }
+  }
+  for (const [identity, additions] of classified) {
+    for (const addition of additions) {
+      if (addition.kind !== "reused") continue;
+      if (addition.linkedMachines?.includes(identity) || !addition.linkedMachines?.every((linked) =>
+        classified.get(linked)?.some((peer) => peer.field === addition.field && peer.value === addition.value &&
+          peer.kind === "reused" && peer.linkedMachines?.includes(identity)))) {
+        throw new Error(`Reutilización técnica sin vínculo editorial recíproco: ${identity}:${addition.field}`);
+      }
+    }
   }
   return result;
 };

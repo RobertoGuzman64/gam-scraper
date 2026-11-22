@@ -100,8 +100,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
         await prepareExplorerTechnicalEvidence(root);
         printCommandDeliverable("PANEL LOCAL", await writeLocalPanel(root));
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.warn(`AVISO | Exportación comercial entregada; el panel local no pudo actualizarse: ${message}`);
+        throw new Error("Exportación comercial entregada, pero la actualización del panel local no se ha completado", { cause: error });
       }
     }
     printCommandResult("Dos ZIP comprobados desde publicaciones vigentes; integración en BD NO VERIFICADA");

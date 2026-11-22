@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { isPublicationDirectoryName, matchesPublicationApproval } from "../shared/publication-identity.mjs";
 import { readOfflinePreparation } from "../../dist/infrastructure/filesystem/preparation/offline-preparation.js";
+import { isPublicationTechnicalProvenance } from "../../dist/contracts/technical-provenance.js";
 
 const providers = ["gam", "gomariz", "mercaeleva"];
 const memberSuffixes = ["-preparation.manifest.json", "-preparation.json", "-diagnostics.json", "-comparison.json"];
@@ -130,18 +131,36 @@ const publicationSets = async (root, provider, prepared) => {
       if (!child.isFile() || child.isSymbolicLink()) throw new Error(`Miembro irregular: ${child.name}`);
       return child.name;
     }).sort();
-    const expected = ["accreditation.json", `${provider}-publishable.json`, "manifest.json"].sort();
-    if (JSON.stringify(files) !== JSON.stringify(expected)) throw new Error(`Publicación incompleta: ${directory}`);
     const manifest = await readJson(join(directory, "manifest.json"));
+    if (!isRecord(manifest) || !isRecord(manifest.files)) {
+      throw new Error(`Integridad de publicación no acreditada: ${directory}`);
+    }
+    const evidenceSha = manifest.files["technical-provenance.json"];
+    const expected = ["accreditation.json", `${provider}-publishable.json`, "manifest.json",
+      ...(evidenceSha === undefined ? [] : ["technical-provenance.json"])].sort();
+    if (JSON.stringify(files) !== JSON.stringify(expected)) throw new Error(`Publicación incompleta: ${directory}`);
     const approvalBytes = await readFile(join(directory, "accreditation.json"));
     const productBytes = await readFile(join(directory, `${provider}-publishable.json`));
     const approval = sha256(approvalBytes);
-    if (!isRecord(manifest) || manifest.version !== 1 || manifest.providerId !== provider ||
+    if (manifest.version !== 1 || manifest.providerId !== provider ||
       typeof manifest.runId !== "string" || !validSha(manifest.preparationSha256) ||
       manifest.approvalSha256 !== approval || !matchesPublicationApproval(entry.name, approval) ||
-      manifest.files?.[`${provider}-publishable.json`] !== sha256(productBytes) ||
-      manifest.files?.["accreditation.json"] !== approval) {
+      manifest.files[`${provider}-publishable.json`] !== sha256(productBytes) ||
+      manifest.files["accreditation.json"] !== approval ||
+      (evidenceSha !== undefined && !validSha(evidenceSha))) {
       throw new Error(`Integridad de publicación no acreditada: ${directory}`);
+    }
+    if (evidenceSha !== undefined) {
+      const evidenceBytes = await readFile(join(directory, "technical-provenance.json"));
+      const evidence = JSON.parse(evidenceBytes);
+      const products = JSON.parse(productBytes);
+      if (sha256(evidenceBytes) !== evidenceSha || !isPublicationTechnicalProvenance(evidence) ||
+        evidence.providerId !== provider || evidence.preparationSha256 !== manifest.preparationSha256 ||
+        !Array.isArray(products) || evidence.products.length !== products.length ||
+        evidence.products.some((item, index) =>
+          item.reference !== products[index]?.reference || item.sourceUrl !== products[index]?.sourceUrl)) {
+        throw new Error(`Procedencia técnica publicada inválida: ${directory}`);
+      }
     }
     if (seenApprovals.has(approval) || result.some((item) =>
       entry.name.startsWith(basename(item.directory)) || basename(item.directory).startsWith(entry.name))) {

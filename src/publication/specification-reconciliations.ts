@@ -1,4 +1,5 @@
 import type { ImportCandidate } from "../commercial/legacy-export/contracts.js";
+import { withdrawnTechnicalSpecIdentities } from "../catalog/withdrawn-technical-specs.js";
 import type { PublicationDifference } from "./publication-contracts.js";
 
 export type SpecificationReconciliation = {
@@ -85,6 +86,17 @@ export const reconcileRemovedSpecifications = (
     const removedKey = separator < 0 ? "" : key.slice(separator + 1);
     const old = previous.get(identity);
     const updated = next.get(identity);
+    const withdrawn = withdrawnTechnicalSpecIdentities.find((item) =>
+      item.providerId === providerId && `ref:${item.reference.toLowerCase()}` === identity &&
+      item.field === removedKey);
+    if (withdrawn && old && updated && old.sourceUrl === withdrawn.sourceUrl &&
+      updated.sourceUrl === withdrawn.sourceUrl && old.reference === withdrawn.reference &&
+      updated.reference === withdrawn.reference && (old.spec["Modelo"] ?? null) === withdrawn.model &&
+      (updated.spec["Modelo"] ?? null) === withdrawn.model && old.spec[removedKey] === withdrawn.value &&
+      !Object.hasOwn(updated.spec, removedKey)) {
+      resolved.push(key);
+      continue;
+    }
     if (!rule || !old || !updated || old.sourceUrl !== updated.sourceUrl ||
       old.reference !== updated.reference || old.spec["Modelo"] !== rule.model ||
       updated.spec["Modelo"] !== (rule.replacement["Modelo"] ?? rule.model) ||

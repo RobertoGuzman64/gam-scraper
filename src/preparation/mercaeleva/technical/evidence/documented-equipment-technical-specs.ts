@@ -292,6 +292,19 @@ const sourceFingerprint = (record: ProductRecord): string => createHash("sha256"
   specs: record.specs,
 })).digest("hex");
 
+const editorialRuleIdentity = (
+  record: ProductRecord, unit: DocumentedUnit, mechanism: string, field: string, value: SpecsMap[string]
+): string => {
+  const profile = JSON.stringify([unit.brand, unit.model, unit.title, unit.source,
+    unit.fieldSources ?? null, unit.specifications]);
+  const shared = Object.entries(documentedUnits).some(([reference, candidate]) =>
+    reference !== record.reference && JSON.stringify([candidate.brand, candidate.model, candidate.title,
+      candidate.source, candidate.fieldSources ?? null, candidate.specifications]) === profile);
+  const identity = shared ? ["shared-rule", mechanism, profile, field, value] :
+    ["unit-rule", mechanism, record.providerId, record.reference, record.url, field, value];
+  return createHash("sha256").update(JSON.stringify(identity)).digest("hex");
+};
+
 export const recoverMercaelevaDocumentedEquipmentTechnicalSpecs = (record: ProductRecord, specs: SpecsMap, observe?: TechnicalRecoveryObservation): SpecsMap => {
   if (!validMercaelevaTechnicalSource(record) || record.categoryKey !== "venta" ||
     record.condition !== "Segunda mano" || !record.reference || !record.specs ||
@@ -311,12 +324,15 @@ export const recoverMercaelevaDocumentedEquipmentTechnicalSpecs = (record: Produ
     for (const [field, value] of Object.entries(unit.specifications)) {
       observe?.(specs, { ...specs, [field]: value }, mechanism, undefined,
         { scope: "unit-document", document: { url: unit.fieldSources[field] ?? unit.source,
-          brand: unit.brand, model: unit.model } });
+          brand: unit.brand, model: unit.model } }, editorialRuleIdentity(record, unit, mechanism, field, value));
     }
     observe?.(specs, recovered, mechanism);
   } else {
-    observe?.(specs, recovered, mechanism, undefined,
-      { scope: "unit-document", document: { url: unit.source, brand: unit.brand, model: unit.model } });
+    for (const [field, value] of Object.entries(unit.specifications)) {
+      observe?.(specs, { ...specs, [field]: value }, mechanism, undefined,
+        { scope: "unit-document", document: { url: unit.source, brand: unit.brand, model: unit.model } },
+        editorialRuleIdentity(record, unit, mechanism, field, value));
+    }
   }
   return recovered;
 };

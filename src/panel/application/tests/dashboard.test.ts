@@ -97,7 +97,8 @@ test("el HTML autónomo contiene los contratos acreditados sin valores prefijado
   assert.ok(html.includes("Comparar contenido de la ficha"));
   assert.ok(html.includes("Especificaciones alineadas por campo"));
   assert.ok(html.includes("Ver trazabilidad"));
-  assert.ok(html.includes("Atribución a la propia ficha: revisión consolidada o evidencia directa verificada."));
+  assert.ok(html.includes("Incorporación editorial exclusiva de esta máquina dentro del corte verificado."));
+  assert.ok(html.includes("Incorporación editorial reutilizada entre máquinas vinculadas por su regla técnica."));
   assert.ok(html.includes("La aplicación histórica de la regla no está demostrada"));
   assert.ok(html.includes("Una coincidencia documental no acredita por sí sola"));
   assert.ok(!html.includes('value="documented"'));

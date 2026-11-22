@@ -5,6 +5,9 @@ import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 import { classifyPublishedTechnicalAdditions } from "../../../preparation/technical-spec-classification.js";
 import { readPanelSnapshot } from "../../evidence/read-panel-snapshot.js";
 import { readPanelExplorer } from "../../../tools/catalog/read-panel-explorer.js";
+import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
+
+const fixture = createPanelEvidenceWorkspaceFixture();
 
 const examples = [
   { providerId: "gam", reference: "231", field: "", kind: "reused" },
@@ -42,14 +45,16 @@ test("el motor es la única autoridad para clasificar evidencias técnicas emiti
 });
 
 test("el explorador refleja exclusivamente las clasificaciones reproducibles por el motor", async () => {
-  const root = process.cwd();
+  const root = await fixture.root();
   const snapshot = await readPanelSnapshot(root);
   const explorer = await readPanelExplorer(root, snapshot);
   const additions = explorer.products.flatMap((product) => product.specAdditions);
   assert.ok(additions.length > 0);
   assert.ok(additions.some((addition) => addition.kind === "own"));
   assert.ok(additions.some((addition) => addition.kind === "reused"));
-  assert.ok(additions.some((addition) => addition.kind === "pending"));
+  assert.equal(additions.filter((addition) => addition.kind === "pending").length, 3);
+  assert.ok(additions.filter((addition) => addition.kind === "reused")
+    .every((addition) => addition.linkedMachines !== undefined && addition.linkedMachines.length > 0));
   for (const product of explorer.products) {
     assert.deepEqual(product.specAdditions.map((addition) => addition.field),
       product.changes.filter((difference) => difference.group === "technical" &&

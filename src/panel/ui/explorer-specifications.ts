@@ -6,10 +6,13 @@ const renderAdditionProvenance = (item: PanelExplorerProduct, addition: PanelSpe
   const details = create("details", "spec-provenance-details");
   append(details, create("summary", "", "Ver trazabilidad"));
   const origin = item.provenance.find((entry) => entry.group === "technical" && entry.field === addition.field);
-  const kindDescription = addition.kind === "pending" ? "Procedencia pendiente de acreditar."
-    : addition.kind === "own" ? "Atribución a la propia ficha: revisión consolidada o evidencia directa verificada."
-      : "Clasificación revisada: información técnica reutilizada.";
+  const kindDescription = addition.kind === "pending" ? "Pertenencia editorial pendiente de resolver."
+    : addition.kind === "own" ? "Incorporación editorial exclusiva de esta máquina dentro del corte verificado."
+      : "Incorporación editorial reutilizada entre máquinas vinculadas por su regla técnica.";
   append(details, create("p", "", kindDescription));
+  if (addition.kind === "reused" && addition.linkedMachines?.length) {
+    append(details, create("p", "", `Misma incorporación editorial compartida con: ${addition.linkedMachines.join(", ")}`));
+  }
   if (origin?.status === "source-compatible" && origin.proof && origin.sourceField && origin.sourceValue) {
     append(details,
       create("p", "", `Dato original compatible: ${origin.sourceField} = ${origin.sourceValue}`),
@@ -33,7 +36,7 @@ const renderAdditionProvenance = (item: PanelExplorerProduct, addition: PanelSpe
 
 export const renderSpecifications = (item: PanelExplorerProduct, additionKind: PanelSpecAddition["kind"] | "todos"): HTMLElement => {
   const section = create("section", "detail-section technical-section");
-  append(section, create("p", "minor-note", "Especificaciones alineadas por campo. Solo se colorean las nuevas. Azul: atribución a la propia ficha acreditada por revisión o evidencia directa; naranja: reutilización técnica revisada; gris: procedencia sin acreditar. La compatibilidad con una regla se muestra por separado y no demuestra su aplicación histórica. Compartir información técnica no significa copiar datos entre unidades."));
+  append(section, create("p", "minor-note", "Especificaciones alineadas por campo. Solo se colorean las incorporaciones del motor. Azul: incorporación editorial exclusiva; naranja: la misma incorporación editorial compartida con otras máquinas; gris: pertenencia aún sin resolver. La procedencia documental se muestra por separado y no decide los colores. Compartir información técnica no significa copiar datos entre unidades."));
   const technical = item.changes.filter((difference) => difference.group === "technical");
   const source = item.original && item.published ? technical :
     item.published && item.commercialTechnicalChanges.length ? item.commercialTechnicalChanges.map((difference): PanelFieldDifference => ({

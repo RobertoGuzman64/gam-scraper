@@ -5,5 +5,6 @@ export type TechnicalRecoverySourceField = "longDescription" | "year" | { readon
 
 export type TechnicalRecoveryObservation = (
   before: SpecsMap, after: SpecsMap, mechanism: string,
-  sourceField?: TechnicalRecoverySourceField, source?: DocumentedTechnicalSource
+  sourceField?: TechnicalRecoverySourceField, source?: DocumentedTechnicalSource,
+  editorialRuleId?: string
 ) => void;

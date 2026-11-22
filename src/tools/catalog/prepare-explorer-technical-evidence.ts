@@ -11,14 +11,31 @@ import { readPublicationTechnicalProvenance } from "../../panel/evidence/read-te
 import { compareOriginalToPublished } from "../../panel/explorer/field-differences.js";
 import { productIdentity } from "../../panel/explorer/explorer-identity.js";
 import { fromOriginal, fromPublication } from "../../panel/explorer/explorer-product-view.js";
-import { classifyPublishedTechnicalAdditions } from "../../preparation/technical-spec-classification.js";
+import { buildPublishedTechnicalEditorialCohort, classifyPublishedTechnicalAdditions } from "../../preparation/technical-spec-classification.js";
+import { prepareSourceProduct } from "../../preparation/prepare-product.js";
 import { explorerTechnicalEvidenceCachePath } from "./explorer-technical-evidence-cache.js";
 import type { ExplorerTechnicalEvidenceCache } from "./explorer-technical-evidence-cache.js";
+import type { ProductRecord } from "../../contracts/catalog.js";
+import type { ProductTechnicalProvenance } from "../../contracts/technical-provenance.js";
 
 export const prepareExplorerTechnicalEvidence = async (workspace: string): Promise<string> => {
   const root = resolve(workspace);
   const snapshot = await readPanelSnapshot(root);
-  const providers: ExplorerTechnicalEvidenceCache["providers"][number][] = [];
+  type StagedProduct = {
+    readonly identity: string;
+    readonly original: ProductRecord | null;
+    readonly trace: ProductTechnicalProvenance | null;
+    readonly reference: string | null;
+    readonly sourceUrl: string;
+    readonly providerId: string;
+    readonly originalVerified: boolean;
+    readonly additions: readonly { readonly field: string; readonly value: string }[];
+    readonly provenance: ExplorerTechnicalEvidenceCache["providers"][number]["products"][number]["provenance"];
+  };
+  type StagedProvider = Omit<ExplorerTechnicalEvidenceCache["providers"][number], "products"> & {
+    readonly products: readonly StagedProduct[];
+  };
+  const staged: StagedProvider[] = [];
   const knowledge = await readPanelUnitKnowledge(root);
   for (const provider of snapshot.providers) {
     const published = await readAccreditedPublication(resolve(root, provider.publication.path));
@@ -52,27 +69,45 @@ export const prepareExplorerTechnicalEvidence = async (workspace: string): Promi
       if (originals && (!original || original.reference !== item.reference || original.url !== item.sourceUrl)) {
         throw new Error(`Original sin correspondencia publicada: ${identity}`);
       }
-      const trace = traces.get(identity) ?? null;
-      if (emitted && !trace) throw new Error(`Publicación sin traza técnica: ${identity}`);
-      if (original && trace && originalRecordFingerprint(original) !== trace.originalRecordSha256) {
+      const publishedTrace = traces.get(identity) ?? null;
+      if (emitted && !publishedTrace) throw new Error(`Publicación sin traza técnica: ${identity}`);
+      if (original && publishedTrace && originalRecordFingerprint(original) !== publishedTrace.originalRecordSha256) {
         throw new Error(`Traza técnica para otra variante: ${identity}`);
       }
       const publishedView = fromPublication(item);
       const changes = original ? compareOriginalToPublished(fromOriginal(original), publishedView) : [];
       const additions = changes.filter((difference) => difference.group === "technical" && difference.change === "added")
         .map((difference) => ({ field: difference.field, value: difference.after ?? "" }));
-      if (trace && trace.entries.some((entry) => !additions.some((addition) =>
+      if (publishedTrace && publishedTrace.entries.some((entry) => !additions.some((addition) =>
         addition.field === entry.field && addition.value === entry.value))) {
         throw new Error(`Traza técnica incompatible con publicación: ${identity}`);
       }
-      return { identity, additions: classifyPublishedTechnicalAdditions(original, trace, provider.providerId,
-        item.reference, item.sourceUrl, provider.original.status === "verified", additions),
+      const trace = publishedTrace ?? (original && additions.length
+        ? prepareSourceProduct(original).technicalProvenance ?? null : null);
+      return { identity, original, trace, providerId: provider.providerId,
+        reference: item.reference, sourceUrl: item.sourceUrl,
+        originalVerified: provider.original.status === "verified", additions,
         provenance: resolvePanelFieldProvenance(original, publishedView, changes, provider, knowledge,
-          item.reference, item.sourceUrl, trace) };
+          item.reference, item.sourceUrl, publishedTrace) };
     });
-    providers.push({ providerId: provider.providerId, publicationSha256: provider.publication.sha256,
+    staged.push({ providerId: provider.providerId, publicationSha256: provider.publication.sha256,
       originalSha256: provider.original.status === "verified" ? provider.original.artifact.sha256 : null, products });
   }
+  const cohort = buildPublishedTechnicalEditorialCohort(staged.flatMap((provider) => provider.products.map((product) => ({
+    providerId: product.providerId, reference: product.reference, sourceUrl: product.sourceUrl,
+    original: product.original, emitted: product.trace, originalVerified: product.originalVerified,
+    additions: product.additions
+  }))));
+  const providers: ExplorerTechnicalEvidenceCache["providers"][number][] = staged.map((provider) => ({
+    providerId: provider.providerId, publicationSha256: provider.publicationSha256,
+    originalSha256: provider.originalSha256,
+    products: provider.products.map((product) => ({
+      identity: product.identity,
+      additions: classifyPublishedTechnicalAdditions(product.original, product.trace, product.providerId,
+        product.reference, product.sourceUrl, product.originalVerified, product.additions, cohort),
+      provenance: product.provenance
+    }))
+  }));
   const content = JSON.stringify({ version: 1, knowledgeSha256: knowledge?.artifact.sha256 ?? null,
     providers } satisfies ExplorerTechnicalEvidenceCache) + "\n";
   const current = await readPanelSnapshot(root);

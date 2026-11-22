@@ -1,23 +1,27 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { join } from "node:path";
 import { before, test } from "node:test";
-import { fileURLToPath } from "node:url";
 import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
 import { recoverGamStabilizedTechnicalSpecs } from "../../../preparation/gam/technical/gam-technical-recovery.js";
 import { exactAddedKeys, inspectSpecProvenance } from "../spec-provenance-inspection.js";
 import type { SpecProvenanceInspection } from "../spec-provenance-inspection.js";
+import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
+const fixture = createPanelEvidenceWorkspaceFixture();
+let root: string;
 let report: SpecProvenanceInspection;
 
-before(async () => { report = await inspectSpecProvenance(root); });
+before(async () => {
+  root = await fixture.root();
+  report = await inspectSpecProvenance(root);
+});
 
 test("mide las 2898 incorporaciones históricas con clasificación exclusiva del motor", () => {
   assert.deepEqual(report.totals, {
-    additions: 2898, own: 1855, reused: 656, pending: 387, reproduced: 2838,
-    classifiedReproduced: 2455, pendingReproduced: 383, notReproduced: 60,
+    additions: 2898, own: 2381, reused: 514, pending: 3, reproduced: 2838,
+    classifiedReproduced: 2838, pendingReproduced: 0, notReproduced: 60,
     gamRecovery: 1590, documentedRecovery: 1081, originalYear: 167
   });
   assert.equal(report.classificationChanged, false);
@@ -35,7 +39,7 @@ test("separa proveedores y distingue las rutas de reproducción sin solapamiento
     { providerId: "mercaeleva", additions: 741, reproduced: 736, notReproduced: 5 }
   ]);
   assert.equal(report.candidates.filter((item) => item.currentKind === "pending" &&
-    item.mechanisms.length === 1 && item.mechanisms[0] === "documentedRecovery").length, 380);
+    item.mechanisms.length > 0).length, 0);
   assert.equal(report.candidates.filter((item) => item.mechanisms.length > 1).length, 0);
 });
 
@@ -62,10 +66,10 @@ test("exige identidad de campo y valor sin atribuir aplicación histórica", () 
     }
   }
   assert.equal(report.candidates.filter((item) => item.reproduction === "not-reproduced" &&
-    item.currentKind === "own").length, 56);
-  assert.equal(report.candidates.filter((item) => item.sourceKindProof === "original-field-compatible").length, 1068);
+    item.currentKind === "own").length, 57);
+  assert.equal(report.candidates.filter((item) => item.sourceKindProof === "original-field-compatible").length, 1069);
   assert.equal(report.candidates.filter((item) => item.sourceKindProof === "original-field-compatible" &&
-    item.providerId === "gam").length, 901);
+    item.providerId === "gam").length, 902);
   assert.equal(report.candidates.filter((item) => item.sourceKindProof === "original-field-compatible" &&
     item.providerId === "gomariz").length, 167);
 });
@@ -85,10 +89,11 @@ test("descarta valores distintos y no confunde un campo conservado con una incor
 });
 
 test("no modifica originales, publicaciones ni el HTML autónomo durante la inspección", async () => {
-  const paths = ["panel/index.html",
-    ...report.providers.flatMap((provider) => [provider.originalPath, provider.publicationPath])];
+  const paths = [join(process.cwd(), "panel", "index.html"),
+    ...report.providers.flatMap((provider) =>
+      [join(root, provider.originalPath), join(root, provider.publicationPath)])];
   const hashes = async (): Promise<readonly string[]> => Promise.all(paths.map(async (path) =>
-    createHash("sha256").update(await readFile(join(root, path))).digest("hex")));
+    createHash("sha256").update(await readFile(path)).digest("hex")));
   const before = await hashes();
   await inspectSpecProvenance(root);
   assert.deepEqual(await hashes(), before);
