@@ -57,6 +57,12 @@ El guard `GUARDS/tests-module-integrity-guard.mjs` revisa imports relativos ause
 
 No hay una capa `pipeline` física. Los orquestadores viven junto al dominio que coordinan: `src/scraping/workflow/`, `src/scraping/batch/`, `src/preparation/workflow/`, `src/campaign/` y `src/publication/`. Tener numerosas dependencias no es por sí solo un defecto de diseño. No reorganizar carpetas, introducir capas vacías o mover reglas por estética.
 
+### Presentación y orquestación de la CLI
+
+Los comandos de `src/cli/commands/` coordinan las operaciones, mientras `src/cli/reporting/` transforma eventos y resultados en mensajes para el operador. `operation-progress.ts` reutiliza `live-status.ts` y `terminal.ts` para mostrar etapa activa, proveedor, contadores fiables y duración, evitando barras y mensajes de avance redundantes entre proveedores. Una notificación de avance no constituye una decisión editorial ni acredita un `PASS`. La salida no interactiva debe seguir siendo legible, sin depender de animación o ANSI, y deben mantenerse los canales y contratos de salida de los comandos.
+
+La dirección de dependencia protegida es **comandos → reporting**, nunca **reporting → comandos**. `GUARDS/tests-module-integrity-guard.mjs` rechaza imports de `src/cli/reporting/` a `src/cli/commands/`, con prueba positiva y negativa en `GUARDS/tests-architecture-guards.test.mjs`. No convertir esta frontera en un sistema de UI paralelo ni colocar reglas de preparación, acreditación o publicación en reporting. Ver [Pruebas y guards](TESTING.md).
+
 ## Flujos y puntos de entrada
 
 ### Extracción y salida

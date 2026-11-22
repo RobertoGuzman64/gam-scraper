@@ -12,7 +12,7 @@ Esta guía describe los controles **vigentes**, sus autorizaciones exactas y sus
 | -------------------------------------------------- | ------------------------------------------------------------------------- |
 | `tests-editorial-architecture-guard.mjs`           | 0 infracciones                                                            |
 | `tests-domain-tests-guard.mjs`                     | 0 infracciones                                                            |
-| Autopruebas `tests-architecture-guards.test.mjs`   | 47 correctas, 0 fallidas en el corte comunicado en `develop` (22-11-2026) |
+| Autopruebas `tests-architecture-guards.test.mjs`   | 48 correctas, 0 fallidas en el corte comunicado en `develop` (22-11-2026) |
 | Excepciones explícitas en tests                    | 19 usos exactos: 12 recuentos de cohortes y 7 dependencias transitivas    |
 | Integraciones de catálogo directamente acreditadas | 21 lecturas, en 14 suites                                                 |
 
@@ -39,6 +39,14 @@ Los guards de gobernanza, integridad productiva, arquitectura editorial y arquit
 `tests-module-integrity-guard.mjs` comprueba los imports relativos de los módulos productivos; no permite dependencias hacia `src/cli/`, `src/tools/`, `src/testing/` o suites de test, ni imports entre implementaciones de proveedores de preparación o entre adaptadores de scraping. Mantiene el motor técnico compartido independiente de `src/commercial/`, la proyección comercial independiente de `src/scraping/` y extracción sin dependencia comercial. Detecta también rutas retiradas `src/pipeline/` y `src/catalog/preparation/`.
 
 `tests-domain-tests-guard.mjs` protege además las ubicaciones de tests: suites de dominio en `tests/` local (con excepción técnica GAM existente), integración en `src/testing/integration/{catalog,commercial,preparation}/`, builders y fixtures en sus zonas, prohibición de imports de suites como helpers y de runners paralelos en `src/testing/`. Rechaza suites que el runner no descubriría por no usar `*.test.ts` y nuevos árboles `testing/` paralelos, conservando seis helpers históricos expresamente autorizados. Un guard arquitectónico no acredita que el trabajo de calidad haya mejorado una ficha.
+
+## Frontera operativa y protección del progreso
+
+`tests-module-integrity-guard.mjs` impide que `src/cli/reporting/` importe módulos de `src/cli/commands/`: la presentación no depende de orquestadores CLI. La autoprueba en `tests-architecture-guards.test.mjs` comprueba tanto dependencias permitidas (entre módulos de reporting y hacia diagnósticos) como el import prohibido de un comando. Se trata de una ampliación del guard existente, **sin un guard ni un comando npm nuevo**. No prohíbe a los comandos consumir reporting ni sustituye las pruebas funcionales de terminal.
+
+El contrato de progreso se verifica en `src/cli/reporting/tests/operation-progress.test.ts` y `terminal.test.ts`: etapas, contadores válidos, cierres e interrupciones, mensajes sin barras de proveedores redundantes y compatibilidad con terminales interactivas/no interactivas. Los fallos que se escriben en `stderr` deben verificarse también en ese canal. El avance de un proveedor no equivale automáticamente a una publicación acreditada ni a un resultado `PASS`. Los indicadores granulares de scraping conservan su finalidad propia.
+
+Las pruebas de FINISH y exportación protegen preflight, integridad, recuperación, decisiones y equivalencia de entregables; no se fija un tiempo de ejecución ni se prohíbe una revalidación necesaria al cruzar etapas o activar bajo bloqueo. El guard de rendimiento controla patrones y cuotas de **tests**, no acredita por sí solo una aceleración del proceso editorial.
 
 ## Política permanente de pruebas
 
@@ -72,4 +80,4 @@ Las suites incluyen controles de imágenes GAM, identidad de variantes, recupera
 
 El corte acreditado se obtuvo sin modificar tests protegidos y sin introducir excepciones generales. Conservar el cero exige que cualquier nueva infracción se **resuelva o acredite contractualmente con alcance exacto**, no degradar el guard ni añadir tolerancias. Una integración necesaria no justifica convertir en dependiente del catálogo todo test de dominio.
 
-El propietario ha comunicado el resultado completo de `npm test` en `develop` el 22 de noviembre de 2026: **539 suites, 2.789 tests correctos, 0 fallidos y 0 omitidos**, con reutilización de caché en parte de la batería, además de `npm run build` correcto. Es una instantánea de ejecución comunicada, no una garantía permanente; registrar el resultado real de cada nueva ejecución. Referencias: [Motor editorial](../docs/EDITORIAL_ENGINE.md), [Validación](../docs/VALIDATION.md) y [Pruebas y rendimiento](../docs/TESTING.md).
+El propietario ha comunicado el resultado completo de `npm test` en `develop` el 22 de noviembre de 2026: **540 suites, 2.799 tests correctos, 0 fallidos y 0 omitidos**, con reutilización de caché en parte de la batería, además de `npm run build` correcto. Es una instantánea de ejecución comunicada, no una garantía permanente; registrar el resultado real de cada nueva ejecución. Referencias: [Motor editorial](../docs/EDITORIAL_ENGINE.md), [Validación](../docs/VALIDATION.md) y [Pruebas y rendimiento](../docs/TESTING.md).

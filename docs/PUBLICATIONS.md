@@ -138,6 +138,10 @@ No abre una sesión de decisiones humanas. `src/publication/automatic-individual
 
 **Publicar.** `src/cli/commands/catalog/publish-individual.ts` coordina `src/publication/individual-finish.ts`. FINISH hace un preflight completo: comprueba originales/preparaciones, exclusiones y aceptación de diferencias; bloquea bajas, pérdidas de descripciones, especificaciones o valores técnicos sin equivalencia acreditada, y cambios de identidad de origen. Tras superar esas comprobaciones, crea/verifica la candidata, su ZIP comercial y el recibo **antes** de seleccionar y verificar las publicaciones vigentes. No modifica el JSON anterior acreditado para forzar el éxito.
 
+**Validaciones y coste operativo.** FINISH evita repetir dentro de una misma etapa ciertas reconstrucciones y validaciones de selecciones que ya han sido comprobadas; esto no autoriza a reutilizarlas sin límite. La acreditación, la inspección y la eventual activación preservan sus fronteras de comprobación: se detectan modificaciones de origen, preparación o decisiones entre pasos, y en la publicación real se conserva la verificación bajo bloqueo y de la selección activa. La CLI no necesita anteponer otra simulación completa al preflight propio de FINISH. La simulación `--simular` valida y calcula sin escrituras; no prueba por sí sola la activación real.
+
+**Observabilidad.** El progreso distingue las etapas `ACREDITACIÓN` e `INSPECCIÓN`, y en publicación real también `ENTREGA`, `VERIFICACIÓN` y `ACTIVACIÓN`. Los contadores representan proveedores procesados, no fichas publicadas ni aprobaciones nuevas. Las duraciones se informan sin imponer límites fijos: una etapa lenta no debe ocultarse ni sortearse. La presentación corresponde a `src/cli/reporting/`, no a las reglas editoriales.
+
 Si existe un caso nuevo o una exclusión distinta, resolverlo mediante el procedimiento editorial explícito `acreditar:proveedor` descrito en el [README](../README.md); ese procedimiento exige decisiones humanas y evidencia. La automatización no proporciona una aprobación genérica alternativa.
 
 ### Operaciones posteriores y recuperación

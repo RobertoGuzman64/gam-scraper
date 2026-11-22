@@ -70,11 +70,21 @@ Estas reglas son verificadas por `GUARDS/tests-domain-tests-guard.mjs` y las fro
 - `GUARDS/tests-domain-tests-guard.mjs` inspecciona dependencias directas/transitivas de catálogos, cohortes fijas y hashes editoriales congelados. El hash de **procedencia de manifest** no es un hash de redacción.
 - Ambos usan `GUARDS/guards-architecture-core.mjs`; las autopruebas están en `GUARDS/tests-architecture-guards.test.mjs`. Las excepciones son verificaciones exactas de contratos, **no** tolerancias globales.
 
-El corte comunicado en `develop` el 22 de noviembre de 2026 registra **0 infracciones**, **47 autopruebas arquitectónicas correctas**, 19 excepciones exactas (12 cohortes y 7 dependencias transitivas) y 21 lecturas directas legítimas en 14 suites protegidas. Son categorías distintas; 19 y 21 **no son** avisos pendientes. Los recuentos pueden cambiar: prevalecen la salida vigente de `npm test` y los contratos en los propios guards.
+El corte comunicado en `develop` el 22 de noviembre de 2026 registra **0 infracciones**, **48 autopruebas arquitectónicas correctas**, 19 excepciones exactas (12 cohortes y 7 dependencias transitivas) y 21 lecturas directas legítimas en 14 suites protegidas. Son categorías distintas; 19 y 21 **no son** avisos pendientes. Los recuentos pueden cambiar: prevalecen la salida vigente de `npm test` y los contratos en los propios guards.
 
 Las 21 lecturas acreditadas están vinculadas al **SHA-256 completo** de cada una de las 14 suites, a una cantidad exacta de lecturas y a una responsabilidad documentada. Si cambia un archivo o aumenta su acceso, el guard lo vuelve a señalar. Los recuentos de cohortes y las dependencias indirectas también requieren coincidencia exacta de su forma autorizada. **No** añadir excepciones para hacer desaparecer una incidencia nueva: primero acreditar su contrato, o migrar el acceso si no precisa catálogo completo.
 
 La enumeración vigente y la razón de cada autorización están en [GUARDS/README.md](../GUARDS/README.md) y, para lecturas directas, en el mapa `accreditedCatalogIntegrations` del guard.
+
+## Regresión del tooling operativo
+
+La presentación de estados y progreso reside en `src/cli/reporting/` (`operation-progress.ts`, `live-status.ts` y `terminal.ts`); los comandos y servicios siguen siendo responsables de ejecutar las operaciones y emitir información fiable. `tests-module-integrity-guard.mjs` rechaza imports desde reporting hacia `src/cli/commands/`; la autoprueba arquitectónica cubre el caso permitido y el prohibido. Esta protección de dependencias no sustituye las pruebas de comportamiento.
+
+`src/cli/reporting/tests/operation-progress.test.ts` y `terminal.test.ts` comprueban avances y cierres, contadores reales, ausencia de barras/duplicados por proveedor, cancelaciones y salidas interactivas o capturadas. Los estados de éxito, advertencia y fallo se basan en resultados verificados, no en el mero avance; las salidas de error por `stderr` requieren captura expresa. No prohibir indiscriminadamente las barras de progreso por ficha del scraping.
+
+En FINISH, las suites de `src/publication/tests/` protegen acreditaciones, diferencias, publicación, idempotencia y recuperación. La optimización de selecciones ya validadas debe conservar la comprobación de cambios entre etapas y las verificaciones previas a activar. En la exportación, conservar la equivalencia del preflight/proyección y la verificación final de fuentes. Para evitar regresiones de coste, preferir pruebas de equivalencia y de límites de responsabilidad a límites de segundos o aserciones rígidas sobre la forma del código.
+
+El propietario comunicó para `develop` (22-11-2026) una ejecución global de **540/540 suites, 2.799 tests correctos, 0 fallidos y 0 omitidos**, y `npm run build` correcto. Es una fotografía de esa ejecución, no un umbral fijo del runner ni evidencia de que las nuevas ejecuciones pasen automáticamente; la caché puede reutilizar parte de las suites.
 
 ## Criterio para nuevas pruebas
 
