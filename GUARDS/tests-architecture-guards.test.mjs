@@ -504,6 +504,17 @@ test("el guard productivo respeta dependencias normales e imports desde tests", 
   assert.deepEqual(inspectModuleIntegrity(root).boundaries, []);
 });
 
+test("la presentación operativa no importa orquestadores, pero conserva contratos de lectura", (t) => {
+  const { root, write } = fixture(t);
+  linkModules(write, "src/cli/reporting/operation-progress.ts", "src/cli/reporting/live-status.ts");
+  linkModules(write, "src/cli/reporting/commercial-report.ts", "src/commercial/diagnostics/report-summary.ts");
+  assert.deepEqual(inspectModuleIntegrity(root).boundaries, []);
+  linkModules(write, "src/cli/reporting/operation-progress.ts", "src/cli/commands/catalog/publish-individual.ts");
+  const { boundaries } = inspectModuleIntegrity(root);
+  assert.equal(boundaries.length, 1);
+  assert.match(boundaries[0] ?? "", /presentación de terminal no debe depender de orquestadores CLI/u);
+});
+
 test("prohíbe que el dominio dependa de CLI, herramientas o fixtures de tests", (t) => {
   const { root, write } = fixture(t);
   linkModules(write, "src/catalog/diagnostics/gaps.ts", "src/cli/reporting/output.ts");

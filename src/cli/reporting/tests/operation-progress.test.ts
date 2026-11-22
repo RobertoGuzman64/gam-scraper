@@ -9,8 +9,13 @@ const capture = (action: () => void): string => {
     lines.push(typeof message === "string" ? message : message.toString());
     return true;
   });
+  const writeError = mock.method(process.stderr, "write", (message: string | Uint8Array) => {
+    lines.push(typeof message === "string" ? message : message.toString());
+    return true;
+  });
   try { action(); }
   finally {
+    writeError.mock.restore();
     write.mock.restore();
     log.mock.restore();
   }
@@ -64,4 +69,38 @@ test("una interrupción no acredita la etapa inacabada", () => {
   assert.match(output, /WARN \| FINISH \| INTERRUMPIDA/);
   assert.doesNotMatch(output, /PASS \| FINISH/);
   assert.doesNotMatch(output, /█|░/);
+});
+
+
+test("los contadores inválidos y los eventos repetidos no inventan proveedores completados", () => {
+  const output = capture(() => {
+    const progress = new OperationProgress("FINISH");
+    progress.stage("ACREDITACIÓN", "3 proveedores");
+    progress.update("GAM", 0, 3);
+    progress.update("GAM", 0, 3);
+    progress.update("GAM", -1, 3);
+    progress.update("GAM", 4, 3);
+    progress.update("GAM", 1, 3);
+    progress.update("GAM", 1, 3);
+    progress.update("GOMARIZ", 1, 3);
+    progress.abort();
+  });
+  assert.equal((output.match(/GAM \| 1\/3 procesados/g) ?? []).length, 1);
+  assert.doesNotMatch(output, /GOMARIZ \| [0-9]+\/3 procesados|4\/3 procesados|-1\/3 procesados/);
+  assert.match(output, /WARN \| FINISH \| ACREDITACIÓN/);
+  assert.doesNotMatch(output, /PASS \| FINISH|█|░/);
+});
+
+test("una etapa fallida conserva el estado FAIL y no anuncia una ejecución correcta", () => {
+  const output = capture(() => {
+    const progress = new OperationProgress("EXPORTACIÓN COMERCIAL");
+    progress.stage("VERIFICACIÓN", "fuentes acreditadas");
+    progress.update("GAM", 1, 3);
+    progress.finish("FAIL");
+    progress.finish();
+    progress.update("GOMARIZ", 2, 3);
+  });
+  assert.equal((output.match(/FAIL \| EXPORTACIÓN COMERCIAL \| VERIFICACIÓN/g) ?? []).length, 1);
+  assert.equal((output.match(/FAIL \| EXPORTACIÓN COMERCIAL \| TOTAL/g) ?? []).length, 1);
+  assert.doesNotMatch(output, /PASS \| EXPORTACIÓN COMERCIAL|GOMARIZ|█|░/);
 });

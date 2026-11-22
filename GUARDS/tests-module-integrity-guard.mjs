@@ -45,6 +45,9 @@ const resolvedLocalModule = (path, specifier) => {
 const boundaryViolation = (source, target) => {
   const from = source.split("/");
   const to = target.split("/");
+  if (source.startsWith("src/cli/reporting/") && target.startsWith("src/cli/commands/")) {
+    return "La presentación de terminal no debe depender de orquestadores CLI";
+  }
   if (from[0] !== "src" || to[0] !== "src" || !productionLayers.has(from[1])) return null;
   if (internalTools.has(to[1])) return "La lógica productiva no debe depender de CLI, herramientas ni fixtures de test";
   if (to.includes("tests") || /(?:\.test|\.spec)\.(?:ts|tsx|mts|js|mjs|cjs)$/u.test(target)) {
