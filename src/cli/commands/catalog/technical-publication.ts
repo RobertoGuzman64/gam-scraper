@@ -9,7 +9,6 @@ import type { TechnicalDifference } from "../../../publication/technical-snapsho
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const help = `Uso: npm run publicacion:tecnica -- <proveedor> --preparacion <preparation.json> [--activar] [--json]
-     npm run publicacion:tecnica -- manain --csv <partial-all.csv> --censo <censo.json> [--activar] [--json]
      npm run publicacion:tecnica -- <proveedor> --ver [--json]
      npm run publicacion:tecnica -- <proveedor> --listar [--json]
      npm run publicacion:tecnica -- <proveedor> --comparar <sha256> [--json]
@@ -31,8 +30,6 @@ export const runTechnicalPublication = async (args: readonly string[], workspace
   const [providerId, ...rest] = args;
   if (!isCampaignProvider(providerId)) throw new Error(help);
   let preparation: string | undefined;
-  let csv: string | undefined;
-  let census: string | undefined;
   let mode: "publish" | "view" | "list" | "compare" = "publish";
   let other: string | undefined;
   let activate = false;
@@ -41,12 +38,10 @@ export const runTechnicalPublication = async (args: readonly string[], workspace
     const argument = rest[index];
     if (argument === "--activar" && !activate) activate = true;
     else if (argument === "--json" && !json) json = true;
-    else if ((argument === "--preparacion" || argument === "--preparation" || argument === "--csv" || argument === "--censo") &&
+    else if ((argument === "--preparacion" || argument === "--preparation") &&
       rest[index + 1] && !rest[index + 1]!.startsWith("--")) {
       const value = rest[++index]!;
       if ((argument === "--preparacion" || argument === "--preparation") && !preparation) preparation = value;
-      else if (argument === "--csv" && !csv) csv = value;
-      else if (argument === "--censo" && !census) census = value;
       else throw new Error(help);
     } else if ((argument === "--ver" || argument === "--listar") && mode === "publish") {
       mode = argument === "--ver" ? "view" : "list";
@@ -57,7 +52,7 @@ export const runTechnicalPublication = async (args: readonly string[], workspace
     } else throw new Error(help);
   }
   if (mode !== "publish") {
-    if (activate || preparation || csv || census) throw new Error(help);
+    if (activate || preparation) throw new Error(help);
     if (mode === "list") {
       const versions = await listTechnicalVersions(workspace, providerId);
       if (json) { console.log(JSON.stringify({ providerId, versions }, null, 2)); return; }
@@ -79,9 +74,7 @@ export const runTechnicalPublication = async (args: readonly string[], workspace
     return;
   }
   const result = await publishTechnicalSnapshot(workspace, providerId, {
-    ...(preparation === undefined ? {} : { preparation }),
-    ...(csv === undefined ? {} : { csv }),
-    ...(census === undefined ? {} : { census })
+    ...(preparation === undefined ? {} : { preparation })
   }, activate);
   if (json) { console.log(JSON.stringify(result, null, 2)); return; }
   printCommandHeader(`PUBLICACIÓN TÉCNICA | ${providerId} | ${result.status.toUpperCase()}`);

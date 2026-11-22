@@ -2,19 +2,23 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../../../commercial/legacy-export/contracts.js";
 import { fold } from "../../../shared/classification/mapping/category-utils.js";
 import { manainSourceDescriptionContradictsFamily, manainSourceFamily } from "../../technical/evidence/source.js";
+import { manainDocumentFamily } from "../../technical/evidence/document-family.js";
 
 const energyOf = (record: ProductRecord): "diesel" | "electrica" | null => {
   const raw = record.specs?.Motor;
   if (raw !== undefined && typeof raw !== "string") return null;
   const motor = fold(raw ?? "");
   const motorEnergy = motor === "diesel" ? "diesel" : motor === "electrico" ? "electrica" : null;
+  const documented = manainDocumentFamily(record)?.energy ?? null;
+  if (documented && motor && motorEnergy !== documented) return null;
   if (motor && !motorEnergy) return null;
   const text = fold(`${record.title ?? ""} ${record.shortDescription ?? ""}`);
   const textDiesel = /\bdiesel\b/.test(text);
   const textElectric = /\belectric[oa]\b/.test(text);
   if (textDiesel && textElectric || /\b(?:gasolina|glp|hibrid[oa])\b/.test(text)) return null;
   const textEnergy = textDiesel ? "diesel" : textElectric ? "electrica" : null;
-  return motorEnergy && textEnergy && motorEnergy !== textEnergy ? null : motorEnergy ?? textEnergy;
+  if (documented && textEnergy && documented !== textEnergy) return null;
+  return motorEnergy && textEnergy && motorEnergy !== textEnergy ? null : documented ?? motorEnergy ?? textEnergy;
 };
 
 export const manainCategorySlug = (record: ProductRecord, condition: ImportCandidate["condition"]): string | null => {

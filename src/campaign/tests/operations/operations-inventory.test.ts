@@ -9,7 +9,7 @@ import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog
 import { inspectCampaignOperations } from "../../operations-status.js";
 import { inspectOperationsInventory } from "../../operations-inventory.js";
 
-test("estado distingue parcial acreditado y archivo alterado sin crear archivos de trabajo", async () => {
+test("estado no confunde el CSV web de Manain con su original documental", async () => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-inventory-"));
   try {
     const status = await inspectCampaignOperations(root);
@@ -30,7 +30,7 @@ test("estado distingue parcial acreditado y archivo alterado sin crear archivos 
     }));
     const partial = await inspectOperationsInventory(root, status);
     const manain = partial.providers.find((provider) => provider.providerId === "manain");
-    assert.equal(manain?.original.state, "parcial");
+    assert.equal(manain?.original.state, "ausente");
     assert.equal(manain?.final.state, "ausente");
     assert.equal((await readdir(dir)).length, 2);
 
@@ -55,7 +55,7 @@ test("estado distingue parcial acreditado y archivo alterado sin crear archivos 
 
     await writeFile(csv, content + "manain,ALTERADO\n");
     const altered = await inspectOperationsInventory(root, status);
-    assert.equal(altered.providers.find((provider) => provider.providerId === "manain")?.original.state, "error");
+    assert.equal(altered.providers.find((provider) => provider.providerId === "manain")?.original.state, "ausente");
     assert.equal((await readFile(csv, "utf8")).endsWith("ALTERADO\n"), true);
   } finally {
     await rm(root, { recursive: true, force: true });

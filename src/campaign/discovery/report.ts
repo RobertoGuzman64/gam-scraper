@@ -7,7 +7,7 @@ import { readAppliedIntervention } from "../../infrastructure/filesystem/interve
 import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
 import type { OfflinePreparation } from "../../preparation/offline-document.js";
 import type { CanonicalCatalog } from "../../catalog/canonical-catalog.js";
-import type { BatchReport, ProviderRun } from "../../contracts/batch-report.js";
+import type { BatchReport, ProviderRun, DocumentRunOrigin } from "../../contracts/batch-report.js";
 
 export { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 
@@ -23,8 +23,19 @@ const isBatchStatus = (value: unknown): value is BatchReport["status"] =>
 export const isCampaignProvider = (value: unknown): value is typeof CAMPAIGN_PROVIDERS[number] =>
   typeof value === "string" && CAMPAIGN_PROVIDERS.some((id) => id === value);
 
+const isDocumentOrigin = (value: unknown): value is DocumentRunOrigin =>
+  isRecord(value) && Object.keys(value).every((key) =>
+    ["kind", "stocklistSha256", "pdfSha256", "pageCount", "technicalEvidenceSha256"].includes(key)) &&
+  value.kind === "document" &&
+  typeof value.stocklistSha256 === "string" && /^[a-f0-9]{64}$/.test(value.stocklistSha256) &&
+  typeof value.pdfSha256 === "string" && /^[a-f0-9]{64}$/.test(value.pdfSha256) &&
+  typeof value.pageCount === "number" && Number.isSafeInteger(value.pageCount) && value.pageCount > 0 &&
+  (value.technicalEvidenceSha256 === undefined || typeof value.technicalEvidenceSha256 === "string" &&
+    /^[a-f0-9]{64}$/.test(value.technicalEvidenceSha256));
+
 const isProviderRun = (value: unknown): value is ProviderRun =>
   isRecord(value) && typeof value.providerId === "string" &&
+  (value.origin === undefined || value.providerId === "manain" && isDocumentOrigin(value.origin)) &&
   (value.status === "complete" || value.status === "failed") &&
   validDate(value.startedAt) && validDate(value.endedAt) &&
   Date.parse(value.endedAt) >= Date.parse(value.startedAt) &&

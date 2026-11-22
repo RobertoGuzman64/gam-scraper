@@ -15,7 +15,7 @@ export const prepareIndividualHelp = `Uso:
   npm run catalogo:preparar -- --detalle
 
 Proveedores por defecto: gam, gomariz y mercaeleva.
---simular consulta y calcula sin escribir nada; --detalle muestra diagnósticos, rutas y referencias históricas. Manain es parcial y no entra.
+--simular consulta y calcula sin escribir nada; --detalle muestra diagnósticos, rutas y referencias históricas. Manain utiliza el stocklist documental y las campañas, sin publicación individual automática.
 Reutiliza preparaciones verificadas; nunca aprueba, publica, extrae ni altera originales.`;
 
 export const runPrepareIndividual = async (args: readonly string[], workspace: string): Promise<boolean> => {

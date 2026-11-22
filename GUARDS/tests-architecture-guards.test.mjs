@@ -534,7 +534,7 @@ test("detecta importaciones de módulos de pruebas desde producción", (t) => {
 test("los proveedores de preparación y scraping no pueden depender de otro proveedor", (t) => {
   const { root, write } = fixture(t);
   linkModules(write, "src/preparation/gam/technical/read.ts", "src/preparation/gomariz/technical/rules.ts");
-  linkModules(write, "src/scraping/providers/manain/adapter.ts", "src/scraping/providers/mercaeleva/adapter.ts");
+  linkModules(write, "src/scraping/providers/gam/adapter.ts", "src/scraping/providers/mercaeleva/adapter.ts");
   const { boundaries } = inspectModuleIntegrity(root);
   assert.equal(boundaries.length, 2);
   assert.ok(boundaries.some((entry) => entry.includes("proveedores de preparación")));

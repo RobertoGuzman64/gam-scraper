@@ -79,7 +79,8 @@ export const readTechnicalVersion = async (
     manifest.version !== 1 || manifest.providerId !== providerId || manifest.sha256 !== fingerprint ||
     manifest.quality !== snapshot.quality || manifest.products !== snapshot.products.length ||
     manifest.sourceSha256 !== (snapshot.source.kind === "canonical"
-      ? snapshot.source.catalogSha256 : snapshot.source.recordSha256)) {
+      ? snapshot.source.catalogSha256 : snapshot.source.kind === "stocklist"
+        ? snapshot.source.stocklistSha256 : snapshot.source.recordSha256)) {
     throw new Error("Corte técnico alterado, sin manifest válido o de proveedor distinto");
   }
   return { sha256: fingerprint, snapshot };
@@ -221,7 +222,12 @@ export const activateTechnicalPublication = async (
     }
     await clearTemporaryArtifacts(layout);
     const versions = await listTechnicalVersions(root, candidate.providerId);
-    if (!active && versions.length && (versions.length !== 1 || versions[0] !== fingerprint)) {
+    const retainedLegacy = !active && candidate.providerId === "manain" && versions.length === 1 &&
+      versions[0] !== fingerprint ? await readTechnicalVersion(root, candidate.providerId, versions[0]!) : null;
+    if (retainedLegacy && retainedLegacy.snapshot.source.kind !== "manain-record") {
+      throw new Error("Versión Manain sin selección vigente no corresponde al histórico retirado");
+    }
+    if (!active && versions.length && !retainedLegacy && (versions.length !== 1 || versions[0] !== fingerprint)) {
       throw new Error("Versiones técnicas sin selección vigente: recuperación manual requerida");
     }
     if (active?.sha256 === fingerprint) {
@@ -241,7 +247,8 @@ export const activateTechnicalPublication = async (
           version: 1, providerId: candidate.providerId, sha256: fingerprint,
           quality: candidate.quality, products: candidate.products.length,
           sourceSha256: candidate.source.kind === "canonical"
-            ? candidate.source.catalogSha256 : candidate.source.recordSha256
+            ? candidate.source.catalogSha256 : candidate.source.kind === "stocklist"
+              ? candidate.source.stocklistSha256 : candidate.source.recordSha256
         };
         await writeFile(join(stage, "snapshot.json"), raw, { flag: "wx" });
         await writeFile(join(stage, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`, { flag: "wx" });
@@ -253,7 +260,7 @@ export const activateTechnicalPublication = async (
     try {
       await writeFile(stageIndex, `${JSON.stringify({
         version: 1, providerId: candidate.providerId, sha256: fingerprint,
-        previousSha256: active?.sha256 ?? null
+        previousSha256: active?.sha256 ?? retainedLegacy?.sha256 ?? null
       }, null, 2)}\n`, { flag: "wx" });
       await rename(stageIndex, layout.active);
     } finally { await rm(stageIndex, { force: true }); }

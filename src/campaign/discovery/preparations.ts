@@ -10,6 +10,7 @@ import type { CanonicalCatalog } from "../../catalog/canonical-catalog.js";
 import type { BatchReport, ProviderRun } from "../../contracts/batch-report.js";
 
 import { isRecord, isCampaignProvider } from "./report.js";
+import { verifyManainCampaignDocument } from "../document-source.js";
 import type { ProviderDiscovery, Artifact, Preparation } from "./contracts.js";
 
 export const directories = async (path: string): Promise<readonly string[]> => {
@@ -147,6 +148,10 @@ export const inspectProvider = async (
       Date.parse(catalog.startedAt) < Date.parse(run.startedAt) ||
       Date.parse(catalog.endedAt) > Date.parse(run.endedAt)) {
       throw new Error("El catálogo no pertenece a la ejecución indicada en run.json");
+    }
+    if (run.origin !== undefined) await verifyManainCampaignDocument(resolve(root, run.outputDir), catalog, run.origin);
+    else if (providerId === "manain" && run.outputPrefix === "manain-stocklist") {
+      throw new Error("El catálogo documental carece de procedencia de campaña");
     }
     const original = { path, sha256: createHash("sha256").update(await readFile(path)).digest("hex") };
     const result = await selectPreparation(root, run, report.runId, includeHistorical, original, catalog.scope, catalog.productCount);

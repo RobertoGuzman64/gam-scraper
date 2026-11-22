@@ -261,7 +261,7 @@ test("la campaña reserva su runId antes del primer proveedor, incluso si no reg
     await writeFile(script, stubScript);
     const interrupted = new AbortController();
     interrupted.abort();
-    const result = await runBatch({ providerIds: ["gam", "gomariz", "mercaeleva", "manain"],
+    const result = await runBatch({ providerIds: ["gam", "gomariz", "mercaeleva"],
       outRoot, historyDir, dryRun: false }, script, undefined, interrupted.signal, runId);
     assert.equal(result.report.runId, runId);
     assert.equal(result.report.status, "failed");

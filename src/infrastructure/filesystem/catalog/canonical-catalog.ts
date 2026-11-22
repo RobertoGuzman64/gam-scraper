@@ -86,9 +86,19 @@ export const readCanonicalCatalogWithFingerprint = async (file: string): Promise
     manifest.endedAt !== catalog.endedAt || manifest.catalogSha256 !== hash) {
     throw new Error("El catálogo y su manifest pertenecen a ejecuciones distintas o están dañados");
   }
+  const documentary = isRecord(summary) && isRecord(summary.origin) && catalog.providerId === "manain" &&
+    summary.origin.kind === "document" &&
+    typeof summary.origin.stocklistSha256 === "string" && /^[a-f0-9]{64}$/.test(summary.origin.stocklistSha256) &&
+    typeof summary.origin.pdfSha256 === "string" && /^[a-f0-9]{64}$/.test(summary.origin.pdfSha256) &&
+    typeof summary.origin.pageCount === "number" && Number.isSafeInteger(summary.origin.pageCount) &&
+    summary.origin.pageCount > 0 &&
+    (summary.origin.technicalEvidenceSha256 === undefined ||
+      typeof summary.origin.technicalEvidenceSha256 === "string" &&
+      /^[a-f0-9]{64}$/.test(summary.origin.technicalEvidenceSha256));
   if (!isRecord(summary) || !isRecord(summary.quality) || summary.quality.status !== "complete" ||
     summary.quality.published !== true || !isRecord(summary.totals) ||
-    summary.totals.scrapedProducts !== catalog.productCount ||
+    !(documentary && summary.totals.documentProducts === catalog.productCount ||
+      summary.origin === undefined && summary.totals.scrapedProducts === catalog.productCount) ||
     summary.startedAt !== catalog.startedAt || summary.endedAt !== catalog.endedAt ||
     !isRecord(summary.artifacts) || summary.artifacts.catalogSha256 !== hash) {
     throw new Error("El catálogo no coincide con la publicación completa acreditada");

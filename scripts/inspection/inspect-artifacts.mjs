@@ -6,7 +6,7 @@ import { basename, join, relative, resolve, sep } from "node:path";
 const families = [
   ["originales", /^catalogs\/providers\/[^/]+\/original\//, "mantener", "Original canónico protegido; nombre y manifest vinculados"],
   ["publicaciones", /^catalogs\/providers\/[^/]+\/publications\//, "mantener", "Acreditaciones, índices y publicaciones protegidos"],
-  ["manain", /^catalogs\/providers\/[^/]+\/records\//, "mantener", "Registro de origen protegido"],
+  ["evidencia-manain", /^catalogs\/providers\/manain\/evidence\//, "mantener", "Evidencia técnica documental acreditada"],
   ["campanas-portables", /^catalogs\/campaigns\//, "mantener", "Publicación de campaña y manifiestos acreditados"],
   ["selecciones", /^catalogs\/active\.json$/, "mantener", "Índice global activo protegido"],
   ["extracciones", /^storage\/scraped\//, "bloqueado", "Requiere clasificación con catalog-retention y referencias históricas"],

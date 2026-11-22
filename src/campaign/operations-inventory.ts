@@ -8,6 +8,8 @@ import { readPortableOriginal } from "../infrastructure/filesystem/catalog/porta
 import { readAccreditedPublication, resolveAccreditedPublication } from "../infrastructure/filesystem/catalog/accredited-publication.js";
 import { readOfflinePreparation } from "../infrastructure/filesystem/preparation/offline-preparation.js";
 import { getProvider } from "../scraping/registry.js";
+import { readManainStocklist } from "../infrastructure/filesystem/catalog/manain-stocklist.js";
+import { validateOfflinePreparation } from "../preparation/workflow/validation/offline.js";
 import { listTechnicalVersions, readActiveTechnicalPublication } from "../infrastructure/filesystem/catalog/technical-publication.js";
 import { verifyDeliveredCampaign } from "./delivery/verification.js";
 import { listCampaignRuns } from "./discovery/search.js";
@@ -113,7 +115,9 @@ const inspectTechnical = async (root: string, providerId: string): Promise<Inven
   try {
     const versions = await listTechnicalVersions(root, providerId);
     const active = await readActiveTechnicalPublication(root, providerId);
-    if (!active) return versions.length ? invalid("Versiones técnicas sin selección activa") : absent("Sin publicación técnica");
+    if (!active) return versions.length && providerId === "manain"
+      ? partial(`${versions.length} versiones técnicas históricas sin corte vigente`)
+      : versions.length ? invalid("Versiones técnicas sin selección activa") : absent("Sin publicación técnica");
     const { snapshot } = active;
     return ok(`Corte ${snapshot.quality}: ${snapshot.products.length} fichas (${snapshot.totals.ready} ready / ${snapshot.totals.review} review)`);
   } catch (error) {
@@ -218,6 +222,18 @@ const operationalPrefix = async (root: string, providerId: string): Promise<stri
   return portablePrefix ?? current;
 };
 
+const inspectDocumentPreparation = async (root: string): Promise<InventoryItem> => {
+  const file = join(root, "storage", "prepared", "manain", "manain-stocklist-preparation.json");
+  const original = join(root, "catalogs", "providers", "manain", "original", "manain-stocklist.json");
+  try {
+    const validated = await validateOfflinePreparation("manain", file, original);
+    return ok(`Preparación documental acreditada (${validated.ready} Ready / ${validated.review} Review)`);
+  } catch (error) {
+    if (missing(error)) return absent("Sin preparación documental conservada");
+    return invalid(`Preparación documental no verificable: ${describe(error)}`);
+  }
+};
+
 export const inspectOperationsInventory = async (
   rootDirectory: string, status: CampaignOperationsStatus, desktopDirectory?: string
 ): Promise<OperationsInventory> => {
@@ -255,19 +271,32 @@ export const inspectOperationsInventory = async (
   }
   if (retainedDeliveries > 2) campaignIssues.push(`Retención excedida: ${retainedDeliveries} entregas acreditadas (máximo 2)`);
   const prefixes = new Map<string, string>();
-  for (const providerId of CAMPAIGN_PROVIDERS) prefixes.set(providerId, await operationalPrefix(root, providerId));
+  for (const providerId of CAMPAIGN_PROVIDERS) {
+    if (providerId !== "manain") prefixes.set(providerId, await operationalPrefix(root, providerId));
+  }
   const portable = await inspectPortableInventory(root, Object.fromEntries(CAMPAIGN_PROVIDERS.map((providerId) => [
-    providerId, join(root, "storage", "scraped", providerId,
-      `${prefixes.get(providerId) ?? getProvider(providerId).defaultOptions.outPrefix}-catalog.json`)
+    providerId, providerId === "manain"
+      ? join(root, "catalogs", "providers", "manain", "original", "manain-stocklist.json")
+      : join(root, "storage", "scraped", providerId,
+        `${prefixes.get(providerId) ?? getProvider(providerId).defaultOptions.outPrefix}-catalog.json`)
   ])));
   const providers = await Promise.all(CAMPAIGN_PROVIDERS.map(async (providerId): Promise<ProviderInventory> => {
-    const prefix = prefixes.get(providerId) ?? getProvider(providerId).defaultOptions.outPrefix;
+    const prefix = prefixes.get(providerId) ?? "manain-stocklist";
     const dir = join(root, "storage", "scraped", providerId);
     const fromCampaign = status.campaign.providers.find((entry) => entry.providerId === providerId);
-    const localOriginal = await inspectOriginal(dir, prefix, providerId);
+    const localOriginal = providerId === "manain" ? await (async (): Promise<InventoryItem> => {
+      try {
+        const { stocklist } = await readManainStocklist(join(root, "catalogs", "providers", "manain", "original"));
+        return ok(`Stocklist documental acreditado (${stocklist.productos.length} máquinas)`);
+      } catch (error) {
+        return missing(error) ? absent("Sin stocklist documental") : invalid(describe(error));
+      }
+    })() : await inspectOriginal(dir, prefix, providerId);
     const original = fromCampaign?.catalog && localOriginal.state === "ausente"
       ? ok("Original acreditado en campaña activa") : localOriginal;
-    const localPreparation = await inspectPreparation(root, dir, prefix, providerId, localOriginal);
+    const localPreparation = providerId === "manain"
+      ? await inspectDocumentPreparation(root)
+      : await inspectPreparation(root, dir, prefix, providerId, localOriginal);
     const preparation = fromCampaign?.preparation && localPreparation.state === "ausente"
       ? ok("Preparación acreditada en campaña activa") : localPreparation;
     const portableProvider = portable.providers.find((entry) => entry.providerId === providerId);
