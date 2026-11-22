@@ -101,7 +101,7 @@ test("preserva ausencia de precio, cero y diferencias entre salida técnica y co
 });
 
 test("sin original acreditado impide cualquier comparación editorial pero conserva FINISH", async () => {
-  const snapshot = await readPanelSnapshot(await fixture.root());
+  const { snapshot } = await readStaticExplorer();
   const providers = snapshot.providers.map((provider) => provider.providerId === "gam" && provider.original.status === "verified" ? {
     ...provider,
     original: { status: "unavailable" as const, expectedSha256: provider.original.artifact.sha256, reason: "Original no conservado" }

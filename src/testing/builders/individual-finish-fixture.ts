@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { basename, join } from "node:path";
 import type { IndividualFinishResult } from "../../publication/individual-finish.js";
+import type { IndividualCatalogProvider } from "../../preparation/workflow/individual-context.js";
 import { createIndividualWorkspaceFixture } from "./individual-workspace-fixture.js";
 import { preflightIndividualAccreditations } from "../../publication/individual-accreditation.js";
 import { startIndividualEditorial, decideIndividualEditorial, approveIndividualEditorial } from "../../publication/individual-editorial.js";
@@ -8,8 +9,8 @@ import { publishIndividualCatalogs } from "../../publication/individual-finish.j
 
 export const finishProviders = ["gam", "gomariz", "mercaeleva"] as const;
 const reason = "Contraste editorial realizado con evidencia de origen";
-const approve = async (root: string): Promise<void> => {
-  const contexts = await preflightIndividualAccreditations(root, finishProviders);
+const approve = async (root: string, providers: readonly IndividualCatalogProvider[] = finishProviders): Promise<void> => {
+  const contexts = await preflightIndividualAccreditations(root, providers);
   for (const context of contexts) {
     await startIndividualEditorial(context.options);
     for (const entry of context.expected.exclusions) {
@@ -28,7 +29,8 @@ const finishFixtureOptions = {
   defaultState: "approved" as const, approve
 };
 
-export const createIndividualFinishWorkspace = () => createIndividualWorkspaceFixture(finishFixtureOptions);
+export const createIndividualFinishWorkspace = (providers: readonly IndividualCatalogProvider[] = finishProviders) =>
+  createIndividualWorkspaceFixture({ ...finishFixtureOptions, providers, approve: (root: string) => approve(root, providers) });
 
 export const createPublishedIndividualFinishWorkspace = () => {
   const withWorkspace = createIndividualWorkspaceFixture({
@@ -52,6 +54,8 @@ export const createPublishedIndividualFinishWorkspace = () => {
   };
 };
 
-export const publishIndividualTestWorkspace = (root: string, desktop: string) => publishIndividualCatalogs({
-  workspace: root, providers: finishProviders, dryRun: false, desktopDirectory: desktop
+export const publishIndividualTestWorkspace = (
+  root: string, desktop: string, providers: readonly IndividualCatalogProvider[] = finishProviders
+) => publishIndividualCatalogs({
+  workspace: root, providers, dryRun: false, desktopDirectory: desktop
 });

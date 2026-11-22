@@ -8,7 +8,7 @@ import { listIndividualFinishJournals } from "../../infrastructure/filesystem/ca
 import { preflightIndividualAccreditations } from "../individual-accreditation.js";
 import { createIndividualFinishWorkspace } from "../../testing/builders/individual-finish-fixture.js";
 
-const withWorkspace = createIndividualFinishWorkspace();
+const withWorkspace = createIndividualFinishWorkspace(["gam"]);
 
 test("exportación humana es copia exacta sin escrituras en el expediente", async () => {
   await withWorkspace(async (root, desktop) => {

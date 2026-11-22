@@ -17,6 +17,10 @@ const workspace = async (task: (root: string) => Promise<void>): Promise<void> =
 
 const fixture = createPanelEvidenceWorkspaceFixture();
 
+let staticSnapshot: ReturnType<typeof readPanelSnapshot> | undefined;
+const readStaticSnapshot = (): ReturnType<typeof readPanelSnapshot> =>
+  staticSnapshot ??= fixture.root().then((root) => readPanelSnapshot(root));
+
 const source = { identity: "gam:ref:123", reference: "123", sourceUrl: "https://example.com/123" };
 const published = [{ reference: "123", sourceUrl: "https://example.com/123" }];
 
@@ -54,7 +58,7 @@ test("rechaza informe técnico sin totales coherentes o trazabilidad completa", 
 });
 
 test("corte vigente enlaza publicaciones, informes y paquete comercial sin escrituras", async () => {
-  const snapshot = await readPanelSnapshot(await fixture.root());
+  const snapshot = await readStaticSnapshot();
   assert.deepEqual(snapshot.providers.map((item) => item.providerId), [...LEGACY_CAMPAIGN_PROVIDERS]);
   assert.ok(!("backendIntegration" in snapshot));
   assert.equal(snapshot.environment, "develop");
@@ -97,7 +101,7 @@ test("versión incompleta, selección inexistente y huella alterada bloquean la 
 
 
 test("el glosario cubre cada métrica del snapshot sin duplicados", async () => {
-  const snapshot = await readPanelSnapshot(await fixture.root());
+  const snapshot = await readStaticSnapshot();
   const keys = [...Object.keys(snapshot.totals).filter((key) => key !== "transformations"),
     ...Object.keys(snapshot.totals.transformations)];
   assert.equal(new Set(PANEL_METRIC_DEFINITIONS.map((item) => item.key)).size, keys.length);

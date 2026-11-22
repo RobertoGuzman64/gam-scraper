@@ -60,7 +60,8 @@ test("detecta preparaciones censales repetidas en el panel sin impedir lecturas 
     "src/panel/explorer/tests/read-panel-explorer.test.ts",
     "src/panel/evidence/read-panel-snapshot.ts",
     "src/panel/explorer/read-panel-explorer.ts",
-    "src/panel/application/panel-html.ts"
+    "src/panel/application/panel-html.ts",
+    "src/tools/catalog/tests/explorer-technical-evidence-cache.test.ts"
   ];
   const sources = new Map(paths.map((path) => [path, readFileSync(join(root, path), "utf8")]));
   assert.deepEqual(inspectPanelHeavyPreparations(sources), []);
@@ -72,11 +73,39 @@ test("detecta preparaciones censales repetidas en el panel sin impedir lecturas 
   assert.notEqual(updated, original);
   const repeated = new Map(sources);
   repeated.set(dashboard, updated);
-  assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("readPanelSnapshot: 3 preparaciones")));
+  assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("readPanelSnapshot: 2 preparaciones")));
+  const duplicatedExplorer = original.replace("const dashboard = createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot));",
+    "const dashboard = createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot)); await readPanelExplorer(workspace, snapshot);");
+  assert.notEqual(duplicatedExplorer, original);
+  repeated.set(dashboard, duplicatedExplorer);
+  assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("readPanelExplorer: 2 preparaciones")));
   const looped = original.replace("const snapshot = await readPanelSnapshot(workspace);",
     `for (const provider of ["gam"]) await readPanelSnapshot(workspace); const snapshot = await readPanelSnapshot(workspace);`);
   assert.notEqual(looped, original);
   repeated.set(dashboard, looped);
+  assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("fuera de iteraciones")));
+  repeated.set(dashboard, original);
+  const explorer = paths[1];
+  const explorerSource = sources.get(explorer);
+  assert.ok(explorerSource);
+  const repeatedSnapshot = explorerSource.replace("const { explorer } = await readStaticExplorer();",
+    "const { explorer } = await readStaticExplorer(); await readPanelSnapshot(await fixture.root());");
+  assert.notEqual(repeatedSnapshot, explorerSource);
+  repeated.set(explorer, repeatedSnapshot);
+  assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("readPanelSnapshot: 3 preparaciones")));
+  repeated.set(explorer, explorerSource);
+  const technicalCache = paths[5];
+  const cacheSource = sources.get(technicalCache);
+  assert.ok(cacheSource);
+  const cacheWithRepeatedSnapshot = cacheSource.replace("const snapshot = await readStaticSnapshot();",
+    "const snapshot = await readStaticSnapshot(); await readPanelSnapshot(workspace);");
+  assert.notEqual(cacheWithRepeatedSnapshot, cacheSource);
+  repeated.set(technicalCache, cacheWithRepeatedSnapshot);
+  assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("readPanelSnapshot: 2 preparaciones")));
+  const cacheWithLoop = cacheSource.replace("const snapshot = await readStaticSnapshot();",
+    "for (const item of [workspace]) await readPanelSnapshot(item); const snapshot = await readStaticSnapshot();");
+  assert.notEqual(cacheWithLoop, cacheSource);
+  repeated.set(technicalCache, cacheWithLoop);
   assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("fuera de iteraciones")));
 });
 

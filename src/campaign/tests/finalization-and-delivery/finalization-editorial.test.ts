@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test, { after } from "node:test";
 import { finalizeActiveCampaign } from "../../finalization.js";
 import { reuseCampaignTestFixture } from "../campaign-catalog-fixture.js";
@@ -58,5 +59,9 @@ test("acredita editorialmente una campaña mediante operaciones guiadas sin edit
     }), /está aprobada/);
     assert.equal((await finalizeActiveCampaign(data.root, true)).status, "simulation");
     assert.equal((await finalizeActiveCampaign(data.root, false)).status, "selected");
+    await assert.rejects(approveActiveCampaignEditorial(data.root, "Una nueva aprobación no corresponde a esta selección."),
+      /está aprobada/);
+    const selectedContents = await readFile(draft.draftFile, "utf8");
+    assert.equal(JSON.parse(selectedContents).approved, true);
   } finally { await data.cleanup(); }
 });

@@ -92,13 +92,16 @@ const rawLimits = {
 };
 const panelPreparationLimits = {
   "src/panel/application/tests/dashboard.test.ts": [
-    ["src/panel/evidence/read-panel-snapshot.ts", "readPanelSnapshot", 2],
-    ["src/panel/explorer/read-panel-explorer.ts", "readPanelExplorer", 2],
+    ["src/panel/evidence/read-panel-snapshot.ts", "readPanelSnapshot", 1],
+    ["src/panel/explorer/read-panel-explorer.ts", "readPanelExplorer", 1],
     ["src/panel/application/panel-html.ts", "renderPanelHtml", 1]
   ],
   "src/panel/explorer/tests/read-panel-explorer.test.ts": [
-    ["src/panel/evidence/read-panel-snapshot.ts", "readPanelSnapshot", 3],
+    ["src/panel/evidence/read-panel-snapshot.ts", "readPanelSnapshot", 2],
     ["src/panel/explorer/read-panel-explorer.ts", "readPanelExplorer", 4]
+  ],
+  "src/tools/catalog/tests/explorer-technical-evidence-cache.test.ts": [
+    ["src/panel/evidence/read-panel-snapshot.ts", "readPanelSnapshot", 1]
   ]
 };
 const trustedProduction = new Set([

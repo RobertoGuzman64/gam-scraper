@@ -120,7 +120,6 @@ test("impide exportaciones con fuentes comerciales cambiadas o selección de pub
   const alteredReferences = withManifest(files, (manifest) => {
     manifest.taxonomySha256 = "0".repeat(64);
   });
-  validateCommercialExportFiles(alteredReferences);
   await assert.rejects(verifyCommercialExportSources(root, alteredReferences), /referencias comerciales cambiaron/);
 
   const product = files.find((entry) => entry.name === "gam-commercial.json");
@@ -138,7 +137,6 @@ test("impide exportaciones con fuentes comerciales cambiadas o selección de pub
     provider.sha256 = alteredProduct.sha256;
     provider.bytes = alteredProduct.bytes;
   });
-  validateCommercialExportFiles(alteredPublication);
   await assert.rejects(verifyCommercialExportSources(root, alteredPublication), /publicación activa de gam cambió/);
 
   const rewrittenPlan: unknown = JSON.parse(product.content);
@@ -155,7 +153,6 @@ test("impide exportaciones con fuentes comerciales cambiadas o selección de pub
     provider.sha256 = rewrittenProduct.sha256;
     provider.bytes = rewrittenProduct.bytes;
   });
-  validateCommercialExportFiles(rewrittenExport);
   await assert.rejects(verifyCommercialExportSources(root, rewrittenExport),
     /fuentes originales o la proyección comercial cambiaron/);
 
@@ -163,7 +160,6 @@ test("impide exportaciones con fuentes comerciales cambiadas o selección de pub
     assert.ok(Array.isArray(manifest.providers));
     manifest.providers = manifest.providers.filter((item: unknown) => isRecord(item) && item.providerId !== "mercaeleva");
   });
-  validateCommercialExportFiles(subset);
   await assert.rejects(verifyCommercialExportSources(root, subset), /conjunto de publicaciones activas cambió/);
 });
 

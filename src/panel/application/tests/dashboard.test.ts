@@ -23,9 +23,10 @@ const renderPanelHtml = async (...args: Parameters<typeof renderAutonomousHtml>)
 const prepareStaticPanel = async () => {
   const workspace = await fixture.root();
   const snapshot = await readPanelSnapshot(workspace);
+  const snapshotBeforeView = JSON.stringify(snapshot);
   const dashboard = createDashboardPayload(snapshot, await readPanelExplorer(workspace, snapshot));
   const html = await renderPanelHtml(process.cwd(), dashboard);
-  return { snapshot, dashboard, html };
+  return { snapshot, dashboard, html, snapshotBeforeView };
 };
 
 let staticPanel: ReturnType<typeof prepareStaticPanel> | undefined;
@@ -181,11 +182,8 @@ test("los títulos de las métricas son informativos y no abren diálogos de def
 });
 
 test("las fuentes y métricas no se alteran al crear la vista", async () => {
-  const snapshot = await readPanelSnapshot(await fixture.root());
-  const before = JSON.stringify(snapshot);
-  const dashboard = createDashboardPayload(snapshot, await readPanelExplorer(await fixture.root(), snapshot));
-  await renderPanelHtml(process.cwd(), dashboard);
-  assert.equal(JSON.stringify(snapshot), before);
+  const { snapshot, dashboard, snapshotBeforeView } = await readStaticPanel();
+  assert.equal(JSON.stringify(snapshot), snapshotBeforeView);
   assert.deepEqual(dashboard.snapshot.providers.map((provider) => provider.providerId), ["gam", "gomariz", "mercaeleva"]);
 });
 

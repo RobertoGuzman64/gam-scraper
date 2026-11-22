@@ -5,7 +5,7 @@ import test from "node:test";
 import { consolidate, runPublishIndividual } from "../../cli/commands/catalog/publish-individual.js";
 import { preflightIndividualAccreditations } from "../individual-accreditation.js";
 import { publishIndividualCatalogs } from "../individual-finish.js";
-import { createIndividualFinishWorkspace, finishProviders, publishIndividualTestWorkspace } from "../../testing/builders/individual-finish-fixture.js";
+import { createIndividualFinishWorkspace, publishIndividualTestWorkspace } from "../../testing/builders/individual-finish-fixture.js";
 
 const withWorkspace = createIndividualFinishWorkspace();
 
@@ -37,18 +37,20 @@ test("FINISH reutiliza una publicación para comprobar cierre y reacreditación"
     });
 
     await context.test("FINISH reacredita sin interacción las exclusiones idénticas de la publicación vigente", async () => {
-      const contexts = await preflightIndividualAccreditations(root, finishProviders);
+      const providers = ["gam"] as const;
+      const contexts = await preflightIndividualAccreditations(root, providers);
       const gam = contexts[0];
       assert.ok(gam?.existing);
       await rm(gam.existing.draftFile);
       const preview = await publishIndividualCatalogs({
-        workspace: root, providers: finishProviders, dryRun: true, desktopDirectory: null
+        workspace: root, providers, dryRun: true, desktopDirectory: null
       });
       assert.equal(preview.providers[0]?.excluded, 2);
       await assert.rejects(lstat(gam.existing.draftFile), { code: "ENOENT" });
-      const renewed = await publishIndividualTestWorkspace(root, desktop);
+      const renewed = await publishIndividualTestWorkspace(root, desktop, providers);
+      assert.deepEqual(renewed.providers.map((item) => item.providerId), providers);
       assert.equal(renewed.providers[0]?.excluded, 2);
-      const updated = await preflightIndividualAccreditations(root, ["gam"]);
+      const updated = await preflightIndividualAccreditations(root, providers);
       assert.equal(updated[0]?.existing?.inspection.approved, true);
       assert.equal(updated[0]?.existing?.inspection.completed, 2);
       assert.ok(updated[0]?.existing?.accreditation.approvalReason?.includes("automática"));
@@ -65,7 +67,7 @@ test("FINISH muestra actividad mientras espera la poda y conserva su código de 
     await consolidate(root);
     await writeFile(script, 'console.error("BLOQUEO REAL"); process.exitCode = 5;\n');
     await assert.rejects(consolidate(root), /ARCHIVADO PENDIENTE.*código 5/);
-  });
+  }, "original");
 });
 
 test("FINISH conserva publicaciones si falla el informe y permite reintentar sin republicar", async () => {

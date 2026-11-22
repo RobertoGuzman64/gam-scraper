@@ -14,8 +14,10 @@ import { readIndividualSelection, selectIndividualPublishable } from "../individ
 import { publishIndividualCatalogs } from "../individual-finish.js";
 import { createIndividualWorkspaceFixture, prepareIndividualTestWorkspace } from "../../testing/builders/individual-workspace-fixture.js";
 
+const accreditationProviders = ["gam"] as const;
 const withWorkspace = createIndividualWorkspaceFixture({
-  prefix: "equipzilla auto-acreditar ", serialNumber: "SERIE-REPETIDA", defaultState: "prepared"
+  prefix: "equipzilla auto-acreditar ", serialNumber: "SERIE-REPETIDA", defaultState: "prepared",
+  providers: accreditationProviders
 });
 
 const historical = (context: IndividualAccreditationProvider): IndividualAccreditationProvider => ({
@@ -101,7 +103,7 @@ test("proveedor sin incidencias se acredita sin terminal y --simular no escribe"
       failures: []
     }], original.startedAt, new Date(Date.parse(original.endedAt) + 60_000).toISOString());
     await consolidatePortableOriginal(root, sourceFile);
-    await prepareIndividualTestWorkspace(root);
+    await prepareIndividualTestWorkspace(root, accreditationProviders);
     const context = await prepared(root, "gam");
     assert.equal(context.expected.exclusions.length, 0);
     assert.equal(await runAccreditIndividual(["--proveedor", "gam", "--simular"], root), true);

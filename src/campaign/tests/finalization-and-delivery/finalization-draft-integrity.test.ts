@@ -13,7 +13,7 @@ after(fixtureCache.close);
 test("rechaza borradores caducados, estructura adulterada y edición de selecciones existentes", async () => {
   const data = await fixture();
   try {
-    const { inspectActiveCampaignEditorial, decideActiveCampaignEditorial, approveActiveCampaignEditorial } =
+    const { inspectActiveCampaignEditorial, decideActiveCampaignEditorial } =
       await import("../../editorial.js");
     const draft = await finalizeActiveCampaign(data.root, false);
     const editorial = await inspectActiveCampaignEditorial(data.root);
@@ -36,17 +36,5 @@ test("rechaza borradores caducados, estructura adulterada y edición de seleccio
       reason: "Ficha contrastada manualmente con la publicación vigente.", evidenceUrls: [first.sourceUrl]
     }), /ya tiene selección/);
     await rm(selectionFolder, { recursive: true });
-    for (const item of editorial.accreditation.exclusions) {
-      await decideActiveCampaignEditorial(data.root, {
-        providerId: item.providerId, reference: item.reference, decision: "excluir",
-        reason: "Exclusión por incidencia contrastada manualmente.", evidenceUrls: [item.sourceUrl]
-      });
-    }
-    await approveActiveCampaignEditorial(data.root, "Cotejado el conjunto de fichas en la campaña vigente.");
-    await finalizeActiveCampaign(data.root, false);
-    await assert.rejects(approveActiveCampaignEditorial(data.root, "Una nueva aprobación no corresponde a esta selección."),
-      /está aprobada/);
-    const selectedContents = await readFile(draft.draftFile, "utf8");
-    assert.equal(JSON.parse(selectedContents).approved, true);
   } finally { await data.cleanup(); }
 });

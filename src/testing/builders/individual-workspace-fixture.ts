@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after } from "node:test";
 import type { ProductRecord } from "../../contracts/catalog.js";
+import type { IndividualCatalogProvider } from "../../preparation/workflow/individual-context.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../contracts/scraping.js";
 import { consolidatePortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
 import { prepareIndividualCatalogs } from "../../preparation/workflow/individual-prepare.js";
@@ -25,19 +26,26 @@ const product = (reference: string, serialNumber: string | null): ProductRecord 
   specs: { "Altura de trabajo": "8 m" }
 });
 
-export const prepareIndividualTestWorkspace = async (root: string): Promise<void> => {
-  const results = await prepareIndividualCatalogs({ workspace: root, providers, dryRun: false });
+export const prepareIndividualTestWorkspace = async (
+  root: string, selectedProviders: readonly IndividualCatalogProvider[] = providers
+): Promise<void> => {
+  const results = await prepareIndividualCatalogs({ workspace: root, providers: selectedProviders, dryRun: false });
   assert.ok(results.every((item) => item.error === null), JSON.stringify(results.map((item) => item.error)));
 };
 
-const createOriginals = async (root: string, serialNumber: string): Promise<void> => {
-  const src = join(root, "fuente-gam");
-  await mkdir(src);
-  const products = [product("11111", serialNumber), product("22222", serialNumber), product("33333", null)];
-  const scraped: CategoryScrapeResult = { category, products, discoveredProductUrls: products.length, failures: [] };
-  await writeOutputs(src, "scrape-gam", [scraped], "2026-11-03T11:00:00Z", "2026-11-03T11:00:00Z");
-  await consolidatePortableOriginal(root, join(src, "scrape-gam-catalog.json"));
+const createOriginals = async (
+  root: string, serialNumber: string, selectedProviders: readonly IndividualCatalogProvider[]
+): Promise<void> => {
+  if (selectedProviders.includes("gam")) {
+    const src = join(root, "fuente-gam");
+    await mkdir(src);
+    const products = [product("11111", serialNumber), product("22222", serialNumber), product("33333", null)];
+    const scraped: CategoryScrapeResult = { category, products, discoveredProductUrls: products.length, failures: [] };
+    await writeOutputs(src, "scrape-gam", [scraped], "2026-11-03T11:00:00Z", "2026-11-03T11:00:00Z");
+    await consolidatePortableOriginal(root, join(src, "scrape-gam-catalog.json"));
+  }
   for (const id of ["gomariz", "mercaeleva"] as const) {
+    if (!selectedProviders.includes(id)) continue;
     const folder = join(root, `fuente-${id}`);
     await mkdir(folder);
     for (const name of [`scrape-${id}-catalog.json`, `scrape-${id}-catalog.manifest.json`, `scrape-${id}-summary.json`]) {
@@ -53,6 +61,7 @@ type FixtureOptions<Published> = {
   readonly prefix: string;
   readonly serialNumber: string;
   readonly defaultState: FixtureState;
+  readonly providers?: readonly IndividualCatalogProvider[];
   readonly approve?: (root: string) => Promise<void>;
   readonly publish?: (root: string, desktop: string) => Promise<Published>;
 };
@@ -70,11 +79,11 @@ export const createIndividualWorkspaceFixture = <Published = never>(options: Fix
       roots.add(root);
       try {
         if (state === "original") {
-          await createOriginals(root, options.serialNumber);
+          await createOriginals(root, options.serialNumber, options.providers ?? providers);
         } else {
           const previous: FixtureState = state === "prepared" ? "original" : state === "approved" ? "prepared" : "approved";
           await cp(await seed(previous), root, { recursive: true, mode: constants.COPYFILE_FICLONE });
-          if (state === "prepared") await prepareIndividualTestWorkspace(root);
+          if (state === "prepared") await prepareIndividualTestWorkspace(root, options.providers);
           else if (state === "approved") {
             if (!options.approve) throw new Error("La fixture no tiene aprobación editorial configurada");
             await options.approve(root);

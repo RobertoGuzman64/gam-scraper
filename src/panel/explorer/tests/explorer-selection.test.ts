@@ -14,13 +14,16 @@ const baseSelection: ExplorerSelection = {
   sort: "most-differences", missingOriginalDescription: false,
   withoutOriginalSpecs: false, withTechnicalAdditions: false, withEditorialChanges: false
 };
-const source = async (): Promise<PanelExplorerProduct> => {
+const prepareSource = async (): Promise<PanelExplorerProduct> => {
   const workspace = await fixture.root();
   const explorer = await readPanelExplorer(workspace, await readPanelSnapshot(workspace));
   const item = explorer.products.find((candidate) => candidate.original && candidate.published && candidate.commercial);
   assert.ok(item?.original && item.published);
   return item;
 };
+let staticSource: ReturnType<typeof prepareSource> | undefined;
+const source = (): ReturnType<typeof prepareSource> =>
+  staticSource ??= prepareSource();
 const difference = (field: string, group: PanelFieldDifference["group"], change: PanelFieldDifference["change"]): PanelFieldDifference =>
   ({ field, group, change, before: "original", after: "publicado" });
 const product = (base: PanelExplorerProduct, identity: string, specs: number, changes: readonly PanelFieldDifference[],

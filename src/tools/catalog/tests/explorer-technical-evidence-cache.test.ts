@@ -8,9 +8,13 @@ import { explorerTechnicalEvidenceCachePath } from "../explorer-technical-eviden
 
 const fixture = createPanelEvidenceWorkspaceFixture();
 
+let staticSnapshot: ReturnType<typeof readPanelSnapshot> | undefined;
+const readStaticSnapshot = (): ReturnType<typeof readPanelSnapshot> =>
+  staticSnapshot ??= fixture.root().then((root) => readPanelSnapshot(root));
+
 test("rechaza evidencias técnicas precalculadas de otro corte y conserva las originales", async () => {
   await fixture.withCopy(async (workspace) => {
-    const snapshot = await readPanelSnapshot(workspace);
+    const snapshot = await readStaticSnapshot();
     const target = explorerTechnicalEvidenceCachePath(workspace);
     const original = await readFile(target, "utf8");
     const provider = snapshot.providers[0];
@@ -25,7 +29,7 @@ test("rechaza evidencias técnicas precalculadas de otro corte y conserva las or
 
 test("rechaza campos obsoletos o ajenos al contrato de clasificaciones", async () => {
   await fixture.withCopy(async (workspace) => {
-    const snapshot = await readPanelSnapshot(workspace);
+    const snapshot = await readStaticSnapshot();
     const target = explorerTechnicalEvidenceCachePath(workspace);
     const original = await readFile(target, "utf8");
     assert.ok(original.includes('"version":2'));
@@ -54,7 +58,7 @@ test("rechaza campos obsoletos o ajenos al contrato de clasificaciones", async (
 
 test("rechaza relaciones naranjas sin reciprocidad tras retirar el payload documental", async () => {
   await fixture.withCopy(async (workspace) => {
-    const snapshot = await readPanelSnapshot(workspace);
+    const snapshot = await readStaticSnapshot();
     const target = explorerTechnicalEvidenceCachePath(workspace);
     const original = await readFile(target, "utf8");
     const altered = original.replace('"linkedMachines":[', '"linkedMachines":["identidad-inexistente",');
