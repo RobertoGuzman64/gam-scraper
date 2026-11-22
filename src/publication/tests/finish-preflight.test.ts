@@ -80,9 +80,10 @@ test("preflight sin preparación recorre los tres proveedores y no genera decisi
   }, "original");
 });
 
-test("FINISH --simular expone los bloqueos de los tres proveedores y conserva el bloqueo productivo", async () => {
+test("FINISH productivo diagnostica los tres proveedores sin abrir diario", async () => {
   await withWorkspace(async (root, desktop) => {
-    await assert.rejects(runPublishIndividual(["--simular"], root), /FINISH \/ PREFLIGHT BLOQUEADO.*3 proveedores/s);
+    await assert.rejects(runPublishIndividual([], root, { desktopDirectory: desktop }),
+      /FINISH \/ PREFLIGHT BLOQUEADO.*3 proveedores/s);
     assert.deepEqual(await readdir(desktop), []);
     await assert.rejects(lstat(join(root, "storage")), { code: "ENOENT" });
   }, "original");

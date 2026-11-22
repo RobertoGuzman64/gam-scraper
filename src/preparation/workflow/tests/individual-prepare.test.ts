@@ -41,8 +41,10 @@ const withWorkspace = async (
 
 after(fixtureCache.close);
 
-const runGomariz = (root: string, dryRun = false) => prepareIndividualCatalogs({
-  workspace: root, providers: ["gomariz"], dryRun
+type ProviderProgress = NonNullable<Parameters<typeof prepareIndividualCatalogs>[0]["onProgress"]>;
+
+const runGomariz = (root: string, dryRun = false, onProgress?: ProviderProgress) => prepareIndividualCatalogs({
+  workspace: root, providers: ["gomariz"], dryRun, ...(onProgress ? { onProgress } : {})
 });
 
 const firstPreparation = async (root: string): Promise<string> => {
@@ -102,7 +104,10 @@ test("simulación offline no crea carpetas, archivos ni cambia el original", asy
   await withWorkspace(async (root) => {
     const original = join(root, "catalogs", "providers", "gomariz", "original", files[0]);
     const before = await readFile(original);
-    const result = await runGomariz(root, true);
+    const updates: string[] = [];
+    const result = await runGomariz(root, true,
+      (providerId, completed, total) => { updates.push(`${providerId} ${completed}/${total}`); });
+    assert.deepEqual(updates, ["gomariz 0/1", "gomariz 1/1"]);
     assert.equal(result[0]?.summary?.status, "simulada");
     assert.equal(result[0]?.summary?.preparationFile, null);
     await assert.rejects(lstat(join(root, "storage")), { code: "ENOENT" });

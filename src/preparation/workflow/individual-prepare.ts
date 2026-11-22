@@ -51,14 +51,17 @@ export const prepareIndividualCatalogs = async (options: {
   readonly workspace: string;
   readonly providers: readonly IndividualCatalogProvider[];
   readonly dryRun: boolean;
+  readonly onProgress?: (providerId: IndividualCatalogProvider, completed: number, total: number) => void;
 }): Promise<readonly IndividualPreparationOutcome[]> => {
   const workspace = resolve(options.workspace);
   const results: IndividualPreparationOutcome[] = [];
   for (const providerId of options.providers) {
+    options.onProgress?.(providerId, results.length, options.providers.length);
     try {
       const context = await resolveIndividualPreparationContext(workspace, providerId);
       if (context.preparation && context.preparationFile) {
         results.push({ providerId, summary: summarize(context, context.preparation, "reutilizada", context.preparationFile), error: null });
+        options.onProgress?.(providerId, results.length, options.providers.length);
         continue;
       }
       if (!options.dryRun) await ensureIndividualPreparationDirectory(workspace, providerId);
@@ -89,6 +92,7 @@ export const prepareIndividualCatalogs = async (options: {
         error: error instanceof Error ? error.message : String(error)
       });
     }
+    options.onProgress?.(providerId, results.length, options.providers.length);
   }
   return results;
 };

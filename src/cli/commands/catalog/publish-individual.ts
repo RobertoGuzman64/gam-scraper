@@ -2,15 +2,16 @@ import { spawn } from "node:child_process";
 import { resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseIndividualCatalogProviders } from "../../options/individual-catalog.js";
-import { printCommandHeader, printCommandSection, printCommandProvider, printCommandResult, printCommandDeliverable, printReportLine, printStatus } from "../../reporting/terminal.js";
-import { LiveStatus } from "../../reporting/live-status.js";
+import { printCommandHeader, printCommandSection, printCommandProvider, printCommandResult, printCommandDeliverable, printReportLine, printStatus, formatStatus } from "../../reporting/terminal.js";
+import { LiveStatus, formatDuration } from "../../reporting/live-status.js";
+import { OperationProgress } from "../../reporting/operation-progress.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { findDesktopDirectory } from "../../../infrastructure/filesystem/desktop-directory.js";
 import { publishIndividualCatalogs } from "../../../publication/individual-finish.js";
 import { completeIndividualFinishClosure } from "../../../publication/individual-finish-closure.js";
 import { individualFinishClosurePhase, listIndividualFinishJournals } from "../../../infrastructure/filesystem/catalog/individual-finish-journal.js";
 import { inspectIndividualFinishPreflight } from "../../../publication/finish-preflight.js";
-import type { IndividualFinishResult } from "../../../publication/individual-finish.js";
+import type { IndividualFinishResult, IndividualFinishProgress } from "../../../publication/individual-finish.js";
 import type { IndividualCatalogProvider } from "../../../preparation/workflow/individual-context.js";
 import { runCatalogContentGaps } from "./catalog-content-gaps.js";
 import { deliverPublishedWorkReport } from "../../reporting/published-work-archive.js";
@@ -60,12 +61,14 @@ export const consolidate = async (workspace: string): Promise<void> => {
   }
 };
 
-const previewWithFullDiagnostics = async (
-  workspace: string, providers: readonly IndividualCatalogProvider[]
+const withFullDiagnostics = async (
+  workspace: string, providers: readonly IndividualCatalogProvider[],
+  action: () => Promise<IndividualFinishResult>
 ): Promise<IndividualFinishResult> => {
   try {
-    return await publishIndividualCatalogs({ workspace, providers, dryRun: true, desktopDirectory: null });
+    return await action();
   } catch (error) {
+    if (error instanceof Error && error.message.startsWith("FINISH PARCIAL/BLOQUEADO")) throw error;
     const diagnostic = await inspectIndividualFinishPreflight(workspace, providers).catch(() => null);
     if (diagnostic && !diagnostic.complete) {
       for (const entry of diagnostic.providers) {
@@ -130,18 +133,47 @@ export const runPublishIndividual = async (
   const parsed = parseIndividualCatalogProviders(args.filter((arg) => arg !== "--detalle"));
   printCommandHeader("PASO 2/2 · FINISH", parsed.dryRun);
   const root = resolve(workspace);
-  if (!parsed.dryRun) {
-    const preflight = await previewWithFullDiagnostics(root, parsed.providerIds);
-    printStatus("PASS", `PREFLIGHT | ${preflight.providers.length} proveedores con exclusiones acreditadas y diferencias aceptadas`);
-    if (detailed) describeResult(preflight, true);
+  const progress = new OperationProgress("FINISH");
+  let desktopDirectory: string | null = null;
+  let result: IndividualFinishResult;
+  try {
+    progress.stage(parsed.dryRun ? "SIMULACIÓN" : "PREFLIGHT", `${parsed.providerIds.length} ${parsed.providerIds.length === 1 ? "proveedor" : "proveedores"}`);
+    const previewProgress: IndividualFinishProgress = (_stage, providerId, completed, total) => {
+      progress.update(providerId.toUpperCase(), completed, total);
+    };
+    desktopDirectory = parsed.dryRun ? null : hooks.desktopDirectory ?? await findDesktopDirectory();
+    if (parsed.dryRun) {
+      result = await withFullDiagnostics(root, parsed.providerIds, () => publishIndividualCatalogs({
+        workspace: root, providers: parsed.providerIds, dryRun: true, desktopDirectory: null,
+        onProgress: previewProgress
+      }));
+    } else {
+      let activeStage = "PREFLIGHT";
+      let preflightComplete = false;
+      const publishingProgress: IndividualFinishProgress = (stage, providerId, completed, total) => {
+        if (stage === "INSPECCIÓN") {
+          if (completed === 1 && preflightComplete) {
+            progress.log(formatStatus("PASS", `PREFLIGHT | ${total} proveedores con exclusiones acreditadas y diferencias aceptadas`));
+            progress.stage("REVALIDACIÓN", `${total} proveedores · bajo bloqueo`);
+            activeStage = "REVALIDACIÓN";
+          }
+          if (completed === total && !preflightComplete) preflightComplete = true;
+        } else if (stage !== activeStage) {
+          progress.stage(stage, `${total} proveedores`);
+          activeStage = stage;
+        }
+        progress.update(providerId.toUpperCase(), completed, total);
+      };
+      result = await withFullDiagnostics(root, parsed.providerIds, () => publishIndividualCatalogs({
+        workspace: root, providers: parsed.providerIds, dryRun: false,
+        desktopDirectory, onProgress: publishingProgress
+      }));
+    }
+    progress.finish();
+  } catch (error) {
+    progress.abort();
+    throw error;
   }
-  const desktopDirectory = parsed.dryRun ? null : hooks.desktopDirectory ?? await findDesktopDirectory();
-  const result = parsed.dryRun
-    ? await previewWithFullDiagnostics(root, parsed.providerIds)
-    : await publishIndividualCatalogs({
-      workspace: root, providers: parsed.providerIds, dryRun: false,
-      desktopDirectory
-    });
   printCommandSection(parsed.dryRun ? "RESULTADO DE SIMULACIÓN" : "PUBLICACIONES");
   describeResult(result, detailed);
   if (parsed.dryRun) {
@@ -149,12 +181,21 @@ export const runPublishIndividual = async (
     return result;
   }
   printCommandSection("CIERRE DE PUBLICACIÓN");
+  const closeStep = async (name: string, task: () => Promise<void>): Promise<void> => {
+    const startedAt = Date.now();
+    printStatus("RUN", `FINISH | ${name} | en curso`);
+    await task();
+    printStatus("PASS", `FINISH | ${name} | ${formatDuration(Date.now() - startedAt)}`);
+  };
   const closure = await completeIndividualFinishClosure(root, result, {
-    retention: async () => { await (hooks.retention ?? (() => consolidate(root)))(); },
-    auditor: async () => { await (hooks.auditor ?? (() => runCatalogContentGaps(["--comparar", "--specs", "--top", "5"])))(); },
+    retention: async () => { await closeStep("RETENCIÓN", async () => { await (hooks.retention ?? (() => consolidate(root)))(); }); },
+    auditor: async () => { await closeStep("AUDITORÍA", async () => { await (hooks.auditor ?? (() => runCatalogContentGaps(["--comparar", "--specs", "--top", "5"])))(); }); },
     reporter: async () => {
       if (!desktopDirectory) throw new Error("No se ha resuelto el Escritorio del informe");
+      const startedAt = Date.now();
+      printStatus("RUN", "FINISH | INFORME | preparando ZIP técnico");
       const delivery = await (hooks.reporter ?? deliverPublishedWorkReport)(root, desktopDirectory, result);
+      printStatus("PASS", `FINISH | INFORME | ${formatDuration(Date.now() - startedAt)}`);
       printCommandSection("TRABAJO REALIZADO");
       for (const line of formatPublishedWorkTerminal(delivery.report, detailed)) printReportLine(line);
       return delivery;

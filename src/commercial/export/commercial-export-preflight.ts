@@ -8,7 +8,7 @@ import { checkHistoricalReferenceIntegrity } from "../../infrastructure/filesyst
 import type { HistoricalReferenceMismatch } from "../../infrastructure/filesystem/legacy-export/reference-integrity.js";
 import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { assertCurrentCommercialInventory, readCommercialPublicationInput } from "./commercial-inputs.js";
-import { prepareCommercialExportProvider } from "./commercial-export.js";
+import { assembleCommercialExportFiles, prepareCommercialExportProvider, type CommercialExportFile } from "./commercial-export.js";
 import { loadFindingRecognitionRegistry } from "../../infrastructure/filesystem/catalog/finding-recognition-store.js";
 import type { AuditProviderFailure } from "../../shared/audit-provider-results.js";
 
@@ -58,9 +58,10 @@ const publicationEvidence = async (
     products: publication.products.length, selection: path, sourceCatalogSha256, sourceProductCount };
 };
 
-export const inspectCommercialExportPreflight = async (
-  directory: string, environment: CommercialEnvironment | null
-): Promise<CommercialExportPreflight> => {
+const inspectPreflight = async (
+  directory: string, environment: CommercialEnvironment | null, includeFiles: boolean,
+  onProviderProgress: ((providerId: string, completed: number, total: number) => void) | null = null
+): Promise<{ readonly preflight: CommercialExportPreflight; readonly files: readonly CommercialExportFile[] | null }> => {
   const root = resolve(directory);
   const publications: CommercialExportPublicationEvidence[] = [];
   const failures: AuditProviderFailure[] = [];
@@ -69,7 +70,7 @@ export const inspectCommercialExportPreflight = async (
   let historicalReferenceWarning: string | null = null;
   try { historicalReferences = await checkHistoricalReferenceIntegrity(root); }
   catch (error) { historicalReferenceWarning = error instanceof Error ? error.message : String(error); }
-  const catalog = await loadImportCatalogSnapshot().then((result) => result.catalog).catch((error: unknown) => {
+  const snapshot = await loadImportCatalogSnapshot().catch((error: unknown) => {
     globalFailures.push(`Catálogo comercial: ${error instanceof Error ? error.message : String(error)}`);
     return null;
   });
@@ -81,21 +82,41 @@ export const inspectCommercialExportPreflight = async (
     globalFailures.push(`Reconocimientos comerciales: ${error instanceof Error ? error.message : String(error)}`);
     return null;
   });
-  for (const providerId of LEGACY_CAMPAIGN_PROVIDERS) {
+  const plans: ReturnType<typeof prepareCommercialExportProvider>[] = [];
+  for (const [index, providerId] of LEGACY_CAMPAIGN_PROVIDERS.entries()) {
     try {
       const path = await resolveAccreditedPublication(root, providerId);
       if (!path) throw new Error(`No existe publicación activa de ${providerId}`);
       const evidence = await publicationEvidence(path, providerId);
       publications.push(evidence);
-      if (catalog) {
-        const input = await readCommercialPublicationInput(root, path, catalog);
+      if (snapshot) {
+        const input = await readCommercialPublicationInput(root, path, snapshot.catalog);
         await assertCurrentCommercialInventory(root, [input]);
-        if (references && registry) prepareCommercialExportProvider(input, catalog, references, registry, environment);
+        if (references && registry) {
+          const plan = prepareCommercialExportProvider(input, snapshot.catalog, references, registry, environment);
+          if (includeFiles) plans.push(plan);
+        }
       }
       if (references && environment !== null && references.companies[providerId]?.[environment] === undefined) {
         throw new Error(`No existe companyID del proveedor ${providerId} para ${environment}`);
       }
     } catch (error) { failures.push(issue(providerId, error)); }
+    onProviderProgress?.(providerId, index + 1, LEGACY_CAMPAIGN_PROVIDERS.length);
   }
-  return { publications, failures, globalFailures, historicalReferences, historicalReferenceWarning };
+  const preflight = { publications, failures, globalFailures, historicalReferences, historicalReferenceWarning };
+  const files = includeFiles && snapshot && references && registry &&
+    failures.length === 0 && globalFailures.length === 0 &&
+    plans.length === LEGACY_CAMPAIGN_PROVIDERS.length && publications.length === LEGACY_CAMPAIGN_PROVIDERS.length
+    ? assembleCommercialExportFiles(plans, snapshot, references, environment) : null;
+  return { preflight, files };
 };
+
+export const inspectCommercialExportPreflight = async (
+  directory: string, environment: CommercialEnvironment | null
+): Promise<CommercialExportPreflight> => (await inspectPreflight(directory, environment, false)).preflight;
+
+export const prepareCommercialExportPreflight = async (
+  directory: string, environment: CommercialEnvironment | null,
+  onProviderProgress?: (providerId: string, completed: number, total: number) => void
+): Promise<{ readonly preflight: CommercialExportPreflight; readonly files: readonly CommercialExportFile[] | null }> =>
+  inspectPreflight(directory, environment, true, onProviderProgress);

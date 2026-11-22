@@ -145,7 +145,6 @@ export const deliverCommercialPackages = async (
     throw new Error("Los paquetes comerciales deben quedar fuera del repositorio");
   }
   if (!(await stat(physicalDesktop)).isDirectory()) throw new Error("El Escritorio no es un directorio");
-  await verifyCommercialExportSources(root, files);
   const commercialArchive = createZipArchive(files.map((file) => ({ name: file.name, data: file.content })));
   const reportMarkdown = renderCommercialIntegrationReport(snapshot, date);
   const reportArchive = createZipArchive([{ name: "INFORME.md", data: reportMarkdown }]);

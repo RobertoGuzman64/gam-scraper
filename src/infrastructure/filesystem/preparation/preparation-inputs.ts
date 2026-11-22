@@ -6,33 +6,41 @@ import type { PreparationFingerprints } from "../../../preparation/offline-docum
 
 const sha = (value: string): string => createHash("sha256").update(value).digest("hex");
 
-const readRuleFiles = async (directory: string): Promise<readonly { name: string; content: string }[]> => {
+const readRuleFiles = async (
+  directory: string,
+  include: (name: string) => boolean,
+  excludedDirectory: string | null = null,
+  prefix = ""
+): Promise<readonly { name: string; content: string }[]> => {
   const entries = await readdir(directory, { withFileTypes: true });
-  const paths = entries.filter((entry) => entry.isFile() && entry.name.endsWith(".js") && !entry.name.endsWith(".test.js"));
+  const paths = entries.filter((entry) => entry.isFile() && entry.name.endsWith(".js") &&
+    !entry.name.endsWith(".test.js") && include(`${prefix}${entry.name}`));
   const files = await Promise.all(paths.map(async (entry) => ({
     name: entry.name, content: await readFile(join(directory, entry.name), "utf8")
   })));
-  const nested = await Promise.all(entries.filter((entry) => entry.isDirectory() && entry.name !== "tests")
-    .map(async (subdirectory) => (await readRuleFiles(join(directory, subdirectory.name)))
-      .map((child) => ({ name: `${subdirectory.name}/${child.name}`, content: child.content }))));
+  const nested = await Promise.all(entries.filter((entry) => entry.isDirectory() && entry.name !== "tests" &&
+    `${prefix}${entry.name}` !== excludedDirectory)
+    .map(async (subdirectory) => (await readRuleFiles(
+      join(directory, subdirectory.name), include, excludedDirectory, `${prefix}${subdirectory.name}/`
+    )).map((child) => ({ name: `${subdirectory.name}/${child.name}`, content: child.content }))));
   return [...files, ...nested.flat()];
 };
 
 export const loadPreparationInputs = async (): Promise<{ fingerprints: PreparationFingerprints }> => {
   const root = fileURLToPath(new URL("../../../", import.meta.url));
   const [preparation, legacy, normalization, identity, conflicts] = await Promise.all([
-    readRuleFiles(join(root, "preparation")),
-    readRuleFiles(join(root, "commercial", "legacy-export")),
-    readRuleFiles(join(root, "catalog", "normalization")),
+    readRuleFiles(join(root, "preparation"),
+      (name) => !["product-attributes.js", "shared/classification/mapping/category-mapping.js"].includes(name),
+      "workflow"),
+    readRuleFiles(join(root, "commercial", "legacy-export"),
+      (name) => name === "contracts.js" || name === "prepare-product.js"),
+    readRuleFiles(join(root, "catalog", "normalization"), () => true),
     readFile(join(root, "catalog", "identity.js"), "utf8"),
     readFile(join(root, "catalog", "identity-conflicts.js"), "utf8")
   ]);
   const files = [
-    ...preparation.filter((file) => !file.name.startsWith("workflow/") &&
-      !["product-attributes.js", "shared/classification/mapping/category-mapping.js"].includes(file.name))
-      .map((file) => ({ name: `preparation/${file.name}`, content: file.content })),
-    ...legacy.filter((file) => file.name === "contracts.js" || file.name === "prepare-product.js")
-      .map((file) => ({ name: `preparation/legacy-export/${file.name}`, content: file.content })),
+    ...preparation.map((file) => ({ name: `preparation/${file.name}`, content: file.content })),
+    ...legacy.map((file) => ({ name: `preparation/legacy-export/${file.name}`, content: file.content })),
     ...normalization.map((file) => ({ name: `normalization/${file.name}`, content: file.content })),
     { name: "identity.js", content: identity },
     { name: "identity-conflicts.js", content: conflicts }

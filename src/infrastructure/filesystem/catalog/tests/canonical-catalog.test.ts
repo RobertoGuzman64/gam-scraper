@@ -7,7 +7,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../../contracts/scraping.js";
 import { writeOutputs } from "../../../../scraping/output/publish.js";
-import { readCanonicalCatalog } from "../canonical-catalog.js";
+import { readCanonicalCatalog, readCanonicalCatalogWithFingerprint } from "../canonical-catalog.js";
 import { readPortableOriginal } from "../portable-original.js";
 
 const category: CategoryConfig = { key: "venta", name: "Venta", url: "https://test.example/venta" };
@@ -43,7 +43,8 @@ const paths = (dir: string) => ({
 test("publica ProductRecord canónico íntegro y permite relectura offline sin importador", async () => {
   await withDir(async (dir) => {
     await writeOutputs(dir, "inventario", [result(null)], stamp(1), stamp(1));
-    const source = await readCanonicalCatalog(paths(dir).canonical);
+    const { catalog: source, catalogSha256 } = await readCanonicalCatalogWithFingerprint(paths(dir).canonical);
+    assert.deepEqual(source, await readCanonicalCatalog(paths(dir).canonical));
     assert.equal(source.version, 1);
     assert.equal(source.quality.published, true);
     assert.equal(source.productCount, 12);
@@ -55,6 +56,7 @@ test("publica ProductRecord canónico íntegro y permite relectura offline sin i
     assert.ok(summary && typeof summary === "object" && "artifacts" in summary);
     assert.ok(summary.artifacts && typeof summary.artifacts === "object" && "catalogSha256" in summary.artifacts);
     assert.equal(summary.artifacts.catalogSha256, createHash("sha256").update(text).digest("hex"));
+    assert.equal(catalogSha256, summary.artifacts.catalogSha256);
   });
 });
 

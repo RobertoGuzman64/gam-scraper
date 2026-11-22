@@ -102,24 +102,19 @@ export const prepareCommercialExportProvider = (
   return { plan, recognitions };
 };
 
-export const buildCommercialExportFiles = async (
-  root: string, environment: CommercialEnvironment | null
-): Promise<readonly CommercialExportFile[]> => {
-  const [{ catalog, categoryRaw, attributeRaw }, references] = await Promise.all([
-    loadImportCatalogSnapshot(), loadCommercialReference()
-  ]);
-  const [inputs, registry] = await Promise.all([
-    loadCommercialPublicationInputs(root, catalog), loadFindingRecognitionRegistry(root)
-  ]);
-  await assertCurrentCommercialInventory(root, inputs);
-  const plans = inputs.map((input) => prepareCommercialExportProvider(input, catalog, references, registry, environment));
+export const assembleCommercialExportFiles = (
+  plans: readonly ReturnType<typeof prepareCommercialExportProvider>[],
+  snapshot: Awaited<ReturnType<typeof loadImportCatalogSnapshot>>,
+  references: CommercialReference,
+  environment: CommercialEnvironment | null
+): readonly CommercialExportFile[] => {
   const products = plans.map(({ plan, recognitions }) => file(`${plan.providerId}-commercial.json`,
     serialized(buildCommercialDeliveryPlan(plan, recognitions))));
   const manifest = file("commercial-manifest.json", serialized({
     version: 2,
     environment,
-    taxonomySha256: hash(categoryRaw),
-    attributesSha256: hash(attributeRaw),
+    taxonomySha256: hash(snapshot.categoryRaw),
+    attributesSha256: hash(snapshot.attributeRaw),
     logosSha256: hash(references.logoRaw),
     companiesSha256: hash(references.companyRaw),
     providers: plans.map(({ plan }, index) => {
@@ -139,4 +134,18 @@ export const buildCommercialExportFiles = async (
     })
   }));
   return [...products, manifest];
+};
+
+export const buildCommercialExportFiles = async (
+  root: string, environment: CommercialEnvironment | null
+): Promise<readonly CommercialExportFile[]> => {
+  const [snapshot, references] = await Promise.all([
+    loadImportCatalogSnapshot(), loadCommercialReference()
+  ]);
+  const [inputs, registry] = await Promise.all([
+    loadCommercialPublicationInputs(root, snapshot.catalog), loadFindingRecognitionRegistry(root)
+  ]);
+  await assertCurrentCommercialInventory(root, inputs);
+  const plans = inputs.map((input) => prepareCommercialExportProvider(input, snapshot.catalog, references, registry, environment));
+  return assembleCommercialExportFiles(plans, snapshot, references, environment);
 };

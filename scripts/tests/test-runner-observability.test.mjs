@@ -3,6 +3,11 @@ import test from "node:test";
 import { resolve } from "node:path";
 import { createRunnerTimeline } from "../test-runner-observability.mjs";
 
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { AUDIT_MODES, runAuditBattery } from "../inspection/audit-battery-core.mjs";
+
 const a = "dist/suite-a.test.js";
 const b = "dist/suite-b.test.js";
 const c = "dist/suite-c.test.js";
@@ -78,4 +83,29 @@ test("un fallo de carga de archivo cuenta como informe aunque Node lo clasifique
   timeline.register({ type: "test:fail", data: { name: resolve(a), details: { type: "test" } } }, "general");
   assert.equal(timeline.progress().reported, 1);
   assert.equal(timeline.progress().remaining, 0);
+});
+
+test("la batería comunica once modos completos sin alterar las capturas de cada auditor", async () => {
+  const root = await mkdtemp(join(tmpdir(), "eqz-audit-progress-"));
+  const progress = [];
+  const run = { stdout: "{}", stderr: "", exitCode: 0, signal: null, error: null, timedOut: false };
+  const source = { originals: { complete: true, sources: [] }, populations: { analyzedAt: "no-relevante", byStage: [] } };
+  try {
+    const { report } = await runAuditBattery({
+      root, outDirectory: join(root, "informes"),
+      prepare: async () => run,
+      execute: async () => run,
+      sources: async () => source,
+      onModeProgress: (id, completed, total, result) => progress.push({ id, completed, total, result })
+    });
+    assert.equal(report.audits.length, AUDIT_MODES.length);
+    assert.equal(report.status, "SUCCESS");
+    assert.equal(progress.length, AUDIT_MODES.length * 2);
+    for (const [index, mode] of AUDIT_MODES.entries()) {
+      assert.deepEqual(progress[index * 2], { id: mode.id, completed: index, total: AUDIT_MODES.length, result: null });
+      assert.deepEqual(progress[index * 2 + 1], { id: mode.id, completed: index + 1, total: AUDIT_MODES.length, result: "SUCCESS" });
+    }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

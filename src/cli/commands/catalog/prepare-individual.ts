@@ -5,6 +5,7 @@ import { prepareIndividualCatalogs } from "../../../preparation/workflow/individ
 import { checkHistoricalReferenceIntegrity } from "../../../infrastructure/filesystem/legacy-export/reference-integrity.js";
 import { printCommandHeader, printCommandProvider, printCommandSection, printCommandResult, printCommandWarning, printCommandDeliverable, printReportLine, printStatus } from "../../reporting/terminal.js";
 import { printCommandError } from "../../reporting/errors.js";
+import { OperationProgress } from "../../reporting/operation-progress.js";
 
 export const prepareIndividualHelp = `Uso:
   npm run catalogo:preparar
@@ -27,7 +28,22 @@ export const runPrepareIndividual = async (args: readonly string[], workspace: s
   if (args.filter((arg) => arg === "--detalle").length > 1) throw new Error("--detalle repetido");
   const options = parseIndividualCatalogProviders(args.filter((arg) => arg !== "--detalle"));
   printCommandHeader("PASO 1/2 · PREPARAR", options.dryRun);
-  const results = await prepareIndividualCatalogs({ workspace, providers: options.providerIds, dryRun: options.dryRun });
+  const progress = new OperationProgress("PREPARAR");
+  let results: Awaited<ReturnType<typeof prepareIndividualCatalogs>>;
+  let referenceMismatches: Awaited<ReturnType<typeof checkHistoricalReferenceIntegrity>>;
+  try {
+    progress.stage("CATÁLOGOS", `${options.providerIds.length} ${options.providerIds.length === 1 ? "proveedor" : "proveedores"}`);
+    results = await prepareIndividualCatalogs({
+      workspace, providers: options.providerIds, dryRun: options.dryRun,
+      onProgress: (providerId, completed, count) => progress.update(providerId.toUpperCase(), completed, count)
+    });
+    progress.stage("REFERENCIAS HISTÓRICAS", "comprobando integridad");
+    referenceMismatches = await checkHistoricalReferenceIntegrity(workspace);
+    progress.finish(results.some((result) => !result.summary) ? "WARN" : "PASS");
+  } catch (error) {
+    progress.abort();
+    throw error;
+  }
   let total = 0;
   let ready = 0;
   let review = 0;
@@ -64,7 +80,6 @@ export const runPrepareIndividual = async (args: readonly string[], workspace: s
       if (summary.preparationFile) printCommandDeliverable("    Preparación", summary.preparationFile);
     }
   }
-  const referenceMismatches = await checkHistoricalReferenceIntegrity(workspace);
   if (referenceMismatches?.length) {
     printCommandSection("REFERENCIAS HISTÓRICAS");
     printCommandWarning(`${referenceMismatches.length} archivos difieren del manifiesto histórico; no se modifican`);

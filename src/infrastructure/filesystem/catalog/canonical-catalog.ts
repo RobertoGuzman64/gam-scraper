@@ -60,7 +60,10 @@ export const writeCanonicalCatalog = async (
   return catalogSha256;
 };
 
-export const readCanonicalCatalog = async (file: string): Promise<CanonicalCatalog> => {
+export const readCanonicalCatalogWithFingerprint = async (file: string): Promise<{
+  readonly catalog: CanonicalCatalog;
+  readonly catalogSha256: string;
+}> => {
   const path = resolve(file);
   const name = basename(path);
   if (!name.endsWith("-catalog.json") || name.length <= "-catalog.json".length) {
@@ -90,5 +93,8 @@ export const readCanonicalCatalog = async (file: string): Promise<CanonicalCatal
     !isRecord(summary.artifacts) || summary.artifacts.catalogSha256 !== hash) {
     throw new Error("El catálogo no coincide con la publicación completa acreditada");
   }
-  return catalog;
+  return { catalog, catalogSha256: hash };
 };
+
+export const readCanonicalCatalog = async (file: string): Promise<CanonicalCatalog> =>
+  (await readCanonicalCatalogWithFingerprint(file)).catalog;

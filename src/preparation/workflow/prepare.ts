@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
@@ -13,7 +12,7 @@ import type { SourceTriageGroup } from "../../catalog/diagnostics/source-triage.
 import type { OfflineDiagnostics, PreparationComparison } from "../offline-diagnostics.js";
 import { parseOfflinePreparation } from "../offline-document.js";
 import type { OfflinePreparation, PreparationFingerprints } from "../offline-document.js";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readCanonicalCatalogWithFingerprint } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { readAppliedIntervention } from "../../infrastructure/filesystem/interventions/intervention-derived.js";
 import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation/preparation-inputs.js";
 import { offlinePreparationManifest, offlinePreparationManifestPath, readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
@@ -39,8 +38,6 @@ export type PrepareResult = {
   readonly comparisonFile: string | null;
 };
 
-const sha = (value: string): string => createHash("sha256").update(value).digest("hex");
-
 const writeExclusive = async (files: readonly { path: string; content: string }[]): Promise<void> => {
   const created: string[] = [];
   try {
@@ -65,8 +62,9 @@ export const assertPreparationInputsCurrent = async (
   const source = resolve(options.source);
   const derived = options.originalSource === undefined
     ? null : await readAppliedIntervention(source, options.originalSource);
-  const catalog = derived?.catalog ?? await readCanonicalCatalog(source);
-  const catalogSha256 = derived?.catalogSha256 ?? sha(await readFile(source, "utf8"));
+  const snapshot = derived ?? await readCanonicalCatalogWithFingerprint(source);
+  const catalog = snapshot.catalog;
+  const catalogSha256 = snapshot.catalogSha256;
   if (catalogSha256 !== expected.catalogSha256 || !isDeepStrictEqual(catalog, expected.catalog)) {
     throw new Error("El catálogo de origen cambió durante la preparación; no se guarda una derivación obsoleta");
   }
@@ -90,9 +88,10 @@ export const prepareSavedCatalog = async (options: PrepareOptions): Promise<Prep
   }
   const derived = options.originalSource === undefined
     ? null : await readAppliedIntervention(source, options.originalSource);
-  const catalog = derived?.catalog ?? await readCanonicalCatalog(source);
+  const snapshot = derived ?? await readCanonicalCatalogWithFingerprint(source);
+  const catalog = snapshot.catalog;
   if (catalog.providerId !== options.providerId) throw new Error("El proveedor solicitado no coincide con el catálogo de origen");
-  const sourceHash = derived?.catalogSha256 ?? sha(await readFile(source, "utf8"));
+  const sourceHash = snapshot.catalogSha256;
   if (derived === null) {
     const manifest: unknown = JSON.parse(await readFile(join(dirname(source), `${basename(source).slice(0, -"-catalog.json".length)}-catalog.manifest.json`), "utf8"));
     if (!manifest || typeof manifest !== "object" || !("catalogSha256" in manifest) || manifest.catalogSha256 !== sourceHash) {

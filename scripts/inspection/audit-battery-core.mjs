@@ -119,7 +119,7 @@ const renderSummary = (report) => {
 };
 
 export const runAuditBattery = async ({ root, outDirectory, timeoutMs = 240_000,
-  execute = executeNode, prepare = null, sources = readSources } = {}) => {
+  execute = executeNode, prepare = null, sources = readSources, onModeProgress = null } = {}) => {
   const workspace = resolve(root ?? dirname(dirname(dirname(fileURLToPath(import.meta.url)))));
   const parent = resolve(outDirectory ?? join(workspace, "catalogs", "reports", "audit-battery"));
   await mkdir(parent, { recursive: true });
@@ -148,6 +148,7 @@ export const runAuditBattery = async ({ root, outDirectory, timeoutMs = 240_000,
   await mkdir(folder);
   const audits = [];
   for (const mode of AUDIT_MODES) {
+    onModeProgress?.(mode.id, audits.length, AUDIT_MODES.length, null);
     const started = new Date().toISOString();
     const time = Date.now();
     const args = ["scripts/tooling.mjs", mode.command, ...mode.args];
@@ -176,6 +177,7 @@ export const runAuditBattery = async ({ root, outDirectory, timeoutMs = 240_000,
       json: jsonPath ? relativePath(output, join(folder, jsonPath)) : null,
       provenance: validJson(json?.provenance) ? json.provenance : null, auditCoverage: coverage,
       sourceStages: modeSourceStages(mode, before?.populations.byStage ?? []) });
+    onModeProgress?.(mode.id, audits.length, AUDIT_MODES.length, status);
   }
   let after = null;
   if (buildStatus === "SUCCESS" && before) {

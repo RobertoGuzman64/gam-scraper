@@ -1,10 +1,8 @@
-import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
-import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { buildProductIdentity } from "../../../catalog/identity.js";
 import { prepareImportBatch } from "../../prepare.js";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readCanonicalCatalogWithFingerprint } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { readAppliedIntervention } from "../../../infrastructure/filesystem/interventions/intervention-derived.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { loadPreparationInputs } from "../../../infrastructure/filesystem/preparation/preparation-inputs.js";
@@ -32,15 +30,13 @@ export type OfflineValidation = {
   readonly sourceProducts: readonly ProductRecord[];
 };
 
-const sha = (value: string): string => createHash("sha256").update(value).digest("hex");
-
 export const validateCanonicalSource = async (sourceFile: string, providerId: string): Promise<CatalogValidation> => {
   const path = resolve(sourceFile);
-  const catalog = await readCanonicalCatalog(path);
+  const { catalog, catalogSha256 } = await readCanonicalCatalogWithFingerprint(path);
   if (catalog.providerId !== providerId) throw new Error("El catálogo canónico pertenece a otro proveedor");
   return {
     providerId, sourceFile: path, productCount: catalog.productCount,
-    endedAt: catalog.endedAt, catalogSha256: sha(await readFile(path, "utf8"))
+    endedAt: catalog.endedAt, catalogSha256
   };
 };
 
@@ -50,12 +46,13 @@ export const validateOfflinePreparation = async (
 ): Promise<OfflineValidation> => {
   const path = resolve(sourceFile);
   const derived = originalSource === undefined ? null : await readAppliedIntervention(path, originalSource);
-  const canonical = derived?.catalog ?? await readCanonicalCatalog(path);
+  const snapshot = derived ?? await readCanonicalCatalogWithFingerprint(path);
+  const canonical = snapshot.catalog;
   if (canonical.providerId !== providerId) throw new Error("La preparación y el catálogo pertenecen a proveedores distintos");
   const [preparation, inputs] = await Promise.all([
     readOfflinePreparation(resolve(preparationFile), providerId), loadPreparationInputs()
   ]);
-  const sourceHash = derived?.catalogSha256 ?? sha(await readFile(path, "utf8"));
+  const sourceHash = snapshot.catalogSha256;
   if (!isDeepStrictEqual(preparation.source.intervention, derived?.provenance)) {
     throw new Error("La procedencia de la preparación no coincide con la intervención verificada");
   }

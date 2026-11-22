@@ -27,13 +27,18 @@ test("FINISH exige preparar y bloquea incidencias nuevas sin antecedente acredit
 
 test("interrupción tras primer proveedor deja diario PARCIAL y se reanuda sin otro ZIP", async () => {
   await withWorkspace(async (root, desktop) => {
+    const progress: string[] = [];
     await assert.rejects(publishIndividualCatalogs({
       workspace: root, providers: finishProviders, dryRun: false, desktopDirectory: desktop,
+      onProgress: (stage, providerId, completed, total) => progress.push(`${stage} ${providerId} ${completed}/${total}`),
       activate: async (workspace, providerId, sha, activate) => {
         if (providerId === "gomariz" && activate) throw new Error("fallo inyectado de activación");
         return selectActivePublication(workspace, providerId, sha, activate);
       }
     }), /FINISH PARCIAL\/BLOQUEADO.*gam.*fallo inyectado/s);
+    assert.ok(progress.includes(`INSPECCIÓN gam 1/${finishProviders.length}`));
+    assert.ok(progress.includes(`ENTREGA mercaeleva ${finishProviders.length}/${finishProviders.length}`));
+    assert.ok(progress.includes(`ACTIVACIÓN gam 1/${finishProviders.length}`));
     assert.ok(await resolveAccreditedPublication(root, "gam"));
     const zips = await readdir(desktop);
     assert.equal(zips.length, 3);

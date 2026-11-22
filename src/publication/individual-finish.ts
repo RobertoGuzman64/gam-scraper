@@ -37,6 +37,11 @@ export type IndividualFinishResult = {
   readonly providers: readonly (IndividualFinishPreview & { readonly status: "SIMULACIÓN" | "YA VIGENTE" | "ACTIVADA Y VERIFICADA"; readonly zipFile: string | null })[];
 };
 
+export type IndividualFinishProgress = (
+  stage: "INSPECCIÓN" | "ENTREGA" | "VERIFICACIÓN" | "ACTIVACIÓN",
+  providerId: IndividualCatalogProvider, completed: number, total: number
+) => void;
+
 type Checked = IndividualFinishPreview & { readonly options: IndividualEditorialOptions };
 
 const missing = (error: unknown): boolean => error instanceof Error && "code" in error && error.code === "ENOENT";
@@ -78,7 +83,7 @@ export const readIndividualActiveSha = async (root: string, providerId: Individu
 };
 
 const inspected = async (
-  root: string, providers: readonly IndividualCatalogProvider[]
+  root: string, providers: readonly IndividualCatalogProvider[], onProgress?: IndividualFinishProgress
 ): Promise<readonly Checked[]> => {
   const contexts = await preflightIndividualAccreditations(root, providers);
   const checked: Checked[] = [];
@@ -107,6 +112,7 @@ const inspected = async (
     checked.push({ providerId: context.providerId, options: context.options, approvalSha256,
       activeSha256: currentSha256, difference, publishable: selection.totals.publishable,
       excluded: selection.totals.excluded, unchanged: currentSha256 === approvalSha256 });
+    onProgress?.("INSPECCIÓN", context.providerId, checked.length, providers.length);
   }
   if (blockers.length) throw new Error(`FINISH / PREFLIGHT BLOQUEADO | Sin publicaciones ni activaciones nuevas. ${blockers.join("; ")}. Corrige la evidencia o las reglas y vuelve a simular`);
   if (checked.length !== providers.length) throw new Error("FINISH / PREFLIGHT: conjunto incompleto");
@@ -146,10 +152,11 @@ export const publishIndividualCatalogs = async (options: {
   readonly dryRun: boolean;
   readonly desktopDirectory: string | null;
   readonly activate?: typeof selectActivePublication;
+  readonly onProgress?: IndividualFinishProgress;
 }): Promise<IndividualFinishResult> => {
   const root = resolve(options.workspace);
   const execute = async (): Promise<IndividualFinishResult> => {
-    const checked = await inspected(root, options.providers);
+    const checked = await inspected(root, options.providers, options.onProgress);
     if (options.dryRun) {
       return { mode: "simulation", providers: checked.map((item) => ({ ...preview(item), status: "SIMULACIÓN", zipFile: null })) };
     }
@@ -163,26 +170,38 @@ export const publishIndividualCatalogs = async (options: {
     journal = await updateIndividualFinishJournal(journalPath, journal, completed);
     const zipFiles = new Map<IndividualCatalogProvider, string | null>();
     try {
+      let deliveredCount = 0;
       for (const item of checked) {
         if (completed.includes(item.providerId)) {
           await deliverIndividualProvider(item.options, "verify");
           zipFiles.set(item.providerId, null);
-          continue;
+        } else {
+          const delivered = await deliverIndividualArchive(item.options, options.desktopDirectory, "publish");
+          if (!delivered.zipFile) throw new Error(`${item.providerId}: falta ZIP acreditado`);
+          zipFiles.set(item.providerId, delivered.zipFile);
         }
-        const delivered = await deliverIndividualArchive(item.options, options.desktopDirectory, "publish");
-        if (!delivered.zipFile) throw new Error(`${item.providerId}: falta ZIP acreditado`);
-        zipFiles.set(item.providerId, delivered.zipFile);
+        deliveredCount += 1;
+        options.onProgress?.("ENTREGA", item.providerId, deliveredCount, checked.length);
       }
+      let verifiedCount = 0;
       for (const item of checked) {
-        if (completed.includes(item.providerId)) continue;
-        const result = await selectActivePublication(root, item.providerId, item.approvalSha256, false);
-        if (!result.acceptance.accepted) throw new Error(`${item.providerId}: diferencias no aceptadas: ${result.acceptance.blockers.join("; ")}`);
+        if (!completed.includes(item.providerId)) {
+          const result = await selectActivePublication(root, item.providerId, item.approvalSha256, false);
+          if (!result.acceptance.accepted) throw new Error(`${item.providerId}: diferencias no aceptadas: ${result.acceptance.blockers.join("; ")}`);
+        }
+        verifiedCount += 1;
+        options.onProgress?.("VERIFICACIÓN", item.providerId, verifiedCount, checked.length);
       }
       if (completed.length !== checked.length) {
         journal = await markIndividualFinishCandidates(journalPath, journal);
       }
+      let activatedCount = 0;
       for (const item of checked) {
-        if (completed.includes(item.providerId)) continue;
+        if (completed.includes(item.providerId)) {
+          activatedCount += 1;
+          options.onProgress?.("ACTIVACIÓN", item.providerId, activatedCount, checked.length);
+          continue;
+        }
         const activated = await (options.activate ?? selectActivePublication)(root, item.providerId, item.approvalSha256, true);
         if (!activated.acceptance.accepted) throw new Error(`${item.providerId}: activación no autorizada`);
         if (await readIndividualActiveSha(root, item.providerId, item.approvalSha256) !== item.approvalSha256) {
@@ -194,6 +213,8 @@ export const publishIndividualCatalogs = async (options: {
         }
         completed = [...completed, item.providerId];
         journal = await updateIndividualFinishJournal(journalPath, journal, completed);
+        activatedCount += 1;
+        options.onProgress?.("ACTIVACIÓN", item.providerId, activatedCount, checked.length);
       }
       return { mode: "complete", providers: checked.map((item) => ({
         ...preview(item), status: item.unchanged ? "YA VIGENTE" : "ACTIVADA Y VERIFICADA",
@@ -207,7 +228,7 @@ export const publishIndividualCatalogs = async (options: {
     }
   };
   if (options.dryRun) return execute();
-  await inspected(root, options.providers);
+  await inspected(root, options.providers, options.onProgress);
   return withIndividualFinishLock(root, async () => {
     await ensureAutomaticIndividualAccreditations(root, options.providers);
     return execute();
