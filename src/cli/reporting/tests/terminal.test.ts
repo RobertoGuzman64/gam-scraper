@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { mock } from "node:test";
 import test from "node:test";
+import { BatchConsole } from "../batch-progress.js";
+import type { ProviderRun } from "../../../contracts/batch-report.js";
 import { formatHeader, formatProgressBar, formatReportLine, formatStatus, supportsTerminalColor, supportsAnimation, printCommandHeader, printCommandProvider, printCommandResult, printCommandSection } from "../terminal.js";
 
 test("estados semánticos mantienen texto legible en salidas sin color", () => {
@@ -121,4 +123,33 @@ test("Windows clásico, terminal moderna y captura no interactiva distinguen col
   assert.equal(supportsAnimation({ isTTY: false }, "win32", { ...env, WT_SESSION: "terminal" }), false);
   assert.equal(supportsTerminalColor({ isTTY: true }, "linux", { ...env, NO_COLOR: "1" }), false);
   assert.equal(supportsAnimation({ isTTY: true }, "linux", { ...env, FORCE_COLOR: "0" }), false);
+});
+
+
+test("el lote muestra el contador de proveedores sin barras ni anuncios duplicados", () => {
+  const lines: string[] = [];
+  const log = mock.method(console, "log", (message: string) => { lines.push(message); });
+  const write = mock.method(process.stdout, "write", (message: string | Uint8Array) => {
+    lines.push(typeof message === "string" ? message : message.toString());
+    return true;
+  });
+  try {
+    const batch = new BatchConsole();
+    batch.start("salida", 3);
+    batch.begin("gam", 1, 3);
+    const result: ProviderRun = {
+      providerId: "gam", status: "complete", startedAt: "2026-01-01T00:00:00Z",
+      endedAt: "2026-01-01T00:00:04Z", durationMs: 4000, outputDir: "salida",
+      outputPrefix: "gam", logFile: "log", summaryFile: "resumen", changesFile: "cambios", products: 983
+    };
+    batch.end(result);
+  } finally {
+    write.mock.restore();
+    log.mock.restore();
+  }
+  const output = lines.join("\n").replace(/\u001b\[[0-9;]*m/g, "");
+  assert.match(output, /GAM \| 1\/3 proveedores \| iniciando scraper/);
+  assert.match(output, /PASS \| GAM \| 983 productos \| 4s \| 1\/3/);
+  assert.doesNotMatch(output, /█|░/);
+  assert.equal((output.match(/iniciando scraper/g) ?? []).length, 1);
 });

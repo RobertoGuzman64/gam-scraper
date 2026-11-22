@@ -1,5 +1,5 @@
 import { LiveStatus, formatDuration } from "./live-status.js";
-import { formatProgressBar, formatStatus, printStatus, type TerminalStatus } from "./terminal.js";
+import { printStatus, type TerminalStatus } from "./terminal.js";
 
 export class OperationProgress {
   private readonly live = new LiveStatus();
@@ -8,6 +8,9 @@ export class OperationProgress {
   private stageStartedAt = this.startedAt;
   private closed = false;
   private lastCompleted = 0;
+  private activeDetail: string | null = null;
+  private activeStartedAt: number | null = null;
+  private lastFinishedDetail: string | null = null;
 
   constructor(private readonly operation: string) {}
 
@@ -17,18 +20,39 @@ export class OperationProgress {
     this.stageName = name;
     this.stageStartedAt = Date.now();
     this.lastCompleted = 0;
-    this.update(detail ?? "en curso");
+    this.activeDetail = null;
+    this.activeStartedAt = null;
+    this.lastFinishedDetail = null;
+    this.live.update(`${this.operation} | ${name} | ${detail ?? "en curso"}`);
   }
 
   update(detail: string, completed?: number, total?: number): void {
     if (this.closed || this.stageName === null) return;
-    const bar = completed !== undefined && total !== undefined ? formatProgressBar(completed, total) : "";
-    const message = [this.operation, this.stageName, detail, bar].filter(Boolean).join(" | ");
-    this.live.update(message);
-    if (bar && completed !== undefined && completed > this.lastCompleted) {
-      this.lastCompleted = completed;
-      this.live.log(formatStatus("RUN", message));
+    const prefix = `${this.operation} | ${this.stageName}`;
+    const countIsValid = completed !== undefined && total !== undefined &&
+      Number.isSafeInteger(completed) && Number.isSafeInteger(total) && total > 0 &&
+      completed >= 0 && completed <= total;
+    if (!countIsValid || completed === undefined || total === undefined) {
+      this.live.update(`${prefix} | ${detail}`);
+      return;
     }
+    if (completed > this.lastCompleted) {
+      const elapsed = this.activeDetail === detail && this.activeStartedAt !== null
+        ? ` | ${formatDuration(Date.now() - this.activeStartedAt)}` : "";
+      this.live.stop();
+      this.live.log(`  ${detail} | ${completed}/${total} procesados${elapsed}`);
+      this.lastCompleted = completed;
+      this.lastFinishedDetail = detail;
+      this.activeDetail = null;
+      this.activeStartedAt = null;
+      return;
+    }
+    if (completed === this.lastCompleted && detail === this.lastFinishedDetail) return;
+    if (this.activeDetail !== detail) {
+      this.activeDetail = detail;
+      this.activeStartedAt = Date.now();
+    }
+    this.live.update(`${prefix} | ${detail} | ${completed}/${total}`);
   }
 
   finish(result: TerminalStatus = "PASS"): void {

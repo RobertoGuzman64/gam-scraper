@@ -72,7 +72,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
   try {
     progress.stage("PREFLIGHT Y PROYECCIÓN", "acreditando y preparando proveedores");
     const { preflight, files } = await prepareCommercialExportPreflight(root, options.environment,
-      (providerId, completed, total) => progress.update(`${providerId} · ${completed}/${total} evaluados`, completed, total));
+      (providerId, completed, total) => progress.update(providerId.toUpperCase(), completed, total));
     for (const line of renderCommercialExportPreflight(preflight, options.environment)) progress.log(formatReportLine(line));
     if (preflight.failures.length || preflight.globalFailures.length || preflight.publications.length !== 3) {
       throw new Error(`Preflight comercial no conforme: ${preflight.failures.length} incidencias por proveedor y ${preflight.globalFailures.length} globales. No se exportó ningún archivo`);

@@ -3,7 +3,7 @@ import type { ProviderRun } from "../../scraping/batch/report.js";
 import type { BatchObserver } from "../../scraping/batch/run.js";
 import { formatCategoryProgress } from "./scrape-progress.js";
 import { LiveStatus, formatDuration } from "./live-status.js";
-import { formatProgressBar, formatStatus, printStatus, printReportLine } from "./terminal.js";
+import { formatStatus, printStatus, printReportLine } from "./terminal.js";
 
 export class BatchConsole implements BatchObserver {
   private readonly status = new LiveStatus();
@@ -25,8 +25,7 @@ export class BatchConsole implements BatchObserver {
   begin(providerId: string, position: number, count: number): void {
     this.current = providerId;
     this.loggedFailure = false;
-    this.status.log(`  ${formatProgressBar(this.completed, this.total)} | ${providerId} | iniciando`);
-    this.status.update(`[${position}/${count}] ${providerId} | iniciando scraper`);
+    this.status.update(`${providerId.toUpperCase()} | ${position}/${count} proveedores | iniciando scraper`);
   }
 
   progress(providerId: string, event: ScrapeEvent): void {
@@ -45,7 +44,7 @@ export class BatchConsole implements BatchObserver {
     this.status.stop();
     this.completed += 1;
     if (result.status === "complete") {
-      printStatus("PASS", `${result.providerId.toUpperCase()} | ${result.products ?? 0} productos | ${formatDuration(result.durationMs)} | ${formatProgressBar(this.completed, this.total)}`);
+      printStatus("PASS", `${result.providerId.toUpperCase()} | ${result.products ?? 0} productos | ${formatDuration(result.durationMs)} | ${this.completed}/${this.total}`);
     } else {
       if (this.loggedFailure) printStatus("FAIL", `${result.providerId} | ${formatDuration(result.durationMs)} | fallo confirmado`);
       else printStatus("FAIL", `${result.providerId} | ${formatDuration(result.durationMs)}\n  Causa: ${result.error ?? "Error no identificado"}`);
