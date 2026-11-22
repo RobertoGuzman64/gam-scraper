@@ -61,7 +61,9 @@ test("detecta preparaciones censales repetidas en el panel sin impedir lecturas 
     "src/panel/evidence/read-panel-snapshot.ts",
     "src/panel/explorer/read-panel-explorer.ts",
     "src/panel/application/panel-html.ts",
-    "src/tools/catalog/tests/explorer-technical-evidence-cache.test.ts"
+    "src/tools/catalog/tests/explorer-technical-evidence-cache.test.ts",
+    "src/panel/explorer/tests/explorer-selection.test.ts",
+    "src/panel/evidence/tests/read-panel-snapshot.test.ts"
   ];
   const sources = new Map(paths.map((path) => [path, readFileSync(join(root, path), "utf8")]));
   assert.deepEqual(inspectPanelHeavyPreparations(sources), []);
@@ -107,6 +109,41 @@ test("detecta preparaciones censales repetidas en el panel sin impedir lecturas 
   assert.notEqual(cacheWithLoop, cacheSource);
   repeated.set(technicalCache, cacheWithLoop);
   assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("fuera de iteraciones")));
+  repeated.set(technicalCache, cacheSource);
+  const selection = paths[6];
+  const selectionSource = sources.get(selection);
+  assert.ok(selectionSource);
+  const uncachedSelection = selectionSource.replace("staticSource ??= prepareSource()", "prepareSource()");
+  assert.notEqual(uncachedSelection, selectionSource);
+  repeated.set(selection, uncachedSelection);
+  assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("source: preparación costosa repetible")));
+  const renamedSelection = selectionSource.replaceAll("staticSource", "memoizedSource");
+  assert.notEqual(renamedSelection, selectionSource);
+  repeated.set(selection, renamedSelection);
+  assert.deepEqual(inspectPanelHeavyPreparations(repeated), []);
+  const alternateCache = selectionSource.replace("staticSource ??= prepareSource()", "staticSource ||= prepareSource()");
+  assert.notEqual(alternateCache, selectionSource);
+  repeated.set(selection, alternateCache);
+  assert.deepEqual(inspectPanelHeavyPreparations(repeated), []);
+  const repeatedDirectRead = selectionSource.replace("const base = await source();",
+    "const base = await source(); await readPanelSnapshot(await fixture.root());");
+  assert.notEqual(repeatedDirectRead, selectionSource);
+  repeated.set(selection, repeatedDirectRead);
+  assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("readPanelSnapshot: 2 preparaciones")));
+  repeated.set(selection, selectionSource);
+  const uncachedExplorer = explorerSource.replace("staticExplorer ??= prepareStaticExplorer()", "prepareStaticExplorer()");
+  assert.notEqual(uncachedExplorer, explorerSource);
+  repeated.set(explorer, uncachedExplorer);
+  assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("readStaticExplorer: preparación costosa repetible")));
+  repeated.set(explorer, explorerSource);
+  const snapshotTest = paths[7];
+  const snapshotSource = sources.get(snapshotTest);
+  assert.ok(snapshotSource);
+  const uncachedSnapshot = snapshotSource.replace("staticSnapshot ??= fixture.root().then((root) => readPanelSnapshot(root))",
+    "fixture.root().then((root) => readPanelSnapshot(root))");
+  assert.notEqual(uncachedSnapshot, snapshotSource);
+  repeated.set(snapshotTest, uncachedSnapshot);
+  assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("readStaticSnapshot: preparación costosa repetible")));
 });
 
 test("el comando comercial invoca el guard protegido desde GUARDS", () => {

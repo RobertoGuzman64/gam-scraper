@@ -102,8 +102,16 @@ const panelPreparationLimits = {
   ],
   "src/tools/catalog/tests/explorer-technical-evidence-cache.test.ts": [
     ["src/panel/evidence/read-panel-snapshot.ts", "readPanelSnapshot", 1]
+  ],
+  "src/panel/explorer/tests/explorer-selection.test.ts": [
+    ["src/panel/evidence/read-panel-snapshot.ts", "readPanelSnapshot", 1],
+    ["src/tools/catalog/read-panel-explorer.ts", "readPanelExplorer", 1]
   ]
 };
+const panelSharedPreparationSuites = [
+  ...Object.keys(panelPreparationLimits),
+  "src/panel/evidence/tests/read-panel-snapshot.test.ts"
+];
 const trustedProduction = new Set([
   "src/cli/commands/catalog/publish-individual.ts",
   "src/cli/commands/catalog/prepare-individual.ts",
@@ -270,6 +278,87 @@ const namesFor = (file, sources) => {
   return { modules, calls, bindings: [...imports.values()] };
 };
 
+const inspectRepeatedPanelHelpers = (file, sources) => {
+  const entry = namesFor(file, sources);
+  const expensive = new Set(Object.values(panelPreparationLimits)
+    .flatMap((limits) => limits.filter(([, imported]) => imported !== "renderPanelHtml")
+      .map(([module, imported]) => `${module}#${imported}`)));
+  const positions = new Set(entry.calls
+    .filter((call) => call.kind === "call" && expensive.has(`${call.module}#${call.imported}`))
+    .map((call) => `${call.line}:${call.column}`));
+  const source = ts.createSourceFile(file, sources.get(file), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const functions = new Map();
+  for (const statement of source.statements) {
+    if (ts.isFunctionDeclaration(statement) && statement.name && statement.body) {
+      functions.set(statement.name.text, statement);
+    }
+    if (ts.isVariableStatement(statement)) {
+      for (const declaration of statement.declarationList.declarations) {
+        if (ts.isIdentifier(declaration.name) && declaration.initializer &&
+          (ts.isArrowFunction(declaration.initializer) || ts.isFunctionExpression(declaration.initializer))) {
+          functions.set(declaration.name.text, declaration.initializer);
+        }
+      }
+    }
+  }
+  const invocations = new Map();
+  const repeated = new Set();
+  const isRepeated = (node) => {
+    for (let current = node.parent; current; current = current.parent) {
+      if (ts.isForStatement(current) || ts.isForOfStatement(current) || ts.isForInStatement(current) ||
+        ts.isWhileStatement(current) || ts.isDoStatement(current)) return true;
+      if ((ts.isArrowFunction(current) || ts.isFunctionExpression(current)) &&
+        ts.isCallExpression(current.parent) && ts.isPropertyAccessExpression(current.parent.expression) &&
+        ["map", "forEach", "flatMap", "reduce"].includes(current.parent.expression.name.text)) return true;
+    }
+    return false;
+  };
+  const visitInvocations = (node) => {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && functions.has(node.expression.text)) {
+      const name = node.expression.text;
+      invocations.set(name, (invocations.get(name) ?? 0) + 1);
+      if (isRepeated(node)) repeated.add(name);
+    }
+    ts.forEachChild(node, visitInvocations);
+  };
+  visitInvocations(source);
+  const dependencies = new Map();
+  const isMemoized = (node, boundary) => {
+    for (let current = node.parent; current && current !== boundary; current = current.parent) {
+      if (ts.isBinaryExpression(current) &&
+        [ts.SyntaxKind.QuestionQuestionEqualsToken, ts.SyntaxKind.BarBarEqualsToken]
+          .includes(current.operatorToken.kind)) return true;
+    }
+    return false;
+  };
+  for (const [name, fn] of functions) {
+    const calls = [];
+    let direct = false;
+    const visit = (node) => {
+      if (ts.isCallExpression(node) && !isMemoized(node, fn)) {
+        const position = source.getLineAndCharacterOfPosition(node.getStart(source));
+        if (positions.has(`${position.line + 1}:${position.character + 1}`)) direct = true;
+        if (ts.isIdentifier(node.expression) && functions.has(node.expression.text)) calls.push(node.expression.text);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(fn.body);
+    dependencies.set(name, { direct, calls });
+  }
+  const isUncached = (name, seen = new Set()) => {
+    if (seen.has(name)) return false;
+    const state = dependencies.get(name);
+    if (!state) return false;
+    if (state.direct) return true;
+    const next = new Set(seen);
+    next.add(name);
+    return state.calls.some((callee) => isUncached(callee, next));
+  };
+  return [...functions.keys()]
+    .filter((name) => ((invocations.get(name) ?? 0) > 1 || repeated.has(name)) && isUncached(name))
+    .map((name) => `${file} | ${name}: preparación costosa repetible sin promesa compartida; reutiliza la preparación dentro de la suite`);
+};
+
 export const inspectPanelHeavyPreparations = (sources) => {
   const findings = [];
   for (const [file, limits] of Object.entries(panelPreparationLimits)) {
@@ -291,6 +380,10 @@ export const inspectPanelHeavyPreparations = (sources) => {
         }
       }
     }
+  }
+  for (const file of panelSharedPreparationSuites) {
+    if (sources.has(file)) findings.push(...inspectRepeatedPanelHelpers(file, sources));
+    else if (!(file in panelPreparationLimits)) findings.push(`${file} | suite protegida ausente`);
   }
   return findings;
 };
@@ -418,6 +511,6 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     for (const problem of result.errors) console.error(`  ${problem}`);
     process.exitCode = 1;
   } else {
-    console.log(formatScriptStatus("PASS", `PROTECCIÓN DE TESTS | ${protectedSuites.length + Object.keys(panelPreparationLimits).length} suites | ${result.files} módulos | ${result.contracts} cuotas de ejecución | ${result.raw} cuotas de infraestructura`));
+    console.log(formatScriptStatus("PASS", `PROTECCIÓN DE TESTS | ${protectedSuites.length + panelSharedPreparationSuites.length} suites | ${result.files} módulos | ${result.contracts} cuotas de ejecución | ${result.raw} cuotas de infraestructura`));
   }
 }
