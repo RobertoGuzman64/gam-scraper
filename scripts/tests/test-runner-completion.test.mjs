@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { isTestRunAccreditable } from "../test-runner-completion.mjs";
 
 const valid = () => ({ success: true, counts: { passed: 3, failed: 0, skipped: 0, todo: 0, cancelled: 0 } });
@@ -55,6 +55,63 @@ for await (const event of run({ files: [${JSON.stringify(file)}] })) {
     assert.equal(summary.counts.skipped, 1);
     assert.equal(summary.counts.todo, 1);
     assert.equal(isTestRunAccreditable([summary], 1, true, true), false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+
+test("la caché admite las integraciones de preparación auditadas e invalida entradas y dependencias", () => {
+  const root = mkdtempSync(join(tmpdir(), "eqt-cache-"));
+  try {
+    const integration = "testing/integration/preparation/tests/technical.test";
+    const editorial = "preparation/shared/editorial/tests/editorial.test";
+    const unsafe = "testing/integration/preparation/tests/unsafe.test";
+    const outside = "publication/tests/ordinary.test";
+    const files = [integration, editorial, unsafe, outside].map((file) => `dist/${file}.js`);
+    const write = (file, content) => {
+      const path = join(root, file);
+      mkdirSync(dirname(path), { recursive: true });
+      writeFileSync(path, content);
+    };
+    const createSuite = (file, content) => {
+      write(`src/${file}.ts`, content);
+      write(`dist/${file}.js`, content);
+    };
+    createSuite(integration, 'import { value } from "../fixture.js"; import { readFileSync } from "node:fs"; import test from "node:test"; test("censo", () => { readFileSync("data/catalog.json"); value(); });');
+    createSuite(editorial, 'import test from "node:test"; test("dominio", () => {});');
+    createSuite(unsafe, 'import { writeFileSync } from "node:fs"; import test from "node:test"; test("escritura", () => { writeFileSync("data/catalog.json", "x"); });');
+    createSuite(outside, 'import test from "node:test"; test("externa", () => {});');
+    write("src/testing/integration/preparation/fixture.ts", "export const value = () => 1;");
+    write("dist/testing/integration/preparation/fixture.js", "export const value = () => 1;");
+    write("data/catalog.json", '{"version":1}');
+
+    const probe = (seed = false) => {
+      const source = `import { fingerprintTestInputs, loadTestResultsCache, saveTestResultsCache } from ${JSON.stringify(new URL("../test-result-cache.mjs", import.meta.url).href)};
+        const fingerprints = fingerprintTestInputs(${JSON.stringify(files)});
+        const reused = loadTestResultsCache(fingerprints);
+        if (${seed}) saveTestResultsCache(fingerprints, new Map([...fingerprints].map(([name, fingerprint]) =>
+          [name, { fingerprint, passed: 1, failed: 0, skipped: 0, todo: 0 }])));
+        process.stdout.write(JSON.stringify({ eligible: [...fingerprints.keys()].sort(), reused: [...reused.keys()].sort() }));`;
+      const result = spawnSync(process.execPath, ["--input-type=module", "--eval", source], {
+        cwd: root, encoding: "utf8"
+      });
+      assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+      return JSON.parse(result.stdout);
+    };
+
+    const expected = [files[0], files[1]].sort();
+    assert.deepEqual(probe(true), { eligible: expected, reused: [] });
+    assert.deepEqual(probe(), { eligible: expected, reused: expected });
+    write("data/catalog.json", '{"version":2}');
+    assert.deepEqual(probe().reused, [files[1]]);
+    write("data/catalog.json", '{"version":1}');
+    assert.deepEqual(probe().reused, expected);
+    write("src/testing/integration/preparation/fixture.ts", "export const value = () => 2;");
+    assert.deepEqual(probe().reused, [files[1]]);
+    write("src/testing/integration/preparation/fixture.ts", "export const value = () => 1;");
+    write(`dist/${editorial}.js`, 'import test from "node:test"; test("dominio", () => { });');
+    assert.deepEqual(probe().reused, [files[0]]);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

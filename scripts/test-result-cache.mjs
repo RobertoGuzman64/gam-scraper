@@ -25,6 +25,7 @@ const PURE_ROOT_FILES = new Set([
 const EXTERNAL_DATA_ACCESS = /\b(?:node:fs(?:\/promises)?|fs\/promises|process\.(?:binding|loadEnvFile))\b/u;
 const AUDITED_FAMILIES = [
   "src/preparation/",
+  "src/testing/integration/preparation/tests/",
   "src/catalog/coverage/tests/",
   "src/catalog/editorial/tests/",
   "src/catalog/diagnostics/tests/",
