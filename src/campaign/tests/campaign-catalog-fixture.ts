@@ -5,7 +5,7 @@ import type { CanonicalCatalog } from "../../catalog/canonical-catalog.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
 
 export const copyCampaignTestCatalog = async (
-  destination: string, providerId: string, prefix: string
+  destination: string, providerId: string, prefix: string, reviewCount = 0
 ): Promise<CanonicalCatalog> => {
   const startedAt = "2026-10-22T08:46:28.582Z";
   const endedAt = "2026-10-22T08:52:45.412Z";
@@ -21,7 +21,7 @@ export const copyCampaignTestCatalog = async (
     model: "Plataforma",
     shortDescription: "Plataforma elevadora",
     longDescription: "Plataforma elevadora para trabajos en altura",
-    price: null,
+    price: index < reviewCount ? "12??" : null,
     year: null,
     location: null,
     country: null,

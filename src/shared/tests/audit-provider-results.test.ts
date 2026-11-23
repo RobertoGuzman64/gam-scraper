@@ -15,6 +15,17 @@ test("una fuente histórica ausente no impide evaluar las demás", async () => {
   });
 });
 
+test("la ausencia de original portátil es una fuente incompleta, no un error de procesamiento", async () => {
+  const result = await collectAuditProviderResults(["gomariz", "gam"], async (source) => {
+    if (source === "gomariz") throw new Error("Falta original portátil: gomariz");
+    return { providerId: source, value: source };
+  }, (source) => source);
+  assert.deepEqual(result.evaluated, ["gam"]);
+  assert.equal(auditProviderCoverage(result).incompleteSource, 1);
+  assert.equal(auditProviderCoverage(result).errors, 0);
+  assert.equal(result.failures[0]?.category, "INCOMPLETE_SOURCE");
+});
+
 test("el error técnico y el archivo corrupto no se clasifican como fuente histórica ausente", async () => {
   const result = await collectAuditProviderResults(["gam", "gomariz", "mercaeleva"], async (source) => {
     if (source === "gam") throw new Error("Catálogo y manifest pertenecen a ejecuciones distintas");

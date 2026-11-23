@@ -28,7 +28,7 @@ const createCampaign = async (root: string): Promise<string> => {
     const prefix = prefixes[providerId];
     const dir = join(root, "storage", "scraped", "campaigns", runId, providerId);
     await mkdir(dir, { recursive: true });
-    const catalog = await copyCampaignTestCatalog( dir, providerId, prefix);
+    const catalog = await copyCampaignTestCatalog(dir, providerId, prefix, 2);
     providers.push({
       providerId, status: "complete",
       startedAt: new Date(Date.parse(catalog.startedAt) - 1000).toISOString(),

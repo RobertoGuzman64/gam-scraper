@@ -14,6 +14,7 @@ export type AuditProviderResults<T> = {
 const missingAccreditedSource = (message: string): boolean =>
   message.startsWith("No se conserva el original acreditado de ") ||
   message.startsWith("Falta el original canónico para ") ||
+  message.startsWith("Falta original portátil: ") ||
   message.startsWith("No existe original canónico para comparar ") ||
   (/ENOENT/u.test(message) && /[\\/]original[\\/]|[\\/]\.history[\\/]/u.test(message));
 

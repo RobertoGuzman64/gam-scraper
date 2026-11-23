@@ -25,7 +25,7 @@ export const createFixture = async () => {
     const prefix = prefixes[id];
     const dir = join(root, "storage", "scraped", "campaigns", runId, id);
     await mkdir(dir, { recursive: true });
-    const catalog = await copyCampaignTestCatalog( dir, id, prefix);
+    const catalog = await copyCampaignTestCatalog(dir, id, prefix, 2);
     providers.push({
       providerId: id, status: "complete",
       startedAt: new Date(Date.parse(catalog.startedAt) - 1000).toISOString(),

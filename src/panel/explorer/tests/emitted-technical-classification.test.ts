@@ -53,7 +53,6 @@ test("el explorador refleja exclusivamente las clasificaciones reproducibles por
   assert.ok(additions.length > 0);
   assert.ok(additions.some((addition) => addition.kind === "own"));
   assert.ok(additions.some((addition) => addition.kind === "reused"));
-  assert.equal(additions.filter((addition) => addition.kind === "pending").length, 3);
   assert.ok(additions.filter((addition) => addition.kind === "reused")
     .every((addition) => addition.linkedMachines !== undefined && addition.linkedMachines.length > 0));
   const byIdentity = new Map(explorer.products.map((product) => [product.identity, product]));

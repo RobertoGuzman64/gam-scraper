@@ -6,6 +6,7 @@ import test, { after } from "node:test";
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { discoverAccreditedPublications, readAccreditedPublication, resolveAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { readActiveCatalogIndex } from "../../../infrastructure/filesystem/catalog/active-selection.js";
+import { consolidatePortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
 import { inspectPortableInventory } from "../../portable-inventory.js";
 import { verifyPortableCampaignRetirement } from "../../../infrastructure/filesystem/catalog/portable-campaign.js";
 import { selectActiveCampaign } from "../../../publication/active-campaign.js";
@@ -57,6 +58,7 @@ test("no se sustituye parcialmente una campaña global por una publicación indi
   try {
     await selectActiveCampaign(data.root, data.runId, true);
     const providerId = "gomariz";
+    await consolidatePortableOriginal(data.root, join(data.root, "catalogs", "campaigns", data.runId, providerId, "scrape-gomariz-catalog.json"));
     const sha = accreditedPublicationSha(resolve("."), "gomariz");
     const original = await accreditedPublicationDirectory(resolve("."), providerId);
     const destination = join(data.root, "catalogs", "providers", providerId, "publications", sha);

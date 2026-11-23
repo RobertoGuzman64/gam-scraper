@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { cp, rm, writeFile } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
 import { auditCommercialCatalogWithCoverage } from "../../../../commercial/export/commercial-audit.js";
@@ -14,7 +14,6 @@ test("la auditoría comercial conserva los bloqueos reales y distingue fuentes a
     assert.deepEqual(complete.auditCoverage?.failures, []);
     const gomarizOriginal = join(root, "catalogs", "providers", "gomariz", "original");
     await rm(gomarizOriginal, { recursive: true, force: true });
-    await cp(join(process.cwd(), "catalogs", "providers", "gomariz", "original"), gomarizOriginal, { recursive: true });
     const gamManifest = join(root, "catalogs", "providers", "gam", "original", "scrape-gam-catalog.manifest.json");
     await writeFile(gamManifest, "{" );
     const damaged = await auditCommercialCatalogWithCoverage(root, false);
