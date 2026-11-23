@@ -169,38 +169,6 @@ export const renderPanelHtml = async (workspace: string, payload: PanelDashboard
           </div>
           <div class="explain-footer"><div class="explain-actions"><button id="excluded-example" type="button" class="text-action">Ver exclusión real →</button><button type="button" class="text-action rule-action" data-rule="exclusion">Ver regla &lt;/&gt;</button></div></div>
         </section>
-        <section class="explain-card" aria-labelledby="transformation-stage-title">
-          <div class="explain-heading"><div><span class="section-kicker">AMPLIACIÓN / TRANSFORMACIÓN EDITORIAL</span><h2 id="transformation-stage-title">Qué cambia entre el original y FINISH.</h2></div><span class="explain-label">INFORME TÉCNICO ACREDITADO</span></div>
-          <p class="explain-lede">Cambios observados por comparación de estados. Las incorporaciones no acreditan por sí solas investigación externa ni la regla histórica aplicada.</p>
-          <div class="restored-stage-grid" role="group" aria-label="Transformaciones observadas del corte">
-            <div class="restored-stat"><strong id="stage-transformed">—</strong><span>Fichas transformadas</span></div>
-            <div class="restored-stat"><strong id="stage-titles">—</strong><span>Títulos modificados</span></div>
-            <div class="restored-stat"><strong id="stage-descriptions">—</strong><span>Descripciones creadas o modificadas</span></div>
-            <div class="restored-stat"><strong id="stage-technical">—</strong><span>Claves técnicas incorporadas</span></div>
-          </div>
-          <div class="explain-footer"><button type="button" class="text-action" id="transformation-example">Inspeccionar transformación real →</button></div>
-        </section>
-        <section class="explain-card" aria-labelledby="commercial-stage-title">
-          <div class="explain-heading"><div><span class="section-kicker">AMPLIACIÓN / SELECCIÓN COMERCIAL</span><h2 id="commercial-stage-title">Publicar no equivale a exportar.</h2></div><span class="explain-label">DOS DECISIONES INDEPENDIENTES</span></div>
-          <p class="explain-lede">FINISH certifica el resultado técnico individual. La proyección comercial decide qué fichas entran en el paquete develop.</p>
-          <div class="restored-stage-grid" role="group" aria-label="Selección de fichas para el paquete comercial">
-            <div class="restored-stat"><strong id="stage-published">—</strong><span>Publicadas en FINISH</span></div>
-            <div class="restored-stat"><strong id="stage-exported">—</strong><span>Exportadas a comercial</span></div>
-            <div class="restored-stat"><strong id="stage-categorized">—</strong><span>Exportadas categorizadas</span></div>
-            <div class="restored-stat"><strong id="stage-pending">—</strong><span>Exportadas sin categoría</span></div>
-          </div>
-          <details class="audit-disclosure"><summary>Consultar matrices de incidencias y decisiones (C y D)</summary>
-            <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">C</span><h3>Controles e incidencias comerciales</h3></div><span class="card-side-note">Conteos del corte acreditado</span></div><div class="scroll-table" id="quality-matrix"></div><p class="minor-note">Las coincidencias de referencia no implican necesariamente duplicados de identidad. Las excepciones comerciales no son exclusiones editoriales.</p></section>
-            <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">D</span><h3>Decisiones por etapa</h3></div><span class="card-side-note">Poblaciones diferenciadas</span></div><div class="scroll-table" id="decisions-matrix"></div></section>
-          </details>
-        </section>
-        <section class="explain-card" aria-labelledby="traceability-stage-title">
-          <div class="explain-heading"><div><span class="section-kicker">AMPLIACIÓN / LA HISTORIA DEL DATO</span><h2 id="traceability-stage-title">Cada resultado tiene un corte y un origen.</h2></div><span class="explain-label">EVIDENCIA DEL REPOSITORIO</span></div>
-          <p class="explain-lede">Se identifican los originales conservados, las aprobaciones, las publicaciones individuales y el paquete comercial del mismo corte.</p>
-          <div id="traceability-providers" class="restored-provenance-list"></div>
-          <details class="audit-disclosure"><summary>Consultar informes y archivos acreditados</summary><div class="restored-evidence" id="traceability-artifacts"></div></details>
-          <p class="minor-note">Este panel acredita archivos y transformaciones observables. No acredita inserciones o actualizaciones en una base de datos externa.</p>
-        </section>
       </section>
 
       <section class="page-view" data-view="explorador" aria-labelledby="explorer-title" hidden>

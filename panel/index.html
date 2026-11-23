@@ -771,19 +771,6 @@ p {
 
 
 
-.restored-stage-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:24px 0}
-.restored-stat{display:flex;flex-direction:column;gap:10px;padding:20px;border:1px solid var(--stroke);border-radius:12px;background:var(--panel2)}
-.restored-stat strong{font-size:clamp(27px,2.6vw,42px);line-height:1.05;letter-spacing:-.045em;color:var(--mint);font-variant-numeric:tabular-nums}
-.restored-stat span{font-size:var(--type-secondary);line-height:1.4;color:var(--muted)}
-.restored-provenance-list{display:grid;gap:14px;margin:23px 0}
-.restored-provenance-card{min-width:0;padding:20px;border:1px solid var(--stroke);border-radius:12px;background:var(--panel2)}
-.restored-provenance-card h3{margin-bottom:12px;color:var(--cyan)}
-.restored-provenance-line{overflow-wrap:anywhere;color:var(--muted);font-size:var(--type-secondary);margin:7px 0;line-height:1.6}
-.restored-evidence{padding:20px;border:1px solid var(--stroke);border-radius:12px}
-@media(max-width:980px){.restored-stage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:540px){.restored-stage-grid{grid-template-columns:minmax(0,1fr)}}
-
-
 .source-map-grid {display:grid;grid-template-columns:minmax(285px,1.5fr) 26px minmax(185px,.94fr) 26px minmax(180px,.85fr);gap:14px;align-items:center}
 .source-map-inputs {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;align-items:stretch}
 .source-map-inputs>span {grid-column:1/-1;color:#afcedd;font-size:var(--type-secondary);letter-spacing:.07em;font-weight:760;margin-bottom:4px}
@@ -1674,38 +1661,6 @@ input:focus-visible,summary:focus-visible {outline:2px solid var(--cyan);outline
           </div>
           <div class="explain-footer"><div class="explain-actions"><button id="excluded-example" type="button" class="text-action">Ver exclusión real →</button><button type="button" class="text-action rule-action" data-rule="exclusion">Ver regla &lt;/&gt;</button></div></div>
         </section>
-        <section class="explain-card" aria-labelledby="transformation-stage-title">
-          <div class="explain-heading"><div><span class="section-kicker">AMPLIACIÓN / TRANSFORMACIÓN EDITORIAL</span><h2 id="transformation-stage-title">Qué cambia entre el original y FINISH.</h2></div><span class="explain-label">INFORME TÉCNICO ACREDITADO</span></div>
-          <p class="explain-lede">Cambios observados por comparación de estados. Las incorporaciones no acreditan por sí solas investigación externa ni la regla histórica aplicada.</p>
-          <div class="restored-stage-grid" role="group" aria-label="Transformaciones observadas del corte">
-            <div class="restored-stat"><strong id="stage-transformed">—</strong><span>Fichas transformadas</span></div>
-            <div class="restored-stat"><strong id="stage-titles">—</strong><span>Títulos modificados</span></div>
-            <div class="restored-stat"><strong id="stage-descriptions">—</strong><span>Descripciones creadas o modificadas</span></div>
-            <div class="restored-stat"><strong id="stage-technical">—</strong><span>Claves técnicas incorporadas</span></div>
-          </div>
-          <div class="explain-footer"><button type="button" class="text-action" id="transformation-example">Inspeccionar transformación real →</button></div>
-        </section>
-        <section class="explain-card" aria-labelledby="commercial-stage-title">
-          <div class="explain-heading"><div><span class="section-kicker">AMPLIACIÓN / SELECCIÓN COMERCIAL</span><h2 id="commercial-stage-title">Publicar no equivale a exportar.</h2></div><span class="explain-label">DOS DECISIONES INDEPENDIENTES</span></div>
-          <p class="explain-lede">FINISH certifica el resultado técnico individual. La proyección comercial decide qué fichas entran en el paquete develop.</p>
-          <div class="restored-stage-grid" role="group" aria-label="Selección de fichas para el paquete comercial">
-            <div class="restored-stat"><strong id="stage-published">—</strong><span>Publicadas en FINISH</span></div>
-            <div class="restored-stat"><strong id="stage-exported">—</strong><span>Exportadas a comercial</span></div>
-            <div class="restored-stat"><strong id="stage-categorized">—</strong><span>Exportadas categorizadas</span></div>
-            <div class="restored-stat"><strong id="stage-pending">—</strong><span>Exportadas sin categoría</span></div>
-          </div>
-          <details class="audit-disclosure"><summary>Consultar matrices de incidencias y decisiones (C y D)</summary>
-            <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">C</span><h3>Controles e incidencias comerciales</h3></div><span class="card-side-note">Conteos del corte acreditado</span></div><div class="scroll-table" id="quality-matrix"></div><p class="minor-note">Las coincidencias de referencia no implican necesariamente duplicados de identidad. Las excepciones comerciales no son exclusiones editoriales.</p></section>
-            <section class="surface-card matrix-card"><div class="card-heading"><div><span class="matrix-letter">D</span><h3>Decisiones por etapa</h3></div><span class="card-side-note">Poblaciones diferenciadas</span></div><div class="scroll-table" id="decisions-matrix"></div></section>
-          </details>
-        </section>
-        <section class="explain-card" aria-labelledby="traceability-stage-title">
-          <div class="explain-heading"><div><span class="section-kicker">AMPLIACIÓN / LA HISTORIA DEL DATO</span><h2 id="traceability-stage-title">Cada resultado tiene un corte y un origen.</h2></div><span class="explain-label">EVIDENCIA DEL REPOSITORIO</span></div>
-          <p class="explain-lede">Se identifican los originales conservados, las aprobaciones, las publicaciones individuales y el paquete comercial del mismo corte.</p>
-          <div id="traceability-providers" class="restored-provenance-list"></div>
-          <details class="audit-disclosure"><summary>Consultar informes y archivos acreditados</summary><div class="restored-evidence" id="traceability-artifacts"></div></details>
-          <p class="minor-note">Este panel acredita archivos y transformaciones observables. No acredita inserciones o actualizaciones en una base de datos externa.</p>
-        </section>
       </section>
 
       <section class="page-view" data-view="explorador" aria-labelledby="explorer-title" hidden>
@@ -1874,65 +1829,6 @@ const transformationColumns = [
     { key: "formattedTechnicalValues", label: "Valores formateados" },
     { key: "changedTechnicalValues", label: "Valores cambiados" }
 ];
-const qualityColumns = [
-    { key: "withPrice", label: "Con precio" },
-    { key: "pendingCategory", label: "Sin categoría" },
-    { key: "exceptions", label: "Excepciones comerciales" },
-    { key: "repeatedReferences", label: "Coincidencias de referencia" }
-];
-const decisionColumns = [
-    { key: "originals", label: "Originales" },
-    { key: "published", label: "Publicadas FINISH" },
-    { key: "excludedEditorial", label: "Excluidas de FINISH" },
-    { key: "exported", label: "Exportadas" },
-    { key: "excludedCommercial", label: "Excluidas de comercial" }
-];
-const renderStageMetrics = (scope) => {
-    const metrics = metricsFor(scope);
-    const values = [
-        ["stage-transformed", metrics.transformations.changedProducts],
-        ["stage-titles", metrics.transformations.changedTitles],
-        ["stage-descriptions", metrics.transformations.createdDescriptions + metrics.transformations.modifiedDescriptions],
-        ["stage-technical", metrics.transformations.addedTechnicalKeys],
-        ["stage-published", metrics.published],
-        ["stage-exported", metrics.exported],
-        ["stage-categorized", metrics.categorized],
-        ["stage-pending", metrics.pendingCategory]
-    ];
-    for (const [id, value] of values)
-        byId(id).textContent = format(value);
-};
-const renderTraceability = (scope) => {
-    const target = byId("traceability-providers");
-    target.replaceChildren();
-    for (const provider of selectedProviders(scope)) {
-        const card = element("article", "restored-provenance-card");
-        append(card, element("h3", "", knownName(provider.providerId)));
-        const original = provider.original;
-        const originalText = original.status === "verified" ?
-            `Original conservado: ${original.products} fichas · SHA256 ${original.artifact.sha256}` :
-            `Original no conservado: ${original.reason} · SHA256 esperado ${original.expectedSha256}`;
-        for (const line of [
-            originalText,
-            `Aprobación técnica: SHA256 ${provider.approvalSha256}`,
-            `Publicación FINISH: ${provider.publication.path} · SHA256 ${provider.publication.sha256}`,
-            `Proyección comercial: ${provider.commercial.path} · SHA256 ${provider.commercial.sha256}`
-        ])
-            append(card, element("p", "restored-provenance-line", line));
-        append(target, card);
-    }
-    const artifacts = byId("traceability-artifacts");
-    artifacts.replaceChildren();
-    for (const [label, artifact] of [
-        ["Manifiesto comercial", payload.snapshot.commercialManifest],
-        ["Informe técnico", payload.snapshot.technicalReport],
-        ["Informe comercial", payload.snapshot.commercialReport]
-    ]) {
-        const item = element("p", "restored-provenance-line");
-        append(item, element("strong", "", `${label}: `), document.createTextNode(`${artifact.path} · SHA256 ${artifact.sha256}`));
-        append(artifacts, item);
-    }
-};
 const caseFor = (scope, focus) => payload.explorer.cases.find((candidate) => (scope === "todos" || candidate.providerId === scope) &&
     (focus === "exclusion" ? candidate.focus === "exclusion" :
         focus === "technical" ? candidate.focus === "technical" : candidate.focus === "technical" || candidate.focus === "content"));
@@ -1987,7 +1883,6 @@ const renderExplanations = (scope) => {
     renderExampleAction("source-example", scope);
     renderExampleAction("normalization-example", scope, "technical");
     renderExampleAction("excluded-example", scope, "exclusion");
-    renderExampleAction("transformation-example", scope, "technical");
 };
 const renderKpis = (scope) => {
     const container = byId("overview-kpis");
@@ -2041,8 +1936,6 @@ const renderProviderChart = (scope) => {
 const renderMatrices = (scope) => {
     createMatrix("pipeline-matrix", pipelineColumns, scope);
     createMatrix("transform-matrix", transformationColumns, scope);
-    createMatrix("quality-matrix", qualityColumns, scope);
-    createMatrix("decisions-matrix", decisionColumns, scope);
 };
 const render = () => {
     byId("scope-summary").textContent = scopeLabel(currentScope);
@@ -2050,8 +1943,6 @@ const render = () => {
     renderExplanations(currentScope);
     renderProviderChart(currentScope);
     renderMatrices(currentScope);
-    renderStageMetrics(currentScope);
-    renderTraceability(currentScope);
 };
 const updateScope = (scope) => {
     currentScope = scope;
