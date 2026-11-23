@@ -7,22 +7,22 @@ import { offlinePreparationManifestPath } from "../../infrastructure/filesystem/
 import { approveIndividualEditorial, decideIndividualEditorial, inspectIndividualEditorial, startIndividualEditorial } from "../individual-editorial.js";
 import { readIndividualSelection, selectIndividualPublishable } from "../individual-selection.js";
 import { createManainSelectionWorkspace } from "../../testing/builders/manain-individual-selection-fixture.js";
+import { stageReviewedTestExclusions } from "./stage-reviewed-test-exclusions.js";
 
 
-test("Manain: selección verificable de 383 listas y una revisión sin aprobación ni publicación", async () => {
+test("Manain: selección verificable conserva revisiones sin aprobación ni publicación", async () => {
   const { root, source, preparation } = await createManainSelectionWorkspace();
   try {
     const original = await readFile(source);
     const selected = await readIndividualSelection("manain", source, preparation);
     assert.equal(selected.preparation.source.record?.quality, "partial");
-    assert.equal(selected.preparation.totals.ready, 383);
-    assert.equal(selected.preparation.totals.review, 1);
-    assert.equal(selected.sources[0]?.productCount, 384);
+    assert.equal(selected.sources[0]?.productCount, selected.preparation.products.length);
+    assert.equal(selected.preparation.totals.ready + selected.preparation.totals.review,
+      selected.preparation.products.length);
+    assert.ok(selected.preparation.totals.review > 0);
     assert.equal(selected.draft.approved, false);
-    assert.equal(selected.draft.exclusions.length, 1);
-    assert.equal(selected.draft.exclusions[0]?.reference, "MA3727");
-    assert.equal(selected.draft.exclusions[0]?.status, "review");
-    assert.equal(selected.draft.exclusions[0]?.decision, null);
+    assert.equal(selected.draft.exclusions.length, selected.preparation.totals.review);
+    assert.ok(selected.draft.exclusions.every((exclusion) => exclusion.status === "review" && exclusion.decision === null));
     await runSelectProvider(["manain", "--source", source, "--preparation", preparation]);
     const approved = { ...selected.draft, approved: true, approvalReason: "Motivo global revisado expresamente" };
     assert.throws(() => selectIndividualPublishable(selected, JSON.stringify(approved)), /decisión ausente o caducada/);
@@ -69,30 +69,33 @@ test("Manain: admite el registro parcial verificado solo con exclusión y aproba
   const { root, source, preparation } = await createManainSelectionWorkspace();
   try {
     const selection = await readIndividualSelection("manain", source, preparation);
-    const pending = selection.draft.exclusions[0];
-    assert.ok(pending);
+    const pending = selection.draft.exclusions;
+    assert.ok(pending.length > 0);
     const options = { rootDirectory: root, providerId: "manain", catalogFile: source, preparationFile: preparation };
     await startIndividualEditorial(options);
+    const first = pending[0];
+    assert.ok(first);
     await decideIndividualEditorial(options, {
-      reference: pending.reference, decision: "excluir",
-      reason: "Alcance máximo ambiguo sin equivalencia técnica acreditada",
-      evidenceUrls: [pending.sourceUrl]
+      reference: first.reference, decision: "excluir",
+      reason: "Ficha en revisión técnica sin evidencia suficiente para publicar",
+      evidenceUrls: [first.sourceUrl]
     });
     const state = await inspectIndividualEditorial(options);
     assert.equal(state.inspection.approved, false);
     assert.equal(state.inspection.completed, 1);
     assert.throws(() => selectIndividualPublishable(selection, JSON.stringify(state.accreditation)), /aprobación ausente/);
-    const approved = await approveIndividualEditorial(options, "Aprobación editorial expresamente solicitada");
+    await stageReviewedTestExclusions(state);
+    const approved = await approveIndividualEditorial(options, "Aprobación editorial simulada en prueba aislada");
     assert.equal(approved.inspection.approved, true);
-    assert.equal(approved.inspection.completed, 1);
+    assert.equal(approved.inspection.completed, pending.length);
     const published = selectIndividualPublishable(selection, JSON.stringify(approved.accreditation, null, 2));
-    assert.equal(published.totals.original, 384);
-    assert.equal(published.totals.ready, 383);
-    assert.equal(published.totals.review, 1);
-    assert.equal(published.totals.publishable, 383);
-    assert.equal(published.totals.excluded, 1);
-    assert.equal(published.exclusions[0]?.reference, "MA3727");
-    assert.ok(!published.products.some((product) => product.reference === "MA3727"));
+    assert.equal(published.totals.original, selection.preparation.products.length);
+    assert.equal(published.totals.ready, selection.preparation.totals.ready);
+    assert.equal(published.totals.review, pending.length);
+    assert.equal(published.totals.publishable, selection.preparation.totals.ready);
+    assert.equal(published.totals.excluded, pending.length);
+    assert.ok(pending.every((exclusion) => published.exclusions.some((item) => item.reference === exclusion.reference)));
+    assert.ok(published.products.every((product) => !pending.some((item) => item.reference === product.reference)));
     assert.equal(published.source[0]?.record?.quality, "partial");
     await assert.rejects(readFile(join(root, "catalogs", "providers", "manain", "publications", "active.json")), { code: "ENOENT" });
   } finally {

@@ -80,3 +80,52 @@ test("Manain: la preparación completa conserva la medida y el original", () => 
   assert.equal(result.product.spec["Peso carretilla en vacio"], "1550");
   assert.equal(JSON.stringify(record), original);
 });
+
+test("Manain: unifica señales binarias escritas en variantes sin reinterpretar otros valores", () => {
+  const input: SpecsMap = {
+    Estabilizadores: "si",
+    "Trabajo negativo": "no",
+    Matriculada: "SI",
+    Restaurada: "No",
+    "Barra antiatrapamiento": "sí",
+    "Baterias nuevas": "SIN BATERÍAS",
+    Modelo: "SI 20",
+    Motor: "Siemens",
+    Potencia: "3.6 kw",
+    Activo: true,
+    Unidades: 2,
+    Observaciones: ["si", "no"]
+  };
+  const original = JSON.stringify(input);
+  const output = normalizeManainTechnicalSpecs(record, input);
+  assert.notEqual(output, input);
+  assert.equal(output.Estabilizadores, "Sí");
+  assert.equal(output["Trabajo negativo"], "No");
+  assert.equal(output.Matriculada, "Sí");
+  assert.equal(output.Restaurada, "No");
+  assert.equal(output["Barra antiatrapamiento"], "Sí");
+  assert.equal(output["Baterias nuevas"], "SIN BATERÍAS");
+  assert.equal(output.Modelo, "SI 20");
+  assert.equal(output.Motor, "Siemens");
+  assert.equal(output.Potencia, "3.6 kw");
+  assert.equal(output.Activo, true);
+  assert.equal(output.Unidades, 2);
+  assert.deepEqual(output.Observaciones, ["si", "no"]);
+  assert.equal(JSON.stringify(input), original);
+  assert.equal(normalizeManainTechnicalSpecs(record, output), output);
+  assert.equal(normalizeManainTechnicalSpecs({ ...record, providerId: "gam" }, input), input);
+});
+
+test("Manain: la preparación integra la unificación binaria sin alterar el registro de origen", () => {
+  const source: ProductRecord = {
+    ...record,
+    specs: { ...record.specs, Estabilizadores: "si", "Trabajo negativo": "no", Matriculada: "SI" }
+  };
+  const original = JSON.stringify(source);
+  const prepared = prepareSourceProduct(source);
+  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.product.spec.Estabilizadores, "Sí");
+  assert.equal(prepared.product.spec["Trabajo negativo"], "No");
+  assert.equal(prepared.product.spec.Matriculada, "Sí");
+  assert.equal(JSON.stringify(source), original);
+});

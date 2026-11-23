@@ -6,6 +6,7 @@ import { buildProductIdentity } from "../../../catalog/identity.js";
 import { readVerifiedManainRecordSource } from "../../../infrastructure/filesystem/catalog/manain-record-source.js";
 import { prepareImportBatch } from "../../batch-identity.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
+import { normalizeManainTechnicalSpecs } from "../../manain/technical/reconciliation/normalization.js";
 import { captureSourceEditorialEvidence } from "../../shared/editorial/mapping/source-editorial-evidence.js";
 import { resolveEditorialSource } from "../../shared/editorial/domain/editorial-source.js";
 import { prepareVerifiedManainRecord } from "../prepare.js";
@@ -45,7 +46,7 @@ test("Manain: el original verificado atraviesa íntegramente el motor editorial 
     assert.equal(prepared.product.sourceUrl, source.url);
     assert.equal(prepared.product.reference, source.reference);
     assert.deepEqual(prepared.product.images, source.images);
-    assert.deepEqual(prepared.product.spec, source.specs);
+    assert.deepEqual(prepared.product.spec, normalizeManainTechnicalSpecs(source, source.specs ?? {}));
     assert.equal(prepared.product.categorySellID, null);
     assert.deepEqual(prepared.product.attributes, []);
     assert.equal(prepared.status, prepared.issues.length === 0 ? "ready" : "review");

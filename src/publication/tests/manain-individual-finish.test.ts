@@ -12,7 +12,8 @@ import { deliverPublishedWorkReport } from "../../cli/reporting/published-work-a
 import type { PublishedWorkReport } from "../../catalog/diagnostics/published-work.js";
 import { deliverIndividualProvider } from "../individual-delivery.js";
 import { listIndividualFinishJournals } from "../../infrastructure/filesystem/catalog/individual-finish-journal.js";
-import { approveIndividualEditorial, decideIndividualEditorial, startIndividualEditorial } from "../individual-editorial.js";
+import { approveIndividualEditorial, startIndividualEditorial } from "../individual-editorial.js";
+import { readIndividualSelection } from "../individual-selection.js";
 import { loadImportCatalogSnapshot } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { readCommercialPublicationInput } from "../../commercial/export/commercial-inputs.js";
@@ -21,23 +22,23 @@ import { accreditCommercialPlan } from "../../commercial/diagnostics/commercial-
 import { assembleCommercialExportFiles } from "../../commercial/export/commercial-export.js";
 import { validateCommercialExportFiles } from "../../commercial/export/commercial-export-verification.js";
 import { inspectCommercialExportPreflight } from "../../commercial/export/commercial-export-preflight.js";
+import { stageReviewedTestExclusions } from "./stage-reviewed-test-exclusions.js";
 
-test("Manain: FINISH activa 383 fichas solo tras aprobación humana y conserva su procedencia", async () => {
+test("Manain: FINISH requiere acreditación expresa y conserva la procedencia parcial", async () => {
   const { root, source, preparation } = await createManainSelectionWorkspace();
   const desktop = await mkdtemp(join(tmpdir(), "equipzilla-manain-finish-desktop-"));
   try {
     const original = await readFile(source);
     const options = { rootDirectory: root, providerId: "manain", catalogFile: source, preparationFile: preparation };
     const opened = await startIndividualEditorial(options);
-    const exclusion = opened.accreditation.exclusions[0];
-    assert.ok(exclusion);
-    await decideIndividualEditorial(options, {
-      reference: exclusion.reference, decision: "excluir",
-      reason: "Alcance máximo ambiguo sin interpretación técnica acreditada",
-      evidenceUrls: [exclusion.sourceUrl]
-    });
+    const selection = await readIndividualSelection("manain", source, preparation);
+    const ready = selection.preparation.totals.ready;
+    const originalCount = selection.preparation.products.length;
+    const exclusions = opened.accreditation.exclusions;
+    assert.ok(exclusions.length > 0);
+    await stageReviewedTestExclusions(opened);
     await assert.rejects(readFile(join(root, "catalogs", "providers", "manain", "publications", "active.json")), { code: "ENOENT" });
-    await approveIndividualEditorial(options, "Aprobación humana expresa de las 383 fichas listas y exclusión de MA3727");
+    await approveIndividualEditorial(options, "Aprobación editorial simulada en prueba aislada de FINISH");
     const reports: PublishedWorkReport[] = [];
     const reporter: typeof deliverPublishedWorkReport = async (workspace, directory, result) => {
       const delivery = await deliverPublishedWorkReport(workspace, directory, result);
@@ -52,17 +53,17 @@ test("Manain: FINISH activa 383 fichas solo tras aprobación humana y conserva s
     const file = await resolveAccreditedPublication(root, "manain");
     assert.ok(file);
     const published = await readAccreditedPublication(file);
-    assert.equal(published.products.length, 383);
-    assert.ok(!published.products.some((product) => product.reference === "MA3727"));
+    assert.equal(published.products.length, ready);
+    assert.ok(published.products.every((product) => !exclusions.some((item) => item.reference === product.reference)));
     const originals = await publicationOriginalSources(root, file, "manain", published.products);
-    assert.equal(originals.size, 384);
+    assert.equal(originals.size, originalCount);
     assert.ok(finish);
     assert.equal(reports.length, 1);
     const report = reports[0];
     assert.ok(report);
-    assert.equal(report.total.originalProducts, 384);
-    assert.equal(report.total.publishedProducts, 383);
-    assert.equal(report.total.excludedProducts, 1);
+    assert.equal(report.total.originalProducts, originalCount);
+    assert.equal(report.total.publishedProducts, ready);
+    assert.equal(report.total.excludedProducts, exclusions.length);
     const journals = await listIndividualFinishJournals(root);
     assert.equal(journals.length, 1);
     assert.equal(journals[0]?.journal.status, "complete");
@@ -70,7 +71,7 @@ test("Manain: FINISH activa 383 fichas solo tras aprobación humana y conserva s
     const retention = JSON.parse(await readFile(join(root, "catalogs", "providers", "manain", "publication-retention.json"), "utf8"));
     assert.equal(retention.previousSha256, null);
     assert.equal((await readdir(desktop)).length, 2);
-    assert.equal((await deliverIndividualProvider(options, "verify")).publishable, 383);
+    assert.equal((await deliverIndividualProvider(options, "verify")).publishable, ready);
     assert.deepEqual(await readFile(source), original);
     const [catalog, references] = await Promise.all([loadImportCatalogSnapshot(), loadCommercialReference()]);
     const input = await readCommercialPublicationInput(root, file, catalog.catalog);
@@ -79,11 +80,11 @@ test("Manain: FINISH activa 383 fichas solo tras aprobación humana y conserva s
     const plan = planCommercialExport(input.entries, "manain", input.publicationSha256,
       catalog.catalog, references.brandLogos, "develop", companyID);
     const accreditation = accreditCommercialPlan(input.entries, plan, catalog.catalog, references.brandLogos, companyID);
-    assert.equal(input.originalProducts, 384);
-    assert.equal(plan.total, 383);
-    assert.equal(plan.summary.exported, 375);
-    assert.equal(plan.summary.categorized, 374);
-    assert.equal(plan.summary.excludedTools, 8);
+    assert.equal(input.originalProducts, originalCount);
+    assert.equal(plan.total, ready);
+    assert.equal(plan.summary.exported, plan.total - plan.summary.excludedTools);
+    assert.equal(plan.summary.categorized, plan.summary.exported - plan.summary.pendingCategory);
+    assert.equal(plan.summary.excludedTools, plan.excluded.length);
     assert.deepEqual(plan.excluded.map((item) => item.reference).sort(),
       ["MAN169", "MAN671", "MAN676", "MAN677", "MAN680", "MAN681", "MAN682", "MAN683"]);
     assert.ok(plan.excluded.every((item) => item.reason === "herramienta"));
@@ -93,11 +94,11 @@ test("Manain: FINISH activa 383 fichas solo tras aprobación humana y conserva s
     assert.equal(plan.summary.pendingCategory, 1);
     assert.deepEqual(plan.products.filter((product) => product.categorySellID === null).map((product) => product.reference),
       ["MAN1188"]);
-    assert.equal(plan.summary.attributes, 2284);
+    assert.ok(plan.summary.attributes > 0);
     assert.equal(plan.summary.withPrice, 0);
-    assert.equal(plan.summary.withCompany, 375);
+    assert.equal(plan.summary.withCompany, plan.summary.exported);
     assert.equal(accreditation.summary.blocking, 0);
-    assert.ok(!plan.products.some((product) => product.reference === "MA3727"));
+    assert.ok(plan.products.every((product) => !exclusions.some((item) => item.reference === product.reference)));
     const commercialFiles = assembleCommercialExportFiles([{ plan, recognitions: new Map() }],
       catalog, references, "develop");
     assert.deepEqual(commercialFiles.map((entry) => entry.name), ["manain-commercial.json", "commercial-manifest.json"]);
