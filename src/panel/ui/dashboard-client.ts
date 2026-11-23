@@ -16,7 +16,7 @@ const payload = readPanelPayload();
 const ruleRaw = document.getElementById("panel-rule-examples")?.textContent;
 if (!ruleRaw) throw new Error("Reglas técnicas del panel no disponibles");
 const decodedRules: unknown = JSON.parse(ruleRaw);
-const ruleIds = ["normalization", "exclusion"] as const;
+const ruleIds = ["source", "normalization", "exclusion"] as const;
 const isRuleExample = (value: unknown): value is PanelRuleExamples[PanelRuleId] => isRecord(value) &&
   typeof value.title === "string" && typeof value.summary === "string" &&
   typeof value.path === "string" && typeof value.code === "string";
@@ -24,12 +24,14 @@ if (!isRecord(decodedRules) || Object.keys(decodedRules).length !== ruleIds.leng
   !ruleIds.every((id) => isRuleExample(decodedRules[id]))) {
   throw new Error("Contrato de reglas técnicas incompatible");
 }
+const sourceRule = decodedRules.source;
 const normalizationRule = decodedRules.normalization;
 const exclusionRule = decodedRules.exclusion;
-if (!isRuleExample(normalizationRule) || !isRuleExample(exclusionRule)) {
+if (!isRuleExample(sourceRule) || !isRuleExample(normalizationRule) || !isRuleExample(exclusionRule)) {
   throw new Error("Reglas técnicas no disponibles");
 }
 const ruleExamples: PanelRuleExamples = {
+  source: sourceRule,
   normalization: normalizationRule,
   exclusion: exclusionRule
 };
@@ -57,7 +59,7 @@ const ruleDialog = byId("rule-dialog");
 for (const button of document.querySelectorAll<HTMLButtonElement>("[data-rule]")) {
   button.addEventListener("click", () => {
     const id = button.dataset.rule;
-    if (id !== "normalization" && id !== "exclusion") return;
+    if (id !== "source" && id !== "normalization" && id !== "exclusion") return;
     const example = ruleExamples[id];
     byId("rule-dialog-title").textContent = example.title;
     byId("rule-dialog-summary").textContent = example.summary;
@@ -238,6 +240,7 @@ const renderExplanations = (scope: PanelScope): void => {
   const metrics = metricsFor(scope);
   byId("control-exclusion-editorial").textContent = format(metrics.excludedEditorial);
   byId("control-exclusion-commercial").textContent = format(metrics.excludedCommercial);
+  renderExampleAction("source-example", scope);
   renderExampleAction("normalization-example", scope, "technical");
   renderExampleAction("excluded-example", scope, "exclusion");
   renderExampleAction("transformation-example", scope, "technical");

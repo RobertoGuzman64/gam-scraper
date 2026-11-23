@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-export type PanelRuleId = "normalization" | "exclusion";
+export type PanelRuleId = "source" | "normalization" | "exclusion";
 
 export type PanelRuleExample = {
   readonly title: string;
@@ -18,6 +18,13 @@ type RuleSource = Omit<PanelRuleExample, "code"> & {
 };
 
 const sources: Readonly<Record<PanelRuleId, RuleSource>> = {
+  source: {
+    title: "Compatibilidad de evidencia documental",
+    summary: "Esta ruta incorpora especificaciones solo cuando la identidad, huella y claves son compatibles. No representa todas las fuentes posibles.",
+    path: "src/preparation/shared/technical/evidence/documented-technical-evidence.ts",
+    first: "if (!unit || record.brand !== unit.brand || record.model !== unit.model ||",
+    last: "Object.keys(unit.specifications).some((key) => key in specs)) return specs;"
+  },
   normalization: {
     title: "Comprobación de valores numéricos",
     summary: "Se interpreta el valor según su tipo y unidad. Un número no interpretable o negativo no se incorpora por esta regla.",
@@ -55,9 +62,10 @@ const readExcerpt = async (workspace: string, spec: RuleSource): Promise<PanelRu
 };
 
 export const readPanelRuleExamples = async (workspace: string): Promise<PanelRuleExamples> => {
-  const [normalization, exclusion] = await Promise.all([
+  const [source, normalization, exclusion] = await Promise.all([
+    readExcerpt(workspace, sources.source),
     readExcerpt(workspace, sources.normalization),
     readExcerpt(workspace, sources.exclusion)
   ]);
-  return { normalization, exclusion };
+  return { source, normalization, exclusion };
 };
