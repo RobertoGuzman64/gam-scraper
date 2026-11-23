@@ -79,6 +79,11 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
       throw new Error(`Preflight comercial no conforme: ${preflight.failures.length} incidencias por proveedor y ${preflight.globalFailures.length} globales. No se exportó ningún archivo`);
     }
     if (!files) throw new Error("Preflight comercial sin corte exportable");
+    const snapshot = inspectCommercialPackage(files);
+    const pendingCategories = snapshot.providers.reduce((total, provider) => total + provider.summary.pendingCategory, 0);
+    const readiness = pendingCategories > 0
+      ? `PENDIENTE DE IMPORTACIÓN | ${pendingCategories} productos elegibles sin categoría · revisar informe comercial`
+      : "CATEGORÍAS COMPLETAS | aceptación en backend NO VERIFICADA";
     const manifest = files.find((item) => item.name === "commercial-manifest.json");
     if (!manifest) throw new Error("Falta el manifiesto comercial");
     if (options.dryRun) {
@@ -88,6 +93,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
       printCommandHeader("EXPORTACIÓN COMERCIAL", true);
       printReportLine(`Entorno: ${options.environment ?? "sin companyID"} · ${files.length - 1} proveedores · un manifiesto`);
       for (const entry of files) printReportLine(`  ${entry.name} · ${entry.bytes} bytes · calculado, no escrito`);
+      printReportLine(readiness);
       printCommandResult("SIMULACIÓN COMPLETA · SIN ESCRITURAS · NO SE CREA NUEVA PUBLICACIÓN");
       return;
     }
@@ -96,11 +102,12 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
       const delivered = await deliverCommercialPackages(root, await findDesktopDirectory(), files);
       progress.finish();
       printCommandHeader("EXPORTACIÓN COMERCIAL");
-      for (const provider of inspectCommercialPackage(files).providers) {
-        printCommandProvider(provider.providerId, `${provider.summary.exported} productos · ${provider.summary.attributes} atributos`);
+      for (const provider of snapshot.providers) {
+        printCommandProvider(provider.providerId, `${provider.summary.exported} productos · ${provider.summary.categorized} categorizados · ${provider.summary.pendingCategory} pendientes · ${provider.summary.attributes} atributos`);
       }
       printCommandSection("TOTAL ACREDITADO");
       printReportLine(`${delivered.exported} productos · ${delivered.attributes} atributos · entorno ${delivered.environment}`);
+      printReportLine(readiness);
       printCommandSection("ENTREGABLES");
       printCommandDeliverable("COMERCIAL", delivered.commercial);
       printCommandDeliverable("INFORME", delivered.report);
@@ -144,6 +151,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
     printReportLine(`${files.length - 1} proveedores · entorno ${options.environment ?? "sin companyID"}`);
     printCommandSection("ARCHIVOS VERIFICADOS");
     for (const entry of files) printReportLine(`  ${entry.name} · ${entry.bytes} bytes`);
+    printReportLine(readiness);
     printCommandDeliverable("DIRECTORIO COMERCIAL", destination);
     printCommandResult("Archivos comerciales nuevos desde publicaciones vigentes; publicaciones y backend sin modificar");
   } catch (error) {

@@ -181,6 +181,39 @@ const planWithProduct = (): CommercialExportPlan => ({
   }
 });
 
+test("las categorías pendientes exigen una excepción exacta y son visibles en el informe comercial", () => {
+  const base = planWithProduct();
+  const original = base.products[0];
+  assert.ok(original);
+  const exception = { identity: "gam:ref:product-1", reference: original.reference,
+    sourceUrl: original.sourceUrl, reason: "sin-categoria" };
+  const pending: CommercialExportPlan = {
+    ...base,
+    products: [{ ...original, categorySellID: null, category: null }],
+    exceptions: [exception],
+    summary: { ...base.summary, categorized: 0, pendingCategory: 1 }
+  };
+  const files = filesForProvider(pending);
+  assert.doesNotThrow(() => validateCommercialExportFiles(files));
+  const snapshot = inspectCommercialPackage(files);
+  assert.deepEqual(snapshot.providers[0]?.pendingCategories, [
+    { reference: "product-1", sourceUrl: "https://example.com/product" }
+  ]);
+  const markdown = renderCommercialIntegrationReport(snapshot, "2026-11-06");
+  assert.match(markdown, /Aptitud para importación: PENDIENTE/u);
+  assert.match(markdown, /product-1 \| https:\/\/example\.com\/product/u);
+  assert.equal(verifyCommercialIntegrationArchive(createZipArchive([{ name: "INFORME.md", data: markdown }]), files), "2026-11-06");
+
+  assert.throws(() => validateCommercialExportFiles(filesForProvider({ ...pending, exceptions: [] })),
+    /Categoría pendiente sin excepción/u);
+  assert.throws(() => validateCommercialExportFiles(filesForProvider({ ...pending, exceptions: [exception, exception] })),
+    /Excepción de categoría no justificada/u);
+  assert.throws(() => validateCommercialExportFiles(filesForProvider({ ...base, exceptions: [exception] })),
+    /Excepción de categoría no justificada/u);
+  assert.match(renderCommercialIntegrationReport(inspectCommercialPackage(filesForProvider(base)), "2026-11-06"),
+    /sin categorías pendientes; aceptación en backend NO VERIFICADA/u);
+});
+
 test("las referencias técnicas son únicas aunque las referencias externas coincidan", () => {
   const plan = planWithProduct();
   const first = plan.products[0];

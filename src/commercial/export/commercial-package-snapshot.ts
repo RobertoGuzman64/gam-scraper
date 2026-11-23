@@ -5,6 +5,11 @@ import { commercialReference } from "../diagnostics/commercial-baseline.js";
 import { validateCommercialExportFiles } from "./commercial-export-verification.js";
 import type { CommercialExportFile } from "./commercial-export.js";
 
+export type CommercialPendingCategory = {
+  readonly reference: string | null;
+  readonly sourceUrl: string;
+};
+
 export type CommercialPackageProvider = {
   readonly providerId: string;
   readonly publicationSha256: string;
@@ -16,6 +21,7 @@ export type CommercialPackageProvider = {
   readonly excluded: number;
   readonly exceptions: number;
   readonly exceptionReasons: readonly { readonly reason: string; readonly count: number }[];
+  readonly pendingCategories: readonly CommercialPendingCategory[];
   readonly repeatedReferences: number;
   readonly fields: readonly string[];
 };
@@ -71,10 +77,16 @@ export const inspectCommercialPackage = (files: readonly CommercialExportFile[])
     const counts = new Map<string, number>();
     const references = new Map<string, number>();
     const fields = new Set<string>();
+    const pendingCategories: CommercialPendingCategory[] = [];
     for (const [index, product] of plan.products.entries()) {
       const source: unknown = plan.sources[index];
       if (!isRecord(product) || !isRecord(source)) throw new Error(`Producto comercial inválido: ${item.file}`);
       for (const field of Object.keys(product)) fields.add(field);
+      if (product.categorySellID === null) {
+        if (typeof source.sourceUrl !== "string") throw new Error(`Origen pendiente inválido: ${item.file}`);
+        pendingCategories.push({ reference: typeof product.reference === "string" ? product.reference : null,
+          sourceUrl: source.sourceUrl });
+      }
       if ((product.reference !== null && typeof product.reference !== "string") ||
         (source.externalReference !== undefined && source.externalReference !== null &&
           typeof source.externalReference !== "string")) {
@@ -95,6 +107,9 @@ export const inspectCommercialPackage = (files: readonly CommercialExportFile[])
       counts.set(issue.reason, (counts.get(issue.reason) ?? 0) + 1);
     }
     const summary = plan.summary;
+    if (pendingCategories.length !== numeric(summary, "pendingCategory")) {
+      throw new Error(`Pendientes de categoría incoherentes: ${item.file}`);
+    }
     providers.push({
       providerId: item.providerId,
       publicationSha256: item.publicationSha256,
@@ -112,6 +127,7 @@ export const inspectCommercialPackage = (files: readonly CommercialExportFile[])
       excluded: numeric(item, "excluded"),
       exceptions: numeric(item, "exceptions"),
       exceptionReasons: [...counts].map(([reason, count]) => ({ reason, count })).sort((a, b) => a.reason.localeCompare(b.reason)),
+      pendingCategories,
       repeatedReferences: [...references.values()].filter((count) => count > 1).length,
       fields: [...fields].sort()
     });

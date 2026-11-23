@@ -163,6 +163,7 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
         sourceUrl: origin.sourceUrl, externalReference: origin.externalReference });
     }
     const productUrls = new Set<string>();
+    const pendingCategoryUrls = new Set<string>();
     const identities = new Set<string>();
     const productsByUrl = new Map<string, Record<string, unknown>>();
     const requiredHeightExceptions = new Map<string, string>();
@@ -179,6 +180,7 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
       identities.add(identity);
       productUrls.add(product.sourceUrl);
       productsByUrl.set(product.sourceUrl, product);
+      if (product.categorySellID === null) pendingCategoryUrls.add(product.sourceUrl);
       const editorialIssues = inspectCommercialEditorialQuality({
         title: typeof product.title === "string" ? product.title : null,
         description: typeof product.description === "string" ? product.description : null,
@@ -238,6 +240,7 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
       identities.add(identity);
       exclusionUrls.add(exclusion.sourceUrl);
     }
+    const pendingExceptionUrls = new Set<string>();
     for (const exception of plan.exceptions) {
       if (!isRecord(exception) || typeof exception.identity !== "string" || !exception.identity.trim() ||
         typeof exception.reason !== "string" || !exception.reason.trim() ||
@@ -250,6 +253,12 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
         exception.identity !== publishedIdentity(provider.providerId, product)) {
         throw new Error(`Excepción comercial con identidad discordante para el proveedor ${provider.providerId}`);
       }
+      if (exception.reason === "sin-categoria") {
+        if (!pendingCategoryUrls.has(exception.sourceUrl) || pendingExceptionUrls.has(exception.sourceUrl)) {
+          throw new Error(`Excepción de categoría no justificada para ${provider.providerId}:${exception.sourceUrl}`);
+        }
+        pendingExceptionUrls.add(exception.sourceUrl);
+      }
       if (Object.prototype.hasOwnProperty.call(exception, "accreditation")) {
         const sourceIndex = verifiedProducts.findIndex((item) => item.sourceUrl === exception.sourceUrl);
         const receiver: unknown = Array.isArray(plan.products) ? plan.products[sourceIndex] : undefined;
@@ -261,6 +270,11 @@ export const validateCommercialExportFiles = (expected: readonly CommercialExpor
           }, receiver)) {
           throw new Error(`Acreditación comercial incoherente para ${provider.providerId}:${exception.sourceUrl}`);
         }
+      }
+    }
+    for (const sourceUrl of pendingCategoryUrls) {
+      if (!pendingExceptionUrls.has(sourceUrl)) {
+        throw new Error(`Categoría pendiente sin excepción para ${provider.providerId}:${sourceUrl}`);
       }
     }
     for (const sourceUrl of requiredCapacityExceptions) {

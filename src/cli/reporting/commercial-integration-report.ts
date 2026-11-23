@@ -50,6 +50,9 @@ export const renderCommercialIntegrationReport = (snapshot: CommercialPackageSna
     "",
     `- Fichas técnicas incluidas en las publicaciones: ${totals.source}; elegibles: ${totals.exported}; excluidas: ${totals.exclusions}.`,
     `- Categorizadas: ${totals.categorized}; pendientes de categoría: ${totals.pending}.`,
+    totals.pending > 0
+      ? `- Aptitud para importación: PENDIENTE · ${totals.pending} productos elegibles sin categoría comercial; el paquete verificable NO está listo para importar íntegramente.`
+      : "- Aptitud para importación: sin categorías pendientes; aceptación en backend NO VERIFICADA.",
     `- Atributos aceptados: ${totals.attributes}; con precio: ${totals.prices}; con logo: ${totals.logos}; con companyID: ${totals.companies}.`,
     `- Excepciones registradas: ${totals.exceptions}; grupos de referencias visibles coincidentes entre productos exportados: ${totals.repeated}.`,
     "- El recuento de origen corresponde a las fichas de la publicación técnica incluida; no acredita el total del catálogo original del proveedor.",
@@ -71,6 +74,13 @@ export const renderCommercialIntegrationReport = (snapshot: CommercialPackageSna
       `- Campos comerciales presentes: ${declaredFields.filter((field) => provider.fields.includes(field)).join(", ")}.`,
       ""
     );
+    if (provider.pendingCategories.length > 0) {
+      lines.push("Productos elegibles pendientes de categoría (no listos para importar):");
+      for (const pending of provider.pendingCategories) {
+        lines.push(`- ${pending.reference ?? "sin referencia"} | ${pending.sourceUrl}`);
+      }
+      lines.push("");
+    }
     if (provider.exceptionReasons.length > 0) {
       lines.push("Señales y excepciones documentadas:");
       for (const issue of provider.exceptionReasons) lines.push(`- ${issue.reason}: ${issue.count}`);
