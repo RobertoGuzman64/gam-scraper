@@ -2,6 +2,7 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate } from "../legacy-export/contracts.js";
 import { fold } from "../../preparation/shared/classification/mapping/category-utils.js";
 import { isGamVerifiedHysterSGlp, reconcileGamVerifiedHysterSGlp } from "./gam-category-evidence.js";
+import { documentedManainCommercialSlug } from "./manain-category-evidence.js";
 
 const sourceRoute = (source: ProductRecord): string | null => {
   try {
@@ -31,6 +32,7 @@ const verified = (source: ProductRecord, model: RegExp, brand: string): boolean 
 
 export const documentedSourceCommercialSlug = (source: ProductRecord, condition: ImportCandidate["condition"]): string | null => {
   if (!condition) return null;
+  if (source.providerId === "manain") return documentedManainCommercialSlug(source, condition);
   source = reconcileGamVerifiedHysterSGlp(source);
   const route = sourceRoute(source);
   if (!route) return null;

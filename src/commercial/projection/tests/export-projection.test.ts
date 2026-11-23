@@ -7,6 +7,7 @@ import type { BrandLogoReference } from "../../../infrastructure/filesystem/lega
 import { planCommercialExport } from "../export-projection.js";
 import { decideCommercialCategory } from "../category-decision.js";
 import { projectCommercialPresentation } from "../presentation-projection.js";
+import { isValidCommercialCategory } from "../category-projection.js";
 import { normalizePreparedEditorialPresentation } from "../../../preparation/shared/editorial/mapping/prepared-editorial-presentation.js";
 import { accreditCommercialPlan } from "../../diagnostics/commercial-accreditation.js";
 import { hasLoadCapacityDisagreement } from "../../validation/technical-specifications.js";
@@ -625,4 +626,64 @@ test("la acreditación comercial bloquea un error de escala confirmado de GAM si
     "medida-submetro-atributo-escala-multiplicada"));
   assert.deepEqual(output.products[0]?.attributes.filter((item) => item.attributeID === 60),
     [{ attributeID: 60, value: 368 }]);
+});
+
+
+test("Manain: diez máquinas reciben categoría comercial solo por evidencia de origen y modelo corroborado", async () => {
+  const realCatalog = await loadImportCatalog();
+  const { brandLogos } = await loadCommercialReference();
+  const root = fileURLToPath(new URL("../../../../", import.meta.url));
+  const categories = new Map<string, number>([
+    ["MA4032", 34], ["MA4031", 34], ["MA3804", 34], ["MA3641", 34],
+    ["MA3622", 34], ["MA3806", 34], ["MA3264", 34], ["MA3719", 34],
+    ["MA1824", 47], ["MAN1120", 68]
+  ]);
+  const pending = ["MAN2327", "MAN2285", "MA3959", "MA3803", "MA3306", "MA4054", "MA4048"];
+  const references = [...categories.keys(), ...pending];
+  const selected = await selectAccreditedCommercialInputs(root, realCatalog, { manain: references });
+  const manain = selected.get("manain");
+  assert.ok(manain);
+  const before = JSON.stringify(manain.entries);
+  const output = planCommercialExport(manain.entries, "manain", manain.publicationSha256,
+    realCatalog, brandLogos, null, null);
+  assert.equal(output.total, 17);
+  assert.equal(output.summary.exported, 17);
+  assert.equal(output.summary.categorized, 10);
+  assert.equal(output.summary.pendingCategory, 7);
+  assert.equal(accreditCommercialPlan(manain.entries, output, realCatalog, brandLogos, null).summary.blocking, 0);
+  assert.equal(JSON.stringify(manain.entries), before);
+  for (const entry of manain.entries) {
+    const expected = categories.get(entry.source.reference ?? "") ?? null;
+    const product = output.products.find((candidate) => candidate.reference === entry.source.reference);
+    assert.ok(product);
+    assert.equal(product.categorySellID, expected, entry.source.reference ?? undefined);
+    assert.deepEqual(product.spec, entry.published.spec);
+    if (expected === null) {
+      assert.deepEqual(product.attributes, []);
+      continue;
+    }
+    assert.equal(isValidCommercialCategory(entry.source, expected, "Segunda_Mano", realCatalog), true);
+    const source = entry.source;
+    const modified = [
+      { ...source, categoryKey: "maquinaria" },
+      { ...source, url: source.url.replace("manain.com", "otro.example") },
+      { ...source, brand: "OTRA MARCA" },
+      { ...source, model: "OTRO MODELO" },
+      { ...source, specs: { ...source.specs, Marca: "OTRA MARCA" } },
+      { ...source, specs: { ...source.specs, Modelo: "OTRO MODELO" } },
+      { ...source, specs: { ...source.specs, Motor: "Gasolina" } },
+      { ...source, specs: { ...source.specs, "Nueva o usada": "nueva" } },
+      ...(expected === 68 ? [
+        { ...source, specs: { ...source.specs, "Diametro del tambor": "800 mm" } },
+        { ...source, specs: { ...source.specs, Peso: "3000 kg" } }
+      ] : [
+        { ...source, specs: { ...source.specs, "Capacidad carga": "200 kg" } }
+      ])
+    ];
+    for (const altered of modified) {
+      assert.equal(isValidCommercialCategory(altered, expected, "Segunda_Mano", realCatalog), false,
+        `${entry.source.reference}: identidad o evidencia alterada`);
+    }
+    assert.equal(isValidCommercialCategory(source, expected, "Nuevo", realCatalog), false);
+  }
 });

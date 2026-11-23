@@ -82,7 +82,7 @@ test("Manain: FINISH activa 383 fichas solo tras aprobación humana y conserva s
     assert.equal(input.originalProducts, 384);
     assert.equal(plan.total, 383);
     assert.equal(plan.summary.exported, 375);
-    assert.equal(plan.summary.categorized, 351);
+    assert.equal(plan.summary.categorized, 361);
     assert.equal(plan.summary.excludedTools, 8);
     assert.deepEqual(plan.excluded.map((item) => item.reference).sort(),
       ["MAN169", "MAN671", "MAN676", "MAN677", "MAN680", "MAN681", "MAN682", "MAN683"]);
@@ -90,8 +90,8 @@ test("Manain: FINISH activa 383 fichas solo tras aprobación humana y conserva s
     for (const reference of ["MAN980", "MAN1188", "MAN553", "MAN685", "MAN118", "MAN743", "MAN742"]) {
       assert.ok(plan.products.some((product) => product.reference === reference));
     }
-    assert.equal(plan.summary.pendingCategory, 24);
-    assert.equal(plan.summary.attributes, 2209);
+    assert.equal(plan.summary.pendingCategory, 14);
+    assert.equal(plan.summary.attributes, 2284);
     assert.equal(plan.summary.withPrice, 0);
     assert.equal(plan.summary.withCompany, 375);
     assert.equal(accreditation.summary.blocking, 0);
