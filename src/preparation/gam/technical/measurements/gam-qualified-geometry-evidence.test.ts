@@ -1,12 +1,12 @@
+import { accreditedGamRegressionSource } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamVerifiedUnitGeometrySpecs } from "./verified-unit-geometry-specs.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const catalog = accreditedGamRegressionSource();
 const references = [
   "6419", "6425", "6424", "2151", "4623", "2108", "1713", "2102",
   "4798", "4846", "4725", "6743", "6744", "2103", "4024",
@@ -14,14 +14,14 @@ const references = [
 ] as const;
 
 const record = (reference: string): ProductRecord => {
-  const found = catalog.products.find((item) => item.reference === reference);
+  const found = catalog.find((item) => item.reference === reference);
   assert.ok(found, reference);
   return found;
 };
 
 test("solo las veinte referencias acreditadas reciben nuevas especificaciones", () => {
   const changed: string[] = [];
-  for (const source of catalog.products) {
+  for (const source of catalog) {
     const original = structuredClone(source);
     const after = recoverGamVerifiedUnitGeometrySpecs(source);
     const added = Object.keys(after).filter((key) => !Object.hasOwn(source.specs ?? {}, key));

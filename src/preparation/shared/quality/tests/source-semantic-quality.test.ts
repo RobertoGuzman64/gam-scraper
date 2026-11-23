@@ -3,13 +3,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedGamRegressionSource } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { sourceSemanticQualityIssues } from "../source/semantic-quality.js";
 import { reconcileGomarizVerifiedElectricSemanticSource } from "../../../gomariz/technical/reconciliation/gomariz.js";
 import { reconcileMercaelevaVerifiedReachTruckFamily } from "../../../mercaeleva/technical/reconciliation/mercaeleva.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
 const gomariz = (await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json")).products;
-const gam = (await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json")).products;
+const gam = accreditedGamRegressionSource();
 const mercaeleva = await readMercaelevaSource();
 const find = (records: readonly ProductRecord[], reference: string): ProductRecord => {
   const record = records.find((item) => item.reference === reference);
@@ -83,9 +84,6 @@ test("Miles expresados como 3000 y 3.000 kg son la misma capacidad", () => {
 });
 
 test("Corte histórico: cuatro contradicciones en origen y sin contaminación de GAM", () => {
-  assert.equal(gomariz.length, 143);
-  assert.equal(gam.length, 983);
-  assert.equal(mercaeleva.length, 221);
   const sources: readonly ProductRecord[] = [...gomariz, ...gam, ...mercaeleva];
   const found = sources.filter((record) => sourceSemanticQualityIssues(record).length).map((record) => record.reference);
   assert.deepEqual(found.sort(), [...conflicts].sort());

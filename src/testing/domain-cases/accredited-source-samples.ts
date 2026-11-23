@@ -5,10 +5,14 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 
 export const accreditedSourceDatasets = [
   "gam-original",
+  "gam-regression-supplement",
+  "gam-gallery-supplement",
   "gam-source-cases",
   "gam-editorial-cases",
   "gam-short-discrepancy-source",
   "gam-verified-fuel-cases",
+  "gam-technical-units-cases",
+  "manain-editorial-source",
   "editorial-load-original",
   "mercaeleva-original",
   "mercaeleva-source-cases",
@@ -36,4 +40,24 @@ export const accreditedSourceRecord = (dataset: AccreditedSourceDataset, referen
   const record = accreditedSourceSamples(dataset).find((entry) => entry.reference === reference);
   if (!record) throw new Error(`${dataset}:${reference}`);
   return record;
+};
+
+let gamRegressionProducts: readonly ProductRecord[] | undefined;
+
+export const accreditedGamRegressionSource = (): readonly ProductRecord[] => {
+  gamRegressionProducts ??= [
+    ...accreditedSourceSamples("gam-original"),
+    ...accreditedSourceSamples("gam-regression-supplement")
+  ];
+  return gamRegressionProducts;
+};
+
+let gamGalleryProducts: readonly ProductRecord[] | undefined;
+
+export const accreditedGamGallerySource = (): readonly ProductRecord[] => {
+  gamGalleryProducts ??= [
+    ...accreditedGamRegressionSource(),
+    ...accreditedSourceSamples("gam-gallery-supplement")
+  ];
+  return gamGalleryProducts;
 };

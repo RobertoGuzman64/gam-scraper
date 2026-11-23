@@ -1,14 +1,15 @@
+import { accreditedSourceSamples } from "../../../../../domain-cases/accredited-source-samples.js";
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamSourceGradeabilitySpecs } from "../../../../../../preparation/gam/technical/mobility/source-gradeability-evidence.js";
 import { recoverGamSweepingBrushSpecs } from "../../../../../../preparation/gam/technical/operations/sweeping-brush-evidence.js";
 import { prepareSourceProduct } from "../../../../../../preparation/prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gam = accreditedGamRegressionSource();
+const gomariz = accreditedSourceSamples("gomariz-original");
 
 const main = "Anchura del cepillo principal (mm)";
 const side = "Anchura del cepillo lateral (mm)";
@@ -32,7 +33,7 @@ const expected: Readonly<Record<string, Readonly<Record<string, number>>>> = {
 };
 
 const original = (reference: string): ProductRecord => {
-  const record = gam.products.find((candidate) => candidate.reference === reference);
+  const record = gam.find((candidate) => candidate.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -60,7 +61,7 @@ test("incorpora medidas de cepillos y pendientes acreditadas, con normalización
 });
 
 test("únicamente recupera estas medidas cuando está acreditada la identidad y la configuración", () => {
-  const observed = gam.products.flatMap((record) => {
+  const observed = gam.flatMap((record) => {
     const result = recover(record);
     const gained = Object.keys(result).filter((key) => !Object.hasOwn(record.specs ?? {}, key));
     return gained.length > 0 ? [{ reference: record.reference, fields: gained }] : [];
@@ -68,7 +69,7 @@ test("únicamente recupera estas medidas cuando está acreditada la identidad y 
   assert.deepEqual(new Set(observed.map(({ reference }) => reference)), new Set(Object.keys(expected)));
   assert.equal(observed.reduce((total, { fields }) => total + fields.length, 0),
     Object.values(expected).reduce((total, fields) => total + Object.keys(fields).length, 0));
-  for (const record of gomariz.products) {
+  for (const record of gomariz) {
     assert.deepEqual(recover(record), record.specs ?? {});
   }
 });

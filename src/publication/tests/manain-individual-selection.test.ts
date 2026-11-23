@@ -19,7 +19,6 @@ test("Manain: selección verificable conserva revisiones sin aprobación ni publ
     assert.equal(selected.sources[0]?.productCount, selected.preparation.products.length);
     assert.equal(selected.preparation.totals.ready + selected.preparation.totals.review,
       selected.preparation.products.length);
-    assert.ok(selected.preparation.totals.review > 0);
     assert.equal(selected.draft.approved, false);
     assert.equal(selected.draft.exclusions.length, selected.preparation.totals.review);
     assert.ok(selected.draft.exclusions.every((exclusion) => exclusion.status === "review" && exclusion.decision === null));

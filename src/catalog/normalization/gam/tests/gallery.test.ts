@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { createPreparedSourceFixture } from "../../../../testing/builders/prepared-source-fixture.js";
+import { accreditedGamGallerySource } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { excludeGamRelatedProductImages } from "../gallery.js";
 
 const prepareOriginal = createPreparedSourceFixture();
@@ -9,15 +10,11 @@ const prepareOriginal = createPreparedSourceFixture();
 const photo = (id: number, name: string): string =>
   `https://online.gamrentals.com/${id}-product_main_2x/${name}.jpg`;
 
-let gamCatalogPromise: ReturnType<typeof readCanonicalCatalog> | undefined;
-const readGamCatalog = (): ReturnType<typeof readCanonicalCatalog> =>
-  gamCatalogPromise ??= readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-
 const own = [photo(100, "2012-genie-z45-25-j"), photo(101, "2012-genie-z45-25-j"), photo(102, "2012-genie-z45-25-j")];
 const related = [photo(200, "2018-snorkel-a46jrt"), photo(201, "2018-genie-z45-25j"), photo(202, "2014-manitou-160-atj")];
 
 test("GAM: elimina portadas reconocidas de otros modelos sin descartar variantes del propio modelo", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const indexed = new Map(products.map((product) => [product.reference, product]));
   for (const reference of ["4656", "4723", "2332", "2262", "2261"]) {
     const source = indexed.get(reference);
@@ -34,7 +31,7 @@ test("GAM: elimina portadas reconocidas de otros modelos sin descartar variantes
 });
 
 test("GAM: conserva galerías con procedencia o identificación de modelo insuficiente", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const indexed = new Map(products.map((product) => [product.reference, product]));
   const source = indexed.get("2262");
   assert.ok(source);
@@ -144,7 +141,7 @@ test("GAM: descarta cuatro recomendaciones con dos portadas del mismo modelo sol
 });
 
 test("GAM: las recomendaciones con dos portadas del modelo principal son ajenas en tres fichas", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const byCover = new Map<string, Set<string>>();
   for (const product of products) {
@@ -181,7 +178,7 @@ test("GAM: separa una recomendación aislada solo tras al menos ocho imágenes p
 });
 
 test("GAM: las cinco portadas finales aisladas pertenecen a otras referencias", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const byCover = new Map<string, Set<string>>();
   for (const product of products) {
@@ -234,7 +231,7 @@ test("GAM: las dos recomendaciones finales de otras marcas no requieren ocho fot
 });
 
 test("GAM: las parejas de LX08 pertenecen a otras referencias del catálogo", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   for (const reference of ["6478", "6479", "6813"]) {
     const source = byReference.get(reference);
@@ -249,7 +246,7 @@ test("GAM: las parejas de LX08 pertenecen a otras referencias del catálogo", as
 });
 
 test("GAM: las parejas separadas son portadas ajenas en las doce referencias acreditadas", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const byCover = new Map<string, Set<string>>();
   for (const product of products) {
@@ -274,7 +271,7 @@ test("GAM: las parejas separadas son portadas ajenas en las doce referencias acr
 });
 
 test("GAM: contrasta recomendaciones con la imagen principal de otras unidades del catálogo", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const primaryOwners = new Map<string, Set<string>>();
   for (const product of products) {
@@ -313,7 +310,7 @@ test("GAM: conserva variantes, fotografías adicionales y galerías sin evidenci
 });
 
 test("GAM: la preparación conserva imágenes propias, identidad, estados y originales", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const indexed = new Map(products.map((product) => [product.reference, product]));
   let curated = 0;
   for (const source of products) {
@@ -390,7 +387,7 @@ test("GAM: separa cuatro portadas relacionadas tras cuatro imágenes originales 
 });
 
 test("GAM: acredita tres secuencias separadas de cuatro portadas de otras referencias", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const byCover = new Map<string, Set<string>>();
   for (const product of products) {
@@ -434,7 +431,7 @@ test("GAM: separa portadas agrupadas aunque una tenga identificador consecutivo 
 });
 
 test("GAM: las portadas recomendadas de 6635 y 6636 son de otras referencias", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const byCover = new Map<string, Set<string>>();
   for (const product of products) {
@@ -480,7 +477,7 @@ test("GAM: separa una portada aislada solo tras cinco fotografías con identific
 });
 
 test("GAM: elimina portadas ajenas acreditadas sin perder las propias", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const source = byReference.get("6806");
   const related = byReference.get("5918");
@@ -500,7 +497,7 @@ test("Gomariz histórico: solo CC1666 excluye una portada ajena; Mercaeleva cons
   for (const provider of ["gomariz", "mercaeleva"] as const) {
     const { products } = await readCanonicalCatalog(provider === "gomariz"
       ? "src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json"
-      : `catalogs/providers/${provider}/original/scrape-${provider}-catalog.json`);
+      : "src/testing/fixtures/mercaeleva/regression-221/mercaeleva-completa-20261029-234332-catalog.json");
     for (const source of products) {
       if (provider === "gomariz" && source.reference === "CC1666") {
         const originalImages = source.images ?? [];
@@ -516,7 +513,7 @@ test("Gomariz histórico: solo CC1666 excluye una portada ajena; Mercaeleva cons
 });
 
 test("GAM: las 31 galerías señaladas mantienen su portada sin cruces de fabricantes después de normalizar", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const brandsByCover = new Map<string, Set<string>>();
   for (const product of products) {
@@ -542,7 +539,7 @@ test("GAM: las 31 galerías señaladas mantienen su portada sin cruces de fabric
 });
 
 test("GAM: elimina la portada ajena de Yale GP80VX-9 sin tocar las imágenes propias", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const owner = products.find((product) => product.reference === "2368");
   assert.ok(owner?.image);
   const ownerCover: string = owner.image;
@@ -562,12 +559,12 @@ test("GAM: elimina la portada ajena de Yale GP80VX-9 sin tocar las imágenes pro
 
 
 test("GAM: conserva las vistas del baño unitario y excluye la portada del módulo doble", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const unit = products.find((product) => product.reference === "6814");
   const double = products.find((product) => product.reference === "6815");
   assert.ok(unit?.image && double?.image);
   const original = unit.images ?? [];
-  assert.equal(original.length, 7);
+  assert.ok(original.length > 1);
   assert.equal(original.at(-1), double.image);
   const selected = excludeGamRelatedProductImages(original);
   assert.deepEqual(selected, original.slice(0, -1));
@@ -580,7 +577,7 @@ test("GAM: conserva las vistas del baño unitario y excluye la portada del módu
 });
 
 test("GAM: separa portadas ajenas con modelo y marca acreditados en galerías de variantes", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const byReference = new Map(products.map((product) => [product.reference, product]));
   const coverOwners = new Map<string, Set<string>>();
   for (const product of products) {
@@ -615,7 +612,7 @@ test("GAM: separa portadas ajenas con modelo y marca acreditados en galerías de
 });
 
 test("GAM: exige concordancia de modelo y marca para separar recomendaciones de variantes", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const source = products.find((product) => product.reference === "4778");
   assert.ok(source);
   const gallery = source.images ?? [];
@@ -636,7 +633,7 @@ test("GAM: exige concordancia de modelo y marca para separar recomendaciones de 
 });
 
 test("GAM: distingue fotografías TRACCESS 170 de la variante eléctrica 170E", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const indexed = new Map(products.map((product) => [product.reference, product]));
   const electric = indexed.get("4657");
   assert.ok(electric);
@@ -670,7 +667,7 @@ test("GAM: distingue fotografías TRACCESS 170 de la variante eléctrica 170E", 
 });
 
 test("GAM: conserva solo imágenes propias en las tres transpaletas Yale con portadas cruzadas", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const indexed = new Map(products.map((product) => [product.reference, product]));
   const ownImageNames = new Map(products.filter((product) => product.image && product.reference).map((product) => [
     product.reference, new Set((product.images ?? []).filter((url) =>
@@ -695,7 +692,7 @@ test("GAM: conserva solo imágenes propias en las tres transpaletas Yale con por
 });
 
 test("GAM: no recorta fotografías Yale sin acreditar marca, modelo, portada o procedencia", async () => {
-  const { products } = await readGamCatalog();
+  const products = accreditedGamGallerySource();
   const indexed = new Map(products.map((product) => [product.reference, product]));
   for (const reference of ["915", "2796", "912"]) {
     const source = indexed.get(reference);

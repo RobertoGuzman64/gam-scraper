@@ -1,24 +1,24 @@
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamVerifiedIntegratedCharger } from "../../../../../../preparation/gam/technical/energy/battery-electrical-evidence.js";
 import { prepareSourceProduct } from "../../../../../../preparation/prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const catalog = accreditedGamRegressionSource();
 const references = ["2194", "2258", "2195", "2260", "2203", "3996", "3999", "4000", "2199", "2204", "2201", "2205", "2206"] as const;
 const key = "Cargador de batería";
 
 const getRecord = (reference: string): ProductRecord => {
-  const found = catalog.products.find((record) => record.reference === reference);
+  const found = catalog.find((record) => record.reference === reference);
   assert.ok(found, reference);
   return found;
 };
 
 test("acredita únicamente cargadores integrados de trece modelos identificados", () => {
   const changed: string[] = [];
-  for (const record of catalog.products) {
+  for (const record of catalog) {
     const snapshot = structuredClone(record);
     const recovered = recoverGamVerifiedIntegratedCharger(record);
     assert.deepEqual(record, snapshot, record.reference ?? "");

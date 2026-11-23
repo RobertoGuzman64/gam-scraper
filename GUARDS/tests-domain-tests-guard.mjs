@@ -7,10 +7,13 @@ import {
   uniqueFindings, optionsFrom, present
 } from "./guards-architecture-core.mjs";
 
+const monitoredTest = (path) => isTest(path) && /^(?:src|scripts)\//u.test(path);
 const domainTest = (path) => isTest(path) &&
   /^(?:src\/preparation\/(?!workflow\/)|src\/catalog\/(?:normalization|reference|validation|diagnostics|editorial|coverage)\/|src\/commercial\/(?:validation|diagnostics|projection)\/|src\/(?:domain|normalization|reconciliation)\/)/u.test(path);
+const localTestSupport = (path) => !isTest(path) && /\/tests\//u.test(path);
 const supportModule = (path) => !isTest(path) &&
-  /^(?:src\/testing\/|scripts\/testing\/)|\/fixtures?\/|\/tests\/helpers?\/|(?:^|\/)[\w-]*fixture\.(?:ts|tsx|mts|js|mjs)$/u.test(path);
+  /^(?:src\/testing\/|scripts\/testing\/)|\/fixtures?\/|(?:^|\/)[\w-]*fixture\.(?:ts|tsx|mts|js|mjs)$/u.test(path) ||
+  localTestSupport(path);
 const catalogPath = (value) => /catalogs\s*[/\\]\s*providers\s*[/\\]/iu.test(value) &&
   /(?:original|publications|technical|catalog\.json|publishable)/iu.test(value);
 const historicalFixture = (value) => /(?:src\/testing\/fixtures\/|testing\/fixtures\/)/iu.test(value) &&
@@ -115,6 +118,9 @@ const checkTestLayout = (project, visit) => {
 const sourceEvidence = (source) => {
   const candidate = [];
   visitNodes(source, (node) => {
+    if (ts.isCallExpression(node) && /(?:readVerifiedManainRecordSource)$/u.test(node.expression.getText(source))) {
+      candidate.push(node);
+    }
     if (ts.isCallExpression(node) && /(?:readFile(?:Sync)?|readCanonicalCatalog|loadCatalog|createReadStream|openSync|join|resolve|readdir(?:Sync)?)$/u.test(node.expression.getText(source))) {
       const expression = node.getText(source);
       const literals = [...expression.matchAll(/["'`]([^"'`]+)["'`]/gu)].map((match) => match[1]?.toLowerCase());
@@ -125,6 +131,10 @@ const sourceEvidence = (source) => {
     if ((ts.isStringLiteralLike(node) || ts.isTemplateExpression(node)) &&
       (catalogPath(node.getText(source)) || historicalFixture(node.getText(source)))) candidate.push(node);
   });
+  const { liveRead } = createSourceTracing(source);
+  visitNodes(source, (node) => {
+    if (ts.isCallExpression(node) && liveRead(node)) candidate.push(node);
+  });
   const chosen = [];
   for (const node of candidate.sort((a, b) => b.getWidth(source) - a.getWidth(source))) {
     if (!chosen.some((other) => other.getStart(source) <= node.getStart(source) &&
@@ -133,75 +143,154 @@ const sourceEvidence = (source) => {
   return chosen.sort((a, b) => a.getStart(source) - b.getStart(source));
 };
 
+const declaredValues = (source) => {
+  const declarations = new Map();
+  visitNodes(source, (node) => {
+    if (!ts.isVariableDeclaration(node) || !ts.isIdentifier(node.name) || !node.initializer) return;
+    const scope = nearestScope(node);
+    if (!scope) return;
+    const key = `${scope.pos}:${node.name.text}`;
+    const matches = declarations.get(key) ?? [];
+    matches.push(node);
+    declarations.set(key, matches);
+  });
+  const declaration = (node) => {
+    if (!ts.isIdentifier(node)) return null;
+    let scope = nearestScope(node);
+    while (scope) {
+      const matches = declarations.get(`${scope.pos}:${node.text}`) ?? [];
+      const previous = matches.filter((entry) => entry.getStart(source) < node.getStart(source));
+      if (previous.length > 0) return previous[previous.length - 1].initializer;
+      scope = nearestScope(scope);
+    }
+    return null;
+  };
+  return declaration;
+};
+
+const createSourceTracing = (source) => {
+  const declaration = declaredValues(source);
+  const unwrap = (node) => ts.isParenthesizedExpression(node) || ts.isAwaitExpression(node) ||
+    ts.isAsExpression(node) ? unwrap(node.expression) : node;
+  const literals = (node, visited = new Set()) => {
+    const current = unwrap(node);
+    if (ts.isStringLiteralLike(current)) return [current.text.toLowerCase()];
+    if (ts.isIdentifier(current)) {
+      const value = declaration(current);
+      if (!value || visited.has(value)) return [];
+      visited.add(value);
+      return literals(value, visited);
+    }
+    if (ts.isCallExpression(current) && /^(?:join|resolve|path\.(?:join|resolve))$/u.test(current.expression.getText(source))) {
+      return current.arguments.flatMap((part) => literals(part, new Set(visited)));
+    }
+    return [];
+  };
+  const cwdRoot = (node, visited = new Set()) => {
+    const current = unwrap(node);
+    if (ts.isCallExpression(current) && /^process\.cwd$/u.test(current.expression.getText(source))) return true;
+    if (ts.isIdentifier(current)) {
+      const value = declaration(current);
+      if (!value || visited.has(value)) return false;
+      visited.add(value);
+      return cwdRoot(value, visited);
+    }
+    if (ts.isCallExpression(current) && /^(?:join|resolve|path\.(?:join|resolve))$/u.test(current.expression.getText(source))) {
+      return current.arguments.some((part) => cwdRoot(part, visited));
+    }
+    return false;
+  };
+  const relativeRoot = (node, visited = new Set()) => {
+    const current = unwrap(node);
+    if (ts.isStringLiteralLike(current)) return /^(?:\.\/?|catalogs(?:[/\\]|$))/u.test(current.text);
+    if (ts.isIdentifier(current)) {
+      const value = declaration(current);
+      if (!value || visited.has(value)) return false;
+      visited.add(value);
+      return relativeRoot(value, visited);
+    }
+    if (ts.isCallExpression(current) && /^(?:join|resolve|path\.(?:join|resolve))$/u.test(current.expression.getText(source))) {
+      const first = current.arguments[0];
+      return Boolean(first && (cwdRoot(first) || relativeRoot(first, visited)));
+    }
+    return false;
+  };
+  const livePath = (node, visited = new Set()) => {
+    const current = unwrap(node);
+    if (ts.isStringLiteralLike(current)) return catalogPath(current.text);
+    if (ts.isIdentifier(current)) {
+      const value = declaration(current);
+      if (!value || visited.has(value)) return false;
+      visited.add(value);
+      return livePath(value, visited);
+    }
+    if (!ts.isCallExpression(current) ||
+      !/^(?:join|resolve|path\.(?:join|resolve))$/u.test(current.expression.getText(source))) return false;
+    const parts = current.arguments.flatMap((part) => literals(part));
+    const providerPath = parts.some(catalogPath) || parts.includes('catalogs') && parts.includes('providers') &&
+      parts.some((part) => ['original', 'publications', 'technical', 'records'].includes(part));
+    const first = current.arguments[0];
+    const currentRoot = first && (cwdRoot(first) || relativeRoot(first));
+    return Boolean(providerPath && currentRoot);
+  };
+  const liveRead = (node) => {
+    const current = unwrap(node);
+    if (!ts.isCallExpression(current)) return false;
+    const callee = current.expression.getText(source);
+    if (/\breadVerifiedManainRecordSource$/u.test(callee)) {
+      return current.arguments.some((argument) => cwdRoot(argument));
+    }
+    if (!/(?:readCanonicalCatalog|readFile(?:Sync)?|loadCatalog|createReadStream|openSync)$/u.test(callee)) return false;
+    return current.arguments.some((argument) => livePath(argument));
+  };
+  const liveValue = (node, visited = new Set()) => {
+    const current = unwrap(node);
+    if (liveRead(current)) return true;
+    if (ts.isIdentifier(current)) {
+      const value = declaration(current);
+      if (!value || visited.has(value)) return false;
+      visited.add(value);
+      return liveValue(value, visited);
+    }
+    if (ts.isPropertyAccessExpression(current) || ts.isElementAccessExpression(current)) {
+      return liveValue(current.expression, visited);
+    }
+    if (ts.isCallExpression(current) && ts.isPropertyAccessExpression(current.expression)) {
+      return liveValue(current.expression.expression, visited);
+    }
+    return false;
+  };
+  return { liveRead, liveValue };
+};
+
+const liveSourceEvidence = (source) => {
+  const { liveRead } = createSourceTracing(source);
+  let live = false;
+  visitNodes(source, (node) => {
+    if (ts.isCallExpression(node) && liveRead(node)) live = true;
+  });
+  return live;
+};
+
 const accreditedCatalogIntegrations = new Map([
   ["src/catalog/normalization/gam/tests/gallery.test.ts", {
-    sha256: "d1c1837b7ff5c8b5d51a1e0edb98c7b9e0cbc71b43d2dbd7e544c2f7f5f44568",
-    reads: 2,
-    responsibility: "Regresión real de procedencia de imágenes y exclusión de galerías ajenas"
+    sha256: "afe9285d98a6b3bd9dcd609fcf55671a6d43c376bbf8c2585aa28d67b32e40fb",
+    reads: 1,
+    responsibility: "Regresión histórica congelada de galerías e integridad entre unidades y proveedores"
   }],
   ["src/preparation/gam/identity/tests/gam-identity-variants.test.ts", {
     sha256: "29400091418295a3aadaf8f6b922a88f1d25d6796e37674d119a1c6c19d0acf8",
     reads: 1,
     responsibility: "Variantes e identidad cruzada contra fixture histórica firmada"
   }],
-  ["src/preparation/gam/quality/tests/gam-verified-operational-safety.test.ts", {
-    sha256: "8c755a49c8d3fcf67465c6497548d0ce1679be270617f7c7134358ddf29b0836",
-    reads: 1,
-    responsibility: "Censo de recuperación de seguridad por unidad y protección entre proveedores"
-  }],
-  ["src/preparation/gam/technical/measurements/gam-clearance-platform.test.ts", {
-    sha256: "1a6f3d733722df5edf02f25efb4de533833bff045b916500ae72656a62536d30",
-    reads: 2,
-    responsibility: "Censo de medidas de plataforma y altura sin propagación entre proveedores"
-  }],
-  ["src/preparation/gam/technical/measurements/gam-qualified-geometry-evidence.test.ts", {
-    sha256: "596472785bcc646539887bc6483d34e28fc46d626dbb0fff37dc8d63ff4b0985",
-    reads: 1,
-    responsibility: "Censo de geometría técnica acreditada y preservación de originales"
-  }],
-  ["src/preparation/gam/technical/mobility/gam-traction-braking-evidence.test.ts", {
-    sha256: "96911b800cbc9d375eefd8c6b70ae7062552dbffcd5529c607000c80b8b50ba9",
-    reads: 1,
-    responsibility: "Censo de tracción y frenada atribuibles a la fuente"
-  }],
-  ["src/preparation/gam/technical/mobility/gam-verified-drivetrain-brakes.test.ts", {
-    sha256: "35bb397e129a9518caf1a7ddd1f8a7b9515b2db66f09a7c19e86155dc5d38de3",
-    reads: 1,
-    responsibility: "Censo de motorización y frenada acreditadas sin contaminación"
-  }],
-  ["src/preparation/gam/technical/operations/gam-cleaning-tank-evidence.test.ts", {
-    sha256: "e1998ac6a0c41c657d44c5ea68ce17b955958b679083fbef518a1bc8c942831f",
-    reads: 2,
-    responsibility: "Censo de depósitos de limpieza con aislamiento entre proveedores"
-  }],
-  ["src/preparation/gam/technical/operations/gam-unit-performance-specs.test.ts", {
-    sha256: "6f6e302fc291b30300ae1d4bb6649a13dab6a3c93ce1e8ec24cb985497b936f7",
-    reads: 1,
-    responsibility: "Censo de prestaciones técnicas y pruebas de no propagación"
-  }],
-  ["src/preparation/gam/technical/safety/gam-acoustic-evidence.test.ts", {
-    sha256: "656769063ad54f20b376994cabda6748127d8095912d2a9274021b7a0f36a844",
-    reads: 2,
-    responsibility: "Censo de acústica acreditada y exclusión entre proveedores"
-  }],
-  ["src/preparation/gam/technical/safety/gam-verified-operator-controls.test.ts", {
-    sha256: "cd8b298d922e8fbfd0c7199e004afb8225c48f35e643f4bf66aeb76c599cc1d9",
-    reads: 1,
-    responsibility: "Censo de mandos y controles de seguridad con procedencia"
-  }],
-  ["src/preparation/gam/technical/tests/gam-verified-tyre-and-noise-details.test.ts", {
-    sha256: "d9558900d252cc1e58dc7b5cc39bded95397c46c9dcec2a1a069c57a5fc1ca20",
-    reads: 2,
-    responsibility: "Censo de neumáticos y ruido con normalización y variantes negativas"
-  }],
   ["src/preparation/shared/quality/tests/source-semantic-quality.test.ts", {
-    sha256: "3224c3251324ad2c5a9210e0446396185ba4a2bb15261a84ff98268db2aac70f",
-    reads: 2,
-    responsibility: "Regresión histórica de contradicciones semánticas y calidad de fuente"
+    sha256: "b485ef9925c022a2f5d9632c39c94c7e6b46b5a02a804ff2a0e57fa123e0cba4",
+    reads: 1,
+    responsibility: "Regresión semántica de fuentes históricas congeladas GAM, Gomariz y Mercaeleva"
   }],
   ["src/preparation/tests/catalog-publication-consistency.test.ts", {
     sha256: "2165c8c823a5ab7fec72f1d0c26184248c0d1eb14eed22fc0a0cb2ea0ab4011b",
-    reads: 2,
+    reads: 3,
     responsibility: "Integridad, procedencia y proyección de publicaciones acreditadas"
   }]
 ]);
@@ -212,57 +301,6 @@ const creditedCatalogIntegration = (path, source, direct) => {
   const sha256 = createHash("sha256").update(source.text).digest("hex");
   return sha256 === contract.sha256 ? contract : null;
 };
-
-const cohortExceptions = new Map([
-  ["src/catalog/normalization/gam/tests/gallery.test.ts", {
-    test: "GAM: conserva las vistas del baño unitario y excluye la portada del módulo doble",
-    assertion: "assert.equal(original.length, 7)"
-  }],
-  ["src/preparation/gam/identity/tests/gam-identity-variants.test.ts", {
-    test: "GAM: tres series colisionadas conservan seis fichas y bloquean solo las Hyster",
-    assertion: "assert.equal(batch.products.length, 6)"
-  }],
-  ["src/preparation/gam/quality/tests/gam-verified-operational-safety.test.ts", {
-    test: "recupera veinte prestaciones de seguridad de fuentes individuales conservando las especificaciones anteriores",
-    assertion: "assert.equal(changed.length, 20)"
-  }],
-  ["src/preparation/gam/technical/measurements/gam-clearance-platform.test.ts", {
-    test: "solo las referencias acreditadas reciben medidas nuevas y Gomariz queda intacto",
-    assertion: "assert.equal(changed.length, 30)"
-  }],
-  ["src/preparation/gam/technical/measurements/gam-qualified-geometry-evidence.test.ts", {
-    test: "solo las veinte referencias acreditadas reciben nuevas especificaciones",
-    assertion: "assert.equal(changed.length, 20)"
-  }],
-  ["src/preparation/gam/technical/mobility/gam-traction-braking-evidence.test.ts", {
-    test: "añade una prestación acreditada a veintiuna fichas sin modificar originales",
-    assertion: "assert.equal(changed.length, 21)"
-  }],
-  ["src/preparation/gam/technical/mobility/gam-verified-drivetrain-brakes.test.ts", {
-    test: "recupera únicamente prestaciones demostradas por el original sin perder acreditaciones anteriores",
-    assertion: "assert.equal(changed.length, 38)"
-  }],
-  ["src/preparation/gam/technical/operations/gam-cleaning-tank-evidence.test.ts", {
-    test: "solo las 25 fichas GAM con prueba atribuible reciben depósitos, sin arrastrar Gomariz",
-    assertion: "assert.equal(changed.length, 27)"
-  }],
-  ["src/preparation/gam/technical/operations/gam-unit-performance-specs.test.ts", {
-    test: "recupera solo las referencias acreditadas y conserva los originales",
-    assertion: "assert.equal(changed.length, 56)"
-  }],
-  ["src/preparation/gam/technical/safety/gam-acoustic-evidence.test.ts", {
-    test: "las 22 fichas únicas pertenecen a GAM y Gomariz queda intacto",
-    assertion: "assert.equal(changed.length, 22)"
-  }],
-  ["src/preparation/gam/technical/safety/gam-verified-operator-controls.test.ts", {
-    test: "recupera prestaciones de mando y presencia acreditadas y normalizables",
-    assertion: "assert.equal(changed.length, 25)"
-  }],
-  ["src/preparation/gam/technical/tests/gam-verified-tyre-and-noise-details.test.ts", {
-    test: "la recuperación se limita a veinte identidades únicas de GAM",
-    assertion: "assert.equal(changed.length, 20)"
-  }]
-]);
 
 const transitiveExceptions = new Map([
   ["src/preparation/gam/classification/tests/gam-verified-category-equivalences.test.ts",
@@ -281,43 +319,134 @@ const transitiveExceptions = new Map([
     "src/testing/builders/mercaeleva-source-fixture.ts"]
 ]);
 
-const cohortTestName = (source, node) => {
-  for (let current = node.parent; current; current = current.parent) {
-    if (ts.isCallExpression(current) && ts.isIdentifier(current.expression) &&
-      ["test", "it"].includes(current.expression.text) && ts.isStringLiteralLike(current.arguments[0])) {
-      return current.arguments[0].text;
-    }
-  }
-  return null;
-};
-
-const isAccreditedCohort = (path, source, node) => {
-  const exception = cohortExceptions.get(path);
-  return !!exception && node.getText(source).replace(/\s+/gu, " ").trim() === exception.assertion &&
-    cohortTestName(source, node) === exception.test;
-};
+const accreditedTransitiveSources = new Map([
+  ["src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts",
+    "7fe8dba3dc1e99e20890e2f9cf2c3a15bd6023cbe201640c146014d5663bbefe"],
+  ["src/testing/builders/mercaeleva-source-fixture.ts",
+    "6986e840629c39431c53a1faad10a9c523dfdf4e03dbb9b8f6bb4fe9f3c07ebe"]
+]);
 
 const isAccreditedTransitive = (path, helper, project, helperEvidence) => {
   if (transitiveExceptions.get(path) !== helper || (helperEvidence.get(helper) ?? []).length !== 1) return false;
-  const source = project.files.get(helper)?.text ?? "";
-  if (helper.includes("gam-source-category-fixture")) {
-    return source.includes("scrape-gam-marzo-2026-catalog.json") && source.includes("readCanonicalCatalog");
-  }
-  return helper === "src/testing/builders/mercaeleva-source-fixture.ts" &&
-    source.includes("readCanonicalCatalog") && source.includes('join("catalogs", "providers", "mercaeleva", "original")') &&
-    source.includes("entries.length !== 1");
+  const source = project.files.get(helper)?.text;
+  return typeof source === "string" &&
+    createHash("sha256").update(source).digest("hex") === accreditedTransitiveSources.get(helper);
 };
 
-const isCount = (node, source) => /\b(?:catalog|original|publication|products|changed|improved|records)\b[\w.\[\]?]*\.length\b/iu.test(node.getText(source));
-const isNumber = (node) => ts.isNumericLiteral(node);
+const isCount = (node, source) => /\b(?:catalog|original|publication|products|changed|improved|records|entries|units|machines|gam|gomariz|mercaeleva|manain)\b[\w.\[\]?]*\.length\b/iu.test(node.getText(source));
+const nearestScope = (node) => {
+  let current = node.parent;
+  while (current && !ts.isBlock(current) && !ts.isSourceFile(current)) current = current.parent;
+  return current;
+};
+const numericBindings = (source) => {
+  const constants = new Map();
+  visitNodes(source, (node) => {
+    if (!ts.isVariableDeclaration(node) || !ts.isIdentifier(node.name) || !node.initializer ||
+      !ts.isNumericLiteral(node.initializer) ||
+      !(ts.getCombinedNodeFlags(node) & ts.NodeFlags.Const)) return;
+    const scope = nearestScope(node);
+    if (scope) constants.set(`${scope.pos}:${node.name.text}`, node.getStart(source));
+  });
+  return constants;
+};
+const isNumber = (node, constants) => {
+  if (ts.isNumericLiteral(node)) return true;
+  if (!ts.isIdentifier(node)) return false;
+  let scope = nearestScope(node);
+  while (scope) {
+    const position = constants.get(`${scope.pos}:${node.text}`);
+    if (position !== undefined && position < node.getStart()) return true;
+    scope = nearestScope(scope);
+  }
+  return false;
+};
+const isEquality = (node, source) =>
+  ts.isCallExpression(node) && /^(?:(?:assert|expect)\.)?(?:equal|strictEqual|deepEqual|toEqual)$/u.test(node.expression.getText(source));
 
 const checkFrozen = (source, visit) => {
+  const constants = numericBindings(source);
+  const { liveValue } = createSourceTracing(source);
+  const liveCount = (node) => {
+    const current = ts.isParenthesizedExpression(node) ? node.expression : node;
+    return ts.isPropertyAccessExpression(current) && current.name.text === 'length' &&
+      liveValue(current.expression);
+  };
+  const frozen = (left, right) => isNumber(right, constants) &&
+    (liveCount(left) || isCount(left, source));
   visitNodes(source, (node) => {
-    if (ts.isCallExpression(node) && /^(?:(?:assert|expect)\.)?(?:equal|strictEqual|deepEqual|toEqual)$/u.test(node.expression.getText(source))) {
+    if (isEquality(node, source)) {
       const [left, right] = node.arguments;
-      if (left && right && ((isCount(left, source) && isNumber(right)) || (isCount(right, source) && isNumber(left)))) {
+      if (left && right && (frozen(left, right) || frozen(right, left))) {
         visit("T-FIXED-COHORT", node, "El test fija el tamaño de un catálogo operativo como resultado de dominio");
       }
+    }
+    if (ts.isCallExpression(node) && /^(?:assert|expect)\.(?:ok|equal|strictEqual)$/u.test(node.expression.getText(source))) {
+      visitNodes(node, (expression) => {
+        if (!ts.isBinaryExpression(expression) || ![
+          ts.SyntaxKind.EqualsEqualsToken, ts.SyntaxKind.EqualsEqualsEqualsToken
+        ].includes(expression.operatorToken.kind)) return;
+        if (frozen(expression.left, expression.right) || frozen(expression.right, expression.left)) {
+          visit("T-FIXED-COHORT", node, "El test exige un tamaño fijo de catálogo operativo mediante igualdad");
+        }
+      });
+    }
+  });
+};
+
+const checkVolatileExpectations = (source, visit) => {
+  const constants = numericBindings(source);
+  visitNodes(source, (node) => {
+    if (!isEquality(node, source)) return;
+    const [left, right] = node.arguments;
+    if (!left || !right) return;
+    if ((ts.isPropertyAccessExpression(left) && /\.(?:discoveredProductUrls|pendingCategory|withPrice)$/u.test(left.getText(source)) && isNumber(right, constants)) ||
+      (ts.isPropertyAccessExpression(right) && /\.(?:discoveredProductUrls|pendingCategory|withPrice)$/u.test(right.getText(source)) && isNumber(left, constants))) {
+      visit("T-FIXED-STOCK-FIELD", node, "El test congela un indicador variable de la fuente o la proyección");
+    }
+  });
+};
+
+const checkMandatoryReferences = (source, visit) => {
+  const foundReference = new Map();
+  const localArrays = new Set();
+  visitNodes(source, (node) => {
+    if (!ts.isVariableDeclaration(node) || !ts.isIdentifier(node.name) || !node.initializer) return;
+    const scope = nearestScope(node);
+    if (!scope) return;
+    if (ts.isArrayLiteralExpression(node.initializer)) {
+      localArrays.add(`${scope.pos}:${node.name.text}`);
+      return;
+    }
+    const expression = node.initializer.getText(source);
+    const receiver = /^([\w$]+)\.find\s*\(/u.exec(expression)?.[1];
+    if (receiver && localArrays.has(`${scope.pos}:${receiver}`)) return;
+    if (/\.find\s*\(/u.test(expression) &&
+      /\.reference\s*===?\s*["'`][A-Za-z0-9-]+["'`]/u.test(expression)) {
+      foundReference.set(`${scope.pos}:${node.name.text}`, node.getStart(source));
+    }
+  });
+  visitNodes(source, (node) => {
+    if (!ts.isCallExpression(node) || !/^(?:assert|expect)\.(?:ok|equal|strictEqual|deepEqual|notEqual|toEqual)$/u.test(node.expression.getText(source))) return;
+    const statement = node.getText(source);
+    const requiredReference = /\.(?:find|some)\s*\(/u.test(statement) &&
+      /\.reference\s*===?\s*["'`][A-Za-z0-9-]+["'`]/u.test(statement);
+    const requiredSet = /\b(?:reference|references)\b/iu.test(statement) &&
+      node.arguments.some((argument) => ts.isArrayLiteralExpression(argument) &&
+        argument.elements.length > 0 && argument.elements.every((element) => ts.isStringLiteralLike(element)));
+    const requiredLookup = /\.get\s*\(\s*["'`][A-Za-z0-9-]+["'`]\s*\)/u.test(statement);
+    const first = node.arguments[0];
+    let requiredVariable = false;
+    if (ts.isIdentifier(first) && /^(?:assert|expect)\.ok$/u.test(node.expression.getText(source))) {
+      let scope = nearestScope(node);
+      while (scope && !requiredVariable) {
+        const position = foundReference.get(`${scope.pos}:${first.text}`);
+        requiredVariable = position !== undefined && position < node.getStart(source);
+        scope = nearestScope(scope);
+      }
+    }
+    if (requiredReference || requiredSet || requiredLookup || requiredVariable) {
+      visit("T-FIXED-REFERENCE", node, "El test exige referencias concretas de un catálogo operativo");
     }
   });
 };
@@ -360,7 +489,7 @@ export const inspectTestArchitecture = (root) => {
     const source = project.files.get(path);
     if (source || !node) issues.push(findIssue(rule, path, source, node, detail, signature));
   };
-  const suites = [...project.files.keys()].filter(domainTest);
+  const suites = [...project.files.keys()].filter(monitoredTest);
   checkTestLayout(project, (rule, path, detail, node, signature) => push(rule, path, node, detail, signature));
   const helperEvidence = new Map();
   for (const [path, source] of project.files) {
@@ -376,13 +505,14 @@ export const inspectTestArchitecture = (root) => {
           rule: "T-PRODUCT-CATALOG", path, source: node.getText(source),
           responsibility: integration.responsibility
         });
-      } else {
+      } else if (domainTest(path)) {
         push("T-PRODUCT-CATALOG", path, node,
           "Una prueba de dominio obtiene su entrada de un catálogo productivo o fixture histórica completa");
       }
     }
     const seen = new Set([path]);
     let catalogDependent = direct.length > 0;
+    let liveDependent = liveSourceEvidence(source);
     const pending = [...project.dependencies.get(path) ?? []];
     while (pending.length > 0) {
       const current = pending.pop();
@@ -390,23 +520,22 @@ export const inspectTestArchitecture = (root) => {
       seen.add(current);
       if ((helperEvidence.get(current) ?? []).length > 0) {
         catalogDependent = true;
+        if (liveSourceEvidence(project.files.get(current))) liveDependent = true;
         if (isAccreditedTransitive(path, current, project, helperEvidence)) {
           exceptions.push({ rule: "T-TRANSITIVE-CATALOG", path, source: current });
-        } else {
+        } else if ((domainTest(path) &&
+          (transitiveExceptions.get(path) === current || !localTestSupport(current))) ||
+          liveSourceEvidence(project.files.get(current))) {
           push("T-TRANSITIVE-CATALOG", path, undefined,
             `La prueba de dominio obtiene catálogos históricos/operativos mediante ${current}`, `helper:${current}`);
         }
       }
       pending.push(...project.dependencies.get(current) ?? []);
     }
-    if (catalogDependent) {
-      checkFrozen(source, (rule, node, detail) => {
-        if (isAccreditedCohort(path, source, node)) {
-          exceptions.push({ rule, path, source: node.getText(source) });
-        } else {
-          push(rule, path, node, detail);
-        }
-      });
+    if (catalogDependent && liveDependent) {
+      checkFrozen(source, (rule, node, detail) => push(rule, path, node, detail));
+      checkVolatileExpectations(source, (rule, node, detail) => push(rule, path, node, detail));
+      checkMandatoryReferences(source, (rule, node, detail) => push(rule, path, node, detail));
       checkFrozenText(source, (rule, node, detail) => push(rule, path, node, detail));
     }
   }

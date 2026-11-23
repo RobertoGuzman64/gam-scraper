@@ -1,14 +1,15 @@
+import { accreditedSourceSamples } from "../../../../../domain-cases/accredited-source-samples.js";
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamExplicitHorizontalReachSpec } from "../../../../../../preparation/gam/technical/measurements/reach-evidence.js";
 import { recoverGamNonMarkingTyresSpec } from "../../../../../../preparation/gam/technical/mobility/non-marking-tyres-evidence.js";
 import { prepareSourceProduct } from "../../../../../../preparation/prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gam = accreditedGamRegressionSource();
+const gomariz = accreditedSourceSamples("gomariz-original");
 const lateralReach = [
   ["6172", 9.5], ["4660", 8.2], ["4717", 8.2],
   ["4725", 11], ["4662", 12], ["4651", 15.5]
@@ -16,7 +17,7 @@ const lateralReach = [
 const nonMarking = ["4731", "4733", "4735", "4740", "4744", "4746", "4772", "4808", "4809", "4810", "4743"] as const;
 
 const recordOf = (reference: string): ProductRecord => {
-  const record = gam.products.find((product) => product.reference === reference);
+  const record = gam.find((product) => product.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -127,14 +128,14 @@ test("neumáticos XCMG excluye variantes cruzadas, orugas, negaciones y valores 
 test("la cohorte se limita a las fichas acreditadas sin afectar a Gomariz", () => {
   const wantedReach: ReadonlySet<string> = new Set(lateralReach.map(([reference]) => reference));
   const wantedTyres = new Set(nonMarking);
-  const reached = gam.products.filter((record) => Object.keys(recoverGamExplicitHorizontalReachSpec(record))
+  const reached = gam.filter((record) => Object.keys(recoverGamExplicitHorizontalReachSpec(record))
     .length > Object.keys(record.specs ?? {}).length && record.reference !== null && wantedReach.has(record.reference));
   assert.equal(reached.length, wantedReach.size);
-  const newTyres = gam.products.filter((record) => Object.keys(recoverGamNonMarkingTyresSpec(record))
+  const newTyres = gam.filter((record) => Object.keys(recoverGamNonMarkingTyresSpec(record))
     .length > Object.keys(record.specs ?? {}).length).map((record) => record.reference);
   assert.deepEqual(new Set(newTyres), wantedTyres);
   assert.equal(newTyres.length, nonMarking.length);
-  for (const record of gomariz.products) {
+  for (const record of gomariz) {
     assert.deepEqual(recoverGamExplicitHorizontalReachSpec(record), record.specs ?? {});
     assert.deepEqual(recoverGamNonMarkingTyresSpec(record), record.specs ?? {});
   }

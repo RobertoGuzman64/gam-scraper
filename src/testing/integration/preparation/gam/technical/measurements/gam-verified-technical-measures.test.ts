@@ -1,15 +1,16 @@
+import { accreditedSourceSamples } from "../../../../../domain-cases/accredited-source-samples.js";
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamVerifiedTechnicalSpecs } from "../../../../../../preparation/gam/technical/measurements/verified-technical-measures.js";
 import { prepareSourceProduct } from "../../../../../../preparation/prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gam = accreditedGamRegressionSource();
+const gomariz = accreditedSourceSamples("gomariz-original");
 
 const byReference = (reference: string) => {
-  const record = gam.products.find((item) => item.reference === reference);
+  const record = gam.find((item) => item.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -83,7 +84,7 @@ test("GAM rechaza variantes, atribuciones incorrectas y medidas contradictorias"
 
 test("el lote aporta solo 18 fichas GAM con 18 especificaciones sin trasladarlas a Gomariz", () => {
   const expected = [...rotationCases, ...widthCases, ...fuelCases].map(([reference]) => reference);
-  const changes = gam.products.flatMap((record) => {
+  const changes = gam.flatMap((record) => {
     const next = recoverGamVerifiedTechnicalSpecs(record);
     const added = Object.keys(next).filter((key) => !Object.hasOwn(record.specs ?? {}, key));
     return added.length ? [{ reference: record.reference, added }] : [];
@@ -91,6 +92,6 @@ test("el lote aporta solo 18 fichas GAM con 18 especificaciones sin trasladarlas
   assert.deepEqual(new Set(changes.map(({ reference }) => reference)), new Set(expected));
   assert.equal(changes.length, 18);
   assert.ok(changes.every(({ reference, added }) => added.length === (reference === "6542" ? 2 : 1)));
-  assert.ok(gomariz.products.every((record) =>
+  assert.ok(gomariz.every((record) =>
     JSON.stringify(recoverGamVerifiedTechnicalSpecs(record)) === JSON.stringify(record.specs ?? {})));
 });

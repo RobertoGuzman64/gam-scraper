@@ -1,10 +1,10 @@
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamVerifiedUsedYearSpec } from "../../../../../../preparation/gam/technical/source/used-year-spec-evidence.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const gam = accreditedGamRegressionSource();
 const expected = [
   "6947", "6997", "6196", "6195", "6920", "6881", "6857", "6834", "6358", "6367",
   "6607", "6571", "6631", "6614", "6886", "6486", "6845", "6362", "6116",
@@ -17,14 +17,14 @@ const expected = [
 ];
 
 const source = (reference: string) => {
-  const record = gam.products.find((product) => product.reference === reference);
+  const record = gam.find((product) => product.reference === reference);
   assert.ok(record, reference);
   return record;
 };
 
 test("GAM: año verificable de unidades identificadas sin inferencias por modelo", () => {
   const recovered: string[] = [];
-  for (const record of gam.products) {
+  for (const record of gam) {
     const previous = normalizeSpecsObject(record.specs);
     const updated = recoverGamVerifiedUsedYearSpec(record);
     const normalized = normalizeSpecsObject(updated);

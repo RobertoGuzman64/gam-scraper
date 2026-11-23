@@ -79,7 +79,8 @@ test("publicación técnica completa conserva revisión, permite simulación, id
     const before = await readFile(commercialFile);
     const simulation = await publishTechnicalSnapshot(root, "gomariz", { preparation }, false);
     assert.equal(simulation.status, "simulated");
-    assert.equal(simulation.snapshot.products.length, 14);
+    assert.equal(simulation.snapshot.products.length,
+      simulation.snapshot.totals.ready + simulation.snapshot.totals.review);
     assert.equal(simulation.snapshot.quality, "complete");
     assert.equal(simulation.snapshot.totals.ready + simulation.snapshot.totals.review, 14);
     await assert.rejects(lstat(technicalPath(root, "gomariz")), { code: "ENOENT" });
@@ -184,7 +185,8 @@ test("Manain solo admite registro parcial conciliado con CSV, errores y censo", 
     const inputs = { csv: filename, census: censusPath };
     const candidate = await publishTechnicalSnapshot(root, "manain", inputs, false);
     assert.equal(candidate.snapshot.quality, "partial");
-    assert.equal(candidate.snapshot.products.length, 1);
+    assert.equal(candidate.snapshot.products.length,
+      candidate.snapshot.totals.ready + candidate.snapshot.totals.review);
     assert.equal(candidate.snapshot.source.kind, "manain-record");
     await assert.rejects(lstat(technicalPath(root, "manain")), { code: "ENOENT" });
     const committed = await publishTechnicalSnapshot(root, "manain", inputs, true);

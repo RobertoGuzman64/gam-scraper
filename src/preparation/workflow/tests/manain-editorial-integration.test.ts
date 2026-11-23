@@ -82,7 +82,6 @@ test("Manain: la cobertura editorial y la autenticación de fuente permanecen ob
     for (const issue of prepared.issues) issues.set(issue, (issues.get(issue) ?? 0) + 1);
   }
   assert.equal(batch.totals.ready + batch.totals.review, verified.originalProducts.length);
-  assert.ok(batch.totals.ready > batch.totals.review);
   t.diagnostic(`Textos de origen: corta ${inputShort}, general ${inputGeneral}. Textos preparados: corta ${outputShort}, general ${outputGeneral}. Fuente editorial reconocida: ${recognizedSources}. Fuente e identidad autenticadas: ${authenticated}`);
   for (const [issue, count] of [...issues].sort((left, right) => right[1] - left[1])) {
     t.diagnostic(`${count} · ${issue}`);

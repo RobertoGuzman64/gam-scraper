@@ -1,14 +1,14 @@
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import { reconcileGamHorometer } from "../../../../../../preparation/gam/technical/reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamExplicitLoadCapacitySpec } from "../../../../../../preparation/gam/technical/measurements/load-capacity-evidence.js";
 import { prepareSourceProduct } from "../../../../../../preparation/prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const gam = accreditedGamRegressionSource();
 const recordOf = (reference: string) => {
-  const record = gam.products.find((product) => product.reference === reference);
+  const record = gam.find((product) => product.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -75,7 +75,7 @@ test("GAM: capacidades de vehículos solo con evidencia e identidad inequívocas
 });
 
 test("GAM: cohorte neta y exclusiva de referencias acreditadas, sin cambios en otros proveedores", () => {
-  const gained = gam.products.filter((record) => !Object.hasOwn(record.specs ?? {}, "Capacidad de carga (kg)") &&
+  const gained = gam.filter((record) => !Object.hasOwn(record.specs ?? {}, "Capacidad de carga (kg)") &&
     Object.hasOwn(recoverGamExplicitLoadCapacitySpec(record), "Capacidad de carga (kg)"));
   assert.deepEqual(new Set(gained.map((record) => record.reference)), new Set(expectedCapacities.keys()));
   assert.equal(gained.length, expectedCapacities.size);

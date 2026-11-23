@@ -1,13 +1,14 @@
+import { accreditedSourceSamples } from "../../../../../domain-cases/accredited-source-samples.js";
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamLithiumBatteryType, recoverGamVerifiedMobilityBatteryType } from "../../../../../../preparation/gam/technical/energy/battery-chemistry-evidence.js";
 import { prepareSourceProduct } from "../../../../../../preparation/prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gam = accreditedGamRegressionSource();
+const gomariz = accreditedSourceSamples("gomariz-original");
 const references = [
   "6218", "6477", "6635", "6636", "6262", "6478", "6479", "6813",
   "4780", "4798", "6419", "6420", "6421", "6425", "6424",
@@ -15,7 +16,7 @@ const references = [
 ] as const;
 
 const recordOf = (reference: string): ProductRecord => {
-  const record = gam.products.find((product) => product.reference === reference);
+  const record = gam.find((product) => product.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -76,12 +77,12 @@ test("solo modifica la cohorte acreditada y no aplica recuperaciones GAM a Gomar
   const expected = new Set<string>([
     ...references, "6322", "6325", "6326", "6327", "2649", "2796", "2797", "3442"
   ]);
-  const improved = gam.products.filter((record) =>
+  const improved = gam.filter((record) =>
     Object.keys(recoverGamLithiumBatteryType(record)).length > Object.keys(record.specs ?? {}).length
   ).map((record) => record.reference);
   assert.equal(improved.length, expected.size);
   assert.deepEqual(new Set(improved), expected);
-  for (const record of gomariz.products) {
+  for (const record of gomariz) {
     assert.deepEqual(recoverGamLithiumBatteryType(record), record.specs ?? {});
   }
 });

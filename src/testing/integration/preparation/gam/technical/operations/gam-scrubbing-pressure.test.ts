@@ -1,13 +1,14 @@
+import { accreditedSourceSamples } from "../../../../../domain-cases/accredited-source-samples.js";
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamScrubbingPressureSpec } from "../../../../../../preparation/gam/technical/operations/scrubbing-pressure-evidence.js";
 import { prepareSourceProduct } from "../../../../../../preparation/prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gam = accreditedGamRegressionSource();
+const gomariz = accreditedSourceSamples("gomariz-original");
 const key = "Presión máxima de fregado (kg)";
 const expected = [
   ["3996", 25], ["3999", 19], ["4000", 35.4], ["4005", 22],
@@ -18,7 +19,7 @@ const expected = [
 ] as const;
 
 const recordOf = (reference: string): ProductRecord => {
-  const record = gam.products.find((product) => product.reference === reference);
+  const record = gam.find((product) => product.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -77,11 +78,11 @@ test("rechaza mutaciones de identidad, origen, condiciones y presiones contradic
 });
 
 test("se limita al lote acreditado y no modifica el proveedor Gomariz", () => {
-  const changed = gam.products.flatMap((record) => Object.hasOwn(recoverGamScrubbingPressureSpec(record), key)
+  const changed = gam.flatMap((record) => Object.hasOwn(recoverGamScrubbingPressureSpec(record), key)
     && !Object.hasOwn(record.specs ?? {}, key) ? [record.reference] : []);
   assert.deepEqual(new Set(changed), new Set(expected.map(([reference]) => reference)));
   assert.equal(changed.length, expected.length);
-  for (const record of gomariz.products) {
+  for (const record of gomariz) {
     assert.deepEqual(recoverGamScrubbingPressureSpec(record), record.specs ?? {});
   }
 });

@@ -9,10 +9,13 @@ import { editorialAuditFingerprints, loadEditorialAuditPopulation } from '../../
 import { prepareSourceProduct } from '../../../dist/preparation/prepare-product.js';
 import { prepareImportBatch } from '../../../dist/preparation/batch-identity.js';
 import { discoverAccreditedPublications, readAccreditedPublication } from '../../../dist/infrastructure/filesystem/catalog/accredited-publication.js';
+import { readPortableOriginalArtifacts } from '../../../dist/infrastructure/filesystem/catalog/portable-original.js';
+import { readActiveTechnicalPublication } from '../../../dist/infrastructure/filesystem/catalog/technical-publication.js';
+import { LEGACY_CAMPAIGN_PROVIDERS, CAMPAIGN_PROVIDERS } from '../../../dist/contracts/campaign-providers.js';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 
-const gam = JSON.parse(readFileSync(resolve(root, 'catalogs/providers/gam/original/scrape-gam-catalog.json'), 'utf8'));
+const gam = { products: JSON.parse(readFileSync(resolve(root, 'src/testing/domain-cases/data/gam-source-cases.json'), 'utf8')) };
 const record = (reference) => {
   const product = gam.products.find((item) => item.reference === reference);
   assert.ok(product, `Falta referencia histórica GAM ${reference}`);
@@ -46,11 +49,22 @@ test('las tres poblaciones quedan separadas por corte, fuente y proveedor', asyn
     ['originales_canonicos', 'publicacion_final', 'publicacion_tecnica']);
   const accredited = await Promise.all((await discoverAccreditedPublications(root)).map(readAccreditedPublication));
   const totalPublished = accredited.reduce((sum, item) => sum + item.products.length, 0);
-  assert.deepEqual(report.byStage.map((item) => item.products), [1751, totalPublished, 931]);
+  const originalCounts = await Promise.all(LEGACY_CAMPAIGN_PROVIDERS.map(async (providerId) => {
+    const { catalog } = await readPortableOriginalArtifacts(root, providerId);
+    return catalog.productCount;
+  }));
+  const technicalPublications = (await Promise.all(CAMPAIGN_PROVIDERS.map(async (providerId) =>
+    ({ providerId, active: await readActiveTechnicalPublication(root, providerId) })))).filter(({ active }) => active !== null);
+  const technicalTotal = technicalPublications.length > 0
+    ? technicalPublications.reduce((sum, { active }) => sum + active.snapshot.products.length, 0) : null;
+  assert.deepEqual(report.byStage.map((item) => item.products), [
+    originalCounts.reduce((sum, count) => sum + count, 0), totalPublished, technicalTotal
+  ]);
   assert.deepEqual(report.byStage[1].providers.map((item) => [item.providerId, item.products]),
     accredited.map((item) => [item.providerId, item.products.length]));
   assert.deepEqual(report.byStage.map((item) => item.providers.map((provider) => provider.providerId)),
-    [['gam', 'gomariz', 'mercaeleva'], accredited.map((item) => item.providerId), ['gomariz', 'manain']]);
+    [LEGACY_CAMPAIGN_PROVIDERS, accredited.map((item) => item.providerId),
+      technicalPublications.map((item) => item.providerId)]);
   for (const stage of report.byStage) {
     assert.equal(stage.products, stage.providers.reduce((sum, item) => sum + item.products, 0));
     assert.ok(stage.providers.every((item) => item.sourceCut && item.sourceSha256));
@@ -62,7 +76,12 @@ test('las tres poblaciones quedan separadas por corte, fuente y proveedor', asyn
   assert.equal(comparablePopulation(originals[0], finals[0]), false);
   assert.equal(comparablePopulation(originals[0], { ...originals[0], rulesSha256: 'otro-corte' }), false);
   assert.equal(comparablePopulation(originals[0], { ...originals[0], sourceCut: 'otro-corte' }), false);
-  assert.equal(report.byStage[2].providers.find((item) => item.providerId === 'manain').complete, false);
+  for (const { providerId, active } of technicalPublications) {
+    const item = report.byStage[2].providers.find((candidate) => candidate.providerId === providerId);
+    assert.ok(item);
+    assert.equal(item.products, active.snapshot.products.length);
+    assert.equal(item.complete, active.snapshot.quality === 'complete');
+  }
 });
 
 test('un original adulterado no se convierte en una población auditable', async () => {

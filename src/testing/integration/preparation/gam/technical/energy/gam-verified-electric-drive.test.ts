@@ -1,10 +1,10 @@
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamVerifiedElectricDriveSpec } from "../../../../../../preparation/gam/technical/energy/verified-electric-drive-evidence.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const gam = accreditedGamRegressionSource();
 const expected = [
   "6077", "6126", "6202", "6228", "6206", "6937", "6854", "6362",
   "6878", "6706", "5880", "6819", "6820", "6823", "6841", "5910",
@@ -16,14 +16,14 @@ const expected = [
 ];
 
 const source = (reference: string) => {
-  const record = gam.products.find((product) => product.reference === reference);
+  const record = gam.find((product) => product.reference === reference);
   assert.ok(record, reference);
   return record;
 };
 
 test("GAM: se acredita la motorización de unidades eléctricas con evidencia individual", () => {
   const changed: string[] = [];
-  for (const record of gam.products) {
+  for (const record of gam) {
     const before = normalizeSpecsObject(record.specs).normalized;
     const recovered = recoverGamVerifiedElectricDriveSpec(record);
     const after = normalizeSpecsObject(recovered).normalized;

@@ -5,7 +5,7 @@ import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/l
 import { resolveAttribute, resolveAttributeValue } from "../../../../../../preparation/shared/classification/mapping/attribute-mapping.js";
 import { productAttributes } from "../../../../../../preparation/product-attributes.js";
 import { prepareProduct } from "../../../../../../commercial/legacy-export/prepare-product.js";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceSamples } from "../../../../../domain-cases/accredited-source-samples.js";
 import { gamSourceYear } from "../../../../../../catalog/normalization/gam/year.js";
 
 const catalog = await loadImportCatalog();
@@ -167,7 +167,7 @@ test("preparación: no emite opciones incompatibles ni oculta atributos obligato
 
 
 test("GAM: las ocho capacidades 2000 kg no se exportan como años de fabricación", async () => {
-  const originals = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+  const originals = { products: accreditedSourceSamples("gam-original") };
   const references = ["6588", "6590", "2237", "2239", "912", "2238", "241", "242"];
   const year = attribute("Año de fabricación");
   assert.equal(year.id, 117);

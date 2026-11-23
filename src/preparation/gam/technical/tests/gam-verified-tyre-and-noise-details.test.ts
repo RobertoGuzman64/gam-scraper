@@ -1,14 +1,15 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
+import { accreditedGamRegressionSource } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamVerifiedTyreDimensions } from "../mobility/verified-tyre-dimensions-evidence.js";
 import { recoverGamVerifiedConditionalAcoustics } from "../safety/verified-conditional-acoustics-evidence.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gam = accreditedGamRegressionSource();
+const gomariz = accreditedSourceSamples("gomariz-original");
 const tyreReferences = [
   "2093", "2095", "2058", "2060", "2064",
   "5988", "5989", "5990", "5993", "5994", "5995", "5996", "5997"
@@ -16,7 +17,7 @@ const tyreReferences = [
 const soundReferences = ["6423", "4030", "4033", "3996", "4003", "4004", "4012"] as const;
 
 const recordOf = (reference: string): ProductRecord => {
-  const record = gam.products.find((candidate) => candidate.reference === reference);
+  const record = gam.find((candidate) => candidate.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -79,14 +80,14 @@ test("rechaza variantes ajenas, conflictos, especificaciones previas y datos con
 });
 
 test("la recuperación se limita a veinte identidades únicas de GAM", () => {
-  const changed = gam.products.flatMap((record) => {
+  const changed = gam.flatMap((record) => {
     const tyres = recoverGamVerifiedTyreDimensions(record);
     const sound = recoverGamVerifiedConditionalAcoustics({ ...record, specs: tyres });
     return Object.keys(sound).some((key) => !Object.hasOwn(record.specs ?? {}, key)) ? [record.reference] : [];
   });
   assert.deepEqual(new Set(changed), new Set([...tyreReferences, ...soundReferences]));
   assert.equal(changed.length, 20);
-  for (const record of gomariz.products) {
+  for (const record of gomariz) {
     assert.deepEqual(recoverGamVerifiedTyreDimensions(record), record.specs ?? {});
     assert.deepEqual(recoverGamVerifiedConditionalAcoustics(record), record.specs ?? {});
   }

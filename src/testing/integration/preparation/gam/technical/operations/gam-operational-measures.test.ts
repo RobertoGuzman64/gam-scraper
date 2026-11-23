@@ -1,14 +1,15 @@
+import { accreditedSourceSamples } from "../../../../../domain-cases/accredited-source-samples.js";
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamOperationalSpecs } from "../../../../../../preparation/gam/technical/measurements/operational-measures-evidence.js";
 import { prepareSourceProduct } from "../../../../../../preparation/prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gam = accreditedGamRegressionSource();
+const gomariz = accreditedSourceSamples("gomariz-original");
 const recordOf = (reference: string) => {
-  const record = gam.products.find((product) => product.reference === reference);
+  const record = gam.find((product) => product.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -67,7 +68,7 @@ test("GAM descarta identidades discordantes, velocidades contradictorias y varia
 });
 
 test("53 referencias GAM reciben velocidades acreditadas, sin herencias a Gomariz", () => {
-  const changes = gam.products.flatMap((record) => {
+  const changes = gam.flatMap((record) => {
     const current = recoverGamOperationalSpecs(record);
     const added = Object.keys(current).filter((key) => !Object.hasOwn(record.specs ?? {}, key));
     return added.length ? [{ reference: record.reference, added }] : [];
@@ -78,7 +79,7 @@ test("53 referencias GAM reciben velocidades acreditadas, sin herencias a Gomari
   assert.equal(changes.filter(({ added }) => added[0] === "Velocidad de desplazamiento con/sin carga (km/h)").length, 14);
   assert.equal(changes.filter(({ added }) => added[0] === "Velocidad limitada (km/h)").length, 5);
   assert.ok(changes.every(({ added }) => added.length === 1));
-  assert.ok(gomariz.products.every((record) =>
+  assert.ok(gomariz.every((record) =>
     JSON.stringify(recoverGamOperationalSpecs(record)) === JSON.stringify(record.specs ?? {})));
 });
 
@@ -132,7 +133,7 @@ test("rechaza velocidades alternativas, cargas específicas, modelos incompatibl
 test("las 15 velocidades aisladas se atribuyen a su ficha y no se duplican con las 19 medidas previas", () => {
   const expected = new Set([...isolatedCases.map(([reference]) => reference),
     ...["50", "2117", "52", "53", "2239", "2151", "4032", "4033", "5771"]]);
-  const newOnly = gam.products.flatMap((record) => {
+  const newOnly = gam.flatMap((record) => {
     const after = recoverGamOperationalSpecs(record);
     if (!Object.hasOwn(after, "Velocidad de desplazamiento (km/h)")) return [];
     if (record.categoryKey === "maquinaria") return [];

@@ -1,17 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { reconcileGamHorometer } from "../../../../../preparation/gam/technical/reconciliation/gam-horometer.js";
 import { reconcileGamSourceTechnicalUnits } from "../../../../../preparation/gam/technical/reconciliation/gam-source-technical-units.js";
 import { prepareSourceProduct } from "../../../../../preparation/prepare-product.js";
 import type { DescriptionCoverageInput } from "../../../../../catalog/diagnostics/description-coverage.js";
 import { analyzeSpecificationCoverage } from "../../../../../catalog/diagnostics/specification-coverage.js";
+import { accreditedGamGallerySource, accreditedSourceSamples } from "../../../../domain-cases/accredited-source-samples.js";
 
-const [gam, mercaeleva] = await Promise.all([
-  readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json"),
-  readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json")
-]);
+const gam = { products: accreditedGamGallerySource() };
+const mercaeleva = { products: accreditedSourceSamples("mercaeleva-original") };
 
 const sourceRecord = (reference: string): ProductRecord => {
   const catalog = reference.startsWith("M") ? mercaeleva : gam;

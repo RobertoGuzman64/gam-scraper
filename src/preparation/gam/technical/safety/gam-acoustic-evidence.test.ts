@@ -1,12 +1,13 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
+import { accreditedGamRegressionSource } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamAcousticSpec } from "./acoustic-evidence.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gam = accreditedGamRegressionSource();
+const gomariz = accreditedSourceSamples("gomariz-original");
 
 const cases = [
   ["4019", "75 dBA"], ["4020", "75 dBA"], ["4022", "84 dBA"],
@@ -20,7 +21,7 @@ const cases = [
 ] as const;
 
 const byReference = (reference: string) => {
-  const record = gam.products.find((candidate) => candidate.reference === reference);
+  const record = gam.find((candidate) => candidate.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -68,7 +69,7 @@ test("rechaza identidades alteradas, lecturas contradictorias y claves acústica
 });
 
 test("las 22 fichas únicas pertenecen a GAM y Gomariz queda intacto", () => {
-  const changed = gam.products.flatMap((record) => {
+  const changed = gam.flatMap((record) => {
     const next = recoverGamAcousticSpec(record);
     const added = Object.keys(next).filter((key) => !Object.hasOwn(record.specs ?? {}, key));
     return added.length ? [{ reference: record.reference, added }] : [];
@@ -76,6 +77,6 @@ test("las 22 fichas únicas pertenecen a GAM y Gomariz queda intacto", () => {
   assert.deepEqual(new Set(changed.map(({ reference }) => reference)), new Set(cases.map(([reference]) => reference)));
   assert.equal(changed.length, 22);
   assert.ok(changed.every(({ added }) => added.length === 1 && added[0] === "Nivel sonoro"));
-  assert.ok(gomariz.products.every((record) =>
+  assert.ok(gomariz.every((record) =>
     JSON.stringify(recoverGamAcousticSpec(record)) === JSON.stringify(record.specs ?? {})));
 });

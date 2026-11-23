@@ -1,12 +1,13 @@
+import { accreditedSourceSamples } from "../../../../../domain-cases/accredited-source-samples.js";
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamCleaningProductivitySpec } from "../../../../../../preparation/gam/technical/operations/cleaning-productivity-evidence.js";
 import { prepareSourceProduct } from "../../../../../../preparation/prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gam = accreditedGamRegressionSource();
+const gomariz = accreditedSourceSamples("gomariz-original");
 const key = "Rendimiento de limpieza (m²/h)";
 
 const expected = [
@@ -18,7 +19,7 @@ const expected = [
 ] as const;
 
 const recordOf = (reference: string) => {
-  const record = gam.products.find((candidate) => candidate.reference === reference);
+  const record = gam.find((candidate) => candidate.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -98,14 +99,14 @@ test("rechaza identidades cruzadas, lecturas distintas, unidades dudosas y métr
 });
 
 test("solo se incorporan las 19 fichas verificadas y Gomariz no cambia", () => {
-  const changed = gam.products.flatMap((record) => {
+  const changed = gam.flatMap((record) => {
     const after = recoverGamCleaningProductivitySpec(record);
     return Object.hasOwn(after, key) && !Object.hasOwn(record.specs ?? {}, key)
       ? [record.reference] : [];
   });
   assert.deepEqual(new Set(changed), new Set(expected.map(([reference]) => reference)));
   assert.equal(changed.length, expected.length);
-  for (const record of gomariz.products) {
+  for (const record of gomariz) {
     assert.deepEqual(recoverGamCleaningProductivitySpec(record), record.specs ?? {});
   }
 });

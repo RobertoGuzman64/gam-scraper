@@ -1,13 +1,14 @@
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../../catalog/normalization/normalize-specs.js";
+import { normalizeTechnicalPresentation } from "../../../../../../preparation/shared/technical/reconciliation/technical-presentation.js";
 import { recoverGamAutonomySpec } from "../../../../../../preparation/gam/technical/energy/autonomy-evidence.js";
 import { prepareSourceProduct } from "../../../../../../preparation/prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const catalog = accreditedGamRegressionSource();
 const recordOf = (reference: string) => {
-  const record = catalog.products.find((product) => product.reference === reference);
+  const record = catalog.find((product) => product.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -28,12 +29,12 @@ test("recupera solo la autonomía explícita y atribuible al modelo, manteniendo
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.product.spec[key], `${String(value).replace(".", ",")} ${unit}`, reference);
     assert.equal(normalizeSpecsObject({ [key]: `${String(value).replace(".", ",")} ${unit}` }).normalized[key], value, reference);
-    for (const [name, sourceValue] of Object.entries(record.specs ?? {})) {
+    for (const [name, sourceValue] of Object.entries(normalizeTechnicalPresentation(record.specs ?? {}))) {
       assert.deepEqual(prepared.product.spec[name], sourceValue, `${reference}: ${name}`);
     }
     assert.deepEqual(record, original);
   }
-  const changed = catalog.products.filter((record) => {
+  const changed = catalog.filter((record) => {
     const before = record.specs ?? {};
     const after = recoverGamAutonomySpec(record);
     return Object.keys(after).some((key) => !Object.hasOwn(before, key));

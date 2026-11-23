@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { prepareVerifiedManainRecord } from "../../preparation/workflow/prepare.js";
 
-const fixture = join(process.cwd(), "catalogs", "providers", "manain");
+const fixture = join(process.cwd(), "src", "testing", "fixtures", "manain", "regression-384");
 
 export const createManainSelectionWorkspace = async (): Promise<{ root: string; source: string; preparation: string }> => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-manain-selection-"));

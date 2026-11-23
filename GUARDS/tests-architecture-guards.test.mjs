@@ -354,33 +354,43 @@ test("identifica hashes literales de salidas editoriales atadas a catálogo, per
   assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FROZEN-EDITORIAL-HASH"));
 });
 
-test("los recuentos acreditados se exceptúan por ruta, prueba y afirmación exacta", (t) => {
+test("ningún recuento del catálogo vivo conserva una excepción por nombre de prueba", (t) => {
   const { root, write } = fixture(t);
+  const path = "src/catalog/normalization/gam/tests/gallery.test.ts";
+  write(path,
+    "import assert from 'node:assert/strict'; import test from 'node:test'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const source = readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json'); test('GAM: conserva las vistas del baño unitario y excluye la portada del módulo doble', () => { const original = { length: 7 }; assert.equal(original.length, 7); });");
+  const result = inspectTestArchitecture(root);
+  assert.ok(rules(result.findings).has("T-FIXED-COHORT"));
+  assert.equal(result.exceptions.filter((item) => item.rule === "T-FIXED-COHORT").length, 0);
+});
+
+test("las suites GAM desacopladas no pueden volver a un catálogo operativo mediante su helper", (t) => {
+  const { root, write } = fixture(t);
+  const helper = "src/testing/domain-cases/accredited-source-samples.ts";
   const path = "src/preparation/gam/quality/tests/gam-verified-operational-safety.test.ts";
-  const original = "import assert from 'node:assert/strict'; import test from 'node:test'; const source = 'catalogs/providers/gam/original/scrape-gam-catalog.json'; test('recupera veinte prestaciones de seguridad de fuentes individuales conservando las especificaciones anteriores', () => { const changed = { length: 20 }; assert.equal(changed.length, 20); });";
-  write(path, original);
-  const accredited = inspectTestArchitecture(root);
-  assert.equal(accredited.findings.filter((finding) => finding.rule === "T-FIXED-COHORT").length, 0);
-  assert.equal(accredited.exceptions.filter((item) => item.rule === "T-FIXED-COHORT").length, 1);
-  assert.ok(rules(accredited.findings).has("T-PRODUCT-CATALOG"));
-  write(path, original.replace("assert.equal(changed.length, 20)", "assert.equal(changed.length, 21)"));
-  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FIXED-COHORT"));
-  write(path, original.replace("recupera veinte prestaciones de seguridad de fuentes individuales conservando las especificaciones anteriores",
-    "otro caso con el mismo recuento"));
-  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FIXED-COHORT"));
+  write(helper,
+    "import { readFileSync } from 'node:fs'; export const accreditedGamRegressionSource = () => JSON.parse(readFileSync('src/testing/domain-cases/data/gam-original.json', 'utf8')); ");
+  write(path,
+    "import { accreditedGamRegressionSource } from '../../../../testing/domain-cases/accredited-source-samples.js'; const records = accreditedGamRegressionSource(); export const total = records.length;");
+  assert.deepEqual(inspectTestArchitecture(root).findings, []);
+  write(helper,
+    "import { readCanonicalCatalog } from '../../infrastructure/filesystem/catalog/canonical-catalog.js'; export const accreditedGamRegressionSource = () => readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json');");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
 });
 
 test("la excepción de fixture transitiva no cubre fuentes o consumidores nuevos", (t) => {
   const { root, write } = fixture(t);
   const path = "src/preparation/gam/classification/tests/gam-verified-category-equivalences.test.ts";
   const fixturePath = "src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts";
-  const accreditedFixture = "import { readCanonicalCatalog } from '../../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; export const load = () => readCanonicalCatalog('src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json');";
+  const accreditedFixture = readFileSync(new URL("../src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts", import.meta.url), "utf8");
   write(fixturePath, accreditedFixture);
   write(path,
     "import { load } from '../../technical/tests/support/gam-source-category-fixture.js'; export const source = load; ");
   const accredited = inspectTestArchitecture(root);
   assert.equal(accredited.findings.filter((finding) => finding.rule === "T-TRANSITIVE-CATALOG").length, 0);
   assert.equal(accredited.exceptions.filter((item) => item.rule === "T-TRANSITIVE-CATALOG").length, 1);
+  write(fixturePath, accreditedFixture + "\nexport const extra = 1;");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
   write(fixturePath, accreditedFixture + " export const extra = readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json');");
   assert.equal(inspectTestArchitecture(root).findings.filter((finding) => finding.rule === "T-TRANSITIVE-CATALOG").length, 1);
   write(fixturePath, accreditedFixture);
@@ -391,16 +401,20 @@ test("la excepción de fixture transitiva no cubre fuentes o consumidores nuevos
   assert.equal(inspectTestArchitecture(root).findings.filter((finding) => finding.rule === "T-TRANSITIVE-CATALOG").length, 1);
 });
 
-test("la excepción transitiva Mercaeleva se revoca si el builder incorpora otra fuente", (t) => {
+test("el builder histórico Mercaeleva no puede volver a consumir originales vivos", (t) => {
   const { root, write } = fixture(t);
   const helper = "src/testing/builders/mercaeleva-source-fixture.ts";
   const path = "src/preparation/mercaeleva/technical/tests/specifications/mercaeleva-documented-platform-technical-specs.test.ts";
-  const source = 'import { join } from "node:path"; import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js"; export const read = () => { const folder = join("catalogs", "providers", "mercaeleva", "original"); const entries = []; if (entries.length !== 1) throw Error(); return readCanonicalCatalog(join(folder, "catalog.json")); };';
+  const source = readFileSync(new URL("../src/testing/builders/mercaeleva-source-fixture.ts", import.meta.url), "utf8");
   write(helper, source);
-  write(path, "import { read } from '../../../../../testing/builders/mercaeleva-source-fixture.js'; export const load = read;");
+  write(path, "import { readMercaelevaSource } from '../../../../../testing/builders/mercaeleva-source-fixture.js'; export const load = readMercaelevaSource;");
   const accredited = inspectTestArchitecture(root);
   assert.equal(accredited.exceptions.filter((item) => item.rule === "T-TRANSITIVE-CATALOG").length, 1);
   assert.ok(!rules(accredited.findings).has("T-TRANSITIVE-CATALOG"));
+  write(helper, source + "\nexport const extra = 1;");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
+  write(helper, source.replace("src/testing/fixtures/mercaeleva/regression-221/mercaeleva-completa-20261029-234332-catalog.json", "catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json"));
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
   write(helper, source + " export const extra = readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json');");
   assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
 });
@@ -447,34 +461,24 @@ const guardedRepositoryRoot = fileURLToPath(new URL("../", import.meta.url));
 const accreditedCatalogIntegrationPaths = [
   "src/catalog/normalization/gam/tests/gallery.test.ts",
   "src/preparation/gam/identity/tests/gam-identity-variants.test.ts",
-  "src/preparation/gam/quality/tests/gam-verified-operational-safety.test.ts",
-  "src/preparation/gam/technical/measurements/gam-clearance-platform.test.ts",
-  "src/preparation/gam/technical/measurements/gam-qualified-geometry-evidence.test.ts",
-  "src/preparation/gam/technical/mobility/gam-traction-braking-evidence.test.ts",
-  "src/preparation/gam/technical/mobility/gam-verified-drivetrain-brakes.test.ts",
-  "src/preparation/gam/technical/operations/gam-cleaning-tank-evidence.test.ts",
-  "src/preparation/gam/technical/operations/gam-unit-performance-specs.test.ts",
-  "src/preparation/gam/technical/safety/gam-acoustic-evidence.test.ts",
-  "src/preparation/gam/technical/safety/gam-verified-operator-controls.test.ts",
-  "src/preparation/gam/technical/tests/gam-verified-tyre-and-noise-details.test.ts",
   "src/preparation/shared/quality/tests/source-semantic-quality.test.ts",
   "src/preparation/tests/catalog-publication-consistency.test.ts"
 ];
 
-test("las 21 lecturas protegidas son contratos de integración exactos y no infracciones", (t) => {
+test("las lecturas protegidas son contratos de integración exactos y no infracciones", (t) => {
   const { root, write } = fixture(t);
   for (const path of accreditedCatalogIntegrationPaths) {
     write(path, readFileSync(join(guardedRepositoryRoot, path), "utf8"));
   }
   const result = inspectTestArchitecture(root);
   assert.deepEqual(result.findings, []);
-  assert.equal(result.integrations.length, 21);
-  assert.equal(new Set(result.integrations.map((item) => item.path)).size, 14);
+  assert.equal(result.integrations.length, 6);
+  assert.equal(new Set(result.integrations.map((item) => item.path)).size, 4);
 });
 
 test("la acreditación exacta se revoca ante cualquier cambio y no acepta nuevas lecturas", (t) => {
   const { root, write } = fixture(t);
-  const path = "src/preparation/gam/quality/tests/gam-verified-operational-safety.test.ts";
+  const path = "src/catalog/normalization/gam/tests/gallery.test.ts";
   const original = readFileSync(join(guardedRepositoryRoot, path), "utf8");
   write(path, original);
   assert.equal(inspectTestArchitecture(root).integrations.length, 1);
@@ -650,4 +654,200 @@ test("rechaza nombres de suites que el runner no descubre en src", (t) => {
   write("src/catalog/diagnostics/tests/not-discovered.spec.ts", "export const valid = true;\n");
   write("src/preparation/shared/editorial/tests/not-discovered.test.mts", "export const valid = true;\n");
   assert.equal(inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-TEST-DISCOVERY").length, 2);
+});
+
+test("detecta recuentos fijos del catálogo operativo desde integración y scripts", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/integration/preparation/tests/live-count.test.ts",
+    "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const gam = await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json'); assert.equal(gam.products.length, 976);\n");
+  write("scripts/inspection/tests/live-count.test.mjs",
+    "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../src/infrastructure/filesystem/catalog/canonical-catalog.js'; const gam = await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json'); assert.equal(gam.products.length, 976);\n");
+  const result = inspectTestArchitecture(root);
+  assert.equal(result.findings.filter((item) => item.rule === "T-FIXED-COHORT").length, 2);
+});
+
+test("impide leer la fuente viva de Manain en un test de dominio", (t) => {
+  const { root, write } = fixture(t);
+  write("src/preparation/manain/editorial/tests/live-record.test.ts",
+    "import assert from 'node:assert/strict'; import { readVerifiedManainRecordSource } from '../../../../infrastructure/filesystem/catalog/manain-record-source.js'; const records = (await readVerifiedManainRecordSource(process.cwd())).originalProducts; assert.equal(records.length, 384);\n");
+  const found = rules(inspectTestArchitecture(root).findings);
+  assert.ok(found.has("T-PRODUCT-CATALOG"));
+  assert.ok(found.has("T-FIXED-COHORT"));
+});
+
+test("impide que un helper de catálogo vivo esconda recuentos a consumidores nuevos", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/builders/live-catalog-fixture.ts",
+    "import { readCanonicalCatalog } from '../../infrastructure/filesystem/catalog/canonical-catalog.js'; export const load = () => readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json');\n");
+  write("src/testing/integration/catalog/tests/live-helper.test.ts",
+    "import assert from 'node:assert/strict'; import { load } from '../../../builders/live-catalog-fixture.js'; const gam = await load(); assert.equal(gam.products.length, 983);\n");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FIXED-COHORT"));
+});
+
+test("prohíbe congelar indicadores de procedencia y categorías en un corte vivo", (t) => {
+  const { root, write } = fixture(t);
+  write("src/preparation/workflow/tests/live-source.test.ts",
+    "import assert from 'node:assert/strict'; import { readVerifiedManainRecordSource } from '../../../infrastructure/filesystem/catalog/manain-record-source.js'; const records = await readVerifiedManainRecordSource(process.cwd()); assert.equal(records.snapshot.source.discoveredProductUrls, 387); assert.equal(records.snapshot.totals.pendingCategory, 1);\n");
+  assert.equal(inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-FIXED-STOCK-FIELD").length, 2);
+});
+
+test("no confunde poblaciones sintéticas o históricas con inventario vivo", (t) => {
+  const { root, write } = fixture(t);
+  write("src/preparation/shared/editorial/tests/stable-cases.test.ts",
+    "import assert from 'node:assert/strict'; const products = [{reference:'A'}, {reference:'B'}]; assert.equal(products.length, 2);\n");
+  write("src/testing/integration/catalog/tests/fixed-history.test.ts",
+    "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const snapshot = await readCanonicalCatalog('src/testing/fixtures/gam/regression-2026/catalog.json'); assert.equal(snapshot.products.length, 143);\n");
+  write("src/testing/integration/preparation/tests/dynamic-live.test.ts",
+    "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const catalog = await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json'); const prepared = catalog.products.map(item => item.reference); assert.equal(prepared.length, catalog.products.length);\n");
+  assert.deepEqual(inspectTestArchitecture(root).findings, []);
+});
+
+test("prohíbe exigir referencias concretas desde el inventario vivo", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/integration/preparation/tests/pinned-live.test.ts",
+    "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const records = (await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json')).products; assert.ok(records.find(record => record.reference === 'MAN1188'));\n");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FIXED-REFERENCE"));
+});
+
+test("prohíbe listas de referencias obligatorias en la exportación de stock vivo", (t) => {
+  const { root, write } = fixture(t);
+  write("src/commercial/legacy-export/tests/pinned-catalog.test.ts",
+    "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const catalog = await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json'); assert.deepEqual(catalog.products.map(item => item.reference), ['MAN169', 'MAN671']);\n");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FIXED-REFERENCE"));
+});
+
+
+test("impide recuentos de catálogo vivo ocultos en constantes", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/integration/catalog/tests/constant-count.test.ts",
+    "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const original = await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json'); const total = 976; assert.equal(original.products.length, total);\n");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FIXED-COHORT"));
+});
+
+test("impide congelar indicadores de stock vivo mediante constantes", (t) => {
+  const { root, write } = fixture(t);
+  write("src/preparation/workflow/tests/fixed-fields.test.ts",
+    "import assert from 'node:assert/strict'; import { readVerifiedManainRecordSource } from '../../../infrastructure/filesystem/catalog/manain-record-source.js'; const source = await readVerifiedManainRecordSource(process.cwd()); const fixed = 387; assert.equal(source.snapshot.source.discoveredProductUrls, fixed);\n");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FIXED-STOCK-FIELD"));
+});
+
+test("impide referencias obligatorias escondidas tras variables de selección", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/integration/catalog/tests/live-reference.test.ts",
+    "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const source = await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json'); const required = source.products.find((item) => item.reference === '1234'); assert.ok(required);\n");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FIXED-REFERENCE"));
+});
+
+test("no confunde variables locales de otros tests con referencias del catálogo vivo", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/integration/catalog/tests/independent-synthetic.test.ts",
+    "import assert from 'node:assert/strict'; import test from 'node:test'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; test('catálogo vivo', async () => { const source = await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json'); assert.ok(source.products.length > 0); }); test('fixture sintética', () => { const source = [{ reference: '1234' }]; const required = source.find((item) => item.reference === '1234'); assert.ok(required); });\n");
+  assert.ok(!rules(inspectTestArchitecture(root).findings).has("T-FIXED-REFERENCE"));
+});
+
+test("detecta lectura viva detrás de helpers locales, sin prohibir fuentes históricas", (t) => {
+  const { root, write } = fixture(t);
+  const helper = "src/catalog/coverage/tests/source-helper.ts";
+  const consumer = "src/catalog/coverage/tests/coverage.test.ts";
+  write(helper,
+    "import { readCanonicalCatalog } from '../../../infrastructure/filesystem/catalog/canonical-catalog.js'; export const read = () => readCanonicalCatalog('src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json');\n");
+  write(consumer, "import { read } from './source-helper.js'; export const source = read;\n");
+  assert.ok(!rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
+  write(helper,
+    "import { readCanonicalCatalog } from '../../../infrastructure/filesystem/catalog/canonical-catalog.js'; export const read = () => readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json');\n");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
+});
+
+test("el comando del guard falla de verdad si se introduce un test acoplado", (t) => {
+  const { root, write } = fixture(t);
+  const command = fileURLToPath(new URL("./tests-domain-tests-guard.mjs", import.meta.url));
+  write("src/testing/integration/catalog/tests/live-count.test.ts",
+    "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const source = await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json'); assert.equal(source.products.length, 384);\n");
+  const failed = spawnSync(process.execPath, [command, "--root", root], { encoding: "utf8" });
+  assert.equal(failed.status, 1, failed.stderr);
+  assert.match(failed.stdout, /T-FIXED-COHORT/u);
+  write("src/testing/integration/catalog/tests/live-count.test.ts",
+    "import assert from 'node:assert/strict'; const fixture = { products: [1, 2] }; assert.equal(fixture.products.length, 2);\n");
+  const passed = spawnSync(process.execPath, [command, "--root", root], { encoding: "utf8" });
+  assert.equal(passed.status, 0, passed.stderr + passed.stdout);
+});
+
+test("no confunde una constante de otro test con el censo operativo", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/integration/catalog/tests/independent-amounts.test.ts",
+    "import assert from 'node:assert/strict'; import test from 'node:test'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; test('sintético', () => { const total = 384; assert.equal([1, 2].length, 2); }); test('censal', async () => { const source = await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json'); const total = source.products.length; assert.equal(source.products.length, total); });\n");
+  assert.ok(!rules(inspectTestArchitecture(root).findings).has("T-FIXED-COHORT"));
+});
+
+test("no considera inmutable una variable reasignable de un censo dinámico", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/integration/catalog/tests/mutable-count.test.ts",
+    "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const source = await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json'); let count = 1; count = source.products.length; assert.equal(source.products.length, count);\n");
+  assert.ok(!rules(inspectTestArchitecture(root).findings).has("T-FIXED-COHORT"));
+});
+
+test("detecta rutas de originales vivos declaradas mediante aliases o segmentos relativos", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/integration/catalog/tests/live-alias.test.ts",
+    "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const path = 'catalogs/providers/gam/original/scrape-gam-catalog.json'; const inventory = await readCanonicalCatalog(path); assert.equal(inventory.products.length, 983);\n");
+  write("src/testing/integration/preparation/tests/live-join.test.ts",
+    "import assert from 'node:assert/strict'; import { join } from 'node:path'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const path = join('catalogs','providers','gam','original','scrape-gam-catalog.json'); const inventory = await readCanonicalCatalog(path); assert.equal(inventory.products.length, 976);\n");
+  const findings = inspectTestArchitecture(root).findings.filter((entry) => entry.rule === "T-FIXED-COHORT");
+  assert.equal(findings.length, 2);
+});
+
+test("detecta recuentos de aliases de inventario y aserciones de igualdad", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/integration/catalog/tests/live-records.test.ts",
+    "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const dataset = (await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json')).products; assert.equal(dataset.length, 983); assert.ok(dataset.length === 983);\n");
+  const findings = inspectTestArchitecture(root).findings.filter((entry) => entry.rule === "T-FIXED-COHORT");
+  assert.equal(findings.length, 2);
+});
+
+test("detecta helpers vivos con rutas segmentadas consumidos desde integración", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/builders/operational-source.ts",
+    "import { join } from 'node:path'; import { readCanonicalCatalog } from '../../infrastructure/filesystem/catalog/canonical-catalog.js'; const source = join('catalogs','providers','gam','original','scrape-gam-catalog.json'); export const load = () => readCanonicalCatalog(source);\n");
+  write("src/testing/integration/catalog/tests/live-helper.test.ts",
+    "import assert from 'node:assert/strict'; import { load } from '../../../builders/operational-source.js'; const inventory = await load(); assert.equal(inventory.products.length, 983);\n");
+  const findings = inspectTestArchitecture(root).findings;
+  assert.ok(findings.some((item) => item.rule === "T-TRANSITIVE-CATALOG"));
+  assert.ok(findings.some((item) => item.rule === "T-FIXED-COHORT"));
+});
+
+test("detecta raíces operativas heredadas de process.cwd sin bloquear raíces temporales", (t) => {
+  const { root, write } = fixture(t);
+  const suite = "src/testing/integration/preparation/tests/catalog-root.test.ts";
+  write(suite,
+    "import assert from 'node:assert/strict'; import { join } from 'node:path'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const root = process.cwd(); const source = join(root, 'catalogs', 'providers', 'gam', 'original', 'scrape-gam-catalog.json'); const records = (await readCanonicalCatalog(source)).products; assert.equal(records.length, 976);\n");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FIXED-COHORT"));
+  write(suite,
+    "import assert from 'node:assert/strict'; import { join } from 'node:path'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const verify = async (root: string) => { const source = join(root, 'catalogs', 'providers', 'gam', 'original', 'scrape-gam-catalog.json'); const records = (await readCanonicalCatalog(source)).products; assert.equal(records.length, 2); }; export { verify };\n");
+  assert.deepEqual(inspectTestArchitecture(root).findings, []);
+});
+
+test("permite contar datos sintéticos aunque otra prueba lea un original vivo", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/integration/catalog/tests/isolated-dataset.test.ts",
+    "import assert from 'node:assert/strict'; import test from 'node:test'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; test('censo', async () => { const source = await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json'); assert.ok(source.products.every(item => !!item.reference)); }); test('sintético', () => { const dataset = [{reference:'A'}]; assert.equal(dataset.length, 1); });\n");
+  assert.deepEqual(inspectTestArchitecture(root).findings, []);
+});
+
+test("detecta una ruta viva compuesta en dos pasos y propagada por un builder", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/builders/source-composed.ts",
+    "import { join } from 'node:path'; import { readCanonicalCatalog } from '../../infrastructure/filesystem/catalog/canonical-catalog.js'; const base = join('catalogs', 'providers'); const source = join(base, 'gam', 'original', 'scrape-gam-catalog.json'); export const load = () => readCanonicalCatalog(source);\n");
+  write("src/testing/integration/catalog/tests/source-composed.test.ts",
+    "import assert from 'node:assert/strict'; import { load } from '../../../builders/source-composed.js'; const inventory = await load(); assert.equal(inventory.products.length, 976);\n");
+  const findings = inspectTestArchitecture(root).findings;
+  assert.ok(findings.some((item) => item.rule === "T-TRANSITIVE-CATALOG"));
+});
+
+test("acepta la raíz temporal de un builder de publicaciones sin acreditación del stock vivo", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/builders/temporary-publications.ts",
+    "import { readFileSync } from 'node:fs'; import { join } from 'node:path'; export const read = (root: string) => readFileSync(join(root, 'catalogs', 'providers', 'gam', 'publications', 'active.json'), 'utf8');\n");
+  write("src/testing/integration/catalog/tests/temporary-publications.test.ts",
+    "import assert from 'node:assert/strict'; import { read } from '../../../builders/temporary-publications.js'; const verify = (workspace: string) => { const data = read(workspace); assert.ok(data.length >= 0); }; export { verify };\n");
+  assert.deepEqual(inspectTestArchitecture(root).findings, []);
 });

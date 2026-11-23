@@ -1,7 +1,5 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolve } from "node:path";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { prepareImportBatch } from "../../preparation/prepare.js";
 import { prepareSourceProduct } from "../../preparation/prepare-product.js";
 import { differenceBetween } from "../active-publication.js";
@@ -10,11 +8,11 @@ import { reconcileRemovedSpecifications } from "../specification-reconciliations
 import { classifyQualityIssue } from "../../preparation/offline-diagnostics.js";
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 import { accreditedReconciliationCases } from "../../testing/fixtures/gam/specification-reconciliations.js";
+import { accreditedGamGallerySource } from "../../testing/domain-cases/accredited-source-samples.js";
 import { recoverGamDocumentedWarehouseCleaningAndLiftingSpecs } from "../../preparation/gam/technical/models/documented-warehouse-cleaning-and-lifting-specs.js";
 import { reconcileGamForeignCategoryTitle } from "../../preparation/gam/identity/reconciliation/gam-foreign-category-title.js";
 
-const root = resolve(process.cwd());
-const source = await readCanonicalCatalog(resolve(root, "catalogs/providers/gam/original/scrape-gam-catalog.json"));
+const source = { products: accreditedGamGallerySource() };
 const prepared = prepareImportBatch(source.products);
 const reconciliationProduct = (
   item: (typeof accreditedReconciliationCases)[number], spec: ImportCandidate["spec"]

@@ -1,15 +1,16 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
+import { accreditedGamRegressionSource } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { reconcileGamHorometer } from "../reconciliation/gam-horometer.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamClearanceAndPlatform } from "./clearance-platform-evidence.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gam = accreditedGamRegressionSource();
+const gomariz = accreditedSourceSamples("gomariz-original");
 const recordOf = (reference: string) => {
-  const record = gam.products.find((item) => item.reference === reference);
+  const record = gam.find((item) => item.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -99,7 +100,7 @@ test("no se recuperan valores si existe una atribución dudosa, alternativa o co
 
 test("solo las referencias acreditadas reciben medidas nuevas y Gomariz queda intacto", () => {
   const expected = new Set([...clearanceCases, ...platformCases].map(([reference]) => reference));
-  const changed = gam.products.flatMap((record) => {
+  const changed = gam.flatMap((record) => {
     const next = recoverGamClearanceAndPlatform(record);
     const added = Object.keys(next).filter((key) => !Object.hasOwn(record.specs ?? {}, key));
     return added.length ? [{ reference: record.reference, added }] : [];
@@ -108,6 +109,6 @@ test("solo las referencias acreditadas reciben medidas nuevas y Gomariz queda in
   assert.deepEqual(new Set(changed.map(({ reference }) => reference)), expected);
   assert.equal(changed.length, 30);
   assert.ok(changed.every(({ added }) => added.length === 1));
-  assert.ok(gomariz.products.every((record) =>
+  assert.ok(gomariz.every((record) =>
     JSON.stringify(recoverGamClearanceAndPlatform(record)) === JSON.stringify(record.specs ?? {})));
 });

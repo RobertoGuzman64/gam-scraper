@@ -1,13 +1,13 @@
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../../catalog/normalization/normalize-specs.js";
 import { prepareSourceProduct } from "../../../../../../preparation/prepare-product.js";
 import { recoverGamExplicitHorizontalReachSpec } from "../../../../../../preparation/gam/technical/measurements/reach-evidence.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const gam = accreditedGamRegressionSource();
 const recordOf = (reference: string) => {
-  const record = gam.products.find((product) => product.reference === reference);
+  const record = gam.find((product) => product.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -44,7 +44,7 @@ test("no recupera alcances ambiguos, no corroborados o ya representados", () => 
 });
 
 test("detecta exclusivamente las fichas GAM que reciben alcance acreditado", () => {
-  const recovered = gam.products.filter((record) =>
+  const recovered = gam.filter((record) =>
     Object.hasOwn(recoverGamExplicitHorizontalReachSpec(record), "Alcance horizontal (m)") &&
     !Object.hasOwn(record.specs ?? {}, "Alcance horizontal (m)"));
   assert.equal(recovered.length, 28);

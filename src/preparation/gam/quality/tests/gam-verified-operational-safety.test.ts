@@ -1,12 +1,12 @@
+import { accreditedGamRegressionSource } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamVerifiedOperationalSafety } from "../../technical/safety/verified-operational-safety-evidence.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const catalog = accreditedGamRegressionSource();
 const overload = ["4730", "4803", "4805", "4804", "4799", "4785", "4787", "4795", "4788", "4796", "4808", "4809", "4810"];
 const alarms = ["4735", "4740", "4742", "4746", "4807"];
 const sensors = ["2155", "2159"];
@@ -17,14 +17,14 @@ const expected = new Map<string, string>([
 ]);
 
 const getRecord = (reference: string): ProductRecord => {
-  const found = catalog.products.find((record) => record.reference === reference);
+  const found = catalog.find((record) => record.reference === reference);
   assert.ok(found, reference);
   return found;
 };
 
 test("recupera veinte prestaciones de seguridad de fuentes individuales conservando las especificaciones anteriores", () => {
   const changed: string[] = [];
-  for (const record of catalog.products) {
+  for (const record of catalog) {
     const reference = record.reference ?? "";
     const snapshot = structuredClone(record);
     const recovered = recoverGamVerifiedOperationalSafety(record);

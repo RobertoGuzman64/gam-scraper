@@ -1,12 +1,12 @@
+import { accreditedGamRegressionSource } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamVerifiedUnitPerformanceSpecs } from "./verified-unit-performance-specs.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const catalog = accreditedGamRegressionSource();
 const references = [
   "6420", "4388", "6480", "6481", "6368", "4624", "6113", "6114", "6323", "6115",
   "5989", "5990", "4660", "4717", "3997", "2369", "6573", "4012", "4006", "4007"
@@ -23,7 +23,7 @@ const additionalTechnicalReferences = [
 ] as const;
 
 const record = (reference: string): ProductRecord => {
-  const found = catalog.products.find((item) => item.reference === reference);
+  const found = catalog.find((item) => item.reference === reference);
   assert.ok(found, reference);
   return found;
 };
@@ -36,7 +36,7 @@ const addedKeys = (source: ProductRecord): readonly string[] => {
 test("recupera solo las referencias acreditadas y conserva los originales", () => {
   const changed: string[] = [];
   let addedCount = 0;
-  for (const source of catalog.products) {
+  for (const source of catalog) {
     const original = structuredClone(source);
     const after = recoverGamVerifiedUnitPerformanceSpecs(source);
     const added = addedKeys(source);

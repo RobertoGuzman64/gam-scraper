@@ -7,6 +7,7 @@ import test from "node:test";
 import { parseIndividualCatalogProviders } from "../../../cli/options/individual-catalog.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { validateManainRecordPreparation } from "../validation/offline.js";
+import { readVerifiedManainRecordSource } from "../../../infrastructure/filesystem/catalog/manain-record-source.js";
 import { runPrepareIndividual } from "../../../cli/commands/catalog/prepare-individual.js";
 
 const source = join(process.cwd(), "catalogs", "providers", "manain");
@@ -75,8 +76,12 @@ test("Manain: genera una preparación verificable, la reutiliza y conserva el or
     const prepared = await readOfflinePreparation(path, "manain");
     assert.equal(prepared.source.catalogSha256, originalSha);
     assert.equal(prepared.source.record?.quality, "partial");
-    assert.equal(prepared.source.record?.discoveredProductUrls, 387);
-    assert.equal(prepared.products.length, 384);
+    const verified = await readVerifiedManainRecordSource(root);
+    assert.equal(verified.snapshot.source.kind, "manain-record");
+    if (verified.snapshot.source.kind !== "manain-record") throw new Error("Origen técnico Manain no verificado");
+    assert.equal(prepared.source.record?.discoveredProductUrls, verified.snapshot.source.discoveredProductUrls);
+    assert.equal(prepared.products.length, verified.originalProducts.length);
+    assert.equal(prepared.totals.ready + prepared.totals.review, verified.originalProducts.length);
     assert.equal(prepared.quality, "complete");
     await validateManainRecordPreparation(root, path);
     const bytes = await readFile(path);

@@ -7,7 +7,8 @@ import { prepareProduct } from "../prepare-product.js";
 import { planProductImport, readReferenceInventory } from "../export-plan.js";
 import { planCreateMany } from "../create-many-plan.js";
 import { commercialReferenceKey } from "../commercial-reference.js";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceSamples } from "../../../testing/domain-cases/accredited-source-samples.js";
+import { accreditedPublicationOriginalSources } from "../../../infrastructure/filesystem/catalog/accredited-publication-original.js";
 import { readAccreditedPublication, resolveAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
 
 const source: ProductRecord = {
@@ -102,8 +103,7 @@ test("preparación GAM rechaza tipos de referencia comercial alterados", () => {
 
 
 test("GAM impide dos altas del mismo stock aunque cambie el separador", async () => {
-  const original = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-  const yale = original.products.filter((item) => item.reference === "6835" || item.reference === "6858");
+  const yale = accreditedSourceSamples("gam-original").filter((item) => item.reference === "6835" || item.reference === "6858");
   assert.equal(yale.length, 2);
   assert.deepEqual(yale.map((item) => item.externalReference), ["GAM 27262", "GAM-27262"]);
   assert.equal(yale[0]?.serialNumber, yale[1]?.serialNumber);
@@ -154,8 +154,8 @@ test("las colisiones comerciales reales de la publicación GAM no producen altas
     groups.set(key, group);
   }
   const collided = [...groups.values()].filter((group) => group.length > 1).flat();
-  const original = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-  const byReference = new Map(original.products.map((product) => [product.reference, product]));
+  const originals = await accreditedPublicationOriginalSources(process.cwd(), publicationFile, "gam");
+  const byReference = new Map([...originals.values()].map((product) => [product.reference, product]));
   const records = collided.map((product) => {
     const sourceRecord = byReference.get(product.reference);
     assert.ok(sourceRecord);

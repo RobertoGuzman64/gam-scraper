@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedGamRegressionSource, accreditedSourceSamples } from "../../../domain-cases/accredited-source-samples.js";
 import { analyzeTechnicalDensity } from "../../../../catalog/diagnostics/technical-density.js";
 import { prepareSourceProduct } from "../../../../preparation/prepare-product.js";
 import { recoverGamDocumentedMultiUnitLotSpecs } from "../../../../preparation/gam/technical/models/documented-multi-unit-lot-specs.js";
@@ -65,10 +65,10 @@ const recover = {
   gam: recoverGamDocumentedMultiUnitLotSpecs,
   mercaeleva: recoverMercaelevaDocumentedJlgSl203204Specs
 };
-const catalogs = await Promise.all((["gam", "mercaeleva"] as const).map(async (providerId) => ({
-  providerId,
-  products: (await readCanonicalCatalog(`catalogs/providers/${providerId}/original/scrape-${providerId}-catalog.json`)).products
-})));
+const catalogs = [
+  { providerId: "gam", products: accreditedGamRegressionSource() },
+  { providerId: "mercaeleva", products: accreditedSourceSamples("mercaeleva-original") }
+] as const;
 
 const getTarget = (providerId: "gam" | "mercaeleva", reference: string): ProductRecord => {
   const catalog = catalogs.find((candidate) => candidate.providerId === providerId);

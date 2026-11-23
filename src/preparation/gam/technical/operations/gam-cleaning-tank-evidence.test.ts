@@ -1,17 +1,18 @@
+import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
+import { accreditedGamRegressionSource } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamCleaningTankSpecs } from "./cleaning-tank-evidence.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gam = accreditedGamRegressionSource();
+const gomariz = accreditedSourceSamples("gomariz-original");
 const solutionKey = "Depósito de solución";
 const recoveryKey = "Depósito de recuperación";
 
 const recordOf = (reference: string) => {
-  const record = gam.products.find((product) => product.reference === reference);
+  const record = gam.find((product) => product.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -92,7 +93,7 @@ test("solo las 25 fichas GAM con prueba atribuible reciben depósitos, sin arras
     "5773", "4008", "4011", "4006", "4007", "4003", "4004", "4009", "4010", "5771",
     "4012", "4013", "4014", "4015", "4017", "4018", "4021"
   ];
-  const changed = gam.products.flatMap((record) => {
+  const changed = gam.flatMap((record) => {
     const source = record.specs ?? {};
     const enriched = recoverGamCleaningTankSpecs(record);
     const keys = Object.keys(enriched).filter((key) => !Object.hasOwn(source, key));
@@ -102,6 +103,6 @@ test("solo las 25 fichas GAM con prueba atribuible reciben depósitos, sin arras
   assert.equal(changed.length, 27);
   assert.equal(changed.reduce((count, row) => count + row.keys.length, 0), 48);
   assert.ok(changed.every(({ keys }) => keys.every((key) => key === solutionKey || key === recoveryKey)));
-  assert.ok(gomariz.products.every((record) =>
+  assert.ok(gomariz.every((record) =>
     JSON.stringify(recoverGamCleaningTankSpecs(record)) === JSON.stringify(record.specs ?? {})));
 });

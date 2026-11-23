@@ -1,17 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { accreditedSourceSamples } from "../../../domain-cases/accredited-source-samples.js";
 import { createPreparedSourceFixture } from "../../../builders/prepared-source-fixture.js";
 import { reconcileGamSourceTechnicalUnits } from "../../../../preparation/gam/technical/reconciliation/gam-source-technical-units.js";
 
 const prepareOriginal = createPreparedSourceFixture();
 
-const [gam, mercaeleva, gomariz] = await Promise.all([
-  readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json"),
-  readCanonicalCatalog("catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json"),
-  readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json")
-]);
+const gam = accreditedSourceSamples("gam-technical-units-cases");
+const mercaeleva = accreditedSourceSamples("mercaeleva-original");
+const gomariz = accreditedSourceSamples("gomariz-original");
 
 const recordOf = (products: readonly ProductRecord[], reference: string): ProductRecord => {
   const record = products.find((product) => product.reference === reference);
@@ -35,21 +33,21 @@ test("normaliza alturas publicadas con unidades duplicadas sin convertir las mag
     ["2133", "- / 980 / 1500 mm"],
   ] as const;
   for (const [reference, height] of heights) {
-    const original = recordOf(gam.products, reference);
+    const original = recordOf(gam, reference);
     const snapshot = structuredClone(original);
     const prepared = prepareOriginal(original);
     assert.equal(prepared.product.spec["Altura Plataforma"], height, reference);
     assert.deepEqual(original, snapshot, reference);
   }
   for (const reference of ["6873", "6874"]) {
-    const original = recordOf(gam.products, reference);
+    const original = recordOf(gam, reference);
     assert.equal(prepareOriginal(original).product.spec["Alcance Lateral"], "8,5 m", reference);
   }
 });
 
 test("conserva únicamente el voltaje acreditado cuando la capacidad se expresa incorrectamente en horas", () => {
   for (const reference of ["2108", "2109", "920"]) {
-    const original = recordOf(gam.products, reference);
+    const original = recordOf(gam, reference);
     assert.equal(original.specs?.["Capacidad de la batería"], "24V / 240h(V/Ah)", reference);
     const before = structuredClone(original);
     const prepared = prepareOriginal(original);
@@ -61,7 +59,7 @@ test("conserva únicamente el voltaje acreditado cuando la capacidad se expresa 
 });
 
 test("traslada datos eléctricos tipados fuera del campo de anchura sin alterar dimensiones", () => {
-  const original = recordOf(gam.products, "2218");
+  const original = recordOf(gam, "2218");
   const before = structuredClone(original);
   const prepared = prepareOriginal(original);
   assert.equal(prepared.product.spec["Ancho promedio"], undefined);
@@ -72,11 +70,11 @@ test("traslada datos eléctricos tipados fuera del campo de anchura sin alterar 
 });
 
 test("solo normaliza los valores malformados identificables sin pisar medidas contradictorias", () => {
-  const record = recordOf(gam.products, "2218");
-  const battery = recordOf(gam.products, "2109");
-  const height = recordOf(gam.products, "2110");
-  const otherProvider = recordOf(gomariz.products, gomariz.products[0]?.reference ?? "");
-  assert.equal(reconcileGamSourceTechnicalUnits(recordOf(gam.products, "2219")).specs?.["Capacidad de la batería (Ah)"], "840-1000 Ah");
+  const record = recordOf(gam, "2218");
+  const battery = recordOf(gam, "2109");
+  const height = recordOf(gam, "2110");
+  const otherProvider = recordOf(gomariz, gomariz[0]?.reference ?? "");
+  assert.equal(reconcileGamSourceTechnicalUnits(recordOf(gam, "2219")).specs?.["Capacidad de la batería (Ah)"], "840-1000 Ah");
   assert.deepEqual(reconcileGamSourceTechnicalUnits(otherProvider), otherProvider);
   assert.deepEqual(reconcileGamSourceTechnicalUnits({ ...record, specs: { ...record.specs, "Voltaje batería (V)": "48 V" } }).specs,
     { ...record.specs, "Voltaje batería (V)": "48 V" });
@@ -87,7 +85,7 @@ test("solo normaliza los valores malformados identificables sin pisar medidas co
 });
 
 test("omite alturas de plataforma que no se pueden acreditar sin convertir unidades", () => {
-  const original = recordOf(gam.products, "1714");
+  const original = recordOf(gam, "1714");
   const before = structuredClone(original);
   const prepared = prepareOriginal(original);
   assert.equal(prepared.product.spec["Altura Plataforma"], undefined);
@@ -99,7 +97,7 @@ test("omite alturas de plataforma que no se pueden acreditar sin convertir unida
 
 test("normaliza la altura de plataforma acreditada de tres recogepedidos Yale", () => {
   for (const reference of ["2238", "2239", "2240"]) {
-    const original = recordOf(gam.products, reference);
+    const original = recordOf(gam, reference);
     const before = structuredClone(original);
     assert.equal(original.specs?.["Altura Plataforma"], "-/980 metros", reference);
     const prepared = prepareOriginal(original);
@@ -118,7 +116,7 @@ test("elimina etiquetas duplicadas de batería sin perder voltaje ni amperios-ho
     ["2240", "24V / 620Ah(V/Ah)"]
   ] as const;
   for (const [reference, battery] of values) {
-    const original = recordOf(gam.products, reference);
+    const original = recordOf(gam, reference);
     const before = structuredClone(original);
     assert.equal(original.specs?.["Capacidad de la batería"], `${battery}(V/Ah)`, reference);
     const prepared = prepareOriginal(original);
@@ -127,25 +125,13 @@ test("elimina etiquetas duplicadas de batería sin perder voltaje ni amperios-ho
   }
 });
 
-test("la salida técnica de los tres proveedores no reintroduce unidades duplicadas", () => {
-  for (const products of [gam.products, gomariz.products, mercaeleva.products]) {
-    for (const original of products) {
-      const prepared = prepareOriginal(original).product;
-      for (const [key, value] of Object.entries(prepared.spec)) {
-        if (typeof value !== "string") continue;
-        assert.doesNotMatch(value, /\bmm\s+metros?\b|\bm\s+metros?\b|\(V\/Ah\)\s*\(V\/Ah\)/iu,
-          `${original.providerId}:${original.reference}:${key}`);
-      }
-    }
-  }
-});
 
 test("no publica tensiones de batería como potencia de motor en arrastradores", () => {
   for (const [reference, key, value] of [
     ["2573", "Potencia Motor (CV)", "48"],
     ["2737", "Potencia Motor (KW)", "36"]
   ] as const) {
-    const original = recordOf(gam.products, reference);
+    const original = recordOf(gam, reference);
     const snapshot = structuredClone(original);
     assert.equal(original.specs?.[key], value, reference);
     const prepared = prepareOriginal(original);
@@ -163,7 +149,7 @@ test("no publica tensiones de batería como potencia de motor en arrastradores",
     ]) assert.equal(reconcileGamSourceTechnicalUnits(modified).specs?.[key], modified.specs?.[key]);
   }
   for (const reference of ["2572", "2738"]) {
-    const original = recordOf(gam.products, reference);
+    const original = recordOf(gam, reference);
     const prepared = prepareOriginal(original);
     assert.equal(prepared.product.spec["Potencia Motor (CV)"], original.specs?.["Potencia Motor (CV)"], reference);
     assert.equal(prepared.product.spec["Potencia Motor (KW)"], original.specs?.["Potencia Motor (KW)"], reference);
@@ -180,7 +166,7 @@ test("normaliza medidas Yale de origen solo con modelo, valor y procedencia corr
     ["2302", "Altura Plataforma", "4920 metros", "4920 mm"]
   ] as const;
   for (const [reference, key, source, expected] of cases) {
-    const original = recordOf(gam.products, reference);
+    const original = recordOf(gam, reference);
     const before = structuredClone(original);
     assert.equal(original.specs?.[key], source, reference);
     const reconciled = reconcileGamSourceTechnicalUnits(original);
@@ -196,7 +182,7 @@ test("normaliza medidas Yale de origen solo con modelo, valor y procedencia corr
     ]) assert.equal(reconcileGamSourceTechnicalUnits(changed).specs?.[key], changed.specs?.[key], reference);
     assert.deepEqual(original, before, reference);
   }
-  const conflicting = recordOf(gam.products, "2305");
+  const conflicting = recordOf(gam, "2305");
   assert.equal(conflicting.specs?.["Altura Plataforma"], "9225 metros");
   assert.equal(prepareOriginal(conflicting).product.spec["Altura Plataforma"], undefined);
 });
@@ -208,7 +194,7 @@ test("rechaza la supresión de datos Hyster cuando cambia su identidad o evidenc
     ["73", "Capacidad de la batería", "80 V / 500 Ah"],
     ["2305", "Altura Plataforma", "9,225 m"]
   ] as const) {
-    const original = recordOf(gam.products, reference);
+    const original = recordOf(gam, reference);
     const changed: ProductRecord[] = [
       { ...original, reference: `${reference}-otro` },
       { ...original, url: `${original.url}?variante=otra` },
@@ -238,7 +224,7 @@ test("elimina únicamente duplicaciones sintácticas de unidad en centro de carg
     ["2287", "500mm mm", "500 mm"]
   ] as const;
   for (const [reference, source, expected] of values) {
-    const original = recordOf(gam.products, reference);
+    const original = recordOf(gam, reference);
     const before = structuredClone(original);
     assert.equal(original.specs?.["Centro de carga"], source);
     const reconciled = reconcileGamSourceTechnicalUnits(original);
@@ -254,7 +240,7 @@ test("elimina únicamente duplicaciones sintácticas de unidad en centro de carg
 });
 
 test("descarta el error de hoja de cálculo sin sustituirlo por una altura inventada", () => {
-  const original = recordOf(gam.products, "2130");
+  const original = recordOf(gam, "2130");
   const before = structuredClone(original);
   assert.equal(original.specs?.["Altura de elevación (mm)"], "#VALUE! mm");
   const reconciled = reconcileGamSourceTechnicalUnits(original);

@@ -1,12 +1,12 @@
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { prepareSourceProduct } from "../../../../../../preparation/prepare-product.js";
 import { recoverGamExplicitWorkHeightSpec } from "../../../../../../preparation/gam/technical/measurements/work-height-evidence.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const gam = accreditedGamRegressionSource();
 const find = (reference: string) => {
-  const record = gam.products.find((product) => product.reference === reference);
+  const record = gam.find((product) => product.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -49,7 +49,7 @@ test("la recuperación se limita a las veintitrés fichas respaldadas por su pro
     "4731", "4734", "4735", "4751", "4778", "4779", "4783", "4790", "4794", "4798", "4807",
     "6162", "6185", "6186", "6187", "6189", "6190", "6191", "6192", "6193", "6767", "6768", "6963"
   ];
-  const recovered = gam.products.filter((record) =>
+  const recovered = gam.filter((record) =>
     Object.hasOwn(recoverGamExplicitWorkHeightSpec(record), "Altura de trabajo (m)") &&
     !Object.hasOwn(record.specs ?? {}, "Altura de trabajo (m)"));
   assert.deepEqual(recovered.map((record) => record.reference).sort(), expected.sort());

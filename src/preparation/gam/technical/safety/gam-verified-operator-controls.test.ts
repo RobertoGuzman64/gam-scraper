@@ -1,12 +1,12 @@
+import { accreditedGamRegressionSource } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamVerifiedOperatorControls } from "./verified-operator-controls-evidence.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const catalog = accreditedGamRegressionSource();
 const proportional = ["4738", "4742", "4800", "4746", "6963", "4762", "4772", "4777", "4776", "5900", "4791", "6767", "6768", "4807", "5903"];
 const operatorPresence = ["4626", "5998", "5999", "6000", "6001", "5988", "5993", "5995", "5996", "5997"];
 const expected = new Map([
@@ -15,14 +15,14 @@ const expected = new Map([
 ]);
 
 const getRecord = (reference: string): ProductRecord => {
-  const found = catalog.products.find((record) => record.reference === reference);
+  const found = catalog.find((record) => record.reference === reference);
   assert.ok(found, reference);
   return found;
 };
 
 test("recupera prestaciones de mando y presencia acreditadas y normalizables", () => {
   const changed: string[] = [];
-  for (const record of catalog.products) {
+  for (const record of catalog) {
     const reference = record.reference ?? "";
     const snapshot = structuredClone(record);
     const recovered = recoverGamVerifiedOperatorControls(record);

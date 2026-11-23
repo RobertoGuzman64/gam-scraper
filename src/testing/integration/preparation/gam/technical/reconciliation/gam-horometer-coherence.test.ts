@@ -1,21 +1,21 @@
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { reconcileGamHorometer } from "../../../../../../preparation/gam/technical/reconciliation/gam-horometer.js";
 import { prepareSourceProduct } from "../../../../../../preparation/prepare-product.js";
 import { prepareProduct } from "../../../../../../commercial/legacy-export/prepare-product.js";
 import { resolveAttribute } from "../../../../../../preparation/shared/classification/mapping/attribute-mapping.js";
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const gam = accreditedGamRegressionSource();
 const catalog = await loadImportCatalog();
 const usedHours = catalog.attributes.find((attribute) => attribute.name === "Horas de uso");
 assert.ok(usedHours);
 const usedHourIds = new Set(catalog.attributes.filter((attribute) => attribute.name === "Horas de uso").map((attribute) => attribute.id));
 
 const byReference = (reference: string): ProductRecord => {
-  const found = gam.products.find((record) => record.reference === reference);
+  const found = gam.find((record) => record.reference === reference);
   assert.ok(found, reference);
   return found;
 };
@@ -24,7 +24,7 @@ const missing = /^na(?:\s+[a-z]\d{8,20})?\s+horas$/iu;
 const replaced = /^hor[oó]metro\s+sustituido\s+horas$/iu;
 
 test("57 lecturas no cuantitativas GAM se representan sin inventar horas ni alterar originales", () => {
-  const affected = gam.products.filter((record) =>
+  const affected = gam.filter((record) =>
     record.horometer !== null && (missing.test(record.horometer) || replaced.test(record.horometer))
   );
   assert.equal(affected.length, 57);

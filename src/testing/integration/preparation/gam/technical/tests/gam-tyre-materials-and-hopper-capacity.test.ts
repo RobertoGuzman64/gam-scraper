@@ -1,15 +1,16 @@
+import { accreditedSourceSamples } from "../../../../../domain-cases/accredited-source-samples.js";
+import { accreditedGamRegressionSource } from "../../../../../domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamSweeperHopperCapacity } from "../../../../../../preparation/gam/technical/operations/cleaning-tank-evidence.js";
 import { recoverGamHysterForkliftTyresSpec, recoverGamNonMarkingTyresSpec, recoverGamVerifiedSuperelasticTyresSpec, recoverGamVerifiedTyreMaterialsSpec, recoverGamYaleSuperelasticTyresSpec } from "../../../../../../preparation/gam/technical/mobility/non-marking-tyres-evidence.js";
 import { prepareSourceProduct } from "../../../../../../preparation/prepare-product.js";
 import { reconcileGamSourceTechnicalUnits } from "../../../../../../preparation/gam/technical/reconciliation/gam-source-technical-units.js";
 
-const gam = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
-const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
+const gam = accreditedGamRegressionSource();
+const gomariz = accreditedSourceSamples("gomariz-original");
 
 const tyreExamples = [
   ["2074", "Superelásticos"], ["2068", "Radiales"],
@@ -27,7 +28,7 @@ const hopperExamples = [
 ] as const;
 
 const source = (reference: string): ProductRecord => {
-  const record = gam.products.find((product) => product.reference === reference);
+  const record = gam.find((product) => product.reference === reference);
   assert.ok(record, reference);
   return record;
 };
@@ -119,7 +120,7 @@ test("no atribuye materiales de opciones o configuraciones contradichas", () => 
 });
 
 test("el enriquecimiento se limita a veinticuatro referencias GAM y excluye Gomariz", () => {
-  const changes = gam.products.flatMap((record) => {
+  const changes = gam.flatMap((record) => {
     const previousTyres = recoverGamVerifiedSuperelasticTyresSpec({
       ...record, specs: recoverGamYaleSuperelasticTyresSpec({
         ...record, specs: recoverGamHysterForkliftTyresSpec({
@@ -134,7 +135,7 @@ test("el enriquecimiento se limita a veinticuatro referencias GAM y excluye Goma
   const expected = [...tyreExamples, ...hopperExamples].map(([reference]) => reference);
   assert.deepEqual(new Set(changes), new Set(expected));
   assert.equal(changes.length, 24);
-  for (const record of gomariz.products) {
+  for (const record of gomariz) {
     assert.deepEqual(recoverGamSweeperHopperCapacity(record), record.specs ?? {});
     assert.deepEqual(recoverGamVerifiedTyreMaterialsSpec(record), record.specs ?? {});
   }

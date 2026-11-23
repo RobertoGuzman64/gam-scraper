@@ -44,15 +44,14 @@ test("la publicación comercial usa el original histórico acreditado tras renov
   const { root, publicationFile } = await workspace();
   try {
     const published = await readAccreditedPublication(publicationFile);
-    assert.equal(published.products.length, 143);
     assert.equal((await originalSources(root, "gomariz"))?.size, 14);
     const historicalSources = await accreditedPublicationOriginalSources(root, publicationFile, "gomariz");
-    assert.equal(historicalSources.size, 143);
+    assert.equal(historicalSources.size, published.products.length);
     assert.ok(historicalSources.has("gomariz:ref:mt1579"));
     const inputs = await loadCommercialPublicationInputs(root, await loadImportCatalog());
     assert.equal(inputs.length, 1);
-    assert.equal(inputs[0]?.originalProducts, 143);
-    assert.equal(inputs[0]?.entries.length, 143);
+    assert.equal(inputs[0]?.originalProducts, published.products.length);
+    assert.equal(inputs[0]?.entries.length, published.products.length);
     await assert.rejects(assertCurrentCommercialInventory(root, inputs),
       /Exportación comercial bloqueada: gomariz conserva \d+ referencias ausentes del original vigente/);
     assert.equal((await originalSources(root, "gomariz"))?.size, 14);
@@ -69,7 +68,8 @@ test("la publicación individual admite manifiestos con el contrato mínimo de p
     delete manifest.source.prefix;
     delete manifest.source.scope;
     await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
-    assert.equal((await accreditedPublicationOriginalSources(root, publicationFile, "gomariz")).size, 143);
+    const published = await readAccreditedPublication(publicationFile);
+    assert.equal((await accreditedPublicationOriginalSources(root, publicationFile, "gomariz")).size, published.products.length);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
@@ -95,7 +95,7 @@ test("once bajas de Gomariz no invalidan la auditoría histórica ni pueden expo
     const missing = new Set(["MT1579", "TE61", "BA1347", "5051BDX", "1011JFB", "GR1113",
       "BA1262", "CAE1054", "RO1197", "RO457", "TE1606"]);
     const retained = source.products.filter((product) => !missing.has(product.reference ?? ""));
-    assert.equal(source.products.length - retained.length, 11);
+    assert.equal(source.products.length - retained.length, missing.size);
     const changed = { ...source, products: retained, productCount: retained.length };
     const raw = JSON.stringify(changed, null, 2);
     const hash = (await import("node:crypto")).createHash("sha256").update(raw).digest("hex");
@@ -114,7 +114,8 @@ test("once bajas de Gomariz no invalidan la auditoría histórica ni pueden expo
       artifacts: { ...oldSummary.artifacts, catalogSha256: hash }
     }, null, 2));
     const inputs = await loadCommercialPublicationInputs(root, await loadImportCatalog());
-    assert.equal(inputs[0]?.entries.length, 143);
+    const published = await readAccreditedPublication(publicationFile);
+    assert.equal(inputs[0]?.entries.length, published.products.length);
     await assert.rejects(assertCurrentCommercialInventory(root, inputs), (error: unknown) => {
       assert.ok(error instanceof Error);
       assert.match(error.message, /gomariz conserva 11 referencias ausentes/);

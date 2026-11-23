@@ -1,12 +1,12 @@
+import { accreditedGamRegressionSource } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamVerifiedDrivetrainBrakes } from "./verified-drivetrain-brakes-evidence.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const catalog = accreditedGamRegressionSource();
 const expected: Readonly<Record<string, Readonly<{ key: string; value: string | boolean }>>> = {
   "2239": { key: "Freno electromagnético", value: true },
   "2099": { key: "Freno electromagnético", value: true },
@@ -62,7 +62,7 @@ for (const [reference, entry] of Object.entries(extraExpected)) {
 }
 
 const getRecord = (reference: string): ProductRecord => {
-  const found = catalog.products.find((product) => product.reference === reference);
+  const found = catalog.find((product) => product.reference === reference);
   assert.ok(found, reference);
   return found;
 };
@@ -70,7 +70,7 @@ const getRecord = (reference: string): ProductRecord => {
 test("recupera únicamente prestaciones demostradas por el original sin perder acreditaciones anteriores", () => {
   const changed: string[] = [];
   let addedCount = 0;
-  for (const record of catalog.products) {
+  for (const record of catalog) {
     const reference = record.reference ?? "";
     const before = structuredClone(record);
     const result = recoverGamVerifiedDrivetrainBrakes(record);

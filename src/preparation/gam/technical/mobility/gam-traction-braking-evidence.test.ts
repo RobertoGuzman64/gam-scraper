@@ -1,25 +1,25 @@
+import { accreditedGamRegressionSource } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
 import { recoverGamVerifiedTractionBraking } from "./verified-traction-braking-evidence.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gam/original/scrape-gam-catalog.json");
+const catalog = accreditedGamRegressionSource();
 const fourWheel = ["4778", "4779", "4780", "4782", "4785", "4787", "4795", "4788", "4796", "4790", "4793", "4813", "4798"] as const;
 const braking = ["2194", "2258", "2195", "2260", "2203", "2199", "2204", "2201"] as const;
 const references = [...fourWheel, ...braking];
 const keyFor = (reference: string): string => fourWheel.some((entry) => entry === reference) ? "Tracción 4x4" : "Frenado regenerativo";
 const record = (reference: string): ProductRecord => {
-  const found = catalog.products.find((item) => item.reference === reference);
+  const found = catalog.find((item) => item.reference === reference);
   assert.ok(found, reference);
   return found;
 };
 
 test("añade una prestación acreditada a veintiuna fichas sin modificar originales", () => {
   const changed: string[] = [];
-  for (const source of catalog.products) {
+  for (const source of catalog) {
     const snapshot = structuredClone(source);
     const result = recoverGamVerifiedTractionBraking(source);
     assert.deepEqual(source, snapshot, String(source.reference));
