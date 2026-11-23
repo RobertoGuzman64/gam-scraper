@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { gzipSync } from "node:zlib";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
-import { inspectRepositoryGovernance } from "./tests-repository-governance-guard.mjs";
+import { inspectCatalogReplicas, inspectRepositoryGovernance } from "./tests-repository-governance-guard.mjs";
 
 const fixture = (t) => {
   const root = mkdtempSync(join(tmpdir(), "eq-governance-"));
@@ -150,4 +151,153 @@ test("rechaza contratos incompletos, rutas duplicadas y límites inválidos", (t
   assert.throws(() => inspectRepositoryGovernance(value.root, {
     ...value.policy, maxCounts: { markdown: 2, scripts: 1 }
   }), /inválido/u);
+});
+
+const machine = (reference) => ({
+  providerId: "gam", reference, categoryKey: "elevacion", title: `Máquina ${reference}`,
+  url: `https://example.test/machine/${reference}`, brand: "Marca", model: "Modelo", specifications: []
+});
+
+const zip = (entries) => {
+  const locals = [];
+  const central = [];
+  let offset = 0;
+  for (const [name, value] of entries) {
+    const filename = Buffer.from(name);
+    const content = Buffer.isBuffer(value) ? value : Buffer.from(value);
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt32LE(content.length, 18);
+    local.writeUInt32LE(content.length, 22);
+    local.writeUInt16LE(filename.length, 26);
+    locals.push(local, filename, content);
+    const directory = Buffer.alloc(46);
+    directory.writeUInt32LE(0x02014b50, 0);
+    directory.writeUInt16LE(20, 4);
+    directory.writeUInt16LE(20, 6);
+    directory.writeUInt32LE(content.length, 20);
+    directory.writeUInt32LE(content.length, 24);
+    directory.writeUInt16LE(filename.length, 28);
+    directory.writeUInt32LE(offset, 42);
+    central.push(directory, filename);
+    offset += local.length + filename.length + content.length;
+  }
+  const listing = Buffer.concat(central);
+  const trailer = Buffer.alloc(22);
+  trailer.writeUInt32LE(0x06054b50, 0);
+  trailer.writeUInt16LE(entries.length, 8);
+  trailer.writeUInt16LE(entries.length, 10);
+  trailer.writeUInt32LE(listing.length, 12);
+  trailer.writeUInt32LE(offset, 16);
+  return Buffer.concat([...locals, listing, trailer]);
+};
+
+const replicaCodes = (root) => inspectCatalogReplicas(root).findings.map((finding) => finding.split(":")[0]);
+
+test("impide un archivo clonado de catalogs aunque cambie de carpeta o extensión", (t) => {
+  const value = fixture(t);
+  const { root, write } = value;
+  const source = JSON.stringify({ providerId: "gam", productCount: 1, products: [machine("100")] });
+  write("catalogs/providers/gam/original/original.json", source);
+  write("src/other/source.evidence", source);
+  assert.ok(replicaCodes(root).includes("R-ARCHIVO-DUPLICADO"));
+  assert.ok(findings({ root, policy: value.policy }).some((finding) => finding.includes("R-ARCHIVO-DUPLICADO")));
+});
+
+test("detecta registros íntegros copiados aunque cambien formato y orden de campos", (t) => {
+  const { root, write } = fixture(t);
+  write("catalogs/providers/gam/original/original.json", JSON.stringify({ products: [machine("101")] }));
+  write("data/cache/not-a-catalog.txt", JSON.stringify([{ ...machine("101") }], null, 2));
+  assert.ok(replicaCodes(root).includes("R-REGISTRO-COPIADO"));
+});
+
+test("rechaza catálogos renombrados y productos repartidos en múltiples datasets", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/data/one.payload", JSON.stringify({ providerId: "gam", products: Array.from({ length: 11 }, (_, i) => machine(String(i))) }));
+  assert.ok(replicaCodes(root).includes("R-REPLICA-CATALOGO"));
+  assert.ok(replicaCodes(root).includes("R-DATASET-DE-MAQUINAS"));
+  rmSync(join(root, "src/testing/data/one.payload"));
+  for (let i = 0; i < 3; i++) {
+    write(`src/testing/data/shard-${i}.dat`, JSON.stringify(Array.from({ length: 4 }, (_, j) => machine(`${i}-${j}`))));
+  }
+  assert.ok(replicaCodes(root).includes("R-CATALOGO-FRAGMENTADO"));
+});
+
+test("bloquea manifests y publicaciones de catálogo fuera del propietario legítimo", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/manifest.json", JSON.stringify({ version: 1, providerId: "gam", productCount: 3, catalogSha256: "a".repeat(64) }));
+  assert.ok(replicaCodes(root).includes("R-ARTEFACTO-CATALOGO"));
+  rmSync(join(root, "src/testing/manifest.json"));
+  write("src/testing/publication.json", JSON.stringify({
+    providerId: "gam", runId: "historical", source: { catalogSha256: "a".repeat(64) },
+    totals: { ready: 2 }, files: { "published.json": "b".repeat(64) }
+  }));
+  assert.ok(replicaCodes(root).includes("R-ARTEFACTO-CATALOGO"));
+});
+
+test("detecta archivos ZIP disfrazados por la firma, la ruta y el contenido", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/panel/published-snapshot.evidence", zip([
+    ["catalogs/providers/gam/original/source.json", "{}"]
+  ]));
+  assert.ok(replicaCodes(root).includes("R-CATALOGO-EMPAQUETADO"));
+  rmSync(join(root, "src/testing/panel/published-snapshot.evidence"));
+  write("data/renamed.bin", zip([["hidden.json", JSON.stringify({ providerId: "gam", products: Array.from({ length: 12 }, (_, i) => machine(String(i))) })]]));
+  assert.ok(replicaCodes(root).includes("R-DATASET-DE-MAQUINAS"));
+});
+
+test("rechaza archivos GZIP renombrados con productos de un proveedor", (t) => {
+  const { root, write } = fixture(t);
+  write("src/backup/evidence.dat", gzipSync(Buffer.from(JSON.stringify({ providerId: "gam", products: Array.from({ length: 5 }, (_, i) => machine(String(i))) }))));
+  assert.ok(replicaCodes(root).includes("R-REPLICA-CATALOGO"));
+});
+
+test("rechaza payloads de catálogo incrustados masivamente en código de pruebas", (t) => {
+  const { root, write } = fixture(t);
+  const value = Array.from({ length: 12 }, (_, i) => JSON.stringify(machine(String(i))));
+  write("src/testing/builders/embedded.ts", `export const entries = [${value.join(",")}];\n`);
+  assert.ok(replicaCodes(root).includes("R-REGISTROS-EMBEBIDOS"));
+});
+
+test("permite catálogos bajo catalogs, casos sintéticos pequeños y conocimientos derivados", (t) => {
+  const { root, write } = fixture(t);
+  write("catalogs/providers/gam/original/source.json", JSON.stringify({ providerId: "gam", products: Array.from({ length: 12 }, (_, i) => machine(String(i))) }));
+  write("src/testing/fixtures/sample.json", JSON.stringify([{ ...machine("synthetic-1"), title: "Ejemplo sintético" }]));
+  write("data/editorial/knowledge/verified-units.json", JSON.stringify({ version: 1, entries: Array.from({ length: 30 }, (_, i) => ({ key: `gam:${i}`, model: "MODEL", facts: ["dato"] })) }));
+  write("src/testing/panel/benign.evidence", zip([["readme.txt", "texto sin datos de catálogo"]]));
+  assert.deepEqual(replicaCodes(root), []);
+});
+
+test("un contenedor corrupto no evade el guard", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/fixtures/hidden.evidence", Buffer.from([0x50, 0x4b, 0x03, 0x04, 1, 2, 3]));
+  assert.ok(replicaCodes(root).includes("R-CONTENEDOR-NO-INSPECCIONABLE"));
+});
+
+test("protege proveedores futuros sin incorporar listas cerradas", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/data/new-provider.bin", JSON.stringify({
+    providerId: "proveedor-futuro", products: Array.from({ length: 12 }, (_, i) => ({
+      ...machine(`future-${i}`), providerId: "proveedor-futuro"
+    }))
+  }));
+  assert.ok(replicaCodes(root).includes("R-REPLICA-CATALOGO"));
+});
+
+test("detecta las evidencias y resúmenes históricos que no incluyen providerId en la raíz", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/fixtures/preparation.json", JSON.stringify({
+    version: 1, quality: "complete", source: { providerId: "gam", catalogSha256: "a".repeat(64) },
+    totals: { ready: 2, review: 0 }, fingerprints: { rulesVersion: 1 }
+  }));
+  write("data/history/summary.json", JSON.stringify({
+    startedAt: "2026-01-01", endedAt: "2026-01-01", totals: { scrapedProducts: 2 },
+    artifacts: { catalogSha256: "a".repeat(64) }
+  }));
+  write("data/history/accreditation.json", JSON.stringify({
+    runId: "historical", approved: true, sources: [{ providerId: "gam", catalogSha256: "a".repeat(64) }]
+  }));
+  const matching = inspectCatalogReplicas(root).findings.filter((finding) => finding.startsWith("R-ARTEFACTO-CATALOGO"));
+  assert.equal(matching.length, 3);
 });
