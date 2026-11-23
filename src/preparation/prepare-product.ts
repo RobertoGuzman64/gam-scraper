@@ -25,6 +25,7 @@ import { resolvePreparedEditorial } from "./shared/editorial/mapping/prepared-ed
 import { normalizePreparedEditorialPresentation } from "./shared/editorial/mapping/prepared-editorial-presentation.js";
 import { reconcileUsedHandlingSource } from "./shared/editorial/mapping/source-used-handling.js";
 import { hasVerifiedPublishedEditorialLoadConflict } from "./shared/editorial/mapping/prepared-editorial-load-consistency.js";
+import { reconcileManainEditorialSourceSpecs } from "./manain/editorial/mapping/domain-source.js";
 
 const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
   const originalRecord = record;
@@ -53,8 +54,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   record = reconcileTechnicalBeforeEditorial(record, technicalProvenance.observe);
   record = reconcileTechnicalAfterEditorial(record);
   const reconciledSpecs = applyReconciledTechnicalSpecs(beforeReconciliation, record, documentedSpecs);
-  const editorialRecord: ProductRecord = { ...record, specs: reconciledSpecs,
-    shortDescription: sourceUnitRecord.shortDescription, longDescription: coherentSource.longDescription };
+  const editorialRecord = reconcileManainEditorialSourceSpecs({ ...record, specs: reconciledSpecs,
+    shortDescription: sourceUnitRecord.shortDescription, longDescription: coherentSource.longDescription });
   const sourceEditorial = captureSourceEditorialEvidence(editorialRecord);
   const qualityRecord = coherentSource === sourceUnitRecord ? record :
     { ...record, longDescription: coherentSource.longDescription };

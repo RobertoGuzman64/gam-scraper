@@ -29,6 +29,7 @@ const asserted = (facts: EditorialFacts): readonly string[] => {
 
 const details = (facts: EditorialFacts, battery: string | null): readonly string[] => [
   quantity(facts.weightKg, "kg", "peso declarado"),
+  quantity(facts.discDiameterMm, "mm", "diámetro máximo de disco"),
   quantity(facts.lengthM, "m", "longitud"),
   quantity(facts.widthM, "m", "anchura"),
   quantity(facts.heightM, "m", "altura del equipo"),

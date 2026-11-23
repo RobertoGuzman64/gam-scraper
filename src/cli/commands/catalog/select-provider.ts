@@ -5,9 +5,11 @@ import { readIndividualSelection } from "../../../publication/individual-selecti
 import { printCommandError } from "../../reporting/errors.js";
 
 const help = `Uso:
-  npm run seleccionar:proveedor -- gam --origen <catalog.json> --preparacion <preparation.json>
+  npm run seleccionar:proveedor -- gam --source <catalog.json> --preparation <preparation.json>
+  npm run seleccionar:proveedor -- manain --source catalogs/providers/manain/records/manain-record.json --preparation <preparation.json>
 
-Consulta la preparación canónica verificada de un solo proveedor y sus decisiones editoriales pendientes.
+Consulta el original verificado y su preparación individual; muestra las decisiones pendientes.
+Manain conserva su procedencia partial: consultar no acredita su admisión comercial.
 No aprueba decisiones, genera JSON finales ni escribe archivos.`;
 
 export const runSelectProvider = async (args: readonly string[]): Promise<void> => {
@@ -25,7 +27,7 @@ export const runSelectProvider = async (args: readonly string[]): Promise<void> 
   }
   const source = options.get("--source");
   const preparation = options.get("--preparation");
-  if (!source || !preparation) throw new Error("Se requieren --origen y --preparacion");
+  if (!source || !preparation) throw new Error("Se requieren --source y --preparation");
   const context = await readIndividualSelection(providerId, resolve(source), resolve(preparation));
   printReportLine(`SELECCIÓN INDIVIDUAL | ${providerId.toUpperCase()} | PENDIENTE DE ACREDITACIÓN`);
   printReportLine(`  Originales: ${context.preparation.source.productCount} | Ready: ${context.preparation.totals.ready} | Review: ${context.preparation.totals.review}`);

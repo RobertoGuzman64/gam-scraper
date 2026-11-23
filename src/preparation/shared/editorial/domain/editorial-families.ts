@@ -1,10 +1,11 @@
 export type EditorialFamily =
   | "plataforma-tijera" | "plataforma-articulada" | "plataforma-telescopica"
-  | "plataforma-mastil" | "plataforma-oruga" | "camion-cesta"
+  | "plataforma-mastil" | "plataforma-unipersonal" | "plataforma-oruga" | "camion-cesta"
   | "manipulador-telescopico" | "carretilla-elevadora" | "carretilla-retractil"
   | "transpaleta" | "apilador" | "recogepedidos" | "tractor-arrastre"
   | "dumper" | "excavadora" | "miniexcavadora" | "cargadora"
-  | "compactadora" | "grupo-electrogeno" | "torre-iluminacion"
+  | "compactadora" | "martillo-miniexcavadora" | "martillo-electrico" | "radial-electrica" | "equipo-corte-disco"
+  | "regla-vibrante" | "hidrolimpiadora" | "bomba-sumergible" | "grupo-electrogeno" | "torre-iluminacion"
   | "compresor" | "fregadora" | "barredora" | "maquina-limpieza"
   | "almacen-vertical" | "elevador-materiales";
 
@@ -25,11 +26,19 @@ const definitions: readonly FamilyDefinition[] = [
   { family: "tractor-arrastre", noun: "tractor de arrastre", pattern: /\b(?:tractor(?:es)?[-\s]+de[-\s]+arrastre|tractor(?:es)?[-\s]+de[-\s]+remolque|tow[-\s]+tractor)\b/u },
   { family: "transpaleta", noun: "transpaleta", pattern: /\b(?:transpalet(?:a|as)?|transpallet|pallet[-\s]+truck)\b/u },
   { family: "apilador", noun: "apilador", pattern: /\b(?:apilador(?:a|es|as)?|stacker)\b/u },
+  { family: "plataforma-unipersonal", noun: "plataforma unipersonal", pattern: /\belevacion[-\s]+unipersonal(?:es)?\b/u },
   { family: "plataforma-mastil", noun: "equipo de mástil vertical", pattern: /\b(?:mastil[-\s]+vertical|plataforma[-\s]+vertical|elevador[-\s]+vertical|vertical[-\s]+mast)\b/u },
   { family: "plataforma-tijera", noun: "plataforma de tijera", pattern: /\b(?:tijera|tijeras|scissor[-\s]+lift|elevador[-\s]+tijera)\b/u },
   { family: "plataforma-articulada", noun: "plataforma articulada", pattern: /\b(?:plataforma(?:s)?[-\s]+articulad[ao]s?|brazo[-\s]+articulad[ao]|articulating[-\s]+boom|articulated[-\s]+boom|boom[-\s]+lift)\b/u },
   { family: "plataforma-telescopica", noun: "plataforma telescópica", pattern: /\b(?:plataforma(?:s)?[-\s]+telescopic[ao]s?|brazo[-\s]+telescopic[ao]|telescopic[-\s]+boom)\b/u },
   { family: "carretilla-elevadora", noun: "carretilla elevadora", pattern: /\b(?:carretilla(?:s)?[-\s]+(?:elevadora|industrial)|carretilla|grua[-\s]+horquilla|forklift|montacargas)\b/u },
+  { family: "martillo-miniexcavadora", noun: "martillo para miniexcavadora", pattern: /\bmartillo[-\s]+(?:para[-\s]+|de[-\s]+)?mini[-\s]?excavadora\b/u },
+  { family: "martillo-electrico", noun: "martillo", pattern: /\bmartillos?[-\s]+electricos?\b/u },
+  { family: "radial-electrica", noun: "amoladora radial", pattern: /\b(?:amoladora[-\s]+radial|radiales?[-\s]+electricas?)\b/u },
+  { family: "equipo-corte-disco", noun: "equipo de corte con disco", pattern: /\b(?:equipo[-\s]+de[-\s]+corte[-\s]+con[-\s]+disco|disc[-\s]+cutting[-\s]+machine)\b/u },
+  { family: "regla-vibrante", noun: "regla vibrante", pattern: /\breglas?[-\s]+vibrantes?\b/u },
+  { family: "hidrolimpiadora", noun: "hidrolimpiadora", pattern: /\bhidrolimpiadoras?\b/u },
+  { family: "bomba-sumergible", noun: "bomba sumergible", pattern: /\bbombas?[-\s]+sumergibles?\b/u },
   { family: "miniexcavadora", noun: "miniexcavadora", pattern: /\b(?:miniexcavadora|mini[-\s]+excavadora|mini[-\s]+excavator)\b/u },
   { family: "excavadora", noun: "excavadora", pattern: /\b(?:excavadora|excavator|retroexcavadora)\b/u },
   { family: "dumper", noun: "dúmper", pattern: /\b(?:dumper|dumperes|dumpero|volquete)\b/u },
@@ -112,7 +121,7 @@ export const editorialFamilyName = (family: EditorialFamily): string =>
 
 const masculineFamilies: ReadonlySet<EditorialFamily> = new Set([
   "almacen-vertical", "elevador-materiales", "camion-cesta", "manipulador-telescopico",
-  "recogepedidos", "tractor-arrastre", "apilador", "dumper", "grupo-electrogeno", "compresor", "plataforma-mastil"
+  "recogepedidos", "tractor-arrastre", "apilador", "dumper", "grupo-electrogeno", "compresor", "plataforma-mastil", "martillo-electrico", "equipo-corte-disco"
 ]);
 
 export const editorialFamilyIsMasculine = (family: EditorialFamily): boolean => masculineFamilies.has(family);

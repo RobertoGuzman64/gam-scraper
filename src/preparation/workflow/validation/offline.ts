@@ -1,8 +1,10 @@
 import { isDeepStrictEqual } from "node:util";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { buildProductIdentity } from "../../../catalog/identity.js";
 import { prepareImportBatch } from "../../prepare.js";
 import { readCanonicalCatalogWithFingerprint } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readVerifiedManainRecordSource } from "../../../infrastructure/filesystem/catalog/manain-record-source.js";
+import { manainRecordPreparationSource } from "../manain-record-source.js";
 import { readAppliedIntervention } from "../../../infrastructure/filesystem/interventions/intervention-derived.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { loadPreparationInputs } from "../../../infrastructure/filesystem/preparation/preparation-inputs.js";
@@ -85,5 +87,43 @@ export const validateOfflinePreparation = async (
     review: preparation.totals.review, importReady: null,
     importBlocked: null,
     preparation, target: null, sourceProducts: canonical.products
+  };
+};
+
+export const validateManainRecordPreparation = async (
+  workspace: string, preparationFile: string
+): Promise<OfflinePreparation> => {
+  const verified = await readVerifiedManainRecordSource(workspace);
+  const [preparation, inputs] = await Promise.all([
+    readOfflinePreparation(resolve(preparationFile), "manain"), loadPreparationInputs()
+  ]);
+  const source = manainRecordPreparationSource(verified);
+  const expected = prepareImportBatch(verified.originalProducts);
+  if (!isDeepStrictEqual(preparation.source, source) ||
+    !isDeepStrictEqual(preparation.fingerprints, inputs.fingerprints) ||
+    !isDeepStrictEqual(preparation.identities, verified.originalProducts.map((product) => buildProductIdentity(product).key)) ||
+    !isDeepStrictEqual(preparation.products, expected.products) ||
+    !isDeepStrictEqual(preparation.totals, expected.totals)) {
+    throw new Error("Preparación Manain distinta del registro verificado o de las reglas vigentes");
+  }
+  return preparation;
+};
+
+export const validateManainRecordSelection = async (
+  sourceFile: string, preparationFile: string
+): Promise<{
+  readonly catalog: Pick<CatalogValidation, "catalogSha256" | "productCount">;
+  readonly preparation: OfflinePreparation;
+}> => {
+  const source = resolve(sourceFile);
+  const workspace = resolve(dirname(source), "../../../..");
+  const verified = await readVerifiedManainRecordSource(workspace);
+  if (source !== verified.recordFile) {
+    throw new Error("La selección de Manain exige el registro original verificado en su ruta canónica");
+  }
+  const preparation = await validateManainRecordPreparation(workspace, preparationFile);
+  return {
+    catalog: { catalogSha256: verified.recordSha256, productCount: verified.originalProducts.length },
+    preparation
   };
 };

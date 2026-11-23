@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readActiveTechnicalPublication, listTechnicalVersions } from "../../../infrastructure/filesystem/catalog/technical-publication.js";
+import { readVerifiedManainRecordSource } from "../../../infrastructure/filesystem/catalog/manain-record-source.js";
 import { compareWithTechnicalVersion, publishTechnicalSnapshot } from "../../../publication/technical-publication.js";
 import { isCampaignProvider } from "../../../contracts/campaign-providers.js";
 import { printCommandError } from "../../reporting/errors.js";
@@ -73,6 +74,7 @@ export const runTechnicalPublication = async (args: readonly string[], workspace
       return;
     }
     const active = await readActiveTechnicalPublication(workspace, providerId);
+    if (active && providerId === "manain") await readVerifiedManainRecordSource(workspace);
     if (json) { console.log(JSON.stringify(active, null, 2)); return; }
     printReportLine(active ? `PUBLICACIÓN TÉCNICA | ${providerId} | ${active.sha256} | ${active.snapshot.quality} | ${active.snapshot.products.length} fichas · ${active.snapshot.totals.ready} ready · ${active.snapshot.totals.review} review`
       : `PUBLICACIÓN TÉCNICA | ${providerId} | sin versión vigente`);

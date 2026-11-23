@@ -2,28 +2,32 @@ import { createHash } from "node:crypto";
 import { lstat, mkdir, readFile, readdir } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
-import type { OfflinePreparation, PreparationFingerprints } from "../offline-document.js";
+import type { OfflinePreparation, PreparationFingerprints, PreparationSource } from "../offline-document.js";
 import { buildOfflineDiagnostics } from "../offline-diagnostics.js";
 import type { OfflineDiagnostics } from "../offline-diagnostics.js";
 import { buildSourceTriage } from "../../catalog/diagnostics/source-triage.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
-import { LEGACY_CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
+import { CAMPAIGN_PROVIDERS, LEGACY_CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { resolveAccreditedPublication, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { readPortableOriginalArtifacts } from "../../infrastructure/filesystem/catalog/portable-original.js";
+import { readVerifiedManainRecordSource } from "../../infrastructure/filesystem/catalog/manain-record-source.js";
+import { manainRecordPreparationSource } from "./manain-record-source.js";
 import { validateCanonicalSource } from "./validation/offline.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation/preparation-inputs.js";
-import { validateOfflinePreparation } from "./validation/offline.js";
+import { validateManainRecordPreparation, validateOfflinePreparation } from "./validation/offline.js";
 
 export type IndividualCatalogProvider = typeof LEGACY_CAMPAIGN_PROVIDERS[number];
+export type IndividualPreparationProvider = typeof CAMPAIGN_PROVIDERS[number];
 
-export type IndividualPreparationContext = {
-  readonly providerId: IndividualCatalogProvider;
+export type IndividualPreparationContext<T extends IndividualPreparationProvider = IndividualPreparationProvider> = {
+  readonly providerId: T;
   readonly sourceFile: string;
   readonly catalogSha256: string;
   readonly sourceProducts: number;
   readonly sourcePrefix: string;
+  readonly sourceRecord: PreparationSource["record"];
   readonly fingerprints: PreparationFingerprints;
   readonly preparedDirectory: string;
   readonly outputFile: string;
@@ -39,7 +43,7 @@ const missing = (error: unknown): boolean =>
 const record = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 
-const verifyPreparedDirectory = async (workspace: string, providerId: IndividualCatalogProvider): Promise<string> => {
+const verifyPreparedDirectory = async (workspace: string, providerId: IndividualPreparationProvider): Promise<string> => {
   const root = resolve(workspace);
   const directory = join(root, "storage", "prepared", providerId);
   for (const path of [root, join(root, "storage"), join(root, "storage", "prepared"), directory]) {
@@ -55,8 +59,8 @@ const verifyPreparedDirectory = async (workspace: string, providerId: Individual
 };
 
 const readExistingPreparations = async (
-  directory: string, providerId: IndividualCatalogProvider,
-  source: { readonly prefix: string; readonly scope: string; readonly sha: string; readonly count: number },
+  workspace: string, directory: string, providerId: IndividualPreparationProvider,
+  source: { readonly prefix: string; readonly scope: string; readonly sha: string; readonly count: number; readonly record?: PreparationSource["record"] },
   fingerprints: PreparationFingerprints, sourceFile: string, sourceProducts: readonly ProductRecord[]
 ): Promise<{ readonly file: string; readonly preparation: OfflinePreparation } | null> => {
   let entries;
@@ -98,7 +102,8 @@ const readExistingPreparations = async (
     }
     if (preparation.source.prefix === source.prefix && preparation.source.scope === source.scope &&
       preparation.source.catalogSha256 === source.sha && preparation.source.productCount === source.count &&
-      preparation.source.intervention === undefined && isDeepStrictEqual(preparation.fingerprints, fingerprints)) {
+      preparation.source.intervention === undefined &&
+      isDeepStrictEqual(preparation.source.record, source.record) && isDeepStrictEqual(preparation.fingerprints, fingerprints)) {
       const expectedDiagnostics = {
         ...buildOfflineDiagnostics(preparation), sourceTriage: buildSourceTriage(preparation, sourceProducts)
       };
@@ -111,24 +116,29 @@ const readExistingPreparations = async (
   if (matches.length > 1) throw new Error(`Preparaciones ambiguas para ${providerId}: ${matches.map((item) => basename(item.file)).join(", ")}`);
   const chosen = matches[0];
   if (!chosen) return null;
-  await validateOfflinePreparation(providerId, chosen.file, sourceFile);
+  if (providerId === "manain") await validateManainRecordPreparation(workspace, chosen.file);
+  else await validateOfflinePreparation(providerId, chosen.file, sourceFile);
   return chosen;
 };
 
-export const resolveIndividualPreparationContext = async (
-  workspace: string, providerId: IndividualCatalogProvider
-): Promise<IndividualPreparationContext> => {
-  const root = resolve(workspace);
-  for (const lockFile of [
-    join(root, "catalogs", ".active.lock"),
-    join(root, "catalogs", "providers", providerId, "publications", ".active.lock"),
-    join(root, "catalogs", "providers", providerId, "publications", ".publication.lock"),
-    join(root, "storage", "prepared", `.retention-${providerId}.lock`)
-  ]) {
-    try {
-      await lstat(lockFile);
-      throw new Error(`Otra operación usa un bloqueo vigente: ${lockFile}. Comprobar la operación antes de continuar`);
-    } catch (error) { if (!missing(error)) throw error; }
+type IndividualSource = {
+  readonly sourceFile: string;
+  readonly catalogSha256: string;
+  readonly prefix: string;
+  readonly scope: string;
+  readonly products: readonly ProductRecord[];
+  readonly record?: PreparationSource["record"];
+};
+
+const readIndividualSource = async (root: string, providerId: IndividualPreparationProvider): Promise<IndividualSource> => {
+  if (providerId === "manain") {
+    const verified = await readVerifiedManainRecordSource(root);
+    const provenance = manainRecordPreparationSource(verified);
+    return {
+      sourceFile: verified.recordFile, catalogSha256: verified.recordSha256,
+      prefix: provenance.prefix, scope: provenance.scope, products: verified.originalProducts,
+      record: provenance.record
+    };
   }
   const { catalog } = await readPortableOriginalArtifacts(root, providerId);
   const sourceFile = join(root, "catalogs", "providers", providerId, "original", `scrape-${providerId}-catalog.json`);
@@ -144,17 +154,39 @@ export const resolveIndividualPreparationContext = async (
   } catch (error) {
     if (!missing(error)) throw error;
   }
+  return { sourceFile, catalogSha256, prefix: catalog.prefix, scope: catalog.scope, products: catalog.products };
+};
+
+export const resolveIndividualPreparationContext = async <T extends IndividualPreparationProvider>(
+  workspace: string, providerId: T
+): Promise<IndividualPreparationContext<T>> => {
+  const root = resolve(workspace);
+  for (const lockFile of [
+    join(root, "catalogs", ".active.lock"),
+    join(root, "catalogs", "providers", providerId, "publications", ".active.lock"),
+    join(root, "catalogs", "providers", providerId, "publications", ".publication.lock"),
+    join(root, "storage", "prepared", `.retention-${providerId}.lock`)
+  ]) {
+    try {
+      await lstat(lockFile);
+      throw new Error(`Otra operación usa un bloqueo vigente: ${lockFile}. Comprobar la operación antes de continuar`);
+    } catch (error) { if (!missing(error)) throw error; }
+  }
+  const source = await readIndividualSource(root, providerId);
+  const { sourceFile, catalogSha256 } = source;
   const { fingerprints } = await loadPreparationInputs();
   const preparedDirectory = await verifyPreparedDirectory(root, providerId);
-  const existing = await readExistingPreparations(preparedDirectory, providerId, {
-    prefix: catalog.prefix, scope: catalog.scope, sha: catalogSha256, count: catalog.productCount
-  }, fingerprints, sourceFile, catalog.products);
+  const existing = await readExistingPreparations(root, preparedDirectory, providerId, {
+    prefix: source.prefix, scope: source.scope, sha: catalogSha256, count: source.products.length,
+    ...(source.record === undefined ? {} : { record: source.record })
+  }, fingerprints, sourceFile, source.products);
   const generation = digest(JSON.stringify({ providerId, catalogSha256, fingerprints }));
-  const outputFile = join(preparedDirectory, `scrape-${providerId}-${generation.slice(0, 24)}-preparation.json`);
+  const outputFile = join(preparedDirectory, `${providerId === "manain" ? "manain-record" : `scrape-${providerId}`}-${generation.slice(0, 24)}-preparation.json`);
   const activeFile = await resolveAccreditedPublication(root, providerId);
   const activeProducts = activeFile ? (await readAccreditedPublication(activeFile)).products : [];
   return {
-    providerId, sourceFile, catalogSha256, sourceProducts: catalog.productCount, sourcePrefix: catalog.prefix,
+    providerId, sourceFile, catalogSha256, sourceProducts: source.products.length, sourcePrefix: source.prefix,
+    sourceRecord: source.record,
     fingerprints, preparedDirectory, outputFile, preparationFile: existing?.file ?? null,
     preparation: existing?.preparation ?? null, activeFile, activeProducts
   };
@@ -162,7 +194,7 @@ export const resolveIndividualPreparationContext = async (
 
 export const requireIndividualPreparationContext = async (
   workspace: string, providerId: IndividualCatalogProvider
-): Promise<IndividualPreparationContext & { readonly preparationFile: string; readonly preparation: OfflinePreparation }> => {
+): Promise<IndividualPreparationContext<IndividualCatalogProvider> & { readonly preparationFile: string; readonly preparation: OfflinePreparation }> => {
   const context = await resolveIndividualPreparationContext(workspace, providerId);
   if (!context.preparation || !context.preparationFile) {
     throw new Error(`Falta preparación actual de ${providerId}. Ejecuta npm run catalogo:preparar; no uses rutas de storage manuales`);
@@ -171,7 +203,7 @@ export const requireIndividualPreparationContext = async (
 };
 
 export const ensureIndividualPreparationDirectory = async (
-  workspace: string, providerId: IndividualCatalogProvider
+  workspace: string, providerId: IndividualPreparationProvider
 ): Promise<void> => {
   const root = resolve(workspace);
   const path = [join(root, "storage"), join(root, "storage", "prepared"), join(root, "storage", "prepared", providerId)];
@@ -192,7 +224,7 @@ export const ensureIndividualPreparationDirectory = async (
 };
 
 export type IndividualPreparationSummary = {
-  readonly providerId: IndividualCatalogProvider;
+  readonly providerId: IndividualPreparationProvider;
   readonly status: "reutilizada" | "generada" | "simulada";
   readonly sourceCount: number;
   readonly ready: number;

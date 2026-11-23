@@ -1,16 +1,16 @@
 import { resolve } from "node:path";
 import { buildOfflineDiagnostics } from "../offline-diagnostics.js";
 import type { OfflinePreparation } from "../offline-document.js";
-import { prepareSavedCatalog } from "./prepare.js";
+import { prepareSavedCatalog, prepareVerifiedManainRecord } from "./prepare.js";
 import { differenceBetween } from "../../publication/active-publication.js";
 import { reconcileRemovedSpecifications } from "../../publication/specification-reconciliations.js";
 import {
   ensureIndividualPreparationDirectory, resolveIndividualPreparationContext,
-  type IndividualCatalogProvider, type IndividualPreparationContext, type IndividualPreparationSummary
+  type IndividualPreparationProvider, type IndividualPreparationContext, type IndividualPreparationSummary
 } from "./individual-context.js";
 
 export type IndividualPreparationOutcome = {
-  readonly providerId: IndividualCatalogProvider;
+  readonly providerId: IndividualPreparationProvider;
   readonly summary: IndividualPreparationSummary | null;
   readonly error: string | null;
 };
@@ -49,9 +49,9 @@ const summarize = (
 
 export const prepareIndividualCatalogs = async (options: {
   readonly workspace: string;
-  readonly providers: readonly IndividualCatalogProvider[];
+  readonly providers: readonly IndividualPreparationProvider[];
   readonly dryRun: boolean;
-  readonly onProgress?: (providerId: IndividualCatalogProvider, completed: number, total: number) => void;
+  readonly onProgress?: (providerId: IndividualPreparationProvider, completed: number, total: number) => void;
 }): Promise<readonly IndividualPreparationOutcome[]> => {
   const workspace = resolve(options.workspace);
   const results: IndividualPreparationOutcome[] = [];
@@ -65,13 +65,16 @@ export const prepareIndividualCatalogs = async (options: {
         continue;
       }
       if (!options.dryRun) await ensureIndividualPreparationDirectory(workspace, providerId);
-      const result = await prepareSavedCatalog({
-        providerId, source: context.sourceFile, out: context.outputFile, compare: null, dryRun: options.dryRun
-      });
+      const result = providerId === "manain"
+        ? await prepareVerifiedManainRecord(workspace, { out: context.outputFile, compare: null, dryRun: options.dryRun })
+        : await prepareSavedCatalog({
+          providerId, source: context.sourceFile, out: context.outputFile, compare: null, dryRun: options.dryRun
+        });
       if (result.preparation.source.catalogSha256 !== context.catalogSha256 ||
         result.preparation.source.prefix !== context.sourcePrefix ||
         result.preparation.source.productCount !== context.sourceProducts ||
-        JSON.stringify(result.preparation.fingerprints) !== JSON.stringify(context.fingerprints)) {
+        JSON.stringify(result.preparation.fingerprints) !== JSON.stringify(context.fingerprints) ||
+        JSON.stringify(result.preparation.source.record) !== JSON.stringify(context.sourceRecord)) {
         throw new Error("El origen o las reglas cambiaron durante la preparación; revisar el nuevo conjunto antes de reintentar");
       }
       if (!options.dryRun) {

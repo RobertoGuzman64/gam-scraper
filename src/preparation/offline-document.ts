@@ -8,6 +8,14 @@ export type InterventionProvenance = {
   readonly derivedCatalogSha256: string;
 };
 
+export type ManainRecordProvenance = {
+  readonly quality: "partial";
+  readonly technicalSha256: string;
+  readonly sourceCsvSha256: string;
+  readonly discoveredProductUrls: number;
+  readonly discardedUrls: readonly string[];
+};
+
 export type PreparationSource = {
   readonly providerId: string;
   readonly prefix: string;
@@ -15,6 +23,7 @@ export type PreparationSource = {
   readonly catalogSha256: string;
   readonly productCount: number;
   readonly intervention?: InterventionProvenance;
+  readonly record?: ManainRecordProvenance;
 };
 
 export type PreparationFingerprints = {
@@ -58,6 +67,30 @@ const parseInterventionProvenance = (value: unknown, catalogSha256: string): Int
   };
 };
 
+const parseManainRecordProvenance = (
+  value: unknown, providerId: string,
+  source: Record<string, unknown>, productCount: number,
+  intervention: InterventionProvenance | undefined
+): ManainRecordProvenance => {
+  if (!isRecord(value) || Object.keys(value).length !== 5 || providerId !== "manain" || intervention !== undefined ||
+    source.prefix !== "manain-record" || typeof source.catalogSha256 !== "string" ||
+    source.scope !== source.catalogSha256.slice(0, 16) ||
+    value.quality !== "partial" || !isSha(value.technicalSha256) || !isSha(value.sourceCsvSha256) ||
+    typeof value.discoveredProductUrls !== "number" || !Number.isSafeInteger(value.discoveredProductUrls) ||
+    !Array.isArray(value.discardedUrls) ||
+    !value.discardedUrls.every((url: unknown) => typeof url === "string" && url.startsWith("https://")) ||
+    new Set(value.discardedUrls).size !== value.discardedUrls.length ||
+    value.discoveredProductUrls !== productCount + value.discardedUrls.length) {
+    throw new Error("Procedencia del registro Manain inválida en preparación");
+  }
+  return {
+    quality: "partial", technicalSha256: value.technicalSha256,
+    sourceCsvSha256: value.sourceCsvSha256,
+    discoveredProductUrls: value.discoveredProductUrls,
+    discardedUrls: value.discardedUrls
+  };
+};
+
 export const parseOfflinePreparation = (value: unknown, providerId: string): OfflinePreparation => {
   const parsed = parsePreparation(value, providerId);
   if (!isRecord(value) || value.version !== 1 || !isRecord(value.source) || !isRecord(value.fingerprints) ||
@@ -83,12 +116,15 @@ export const parseOfflinePreparation = (value: unknown, providerId: string): Off
   }
   const intervention = value.source.intervention === undefined
     ? undefined : parseInterventionProvenance(value.source.intervention, value.source.catalogSha256);
+  const recordProvenance = value.source.record === undefined ? undefined :
+    parseManainRecordProvenance(value.source.record, providerId, value.source, parsed.products.length, intervention);
   return {
     version: 1, quality: "complete", published: true, preparedAt: value.preparedAt,
     source: {
       providerId, prefix: value.source.prefix, scope: value.source.scope,
       catalogSha256: value.source.catalogSha256, productCount: value.source.productCount,
-      ...(intervention === undefined ? {} : { intervention })
+      ...(intervention === undefined ? {} : { intervention }),
+      ...(recordProvenance === undefined ? {} : { record: recordProvenance })
     },
     fingerprints: value.fingerprints.rulesVersion === 2 ? {
       rulesVersion: 2, rulesSha256: value.fingerprints.rulesSha256 as string

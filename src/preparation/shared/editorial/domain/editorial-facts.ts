@@ -19,6 +19,7 @@ export type EditorialFacts = {
   readonly loadCapacityKg: number | null;
   readonly trayCapacityKg: number | null;
   readonly weightKg: number | null;
+  readonly discDiameterMm: number | null;
   readonly lengthM: number | null;
   readonly widthM: number | null;
   readonly heightM: number | null;
@@ -217,6 +218,8 @@ export const resolveEditorialFacts = (record: ProductRecord, familyOverride: Edi
   const capacity = sourceCapacity(record, source, family);
   const trayCapacity = family === "almacen-vertical" ? editorialQuantityOf(record.specs, ["Carga neta por bandeja"], "kg") : null;
   const weight = editorialQuantityOf(record.specs, ["Peso"], "kg");
+  const discDiameter = family === "equipo-corte-disco" ?
+    editorialQuantityOf(record.specs, ["Diametro max. disco"], "mm") : null;
   const length = editorialMetricOf(record.specs, ["Longitud"]);
   const width = editorialMetricOf(record.specs, ["Anchura"]);
   const height = family === "elevador-materiales" || source.equipmentHeight === undefined ? null :
@@ -235,10 +238,11 @@ export const resolveEditorialFacts = (record: ProductRecord, familyOverride: Edi
     lateralFamily && !telehandler && source.lateralReach !== undefined && lateralCandidate === null ||
     source.loadCapacity !== undefined && (isHandling(family) || platform || family === "dumper") && capacity === null ||
     (isHandling(family) && source.liftingHeight !== undefined && lifting === null)) return null;
+  const minimumWeight = family === "radial-electrica" || family === "martillo-electrico" ? 2 : 10;
   if (!valid(work, 3, 60) || !valid(platformHeight, 0.5, 60) || !valid(storedHeight, 0.5, 30) ||
     !valid(lateral, 0.5, 60) || !valid(lifting, 0.5, 60) || !valid(capacity, 100, 50000) ||
     !valid(trayCapacity, 10, 5000) ||
-    !valid(weight, 10, 500000) || !valid(length, 0.2, 50) || !valid(width, 0.2, 20) ||
+    !valid(weight, minimumWeight, 500000) || !valid(discDiameter, 150, 500) || !valid(length, 0.2, 50) || !valid(width, 0.2, 20) ||
     !valid(height, 0.2, 30) || !valid(voltage, 1, 1500) || !valid(power, 1, 20000) ||
     !valid(gradeability, 0, 100) || !valid(cleaningWidth, 0.2, 5) || !valid(drawbar, 100, 200000) ||
     (work !== null && storedHeight !== null && storedHeight > work)) return null;
@@ -246,11 +250,11 @@ export const resolveEditorialFacts = (record: ProductRecord, familyOverride: Edi
     const announced = /\b(\d{3,5})\s*kg\b/iu.exec(record.title ?? "")?.[1];
     if (announced && capacity !== null && Number(announced) !== capacity) return null;
   }
-  if (![work, platformHeight, lateral, lifting, capacity, trayCapacity, weight, power, voltage, gradeability, height, loadCenter, turningRadius, cleaningWidth, drawbar, basket?.[0] ?? null].some((value) => value !== null)) return null;
+  if (![work, platformHeight, lateral, lifting, capacity, trayCapacity, weight, discDiameter, power, voltage, gradeability, height, loadCenter, turningRadius, cleaningWidth, drawbar, basket?.[0] ?? null].some((value) => value !== null)) return null;
   return {
     family, brand: source.brand, model: source.model, workingHeightM: work,
     platformHeightM: platformHeight, storedHeightM: storedHeight, lateralReachM: lateral,
-    liftingHeightM: lifting, loadCapacityKg: capacity, trayCapacityKg: trayCapacity, weightKg: weight,
+    liftingHeightM: lifting, loadCapacityKg: capacity, trayCapacityKg: trayCapacity, weightKg: weight, discDiameterMm: discDiameter,
     lengthM: length, widthM: width, heightM: height,
     voltageV: voltage, powerKva: power, gradeabilityPercent: gradeability,
     loadCenterMm: loadCenter, turningRadiusM: turningRadius === null ? null : turningRadius / 1000, cleaningWidthM: cleaningWidth,
