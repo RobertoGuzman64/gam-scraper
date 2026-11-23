@@ -301,3 +301,23 @@ test("detecta las evidencias y resúmenes históricos que no incluyen providerId
   const matching = inspectCatalogReplicas(root).findings.filter((finding) => finding.startsWith("R-ARTEFACTO-CATALOGO"));
   assert.equal(matching.length, 3);
 });
+
+test("excluye artefactos operativos de storage sin permitir réplicas en testing", (t) => {
+  const value = fixture(t);
+  const { root, write } = value;
+  const source = JSON.stringify({ providerId: "gam", products: Array.from({ length: 12 }, (_, i) => machine(String(i))) });
+  write("catalogs/providers/gam/original/source.json", source);
+  write("storage/providers/gam/editorial/accreditation-run.json", source);
+  write("storage/providers/gam/deliveries/run.json", JSON.stringify({
+    providerId: "gam", catalogSha256: "a".repeat(64)
+  }));
+  write("storage/prepared/gam/run-preparation.json", source);
+  write("storage/prepared/gam/run-preparation.manifest.json", JSON.stringify({
+    providerId: "gam", sourceCsvSha256: "b".repeat(64)
+  }));
+  assert.deepEqual(replicaCodes(root), []);
+  assert.deepEqual(findings(value), []);
+  write("src/testing/fixtures/duplicated-source.json", source);
+  assert.ok(replicaCodes(root).includes("R-ARCHIVO-DUPLICADO"));
+  assert.ok(findings(value).some((finding) => finding.includes("src/testing/fixtures/duplicated-source.json")));
+});

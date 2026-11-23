@@ -28,7 +28,7 @@ const walk = (root, directory = "") => {
 
 const archiveLimit = 32 * 1024 * 1024;
 const dataLimit = 12 * 1024 * 1024;
-const replicaExcludedDirectories = new Set([".git", "node_modules", "dist", "output", "out", "reports", "coverage"]);
+const replicaExcludedDirectories = new Set([".git", "node_modules", "dist", "storage", "output", "out", "reports", "coverage"]);
 
 const replicaPaths = (root, directory = "") => {
   const paths = [];
