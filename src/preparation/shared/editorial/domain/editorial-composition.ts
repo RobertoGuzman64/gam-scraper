@@ -132,7 +132,7 @@ export const resolveReusableEditorial = (
   const identity = `${family[0]?.toLocaleUpperCase("es") ?? ""}${family.slice(1)}${fuel} ${name}`;
   const main = measures.length ? join(measures) : join(extras.slice(0, 2));
   const unit = [facts.year !== null ? `año de fabricación ${facts.year}` : null,
-    facts.hours !== null ? `${formatEditorialQuantity(facts.hours)} horas registradas` : null]
+    facts.hours !== null ? `${formatEditorialQuantity(facts.hours)} ${facts.hours === 1 ? "hora registrada" : "horas registradas"}` : null]
     .filter((value): value is string => value !== null);
   const generalClauses = [...measures, ...extras];
   const generalDetails = generalClauses.length ? join(generalClauses) : main;

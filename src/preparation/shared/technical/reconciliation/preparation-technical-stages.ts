@@ -12,6 +12,7 @@ import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
 import { reconcileGamInitialTechnicalEvidence, reconcileGamTechnicalIdentity, reconcileGamTechnicalBeforeEditorial, reconcileGamTechnicalCapacities, reconcileGamTechnicalMeasurements, normalizeGamTechnicalSpecs } from "../../../gam/technical/reconciliation/preparation-technical-stages.js";
 import { reconcileMercaelevaInitialTechnicalEvidence, reconcileMercaelevaSourceFamily, reconcileMercaelevaSourceTechnicalSpecs, reconcileMercaelevaTechnicalBeforeEditorial, reconcileMercaelevaTechnicalCapacity, reconcileMercaelevaTechnicalCorroboratedCapacity, sanitizeMercaelevaTechnicalSpecs } from "../../../mercaeleva/technical/reconciliation/preparation-technical-stages.js";
+import { normalizeManainTechnicalSpecs } from "../../../manain/technical/reconciliation/normalization.js";
 import { reconcileGomarizDocumentedWeight } from "../../../gomariz/technical/evidence/documented-weight.js";
 import { reconcileGomarizDocumented1cxFuel } from "../../../gomariz/technical/evidence/verified-1cx-fuel.js";
 import { reconcileGomarizVerifiedElectricSemanticSource, reconcileGomarizVerifiedPlatformHeight, reconcileGomarizVerifiedTowerModel, reconcileGomarizVerifiedCompositeBrand } from "../../../gomariz/technical/reconciliation/gomariz.js";
@@ -64,4 +65,5 @@ export const reconcileTechnicalAfterEditorial = (record: ProductRecord): Product
 
 export const normalizePreparedTechnicalSpecs = (
   record: ProductRecord, specs: SpecsMap, observe?: TechnicalRecoveryObservation
-): SpecsMap => normalizeGamTechnicalSpecs(record, sanitizeMercaelevaTechnicalSpecs(record, specs), observe);
+): SpecsMap => normalizeManainTechnicalSpecs(record,
+  normalizeGamTechnicalSpecs(record, sanitizeMercaelevaTechnicalSpecs(record, specs), observe));

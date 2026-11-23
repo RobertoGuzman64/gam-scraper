@@ -183,6 +183,9 @@ const unitHours = (record: ProductRecord): number | null => {
   return Number.isSafeInteger(hours) && hours >= 0 && hours <= 200000 ? hours : null;
 };
 
+export const editorialWeightIsPlausible = (family: EditorialFamily, weightKg: number): boolean =>
+  !(family.startsWith("plataforma-") && weightKg < 100);
+
 export const resolveEditorialFacts = (record: ProductRecord, familyOverride: EditorialFamily | null = null): EditorialFacts | null => {
   const source = resolveEditorialSource(record);
   if (!source) return null;
@@ -217,11 +220,16 @@ export const resolveEditorialFacts = (record: ProductRecord, familyOverride: Edi
     sourceMetric(source.liftingHeight, source.liftingHeightUnit) === liftingAliases ? liftingAliases : null;
   const capacity = sourceCapacity(record, source, family);
   const trayCapacity = family === "almacen-vertical" ? editorialQuantityOf(record.specs, ["Carga neta por bandeja"], "kg") : null;
-  const weight = editorialQuantityOf(record.specs, ["Peso"], "kg");
+  const declaredWeight = editorialQuantityOf(record.specs, ["Peso"], "kg");
+  const weight = declaredWeight !== null && editorialWeightIsPlausible(family, declaredWeight) ? declaredWeight : null;
   const discDiameter = family === "equipo-corte-disco" ?
     editorialQuantityOf(record.specs, ["Diametro max. disco"], "mm") : null;
-  const length = editorialMetricOf(record.specs, ["Longitud"]);
-  const width = editorialMetricOf(record.specs, ["Anchura"]);
+  const lengthCandidate = editorialMetricOf(record.specs, ["Longitud", "Longitud total", "Largo"]);
+  const length = record.specs?.Longitud === undefined && record.specs?.["Longitud total"] === undefined &&
+    !valid(lengthCandidate, 0.2, 50) ? null : lengthCandidate;
+  const widthCandidate = editorialMetricOf(record.specs, ["Anchura", "Ancho total", "Anchura total", "Ancho"]);
+  const width = record.specs?.Anchura === undefined && record.specs?.["Ancho total"] === undefined &&
+    record.specs?.["Anchura total"] === undefined && !valid(widthCandidate, 0.2, 20) ? null : widthCandidate;
   const height = family === "elevador-materiales" || source.equipmentHeight === undefined ? null :
     editorialMetricOf({ Altura: source.equipmentHeight }, ["Altura"]);
   const voltage = editorialQuantityOf(record.specs, ["Voltaje de la batería", "Voltaje"], "V");

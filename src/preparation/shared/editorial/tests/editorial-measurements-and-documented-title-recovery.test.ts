@@ -81,6 +81,53 @@ test("alcance lateral solo con familia reconocida y procedencia concordante", ()
   assert.equal(resolveEditorialFacts({ ...source, title: "Carretilla elevadora MARCA MODELO10", url: source.url?.replace("plataforma-sobre-orugas", "carretilla") ?? null })?.lateralReachM ?? null, null);
 });
 
+test("dimensiones totales acreditadas enriquecen la descripción sin confundirse con plataforma o alternativas", () => {
+  const source = controlledMercaelevaPlatform();
+  const record: ProductRecord = {
+    ...source,
+    specs: {
+      ...source.specs,
+      "Longitud total": "4,88 m",
+      "Ancho total": "2,31 m",
+      "Longitud plataforma": "1,81 m",
+      "Ancho plataforma": "3,96 m"
+    }
+  };
+  assert.equal(resolveEditorialFacts(record)?.lengthM, 4.88);
+  assert.equal(resolveEditorialFacts(record)?.widthM, 2.31);
+  const general = resolveReusableEditorial(record).general ?? "";
+  assert.match(general, /longitud de 4,88 m/u);
+  assert.match(general, /anchura de 2,31 m/u);
+  assert.doesNotMatch(general, /longitud de 1,81 m|anchura de 3,96 m/u);
+
+  const anotherUnit = { ...record, reference: "OTRA-UNIDAD", url: record.url?.replace("CONTROL-02", "OTRA-UNIDAD") ?? null,
+    specs: { ...record.specs, "Longitud total": "5,25 m", "Ancho total": "2,40 m" } };
+  assert.match(resolveReusableEditorial(anotherUnit).general ?? "", /longitud de 5,25 m/u);
+  assert.doesNotMatch(resolveReusableEditorial(anotherUnit).general ?? "", /longitud de 4,88 m/u);
+
+  const alternateLabels = { ...record, specs: {
+    ...source.specs, Largo: "4880 mm", Ancho: "2310 mm"
+  } };
+  assert.equal(resolveEditorialFacts(alternateLabels)?.lengthM, 4.88);
+  assert.equal(resolveEditorialFacts(alternateLabels)?.widthM, 2.31);
+  assert.match(resolveReusableEditorial(alternateLabels).general ?? "", /longitud de 4,88 m y anchura de 2,31 m/u);
+
+  const doubtfulWidth = { ...record, specs: { ...source.specs, Largo: "4880 mm", Ancho: "180 mm" } };
+  assert.equal(resolveEditorialFacts(doubtfulWidth)?.lengthM, 4.88);
+  assert.equal(resolveEditorialFacts(doubtfulWidth)?.widthM, null);
+  assert.doesNotMatch(resolveReusableEditorial(doubtfulWidth).general ?? "", /anchura de /u);
+
+  const inconsistent = { ...record, specs: { ...record.specs, Longitud: "5 m", Anchura: "2 m" } };
+  assert.equal(resolveEditorialFacts(inconsistent)?.lengthM, null);
+  assert.equal(resolveEditorialFacts(inconsistent)?.widthM, null);
+  assert.doesNotMatch(resolveReusableEditorial(inconsistent).general ?? "", /longitud de |anchura de /u);
+
+  for (const invalid of ["4,88 kg", "4,88 m o 5 m", "sin dato"]) {
+    assert.equal(resolveEditorialFacts({ ...record, specs: { ...record.specs, "Longitud total": invalid } })?.lengthM, null);
+  }
+  assert.equal(resolveEditorialFacts({ ...record, url: "https://example.invalid/for-sale/machine/equipo-CONTROL-02" }), null);
+});
+
 test("radio métrico acreditado por fuente y preparado, pero no propagado entre unidades", () => {
   const source = gamRadius("1,98 m");
   assert.equal(resolveEditorialFacts(source)?.turningRadiusM, 1.98);

@@ -106,11 +106,12 @@ export const resolveManainEditorialDomainSource = (record: ProductRecord): Edito
 export const reconcileManainEditorialSourceSpecs = (record: ProductRecord): ProductRecord => {
   if (!resolveManainEditorialDomainSource(record)) return record;
   const family = manainSourceFamily(record);
-  if (family === "manipulacion-apilador") {
+  if (family?.startsWith("elevacion-") || family?.startsWith("manipulacion-")) {
     const capacity = record.specs?.["Capacidad carga"];
-    if (typeof capacity !== "string" || editorialQuantity(capacity, "kg") === null ||
-      ["Capacidad de carga (kg)", "Capacidad de carga", "Capacidad"].some((key) => record.specs?.[key] !== undefined)) return record;
-    return { ...record, specs: { ...record.specs, "Capacidad de carga": capacity } };
+    if (typeof capacity === "string" && editorialQuantity(capacity, "kg") !== null &&
+      !["Capacidad de carga (kg)", "Capacidad de carga", "Capacidad"].some((key) => record.specs?.[key] !== undefined)) {
+      return { ...record, specs: { ...record.specs, "Capacidad de carga": capacity } };
+    }
   }
   const smallElectricTool = family === "pequena-maquinaria-radiales-electricas" ||
     family === "pequena-maquinaria-martillos-electricos";

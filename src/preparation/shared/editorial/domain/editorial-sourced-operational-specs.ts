@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { editorialFamilyOf } from "./editorial-families.js";
+import { resolveSourcedEquipmentDetails } from "./editorial-sourced-equipment-details.js";
 import { editorialMetricOf, editorialQuantityOf, formatEditorialQuantity } from "./editorial-measurements.js";
 import { sameEditorialUnit, verifiedEditorialIdentity } from "./editorial-source-contract.js";
 
@@ -83,6 +84,7 @@ export const resolveSourcedOperationalSpecs = (
 ): string | null => {
   if (!authenticatedOrigin || !general?.trim() || general.trim().split(/\s+/u).length >= 60 ||
     !sameEditorialUnit(source, prepared)) return null;
-  const addition = batteryContext(source, prepared, general) ?? towerContext(source, prepared, general) ?? transportContext(source, prepared, general);
+  const addition = batteryContext(source, prepared, general) ?? towerContext(source, prepared, general) ?? transportContext(source, prepared, general) ??
+    resolveSourcedEquipmentDetails(source, prepared, general, authenticatedOrigin);
   return addition ? `${general.trim()} ${addition}` : null;
 };
