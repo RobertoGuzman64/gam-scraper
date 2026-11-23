@@ -10,10 +10,12 @@ import { reconcileGamSourceForCommercialFallback, reconcileSourceForCommercialPr
 const generalCategorySlugs = new Set([
   "plataforma-articulada",
   "plataforma-elevadora",
+  "plataforma-elevadora-segunda-mano",
   "carretilla-elevadora",
   "manipulacion-elevacion-cargas",
   "manipulacion-elevacion-cargas-segunda-mano",
   "maquinaria-construccion-segunda-mano",
+  "energia-aire-agua-segunda-mano",
   "vehiculos-segunda-mano",
   "casetas-contenedores-vallas-segunda-mano"
 ]);

@@ -629,27 +629,31 @@ test("la acreditación comercial bloquea un error de escala confirmado de GAM si
 });
 
 
-test("Manain: diez máquinas reciben categoría comercial solo por evidencia de origen y modelo corroborado", async () => {
+test("Manain clasifica mástiles, compactación y agua en categorías generales acreditadas", async () => {
   const realCatalog = await loadImportCatalog();
   const { brandLogos } = await loadCommercialReference();
   const root = fileURLToPath(new URL("../../../../", import.meta.url));
   const categories = new Map<string, number>([
     ["MA4032", 34], ["MA4031", 34], ["MA3804", 34], ["MA3641", 34],
     ["MA3622", 34], ["MA3806", 34], ["MA3264", 34], ["MA3719", 34],
-    ["MA1824", 47], ["MAN1120", 68]
+    ["MA1824", 47], ["MAN1120", 68],
+    ["MAN2327", 73], ["MAN2285", 73], ["MA3959", 73], ["MA3803", 73],
+    ["MA3306", 73], ["MA4054", 73], ["MA4048", 73],
+    ["MAN980", 67], ["MAN743", 67], ["MAN742", 67], ["MAN553", 67],
+    ["MAN118", 104], ["MAN685", 104]
   ]);
-  const pending = ["MAN2327", "MAN2285", "MA3959", "MA3803", "MA3306", "MA4054", "MA4048"];
-  const references = [...categories.keys(), ...pending];
-  const selected = await selectAccreditedCommercialInputs(root, realCatalog, { manain: references });
+  const pending = ["MAN1188"];
+  const selected = await selectAccreditedCommercialInputs(root, realCatalog,
+    { manain: [...categories.keys(), ...pending] });
   const manain = selected.get("manain");
   assert.ok(manain);
   const before = JSON.stringify(manain.entries);
   const output = planCommercialExport(manain.entries, "manain", manain.publicationSha256,
     realCatalog, brandLogos, null, null);
-  assert.equal(output.total, 17);
-  assert.equal(output.summary.exported, 17);
-  assert.equal(output.summary.categorized, 10);
-  assert.equal(output.summary.pendingCategory, 7);
+  assert.equal(output.total, 24);
+  assert.equal(output.summary.exported, 24);
+  assert.equal(output.summary.categorized, 23);
+  assert.equal(output.summary.pendingCategory, 1);
   assert.equal(accreditCommercialPlan(manain.entries, output, realCatalog, brandLogos, null).summary.blocking, 0);
   assert.equal(JSON.stringify(manain.entries), before);
   for (const entry of manain.entries) {
@@ -663,6 +667,8 @@ test("Manain: diez máquinas reciben categoría comercial solo por evidencia de 
       continue;
     }
     assert.equal(isValidCommercialCategory(entry.source, expected, "Segunda_Mano", realCatalog), true);
+    assert.equal(isValidCommercialCategory(entry.source, expected, "Nuevo", realCatalog), false);
+    if (expected === 67 || expected === 73 || expected === 104) assert.deepEqual(product.attributes, []);
     const source = entry.source;
     const modified = [
       { ...source, categoryKey: "maquinaria" },
@@ -671,11 +677,26 @@ test("Manain: diez máquinas reciben categoría comercial solo por evidencia de 
       { ...source, model: "OTRO MODELO" },
       { ...source, specs: { ...source.specs, Marca: "OTRA MARCA" } },
       { ...source, specs: { ...source.specs, Modelo: "OTRO MODELO" } },
-      { ...source, specs: { ...source.specs, Motor: "Gasolina" } },
+      { ...source, specs: { ...source.specs, Motor: expected === 67 ? "Eléctrico" : "Gasolina" } },
       { ...source, specs: { ...source.specs, "Nueva o usada": "nueva" } },
       ...(expected === 68 ? [
         { ...source, specs: { ...source.specs, "Diametro del tambor": "800 mm" } },
         { ...source, specs: { ...source.specs, Peso: "3000 kg" } }
+      ] : expected === 67 ? [
+        { ...source, title: "OTRO MODELO" },
+        { ...source, specs: { ...source.specs, Peso: "sin medida" } },
+        { ...source, url: source.url.replace("compactacion", "hidrolimpiadora") }
+      ] : expected === 73 ? [
+        { ...source, title: "OTRO MODELO" },
+        { ...source, specs: { ...source.specs, "Capacidad carga": "227 kg" } },
+        { ...source, specs: { ...source.specs, "Altura trabajo": "" } },
+        { ...source, specs: { ...source.specs, "Longitud plataforma": "" } },
+        { ...source, url: source.url.replace("elevacion-mastil", "elevacion-unipersonal") }
+      ] : expected === 104 ? [
+        { ...source, title: "OTRO MODELO" },
+        { ...source, url: source.url.replace("venta-pequena-maquinaria-", "venta-pequena-maquinaria-otra-") },
+        { ...source, specs: { ...source.specs, "Caudal max.": "", "Caudal nominal": "" } },
+        { ...source, specs: { ...source.specs, "Altura elevacion max": "", "Presion max.": "" } }
       ] : [
         { ...source, specs: { ...source.specs, "Capacidad carga": "200 kg" } }
       ])
@@ -684,7 +705,6 @@ test("Manain: diez máquinas reciben categoría comercial solo por evidencia de 
       assert.equal(isValidCommercialCategory(altered, expected, "Segunda_Mano", realCatalog), false,
         `${entry.source.reference}: identidad o evidencia alterada`);
     }
-    assert.equal(isValidCommercialCategory(source, expected, "Nuevo", realCatalog), false);
   }
 });
 
