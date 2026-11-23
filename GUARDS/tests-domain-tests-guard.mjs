@@ -19,7 +19,7 @@ const catalogPath = (value) => /catalogs\s*[/\\]\s*providers\s*[/\\]/iu.test(val
 const historicalFixture = (value) => /(?:src\/testing\/fixtures\/|testing\/fixtures\/)/iu.test(value) &&
   /(?:regression[-_/]\d+|(?:scrape|catalog)[\w-]*20\d\d|(?:catalog|publishable)\.json)/iu.test(value);
 
-const testingRoots = new Set(["builders", "domain-cases", "fixtures", "integration"]);
+const testingRoots = new Set(["builders", "fixtures", "integration"]);
 const integrationRoots = new Set(["catalog", "commercial", "preparation"]);
 const establishedPreparationHelpers = new Set([
   "src/preparation/testing/category-slug-resolver.ts",
@@ -45,7 +45,7 @@ const checkTestLayout = (project, visit) => {
     for (const entry of readdirSync(testingDirectory, { withFileTypes: true })) {
       if (!testingRoots.has(entry.name) || !entry.isDirectory()) {
         visit("T-TESTING-ROOT", `src/testing/${entry.name}`,
-          "El soporte compartido de tests solo puede estar en builders, domain-cases, fixtures o integration");
+          "El soporte compartido de tests solo puede estar en builders, fixtures o integration");
       }
     }
   }
@@ -72,6 +72,9 @@ const checkTestLayout = (project, visit) => {
     }
   }
   for (const [path, source] of project.files) {
+    if ((isTest(path) || supportModule(path)) && /(?:accredited-source-samples|(?:src[\\/])?testing[\\/]domain-cases[\\/]data)/iu.test(source.text)) {
+      visit("T-RETIRED-DATASET", path, "Prohibido recuperar loaders o rutas de datasets históricos eliminados");
+    }
     if (isTest(path) && path.startsWith("src/") && !path.endsWith(".test.ts")) {
       visit("T-TEST-DISCOVERY", path,
         "El runner solo descubre archivos *.test.ts en src/; esta suite quedaría sin ejecutar");
@@ -273,20 +276,10 @@ const liveSourceEvidence = (source) => {
 };
 
 const accreditedCatalogIntegrations = new Map([
-  ["src/catalog/normalization/gam/tests/gallery.test.ts", {
-    sha256: "afe9285d98a6b3bd9dcd609fcf55671a6d43c376bbf8c2585aa28d67b32e40fb",
-    reads: 1,
-    responsibility: "Regresión histórica congelada de galerías e integridad entre unidades y proveedores"
-  }],
   ["src/preparation/gam/identity/tests/gam-identity-variants.test.ts", {
     sha256: "29400091418295a3aadaf8f6b922a88f1d25d6796e37674d119a1c6c19d0acf8",
     reads: 1,
     responsibility: "Variantes e identidad cruzada contra fixture histórica firmada"
-  }],
-  ["src/preparation/shared/quality/tests/source-semantic-quality.test.ts", {
-    sha256: "b485ef9925c022a2f5d9632c39c94c7e6b46b5a02a804ff2a0e57fa123e0cba4",
-    reads: 1,
-    responsibility: "Regresión semántica de fuentes históricas congeladas GAM, Gomariz y Mercaeleva"
   }],
   ["src/preparation/tests/catalog-publication-consistency.test.ts", {
     sha256: "2165c8c823a5ab7fec72f1d0c26184248c0d1eb14eed22fc0a0cb2ea0ab4011b",
@@ -309,8 +302,6 @@ const transitiveExceptions = new Map([
     "src/testing/builders/mercaeleva-source-fixture.ts"],
   ["src/preparation/mercaeleva/technical/tests/specifications/mercaeleva-documented-platform-technical-specs.test.ts",
     "src/testing/builders/mercaeleva-source-fixture.ts"],
-  ["src/preparation/shared/quality/tests/source-semantic-quality.test.ts",
-    "src/testing/builders/mercaeleva-source-fixture.ts"]
 ]);
 
 const accreditedTransitiveSources = new Map([

@@ -6,42 +6,12 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { comparablePopulation, readEditorialPopulations } from '../editorial-populations.mjs';
 import { editorialAuditFingerprints, loadEditorialAuditPopulation } from '../../operations/editorial-audit-population.mjs';
-import { prepareSourceProduct } from '../../../dist/preparation/prepare-product.js';
-import { prepareImportBatch } from '../../../dist/preparation/batch-identity.js';
 import { discoverAccreditedPublications, readAccreditedPublication } from '../../../dist/infrastructure/filesystem/catalog/accredited-publication.js';
 import { readPortableOriginalArtifacts } from '../../../dist/infrastructure/filesystem/catalog/portable-original.js';
 import { readActiveTechnicalPublication } from '../../../dist/infrastructure/filesystem/catalog/technical-publication.js';
 import { LEGACY_CAMPAIGN_PROVIDERS, CAMPAIGN_PROVIDERS } from '../../../dist/contracts/campaign-providers.js';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
-
-const gam = { products: JSON.parse(readFileSync(resolve(root, 'src/testing/domain-cases/data/gam-source-cases.json'), 'utf8')) };
-const record = (reference) => {
-  const product = gam.products.find((item) => item.reference === reference);
-  assert.ok(product, `Falta referencia histórica GAM ${reference}`);
-  return product;
-};
-
-test('la auditoría por ficha no sustituye la calidad de preparación por lote', () => {
-  const references = ['6682', '6703'];
-  const rows = references.map(record);
-  assert.ok(rows.every((item) => item.serialNumber === 'P177B10585U'));
-  assert.ok(rows.every((item) => prepareSourceProduct(item).status === 'ready'));
-  const prepared = prepareImportBatch(rows);
-  assert.equal(prepared.totals.review, 2);
-  assert.equal(prepared.totals.ready, 0);
-  assert.ok(prepared.products.every((item) => item.issues.some((issue) => issue.includes('Número de serie'))));
-  assert.ok(prepared.products.every((item) => item.issues.some((issue) => issue.includes('Stock GAM diferenciado'))));
-});
-
-test('excepciones de identidad verificadas no crean reviews adicionales', () => {
-  for (const references of [['6835', '6858'], ['6806', '6807']]) {
-    const rows = references.map(record);
-    const results = prepareImportBatch(rows);
-    assert.equal(results.totals.review, 0);
-    assert.equal(results.totals.ready, 2);
-  }
-});
 
 test('las tres poblaciones quedan separadas por corte, fuente y proveedor', async () => {
   const report = await readEditorialPopulations(root);

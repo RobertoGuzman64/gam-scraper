@@ -364,18 +364,26 @@ test("ningún recuento del catálogo vivo conserva una excepción por nombre de 
   assert.equal(result.exceptions.filter((item) => item.rule === "T-FIXED-COHORT").length, 0);
 });
 
-test("las suites GAM desacopladas no pueden volver a un catálogo operativo mediante su helper", (t) => {
+test("la arquitectura impide reconstruir el antiguo almacén domain-cases", (t) => {
   const { root, write } = fixture(t);
   const helper = "src/testing/domain-cases/accredited-source-samples.ts";
-  const path = "src/preparation/gam/quality/tests/gam-verified-operational-safety.test.ts";
+  const suite = "src/preparation/gam/quality/tests/gam-verified-operational-safety.test.ts";
   write(helper,
     "import { readFileSync } from 'node:fs'; export const accreditedGamRegressionSource = () => JSON.parse(readFileSync('src/testing/domain-cases/data/gam-original.json', 'utf8')); ");
-  write(path,
+  write(suite,
     "import { accreditedGamRegressionSource } from '../../../../testing/domain-cases/accredited-source-samples.js'; const records = accreditedGamRegressionSource(); export const total = records.length;");
-  assert.deepEqual(inspectTestArchitecture(root).findings, []);
-  write(helper,
-    "import { readCanonicalCatalog } from '../../infrastructure/filesystem/catalog/canonical-catalog.js'; export const accreditedGamRegressionSource = () => readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json');");
-  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
+  const findings = rules(inspectTestArchitecture(root).findings);
+  assert.ok(findings.has("T-TESTING-ROOT"));
+  assert.ok(findings.has("T-RETIRED-DATASET"));
+});
+
+test("ni otro helper ni una suite pueden referenciar datasets históricos retirados", (t) => {
+  const { root, write } = fixture(t);
+  const suite = "src/preparation/shared/editorial/tests/contract.test.ts";
+  write(suite, "import { readFileSync } from 'node:fs'; readFileSync('src/testing/domain-cases/data/gam-original.json', 'utf8');");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-RETIRED-DATASET"));
+  write(suite, "import assert from 'node:assert/strict'; assert.equal(2 + 2, 4);");
+  assert.ok(!rules(inspectTestArchitecture(root).findings).has("T-RETIRED-DATASET"));
 });
 
 test("el helper eliminado de GAM no conserva autorizaciones transitivas", (t) => {
@@ -455,9 +463,7 @@ test("un test de integración de publicación no se penaliza por usar manifiesto
 
 const guardedRepositoryRoot = fileURLToPath(new URL("../", import.meta.url));
 const accreditedCatalogIntegrationPaths = [
-  "src/catalog/normalization/gam/tests/gallery.test.ts",
   "src/preparation/gam/identity/tests/gam-identity-variants.test.ts",
-  "src/preparation/shared/quality/tests/source-semantic-quality.test.ts",
   "src/preparation/tests/catalog-publication-consistency.test.ts"
 ];
 
@@ -468,13 +474,13 @@ test("las lecturas protegidas son contratos de integración exactos y no infracc
   }
   const result = inspectTestArchitecture(root);
   assert.deepEqual(result.findings, []);
-  assert.equal(result.integrations.length, 6);
-  assert.equal(new Set(result.integrations.map((item) => item.path)).size, 4);
+  assert.equal(result.integrations.length, 4);
+  assert.equal(new Set(result.integrations.map((item) => item.path)).size, 2);
 });
 
 test("la acreditación exacta se revoca ante cualquier cambio y no acepta nuevas lecturas", (t) => {
   const { root, write } = fixture(t);
-  const path = "src/catalog/normalization/gam/tests/gallery.test.ts";
+  const path = "src/preparation/gam/identity/tests/gam-identity-variants.test.ts";
   const original = readFileSync(join(guardedRepositoryRoot, path), "utf8");
   write(path, original);
   assert.equal(inspectTestArchitecture(root).integrations.length, 1);
