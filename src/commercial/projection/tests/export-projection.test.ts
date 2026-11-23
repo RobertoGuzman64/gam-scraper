@@ -5,6 +5,7 @@ import type { ImportCandidate, ImportCatalog } from "../../legacy-export/contrac
 import type { CommercialBaselineInput } from "../../diagnostics/commercial-baseline.js";
 import type { BrandLogoReference } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { planCommercialExport } from "../export-projection.js";
+import { decideCommercialCategory } from "../category-decision.js";
 import { projectCommercialPresentation } from "../presentation-projection.js";
 import { normalizePreparedEditorialPresentation } from "../../../preparation/shared/editorial/mapping/prepared-editorial-presentation.js";
 import { accreditCommercialPlan } from "../../diagnostics/commercial-accreditation.js";
@@ -107,6 +108,40 @@ test("conserva todas las elegibles incluso sin categoría, y registra exclusione
   assert.equal(output.excluded.length, 2);
   assert.equal(output.excluded[0]?.reason, "lote");
   assert.equal(output.excluded[1]?.reason, "herramienta");
+});
+
+
+test("Manain excluye herramientas portátiles solo con identidad y familia documentadas", () => {
+  const tool: ProductRecord = {
+    ...source("MAN676"), providerId: "manain", categoryKey: "venta", categoryName: "Maquinaria en venta",
+    url: "https://manain.com/producto/venta-pequena-maquinaria-martillos-electricos-bosch-gsh-11-e/",
+    title: "GSH 11 E", brand: "BOSCH", model: "GSH 11 E",
+    specs: { Marca: "BOSCH", Modelo: "GSH 11 E", Motor: "Eléctrico" }
+  };
+  const radial: ProductRecord = {
+    ...tool, reference: "MAN683", title: "GWS 22-230 H", model: "GWS 22-230 H",
+    url: "https://manain.com/producto/venta-pequena-maquinaria-radiales-electricas-bosch-gws-22-230-h-3/",
+    specs: { Marca: "BOSCH", Modelo: "GWS 22-230 H", Motor: "Eléctrico" }
+  };
+  for (const record of [tool, radial]) {
+    assert.deepEqual(decideCommercialCategory(record, null),
+      { status: "excluded", reason: "herramienta", categorySellID: null });
+  }
+  const unrelated: readonly ProductRecord[] = [
+    { ...tool, url: tool.url.replace("manain.com", "other.example") },
+    { ...tool, url: tool.url.replace("martillos-electricos", "martillo-miniex") },
+    { ...tool, categoryKey: "maquinaria" },
+    { ...tool, brand: "Otra marca" },
+    { ...tool, specs: { ...tool.specs, Modelo: "OTRO" } },
+    { ...tool, specs: { ...tool.specs, Motor: "Diésel" } },
+    { ...tool, model: "OTRO" },
+    { ...tool, title: "Otra máquina" },
+    { ...radial, url: radial.url.replace("radiales-electricas", "martillos-electricos") },
+    { ...tool, url: "https://manain.com/producto/venta-pequena-maquinaria-compactacion-husqvarna-lt-6005/" }
+  ];
+  for (const record of unrelated) {
+    assert.equal(decideCommercialCategory(record, null).status, "pending");
+  }
 });
 
 test("dos máquinas con la misma referencia comercial mantienen identidades propias", () => {

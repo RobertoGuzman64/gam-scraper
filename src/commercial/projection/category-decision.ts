@@ -1,5 +1,6 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
 import { fold } from "../../preparation/shared/classification/mapping/category-utils.js";
+import { isVerifiedManainHandTool } from "./manain-tool-evidence.js";
 
 export type CommercialCategoryDecision =
   | { readonly status: "excluded"; readonly reason: "lote" | "herramienta" | "accesorio"; readonly categorySellID: null }
@@ -23,6 +24,9 @@ export const decideCommercialCategory = (
   }
   if (segments.some((segment) => segment === "herramientas" || segment === "tools") ||
     sourceCategory === "herramientas" || sourceCategory === "tools") {
+    return { status: "excluded", reason: "herramienta", categorySellID: null };
+  }
+  if (isVerifiedManainHandTool(source)) {
     return { status: "excluded", reason: "herramienta", categorySellID: null };
   }
   const isBraviComponent = source.providerId === "gam" && source.categoryKey === "marcas-nuevas" &&
