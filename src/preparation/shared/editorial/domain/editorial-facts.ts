@@ -271,3 +271,9 @@ export const resolveEditorialFacts = (record: ProductRecord, familyOverride: Edi
     year: unitYear(record), hours: unitHours(record), energy
   };
 };
+
+export const editorialHasImplausibleWeight = (record: ProductRecord): boolean => {
+  const facts = resolveEditorialFacts(record);
+  const weight = editorialQuantityOf(record.specs, ["Peso"], "kg");
+  return facts !== null && weight !== null && !editorialWeightIsPlausible(facts.family, weight);
+};

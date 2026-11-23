@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
-import { normalizeTechnicalPresentation } from "../reconciliation/technical-presentation.js";
+import { normalizeTechnicalPresentation, rejectImplausibleTechnicalWeight } from "../reconciliation/technical-presentation.js";
 import { normalizePreparedTechnicalSpecs } from "../reconciliation/preparation-technical-stages.js";
 
 const source: ProductRecord = {
@@ -92,4 +92,34 @@ test("el tipo de mástil unívoco se presenta con ortografía uniforme y sin inf
 test("una entrada sin cambios conserva la identidad del mapa", () => {
   const input: SpecsMap = { Modelo: "SI", Motor: "Diésel", "Tipo mastil": "Tríplex", Activo: true };
   assert.equal(normalizeTechnicalPresentation(input), input);
+});
+
+test("un peso incompatible con la familia se retiene en el origen pero no en la presentación", () => {
+  const platform: ProductRecord = {
+    ...source,
+    providerId: "manain",
+    categoryKey: "venta",
+    categoryName: "Maquinaria en venta",
+    url: "https://manain.com/producto/venta-elevacion-brazo-articulado-equiptest-tx1/",
+    title: "TX1",
+    condition: "Segunda mano",
+    brand: "EQUIPTEST",
+    model: "TX1",
+    specs: {
+      Marca: "EQUIPTEST", Modelo: "TX1", Motor: "Diésel", "Nueva o usada": "usada",
+      "Altura trabajo": "15 m", "Capacidad carga": "230 kg", Peso: "10 kg"
+    }
+  };
+  const input = platform.specs ?? {};
+  const output = rejectImplausibleTechnicalWeight(platform, input);
+  assert.equal(output.Peso, undefined);
+  assert.equal(input.Peso, "10 kg");
+  assert.equal(output["Altura trabajo"], "15 m");
+  assert.equal(rejectImplausibleTechnicalWeight(platform, output), output);
+  const documented = { ...input, Peso: "1200 kg" };
+  assert.equal(rejectImplausibleTechnicalWeight(platform, documented), documented);
+  const acceptable = { ...platform, specs: documented };
+  assert.equal(rejectImplausibleTechnicalWeight(acceptable, documented), documented);
+  const foreign = { ...platform, providerId: "gam", categoryKey: "incompatible" };
+  assert.equal(rejectImplausibleTechnicalWeight(foreign, input), input);
 });

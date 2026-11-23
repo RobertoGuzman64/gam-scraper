@@ -1,4 +1,5 @@
-import type { SpecsMap, SpecValue } from "../../../../contracts/catalog.js";
+import type { ProductRecord, SpecsMap, SpecValue } from "../../../../contracts/catalog.js";
+import { editorialHasImplausibleWeight } from "../../editorial/domain/editorial-facts.js";
 
 const identityFields = new Set(["marca", "modelo", "referencia", "numero de serie", "nº de serie", "nro de serie", "motor", "tipo motor"]);
 
@@ -29,4 +30,11 @@ export const normalizeTechnicalPresentation = (specs: SpecsMap): SpecsMap => {
     normalized[key] = formatted;
   }
   return normalized ?? specs;
+};
+
+export const rejectImplausibleTechnicalWeight = (record: ProductRecord, specs: SpecsMap): SpecsMap => {
+  if (specs.Peso === undefined || specs.Peso !== record.specs?.Peso || !editorialHasImplausibleWeight(record)) return specs;
+  const safe = { ...specs };
+  delete safe.Peso;
+  return safe;
 };

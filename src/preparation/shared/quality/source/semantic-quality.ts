@@ -1,8 +1,7 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { fold, numberToken } from "../../classification/mapping/attribute-utils.js";
 import { verifiedGomarizPlatformHeight } from "../../../../catalog/normalization/gomariz/technical.js";
-import { editorialWeightIsPlausible, resolveEditorialFacts } from "../../editorial/domain/editorial-facts.js";
-import { editorialQuantityOf } from "../../editorial/domain/editorial-measurements.js";
+import { editorialHasImplausibleWeight } from "../../editorial/domain/editorial-facts.js";
 
 const sourceHost = (record: ProductRecord, host: string): boolean => {
   try {
@@ -117,9 +116,7 @@ const mercaelevaIssues = (record: ProductRecord): readonly string[] => {
 };
 
 const implausibleWeightIssues = (record: ProductRecord): readonly string[] => {
-  const facts = resolveEditorialFacts(record);
-  const weight = editorialQuantityOf(record.specs, ["Peso"], "kg");
-  return facts && weight !== null && !editorialWeightIsPlausible(facts.family, weight) ?
+  return editorialHasImplausibleWeight(record) ?
     ["Peso técnicamente inverosímil para la familia del equipo: requiere verificación documental"] : [];
 };
 
