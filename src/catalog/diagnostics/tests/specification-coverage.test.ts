@@ -137,3 +137,43 @@ test("calibración: una ausencia familiar no vinculante nunca oculta una pérdid
   assert.deepEqual(analyzeSpecificationCoverage(source), initial);
   assert.deepEqual(analyzeSpecificationCoverage(changed), regression);
 });
+
+
+test("acredita un valor de hoja de cálculo no utilizable sin convertirlo en pérdida editorial", () => {
+  const original = input("hoja-invalida", { "Altura de elevación (mm)": "#VALUE! mm", "Centro de carga": "500 mm" },
+    { "Centro de carga": "500 mm" }, { "Centro de carga": "500 mm" });
+  const snapshot = structuredClone(original);
+  const report = analyzeSpecificationCoverage([original]);
+  assert.equal(report.totals.accreditedReconciliations, 1);
+  assert.equal(report.totals.sourceNotPreserved, 0);
+  assert.equal(report.totals.lostAfterPublication, 0);
+  const reconciliation = report.cases.find((item) => item.stage === "reconciliacion_acreditada");
+  assert.equal(reconciliation?.key, "Altura de elevación (mm)");
+  assert.deepEqual(reconciliation?.reconciliation, {
+    originalValue: "#VALUE! mm", destinationKeys: [], classification: "origen_no_utilizable"
+  });
+  assert.deepEqual(original, snapshot);
+  const replaced = { ...original, source: { ...original.source, specs: {
+    ...original.source.specs, "Altura de elevación (mm)": "1200 mm"
+  } } };
+  const invalidated = analyzeSpecificationCoverage([replaced]);
+  assert.equal(invalidated.totals.accreditedReconciliations, 0);
+  assert.equal(invalidated.totals.sourceNotPreserved, 1);
+});
+
+test("el horómetro no disponible requiere evidencia del origen y no acredita reconstrucciones", () => {
+  const original = input("horometro-ausente", { Horómetro: "NA horas" }, {}, {});
+  const verified = { ...original, source: { ...original.source, horometer: "NA horas" } };
+  const accredited = analyzeSpecificationCoverage([verified]);
+  assert.equal(accredited.totals.accreditedReconciliations, 1);
+  assert.equal(accredited.cases[0]?.stage, "reconciliacion_acreditada");
+  assert.deepEqual(accredited.cases[0]?.reconciliation, {
+    originalValue: "NA horas", destinationKeys: [], classification: "origen_no_utilizable"
+  });
+  const withoutEvidence = analyzeSpecificationCoverage([original]);
+  assert.equal(withoutEvidence.totals.accreditedReconciliations, 0);
+  assert.equal(withoutEvidence.totals.sourceNotPreserved, 1);
+  const reconstructed = analyzeSpecificationCoverage([{ ...verified, origin: "reconstruccion_publicada" }]);
+  assert.equal(reconstructed.totals.accreditedReconciliations, 0);
+  assert.equal(reconstructed.totals.canonicalOriginals, 0);
+});

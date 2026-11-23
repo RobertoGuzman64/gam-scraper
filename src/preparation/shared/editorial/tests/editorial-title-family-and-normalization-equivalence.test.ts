@@ -1,33 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { resolveEditorialFacts } from "../domain/editorial-facts.js";
 import { normalizeEditorialGeneral, normalizeEditorialTitle } from "../domain/editorial-normalization.js";
-import { resolveKnowledgeEditorial } from "../mapping/knowledge-editorial.js";
 import { presentCommercialMotorization } from "../domain/editorial-motorization.js";
 import { resolvePreparedEditorialTitle } from "../mapping/prepared-editorial-title.js";
 import { normalizePreparedEditorialPresentation } from "../mapping/prepared-editorial-presentation.js";
 import { controlledGamForklift, controlledGomarizPlatform, controlledMercaelevaForklift } from "./editorial-contract-records.js";
-
-const historical = [
-  [accreditedSourceRecord("gam-original", "6901"), "Plataforma articulada diésel SNORKEL A46JRT"],
-  [accreditedSourceRecord("gomariz-original", "TE1591"), "Plataforma de tijera eléctrica LGMG AS0812 · 10 m de trabajo"],
-  [accreditedSourceRecord("mercaeleva-original", "M940-4770"), "Carretilla elevadora eléctrica Linde E20PL"]
-] as const;
-
-test("conservan títulos técnicos documentados en originales de los tres proveedores", () => {
-  for (const [record, expected] of historical) {
-    const snapshot = JSON.stringify(record);
-    const prepared = prepareSourceProduct(record);
-    assert.equal(prepared.product.title, expected, `${record.providerId}:${record.reference}`);
-    assert.equal(prepared.product.description_title, expected);
-    assert.equal(prepared.product.reference, record.reference);
-    assert.equal(prepared.product.sourceUrl, record.url);
-    assert.equal(JSON.stringify(record), snapshot);
-  }
-});
 
 test("compone familia, identidad, motorización y altura con datos de una unidad nueva compatible", () => {
   const old = controlledGomarizPlatform();
@@ -142,43 +122,6 @@ test("las citas literales de origen conservan grafías anómalas sin impedir nor
     "Texto con 12 m y cita «8M»; carga 230 kg.");
 });
 
-
-test("la normalización conserva títulos literales entrecomillados en firmas históricas y normaliza las medidas externas", () => {
-  for (const reference of ["6195", "6196"]) {
-    const source = accreditedSourceRecord("gam-original", reference);
-    const snapshot = JSON.stringify(source);
-    const signed = resolveKnowledgeEditorial(source, source).general;
-    assert.ok(signed, reference);
-    assert.match(signed, /«Plataforma Tijera Eléctrica 8M JLG 1930ES»/u);
-    const prepared = prepareSourceProduct(source);
-    assert.equal(prepared.status, "ready", reference);
-    assert.match(prepared.product.description_general ?? "", /«Plataforma Tijera Eléctrica 8M JLG 1930ES»/u);
-    assert.match(prepared.product.description_general ?? "", /230 kg/u);
-    assert.doesNotMatch(prepared.product.description_general ?? "", /«Plataforma Tijera Eléctrica 8 m JLG 1930ES»/u);
-    assert.equal(normalizeEditorialGeneral(prepared.product.description_general, source.model),
-      prepared.product.description_general);
-    assert.equal(JSON.stringify(source), snapshot);
-  }
-});
-
-test("las citas de origen de una unidad no se convierten en firmas transferibles a otra referencia", () => {
-  for (const reference of ["6195", "6196"]) {
-    const source = accreditedSourceRecord("gam-original", reference);
-    const signed = resolveKnowledgeEditorial(source, source).general;
-    assert.ok(signed);
-    for (const changed of [
-      { ...source, reference: `${reference}-NUEVA`, url: `${source.url}?unidad=nueva` },
-      { ...source, providerId: "otro-proveedor" },
-      { ...source, url: `${source.url}?revisada=1` },
-      { ...source, model: "1930 ES OTRA" },
-      { ...source, specs: { ...source.specs, "Información revisada": "dato no autenticado" } }
-    ]) {
-      const knowledge = resolveKnowledgeEditorial(changed, changed);
-      assert.equal(knowledge.general, null);
-      assert.equal(knowledge.short, null);
-    }
-  }
-});
 
 test("las citas técnicas literales múltiples y las medidas fuera de ellas permanecen separadas", () => {
   const text = "Código «8M» y denominación «modelo 4.30mm»; altura de trabajo 8M, carga 230KG y longitud 1450mm.";

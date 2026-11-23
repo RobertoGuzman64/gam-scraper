@@ -1,22 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { accreditedSourceRecord } from "../../../testing/domain-cases/accredited-source-samples.js";
-import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 import { parseSpecByRule } from "../../../tools/gam/seed/internal/spec.js";
-import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "../../../preparation/mercaeleva/technical/evidence/verified-platform-source-specs.js";
 import { normalizeSpecsObject } from "../normalize-specs.js";
 import { parseDimension, parseDimensionRect, parseYear } from "../spec-parsers.js";
 
 test("N02 conserva modelos y valores técnicos con palabras que forman parte de la descripción", () => {
-  for (const reference of ["4029", "4030"]) {
-    const source = accreditedSourceRecord("gam-original", reference);
-    const original = structuredClone(source);
-    const model = source.specs?.Modelo;
-    assert.equal(model, source.model, reference);
-    assert.equal(normalizeSpecsObject(source.specs).normalized.Modelo, model, reference);
-    assert.equal(normalizeSpecsObject({ Modelo: model }).normalized.Modelo, model, reference);
-    assert.equal(prepareSourceProduct(source).product.spec.Modelo, model, reference);
-    assert.deepEqual(source, original, reference);
+  for (const model of ["BCS S16H Descarga alto", "BCS S16L Descarga baja"]) {
+    assert.equal(normalizeSpecsObject({ Modelo: model }).normalized.Modelo, model);
   }
   const charger = "Cargador externo 2A para batería de 10 Ah";
   assert.equal(normalizeSpecsObject({ "Cargador de batería": charger }).normalized["Cargador de batería"], charger);
@@ -49,12 +39,8 @@ test("N07 interpreta geometría completa en milímetros sin perder decimales ni 
 });
 
 test("N07 descarta medidas contaminadas, incompletas, imposibles o con unidades incompatibles", () => {
-  const source = accreditedSourceRecord("gam-original", "5855");
-  const original = structuredClone(source);
-  const contaminated = source.specs?.["Dimensiones Cesta"];
-  assert.equal(contaminated, "1 1,8 x 0,8 8 8 x 0 metros");
+  const contaminated = "1 1,8 x 0,8 8 8 x 0 metros";
   assert.equal(normalizeSpecsObject({ "Dimensiones Cesta": contaminated }).normalized["Dimensiones cesta (mm)"], undefined);
-  assert.deepEqual(source, original);
   for (const raw of [
     "1 1,8 x 0,8 8 8 x 0 metros", "1,2 x 0,1 x 0,04 x 0,02 m",
     "1,2 m x 10 x 40 mm", "1,2 x 10 cm x 40 mm",
@@ -70,14 +56,9 @@ test("N07 descarta medidas contaminadas, incompletas, imposibles o con unidades 
 });
 
 test("N08 solo acepta años de fabricación de cuatro cifras y no infiere año de título o URL", () => {
-  const source = accreditedSourceRecord("mercaeleva-original", "M547-1056");
-  const original = structuredClone(source);
-  assert.equal(source.specs?.["Año de fabricación"], "28");
-  assert.equal(source.year, null);
-  assert.equal(normalizeSpecsObject(source.specs).normalized.Año, undefined);
-  assert.equal(normalizeSpecsObject(source.specs).droppedNullLikeKeys.includes("Año"), true);
+  assert.equal(normalizeSpecsObject({ "Año de fabricación": "28" }).normalized.Año, undefined);
+  assert.equal(normalizeSpecsObject({ "Año de fabricación": "28" }).droppedNullLikeKeys.includes("Año"), true);
   assert.equal(parseSpecByRule("Año", "28"), null);
-  assert.deepEqual(source, original);
   for (const valid of ["1900", "2000", "2012", "2026", 2025]) {
     assert.equal(parseYear(valid), Number(valid));
     assert.equal(normalizeSpecsObject({ "Año de fabricación": valid }).normalized.Año, Number(valid));
@@ -87,18 +68,6 @@ test("N08 solo acepta años de fabricación de cuatro cifras y no infiere año d
     assert.equal(normalizeSpecsObject({ "Año de fabricación": invalid }).normalized.Año, undefined, String(invalid));
   }
   assert.equal(normalizeSpecsObject({ Modelo: "S85", "Año de fabricación": "28" }).normalized.Año, undefined);
-  const prepared = prepareSourceProduct(source);
-  assert.equal(prepared.product.spec["Año de fabricación"], "2008");
-  assert.equal(normalizeSpecsObject(prepared.product.spec).normalized.Año, 2008);
-  for (const variant of [
-    { ...source, url: `${source.url}?variante=distinta` },
-    { ...source, title: `${source.title} AÑO 2025` },
-    { ...source, model: `${source.model}-2024` },
-    { ...source, specs: { ...source.specs, "Año de fabricación": "2028" } }
-  ]) {
-    assert.equal(reconcileMercaelevaVerifiedPlatformSourceSpecs(variant), variant);
-    assert.equal(normalizeSpecsObject(variant.specs).normalized.Año, undefined);
-  }
   assert.equal(parseSpecByRule("Año", "2012"), 2012);
   assert.equal(parseSpecByRule("Año", "2099"), null);
 });

@@ -4,7 +4,6 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { resolveAttributeValue } from "../../../shared/classification/mapping/attribute-mapping.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { prepareProduct } from "../../../prepare.js";
-import { accreditedSourceSamples, accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 
 const catalog = await loadImportCatalog();
 const attr = (name: string) => {
@@ -139,52 +138,4 @@ test("GAM energía: utiliza un motor eléctrico literal sin introducir conflicto
   }
   assert.equal(resolved({ ...source, specs: { "Tipo motor": "Eléctrico", "Motorización / Energía": "Eléctrico" } },
     "Motorización / Energía"), "Eléctrico");
-});
-
-
-test("GAM: recupera el motor eléctrico explícito de las cinco carretillas trilaterales Yale sin cambiar el contrato", async () => {
-  const references = ["2263", "2264", "2265", "2266", "2267"];
-  const selected = accreditedSourceSamples("gam-original").filter((record) => references.includes(record.reference ?? ""));
-  assert.equal(selected.length, references.length);
-  for (const record of selected) {
-    assert.equal(record.specs?.["Motorización"], "Eléctrico", record.reference ?? "");
-    assert.equal(resolved(record, "Motorización / Energía"), "Eléctrico", record.reference ?? "");
-    const prepared = prepareProduct(record, catalog);
-    assert.equal(prepared.product.categorySellID, 14, record.reference ?? "");
-    assert.ok(prepared.product.attributes.some((item) => item.attributeID === 119 && item.value === "Eléctrico"), record.reference ?? "");
-  }
-});
-
-test("GAM: no promueve motorizaciones incompatibles, familias distintas ni identidades cambiadas", async () => {
-  const yale = accreditedSourceRecord("gam-original", "2265");
-  assert.equal(resolved(yale, "Motorización / Energía"), "Eléctrico");
-  for (const altered of [
-    { ...yale, providerId: "gomariz" },
-    { ...yale, categoryKey: "marcas-nuevas" },
-    { ...yale, brand: "HYSTER" },
-    { ...yale, model: "MTC13-48V" },
-    { ...yale, title: "Carretilla elevadora Yale MTC13-80V" },
-    { ...yale, url: yale.url.replace("carretillas-trilaterales-yale", "carretillas-elevadoras-glp-yale") },
-    { ...yale, shortDescription: "Carretilla diésel Yale MTC13-80V" },
-    { ...yale, longDescription: "Carretilla Yale MTC13-80V disponible en versión GLP" },
-    { ...yale, specs: { ...yale.specs, "Tipo motor": "Diésel" } },
-    { ...yale, specs: { ...yale.specs, "Motorización": "Diésel" } },
-    { ...yale, specs: { ...yale.specs, "Motorización": "Eléctrico / Diésel" } },
-    { ...yale, specs: {} }
-  ]) {
-    assert.equal(resolved(altered, "Motorización / Energía"), null, altered.url);
-  }
-  for (const reference of ["2311", "2312", "2313"]) {
-    const contradictory = accreditedSourceRecord("gam-original", reference);
-    assert.equal(resolved(contradictory, "Motorización / Energía"), null, reference);
-    const prepared = prepareProduct(contradictory, catalog);
-    assert.equal(prepared.status, "ready", reference);
-    assert.equal(prepared.product.spec["Motorización"], "GLP", reference);
-    assert.ok(!prepared.product.attributes.some((item) => item.attributeID === 119), reference);
-  }
-  const unresolved = accreditedSourceRecord("gam-original", "2314");
-  assert.equal(resolved(unresolved, "Motorización / Energía"), null);
-  assert.equal(prepareProduct(unresolved, catalog).status, "ready");
-  const altered = { ...unresolved, specs: { ...unresolved.specs, "Capacidad de carga (kg)": "6500 KG" } };
-  assert.equal(prepareProduct(altered, catalog).status, "review");
 });

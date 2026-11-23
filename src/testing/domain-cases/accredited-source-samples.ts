@@ -11,7 +11,6 @@ export const accreditedSourceDatasets = [
   "gam-editorial-cases",
   "gam-short-discrepancy-source",
   "gam-verified-fuel-cases",
-  "gam-technical-units-cases",
   "manain-editorial-source",
   "editorial-load-original",
   "mercaeleva-original",
@@ -19,7 +18,6 @@ export const accreditedSourceDatasets = [
   "gomariz-original",
   "gomariz-regression",
   "gomariz-documented-weight",
-  "gomariz-special-original",
 ] as const;
 
 export type AccreditedSourceDataset = typeof accreditedSourceDatasets[number];

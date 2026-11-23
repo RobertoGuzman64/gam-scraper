@@ -378,27 +378,23 @@ test("las suites GAM desacopladas no pueden volver a un catálogo operativo medi
   assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
 });
 
-test("la excepción de fixture transitiva no cubre fuentes o consumidores nuevos", (t) => {
+test("el helper eliminado de GAM no conserva autorizaciones transitivas", (t) => {
   const { root, write } = fixture(t);
-  const path = "src/preparation/gam/classification/tests/gam-verified-category-equivalences.test.ts";
-  const fixturePath = "src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts";
-  const accreditedFixture = readFileSync(new URL("../src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts", import.meta.url), "utf8");
-  write(fixturePath, accreditedFixture);
-  write(path,
-    "import { load } from '../../technical/tests/support/gam-source-category-fixture.js'; export const source = load; ");
-  const accredited = inspectTestArchitecture(root);
-  assert.equal(accredited.findings.filter((finding) => finding.rule === "T-TRANSITIVE-CATALOG").length, 0);
-  assert.equal(accredited.exceptions.filter((item) => item.rule === "T-TRANSITIVE-CATALOG").length, 1);
-  write(fixturePath, accreditedFixture + "\nexport const extra = 1;");
+  const helper = "src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts";
+  const suite = "src/preparation/gam/classification/tests/gam-verified-category-equivalences.test.ts";
+  write(helper,
+    "import { readCanonicalCatalog } from '../../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; export const load = () => readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json');");
+  write(suite,
+    "import { load } from '../../technical/tests/support/gam-source-category-fixture.js'; export const source = load;");
   assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
-  write(fixturePath, accreditedFixture + " export const extra = readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json');");
-  assert.equal(inspectTestArchitecture(root).findings.filter((finding) => finding.rule === "T-TRANSITIVE-CATALOG").length, 1);
-  write(fixturePath, accreditedFixture);
-  write("src/testing/builders/alternative-catalog-fixture.ts",
-    "export const source = 'catalogs/providers/gam/original/scrape-gam-catalog.json';");
-  write(path,
-    "import { load } from '../../technical/tests/support/gam-source-category-fixture.js'; import { source } from '../../../../testing/builders/alternative-catalog-fixture.js'; export const both = [load, source];");
-  assert.equal(inspectTestArchitecture(root).findings.filter((finding) => finding.rule === "T-TRANSITIVE-CATALOG").length, 1);
+  write(helper,
+    "export const load = () => ({ products: [{ reference: 'A' }] });");
+  assert.ok(!rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
+  write("src/testing/builders/operational-source.ts",
+    "import { readCanonicalCatalog } from '../../infrastructure/filesystem/catalog/canonical-catalog.js'; export const load = () => readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json');");
+  write(suite,
+    "import { load } from '../../../../testing/builders/operational-source.js'; export const source = load;");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
 });
 
 test("el builder histórico Mercaeleva no puede volver a consumir originales vivos", (t) => {

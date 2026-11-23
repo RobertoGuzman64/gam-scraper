@@ -1,13 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { controlledGomarizForklift } from "../../../preparation/shared/editorial/tests/editorial-contract-records.js";
 import { createPreparedSourceFixture } from "../prepared-source-fixture.js";
 
-const catalog = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
-const original = catalog.products[0];
-assert.ok(original);
-
-test("reutiliza la preparación de una fuente original inmutable dentro de la misma suite", () => {
+test("reutiliza la preparación de una fuente inmutable dentro de la misma suite", () => {
+  const original = controlledGomarizForklift();
   const prepare = createPreparedSourceFixture();
   const before = structuredClone(original);
   const first = prepare(original);
@@ -17,6 +14,7 @@ test("reutiliza la preparación de una fuente original inmutable dentro de la mi
 });
 
 test("las variantes alteradas y las suites independientes mantienen preparaciones distintas", () => {
+  const original = controlledGomarizForklift();
   const prepare = createPreparedSourceFixture();
   const originalPrepared = prepare(original);
   const changed = { ...original, title: "Título distinto para comprobar la variación" };

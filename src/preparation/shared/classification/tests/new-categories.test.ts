@@ -3,7 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { createCategorySlugResolver } from "../../../testing/category-slug-resolver.js";
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
-import { isLeafCategoryForCondition } from "../mapping/category-mapping.js";
+import { isLeafCategoryForCondition, resolveCategory } from "../mapping/category-mapping.js";
 import { planProductImport, readReferenceInventory } from "../../../../commercial/legacy-export/export-plan.js";
 import { validateImportCandidate } from "../../../../commercial/legacy-export/import-validation.js";
 import { prepareProduct } from "../../../prepare.js";
@@ -135,4 +135,22 @@ test("mapeo usado anterior conserva categoría y condición, sin mezclarlas", ()
   assert.equal(used.product.categorySellID, 27);
   assert.equal(used.product.condition, "Segunda_Mano");
   assert.ok(!used.issues.includes("Tipo de máquina de origen sin confirmar"));
+});
+
+
+test("la caché distingue condiciones y no reutiliza hojas desactivadas de otro catálogo", () => {
+  const product = gam("plataformas-de-tijera-electricas-xcmg", "Plataforma elevadora de tijera eléctrica XCMG");
+  const expected = resolveCategory(product, catalog.categories, "Nuevo");
+  assert.ok(expected);
+  const categories = catalog.categories.map((category) =>
+    category.id === expected.id ? { ...category, active: false } : category
+  );
+  assert.equal(resolveCategory(product, categories, "Nuevo"), null);
+  assert.equal(resolveCategory(product, catalog.categories, "Nuevo")?.id, expected.id);
+  for (const condition of ["Nuevo", "Segunda_Mano"] as const) {
+    const fresh = resolveCategory(product, [...catalog.categories], condition)?.id ?? null;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      assert.equal(resolveCategory(product, catalog.categories, condition)?.id ?? null, fresh);
+    }
+  }
 });

@@ -3,7 +3,6 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../legacy-export/contracts.js";
 import { assessCommercialYear, commercialAttributeYear, normalizeCommercialYearDescription } from "../year-consistency.js";
-import { accreditedSourceRecord } from "../../../testing/domain-cases/accredited-source-samples.js";
 import { gamSourceYear } from "../../../catalog/normalization/gam/year.js";
 
 type Source = Pick<ProductRecord,
@@ -112,27 +111,26 @@ test("el año de atributo requiere una única asignación válida y preserva los
     { attributeID: 117, value: 2015 }]), 2015);
 });
 
-test("los once años discordantes conservan la procedencia del origen sin imponer el slug", async () => {
-  const cases = [
-    ["5961", 2015, 2018, "descripcion"], ["6236", 2018, 2017, "descripcion"],
-    ["6588", 2000, 2019, "titulo"], ["6590", 2000, 2019, "titulo"],
-    ["6797", 2015, 2016, "descripcion"], ["6869", 2016, 2008, "descripcion"],
-    ["6870", 2016, 2008, "descripcion"], ["6909", 2007, 2008, "descripcion"],
-    ["6911", 2008, 2014, "descripcion"], ["6921", 2016, 2017, "descripcion"],
-    ["6930", 2008, 2014, "descripcion"]
-  ] as const;
-  for (const [reference, manufacture, url, provenance] of cases) {
-    const record = accreditedSourceRecord("gam-original", reference);
-    assert.equal(record.year, String(manufacture), reference);
-    assert.equal(record.yearSource, provenance, reference);
-    const accepted = gamSourceYear(record);
-    assert.equal(accepted, provenance === "titulo" ? null : String(manufacture), reference);
-    const input = yearProduct(record, manufacture, "");
+test("la procedencia del año prevalece sobre slugs discordantes sin depender de referencias históricas", () => {
+  const record = source("7101", "2016", "2018", "Año 2016.");
+  for (const [yearSource, title, expected] of [
+    ["descripcion", "Plataforma modelo 7101", "2016"],
+    ["titulo", "Plataforma modelo 7101", null],
+    ["titulo", "Plataforma fabricada en el año 2016", "2016"],
+    ["url", "Plataforma modelo 7101", null]
+  ] as const) {
+    const candidate = { ...record, yearSource, title };
+    const accepted = gamSourceYear(candidate);
+    assert.equal(accepted, expected, yearSource);
+    const input = yearProduct(candidate, 2016, "");
     const assessment = assessCommercialYear(accepted === null ? { ...input, attributes: [] } : input);
-    assert.equal(assessment.urlYear, url, reference);
-    assert.equal(assessment.attributeYear, accepted === null ? null : manufacture, reference);
-    assert.equal(assessment.urlAttributeDisagreement, accepted !== null, reference);
+    assert.equal(assessment.urlYear, 2018);
+    assert.equal(assessment.attributeYear, accepted === null ? null : 2016);
+    assert.equal(assessment.urlAttributeDisagreement, accepted !== null);
   }
+  const matchingUrl = { ...record, yearSource: "url" as const,
+    url: record.url.replace("7101-2018-", "7101-2016-"), title: "Plataforma modelo 7101" };
+  assert.equal(gamSourceYear(matchingUrl), "2016");
 });
 
 test("los slugs de otra unidad, otros dominios y rutas no representativas no acreditan fechas", () => {

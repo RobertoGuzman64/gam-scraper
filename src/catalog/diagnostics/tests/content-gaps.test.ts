@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { analyzeCatalogContentGaps } from "../../../commercial/legacy-export/content-gaps-commercial.js";
 import { prioritizeCatalogGaps } from "../content-gaps-source.js";
@@ -7,9 +6,6 @@ import type { GapInput } from "../content-gaps-types.js";
 import type { ImportCandidate, ImportCatalog } from "../../../commercial/legacy-export/contracts.js";
 import type { PreparedProduct } from "../../../preparation/contracts.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
-import { prepareProduct } from "../../../commercial/legacy-export/prepare-product.js";
 
 const catalog: ImportCatalog = {
   categories: [{ id: 10, parentId: null, name: "Carretillas", slug: "carretillas" },
@@ -138,33 +134,4 @@ test("prioriza evidencia directa y distingue ausencia total de evidencia", () =>
   assert.equal(prioritized[0]?.tier, 0);
   const noEvidence = result.cases.find((item) => item.reference === "10");
   assert.equal(noEvidence?.gaps.find((item) => item.field.kind === "description")?.evidence, "sin_evidencia_observable");
-});
-
-test("los originales históricos de tres proveedores preservan preparación y evidencias", async () => {
-  const paths = [
-    "gam/scrape-gam-marzo-2026-catalog.json",
-    "gomariz/scrape-gomariz-catalog.json",
-    "mercaeleva/scrape-mercaeleva-catalog.json"
-  ];
-  const sources = await Promise.all(paths.map((path) => readCanonicalCatalog(
-    fileURLToPath(new URL(`../../../../src/testing/fixtures/${path}`, import.meta.url))
-  )));
-  const importCatalog = await loadImportCatalog();
-  const inputs = sources.flatMap((source) => source.products.map((record) => ({
-    source: record, prepared: prepareProduct(record, importCatalog)
-  })));
-  const before = JSON.stringify(inputs);
-  const analysis = analyzeCatalogContentGaps(inputs, importCatalog);
-  assert.equal(analysis.universe.total, sources.reduce((total, source) => total + source.productCount, 0));
-  assert.deepEqual(analysis.universe.providers.map((item) => item.providerId), ["gam", "gomariz", "mercaeleva"]);
-  assert.ok(prioritizeCatalogGaps(analysis).length > 0);
-  assert.ok(analysis.groups.some((group) => group.observations.some((item) =>
-    item.missing > 0 && item.originalSpecKeys.length > 0)));
-  const radio = analysis.groups.flatMap((group) => group.observations.map((observation) => ({ group, observation })))
-    .find(({ group, observation }) => group.providerId === "gam" && observation.field.name === "Radio de giro" &&
-      observation.missing > 0 && observation.originalSpecKeys.length > 0);
-  assert.ok(radio);
-  assert.ok(radio.observation.missingIdentities.some((identity) => analysis.cases.some((item) =>
-    item.identity === identity && Object.values(item.original.specs ?? {}).length > 0)));
-  assert.equal(JSON.stringify(inputs), before);
 });

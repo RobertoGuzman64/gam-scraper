@@ -303,12 +303,6 @@ const creditedCatalogIntegration = (path, source, direct) => {
 };
 
 const transitiveExceptions = new Map([
-  ["src/preparation/gam/classification/tests/gam-verified-category-equivalences.test.ts",
-    "src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts"],
-  ["src/preparation/gam/identity/tests/gam-categories-condition.test.ts",
-    "src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts"],
-  ["src/preparation/gam/identity/tests/gam-source-category-and-condition.test.ts",
-    "src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts"],
   ["src/preparation/mercaeleva/technical/tests/models/jlg-450aj-base-model-evidence.test.ts",
     "src/testing/builders/mercaeleva-source-fixture.ts"],
   ["src/preparation/mercaeleva/technical/tests/specifications/mercaeleva-documented-equipment-technical-specs.test.ts",
@@ -320,8 +314,6 @@ const transitiveExceptions = new Map([
 ]);
 
 const accreditedTransitiveSources = new Map([
-  ["src/preparation/gam/technical/tests/support/gam-source-category-fixture.ts",
-    "7fe8dba3dc1e99e20890e2f9cf2c3a15bd6023cbe201640c146014d5663bbefe"],
   ["src/testing/builders/mercaeleva-source-fixture.ts",
     "6986e840629c39431c53a1faad10a9c523dfdf4e03dbb9b8f6bb4fe9f3c07ebe"]
 ]);
