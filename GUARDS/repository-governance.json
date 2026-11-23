@@ -1,7 +1,7 @@
 {
   "version": 3,
   "maxCounts": {
-    "markdown": 16,
+    "markdown": 17,
     "scripts": 57
   },
   "allowedPaths": {
@@ -20,6 +20,7 @@
       "docs/OPERATIONS_AND_MAINTENANCE.md",
       "docs/PUBLICATIONS.md",
       "docs/REPOSITORY_GOVERNANCE.md",
+      "docs/RIP_ZIP_DISFRAZADO.md",
       "docs/TESTING.md",
       "docs/VALIDATION.md"
     ],

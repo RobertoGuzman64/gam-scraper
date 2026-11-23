@@ -38,7 +38,7 @@ Una consulta o un plan no equivalen a permiso para editar; una intervención pro
 
 La autorización para mejorar fichas alcanza **los módulos productivos necesarios dentro de `src/`**, no una reforma general del proyecto. Para cambiar Markdown, scripts, guards, comandos npm, carpetas protegidas, datos acreditados, contratos o publicaciones se necesita autorización explícita para el cambio concreto. **No crear documentación ni scripts temporales**, tampoco como paso intermedio, y no incorporar nombres de fases a rutas o ficheros. Reutilizar código, herramientas, tests y documentos existentes; una consulta o planificación no autoriza editar.
 
-El guard de gobernanza protege **16 rutas Markdown y 57 rutas de scripts**, además de los **57 comandos npm**; permite editar el contenido de los archivos inventariados, pero la política anterior exige permiso humano. Los guards de integridad, arquitectura editorial y tests protegen las fronteras del código. Consultar [Gobernanza](docs/REPOSITORY_GOVERNANCE.md), [Arquitectura](docs/ARCHITECTURE.md), [Pruebas](docs/TESTING.md) y [Calidad del catálogo](docs/CATALOG_QUALITY.md) antes de intervenir. No confundir un PASS de guards con permiso para cambiar contratos o datos.
+El guard de gobernanza protege **17 rutas Markdown y 57 rutas de scripts**, además de los **57 comandos npm**; permite editar el contenido de los archivos inventariados, pero la política anterior exige permiso humano. Los guards de integridad, arquitectura editorial y tests protegen las fronteras del código. Consultar [Gobernanza](docs/REPOSITORY_GOVERNANCE.md), [Arquitectura](docs/ARCHITECTURE.md), [Pruebas](docs/TESTING.md) y [Calidad del catálogo](docs/CATALOG_QUALITY.md) antes de intervenir. No confundir un PASS de guards con permiso para cambiar contratos o datos.
 
 ## Instalaciones existentes
 
@@ -307,4 +307,5 @@ Cada procedimiento y contrato tiene un documento propietario. Para producir un c
 - [Operación y mantenimiento](docs/OPERATIONS_AND_MAINTENANCE.md): entorno, despliegue, recuperación y referencias legadas.
 - [Publicaciones](docs/PUBLICATIONS.md): publicación técnica y publicación individual acreditada.
 - [Pruebas y guards](docs/TESTING.md): arquitectura de tests, regresiones y rendimiento.
+- [RIP ZIP disfrazado](docs/RIP_ZIP_DISFRAZADO.md): caso histórico excepcional sobre datasets camuflados y límites de los guards.
 - [Validación](docs/VALIDATION.md): comprobaciones y criterios de aceptación.

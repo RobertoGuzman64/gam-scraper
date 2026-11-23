@@ -18,7 +18,7 @@ Esta guía describe los controles **vigentes**, sus autorizaciones exactas y sus
 
 **Cero infracciones no significa cero lecturas legítimas de catálogos ni prueba una batería `npm test` global.** Las 19 excepciones y las 21 lecturas acreditadas no cuentan como infracciones porque protegen garantías concretas; no son una tolerancia genérica, un baseline ni advertencias ocultas.
 
-El guard de inventario (`tests-repository-governance-guard.mjs`) se ejecuta primero en `npm test`, junto a sus pruebas negativas. `repository-governance.json` registra **16 rutas Markdown, 57 rutas de scripts y 57 comandos npm**: bloquea rutas nuevas fuera de inventario, exceso de cuota y cambios en los comandos o en `bin`. **No usa hashes de contenido ni impide editar o eliminar un Markdown/script existente**; esas acciones siguen exigiendo autorización humana, aunque el guard no pueda verificarla. También comprueba nombres de fases y temporales, tipos de archivos en carpetas protegidas y seguimiento Git de `reports/` raíz.
+El guard de inventario (`tests-repository-governance-guard.mjs`) se ejecuta primero en `npm test`, junto a sus pruebas negativas. `repository-governance.json` registra **17 rutas Markdown, 57 rutas de scripts y 57 comandos npm**: bloquea rutas nuevas fuera de inventario, exceso de cuota y cambios en los comandos o en `bin`. **No usa hashes de contenido ni impide editar o eliminar un Markdown/script existente**; esas acciones siguen exigiendo autorización humana, aunque el guard no pueda verificarla. También comprueba nombres de fases y temporales, tipos de archivos en carpetas protegidas y seguimiento Git de `reports/` raíz.
 
 ## Ejecutar los guards
 
