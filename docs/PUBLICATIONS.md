@@ -101,7 +101,7 @@ Es el circuito de proveedor que produce los datos publicables acreditados y las 
 
 ### Alcance y condiciones previas
 
-El circuito simplificado usa los originales canónicos completos y verificables de `catalogs/providers/{gam,gomariz,mercaeleva}/original/`. **No incluye Manain**, que mantiene un registro parcial, ni reemplaza la campaña global de cuatro proveedores. `catalogo:preparar` produce preparaciones offline; `catalogo:publicar` realiza la comprobación previa, la acreditación automática estrictamente limitada y FINISH. La operación intermedia `catalogo:acreditar` es opcional y no interactiva.
+El circuito individual usa los originales canónicos completos y verificables de `catalogs/providers/{gam,gomariz,mercaeleva}/original/`. Para **Manain**, admite exclusivamente el registro oficial `catalogs/providers/manain/records/manain-record.json` conciliado por huella e identidades con su publicación técnica; su procedencia permanece identificada como `partial` y no se presenta como una extracción canónica completa. No reemplaza la campaña global de cuatro proveedores. `catalogo:preparar` produce preparaciones offline; `catalogo:publicar` realiza la comprobación previa, la acreditación estrictamente limitada y FINISH. La operación intermedia `catalogo:acreditar` es opcional y no interactiva.
 
 Los originales, las aprobaciones y los finales son conjuntos distintos. Una ficha `review` no cambia a `ready` por ser excluida de una selección; un catálogo con publicaciones vigentes no acredita por ello todas las fichas originales como `ready`. Ningún comando aquí importa productos al backend.
 
@@ -123,7 +123,9 @@ npm run catalogo:publicar
 npm run estado
 ```
 
-Para operar solo un proveedor, añadir `-- --proveedor gam` (o `gomariz` o `mercaeleva`) a los comandos `catalogo:*`. `--simular` consulta y calcula sin efectuar escrituras ni activar publicaciones. El flujo por defecto incluye los tres proveedores; ninguno se elige por la fecha del fichero.
+Para operar solo un proveedor, añadir `-- --proveedor gam` (o `gomariz`, `mercaeleva` o `manain`) a los comandos `catalogo:*`. `--simular` consulta y calcula sin efectuar escrituras ni activar publicaciones. El flujo por defecto sigue incluyendo únicamente los tres proveedores con original canónico; Manain debe solicitarse expresamente. Ninguno se elige por la fecha del fichero.
+
+**Manain:** la preparación oficial debe existir y su acreditación editorial debe estar aprobada expresamente mediante `acreditar:proveedor`. La revisión `MA3727` solo se excluye cuando consta una decisión válida con motivo y evidencia; la exclusión no modifica el registro original. FINISH genera la publicación individual con las fichas seleccionadas, verifica su procedencia y ejecuta el cierre ordinario. La exportación comercial por el circuito compartido requiere una integración independiente y no se presupone por la activación de esta publicación.
 
 **Preparar.** `src/cli/commands/catalog/prepare-individual.ts` delega en `src/preparation/workflow/individual-prepare.ts`. Comprueba el original portátil y las huellas de origen/reglas; reutiliza una preparación compatible o produce otra versión con diagnósticos, preservando las anteriores. El resumen distingue `ready`, `review` y diferencias provisionales con la publicación vigente. Ausencias, revisiones o diferencias *no* son decisiones editoriales automáticas.
 

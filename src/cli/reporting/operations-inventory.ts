@@ -1,4 +1,5 @@
 import type { CampaignOperationsStatus } from "../../campaign/operations-status.js";
+import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import type { InventoryItem, OperationsInventory } from "../../campaign/operations-inventory.js";
 import {
   printCommandHeader, printCommandProvider, printCommandResult, printCommandSection,
@@ -49,7 +50,7 @@ export const printOperationsInventory = (
 ): void => {
   printCommandHeader("ESTADO OPERATIVO");
   const individual = inventory.providers.filter((entry) =>
-    ["gam", "gomariz", "mercaeleva"].includes(entry.providerId));
+    CAMPAIGN_PROVIDERS.some((id) => id === entry.providerId));
   const verified = individual.filter((entry) => entry.final.state === "correcto").length;
   printReportLine(`PUBLICACIONES INDIVIDUALES | ${verified}/${individual.length} vigentes verificables`);
   printReportLine(`CAMPAÑA GLOBAL | ${status.campaign.runId ? status.description : "sin actividad"} (circuito independiente)`);
@@ -59,15 +60,13 @@ export const printOperationsInventory = (
       provider.final.state === "ausente" ? "sin publicación individual" : provider.final.state.toUpperCase();
     printCommandProvider(provider.providerId, `${primary} · preparación ${provider.preparation.state}`);
     if (provider.technical && provider.technical.state !== "ausente") printItem("  TÉCNICA", provider.technical);
-    if (["gam", "gomariz", "mercaeleva"].includes(provider.providerId)) {
+    if (CAMPAIGN_PROVIDERS.some((id) => id === provider.providerId)) {
       for (const [label, item] of [["ORIGINAL", provider.original], ["ORIGINAL REPOSITORIO", provider.portableOriginal],
         ["COHERENCIA", provider.consistency], ["PREPARACIÓN", provider.preparation], ["PUBLICACIÓN", provider.final]] as const) {
         if (item.state !== "correcto" && (label !== "COHERENCIA" || item.state !== "ausente")) {
           printStatus(item.state === "error" ? "FAIL" : "WARN", `${provider.providerId.toUpperCase()} ${label} | ${item.detail}`);
         }
       }
-    } else if (provider.final.state === "ausente") {
-      printReportLine(`  ${provider.providerId.toUpperCase()} no participa en las publicaciones individuales`);
     }
   }
   if (status.reference.status === "invalid") printStatus("FAIL", `REFERENCIA GLOBAL | ${status.reference.reason}`);

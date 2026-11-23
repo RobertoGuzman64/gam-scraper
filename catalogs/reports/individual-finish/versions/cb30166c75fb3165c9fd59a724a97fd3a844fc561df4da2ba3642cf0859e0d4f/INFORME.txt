@@ -9,7 +9,8 @@ Comparación entre el original canónico y la publicación individual acreditada
 | GAM | 983 | 976 | 7 | 976 |
 | GOMARIZ | 547 | 546 | 1 | 546 |
 | MERCAELEVA | 221 | 221 | 0 | 221 |
-| TOTAL | 1751 | 1743 | 8 | 1743 |
+| MANAIN | 384 | 383 | 1 | 383 |
+| TOTAL | 2135 | 2126 | 9 | 2126 |
 
 ## Especificaciones técnicas
 
@@ -17,8 +18,9 @@ Comparación entre el original canónico y la publicación individual acreditada
 | --- | ---: | ---: | ---: | ---: |
 | GAM | 1573 | 0 | 6 | 46 |
 | GOMARIZ | 169 | 0 | 0 | 6 |
-| MERCAELEVA | 270 | 0 | 0 | 6 |
-| TOTAL | 2012 | 0 | 6 | 58 |
+| MERCAELEVA | 269 | 0 | 0 | 6 |
+| MANAIN | 0 | 0 | 0 | 0 |
+| TOTAL | 2011 | 0 | 6 | 58 |
 
 ## Contenido y datos comerciales
 
@@ -27,15 +29,17 @@ Comparación entre el original canónico y la publicación individual acreditada
 | GAM | 777 | 6 | 1846 | 0 | 0 | 5 | 823 |
 | GOMARIZ | 499 | 546 | 546 | 0 | 0 | 0 | 0 |
 | MERCAELEVA | 216 | 229 | 213 | 0 | 0 | 2 | 0 |
-| TOTAL | 1492 | 781 | 2605 | 0 | 0 | 7 | 823 |
+| MANAIN | 383 | 766 | 0 | 0 | 0 | 0 | 0 |
+| TOTAL | 1875 | 1547 | 2605 | 0 | 0 | 7 | 823 |
 
 ## Trazabilidad de origen y publicación
 
 | Proveedor | Original | Aprobación | JSON comercial |
 | --- | --- | --- | --- |
-| GAM | `855865e4a99f` | `544ea719741d` | `16678157073b` |
-| GOMARIZ | `87e2fc58e39f` | `9375867e608b` | `c8b70bbc9133` |
-| MERCAELEVA | `83e0265743ba` | `52a91dfb3519` | `288b7c9655b5` |
+| GAM | `855865e4a99f` | `1025099d11dc` | `e784ca065ca2` |
+| GOMARIZ | `87e2fc58e39f` | `95141df7205c` | `c8b70bbc9133` |
+| MERCAELEVA | `83e0265743ba` | `cb920727f2c9` | `38eae2f8ce86` |
+| MANAIN | `75ac3f526e79` | `f14a875b7c00` | `29b81674626e` |
 Huellas SHA-256 abreviadas a 12 caracteres para lectura. Los valores completos constan en los originales y manifiestos acreditados.
 
 ## Cómo interpretar las cifras

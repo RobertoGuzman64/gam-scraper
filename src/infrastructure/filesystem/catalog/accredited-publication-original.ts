@@ -10,6 +10,9 @@ import { originalSources } from "./original-catalog-sources.js";
 import { readCanonicalCatalog } from "./canonical-catalog.js";
 import { readPortableCampaign } from "./portable-campaign.js";
 import { readPortableOriginalArtifacts } from "./portable-original.js";
+import { readVerifiedManainRecordSource } from "./manain-record-source.js";
+import { manainRecordPreparationSource } from "../../../preparation/workflow/manain-record-source.js";
+import { isDeepStrictEqual } from "node:util";
 
 const sha256 = (raw: string): string => createHash("sha256").update(raw).digest("hex");
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -41,7 +44,7 @@ const matchingCatalog = async (
   return catalog;
 };
 
-const mapCatalog = (catalog: CanonicalCatalog): Map<string, ProductRecord> => {
+const mapCatalog = (catalog: Pick<CanonicalCatalog, "products">): Map<string, ProductRecord> => {
   const products = new Map<string, ProductRecord>();
   for (const product of catalog.products) {
     const key = buildProductIdentity(product).key;
@@ -79,6 +82,17 @@ export const accreditedPublicationOriginalSources = async (
     throw new Error(`Publicación comercial sin procedencia canónica válida: ${providerId}`);
   }
   const { catalogSha256, productCount } = metadata.source;
+  if (providerId === "manain") {
+    const verified = await readVerifiedManainRecordSource(root);
+    const expected = manainRecordPreparationSource(verified);
+    if (catalogSha256 !== expected.catalogSha256 || productCount !== expected.productCount ||
+      metadata.source.prefix !== expected.prefix || metadata.source.scope !== expected.scope ||
+      !isDeepStrictEqual(metadata.source.record, expected.record) ||
+      metadata.source.intervention !== undefined) {
+      throw new Error("Publicación Manain sin procedencia parcial verificada coincidente");
+    }
+    return mapCatalog({ products: verified.originalProducts });
+  }
   const currentArtifacts = await readPortableOriginalArtifacts(root, providerId);
   const prefix = metadata.source.prefix ?? currentArtifacts.catalog.prefix;
   const scope = metadata.source.scope ?? null;
@@ -109,6 +123,7 @@ export const accreditedPublicationOriginalSources = async (
 export const publicationOriginalSources = async (
   root: string, publicationFile: string, providerId: string, published: readonly ImportCandidate[]
 ): Promise<Map<string, ProductRecord>> => {
+  if (providerId === "manain") return accreditedPublicationOriginalSources(root, publicationFile, providerId);
   const current = await originalSources(root, providerId);
   if (current && published.every((product) => current.has(buildProductIdentity({ providerId: product.providerId,
     reference: product.reference, serialNumber: null, url: product.sourceUrl }).key))) return current;

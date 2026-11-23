@@ -193,6 +193,54 @@ test("registro parcial Manain se distingue de un original inválido sin promocio
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
+test("Manain publicado conserva el registro parcial y admite su índice de retención acreditado", async () => {
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-inventory-manain-retention-"));
+  try {
+    const base = join(root, "catalogs", "providers", "manain");
+    const records = join(base, "records");
+    const publications = join(base, "publications");
+    const sha = "a".repeat(64);
+    const active = { version: 1, providerId: "manain", approvalSha256: sha };
+    const retention = { ...active, previousSha256: null };
+    await mkdir(records, { recursive: true });
+    await mkdir(publications, { recursive: true });
+    await writeFile(join(records, "manain-record.json"), JSON.stringify({
+      providerId: "manain", quality: { status: "partial", published: false }, products: []
+    }));
+    await writeFile(join(publications, "active.json"), JSON.stringify(active));
+    const retentionPath = join(base, "publication-retention.json");
+    await writeFile(retentionPath, JSON.stringify(retention));
+
+    const entry = (await inspectPortableInventory(root, input(root))).providers.find((provider) => provider.providerId === "manain");
+    assert.equal(entry?.original.state, "parcial");
+    assert.equal(entry?.consistency.state, "parcial");
+    assert.match(entry?.original.detail ?? "", /Registro parcial de Manain conservado/);
+
+    await writeFile(retentionPath, JSON.stringify({ ...retention, providerId: "gam" }));
+    const foreign = (await inspectPortableInventory(root, input(root))).providers.find((provider) => provider.providerId === "manain");
+    assert.equal(foreign?.original.state, "error");
+    assert.match(foreign?.original.detail ?? "", /retención individual no acreditado/);
+
+    await writeFile(retentionPath, JSON.stringify({ ...retention, approvalSha256: "b".repeat(64) }));
+    const mismatched = (await inspectPortableInventory(root, input(root))).providers.find((provider) => provider.providerId === "manain");
+    assert.equal(mismatched?.original.state, "error");
+    assert.match(mismatched?.original.detail ?? "", /retención individual no acreditado/);
+
+    await writeFile(retentionPath, JSON.stringify(retention));
+    await writeFile(join(base, "unexpected.tmp"), "entrada no acreditada");
+    const unexpected = (await inspectPortableInventory(root, input(root))).providers.find((provider) => provider.providerId === "manain");
+    assert.equal(unexpected?.original.state, "error");
+    assert.match(unexpected?.original.detail ?? "", /Archivos inesperados/);
+    await rm(join(base, "unexpected.tmp"));
+
+    await rm(retentionPath);
+    await mkdir(retentionPath);
+    const nonRegular = (await inspectPortableInventory(root, input(root))).providers.find((provider) => provider.providerId === "manain");
+    assert.equal(nonRegular?.original.state, "error");
+    assert.match(nonRegular?.original.detail ?? "", /retención individual no regular/);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
 test("otros proveedores no admiten registros Manain ni entradas desconocidas", async () => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-inventory-foreign-record-"));
   try {

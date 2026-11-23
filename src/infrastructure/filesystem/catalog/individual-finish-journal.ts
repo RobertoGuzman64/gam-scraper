@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { lstat, mkdir, open, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import type { IndividualCatalogProvider } from "../../../preparation/workflow/individual-context.js";
+import { isCampaignProvider } from "../../../contracts/campaign-providers.js";
 
 export type IndividualFinishTarget = {
   readonly providerId: IndividualCatalogProvider;
@@ -58,7 +59,7 @@ const isJournal = (value: unknown): value is IndividualFinishJournal => {
   const providers = targets.map((item) => {
     if (!item || typeof item !== "object" || Array.isArray(item) ||
       !("providerId" in item) || !("approvalSha256" in item) || !("previousSha256" in item) ||
-      (item.providerId !== "gam" && item.providerId !== "gomariz" && item.providerId !== "mercaeleva") ||
+      !isCampaignProvider(item.providerId) ||
       !isHash(item.approvalSha256) || (item.previousSha256 !== null && !isHash(item.previousSha256))) return null;
     return item.providerId;
   });

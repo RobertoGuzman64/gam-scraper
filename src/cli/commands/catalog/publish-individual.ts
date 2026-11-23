@@ -22,6 +22,7 @@ export const publishIndividualHelp = `Uso:
   npm run catalogo:publicar -- --proveedor gam
   npm run catalogo:publicar -- --simular
   npm run catalogo:publicar -- --proveedor gomariz --simular
+  npm run catalogo:publicar -- --proveedor manain --simular
   npm run catalogo:publicar -- --detalle
   npm run catalogo:publicar -- --estado
 
@@ -130,7 +131,7 @@ export const runPublishIndividual = async (
   }
   const detailed = args.includes("--detalle");
   if (args.filter((arg) => arg === "--detalle").length > 1) throw new Error("--detalle repetido");
-  const parsed = parseIndividualCatalogProviders(args.filter((arg) => arg !== "--detalle"));
+  const parsed = parseIndividualCatalogProviders(args.filter((arg) => arg !== "--detalle"), true);
   printCommandHeader("PASO 2/2 · FINISH", parsed.dryRun);
   const root = resolve(workspace);
   const progress = new OperationProgress("FINISH");

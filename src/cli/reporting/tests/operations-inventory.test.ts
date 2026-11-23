@@ -44,14 +44,15 @@ const capture = (detailed: boolean, snapshot: OperationsInventory = inventory): 
   return lines.join("\n").replace(/\u001b\[[0-9;]*m/g, "");
 };
 
-test("estado breve distingue publicaciones verificadas, campaña inactiva y MANAIN parcial", () => {
+test("estado breve distingue tres publicaciones verificadas, campaña inactiva y MANAIN pendiente", () => {
   const output = capture(false);
-  assert.match(output, /PUBLICACIONES INDIVIDUALES \| 3\/3 vigentes verificables/);
+  assert.match(output, /PUBLICACIONES INDIVIDUALES \| 3\/4 vigentes verificables/);
   assert.match(output, /CAMPAÑA GLOBAL \| sin actividad/);
   assert.match(output, /GAM.*publicación verificada/);
   assert.match(output, /MERCAELEVA.*publicación verificada/);
-  assert.match(output, /MANAIN.*no participa en las publicaciones individuales/);
-  assert.match(output, /RESULTADO\nPASS \| Publicaciones individuales 3\/3 verificadas/);
+  assert.match(output, /MANAIN.*sin publicación individual/);
+  assert.match(output, /WARN \| MANAIN PUBLICACIÓN \| Sin JSON final acreditado/);
+  assert.match(output, /RESULTADO\nWARN \| Publicaciones individuales 3\/4 verificadas/);
   assert.doesNotMatch(output, /README\.md|JSON FINAL|CAMPAÑAS CONSERVADAS/);
   assert.ok(output.split("\n").length < 20);
 });
@@ -68,8 +69,19 @@ test("estado detallado conserva cada diagnóstico y separa los proveedores", () 
 
 test("estado breve no oculta un fallo de la publicación individual", () => {
   const output = capture(false, { ...inventory, providers: [
-    provider("gam", { state: "error", detail: "SHA-256 incorrecto" }), provider("gomariz"), provider("mercaeleva")
+    provider("gam", { state: "error", detail: "SHA-256 incorrecto" }), provider("gomariz"),
+    provider("mercaeleva"), provider("manain", missing)
   ] });
   assert.match(output, /FAIL \| GAM PUBLICACIÓN \| SHA-256 incorrecto/);
-  assert.match(output, /RESULTADO\nFAIL \| Publicaciones individuales 2\/3 verificadas/);
+  assert.match(output, /RESULTADO\nFAIL \| Publicaciones individuales 2\/4 verificadas/);
+});
+
+test("estado breve verifica las cuatro publicaciones cuando MANAIN ya está acreditada", () => {
+  const output = capture(false, { ...inventory, providers: [
+    provider("gam"), provider("gomariz"), provider("mercaeleva"), provider("manain")
+  ] });
+  assert.match(output, /PUBLICACIONES INDIVIDUALES \| 4\/4 vigentes verificables/);
+  assert.match(output, /MANAIN.*publicación verificada/);
+  assert.match(output, /RESULTADO\nPASS \| Publicaciones individuales 4\/4 verificadas/);
+  assert.doesNotMatch(output, /WARN \| MANAIN PUBLICACIÓN/);
 });

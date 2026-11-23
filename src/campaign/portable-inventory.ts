@@ -74,7 +74,7 @@ const inspectProvider = async (root: string, providerId: string): Promise<Invent
     const hasManainRecord = providerId === "manain" && names.includes("records");
     if (names.some((name) => name !== "original" && name !== "publications" && name !== "technical" &&
       !(hasManainRecord && name === "records") &&
-      !(providerId !== "manain" && name === "publication-retention.json"))) {
+      name !== "publication-retention.json")) {
       return invalid("Archivos inesperados o promoción pendiente en original portátil");
     }
     if (names.includes("publication-retention.json")) {

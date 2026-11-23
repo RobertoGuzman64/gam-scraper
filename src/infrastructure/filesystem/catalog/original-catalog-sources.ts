@@ -3,8 +3,19 @@ import { join } from "node:path";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "./canonical-catalog.js";
 import { buildProductIdentity } from "../../../catalog/identity.js";
+import { readVerifiedManainRecordSource } from "./manain-record-source.js";
 
 export const originalSources = async (root: string, providerId: string): Promise<Map<string, ProductRecord> | null> => {
+  if (providerId === "manain") {
+    const verified = await readVerifiedManainRecordSource(root);
+    const sources = new Map<string, ProductRecord>();
+    for (const source of verified.originalProducts) {
+      const key = buildProductIdentity(source).key;
+      if (sources.has(key)) throw new Error(`Identidad duplicada en original ${key}`);
+      sources.set(key, source);
+    }
+    return sources;
+  }
   const directory = join(root, "catalogs", "providers", providerId, "original");
   let filenames: string[];
   try {

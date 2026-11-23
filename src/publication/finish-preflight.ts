@@ -3,6 +3,7 @@ import { readActiveCatalogIndex } from "../infrastructure/filesystem/catalog/act
 import { resolveAccreditedPublication, readAccreditedPublication } from "../infrastructure/filesystem/catalog/accredited-publication.js";
 import { publicationApprovalSha } from "../infrastructure/filesystem/catalog/publication-identity.js";
 import { readPortableOriginalArtifacts } from "../infrastructure/filesystem/catalog/portable-original.js";
+import { readVerifiedManainRecordSource } from "../infrastructure/filesystem/catalog/manain-record-source.js";
 import { requireIndividualPreparationContext } from "../preparation/workflow/individual-context.js";
 import type { IndividualCatalogProvider } from "../preparation/workflow/individual-context.js";
 import type { ImportCandidate } from "../commercial/legacy-export/contracts.js";
@@ -66,11 +67,17 @@ const inspectProvider = async (
   let difference: PublicationDifference | null = null;
   if (globalIssue) block("vigente", globalIssue);
   try {
-    const { catalog, files } = await readPortableOriginalArtifacts(workspace, providerId);
-    const raw = files.find((item) => item.name.endsWith("-catalog.json"));
-    if (!raw) throw new Error("Catálogo portátil sin fuente verificable");
-    original = { sha256: sha256(raw.content), count: catalog.productCount };
-    originalProducts = catalog.products;
+    if (providerId === "manain") {
+      const verified = await readVerifiedManainRecordSource(workspace);
+      original = { sha256: verified.recordSha256, count: verified.originalProducts.length };
+      originalProducts = verified.originalProducts;
+    } else {
+      const { catalog, files } = await readPortableOriginalArtifacts(workspace, providerId);
+      const raw = files.find((item) => item.name.endsWith("-catalog.json"));
+      if (!raw) throw new Error("Catálogo portátil sin fuente verificable");
+      original = { sha256: sha256(raw.content), count: catalog.productCount };
+      originalProducts = catalog.products;
+    }
   } catch (error) { block("origen", reasonOf(error)); }
   try {
     const file = await resolveAccreditedPublication(workspace, providerId);
@@ -130,9 +137,11 @@ const inspectProvider = async (
   }
   if (original) {
     try {
-      const fresh = await readPortableOriginalArtifacts(workspace, providerId);
-      const file = fresh.files.find((item) => item.name.endsWith("-catalog.json"));
-      if (!file || sha256(file.content) !== original.sha256) {
+      const currentHash = providerId === "manain"
+        ? (await readVerifiedManainRecordSource(workspace)).recordSha256
+        : sha256((await readPortableOriginalArtifacts(workspace, providerId)).files.find((item) =>
+          item.name.endsWith("-catalog.json"))?.content ?? "");
+      if (currentHash !== original.sha256) {
         block("origen", "El original cambió durante el diagnóstico; repetir con fuentes estables");
       }
     } catch (error) { block("origen", reasonOf(error)); }

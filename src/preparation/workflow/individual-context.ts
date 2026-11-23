@@ -18,7 +18,7 @@ import { readOfflinePreparation } from "../../infrastructure/filesystem/preparat
 import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation/preparation-inputs.js";
 import { validateManainRecordPreparation, validateOfflinePreparation } from "./validation/offline.js";
 
-export type IndividualCatalogProvider = typeof LEGACY_CAMPAIGN_PROVIDERS[number];
+export type IndividualCatalogProvider = typeof CAMPAIGN_PROVIDERS[number];
 export type IndividualPreparationProvider = typeof CAMPAIGN_PROVIDERS[number];
 
 export type IndividualPreparationContext<T extends IndividualPreparationProvider = IndividualPreparationProvider> = {

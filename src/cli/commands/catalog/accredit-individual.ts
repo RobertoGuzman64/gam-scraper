@@ -12,6 +12,7 @@ import { readIndividualSelection, selectIndividualPublishable } from "../../../p
 export const accreditIndividualHelp = `Uso opcional:
   npm run catalogo:acreditar
   npm run catalogo:acreditar -- --proveedor gam
+  npm run catalogo:acreditar -- --proveedor manain --simular
   npm run catalogo:acreditar -- --simular
 
 La publicación ordinaria acredita automáticamente las exclusiones históricas idénticas.
@@ -25,7 +26,7 @@ export const runAccreditIndividual = async (args: readonly string[], workspace: 
     return true;
   }
   if (args.includes("--help")) throw new Error("--help no admite otras opciones");
-  const parsed = parseIndividualCatalogProviders(args);
+  const parsed = parseIndividualCatalogProviders(args, true);
   const root = resolve(workspace);
   printReportLine(formatHeader(`ACREDITACIÓN AUTOMÁTICA${parsed.dryRun ? " · SIMULACIÓN" : ""}`));
   if (parsed.dryRun) {

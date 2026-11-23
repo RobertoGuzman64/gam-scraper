@@ -61,6 +61,9 @@ const limits = {
   "src/publication/tests/finish-preflight.test.ts": {
     "finish-cli": 1, "prepare-helper": 1, "finish-factory": 1
   },
+  "src/publication/tests/manain-individual-finish.test.ts": {
+    "finish-cli": 1, "work-report": 1, "work-collection": 1
+  },
   "src/publication/tests/individual-finish-recovery.test.ts": {
     "finish-cli": 6, "finish-factory": 1
   },
@@ -88,7 +91,8 @@ const rawLimits = {
   [shared.gaps]: { cp: 4, mkdtemp: 1, execFile: 1 },
   "src/cli/commands/catalog/tests/catalog-content-gaps-publications.test.ts": { mkdtemp: 3, copyFile: 3 },
   "src/cli/commands/catalog/tests/catalog-content-gaps.test.ts": { mkdtemp: 1, copyFile: 1 },
-  "src/cli/commands/catalog/tests/commercial-audit-coverage.test.ts": { cp: 1, spawnSync: 1 }
+  "src/cli/commands/catalog/tests/commercial-audit-coverage.test.ts": { cp: 1, spawnSync: 1 },
+  "src/testing/builders/manain-individual-selection-fixture.ts": { copyFile: 3, mkdtemp: 1 }
 };
 const panelPreparationLimits = {
   "src/panel/application/tests/dashboard.test.ts": [

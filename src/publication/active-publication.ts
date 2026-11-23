@@ -116,7 +116,10 @@ const describe = async (root: string, providerId: string, sha: string): Promise<
   readonly acceptance: PublicationAcceptance;
 }> => {
   const candidate = await validateVersion(root, providerId, sha);
-  const current = await resolveAccreditedPublication(root, providerId, true);
+  const global = await readActiveCatalogIndex(root);
+  const local = await readSelectionSnapshot(join(root, "catalogs", "providers", providerId, "publications", "active.json"));
+  const current = global?.providers[providerId] || local !== null
+    ? await resolveAccreditedPublication(root, providerId, true) : null;
   const previous = current ? basename(current) === "publishable.json" ? basename(dirname(dirname(current))) :
     await publicationApprovalSha(dirname(current)) : null;
   const old = current ? (await readAccreditedPublication(current)).products : [];
