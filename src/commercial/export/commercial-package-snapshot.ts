@@ -1,3 +1,4 @@
+import { isReferenceProviderSet } from "../../contracts/campaign-providers.js";
 import type { CommercialEnvironment } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import type { CommercialExportPlan } from "../projection/export-projection.js";
 import { commercialReference } from "../diagnostics/commercial-baseline.js";
@@ -119,9 +120,8 @@ export const inspectCommercialPackage = (files: readonly CommercialExportFile[])
 };
 
 export const assertCommercialPackageProviders = (snapshot: CommercialPackageSnapshot): void => {
-  const expected = ["gam", "gomariz", "mercaeleva"];
-  const actual = snapshot.providers.map((provider) => provider.providerId).sort();
-  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
-    throw new Error(`El paquete comercial exige los tres proveedores acreditados: ${expected.join(", ")}`);
+  const providers = snapshot.providers.map((provider) => provider.providerId);
+  if (!isReferenceProviderSet(providers)) {
+    throw new Error("El paquete comercial exige GAM, Gomariz y Mercaeleva, más Manain cuando su publicación está activa");
   }
 };

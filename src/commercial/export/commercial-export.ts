@@ -1,3 +1,4 @@
+import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { createHash } from "node:crypto";
 import { loadImportCatalogSnapshot } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
@@ -108,7 +109,10 @@ export const assembleCommercialExportFiles = (
   references: CommercialReference,
   environment: CommercialEnvironment | null
 ): readonly CommercialExportFile[] => {
-  const products = plans.map(({ plan, recognitions }) => file(`${plan.providerId}-commercial.json`,
+  const ordered = [...plans].sort((a, b) =>
+    CAMPAIGN_PROVIDERS.findIndex((id) => id === a.plan.providerId) -
+    CAMPAIGN_PROVIDERS.findIndex((id) => id === b.plan.providerId));
+  const products = ordered.map(({ plan, recognitions }) => file(`${plan.providerId}-commercial.json`,
     serialized(buildCommercialDeliveryPlan(plan, recognitions))));
   const manifest = file("commercial-manifest.json", serialized({
     version: 2,
@@ -117,7 +121,7 @@ export const assembleCommercialExportFiles = (
     attributesSha256: hash(snapshot.attributeRaw),
     logosSha256: hash(references.logoRaw),
     companiesSha256: hash(references.companyRaw),
-    providers: plans.map(({ plan }, index) => {
+    providers: ordered.map(({ plan }, index) => {
       const output = products[index];
       if (!output) throw new Error(`Falta la exportación del proveedor ${plan.providerId}`);
       return {

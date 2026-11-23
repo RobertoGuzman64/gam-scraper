@@ -13,6 +13,14 @@ import type { PublishedWorkReport } from "../../catalog/diagnostics/published-wo
 import { deliverIndividualProvider } from "../individual-delivery.js";
 import { listIndividualFinishJournals } from "../../infrastructure/filesystem/catalog/individual-finish-journal.js";
 import { approveIndividualEditorial, decideIndividualEditorial, startIndividualEditorial } from "../individual-editorial.js";
+import { loadImportCatalogSnapshot } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
+import { readCommercialPublicationInput } from "../../commercial/export/commercial-inputs.js";
+import { planCommercialExport } from "../../commercial/projection/export-projection.js";
+import { accreditCommercialPlan } from "../../commercial/diagnostics/commercial-accreditation.js";
+import { assembleCommercialExportFiles } from "../../commercial/export/commercial-export.js";
+import { validateCommercialExportFiles } from "../../commercial/export/commercial-export-verification.js";
+import { inspectCommercialExportPreflight } from "../../commercial/export/commercial-export-preflight.js";
 
 test("Manain: FINISH activa 383 fichas solo tras aprobación humana y conserva su procedencia", async () => {
   const { root, source, preparation } = await createManainSelectionWorkspace();
@@ -64,6 +72,30 @@ test("Manain: FINISH activa 383 fichas solo tras aprobación humana y conserva s
     assert.equal((await readdir(desktop)).length, 2);
     assert.equal((await deliverIndividualProvider(options, "verify")).publishable, 383);
     assert.deepEqual(await readFile(source), original);
+    const [catalog, references] = await Promise.all([loadImportCatalogSnapshot(), loadCommercialReference()]);
+    const input = await readCommercialPublicationInput(root, file, catalog.catalog);
+    const companyID = references.companies.manain?.develop;
+    assert.ok(companyID);
+    const plan = planCommercialExport(input.entries, "manain", input.publicationSha256,
+      catalog.catalog, references.brandLogos, "develop", companyID);
+    const accreditation = accreditCommercialPlan(input.entries, plan, catalog.catalog, references.brandLogos, companyID);
+    assert.equal(input.originalProducts, 384);
+    assert.equal(plan.total, 383);
+    assert.equal(plan.summary.exported, 383);
+    assert.equal(plan.summary.categorized, 351);
+    assert.equal(plan.summary.pendingCategory, 32);
+    assert.equal(plan.summary.attributes, 2209);
+    assert.equal(plan.summary.withPrice, 0);
+    assert.equal(plan.summary.withCompany, 383);
+    assert.equal(accreditation.summary.blocking, 0);
+    assert.ok(!plan.products.some((product) => product.reference === "MA3727"));
+    const commercialFiles = assembleCommercialExportFiles([{ plan, recognitions: new Map() }],
+      catalog, references, "develop");
+    assert.deepEqual(commercialFiles.map((entry) => entry.name), ["manain-commercial.json", "commercial-manifest.json"]);
+    assert.doesNotThrow(() => validateCommercialExportFiles(commercialFiles));
+    const preflight = await inspectCommercialExportPreflight(root, null);
+    assert.deepEqual(preflight.publications.map((item) => item.providerId), ["manain"]);
+    assert.deepEqual(preflight.failures.map((item) => item.providerId), ["gam", "gomariz", "mercaeleva"]);
     const manifestPath = join(file, "..", "manifest.json");
     const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
     manifest.source.record.technicalSha256 = "0".repeat(64);

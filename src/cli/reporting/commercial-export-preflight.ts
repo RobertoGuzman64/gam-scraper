@@ -1,3 +1,4 @@
+import { isReferenceProviderSet } from "../../contracts/campaign-providers.js";
 import type { CommercialExportPreflight } from "../../commercial/export/commercial-export-preflight.js";
 import type { CommercialEnvironment } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 
@@ -23,7 +24,7 @@ export const renderCommercialExportPreflight = (
     for (const mismatch of report.historicalReferences) lines.push(
       `  ${mismatch.path} | esperada ${mismatch.expectedSha256} | actual ${mismatch.actualSha256 ?? "archivo ausente"}`);
   }
-  lines.push(report.failures.length || report.globalFailures.length || report.publications.length !== 3
+  lines.push(report.failures.length || report.globalFailures.length || !isReferenceProviderSet(report.publications.map((item) => item.providerId))
     ? "Etapas: preparación nueva NO EJECUTADA · publicaciones inspeccionadas con bloqueos · paquete comercial NO GENERADO"
     : "Etapas: preparación nueva NO EJECUTADA · publicaciones vigentes REUTILIZADAS · paquete comercial AÚN NO GENERADO");
   return lines;

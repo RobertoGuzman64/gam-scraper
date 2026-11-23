@@ -1,3 +1,4 @@
+import { isReferenceProviderSet } from "../../../contracts/campaign-providers.js";
 import { mkdir, realpath, rm, writeFile } from "node:fs/promises";
 import { resolve, relative, isAbsolute, join, dirname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -65,7 +66,7 @@ export const shouldRefreshLocalPanel = (options: CommercialExportOptions): boole
 export const runCommercialExport = async (args: readonly string[]): Promise<void> => {
   const options = parseCommercialExportOptions(args);
   if (options === "help") {
-    printReportLine("Uso: npm run exportar:comercial -- --entorno develop|production [--simular] [--salida <directorio-nuevo>]\nPor defecto genera dos ZIP verificados en el Escritorio: comercial (tres JSON y manifiesto) e informe de integración. --salida conserva los cuatro archivos sueltos en un directorio nuevo. --simular permite verificar sin elegir entorno. También admite --out, --environment y --dry-run. No publica ni importa en backend.");
+    printReportLine("Uso: npm run exportar:comercial -- --entorno develop|production [--simular] [--salida <directorio-nuevo>]\nPor defecto genera dos ZIP verificados en el Escritorio: comercial (un JSON por proveedor acreditado y manifiesto) e informe de integración. --salida conserva los archivos sueltos en un directorio nuevo. --simular permite verificar sin elegir entorno. También admite --out, --environment y --dry-run. No publica ni importa en backend.");
     return;
   }
   const progress = new OperationProgress("EXPORTACIÓN COMERCIAL");
@@ -74,7 +75,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
     const { preflight, files } = await prepareCommercialExportPreflight(root, options.environment,
       (providerId, completed, total) => progress.update(providerId.toUpperCase(), completed, total));
     for (const line of renderCommercialExportPreflight(preflight, options.environment)) progress.log(formatReportLine(line));
-    if (preflight.failures.length || preflight.globalFailures.length || preflight.publications.length !== 3) {
+    if (preflight.failures.length || preflight.globalFailures.length || !isReferenceProviderSet(preflight.publications.map((item) => item.providerId))) {
       throw new Error(`Preflight comercial no conforme: ${preflight.failures.length} incidencias por proveedor y ${preflight.globalFailures.length} globales. No se exportó ningún archivo`);
     }
     if (!files) throw new Error("Preflight comercial sin corte exportable");
@@ -128,7 +129,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
       !physicalRelative.startsWith(`..${sep}`) && !isAbsolute(physicalRelative))) {
       throw new Error("La salida comercial apunta al repositorio mediante su directorio de destino");
     }
-    progress.stage("ESCRITURA", "cuatro archivos comerciales y verificación");
+    progress.stage("ESCRITURA", "archivos comerciales y verificación");
     await mkdir(destination, { recursive: false });
     try {
       for (const entry of files) await writeFile(join(destination, entry.name), entry.content, { flag: "wx" });
@@ -144,7 +145,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
     printCommandSection("ARCHIVOS VERIFICADOS");
     for (const entry of files) printReportLine(`  ${entry.name} · ${entry.bytes} bytes`);
     printCommandDeliverable("DIRECTORIO COMERCIAL", destination);
-    printCommandResult("Cuatro archivos nuevos desde publicaciones vigentes; publicaciones y backend sin modificar");
+    printCommandResult("Archivos comerciales nuevos desde publicaciones vigentes; publicaciones y backend sin modificar");
   } catch (error) {
     progress.abort();
     throw error;

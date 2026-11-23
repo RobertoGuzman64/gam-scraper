@@ -6,7 +6,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { createCommercialReferenceFixture, type CommercialReferenceFixture } from "../../../testing/builders/commercial-reference-fixture.js";
-import { buildCommercialExportFiles, buildCommercialDeliveryPlan, type CommercialExportFile } from "../commercial-export.js";
+import { loadImportCatalogSnapshot } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+import { loadCommercialReference } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
+import { buildCommercialExportFiles, buildCommercialDeliveryPlan, assembleCommercialExportFiles, type CommercialExportFile } from "../commercial-export.js";
 import type { CommercialExportPlan } from "../../projection/export-projection.js";
 import { validateCommercialExportFiles, verifyCommercialExportArchive, verifyCommercialExportDirectory, verifyCommercialExportSources, verifyCommercialExportZip } from "../commercial-export-verification.js";
 import { createZipArchive, readZipArchive } from "../../../infrastructure/archive/zip.js";
@@ -491,10 +493,39 @@ test("el ZIP mantiene los bytes exactos y rechaza corrupción, entradas extra y 
   assert.throws(() => verifyCommercialExportArchive(corrupted, files), /ZIP:/);
 });
 
+test("el manifiesto comercial es idéntico aunque las publicaciones se descubran en otro orden", async () => {
+  const [catalog, references] = await Promise.all([loadImportCatalogSnapshot(), loadCommercialReference()]);
+  const providers = ["gam", "gomariz", "mercaeleva", "manain"] as const;
+  const plans = providers.map((providerId) => ({ plan: { ...emptyPlan(), providerId }, recognitions: new Map() }));
+  const forward = assembleCommercialExportFiles(plans, catalog, references, null);
+  const reversed = assembleCommercialExportFiles([...plans].reverse(), catalog, references, null);
+  assert.deepEqual(forward, reversed);
+  assert.deepEqual(forward.map((entry) => entry.name), [
+    "gam-commercial.json", "gomariz-commercial.json", "mercaeleva-commercial.json", "manain-commercial.json",
+    "commercial-manifest.json"
+  ]);
+  assert.doesNotThrow(() => assertCommercialPackageProviders(inspectCommercialPackage(forward)));
+});
+
+test("el paquete comercial admite tres publicaciones históricas o las cuatro con Manain, nunca subconjuntos", () => {
+  const providers = ["gam", "gomariz", "mercaeleva", "manain"] as const;
+  const original = inspectCommercialPackage(filesForProvider());
+  const entries = providers.map((providerId) => {
+    const snapshot = inspectCommercialPackage(filesForProvider({ ...emptyPlan(), providerId }));
+    const entry = snapshot.providers[0];
+    assert.ok(entry);
+    return entry;
+  });
+  assert.doesNotThrow(() => assertCommercialPackageProviders({ ...original, providers: entries.slice(0, 3) }));
+  assert.doesNotThrow(() => assertCommercialPackageProviders({ ...original, providers: entries }));
+  assert.throws(() => assertCommercialPackageProviders({ ...original, providers: entries.slice(1) }), /GAM, Gomariz y Mercaeleva/);
+  assert.throws(() => assertCommercialPackageProviders({ ...original, providers: [...entries, entries[3]!] }), /GAM, Gomariz y Mercaeleva/);
+});
+
 test("el informe identifica fuentes, excepciones, límites de integración y detecta manipulación", () => {
   const files = filesForProvider(planWithProduct());
   const snapshot = inspectCommercialPackage(files);
-  assert.throws(() => assertCommercialPackageProviders(snapshot), /tres proveedores/);
+  assert.throws(() => assertCommercialPackageProviders(snapshot), /GAM, Gomariz y Mercaeleva/);
   const markdown = renderCommercialIntegrationReport(snapshot, "2026-11-06");
   assert.match(markdown, /NO VERIFICADO EN BD/);
   assert.match(markdown, /gam-commercial\.json/);
