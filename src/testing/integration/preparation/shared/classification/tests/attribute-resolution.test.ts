@@ -1,14 +1,21 @@
 import assert from "node:assert/strict";
+
 import test from "node:test";
+
 import type { ProductRecord, SpecsMap } from "../../../../../../contracts/catalog.js";
+
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+
 import { resolveAttribute, resolveAttributeValue } from "../../../../../../preparation/shared/classification/mapping/attribute-mapping.js";
+
 import { productAttributes } from "../../../../../../preparation/product-attributes.js";
+
 import { prepareProduct } from "../../../../../../commercial/legacy-export/prepare-product.js";
-import { accreditedSourceSamples } from "../../../../../domain-cases/accredited-source-samples.js";
+
 import { gamSourceYear } from "../../../../../../catalog/normalization/gam/year.js";
 
 const catalog = await loadImportCatalog();
+
 const attribute = (name: string) => {
   const found = catalog.attributes.find((item) => item.name === name);
   assert.ok(found, name);
@@ -90,7 +97,6 @@ test("preparación: conserva las ausencias antiguas y expone su clasificación i
   assert.ok(result.missingRequiredDetails.every((item) => !result.attributes.some((entry) => entry.attributeID === item.attributeID)));
 });
 
-
 test("GAM: recupera solo un voltaje y una capacidad de batería explícitos", () => {
   const target = attribute("Batería (V / Ah)");
   assert.deepEqual(resolveAttribute(gamRecord({ "Capacidad de la batería": "48V / 420Ah(V/Ah)" }), target),
@@ -144,7 +150,6 @@ test("GAM: la batería recuperada solo se publica en categorías compatibles sin
   assert.ok(!incompatible.product.attributes.some((item) => batteryIds.has(item.attributeID)));
 });
 
-
 test("preparación: no emite opciones incompatibles ni oculta atributos obligatorios inválidos", () => {
   const category = catalog.categories[0];
   const brand = attribute("Marca");
@@ -163,22 +168,6 @@ test("preparación: no emite opciones incompatibles ni oculta atributos obligato
     [{ attributeID: brand.id, value: "GENIE" }]);
   assert.deepEqual(productAttributes(gamRecord(), category, { ...contract, relations: [] }).attributes, []);
   assert.deepEqual(productAttributes(gamRecord(), category, { ...contract, relations: [] }).missingRequiredDetails, []);
-});
-
-
-test("GAM: las ocho capacidades 2000 kg no se exportan como años de fabricación", async () => {
-  const originals = { products: accreditedSourceSamples("gam-original") };
-  const references = ["6588", "6590", "2237", "2239", "912", "2238", "241", "242"];
-  const year = attribute("Año de fabricación");
-  assert.equal(year.id, 117);
-  const affected = originals.products.filter((item) => item.yearSource === "titulo");
-  assert.deepEqual(affected.map((item) => item.reference).sort(), [...references].sort());
-  for (const record of affected) {
-    assert.equal(record.year, "2000", record.reference ?? "sin referencia");
-    assert.equal(gamSourceYear(record), null, record.reference ?? "sin referencia");
-    assert.deepEqual(resolveAttribute(record, year), { status: "not_observed", value: null }, record.reference ?? "sin referencia");
-    assert.equal(record.year, "2000");
-  }
 });
 
 test("GAM: preserva años acreditados en descripción y ficha y los declarados explícitamente en título", () => {

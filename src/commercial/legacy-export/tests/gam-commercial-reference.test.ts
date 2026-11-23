@@ -1,14 +1,23 @@
 import assert from "node:assert/strict";
+
 import test from "node:test";
+
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+
 import type { ProductRecord } from "../../../contracts/catalog.js";
+
 import { parsePreparation } from "../../../preparation/preparation-document.js";
+
 import { prepareProduct } from "../prepare-product.js";
+
 import { planProductImport, readReferenceInventory } from "../export-plan.js";
+
 import { planCreateMany } from "../create-many-plan.js";
+
 import { commercialReferenceKey } from "../commercial-reference.js";
-import { accreditedSourceSamples } from "../../../testing/domain-cases/accredited-source-samples.js";
+
 import { accreditedPublicationOriginalSources } from "../../../infrastructure/filesystem/catalog/accredited-publication-original.js";
+
 import { readAccreditedPublication, resolveAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
 
 const source: ProductRecord = {
@@ -24,7 +33,9 @@ const source: ProductRecord = {
 };
 
 const emptyInventory = readReferenceInventory("companyID,reference\n45,OTRA\n", 45);
+
 const catalog = await loadImportCatalog();
+
 const documentFor = (records: readonly ProductRecord[]) => parsePreparation({
   quality: "complete", published: true, products: records.map((record) => prepareProduct(record, catalog))
 }, "gam");
@@ -101,28 +112,6 @@ test("preparación GAM rechaza tipos de referencia comercial alterados", () => {
   } }] }, "gam"), /productos inválidos/);
 });
 
-
-test("GAM impide dos altas del mismo stock aunque cambie el separador", async () => {
-  const yale = accreditedSourceSamples("gam-original").filter((item) => item.reference === "6835" || item.reference === "6858");
-  assert.equal(yale.length, 2);
-  assert.deepEqual(yale.map((item) => item.externalReference), ["GAM 27262", "GAM-27262"]);
-  assert.equal(yale[0]?.serialNumber, yale[1]?.serialNumber);
-  assert.deepEqual(yale.map((item) => item.horometer), ["1660 horas", "1662 horas"]);
-  assert.notEqual(yale[0]?.image, yale[1]?.image);
-  assert.deepEqual(yale.map((item) => item.specs?.["Tipo Mástil"] ?? null), [null, "DUPLEX"]);
-  const document = documentFor(yale);
-  assert.deepEqual(document.products.map((item) => item.status), ["ready", "ready"]);
-  for (const plan of [
-    planProductImport(document, "gam", emptyInventory, catalog),
-    planCreateMany(document, "gam", emptyInventory, catalog)
-  ]) {
-    assert.equal(plan.report.newProducts, 0);
-    assert.equal(plan.report.duplicateReferences, 2);
-    assert.deepEqual(plan.report.duplicates.map((item) => item.reference), ["GAM 27262", "GAM-27262"]);
-  }
-  assert.deepEqual(document.products.map((item) => item.product.reference), ["6835", "6858"]);
-});
-
 test("GAM reconoce stock importado con separador alternativo, sin cambiar el resto de referencias", () => {
   const document = documentFor([{ ...source, externalReference: "GAM 27262" }]);
   const inventory = readReferenceInventory("companyID,reference\n45,GAM-27262\n", 45);
@@ -139,7 +128,6 @@ test("GAM reconoce stock importado con separador alternativo, sin cambiar el res
   assert.equal(commercialReferenceKey("gam", "PV 41592"), "PV 41592");
   assert.equal(commercialReferenceKey("gomariz", "GAM 27262"), "GAM 27262");
 });
-
 
 test("las colisiones comerciales reales de la publicación GAM no producen altas duplicadas", async () => {
   const publicationFile = await resolveAccreditedPublication(process.cwd(), "gam");

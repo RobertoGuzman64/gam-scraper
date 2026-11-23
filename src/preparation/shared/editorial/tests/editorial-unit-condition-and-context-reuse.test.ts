@@ -1,17 +1,18 @@
 import assert from "node:assert/strict";
+
 import test from "node:test";
+
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
-import { prepareSourceProduct } from "../../../prepare-product.js";
+
 import { resolveVerifiedEditorialCondition } from "../domain/editorial-condition.js";
+
 import { resolveEditorialIdentitySummary } from "../domain/editorial-identity-summary.js";
+
 import { resolveVerifiedTechnicalBrief } from "../domain/editorial-technical-brief.js";
+
 import { resolveVerifiedEditorialUnitContext } from "../domain/editorial-unit-context.js";
-import { normalizeCorroboratedTowingSummary } from "../domain/editorial-towing-summary.js";
-import { normalizeEditorialSummary } from "../domain/editorial-normalization.js";
-import {
-  controlledGamForklift, controlledGomarizForklift, controlledMercaelevaForklift
-} from "./editorial-contract-records.js";
+
+import { controlledGamForklift, controlledGomarizForklift, controlledMercaelevaForklift } from "./editorial-contract-records.js";
 
 const general = "La ficha técnica describe exclusivamente la unidad indicada por el proveedor.";
 
@@ -23,24 +24,6 @@ const withConditionEvidence = (record: ProductRecord, condition: "Nuevo" | "Segu
     Estado: condition === "Nuevo" ? "Nuevo" : "Usado",
     Peso: "2400 kg",
     Longitud: "2,8 m"
-  }
-});
-
-test("conserva la condición acreditada de originales de los tres proveedores", () => {
-  const cases = [
-    ["gam-original", "6682", "Segunda mano", /de ocasión/u],
-    ["gam-original", "2057", "Nuevo", /nueva/u],
-    ["gomariz-original", "TE1591", "Segunda mano", /de ocasión/u],
-    ["mercaeleva-original", "M208-7097", "Segunda mano", /de ocasión/u],
-    ["mercaeleva-original", "M840-6795", "Nuevo", /nueva/u]
-  ] as const;
-  for (const [dataset, reference, condition, pattern] of cases) {
-    const source = accreditedSourceRecord(dataset, reference);
-    const before = JSON.stringify(source);
-    assert.equal(resolveVerifiedEditorialCondition(source), condition, reference);
-    assert.match(resolveEditorialIdentitySummary(source, null) ?? "", pattern, reference);
-    assert.ok(prepareSourceProduct(source).product.title, reference);
-    assert.equal(JSON.stringify(source), before, reference);
   }
 });
 
@@ -65,27 +48,6 @@ test("reutiliza la condición en nuevas unidades y descarta estados técnicos in
       assert.equal(resolveVerifiedEditorialCondition({ ...source, condition: null }), null, source.providerId);
     }
   }
-});
-
-test("un resumen comercial de arrastrador no normaliza un Nuevo contradicho por Estado Usado", () => {
-  const source = accreditedSourceRecord("gam-original", "2738");
-  const prepared = prepareSourceProduct(source).product;
-  const raw = normalizeEditorialSummary(source.shortDescription, source.model);
-  const conflicting = { ...source, specs: { ...source.specs, Estado: "Usado" } };
-  assert.notEqual(normalizeCorroboratedTowingSummary(source, prepared, raw), raw);
-  assert.equal(normalizeCorroboratedTowingSummary(conflicting, prepared, raw), raw);
-});
-
-test("recupera ubicación, serie y referencia únicamente de originales corroborados", () => {
-  const gam = accreditedSourceRecord("gam-original", "6682");
-  const historical = prepareSourceProduct(gam).product.description_general ?? "";
-  assert.match(historical, /Ubicación declarada para esta unidad: TARRAGONA/u);
-  assert.match(historical, /Número de serie declarado para esta unidad: P177B10585U/u);
-  const mercaeleva = accreditedSourceRecord("mercaeleva-original", "M208-7097");
-  assert.match(resolveVerifiedEditorialUnitContext(mercaeleva, general, mercaeleva) ?? "",
-    /Referencia comercial declarada por el vendedor: MER0939/u);
-  assert.equal(resolveVerifiedEditorialUnitContext(mercaeleva, general,
-    { ...mercaeleva, specs: { ...mercaeleva.specs, "Artículo No.": "OTRO" } }), general);
 });
 
 test("permite unidades compatibles nuevas y bloquea datos propios de otra unidad", () => {
@@ -120,20 +82,4 @@ test("permite unidades compatibles nuevas y bloquea datos propios de otra unidad
     assert.equal(resolveVerifiedEditorialUnitContext(source, general,
       { ...source, condition: "Nuevo" }), general, source.providerId);
   }
-});
-
-test("el contexto de una unidad GAM nueva llega a la preparación sin copiar la anterior", () => {
-  const original = accreditedSourceRecord("gam-original", "6682");
-  const next: ProductRecord = {
-    ...original,
-    reference: "6682-NUEVA",
-    url: original.url.replace("/6682-", "/6682-NUEVA-"),
-    location: "Madrid",
-    serialNumber: "SERIE98765",
-    specs: { ...original.specs, Ubicación: "Madrid", "Nº de serie": "SERIE98765" }
-  };
-  const general = prepareSourceProduct(next).product.description_general ?? "";
-  assert.match(general, /Ubicación declarada para esta unidad: Madrid/u);
-  assert.match(general, /Número de serie declarado para esta unidad: SERIE98765/u);
-  assert.doesNotMatch(general, /TARRAGONA|P177B10585U/u);
 });

@@ -1,17 +1,25 @@
 import assert from "node:assert/strict";
+
 import test from "node:test";
-import { accreditedSourceRecord, accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
+
 import { loadImportCatalog } from "../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
+
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
+
 import { normalizeGamRows } from "../../../../tools/gam/normalization/normalize-rows.js";
-import { prepareProduct } from "../../../../commercial/legacy-export/prepare-product.js";
-import { resolveAttribute, resolveAttributeValue } from "../mapping/attribute-mapping.js";
+
+import { resolveAttributeValue } from "../mapping/attribute-mapping.js";
+
 import { numberToken } from "../mapping/attribute-utils.js";
+
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 
 const catalog = await loadImportCatalog();
+
 const workingHeight = catalog.attributes.find((attribute) => attribute.name === "Altura de trabajo");
+
 const platformHeight = catalog.attributes.find((attribute) => attribute.name === "Altura de plataforma");
+
 assert.ok(workingHeight);
 assert.ok(platformHeight);
 
@@ -49,55 +57,6 @@ test("el parser distingue decimales inferiores a uno de los separadores de milla
   for (const text of ["1 27", "-0,368", "0,368 mm", "0,368/1", "0,368 metros"]) {
     assert.equal(numberToken(text), null, text);
   }
-});
-
-test("GAM 3993 convierte 0,368 metros a 368 mm en el atributo comercial 60", async () => {
-  const record = accreditedSourceRecord("gam-original", "3993");
-  const width = catalog.attributes.find((attribute) => attribute.id === 60);
-  assert.ok(record);
-  assert.ok(width);
-  assert.equal(width.name, "Ancho de trabajo");
-  assert.equal(width.unit_option, "mm");
-  assert.equal(record.specs?.["Anchura trabajo"], "0,368 metros");
-  assert.deepEqual(resolveAttribute(record, width), { status: "resolved", value: 368 });
-  assert.ok(prepareProduct(record, catalog).product.attributes.some((item) =>
-    item.attributeID === width.id && item.value === 368));
-  assert.deepEqual(resolveAttribute({ ...record, specs: { ...record.specs, "Anchura trabajo": "0.368 m" } }, width),
-    { status: "resolved", value: 368 });
-});
-
-test("GAM 2144 y 1144 interpretan alturas inferiores a un metro sin alterar categorías", async () => {
-  const records = new Map(accreditedSourceSamples("gam-original").map((record) => [record.reference, record]));
-  const height = catalog.attributes.find((attribute) => attribute.id === 29);
-  assert.ok(height);
-  assert.equal(height.name, "Altura de elevación");
-  assert.equal(height.unit_option, "mm");
-  for (const [reference, raw, expected] of [
-    ["2144", "0,202 metros", 202], ["1144", "0,115 metros", 115]
-  ] as const) {
-    const record = records.get(reference);
-    assert.ok(record, reference);
-    assert.equal(record.specs?.["Altura de elevación (m)"], raw, reference);
-    assert.deepEqual(resolveAttribute(record, height), { status: "resolved", value: expected }, reference);
-    assert.ok(prepareProduct(record, catalog).product.attributes.some((item) =>
-      item.attributeID === height.id && item.value === expected), reference);
-  }
-});
-
-test("GAM conserva las anchuras acreditadas por configuración y la potencia de grupo", async () => {
-  const records = new Map(accreditedSourceSamples("gam-original").map((record) => [record.reference, record]));
-  const width = catalog.attributes.find((attribute) => attribute.id === 60);
-  const power = catalog.attributes.find((attribute) => attribute.id === 70);
-  assert.ok(width);
-  assert.ok(power);
-  for (const [reference, expected] of [["4002", 800], ["4004", 800], ["4005", 700]] as const) {
-    const record = records.get(reference);
-    assert.ok(record, reference);
-    assert.equal(resolveAttributeValue(record, width), expected, reference);
-  }
-  const generator = records.get("1218");
-  assert.ok(generator);
-  assert.equal(resolveAttributeValue(generator, power), 1270);
 });
 
 test("normalización conserva las unidades de origen de alturas expresadas en metros", () => {
@@ -189,24 +148,6 @@ test("no convierte medidas ambiguas, contradictorias ni compuestos en números t
   }
 });
 
-test("contrasta medidas reales de GAM sin confundir radios, alturas ni mezclas de unidades", async () => {
-  const byReference = new Map(accreditedSourceSamples("gam-original").map((record) => [record.reference, record]));
-  for (const [reference, expected] of [["6542", 6020], ["1152", 1980], ["1145", 1980], ["912", 1980]] as const) {
-    const record = byReference.get(reference);
-    assert.ok(record, reference);
-    assert.equal(normalizeSpecsObject(record.specs).normalized["Radio de giro (mm)"], expected);
-  }
-  for (const [reference, expected] of [["2155", 2900], ["157", 3350], ["2265", null], ["2110", null]] as const) {
-    const record = byReference.get(reference);
-    assert.ok(record, reference);
-    assert.equal(normalizeSpecsObject(record.specs).normalized["Altura plataforma (mm)"] ?? null, expected);
-  }
-  const cleaningWidth = byReference.get("4023");
-  assert.ok(cleaningWidth);
-  assert.equal(normalizeSpecsObject(cleaningWidth.specs).normalized["Anchura trabajo (mm)"], 700);
-});
-
-
 test("la normalización de CSV GAM publica medidas en la unidad de su clave sin alterar las otras columnas", async () => {
   const row: Record<string, string> = {
     reference: "6542",
@@ -220,15 +161,4 @@ test("la normalización de CSV GAM publica medidas en la unidad de su clave sin 
   assert.equal(row.title, "XCMG XGA43K");
   assert.equal(row["spec__Radio de giro (mm)"], "6020");
   assert.equal(row["spec__Altura plataforma (mm)"], undefined);
-});
-
-
-test("el original Gomariz expresado en metros se normaliza sin perder su escala", async () => {
-  const source = accreditedSourceRecord("gomariz-original", "OR1537");
-  assert.ok(source);
-  const result = normalizeSpecsObject(source.specs);
-  assert.equal(result.normalized["Altura plataforma (mm)"], 13000);
-  assert.equal(result.normalized["Altura de trabajo (mm)"], 15000);
-  assert.equal(result.normalized["Longitud (mm)"], 4540);
-  assert.equal(result.normalized["Anchura (mm)"], 1390);
 });

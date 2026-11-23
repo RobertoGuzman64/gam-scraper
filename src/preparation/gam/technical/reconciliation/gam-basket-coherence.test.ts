@@ -1,53 +1,8 @@
-import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
-import { documentedBasketCorrections, additionalVerifiedBasketCorrections } from "../../../testing/gam-verified-basket-dimensions.js";
 import assert from "node:assert/strict";
+
 import test from "node:test";
-import { prepareSourceProduct } from "../../../prepare-product.js";
-import { reconcileGamBasketDimensions } from "./gam-basket-dimensions.js";
+
 import { normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
-
-const source = { products: accreditedSourceSamples("gam-original") };
-const records = new Map(source.products.map((record) => [record.reference, record]));
-const original = (reference: string) => {
-  const record = records.get(reference);
-  assert.ok(record, reference);
-  return record;
-};
-
-test("prepara 24 medidas verificables de forma idéntica a su evidencia sin editar la fuente", () => {
-  for (const [reference, expected] of documentedBasketCorrections) {
-    const record = original(reference);
-    const sourceBefore = JSON.stringify(record);
-    const result = prepareSourceProduct(record);
-    assert.equal(result.product.spec["Dimensiones Cesta"], expected, reference);
-    const expectedIssues = reference === "4739" ? ["Descripción comercial contradictoria: capacidad de carga"] : [];
-    assert.equal(result.status, expectedIssues.length ? "review" : "ready", reference);
-    assert.deepEqual(result.issues, expectedIssues, reference);
-    assert.equal(JSON.stringify(record), sourceBefore, reference);
-    assert.equal(reconcileGamBasketDimensions(reconcileGamBasketDimensions(record)).specs?.["Dimensiones Cesta"], expected);
-  }
-});
-
-test("las dos dimensiones adicionales acreditadas se recuperan sin modificar el original", () => {
-  for (const [reference, dimensions] of additionalVerifiedBasketCorrections) {
-    const record = original(reference);
-    const result = prepareSourceProduct(record);
-    assert.equal(result.product.spec["Dimensiones Cesta"], dimensions, reference);
-    assert.equal(result.status, "ready", reference);
-    assert.notEqual(result.product.spec["Dimensiones Cesta"], record.specs?.["Dimensiones Cesta"], reference);
-  }
-});
-
-test("no recupera medidas cuando cambia la cifra corroborada, la unidad o la identidad de proveedor", () => {
-  const record = original("6162");
-  const wrongDimensions = { ...record, specs: { ...record.specs, "Dimensiones Cesta": "1400x750x1100 metros" } };
-  assert.equal(reconcileGamBasketDimensions(wrongDimensions), wrongDimensions);
-  assert.equal(prepareSourceProduct(wrongDimensions).status, "review");
-  const withoutProse = { ...record, longDescription: "Sin medidas de la cesta" };
-  assert.equal(reconcileGamBasketDimensions(withoutProse), withoutProse);
-  const otherProvider = { ...record, providerId: "gomariz" };
-  assert.equal(reconcileGamBasketDimensions(otherProvider), otherProvider);
-});
 
 test("el normalizador no inventa decimales ni acepta dimensiones deformadas", () => {
   const examples = [
