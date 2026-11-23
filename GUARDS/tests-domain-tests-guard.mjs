@@ -200,7 +200,7 @@ const accreditedCatalogIntegrations = new Map([
     responsibility: "Regresión histórica de contradicciones semánticas y calidad de fuente"
   }],
   ["src/preparation/tests/catalog-publication-consistency.test.ts", {
-    sha256: "d86d983ac72ac3d13019441d37a2278d7fb6b4f84c2b5fcd9d100703e6dbb9ca",
+    sha256: "2165c8c823a5ab7fec72f1d0c26184248c0d1eb14eed22fc0a0cb2ea0ab4011b",
     reads: 2,
     responsibility: "Integridad, procedencia y proyección de publicaciones acreditadas"
   }]

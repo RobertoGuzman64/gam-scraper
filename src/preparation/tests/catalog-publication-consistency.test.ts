@@ -24,13 +24,16 @@ const publicationFiles = (await discoverAccreditedPublications(root)).map((file)
 const publications = await Promise.all(publicationFiles.map(readAccreditedPublication));
 
 const datasets = await Promise.all(publications.map(async (published, index) => {
-  const originalPath = published.providerId === "gomariz"
-    ? "src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json"
-    : `catalogs/providers/${published.providerId}/original/scrape-${published.providerId}-catalog.json`;
-  const originalProducts = published.providerId === "manain"
+  const originalPath = published.providerId === "manain"
+    ? null
+    : published.providerId === "gomariz"
+      ? "src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json"
+      : `catalogs/providers/${published.providerId}/original/scrape-${published.providerId}-catalog.json`;
+  const originalProducts = originalPath === null
     ? (await readVerifiedManainRecordSource(root)).originalProducts
     : (await readCanonicalCatalog(originalPath)).products;
   if (published.providerId === "gomariz") {
+    assert.ok(originalPath);
     const manifest: unknown = JSON.parse(await readFile(publicationFiles[index]!.replace(/gomariz-publishable\.json$/u, "manifest.json"), "utf8"));
     assert.ok(manifest && typeof manifest === "object" && "source" in manifest);
     const source = manifest.source;
