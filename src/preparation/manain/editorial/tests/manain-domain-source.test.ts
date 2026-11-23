@@ -4,7 +4,7 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { readVerifiedManainRecordSource } from "../../../../infrastructure/filesystem/catalog/manain-record-source.js";
 import { prepareImportBatch } from "../../../batch-identity.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
-import { normalizeManainTechnicalSpecs } from "../../technical/reconciliation/normalization.js";
+import { normalizePreparedTechnicalSpecs } from "../../../shared/technical/reconciliation/preparation-technical-stages.js";
 import { resolveEditorialSource } from "../../../shared/editorial/domain/editorial-source.js";
 import { resolveEditorialFacts } from "../../../shared/editorial/domain/editorial-facts.js";
 import { captureSourceEditorialEvidence } from "../../../shared/editorial/mapping/source-editorial-evidence.js";
@@ -73,7 +73,7 @@ test("Manain: las 384 unidades atraviesan el motor común conservando los datos 
     assert.equal(prepared.product.reference, record.reference);
     assert.equal(prepared.product.sourceUrl, record.url);
     assert.deepEqual(prepared.product.images, record.images);
-    assert.deepEqual(prepared.product.spec, normalizeManainTechnicalSpecs(record, record.specs ?? {}));
+    assert.deepEqual(prepared.product.spec, normalizePreparedTechnicalSpecs(record, record.specs ?? {}));
     assert.equal(prepared.product.price, null);
     assert.equal(prepared.product.categorySellID, null);
     assert.deepEqual(prepared.product.attributes, []);
@@ -116,7 +116,7 @@ test("Manain: las familias web en español y catalán alimentan el editor sin al
     assert.ok(prepared.product.description?.trim(), reference);
     assert.ok(prepared.product.description_general?.trim(), reference);
     assert.deepEqual(prepared.product.images, record.images);
-    assert.deepEqual(prepared.product.spec, normalizeManainTechnicalSpecs(record, record.specs ?? {}));
+    assert.deepEqual(prepared.product.spec, normalizePreparedTechnicalSpecs(record, record.specs ?? {}));
   }
 });
 
@@ -149,7 +149,7 @@ test("Manain: las unidades nuevas se autentican solo con condición documental c
     assert.equal(prepared.product.condition, "Nuevo", reference);
     assert.ok(prepared.product.description?.trim(), reference);
     assert.ok(prepared.product.description_general?.trim(), reference);
-    assert.deepEqual(prepared.product.spec, normalizeManainTechnicalSpecs(record, record.specs ?? {}));
+    assert.deepEqual(prepared.product.spec, normalizePreparedTechnicalSpecs(record, record.specs ?? {}));
     assert.deepEqual(prepared.product.images, record.images);
   }
   const sample = records.find((item) => item.reference === "MAN3178");
@@ -177,7 +177,7 @@ test("Manain: marcas con ampersand mantienen identidad exacta aunque la URL supr
     assert.equal(prepared.status, "ready", reference);
     assert.match(prepared.product.description ?? "", /OIL&STEEL/u);
     assert.deepEqual(prepared.product.images, record.images);
-    assert.deepEqual(prepared.product.spec, normalizeManainTechnicalSpecs(record, record.specs ?? {}));
+    assert.deepEqual(prepared.product.spec, normalizePreparedTechnicalSpecs(record, record.specs ?? {}));
   }
   const source = records.find((item) => item.reference === "MAN664");
   assert.ok(source);
@@ -201,7 +201,7 @@ test("Manain: el modelo duplicado literalmente en origen se interpreta sin alter
     assert.equal(prepared.status, "ready", reference);
     assert.match(prepared.product.description ?? "", /MANITOU MT 625 H/u);
     assert.doesNotMatch(prepared.product.description ?? "", /MT 625 H, MT 625 H/u);
-    assert.deepEqual(prepared.product.spec, normalizeManainTechnicalSpecs(record, record.specs ?? {}));
+    assert.deepEqual(prepared.product.spec, normalizePreparedTechnicalSpecs(record, record.specs ?? {}));
     assert.deepEqual(prepared.product.images, record.images);
   }
   const source = records.find((item) => item.reference === "MAN1623");
@@ -225,7 +225,7 @@ test("Manain: equipos de compactación con bandeja verificable reutilizan la fam
     assert.equal(prepared.status, "ready", reference);
     assert.match(prepared.product.description ?? "", /Compactadora de gasolina/u);
     assert.match(prepared.product.description_general ?? "", /compactación del terreno/u);
-    assert.deepEqual(prepared.product.spec, normalizeManainTechnicalSpecs(record, record.specs ?? {}));
+    assert.deepEqual(prepared.product.spec, normalizePreparedTechnicalSpecs(record, record.specs ?? {}));
     assert.deepEqual(prepared.product.images, record.images);
   }
 
@@ -266,7 +266,7 @@ test("Manain: capacidad del apilador alimenta la composición sin modificar sus 
   assert.equal(prepared.status, "ready");
   assert.match(prepared.product.description ?? "", /capacidad de carga de 1\.600 kg/u);
   assert.doesNotMatch(prepared.product.description_general ?? "", /altura de elevación de/u);
-  assert.deepEqual(prepared.product.spec, normalizeManainTechnicalSpecs(source, source.specs ?? {}));
+  assert.deepEqual(prepared.product.spec, normalizePreparedTechnicalSpecs(source, source.specs ?? {}));
   assert.deepEqual(prepared.product.images, source.images);
 
   const rejected: ProductRecord[] = [
@@ -320,7 +320,7 @@ test("Manain: capacidad de carga por unidad en familias compatibles, sin alterar
   const prepared = prepareSourceProduct(source);
   assert.equal(prepared.status, "ready");
   assert.match(prepared.product.description_general ?? "", /capacidad de 230 kg/u);
-  assert.deepEqual(prepared.product.spec, normalizeManainTechnicalSpecs(source, source.specs ?? {}));
+  assert.deepEqual(prepared.product.spec, normalizePreparedTechnicalSpecs(source, source.specs ?? {}));
   assert.equal(JSON.stringify(source), original);
 
   const next: ProductRecord = {
@@ -359,7 +359,7 @@ test("Manain: plataformas unipersonales componen textos con medidas originales s
     assert.match(prepared.product.description_general ?? "", /altura de trabajo de 4,[5]/u);
     assert.doesNotMatch(prepared.product.description_general ?? "", /plataforma de tijera|mástil vertical/iu);
     assert.deepEqual(prepared.product.images, record.images);
-    assert.deepEqual(prepared.product.spec, normalizeManainTechnicalSpecs(record, record.specs ?? {}));
+    assert.deepEqual(prepared.product.spec, normalizePreparedTechnicalSpecs(record, record.specs ?? {}));
   }
 
   const source = records.find((item) => item.reference === "MA3620");
@@ -394,7 +394,7 @@ test("Manain: martillos para miniexcavadora reutilizan el editor sin atribuir al
     assert.doesNotMatch(prepared.product.description ?? "", /diésel|gasolina|eléctrico/iu);
     assert.doesNotMatch(prepared.product.description_general ?? "", /diésel|gasolina|eléctrico/iu);
     assert.deepEqual(prepared.product.images, record.images);
-    assert.deepEqual(prepared.product.spec, normalizeManainTechnicalSpecs(record, record.specs ?? {}));
+    assert.deepEqual(prepared.product.spec, normalizePreparedTechnicalSpecs(record, record.specs ?? {}));
   }
 
   const source = records.find((item) => item.reference === "MAN775");
@@ -438,7 +438,7 @@ test("Manain: la pequeña maquinaria documentada utiliza familias editoriales di
     assert.ok(prepared.product.description?.startsWith(label), reference);
     assert.ok(prepared.product.description?.includes(`peso declarado de ${weight} kg`), reference);
     assert.ok(prepared.product.description_general?.trim(), reference);
-    assert.deepEqual(prepared.product.spec, normalizeManainTechnicalSpecs(record, record.specs ?? {}), reference);
+    assert.deepEqual(prepared.product.spec, normalizePreparedTechnicalSpecs(record, record.specs ?? {}), reference);
     assert.deepEqual(prepared.product.images, record.images, reference);
     assert.equal(prepared.product.sourceUrl, record.url, reference);
     assert.equal(prepared.product.price, null, reference);
@@ -505,7 +505,7 @@ test("Manain: equipos de corte con disco requieren diámetro, motorización, pes
   assert.match(prepared.product.description ?? "", /^Equipo de corte con disco eléctrico HOLZSTAR TKS 316 E/u);
   assert.match(prepared.product.description_general ?? "", /diámetro máximo de disco de 315 mm/u);
   assert.match(prepared.product.description_general ?? "", /peso declarado de 53 kg/u);
-  assert.deepEqual(prepared.product.spec, normalizeManainTechnicalSpecs(source, source.specs ?? {}));
+  assert.deepEqual(prepared.product.spec, normalizePreparedTechnicalSpecs(source, source.specs ?? {}));
   assert.deepEqual(prepared.product.images, source.images);
   assert.equal(prepared.product.sourceUrl, source.url);
   const rejected: ProductRecord[] = [

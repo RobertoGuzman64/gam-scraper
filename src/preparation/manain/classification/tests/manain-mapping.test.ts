@@ -255,7 +255,7 @@ test("Manain: disponibilidad de elevación libre sin medida no se interpreta com
   assert.deepEqual(resolveAttribute(source, attribute("Elevación libre")), { status: "not_observed", value: null });
   const prepared = prepareProduct(source, catalog);
   assert.equal(prepared.status, "review");
-  assert.equal(prepared.product.spec["Elevacion libre"], "si");
+  assert.equal(prepared.product.spec["Elevacion libre"], "Sí");
   const measured = { ...source, specs: { ...source.specs, "Elevación libre (mm)": "1500 mm" } };
   assert.equal(resolveAttribute(measured, attribute("Elevación libre")).value, 1500);
   const malformed = { ...source, specs: { ...source.specs, "Elevacion libre": "inexacta" } };

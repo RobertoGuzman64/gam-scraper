@@ -4,6 +4,7 @@ import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { accreditedSourceRecord } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import { projectCommercialPresentation } from "../../../../commercial/projection/presentation-projection.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
+import { normalizeTechnicalPresentation } from "../../technical/reconciliation/technical-presentation.js";
 import { withoutContradictoryFamilyGeneral } from "../domain/editorial-source-family-general.js";
 import { normalizePreparedEditorialPresentation } from "../mapping/prepared-editorial-presentation.js";
 import { controlledGamForklift, controlledGomarizForklift, controlledMercaelevaForklift } from "./editorial-contract-records.js";
@@ -28,7 +29,7 @@ test("la general contradictoria de GAM se sustituye por datos GLP acreditados de
   assert.match(prepared.product.description_general ?? "", /altura de elevación de 6 m/u);
   assert.match(prepared.product.description_general ?? "", /5\.000 kg/u);
   assert.doesNotMatch(prepared.product.description_general ?? "", /di[eé]sel/iu);
-  assert.deepEqual(prepared.product.spec, source.specs);
+  assert.deepEqual(prepared.product.spec, normalizeTechnicalPresentation(source.specs ?? {}));
   assert.equal(JSON.stringify(source), snapshot);
 });
 

@@ -1,3 +1,4 @@
+import { normalizeTechnicalPresentation } from "../../../shared/technical/reconciliation/technical-presentation.js";
 import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -31,7 +32,7 @@ test("ambas referencias GAM conservan su serie y el conflicto de stock se explic
     assert.ok(prepared.issues.some((issue) => issue.includes("Número de serie P177B10585U compartido")));
     assert.ok(prepared.issues.some((issue) => issue.includes("Stock GAM diferenciado")));
   }
-  assert.deepEqual(result.products.map(({ product }) => product.spec), [first, second].map((record) => ({ ...record.specs, "Motorización": "GLP" })));
+  assert.deepEqual(result.products.map(({ product }) => product.spec), [first, second].map((record) => (normalizeTechnicalPresentation({ ...record.specs, "Motorización": "GLP" }))));
   assert.deepEqual([first, second], originals);
 });
 

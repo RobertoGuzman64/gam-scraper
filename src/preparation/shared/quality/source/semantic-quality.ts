@@ -116,14 +116,15 @@ const mercaelevaIssues = (record: ProductRecord): readonly string[] => {
   return issues;
 };
 
-const manainIssues = (record: ProductRecord): readonly string[] => {
+const implausibleWeightIssues = (record: ProductRecord): readonly string[] => {
   const facts = resolveEditorialFacts(record);
   const weight = editorialQuantityOf(record.specs, ["Peso"], "kg");
   return facts && weight !== null && !editorialWeightIsPlausible(facts.family, weight) ?
     ["Peso técnicamente inverosímil para la familia del equipo: requiere verificación documental"] : [];
 };
 
-export const sourceSemanticQualityIssues = (record: ProductRecord): readonly string[] =>
-  record.providerId === "gomariz" ? gomarizIssues(record) :
-    record.providerId === "mercaeleva" ? mercaelevaIssues(record) :
-      record.providerId === "manain" ? manainIssues(record) : [];
+export const sourceSemanticQualityIssues = (record: ProductRecord): readonly string[] => [
+  ...(record.providerId === "gomariz" ? gomarizIssues(record) :
+    record.providerId === "mercaeleva" ? mercaelevaIssues(record) : []),
+  ...implausibleWeightIssues(record)
+];

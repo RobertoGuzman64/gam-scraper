@@ -1,3 +1,4 @@
+import { normalizeTechnicalPresentation } from "../../../shared/technical/reconciliation/technical-presentation.js";
 import { accreditedSourceSamples } from "../../../../testing/domain-cases/accredited-source-samples.js";
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -28,7 +29,7 @@ test("las dos fichas Yale publicadas con stock GAM-27262 conservan VIN y datos o
   assert.deepEqual(result.totals, { ready: 2, review: 0 });
   assert.deepEqual(result.products.map(({ product }) => product.reference), ["6835", "6858"]);
   assert.ok(result.products.every(({ status, issues }) => status === "ready" && issues.length === 0));
-  assert.deepEqual(result.products.map(({ product }) => product.spec), [older, newer].map((product) => ({ ...product.specs, "Año de fabricación": "2019", "Motorización": "Eléctrico" })));
+  assert.deepEqual(result.products.map(({ product }) => product.spec), [older, newer].map((product) => (normalizeTechnicalPresentation({ ...product.specs, "Año de fabricación": "2019", "Motorización": "Eléctrico" }))));
   assert.equal(older.serialNumber, newer.serialNumber);
   assert.equal(older.horometer, "1660 horas");
   assert.equal(newer.horometer, "1662 horas");

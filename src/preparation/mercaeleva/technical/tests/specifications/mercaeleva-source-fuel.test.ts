@@ -1,3 +1,4 @@
+import { normalizeTechnicalPresentation } from "../../../../shared/technical/reconciliation/technical-presentation.js";
 import { accreditedSourceSamples } from "../../../../../testing/domain-cases/accredited-source-samples.js";
 import { recoverMercaelevaDocumentedEquipmentTechnicalSpecs } from "../../evidence/documented-equipment-technical-specs.js";
 import assert from "node:assert/strict";
@@ -23,7 +24,7 @@ test("recupera motorización explícita coincidente del anuncio sin cambiar el o
     const original = structuredClone(record);
     const output = prepareSourceProduct(record);
     assert.equal(output.status, "ready", reference);
-    assert.deepEqual(output.product.spec, recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, { ...record.specs, "Tipo de motor": fuel }), reference);
+    assert.deepEqual(output.product.spec, normalizeTechnicalPresentation(recoverMercaelevaDocumentedEquipmentTechnicalSpecs(record, { ...record.specs, "Tipo de motor": fuel })), reference);
     assert.deepEqual(record, original, reference);
   }
 });

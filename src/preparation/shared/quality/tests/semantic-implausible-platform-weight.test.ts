@@ -42,6 +42,17 @@ test("el motor no acredita pesos físicamente inverosímiles en plataformas ni a
   assert.deepEqual(sourceSemanticQualityIssues(supported), []);
   assert.equal(accepted.status, "ready");
   assert.match(accepted.product.description_general ?? "", /peso declarado de 1\.200 kg/u);
-  const alternativeSource: ProductRecord = { ...platform, providerId: "gam" };
-  assert.deepEqual(sourceSemanticQualityIssues(alternativeSource), []);
+  const invalidOrigin: ProductRecord = { ...platform, providerId: "gam" };
+  assert.deepEqual(sourceSemanticQualityIssues(invalidOrigin), []);
+  const gamSource: ProductRecord = {
+    ...platform,
+    providerId: "gam",
+    categoryKey: "elevacion",
+    title: "EQUIPTEST TX1 | Plataforma articulada diésel",
+    reference: "1234",
+    specs: { ...platform.specs, "Capacidad de carga (kg)": "230 kg" },
+    url: "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-diesel-segunda-mano/1234-equiptest-tx1"
+  };
+  assert.ok(sourceSemanticQualityIssues(gamSource).some((issue) => /Peso técnicamente inverosímil/u.test(issue)));
+  assert.deepEqual(sourceSemanticQualityIssues({ ...gamSource, specs: { ...gamSource.specs, Peso: "1.200 kg" } }), []);
 });
