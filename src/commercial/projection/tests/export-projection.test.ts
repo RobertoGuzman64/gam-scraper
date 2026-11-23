@@ -687,3 +687,50 @@ test("Manain: diez máquinas reciben categoría comercial solo por evidencia de 
     assert.equal(isValidCommercialCategory(source, expected, "Nuevo", realCatalog), false);
   }
 });
+
+test("Gomariz clasifica el rodillo dúplex documentado sin atribuir categoría inexistente a barredoras", async () => {
+  const realCatalog = await loadImportCatalog();
+  const { brandLogos } = await loadCommercialReference();
+  const root = fileURLToPath(new URL("../../../../", import.meta.url));
+  const selected = await selectAccreditedCommercialInputs(root, realCatalog,
+    { gomariz: ["RO456", "BR901", "BR954"] });
+  const gomariz = selected.get("gomariz");
+  assert.ok(gomariz);
+  const original = JSON.stringify(gomariz.entries);
+  const output = planCommercialExport(gomariz.entries, "gomariz", gomariz.publicationSha256,
+    realCatalog, brandLogos, null, null);
+  assert.equal(output.total, 3);
+  assert.equal(output.summary.exported, 3);
+  assert.equal(output.summary.categorized, 1);
+  assert.equal(output.summary.pendingCategory, 2);
+  assert.equal(accreditCommercialPlan(gomariz.entries, output, realCatalog, brandLogos, null).summary.blocking, 0);
+  assert.equal(JSON.stringify(gomariz.entries), original);
+  for (const entry of gomariz.entries) {
+    const reference = entry.source.reference;
+    const product = output.products.find((candidate) => candidate.reference === reference);
+    assert.ok(product);
+    assert.deepEqual(product.spec, entry.published.spec);
+    if (reference !== "RO456") {
+      assert.equal(product.categorySellID, null);
+      assert.deepEqual(product.attributes, []);
+      continue;
+    }
+    assert.equal(product.categorySellID, 68);
+    assert.equal(isValidCommercialCategory(entry.source, 68, "Segunda_Mano", realCatalog), true);
+    assert.equal(isValidCommercialCategory(entry.source, 68, "Nuevo", realCatalog), false);
+    const altered: readonly ProductRecord[] = [
+      { ...entry.source, categoryKey: "maquinaria" },
+      { ...entry.source, url: entry.source.url.replace("gomarizrent.com", "otro.example") },
+      { ...entry.source, url: entry.source.url.replace("/rodillo/", "/retroexcavadora/") },
+      { ...entry.source, brand: "OTRA MARCA" },
+      { ...entry.source, model: "OTRO MODELO" },
+      { ...entry.source, title: "Otra máquina" },
+      { ...entry.source, longDescription: "Rodillo sin tipo técnico acreditado" },
+      { ...entry.source, specs: { ...entry.source.specs, Motor: "Eléctrico" } },
+      { ...entry.source, specs: { ...entry.source.specs, Peso: "500 kg" } }
+    ];
+    for (const candidate of altered) {
+      assert.equal(isValidCommercialCategory(candidate, 68, "Segunda_Mano", realCatalog), false);
+    }
+  }
+});

@@ -170,6 +170,15 @@ export const documentedSourceCommercialSlug = (source: ProductRecord, condition:
     }
   }
   if (source.providerId === "gomariz" && condition === "Segunda_Mano") {
+    if (source.categoryKey === "venta" &&
+      route === "movimiento-de-tierras-demolicion-y-compactacion/rodillo" &&
+      fold(source.brand ?? "") === "dynapac" && fold(source.model ?? "") === "lp6500" &&
+      title === "dynapac lp6500" && /\brodillo duplex\b/.test(general) &&
+      /\bcompactacion de tierra y asfalto\b/.test(general) &&
+      fold(String(source.specs?.Motor ?? "")) === "diesel" &&
+      fold(String(source.specs?.Peso ?? "")) === "696 kg") {
+      return "rodillo-tandem-segunda-mano";
+    }
     if (route === "camion/camion-porta-maquinaria" &&
       /\bcamion\b|\b(?:renault|scania)\b/.test(title) && /\bcamion\b/.test(`${short} ${general}`)) {
       return "vehiculos-segunda-mano";
