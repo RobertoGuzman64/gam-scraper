@@ -50,7 +50,7 @@ test('las tres poblaciones quedan separadas por corte, fuente y proveedor', asyn
   assert.deepEqual(report.byStage[1].providers.map((item) => [item.providerId, item.products]),
     accredited.map((item) => [item.providerId, item.products.length]));
   assert.deepEqual(report.byStage.map((item) => item.providers.map((provider) => provider.providerId)),
-    [['gam', 'gomariz', 'mercaeleva'], ['gam', 'gomariz', 'mercaeleva'], ['gomariz', 'manain']]);
+    [['gam', 'gomariz', 'mercaeleva'], accredited.map((item) => item.providerId), ['gomariz', 'manain']]);
   for (const stage of report.byStage) {
     assert.equal(stage.products, stage.providers.reduce((sum, item) => sum + item.products, 0));
     assert.ok(stage.providers.every((item) => item.sourceCut && item.sourceSha256));

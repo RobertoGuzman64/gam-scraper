@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readVerifiedManainRecordSource } from "../../infrastructure/filesystem/catalog/manain-record-source.js";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
@@ -26,7 +27,9 @@ const datasets = await Promise.all(publications.map(async (published, index) => 
   const originalPath = published.providerId === "gomariz"
     ? "src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json"
     : `catalogs/providers/${published.providerId}/original/scrape-${published.providerId}-catalog.json`;
-  const original = await readCanonicalCatalog(originalPath);
+  const originalProducts = published.providerId === "manain"
+    ? (await readVerifiedManainRecordSource(root)).originalProducts
+    : (await readCanonicalCatalog(originalPath)).products;
   if (published.providerId === "gomariz") {
     const manifest: unknown = JSON.parse(await readFile(publicationFiles[index]!.replace(/gomariz-publishable\.json$/u, "manifest.json"), "utf8"));
     assert.ok(manifest && typeof manifest === "object" && "source" in manifest);
@@ -34,7 +37,7 @@ const datasets = await Promise.all(publications.map(async (published, index) => 
     assert.ok(source && typeof source === "object" && "catalogSha256" in source);
     assert.equal(createHash("sha256").update(await readFile(originalPath)).digest("hex"), source.catalogSha256);
   }
-  const byReference = new Map(original.products.map((product) => [product.reference, product]));
+  const byReference = new Map(originalProducts.map((product) => [product.reference, product]));
   const selected = published.products.map((product) => {
     const source = byReference.get(product.reference);
     assert.ok(source, `${published.providerId}:${product.reference} sin original`);
@@ -44,14 +47,14 @@ const datasets = await Promise.all(publications.map(async (published, index) => 
   const before = JSON.stringify(selected);
   const technical = prepareImportBatch(selected);
   assert.equal(JSON.stringify(selected), before, published.providerId);
-  return { published, original, selected, technical };
+  return { published, originalProducts, selected, technical };
 }));
 
 test("el catálogo acreditado tiene identidad completa y la preparación no altera los originales", () => {
   assert.ok(datasets.length > 0);
   const identities = new Set<string>();
-  for (const { published, original, selected, technical } of datasets) {
-    assert.ok(original.products.length >= selected.length, published.providerId);
+  for (const { published, originalProducts, selected, technical } of datasets) {
+    assert.ok(originalProducts.length >= selected.length, published.providerId);
     const previous = JSON.stringify(selected);
     const prepared = technical;
     assert.equal(prepared.products.length, published.products.length, published.providerId);
