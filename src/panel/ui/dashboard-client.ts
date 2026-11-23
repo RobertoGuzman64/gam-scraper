@@ -131,6 +131,63 @@ const transformationColumns: readonly MetricColumn[] = [
   { key: "formattedTechnicalValues", label: "Valores formateados" },
   { key: "changedTechnicalValues", label: "Valores cambiados" }
 ];
+const qualityColumns: readonly MetricColumn[] = [
+  { key: "withPrice", label: "Con precio" },
+  { key: "pendingCategory", label: "Sin categoría" },
+  { key: "exceptions", label: "Excepciones comerciales" },
+  { key: "repeatedReferences", label: "Coincidencias de referencia" }
+];
+const decisionColumns: readonly MetricColumn[] = [
+  { key: "originals", label: "Originales" },
+  { key: "published", label: "Publicadas FINISH" },
+  { key: "excludedEditorial", label: "Excluidas de FINISH" },
+  { key: "exported", label: "Exportadas" },
+  { key: "excludedCommercial", label: "Excluidas de comercial" }
+];
+const renderStageMetrics = (scope: PanelScope): void => {
+  const metrics = metricsFor(scope);
+  const values: readonly (readonly [string, number])[] = [
+    ["stage-transformed", metrics.transformations.changedProducts],
+    ["stage-titles", metrics.transformations.changedTitles],
+    ["stage-descriptions", metrics.transformations.createdDescriptions + metrics.transformations.modifiedDescriptions],
+    ["stage-technical", metrics.transformations.addedTechnicalKeys],
+    ["stage-published", metrics.published],
+    ["stage-exported", metrics.exported],
+    ["stage-categorized", metrics.categorized],
+    ["stage-pending", metrics.pendingCategory]
+  ];
+  for (const [id, value] of values) byId(id).textContent = format(value);
+};
+const renderTraceability = (scope: PanelScope): void => {
+  const target = byId("traceability-providers");
+  target.replaceChildren();
+  for (const provider of selectedProviders(scope)) {
+    const card = element("article", "restored-provenance-card");
+    append(card, element("h3", "", knownName(provider.providerId)));
+    const original = provider.original;
+    const originalText = original.status === "verified" ?
+      `Original conservado: ${original.products} fichas · SHA256 ${original.artifact.sha256}` :
+      `Original no conservado: ${original.reason} · SHA256 esperado ${original.expectedSha256}`;
+    for (const line of [
+      originalText,
+      `Aprobación técnica: SHA256 ${provider.approvalSha256}`,
+      `Publicación FINISH: ${provider.publication.path} · SHA256 ${provider.publication.sha256}`,
+      `Proyección comercial: ${provider.commercial.path} · SHA256 ${provider.commercial.sha256}`
+    ]) append(card, element("p", "restored-provenance-line", line));
+    append(target, card);
+  }
+  const artifacts = byId("traceability-artifacts");
+  artifacts.replaceChildren();
+  for (const [label, artifact] of [
+    ["Manifiesto comercial", payload.snapshot.commercialManifest],
+    ["Informe técnico", payload.snapshot.technicalReport],
+    ["Informe comercial", payload.snapshot.commercialReport]
+  ] as const) {
+    const item = element("p", "restored-provenance-line");
+    append(item, element("strong", "", `${label}: `), document.createTextNode(`${artifact.path} · SHA256 ${artifact.sha256}`));
+    append(artifacts, item);
+  }
+};
 const caseFor = (scope: PanelScope, focus?: "technical" | "exclusion") => payload.explorer.cases.find((candidate) =>
   (scope === "todos" || candidate.providerId === scope) &&
   (focus === "exclusion" ? candidate.focus === "exclusion" :
@@ -183,6 +240,7 @@ const renderExplanations = (scope: PanelScope): void => {
   byId("control-exclusion-commercial").textContent = format(metrics.excludedCommercial);
   renderExampleAction("normalization-example", scope, "technical");
   renderExampleAction("excluded-example", scope, "exclusion");
+  renderExampleAction("transformation-example", scope, "technical");
 };
 const renderKpis = (scope: PanelScope): void => {
   const container = byId("overview-kpis");
@@ -236,6 +294,8 @@ const renderProviderChart = (scope: PanelScope): void => {
 const renderMatrices = (scope: PanelScope): void => {
   createMatrix("pipeline-matrix", pipelineColumns, scope);
   createMatrix("transform-matrix", transformationColumns, scope);
+  createMatrix("quality-matrix", qualityColumns, scope);
+  createMatrix("decisions-matrix", decisionColumns, scope);
 };
 const render = (): void => {
   byId("scope-summary").textContent = scopeLabel(currentScope);
@@ -243,6 +303,8 @@ const render = (): void => {
   renderExplanations(currentScope);
   renderProviderChart(currentScope);
   renderMatrices(currentScope);
+  renderStageMetrics(currentScope);
+  renderTraceability(currentScope);
 };
 const updateScope = (scope: PanelScope): void => {
   currentScope = scope;

@@ -763,3 +763,15 @@ p {
 }
 
 
+
+.restored-stage-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:24px 0}
+.restored-stat{display:flex;flex-direction:column;gap:10px;padding:20px;border:1px solid var(--stroke);border-radius:12px;background:var(--panel2)}
+.restored-stat strong{font-size:clamp(27px,2.6vw,42px);line-height:1.05;letter-spacing:-.045em;color:var(--mint);font-variant-numeric:tabular-nums}
+.restored-stat span{font-size:var(--type-secondary);line-height:1.4;color:var(--muted)}
+.restored-provenance-list{display:grid;gap:14px;margin:23px 0}
+.restored-provenance-card{min-width:0;padding:20px;border:1px solid var(--stroke);border-radius:12px;background:var(--panel2)}
+.restored-provenance-card h3{margin-bottom:12px;color:var(--cyan)}
+.restored-provenance-line{overflow-wrap:anywhere;color:var(--muted);font-size:var(--type-secondary);margin:7px 0;line-height:1.6}
+.restored-evidence{padding:20px;border:1px solid var(--stroke);border-radius:12px}
+@media(max-width:980px){.restored-stage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){.restored-stage-grid{grid-template-columns:minmax(0,1fr)}}

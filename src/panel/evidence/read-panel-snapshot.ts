@@ -4,7 +4,7 @@ import { LEGACY_CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js
 import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { parseTechnicalReport } from "./report-metrics.js";
 import type { TechnicalReportProvider } from "./report-metrics.js";
-import { artifact, inspectReport, recordFrom } from "./evidence-files.js";
+import { artifact, digest, inspectReport, recordFrom, regularText } from "./evidence-files.js";
 import { assertCommercialLineage, readCommercialFiles, verifyCommercialReport } from "./commercial-evidence.js";
 import { readPanelOriginalEvidence, readPublicationLineage, readRetention } from "./publication-evidence.js";
 import type { PublicationLineage } from "./publication-evidence.js";
@@ -65,7 +65,25 @@ export const readPanelSnapshot = async (workspace: string): Promise<PanelSnapsho
     throw new Error("Selección comercial develop incompatible");
   }
   const date = verifyCommercialReport(commercialReport.content, snapshot.manifestSha256, snapshot.providers);
-  const report = parseTechnicalReport(technicalReport.content);
+  parseTechnicalReport(technicalReport.content);
+  let selectedTechnicalReport = technicalReport;
+  if (technicalReport.content.includes("| MANAIN |")) {
+    if (technicalReport.previousSha256 === null) {
+      throw new Error("No hay informe técnico compatible con el paquete comercial de tres proveedores");
+    }
+    const previousPath = join(root, "catalogs", "reports", "individual-finish", "versions", technicalReport.previousSha256, "INFORME.txt");
+    const previousContent = await regularText(previousPath);
+    if (digest(previousContent) !== technicalReport.previousSha256) {
+      throw new Error("Informe técnico histórico sin huella válida");
+    }
+    if (previousContent.includes("| MANAIN |")) {
+      throw new Error("No hay informe técnico compatible con el paquete comercial de tres proveedores");
+    }
+    selectedTechnicalReport = {
+      content: previousContent, evidence: artifact(root, previousPath, technicalReport.previousSha256), previousSha256: null
+    };
+  }
+  const report = parseTechnicalReport(selectedTechnicalReport.content);
   const providers: PanelProviderEvidence[] = [];
   for (const providerId of LEGACY_CAMPAIGN_PROVIDERS) {
     const path = await resolveAccreditedPublication(root, providerId);
@@ -120,10 +138,10 @@ export const readPanelSnapshot = async (workspace: string): Promise<PanelSnapsho
   return {
     environment: "develop", packageDateUtc: date,
     commercialManifest: artifact(root, join(root, "catalogs", "commercial", "develop", "versions", stored.selectedSha256, "commercial-manifest.json"), stored.selectedSha256),
-    technicalReport: technicalReport.evidence, commercialReport: commercialReport.evidence,
+    technicalReport: selectedTechnicalReport.evidence, commercialReport: commercialReport.evidence,
     retainedPreviousSha256: {
       commercial: stored.previousSha256,
-      technicalReport: technicalReport.previousSha256,
+      technicalReport: selectedTechnicalReport.previousSha256,
       commercialReport: commercialReport.previousSha256
     },
     providers, totals: totals(providers)

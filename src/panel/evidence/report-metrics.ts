@@ -1,5 +1,5 @@
 import type { PanelProviderId, PanelTransformationMetrics } from "./types.js";
-import { LEGACY_CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
+import { CAMPAIGN_PROVIDERS, LEGACY_CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 
 export type TechnicalReportProvider = {
   readonly providerId: PanelProviderId;
@@ -46,12 +46,13 @@ const rows = (content: string, name: string, length: number): ReadonlyMap<string
     }
     result.set(cells[0], cells);
   }
-  if (result.size !== LEGACY_CAMPAIGN_PROVIDERS.length + 1 || !result.has("TOTAL") ||
-    LEGACY_CAMPAIGN_PROVIDERS.some((providerId) => !result.has(providerId.toUpperCase()))) {
+  const providers = result.has("MANAIN") ? CAMPAIGN_PROVIDERS : LEGACY_CAMPAIGN_PROVIDERS;
+  if (result.size !== providers.length + 1 || !result.has("TOTAL") ||
+    providers.some((providerId) => !result.has(providerId.toUpperCase()))) {
     throw new Error(`Proveedores incompletos en el informe técnico: ${name}`);
   }
   for (let column = 1; column < length; column += 1) {
-    const sum = LEGACY_CAMPAIGN_PROVIDERS.reduce((total, providerId) =>
+    const sum = providers.reduce((total, providerId) =>
       total + number(result.get(providerId.toUpperCase())?.[column]), 0);
     if (sum !== number(result.get("TOTAL")?.[column])) {
       throw new Error(`Total discordante en informe técnico: ${name}, columna ${column}`);
@@ -67,6 +68,9 @@ export const parseTechnicalReport = (content: string): readonly TechnicalReportP
   const scope = rows(content, "Alcance", 5);
   const technical = rows(content, "Especificaciones técnicas", 5);
   const editorial = rows(content, "Contenido y datos comerciales", 8);
+  if (scope.has("MANAIN") !== technical.has("MANAIN") || scope.has("MANAIN") !== editorial.has("MANAIN")) {
+    throw new Error("Poblaciones por proveedor distintas entre secciones técnicas");
+  }
   const lineage = new Map<string, readonly string[]>();
   for (const fields of table(section(content, "Trazabilidad de origen y publicación"))) {
     if (fields.length !== 4 || !fields[0] || lineage.has(fields[0])) {
@@ -74,7 +78,8 @@ export const parseTechnicalReport = (content: string): readonly TechnicalReportP
     }
     lineage.set(fields[0], fields);
   }
-  if (lineage.size !== LEGACY_CAMPAIGN_PROVIDERS.length) {
+  const providers = scope.has("MANAIN") ? CAMPAIGN_PROVIDERS : LEGACY_CAMPAIGN_PROVIDERS;
+  if (lineage.size !== providers.length || providers.some((id) => !lineage.has(id.toUpperCase()))) {
     throw new Error("Trazabilidad técnica incompleta");
   }
   return LEGACY_CAMPAIGN_PROVIDERS.map((providerId) => {

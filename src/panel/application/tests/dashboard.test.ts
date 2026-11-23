@@ -143,28 +143,23 @@ test("el HTML neutraliza etiquetas incrustadas en datos de procedencia", async (
   assert.ok(!html.includes("</script><script>alert(1)</script>"));
 });
 
-test("F3 conserva el corte acreditado sin emitir matrices C/D ni el bloque de evidencias", async () => {
+test("el corte acreditado alimenta matrices C/D y la trazabilidad recuperada", async () => {
   const { snapshot, dashboard, html } = await readStaticPanel();
   const quality = html.split('data-view="calidad"')[1]?.split('data-view="explorador"')[0];
   assert.ok(quality);
-  for (const id of ["quality-cut-title", "quality-cut-summary", "quality-cut-files-list", "quality-matrix",
-    "decisions-matrix", "local-evidence-toggle", "evidence-access-status"]) {
-    assert.ok(!html.includes(`id="${id}"`), id);
+  for (const id of ["quality-matrix", "decisions-matrix", "traceability-providers", "traceability-artifacts"]) {
+    assert.ok(html.includes(`id="${id}"`), id);
   }
-  for (const text of ["Consultar matrices de incidencias y decisiones (C y D)", "CORTE Y EVIDENCIAS",
-    "Datos del corte", "Consultar informes y archivos acreditados"]) assert.ok(!html.includes(text), text);
+  assert.ok(html.includes("Consultar matrices de incidencias y decisiones (C y D)"));
+  assert.ok(html.includes("Consultar informes y archivos acreditados"));
   assert.ok(!("decisions" in dashboard));
-  assert.ok(!html.includes('"decisions":'));
   assert.ok(html.includes(`"packageDateUtc":"${snapshot.packageDateUtc}"`));
   assert.ok(html.includes(`"sha256":"${snapshot.commercialManifest.sha256}"`));
-  assert.ok(!quality.includes('id="checks-title"'));
   assert.ok(quality.includes('id="controls-title"'));
   assert.ok(quality.includes('id="excluded-example"'));
-  assert.ok(html.includes('id="pipeline-matrix"'));
-  assert.ok(html.includes('id="transform-matrix"'));
-  assert.ok(!html.includes('createMatrix("quality-matrix"'));
-  assert.ok(!html.includes('renderQualityCut('));
-  assert.ok(!html.includes('renderDecisions('));
+  assert.ok(html.includes('createMatrix("quality-matrix"'));
+  assert.ok(html.includes('createMatrix("decisions-matrix"'));
+  assert.ok(html.includes("const renderTraceability = (scope) =>"));
 });
 
 test("los títulos de las métricas son informativos y no abren diálogos de definición", async () => {
@@ -226,7 +221,7 @@ test("F1 presenta una tabla compacta y un diccionario completo en el HTML autón
 test("las demostraciones conservadas quedan en orden y Fichas reales al final", async () => {
   const { html } = await readStaticPanel();
   assert.equal((html.match(/<section class="page-view" data-view=/g) ?? []).length, 4);
-  const labels = ["ETAPA 1 / NORMALIZACIÓN", "ETAPA 2 / CONTROL Y EXCLUSIÓN"];
+  const labels = ["ETAPA 1 / NORMALIZACIÓN", "ETAPA 2 / CONTROL Y EXCLUSIÓN", "ETAPA 3 / TRANSFORMACIÓN EDITORIAL", "ETAPA 4 / SELECCIÓN COMERCIAL", "ETAPA 5 / LA HISTORIA DEL DATO"];
   for (const step of labels) assert.equal(html.split(step).length - 1, 1, step);
   for (let i = 1; i < labels.length; i++) {
     assert.ok(html.indexOf(labels[i - 1]!) < html.indexOf(labels[i]!), labels[i]);
@@ -237,21 +232,21 @@ test("las demostraciones conservadas quedan en orden y Fichas reales al final", 
     assert.ok(html.indexOf(`data-view="${views[i - 1]}"`) < html.indexOf(`data-view="${views[i]}"`));
   }
   assert.ok(html.includes("03 / VALIDACIÓN Y CONTROL"));
-  assert.ok(!html.includes("E5 / LA HISTORIA DEL DATO"));
+  assert.ok(html.includes("ETAPA 5 / LA HISTORIA DEL DATO"));
   assert.ok(!html.includes('id="source-example"'));
   assert.ok(html.includes('id="normalization-examples"'));
   assert.ok(html.includes('id="excluded-example"'));
   assert.ok(html.includes('id="control-exclusion-editorial"'));
   assert.ok(html.includes('id="control-exclusion-commercial"'));
   assert.ok(html.includes('<details class="audit-disclosure"><summary>Consultar matrices de recorrido y transformación (A y B)'));
-  assert.ok(!html.includes('Consultar matrices de incidencias y decisiones (C y D)'));
+  assert.ok(html.includes('Consultar matrices de incidencias y decisiones (C y D)'));
   assert.ok(!html.includes('id="quality-cut-title"'));
   assert.ok(html.includes("EJEMPLOS DE REGLA VIGENTE"));
   assert.ok(!html.includes("Cuatro comprobaciones para decidir"));
   assert.ok(!html.includes("Ver comprobaciones y código de referencia"));
   assert.ok(!html.includes('class="mechanism-detail"'));
   assert.ok(html.includes("No todo rechazo significa lo mismo"));
-  assert.ok(!html.includes('class="source-map"'));
+  assert.ok(html.includes('id="traceability-providers"'));
   assert.ok(!html.includes("source-map-grid"));
   assert.ok(!html.includes("CORROBORACIÓN DOCUMENTADA"));
   assert.ok(html.includes("panel:request-case"));
@@ -308,8 +303,8 @@ test("el modo portátil conserva enlaces seguros y casos reales sin navegación 
   assert.ok(!html.includes("explorer-sort-current"));
   assert.ok(!html.includes('id="quality-cut-files-list"'));
   assert.ok(!html.includes('class="stage-strip"'));
-  assert.ok(!html.includes('id="quality-matrix"'));
-  assert.ok(!html.includes('id="decisions-matrix"'));
+  assert.ok(html.includes('id="quality-matrix"'));
+  assert.ok(html.includes('id="decisions-matrix"'));
   assert.ok(!html.includes('"stage-value"'));
   assert.ok(!html.includes('<script type="module" src='));
 });
@@ -407,7 +402,7 @@ test("organización: cada matriz queda en su vista y no se repiten tarjetas de i
   assert.ok(flow);
   assert.ok(quality);
   for (const id of ["pipeline-matrix", "transform-matrix"]) assert.ok(flow.includes(`id="${id}"`));
-  for (const id of ["quality-matrix", "decisions-matrix"]) assert.ok(!html.includes(`id="${id}"`));
+  for (const id of ["quality-matrix", "decisions-matrix"]) assert.ok(quality.includes(`id="${id}"`));
   for (const id of ["controls-title", "control-exclusion-editorial", "control-exclusion-commercial"])
     assert.ok(quality.includes(`id="${id}"`));
   assert.ok(!quality.includes('id="quality-highlights"'));
