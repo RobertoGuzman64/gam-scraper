@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { copyFile, cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import test, { after } from "node:test";
 import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
 import { readPortableCampaign } from "../../../infrastructure/filesystem/catalog/portable-campaign.js";
@@ -11,10 +11,9 @@ import { finalizeActiveCampaign } from "../../finalization.js";
 import { deliverActiveCampaign } from "../../delivery/execute.js";
 import { applyPortableMigration, planPortableMigration } from "../../portable-migration.js";
 import { approveDraft, createFixture } from "../finalization-fixture.js";
-import { reuseCampaignTestFixture } from "../campaign-catalog-fixture.js";
+import { copyCampaignTestCatalog, reuseCampaignTestFixture } from "../campaign-catalog-fixture.js";
 
 const prefix = "scrape-gomariz";
-const fixture = resolve("src/testing/fixtures/gomariz");
 const originalFiles = [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`] as const;
 
 const campaignFixtures = reuseCampaignTestFixture(createFixture);
@@ -35,7 +34,7 @@ const withOriginal = async (callback: (root: string, source: string) => Promise<
   const source = join(root, "storage", "scraped", "gomariz");
   await mkdir(source, { recursive: true });
   try {
-    for (const file of originalFiles) await copyFile(join(fixture, file), join(source, file));
+    await copyCampaignTestCatalog(source, "gomariz", prefix);
     await callback(root, source);
   } finally { await rm(root, { recursive: true, force: true }); }
 };
@@ -48,12 +47,12 @@ test("simulación sin escrituras, migración completa, idempotencia y portabilid
     assert.equal((await readdir(root)).includes("catalogs"), false);
     const applied = await applyPortableMigration(root);
     assert.equal(applied.providers[1]?.status, "actualizado");
-    assert.equal((await readPortableOriginal(root, "gomariz")).productCount, 14);
+    assert.equal((await readPortableOriginal(root, "gomariz")).productCount, 4);
     assert.equal((await applyPortableMigration(root)).providers[1]?.status, "actualizado");
     const moved = join(root, "clean-copy");
     await mkdir(moved);
     await cp(join(root, "catalogs"), join(moved, "catalogs"), { recursive: true });
-    assert.equal((await readPortableOriginal(moved, "gomariz")).productCount, 14);
+    assert.equal((await readPortableOriginal(moved, "gomariz")).productCount, 4);
     const inventory = await inspectPortableInventory(moved, {});
     assert.equal(inventory.providers.find((p) => p.providerId === "gomariz")?.original.state, "correcto");
     assert.deepEqual(inventory.issues, []);
@@ -204,7 +203,7 @@ test("las publicaciones vigentes y el registro Manain no bloquean la migración 
     assert.equal(plan.providers.find((item) => item.providerId === "gomariz")?.status, "consolidar");
     assert.equal(plan.providers.find((item) => item.providerId === "manain")?.status, "ausente");
     await applyPortableMigration(root);
-    assert.equal((await readPortableOriginal(root, "gomariz")).productCount, 14);
+    assert.equal((await readPortableOriginal(root, "gomariz")).productCount, 4);
     assert.equal(await readFile(join(recordsDir, "manain-record.json"), "utf8"), "{}");
     assert.deepEqual(await readdir(publicationDir), []);
   });

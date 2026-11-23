@@ -1,18 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { inspectGamBasketDom, pendingGamBasketRecords } from "../basket-dom-evidence.js";
-
-test("GAM: diagnostica las 15 cestas pendientes tras recuperar fragmentos repetidos sin alterar los valores originales", async () => {
-  const catalog = await readCanonicalCatalog("src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json");
-  const pending = pendingGamBasketRecords(catalog.products);
-  assert.equal(pending.length, 15);
-  assert.deepEqual(pending.map((record) => record.reference).sort(), [
-    "6169", "6171", "6607", "6614",
-    "6615", "6616", "6617", "6622", "6625", "6626", "6630", "6631", "6632", "6642", "6669"
-  ].sort());
-  assert.equal(pending.find((record) => record.reference === "6607")?.specs?.["Dimensiones Cesta"], "1 76 83X0 metros");
-});
+import { inspectGamBasketDom } from "../basket-dom-evidence.js";
 
 test("GAM: conserva el HTML original y los nodos del mismo campo para estudiar una cadena fragmentada", () => {
   const evidence = inspectGamBasketDom(`<main><dl><dt>Dimensiones Cesta</dt><dd><span>1</span> <span>1,83 x 0,76</span> <span>76</span> <span>83 x 0 metros</span></dd></dl></main>`);

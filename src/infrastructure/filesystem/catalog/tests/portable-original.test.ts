@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -9,14 +9,14 @@ import { consolidatePortableOriginal, readPortableOriginal, recoverPortableOrigi
 
 const prefix = "scrape-gomariz";
 const files = [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`] as const;
-const fixtureRoot = join(process.cwd(), "src", "testing", "fixtures", "gomariz");
+import { copyCampaignTestCatalog } from "../../../../campaign/tests/campaign-catalog-fixture.js";
 
 const withWorkspace = async (callback: (root: string, source: string) => Promise<void>): Promise<void> => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-portable-"));
   const source = join(root, "source");
   await mkdir(source);
   try {
-    for (const file of files) await copyFile(join(fixtureRoot, file), join(source, file));
+    await copyCampaignTestCatalog(source, "gomariz", prefix);
     await callback(root, source);
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -40,15 +40,15 @@ const updateSource = async (source: string): Promise<void> => {
 test("original portátil conserva exactamente canónico, manifest y resumen verificables sin storage", async () => {
   await withWorkspace(async (root, source) => {
     const published = await consolidatePortableOriginal(root, sourceCatalog(source));
-    assert.deepEqual(published, { providerId: "gomariz", productCount: 14, changed: true });
+    assert.deepEqual(published, { providerId: "gomariz", productCount: 4, changed: true });
     assert.deepEqual((await readdir(portableDir(root))).sort(), [...files].sort());
     await rm(source, { recursive: true });
     const portable = await readPortableOriginal(root, "gomariz");
-    assert.equal(portable.productCount, 14);
+    assert.equal(portable.productCount, 4);
     const renamed = `${root}-moved`;
     await rename(root, renamed);
     try {
-      assert.equal((await readPortableOriginal(renamed, "gomariz")).productCount, 14);
+      assert.equal((await readPortableOriginal(renamed, "gomariz")).productCount, 4);
     } finally {
       await rename(renamed, root);
     }
@@ -79,7 +79,7 @@ test("truncamientos, resúmenes falsos y mezclas no sustituyen el original vigen
     const goodSummary = await readFile(join(source, files[2]), "utf8");
     await writeFile(join(source, files[2]), JSON.stringify({
       startedAt: "2026-10-01T00:00:00Z", endedAt: "2026-10-01T00:00:00Z",
-      quality: { status: "complete", published: true }, totals: { scrapedProducts: 14 },
+      quality: { status: "complete", published: true }, totals: { scrapedProducts: 4 },
       artifacts: { catalogSha256: "0".repeat(64) }
     }));
     await assert.rejects(consolidatePortableOriginal(root, sourceCatalog(source)), /publicación completa acreditada/);
@@ -125,7 +125,7 @@ test("se recupera una promoción interrumpida sin perder el original anterior", 
     await assert.rejects(readPortableOriginal(root, "gomariz"), /pendiente de recuperación/);
     await assert.rejects(consolidatePortableOriginal(root, sourceCatalog(source)), /pendiente de recuperación/);
     assert.equal(await recoverPortableOriginal(root, "gomariz"), true);
-    assert.equal((await readPortableOriginal(root, "gomariz")).productCount, 14);
+    assert.equal((await readPortableOriginal(root, "gomariz")).productCount, 4);
     assert.equal(await recoverPortableOriginal(root, "gomariz"), false);
     assert.deepEqual(await readdir(provider), ["original"]);
   });

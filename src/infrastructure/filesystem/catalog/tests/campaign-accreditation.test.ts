@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test, { after } from "node:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import { prepareSavedCatalog } from "../../../../preparation/workflow/prepare.js";
 import { readCampaignAccreditationSources } from "../../../../campaign/accreditation-sources.js";
 import { readCanonicalCatalog } from "../canonical-catalog.js";
@@ -15,11 +15,12 @@ const providers = CAMPAIGN_PROVIDERS;
 const prefixes = ["scrape-gam-marzo-2026", "scrape-gomariz", "scrape-mercaeleva", "scrape-manain"] as const;
 const dir = await mkdtemp(join(tmpdir(), "editorial-accreditation-fixtures-"));
 after(async () => rm(dir, { recursive: true, force: true }));
-const catalogPaths = providers.map((providerId, index) => providerId === "manain"
-  ? join(dir, "source", providerId, `${prefixes[index]}-catalog.json`)
-  : resolve(`src/testing/fixtures/${providerId}/${prefixes[index]}-catalog.json`));
-await mkdir(join(dir, "source", "manain"), { recursive: true });
-await copyCampaignTestCatalog(resolve("src/testing/fixtures"), join(dir, "source", "manain"), "manain", "scrape-manain");
+const catalogPaths = providers.map((providerId, index) => join(dir, "source", providerId, `${prefixes[index]}-catalog.json`));
+await Promise.all(providers.map(async (providerId, index) => {
+  const destination = join(dir, "source", providerId);
+  await mkdir(destination, { recursive: true });
+  await copyCampaignTestCatalog(destination, providerId, prefixes[index]!);
+}));
 const paths = providers.map((providerId, index) => ({
   providerId,
   path: join(dir, providerId, `${prefixes[index]}-test-preparation.json`)

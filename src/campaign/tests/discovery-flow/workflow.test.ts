@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { copyFile, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import test, { after } from "node:test";
 import { inspectBeforeExtraction } from "../../preflight.js";
 import { reviewActiveCampaign } from "../../review.js";
@@ -9,20 +9,15 @@ import { CAMPAIGN_PROVIDERS } from "../../discovery/report.js";
 import type { BatchReport, ProviderRun } from "../../../contracts/batch-report.js";
 import { copyCampaignTestCatalog, reuseCampaignTestFixture } from "../campaign-catalog-fixture.js";
 
-const sourceRoot = resolve("src/testing/fixtures");
 
 const populate = async (root: string, providerId: string): Promise<ProviderRun> => {
-  const source = join(sourceRoot, providerId);
   const names = ["gam", "gomariz", "mercaeleva", "manain"];
   const prefixes = ["scrape-gam-marzo-2026", "scrape-gomariz", "scrape-mercaeleva", "scrape-manain"];
   const prefix = prefixes[names.indexOf(providerId)];
   if (!prefix) throw new Error("Proveedor no admitido");
   const dir = join(root, "storage", "scraped", "campaigns", "prueba", providerId);
   await mkdir(dir, { recursive: true });
-  if (providerId === "manain") await copyCampaignTestCatalog(sourceRoot, dir, providerId, prefix);
-  else for (const name of [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`]) {
-    await copyFile(join(source, name), join(dir, name));
-  }
+  await copyCampaignTestCatalog(dir, providerId, prefix);
   const catalog: unknown = JSON.parse(await readFile(join(dir, `${prefix}-catalog.json`), "utf8"));
   if (!catalog || typeof catalog !== "object" || !("startedAt" in catalog) || !("endedAt" in catalog) ||
     typeof catalog.startedAt !== "string" || typeof catalog.endedAt !== "string") {

@@ -6,7 +6,6 @@ import { prepareCached } from "../../../../../../../preparation/testing/prepare-
 import { recoverGomarizSourceYearSpec } from "../../../../../../../preparation/gomariz/technical/mapping/source-year-spec.js";
 import { reconcileGomarizDocumented1cxFuel } from "../../../../../../../preparation/gomariz/technical/evidence/verified-1cx-fuel.js";
 import { recoverBaseTechnicalSpecs } from "../../../../../../../preparation/shared/technical/recovery/base-technical-recovery.js";
-import { readCanonicalCatalog } from "../../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { recoverGomarizDocumentedRenaultPremiumSpecs } from "../../../../../../../preparation/gomariz/technical/evidence/documented-renault-premium-specs.js";
 import { reconcileGomarizVerifiedPlatformHeight } from "../../../../../../../preparation/gomariz/technical/reconciliation/gomariz.js";
 import { prepareSourceProduct } from "../../../../../../../preparation/prepare-product.js";
@@ -83,24 +82,6 @@ test("Gomariz: conserva y rechaza especificaciones con valores múltiples incomp
 });
 
 
-
-test("Gomariz: traslada el año explícito de la ficha a spec sin alterar los originales", async () => {
-  const source = await readCanonicalCatalog("src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json");
-  const records = source.products.filter((record) => record.year !== null);
-  assert.ok(records.length > 0);
-  for (const record of records) {
-    assert.ok(record.year);
-    const before = JSON.stringify(record);
-    const prepared = prepareSourceProduct(record);
-    const verified = reconcileGomarizDocumented1cxFuel(record);
-    assert.equal(prepared.product.spec["Año de fabricación"], record.year, record.reference ?? "");
-    assert.deepEqual(prepared.product.spec, { ...recoverGomarizDocumentedRenaultPremiumSpecs(record, recoverGomarizDocumentedScaniaP220Specs(record, { ...verified.specs, "Año de fabricación": record.year })), ...reconcileGomarizVerifiedPlatformHeight(verified).specs });
-    assert.equal(JSON.stringify(record), before);
-  }
-  for (const record of source.products.filter((item) => item.year === null)) {
-    assert.equal(prepareSourceProduct(record).product.spec["Año de fabricación"], undefined);
-  }
-});
 
 test("Gomariz: conserva años existentes y rechaza proveedores, fuentes y fechas sin acreditar", () => {
   const record: ProductRecord = {

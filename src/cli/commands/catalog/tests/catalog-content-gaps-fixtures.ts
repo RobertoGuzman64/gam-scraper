@@ -1,5 +1,4 @@
 import { constants } from "node:fs";
-import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
@@ -9,11 +8,11 @@ import { accreditedPublicationDirectory } from "../../../../testing/builders/acc
 
 const run = promisify(execFile);
 export const root = fileURLToPath(new URL("../../../../../", import.meta.url));
-const fixture = (provider: string, prefix: string): string =>
-  join(root, "src", "testing", "fixtures", provider, `${prefix}-catalog.json`);
-export const gam = fixture("gam", "scrape-gam-marzo-2026");
-export const gomariz = fixture("gomariz", "scrape-gomariz");
-export const mercaeleva = fixture("mercaeleva", "scrape-mercaeleva");
+const original = (provider: string): string =>
+  join(root, "catalogs", "providers", provider, "original", `scrape-${provider}-catalog.json`);
+export const gam = original("gam");
+export const gomariz = original("gomariz");
+export const mercaeleva = original("mercaeleva");
 const cli = join(root, "dist", "cli", "commands", "catalog", "catalog-content-gaps.js");
 
 export const execute = async (args: readonly string[]): Promise<string> =>
@@ -43,32 +42,16 @@ const createBaselineRoot = async (commercial = false): Promise<string> => {
       ...(["gam", "gomariz", "mercaeleva"] as const).map(async (providerId) => {
         const source = join(root, "catalogs", "providers", providerId);
         const target = join(destination, "catalogs", "providers", providerId);
-        const published = providerId === "gomariz"
-          ? join(root, "src", "testing", "fixtures", "gomariz", "regression-143", "publications", "ffe1f64cd24d")
-          : await accreditedPublicationDirectory(root, providerId);
+        const published = await accreditedPublicationDirectory(root, providerId);
         await cp(published, join(target, "publications", basename(published)), {
           recursive: true, mode: constants.COPYFILE_FICLONE
         });
         if (commercial) {
-          const index = providerId === "gomariz"
-            ? join(root, "src", "testing", "fixtures", "gomariz", "regression-143", "publications", "active.json")
-            : join(source, "publications", "active.json");
+          const index = join(source, "publications", "active.json");
           await writeFile(join(target, "publications", "active.json"), await readFile(index));
         }
         if (providerId !== "mercaeleva" || commercial) {
-          const original = providerId === "gomariz"
-            ? join(root, "src", "testing", "fixtures", "gomariz", "regression-143")
-            : join(source, "original");
-          if (providerId === "gomariz") {
-            const manifest: unknown = JSON.parse(await readFile(join(published, "manifest.json"), "utf8"));
-            if (!manifest || typeof manifest !== "object" || !("source" in manifest) ||
-              !manifest.source || typeof manifest.source !== "object" ||
-              !("catalogSha256" in manifest.source) || typeof manifest.source.catalogSha256 !== "string" ||
-              createHash("sha256").update(await readFile(join(original, "scrape-gomariz-catalog.json")))
-                .digest("hex") !== manifest.source.catalogSha256) {
-              throw new Error("La captura histórica Gomariz no coincide con la publicación acreditada");
-            }
-          }
+          const original = join(source, "original");
           await cp(original, join(target, "original"), {
             recursive: true, mode: constants.COPYFILE_FICLONE
           });

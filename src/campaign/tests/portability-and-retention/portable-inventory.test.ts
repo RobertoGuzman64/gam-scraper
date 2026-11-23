@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { copyFile, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import test from "node:test";
 import { consolidatePortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
 import { readCanonicalCatalog, writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
@@ -9,9 +9,9 @@ import { inspectPortableInventory } from "../../portable-inventory.js";
 import { retainRepositoryArtifact } from "../../../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
 import { createFixture, approveDraft } from "../finalization-fixture.js";
 import { finalizeActiveCampaign } from "../../finalization.js";
+import { copyCampaignTestCatalog } from "../campaign-catalog-fixture.js";
 
 const prefix = "scrape-gomariz";
-const fixture = resolve("src/testing/fixtures/gomariz");
 const pathFor = (root: string): string => join(root, "storage", "scraped", "gomariz", `${prefix}-catalog.json`);
 const files = [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`] as const;
 const portable = (root: string): string => join(root, "catalogs", "providers", "gomariz", "original");
@@ -22,7 +22,7 @@ const withOriginal = async (callback: (root: string) => Promise<void>): Promise<
   try {
     const dir = join(root, "storage", "scraped", "gomariz");
     await mkdir(dir, { recursive: true });
-    for (const file of files) await copyFile(join(fixture, file), join(dir, file));
+    await copyCampaignTestCatalog(dir, "gomariz", prefix);
     await callback(root);
   } finally {
     await rm(root, { recursive: true, force: true });

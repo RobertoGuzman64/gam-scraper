@@ -405,22 +405,30 @@ test("el helper eliminado de GAM no conserva autorizaciones transitivas", (t) =>
   assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
 });
 
-test("el builder histórico Mercaeleva no puede volver a consumir originales vivos", (t) => {
+test("el builder histórico Mercaeleva eliminado no recupera acceso a datasets", (t) => {
   const { root, write } = fixture(t);
   const helper = "src/testing/builders/mercaeleva-source-fixture.ts";
-  const path = "src/preparation/mercaeleva/technical/tests/specifications/mercaeleva-documented-platform-technical-specs.test.ts";
-  const source = readFileSync(new URL("../src/testing/builders/mercaeleva-source-fixture.ts", import.meta.url), "utf8");
-  write(helper, source);
-  write(path, "import { readMercaelevaSource } from '../../../../../testing/builders/mercaeleva-source-fixture.js'; export const load = readMercaelevaSource;");
-  const accredited = inspectTestArchitecture(root);
-  assert.equal(accredited.exceptions.filter((item) => item.rule === "T-TRANSITIVE-CATALOG").length, 1);
-  assert.ok(!rules(accredited.findings).has("T-TRANSITIVE-CATALOG"));
-  write(helper, source + "\nexport const extra = 1;");
+  const suite = "src/preparation/mercaeleva/technical/tests/specifications/mercaeleva-documented-platform-technical-specs.test.ts";
+  write(helper, "import { readCanonicalCatalog } from '../../infrastructure/filesystem/catalog/canonical-catalog.js'; export const load = () => readCanonicalCatalog('src/testing/fixtures/mercaeleva/regression-221/mercaeleva-completa-20261029-234332-catalog.json');");
+  write(suite, "import { load } from '../../../../../testing/builders/mercaeleva-source-fixture.js'; export const source = load;");
   assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
-  write(helper, source.replace("src/testing/fixtures/mercaeleva/regression-221/mercaeleva-completa-20261029-234332-catalog.json", "catalogs/providers/mercaeleva/original/scrape-mercaeleva-catalog.json"));
-  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
-  write(helper, source + " export const extra = readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json');");
-  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
+});
+
+test("un nuevo loader del ZIP del panel no queda permitido", (t) => {
+  const { root, write } = fixture(t);
+  write("src/testing/builders/panel-evidence-workspace-fixture.ts", "import { readFileSync } from 'node:fs'; export const load = () => readFileSync('src/testing/fixtures/panel/published-snapshot.evidence');");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-RETIRED-DATASET"));
+});
+
+test("ninguna suite puede restaurar lectores de JSON históricos en testing/fixtures", (t) => {
+  const { root, write } = fixture(t);
+  const path = "src/testing/builders/historical-loader.ts";
+  write(path, "import { readFileSync } from 'node:fs'; export const load = () => readFileSync('src/testing/fixtures/gam/scrape-gam-marzo-2026-catalog.json');");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-RETIRED-DATASET"));
+  write(path, "import { join } from 'node:path'; export const path = join('src', 'testing', 'fixtures', 'gomariz', 'scrape-gomariz-catalog.json');");
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-RETIRED-DATASET"));
+  write(path, "export { accreditedReconciliationCases } from '../fixtures/gam/specification-reconciliations.js';");
+  assert.ok(!rules(inspectTestArchitecture(root).findings).has("T-RETIRED-DATASET"));
 });
 
 test("el hash de procedencia se conserva aunque la suite inspeccione descripciones", (t) => {
@@ -463,7 +471,6 @@ test("un test de integración de publicación no se penaliza por usar manifiesto
 
 const guardedRepositoryRoot = fileURLToPath(new URL("../", import.meta.url));
 const accreditedCatalogIntegrationPaths = [
-  "src/preparation/gam/identity/tests/gam-identity-variants.test.ts",
   "src/preparation/tests/catalog-publication-consistency.test.ts"
 ];
 
@@ -474,23 +481,23 @@ test("las lecturas protegidas son contratos de integración exactos y no infracc
   }
   const result = inspectTestArchitecture(root);
   assert.deepEqual(result.findings, []);
-  assert.equal(result.integrations.length, 4);
-  assert.equal(new Set(result.integrations.map((item) => item.path)).size, 2);
+  assert.equal(result.integrations.length, 2);
+  assert.equal(new Set(result.integrations.map((item) => item.path)).size, 1);
 });
 
 test("la acreditación exacta se revoca ante cualquier cambio y no acepta nuevas lecturas", (t) => {
   const { root, write } = fixture(t);
-  const path = "src/preparation/gam/identity/tests/gam-identity-variants.test.ts";
+  const path = "src/preparation/tests/catalog-publication-consistency.test.ts";
   const original = readFileSync(join(guardedRepositoryRoot, path), "utf8");
   write(path, original);
-  assert.equal(inspectTestArchitecture(root).integrations.length, 1);
+  assert.equal(inspectTestArchitecture(root).integrations.length, 2);
   write(path, original + "\nconst regression = 42;\n");
-  assert.equal(inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-PRODUCT-CATALOG").length, 1);
+  assert.equal(inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-PRODUCT-CATALOG").length, 2);
   write(path, original + "\nconst extra = 'catalogs/providers/gomariz/original/other.json';\n");
   assert.ok(inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-PRODUCT-CATALOG").length >= 2);
   write(path, original);
   write("src/preparation/shared/editorial/tests/new-catalog.test.ts", original);
-  assert.equal(inspectTestArchitecture(root).integrations.length, 1);
+  assert.equal(inspectTestArchitecture(root).integrations.length, 2);
   assert.ok(inspectTestArchitecture(root).findings.some((item) => item.path === "src/preparation/shared/editorial/tests/new-catalog.test.ts"));
 });
 
@@ -693,7 +700,7 @@ test("prohíbe congelar indicadores de procedencia y categorías en un corte viv
   assert.equal(inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-FIXED-STOCK-FIELD").length, 2);
 });
 
-test("no confunde poblaciones sintéticas o históricas con inventario vivo", (t) => {
+test("admite poblaciones sintéticas pero rechaza el antiguo almacén histórico", (t) => {
   const { root, write } = fixture(t);
   write("src/preparation/shared/editorial/tests/stable-cases.test.ts",
     "import assert from 'node:assert/strict'; const products = [{reference:'A'}, {reference:'B'}]; assert.equal(products.length, 2);\n");
@@ -701,7 +708,7 @@ test("no confunde poblaciones sintéticas o históricas con inventario vivo", (t
     "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const snapshot = await readCanonicalCatalog('src/testing/fixtures/gam/regression-2026/catalog.json'); assert.equal(snapshot.products.length, 143);\n");
   write("src/testing/integration/preparation/tests/dynamic-live.test.ts",
     "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const catalog = await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json'); const prepared = catalog.products.map(item => item.reference); assert.equal(prepared.length, catalog.products.length);\n");
-  assert.deepEqual(inspectTestArchitecture(root).findings, []);
+  assert.deepEqual([...rules(inspectTestArchitecture(root).findings)], ["T-RETIRED-DATASET"]);
 });
 
 test("prohíbe exigir referencias concretas desde el inventario vivo", (t) => {

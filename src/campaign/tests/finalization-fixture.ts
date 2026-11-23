@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { buildProductIdentity } from "../../catalog/identity.js";
@@ -10,7 +10,6 @@ import { CAMPAIGN_PROVIDERS } from "../discovery/report.js";
 import { copyCampaignTestCatalog } from "./campaign-catalog-fixture.js";
 import type { ProviderRun, BatchReport } from "../../contracts/batch-report.js";
 
-const sourceRoot = resolve("src/testing/fixtures");
 export const prefixes = {
   gam: "scrape-gam-marzo-2026",
   gomariz: "scrape-gomariz",
@@ -26,7 +25,7 @@ export const createFixture = async () => {
     const prefix = prefixes[id];
     const dir = join(root, "storage", "scraped", "campaigns", runId, id);
     await mkdir(dir, { recursive: true });
-    const catalog = await copyCampaignTestCatalog(sourceRoot, dir, id, prefix);
+    const catalog = await copyCampaignTestCatalog( dir, id, prefix);
     providers.push({
       providerId: id, status: "complete",
       startedAt: new Date(Date.parse(catalog.startedAt) - 1000).toISOString(),

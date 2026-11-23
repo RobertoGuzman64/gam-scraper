@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { constants } from "node:fs";
-import { cp, copyFile, mkdir, mkdtemp, rm } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after } from "node:test";
@@ -48,9 +48,15 @@ const createOriginals = async (
     if (!selectedProviders.includes(id)) continue;
     const folder = join(root, `fuente-${id}`);
     await mkdir(folder);
-    for (const name of [`scrape-${id}-catalog.json`, `scrape-${id}-catalog.manifest.json`, `scrape-${id}-summary.json`]) {
-      await copyFile(join(process.cwd(), "src", "testing", "fixtures", id, name), join(folder, name));
-    }
+    const products: ProductRecord[] = ["11111", "22222", "33333"].map((reference, index) => ({
+      ...product(reference, index === 2 ? null : serialNumber),
+      providerId: id,
+      url: `https://example.test/${id}/producto-${reference}`
+    }));
+    const scraped: CategoryScrapeResult = {
+      category, products, discoveredProductUrls: products.length, failures: []
+    };
+    await writeOutputs(folder, `scrape-${id}`, [scraped], "2026-11-03T11:00:00Z", "2026-11-03T11:00:00Z");
     await consolidatePortableOriginal(root, join(folder, `scrape-${id}-catalog.json`));
   }
 };

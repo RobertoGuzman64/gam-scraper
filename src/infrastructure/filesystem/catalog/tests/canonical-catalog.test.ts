@@ -9,6 +9,7 @@ import type { CategoryConfig, CategoryScrapeResult } from "../../../../contracts
 import { writeOutputs } from "../../../../scraping/output/publish.js";
 import { readCanonicalCatalog, readCanonicalCatalogWithFingerprint } from "../canonical-catalog.js";
 import { readPortableOriginal } from "../portable-original.js";
+import { copyCampaignTestCatalog } from "../../../../campaign/tests/campaign-catalog-fixture.js";
 
 const category: CategoryConfig = { key: "venta", name: "Venta", url: "https://test.example/venta" };
 const stamp = (day: number): string => `2026-10-${String(day).padStart(2, "0")}T10:00:00Z`;
@@ -171,14 +172,11 @@ test("un alias portátil estable conserva íntegros los bytes y la acreditación
   await withDir(async (root) => {
     const provider = "gam";
     const original = join(root, "catalogs", "providers", provider, "original");
-    const fixture = resolve("src/testing/fixtures/gam");
     const previous = "scrape-gam-marzo-2026";
     const current = "scrape-gam";
     const suffixes = ["-catalog.json", "-catalog.manifest.json", "-summary.json"] as const;
     await mkdir(original, { recursive: true });
-    for (const suffix of suffixes) {
-      await copyFile(join(fixture, `${previous}${suffix}`), join(original, `${previous}${suffix}`));
-    }
+    await copyCampaignTestCatalog(original, provider, previous);
     const before = await readCanonicalCatalog(join(original, `${previous}-catalog.json`));
     const contents = await Promise.all(suffixes.map((suffix) => readFile(join(original, `${previous}${suffix}`))));
     for (const suffix of suffixes) {

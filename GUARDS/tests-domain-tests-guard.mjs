@@ -72,7 +72,9 @@ const checkTestLayout = (project, visit) => {
     }
   }
   for (const [path, source] of project.files) {
-    if ((isTest(path) || supportModule(path)) && /(?:accredited-source-samples|(?:src[\\/])?testing[\\/]domain-cases[\\/]data)/iu.test(source.text)) {
+    const oldDataPath = /(?:src[\\/])?testing[\\/]fixtures[\\/][^'"`\n]{0,160}(?:\.json|\.evidence|\.zip)/iu;
+    const segmentedDataPath = /["'`]testing["'`]\s*,\s*["'`]fixtures["'`][\s\S]{0,150}(?:catalog|regression[-_]\d+|published-snapshot)/iu;
+    if ((isTest(path) || supportModule(path)) && (oldDataPath.test(source.text) || segmentedDataPath.test(source.text) || /(?:accredited-source-samples|published-snapshot\.evidence|(?:src[\\/])?testing[\\/]domain-cases[\\/]data)/iu.test(source.text))) {
       visit("T-RETIRED-DATASET", path, "Prohibido recuperar loaders o rutas de datasets históricos eliminados");
     }
     if (isTest(path) && path.startsWith("src/") && !path.endsWith(".test.ts")) {
@@ -276,14 +278,9 @@ const liveSourceEvidence = (source) => {
 };
 
 const accreditedCatalogIntegrations = new Map([
-  ["src/preparation/gam/identity/tests/gam-identity-variants.test.ts", {
-    sha256: "29400091418295a3aadaf8f6b922a88f1d25d6796e37674d119a1c6c19d0acf8",
-    reads: 1,
-    responsibility: "Variantes e identidad cruzada contra fixture histórica firmada"
-  }],
   ["src/preparation/tests/catalog-publication-consistency.test.ts", {
-    sha256: "2165c8c823a5ab7fec72f1d0c26184248c0d1eb14eed22fc0a0cb2ea0ab4011b",
-    reads: 3,
+    sha256: "8d99dbc75d6c711d3bffeea31a3077b97e32b82cfa264e10205b57123c623411",
+    reads: 2,
     responsibility: "Integridad, procedencia y proyección de publicaciones acreditadas"
   }]
 ]);
@@ -296,17 +293,15 @@ const creditedCatalogIntegration = (path, source, direct) => {
 };
 
 const transitiveExceptions = new Map([
-  ["src/preparation/mercaeleva/technical/tests/models/jlg-450aj-base-model-evidence.test.ts",
-    "src/testing/builders/mercaeleva-source-fixture.ts"],
-  ["src/preparation/mercaeleva/technical/tests/specifications/mercaeleva-documented-equipment-technical-specs.test.ts",
-    "src/testing/builders/mercaeleva-source-fixture.ts"],
-  ["src/preparation/mercaeleva/technical/tests/specifications/mercaeleva-documented-platform-technical-specs.test.ts",
-    "src/testing/builders/mercaeleva-source-fixture.ts"],
+  ["src/publication/tests/manain-individual-selection.test.ts",
+    "src/testing/builders/manain-individual-selection-fixture.ts"],
+  ["src/publication/tests/manain-individual-finish.test.ts",
+    "src/testing/builders/manain-individual-selection-fixture.ts"]
 ]);
 
 const accreditedTransitiveSources = new Map([
-  ["src/testing/builders/mercaeleva-source-fixture.ts",
-    "6986e840629c39431c53a1faad10a9c523dfdf4e03dbb9b8f6bb4fe9f3c07ebe"]
+  ["src/testing/builders/manain-individual-selection-fixture.ts",
+    "435bdfb7175acf306d4b024332fa46999aeb78b1caeff4fb4976e020d738424b"]
 ]);
 
 const isAccreditedTransitive = (path, helper, project, helperEvidence) => {

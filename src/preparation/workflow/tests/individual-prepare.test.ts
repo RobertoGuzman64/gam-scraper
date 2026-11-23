@@ -11,16 +11,16 @@ import { requireIndividualPreparationContext } from "../individual-context.js";
 import { parseIndividualCatalogProviders } from "../../../cli/options/individual-catalog.js";
 import { prepareIndividualCatalogs } from "../individual-prepare.js";
 import { reuseWorkspaceTestFixture } from "../../../testing/builders/reusable-workspace-fixture.js";
+import { copyCampaignTestCatalog } from "../../../campaign/tests/campaign-catalog-fixture.js";
 
 const files = ["scrape-gomariz-catalog.json", "scrape-gomariz-catalog.manifest.json", "scrape-gomariz-summary.json"] as const;
-const fixtures = join(process.cwd(), "src", "testing", "fixtures", "gomariz");
 
 const fixtureCache = reuseWorkspaceTestFixture(async () => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-catalogo preparar "));
   const source = join(root, "fixture");
   try {
     await mkdir(source);
-    for (const name of files) await copyFile(join(fixtures, name), join(source, name));
+    await copyCampaignTestCatalog(source, "gomariz", "scrape-gomariz");
     await consolidatePortableOriginal(root, join(source, files[0]));
     return { root, source, cleanup: () => rm(root, { recursive: true, force: true }) };
   } catch (error) {
@@ -51,7 +51,7 @@ const firstPreparation = async (root: string): Promise<string> => {
   const [result] = await runGomariz(root);
   assert.equal(result?.error, null);
   assert.equal(result.summary?.status, "generada");
-  assert.equal(result.summary.sourceCount, 14);
+  assert.equal(result.summary.sourceCount, 4);
   assert.ok(result.summary.preparationFile);
   return result.summary.preparationFile;
 };

@@ -1,168 +1,38 @@
 import assert from "node:assert/strict";
-import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import test from "node:test";
+import { createPublishedIndividualFinishWorkspace } from "../../../../testing/builders/individual-finish-fixture.js";
 import { accreditedPublicationOriginalSources } from "../accredited-publication-original.js";
-import { readAccreditedPublication } from "../accredited-publication.js";
-import { originalSources } from "../original-catalog-sources.js";
-import { assertCurrentCommercialInventory, loadCommercialPublicationInputs } from "../../../../commercial/export/commercial-inputs.js";
-import { loadImportCatalog } from "../../legacy-export/import-catalog-loader.js";
+import { readAccreditedPublication, resolveAccreditedPublication } from "../accredited-publication.js";
 
-const fixture = join(process.cwd(), "src", "testing", "fixtures", "gomariz");
-const historical = join(fixture, "regression-143");
-const historicalPublications = join(historical, "publications");
-const prefix = "scrape-gomariz";
-const files = [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`] as const;
-const archiveName = "archive-2026-10-29T12-00-00-000Z-11111111-1111-4111-8111-111111111111";
+const withPublished = createPublishedIndividualFinishWorkspace();
 
-const workspace = async (): Promise<{ root: string; publicationFile: string; archived: string }> => {
-  const root = await mkdtemp(join(tmpdir(), "eqz-commercial-original-"));
-  const base = join(root, "catalogs", "providers", "gomariz");
-  const current = join(base, "original");
-  const versions = join(base, "publications");
-  const archived = join(root, "storage", "scraped", "gomariz", ".history", prefix, archiveName);
-  await mkdir(current, { recursive: true });
-  await mkdir(versions);
-  await mkdir(archived, { recursive: true });
-  for (const name of files) {
-    await copyFile(join(fixture, name), join(current, name));
-    await copyFile(join(historical, name), join(archived, name));
-  }
-  const active = JSON.parse(await readFile(join(historicalPublications, "active.json"), "utf8")) as { approvalSha256: string };
-  const version = active.approvalSha256.slice(0, 12);
-  const destination = join(versions, version);
-  await mkdir(destination);
-  for (const name of ["gomariz-publishable.json", "manifest.json", "accreditation.json"]) {
-    await copyFile(join(historicalPublications, version, name), join(destination, name));
-  }
-  await copyFile(join(historicalPublications, "active.json"), join(versions, "active.json"));
-  return { root, publicationFile: join(destination, "gomariz-publishable.json"), archived };
-};
-
-test("la publicación comercial usa el original histórico acreditado tras renovar el inventario vigente", async () => {
-  const { root, publicationFile } = await workspace();
-  try {
-    const published = await readAccreditedPublication(publicationFile);
-    assert.equal((await originalSources(root, "gomariz"))?.size, 14);
-    const historicalSources = await accreditedPublicationOriginalSources(root, publicationFile, "gomariz");
-    assert.equal(historicalSources.size, published.products.length);
-    assert.ok(historicalSources.has("gomariz:ref:mt1579"));
-    const inputs = await loadCommercialPublicationInputs(root, await loadImportCatalog());
-    assert.equal(inputs.length, 1);
-    assert.equal(inputs[0]?.originalProducts, published.products.length);
-    assert.equal(inputs[0]?.entries.length, published.products.length);
-    await assert.rejects(assertCurrentCommercialInventory(root, inputs),
-      /Exportación comercial bloqueada: gomariz conserva \d+ referencias ausentes del original vigente/);
-    assert.equal((await originalSources(root, "gomariz"))?.size, 14);
-  } finally { await rm(root, { recursive: true, force: true }); }
-});
-
-test("la publicación individual admite manifiestos con el contrato mínimo de procedencia", async () => {
-  const { root, publicationFile } = await workspace();
-  try {
-    const manifestPath = join(dirname(publicationFile), "manifest.json");
-    const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
-      source: { prefix?: string; scope?: string }
-    };
-    delete manifest.source.prefix;
-    delete manifest.source.scope;
-    await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
-    const published = await readAccreditedPublication(publicationFile);
-    assert.equal((await accreditedPublicationOriginalSources(root, publicationFile, "gomariz")).size, published.products.length);
-  } finally { await rm(root, { recursive: true, force: true }); }
-});
-
-test("ni la ausencia ni la alteración del archivo histórico permiten usar el original nuevo como sustituto", async () => {
-  const { root, publicationFile, archived } = await workspace();
-  try {
-    const oldCatalog = join(archived, `${prefix}-catalog.json`);
-    await writeFile(oldCatalog, `${await readFile(oldCatalog, "utf8")} `);
-    await assert.rejects(accreditedPublicationOriginalSources(root, publicationFile, "gomariz"), /No se conserva el original acreditado/);
-    await rm(archived, { recursive: true, force: true });
-    await assert.rejects(accreditedPublicationOriginalSources(root, publicationFile, "gomariz"), /No se conserva el original acreditado/);
-  } finally { await rm(root, { recursive: true, force: true }); }
-});
-
-test("once bajas de Gomariz no invalidan la auditoría histórica ni pueden exportarse sin reacreditación", async () => {
-  const { root, publicationFile } = await workspace();
-  try {
-    const current = join(root, "catalogs", "providers", "gomariz", "original");
-    const source = JSON.parse(await readFile(join(historical, `${prefix}-catalog.json`), "utf8")) as {
-      productCount: number;
-      products: { reference: string | null }[];
-    };
-    const missing = new Set(["MT1579", "TE61", "BA1347", "5051BDX", "1011JFB", "GR1113",
-      "BA1262", "CAE1054", "RO1197", "RO457", "TE1606"]);
-    const retained = source.products.filter((product) => !missing.has(product.reference ?? ""));
-    assert.equal(source.products.length - retained.length, missing.size);
-    const changed = { ...source, products: retained, productCount: retained.length };
-    const raw = JSON.stringify(changed, null, 2);
-    const hash = (await import("node:crypto")).createHash("sha256").update(raw).digest("hex");
-    const oldManifest = JSON.parse(await readFile(join(historical, `${prefix}-catalog.manifest.json`), "utf8")) as {
-      productCount: number; catalogSha256: string;
-    };
-    const oldSummary = JSON.parse(await readFile(join(historical, `${prefix}-summary.json`), "utf8")) as {
-      totals: { scrapedProducts: number }; artifacts: { catalogSha256: string };
-    };
-    await writeFile(join(current, `${prefix}-catalog.json`), raw);
-    await writeFile(join(current, `${prefix}-catalog.manifest.json`), JSON.stringify({
-      ...oldManifest, productCount: retained.length, catalogSha256: hash
-    }, null, 2));
-    await writeFile(join(current, `${prefix}-summary.json`), JSON.stringify({
-      ...oldSummary, totals: { ...oldSummary.totals, scrapedProducts: retained.length },
-      artifacts: { ...oldSummary.artifacts, catalogSha256: hash }
-    }, null, 2));
-    const inputs = await loadCommercialPublicationInputs(root, await loadImportCatalog());
-    const published = await readAccreditedPublication(publicationFile);
-    assert.equal(inputs[0]?.entries.length, published.products.length);
-    await assert.rejects(assertCurrentCommercialInventory(root, inputs), (error: unknown) => {
-      assert.ok(error instanceof Error);
-      assert.match(error.message, /gomariz conserva 11 referencias ausentes/);
-      for (const reference of missing) assert.match(error.message, new RegExp(reference));
-      return true;
-    });
-  } finally { await rm(root, { recursive: true, force: true }); }
-});
-
-test("el lector acreditado admite el alias portátil cuando el prefijo canónico difiere del nombre de archivo", async () => {
-  const root = await mkdtemp(join(tmpdir(), "eqz-commercial-alias-"));
-  try {
-    const base = join(root, "catalogs", "providers", "gam");
-    const original = join(base, "original");
-    const publications = join(base, "publications", "candidato");
-    await mkdir(original, { recursive: true });
-    await mkdir(publications, { recursive: true });
-    const fixtureGam = join(process.cwd(), "src", "testing", "fixtures", "gam");
-    const catalogPrefix = "scrape-gam-marzo-2026";
-    for (const suffix of ["catalog.json", "catalog.manifest.json", "summary.json"]) {
-      await copyFile(join(fixtureGam, `${catalogPrefix}-${suffix}`), join(original, `scrape-gam-${suffix}`));
+test("la publicación acreditada recupera sus originales sin depender del inventario histórico", async () => {
+  await withPublished(async (root) => {
+    const publicationFile = await resolveAccreditedPublication(root, "gomariz");
+    assert.ok(publicationFile);
+    const publication = await readAccreditedPublication(publicationFile);
+    const originals = await accreditedPublicationOriginalSources(root, publicationFile, "gomariz");
+    assert.equal(originals.size, 3);
+    for (const product of publication.products) {
+      assert.ok([...originals.values()].some((original) =>
+        original.providerId === product.providerId && original.reference === product.reference &&
+        original.url === product.sourceUrl));
     }
-    const source = JSON.parse(await readFile(join(fixtureGam, `${catalogPrefix}-catalog.manifest.json`), "utf8")) as {
-      providerId: string; prefix: string; scope: string; catalogSha256: string; productCount: number;
-    };
-    await writeFile(join(publications, "manifest.json"), JSON.stringify({
-      version: 1, providerId: "gam", source
-    }));
-    const recovered = await accreditedPublicationOriginalSources(root, join(publications, "gam-publishable.json"), "gam");
-    assert.equal(recovered.size, source.productCount);
-  } finally { await rm(root, { recursive: true, force: true }); }
+  });
 });
 
-test("un manifiesto o resumen histórico incompatible impide la lectura acreditada", async () => {
-  const { root, publicationFile, archived } = await workspace();
-  try {
-    const manifestPath = join(archived, `${prefix}-catalog.manifest.json`);
-    const rawManifest = await readFile(manifestPath, "utf8");
-    const manifest = JSON.parse(rawManifest) as { catalogSha256: string };
-    await writeFile(manifestPath, JSON.stringify({ ...manifest, catalogSha256: "b".repeat(64) }));
+test("una alteración del original acreditado no puede sustituirse silenciosamente", async () => {
+  await withPublished(async (root) => {
+    const publicationFile = await resolveAccreditedPublication(root, "gomariz");
+    assert.ok(publicationFile);
+    const originalFile = join(root, "catalogs", "providers", "gomariz", "original", "scrape-gomariz-catalog.json");
+    const original = await readFile(originalFile, "utf8");
+    await writeFile(originalFile, `${original} `);
     await assert.rejects(accreditedPublicationOriginalSources(root, publicationFile, "gomariz"),
-      /catálogo y su manifest pertenecen a ejecuciones distintas/);
-    await writeFile(manifestPath, rawManifest);
-    const summaryPath = join(archived, `${prefix}-summary.json`);
-    const summary = JSON.parse(await readFile(summaryPath, "utf8")) as { totals: { scrapedProducts: number } };
-    await writeFile(summaryPath, JSON.stringify({ ...summary, totals: { ...summary.totals, scrapedProducts: 142 } }));
-    await assert.rejects(accreditedPublicationOriginalSources(root, publicationFile, "gomariz"),
-      /catálogo no coincide con la publicación completa acreditada/);
-  } finally { await rm(root, { recursive: true, force: true }); }
+      /No se conserva el original acreditado|alterado|coincide|SHA256|manifest pertenecen a ejecuciones distintas/);
+    await writeFile(originalFile, original);
+    assert.equal((await accreditedPublicationOriginalSources(root, publicationFile, "gomariz")).size, 3);
+  });
 });

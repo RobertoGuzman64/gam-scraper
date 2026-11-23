@@ -22,10 +22,10 @@ import { toCsv } from "../../shared/csv.js";
 import { inspectPortableInventory } from "../../campaign/portable-inventory.js";
 import { readContentGapOptions } from "../../cli/commands/catalog/catalog-content-gaps-options.js";
 import { runTechnicalPublication } from "../../cli/commands/catalog/technical-publication.js";
+import { copyCampaignTestCatalog } from "../../campaign/tests/campaign-catalog-fixture.js";
 
 const hash = (text: string): string => createHash("sha256").update(text).digest("hex");
 const originals = ["scrape-gomariz-catalog.json", "scrape-gomariz-catalog.manifest.json", "scrape-gomariz-summary.json"] as const;
-const fixture = join(process.cwd(), "src", "testing", "fixtures", "gomariz");
 const technicalPath = (root: string, provider: string): string =>
   join(root, "catalogs", "providers", provider, "technical");
 
@@ -33,7 +33,7 @@ const workspace = async (): Promise<{ root: string; preparation: string }> => {
   const root = await mkdtemp(join(tmpdir(), "eqz-technical-"));
   const source = join(root, "source");
   await mkdir(source);
-  for (const name of originals) await copyFile(join(fixture, name), join(source, name));
+  await copyCampaignTestCatalog(source, "gomariz", "scrape-gomariz");
   const sourceCatalog = await readCanonicalCatalog(join(source, originals[0]));
   const sourceHash = await writeCanonicalCatalog(source, sourceCatalog.prefix, sourceCatalog.scope,
     sourceCatalog.startedAt, sourceCatalog.endedAt, sourceCatalog.products.map((product) => ({
@@ -82,7 +82,7 @@ test("publicación técnica completa conserva revisión, permite simulación, id
     assert.equal(simulation.snapshot.products.length,
       simulation.snapshot.totals.ready + simulation.snapshot.totals.review);
     assert.equal(simulation.snapshot.quality, "complete");
-    assert.equal(simulation.snapshot.totals.ready + simulation.snapshot.totals.review, 14);
+    assert.equal(simulation.snapshot.totals.ready + simulation.snapshot.totals.review, 4);
     await assert.rejects(lstat(technicalPath(root, "gomariz")), { code: "ENOENT" });
     const activated = await publishTechnicalSnapshot(root, "gomariz", { preparation }, true);
     assert.equal(activated.status, "activated");

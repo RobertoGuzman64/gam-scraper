@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { copyFile, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import test from "node:test";
 import { prepareSavedCatalog } from "../../../preparation/workflow/prepare.js";
 import { discoverCampaign } from "../../discovery/search.js";
@@ -11,22 +11,17 @@ import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import type { BatchReport, ProviderRun } from "../../../contracts/batch-report.js";
 import { copyCampaignTestCatalog } from "../campaign-catalog-fixture.js";
 
-const fixtureRoot = resolve("src/testing/fixtures");
 
 const createRoot = async (): Promise<string> => mkdtemp(join(tmpdir(), "equipzilla-campaign-discovery-"));
 
 const populate = async (root: string, providerId: string): Promise<ProviderRun> => {
-  const source = join(fixtureRoot, providerId);
   const names = ["gam", "gomariz", "mercaeleva", "manain"];
   const prefixes = ["scrape-gam-marzo-2026", "scrape-gomariz", "scrape-mercaeleva", "scrape-manain"];
   const prefix = prefixes[names.indexOf(providerId)];
   if (!prefix) throw new Error("Proveedor de prueba no declarado");
   const outputDir = join(root, "storage", "scraped", providerId);
   await mkdir(outputDir, { recursive: true });
-  if (providerId === "manain") await copyCampaignTestCatalog(fixtureRoot, outputDir, providerId, prefix);
-  else for (const name of [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`]) {
-    await copyFile(join(source, name), join(outputDir, name));
-  }
+  await copyCampaignTestCatalog(outputDir, providerId, prefix);
   const catalog: unknown = JSON.parse(await readFile(join(outputDir, `${prefix}-catalog.json`), "utf8"));
   if (!catalog || typeof catalog !== "object" || !("startedAt" in catalog) || !("endedAt" in catalog) ||
     typeof catalog.startedAt !== "string" || typeof catalog.endedAt !== "string") {

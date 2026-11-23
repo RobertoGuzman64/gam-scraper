@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { reviewActiveCampaign } from "../../review.js";
 import { finalizeActiveCampaign } from "../../finalization.js";
@@ -10,7 +10,6 @@ import { CAMPAIGN_PROVIDERS } from "../../discovery/report.js";
 import { copyCampaignTestCatalog, reuseCampaignTestFixture } from "../campaign-catalog-fixture.js";
 import type { BatchReport, ProviderRun } from "../../../contracts/batch-report.js";
 
-const fixtures = resolve("src/testing/fixtures");
 export const prefixes = {
   gam: "scrape-gam-marzo-2026",
   gomariz: "scrape-gomariz",
@@ -32,7 +31,7 @@ const writeCompleteRun = async (root: string, runId: string, startedAt: string, 
     const prefix = prefixes[id];
     const dir = join(root, "storage", "scraped", "campaigns", runId, id);
     await mkdir(dir, { recursive: true });
-    const catalog = await copyCampaignTestCatalog(fixtures, dir, id, prefix);
+    const catalog = await copyCampaignTestCatalog( dir, id, prefix);
     providers.push({
       providerId: id, status: "complete",
       startedAt: new Date(Date.parse(catalog.startedAt) - 1000).toISOString(),

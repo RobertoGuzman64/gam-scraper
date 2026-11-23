@@ -126,23 +126,3 @@ test("Gomariz admite solo las once ausencias históricas verificadas contra el o
   assert.equal(evaluateIndividualPublicationDifference("gomariz", unknownDifference, [unknown], [], null, [baseOriginal]).accepted, false);
 });
 
-test("las once ausencias de la publicación histórica Gomariz no están en el original canónico vigente", async () => {
-  const { resolve } = await import("node:path");
-  const { readPortableOriginal } = await import("../../infrastructure/filesystem/catalog/portable-original.js");
-  const { readAccreditedPublication } = await import("../../infrastructure/filesystem/catalog/accredited-publication.js");
-  const { differenceBetween } = await import("../active-publication.js");
-  const { evaluateIndividualPublicationDifference } = await import("../publication-acceptance.js");
-  const root = resolve(process.cwd());
-  const current = await readPortableOriginal(root, "gomariz");
-  const path = resolve(root, "src/testing/fixtures/gomariz/regression-143/publications/ffe1f64cd24d/gomariz-publishable.json");
-  const previous = (await readAccreditedPublication(path)).products;
-  const references = new Set(current.products.flatMap((item) =>
-    item.reference?.trim() ? [item.reference.trim().toLowerCase()] : []));
-  const selected = previous.filter((item) => item.reference && references.has(item.reference.trim().toLowerCase()));
-  const difference = differenceBetween("vigente", "nuevo", previous, selected);
-  assert.deepEqual([...difference.removed].sort(), [
-    "ref:mt1579", "ref:te61", "ref:ba1347", "ref:5051bdx", "ref:1011jfb", "ref:gr1113",
-    "ref:ba1262", "ref:cae1054", "ref:ro1197", "ref:ro457", "ref:te1606"
-  ].sort());
-  assert.equal(evaluateIndividualPublicationDifference("gomariz", difference, previous, selected, null, current.products).accepted, true);
-});

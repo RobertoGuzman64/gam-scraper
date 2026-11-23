@@ -1,23 +1,19 @@
 import assert from "node:assert/strict";
-import { copyFile, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import test from "node:test";
 import { consolidatePortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
 import { discoverCampaign } from "../../discovery/search.js";
 import { inspectBeforeExtraction } from "../../preflight.js";
 
-const fixtures = resolve("src/testing/fixtures");
+import { copyCampaignTestCatalog } from "../campaign-catalog-fixture.js";
 
 const populate = async (root: string, providerId: "gam" | "gomariz"): Promise<string> => {
   const prefix = providerId === "gam" ? "scrape-gam-marzo-2026" : "scrape-gomariz";
   const directory = join(root, "storage", "scraped", providerId);
   await mkdir(directory, { recursive: true });
-  for (const name of [
-    `${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`
-  ]) {
-    await copyFile(join(fixtures, providerId, name), join(directory, name));
-  }
+  await copyCampaignTestCatalog(directory, providerId, prefix);
   return join(directory, `${prefix}-catalog.json`);
 };
 
